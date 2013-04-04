@@ -8,7 +8,7 @@ package ee.webmedia.alfresco.classificator.enums;
 public enum StorageType {
     DIGITAL("Digitaalne"),
     XML("Xml"),
-    PAPER("Paber");
+    PAPER("Paberil");
 
     private String valueName;
 

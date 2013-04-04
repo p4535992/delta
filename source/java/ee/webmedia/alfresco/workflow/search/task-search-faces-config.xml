@@ -16,19 +16,11 @@
          <value>#{UserListDialog}</value>
       </managed-property>
    </managed-bean>
-   
+
    <managed-bean>
-      <managed-bean-name>TaskReportDialog</managed-bean-name>
-      <managed-bean-class>ee.webmedia.alfresco.workflow.search.web.TaskReportDialog</managed-bean-class>
+      <managed-bean-name>TaskSearchResultsDialog</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.workflow.search.web.TaskSearchResultsDialog</managed-bean-class>
       <managed-bean-scope>session</managed-bean-scope>
-      <managed-property>
-         <property-name>taskSearchResultsDialog</property-name>
-         <value>#{TaskSearchResultsDialog}</value>
-      </managed-property>
-      <managed-property>
-         <property-name>userListDialog</property-name>
-         <value>#{UserListDialog}</value>
-      </managed-property>
-   </managed-bean>   
+   </managed-bean>
 
 </faces-config>

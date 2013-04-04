@@ -1,8 +1,5 @@
 package ee.webmedia.alfresco.document.web.evaluator;
 
-import static ee.webmedia.alfresco.privilege.service.PrivilegeUtil.isAdminOrDocmanagerWithViewDocPermission;
-
-import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.web.action.evaluator.BaseActionEvaluator;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.StringUtils;
@@ -20,14 +17,9 @@ public class DeleteDocumentEvaluator extends BaseActionEvaluator {
 
     @Override
     public boolean evaluate(Node docNode) {
-        if (!docNode.getNodeRef().getStoreRef().getProtocol().equals(StoreRef.PROTOCOL_WORKSPACE)) {
-            return false;
-        }
-        if (!new ViewStateActionEvaluator().evaluate(docNode)) {
-            return false;
-        }
-        return isAdminOrDocmanagerWithViewDocPermission(docNode)
-                || (StringUtils.isBlank((String) docNode.getProperties().get(DocumentCommonModel.Props.REG_NUMBER)) && new IsOwnerEvaluator().evaluate(docNode));
+        boolean isInViewState = new ViewStateActionEvaluator().evaluate(docNode);
+        return isInViewState && StringUtils.isBlank((String) docNode.getProperties().get(DocumentCommonModel.Props.REG_NUMBER))
+                && docNode.hasPermission(DocumentCommonModel.Privileges.DELETE_DOCUMENT_META_DATA);
     }
 
 }

@@ -69,7 +69,7 @@ public class UIRichList extends UIComponentBase implements IDataContainer,Serial
    // Construction
    
     private static final long serialVersionUID = 4302199745018058173L;
-    public static final String RICH_LIST_PAGE_BOOKMARKS = "RichList-page-bookmarks";
+    private static final String RICH_LIST_PAGE_BOOKMARKS = "RichList-page-bookmarks";
 
    /**
     * Default constructor
@@ -273,11 +273,6 @@ public class UIRichList extends UIComponentBase implements IDataContainer,Serial
       // relation between objects in the _rowStates and the
       // corresponding DataModel element.
       _rowStates.clear();
-
-      // KAAREL: When we replace the data model it makes sense to clear the sorting and paging settings also.
-      sortColumn = null;
-      sortDescending = true;
-      currentPage = 0;
    }
    
    /**
@@ -671,16 +666,6 @@ public class UIRichList extends UIComponentBase implements IDataContainer,Serial
       {
          // build the appropriate data-model wrapper object
          Object val = getValue();
-         if (val == null) {
-             String msg = "value of RichList '" + getId() + "' is null";
-             ValueBinding vb = getValueBinding("value");
-             if (vb != null) {
-                 msg += " (returned by '" + vb.toString() + "')";
-             } else {
-                 msg += " (missing value binding)";
-             }
-             throw new RuntimeException(msg);
-         }
          if (val instanceof List)
          {
             this.dataModel = new GridListDataModel((List)val);

@@ -73,14 +73,4 @@
       </property>
    </bean>
 
-   <bean id="adrDeletedDocumentNodeRefToTextUpdater" class="ee.webmedia.alfresco.adr.bootstrap.AdrDeletedDocumentNodeRefToTextUpdater" parent="abstractNodeUpdater">
-      <property name="moduleId" value="simdhs" />
-      <property name="executeOnceOnly" value="true" />
-      <property name="dependsOn">
-         <list>
-            <ref bean="adrDeletedDocumentsBootstrap" />
-         </list>
-      </property>
-   </bean>
-
 </beans>

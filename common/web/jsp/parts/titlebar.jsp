@@ -37,7 +37,7 @@
       <a:actionLink id="client-logo" value="#{ApplicationService.projectTitle}" href="/" tooltip="Avalehele" image="/images/logo/logo.png" showLink="false" />
       <a:actionLink id="project-name" value="Dokumendihaldus" href="/" tooltip="Dokumendihaldus" />
       
-      <a:panel id="search" styleClass="search-box">
+      <a:panel id="search">
          <f:verbatim>
          <span>
          </f:verbatim>
@@ -55,8 +55,8 @@
                image="/images/icons/add_attachment.gif"
                showLink="false"
                value="#{msg.addressbook}"
-               action="dialog:addressbookList"
-               rendered="#{AddressbookSearchBean.userHasPermission}" />
+               action="dialog:addressbookManage"
+               rendered="#{AddressbookDialog.userHasPermission}" />
          <f:verbatim>
          </span>
          </f:verbatim>

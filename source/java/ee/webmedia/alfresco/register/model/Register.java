@@ -13,9 +13,10 @@ public class Register implements Serializable {
     private static final long serialVersionUID = 1L;
     private int id;
     private String name;
+    private String prefix;
+    private String suffix;
     private String comment;
     private boolean active;
-    private boolean autoReset;
 
     @AlfrescoModelProperty(isMappable = false)
     private int counter;
@@ -27,6 +28,7 @@ public class Register implements Serializable {
         return new StringBuilder()
                 .append("\nName (id) = " + name + "(" + id + ")\n")
                 .append("counter = " + counter + "\n")
+                .append("prefix | suffix = " + prefix + " | " + suffix + "\n")
                 .append("Active = " + active + "\n").toString();
     }
 
@@ -54,6 +56,22 @@ public class Register implements Serializable {
         this.counter = counter;
     }
 
+    public String getPrefix() {
+        return prefix;
+    }
+
+    public void setPrefix(String prefix) {
+        this.prefix = prefix;
+    }
+
+    public String getSuffix() {
+        return suffix;
+    }
+
+    public void setSuffix(String suffix) {
+        this.suffix = suffix;
+    }
+
     public String getComment() {
         return comment;
     }
@@ -76,14 +94,6 @@ public class Register implements Serializable {
 
     public void setNodeRef(NodeRef nodeRef) {
         this.nodeRef = nodeRef;
-    }
-
-    public void setAutoReset(boolean autoReset) {
-        this.autoReset = autoReset;
-    }
-
-    public boolean isAutoReset() {
-        return autoReset;
     }
 
 }

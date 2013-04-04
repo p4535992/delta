@@ -2,7 +2,6 @@ package ee.webmedia.alfresco.document.web.evaluator;
 
 import javax.faces.context.FacesContext;
 
-import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.web.action.evaluator.BaseActionEvaluator;
 import org.alfresco.web.bean.repository.Node;
 import org.springframework.web.jsf.FacesContextUtils;
@@ -17,9 +16,6 @@ public class AddFavoritesDocumentEvaluator extends BaseActionEvaluator {
 
     @Override
     public boolean evaluate(Node docNode) {
-        if (!docNode.getNodeRef().getStoreRef().getProtocol().equals(StoreRef.PROTOCOL_WORKSPACE)) {
-            return false;
-        }
         ViewStateActionEvaluator viewStateEval = new ViewStateActionEvaluator();
         if (!viewStateEval.evaluate(docNode)) {
             return false;

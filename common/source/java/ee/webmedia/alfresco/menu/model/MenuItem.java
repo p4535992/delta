@@ -15,6 +15,7 @@ import javax.faces.el.MethodBinding;
 import javax.faces.el.ValueBinding;
 
 import org.alfresco.config.Config;
+import org.alfresco.i18n.I18NUtil;
 import org.alfresco.web.app.Application;
 import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.config.ActionsConfigElement;
@@ -29,16 +30,11 @@ import org.apache.myfaces.shared_impl.taglib.UIComponentTagUtils;
 
 import com.thoughtworks.xstream.annotations.XStreamAlias;
 import com.thoughtworks.xstream.annotations.XStreamAsAttribute;
-import com.thoughtworks.xstream.annotations.XStreamImplicit;
 import com.thoughtworks.xstream.annotations.XStreamOmitField;
 
-import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.einvoice.service.EInvoiceService;
 import ee.webmedia.alfresco.menu.ui.component.MenuItemWrapper;
-import ee.webmedia.alfresco.menu.ui.component.UIMenuComponent.ClearViewStackActionListener;
-import ee.webmedia.alfresco.orgstructure.amr.service.RSService;
 import ee.webmedia.alfresco.user.service.UserService;
-import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
 
 /**
@@ -58,6 +54,8 @@ public class MenuItem implements Serializable {
     @XStreamAsAttribute
     private String title;
     @XStreamAsAttribute
+    private String titleBinding;
+    @XStreamAsAttribute
     @XStreamAlias("title-id")
     private String titleId;
     @XStreamAsAttribute
@@ -67,8 +65,6 @@ public class MenuItem implements Serializable {
     private boolean docManager;
     @XStreamAsAttribute
     private boolean accountant;
-    @XStreamAsAttribute
-    private boolean supervisor;
     private String outcome;
     @XStreamAlias("subitems")
     private List<MenuItem> subItems;
@@ -81,11 +77,9 @@ public class MenuItem implements Serializable {
     @XStreamOmitField
     private Map<String, String> params;
     private String processor;
-    @XStreamImplicit(itemFieldName = "styleClass")
-    private List<String> styleClass;
     @XStreamOmitField
-    private boolean renderingDisabled;
-    private String hidden;
+    private List<String> styleClass;
+    protected String hidden;
 
     @XStreamOmitField
     private static final String ACTION_CONTEXT = "actionContext";
@@ -97,21 +91,18 @@ public class MenuItem implements Serializable {
     public MenuItem() {
     }
 
-    public UIComponent createComponent(FacesContext context, String id, UserService userService, WorkflowService workflowService, EInvoiceService einvoiceService,
-            RSService rsService) {
-        return createComponent(context, id, false, userService, workflowService, einvoiceService, rsService, false);
+    public UIComponent createComponent(FacesContext context, String id, UserService userService, WorkflowService workflowService, EInvoiceService einvoiceService) {
+        return createComponent(context, id, false, userService, workflowService, einvoiceService, false);
     }
 
     public UIComponent createComponent(FacesContext context, String id, UserService userService, WorkflowService workflowService, EInvoiceService einvoiceService,
-            RSService rsService,
             boolean createChildren) {
-        return createComponent(context, id, false, userService, workflowService, einvoiceService, rsService, false);
+        return createComponent(context, id, false, userService, workflowService, einvoiceService, false);
     }
 
     public UIComponent createComponent(FacesContext context, String id, UserService userService, WorkflowService workflowService, EInvoiceService einvoiceService,
-            RSService rsService,
             boolean createChildren, boolean plainLink) {
-        return createComponent(context, id, false, userService, workflowService, einvoiceService, rsService, true);
+        return createComponent(context, id, false, userService, workflowService, einvoiceService, true);
     }
 
     /**
@@ -123,10 +114,17 @@ public class MenuItem implements Serializable {
      */
     @SuppressWarnings("deprecation")
     public UIComponent createComponent(FacesContext context, String id, boolean active, UserService userService, WorkflowService workflowService, EInvoiceService einvoiceService,
-            RSService rsService,
             boolean plainLink) {
 
-        if (!isRendered(userService, workflowService, einvoiceService, rsService)) {
+        if (isRestricted() && !hasPermissions(userService)) {
+            return null;
+        }
+
+        if (isExternalReview() && !isExternalReviewEnabled(workflowService)) {
+            return null;
+        }
+
+        if (isEinvoiceFunctionality() && !isEinvoiceFunctionalityEnabled(einvoiceService)) {
             return null;
         }
 
@@ -138,15 +136,12 @@ public class MenuItem implements Serializable {
 
         link.setRendererType(UIActions.RENDERER_ACTIONLINK);
         FacesHelper.setupComponentId(context, link, id);
-        link.addActionListener(new ClearViewStackActionListener());
 
-        if (title == null) {
-            setTitle(MessageUtil.getMessage(getTitleId()));
-        } else if (StringUtils.startsWith(title, "#{")) {
-            ValueBinding vb = application.createValueBinding(title);
-            if (vb != null) {
-                setTitle((String) vb.getValue(context));
-            }
+        if (StringUtils.isNotBlank(getTitleBinding()) && getTitleBinding().startsWith("#{")) {
+            setTitle((String) application.createValueBinding(getTitleBinding()).getValue(context));
+        }
+        if (getTitle() == null) {
+            setTitle(I18NUtil.getMessage(getTitleId()));
         }
         link.setValue(getTitle());
         link.setTooltip(getTitle());
@@ -195,7 +190,7 @@ public class MenuItem implements Serializable {
 
             if (hideIt && !getStyleClass().contains(HIDDEN_MENU_ITEM)) {
                 getStyleClass().add(HIDDEN_MENU_ITEM);
-            } else if (!hideIt) {
+            } else if (!hideIt && getStyleClass().contains(HIDDEN_MENU_ITEM)) {
                 getStyleClass().remove(HIDDEN_MENU_ITEM);
             }
         }
@@ -278,27 +273,6 @@ public class MenuItem implements Serializable {
         return wrap;
     }
 
-    protected boolean isRendered(UserService userService, WorkflowService workflowService, EInvoiceService einvoiceService, RSService rsService) {
-        if (isRenderingDisabled() || isRestricted() && !hasPermissions(userService)) {
-            return false;
-        }
-        if (isExternalReview() && !isExternalReviewEnabled(workflowService)) {
-            return false;
-        }
-        if (isEinvoiceFunctionality() && !isEinvoiceFunctionalityEnabled(einvoiceService)) {
-            return false;
-        }
-        boolean isRestrictedDelta = rsService.isRestrictedDelta();
-        if ("regularDelta".equals(id) && (!isRestrictedDelta || StringUtils.isBlank(rsService.getDeltaUrl()))) {
-            return false;
-        }
-        if ("restrictedDelta".equals(id)
-                && (isRestrictedDelta || StringUtils.isBlank(rsService.getRestrictedDeltaUrl()) || !BeanHelper.getRsAccessStatusBean().isCanUserAccessRestrictedDelta())) {
-            return false;
-        }
-        return true;
-    }
-
     protected boolean isEinvoiceFunctionalityEnabled(EInvoiceService einvoiceService) {
         return einvoiceService.isEinvoiceEnabled();
     }
@@ -322,24 +296,18 @@ public class MenuItem implements Serializable {
     }
 
     public boolean hasPermissions(UserService userService) {
-        if (userService.isAdministrator()) { // Access all areas
-            return true;
+        if (isAdmin()) {
+            return userService.isAdministrator();
+        } else if (isDocManager()) {
+            return userService.isDocumentManager();
+        } else if (isAccountant()) {
+            return userService.isAccountant();
         }
-        if (isDocManager() && userService.isDocumentManager()) {
-            return true;
-        }
-        if (isAccountant() && userService.isAccountant()) {
-            return true;
-        }
-        if (isSupervisor() && userService.isSupervisor()) {
-            return true;
-        }
-
         return false;
     }
 
     public boolean isRestricted() {
-        return isAdmin() || isDocManager() || isAccountant() || isSupervisor();
+        return isAdmin() || isDocManager() || isAccountant();
     }
 
     public boolean isExternalReview() {
@@ -355,7 +323,7 @@ public class MenuItem implements Serializable {
     }
 
     public String getActionListener() {
-        return actionListener;
+        return (actionListener != null) ? actionListener : "";
     }
 
     public void setActionListener(String actionListener) {
@@ -471,22 +439,6 @@ public class MenuItem implements Serializable {
         return accountant;
     }
 
-    public void setSupervisor(boolean supervisor) {
-        this.supervisor = supervisor;
-    }
-
-    public boolean isSupervisor() {
-        return supervisor;
-    }
-
-    public boolean isRenderingDisabled() {
-        return renderingDisabled;
-    }
-
-    public void setRenderingDisabled(boolean renderingDisabled) {
-        this.renderingDisabled = renderingDisabled;
-    }
-
     public String getHidden() {
         return hidden;
     }
@@ -509,6 +461,14 @@ public class MenuItem implements Serializable {
 
     public String getTarget() {
         return target;
+    }
+
+    public void setTitleBinding(String titleBinding) {
+        this.titleBinding = titleBinding;
+    }
+
+    public String getTitleBinding() {
+        return titleBinding;
     }
 
 }

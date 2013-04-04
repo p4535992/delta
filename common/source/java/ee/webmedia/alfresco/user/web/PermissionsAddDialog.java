@@ -16,15 +16,12 @@ import org.alfresco.service.cmr.security.PermissionService;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.Repository;
 import org.alfresco.web.ui.common.component.UIGenericPicker;
-import org.apache.commons.lang.StringUtils;
 import org.springframework.web.jsf.FacesContextUtils;
 
-import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
 import ee.webmedia.alfresco.user.model.Authority;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.ActionUtil;
-import ee.webmedia.alfresco.utils.MessageUtil;
 
 public class PermissionsAddDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;
@@ -35,35 +32,18 @@ public class PermissionsAddDialog extends BaseDialogBean {
 
     private NodeRef nodeRef;
     private String permission;
-    private String dialogTitleId;
     private List<Authority> authorities;
     private transient ListDataModel authoritiesModel;
 
     public void setup(ActionEvent event) {
-        reset();
-
         nodeRef = new NodeRef(ActionUtil.getParam(event, "nodeRef"));
         permission = ActionUtil.getParam(event, "permission");
-        if (ActionUtil.hasParam(event, "dialogTitleId")) {
-            String param = ActionUtil.getParam(event, "dialogTitleId");
-            if (param != null && !param.equals("null")) {
-                dialogTitleId = param;
-            }
-        }
     }
 
     @Override
     public void init(Map<String, String> params) {
         super.init(params);
         authorities = new ArrayList<Authority>();
-    }
-
-    @Override
-    public String getContainerTitle() {
-        if (StringUtils.isNotBlank(dialogTitleId)) {
-            return MessageUtil.getMessage(dialogTitleId);
-        }
-        return MessageUtil.getMessage("manage_invited_users");
     }
 
     @Override
@@ -81,12 +61,6 @@ public class PermissionsAddDialog extends BaseDialogBean {
             }
 
         }, AuthenticationUtil.getSystemUserName());
-
-        // Execute callback
-        String callbackMethodBinding = BeanHelper.getPermissionsListDialog().getCallbackMethodBinding();
-        if (StringUtils.isNotBlank(callbackMethodBinding)) {
-            context.getApplication().createMethodBinding(callbackMethodBinding, new Class[] {}).invoke(context, new Object[] {});
-        }
 
         reset();
         return outcome;
@@ -162,7 +136,6 @@ public class PermissionsAddDialog extends BaseDialogBean {
         permission = null;
         authorities = null;
         authoritiesModel = null;
-        dialogTitleId = null;
     }
 
     // START: getters / setters

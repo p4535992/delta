@@ -28,7 +28,6 @@
 
    <bean class="org.springframework.web.servlet.handler.BeanNameUrlHandlerMapping" />
 
-   <import resource="classpath:ee/webmedia/alfresco/relvastus/relvastus-ws-context.xml" />
-   <import resource="classpath:ee/webmedia/alfresco/ikt/ikt-ws-context.xml" />
+   <import resource="classpath:ee/webmedia/alfresco/maais/maais-ws-context.xml" />
 
 </beans>

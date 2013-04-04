@@ -30,7 +30,7 @@
             <property name="tasksearch:startedDateTimeBegin">
                <type>d:date</type>
             </property>
-            <property name="tasksearch:startedDateTimeBegin_EndDate">
+            <property name="tasksearch:startedDateTimeEnd">
                <type>d:date</type>
             </property>
             <property name="tasksearch:taskType">
@@ -39,18 +39,12 @@
             </property>
             <property name="tasksearch:ownerName">
                <type>d:text</type>
-               <multiple>true</multiple>
             </property>
             <property name="tasksearch:creatorName">
                <type>d:text</type>
             </property>
-            <property name="tasksearch:outcome">
-               <type>d:text</type>
-               <multiple>true</multiple>
-            </property>
             <property name="tasksearch:organizationName">
                <type>d:text</type>
-               <multiple>true</multiple>
             </property>
             <property name="tasksearch:jobTitle">
                <type>d:text</type>
@@ -58,7 +52,7 @@
             <property name="tasksearch:dueDateTimeBegin">
                <type>d:date</type>
             </property>
-            <property name="tasksearch:dueDateTimeBegin_EndDate">
+            <property name="tasksearch:dueDateTimeEnd">
                <type>d:date</type>
             </property>
             <property name="tasksearch:onlyResponsible">
@@ -68,7 +62,7 @@
             <property name="tasksearch:completedDateTimeBegin">
                <type>d:date</type>
             </property>
-            <property name="tasksearch:completedDateTimeBegin_EndDate">
+            <property name="tasksearch:completedDateTimeEnd">
                <type>d:date</type>
             </property>
             <property name="tasksearch:comment">
@@ -88,12 +82,8 @@
             <property name="tasksearch:stoppedDateTimeBegin">
                <type>d:date</type>
             </property>
-            <property name="tasksearch:stoppedDateTimeBegin_EndDate">
+            <property name="tasksearch:stoppedDateTimeEnd">
                <type>d:date</type>
-            </property>
-            <property name="tasksearch:docType">
-               <type>d:text</type>
-               <multiple>true</multiple>
             </property>
          </properties>
       </type>
@@ -117,7 +107,7 @@
             </child-association>
          </associations>
       </aspect>
-      
+
    </aspects>
 
 </model>

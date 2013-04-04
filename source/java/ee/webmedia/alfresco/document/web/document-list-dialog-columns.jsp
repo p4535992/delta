@@ -11,10 +11,7 @@
          <f:facet name="header">
             <a:sortLink id="col1-sort" label="#{msg.document_regNumber}" value="regNumber" styleClass="header" />
          </f:facet>
-         <a:actionLink id="col1-text" value="#{r.regNumber}" action="#{DocumentDialog.action}" tooltip="#{r.regNumber}"
-            actionListener="#{DocumentDialog.open}" >
-            <f:param name="nodeRef" value="#{r.node.nodeRef}" />
-         </a:actionLink>
+         <h:outputText id="col1-text" value="#{r.regNumber}" />
       </a:column>
       
       <%-- Registration date --%>
@@ -22,10 +19,9 @@
          <f:facet name="header">
             <a:sortLink id="col2-sort" label="#{msg.document_regDateTime}" value="regDateTime" styleClass="header" />
          </f:facet>
-         <a:actionLink id="col2-text" value="#{r.regDateTimeStr}" action="#{DocumentDialog.action}" tooltip="#{r.regDateTimeStr}" styleClass="no-underline"
-          actionListener="#{DocumentDialog.open}" >
-            <f:param name="nodeRef" value="#{r.node.nodeRef}" />
-          </a:actionLink>
+         <h:outputText id="col2-text" value="#{r.regDateTime}" >
+            <a:convertXMLDate pattern="#{msg.date_pattern}" />
+         </h:outputText>
       </a:column>
       
       <%-- Document type --%>
@@ -33,10 +29,7 @@
          <f:facet name="header">
             <a:sortLink id="col3-sort" label="#{msg.document_docType}" value="documentTypeName" styleClass="header" />
          </f:facet>
-         <a:actionLink id="col3-text" value="#{r.documentTypeName}" action="#{DocumentDialog.action}" tooltip="#{r.documentTypeName}"
-          actionListener="#{DocumentDialog.open}" styleClass="no-underline" >
-            <f:param name="nodeRef" value="#{r.node.nodeRef}" />
-          </a:actionLink>
+         <h:outputText id="col3-text" value="#{r.documentTypeName}" />
       </a:column>
       
       <%-- Sender/owner --%>
@@ -44,40 +37,15 @@
          <f:facet name="header">
             <a:sortLink id="col4-sort" label="#{msg.document_sender}" value="sender" styleClass="header" />
          </f:facet>
-         <a:actionLink id="col4-text" value="#{r.sender}" action="#{DocumentDialog.action}" tooltip="#{r.sender}"
-          actionListener="#{DocumentDialog.open}" styleClass="tooltip condence20- no-underline" >
-            <f:param name="nodeRef" value="#{r.node.nodeRef}" />
-          </a:actionLink>
+         <h:outputText id="col4-text-1" value="#{r.sender}" title="#{r.sender}" styleClass="tooltip condence20-" />
       </a:column>
-      
-      <% 
-         Boolean showOrgStructColumn = false;
-         String showOrgStructStr = request.getParameter("showOrgStructColumn");
-         if(showOrgStructStr != null){
-             showOrgStructColumn = Boolean.parseBoolean(showOrgStructStr);
-         }
-         String showOrgStructColumnStr = showOrgStructColumn ? "true" : "false";
-      %>
-      <%-- Organization structure --%>
-      <a:column id="col4_1" primary="true" styleClass="#{r.cssStyleClass}" rendered="<%=showOrgStructColumnStr%>" >
-         <f:facet name="header">
-            <a:sortLink id="col4_1-sort" label="#{msg.document_ownerStructUnit}" value="ownerOrgStructUnit" styleClass="header" />
-         </f:facet>
-        	<a:actionLink id="col4_1-text-1" value="#{r.ownerOrgStructUnit}" action="#{DocumentDialog.action}" tooltip="#{r.ownerOrgStructUnit}"
-          actionListener="#{DocumentDialog.open}" styleClass="tooltip condence50- no-underline" >
-            <f:param name="nodeRef" value="#{r.node.nodeRef}" />
-           </a:actionLink>
-      </a:column>      
       
       <%-- All Recipients --%>
       <a:column id="col5" primary="true" styleClass="#{r.cssStyleClass}" >
          <f:facet name="header">
             <a:sortLink id="col5-sort" label="#{msg.document_allRecipients}" value="allRecipients" styleClass="header" />
          </f:facet>
-        	<a:actionLink id="col5-text" value="#{r.allRecipients}" action="#{DocumentDialog.action}" tooltip="#{r.allRecipients}"
-          actionListener="#{DocumentDialog.open}" styleClass="tooltip condence20- no-underline" >
-            <f:param name="nodeRef" value="#{r.node.nodeRef}" />
-           </a:actionLink>
+         <h:outputText id="col5-text-1" value="#{r.allRecipients}" title="#{r.allRecipients}" styleClass="tooltip condence20-" />
       </a:column>
 
       <%-- Title --%>
@@ -86,10 +54,15 @@
             <a:sortLink id="col6-sort" label="#{msg.document_docName}" value="docName" styleClass="header" />
          </f:facet>
          <a:actionLink id="col6-text-1" value="#{r.docName}" action="#{DocumentDialog.action}" tooltip="#{r.docName}"
-            actionListener="#{DocumentDialog.open}" styleClass="tooltip condence20- no-underline" >
+            actionListener="#{DocumentDialog.open}" rendered="#{r.cssStyleClass ne 'case'}" styleClass="tooltip condence20-" >
             <f:param name="nodeRef" value="#{r.node.nodeRef}" />
          </a:actionLink>
          <!-- if row item is not document, but case, create link to documents list of case (row item is subclass of Document, to be shown as listItem in document list) -->
+         <a:actionLink id="col6-link2docList-1" value="#{r.docName}" action="dialog:documentListDialog" tooltip="#{r.docName}"
+            actionListener="#{DocumentListDialog.setup}" rendered="#{r.cssStyleClass == 'case' && !r.maaisCase}" styleClass="condence20-" >
+            <f:param name="caseNodeRef" value="#{r.node.nodeRef}" />
+         </a:actionLink>
+         <h:outputText id="col6-text-2" value="#{r.docName}" title="#{r.docName}" styleClass="tooltip condence20-" rendered="#{r.maaisCase}" />
       </a:column>
 
       <%-- DueDate --%>
@@ -97,10 +70,9 @@
          <f:facet name="header">
             <a:sortLink id="col7-sort" label="#{msg.document_dueDate}" value="dueDate" styleClass="header" />
          </f:facet>
-         <a:actionLink id="col7-text" value="#{r.dueDateStr}" action="#{DocumentDialog.action}" tooltip="#{r.dueDateStr}"
-            actionListener="#{DocumentDialog.open}" styleClass="no-underline" >
-            <f:param name="nodeRef" value="#{r.node.nodeRef}" />
-         </a:actionLink>
+         <h:outputText id="col7-text" value="#{r.dueDate}" >
+            <a:convertXMLDate pattern="#{msg.date_pattern}" />
+         </h:outputText>
       </a:column>
 
       <%-- Complience Date --%>
@@ -108,10 +80,9 @@
          <f:facet name="header">
             <a:sortLink id="col9-sort" label="#{msg.document_complienceDate}" value="complienceDate" styleClass="header" />
          </f:facet>
-         <a:actionLink id="col9-text" value="#{r.complienceDateStr}" action="#{DocumentDialog.action}" tooltip="#{r.complienceDateStr}"
-            actionListener="#{DocumentDialog.open}" styleClass="no-underline" >
-            <f:param name="nodeRef" value="#{r.node.nodeRef}" />
-         </a:actionLink>
+         <h:outputText id="col9-text" value="#{r.complienceDate}" >
+            <a:convertXMLDate pattern="#{msg.date_pattern}" />
+         </h:outputText>
       </a:column>
 
       <%-- Files --%>
@@ -122,5 +93,45 @@
           <f:facet name="csvExport">
               <a:param value="false"/>
           </f:facet>
-          <wm:customChildrenContainer childGenerator="#{DocumentListDialog.documentRowFileGenerator}" parameterList="#{r.files}"/>
+
+         <wm:docPermissionEvaluator value="#{r.files[0].node}" allow="viewDocumentFiles">
+            <a:actionLink id="col10-act1" value="#{r.files[0].name}" href="#{r.files[0].downloadUrl}" target="_blank" showLink="false"
+               image="/images/icons/#{r.files[0].digiDocContainer ? 'ddoc_sign_small.gif' : 'attachment.gif'}" styleClass="inlineAction webdav-readOnly" />
+         </wm:docPermissionEvaluator>
+         <wm:docPermissionEvaluator value="#{r.files[0].node}" deny="viewDocumentFiles">
+            <h:graphicImage value="/images/icons/#{r.files[0].digiDocContainer ? 'ddoc_sign_small.gif' : 'attachment.gif'}" alt="#{r.files[0].name}"
+               title="#{r.files[0].name}" rendered="#{r.files[0] != null}" />
+         </wm:docPermissionEvaluator>
+         <wm:docPermissionEvaluator value="#{r.files[1].node}" allow="viewDocumentFiles">
+            <a:actionLink id="col10-act2" value="#{r.files[1].name}" href="#{r.files[1].downloadUrl}" target="_blank" showLink="false"
+               image="/images/icons/#{r.files[1].digiDocContainer ? 'ddoc_sign_small.gif' : 'attachment.gif'}" styleClass="inlineAction webdav-readOnly" />
+         </wm:docPermissionEvaluator>
+         <wm:docPermissionEvaluator value="#{r.files[1].node}" deny="viewDocumentFiles">
+            <h:graphicImage value="/images/icons/#{r.files[1].digiDocContainer ? 'ddoc_sign_small.gif' : 'attachment.gif'}" alt="#{r.files[1].name}"
+               title="#{r.files[1].name}" rendered="#{r.files[1] != null}" />
+         </wm:docPermissionEvaluator>
+         <wm:docPermissionEvaluator value="#{r.files[2].node}" allow="viewDocumentFiles">
+            <a:actionLink id="col10-act3" value="#{r.files[2].name}" href="#{r.files[2].downloadUrl}" target="_blank" showLink="false"
+               image="/images/icons/#{r.files[2].digiDocContainer ? 'ddoc_sign_small.gif' : 'attachment.gif'}" styleClass="inlineAction webdav-readOnly" />
+         </wm:docPermissionEvaluator>
+         <wm:docPermissionEvaluator value="#{r.files[2].node}" deny="viewDocumentFiles">
+            <h:graphicImage value="/images/icons/#{r.files[2].digiDocContainer ? 'ddoc_sign_small.gif' : 'attachment.gif'}" alt="#{r.files[2].name}"
+               title="#{r.files[2].name}" rendered="#{r.files[2] != null}" />
+         </wm:docPermissionEvaluator>
+         <wm:docPermissionEvaluator value="#{r.files[3].node}" allow="viewDocumentFiles">
+            <a:actionLink id="col10-act4" value="#{r.files[3].name}" href="#{r.files[3].downloadUrl}" target="_blank" showLink="false"
+               image="/images/icons/#{r.files[3].digiDocContainer ? 'ddoc_sign_small.gif' : 'attachment.gif'}" styleClass="inlineAction webdav-readOnly" />
+         </wm:docPermissionEvaluator>
+         <wm:docPermissionEvaluator value="#{r.files[3].node}" deny="viewDocumentFiles">
+            <h:graphicImage value="/images/icons/#{r.files[3].digiDocContainer ? 'ddoc_sign_small.gif' : 'attachment.gif'}" alt="#{r.files[3].name}"
+               title="#{r.files[3].name}" rendered="#{r.files[3] != null}" />
+         </wm:docPermissionEvaluator>
+         <wm:docPermissionEvaluator value="#{r.files[4].node}" allow="viewDocumentFiles">
+            <a:actionLink id="col10-act5" value="#{r.files[4].name}" href="#{r.files[4].downloadUrl}" target="_blank" showLink="false"
+               image="/images/icons/#{r.files[4].digiDocContainer ? 'ddoc_sign_small.gif' : 'attachment.gif'}" styleClass="inlineAction webdav-readOnly" />
+         </wm:docPermissionEvaluator>
+         <wm:docPermissionEvaluator value="#{r.files[4].node}" deny="viewDocumentFiles">
+            <h:graphicImage value="/images/icons/#{r.files[4].digiDocContainer ? 'ddoc_sign_small.gif' : 'attachment.gif'}" alt="#{r.files[4].name}"
+               title="#{r.files[4].name}" rendered="#{r.files[4] != null}" />
+         </wm:docPermissionEvaluator>
       </a:column>

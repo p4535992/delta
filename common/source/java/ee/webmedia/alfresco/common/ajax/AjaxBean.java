@@ -2,15 +2,12 @@ package ee.webmedia.alfresco.common.ajax;
 
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.Collections;
 import java.util.Map;
-import java.util.Set;
 
 import javax.faces.application.Application;
 import javax.faces.application.StateManager;
 import javax.faces.application.ViewHandler;
 import javax.faces.component.UIComponent;
-import javax.faces.component.UIForm;
 import javax.faces.component.UIInput;
 import javax.faces.component.UIViewRoot;
 import javax.faces.context.FacesContext;
@@ -19,20 +16,13 @@ import javax.faces.el.ValueBinding;
 import javax.faces.event.PhaseId;
 
 import org.alfresco.repo.content.MimetypeMap;
-import org.alfresco.repo.webdav.WebDAVHelper;
-import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.app.servlet.ajax.InvokeCommand.ResponseMimetype;
 import org.alfresco.web.ui.common.Utils;
-import org.apache.myfaces.shared_impl.renderkit.html.HtmlFormRendererBase;
 import org.apache.myfaces.shared_impl.util.RestoreStateUtils;
 import org.apache.myfaces.shared_impl.util.StateUtils;
 import org.springframework.util.Assert;
 
-import ee.webmedia.alfresco.common.web.BeanHelper;
-import ee.webmedia.alfresco.document.service.DocLockService;
-import ee.webmedia.alfresco.privilege.service.PrivilegeUtil;
 import ee.webmedia.alfresco.utils.ComponentUtil;
-import flexjson.JSONSerializer;
 
 /**
  * @author Alar Kvell
@@ -48,51 +38,6 @@ public class AjaxBean implements Serializable {
     // AJAX handler methods
 
     @ResponseMimetype(MimetypeMap.MIMETYPE_HTML)
-    public void isFileLocked() throws IOException {
-        // FIXME XXX This method isn't called when opening WebDAV file in IE! CL 161673
-        FacesContext context = FacesContext.getCurrentInstance();
-
-        @SuppressWarnings("unchecked")
-        Map<String, String> params = context.getExternalContext().getRequestParameterMap();
-        String path = params.get("path");
-        Assert.hasLength(path, "path was not found in request");
-
-        String[] parts = path.split(WebDAVHelper.PathSeperator);
-        String id = parts[parts.length - 2];
-        String filename = parts[parts.length - 1];
-        NodeRef docRef = BeanHelper.getGeneralService().getExistingNodeRefAllStores(id);
-        ResponseWriter out = context.getResponseWriter();
-        if (docRef == null) {
-            out.write("DOCUMENT_DELETED");
-            return;
-        }
-        NodeRef fileRef = BeanHelper.getFileFolderService().searchSimple(docRef, filename);
-        if (fileRef == null) {
-            out.write("FILE_DELETED");
-            return;
-        }
-
-        // If user cannot edit the document, then output nothing
-        if (Boolean.FALSE.equals(PrivilegeUtil.additionalDocumentFileWritePermission(docRef, BeanHelper.getNodeService()))) {
-            return;
-        }
-
-        String lockOwner = null;
-        DocLockService docLockService = BeanHelper.getDocLockService();
-        boolean generated = BeanHelper.getFileService().isFileGenerated(fileRef);
-        lockOwner = docLockService.getLockOwnerIfLocked(generated ? docRef : fileRef);
-
-        if (lockOwner != null) {
-            out.write(BeanHelper.getUserService().getUserFullName(lockOwner));
-            return;
-        }
-        if (generated) {
-            docLockService.setLockIfFree(docRef); // Lock the document. File is locked by WebDAV client
-        }
-        out.write("NOT_LOCKED");
-    }
-
-    @ResponseMimetype(MimetypeMap.MIMETYPE_HTML)
     public void submit() throws IOException {
         FacesContext context = FacesContext.getCurrentInstance();
 
@@ -106,9 +51,8 @@ public class AjaxBean implements Serializable {
         // Phase 1: Restore view
         UIViewRoot viewRoot = restoreViewRoot(context, viewName);
 
-        UIComponent component = ComponentUtil.findChildComponentById(context, viewRoot, componentClientId, true);
+        UIComponent component = ComponentUtil.findChildComponentById(context, viewRoot, componentClientId);
         Assert.notNull(component, String.format("Component with clientId=%s was not found", componentClientId));
-        UIForm form = Utils.getParentForm(context, component);
 
         // The following is copied from RestoreStateUtils#recursivelyHandleComponentReferencesAndSetValid
         ValueBinding binding = component.getValueBinding("binding");
@@ -186,15 +130,6 @@ public class AjaxBean implements Serializable {
         String viewState = saveView(context, viewRoot);
         ResponseWriter out = context.getResponseWriter();
         out.write("VIEWSTATE:" + viewState);
-
-        @SuppressWarnings("unchecked")
-        Set<String> formHiddenInputs = (Set<String>) context.getExternalContext().getRequestMap().get(
-                HtmlFormRendererBase.getHiddenCommandInputsSetName(context, form));
-        if (formHiddenInputs == null) {
-            formHiddenInputs = Collections.<String> emptySet();
-        }
-        String jsonHiddenInputNames = new JSONSerializer().serialize(formHiddenInputs);
-        out.write("HIDDEN_INPUT_NAMES_JSON:" + jsonHiddenInputNames);
     }
 
     protected String getParam(FacesContext context, String paramKey) {
@@ -206,7 +141,6 @@ public class AjaxBean implements Serializable {
     protected String getParam(Map<String, String> params, String paramKey) {
         String param = params.get(paramKey);
         Assert.hasLength(param, paramKey + " was not found in request");
-        Assert.isTrue(!"undefined".equals(param), paramKey + " was found in request, but with undefined value");
         return param;
     }
 

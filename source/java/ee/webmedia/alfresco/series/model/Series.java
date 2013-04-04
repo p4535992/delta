@@ -1,10 +1,10 @@
 package ee.webmedia.alfresco.series.model;
 
 import java.io.Serializable;
-import java.util.Date;
 import java.util.List;
 
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
 
 import ee.webmedia.alfresco.app.AppConstants;
@@ -25,12 +25,8 @@ public class Series implements Serializable, Comparable<Series> {
     private String description;
     private String status;
     private Integer retentionPeriod; // can be empty
-    private List<String> docType;
+    private List<QName> docType;
     private int containingDocsCount;
-    private boolean newNumberForEveryDoc;
-    private boolean individualizingNumbers;
-    private String docNumberPattern;
-    private int register;
 
     @AlfrescoModelProperty(isMappable = false)
     private Node node;
@@ -42,10 +38,6 @@ public class Series implements Serializable, Comparable<Series> {
     public void setType(String type) {
         node.getProperties().put(SeriesModel.Props.TYPE.toString(), type);
         this.type = type;
-    }
-
-    public void setValidFromDate(Date validFrom) {
-        node.getProperties().put(SeriesModel.Props.VALID_FROM_DATE.toString(), validFrom);
     }
 
     public String getSeriesIdentifier() {
@@ -114,11 +106,11 @@ public class Series implements Serializable, Comparable<Series> {
         this.retentionPeriod = retentionPeriod;
     }
 
-    public List<String> getDocType() {
+    public List<QName> getDocType() {
         return docType;
     }
 
-    public void setDocType(List<String> docType) {
+    public void setDocType(List<QName> docType) {
         node.getProperties().put(SeriesModel.Props.DOC_TYPE.toString(), docType);
         this.docType = docType;
     }
@@ -137,38 +129,6 @@ public class Series implements Serializable, Comparable<Series> {
 
     public void setNode(Node node) {
         this.node = node;
-    }
-
-    public boolean isNewNumberForEveryDoc() {
-        return newNumberForEveryDoc;
-    }
-
-    public void setNewNumberForEveryDoc(boolean newNumberForEveryDoc) {
-        this.newNumberForEveryDoc = newNumberForEveryDoc;
-    }
-
-    public boolean isIndividualizingNumbers() {
-        return individualizingNumbers;
-    }
-
-    public void setIndividualizingNumbers(boolean individualizingNumbers) {
-        this.individualizingNumbers = individualizingNumbers;
-    }
-
-    public String getDocNumberPattern() {
-        return docNumberPattern;
-    }
-
-    public void setDocNumberPattern(String docNumberPattern) {
-        this.docNumberPattern = docNumberPattern;
-    }
-
-    public int getRegister() {
-        return register;
-    }
-
-    public void setRegister(int register) {
-        this.register = register;
     }
 
     @Override

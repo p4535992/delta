@@ -20,9 +20,7 @@ import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet.ClientValidation;
 import org.apache.commons.lang.StringUtils;
 
-import ee.webmedia.alfresco.common.propertysheet.generator.GeneralSelectorGenerator;
 import ee.webmedia.alfresco.common.web.BeanHelper;
-import ee.webmedia.alfresco.docconfig.generator.fieldtype.DateGenerator;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 
 /**
@@ -34,10 +32,9 @@ import ee.webmedia.alfresco.utils.ComponentUtil;
 public class DatePickerGenerator extends BaseComponentGenerator {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(DatePickerGenerator.class);
     /** predefined property names, that should be considered as beginDates despite how they are named */
-    private List<String> addBeginDateClassByPropName = new ArrayList<String>();
+    private List<String> addBeginDateClassByPropName;
     /** predefined property names, that should be considered as endDates despite how they are named */
-    private List<String> addEndDateClassByPropName = new ArrayList<String>();
-    public static final String DATE_FIELD_LABEL = "dateFieldLabel";
+    private List<String> addEndDateClassByPropName;
 
     @Override
     public UIComponent generate(FacesContext context, String id) {
@@ -68,9 +65,6 @@ public class DatePickerGenerator extends BaseComponentGenerator {
 
     private String getAdditionalStyleClass(PropertyDefinition propertyDef) {
         String propName = propertyDef.getName().getLocalName();
-        if (propName.endsWith(DateGenerator.END_PREFIX)) {
-            return "endDate";
-        }
         boolean isBegin = isBeginDate(propName);
         boolean isEnd = isEndDate(propName);
         if (!isBegin && !isEnd) {
@@ -144,53 +138,35 @@ public class DatePickerGenerator extends BaseComponentGenerator {
     }
 
     protected void setupValidDateConstraint(FacesContext context, UIPropertySheet propertySheet, PropertySheetItem property, UIComponent component) {
-        if (isCreateOutputText(context)) {
+        if (isCreateOutputText()) {
             return;
         }
-        addClientValidation(context, propertySheet, property, component, component.getClientId(context), "validateDate");
-    }
-
-    protected void addClientValidation(FacesContext context, UIPropertySheet propertySheet, PropertySheetItem property, UIComponent component, String elementClientId,
-            String jsFuntctionName) {
-        String value = "document.getElementById('" + elementClientId + "')";
         List<String> params = new ArrayList<String>(2);
+
+        // add the value parameter
+        String value = "document.getElementById('" +
+                component.getClientId(context) + "')";
         params.add(value);
 
         // add the validation failed messages
         String matchMsg = Application.getMessage(context, "validation_date_failed");
-        addStringConstraintParam(params, MessageFormat.format(matchMsg, getDateFieldTitle(property)));
+        addStringConstraintParam(params,
+                MessageFormat.format(matchMsg, new Object[] { property.getResolvedDisplayLabel() }));
 
         // add the validation case to the property sheet
-        propertySheet.addClientValidation(new ClientValidation(jsFuntctionName, params, true));
+        propertySheet.addClientValidation(new ClientValidation("validateDate",
+                params, true));
 
         // add event handler to kick off real time checks
         @SuppressWarnings("unchecked")
         Map<String, Object> attributes = component.getAttributes();
-        String onchange = StringUtils.trimToEmpty((String) attributes.get("onchange"));
-        onchange += "processButtonState();";
-        attributes.put("onchange", onchange);
-    }
-
-    protected String getDateFieldTitle(PropertySheetItem property) {
-        if (property != null) {
-            return property.getResolvedDisplayLabel();
-        }
-        return getCustomAttributes().get(DATE_FIELD_LABEL);
+        attributes.put("onchange", "processButtonState();");
     }
 
     @Override
     protected void setupMandatoryValidation(FacesContext context, UIPropertySheet propertySheet, PropertySheetItem item, UIComponent component,
             boolean realTimeChecking, String idSuffix) {
         super.setupMandatoryValidation(context, propertySheet, item, component, true, idSuffix);
-    }
-
-    @Override
-    protected void setupMandatoryPropertyIfNecessary(FacesContext context, UIPropertySheet propertySheet, PropertySheetItem property, PropertyDefinition propertyDef,
-            UIComponent component) {
-        super.setupMandatoryPropertyIfNecessary(context, propertySheet, property, propertyDef, component);
-
-        // Must do this after component has beed added to tree
-        GeneralSelectorGenerator.setupValueChangeListener(context, component, getCustomAttributes());
     }
 
     public void setAddBeginDateClassByPropName(List<String> addBeginDateClassByPropName) {

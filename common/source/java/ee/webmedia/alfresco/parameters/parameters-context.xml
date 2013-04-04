@@ -46,7 +46,6 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
    <bean id="parametersService" class="ee.webmedia.alfresco.parameters.service.ParametersServiceImpl">
       <property name="generalService" ref="GeneralService" />
       <property name="nodeService" ref="NodeService" />
-      <property name="jobsEnabled" value="${jobs.enabled}" />
    </bean>
 
    <bean id="ParametersService" class="org.springframework.aop.framework.ProxyFactoryBean">

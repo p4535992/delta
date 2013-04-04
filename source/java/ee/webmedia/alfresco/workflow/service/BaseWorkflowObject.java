@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -13,7 +14,6 @@ import org.alfresco.util.EqualsHelper;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.util.Assert;
 
-import ee.webmedia.alfresco.common.model.NodeBaseVO;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.workflow.model.Status;
@@ -22,14 +22,15 @@ import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 /**
  * @author Alar Kvell
  */
-public abstract class BaseWorkflowObject extends NodeBaseVO {
+public abstract class BaseWorkflowObject {
 
+    private final WmNode node;
     private Map<QName, Serializable> originalProperties;
 
     protected BaseWorkflowObject(WmNode node) {
         Assert.notNull(node);
         this.node = node;
-        if (node.isUnsaved()) {
+        if (node.getNodeRef() == null) {
             originalProperties = new HashMap<QName, Serializable>();
         } else {
             originalProperties = getProperties(true);
@@ -39,6 +40,10 @@ public abstract class BaseWorkflowObject extends NodeBaseVO {
     protected <T extends BaseWorkflowObject> T copyImpl(T copy) {
         copy.originalProperties = RepoUtil.copyProperties(originalProperties);
         return copy;
+    }
+
+    public WmNode getNode() {
+        return node;
     }
 
     // wfc:common aspect
@@ -79,21 +84,13 @@ public abstract class BaseWorkflowObject extends NodeBaseVO {
         setProp(WorkflowCommonModel.Props.STOPPED_DATE_TIME, stoppedDateTime);
     }
 
-    public String getOwnerId() {
-        return getProp(WorkflowCommonModel.Props.OWNER_ID);
-    }
-
-    public void setOwnerId(String ownerId) {
-        setProp(WorkflowCommonModel.Props.OWNER_ID, ownerId);
-    }
-
     // -----------------
 
     private Map<QName, Serializable> getProperties(boolean copy) {
         return RepoUtil.toQNameProperties(getNode().getProperties(), copy);
     }
 
-    private Map<QName, Serializable> getNewProperties() {
+    protected Map<QName, Serializable> getNewProperties() {
         return getProperties(false);
     }
 
@@ -136,7 +133,7 @@ public abstract class BaseWorkflowObject extends NodeBaseVO {
 
     public boolean isType(QName... types) {
         for (QName type : types) {
-            if (type.equals(getType())) {
+            if (type.equals(this.getType())) {
                 return true;
             }
         }
@@ -150,6 +147,26 @@ public abstract class BaseWorkflowObject extends NodeBaseVO {
     @Override
     public String toString() {
         return WmNode.toString(this) + " status=" + getStatus() + " [\n  node=" + StringUtils.replace(getNode().toString(), "\n", "\n  ") + additionalToString() + "\n]";
+    }
+
+    public <T extends Serializable> T getProp(QName propName) {
+        @SuppressWarnings("unchecked")
+        T value = (T) getNode().getProperties().get(propName);
+        return value;
+    }
+
+    public <T extends List<? extends Serializable>> T getPropList(QName propName) {
+        @SuppressWarnings("unchecked")
+        T value = (T) getNode().getProperties().get(propName);
+        return value;
+    }
+
+    protected void setProp(QName propName, Serializable propValue) {
+        getNode().getProperties().put(propName.toString(), propValue);
+    }
+
+    protected void setPropList(QName propName, List<? extends Serializable> propValue) {
+        getNode().getProperties().put(propName.toString(), propValue);
     }
 
     protected void preSave() {

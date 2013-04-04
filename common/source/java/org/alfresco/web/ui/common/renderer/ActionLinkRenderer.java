@@ -24,8 +24,6 @@
  */
 package org.alfresco.web.ui.common.renderer;
 
-import static org.alfresco.web.ui.common.Utils.getActionHiddenFieldName;
-
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
@@ -36,14 +34,10 @@ import javax.faces.component.UIComponent;
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
-import org.alfresco.util.Pair;
 import org.alfresco.web.ui.common.Utils;
 import org.alfresco.web.ui.common.component.UIActionLink;
 import org.alfresco.web.ui.common.component.UIMenu;
 import org.alfresco.web.ui.repo.component.UIActions;
-import org.apache.commons.lang.StringUtils;
-
-import ee.webmedia.alfresco.utils.ComponentUtil;
 
 /**
  * @author kevinr
@@ -53,24 +47,20 @@ public class ActionLinkRenderer extends BaseRenderer
    // ------------------------------------------------------------------------------
    // Renderer implementation 
    
-    public static final String AJAX_ENABLED = "ajaxEnabled";
-    public static final String AJAX_PARENT_LEVEL = "ajaxParentLevel";
-
    /**
     * @see javax.faces.render.Renderer#decode(javax.faces.context.FacesContext, javax.faces.component.UIComponent)
     */
    public void decode(FacesContext context, UIComponent component)
    {
       Map requestMap = context.getExternalContext().getRequestParameterMap();
-      UIActionLink link = (UIActionLink) component;
-      String fieldId = getActionHiddenFieldName(context, component);
-
+      String fieldId = Utils.getActionHiddenFieldName(context, component);
       String value = (String)requestMap.get(fieldId);
       // we are clicked if the hidden field contained our client id
       if (value != null && value.equals(component.getClientId(context)))
       {
          // get all the params for this actionlink, see if any values have been set
          // on the request which match our params and set them into the component
+         UIActionLink link = (UIActionLink)component;
          Map<String, String> destParams = link.getParameterMap();
          Map<String, String> actionParams = getParameterComponents(link);
          if (actionParams != null)
@@ -87,15 +77,6 @@ public class ActionLinkRenderer extends BaseRenderer
       }
    }
    
-    private boolean isAjaxEnabled(UIComponent component) {
-        return Boolean.TRUE.equals(component.getAttributes().get(AJAX_ENABLED));
-    }
-
-    private int getAjaxParentLevel(UIComponent component) {
-        Integer ajaxParentLevel = (Integer) component.getAttributes().get(AJAX_PARENT_LEVEL);
-        return ajaxParentLevel == null ? 0 : Math.max(ajaxParentLevel, 0);
-    }
-
    /**
     * @see javax.faces.render.Renderer#encodeEnd(javax.faces.context.FacesContext, javax.faces.component.UIComponent)
     */
@@ -202,21 +183,13 @@ public class ActionLinkRenderer extends BaseRenderer
          }
          else
          {
-                String generateFormSubmit;
-                if (isAjaxEnabled(link)) {
-                    generateFormSubmit = ComponentUtil.generateAjaxFormSubmit(context, link, getActionHiddenFieldName(context, link), link.getClientId(context), getParameterComponents(link),
-                            getAjaxParentLevel(link));
-                } else {
-                    // generate JavaScript to set a hidden form field and submit
-                    // a form which request attributes that we can decode
-                            generateFormSubmit = Utils.generateFormSubmit(context,
-                                                       link, 
-                                                       Utils.getActionHiddenFieldName(context, link), 
-                                                       link.getClientId(context), 
-                                                       getParameterComponents(link));
-                    generateFormSubmit = escapeQuotes(generateFormSubmit);
-                }
-            out.write(generateFormSubmit);
+            // generate JavaScript to set a hidden form field and submit
+            // a form which request attributes that we can decode
+            out.write(Utils.generateFormSubmit(context, 
+                                               link, 
+                                               Utils.getActionHiddenFieldName(context, link), 
+                                               link.getClientId(context), 
+                                               getParameterComponents(link)));
          }
          
          out.write('"');
@@ -397,14 +370,9 @@ public class ActionLinkRenderer extends BaseRenderer
          }
          else
          {
-                String onclickStr;
-                if (isAjaxEnabled(link)) {
-                    onclickStr = ComponentUtil.generateAjaxFormSubmit(context, link, getActionHiddenFieldName(context, link), link.getClientId(context), getParameterComponents(link),
-                            getAjaxParentLevel(link));
-                } else {                
             // generate JavaScript to set a hidden form field and submit
             // a form which request attributes that we can decode
-                    onclickStr = Utils.generateFormSubmit(context,
+            String onclickStr = Utils.generateFormSubmit(context, 
                     link, 
                     Utils.getActionHiddenFieldName(context, link), 
                     link.getClientId(context), 
@@ -414,8 +382,6 @@ public class ActionLinkRenderer extends BaseRenderer
                onclickStr = "nextSubmitStaysOnSamePage();" + onclickStr;
             }
             
-            onclickStr = escapeQuotes(onclickStr);
-                }
             out.write(onclickStr);
          }
          
@@ -490,9 +456,4 @@ public class ActionLinkRenderer extends BaseRenderer
       }
       return parent;
    }
-
-    private String escapeQuotes(String str) {
-        return StringUtils.replace(str, "\"", "&quot;");
-    }
-
 }

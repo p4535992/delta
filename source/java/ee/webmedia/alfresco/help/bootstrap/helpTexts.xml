@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<view:view xmlns:view="http://www.alfresco.org/view/repository/1.0" xmlns:cm="http://www.alfresco.org/model/content/1.0" xmlns:hlt="http://alfresco.webmedia.ee/model/helpText/1.0">
-
-   <cm:folder view:childName="hlt:helpTexts">
-   </cm:folder>
-
-</view:view>

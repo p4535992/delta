@@ -2,18 +2,17 @@ package ee.webmedia.alfresco.document.model;
 
 import org.alfresco.service.namespace.QName;
 
-@Deprecated
 public interface DocumentSubtypeModel {
     String URI = "http://alfresco.webmedia.ee/model/document/subtype/1.0";
     String PREFIX = "docsub:";
     QName MODEL_NAME = QName.createQName(URI, "documentSubtypeModel");
 
-    // TODO DLSeadist remove these and rewrite all places to use SystematicDocumentType enum
     public interface Types {
         QName INCOMING_LETTER = QName.createQName(URI, "incomingLetter");
         QName INCOMING_LETTER_MV = QName.createQName(URI, "incomingLetterMv");
         QName OUTGOING_LETTER = QName.createQName(URI, "outgoingLetter");
         QName OUTGOING_LETTER_MV = QName.createQName(URI, "outgoingLetterMv");
+        QName OUTGOING_LETTER_MAAIS = QName.createQName(URI, "outgoingLetterMaais");
         QName ERRAND_ORDER_ABROAD = QName.createQName(URI, "errandOrderAbroad");
         QName ERRAND_ORDER_ABROAD_MV = QName.createQName(URI, "errandOrderAbroadMv");
         QName ERRAND_APPLICATION_DOMESTIC = QName.createQName(URI, "errandApplicationDomestic");
@@ -37,6 +36,7 @@ public interface DocumentSubtypeModel {
         QName CONTRACT_SIM = QName.createQName(URI, "contractSim");
         QName CONTRACT_SMIT = QName.createQName(URI, "contractSmit");
         QName CONTRACT_MV = QName.createQName(URI, "contractMv");
+        QName CONTRACT_MAAIS = QName.createQName(URI, "contractMaais");
         QName LICENCE = QName.createQName(URI, "licence");
         QName MANAGEMENTS_ORDER = QName.createQName(URI, "managementsOrder");
         QName VACATION_ORDER = QName.createQName(URI, "vacationOrder");
@@ -50,6 +50,7 @@ public interface DocumentSubtypeModel {
         QName INVOICE = QName.createQName(URI, "invoice");
         QName RESOLUTION_MV = QName.createQName(URI, "resolutionMv");
         QName ORDER_MV = QName.createQName(URI, "orderMv");
+        QName ORDER_MAAIS = QName.createQName(URI, "orderMaais");
         QName OTHER_DOCUMENT_MV = QName.createQName(URI, "otherDocumentMv");
     }
 

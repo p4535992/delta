@@ -152,13 +152,12 @@ th {
 	margin-left: 0;
 }
 
-.propertiesLabel + td .propertiesLabel + td {
-	width: auto;
+.propertiesLabel + td {
+	width: 100%;
 }
 
-/* max-width does not work in IE */
-#container-content .multiE td select {
-	width: 226px;
+.propertiesLabel + td .propertiesLabel + td {
+	width: auto;
 }
 
 hr {

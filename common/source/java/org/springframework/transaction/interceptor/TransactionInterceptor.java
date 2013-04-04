@@ -106,8 +106,18 @@ public class TransactionInterceptor extends TransactionAspectSupport implements 
         final String joinpointIdentification = methodIdentification(invocation.getMethod());
 
         if (txAttr == null || !(getTransactionManager() instanceof CallbackPreferringPlatformTransactionManager)) {
-            // Standard transaction demarcation with getTransaction and commit/rollback calls.
+            // 1) If we have active transaction, let TransactionInterceptor handle transaction commit/rollback (txInfo != null)
+            //    in completeTransactionAfterThrowing, cleanupTransactionInfo, commitTransactionAfterReturning. As transaction is not
+            //    created by current call, only marking rollback is actually executed. TransactionHelper is not used for processing transaction
+            //    because it doesn't mark transaction for rollback in case of runtime exception.
+            // 2) If new transaction is needed (no existing transaction), RetryingTransactionManager creates the transaction to be able to retry method invocation
+            //    and performs needed commit/rollback operations on transaction:
+            //    txInfo == null, calls to completeTransactionAfterThrowing, cleanupTransactionInfo, commitTransactionAfterReturning do nothing;            
             TransactionInfo txInfo = null;
+            if (AlfrescoTransactionSupport.getTransactionReadState() != TxnReadState.TXN_NONE) {
+                // Standard transaction demarcation with getTransaction and commit/rollback calls.
+                txInfo = createTransactionIfNecessary(txAttr, joinpointIdentification);
+            }
             boolean canDelegate = getTransactionManager() instanceof RetryingTransactionManager;
             Object retVal = null;
             try {

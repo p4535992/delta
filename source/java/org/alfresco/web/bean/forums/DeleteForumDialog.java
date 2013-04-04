@@ -53,7 +53,7 @@ public class DeleteForumDialog extends DeleteSpaceDialog {
             this.browseBean.setActionSpace(null);
         }
         
-        return AlfrescoNavigationHandler.getMultipleCloseOutcome(2);
+        return AlfrescoNavigationHandler.CLOSE_DIALOG_OUTCOME + AlfrescoNavigationHandler.OUTCOME_SEPARATOR + AlfrescoNavigationHandler.CLOSE_DIALOG_OUTCOME;
     }
 
     @Override

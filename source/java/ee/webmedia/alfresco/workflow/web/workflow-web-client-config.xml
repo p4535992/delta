@@ -73,82 +73,30 @@
 
       </dialogs>
    </config>
-   
-   <config evaluator="node-type" condition="wfs:orderAssignmentTask">
-      <property-sheet>
-         <show-property name="{temp}category" outputText="true" rendered="#{WorkflowBlockBean.showOrderAssignmentCategory}" display-label-id="task_property_category_orderAssignmentTask"/>
-      </property-sheet>   
-   </config>    
 
-   <config evaluator="node-type" condition="wfs:assignmentTask,wfs:orderAssignmentTask">
-      <property-sheet>
-         <show-property name="{temp}delegationHistory" ignore-if-missing="false" component-generator="DelegationHistoryGenerator" display-label-id="delegation_history" />
-      </property-sheet>
-   </config>
-   
    <config evaluator="node-type" condition="wfs:assignmentTask">
       <property-sheet>
+         <show-property name="{temp}delegationHistory" ignore-if-missing="false" component-generator="DelegationHistoryGenerator" display-label-id="delegation_history" />
          <show-property name="{temp}delegateAsResponsibleAssignmentTask" component-generator="DelegationTaskListGenerator" display-label-id="assignmentWorkflow_tasks" taskType="ASSIGNMENT_RESPONSIBLE" />
          <show-property name="{temp}delegateAsAssignmentTask" component-generator="DelegationTaskListGenerator" ignore-if-missing="false" display-label-id="assignmentWorkflow_tasks_co" taskType="ASSIGNMENT_NOT_RESPONSIBLE" />
-      </property-sheet>
-   </config>
-   
-   <config evaluator="node-type" condition="wfs:orderAssignmentTask">
-      <property-sheet>
-         <show-property name="{temp}delegateAsResponsibleAssignmentTask" component-generator="DelegationTaskListGenerator" display-label-id="orderAssignmentWorkflow_tasks" taskType="ORDER_ASSIGNMENT_RESPONSIBLE" />
-         <show-property name="{temp}delegateAsAssignmentTask" component-generator="DelegationTaskListGenerator" ignore-if-missing="false" display-label-id="orderAssignmentWorkflow_tasks_co" taskType="ORDER_ASSIGNMENT_NOT_RESPONSIBLE" />
-      </property-sheet>
-   </config>  
-         
-   <config evaluator="node-type" condition="wfs:assignmentTask,wfs:orderAssignmentTask">
-      <property-sheet>         
          <show-property name="{temp}delegateAsInformationTask" component-generator="DelegationTaskListGenerator" ignore-if-missing="false" display-label-id="informationWorkflow" taskType="INFORMATION" />
          <show-property name="{temp}delegateAsOpinionTask" component-generator="DelegationTaskListGenerator" display-label-id="opinionWorkflow" taskType="OPINION" />
-      </property-sheet>
-   </config>
-   
-   <config evaluator="node-type" condition="wfs:orderAssignmentTask">
-      <property-sheet>
-         <show-property name="wfs:sendOrderAssignmentCompletedEmail" />
-      </property-sheet>
-   </config>
-   
-   <config evaluator="node-type" condition="wfs:assignmentTask,wfs:orderAssignmentTask">
-      <property-sheet>         
          <show-property name="{temp}delegateButton" ignore-if-missing="false" component-generator="DelegateButtonGenerator" display-label-id="whiteSpace" />
       </property-sheet>
-   </config>            
+   </config>
 
-   <!-- All nodes with aspect wfs:commonTask except wfs:assignmentTask and wfs:orderAssignmentTask(that shows the same information in delegation history) -->
-   <config evaluator="node-type" condition="wfs:signatureTask,wfs:opinionTask,wfs:reviewTask,wfs:externalReviewTask,wfs:informationTask,wfs:confirmationTask,wfs:dueDateExtensionTask">
+   <!-- All nodes with aspect wfs:commonTask except wfs:assignmentTask(that shows the same information in delegation history) -->
+   <config evaluator="node-type" condition="wfs:signatureTask,wfs:opinionTask,wfs:reviewTask,wfs:externalReviewTask,wfs:informationTask">
       <property-sheet>
          <!--
             See Task class, it adds a resolver which returns task's resolution if present or workflow's resolution otherwise 
          -->
          <show-property name="{temp}resolution" outputText="true" display-label-id="task_property_resolution" />
+         <show-property name="wfc:creatorName" outputText="true" />
+         <show-property name="wfs:dueDate" outputText="true" styleClass="date" />
       </property-sheet>
    </config>
-   
-   <!-- Override for  -->
-   <config evaluator="node-type" condition="wfs:dueDateExtensionTask">
-      <property-sheet>            
-         <show-property name="wfc:creatorName" display-label-id="task_property_creator_dueDateExtensionTask" outputText="true" />
-      </property-sheet>
-   </config>   
-   
-   <!-- All nodes with aspect wfs:commonTask except wfs:assignmentTask and wfs:orderAssignmentTask(that shows the same information in delegation history) -->
-   <config evaluator="node-type" condition="wfs:signatureTask,wfs:opinionTask,wfs:reviewTask,wfs:externalReviewTask,wfs:informationTask,wfs:confirmationTask,wfs:dueDateExtensionTask">
-      <property-sheet>
-         <show-property name="{temp}dueDateTimeStr" outputText="true" styleClass="date" display-label-id="task_property_due_date" />
-      </property-sheet>
-   </config>
-   
-   <config evaluator="node-type" condition="wfs:dueDateExtensionTask">
-      <property-sheet>
-         <show-property name="wfs:confirmedDueDate" component-generator="DatePickerGenerator" />
-      </property-sheet>
-   </config>   
-   
+
    <config evaluator="aspect-name" condition="wfs:commonTask">
       <property-sheet>
          <show-property name="wfs:comment" component-generator="TextAreaGenerator" styleClass="expand19-200" />
@@ -156,7 +104,7 @@
    </config>
 
    <!-- Override: comment property label is different for assignmentTask -->
-   <config evaluator="node-type" condition="wfs:assignmentTask,wfs:orderAssignmentTask">
+   <config evaluator="node-type" condition="wfs:assignmentTask">
       <property-sheet>
          <show-property name="wfs:comment" display-label-id="task_property_comment_assignmentTask" component-generator="TextAreaGenerator" styleClass="expand19-200" />
       </property-sheet>
@@ -179,12 +127,6 @@
       <property-sheet>
          <show-property name="wfs:comment" display-label-id="task_property_comment_externalReviewTask" component-generator="TextAreaGenerator" styleClass="expand19-200" />
       </property-sheet>
-   </config>
-   <!-- Override: comment property label is different for confirmationTask -->
-   <config evaluator="node-type" condition="wfs:confirmationTask">
-      <property-sheet>
-         <show-property name="wfs:comment" display-label-id="task_property_comment_confirmationTask" component-generator="TextAreaGenerator" styleClass="expand19-200" />
-      </property-sheet>
    </config>   
    
    <config evaluator="node-type" condition="wfs:reviewTask">
@@ -199,32 +141,28 @@
          <show-property name="wfs:tempOutcome" display-label-id="task_property_outcomes_externalReviewTask" component-generator="GeneralSelectorGenerator"
             selectionItems="#{WorkflowBlockBean.getExternalReviewTaskOutcomes}" converter="javax.faces.Integer" ignore-if-missing="false" />
       </property-sheet>
-   </config>
-   
-   <config evaluator="node-type" condition="wfs:opinionTask">
-      <property-sheet>
-         <show-property name="{temp}files" removedValues="#{WorkflowBlockBean.removedFiles}" display-label-id="task_file_upload" component-generator="UploadFileGenerator" successMsgKey="opinion_file_uploaded" ignore-if-missing="false" />
-      </property-sheet>
-   </config>
-   
-   <config evaluator="node-type" condition="wfs:orderAssignmentTask">
-      <property-sheet>
-         <show-property name="{temp}files" removedValues="#{WorkflowBlockBean.removedFiles}" display-label-id="task_file_upload" component-generator="UploadFileGenerator" successMsgKey="orderAssignment_file_uploaded" ignore-if-missing="false" />
-      </property-sheet>
    </config>   
+   
+   <config evaluator="aspect-name" condition="wfs:file">
+      <property-sheet>
+         <show-property name="wfs:file" component-generator="UploadFileGenerator" />
+      </property-sheet>
+   </config>
+
+
 
    <!-- COMPOUND WORKFLOW CONFIG - BEGIN -->
- 
+
    <config evaluator="node-type" condition="wfc:compoundWorkflow">
       <property-sheet>
-         <show-property name="wfc:ownerName" editable="false" component-generator="UserSearchGenerator" usernameProp="wfc:ownerId" pickerCallback="#{UserListDialog.searchUsers}"
-            setterCallback="#{CompoundWorkflowDialog.setWorkfowOwner}" readOnlyIf="wfc:status=teostamisel" /> 
+         <show-property name="wfc:ownerName" editable="false" component-generator="SearchGenerator" pickerCallback="#{UserListDialog.searchUsers}"
+            setterCallback="#{CompoundWorkflowDialog.setWorkfowOwner}" readOnlyIf="wfc:status!=uus||teostamisel||peatatud||teostamata" /> 
       </property-sheet>
    </config>
 
    <config evaluator="node-type" condition="wfs:reviewWorkflow">
       <property-sheet>
-         <show-property name="wfc:parallelTasks" readOnlyIf="wfc:status=teostamisel||peatatud||lõpetatud" component-generator="GeneralSelectorGenerator"
+         <show-property name="wfc:parallelTasks" readOnlyIf="wfc:status=teostamisel||peatatud||lõpetatud||teostamata" component-generator="GeneralSelectorGenerator"
             selectionItems="#{CompoundWorkflowDialog.getParallelSelections}" converter="ee.webmedia.alfresco.common.propertysheet.converter.BooleanToLabelConverter"
             converterLabelPrefix="reviewWorkflow_parallel" />
       </property-sheet>
@@ -232,30 +170,24 @@
 
    <config evaluator="aspect-name" condition="wfs:commonWorkflow" >
       <property-sheet>
-         <show-property name="wfs:resolution" readOnlyIf="wfc:status=teostamisel||peatatud||lõpetatud" component-generator="TextAreaGenerator" styleClass="expand19-200 short-resolution" />
+         <show-property name="wfs:resolution" readOnlyIf="wfc:status=teostamisel||peatatud||lõpetatud||teostamata" component-generator="TextAreaGenerator" styleClass="expand19-200 short-resolution" />
       </property-sheet>
    </config>
 
-   <config evaluator="node-type" condition="wfs:assignmentWorkflow,wfs:orderAssignmentWorkflow" >
+   <config evaluator="node-type" condition="wfs:assignmentWorkflow" >
       <property-sheet>
          <!-- Override resolution from aspect-name=wfs:commonWorkflow - different readOnlyIf and component-generator -->
-         <show-property name="wfs:resolution" readOnlyIf="wfc:status=lõpetatud" component-generator="TextAreaAlwaysEditGenerator" styleClass="expand19-200 short-resolution" />
+         <show-property name="wfs:resolution" readOnlyIf="wfc:status=lõpetatud||teostamata" component-generator="TextAreaAlwaysEditGenerator" styleClass="expand19-200 short-resolution" />
       </property-sheet>
    </config>
 
-   <config evaluator="node-type" condition="wfs:reviewWorkflow,wfs:externalReviewWorkflow,wfs:confirmationWorkflow" >
+   <config evaluator="node-type" condition="wfs:reviewWorkflow,wfs:externalReviewWorkflow" >
       <property-sheet>
          <!-- Override resolution from aspect-name=wfs:commonWorkflow: resolution display="inline" so that following property(stopOnFinish) is shown on the same line for reviewWorkflow  -->
-         <show-property name="wfs:resolution" readOnlyIf="wfc:status=teostamisel||peatatud||lõpetatud" component-generator="TextAreaGenerator" styleClass="expand19-200 short-resolution" display="inline" />
+         <show-property name="wfs:resolution" readOnlyIf="wfc:status=teostamisel||peatatud||lõpetatud||teostamata" component-generator="TextAreaGenerator" styleClass="expand19-200 short-resolution" display="inline" />
          <show-property name="wfc:stopOnFinish" readOnlyIf="wfc:status=lõpetatud" />
       </property-sheet>
    </config>
-   
-   <config evaluator="node-type" condition="wfs:orderAssignmentWorkflow">
-      <property-sheet>
-         <show-property name="wfs:category" readOnlyIf="wfc:status=teostamisel||peatatud||lõpetatud" component-generator="ClassificatorSelectorGenerator" classificatorName="orderAssignmentTaskCategory" rendered="#{WorkflowBlockBean.showOrderAssignmentCategory}" />
-      </property-sheet>
-   </config>    
 
    <config evaluator="node-type" condition="wfs:signatureWorkflow">
       <property-sheet>
@@ -293,31 +225,8 @@
          <show-property name="{temp}workflowTasksCo" component-generator="TaskListGenerator" ignore-if-missing="false" display-label-id="assignmentWorkflow_tasks_co" />
       </property-sheet>
    </config>
-   
-   <config evaluator="node-type" condition="wfs:orderAssignmentWorkflow">
-      <property-sheet>
-         <show-property name="{temp}workflowTasks" component-generator="TaskListGenerator" ignore-if-missing="false" display-label-id="orderAssignmentWorkflow_tasks" responsible="true" />
-         <show-property name="{temp}workflowTasksCo" component-generator="TaskListGenerator" ignore-if-missing="false" display-label-id="orderAssignmentWorkflow_tasks_co" />
-      </property-sheet>
-   </config>  
-   
-   <config evaluator="node-type" condition="wfs:confirmationWorkflow">
-      <property-sheet>
-         <show-property name="{temp}workflowTasks" component-generator="TaskListGenerator" ignore-if-missing="false" forcedMandatory="true" display-label-id="confirmationWorkflow_tasks" />
-      </property-sheet>
-   </config>
 
-   <config evaluator="node-type" condition="wfs:dueDateExtensionWorkflow">
-      <property-sheet>
-         <show-property name="{temp}workflowTasks" component-generator="TaskListGenerator" ignore-if-missing="false" forcedMandatory="true" display-label-id="dueDateExtensionWorkflow_tasks" />
-      </property-sheet>
-   </config>
-   
-   <config evaluator="node-type" condition="wfs:signatureWorkflow,wfs:opinionWorkflow,wfs:reviewWorkflow,wfs:informationWorkflow,wfs:assignmentWorkflow,wfs:orderAssignmentWorkflow,wfs:confirmationWorkflow,wfs:docRegistrationWorkflow">
-      <property-sheet>
-         <show-property name="wfc:mandatory" component-generator="CheckboxGenerator" show="#{DialogManager.bean == 'CompoundWorkflowDefinitionDialog'}"/>
-      </property-sheet>
-   </config>
+
    <!-- COMPOUND WORKFLOW CONFIG - END -->
 
 

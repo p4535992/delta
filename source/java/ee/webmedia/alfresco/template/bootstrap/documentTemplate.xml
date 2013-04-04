@@ -9,6 +9,7 @@
       <view:aspects>
          <app:uifacets />
          <sys:aspect_root />
+         <docTempl:template />
       </view:aspects>
       <view:properties>
          <app:icon>space-icon-default</app:icon>

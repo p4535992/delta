@@ -1,6 +1,5 @@
 package ee.webmedia.alfresco.common.propertysheet.generator;
 
-import static ee.webmedia.alfresco.utils.ComponentUtil.DEFAULT_SELECT_VALUE;
 import static org.alfresco.web.bean.generator.BaseComponentGenerator.CustomAttributeNames.STYLE_CLASS;
 import static org.alfresco.web.bean.generator.BaseComponentGenerator.CustomConstants.VALUE_INDEX_IN_MULTIVALUED_PROPERTY;
 
@@ -29,7 +28,6 @@ import org.apache.commons.lang.StringUtils;
 import ee.webmedia.alfresco.common.ajax.AjaxUpdateable;
 import ee.webmedia.alfresco.common.propertysheet.converter.BooleanToLabelConverter;
 import ee.webmedia.alfresco.utils.ComponentUtil;
-import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
  * Component that generates a HtmlSelectOneMenu component that will receive values from method binding defined with "selectionItems" attribute.<br>
@@ -41,11 +39,10 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 public class GeneralSelectorGenerator extends BaseComponentGenerator {
 
     public static final String ATTR_SELECTION_ITEMS = "selectionItems";
-    public static final String ATTR_VALUE_CHANGE_LISTENER = "valueChangeListener";
     // The following variables' values are also hardcoded in scripts.js, so change the values simultaneously here and in javascript
     public static final String ONCHANGE_SCRIPT_START_MARKER = "¤¤¤¤";
     public static final String ONCHANGE_MARKER_CLASS = "selectWithOnchangeEvent";
-    // call javascript function that takes current element id as parameter
+    //call javascript function that takes current element id as parameter 
     public static final String ONCHANGE_PARAM_MARKER_CLASS = "selectWithOnchangeEventParam";
 
     @Override
@@ -106,7 +103,7 @@ public class GeneralSelectorGenerator extends BaseComponentGenerator {
 
         if (component instanceof UIInput) {
             ValueBinding vb = component.getValueBinding("value");
-            List<UIComponent> results = initializeSelectionItems(context, propertySheet, item, propertyDef, (UIInput) component,
+            List<UISelectItem> results = initializeSelectionItems(context, propertySheet, item, propertyDef, (UIInput) component,
                     vb != null ? vb.getValue(context) : null, multiValued);
             if (results != null) {
                 List<UIComponent> children = component.getChildren();
@@ -124,6 +121,7 @@ public class GeneralSelectorGenerator extends BaseComponentGenerator {
         setupSelectComponent(context, propertySheet, item, propertyDef, component, propertyDef == null ? false : propertyDef.isMultiValued());
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     protected void setupMandatoryPropertyIfNecessary(FacesContext context, UIPropertySheet propertySheet, PropertySheetItem property,
             PropertyDefinition propertyDef, UIComponent component) {
@@ -131,21 +129,19 @@ public class GeneralSelectorGenerator extends BaseComponentGenerator {
         super.setupMandatoryPropertyIfNecessary(context, propertySheet, property, propertyDef, component);
 
         // Must do this after component has beed added to tree
-        setupValueChangeListener(context, component, getCustomAttributes());
+        setupValueChangeListener(context, component);
     }
 
     /**
      * Must do this after component has beed added to tree
-     * 
-     * @param customAttributes ...of the component generator
      */
-    public static void setupValueChangeListener(FacesContext context, UIComponent component, Map<String, String> customAttributes) {
-        String valueChangeListener = customAttributes.get(ATTR_VALUE_CHANGE_LISTENER);
+    public void setupValueChangeListener(FacesContext context, UIComponent component) {
+        String valueChangeListener = getCustomAttributes().get("valueChangeListener");
         if (StringUtils.isNotBlank(valueChangeListener) && component instanceof UIInput) {
             ((UIInput) component).setValueChangeListener(context.getApplication().createMethodBinding(valueChangeListener,
                     new Class[] { ValueChangeEvent.class }));
             final String onchange;
-            if (Boolean.valueOf(customAttributes.get(AjaxUpdateable.AJAX_DISABLED_ATTR))) {
+            if (Boolean.valueOf(getCustomAttributes().get(AjaxUpdateable.AJAX_DISABLED_ATTR))) {
                 onchange = Utils.generateFormSubmit(context, component);
             } else {
                 onchange = ComponentUtil.generateAjaxFormSubmit(context, component);
@@ -155,13 +151,11 @@ public class GeneralSelectorGenerator extends BaseComponentGenerator {
             } else if (component instanceof HtmlSelectManyListbox) {
                 // TODO: check if this class behaves correctly in IE8 with onChange and jQuery change event both active
                 ((HtmlSelectManyListbox) component).setOnchange(onchange);
-            } else {
-                ComponentUtil.putAttribute(component, "onchange", onchange);
             }
         }
     }
 
-    protected List<UIComponent> initializeSelectionItems(FacesContext context, UIPropertySheet propertySheet,
+    protected List<UISelectItem> initializeSelectionItems(FacesContext context, UIPropertySheet propertySheet,
             PropertySheetItem item, PropertyDefinition propertyDef, UIInput component, Object boundValue, boolean multiValued) {
 
         String selectionItems = getSelectionItems();
@@ -183,8 +177,9 @@ public class GeneralSelectorGenerator extends BaseComponentGenerator {
         super.setupMandatoryValidation(context, propertySheet, item, component, true, idSuffix);
 
         // currently valuechangelistener and mandatory validation are not used together in any property sheet
-        if (StringUtils.isBlank(getCustomAttributes().get(ATTR_VALUE_CHANGE_LISTENER))) {
+        if (StringUtils.isBlank(getCustomAttributes().get("valueChangeListener"))) {
             // add event handler to kick off real time checks
+            @SuppressWarnings("unchecked")
             Map<String, Object> attributes = component.getAttributes();
             attributes.put("onchange", "processButtonState();");
         }
@@ -196,19 +191,6 @@ public class GeneralSelectorGenerator extends BaseComponentGenerator {
 
     protected String getStyleClass() {
         return getCustomAttributes().get(STYLE_CLASS);
-    }
-
-    /**
-     * Similar method for {@link SelectItem} objects is {@link ComponentUtil#addDefault(List, FacesContext)}
-     * 
-     * @param context
-     * @param results
-     */
-    public static void addDefault(FacesContext context, List<UIComponent> results) {
-        UISelectItem selectItem = (UISelectItem) context.getApplication().createComponent(UISelectItem.COMPONENT_TYPE);
-        selectItem.setItemLabel(MessageUtil.getMessage(context, "select_default_label"));
-        selectItem.setItemValue(DEFAULT_SELECT_VALUE); // value of SelectItem can't be null
-        results.add(0, selectItem);
     }
 
 }

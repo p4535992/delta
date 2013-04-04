@@ -54,10 +54,6 @@ import org.alfresco.web.ui.common.Utils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import ee.webmedia.alfresco.common.web.BeanHelper;
-import ee.webmedia.alfresco.log.model.LogEntry;
-import ee.webmedia.alfresco.log.model.LogObject;
-
 /**
  * JSF Managed Bean. Backs the "login.jsp" view to provide the form fields used
  * to enter user data for login. Also contains bean methods to validate form
@@ -281,7 +277,7 @@ public class LoginBean implements Serializable
       String outcome = null;
       
       FacesContext fc = FacesContext.getCurrentInstance();
-
+      
       if (this.username != null && this.username.length() != 0 &&
           this.password != null && this.password.length() != 0)
       {
@@ -400,8 +396,6 @@ public class LoginBean implements Serializable
    public String logout()
    {
       FacesContext context = FacesContext.getCurrentInstance();
-
-      BeanHelper.getLogService().addLogEntry(LogEntry.create(LogObject.LOG_IN_OUT, BeanHelper.getUserService(), "applog_logout"));
       
       // need to capture this value before invalidating the session
       boolean externalAuth = isAlfrescoAuth();

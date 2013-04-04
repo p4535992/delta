@@ -40,7 +40,7 @@
       <a:actionLink id="client-logo" value="#{ApplicationService.headerText}" href="/" tooltip="#{ApplicationService.headerText}" image="/images/logo/logo.png" showLink="false" />
       <a:actionLink id="project-name" value="#{ApplicationService.headerText}" href="/" tooltip="#{ApplicationService.headerText}" />
       
-      <a:panel id="search" styleClass="search-box">
+      <a:panel id="search">
          <f:verbatim>
          <span>
          </f:verbatim>
@@ -58,7 +58,7 @@
                 image="/images/icons/address-book-open-blue.png"
                 showLink="false"
                 value="#{msg.addressbook}"
-                action="dialog:addressbookList"
+                action="dialog:addressbookManage"
                 actionListener="#{MenuBean.clearViewStack}"
                 rendered="#{UserService.documentManager}">
                    <f:param name="primaryId" value="2" />
@@ -67,7 +67,7 @@
          </span>
          </f:verbatim>
 
-          <h:selectOneMenu id="select_user"  onchange="javascript:document.getElementsByTagName('form')[1].submit();"
+          <h:selectOneMenu id="select_user" styleClass="#{SubstitutionBean.onChangeStyleClass}"
                            value="#{SubstitutionBean.selectedSubstitution}" valueChangeListener="#{SubstitutionBean.substitutionSelected}">
             <f:selectItem itemValue="" itemLabel="#{NavigationBean.currentUser.fullName}"/>
             <f:selectItems value="#{SubstitutionBean.activeSubstitutions}"/>

@@ -98,7 +98,7 @@ public class UIViewRoot
                 ordinal == phaseIdOrdinal)
             {
                 UIComponent source = event.getComponent();
-                long startTime = System.nanoTime();
+                long startTime = System.currentTimeMillis();
                 try
                 {
                     source.broadcast(event);
@@ -114,7 +114,7 @@ public class UIViewRoot
                     abort = true;
                     break;
                 } finally {
-                    long duration = (System.nanoTime() - startTime) / 1000000L;
+                    long duration = System.currentTimeMillis() - startTime;
                     StatisticsPhaseListener.add(StatisticsPhaseListenerLogColumn.EVENT, duration + "," + event.getPhaseId() + "," + event.toString());
 
 	                try

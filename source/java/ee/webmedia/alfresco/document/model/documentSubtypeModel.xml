@@ -3,19 +3,17 @@
    xsi:schemaLocation="http://www.alfresco.org/model/dictionary/1.0 http://svn.alfresco.com/repos/alfresco-open-mirror/alfresco/HEAD/root/projects/repository/config/alfresco/model/modelSchema.xsd">
 
    <imports>
-   <!-- FIXME: remove the following imports after all existing static documents are migrated to dynamic documents -->
-        <import uri="http://www.alfresco.org/model/dictionary/1.0" prefix="d" />
-        <import uri="http://www.alfresco.org/model/content/1.0" prefix="cm" />
-        <import uri="http://alfresco.webmedia.ee/model/document/common/1.0" prefix="doccom" />
-        <import uri="http://alfresco.webmedia.ee/model/document/specific/1.0" prefix="docspec" />
-        <import uri="http://alfresco.webmedia.ee/model/transaction/1.0" prefix="trn" />
+      <import uri="http://www.alfresco.org/model/dictionary/1.0" prefix="d" />
+      <import uri="http://www.alfresco.org/model/content/1.0" prefix="cm" />
+      <import uri="http://alfresco.webmedia.ee/model/document/common/1.0" prefix="doccom" />
+      <import uri="http://alfresco.webmedia.ee/model/document/specific/1.0" prefix="docspec" />
+      <import uri="http://alfresco.webmedia.ee/model/transaction/1.0" prefix="trn" />
    </imports>
 
    <namespaces>
       <namespace uri="http://alfresco.webmedia.ee/model/document/subtype/1.0" prefix="docsub" />
    </namespaces>
 
-   <!-- FIXME: remove the following definitions after all existing static documents are migrated to dynamic documents -->
    <types>
 
       <type name="docsub:incomingLetter">
@@ -67,7 +65,24 @@
             <aspect>docspec:outgoingLetterMv</aspect>
          </mandatory-aspects>
       </type>      
+      
+      <type name="docsub:outgoingLetterMaais">
+         <parent>doccom:document</parent>
+         <mandatory-aspects>
+            <aspect>doccom:sendDesc</aspect>
+            <aspect>doccom:recipient</aspect>
+            <aspect>doccom:additionalRecipient</aspect>
+            <aspect>doccom:signer</aspect>
+            <aspect>docspec:sender</aspect>
+            <aspect>docspec:template</aspect>
+            <aspect>docspec:content</aspect>
+            <aspect>docspec:annex</aspect>
+            <aspect>docspec:outgoingLetterMv</aspect>
+            <aspect>docspec:outgoingLetterMaais</aspect>
+         </mandatory-aspects>
+      </type>
 
+      <!-- Välislähetuse dokumenndi tüüp -->
       <type name="docsub:errandOrderAbroad">
          <parent>doccom:document</parent>
          <mandatory-aspects>
@@ -83,6 +98,7 @@
          </mandatory-aspects>
       </type>      
       
+      <!-- Siselähetuse dokumendi tüüp -->
       <type name="docsub:errandApplicationDomestic">
          <parent>doccom:document</parent>
          <mandatory-aspects>
@@ -90,6 +106,7 @@
          </mandatory-aspects>
       </type>
 
+      <!-- Koolitustaotluse dokumenndi tüüp -->
       <type name="docsub:trainingApplication">
          <parent>doccom:document</parent>
          <mandatory-aspects>
@@ -97,6 +114,7 @@
          </mandatory-aspects>
       </type>
 
+      <!-- Riigihanke läbiviimise taotluse dokumendi tüüp -->
       <type name="docsub:tenderingApplication">
          <parent>doccom:document</parent>
          <mandatory-aspects>
@@ -255,6 +273,20 @@
          </mandatory-aspects>
       </type>      
       
+      <type name="docsub:orderMaais">
+         <parent>doccom:document</parent>
+         <mandatory-aspects>
+            <aspect>doccom:sendDesc</aspect>
+            <aspect>doccom:recipient</aspect>
+            <aspect>doccom:additionalRecipient</aspect>
+            <aspect>doccom:signer</aspect>
+            <aspect>docspec:template</aspect>
+            <aspect>docspec:content</aspect>
+            <aspect>docspec:orderType</aspect>
+            <aspect>docspec:orderMaais</aspect>
+         </mandatory-aspects>
+      </type>      
+      
       <type name="docsub:decree">
          <parent>doccom:document</parent>
          <mandatory-aspects>
@@ -288,7 +320,6 @@
             <aspect>docspec:deliverer</aspect>
             <aspect>docspec:receiver</aspect>
             <aspect>docspec:secondPartyReg</aspect>
-            <aspect>docspec:template</aspect>
          </mandatory-aspects>
       </type>
       
@@ -389,6 +420,20 @@
             <aspect>doccom:sendDesc</aspect>
             <aspect>doccom:additionalRecipient</aspect>
             <aspect>docspec:template</aspect>
+         </mandatory-aspects>
+      </type>      
+      
+      <type name="docsub:contractMaais">
+         <parent>doccom:document</parent>
+         <mandatory-aspects>
+            <aspect>doccom:signerName</aspect>
+            <aspect>docspec:firstParty</aspect>
+            <aspect>docspec:contractMvDetails</aspect>
+            <aspect>docspec:content</aspect>
+            <aspect>doccom:sendDesc</aspect>
+            <aspect>doccom:additionalRecipient</aspect>
+            <aspect>docspec:template</aspect>
+            <aspect>docspec:contractMaais</aspect>
          </mandatory-aspects>
       </type>      
 

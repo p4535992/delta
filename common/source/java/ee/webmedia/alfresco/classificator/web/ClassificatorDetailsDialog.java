@@ -1,7 +1,5 @@
 package ee.webmedia.alfresco.classificator.web;
 
-import static ee.webmedia.alfresco.common.web.BeanHelper.getClassificatorService;
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -14,45 +12,58 @@ import javax.faces.event.ActionEvent;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.util.GUID;
+import org.alfresco.web.app.Application;
+import org.alfresco.web.app.context.IContextListener;
+import org.alfresco.web.app.context.UIContextService;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.Node;
+import org.alfresco.web.ui.common.Utils;
 import org.alfresco.web.ui.common.component.data.UIRichList;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.util.Assert;
+import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.classificator.model.Classificator;
+import ee.webmedia.alfresco.classificator.model.ClassificatorModel;
 import ee.webmedia.alfresco.classificator.model.ClassificatorValue;
+import ee.webmedia.alfresco.classificator.service.ClassificatorService;
 import ee.webmedia.alfresco.classificator.service.ClassificatorServiceImpl;
-import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
 
-public class ClassificatorDetailsDialog extends BaseDialogBean {
+public class ClassificatorDetailsDialog extends BaseDialogBean implements IContextListener {
 
     private static final long serialVersionUID = 1L;
 
     private static final Log log = LogFactory.getLog(ClassificatorDetailsDialog.class);
-    private static final String ADD_VALUE_ACTION_GROUP = "browse_add_classificator_values";
-    private static final String ADD_REMOVE_VALUE_ACTION_GROUP = "browse_add_delete_classificator_values";
+    private static final String ADD_VALUE_ACTION_GROUP = "browse_classificator_values";
 
-    public static final String BEAN_NAME = "ClassificatorDetailsDialog";
-
+    private transient ClassificatorService classificatorService;
     private transient UIRichList richList;
 
-    private Map<String, ClassificatorValue> originalValues;
     private List<ClassificatorValue> classificatorValues;
-    private List<ClassificatorValue> addedClassificatorValues;
+    private Map<String, ClassificatorValue> originalValues;
     private Classificator selectedClassificator;
     private Node classificatorNode;
-    private String searchCriteria = "";
-    private boolean savedClassificator;
+    private List<ClassificatorValue> addedClassificators;
 
-    @Override
-    public void init(Map<String, String> parameters) {
-        super.init(parameters);
+    public ClassificatorDetailsDialog() {
+        UIContextService.getInstance(FacesContext.getCurrentInstance()).registerBean(this);
+    }
+
+    public void setClassificatorService(ClassificatorService classificatorService) {
+        this.classificatorService = classificatorService;
+    }
+
+    protected ClassificatorService getClassificatorService() {
+        if (classificatorService == null) {
+            classificatorService = (ClassificatorService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
+                    .getBean(ClassificatorService.BEAN_NAME);
+        }
+        return classificatorService;
     }
 
     /**
@@ -63,10 +74,8 @@ public class ClassificatorDetailsDialog extends BaseDialogBean {
     }
 
     public Node getClassificatorNode() {
-        if (selectedClassificator != null && classificatorNode == null) {
+        if (classificatorNode == null) {
             classificatorNode = new Node(selectedClassificator.getNodeRef());
-        } else if (selectedClassificator == null && classificatorNode == null) {
-            classificatorNode = BeanHelper.getClassificatorService().getNewUnsavedClassificator();
         }
         return classificatorNode;
     }
@@ -97,12 +106,6 @@ public class ClassificatorDetailsDialog extends BaseDialogBean {
 
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
-        if (RepoUtil.isUnsaved(classificatorNode)) {
-            NodeRef classificatorRef = BeanHelper.getClassificatorService().saveClassificatorNode(classificatorNode);
-            MessageUtil.addInfoMessage("save_success");
-            reloadSavedData(classificatorRef);
-            return null;
-        }
         String validationMessage;
         final Set<String> messages = new HashSet<String>(3);
         int defaultCheckBox = 0;
@@ -137,21 +140,17 @@ public class ClassificatorDetailsDialog extends BaseDialogBean {
         }
         if (hasErrors || messages.size() > 0) {
             for (String message : messages) {
-                MessageUtil.addErrorMessage(message);
+                Utils.addErrorMessage(Application.getMessage(context, message));
             }
+            outcome = null;
+            super.isFinished = false;
         } else {
-            BeanHelper.getClassificatorService().updateClassificatorValues(selectedClassificator, classificatorNode, originalValues, classificatorValues, addedClassificatorValues);
-            reloadSavedData(selectedClassificator.getNodeRef());
+            ClassificatorServiceImpl.classificatorBeanPropertyMapper.toObject(RepoUtil.toQNameProperties(classificatorNode.getProperties()), selectedClassificator);
+            getClassificatorService().updateClassificatorValues(selectedClassificator, originalValues, classificatorValues, addedClassificators);
+            resetData();
             MessageUtil.addInfoMessage("save_success");
         }
-        return null;
-    }
-
-    private void reloadSavedData(NodeRef classificatorRef) {
-        resetData();
-        selectedClassificator = BeanHelper.getClassificatorService().getClassificatorByNodeRef(classificatorRef);
-        classificatorNode = new Node(classificatorRef);
-        loadClassificatorValues();
+        return outcome;
     }
 
     @Override
@@ -161,17 +160,24 @@ public class ClassificatorDetailsDialog extends BaseDialogBean {
     }
 
     @Override
+    public boolean getFinishButtonDisabled() {
+        return false;
+    }
+
+    @Override
     public String getContainerTitle() {
         if (selectedClassificator != null) {
             return selectedClassificator.getName();
         }
-        return MessageUtil.getMessage("classificators_create");
+        return super.getContainerTitle();
     }
 
-    /** used by delete action to do actual deleting (after user has confirmed deleting in DeleteDialog) */
-    public String deleteClassificator(@SuppressWarnings("unused") ActionEvent event) {
-        getClassificatorService().deleteClassificator(selectedClassificator);
-        return getCloseOutcome(2);
+    @Override
+    public String getActionsConfigId() {
+        if (selectedClassificator != null && selectedClassificator.isAddRemoveValues()) {
+            return ADD_VALUE_ACTION_GROUP;
+        }
+        return null;
     }
 
     /**
@@ -182,15 +188,8 @@ public class ClassificatorDetailsDialog extends BaseDialogBean {
      */
     public void select(ActionEvent event) {
         resetData();
-        if (ActionUtil.hasParam(event, "nodeRef")) {
-            NodeRef classificatorRef = ActionUtil.getParam(event, "nodeRef", NodeRef.class);
-            selectedClassificator = BeanHelper.getClassificatorService().getClassificatorByNodeRef(classificatorRef);
-            classificatorNode = new Node(classificatorRef);
-            loadClassificatorValues();
-        } else {
-            classificatorNode = BeanHelper.getClassificatorService().getNewUnsavedClassificator();
-            classificatorValues = new ArrayList<ClassificatorValue>();
-        }
+        selectedClassificator = getClassificatorByNodeRef(ActionUtil.getParam(event, "nodeRef"));
+        loadClassificatorValues();
     }
 
     /**
@@ -206,9 +205,9 @@ public class ClassificatorDetailsDialog extends BaseDialogBean {
         classificatorValues.remove(classificatorValue);
         if (originalValues.containsKey(ref)) {
             originalValues.remove(ref);
-            BeanHelper.getClassificatorService().removeClassificatorValueByNodeRef(selectedClassificator, ref);
+            getClassificatorService().removeClassificatorValueByNodeRef(selectedClassificator, ref);
         } else {
-            addedClassificatorValues.remove(classificatorValue);
+            addedClassificators.remove(classificatorValue);
         }
         MessageUtil.addInfoMessage("classificator_value_remove_success");
         if (log.isDebugEnabled()) {
@@ -229,13 +228,32 @@ public class ClassificatorDetailsDialog extends BaseDialogBean {
      * @param event
      */
     public void addNewValue(ActionEvent event) {
+        Boolean alfabeticOrder = (Boolean) classificatorNode.getProperties().get(ClassificatorModel.Props.ALFABETIC_ORDER);
         ClassificatorValue addedClassificatorValue = new ClassificatorValue();
         addedClassificatorValue.setActive(true);
-        addedClassificatorValue.setOrder(getMaxClassificatorValueOrder() + 1);
+        if (alfabeticOrder == null || !alfabeticOrder) {
+            addedClassificatorValue.setOrder(getMaxClassificatorValueOrder() + 1);
+        }
         // set the temporary random unique ID to be used in the UI form
         addedClassificatorValue.setNodeRef(new NodeRef(addedClassificatorValue.hashCode() + "", event.hashCode() + "", GUID.generate()));
         classificatorValues.add(addedClassificatorValue);
-        addedClassificatorValues.add(addedClassificatorValue);
+        addedClassificators.add(addedClassificatorValue);
+        reOrderIfNeeded();
+    }
+
+    @Override
+    public void contextUpdated() {
+        clearRichList();
+    }
+
+    @Override
+    public void areaChanged() {
+        clearRichList();
+    }
+
+    @Override
+    public void spaceChanged() {
+        clearRichList();
     }
 
     private void clearRichList() {
@@ -244,39 +262,24 @@ public class ClassificatorDetailsDialog extends BaseDialogBean {
         }
     }
 
-    protected void resetData() {
+    private void resetData() {
         originalValues = null;
         classificatorValues = null;
         selectedClassificator = null;
-        addedClassificatorValues = null;
+        addedClassificators = null;
         richList = null;
         classificatorNode = null;
     }
 
     private void loadClassificatorValues() {
         if (selectedClassificator != null) {
-            classificatorValues = BeanHelper.getClassificatorService().getAllClassificatorValues(selectedClassificator);
+            classificatorValues = getClassificatorService().getAllClassificatorValues(selectedClassificator);
             originalValues = new TreeMap<String, ClassificatorValue>();
             for (ClassificatorValue cv : classificatorValues) {
                 originalValues.put(cv.getNodeRef().toString(), new ClassificatorValue(cv));
             }
-            addedClassificatorValues = new ArrayList<ClassificatorValue>();
+            addedClassificators = new ArrayList<ClassificatorValue>();
         }
-    }
-
-    public void search() {
-        if (StringUtils.isNotBlank(getSearchCriteria())) {
-            clearRichList();
-            classificatorValues = BeanHelper.getClassificatorService().searchValues(getSearchCriteria(), selectedClassificator.getNodeRef());
-        } else {
-            MessageUtil.addInfoMessage("classificators_error_emptySearchField");
-        }
-    }
-
-    public void showAll() {
-        clearRichList();
-        setSearchCriteria("");
-        classificatorValues = BeanHelper.getClassificatorService().getAllClassificatorValues(selectedClassificator);
     }
 
     private int getMaxClassificatorValueOrder() {
@@ -285,6 +288,11 @@ public class ClassificatorDetailsDialog extends BaseDialogBean {
             maxOrder = Math.max(maxOrder, cv.getOrder());
         }
         return maxOrder;
+    }
+
+    private Classificator getClassificatorByNodeRef(String ref) {
+        Assert.notNull(ref);
+        return getClassificatorService().getClassificatorByNodeRef(ref);
     }
 
     private ClassificatorValue getClassificatorValueByNodeRef(String ref) {
@@ -300,30 +308,6 @@ public class ClassificatorDetailsDialog extends BaseDialogBean {
 
     @Override
     public Object getActionsContext() {
-        return selectedClassificator;
-    }
-
-    public boolean isClassificatorNodeSet() {
-        return classificatorNode != null;
-    }
-
-    public String getSearchCriteria() {
-        return searchCriteria;
-    }
-
-    public void setSearchCriteria(String searchCriteria) {
-        this.searchCriteria = searchCriteria;
-    }
-
-    public void setClassificatorNode(Node classificatorNode) {
-        this.classificatorNode = classificatorNode;
-    }
-
-    public boolean isSavedClassificator() {
-        return RepoUtil.isSaved(classificatorNode);
-    }
-
-    public boolean isUnsavedClassificator() {
-        return !isSavedClassificator();
+        return null;
     }
 }

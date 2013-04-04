@@ -1,4 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<view:view xmlns:view="http://www.alfresco.org/view/repository/1.0" xmlns:the="http://alfresco.webmedia.ee/model/thesaurus/1.0">
-   <the:thesauri view:childName="the:thesauri" />
-</view:view>

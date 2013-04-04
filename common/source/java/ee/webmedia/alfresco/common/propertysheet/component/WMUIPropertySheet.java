@@ -6,18 +6,16 @@ import java.util.Collection;
 import java.util.List;
 
 import javax.faces.context.FacesContext;
-import javax.faces.el.EvaluationException;
 import javax.faces.el.MethodBinding;
+import javax.faces.el.ReferenceSyntaxException;
 import javax.faces.el.ValueBinding;
 
 import org.alfresco.util.Pair;
-import org.alfresco.web.bean.generator.BaseComponentGenerator;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.config.PropertySheetConfigElement.ItemConfig;
 import org.alfresco.web.ui.repo.RepoConstants;
 import org.alfresco.web.ui.repo.component.property.PropertySheetItem;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
-import org.apache.commons.lang.StringUtils;
 import org.apache.myfaces.shared_impl.renderkit.html.HTML;
 
 import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement.ItemConfigVO;
@@ -34,7 +32,6 @@ public class WMUIPropertySheet extends UIPropertySheet {
     public static final String SHOW = "show";
     public static final String DISPLAY = "display";
     public static final String INLINE = "inline";
-    public static final String ATTR_SHOW_UNVALUED = "showUnvalued";
 
     /**
      * If this propertySheet represents a subPropertySheet(meaning it is in another propertySheet), it is associated to the parent using some type of
@@ -62,19 +59,11 @@ public class WMUIPropertySheet extends UIPropertySheet {
     @Override
     protected void changePropSheetItem(ItemConfig item, PropertySheetItem propSheetItem) {
         // if both can have custom attributes, then set them from item to propSheetItem
-        if (item instanceof CustomAttributes) {
+        if (item instanceof CustomAttributes && propSheetItem instanceof CustomAttributes) {
             CustomAttributes wMPropertyConfig = (CustomAttributes) item;
-            CustomAttributes wmPropSheetItem = propSheetItem;
+            CustomAttributes wmPropSheetItem = (CustomAttributes) propSheetItem;
             wmPropSheetItem.setCustomAttributes(wMPropertyConfig.getCustomAttributes());
         }
-    }
-
-    public boolean isShowUnvalued() {
-        ValueBinding vb = getValueBinding(ATTR_SHOW_UNVALUED);
-        if (vb == null) {
-            return true;
-        }
-        return (Boolean) vb.getValue(getFacesContext());
     }
 
     @Override
@@ -89,15 +78,10 @@ public class WMUIPropertySheet extends UIPropertySheet {
                         MethodBinding mb = context.getApplication().createMethodBinding(show,
                                 new Class[] { UIPropertySheet.class });
                         showItem = (Boolean) mb.invoke(context, new Object[] { this });
-                    } catch (EvaluationException e) {
-                        try { // ... if first method failed, try ValueBinding
-                            ValueBinding vb = context.getApplication().createValueBinding(show);
-                            showItem = (Boolean) vb.getValue(context);
-                        } catch (EvaluationException e2) {
-                            // ... if it also failed, maybe there is method that takes PropertySheetItem
-                            PropertySheetItem psItem = createPropertySheetItemAndId(item, context).getFirst();
-                            BaseComponentGenerator.evaluateBoolean(show, context, psItem);
-                        }
+                    } catch (ReferenceSyntaxException e) {
+                        // ... if first method failed, try ValueBinding
+                        ValueBinding vb = context.getApplication().createValueBinding(show);
+                        showItem = (Boolean) vb.getValue(context);
                     }
                     if (showItem != null && !showItem) {
                         continue;
@@ -116,9 +100,6 @@ public class WMUIPropertySheet extends UIPropertySheet {
         final Pair<PropertySheetItem, String> propSheetItemAndId;
         if (item instanceof ItemConfigVO) {
             ItemConfigVO confVO = (ItemConfigVO) item;
-            if (StringUtils.isNotBlank(confVO.getCustomAttributes().get(SubPropertySheetItem.ATTR_BELONGS_TO_SUB_PROPERTY_SHEET_ID))) {
-                return new Pair<PropertySheetItem, String>(null, null);
-            }
             PropertySheetItem propSheetItem;
             String id;
             if (confVO.getConfigItemType().equals(ConfigItemType.PROPERTY)) {
@@ -133,7 +114,7 @@ public class WMUIPropertySheet extends UIPropertySheet {
                 id = ASSOC_ID_PREFIX + item.getName();
                 propSheetItem = (PropertySheetItem) context.getApplication().
                         createComponent(RepoConstants.ALFRESCO_FACES_CHILD_ASSOCIATION);
-            } else if (confVO.getConfigItemType().equals(ConfigItemType.SEPARATOR)) {
+            } else if (confVO.getConfigItemType().equals(ConfigItemType.SEPPARATOR)) {
                 id = SEP_ID_PREFIX + item.getName();
                 propSheetItem = (PropertySheetItem) context.getApplication().
                         createComponent(RepoConstants.ALFRESCO_FACES_SEPARATOR);

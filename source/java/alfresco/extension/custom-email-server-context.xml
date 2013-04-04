@@ -18,7 +18,6 @@
       <property name="userService" ref="UserService" />
       <property name="generalService" ref="GeneralService" />
       <property name="ocrService" ref="OcrService" />
-      <property name="fileService" ref="FileService" />
    </bean>
 
    <!-- @Override from email-service-context.xml -->

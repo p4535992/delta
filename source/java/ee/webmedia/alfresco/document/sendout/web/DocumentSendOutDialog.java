@@ -1,18 +1,6 @@
 package ee.webmedia.alfresco.document.sendout.web;
 
-import static ee.webmedia.alfresco.common.web.BeanHelper.getAddressbookService;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getClassificatorService;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentLogService;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentService;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentTemplateService;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getEmailService;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getFileService;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getParametersService;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getSendOutService;
-import static ee.webmedia.alfresco.utils.ComponentUtil.addFacet;
-import static ee.webmedia.alfresco.utils.ComponentUtil.getAttributes;
-import static ee.webmedia.alfresco.utils.ComponentUtil.getChildren;
-
+import java.io.ByteArrayOutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -21,65 +9,68 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
-import javax.faces.application.Application;
-import javax.faces.component.UIColumn;
-import javax.faces.component.UIComponent;
-import javax.faces.component.UIInput;
-import javax.faces.component.UIMessages;
-import javax.faces.component.UIOutput;
-import javax.faces.component.UIPanel;
-import javax.faces.component.html.HtmlDataTable;
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 import javax.faces.model.SelectItem;
 
 import org.alfresco.model.ContentModel;
 import org.alfresco.service.cmr.lock.NodeLockedException;
+import org.alfresco.service.cmr.model.FileInfo;
+import org.alfresco.service.cmr.repository.AssociationRef;
+import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.InvalidNodeRefException;
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.cmr.security.AuthorityService;
+import org.alfresco.service.cmr.security.AuthorityType;
+import org.alfresco.service.cmr.security.PersonService;
 import org.alfresco.service.namespace.QName;
-import org.alfresco.util.Pair;
+import org.alfresco.service.namespace.RegexQNamePattern;
 import org.alfresco.web.app.AlfrescoNavigationHandler;
 import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.Node;
+import org.alfresco.web.bean.repository.Repository;
 import org.alfresco.web.ui.common.converter.ByteSizeConverter;
-import org.alfresco.web.ui.repo.component.UIActions;
-import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.collections.Transformer;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.validator.EmailValidator;
-import org.apache.myfaces.shared_impl.renderkit.JSFAttr;
-import org.apache.myfaces.shared_impl.renderkit.html.HTML;
+import org.springframework.web.jsf.FacesContextUtils;
 
-import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
-import ee.webmedia.alfresco.addressbook.util.AddressbookUtil;
+import ee.webmedia.alfresco.addressbook.service.AddressbookService;
+import ee.webmedia.alfresco.addressbook.web.dialog.AddressbookMainViewDialog;
 import ee.webmedia.alfresco.classificator.enums.SendMode;
 import ee.webmedia.alfresco.classificator.enums.StorageType;
 import ee.webmedia.alfresco.classificator.model.Classificator;
 import ee.webmedia.alfresco.classificator.model.ClassificatorValue;
-import ee.webmedia.alfresco.common.propertysheet.modalLayer.ModalLayerComponent;
-import ee.webmedia.alfresco.common.web.BeanHelper;
-import ee.webmedia.alfresco.docdynamic.model.DocumentChildModel;
-import ee.webmedia.alfresco.docdynamic.web.DocumentLockHelperBean;
+import ee.webmedia.alfresco.classificator.service.ClassificatorService;
+import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.document.file.model.File;
+import ee.webmedia.alfresco.document.file.service.FileService;
+import ee.webmedia.alfresco.document.log.service.DocumentLogService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
+import ee.webmedia.alfresco.document.sendout.service.SendOutService;
+import ee.webmedia.alfresco.document.service.DocumentService;
+import ee.webmedia.alfresco.document.web.DocumentDialog;
 import ee.webmedia.alfresco.document.web.OutboxDocumentMenuItemProcessor;
 import ee.webmedia.alfresco.document.web.UnsentDocumentMenuItemProcessor;
 import ee.webmedia.alfresco.menu.ui.MenuBean;
+import ee.webmedia.alfresco.orgstructure.service.OrganizationStructureService;
 import ee.webmedia.alfresco.parameters.model.Parameters;
+import ee.webmedia.alfresco.parameters.service.ParametersService;
+import ee.webmedia.alfresco.signature.service.SignatureService;
 import ee.webmedia.alfresco.template.model.DocumentTemplate;
+import ee.webmedia.alfresco.template.service.DocumentTemplateService;
+import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UserUtil;
-import ee.webmedia.alfresco.utils.WebUtil;
 
 /**
  * Bean for sending out document dialog.
@@ -89,63 +80,52 @@ import ee.webmedia.alfresco.utils.WebUtil;
 public class DocumentSendOutDialog extends BaseDialogBean {
 
     private static final long serialVersionUID = 1L;
-    public static final String BEAN_NAME = "DocumentSendOutDialog";
 
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DocumentSendOutDialog.class);
 
-    private static final String[] PROP_KEYS = { "recipientName", "recipientEmail", "recipientSendMode", "recipientGroup" };
+    private static final String[] PROP_KEYS = { "recipientName", "recipientEmail", "recipientSendMode" };
 
-    private transient UIPanel modalContainer;
+    private transient GeneralService generalService;
+    private transient DocumentService documentService;
+    private transient DocumentLogService documentLogService;
+    private transient ClassificatorService classificatorService;
+    private transient ParametersService parametersService;
+    private transient DocumentTemplateService documentTemplateService;
+    private transient SendOutService sendOutService;
+    private transient SignatureService signatureService;
+    private transient FileService fileService;
+    private transient AddressbookService addressbookService;
+    private transient OrganizationStructureService organizationStructureService;
+    private transient UserService userService;
+    private transient AuthorityService authorityService;
+    private transient PersonService personService;
+    private AddressbookMainViewDialog addressbookDialog;
 
     private SendOutModel model;
     private List<SelectItem> sendModes;
     private List<SelectItem> emailTemplates;
-    private List<EncryptionRecipient> encryptionRecipients;
-    private String modalId;
 
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
         if (validate(context)) {
-            if (model.isEncrypt()) {
-                showEncryptionRecipientsModal(context);
-                return null;
+            boolean success = false;
+            try {
+                success = sendOut(context);
+            } catch (NodeLockedException e) {
+                MessageUtil.addErrorMessage(context, "document_sendOut_error_docLocked");
             }
-            if (sendOutAndFinish(context)) {
+            if (success) {
+                resetState();
+                MessageUtil.addInfoMessage("document_sendOut_success");
                 return outcome;
             }
         }
+        super.isFinished = false;
         return null;
-    }
-
-    public void encryptAndFinish(@SuppressWarnings("unused") ActionEvent event) {
-        try {
-            if (sendOutAndFinish(FacesContext.getCurrentInstance())) {
-                WebUtil.navigateWithCancel();
-            }
-        } catch (UnableToPerformException e) {
-            handleException(e);
-        }
-    }
-
-    private boolean sendOutAndFinish(FacesContext context) {
-        boolean success = false;
-        try {
-            success = sendOut(context);
-        } catch (NodeLockedException e) {
-            MessageUtil.addErrorMessage(context, "document_sendOut_error_docLocked");
-        }
-        if (success) {
-            BeanHelper.getDocumentLockHelperBean().lockOrUnlockIfNeeded(false);
-            resetState();
-            MessageUtil.addInfoMessage("document_sendOut_success");
-        }
-        return success;
     }
 
     @Override
     public String cancel() {
-        // Unlock when finished
-        BeanHelper.getDocumentLockHelperBean().lockOrUnlockIfNeeded(false);
         resetState();
         return super.cancel();
     }
@@ -165,26 +145,28 @@ public class DocumentSendOutDialog extends BaseDialogBean {
         return false;
     }
 
+    private static final int USERS_FILTER = 0;
+    private static final int USER_GROUPS_FILTER = 1;
+    private static final int CONTACTS_FILTER = 2;
+    private static final int CONTACT_GROUPS_FILTER = 3;
+
+    public SelectItem[] getRecipientSearchFilters() {
+        return new SelectItem[] {
+                new SelectItem(USERS_FILTER, MessageUtil.getMessage("task_owner_users")),
+                new SelectItem(USER_GROUPS_FILTER, MessageUtil.getMessage("task_owner_usergroups")),
+                new SelectItem(CONTACTS_FILTER, MessageUtil.getMessage("task_owner_contacts")),
+                new SelectItem(CONTACT_GROUPS_FILTER, MessageUtil.getMessage("task_owner_contactgroups")) };
+    }
+
     public String init() {
         FacesContext context = FacesContext.getCurrentInstance();
-        Node docNode = BeanHelper.getDocumentDialogHelperBean().getNode();
-        docNode.clearPermissionsCache();
-        if (!new SendOutActionEvaluator().evaluate(docNode)) {
-            MessageUtil.addErrorMessage("document_send_out_error_noPermission");
-            return null;
-        }
+        DocumentDialog dialog = (DocumentDialog) FacesHelper.getManagedBean(context, DocumentDialog.BEAN_NAME);
+        Node docNode = dialog.getNode();
         if (!getNodeService().exists(docNode.getNodeRef())) {
             return AlfrescoNavigationHandler.CLOSE_DIALOG_OUTCOME;
         }
-
         try {
-            // Lock the node
-            DocumentLockHelperBean documentLockHelperBean = BeanHelper.getDocumentLockHelperBean();
-            documentLockHelperBean.lockOrUnlockIfNeeded(documentLockHelperBean.isLockingAllowed());
-            BaseDialogBean.validatePermission(docNode, DocumentCommonModel.Privileges.EDIT_DOCUMENT);
-        } catch (NodeLockedException e) {
-            BeanHelper.getDocumentLockHelperBean().handleLockedNode("document_validation_alreadyLocked");
-            return null;
+            BaseDialogBean.validatePermission(docNode, DocumentCommonModel.Privileges.EDIT_DOCUMENT_META_DATA);
         } catch (UnableToPerformException e) {
             MessageUtil.addStatusMessage(context, e);
             return null;
@@ -251,32 +233,44 @@ public class DocumentSendOutDialog extends BaseDialogBean {
 
         List<String> names = newListIfNull((List<String>) props.get(DocumentCommonModel.Props.RECIPIENT_NAME), false);
         List<String> emails = newListIfNull((List<String>) props.get(DocumentCommonModel.Props.RECIPIENT_EMAIL), false);
-        List<String> groups = newListIfNull((List<String>) props.get(DocumentCommonModel.Props.RECIPIENT_GROUP), false);
-        while (groups.size() < names.size()) {
-            groups.add("");
+        String contractName = (String) props.get(DocumentSpecificModel.Props.SECOND_PARTY_NAME);
+        String contractEmail = (String) props.get(DocumentSpecificModel.Props.SECOND_PARTY_EMAIL);
+        if (StringUtils.isNotBlank(contractName) || StringUtils.isNotBlank(contractEmail)) {
+            names.add(StringUtils.isNotBlank(contractName) ? contractName : "");
+            emails.add(StringUtils.isNotBlank(contractEmail) ? contractEmail : "");
         }
-        List<Node> childNodes = node.getAllChildAssociations(DocumentChildModel.Assocs.CONTRACT_PARTY);
-        if (childNodes != null) {
-            for (Node childNode : childNodes) {
-                String name = (String) childNode.getProperties().get(DocumentSpecificModel.Props.PARTY_NAME);
-                String email = (String) childNode.getProperties().get(DocumentSpecificModel.Props.PARTY_EMAIL);
+        contractName = (String) props.get(DocumentSpecificModel.Props.THIRD_PARTY_NAME);
+        contractEmail = (String) props.get(DocumentSpecificModel.Props.THIRD_PARTY_EMAIL);
+        if (StringUtils.isNotBlank(contractName) || StringUtils.isNotBlank(contractEmail)) {
+            names.add(StringUtils.isNotBlank(contractName) ? contractName : "");
+            emails.add(StringUtils.isNotBlank(contractEmail) ? contractEmail : "");
+        }
+        if (getNodeService().hasAspect(node.getNodeRef(), DocumentSpecificModel.Aspects.CONTRACT_COMMON_DETAILS)) {
+            List<ChildAssociationRef> childAssocs = getNodeService().getChildAssocs(node.getNodeRef());
+            ArrayList<Serializable> partyNames = getDocumentService().collectProperties(node.getNodeRef(), childAssocs, DocumentSpecificModel.Props.PARTY_NAME);
+            ArrayList<Serializable> partyEmails = getDocumentService().collectProperties(node.getNodeRef(), childAssocs, DocumentSpecificModel.Props.PARTY_EMAIL);
+            if (partyNames.size() != partyEmails.size()) {
+                throw new RuntimeException("Document has uneven count of docspec:partyName and docspec:partyEmail values! Check code!");
+            }
+            String name, email;
+            for (int i = 0; i < partyNames.size(); i++) {
+                name = (String) partyNames.get(i);
+                email = (String) partyEmails.get(i);
                 if (StringUtils.isBlank(name) && StringUtils.isBlank(email)) {
                     continue;
                 }
 
                 names.add(name);
                 emails.add(email);
-                groups.add("");
             }
         }
 
         if (names.size() == 1 && emails.size() == 1 && StringUtils.isBlank(names.get(0)) && StringUtils.isBlank(emails.get(0))) {
             names = new ArrayList<String>();
             emails = new ArrayList<String>();
-            groups = new ArrayList<String>();
         }
 
-        addAdditionalRecipients(props, names, emails, groups);
+        addAdditionalRecipients(props, names, emails);
         List<String> recSendModes = new ArrayList<String>(names.size());
         for (int i = 0; i < names.size(); i++) {
             if (StringUtils.isNotBlank(names.get(i)) || StringUtils.isNotBlank(emails.get(i))) {
@@ -289,22 +283,16 @@ public class DocumentSendOutDialog extends BaseDialogBean {
         properties.put(PROP_KEYS[0], names);
         properties.put(PROP_KEYS[1], emails);
         properties.put(PROP_KEYS[2], recSendModes);
-        properties.put(PROP_KEYS[3], groups);
 
         model.setProperties(properties);
     }
 
-    private void addAdditionalRecipients(Map<String, Object> props, List<String> names, List<String> emails, List<String> groups) {
+    private void addAdditionalRecipients(Map<String, Object> props, List<String> names, List<String> emails) {
         @SuppressWarnings("unchecked")
         List<String> namesAdd = newListIfNull((List<String>) props.get(DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME), false);
         @SuppressWarnings("unchecked")
         List<String> emailsAdd = newListIfNull((List<String>) props.get(DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_EMAIL), false);
-        @SuppressWarnings("unchecked")
-        List<String> groupsAdd = newListIfNull((List<String>) props.get(DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_GROUP), false);
         RepoUtil.validateSameSize(namesAdd, emailsAdd, "additionalNames", "additionalEmails");
-        while (groupsAdd.size() < namesAdd.size()) {
-            groupsAdd.add("");
-        }
 
         List<Integer> removeIndexes = new ArrayList<Integer>();
         int j = 0;
@@ -319,12 +307,10 @@ public class DocumentSendOutDialog extends BaseDialogBean {
         Collections.reverse(removeIndexes);
         for (Integer index : removeIndexes) {
             namesAdd.remove((int) index);
-            groupsAdd.remove((int) index);
         }
 
         names.addAll(namesAdd);
         emails.addAll(emailsAdd);
-        groups.addAll(groupsAdd);
 
         if (names.isEmpty()) {
             names.add("");
@@ -332,16 +318,13 @@ public class DocumentSendOutDialog extends BaseDialogBean {
         if (emails.isEmpty()) {
             emails.add("");
         }
-        if (groups.isEmpty()) {
-            groups.add("");
-        }
     }
 
     public String getPanelTitle() {
         return model.getDocName();
     }
 
-    public List<SelectItem> getSendModes() {
+    public synchronized List<SelectItem> getSendModes() {
         if (sendModes == null) {
             sendModes = new ArrayList<SelectItem>();
             sendModes.add(new SelectItem("", MessageUtil.getMessage(FacesContext.getCurrentInstance(), "document_choose")));
@@ -355,7 +338,7 @@ public class DocumentSendOutDialog extends BaseDialogBean {
         return sendModes;
     }
 
-    public List<SelectItem> getEmailTemplates() {
+    public synchronized List<SelectItem> getEmailTemplates() {
         if (emailTemplates == null) {
             emailTemplates = new ArrayList<SelectItem>();
             emailTemplates.add(new SelectItem("", MessageUtil.getMessage(FacesContext.getCurrentInstance(), "document_choose")));
@@ -365,10 +348,6 @@ public class DocumentSendOutDialog extends BaseDialogBean {
             }
         }
         return emailTemplates;
-    }
-
-    public List<EncryptionRecipient> getEncryptionRecipients() {
-        return encryptionRecipients;
     }
 
     public void updateSendModes(@SuppressWarnings("unused") ActionEvent event) {
@@ -393,10 +372,37 @@ public class DocumentSendOutDialog extends BaseDialogBean {
         if (type.equals(ContentModel.TYPE_PERSON)) {
             result = getPersonData(nodeRef);
         } else {
-            result = AddressbookUtil.getContactData(nodeRef);
+            result = addressbookDialog.getContactData(nodeRef);
         }
         result.add(model.getDefaultSendMode());
         return result;
+    }
+
+    public String[] preprocessSearchResult(String[] results, Integer filterIndex) {
+        List<String> processedResult = new ArrayList<String>();
+        for (String result : results) {
+            if (filterIndex == USERS_FILTER) {
+                // Replace user name with reference to the person node
+                NodeRef nodeRef = getPersonService().getPerson(result);
+                processedResult.add(nodeRef.toString());
+            } else if (filterIndex == USER_GROUPS_FILTER) {
+                // Add all users contained in user group and replace user names with reference to the person node
+                Set<String> auths = getAuthorityService().getContainedAuthorities(AuthorityType.USER, result, true);
+                for (String auth : auths) {
+                    NodeRef nodeRef = getPersonService().getPerson(auth);
+                    processedResult.add(nodeRef.toString());
+                }
+            } else if (filterIndex == CONTACT_GROUPS_FILTER) {
+                // Add all users contain in user group
+                List<AssociationRef> assocs = getNodeService().getTargetAssocs(new NodeRef(result), RegexQNamePattern.MATCH_ALL);
+                for (AssociationRef assoc : assocs) {
+                    processedResult.add(assoc.getTargetRef().toString());
+                }
+            } else {
+                processedResult.add(result);
+            }
+        }
+        return processedResult.toArray(new String[processedResult.size()]);
     }
 
     private List<String> getPersonData(String nodeRef) {
@@ -415,7 +421,6 @@ public class DocumentSendOutDialog extends BaseDialogBean {
         model = null;
         sendModes = null;
         emailTemplates = null;
-        modalId = null;
     }
 
     private boolean validate(FacesContext context) {
@@ -434,10 +439,10 @@ public class DocumentSendOutDialog extends BaseDialogBean {
             String name = names.get(i);
             String email = StringUtils.trim(emails.get(i));
             String mode = modes.get(i);
-            if (!hasValidRecipient && StringUtils.isNotBlank(name) && StringUtils.isNotBlank(mode) && (StringUtils.isNotBlank(email)
-                    || (!SendMode.EMAIL.equals(mode) && !SendMode.EMAIL_DVK.equals(mode) && !SendMode.EMAIL_BCC.equals(mode)))) {
+            if (!hasValidRecipient && StringUtils.isNotBlank(name) && StringUtils.isNotBlank(mode)
+                    && (StringUtils.isNotBlank(email) || (!SendMode.EMAIL.equals(mode) && !SendMode.EMAIL_DVK.equals(mode)))) {
                 hasValidRecipient = true;
-            } else if (!hasMissingEmails && StringUtils.isNotBlank(mode) && (SendMode.EMAIL.equals(mode) || SendMode.EMAIL_DVK.equals(mode) || SendMode.EMAIL_BCC.equals(mode))
+            } else if (!hasMissingEmails && StringUtils.isNotBlank(mode) && (SendMode.EMAIL.equals(mode) || SendMode.EMAIL_DVK.equals(mode))
                     && StringUtils.isBlank(email)) {
                 hasMissingEmails = true;
             } else if (!hasInvalidRecipient && (StringUtils.isNotBlank(name) || StringUtils.isNotBlank(mode) || StringUtils.isNotBlank(email))
@@ -450,7 +455,7 @@ public class DocumentSendOutDialog extends BaseDialogBean {
                     MessageUtil.addErrorMessage(context, "email_format_is_not_valid");
                 }
             }
-            if (!hasEmailMode && (SendMode.EMAIL.equals(mode) || SendMode.EMAIL_DVK.equals(mode) || SendMode.EMAIL_BCC.equals(mode))) {
+            if (!hasEmailMode && (SendMode.EMAIL.equals(mode) || SendMode.EMAIL_DVK.equals(mode))) {
                 hasEmailMode = true;
             }
         }
@@ -479,8 +484,23 @@ public class DocumentSendOutDialog extends BaseDialogBean {
             if (maxSizeMB != null && maxSizeMB.longValue() > 0) {
                 // Check total files size
                 long maxSizeBytes = maxSizeMB.longValue() * 1024 * 1024;
-                long totalSizeBytes = getEmailService().getAttachmentsTotalSize(getFileRefs(), model.isZip(), model.isEncrypt());
+                long totalSizeBytes = 0;
+
+                if (model.isZip()) {
+                    ByteArrayOutputStream byteStream = getGeneralService().getZipFileFromFiles(model.getNodeRef(), model.getSelectedFiles());
+                    totalSizeBytes = byteStream.size();
+                    byteStream.reset();
+
+                } else {
+                    for (FileInfo fileInfo : getFileFolderService().listFiles(model.getNodeRef())) {
+                        if (model.getSelectedFiles().contains(fileInfo.getNodeRef().toString())) {
+                            log.debug("Validate - file size: " + fileInfo.getContentData().getSize());
+                            totalSizeBytes += fileInfo.getContentData().getSize();
+                        }
+                    }
+                }
                 log.debug("Validate - total file size: " + totalSizeBytes + ", maxSize: " + maxSizeBytes);
+
                 if (totalSizeBytes > maxSizeBytes) {
                     valid = false;
                     MessageUtil.addErrorMessage(context, "document_send_out_size", maxSizeMB);
@@ -496,41 +516,26 @@ public class DocumentSendOutDialog extends BaseDialogBean {
         List<String> names = new ArrayList<String>();
         List<String> emails = new ArrayList<String>();
         List<String> modes = new ArrayList<String>();
-        List<String> encryptionIdCodes = null;
 
         names.addAll(model.getProperties().get(PROP_KEYS[0]));
         emails.addAll(model.getProperties().get(PROP_KEYS[1]));
         modes.addAll(model.getProperties().get(PROP_KEYS[2]));
 
-        if (model.isEncrypt()) {
-            encryptionIdCodes = new ArrayList<String>();
-            for (EncryptionRecipient encryptionRecipient : getEncryptionRecipients()) {
-                if (StringUtils.isBlank(encryptionRecipient.getIdCode())) {
-                    MessageUtil.addErrorMessage("document_send_out_encryptionRecipient_idCode_mandatory");
-                    return false;
-                }
-                encryptionIdCodes.add(StringUtils.strip(encryptionRecipient.getIdCode()));
-            }
-        }
-
-        List<NodeRef> fileRefs = getFileRefs();
         try {
-            result = getSendOutService().sendOut(model.getNodeRef(), names, emails, modes, encryptionIdCodes, model.getSenderEmail(), model.getSubject(), model.getContent(),
-                    fileRefs, model.isZip());
+            result = getSendOutService().sendOut(model.getNodeRef(), names, emails, modes, model.getSenderEmail(), model.getSubject(), model.getContent(),
+                    model.getSelectedFiles(), model.isZip());
         } catch (UnableToPerformException e) {
             MessageUtil.addStatusMessage(context, e);
             return false;
         } catch (Exception e) {
-            log.error(
-                    "Sending out document failed\n  nodeRef=" + model.getNodeRef() + "\n  names=" + names + "\n  emails=" + emails + "\n  modes=" + modes
-                            + "\n  encryptionIdCodes=" + encryptionIdCodes + "\n  senderEmail=" + model.getSenderEmail() + "\n  subject=" + model.getSubject() + "\n  content="
-                            + (model.getContent() == null ? "null" : "String[" + model.getContent().length() + "]") + "\n  fileRefs=" + fileRefs + "\n  zip=" + model.isZip()
-                            + "\n  encrypt=" + model.isEncrypt(), e);
+            log.error("Sending out document failed\n  nodeRef=" + model.getNodeRef() + "\n  names=" + names + "\n  emails=" + emails + "\n  modes=" + modes
+                    + "\n  senderEmail=" + model.getSenderEmail() + "\n  subject=" + model.getSubject() + "\n  content="
+                    + (model.getContent() == null ? "null" : "String[" + model.getContent().length() + "]") + "\n  selectedFiles=" + model.getSelectedFiles()
+                    + "\n  zip=" + model.isZip(), e);
             result = false;
         }
         if (!result) {
             MessageUtil.addErrorMessage(context, "document_send_failed");
-            getDocumentLogService().addDocumentLog(model.getNodeRef(), MessageUtil.getMessage("document_log_status_sending_failed"));
         } else {
             getDocumentLogService().addDocumentLog(model.getNodeRef(), MessageUtil.getMessage("document_log_status_sent"));
             ((MenuBean) FacesHelper.getManagedBean(context, MenuBean.BEAN_NAME)).processTaskItem(
@@ -538,17 +543,6 @@ public class DocumentSendOutDialog extends BaseDialogBean {
                     UnsentDocumentMenuItemProcessor.UNSENT_DOCUMENT);
         }
         return result;
-    }
-
-    private List<NodeRef> getFileRefs() {
-        @SuppressWarnings("unchecked")
-        List<NodeRef> fileRefs = (List<NodeRef>) CollectionUtils.collect(model.getSelectedFiles(), new Transformer() {
-            @Override
-            public Object transform(Object fileRefString) {
-                return new NodeRef((String) fileRefString);
-            }
-        });
-        return fileRefs;
     }
 
     public static List<String> newListIfNull(List<String> list, boolean checkEmpty) {
@@ -562,147 +556,147 @@ public class DocumentSendOutDialog extends BaseDialogBean {
         return result;
     }
 
-    private void showEncryptionRecipientsModal(FacesContext context) {
-        final Application application = context.getApplication();
-        ModalLayerComponent modal = (ModalLayerComponent) application.createComponent(ModalLayerComponent.class.getCanonicalName());
-        modal.setId("encryptionRecipients");
-        modal.setActionListener(application.createMethodBinding("#{DocumentSendOutDialog.encryptAndFinish}", UIActions.ACTION_CLASS_ARGS));
-        Map<String, Object> attributes = getAttributes(modal);
-        attributes.put(ModalLayerComponent.ATTR_HEADER_KEY, "document_send_out_encryption_title");
-        attributes.put(ModalLayerComponent.ATTR_SUBMIT_BUTTON_MSG_KEY, "document_send_out_encryption_perform");
-        attributes.put(ModalLayerComponent.ATTR_SET_RENDERED_FALSE_ON_CLOSE, Boolean.TRUE);
-
-        UIMessages messages = (UIMessages) application.createComponent(UIMessages.COMPONENT_TYPE);
-        messages.setRendererType("org.alfresco.faces.Errors");
-        messages.setValueBinding("message", application.createValueBinding("#{DialogManager.errorMessage}"));
-        attributes = getAttributes(messages);
-        attributes.put("styleClass", "message");
-        attributes.put("errorClass", "error-message");
-        attributes.put("infoClass", "info-message");
-        getChildren(modal).add(messages);
-
-        UIOutput output = (UIOutput) application.createComponent(UIOutput.COMPONENT_TYPE);
-        output.setValue("<p>");
-        getAttributes(output).put(JSFAttr.ESCAPE_ATTR, Boolean.FALSE);
-        getChildren(modal).add(output);
-
-        output = (UIOutput) application.createComponent(UIOutput.COMPONENT_TYPE);
-        output.setValue(MessageUtil.getMessage("document_send_out_encryption_intro"));
-        getChildren(modal).add(output);
-
-        output = (UIOutput) application.createComponent(UIOutput.COMPONENT_TYPE);
-        output.setValue("</p><br />");
-        getAttributes(output).put(JSFAttr.ESCAPE_ATTR, Boolean.FALSE);
-        getChildren(modal).add(output);
-
-        HtmlDataTable table = (HtmlDataTable) application.createComponent(HtmlDataTable.COMPONENT_TYPE);
-        table.setId("encryptRecipients");
-        table.setValueBinding("value", application.createValueBinding("#{DocumentSendOutDialog.encryptionRecipients}"));
-        table.setVar("row");
-        table.setRowClasses("selectedItemsRow,selectedItemsRowAlt");
-        table.setHeaderClass("selectedItemsHeader");
-        table.setWidth("100%");
-        getChildren(modal).add(table);
-        createAndAddColumn(application, table, "document_send_out_encryptionRecipient_name", "#{row.name}", true);
-        createAndAddColumn(application, table, "document_send_out_encryptionRecipient_idCode", "#{row.idCode}", false);
-
-        List<UIComponent> children = getChildren(getModalContainer());
-        children.clear();
-        children.add(modal);
-        modalId = modal.getClientId(context) + "_popup";
-
-        Map<Pair<String /* name */, String /* email */>, String /* idCode */> idCodesByNameAndEmail = new HashMap<Pair<String, String>, String>();
-        for (Node contact : getAddressbookService().listOrganizationAndPerson()) {
-            String name = AddressbookUtil.getContactFullName(RepoUtil.toQNameProperties(contact.getProperties()), contact.getType());
-            String email = (String) contact.getProperties().get(AddressbookModel.Props.EMAIL.toString());
-            String idCode = null;
-            if (contact.getType().equals(AddressbookModel.Types.ORGANIZATION)) {
-                idCode = (String) contact.getProperties().get(AddressbookModel.Props.ENCRYPTION_PERSON_ID.toString());
-            } else if (contact.getType().equals(AddressbookModel.Types.PRIV_PERSON)) {
-                idCode = (String) contact.getProperties().get(AddressbookModel.Props.PERSON_ID.toString());
-            }
-            if (StringUtils.isNotBlank(name) && StringUtils.isNotBlank(email) && StringUtils.isNotBlank(idCode)) {
-                idCodesByNameAndEmail.put(Pair.newInstance(name.toLowerCase(), email.toLowerCase()), idCode);
-            }
-        }
-
-        encryptionRecipients = new ArrayList<EncryptionRecipient>();
-        List<String> names = model.getProperties().get(PROP_KEYS[0]);
-        List<String> emails = model.getProperties().get(PROP_KEYS[1]);
-        for (int i = 0; i < names.size(); i++) {
-            String name = names.get(i);
-            String email = StringUtils.trim(emails.get(i));
-            String idCode = StringUtils.trimToEmpty(idCodesByNameAndEmail.get(Pair.newInstance(name.toLowerCase(), email.toLowerCase())));
-
-            EncryptionRecipient encryptionRecipient = new EncryptionRecipient();
-            encryptionRecipient.setName(name);
-            encryptionRecipient.setIdCode(idCode);
-            encryptionRecipients.add(encryptionRecipient);
-        }
-    }
-
-    private void createAndAddColumn(final Application application, HtmlDataTable table, String titleKey, String valueBinding, boolean disabled) {
-        UIColumn column = (UIColumn) application.createComponent(UIColumn.COMPONENT_TYPE);
-        getChildren(table).add(column);
-
-        UIOutput headerOutput = (UIOutput) application.createComponent(UIOutput.COMPONENT_TYPE);
-        headerOutput.setValue(MessageUtil.getMessage(titleKey));
-        addFacet(column, "header", headerOutput);
-
-        UIInput input = (UIInput) application.createComponent(UIInput.COMPONENT_TYPE);
-        input.setValueBinding("value", application.createValueBinding(valueBinding));
-        if (disabled) {
-            getAttributes(input).put(HTML.READONLY_ATTR, Boolean.TRUE);
-        }
-        getChildren(column).add(input);
-    }
-
     // START: getters / setters
 
     public SendOutModel getModel() {
         return model;
     }
 
-    public String getModalId() {
-        return modalId;
+    public void setDocumentService(DocumentService documentService) {
+        this.documentService = documentService;
     }
 
-    public void setModalContainer(UIPanel panel) {
-        modalContainer = panel;
-    }
-
-    public UIPanel getModalContainer() {
-        if (modalContainer == null) {
-            modalContainer = new UIPanel();
+    public DocumentService getDocumentService() {
+        if (documentService == null) {
+            documentService = (DocumentService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())//
+                    .getBean(DocumentService.BEAN_NAME);
         }
-        return modalContainer;
+        return documentService;
+    }
+
+    protected DocumentLogService getDocumentLogService() {
+        if (documentLogService == null) {
+            documentLogService = (DocumentLogService) FacesContextUtils.getRequiredWebApplicationContext( //
+                    FacesContext.getCurrentInstance()).getBean(DocumentLogService.BEAN_NAME);
+        }
+        return documentLogService;
+    }
+
+    public void setDocumentTemplateService(DocumentTemplateService documentTemplateService) {
+        this.documentTemplateService = documentTemplateService;
+    }
+
+    public DocumentTemplateService getDocumentTemplateService() {
+        if (documentTemplateService == null) {
+            documentTemplateService = (DocumentTemplateService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())//
+                    .getBean(DocumentTemplateService.BEAN_NAME);
+        }
+        return documentTemplateService;
+    }
+
+    public void setGeneralService(GeneralService generalService) {
+        this.generalService = generalService;
+    }
+
+    public GeneralService getGeneralService() {
+        if (generalService == null) {
+            generalService = (GeneralService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())//
+                    .getBean(GeneralService.BEAN_NAME);
+        }
+        return generalService;
+    }
+
+    public void setClassificatorService(ClassificatorService classificatorService) {
+        this.classificatorService = classificatorService;
+    }
+
+    public ClassificatorService getClassificatorService() {
+        if (classificatorService == null) {
+            classificatorService = (ClassificatorService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())//
+                    .getBean(ClassificatorService.BEAN_NAME);
+        }
+        return classificatorService;
+    }
+
+    public void setParametersService(ParametersService parametersService) {
+        this.parametersService = parametersService;
+    }
+
+    public ParametersService getParametersService() {
+        if (parametersService == null) {
+            parametersService = (ParametersService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())//
+                    .getBean(ParametersService.BEAN_NAME);
+        }
+        return parametersService;
+    }
+
+    public void setAddressbookDialog(AddressbookMainViewDialog addressbookDialog) {
+        this.addressbookDialog = addressbookDialog;
+    }
+
+    public SendOutService getSendOutService() {
+        if (sendOutService == null) {
+            sendOutService = (SendOutService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())//
+                    .getBean(SendOutService.BEAN_NAME);
+        }
+        return sendOutService;
+    }
+
+    public SignatureService getSignatureService() {
+        if (signatureService == null) {
+            signatureService = (SignatureService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())//
+                    .getBean(SignatureService.BEAN_NAME);
+        }
+        return signatureService;
+    }
+
+    protected FileService getFileService() {
+        if (fileService == null) {
+            fileService = (FileService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())//
+                    .getBean(FileService.BEAN_NAME);
+        }
+        return fileService;
+    }
+
+    protected AddressbookService getAddressbookService() {
+        if (addressbookService == null) {
+            addressbookService = (AddressbookService) FacesContextUtils.getRequiredWebApplicationContext(
+                    FacesContext.getCurrentInstance()).getBean(AddressbookService.BEAN_NAME);
+        }
+        return addressbookService;
+    }
+
+    protected UserService getUserService() {
+        if (userService == null) {
+            userService = (UserService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
+                    .getBean(UserService.BEAN_NAME);
+        }
+        return userService;
+    }
+
+    protected OrganizationStructureService getOrganizationStructureService() {
+        if (organizationStructureService == null) {
+            organizationStructureService = (OrganizationStructureService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
+                    .getBean(OrganizationStructureService.BEAN_NAME);
+        }
+        return organizationStructureService;
+    }
+
+    protected AuthorityService getAuthorityService() {
+        if (authorityService == null) {
+            authorityService = Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getAuthorityService();
+        }
+        return authorityService;
+    }
+
+    protected PersonService getPersonService() {
+        if (personService == null) {
+            personService = Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getPersonService();
+        }
+        return personService;
     }
 
     // END: getters / setters
-
-    public static class EncryptionRecipient implements Serializable {
-        private static final long serialVersionUID = 1L;
-
-        private String name;
-        private String idCode;
-
-        public String getName() {
-            return name;
-        }
-
-        public void setName(String name) {
-            this.name = name;
-        }
-
-        public String getIdCode() {
-            return idCode;
-        }
-
-        public void setIdCode(String idCode) {
-            this.idCode = idCode;
-        }
-
-    }
 
     public static class SendOutModel implements Serializable {
 
@@ -719,7 +713,6 @@ public class DocumentSendOutDialog extends BaseDialogBean {
         private String sendDesc;
         private String sendMode;
         private boolean zip;
-        private boolean encrypt;
         private String senderEmail;
         private String sendoutInfo;
         private String subject;
@@ -774,14 +767,6 @@ public class DocumentSendOutDialog extends BaseDialogBean {
 
         public void setZip(boolean zip) {
             this.zip = zip;
-        }
-
-        public boolean isEncrypt() {
-            return encrypt;
-        }
-
-        public void setEncrypt(boolean encrypt) {
-            this.encrypt = encrypt;
         }
 
         public String getSenderEmail() {

@@ -1,7 +1,7 @@
 package ee.webmedia.alfresco.orgstructure.amr.service;
 
-import smit.ametnik.services.AmetnikExt;
-import smit.ametnik.services.YksusExt;
+import smit.ametnik.services.Ametnik;
+import smit.ametnik.services.Yksus;
 
 /**
  * Web service, to communicate with AmetnikeRegister
@@ -11,9 +11,9 @@ import smit.ametnik.services.YksusExt;
 public interface AMRService {
     String BEAN_NAME = "AmrService";
 
-    YksusExt[] getYksusByAsutusId();
+    Yksus[] getYksusByAsutusId();
 
-    AmetnikExt[] getAmetnikByAsutusId();
+    Ametnik[] getAmetnikByAsutusId();
 
-    AmetnikExt getAmetnikByIsikukood(String socialSecurityNr);
+    Ametnik getAmetnikByIsikukood(String socialSecurityNr);
 }

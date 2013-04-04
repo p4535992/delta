@@ -7,27 +7,11 @@ import org.alfresco.repo.lock.LockServiceImpl;
 import org.alfresco.service.cmr.lock.LockStatus;
 import org.alfresco.service.cmr.lock.LockType;
 import org.alfresco.service.cmr.repository.NodeRef;
-import org.apache.commons.lang.StringUtils;
-import org.springframework.util.Assert;
-
-import ee.webmedia.alfresco.common.web.BeanHelper;
-import ee.webmedia.alfresco.document.file.service.FileService;
-import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 
 public class DocLockServiceImpl extends LockServiceImpl implements DocLockService {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DocLockServiceImpl.class);
     /** timeOut in seconds how long lock is kept after creation(refreshing) before expiring */
     private final int lockTimeout = 180;
-    private FileService fileService;
-
-    @Override
-    public String getLockOwnerIfLocked(NodeRef nodeRef) {
-        Assert.notNull(nodeRef, "NodeRef cannot be null!");
-        if (isLockByOther(nodeRef)) {
-            return (String) nodeService.getProperty(nodeRef, ContentModel.PROP_LOCK_OWNER);
-        }
-        return null;
-    }
 
     /**
      * Gets the lock statuc for a node and a user name. <br>
@@ -44,7 +28,6 @@ public class DocLockServiceImpl extends LockServiceImpl implements DocLockServic
     @Override
     public LockStatus getLockStatus(NodeRef nodeRef, String userName) {
         LockStatus result = LockStatus.NO_LOCK;
-        log.info("Checking lock status for user " + userName + " on " + nodeRef);
         if (nodeService.hasAspect(nodeRef, ContentModel.ASPECT_LOCKABLE)) {
             // Get the current lock owner
             String currentLockOwner = (String) nodeService.getProperty(nodeRef, ContentModel.PROP_LOCK_OWNER);
@@ -65,7 +48,6 @@ public class DocLockServiceImpl extends LockServiceImpl implements DocLockServic
                     }
                 }
             }
-            log.info("Lock owner: " + currentLockOwner + "; Node owner: " + nodeOwner + "; Returning " + result.name());
         }
         return result;
     }
@@ -104,20 +86,6 @@ public class DocLockServiceImpl extends LockServiceImpl implements DocLockServic
         return lockSts;
     }
 
-    @Override
-    public boolean isGeneratedFileDocumentLocked(NodeRef fileRef) {
-        if (!fileService.isFileGenerated(fileRef)) {
-            return false;
-        }
-
-        NodeRef docRef = BeanHelper.getGeneralService().getAncestorNodeRefWithType(fileRef, DocumentCommonModel.Types.DOCUMENT);
-        if (docRef != null) {
-            return (getLockStatus(docRef) == LockStatus.LOCKED);
-        }
-
-        return false;
-    }
-
     private LockStatus debugLock(NodeRef lockNode, String msgPrefix) {
         LockStatus lockSts = getLockStatus(lockNode);
         if (log.isDebugEnabled()) {
@@ -134,26 +102,27 @@ public class DocLockServiceImpl extends LockServiceImpl implements DocLockServic
         return lockSts;
     }
 
-    @Override
-    public boolean isLockByOther(NodeRef nodeRef) {
+    private boolean isLockByOther(NodeRef nodeRef) {
         return isLockByOther(nodeRef, getUserName());
     }
 
     private boolean isLockByOther(NodeRef nodeRef, String userName) {
         boolean isLockOwnedByOther = true;
-        String currentLockOwner = (String) nodeService.getProperty(nodeRef, ContentModel.PROP_LOCK_OWNER);
-        if (StringUtils.isNotBlank(currentLockOwner)) {
-            Date expiryDate = (Date) nodeService.getProperty(nodeRef, ContentModel.PROP_EXPIRY_DATE);
-            if (expiryDate != null && expiryDate.before(new Date())) {
-                isLockOwnedByOther = false; // LockStatus.LOCK_EXPIRED;
-                log.debug("existing lock has expired");
-            } else {
-                if (currentLockOwner.equals(userName)) {
-                    log.debug("user '" + userName + "' owns the lock");
-                    isLockOwnedByOther = false; // LockStatus.LOCK_OWNER;
+        if (nodeService.hasAspect(nodeRef, ContentModel.ASPECT_LOCKABLE)) {
+            String currentLockOwner = (String) nodeService.getProperty(nodeRef, ContentModel.PROP_LOCK_OWNER);
+            if (currentLockOwner != null) {
+                Date expiryDate = (Date) nodeService.getProperty(nodeRef, ContentModel.PROP_EXPIRY_DATE);
+                if (expiryDate != null && expiryDate.before(new Date())) {
+                    isLockOwnedByOther = false; // LockStatus.LOCK_EXPIRED;
+                    log.debug("existing lock has expired");
                 } else {
-                    log.debug("user '" + userName + "' doesn't own the lock - lock owned by '" + currentLockOwner + "'");
-                    isLockOwnedByOther = true; // LockStatus.LOCKED;
+                    if (currentLockOwner.equals(userName)) {
+                        log.debug("user '" + userName + "' owns the lock");
+                        isLockOwnedByOther = false; // LockStatus.LOCK_OWNER;
+                    } else {
+                        log.debug("user '" + userName + "' doesn't own the lock - lock owned by '" + currentLockOwner + "'");
+                        isLockOwnedByOther = true; // LockStatus.LOCKED;
+                    }
                 }
             }
         } else {
@@ -166,10 +135,6 @@ public class DocLockServiceImpl extends LockServiceImpl implements DocLockServic
     @Override
     public int getLockTimeout() {
         return lockTimeout;
-    }
-
-    public void setFileService(FileService fileService) {
-        this.fileService = fileService;
     }
     // END: getters / setters
 

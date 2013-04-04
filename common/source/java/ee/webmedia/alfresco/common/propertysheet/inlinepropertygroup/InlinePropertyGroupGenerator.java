@@ -2,8 +2,6 @@ package ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup;
 
 import static ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.CombinedPropReader.AttributeNames.OPTIONS_SEPARATOR;
 import static ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.CombinedPropReader.AttributeNames.PROPERTIES_SEPARATOR;
-import static ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.CombinedPropReader.AttributeNames.PROPS;
-import static ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.CombinedPropReader.AttributeNames.TEXT_ID;
 import static org.alfresco.web.bean.generator.BaseComponentGenerator.CustomAttributeNames.VALDIATION_DISABLED;
 import static org.alfresco.web.bean.generator.BaseComponentGenerator.CustomAttributeNames.VALIDATION_MARKER_DISABLED;
 import static org.alfresco.web.bean.generator.BaseComponentGenerator.CustomConstants.VALUE_INDEX_IN_MULTIVALUED_PROPERTY;
@@ -18,7 +16,6 @@ import javax.faces.component.UIOutput;
 import javax.faces.context.FacesContext;
 
 import org.alfresco.service.cmr.dictionary.PropertyDefinition;
-import org.alfresco.service.namespace.QName;
 import org.alfresco.web.app.Application;
 import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.generator.BaseComponentGenerator;
@@ -27,7 +24,6 @@ import org.alfresco.web.ui.repo.component.property.PropertySheetItem;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.apache.commons.lang.StringUtils;
 
-import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 
 /**
@@ -46,9 +42,8 @@ import ee.webmedia.alfresco.utils.ComponentUtil;
  * 
  * @author Alar Kvell
  */
-public class InlinePropertyGroupGenerator extends BaseComponentGenerator implements HandlesViewMode {
+public class InlinePropertyGroupGenerator extends BaseComponentGenerator implements GeneratorsWrapper {
 
-    public static final String INLINE_PROPERTY_GROUP_PROP_NAMES_ATTR = "inlinePropertyGroupPropNames";
     private static final String ESCAPE_TEXT = "escapeText";
     private static final String PLACEHOLDER = "#";
     private int propIndex = 0;
@@ -59,7 +54,7 @@ public class InlinePropertyGroupGenerator extends BaseComponentGenerator impleme
         getCustomAttributes().put(VALIDATION_MARKER_DISABLED, Boolean.FALSE.toString());
         propIndex = 0;
         UIComponent container = context.getApplication().createComponent(ComponentConstants.JAVAX_FACES_GRID);
-        ComponentUtil.putAttribute(container, "styleClass", "inline-property-group");
+        container.getAttributes().put("styleClass", "inline-property-group");
         FacesHelper.setupComponentId(context, container, null);
         return container;
     }
@@ -69,26 +64,21 @@ public class InlinePropertyGroupGenerator extends BaseComponentGenerator impleme
             PropertyDefinition propertyDef, UIComponent component) {
         // by now, this component has been added to parent's children list
 
-        String propertyDescriptions = getCustomAttributes().get(PROPS);
+        String propertyDescriptions = getCustomAttributes().get("props");
         boolean escapeText = Boolean.valueOf(getCustomAttributes().get(ESCAPE_TEXT));
         String optionsSeparator = getCustomAttributes().get(OPTIONS_SEPARATOR);
         String propertiesSeparator = getCustomAttributes().get(PROPERTIES_SEPARATOR);
         final List<ComponentPropVO> propVOs = CombinedPropReader.readProperties(propertyDescriptions, propertiesSeparator, optionsSeparator, propertySheet.getNode(), context);
-        List<QName> propNames = new ArrayList<QName>();
-        for (ComponentPropVO componentPropVO : propVOs) {
-            propNames.add(QName.createQName(componentPropVO.getPropertyName(), BeanHelper.getNamespaceService()));
-        }
-        ComponentUtil.getAttributes(component).put(INLINE_PROPERTY_GROUP_PROP_NAMES_ATTR, propNames);
 
-        String text = Application.getMessage(FacesContext.getCurrentInstance(), getCustomAttributes().get(TEXT_ID));
+        String text = Application.getMessage(FacesContext.getCurrentInstance(), getCustomAttributes().get("textId"));
         @SuppressWarnings("unchecked")
         List<UIComponent> children = component.getChildren();
-        generate(context, propertySheet, children, propVOs, text, escapeText);
+        generate(context, propertySheet, item, children, propVOs, text, escapeText);
 
         super.setupMandatoryPropertyIfNecessary(context, propertySheet, item, propertyDef, component);
     }
 
-    protected void generate(FacesContext context, UIPropertySheet propertySheet, List<UIComponent> children,
+    protected void generate(FacesContext context, UIPropertySheet propertySheet, PropertySheetItem item, List<UIComponent> children,
             List<ComponentPropVO> propVOs, String text, boolean escapeText) {
 
         int i = 0;
@@ -106,24 +96,12 @@ public class InlinePropertyGroupGenerator extends BaseComponentGenerator impleme
 
     protected void generateRow(FacesContext context, UIPropertySheet propertySheet, List<UIComponent> rowChildren,
             List<ComponentPropVO> propVOs, String text, boolean escapeText) {
-        final int nrOfParts;
-        if (text.startsWith(PLACEHOLDER) && text.endsWith(PLACEHOLDER)) {
-            nrOfParts = propVOs.size();
-        } else if (!text.startsWith(PLACEHOLDER) && !text.endsWith(PLACEHOLDER)) {
-            nrOfParts = propVOs.size() + 1;
-        } else {
-            nrOfParts = propVOs.size();
-        }
+        final int nrOfParts = text.startsWith(PLACEHOLDER) ? propVOs.size() + 1 : propVOs.size();
         List<String> textParts = new ArrayList<String>(Arrays.asList(text.split(PLACEHOLDER, nrOfParts)));
         String last = textParts.get(textParts.size() - 1);
         if (last.endsWith(PLACEHOLDER)) {
             textParts.set(textParts.size() - 1, last.substring(0, last.length() - 1));
             textParts.add("");
-        }
-        String first = textParts.get(0);
-        if (first.startsWith(PLACEHOLDER)) {
-            textParts.set(0, first.substring(1));
-            textParts.add(0, "");
         }
         for (int i = 0; i < textParts.size(); i++) {
             final String textPart = textParts.get(i);

@@ -56,15 +56,6 @@
       </managed-property>
    </managed-bean>
 
-   <managed-bean>
-      <description>
-         Bean that generates a date picker component with due date selector
-      </description>
-      <managed-bean-name>DatePickerWithDueDateGenerator</managed-bean-name>
-      <managed-bean-class>ee.webmedia.alfresco.common.propertysheet.datepicker.DatePickerWithDueDateGenerator</managed-bean-class>
-      <managed-bean-scope>request</managed-bean-scope>
-   </managed-bean>
-
     <managed-bean>
         <managed-bean-name>ClearStateNotificationHandler</managed-bean-name>
         <managed-bean-class>ee.webmedia.alfresco.common.web.ClearStateNotificationHandler</managed-bean-class>
@@ -116,21 +107,6 @@
       <converter-class>ee.webmedia.alfresco.common.propertysheet.datepicker.DatePickerConverter</converter-class>
    </converter>
    
-   <converter>
-      <converter-id>ee.webmedia.alfresco.common.propertysheet.datepicker.TimePickerConverter</converter-id>
-      <converter-class>ee.webmedia.alfresco.common.propertysheet.datepicker.TimePickerConverter</converter-class>
-   </converter>
-   
-   <converter>
-      <converter-id>ee.webmedia.alfresco.workflow.web.DueDateDaysConverter</converter-id>
-      <converter-class>ee.webmedia.alfresco.workflow.web.DueDateDaysConverter</converter-class>
-   </converter>
-   
-   <converter>
-      <converter-id>ee.webmedia.alfresco.common.web.ConvertIntWithMsg</converter-id>
-      <converter-class>ee.webmedia.alfresco.common.web.ConvertIntWithMsg</converter-class>
-   </converter>
-
    <component>
       <component-type>component.CustomSelectOneRadio</component-type>
       <component-class>ee.webmedia.alfresco.common.radio.UICustomSelectOneRadio</component-class>

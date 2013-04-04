@@ -2,7 +2,7 @@
 <beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
    xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
 
-   <bean id="volumeModelBootstrap" parent="dictionaryModelBootstrap" depends-on="documentDynamicModelBootstrap,caseModelBootstrap" >
+   <bean id="volumeModelBootstrap" parent="dictionaryModelBootstrap" depends-on="dictionaryBootstrap,documentModelBootstrap,caseModelBootstrap" >
       <property name="models">
          <list>
             <value>ee/webmedia/alfresco/volume/model/volumeModel.xml</value>
@@ -33,9 +33,6 @@
       <property name="seriesService" ref="SeriesService" />
       <property name="caseService" ref="CaseService" />
       <property name="documentService" ref="documentService" />
-      <property name="logService" ref="LogService" />
-      <property name="userService" ref="UserService" />
-      <property name="caseVolumeEnabled" value="${conf.casefile.enabled}" />
    </bean>
 
    <bean id="VolumeService" class="org.springframework.aop.framework.ProxyFactoryBean">
@@ -54,6 +51,7 @@
 
    <bean id="volumeParametersBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
       <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
       <property name="dependsOn">
          <list>
             <ref bean="parametersSpacesBootstrap" />
@@ -77,7 +75,6 @@
 
    <bean id="volumeAutomaticClosingTrigger" class="ee.webmedia.alfresco.parameters.job.ParameterRescheduledTriggerBean" parent="parameterRescheduledTriggerParent"
       depends-on="volumeParametersBootstrap">
-      <property name="enabled" value="${jobs.enabled}" />
       <property name="parameterName" value="volumeAutomaticClosingTime" />
       <property name="parameterFormat" value="H:mm" />
       <property name="jobDetail">
@@ -85,25 +82,11 @@
             <property name="jobClass" value="ee.webmedia.alfresco.volume.job.VolumeAutomaticClosingJob" />
             <property name="jobDataAsMap">
                <map>
-                  <entry key="documentListService" value-ref="DocumentListService" />
+                  <entry key="functionsService" value-ref="FunctionsService" />
                </map>
             </property>
          </bean>
       </property>
    </bean>
-   
-   <!-- 
-   	  1) Updates volume type from estonian string literals to translatable constants and 
-   	  2) changes namespaces of volume properties
-   -->
-   <bean id="volumeTypeAndNamespaceUpdater" class="ee.webmedia.alfresco.volume.bootstrap.VolumeTypeUpdater" parent="abstractNodeUpdater" >
-      <property name="moduleId" value="simdhs" />
-   </bean>
-
-   <!-- START: web beans: -->
-
-   <bean id="VolumeTypePrivilegesHandler" class="ee.webmedia.alfresco.volume.web.VolumeTypePrivilegesHandler" scope="session" />
-
-   <!-- END: web beans: -->
 
 </beans>

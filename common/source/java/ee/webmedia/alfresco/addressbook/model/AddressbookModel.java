@@ -7,12 +7,6 @@ import org.alfresco.service.namespace.QName;
  */
 public interface AddressbookModel {
     String URI = "http://alfresco.webmedia.ee/model/addressbook/1.0";
-    String PREFIX = "ab:";
-
-    public interface Repo {
-        String ADDRESSBOOK_PARENT = "/";
-        String ADDRESSBOOK_SPACE = ADDRESSBOOK_PARENT + PREFIX + "addressbook";
-    }
 
     interface Types {
         QName ORGANIZATION = QName.createQName(AddressbookModel.URI, "organization");
@@ -39,9 +33,6 @@ public interface AddressbookModel {
         QName PERSON_ID = QName.createQName(AddressbookModel.URI, "personId");
         QName JOB_NAME = QName.createQName(AddressbookModel.URI, "jobName");
         QName PHONE = QName.createQName(AddressbookModel.URI, "phone");
-        QName FIRST_ADDITIONAL_PHONE = QName.createQName(AddressbookModel.URI, "firstAdditionalPhone");
-        QName SECOND_ADDITIONAL_PHONE = QName.createQName(AddressbookModel.URI, "secondAdditionalPhone");
-        QName MOBILE_PHONE = QName.createQName(AddressbookModel.URI, "mobilePhone");
         QName ORGANIZATION_NAME = QName.createQName(AddressbookModel.URI, "orgName");
         QName ORGANIZATION_ALTERNATE_NAME = QName.createQName(AddressbookModel.URI, "orgAltName");
         QName ORGANIZATION_ACRONYM = QName.createQName(AddressbookModel.URI, "orgAcronym");
@@ -50,25 +41,18 @@ public interface AddressbookModel {
         QName TASK_CAPABLE = QName.createQName(AddressbookModel.URI, "taskCapable");
         QName GROUP_NAME = QName.createQName(AddressbookModel.URI, "groupName");
         QName EMAIL = QName.createQName(AddressbookModel.URI, "email");
-        QName FIRST_ADDITIONAL_EMAIL = QName.createQName(AddressbookModel.URI, "firstAdditionalEmail");
-        QName SECOND_ADDITIONAL_EMAIL = QName.createQName(AddressbookModel.URI, "secondAdditionalEmail");
         QName FAX = QName.createQName(AddressbookModel.URI, "fax");
         QName POSTAL = QName.createQName(AddressbookModel.URI, "postal");
-        QName WEBSITE = QName.createQName(AddressbookModel.URI, "website");
         QName ADDRESS1 = QName.createQName(AddressbookModel.URI, "address1");
         QName ADDRESS2 = QName.createQName(AddressbookModel.URI, "address2");
         QName CITY = QName.createQName(AddressbookModel.URI, "city");
         QName COUNTRY = QName.createQName(AddressbookModel.URI, "country");
         QName SAP_ACCOUNT = QName.createQName(AddressbookModel.URI, "sapAccount");
-        QName ENCRYPTION_PERSON_ID = QName.createQName(AddressbookModel.URI, "encryptionPersonId");
-        QName MANAGEABLE_FOR_ADMIN = QName.createQName(AddressbookModel.URI, "manageableForAdmin");
     }
 
     interface Aspects {
         QName ORGANIZATION_PROPERTIES = QName.createQName(AddressbookModel.URI, "organizationProperties");
         QName EVERYONE = QName.createQName(AddressbookModel.URI, "everyone");
         QName TASK_CAPABLE = QName.createQName(AddressbookModel.URI, "taskCapable");
-        QName ENCRYPTION_PERSON_ID = QName.createQName(AddressbookModel.URI, "encryptionPersonId");
-        QName SKYPE = QName.createQName(AddressbookModel.URI, "skype");
     }
 }

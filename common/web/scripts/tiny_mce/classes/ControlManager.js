@@ -1,11 +1,11 @@
 /**
  * ControlManager.js
  *
- * Copyright, Moxiecode Systems AB
+ * Copyright 2009, Moxiecode Systems AB
  * Released under LGPL License.
  *
- * License: http://www.tinymce.com/license
- * Contributing: http://www.tinymce.com/contributing
+ * License: http://tinymce.moxiecode.com/license
+ * Contributing: http://tinymce.moxiecode.com/contributing
  */
 
 (function(tinymce) {
@@ -113,43 +113,31 @@
 		 * will be used.
 		 *
 		 * @method createControl
-		 * @param {String} name Control name to create for example "separator".
+		 * @param {String} n Control name to create for example "separator".
 		 * @return {tinymce.ui.Control} Control instance that got created and added.
 		 */
-		createControl : function(name) {
-			var ctrl, i, l, self = this, editor = self.editor, factories, ctrlName;
+		createControl : function(n) {
+			var c, t = this, ed = t.editor;
 
-			// Build control factory cache
-			if (!self.controlFactories) {
-				self.controlFactories = [];
-				each(editor.plugins, function(plugin) {
-					if (plugin.createControl) {
-						self.controlFactories.push(plugin);
-					}
-				});
-			}
+			each(ed.plugins, function(p) {
+				if (p.createControl) {
+					c = p.createControl(n, t);
 
-			// Create controls by asking cached factories
-			factories = self.controlFactories;
-			for (i = 0, l = factories.length; i < l; i++) {
-				ctrl = factories[i].createControl(name, self);
-
-				if (ctrl) {
-					return self.add(ctrl);
+					if (c)
+						return false;
 				}
+			});
+
+			switch (n) {
+				case "|":
+				case "separator":
+					return t.createSeparator();
 			}
 
-			// Create sepearator
-			if (name === "|" || name === "separator") {
-				return self.createSeparator();
-			}
+			if (!c && ed.buttons && (c = ed.buttons[n]))
+				return t.createButton(n, c);
 
-			// Create control from button collection
-			if (editor.buttons && (ctrl = editor.buttons[name])) {
-				return self.createButton(name, ctrl);
-			}
-
-			return self.add(ctrl);
+			return t.add(c);
 		},
 
 		/**
@@ -172,8 +160,6 @@
 			s['class'] = s['class'] + ' ' + ed.getParam('skin') + 'Skin';
 			if (v = ed.getParam('skin_variant'))
 				s['class'] += ' ' + ed.getParam('skin') + 'Skin' + v.substring(0, 1).toUpperCase() + v.substring(1);
-
-			s['class'] += ed.settings.directionality == "rtl" ? ' mceRtl' : '';
 
 			id = t.prefix + id;
 			cls = cc || t._cls.dropmenu || tinymce.ui.DropMenu;
@@ -249,16 +235,11 @@
 
 			id = t.prefix + id;
 
-
-			function useNativeListForAccessibility(ed) {
-				return ed.settings.use_accessible_selects && !tinymce.isGecko
-			}
-
-			if (ed.settings.use_native_selects || useNativeListForAccessibility(ed))
+			if (ed.settings.use_native_selects)
 				c = new tinymce.ui.NativeListBox(id, s);
 			else {
 				cls = cc || t._cls.listbox || tinymce.ui.ListBox;
-				c = new cls(id, s, ed);
+				c = new cls(id, s);
 			}
 
 			t.controls[id] = c;
@@ -322,11 +303,11 @@
 
 			if (s.menu_button) {
 				cls = cc || t._cls.menubutton || tinymce.ui.MenuButton;
-				c = new cls(id, s, ed);
+				c = new cls(id, s);
 				ed.onMouseDown.add(c.hideMenu, c);
 			} else {
 				cls = t._cls.button || tinymce.ui.Button;
-				c = new cls(id, s, ed);
+				c = new cls(id, s);
 			}
 
 			return t.add(c);
@@ -387,7 +368,7 @@
 
 			id = t.prefix + id;
 			cls = cc || t._cls.splitbutton || tinymce.ui.SplitButton;
-			c = t.add(new cls(id, s, ed));
+			c = t.add(new cls(id, s));
 			ed.onMouseDown.add(c.hideMenu, c);
 
 			return c;
@@ -436,7 +417,7 @@
 
 			id = t.prefix + id;
 			cls = cc || t._cls.colorsplitbutton || tinymce.ui.ColorSplitButton;
-			c = new cls(id, s, ed);
+			c = new cls(id, s);
 			ed.onMouseDown.add(c.hideMenu, c);
 
 			// Remove the menu element when the editor is removed
@@ -477,23 +458,11 @@
 
 			id = t.prefix + id;
 			cls = cc || t._cls.toolbar || tinymce.ui.Toolbar;
-			c = new cls(id, s, t.editor);
+			c = new cls(id, s);
 
 			if (t.get(id))
 				return null;
 
-			return t.add(c);
-		},
-		
-		createToolbarGroup : function(id, s, cc) {
-			var c, t = this, cls;
-			id = t.prefix + id;
-			cls = cc || this._cls.toolbarGroup || tinymce.ui.ToolbarGroup;
-			c = new cls(id, s, t.editor);
-			
-			if (t.get(id))
-				return null;
-			
 			return t.add(c);
 		},
 

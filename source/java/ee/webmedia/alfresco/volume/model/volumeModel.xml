@@ -8,7 +8,6 @@
       <import uri="http://www.alfresco.org/model/content/1.0" prefix="cm" />
       <import uri="http://alfresco.webmedia.ee/model/document/common/1.0" prefix="doccom" />
       <import uri="http://alfresco.webmedia.ee/model/case/1.0" prefix="case" />
-      <import uri="http://alfresco.webmedia.ee/model/document/dynamic/1.0" prefix="docdyn" />
    </imports>
 
    <namespaces>
@@ -16,88 +15,52 @@
    </namespaces>
 
    <types>
-      <type name="vol:deletedDocument">
-         <parent>sys:base</parent>
-         <properties>
-            <property name="vol:actor">
-               <type>d:text</type>
-               <mandatory>true</mandatory>
-            </property>
-            <property name="vol:deletedDateTime">
-               <type>d:date</type>
-               <mandatory>true</mandatory>
-            </property>
-            <property name="vol:documentData">
-               <type>d:text</type>
-               <mandatory>true</mandatory>
-            </property>
-            <property name="vol:comment">
-               <type>d:text</type>
-               <mandatory>true</mandatory>
-            </property>
-         </properties>
-      </type>
-   
       <type name="vol:volume">
          <parent>sys:base</parent>
          <properties>
-            <property name="docdyn:title">
+            <property name="vol:title">
                <type>d:text</type>
                <mandatory>true</mandatory>
             </property>
-            <property name="docdyn:containsCases">
+            <property name="vol:containsCases">
                <type>d:boolean</type>
             </property>
-            <property name="docdyn:casesCreatableByUser">
-               <type>d:boolean</type>
-            </property>
-            <property name="docdyn:description">
+            <property name="vol:description">
                <type>d:text</type>
             </property>
-            <property name="docdyn:status">
+            <property name="vol:status">
                <type>d:text</type>
             </property>
-            <property name="docdyn:validFrom">
+            <property name="vol:validFrom">
                <type>d:date</type>
                <mandatory>true</mandatory>
             </property>
-            <property name="docdyn:validTo">
+            <property name="vol:validTo">
                <type>d:date</type>
             </property>
-            <property name="docdyn:dispositionDate">
+            <property name="vol:dispositionDate">
                <type>d:date</type>
             </property>
-            <property name="docdyn:volumeType">
+            <property name="vol:volumeType">
                <type>d:text</type>
                <mandatory>true</mandatory>
             </property>
-            <property name="docdyn:volumeMark">
+            <property name="vol:volumeMark">
                <type>d:text</type>
                <mandatory>true</mandatory>
             </property>
-            <property name="docdyn:sendToDestruction">
+            <property name="vol:sendToDestruction">
                 <type>d:boolean</type>
             </property>
-             <property name="docdyn:archivingNote">
+             <property name="vol:archivingNote">
                  <type>d:text</type>
              </property>
-             <property name="docdyn:containingDocsCount">
+             <property name="vol:containingDocsCount">
                <type>d:int</type>
                <default>0</default>
             </property>
          </properties>
          <associations><!-- Volumes can have either documents as direct children or cases as children with documents -->
-            <child-association name="vol:deletedDocument">
-               <source>
-                  <mandatory>true</mandatory>
-                  <many>false</many>
-               </source>
-               <target>
-                  <class>vol:deletedDocument</class>
-                  <mandatory>false</mandatory>
-                  <many>true</many>
-               </target>
-            </child-association>
             <child-association name="case:case">
                <source>
                   <mandatory>true</mandatory>
@@ -112,7 +75,6 @@
          </associations>
          <mandatory-aspects>
             <aspect>doccom:documentContainer</aspect>
-            <aspect>doccom:documentRegNumbersContainer</aspect>
          </mandatory-aspects>
       </type>
    </types>

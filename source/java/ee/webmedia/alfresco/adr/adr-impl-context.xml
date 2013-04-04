@@ -8,10 +8,8 @@
       <property name="fileFolderService" ref="fileFolderService" />
       <property name="documentSearchService" ref="documentSearchService" />
       <property name="fileService" ref="fileService" />
+      <property name="documentTypeService" ref="documentTypeService" />
       <property name="documentService" ref="documentService" />
-      <property name="documentAdminService" ref="documentAdminService" />
-      <property name="documentDynamicService" ref="documentDynamicService" />
-      <property name="classificatorService" ref="classificatorService" />
       <property name="nodeService" ref="nodeService" />
       <property name="generalService" ref="generalService" />
       <property name="namespaceService" ref="namespaceService" />

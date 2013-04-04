@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" xmlns:tns="http://delta/maais/schemas" targetNamespace="http://delta/maais/schemas">
+   <xs:element name="CatalogStructureRequest">
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="documentTemplate" type="xs:string" maxOccurs="1" minOccurs="1" />
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="CatalogStructureResponse">
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="catalogStructure" type="tns:CatalogStructureElement" maxOccurs="unbounded" minOccurs="0" />
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:complexType name="CatalogStructureElement">
+      <xs:sequence>
+         <xs:element name="function" type="xs:string" maxOccurs="1" minOccurs="1" />
+         <xs:element name="series" type="xs:string" maxOccurs="1" minOccurs="1" />
+         <xs:element name="volume" type="xs:string" maxOccurs="1" minOccurs="1" />
+         <xs:element name="volumeNodeRef" type="xs:string" maxOccurs="1" minOccurs="1" />
+         <xs:element name="case" type="xs:string" maxOccurs="1" minOccurs="0" />
+         <xs:element name="caseNodeRef" type="xs:string" maxOccurs="1" minOccurs="0" />
+      </xs:sequence>
+   </xs:complexType>
+   <xs:element name="RegisterDocumentRequest">
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="documentTemplate" type="xs:string" maxOccurs="1" minOccurs="1" />
+            <xs:element name="volumeCaseNodeRef" type="xs:string" maxOccurs="1" minOccurs="1" />
+            <xs:element name="maaisCase" type="xs:string" maxOccurs="1" minOccurs="1" />
+            <xs:element name="documentFields" type="tns:DocumentFields" maxOccurs="1" minOccurs="1" />
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:complexType name="DocumentFields">
+      <xs:sequence>
+         <xs:element name="ownerName" type="xs:string" maxOccurs="1" minOccurs="1" />
+         <xs:element name="ownerId" type="xs:string" maxOccurs="1" minOccurs="1" />
+         <xs:element name="docName" type="xs:string" maxOccurs="1" minOccurs="1" />
+
+         <xs:element name="maaisLandAddress" type="xs:string" maxOccurs="1" minOccurs="0" />
+         <xs:element name="maaisLandAddressMunicipalityGenitive" type="xs:string" maxOccurs="1" minOccurs="0" />
+         <xs:element name="maaisLandAddressMunicipalityInessive" type="xs:string" maxOccurs="1" minOccurs="0" />
+         <xs:element name="maaisLandAddressStreetVillage" type="xs:string" maxOccurs="1" minOccurs="0" />
+         <xs:element name="maaisLandUsages" type="xs:string" maxOccurs="1" minOccurs="0" />
+         
+         <xs:element name="maaisLandArea" type="xs:string" maxOccurs="1" minOccurs="0" />
+         <xs:element name="maaisLandOwners" type="xs:string" maxOccurs="1" minOccurs="0" />
+         <xs:element name="maaisPaymentScheduleDuration" type="xs:string" maxOccurs="1" minOccurs="0" />
+         <xs:element name="maaisCadasterNumber" type="xs:string" maxOccurs="1" minOccurs="0" />
+         <xs:element name="maaisLandCadaster" type="xs:string" maxOccurs="1" minOccurs="0" />
+         <xs:element name="maaisLandCadasterPlural" type="xs:string" maxOccurs="1" minOccurs="0" />
+         <xs:element name="maaisLandNumber" type="xs:string" maxOccurs="1" minOccurs="0" />
+         <xs:element name="maaisPaymentScheduleYearlyFee" type="xs:string" maxOccurs="1" minOccurs="0" />
+         
+         <xs:element name="maaisPaymentSchedulePurchasePrice" type="xs:string" maxOccurs="1" minOccurs="0" />
+         <xs:element name="maaisPaymentScheduleReferenceNo" type="xs:string" maxOccurs="1" minOccurs="0" />
+         <xs:element name="maaisPaymentScheduleRemainingPrincipalDebt" type="xs:string" maxOccurs="1" minOccurs="0" />
+         <xs:element name="maaisLandName" type="xs:string" maxOccurs="1" minOccurs="0" />
+         <xs:element name="maaisPaymentScheduleOwners" type="xs:string" maxOccurs="1" minOccurs="0" />
+         <xs:element name="maaisCGDecisionPrivatizationWithPreemptionRightNo" type="xs:string" maxOccurs="1" minOccurs="0" />
+         <xs:element name="maaisPaymentScheduleOwnersWithAddresses" type="xs:string" maxOccurs="1" minOccurs="0" />
+         <xs:element name="maaisLandMunicipalityGenitive" type="xs:string" maxOccurs="1" minOccurs="0" />
+         
+         <xs:element name="maaisLandMunicipalityCouncilGenitive" type="xs:string" maxOccurs="1" minOccurs="0" />
+         <xs:element name="maaisPaymentScheduleOwnerName" type="xs:string" maxOccurs="1" minOccurs="0" />
+         <xs:element name="maaisPaymentScheduleOwnerCode" type="xs:string" maxOccurs="1" minOccurs="0" />
+         <xs:element name="maaisCaseRelatedPersonWithAddress" type="xs:string" maxOccurs="1" minOccurs="0" />
+         <xs:element name="maaisCaseRelatedPersonsSeparatedByLinebreak" type="xs:string" maxOccurs="1" minOccurs="0" />
+         <xs:element name="maaisCaseRelatedPerson" type="xs:string" maxOccurs="1" minOccurs="0" />
+         <xs:element name="maaisCaseRelatedPersonRepresentativeWithJobGenitive" type="xs:string" maxOccurs="1" minOccurs="0" />
+         
+         <xs:element name="maaisFirstPaymentScheduleAmount" type="xs:string" maxOccurs="1" minOccurs="0" />
+         <xs:element name="maaisLandPurchaseSaleContractDate" type="xs:string" maxOccurs="1" minOccurs="0" />
+         <xs:element name="maaisPaymentSchedulePrepaymentAmount" type="xs:string" maxOccurs="1" minOccurs="0" />
+         <xs:element name="maaisPaymentScheduleTotalLoanAmount" type="xs:string" maxOccurs="1" minOccurs="0" />
+         <xs:element name="maaisPaymentScheduleTotalPaidAmount" type="xs:string" maxOccurs="1" minOccurs="0" />
+         
+         <xs:element name="maaisLandRentalAnnouncementDate" type="xs:string" maxOccurs="1" minOccurs="0" />
+         <xs:element name="maaisLandRentalAnnouncementStateOwnershipDate" type="xs:string" maxOccurs="1" minOccurs="0" />
+         <xs:element name="maaisLandRentalAnnouncementStateOwnershipNo" type="xs:string" maxOccurs="1" minOccurs="0" />
+         <xs:element name="maaisLandOwnerPrimaryAddress" type="xs:string" maxOccurs="1" minOccurs="0" />
+         <xs:element name="maaisMunicipalityCouncilDecisionNo" type="xs:string" maxOccurs="1" minOccurs="0" />
+         <xs:element name="maaisMunicipalityCouncilDecisionDate" type="xs:string" maxOccurs="1" minOccurs="0" />
+         
+         <xs:element name="maaisBuildingRightsContractAnnouncementDate" type="xs:string" maxOccurs="1" minOccurs="0" />
+         <xs:element name="maaisBuildingRightsAnnouncementStateOwnershipDate" type="xs:string" maxOccurs="1" minOccurs="0" />
+         <xs:element name="maaisBuildingRightsAnnouncementStateOwnershipNo" type="xs:string" maxOccurs="1" minOccurs="0" />
+         <xs:element name="maaisChildBenefitSubsection" type="xs:string" maxOccurs="1" minOccurs="0" />
+         
+         <xs:element name="maaisChildBenefitNames" type="xs:string" maxOccurs="1" minOccurs="0" />
+         <xs:element name="maaisChildBenefitTotalAmount" type="xs:string" maxOccurs="1" minOccurs="0" />
+         <xs:element name="maaisPaymentSchedulesAmount" type="xs:string" maxOccurs="1" minOccurs="0" />
+         <xs:element name="maaisContractPartyGrammarForm" type="xs:string" maxOccurs="1" minOccurs="0" />
+         <xs:element name="maaisCountyGovernorOrderPrivatizationNo" type="xs:string" maxOccurs="1" minOccurs="0" />
+         <xs:element name="maaisCountyGovernorOrderPrivatizationDate" type="xs:string" maxOccurs="1" minOccurs="0" />
+         <xs:element name="maaisPurchasePriceTotal" type="xs:string" maxOccurs="1" minOccurs="0" />
+         <xs:element name="maaisPurchasePriceLand" type="xs:string" maxOccurs="1" minOccurs="0" />
+         <xs:element name="maaisPurchasePriceForest" type="xs:string" maxOccurs="1" minOccurs="0" />
+         <xs:element name="maaisCaseAssociatedPrepayments" type="xs:string" maxOccurs="1" minOccurs="0" />
+         
+         <xs:element name="maaisCaseAssociatedPrepaymentsDates" type="xs:string" maxOccurs="1" minOccurs="0" />
+         <xs:element name="maaisDebtTransferParagraph" type="xs:string" maxOccurs="1" minOccurs="0" />
+         <xs:element name="maaisApplicationForTransferringDebtDate" type="xs:string" maxOccurs="1" minOccurs="0" />
+         
+         <xs:element name="maaisApplicationForBenefitDate" type="xs:string" maxOccurs="1" minOccurs="0" />
+      </xs:sequence>
+   </xs:complexType>
+   <xs:element name="RegisterDocumentResponse">
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="url" type="xs:string" maxOccurs="1" minOccurs="1" />
+            <xs:element name="files" type="tns:File" maxOccurs="unbounded" minOccurs="0" />
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:complexType name="File">
+      <xs:sequence>
+         <xs:element name="filename" type="xs:string" maxOccurs="1" minOccurs="1" />
+         <xs:element name="url" type="xs:string" maxOccurs="1" minOccurs="1" />
+      </xs:sequence>
+   </xs:complexType>
+   <xs:element name="AuthRequest">
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="username" type="xs:string" maxOccurs="1" minOccurs="1" />
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+   <xs:element name="AuthResponse">
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="url" type="xs:string" maxOccurs="1" minOccurs="1" />
+            <xs:element name="urlExpirationTime" type="xs:dateTime" maxOccurs="1" minOccurs="1" />
+            <xs:element name="sessionIdWithDelimiter" type="xs:string" maxOccurs="1" minOccurs="1" />
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+</xs:schema>

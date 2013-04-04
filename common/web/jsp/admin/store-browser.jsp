@@ -62,8 +62,66 @@
           </h:column>
       </h:dataTable>
 
-      <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/testing-for-developer-bean.jsp" />
+      <hr/>
+      <b><h:outputText styleClass="mainTitle" value="Skriptid"/></b><br/>
 
+         <br/>
+         <u>Dokumendi õiguste uuendamise skript (enne 2.5 versiooni)</u>
+         <br/>
+         <br/>
+         <h:commandButton id="startDocumentPrivilegesUpdater" value="Käivita dokumendi õiguste skript" type="submit"
+            actionListener="#{documentPrivilegesUpdater.executeUpdaterInBackground}"
+            rendered="#{documentPrivilegesUpdater.updaterRunning == false}" />
+         <h:commandButton id="stopDocumentPrivilegesUpdater" value="Peata dokumendi õiguste skript" type="submit"
+            actionListener="#{documentPrivilegesUpdater.stopUpdater}"
+            rendered="#{documentPrivilegesUpdater.updaterRunning == true}"
+            disabled="#{documentPrivilegesUpdater.updaterStopping == true}" />
+         <br/>
+         <h:outputText value="Paus pärast iga dokumendi töötlemist (ms): "/>
+         <h:inputText id="documentPrivilegesUpdaterSleepTime" value="#{documentPrivilegesUpdater.sleepTime}" size="4" />
+         <h:commandButton id="updateDocumentPrivilegesUpdaterSleepTime" value="Uuenda" type="submit"
+            actionListener="#{documentPrivilegesUpdater.updateSleepTime}" />
+
+         <br/>
+         <br/>
+         <br/>
+         <u>Lepingute väljasaatmise kirjete tekitamise skript (ContractSendInfoUpdater)</u>
+         <br/>
+         <br/>
+         <h:commandButton id="startContractSendInfoUpdater" value="Käivita dokumendi õiguste optimeerimise skript" type="submit"
+            actionListener="#{contractSendInfoUpdater.executeUpdaterInBackground}"
+            rendered="#{contractSendInfoUpdater.updaterRunning == false}" />
+         <h:commandButton id="stopContractSendInfoUpdater" value="Peata dokumendi õiguste optimeerimise skript" type="submit"
+            actionListener="#{contractSendInfoUpdater.stopUpdater}"
+            rendered="#{contractSendInfoUpdater.updaterRunning == true}"
+            disabled="#{contractSendInfoUpdater.updaterStopping == true}" />
+         <br/>
+         <h:outputText value="Paus pärast iga dokumendi töötlemist (ms): "/>
+         <h:inputText id="contractSendInfoUpdaterSleepTime" value="#{contractSendInfoUpdater.sleepTime}" size="4" />
+         <h:commandButton id="updateContractSendInfoUpdaterSleepTime" value="Uuenda" type="submit"
+            actionListener="#{contractSendInfoUpdater.updateSleepTime}" />
+
+      <hr/>
+         <h:outputText value="Faili asukoht serveri kõvakettal, millest DVK dokument importida: "/><br/>
+         <h:inputText id="fileNameInputText" value="#{TestingForDeveloperBean.fileName}" size="70" /><br/>
+         <h:commandButton id="receiveDocStub" value="Jäljenda DVK importi faili alusel" type="submit"
+            actionListener="#{TestingForDeveloperBean.receiveDocStub}" />
+      <hr/>
+      <h:outputText styleClass="mainTitle" value="Arendajale testimiseks"/><br/>
+
+         <a:actionLink value="TestingForDeveloper" actionListener="#{TestingForDeveloperBean.handleTestEvent}" >
+              <f:param name="testP" value="11" />
+         </a:actionLink>
+
+      <hr/>
+         <h:commandButton id="processAccessRestrictionEndDateNotifications" value="processAccessRestrictionEndDateNotifications" type="submit"
+            actionListener="#{NotificationService.processAccessRestrictionEndDateNotifications}" rendered="#{ApplicationService.test}" />
+         <br/>
+         <h:commandButton id="processTaskDueDateNotifications" value="processTaskDueDateNotifications" type="submit"
+            actionListener="#{NotificationService.processTaskDueDateNotifications}" rendered="#{ApplicationService.test}" />
+         <br/>
+         <h:commandButton id="processVolumeDispositionDateNotifications" value="processVolumeDispositionDateNotifications" type="submit"
+            actionListener="#{NotificationService.processVolumeDispositionDateNotifications}" rendered="#{ApplicationService.test}" />
    </h:form>
 </f:view>
 

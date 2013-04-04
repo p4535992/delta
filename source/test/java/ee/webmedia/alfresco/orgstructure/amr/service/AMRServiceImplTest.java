@@ -6,8 +6,8 @@ import junit.framework.TestCase;
 
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
-import smit.ametnik.services.AmetnikExt;
-import smit.ametnik.services.YksusExt;
+import smit.ametnik.services.Ametnik;
+import smit.ametnik.services.Yksus;
 
 /**
  * Test {@link AMRServiceImpl}
@@ -27,9 +27,9 @@ public class AMRServiceImplTest extends TestCase {
     }
 
     public void testYksusByAsutusId() {
-        YksusExt[] yksusArray = amrService.getYksusByAsutusId();
+        Yksus[] yksusArray = amrService.getYksusByAsutusId();
         assertTrue(yksusArray.length > 0);
-        for (YksusExt yksus : yksusArray) {
+        for (Yksus yksus : yksusArray) {
             BigInteger unitId = yksus.getId();
             String name = yksus.getNimetus();
             BigInteger superUnitId = yksus.getYlemYksusId();
@@ -40,9 +40,9 @@ public class AMRServiceImplTest extends TestCase {
     }
 
     public void testGetAmetnikByAsutusId() {
-        AmetnikExt[] ametnikArray = amrService.getAmetnikByAsutusId();
+        Ametnik[] ametnikArray = amrService.getAmetnikByAsutusId();
         assertTrue(ametnikArray.length > 0);
-        for (AmetnikExt ametnik : ametnikArray) {
+        for (Ametnik ametnik : ametnikArray) {
             ametnikId = ametnik.getIsikukood(); // save id for next test
             ametnikFirstName = ametnik.getEesnimi(); // save id for next test
             String lastName = ametnik.getPerekonnanimi();
@@ -56,7 +56,7 @@ public class AMRServiceImplTest extends TestCase {
     }
 
     public void testGetAmetnikByIsikukood() {
-        AmetnikExt ametnik = amrService.getAmetnikByIsikukood(ametnikId);
+        Ametnik ametnik = amrService.getAmetnikByIsikukood(ametnikId);
         if (ametnik != null) {
             String eesnimi = ametnik.getEesnimi();
             assertEquals(ametnik.getIsikukood(), ametnikId);

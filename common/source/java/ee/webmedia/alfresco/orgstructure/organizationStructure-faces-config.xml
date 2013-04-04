@@ -17,6 +17,10 @@
       <managed-bean-name>OrganizationStructureListDialog</managed-bean-name>
       <managed-bean-class>ee.webmedia.alfresco.orgstructure.web.OrganizationStructureListDialog</managed-bean-class>
       <managed-bean-scope>session</managed-bean-scope>
+      <managed-property>
+         <property-name>organizationStructureService</property-name>
+         <value>#{OrganizationStructureService}</value>
+      </managed-property>
    </managed-bean>
 
    <converter>

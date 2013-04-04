@@ -6,7 +6,7 @@
 <%@ page buffer="32kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
 
-<a:panel id="similar-results-panel" styleClass="panel-100 with-pager" label="#{msg.document_search_similar_documents}" progressive="true" rendered="#{DocumentDynamicDialog.showFoundSimilar}">
+<a:panel id="similar-results-panel" styleClass="panel-100 with-pager" label="#{msg.document_search_similar_documents}" progressive="true" rendered="#{DocumentDialog.search.count > 0}">
    <a:richList id="similar-documentList" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
       width="100%" value="#{DocumentDialog.search.documents}" var="r">
 
@@ -15,7 +15,7 @@
       <%-- iconLink to document details --%>
       <a:column id="col-actions" actions="true" styleClass="actions-column2 #{r.cssStyleClass}">
          <a:actionLink id="col-actions-act1" value="#{r.docName}" image="/images/icons/document-followup.png" showLink="false"
-            actionListener="#{DocumentDynamicDialog.addFollowUpHandlerSimilarDocuments}" tooltip="#{msg.document_search_add_followup}">
+            actionListener="#{DocumentDialog.addFollowUpHandler}" tooltip="#{msg.document_search_add_followup}">
             <f:param name="nodeRef" value="#{r.node.nodeRef}" />
          </a:actionLink>
       </a:column>

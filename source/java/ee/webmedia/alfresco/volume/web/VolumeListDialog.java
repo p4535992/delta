@@ -1,10 +1,5 @@
 package ee.webmedia.alfresco.volume.web;
 
-import static ee.webmedia.alfresco.common.web.BeanHelper.getCaseListDialog;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentListDialog;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getLogService;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
-
 import java.util.List;
 
 import javax.faces.context.FacesContext;
@@ -14,9 +9,6 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.springframework.web.jsf.FacesContextUtils;
 
-import ee.webmedia.alfresco.classificator.enums.VolumeType;
-import ee.webmedia.alfresco.log.model.LogEntry;
-import ee.webmedia.alfresco.log.model.LogObject;
 import ee.webmedia.alfresco.series.model.Series;
 import ee.webmedia.alfresco.series.service.SeriesService;
 import ee.webmedia.alfresco.utils.ActionUtil;
@@ -54,7 +46,6 @@ public class VolumeListDialog extends BaseDialogBean {
 
     public void showAll(NodeRef nodeRef) {
         parent = getSeriesService().getSeriesByNodeRef(nodeRef.toString());
-        getLogService().addLogEntry(LogEntry.create(LogObject.SERIES, getUserService(), nodeRef, "applog_space_open", parent.getSeriesIdentifier(), parent.getTitle()));
     }
 
     public List<Volume> getEntries() {
@@ -69,19 +60,6 @@ public class VolumeListDialog extends BaseDialogBean {
     @Override
     public Object getActionsContext() {
         return parent.getNode();
-    }
-
-    public void showVolumeContents(ActionEvent event) {
-        NodeRef volumeRef = new NodeRef(ActionUtil.getParam(event, "volumeNodeRef"));
-        Volume volume = getVolumeService().getVolumeByNodeRef(volumeRef);
-        boolean isVolumeTypeCase = volume.getVolumeType().equals(VolumeType.CASE_FILE.name());
-        if (!volume.isContainsCases() && !isVolumeTypeCase) {
-            getDocumentListDialog().init(volumeRef);
-        } else if (volume.isContainsCases() && !isVolumeTypeCase) {
-            getCaseListDialog().init(volumeRef);
-        } else {
-            throw new RuntimeException("Not implemented");
-        }
     }
 
     // END: jsf actions/accessors

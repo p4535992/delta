@@ -9,39 +9,39 @@
 <h:panelGroup id="task-search-panel-facets">
    <f:facet name="title">
       <h:panelGroup>
-         <h:outputText value="#{DialogManager.bean.savedFilterSelectTitle}" />
+         <h:outputText value="#{msg.task_search_saved}" />
          <f:verbatim>&nbsp;</f:verbatim>
-         <h:selectOneMenu id="filters" value="#{DialogManager.bean.selectedFilter}" converter="ee.webmedia.alfresco.common.propertysheet.converter.NodeRefConverter"
-            valueChangeListener="#{DialogManager.bean.selectedFilterValueChanged}" binding="#{DialogManager.bean.selectedFilterMenu}">
-            <f:selectItems value="#{DialogManager.bean.allFilters}" />
+         <h:selectOneMenu id="filters" value="#{TaskSearchDialog.selectedFilter}" converter="ee.webmedia.alfresco.common.propertysheet.converter.NodeRefConverter"
+            valueChangeListener="#{TaskSearchDialog.selectedFilterValueChanged}" binding="#{TaskSearchDialog.selectedFilterMenu}">
+            <f:selectItems value="#{TaskSearchDialog.allFilters}" />
          </h:selectOneMenu>
       </h:panelGroup>
    </f:facet>
 </h:panelGroup>
 
-<a:panel id="task-search-panel" facetsId="dialog:dialog-body:task-search-panel-facets" styleClass="panel-100" label="#{DialogManager.bean.filterPanelTitle}">
-   <r:propertySheetGrid id="task-search-filter" value="#{DialogManager.bean.filter}" columns="1" mode="edit" externalConfig="true"
-      labelStyleClass="propertiesLabel" binding="#{DialogManager.bean.propertySheet}" />
+<a:panel id="task-search-panel" facetsId="dialog:dialog-body:task-search-panel-facets" styleClass="panel-100" label="#{msg.task_search}">
+   <r:propertySheetGrid id="task-search-filter" value="#{TaskSearchDialog.filter}" columns="1" mode="edit" externalConfig="true"
+      labelStyleClass="propertiesLabel" binding="#{TaskSearchDialog.propertySheet}" />
 </a:panel>
 
-<a:panel id="task-search-filters-panel" styleClass="panel-100" label="#{DialogManager.bean.manageSavedBlockTitle}" rendered="#{DialogManager.bean.showManageSavedDialog}">
+<a:panel id="task-search-filters-panel" styleClass="panel-100" label="#{msg.task_search_saved_manage}">
    <h:panelGrid columns="2" cellpadding="3" cellspacing="3" border="0" columnClasses="propertiesLabel," width="100%">
       <h:outputText value="#{msg.task_search_name}" styleClass="no-wrap" />
-      <h:inputText id="searchTitle" binding="#{DialogManager.bean.searchTitleInput}" size="35" />
+      <h:inputText id="searchTitle" binding="#{TaskSearchDialog.searchTitleInput}" size="35" />
       <%-- empty placeholder to allign checkbox to the right with the lable --%>
       <f:verbatim />
       <a:booleanEvaluator id="foundSimilarEvaluator" value="#{UserService.administrator}">
-         <h:panelGroup rendered="#{!DialogManager.bean.reportSearch}">
-            <h:selectBooleanCheckbox id="toAllUsers" binding="#{DialogManager.bean.publicCheckBox}" />
+         <h:panelGroup>
+            <h:selectBooleanCheckbox id="toAllUsers" binding="#{TaskSearchDialog.publicCheckBox}" />
             <h:outputLabel value="#{msg.document_search_save_toAllUsers}" for="toAllUsers" />
          </h:panelGroup>
       </a:booleanEvaluator>
    </h:panelGrid>
 
    <f:verbatim><span class="task-sheet-buttons"></f:verbatim>
-   <h:commandButton id="save" actionListener="#{DialogManager.bean.saveFilter}" value="#{msg.save}" />
+   <h:commandButton id="save" actionListener="#{TaskSearchDialog.saveFilter}" value="#{msg.save}" />
    <f:verbatim>&nbsp;</f:verbatim>
-   <h:commandButton id="delete" actionListener="#{DialogManager.bean.deleteFilter}" value="#{msg.delete}" />
+   <h:commandButton id="delete" actionListener="#{TaskSearchDialog.deleteFilter}" value="#{msg.delete}" />
    <f:verbatim></span></f:verbatim>
 </a:panel>
 

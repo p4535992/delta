@@ -17,7 +17,6 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.myfaces.context.servlet.ServletFacesContextImpl;
 import org.springframework.web.jsf.FacesContextUtils;
 
-import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.einvoice.service.EInvoiceService;
 import ee.webmedia.alfresco.menu.model.DropdownMenuItem;
 import ee.webmedia.alfresco.menu.model.Menu;
@@ -26,7 +25,6 @@ import ee.webmedia.alfresco.menu.service.MenuService;
 import ee.webmedia.alfresco.menu.service.MenuService.MenuItemFilter;
 import ee.webmedia.alfresco.menu.ui.MenuBean;
 import ee.webmedia.alfresco.menu.web.MenuItemCountBean;
-import ee.webmedia.alfresco.orgstructure.amr.service.RSService;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
 
@@ -46,7 +44,6 @@ public class MenuRenderer extends BaseRenderer {
         // Prepare scrolling info
         MenuBean menuBean = (MenuBean) FacesHelper.getManagedBean(context, MenuBean.BEAN_NAME);
         if (StringUtils.isBlank(menuBean.getScrollToY()) || !menuBean.getScrollToY().equals("0")) {
-            @SuppressWarnings("cast")
             String scrollToY = (String) context.getExternalContext().getRequestParameterMap().get("scrollToY");
             menuBean.setScrollToY(scrollToY);
         } else {
@@ -127,6 +124,7 @@ public class MenuRenderer extends BaseRenderer {
                     out.write(sb.toString());
                 }
             }
+
             requestMap.put(TREE_SCRIPTS_WRITTEN, Boolean.TRUE);
         }
     }
@@ -163,21 +161,17 @@ public class MenuRenderer extends BaseRenderer {
             int i = 0;
             String id = SECONDARY_MENU_PREFIX;
             for (MenuItem item : menuItems) {
-                UIComponent menuItem = item.createComponent(context, id + i, getUserService(), getWorkflowService(), getEinvoiceService(), getRsService());
+                UIComponent menuItem = item.createComponent(context, id + i, getUserService(), getWorkflowService(), getEinvoiceService());
                 if (menuItem != null) {
                     children.add(menuItem);
+                    i++;
                 }
-                i++;
             }
 
             for (Object o : children) {
                 Utils.encodeRecursive(context, (UIComponent) o);
             }
         }
-    }
-
-    protected RSService getRsService() {
-        return BeanHelper.getRSService();
     }
 
     /**
@@ -202,7 +196,7 @@ public class MenuRenderer extends BaseRenderer {
         Map<String, MenuItemFilter> menuItemFilters = getMenuService().getMenuItemFilters();
         for (MenuItem item : menuItems) {
             if (activeItemid.equals(Integer.toString(i))) {
-                UIComponent menuItem = item.createComponent(context, id + i, true, getUserService(), getWorkflowService(), getEinvoiceService(), getRsService(), false);
+                UIComponent menuItem = item.createComponent(context, id + i, true, getUserService(), getWorkflowService(), getEinvoiceService(), false);
                 if (menuItem != null) {
                     children.add(menuItem);
                 }
@@ -218,12 +212,12 @@ public class MenuRenderer extends BaseRenderer {
                     filter = null; // reset for next cycle
                 }
 
-                UIComponent menuItem = item.createComponent(context, id + i, getUserService(), getWorkflowService(), getEinvoiceService(), getRsService());
+                UIComponent menuItem = item.createComponent(context, id + i, getUserService(), getWorkflowService(), getEinvoiceService());
                 if (menuItem != null) {
                     children.add(removeTooltipRecursive(menuItem));
                 }
             } else {
-                UIComponent menuItem = item.createComponent(context, id + i, getUserService(), getWorkflowService(), getEinvoiceService(), getRsService());
+                UIComponent menuItem = item.createComponent(context, id + i, getUserService(), getWorkflowService(), getEinvoiceService());
                 if (menuItem != null) {
                     children.add(menuItem);
                 }

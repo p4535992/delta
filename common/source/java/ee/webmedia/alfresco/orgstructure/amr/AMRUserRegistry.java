@@ -3,11 +3,9 @@ package ee.webmedia.alfresco.orgstructure.amr;
 import java.io.Serializable;
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 
 import org.alfresco.model.ContentModel;
@@ -18,13 +16,10 @@ import org.alfresco.service.namespace.QName;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import smit.ametnik.services.Aadress;
-import smit.ametnik.services.AmetnikExt;
+import smit.ametnik.services.Ametnik;
 import ee.webmedia.alfresco.common.service.ApplicationService;
 import ee.webmedia.alfresco.orgstructure.amr.service.AMRService;
-import ee.webmedia.alfresco.orgstructure.amr.service.RSService;
 import ee.webmedia.alfresco.user.service.UserService;
-import ee.webmedia.alfresco.utils.UserUtil;
 
 /**
  * A {@link UserRegistry} implementation with the ability to query Alfresco-like descriptions of users and groups from a SIM "Ametnikeregister".
@@ -36,7 +31,6 @@ public class AMRUserRegistry implements UserRegistry, ActivateableBean {
 
     private UserService userService;
     private AMRService amrService;
-    private RSService rsService;
     private ApplicationService applicationService;
     private String testEmail;
 
@@ -45,18 +39,9 @@ public class AMRUserRegistry implements UserRegistry, ActivateableBean {
 
     @Override
     public Iterator<NodeDescription> getPersons(Date modifiedSince) {
-        AmetnikExt[] ametnikArray = amrService.getAmetnikByAsutusId();
+        Ametnik[] ametnikArray = amrService.getAmetnikByAsutusId();
         ArrayList<NodeDescription> persons = new ArrayList<NodeDescription>(ametnikArray.length);
-        boolean isRestrictedDelta = rsService.isRestrictedDelta();
-        List<String> restrictedDeltaUsers = new ArrayList<String>();
-        if (isRestrictedDelta) {
-            // avoid retrieving restricted delta users if not in restricted delta
-            restrictedDeltaUsers = Arrays.asList(rsService.getIsikukoodByAsutusIdAndHasRsLubaRequest());
-        }
-        for (AmetnikExt ametnik : ametnikArray) {
-            if (checkRestrictedDeltaUsers(isRestrictedDelta, restrictedDeltaUsers, ametnik)) {
-                continue;
-            }
+        for (Ametnik ametnik : ametnikArray) {
             NodeDescription person = mergePersonDescription(ametnik);
             person.setLastModified(new Date());// actually should be when modified in remote system
             persons.add(person);
@@ -69,18 +54,10 @@ public class AMRUserRegistry implements UserRegistry, ActivateableBean {
         return persons.iterator();
     }
 
-    private boolean checkRestrictedDeltaUsers(boolean isRestrictedDelta, List<String> restrictedDeltaUsers, AmetnikExt ametnik) {
-        return isRestrictedDelta && !restrictedDeltaUsers.contains(ametnik.getIsikukood());
-    }
-
     @Override
     public Iterator<NodeDescription> getPersonByIdCode(String idCode) {
-        AmetnikExt ametnik = amrService.getAmetnikByIsikukood(idCode);
+        Ametnik ametnik = amrService.getAmetnikByIsikukood(idCode);
         if (ametnik == null) {
-            return Collections.<NodeDescription> emptyList().iterator();
-        }
-        // TODO merge logic from AMRSimpleAuthenticationImpl to here (RsAccessStatusBean and other...)
-        if (rsService.isRestrictedDelta() && !rsService.hasRsLubaByIsikukood(idCode)) {
             return Collections.<NodeDescription> emptyList().iterator();
         }
         return Collections.singleton(mergePersonDescription(ametnik)).iterator();
@@ -101,7 +78,7 @@ public class AMRUserRegistry implements UserRegistry, ActivateableBean {
      * @return NodeDescription with properties from given <code>ametnik</code><br>
      *         (merged with propertis that person with the same userName has - if such person exists)
      */
-    private NodeDescription mergePersonDescription(AmetnikExt ametnik) {
+    private NodeDescription mergePersonDescription(Ametnik ametnik) {
         Map<QName, Serializable> properties;
         NodeDescription person = new NodeDescription();
         properties = person.getProperties();
@@ -114,12 +91,12 @@ public class AMRUserRegistry implements UserRegistry, ActivateableBean {
     }
 
     /**
-     * Reads properties from <code>AmetnikExt</code> object and puts them into <code>properties</code>
+     * Reads properties from <code>Ametnik</code> object and puts them into <code>properties</code>
      * 
      * @param ametnik
      * @param properties
      */
-    public void fillPropertiesFromAmetnik(AmetnikExt ametnik, Map<QName, Serializable> properties) {
+    public void fillPropertiesFromAmetnik(Ametnik ametnik, Map<QName, Serializable> properties) {
         String email = ametnik.getEmail();
 
         // This is actually implemented in ChainingUserRegistrySynchronizer and the correct thing to do would be to
@@ -139,16 +116,6 @@ public class AMRUserRegistry implements UserRegistry, ActivateableBean {
         properties.put(ContentModel.PROP_LASTNAME, ametnik.getPerekonnanimi());
         properties.put(ContentModel.PROP_TELEPHONE, ametnik.getKontakttelefon());
         properties.put(ContentModel.PROP_JOBTITLE, ametnik.getAmetikoht());
-        properties.put(ContentModel.PROP_ORGANIZATION_PATH, (ArrayList<String>) UserUtil.formatYksusRadaToOrganizationPath(ametnik.getYksusRada()));
-        Aadress aadress = ametnik.getAadress();
-        if (aadress != null) {
-            properties.put(ContentModel.PROP_COUNTY, aadress.getMaakond());
-            properties.put(ContentModel.PROP_MUNICIPALITY, aadress.getOmavalitsus());
-            properties.put(ContentModel.PROP_VILLAGE, aadress.getAsustusYksus());
-            properties.put(ContentModel.PROP_STREET_HOUSE, aadress.getKohanimi());
-            properties.put(ContentModel.PROP_POSTAL_CODE, aadress.getSihtkood());
-        }
-        properties.put(ContentModel.PROP_SERVICE_RANK, ametnik.getTeenistusaste());
     }
 
     // START: getters / setters
@@ -181,11 +148,6 @@ public class AMRUserRegistry implements UserRegistry, ActivateableBean {
     public void setTestEmail(String testEmail) {
         this.testEmail = testEmail;
     }
-
-    public void setRsService(RSService rsService) {
-        this.rsService = rsService;
-    }
-
     // END: getters / setters
 
 }

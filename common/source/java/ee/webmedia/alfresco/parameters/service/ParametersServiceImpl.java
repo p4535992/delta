@@ -34,7 +34,6 @@ public class ParametersServiceImpl implements ParametersService {
 
     private GeneralService generalService;
     private NodeService nodeService;
-    private boolean jobsEnabled = true;
 
     private Boolean applicationStarted = false;
     /**
@@ -205,16 +204,7 @@ public class ParametersServiceImpl implements ParametersService {
         nodeService.setProperty(nodeRef, ParametersModel.Props.Parameter.NEXT_FIRE_TIME, parameter.getNextFireTime());
     }
 
-    @Override
-    public boolean isJobsEnabled() {
-        return jobsEnabled;
-    }
-
     // START: getters / setters
-    public void setJobsEnabled(boolean jobsEnabled) {
-        this.jobsEnabled = jobsEnabled;
-    }
-
     public void setGeneralService(GeneralService generalService) {
         this.generalService = generalService;
     }

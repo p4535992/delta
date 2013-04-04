@@ -1,7 +1,5 @@
 package ee.webmedia.alfresco.substitute.model;
 
-import static ee.webmedia.alfresco.document.model.Document.dateFormat;
-
 import java.io.Serializable;
 import java.util.Calendar;
 import java.util.Date;
@@ -9,7 +7,6 @@ import java.util.Date;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.apache.commons.lang.time.DateUtils;
 
-import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.beanmapper.AlfrescoModelProperty;
 import ee.webmedia.alfresco.utils.beanmapper.AlfrescoModelType;
 
@@ -41,14 +38,6 @@ public class Substitute implements Serializable {
         substitutionStartDate = sub.substitutionStartDate;
         substitutionEndDate = sub.substitutionEndDate;
         nodeRef = sub.nodeRef;
-    }
-
-    public static Substitute newInstance() {
-        Substitute newSubstitute = new Substitute();
-        newSubstitute.setValid(false);
-        // set the temporary random unique ID to be used in the UI form
-        newSubstitute.setNodeRef(RepoUtil.createNewUnsavedNodeRef());
-        return newSubstitute;
     }
 
     @Override
@@ -127,10 +116,6 @@ public class Substitute implements Serializable {
         return substitutionStartDate;
     }
 
-    public String getSubstitutionStartDateFormatted() {
-        return dateFormat.format(substitutionStartDate);
-    }
-
     public void setSubstitutionStartDate(Date substitutionStartDate) {
         this.substitutionStartDate = substitutionStartDate;
     }
@@ -139,22 +124,8 @@ public class Substitute implements Serializable {
         return substitutionEndDate;
     }
 
-    public String getSubstitutionEndDateFormatted() {
-        return dateFormat.format(substitutionEndDate);
-    }
-
     public void setSubstitutionEndDate(Date substitutionEndDate) {
         this.substitutionEndDate = substitutionEndDate;
-    }
-
-    public boolean isActive() {
-        if (substitutionEndDate == null || substitutionStartDate == null) {
-            return false;
-        }
-        Date currentDate = DateUtils.truncate(new Date(), Calendar.DATE);
-        return (currentDate.after(substitutionStartDate) && currentDate.before(substitutionEndDate))
-                || DateUtils.isSameDay(currentDate, substitutionEndDate)
-                || DateUtils.isSameDay(currentDate, substitutionStartDate);
     }
 
     public void setValid(boolean valid) {

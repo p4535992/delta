@@ -33,20 +33,13 @@
          </list>
       </property>
    </bean>
-   
-   <!-- Used to update series volume types values. CL task: 177957 -->
-   <bean id="seriesUpdater" class="ee.webmedia.alfresco.series.bootstrap.SeriesUpdater" parent="abstractNodeUpdater">
-      <property name="moduleId" value="simdhs" />
-   </bean>
 
    <bean id="seriesService" class="ee.webmedia.alfresco.series.service.SeriesServiceImpl">
       <property name="dictionaryService" ref="DictionaryService" />
       <property name="nodeService" ref="NodeService" />
       <property name="generalService" ref="GeneralService" />
-      <property name="docLogService" ref="DocumentLogService" />
-      <property name="appLogService" ref="LogService" />
-      <property name="userService" ref="UserService" />
-      <property name="permissionService" ref="PermissionService" />
+      <property name="logService" ref="DocumentLogService" />
+      <property name="searchService" ref="SearchService" />
       <!--  XXX: property:volumeService - retrieved from applicationContext to avoid circular dependency between VolumeService and SeriesService      -->
    </bean>
 
@@ -63,21 +56,5 @@
          </list>
       </property>
    </bean>
-
-   <!-- Used to add document regNr pattern to old series (CL task 174930) -->
-   <bean id="SeriesDocNumberPatternUpdater" class="ee.webmedia.alfresco.document.bootstrap.SeriesDocNumberPatternUpdater" parent="abstractNodeUpdater" >
-      <property name="moduleId" value="simdhs" />
-   </bean>
-   
-   <!-- Adds to docNumberPattern register prefix and suffix if they exist. -->
-   <bean id="SeriesDocNumberPatternAddRegisterSufPrefUpdater" class="ee.webmedia.alfresco.document.bootstrap.SeriesDocNumberPatternAddRegisterSufPrefUpdater" parent="abstractNodeUpdater" >
-      <property name="moduleId" value="simdhs" />
-   </bean>
-
-   <!-- START: web beans: -->
-
-   <bean id="SeriesTypePrivilegesHandler" class="ee.webmedia.alfresco.series.web.SeriesTypePrivilegesHandler" scope="session"/>
-
-   <!-- END: web beans: -->
 
 </beans>

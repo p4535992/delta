@@ -11,13 +11,13 @@ import javax.faces.context.FacesContext;
 import javax.faces.model.SelectItem;
 
 import org.alfresco.web.bean.dialog.BaseDialogBean;
-import org.alfresco.web.ui.common.component.PickerSearchParams;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.document.type.model.DocumentType;
 import ee.webmedia.alfresco.document.type.service.DocumentTypeService;
+import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
  * @author Alar Kvell
@@ -32,16 +32,16 @@ public class DocumentTypeDialog extends BaseDialogBean {
     @Override
     public void init(Map<String, String> params) {
         super.init(params);
-        initDocumentTypes();
-    }
-
-    private void initDocumentTypes() {
         documentTypes = getDocumentTypeService().getAllDocumentTypes();
     }
 
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
-        return null;
+        getDocumentTypeService().updateDocumentTypes(documentTypes);
+        documentTypes = null;
+        MessageUtil.addInfoMessage("save_success");
+        // We need to stay on the same dialog
+        return "dialog:close:dialog:documentTypeDialog";
     }
 
     @Override
@@ -55,26 +55,17 @@ public class DocumentTypeDialog extends BaseDialogBean {
         return false;
     }
 
-    @Override
-    public Object getActionsContext() {
-        return null;
-    }
-
-    @Override
-    public void restored() {
-        initDocumentTypes();
-    }
-
     /**
      * Query callback method executed by the Generic Picker component.
      * This method is part of the contract to the Generic Picker, it is up to the backing bean
      * to execute whatever query is appropriate and return the results.
      * 
-     * @param params Search parameters
+     * @param filterIndex Index of the filter drop-down selection
+     * @param substring Text from the search textbox
      * @return An array of SelectItem objects containing the results to display in the picker.
      */
-    public SelectItem[] searchUsedDocTypes(PickerSearchParams params) {
-        return searchUsedDocTypes(params, false);
+    public SelectItem[] searchUsedDocTypes(int filterIndex, String substring) {
+        return searchUsedDocTypes(substring, false);
     }
 
     /**
@@ -84,8 +75,7 @@ public class DocumentTypeDialog extends BaseDialogBean {
         return Arrays.asList(searchUsedDocTypes(null, true));
     }
 
-    private SelectItem[] searchUsedDocTypes(PickerSearchParams params, boolean addEmptyItem) {
-        String substring = params == null ? null : params.getSearchString();
+    private SelectItem[] searchUsedDocTypes(String substring, boolean addEmptyItem) {
         final List<DocumentType> usedDocTypes = getDocumentTypeService().getAllDocumentTypes(true);
         substring = StringUtils.trimToNull(substring);
         substring = (substring != null ? substring.toLowerCase() : null);
@@ -98,9 +88,6 @@ public class DocumentTypeDialog extends BaseDialogBean {
             final String name = documentType.getName();
             if (substring == null || name.toLowerCase().contains(substring)) {
                 results.add(new SelectItem(documentType.getId().toString(), name));
-            }
-            if (params != null && results.size() == params.getLimit()) {
-                break;
             }
         }
         SelectItem[] resultArray = new SelectItem[results.size()];

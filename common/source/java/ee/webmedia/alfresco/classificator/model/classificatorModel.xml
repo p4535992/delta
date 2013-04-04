@@ -42,11 +42,6 @@
             <property name="cl:addRemoveValues">
                <type>d:boolean</type>
                <mandatory>true</mandatory>
-               <default>true</default>
-            </property>
-            <property name="cl:deleteEnabled">
-               <type>d:boolean</type>
-               <default>true</default>
             </property>
             <property name="cl:alfabeticOrder">
                <type>d:boolean</type><!-- when true values should be sorted alfabetically, otherwise(null or false) in the order of adding -->
@@ -94,9 +89,6 @@
                <mandatory>true</mandatory>
             </property>
             <property name="cl:classificatorDescription">
-               <type>d:text</type>
-            </property>            
-            <property name="cl:valueData">
                <type>d:text</type>
             </property>            
          </properties>

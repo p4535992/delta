@@ -10,9 +10,13 @@
 <f:verbatim>
 <script type="text/javascript">
 
-$jQ(document).ready(function(){
+   window.onload = pageLoaded;
+   
+   function pageLoaded()
+   {
+      document.getElementById("dialog:dialog-body:search-text").focus();
       updateButtonState();
-   })
+   }
    
    function updateButtonState()
    {
@@ -32,8 +36,8 @@ $jQ(document).ready(function(){
 
    
    <a:panel id="search-panel">
-      <h:inputText id="search-text" styleClass="focus" value="#{UsersBeanProperties.searchCriteria}" size="35" maxlength="1024" onkeyup="updateButtonState();" />
-      <h:commandButton id="search-btn" value="#{msg.search}" action="#{DialogManager.bean.search}" disabled="true" style="margin-left: 5px;" styleClass="specificAction" />
+      <h:inputText id="search-text" styleClass="admin-user-search-input" value="#{UsersBeanProperties.searchCriteria}" size="35" maxlength="1024" />
+      <h:commandButton id="search-btn" value="#{msg.search}" action="#{DialogManager.bean.search}" disabled="true" style="margin-left: 5px;" />
       <h:commandButton value="#{msg.show_all}" action="#{DialogManager.bean.showAll}" style="margin-left: 5px;"/>
       <f:verbatim>
       <script type="text/javascript">
@@ -49,7 +53,7 @@ $jQ(document).ready(function(){
    <%-- Spaces List --%>
    <a:richList id="usersList" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" styleClass="recordSet" headerStyleClass="recordSetHeader"
       rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt" width="100%" value="#{DialogManager.bean.users}" var="u"
-      initialSortColumn="lastName" binding="#{DialogManager.bean.usersList}" rendered="#{not empty DialogManager.bean.users}">
+      initialSortColumn="lastName" binding="#{DialogManager.bean.usersList}">
       
       <%-- Primary column with given name --%>
       <a:column primary="true" style="padding:2px;text-align:left">
@@ -73,7 +77,7 @@ $jQ(document).ready(function(){
       <%-- Unit column --%>
       <a:column style="text-align:left">
          <f:facet name="header">
-            <a:sortLink label="#{msg.unit}" value="unit" styleClass="header" />
+            <a:sortLink label="#{msg.unit}" value="organizationId" styleClass="header" />
          </f:facet>
          <h:outputText value="#{u.unit}" />
       </a:column>

@@ -3,8 +3,6 @@ package ee.webmedia.alfresco.workflow.web;
 import static ee.webmedia.alfresco.utils.ComponentUtil.addChildren;
 import static ee.webmedia.alfresco.utils.ComponentUtil.createUIParam;
 import static ee.webmedia.alfresco.utils.ComponentUtil.putAttribute;
-import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.getActionId;
-import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.getDialogId;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,7 +23,6 @@ import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.ui.common.ComponentConstants;
 import org.alfresco.web.ui.common.component.UIActionLink;
 import org.alfresco.web.ui.common.component.UIGenericPicker;
-import org.alfresco.web.ui.common.tag.GenericPickerTag;
 import org.alfresco.web.ui.repo.component.UIActions;
 import org.alfresco.web.ui.repo.component.property.PropertySheetItem;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
@@ -54,8 +51,6 @@ public class DelegationTaskListGenerator extends TaskListGenerator {
     enum DelegatableTaskType {
         ASSIGNMENT_RESPONSIBLE(WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW)
         , ASSIGNMENT_NOT_RESPONSIBLE(WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW)
-        , ORDER_ASSIGNMENT_RESPONSIBLE(WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_WORKFLOW)
-        , ORDER_ASSIGNMENT_NOT_RESPONSIBLE(WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_WORKFLOW)
         , INFORMATION(WorkflowSpecificModel.Types.INFORMATION_WORKFLOW)
         , OPINION(WorkflowSpecificModel.Types.OPINION_WORKFLOW);
 
@@ -65,12 +60,8 @@ public class DelegationTaskListGenerator extends TaskListGenerator {
             this.workflowTypeQName = workflowTypeQName;
         }
 
-        public boolean isOrderAssignmentOrAssignmentWorkflow() {
-            return WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW.equals(workflowTypeQName) || WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_WORKFLOW.equals(workflowTypeQName);
-        }
-
-        public boolean isResponsibleTask() {
-            return ASSIGNMENT_RESPONSIBLE.equals(this) || ORDER_ASSIGNMENT_RESPONSIBLE.equals(this);
+        public boolean isAssignmentWorkflow() {
+            return WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW.equals(workflowTypeQName);
         }
 
         public QName getWorkflowTypeQName() {
@@ -85,23 +76,17 @@ public class DelegationTaskListGenerator extends TaskListGenerator {
             } else if (task.isType(WorkflowSpecificModel.Types.ASSIGNMENT_TASK)) {
                 if (task.isResponsible()) {
                     return ASSIGNMENT_RESPONSIBLE;
+                } else {
+                    return ASSIGNMENT_NOT_RESPONSIBLE;
                 }
-                return ASSIGNMENT_NOT_RESPONSIBLE;
-            } else if (task.isType(WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_TASK)) {
-                if (task.isResponsible()) {
-                    return ORDER_ASSIGNMENT_RESPONSIBLE;
-                }
-                return ORDER_ASSIGNMENT_NOT_RESPONSIBLE;
             } else {
                 throw new RuntimeException("No DelegatableTaskType defined for task type " + task.getType());
             }
         }
 
         public QName getTaskTypeQName() {
-            if (WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW.equals(workflowTypeQName)) {
+            if (isAssignmentWorkflow()) {
                 return WorkflowSpecificModel.Types.ASSIGNMENT_TASK;
-            } else if (WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_WORKFLOW.equals(workflowTypeQName)) {
-                return WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_TASK;
             } else if (INFORMATION.equals(this)) {
                 return WorkflowSpecificModel.Types.INFORMATION_TASK;
             } else if (OPINION.equals(this)) {
@@ -137,13 +122,13 @@ public class DelegationTaskListGenerator extends TaskListGenerator {
 
         final HtmlPanelGrid taskGrid = (HtmlPanelGrid) application.createComponent(HtmlPanelGrid.COMPONENT_TYPE);
         taskGrid.setId("task-grid-" + listId);
-        boolean isOrderAssignmentOrAssignment = dTaskType.isOrderAssignmentOrAssignmentWorkflow();
-        taskGrid.setColumns(isOrderAssignmentOrAssignment ? 4 : 3);
+        boolean isAssignmentWorkflow = dTaskType.isAssignmentWorkflow();
+        taskGrid.setColumns(isAssignmentWorkflow ? 4 : 3);
         final String customStyleClass = StringUtils.trimToEmpty(getCustomAttributes().get("styleClass"));
         taskGrid.setStyleClass("recipient tasks" + " " + customStyleClass);
 
         if (!visibleTasks.isEmpty()) {
-            if (!isOrderAssignmentOrAssignment) {
+            if (!isAssignmentWorkflow) {
                 UIOutput resoLable = (UIOutput) application.createComponent(UIOutput.COMPONENT_TYPE);
                 resoLable.setValue(StringUtils.uncapitalize(MessageUtil.getMessage("task_property_resolution")));
                 putAttribute(resoLable, "styleClass", "bold");
@@ -162,16 +147,18 @@ public class DelegationTaskListGenerator extends TaskListGenerator {
             UIGenericPicker picker = createOwnerPickerComponent(application, listId, dTaskType, delegatableTaskIndex);
             addChildren(pickerPanel, picker);
 
-            String pickerActionId = getActionId(context, picker);
-            String pickerModalOnclickJsCall = "return showModal('" + getDialogId(context, picker) + "');";
-
             // This disables doing AJAX submit when picker finish button is pressed
             // Currently, picker finish reconstructs entire panelgroup, which is some levels above propertysheet
             // If AJAX submit is desired, something needs to be reworked
             putAttribute(pickerPanel, Search.AJAX_PARENT_LEVEL_KEY, Integer.valueOf(100));
 
+            TaskListCommentComponent commentPopup = (TaskListCommentComponent) application.createComponent(TaskListCommentComponent.class.getCanonicalName());
+            commentPopup.setId("task-comment-popup-" + listId);
+            commentPopup.setActionListener(application.createMethodBinding("#{DialogManager.bean.finishWorkflowTask}", UIActions.ACTION_CLASS_ARGS));
+            resultChildren.add(commentPopup);
+
             final List<UIComponent> taskGridChildren = addChildren(taskGrid, createColumnHeading("workflow_task_owner_name", application));
-            if (isOrderAssignmentOrAssignment) {
+            if (isAssignmentWorkflow) {
                 taskGridChildren.add(createColumnHeading("task_property_resolution", application));
             }
             taskGridChildren.add(createColumnHeading("task_property_due_date", application));
@@ -189,7 +176,7 @@ public class DelegationTaskListGenerator extends TaskListGenerator {
                     nameInput.setValueBinding("value", nameValueBinding);
                     taskGridChildren.add(nameInput);
 
-                    if (isOrderAssignmentOrAssignment) {
+                    if (isAssignmentWorkflow) {
                         ValueBinding resolutionVB = createTaskPropValueBinding(dTaskType, delegatableTaskIndex, counter,
                                 WorkflowSpecificModel.Props.RESOLUTION,
                                 application);
@@ -203,8 +190,7 @@ public class DelegationTaskListGenerator extends TaskListGenerator {
                             , createTaskPropValueBinding(dTaskType, delegatableTaskIndex, counter, WorkflowSpecificModel.Props.DUE_DATE, application));
                     ComponentUtil.createAndSetConverter(context, DatePickerConverter.CONVERTER_ID, dueDateInput);
                     Map<String, Object> dueDateAttributes = ComponentUtil.putAttribute(dueDateInput, "styleClass", "margin-left-4 date");
-                    if (DelegatableTaskType.ASSIGNMENT_RESPONSIBLE.equals(dTaskType) || DelegatableTaskType.ORDER_ASSIGNMENT_RESPONSIBLE.equals(dTaskType)) { // add client side
-                                                                                                                                                              // validation
+                    if (DelegatableTaskType.ASSIGNMENT_RESPONSIBLE.equals(dTaskType)) { // add client side validation
                         List<String> params = new ArrayList<String>(2);
                         params.add("document.getElementById('" + dueDateInput.getClientId(context) + "')");
                         String invalidMsg = MessageUtil.getMessage(context, "validation_date_failed", MessageUtil.getMessage("task_property_due_date"));
@@ -218,14 +204,14 @@ public class DelegationTaskListGenerator extends TaskListGenerator {
                     taskGridChildren.add(columnActions);
 
                     final List<UIComponent> actionChildren = addChildren(columnActions);
-                    UIActionLink taskSearchLink = createOwnerSearchLink(context, application, listId, picker, counter, pickerActionId, pickerModalOnclickJsCall);
+                    UIActionLink taskSearchLink = createOwnerSearchLink(context, application, listId, picker, counter);
                     actionChildren.add(taskSearchLink);
                     { // taskDeleteLink // taskResetLink
                         final UIActionLink taskDeleteLink = (UIActionLink) application.createComponent("org.alfresco.faces.ActionLink");
                         taskDeleteLink.setValue("");
                         taskDeleteLink.setShowLink(false);
                         taskDeleteLink.setId("task-remove-link-" + listId + "-" + counter);
-                        if (dTaskType.equals(DelegatableTaskType.ASSIGNMENT_RESPONSIBLE)) {
+                        if (isAssignmentResponsible(dTaskType)) {
                             taskDeleteLink.setTooltip(MessageUtil.getMessage("clear_fields"));
                             taskDeleteLink.setActionListener(application.createMethodBinding("#{DelegationBean.resetDelegationTask}",
                                     UIActions.ACTION_CLASS_ARGS));
@@ -243,13 +229,13 @@ public class DelegationTaskListGenerator extends TaskListGenerator {
                         );
                         actionChildren.add(taskDeleteLink);
                     }
-                    if (!dTaskType.equals(DelegatableTaskType.ASSIGNMENT_RESPONSIBLE)) {
+                    if (!isAssignmentResponsible(dTaskType)) {
                         createAddTaskLink(application, listId, delegatableTaskIndex, dTaskType, counter, columnActions, counter + 1, false);
                     }
                 }
             }
         } else {
-            if (!dTaskType.equals(DelegatableTaskType.ASSIGNMENT_RESPONSIBLE)) {
+            if (!isAssignmentResponsible(dTaskType)) {
                 createAddTaskLink(application, listId, delegatableTaskIndex, dTaskType, 0, result, 0, true);
             }
         }
@@ -272,6 +258,10 @@ public class DelegationTaskListGenerator extends TaskListGenerator {
         return heading;
     }
 
+    private boolean isAssignmentResponsible(DelegatableTaskType dTaskType) {
+        return DelegatableTaskType.ASSIGNMENT_RESPONSIBLE.equals(dTaskType);
+    }
+
     private MethodBinding createAddTaskMethodBinding(Application application) {
         return application.createMethodBinding("#{DelegationBean.addDelegationTask}", UIActions.ACTION_CLASS_ARGS);
     }
@@ -282,10 +272,8 @@ public class DelegationTaskListGenerator extends TaskListGenerator {
         UIActionLink taskAddLink = (UIActionLink) application.createComponent("org.alfresco.faces.ActionLink");
         taskAddLink.setId("task-add-link-" + listId + "-" + counter);
         String workflowType = dTaskType.getWorkflowTypeQName().getLocalName();
-        String addUserText = MessageUtil.getMessage("workflow_compound_add_" + workflowType + "_user"
-                + (dTaskType.equals(DelegatableTaskType.ORDER_ASSIGNMENT_NOT_RESPONSIBLE) ? "_co" : ""));
-        taskAddLink.setValue(setValue ? addUserText : "");
-        taskAddLink.setTooltip(addUserText);
+        taskAddLink.setValue(setValue ? MessageUtil.getMessage("workflow_compound_add_" + workflowType + "_user") : "");
+        taskAddLink.setTooltip(MessageUtil.getMessage("workflow_compound_add_" + workflowType + "_user"));
         taskAddLink.setActionListener(createAddTaskMethodBinding(application));
         taskAddLink.setShowLink(false);
         ComponentUtil.putAttribute(taskAddLink, "styleClass", "icon-link add-person");
@@ -301,10 +289,11 @@ public class DelegationTaskListGenerator extends TaskListGenerator {
         int index = 0;
         for (Task task : tasks) {
             if (taskType.getTaskTypeQName().equals(task.getNode().getType()) && WorkflowUtil.isGeneratedByDelegation(task)) {
-                if (!taskType.isOrderAssignmentOrAssignmentWorkflow()) {
+                if (!taskType.isAssignmentWorkflow()) {
                     result.add(index);
                 } else {
-                    if (taskType.isResponsibleTask() == task.isResponsible()) {
+                    boolean selectResponsible = isAssignmentResponsible(taskType);
+                    if (selectResponsible == task.isResponsible()) {
                         result.add(index);
                     }
                 }
@@ -341,14 +330,14 @@ public class DelegationTaskListGenerator extends TaskListGenerator {
             selectedSearchProcessingB = "#{DelegationBean.processOwnerSearchResults}";
         }
         picker.setValueBinding("filters", application.createValueBinding(getOwnerSearchFiltersB));
-        picker.setQueryCallback(application.createMethodBinding(executeSearchCallbackB, GenericPickerTag.QUERYCALLBACK_CLASS_ARGS));
+        picker.setQueryCallback(application.createMethodBinding(executeSearchCallbackB, new Class[] { int.class, String.class }));
         picker.setActionListener(application.createMethodBinding(selectedSearchProcessingB, UIActions.ACTION_CLASS_ARGS));
     }
 
     private ValueBinding createTaskPropValueBinding(DelegatableTaskType dTaskType
             , int delegatableTaskIndex, int taskIndex, QName propName, Application application) {
         String tasksListVB;
-        if (dTaskType.isOrderAssignmentOrAssignmentWorkflow()) {
+        if (dTaskType.isAssignmentWorkflow()) {
             tasksListVB = "#{DelegationBean.delegatableTasks[" + delegatableTaskIndex + "].parent.tasks";
         } else {
             tasksListVB = "#{DelegationBean.newWorkflowTasksFetchers[" + delegatableTaskIndex + "].nonAssignmentTasksByType[\"" + dTaskType.name() + "\"]";
@@ -358,7 +347,7 @@ public class DelegationTaskListGenerator extends TaskListGenerator {
 
     private ValueBinding createWorkflowPropValueBinding(DelegatableTaskType dTaskType, int delegatableTaskIndex, QName propName, Application application) {
         String workflowVB;
-        if (!dTaskType.isOrderAssignmentOrAssignmentWorkflow()) {
+        if (!dTaskType.isAssignmentWorkflow()) {
             workflowVB = "#{DelegationBean.newWorkflowTasksFetchers[" + delegatableTaskIndex + "].nonAssignmentWorkflowsByType[\"" + dTaskType.name()
                     + "\"]";
         } else {

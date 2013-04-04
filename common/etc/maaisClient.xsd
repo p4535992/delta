@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:tns="http://www.maais.ee/dms/" elementFormDefault="qualified" targetNamespace="http://www.maais.ee/dms/">
+  <xs:element name="NotifyAssociationRequest" type="tns:NotifyAssociationRequest">
+  </xs:element>
+
+  <xs:element name="NotifyAssociationResponse">
+    <xs:complexType>
+      <xs:complexContent>
+        <xs:restriction base="xs:anyType"/>
+      </xs:complexContent>
+    </xs:complexType>
+  </xs:element>
+
+
+  <xs:complexType name="NotifyAssociationRequest">
+    <xs:sequence>
+      <xs:element maxOccurs="1" minOccurs="1" name="Title" type="xs:string"/>
+      <xs:element maxOccurs="1" minOccurs="0" name="RegistrationDate" type="xs:dateTime"/>
+      <xs:element maxOccurs="1" minOccurs="0" name="DocumentNumber" type="xs:string"/>
+      <xs:element maxOccurs="1" minOccurs="1" name="DocumentType" type="xs:string"/>
+      <xs:element maxOccurs="1" minOccurs="1" name="DocumentReference" type="xs:string"/>
+      <xs:element maxOccurs="1" minOccurs="1" name="Supervisor" type="xs:string"/>
+      <xs:element maxOccurs="1" minOccurs="1" name="TemplateName" type="xs:string"/>
+      <xs:element maxOccurs="1" minOccurs="1" name="CaseNumber" type="xs:string"/>
+      <xs:element maxOccurs="unbounded" minOccurs="0" name="Files" type="tns:File">
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="File">
+    <xs:sequence>
+      <xs:element maxOccurs="1" minOccurs="1" name="Filename" type="xs:string"/>
+      <xs:element maxOccurs="1" minOccurs="1" name="Link" type="xs:string"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:element name="ListCasesResponse" type="tns:ListCasesResponse"/>
+
+  <xs:element name="ListCasesRequest">
+    <xs:complexType>
+      <xs:complexContent>
+        <xs:restriction base="xs:anyType"/>
+      </xs:complexContent>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:complexType name="ListCasesResponse">
+    <xs:sequence>
+      <xs:element maxOccurs="unbounded" minOccurs="0" name="Toimikud" type="tns:Case"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="Case">
+    <xs:sequence>
+      <xs:element maxOccurs="1" minOccurs="1" name="Toimik" type="xs:string"/>
+      <xs:element maxOccurs="1" minOccurs="1" name="Isik" type="xs:string"/>
+      <xs:element maxOccurs="1" minOccurs="0" name="MaaüksuseNumber" type="xs:string"/>
+      <xs:element maxOccurs="1" minOccurs="0" name="MaaüksuseNimi" type="xs:string"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:element name="MaaisAuthRequest" type="tns:MaaisAuthRequest">
+    <xs:annotation>
+      <xs:documentation/>
+    </xs:annotation>
+  </xs:element>
+
+  <xs:element name="MaaisAuthResponse" type="tns:MaaisAuthResponse"/>
+
+  <xs:complexType name="MaaisAuthRequest">
+    <xs:sequence>
+      <xs:element maxOccurs="1" minOccurs="1" name="Isikukood" type="xs:string"/>
+      <xs:element maxOccurs="1" minOccurs="1" name="Nimi" type="xs:string"/>
+      <xs:element maxOccurs="1" minOccurs="1" name="Asutus" type="xs:string"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="MaaisAuthResponse">
+    <xs:sequence>
+      <xs:element maxOccurs="1" minOccurs="1" name="URL" type="xs:string"/>
+      <xs:element maxOccurs="1" minOccurs="1" name="URLExpirationTime" type="xs:positiveInteger"/>
+    </xs:sequence>
+  </xs:complexType>
+
+</xs:schema>

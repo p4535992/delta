@@ -10,10 +10,6 @@ import org.alfresco.service.namespace.QName;
 
 import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
 
-@Deprecated
-// XXX FIXME WARNING!! this class does not know that now we use a property field instead of a node type do define the type of the document
-// therefore this does not work with dynamic documents and will be removed
-// TODO REMOVE!!
 public class DocumentTypeHelper {
 
     public static final QName[] INCOMING_LETTER_TYPES;

@@ -1,4 +1,3 @@
-<%@page import="ee.webmedia.alfresco.common.web.BeanHelper"%>
 <%@ taglib uri="http://java.sun.com/jsf/html" prefix="h"%>
 <%@ taglib uri="http://java.sun.com/jsf/core" prefix="f"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
@@ -26,14 +25,11 @@
          <f:facet name="header">
             <h:outputText id="col2-sort" value="#{msg.task_property_due_date}" styleClass="header" />
          </f:facet>
-            <h:outputText id="col2-text" value="#{r.dueDate}">
-               <a:convertXMLDate pattern="#{msg.date_pattern}" />
-            </h:outputText>
-            <h:outputText value="<br/>" escape="false"/>
-            <h:outputText id="col2-popup-link" value="#{r.dueDateHistory}" escape="false" />
-
+         <h:outputText id="col2-text" value="#{r.dueDate}">
+            <a:convertXMLDate pattern="#{msg.date_pattern}" />
+         </h:outputText>
       </a:column>
-
+      
       <%-- taskCreatorName --%>
       <a:column id="col3" rendered="#{r.task}">
          <f:facet name="header">
@@ -47,12 +43,12 @@
          <f:facet name="header">
             <h:outputText id="col4-sort" value="#{msg.workflow}" styleClass="header" />
          </f:facet>
-         <h:panelGroup rendered="#{WorkflowBlockBean.inWorkspace and r.raisedRights}">
+         <h:panelGroup rendered="#{r.raisedRights}">
             <a:actionLink  value="#{r.workflowType}" action="dialog:compoundWorkflowDialog" actionListener="#{CompoundWorkflowDialog.setupWorkflow}" styleClass="workflow-conf">
                <f:param name="nodeRef" value="#{r.compoundWorkflowNodeRef}" />
             </a:actionLink>
          </h:panelGroup>
-         <h:outputText rendered="#{!WorkflowBlockBean.inWorkspace or !r.raisedRights}" id="col4-text" value="#{r.workflowType}" />
+         <h:outputText rendered="#{!r.raisedRights}" id="col4-text" value="#{r.workflowType}" />
       </a:column>
       
       <%-- taskOwnerName --%>
@@ -60,8 +56,7 @@
          <f:facet name="header">
             <h:outputText id="col5-sort" value="#{msg.task_property_owner}" styleClass="header" />
          </f:facet>
-         <a:actionLink value="#{r.groupName}" styleClass="workflow-conf" href="#{r.workflowGroupTasksUrl}" target="_blank" image="/images/icons/plus.gif" rendered="#{r.groupBlockItem}" /> 
-         <h:outputText id="col5-text" value="#{r.taskOwnerName}" rendered="#{!r.groupBlockItem}" />
+         <h:outputText id="col5-text" value="#{r.taskOwnerName}" />
       </a:column>
       
       <%-- taskResolution --%>

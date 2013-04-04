@@ -10,27 +10,4 @@
       </property>
    </bean>
 
-   <!-- START: web beans: -->
-
-   <!-- this JSF validator can be singleton, as it doesn't change state -->
-   <bean id="OnlyLettersValidator_PANEL_AND_FIELD_NAME" class="ee.webmedia.alfresco.common.propertysheet.validator.OnlyLettersValidator">
-      <property name="customErrorMsgFormat" value="PANEL_AND_FIELD_NAME" />
-   </bean>
-
-   <bean id="OnlyLettersValidator_FIELD_NAME_ONLY" class="ee.webmedia.alfresco.common.propertysheet.validator.OnlyLettersValidator">
-      <property name="customErrorMsgFormat" value="FIELD_NAME_ONLY" />
-   </bean>
-
-   <bean id="InformationTextGenerator" class="ee.webmedia.alfresco.common.propertysheet.generator.InformationTextGenerator" scope="request" />
-
-   <bean id="ActionLinkGenerator" class="ee.webmedia.alfresco.common.propertysheet.generator.ActionLinkGenerator" scope="request" />
-   
-   <bean id="StructUnitSearchGenerator" class="ee.webmedia.alfresco.common.propertysheet.search.StructUnitSearchGenerator" scope="request" />
-   
-   <!-- Same as ClassificatorSelectorGenerator, adds renderer id LabelAndValueSelectorRenderer.LABEL_AND_VALUE_SELECTOR_RENDERER_TYPE -->
-   <bean id="ClassificatorSelectorWithTitleGenerator" class="ee.webmedia.alfresco.common.propertysheet.classificatorselector.ClassificatorSelectorWithTitleGenerator" scope="request" />
-
-   <bean id="PatternOutputGenerator" class="ee.webmedia.alfresco.common.propertysheet.patternoutput.PatternOutputGenerator" scope="request" />
-
-   <!-- END: web beans: -->
 </beans>

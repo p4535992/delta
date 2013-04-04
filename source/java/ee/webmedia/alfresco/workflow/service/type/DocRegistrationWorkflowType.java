@@ -2,9 +2,7 @@ package ee.webmedia.alfresco.workflow.service.type;
 
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
-import org.alfresco.service.cmr.repository.NodeRef;
 
-import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.service.Workflow;
@@ -34,11 +32,7 @@ public class DocRegistrationWorkflowType extends BaseWorkflowType implements Wor
             AuthenticationUtil.runAs(new RunAsWork<Object>() {
                 @Override
                 public Object doWork() throws Exception {
-                    NodeRef docRef = workflow.getParent().getParent();
-                    if (documentService.registerDocumentIfNotRegistered(docRef, true)) {
-                        BeanHelper.getDocumentTemplateService().updateGeneratedFiles(docRef, true);
-                        BeanHelper.getMenuBean().processTaskItems();
-                    }
+                    documentService.registerDocumentIfNotRegistered(workflow.getParent().getParent(), true);
                     return null;
                 }
             }, AuthenticationUtil.getSystemUserName());

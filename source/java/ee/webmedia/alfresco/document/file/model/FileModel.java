@@ -12,7 +12,11 @@ public interface FileModel {
      * Properties described in alfresco model
      */
     public interface Props {
-        QName GENERATED_FROM_TEMPLATE = QName.createQName(URI, "generatedFromTemplate");
+        /**
+         * XXX: this field could be refactored out in favour of field {@link #GENERATION_TYPE}, but not with boolean property, but with some kind of
+         * distinguishing value (defined by {@link GeneratedFileType})
+         */
+        QName GENERATED = QName.createQName(URI, "generated");
         /**
          * property for distinguishing pdf files generated during signing from other generated files that at the moment use {@link #GENERATED} property <br>
          * known values are defined with: {@link GeneratedFileType}
@@ -20,8 +24,6 @@ public interface FileModel {
         QName GENERATION_TYPE = QName.createQName(URI, "generationType");
         QName ACTIVE = QName.createQName(URI, "active");
         QName DISPLAY_NAME = QName.createQName(URI, "displayName");
-        QName NEW_VERSION_ON_NEXT_SAVE = QName.createQName(URI, "newVersionOnNextSave");
-        QName UPDATE_METADATA_IN_FILES = QName.createQName(URI, "updateMetadataInFiles");
 
     }
 }

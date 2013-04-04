@@ -28,11 +28,7 @@ public class WorkflowEventQueue {
         /** List<NodeRef> */
         EXTERNAL_REVIEW_PROCESSED_DOCUMENTS,
         /** Map<NodeRef, List<String>> */
-        ADDITIONAL_EXTERNAL_REVIEW_RECIPIENTS,
-        /** Task, if set means that finishing was triggered by manually finishing given task */
-        ORDER_ASSIGNMENT_FINISH_TRIGGERING_TASK,
-        /** Workflow was cancelled with compound_workflow_finish button, Boolean. */
-        WORKFLOW_CANCELLED_MANUALLY
+        ADDITIONAL_EXTERNAL_REVIEW_RECIPIENTS
     }
 
     public List<WorkflowEvent> getEvents() {

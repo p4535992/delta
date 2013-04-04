@@ -1,4 +1,3 @@
-<%@page import="ee.webmedia.alfresco.common.web.BeanHelper"%>
 <%@ taglib uri="http://java.sun.com/jsf/html" prefix="h"%>
 <%@ taglib uri="http://java.sun.com/jsf/core" prefix="f"%>
 <%@ taglib uri="/WEB-INF/alfresco.tld" prefix="a"%>
@@ -11,17 +10,18 @@
 <%@ page import="org.alfresco.web.app.servlet.FacesHelper"%>
 <%@ page import="org.alfresco.web.ui.common.PanelGenerator"%>
 <%@ page import="ee.webmedia.alfresco.document.file.web.AddFileDialog"%>
-<%@ page import="ee.webmedia.alfresco.parameters.web.ParametersImportDialog"%>
 
 <%
     boolean fileUploaded = false;
-    ParametersImportDialog dialog = BeanHelper.getParametersImportDialog();
+
+    ParametersImportDialog dialog = (ParametersImportDialog) FacesHelper
+            .getManagedBean(FacesContext.getCurrentInstance(), "ParametersImportDialog");
     if (dialog != null && dialog.getFileName() != null) {
         fileUploaded = true;
     }
 %>
 
-<f:verbatim>
+<%@page import="ee.webmedia.alfresco.parameters.web.ParametersImportDialog"%><f:verbatim>
    <script type="text/javascript" src="<%=request.getContextPath()%>/scripts/validation.js"> </script>
 
    <%

@@ -1,7 +1,5 @@
 package ee.webmedia.alfresco.addressbook.web.dialog;
 
-import static ee.webmedia.alfresco.common.web.BeanHelper.getAddressbookService;
-
 import java.util.List;
 import java.util.Map;
 
@@ -17,8 +15,10 @@ import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.TransientNode;
 import org.alfresco.web.ui.common.Utils;
 import org.apache.commons.lang.StringUtils;
+import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
+import ee.webmedia.alfresco.addressbook.service.AddressbookService;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
@@ -30,10 +30,9 @@ public class AddressbookAddEditDialog extends BaseDialogBean {
 
     public static final String BEAN_NAME = "AddressbookAddEditDialog";
     public static final String PERSON_CODE_EXISTS_ERROR = "addressbook_save_person_error_codeExists";
-    public static final String PERSON_NAME_EXISTS_ERROR = "addressbook_save_person_error_nameExists";
     public static final String ORG_CODE_EXISTS_ERROR = "addressbook_save_organization_error_codeExists";
-    public static final String ORG_NAME_EXISTS_ERROR = "addressbook_save_organization_error_nameExists";
 
+    private transient AddressbookService addressbookService;
     protected Node entry;
     protected NodeRef parentOrg = null;
     private boolean skipReset = false;
@@ -60,50 +59,38 @@ public class AddressbookAddEditDialog extends BaseDialogBean {
     protected String finishImpl(FacesContext context, String outcome) throws Exception {
         if (getEntry() == null) {
             Utils.addErrorMessage("addressbook_data_not_found");
+            isFinished = false;
             skipReset = true;
             return null;
         }
-        if (!validate()) {
+        if (validate()) {
+            checkUserInput();
+            return saveData(context, outcome);
+        } else {
             skipReset = true;
-            return null;
+            isFinished = false;
         }
-        checkUserInput();
-        return saveData(context, outcome);
+        return null;
     }
 
     private void checkUserInput() {
         Map<String, Object> properties = getEntry().getProperties();
         // Remove Whitespace from orgCode
-        String personId = (String) properties.get(AddressbookModel.Props.PERSON_ID.toString());
-        if (personId != null) {
-            properties.put(AddressbookModel.Props.PERSON_ID.toString(), StringUtils.deleteWhitespace(personId));
-        }
-        String orgCode = (String) properties.get(AddressbookModel.Props.ORGANIZATION_CODE.toString());
-        if (orgCode != null) {
-            properties.put(AddressbookModel.Props.ORGANIZATION_CODE.toString(), StringUtils.deleteWhitespace(orgCode));
-        }
+        properties.put(AddressbookModel.Props.ORGANIZATION_CODE.toString(),
+                StringUtils.deleteWhitespace((String) properties.get(AddressbookModel.Props.ORGANIZATION_CODE.toString())));
         // ... and email
-        String email = (String) properties.get(AddressbookModel.Props.EMAIL.toString());
-        if (email != null) {
-            properties.put(AddressbookModel.Props.EMAIL.toString(), StringUtils.deleteWhitespace(email));
-        }
+        properties.put(AddressbookModel.Props.EMAIL.toString(), StringUtils.deleteWhitespace((String) properties.get(AddressbookModel.Props.EMAIL.toString())));
     }
 
     private boolean validate() {
         Node contact = getEntry();
-        boolean isValid = true;
         if (Boolean.TRUE.equals(contact.getProperties().get(AddressbookModel.Props.TASK_CAPABLE))) {
             if (StringUtils.isBlank((String) contact.getProperties().get(AddressbookModel.Props.EMAIL))) {
                 MessageUtil.addInfoMessage("addressbook_contact_email_empty_error");
-                isValid = false;
+                return false;
             }
         }
-        String website = (String) contact.getProperties().get(AddressbookModel.Props.WEBSITE);
-        if (StringUtils.isNotBlank(website) && !(website.startsWith("http://") || website.startsWith("https://") || website.startsWith("ftp://"))) {
-            MessageUtil.addInfoMessage("addressbook_contact_invalid_webiste");
-            isValid = false;
-        }
-        return isValid;
+        return true;
     }
 
     @Override
@@ -121,6 +108,15 @@ public class AddressbookAddEditDialog extends BaseDialogBean {
         return outcome;
     }
 
+    // XXX quick fix
+    public Object getAllActionsDataModel() {
+        return new Object() {
+            public int getRowCount() {
+                return 0;
+            }
+        };
+    }
+
     protected String saveData(FacesContext context, String outcome) {
         List<Pair<String, String>> duplicateMessages = getAddressbookService().checkIfContactExists(getEntry());
         boolean allowSave = true;
@@ -131,11 +127,8 @@ public class AddressbookAddEditDialog extends BaseDialogBean {
                     || ORG_CODE_EXISTS_ERROR.equals(messageKey)) {
                 MessageUtil.addErrorMessage(context, messageKey, message.getSecond());
                 allowSave = false;
-            } else {
+            } else if (confirmMessage != null) {
                 confirmMessage = MessageUtil.getMessage(messageKey, message.getSecond());
-                if (confirmMessage != null) {
-                    break;
-                }
             }
         }
         if (!allowSave) {
@@ -190,6 +183,18 @@ public class AddressbookAddEditDialog extends BaseDialogBean {
 
     // ------------------------------------------------------------------------------
     // Bean Getters and Setters
+
+    protected AddressbookService getAddressbookService() {
+        if (addressbookService == null) {
+            addressbookService = (AddressbookService) FacesContextUtils.getRequiredWebApplicationContext(
+                    FacesContext.getCurrentInstance()).getBean(AddressbookService.BEAN_NAME);
+        }
+        return addressbookService;
+    }
+
+    public void setAddressbookService(AddressbookService addressbookService) {
+        this.addressbookService = addressbookService;
+    }
 
     public Node getEntry() {
         return entry;

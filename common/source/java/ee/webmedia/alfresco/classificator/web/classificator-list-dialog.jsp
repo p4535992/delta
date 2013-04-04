@@ -7,13 +7,11 @@
 <%@ page buffer="32kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
 
-<%@ include file="searchPanel.jsp" %>
-
 <a:panel id="classificators-panel" styleClass="panel-100 with-pager" label="#{msg.classificators_list}" progressive="true">
 
    <%-- Spaces List --%>
-   <a:richList id="classificatorsList" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt" width="100%"
-      value="#{ClassificatorListDialog.classificators}" var="classificator" initialSortColumn="name" refreshOnBind="true">
+   <a:richList id="classificatorsList" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow"
+      altRowStyleClass="recordSetRowAlt" width="100%" value="#{DialogManager.bean.classificators}" var="classificator" initialSortColumn="name">
 
       <%-- Primary column for the name --%>
       <a:column id="col1" primary="true">
@@ -30,21 +28,18 @@
             <f:param name="nodeRef" value="#{classificator.nodeRef}" />
          </a:actionLink>
       </a:column>
-      
-      <%-- Column for the description --%>
-      <a:column id="col4" style="text-align:right">
-         <f:facet name="header">
-            <h:outputText id="col2-txt" value="#{msg.classificator_description}" />
-         </f:facet>
-         <h:outputText value="#{classificator.description}" />
-      </a:column>
-      
+
       <%-- Adding allowed, yes or no --%>
       <a:column id="col2" style="text-align:right">
          <f:facet name="header">
             <h:outputText id="col2-txt" value="#{msg.classificator_add_allowed}" />
          </f:facet>
-         <h:outputText value="#{classificator.addRemoveValues}"><a:convertBoolean /></h:outputText>
+         <a:booleanEvaluator id="classificatorCanAddEvaluator" value="#{classificator.addRemoveValues}">
+            <h:outputText id="itemValid" value="#{msg.classificator_yes}" />
+         </a:booleanEvaluator>
+         <a:booleanEvaluator id="classificatorCannotAddEvaluator" value="#{!classificator.addRemoveValues}">
+            <h:outputText id="itemNotValid" value="#{msg.classificator_no}" />
+         </a:booleanEvaluator>
       </a:column>
 
       <%-- Actions column --%>

@@ -1,34 +1,29 @@
 package ee.webmedia.alfresco.search.service;
 
-import static ee.webmedia.alfresco.utils.SearchUtil.generateLuceneSearchParams;
+import static ee.webmedia.alfresco.utils.SearchUtil.formatLuceneDate;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
-import java.util.concurrent.atomic.AtomicLong;
 
 import org.alfresco.i18n.I18NUtil;
 import org.alfresco.model.ContentModel;
-import org.alfresco.repo.search.EmptyResultSet;
 import org.alfresco.repo.search.MLAnalysisMode;
-import org.alfresco.repo.search.impl.SearchStatistics;
 import org.alfresco.repo.search.impl.lucene.AnalysisMode;
 import org.alfresco.repo.search.impl.lucene.LuceneAnalyser;
 import org.alfresco.repo.search.impl.lucene.LuceneConfig;
 import org.alfresco.repo.search.impl.lucene.analysis.MLTokenDuplicator;
 import org.alfresco.service.cmr.dictionary.DictionaryService;
-import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.service.cmr.repository.NodeService;
-import org.alfresco.service.cmr.repository.StoreRef;
-import org.alfresco.service.cmr.search.ResultSet;
-import org.alfresco.service.cmr.search.ResultSetRow;
+import org.alfresco.service.cmr.search.LimitBy;
 import org.alfresco.service.cmr.search.SearchParameters;
 import org.alfresco.service.cmr.search.SearchService;
 import org.alfresco.service.namespace.QName;
@@ -37,23 +32,13 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.lucene.analysis.Token;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.queryParser.QueryParser;
-import org.apache.lucene.search.BooleanQuery;
 
-import ee.webmedia.alfresco.common.service.GeneralService;
-import ee.webmedia.alfresco.common.web.BeanHelper;
-import ee.webmedia.alfresco.parameters.model.Parameters;
-import ee.webmedia.alfresco.parameters.service.ParametersService;
-import ee.webmedia.alfresco.utils.CalendarUtil;
 import ee.webmedia.alfresco.utils.SearchUtil;
 
 public abstract class AbstractSearchServiceImpl {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(AbstractSearchServiceImpl.class);
 
     protected DictionaryService dictionaryService;
-    protected NodeService nodeService;
-    protected GeneralService generalService;
-    protected SearchService searchService;
-    protected ParametersService parametersService;
     protected LuceneConfig config;
 
     protected LuceneAnalyser luceneAnalyser;
@@ -88,33 +73,74 @@ public abstract class AbstractSearchServiceImpl {
         return SearchUtil.joinQueryPartsOr(queryParts);
     }
 
+    protected SearchParameters buildSearchParameters(String query, Integer limit) {
+        // build up the search parameters
+        SearchParameters sp = new SearchParameters();
+        sp.setLanguage(SearchService.LANGUAGE_LUCENE);
+        sp.setQuery(query);
+
+        // This limit does not work when ACLEntryAfterInvocationProvider has been disabled
+        // So we perform our own limiting in this service also
+        if (limit != null) {
+            sp.setLimit(limit);
+            sp.setLimitBy(LimitBy.FINAL_SIZE);
+        } else {
+            sp.setLimitBy(LimitBy.UNLIMITED);
+        }
+        return sp;
+    }
+
     /**
      * Escape symbols and use only 10 first unique words which contain at least 3 characters
      */
     public List<String> parseQuickSearchWords(String searchString) {
-        return parseQuickSearchWords(searchString, 3);
+        return parseQuickSearchWords(searchString, false).getFirst();
     }
 
-    protected List<String> parseQuickSearchWords(String searchString, int minTextLength) {
+    protected Pair<List<String>, List<Date>> parseQuickSearchWordsAndDates(String searchString) {
+        return parseQuickSearchWords(searchString, true);
+    }
+
+    private Pair<List<String>, List<Date>> parseQuickSearchWords(String searchString, boolean parseDates) {
+        DateFormat userDateFormat = new SimpleDateFormat("dd.MM.yyyy");
+        userDateFormat.setLenient(false);
+
         List<String> searchWords = new ArrayList<String>();
+        List<Date> searchDates = new ArrayList<Date>();
         if (StringUtils.isBlank(searchString)) {
-            return searchWords;
-        }
-        Long maxWords = BeanHelper.getParametersService().getLongParameter(Parameters.QUICK_SEARCH_WORDS_COUNT);
-        if (maxWords == null || maxWords < 1 || maxWords > 10) {
-            // TODO: is this valid default maximum value?
-            maxWords = 10L;
+            return new Pair<List<String>, List<Date>>(searchWords, searchDates);
         }
         for (String searchWord : searchString.split("\\s")) {
+            if (parseDates) {
+                Date date = null;
+                try {
+                    date = userDateFormat.parse(searchWord);
+                    // if not date, then ParseException is thrown and processing continues below as regular word
 
-            // Extract dates first.
-            SearchUtil.extractDates(searchWord, searchWords);
+                    if (searchWords.size() + searchDates.size() >= 10) {
+                        continue;
+                    }
+                    if (log.isDebugEnabled()) {
+                        log.debug("getDocumentsQuickSearch - found date match: " + searchWord + " -> " + formatLuceneDate(date));
+                    }
 
-            // Tokenize the search word (even if contained only full date - textual content also needs to be searched):
+                    boolean exists = false;
+                    for (Date tmpDate : searchDates) {
+                        exists |= tmpDate.equals(date);
+                    }
+                    if (!exists) {
+                        searchDates.add(date);
+                    }
+                    continue;
+                } catch (ParseException e) {
+                    // do nothing
+                }
+            }
+
             String searchWordStripped = SearchUtil.stripCustom(SearchUtil.replaceCustom(searchWord, ""));
             for (Token token : getTokens(searchWordStripped)) {
                 String termText = token.term();
-                if (termText.length() >= minTextLength && searchWords.size() < maxWords) {
+                if (termText.length() >= 3 && searchWords.size() + searchDates.size() < 10) {
                     termText = QueryParser.escape(termText);
 
                     boolean exists = false;
@@ -127,230 +153,7 @@ public abstract class AbstractSearchServiceImpl {
                 }
             }
         }
-        return searchWords;
-    }
-
-    protected int countResults(List<ResultSet> resultSets) {
-        int count = 0;
-        try {
-            for (ResultSet resultSet : resultSets) {
-                count += resultSet.length();
-            }
-        } finally {
-            try {
-                for (ResultSet resultSet : resultSets) {
-                    resultSet.close();
-                }
-            } catch (Exception e) {
-                // Do nothing
-            }
-        }
-        return count;
-    }
-
-    protected Pair<List<NodeRef>, Boolean> searchNodes(String query, int limit, String queryName, Collection<StoreRef> storeRefs) {
-        return searchGeneralImplWithoutSort(query, limit, queryName, new SearchCallback<NodeRef>() {
-            @Override
-            public NodeRef addResult(ResultSetRow row) {
-                return row.getNodeRef();
-            }
-        }, storeRefs);
-    }
-
-    protected interface SearchCallback<E> {
-        E addResult(ResultSetRow row);
-    }
-
-    protected <E extends Comparable<? super E>> Pair<List<E>, Boolean> searchGeneralImpl(String query, int limit, String queryName, SearchCallback<E> callback) {
-        return searchGeneralImpl(query, limit, queryName, callback, null);
-    }
-
-    protected <E extends Comparable<? super E>> Pair<List<E>, Boolean> searchGeneralImpl( //
-            String query, int limit, String queryName, SearchCallback<E> callback, Collection<StoreRef> storeRefs) {
-        final Pair<List<E>, Boolean> extractResults = searchGeneralImplWithoutSort(query, limit, queryName, callback, storeRefs);
-        Collections.sort(extractResults.getFirst());
-        return extractResults;
-    }
-
-    protected <E> Pair<List<E>, Boolean> searchGeneralImplWithoutSort( //
-            String query, int limit, String queryName, SearchCallback<E> callback, Collection<StoreRef> storeRefs) {
-        if (StringUtils.isBlank(query)) {
-            return new Pair<List<E>, Boolean>(new ArrayList<E>(), false);
-        }
-        StoreRef singleStoreRef = null;
-        if (storeRefs == null) {
-            singleStoreRef = generalService.getStore();
-        } else if (storeRefs.size() == 1) {
-            singleStoreRef = storeRefs.iterator().next();
-        }
-        long startTime = System.currentTimeMillis();
-        final List<ResultSet> resultSets;
-        if (singleStoreRef != null) {
-            resultSets = Arrays.asList(doSearch(query, limit, queryName, singleStoreRef));
-        } else {
-            resultSets = doSearches(query, limit, queryName, storeRefs);
-        }
-        final Pair<List<E>, Boolean> extractResults = extractResults(callback, startTime, resultSets, limit);
-        return extractResults;
-    }
-
-    private <E> Pair<List<E>, Boolean> extractResults(SearchCallback<E> callback, long startTime, final List<ResultSet> resultSets, int limit) {
-        try {
-            List<E> result = new ArrayList<E>();
-            boolean resultsGotLimited = false;
-            if (log.isDebugEnabled()) {
-                long resultsCount = 0;
-                for (ResultSet resultSet : resultSets) {
-                    resultsCount += resultSet.length();
-                }
-                log.debug("Lucene search time " + (System.currentTimeMillis() - startTime) + " ms, results: " + resultsCount);
-                startTime = System.currentTimeMillis();
-            }
-
-            FILL_RESULT: for (ResultSet resultSet : resultSets) {
-                for (ResultSetRow row : resultSet) {
-                    if (!nodeService.exists(row.getNodeRef())) {
-                        continue;
-                    }
-                    E item = callback.addResult(row);
-                    if (item == null) {
-                        continue;
-                    }
-                    if (limit > -1 && result.size() + 1 > limit) {
-                        resultsGotLimited = true;
-                        break FILL_RESULT;
-                    }
-                    result.add(item);
-                }
-            }
-
-            if (log.isDebugEnabled()) {
-                log.debug("Results construction time " + (System.currentTimeMillis() - startTime) + " ms, final results: " + result.size());
-            }
-            return new Pair<List<E>, Boolean>(result, resultsGotLimited);
-        } finally {
-            try {
-                for (ResultSet resultSet : resultSets) {
-                    resultSet.close();
-                }
-            } catch (Exception e) {
-                // Do nothing
-            }
-        }
-    }
-
-    /**
-     * Sets up search parameters and queries
-     * 
-     * @param query
-     * @param limited if true, only 100 first results are returned
-     * @return query resultset
-     */
-    protected ResultSet doSearch(String query, int limit, String queryName, StoreRef storeRef) {
-        final SearchParameters sp = generateLuceneSearchParams(query, storeRef == null ? generalService.getStore() : storeRef, limit);
-        return doSearchQuery(sp, queryName);
-    }
-
-    protected List<ResultSet> doSearches(String query, int limit, String queryName, Collection<StoreRef> storeRefs) {
-        final SearchParameters sp = generateLuceneSearchParams(query, null, limit);
-        if (storeRefs == null || storeRefs.size() == 0) {
-            storeRefs = Arrays.asList(generalService.getStore());
-        }
-        final Collection<StoreRef> stores = (storeRefs == null || storeRefs.size() == 0) ? Arrays.asList(generalService.getStore()) : storeRefs;
-        List<ResultSet> results = new ArrayList<ResultSet>(stores.size());
-        for (StoreRef storeRef : stores) {
-            sp.getStores().clear();
-            sp.addStore(storeRef);
-            results.add(doSearchQuery(sp, queryName));
-
-            // Optimization: don't search from other stores if limit is reached
-            if (limit > -1 && results.size() > limit) {
-                break;
-            }
-        }
-        return results;
-    }
-
-    private static AtomicLong parallelQueryCount = new AtomicLong(0L);
-    private static AtomicLong parallelClausesCount = new AtomicLong(0L);
-
-    protected ResultSet doSearchQuery(SearchParameters sp, String queryName) {
-        if (StringUtils.isBlank(sp.getQuery())) {
-            return new EmptyResultSet();
-        }
-        long startTime = System.nanoTime();
-        try {
-            int clauses = -1;
-            long parallelQueryCountBefore = -1;
-            long parallelQueryCountAfter = -1;
-            long parallelClausesCountBefore = -1;
-            long parallelClausesCountAfter = -1;
-            SearchStatistics.Data data = null;
-
-            if (log.isInfoEnabled()) {
-                // This clauses counting is simplified but enough for most queries.
-                clauses = StringUtils.countMatches(sp.getQuery(), " AND ") + StringUtils.countMatches(sp.getQuery(), " OR ") + 1;
-                parallelQueryCountBefore = parallelQueryCount.incrementAndGet();
-                parallelClausesCountBefore = parallelClausesCount.addAndGet(clauses);
-                SearchStatistics.enable();
-            }
-
-            ResultSet resultSet;
-            try {
-                resultSet = searchService.query(sp);
-            } finally {
-                if (log.isInfoEnabled()) {
-                    parallelQueryCountAfter = parallelQueryCount.getAndDecrement();
-                    parallelClausesCountAfter = parallelClausesCount.getAndAdd(clauses * -1L);
-                    data = SearchStatistics.getData();
-                    SearchStatistics.disable();
-                }
-            }
-
-            if (log.isInfoEnabled()) {
-                long duration = CalendarUtil.duration(startTime);
-                StringBuilder sb = new StringBuilder(100).append("PERFORMANCE: query ").append(queryName).append(" - ").append(duration).append(" ms");
-
-                sb.append("|").append(clauses);
-                sb.append("|").append(parallelClausesCountBefore);
-                sb.append("|").append(parallelClausesCountAfter);
-                sb.append("|").append(parallelQueryCountBefore);
-                sb.append("|").append(parallelQueryCountAfter);
-                if (data != null) {
-                    sb.append("|").append(data.luceneHitsTime).append(" ms");
-                    sb.append("|").append(data.originalQueryChars);
-                    sb.append("|").append(data.rewrittenQueryChars);
-                }
-
-                // When more than 60 clauses were found in a query, log the query.
-                if (clauses > 60) {
-                    sb.append("\n    query ").append(queryName).append(": ").append(sp.getQuery());
-                }
-                log.info(sb.toString());
-            }
-
-            return resultSet;
-        } catch (BooleanQuery.TooManyClauses e) {
-            log.error("Search failed with TooManyClauses exception, query expanded over limit\n    queryName=" + queryName + "\n    store=" + sp.getStores()
-                    + "\n    limit=" + sp.getLimit() + "\n    limitBy=" + sp.getLimitBy().toString() + "\n    exceptionMessage=" + e.getMessage());
-            throw e;
-        }
-    }
-
-    public void setGeneralService(GeneralService generalService) {
-        this.generalService = generalService;
-    }
-
-    public void setNodeService(NodeService nodeService) {
-        this.nodeService = nodeService;
-    }
-
-    public void setParametersService(ParametersService parametersService) {
-        this.parametersService = parametersService;
-    }
-
-    public void setSearchService(SearchService searchService) {
-        this.searchService = searchService;
+        return new Pair<List<String>, List<Date>>(searchWords, searchDates);
     }
 
     public void setDictionaryService(DictionaryService dictionaryService) {
@@ -383,7 +186,8 @@ public abstract class AbstractSearchServiceImpl {
         ArrayList<org.apache.lucene.analysis.Token> list = new ArrayList<org.apache.lucene.analysis.Token>();
         org.apache.lucene.analysis.Token reusableToken = new org.apache.lucene.analysis.Token();
         org.apache.lucene.analysis.Token nextToken;
-        // boolean severalTokensAtSamePosition = false; // FIXME this is never read
+        int positionCount = 0;
+        boolean severalTokensAtSamePosition = false;
 
         while (true) {
             try {
@@ -395,6 +199,11 @@ public abstract class AbstractSearchServiceImpl {
                 break;
             }
             list.add((org.apache.lucene.analysis.Token) nextToken.clone());
+            if (nextToken.getPositionIncrement() != 0) {
+                positionCount += nextToken.getPositionIncrement();
+            } else {
+                severalTokensAtSamePosition = true;
+            }
         }
         try {
             source.close();
@@ -423,8 +232,9 @@ public abstract class AbstractSearchServiceImpl {
                             }
                             if (found) {
                                 break;
+                            } else {
+                                pre.insert(0, c);
                             }
-                            pre.insert(0, c);
                         }
                     }
                     if (pre.length() > 0) {
@@ -443,7 +253,7 @@ public abstract class AbstractSearchServiceImpl {
                                     list.add(it.next());
                                     count++;
                                     if (count > 1) {
-                                        // severalTokensAtSamePosition = true;
+                                        severalTokensAtSamePosition = true;
                                     }
                                 }
                             }
@@ -470,8 +280,9 @@ public abstract class AbstractSearchServiceImpl {
                             }
                             if (found) {
                                 break;
+                            } else {
+                                post.append(c);
                             }
-                            post.append(c);
                         }
                     }
                     if (post.length() > 0) {
@@ -490,7 +301,7 @@ public abstract class AbstractSearchServiceImpl {
                                     list.add(it.next());
                                     count++;
                                     if (count > 1) {
-                                        // severalTokensAtSamePosition = true;
+                                        severalTokensAtSamePosition = true;
                                     }
                                 }
                             }
@@ -516,7 +327,10 @@ public abstract class AbstractSearchServiceImpl {
                 {
                     return dif;
                 }
-                return o2.getPositionIncrement() - o1.getPositionIncrement();
+                else
+                {
+                    return o2.getPositionIncrement() - o1.getPositionIncrement();
+                }
             }
         });
 
@@ -688,7 +502,10 @@ public abstract class AbstractSearchServiceImpl {
                 {
                     return dif;
                 }
-                return o2.getPositionIncrement() - o1.getPositionIncrement();
+                else
+                {
+                    return o2.getPositionIncrement() - o1.getPositionIncrement();
+                }
             }
         });
         return fixed;

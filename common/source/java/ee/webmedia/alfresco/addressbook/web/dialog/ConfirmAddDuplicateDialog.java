@@ -2,10 +2,9 @@ package ee.webmedia.alfresco.addressbook.web.dialog;
 
 import javax.faces.context.FacesContext;
 
+import org.alfresco.web.app.Application;
+import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
-
-import ee.webmedia.alfresco.common.web.BeanHelper;
-import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
  * Dialog that shows confirmation message before adding duplicate
@@ -19,9 +18,10 @@ public class ConfirmAddDuplicateDialog extends BaseDialogBean {
 
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Exception {
-        AddressbookAddEditDialog bean = BeanHelper.getAddressbookAddEditDialog();
+        AddressbookAddEditDialog bean = (AddressbookAddEditDialog) FacesHelper.getManagedBean( //
+                FacesContext.getCurrentInstance(), AddressbookAddEditDialog.BEAN_NAME);
         bean.persistEntry();
-        return getCloseOutcome(2);
+        return outcome + "[2]";
     }
 
     public void setConfirmMessage(String confirmMessage) {
@@ -45,12 +45,12 @@ public class ConfirmAddDuplicateDialog extends BaseDialogBean {
 
     @Override
     public String getFinishButtonLabel() {
-        return MessageUtil.getMessage("yes");
+        return Application.getMessage(FacesContext.getCurrentInstance(), "yes");
     }
 
     @Override
     public String getCancelButtonLabel() {
-        return MessageUtil.getMessage("no");
+        return Application.getMessage(FacesContext.getCurrentInstance(), "no");
     }
 
 }

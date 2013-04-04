@@ -1,8 +1,5 @@
 package ee.webmedia.alfresco.addressbook.web.dialog;
 
-import static ee.webmedia.alfresco.common.web.BeanHelper.getAddressbookService;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -13,10 +10,11 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.StringUtils;
+import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel.Types;
-import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UserUtil;
 
@@ -24,21 +22,13 @@ public class ContactGroupListDialog extends ContactGroupBaseDialog {
 
     private static final long serialVersionUID = 1L;
 
+    private transient UserService userService;
     private List<Node> contactGroups;
     private final Map<NodeRef, Boolean> originalTaskCapableValues = new HashMap<NodeRef, Boolean>();
 
     @Override
     public void init(Map<String, String> params) {
         super.init(params);
-        initContactGroups();
-    }
-
-    @Override
-    public void restored() {
-        initContactGroups();
-    }
-
-    private void initContactGroups() {
         contactGroups = getAddressbookService().listContactGroups();
         for (Node contactGroup : contactGroups) {
             originalTaskCapableValues.put(contactGroup.getNodeRef(), Boolean.TRUE.equals(contactGroup.getProperties().get(AddressbookModel.Props.TASK_CAPABLE)));
@@ -46,7 +36,7 @@ public class ContactGroupListDialog extends ContactGroupBaseDialog {
     }
 
     public NodeRef getAddressbookNode() {
-        final NodeRef addressbookNodeRef = getAddressbookService().getAddressbookRoot();
+        final NodeRef addressbookNodeRef = getAddressbookService().getAddressbookNodeRef();
         return addressbookNodeRef;
     }
 
@@ -57,15 +47,11 @@ public class ContactGroupListDialog extends ContactGroupBaseDialog {
         Map<NodeRef, Pair<Pair<String, Boolean>, List<Node>>> contactGroupContacts = new HashMap<NodeRef, Pair<Pair<String, Boolean>, List<Node>>>();
         for (Node contactGroup : contactGroups) {
             Map<String, Object> contactGroupProperties = contactGroup.getProperties();
-            Boolean taskCapableValue = Boolean.TRUE.equals(contactGroupProperties.get(AddressbookModel.Props.TASK_CAPABLE));
+            Boolean taskCapableValue = (Boolean) contactGroupProperties.get(AddressbookModel.Props.TASK_CAPABLE);
             Boolean originalTaskCapableValue = originalTaskCapableValues.get(contactGroup.getNodeRef());
             // if taskCapable property is changed, update all contacts in the contact group
-            if (taskCapableValue && taskCapableValue != originalTaskCapableValue) { // Kontaktgrupid.docx 4.1.5.4 - update contacts only if new value is true
+            if (taskCapableValue != originalTaskCapableValue) {
                 List<Node> contactNodes = getAddressbookService().getContactsByType(Types.PERSON_BASE, contactGroup.getNodeRef());
-                if (!contactNodes.isEmpty()) {
-                    MessageUtil.addInfoMessage("addressbook_contactgroup_edit_contains_people_error");
-                    return null;
-                }
                 contactNodes.addAll(getAddressbookService().getContactsByType(Types.ORGANIZATION, contactGroup.getNodeRef()));
                 contactGroupContacts.put(contactGroup.getNodeRef()
                         , new Pair<Pair<String, Boolean>, List<Node>>(new Pair<String, Boolean>((String) contactGroupProperties.get(AddressbookModel.Props.GROUP_NAME),
@@ -104,8 +90,8 @@ public class ContactGroupListDialog extends ContactGroupBaseDialog {
                 }
                 getAddressbookService().addOrUpdateNode(contactGroup, null);
             }
-            MessageUtil.addInfoMessage("save_success");
         }
+        isFinished = false;
         return null;
     }
 
@@ -127,7 +113,12 @@ public class ContactGroupListDialog extends ContactGroupBaseDialog {
         return null;
     }
 
-    public boolean getHideFinishButton() {
-        return !BeanHelper.getUserService().isDocumentManager();
+    public UserService getUserService() {
+        if (userService == null) {
+            userService = (UserService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())//
+                    .getBean(UserService.BEAN_NAME);
+        }
+        return userService;
     }
+
 }

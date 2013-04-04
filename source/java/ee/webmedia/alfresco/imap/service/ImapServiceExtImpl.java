@@ -10,7 +10,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -30,10 +29,8 @@ import org.alfresco.repo.imap.AlfrescoImapConst;
 import org.alfresco.repo.imap.AlfrescoImapFolder;
 import org.alfresco.repo.imap.AlfrescoImapUser;
 import org.alfresco.repo.imap.ImapService;
-import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.model.FileFolderService;
 import org.alfresco.service.cmr.model.FileInfo;
-import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.ContentReader;
 import org.alfresco.service.cmr.repository.ContentService;
 import org.alfresco.service.cmr.repository.ContentWriter;
@@ -61,26 +58,21 @@ import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.classificator.enums.StorageType;
 import ee.webmedia.alfresco.classificator.enums.TransmittalMode;
 import ee.webmedia.alfresco.common.service.GeneralService;
-import ee.webmedia.alfresco.docconfig.bootstrap.SystematicDocumentType;
-import ee.webmedia.alfresco.docdynamic.service.DocumentDynamicService;
 import ee.webmedia.alfresco.document.einvoice.service.EInvoiceService;
 import ee.webmedia.alfresco.document.file.service.FileService;
-import ee.webmedia.alfresco.document.file.web.Subfolder;
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
+import ee.webmedia.alfresco.document.type.service.DocumentTypeService;
 import ee.webmedia.alfresco.imap.AppendBehaviour;
 import ee.webmedia.alfresco.imap.AttachmentsFolderAppendBehaviour;
 import ee.webmedia.alfresco.imap.ImmutableFolder;
 import ee.webmedia.alfresco.imap.IncomingEInvoiceCreateBehaviour;
 import ee.webmedia.alfresco.imap.IncomingFolderAppendBehaviour;
 import ee.webmedia.alfresco.imap.PermissionDeniedAppendBehaviour;
-import ee.webmedia.alfresco.imap.SendFailureAppendBehaviour;
 import ee.webmedia.alfresco.imap.SentFolderAppendBehaviour;
 import ee.webmedia.alfresco.imap.model.ImapModel;
-import ee.webmedia.alfresco.user.service.UserService;
-import ee.webmedia.alfresco.utils.FilenameUtil;
 
 /**
  * SimDhs specific IMAP logic.
@@ -98,17 +90,10 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
     private GeneralService generalService;
     private FileService fileService;
     private MimetypeService mimetypeService;
-    private DocumentDynamicService documentDynamicService;
+    private DocumentTypeService documentTypeService;
     private EInvoiceService einvoiceService;
-    public UserService userService;
 
     private String messageCopyFolder;
-    private String incomingLetterSubfolderType;
-    private String attachmentsSubfolderType;
-    private String outgoingLettersSubfolderType;
-    private String sendFailureNoticesSubfolderType;
-    private Map<NodeRef, String> imapFolderTypes = null;
-    private Map<NodeRef, Set<String>> imapFolderFixedSubfolders = null;
 
     // todo: make this configurable with spring
     private Set<String> allowedFolders = null;
@@ -125,51 +110,17 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
     }
 
     @Override
-    public long saveEmailToSubfolder(NodeRef folderNodeRef, MimeMessage mimeMessage, String behaviour, boolean incomingEmail) throws FolderException {
-        NodeRef parentNodeRef = findOrCreateFolder(folderNodeRef, behaviour);
-        return saveEmail(parentNodeRef, mimeMessage, incomingEmail);
-    }
-
-    @Override
-    public void saveFailureNoticeToSubfolder(NodeRef folderNodeRef, MimeMessage mimeMessage, String behaviour) throws FolderException {
-        NodeRef parentNodeRef = findOrCreateFolder(folderNodeRef, behaviour);
-        saveFailureNotice(parentNodeRef, mimeMessage);
-    }
-
-    private void saveFailureNotice(NodeRef parentNodeRef, MimeMessage mimeMessage) throws FolderException {
-        try {
-            createBody(parentNodeRef, mimeMessage, mimeMessage.getSubject());
-        } catch (Exception e) {
-            log.warn("Cannot save email, folderNodeRef=" + parentNodeRef, e);
-            throw new FolderException("Cannot save email: " + e.getMessage());
-        }
-    }
-
-    private NodeRef findOrCreateFolder(NodeRef folderNodeRef, String behaviour) throws FolderException {
-        NodeRef parentNodeRef = folderNodeRef;
-        if (isUserBasedFolder(parentNodeRef)) {
-            String username = AuthenticationUtil.getRunAsUser();
-            if (userService.getPerson(username) == null) {
-                throw new FolderException("User " + username + " doesn't exist, cannot create imap folder!");
-            }
-            parentNodeRef = fileService.findSubfolderWithName(parentNodeRef, username, ImapModel.Types.IMAP_FOLDER);
-            if (parentNodeRef == null) {
-                parentNodeRef = createImapSubfolder(folderNodeRef, behaviour, userService.getUserFullName(username), username);
-            }
-        }
-        return parentNodeRef;
-    }
-
-    @Override
     public long saveEmail(NodeRef folderNodeRef, MimeMessage mimeMessage, boolean incomingEmail) throws FolderException { // todo: ex handling
         try {
-            String docTypeId;
+            String name = AlfrescoImapConst.MESSAGE_PREFIX + GUID.generate();
+            FileInfo docInfo = null;
+            QName docType;
             if (incomingEmail) {
-                docTypeId = SystematicDocumentType.INCOMING_LETTER.getId();
+                docType = documentTypeService.getIncomingLetterType();
             } else {
-                docTypeId = SystematicDocumentType.OUTGOING_LETTER.getId();
+                docType = documentTypeService.getOutgoingLetterType();
             }
-            NodeRef docRef = documentDynamicService.createNewDocument(docTypeId, folderNodeRef).getFirst().getNodeRef();
+            docInfo = fileFolderService.create(folderNodeRef, name, docType);
 
             Map<QName, Serializable> properties = new HashMap<QName, Serializable>();
             String subject = mimeMessage.getSubject();
@@ -197,13 +148,15 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
                     properties.put(DocumentCommonModel.Props.RECIPIENT_EMAIL, (Serializable) emails);
                 }
             }
+            properties.put(DocumentCommonModel.Props.DOC_STATUS, DocumentStatus.WORKING.getValueName());
             properties.put(DocumentCommonModel.Props.STORAGE_TYPE, StorageType.DIGITAL.getValueName());
+
+            final NodeRef docRef = docInfo.getNodeRef();
             nodeService.addProperties(docRef, properties);
+            saveAttachments(docRef, mimeMessage, true);
 
             documentLogService.addDocumentLog(docRef, I18NUtil.getMessage("document_log_status_imported", I18NUtil.getMessage("document_log_creator_imap")) //
                     , I18NUtil.getMessage("document_log_creator_imap"));
-
-            saveAttachments(docRef, mimeMessage, true);
 
             return (Long) nodeService.getProperty(docRef, ContentModel.PROP_NODE_DBID);
         } catch (Exception e) { // todo: improve exception handling
@@ -288,24 +241,6 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
     }
 
     @Override
-    public NodeRef createImapSubfolder(NodeRef parentFolderNodeRef, String behaviour, String subfolderName, String folderAssocName) {
-        QName assocName = QName.createQName(ImapModel.URI, folderAssocName);
-        Map<QName, Serializable> props = new HashMap<QName, Serializable>();
-        props.put(ContentModel.PROP_NAME, subfolderName);
-        if (StringUtils.isNotBlank(behaviour)) {
-            props.put(ImapModel.Properties.APPEND_BEHAVIOUR, behaviour);
-        }
-        return nodeService.createNode(parentFolderNodeRef, ContentModel.ASSOC_CONTAINS, assocName, ImapModel.Types.IMAP_FOLDER, props).getChildRef();
-    }
-
-    @Override
-    public void saveAttachmentsToSubfolder(NodeRef document, MimeMessage originalMessage, boolean saveBody) throws IOException, MessagingException, TransformationException,
-            FolderException {
-        NodeRef parentNodeRef = findOrCreateFolder(document, AttachmentsFolderAppendBehaviour.BEHAVIOUR_NAME);
-        saveAttachments(parentNodeRef, originalMessage, saveBody);
-    }
-
-    @Override
     public void saveAttachments(NodeRef document, MimeMessage originalMessage, boolean saveBody)
             throws IOException, MessagingException, TransformationException {
         saveAttachments(document, originalMessage, saveBody, null);
@@ -346,32 +281,6 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
         NodeRef attachmentSpaceRef = generalService.getNodeRef(ImapModel.Repo.ATTACHMENT_SPACE);
         Assert.notNull(attachmentSpaceRef, "Attachment node reference not found");
         return attachmentSpaceRef;
-    }
-
-    @Override
-    public NodeRef getSendFailureNoticeRoot() {
-        NodeRef sendFailureNoticeSpaceRef = generalService.getNodeRef(ImapModel.Repo.SEND_FAILURE_NOTICE_SPACE);
-        Assert.notNull(sendFailureNoticeSpaceRef, "Send failure notice node reference not found");
-        return sendFailureNoticeSpaceRef;
-    }
-
-    @Override
-    public boolean isFixedFolder(NodeRef folderRef) {
-        return StringUtils.equals(FOLDER_TYPE_PREFIX_FIXED, getImapFolderTypes().get(folderRef));
-    }
-
-    @Override
-    public boolean isUserBasedFolder(NodeRef folderRef) {
-        return StringUtils.equals(FOLDER_TYPE_PREFIX_USER_BASED, getImapFolderTypes().get(folderRef));
-    }
-
-    @Override
-    public Set<String> getFixedSubfolderNames(NodeRef parentFolderRef) {
-        Set<String> subfolderNames = getImapFolderFixedSubfolders().get(parentFolderRef);
-        if (subfolderNames == null) {
-            return new HashSet<String>();
-        }
-        return subfolderNames;
     }
 
     private void createAttachment(NodeRef document, Part part, String overrideFilename) throws MessagingException, IOException {
@@ -423,11 +332,6 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
     }
 
     private Part createBody(NodeRef document, MimeMessage originalMessage) throws MessagingException, IOException {
-        String filename = I18NUtil.getMessage("imap.letter_body_filename");
-        return createBody(document, originalMessage, filename);
-    }
-
-    public Part createBody(NodeRef document, MimeMessage originalMessage, String filename) throws MessagingException, IOException {
         Part p = getText(originalMessage);
         if (p == null) {
             log.debug("No body part found from message, skipping body PDF creation");
@@ -461,8 +365,8 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
 
         ContentReader reader = tempWriter.getReader();
 
-        String safeFileName = FilenameUtil.makeSafeFilename(filename);
-        FileInfo createdFile = fileService.transformToPdf(document, reader, safeFileName, filename);
+        String filename = I18NUtil.getMessage("imap.letter_body_filename");
+        FileInfo createdFile = fileService.transformToPdf(document, reader, filename, filename);
         if (createdFile == null) {
             createAttachment(document, p, filename);
         }
@@ -597,8 +501,6 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
             return new AttachmentsFolderAppendBehaviour(this);
         } else if (SentFolderAppendBehaviour.BEHAVIOUR_NAME.equals(behaviour)) {
             return new SentFolderAppendBehaviour(this);
-        } else if (SendFailureAppendBehaviour.BEHAVIOUR_NAME.equals(behaviour)) {
-            return new SendFailureAppendBehaviour(this);
         } else {
             throw new RuntimeException("Unknown behaviour: " + behaviour);
         }
@@ -608,52 +510,17 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
         CollectionUtils.filter(folders, new Predicate() {
             @Override
             public boolean evaluate(Object o) {
-                AlfrescoImapFolder folder = (AlfrescoImapFolder) o;
-                NodeRef parentRef = null;
-                ChildAssociationRef parentAssoc = nodeService.getPrimaryParent(folder.getFolderInfo().getNodeRef());
-                if (parentAssoc != null) {
-                    parentRef = parentAssoc.getParentRef();
-                }
-                if (parentRef != null) {
-                    if (isFixedFolder(parentRef)) {
-                        if (getFixedSubfolderNames(parentRef).contains(folder.getName())) {
-                            return true;
-                        }
-                        return false;
-                    }
-                    if (isUserBasedFolder(parentRef)) {
-                        return false;
-                    }
-                    // subfolder type is not specified, user general logic for filtering
-                }
+                MailFolder folder = (MailFolder) o;
                 if (getAllowedFolders().contains(folder.getName())) {
                     if (folder.getName().equals(getIncomingInvoiceFolderName())) {
                         return einvoiceService.isEinvoiceEnabled();
                     }
                     return true;
                 }
-
                 return false;
             }
         });
         return folders;
-    }
-
-    @Override
-    public int getAllFilesCount(NodeRef attachmentRoot, boolean countFilesInSubfolders) {
-        int count = 0;
-        count = fileService.getAllFilesExcludingDigidocSubitems(attachmentRoot).size();
-        if (countFilesInSubfolders) {
-            for (Subfolder imapFolder : getImapSubfolders(attachmentRoot, ContentModel.TYPE_CONTENT)) {
-                count += getAllFilesCount(imapFolder.getNodeRef(), countFilesInSubfolders);
-            }
-        }
-        return count;
-    }
-
-    @Override
-    public List<Subfolder> getImapSubfolders(NodeRef parentRef, QName countableChildNodeType) {
-        return fileService.getSubfolders(parentRef, ImapModel.Types.IMAP_FOLDER, countableChildNodeType);
     }
 
     private Collection<MailFolder> addBehaviour(final Collection<AlfrescoImapFolder> folders) {
@@ -671,74 +538,12 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
             allowedFolders.add(getIncomingInvoiceFolderName());
             allowedFolders.add(I18NUtil.getMessage("imap.folder_attachments"));
             allowedFolders.add(I18NUtil.getMessage("imap.folder_sent_letters"));
-            allowedFolders.add(I18NUtil.getMessage("imap-folders.sendFailureNotices"));
         }
         return allowedFolders;
     }
 
     private String getIncomingInvoiceFolderName() {
         return I18NUtil.getMessage("imap.folder_incomingInvoice");
-    }
-
-    private synchronized void setImapFolderTypesAndSubFolders() {
-        imapFolderTypes = new HashMap<NodeRef, String>();
-        imapFolderFixedSubfolders = new HashMap<NodeRef, Set<String>>();
-        setSubfolderType(incomingLetterSubfolderType, generalService.getNodeRef(ImapModel.Repo.INCOMING_SPACE));
-        setSubfolderType(attachmentsSubfolderType, generalService.getNodeRef(ImapModel.Repo.ATTACHMENT_SPACE));
-        setSubfolderType(outgoingLettersSubfolderType, generalService.getNodeRef(ImapModel.Repo.SENT_SPACE));
-        setSubfolderType(sendFailureNoticesSubfolderType, generalService.getNodeRef(ImapModel.Repo.SEND_FAILURE_NOTICE_SPACE));
-    }
-
-    private void setSubfolderType(String subfolderType, NodeRef parentNodeRef) {
-        if (StringUtils.isNotBlank(subfolderType)) {
-            StringTokenizer tokenizer = new StringTokenizer(subfolderType, ";");
-            String folderType = tokenizer.nextToken();
-            if (StringUtils.equals(FOLDER_TYPE_PREFIX_FIXED, folderType)) {
-                imapFolderTypes.put(parentNodeRef, FOLDER_TYPE_PREFIX_FIXED);
-                Set<String> fixedFolderNames = new HashSet<String>();
-                while (tokenizer.hasMoreTokens()) {
-                    String folderName = tokenizer.nextToken();
-                    QName.createValidLocalName(folderName);
-                    if (StringUtils.isNotBlank(folderName)) {
-                        fixedFolderNames.add(QName.createValidLocalName(folderName));
-                    }
-                }
-                imapFolderFixedSubfolders.put(parentNodeRef, fixedFolderNames);
-            } else if (StringUtils.equals(FOLDER_TYPE_PREFIX_USER_BASED, folderType)) {
-                imapFolderTypes.put(parentNodeRef, FOLDER_TYPE_PREFIX_USER_BASED);
-                imapFolderFixedSubfolders.remove(parentNodeRef);
-            }
-        }
-    }
-
-    public Map<NodeRef, String> getImapFolderTypes() {
-        if (imapFolderTypes == null) {
-            setImapFolderTypesAndSubFolders();
-        }
-        return imapFolderTypes;
-    }
-
-    public Map<NodeRef, Set<String>> getImapFolderFixedSubfolders() {
-        if (imapFolderFixedSubfolders == null) {
-            setImapFolderTypesAndSubFolders();
-        }
-        return imapFolderFixedSubfolders;
-    }
-
-    public void setIncomingLettersSubfolderType(String incomingLetterSubfolderType) {
-        this.incomingLetterSubfolderType = incomingLetterSubfolderType;
-    }
-
-    public void setAttachmentsSubfolderType(String attachmentsSubfolderType) {
-        this.attachmentsSubfolderType = attachmentsSubfolderType;
-    }
-
-    public void setOutgoingLettersSubfolderType(String outgoingLettersSubfolderType) {
-        this.outgoingLettersSubfolderType = outgoingLettersSubfolderType;
-    }
-
-    public void setSendFailureNoticesSubfolderType(String sendFailureNoticesSubfolderType) {
-        this.sendFailureNoticesSubfolderType = sendFailureNoticesSubfolderType;
     }
 
     public void setImapService(ImapService imapService) {
@@ -773,16 +578,12 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
         this.mimetypeService = mimetypeService;
     }
 
-    public void setDocumentDynamicService(DocumentDynamicService documentDynamicService) {
-        this.documentDynamicService = documentDynamicService;
+    public void setDocumentTypeService(DocumentTypeService documentTypeService) {
+        this.documentTypeService = documentTypeService;
     }
 
     public void setEinvoiceService(EInvoiceService einvoiceService) {
         this.einvoiceService = einvoiceService;
-    }
-
-    public void setUserService(UserService userService) {
-        this.userService = userService;
     }
 
     public void setMessageCopyFolder(String messageCopyFolder) {

@@ -12,17 +12,8 @@ function informUser(control, message, showMessage)
 	if (showMessage)
    {
       alert(message);
-      try{
-         control.focus();
-      } catch (er){
-         // just don't focus if control cannot accept focus - happens (at least) in IE for hidden or disabled controls
-      }
+      control.focus();
    }
-}
-
-function isEmptyInput(inputId){
-   var inputValue = document.getElementById(inputId).value;
-   return inputValue == null || inputValue.replace(/^\\s+|\\s+$/g, '').length == 0;
 }
 
 /**
@@ -247,17 +238,6 @@ function validateDate(control, message, showMessage){
 function validateDateString(dateStr){
    var pattern = getDatePattern();
    return pattern.test(dateStr);   
-}
-
-function validateDateInput(dateInputId){
-   if (dateInputId != null){
-      var control = document.getElementById(dateInputId);
-      if(control == null || control.value.length < 1){
-         return true;
-      }
-      return validateDateString(control.value);
-   }
-   return true;
 }
 
 function getDatePattern(){

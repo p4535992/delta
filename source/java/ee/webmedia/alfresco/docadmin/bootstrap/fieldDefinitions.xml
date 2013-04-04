@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<view:view xmlns:view="http://www.alfresco.org/view/repository/1.0" xmlns:docadmin="http://alfresco.webmedia.ee/model/document/admin/1.0">
-   <docadmin:fieldDefinitions view:childName="docadmin:fieldDefinitions" />
-   <docadmin:fieldGroupDefinitions view:childName="docadmin:fieldGroupDefinitions" />
-</view:view>
-

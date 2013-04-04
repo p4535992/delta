@@ -1,31 +1,15 @@
 package ee.webmedia.alfresco.utils;
 
-import static org.alfresco.web.app.Application.MESSAGE_BUNDLE;
-
 import java.text.MessageFormat;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
-import java.util.Locale;
-import java.util.ResourceBundle;
 
 import javax.faces.application.FacesMessage;
 import javax.faces.context.FacesContext;
 
-import org.alfresco.i18n.I18NUtil;
-import org.alfresco.service.cmr.dictionary.TypeDefinition;
-import org.alfresco.service.namespace.NamespaceService;
-import org.alfresco.service.namespace.QName;
-import org.alfresco.util.Pair;
 import org.alfresco.web.app.Application;
-import org.alfresco.web.app.ResourceBundleWrapper;
 import org.alfresco.web.ui.common.Utils;
 import org.apache.commons.lang.StringEscapeUtils;
-import org.apache.commons.lang.StringUtils;
-import org.apache.commons.logging.Log;
-import org.springframework.util.Assert;
 
-import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
 
 /**
@@ -34,16 +18,6 @@ import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
  * @author Ats Uiboupin
  */
 public class MessageUtil {
-    private static final Log LOG = org.apache.commons.logging.LogFactory.getLog(MessageUtil.class);
-
-    private static ResourceBundle resourceBundle;
-
-    private static ResourceBundle getResourceBundle() {
-        if (resourceBundle == null) {
-            resourceBundle = ResourceBundleWrapper.getResourceBundle(MESSAGE_BUNDLE, Locale.getDefault());
-        }
-        return resourceBundle;
-    }
 
     /**
      * @param context
@@ -53,37 +27,7 @@ public class MessageUtil {
      * @return message that has given <code>messageId</code> with placeHolders replaced with given <code>messageValuesForHolders</code>
      */
     public static String getMessage(FacesContext context, String messageId, Object... messageValuesForHolders) {
-        Assert.notNull(messageId, "no messageId given for translation");
-        String message = messageId;
-        if (context != null) {
-            message = Application.getMessage(context, messageId);
-        } else {
-            message = getResourceBundle().getString(messageId);
-        }
-        final Object[] translatedValuesForHolders = getTranslatedMessageValueHolders(context, messageValuesForHolders);
-        if (isMessageTranslated(messageId, message)) {
-            if (translatedValuesForHolders != null) {
-                message = format(message, translatedValuesForHolders);
-            }
-        } else {
-            String i18nUtilMsg = getI18nUtilMessage(new MessageDataImpl(messageId, translatedValuesForHolders));
-            if (isMessageTranslatedByI18nUtil(i18nUtilMsg)) {
-                return i18nUtilMsg;
-            }
-        }
-        return message;
-    }
-
-    private static String format(String message, final Object[] translatedValuesForHolders) {
-        try {
-            return MessageFormat.format(message, translatedValuesForHolders);
-        } catch (IllegalArgumentException e) {
-            // if e.getMessage() is "can't parse argument number SOME_STRING" then message contains "{SOME_STRING}" - expected that message argument number is between "{" and "}"
-            throw new UnableToPerformException(e.getMessage() + "\nProbably there is/are invalid character(s) in translation message.\nmessage=" + message, e);
-        }
-    }
-
-    private static Object[] getTranslatedMessageValueHolders(FacesContext context, Object... messageValuesForHolders) {
+        String message = Application.getMessage(context, messageId);
         final Object[] msgValuesForHolders;
         if (messageValuesForHolders != null && messageValuesForHolders.length > 0) {
             msgValuesForHolders = new Object[messageValuesForHolders.length];
@@ -111,12 +55,15 @@ public class MessageUtil {
         } else {
             msgValuesForHolders = messageValuesForHolders;
         }
-        return msgValuesForHolders;
+        if (msgValuesForHolders != null) {
+            message = MessageFormat.format(message, msgValuesForHolders);
+        }
+        return message;
     }
 
     private static String localizeMessage(FacesContext context, MessageData messageData) {
         final String translationWithPlaceholders = Application.getMessage(context, messageData.getMessageKey());
-        return format(translationWithPlaceholders, getTranslatedMessageParameters(context, messageData));
+        return MessageFormat.format(translationWithPlaceholders, getTranslatedMessageParameters(context, messageData));
     }
 
     /**
@@ -161,34 +108,8 @@ public class MessageUtil {
         return getMessage(FacesContext.getCurrentInstance(), messageId, messageValuesForHolders);
     }
 
-    /**
-     * @param messageData
-     * @return message translated based on {@link MessageData#getMessageKey()} or if such message doesn't exist and {@link MessageData#getFallbackMessage()} is provided, then
-     *         returned message is created based on it
-     */
     public static String getMessage(MessageData messageData) {
-        String messageKey = messageData.getMessageKey();
-        String message = getMessage(messageKey, messageData.getMessageValuesForHolders());
-        if (!isMessageTranslated(messageKey, message)) {
-            MessageData fallbackMessage = messageData.getFallbackMessage();
-            if (fallbackMessage != null) {
-                return getMessage(fallbackMessage);
-            }
-        }
-        return message;
-    }
-
-    private static boolean isMessageTranslated(String messageKey, String message) {
-        return !StringUtils.equals(message, "$$" + messageKey + "$$");
-    }
-
-    private static boolean isMessageTranslatedByI18nUtil(String message) {
-        return message != null;// i18nUtil returns null when message is not found
-    }
-
-    private static String getI18nUtilMessage(MessageData messageData) {
-        Object[] translatedValuesForHolders = getTranslatedMessageValueHolders(FacesContext.getCurrentInstance(), messageData.getMessageValuesForHolders());
-        return I18NUtil.getMessage(messageData.getMessageKey(), translatedValuesForHolders);
+        return getMessage(messageData.getMessageKey(), messageData.getMessageValuesForHolders());
     }
 
     /**
@@ -200,11 +121,8 @@ public class MessageUtil {
      * @param messageValuesForHolders
      */
     public static void addErrorMessage(FacesContext context, String messageId, Object... messageValuesForHolders) {
-        addErrorMessage(new MessageDataImpl(messageId, messageValuesForHolders));
-    }
-
-    private static void addErrorMessage(MessageData messageData) {
-        Utils.addErrorMessage(getMessage(messageData));
+        final String msg = getMessage(context, messageId, messageValuesForHolders);
+        Utils.addErrorMessage(msg);
     }
 
     /**
@@ -213,63 +131,25 @@ public class MessageUtil {
      * @param severity
      * @param messageValuesForHolders
      */
-    private static void addStatusMessageInternal(FacesContext context, MessageData messageData) {
-        MessageSeverity severity = messageData.getSeverity();
-        if (context == null) {
-            context = FacesContext.getCurrentInstance(); // don't know if FacesContext was not given or FacesContext doesn't exist
-            if (context == null) {
-                logMessage(messageData, LOG); // FacesContext doesn't exist
-                return;
-            }
-        }
-        if (severity == MessageSeverity.ERROR) {
-            addErrorMessage(messageData);
+    public static void addStatusMessage(FacesContext context, String messageId, FacesMessage.Severity severity, Object... messageValuesForHolders) {
+        if (severity == FacesMessage.SEVERITY_ERROR) {
+            addErrorMessage(context, messageId, messageValuesForHolders);
             return;
         }
-        context.addMessage(null, getFacesMessage(messageData));
-    }
-
-    private static void logMessage(MessageData messageData, Log logger) {
-        String msg = getMessage(messageData);
-        MessageSeverity severity = messageData.getSeverity();
-        if (severity == MessageSeverity.FATAL) {
-            logger.fatal(msg);
-        } else if (severity == MessageSeverity.ERROR) {
-            logger.error(msg);
-        } else if (severity == MessageSeverity.WARN) {
-            logger.warn(msg);
-        } else if (severity == MessageSeverity.INFO) {
-            logger.info(msg);
-        } else {
-            throw new RuntimeException("Unknown MessageSeverity constant");
-        }
-    }
-
-    public static void logMessage(MessageDataWrapper messageDataWrapper, Log logger) {
-        for (MessageData messageData : messageDataWrapper) {
-            logMessage(messageData, logger);
-        }
-    }
-
-    public static FacesMessage getFacesMessage(MessageData msgData) {
-        String msg = getMessage(msgData);
-        return new FacesMessage(getFacesSeverity(msgData.getSeverity()), msg, msg);
-    }
-
-    public static void addWarningMessage(String msgKey, Object... messageValuesForHolders) {
-        addStatusMessageInternal(FacesContext.getCurrentInstance(), new MessageDataImpl(MessageSeverity.WARN, msgKey, messageValuesForHolders));
+        final String msg = getMessage(context, messageId, messageValuesForHolders);
+        context.addMessage(null, new FacesMessage(severity, msg, msg));
     }
 
     public static void addInfoMessage(String msgKey, Object... messageValuesForHolders) {
-        addStatusMessageInternal(FacesContext.getCurrentInstance(), new MessageDataImpl(MessageSeverity.INFO, msgKey, messageValuesForHolders));
+        addStatusMessage(FacesContext.getCurrentInstance(), msgKey, FacesMessage.SEVERITY_INFO, messageValuesForHolders);
     }
 
     public static void addErrorMessage(String msgKey, Object... messageValuesForHolders) {
-        addStatusMessageInternal(FacesContext.getCurrentInstance(), new MessageDataImpl(MessageSeverity.ERROR, msgKey, messageValuesForHolders));
+        addStatusMessage(FacesContext.getCurrentInstance(), msgKey, FacesMessage.SEVERITY_ERROR, messageValuesForHolders);
     }
 
     public static void addInfoMessage(FacesContext currentInstance, String msgKey, Object... messageValuesForHolders) {
-        addStatusMessageInternal(currentInstance, new MessageDataImpl(MessageSeverity.INFO, msgKey, messageValuesForHolders));
+        addStatusMessage(currentInstance, msgKey, FacesMessage.SEVERITY_INFO, messageValuesForHolders);
     }
 
     public static boolean addStatusMessages(FacesContext facesContext, MessageDataWrapper feedbackWrapper) {
@@ -286,8 +166,8 @@ public class MessageUtil {
      * @return true if added message with error or fatal severity
      */
     public static boolean addStatusMessage(FacesContext facesContext, MessageData messageData) {
-        addStatusMessageInternal(facesContext, messageData);
         final MessageSeverity severity = messageData.getSeverity();
+        addStatusMessage(facesContext, severity, messageData.getMessageKey(), messageData.getMessageValuesForHolders());
         return severity == MessageSeverity.ERROR || severity == MessageSeverity.FATAL;
     }
 
@@ -303,7 +183,8 @@ public class MessageUtil {
         return addStatusMessage(FacesContext.getCurrentInstance(), messageData);
     }
 
-    private static FacesMessage.Severity getFacesSeverity(final MessageSeverity severity) {
+    private static void addStatusMessage(FacesContext facesContext, final MessageSeverity severity, final String message,
+            final Object... maybeUntransaltedMessageValuesForHolders) {
         final FacesMessage.Severity facesSeverity;
         if (severity == MessageSeverity.INFO) {
             facesSeverity = FacesMessage.SEVERITY_INFO;
@@ -316,7 +197,17 @@ public class MessageUtil {
         } else {
             throw new RuntimeException("Unexpected severity: " + severity);
         }
-        return facesSeverity;
+        Object[] translatedMessageValuesForHolders = new Object[maybeUntransaltedMessageValuesForHolders.length];
+        for (int i = 0; i < maybeUntransaltedMessageValuesForHolders.length; i++) {
+            Object maybeUntranslated = maybeUntransaltedMessageValuesForHolders[i];
+            if (maybeUntranslated instanceof UnableToPerformException.UntransaltedMessageValueHolder) {
+                final String messageKey = ((UnableToPerformException.UntransaltedMessageValueHolder) maybeUntranslated).getMessageKey();
+                translatedMessageValuesForHolders[i] = getMessage(facesContext, messageKey);
+            } else {
+                translatedMessageValuesForHolders[i] = maybeUntranslated;
+            }
+        }
+        addStatusMessage(facesContext, message, facesSeverity, translatedMessageValuesForHolders);
     }
 
     /**
@@ -325,54 +216,15 @@ public class MessageUtil {
      * @param currentInstance
      * @param messageKeys
      */
-    public static void addErrorMessage(FacesContext currentInstance, Pair<String, Object[]>[] messageKeysWithValueObjects) {
+    public static void addErrorMessage(FacesContext currentInstance, String[] messageKeys) {
         final StringBuilder sb = new StringBuilder();
-        for (Pair<String, Object[]> messageAndValuePair : messageKeysWithValueObjects) {
-            sb.append(getMessage(currentInstance, messageAndValuePair.getFirst(), messageAndValuePair.getSecond())).append(" ");
+        for (String messageId : messageKeys) {
+            sb.append(getMessage(currentInstance, messageId)).append(" ");
         }
         Utils.addErrorMessage(sb.toString());
     }
 
-    /**
-     * Resolves translation and escapes it for JavaScript. Since it is mostly used from JSP, values support special notation.
-     * When message placeholder value starts with "msg." prefix, then this prefix is stripped and rest of the value is processed with getMessage().
-     */
     public static String getMessageAndEscapeJS(String messageId, Object... messageValuesForHolders) {
-        if (messageValuesForHolders == null) {
-            return StringEscapeUtils.escapeJavaScript(getMessage(messageId, messageValuesForHolders));
-        }
-
-        List<Object> resolvedValues = new ArrayList<Object>(messageValuesForHolders.length);
-        for (Object value : messageValuesForHolders) {
-            if (value instanceof String && StringUtils.startsWith((String) value, "msg.")) {
-                resolvedValues.add(getMessage(StringUtils.removeStart((String) value, "msg.")));
-                continue;
-            }
-            resolvedValues.add(value);
-        }
-
-        return StringEscapeUtils.escapeJavaScript(getMessage(messageId, resolvedValues.toArray()));
+        return StringEscapeUtils.escapeJavaScript(getMessage(messageId, messageValuesForHolders));
     }
-
-    public static String getMessage(Enum<?> c) {
-        return getMessage("constant_" + c.getClass().getCanonicalName() + "_" + c.name());
-    }
-
-    public static String getTypeName(QName objectTypeQName) {
-        TypeDefinition typeDef = BeanHelper.getDictionaryService().getType(objectTypeQName);
-        String translatedTypeName = typeDef.getTitle();
-        if (StringUtils.isBlank(translatedTypeName)) {
-            throw new IllegalStateException("there should be translation for type " + typeDef
-                    + " in model properties file with key '" + getTranslationKeyForType(objectTypeQName, typeDef) + "'");
-        }
-        return translatedTypeName;
-    }
-
-    public static String getTranslationKeyForType(QName objectTypeQName, TypeDefinition typeDef) {
-        NamespaceService namespaceService = BeanHelper.getNamespaceService();
-        String model = typeDef.getModel().getName().toPrefixString(namespaceService).replace(":", "_");
-        String type = objectTypeQName.toPrefixString(namespaceService).replace(":", "_");
-        return model + ".type." + type + ".title";
-    }
-
 }

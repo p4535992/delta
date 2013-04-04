@@ -1,24 +1,16 @@
 package ee.webmedia.alfresco.archivals.web;
 
-import static ee.webmedia.alfresco.common.web.BeanHelper.getFunctionsService;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getGeneralService;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getMenuBean;
-
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import javax.faces.context.FacesContext;
-import javax.faces.event.ActionEvent;
 
-import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.web.app.AlfrescoNavigationHandler;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
+import org.springframework.web.jsf.FacesContextUtils;
 
-import ee.webmedia.alfresco.archivals.model.ArchivalsStoreVO;
+import ee.webmedia.alfresco.archivals.service.ArchivalsService;
 import ee.webmedia.alfresco.functions.model.Function;
-import ee.webmedia.alfresco.functions.web.FunctionsListDialog;
-import ee.webmedia.alfresco.utils.ActionUtil;
-import ee.webmedia.alfresco.utils.WebUtil;
 
 /**
  * Dialog bean for archived functions
@@ -27,28 +19,14 @@ import ee.webmedia.alfresco.utils.WebUtil;
  */
 public class ArchivedFunctionsListDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;
-    private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(ArchivedFunctionsListDialog.class);
 
-    protected NodeRef nodeRef;
-    protected String title;
+    private transient ArchivalsService archivalsService;
     protected List<Function> functions;
 
-    public void setup(ActionEvent event) {
-        nodeRef = ActionUtil.getParam(event, "nodeRef", NodeRef.class);
+    @Override
+    public void init(Map<String, String> params) {
+        super.init(params);
         loadFunctions();
-        title = "";
-        for (ArchivalsStoreVO archivalsStoreVO : getGeneralService().getArchivalsStoreVOs()) {
-            if (nodeRef.equals(archivalsStoreVO.getNodeRef())) {
-                title = archivalsStoreVO.getTitle();
-                break;
-            }
-        }
-        getMenuBean().updateTree(event);
-        WebUtil.navigateTo(AlfrescoNavigationHandler.DIALOG_PREFIX + "archivedFunctionsListDialog");
-    }
-
-    public void exportArchivalsConsolidatedList(@SuppressWarnings("unused") ActionEvent event) {
-        FunctionsListDialog.exportConsolidatedList(nodeRef);
     }
 
     @Override
@@ -78,13 +56,15 @@ public class ArchivedFunctionsListDialog extends BaseDialogBean {
     }
 
     protected void loadFunctions() {
-        functions = getFunctionsService().getFunctions(nodeRef);
+        functions = getArchivalsService().getArchivedFunctions();
         Collections.sort(functions);
     }
 
-    @Override
-    public String getContainerTitle() {
-        return title;
+    private ArchivalsService getArchivalsService() {
+        if (archivalsService == null) {
+            archivalsService = (ArchivalsService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
+                    .getBean(ArchivalsService.BEAN_NAME);
+        }
+        return archivalsService;
     }
-
 }

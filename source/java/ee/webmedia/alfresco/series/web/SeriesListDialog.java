@@ -1,7 +1,5 @@
 package ee.webmedia.alfresco.series.web;
 
-import static ee.webmedia.alfresco.common.web.BeanHelper.getLogService;
-
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
@@ -18,8 +16,6 @@ import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.functions.model.Function;
 import ee.webmedia.alfresco.functions.service.FunctionsService;
-import ee.webmedia.alfresco.log.model.LogEntry;
-import ee.webmedia.alfresco.log.model.LogObject;
 import ee.webmedia.alfresco.series.model.Series;
 import ee.webmedia.alfresco.series.service.SeriesService;
 import ee.webmedia.alfresco.user.service.UserService;
@@ -80,7 +76,6 @@ public class SeriesListDialog extends BaseDialogBean {
     public void showAll(NodeRef nodeRef) {
         function = getFunctionsService().getFunctionByNodeRef(nodeRef);
         loadSeries();
-        getLogService().addLogEntry(LogEntry.create(LogObject.FUNCTION, getUserService(), nodeRef, "applog_space_open", function.getMark(), function.getTitle()));
         disableActions = false;
     }
 

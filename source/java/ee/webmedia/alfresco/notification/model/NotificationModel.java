@@ -42,30 +42,17 @@ public interface NotificationModel {
         QName TASK_REVIEW_TASK_COMPLETED_WITH_REMARKS = QName.createQName(URI, "reviewTaskCompletedWithRemarks");
         QName WORKFLOW_WORKFLOW_COMPLETED = QName.createQName(URI, "workflowCompleted");
         QName WORKFLOW_NEW_WORKFLOW_STARTED = QName.createQName(URI, "newWorkflowStarted");
-        QName TASK_ORDER_ASSIGNMENT_WORKFLOW_COMPLETED = QName.createQName(URI, "orderAssignmentWorkflowCompleted");
-        QName TASK_ORDER_ASSIGNMENT_TASK_COMPLETED = QName.createQName(URI, "orderAssignmentTaskCompleted");
-        QName TASK_CONFIRMATION_TASK_COMPLETED = QName.createQName(URI, "confirmationTaskCompleted");
-        QName TASK_CONFIRMATION_TASK_COMPLETED_NOT_ACCEPTED = QName.createQName(URI, "confirmationTaskCompletedNotAccepted");
-        QName TASK_DUE_DATE_EXTENSION_TASK_COMPLETED = QName.createQName(URI, "taskDueDateExtensionTaskCompleted");
-        QName TASK_DUE_DATE_EXTENSION_TASK_COMPLETED_NOT_ACCEPTED = QName.createQName(URI, "taskDueDateExtensionTaskCompletedNotAccepted");
 
         QName EXTERNAL_REVIEW_WORKFLOW_RECIEVING_ERROR = QName.createQName(URI, "externalReviewWorkflowRecievingError");
         QName EXTERNAL_REVIEW_WORKFLOW_SERIES_ERROR = QName.createQName(URI, "externalReviewWorkflowSeriesError");
         QName EXTERNAL_REVIEW_WORKFLOW_OWNER_ERROR = QName.createQName(URI, "externalReviewWorkflowOwnerError");
 
         QName DISCUSSION_INVITATION = QName.createQName(URI, "discussionInvitation");
-        QName SUBSTITUTION = QName.createQName(URI, "substitution");
 
         QName TASK_DUE_DATE_APPROACHING = QName.createQName(URI, "dueDateApproaching");
         QName TASK_DUE_DATE_EXCEEDED = QName.createQName(URI, "dueDateExceeded");
         QName VOLUME_DISPOSITION_DATE = QName.createQName(URI, "volumeDispositionDate");
-        QName CONTRACT_DUE_DATE = QName.createQName(URI, "contractDueDate");
         QName ACCESS_RESTRICTION_END_DATE = QName.createQName(URI, "accessRestrictionEndDate");
-        QName ACCESS_RESTRICTION_REASON_CHANGED = QName.createQName(URI, "accessRestrictionReasonChanged");
-
-        QName DELEGATED_TASK_COMPLETED = QName.createQName(URI, "delegatedTaskCompleted");
-        QName REVIEW_DOCUMENT_SIGNED = QName.createQName(URI, "reviewDocumentSigned");
-        QName TASK_CANCELLED = QName.createQName(URI, "taskCancelled");
     }
 
 }

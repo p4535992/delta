@@ -1,5 +1,6 @@
 package org.alfresco.repo.search.impl;
 
+
 public class SearchStatistics {
 
     public static Data getData() {
@@ -24,8 +25,6 @@ public class SearchStatistics {
         public long resultsAfterAcl = -1; // Set in AbstractSearchServiceImpl
         public long resultsBeforeAcl = -1; // Set in Hits
         public long luceneHitsTime = -1; // Set in Hits
-        public long originalQueryChars = -1; // Set in Hits
-        public long rewrittenQueryChars = -1; // Set in Hits
         public long aclTime = -1; // Set in ACLEntryAfterInvocationProvider
         public long alfrescoSearchLayerOtherTime = -1; // Set in AbstractSearchServiceImpl
         public long nodeTypesTime = -1; // Set in AbstractSearchServiceImpl

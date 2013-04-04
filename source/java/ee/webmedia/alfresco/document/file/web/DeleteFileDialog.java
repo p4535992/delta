@@ -1,23 +1,22 @@
 package ee.webmedia.alfresco.document.file.web;
 
-import static ee.webmedia.alfresco.common.web.BeanHelper.getDocLockService;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentLogService;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentService;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
-
 import javax.faces.context.FacesContext;
 
 import org.alfresco.model.ContentModel;
-import org.alfresco.service.cmr.lock.LockStatus;
+import org.alfresco.service.cmr.lock.NodeLockedException;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.app.AlfrescoNavigationHandler;
 import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.content.DeleteContentDialog;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.StringUtils;
+import org.springframework.web.jsf.FacesContextUtils;
 
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.file.model.FileModel;
+import ee.webmedia.alfresco.document.log.service.DocumentLogService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.document.type.service.DocumentTypeHelper;
 import ee.webmedia.alfresco.menu.ui.MenuBean;
 import ee.webmedia.alfresco.utils.MessageUtil;
@@ -28,27 +27,20 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 public class DeleteFileDialog extends DeleteContentDialog {
     private static final long serialVersionUID = 1L;
 
+    private transient DocumentService documentService;
+    private transient DocumentLogService documentLogService;
+
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Exception {
         Node file = browseBean.getDocument();
         NodeRef document = null;
-        if (file.getType().equals(ContentModel.TYPE_CONTENT)) {
+        if (file != null && file.getType().equals(ContentModel.TYPE_CONTENT)) {
             document = getNodeService().getPrimaryParent(file.getNodeRef()).getParentRef();
         }
-        if (getDocLockService().getLockStatus(document) == LockStatus.LOCKED) {
-            // lock owned by other user
-            MessageUtil.addErrorMessage("file_delete_error_locked",
-                    getUserService().getUserFullName((String) getNodeService().getProperty(document, ContentModel.PROP_LOCK_OWNER)));
+        super.finishImpl(context, outcome);
+        try {
 
-        } else if (getDocLockService().getLockStatus(file.getNodeRef()) == LockStatus.LOCKED) {
-            // lock owned by other user
-            MessageUtil.addErrorMessage("file_delete_error_locked",
-                    getUserService().getUserFullName((String) getNodeService().getProperty(file.getNodeRef(), ContentModel.PROP_LOCK_OWNER)));
-
-        } else { // could be locked: LockStatus: LOCK_OWNER | NO_LOCK | LOCK_EXPIRED
-            super.finishImpl(context, outcome);
-
-            String fileName = file.getName();
+            String fileName = file != null ? file.getName() : "";
             if (document != null && getDictionaryService().isSubClass(getNodeService().getType(document), DocumentCommonModel.Types.DOCUMENT)) {
                 String displayName = (String) file.getProperties().get(FileModel.Props.DISPLAY_NAME);
                 if (StringUtils.isNotBlank(displayName)) {
@@ -58,12 +50,14 @@ public class DeleteFileDialog extends DeleteContentDialog {
                 getDocumentService().updateSearchableFiles(document);
             }
 
-            if (file.getType().equals(ContentModel.TYPE_CONTENT) || DocumentTypeHelper.isIncomingOrOutgoingLetter(file.getType())) {
+            if (file != null && (file.getType().equals(ContentModel.TYPE_CONTENT) || DocumentTypeHelper.isIncomingOrOutgoingLetter(file.getType()))) {
                 ((MenuBean) FacesHelper.getManagedBean(context, MenuBean.BEAN_NAME)).processTaskItems();
             }
+            BeanHelper.getMaaisService().addMaaisChangedAspectIfNecessary(document, true);
             MessageUtil.addInfoMessage("file_delete_success", fileName);
+        } catch (NodeLockedException e) {
+            MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "file_delete_error_locked");
         }
-
         return outcome;
     }
 
@@ -71,6 +65,22 @@ public class DeleteFileDialog extends DeleteContentDialog {
     protected String doPostCommitProcessing(FacesContext context, String outcome) {
         super.doPostCommitProcessing(context, outcome);
         return AlfrescoNavigationHandler.CLOSE_DIALOG_OUTCOME;
+    }
+
+    protected DocumentService getDocumentService() {
+        if (documentService == null) {
+            documentService = (DocumentService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())//
+                    .getBean(DocumentService.BEAN_NAME);
+        }
+        return documentService;
+    }
+
+    protected DocumentLogService getDocumentLogService() {
+        if (documentLogService == null) {
+            documentLogService = (DocumentLogService) FacesContextUtils.getRequiredWebApplicationContext( //
+                    FacesContext.getCurrentInstance()).getBean(DocumentLogService.BEAN_NAME);
+        }
+        return documentLogService;
     }
 
 }

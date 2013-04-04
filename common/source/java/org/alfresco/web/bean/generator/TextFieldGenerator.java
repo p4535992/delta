@@ -54,6 +54,7 @@ import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet.ClientValidation;
 
 import ee.webmedia.alfresco.common.propertysheet.component.WMUIProperty;
+import ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.GeneratorsWrapper;
 
 /**
  * Generates a text field component.
@@ -120,7 +121,7 @@ public class TextFieldGenerator extends BaseComponentGenerator
       UIComponent component = null;
       
       final String id = getDefaultId(item);
-      if (useGenerator(context, propertySheet))
+      if ((propertySheet.inEditMode() || this instanceof GeneratorsWrapper) && !Boolean.parseBoolean(getCustomAttributes().get(OUTPUT_TEXT)))
       {
          // if the field has the list of values constraint 
          // and it is editable a SelectOne component is 
@@ -345,10 +346,8 @@ public class TextFieldGenerator extends BaseComponentGenerator
          {
             ListOfValuesConstraint constraint = getListOfValuesConstraint(context, 
                      propertySheet, property);
-              // Ats: don't understand why this if was initially added by alfresco developers.
-              // uncommented it, to automatically add appropriate converter so that node.properties wouldn't contain string instead of number
-//            if (constraint != null)
-//            {
+            if (constraint != null)
+            {
                String converterId = null;
                
                if (propertyDef.getDataType().getName().equals(DataTypeDefinition.INT))
@@ -373,7 +372,7 @@ public class TextFieldGenerator extends BaseComponentGenerator
                {
                   createAndSetConverter(context, converterId, component);
                }
-//            }
+            }
          }
       }
    }

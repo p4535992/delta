@@ -16,13 +16,11 @@ import org.alfresco.repo.webdav.WebDAVServerException;
 import org.alfresco.repo.webdav.WebDAVServlet;
 import org.alfresco.service.ServiceRegistry;
 import org.alfresco.service.cmr.security.AuthenticationService;
-import org.alfresco.service.transaction.TransactionService;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.context.support.WebApplicationContextUtils;
 
-import ee.webmedia.alfresco.document.log.service.DocumentLogService;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.versions.service.VersionsService;
 
@@ -41,8 +39,7 @@ public class WebDAVCustomServlet extends WebDAVServlet {
         DocumentService documentService = (DocumentService) context.getBean(DocumentService.BEAN_NAME);
 
         // Create the WebDAV helper
-        m_davHelper = new WebDAVCustomHelper(serviceRegistry, authService, versionsService, documentService, (DocumentLogService) context.getBean(DocumentLogService.BEAN_NAME),
-                (TransactionService) context.getBean("transactionService"));
+        m_davHelper = new WebDAVCustomHelper(serviceRegistry, authService, versionsService, documentService);
 
         // Create the WebDAV methods table
 
@@ -58,12 +55,7 @@ public class WebDAVCustomServlet extends WebDAVServlet {
 
     @Override
     protected void sendErrorResponse(HttpServletResponse response, WebDAVServerException error) throws IOException {
-        // We are only interested in logging the stack trace of application errors, not every non-200-OK HTTP response
-        if (error.getCause() != null && (
-                error.getHttpStatusCode() == HttpServletResponse.SC_INTERNAL_SERVER_ERROR ||
-                error.getHttpStatusCode() == HttpServletResponse.SC_BAD_REQUEST)) {
-            logger.error("Failed to serve webdav request, returning status code: " + error.getHttpStatusCode(), error);
-        }
+        logger.error("Failed to serve webdav request - sending error page", error);
         response.setStatus(error.getHttpStatusCode());
         response.getWriter().append(getResponseText(error));
     }

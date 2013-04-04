@@ -46,7 +46,7 @@ $jQ(document).ready(function() {
       var classes = allClasses.split(' ');
       var byClassSelector = "." + classes.join('.');
       var curGroupCurPermCBs = $jQ(byClassSelector + ":enabled", jqCheckBox.closest("tbody"));
-      curGroupCurPermCBs.prop('checked', isChecked);
+      curGroupCurPermCBs.attr('checked', isChecked);
       curGroupCurPermCBs.each(function(index) {
          if (this != originalCheckBox) {
             $jQ(this).change();
@@ -70,7 +70,7 @@ $jQ(document).ready(function() {
       // rest of this method used to be following 3 lines, but they are 20 times slower than next 25 lines
       // var byClassSelector = "." + classes.join('.');
       // var relatedCBs = $jQ(byClassSelector + ":enabled", privilegesTable);
-      // relatedCBs.prop('checked', isChecked);
+      // relatedCBs.attr('checked', isChecked);
       var user = null;
       var permission = null;
       for ( var i in classes) {
@@ -92,7 +92,7 @@ $jQ(document).ready(function() {
             if (this != curCBRowEl) {
                var otherGroupSameUserRow = $jQ(this);
                var relatedCB = otherGroupSameUserRow.find("." + permission + ":enabled");
-               relatedCB.prop('checked', isChecked);
+               relatedCB.attr('checked', isChecked);
                addDependantPrivileges(relatedCB);
             }
          });
@@ -113,7 +113,7 @@ $jQ(document).ready(function() {
    // confirm removing
    prependOnclick($jQ(".deletePerson,.deleteGroup"), function(e) {
       var userOrGroup = $jQ(e).closest('tr').children().eq(1).text();
-      return confirmWithPlaceholders(confirmMsg, userOrGroup);
+      return confirm(confirmMsg.replace('{0}', userOrGroup));
    });
 
    // START: update header checkboxes of all groups
@@ -142,7 +142,7 @@ $jQ(document).ready(function() {
                   allChecked = false;
                }
             }
-            groupPermissionHeaderCB.prop('checked', allChecked);
+            groupPermissionHeaderCB.attr('checked', allChecked);
          });
       });
    }
@@ -157,7 +157,7 @@ $jQ(document).ready(function() {
                      var privToUpdate = privName[privToUpdateIndex];
                      var relatedPermCBToUpdate = curCB.closest("tr").find("td input[type='checkbox'].permission_" + privToUpdate + ":enabled");
                      if (!relatedPermCBToUpdate.is(":checked")) {
-                        relatedPermCBToUpdate.prop('checked', true);
+                        relatedPermCBToUpdate.attr('checked', true);
                      }
                   }
                }
@@ -170,8 +170,8 @@ $jQ(document).ready(function() {
    function bindOnChangeUpdateHeaderCheckboxState(groupBodyCBs) {
       groupBodyCBs.each(function() {
          $jQ(this).change(function() {
-            addDependantPrivileges($jQ(this));
             updateHeaderCheckboxState(false);
+            addDependantPrivileges($jQ(this));
          });
       });
    }

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view:view xmlns:view="http://www.alfresco.org/view/repository/1.0" xmlns:doctype="http://alfresco.webmedia.ee/model/documenttype/1.0">
+   <doctype:documentType view:childName="docsub:orderMaais">
+      <view:properties>
+         <doctype:name>MaaIS korraldus</doctype:name>
+         <doctype:used>true</doctype:used>
+         <doctype:publicAdr>false</doctype:publicAdr>
+         <doctype:comment>MaaIS</doctype:comment>
+      </view:properties>
+   </doctype:documentType>
+   <doctype:documentType view:childName="docsub:contractMaais">
+      <view:properties>
+         <doctype:name>MaaIS leping</doctype:name>
+         <doctype:used>true</doctype:used>
+         <doctype:publicAdr>false</doctype:publicAdr>
+         <doctype:comment>MaaIS</doctype:comment>
+      </view:properties>
+   </doctype:documentType>
+   <doctype:documentType view:childName="docsub:outgoingLetterMaais">
+      <view:properties>
+         <doctype:name>MaaIS väljaminev kiri</doctype:name>
+         <doctype:used>true</doctype:used>
+         <doctype:publicAdr>false</doctype:publicAdr>
+         <doctype:comment>MaaIS</doctype:comment>
+      </view:properties>
+   </doctype:documentType>
+</view:view>

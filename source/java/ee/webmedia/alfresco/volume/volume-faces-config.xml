@@ -29,6 +29,10 @@
       <managed-bean-name>VolumeDetailsDialog</managed-bean-name>
       <managed-bean-class>ee.webmedia.alfresco.volume.web.VolumeDetailsDialog</managed-bean-class>
       <managed-bean-scope>session</managed-bean-scope>
+      <managed-property>
+         <property-name>volumeService</property-name>
+         <value>#{VolumeService}</value>
+      </managed-property>
    </managed-bean>
 
    <managed-bean>

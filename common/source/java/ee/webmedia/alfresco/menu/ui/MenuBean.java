@@ -1,8 +1,5 @@
 package ee.webmedia.alfresco.menu.ui;
 
-import static org.alfresco.web.bean.dialog.BaseDialogBean.getCloseOutcome;
-import static org.apache.commons.lang.StringUtils.remove;
-
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -27,8 +24,6 @@ import javax.faces.event.ActionEvent;
 import javax.faces.event.ActionListener;
 
 import org.alfresco.error.AlfrescoRuntimeException;
-import org.alfresco.model.ContentModel;
-import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.util.Pair;
@@ -44,7 +39,7 @@ import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.common.service.GeneralService;
-import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.common.web.ClearStateNotificationHandler;
 import ee.webmedia.alfresco.document.einvoice.service.EInvoiceService;
 import ee.webmedia.alfresco.menu.model.DropdownMenuItem;
 import ee.webmedia.alfresco.menu.model.Menu;
@@ -53,11 +48,9 @@ import ee.webmedia.alfresco.menu.service.MenuService;
 import ee.webmedia.alfresco.menu.ui.component.MenuItemWrapper;
 import ee.webmedia.alfresco.menu.ui.component.MenuRenderer;
 import ee.webmedia.alfresco.menu.ui.component.UIMenuComponent;
-import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
-import ee.webmedia.alfresco.utils.WebUtil;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
 
 /**
@@ -77,11 +70,8 @@ public class MenuBean implements Serializable {
     // If you change menu item order in menu-structure.xml, also update constants below!
     public static final int MY_TASKS_AND_DOCUMENTS_ID = 0;
     public static final int DOCUMENT_REGISTER_ID = 1;
-    public static final int MY_DOCUMENTS_ID = 3;
-    public static final int CREATE_NEW_DOCUMENT = 8;
-
-    public static final List<String> HIDDEN_WHEN_EMPTY = Arrays.asList("assignmentTasks", "informationTasks", "orderAssignmentTasks", "opinionTasks", "discussions", "reviewTasks",
-            "externalReviewTasks", "confirmationTasks", "signatureTasks", "forRegisteringList", "userWorkingDocuments");
+    public static final int CREATE_NEW_DOCUMENT = 5;
+    public static final int MY_DOCUMENTS_ID = 2;
 
     private transient HtmlPanelGroup shortcutsPanelGroup;
     private transient HtmlPanelGroup breadcrumb;
@@ -110,7 +100,8 @@ public class MenuBean implements Serializable {
      * @param anchor ID of the HTML element in the form of "#my-panel"
      */
     public void scrollToAnchor(String anchor) {
-        WebUtil.navigateTo(anchor);
+        FacesContext context = FacesContext.getCurrentInstance();
+        context.getApplication().getNavigationHandler().handleNavigation(context, null, anchor);
     }
 
     public void resetBreadcrumb() {
@@ -275,7 +266,8 @@ public class MenuBean implements Serializable {
         }
 
         FacesContext context = FacesContext.getCurrentInstance();
-        context.getApplication().getNavigationHandler().handleNavigation(context, "closeBreadcrumbItem", getCloseOutcome(closeCount));
+        context.getApplication().getNavigationHandler().handleNavigation(context, "closeBreadcrumbItem", "dialog:close[" + closeCount + "]");
+
     }
 
     public void processTaskItem(String... menuItemIds) {
@@ -297,7 +289,7 @@ public class MenuBean implements Serializable {
         final UIComponent link = event.getComponent();
         setLastLinkId(((UIActionLink) link).getId());
 
-        // NOTE: In XML nodes are referenced by xPath, but since all child association names are with the same name(function, series etc)
+        // NOTE: In XML nodes are referenced by xPath, but since all child association names are with the same (function, series etc)
         // Therefore items generated at runtime should be referenced by NodeRef
         if (link.getAttributes().get(DropdownMenuItem.ATTRIBUTE_NODEREF) != null) {
             linkNodeRef = (NodeRef) link.getAttributes().get(DropdownMenuItem.ATTRIBUTE_NODEREF);
@@ -365,7 +357,6 @@ public class MenuBean implements Serializable {
                 if (nodeRef == null) {
                     nodeRef = getGeneralService().getNodeRef(dropdownItem.getXPath());
                 }
-
                 if (item.getSubItems() == null) {
                     item.setSubItems(new ArrayList<MenuItem>());
                 }
@@ -444,13 +435,11 @@ public class MenuBean implements Serializable {
     }
 
     public Menu getMenu() {
-        int newUpdateCount = getMenuService().getUpdateCount();
-        if (newUpdateCount != updateCount || menu == null) {
+        if (getMenuService().getUpdateCount() != updateCount || menu == null) {
             log.debug("Fetching new menu structure from service.");
             reloadMenu(); // XXX - Somehow this makes it work... Although menu structure in service isn't modified.
             menu = getMenuService().getMenu();
-            getMenuService().process(menu, false, true);
-            updateCount = newUpdateCount;
+            updateCount = getMenuService().getUpdateCount();
             if (lastLinkId != null && linkNodeRef != null) {
                 updateTree();
             }
@@ -490,26 +479,21 @@ public class MenuBean implements Serializable {
         // Clear the view stack, otherwise it would grow too big as the cancel button is hidden in some views
         // Later in the life-cycle the view where this action came from is added to the stack, so visible cancel buttons will function properly
         Map<String, Object> sessionMap = context.getExternalContext().getSessionMap();
-        sessionMap.put(UIMenuComponent.VIEW_STACK, new Stack<String>());
+        sessionMap.put(UIMenuComponent.VIEW_STACK, new Stack());
 
         MenuBean menuBean = (MenuBean) FacesHelper.getManagedBean(context, MenuBean.BEAN_NAME);
         menuBean.setMenuItemId(primaryId, secondaryId);
         menuBean.resetBreadcrumb();
 
         // let the ClearStateNotificationHandler notify all the interested listeners
-        BeanHelper.getClearStateNotificationHandler().notifyClearStateListeners();
+        ClearStateNotificationHandler clearStateNotificationHandler = (ClearStateNotificationHandler) FacesHelper.getManagedBean(context,
+                ClearStateNotificationHandler.BEAN_NAME);
+        clearStateNotificationHandler.notifyClearStateListeners();
     }
 
     public void clearViewStack(ActionEvent event) {
         String primaryId = ActionUtil.getParam(event, "primaryId");
         clearViewStack(primaryId, null);
-    }
-
-    public void toggle(@SuppressWarnings("unused") ActionEvent event) {
-        MenuItem menuItem = getMenuItemFromShortcut(getShortcutFromClickedId(), getMenu());
-        if (menuItem instanceof DropdownMenuItem) {
-            ((DropdownMenuItem) menuItem).toggle();
-        }
     }
 
     public void reloadMenu() {
@@ -603,7 +587,7 @@ public class MenuBean implements Serializable {
         }
         MenuItem item = menuItemAndPath.getFirst();
         MenuItemWrapper wrapper = (MenuItemWrapper) item.createComponent(context, SHORTCUT_MENU_ITEM_PREFIX + shortcutsPanelGroup.getChildCount()
-                , getUserService(), getWorkflowService(), getEinvoiceService(), BeanHelper.getRSService(), false);
+                , getUserService(), getWorkflowService(), getEinvoiceService(), false);
         if (wrapper == null) {
             return false; // no permissions or for some other reason wrapper is not created
         }
@@ -616,15 +600,6 @@ public class MenuBean implements Serializable {
         String title = (String) link.getValue();
         if (title.endsWith(")")) {
             link.setValue(title.substring(0, title.lastIndexOf('(')));
-        }
-
-        // All shortcut items should be visible and we don't need the AJAX counter updater.
-        // (NB! Don't modify item variable since it is linked to the actual menu where items have to be hidden sometimes)
-        @SuppressWarnings("unchecked")
-        Map<String, String> attr = wrapper.getAttributes();
-        String styleClass = attr.get("styleClass");
-        if (StringUtils.isNotBlank(styleClass)) {
-            attr.put("styleClass", remove(remove(styleClass, MenuItem.HIDDEN_MENU_ITEM), "menuItemCount"));
         }
 
         @SuppressWarnings("unchecked")
@@ -817,39 +792,6 @@ public class MenuBean implements Serializable {
             // do nothing
         }
 
-    }
-
-    public boolean isMenuItemHidden(String menuItemId) {
-        if (StringUtils.isBlank(menuItemId)) {
-            return false;
-        }
-
-        if (HIDDEN_WHEN_EMPTY.contains(menuItemId)) {
-            Boolean showEmpty = (Boolean) getUserService().getUserProperties(AuthenticationUtil.getRunAsUser()).get(ContentModel.SHOW_EMPTY_TASK_MENU);
-            return showEmpty == null || !showEmpty;
-        }
-
-        return false;
-    }
-
-    public String getRestrictedDeltaName() {
-        return BeanHelper.getRSService().getRestrictedDeltaName();
-    }
-
-    public String getDeltaName() {
-        return BeanHelper.getRSService().getDeltaName();
-    }
-
-    public String getRestrictedDeltaUrl() {
-        return BeanHelper.getRSService().getRestrictedDeltaUrl();
-    }
-
-    public String getDeltaUrl() {
-        return BeanHelper.getRSService().getDeltaUrl();
-    }
-
-    public String getWorkingDocumentsAddress() {
-        return BeanHelper.getParametersService().getStringParameter(Parameters.WORKING_DOCUMENTS_ADDRESS);
     }
 
     // START: getters / setters

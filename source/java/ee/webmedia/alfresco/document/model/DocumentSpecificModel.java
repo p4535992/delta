@@ -3,19 +3,15 @@ package ee.webmedia.alfresco.document.model;
 import org.alfresco.service.namespace.QName;
 
 import ee.webmedia.alfresco.classificator.enums.TransmittalMode;
-import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 
 /**
  * @author Alar Kvell
  */
 public interface DocumentSpecificModel {
-    String DOCSPEC_URI = "http://alfresco.webmedia.ee/model/document/specific/1.0";
-    String DOCSPEC_PREFIX = "docspec:";
+    String URI = "http://alfresco.webmedia.ee/model/document/specific/1.0";
+    String PREFIX = "docspec:";
 
-    String URI = DocumentDynamicModel.URI;
-    String PREFIX = DocumentDynamicModel.PREFIX;
-
-    QName MODEL = QName.createQName(DOCSPEC_URI, "documentSpecificModel");
+    QName MODEL = QName.createQName(URI, "documentSpecificModel");
 
     interface Assocs {
         /** Välislähetuse taotleja ja lähetuse bloki vaheline seos (dokument->taotleja => dokument->taotleja->lähetus) */
@@ -230,7 +226,6 @@ public interface DocumentSpecificModel {
         QName COMPLIENCE_NOTATION = QName.createQName(URI, "complienceNotation");
         QName COMPLIENCE_DATE = QName.createQName(URI, "complienceDate");
         QName DUE_DATE = QName.createQName(URI, "dueDate");
-        QName DUE_DATE_DESC = QName.createQName(URI, "dueDateDesc");
 
         QName DELIVERER_NAME = QName.createQName(URI, "delivererName");
         QName DELIVERER_JOB_TITLE = QName.createQName(URI, "delivererJobTitle");
@@ -339,7 +334,7 @@ public interface DocumentSpecificModel {
         QName MANAGEMENTS_ORDER_DUE_DATE = QName.createQName(URI, "managementsOrderDueDate");
 
         QName PROCUREMENT_TYPE = QName.createQName(URI, "procurementType"); // TODO not in data model yet, because docsub:tenderingApplication is not yet
-        // implemented
+                                                                            // implemented
         QName PROCUREMENT_LEGAL_BASIS = QName.createQName(URI, "procurementLegalBasis");
         QName PROCUREMENT_DESC = QName.createQName(URI, "procurementDesc");
         QName PROCUREMENT_SUM_ESTIMATED = QName.createQName(URI, "procurementSumEstimated");

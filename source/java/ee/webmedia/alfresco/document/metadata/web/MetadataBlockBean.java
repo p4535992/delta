@@ -1,12 +1,12 @@
 package ee.webmedia.alfresco.document.metadata.web;
 
-import static ee.webmedia.alfresco.addressbook.util.AddressbookUtil.getContactFullName;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDialogHelperBean;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getMaaisService;
 import static ee.webmedia.alfresco.utils.TextUtil.joinStringAndStringWithComma;
 import static ee.webmedia.alfresco.utils.TextUtil.joinStringAndStringWithParentheses;
 import static ee.webmedia.alfresco.utils.TextUtil.joinStringAndStringWithSpace;
 import static org.alfresco.web.ui.common.StringUtils.encode;
 
+import java.io.IOException;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.text.DateFormat;
@@ -24,13 +24,17 @@ import javax.faces.component.UIInput;
 import javax.faces.component.UISelectItem;
 import javax.faces.component.html.HtmlSelectOneMenu;
 import javax.faces.context.FacesContext;
+import javax.faces.context.ResponseWriter;
 import javax.faces.event.ActionEvent;
+import javax.faces.event.FacesListener;
+import javax.faces.event.PhaseId;
 import javax.faces.event.ValueChangeEvent;
 import javax.faces.model.SelectItem;
 import javax.faces.validator.ValidatorException;
 
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
+import org.alfresco.service.cmr.lock.LockStatus;
 import org.alfresco.service.cmr.lock.NodeLockedException;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
@@ -41,7 +45,6 @@ import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.Repository;
-import org.alfresco.web.ui.common.component.PickerSearchParams;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.BooleanUtils;
@@ -55,7 +58,7 @@ import com.ibm.icu.util.GregorianCalendar;
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel.Types;
 import ee.webmedia.alfresco.addressbook.service.AddressbookService;
-import ee.webmedia.alfresco.addressbook.util.AddressbookUtil;
+import ee.webmedia.alfresco.addressbook.web.dialog.AddressbookMainViewDialog;
 import ee.webmedia.alfresco.cases.model.Case;
 import ee.webmedia.alfresco.cases.service.CaseService;
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
@@ -63,10 +66,9 @@ import ee.webmedia.alfresco.classificator.model.ClassificatorValue;
 import ee.webmedia.alfresco.classificator.service.ClassificatorService;
 import ee.webmedia.alfresco.common.propertysheet.component.SubPropertySheetItem;
 import ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter;
+import ee.webmedia.alfresco.common.propertysheet.suggester.SuggesterGenerator;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.BeanHelper;
-import ee.webmedia.alfresco.common.web.ClearStateNotificationHandler.ClearStateListener;
-import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 import ee.webmedia.alfresco.document.einvoice.model.Transaction;
 import ee.webmedia.alfresco.document.einvoice.service.EInvoiceUtil;
 import ee.webmedia.alfresco.document.model.Document;
@@ -77,12 +79,14 @@ import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
 import ee.webmedia.alfresco.document.service.DocLockService;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.document.service.DocumentService.TransientProps;
+import ee.webmedia.alfresco.document.service.EventsLoggingHelper;
 import ee.webmedia.alfresco.document.service.InMemoryChildNodeHelper;
 import ee.webmedia.alfresco.document.type.model.DocumentType;
 import ee.webmedia.alfresco.document.type.service.DocumentTypeService;
 import ee.webmedia.alfresco.document.web.DocumentDialog;
 import ee.webmedia.alfresco.dvk.service.DvkService;
 import ee.webmedia.alfresco.dvk.service.ExternalReviewException;
+import ee.webmedia.alfresco.functions.model.Function;
 import ee.webmedia.alfresco.functions.service.FunctionsService;
 import ee.webmedia.alfresco.menu.ui.MenuBean;
 import ee.webmedia.alfresco.orgstructure.service.OrganizationStructureService;
@@ -108,7 +112,7 @@ import ee.webmedia.alfresco.workflow.service.WorkflowService;
 /**
  * @author Alar Kvell
  */
-public class MetadataBlockBean implements ClearStateListener {
+public class MetadataBlockBean implements Serializable {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(MetadataBlockBean.class);
     private static final long serialVersionUID = 1L;
 
@@ -135,7 +139,7 @@ public class MetadataBlockBean implements ClearStateListener {
     private UserListDialog userListDialog;
     private transient UIPropertySheet propertySheet;
     private transient InMemoryChildNodeHelper inMemoryChildNodeHelper;
-    private final SelectItem[] contactOrUserSearchFilters;
+    private SelectItem[] contactOrUserSearchFilters;
 
     private Node document;
     private Node propertySheetControlDocument;
@@ -153,10 +157,6 @@ public class MetadataBlockBean implements ClearStateListener {
     public MetadataBlockBean() {
         String datePattern = Application.getMessage(FacesContext.getCurrentInstance(), "date_pattern");
         dateFormat = new SimpleDateFormat(datePattern);
-        contactOrUserSearchFilters = new SelectItem[] {
-                new SelectItem(0, MessageUtil.getMessage("task_owner_users")),
-                new SelectItem(1, MessageUtil.getMessage("task_owner_contacts")),
-        };
     }
 
     public String getLeavingLetterContent() {
@@ -175,10 +175,24 @@ public class MetadataBlockBean implements ClearStateListener {
         Map<QName, Serializable> personProps = getPersonProps(userName);
         targetProps.put(DocumentSpecificModel.Props.APPLICANT_NAME.toString(), UserUtil.getPersonFullName1(personProps));
         targetProps.put(DocumentSpecificModel.Props.APPLICANT_JOB_TITLE.toString(), personProps.get(ContentModel.PROP_JOBTITLE));
+        String orgstructName = getOrganizationStructureService().getOrganizationStructure((String) personProps.get(ContentModel.PROP_ORGID));
+        targetProps.put(DocumentSpecificModel.Props.APPLICANT_STRUCT_UNIT_NAME.toString(), orgstructName);
 
         // Set properties related to certain aspects if needed
         if (docAspects == null || docAspects.isEmpty()) {
             return RepoUtil.toQNameProperties(targetProps);
+        }
+
+        if (StringUtils.isNotBlank(orgstructName) && docAspects.contains(DocumentSpecificModel.Aspects.ERRAND_ORDER_APPLICANT_ABROAD_V2)) {
+            targetProps.put(DocumentSpecificModel.Props.COST_MANAGER.toString(), getActiveClassificatorValue("errandOrderAbroadCostManager", orgstructName));
+            targetProps.put(DocumentSpecificModel.Props.EXPENDITURE_ITEM.toString(), getActiveClassificatorValue("errandOrderExpenditureItem", orgstructName));
+        }
+
+        if (StringUtils.isNotBlank(orgstructName) && docAspects.contains(DocumentSpecificModel.Types.ERRAND_APPLICATION_DOMESTIC_APPLICANT_TYPE_V2)) {
+            targetProps.put(DocumentSpecificModel.Props.COST_MANAGER.toString(),
+                    getActiveClassificatorValue("errandApplicationDomesticCostManager", orgstructName));
+            targetProps.put(DocumentSpecificModel.Props.COST_ELEMENT.toString(),
+                    getActiveClassificatorValue("errandApplicationDomesticCostElement", orgstructName));
         }
 
         return RepoUtil.toQNameProperties(targetProps);
@@ -274,6 +288,8 @@ public class MetadataBlockBean implements ClearStateListener {
 
         Map<String, Object> docProps = document.getProperties();
         docProps.put(DocumentSpecificModel.Props.RESPONSIBLE_NAME.toString(), UserUtil.getPersonFullName1(personProps));
+        String orgstructName = getOrganizationStructureService().getOrganizationStructure((String) personProps.get(ContentModel.PROP_ORGID));
+        docProps.put(DocumentSpecificModel.Props.RESPONSIBLE_STRUCT_UNIT.toString(), orgstructName);
     }
 
     public void setOrganization(String nodeRefStr) {
@@ -297,12 +313,16 @@ public class MetadataBlockBean implements ClearStateListener {
         docProps.put(DocumentCommonModel.Props.OWNER_ID.toString(), personProps.get(ContentModel.PROP_USERNAME));
         docProps.put(DocumentCommonModel.Props.OWNER_NAME.toString(), UserUtil.getPersonFullName1(personProps));
         docProps.put(DocumentCommonModel.Props.OWNER_JOB_TITLE.toString(), personProps.get(ContentModel.PROP_JOBTITLE));
+        String orgstructName = getOrganizationStructureService().getOrganizationStructure((String) personProps.get(ContentModel.PROP_ORGID));
+        docProps.put(DocumentCommonModel.Props.OWNER_ORG_STRUCT_UNIT.toString(), orgstructName);
         docProps.put(DocumentCommonModel.Props.OWNER_EMAIL.toString(), personProps.get(ContentModel.PROP_EMAIL));
         docProps.put(DocumentCommonModel.Props.OWNER_PHONE.toString(), personProps.get(ContentModel.PROP_TELEPHONE));
     }
 
     private Map<QName, Serializable> getPersonProps(String userName) {
-        return getUserService().getUserProperties(userName);
+        NodeRef person = getPersonService().getPerson(userName);
+        Map<QName, Serializable> personProps = getNodeService().getProperties(person);
+        return personProps;
     }
 
     public void setWhom(String userName) {
@@ -339,6 +359,8 @@ public class MetadataBlockBean implements ClearStateListener {
         Map<String, Object> docProps = document.getProperties();
         docProps.put(DocumentSpecificModel.Props.DELIVERER_NAME.toString(), UserUtil.getPersonFullName1(personProps));
         docProps.put(DocumentSpecificModel.Props.DELIVERER_JOB_TITLE.toString(), personProps.get(ContentModel.PROP_JOBTITLE));
+        String orgstructName = getOrganizationStructureService().getOrganizationStructure((String) personProps.get(ContentModel.PROP_ORGID));
+        docProps.put(DocumentSpecificModel.Props.DELIVERER_STRUCT_UNIT.toString(), orgstructName);
     }
 
     public void setCompensationApplicantName(String userName) {
@@ -347,6 +369,8 @@ public class MetadataBlockBean implements ClearStateListener {
         Map<String, Object> docProps = document.getProperties();
         docProps.put(DocumentSpecificModel.Props.COMPENSATION_APPLICANT_NAME.toString(), UserUtil.getPersonFullName1(personProps));
         docProps.put(DocumentSpecificModel.Props.COMPENSATION_APPLICANT_JOB_TITLE.toString(), personProps.get(ContentModel.PROP_JOBTITLE));
+        String orgstructName = getOrganizationStructureService().getOrganizationStructure((String) personProps.get(ContentModel.PROP_ORGID));
+        docProps.put(DocumentSpecificModel.Props.COMPENSATION_APPLICANT_STRUCT_UNIT_NAME.toString(), orgstructName);
     }
 
     public void setReceiver(String userName) {
@@ -355,17 +379,25 @@ public class MetadataBlockBean implements ClearStateListener {
         Map<String, Object> docProps = document.getProperties();
         docProps.put(DocumentSpecificModel.Props.RECEIVER_NAME.toString(), UserUtil.getPersonFullName1(personProps));
         docProps.put(DocumentSpecificModel.Props.RECEIVER_JOB_TITLE.toString(), personProps.get(ContentModel.PROP_JOBTITLE));
+        String orgstructName = getOrganizationStructureService().getOrganizationStructure((String) personProps.get(ContentModel.PROP_ORGID));
+        docProps.put(DocumentSpecificModel.Props.RECEIVER_STRUCT_UNIT.toString(), orgstructName);
     }
 
     public void setSender(String nodeRefStr) {
         NodeRef nodeRef = new NodeRef(nodeRefStr);
-        String name = getContactFullName(nodeRef);
+        String name = getOrgOrPersonName(nodeRef);
         document.getProperties().put(DocumentSpecificModel.Props.SENDER_DETAILS_NAME.toString(), name);
+    }
+
+    private String getOrgOrPersonName(NodeRef nodeRef) {
+        Map<QName, Serializable> props = getNodeService().getProperties(nodeRef);
+        QName contactType = getNodeService().getType(nodeRef);
+        return AddressbookMainViewDialog.getContactFullName(props, contactType);
     }
 
     public void setApplicantInstitution(String nodeRefStr) {
         NodeRef nodeRef = new NodeRef(nodeRefStr);
-        document.getProperties().put(DocumentSpecificModel.Props.APPLICANT_INSTITUTION.toString(), getContactFullName(nodeRef));
+        document.getProperties().put(DocumentSpecificModel.Props.APPLICANT_INSTITUTION.toString(), getOrgOrPersonName(nodeRef));
     }
 
     public void setApplicantPerson(String searchResult) {
@@ -404,7 +436,7 @@ public class MetadataBlockBean implements ClearStateListener {
 
     public void setCoApplicantInstitution(String nodeRefStr) {
         NodeRef nodeRef = new NodeRef(nodeRefStr);
-        document.getProperties().put(DocumentSpecificModel.Props.CO_APPLICANT_INSTITUTION.toString(), getContactFullName(nodeRef));
+        document.getProperties().put(DocumentSpecificModel.Props.CO_APPLICANT_INSTITUTION.toString(), getOrgOrPersonName(nodeRef));
     }
 
     public void setCoApplicantPerson(String searchResult) {
@@ -428,6 +460,8 @@ public class MetadataBlockBean implements ClearStateListener {
         List<String> list = new ArrayList<String>(3);
         list.add(UserUtil.getPersonFullName1(personProps));
         list.add((String) personProps.get(ContentModel.PROP_JOBTITLE));
+        String orgstructName = getOrganizationStructureService().getOrganizationStructure((String) personProps.get(ContentModel.PROP_ORGID));
+        list.add(orgstructName);
         return list;
     }
 
@@ -503,8 +537,6 @@ public class MetadataBlockBean implements ClearStateListener {
             }
 
             if (document.hasAspect(DocumentCommonModel.Aspects.OWNER)) {
-                // TODO move this code to UserContactRelatedGroupGenerator
-
                 String owner = encode((String) props.get(DocumentCommonModel.Props.OWNER_NAME));
                 List<String> ownerProps = new ArrayList<String>(4);
                 String ownerJobTitle = (String) props.get(DocumentCommonModel.Props.OWNER_JOB_TITLE);
@@ -525,13 +557,7 @@ public class MetadataBlockBean implements ClearStateListener {
                 }
 
                 String ownerDetails = StringUtils.join(ownerProps.iterator(), ", ");
-                String ownerId = (String) props.get(DocumentCommonModel.Props.OWNER_ID);
-                String substitutionInfo = UserUtil.getSubstitute(ownerId);
-                String finalOwnerDetails = joinStringAndStringWithParentheses(owner, ownerDetails);
-                if (!StringUtils.isBlank(substitutionInfo)) {
-                    finalOwnerDetails = joinStringAndStringWithSpace(finalOwnerDetails, "<span class=\"fieldExtraInfo\">" + substitutionInfo + "</span>");
-                }
-                props.put("owner", finalOwnerDetails);
+                props.put("owner", joinStringAndStringWithParentheses(owner, ownerDetails));
             }
 
             if (document.hasAspect(DocumentCommonModel.Aspects.COMMON)) {
@@ -954,8 +980,7 @@ public class MetadataBlockBean implements ClearStateListener {
      * @return A collection of UISelectItem objects containing the selection items to show on form.
      */
     public List<SelectItem> findDocumentTemplates(FacesContext context, UIInput selectComponent) {
-        List<DocumentTemplate> docTemplates = getDocumentTemplateService().getDocumentTemplates(
-                (String) document.getProperties().get(DocumentAdminModel.Props.OBJECT_TYPE_ID));
+        List<DocumentTemplate> docTemplates = getDocumentTemplateService().getDocumentTemplates(document.getType());
         List<SelectItem> selectItems = new ArrayList<SelectItem>(docTemplates.size() + 1);
 
         // Empty default selection
@@ -986,19 +1011,23 @@ public class MetadataBlockBean implements ClearStateListener {
         if (StringUtils.isBlank(accessRestriction)) {
             // read serAccessRestriction-related values from series
             final Series series = getSeriesService().getSeriesByNodeRef(seriesRef);
-            final Map<String, Object> seriesProps = series.getNode().getProperties();
-            final String serAccessRestriction = (String) seriesProps.get(DocumentCommonModel.Props.ACCESS_RESTRICTION.toString());
-            final String serAccessRestrictionReason = (String) seriesProps.get(DocumentCommonModel.Props.ACCESS_RESTRICTION_REASON.toString());
-            final Date serAccessRestrictionBeginDate = (Date) seriesProps.get(DocumentCommonModel.Props.ACCESS_RESTRICTION_BEGIN_DATE.toString());
-            final Date serAccessRestrictionEndDate = (Date) seriesProps.get(DocumentCommonModel.Props.ACCESS_RESTRICTION_END_DATE.toString());
-            final String serAccessRestrictionEndDesc = (String) seriesProps.get(DocumentCommonModel.Props.ACCESS_RESTRICTION_END_DESC.toString());
-            // write them to the document
-            docProps.put(DocumentCommonModel.Props.ACCESS_RESTRICTION.toString(), serAccessRestriction);
-            docProps.put(DocumentCommonModel.Props.ACCESS_RESTRICTION_REASON.toString(), serAccessRestrictionReason);
-            docProps.put(DocumentCommonModel.Props.ACCESS_RESTRICTION_BEGIN_DATE.toString(), serAccessRestrictionBeginDate);
-            docProps.put(DocumentCommonModel.Props.ACCESS_RESTRICTION_END_DATE.toString(), serAccessRestrictionEndDate);
-            docProps.put(DocumentCommonModel.Props.ACCESS_RESTRICTION_END_DESC.toString(), serAccessRestrictionEndDesc);
+            setAccessRestrictionPropsFromSeries(docProps, series);
         }
+    }
+
+    public static void setAccessRestrictionPropsFromSeries(final Map<String, Object> docProps, final Series series) {
+        final Map<String, Object> seriesProps = series.getNode().getProperties();
+        final String serAccessRestriction = (String) seriesProps.get(DocumentCommonModel.Props.ACCESS_RESTRICTION.toString());
+        final String serAccessRestrictionReason = (String) seriesProps.get(DocumentCommonModel.Props.ACCESS_RESTRICTION_REASON.toString());
+        final Date serAccessRestrictionBeginDate = (Date) seriesProps.get(DocumentCommonModel.Props.ACCESS_RESTRICTION_BEGIN_DATE.toString());
+        final Date serAccessRestrictionEndDate = (Date) seriesProps.get(DocumentCommonModel.Props.ACCESS_RESTRICTION_END_DATE.toString());
+        final String serAccessRestrictionEndDesc = (String) seriesProps.get(DocumentCommonModel.Props.ACCESS_RESTRICTION_END_DESC.toString());
+        // write them to the document
+        docProps.put(DocumentCommonModel.Props.ACCESS_RESTRICTION.toString(), serAccessRestriction);
+        docProps.put(DocumentCommonModel.Props.ACCESS_RESTRICTION_REASON.toString(), serAccessRestrictionReason);
+        docProps.put(DocumentCommonModel.Props.ACCESS_RESTRICTION_BEGIN_DATE.toString(), serAccessRestrictionBeginDate);
+        docProps.put(DocumentCommonModel.Props.ACCESS_RESTRICTION_END_DATE.toString(), serAccessRestrictionEndDate);
+        docProps.put(DocumentCommonModel.Props.ACCESS_RESTRICTION_END_DESC.toString(), serAccessRestrictionEndDesc);
     }
 
     public void removeApplicant(ActionEvent event) {
@@ -1109,6 +1138,175 @@ public class MetadataBlockBean implements ClearStateListener {
     }
 
     private void updateFnSerVol(NodeRef functionRef, NodeRef seriesRef, NodeRef volumeRef, String caseLabel, boolean addIfMissing) {
+        { // Function
+            List<Function> allFunctions = getFunctionsService().getAllFunctions(DocListUnitStatus.OPEN);
+            functions = new ArrayList<SelectItem>(allFunctions.size());
+            functions.add(new SelectItem("", ""));
+            boolean functionFound = false;
+            for (Function function : allFunctions) {
+                List<Series> openSeries = getSeriesService().getAllSeriesByFunction(function.getNodeRef(), DocListUnitStatus.OPEN, document.getType());
+                if (openSeries.size() == 0) {
+                    continue;
+                }
+                functions.add(new SelectItem(function.getNode().getNodeRef(), function.getMark() + " " + function.getTitle()));
+                if (functionRef != null && functionRef.equals(function.getNode().getNodeRef())) {
+                    functionFound = true;
+                }
+            }
+            if (!functionFound) {
+                if (addIfMissing && functionRef != null && getNodeService().exists(functionRef)) {
+                    Function function = getFunctionsService().getFunctionByNodeRef(functionRef);
+                    functions.add(1, new SelectItem(function.getNode().getNodeRef(), function.getMark() + " " + function.getTitle()));
+                } else {
+                    functionRef = null;
+                }
+            }
+            // If list contains only one value, then select it right away
+            if (functions.size() == 2) {
+                functions.remove(0);
+                if (functionRef == null) {
+                    functionRef = (NodeRef) functions.get(0).getValue();
+                }
+            }
+        }
+
+        if (functionRef == null) {
+            series = null;
+            seriesRef = null;
+        } else {
+            List<Series> allSeries = getSeriesService().getAllSeriesByFunction(functionRef, DocListUnitStatus.OPEN, document.getType());
+            series = new ArrayList<SelectItem>(allSeries.size());
+            series.add(new SelectItem("", ""));
+            boolean serieFound = false;
+            for (Series serie : allSeries) {
+                series.add(new SelectItem(serie.getNode().getNodeRef(), serie.getSeriesIdentifier() + " " + serie.getTitle()));
+                if (seriesRef != null && seriesRef.equals(serie.getNode().getNodeRef())) {
+                    serieFound = true;
+                }
+            }
+            if (!serieFound) {
+                if (addIfMissing && seriesRef != null && getNodeService().exists(seriesRef)) {
+                    Series serie = getSeriesService().getSeriesByNodeRef(seriesRef);
+                    series.add(1, new SelectItem(serie.getNode().getNodeRef(), serie.getSeriesIdentifier() + " " + serie.getTitle()));
+                } else {
+                    seriesRef = null;
+                }
+            }
+            // If list contains only one value, then select it right away
+            if (series.size() == 2) {
+                series.remove(0);
+                if (seriesRef == null) {
+                    seriesRef = (NodeRef) series.get(0).getValue();
+                }
+            }
+        }
+
+        if (seriesRef == null) {
+            volumes = null;
+            volumeRef = null;
+        } else {
+            UIPropertySheet ps = getPropertySheetInner();
+            if (ps == null) { // when metadata block is first rendered
+                updateAccessRestrictionProperties(seriesRef);
+            } else { // when value change event is fired
+                final NodeRef finalSeriesRef = seriesRef;
+                ActionEvent event = new ActionEvent(ps) {
+                    private static final long serialVersionUID = 1L;
+
+                    boolean notExecuted = true;
+
+                    @Override
+                    public void processListener(FacesListener faceslistener) {
+                        notExecuted = false;
+                        updateAccessRestrictionProperties(finalSeriesRef);
+                    }
+
+                    @Override
+                    public boolean isAppropriateListener(FacesListener faceslistener) {
+                        return notExecuted;
+                    }
+                };
+                event.setPhaseId(PhaseId.INVOKE_APPLICATION);
+                ps.queueEvent(event);
+            }
+
+            List<Volume> allVolumes = getVolumeService().getAllValidVolumesBySeries(seriesRef, DocListUnitStatus.OPEN);
+            volumes = new ArrayList<SelectItem>(allVolumes.size());
+            volumes.add(new SelectItem("", ""));
+            boolean volumeFound = false;
+            for (Volume volume : allVolumes) {
+                volumes.add(new SelectItem(volume.getNode().getNodeRef(), volume.getVolumeMark() + " " + volume.getTitle()));
+                if (volumeRef != null && volumeRef.equals(volume.getNode().getNodeRef())) {
+                    volumeFound = true;
+                }
+            }
+            if (!volumeFound) {
+                if (addIfMissing && volumeRef != null && getNodeService().exists(volumeRef)) {
+                    Volume volume = getVolumeService().getVolumeByNodeRef(volumeRef);
+                    volumes.add(1, new SelectItem(volume.getNode().getNodeRef(), volume.getVolumeMark() + " " + volume.getTitle()));
+                } else {
+                    volumeRef = null;
+                }
+            }
+            // If list contains only one value, then select it right away
+            if (volumes.size() == 2) {
+                volumes.remove(0);
+                if (volumeRef == null) {
+                    volumeRef = (NodeRef) volumes.get(0).getValue();
+                }
+            }
+        }
+
+        if (volumeRef == null) {
+            cases = null;
+            caseLabel = null;
+        } else {
+            if (getVolumeService().getVolumeByNodeRef(volumeRef).isContainsCases()) {
+                List<Case> allCases = getCaseService().getAllCasesByVolume(volumeRef, DocListUnitStatus.OPEN);
+                cases = new ArrayList<String>(allCases.size());
+                for (Case tmpCase : allCases) {
+                    cases.add(tmpCase.getTitle());
+                }
+                if (StringUtils.isBlank(caseLabel) && cases.size() == 1) {
+                    caseLabel = cases.get(0);
+                }
+            } else {
+                cases = null;
+                caseLabel = null;
+            }
+        }
+
+        if (getPropertySheet() != null) {
+            @SuppressWarnings("unchecked")
+            List<UIComponent> children = getPropertySheet().getChildren();
+            for (UIComponent component : children) {
+                if (component.getId().endsWith("_function")) {
+                    HtmlSelectOneMenu functionList = (HtmlSelectOneMenu) component.getChildren().get(1);
+                    ComponentUtil.setSelectItems(FacesContext.getCurrentInstance(), functionList, functions);
+                    functionList.setValue(functionRef);
+                } else if (component.getId().endsWith("_series")) {
+                    HtmlSelectOneMenu seriesList = (HtmlSelectOneMenu) component.getChildren().get(1);
+                    ComponentUtil.setSelectItems(FacesContext.getCurrentInstance(), seriesList, series);
+                    seriesList.setValue(seriesRef);
+                } else if (component.getId().endsWith("_volume")) {
+                    HtmlSelectOneMenu volumeList = (HtmlSelectOneMenu) component.getChildren().get(1);
+                    ComponentUtil.setSelectItems(FacesContext.getCurrentInstance(), volumeList, volumes);
+                    volumeList.setValue(volumeRef);
+                } else if (component.getId().endsWith("_case_Lbl_Editable")) {
+                    UIInput caseList = (UIInput) component.getChildren().get(1);
+                    SuggesterGenerator.setValue(caseList, cases);
+                    caseList.setValue(caseLabel);
+                    component.setRendered(cases != null);
+                }
+            }
+        }
+
+        // These only apply when called initially during creation of a new document
+        // If called from eventlistener, then model values are updated after and thus overwritten
+        document.getProperties().put(DocumentService.TransientProps.FUNCTION_NODEREF, functionRef);
+        document.getProperties().put(DocumentService.TransientProps.SERIES_NODEREF, seriesRef);
+        document.getProperties().put(DocumentService.TransientProps.VOLUME_NODEREF, volumeRef);
+        document.getProperties().put(DocumentService.TransientProps.CASE_LABEL_EDITABLE, caseLabel);
     }
 
     public void ministersOrderWhoseChanged(ValueChangeEvent event) {
@@ -1145,15 +1343,16 @@ public class MetadataBlockBean implements ClearStateListener {
         // Set template
         if (values.length > 1 && StringUtils.isNotBlank(values[1]) && getPropertySheet() != null) {
             String templateName = values[1];
+            @SuppressWarnings("unchecked")
             List<UIComponent> children = getPropertySheet().getChildren();
             children: for (UIComponent component : children) {
                 if (!component.getId().endsWith("_templateName")) {
                     continue;
                 }
                 HtmlSelectOneMenu templateList = (HtmlSelectOneMenu) component.getChildren().get(1);
-                List<UIComponent> templateListValues = templateList.getChildren();
-                for (UIComponent value : templateListValues) {
-                    UISelectItem select = (UISelectItem) value;
+                @SuppressWarnings({ "unchecked", "cast" })
+                List<UISelectItem> templateListValues = (List<UISelectItem>) templateList.getChildren();
+                for (UISelectItem select : templateListValues) {
                     String itemValue = (String) select.getItemValue();
                     if (templateName.equals(itemValue) || templateName.equals(select.getItemLabel())) {
                         document.getProperties().put(DocumentSpecificModel.Props.TEMPLATE_NAME.toString(), itemValue);
@@ -1171,15 +1370,17 @@ public class MetadataBlockBean implements ClearStateListener {
         return contactOrUserSearchFilters;
     }
 
-    public SelectItem[] searchUsersOrContacts(PickerSearchParams params) {
-        log.debug("executeOwnerSearch: " + params.getFilterIndex() + ", " + params.getSearchString());
-        if (params.isFilterIndex(0)) { // users
-            return userListDialog.searchUsers(params);
-        } else if (params.isFilterIndex(1)) { // contacts
-            List<Node> nodes = getAddressbookService().search(params.getSearchString(), params.getLimit());
-            return AddressbookUtil.transformAddressbookNodesToSelectItems(nodes);
+    public SelectItem[] searchUsersOrContacts(int filterIndex, String contains) {
+        log.debug("executeOwnerSearch: " + filterIndex + ", " + contains);
+        if (filterIndex == 0) { // users
+            return userListDialog.searchUsers(-1, contains);
+        } else if (filterIndex == 1) { // contacts
+            final String personLabel = MessageUtil.getMessage("addressbook_private_person").toLowerCase();
+            final String organizationLabel = MessageUtil.getMessage("addressbook_org").toLowerCase();
+            List<Node> nodes = getAddressbookService().search(contains);
+            return AddressbookMainViewDialog.transformNodesToSelectItems(nodes, personLabel, organizationLabel);
         } else {
-            throw new RuntimeException("Unknown filter index value: " + params.getFilterIndex());
+            throw new RuntimeException("Unknown filter index value: " + filterIndex);
         }
     }
 
@@ -1291,13 +1492,16 @@ public class MetadataBlockBean implements ClearStateListener {
         reloadDoc();
         DocumentType documentType = getDocumentTypeService().getDocumentType(document.getType());
         documentTypeName = documentType != null ? documentType.getName() : null;
-        BeanHelper.getClearStateNotificationHandler().addClearStateListener(this);
+        contactOrUserSearchFilters = new SelectItem[] {
+                new SelectItem(0, MessageUtil.getMessage("task_owner_users")),
+                new SelectItem(1, MessageUtil.getMessage("task_owner_contacts")),
+        };
     }
 
     public void reloadDoc() {
         reloadDoc(true);
     }
-    
+
     public void reloadDoc(boolean addInvoiceMessages) {
         reloadDoc(addInvoiceMessages, nodeRef);
     }
@@ -1305,7 +1509,7 @@ public class MetadataBlockBean implements ClearStateListener {
     public void reloadDoc(boolean addInvoiceMessages, NodeRef docNodeRef) {
         document = getDocumentService().getDocument(docNodeRef);
         if (!inEditMode) {// only create lock for existing doc
-            BeanHelper.getDocumentLockHelperBean().lockOrUnlockIfNeeded(inEditMode);
+            lockOrUnlockIfNeeded(inEditMode);
         }
         afterModeChange();
         if (addInvoiceMessages) {
@@ -1328,10 +1532,21 @@ public class MetadataBlockBean implements ClearStateListener {
 
     public void reset() {
         inEditMode = false;
-        BeanHelper.getDocumentLockHelperBean().lockOrUnlockIfNeeded(false);
+        lockOrUnlockIfNeeded(inEditMode);
         document = null;
         propertySheet = null;
         documentTypeName = null;
+    }
+
+    public void saveAndRegister(boolean isDraft, List<NodeRef> newInvoiceDocuments) {
+        if (save(isDraft, newInvoiceDocuments, false)) {
+            document.getProperties().put(DocumentService.TransientProps.TEMP_DOCUMENT_IS_DRAFT, isDraft);
+            EventsLoggingHelper.disableLogging(document, DocumentService.TransientProps.TEMP_LOGGING_DISABLED_DOCUMENT_METADATA_CHANGED);
+            registerDocument(null);
+            // We need to refresh the propertySheetgrid
+            clearPropertySheet();
+            afterModeChange();
+        }
     }
 
     /**
@@ -1350,12 +1565,12 @@ public class MetadataBlockBean implements ClearStateListener {
     }
 
     public void editDocument(Node doc) {
-        if (!doc.hasPermission(DocumentCommonModel.Privileges.EDIT_DOCUMENT)) {
+        if (!doc.hasPermission(DocumentCommonModel.Privileges.EDIT_DOCUMENT_META_DATA)) {
             return;
         }
         document = doc;
         inEditMode = true;
-        BeanHelper.getDocumentLockHelperBean().lockOrUnlockIfNeeded(BeanHelper.getDocumentLockHelperBean().isLockingAllowed());
+        lockOrUnlockIfNeeded(inEditMode);
         propertySheet.setMode(getMode());
         clearPropertySheet();
         DocumentType documentType = getDocumentTypeService().getDocumentType(document.getType());
@@ -1367,7 +1582,7 @@ public class MetadataBlockBean implements ClearStateListener {
 
     public String editAction() {
         try {
-            BaseDialogBean.validatePermission(document, DocumentCommonModel.Privileges.EDIT_DOCUMENT);
+            BaseDialogBean.validatePermission(document, DocumentCommonModel.Privileges.EDIT_DOCUMENT_META_DATA);
         } catch (UnableToPerformException e) {
             MessageUtil.addStatusMessage(e);
         }
@@ -1390,13 +1605,7 @@ public class MetadataBlockBean implements ClearStateListener {
         return save(isDraft, newInvoiveDocuments, true);
     }
 
-    @Deprecated
-    // This code should not be called any more
-    // Move the necessary functionality to documentDynamicService.update...
     public boolean save(boolean isDraft, List<NodeRef> newInvoiveDocuments, boolean addInvoiceMessages) {
-        if (true) {
-            throw new RuntimeException("This code should not be called any more");
-        }
         log.debug("save: docNodeRef=" + document.getNodeRefAsString());
         if (!inEditMode) {
             throw new RuntimeException("Document metadata block is not in edit mode");
@@ -1410,7 +1619,7 @@ public class MetadataBlockBean implements ClearStateListener {
                 if (DocumentSubtypeModel.Types.INVOICE.equals(document.getType())) {
                     document.getProperties().putAll(EInvoiceUtil.getTransSearchableProperties(BeanHelper.getEInvoiceService().getInvoiceTransactions(nodeRef)));
                 }
-                // document = getDocumentService().updateDocument(document);
+                document = getDocumentService().updateDocument(document);
                 NodeRef volume = (NodeRef) document.getProperties().get(TransientProps.VOLUME_NODEREF);
                 NodeRef series = (NodeRef) document.getProperties().get(TransientProps.SERIES_NODEREF);
                 NodeRef function = (NodeRef) document.getProperties().get(TransientProps.FUNCTION_NODEREF);
@@ -1419,7 +1628,7 @@ public class MetadataBlockBean implements ClearStateListener {
                     invoice.getProperties().put(TransientProps.VOLUME_NODEREF, volume);
                     invoice.getProperties().put(TransientProps.SERIES_NODEREF, series);
                     invoice.getProperties().put(TransientProps.FUNCTION_NODEREF, function);
-                    // getDocumentService().updateDocument(invoice);
+                    getDocumentService().updateDocument(invoice);
                 }
                 if (!isDraft && getWorkflowService().isSendableExternalWorkflowDoc(document.getNodeRef())) {
                     getDvkService().sendDvkTasksWithDocument(document.getNodeRef(), null, null);
@@ -1434,7 +1643,7 @@ public class MetadataBlockBean implements ClearStateListener {
             } catch (ExternalReviewException e) {
                 MessageUtil.addInfoMessage("dvk_sending_failed");
             } finally {
-                BeanHelper.getDocumentLockHelperBean().lockOrUnlockIfNeeded(BeanHelper.getDocumentLockHelperBean().isLockingAllowed());
+                lockOrUnlockIfNeeded(inEditMode);
                 reloadTransientProperties();
             }
             propertySheet.setMode(getMode());
@@ -1807,7 +2016,7 @@ public class MetadataBlockBean implements ClearStateListener {
         }
         document = getDocumentService().getDocument(document.getNodeRef());
         inEditMode = false;
-        BeanHelper.getDocumentLockHelperBean().lockOrUnlockIfNeeded(BeanHelper.getDocumentLockHelperBean().isLockingAllowed());
+        lockOrUnlockIfNeeded(inEditMode);
         propertySheet.setMode(getMode());
         clearPropertySheet();
         reloadTransientProperties();
@@ -1830,28 +2039,95 @@ public class MetadataBlockBean implements ClearStateListener {
     /** Web-client action */
     public void registerDocument(@SuppressWarnings("unused") ActionEvent event) {
         try {
-            Node document = getDocumentDialogHelperBean().getNode();
-            DocumentParentNodesVO parentNodes = getDocumentService().getAncestorNodesByDocument(document.getNodeRef());
-            getDocumentService().setTransientProperties(document, parentNodes);
-            document = getDocumentService().registerDocument(document);
-            // Update generated files
-            BeanHelper.getDocumentTemplateService().updateGeneratedFiles(document.getNodeRef(), true);
+            BaseDialogBean.validatePermission(document, DocumentCommonModel.Privileges.EDIT_DOCUMENT_META_DATA);
+            document = getDocumentService().registerDocument(document);// this method deep inside calls MaaisService.notifyAssoc(nodeRef);
+            nodeRef = document.getNodeRef(); // reloadDoc uses NodeRef
+            getDocumentTemplateService().updateGeneratedFilesOnRegistration(nodeRef);// file is being changed here and we need to send the info to MaaIS once more
+            getMaaisService().notifyAssoc(nodeRef);
             ((MenuBean) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), MenuBean.BEAN_NAME)).processTaskItems();
             MessageUtil.addInfoMessage("document_registerDoc_success");
-
         } catch (UnableToPerformException e) {
             if (log.isDebugEnabled()) {
                 log.warn("failed to register: " + e.getMessage());
             }
-            MessageUtil.addStatusMessage(e);
+            MessageUtil.addStatusMessage(FacesContext.getCurrentInstance(), e);
         } catch (NodeLockedException e) {
-            BeanHelper.getDocumentLockHelperBean().handleLockedNode("document_registerDoc_error_docLocked");
+            MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "document_registerDoc_error_docLocked");
         }
-        getDocumentDialogHelperBean().switchMode(false);
+        reloadDoc();
     }
 
     public void setCaseAssignmentNeeded(boolean showModal) {
         // shouldn't be set
+    }
+
+    /**
+     * @return how often (in seconds) clients should call {@link #refreshLockClientHandler()} to refresh lock
+     */
+    public int getClientLockRefreshFrequency() {
+        if (lockRefreshTimeout == null) {
+            lockRefreshTimeout = getDocLockService().getLockTimeout() / 2;
+        }
+        return lockRefreshTimeout;
+    }
+
+    /**
+     * AJAX: Extend lock on document (or create one)
+     */
+    public void refreshLockClientHandler() throws IOException {
+        boolean lockSuccessfullyRefreshed = false;
+        String errMsg = null;
+        if (document == null) {
+            errMsg = "Form is reset";
+        } else {
+            synchronized (document) { // to avoid extending lock after unlock(save/cancel)
+                if (inEditMode) {
+                    lockSuccessfullyRefreshed = lockOrUnlockIfNeeded(inEditMode);
+                } else {
+                    errMsg = "Can't refresh lock - page not in editMode";
+                    log.warn(errMsg);
+                }
+            }
+        }
+        FacesContext context = FacesContext.getCurrentInstance();
+        ResponseWriter out = context.getResponseWriter();
+        StringBuilder xml = new StringBuilder("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\" ?>");
+        xml.append("<refresh-lock success=\"" + lockSuccessfullyRefreshed + "\"");
+        xml.append(" nextReqInMs=\"" + getClientLockRefreshFrequency() * 1000 + "\"");
+        if (errMsg != null) {
+            xml.append(" errMsg=\"" + errMsg + "\"");
+        }
+        xml.append(" />");
+        out.write(xml.toString());
+        log.debug("returning XML: " + xml.toString());
+    }
+
+    /**
+     * @param mustLock4Edit
+     * @return true if current user holds the lock after execution of this function
+     */
+    private boolean lockOrUnlockIfNeeded(boolean mustLock4Edit) {
+        if (document == null) {
+            return false;
+        }
+        final DocLockService lockService = getDocLockService();
+        final NodeRef docRef = document.getNodeRef();
+        synchronized (document) { // to avoid extending lock after unlock(save/cancel)
+            if (mustLock4Edit) {
+                if (lockService.setLockIfFree(docRef) == LockStatus.LOCK_OWNER) {
+                    return true;
+                }
+                log.debug("Lock can't be created");
+                if (log.isDebugEnabled()) {
+                    log.warn("failed to lock: document_validation_alreadyLocked");
+                }
+                MessageUtil.addInfoMessage(FacesContext.getCurrentInstance(), "document_validation_alreadyLocked");
+                inEditMode = false; // don't allow going to editMode
+                return false;
+            }
+            lockService.unlockIfOwner(docRef);
+        }
+        return false;
     }
 
     public DocumentType getDocumentType() {
@@ -1991,7 +2267,7 @@ public class MetadataBlockBean implements ClearStateListener {
         return propertySheet;
     }
 
-    public void setPropertySheet(UIPropertySheet propertySheet) {
+    public void setPropertySheet(UIPropertySheet propertySheet) throws IOException {
         if (propertySheetControlDocument != null && !propertySheetControlDocument.equals(document)) {
             propertySheet.getChildren().clear();
             propertySheetControlDocument = document;
@@ -2010,6 +2286,17 @@ public class MetadataBlockBean implements ClearStateListener {
                     .getBean(DocumentService.BEAN_NAME);
         }
         return documentService;
+    }
+
+    public void setPersonService(PersonService personService) {
+        this.personService = personService;
+    }
+
+    protected PersonService getPersonService() {
+        if (personService == null) {
+            personService = Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getPersonService();
+        }
+        return personService;
     }
 
     public void setNodeService(NodeService nodeService) {
@@ -2155,10 +2442,4 @@ public class MetadataBlockBean implements ClearStateListener {
     }
 
     // END: getters / setters
-
-    @Override
-    public void clearState() {
-        // When user has locked the document and click on a menu link this is called and the lock is freed.
-        reset();
-    }
 }

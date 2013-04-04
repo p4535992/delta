@@ -17,14 +17,4 @@
          </list>
       </property>
    </bean>
-
-   <bean id="forumPermissionRefactorUpdater1" class="ee.webmedia.alfresco.document.forum.bootstrap.ForumPermissionRefactorUpdater" parent="abstractNodeUpdater" >
-      <property name="moduleId" value="simdhs" />
-      <property name="executeOnceOnly" value="true" />
-   </bean>
-
-   <bean class="ee.webmedia.alfresco.document.forum.web.DiscussionsMenuItemProcessor">
-      <property name="menuService" ref="MenuService" />
-      <property name="documentSearchService" ref="DocumentSearchService" />
-   </bean>
 </beans>

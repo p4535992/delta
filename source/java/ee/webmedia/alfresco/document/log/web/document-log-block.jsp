@@ -7,17 +7,8 @@
 <%@ page buffer="32kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
 
-<h:panelGroup id="log-panel-facets" styleClass="nonfloating-element" >
-   <f:facet name="title">
-      <a:actionLink image="/images/icons/version_history.gif" id="log-details-link" showLink="false" tooltip="#{msg.document_log_view_details}" value="" 
-         actionListener="#{ApplicationLogDialog.searchNodeRefEntries}" action="dialog:applicationLogListDialog" rendered="#{LogBlockBean.showLogDetailsLink}" >
-         <f:param name="nodeRef" value="#{LogBlockBean.parentRef}" />
-      </a:actionLink>
-   </f:facet>
-</h:panelGroup>
-
 <a:panel id="document-block-block-panel" label="#{msg.document_log_title}" styleClass="panel-100 with-pager" progressive="true" rendered="#{LogBlockBean.rendered}"
-   expanded="false" facetsId="dialog:dialog-body:log-panel-facets">
+   expanded="false">
 
    <a:richList id="logList" viewMode="details" value="#{LogBlockBean.logs}" var="r" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
       width="100%" refreshOnBind="true" pageSize="#{BrowseBean.pageSizeContent}" initialSortColumn="createdDateTime">

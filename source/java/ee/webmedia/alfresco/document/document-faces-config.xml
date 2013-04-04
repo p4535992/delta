@@ -7,11 +7,30 @@
       new navigation rules * ... But NOT overrides of existing navigation rules (you must use META-INF/faces-config.xml for that) More information:
       http://wiki.alfresco.com/wiki/Packaging_And_Deploying_Extensions#JSF_configuration_files
    -->
+   
+   <component>
+      <component-type>ee.webmedia.alfresco.document.einvoice.web.SendManuallyToSapModalComponent</component-type>
+      <component-class>ee.webmedia.alfresco.document.einvoice.web.SendManuallyToSapModalComponent</component-class>
+   </component>   
 
    <managed-bean>
       <managed-bean-name>DocumentListDialog</managed-bean-name>
       <managed-bean-class>ee.webmedia.alfresco.document.web.DocumentListDialog</managed-bean-class>
       <managed-bean-scope>session</managed-bean-scope>
+   </managed-bean>
+
+   <managed-bean>
+      <managed-bean-name>DocumentSearchDialog</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.document.search.web.DocumentSearchDialog</managed-bean-class>
+      <managed-bean-scope>session</managed-bean-scope>
+      <managed-property>
+         <property-name>documentSearchResultsDialog</property-name>
+         <value>#{DocumentSearchResultsDialog}</value>
+      </managed-property>
+      <managed-property>
+         <property-name>documentSearchBean</property-name>
+         <value>#{DocumentSearchBean}</value>
+      </managed-property>
    </managed-bean>
 
    <managed-bean>
@@ -63,12 +82,6 @@
    </managed-bean>
 
    <managed-bean>
-      <managed-bean-name>DiscussionDocumentListDialog</managed-bean-name>
-      <managed-bean-class>ee.webmedia.alfresco.document.web.DiscussionDocumentListDialog</managed-bean-class>
-      <managed-bean-scope>session</managed-bean-scope>
-   </managed-bean>
-
-   <managed-bean>
       <managed-bean-name>DocumentDialog</managed-bean-name>
       <managed-bean-class>ee.webmedia.alfresco.document.web.DocumentDialog</managed-bean-class>
       <managed-bean-scope>session</managed-bean-scope>
@@ -91,6 +104,10 @@
       <managed-property>
          <property-name>fileBlockBean</property-name>
          <value>#{FileBlockBean}</value>
+      </managed-property>
+      <managed-property>
+         <property-name>typeBlockBean</property-name>
+         <value>#{TypeBlockBean}</value>
       </managed-property>
       <managed-property>
          <property-name>navigator</property-name>
@@ -131,6 +148,10 @@
          <value>#{DocumentService}</value>
       </managed-property>
       <managed-property>
+         <property-name>personService</property-name>
+         <value>#{PersonService}</value>
+      </managed-property>
+      <managed-property>
          <property-name>nodeService</property-name>
          <value>#{NodeService}</value>
       </managed-property>
@@ -168,6 +189,12 @@
          <property-name>navigationBean</property-name>
          <value>#{NavigationBean}</value>
       </managed-property>
+   </managed-bean>
+
+   <managed-bean>
+      <managed-bean-name>TypeBlockBean</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.document.type.web.TypeBlockBean</managed-bean-class>
+      <managed-bean-scope>session</managed-bean-scope>
    </managed-bean>
 
    <managed-bean>
@@ -234,7 +261,6 @@
       </managed-property>
    </managed-bean>
 
-   <!-- FIXME DLSeadist vana bean'i def -->
    <managed-bean>
       <managed-bean-name>DocumentTypeDialog</managed-bean-name>
       <managed-bean-class>ee.webmedia.alfresco.document.type.web.DocumentTypeDialog</managed-bean-class>
@@ -245,11 +271,14 @@
       </managed-property>
    </managed-bean>
 
-
    <managed-bean>
       <managed-bean-name>DocumentSendOutDialog</managed-bean-name>
       <managed-bean-class>ee.webmedia.alfresco.document.sendout.web.DocumentSendOutDialog</managed-bean-class>
       <managed-bean-scope>session</managed-bean-scope>
+      <managed-property>
+         <property-name>addressbookDialog</property-name>
+         <value>#{AddressbookDialog}</value>
+      </managed-property>
    </managed-bean>
 
    <managed-bean>
@@ -344,6 +373,20 @@
       <managed-bean-name>SeparatorGenerator</managed-bean-name>
       <managed-bean-class>org.alfresco.web.bean.generator.SeparatorGenerator</managed-bean-class>
       <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+   
+   <managed-bean>
+      <description>
+         Bean that generates a notification separator
+      </description>
+      <managed-bean-name>RecipientNoteGenerator</managed-bean-name>
+      <managed-bean-class>org.alfresco.web.bean.generator.HtmlSeparatorGenerator</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+      <managed-property>
+         <property-name>html</property-name>
+         <!-- TODO: refactor message into bundle -->
+         <value><![CDATA[<div class="message">Kui adressaat ei ole määratud, siis dokumenti välja ei saadeta! Ära unusta adressaati määrata!</div>]]></value>
+      </managed-property>
    </managed-bean>
    
    <managed-bean>

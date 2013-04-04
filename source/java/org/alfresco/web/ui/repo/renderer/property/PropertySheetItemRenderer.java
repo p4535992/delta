@@ -33,10 +33,6 @@ import javax.faces.context.ResponseWriter;
 
 import org.alfresco.web.ui.common.Utils;
 import org.alfresco.web.ui.common.renderer.BaseRenderer;
-import org.alfresco.web.ui.repo.component.property.PropertySheetItem;
-import org.apache.commons.lang.StringUtils;
-
-import ee.webmedia.alfresco.help.web.HelpTextUtil;
 
 /**
  * Renderer for a PropertySheetItem component
@@ -71,7 +67,7 @@ public void encodeBegin(FacesContext context, UIComponent component) throws IOEx
       }
       
       ResponseWriter out = context.getResponseWriter();
-
+      
       // make sure there are 2 or 3 child components
       int count = component.getChildCount();
       
@@ -85,19 +81,14 @@ public void encodeBegin(FacesContext context, UIComponent component) throws IOEx
          // NOTE: Replacement for the mandatory marker 
          if(count == 3)
          {
-             out.write("<span class=\"red\">*&nbsp;</span>");
+             out.write("<span class=\"no-wrap\"><span class=\"red\">*&nbsp;</span>");
          }
          // encode the label
          Utils.encodeRecursive(context, label);
-
-         // Field help:
-         String property = StringUtils.substringAfter(((PropertySheetItem) component).getName(), ":");
-         if (HelpTextUtil.hasHelpText(context, HelpTextUtil.TYPE_FIELD, property)) {
-             out.write("<span>&nbsp;&nbsp;&nbsp;&nbsp;");
-             HelpTextUtil.writeHelpTextLink(out, context, HelpTextUtil.TYPE_FIELD, property);
+         if(count == 3)
+         {
              out.write("</span>");
          }
-
          // encode the control
          out.write("</td><td>");
          Utils.encodeRecursive(context, control);

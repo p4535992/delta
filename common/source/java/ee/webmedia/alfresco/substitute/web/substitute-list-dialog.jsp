@@ -56,16 +56,13 @@
         </a:column>
 
         <a:column id="actionsCol" actions="true" styleClass="actions-column">
-            <f:facet name="header">
-               <f:verbatim>&nbsp;</f:verbatim>
-            </f:facet>
             <a:actionLink id="deleteLink" value="#{msg.substitute_remove}" image="/images/icons/delete.gif" showLink="false"
                           tooltip="#{msg.substitute_remove}"
                           actionListener="#{DialogManager.bean.deleteSubstitute}" rendered="#{!r.readOnly}">
                 <f:param name="nodeRef" value="#{r.nodeRef}"/>
             </a:actionLink>
-            <a:actionLink id="emailLink" styleClass="mailto" value="#{msg.substitute_instruct}" href="mailto:#{DialogManager.bean.emailAddress[r.substituteId]}?subject=#{DialogManager.bean.emailSubject}" image="/images/icons/email_users.gif"
-                          tooltip="#{msg.substitute_instruct}" showLink="false" onclick="javascript:nextSubmitStaysOnSamePage();"/>
+            <a:actionLink id="emailLink" value="#{msg.substitute_instruct}" href="mailto:#{DialogManager.bean.emailAddress[r.substituteId]}?subject=#{DialogManager.bean.emailSubject}" image="/images/icons/email_users.gif"
+                          tooltip="#{msg.substitute_instruct}" showLink="false"/>
         </a:column>
 
         <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/page-size.jsp"/>
@@ -77,11 +74,11 @@
     $jQ(function() {
        $jQ(document).keyup(function (event) {
           if (event.keyCode == 13 && $jQ("#overlay:visible").length < 1) {
-             clickFinishButton();
+             $jQ("#"+escapeId4JQ("dialog:finish-button")).click();
           }
         });
 
-       getFinishButtons().click(function (event) {
+       $jQ("#"+escapeId4JQ("dialog:finish-button") + ",#" + escapeId4JQ("dialog:finish-button-2")).click(function (event) {
             if(!validateDatePeriods()){
                return false;
             }
@@ -92,16 +89,11 @@
           	now.setMilliseconds(0);
           	var action = null;
           	$jQ('input[name$="substitutionStartDateInput"]').each(function () {
-          	   var beginDate = $jQ(this).datepicker('getDate');
-          	   var endDate = getEndDate($jQ(this), $jQ(this).parent().parent()).datepicker('getDate');
-          	   if (endDate != null && endDate < now) {
-          	      alert('<%= MessageUtil.getMessageAndEscapeJS("substitute_end_before_now")%>');
-          	      action = false;
-          	      return false;
-          	   }
-          	   if (beginDate != null && beginDate < now && endDate != null && endDate >= now) {
+          	   if ($jQ(this).datepicker('getDate') < now) {
                   action = confirm('<%= MessageUtil.getMessageAndEscapeJS("substitute_start_before_now")%>');
-                  return false; // break out of each
+          	   }
+          	   if (action != null) {
+          	      return false; // break out of each
           	   }
           	});
           	return (action == null) ? true : action;

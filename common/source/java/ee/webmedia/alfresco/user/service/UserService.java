@@ -20,31 +20,19 @@ public interface UserService {
     String DOCUMENT_MANAGERS_GROUP = "DOCUMENT_MANAGERS";
     String ADMINISTRATORS_GROUP = "ALFRESCO_ADMINISTRATORS";
     String ACCOUNTANTS_GROUP = "ACCOUNTANTS";
-    String SUPERVISION_GROUP = "SUPERVISION";
-    String ARCHIVIST_GROUP = "ARCHIVISTS";
 
     String AUTH_DOCUMENT_MANAGERS_GROUP = AuthorityType.GROUP.getPrefixString() + DOCUMENT_MANAGERS_GROUP;
     String AUTH_ADMINISTRATORS_GROUP = AuthorityType.GROUP.getPrefixString() + ADMINISTRATORS_GROUP;
-    String AUTH_SUPERVISION_GROUP = AuthorityType.GROUP.getPrefixString() + SUPERVISION_GROUP;
-    String AUTH_ARCHIVIST_GROUP = AuthorityType.GROUP.getPrefixString() + ARCHIVIST_GROUP;
 
     String DOCUMENT_MANAGERS_DISPLAY_NAME = "document_managers_display_name";
     String ALFRESCO_ADMINISTRATORS_DISPLAY_NAME = "alfresco_administrators_display_name";
     String ACCOUNTANTS_DISPLAY_NAME = "accountants_display_name";
-    String SUPERVISION_DISPLAY_NAME = "supervision_display_name";
-    String ARCHIVISTS_DISPLAY_NAME = "archivists_display_name";
 
     /**
-     * Fetches the node reference, where user preferences are kept,
-     * create user preferences node, if not present
+     * Fetches the node reference, where user preferences are kept
      * 
      * @param userName if null, defaults to AuthenticationUtil.getRunAsUser()
      * @return
-     */
-    NodeRef retrieveUsersPreferenceNodeRef(String userName);
-
-    /**
-     * Fetches the node reference, if it exists, null otherwise
      */
     NodeRef getUsersPreferenceNodeRef(String userName);
 
@@ -82,17 +70,15 @@ public interface UserService {
      * Searches for users by first name and last name. If {@code input} is empty, all users are returned if {@code returnAllUsers} is {@code true}, otherwise an
      * empty list is returned. The results from this method should be processed by {@link OrganizationStructureService#setUsersUnit(List)} if correct unit name
      * is desired.
-     * 
-     * @param limit
      */
-    List<Node> searchUsers(String input, boolean returnAllUsers, int limit);
+    List<Node> searchUsers(String input, boolean returnAllUsers);
 
     /**
      * Searches for users from a specified group.
      * 
      * @see #searchUsers(String, boolean)
      */
-    List<Node> searchUsers(String input, boolean returnAllUsers, String group, int limit);
+    List<Node> searchUsers(String input, boolean returnAllUsers, String group);
 
     /**
      * Fetches the users node
@@ -122,10 +108,6 @@ public interface UserService {
     String getUserFullName(String userName);
 
     String getUserFullNameWithUnitName(String userName);
-
-    String getUserFullNameWithOrganizationPath(String userName);
-
-    String getUserFullNameAndId(String userName);
 
     /**
      * Returns a map with the user's properties.
@@ -158,11 +140,11 @@ public interface UserService {
 
     boolean isGroupsEditingAllowed();
 
-    boolean isGroupDeleteAllowed(String group);
+    void setOwnerPropsFromUser(Map<QName, Serializable> docProps, Map<QName, Serializable> userProps);
+
+    void setOwnerPropsFromUser(Map<String, Object> docProps);
 
     String getAccountantsGroup();
-
-    String getSupervisionGroup();
 
     /**
      * @return true if user is in admin or accountant group
@@ -174,37 +156,6 @@ public interface UserService {
      */
     boolean isInAccountantGroup();
 
-    /**
-     * @return true if user is in admin or supervision group
-     */
-    boolean isSupervisor();
-
-    /**
-     * @return true if user is in accountant group
-     */
-    boolean isInSupervisionGroup();
-
-    /**
-     * Adds leaving aspect to leavingUserId.
-     * 
-     * @param leavingUserId resigning user
-     * @param replacementUserId user to whom liability is given to
-     * @return true if successful, false otherwise
-     */
-    boolean markUserLeaving(String leavingUserId, String replacementUserId, boolean isLeaving);
-
     void updateUser(Node user);
-
-    /**
-     * @param userName
-     * @return person ref is person exists, otherwise {@code null}
-     */
-    NodeRef getPerson(String userName);
-
-    Set<String> getUserNamesInGroup(String group);
-
-    Set<String> getUsersGroups(String userName);
-
-    NodeRef retrieveUserReportsFolderRef(String username);
 
 }

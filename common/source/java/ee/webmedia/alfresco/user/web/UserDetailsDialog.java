@@ -1,56 +1,43 @@
 package ee.webmedia.alfresco.user.web;
 
-import static ee.webmedia.alfresco.common.web.BeanHelper.getAuthorityService;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getLogService;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getOrganizationStructureService;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
-import static ee.webmedia.alfresco.utils.UserUtil.getUserDisplayUnit;
-
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import javax.faces.component.UIInput;
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
-import javax.faces.event.ValueChangeEvent;
 
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
-import org.alfresco.service.cmr.security.PermissionService;
 import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.users.UsersBeanProperties;
 import org.alfresco.web.bean.users.UsersDialog;
 import org.apache.commons.lang.StringUtils;
+import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.einvoice.model.DimensionValue;
 import ee.webmedia.alfresco.document.einvoice.model.Dimensions;
 import ee.webmedia.alfresco.document.einvoice.service.EInvoiceService;
-import ee.webmedia.alfresco.log.model.LogEntry;
-import ee.webmedia.alfresco.log.model.LogObject;
+import ee.webmedia.alfresco.orgstructure.service.OrganizationStructureService;
 import ee.webmedia.alfresco.substitute.model.Substitute;
 import ee.webmedia.alfresco.substitute.web.SubstituteListDialog;
+import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
-import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.TextUtil;
-import ee.webmedia.alfresco.utils.UserUtil;
 
 public class UserDetailsDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;
     public static final String BEAN_NAME = "UserDetailsDialog";
 
+    private transient UserService userService;
+    private transient OrganizationStructureService organizationStructureService;
     private UsersBeanProperties properties;
-    private List<Map<String, String>> groups;
-    private String groupToAdd;
 
     private SubstituteListDialog substituteListDialog;
 
@@ -62,29 +49,24 @@ public class UserDetailsDialog extends BaseDialogBean {
         super.init(parameters);
         substituteListDialog = new SubstituteListDialog();
         substituteListDialog.setUserNodeRef(user.getNodeRef());
+        setNotificationSender();
         substituteListDialog.refreshData();
-        setupGroups();
     }
 
-    protected void setupGroups() {
-        groupToAdd = null;
-        Set<String> authorities = getAuthorityService().getAuthoritiesForUser((String) user.getProperties().get(ContentModel.PROP_USERNAME));
-        // Remove all roles and GROUP_EVERYONE
-        for (Iterator<String> iterator = authorities.iterator(); iterator.hasNext();) {
-            String authority = iterator.next();
-            if (authority.startsWith(PermissionService.ROLE_PREFIX) || PermissionService.ALL_AUTHORITIES.equals(authority)) {
-                iterator.remove();
-            }
+    private void setNotificationSender() {
+        SubstituteListDialog.NotificationSender notificationSender =
+                (SubstituteListDialog.NotificationSender) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), NOTIFICATION_SENDER_LABEL);
+        if (notificationSender != null) {
+            substituteListDialog.setNotificationSender(notificationSender);
         }
-        groups = UserUtil.getGroupsFromAuthorities(getAuthorityService(), authorities);
     }
 
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
         if (validate()) {
-            substituteListDialog.save();
+            substituteListDialog.save(context);
             BeanHelper.getUserService().updateUser(user);
-            setupUser((String) user.getProperties().get(ContentModel.PROP_USERNAME.toString()));
+            setupUser((String) user.getProperties().get(ContentModel.PROP_USERNAME));
         }
         isFinished = false;
         return null;
@@ -93,7 +75,7 @@ public class UserDetailsDialog extends BaseDialogBean {
     private boolean validate() {
         List<String> erroneousValues = new ArrayList<String>();
         @SuppressWarnings("unchecked")
-        List<String> relatedFundCenters = (List<String>) user.getProperties().get(ContentModel.PROP_RELATED_FUNDS_CENTER.toString());
+        List<String> relatedFundCenters = (List<String>) user.getProperties().get(ContentModel.PROP_RELATED_FUNDS_CENTER);
         if (relatedFundCenters != null) {
             EInvoiceService eInvoiceService = BeanHelper.getEInvoiceService();
             NodeRef dimensionRef = eInvoiceService.getDimension(Dimensions.INVOICE_FUNDS_CENTERS);
@@ -133,28 +115,12 @@ public class UserDetailsDialog extends BaseDialogBean {
         return false;
     }
 
-    public boolean isShowEmptyTaskMenuNotEditable() {
-        return !isShowEmptyTaskMenuEditable();
-    }
-
-    public void showEmptyTaskMenuChanged(ValueChangeEvent e) {
-        user.getProperties().put(ContentModel.SHOW_EMPTY_TASK_MENU.toString(), DefaultTypeConverter.INSTANCE.convert(Boolean.class, e.getNewValue()));
-    }
-
-    public boolean isShowEmptyTaskMenuEditable() {
-        return BeanHelper.getUserService().isAdministrator() || user.getProperties().get(ContentModel.PROP_USERNAME.toString()).equals(AuthenticationUtil.getRunAsUser());
-    }
-
     public boolean isRelatedFundsCenterNotEditable() {
-        return !BeanHelper.getUserService().isAdministrator() && BeanHelper.getEInvoiceService().isEinvoiceEnabled();
+        return !isRelatedFundsCenterEditable();
     }
 
     public boolean isRelatedFundsCenterEditable() {
-        return BeanHelper.getUserService().isAdministrator() && BeanHelper.getEInvoiceService().isEinvoiceEnabled();
-    }
-
-    public boolean isServiceRankRendered() {
-        return StringUtils.isNotBlank((String) user.getProperties().get(ContentModel.PROP_SERVICE_RANK.toString()));
+        return BeanHelper.getUserService().isAdministrator();
     }
 
     /**
@@ -164,7 +130,7 @@ public class UserDetailsDialog extends BaseDialogBean {
      * UsersDialog.getCurrentUserNode().
      */
     public void setupCurrentUser(@SuppressWarnings("unused") ActionEvent event) {
-        Node node = new Node(BeanHelper.getUserService().getPerson(AuthenticationUtil.getRunAsUser()));
+        Node node = new Node(properties.getPersonService().getPerson(AuthenticationUtil.getRunAsUser()));
         // Eagerly load properties
         node.getProperties();
 
@@ -175,13 +141,10 @@ public class UserDetailsDialog extends BaseDialogBean {
         List<Node> users = new ArrayList<Node>(1);
         users.add(node);
         fillUserProps(users);
-        BeanHelper.getAssignResponsibilityBean().updateLiabilityGivenToPerson(node);
     }
 
     private void fillUserProps(List<Node> users) {
         user = getOrganizationStructureService().setUsersUnit(users).get(0);
-        setupGroups();
-        Map<String, Object> props = user.getProperties();
         EInvoiceService eInvoiceService = BeanHelper.getEInvoiceService();
         NodeRef dimensionRef = eInvoiceService.getDimension(Dimensions.INVOICE_FUNDS_CENTERS);
         @SuppressWarnings("unchecked")
@@ -189,12 +152,7 @@ public class UserDetailsDialog extends BaseDialogBean {
         if (relatedFundsCenters == null || relatedFundsCenters.isEmpty()) {
             relatedFundsCenters = eInvoiceService.getDimensionDefaultValueList(Dimensions.INVOICE_FUNDS_CENTERS, null);
         }
-        props.put("{temp}unit", getUserDisplayUnit(props));
-        props.put("{temp}jobAddress", TextUtil.joinNonBlankStringsWithComma(Arrays.asList((String) props.get(ContentModel.PROP_STREET_HOUSE),
-                (String) props.get(ContentModel.PROP_VILLAGE), (String) props.get(ContentModel.PROP_MUNICIPALITY), (String) props.get(ContentModel.PROP_POSTAL_CODE),
-                (String) props.get(ContentModel.PROP_COUNTY))));
-        props.put(ContentModel.PROP_RELATED_FUNDS_CENTER.toString(), relatedFundsCenters);
-
+        user.getProperties().put(ContentModel.PROP_RELATED_FUNDS_CENTER.toString(), relatedFundsCenters);
         StringBuilder sb = new StringBuilder("");
 
         int dimensionIndex = 0;
@@ -206,49 +164,13 @@ public class UserDetailsDialog extends BaseDialogBean {
                 DimensionValue dimensionValue = eInvoiceService.getDimensionValue(dimensionRef, dimensionName);
                 sb.append("<span title=\"");
                 sb.append(org.alfresco.web.ui.common.StringUtils.encode(TextUtil.joinStringAndStringWithSeparator(dimensionValue.getValue(),
-                        dimensionValue.getValueComment(), ";")));
+                            dimensionValue.getValueComment(), ";")));
                 sb.append("\" class=\"tooltip\">");
                 sb.append(org.alfresco.web.ui.common.StringUtils.encode(dimensionValue.getValueName())).append("</span>");
                 dimensionIndex++;
             }
         }
         user.getProperties().put("{temp}relatedFundsCenter", sb.toString());
-
-        Boolean showEmpty = (Boolean) user.getProperties().get(ContentModel.SHOW_EMPTY_TASK_MENU.toString());
-        if (showEmpty == null) {
-            user.getProperties().put(ContentModel.SHOW_EMPTY_TASK_MENU.toString(), false);
-            showEmpty = false;
-        }
-        String emptyTaskMenuString = MessageUtil.getMessage(showEmpty ? "yes" : "no");
-        user.getProperties().put("{temp}" + ContentModel.SHOW_EMPTY_TASK_MENU.getLocalName(), emptyTaskMenuString);
-    }
-
-    public void removeFromGroup(ActionEvent event) {
-        String group = ActionUtil.getParam(event, "group");
-        if (StringUtils.isBlank(group)) {
-            return;
-        }
-        getAuthorityService().removeAuthority(group, (String) user.getProperties().get(ContentModel.PROP_USERNAME));
-
-        String userFullInfo = UserUtil.getUserFullNameAndId(RepoUtil.toQNameProperties(user.getProperties()));
-        getLogService().addLogEntry(LogEntry.create(LogObject.USER_GROUP, getUserService(), user.getNodeRef(), "applog_group_user_rem", group, userFullInfo));
-
-        setupGroups();
-        MessageUtil.addInfoMessage("user_removed_from_group");
-    }
-
-    public void addToGroup(String group) {
-        if (StringUtils.isBlank(group)) {
-            return;
-        }
-
-        getAuthorityService().addAuthority(group, (String) user.getProperties().get(ContentModel.PROP_USERNAME));
-
-        String userFullInfo = UserUtil.getUserFullNameAndId(RepoUtil.toQNameProperties(user.getProperties()));
-        getLogService().addLogEntry(LogEntry.create(LogObject.USER_GROUP, getUserService(), user.getNodeRef(), "applog_group_user_add", group, userFullInfo));
-
-        setupGroups();
-        MessageUtil.addInfoMessage("user_added_to_group");
     }
 
     /**
@@ -258,9 +180,7 @@ public class UserDetailsDialog extends BaseDialogBean {
      * UsersDialog.getPerson().
      */
     public void setupUser(ActionEvent event) {
-        String userName = ActionUtil.getParam(event, "id");
-        setupUser(userName);
-        BeanHelper.getAssignResponsibilityBean().updateLiabilityGivenToPerson(new Node(BeanHelper.getUserService().getPerson(userName)));
+        setupUser(ActionUtil.getParam(event, "id"));
     }
 
     /**
@@ -270,19 +190,8 @@ public class UserDetailsDialog extends BaseDialogBean {
      */
     public void setupUser(String userName) {
         List<Node> users = new ArrayList<Node>(1);
-        users.add(new Node(BeanHelper.getUserService().getPerson(userName)));
+        users.add(new Node(properties.getPersonService().getPerson(userName)));
         fillUserProps(users);
-        setupGroups();
-    }
-
-    public void refreshCurrentUser() {
-        if (user == null) {
-            return;
-        }
-        String username = (String) user.getProperties().get(ContentModel.PROP_USERNAME);
-        if (StringUtils.isNotBlank(username)) {
-            setupUser(username);
-        }
     }
 
     public UsersBeanProperties getProperties() {
@@ -330,25 +239,30 @@ public class UserDetailsDialog extends BaseDialogBean {
         return substituteListDialog.getEmailAddress();
     }
 
-    public void setGroups(List<Map<String, String>> groups) {
-        this.groups = groups;
-    }
-
-    public List<Map<String, String>> getGroups() {
-        if (groups == null) {
-            setupGroups();
-        }
-        return groups;
-    }
-
-    public String getGroupToAdd() {
-        return groupToAdd;
-    }
-
-    public void setGroupToAdd(String groupToAdd) {
-        this.groupToAdd = groupToAdd;
-    }
-
     // ///
+
+    protected UserService getUserService() {
+        if (userService == null) {
+            userService = (UserService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
+                    .getBean(UserService.BEAN_NAME);
+        }
+        return userService;
+    }
+
+    public void setUserService(UserService userService) {
+        this.userService = userService;
+    }
+
+    protected OrganizationStructureService getOrganizationStructureService() {
+        if (organizationStructureService == null) {
+            organizationStructureService = (OrganizationStructureService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
+                    .getBean(OrganizationStructureService.BEAN_NAME);
+        }
+        return organizationStructureService;
+    }
+
+    public void setOrganizationStructureService(OrganizationStructureService organizationStructureService) {
+        this.organizationStructureService = organizationStructureService;
+    }
 
 }

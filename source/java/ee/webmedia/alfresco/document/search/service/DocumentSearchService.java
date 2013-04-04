@@ -6,7 +6,6 @@ import java.util.Map;
 import java.util.Set;
 
 import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
@@ -41,16 +40,11 @@ public interface DocumentSearchService {
      * where multiple files under the same document matched the search criteria.
      * 
      * @param searchString
-     * @param containerNodeRef if not null, only documents with given parent container nodeRef are returned
-     * @param limited
      * @return list of matching documents (max 100 entries)
      */
-    Pair<List<Document>, Boolean> searchDocumentsQuick(String searchString, NodeRef containerNodeRef, int limit);
+    List<Document> searchDocumentsQuick(String searchString);
 
-    /**
-     * @param trySearchCases - if false, case search is not executed, if true, evaluate also other conditions to determine whether to search cases or not
-     */
-    Pair<List<Document>, Boolean> searchDocumentsAndOrCases(String searchValue, Date regDateTimeBegin, Date regDateTimeEnd, List<String> documentTypes, boolean trySearchCases);
+    List<Document> searchDocumentsAndOrCases(String searchValue, Date regDateTimeBegin, Date regDateTimeEnd, List<QName> documentTypes);
 
     /**
      * Searches for documents using a search filter.
@@ -61,18 +55,7 @@ public interface DocumentSearchService {
      * @param filter
      * @return list of matching documents (max 100 entries)
      */
-    Pair<List<Document>, Boolean> searchDocuments(Node filter, int limit);
-
-    /**
-     * Searches for documents using a search filter.
-     * Query must be exactly the same as in searchDocuments,
-     * but returns all documents (no limit for returned result rows)
-     * and for performance reasons only nodeRefs are returned.
-     * Ignore filter storeRefs and use parameter storeRef
-     * as we want to add checkpoints between queries to different stores
-     * outside this service.
-     */
-    List<NodeRef> searchDocumentsForReport(Node filter, StoreRef storeRef);
+    List<Document> searchDocuments(Node filter);
 
     /**
      * @return documents being sent but not delivered to ALL recipients
@@ -105,10 +88,9 @@ public interface DocumentSearchService {
     /**
      * Fetches list of documents where date in regDateTime property is current date
      * 
-     * @param limit
      * @return list of Document objects
      */
-    Pair<List<Document>, Boolean> searchTodayRegisteredDocuments(String searchString, int limit);
+    List<Document> searchTodayRegisteredDocuments();
 
     /**
      * Fetches a list of documents where recipient or additional recipient is present and docStatus is finished.
@@ -163,15 +145,7 @@ public interface DocumentSearchService {
      * @param filter
      * @return list of matching tasks
      */
-    Pair<List<TaskInfo>, Boolean> searchTasks(Node filter, int limit);
-
-    /**
-     * Searches for tasks using a search filter.
-     * Query must be exactly the same as in searchTasks,
-     * but returns all tasks (no limit for returned result rows)
-     * and for performance reasons only nodeRefs are returned.
-     */
-    List<NodeRef> searchTasksForReport(Node filter);
+    List<TaskInfo> searchTasks(Node filter);
 
     /**
      * If due date is null, then list with due tasks is returned (dueDate < sysDate)
@@ -190,21 +164,41 @@ public interface DocumentSearchService {
      * @param senderRegNumber
      * @return list of found documents
      */
-    List<Document> searchIncomingLetterRegisteredDocuments(String senderRegNumber);
+    List<Document> searchIncomingLetterRegisteredDocuments(String senderRegNumber, QName documentType);
 
     List<Document> searchAccessRestictionEndsAfterDate(Date restrictionEndDate);
 
-    List<NodeRef> searchWorkingDocumentsByOwnerId(String ownerId, boolean isPreviousOwnerId);
+    List<NodeRef> searchWorkingDocumentsByOwnerId(String ownerId);
 
-    List<NodeRef> searchNewTasksByOwnerId(String ownerId, boolean isPreviousOwnerId);
+    List<NodeRef> searchNewTasksByOwnerId(String ownerId);
 
-    List<NodeRef> searchAdrDocuments(Date modifiedDateBegin, Date modifiedDateEnd, Set<String> documentTypeIds);
+    /**
+     * Used by ADR web service to search documents.
+     * 
+     * @param regDateBegin
+     * @param regDateEnd
+     * @param docType
+     * @param searchString
+     * @return
+     */
+    List<Document> searchAdrDocuments(Date regDateBegin, Date regDateEnd, QName docType, String searchString, Set<QName> documentTypes);
+
+    /**
+     * Used by ADR web service to search document details.
+     * 
+     * @param regNumber
+     * @param regDate
+     * @return
+     */
+    List<Document> searchAdrDocuments(String regNumber, Date regDate, Set<QName> documentTypes);
+
+    List<NodeRef> searchAdrDocuments(Date modifiedDateBegin, Date modifiedDateEnd, Set<QName> documentTypes);
 
     List<NodeRef> searchAdrDeletedDocuments(Date deletedDateBegin, Date deletedDateEnd);
 
-    List<String> searchAdrDeletedDocumentTypes(Date deletedDateBegin, Date deletedDateEnd);
+    List<QName> searchAdrDeletedDocumentTypes(Date deletedDateBegin, Date deletedDateEnd);
 
-    List<String> searchAdrAddedDocumentTypes(Date addedDateBegin, Date addedDateEnd);
+    List<QName> searchAdrAddedDocumentTypes(Date addedDateBegin, Date addedDateEnd);
 
     Map<NodeRef, Pair<String, String>> searchTaskBySendStatusQuery(QName taskType);
 
@@ -212,7 +206,6 @@ public interface DocumentSearchService {
 
     Task searchTaskByOriginalDvkIdQuery(String originalDvkId);
 
-    // TODO not document specific
     Series searchSeriesByIdentifier(String identifier);
 
     /**
@@ -220,9 +213,8 @@ public interface DocumentSearchService {
      * returned.
      * 
      * @param withAdminsAndDocManagers - should administrators and document managers groups be included or filtered out
-     * @param limit
      */
-    List<Authority> searchAuthorityGroups(String groupName, boolean returnAllGroups, boolean withAdminsAndDocManagers, int limit);
+    List<Authority> searchAuthorityGroups(String groupName, boolean returnAllGroups, boolean withAdminsAndDocManagers);
 
     List<Document> searchSimilarInvoiceDocuments(String regNumber, String invoiceNumber, Date invoiceDate);
 
@@ -243,18 +235,6 @@ public interface DocumentSearchService {
 
     List<Document> searchDocumentsByDvkId(String dvkId);
 
-    // TODO not document specific
-    List<NodeRef> simpleSearch(String searchInputString, NodeRef parentRef, QName type, QName... props);
-
-    /**
-     * @param query - lucene query
-     * @param limited - should results be limited to DocumentSearchServiceImpl.RESULTS_LIMIT results?
-     * @param queryName - arbitary name used in logging statements
-     * @return
-     */
-    // TODO not document specific
-    List<NodeRef> searchNodes(String query, int limit, String queryName);
-
     /**
      * @param query
      * @return true if at least one result could be found based on query (from default store)
@@ -264,21 +244,10 @@ public interface DocumentSearchService {
 
     boolean isMatch(String query, boolean allStores, String queryName);
 
-    /**
-     * Searches for working documents that have a discussion that involves current user
-     * 
-     * @return
-     */
-    List<Document> searchDiscussionDocuments();
+    List<NodeRef> searchOpenSeriesByDocType(QName docType);
 
-    int getDiscussionDocumentsCount();
+    List<Document> searchDocumentsByAspect(QName aspect);
 
-    List<Document> searchDueContracts();
-
-    List<StoreRef> getStoresFromDocumentReportFilter(Map<String, Object> properties);
-
-    String generateDeletedSearchQuery(String searchValue, NodeRef containerNodeRef);
-
-    Pair<List<NodeRef>, Boolean> searchAllDocumentsByParentRef(NodeRef parentRef, int limit);
+    NodeRef getMaaisCase(String caseNumber);
 
 }

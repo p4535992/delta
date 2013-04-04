@@ -3,6 +3,7 @@
    xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
 
    <import resource="classpath:ee/webmedia/alfresco/common/propertysheet/common-propertysheet-context.xml"/>
+   <import resource="classpath:ee/webmedia/alfresco/common/externalsession/externalsession-context.xml"/>
    
    <bean id="sessionContext" class="ee.webmedia.alfresco.common.web.SessionContext" scope="session">
    
@@ -136,19 +137,6 @@
       </property>
    </bean>
 
-   <bean id="statInterceptor" class="ee.webmedia.alfresco.utils.StatInterceptor">
-      <property name="thresholdMillis" value="1000" /><!-- XXX after optimizing, this value should be much closer to default (50ms) -->
-   </bean>
-
-   <bean id="commonInterceptorsList" class="org.springframework.beans.factory.config.ListFactoryBean">
-      <property name="sourceList">
-         <list>
-            <idref bean="commonTransactionInterceptor" />
-            <idref bean="statInterceptor" />
-         </list>
-      </property>
-   </bean>
-
    <bean id="commonWebClientConfigBootstrap" class="org.alfresco.web.config.WebClientConfigBootstrap" init-method="init">
       <property name="configs">
          <list>
@@ -189,11 +177,6 @@
       <property name="contentService" ref="ContentService" />
       <property name="mimetypeService" ref="MimetypeService" />
       <property name="transactionService" ref="TransactionService" />
-      <property name="jdbcTemplate">
-         <bean class="org.springframework.jdbc.core.simple.SimpleJdbcTemplate">
-            <constructor-arg ref="dataSource" />
-         </bean>
-      </property>       
    </bean>
    
    <bean id="GeneralService" class="org.springframework.aop.framework.ProxyFactoryBean">
@@ -232,26 +215,6 @@
       </property>
    </bean>
 
-   <bean id="modalSearchParametersBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
-      <property name="moduleId" value="common" />
-      <property name="executeOnceOnly" value="true" />
-      <property name="dependsOn">
-         <list>
-            <ref bean="parametersSpacesBootstrap" />
-         </list>
-      </property>
-      <property name="importer" ref="spacesBootstrap" />
-      <property name="bootstrapViews">
-         <list>
-            <props>
-               <prop key="encoding">UTF-8</prop>
-               <prop key="path">/param:parameters</prop>
-               <prop key="location">ee/webmedia/alfresco/common/bootstrap/modal-search-parameters.xml</prop>
-            </props>
-         </list>
-      </property>
-   </bean>
-
    <bean id="abstractNodeUpdater" abstract="true" parent="module.baseComponent">
       <property name="inputFolderPath" value="${dir.root}" />
    </bean>
@@ -263,39 +226,9 @@
    </bean>
    <bean id="classpathResourceResolver" class="ee.webmedia.alfresco.common.ClasspathResourceResolver" />
 
-   <bean id="createContentDataIndexBootstrap" class="ee.webmedia.alfresco.common.bootstrap.CreateContentDataIndexBootstrap" parent="module.baseComponent">
-      <property name="moduleId" value="common" />
-      <property name="executeOnceOnly" value="true" />
-      <property name="dataSource" ref="dataSource" />
-   </bean>
-
-   <bean id="createAccessControlEntryUniqueIndexBootstrap" class="ee.webmedia.alfresco.common.bootstrap.CreateAccessControlEntryUniqueIndexBootstrap" parent="module.baseComponent">
-      <property name="moduleId" value="common" />
-      <property name="executeOnceOnly" value="true" />
-      <property name="dataSource" ref="dataSource" />
-   </bean>
-   
-   <bean id="executeStatementsBootstrap" class="ee.webmedia.alfresco.common.bootstrap.ExecuteStatementsBootstrap" parent="module.baseComponent" abstract="true">
-      <property name="moduleId" value="common" />
-      <property name="executeOnceOnly" value="true" />
-      <property name="dataSource" ref="dataSource" />
-   </bean>   
-
-   <bean id="customReindexComponent" class="ee.webmedia.alfresco.common.service.CustomReindexComponent" parent="indexRecoveryComponentBase">
-      <property name="enabled" value="${findHolesAndIndex.enabled}" />
-      <property name="maxRecordSetSize" value="${index.tracking.maxRecordSetSize}" />
-      <property name="maxTransactionsPerLuceneCommit" value="${index.tracking.maxTransactionsPerLuceneCommit}" />
-   </bean>
-
    <!-- START: web beans: -->
 
    <bean id="TestingForDeveloperBean" class="ee.webmedia.alfresco.common.web.TestingForDeveloperBean" scope="session" />
-
-   <bean id="UserContactGroupSearchBean" class="ee.webmedia.alfresco.common.web.UserContactGroupSearchBean" scope="session" />
-
-   <bean id="UserConfirmHelper" class="ee.webmedia.alfresco.common.web.UserConfirmHelper" scope="session" />
-   
-   <bean id="DisableFocusingBean" class="ee.webmedia.alfresco.common.web.DisableFocusingBean" scope="request" />
 
    <!-- END: web beans: -->
 </beans>

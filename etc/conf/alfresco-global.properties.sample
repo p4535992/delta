@@ -41,17 +41,13 @@ mail.host=mail1.webmedia.int
 mail.from.default=minu.nimi@webmedia.ee
 #mail.smtp.auth=false
 
-# if non-empty, then content of all outbound SMTP messages are saved to that folder. Used for SMTP debugging.
-mail.messageFolder=
-
 project.test=true
 
 # If false, use jdigidoc.cfg, this means:
 #    * use live OCSP service - http://ocsp.sk.ee
 #    * cannot use test-id cards, gives error
 #    * signatures from test id-cards and signatures with test OCSP
-#      confirmations shown as invalid
-#    * use live DigiDocService - https://digidocservice.sk.ee/DigiDocService
+#      confirmations shown as invalid 
 # If true, use jdigidoc-test.cfg, this means:
 #    * use test OCSP service - http://www.openxades.org/cgi-bin/ocsp.cgi - this
 #      means you have to upload your id-card certificate at
@@ -59,13 +55,7 @@ project.test=true
 #    * can use test-id cards
 #    * signatures from test id-cards and signatures with test OCSP
 #      confirmations shown as valid
-#    * use test DigiDocService - https://www.openxades.org:8443/DigiDocService
-#      this means you have to use test phone numbers or register your mobile-id
-#      certificates at http://www.openxades.org/ddsregisteruser/
 jdigidoc.test=true
-
-# Enable session serialization filter in development
-#serializingfilter.enabled=true
 
 #
 # Authentication Configuration
@@ -83,8 +73,8 @@ amr.service.url=http://gfna1-dto.dwl.smit:38082/amr-services-dwl/services/AmrReq
 # ID of current organization inside AMR
 amr.org.id=2
 
-# URL on rs webservice
-rs.service.url=http://gfna1-dto.dwl.smit:38082/amr-services/services/RsRequest
+# Enable session serialization filter in development
+#serializingfilter.enabled=false
 
 # This server's URL, must be exactly in the format of https://example.com:8181
 # * used when redirecting back from CAS to this server
@@ -174,15 +164,3 @@ ocr.url=
 
 # SOAP request URL of MSO web service; if empty then MSO is not used
 mso.url=
-
-#
-# Digital Signing (EstEID) configuration 
-#-------------
-
-# Service name that is used whem making Mobile-ID requests to DigiDocService.
-# According to http://www.sk.ee/upload/files/DigiDocService_spec_eng.pdf
-# ServiceName = name of the service that is displayed on user's phone. Must be
-# previously agreed with Application Provider and DigiDocService operator.
-# Maximum length 20 chars.
-# If empty, then Mobile-ID is disabled.
-mobile-id.service-name=

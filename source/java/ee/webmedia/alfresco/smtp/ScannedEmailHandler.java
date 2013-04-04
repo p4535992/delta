@@ -8,6 +8,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.alfresco.email.server.handler.AbstractForumEmailMessageHandler;
+import org.alfresco.i18n.I18NUtil;
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
@@ -23,8 +24,6 @@ import org.alfresco.service.namespace.QName;
 import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.common.service.GeneralService;
-import ee.webmedia.alfresco.document.file.service.FileService;
-import ee.webmedia.alfresco.document.scanned.model.ScannedModel;
 import ee.webmedia.alfresco.ocr.service.OcrService;
 import ee.webmedia.alfresco.user.service.UserService;
 
@@ -35,11 +34,9 @@ import ee.webmedia.alfresco.user.service.UserService;
  */
 public class ScannedEmailHandler extends AbstractForumEmailMessageHandler {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(ScannedEmailHandler.class);
-    private static final Pattern fileNamePattern = Pattern.compile("(\\d{11})\\w*(.*)");
     private UserService userService;
     private GeneralService generalService;
     private OcrService ocrService;
-    private FileService fileService;
 
     @Override
     public void processMessage(NodeRef contentNodeRef, EmailMessage message) {
@@ -57,12 +54,12 @@ public class ScannedEmailHandler extends AbstractForumEmailMessageHandler {
             final String fileName = attachment.getFileName();
             log.debug("Processing attachment '" + fileName + "'");
             try {
-                final String userIdCode = getSSNFromFilename(fileName);
-                if (userIdCode != null && !userService.isDocumentManager(userIdCode)) {
+                final FileNameSplitter fileNameSplitter = new FileNameSplitter(fileName);
+                final String userIdCode = fileNameSplitter.getSSN().toString();
+                if (!userService.isDocumentManager(userIdCode)) {
                     log.info("User '" + userIdCode + "' is not a documentManager, not adding attachments!");
                     continue;
                 }
-                final String systemUserName = AuthenticationUtil.getSystemUserName();
                 AuthenticationUtil.runAs(new RunAsWork<NodeRef>() {
                     @Override
                     public NodeRef doWork() throws Exception {
@@ -70,31 +67,22 @@ public class ScannedEmailHandler extends AbstractForumEmailMessageHandler {
                             @Override
                             public NodeRef doWork() throws Exception {
                                 final String originalFullyAuthenticatedUser = AuthenticationUtil.getFullyAuthenticatedUser();
-                                // set authenticated user based on username whom this attachement is sent or system if user could not be specified
-                                if (userIdCode != null) {
-                                    AuthenticationUtil.setFullyAuthenticatedUser(userIdCode);
-                                } else {
-                                    AuthenticationUtil.setFullyAuthenticatedUser(systemUserName);
-                                }
+                                // set authenticated user based on username whom this attachement is sent
+                                AuthenticationUtil.setFullyAuthenticatedUser(userIdCode);
                                 // ... but set runAsUser system to get rights to create childNodes
-                                AuthenticationUtil.setRunAsUser(systemUserName);
+                                AuthenticationUtil.setRunAsUser(AuthenticationUtil.getSystemUserName());
                                 // process message so that creator of attachement file will be set based on userIdCode, but also having rights to create
                                 // childNodes, that is otherwise granted only for EMAIL_CONTRIBUTORS group
-                                NodeRef personalFolderRef = null;
-                                if (userIdCode != null) {
-                                    personalFolderRef = getPersonalFolderRef(contentNodeRef, userIdCode);
-                                } else {
-                                    personalFolderRef = generalService.getNodeRef(ScannedModel.Repo.SCANNED_SPACE);
-                                }
-                                addAttachment(personalFolderRef, fileName, attachment);
+                                NodeRef personalFolderRef = getPersonalFolderRef(contentNodeRef, userIdCode);
+                                addAttachment(personalFolderRef, fileNameSplitter, attachment, userIdCode);
                                 // restore original fullyAuthenticatedUser
                                 AuthenticationUtil.setFullyAuthenticatedUser(originalFullyAuthenticatedUser);
                                 return null;
                             }
-                        }, systemUserName);
+                        }, AuthenticationUtil.getSystemUserName());
                         return null;
                     }
-                }, userIdCode != null ? userIdCode : systemUserName);
+                }, userIdCode);
                 counter++;
             } catch (IllegalArgumentException e) {
                 // just ignore files, that don't have valid SocalSecurityNumber
@@ -104,11 +92,13 @@ public class ScannedEmailHandler extends AbstractForumEmailMessageHandler {
         log.info("saved " + counter + "/" + attachments.length + " attachments");
     }
 
-    private void addAttachment(NodeRef spaceNodeRef, String fileName, EmailMessagePart attachment) {
+    private void addAttachment(NodeRef spaceNodeRef, FileNameSplitter fileNameSplitter, EmailMessagePart attachment, String userIdCode) {
+        String fileName = fileNameSplitter.getFileNameWithoutSSN().trim();
         QName assocType = ContentModel.ASSOC_CONTAINS;
         final NodeService nodeService = getNodeService();
+        fileName = generalService.getUniqueFileName(spaceNodeRef, fileName);
         Map<QName, Serializable> contentProps = new HashMap<QName, Serializable>();
-        contentProps.put(ContentModel.PROP_NAME, generalService.getUniqueFileName(spaceNodeRef, QName.createValidLocalName(fileName.trim())));
+        contentProps.put(ContentModel.PROP_NAME, fileName);
         final QName assocQName = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, fileName);
         ChildAssociationRef associationRef = nodeService.createNode(
                 spaceNodeRef,
@@ -133,10 +123,10 @@ public class ScannedEmailHandler extends AbstractForumEmailMessageHandler {
 
     private NodeRef getPersonalFolderRef(NodeRef contentNodeRef, String userIdCode) {
         final QName SCANNED_BY_PERSONS_ASSOC = ContentModel.ASSOC_CONTAINS;
-        NodeRef spaceNodeRef = fileService.findSubfolderWithName(contentNodeRef, userIdCode, ContentModel.TYPE_FOLDER);
+        NodeRef spaceNodeRef = getNodeService().getChildByName(contentNodeRef, SCANNED_BY_PERSONS_ASSOC, userIdCode);
         if (spaceNodeRef == null) {
             final HashMap<QName, Serializable> props = new HashMap<QName, Serializable>();
-            props.put(ContentModel.PROP_NAME, userService.getUserFullName(userIdCode));
+            props.put(ContentModel.PROP_NAME, userIdCode);
             ChildAssociationRef association = getNodeService().createNode(
                     contentNodeRef,
                     SCANNED_BY_PERSONS_ASSOC,
@@ -149,15 +139,45 @@ public class ScannedEmailHandler extends AbstractForumEmailMessageHandler {
         return spaceNodeRef;
     }
 
-    public String getSSNFromFilename(String wholeFileName) {
-        if (StringUtils.isBlank(wholeFileName)) {
-            throw new RuntimeException("empty fileName");
+    /**
+     * Helper that splits SocalSecurityNumber from rest of the file name
+     * 
+     * @author Ats Uiboupin
+     */
+    private static class FileNameSplitter {
+        private static final Pattern fileNamePattern = Pattern.compile("(\\d{11})\\w*(.*)");
+        private final Long ssn;
+        private final String fileNameWithoutSSN;
+
+        /**
+         * @param wholeFileName
+         * @throws IllegalArgumentException - if <code>wholeFileName</code> doesn't contain SocalSecurityNumber
+         */
+        public FileNameSplitter(String wholeFileName) {
+            if (StringUtils.isBlank(wholeFileName)) {
+                throw new RuntimeException("empty fileName");
+            }
+            Matcher matcher = fileNamePattern.matcher(wholeFileName.trim());
+            if (matcher.find()) {
+                final String strSSN = matcher.group(1);
+                ssn = Long.valueOf(strSSN);
+                String baseName = matcher.group(2);
+                if (StringUtils.isBlank(baseName)) {
+                    baseName = I18NUtil.getMessage("imap.letter_subject_missing");
+                }
+                fileNameWithoutSSN = baseName;
+            } else {
+                throw new IllegalArgumentException("FileName '" + wholeFileName + "' doesn't match pattern '" + fileNamePattern + "'");
+            }
         }
-        Matcher matcher = fileNamePattern.matcher(wholeFileName.trim());
-        if (matcher.find()) {
-            return matcher.group(1);
+
+        public Long getSSN() {
+            return ssn;
         }
-        return null;
+
+        public String getFileNameWithoutSSN() {
+            return fileNameWithoutSSN;
+        }
     }
 
     // START: getters / setters
@@ -171,10 +191,6 @@ public class ScannedEmailHandler extends AbstractForumEmailMessageHandler {
 
     public void setOcrService(OcrService ocrService) {
         this.ocrService = ocrService;
-    }
-
-    public void setFileService(FileService fileService) {
-        this.fileService = fileService;
     }
     // END: getters / setters
 }

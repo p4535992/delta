@@ -1,7 +1,5 @@
 package ee.webmedia.alfresco.document.search.web;
 
-import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentAdminService;
-
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -11,8 +9,10 @@ import javax.faces.component.html.HtmlSelectManyListbox;
 import javax.faces.context.FacesContext;
 import javax.faces.model.SelectItem;
 
-import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
-import ee.webmedia.alfresco.docadmin.service.DocumentType;
+import org.springframework.web.jsf.FacesContextUtils;
+
+import ee.webmedia.alfresco.document.type.model.DocumentType;
+import ee.webmedia.alfresco.document.type.service.DocumentTypeService;
 import ee.webmedia.alfresco.utils.WebUtil;
 
 /**
@@ -22,9 +22,9 @@ import ee.webmedia.alfresco.utils.WebUtil;
  */
 public class DocumentSearchBean implements Serializable {
     private static final long serialVersionUID = 1L;
-    public static final String BEAN_NAME = "DocumentSearchBean";
 
     private List<SelectItem> documentTypes;
+    private transient DocumentTypeService documentTypeService;
 
     public void reset() {
         documentTypes = null;
@@ -44,20 +44,22 @@ public class DocumentSearchBean implements Serializable {
 
     public List<SelectItem> getDocumentTypes() {
         if (documentTypes == null) {
-            getDocumentTypeListItems();
+            List<DocumentType> types = getDocumentTypeService().getAllDocumentTypes(true);
+            documentTypes = new ArrayList<SelectItem>(types.size());
+            for (DocumentType documentType : types) {
+                documentTypes.add(new SelectItem(documentType.getId(), documentType.getName()));
+            }
+            WebUtil.sort(documentTypes);
         }
         return documentTypes;
     }
 
-    public List<SelectItem> getDocumentTypeListItems() {
-        List<DocumentType> types = getDocumentAdminService().getDocumentTypes(DocumentAdminService.DONT_INCLUDE_CHILDREN, true);
-        documentTypes = new ArrayList<SelectItem>(types.size());
-        for (DocumentType documentType : types) {
-            documentTypes.add(new SelectItem(documentType.getId(), documentType.getName()));
+    private DocumentTypeService getDocumentTypeService() {
+        if (documentTypeService == null) {
+            documentTypeService = (DocumentTypeService) FacesContextUtils.getRequiredWebApplicationContext( //
+                    FacesContext.getCurrentInstance()).getBean(DocumentTypeService.BEAN_NAME);
         }
-        WebUtil.sort(documentTypes);
-        return documentTypes;
+        return documentTypeService;
     }
-
     // END: getters / setters
 }

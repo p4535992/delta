@@ -37,7 +37,7 @@ public class SendToDestructionGenerator extends BaseComponentGenerator {
     public UIComponent createComponent(FacesContext context, UIPropertySheet propertySheet, PropertySheetItem item) {
         UIComponent component = super.createComponent(context, propertySheet, item);
         if (isReadOnly()) {
-            ComponentUtil.setReadonlyAttributeRecursively(component);
+            ComponentUtil.setDisabledAttributeRecursively(component);
         }
         return component;
     }

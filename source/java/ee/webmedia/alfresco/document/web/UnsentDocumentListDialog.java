@@ -22,9 +22,4 @@ public class UnsentDocumentListDialog extends BaseDocumentListDialog {
     public String getListTitle() {
         return MessageUtil.getMessage(FacesContext.getCurrentInstance(), "document_unsent_list");
     }
-
-    @Override
-    public boolean isShowOrgStructColumn() {
-        return true;
-    }
 }

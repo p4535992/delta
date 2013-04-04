@@ -16,7 +16,7 @@
             <image>/images/icons/template.gif</image>
             <action-listener>#{DocumentDialog.populateTemplate}</action-listener>
             <params>
-               <param name="documentNodeRef">#{DocumentDialogHelperBean.nodeRef}</param>
+               <param name="documentNodeRef">#{DocumentDialog.node.nodeRef}</param>
             </params>
          </action>
 
@@ -24,7 +24,8 @@
             <evaluator>ee.webmedia.alfresco.document.web.evaluator.CopyDocumentActionEvaluator</evaluator>
             <label-id>document_copy</label-id>
             <image>/images/icons/versioned_properties.gif</image>
-            <action-listener>#{DocumentDynamicDialog.copyDocument}</action-listener>
+            <action>#{DocumentDialog.action}</action>
+            <action-listener>#{DocumentDialog.copy}</action-listener>
          </action>
 
          <action id="document_createReply">
@@ -193,7 +194,19 @@
             <image>/images/icons/versioned_properties.gif</image>
             <action>#{DocumentSendOutDialog.init}</action>
             <action-listener>#{DocumentSendOutDialog.loadDocument}</action-listener>
-            <params><param name="documentNodeRef">#{DocumentDialogHelperBean.nodeRef}</param></params>
+            <params><param name="documentNodeRef">#{DialogManager.bean.node.nodeRef}</param></params>
+         </action>
+
+         <action id="document_manage_permissions">
+            <evaluator>ee.webmedia.alfresco.privilege.web.ManagePrivilegesEvaluator</evaluator>
+            <label-id>document_manage_permissions</label-id>
+            <image>/images/icons/users.gif</image>
+            <action>dialog:managePrivilegesDialog</action>
+            <action-listener>#{ManagePrivilegesDialog.init}</action-listener>
+            <params>
+               <param name="manageableRef">#{DocumentDialog.node.nodeRef}</param>
+               <param name="manageablePermissions">viewDocumentMetaData editDocumentMetaData viewDocumentFiles editDocumentFiles deleteDocumentFiles deleteDocumentMetaData</param>
+            </params>
          </action>
 
          <action id="document_errandOrderApplicant_add">
@@ -223,12 +236,22 @@
             <image>/images/icons/remove_item.gif</image>
             <action-listener>#{MetadataBlockBean.removeErrand}</action-listener>
          </action>
+         
+         <action id="document_contractMvParty_add">
+            <label-id>document_contractMv_addParty</label-id>
+            <tooltip-id>document_contractMv_addParty_tooltip</tooltip-id>
+            <image>/images/icons/add_user.gif</image>
+            <action-listener>#{MetadataBlockBean.addParty}</action-listener>
+         </action>
 
-         <action id="document_changeByNewDocument">
-            <evaluator>ee.webmedia.alfresco.document.web.evaluator.ChangeByNewDocumentEvaluator</evaluator>
-            <label-id>document_changeByNewDocument</label-id>
-            <image>/images/icons/versioned_properties.gif</image>
-            <action-listener>#{DocumentDynamicDialog.changeByNewDocument}</action-listener>
+         <action id="document_contractParty_remove">
+            <label-id>document_contract_deleteParty</label-id>
+            <tooltip-id>document_contract_deleteParty_tooltip</tooltip-id>
+            <image>/images/icons/remove_user.gif</image>
+            <action-listener>#{MetadataBlockBean.removeParty}</action-listener>
+            <params>
+               <param name="subPropsheetsRequiredCount">1</param><!-- contract must have at least 2 parties(1 main party + 1 additional party) -->
+            </params>
          </action>
 
          <action-group id="document_errandOrderApplicant">
@@ -240,6 +263,11 @@
             <action idref="document_errandsAbroad_remove" />
             <action idref="document_errandsAbroad_add" />
          </action-group>
+         
+         <action-group id="document_contractMvParty">
+            <action idref="document_contractMvParty_add" />
+            <action idref="document_contractParty_remove" />
+         </action-group>         
 
           <action id="document_end">
             <evaluator>ee.webmedia.alfresco.document.web.evaluator.EndDocumentEvaluator</evaluator>
@@ -259,21 +287,27 @@
             <evaluator>ee.webmedia.alfresco.document.web.evaluator.DeleteDocumentEvaluator</evaluator>
             <label-id>document_delete</label-id>
             <image>/images/icons/versioned_properties.gif</image>
-            <action-listener>#{DocumentDynamicDialog.deleteDocument}</action-listener>
+            <action-listener>#{DocumentDialog.deleteDocument}</action-listener>
          </action>
 
           <action id="document_favorites_add">
             <evaluator>ee.webmedia.alfresco.document.web.evaluator.AddFavoritesDocumentEvaluator</evaluator>
             <label-id>document_favorites_add</label-id>
             <image>/images/icons/versioned_properties.gif</image>
-            <action-listener>#{DocumentDynamicDialog.addDocumentToFavorites}</action-listener>
+            <action-listener>#{FavoritesDocumentListDialog.add}</action-listener>
+            <params>
+               <param name="nodeRef">#{DocumentDialog.node.nodeRef}</param>
+            </params>
          </action>
 
           <action id="document_favorites_remove">
             <evaluator>ee.webmedia.alfresco.document.web.evaluator.RemoveFavoritesDocumentEvaluator</evaluator>
             <label-id>document_favorites_remove</label-id>
             <image>/images/icons/versioned_properties.gif</image>
-            <action-listener>#{DocumentDialog.removeFavorite}</action-listener>
+            <action-listener>#{FavoritesDocumentListDialog.remove}</action-listener>
+            <params>
+               <param name="nodeRef">#{DocumentDialog.node.nodeRef}</param>
+            </params>
          </action>
          
          <action id="document_sendToSap">
@@ -312,16 +346,6 @@
             <action-listener>#{DvkBean.updateDocSendStatuses}</action-listener>
          </action>
 
-         <action id="docList_moveMass">
-            <label-id>document_move</label-id>
-            <evaluator>ee.webmedia.alfresco.document.web.evaluator.IsOpenDocListUnitEvaluator</evaluator>
-            <action-listener>#{DialogManager.bean.updateLocationSelect}</action-listener>
-         </action>
-
-         <action-group id="docListActions">
-            <action idref="docList_moveMass" />
-         </action-group>
-
          <action-group id="document_actions">
             <action idref="document_copy" />
             <action idref="word_file_from_document" />
@@ -336,6 +360,7 @@
             <action idref="document_delete"/>
             <action idref="document_favorites_add"/>
             <action idref="document_favorites_remove"/>
+            <action idref="document_manage_permissions" />
             <action idref="document_sendToSap" />
             <action idref="document_sendToSapManually" />
          </action-group>
@@ -366,7 +391,7 @@
       <dialogs>
 
          <dialog name="documentListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/document/web/document-list-dialog.jsp" managed-bean="DocumentListDialog"
-            icon="/images/icons/versioned_properties_large.gif" title-id="document_list" description-id="document_list_info" actions-config-id="docListActions" />
+            icon="/images/icons/versioned_properties_large.gif" title-id="document_list" description-id="document_list_info" />
 
          <dialog name="document" page="/WEB-INF/classes/ee/webmedia/alfresco/document/web/document-dialog.jsp" managed-bean="DocumentDialog"
             icon="/images/icons/details_large.gif" title-id="document" actions-config-id="document_actions" 
@@ -374,6 +399,9 @@
 
          <dialog name="documentSendOutDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/document/sendout/web/document-send-out-dialog.jsp" managed-bean="DocumentSendOutDialog"
             icon="/images/icons/details_large.gif" title-id="document_send_out" />
+
+         <dialog name="managePrivilegesDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/privilege/web/manage-privileges-dialog.jsp" managed-bean="ManagePrivilegesDialog"
+            icon="/images/icons/users_large.gif" title-id="document_manage_permissions" />
 
          <dialog name="outboxDocumentListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/document/web/document-list-dialog.jsp" managed-bean="OutboxDocumentListDialog"
             icon="/images/icons/versioned_properties_large.gif" title-id="document_outbox" show-ok-button="false" />
@@ -386,9 +414,6 @@
 
          <dialog name="favoritesDocumentListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/document/web/document-list-dialog.jsp" managed-bean="FavoritesDocumentListDialog"
             icon="/images/icons/versioned_properties_large.gif" title-id="document_myFavorites" show-ok-button="false" />
-
-         <dialog name="discussionDocumentListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/document/web/document-list-dialog.jsp" managed-bean="DiscussionDocumentListDialog"
-            icon="/images/icons/versioned_properties_large.gif" title-id="browse_topics" show-ok-button="false" />
       </dialogs>
    </config>
 </alfresco-config>

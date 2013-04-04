@@ -1,13 +1,6 @@
 var delta = [];
 delta['translations'] = [];
 
-/** Vertical scrollbar appears when browser window is narrower than minScreenWidth */
-var minScreenWidth = 920;
-
-function setMinScreenWidth(minWidth){
-   minScreenWidth = minWidth;
-}
-
 function addTranslation(key, value) {
    delta.translations[key] = value;
 }
@@ -91,7 +84,7 @@ function zIndexWorkaround(context)
    if(isIE()) {
 
       var containerContext = context;
-     if (context) {
+	  if (context) {
          if (!$jQ(context).parents().is('#container')) {
             return;
          }
@@ -137,24 +130,24 @@ function zIndexWorkaround(context)
 }
 
 function fixIEDropdownMinWidth(container, items, context) {
-   if(isIE(7)) {
-      var max = 0;
-      var ul = $jQ(container, context);
-      ul.css('visibility', 'hidden').css('display', 'block');
-      $jQ(items, context).each(function() {
-         var li = $jQ(this);
-         if(li.outerWidth() > max) {
-            max = li.outerWidth();
-         }
-      }).each(function() {
-         $jQ(this).css('min-width', max+'px');
-      });
-      ul.css('display', 'none').css('visibility', 'visible');
-   }
+	if(isIE(7)) {
+		var max = 0;
+		var ul = $jQ(container, context);
+		ul.css('visibility', 'hidden').css('display', 'block');
+		$jQ(items, context).each(function() {
+			var li = $jQ(this);
+			if(li.outerWidth() > max) {
+				max = li.outerWidth();
+			}
+		}).each(function() {
+			$jQ(this).css('min-width', max+'px');
+		});
+		ul.css('display', 'none').css('visibility', 'visible');
+	}
 }
 
 function fixIESelectMinWidth(context) {
-   if(isIE(7)) {
+	if(isIE(7)) {
       if (context) {
          if (!$jQ(context).parents().is('#container-content')) {
             return;
@@ -164,12 +157,12 @@ function fixIESelectMinWidth(context) {
       }
 
       $jQ("td select").not('.with-pager select').not(".modalpopup-content-inner select[name$='_results']").not("#aoscModal-container-modalpopup select").not(".genericpicker-results").each(function() {
-         var select = $jQ(this);
-         if(select.outerWidth() < 165) {
-            select.css('width', '170px');
-         }
-      });
-   }
+			var select = $jQ(this);
+			if(select.outerWidth() < 165) {
+				select.css('width', '170px');
+			}
+		});
+	}
 }
 
 /**
@@ -179,13 +172,6 @@ function escapeId4JQ(idToEscape) {
    return idToEscape.replace(/:/g, "\\:").replace(/\./g, "\\.");
 }
 
-function confirmWithPlaceholders(msgWithPlaceholders /*, placeHolderValues ...*/) {
-   var translatedMsg = msgWithPlaceholders;
-   for( var i = 1; i < arguments.length; i++ ) {
-      translatedMsg = translatedMsg.replace('{'+(i-1)+'}', arguments[i]);
-  }
-  return confirm(translatedMsg);
-}
 /**
  * Prepend given function to each element selected with jQBtnOrLink jQuery object.
  * @param jQBtnOrLink - jQuery object containing elements that need prepending function
@@ -227,25 +213,18 @@ function prependFunction(jQHtmlElem, prependFn, eventAttributeName) {
  * @param status - status of the function/series/volume/case
  */
 function processFnSerVolCaseCloseButton(status){
-   var closeBtns = getCloseButtons();
-   var finishDisabled = getFinishButtons().prop("disabled");
+   var closeBtn = $jQ("#"+escapeId4JQ("dialog:close-button"));
+   var finishBtn = $jQ("#"+escapeId4JQ("dialog:finish-button"));
+   var closeBtn2 = $jQ("#"+escapeId4JQ("dialog:close-button-2"));
+   var finishBtn2 = $jQ("#"+escapeId4JQ("dialog:finish-button-2"));
+   var finishDisabled = finishBtn.attr("disabled");
    if(status != "avatud"){
-      closeBtns.remove();
+      closeBtn.remove();
+      closeBtn2.remove();
    } else if(finishDisabled || status == "avatud"){
-      closeBtns.prop("disabled", finishDisabled);
+      closeBtn.attr("disabled", finishDisabled);
+      closeBtn2.attr("disabled", finishDisabled);
    }
-}
-
-function getFinishButtons() {
-   return $jQ(escapeId4JQ("#dialog:finish-button, #dialog:finish-button-2"));
-}
-
-function getCloseButtons() {
-   return $jQ(escapeId4JQ("#dialog:close-button, #dialog:close-button-2"));
-}
-
-function clickFinishButton() {
-   return $jQ(escapeId4JQ("#dialog:finish-button")).click();
 }
 
 function disableAndRemoveButton(buttonId) {
@@ -257,16 +236,13 @@ function disableAndRemoveButton(buttonId) {
  * @author Ats Uiboupin
  */
 function appendSelection(source, targetId) {
-   var selectItem = $jQ('#' + escapeId4JQ(source.attr("id")) + ' :selected');
-   if ($jQ('#' + escapeId4JQ(source.attr("id")) + ' :selected').val() == "") {
-      return;
-   }
+   var appendSepparator = ', ';
    var targetElem = $jQ("#" + escapeId4JQ(targetId));
+   var lable = $jQ('#' + escapeId4JQ(source.attr("id")) + ' :selected').text(); // using label not value!
    var lastToItemValue = targetElem.val();
    if (lastToItemValue.length != 0) {
-      lastToItemValue = lastToItemValue + ', ';
+      lastToItemValue = lastToItemValue + appendSepparator;
    }
-   var lable = selectItem.text(); // using label not value!
    targetElem.val(lastToItemValue + lable);
 };
 
@@ -282,7 +258,7 @@ function addAutocompleter(inputId, valuesArray){
       var jQInput = $jQ("#"+escapeId4JQ(inputId));
       var autoCompleter = jQInput.autocompleteArray(valuesArray, { minChars: -1, suggestAll: 1, delay: 50, onItemSelect: function(li) { processButtonState(); } });
       autoCompleter.parent(".suggest-wrapper").click(function(){
-         jQInput.focus();
+         autoCompleter.trigger("suggest");
       });
       autoCompleter.bind("autoComplete", function(e, data){
          var ac = $jQ(this);
@@ -302,7 +278,7 @@ var dimensionSelectorDefaultValues = {};
 var lastDimensionQueryDates = {};
 
 function addUIAutocompleter(input, valuesArray, dimensionName, dimensionQueryDate, filterName, linkId){
-   autocompleters.push(function() {
+   autocompleters.push(function() {  
       var inputId = "#"+escapeId4JQ(input);
       var jQInput = $jQ(inputId);
       var dimensionKey = dimensionName;
@@ -351,9 +327,9 @@ function addUIAutocompleter(input, valuesArray, dimensionName, dimensionQueryDat
                      }
                      response(data);
                   }
-              });
+              });               
             }
-         },
+         },         
          focus: function( event, ui ) {
             return false;
          },
@@ -372,7 +348,7 @@ function addUIAutocompleter(input, valuesArray, dimensionName, dimensionQueryDat
             my: "right top",
             at: "right bottom",
             collision: "none"
-         }
+         }         
       });
       autocomplete.data("uiAutocomplete")._renderItem = function( ul, item ) {
          var renderedItem = $jQ( "<li><a title=\"" + item.description + "\">" + item.value + "<br>" + item.label + "</a></li>" );
@@ -407,7 +383,7 @@ function getDateFromString(dateString){
          }
          if (dateParts[0].charAt(0) == "0"){
             dateParts[0] = dateParts[0].substr(1);
-         }
+         }         
          var date = new Date(parseInt(dateParts[2]), parseInt(dateParts[1]), parseInt(dateParts[0]));
          return date;
       }
@@ -429,14 +405,14 @@ function addSearchSuggest(clientId, containerClientId, pickerCallback, submitUri
 }
 
 function addSearchSuggest(clientId, containerClientId, pickerCallback, submitUri, autoCompleteCallback) {
-   autocompleters.push(function addAutocompleter() {
+   autocompleters.push(function () {
       var jQInput = $jQ("#"+escapeId4JQ(clientId));
       var uri = getContextPath() + "/ajax/invoke/AjaxSearchBean.searchSuggest";
       var suggest = jQInput.autocomplete(uri, {extraParams: {'pickerCallback' : pickerCallback}, matchContains: 1, minChars: 3, suggestAll: 1, delay: 50,
       onItemSelect: function (li) {
          processButtonState();
       },
-      formatResult: function formatSuggestResult(data) {
+      formatResult: function (data) {
          var end = data.indexOf("<");
          if (end > 0) {
             return data.substring(0, data.indexOf("<"));
@@ -445,24 +421,11 @@ function addSearchSuggest(clientId, containerClientId, pickerCallback, submitUri
       }
       });
 
-      suggest.bind("autoComplete", function handleAutocomplete(event, data) {
-         handleEnterKeySkip = true;
-         setScreenProtected(true, "FIXME: palun oodake, ühendus serveriga");
-         $jQ.ajax({
-            type: 'POST',
-            url: submitUri,
-            mode: 'queue',
-            data: $jQ.param({'data' : data.newVal}),
-            success: function autocompleteSuccess(responseText) {
-               if (autoCompleteCallback) {
-                  autoCompleteCallback.call(data.newVal);
-               }
-               ajaxSuccess(responseText, clientId, containerClientId);
-               setScreenProtected(false);
-            },
-            error: ajaxError,
-            dataType: 'text'
-         });
+      suggest.bind("autoComplete", function(e, data) {
+      	ajaxSubmit(clientId, containerClientId, [], submitUri, {'data' : data.newVal});
+      	if (autoCompleteCallback) {
+      	   autoCompleteCallback.call(data.newVal);
+      	}
       });
       jQInput.focus(function() {
          jQInput.keydown();
@@ -481,54 +444,38 @@ function applyAutocompleters() {
 }
 
 function showFooterTitlebar() {
-   var bar = $jQ("#footer-titlebar");
+	var bar = $jQ("#footer-titlebar");
 
-   if (bar.length > 0) {
-      if($jQ(window).height() < bar.offset().top) {
-         bar.css('visibility', 'visible'); // vivibility is used, because display: none; gives offset (0, 0)
-      } else {
-         bar.css('display', 'none'); // doesn't need to take the space
-      }
-   }
-}
-
-function showDuplicatedTableHeader(context) {
-   var table = $jQ("table.duplicate-header", context);
-
-   if (table.length > 0) {
-      if($jQ(window).height() < table.offset().top + table.outerHeight()) {
-         table.append("<tfoot></tfoot>");
-         
-         var footer = table.children("tfoot");
-         var row = table.children("thead").children("tr");
-         row.clone().appendTo(footer);
-      }
-   }
+	if (bar.length > 0) {
+   	if($jQ(window).height() < bar.offset().top) {
+   		bar.css('visibility', 'visible'); // vivibility is used, because display: none; gives offset (0, 0)
+   	} else {
+   		bar.css('display', 'none'); // doesn't need to take the space
+   	}
+	}
 }
 
 function setPageScrollY() {
-   var scrollTop = $jQ(window).scrollTop();
-   $jQ('#wrapper form').append('<input type="hidden" name="scrollToY" value="'+ scrollTop +'" />');
+	var scrollTop = $jQ(window).scrollTop();
+	$jQ('#wrapper form').append('<input type="hidden" name="scrollToY" value="'+ scrollTop +'" />');
 }
 
-function getSharePointObject() {
-   var agent = navigator.userAgent.toLowerCase();
-   if (agent.indexOf('msie') != -1) {
-      var sharePointObject = new ActiveXObject('SharePoint.OpenDocuments.1');
-      return sharePointObject;
-   }
-   return null;
-}
-
-function webdavOpen(url, sharePointObject) {
+function webdavOpen() {
    var showDoc = true;
-   if (sharePointObject) {
-      // if the link represents an Office document and we are in IE try and
-      // open the file directly to get WebDAV editing capabilities
-      showDoc = !sharePointObject.EditDocument(url);
+   // if the link represents an Office document and we are in IE try and
+   // open the file directly to get WebDAV editing capabilities
+   var agent = navigator.userAgent.toLowerCase();
+   if (agent.indexOf('msie') != -1)
+   {
+         var wordDoc = new ActiveXObject('SharePoint.OpenDocuments.1');
+         if (wordDoc)
+         {
+            showDoc = !wordDoc.EditDocument(this.href);
+         }
    }
-   if (showDoc == true) {
-      window.open(url, '_blank');
+   if (showDoc == true)
+   {
+      window.open(this.href, '_blank');
    }
    return false;
 }
@@ -537,8 +484,8 @@ function webdavOpen(url, sharePointObject) {
  * Open file in read-only mode (TODO: with webdav, if file is office document)
  * @return false
  */
-function webdavOpenReadOnly(url) {
-   // TODO: at the moment it just always provides a download link even for office documents
+function webdavOpenReadOnly() {
+   // TODO: at the moment it just alwais provides a download link even for office documents
 //   // if the link represents an Office document and we are in IE try and
 //   // open the file directly to get WebDAV editing capabilities
 //   var agent = navigator.userAgent.toLowerCase();
@@ -564,7 +511,7 @@ function webdavOpenReadOnly(url) {
 //      alert("To open using webdaw you must have IE compatible browser(for example firefox with IEtab or Internet Explorer)");
 //   }
 //   alert("regular file download");
-   window.open(url, '_blank');// regular file saveAs/open by downloading it to HD
+   window.open(this.href, '_blank');// regular file saveAs/open by downloading it to HD
    return false;
 }
 
@@ -598,40 +545,42 @@ var openModalContent = null;
 var titlebarIndex = null;
 
 function showModal(target, height){
-   target = escapeId4JQ(target);
-   if ($jQ("#overlay").length == 0) {
-      $jQ("#" + target).before("<div id='overlay'></div>");
-   }
-   if(isIE(7)) {
-      titlebarIndex = $jQ("#titlebar").css("z-index");
-      $jQ("#titlebar").css("z-index", "-1");
-   }
-   if (openModalContent != null){
-      $jQ("#" + openModalContent).hide();
-   }
-   openModalContent = target;
+	target = escapeId4JQ(target);
+	if ($jQ("#overlay").length == 0) {
+		$jQ("#" + target).before("<div id='overlay'></div>");
+	}
+	if(isIE(7)) {
+		titlebarIndex = $jQ("#titlebar").css("z-index");
+		$jQ("#titlebar").css("z-index", "-1");
+	}
+	if (openModalContent != null){
+		$jQ("#" + openModalContent).hide();
+	}
+	openModalContent = target;
 
-   $jQ("#overlay").css("display","block");
-   $jQ("#" + target).css("display","block");
-   if (height != null) {
-      $jQ("#" + target).css("height",height);
-   }
-   $jQ("#" + target).show();
-   $jQ("#" + target).find(".genericpicker-input").focus();
-   return false;
+	$jQ("#overlay").css("display","block");
+	$jQ("#" + target).css("display","block");
+	$jQ("#" + target).find(".genericpicker-input").focus();
+	if (height != null) {
+	   $jQ("#" + target).css("height",height);
+	}
+	$jQ("#" + target).show();
+
+	return false;
 }
 
 function hideModal(){
-   if (openModalContent != null){
-     if(isIE(7) && titlebarIndex != null) {
-        $jQ("#titlebar").css("zIndex", titlebarIndex);
-     }
-     $jQ("#" + openModalContent).hide();
+	if (openModalContent != null){
+	  if(isIE(7) && titlebarIndex != null) {
+		  $jQ("#titlebar").css("zIndex", titlebarIndex);
+	  }
+	  $jQ("#" + openModalContent).hide();
       $jQ("#overlay").remove();
-   }
-   return false;
+	}
+	return false;
 }
 
+var propSheetValidateBtnFn = [];
 var propSheetValidateSubmitFn = [];
 var propSheetValidateFormId = '';
 var propSheetValidateFinishId = '';
@@ -643,7 +592,8 @@ var propSheetNextBtnPressed = false;
 // Should be called once per property sheet. If there are multiple propertySheets on the same
 // page then the last caller overwrites formId, finishBtnId and nextBtnId, so those must be
 // equal to all property sheets on the same page.
-function registerPropertySheetValidator(submitFn, formId, finishBtnId, nextBtnId) {
+function registerPropertySheetValidator(btnFn, submitFn, formId, finishBtnId, nextBtnId) {
+   propSheetValidateBtnFn.push(btnFn);
    propSheetValidateSubmitFn.push(submitFn);
    propSheetValidateFormId = formId;
    propSheetValidateFinishId = finishBtnId;
@@ -652,6 +602,16 @@ function registerPropertySheetValidator(submitFn, formId, finishBtnId, nextBtnId
 }
 
 function processButtonState() {
+   for (var i = 0; i < propSheetValidateBtnFn.length; i++) {
+      if (typeof propSheetValidateBtnFn[i] == 'function') {
+         propSheetValidateBtnFn[i]();
+         var finishBtn = document.getElementById(propSheetValidateFormId + ':' + propSheetValidateFinishId);
+         var finishBtn2 = document.getElementById(propSheetValidateFormId + ':' + propSheetValidateSecondaryFinishId);
+         if (finishBtn == null || finishBtn.disabled == true) {
+            break;
+         }
+      }
+   }
    if (typeof postProcessButtonState == 'function') { postProcessButtonState(); }
 }
 
@@ -676,13 +636,8 @@ function propSheetValidateSubmit() {
    return result;
 }
 
-function triggerPropSheetValidation(){
-   propSheetNextBtnPressed = true;
-   return propSheetValidateSubmit();
-}
-
 function propSheetValidateSubmitCommon() {
-   return (!window.propSheetValidateCustom || propSheetValidateCustom()) && validateDatePeriods();
+   return validateDatePeriods();
 }
 
 function validateDatePeriods() {
@@ -695,9 +650,6 @@ function validateDatePeriods() {
          return;
       }
       var endDate = getEndDate(beginDateElem, row);
-      if (!endDate) {
-         return;
-      }
       var oneDay = 24*60*60*1000; // hours*minutes*seconds*milliseconds
       if (endDate.val() != "") {
          var daysDiff = (endDate.datepicker('getDate') - bDate.datepicker('getDate') ) / oneDay;
@@ -711,25 +663,22 @@ function validateDatePeriods() {
    return !endBeforeBegin;
 }
 
-function getEndDate(beginDateElem, container) {
+function getEndDate(beginDateElem, container){
    var endDates = container.find(".endDate");
-   if (endDates.length>1) {
+   if(endDates.length>1){
       var dates = container.find(".beginDate, .endDate");
-      for (var i = 0; i < dates.length; i++) {
-         if (dates[i] == beginDateElem && dates.length > i+1) {
+      for ( var i = 0; i < dates.length; i++) {
+         if(dates[i]==beginDateElem && dates.length > i+1){
             return $jQ(dates[i+1]);
          }
       }
-      return null;
-   } else if (endDates.length == 0) {
-      return null;
    } else {
       return endDates;
    }
 }
 
 function propSheetValidateOnDocumentReady() {
-   if (propSheetValidateSubmitFn.length > 0) {
+   if (propSheetValidateBtnFn.length > 0 || propSheetValidateSubmitFn.length > 0) {
       document.getElementById(propSheetValidateFormId).onsubmit = propSheetValidateSubmit;
       var finishBtn = document.getElementById(propSheetValidateFormId + ':' + propSheetValidateFinishId);
       if(finishBtn){
@@ -737,24 +686,13 @@ function propSheetValidateOnDocumentReady() {
       }
       var secondaryFinishButton = document.getElementById(propSheetValidateFormId + ':' + propSheetValidateSecondaryFinishId);
       if(secondaryFinishButton != null) {
-        secondaryFinishButton.onclick = function() { propSheetFinishBtnPressed = true; };
+    	  secondaryFinishButton.onclick = function() { propSheetFinishBtnPressed = true; };
       }
       if (propSheetValidateNextId.length > 0) {
          var validateNextId = document.getElementById(propSheetValidateFormId + ':' + propSheetValidateNextId);
          if (validateNextId != null){
             validateNextId.onclick = function() { propSheetNextBtnPressed = true; };
          }
-      }
-      processButtonState();
-   }
-}
-
-function propSheetValidateRegisterOnDocumentReady() {
-   if (propSheetValidateSubmitFn.length > 0) {
-      document.getElementById(propSheetValidateFormId).onsubmit = propSheetValidateSubmit;
-      var registerBtn = document.getElementById(propSheetValidateFormId + ':documentRegisterButton');
-      if(registerBtn){
-         registerBtn.onclick = function() { propSheetFinishBtnPressed = true; };
       }
       processButtonState();
    }
@@ -863,22 +801,7 @@ function ajaxSuccess(responseText, componentClientId, componentContainerId) {
       // Split response
       var i = responseText.lastIndexOf('VIEWSTATE:');
       var html = responseText.substr(0, i);
-      var hiddenInputsIndex = responseText.lastIndexOf("HIDDEN_INPUT_NAMES_JSON:");
-      var viewState = responseText.substr(i + 'VIEWSTATE:'.length, hiddenInputsIndex);
-
-      var hiddenInputNames = $jQ.parseJSON(responseText.substr(hiddenInputsIndex+"HIDDEN_INPUT_NAMES_JSON:".length));
-      if(hiddenInputNames){
-         var hiddenInputsContainer = $jQ("#hiddenInputsContainer");
-         hiddenInputNames.each(function(elem){
-            var hiddenInput = hiddenInputsContainer.find("input[name='"+elem+"']");
-            if(hiddenInput.length == 0){
-               $jQ('<input type="hidden" name="'+elem+'" value="" />').appendTo(hiddenInputsContainer);
-            } else {
-               hiddenInput.val("");
-            }
-         });
-      }
-
+      var viewState = responseText.substr(i + 10);
 
       // Update HTML
       $jQ('#' + escapeId4JQ(componentContainerId)).after(html).remove();
@@ -895,7 +818,7 @@ function ajaxSuccess(responseText, componentClientId, componentContainerId) {
 
       try {
          // Reattach behaviour
-         handleHtmlLoaded($jQ('#' + escapeId4JQ(componentContainerId)), false);
+         handleHtmlLoaded($jQ('#' + escapeId4JQ(componentContainerId)));
       } catch (e) {
          alert("Failed to update page! "+e);
       } finally {
@@ -954,11 +877,7 @@ function updateMenuItemCount(menuItemId) {
             }
 
             // Update on all elements with same menuitemid
-            var menuItem = $jQ('.menuItemCount[menuitemid=' + menuItemId + '] a');
-            menuItem.text(text).attr('title', text);
-            if (count.length > 2) {
-               menuItem.parent().removeClass("hiddenMenuItem");
-            }
+            $jQ('.menuItemCount[menuitemid=' + menuItemId + '] a').text(text).attr('title', text);
          }
 
          //Continuous update disabled - if you stay on the same page, the counts are updated only once.
@@ -1044,56 +963,6 @@ function allowMultiplePageSizeChangers(){ // otherwise the last pageSizeChanger 
    });
 }
 
-/**
- * Returns true if event was handled. 
- */
-var handleEnterKeySkip = false;
-function handleEnterKey(event) {
-   if (handleEnterKeySkip) {
-      return;
-   }
-
-   var target = $jQ(event.target);
-   var targetTag = event.target.tagName.toLowerCase();
-   
-   // Allow normal behaviour for textareas
-   if ("textarea" == targetTag) {
-      return false;
-   }
-   
-   // Submit search for (constrained)quickSearch by clicking the next button
-   var targetId = target.attr('id');
-   if (targetId && endsWith(targetId.toLowerCase(), "quicksearch")) {
-      target.next().click();
-      return true;
-   }
-   
-   // Are there any specific actions (modal search, dialog search)?
-   var specificActions = $jQ('.specificAction').filter(":visible");
-   if (specificActions.length == 1) { // Do nothing if multiple actions match
-      // Special case for generic pickers. If we have selected something and press enter, we should select instead of searching
-      if ("select" == targetTag) {
-         var picker = target.parents(".generic-picker");
-         if (picker.length > 0) {
-            picker.first().find(".picker-add").click();
-            return true;
-         }
-      }
-      
-      specificActions.click();
-      return true;
-   }
-   
-   // Default actions are usually dialog finishImpl buttons
-   var defaultActions = $jQ('.defaultAction').filter(":visible");
-   if (defaultActions.length == 1) { // Do nothing if multiple actions match
-      defaultActions.click();
-      return true;
-   }
-   
-   return false;
-}
-
 //-----------------------------------------------------------------------------
 // DOCUMENT-READY FUNCTIONS
 //-----------------------------------------------------------------------------
@@ -1112,26 +981,34 @@ $jQ(document).ready(function() {
 function initWithScreenProtected() {
    showFooterTitlebar();
    allowMultiplePageSizeChangers();
-
-   // Collect all enter presses at document root (NB! live() doesn't work!)
-   $jQ(document).keypress(function (event) {
-      if (event.keyCode == 13 && handleEnterKey(event)) {
-         event.stopPropagation(); // You shall not PASS!
-         return false;
-      }
+   $jQ(".admin-user-search-input").keyup(function(event) {
+	   updateButtonState();
+	   if (event.keyCode == 13) {
+		     $jQ(this).next().click();
+		     return false;
+	   }
    });
 
-   $jQ(".toggle-tbody").live("mousedown", function (event) {
-      $jQ(this).closest("tbody").next().toggle();
-      $jQ(this).toggleClass("plus").toggleClass("minus");
+   $jQ(".quickSearch-input").live('keydown', function(event) {
+	   if (event.keyCode == 13) {
+		    $jQ(this).next().click();
+		    return false;
+	   }
    });
+
+   $jQ(".genericpicker-input").live('keydown', function (event) {
+      if (event.keyCode == 13) {
+	      $jQ(this).next().click();
+			return false;
+	   }
+	});
 
    $jQ(".genericpicker-input").live('keyup', function (event) {
       var input = $jQ(this);
       var filter = input.prev();
       var filterValue;
-      if (filter != null && filter.val() != undefined) {
-         filterValue = filter.val();
+      if (filter != null && filter.attr('value') != undefined) {
+         filterValue = filter.attr('value');
       }
 
       var tbody = input.closest('tbody');
@@ -1150,14 +1027,14 @@ function initWithScreenProtected() {
          select.children('option').each(function (i) {
             var option = $jQ(this);
             if (option.text().toLowerCase().indexOf(inputValue.toLowerCase()) < 0) {
-               option.prop('disabled', 'disabled').hide();
+               option.attr('disabled', 'disabled').hide();
                option.wrap('<span />').hide();
             }
-         });
+         }); 
          select.children('span').each(function (i) {
             var option = $jQ(this).find('option');
             if (option.text().toLowerCase().indexOf(inputValue.toLowerCase()) > -1) {
-               option.prop('disabled', '').show();
+               option.attr('disabled', '').show();
                $jQ(this).replaceWith(option).show();
             }
          });
@@ -1179,12 +1056,6 @@ function initWithScreenProtected() {
          filterValue = 0;
       }
 
-      var index = callback.indexOf("|");
-      if (index >= 0) {
-         filterValue = callback.substring(0, index);
-         callback = callback.substring(index + 1);
-      }
-
       var backspace = event.keyCode == 8;
       if (value.length == 3 && !backspace) {
          $jQ.ajax({
@@ -1201,32 +1072,17 @@ function initWithScreenProtected() {
       }
    };
 
-   $jQ(".genericpicker-filter").live('change', function (event) {
-      var filter = $jQ(this);
-      var tbody = filter.closest('tbody');
-      var select = tbody.find('.genericpicker-results');
-      var input = filter.next();
-      if (input.val().length < 3) {
-         select.empty();
-      } else {
-         input.next().click();
-      }
-   });
-
    $jQ(".errandReportDateBase").live('change', function (event) {
       // Get the date
       var elem = $jQ(this);
       if (elem != null) {
          // Find the report due date
          var errandEnd = elem.datepicker('getDate');
-         var reportDue = "";
-         if (errandEnd) {
-            reportDue = new Date(errandEnd.getFullYear(), errandEnd.getMonth(), errandEnd.getDate() + 5);
-            if (reportDue.getDay() == 6) { // Saturday
-               reportDue = new Date(reportDue.getFullYear(), reportDue.getMonth(), reportDue.getDate() + 2);
-            } else if (reportDue.getDay() == 0) { // Sunday
-               reportDue = new Date(reportDue.getFullYear(), reportDue.getMonth(), reportDue.getDate() + 1);
-            }
+         var reportDue = new Date(errandEnd.getFullYear(), errandEnd.getMonth(), errandEnd.getDate() + 5);
+         if (reportDue.getDay() == 6) { // Saturday
+            reportDue = new Date(reportDue.getFullYear(), reportDue.getMonth(), reportDue.getDate() + 2);
+         } else if (reportDue.getDay() == 0) { // Sunday
+            reportDue = new Date(reportDue.getFullYear(), reportDue.getMonth(), reportDue.getDate() + 1);
          }
          // Set date
          elem.closest(".panel-border").find(".reportDueDate").datepicker('setDate',  reportDue);
@@ -1290,21 +1146,20 @@ function initWithScreenProtected() {
       }
       if (dateField != null) {
          dateField.datepicker('setDate', elem.datepicker('getDate'));
-         dateField.change();
       }
    });
 
    if(isIE()) {
-      // http://www.htmlcenter.com/blog/fixing-the-ie-text-selection-bug/
-      document.body.style.height = document.documentElement.scrollHeight + 'px';
+	   // http://www.htmlcenter.com/blog/fixing-the-ie-text-selection-bug/
+	   document.body.style.height = document.documentElement.scrollHeight + 'px';
    }
 
    if(isIE(7)) {
-      $jQ(window).resize(function() {
-         var htmlWidth = $jQ("html").outerWidth(true);
-         var width =  htmlWidth < minScreenWidth ? minScreenWidth : htmlWidth;
-         $jQ("#wrapper").css("min-width", width + "px");
-      });
+	   $jQ(window).resize(function() {
+		   var htmlWidth = $jQ("html").outerWidth(true);
+		   var width =  htmlWidth < 920 ? 920 : htmlWidth;
+		   $jQ("#wrapper").css("min-width", width + "px");
+	   });
    }
 
    var suggesters = $jQ("span.suggest-wrapper>textarea");
@@ -1394,10 +1249,10 @@ function initWithScreenProtected() {
       transFooterTotalSumElem = jQuery("#footer-sum-2:first");
       setTransTotalSumColor(transFooterTotalSumElem, invoiceTotalSum, getFloatOrNull(transFooterTotalSumElem.text()));
    });
-
+   
    jQuery(".trans-row-sum-input").live('change', recalculateInvoiceSums);
    jQuery(".trans-row-vat-code-input").live('change', recalculateInvoiceSums);
-
+   
    jQuery(".trans-row-entry-content-input").keyup(function(){
       textCounter($(this), 50);
    });
@@ -1408,17 +1263,7 @@ function initWithScreenProtected() {
    toggleSubrow.init();
    toggleSubrowToggle.init();
 
-   jQuery(".task-due-date-date").live("change", processTaskDueDateDate);
-   jQuery(".clearGroupRowDate").live("change", clearGroupRowDate);
-   jQuery(".groupRowDate").live("change", groupRowDateChange);
-   jQuery(".changeSendOutMode").live("change", changeSendOutMode);
-   jQuery(".resetSendOutGroupSendMode").live("change", resetSendOutGroupSendMode);
-
-   if (isIE()) {
-     jQuery("#footer a, .mailto").click(function() { nextSubmitStaysOnSamePage() });
-   }
-
-   handleHtmlLoaded(null, setInputFocus, selects);
+   handleHtmlLoaded(null, selects);
 };
 
 var toggleSubrowToggle = {
@@ -1443,7 +1288,7 @@ var toggleSubrowToggle = {
 };
 var toggleSubrow = {
       init : function(){
-         var subrowToggles = $jQ("td.trans-toggle-subrow").children("a");
+         var subrowToggles = $jQ("td.trans-toggle-subrow").children("a"); 
          subrowToggles.click(this.clickIt);
          subrowToggles.click();
       },
@@ -1548,7 +1393,7 @@ function textCounter(input, maxlimit) {
    }
 }
 
-// return number for valid numeric string,
+// return number for valid numeric string, 
 // 0 for blank string and NaN for all other values
 function getFloatOrNull(originalSumString){
    var sumString = originalSumString.replace(",", ".");
@@ -1562,12 +1407,12 @@ function getFloatOrNull(originalSumString){
    return NaN;
 }
 
-// use to avoid javascript parsing strings like "55 krooni" to number 55
+// use to avoid javascript parsing strings like "55 krooni" to number 55 
 // (conversion that java validation wouldn't allow)
 function isNumeric(numberStr){
    var validChars = "0123456789.";
    var additionalFirstChars = "+-";
-   for (i = 0; i < numberStr.length; i++){
+   for (i = 0; i < numberStr.length; i++){ 
       var currentChar = numberStr.charAt(i);
       if (validChars.indexOf(currentChar) == -1) {
          if(i !== 0 || additionalFirstChars.indexOf(currentChar) == -1){
@@ -1577,84 +1422,8 @@ function isNumeric(numberStr){
    }
    return true;
 }
-function processTaskDueDateDate(){
-   var dueDateInput = $jQ(this);
-   var taskRow = dueDateInput.closest("tr");
-   var taskDueDateTime = taskRow.find(".task-due-date-time");
-   var taskDueDateDays = taskRow.find(".task-due-date-days");
-   if(dueDateInput.val() == ""){
-      taskDueDateTime.val("");
-   } else {
-      if(taskDueDateTime.val() == ""){
-         taskDueDateTime.val("23:59");
-      }
-   }
-   taskDueDateDays.val("");
-}
-
-function clearGroupRowDate(){
-   var dueDateInput = $jQ(this);
-   var taskRow = dueDateInput.closest("tr");
-   while (true) {
-      taskRow = taskRow.prev();
-      if(taskRow.length == 0) {
-         return;
-      }
-      
-      var groupDateInputs = taskRow.find(".groupRowDate");
-      if (groupDateInputs.length > 0) {
-         groupDateInputs.each(function () {
-            $jQ(this).val("");
-         });
-         
-         return;
-      }
-   }
-}
-
-function groupRowDateChange() {
-   var input = $jQ(this);
-   var row = input.closest("tr");
-   var dateVal = row.find(".date")[0].value;
-   var timeVal = row.find(".time")[0].value;
    
-   while (true) {
-      row = row.next();
-      if(row.length == 0) {
-         return;
-      }
-      
-      var dateInput = row.find(".clearGroupRowDate.date");
-      var timeInput = row.find(".clearGroupRowDate.time");
-      if (dateInput.length < 1 || timeInput.length < 1) {
-         return; // Out of thid group
-      }
-      dateInput[0].value = dateVal;
-      timeInput[0].value = timeVal;
-   }
-}
 
-function changeSendOutMode() {
-   var value = this.value;
-   if (value == "") {
-      return;
-   }
-   
-   $jQ(this).closest("tbody").next().find("select").each(function () {
-      this.value = value;
-   });
-}
-
-function resetSendOutGroupSendMode() {
-   var select = $jQ(this);
-   select.closest("tbody").prev().find(".changeSendOutMode").each(function () {
-      this.value = "";
-   });
-}
-
-function setReadonly(element, readonly){
-   element.attr("readonly", readonly);
-}
 
 function initSelectTooltips(selects) {
    selects.each(function(){
@@ -1686,6 +1455,7 @@ function extendCondencePlugin() {
    condencers.each(function(){
       var p = this.className.match(/condence(\d+)?(\-)?/i);
       var condenceAtChar = p ? parseInt('0'+p[1], 10) : 200;
+      var condenceAtChar = p ? parseInt('0'+p[1], 10) : 200;
       var condence = p ? parseInt('0'+p[1], 10) : 200;
       var moreTxt = "... ";
       if(!(p && p[2] == "-")){
@@ -1699,44 +1469,24 @@ function extendCondencePlugin() {
          ellipsis: "",
          condensedLength: condenceAtChar,
          minTrail: moreTxt.length,
-         strictTrim: false  // assume that condense content is not text (html, except links, is escaped)
-                           // and does search for word breaks for triming text
+         strictTrim: true  // assume that condense content is text (i.e. doesn't contain html elements)
+                           // and don't search for word breaks for triming text
          }
        );
    });
 }
 
-function setMinEndDate(owner, dateElem, triggerEndDateChange){
-   if (dateElem.attr("class").indexOf("beginDate") < 0) return;
-   var beginDate = dateElem.val();
-   if (beginDate == null || beginDate.trim().length == 0) return;
-   var row = dateElem.closest("tr");
-   if (row == null) return;
-   var endDate = getEndDate(owner, row);
-   if (endDate == null) return;
-   var endDatePicker = endDate.data("datepicker");
-   if (endDatePicker == null) return;
-   var date = jQuery.datepicker.parseDate(endDatePicker.settings.dateFormat, beginDate, endDatePicker.settings);
-   if (date == null) return;         
-   endDate.datepicker("option", "minDate", date);
-   if (triggerEndDateChange) {
-      endDate.change();
-   }
-}
-
 // These things need to be performed
 // 1) once after full page load
 // *) each time an area is replaced inside the page
-function handleHtmlLoaded(context, setFocus, selects) {
+function handleHtmlLoaded(context, selects) {
    
-   showDuplicatedTableHeader(context);
-
    $jQ(".tooltip", context).tooltip({
       track: true
       ,escapeHtml: true
       ,tooltipContainerElemName: "p"
-   });
-
+   });   
+   
    //initialize all expanding textareas
    var expanders = jQuery("textarea[class*=expand]", context);
    expanders.TextAreaExpander();
@@ -1767,59 +1517,11 @@ function handleHtmlLoaded(context, setFocus, selects) {
    /**
     * Open Office documents directly from server
     */
-   $jQ('.webdav-open', context).click(function () {
-      // 1) this.href = 'https://dhs.example.com/dhs/webdav/xxx/yyy/zzz/abc.doc'
-      // 2) $jQ(this).attr('href') = '/dhs/webdav/xxx/yyy/zzz/abc.doc'
-      var path = this.href; // SharePoint ActiveXObject methods need to get full URL
-
-      var sharePointObject = getSharePointObject();
-      if (sharePointObject) {
-         // When page is submitted, user sees an hourglass cursor
-         $jQ(".submit-protection-layer").show().focus();
-         var uri = getContextPath() + '/ajax/invoke/AjaxBean.isFileLocked';
-         $jQ.ajax({
-           type: 'POST',
-           url: uri,
-           data: 'path=' + path, // path is already escaped, so disable jquery escaping by giving it a string directly
-           mode: 'queue',
-           success: function (responseText) {
-             $jQ(".submit-protection-layer").hide();
-             if (responseText.length == 0) { // If we get an empty response, then open read-only (other conditions prevent from editing - incoming letter, finished, some running workflow)
-                webdavOpenReadOnly(path); 
-             } else if (responseText.indexOf("DOCUMENT_DELETED") > -1) {
-                alert("Faili ei saa avada, dokument on kustutatud");
-                return false;
-             } else if (responseText.indexOf("FILE_DELETED") > -1) {
-                alert("Faili ei saa avada, fail on kustutatud");
-                return false;
-             } else if (responseText.indexOf("NOT_LOCKED") > -1) {
-                webdavOpen(path, sharePointObject);
-             } else if (confirm(getTranslation("webdav_openReadOnly").replace("#", responseText))) {
-                // TODO CL 161673: responseText might contain HTML of CAS page if session has timed out
-                webdavOpenReadOnly(path);
-             } else {
-                return false;
-             }
-           },
-           error: ajaxError,
-           datatype: 'html'
-         });
-      } else {
-         webdavOpen(path, sharePointObject);
-      }
-      return false;
-   });
-
-   $jQ('a.webdav-readOnly', context).click(function () {
-      webdavOpenReadOnly(this.href);
-      return false;
-   });
-
-   jQuery(".dailyAllowanceDaysField, .dailyAllowanceRateField, .errandReportDateBase, .eventBeginDate, .eventEndDate", context).change();
+   $jQ('a.webdav-open', context).click(webdavOpen);
+   $jQ('a.webdav-readOnly', context).click(webdavOpenReadOnly);
+   
    jQuery(".expectedExpenseSumField", context).keyup();
-   $jQ('.triggerPropSheetValidation', context).each(function () {
-      prependOnclick($jQ(this), triggerPropSheetValidation);
-   });
+   jQuery(".dailyAllowanceDaysField, .dailyAllowanceRateField", context).change();
 
    ////////////////////////////////////////////////////////////////////////////////////////////////////
    // Functions that should be executed before removing submit-protection layer should be above.
@@ -1832,75 +1534,11 @@ function handleHtmlLoaded(context, setFocus, selects) {
    ////////////////////////////////////////////////////////////////////////////////////////////////////
    $jQ(".genericpicker-input:visible").focus();
 
-   var container = $jQ("#"+escapeId4JQ('container-content'));
-   if (setFocus) {
-      $jQ("input:text,textarea", container).filter(':visible:enabled[readonly!="readonly"].focus').first().focus();
-   }
    applyAutocompleters();
 
-
    // datepicker
-   var activeDatePickers = jQuery("input.date", context).not("input[readonly]");
-   activeDatePickers.focusout(function(){
-      var jqDate=$jQ(this);
-      var strDate = jqDate.val().trim();
-      var result;
-      var shortPattern = /^\d{4}$/;
-      var longPattern = /^\d{8}$/;
-      if(shortPattern.test(strDate)){
-         result = strDate.substring(0,2) + "." + strDate.substring(2,4) + "." + new Date().getFullYear();
-      } else if(longPattern.test(strDate)){
-         result = strDate.substring(0,2) + "." + strDate.substring(2,4) + "." + strDate.substring(4);
-      } else {
-         result = strDate;
-      }
-      jqDate.val(result);
-   });
-   var dp_dates = activeDatePickers.datepicker({
-      dateFormat: 'dd.mm.yy',
-      changeMonth: true,
-      changeYear: true,
-      nextText: '',
-      prevText: '',
-      yearRange: '-100:+100',
-      duration: '',
-      showAnim: '',
-      onSelect: function( selectedDate ) {
-         var dateElem = jQuery(this);
-         dateElem.trigger("change");
-         var onchange = '' + dateElem.attr("onchange");
-         if (onchange.indexOf('ajaxSubmit(') == -1) {
-            var date_all = jQuery.datepicker.parseDate(dateElem.data("datepicker").settings.dateFormat,selectedDate,dateElem.data("datepicker").settings);
-            dp_dates.datepicker("option","defaultDate",date_all);
-            setMinEndDate(this, dateElem, true);
-         }
-      }
-   });
-   
-   activeDatePickers.each(function()
-         {
-            var dateElem = jQuery(this);
-            var onchange = '' + dateElem.attr("onchange");
-            setMinEndDate(this, dateElem, onchange.indexOf('ajaxSubmit(') == -1);
-         });
-
-   jQuery(".quickDateRangePicker", context).each(function (intIndex)
-         {
-            var selector = jQuery(this);
-            var selectorId = selector.attr("id");
-            var beginDate = jQuery("#" + escapeId4JQ(selectorId.replace("_DateRangePicker","")));
-            var endDate = jQuery("#" + escapeId4JQ(selectorId.replace("_DateRangePicker","_EndDate")));
-            setDateFromEnum(beginDate,endDate,selector.val());
-            beginDate.change(clearRangePicker);
-            endDate.change(clearRangePicker);
-            selector.change(setDateFromEnumOnChange);
-         });
-
-   if(context != null) {
-      $jQ("input", context).focus(function() {
-            lastActiveInput = $jQ(this);
-      });
-   }
+   jQuery("input.date", context).not("input[readonly]").datepicker({ dateFormat: 'dd.mm.yy', changeMonth: true, changeYear: true, nextText: '', prevText: '', yearRange: '-100:+100', duration: '' });
+   jQuery("input.sysdate", context).not("input[readonly]").datepicker({ dateFormat: 'dd.mm.yy', changeMonth: true, changeYear: true, nextText: '', prevText: '', defaultDate: +7, yearRange: '-100:+100', duration: '' });
 
    /**
     * Binder for alfresco properties that are generated with ClassificatorSelectorAndTextGenerator.class
@@ -1914,12 +1552,13 @@ function handleHtmlLoaded(context, setFocus, selects) {
       var textAreaId = selectId.substring(0, selectId.lastIndexOf(':') + 1) + TARGET_SUFFIX;
       var existingValue = $jQ("#" + escapeId4JQ(textAreaId)).text();
       var initialValue = $jQ('#' + escapeId4JQ(selectId) + ' :selected').text();
-      if (initialValue != "" && existingValue == "" && initialValue != getTranslation("select_default_label"))
+      if (initialValue != "" && existingValue == "")
       {
          var targetElem = $jQ("#" + escapeId4JQ(textAreaId));
          targetElem.val(initialValue);
       }
-      $jQ(this).change(function() {
+      $jQ(this).bind("change", function()
+      {
          appendSelection($jQ(this), textAreaId);
       });
    });
@@ -1928,21 +1567,29 @@ function handleHtmlLoaded(context, setFocus, selects) {
     * Add onChange functionality to jQuery change event (we can't use onChange attribute because of jQuery bug in IE)
     * @author Riina Tens
     */
-   $jQ("[class*=selectWithOnchangeEvent]", context).each(function (intIndex, selectElement)
+   $jQ("[class^=selectWithOnchangeEvent]", context).each(function (intIndex, selectElement)
    {
       var classString = selectElement.className;
       var currElId = selectElement.id;
       var onChangeJavascript = classString.substring(classString.lastIndexOf('¤¤¤¤') + 4);
       if(onChangeJavascript != ""){
-            $jQ(this).change(function(){
+         if(classString.indexOf('selectWithOnchangeEventParam') == 0){
+            $jQ(this).bind("change", function()
+            {
                //assume onChangeJavascript contains valid function body
                eval("(function(currElId) {" + onChangeJavascript + "}) ('" + selectElement.id + "');");
             });
+         }
+         else{
+            $jQ(this).bind("change", function()
+            {
+               eval("(function() {" + onChangeJavascript + "}) ();");
+            });
+         }
       }
    });
 
-   propSheetValidateOnDocumentReady();
-   propSheetValidateRegisterOnDocumentReady();
+	propSheetValidateOnDocumentReady();
 
    // this method should be called after critical activities have been done in handleHtmlLoaded as it displays alerts and possibly submits page
    confirmWorkflow();
@@ -1966,17 +1613,14 @@ function handleHtmlLoaded(context, setFocus, selects) {
    $jQ(".modalwrap select option", context).tooltip();
    initSelectTooltips((selects==undefined) ? $jQ("select") : selects);
 
-   var forms = $jQ(document.forms);
-   if(forms.length > 2){
-      forms.each(function(){
-         var form = this;
-         if(form.id != "rshStorageForm" && form.id != "searchForm" && form.id != "ConfigAdmin-console-title" && form.id != "node-browser-titlebar") {
-            alert("unexpected form.id='"+form.id+"' (found "+forms.length+" forms)");
-         }
-      });
-   }
+   // XXX: kasutusel addressbook.jsp, users.jsp lehtedel
+   $jQ(".admin-user-search-input", context).keyup(function(event) {
+      updateButtonState();
+      if (event.keyCode == '13') {
+         $jQ(this).next().click();
+      }
+   });
 
-   $jQ(".readonly", context).attr('readonly', 'readonly');
 }
 
 //-----------------------------------------------------------------------------
@@ -2001,59 +1645,159 @@ function cancelSign() {
  return oamSubmitForm('dialog','dialog:dialog-body:cancelSign',null,[[]]);
 }
 
-function performSigningPluginOperation(operation, hashHex, certId, path) {
-   try {
-      // plugin works when it's the first child of body; doesn't work when it's somewhere in the middle
-      $jQ('body').prepend('<div id="pluginLocation"></div>');
+function driverError() {
+}
 
-      loadSigningPlugin('est');
-      var plugin = new IdCardPluginHandler('est');
+//Some parts based on https://digidoc.sk.ee/include/JS/idCard.js
+//Some parts based on https://id.smartlink.ee/plugin_tests/legacy-plugin/load-legacy.js
+function loadSigningPlugin(operation, hashHex, certId, path) {
 
-      if (operation == 'PREPARE') {
-         var selectedCertificate = plugin.getCertificate();
-         var certHex = selectedCertificate.cert;
-         var certId = selectedCertificate.id;
+ if (isIE())
+ {
+    //activeX
+    document.getElementById('pluginLocation').innerHTML = '<OBJECT id="IdCardSigning" codebase="' + path + '/applet/EIDCard.cab#Version=1,0,2,4" classid="clsid:FC5B7BD2-584A-4153-92D7-4C5840E4BC28"></OBJECT>';
 
-         if (certHex) {
-            processCert(certHex, certId);
-         } else {
-            throw new IdCardException(1601, 'Sertifikaadi lugemine ebaõnnestus');
-         }
+    if (!this.isActiveXOK(document.getElementById('IdCardSigning')))
+    {
+       $jQ('#signWait').html('ID-kaardi draiverid ei ole paigaldatud!');
+       return;
+    }
+    var plugin = document.getElementById('IdCardSigning');
 
-      } else if (operation == 'FINALIZE') {
-         var signedHashHex = plugin.sign(certId, hashHex);
-         if (signedHashHex) {
-            signDocument(signedHashHex);
-         } else {
-            throw new IdCardException(1602, 'Allkirjastamine ebaõnnestus');
-         }
-      }
+    if (operation == 'PREPARE') {
+       var certHex = plugin.getSigningCertificate();
+       if (certHex) {
+          var certId = plugin.selectedCertNumber;
+          processCert(certHex, certId);
+       } else {
+          $jQ('#signWait').html('Sertifikaati ei valitud või sertifikaadid on registreerimata!');
+       }
 
-   } catch(ex) {
-      if (ex instanceof IdCardException) {
-         $jQ('#signWait').html(ex.message + ' (vea kood ' + ex.returnCode + ')');
-      } else {
-         $jQ('#signWait').html('Viga: ' + (ex.message != undefined ? ex.message : ex));
-      }
+    } else if (operation == 'FINALIZE') {
+       var signedHashHex = plugin.getSignedHash(hashHex, certId);
+       if (signedHashHex) {
+          signDocument(signedHashHex);
+       } else {
+          $jQ('#signWait').html('Allkirjastamine katkestati või ID-kaart ei ole lugejas!');
+       }
+    }
+ }
+ else if (navigator.userAgent.indexOf('Firefox') != -1)
+ {
+    navigator.plugins.refresh();
+    if (!navigator.mimeTypes['application/x-idcard-plugin']) {
+       $jQ('#signWait').html('ID-kaardi draiverid ei ole paigaldatud!');
+       return;
+    }
+
+    var s = document.createElement('embed');
+    s.id           = 'IdCardSigning';
+    s.type         = 'application/x-idcard-plugin';
+    s.style.width  = "1px";
+    s.style.height = "1px";
+    var b = document.getElementsByTagName("body")[0];
+    b.appendChild(s); // why does it work when appended here?
+
+    var plugin = document.getElementById('IdCardSigning');
+    $jQ.log('Loaded Mozilla plugin ' + plugin.getVersion());
+
+    if (operation == 'PREPARE') {
+       var response = eval('' + plugin.getCertificates());
+       if (response.returnCode != 0 || response.certificates.length < 1) {
+           firefoxSigningPluginError(response.returnCode);
+           return;
+       }
+
+       /* Find correct certificate */
+       var reg = new RegExp("(^| |,)Non-Repudiation($|,)");
+       var cert = null;
+       for (var i in response.certificates) {
+           cert = response.certificates[i];
+           if (reg.exec(cert.keyUsage)) break;
+       }
+
+       if (cert) {
+          var certHex = cert.cert;
+          var certId = cert.id;
+          processCert(certHex, certId);
+       } else {
+          $jQ('#signWait').html('Sertifikaati ei leitud!');
+       }
+
+    } else if (operation == 'FINALIZE') {
+       var response = eval('' + plugin.sign(certId, hashHex));
+       if (response.returnCode != 0) {
+          firefoxSigningPluginError(response.returnCode);
+          return;
+       }
+
+       var signedHashHex = response.signature;
+       signDocument(signedHashHex);
+    }
+ }
+ else
+ {
+    $jQ('#signWait').html('Digiallkirjastamine ei ole toetatud!');
+/*
+    //applet
+    $jQ('#signWait').hide();
+    $jQ('#pluginLocation').show();
+
+    document.getElementById('pluginLocation').innerHTML = '<embed'
+       + ' id="signApplet"'
+       + ' type="application/x-java-applet;version=1.4"'
+       + ' width="400"'
+       + ' height="80"'
+       + ' pluginspage="http://javadl.sun.com/webapps/download/GetFile/1.6.0_18-b07/windows-i586/xpiinstall.exe"'
+       + ' java_code="SignApplet.class"'
+       + ' java_codebase="' + path + '/applet"'
+       + ' java_archive="SignApplet_sig.jar, iaikPkcs11Wrapper_sig.jar"'
+       + ' NAME="SignApplet"'
+       + ' MAYSCRIPT="true"'
+       + ' LANGUAGE="EST"'
+       + ' FUNC_SET_CERT="window.processCert"'
+       + ' FUNC_SET_SIGN="window.signDocument"'
+       + ' FUNC_CANCEL="window.cancelSign"'
+       + ' FUNC_DRIVER_ERR="window.driverError"'
+       + ' DEBUG_LEVEL="4"'
+       + ' OPERATION="' + operation + '"'
+       + ' HASH="' + hashHex + '"'
+       + ' TOKEN_ID=""'
+       + ' LEGACY_LIFECYCLE="true"'
+       + '><noembed></noembed></embed>';
+*/
+ }
+}
+
+function firefoxSigningPluginError(returnCode) {
+   $jQ.log('returnCode=' + returnCode);
+   if (returnCode == 1) {
+      $jQ('#signWait').html('Allkirjastamine katkestati!');
+   } else if (returnCode == 12) {
+      $jQ('#signWait').html('ID-kaart ei ole lugejas!');
+   } else if (returnCode == 16) {
+      $jQ('#signWait').html('Vale ID-kaart on lugejas!');
+   } else {
+      $jQ('#signWait').html('Allkirjastamine ebaõnnestus (vea kood ' + returnCode + ')!');
    }
 }
 
-function getMobileIdSignature() {
-   var uri = getContextPath() + "/ajax/invoke/WorkflowBlockBean.getMobileIdSignature";
-   $jQ.ajax({
-      type: 'POST',
-      mode: 'queue',
-      url: uri,
-      dataType: 'html',
-      success: function( responseText, status, xhr ) {
-         if (responseText == 'FINISH') {
-            $jQ('#mobileIdChallengeMessage').html('<p>Vastus saadud...</p>');
-            $jQ('#' + escapeId4JQ('dialog:dialog-body:mobileIdChallengeModal_submit_btn')).click();
-         } else if (responseText == 'REPEAT') {
-            window.setTimeout(getMobileIdSignature, 2000);
-         }
-      }
-   });
+//https://digidoc.sk.ee/include/JS/idCard.js
+function isActiveXOK(plugin) {
+
+ if (plugin == null)
+    return false;
+
+ if (typeof(plugin) == "undefined")
+    return false;
+
+ if (plugin.readyState != 4 )
+    return false;
+
+ if (plugin.object == null )
+    return false;
+
+ return true;
 }
 
 function sendToSapManually(){
@@ -2070,101 +1814,5 @@ function confirmWorkflow(){
          return false;
       }
    }
-   $jQ("[class='workflow-after-confirmation-link']").eq(0).click();
-}
-
-function clearFormHiddenParams(currFormName, newTargetVal) {
-   var f = document.forms[currFormName];
-   $jQ("#hiddenInputsContainer input[type='hidden']", $jQ(f)).each(function(){
-      var jqInput=$jQ(this);
-      var before = jqInput.val();// FIXME DLSeadist debug
-      jqInput.val("");
-   });
-   if(newTargetVal){// FIXME DLSeadist debug - testiks sisse jäätud..kui üllatust ei tule kuskilt, siis kustutan lõpus ära
-      alert("suprize! newTargetVal="+newTargetVal+" ( old val was '"+f.target+"')");
-   }
-   f.target = newTargetVal ? newTargetVal : '';
-}
-function clearRangePicker(){
-   var date = jQuery(this);
-   var dateId = date.attr("id");
-   dateId = dateId.replace("_EndDate","");
-   var otherDate;
-   if(dateId==date.attr("id")){
-      otherDate = jQuery("#" + escapeId4JQ(dateId + "_EndDate"))
-   } else {
-      otherDate = jQuery("#" + escapeId4JQ(dateId))
-   }
-   date.datepicker("option","minDate",null);
-   date.datepicker("option","maxDate",null);
-   otherDate.datepicker("option","minDate",null);
-   otherDate.datepicker("option","maxDate",null);
-   var selector = jQuery("#" + escapeId4JQ(dateId + "_DateRangePicker"));
-   selector.val("");
-}
-function setDateFromEnumOnChange(){
-   var selector = jQuery(this);
-   var selectorId = selector.attr("id");
-   var beginDate = jQuery("#" + escapeId4JQ(selectorId.replace("_DateRangePicker","")));
-   var endDate = jQuery("#" + escapeId4JQ(selectorId.replace("_DateRangePicker","_EndDate")));
-   setDateFromEnum(beginDate,endDate,selector.val());
-}
-function getEstonianWeekday(date){
-   var weekday = date.getDay()-1;
-   if(weekday<0) {
-      return 6;
-   }
-   return weekday;
-}
-function setDateFromEnum(beginDate,endDate,selectedEnum){
-   if(selectedEnum=="") return;
-   var startDate = new Date();
-   var finishDate = new Date();
-   if(selectedEnum == "YESTERDAY"){
-      startDate.setDate(startDate.getDate()-1);
-      finishDate.setDate(finishDate.getDate()-1);
-   } else if(selectedEnum == "CURRENT_WEEK"){
-      startDate.setDate(startDate.getDate() - getEstonianWeekday(startDate));
-   } else if(selectedEnum == "PREV_WEEK"){
-      startDate.setDate(startDate.getDate() - getEstonianWeekday(startDate) -7);
-      finishDate= new Date(startDate.getFullYear(),startDate.getMonth(),startDate.getDate() + 6,0,0,0,0);
-   } else if(selectedEnum == "FROM_PREV_WEEK"){
-      startDate.setDate(startDate.getDate() - getEstonianWeekday(startDate) -7);
-   } else if(selectedEnum == "CURRENT_MONTH"){
-      startDate = new Date(startDate.getFullYear(),startDate.getMonth(),1,0,0,0,0);
-   } else if(selectedEnum == "PREV_MONTH"){
-      startDate = new Date(startDate.getFullYear(),startDate.getMonth()-1,1,0,0,0,0);
-      finishDate= new Date(startDate.getFullYear(),startDate.getMonth() + 1,1,0,0,0,0);
-      finishDate.setDate(finishDate.getDate()-1);
-   } else if(selectedEnum == "FROM_PREV_MONTH"){
-      startDate = new Date(startDate.getFullYear(),startDate.getMonth()-1,1,0,0,0,0);
-   } else if(selectedEnum == "CURRENT_YEAR"){
-      startDate = new Date(startDate.getFullYear(),0,1,0,0,0,0);
-   }
-   beginDate.datepicker("option","defaultDate",startDate);
-   beginDate.datepicker("setDate",startDate);
-   endDate.datepicker("option","minDate",startDate);
-   endDate.datepicker("option","defaultDate",finishDate);
-   endDate.datepicker("setDate",finishDate);
-}
-
-function clickNextLink(currElId){
-   $jQ("#" + escapeId4JQ(currElId)).nextAll("a").eq(0).click();
-}
-
-function endsWith(str, suffix) {
-   return str && suffix && str.indexOf(suffix, str.length - suffix.length) !== -1;
-}
-function help(url) {
-   var settings=
-      "toolbar=no,location=no,directories=no,"+
-      "status=no,menubar=no,scrollbars=yes,"+
-      "resizable=yes,width=800px,height=600px";
-
-   var win = window.open(url,"Abiinfo",settings);
-
-   if (window.focus) {
-      win.focus();
-   }
-   return false;
+   $jQ("[class='workflow-after-confirmation-link']").get(0).click();
 }

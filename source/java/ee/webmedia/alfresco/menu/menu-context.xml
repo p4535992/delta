@@ -32,7 +32,6 @@
       <property name="generalService" ref="GeneralService" />
       <property name="nodeService" ref="NodeService" />
       <property name="userService" ref="UserService" />
-      <property name="parametersService" ref="ParametersService" />
       <property name="updateCount" value="0" />
       <property name="menuItemFilters">
          <map>
@@ -82,37 +81,17 @@
       <property name="nodeService" ref="NodeService" />
       <property name="menuService" ref="MenuService" />
    </bean>
-   
-   <bean class="ee.webmedia.alfresco.menu.service.AdministratorMenuItemProcessor">
-      <property name="userService" ref="UserService" />
-      <property name="menuService" ref="MenuService" />
-      <property name="einvoiceService" ref="EInvoiceService" />       
-   </bean>
 
-   <bean class="ee.webmedia.alfresco.menu.service.HiddenMenuItemProcessor">
-      <property name="menuService" ref="MenuService" />
-      <property name="volumeService" ref="VolumeService" />       
-      <property name="parametersService" ref="ParametersService" />       
-   </bean>
-
-   <bean id="menuParametersBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
-      <property name="moduleId" value="common" />
+   <!-- Changes shortcut to menuItemId (CL task 158558) -->
+   <bean id="shortcutToMenuItemIdUpdater" class="ee.webmedia.alfresco.menu.bootstrap.ShortcutToMenuItemIdUpdater" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
       <property name="dependsOn">
          <list>
-            <ref bean="parametersSpacesBootstrap" />
+            <ref bean="documentTypeSpacesBootstrap2" />
          </list>
       </property>
-      <property name="importer" ref="spacesBootstrap" />
-      <property name="bootstrapViews">
-         <list>
-            <props>
-               <prop key="encoding">UTF-8</prop>
-               <prop key="path">/param:parameters</prop>
-               <prop key="location">ee/webmedia/alfresco/menu/bootstrap/menu-parameters.xml</prop>
-            </props>
-         </list>
-      </property>
-   </bean>
+      <property name="menuService" ref="menuService" />
+   </bean> 
 
 </beans>

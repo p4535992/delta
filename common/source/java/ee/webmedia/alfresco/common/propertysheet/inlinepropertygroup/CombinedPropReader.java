@@ -30,10 +30,7 @@ public class CombinedPropReader {
     public interface AttributeNames {
         String OPTIONS_SEPARATOR = "optionsSeparator";
         String PROPERTIES_SEPARATOR = "propertiesSeparator";
-        String DEFAULT_PROPERTIES_SEPARATOR = ",";
         String PROPS_GENERATION = "propsGeneration";
-        String PROPS = "props";
-        String TEXT_ID = "textId";
         String PROP_GENERATOR_DESCRIPTORS = "propGeneratorDescriptors";
     }
 
@@ -76,7 +73,7 @@ public class CombinedPropReader {
     public static List<ComponentPropVO> readProperties(String propertyDescriptionsEncoded, String propertiesSeparator, String optionsSeparator, Node node,
             FacesContext context) {
         if (StringUtils.isBlank(propertiesSeparator)) {
-            propertiesSeparator = AttributeNames.DEFAULT_PROPERTIES_SEPARATOR;
+            propertiesSeparator = ",";
         }
         if (StringUtils.isBlank(optionsSeparator)) {
             optionsSeparator = "\\|"; // XXX: default could be "¤", as it is probably not used as often as "|".
@@ -102,21 +99,12 @@ public class CombinedPropReader {
             if (fields.length >= 2 && StringUtils.isNotEmpty(fields[1])) {
                 generatorName = fields[1].trim();
             }
-
-            Map<String, String> customAttributes = getAttributes(propDesc, fields);
-            String displayLabelIdKey = "display-label-id";
-            if (customAttributes.containsKey(displayLabelIdKey)) {
-                componentPropVO.setPropertyLabel(MessageUtil.getMessage(customAttributes.remove(displayLabelIdKey)));
-            }
-
             if (node != null) { // set label and component generator, if it was not explicitly specified
                 // get property definition
                 PropertyDefinition propDef = ComponentUtil.getPropertyDefinition(context, node, propName);
 
                 // set property label
-                if (StringUtils.isBlank(componentPropVO.getPropertyLabel())) {
-                    componentPropVO.setPropertyLabel(ComponentUtil.resolveDisplayLabel(context, propDef, propName));
-                }
+                componentPropVO.setPropertyLabel(ComponentUtil.resolveDisplayLabel(context, propDef, propName));
 
                 if (StringUtils.isBlank(generatorName)) {
                     if (propDef != null) {
@@ -138,7 +126,7 @@ public class CombinedPropReader {
             componentPropVO.setGeneratorName(generatorName);
 
             // get attributes
-            componentPropVO.setCustomAttributes(customAttributes);
+            componentPropVO.setCustomAttributes(getAttributes(propDesc, fields));
 
             componentPropVOs.add(componentPropVO);
         }

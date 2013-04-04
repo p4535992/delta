@@ -43,11 +43,8 @@
       <property name="templateService" ref="DocumentTemplateService" />
       <property name="fileService" ref="FileService" />
       <property name="documentSearchService" ref="DocumentSearchService" />
+      <property name="authorityService" ref="AuthorityService" />
       <property name="substituteService" ref="SubstituteService" />
-      <property name="addressbookService" ref="AddressbookService" />
-      <property name="classificatorService" ref="ClassificatorService" />
-      <property name="workflowService" ref="wmWorkflowService" />
-      <property name="logService" ref="LogService" />
    </bean>
 
    <bean id="NotificationService" class="org.springframework.aop.framework.ProxyFactoryBean">
@@ -67,10 +64,6 @@
    <bean id="workflowStatusEventListener" class="ee.webmedia.alfresco.notification.service.event.WorkflowStatusEventListener">
       <property name="notificationService" ref="NotificationService" />
       <property name="workflowService" ref="WmWorkflowService" />
-      <property name="generalService" ref="GeneralService" />
-      <property name="privilegeService" ref="PrivilegeService" />
-      <property name="fileService" ref="FileService" />
-      <property name="transactionService" ref="TransactionService" />
    </bean>
    
    <bean id="notificationImportBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent" abstract="true">
@@ -103,17 +96,6 @@
       </property>
    </bean>
    
-   <bean id="notificationParametersBootstrap2" parent="notificationImportBootstrap">
-      <property name="bootstrapViews">
-         <list>
-            <props>
-               <prop key="path">/param:parameters</prop>
-               <prop key="location">ee/webmedia/alfresco/notification/bootstrap/notification-parameters2.xml</prop>
-            </props>
-         </list>
-      </property>
-   </bean>
-   
    <bean id="notificationRootBootstrap" parent="notificationImportBootstrap">
       <property name="bootstrapViews">
          <list>
@@ -130,14 +112,8 @@
       <property name="source" ref="parameterRescheduledJobsBootstrap" />
       <property name="dependsOn" ref="notificationParametersBootstrap" />
    </bean>
-
-   <bean class="ee.webmedia.alfresco.common.bootstrap.ModuleComponentDependsOnSetter">
-      <property name="source" ref="parameterRescheduledJobsBootstrap" />
-      <property name="dependsOn" ref="notificationParametersBootstrap2" />
-   </bean>
    
    <bean id="taskDueDateNotificationTrigger" class="ee.webmedia.alfresco.parameters.job.ParameterRescheduledTriggerBean" parent="parameterRescheduledTriggerParent">
-      <property name="enabled" value="${jobs.enabled}" />
       <property name="parameterName" value="taskDueDateNotificationTime" />
       <property name="parameterFormat" value="H:mm" />
       <property name="jobDetail">
@@ -153,7 +129,6 @@
    </bean>
    
    <bean id="volumeDispositionDateNotificationTrigger" class="ee.webmedia.alfresco.parameters.job.ParameterRescheduledTriggerBean" parent="parameterRescheduledTriggerParent">
-      <property name="enabled" value="${jobs.enabled}" />
       <property name="parameterName" value="volumeDispositionDateNotificationDays" />
       <property name="parameterFormat" value="D" />
       <property name="jobDetail">
@@ -169,28 +144,11 @@
    </bean>
    
    <bean id="accessRestrictionEndDateNotificationTrigger" class="ee.webmedia.alfresco.parameters.job.ParameterRescheduledTriggerBean" parent="parameterRescheduledTriggerParent">
-      <property name="enabled" value="${jobs.enabled}" />
       <property name="parameterName" value="accessRestrictionEndDateNotificationDays" />
       <property name="parameterFormat" value="D" />
       <property name="jobDetail">
          <bean id="accessRestrictionEndDateNotificationJobDetails" class="org.springframework.scheduling.quartz.JobDetailBean">
             <property name="jobClass" value="ee.webmedia.alfresco.notification.job.AccessRestrictionEndDateNotificationJob" />
-            <property name="jobDataAsMap">
-               <map>
-                  <entry key="notificationService" value-ref="NotificationService" />
-               </map>
-            </property>
-         </bean>
-      </property>
-   </bean>
-
-   <bean id="contractDueDateNotificationTrigger" class="ee.webmedia.alfresco.parameters.job.ParameterRescheduledTriggerBean" parent="parameterRescheduledTriggerParent">
-      <property name="enabled" value="${jobs.enabled}" />
-      <property name="parameterName" value="contractDueDateNotificationDays" />
-      <property name="parameterFormat" value="D" />
-      <property name="jobDetail">
-         <bean id="contractDueDateNotificationJobDetails" class="org.springframework.scheduling.quartz.JobDetailBean">
-            <property name="jobClass" value="ee.webmedia.alfresco.notification.job.ContractDueDateNotificationJob" />
             <property name="jobDataAsMap">
                <map>
                   <entry key="notificationService" value-ref="NotificationService" />

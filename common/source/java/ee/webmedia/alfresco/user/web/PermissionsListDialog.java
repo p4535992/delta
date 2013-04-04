@@ -4,7 +4,6 @@ import java.util.Iterator;
 import java.util.List;
 
 import javax.faces.context.FacesContext;
-import javax.faces.el.MethodBinding;
 import javax.faces.event.ActionEvent;
 
 import org.alfresco.service.cmr.repository.NodeRef;
@@ -21,9 +20,6 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 
 public class PermissionsListDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;
-    public static final String BEAN_NAME = "PermissionsListDialog";
-    /** allows delegating actual permission removing to another method using given method binding expression */
-    private static String DELEGATE_REMOVE_AUTHORITY_MB = "delegateRemoveAuthorityMB";
 
     private transient UIRichList authoritiesRichList;
     private transient UserService userService;
@@ -33,8 +29,6 @@ public class PermissionsListDialog extends BaseDialogBean {
     private List<Authority> authorities;
     private String alternateConfigId;
     private String alternateDialogTitleId;
-    private String callbackMethodBinding;
-    private String delegateRemoveAuthorityMB;
 
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
@@ -44,29 +38,14 @@ public class PermissionsListDialog extends BaseDialogBean {
     }
 
     @Override
-    public boolean isFinishButtonVisible(boolean dialogConfOKButtonVisible) {
-        return false;
-    }
-
-    @Override
     public String cancel() {
-        reset();
+        nodeRef = null;
+        permission = null;
+        restored();
         return super.cancel();
     }
 
-    private void reset() {
-        // Don't call these from restored() since this dialog uses nested dialogs for actual rights management!
-        nodeRef = null;
-        permission = null;
-        alternateConfigId = null;
-        callbackMethodBinding = null;
-        alternateDialogTitleId = null;
-        restored();
-    }
-
     public void setup(ActionEvent event) {
-        reset();
-
         nodeRef = new NodeRef(ActionUtil.getParam(event, "nodeRef"));
         permission = ActionUtil.getParam(event, "permission");
         if (ActionUtil.hasParam(event, "alternateConfigId")) {
@@ -75,10 +54,7 @@ public class PermissionsListDialog extends BaseDialogBean {
         if (ActionUtil.hasParam(event, "alternateDialogTitleId")) {
             alternateDialogTitleId = ActionUtil.getParam(event, "alternateDialogTitleId");
         }
-        if (ActionUtil.hasParam(event, "callbackMethodBinding")) {
-            callbackMethodBinding = "#{" + ActionUtil.getParam(event, "callbackMethodBinding") + "}";
-        }
-        delegateRemoveAuthorityMB = ActionUtil.getParam(event, DELEGATE_REMOVE_AUTHORITY_MB, "");
+        restored();
     }
 
     public void removeAuthorityAndSave(ActionEvent event) {
@@ -86,15 +62,8 @@ public class PermissionsListDialog extends BaseDialogBean {
         for (Iterator<Authority> it = authorities.iterator(); it.hasNext();) {
             Authority authority = it.next();
             if (StringUtils.equals(authority.getAuthority(), auth)) {
-                if (StringUtils.isNotBlank(delegateRemoveAuthorityMB)) {
-                    FacesContext context = FacesContext.getCurrentInstance();
-                    MethodBinding b = context.getApplication().createMethodBinding("#{" + delegateRemoveAuthorityMB + "}"
-                            , new Class[] { NodeRef.class, String.class, String.class });
-                    b.invoke(context, new Object[] { nodeRef, authority.getAuthority(), permission });
-                } else {
-                    BeanHelper.getPermissionService().deletePermission(nodeRef, authority.getAuthority(), permission);
-                    MessageUtil.addInfoMessage("delete_success");
-                }
+                BeanHelper.getPermissionService().deletePermission(nodeRef, authority.getAuthority(), permission);
+                MessageUtil.addInfoMessage("delete_success");
                 it.remove();
                 break;
             }
@@ -165,18 +134,5 @@ public class PermissionsListDialog extends BaseDialogBean {
     public void setUserService(UserService userService) {
         this.userService = userService;
     }
-
-    public String getCallbackMethodBinding() {
-        return callbackMethodBinding;
-    }
-
-    public void setCallbackMethodBinding(String callbackMethodBinding) {
-        this.callbackMethodBinding = callbackMethodBinding;
-    }
-
-    public String getAlternateDialogTitleId() {
-        return alternateDialogTitleId;
-    }
-
     // END: getters / setters
 }

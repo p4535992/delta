@@ -9,7 +9,7 @@ import org.alfresco.service.cmr.dictionary.PropertyDefinition;
 import org.alfresco.web.ui.repo.component.property.PropertySheetItem;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 
-import ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.HandlesViewMode;
+import ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.GeneratorsWrapper;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 
 /**
@@ -17,7 +17,7 @@ import ee.webmedia.alfresco.utils.ComponentUtil;
  * 
  * @author Riina Tens
  */
-public class DimensionSelectorAlwaysEditGenerator extends DimensionSelectorGenerator implements HandlesViewMode {
+public class DimensionSelectorAlwaysEditGenerator extends DimensionSelectorGenerator implements GeneratorsWrapper {
 
     @Override
     protected void setupProperty(FacesContext context, UIPropertySheet propertySheet, PropertySheetItem item, PropertyDefinition propertyDef,

@@ -1,20 +1,30 @@
 package ee.webmedia.alfresco.imap.web;
 
-import org.alfresco.service.cmr.repository.NodeRef;
+import javax.faces.event.ActionEvent;
 
-import ee.webmedia.alfresco.common.web.BeanHelper;
-import ee.webmedia.alfresco.imap.model.ImapModel;
+import ee.webmedia.alfresco.document.web.BaseDocumentListDialog;
+import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
- * @author Riina Tens
+ * Dialog for incoming emails list.
+ * 
+ * @author Romet Aidla
  */
-public class IncomingEmailListDialog extends AbstractEmailListDialog {
+public class IncomingEmailListDialog extends BaseDocumentListDialog {
+    private static final long serialVersionUID = 0L;
 
-    private static final long serialVersionUID = 1L;
-
-    @Override
-    protected NodeRef getMainFolderRef() {
-        return BeanHelper.getGeneralService().getNodeRef(ImapModel.Repo.INCOMING_SPACE);
+    /** @param event */
+    public void setup(ActionEvent event) {
+        restored();
     }
 
+    @Override
+    public void restored() {
+        documents = getDocumentService().getIncomingEmails();
+    }
+
+    @Override
+    public String getListTitle() {
+        return MessageUtil.getMessage("document_incoming_emails");
+    }
 }

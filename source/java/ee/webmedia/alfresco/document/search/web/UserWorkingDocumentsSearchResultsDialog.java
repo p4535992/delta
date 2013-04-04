@@ -26,14 +26,4 @@ public class UserWorkingDocumentsSearchResultsDialog extends BaseDocumentListDia
     public void restored() {
         documents = getDocumentSearchService().searchInProcessUserDocuments();
     }
-
-    @Override
-    public String getColumnsFile() {
-        return "/WEB-INF/classes/ee/webmedia/alfresco/document/search/web/user-working-documents-list-dialog-columns.jsp";
-    }
-
-    @Override
-    public String getInitialSortColumn() {
-        return "documentTypeName";
-    }
 }

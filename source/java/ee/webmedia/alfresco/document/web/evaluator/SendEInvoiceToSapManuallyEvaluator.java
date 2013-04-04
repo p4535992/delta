@@ -2,7 +2,6 @@ package ee.webmedia.alfresco.document.web.evaluator;
 
 import java.util.List;
 
-import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.web.action.evaluator.BaseActionEvaluator;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.StringUtils;
@@ -23,9 +22,6 @@ public class SendEInvoiceToSapManuallyEvaluator extends BaseActionEvaluator {
 
     @Override
     public boolean evaluate(Node docNode) {
-        if (!docNode.getNodeRef().getStoreRef().getProtocol().equals(StoreRef.PROTOCOL_WORKSPACE)) {
-            return false;
-        }
         boolean isInViewState = new ViewStateActionEvaluator().evaluate(docNode);
         return isInViewState
                 && DocumentSubtypeModel.Types.INVOICE.equals(docNode.getType())

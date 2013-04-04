@@ -1,7 +1,3 @@
-jQuery.expr[':'].focus = function( elem ) {
-  return elem === document.activeElement && ( elem.type || elem.href );
-};
-
 nrOfAutoCompleteInputs = 0;
 jQuery.autocomplete = function(input, options) {
    // Create a link to self
@@ -244,8 +240,7 @@ jQuery.autocomplete = function(input, options) {
       // get the position of the input field right now (in case the DOM is shifted)
       var pos = findPos(input);
       // either use the specified width, or autocalculate based on form element
-      var iWidth = parseInt((options.width > 0) ? options.width : $input.width() + 4);
-      iWidth = Math.min(400, iWidth); // IE9 bug
+      var iWidth = (options.width > 0) ? options.width : $input.width() + 4;
 /*
       var padding = jQuery.browser.mozilla ? 20 : 4; // hardcoded, also fix for firefox
       // determine with using textMetrics
@@ -286,7 +281,7 @@ jQuery.autocomplete = function(input, options) {
          results.innerHTML = "";
 
          // if the field no longer has focus or if there are no matches, do not display the drop down
-         if( !$input.is(":focus") || data.length == 0 ) return hideResultsNow();
+         if( !hasFocus || data.length == 0 ) return hideResultsNow();
 
          if (jQuery.browser.msie) {
             // we put a styled iframe behind the calendar so HTML SELECT elements don't show through
@@ -344,7 +339,7 @@ jQuery.autocomplete = function(input, options) {
          jQuery(li).hover(
             function() { jQuery("li", ul).removeClass("ac_over"); jQuery(this).addClass("ac_over"); active = jQuery("li", ul).indexOf(jQuery(this).get(0)); },
             function() { jQuery(this).removeClass("ac_over"); }
-			).mousedown(function(e) { e.preventDefault(); e.stopPropagation(); selectItem(this); });
+			).click(function(e) { e.preventDefault(); e.stopPropagation(); selectItem(this); });
       }
       return ul;
    };

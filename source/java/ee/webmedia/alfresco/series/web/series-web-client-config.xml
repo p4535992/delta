@@ -16,20 +16,17 @@
             </params>
          </action>
 
-         <action id="series_open">
-            <evaluator>ee.webmedia.alfresco.series.web.SeriesIsClosedEvaluator</evaluator>
-            <label-id>series_open</label-id>
-            <image>/images/icons/versioned_properties.gif</image>
-            <action-listener>#{SeriesDetailsDialog.open}</action-listener>
-         </action>
-
          <action id="series_permissions">
+            <permissions>
+               <permission allow="true">ReadPermissions</permission>
+            </permissions>
             <label-id>manage_invited_users</label-id>
-            <image>/images/icons/users.gif</image>
-            <action>dialog:manageInheritablePrivilegesDialog</action>
-            <action-listener>#{ManageInheritablePrivilegesDialog.init}</action-listener>
+            <image>/images/icons/invite.gif</image>
+            <action-listener>#{PermissionsListDialog.setup}</action-listener>
+            <action>dialog:permissionsListDialog</action>
             <params>
-               <param name="manageableRef">#{SeriesDetailsDialog.currentNode.nodeRef}</param>
+               <param name="nodeRef">#{SeriesDetailsDialog.currentNode.nodeRef}</param>
+               <param name="permission">DocumentFileRead</param>
             </params>
          </action>
 
@@ -38,7 +35,6 @@
          </action-group>
 
          <action-group id="browse_actions_series_details">
-            <action idref="series_open"/>
             <action idref="series_permissions" />
          </action-group>
 
@@ -70,21 +66,12 @@
          <show-property name="ser:description" display-label-id="series_description" readOnlyIf="ser:status=suletud" styleClass="expand19-200" component-generator="TextAreaGenerator"/>
          <show-property name="ser:status" display-label-id="series_status" read-only="true" classificatorName="docListUnitStatus"
             component-generator="ClassificatorSelectorGenerator" />
-         <show-property name="ser:validFromDate" display-label-id="series_validFromDate" readOnlyIf="ser:status=suletud" />
-         <show-property name="ser:validToDate" display-label-id="series_validToDate" readOnlyIf="ser:status=suletud" />
          <show-property name="ser:order" display-label-id="series_order" converter="javax.faces.Integer" />
-         <show-property name="ser:docType" display-label-id="series_docType" component-generator="SearchGenerator" pickerCallback="#{DocTypeListDialog.searchUsedDocTypes}"
+         <show-property name="ser:docType" display-label-id="series_docType" component-generator="SearchGenerator" pickerCallback="#{DocumentTypeDialog.searchUsedDocTypes}"
             allowDuplicates="false" converter="ee.webmedia.alfresco.document.type.web.DocumentTypeConverter" dialogTitleId="series_docType_popUpInfo" />
          <show-property name="ser:register" display-label-id="series_register" readOnlyIf="ser:status=suletud" component-generator="GeneralSelectorGenerator"
             converter="javax.faces.Integer" selectionItems="#{RegisterListDialog.findActiveRegisters}" />
-         <show-property name="ser:docNumberPattern" display-label-id="series_docNumberPattern" readOnlyIf="ser:status=suletud" />
-         <show-property name="ser:newNumberForEveryDoc" display-label-id="series_newNumberForEveryDoc" readOnlyIf="ser:status=suletud" component-generator="CheckboxGenerator" />
          <show-property name="ser:individualizingNumbers" display-label-id="series_individualizingNumbers" readOnlyIf="ser:status=suletud" component-generator="CheckboxGenerator" />
-         <show-property name="ser:volType" display-label-id="series_volType" component-generator="EnumSelectorGenerator" 
-            enumClass="ee.webmedia.alfresco.classificator.enums.VolumeType" readOnlyIf="ser:status=suletud" /> 
-         <show-property name="ser:volRegister" display-label-id="series_volRegister" readOnlyIf="ser:status=suletud" show="#{VolumeService.caseVolumeEnabled}" 
-            component-generator="GeneralSelectorGenerator" converter="javax.faces.Integer" selectionItems="#{RegisterListDialog.findActiveRegisters}"/>
-         <show-property name="ser:volNumberPattern" display-label-id="series_volNumberPattern"  readOnlyIf="ser:status=suletud" show="#{VolumeService.caseVolumeEnabled}" />
          <show-property name="doccom:accessRestriction" component-generator="ClassificatorSelectorGenerator" classificatorName="accessRestriction"
             readOnlyIf="ser:status=suletud" />
          <show-property name="doccom:accessRestrictionReason" mandatoryIf="accessRestriction" component-generator="ClassificatorSelectorAndTextGenerator"

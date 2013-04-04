@@ -17,7 +17,7 @@
          <f:facet name="header">
             <a:sortLink id="col1-lbl" label="#{msg.workflow_compound_name}" value="name" mode="case-insensitive" styleClass="header" />
          </f:facet>
-         <a:actionLink id="col1-act" value="#{r.nameAndUserFullName}" action="dialog:compoundWorkflowDefinitionDialog" actionListener="#{CompoundWorkflowDefinitionDialog.setupWorkflow}"
+         <a:actionLink id="col1-act" value="#{r.name}" action="dialog:compoundWorkflowDefinitionDialog" actionListener="#{CompoundWorkflowDefinitionDialog.setupWorkflow}"
             tooltip="#{msg.workflow_compound_edit}">
             <f:param name="nodeRef" value="#{r.node.nodeRef}" />
          </a:actionLink>

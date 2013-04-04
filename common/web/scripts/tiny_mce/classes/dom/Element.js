@@ -1,11 +1,11 @@
 /**
  * Element.js
  *
- * Copyright, Moxiecode Systems AB
+ * Copyright 2009, Moxiecode Systems AB
  * Released under LGPL License.
  *
- * License: http://www.tinymce.com/license
- * Contributing: http://www.tinymce.com/contributing
+ * License: http://tinymce.moxiecode.com/license
+ * Contributing: http://tinymce.moxiecode.com/contributing
  */
 
 (function(tinymce) {
@@ -15,12 +15,6 @@
 	 * since it's bound to an element.
 	 *
 	 * @class tinymce.dom.Element
-	 * @example
-	 * // Creates an basic element for an existing element
-	 * var elm = new tinymce.dom.Element('someid');
-	 * 
-	 * elm.setStyle('background-color', 'red');
-	 * elm.moveTo(10, 10);
 	 */
 
 	/**
@@ -46,20 +40,20 @@
 				('getPos,getRect,getParent,add,setStyle,getStyle,setStyles,' + 
 				'setAttrib,setAttribs,getAttrib,addClass,removeClass,' + 
 				'hasClass,getOuterHTML,setOuterHTML,remove,show,hide,' + 
-				'isHidden,setHTML,get').split(/,/), function(k) {
-					t[k] = function() {
-						var a = [id], i;
+				'isHidden,setHTML,get').split(/,/)
+			, function(k) {
+				t[k] = function() {
+					var a = [id], i;
 
-						for (i = 0; i < arguments.length; i++)
-							a.push(arguments[i]);
+					for (i = 0; i < arguments.length; i++)
+						a.push(arguments[i]);
 
-						a = dom[k].apply(dom, a);
-						t.update(k);
+					a = dom[k].apply(dom, a);
+					t.update(k);
 
-						return a;
-					};
-			}
-		);
+					return a;
+				};
+		});
 
 		tinymce.extend(t, {
 			/**

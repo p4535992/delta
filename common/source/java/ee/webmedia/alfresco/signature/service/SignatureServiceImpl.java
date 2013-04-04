@@ -1,31 +1,19 @@
 package ee.webmedia.alfresco.signature.service;
 
-import static ee.webmedia.alfresco.utils.CalendarUtil.duration;
-
-import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
-import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
-import java.io.UnsupportedEncodingException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
-import java.util.Vector;
-
-import javax.xml.ws.Holder;
-import javax.xml.ws.soap.SOAPFaultException;
 
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.content.MimetypeMap;
@@ -39,26 +27,14 @@ import org.alfresco.service.cmr.repository.MimetypeService;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.namespace.QName;
-import org.alfresco.util.TempFileProvider;
 import org.apache.commons.codec.binary.Base64OutputStream;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.ObjectUtils;
-import org.apache.commons.lang.StringUtils;
-import org.apache.cxf.jaxws.JaxWsProxyFactoryBean;
 import org.apache.log4j.Logger;
-import org.bouncycastle.asn1.ASN1InputStream;
-import org.bouncycastle.asn1.DERObject;
-import org.bouncycastle.asn1.DERObjectIdentifier;
-import org.bouncycastle.asn1.DEROctetString;
-import org.bouncycastle.asn1.DERSequence;
-import org.bouncycastle.asn1.x509.X509Name;
-import org.bouncycastle.jce.PrincipalUtil;
-import org.bouncycastle.jce.X509Principal;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.util.Assert;
+import org.springframework.util.StringUtils;
 
-import ee.sk.digidoc.Base64Util;
 import ee.sk.digidoc.CertValue;
 import ee.sk.digidoc.DataFile;
 import ee.sk.digidoc.DigiDocException;
@@ -67,30 +43,16 @@ import ee.sk.digidoc.SignatureProductionPlace;
 import ee.sk.digidoc.SignedDoc;
 import ee.sk.digidoc.SignedProperties;
 import ee.sk.digidoc.factory.SAXDigiDocFactory;
-import ee.sk.digidocservice.DataFileDigest;
-import ee.sk.digidocservice.DataFileDigestList;
-import ee.sk.digidocservice.DigiDocServicePortType;
-import ee.sk.digidocservice.ObjectFactory;
 import ee.sk.utils.ConfigManager;
-import ee.sk.xmlenc.EncryptedData;
-import ee.sk.xmlenc.EncryptedKey;
-import ee.sk.xmlenc.EncryptionProperty;
 import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.signature.exception.SignatureException;
 import ee.webmedia.alfresco.signature.exception.SignatureRuntimeException;
 import ee.webmedia.alfresco.signature.model.DataItem;
-import ee.webmedia.alfresco.signature.model.SignatureChallenge;
 import ee.webmedia.alfresco.signature.model.SignatureDigest;
 import ee.webmedia.alfresco.signature.model.SignatureItem;
 import ee.webmedia.alfresco.signature.model.SignatureItemsAndDataItems;
-import ee.webmedia.alfresco.signature.model.SkLdapCertificate;
-import ee.webmedia.alfresco.utils.FilenameUtil;
-import ee.webmedia.alfresco.utils.UnableToPerformException;
-import ee.webmedia.alfresco.utils.UserUtil;
+import ee.webmedia.alfresco.utils.Timer;
 
-/**
- * @author Alar Kvell
- */
 public class SignatureServiceImpl implements SignatureService, InitializingBean {
 
     private static Logger log = Logger.getLogger(SignatureServiceImpl.class);
@@ -98,7 +60,6 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
     private FileFolderService fileFolderService;
     private NodeService nodeService;
     private MimetypeService mimetypeService;
-    private JaxWsProxyFactoryBean digiDocServiceFactory;
     private boolean test = false;
 
     private String jDigiDocCfg;
@@ -106,12 +67,6 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
     private String pkcs12Container;
     private String pkcs12Password;
     private String pkcs12CertSerial;
-    private String digiDocServiceUrl;
-    private String testDigiDocServiceUrl;
-    private String mobileIdServiceName;
-    private String testMobileIdServiceName;
-
-    private DigiDocServicePortType digiDocService;
 
     public void setFileFolderService(FileFolderService fileFolderService) {
         this.fileFolderService = fileFolderService;
@@ -123,10 +78,6 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
 
     public void setMimetypeService(MimetypeService mimetypeService) {
         this.mimetypeService = mimetypeService;
-    }
-
-    public void setDigiDocServiceFactory(JaxWsProxyFactoryBean digiDocServiceFactory) {
-        this.digiDocServiceFactory = digiDocServiceFactory;
     }
 
     public void setjDigiDocCfg(String jDigiDocCfg) {
@@ -149,25 +100,9 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
         this.pkcs12CertSerial = pkcs12CertSerial;
     }
 
-    public void setDigiDocServiceUrl(String digiDocServiceUrl) {
-        this.digiDocServiceUrl = digiDocServiceUrl;
-    }
-
-    public void setTestDigiDocServiceUrl(String testDigiDocServiceUrl) {
-        this.testDigiDocServiceUrl = testDigiDocServiceUrl;
-    }
-
-    public void setMobileIdServiceName(String mobileIdServiceName) {
-        this.mobileIdServiceName = mobileIdServiceName;
-    }
-
-    public void setTestMobileIdServiceName(String testMobileIdServiceName) {
-        this.testMobileIdServiceName = testMobileIdServiceName;
-    }
-
     @Override
     public void afterPropertiesSet() throws Exception {
-        if (StringUtils.isNotEmpty(pkcs12Container)) {
+        if (StringUtils.hasLength(pkcs12Container)) {
             File container = new File(pkcs12Container);
             if (!container.canRead()) {
                 throw new RuntimeException("Cannot read PKCS12 container file: " + container);
@@ -175,10 +110,10 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
             if (!container.isFile()) {
                 throw new RuntimeException("PKCS12 container is not a regular file: " + container);
             }
-            if (!StringUtils.isNotEmpty(pkcs12Password)) {
+            if (!StringUtils.hasText(pkcs12Password)) {
                 throw new RuntimeException("PKCS12 container password must not be empty");
             }
-            if (!StringUtils.isNotEmpty(pkcs12CertSerial)) {
+            if (!StringUtils.hasText(pkcs12CertSerial)) {
                 throw new RuntimeException("PKCS12 certificate serial number must not be empty");
             }
             Hashtable<String, String> props = new Hashtable<String, String>();
@@ -194,10 +129,6 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
         if (!ConfigManager.init("jar://" + (isTest() ? jDigiDocCfgTest : jDigiDocCfg))) {
             throw new RuntimeException("JDigiDoc initialization failed");
         }
-        digiDocServiceFactory.setAddress(isTest() ? testDigiDocServiceUrl : digiDocServiceUrl);
-        digiDocServiceFactory.setServiceName(new javax.xml.namespace.QName("http://www.sk.ee/DigiDocService/DigiDocService_2_3.wsdl", "DigiDocService"));
-        digiDocServiceFactory.setEndpointName(new javax.xml.namespace.QName("http://www.sk.ee/DigiDocService/DigiDocService_2_3.wsdl", "DigiDocServicePortType"));
-        digiDocService = (DigiDocServicePortType) digiDocServiceFactory.create();
     }
 
     @Override
@@ -209,11 +140,6 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
     @Override
     public boolean isDigiDocContainer(FileInfo fileInfo) {
         return fileInfo.getName().toLowerCase().endsWith(".ddoc") && !fileInfo.isFolder();
-    }
-
-    @Override
-    public boolean isMobileIdEnabled() {
-        return StringUtils.isNotEmpty(getMobileIdServiceName());
     }
 
     @Override
@@ -252,49 +178,22 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
     }
 
     @Override
-    public SignatureChallenge getSignatureChallenge(NodeRef nodeRef, String phoneNo) throws SignatureException {
+    public SignatureDigest getSignatureDigest(List<NodeRef> selectedNodeRefs, String certHex) throws SignatureException {
         SignedDoc signedDoc = null;
         try {
-            signedDoc = getSignedDoc(nodeRef, true);
-            SignatureChallenge signatureChallenge = getSignatureChallenge(signedDoc, phoneNo);
-            return signatureChallenge;
-        } catch (UnableToPerformException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new SignatureException("Failed to create Mobile-ID signing request of ddoc file, nodeRef = " + nodeRef + ", phoneNo = " + phoneNo, e);
-        }
-    }
-
-    @Override
-    public SignatureDigest getSignatureDigest(List<NodeRef> contents, String certHex) throws SignatureException {
-        SignedDoc signedDoc = null;
-        try {
-            signedDoc = createSignedDoc(contents);
+            signedDoc = createSignedDoc(selectedNodeRefs);
             SignatureDigest signatureDigest = getSignatureDigest(signedDoc, certHex);
             return signatureDigest;
         } catch (Exception e) {
-            throw new SignatureException("Failed to calculate signed info digest from contents = " + contents + ", certHex = " + certHex, e);
-        }
-    }
-
-    @Override
-    public SignatureChallenge getSignatureChallenge(List<NodeRef> contents, String phoneNo) throws SignatureException {
-        SignedDoc signedDoc = null;
-        try {
-            signedDoc = createSignedDoc(contents);
-            SignatureChallenge signatureDigest = getSignatureChallenge(signedDoc, phoneNo);
-            return signatureDigest;
-        } catch (UnableToPerformException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new SignatureException("Failed to create Mobile-ID signing request from contents = " + contents + ", phoneNo = " + phoneNo, e);
+            throw new SignatureException("Failed to calculate signed info digest from selected nodeRefs " + selectedNodeRefs + ", certHex = " + certHex, e);
         }
     }
 
     @Override
     public NodeRef createContainer(NodeRef parent, List<NodeRef> contents, String filename, SignatureDigest signatureDigest, String signatureHex) {
+        SignedDoc signedDoc = null;
         try {
-            SignedDoc signedDoc = createSignedDoc(contents);
+            signedDoc = createSignedDoc(contents);
             addSignature(signedDoc, signatureDigest, signatureHex);
             NodeRef newNodeRef = createContentNode(parent, filename);
             writeSignedDoc(newNodeRef, signedDoc);
@@ -302,20 +201,6 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
         } catch (Exception e) {
             throw new SignatureRuntimeException("Failed to add signature and write ddoc to file " + filename + ", parent = " + parent + ", contents = "
                     + contents + ", signatureDigest = " + signatureDigest + ", signatureHex = " + signatureHex, e);
-        }
-    }
-
-    @Override
-    public NodeRef createContainer(NodeRef parent, List<NodeRef> contents, String filename, SignatureChallenge signatureChallenge, String signature) {
-        try {
-            SignedDoc signedDoc = createSignedDoc(contents);
-            addSignature(signedDoc, signatureChallenge, signature);
-            NodeRef newNodeRef = createContentNode(parent, filename);
-            writeSignedDoc(newNodeRef, signedDoc);
-            return newNodeRef;
-        } catch (Exception e) {
-            throw new SignatureRuntimeException("Failed to add signature and write ddoc to file " + filename + ", parent = " + parent + ", contents = "
-                    + contents + ", signatureChallenge = " + signatureChallenge, e);
         }
     }
 
@@ -329,18 +214,6 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
         } catch (Exception e) {
             throw new SignatureRuntimeException("Failed to add signature to ddoc file, nodeRef = " + nodeRef + ", signatureDigest = " + signatureDigest
                     + ", signatureHex = " + signatureHex, e);
-        }
-    }
-
-    @Override
-    public void addSignature(NodeRef nodeRef, SignatureChallenge signatureChallenge, String signature) {
-        SignedDoc signedDoc = null;
-        try {
-            signedDoc = getSignedDoc(nodeRef, true);
-            addSignature(signedDoc, signatureChallenge, signature);
-            writeSignedDoc(nodeRef, signedDoc);
-        } catch (Exception e) {
-            throw new SignatureRuntimeException("Failed to add signature to ddoc file, nodeRef = " + nodeRef + ", signatureChallenge = " + signatureChallenge, e);
         }
     }
 
@@ -359,20 +232,6 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
         }
     }
 
-    @Override
-    public void writeContainer(OutputStream output, List<NodeRef> contents) {
-        try {
-            SignedDoc signedDoc = createSignedDoc(contents);
-            try {
-                signedDoc.writeToStream(output);
-            } finally {
-                output.close();
-            }
-        } catch (Exception e) {
-            throw new SignatureRuntimeException("Failed to write ddoc file, output = " + output + ", contents = " + contents, e);
-        }
-    }
-
     private void addSignature(SignedDoc signedDoc, SignatureDigest signatureDigest, String signatureHex) throws DigiDocException, SignatureException {
         byte[] signatureBytes = SignedDoc.hex2bin(signatureHex);
         Signature sig = prepareSignature(signedDoc, signatureDigest.getCertHex());
@@ -386,12 +245,10 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
         }
 
         sig.setSignatureValue(signatureBytes);
+        Timer timer = new Timer("signatureConfirmation");
 
         // If OCSP response is successful, then no exception is thrown
-        long startTime = System.nanoTime();
         sig.getConfirmation();
-        long stopTime = System.nanoTime();
-        log.info("PERFORMANCE: query skOcspSignatureConfirmation - " + duration(startTime, stopTime) + " ms");
 
         // If certificate has been revoked, then the following error is logged:
         // ERROR [ee.sk.digidoc.factory.BouncyCastleNotaryFactory] - <Certificate has been revoked!>
@@ -425,6 +282,8 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
         // DigiDocException.code: 65
         // DigiDocException.message: ERROR: 65java.net.ConnectException; nested exception is:
         // java.net.ConnectException: Connection timed out
+
+        log.debug(timer);
     }
 
     private SignatureDigest getSignatureDigest(SignedDoc sd, String certHex) throws DigiDocException {
@@ -522,7 +381,7 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
             String subjectFirstName = SignedDoc.getSubjectFirstName(cert);
             String subjectLastName = SignedDoc.getSubjectLastName(cert);
             String legalCode = SignedDoc.getSubjectPersonalCode(cert);
-            String name = UserUtil.getPersonFullName(subjectFirstName, subjectLastName);
+            String name = subjectFirstName + " " + subjectLastName;
 
             SignedProperties signedProperties = signature.getSignedProperties();
             int claimedRolesNumber = signedProperties.countClaimedRoles();
@@ -558,7 +417,7 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
         address.add(signatureProductionPlace.getPostalCode());
         address.add(signatureProductionPlace.getCountryName());
 
-        return StringUtils.join(address, ", ");
+        return StringUtils.collectionToDelimitedString(address, ", ");
     }
 
     private void writeSignedDoc(NodeRef nodeRef, SignedDoc document) throws DigiDocException, IOException {
@@ -614,194 +473,18 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
         document.addDataFile(datafile);
     }
 
-    private SignatureChallenge getSignatureChallenge(SignedDoc signedDoc, String phoneNo) throws DigiDocException {
-        phoneNo = StringUtils.stripToEmpty(phoneNo);
-
-        ObjectFactory objectFactory = new ObjectFactory();
-
-        List<String> digestHexs = new ArrayList<String>();
-        DataFileDigestList dataFileDigestList = objectFactory.createDataFileDigestList();
-        for (int i = 0; i < signedDoc.countDataFiles(); i++) {
-            DataFile df = signedDoc.getDataFile(i);
-            String digestHex = Base64Util.encode(df.getDigest());
-            digestHexs.add(digestHex);
-
-            DataFileDigest dataFileDigest = objectFactory.createDataFileDigest();
-            dataFileDigest.setId(objectFactory.createDataFileDigestId(df.getId()));
-            dataFileDigest.setDigestType(objectFactory.createDataFileDigestDigestType(DataFile.DIGEST_TYPE_SHA1));
-            dataFileDigest.setDigestValue(objectFactory.createDataFileDigestDigestValue(digestHex));
-            dataFileDigestList.getDataFileDigest().add(dataFileDigest);
-        }
-        String signatureId = signedDoc.getNewSignatureId();
-        String format = signedDoc.getFormat();
-        String version = signedDoc.getVersion();
-
-        // REQUEST
-        // @formatter:off
-        // <dig:MobileCreateSignature soapenv:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
-        //    <PhoneNo xsi:type="xsd:string">+3725217229</PhoneNo>
-        //    <Language xsi:type="xsd:string">EST</Language>
-        //    <ServiceName xsi:type="xsd:string">Testimine</ServiceName>
-        //    <MessageToDisplay xsi:type="xsd:string">TODO... Maksimaalne pikkus 40 tähemärki</MessageToDisplay>
-        //    <DataFiles xsi:type="dig:DataFileDigestList">
-        //       <DataFileDigest xsi:type="dig:DataFileDigest">
-        //          <Id xsi:type="xsd:string">D0</Id>
-        //          <DigestType xsi:type="xsd:string">sha1</DigestType>
-        //          <DigestValue xsi:type="xsd:string">t8eRSrKTgR4PAAKTLYWGCjuTSJA=</DigestValue>
-        //       </DataFileDigest>
-        //    </DataFiles>
-        //    <Format xsi:type="xsd:string">DIGIDOC-XML</Format>
-        //    <Version xsi:type="xsd:string">1.3</Version>
-        //    <SignatureID xsi:type="xsd:string">S0</SignatureID>
-        //    <MessagingMode xsi:type="xsd:string">asynchClientServer</MessagingMode>
-        // </dig:MobileCreateSignature>
-        // @formatter:on
-
-        Holder<Integer> sesscode = new Holder<Integer>();
-        Holder<String> challengeId = new Holder<String>();
-        Holder<String> status = new Holder<String>();
-        long startTime = System.nanoTime();
-        try {
-            digiDocService.mobileCreateSignature(
-                    "",
-                    "",
-                    phoneNo,
-                    "EST",
-                    getMobileIdServiceName(),
-                    "",
-                    "",
-                    "",
-                    "",
-                    "",
-                    "",
-                    "",
-                    dataFileDigestList,
-                    format,
-                    version,
-                    signatureId,
-                    "asynchClientServer",
-                    0,
-                    sesscode,
-                    challengeId,
-                    status);
-            long stopTime = System.nanoTime();
-            if (!"OK".equals(status.value)) {
-                log.error("Error performing query skDigiDocServiceMobileCreateSignature - " + duration(startTime, stopTime) + " ms: status='" + status.value + "'");
-                throw new UnableToPerformException("sk_digidocservice_error");
-            }
-            log.info("PERFORMANCE: query skDigiDocServiceMobileCreateSignature - " + duration(startTime, stopTime) + " ms, status=OK");
-        } catch (SOAPFaultException e) {
-            long stopTime = System.nanoTime();
-            handleDigiDocServiceSoapFault(e, startTime, stopTime, "skDigiDocServiceMobileCreateSignature");
-        }
-
-        // RESPONSE
-        // @formatter:off
-        // <d:MobileCreateSignatureResponse>
-        //    <Sesscode xsi:type="xsd:int">1756908565</Sesscode>
-        //    <ChallengeID xsi:type="xsd:string">1712</ChallengeID>
-        //    <Status xsi:type="xsd:string">OK</Status>
-        // </d:MobileCreateSignatureResponse>
-        // @formatter:on
-
-        return new SignatureChallenge(sesscode.value, challengeId.value, digestHexs, signatureId, format, version);
-    }
-
-    @Override
-    public String getMobileIdSignature(SignatureChallenge signatureChallenge) {
-
-        // REQUEST
-        // @formatter:off
-        // <dig:GetMobileCreateSignatureStatus soapenv:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
-        //    <Sesscode xsi:type="xsd:int">1756908565</Sesscode>
-        //    <WaitSignature xsi:type="xsd:boolean">false</WaitSignature>
-        // </dig:GetMobileCreateSignatureStatus>
-        // @formatter:on
-
-        Holder<Integer> sesscode = new Holder<Integer>(signatureChallenge.getSesscode());
-        Holder<String> status = new Holder<String>();
-        Holder<String> signature = new Holder<String>();
-        long startTime = System.nanoTime();
-        try {
-            digiDocService.getMobileCreateSignatureStatus(sesscode, false, status, signature);
-            long stopTime = System.nanoTime();
-            if (!Arrays.asList("SIGNATURE", "OUTSTANDING_TRANSACTION", "EXPIRED_TRANSACTION", "USER_CANCEL", "MID_NOT_READY", "PHONE_ABSENT", "SIM_ERROR", "SENDING_ERROR",
-                    "INTERNAL_ERROR").contains(status.value)) {
-                log.error("Error performing query skDigiDocServiceGetMobileCreateSignatureStatus - " + duration(startTime, stopTime) + " ms: status=" + status.value);
-                throw new UnableToPerformException("sk_digidocservice_error");
-            }
-            log.info("PERFORMANCE: query skDigiDocServiceGetMobileCreateSignatureStatus - " + duration(startTime, stopTime) + " ms, status=" + status.value);
-            if ("SIGNATURE".equals(status.value)) {
-                return signature.value;
-            } else if ("OUTSTANDING_TRANSACTION".equals(status.value)) {
-                return null;
-            }
-            throw new UnableToPerformException("ddoc_signature_failed_" + status.value);
-        } catch (SOAPFaultException e) {
-            long stopTime = System.nanoTime();
-            handleDigiDocServiceSoapFault(e, startTime, stopTime, "skDigiDocServiceGetMobileCreateSignatureStatus");
-        }
-        Assert.isTrue(false); // unreachable code
-        return null;
-
-        // RESPONSE:
-        // @formatter:off
-        // <d:GetMobileCreateSignatureStatusResponse>
-        //    <Sesscode xsi:type="xsd:int">0</Sesscode>
-        //    <Status xsi:type="xsd:string">SIGNATURE</Status>
-        //    <Signature xsi:type="xsd:string"><![CDATA[<Signature Id="S0" xmlns="http://www.w3.org/2000/09/xmldsig#">...</Signature>]]></Signature>
-        // </d:GetMobileCreateSignatureStatusResponse>
-        // @formatter:on
-    }
-
-    private void handleDigiDocServiceSoapFault(SOAPFaultException e, long startTime, long stopTime, String queryName) {
-        try {
-            int faultCode = Integer.parseInt(e.getMessage());
-            if (faultCode >= 200 && faultCode < 300) {
-                log.info("PERFORMANCE: query " + queryName + " - " + duration(startTime, stopTime) + " ms, faultCode=" + faultCode);
-                throw new UnableToPerformException("ddoc_signature_failed_INTERNAL_ERROR");
-            } else if (faultCode == 101 || (faultCode >= 300 && faultCode <= 303)) {
-                log.info("PERFORMANCE: query " + queryName + " - " + duration(startTime, stopTime) + " ms, faultCode=" + faultCode);
-                throw new UnableToPerformException("ddoc_signature_failed_" + faultCode);
-            }
-        } catch (NumberFormatException e2) {
-            // do nothing
-        }
-        log.error("Error performing query " + queryName + " - " + duration(startTime, stopTime) + " ms: " + e.getMessage(), e);
-        throw new UnableToPerformException("sk_digidocservice_error");
-    }
-
-    private void addSignature(SignedDoc signedDoc, SignatureChallenge signatureChallenge, String signature) throws DigiDocException, SignatureException,
-            UnsupportedEncodingException {
-
-        List<String> digestHexs = new ArrayList<String>();
-        for (int i = 0; i < signedDoc.countDataFiles(); i++) {
-            DataFile df = signedDoc.getDataFile(i);
-            String digestHex = Base64Util.encode(df.getDigest());
-            digestHexs.add(digestHex);
-        }
-        if (!digestHexs.equals(signatureChallenge.getDigestHexs()) || !signedDoc.getNewSignatureId().equals(signatureChallenge.getSignatureId())
-                || !signedDoc.getFormat().equals(signatureChallenge.getFormat()) || !signedDoc.getVersion().equals(signatureChallenge.getVersion())) {
-            throw new SignatureException("Signed info digest does not match, files were modified in the meantime");
-        }
-
-        SAXDigiDocFactory digiDocFactory = new SAXDigiDocFactory();
-        digiDocFactory.init();
-        digiDocFactory.readSignature(signedDoc, new ByteArrayInputStream(signature.getBytes("UTF-8")));
-    }
-
     private static void bindCleanTempFiles(final SignedDoc signedDoc) {
         try {
             Assert.notNull(AlfrescoTransactionSupport.getTransactionId(), "No transaction is present");
 
-            if (log.isTraceEnabled()) {
+            if (log.isDebugEnabled()) {
                 StringBuilder s = new StringBuilder("bindCleanTempFiles");
                 s.append("\n  signedDoc=").append(ObjectUtils.identityToString(signedDoc));
                 s.append("\n  countDataFiles=").append(signedDoc.countDataFiles());
                 for (int i = 0; i < signedDoc.countDataFiles(); i++) {
                     s.append("\n  dataFile[").append(i).append("]=").append(signedDoc.getDataFile(i).getFileName());
                 }
-                log.trace(s.toString());
+                log.debug(s.toString());
             }
 
             AlfrescoTransactionSupport.bindListener(new TransactionListenerAdapter() {
@@ -818,14 +501,14 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
 
     private static void cleanTempFiles(SignedDoc signedDoc) {
         try {
-            if (log.isTraceEnabled()) {
+            if (log.isDebugEnabled()) {
                 StringBuilder s = new StringBuilder("cleanTempFiles");
                 s.append("\n  signedDoc=").append(ObjectUtils.identityToString(signedDoc));
                 s.append("\n  countDataFiles=").append(signedDoc.countDataFiles());
                 for (int i = 0; i < signedDoc.countDataFiles(); i++) {
                     s.append("\n  dataFile[").append(i).append("]=").append(signedDoc.getDataFile(i).getFileName());
                 }
-                log.trace(s.toString());
+                log.debug(s.toString());
             }
 
             signedDoc.cleanupDfCache();
@@ -848,150 +531,8 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
         this.test = test;
     }
 
-    private boolean isTest() {
+    public boolean isTest() {
         return test;
-    }
-
-    private String getMobileIdServiceName() {
-        return isTest() ? testMobileIdServiceName : mobileIdServiceName;
-    }
-
-    @Override
-    public List<X509Certificate> getCertificatesForEncryption(List<SkLdapCertificate> certificates) {
-        ArrayList<X509Certificate> results = new ArrayList<X509Certificate>();
-        outer: for (SkLdapCertificate skLdapCertificate : certificates) {
-            try {
-                X509Certificate cert = SignedDoc.readCertificate(skLdapCertificate.getUserCertificate());
-
-                // In DigiDoc Client 2 and 3, only certificates which contain DataEncipherment in KeyUsage, are suitable for encryption
-                // According to https://svn.eesti.ee/projektid/idkaart_public/trunk/qdigidoc/crypto/KeyDialog.cpp
-                // * c.keyUsage().contains( SslCertificate::DataEncipherment )
-                boolean dataEncipherment = cert.getKeyUsage()[3];
-                if (!dataEncipherment) {
-                    continue;
-                }
-
-                // In DigiDoc Client 3 (but not 2), additionally Mobile-ID certificates are filtered out (because decryption is not implemented in Mobile-ID)
-                // According to https://svn.eesti.ee/projektid/idkaart_public/trunk/qdigidoc/crypto/KeyDialog.cpp
-                // * c.type() != SslCertificate::MobileIDType
-                // and https://svn.eesti.ee/projektid/idkaart_public/trunk/qdigidoc/common/SslCertificate.cpp
-                // * QStringList p = policies();
-                // * if( p.indexOf( QRegExp( "^1\\.3\\.6\\.1\\.4\\.1\\.10015\\.1\\.3.*" ) ) != -1 ||
-                // * p.indexOf( QRegExp( "^1\\.3\\.6\\.1\\.4\\.1\\.10015\\.11\\.1.*" ) ) != -1 )
-                // * return MobileIDType;
-                // 1.3.6.1.4.1.10015.1
-
-                List<String> objectIdentifiers = getPolicyObjectIdentifiers(cert);
-                for (String objectIdentifier : objectIdentifiers) {
-                    if (objectIdentifier.startsWith("1.3.6.1.4.1.10015.1.3") || objectIdentifier.startsWith("1.3.6.1.4.1.10015.11.1")) {
-                        continue outer;
-                    }
-                }
-
-                results.add(cert);
-            } catch (Exception e) {
-                throw new SignatureRuntimeException("Failed to parse certificate for " + skLdapCertificate.getCn(), e);
-            }
-        }
-        return results;
-    }
-
-    private static List<String> getPolicyObjectIdentifiers(X509Certificate cert) {
-        try {
-            List<String> objectIdentifiers = new ArrayList<String>();
-            byte[] policies = cert.getExtensionValue("2.5.29.32");
-            if (policies != null) {
-                DERObject derObject;
-                derObject = toDerObject(policies);
-                if (derObject instanceof DEROctetString) {
-                    derObject = toDerObject(((DEROctetString) derObject).getOctets());
-                }
-                if (derObject instanceof DERSequence) {
-                    collectObjectIdentifiers((DERSequence) derObject, objectIdentifiers);
-                }
-            }
-            return objectIdentifiers;
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to get policy object identifiers from certificate: " + cert, e);
-        }
-    }
-
-    private static DERObject toDerObject(byte[] data) throws IOException {
-        return new ASN1InputStream(new ByteArrayInputStream(data)).readObject();
-    }
-
-    private static void collectObjectIdentifiers(DERSequence sequence, List<String> objectIdentifiers) {
-        for (Enumeration<?> enumeration = sequence.getObjects(); enumeration.hasMoreElements();) {
-            Object element = enumeration.nextElement();
-            if (element instanceof DERObjectIdentifier) {
-                objectIdentifiers.add(((DERObjectIdentifier) element).getId());
-            } else if (element instanceof DERSequence) {
-                collectObjectIdentifiers((DERSequence) element, objectIdentifiers);
-            }
-        }
-    }
-
-    @Override
-    public void writeEncryptedContainer(OutputStream output, List<NodeRef> contents, List<X509Certificate> recipientCerts) {
-        Assert.isTrue(!contents.isEmpty());
-        Assert.isTrue(!recipientCerts.isEmpty());
-
-        try {
-            EncryptedData cdoc = new EncryptedData(null, null, null, EncryptedData.DENC_XMLNS_XMLENC, EncryptedData.DENC_ENC_METHOD_AES128);
-
-            int idCounter = 1;
-            for (X509Certificate recipientCert : recipientCerts) {
-
-                X509Principal principal = PrincipalUtil.getSubjectX509Principal(recipientCert);
-                Vector<?> values = principal.getValues(X509Name.CN);
-                String cn = (String) values.get(0);
-
-                String id = "ID" + idCounter++;
-                EncryptedKey ekey = new EncryptedKey(id, cn, EncryptedData.DENC_ENC_METHOD_RSA1_5, null, null, recipientCert);
-                cdoc.addEncryptedKey(ekey);
-            }
-
-            SignedDoc ddoc = createSignedDoc(contents);
-
-            // Like cdoc.setPropRegisterDigiDoc(signedDoc), but with minor improvements
-            for (int i = 0; i < ddoc.countDataFiles(); i++) {
-                DataFile df = ddoc.getDataFile(i);
-                StringBuffer sb = new StringBuffer();
-                sb.append(df.getFileName());
-                sb.append("|");
-                sb.append(FilenameUtil.byteCountToDisplaySize(df.getSize()));
-                sb.append("|");
-                sb.append(df.getMimeType());
-                sb.append("|");
-                sb.append(df.getId());
-                EncryptionProperty prop = new EncryptionProperty(EncryptedData.ENCPROP_ORIG_FILE, sb.toString());
-                prop.setId(EncryptedData.ENCPROP_ORIG_FILE + i);
-                cdoc.addProperty(prop);
-            }
-
-            File tmpFile = TempFileProvider.createTempFile("container-", ".ddoc");
-            try {
-                OutputStream tmpOutput = new BufferedOutputStream(new FileOutputStream(tmpFile));
-                try {
-                    ddoc.writeToStream(tmpOutput);
-                } finally {
-                    tmpOutput.close();
-                }
-
-                InputStream tmpInput = new BufferedInputStream(new FileInputStream(tmpFile));
-                try {
-                    cdoc.encryptStream(tmpInput, output, EncryptedData.DENC_COMPRESS_ALLWAYS);
-                } finally {
-                    tmpInput.close();
-                }
-            } finally {
-                tmpFile.delete();
-            }
-        } catch (Exception e) {
-            throw new SignatureRuntimeException("Failed to encrypt, contents = " + contents + ", recipientCerts = " + recipientCerts, e);
-        } finally {
-            IOUtils.closeQuietly(output);
-        }
     }
 
 }

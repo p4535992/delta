@@ -4,8 +4,9 @@
 
    <!-- @Override classpath:alfresco/web-client-application-context.xml -->
    <bean id="defaultAuthenticationFilter" class="ee.webmedia.alfresco.user.service.SimpleAuthenticationFilter">
-      <property name="configService" ref="webClientConfigService" />
-      <property name="logService" ref="LogService" />
+      <property name="configService">
+         <ref bean="webClientConfigService" />
+      </property>
    </bean>
 
    <!-- User registry synchronization jobs -->

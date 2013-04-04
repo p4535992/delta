@@ -149,6 +149,7 @@ public abstract class AbstractSearchFilterBlockBean<T extends FilterService> ext
     public HtmlInputText getSearchTitleInput() {
         if (searchTitleInput == null) {
             searchTitleInput = new HtmlInputText();
+            // value="#{DocumentSearchDialog.filter.properties['{http://alfresco.webmedia.ee/model/document/search/1.0}name']}"
             String filterName = (String) filter.getProperties().get(getFilterNameProperty());
             searchTitleInput.setValue(filterName);
         }
@@ -186,10 +187,7 @@ public abstract class AbstractSearchFilterBlockBean<T extends FilterService> ext
             filter = getFilterService().getFilter(newValue);
         }
         originalFilterName = (String) filter.getProperties().get(getFilterNameProperty());
-        // may be null if filter saving block is not displayed
-        if (searchTitleInput != null) {
-            searchTitleInput.setValue(originalFilterName);
-        }
+        searchTitleInput.setValue(originalFilterName);
         propertySheet.getChildren().clear();
         setPublicFilter(newValue);
     }
@@ -230,28 +228,6 @@ public abstract class AbstractSearchFilterBlockBean<T extends FilterService> ext
     abstract protected String getFilterDeleteDeniedMessageKey();
 
     abstract protected String getNewFilterSelectItemMessageKey();
-
-    abstract protected QName getFilterType();
-
-    public String getManageSavedBlockTitle() {
-        return "";
-    }
-
-    public String getSavedFilterSelectTitle() {
-        return "";
-    }
-
-    public String getFilterPanelTitle() {
-        return "";
-    }
-
-    public boolean isReportSearch() {
-        return false;
-    }
-
-    public boolean isShowManageSavedDialog() {
-        return true;
-    }
 
     private void setPublicFilter(NodeRef newValue) {
         final boolean isPublic = newValue == null ? false : publicFilterRefs.contains(newValue.toString());
@@ -300,7 +276,6 @@ public abstract class AbstractSearchFilterBlockBean<T extends FilterService> ext
         }
         return userService;
     }
-
     // END: getters / setters
 
 }

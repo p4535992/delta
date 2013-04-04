@@ -2,21 +2,18 @@ package ee.webmedia.alfresco.document.file.model;
 
 import static ee.webmedia.alfresco.document.file.model.FileModel.Props.ACTIVE;
 import static ee.webmedia.alfresco.document.file.model.FileModel.Props.DISPLAY_NAME;
+import static ee.webmedia.alfresco.document.file.model.FileModel.Props.GENERATED;
 
 import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.web.scripts.FileTypeImageUtils;
 import org.alfresco.service.cmr.model.FileInfo;
 import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
-import org.apache.commons.lang.time.FastDateFormat;
 
-import ee.webmedia.alfresco.common.service.IClonable;
 import ee.webmedia.alfresco.signature.model.DataItem;
 import ee.webmedia.alfresco.signature.model.SignatureItem;
 import ee.webmedia.alfresco.signature.model.SignatureItemsAndDataItems;
@@ -24,7 +21,7 @@ import ee.webmedia.alfresco.signature.model.SignatureItemsAndDataItems;
 /**
  * @author Dmitri Melnikov
  */
-public class File implements Serializable, IClonable<File> {
+public class File implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -49,15 +46,13 @@ public class File implements Serializable, IClonable<File> {
     private boolean isTransformableToPdf;
     private long nrOfChildren; // used to show childCount if the file represents folder
     private boolean isPdf;
-    public static FastDateFormat dateFormat = FastDateFormat.getInstance("dd.MM.yyyy HH:mm");
 
     public File() {
     }
 
     public File(FileInfo fileInfo) {
         name = fileInfo.getName();
-        Map<QName, Serializable> fileProps = fileInfo.getProperties();
-        displayName = (fileProps.get(DISPLAY_NAME) == null) ? name : fileProps.get(DISPLAY_NAME).toString();
+        displayName = (fileInfo.getProperties().get(DISPLAY_NAME) == null) ? name : fileInfo.getProperties().get(DISPLAY_NAME).toString();
         created = fileInfo.getCreatedDate();
         modified = fileInfo.getModifiedDate();
         // fileInfo.getContentData() != null is here for testing purposes only; normally fileInfo.getContentData() shouldn't be null
@@ -69,11 +64,11 @@ public class File implements Serializable, IClonable<File> {
         nodeRef = fileInfo.getNodeRef();
         node = new Node(nodeRef);
         digiDocItem = false;
-        versionable = fileProps.get(ContentModel.PROP_VERSION_LABEL) != null;
+        versionable = fileInfo.getProperties().get(ContentModel.PROP_VERSION_LABEL) != null;
         creator = "";
         modifier = "";
-        generated = fileProps.get(FileModel.Props.GENERATED_FROM_TEMPLATE) != null || fileProps.get(FileModel.Props.GENERATION_TYPE) != null;
-        active = (fileProps.get(ACTIVE) == null) ? true : Boolean.parseBoolean(fileProps.get(ACTIVE).toString());
+        generated = fileInfo.getProperties().get(GENERATED) != null;
+        active = (fileInfo.getProperties().get(ACTIVE) == null) ? true : Boolean.parseBoolean(fileInfo.getProperties().get(ACTIVE).toString());
     }
 
     public String getName() {
@@ -130,10 +125,6 @@ public class File implements Serializable, IClonable<File> {
 
     public void setCreated(Date created) {
         this.created = created;
-    }
-
-    public String getCreatedTimeStr() {
-        return getCreated() != null ? dateFormat.format(getCreated()) : "";
     }
 
     public Date getModified() {
@@ -292,17 +283,4 @@ public class File implements Serializable, IClonable<File> {
         return isPdf;
     }
 
-    @Override
-    public File clone() {
-        File file;
-        try {
-            file = (File) super.clone();
-        } catch (CloneNotSupportedException e) {
-            throw new RuntimeException(e);
-        }
-        file.setCreated((Date) created.clone());
-        file.setModified((Date) modified.clone());
-        file.setNode(new Node(nodeRef));
-        return file;
-    }
 }

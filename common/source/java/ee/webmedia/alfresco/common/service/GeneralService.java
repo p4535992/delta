@@ -1,7 +1,7 @@
 package ee.webmedia.alfresco.common.service;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.OutputStream;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.LinkedHashSet;
@@ -20,15 +20,10 @@ import org.alfresco.service.cmr.repository.ContentWriter;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.namespace.QName;
-import org.alfresco.service.namespace.QNamePattern;
 import org.alfresco.web.bean.repository.Node;
-import org.apache.commons.logging.Log;
 
-import ee.webmedia.alfresco.archivals.model.ArchivalsStoreVO;
 import ee.webmedia.alfresco.common.propertysheet.component.WMUIProperty;
 import ee.webmedia.alfresco.common.web.WmNode;
-import ee.webmedia.alfresco.document.log.service.DocumentPropertiesChangeHolder;
-import ee.webmedia.alfresco.utils.AdjustableSemaphore;
 
 /**
  * @author Ats Uiboupin
@@ -42,26 +37,10 @@ public interface GeneralService {
      */
     StoreRef getStore();
 
-    void setArchivalsStoreVOs(LinkedHashSet<ArchivalsStoreVO> archivalsStoreVOs);
-
-    LinkedHashSet<ArchivalsStoreVO> getArchivalsStoreVOs();
-
-    LinkedHashSet<StoreRef> getArchivalsStoreRefs();
-
-    LinkedHashSet<StoreRef> getAllWithArchivalsStoreRefs();
-
-    /**
-     * Return all storeRefs returned from getAllWithArchivalsStoreRefs call (active store + archived documents' stores)
-     * and storeRef where deleted documents are stored
-     */
-    LinkedHashSet<StoreRef> getAllStoreRefsWithTrashCan();
-
     /**
      * @return store where archived documents are stored
      */
     StoreRef getArchivalsStoreRef();
-
-    NodeRef getPrimaryArchivalsNodeRef();
 
     /**
      * Search for NodeRef with an XPath expression.
@@ -91,8 +70,6 @@ public interface GeneralService {
      * @throws RuntimeException if more than 1 node found
      */
     NodeRef getNodeRef(String nodeRefXPath, NodeRef root);
-
-    NodeRef getChildByAssocName(NodeRef parentRef, QNamePattern assocNamePattern);
 
     ChildAssociationRef getLastChildAssocRef(String nodeRefXPath);
 
@@ -179,16 +156,6 @@ public interface GeneralService {
     TypeDefinition getAnonymousType(Node node);
 
     /**
-     * Add and remove aspects in repository according to node aspects.
-     * 
-     * @param node
-     * @return if node was modified in repository
-     */
-    boolean setAspectsIgnoringSystem(Node node);
-
-    boolean setAspectsIgnoringSystem(NodeRef nodeRef, Set<QName> nodeAspects);
-
-    /**
      * @param node
      * @return number of new associations created to repository
      */
@@ -200,22 +167,13 @@ public interface GeneralService {
      * @param node - node that previously had some childAssociations in repository that should be removed
      * @return number of associations that were deleted from repository
      */
-    public void saveRemovedChildAssocs(Node node, DocumentPropertiesChangeHolder docPropsChangeHolder);
+    public int saveRemovedChildAssocs(Node node);
 
     /**
      * @param nodeRef
      * @return node according to nodeRef from repo, filling properties and aspects
      */
     Node fetchNode(NodeRef nodeRef);
-
-    /**
-     * Fetches WmNode from repository
-     * 
-     * @param objectRef NodeRef of the desired object
-     * @param objectType Type of the object
-     * @return WmNode representation of the repository object
-     */
-    WmNode fetchObjectNode(NodeRef objectRef, QName objectType);
 
     /**
      * @param type - node type
@@ -234,12 +192,13 @@ public interface GeneralService {
     Node getAncestorWithType(NodeRef childRef, QName ancestorType);
 
     /**
-     * Zip-s up given files.
+     * Zip-s up those files which are attached to given document, and where the id is in fileIds list.
      * 
-     * @param output
-     * @param fileRefs selected file nodeRefs.
+     * @param document document node ref
+     * @param fileNodeRefs selected file nodeRefs as strings (from all the files assosiated to this given document).
+     * @return ByteArrayOutputStream with zip file bytes
      */
-    void writeZipFileFromFiles(OutputStream output, List<NodeRef> fileRefs);
+    ByteArrayOutputStream getZipFileFromFiles(NodeRef document, List<String> fileNodeRefs);
 
     String getUniqueFileName(NodeRef folder, String fileName);
 
@@ -264,14 +223,13 @@ public interface GeneralService {
 
     /**
      * Updates parent node containingDocsCount property
-     * If {@code added} is null, then {@code count} is added to current value (negative or positive);
      * 
      * @param parentNodeRef parent to update
      * @param propertyName property name to update
      * @param added should we increase or decrease
      * @param count how many docs were added/removed
      */
-    void updateParentContainingDocsCount(NodeRef parentNodeRef, QName propertyName, Boolean added, Integer count);
+    void updateParentContainingDocsCount(NodeRef parentNodeRef, QName propertyName, boolean added, Integer count);
 
     /**
      * Sets up the writer (mimetype, encoding) and writes contents of the file
@@ -299,22 +257,6 @@ public interface GeneralService {
      * @param work work to execute in a background thread after current transaction commit completes
      * @param threadName name to give the new thread that is created for executing work
      */
-    void runOnBackground(final RunAsWork<Void> work, final String threadName, boolean createTransaction);
-
-    void runOnBackground(RunAsWork<Void> work, String threadNamePrefix, boolean createTransaction, RunAsWork<Void> workAfterCommit);
-
-    /** Return true if storeRef is primary or additional archivals storeRef */
-    boolean isArchivalsStoreRef(StoreRef storeRef);
-
-    NodeRef getExistingNodeRefAllStores(String id);
-
-    /** Run semaphoreCallback code quarded by given semaphore */
-    <T> T runSemaphored(AdjustableSemaphore adjustableSemaphore, ExecuteCallback<T> searchCallback);
-
-    String getUniqueFileName(String fileName, List<NodeRef> filesToCheck, NodeRef... parentRefs);
-
-    String getTsquery(String input);
-
-    void explainQuery(String sqlQuery, Log log, Object... args);
+    void runOnBackground(final RunAsWork<Void> work, final String threadName);
 
 }

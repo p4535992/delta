@@ -24,7 +24,6 @@
  */
 package org.alfresco.repo.node.db;
 
-import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentListService;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -33,6 +32,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -65,10 +65,10 @@ import org.alfresco.service.cmr.repository.InvalidChildAssociationRefException;
 import org.alfresco.service.cmr.repository.InvalidNodeRefException;
 import org.alfresco.service.cmr.repository.InvalidStoreRefException;
 import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.service.cmr.repository.NodeRef.Status;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.repository.Path;
 import org.alfresco.service.cmr.repository.StoreRef;
+import org.alfresco.service.cmr.repository.NodeRef.Status;
 import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
@@ -82,13 +82,6 @@ import org.alfresco.util.PropertyMap;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.util.Assert;
-
-import ee.webmedia.alfresco.common.web.BeanHelper;
-import ee.webmedia.alfresco.document.model.DocumentCommonModel;
-import ee.webmedia.alfresco.template.model.DocumentTemplateModel;
-import ee.webmedia.alfresco.utils.MessageUtil;
-import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
-import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 
 /**
  * Node service using database persistence layer to fulfill functionality
@@ -764,22 +757,15 @@ public class DbNodeServiceImpl extends AbstractNodeServiceImpl
            StoreRef storeRef = nodeRef.getStoreRef();
            archiveStoreRef = storeArchiveMap.get(storeRef);
            // get the type and check if we need archiving
-           TypeDefinition typeDef = dictionaryService.getType(nodeTypeQName);          
+           TypeDefinition typeDef = dictionaryService.getType(nodeTypeQName);
            if (typeDef == null || !typeDef.isArchive() || archiveStoreRef == null)
            {
               requiresDelete = true;
-           }
-           else
-           {
-               if(typeDef != null && DocumentCommonModel.Types.DOCUMENT.equals(typeDef.getName()) && DocumentCommonModel.Types.DRAFTS.equals(getPrimaryParent(childAssocRef.getParentRef()).getQName())){
-                   requiresDelete = true;
-               }               
            }
         }
            
         if (requiresDelete)
         {
-            deleteChildDataFromDb(nodeRef, nodeTypeQName);
             // Cascade as required
             if (cascadeInTransaction)
             {
@@ -799,12 +785,6 @@ public class DbNodeServiceImpl extends AbstractNodeServiceImpl
             archiveNode(nodeRef, archiveStoreRef);
             // The archive performs a move, which will fire the appropriate OnDeleteNode
             invokeOnDeleteNode(childAssocRef, nodeTypeQName, nodeAspectQNames, true);
-        }
-    }
-    
-    private void deleteChildDataFromDb(NodeRef nodeRef, QName nodeTypeQName) {
-        if (!dictionaryService.isSubClass(getType(nodeRef), WorkflowCommonModel.Types.TASK)) {
-            BeanHelper.getWorkflowDbService().deleteTasksCascading(nodeRef, nodeTypeQName);
         }
     }
     
@@ -1962,42 +1942,16 @@ public class DbNodeServiceImpl extends AbstractNodeServiceImpl
         
         // add the aspect
         newAspects.add(ContentModel.ASPECT_ARCHIVED);
-        String authenticatedUser = AuthenticationUtil.getFullyAuthenticatedUser();
-        newProperties.put(ContentModel.PROP_ARCHIVED_BY, authenticatedUser);
-        newProperties.put(ContentModel.PROP_ARCHIVED_BY_NAME, BeanHelper.getUserService().getUserFullName(authenticatedUser));
+        newProperties.put(ContentModel.PROP_ARCHIVED_BY, AuthenticationUtil.getFullyAuthenticatedUser());
         newProperties.put(ContentModel.PROP_ARCHIVED_DATE, new Date());
         newProperties.put(ContentModel.PROP_ARCHIVED_ORIGINAL_PARENT_ASSOC, primaryParentAssocPair.getSecond());
         Serializable originalOwner = existingProperties.get(ContentModel.PROP_OWNER);
         Serializable originalCreator = existingProperties.get(ContentModel.PROP_CREATOR);
         if (originalOwner != null || originalCreator != null)
         {
-            Serializable archivedOriginalOwner = originalOwner != null ? originalOwner : originalCreator;
-            newProperties.put(ContentModel.PROP_ARCHIVED_ORIGINAL_OWNER, archivedOriginalOwner);
-            newProperties.put(ContentModel.PROP_ARCHIVED_ORIGINAL_OWNER_NAME, BeanHelper.getUserService().getUserFullName((String) archivedOriginalOwner));            
-        }        
-        newProperties.put(ContentModel.PROP_ARCHIVED_ORIGINAL_LOCATION_STRING, getDocumentListService().getDisplayPath(nodeRef, false));        
-        QName type = getType(nodeRef);
-        Map<QName, Serializable> properties = getProperties(nodeRef);
-        String name;
-        if (DocumentCommonModel.Types.DOCUMENT.equals(type)) {
-            name = (String) properties.get(DocumentCommonModel.Props.DOC_NAME);
-        } else {
-            name = (String) properties.get(ContentModel.PROP_NAME);
-        }
-        newProperties.put(ContentModel.PROP_ARCHIVED_OBJECT_NAME, name);
-        if (DocumentCommonModel.Types.DOCUMENT.equals(type)) {
-            newProperties.put(ContentModel.PROP_ARCHIVED_OBJECT_TYPE_STRING, BeanHelper.getDocumentService().getDocumentByNodeRef(nodeRef).getDocumentTypeName());            
-        } else if (ContentModel.TYPE_CONTENT.equals(type) && properties.containsKey(DocumentTemplateModel.Prop.TEMPLATE_TYPE)) {
-            newProperties.put(ContentModel.PROP_ARCHIVED_OBJECT_TYPE_STRING, properties.get(DocumentTemplateModel.Prop.COMMENT));
-        } else {
-            newProperties.put(ContentModel.PROP_ARCHIVED_OBJECT_TYPE_STRING, MessageUtil.getMessage("trashcan_file_type"));            
-        }
-        if (DocumentCommonModel.Types.DOCUMENT.equals(type)) {
-            newProperties.put(ContentModel.PROP_ARCHIVED_OBJECT_TYPE, "document");            
-        } else if (ContentModel.TYPE_CONTENT.equals(type) && properties.containsKey(DocumentTemplateModel.Prop.TEMPLATE_TYPE)) {
-            newProperties.put(ContentModel.PROP_ARCHIVED_OBJECT_TYPE, "content");
-        } else {
-            newProperties.put(ContentModel.PROP_ARCHIVED_OBJECT_TYPE, "file");            
+            newProperties.put(
+                    ContentModel.PROP_ARCHIVED_ORIGINAL_OWNER,
+                    originalOwner != null ? originalOwner : originalCreator);
         }
         
         // change the node ownership
@@ -2304,9 +2258,6 @@ public class DbNodeServiceImpl extends AbstractNodeServiceImpl
             if (cascade)
             {
                 pullNodeChildrenToSameStore(newChildNodePair, cascade, indexChildren);
-            }
-            if (dictionaryService.isSubClass(childNodeTypeQName, WorkflowCommonModel.Types.WORKFLOW)) {
-                BeanHelper.getWorkflowDbService().updateWorkflowTasksStore(childNodeRef, storeRef);
             }
         }
     }

@@ -2,7 +2,6 @@ package ee.webmedia.alfresco.document.web.evaluator;
 
 import java.util.ArrayList;
 
-import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
 
@@ -22,7 +21,6 @@ public class ReplyNodeTypeEvaluator extends NodeTypeEvaluator {
 
     @Override
     public boolean evaluate(Node docNode) {
-        return docNode.getNodeRef().getStoreRef().getProtocol().equals(StoreRef.PROTOCOL_WORKSPACE)
-                && super.evaluate(docNode) && RegisterDocumentEvaluator.isRegistered(docNode);
+        return super.evaluate(docNode) && RegisterDocumentEvaluator.isRegistered(docNode);
     }
 }

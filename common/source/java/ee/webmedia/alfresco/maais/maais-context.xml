@@ -1,0 +1,247 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
+
+   <bean parent="dictionaryModelBootstrap" depends-on="dictionaryBootstrap">
+      <property name="models">
+         <list>
+            <value>ee/webmedia/alfresco/maais/model/maaisModel.xml</value>
+         </list>
+      </property>
+   </bean>
+
+   <bean id="maaisTableBootstrap" class="ee.webmedia.alfresco.maais.bootstrap.MaaisTableBootstrap" parent="createTableBootstrap" />
+
+   <bean id="maaisClientServiceMarshaller" class="org.springframework.oxm.jaxb.Jaxb2Marshaller">
+      <property name="contextPath" value="ee.webmedia.alfresco.maais.generated.client" />
+      <property name="schema" value="classpath:ee/webmedia/alfresco/maais/generated/client/maaisClient.xsd" />
+   </bean>
+
+   <bean id="maaisHttpParams" class="org.apache.commons.httpclient.params.HttpClientParams">
+      <property name="soTimeout" value="${conf.maais.timeout}" />
+   </bean>
+
+   <bean id="maaisHttpClient" class="org.apache.commons.httpclient.HttpClient">
+      <property name="params" ref="maaisHttpParams" />
+   </bean>
+
+   <bean id="maaisHttpSender" class="org.springframework.ws.transport.http.CommonsHttpMessageSender">
+      <constructor-arg>
+         <ref bean="maaisHttpClient" />
+      </constructor-arg>
+   </bean>
+
+   <bean id="maaisServiceTemplate" class="org.springframework.ws.client.core.WebServiceTemplate">
+      <constructor-arg ref="messageFactory" />
+      <property name="messageSenders">
+         <list>
+            <ref bean="maaisHttpSender" />
+         </list>
+      </property>
+      <property name="marshaller" ref="maaisClientServiceMarshaller"></property>
+      <property name="unmarshaller" ref="maaisClientServiceMarshaller"></property>
+      <property name="defaultUri" value="${conf.maais.url}" />
+   </bean>
+
+   <bean id="maaisService" class="ee.webmedia.alfresco.maais.service.MaaisServiceImpl">
+      <property name="jdbcTemplate">
+         <bean class="org.springframework.jdbc.core.simple.SimpleJdbcTemplate">
+            <constructor-arg ref="dataSource" />
+         </bean>
+      </property>
+      <property name="webServiceTemplate" ref="maaisServiceTemplate" />
+      <property name="parametersService" ref="ParametersService" />
+      <property name="documentTemplateService" ref="DocumentTemplateService" />
+      <property name="documentSearchService" ref="DocumentSearchService" />
+      <property name="volumeService" ref="VolumeService" />
+      <property name="seriesService" ref="SeriesService" />
+      <property name="caseService" ref="CaseService" />
+      <property name="documentService" ref="DocumentService" />
+      <property name="functionsService" ref="FunctionsService" />
+      <property name="generalService" ref="GeneralService" />
+      <property name="nodeService" ref="NodeService" />
+      <property name="personService" ref="PersonService" />
+      <property name="userService" ref="UserService" />
+      <property name="dictionaryService" ref="DictionaryService" />
+      <property name="fileService" ref="FileService" />
+      <property name="organizationStructureService" ref="OrganizationStructureService" />
+      <property name="organizationId" value="${x-tee.institution}" />
+      <property name="serviceUrl" value="${conf.maais.url}" />
+      <property name="maaisName" value="${conf.maais.name}" />
+   </bean>
+   
+   <bean id="maaisSpacesBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
+      <property name="moduleId" value="common" />
+      <property name="executeOnceOnly" value="true" />
+
+      <property name="importer" ref="spacesBootstrap" />
+      <property name="bootstrapViews">
+         <list>
+            <props>
+               <prop key="encoding">UTF-8</prop>
+               <prop key="path">/</prop>
+               <prop key="location">ee/webmedia/alfresco/maais/bootstrap/maais.xml</prop>
+            </props>
+         </list>
+      </property>
+   </bean>
+
+   <bean id="MaaisService" class="org.springframework.aop.framework.ProxyFactoryBean">
+      <property name="proxyInterfaces">
+         <list>
+            <value>ee.webmedia.alfresco.maais.service.MaaisService</value>
+         </list>
+      </property>
+      <property name="target" ref="maaisService" />
+      <property name="interceptorNames">
+         <list>
+            <idref bean="commonTransactionInterceptor" />
+         </list>
+      </property>
+   </bean>
+
+   <bean id="maaisParametersBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
+      <property name="moduleId" value="common" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="parametersSpacesBootstrap" />
+         </list>
+      </property>
+      <property name="importer" ref="spacesBootstrap" />
+      <property name="bootstrapViews">
+         <list>
+            <props>
+               <prop key="encoding">UTF-8</prop>
+               <prop key="path">/param:parameters</prop>
+               <prop key="location">ee/webmedia/alfresco/maais/bootstrap/maais-parameters.xml</prop>
+            </props>
+         </list>
+      </property>
+   </bean>
+
+   <bean id="maaisParametersBootstrap2" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
+      <property name="moduleId" value="common" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="parametersSpacesBootstrap" />
+         </list>
+      </property>
+      <property name="importer" ref="spacesBootstrap" />
+      <property name="bootstrapViews">
+         <list>
+            <props>
+               <prop key="encoding">UTF-8</prop>
+               <prop key="path">/param:parameters</prop>
+               <prop key="location">ee/webmedia/alfresco/maais/bootstrap/maais-parameters2.xml</prop>
+            </props>
+         </list>
+      </property>
+   </bean>
+
+   <bean id="maaisParametersBootstrap3" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
+      <property name="moduleId" value="common" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="parametersSpacesBootstrap" />
+         </list>
+      </property>
+      <property name="importer" ref="spacesBootstrap" />
+      <property name="bootstrapViews">
+         <list>
+            <props>
+               <prop key="encoding">UTF-8</prop>
+               <prop key="path">/param:parameters</prop>
+               <prop key="location">ee/webmedia/alfresco/maais/bootstrap/maais-parameters3.xml</prop>
+            </props>
+         </list>
+      </property>
+   </bean>
+   
+   <bean id="maaisParametersBootstrap4" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
+      <property name="moduleId" value="common" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="parametersSpacesBootstrap" />
+         </list>
+      </property>
+      <property name="importer" ref="spacesBootstrap" />
+      <property name="bootstrapViews">
+         <list>
+            <props>
+               <prop key="encoding">UTF-8</prop>
+               <prop key="path">/param:parameters</prop>
+               <prop key="location">ee/webmedia/alfresco/maais/bootstrap/maais-parameters4.xml</prop>
+            </props>
+         </list>
+      </property>
+   </bean>
+   
+   <bean id="maaisRenewCasesTrigger" class="ee.webmedia.alfresco.parameters.job.ParameterRescheduledTriggerBean" parent="parameterRescheduledTriggerParent">
+      <property name="parameterName" value="maaisRenewCasesTime" />
+      <property name="parameterFormat" value="H:mm" />
+      <property name="jobDetail">
+         <bean id="maaisRenewCasesJobDetails" class="org.springframework.scheduling.quartz.JobDetailBean">
+            <property name="jobClass" value="ee.webmedia.alfresco.maais.job.MaaisRenewCasesJob" />
+            <property name="jobDataAsMap">
+               <map>
+                  <entry key="maaisService" value-ref="MaaisService" />
+               </map>
+            </property>
+         </bean>
+      </property>
+   </bean>
+
+   <bean class="ee.webmedia.alfresco.common.bootstrap.ModuleComponentDependsOnSetter">
+      <property name="source" ref="parameterRescheduledJobsBootstrap" />
+      <property name="dependsOn" ref="maaisParametersBootstrap" />
+   </bean>
+
+   <bean class="ee.webmedia.alfresco.common.bootstrap.ModuleComponentDependsOnSetter">
+      <property name="source" ref="parameterRescheduledJobsBootstrap" />
+      <property name="dependsOn" ref="maaisParametersBootstrap2" />
+   </bean>
+
+   <bean class="ee.webmedia.alfresco.common.bootstrap.ModuleComponentDependsOnSetter">
+      <property name="source" ref="parameterRescheduledJobsBootstrap" />
+      <property name="dependsOn" ref="maaisParametersBootstrap3" />
+   </bean>
+
+   <bean id="updateMaaisAuthTrigger" class="ee.webmedia.alfresco.parameters.job.ParameterRescheduledTriggerBean" parent="parameterRescheduledTriggerParent">
+      <property name="enabled" value="true" />
+      <property name="parameterName" value="maaisRenewSessionsPeriod" />
+      <property name="parameterFormat" value="m" />
+      <property name="jobDetail">
+         <bean id="updateMaaisAuthJobDetails" class="org.springframework.scheduling.quartz.JobDetailBean">
+            <property name="jobClass" value="ee.webmedia.alfresco.maais.job.UpdateMaaisAuthJob" />
+            <property name="jobDataAsMap">
+               <map>
+                  <entry key="maaisService" value-ref="MaaisService" />
+               </map>
+            </property>
+         </bean>
+      </property>
+   </bean>
+   
+   <bean id="sendMaaisChangedDocumentsTrigger" class="ee.webmedia.alfresco.parameters.job.ParameterRescheduledTriggerBean" parent="parameterRescheduledTriggerParent">
+      <property name="enabled" value="true" />
+      <property name="parameterName" value="maaisNotifyAssocRetryPeriod" />
+      <property name="parameterFormat" value="m" />
+      <property name="jobDetail">
+         <bean id="sendMaaisChangedDocumentsJobDetails" class="org.springframework.scheduling.quartz.JobDetailBean">
+            <property name="jobClass" value="ee.webmedia.alfresco.maais.job.SendMaaisChangedDocumentsJob" />
+            <property name="jobDataAsMap">
+               <map>
+                  <entry key="maaisService" value-ref="MaaisService" />
+               </map>
+            </property>
+         </bean>
+      </property>
+   </bean>
+
+   <bean id="MaaisSessionBean" class="ee.webmedia.alfresco.maais.MaaisSessionBean" scope="session" />
+
+</beans>

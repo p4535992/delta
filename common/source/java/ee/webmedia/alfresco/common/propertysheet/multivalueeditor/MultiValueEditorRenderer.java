@@ -23,17 +23,13 @@ import org.alfresco.web.ui.repo.component.UIMultiValueEditor;
 import org.alfresco.web.ui.repo.component.UIMultiValueEditor.MultiValueEditorEvent;
 import org.apache.commons.lang.StringUtils;
 
-import ee.webmedia.alfresco.classificator.model.ClassificatorValue;
-import ee.webmedia.alfresco.classificator.service.ClassificatorService;
 import ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.ComponentPropVO;
 import ee.webmedia.alfresco.common.propertysheet.search.Search;
 import ee.webmedia.alfresco.common.propertysheet.search.SearchRenderer;
-import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
-import ee.webmedia.alfresco.help.web.HelpTextUtil;
+import ee.webmedia.alfresco.document.search.model.DocumentSearchModel;
 import ee.webmedia.alfresco.utils.ComponentUtil;
-import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
  * Render {@link MultiValueEditor} as HTML table. Direct children of {@link MultiValueEditor} must be {@link HtmlPanelGroup} components.
@@ -44,7 +40,6 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 public class MultiValueEditorRenderer extends BaseRenderer {
 
     public static final String MULTI_VALUE_EDITOR_RENDERER_TYPE = MultiValueEditorRenderer.class.getCanonicalName();
-    public static final String GROUP_CONTROL_SEND_OUT = "sendOut";
 
     @Override
     public void decode(FacesContext context, UIComponent component) {
@@ -123,13 +118,6 @@ public class MultiValueEditorRenderer extends BaseRenderer {
             for (ComponentPropVO propVO : propVOs) {
                 out.write("<th>");
                 out.writeText(propVO.getPropertyLabel(), null);
-
-                // Field help:
-                String property = StringUtils.substringAfter(propVO.getPropertyName(), ":");
-                if (HelpTextUtil.hasHelpText(context, HelpTextUtil.TYPE_FIELD, property)) {
-                    out.write("&nbsp;");
-                    HelpTextUtil.writeHelpTextLink(out, context, HelpTextUtil.TYPE_FIELD, property);
-                }
                 out.write("</th>");
             }
             out.write("</tr></thead>");
@@ -154,189 +142,6 @@ public class MultiValueEditorRenderer extends BaseRenderer {
         ResponseWriter out = context.getResponseWriter();
         out.write("</tbody></table>");
 
-        renderAddLink(context, component, out);
-
-        @SuppressWarnings("unchecked")
-        List<UIComponent> children = component.getChildren();
-        for (int i = 0; i < children.size(); i++) {
-            UIComponent child = children.get(i);
-            if (!child.isRendered()) {
-                continue;
-            }
-            if (child instanceof UIGenericPicker) {
-                renderPicker(context, out, component, (UIGenericPicker) child);
-            }
-        }
-
-        out.write("</div>");
-    }
-
-    @Override
-    public boolean getRendersChildren() {
-        return true;
-    }
-
-    @Override
-    public void encodeChildren(FacesContext context, UIComponent multiValueEditor) throws IOException {
-        ResponseWriter out = context.getResponseWriter();
-        boolean hasPicker = ((MultiValueEditor) multiValueEditor).getPickerCallback() != null;
-        int rowIndex = 0;
-        boolean deleteEnabled = !ComponentUtil.isComponentDisabledOrReadOnly(multiValueEditor);
-        String previousGroupingValue = null;
-        boolean inGroup = false;
-        String groupRowControls = generateGroupRowControls(context, multiValueEditor);
-        List<UIComponent> children = multiValueEditor.getChildren();
-        int renderedRowCount = ComponentUtil.getRenderedChildrenCount(multiValueEditor);
-        for (UIComponent child : children) {
-            if (!child.isRendered()) {
-                continue;
-            }
-
-            if (child instanceof HtmlPanelGroup) {
-                int renderedColumnCount = ComponentUtil.getRenderedChildrenCount(child);
-                String groupByColumnValue = (String) child.getAttributes().get(MultiValueEditor.GROUP_BY_COLUMN_VALUE);
-                if (StringUtils.isNotBlank(groupByColumnValue) && !groupByColumnValue.equals(previousGroupingValue)) {
-                    if (previousGroupingValue != null) {
-                        out.write("</tbody>");
-                        inGroup = false;
-                    }
-
-                    generateGroupRow(out, context, (MultiValueEditor) multiValueEditor, groupByColumnValue, rowIndex, renderedColumnCount, deleteEnabled, groupRowControls);
-                    out.write("<tbody class=\"hidden\">");
-                    inGroup = true;
-                    previousGroupingValue = groupByColumnValue;
-                } else if (StringUtils.isBlank(groupByColumnValue) && previousGroupingValue != null) {
-                    out.write("</tbody>");
-                    inGroup = false;
-                }
-
-                out.write("<tr>");
-
-                List<UIComponent> columns = child.getChildren();
-                int columnCount = 0;
-                for (UIComponent column : columns) {
-                    if (!column.isRendered()) {
-                        continue;
-                    }
-                    out.write("<td>");
-                    if ((rowIndex == renderedRowCount - 1) && (columnCount == renderedColumnCount - 1) && ((MultiValueEditor) multiValueEditor).isAutomaticallyAddRows()) {
-                        String addLinkId = getAddLinkId(context, multiValueEditor);
-                        // component has to implement actual link clicking
-                        ComponentUtil.putAttribute(column, MultiValueEditor.ATTR_CLICK_LINK_ID, addLinkId);
-                    } else {
-                        column.getAttributes().remove(MultiValueEditor.ATTR_CLICK_LINK_ID);
-                    }
-                    Utils.encodeRecursive(context, column);
-                    if (hasSearchSuggest(multiValueEditor, column)) {
-                        out.write(ComponentUtil.generateSuggestScript(context, column, (String) multiValueEditor.getAttributes().get(Search.PICKER_CALLBACK_KEY)));
-                    }
-                    out.write("</td>");
-                    columnCount++;
-                }
-
-                out.write("<td>");
-                if (!ComponentUtil.isComponentDisabledOrReadOnly(multiValueEditor) && (!((MultiValueEditor) multiValueEditor).isForcedMandatory_() || renderedRowCount > 1)) {
-
-                    out.write("<a class=\"icon-link margin-left-4 delete\" onclick=\"");
-                    out.write(ComponentUtil //
-                            .generateAjaxFormSubmit(context, multiValueEditor, multiValueEditor.getClientId(context), Integer
-                                    .toString(UIMultiValueEditor.ACTION_REMOVE) + ";" + rowIndex));
-                    out.write("\" title=\"" + Application.getMessage(context, "delete") + "\">");
-                    out.write("</a>");
-
-                    if (hasPicker && !inGroup) {
-                        out.write("<a class=\"icon-link search\" onclick=\"");
-                        out.write(ComponentUtil.generateFieldSetter(context, multiValueEditor, getActionId(context, multiValueEditor),
-                                SearchRenderer.OPEN_DIALOG_ACTION + ";" + rowIndex));
-                        out.write("return showModal('");
-                        out.write(getDialogId(context, multiValueEditor));
-                        out.write("');\"");
-                        out.write(" title=\"" + Application.getMessage(context, SearchRenderer.SEARCH_MSG) + "\">");
-                        // out.write(Application.getMessage(context, SearchRenderer.SEARCH_MSG));
-                        out.write("</a>");
-                    }
-                }
-
-                out.write("</td></tr>");
-                rowIndex++;
-            }
-        }
-    }
-
-    private String generateGroupRowControls(FacesContext context, UIComponent multiValueEditor) {
-        String html = null;
-        String rowControls = (String) multiValueEditor.getAttributes().get(MultiValueEditor.GROUP_ROW_CONTROLS);
-        if (StringUtils.isBlank(rowControls)) {
-            return html;
-        }
-
-        if (GROUP_CONTROL_SEND_OUT.equals(rowControls)) {
-            ClassificatorService classificatorService = BeanHelper.getClassificatorService();
-            List<ClassificatorValue> activeClassificatorValues = classificatorService.getActiveClassificatorValues(classificatorService.getClassificatorByName("sendMode"));
-
-            StringBuilder s = new StringBuilder("<select class=\"changeSendOutMode width120\">");
-            s.append("<option value=\"\">").append(MessageUtil.getMessage("select_default_label")).append("</option>");
-            for (ClassificatorValue classificatorValue : activeClassificatorValues) {
-                s.append("<option value=\"").append(classificatorValue.getValueName()).append("\">").append(classificatorValue.getValueName()).append("</option>");
-            }
-            s.append("</select>");
-            html = s.toString();
-        }
-
-        return html;
-    }
-
-    private void generateGroupRow(ResponseWriter out, FacesContext context, MultiValueEditor multiValueEditor, String groupByColumnValue, int rowIndex, int columnCount,
-            boolean deleteEnabled, String rowControlComponent) throws IOException {
-
-        if (rowControlComponent != null) {
-            columnCount -= 1;
-        }
-        if (!deleteEnabled) {
-            columnCount += 1;
-        }
-
-        out.write("<tr><td");
-        if (columnCount > 0) {
-            out.write(" colspan=\"");
-            out.write(Integer.toString(columnCount));
-            out.write("\"");
-        }
-        out.write("><a href=\"#\" onclick=\"return false;\" class=\"icon-link toggle-tbody plus\"></a>");
-        out.write(groupByColumnValue);
-        out.write("</td>");
-
-        if (rowControlComponent != null) {
-            out.write("<td>");
-            out.write(rowControlComponent);
-            out.write("</td>");
-        }
-
-        if (deleteEnabled) {
-            out.write("<td class=\"actions\"><a class=\"icon-link margin-left-4 delete\" onclick=\"");
-            out.write(ComponentUtil.generateAjaxFormSubmit(context, multiValueEditor, multiValueEditor.getClientId(context), Integer.toString(MultiValueEditor.ACTION_REMOVE_GROUP)
-                    + ";" + rowIndex));
-            out.write("\" title=\"");
-            out.write(Application.getMessage(context, "delete"));
-            out.write("\"></a></td>");
-        }
-
-        out.write("</tr>");
-    }
-
-    private boolean hasSearchSuggest(UIComponent multiValueEditor, UIComponent column) {
-        if (Boolean.TRUE.equals(multiValueEditor.getAttributes().get(Search.SEARCH_SUGGEST_DISABLED))) {
-            return false;
-        }
-        String id = column.getId();
-        return StringUtils.startsWith(id, FacesHelper.makeLegalId(DocumentCommonModel.PREFIX + DocumentCommonModel.Props.RECIPIENT_NAME.getLocalName()))
-                || StringUtils.startsWith(id,
-                        FacesHelper.makeLegalId(DocumentCommonModel.PREFIX + DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME.getLocalName()))
-                || StringUtils.startsWith(id,
-                        FacesHelper.makeLegalId(DocumentSpecificModel.PREFIX + DocumentSpecificModel.Props.PROCUREMENT_APPLICANT_NAME.getLocalName()));
-    }
-
-    private void renderAddLink(FacesContext context, UIComponent component, ResponseWriter out) throws IOException {
         @SuppressWarnings("unchecked")
         final Map<String, Object> attributes = component.getAttributes();
         String addLabelId = (String) attributes.get(MultiValueEditor.ADD_LABEL_ID);
@@ -367,10 +172,111 @@ public class MultiValueEditorRenderer extends BaseRenderer {
                     , Integer.toString(UIMultiValueEditor.ACTION_ADD), null, ajaxParentLevel));
             out.write("\">");
             if (!noAddLinkLabel) {
-                out.write(Application.getMessage(context, addLabelId));
+                out.write(addLabel);
             }
             out.write("</a>");
         }
+
+        @SuppressWarnings("unchecked")
+        List<UIComponent> children = component.getChildren();
+        for (int i = 0; i < children.size(); i++) {
+            UIComponent child = children.get(i);
+            if (!child.isRendered()) {
+                continue;
+            }
+            if (child instanceof UIGenericPicker) {
+                renderPicker(context, out, component, (UIGenericPicker) child);
+            }
+        }
+
+        out.write("</div>");
+    }
+
+    @Override
+    public boolean getRendersChildren() {
+        return true;
+    }
+
+    @Override
+    public void encodeChildren(FacesContext context, UIComponent multiValueEditor) throws IOException {
+        ResponseWriter out = context.getResponseWriter();
+        boolean hasPicker = ((MultiValueEditor) multiValueEditor).getPickerCallback() != null;
+        int rowIndex = 0;
+        @SuppressWarnings("unchecked")
+        List<UIComponent> children = multiValueEditor.getChildren();
+        int renderedRowCount = ComponentUtil.getRenderedChildrenCount(multiValueEditor, HtmlPanelGroup.class);
+        for (UIComponent child : children) {
+            if (!child.isRendered()) {
+                continue;
+            }
+
+            if (child instanceof HtmlPanelGroup) {
+                out.write("<tr>");
+
+                @SuppressWarnings("unchecked")
+                List<UIComponent> columns = child.getChildren();
+                int renderedColumnCount = ComponentUtil.getRenderedChildrenCount(child, null);
+                int columnCount = 0;
+                for (UIComponent column : columns) {
+                    if (!column.isRendered()) {
+                        continue;
+                    }
+                    out.write("<td>");
+                    if ((rowIndex == renderedRowCount - 1) && (columnCount == renderedColumnCount - 1) && ((MultiValueEditor) multiValueEditor).isAutomaticallyAddRows()) {
+                        String addLinkId = getAddLinkId(context, multiValueEditor);
+                        // component has to implement actual link clicking
+                        ComponentUtil.putAttribute(column, MultiValueEditor.ATTR_CLICK_LINK_ID, addLinkId);
+                    } else {
+                        column.getAttributes().remove(MultiValueEditor.ATTR_CLICK_LINK_ID);
+                    }
+                    Utils.encodeRecursive(context, column);
+                    if (hasSearchSuggest(column)) {
+                        ComponentUtil.generateSuggestScript(context, column, (String) multiValueEditor.getAttributes().get(Search.PICKER_CALLBACK_KEY), out);
+                    }
+                    out.write("</td>");
+                    columnCount++;
+                }
+
+                out.write("<td>");
+                if (!ComponentUtil.isComponentDisabledOrReadOnly(multiValueEditor)) { // don't render removing link
+
+                    out.write("<a class=\"icon-link margin-left-4 delete\" onclick=\"");
+                    out.write(ComponentUtil //
+                            .generateAjaxFormSubmit(context, multiValueEditor, multiValueEditor.getClientId(context), Integer
+                                    .toString(UIMultiValueEditor.ACTION_REMOVE) + ";" + rowIndex));
+                    out.write("\" title=\"" + Application.getMessage(context, "delete") + "\">");
+                    out.write("</a>");
+
+                    if (hasPicker) {
+
+                        out.write("<a class=\"icon-link search\" onclick=\"");
+                        out.write(ComponentUtil.generateFieldSetter(context, multiValueEditor, getActionId(context, multiValueEditor),
+                                SearchRenderer.OPEN_DIALOG_ACTION + ";" + rowIndex));
+                        out.write("return showModal('");
+                        out.write(getDialogId(context, multiValueEditor));
+                        out.write("');\"");
+                        out.write(" title=\"" + Application.getMessage(context, SearchRenderer.SEARCH_MSG) + "\">");
+                        // out.write(Application.getMessage(context, SearchRenderer.SEARCH_MSG));
+                        out.write("</a>");
+
+                    }
+                }
+
+                out.write("</td></tr>");
+                rowIndex++;
+            }
+        }
+    }
+
+    private boolean hasSearchSuggest(UIComponent column) {
+        String id = column.getId();
+        return StringUtils.startsWith(id, FacesHelper.makeLegalId(DocumentCommonModel.PREFIX + DocumentCommonModel.Props.RECIPIENT_NAME.getLocalName()))
+                || StringUtils.startsWith(id,
+                        FacesHelper.makeLegalId(DocumentCommonModel.PREFIX + DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME.getLocalName()))
+                || StringUtils.startsWith(id,
+                        FacesHelper.makeLegalId(DocumentSpecificModel.PREFIX + DocumentSpecificModel.Props.PROCUREMENT_APPLICANT_NAME.getLocalName()))
+                || StringUtils.startsWith(id, FacesHelper.makeLegalId(DocumentSearchModel.PREFIX + DocumentSearchModel.Props.SENDER_NAME.getLocalName()))
+                || StringUtils.startsWith(id, FacesHelper.makeLegalId(DocumentSearchModel.PREFIX + DocumentSearchModel.Props.RECIPIENT_NAME.getLocalName()));
     }
 
     protected void renderPicker(FacesContext context, ResponseWriter out, UIComponent multiValueEditor, UIGenericPicker picker) throws IOException {
@@ -398,7 +304,8 @@ public class MultiValueEditorRenderer extends BaseRenderer {
         out.write(Application.getMessage(context, SearchRenderer.CLOSE_WINDOW_MSG));
         out.write("</a></p></div><div class=\"modalpopup-content\"><div class=\"modalpopup-content-inner\">");
 
-        Map<String, Object> attributes = picker.getAttributes();
+        @SuppressWarnings("unchecked")
+        Map<Object, Object> attributes = picker.getAttributes();
         attributes.put(Search.PICKER_CALLBACK_KEY, multiValueEditor.getAttributes().get(Search.PICKER_CALLBACK_KEY));
         Utils.encodeRecursive(context, picker);
 

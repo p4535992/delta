@@ -1,23 +1,14 @@
 package ee.webmedia.alfresco.utils;
 
 import static ee.webmedia.alfresco.utils.ISOLatin1Util.removeAccents;
-import static org.apache.commons.io.FileUtils.ONE_GB;
-import static org.apache.commons.io.FileUtils.ONE_KB;
-import static org.apache.commons.io.FileUtils.ONE_MB;
 
-import java.text.DecimalFormat;
 import java.util.List;
 import java.util.regex.Pattern;
 
 import org.alfresco.repo.content.MimetypeMap;
-import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.util.Pair;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
 
-import ee.webmedia.alfresco.common.service.GeneralService;
-import ee.webmedia.alfresco.workflow.service.Task;
-import ee.webmedia.alfresco.workflow.service.WorkflowDbService;
 import ee.webmedia.xtee.client.dhl.types.ee.sk.digiDoc.v13.DataFileType;
 
 /**
@@ -26,9 +17,6 @@ import ee.webmedia.xtee.client.dhl.types.ee.sk.digiDoc.v13.DataFileType;
  * @author Kaarel Jõgeva
  */
 public class FilenameUtil {
-
-    public static final String ERR_INVALID_FILE_NAME = "add_file_invalid_file_name";
-
     private static final int FILE_MAX_LENGTH = 50;
     private static final String FILE_MAX_LENGTH_SUFFIX = "....";
     private static final String FILE_NON_ASCII_REPLACEMENT = "_";
@@ -83,7 +71,7 @@ public class FilenameUtil {
     }
 
     public static String generateUniqueFileDisplayName(String displayName, List<String> existingDisplayNames) {
-        String baseName = FilenameUtils.removeExtension(displayName);
+        String baseName = displayName.substring(0, FilenameUtils.indexOfExtension(displayName));
         String extension = FilenameUtils.getExtension(displayName);
         if (StringUtils.isBlank(extension)) {
             extension = MimetypeMap.EXTENSION_BINARY;
@@ -138,59 +126,13 @@ public class FilenameUtil {
                 replaceAmpersand(
                 trimDotsAndSpaces(
                 stripForbiddenWindowsCharacters(
-                name))))));
+                        name))))));
 
         if (existingFileNames != null && !existingFileNames.isEmpty()) {
             safeName = generateUniqueFileDisplayName(safeName, existingFileNames);
         }
 
         return safeName;
-    }
-
-    public static Pair<String, String> getFilenameFromDisplayname(NodeRef documentNodeRef, List<String> existingDisplayNames, String displayName, GeneralService generalService) {
-        displayName = generateUniqueFileDisplayName(displayName, existingDisplayNames);
-        String name = checkAndGetUniqueFilename(documentNodeRef, displayName, generalService);
-        return new Pair<String, String>(name, displayName);
-    }
-
-    public static Pair<String, String> getTaskFilenameFromDisplayname(Task task, List<String> existingDisplayNames, String displayName,
-            GeneralService generalService, WorkflowDbService workflowDbService) {
-        displayName = generateUniqueFileDisplayName(displayName, existingDisplayNames);
-        String name = generalService.getUniqueFileName(makeSafeFilename(displayName),
-                workflowDbService.getTaskFileNodeRefs(task.getNodeRef()), task.getParent().getNodeRef());
-        return new Pair<String, String>(name, displayName);
-    }
-
-    public static String getDiplayNameFromName(String originalFileName) {
-        return FilenameUtils.removeExtension(originalFileName) + "." + FilenameUtils.getExtension(originalFileName);
-    }
-
-    /**
-     * NB! this method is intended only for cm:name property!
-     */
-    private static String checkAndGetUniqueFilename(NodeRef documentNodeRef, String displayName, GeneralService generalService) {
-        String safeFilename = makeSafeFilename(displayName);
-        return generalService.getUniqueFileName(documentNodeRef, safeFilename);
-    }
-
-    public static String byteCountToDisplaySize(long size) {
-        DecimalFormat df = new DecimalFormat("#.##");
-
-        String displaySize;
-        if (size / ONE_GB > 0) {
-            displaySize = df.format((double) size / ONE_GB) + " GB";
-        } else if (size / ONE_MB > 0) {
-            displaySize = df.format((double) size / ONE_MB) + " MB";
-        } else if (size / ONE_KB > 0) {
-            displaySize = df.format((double) size / ONE_KB) + " KB";
-        } else {
-            displaySize = String.valueOf(size) + " B";
-        }
-        return displaySize;
-    }
-
-    public static boolean isEncryptedFile(String fileName) {
-        return fileName.toLowerCase().endsWith(".cdoc");
     }
 
 }

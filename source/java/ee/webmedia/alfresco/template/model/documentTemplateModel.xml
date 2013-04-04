@@ -17,12 +17,9 @@
          <properties>
             <property name="docTempl:name">
                <type>d:text</type>
-               <mandatory enforced="true">true</mandatory>
+               <mandatory enforced="false">true</mandatory>
             </property>
             <property name="docTempl:comment">
-               <type>d:text</type>
-            </property>
-            <property name="docTempl:templateType">
                <type>d:text</type>
             </property>
          </properties>
@@ -33,31 +30,8 @@
             <aspect>docTempl:template</aspect>
          </mandatory-aspects>
       </aspect>
-
-      <aspect name="docTempl:notificationTemplate">
-         <mandatory-aspects>
-            <aspect>docTempl:template</aspect>
-         </mandatory-aspects>
-      </aspect>
       
-      <!-- XXX Deprecated: This aspect is not used in new templates any more -->
       <aspect name="docTempl:systemTemplate">
-         <mandatory-aspects>
-            <aspect>docTempl:template</aspect>
-         </mandatory-aspects>
-      </aspect>
-      
-      <aspect name="docTempl:reportTemplate">
-         <properties>
-            <property name="docTempl:reportType">
-               <type>d:text</type>
-               <mandatory enforced="true">true</mandatory>
-            </property>
-            <property name="docTempl:reportOutputType">
-               <type>d:text</type>
-               <mandatory>false</mandatory>
-            </property>
-         </properties>
          <mandatory-aspects>
             <aspect>docTempl:template</aspect>
          </mandatory-aspects>
@@ -66,9 +40,8 @@
       <aspect name="docTempl:documentTemplate">
          <properties>
             <property name="docTempl:docTypeId">
-               <type>d:text</type>
-               <!--if 'mandatory' not commented updater cant remove this aspect. document-template-web-client-config.xml added forcedMandatory="true" -->
-               <!--<mandatory enforced="false">true</mandatory> -->
+               <type>d:qname</type>
+               <mandatory enforced="false">true</mandatory>
             </property>
          </properties>
          <mandatory-aspects>

@@ -1,14 +1,11 @@
 package ee.webmedia.alfresco.classificator.model;
 
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
-import org.alfresco.service.namespace.QName;
-import org.apache.commons.lang.StringUtils;
 import org.springframework.util.Assert;
 
 import com.thoughtworks.xstream.annotations.XStreamAlias;
@@ -29,10 +26,6 @@ public class ClassificatorExportVO extends Classificator {
     private final List<ClassificatorValue> classificatorValues;
     @XStreamOmitField
     private List<ClassificatorValue> previousClassificatorValues;
-    @XStreamOmitField
-    private String previousDescription;
-    @XStreamOmitField
-    private boolean previousDeleteEnabled;
 
     @XStreamOmitField
     private Boolean valueChanged;
@@ -47,8 +40,7 @@ public class ClassificatorExportVO extends Classificator {
 
     public ClassificatorExportVO(Classificator classificator, List<ClassificatorValue> allClassificatorValues) {
         this(classificator.getName(), allClassificatorValues);
-        setDeleteEnabled(classificator.isDeleteEnabled());
-        setDescription(classificator.getDescription());
+        Assert.isTrue(classificator.isAddRemoveValues(), "Classificators, that have no changable values should not be exported: " + classificator);
     }
 
     public List<ClassificatorValue> getClassificatorValues() {
@@ -184,13 +176,10 @@ public class ClassificatorExportVO extends Classificator {
                 return 1;
             } else if (o1.isByDefault() != o.isByDefault()) {
                 return 1;
-            } else if (!StringUtils.equals(o1.getValueData(), o.getValueData())) {
-                return 1;
             } else {
                 return 0;
             }
         }
-
     }
 
     public class ClassificatorValueState {
@@ -220,24 +209,5 @@ public class ClassificatorExportVO extends Classificator {
             }
             return changed;
         }
-    }
-
-    public List<QName> getChangedProperties() {
-        List<QName> propsQNames = new ArrayList<QName>();
-        if (!StringUtils.equals(previousDescription, getDescription())) {
-            propsQNames.add(ClassificatorModel.Props.DESCRIPTION);
-        }
-        if (previousDeleteEnabled != isDeleteEnabled()) {
-            propsQNames.add(ClassificatorModel.Props.DELETE_ENABLED);
-        }
-        return propsQNames;
-    }
-
-    public void setPreviousDescription(String previousDescription) {
-        this.previousDescription = previousDescription;
-    }
-
-    public void setPreviousDeleteEnabled(boolean previousDeleteEnabled) {
-        this.previousDeleteEnabled = previousDeleteEnabled;
     }
 }

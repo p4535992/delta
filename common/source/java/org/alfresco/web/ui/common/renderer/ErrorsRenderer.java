@@ -149,9 +149,7 @@ public class ErrorsRenderer extends BaseRenderer
                out.write("<div style='margin-bottom: 3px;'");
                renderMessageAttrs(fm, out, errorClass, infoClass);
                out.write(">");
-               String msgEncoded = Utils.encode(fm.getSummary());
-               msgEncoded = StringUtils.replace(msgEncoded, "\n", "<br/>");
-               out.write(msgEncoded);
+               out.write(Utils.encode(fm.getSummary()));
                out.write("</div>\n");
             }
             
