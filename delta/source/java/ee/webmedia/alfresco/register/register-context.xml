@@ -3,11 +3,6 @@
    xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
 
    <bean id="registerTableBootstrap" class="ee.webmedia.alfresco.register.bootstrap.RegisterTableBootstrap" parent="createTableBootstrap">
-      <property name="dependsOn">
-         <list>
-            <ref bean="invalidNodeFixerAndIndexIntegrityCheckerBootstrap"/>
-         </list>
-      </property>
    </bean>
 
    <bean id="registerModelBootstrap" parent="dictionaryModelBootstrap" depends-on="dictionaryBootstrap">

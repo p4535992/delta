@@ -1572,7 +1572,7 @@ public abstract class AbstractLuceneIndexerAndSearcherFactory implements LuceneI
                 }
     
                 IndexIntegrityCheckerBootstrap indexIntegrityCheckerBootstrap = BeanHelper.getSpringBean(IndexIntegrityCheckerBootstrap.class, "indexIntegrityCheckerBootstrap");
-                indexIntegrityCheckerBootstrap.execute(true, null);
+//                indexIntegrityCheckerBootstrap.execute(true, null);
     
                 final LuceneIndexerAndSearcher indexerAndSearcher = BeanHelper.getSpringBean(LuceneIndexerAndSearcher.class, "admLuceneIndexerAndSearcherFactory");
                 RetryingTransactionHelper txHelper = BeanHelper.getTransactionService().getRetryingTransactionHelper();
