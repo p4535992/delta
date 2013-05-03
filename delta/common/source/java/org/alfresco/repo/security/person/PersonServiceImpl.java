@@ -578,8 +578,8 @@ public class PersonServiceImpl extends TransactionListenerAdapter implements Per
         Map<QName, Serializable> update = nodeService.getProperties(personNode);
         update.putAll(properties);
 
-        personPropertiesCache.put(userName, update);
         nodeService.setProperties(personNode, update);
+        personPropertiesCache.put(userName, nodeService.getProperties(personNode));
     }
     
     @Override
