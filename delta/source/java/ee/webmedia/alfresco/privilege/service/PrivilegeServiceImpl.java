@@ -262,7 +262,7 @@ public class PrivilegeServiceImpl implements PrivilegeService {
 
     private void deletePermissions(NodeRef manageableRef, String authority, Set<String> privilegesToDelete) {
         for (String permission : privilegesToDelete) {
-            if (!hasPermissionOnAuthority(manageableRef, permission, authority)) {
+            if (!hasPermissionOnAuthority(manageableRef, authority, permission)) {
                 if (LOG.isDebugEnabled()) {
                     LOG.debug("Previously deleted permission " + permission + " from " + authority + " on " + manageableRef + " - nothing to do");
                 }
@@ -294,7 +294,7 @@ public class PrivilegeServiceImpl implements PrivilegeService {
         Assert.notNull(authority, "setPermissions() called without authority");
         Set<String> permissionsWithDependencies = PrivilegeUtil.getPrivsWithDependencies(privilegesToAdd);
         for (String permission : permissionsWithDependencies) {
-            if (hasPermissionOnAuthority(manageableRef, permission, authority)) {
+            if (hasPermissionOnAuthority(manageableRef, authority, permission)) {
                 if (LOG.isDebugEnabled()) {
                     LOG.debug("Previously set permission " + permission + " to " + authority + " on " + manageableRef + " - nothing to do");
                 }
