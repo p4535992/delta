@@ -182,7 +182,7 @@ public class SharepointMapping {
         return mapping != null ? new MappedDocument(docRoot, mapping) : null;
     }
 
-    private Mapping getDocumentMapping(DocumentMetadata meta) {
+    public Mapping getDocumentMapping(DocumentMetadata meta) {
         Mapping propMapping = null;
 
         if (StringUtils.isNotBlank(meta.getDirection())) {

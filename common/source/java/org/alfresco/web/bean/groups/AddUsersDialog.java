@@ -57,6 +57,7 @@ import org.alfresco.web.ui.common.component.PickerSearchParams;
 import org.alfresco.web.ui.common.component.UIGenericPicker;
 import org.apache.lucene.search.BooleanQuery;
 
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.SearchUtil;
 
@@ -112,7 +113,7 @@ public class AddUsersDialog extends BaseDialogBean
       {
          try
          {
-            this.getAuthService().addAuthority(this.group, wrapper.getAuthority());
+             BeanHelper.getUserService().addUserToGroup(this.group,  wrapper.getAuthority());
          } catch (DuplicateChildNodeNameException e) {
             MessageUtil.addErrorMessage(context, "add_user_group_duplicate", wrapper.getName());
             isFinished = false;

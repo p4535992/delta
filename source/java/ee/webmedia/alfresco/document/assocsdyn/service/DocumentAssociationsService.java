@@ -64,6 +64,6 @@ public interface DocumentAssociationsService {
 
     List<NodeRef> getDocumentIndependentWorkflowAssocs(NodeRef docRef);
 
-    boolean isAddCompoundWorkflowAssoc(NodeRef baseDocumentRef, String associatiedDocTypeId, QName documentAssocType);
+    boolean isAddCompoundWorkflowAssoc(NodeRef baseDocumentRef, String associatedDocTypeId, QName documentAssocType);
 
 }

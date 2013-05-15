@@ -60,9 +60,6 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
     private List<DueDateHistoryRecord> dueDateHistoryRecords;
     private List<NodeRef> removedFiles;
     private boolean filesLoaded;
-    /** If null, indicates that due date history data existence has not been checked and should not be updated in delta_task table */
-    private Boolean hasDueDateHistory;
-    private Boolean originalHasDueDateHistory;
     private Boolean originalHasFiles;
     private String groupDueDateVbString;
     private String workflowNodeRefId;
@@ -101,7 +98,6 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
     protected Task copy(Workflow copyParent) {
         Task copy = copyImpl(new Task(getNode().clone(), copyParent, outcomes));
         copy.setDueDateHistoryRecords(getDueDateHistoryRecords());
-        copy.hasDueDateHistory = !getDueDateHistoryRecords().isEmpty();
         return copy;
     }
 
@@ -573,22 +569,6 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
 
     public boolean filesLoaded() {
         return filesLoaded;
-    }
-
-    public void setHasDueDateHistory(boolean hasDueDateHistory) {
-        this.hasDueDateHistory = hasDueDateHistory;
-    }
-
-    public Boolean getHasDueDateHistory() {
-        return hasDueDateHistory;
-    }
-
-    public Boolean getOriginalHasDueDateHistory() {
-        return originalHasDueDateHistory;
-    }
-
-    public void setOriginalHasDueDateHistory(Boolean originalHasDueDateHistory) {
-        this.originalHasDueDateHistory = originalHasDueDateHistory;
     }
 
     public Boolean getOriginalHasFiles() {

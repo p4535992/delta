@@ -17,6 +17,7 @@ import static ee.webmedia.alfresco.privilege.service.PrivilegeUtil.isAdminOrDocm
 import static ee.webmedia.alfresco.utils.ComponentUtil.getAttributes;
 import static ee.webmedia.alfresco.utils.ComponentUtil.getChildren;
 import static ee.webmedia.alfresco.utils.ComponentUtil.putAttribute;
+import static ee.webmedia.alfresco.workflow.web.CompoundWorkflowDialog.handleWorkflowChangedException;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -76,7 +77,6 @@ import org.apache.commons.lang.StringUtils;
 import org.joda.time.LocalDate;
 
 import ee.webmedia.alfresco.app.AppConstants;
-import ee.webmedia.alfresco.casefile.model.CaseFileModel;
 import ee.webmedia.alfresco.casefile.model.CaseFileModel;
 import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.common.propertysheet.component.WMUIPropertySheet;
@@ -168,6 +168,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
 
     private transient HtmlPanelGroup dataTableGroup;
     private transient UIRichList reviewNotesRichList;
+    private transient HtmlPanelGroup dueDateHistoryModalPanel;
 
     private NodeRef containerRef;
     private Node container;
@@ -192,9 +193,6 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
     private NodeRef mainDocumentRef;
     private Map<NodeRef, String> originalStatuses;
 
-    private String renderedModal;
-    private transient UIPanel modalContainer;
-
     @Override
     public void resetOrInit(DialogDataProvider provider) {
         if (provider == null) {
@@ -204,7 +202,6 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
             compoundWorkflowDialog = null;
             init(provider.getNode());
         }
-        resetModals();
     }
 
     public void init(Node container) {
@@ -306,27 +303,6 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
             if (retrieveAll || task.isType(WorkflowSpecificModel.Types.OPINION_TASK, WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_TASK)) {
                 getWorkflowService().retrieveTaskFiles(task, taskFiles.get(task.getNodeRef()));
             }
-        }
-    }
-
-    private void resetModals() {
-        renderedModal = null;
-        List<UIComponent> children = ComponentUtil.getChildren(getModalContainer());
-        children.clear();
-        DueDateHistoryModalComponent linkModal = new DueDateHistoryModalComponent();
-        linkModal.setId("document-link-modal-container");
-        children.add(linkModal);
-    }
-
-    public boolean isModalRendered() {
-        return StringUtils.isNotBlank(renderedModal);
-    }
-
-    public String getFetchAndResetRenderedModal() {
-        try {
-            return renderedModal;
-        } finally {
-            renderedModal = null;
         }
     }
 
@@ -578,8 +554,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
             task.getRemovedFiles().clear();
             MessageUtil.addInfoMessage("save_success");
         } catch (WorkflowChangedException e) {
-            log.debug("Saving task failed", e);
-            MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "workflow_task_save_failed");
+            handleWorkflowChangedException(e, "Saving task failed", "workflow_task_save_failed", log);
         }
         notifyDialogsIfNeeded();
     }
@@ -663,8 +638,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
             log.error("Finishing task failed", e);
             BeanHelper.getDocumentLockHelperBean().handleLockedNode("task_finish_error_document_locked", e);
         } catch (WorkflowChangedException e) {
-            log.error("Finishing task failed", e);
-            MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "workflow_task_save_failed");
+            CompoundWorkflowDialog.handleWorkflowChangedException(e, "Finishing task failed", "workflow_task_save_failed", log);
         } catch (WorkflowActiveResponsibleTaskException e) {
             log.debug("Finishing task failed: more than one active responsible task!", e);
             MessageUtil.addErrorMessage("workflow_compound_save_failed_responsible");
@@ -797,6 +771,10 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
             }
         } catch (UnableToPerformException e) {
             MessageUtil.addStatusMessage(e);
+            return;
+        } catch (NodeLockedException e) {
+            e.setCustomMessageId(null);
+            BeanHelper.getDocumentLockHelperBean().handleLockedNode("document_registerDoc_error_docLocked", e);
             return;
         }
         if (SignatureTaskOutcome.SIGNED_IDCARD.equals((int) outcomeIndex)) {
@@ -1161,7 +1139,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
             getDocumentService().finishDocumentSigning(signatureTask, signatureHex, signingQueue.get(0), mainDocumentRef == null, finishTask, originalStatuses);
             signingQueue.remove(0);
             long step1 = System.currentTimeMillis();
-            notifyDialogsIfNeeded();
+            notifyDialogsIfNeeded(false, finishTask);
             long step2 = System.currentTimeMillis();
             if (log.isInfoEnabled()) {
                 log.info("finishDocumentSigning took total time " + (step2 - step0) + " ms\n    service call - " + (step1 - step0) + " ms\n    reload document - "
@@ -1174,8 +1152,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         } catch (UnableToPerformException e) {
             MessageUtil.addStatusMessage(e);
         } catch (WorkflowChangedException e) {
-            log.debug("Finishing signature task failed", e);
-            MessageUtil.addErrorMessage("workflow_task_save_failed");
+            handleWorkflowChangedException(e, "Finishing signature task failed", "workflow_task_save_failed", log);
         } catch (SignatureRuntimeException e) {
             SignatureBlockBean.addSignatureError(e);
         } catch (FileExistsException e) {
@@ -1189,15 +1166,15 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
     }
 
     public void notifyDialogsIfNeeded() {
-        notifyDialogsIfNeeded(false);
+        notifyDialogsIfNeeded(false, true);
     }
 
-    public void notifyDialogsIfNeeded(boolean resetExpandedData) {
+    public void notifyDialogsIfNeeded(boolean resetExpandedData, boolean initWorkflowBlock) {
         if (compoundWorkflow == null || !compoundWorkflow.isIndependentWorkflow()) {
             getDocumentDialogHelperBean().switchMode(false);
         }
         if (compoundWorkflow != null && compoundWorkflowDialog != null) {
-            compoundWorkflowDialog.reload(compoundWorkflow != null ? compoundWorkflow.getNodeRef() : null, resetExpandedData);
+            compoundWorkflowDialog.reload(compoundWorkflow != null ? compoundWorkflow.getNodeRef() : null, resetExpandedData, initWorkflowBlock);
         }
     }
 
@@ -1279,6 +1256,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
             return false;
         }
         ExternalContext externalContext = FacesContext.getCurrentInstance().getExternalContext();
+        @SuppressWarnings("cast")
         String requestParamChallengeId = (String) externalContext.getRequestParameterMap().get("mobileIdChallengeId");
         if (StringUtils.isBlank(requestParamChallengeId) || !requestParamChallengeId.equals(signatureTask.getSignatureChallenge().getChallengeId())) {
             return false;
@@ -1741,7 +1719,29 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         }
         groupedWorkflowBlockItems.remove(groupedWorkflowBlockItems.size() - 1); // remove two last ones
         groupedWorkflowBlockItems.remove(groupedWorkflowBlockItems.size() - 1);
+        updateDueDateHistoryPanel();
         return groupedWorkflowBlockItems;
+    }
+
+    private void updateDueDateHistoryPanel() {
+        if (dueDateHistoryModalPanel == null) {
+            return;
+        }
+        List<UIComponent> children = dueDateHistoryModalPanel.getChildren();
+        children.clear();
+        for (CompoundWorkflow cWorkflow : getCompoundWorkflows()) {
+            for (Workflow workflow : cWorkflow.getWorkflows()) {
+                if (!workflow.isType(WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW, WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_WORKFLOW)) {
+                    continue;
+                }
+                for (Task task : workflow.getTasks()) {
+                    List<DueDateHistoryRecord> dueDateHistoryRecords = task.getDueDateHistoryRecords();
+                    if (dueDateHistoryRecords != null && !dueDateHistoryRecords.isEmpty()) {
+                        children.add(new DueDateHistoryModalComponent(FacesContext.getCurrentInstance(), task.getNodeRef().getId(), dueDateHistoryRecords));
+                    }
+                }
+            }
+        }
     }
 
     public List<WorkflowBlockItem> getGroupedWorkflowBlockItems() {
@@ -1797,23 +1797,6 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         return fileComponentCreator;
     }
 
-    public CustomChildrenCreator getDueDateHistoryRecordsGenerator() {
-        CustomChildrenCreator dueDateHistoryGenerator = new CustomChildrenCreator() {
-
-            @SuppressWarnings("unchecked")
-            @Override
-            public List<UIComponent> createChildren(List<Object> params, int rowCounter) {
-                List<UIComponent> components = new ArrayList<UIComponent>();
-                if (params != null && params.size() > 0) {
-                    String modalId = ((DueDateHistoryRecord) params.get(0)).getTaskId();
-                    components.add(new DueDateHistoryModalComponent(FacesContext.getCurrentInstance(), modalId, (List) params));
-                }
-                return components;
-            }
-        };
-        return dueDateHistoryGenerator;
-    }
-
     public List<File> getRemovedFiles() {
         if (removedFiles == null) {
             removedFiles = new ArrayList<File>();
@@ -1845,15 +1828,17 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         this.signature = signature;
     }
 
-    public UIPanel getModalContainer() {
-        if (modalContainer == null) {
-            modalContainer = new UIPanel();
-        }
-        return modalContainer;
+    public HtmlPanelGroup getDueDateHistoryModalPanel() {
+        return dueDateHistoryModalPanel;
     }
 
-    public void setModalContainer(UIPanel modalContainer) {
-        this.modalContainer = modalContainer;
+    public void setDueDateHistoryModalPanel(HtmlPanelGroup dueDateHistoryModalPanel) {
+        if (this.dueDateHistoryModalPanel == null) {
+            this.dueDateHistoryModalPanel = dueDateHistoryModalPanel;
+            updateDueDateHistoryPanel();
+        } else {
+            this.dueDateHistoryModalPanel = dueDateHistoryModalPanel;
+        }
     }
 
     // END: getters / setters

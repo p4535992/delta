@@ -59,5 +59,5 @@
    <r:propertySheetGrid id="log-search-filter" value="#{ApplicationLogDialog.filter}" columns="1" mode="edit" externalConfig="true" labelStyleClass="propertiesLabel"
       binding="#{ApplicationLogDialog.propertySheet}" />
 
-   <h:commandButton action="search" value="#{msg.applog_search}" actionListener="#{ApplicationLogDialog.search}" />
+   <h:commandButton action="search" value="#{msg.applog_search}" actionListener="#{ApplicationLogDialog.search}" styleClass="specificAction" />
 </a:panel>

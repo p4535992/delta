@@ -117,6 +117,7 @@ public enum Parameters {
 
     WORKING_DOCUMENTS_ADDRESS("workingDocumentsAddress"),
     ONE_STEP_ALLOWED_IN_COMPOUND_WORKFLOW_MESSAGE("oneStepAllowedInCompoundWorkflowMessage"),
+    LARGE_WORKFLOW_WARNING_TASK_COUNT("largeWorkflowWarningTaskCount"),
 
     QUICK_SEARCH_WORDS_COUNT("quickSearchWordsCount"),
 

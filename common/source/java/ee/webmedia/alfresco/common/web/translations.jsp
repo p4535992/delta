@@ -13,5 +13,6 @@
       addTranslation("webdav_openReadOnly", '<%= MessageUtil.getMessageAndEscapeJS("webdav_openReadOnly")%>');
       addTranslation("webdav_noPermissionsDownloadConfirm", '<%= MessageUtil.getMessageAndEscapeJS("webdav_noPermissionsDownloadConfirm")%>');
       addTranslation("select_default_label", '<%= MessageUtil.getMessageAndEscapeJS("select_default_label")%>');
+      addTranslation("modal_search_limited", '<%= MessageUtil.getMessageAndEscapeJS("modal_search_limited")%>');
 </script>
 </f:verbatim>

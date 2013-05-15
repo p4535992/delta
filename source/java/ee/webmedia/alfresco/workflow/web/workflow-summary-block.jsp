@@ -8,7 +8,9 @@
 
 <%@ page buffer="32kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
-<%@ page import="ee.webmedia.alfresco.common.web.BeanHelper" %>
+<%@ page import="ee.webmedia.alfresco.utils.MessageUtil" %>
+
+<% String historyLinkLabel = MessageUtil.getMessage("task_due_date_history_show_history"); %>
 
 <a:panel id="workflowSummaryBlock" label="#{msg.tasks}" progressive="true" expanded="<%=new Boolean(BeanHelper.getWorkflowBlockBean().isWorkflowSummaryBlockExpanded()).toString() %>">
    <a:richList viewMode="details" refreshOnBind="true" id="workflowList" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt" width="100%" value="#{WorkflowBlockBean.workflowBlockItems}" var="r" >
@@ -32,7 +34,7 @@
                <a:convertXMLDate pattern="#{msg.date_pattern}" />
             </h:outputText>
             <h:outputText id="col2-br" value="<br/>" escape="false"/>
-            <wm:customChildrenContainer id="task-list-due-date-history" childGenerator="#{WorkflowBlockBean.dueDateHistoryRecordsGenerator}" parameterList="#{r.dueDateHistoryRecords}"/>
+            <a:actionLink id="task-list-due-date-history-link" value="<%=historyLinkLabel%>" onclick="return showModal('#{r.dueDateHistoryModalId}');" rendered="#{r.showDueDateHistoryModal}"/>
       </a:column>
 
       <%-- taskCreatorName --%>
@@ -49,7 +51,7 @@
             <h:outputText id="col4-sort" value="#{msg.workflow}" styleClass="header" />
          </f:facet>
          <h:panelGroup id="col4-panel" rendered="#{WorkflowBlockBean.inWorkspace and r.raisedRights}">
-            <a:actionLink id="col4-act" value="#{r.workflowType}" action="dialog:compoundWorkflowDialog" actionListener="#{CompoundWorkflowDialog.setupWorkflow}" styleClass="workflow-conf">
+            <a:actionLink id="col4-act" value="#{r.workflowType}" action="dialog:compoundWorkflowDialog" actionListener="#{CompoundWorkflowDialog.setupWorkflow}" styleClass="workflow-conf" >
                <f:param name="nodeRef" value="#{r.compoundWorkflowNodeRef}" />
             </a:actionLink>
          </h:panelGroup>
@@ -96,4 +98,7 @@
       <a:column id="sep-zebra" rendered="#{r.zebra}" colspan="8" styleClass="workflow-separator-zebra" />
    
    </a:richList>
+   
+   <h:panelGroup id="task-due-date-history-modals" binding="#{WorkflowBlockBean.dueDateHistoryModalPanel}"/>
+
 </a:panel>

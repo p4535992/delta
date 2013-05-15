@@ -43,7 +43,7 @@ public class SearchBlockBean extends AbstractSearchBlockBean implements Document
     private DocumentSearchBean documentSearchBean;
 
     private boolean show;
-    private boolean foundSimilar;
+    private boolean showSimilarDocumentsBlock;
     private DocumentDynamic document;
     private Node node;
 
@@ -70,7 +70,7 @@ public class SearchBlockBean extends AbstractSearchBlockBean implements Document
     public void reset() {
         super.reset();
         show = true;
-        foundSimilar = false;
+        showSimilarDocumentsBlock = false;
         documentSearchBean.reset();
     }
 
@@ -233,7 +233,7 @@ public class SearchBlockBean extends AbstractSearchBlockBean implements Document
             document = bean.document;
             assocBlockObjects = bean.assocBlockObjects;
             show = bean.show;
-            foundSimilar = bean.foundSimilar;
+            foundSimilar = bean.showSimilarDocumentsBlock;
             expanded = bean.isExpanded();
         }
 
@@ -241,7 +241,7 @@ public class SearchBlockBean extends AbstractSearchBlockBean implements Document
             bean.document = document;
             bean.assocBlockObjects = assocBlockObjects;
             bean.show = show;
-            bean.foundSimilar = foundSimilar;
+            bean.showSimilarDocumentsBlock = foundSimilar;
             bean.setExpanded(expanded);
         }
     }
@@ -255,7 +255,7 @@ public class SearchBlockBean extends AbstractSearchBlockBean implements Document
             for (Document doc : documents) {
                 assocBlockObjects.add(new AssocBlockObject(doc));
             }
-            foundSimilar = documents.size() > 0;
+            showSimilarDocumentsBlock = documents.size() > 0;
         }
     }
 
@@ -273,12 +273,12 @@ public class SearchBlockBean extends AbstractSearchBlockBean implements Document
         this.show = show;
     }
 
-    public boolean isFoundSimilar() {
-        return foundSimilar;
+    public boolean isShowSimilarDocumentsBlock() {
+        return showSimilarDocumentsBlock;
     }
 
-    public void setFoundSimilar(boolean foundSimilar) {
-        this.foundSimilar = foundSimilar;
+    public void setShowSimilarDocumentsBlock(boolean foundSimilar) {
+        this.showSimilarDocumentsBlock = foundSimilar;
     }
 
     public void setDocumentSearchBean(DocumentSearchBean documentSearchBean) {

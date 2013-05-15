@@ -11,6 +11,7 @@ import org.alfresco.web.ui.common.component.PickerSearchParams;
 import ee.webmedia.alfresco.docadmin.service.CaseFileType;
 import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
 import ee.webmedia.alfresco.docadmin.service.DynamicType;
+import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
  * @author Ats Uiboupin
@@ -37,6 +38,11 @@ public class CaseFileTypeListDialog extends DynamicTypeListDialog<CaseFileType> 
     @Override
     protected List<? extends DynamicType> loadUsedTypes() {
         return getDocumentAdminService().getUsedCaseFileTypes(DocumentAdminService.DONT_INCLUDE_CHILDREN);
+    }
+
+    @Override
+    public String getListTitle() {
+        return MessageUtil.getMessage("caseFileTypes");
     }
 
 }

@@ -106,7 +106,7 @@ public class ApplicationLogDialog extends AbstractSearchFilterBlockBean<LogServi
         result.setComputerId((String) props.get(LogSearchModel.Props.COMPUTER_ID));
         result.setDescription((String) props.get(LogSearchModel.Props.DESCRIPTION));
         result.setObjectName((String) props.get(LogSearchModel.Props.OBJECT_NAME));
-        result.setObjectId(Collections.singletonList(((String) props.get(LogSearchModel.Props.OBJECT_ID))));
+        result.setObjectId(Collections.singletonList((String) props.get(LogSearchModel.Props.OBJECT_ID)));
         return result;
     }
 

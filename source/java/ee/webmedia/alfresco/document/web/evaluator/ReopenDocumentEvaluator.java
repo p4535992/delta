@@ -23,12 +23,11 @@ public class ReopenDocumentEvaluator extends BaseActionEvaluator {
             return false;
         }
         boolean isFinished = DocumentStatus.FINISHED.getValueName().equals(node.getProperties().get(DocumentCommonModel.Props.DOC_STATUS.toString()));
-        return isFinished && hasUserRights(node);
+        return isFinished && new ViewStateActionEvaluator().evaluate(node) && hasUserRights(node);
     }
 
     public static boolean hasUserRights(Node docNode) {
-        return new ViewStateActionEvaluator().evaluate(docNode)
-                && (new IsOwnerEvaluator().evaluate(docNode) || isAdminOrDocmanagerWithViewDocPermission(docNode));
+        return (new IsOwnerEvaluator().evaluate(docNode) || isAdminOrDocmanagerWithViewDocPermission(docNode));
     }
 
 }

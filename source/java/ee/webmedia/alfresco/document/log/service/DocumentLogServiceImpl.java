@@ -18,6 +18,7 @@ import org.alfresco.service.namespace.QName;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateFormatUtils;
 import org.springframework.util.Assert;
+import org.alfresco.service.namespace.QName;
 
 import ee.webmedia.alfresco.casefile.model.CaseFileModel;
 import ee.webmedia.alfresco.cases.model.CaseModel;
@@ -31,6 +32,8 @@ import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
+import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.utils.RepoUtil;
 
 public class DocumentLogServiceImpl implements DocumentLogService {
 
@@ -94,6 +97,14 @@ public class DocumentLogServiceImpl implements DocumentLogService {
     private void addAppLogEntry(NodeRef nodeRef, String creator, String description) {
         String creatorId = userService.getCurrentUserName();
         logService.addLogEntry(LogEntry.createLoc(LogObject.DOCUMENT, creatorId, creator, nodeRef, description));
+    }
+
+    @Override
+    public void addDeletedObjectLog(NodeRef objectRef, String msgKey) {
+        QName objectType = nodeService.getType(objectRef);
+        LogEntry logEntry = LogEntry.create(LogObject.RESTORE, userService, objectRef, msgKey, RepoUtil.getArchivedObjectName(objectType, nodeService.getProperties(objectRef)));
+        logEntry.setObjectName(MessageUtil.getTypeName(objectType));
+        logService.addLogEntry(logEntry);
     }
 
     // START: getters / setters

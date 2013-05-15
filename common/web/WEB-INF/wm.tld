@@ -333,8 +333,14 @@
          <rtexprvalue>true</rtexprvalue>
          <description>Children generator implementing ee.webmedia.alfresco.common.propertysheet.customchildrencontainer.CustomChildrenCreator</description>
       </attribute>      
-   </tag>  
-   
+      <attribute>
+         <name>childrenRendered</name>
+         <required>false</required>
+         <rtexprvalue>true</rtexprvalue>
+         <description>Additional condition that can forbid rendering of children</description>
+      </attribute>      
+   </tag>
+
    <tag>
       <name>ajaxCapablePanelGroupTag</name>
       <tag-class>ee.webmedia.alfresco.common.propertysheet.ajaxcapablepanelgroup.AjaxCapablePanelGroupTag</tag-class>

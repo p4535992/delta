@@ -44,6 +44,27 @@
       rendered="#{deleteAllLogNodesFromRepo.updaterRunning}"
       disabled="#{deleteAllLogNodesFromRepo.updaterStopping}" />
 	<f:verbatim><br/></f:verbatim>	
+
+   <f:verbatim><br/><hr/></f:verbatim>
+   <h:outputText value="Dokumentide shortRegNumber korrigeerimine numbriliseks väärtuseks ja regNumber korrigeerimine vastavalt"/>
+   <f:verbatim><br/></f:verbatim>
+   <h:outputText value="Päriselt muuda andmeid: "/>
+   <h:selectBooleanCheckbox value="#{invalidShortRegNumberUpdater.writeValues}" />
+   <f:verbatim><br/></f:verbatim>
+   <h:outputText value="numberOfDocumentsInSingleTransaction: "/>
+    <h:inputText id="invalidShortRegNumberUpdaterBatchSize" value="#{invalidShortRegNumberUpdater.batchSize}" size="4" />
+    <f:verbatim><br/></f:verbatim>    
+    <h:outputText value="Paus pärast iga dokumendi töötlemist (ms): "/>
+    <h:inputText id="invalidShortRegNumberUpdaterSleepTime" value="#{invalidShortRegNumberUpdater.sleepTime}" size="4" />
+    <f:verbatim><br/></f:verbatim>
+    <h:commandButton id="startinvalidShortRegNumberUpdaterUpdater" value="Käivita shortRegNumber korrigeerimise skript" type="submit"
+      actionListener="#{invalidShortRegNumberUpdater.executeUpdaterInBackground}"
+      rendered="#{!invalidShortRegNumberUpdater.updaterRunning}" />
+    <h:commandButton id="stopinvalidShortRegNumberUpdaterUpdater" value="Peata shortRegNumber korrigeerimise skript" type="submit"
+      actionListener="#{invalidShortRegNumberUpdater.stopUpdater}"
+      rendered="#{invalidShortRegNumberUpdater.updaterRunning}"
+      disabled="#{invalidShortRegNumberUpdater.updaterStopping}" />
+   <f:verbatim><br/></f:verbatim>   
 	
 <%--   <br/>
    <u>Dokumendi õiguste uuendamise skript (enne 2.5 versiooni)</u>
@@ -104,28 +125,9 @@
 <f:verbatim><hr/></f:verbatim>
 <h:commandButton id="docList_updateDocCounters" value="Uuenda dokumentide loendureid" type="submit" 
       actionListener="#{FunctionsListDialog.updateDocCounters}" />
+<h:commandButton id="docList_updateArchivedDocCounters" value="Uuenda arhiveeritud dokumentide loendureid" type="submit"
+	actionListener="#{FunctionsListDialog.updateArchivedDocCounters}" />      
 <%--
-<f:verbatim><hr/></f:verbatim>
-<h:outputText value="Dokumentidele õiguste lisamine lähtuvalt tööülesannetest"/>
-<f:verbatim><br/></f:verbatim>
-<h:outputText value="Kasutajate isikukoodid (tühikute või reavahetustega eraldatud): "/>
-<h:inputTextarea id="addTaskPrivilegesToDocumentUpdaterValidUsers" value="#{addTaskPrivilegesToDocumentUpdater.validUsers}" rows="5" cols="30" styleClass="expand19-200" />
-<f:verbatim><br/></f:verbatim>
-<h:outputText value="Mitu tööülesannet ühes transaktsioonis töödelda: "/>
-<h:inputText id="addTaskPrivilegesToDocumentUpdaterBatchSize" value="#{addTaskPrivilegesToDocumentUpdater.batchSize}" converter="javax.faces.Integer" size="4" />
-<f:verbatim><br/></f:verbatim>
-<h:commandButton id="startAddTaskPrivilegesToDocumentUpdater" value="Käivita õiguste lisamine" type="submit"
-   actionListener="#{addTaskPrivilegesToDocumentUpdater.executeUpdaterInBackground}"
-   rendered="#{addTaskPrivilegesToDocumentUpdater.updaterRunning == false}" />
-<h:commandButton id="stopAddTaskPrivilegesToDocumentUpdater" value="Peata õiguste lisamine" type="submit"
-   actionListener="#{addTaskPrivilegesToDocumentUpdater.stopUpdater}"
-   rendered="#{addTaskPrivilegesToDocumentUpdater.updaterRunning == true}"
-   disabled="#{addTaskPrivilegesToDocumentUpdater.updaterStopping == true}" />
-<f:verbatim><br/></f:verbatim>
-<h:outputText value="Paus pärast iga tööülesande töötlemist (ms): "/>
-<h:inputText id="addTaskPrivilegesToDocumentUpdaterSleepTime" value="#{addTaskPrivilegesToDocumentUpdater.sleepTime}" converter="javax.faces.Integer" size="4" />
-<h:commandButton id="updateAddTaskPrivilegesToDocumentUpdaterSleepTime" value="Uuenda" type="submit"
-      actionListener="#{addTaskPrivilegesToDocumentUpdater.updateSleepTime}" />
 --%>
 
 <f:verbatim><hr/></f:verbatim>
@@ -227,6 +229,79 @@
 
 <f:verbatim><hr/></f:verbatim>
 
+<h:outputText value="Dokumendi failide liigutamine taustainfo plokki"/>
+<f:verbatim><br/></f:verbatim>
+<h:outputText value="Faili completed_docs.csv tee: "/>
+<h:inputText id="fileActiveUpdaterCompletedDocsCsvPath" value="#{fileActiveUpdater.completedDocsCsvPath}" />
+<f:verbatim><br/></f:verbatim>
+<h:outputText value="Faili files.csv tee: "/>
+<h:inputText id="fileActiveUpdaterFilesCsvPath" value="#{fileActiveUpdater.filesCsvPath}" />
+<f:verbatim><br/></f:verbatim>
+<h:outputText value="Mitme dokumendi failid ühes transaktsioonis töödelda: "/>
+<h:inputText id="fileActiveUpdaterBatchSize" value="#{fileActiveUpdater.batchSize}" converter="javax.faces.Integer" size="4" />
+<f:verbatim><br/></f:verbatim>
+<h:commandButton id="startFileActiveUpdater" value="Käivita" type="submit"
+   actionListener="#{fileActiveUpdater.executeUpdaterInBackground}"
+   rendered="#{fileActiveUpdater.updaterRunning == false}" />
+<h:commandButton id="stopFileActiveUpdater" value="Peata" type="submit"
+   actionListener="#{fileActiveUpdater.stopUpdater}"
+   rendered="#{fileActiveUpdater.updaterRunning == true}"
+   disabled="#{fileActiveUpdater.updaterStopping == true}" />
+<f:verbatim><br/></f:verbatim>
+
+<f:verbatim><hr/></f:verbatim>
+
+<h:outputText value="'generalCaseFile' tüüpi asjatoimikute objectTypeVersionNr uuendamine uusima väärtuse peale"/>
+<f:verbatim><br/></f:verbatim>
+<h:outputText value="Mitu objekti ühes transaktsioonis töödelda: "/>
+<h:inputText id="caseFileLatestVersionUpdaterBatchSize" value="#{caseFileLatestVersionUpdater.batchSize}" converter="javax.faces.Integer" size="4" />
+<f:verbatim><br/></f:verbatim>
+<h:commandButton id="startCaseFileLatestVersionUpdater" value="Käivita" type="submit"
+   actionListener="#{caseFileLatestVersionUpdater.executeUpdaterInBackground}"
+   rendered="#{caseFileLatestVersionUpdater.updaterRunning == false}" />
+<h:commandButton id="stopCaseFileLatestVersionUpdater" value="Peata" type="submit"
+   actionListener="#{caseFileLatestVersionUpdater.stopUpdater}"
+   rendered="#{caseFileLatestVersionUpdater.updaterRunning == true}"
+   disabled="#{caseFileLatestVersionUpdater.updaterStopping == true}" />
+<f:verbatim><br/></f:verbatim>
+
+<f:verbatim><hr/></f:verbatim>
+
+<h:outputText value="d_lisavaljaVaartus.csv järgi asjatoimikute keywordsString väärtustamine"/>
+<f:verbatim><br/></f:verbatim>
+<h:outputText value="Faili d_lisavaljaVaartus.csv tee: "/>
+<h:inputText id="caseFileKeywordsStringUpdaterLisavaljaVaartusCsvPath" value="#{caseFileKeywordsStringUpdater.lisavaljaVaartusCsvPath}" />
+<f:verbatim><br/></f:verbatim>
+<h:outputText value="Mitu objekti ühes transaktsioonis töödelda: "/>
+<h:inputText id="caseFileKeywordsStringUpdaterBatchSize" value="#{caseFileKeywordsStringUpdater.batchSize}" converter="javax.faces.Integer" size="4" />
+<f:verbatim><br/></f:verbatim>
+<h:commandButton id="startCaseFileKeywordsStringUpdater" value="Käivita" type="submit"
+   actionListener="#{caseFileKeywordsStringUpdater.executeUpdaterInBackground}"
+   rendered="#{caseFileKeywordsStringUpdater.updaterRunning == false}" />
+<h:commandButton id="stopCaseFileKeywordsStringUpdater" value="Peata" type="submit"
+   actionListener="#{caseFileKeywordsStringUpdater.stopUpdater}"
+   rendered="#{caseFileKeywordsStringUpdater.updaterRunning == true}"
+   disabled="#{caseFileKeywordsStringUpdater.updaterStopping == true}" />
+<f:verbatim><br/></f:verbatim>
+
+<f:verbatim><hr/></f:verbatim>
+
+<h:outputText value="Testandmete kaevandamine - andmed mis lähevad ADR'i, kirjutataks csv failidesse testandmete generaatori jaoks" />
+<f:verbatim><br/></f:verbatim>
+<h:outputText value="Mitu objekti ühes transaktsioonis töödelda: "/>
+<h:inputText id="adrTestDataUpdaterBatchSize" value="#{adrTestDataUpdater.batchSize}" converter="javax.faces.Integer" size="4" />
+<f:verbatim><br/></f:verbatim>
+<h:commandButton id="startadrTestDataUpdater" value="Käivita" type="submit"
+   actionListener="#{adrTestDataUpdater.executeUpdaterInBackground}"
+   rendered="#{adrTestDataUpdater.updaterRunning == false}" />
+<h:commandButton id="stopadrTestDataUpdater" value="Peata" type="submit"
+   actionListener="#{adrTestDataUpdater.stopUpdater}"
+   rendered="#{adrTestDataUpdater.updaterRunning == true}"
+   disabled="#{adrTestDataUpdater.updaterStopping == true}" />
+<f:verbatim><br/></f:verbatim>
+
+<f:verbatim><hr/></f:verbatim>
+
 <h:outputText value="Restore data _from_ Delta specified by the following database and contentstore folder"/>
 <f:verbatim><br/><br/></f:verbatim>
 <h:outputText value="db.name="/>
@@ -294,6 +369,7 @@
 <h:commandButton id="updateOrganisationStructureBasedGroups" value="updateOrganisationStructureBasedGroups" type="submit"
    actionListener="#{OrganizationStructureService.updateOrganisationStructureBasedGroups}" />
    <f:verbatim><br/></f:verbatim>
+
 <h:outputText id="reportGenerationTitle" value="Aruannete genereerimine: " />
 <f:verbatim><br/></f:verbatim>
 <h:outputText id="reportGenerationStatus" value=" Selles klastri õlas aruannete genereerimine ei jookse." rendered="#{!ReportListDialog.reportGenerationEnabled}" />
@@ -301,6 +377,15 @@
    actionListener="#{ReportListDialog.pauseReportGeneration}" rendered="#{ReportListDialog.showPauseReportGeneration}" />
 <h:commandButton id="continueReportGeneration" value="Jätka aruannete genereerimist" type="submit"
    actionListener="#{ReportListDialog.continueReportGeneration}" rendered="#{ReportListDialog.showContinueReportGeneration}" />
+<f:verbatim><br/></f:verbatim>
+
+<h:outputText id="privilegeActionsTitle" value="Õiguste lisamine ja eemaldamine: " />
+<f:verbatim><br/></f:verbatim>
+<h:outputText id="privilegeActionsStatus" value=" Selles klastri õlas õiguste lisamine ja eemaldamine ei jookse." rendered="#{!ManageInheritablePrivilegesDialog.privilegeActionsEnabled}" />
+<h:commandButton id="pausePrivilegeActions" value="Peata õiguste lisamine ja eemaldamine" type="submit"
+   actionListener="#{ManageInheritablePrivilegesDialog.pausePrivilegeActions}" rendered="#{ManageInheritablePrivilegesDialog.showPausePrivilegeActions}" />
+<h:commandButton id="continuePrivilegeActions" value="Jätka õiguste lisamist ja eemaldamist" type="submit"
+   actionListener="#{ManageInheritablePrivilegesDialog.continuePrivilegeActions}" rendered="#{ManageInheritablePrivilegesDialog.showContinuePrivilegeActions}" />
 <f:verbatim><br/></f:verbatim>
 
 <f:verbatim><hr/></f:verbatim>
@@ -577,6 +662,10 @@
 <h:inputText value="#{postipoissImporter.archivalsStores[0]}" size="40" />
 <f:verbatim><br/></f:verbatim>
 
+<h:outputText value="firstSetPublicFilesToBackgroundFiles: "/>
+<h:selectBooleanCheckbox value="#{postipoissImporter.publicFilesToBackgroundFiles[0]}" />
+<f:verbatim><br/></f:verbatim>
+
 <h:outputText value="firstOpenUnit: "/>
 <h:selectBooleanCheckbox value="#{postipoissImporter.openUnits[0]}" />
 <f:verbatim><br/><br/></f:verbatim>
@@ -599,6 +688,10 @@
 
 <h:outputText value="secondArchivalsStore: "/>
 <h:inputText value="#{postipoissImporter.archivalsStores[1]}" size="40" />
+<f:verbatim><br/></f:verbatim>
+
+<h:outputText value="secondSetPublicFilesToBackgroundFiles: "/>
+<h:selectBooleanCheckbox value="#{postipoissImporter.publicFilesToBackgroundFiles[1]}" />
 <f:verbatim><br/></f:verbatim>
 
 <h:outputText value="secondOpenUnit: "/>
@@ -625,6 +718,10 @@
 <h:inputText value="#{postipoissImporter.archivalsStores[2]}" size="40" />
 <f:verbatim><br/></f:verbatim>
 
+<h:outputText value="thirdSetPublicFilesToBackgroundFiles: "/>
+<h:selectBooleanCheckbox value="#{postipoissImporter.publicFilesToBackgroundFiles[2]}" />
+<f:verbatim><br/></f:verbatim>
+
 <h:outputText value="thirdOpenUnit: "/>
 <h:selectBooleanCheckbox value="#{postipoissImporter.openUnits[2]}" />
 <f:verbatim><br/><br/></f:verbatim>
@@ -649,6 +746,10 @@
 <h:inputText value="#{postipoissImporter.archivalsStores[3]}" size="40" />
 <f:verbatim><br/></f:verbatim>
 
+<h:outputText value="fourthSetPublicFilesToBackgroundFiles: "/>
+<h:selectBooleanCheckbox value="#{postipoissImporter.publicFilesToBackgroundFiles[3]}" />
+<f:verbatim><br/></f:verbatim>
+
 <h:outputText value="fourthOpenUnit: "/>
 <h:selectBooleanCheckbox value="#{postipoissImporter.openUnits[3]}" />
 <f:verbatim><br/><br/></f:verbatim>
@@ -671,6 +772,10 @@
 
 <h:outputText value="fifthArchivalsStore: "/>
 <h:inputText value="#{postipoissImporter.archivalsStores[4]}" size="40" />
+<f:verbatim><br/></f:verbatim>
+
+<h:outputText value="fifthSetPublicFilesToBackgroundFiles: "/>
+<h:selectBooleanCheckbox value="#{postipoissImporter.publicFilesToBackgroundFiles[4]}" />
 <f:verbatim><br/></f:verbatim>
 
 <h:outputText value="fifthOpenUnit: "/>
@@ -842,6 +947,10 @@
 <f:verbatim><br/></f:verbatim>
 
 <a:actionLink value="Lisa sessiooni mitteserialiseeruv objekt" actionListener="#{TestingForDeveloperBean.addNonSerializableObjectToSession}" rendered="#{ApplicationService.test}" />
+
+<f:verbatim><br/></f:verbatim>
+
+<a:actionLink value="executeCacheStatistics" actionListener="#{TestingForDeveloperBean.executeCacheStatistics}" />
 
 <f:verbatim><br/></f:verbatim>
 

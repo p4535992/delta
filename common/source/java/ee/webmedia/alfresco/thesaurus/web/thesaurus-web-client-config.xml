@@ -16,9 +16,6 @@
          </action>
          
          <action id="thesaurus_add_new">
-            <permissions>
-               <permission allow="true">CreateChildren</permission>
-            </permissions>
             <label-id>thesaurus_add</label-id>
             <image>/images/icons/versioned_properties.gif</image>
             <action-listener>#{ThesaurusDetailsDialog.addNew}</action-listener>

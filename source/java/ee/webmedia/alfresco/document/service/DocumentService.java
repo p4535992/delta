@@ -420,6 +420,8 @@ public interface DocumentService {
 
     void deleteDocument(NodeRef nodeRef, String comment, DeletionType deletionType);
 
+    void deleteDocument(NodeRef nodeRef, String docDeletingComment, DeletionType disposition, String executingUser);
+
     public boolean isFinishUnregisteredDocumentEnabled();
 
 }

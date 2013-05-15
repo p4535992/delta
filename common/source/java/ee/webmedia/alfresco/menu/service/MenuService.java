@@ -114,4 +114,6 @@ public interface MenuService {
 
     void addVolumeShortcuts(NodeRef volumeRef, boolean isCaseFile);
 
+    void logMenu(Menu menu, String logPrefix);
+
 }

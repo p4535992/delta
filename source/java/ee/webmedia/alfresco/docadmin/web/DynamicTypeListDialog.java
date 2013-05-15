@@ -163,6 +163,8 @@ public abstract class DynamicTypeListDialog<T extends DynamicType> extends BaseD
 
     protected abstract String getExportFileName();
 
+    public abstract String getListTitle();
+
     private ExcludingExporterCrawlerParameters getDynamicTypesExportParameters(NodeRef nodeRef, List<NodeRef> excludedNodeRef) {
         ExcludingExporterCrawlerParameters params = new ExcludingExporterCrawlerParameters();
         params.setExportFrom(new Location(nodeRef));

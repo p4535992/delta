@@ -4,6 +4,7 @@ import java.util.List;
 
 import javax.faces.event.ActionEvent;
 
+import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.bean.repository.Node;
 
 import ee.webmedia.alfresco.orgstructure.model.OrganizationStructure;
@@ -73,5 +74,9 @@ public interface OrganizationStructureService {
     void updateOrganisationStructureBasedGroups(ActionEvent event);
 
     List<String> getOrganizationStructurePaths(String value);
+
+    List<NodeRef> getAllOrganizationStructureRefs();
+
+    OrganizationStructure getOrganizationStructure(NodeRef nodeRef);
 
 }

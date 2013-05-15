@@ -232,27 +232,12 @@ public class GroupUsersListDialog extends BaseDialogBean {
         String authority = params.get("id");
         users = null;
         if (authority != null && authority.length() != 0) {
-            UserTransaction tx = null;
             try {
-                FacesContext context = FacesContext.getCurrentInstance();
-                tx = Repository.getUserTransaction(context);
-                tx.begin();
-
-                getAuthorityService().removeAuthority(group, authority);
-
-                // commit the transaction
-                tx.commit();
-
+                BeanHelper.getUserService().removeUserFromGroup(group, authority);
                 MessageUtil.addInfoMessage("delete_user_from_group");
             } catch (Throwable err) {
                 Utils.addErrorMessage(MessageFormat.format(Application.getMessage(
                         FacesContext.getCurrentInstance(), Repository.ERROR_GENERIC), err.getMessage()), err);
-                try {
-                    if (tx != null) {
-                        tx.rollback();
-                    }
-                } catch (Exception tex) {
-                }
             }
         }
     }

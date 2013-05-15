@@ -90,6 +90,10 @@ public class DocumentType extends DynamicType {
         setProp(DocumentAdminModel.Props.REGISTRATION_ENABLED, registrationEnabled);
     }
 
+    public boolean isRegistrationOnDocFormEnabled() {
+        return getPropBoolean(DocumentAdminModel.Props.REGISTRATION_ON_DOC_FORM_ENABLED);
+    }
+
     public boolean isFinishDocByRegistration() {
         return getPropBoolean(DocumentAdminModel.Props.FINISH_DOC_BY_REGISTRATION);
     }

@@ -846,29 +846,44 @@ function setScreenProtected(isProtected, reason) {
 }
 
 function updateState(divId, panelId, viewName) {
+   setScreenProtected(true, "FIXME: palun oodake, ühendus serveriga");
     var uri = getContextPath() + '/ajax/invoke/PanelStateBean.updatePanelState?panelId=' + panelId +
               '&panelState=' + $jQ(divId).is(":visible") + '&viewName=' + viewName;
 
     $jQ.ajax({
        type: 'POST',
        url: uri,
+       data: addViewStateElement(null).serialize(),
        mode: 'queue',
        success: requestUpdatePanelStateSuccess,
        error: requestUpdatePanelStateFailure,
-       dataType: 'xml'
+       dataType: 'html'
     });
 }
 
-function requestUpdatePanelStateSuccess(xml) {
-   if (!xml) { // check that response is not empty
-      return;
+function requestUpdatePanelStateSuccess(responseText) {
+   try {
+      if (!responseText) { // check that response is not empty
+         return;
+      }
+      if (isAjaxViewStateError(responseText)) {
+         handleAjaxViewStateError(responseText);
+         return;
+      }
+      // Set new value to view state, so when form is submitted next time, correct state is restored.
+      var viewState = responseText.substr('VIEWSTATE:'.length);
+      document.getElementById("javax.faces.ViewState").value = viewState;
+   } finally {
+      setScreenProtected(false);
    }
-   // Set new value to view state, so when form is submitted next time, correct state is restored.
-   document.getElementById("javax.faces.ViewState").value = xml.documentElement.getAttribute('view-state');
 }
 
 function requestUpdatePanelStateFailure() {
-    $jQ.log("Updating panel status in server side failed");
+   try {
+      $jQ.log("Updating panel status in server side failed");
+   } finally {
+      setScreenProtected(false);
+   }    
 }
 
 function ajaxError(request, textStatus, errorThrown) {
@@ -919,11 +934,30 @@ function getContainerFields(componentContainerId, componentClientId, submittable
       return componentClientId == this.name.substring(0, componentClientId.length) || $jQ.inArray(this.name, submittableParams) >= 0;
    });
 
-   return componentChildFormElements.add(hiddenFormElements).serialize();
+   componentChildFormElements = componentChildFormElements.add(hiddenFormElements);
+   componentChildFormElements = addViewStateElement(componentChildFormElements);
+   return componentChildFormElements.serialize();
+}
+
+function addViewStateElement(elements){
+   var viewState = $jQ('#javax\\.faces\\.ViewState');
+   if(elements != null){
+      elements = elements.add(viewState);
+   } else {
+      elements = viewState;
+   }
+   return elements;
 }
 
 function ajaxSuccess(responseText, componentClientId, componentContainerId) {
    if (responseText) { // check that response is not empty
+      if (isAjaxViewStateError(responseText)) {
+         try {
+            return handleAjaxViewStateError(responseText);
+         } finally {
+            setScreenProtected(false);
+         }
+      }
       // Split response
       var i = responseText.lastIndexOf('VIEWSTATE:');
       var html = responseText.substr(0, i);
@@ -970,7 +1004,21 @@ function ajaxSuccess(responseText, componentClientId, componentContainerId) {
    }
 }
 
-//-----------------------------------------------------------------------------
+function isAjaxViewStateError(responseText){
+   try {
+      return responseText.lastIndexOf('ERROR_VIEW_STATE_CHANGED') > -1;
+   } catch (e){
+      return false;
+   }
+}
+
+function handleAjaxViewStateError(responseText) {
+   var redirectUrl = $jQ.parseJSON(responseText.substr("ERROR_VIEW_STATE_CHANGED:".length));
+   window.location.href = redirectUrl;
+   return false;
+}
+
+// -----------------------------------------------------------------------------
 //MENU ITEM COUNT UPDATE
 //-----------------------------------------------------------------------------
 
@@ -1224,7 +1272,20 @@ function initWithScreenProtected() {
          var index = responseText.indexOf("|");
          select.attr("size", responseText.substring(0, index));
          select.append(responseText.substring(index + 1, responseText.length));
-         tbody.find('.hidden').toggleClass('hidden');
+         var resultCount = select.children().length;
+         
+         if (select.attr("data-initialresults") == undefined) { // After the first fresh search, record the initial result count
+            select.attr("data-initialresults", resultCount);
+         }
+         
+         // Check if resultset is limited and show/hide message accordingly
+         if (resultCount == select.attr("data-rowlimit")) {
+            tbody.find('.modalResultsLimited').show();
+         } else {
+            tbody.find('.modalResultsLimited').hide();
+         }
+         
+         tbody.find('tr.hidden').toggleClass('hidden');
       };
 
       // Workaround for IE/WebKit, since it cannot hide option elements...
@@ -1269,11 +1330,20 @@ function initWithScreenProtected() {
          filterByStructUnit = split[1];
       }
 
-      var backspace = event.keyCode == 8;
       var tbody = $jQ(callbackContext);
       var select = tbody.find('.genericpicker-results');
       var opts = select.children('option');
-      if (value.length > 2 && reSearch && !backspace) {
+
+      // Determine if we are dealing with limited resultset
+      var limited = false;
+      if (value.length < 3) {
+         select.removeAttr("data-initialresults"); // Reset the initial result count
+      } else {
+         limited = select.attr("data-initialresults") == select.attr("data-rowlimit");
+      }
+
+      var backspace = event.keyCode == 8;
+      if (value.length > 2 && reSearch && !backspace || limited) {
          $jQ.ajax({
             type: 'POST',
             url: getContextPath() + "/ajax/invoke/AjaxSearchBean.searchPickerResults",
@@ -1467,7 +1537,7 @@ function initWithScreenProtected() {
       } else if (elem.hasClass("eventEndDate")) {
          dateField = row.next().find(".errandEndDate");
       }
-      if (dateField != null) {
+      if (dateField != null && !dateField.val()) { // Only update if a value isn't specified
          dateField.datepicker('setDate', elem.datepicker('getDate'));
          dateField.change();
       }

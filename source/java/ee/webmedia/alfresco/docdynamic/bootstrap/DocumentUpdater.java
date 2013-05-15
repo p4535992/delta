@@ -2,10 +2,12 @@ package ee.webmedia.alfresco.docdynamic.bootstrap;
 
 import static ee.webmedia.alfresco.classificator.enums.DocumentStatus.FINISHED;
 import static ee.webmedia.alfresco.classificator.enums.DocumentStatus.WORKING;
+import static ee.webmedia.alfresco.privilege.service.PrivilegeUtil.removePermission;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -214,40 +216,17 @@ public class DocumentUpdater extends AbstractNodeUpdater {
 
     public String updatePermission(NodeRef docRef) {
         Set<AccessPermission> allSetPermissions = serviceRegistry.getPermissionService().getAllSetPermissions(docRef);
-        Map<String, String> replacePermissions = new HashMap<String, String>();
+        Map<String, Set<String>> replacePermissions = new HashMap<String, Set<String>>();
         replacePermissions.put(DELETE_DOCUMENT_META_DATA, null);
         replacePermissions.put(DELETE_DOCUMENT_FILES, null);
-        replacePermissions.put(EDIT_DOCUMENT_FILES, DocumentCommonModel.Privileges.EDIT_DOCUMENT);
-        replacePermissions.put(EDIT_DOCUMENT_META_DATA, DocumentCommonModel.Privileges.EDIT_DOCUMENT);
+        replacePermissions.put(EDIT_DOCUMENT_FILES, Collections.singleton(DocumentCommonModel.Privileges.EDIT_DOCUMENT));
+        replacePermissions.put(EDIT_DOCUMENT_META_DATA, Collections.singleton(DocumentCommonModel.Privileges.EDIT_DOCUMENT));
         Map<String, List<String>> removedAuthorities = removePermission(docRef, replacePermissions, allSetPermissions);
         List<String> removedPermissionInfo = new ArrayList<String>(removedAuthorities.keySet().size());
         for (Entry<String, List<String>> entry : removedAuthorities.entrySet()) {
             removedPermissionInfo.add(entry.getKey() + " [ " + StringUtils.join(entry.getValue(), " ") + " ]");
         }
         return StringUtils.join(removedPermissionInfo, ", ");
-    }
-
-    private Map<String, List<String>> removePermission(NodeRef nodeRef, Map<String, String> replacements, Set<AccessPermission> allSetPermissions) {
-        Map<String, List<String>> hashMap = new HashMap<String, List<String>>();
-        for (AccessPermission accessPermission : allSetPermissions) {
-            String existingPermission = accessPermission.getPermission();
-            if (accessPermission.isSetDirectly() && replacements.containsKey(existingPermission)) {
-
-                String authority = accessPermission.getAuthority();
-                serviceRegistry.getPermissionService().deletePermission(nodeRef, authority, existingPermission);
-                String replacementPermission = replacements.get(existingPermission);
-                if (replacementPermission != null) {
-                    serviceRegistry.getPermissionService().setPermission(nodeRef, authority, replacementPermission, true);
-                }
-                List<String> authoritiesByFormerPermission = hashMap.get(existingPermission);
-                if (authoritiesByFormerPermission == null) {
-                    authoritiesByFormerPermission = new ArrayList<String>();
-                    hashMap.put(existingPermission, authoritiesByFormerPermission);
-                }
-                authoritiesByFormerPermission.add(authority);
-            }
-        }
-        return hashMap;
     }
 
     public static String updateHasAllFinishedCompoundWorkflows(NodeRef docRef, Map<QName, Serializable> origProps, Map<QName, Serializable> updatedProps,

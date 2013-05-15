@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 
 import javax.faces.context.FacesContext;
+import javax.faces.event.ActionEvent;
 import javax.faces.model.SelectItem;
 
 import org.alfresco.model.ContentModel;
@@ -29,6 +30,7 @@ import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.user.model.UserListRowVO;
 import ee.webmedia.alfresco.user.model.UserModel;
 import ee.webmedia.alfresco.user.service.UserService;
+import ee.webmedia.alfresco.utils.MessageDataImpl;
 import ee.webmedia.alfresco.utils.UserUtil;
 import ee.webmedia.alfresco.utils.WebUtil;
 
@@ -52,21 +54,13 @@ public class UserListDialog extends BaseDialogBean {
     @Override
     public void init(Map<String, String> params) {
         super.init(params);
-        reset();
-    }
-
-    @Override
-    public String cancel() {
-        reset();
-        return super.cancel();
-    }
-
-    private void reset() {
-        users = null;
-        usersList = null;
+        if (usersList != null) {
+            usersList.setValue(null);
+        }
         if (properties != null) {
             properties.setSearchCriteria(null);
         }
+        users = new ArrayList<UserListRowVO>();
     }
 
     /**
@@ -95,12 +89,17 @@ public class UserListDialog extends BaseDialogBean {
         return null;
     }
 
+    public String showAllConfirm() {
+        BeanHelper.getUserConfirmHelper().setup(new MessageDataImpl("users_list_showAll_confirm"), null, "#{UserListDialog.showAll}", null, null, null, null);
+        return null;
+    }
+
     /**
      * Action handler to show all the users currently in the system
      * 
      * @return The outcome
      */
-    public String showAll() {
+    public String showAll(@SuppressWarnings("unused") ActionEvent event) {
         if (usersList != null) {
             usersList.setValue(null);
         }
@@ -198,10 +197,6 @@ public class UserListDialog extends BaseDialogBean {
 
     public void setProperties(UsersBeanProperties properties) {
         this.properties = properties;
-    }
-
-    public void setUsers(List<UserListRowVO> users) {
-        this.users = users;
     }
 
     public UIRichList getUsersList() {

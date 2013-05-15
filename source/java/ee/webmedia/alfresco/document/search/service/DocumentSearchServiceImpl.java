@@ -14,7 +14,6 @@ import static ee.webmedia.alfresco.utils.SearchUtil.generateMultiNodeRefQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateMultiStringExactQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateNodeRefQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateNumberPropertyRangeQuery;
-import static ee.webmedia.alfresco.utils.SearchUtil.generateParentQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generatePropertyBooleanQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generatePropertyDateQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generatePropertyExactQuery;
@@ -338,7 +337,8 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         return results;
     }
 
-    private String generateAdrDocumentSearchQuery(List<String> queryParts, Set<String> documentTypeIds) {
+    @Override
+    public String generateAdrDocumentSearchQuery(List<String> queryParts, Set<String> documentTypeIds) {
         if (documentTypeIds.size() == 0) {
             return null;
         }
@@ -1784,6 +1784,14 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         return searchNodes(query, -1, /* queryName */"usersByRelatedFundsCenter");
     }
 
+    @Override
+    public boolean isFieldByOriginalIdExists(String fieldId) {
+        String query = SearchUtil.joinQueryPartsAnd(SearchUtil.generatePropertyExactQuery(DocumentAdminModel.Props.FIELD_ID, fieldId),
+                SearchUtil.generateTypeQuery(DocumentAdminModel.Types.FIELD));
+        query = SearchUtil.generateAndNotQuery(query, SearchUtil.generateTypeQuery(DocumentAdminModel.Types.FIELD_DEFINITION));
+        return isMatch(query);
+    }    
+
     private Pair<List<String>, List<Object>> getTaskQuery(QName taskType, String ownerId, Status status, boolean isPreviousOwnerId) {
         QName ownerField = (isPreviousOwnerId) ? WorkflowCommonModel.Props.PREVIOUS_OWNER_ID : WorkflowCommonModel.Props.OWNER_ID;
         List<String> queryParts = new ArrayList<String>();
@@ -1960,7 +1968,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
 
         // END: special cases
 
-        fillQueryFromProps(queryParts, props);
+        fillQueryFromProps(queryParts, props, storeRefs);
 
         String searchFilter = WmNode.toHumanReadableStringIfPossible(RepoUtil.getNotEmptyProperties(props), namespaceService, BeanHelper.getDocumentAdminService());
         log.info("Documents search filter: " + searchFilter);
@@ -1999,7 +2007,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         // Märksõnad
         generateHierarchicalKeywordQuery(queryParts, props, getDocumentAdminService().getSearchableVolumeFieldDefinitions());
 
-        fillQueryFromProps(queryParts, props);
+        fillQueryFromProps(queryParts, props, getVolumeSearchStoreRefs(filter.getProperties()));
 
         String searchFilter = WmNode.toHumanReadableStringIfPossible(RepoUtil.getNotEmptyProperties(props), namespaceService, BeanHelper.getDocumentAdminService());
         log.info("Volumes search filter: " + searchFilter);
@@ -2046,7 +2054,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         props.remove(DocumentDynamicModel.Props.THESAURUS);
     }
 
-    private void fillQueryFromProps(List<String> queryParts, Map<QName, Serializable> props) {
+    private void fillQueryFromProps(List<String> queryParts, Map<QName, Serializable> props, List<StoreRef> storeRefs) {
         // dynamic generation
         for (Entry<QName, Serializable> entry : props.entrySet()) {
             QName propQName = entry.getKey();
@@ -2055,16 +2063,20 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
                 if (StringUtils.isBlank(caseLabel)) {
                     continue;
                 }
-                NodeRef volumeRef = (NodeRef) props.get(DocumentCommonModel.Props.VOLUME);
-                String query = joinQueryPartsAnd(generatePropertyWildcardQuery(CaseModel.Props.TITLE, caseLabel.trim(), false, true),
-                        generateParentQuery(volumeRef));
-                ResultSet result = null;
+                String query = generatePropertyWildcardQuery(CaseModel.Props.TITLE, caseLabel.trim(), false, true);
+                List<ResultSet> results = null;
                 try {
-                    result = doSearch(query, -1, "searchCaseByLabelForDocumentSearch", volumeRef.getStoreRef());
-                    queryParts.add(generateMultiNodeRefQuery(result.getNodeRefs(), DocumentCommonModel.Props.CASE));
+                    results = doSearches(query, -1, "searchCaseByLabelForDocumentSearch", storeRefs);
+                    for (ResultSet result : results) {
+                        queryParts.add(generateMultiNodeRefQuery(result.getNodeRefs(), DocumentCommonModel.Props.CASE));
+                    }
                 } finally {
-                    if (result != null) {
-                        result.close();
+                    if (results != null) {
+                        for (ResultSet result : results) {
+                            if (result != null) {
+                                result.close();
+                            }
+                        }
                     }
                 }
                 continue;

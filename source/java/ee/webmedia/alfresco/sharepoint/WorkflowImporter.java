@@ -11,6 +11,7 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getWorkflowDbService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getWorkflowService;
 import static ee.webmedia.alfresco.sharepoint.DocumentImporter.CSV_NAME_COMPLETED_DOCS;
 import static ee.webmedia.alfresco.sharepoint.ImportUtil.docsError;
+import static ee.webmedia.alfresco.sharepoint.ImportUtil.getString;
 import static org.apache.commons.lang.StringUtils.isBlank;
 import static org.apache.commons.lang.StringUtils.isNotBlank;
 
@@ -124,6 +125,7 @@ public class WorkflowImporter {
     private final String baseCompoundWorkflowUrl;
     private final NodeRef compoundWorkflowsParentRef;
     private final LogEntry logEntry = new LogEntry();
+    private final Map<String, NodeRef> importedCaseFiles;
     private ProgressTracker progressTracker;
 
     private final SimpleJdbcTemplate jdbcTemplate;
@@ -172,6 +174,7 @@ public class WorkflowImporter {
             docsError(errorFile, e);
             throw new RuntimeException(e);
         }
+        importedCaseFiles = loadCompletedCaseFiles(volumeLogFile);
 
         baseCompoundWorkflowUrl = BeanHelper.getDocumentTemplateService().getServerUrl() + "/n/" + ExternalAccessPhaseListener.OUTCOME_COMPOUND_WORKFLOW_PROCEDURE_ID + "/";
         compoundWorkflowsParentRef = generalService.getNodeRef(WorkflowCommonModel.Repo.INDEPENDENT_WORKFLOWS_SPACE);
@@ -275,32 +278,9 @@ public class WorkflowImporter {
 
                     String searchCaseFileVolumeMark = StringUtils.stripToEmpty(caseFile.getVolumeMark());
                     if (StringUtils.isNotBlank(searchCaseFileVolumeMark)) {
-                        List<String> query = new ArrayList<String>(2);
-                        query.add(SearchUtil.generateTypeQuery(CaseFileModel.Types.CASE_FILE));
-                        query.add(SearchUtil.generateAspectQuery(DocumentCommonModel.Aspects.SEARCHABLE));
-                        query.add(SearchUtil.generateStringExactQuery(searchCaseFileVolumeMark, VolumeModel.Props.VOLUME_MARK));
-                        String q = SearchUtil.joinQueryPartsAnd(query, false);
-
-                        org.alfresco.service.cmr.search.ResultSet result = searchService.query(generalService.getStore(), SearchService.LANGUAGE_LUCENE, q);
-                        for (NodeRef nodeRef : result.getNodeRefs()) {
-                            if (nodeService.exists(nodeRef)
-                                    && searchCaseFileVolumeMark.equalsIgnoreCase(StringUtils.stripToEmpty((String) nodeService.getProperty(nodeRef, VolumeModel.Props.VOLUME_MARK)))) {
-                                parentRef = nodeRef;
-                                break;
-                            }
-                        }
-                        result.close();
+                        parentRef = importedCaseFiles.get(searchCaseFileVolumeMark);
                         if (parentRef == null) {
-                            result = searchService.query(generalService.getArchivalsStoreRef(), SearchService.LANGUAGE_LUCENE, q);
-                            for (NodeRef nodeRef : result.getNodeRefs()) {
-                                if (nodeService.exists(nodeRef)
-                                        && searchCaseFileVolumeMark
-                                                .equalsIgnoreCase(StringUtils.stripToEmpty((String) nodeService.getProperty(nodeRef, VolumeModel.Props.VOLUME_MARK)))) {
-                                    parentRef = nodeRef;
-                                    break;
-                                }
-                            }
-                            result.close();
+                            parentRef = importedCaseFiles.get("0" + searchCaseFileVolumeMark);
                         }
                     }
 
@@ -332,17 +312,16 @@ public class WorkflowImporter {
                             result.close();
 
                             if (series == null) {
-                                markCompletedProcedureFailed(procId, 45,
+                                markCompletedProcedureFailed(procId, 48,
                                         "Asjatoimiku loomiseks ei leita sisendparameetri seriesIdentifierForProcessToCaseFile poolt määratud sarja");
                                 continue;
                             }
-
 
                             if (isBlank(caseFile.getVolumeMark())) {
                                 caseFile.setVolumeMark(procId.toString());
                             }
                             if (isBlank(caseFile.getTitle()) || isBlank(caseFile.getVolumeMark()) || isBlank(caseFile.getStatus()) || caseFile.getValidFrom() == null) {
-                                markCompletedProcedureFailed(procId, 46, "Asjatoimiku loomiseks vajalikud kohustuslikud andmed on puudulikud");
+                                markCompletedProcedureFailed(procId, 49, "Asjatoimiku loomiseks vajalikud kohustuslikud andmed on puudulikud");
                                 continue;
                             }
                             cf = caseFileService.createNewCaseFile(settings.getCaseFileTypeVersionForProcessToCaseFile(), series, false).getFirst();
@@ -365,7 +344,7 @@ public class WorkflowImporter {
                             cf.setProp(DocumentDynamicModel.Props.OWNER_WORK_ADDRESS, userProps.get(ContentModel.PROP_STREET_HOUSE));
 
                         } else {
-                            markCompletedProcedureFailed(procId, 44, "Asjatoimik ei ole leitav");
+                            markCompletedProcedureFailed(procId, 47, "Asjatoimik ei ole leitav");
                             continue;
                         }
 
@@ -444,7 +423,7 @@ public class WorkflowImporter {
                         LOG.warn("Failed to validate compoundWorkflow statuses for procedure_id " + procId, e);
                         // Only one compoundWorkflow can be created from one procedure_id
                         nodeService.deleteNode(compoundFlowRef);
-                        markCompletedProcedureFailed(procId, 47, "Terviktöövoo, töövoogude ja tööülesannete staatused ei ole omavahel kooskõlas");
+                        markCompletedProcedureFailed(procId, 50, "Terviktöövoo, töövoogude ja tööülesannete staatused ei ole omavahel kooskõlas");
                         continue outer;
                     }
 
@@ -456,7 +435,7 @@ public class WorkflowImporter {
                                 final NodeRef fromNode = new NodeRef(assoc.getFromNode());
                                 if (!nodeService.exists(fromNode)) {
                                     nodeService.deleteNode(compoundFlowRef);
-                                    markCompletedProcedureFailed(procId, 48, "Seotud dokument ei eksisteeri: " + fromNode);
+                                    markCompletedProcedureFailed(procId, 51, "Seotud dokument ei eksisteeri: " + fromNode);
                                     continue outer;
                                 }
                                 nodeService.createAssociation(fromNode, compoundFlowRef, DocumentCommonModel.Assocs.WORKFLOW_DOCUMENT);
@@ -580,6 +559,32 @@ public class WorkflowImporter {
                                 copyDocAssocs(compoundFlowRef, nodeRef);
                             }
                         }
+                    } else {
+                        for (Association assoc : associations) {
+                            if (assoc.isDocument() && assoc.getFromNode() != null) {
+                                final NodeRef fromNode = new NodeRef(assoc.getFromNode());
+                                if (!nodeService.exists(fromNode)) {
+                                    nodeService.deleteNode(compoundFlowRef);
+                                    markCompletedProcedureFailed(procId, 51, "Seotud dokument ei eksisteeri: " + fromNode);
+                                    continue outer;
+                                }
+
+                                // If document (fromNode) is not a child of our caseFile (parentRef), only then create association
+                                if (!nodeService.getPrimaryParent(fromNode).getParentRef().equals(parentRef)) {
+                                    boolean assocExists = false;
+                                    List<AssociationRef> existingAssocs = nodeService.getSourceAssocs(fromNode, CaseFileModel.Assocs.CASE_FILE_DOCUMENT);
+                                    for (AssociationRef existingAssoc : existingAssocs) {
+                                        if (existingAssoc.getSourceRef().equals(parentRef)) {
+                                            assocExists = true;
+                                            break;
+                                        }
+                                    }
+                                    if (!assocExists) {
+                                        nodeService.createAssociation(parentRef, fromNode, CaseFileModel.Assocs.CASE_FILE_DOCUMENT);
+                                    }
+                                }
+                            }
+                        }
                     }
 
                     logEntry.setObjectId(compoundFlowRef.toString());
@@ -692,6 +697,41 @@ public class WorkflowImporter {
                 return null;
             }
         });
+    }
+
+    private static Map<String, NodeRef> loadCompletedCaseFiles(File completed) {
+        LOG.info("Loading previously completed caseFiles from file " + completed);
+
+        Map<String, NodeRef> caseFiles = new HashMap<String, NodeRef>();
+        CsvReader reader = null;
+
+        try {
+            reader = ImportUtil.createLogReader(completed);
+
+            if (reader.readHeaders()) {
+                while (reader.readRecord()) {
+                    String type = getString(reader, 1);
+                    if (!"caseFile".equals(type)) {
+                        continue;
+                    }
+                    String volumeMark = getString(reader, 2);
+                    if (caseFiles.containsKey(volumeMark)) {
+                        continue;
+                    }
+                    caseFiles.put(volumeMark, new NodeRef(getString(reader, 5)));
+                }
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        } finally {
+            if (reader != null) {
+                reader.close();
+            }
+        }
+
+        LOG.info("Loaded " + caseFiles.size() + " previously imported caseFiles (by non-duplicate volumeMark).");
+
+        return caseFiles;
     }
 
     private Set<Integer> getCompletedProcedureIds() {

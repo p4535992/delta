@@ -17,6 +17,7 @@ import javax.faces.event.ValueChangeEvent;
 import javax.faces.model.SelectItem;
 
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.util.Pair;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
@@ -150,13 +151,17 @@ public class VolumeDetailsDialog extends BaseDialogBean implements BlockBeanProv
         }
         if (!isClosed()) {
             try {
-                getVolumeService().closeVolume(currentEntry.getNodeRef());
+                Pair<String, Object[]> error = getVolumeService().closeVolume(currentEntry.getNodeRef());
                 reload(currentEntry.getNode().getNodeRef());
+                if (error != null) {
+                    MessageUtil.addErrorMessage(error.getFirst(), error.getSecond());
+                } else {
+                    MessageUtil.addInfoMessage("volume_close_success");
+                }
             } catch (UnableToPerformException e) {
                 MessageUtil.addStatusMessage(e);
                 return;
             }
-            MessageUtil.addInfoMessage("volume_close_success");
             clearPropSheet();
         }
     }
@@ -205,14 +210,12 @@ public class VolumeDetailsDialog extends BaseDialogBean implements BlockBeanProv
 
     public void archive(@SuppressWarnings("unused") ActionEvent event) {
         Assert.notNull(currentEntry, "No current volume");
-        NodeRef archivedVolumeNodeRef = archiveVolume(currentEntry.getNode().getNodeRef());
-        reload(archivedVolumeNodeRef);
+        archiveVolume(currentEntry.getNode().getNodeRef());
         MessageUtil.addInfoMessage("volume_archive_success");
-        clearPropSheet();
     }
 
-    public NodeRef archiveVolume(NodeRef volumeRef) {
-        return getArchivalsService().archiveVolumeOrCaseFile(volumeRef);
+    public void archiveVolume(NodeRef volumeRef) {
+        getArchivalsService().archiveVolumeOrCaseFile(volumeRef);
     }
 
     /**

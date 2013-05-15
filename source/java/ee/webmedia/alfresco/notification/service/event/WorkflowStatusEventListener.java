@@ -22,11 +22,17 @@ import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.InitializingBean;
 
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.file.service.FileService;
+import ee.webmedia.alfresco.log.model.LogEntry;
+import ee.webmedia.alfresco.log.model.LogObject;
+import ee.webmedia.alfresco.log.service.LogService;
 import ee.webmedia.alfresco.menu.ui.MenuBean;
 import ee.webmedia.alfresco.notification.service.NotificationService;
 import ee.webmedia.alfresco.privilege.service.PrivilegeService;
 import ee.webmedia.alfresco.privilege.service.PrivilegeUtil;
+import ee.webmedia.alfresco.user.service.UserService;
+import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.service.BaseWorkflowObject;
 import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
@@ -82,6 +88,17 @@ public class WorkflowStatusEventListener implements WorkflowMultiEventListener, 
             }
 
         }, "workflowPermissionsAndNotifications", false);
+        LogService logService = BeanHelper.getLogService();
+        UserService userService = BeanHelper.getUserService();
+        for (WorkflowEvent event : queue.getEvents()) {
+            BaseWorkflowObject object = event.getObject();
+            if (object instanceof Task && WorkflowEventType.STATUS_CHANGED.equals(event.getType())
+                    && Status.NEW.equals(event.getOriginalStatus()) && ((Task) object).isStatus(Status.IN_PROGRESS)) {
+                NodeRef taskRef = object.getNodeRef();
+                logService.addLogEntry(LogEntry.create(LogObject.TASK, userService, taskRef, "applog_task_assigned",
+                        ((Task) object).getOwnerName(), MessageUtil.getTypeName(workflowService.getNodeRefType(taskRef))));
+            }
+        }        
     }
 
     private Void doWork(final List<WorkflowEvent> events, final Task initiatingTask, final boolean sendNotifications, final List<NodeRef> groupAssignmentTasksFinishedAutomatically) {

@@ -39,6 +39,8 @@ public class CaseFileMapper implements ParameterizedRowMapper<CaseFile> {
         result.setToSurvey(rs.getBoolean(25));
         result.setProcedureStatus(rs.getString(26));
         result.setEqualityOfTreatment(rs.getBoolean(27));
+        result.setWorkflowDueDate(rs.getTimestamp(28));
+        result.setKeywordsString(rs.getString(29));
         return result;
     }
 }

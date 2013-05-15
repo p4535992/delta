@@ -195,7 +195,7 @@
    <config evaluator="node-type" condition="wfs:dueDateExtensionTask">
       <property-sheet>            
          <show-property name="wfc:creatorName" display-label-id="task_property_creator_dueDateExtensionTask" outputText="true" />
-         <show-property name="{temp}initiatingCompoundWorkflowTitle" display-label-id="task_property_extensionWorkflowId" outputText="false" actionListener="#{CompoundWorkflowDialog.setupWorkflow}"
+         <show-property name="{temp}initiatingCompoundWorkflowTitle" display-label-id="task_property_extensionWorkflowId" outputText="false" action="dialog:compoundWorkflowDialog" actionListener="#{CompoundWorkflowDialog.setupWorkflow}"
             component-generator="ActionLinkGenerator" params="nodeRef=#{__propSheetVar.properties['temp:initiatingCompoundWorkflowRef']}" />
       </property-sheet>
    </config>   

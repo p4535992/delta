@@ -221,28 +221,27 @@ public class DocLockServiceImpl extends LockServiceImpl implements DocLockServic
         return lockSts;
     }
 
-    private boolean isLockByOther(NodeRef nodeRef) {
+    @Override
+    public boolean isLockByOther(NodeRef nodeRef) {
         return isLockByOther(nodeRef, getUserName());
     }
 
     private boolean isLockByOther(NodeRef nodeRef, String userName) {
         boolean isLockOwnedByOther = true;
-        if (nodeService.hasAspect(nodeRef, ContentModel.ASPECT_LOCKABLE)) {
-            String currentLockOwner = (String) nodeService.getProperty(nodeRef, ContentModel.PROP_LOCK_OWNER);
-            if (currentLockOwner != null) {
-                Date expiryDate = (Date) nodeService.getProperty(nodeRef, ContentModel.PROP_EXPIRY_DATE);
-                if (expiryDate != null && expiryDate.before(new Date())) {
-                    isLockOwnedByOther = false; // LockStatus.LOCK_EXPIRED;
-                    log.debug("existing lock has expired");
+        String currentLockOwner = (String) nodeService.getProperty(nodeRef, ContentModel.PROP_LOCK_OWNER);
+        if (StringUtils.isNotBlank(currentLockOwner)) {
+            Date expiryDate = (Date) nodeService.getProperty(nodeRef, ContentModel.PROP_EXPIRY_DATE);
+            if (expiryDate != null && expiryDate.before(new Date())) {
+                isLockOwnedByOther = false; // LockStatus.LOCK_EXPIRED;
+                log.debug("existing lock has expired");
+            } else {
+                userName = getUserNameAndSession(userName);
+                if (currentLockOwner.equals(userName)) {
+                    log.debug("user '" + userName + "' owns the lock");
+                    isLockOwnedByOther = false; // LockStatus.LOCK_OWNER;
                 } else {
-                    userName = getUserNameAndSession(userName);
-                    if (currentLockOwner.equals(userName)) {
-                        log.debug("user '" + userName + "' owns the lock");
-                        isLockOwnedByOther = false; // LockStatus.LOCK_OWNER;
-                    } else {
-                        log.debug("user '" + userName + "' doesn't own the lock - lock owned by '" + currentLockOwner + "'");
-                        isLockOwnedByOther = true; // LockStatus.LOCKED;
-                    }
+                    log.debug("user '" + userName + "' doesn't own the lock - lock owned by '" + currentLockOwner + "'");
+                    isLockOwnedByOther = true; // LockStatus.LOCKED;
                 }
             }
         } else {

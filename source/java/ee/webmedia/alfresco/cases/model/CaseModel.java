@@ -27,5 +27,6 @@ public interface CaseModel {
         QName TITLE = QName.createQName(URI, "title");
         QName CREATED = QName.createQName(URI, "created");
         QName CONTAINING_DOCS_COUNT = QName.createQName(URI, "containingDocsCount");
+        QName ORIGINAL_CASE = QName.createQName(URI, "originalCase");
     }
 }

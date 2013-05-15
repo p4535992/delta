@@ -114,7 +114,7 @@ public class DeleteAssocDialog extends DeleteContentDialog {
 
     @Override
     public String getContainerTitle() {
-        return "Seose kustutamine";
+        return MessageUtil.getMessage("document_deleteAssocDialog_deleteAssoc");
     }
 
 }

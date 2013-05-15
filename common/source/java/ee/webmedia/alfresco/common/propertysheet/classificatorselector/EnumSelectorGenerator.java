@@ -65,7 +65,7 @@ public class EnumSelectorGenerator extends GeneralSelectorGenerator implements H
 
     private void setConvertedValue(UIOutput uiOutput, Object boundValue, String enumClassName) {
         Enum<?> enumValue = DefaultTypeConverter.INSTANCE.convert(EnumConverter.getEnumClass(enumClassName), boundValue);
-        uiOutput.setValue(MessageUtil.getMessage(enumValue));
+        uiOutput.setValue(enumValue != null ? MessageUtil.getMessage(enumValue) : "");
     }
 
     @Override

@@ -8,7 +8,7 @@
 <%@ page buffer="32kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
 
-<a:panel id="docType-panel" label="#{msg.doc_types_list}" styleClass="panel-100 with-pager">
+<a:panel id="docType-panel" label="#{DialogManager.bean.listTitle}" styleClass="panel-100 with-pager">
    <%-- 
    DialogManager.bean is used to refer to subclass of DynamicTypeListDialog - 
    either DocTypeListDialog or CaseFileTypeListDialog

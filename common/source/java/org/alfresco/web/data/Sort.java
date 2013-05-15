@@ -40,6 +40,7 @@ import java.util.Map;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.ClassUtils;
+import org.apache.commons.collections.comparators.BooleanComparator;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -138,9 +139,13 @@ public abstract class Sort
          // there will always be at least one item to sort if we get to this method
          Object bean = this.data.get(0);
          Class<? extends Object> beanClass = bean.getClass();
-        try
+         try
          {
-            getter = beanClass.getMethod(methodName, (Class [])null);
+            try {
+                getter = beanClass.getMethod(methodName, (Class [])null);
+            } catch (NoSuchMethodException e) { // Check for boolean naming convention
+                getter = beanClass.getMethod(methodName.replaceFirst("get", "is"), (Class[]) null);
+            }
             getters.put(beanClass, getter);
             returnType = getter.getReturnType();
          }
@@ -212,7 +217,7 @@ public abstract class Sort
          }
          else if (returnType.equals(boolean.class) || returnType.equals(Boolean.class))
          {
-            this.comparator = new BooleanComparator();
+            this.comparator = BooleanComparator.getFalseFirstComparator();
          }
          else if (returnType.equals(int.class) || returnType.equals(Integer.class))
          {
@@ -478,20 +483,6 @@ private Method getItemMethod(String propMethodName, Map<Class, Method> propertie
          if (obj1 == null) return -1;
          if (obj2 == null) return 1;
          return ((Long)obj1).compareTo((Long)obj2);
-      }
-   }
-   
-   private static class BooleanComparator implements Comparator
-   {
-      /**
-       * @see org.alfresco.web.data.IDataComparator#compare(java.lang.Object, java.lang.Object)
-       */
-      public int compare(final Object obj1, final Object obj2)
-      {
-         if (obj1 == null && obj2 == null) return 0;
-         if (obj1 == null) return -1;
-         if (obj2 == null) return 1;
-         return ((Boolean)obj1).equals((Boolean)obj2) ? -1 : 1;
       }
    }
    

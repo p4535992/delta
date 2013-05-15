@@ -30,6 +30,9 @@
             <property name="case:created">
                <type>d:date</type>
             </property>
+            <property name="case:originalCase">
+               <type>d:noderef</type>
+            </property>            
          </properties>
          <associations>
             <association name="case:caseDocument">

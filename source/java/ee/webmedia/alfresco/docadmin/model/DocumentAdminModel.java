@@ -106,6 +106,7 @@ public interface DocumentAdminModel {
         QName ADD_REPLY_TO_UNREGISTRATED_DOC_ENABLED = QName.createQName(URI, "addReplyToUnregistratedDocEnabled");
         QName EDIT_FILES_OF_FINISHED_DOC_ENABLED = QName.createQName(URI, "editFilesOfFinishedDocEnabled");
         QName LATEST_VERSION = QName.createQName(URI, "latestVersion");
+        QName REGISTRATION_ON_DOC_FORM_ENABLED = QName.createQName(URI, "registrationOnDocFormEnabled");
         // END: properties of type documentType
         // START: properties of type fieldGroup
         QName FIELD_DEFINITIONS_IDS = QName.createQName(URI, "fieldDefinitionIds");

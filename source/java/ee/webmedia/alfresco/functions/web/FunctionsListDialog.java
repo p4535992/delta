@@ -91,6 +91,11 @@ public class FunctionsListDialog extends BaseDialogBean {
         MessageUtil.addInfoMessage(FacesContext.getCurrentInstance(), "docList_updateDocCounters_success", docCount);
     }
 
+    public void updateArchivedDocCounters(@SuppressWarnings("unused") ActionEvent event) {
+        final long docCount = BeanHelper.getDocumentListService().updateDocCounters(BeanHelper.getArchivalsService().getArchivalRoot());
+        MessageUtil.addInfoMessage(FacesContext.getCurrentInstance(), "docList_updateDocCounters_success", docCount);
+    }
+
     /**
      * NB! this method doesn't delete files associated with cases or documents that will get deleted - hence wasting disk usage. <br>
      * But as at the moment this method is meant to be called only in cases where repository and DB backups will be restored(before final successful import), it

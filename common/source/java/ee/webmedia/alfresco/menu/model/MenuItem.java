@@ -57,6 +57,9 @@ import ee.webmedia.alfresco.workflow.service.WorkflowService;
 public class MenuItem implements Serializable {
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(MenuItem.class);
     final static public String HIDDEN_MENU_ITEM = "hiddenMenuItem";
+    public static final List<String> MY_TASK_MENU_ITEMS = Arrays.asList("assignmentTasks", "informationTasks", "orderAssignmentTasks", "opinionTasks", "discussions",
+            "reviewTasks",
+            "externalReviewTasks", "confirmationTasks", "signatureTasks", "forRegisteringList");
 
     @XStreamOmitField
     private static final long serialVersionUID = 0L;
@@ -208,6 +211,9 @@ public class MenuItem implements Serializable {
             } else if (!hideIt) {
                 getStyleClass().remove(HIDDEN_MENU_ITEM);
             }
+            if (MY_TASK_MENU_ITEMS.contains(id) && hideIt) {
+                log.debug("setting menu_my_tasks subitem " + getId() + " hidden");
+            }
         }
 
         Config config = Application.getConfigService(context).getGlobalConfig();
@@ -289,53 +295,62 @@ public class MenuItem implements Serializable {
     }
 
     protected boolean isRendered(UserService userService, WorkflowService workflowService, EInvoiceService einvoiceService, RSService rsService) {
-        if (isRenderingDisabled() || isRestricted() && !hasPermissions(userService)) {
-            return false;
-        }
-        if (isExternalReview() && !(isExternalReviewEnabled(workflowService) || workflowService.isReviewToOtherOrgEnabled())) {
-            return false;
-        }
-        if (isOrderAssignment() && !isOrderAssignmentEnabled(workflowService)) {
-            return false;
-        }
-        if (isEinvoiceFunctionality() && !isEinvoiceFunctionalityEnabled(einvoiceService)) {
-            return false;
-        }
+        int reason = -1;
+        boolean result = true;
         VolumeService volumeService = BeanHelper.getVolumeService();
-        if ("userCompoundWorkflows".equals(id) && !workflowService.isIndependentWorkflowEnabled() && !volumeService.isCaseVolumeEnabled()) {
-            return false;
-        }
-        if ("userCaseFiles".equals(id) && !volumeService.isCaseVolumeEnabled()) {
-            return false;
-        }
-        boolean isRestrictedDelta = rsService.isRestrictedDelta();
-        if ("regularDelta".equals(id) && (!isRestrictedDelta || StringUtils.isBlank(rsService.getDeltaUrl()))) {
-            return false;
-        }
-        if ("restrictedDelta".equals(id)
-                && (isRestrictedDelta || StringUtils.isBlank(rsService.getRestrictedDeltaUrl()) || !BeanHelper.getRsAccessStatusBean().isCanUserAccessRestrictedDelta())) {
-            return false;
-        }
-        if ("compoundWorkflowSearch".equals(id)) {
-            return BeanHelper.getVolumeService().isCaseVolumeEnabled() || workflowService.isIndependentWorkflowEnabled();
-        }
-        if (Arrays.asList("executedReports", "taskReports", "documentReports", "volumeReports").contains(id)) {
-            return BeanHelper.getReportService().isUsableByAdminDocManagerOnly() ? userService.isDocumentManager() : true;
-        }
-        if (Arrays.asList("compoundWorkflows", "assignmentTasks", "informationTasks", "reviewTasks", "externalReviewTasks", "confirmationTasks", "taskSearch", "taskReports")
+        if (isRenderingDisabled() || isRestricted() && !hasPermissions(userService)) {
+            result = false;
+            reason = 1;
+        } else if (isExternalReview() && !(isExternalReviewEnabled(workflowService) || workflowService.isReviewToOtherOrgEnabled())) {
+            result = false;
+            reason = 2;
+        } else if (isOrderAssignment() && !isOrderAssignmentEnabled(workflowService)) {
+            result = false;
+            reason = 3;
+        } else if (isEinvoiceFunctionality() && !isEinvoiceFunctionalityEnabled(einvoiceService)) {
+            result = false;
+            reason = 4;
+        } else if ("userCompoundWorkflows".equals(id) && !workflowService.isIndependentWorkflowEnabled() && !volumeService.isCaseVolumeEnabled()) {
+            result = false;
+            reason = 5;
+        } else if ("userCaseFiles".equals(id) && !volumeService.isCaseVolumeEnabled()) {
+            result = false;
+            reason = 6;
+        } else if ("compoundWorkflowSearch".equals(id)) {
+            result = BeanHelper.getVolumeService().isCaseVolumeEnabled() || workflowService.isIndependentWorkflowEnabled();
+            reason = 7;
+        } else if (Arrays.asList("executedReports", "taskReports", "documentReports", "volumeReports").contains(id)) {
+            result = BeanHelper.getReportService().isUsableByAdminDocManagerOnly() ? userService.isDocumentManager() : true;
+            reason = 8;
+        } else if (Arrays
+                .asList("compoundWorkflows", "assignmentTasks", "informationTasks", "reviewTasks", "externalReviewTasks", "confirmationTasks", "taskSearch", "taskReports")
                 .contains(id)) {
-            return workflowService.isWorkflowEnabled();
+            result = workflowService.isWorkflowEnabled();
+            reason = 9;
+        } else if (Arrays.asList("orderAssignmentTasks", "opinionTasks", "signatureTasks").contains(id)) {
+            result = workflowService.isDocumentWorkflowEnabled() || workflowService.isIndependentWorkflowEnabled();
+            reason = 10;
+        } else if ("externalReviewTasks".equals(id)) {
+            result = workflowService.isReviewToOtherOrgEnabled() || workflowService.externalReviewWorkflowEnabled();
+            reason = 11;
+        } else if ("webServiceDocuments".equals(id) && StringUtils.isBlank(BeanHelper.getAddDocumentService().getWebServiceDocumentsMenuItemTitle())) {
+            result = false;
+            reason = 12;
+        } else {
+            boolean isRestrictedDelta = rsService.isRestrictedDelta();
+            if ("regularDelta".equals(id) && (!isRestrictedDelta || StringUtils.isBlank(rsService.getDeltaUrl()))) {
+                result = false;
+                reason = 13;
+            } else if ("restrictedDelta".equals(id)
+                    && (isRestrictedDelta || StringUtils.isBlank(rsService.getRestrictedDeltaUrl()) || !BeanHelper.getRsAccessStatusBean().isCanUserAccessRestrictedDelta())) {
+                result = false;
+                reason = 14;
+            }
         }
-        if (Arrays.asList("orderAssignmentTasks", "opinionTasks", "signatureTasks").contains(id)) {
-            return workflowService.isDocumentWorkflowEnabled() || workflowService.isIndependentWorkflowEnabled();
+        if (!result && MY_TASK_MENU_ITEMS.contains(getId())) {
+            log.debug("menu_my_tasks subitem " + getId() + " is not rendered, reason=" + reason);
         }
-        if ("externalReviewTasks".equals(id)) {
-            return workflowService.isReviewToOtherOrgEnabled() || workflowService.externalReviewWorkflowEnabled();
-        }
-        if ("webServiceDocuments".equals(id) && StringUtils.isBlank(BeanHelper.getAddDocumentService().getWebServiceDocumentsMenuItemTitle())) {
-            return false;
-        }
-        return true;
+        return result;
     }
 
     protected boolean isEinvoiceFunctionalityEnabled(EInvoiceService einvoiceService) {

@@ -4,9 +4,7 @@
       <actions>
 
          <action id="series_add_new">
-            <permissions>
-               <permission allow="true">CreateChildren</permission>
-            </permissions>
+            <evaluator>ee.webmedia.alfresco.user.web.DocumentManagerEvaluator</evaluator>
             <label-id>series_createNew</label-id>
             <image>/images/icons/versioned_properties.gif</image>
             <action-listener>#{SeriesDetailsDialog.addNewSeries}</action-listener>

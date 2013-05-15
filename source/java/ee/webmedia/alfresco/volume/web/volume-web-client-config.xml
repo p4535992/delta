@@ -1,13 +1,10 @@
-﻿<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <alfresco-config>
    <config>
       <actions>
 
          <action id="volume_add_new">
             <evaluator>ee.webmedia.alfresco.volume.web.evaluator.CanAddVolumeEvaluator</evaluator>
-            <permissions>
-               <permission allow="true">CreateChildren</permission>
-            </permissions>
             <label-id>volume_add_new</label-id>
             <image>/images/icons/versioned_properties.gif</image>
             <action-listener>#{VolumeDetailsDialog.addNewVolume}</action-listener>

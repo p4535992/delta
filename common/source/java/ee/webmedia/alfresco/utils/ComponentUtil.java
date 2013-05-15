@@ -66,6 +66,7 @@ import org.alfresco.web.ui.repo.tag.LoadBundleTag;
 import org.apache.commons.collections.Closure;
 import org.apache.commons.collections.comparators.NullComparator;
 import org.apache.commons.collections.comparators.TransformingComparator;
+import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.myfaces.shared_impl.renderkit.html.HtmlFormRendererBase;
 import org.apache.myfaces.shared_impl.taglib.UIComponentTagUtils;
@@ -698,13 +699,11 @@ public class ComponentUtil {
         HtmlFormRendererBase.addHiddenCommandParameter(context, form, fieldId);
         StringBuilder buf = new StringBuilder(200);
         buf.append("document.forms['");
-        buf.append(formClientId);
+        buf.append(StringEscapeUtils.escapeJavaScript(formClientId));
         buf.append("']['");
-        buf.append(fieldId);
+        buf.append(StringEscapeUtils.escapeJavaScript(fieldId));
         buf.append("'].value='");
-        String val = StringUtils.replace(value, "\\", "\\\\"); // encode escape character
-        val = StringUtils.replace(val, "'", "\\'"); // encode single quote as we wrap string with that
-        buf.append(val);
+        buf.append(StringEscapeUtils.escapeJavaScript(value));
         buf.append("';");
         return buf.toString();
     }
@@ -861,13 +860,17 @@ public class ComponentUtil {
         }
 
         // Add filter info
-        int filter = UserContactGroupSearchBean.USERS_FILTER;
+        int filter = searchAttrs.containsKey(Search.FILTER_INDEX) ? (Integer) searchAttrs.get(Search.FILTER_INDEX) : 0;
         String filters = (String) searchAttrs.get(Search.FILTERS_KEY);
         if (filters != null) {
             SelectItem[] filterSelects = (SelectItem[]) context.getApplication().createValueBinding(filters).getValue(context);
             for (SelectItem selectItem : filterSelects) {
                 filter = filter | ((Integer) selectItem.getValue());
             }
+        }
+
+        if (filter == 0) {
+            filter = UserContactGroupSearchBean.USERS_FILTER; // Default to user search if no other option is applicable.
         }
 
         String containerClientId = ancestorAjaxComponent.getClientId(context);
@@ -877,11 +880,11 @@ public class ComponentUtil {
         String sep = "\", \"";
         StringBuffer sb = new StringBuffer("<script type=\"text/javascript\">");
         sb.append("addSearchSuggest(\"")
-        .append(clientId).append(sep)
-        .append(containerClientId).append(sep)
-        .append(pickerCallback).append(sep)
-        .append(filter).append(sep)
-        .append(submitUri).append("\");");
+                .append(clientId).append(sep)
+                .append(containerClientId).append(sep)
+                .append(pickerCallback).append(sep)
+                .append(filter).append(sep)
+                .append(submitUri).append("\");");
         sb.append("</script>");
         return sb.toString();
     }
@@ -1064,9 +1067,23 @@ public class ComponentUtil {
         if (propDef != null) {
             // try and get the repository assigned label
             displayLabel = propDef.getTitle();
+
+            // If title is null, it is most probably because property is on a non-dynamic node. Meaning the property
+            // definition couldn't be fetched using DocumentConfigService. Relying on naming conventions, we could try
+            // to fetch the translation from *.properties files.
+            String propLocalName = propDef.getName().getLocalName();
             if (displayLabel == null) {
-                // if the label is still null default to the local name of the property
-                displayLabel = propDef.getName().getLocalName();
+                String containerName = propDef.getContainerClass().getName().getLocalName();
+                String messageKey = containerName + "_" + propLocalName;
+                displayLabel = MessageUtil.getMessage(messageKey);
+                if (!MessageUtil.isMessageTranslated(messageKey, displayLabel)) {
+                    displayLabel = null; // Don't display missing message key (I18NUtil already returns null)
+                }
+            }
+
+            // If the label is still null default to the local name of the property
+            if (displayLabel == null) {
+                displayLabel = propLocalName;
             }
         }
         if (displayLabel == null) {

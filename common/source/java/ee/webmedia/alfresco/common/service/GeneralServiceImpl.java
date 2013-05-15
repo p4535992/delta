@@ -15,6 +15,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -1021,6 +1022,18 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
 
     private String getBootstrapXPath(String moduleName, String bootstrapName) {
         return "/sys:system-registry/module:modules/module:" + moduleName + "/module:components/module:" + bootstrapName;
+    }
+
+    @Override
+    public void setModifiedToNow(final NodeRef nodeRef) {
+        // Change document modified time, so it would be detected on next ADR sync
+        AuthenticationUtil.runAs(new RunAsWork<Void>() {
+            @Override
+            public Void doWork() throws Exception {
+                nodeService.setProperty(nodeRef, ContentModel.PROP_MODIFIED, new Date(AlfrescoTransactionSupport.getTransactionStartTime()));
+                return null;
+            }
+        }, AuthenticationUtil.getSystemUserName());
     }
 
     // START: getters / setters

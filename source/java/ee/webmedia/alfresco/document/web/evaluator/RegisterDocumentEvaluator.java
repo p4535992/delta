@@ -7,6 +7,7 @@ import java.util.Map;
 
 import javax.faces.context.FacesContext;
 
+import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.cmr.security.AccessStatus;
 import org.alfresco.service.cmr.security.PermissionService;
@@ -32,13 +33,19 @@ public class RegisterDocumentEvaluator extends BaseActionEvaluator {
 
     @Override
     public boolean evaluate(Node docNode) {
+        NodeRef docTypeRef = getDocTypeRef(docNode);
         return docNode.getNodeRef().getStoreRef().getProtocol().equals(StoreRef.PROTOCOL_WORKSPACE)
                 && new DocumentNotInDraftsFunctionActionEvaluator().evaluate(docNode)
-                && new ViewStateActionEvaluator().evaluate(docNode) && canRegister(docNode, true);
+                && new ViewStateActionEvaluator().evaluate(docNode) && canRegister(docNode, true)
+                && getDocumentAdminService().getTypeProperty(docTypeRef, DocumentAdminModel.Props.REGISTRATION_ON_DOC_FORM_ENABLED, Boolean.class);
     }
 
     public boolean canRegister(Node docNode, boolean checkStoppedOrInprogressWorkflows) {
-        if (!canRegister(docNode)) {
+        return canRegister(docNode, checkStoppedOrInprogressWorkflows, getDocTypeRef(docNode));
+    }
+
+    private boolean canRegister(Node docNode, boolean checkStoppedOrInprogressWorkflows, NodeRef docTypeRef) {
+        if (!canRegister(docNode, docTypeRef)) {
             return false;
         }
         if (checkStoppedOrInprogressWorkflows && !new HasNoStoppedOrInprogressWorkflowsEvaluator().evaluate(docNode)) {
@@ -54,15 +61,23 @@ public class RegisterDocumentEvaluator extends BaseActionEvaluator {
     }
 
     public boolean canRegister(Node docNode) {
+        return canRegister(docNode, getDocTypeRef(docNode));
+    }
+
+    private boolean canRegister(Node docNode, NodeRef docTypeRef) {
         if (isRegistered(docNode)) {
             return false;
         }
         BeanHelper.getDocumentService().throwIfNotDynamicDoc(docNode);
-        String docTypeId = (String) docNode.getProperties().get(Props.OBJECT_TYPE_ID);
-        if (!getDocumentAdminService().getDocumentTypeProperty(docTypeId, DocumentAdminModel.Props.REGISTRATION_ENABLED, Boolean.class)) {
+        if (!getDocumentAdminService().getTypeProperty(docTypeRef, DocumentAdminModel.Props.REGISTRATION_ENABLED, Boolean.class)) {
             return false;
         }
         return true;
+    }
+
+    public NodeRef getDocTypeRef(Node docNode) {
+        NodeRef docTypeRef = getDocumentAdminService().getDocumentTypeRef((String) docNode.getProperties().get(Props.OBJECT_TYPE_ID));
+        return docTypeRef;
     }
 
     public static boolean isNotRegistered(Node docNode) {

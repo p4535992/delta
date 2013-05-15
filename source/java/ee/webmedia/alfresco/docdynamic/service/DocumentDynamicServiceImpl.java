@@ -195,13 +195,13 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
     }
 
     @Override
-    public void setOwnerFromActiveResponsibleTask(CompoundWorkflow compoundWorkflow, NodeRef documentRef, Map<String, Object> documentProps) {
+    public void setOwnerFromActiveResponsibleTask(CompoundWorkflow compoundWorkflow, NodeRef documentRef, Map<QName, Serializable> documentProps) {
         if (!DocumentStatus.WORKING.equals((String) nodeService.getProperty(documentRef, DocumentCommonModel.Props.DOC_STATUS))) {
             return;
         }
         String docNewOwnerUsername = null;
         workflow_for: for (Workflow workflow : compoundWorkflow.getWorkflows()) {
-            if (WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW.equals(workflow.getType())) {
+            if (workflow.isType(WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW)) {
                 for (Task task : workflow.getTasks()) {
                     if (WorkflowUtil.isActiveResponsible(task)) {
                         docNewOwnerUsername = task.getOwnerId();
@@ -214,9 +214,7 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         }
 
         if (StringUtils.isNotBlank(docNewOwnerUsername)) {
-            Map<QName, Serializable> properties = nodeService.getProperties(documentRef);
-            setOwner(properties, docNewOwnerUsername, false, DocumentType.class);
-            documentProps.putAll(RepoUtil.toStringProperties(properties));
+            setOwner(documentProps, docNewOwnerUsername, false, DocumentType.class);
         }
     }
 
@@ -789,6 +787,7 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
 
     private void validateDocument(List<String> saveListenerBeanNames, DocumentDynamic document, Map<String, Pair<DynamicPropertyDefinition, Field>> propDefs) {
         ValidationHelperImpl validationHelper = new ValidationHelperImpl(propDefs);
+        validateDocumentForFormulaPattern(document, validationHelper);
         for (String saveListenerBeanName : saveListenerBeanNames) {
             SaveListener saveListener = (SaveListener) beanFactory.getBean(saveListenerBeanName, SaveListener.class);
             saveListener.validate(document, validationHelper);
@@ -796,6 +795,34 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         if (!validationHelper.errorMessages.isEmpty()) {
             throw new UnableToPerformMultiReasonException(new MessageDataWrapper(validationHelper.errorMessages));
         }
+    }
+
+    private void validateDocumentForFormulaPattern(DocumentDynamic document, ValidationHelperImpl validationHelper) {
+        for (Pair<DynamicPropertyDefinition, Field> propDefPair : validationHelper.getPropDefs().values()) {
+            Field field = propDefPair.getSecond();
+            if (field == null) {
+                continue; // Hidden fields can be ignored
+            }
+            Serializable value = document.getProp(field.getQName());
+            if (validateValueForFormulaPattern(value, field, validationHelper)) {
+                // it was a string value
+            } else if (value instanceof Collection<?>) {
+                for (Object item : (Collection<?>) ((Collection<?>) value)) {
+                    validateValueForFormulaPattern(item, field, validationHelper);
+                }
+            }
+        }
+    }
+
+    private boolean validateValueForFormulaPattern(Object item, Field field, ValidationHelperImpl validationHelper) {
+        if (item instanceof String) {
+            String stringValue = (String) item;
+            if (StringUtils.startsWith(stringValue, "{") && StringUtils.endsWith(stringValue, "}")) {
+                validationHelper.addErrorMessage("docdyn_save_error_valueContainsFormulaPattern", field.getName());
+            }
+            return true;
+        }
+        return false;
     }
 
     @Override

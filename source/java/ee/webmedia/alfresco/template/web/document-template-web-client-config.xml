@@ -13,9 +13,6 @@
 
          </action>
          <action id="template_add_new_email">
-            <permissions>
-               <permission allow="true">CreateChildren</permission>
-            </permissions>
             <label-id>template_add_new_email_template</label-id>
             <image>/images/icons/template_add.gif</image>
             <action>dialog:addDocumentTemplate</action>
@@ -26,9 +23,6 @@
          </action>
          
          <action id="template_add_new_system">
-            <permissions>
-               <permission allow="true">CreateChildren</permission>
-            </permissions>
             <label-id>template_add_new_system_template</label-id>
             <image>/images/icons/template_add.gif</image>
             <action>dialog:addDocumentTemplate</action>
@@ -39,9 +33,6 @@
          </action>
          
          <action id="template_add_new_report">
-            <permissions>
-               <permission allow="true">CreateChildren</permission>
-            </permissions>
             <label-id>template_add_new_report_template</label-id>
             <image>/images/icons/template_add.gif</image>
             <action>dialog:addDocumentTemplate</action>

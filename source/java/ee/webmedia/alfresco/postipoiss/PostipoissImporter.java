@@ -1,7 +1,10 @@
 package ee.webmedia.alfresco.postipoiss;
 
 import java.io.File;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
@@ -72,7 +75,8 @@ public class PostipoissImporter implements SaveListener {
     public synchronized void startImporterInBackground(ActionEvent event) throws Exception {
         if (!isImporterRunning()) {
             log.info("startImporterInBackground\n  dataFolders=" + dataFolders + "\n  workFolders=" + workFolders + "\n  mappingsFileNames=" + mappingsFileNames
-                    + "\n  defaultOwnerIds=" + defaultOwnerIds + "\n  archivalsStores=" + archivalsStores + "\n  openUnits=" + openUnits);
+                    + "\n  publishToAdrWithFilesStartingFromDates=" + publishToAdrWithFilesStartingFromDates + "\n  defaultOwnerIds=" + defaultOwnerIds + "\n  archivalsStores="
+                    + archivalsStores + "\n  setPublicFilesToBackgroundFiles=" + publicFilesToBackgroundFiles + "\n  openUnits=" + openUnits);
             LinkedHashSet<ArchivalsStoreVO> archivalsStoreVOs = generalService.getArchivalsStoreVOs();
             iterate(archivalsStoreVOs, false);
             iterate(archivalsStoreVOs, true);
@@ -98,8 +102,8 @@ public class PostipoissImporter implements SaveListener {
         }
         Set<NodeRef> archivalsRoots = new HashSet<NodeRef>();
         for (int i = 0; i < countTmp; i++) {
-            if (i >= dataFolders.size() || i >= workFolders.size() || i >= mappingsFileNames.size() || i >= defaultOwnerIds.size() || i >= archivalsStores.size()
-                    || i >= openUnits.size()) {
+            if (i >= dataFolders.size() || i >= workFolders.size() || i >= mappingsFileNames.size() || i >= defaultOwnerIds.size()
+                    || i >= publishToAdrWithFilesStartingFromDates.size() || i >= archivalsStores.size() || i >= publicFilesToBackgroundFiles.size() || i >= openUnits.size()) {
                 if (execute) {
                     log.info("Skipping input arguments group " + (i + 1));
                 }
@@ -135,14 +139,21 @@ public class PostipoissImporter implements SaveListener {
             Assert.isTrue(!archivalsRoots.contains(archivalsRoot), "archivalsStore " + (i + 1) + " documentList root nodeRef is already used: " + archivalsRoot);
             archivalsRoots.add(archivalsRoot);
 
+            Date publishToAdrWithFilesStartingFromDate = null;
+            if (StringUtils.isNotBlank(publishToAdrWithFilesStartingFromDates.get(i))) {
+                DateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
+                dateFormat.setLenient(false);
+                publishToAdrWithFilesStartingFromDate = dateFormat.parse(publishToAdrWithFilesStartingFromDates.get(i));
+            }
+
             if (execute) {
                 log.info("Executing importer for arguments group " + (i + 1));
                 try {
                     PostipoissStructureImporter postipoissStructureImporter = postipoissStructureImporters.get(i);
                     PostipoissDocumentsImporter postipoissDocumentsImporter = postipoissDocumentsImporters.get(i);
-                    startImporter(i, batchSizeTmp, dataFolder, workFolder, mappingsFile, archivalsRoot, defaultOwnerIds.get(i), Boolean.TRUE.equals(openUnits.get(i)),
-                            postipoissStructureImporter,
-                            postipoissDocumentsImporter);
+                    startImporter(i, batchSizeTmp, dataFolder, workFolder, mappingsFile, archivalsRoot, defaultOwnerIds.get(i),
+                            publishToAdrWithFilesStartingFromDate, Boolean.TRUE.equals(publicFilesToBackgroundFiles.get(i)), Boolean.TRUE.equals(openUnits.get(i)),
+                            postipoissStructureImporter, postipoissDocumentsImporter);
                 } catch (StopException e) {
                     throw e;
                 } catch (Exception e) {
@@ -153,8 +164,8 @@ public class PostipoissImporter implements SaveListener {
     }
 
     private void startImporter(final int i, final int batchSizeTmp, final File dataFolder, final File workFolder, final File mappingsFile, final NodeRef archivalsRoot,
-            final String defaultOwnerId, final boolean openUnit, final PostipoissStructureImporter postipoissStructureImporter,
-            final PostipoissDocumentsImporter postipoissDocumentsImporter)
+            final String defaultOwnerId, final Date publishToAdrWithFilesStartingFromDate, final boolean publicFileToBackgroundFile, final boolean openUnit,
+            final PostipoissStructureImporter postipoissStructureImporter, final PostipoissDocumentsImporter postipoissDocumentsImporter)
             throws Exception {
         new Thread(new Runnable() {
             @Override
@@ -168,7 +179,9 @@ public class PostipoissImporter implements SaveListener {
                             try {
                                 LogHelper.setUserInfo("127.0.0.1", "localhost");
                                 postipoissStructureImporter.runImport(dataFolder, workFolder, archivalsRoot, openUnit);
-                                postipoissDocumentsImporter.runImport(dataFolder, workFolder, archivalsRoot, mappingsFile, batchSizeTmp, defaultOwnerId);
+                                postipoissDocumentsImporter
+                                        .runImport(dataFolder, workFolder, archivalsRoot, mappingsFile, batchSizeTmp, defaultOwnerId, publishToAdrWithFilesStartingFromDate,
+                                                publicFileToBackgroundFile);
                                 return null;
                             } catch (StopException e) {
                                 log.info("Stop completed");
@@ -193,18 +206,24 @@ public class PostipoissImporter implements SaveListener {
     private List<String> workFolders;
     private List<String> mappingsFileNames;
     private List<String> defaultOwnerIds;
+    private List<String> publishToAdrWithFilesStartingFromDates;
     private List<String> archivalsStores;
+    private List<Boolean> publicFilesToBackgroundFiles;
     private List<Boolean> openUnits;
     private int batchSize = 50;
     private boolean seriesComparisonIncludesTitle = false;
 
     private void init() {
-        if (dataFolders == null || workFolders == null || mappingsFileNames == null || defaultOwnerIds == null || archivalsStores == null || openUnits == null) {
+        if (dataFolders == null || workFolders == null || mappingsFileNames == null || defaultOwnerIds == null || publishToAdrWithFilesStartingFromDates == null
+                || archivalsStores == null || publicFilesToBackgroundFiles == null
+                || openUnits == null) {
             List<String> dataFoldersTmp = new ArrayList<String>();
             List<String> workFoldersTmp = new ArrayList<String>();
             List<String> mappingsFileNamesTmp = new ArrayList<String>();
             List<String> defaultOwnerIdsTmp = new ArrayList<String>();
+            List<String> publishToAdrWithFilesStartingFromDatesTmp = new ArrayList<String>();
             List<String> archivalsStoresTmp = new ArrayList<String>();
+            List<Boolean> publicFilesToBackgroundFilesTmp = new ArrayList<Boolean>();
             List<Boolean> openUnitsTmp = new ArrayList<Boolean>();
 
             LinkedHashSet<ArchivalsStoreVO> archivalsStoreVOs = generalService.getArchivalsStoreVOs();
@@ -221,7 +240,9 @@ public class PostipoissImporter implements SaveListener {
                 workFoldersTmp.add("");
                 mappingsFileNamesTmp.add("");
                 defaultOwnerIdsTmp.add("");
+                publishToAdrWithFilesStartingFromDatesTmp.add("");
                 archivalsStoresTmp.add(archivalsStore);
+                publicFilesToBackgroundFilesTmp.add(Boolean.FALSE);
                 openUnitsTmp.add(Boolean.FALSE);
             }
 
@@ -229,7 +250,9 @@ public class PostipoissImporter implements SaveListener {
             workFolders = workFoldersTmp;
             mappingsFileNames = mappingsFileNamesTmp;
             defaultOwnerIds = defaultOwnerIdsTmp;
+            publishToAdrWithFilesStartingFromDates = publishToAdrWithFilesStartingFromDatesTmp;
             archivalsStores = archivalsStoresTmp;
+            publicFilesToBackgroundFiles = publicFilesToBackgroundFilesTmp;
             openUnits = openUnitsTmp;
         }
     }
@@ -250,12 +273,22 @@ public class PostipoissImporter implements SaveListener {
     }
 
     public List<String> getDefaultOwnerIds() {
+        init();
         return defaultOwnerIds;
+    }
+
+    public List<String> getPublishToAdrWithFilesStartingFromDates() {
+        return publishToAdrWithFilesStartingFromDates;
     }
 
     public List<String> getArchivalsStores() {
         init();
         return archivalsStores;
+    }
+
+    public List<Boolean> getPublicFilesToBackgroundFiles() {
+        init();
+        return publicFilesToBackgroundFiles;
     }
 
     public List<Boolean> getOpenUnits() {

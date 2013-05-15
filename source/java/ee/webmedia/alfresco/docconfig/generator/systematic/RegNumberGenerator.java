@@ -40,6 +40,7 @@ public class RegNumberGenerator extends BaseSystematicFieldGenerator {
         getDocumentAdminService().registerForbiddenFieldId(VolumeModel.Props.CASES_CREATABLE_BY_USER.getLocalName());
         getDocumentAdminService().registerForbiddenFieldId(VolumeModel.Props.VOLUME_TYPE.getLocalName());
         getDocumentAdminService().registerForbiddenFieldId(VolumeModel.Props.CONTAINING_DOCS_COUNT.getLocalName());
+        getDocumentAdminService().registerForbiddenFieldId(VolumeModel.Props.ORIGINAL_VOLUME.getLocalName());
         getDocumentAdminService().registerForbiddenFieldId(VolumeModel.Props.LOCATION.getLocalName());
 
         super.afterPropertiesSet();

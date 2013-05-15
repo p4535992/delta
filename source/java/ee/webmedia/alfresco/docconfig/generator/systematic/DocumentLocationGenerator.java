@@ -17,6 +17,7 @@ import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.VOLU
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -273,7 +274,12 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
                 caseLabelEditableItem.setDontRenderIfDisabled(true);
             }
             caseLabelEditableItem.setComponentGenerator("SuggesterGenerator");
-            caseLabelEditableItem.setSuggesterValues(getStateHolderBindingName("getCasesEditable", stateHolderKey));
+            String bindingName = "getCasesEditable";
+            if (forSearch) {
+                // NB! We also need to be able to search by case label alone. Returning null from getCasesEditable sets the suggester to read-only.
+                bindingName += "OrEmptyList";
+            }
+            caseLabelEditableItem.setSuggesterValues(getBindingName(bindingName, stateHolderKey));
             caseLabelEditableItem.setStyleClass("long");
             caseLabelEditableItem.setShowInViewMode(false);
             generatorResults.addItem(caseLabelEditableItem);
@@ -437,6 +443,16 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
             return casesEditable;
         }
 
+        /**
+         * Alternative case listing for search dialogs. If we return null for casesEditable, then the Suggester component is rendered as read-only.
+         */
+        public List<String> getCasesEditableOrEmptyList(FacesContext context, UIInput selectComponent) {
+            if (casesEditable == null) {
+                return Collections.<String> emptyList();
+            }
+            return casesEditable;
+        }
+
         public void functionValueChanged(ValueChangeEvent event) {
             NodeRef functionRef = (NodeRef) event.getNewValue();
             updateFnSerVol(functionRef, null, null, null, null, false, true, false);
@@ -454,7 +470,7 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
             NodeRef functionRef = (NodeRef) document.getProperties().get(functionProp);
             NodeRef seriesRef = (NodeRef) document.getProperties().get(seriesProp);
             NodeRef volumeRef = (NodeRef) event.getNewValue();
-            updateFnSerVol(functionRef, seriesRef, volumeRef, null, null, false, true, false);
+            updateFnSerVol(functionRef, seriesRef, volumeRef, null, null, false, false, false);
         }
 
         private void updateFnSerVol(NodeRef functionRef, NodeRef seriesRef, NodeRef volumeRef, NodeRef caseRef, String caseLabel, boolean addIfMissing,
@@ -492,7 +508,7 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
                 functions.add(new SelectItem("", ""));
                 boolean functionFound = false;
                 for (Function function : allFunctions) {
-                    List<Series> openSeries = getAllSeries(function.getNodeRef(), isSearchFilterOrDocTypeNull, idList);
+                    List<Series> openSeries = getAllSeries(function.getNodeRef(), isSearchFilter, idList);
                     if (openSeries.size() == 0) {
                         continue;
                     }
@@ -524,7 +540,7 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
                 seriesRef = null;
             } else {
                 List<Series> allSeries;
-                allSeries = getAllSeries(functionRef, isSearchFilterOrDocTypeNull, idList);
+                allSeries = getAllSeries(functionRef, isSearchFilter, idList);
                 series = new ArrayList<SelectItem>(allSeries.size());
                 series.add(new SelectItem("", ""));
                 for (Series serie : allSeries) {
@@ -584,9 +600,7 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
                 List<Volume> allVolumes;
                 if (isSearchFilter) { // Search screens
                     allVolumes = getVolumeService().getAllVolumesBySeries(seriesRef);
-                } else if (docTypeNull) { // Mass document relocating
-                    allVolumes = getVolumeService().getAllVolumesBySeries(seriesRef, DocListUnitStatus.OPEN);
-                } else if (getGeneralService().getStore().equals(seriesRef.getStoreRef())) {
+                } else if (docTypeNull || getGeneralService().getStore().equals(seriesRef.getStoreRef())) { // Mass and regular document relocating
                     allVolumes = getVolumeService().getAllValidVolumesBySeries(seriesRef, DocListUnitStatus.OPEN);
                 } else {
                     allVolumes = Collections.emptyList();
@@ -638,7 +652,9 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
                 cases = null;
                 casesEditable = null;
                 caseRef = null;
-                caseLabel = null;
+                if (!isSearchFilter) {
+                    caseLabel = null;
+                }
             } else {
                 Volume volume = getVolumeService().getVolumeByNodeRef(volumeRef);
                 if (volume.isContainsCases()) {
@@ -686,7 +702,9 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
                 } else {
                     cases = null;
                     casesEditable = null;
-                    caseLabel = null;
+                    if (!isSearchFilter) {
+                        caseLabel = null;
+                    }
                 }
             }
             if (isSearchFilter || casesCreatableByUser && !isDocTypeDef) {
@@ -737,7 +755,7 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
                             component.setRendered(cases != null && !isSearchFilter);
                         } else if (documentType && component.getId().endsWith("_" + caseLabelEditableProp.getLocalName())) {
                             UIInput caseList = (UIInput) componentChildren.get(1);
-                            SuggesterGenerator.setValue(caseList, casesEditable);
+                            SuggesterGenerator.setValue(caseList, (isSearchFilter && casesEditable == null ? Collections.<String> emptyList() : casesEditable));
                             caseList.setValue(caseLabel);
                             component.setRendered(casesEditable != null || isSearchFilter);
                         }
@@ -752,9 +770,7 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
             if (documentType) {
                 document.getProperties().put(volumeProp.toString(), volumeRef);
                 document.getProperties().put(caseProp.toString(), caseRef);
-                if (!isSearchFilter) { // do not clear caseLabelEditable prop if this is a search filter node
-                    document.getProperties().put(caseLabelEditableProp.toString(), caseLabel);
-                }
+                document.getProperties().put(caseLabelEditableProp.toString(), caseLabel);
             }
         }
 
@@ -780,15 +796,31 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
             return showCaseFileTypes;
         }
 
+        @SuppressWarnings("unchecked")
         private List<Function> getAllFunctions(Node document, boolean isSearchFilter) {
             if (!isSearchFilter) {
                 return getFunctionsService().getAllFunctions(DocListUnitStatus.OPEN);
             }
 
-            @SuppressWarnings("unchecked")
             List<NodeRef> selectedStores = (List<NodeRef>) document.getProperties().get(DocumentDynamicSearchDialog.SELECTED_STORES);
-            if (selectedStores == null) {
-                return getFunctionsService().getAllFunctions();
+            if (selectedStores == null || selectedStores.isEmpty()) { // Check if the search filter is already saved
+                List<String> storeStrings = (List<String>) document.getProperties().get(DocumentSearchModel.Props.STORE);
+                if (storeStrings == null) {
+                    return getFunctionsService().getAllFunctions();
+                }
+                for (Iterator<String> i = storeStrings.iterator(); i.hasNext();) {
+                    if (StringUtils.isBlank(i.next())) {
+                        i.remove();
+                    }
+                }
+                if (storeStrings.isEmpty()) {
+                    return getFunctionsService().getAllFunctions();
+                }
+
+                selectedStores = new ArrayList<NodeRef>(storeStrings.size());
+                for (String store : storeStrings) {
+                    selectedStores.add(new NodeRef(store));
+                }
             }
 
             List<Function> allFunctions = new ArrayList<Function>();
@@ -798,9 +830,9 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
             return allFunctions;
         }
 
-        private List<Series> getAllSeries(NodeRef functionRef, boolean isSearchFilterOrDocTypeNull, Set<String> idList) {
+        private List<Series> getAllSeries(NodeRef functionRef, boolean isSearchFilter, Set<String> idList) {
             List<Series> allSeries;
-            if (isSearchFilterOrDocTypeNull) {
+            if (isSearchFilter || idList == null) {
                 allSeries = getSeriesService().getAllSeriesByFunction(functionRef);
             } else if (getGeneralService().getStore().equals(functionRef.getStoreRef())) {
                 allSeries = documentType
@@ -1083,9 +1115,9 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
                 && (parents.getCaseNode() == null ? caseRef == null
                         : (caseRef == null ? false
                                 : parents.getCaseNode().getNodeRef().equals(caseRef)
-                                )
-                                )
-                        );
+                        )
+                )
+                );
     }
 
     // START: setters

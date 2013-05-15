@@ -29,7 +29,7 @@ public interface ArchivalsService {
 
     void archiveVolumesOrCaseFiles(List<NodeRef> volumesToArchive);
 
-    NodeRef archiveVolumeOrCaseFile(NodeRef volumeNodeRef);
+    void archiveVolumeOrCaseFile(NodeRef volumeNodeRef);
 
     void setNewReviewDate(List<NodeRef> volumes, Date reviewDate, NodeRef activityRef);
 
@@ -48,5 +48,7 @@ public interface ArchivalsService {
     void addArchivalActivityDocument(NodeRef archivalActivityRef, NodeRef docRef);
 
     List<File> getArchivalActivityFiles(NodeRef archivalActivityRef);
+
+    NodeRef getArchivalRoot();
 
 }

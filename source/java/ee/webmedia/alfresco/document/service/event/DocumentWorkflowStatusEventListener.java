@@ -9,10 +9,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
-import org.alfresco.repo.security.authentication.AuthenticationUtil;
-import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
-import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
-import org.alfresco.service.cmr.lock.NodeLockedException;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.namespace.QName;
@@ -105,32 +101,13 @@ public class DocumentWorkflowStatusEventListener implements WorkflowEventListene
         if (!DocumentStatus.FINISHED.equals((String) document.getProperties().get(DocumentCommonModel.Props.DOC_STATUS))) {
             if (!allowFinishUnregisteredDocs && isNotRegistered(document)) {
                 logService.addLogEntry(LogEntry.create(LogObject.DOCUMENT, userService, documentRef, "applog_compoundWorkflow_finish_document_error_not_registered"));
-                return;
-            }
-            try {
-                transactionService.getRetryingTransactionHelper().doInTransaction(new RetryingTransactionCallback<Void>() {
-
-                    @Override
-                    public Void execute() throws Throwable {
-                        docLockService.checkForLock(documentRef);
-                        AuthenticationUtil.runAs(new RunAsWork<Void>() {
-
-                            @Override
-                            public Void doWork() throws Exception {
-                                documentService.endDocument(documentRef);
-                                return null;
-                            }
-
-                        }, AuthenticationUtil.getSystemUserName());
-                        return null;
-                    }
-                }, false, true);
-
-            } catch (NodeLockedException e) {
+            } else if (docLockService.isLockByOther(documentRef)) {
                 Pair<String, Object[]> errorMessageKeyAndValueHolders = BeanHelper.getDocumentLockHelperBean().getErrorMessageKeyAndValueHolders("document_end_error_docLocked",
                         documentRef, new Object[0]);
                 logService.addLogEntry(LogEntry.create(LogObject.DOCUMENT, userService, documentRef, errorMessageKeyAndValueHolders.getFirst(),
                         errorMessageKeyAndValueHolders.getSecond()));
+            } else {
+                documentService.endDocument(documentRef);
             }
         }
     }

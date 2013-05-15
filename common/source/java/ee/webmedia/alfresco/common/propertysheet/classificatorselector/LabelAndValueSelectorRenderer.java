@@ -80,8 +80,10 @@ public class LabelAndValueSelectorRenderer extends HtmlMenuRenderer {
         } else {
             writer.writeAttribute("size", Integer.toString(size), null);
         }
-        // don't overwrite title attribute value in javascript
-        ComponentUtil.addStyleClass(uiComponent, "noOptionTitle");
+        if (!isTrue(uiComponent.getAttributes().get(ATTR_DESCRIPTION_AS_TOOLTIP))) {
+            // don't overwrite title attribute value in javascript
+            ComponentUtil.addStyleClass(uiComponent, "noOptionTitle");
+        }
 
         HtmlRendererUtils.renderHTMLAttributes(writer, uiComponent, HTML.SELECT_PASSTHROUGH_ATTRIBUTES_WITHOUT_DISABLED);
 

@@ -13,12 +13,13 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
+import org.alfresco.repo.cache.SimpleCache;
 import org.alfresco.repo.dictionary.IndexTokenisationMode;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.transaction.AlfrescoTransactionSupport;
@@ -69,6 +70,7 @@ import ee.webmedia.alfresco.docadmin.service.FieldGroup;
 import ee.webmedia.alfresco.docadmin.service.MetadataItem;
 import ee.webmedia.alfresco.docadmin.service.SeparatorLine;
 import ee.webmedia.alfresco.docadmin.web.DocAdminUtil;
+import ee.webmedia.alfresco.docconfig.bootstrap.SystematicFieldGroupNames;
 import ee.webmedia.alfresco.docconfig.generator.BaseSystematicFieldGenerator;
 import ee.webmedia.alfresco.docconfig.generator.FieldGenerator;
 import ee.webmedia.alfresco.docconfig.generator.FieldGroupGenerator;
@@ -77,7 +79,9 @@ import ee.webmedia.alfresco.docconfig.generator.GeneratorResults;
 import ee.webmedia.alfresco.docconfig.generator.PropertySheetStateHolder;
 import ee.webmedia.alfresco.docconfig.generator.SaveListener;
 import ee.webmedia.alfresco.docconfig.generator.fieldtype.DateGenerator;
+import ee.webmedia.alfresco.docconfig.generator.systematic.AccessRestrictionGenerator;
 import ee.webmedia.alfresco.docconfig.generator.systematic.DocumentLocationGenerator;
+import ee.webmedia.alfresco.docconfig.service.PropDefCacheKey;
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.docdynamic.web.DocumentDialogHelperBean;
 import ee.webmedia.alfresco.document.einvoice.service.EInvoiceService;
@@ -172,11 +176,10 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
 
     }
 
-    // CUSTOM CACHING
     // XXX NB! some returned objects are unfortunately mutable, thus service callers must not modify them !!!
-    private final Map<PropDefCacheKey, Map<String /* fieldId */, Pair<DynamicPropertyDefinition, Field>>> propertyDefinitionCache = new ConcurrentHashMap<PropDefCacheKey, Map<String, Pair<DynamicPropertyDefinition, Field>>>();
-    private final Map<Pair<String /* documentTypeId */, Integer /* documentTypeVersionNr */>, TreeNode<QName>> childAssocTypeQNameTreeCache = new ConcurrentHashMap<Pair<String, Integer>, TreeNode<QName>>();
-    private final Map<String /* fieldId */, DynamicPropertyDefinition> propertyDefinitionForSearchCache = new ConcurrentHashMap<String, DynamicPropertyDefinition>();
+    private SimpleCache<PropDefCacheKey, Map<String /* fieldId */, Pair<DynamicPropertyDefinition, Field>>> propertyDefinitionCache;
+    private SimpleCache<Pair<String /* documentTypeId */, Integer /* documentTypeVersionNr */>, TreeNode<QName>> childAssocTypeQNameTreeCache;
+    private SimpleCache<String /* fieldId */, DynamicPropertyDefinition> propertyDefinitionForSearchCache;
 
     @Override
     public void registerFieldGeneratorByType(FieldGenerator fieldGenerator, FieldType... fieldTypes) {
@@ -993,6 +996,8 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
         if (requiredHierarchy == null) {
             requiredHierarchy = new QName[] {};
         }
+        FieldGroup accessRestrictionGroup = null;
+        FieldGroup documentLocationGroup = null;
         outer: for (Pair<DynamicPropertyDefinition, Field> fieldAndPropDef : propertyDefinitions.values()) {
             DynamicPropertyDefinition propDef = fieldAndPropDef.getFirst();
             Field field = fieldAndPropDef.getSecond();
@@ -1032,12 +1037,26 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
                             field = relatedFields.getFirst();
                         }
                     }
+                    if (SystematicFieldGroupNames.ACCESS_RESTRICTION.equals(group.getName())) {
+                        accessRestrictionGroup = group;
+                    }
+                    if (SystematicFieldGroupNames.DOCUMENT_LOCATION.equals(group.getName())) {
+                        documentLocationGroup = group;
+                    }
                 }
             }
 
             List<Node> childNodes = collectChildNodes(node, hierarchy, i);
             for (Node childNode : childNodes) {
                 setDefaultPropertyValue(childNode, propDef, forceOverwrite, reallySetDefaultValues, field, propertyDefinitions, documentType);
+            }
+        }
+        if (accessRestrictionGroup != null && reallySetDefaultValues) {
+            // cannot calculate this in setSpecialDependentValues (called at the end of setDefaultPropertyValue),
+            // because multiple other default values must be set before the calculation
+            AccessRestrictionGenerator.calculateAccessRestrictionValues(accessRestrictionGroup, node.getProperties());
+            if (documentLocationGroup != null) {
+                AccessRestrictionGenerator.setAccessRestrictionFromSeries(documentLocationGroup, accessRestrictionGroup, node.getProperties());
             }
         }
     }
@@ -1567,7 +1586,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
     }
 
     private Map<String, Pair<DynamicPropertyDefinition, Field>> createPropertyDefinitions(List<Field> fields) {
-        Map<String, Pair<DynamicPropertyDefinition, Field>> propertyDefinitions = new HashMap<String, Pair<DynamicPropertyDefinition, Field>>();
+        Map<String, Pair<DynamicPropertyDefinition, Field>> propertyDefinitions = new LinkedHashMap<String, Pair<DynamicPropertyDefinition, Field>>();
         // TODO documentTypeVersion, fields and fieldGroups should be immutable; or they should be cloned in get method
         for (Field field : fields) {
             String fieldId = field.getFieldId();
@@ -1765,6 +1784,21 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
         return multiValuedOverride;
     }
 
+    @Override
+    public void removeFrompPopertyDefinitionForSearchCache(String fieldId) {
+        propertyDefinitionForSearchCache.remove(fieldId);
+    }
+
+    @Override
+    public void removeFromChildAssocTypeQNameTreeCache(Pair<String, Integer> typeAndVersion) {
+        childAssocTypeQNameTreeCache.remove(typeAndVersion);
+    }
+
+    @Override
+    public void removeFromPropertyDefinitionCache(PropDefCacheKey key) {
+        propertyDefinitionCache.remove(key);
+    }
+
     // START: setters
     public void setDocumentAdminService(DocumentAdminService documentAdminService) {
         this.documentAdminService = documentAdminService;
@@ -1809,6 +1843,18 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
 
     public void setRegDateFilterInAssociationsSearch(boolean regDateFilterInAssociationsSearch) {
         this.regDateFilterInAssociationsSearch = regDateFilterInAssociationsSearch;
+    }
+
+    public void setPropertyDefinitionCache(SimpleCache<PropDefCacheKey, Map<String /* fieldId */, Pair<DynamicPropertyDefinition, Field>>> propertyDefinitionCache) {
+        this.propertyDefinitionCache = propertyDefinitionCache;
+    }
+
+    public void setChildAssocTypeQNameTreeCache(SimpleCache<Pair<String /* documentTypeId */, Integer /* documentTypeVersionNr */>, TreeNode<QName>> childAssocTypeQNameTreeCache) {
+        this.childAssocTypeQNameTreeCache = childAssocTypeQNameTreeCache;
+    }
+
+    public void setPropertyDefinitionForSearchCache(SimpleCache<String /* fieldId */, DynamicPropertyDefinition> propertyDefinitionForSearchCache) {
+        this.propertyDefinitionForSearchCache = propertyDefinitionForSearchCache;
     }
 
     // END: setters

@@ -19,6 +19,7 @@ import java.util.Set;
 import javax.faces.event.ActionEvent;
 
 import org.alfresco.model.ContentModel;
+import org.alfresco.repo.cache.SimpleCache;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
 import org.alfresco.repo.security.sync.NodeDescription;
@@ -56,7 +57,10 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
     private AuthorityService authorityService;
     // START: properties that would cause dependency cycle when trying to inject them
     private UserService _userService;
-    // START: properties that would cause dependency cycle when trying to inject them
+    // END: properties that would cause dependency cycle when trying to inject them
+
+    /** a transactionally-safe cache to be injected */
+    private SimpleCache<String, OrganizationStructure> orgStructPropertiesCache;
 
     private NodeRef orgStructsRoot;
 
@@ -74,6 +78,7 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
             orgStructuresCount++;
         }
         for (ChildAssociationRef oldOrganization : oldOrganizations) { // remove all old organizations
+            orgStructPropertiesCache.remove((String) nodeService.getProperty(oldOrganization.getChildRef(), OrganizationStructureModel.Props.UNIT_ID));
             nodeService.deleteNode(oldOrganization.getChildRef());
         }
         return orgStructuresCount;
@@ -180,6 +185,7 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
         // Remove missing organization structures
         for (String missingGeneratedGroup : generatedGroups) {
             authorityService.deleteAuthority(missingGeneratedGroup);
+
         }
 
         return 0;
@@ -201,23 +207,25 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
         Map<QName, Serializable> properties = organizationStructureBeanPropertyMapper.toProperties(org);
         nodeService.createNode(getOrgStructsRoot(), OrganizationStructureModel.Assocs.ORGSTRUCT, //
                 QName.createQName(OrganizationStructureModel.URI, org.getUnitId()), OrganizationStructureModel.Types.ORGSTRUCT, properties);
+        orgStructPropertiesCache.put(org.getUnitId(), org);
     }
 
     @Override
     public OrganizationStructure getOrganizationStructure(String unitId) {
-        if (StringUtils.isBlank(unitId)) {
-            return null;
-        }
-        List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(getOrgStructsRoot(),
-                OrganizationStructureModel.Assocs.ORGSTRUCT, //
-                QName.createQName(OrganizationStructureModel.URI, unitId));
-        for (ChildAssociationRef childAssociationRef : childAssocs) {
-            OrganizationStructure orgStruct = getOrganizationStructure(childAssociationRef.getChildRef());
-            if (StringUtils.equals(unitId, orgStruct.getUnitId())) {
-                return orgStruct;
+        OrganizationStructure os = orgStructPropertiesCache.get(unitId);
+        if (os == null && StringUtils.isNotBlank(unitId)) {
+            List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(getOrgStructsRoot(),
+                    OrganizationStructureModel.Assocs.ORGSTRUCT, QName.createQName(OrganizationStructureModel.URI, unitId));
+            for (ChildAssociationRef childAssociationRef : childAssocs) {
+                OrganizationStructure orgStruct = getOrganizationStructure(childAssociationRef.getChildRef());
+                if (StringUtils.equals(unitId, orgStruct.getUnitId())) {
+                    os = orgStruct;
+                    orgStructPropertiesCache.put(unitId, os);
+                    return os;
+                }
             }
         }
-        return null;
+        return os;
     }
 
     @Override
@@ -260,6 +268,17 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
             log.debug("OrganizationStructures found: " + orgstructs);
         }
         return orgstructs;
+    }
+
+    @Override
+    public List<NodeRef> getAllOrganizationStructureRefs() {
+        NodeRef root = generalService.getNodeRef(OrganizationStructureModel.Repo.SPACE);
+        List<ChildAssociationRef> childRefs = nodeService.getChildAssocs(root);
+        List<NodeRef> orgStructRefs = new ArrayList<NodeRef>(childRefs.size());
+        for (ChildAssociationRef childAssoc : childRefs) {
+            orgStructRefs.add(childAssoc.getChildRef());
+        }
+        return orgStructRefs;
     }
 
     @Override
@@ -312,7 +331,8 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
         return structs;
     }
 
-    private OrganizationStructure getOrganizationStructure(NodeRef nodeRef) {
+    @Override
+    public OrganizationStructure getOrganizationStructure(NodeRef nodeRef) {
         OrganizationStructure os = organizationStructureBeanPropertyMapper.toObject(nodeService.getProperties(nodeRef));
         os.setNodeRef(nodeRef);
         return os;
@@ -350,6 +370,10 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
 
     public void setAuthorityService(AuthorityService authorityService) {
         this.authorityService = authorityService;
+    }
+
+    public void setOrgStructPropertiesCache(SimpleCache<String, OrganizationStructure> orgStructPropertiesCache) {
+        this.orgStructPropertiesCache = orgStructPropertiesCache;
     }
 
     // END: getters / setters

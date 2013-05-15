@@ -1305,18 +1305,24 @@ input[type="checkbox"] {
 	padding-bottom: 4px;
 }
 
-.modalpopup-content-inner table td input[type="text"] {
+.modalpopup-content-inner table td.propertiesLabel {
+   padding-right: 6px !important;
+}
+
+.modalpopup-content-inner table td input[type="text"],
+.modalpopup-content-inner table td textarea {
 	width: 392px !important;
 }
 
-.modalpopup-content-inner.modalpopup-filter table td input[type="text"] {
-    width: 218px !important;
-    margin-left: 4px;
+.modalpopup-content-inner.modalpopup-filter table td textarea,
+.modalpopup-content-inner.modalpopup-filter table td input[type="text"],
+.modalpopup-content .task-search-with-filter table td input[type="text"] {
+     margin-left: 4px;
 }
 
+.modalpopup-content-inner.modalpopup-filter table td input[type="text"],
 .modalpopup-content .task-search-with-filter table td input[type="text"] {
     width: 218px !important;
-    margin-left: 4px;
 }
 
 .modalpopup-content-inner table select[multiple="multiple"], 

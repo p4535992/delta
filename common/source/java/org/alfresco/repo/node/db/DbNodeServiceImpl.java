@@ -87,6 +87,7 @@ import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.template.model.DocumentTemplateModel;
 import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 
@@ -1988,13 +1989,7 @@ public class DbNodeServiceImpl extends AbstractNodeServiceImpl
         newProperties.put(ContentModel.PROP_ARCHIVED_ORIGINAL_LOCATION_STRING, getDocumentListService().getDisplayPath(nodeRef, false));        
         QName type = getType(nodeRef);
         Map<QName, Serializable> properties = getProperties(nodeRef);
-        String name;
-        if (DocumentCommonModel.Types.DOCUMENT.equals(type)) {
-            name = (String) properties.get(DocumentCommonModel.Props.DOC_NAME);
-        } else {
-            name = (String) properties.get(ContentModel.PROP_NAME);
-        }
-        newProperties.put(ContentModel.PROP_ARCHIVED_OBJECT_NAME, name);
+        newProperties.put(ContentModel.PROP_ARCHIVED_OBJECT_NAME, RepoUtil.getArchivedObjectName(type, properties));
         if (DocumentCommonModel.Types.DOCUMENT.equals(type)) {
             newProperties.put(ContentModel.PROP_ARCHIVED_OBJECT_TYPE_STRING, BeanHelper.getDocumentService().getDocumentByNodeRef(nodeRef).getDocumentTypeName());            
         } else if (ContentModel.TYPE_CONTENT.equals(type) && properties.containsKey(DocumentTemplateModel.Prop.TEMPLATE_TYPE)) {

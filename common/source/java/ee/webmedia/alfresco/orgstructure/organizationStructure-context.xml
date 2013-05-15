@@ -95,6 +95,7 @@
       <property name="nodeService" ref="NodeService" />
       <property name="userRegistry" ref="userRegistry" />
       <property name="authorityService" ref="AuthorityService" />
+      <property name="orgStructPropertiesCache" ref="orgStructPropertiesCache" />  
    </bean>
 
    <bean id="OrganizationStructureService" class="org.springframework.aop.framework.ProxyFactoryBean">

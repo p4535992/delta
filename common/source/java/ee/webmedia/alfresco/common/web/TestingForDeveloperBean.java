@@ -15,6 +15,7 @@ import java.util.List;
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
+import org.alfresco.repo.cache.EhCacheTracerJob;
 import org.alfresco.repo.search.Indexer;
 import org.alfresco.repo.search.impl.lucene.ADMLuceneTest;
 import org.alfresco.repo.search.impl.lucene.AbstractLuceneBase;
@@ -274,6 +275,10 @@ public class TestingForDeveloperBean implements Serializable {
     public void searchHolesAndIndex(ActionEvent event) {
         CustomReindexComponent customReindexComponent = BeanHelper.getSpringBean(CustomReindexComponent.class, "customReindexComponent");
         customReindexComponent.reindex();
+    }
+
+    public void executeCacheStatistics(ActionEvent event) throws JobExecutionException {
+        (new EhCacheTracerJob()).execute(null);
     }
 
     protected RetryingTransactionHelper getTransactionHelper() {

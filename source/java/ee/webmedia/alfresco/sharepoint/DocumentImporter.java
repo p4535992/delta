@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.sharepoint;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentConfigService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDynamicService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getFileFolderService;
@@ -65,20 +66,27 @@ import ee.webmedia.alfresco.classificator.enums.AccessRestriction;
 import ee.webmedia.alfresco.classificator.enums.PublishToAdr;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.docadmin.service.DocumentTypeVersion;
+import ee.webmedia.alfresco.docadmin.service.Field;
 import ee.webmedia.alfresco.docadmin.web.DocAdminUtil;
+import ee.webmedia.alfresco.docconfig.service.DocumentConfigService;
+import ee.webmedia.alfresco.docconfig.service.DynamicPropertyDefinition;
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamicService;
 import ee.webmedia.alfresco.document.file.model.FileModel;
+import ee.webmedia.alfresco.document.log.service.DocumentPropertiesChangeHolder;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.service.DocumentService;
+import ee.webmedia.alfresco.document.service.DocumentServiceImpl;
 import ee.webmedia.alfresco.eventplan.model.EventPlanModel;
 import ee.webmedia.alfresco.log.model.LogEntry;
 import ee.webmedia.alfresco.log.model.LogObject;
 import ee.webmedia.alfresco.log.service.LogService;
+import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.sharepoint.mapping.DocumentMetadata;
 import ee.webmedia.alfresco.sharepoint.mapping.ImportFile;
 import ee.webmedia.alfresco.sharepoint.mapping.MappedDocument;
+import ee.webmedia.alfresco.sharepoint.mapping.Mapping;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.FilenameUtil;
 import ee.webmedia.alfresco.utils.ProgressTracker;
@@ -141,6 +149,7 @@ public class DocumentImporter {
     private final DocumentDynamicService documentDynamicService = getDocumentDynamicService();
     private final VersionsService versionsService = getVersionsService();
     private final LogService logService = getLogService();
+    private final DocumentConfigService documentConfigService = getDocumentConfigService();
     private final SimpleJdbcTemplate jdbcTemplate;
 
     private final SharepointMapping mapper;
@@ -285,7 +294,7 @@ public class DocumentImporter {
                 try {
                     status.incrCount();
 
-                    result = handleDocument(docXmlFile, null, null);
+                    result = handleDocument(docXmlFile, null, null, true, null);
 
                     if (result.isSuccessful()) {
                         addDocumentLastLog(result);
@@ -337,14 +346,16 @@ public class DocumentImporter {
                 }
             }
 
-            DocumentImportResult result;
+            DocumentImportResult result = null;
 
-            for (File docXmlFile : docXmlFiles.values()) {
-                result = null;
+            for (Iterator<File> i = docXmlFiles.values().iterator(); i.hasNext();) {
+                File file = i.next();
                 try {
                     status.incrCount();
 
-                    result = handleDocument(docXmlFile, docResults.isEmpty() ? null : docResults.get(0).getDocumentRef(), meta);
+                    MappedDocument previousMappedDoc = result == null ? null : result.getMappedDoc();
+                    result = null;
+                    result = handleDocument(file, docResults.isEmpty() ? null : docResults.get(0).getDocumentRef(), meta, !i.hasNext(), previousMappedDoc);
                     docResults.add(result);
 
                     if (!result.isSuccessful()) {
@@ -369,11 +380,11 @@ public class DocumentImporter {
                 } catch (Exception e) {
                     status.incrFailed();
                     LOG.warn("Caught exception during document import.", e);
-                    docsError(errorFile, docXmlFile, e);
+                    docsError(errorFile, file, e);
                     results = null;
                     break batchLoop;
                 } finally {
-                    importedDocXmls.put(FilenameUtils.getBaseName(FilenameUtils.getBaseName(docXmlFile.getName())), result != null ? result.getDocumentRef() : null);
+                    importedDocXmls.put(FilenameUtils.getBaseName(FilenameUtils.getBaseName(file.getName())), result != null ? result.getDocumentRef() : null);
                 }
             }
 
@@ -627,7 +638,7 @@ public class DocumentImporter {
      * @param lastMeta Optional meta data from last version (defaults to current document meta data when <code>null</code>).
      * @return Document import result (can be used for logging).
      */
-    private DocumentImportResult handleDocument(File documentXml, final NodeRef documentRef, DocumentMetadata lastMeta) {
+    private DocumentImportResult handleDocument(File documentXml, final NodeRef documentRef, DocumentMetadata lastMeta, boolean isLast, MappedDocument previousMappedDoc) {
         DocumentMetadata currentMeta = null;
         DocumentDynamic doc = null;
 
@@ -651,31 +662,43 @@ public class DocumentImporter {
                 volumeRef = lastMeta.resolveVolumeRef(importedVolumesCases);
             }
 
-            // 4. Read document properties from document XML according to resolved mappings file (may fail with an exception)
-            MappedDocument mappedDoc = mapper.createMappedDocument(new SAXReader().read(documentXml).getRootElement(), lastMeta);
-
-            if (mappedDoc == null) {
+            Mapping lastMapping = mapper.getDocumentMapping(lastMeta);
+            if (lastMapping == null) {
                 throw new ImportValidationException("Could not resolve document type");
             }
 
-            logService.setThreadLocalOverride(currentMeta.getModified(), currentMeta.getModifier(), getUserName(currentMeta.getModifier()));
+            if (documentRef == null) {
+                doc = documentDynamicService.createNewDocument(lastMapping.getDocumentVersion(), volumeRef, false).getFirst();
 
-            Map<QName, Serializable> props = mappedDoc.getPropertyValues();
-
-            // 5. Apply custom property checks (by the specification)
-            Date restrictionBeginSuggestion = settings.isSharepointOrigin() ? currentMeta.getCreated() : (Date) nodeService.getProperty(volumeRef, VolumeModel.Props.VALID_FROM);
-            postProcessRestrictions(props, restrictionBeginSuggestion, volumeRef);
-            postProcessOther(props, currentMeta, volumeRef);
-
-            if (!settings.isSharepointOrigin() && !currentMeta.getFiles().isEmpty()) {
-                boolean html = FilenameUtils.isExtension(currentMeta.getFiles().get(0).getTitle(), NON_DIGITAL_EXT);
-                props.put(DocumentCommonModel.Props.STORAGE_TYPE, html ? "Paber" : "Digitaalne");
+            } else {
+                doc = documentDynamicService.getDocument(documentRef);
             }
 
-            // 6. Create document and files
-            if (documentRef == null) {
-                doc = documentDynamicService.createNewDocument(mappedDoc.getDocumentTypeVersion(), volumeRef, false).getFirst();
-                nodeService.addAspect(doc.getNodeRef(), DocumentCommonModel.Aspects.SEARCHABLE, null);
+            if (currentMeta.getHistory() != null) {
+                for (DocumentHistory history : currentMeta.getHistory()) {
+                    addDocumentLog(doc.getNodeRef(), history.getDatetime(), history.getCreator(), history.getEvent());
+                }
+            }
+
+            // 4. Read document properties from document XML according to resolved mappings file (may fail with an exception)
+            MappedDocument mappedDoc = new MappedDocument(new SAXReader().read(documentXml).getRootElement(), lastMapping);
+            Map<String, Pair<DynamicPropertyDefinition, Field>> propDefs = documentConfigService.getPropertyDefinitions(doc.getNode());
+
+            if (previousMappedDoc != null) {
+                DocumentPropertiesChangeHolder changes = new DocumentServiceImpl.PropertyChangesMonitorHelper().checkPropertyChanges(
+                        previousMappedDoc.getPropertyValues(), mappedDoc.getPropertyValues(), Collections.<QName> emptyList(), doc.getNodeRef());
+                collectChildrenLog(changes, previousMappedDoc, mappedDoc, doc.getNode());
+                for (String msg : changes.generateLogMessages(propDefs, doc.getNodeRef())) {
+                    addDocumentLog(doc.getNodeRef(), currentMeta.getModified(), currentMeta.getModifier(), msg);
+                }
+            }
+
+            logService.setThreadLocalOverride(currentMeta.getModified(), currentMeta.getModifier(), getUserName(currentMeta.getModifier()));
+            addFile(doc.getNodeRef(), currentMeta);
+
+            if (isLast) {
+
+                Map<QName, Serializable> props = new HashMap<QName, Serializable>(mappedDoc.getPropertyValues());
 
                 // Store parents information on document:
                 Map<QName, NodeRef> parentRefs = parentsCache.get(volumeRef);
@@ -683,49 +706,68 @@ public class DocumentImporter {
                     parentRefs = documentService.getDocumentParents(doc.getNodeRef());
                     parentsCache.put(volumeRef, parentRefs);
                 }
+                NodeRef seriesRef = parentRefs.get(DocumentCommonModel.Props.SERIES);
+
+                // 5. Apply custom property checks (by the specification)
+                Date restrictionBeginSuggestion = settings.isSharepointOrigin() ? currentMeta.getCreated() : (Date) nodeService
+                        .getProperty(volumeRef, VolumeModel.Props.VALID_FROM);
+                String accessRestrictionOriginal = (String) mappedDoc.getPropertyValues().get(DocumentCommonModel.Props.ACCESS_RESTRICTION);
+                postProcessRestrictions(props, restrictionBeginSuggestion, volumeRef);
+                postProcessOther(props, currentMeta, seriesRef, volumeRef, accessRestrictionOriginal);
+
+                if (settings.isAmphoraOrigin()) {
+                    String storageType = "Paber";
+                    for (ImportFile importFile : currentMeta.getFiles()) {
+                        if (!FilenameUtils.isExtension(importFile.getTitle(), NON_DIGITAL_EXT)) {
+                            storageType = "Digitaalne";
+                            break;
+                        }
+                    }
+                    props.put(DocumentCommonModel.Props.STORAGE_TYPE, storageType);
+                }
+
+                DocumentPropertiesChangeHolder changes = new DocumentServiceImpl.PropertyChangesMonitorHelper().checkPropertyChanges(
+                        mappedDoc.getPropertyValues(), props, Collections.<QName> emptyList(), doc.getNodeRef());
+                for (String msg : changes.generateLogMessages(propDefs, doc.getNodeRef())) {
+                    addDocumentLog(doc.getNodeRef(), null, "IMPORT", msg);
+                }
+
+                nodeService.addAspect(doc.getNodeRef(), DocumentCommonModel.Aspects.SEARCHABLE, null);
+
                 props.putAll(parentRefs);
                 doc.getNode().getProperties().putAll(RepoUtil.toStringProperties(props));
                 doc.getNode().getProperties().put(DocumentService.TransientProps.TEMP_LOGGING_DISABLED_DOCUMENT_METADATA_CHANGED, Boolean.TRUE);
                 doc.getNode().getProperties().put(DocumentCommonModel.Props.DOCUMENT_IS_IMPORTED.toString(), Boolean.TRUE);
 
-                if (currentMeta.getHistory() != null) {
-                    for (DocumentHistory history : currentMeta.getHistory()) {
-                        addDocumentLog(doc.getNodeRef(), history.getDatetime(), history.getCreator(), history.getEvent());
-                    }
-                    logService.setThreadLocalOverride(currentMeta.getModified(), currentMeta.getModifier(), getUserName(currentMeta.getModifier()));
-                }
-            } else {
-                doc = documentDynamicService.getDocument(documentRef);
-                doc.getNode().getProperties().putAll(RepoUtil.toStringProperties(props));
-            }
+                addChildren(mappedDoc, doc.getNode(), mappedDoc.getDocumentTypeVersion());
 
-            addChildren(mappedDoc, doc.getNode(), mappedDoc.getDocumentTypeVersion());
+                documentDynamicService.updateDocument(doc, Arrays.asList(DocumentImportListener.BEAN_NAME), false, true);
 
-            documentDynamicService.updateDocument(doc, Arrays.asList(DocumentImportListener.BEAN_NAME), false, true);
+                documentService.updateSearchableFiles(doc.getNodeRef());
 
-            addFile(doc.getNodeRef(), currentMeta);
-            documentService.updateSearchableFiles(doc.getNodeRef());
+                updateDocumentLog(doc.getNodeRef(), currentMeta.getModified(), currentMeta.getModifier());
 
-            updateDocumentLog(doc.getNodeRef(), currentMeta.getModified(), currentMeta.getModifier());
+                if (currentMeta.getAssocs() != null && currentMeta.getAssocType() != null) {
+                    QName assocType = currentMeta.getAssocType();
+                    boolean assocSource = currentMeta.isDocumentAssocSource();
 
-            if (currentMeta.getAssocs() != null && currentMeta.getAssocType() != null) {
-                QName assocType = currentMeta.getAssocType();
-                boolean assocSource = currentMeta.isDocumentAssocSource();
+                    for (String assoc : currentMeta.getAssocs()) {
+                        NodeRef targetRef = importedDocXmls.get(assoc);
 
-                for (String assoc : currentMeta.getAssocs()) {
-                    NodeRef targetRef = importedDocXmls.get(assoc);
-
-                    if (targetRef == null) {
-                        LOG.warn("Could not resolve document association target for '" + assoc + "'.");
-                    } else if (assocSource) {
-                        nodeService.createAssociation(doc.getNodeRef(), targetRef, assocType);
-                    } else {
-                        nodeService.createAssociation(targetRef, doc.getNodeRef(), assocType);
+                        if (targetRef == null) {
+                            LOG.warn("Could not resolve document association target for '" + assoc + "'.");
+                        } else if (assocSource) {
+                            nodeService.createAssociation(doc.getNodeRef(), targetRef, assocType);
+                        } else {
+                            nodeService.createAssociation(targetRef, doc.getNodeRef(), assocType);
+                        }
                     }
                 }
-            }
 
-            return new DocumentImportResult(currentMeta, documentXml, doc.getNodeRef(), props);
+                mappedDoc.getPropertyValues().clear();
+                mappedDoc.getPropertyValues().putAll(props);
+            }
+            return new DocumentImportResult(currentMeta, documentXml, doc.getNodeRef(), mappedDoc);
 
         } catch (ImportValidationException e) {
             if (doc != null && nodeService.exists(doc.getNodeRef())) {
@@ -741,6 +783,24 @@ public class DocumentImporter {
         }
     }
 
+    private void collectChildrenLog(DocumentPropertiesChangeHolder changes, MappedDocument previousParentNode, MappedDocument currentParentNode, Node realParentNode) {
+        for (Entry<String, List<Node>> entry : realParentNode.getAllChildAssociationsByAssocType().entrySet()) {
+            if (entry.getValue().isEmpty()) {
+                continue;
+            }
+            QName assoc = QName.resolveToQName(getNamespaceService(), entry.getKey());
+            MappedDocument previousChildNode = previousParentNode == null ? null : previousParentNode.getChildren().get(assoc);
+            MappedDocument currentChildNode = currentParentNode == null ? null : currentParentNode.getChildren().get(assoc);
+            Node realChildNode = entry.getValue().get(0);
+            Map<QName, Serializable> previousProps = previousChildNode == null ? Collections.<QName, Serializable> emptyMap() : previousChildNode.getPropertyValues();
+            Map<QName, Serializable> currentProps = currentChildNode == null ? Collections.<QName, Serializable> emptyMap() : currentChildNode.getPropertyValues();
+            DocumentPropertiesChangeHolder childChanges = new DocumentServiceImpl.PropertyChangesMonitorHelper().checkPropertyChanges(
+                    previousProps, currentProps, Collections.<QName> emptyList(), realChildNode.getNodeRef());
+            changes.addChanges(childChanges);
+            collectChildrenLog(changes, previousChildNode, currentChildNode, realChildNode);
+        }
+    }
+
     private DocumentMetadata getDocumentMeta(File documentXml) throws ImportValidationException {
         try {
             Element docRoot = new SAXReader().read(documentXml).getRootElement();
@@ -752,11 +812,6 @@ public class DocumentImporter {
 
     private void postProcessRestrictions(Map<QName, Serializable> props, Date created, NodeRef volumeRef) {
         String accessRestriction = (String) props.get(DocumentCommonModel.Props.ACCESS_RESTRICTION);
-
-        if ("Avalik, piiranguga".equalsIgnoreCase(StringUtils.strip(accessRestriction))
-                || "Avalik, väljastatakse teabenõude korras".equalsIgnoreCase(StringUtils.strip(accessRestriction))) {
-            props.put(DocumentDynamicModel.Props.PUBLISH_TO_ADR, PublishToAdr.REQUEST_FOR_INFORMATION.getValueName());
-        }
 
         // a.
         if (accessRestriction != null && accessRestriction.indexOf('§') >= 0) {
@@ -774,6 +829,13 @@ public class DocumentImporter {
         }
 
         props.put(DocumentCommonModel.Props.ACCESS_RESTRICTION, accessRestriction);
+
+        if (AccessRestriction.OPEN.equals(accessRestriction) || AccessRestriction.INTERNAL.equals(accessRestriction)) {
+            props.put(DocumentCommonModel.Props.ACCESS_RESTRICTION_REASON, null);
+            props.put(DocumentCommonModel.Props.ACCESS_RESTRICTION_BEGIN_DATE, null);
+            props.put(DocumentCommonModel.Props.ACCESS_RESTRICTION_END_DATE, null);
+            props.put(DocumentCommonModel.Props.ACCESS_RESTRICTION_END_DESC, null);
+        }
 
         // Further checks are for restricted properties:
         if (restriction != AccessRestriction.AK) {
@@ -820,24 +882,54 @@ public class DocumentImporter {
         }
     }
 
-    private void postProcessOther(Map<QName, Serializable> props, DocumentMetadata meta, NodeRef volumeRef) {
+    private void postProcessOther(Map<QName, Serializable> props, DocumentMetadata meta, NodeRef seriesRef, NodeRef volumeRef, String accessRestrictionOriginal) {
         String publishToAdr = (String) props.get(DocumentDynamicModel.Props.PUBLISH_TO_ADR);
+        final String restriction = (String) props.get(DocumentCommonModel.Props.ACCESS_RESTRICTION);
+        Date regDateTime = (Date) props.get(DocumentCommonModel.Props.REG_DATE_TIME);
+        String regNumber = (String) props.get(DocumentCommonModel.Props.REG_NUMBER);
+        String shortRegNumber = (String) props.get(DocumentCommonModel.Props.SHORT_REG_NUMBER);
+        String individualNumber = (String) props.get(DocumentCommonModel.Props.INDIVIDUAL_NUMBER);
 
-        // i.
+        if (regDateTime == null && StringUtils.isNotBlank(regNumber) && meta.getAdditionalRegDateTime() != null) {
+            regDateTime = ImportUtil.getDate(meta.getAdditionalRegDateTime());
+            props.put(DocumentCommonModel.Props.REG_DATE_TIME, regDateTime);
+        }
+
+        if (meta.getOverwriteDocStatus() != null) {
+            props.put(DocumentCommonModel.Props.DOC_STATUS, meta.getOverwriteDocStatus());
+        }
+
+        if (meta.isMakePublic() != null && !meta.isMakePublic()) {
+            publishToAdr = PublishToAdr.NOT_TO_ADR.getValueName();
+        }
+
         if (settings.isSharepointOrigin()) {
             if (publishToAdr == null) {
-                Date dispositionDate = (Date) nodeService.getProperty(volumeRef, EventPlanModel.Props.RETAIN_UNTIL_DATE);
-                if (dispositionDate != null && dispositionDate.before(new Date())) {
+                Date retainUntilDate = (Date) nodeService.getProperty(volumeRef, EventPlanModel.Props.RETAIN_UNTIL_DATE);
+                if (retainUntilDate != null && retainUntilDate.before(new Date())) {
                     publishToAdr = PublishToAdr.NOT_TO_ADR.getValueName();
                 }
             }
-            if (publishToAdr == null && settings.isNotPublishToAdr(meta.getCreated())) {
+            if (publishToAdr == null && settings.getPublishToAdrStartingFromDate() != null && meta.getCreated() != null
+                    && meta.getCreated().before(settings.getPublishToAdrStartingFromDate())) {
+                publishToAdr = PublishToAdr.NOT_TO_ADR.getValueName();
+            }
+            if (publishToAdr == null && settings.getPublishToAdrStartingFromDate() != null && regDateTime != null
+                    && regDateTime.before(settings.getPublishToAdrStartingFromDate())) {
                 publishToAdr = PublishToAdr.NOT_TO_ADR.getValueName();
             }
             if (publishToAdr == null && meta.getCreated() != null
                     && meta.getCreated().before(settings.getPublishToAdrWithFilesStartingFromDate())) {
 
-                final String restriction = (String) props.get(DocumentCommonModel.Props.ACCESS_RESTRICTION);
+                if (AccessRestriction.OPEN.getValueName().equals(restriction)) {
+                    publishToAdr = PublishToAdr.REQUEST_FOR_INFORMATION.getValueName();
+                } else if (AccessRestriction.AK.getValueName().equals(restriction)) {
+                    publishToAdr = PublishToAdr.TO_ADR.getValueName();
+                }
+            }
+            if (publishToAdr == null && regDateTime != null
+                    && regDateTime.before(settings.getPublishToAdrWithFilesStartingFromDate())) {
+
                 if (AccessRestriction.OPEN.getValueName().equals(restriction)) {
                     publishToAdr = PublishToAdr.REQUEST_FOR_INFORMATION.getValueName();
                 } else if (AccessRestriction.AK.getValueName().equals(restriction)) {
@@ -846,18 +938,31 @@ public class DocumentImporter {
             }
         }
 
-        // i.(5-6) and j.
-        if (publishToAdr == null && meta.isMakePublic() != null) {
-            publishToAdr = meta.isMakePublic() ? PublishToAdr.TO_ADR.getValueName() : PublishToAdr.NOT_TO_ADR.getValueName();
+        if (publishToAdr == null && meta.isMakePublic() != null && meta.isMakePublic()) {
+            publishToAdr = PublishToAdr.TO_ADR.getValueName();
+        }
+
+        if (("Avalik, piiranguga".equalsIgnoreCase(StringUtils.strip(accessRestrictionOriginal))
+                || "Avalik, väljastatakse teabenõude korras".equalsIgnoreCase(StringUtils.strip(accessRestrictionOriginal)))
+                && PublishToAdr.TO_ADR.getValueName().equals(publishToAdr)
+                && AccessRestriction.OPEN.getValueName().equals(restriction)) {
+            publishToAdr = PublishToAdr.REQUEST_FOR_INFORMATION.getValueName();
+        }
+
+        if (settings.isAmphoraOrigin()) {
+            String seriesAccessRestriction = (String) nodeService.getProperty(seriesRef, SeriesModel.Props.ACCESS_RESTRICTION);
+            if (!AccessRestriction.OPEN.getValueName().equals(seriesAccessRestriction)) {
+                publishToAdr = PublishToAdr.NOT_TO_ADR.getValueName();
+            } else if (AccessRestriction.OPEN.getValueName().equals(seriesAccessRestriction)
+                    && PublishToAdr.TO_ADR.getValueName().equals(publishToAdr)
+                    && AccessRestriction.OPEN.getValueName().equals(restriction)) {
+                publishToAdr = PublishToAdr.REQUEST_FOR_INFORMATION.getValueName();
+            }
         }
 
         props.put(DocumentDynamicModel.Props.PUBLISH_TO_ADR, publishToAdr);
 
         postProcessOwner(props, meta);
-
-        String regNumber = (String) props.get(DocumentCommonModel.Props.REG_NUMBER);
-        String shortRegNumber = (String) props.get(DocumentCommonModel.Props.SHORT_REG_NUMBER);
-        String individualNumber = (String) props.get(DocumentCommonModel.Props.INDIVIDUAL_NUMBER);
 
         // m., n. & o.
         if (regNumber != null) {
@@ -956,7 +1061,7 @@ public class DocumentImporter {
             // Unlock the node again, since previous method locked it
             versionsService.setVersionLockableAspect(currentFileRef, false);
 
-            String fileName = StringUtils.defaultIfEmpty(file.getTitle(), file.getFilename());
+            String fileName = file.getTitle();
             String repoFileName = generalService.getUniqueFileName(documentRef, FilenameUtil.makeSafeFilename(fileName));
 
             ContentWriter writer = fileFolderService.getWriter(currentFileRef);
@@ -966,7 +1071,7 @@ public class DocumentImporter {
             nodeService.setProperty(currentFileRef, ContentModel.PROP_NAME, repoFileName); // Also handles childAssocName change
         } else {
             for (ImportFile file : meta.getFiles()) {
-                String fileName = StringUtils.defaultIfEmpty(file.getTitle(), file.getFilename());
+                String fileName = file.getTitle();
                 String repoFileName = generalService.getUniqueFileName(documentRef, FilenameUtil.makeSafeFilename(fileName));
 
                 final FileInfo fileInfo = fileFolderService.create(documentRef, repoFileName, ContentModel.TYPE_CONTENT);

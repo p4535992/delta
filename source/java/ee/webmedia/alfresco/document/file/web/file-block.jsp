@@ -10,8 +10,9 @@
 <%@ page import="ee.webmedia.alfresco.document.file.web.AddFileDialog"%>
 <%@ page import="org.alfresco.web.app.Application" %>
 
+
 <%
-   String webdavOpenMode = "webdav-" + (Application.getDialogManager().getBean() instanceof AddFileDialog? "readOnly": "open") + " condence50- strictTrim tooltip";
+   boolean readOnly = Application.getDialogManager().getBean() instanceof AddFileDialog;
 %>
 
 <h:panelGroup id="files-panel-facets">
@@ -44,8 +45,8 @@
          <f:facet name="small-icon">
             <h:panelGroup>
                <wm:docPermissionEvaluator id="col1-act1-eval-allow" value="#{r.node}" allow="viewDocumentFiles">
-                  <a:actionLink id="col1-act1" value="#{r.displayName}" href="#{r.downloadUrl}" target="_blank" image="#{r.fileType16}" showLink="false"
-                     styleClass='<%="inlineAction " + webdavOpenMode %>' />
+                  <a:actionLink id="col1-act1" value="#{r.displayName}" href='<%=(readOnly ? "#{r.readOnlyUrl}" : "#{r.downloadUrl}")%>' target="_blank" image="#{r.fileType16}" showLink="false"
+                     styleClass='<%="inlineAction condence50- strictTrim tooltip" + (readOnly ? "" : " webdav-open") %>' />
                </wm:docPermissionEvaluator>
                <wm:docPermissionEvaluator id="col1-act1-eval-deny" value="#{r.node}" deny="viewDocumentFiles">
                   <h:graphicImage id="col1-act1-deny" value="#{r.fileType16}" />
@@ -53,7 +54,7 @@
             </h:panelGroup>
          </f:facet>
          <wm:docPermissionEvaluator id="col1-act2-eval-allow" value="#{r.node}" allow="viewDocumentFiles">
-            <a:actionLink id="col1-act2" value="#{r.displayName}" href="#{r.downloadUrl}" target="_blank" styleClass="<%=webdavOpenMode %>" />
+            <a:actionLink id="col1-act2" value="#{r.displayName}" href='<%=(readOnly ? "#{r.readOnlyUrl}" : "#{r.downloadUrl}")%>' target="_blank" styleClass='condence50- strictTrim tooltip<%=(readOnly ? "" : " webdav-open") %>' />
          </wm:docPermissionEvaluator>
          <wm:docPermissionEvaluator id="col1-act2a-eval-deny" value="#{r.node}" deny="viewDocumentFiles">
             <h:outputText id="col1-act2a-eval-deny-txt" value="#{r.displayName}" />
@@ -152,7 +153,7 @@
                image="/images/icons/file-small-gray.png" tooltip="#{msg.file_view_pdf}" rendered="#{r.pdf}">
                <f:param name="nodeRef" value="#{r.nodeRef}" />
             </a:actionLink>
-            <a:actionLink id="col7-act5-download" value="#{r.name}" href="#{r.downloadUrl}" target="_blank" styleClass="<%=webdavOpenMode %>" showLink="false"
+            <a:actionLink id="col7-act5-download" value="#{r.name}" href="#{r.downloadUrl}" target="_blank" styleClass="srictTrim tooltip" showLink="false"
                image="/images/icons/file-small-gray.png" tooltip="#{msg.file_view_pdf}" rendered="#{r.pdf}"/>            
          </wm:docPermissionEvaluator>         
       </a:column>
@@ -231,8 +232,8 @@
          <f:facet name="small-icon">
             <h:panelGroup>
                <wm:docPermissionEvaluator id="col21-act1-eval-allow" value="#{r.node}" allow="viewDocumentFiles">
-                  <a:actionLink id="col21-act1" value="#{r.displayName}" href="#{r.downloadUrl}" target="_blank" image="#{r.fileType16}" showLink="false"
-                     styleClass='<%="inlineAction " + webdavOpenMode %>' />
+                  <a:actionLink id="col21-act1" value="#{r.displayName}" href='<%=(readOnly ? "#{r.readOnlyUrl}" : "#{r.downloadUrl}")%>' target="_blank" image="#{r.fileType16}" showLink="false"
+                     styleClass='<%="inlineAction" + (readOnly ? "" : " webdav-open") %>' />
                </wm:docPermissionEvaluator>
                <wm:docPermissionEvaluator id="col21-act1-eval-deny" value="#{r.node}" deny="viewDocumentFiles">
                   <h:graphicImage id="col21-act1-deny" value="#{r.fileType16}" />
@@ -240,7 +241,7 @@
             </h:panelGroup>
          </f:facet>
          <wm:docPermissionEvaluator id="col21-act2-eval-allow" value="#{r.node}" allow="viewDocumentFiles">
-            <a:actionLink id="col21-act2" value="#{r.displayName}" href="#{r.downloadUrl}" target="_blank" styleClass="<%=webdavOpenMode %>" />
+            <a:actionLink id="col21-act2" value="#{r.displayName}" href='<%=(readOnly ? "#{r.readOnlyUrl}" : "#{r.downloadUrl}")%>' target="_blank" styleClass='condence50- strictTrim tooltip <%=(readOnly ? "" : " webdav-open") %>' />
          </wm:docPermissionEvaluator>
          <wm:docPermissionEvaluator id="col21-act2-eval-deny" value="#{r.node}" deny="viewDocumentFiles">
             <h:outputText id="col21-act2-eval-deny-txt" value="#{r.displayName}" />
@@ -324,7 +325,7 @@
                image="/images/icons/file-small-gray.png" tooltip="#{msg.file_view_pdf}" rendered="#{r.pdf}">
                <f:param name="nodeRef" value="#{r.nodeRef}" />
             </a:actionLink>
-            <a:actionLink id="col27-act5-download" value="#{r.name}" href="#{r.downloadUrl}" target="_blank" styleClass="<%=webdavOpenMode %>" showLink="false"
+            <a:actionLink id="col27-act5-download" value="#{r.name}" href='<%=(readOnly ? "#{r.readOnlyUrl}" : "#{r.downloadUrl}")%>' target="_blank" styleClass="condence50- strictTrim tooltip" showLink="false"
                image="/images/icons/file-small-gray.png" tooltip="#{msg.file_view_pdf}" rendered="#{r.pdf}"/> 
          </wm:docPermissionEvaluator>         
       </a:column>

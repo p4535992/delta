@@ -51,7 +51,6 @@ public class ClassificatorDetailsDialog extends BaseDialogBean {
     private Classificator selectedClassificator;
     private Node classificatorNode;
     private String searchCriteria = "";
-    private boolean savedClassificator;
 
     @Override
     public void init(Map<String, String> parameters) {
@@ -181,9 +180,8 @@ public class ClassificatorDetailsDialog extends BaseDialogBean {
     }
 
     /** used by delete action to do actual deleting (after user has confirmed deleting in DeleteDialog) */
-    public String deleteClassificator(@SuppressWarnings("unused") ActionEvent event) {
+    public void deleteClassificator(@SuppressWarnings("unused") ActionEvent event) {
         getClassificatorService().deleteClassificator(selectedClassificator);
-        return getCloseOutcome(2);
     }
 
     /**

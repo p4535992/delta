@@ -2,6 +2,7 @@ package ee.webmedia.alfresco.document.log.web;
 
 import static ee.webmedia.alfresco.common.web.BeanHelper.getLogService;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -74,10 +75,22 @@ public class LogBlockBean implements DocumentDynamicBlock {
         Set<String> excludedDescriptions = new HashSet<String>(2);
         excludedDescriptions.add(MessageUtil.getMessage("document_log_status_opened_not_inEditMode"));
         excludedDescriptions.add(MessageUtil.getMessage("file_opened", "%"));
+        excludedDescriptions.add(MessageUtil.getMessage("applog_compoundWorkflow_view"));
         logFilter.setExcludedDescriptions(excludedDescriptions);
+        // in 3.6 branch, compound workflow and task log is also added,
+        // in 3.13.* branch this is not needed
         logFilter.setObjectId(Collections.singletonList(parentRef.toString()));
         logFilter.setExactObjectId(true);
         return logFilter;
+    }
+
+    private List<String> getCompoundWorkflowAndTaskNodeRefs() {
+        List<NodeRef> compoundWorkflowAndTaskNodeRefs = BeanHelper.getWorkflowService().getCompoundWorkflowAndTaskNodeRefs(parentRef);
+        List<String> compoundWorkflowAndTaskNodeRefStr = new ArrayList<String>();
+        for (NodeRef nodeRef : compoundWorkflowAndTaskNodeRefs) {
+            compoundWorkflowAndTaskNodeRefStr.add(nodeRef.toString());
+        }
+        return compoundWorkflowAndTaskNodeRefStr;
     }
 
     private LogFilter getSeriesLogFilter() {

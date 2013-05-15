@@ -98,7 +98,7 @@ public class UserUtil {
         String fullName = getPersonFullName2(props, false);
         String bracketContent = joinStringAndStringWithComma(
                 StringUtils.strip((String) props.get(ContentModel.PROP_JOBTITLE)),
-                StringUtils.strip((String) props.get(OrganizationStructureService.UNIT_NAME_PROP))
+                getUserDisplayUnit(props)
                 );
         if (StringUtils.isNotBlank(bracketContent)) {
             fullName += " (" + bracketContent + ")";

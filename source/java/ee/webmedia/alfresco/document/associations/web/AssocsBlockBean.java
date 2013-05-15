@@ -9,6 +9,7 @@ import java.util.Map;
 
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.config.ActionsConfigElement.ActionDefinition;
+import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.classificator.constant.DocTypeAssocType;
 import ee.webmedia.alfresco.common.web.BeanHelper;
@@ -40,6 +41,7 @@ public class AssocsBlockBean implements DocumentDynamicBlock {
     private static final String FOLLOWUPS_METHOD_BINDING_NAME = "#{" + BEAN_NAME + ".createAddFollowupsMenu}";
     private static final String REPLIES_METHOD_BINDING_NAME = "#{" + BEAN_NAME + ".createAddRepliesMenu}";
     private static final String DROPDOWN_MENU_ITEM_ICON = "/images/icons/versioned_properties.gif";
+    private static final String DROPDOWN_MENU_SINGLE_ITEM_ICON = "/images/icons/arrow-right.png";
     public static final String PARAM_ASSOC_MODEL_REF = "assocModelRef";
 
     private Node document;
@@ -123,14 +125,41 @@ public class AssocsBlockBean implements DocumentDynamicBlock {
     }
 
     public List<ActionDefinition> createAddFollowupsMenu(@SuppressWarnings("unused") String nodeTypeId) {
-        return initCreateAddAssocMenu(DocTypeAssocType.FOLLOWUP);
+        return initCreateAddAssocMenu(DocTypeAssocType.FOLLOWUP, "document_addFollowUp");
     }
 
     public List<ActionDefinition> createAddRepliesMenu(@SuppressWarnings("unused") String nodeTypeId) {
-        return initCreateAddAssocMenu(DocTypeAssocType.REPLY);
+        return initCreateAddAssocMenu(DocTypeAssocType.REPLY, "document_addReply");
     }
 
-    private List<ActionDefinition> initCreateAddAssocMenu(DocTypeAssocType docTypeAssocType) {
+    public int getAddFollowupsMenuSize() {
+        return getCreateAddAssocMenuSize(DocTypeAssocType.FOLLOWUP);
+    }
+
+    public int getAddRepliesMenuSize() {
+        return getCreateAddAssocMenuSize(DocTypeAssocType.REPLY);
+    }
+
+    private int getCreateAddAssocMenuSize(DocTypeAssocType docTypeAssocType) {
+        int size = 0;
+        DocumentType documentType = BeanHelper.getDocumentDynamicDialog().getDocumentType();
+        if (documentType == null) {
+            return size;
+        }
+        List<? extends AssociationModel> assocs = documentType.getAssociationModels(docTypeAssocType);
+        for (AssociationModel assocModel : assocs) {
+            String docTypeId = assocModel.getDocType();
+            if (docTypeAssocType == DocTypeAssocType.FOLLOWUP
+                    && (SystematicDocumentType.REPORT.isSameType(docTypeId) || SystematicDocumentType.ERRAND_ORDER_ABROAD.isSameType(docTypeId))) {
+                continue;
+            }
+            size++;
+        }
+
+        return size;
+    }
+
+    private List<ActionDefinition> initCreateAddAssocMenu(DocTypeAssocType docTypeAssocType, String defaultLabelMsg) {
         DocumentType documentType = BeanHelper.getDocumentDynamicDialog().getDocumentType();
         if (documentType == null) {
             return Collections.emptyList();
@@ -152,6 +181,14 @@ public class AssocsBlockBean implements DocumentDynamicBlock {
 
             actionDefinitions.add(actionDefinition);
         }
+
+        if (actionDefinitions.size() == 1 && StringUtils.isNotBlank(defaultLabelMsg)) {
+            ActionDefinition actionDefinition = actionDefinitions.get(0);
+            actionDefinition.Label = null;
+            actionDefinition.LabelMsg = defaultLabelMsg;
+            actionDefinition.Image = DROPDOWN_MENU_SINGLE_ITEM_ICON;
+        }
+
         return actionDefinitions;
     }
 

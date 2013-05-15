@@ -105,6 +105,8 @@ public class FileServiceImpl implements FileService {
         }
         active = !active;
         nodeService.setProperty(nodeRef, FileModel.Props.ACTIVE, active);
+        NodeRef documentRef = nodeService.getPrimaryParent(nodeRef).getParentRef();
+        generalService.setModifiedToNow(documentRef);
         return active;
     }
 
@@ -331,7 +333,7 @@ public class FileServiceImpl implements FileService {
             result = fileFolderService.getFileInfo(overwritableNodeRef);
         }
         nodeService.setProperty(result.getNodeRef(), FileModel.Props.PDF_GENERATED_FROM_FILE, fileRef);
-
+        generalService.setModifiedToNow(parent);
         return result;
     }
 
@@ -502,6 +504,7 @@ public class FileServiceImpl implements FileService {
         item.setCreator(userService.getUserFullName((String) fi.getProperties().get(ContentModel.PROP_CREATOR)));
         item.setModifier(userService.getUserFullName((String) fi.getProperties().get(ContentModel.PROP_MODIFIER)));
         item.setDownloadUrl(generateURL(item.getNodeRef()));
+        item.setReadOnlyUrl(DownloadContentServlet.generateDownloadURL(item.getNodeRef(), item.getDisplayName()));
         return item;
     }
 

@@ -36,6 +36,10 @@ public class DocumentFavoritesServiceImpl extends AbstractFavoritesServiceImpl i
             if (!DocumentCommonModel.Types.DOCUMENT.equals(nodeService.getType(docRef))) { // XXX DLSeadist filter out old document types
                 continue;
             }
+            if (nodeService.getStoreArchiveNode(docRef.getStoreRef()) == null) {
+                // this is trashcan document
+                continue;
+            }
             favorites.add(documentService.getDocumentByNodeRef(docRef));
         }
         return favorites;

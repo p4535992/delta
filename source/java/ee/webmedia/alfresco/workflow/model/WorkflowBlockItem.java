@@ -24,6 +24,7 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.WebUtil;
 import ee.webmedia.alfresco.workflow.service.DueDateHistoryRecord;
 import ee.webmedia.alfresco.workflow.service.Task;
+import ee.webmedia.alfresco.workflow.web.DueDateHistoryModalComponent;
 
 /**
  * @author Kaarel Jõgeva
@@ -108,7 +109,8 @@ public class WorkflowBlockItem implements Serializable {
         }
         if (task.isType(WorkflowSpecificModel.Types.DUE_DATE_EXTENSION_TASK)) {
             Date proposedDueDate = task.getProposedDueDate();
-            return MessageUtil.getMessage("task_due_date_extension_resolution", DATE_FORMAT.format(proposedDueDate), task.getResolution());
+            return MessageUtil.getMessage("task_due_date_extension_resolution",
+                    proposedDueDate != null ? DATE_FORMAT.format(proposedDueDate) : MessageUtil.getMessage("task_empty_value"), task.getResolution());
         }
         return task.getResolution();
     }
@@ -193,6 +195,18 @@ public class WorkflowBlockItem implements Serializable {
             return null;
         }
         return task.getDueDateHistoryRecords();
+    }
+
+    public String getDueDateHistoryModalId() {
+        if (isGroupBlockItem) {
+            return "";
+        }
+        return DueDateHistoryModalComponent.getTaskExtensionHistoryModalId(task.getNodeRef().getId());
+    }
+
+    public boolean isShowDueDateHistoryModal() {
+        List<DueDateHistoryRecord> historyRecords = getDueDateHistoryRecords();
+        return historyRecords != null && !historyRecords.isEmpty();
     }
 
     public String getDueDateHistoryAlert() {

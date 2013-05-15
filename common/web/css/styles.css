@@ -480,6 +480,7 @@ a.action {
 
 .extra-actions li a.icon-link {
 	line-height: 11px;
+	height: 11px;
 }
 
 .dropdown-menu {
@@ -849,12 +850,7 @@ hr {
 	font-weight: bold;
 	vertical-align: top;
 	line-height: 15px;
-	/* width: 10%; */
-}
-
-.propertiesLabel span {
-   padding-top: 3px;
-   display: inline-block;
+    padding-top: 3px;
 }
 
 .propertiesLabel + td .propertiesLabel,
@@ -1287,7 +1283,8 @@ table.recipient th {
 }
 
 input.date,
-input.disabled-date {
+input.disabled-date,
+.modalpopup-filter.modalpopup-content-inner table td input.date {
 	background:#FFFFFF url(../images/icons/ico_cal.gif) no-repeat scroll right 35%;
 	cursor:pointer;
 	padding-right:18px !important;

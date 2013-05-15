@@ -34,7 +34,7 @@ $jQ(document).ready(function(){
    <a:panel id="search-panel">
       <h:inputText id="search-text" styleClass="focus" value="#{UsersBeanProperties.searchCriteria}" size="35" maxlength="1024" onkeyup="updateButtonState();" />
       <h:commandButton id="search-btn" value="#{msg.search}" action="#{DialogManager.bean.search}" disabled="true" style="margin-left: 5px;" styleClass="specificAction" />
-      <h:commandButton value="#{msg.show_all}" action="#{DialogManager.bean.showAll}" style="margin-left: 5px;"/>
+      <h:commandButton value="#{msg.show_all}" action="#{DialogManager.bean.showAllConfirm}" style="margin-left: 5px;"/>
       <f:verbatim>
       <script type="text/javascript">
       	addSearchSuggest("dialog:dialog-body:search-text", "dialog:dialog-body:search-text", "UserListDialog.searchUsers", null, "<%=request.getContextPath()%>/ajax/invoke/AjaxSearchBean.invokeActionListener?actionListener=UserDetailsDialog.setupUser",

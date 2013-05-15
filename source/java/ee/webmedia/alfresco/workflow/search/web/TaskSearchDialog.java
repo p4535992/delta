@@ -1,5 +1,7 @@
 package ee.webmedia.alfresco.workflow.search.web;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getWorkflowService;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -31,8 +33,10 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UserUtil;
 import ee.webmedia.alfresco.utils.WebUtil;
 import ee.webmedia.alfresco.workflow.model.Status;
+import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 import ee.webmedia.alfresco.workflow.search.model.TaskSearchModel;
 import ee.webmedia.alfresco.workflow.search.service.TaskSearchFilterService;
+import ee.webmedia.alfresco.workflow.service.WorkflowService;
 import ee.webmedia.alfresco.workflow.service.type.WorkflowType;
 
 /**
@@ -57,7 +61,7 @@ public class TaskSearchDialog extends AbstractSearchFilterBlockBean<TaskSearchFi
             taskTypes = new ArrayList<SelectItem>(workflowTypes.size());
             for (WorkflowType workflowType : workflowTypes.values()) {
                 QName taskType = workflowType.getTaskType();
-                if (taskType != null) {
+                if (taskType != null && taskTypeEnabled(taskType)) {
                     QName type = workflowType.getWorkflowType();
                     taskTypes.add(new SelectItem(taskType, MessageUtil.getMessage(type == null ? taskType.getLocalName() : type.getLocalName())));
                 }
@@ -225,6 +229,21 @@ public class TaskSearchDialog extends AbstractSearchFilterBlockBean<TaskSearchFi
     public List<SelectItem> getTaskStatuses(FacesContext context, UIInput selectComponent) {
         ((HtmlSelectManyListbox) selectComponent).setSize(5);
         return taskStatuses;
+    }
+
+    private boolean taskTypeEnabled(QName taskType) {
+        if (WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_TASK.equals(taskType)) {
+            return getWorkflowService().isOrderAssignmentWorkflowEnabled();
+        } else if (WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK.equals(taskType)) {
+            return getWorkflowService().externalReviewWorkflowEnabled();
+        } else if (WorkflowSpecificModel.Types.CONFIRMATION_TASK.equals(taskType)) {
+            return getWorkflowService().isOrderAssignmentWorkflowEnabled();
+        } else if (WorkflowSpecificModel.Types.GROUP_ASSIGNMENT_TASK.equals(taskType)) {
+            return getWorkflowService().isGroupAssignmentWorkflowEnabled();
+        } else if (WorkflowSpecificModel.Types.LINKED_REVIEW_TASK.equals(taskType)) {
+            return getWorkflowService().isReviewToOtherOrgEnabled();
+        }
+        return true;
     }
 
     // START: getters / setters

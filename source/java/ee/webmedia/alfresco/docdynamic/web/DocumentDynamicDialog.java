@@ -186,6 +186,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         String documentTypeId = ActionUtil.getParam(event, "typeId");
         DocumentDynamic doc = getDocumentDynamicService().createNewDocumentInDrafts(documentTypeId).getFirst();
         setLocationFromVolume(doc);
+        propertySheet = null;
         open(doc.getNodeRef(), doc, true);
     }
 
@@ -370,9 +371,9 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
 
     public void addFollowUpHandlerSimilarDocuments(ActionEvent event) {
         NodeRef nodeRef = new NodeRef(ActionUtil.getParam(event, PARAM_NODEREF));
-        boolean isFoundSimilar = getSearchBlock().isFoundSimilar();
         addTargetAssocAndReopen(nodeRef, DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP);
-        getSearchBlock().setFoundSimilar(isFoundSimilar);
+        getSearchBlock().setShowSimilarDocumentsBlock(false);
+        setShowSaveAndRegisterButton(true);
     }
 
     public void addReplyHandler(ActionEvent event) {
@@ -399,9 +400,11 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
             WmNode document = getNode();
             for (NodeRef workflowRef : documentAssociationsService.getDocumentIndependentWorkflowAssocs(targetRef)) {
                 addTargetAssoc(workflowRef, DocumentCommonModel.Assocs.WORKFLOW_DOCUMENT, true, false);
+                Map<QName, Serializable> docProps = RepoUtil.toQNameProperties(document.getProperties());
                 getDocumentDynamicService().setOwnerFromActiveResponsibleTask(
                         workflowService.getCompoundWorkflowOfType(workflowRef, Collections.singletonList(WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW)),
-                        document.getNodeRef(), document.getProperties());
+                        document.getNodeRef(), docProps);
+                document.getProperties().putAll(RepoUtil.toStringProperties(docProps));
             }
         }
     }
@@ -532,10 +535,11 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         WmNode node = document.getNode();
 
         List<DialogButtonConfig> buttons = new ArrayList<DialogButtonConfig>(1);
-        if (snapshot.inEditMode && SystematicDocumentType.INCOMING_LETTER.isSameType(document.getDocumentTypeId()) && ((DocumentType)
-                config.getDocType()).isRegistrationEnabled()
+        DocumentType docType = (DocumentType) config.getDocType();
+        if (snapshot.inEditMode && SystematicDocumentType.INCOMING_LETTER.isSameType(document.getDocumentTypeId())
+                && docType.isRegistrationEnabled() && docType.isRegistrationOnDocFormEnabled()
                 && RegisterDocumentEvaluator.isNotRegistered(node)) {
-            if (getSearchBlock().isFoundSimilar()) {
+            if (getSearchBlock().isShowSimilarDocumentsBlock() || getShowSaveAndRegisterButton()) {
                 buttons.add(new DialogButtonConfig("documentRegisterButton", null, "document_registerDoc_continue",
                         "#{DocumentDynamicDialog.saveAndRegisterContinue}", "false", null));
             } else {
@@ -593,6 +597,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         private boolean showDocsAndCasesAssocs;
         private boolean saveAndRegister;
         private boolean saveAndRegisterContinue;
+        private boolean showSaveAndRegisterContinueButton;
         private boolean confirmMoveAssociatedDocuments;
         private boolean moveAssociatedDocumentsConfirmed;
         private DocumentConfig config;
@@ -736,35 +741,27 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
     }
 
     public void sendAccessRestrictionChangedEmails(ActionEvent event) {
-        String paramName = "missingEmailsConfirmed";
-        boolean ignoreMissingEmails = ActionUtil.hasParam(event, paramName);
-        DocumentDynamic document = getDocument();
-        Pair<List<String>, List<SendInfo>> existingAndMissingEmails = BeanHelper.getNotificationService().getExistingAndMissingEmails(BeanHelper.getSendOutService().getDocumentSendInfos(document.getNodeRef()));
-        List<SendInfo> missingEmails = existingAndMissingEmails.getSecond();
-        if (!ignoreMissingEmails && !missingEmails.isEmpty()) {
-            List<String> names = new ArrayList<String>(missingEmails.size());
-            for (SendInfo sendInfo : missingEmails) {
-                names.add(sendInfo.getRecipient());
-            }
-            Map<String, String> params = new HashMap<String, String>(1);
-            params.put(paramName, "true");
-            BeanHelper.getUserConfirmHelper().setup(new MessageDataImpl("docdyn_accessRestriction_missingEmailsConfirm", StringUtils.join(names, ", ")), null,
-                    "#{DocumentDynamicDialog.sendAccessRestrictionChangedEmails}", params, null, "#{DocumentDynamicDialog.dontSendAccessRestrictionChangedEmails}", null);
-            showConfirmationPopup = false; // we don't need this pop-up anymore
-            return;
-        }
-        
         if (isCreateNewCaseFile()) {
             getCurrentSnapshot().needSendNotificationAfterCreateCaseFile = true;
             navigateCreateNewCaseFile();
         } else {
-            notifyAccessRestrictionChanged(document, existingAndMissingEmails.getFirst());
+            DocumentDynamic document = getDocument();
+            notifyAccessRestrictionChanged(document,
+                    BeanHelper.getNotificationService().getExistingAndMissingEmails(BeanHelper.getSendOutService().getDocumentSendInfos(document.getNodeRef())));
             cancel();
         }
     }
 
-    public void notifyAccessRestrictionChanged(DocumentDynamic document, List<String> emails) {
-        BeanHelper.getNotificationService().processAccessRestrictionChangedNotification(document, emails);
+    public void notifyAccessRestrictionChanged(DocumentDynamic document, Pair<List<String>, List<SendInfo>> existingAndMissingEmails) {
+        BeanHelper.getNotificationService().processAccessRestrictionChangedNotification(document, existingAndMissingEmails.getFirst());
+
+        if (!existingAndMissingEmails.getSecond().isEmpty()) {
+            List<String> names = new ArrayList<String>(existingAndMissingEmails.getSecond().size());
+            for (SendInfo sendInfo : existingAndMissingEmails.getSecond()) {
+                names.add(sendInfo.getRecipient());
+            }
+            MessageUtil.addInfoMessage("docdyn_accessRestriction_missingEmails", StringUtils.join(names, ", "));
+        }
     }
 
     public void dontSendAccessRestrictionChangedEmails(@SuppressWarnings("unused") ActionEvent event) {
@@ -951,8 +948,14 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
             if (docAssocs == null || docAssocs.isEmpty()) {
                 return false;
             }
-            NodeRef associatedDocParentRef = getNodeService().getPrimaryParent(docAssocs.get(0).getOtherNodeRef()).getParentRef();
-            return !associatedDocParentRef.equals(newParentRef);
+            NodeRef associatedDocParentRef = null;
+            for (DocAssocInfo docAssocInfo : docAssocs) {
+                if (docAssocInfo.isFollowUpOrReplyAssoc()) {
+                    associatedDocParentRef = getNodeService().getPrimaryParent(docAssocInfo.getOtherNodeRef()).getParentRef();
+                    break;
+                }
+            }
+            return associatedDocParentRef != null && !associatedDocParentRef.equals(newParentRef);
         }
         NodeRef currentParentRef = getNodeService().getPrimaryParent(document.getNodeRef()).getParentRef();
         if (currentParentRef.equals(newParentRef)) {
@@ -987,6 +990,9 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
 
     private void setSaveAndRegisterContinue(boolean saveAndRegisterContinue) {
         getCurrentSnapshot().saveAndRegisterContinue = saveAndRegisterContinue;
+        if (saveAndRegisterContinue) {
+            setShowSaveAndRegisterButton(true);
+        }
     }
 
     private boolean isSaveAndRegisterContinue() {
@@ -997,6 +1003,14 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         return getCurrentSnapshot().saveAndRegister;
     }
 
+    private boolean setShowSaveAndRegisterButton(boolean showSaveAndRegisterContinueButton) {
+        return getCurrentSnapshot().showSaveAndRegisterContinueButton = showSaveAndRegisterContinueButton;
+    }
+
+    private boolean getShowSaveAndRegisterButton() {
+        return getCurrentSnapshot().showSaveAndRegisterContinueButton;
+    }
+
     private boolean checkSimilarDocuments() {
         SearchBlockBean searchBlock = getSearchBlock();
         // search for similar documents if it's an incoming letter
@@ -1004,7 +1018,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
             String senderRegNum = getDocument().getProp(DocumentSpecificModel.Props.SENDER_REG_NUMBER);
             searchBlock.findSimilarDocuments(senderRegNum);
         }
-        if (searchBlock.isFoundSimilar()) {
+        if (searchBlock.isShowSimilarDocumentsBlock()) {
             return true;
         }
         return false;
@@ -1016,7 +1030,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
             setSaveAndRegister(false);
             setSaveAndRegisterContinue(true);
             super.finish();
-            getSearchBlock().setFoundSimilar(false);
+            getSearchBlock().setShowSimilarDocumentsBlock(false);
         }
     }
 
@@ -1129,7 +1143,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         if ((searchBlockBean.isExpanded() && !getCurrentSnapshot().inEditMode)) {
             return true;
         }
-        return getCurrentSnapshot().inEditMode && searchBlockBean.isShow() && !searchBlockBean.isFoundSimilar()
+        return getCurrentSnapshot().inEditMode && searchBlockBean.isShow() && !searchBlockBean.isShowSimilarDocumentsBlock()
                 && (getDocument().isImapOrDvk() && !getDocument().isNotEditable());
     }
 
@@ -1146,7 +1160,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
 
     public boolean isShowFoundSimilar() {
         SearchBlockBean searchBlockBean = (SearchBlockBean) getBlocks().get(SearchBlockBean.class);
-        return getCurrentSnapshot().inEditMode && searchBlockBean.isFoundSimilar();
+        return getCurrentSnapshot().inEditMode && searchBlockBean.isShowSimilarDocumentsBlock();
     }
 
     // =========================================================================
@@ -1379,6 +1393,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         getPropertySheetStateBean().reset(getStateHolders(), provider);
         getDocumentDialogHelperBean().reset(provider);
         resetModals();
+        setShowSaveAndRegisterButton(false);
         super.resetOrInit(provider); // reset blocks
     }
 

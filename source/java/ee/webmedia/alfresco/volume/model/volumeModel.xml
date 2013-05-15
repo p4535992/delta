@@ -85,6 +85,9 @@
             <property name="docdyn:location">
                <type>d:text</type>
             </property>
+            <property name="docdyn:originalVolume">
+               <type>d:noderef</type>
+            </property>         
          </properties>
          <associations>
             <association name="vol:volumeVolume">

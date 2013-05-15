@@ -305,6 +305,7 @@ public class MsoService2Impl implements MsoService, InitializingBean {
         documentReader.getContent(bos);
         JAXBElement<byte[]> documentFile = objectFactory.createMsoDocumentAndFormulasInputDocumentFile(bos.toByteArray());
 
+        JAXBElement<String> fileEncoding = objectFactory.createMsoDocumentAndFormulasInputFileEncoding(documentReader.getEncoding());
         JAXBElement<String> fileType = objectFactory.createMsoDocumentAndFormulasInputFileType(documentReader.getMimetype());
 
         ArrayOfformula arrayOfformula = objectFactory.createArrayOfformula();
@@ -318,6 +319,7 @@ public class MsoService2Impl implements MsoService, InitializingBean {
 
         MsoDocumentAndFormulasInput input = objectFactory.createMsoDocumentAndFormulasInput();
         input.setDocumentFile(documentFile);
+        input.setFileEncoding(fileEncoding);
         input.setFileType(fileType);
         input.setFormulas(msoFormulas);
         return input;
@@ -328,10 +330,12 @@ public class MsoService2Impl implements MsoService, InitializingBean {
         documentReader.getContent(bos);
         JAXBElement<byte[]> documentFile = objectFactory.createMsoDocumentInputDocumentFile(bos.toByteArray());
 
+        JAXBElement<String> fileEncoding = objectFactory.createMsoDocumentInputFileEncoding(documentReader.getEncoding());
         JAXBElement<String> fileType = objectFactory.createMsoDocumentInputFileType(documentReader.getMimetype());
 
         final MsoDocumentInput input = objectFactory.createMsoDocumentInput();
         input.setDocumentFile(documentFile);
+        input.setFileEncoding(fileEncoding);
         input.setFileType(fileType);
         return input;
     }

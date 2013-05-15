@@ -70,7 +70,6 @@ import ee.webmedia.alfresco.log.service.LogService;
 import ee.webmedia.alfresco.privilege.service.PrivilegeService;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.MessageUtil;
-import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.TextUtil;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
 import ee.webmedia.alfresco.workflow.model.Status;
@@ -376,21 +375,21 @@ public class DocumentAssociationsServiceImpl implements DocumentAssociationsServ
             }
         }
         if (setOwnerProps) {
-            Map<String, Object> documentProps = new HashMap<String, Object>();
+            Map<QName, Serializable> documentProps = nodeService.getProperties(docRef);
             documentDynamicService.setOwnerFromActiveResponsibleTask(compoundWorkflow, docRef, documentProps);
-            nodeService.addProperties(docRef, RepoUtil.toQNameProperties(documentProps));
+            nodeService.addProperties(docRef, documentProps);
         }
     }
 
     @Override
-    public boolean isAddCompoundWorkflowAssoc(NodeRef baseDocumentRef, String associatiedDocTypeId, QName documentAssocType) {
-        if (associatiedDocTypeId == null) {
+    public boolean isAddCompoundWorkflowAssoc(NodeRef baseDocumentRef, String associatedDocTypeId, QName documentAssocType) {
+        if (associatedDocTypeId == null) {
             return false;
         }
         String baseDocTypeId = documentDynamicService.getDocumentType(baseDocumentRef);
         List<? extends AssociationModel> associationModels = getAssocs(baseDocTypeId, documentAssocType);
         for (AssociationModel associationModel : associationModels) {
-            if (associatiedDocTypeId.equals(associationModel.getDocType())) {
+            if (associatedDocTypeId.equals(associationModel.getDocType())) {
                 return Boolean.TRUE.equals(associationModel.getAssociateWithSourceDocument());
             }
         }

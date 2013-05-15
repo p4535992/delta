@@ -11,7 +11,7 @@
          <f:facet name="header">
             <a:sortLink id="col1-sort" label="#{msg.document_receivedDateTime}" value="created" styleClass="header" />
          </f:facet>
-         <a:actionLink id="col1-text" value="#{r.createdDateStr}" action="#{DocumentDialog.action}" tooltip="#{r.createdDateStr}" styleClass="no-underline"
+         <a:actionLink id="col1-text" value="#{r.createdDateTimeStr}" action="#{DocumentDialog.action}" tooltip="#{r.createdDateTimeStr}" styleClass="no-underline"
           actionListener="#{DocumentDialog.open}" >
             <f:param name="nodeRef" value="#{r.node.nodeRef}" />
           </a:actionLink>

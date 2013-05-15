@@ -20,6 +20,7 @@ import ee.webmedia.alfresco.docadmin.service.Field;
 import ee.webmedia.alfresco.docadmin.service.FieldGroup;
 import ee.webmedia.alfresco.docconfig.generator.FieldGenerator;
 import ee.webmedia.alfresco.docconfig.generator.FieldGroupGenerator;
+import ee.webmedia.alfresco.docconfig.service.PropDefCacheKey;
 import ee.webmedia.alfresco.utils.TreeNode;
 
 /**
@@ -119,5 +120,11 @@ public interface DocumentConfigService {
     boolean isRegDateFilterInAssociationsSearch();
 
     ItemConfigVO generateFieldGroupReadonlyItem(FieldGroup fieldGroup);
+
+    void removeFrompPopertyDefinitionForSearchCache(String fieldId);
+
+    void removeFromChildAssocTypeQNameTreeCache(Pair<String, Integer> typeAndVersion);
+
+    void removeFromPropertyDefinitionCache(PropDefCacheKey key);
 
 }

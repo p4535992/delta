@@ -1402,24 +1402,27 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
 
     @Override
     public void deleteDocument(NodeRef nodeRef, String comment, DeletionType deletionType) {
+        deleteDocument(nodeRef, comment, deletionType, AuthenticationUtil.getRunAsUser());
+    }
+
+    @Override
+    public void deleteDocument(NodeRef nodeRef, String comment, DeletionType deletionType, String executingUser) {
         log.debug("Deleting document: " + nodeRef);
         getAdrService().addDeletedDocument(nodeRef);
         Set<AssociationRef> assocs = new HashSet<AssociationRef>(nodeService.getTargetAssocs(nodeRef, RegexQNamePattern.MATCH_ALL));
         assocs.addAll(nodeService.getSourceAssocs(nodeRef, RegexQNamePattern.MATCH_ALL));
-        boolean favDirRemoved = false;
         DocumentAssociationsService documentAssociationsService = getDocumentAssociationsService();
+        boolean updateMenu = false;
         for (AssociationRef assoc : assocs) {
             NodeRef sourceRef = assoc.getSourceRef();
-            if ((DocumentCommonModel.Assocs.FAVORITE.equals(assoc.getTypeQName())) &&
-                    DocumentCommonModel.Types.FAVORITE_DIRECTORY.equals(nodeService.getType(sourceRef))) {
-                if (nodeService.getTargetAssocs(sourceRef, DocumentCommonModel.Assocs.FAVORITE).size() == 1) {
-                    nodeService.deleteNode(sourceRef);
-                    favDirRemoved = true;
-                }
-            }
             NodeRef targetRef = assoc.getTargetRef();
-            // association may already have been deleted in this deleting process
-            if (!favDirRemoved) {
+            if (DocumentCommonModel.Assocs.FAVORITE.equals(assoc.getTypeQName()) &&
+                    DocumentCommonModel.Types.FAVORITE_DIRECTORY.equals(nodeService.getType(sourceRef))
+                    && nodeService.getTargetAssocs(sourceRef, DocumentCommonModel.Assocs.FAVORITE).size() == 1) {
+                // assoc is deleted when deleting node
+                nodeService.deleteNode(sourceRef);
+                updateMenu = true;
+            } else {
                 nodeService.removeAssociation(sourceRef, targetRef, assoc.getTypeQName());
                 documentAssociationsService.updateModifiedDateTime(sourceRef, targetRef);
             }
@@ -1432,7 +1435,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
         updateParentDocumentRegNumbers(nodeRef, regNumber, null);
         if (StringUtils.isNotBlank(comment)) { // Create deletedDocument under parent volume
             DeletedDocument deletedDocument = new DeletedDocument();
-            deletedDocument.setActor(getUserFullNameAndId(userService.getCurrentUserProperties()));
+            deletedDocument.setActor(getUserFullNameAndId(userService.getUserProperties(executingUser)));
             deletedDocument.createDocumentData(regNumber, (String) nodeService.getProperty(nodeRef, DOC_NAME));
             deletedDocument.setComment(comment);
             deletedDocument.setDeletionType(deletionType.getValue());
@@ -1452,7 +1455,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
         String location = nodeService.exists(archivedRef) ? (String) nodeService.getProperty(archivedRef, ContentModel.PROP_ARCHIVED_ORIGINAL_LOCATION_STRING) : "";
         logService.addLogEntry(LogEntry.create(LogObject.DOCUMENT, userService, nodeRef, "document_log_status_deleted", status, location));
 
-        if (favDirRemoved) {
+        if (updateMenu) {
             menuService.process(BeanHelper.getMenuBean().getMenu(), false, true);
         }
     }
@@ -2012,6 +2015,10 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
                 props.put(UPDATE_METADATA_IN_FILES.toString(), Boolean.FALSE);
                 propertyChangesMonitorHelper.addIgnoredProps(props, UPDATE_METADATA_IN_FILES);
                 documentLogService.addDocumentLog(docRef, I18NUtil.getMessage("document_log_status_registered"));
+                String docStatus = (String) nodeService.getProperty(docRef, DOC_STATUS);
+                if (!DocumentStatus.FINISHED.getValueName().equals(docStatus)) {
+                    addDocProceedingFinishedLog(docRef);
+                }
             } else {
                 if (EventsLoggingHelper.isLoggingDisabled(docNode, TEMP_LOGGING_DISABLED_REGISTERED_BY_USER)) {
                     creatorDhs = true;
@@ -2116,7 +2123,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
         @SuppressWarnings("unchecked")
         List<Date> substituteEndDates = (List<Date>) props.get(DocumentSpecificModel.Props.SUBSTITUTION_END_DATE);
         String ownerId = (String) props.get(DocumentDynamicModel.Props.OWNER_ID);
-		NodeRef ownerRef = userService.getPerson(ownerId);
+        NodeRef ownerRef = userService.getPerson(ownerId);
         if (ownerRef != null) {
             List<Substitute> addedSubstitutes = new ArrayList<Substitute>();
             for (int i = 0; i < substituteIds.size(); i++) {
@@ -2127,7 +2134,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
                 }
                 substitute.setSubstituteId(substituteId);
                 substitute.setSubstituteName(substituteNames.get(i));
-				substitute.setReplacedPersonUserName(ownerId);
+                substitute.setReplacedPersonUserName(ownerId);
                 Date substitutionEndDate = substituteEndDates.get(i);
                 Date substitutionStartDate = substituteBeginDates.get(i);
                 if (substitutionEndDate == null || substitutionStartDate == null) {
@@ -2150,9 +2157,13 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
         if (!DocumentStatus.FINISHED.getValueName().equals(docStatus)) {
             setPropertyAsSystemUser(DOC_STATUS, DocumentStatus.FINISHED.getValueName(), originalDocRef);
             setPropertyAsSystemUser(UPDATE_METADATA_IN_FILES, Boolean.FALSE, originalDocRef);
-            documentLogService.addDocumentLog(originalDocRef, I18NUtil.getMessage("document_log_status_proceedingFinish") //
-                    , I18NUtil.getMessage("document_log_creator_dhs"));
+            addDocProceedingFinishedLog(originalDocRef);
         }
+    }
+
+    private void addDocProceedingFinishedLog(final NodeRef originalDocRef) {
+        documentLogService.addDocumentLog(originalDocRef, I18NUtil.getMessage("document_log_status_proceedingFinish") //
+                , I18NUtil.getMessage("document_log_creator_dhs"));
     }
 
     @Override
@@ -2306,7 +2317,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
 
         }
 
-        private DocumentPropertiesChangeHolder checkPropertyChanges(final Map<QName, Serializable> oldProps, final Map<QName, Serializable> newProps,
+        public DocumentPropertiesChangeHolder checkPropertyChanges(final Map<QName, Serializable> oldProps, final Map<QName, Serializable> newProps,
                 final List<QName> ignoredProps, NodeRef nodeRef) {
             if (oldProps.size() != newProps.size()) {
                 isPropNamesDifferent(oldProps, newProps, ignoredProps, "removed ignored props: ", nodeRef);
@@ -2341,6 +2352,13 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
                 final QName key = entry.getKey();
                 Serializable newValue = entry.getValue();
                 Serializable oldValue = oldPropsClone.remove(key);
+                // Ignore differences between null values as empty strings
+                if (newValue instanceof String && StringUtils.isBlank((String) newValue)) {
+                    newValue = null;
+                }
+                if (oldValue instanceof String && StringUtils.isBlank((String) oldValue)) {
+                    oldValue = null;
+                }
                 if (!EqualsHelper.nullSafeEquals(oldValue, newValue) && !key.getNamespaceURI().equals(NamespaceService.CONTENT_MODEL_1_0_URI)
                         && !ignoredProps.contains(key) && !TEMP_PROPERTY_CHANGES_IGNORED_PROPS.equals(key)) {
                     if (extraIgnoredProps == null) {

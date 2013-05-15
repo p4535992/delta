@@ -34,7 +34,6 @@ import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.service.DocumentService;
-import ee.webmedia.alfresco.eventplan.model.EventPlanModel;
 import ee.webmedia.alfresco.eventplan.service.EventPlanService;
 import ee.webmedia.alfresco.log.PropDiffHelper;
 import ee.webmedia.alfresco.log.model.LogEntry;
@@ -391,19 +390,17 @@ public class VolumeServiceImpl implements VolumeService {
     public void delete(Volume volume) {
         List<NodeRef> documents = documentService.getAllDocumentRefsByParentRef(volume.getNode().getNodeRef());
         List<Case> cases = caseService.getAllCasesByVolume(volume.getNode().getNodeRef());
-        if (documents.isEmpty() && cases.isEmpty()) {
-            nodeService.deleteNode(volume.getNode().getNodeRef());
-            return;
+        if (!documents.isEmpty() || !cases.isEmpty()) {
+            throw new UnableToPerformException("volume_delete_not_empty");
         }
-        throw new UnableToPerformException("volume_delete_not_empty");
-
+        nodeService.deleteNode(volume.getNode().getNodeRef());
     }
 
     @Override
-    public void closeVolume(NodeRef volumeRef) {
+    public Pair<String, Object[]> closeVolume(NodeRef volumeRef) {
         Pair<Boolean, Date> closeResult = getEventPlanService().closeVolumeOrCaseFile(volumeRef);
         if (!closeResult.getFirst()) {
-            return;
+            return null;
         }
 
         Volume volume = getVolumeByNodeRef(volumeRef);
@@ -412,19 +409,12 @@ public class VolumeServiceImpl implements VolumeService {
         if (closeResult.getSecond() != null) {
             props.put(VolumeModel.Props.VALID_TO.toString(), closeResult.getSecond());
         }
-
-        Series series = seriesService.getSeriesByNodeRef(volume.getSeriesNodeRef().toString());
-        final Integer retentionPeriod = series.getRetentionPeriod();
-        if (retentionPeriod != null) {
-            final Calendar cal1 = Calendar.getInstance();
-            cal1.set(cal1.get(Calendar.YEAR) + 1 + retentionPeriod, 0, 1);// 1. January next year + retentionPeriod(in years)
-            props.put(EventPlanModel.Props.RETAIN_UNTIL_DATE.toString(), DateUtils.truncate(cal1, Calendar.DAY_OF_MONTH).getTime());
-        }
         if (volume.isSaved()) { // force closing all cases of given volume even if there are some cases that are still opened
             caseService.closeAllCasesByVolume(volume.getNodeRef());
         }
         try {
             saveOrUpdate(volume);
+            return null;
         } catch (UnableToPerformException e) {
             throw e;
         }
@@ -480,6 +470,19 @@ public class VolumeServiceImpl implements VolumeService {
             log.debug("Found volume: " + volume);
         }
         return volume;
+    }
+
+    @Override
+    public NodeRef getArchivedVolumeByOriginalNodeRef(NodeRef archivedSeriesRef, NodeRef volumeNodeRef) {
+        List<ChildAssociationRef> volumeChildAssocs = nodeService.getChildAssocs(archivedSeriesRef, Collections.singleton(VolumeModel.Types.VOLUME));
+        for (ChildAssociationRef volumeChildAssoc : volumeChildAssocs) {
+            NodeRef archivedVolumeRef = volumeChildAssoc.getChildRef();
+            NodeRef originalVolumeRef = (NodeRef) nodeService.getProperty(archivedVolumeRef, VolumeModel.Props.ORIGINAL_VOLUME);
+            if (originalVolumeRef != null && originalVolumeRef.equals(volumeNodeRef)) {
+                return archivedVolumeRef;
+            }
+        }
+        return null;
     }
 
     @Override

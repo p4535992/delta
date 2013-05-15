@@ -1,5 +1,7 @@
 package ee.webmedia.alfresco.doclist.service;
 
+import static ee.webmedia.alfresco.utils.MessageUtil.getMessage;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
@@ -69,6 +71,8 @@ public class DocumentListServiceImpl implements DocumentListService {
         try {
             // the Unicode value for UTF-8 BOM, is needed so that Excel would recognize the file in correct encoding
             outputStream.write("\ufeff".getBytes("UTF-8"));
+            csvWriter.writeRecord(new String[] { getMessage("doclist_type"), getMessage("doclist_mark"), getMessage("doclist_title"), getMessage("doclist_doc_count"),
+                    getMessage("doclist_retention_period"), getMessage("doclist_access_restriction"), getMessage("doclist_status") });
             printFunctions(csvWriter, functionsService.getFunctions(rootRef));
         } catch (IOException e) {
             final String msg = "Outputstream exception while exporting consolidated docList row to CSV-stream";
@@ -89,9 +93,7 @@ public class DocumentListServiceImpl implements DocumentListService {
 
     private void printSeries(CsvWriter csvWriter, List<Series> series) {
         for (Series serie : series) {
-            Integer retensionPeriod = serie.getRetentionPeriod();
-            printLine(csvWriter, serie.getType(), serie.getSeriesIdentifier(), serie.getTitle(), serie.getContainingDocsCount(),
-                    (retensionPeriod == null ? "" : retensionPeriod.toString()),
+            printLine(csvWriter, serie.getType(), serie.getSeriesIdentifier(), serie.getTitle(), serie.getContainingDocsCount(), "",
                     nodeService.getProperty(serie.getNode().getNodeRef(), SeriesModel.Props.ACCESS_RESTRICTION).toString(),
                     serie.getStatus());
             printVolumes(csvWriter, serie.getNode().getNodeRef());

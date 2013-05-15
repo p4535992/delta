@@ -166,7 +166,11 @@ public class SubstituteListDialog extends BaseDialogBean {
             if (isValid &&
                     !getSubstituteService().findSubstitutionDutiesInPeriod(userNodeRef, substitutionStartDate, substitutionEndDate).isEmpty()) {
                 isValid = false;
-                MessageUtil.addErrorMessage("substitute_substitution_while_substituting");
+                if (AuthenticationUtil.getFullyAuthenticatedUser().equals(username)) {
+                    MessageUtil.addErrorMessage("substitute_substitution_while_substituting");
+                } else {
+                    MessageUtil.addErrorMessage("substitute_substitution_while_substituting_admin");
+                }
             }
             substitute.setValid(isValid);
         }

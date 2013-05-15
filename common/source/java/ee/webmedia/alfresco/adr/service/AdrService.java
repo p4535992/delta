@@ -1,6 +1,9 @@
 package ee.webmedia.alfresco.adr.service;
 
+import java.io.Serializable;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import javax.xml.datatype.XMLGregorianCalendar;
 
@@ -14,6 +17,7 @@ import ee.webmedia.alfresco.adr.ws.DokumentDetailidegaV2;
 import ee.webmedia.alfresco.adr.ws.DokumentId;
 import ee.webmedia.alfresco.adr.ws.Fail;
 import ee.webmedia.alfresco.adr.ws.FailV2;
+import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
 
 public interface AdrService {
 
@@ -98,5 +102,9 @@ public interface AdrService {
     void deleteDocumentType(QName documentType);
 
     void addDocumentType(QName documentType);
+
+    DokumentDetailidegaV2 buildDokumentDetailidegaV2(DocumentDynamic doc, boolean includeFileContent, Set<String> documentTypeIds,
+            Map<NodeRef, Map<QName, Serializable>> functionsCache, Map<NodeRef, Map<QName, Serializable>> seriesCache, Map<NodeRef, Map<QName, Serializable>> volumesCache,
+            boolean includeAssocsAndDocTypeName);
 
 }

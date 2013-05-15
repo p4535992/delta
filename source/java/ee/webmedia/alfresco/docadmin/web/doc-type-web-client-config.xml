@@ -36,6 +36,7 @@
                <param name="nodeRef">#{actionContext.nodeRef}</param>
                <param name="confirmMessagePlaceholder0">#{actionContext.nameAndId}</param>
                <param name="deleteAfterConfirmHandler">DocTypeDetailsDialog.deleteType</param>
+               <param name="dialogsToClose">2</param>
             </params>
          </action>
 
@@ -62,6 +63,7 @@
                <param name="nodeRef">#{actionContext.nodeRef}</param>
                <param name="confirmMessagePlaceholder0">#{actionContext.nameAndId}</param>
                <param name="deleteAfterConfirmHandler">CaseFileTypeDetailsDialog.deleteType</param>
+               <param name="dialogsToClose">2</param>
             </params>
          </action>
 
@@ -90,6 +92,20 @@
                <param name="callbackMethodBinding">MenuService.menuUpdated</param>
             </params>
          </action>
+         
+         <action id="field_delete">
+            <evaluator>ee.webmedia.alfresco.docadmin.web.DeleteFieldEvaluator</evaluator>
+            <label-id>delete</label-id>
+            <image>/images/icons/delete.gif</image>
+            <action>dialog:deleteDialog</action>
+            <action-listener>#{DeleteDialog.setupDeleteDialog}</action-listener>
+            <params>
+               <param name="nodeRef">#{actionContext.nodeRef}</param>
+               <param name="confirmMessagePlaceholder0">#{actionContext.name}</param>
+               <param name="deleteAfterConfirmHandler">FieldDetailsDialog.deleteField</param>
+               <param name="dialogsToClose">2</param>
+            </params>
+         </action>         
 
          <action-group id="doc_type_list_actions">
             <action idref="doc_type_add" />
@@ -112,6 +128,10 @@
             <action idref="caseFileType_manage_permissions" />
             <action idref="caseFileType_delete" />
          </action-group>
+         
+         <action-group id="field_details_actions">
+            <action idref="field_delete" />
+         </action-group>         
 
       </actions>
       <dialogs>
@@ -132,7 +152,7 @@
             icon="/images/icons/versioned_properties_large.gif" title-id="fieldDefinitions_list" show-ok-button="true" />
 
          <dialog name="fieldDetailsDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/docadmin/web/field-details-dialog.jsp"
-            managed-bean="FieldDetailsDialog" icon="/images/icons/versioned_properties_large.gif" title-id="field_details" />
+            managed-bean="FieldDetailsDialog" icon="/images/icons/versioned_properties_large.gif" title-id="field_details" actions-config-id="field_details_actions"/>
 
          <dialog name="fieldGroupDetailsDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/docadmin/web/field-group-details-dialog.jsp"
             managed-bean="FieldGroupDetailsDialog" icon="/images/icons/versioned_properties_large.gif" title-id="fieldGroup_details" />
@@ -218,6 +238,7 @@
          <show-property name="docadmin:addFollowUpToUnregistratedDocEnabled" labelStyleClass="wrap" />
          <show-property name="docadmin:addReplyToUnregistratedDocEnabled" labelStyleClass="wrap" />
          <show-property name="docadmin:editFilesOfFinishedDocEnabled" labelStyleClass="wrap"/>
+         <show-property name="docadmin:registrationOnDocFormEnabled" labelStyleClass="wrap"/>
       </property-sheet>
    </config>
 

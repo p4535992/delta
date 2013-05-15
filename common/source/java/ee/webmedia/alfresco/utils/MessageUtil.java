@@ -179,7 +179,7 @@ public class MessageUtil {
         return message;
     }
 
-    private static boolean isMessageTranslated(String messageKey, String message) {
+    public static boolean isMessageTranslated(String messageKey, String message) {
         return !StringUtils.equals(message, "$$" + messageKey + "$$");
     }
 

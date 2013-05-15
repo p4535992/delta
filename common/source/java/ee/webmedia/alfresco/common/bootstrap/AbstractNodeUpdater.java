@@ -314,6 +314,21 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
         }
     }
 
+    public static void writeRecordsToCsvFile(File file, Collection<String> records) {
+        try {
+            CsvWriter writer = new CsvWriter(new FileOutputStream(file), CSV_SEPARATOR, CSV_CHARSET);
+            try {
+                for (String record : records) {
+                    writer.writeRecord(new String[] { record });
+                }
+            } finally {
+                writer.close();
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Error writing CSV file '" + file.getAbsolutePath() + "': " + e.getMessage(), e);
+        }
+    }
+
     protected Set<NodeRef> loadNodesFromRepo() throws Exception {
         log.info("Searching nodes from repository");
         List<ResultSet> resultSets = getNodeLoadingResultSet();
@@ -439,6 +454,10 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
         return false;
     }
 
+    public boolean isTransactionReadOnly() {
+        return false;
+    }
+
     public boolean isContinueWithNextBatchAfterError() {
         return false;
     }
@@ -477,7 +496,7 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
                         executeBatch();
                         return null;
                     }
-                }, false, true);
+                }, isTransactionReadOnly(), true);
             } catch (RuntimeException e) {
                 if (isContinueWithNextBatchAfterError()) {
                     log.error("Error updating node; continuing updating next batch.", e);
@@ -538,7 +557,7 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
         String[] getHeaders();
     }
 
-    private void bindCsvWriteAfterCommit(final File completedFile, final File rollbackFile, final CsvWriterClosure closure) {
+    protected void bindCsvWriteAfterCommit(final File completedFile, final File rollbackFile, final CsvWriterClosure closure) {
         AlfrescoTransactionSupport.bindListener(new TransactionListenerAdapter() {
             @Override
             public void afterCommit() {
@@ -547,6 +566,9 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
 
             @Override
             public void afterRollback() {
+                if (rollbackFile == null) {
+                    return;
+                }
                 try {
                     // Write created documents
                     if (rollbackFile.exists()) {

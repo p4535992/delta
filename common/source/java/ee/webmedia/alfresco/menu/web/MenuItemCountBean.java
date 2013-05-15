@@ -100,6 +100,9 @@ public class MenuItemCountBean implements Serializable {
         countVO.count = countHandler.getCount(menuItem);
         countVO.updated = System.currentTimeMillis();
         log.debug("PERFORMANCE: MenuItemCountHandler " + menuItemId + " - " + (countVO.updated - startTime) + " ms");
+        if (MenuItem.MY_TASK_MENU_ITEMS.contains(menuItemId)) {
+            log.debug("Updated count of menu_my_tasks subitem " + menuItemId + " to " + countVO.count);
+        }
 
         ResponseWriter out = context.getResponseWriter();
         out.write(Integer.toString(countVO.count));

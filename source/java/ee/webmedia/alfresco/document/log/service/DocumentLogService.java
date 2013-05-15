@@ -23,8 +23,10 @@ public interface DocumentLogService {
      */
     void addDocumentLog(NodeRef document, String event, String creator);
 
-
     void addAssociationLog(NodeRef document, NodeRef targetNodeRef);
 
     void addAssociationLog(NodeRef document, NodeRef targetNodeRef, boolean removed);
+
+    void addDeletedObjectLog(NodeRef objectRef, String msgKey);
+
 }

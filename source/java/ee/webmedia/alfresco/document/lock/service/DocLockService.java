@@ -35,4 +35,6 @@ public interface DocLockService extends LockService {
     boolean isGeneratedFileDocumentLocked(NodeRef fileRef);
 
     List<Lock> getDocumentAndFileLocks();
+
+    boolean isLockByOther(NodeRef nodeRef);
 }

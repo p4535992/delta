@@ -144,6 +144,15 @@ public class AddressbookUtil {
         return results;
     }
 
+    public static NodePropertyResolver resolverParentOrgName = new NodePropertyResolver() {
+        private static final long serialVersionUID = 1L;
+
+        @Override
+        public Object get(Node node) {
+            return getNodeService().getProperty(getAddressbookService().getOrgOfPerson(node.getNodeRef()), AddressbookModel.Props.ORGANIZATION_NAME);
+        }
+    };
+
     public static NodePropertyResolver resolverParentOrgRef = new NodePropertyResolver() {
         private static final long serialVersionUID = 1L;
 

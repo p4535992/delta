@@ -35,7 +35,6 @@ import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
-import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.simple.ParameterizedRowMapper;
@@ -74,6 +73,8 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
     private static final String DUE_DATE_HISTORY_FIELD = "has_due_date_history";
     private static final String WORKFLOW_ID_KEY = "workflow_id";
     private static final String STORE_ID_FIELD = "store_id";
+    private static final String INITIATING_COMPOUND_WORKFLOW_ID_KEY = "initiating_compound_workflow_id";
+    private static final String INITIATING_COMPOUND_WORKFLOW_STORE_ID_KEY = "initiating_compound_workflow_store_id";
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(WorkflowDbServiceImpl.class);
     private static final List<QName> NOT_SENT_TO_REPO_PROPS = Arrays.asList(QName.createQName(WorkflowCommonModel.URI, "creatorId"),
             QName.createQName(WorkflowCommonModel.URI, "creatorEmail"), MoveTaskFileToChildAssoc.TASK_FILE_PROP_QNAME);
@@ -87,9 +88,9 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
     private GeneralService generalService;
 
     static {
-        TRANSIENT_PROPS.put("initiating_compound_workflow_id", INITIATING_COMPOUND_WORKFLOW_REF);
+        TRANSIENT_PROPS.put(INITIATING_COMPOUND_WORKFLOW_ID_KEY, INITIATING_COMPOUND_WORKFLOW_REF);
         TRANSIENT_PROPS.put("initiating_compound_workflow_title", INITIATING_COMPOUND_WORKFLOW_TITLE);
-        TRANSIENT_PROPS.put("initiating_compound_workflow_store_id", null);
+        TRANSIENT_PROPS.put(INITIATING_COMPOUND_WORKFLOW_STORE_ID_KEY, null);
     }
 
     @Override
@@ -116,7 +117,6 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
         }
         arguments.add(task.getNodeRef().getId());
         updateTaskEntry(fieldNamesAndArguments.getFirst(), arguments, task.getNodeRef());
-        task.setOriginalHasDueDateHistory(task.getHasDueDateHistory());
     }
 
     @Override
@@ -324,10 +324,6 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
             fieldNames.add(INDEX_IN_WORKFLOW_FIELD);
             arguments.add(taskIndexInWorkflow);
         }
-        if (!ObjectUtils.equals(task.getHasDueDateHistory(), task.getOriginalHasDueDateHistory())) {
-            fieldNames.add(DUE_DATE_HISTORY_FIELD);
-            arguments.add(task.getHasDueDateHistory());
-        }
         getPropFieldNamesAndArguments(fieldNames, arguments, changedProps);
         return new Pair<List<String>, List<Object>>(fieldNames, arguments);
     }
@@ -391,6 +387,21 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
         explainQuery(sqlQuery, parentId);
         return tasks;
     }
+    
+    @Override
+    public List<NodeRef> getWorkflowTaskNodeRefs(NodeRef workflowRef) {
+        String sqlQuery = "SELECT task_id, store_id FROM delta_task where workflow_id=? ORDER BY index_in_workflow";
+        String parentId = workflowRef.getId();
+        List<NodeRef> taskRefs = jdbcTemplate.query(sqlQuery, new ParameterizedRowMapper<NodeRef>() {
+
+            @Override
+            public NodeRef mapRow(ResultSet rs, int rowNum) throws SQLException {
+                return nodeRefFromRs(rs, TASK_ID_FIELD);
+            }
+        }, parentId);
+        explainQuery(sqlQuery, parentId);
+        return taskRefs;
+    }    
 
     @Override
     public Pair<List<Task>, Boolean> searchTasksMainStore(String queryCondition, List<Object> arguments, int limit) {
@@ -560,7 +571,7 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
     public Collection<DueDateHistoryRecord> getDueDateHistoryRecords(NodeRef taskRef) {
         String sqlQuery = "SELECT history.previous_date, history.change_reason, history.task_id, history.extension_task_id, task.wfs_compound_workflow_id, task.store_id " +
                 " FROM delta_task_due_date_history history " +
-                " join delta_task task on task.task_id = history.extension_task_id " +
+                " left join delta_task task on task.task_id = history.extension_task_id " +
                 " WHERE history.task_id=? ORDER BY history.task_due_date_history_id";
         String taskRefId = taskRef.getId();
         List<DueDateHistoryRecord> dueDateHistoryRecords = jdbcTemplate.query(sqlQuery, new TaskDueDateHistoryMapper(), taskRefId);
@@ -763,15 +774,7 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
     @Override
     public Set<NodeRef> getAllWorflowNodeRefs() {
         String sqlQuery = "SELECT workflow_id, store_id FROM delta_task WHERE workflow_id IS NOT NULL AND store_id IS NOT NULL GROUP BY workflow_id, store_id";
-        List<NodeRef> workflows = jdbcTemplate.query(sqlQuery,
-                new ParameterizedRowMapper<NodeRef>() {
-
-                    @Override
-                    public NodeRef mapRow(ResultSet rs, int rowNum) throws SQLException {
-                        return nodeRefFromRs(rs, WORKFLOW_ID_KEY);
-                    }
-
-                });
+        List<NodeRef> workflows = queryWorkflowNodeRefs(sqlQuery);
         explainQuery(sqlQuery);
         return new HashSet<NodeRef>(workflows);
     }
@@ -824,8 +827,6 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
     }
 
     private class TaskRowMapper implements ParameterizedRowMapper<Task> {
-        private static final String INITIATING_COMPOUND_WORKFLOW_ID_KEY = "initiating_compound_workflow_id";
-        private static final String INITIATING_COMPOUND_WORKFLOW_STORE_ID_KEY = "initiating_compound_workflow_store_id";
         private final Collection<QName> taskDataTypeDefaultAspects;
         private final List<QName> taskDataTypeDefaultProps;
         private final List<QName> taskDataTypeSearchableProps;
@@ -859,9 +860,6 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
             WmNode taskNode = getNode(rs);
             WorkflowType workflowType = this.workflowType != null ? this.workflowType : BeanHelper.getWorkflowService().getWorkflowTypesByTask().get(taskNode.getType());
             Task task = Task.create(workflowType.getTaskClass(), taskNode, workflow, workflowType.getTaskOutcomes());
-            boolean originalHasDueDateHistory = rs.getBoolean(DUE_DATE_HISTORY_FIELD);
-            task.setHasDueDateHistory(originalHasDueDateHistory);
-            task.setOriginalHasDueDateHistory(originalHasDueDateHistory);
             // use rs.getObject instead of rs.getInt to get null values also
             task.setTaskIndexInWorkflow((Integer) rs.getObject(INDEX_IN_WORKFLOW_FIELD));
             task.setWorkflowNodeRefId(rs.getString(WORKFLOW_ID_KEY));
@@ -977,7 +975,7 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
             deleteTask(nodeRef);
         } else if (isWorkflow(nodeTypeQName)) {
             deleteWorkflowTasks(nodeRef);
-        } else if (WorkflowCommonModel.Types.COMPOUND_WORKFLOW.equals(nodeTypeQName)) {
+        } else if (WorkflowCommonModel.Types.COMPOUND_WORKFLOW.equals(nodeTypeQName) || WorkflowCommonModel.Types.COMPOUND_WORKFLOW_DEFINITION.equals(nodeTypeQName)) {
             deleteCompoundWorkflowTasks(nodeRef);
         } else if (DocumentCommonModel.Types.DOCUMENT.equals(nodeTypeQName)) {
             deleteDocumentTasks(nodeRef);
@@ -1035,6 +1033,35 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
             }
         }
     }
+
+    @Override
+    public Set<NodeRef> getAllWorkflowsWithEmptyTasks() {
+        String sqlQuery = "SELECT task_id, workflow_id, store_id FROM delta_task " +
+                "WHERE workflow_id IS NOT NULL AND store_id IS NOT NULL AND wfc_owner_name IS NULL AND wfs_due_date IS NULL";
+        List<NodeRef> workflows = queryWorkflowNodeRefs(sqlQuery);
+        explainQuery(sqlQuery);
+        return new HashSet<NodeRef>(workflows);
+    }
+
+    @Override
+    public Set<NodeRef> getWorkflowsWithWrongTaskOrder() {
+        String sqlQuery = "select workflow_id, store_id from (" +
+                " select workflow_id, sum(max_index - min_index + 1) as task_ranged_count, sum(task_count) as task_count, max(task_type)  as task_type, " +
+                "max(store_id) as store_id from" +
+                " (select workflow_id, grouped_status, max(index_in_workflow) as max_index, min(index_in_workflow) as min_index, max(task_type) as task_type, " +
+                " max(store_id) as store_id, count(*) as task_count from " +
+                " (select *, case when wfc_status in ('teostamata', 'lõpetatud') then 'lõpetatud_grupp' else wfc_status end as grouped_status from delta_task) as tmp0" +
+                " where task_type NOT IN ('opinionTask', 'informationTask', 'assignmentTask', 'orderAssignmentTask') group by workflow_id, grouped_status" +
+                " order by workflow_id, max_index) as tmp group by workflow_id) as tmp1" +
+                " where task_ranged_count <> task_count";
+        List<NodeRef> workflows = queryWorkflowNodeRefs(sqlQuery);
+        explainQuery(sqlQuery);
+        return new HashSet<NodeRef>(workflows);
+    }
+
+    private List<NodeRef> queryWorkflowNodeRefs(String sqlQuery, Object... args) {
+        return jdbcTemplate.query(sqlQuery, new TaskParentNodeRefMapper(), args);
+    }  
 
     private boolean isWorkflow(QName type) {
         return dictionaryService.isSubClass(type, WorkflowCommonModel.Types.WORKFLOW);

@@ -51,6 +51,7 @@ import com.csvreader.CsvReader;
 import com.csvreader.CsvWriter;
 
 import ee.webmedia.alfresco.archivals.service.ArchivalsService;
+import ee.webmedia.alfresco.casefile.model.CaseFileModel;
 import ee.webmedia.alfresco.casefile.service.CaseFile;
 import ee.webmedia.alfresco.casefile.service.CaseFileService;
 import ee.webmedia.alfresco.cases.model.CaseModel;
@@ -439,7 +440,10 @@ public class StructureImporter {
         Date validFrom = getDate(reader, 19);
         NodeRef volume = null;
 
-        for (ChildAssociationRef assoc : nodeService.getChildAssocs(series, VolumeModel.Associations.VOLUME, VolumeModel.Associations.VOLUME)) {
+        List<ChildAssociationRef> existingVolumes = new ArrayList<ChildAssociationRef>();
+        existingVolumes.addAll(nodeService.getChildAssocs(series, VolumeModel.Associations.VOLUME, VolumeModel.Associations.VOLUME));
+        existingVolumes.addAll(nodeService.getChildAssocs(series, CaseFileModel.Assocs.CASE_FILE, CaseFileModel.Assocs.CASE_FILE));
+        for (ChildAssociationRef assoc : existingVolumes) {
             if (mark.equals(nodeService.getProperty(assoc.getChildRef(), VolumeModel.Props.MARK))
                     && title.equals(nodeService.getProperty(assoc.getChildRef(), VolumeModel.Props.TITLE))
                     && validFrom.equals(nodeService.getProperty(assoc.getChildRef(), VolumeModel.Props.VALID_FROM))) {
@@ -549,7 +553,11 @@ public class StructureImporter {
     }
 
     private void logVolume(CsvWriter writer, NodeRef volume, String url, String functionRef, String seriesRef) throws IOException {
-        writer.write("volume");
+        if (CaseFileModel.Types.CASE_FILE.equals(nodeService.getType(volume))) {
+            writer.write("caseFile");
+        } else {
+            writer.write("volume");
+        }
         writer.write(nodeService.getProperty(volume, VolumeModel.Props.VOLUME_MARK).toString());
         writer.write(nodeService.getProperty(volume, VolumeModel.Props.TITLE).toString());
         writer.write(url);

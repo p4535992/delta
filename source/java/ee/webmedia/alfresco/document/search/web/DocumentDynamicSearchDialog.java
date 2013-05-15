@@ -20,6 +20,7 @@ import java.util.Set;
 import javax.faces.component.UIInput;
 import javax.faces.component.html.HtmlSelectManyListbox;
 import javax.faces.context.FacesContext;
+import javax.faces.event.ActionEvent;
 import javax.faces.event.ValueChangeEvent;
 import javax.faces.model.SelectItem;
 
@@ -139,6 +140,7 @@ public class DocumentDynamicSearchDialog extends AbstractSearchFilterBlockBean<D
             searchableDocumentFieldDefinitions.add(createThesaurusField());
             setFilterDefaultValues(filter, searchableDocumentFieldDefinitions, defaultCheckedFields);
         }
+        setFilterCaseProps();
         getPropertySheetStateBean().reset(config.getStateHolders(), this);
     }
 
@@ -200,13 +202,21 @@ public class DocumentDynamicSearchDialog extends AbstractSearchFilterBlockBean<D
         @SuppressWarnings("unchecked")
         List<NodeRef> selectedStores = (List<NodeRef>) event.getNewValue();
         getNode().getProperties().put(SELECTED_STORES.toString(), selectedStores);
+    }
 
+    protected void resetDocumentLocationState() {
         for (PropertySheetStateHolder stateHolder : config.getStateHolders().values()) { // State holder key varies
             if (stateHolder instanceof DocumentLocationState) {
                 ((DocumentLocationState) stateHolder).reset(isInEditMode());
                 return;
             }
         }
+    }
+
+    @Override
+    public void saveFilter(ActionEvent event) {
+        super.saveFilter(event);
+        resetDocumentLocationState();
     }
 
     @Override

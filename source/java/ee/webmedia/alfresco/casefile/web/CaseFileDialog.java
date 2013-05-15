@@ -93,7 +93,7 @@ import ee.webmedia.alfresco.workflow.web.WorkflowBlockBean;
  * @author Kaarel Jõgeva
  */
 public class CaseFileDialog extends BaseSnapshotCapableWithBlocksDialog<CaseFileDialogSnapshot, DocumentDynamicBlock, DialogDataProvider> implements DialogDataProvider,
-BlockBeanProviderProvider {
+        BlockBeanProviderProvider {
     private static final long serialVersionUID = 1L;
     public static final String BEAN_NAME = "CaseFileDialog";
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(CaseFileDialog.class);
@@ -225,13 +225,12 @@ BlockBeanProviderProvider {
     }
 
     public void archiveCaseFile(@SuppressWarnings("unused") ActionEvent event) {
-        NodeRef archivedNodeRef = archiveCaseFile(getDocumentDialogHelperBean().getNode().getNodeRef());
-        openOrSwitchModeCommon(archivedNodeRef, isInEditMode());
+        archiveCaseFile(getDocumentDialogHelperBean().getNode().getNodeRef());
         MessageUtil.addInfoMessage("caseFile_archive_success");
     }
 
-    public NodeRef archiveCaseFile(NodeRef caseFileRef) {
-        return getArchivalsService().archiveVolumeOrCaseFile(caseFileRef);
+    public void archiveCaseFile(NodeRef caseFileRef) {
+        getArchivalsService().archiveVolumeOrCaseFile(caseFileRef);
     }
 
     // =========================================================================
@@ -262,7 +261,7 @@ BlockBeanProviderProvider {
             return cancel(false);
         }
 
-        if (!isInEditMode() || !getCurrentSnapshot().viewModeWasOpenedInThePast  || !canRestore()) {
+        if (!isInEditMode() || !getCurrentSnapshot().viewModeWasOpenedInThePast || !canRestore()) {
             getDocumentDynamicService().deleteDocumentIfDraft(getCaseFile().getNodeRef());
             return super.cancel(); // closeDialogSnapshot
         }
@@ -612,7 +611,7 @@ BlockBeanProviderProvider {
                                 if (currentSnapshot.sendDocNotifications) { // Confirmation about missing e-mails was asked after DocumentDynamicDialog finish button
                                     Pair<List<String>, List<SendInfo>> existingAndMissingEmails = getNotificationService().getExistingAndMissingEmails(
                                             getSendOutService().getDocumentSendInfos(savedDocumentRef));
-                                    documentDynamicDialog.notifyAccessRestrictionChanged(documentToAdd, existingAndMissingEmails.getFirst());
+                                    documentDynamicDialog.notifyAccessRestrictionChanged(documentToAdd, existingAndMissingEmails);
                                 }
                                 resetDocumentToAdd(currentSnapshot);
                                 documentDynamicDialog.switchMode(true);

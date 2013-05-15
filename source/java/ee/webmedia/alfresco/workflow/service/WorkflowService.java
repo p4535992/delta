@@ -105,6 +105,8 @@ public interface WorkflowService {
      * for compoundWorkflow.type=INDEPENDENT_WORKFLOW, CASE_FILE_WORKFLOW, count active responsible tasks in given compound workflow only
      */
     int getConnectedActiveResponsibleTasksCount(CompoundWorkflow compoundWorkflow, QName workflowType);
+    
+    int getConnectedActiveResponsibleTasksCount(CompoundWorkflow compoundWorkflow, QName workflowType, boolean allowFinished);
 
     /**
      * @param compoundWorkflow
@@ -329,5 +331,9 @@ public interface WorkflowService {
 
     /** Load compound workflow with only workflows of given types. For these workflows tasks are also loaded. */
     CompoundWorkflow getCompoundWorkflowOfType(NodeRef nodeRef, List<QName> types);
+
+    List<CompoundWorkflow> getOtherCompoundWorkflows(CompoundWorkflow compoundWorkflow);
+    
+    List<NodeRef> getCompoundWorkflowAndTaskNodeRefs(NodeRef parentRef);
 
 }

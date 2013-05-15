@@ -27,7 +27,7 @@
          <f:facet name="header">
             <a:sortLink id="col4-sort" label="#{msg.document_docType}" value="documentTypeName" styleClass="header" />
          </f:facet>
-         <a:actionLink id="col4-text-1" value="#{r.documentTypeName}" action="#{DocumentDialog.action}" tooltip="#{r.docName}"
+         <a:actionLink id="col4-text-1" value="#{r.documentTypeName}" action="#{DocumentDialog.action}" tooltip="#{r.documentTypeName}"
             actionListener="#{DocumentDialog.open}" styleClass="no-underline" >
             <f:param name="nodeRef" value="#{r.node.nodeRef}" />
          </a:actionLink>
@@ -53,7 +53,7 @@
          <f:facet name="header">
             <a:sortLink id="col5-sort" label="#{msg.document_sender_recipient}" value="senderOrRecipients" styleClass="header" />
          </f:facet>
-         <a:actionLink id="col5-text-1" value="#{r.sender}" action="#{DocumentDialog.action}" tooltip="#{r.docName}"
+         <a:actionLink id="col5-text-1" value="#{r.sender}" action="#{DocumentDialog.action}" tooltip="#{r.sender}"
             actionListener="#{DocumentDialog.open}" styleClass="condence20- tooltip no-underline" >
             <f:param name="nodeRef" value="#{r.node.nodeRef}" />
          </a:actionLink>
@@ -64,7 +64,7 @@
          <f:facet name="header">
             <a:sortLink id="col7-sort" label="#{msg.document_workflow_status}" value="workflowStatus" styleClass="header" />
          </f:facet>
-         <a:actionLink id="col7-text-1" value="#{r.workflowStatus}" action="#{DocumentDialog.action}" tooltip="#{r.docName}"
+         <a:actionLink id="col7-text-1" value="#{r.workflowStatus}" action="#{DocumentDialog.action}" tooltip="#{r.workflowStatus}"
             actionListener="#{DocumentDialog.open}" styleClass="no-underline" >
             <f:param name="nodeRef" value="#{r.node.nodeRef}" />
          </a:actionLink>

@@ -403,10 +403,45 @@
 
     <cache 
         name="org.alfresco.cache.personCache" 
-        maxElementsInMemory="1000"
+        maxElementsInMemory="10000"
         eternal="true"
         overflowToDisk="false">
     </cache>
+    
+    <cache 
+        name="org.alfresco.cache.personPropertiesCache" 
+        maxElementsInMemory="10000"
+        eternal="true"
+        overflowToDisk="false">
+    </cache> 
+    
+    <cache 
+        name="org.alfresco.cache.orgStructPropertiesCache" 
+        maxElementsInMemory="10000"
+        eternal="true"
+        overflowToDisk="false">
+    </cache>
+    
+    <cache 
+        name="org.alfresco.cache.propertyDefinitionCache" 
+        maxElementsInMemory="10000"
+        eternal="true"
+        overflowToDisk="false">
+    </cache>  
+    
+    <cache 
+        name="org.alfresco.cache.childAssocTypeQNameTreeCache" 
+        maxElementsInMemory="10000"
+        eternal="true"
+        overflowToDisk="false">
+    </cache> 
+    
+    <cache 
+        name="org.alfresco.cache.propertyDefinitionForSearchCache" 
+        maxElementsInMemory="10000"
+        eternal="true"
+        overflowToDisk="false">
+    </cache>    
 
     <cache 
         name="org.alfresco.cache.ticketsCache" 

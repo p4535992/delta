@@ -478,6 +478,21 @@
          </list>
       </property>
    </bean>
+   
+   <bean id="draftsPermissionsUpdater" class="ee.webmedia.alfresco.document.bootstrap.DraftsPermissionsUpdater" parent="module.baseComponent">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="documentDraftsSpacesBootstrap" />
+         </list>
+      </property>
+   </bean>   
+   
+   <bean id="favoritesDeletedDocumentsUpdater4" class="ee.webmedia.alfresco.document.bootstrap.FavoritesDeletedDocumentsUpdater" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+   </bean>    
 
    <bean id="fileMimetypeUpdater2" class="ee.webmedia.alfresco.document.bootstrap.FileMimetypeUpdater" parent="abstractNodeUpdater">
       <property name="moduleId" value="simdhs" />

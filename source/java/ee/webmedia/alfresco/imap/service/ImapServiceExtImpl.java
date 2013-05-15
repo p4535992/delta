@@ -661,8 +661,9 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
         }
         FileInfo createdFile = fileFolderService.create(
                 document,
-                generalService.getUniqueFileName(document, filename),
+                generalService.getUniqueFileName(document, FilenameUtil.makeSafeFilename(filename)),
                 ContentModel.TYPE_CONTENT);
+        nodeService.setProperty(createdFile.getNodeRef(), FileModel.Props.DISPLAY_NAME, filename);
         ContentWriter writer = fileFolderService.getWriter(createdFile.getNodeRef());
         writer.setMimetype(mimeType);
         writer.setEncoding(encoding);

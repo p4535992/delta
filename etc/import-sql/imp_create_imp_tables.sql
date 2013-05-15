@@ -127,7 +127,9 @@ procedure_id integer,
   child_applicant boolean,
   to_survey boolean,
   procedure_status character varying(50),
-  equality_of_treatment boolean);
+  equality_of_treatment boolean,
+  workflow_due_date timestamp with time zone,
+  keywords_string text);
 
 CREATE TABLE imp_compound_workflow (
 procedure_id integer,
@@ -286,3 +288,4 @@ INSERT INTO imp_error_code(error_code, error_desc) values('ERROR_42', 'Tööülesan
 INSERT INTO imp_error_code(error_code, error_desc) values('ERROR_43', 'Asjamenetluse „Võrdne kohtlemine“ ei ole tuvastatav. Failis d_lisavaljaVaartus.csv leidub rohkem kui üks sobivat väärtust');
 INSERT INTO imp_error_code(error_code, error_desc) values('ERROR_44', 'Terviktöövoos on rohkem kui 2 töövoogu, kuid tööülesanded tulemiga "Ei kinnitanud" puuduvad');
 INSERT INTO imp_error_code(error_code, error_desc) values('ERROR_45', 'Terviktöövoo seis ei vasta reeglile: lõpetatud töövooge 0..n, teostamisel töövooge 1, uus töövooge 0..n');
+INSERT INTO imp_error_code(error_code, error_desc) values('ERROR_46', 'Asjamenetluse „Märksõnad“ ei ole tuvastatav. Failis d_lisavaljaVaartus.csv leidub rohkem kui üks sobivat väärtust');

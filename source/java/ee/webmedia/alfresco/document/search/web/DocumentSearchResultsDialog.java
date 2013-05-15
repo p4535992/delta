@@ -143,40 +143,6 @@ public class DocumentSearchResultsDialog extends BaseDocumentListDialog {
         JspStateManagerImpl.ignoreCurrentViewSequenceHack();
     }
 
-    /** @param event */
-    public void exportEstonianPost(ActionEvent event) {
-        CSVExporter exporter = new CSVExporter(new EstonianPostExportDataReader());
-        exporter.setOrderInfo(0, false);
-        exporter.export("documentList");
-
-        // Erko hack for incorrect view id in the next request
-        JspStateManagerImpl.ignoreCurrentViewSequenceHack();
-    }
-
-    private class EstonianPostExportDataReader implements DataReader {
-        @Override
-        public List<String> getHeaderRow(UIRichList list, FacesContext fc) {
-            return Arrays.asList(MessageUtil.getMessage("document_send_mode"),
-                    MessageUtil.getMessage("document_regNumber"),
-                    MessageUtil.getMessage("document_search_export_recipient"));
-        }
-
-        @Override
-        public List<List<String>> getDataRows(UIRichList list, FacesContext fc) {
-            List<List<String>> data = new ArrayList<List<String>>();
-            while (list.isDataAvailable()) {
-                Document document = (Document) list.nextRow();
-                List<SendInfo> sendInfos = getSendOutService().getDocumentSendInfos(document.getNodeRef());
-                for (SendInfo sendInfo : sendInfos) {
-                    if (EP_EXPORT_SEND_MODES.contains(sendInfo.getSendMode().toString())) {
-                        data.add(Arrays.asList(sendInfo.getSendMode().toString(), document.getRegNumber(), sendInfo.getRecipient().toString()));
-                    }
-                }
-            }
-            return data;
-        }
-    }
-
     // TODO we need the richList instance
     /**
      * @param richList - partially preconfigured RichList from jsp

@@ -399,11 +399,14 @@ public class UIGenericPicker extends UICommand implements AjaxUpdateable {
         out.write("</td></tr>");
 
         int size = getSize();
-        if (size == BeanHelper.getParametersService().getLongParameter(Parameters.MAX_MODAL_SEARCH_RESULT_ROWS).intValue()) {
-            out.write("<tr><td>");
-            out.write(Utils.encode(MessageUtil.getMessage(MSG_MODAL_SEARCH_LIMITED, size)));
-            out.write("</td></tr>");
+        int resultRowLimit = BeanHelper.getParametersService().getLongParameter(Parameters.MAX_MODAL_SEARCH_RESULT_ROWS).intValue();
+        out.write("<tr><td class=\"modalResultsLimited");
+        if (size != resultRowLimit) {
+            out.write(" hidden");
         }
+        out.write("\">");
+        out.write(Utils.encode(MessageUtil.getMessage(MSG_MODAL_SEARCH_LIMITED, resultRowLimit)));
+        out.write("</td></tr>");
 
         // information row
         if (currentResults != null && getShowContains() == true) {
@@ -430,6 +433,7 @@ public class UIGenericPicker extends UICommand implements AjaxUpdateable {
         if (getMultiSelect() == true) {
             out.write(" multiple=\"multiple\"");
         }
+        out.write(" data-rowlimit=\"" + resultRowLimit + "\"");
         out.write(">");
 
         // results

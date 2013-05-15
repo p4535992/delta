@@ -62,6 +62,8 @@ String addAssocTooltip = MessageUtil.getMessage("docType_assocsList_add_"+follow
                <f:param name="confirmMessagePlaceholder0" value="#{DocTypeDetailsDialog.docType.nameAndId}"/>
                <f:param name="confirmMessagePlaceholder1" value="#{r.docTypeName}"/>
                <f:param name="confirmMessagePlaceholder2" value="#{r.docType}"/>
+               <f:param name="dialogsToClose" value="1"/>
+               <wm:param name="alreadyDeletedHandler" value='<%=getAssocsListBeanExpression(followUpOrReply,"doAfterDelete")%>' />
          </a:actionLink>
       </a:column>
 

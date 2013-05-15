@@ -192,6 +192,12 @@
       <property name="transactionService" ref="TransactionService" />
    </bean>
 
+   <bean id="invalidShortRegNumberUpdater" class="ee.webmedia.alfresco.docdynamic.bootstrap.InvalidShortRegNumberUpdater" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="enabled" value="false" /><!-- Executed manually from node-browser -->
+   </bean>   
+
    <!-- START: web beans: -->
 
    <bean id="DocumentDynamicDialog" class="ee.webmedia.alfresco.docdynamic.web.DocumentDynamicDialog" scope="session" />

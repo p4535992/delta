@@ -357,6 +357,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
 
         // Set document content's MIME type and encoding from template
         replaceFormulas(documentNodeRef, nodeRef, existingGeneratedFile, templateFilename);
+        generalService.setModifiedToNow(documentNodeRef);
         return displayName;
     }
 
@@ -492,7 +493,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
                 }
             }
             if (sb.length() > 0) {
-                sb.insert(0, "<table cellspacing=\"0\" cellpadding=\"0\" border=\"0\">");
+                sb.insert(0, "<table cellspacing=\"0\" cellpadding=\"5\" border=\"0\">");
                 sb.append("</table>");
                 templateText = templateText.replaceAll("\\{accessRestrEndDateNotificationData\\}", sb.toString());
             }
@@ -508,7 +509,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
                 }
             }
             if (sb.length() > 0) {
-                sb.insert(0, "<table cellspacing=\"0\" cellpadding=\"0\" border=\"0\">");
+                sb.insert(0, "<table cellspacing=\"0\" cellpadding=\"5\" border=\"0\">");
                 sb.append("</table>");
                 templateText = templateText.replaceAll("\\{accessRestrNoEndDateNotificationData\\}", sb.toString());
             }

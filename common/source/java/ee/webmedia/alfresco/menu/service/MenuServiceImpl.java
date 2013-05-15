@@ -137,12 +137,41 @@ public class MenuServiceImpl implements MenuService, InitializingBean {
             xstream.processAnnotations(MenuItem.class);
             xstream.processAnnotations(DropdownMenuItem.class);
             Menu loadedMenu = (Menu) xstream.fromXML(resource.getInputStream());
+
+            logMenu(loadedMenu, "After xml load: ");
             process(loadedMenu, true);
             menu = loadedMenu; // this is performed here at the end, atomically
+            logMenu(menu, "After xml load and process: ");
 
         } catch (IOException e) {
             log.error("Menu configuration loading failed: " + menuConfigLocation, e);
             throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public void logMenu(Menu loadedMenu, String logPrefix) {
+        if (loadedMenu.getSubItems() != null && loadedMenu.getSubItems().size() > 0) {
+            MenuItem menuItem = loadedMenu.getSubItems().get(0);
+            String titleId = menuItem.getTitleId();
+            if ("menu_my_tasks_and_documents".equals(titleId)) {
+                if (menuItem.getSubItems() != null && menuItem.getSubItems().size() > 0) {
+                    MenuItem subMenuItem = menuItem.getSubItems().get(0);
+                    String subMenuItemId = subMenuItem.getId();
+                    if (!"menu_my_tasks".equals(subMenuItemId)) {
+                        log.debug(logPrefix + "Menu error; item menu_my_tasks_and_documents submenu first child id=" + subMenuItemId);
+                    } else {
+                        List<MenuItem> submenuItems = subMenuItem.getSubItems();
+                        if (submenuItems == null || submenuItems.size() == 0) {
+                            log.debug(logPrefix + "Menu error; item menu_my_tasks_and_documents submenu menu_my_tasks subitems is null or empty");
+                        } else {
+                            log.debug(logPrefix + "Loading menu_my_tasks with " + submenuItems.size() + " subitems");
+                        }
+                    }
+                } else {
+                    log.debug(logPrefix + "Menu error; item menu_my_tasks_and_documents submenu is empty");
+                }
+            }
         }
     }
 

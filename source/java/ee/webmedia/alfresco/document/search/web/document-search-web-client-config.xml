@@ -12,6 +12,7 @@
            <action-group id="document_search_actions">
                <action idref="document_search_export_csv"/>
            </action-group>
+           
        </actions>
       <dialogs>
          <dialog name="documentDynamicSearchDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/document/search/web/document-dynamic-search-dialog.jsp" managed-bean="DocumentDynamicSearchDialog"

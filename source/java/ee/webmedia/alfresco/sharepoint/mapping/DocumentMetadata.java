@@ -4,6 +4,7 @@ import static org.apache.commons.lang.StringUtils.trimToNull;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedHashSet;
@@ -16,6 +17,7 @@ import org.alfresco.service.namespace.QName;
 import org.apache.commons.lang.StringUtils;
 import org.dom4j.Element;
 
+import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.sharepoint.DocumentImporter.DocumentHistory;
 import ee.webmedia.alfresco.sharepoint.DocumentImporter.VolumeCase;
@@ -48,6 +50,10 @@ public abstract class DocumentMetadata {
     protected String modifier;
 
     protected Date modified;
+
+    protected String additionalRegDateTime;
+
+    protected String overwriteDocStatus;
 
     protected List<ImportFile> files = new ArrayList<ImportFile>(1);
 
@@ -109,6 +115,14 @@ public abstract class DocumentMetadata {
 
     public String getModifier() {
         return modifier;
+    }
+
+    public String getAdditionalRegDateTime() {
+        return additionalRegDateTime;
+    }
+
+    public String getOverwriteDocStatus() {
+        return overwriteDocStatus;
     }
 
     public List<ImportFile> getFiles() {
@@ -199,6 +213,22 @@ public abstract class DocumentMetadata {
             created = ImportUtil.getDateTime(form.elementTextTrim("Create_Time"));
             modified = ImportUtil.getDateTime(form.elementTextTrim("Edit_Time"));
 
+            List<String> additionalRegDateTimeMappingsFrom = Arrays.asList("Doc_date", "Document_date");
+            for (String fromElement : additionalRegDateTimeMappingsFrom) {
+                additionalRegDateTime = trimToNull(form.elementTextTrim(fromElement));
+                if (additionalRegDateTime != null) {
+                    break;
+                }
+            }
+
+            if (("Keerukas saadetav".equals(documentType) || "Keerukas laekunud".equals(documentType))
+                    && StringUtils.isNotBlank(trimToNull(form.elementTextTrim("Answer_deadline")))
+                    && StringUtils.isBlank(trimToNull(form.elementTextTrim("Answer_date")))
+                    && form.element("Requested_answer_type") != null
+                    && StringUtils.isNotBlank(trimToNull(form.element("Requested_answer_type").elementTextTrim("classifier_id")))) {
+                overwriteDocStatus = DocumentStatus.WORKING.getValueName();
+            }
+
             List<DocumentHistory> tmpHistory = new ArrayList<DocumentHistory>();
 
             if (form.element("HistoryList") != null) {
@@ -229,21 +259,37 @@ public abstract class DocumentMetadata {
             modifier = !tmpHistory.isEmpty() ? tmpHistory.get(tmpHistory.size() - 1).getCreator() : null;
             history = tmpHistory;
 
-            Element fileElem = form.element("Original_file");
-            if (fileElem == null) {
-                fileElem = form.element("File");
-            }
-
-            if (fileElem != null) {
-                File file = new File(dirFiles, fileElem.attributeValue("guid_name"));
-                if (!file.exists()) {
-                    file = new File(dirFiles, fileElem.attributeValue("guid_name").toLowerCase());
-                    if (!file.exists()) {
-                        file = new File(dirFiles, fileElem.attributeValue("guid_name").toUpperCase());
-                    }
+            for (String elementName : Arrays.asList("Original_file", "File", "Answer_file", "Related_file1", "Related_file2")) {
+                for (Element fileElem : (List<Element>) form.elements(elementName)) {
+                    String filename = fileElem.attributeValue("guid_name");
+                    String title = fileElem.attributeValue("filename");
+                    addFile(dirFiles, title, filename);
                 }
-                files.add(new ImportFile(fileElem.attributeValue("filename"), file, created, creator, modified, modifier));
             }
+            addFiles(dirFiles, form, "SignatureList/SignatureContainer/ContainerGuidName", "ContainerFileName");
+            addFiles(dirFiles, form, "ItemFiles/ItemFileList/ItemFile/GuidNameExp", "Name");
+        }
+
+        private void addFiles(File dirFiles, Element form, String xpath, String titleElementName) {
+            for (Element fileGuidElem : (List<Element>) form.selectNodes(xpath)) {
+                String filename = fileGuidElem.getTextTrim();
+                String title = fileGuidElem.getParent().elementTextTrim(titleElementName);
+                addFile(dirFiles, title, filename);
+            }
+        }
+
+        private void addFile(File dirFiles, String title, String filename) {
+            if (StringUtils.isBlank(filename)) {
+                return;
+            }
+            File file = new File(dirFiles, filename);
+            if (!file.exists()) {
+                file = new File(dirFiles, filename.toLowerCase());
+                if (!file.exists()) {
+                    file = new File(dirFiles, filename.toUpperCase());
+                }
+            }
+            files.add(new ImportFile(title, file, created, creator, modified, modifier));
         }
 
         @Override

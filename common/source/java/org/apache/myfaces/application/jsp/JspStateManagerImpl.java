@@ -18,6 +18,8 @@
  */
 package org.apache.myfaces.application.jsp;
 
+import static ee.webmedia.alfresco.common.ajax.AjaxBean.AJAX_REQUEST_PARAM;
+
 import org.apache.commons.collections.map.ReferenceMap;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
@@ -28,6 +30,9 @@ import org.apache.myfaces.application.TreeStructureManager;
 import org.apache.myfaces.renderkit.MyfacesResponseStateManager;
 import org.apache.myfaces.shared_impl.renderkit.ViewSequenceUtils;
 import org.apache.myfaces.shared_impl.util.MyFacesObjectInputStream;
+
+import ee.webmedia.alfresco.common.ajax.AjaxBean;
+import ee.webmedia.alfresco.common.ajax.AjaxIllegalViewStateException;
 
 import javax.faces.FactoryFinder;
 import javax.faces.application.StateManager;
@@ -509,6 +514,10 @@ public class JspStateManagerImpl
                             viewId = correctViewId;
                         }
 
+                        if (requestMap.containsKey(AJAX_REQUEST_PARAM) && Boolean.TRUE.equals(requestMap.get(AJAX_REQUEST_PARAM))) {
+                            throw new AjaxIllegalViewStateException(correctViewId);
+                        }
+                        
                         context.renderResponse();
                         requestMap.put(BROWSER_REFRESH_OR_INCORRECT_VIEW_STATE_ATTR, Boolean.TRUE);
                     }

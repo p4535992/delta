@@ -334,7 +334,9 @@ public class LogServiceImpl implements LogService, InitializingBean {
 
         q.append(" ORDER BY created_date_time ASC");
         String query = q.toString();
+        Long logQueryStart = System.currentTimeMillis();
         List<LogEntry> results = jdbcTemplate.query(query, new LogRowMapper(), values);
+        LOG.info("Log entry query duration: " + (System.currentTimeMillis() - logQueryStart));
         explainQuery(query, values);
         return results;
     }

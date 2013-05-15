@@ -242,12 +242,23 @@ public class KeywordsGenerator extends BaseSystematicFieldGenerator {
                 hierarchy.put(thesaurusName, thesaurusKeywords);
             }
             List<SelectItem> selectItems = new ArrayList<SelectItem>(thesaurusKeywords.size());
+            boolean componentValueFound = false;
+            String firstLevelValue = (String) getFirstLevelKeywordVb(context, selectComponent).getValue(context);
             for (String keywordLevel1 : thesaurusKeywords.keySet()) {
                 selectItems.add(new SelectItem(keywordLevel1, keywordLevel1));
+                if (StringUtils.equalsIgnoreCase(keywordLevel1, firstLevelValue)) {
+                    componentValueFound = true;
+                }
             }
             if (selectItems.isEmpty()) {
+                if (StringUtils.isNotBlank(firstLevelValue)) {
+                    selectItems.add(new SelectItem(firstLevelValue, firstLevelValue));
+                }
                 ComponentUtil.getAttributes(selectComponent).put("title", MessageUtil.getMessage("thesaurus_empty"));
             } else {
+                if (!componentValueFound && StringUtils.isNotBlank(firstLevelValue)) {
+                    selectItems.add(0, new SelectItem(firstLevelValue, firstLevelValue));
+                }
                 ComponentUtil.addDefault(selectItems, context);
             }
             WebUtil.sort(selectItems);
@@ -264,17 +275,24 @@ public class KeywordsGenerator extends BaseSystematicFieldGenerator {
             String selectedThesaurus = StringUtils.isNotBlank(defaultThesaurusName) ? defaultThesaurusName : getSelectedThesaurus(context, selectComponent);
             List<String> level2List = hierarchy.get(selectedThesaurus).get(firstLevelKeyword);
             List<SelectItem> selectItems = new ArrayList<SelectItem>(level2List == null ? 1 : level2List.size());
+            String secondLevelValue = (String) getSecondLevelKeywordVb(context, selectComponent).getValue(context);
             if (level2List != null) {
+                boolean componentValueFound = false;
                 for (String keywordLevel2 : level2List) {
                     selectItems.add(new SelectItem(keywordLevel2, keywordLevel2));
+                    if (StringUtils.equalsIgnoreCase(keywordLevel2, secondLevelValue)) {
+                        componentValueFound = true;
+                    }
+                }
+                if (!componentValueFound && StringUtils.isNotBlank(secondLevelValue)) {
+                    selectItems.add(0, new SelectItem(secondLevelValue, secondLevelValue));
                 }
                 if (!selectItems.isEmpty()) {
                     ComponentUtil.addDefault(selectItems, context);
                 }
                 WebUtil.sort(selectItems);
             } else {
-                String value = (String) getSecondLevelKeywordVb(context, selectComponent).getValue(context);
-                selectItems.add(new SelectItem(value, value));
+                selectItems.add(new SelectItem(secondLevelValue, secondLevelValue));
             }
             return selectItems;
         }

@@ -107,6 +107,10 @@ public class DocAssocInfo implements Serializable, Comparable<DocAssocInfo> {
         return DocumentCommonModel.Assocs.DOCUMENT_2_DOCUMENT.equals(assocTypeQName);
     }
 
+    public boolean isFollowUpOrReplyAssoc() {
+        return DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP.equals(assocTypeQName) || DocumentCommonModel.Assocs.DOCUMENT_REPLY.equals(assocTypeQName);
+    }
+
     public void setCaseFileVolume(boolean isCaseFileVolume) {
         this.isCaseFileVolume = isCaseFileVolume;
     }

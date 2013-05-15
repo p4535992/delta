@@ -2,6 +2,7 @@ package ee.webmedia.alfresco.testdata;
 
 import static ee.webmedia.alfresco.addressbook.model.AddressbookModel.URI;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getAddressbookService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getAuthorityService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getCaseFileService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getCaseService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getClassificatorService;
@@ -11,13 +12,16 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentConfigServic
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDynamicService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentListService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getFileFolderService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getFileService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getFunctionsService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getGeneralService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getMimetypeService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getNamespaceService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getNodeService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getOrganizationStructureService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getPermissionService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getPersonService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getPrivilegeService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getRegisterService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getSeriesService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getSubstituteService;
@@ -27,7 +31,7 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getVolumeService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getWorkflowService;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.FILE_CONTENTS;
 import static ee.webmedia.alfresco.privilege.service.PrivilegeUtil.getPrivsWithDependencies;
-import static ee.webmedia.alfresco.privilege.service.PrivilegeUtil.getRequiredPrivsForInprogressTask;
+import static ee.webmedia.alfresco.privilege.service.PrivilegeUtil.getRequiredPrivsForTask;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -52,6 +56,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -70,12 +75,14 @@ import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
 import org.alfresco.repo.transaction.RetryingTransactionHelper;
 import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
+import org.alfresco.service.cmr.dictionary.DataTypeDefinition;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.ContentData;
 import org.alfresco.service.cmr.repository.ContentIOException;
 import org.alfresco.service.cmr.repository.ContentReader;
 import org.alfresco.service.cmr.repository.ContentWriter;
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.cmr.security.AccessPermission;
 import org.alfresco.service.cmr.security.AuthorityService;
 import org.alfresco.service.cmr.security.AuthorityType;
 import org.alfresco.service.namespace.NamespaceService;
@@ -255,6 +262,9 @@ public class TestDataService implements SaveListener {
     private List<Pair<String, String>> functionMarksAndTitles;
     private List<Pair<String, String>> seriesMarksAndTitles;
     private List<Pair<String, String>> volumesMarksAndTitles;
+    private List<String> groupNames;
+    private List<String> groupLevel1Names;
+    private List<String> groupLevel2Names;
     private List<Integer> registerIds;
     private Set<NodeRef> functions;
     private List<NodeRef> functionsList;
@@ -285,22 +295,22 @@ public class TestDataService implements SaveListener {
 
     private final FastDateFormat dateFormat = FastDateFormat.getInstance("dd.MM.yyyy");
 
-    private int orgUnitsCount = 478;
-    private int usersCount = 5900;
-    private int contactsCount = 2000;
-    private int registersCount = 200;
-    private int functionsCount = 49;
-    private int seriesCount = 503;
-    private int volumesCount = 5000;
+    private int orgUnitsCount = 466;
+    private int usersCount = 5905;
+    private int contactsCount = 2057;
+    private int registersCount = 203;
+    private int functionsCount = 40;
+    private int seriesCount = 370;
+    private int volumesCount = 1436;
     private int caseFilesCount = 0;
     private int closedCaseFilesCount = 0;
-    private int casesCount = 500;
-    private int documentsCount = 1714500;
+    private int casesCount = 2057;
+    private int documentsCount = 700000; // 1076040 would be max in SpacesStore in 2y2m
     private int independentWorkflowsCount = 0;
     private int finishedIndependentWorkflowsCount = 0;
     private int maxDocumentsInIndependentWorkflow = 0;
     private boolean documentWorkflowsEnabled = true;
-    private boolean caseFileWorkflowsEnabled = true;
+    private boolean caseFileWorkflowsEnabled = false;
     private boolean filesEnabled = true;
     private int documentAndWorkflowGeneratorThreads = 1;
 
@@ -329,6 +339,7 @@ public class TestDataService implements SaveListener {
         if (usersCount > 0) {
             createSubstitutes();
         }
+        createGroups();
         createContacts(contactsCount);
         createRegisters(registersCount, documentsCount, seriesCount);
         createFunctions(functionsCount);
@@ -1011,8 +1022,9 @@ public class TestDataService implements SaveListener {
     private void createSeries(int count) {
         Random registersRandom = new Random();
         Random functionsRandom = new Random();
+        Random groupLevel2Random = new Random();
 
-        List<DocumentType> documentTypes = getDocumentAdminService().getDocumentTypes(DocumentAdminService.DONT_INCLUDE_CHILDREN);
+        List<DocumentType> documentTypes = getDocumentAdminService().getDocumentTypes(DocumentAdminService.DONT_INCLUDE_CHILDREN, true);
         for (Iterator<DocumentType> i = documentTypes.iterator(); i.hasNext();) {
             DocumentType docType = i.next();
             if (SystematicDocumentType.INCOMING_LETTER.isSameType(docType.getId()) || SystematicDocumentType.OUTGOING_LETTER.isSameType(docType.getId())) {
@@ -1059,18 +1071,19 @@ public class TestDataService implements SaveListener {
             checkStop();
             Pair<String, String> entry = i.next();
             i.remove();
-            createSerie(entry, count, documentTypes, docTypesCountRandom, functionsRandom, registersRandom);
+            createSerie(entry, count, documentTypes, docTypesCountRandom, functionsRandom, registersRandom, groupLevel2Random);
         }
         while (series.size() < count) {
             checkStop();
-            createSerie(getRandom(seriesMarksAndTitles), count, documentTypes, docTypesCountRandom, functionsRandom, registersRandom);
+            createSerie(getRandom(seriesMarksAndTitles), count, documentTypes, docTypesCountRandom, functionsRandom, registersRandom, groupLevel2Random);
         }
         log.info("There are " + series.size() + " series; goal was " + count + " series");
         seriesWithCaseFilesList = new ArrayList<SerieVO>(seriesWithCaseFiles);
         Collections.shuffle(seriesWithAnnualOrSubjectVolTypeList);
     }
 
-    private void createSerie(Pair<String, String> entry, int count, List<DocumentType> documentTypes, Random docTypesCountRandom, Random functionsRandom, Random registersRandom) {
+    private void createSerie(Pair<String, String> entry, int count, List<DocumentType> documentTypes, Random docTypesCountRandom, Random functionsRandom, Random registersRandom,
+            Random groupLevel2Random) {
         String mark = entry.getFirst();
         String title = entry.getSecond();
 
@@ -1170,11 +1183,80 @@ public class TestDataService implements SaveListener {
         if (volType.contains(VolumeType.ANNUAL_FILE.name()) || volType.contains(VolumeType.SUBJECT_FILE.name())) {
             seriesWithAnnualOrSubjectVolTypeList.add(newSerie);
         }
+
+        // dok.halduritele lisada 2 priv alati
+        // 20'st sarjast:
+        // 11 sarjal * (3-4 II taseme gruppi; 2 priv oli niipaljudel gruppidel: 1,1,3,1,2,1,1,2,1,1,2)
+        // 2 sarjal * (5-6 II taseme gruppi; 2 priv oli niipaljudel gruppidel: 1)
+        // 1 sarjal * (4 I taseme gruppi, kõik 2 priv)
+        // 6 sarjal * (4 I taseme gruppi, kõik 1 priv) + (10 II taseme gruppi, 20% 2 priv (niipaljudel gruppidel 2,2,2,2,2,1,3))
+
+        NodeRef seriesRef = serie.getNode().getNodeRef();
+        getPrivilegeService().setPermissions(seriesRef, getUserService().getDocumentManagersGroup(), priv2);
+
+        double r = Math.random();
+        if (r <= 0.55d) {
+            int groupCount = ((int) (Math.random() * 2)) + 3; // 3 - 4
+            int priv2Count;
+            double r2 = Math.random();
+            if (r2 < 0.64d) {
+                priv2Count = 1;
+            } else if (r2 < 0.90d) {
+                priv2Count = 2;
+            } else {
+                priv2Count = 3;
+            }
+            for (int i = 0; i < groupCount; i++) {
+                String auth = getRandomGaussian2(groupLevel2Names, groupLevel2Random);
+                getPrivilegeService().setPermissions(seriesRef, auth, i + 1 <= priv2Count ? priv2 : priv1);
+            }
+        } else if (r <= 0.65d) {
+            int groupCount = ((int) (Math.random() * 2)) + 5; // 5 - 6
+            int priv2Count;
+            double r2 = Math.random();
+            if (r2 < 0.40d) {
+                priv2Count = 1;
+            } else if (r2 < 0.72d) {
+                priv2Count = 2;
+            } else if (r2 < 0.92d) {
+                priv2Count = 2;
+            } else {
+                priv2Count = 3;
+            }
+            for (int i = 0; i < groupCount; i++) {
+                String auth = getRandomGaussian2(groupLevel2Names, groupLevel2Random);
+                getPrivilegeService().setPermissions(seriesRef, auth, i + 1 <= priv2Count ? priv2 : priv1);
+            }
+        } else if (r <= 0.70d) {
+            for (int i = 0; i < Math.min(4, groupLevel1Names.size() - 1); i++) {
+                getPrivilegeService().setPermissions(seriesRef, groupLevel1Names.get(i), priv2);
+            }
+        } else {
+            List<String> groupLevel2NamesCopy = new ArrayList<String>(groupLevel2Names);
+            for (int i = 0; i < Math.min(4, groupLevel1Names.size() - 1); i++) {
+                getPrivilegeService().setPermissions(seriesRef, groupLevel1Names.get(i), priv1);
+                for (Iterator<String> it = groupLevel2NamesCopy.iterator(); it.hasNext();) {
+                    String groupLevel2Name = it.next();
+                    if (groupLevel2Name.startsWith(groupLevel1Names.get(i) + ",")) {
+                        it.remove();
+                    }
+                }
+            }
+            Collections.shuffle(groupLevel2NamesCopy);
+            for (int i = 0; i < Math.min(10, groupLevel2NamesCopy.size()); i++) {
+                getPrivilegeService().setPermissions(seriesRef, groupLevel2NamesCopy.get(i), Math.random() <= 0.2d ? priv2 : priv1);
+            }
+        }
+
         log.info("Created series " + mark + " " + title);
     }
 
+    private final Set<String> priv1 = new HashSet<String>(Arrays.asList(DocumentCommonModel.Privileges.VIEW_DOCUMENT_FILES));
+    private final Set<String> priv2 = new HashSet<String>(Arrays.asList(DocumentCommonModel.Privileges.VIEW_DOCUMENT_FILES, DocumentCommonModel.Privileges.EDIT_DOCUMENT));
+
     private void createVolumes(int count) {
         Random seriesRandom = new Random();
+        Random volumePrivilegesRandom = new Random();
 
         List<Pair<String, String>> copy = new ArrayList<Pair<String, String>>(volumesMarksAndTitles);
         volumes = new HashSet<NodeRef>();
@@ -1209,11 +1291,11 @@ public class TestDataService implements SaveListener {
             checkStop();
             Pair<String, String> entry = i.next();
             i.remove();
-            createVolume(entry, count, seriesRandom);
+            createVolume(entry, count, seriesRandom, volumePrivilegesRandom.nextDouble() >= 0.77d);
         }
         while (volumes.size() < count) {
             checkStop();
-            createVolume(getRandom(volumesMarksAndTitles), count, seriesRandom);
+            createVolume(getRandom(volumesMarksAndTitles), count, seriesRandom, volumePrivilegesRandom.nextDouble() >= 0.77d);
         }
         log.info("There are " + volumes.size() + " volumes; goal was " + count + " volumes");
         Collections.shuffle(volumesWithCases);
@@ -1264,7 +1346,7 @@ public class TestDataService implements SaveListener {
         log.info("There are " + caseFiles.size() + " case files; goal was " + count + " case files");
     }
 
-    private void createVolume(Pair<String, String> entry, int count, Random seriesRandom) {
+    private void createVolume(Pair<String, String> entry, int count, Random seriesRandom, boolean addPrivileges) {
         String mark = entry.getFirst();
         String title = entry.getSecond();
 
@@ -1294,6 +1376,24 @@ public class TestDataService implements SaveListener {
         }
         docLocations.add(new DocumentLocationVO(serie, volumeRef));
         seriesByVolumeRef.put(volumeRef, serie);
+
+        if (addPrivileges) {
+            List<String> groupLevel2NamesCopy = new ArrayList<String>(groupLevel2Names);
+            for (AccessPermission permission : getPermissionService().getAllSetPermissions(serie.getSeriesRef())) {
+                for (Iterator<String> it = groupLevel2NamesCopy.iterator(); it.hasNext();) {
+                    String groupLevel2Name = it.next();
+                    if (groupLevel2Name.startsWith(permission.getAuthority() + ",")) {
+                        it.remove();
+                    }
+                }
+            }
+            int privCount = ((int) (Math.random() * 8)) + 3; // 3 - 10
+            privCount = Math.min(privCount, groupLevel2NamesCopy.size());
+            for (int i = 0; i < privCount; i++) {
+                getPrivilegeService().setPermissions(volumeRef, getRandom(groupLevel2NamesCopy), Math.random() <= 0.2d ? priv2 : priv1);
+            }
+        }
+
         log.info("Created volume " + mark + " " + title);
     }
 
@@ -1437,6 +1537,28 @@ public class TestDataService implements SaveListener {
         cases.add(caseRef);
         docLocations.add(new DocumentLocationVO(seriesByVolumeRef.get(volumeRef), volumeRef, caseRef));
         log.info("Created case " + title);
+    }
+
+    private void createGroups() {
+        checkStop();
+        log.info("Updating organization structure based groups");
+        getOrganizationStructureService().updateOrganisationStructureBasedGroups();
+        checkStop();
+        log.info("Loading groups");
+        Set<String> groups = getAuthorityService().getAllAuthorities(AuthorityType.GROUP);
+        groups.removeAll(BeanHelper.getUserService().getSystematicGroups());
+        groupNames = new ArrayList<String>(groups);
+        groupLevel1Names = new ArrayList<String>();
+        groupLevel2Names = new ArrayList<String>();
+        for (String groupName : groupNames) {
+            int groupLevel = StringUtils.split(groupName, ',').length;
+            if (groupLevel == 1) {
+                groupLevel1Names.add(groupName);
+            } else if (groupLevel == 2) {
+                groupLevel2Names.add(groupName);
+            }
+        }
+        log.info("There are " + groupNames.size() + " groups (" + groupLevel1Names.size() + " first level groups, " + groupLevel2Names.size() + " second level groups)");
     }
 
     private void createContacts(int count) {
@@ -1648,15 +1770,14 @@ public class TestDataService implements SaveListener {
         ArrayList<String> fileTitles = new ArrayList<String>();
         ContentWriter allWriter = null;
         int filesCount = 0;
-        if (isFilesEnabled()) {
-            double r = Math.random() * 5d;
-            if (r > 4.5d) {
-                filesCount = (int) ((Math.random() * 30) + 5);
-                if (filesCount > 31) {
-                    filesCount = (int) ((Math.random() * 30) + 32);
-                }
-            } else if (r > 1) {
-                filesCount = ((int) r) - 1;
+        double r = Math.random(); // 0×0,5+1×0,4+4,5×0,0995+45×0,0005 = 0,87
+        if (isFilesEnabled() && r >= 0.5d) {
+            if (r < 0.9d) {
+                filesCount = 1;
+            } else if (r < 0.9995) {
+                filesCount = ((int) (Math.random() * 9)) + 2; // 2 - 10
+            } else {
+                filesCount = ((int) (Math.random() * 90)) + 11; // 11 - 100
             }
             Map<QName, Serializable> userProps = getUserData(getUserService().getCurrentUserName()).getSecond();
             allWriter = BeanHelper.getContentService().getWriter(docRef, FILE_CONTENTS, false);
@@ -1678,8 +1799,17 @@ public class TestDataService implements SaveListener {
         getDocumentDynamicService().updateDocument(doc, Arrays.asList("TestDataService"), false, true);
 
         // ASSOCS
-        Random assocsRandom = new Random();
-        int assocsCount = (docs.isEmpty() || Math.random() > 0.4d) ? 0 : Math.abs(getRandomGaussian2(assocsRandom, 16) - 8);
+        int assocsCount = 0;
+        if (!docs.isEmpty()) { // 0,001×45+0,01×4,5+0,25×1 = 0,34
+            r = Math.random();
+            if (r <= 0.25d) {
+                assocsCount = 1;
+            } else if (r <= 0.26d) {
+                assocsCount = ((int) (Math.random() * 9)) + 2; // 2 - 10
+            } else if (r <= 0.261d) {
+                assocsCount = ((int) (Math.random() * 90)) + 11; // 11 - 100
+            }
+        }
         Set<NodeRef> assocOtherDocRefs = new HashSet<NodeRef>();
         for (int i = 0; i < assocsCount; i++) {
             QName assocQName = DocumentCommonModel.Assocs.DOCUMENT_2_DOCUMENT;
@@ -1703,10 +1833,10 @@ public class TestDataService implements SaveListener {
             int compoundWorkflowCount = getCompoundWorkflowCount(workflowRandom);
             if (compoundWorkflowCount > 0) {
                 boolean inProgress = !isRegistered;
-                // 10% registreerimata, neist 56% omab töövoogu, seega kokku 5,6%, aga see on teostamisel
-                // aga tahame et 1000 dokumenti 6000 kasutaja kohta oleksid registreerimiseks menüüpunktis
-                // 1714500 dokist 96012 dokki on regamata, aga teostamisel töövooga, seega 1,04% neist tahame lõpetada
-                if (inProgress && Math.random() < 0.0105d) {
+                // 10% registreerimata, neist 95% omab töövoogu, seega kokku 9,5%, aga see on teostamisel
+                // aga tahame et 1000 dokumenti oleksid registreerimiseks menüüpunktis
+                // 1714500 dokist 162878 dokki on regamata, aga teostamisel töövooga, seega 0,61% neist tahame lõpetada
+                if (inProgress && Math.random() < 0.0062d) {
                     inProgress = false;
                 }
 
@@ -1720,7 +1850,14 @@ public class TestDataService implements SaveListener {
         // How many documents match recipientFinishedDocuments query (are finished && have recipientName/additionalRecipientName/partyName field, that is non-empty)
         // depends on documentTypes.xml that is used. In case of our sample documentTypes.xml, 34% of generated documents match
         // 34% of 1 700 000 is 578 000; 100 of 578 000 is 0.0002
-        if (Math.random() > 0.0002d) {
+        @SuppressWarnings("unchecked")
+        List<String> recipientName = (List<String>) doc.getProp(DocumentCommonModel.Props.RECIPIENT_NAME);
+        @SuppressWarnings("unchecked")
+        List<String> additionalRecipientName = (List<String>) doc.getProp(DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME);
+        if (DocumentStatus.FINISHED.getValueName().equals(doc.getProp(DocumentCommonModel.Props.DOC_STATUS))
+                        && ((recipientName != null && !recipientName.isEmpty()) || (additionalRecipientName != null && !additionalRecipientName.isEmpty()))
+                        && Math.random() > 0.0002d) {
+
             Map<QName, Serializable> sendInfoProps = new HashMap<QName, Serializable>();
             sendInfoProps.put(DocumentCommonModel.Props.SEND_INFO_RESOLUTION, getRandom(docTitles));
             sendInfoProps.put(DocumentCommonModel.Props.SEND_INFO_RECIPIENT, getRandom(contacts));
@@ -1742,17 +1879,13 @@ public class TestDataService implements SaveListener {
         return Pair.newInstance(docRef, docTypeId + ", " + regNumber + ", " + filesCount + " files, " + assocOtherDocRefs.size() + " assocs, " + allTaskCount + " tasks");
     }
 
-    public int getCompoundWorkflowCount(Random compoundWorkflowRandom) {
+    private int getCompoundWorkflowCount(Random compoundWorkflowRandom) {
         int compoundWorkflowCount;
         double workflowRandom = compoundWorkflowRandom.nextDouble();
-        if (workflowRandom < 0.44d) {
+        if (workflowRandom < 0.25d) {
             compoundWorkflowCount = 0;
-        } else if (workflowRandom >= 0.44d && workflowRandom < 0.69d) {
-            compoundWorkflowCount = 1;
-        } else if (workflowRandom >= 0.69d && workflowRandom < 0.82d) {
-            compoundWorkflowCount = 2;
         } else {
-            compoundWorkflowCount = (int) (Math.random() * 31 + 3);
+            compoundWorkflowCount = 1;
         }
         return compoundWorkflowCount;
     }
@@ -1766,6 +1899,18 @@ public class TestDataService implements SaveListener {
 
             // Always fill empty fields that are mandatory; if not mandatory then fill only half of the fields
             if (!field.isMandatory() && Math.random() < 0.5d) {
+
+                // If we don't fill the value with data, then set it to something anyway, because we want the _amount_ of properties to be real also
+                // And creating/editing documents through web interface sets non-filled properties to something also
+                if (value == null) {
+                    if (propDef.isMultiValued()) {
+                        ArrayList<Serializable> list = new ArrayList<Serializable>();
+                        value = list;
+                    } else if (DataTypeDefinition.TEXT.equals(propDef.getDataTypeQName())) {
+                        value = "";
+                    }
+                    propNode.getProperties().put(propName.toString(), value);
+                }
                 return value;
             }
 
@@ -1956,7 +2101,12 @@ public class TestDataService implements SaveListener {
         boolean isIndependentWorkflow = CompoundWorkflowType.INDEPENDENT_WORKFLOW == compoundWorkflowType;
         boolean isCaseFileWorkflow = CompoundWorkflowType.CASE_FILE_WORKFLOW == compoundWorkflowType;
 
-        int wfCount = ((int) (Math.random() * 6)) + 1; // 1 - 6
+        int wfCount;
+        if (Math.random() < 0.9d) {
+            wfCount = 1;
+        } else {
+            wfCount = ((int) (Math.random() * 5)) + 2; // 2 - 6
+        }
         boolean hasSignatureWorkflow = false;
         for (int i = 0; i < wfCount; i++) {
             QName wfType;
@@ -1987,8 +2137,11 @@ public class TestDataService implements SaveListener {
             Date dueDate = cal.getTime();
             List<String> userNamesListCopy = new ArrayList<String>(userNamesList);
             int taskCount;
-            if (Math.random() < 0.8d) {
-                taskCount = ((int) (Math.random() * 10)) + 1; // 1 - 10
+            double r = Math.random();
+            if (r < 0.985d) {
+                taskCount = ((int) (Math.random() * 1.8d)) + 1; // 1 - 2
+            } else if (r < 0.995d) {
+                taskCount = ((int) (Math.random() * 8)) + 3; // 3 - 10
             } else {
                 taskCount = ((int) (Math.random() * 90)) + 11; // 11 - 100
             }
@@ -2073,26 +2226,28 @@ public class TestDataService implements SaveListener {
                 task.setTaskIndexInWorkflow(j);
                 BeanHelper.getWorkflowDbService().createTaskEntry(task, wfRef);
 
-                String ownerId = task.getOwnerId();
-                if (StringUtils.isNotBlank(ownerId)) {
-                    // document workflow
-                    if (isDocumentWorkflow) {
-                        Set<String> requiredPrivileges = PrivilegeUtil.getRequiredPrivsForInprogressTask(task, docRef, fileService, false);
-                        addOwnerPermissions(permissionsByTaskOwnerId, ownerId, requiredPrivileges);
+                if (!task.isStatus(Status.NEW)) {
+                    String ownerId = task.getOwnerId();
+                    if (StringUtils.isNotBlank(ownerId)) {
+                        // document workflow
+                        if (isDocumentWorkflow) {
+                            Set<String> requiredPrivileges = getRequiredPrivsForTask(task, docRef, fileService, false);
+                            addOwnerPermissions(permissionsByTaskOwnerId, ownerId, requiredPrivileges);
+                        }
+                    } else if (isCaseFileWorkflow) {
+                        // case file workflow
+                        addOwnerPermissions(permissionsByTaskOwnerId, ownerId, getPrivsWithDependencies(getRequiredPrivsForTask(task, null, null, true)));
+                    } else {
+                        // independent workflow
+                        Set<String> privileges = WorkflowUtil.getIndependentWorkflowDefaultDocPermissions();
+                        boolean addEditPrivilege = task.isType(WorkflowSpecificModel.Types.ASSIGNMENT_TASK) || WorkflowUtil.isFirstConfirmationTask(task);
+                        Set<String> documentPrivileges = new HashSet<String>();
+                        documentPrivileges.addAll(privileges);
+                        if (addEditPrivilege) {
+                            documentPrivileges.add(DocumentCommonModel.Privileges.EDIT_DOCUMENT);
+                        }
+                        addOwnerPermissions(permissionsByTaskOwnerId, ownerId, documentPrivileges);
                     }
-                } else if (isCaseFileWorkflow) {
-                    // case file workflow
-                    addOwnerPermissions(permissionsByTaskOwnerId, ownerId, getPrivsWithDependencies(getRequiredPrivsForInprogressTask(task, null, null, true)));
-                } else {
-                    // independent workflow
-                    Set<String> privileges = WorkflowUtil.getIndependentWorkflowDefaultDocPermissions();
-                    boolean addEditPrivilege = task.isType(WorkflowSpecificModel.Types.ASSIGNMENT_TASK) || WorkflowUtil.isFirstConfirmationTask(task);
-                    Set<String> documentPrivileges = new HashSet<String>();
-                    documentPrivileges.addAll(privileges);
-                    if (addEditPrivilege) {
-                        documentPrivileges.add(DocumentCommonModel.Privileges.EDIT_DOCUMENT);
-                    }
-                    addOwnerPermissions(permissionsByTaskOwnerId, ownerId, documentPrivileges);
                 }
 
                 allTaskCount++;
@@ -2341,7 +2496,7 @@ public class TestDataService implements SaveListener {
     }
 
     private String stripAndTrim(String value) {
-        return StringUtils.trimToEmpty(StringUtils.stripToEmpty(value));
+        return StringUtils.trimToEmpty(StringUtils.stripToEmpty(StringUtils.defaultString(value).replaceAll("\\p{Cntrl}", " ").replaceAll(" {2,}", " ")));
     }
 
     // SaveListener that sets draft=true on document

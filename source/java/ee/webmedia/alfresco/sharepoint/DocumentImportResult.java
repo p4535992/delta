@@ -15,6 +15,7 @@ import com.csvreader.CsvWriter;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.sharepoint.mapping.DocumentMetadata;
+import ee.webmedia.alfresco.sharepoint.mapping.MappedDocument;
 
 /**
  * A class representing a document import result. For each processed document, exactly one result is created. This object can be logged to the log file once import is completed.
@@ -29,17 +30,17 @@ public class DocumentImportResult {
 
     private final NodeRef documentRef;
 
-    private final Map<QName, Serializable> props;
+    private final MappedDocument mappedDoc;
 
     private final String error;
 
     private final boolean success;
 
-    public DocumentImportResult(DocumentMetadata meta, File docXmlFile, NodeRef documentRef, Map<QName, Serializable> props) {
+    public DocumentImportResult(DocumentMetadata meta, File docXmlFile, NodeRef documentRef, MappedDocument mappedDoc) {
         this.meta = meta;
         this.docXmlFile = docXmlFile;
         this.documentRef = documentRef;
-        this.props = props;
+        this.mappedDoc = mappedDoc;
         success = true;
         error = null;
     }
@@ -50,7 +51,7 @@ public class DocumentImportResult {
         this.error = error;
         success = false;
         documentRef = null;
-        props = null;
+        mappedDoc = null;
     }
 
     public DocumentImportResult(DocumentMetadata meta, File docXmlFile, String error, boolean success) {
@@ -59,7 +60,7 @@ public class DocumentImportResult {
         this.error = error;
         this.success = success;
         documentRef = null;
-        props = null;
+        mappedDoc = null;
     }
 
     public boolean isSuccessful() {
@@ -68,6 +69,10 @@ public class DocumentImportResult {
 
     public NodeRef getDocumentRef() {
         return documentRef;
+    }
+
+    public MappedDocument getMappedDoc() {
+        return mappedDoc;
     }
 
     public DocumentMetadata getMeta() {
@@ -86,6 +91,7 @@ public class DocumentImportResult {
     }
 
     private void logResult(CsvWriter csv) throws IOException {
+        Map<QName, Serializable> props = mappedDoc == null ? null : mappedDoc.getPropertyValues();
         // Columns 1, 2, 3 are read elsewhere, so these must stay in this order
         csv.write(FilenameUtils.getBaseName(docXmlFile.getName()));
         csv.write(documentRef == null ? "" : documentRef.toString());

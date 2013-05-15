@@ -1,13 +1,17 @@
 package ee.webmedia.alfresco.series.bootstrap;
 
-import static ee.webmedia.alfresco.common.web.BeanHelper.getPermissionService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getSeriesService;
+import static ee.webmedia.alfresco.privilege.service.PrivilegeUtil.removePermission;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateTypeQuery;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import org.alfresco.service.cmr.repository.NodeRef;
@@ -15,13 +19,13 @@ import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.cmr.search.ResultSet;
 import org.alfresco.service.cmr.search.SearchService;
 import org.alfresco.service.cmr.security.AccessPermission;
-import org.alfresco.service.cmr.security.PermissionService;
 import org.alfresco.service.namespace.QName;
 import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.casefile.model.CaseFileModel;
 import ee.webmedia.alfresco.classificator.enums.VolumeType;
 import ee.webmedia.alfresco.common.bootstrap.AbstractNodeUpdater;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.series.model.SeriesModel;
 
 /**
@@ -87,23 +91,18 @@ public class SeriesUpdater extends AbstractNodeUpdater {
     }
 
     private void updatePermissions(NodeRef seriesRef, List<String> logInfo) {
-        PermissionService permissionService = getPermissionService();
-        List<String> removedAuthorities = removePermission(seriesRef, DOCUMENT_FILE_READ, permissionService);
-        logInfo.add(StringUtils.join(removedAuthorities, " "));
+        Set<AccessPermission> allSetPermissions = serviceRegistry.getPermissionService().getAllSetPermissions(seriesRef);
+        Map<String, Set<String>> replacePermissions = new HashMap<String, Set<String>>();
+        replacePermissions.put(DOCUMENT_FILE_READ,
+                new HashSet<String>(Arrays.asList(DocumentCommonModel.Privileges.VIEW_DOCUMENT_FILES, DocumentCommonModel.Privileges.VIEW_DOCUMENT_META_DATA)));
+        Map<String, List<String>> removedAuthorities = removePermission(seriesRef, replacePermissions, allSetPermissions);
+        List<String> removedPermissionInfo = new ArrayList<String>(removedAuthorities.keySet().size());
+        for (Entry<String, List<String>> entry : removedAuthorities.entrySet()) {
+            removedPermissionInfo.add(entry.getKey() + " [ " + StringUtils.join(entry.getValue(), " ") + " ]");
+        }
+        logInfo.add(StringUtils.join(removedPermissionInfo, ", "));
         // add permissions that are added when series is created
         getSeriesService().setSeriesDefaultPermissionsOnCreate(seriesRef);
-    }
-
-    public static List<String> removePermission(NodeRef nodeRef, String permissionToRemove, PermissionService permissionService) {
-        List<String> removedAuthorities = new ArrayList<String>();
-        for (AccessPermission accessPermission : permissionService.getAllSetPermissions(nodeRef)) {
-            if (permissionToRemove.equals(accessPermission.getPermission()) && accessPermission.isSetDirectly()) {
-                String authority = accessPermission.getAuthority();
-                permissionService.deletePermission(nodeRef, authority, permissionToRemove);
-                removedAuthorities.add(authority);
-            }
-        }
-        return removedAuthorities;
     }
 
     private void volumeTypesUpdater(NodeRef nodeRef, List<String> logInfo) {

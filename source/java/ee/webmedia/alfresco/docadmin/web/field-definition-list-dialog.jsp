@@ -70,17 +70,6 @@
          <h:outputText value="#{fd.volTypes}" ><a:convertMultiValue /></h:outputText>
       </a:column>
 
-      <!-- FIXME TODO XXX - CL 188070
-      <a:column id="actionsCol" actions="true">
-         <a:booleanEvaluator value="#{empty fd.docTypes && empty fd.volTypes && !fd.systematic}">
-            <a:actionLink id="actionsCol-del" value="#{fd.name}" actionListener="#{FieldDefinitionListDialog.deleteField}"
-             showLink="false" image="/images/icons/delete.gif" tooltip="#{msg.fieldDefinitions_list_action_delete}" styleClass="deleteFieldDef">
-               <f:param name="nodeRef" value="#{fd.nodeRef}" />
-            </a:actionLink>
-         </a:booleanEvaluator>
-      </a:column>
-       -->
-
       <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/page-size.jsp" />
       <a:dataPager id="pager1" styleClass="pager" />
    </a:richList>

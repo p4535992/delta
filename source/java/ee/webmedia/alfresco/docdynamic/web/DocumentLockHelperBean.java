@@ -11,7 +11,6 @@ import javax.faces.context.FacesContext;
 import javax.faces.context.ResponseWriter;
 
 import org.alfresco.model.ContentModel;
-import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.lock.LockStatus;
 import org.alfresco.service.cmr.lock.NodeLockedException;
 import org.alfresco.service.cmr.repository.NodeRef;
@@ -205,7 +204,7 @@ public class DocumentLockHelperBean implements Serializable {
     }
 
     public boolean isLockReleased(NodeRef nodeRef) {
-        LockStatus lockStatus = getDocLockService().getLockStatus(nodeRef, AuthenticationUtil.getRunAsUser());
+        LockStatus lockStatus = getDocLockService().getLockStatus(nodeRef);
         return !LockStatus.LOCK_OWNER.equals(lockStatus);
     }
 }

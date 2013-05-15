@@ -3,6 +3,7 @@ package ee.webmedia.alfresco.document.model;
 import static ee.webmedia.alfresco.utils.TextUtil.LIST_SEPARATOR;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -12,6 +13,7 @@ import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
 import org.alfresco.model.ContentModel;
+import org.alfresco.service.cmr.repository.InvalidNodeRefException;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
@@ -542,7 +544,15 @@ public class Document extends Node implements Comparable<Document>, CssStylable,
             // probably not the best idea to call service from model, but alternatives get probably too complex
             FileService fileService = (FileService) FacesContextUtils.getRequiredWebApplicationContext( //
                     FacesContext.getCurrentInstance()).getBean(FileService.BEAN_NAME);
-            files = fileService.getAllActiveFiles(getNodeRef());
+            try {
+                files = fileService.getAllActiveFiles(getNodeRef());
+            } catch (InvalidNodeRefException e) {
+                // Document has been deleted between initial transaction (that constructed document list)
+                // and this transaction (JSF rendering phase, value-binding from JSP is being resolved).
+                // Removing a row at current stage would be too complicated and displaying an error message too confusing,
+                // so just silence the exception - user sees document row with no file icons.
+                files = new ArrayList<File>();
+            }
         }
         return files;
     }

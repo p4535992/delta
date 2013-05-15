@@ -24,12 +24,14 @@ public class CustomChildrenContainerTag extends UIComponentTag {
 
     private String parameterList;
     private String childGenerator;
+    private String childrenRendered;
 
     @Override
     public void release() {
         super.release();
         setParameterList(null);
         childGenerator = null;
+        childrenRendered = null;
     }
 
     @Override
@@ -38,6 +40,9 @@ public class CustomChildrenContainerTag extends UIComponentTag {
         Application application = FacesContext.getCurrentInstance().getApplication();
         component.setValueBinding(CustomChildrenContainer.ATTR_PARAM_LIST, application.createValueBinding(parameterList));
         component.setValueBinding(CustomChildrenContainer.ATTR_CHILD_GENERATOR, application.createValueBinding(childGenerator));
+        if (childrenRendered != null) {
+            component.setValueBinding(CustomChildrenContainer.ATTR_CHILDREN_RENDERED, application.createValueBinding(childrenRendered));
+        }
     }
 
     public void setChildGenerator(String childGenerator) {
@@ -54,6 +59,14 @@ public class CustomChildrenContainerTag extends UIComponentTag {
 
     public String getParameterList() {
         return parameterList;
+    }
+
+    public String getChildrenRendered() {
+        return childrenRendered;
+    }
+
+    public void setChildrenRendered(String childrenRendered) {
+        this.childrenRendered = childrenRendered;
     }
 
 }

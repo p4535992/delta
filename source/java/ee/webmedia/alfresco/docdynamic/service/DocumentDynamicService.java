@@ -88,7 +88,7 @@ public interface DocumentDynamicService {
 
     void setOwner(Map<QName, Serializable> props, String ownerId, boolean retainPreviousOwnerId);
 
-    void setOwnerFromActiveResponsibleTask(CompoundWorkflow compoundWorkflow, NodeRef documentRef, Map<String, Object> documentProps);
+    void setOwnerFromActiveResponsibleTask(CompoundWorkflow compoundWorkflow, NodeRef documentRef, Map<QName, Serializable> documentProps);
 
     boolean isOwner(NodeRef docRef, String ownerId);
 

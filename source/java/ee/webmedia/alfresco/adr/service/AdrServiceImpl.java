@@ -26,8 +26,10 @@ import javax.activation.DataHandler;
 import javax.sql.DataSource;
 import javax.xml.datatype.XMLGregorianCalendar;
 
+import org.alfresco.model.ContentModel;
 import org.alfresco.repo.content.MimetypeMap;
 import org.alfresco.service.cmr.repository.AssociationRef;
+import org.alfresco.service.cmr.repository.ContentData;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.namespace.NamespaceService;
@@ -103,6 +105,7 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
     private NamespaceService namespaceService;
     private SimpleJdbcTemplate jdbcTemplate;
     private boolean accessRestrictionChangeReasonEnabled;
+    private boolean volumeTitleEnabled;
 
     // ========================================================================
     // =========================== REAL-TIME QUERYING =========================
@@ -226,9 +229,10 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
         return docName;
     }
 
-    private DokumentDetailidegaV2 buildDokumentDetailidegaV2(DocumentDynamic doc, boolean includeFileContent, Set<String> documentTypeIds,
+    @Override
+    public DokumentDetailidegaV2 buildDokumentDetailidegaV2(DocumentDynamic doc, boolean includeFileContent, Set<String> documentTypeIds,
             Map<NodeRef, Map<QName, Serializable>> functionsCache, Map<NodeRef, Map<QName, Serializable>> seriesCache,
-            Map<NodeRef, Map<QName, Serializable>> volumesCache) {
+            Map<NodeRef, Map<QName, Serializable>> volumesCache, boolean testData) {
 
         DokumentDetailidegaV2 dokument = new DokumentDetailidegaV2();
         String documentTypeId = doc.getDocumentTypeId();
@@ -270,14 +274,20 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
         // =======================================================
 
         // Associated documents
-        List<SeotudDokument> assocDocs = getSeotudDokumentList(doc.getNodeRef(), documentTypeIds);
-        dokument.getSeotudDokument().addAll(assocDocs);
+        if (!testData) {
+            List<SeotudDokument> assocDocs = getSeotudDokumentList(doc.getNodeRef(), documentTypeIds);
+            dokument.getSeotudDokument().addAll(assocDocs);
+        }
 
         if (isFileAllowedToAdr(doc)) {
             List<File> allActiveFiles = fileService.getAllActiveFiles(doc.getNodeRef());
             for (File file : allActiveFiles) {
                 FailV2 fail = new FailV2();
                 setFailProperties(fail, file, includeFileContent);
+                if (testData) {
+                    ContentData contentData = (ContentData) nodeService.getProperty(file.getNodeRef(), ContentModel.PROP_CONTENT);
+                    fail.setId(contentData != null ? contentData.getContentUrl() : null);
+                }
                 dokument.getFail().add(fail);
             }
         }
@@ -337,7 +347,9 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
         // Document type
         DokumendiliikV2 wsDocumentType = new DokumendiliikV2();
         wsDocumentType.setId(documentTypeId);
-        wsDocumentType.setNimi(getNullIfEmpty(documentAdminService.getDocumentTypeName(documentTypeId)));
+        if (!testData) {
+            wsDocumentType.setNimi(getNullIfEmpty(documentAdminService.getDocumentTypeName(documentTypeId)));
+        }
         dokument.setDokumendiLiik(wsDocumentType);
 
         // Volume
@@ -358,7 +370,7 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
         Toimik wsVolume = new Toimik();
         wsVolume.setId(volumeRef.toString());
         wsVolume.setViit((String) volumeProps.get(VolumeModel.Props.MARK));
-        wsVolume.setPealkiri((String) volumeProps.get(VolumeModel.Props.TITLE));
+        wsVolume.setPealkiri(volumeTitleEnabled ? (String) volumeProps.get(VolumeModel.Props.TITLE) : "");
         wsVolume.setKehtivAlatesKuupaev(convertToXMLGergorianCalendar((Date) volumeProps.get(VolumeModel.Props.VALID_FROM)));
         wsVolume.setKehtivKuniKuupaev(convertToXMLGergorianCalendar((Date) volumeProps.get(VolumeModel.Props.VALID_TO)));
         dokument.setToimik(wsVolume);
@@ -517,7 +529,7 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
             return koikDokumendidLisatudMuudetud(perioodiAlgusKuupaev, perioodiLoppKuupaev, new BuildDocumentCallback<DokumentDetailidegaV2>() {
                 @Override
                 public DokumentDetailidegaV2 buildDocument(DocumentDynamic doc, Set<String> documentTypeIds) {
-                    return buildDokumentDetailidegaV2(doc, false, documentTypeIds, functionsCache, seriesCache, volumesCache);
+                    return buildDokumentDetailidegaV2(doc, false, documentTypeIds, functionsCache, seriesCache, volumesCache, false);
                 }
             }, jataAlgusestVahele, tulemustePiirang, true);
         } finally {
@@ -619,7 +631,7 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
         return list;
     }
 
-    private boolean isDocumentAllowedToAdr(DocumentDynamic doc, Set<String> publicAdrDocumentTypeIds, boolean logInfo) {
+    public static boolean isDocumentAllowedToAdr(DocumentDynamic doc, Set<String> publicAdrDocumentTypeIds, boolean logInfo) {
         if (!publicAdrDocumentTypeIds.contains(doc.getDocumentTypeId())
                 || StringUtils.isBlank(doc.getRegNumber())
                 || doc.getRegDateTime() == null
@@ -636,7 +648,7 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
         return true;
     }
 
-    private boolean isFileAllowedToAdr(DocumentDynamic doc) {
+    private static boolean isFileAllowedToAdr(DocumentDynamic doc) {
         // Only include file list when document accessRestriction = Avalik AND publishToAdr = Läheb ADR-i
         if (!AccessRestriction.OPEN.getValueName().equals(doc.getProp(ACCESS_RESTRICTION))) {
             return false;
@@ -899,6 +911,10 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
 
     public void setAccessRestrictionChangeReasonEnabled(boolean accessRestrictionChangeReasonEnabled) {
         this.accessRestrictionChangeReasonEnabled = accessRestrictionChangeReasonEnabled;
+    }
+
+    public void setVolumeTitleEnabled(boolean volumeTitleEnabled) {
+        this.volumeTitleEnabled = volumeTitleEnabled;
     }
     // END: getters / setters
 

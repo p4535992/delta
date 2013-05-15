@@ -36,6 +36,7 @@ import ee.webmedia.alfresco.workflow.service.WorkflowService;
  */
 @XStreamAlias("dropdown")
 public class DropdownMenuItem extends MenuItem {
+    private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DropdownMenuItem.class);
 
     @XStreamOmitField
     private static final long serialVersionUID = 0L;
@@ -78,7 +79,11 @@ public class DropdownMenuItem extends MenuItem {
     public UIComponent createComponent(FacesContext context, String id, UserService userService, WorkflowService workflowService, EInvoiceService einvoiceService,
             RSService rsService,
             boolean createChildren) {
+        boolean isMyTasksMenu = isMyTasksMenu();
         if (isRestricted() && !hasPermissions(userService)) {
+            if (isMyTasksMenu) {
+                log.debug("Menu error; menuItem menu_my_tasks is not rendered");
+            }
             return null;
         }
 
@@ -141,12 +146,14 @@ public class DropdownMenuItem extends MenuItem {
                     : Boolean.valueOf(getHidden());
 
             wrapper.setRendered(!hideIt);
+            if (hideIt && isMyTasksMenu) {
+                log.debug("Menu error; menuItem menu_my_tasks is hidden");
+            }
         }
 
         @SuppressWarnings("unchecked")
         List<UIComponent> children = wrapper.getChildren();
         children.add(link);
-
         if (createChildren) {
             MenuItemWrapper childrenWrapper = (MenuItemWrapper) createChildrenComponents(context, id, userService, workflowService, einvoiceService, rsService);
             if (childrenWrapper != null) {
@@ -156,6 +163,9 @@ public class DropdownMenuItem extends MenuItem {
                 children.add(childrenWrapper);
             }
             if (StringUtils.isBlank(getOutcome()) && StringUtils.isBlank(getActionListener()) && (childrenWrapper == null || childrenWrapper.getChildCount() == 0)) {
+                if (isMyTasksMenu) {
+                    log.debug("Menu error; menuItem menu_my_tasks is not rendered because it has no children");
+                }
                 return null;
             }
         }
@@ -174,23 +184,52 @@ public class DropdownMenuItem extends MenuItem {
         String id = parentId + UIMenuComponent.VALUE_SEPARATOR;
         @SuppressWarnings("unchecked")
         List<UIComponent> children = wrapper.getChildren();
+        boolean isMyTasksMenu = isMyTasksMenu();
         if (getSubItems() != null) {
+            int addedChildren = 0;
             for (MenuItem item : getSubItems()) {
                 if (isRestricted() && !hasPermissions(userService)) {
                     continue;
                 }
 
-                UIComponent childItem;
-                childItem = item.createComponent(context, id + i, userService, workflowService, einvoiceService, rsService);
+                UIComponent childItem = item.createComponent(context, id + i, userService, workflowService, einvoiceService, rsService);
 
                 if (childItem != null) {
                     children.add(childItem);
+                    addedChildren++;
                 }
                 i++;
             }
+            if (isMyTasksMenu && addedChildren == 0) {
+                log.debug("Menu error; menuItem menu_my_tasks no child components were created");
+            }
+        } else if (isMyTasksMenu) {
+            log.debug("Menu error; menuItem menu_my_tasks is not rendered because subitems == null");
         }
 
         return wrapper;
+    }
+
+    @Override
+    public List<MenuItem> getSubItems() {
+        List<MenuItem> subItems = super.getSubItems();
+        if (isMyTasksMenu() && (subItems == null || subItems.size() == 0)) {
+            log.debug("Menu error; menuItem menu_my_tasks subItems is null or empty");
+        }
+        return subItems;
+    }
+
+    @Override
+    public void setSubItems(List<MenuItem> subItems) {
+        super.setSubItems(subItems);
+        if (isMyTasksMenu() && (subItems == null || subItems.isEmpty())) {
+            log.debug("Menu error; menuItem menu_my_tasks is set null or empty");
+        }
+    }
+
+    private boolean isMyTasksMenu() {
+        boolean isMyTasksMenu = "menu_my_tasks".equals(getId());
+        return isMyTasksMenu;
     }
 
     public void toggle() {

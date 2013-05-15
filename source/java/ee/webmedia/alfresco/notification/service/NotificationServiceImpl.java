@@ -463,6 +463,7 @@ public class NotificationServiceImpl implements NotificationService {
             Notification notification = setupNotification(type, getTaskWorkflowType(task));
             notification.addRecipient(task.getOwnerName(), task.getOwnerEmail());
             usernamesToCheck.add(task.getOwnerId());
+            notifications.add(notification);
         }
         addTaskIndependentCompoundWorkflowNotification(task.getParent().getParent(), notifications, usernamesToCheck, NotificationModel.NotificationType.TASK_CANCELLED_ORDERED);
         return notifications;
@@ -1120,13 +1121,16 @@ public class NotificationServiceImpl implements NotificationService {
                 }
                 if (!reviewTasks.isEmpty()) {
                     Notification notification = setupNotification(NotificationModel.NotificationType.REVIEW_DOCUMENT_SIGNED, taskWorkflowType);
+                    Set<String> usersToNotify = new HashSet<String>();
                     for (Task reviewTask : reviewTasks) {
                         // Add only distinct e-mails
-                        if (notification.getToEmails().contains(reviewTask.getOwnerEmail())) {
+                        String ownerId = reviewTask.getOwnerId();
+                        if (usersToNotify.contains(ownerId)) {
                             continue;
                         }
                         notification.addRecipient(reviewTask.getOwnerName(), reviewTask.getOwnerEmail());
-                        usernamesToCheck.add(reviewTask.getOwnerId());
+                        usernamesToCheck.add(ownerId);
+                        usersToNotify.add(ownerId);
                     }
                     notifications.add(notification);
                 }

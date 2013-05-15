@@ -82,7 +82,7 @@ public class ModalLayerComponent extends UICommand implements Serializable {
 
         ComponentUtil.writeModalHeader(
                 out,
-                WorkflowUtil.getDialogId(context, this),
+                getModalHtmlId(context),
                 MessageUtil.getMessage((String) getAttributes().get(ATTR_HEADER_KEY)),
                 ComponentUtil.generateFieldSetter(context, this, getActionId(context, this), "")
                         + generateCloseOnClick(context));
@@ -98,6 +98,10 @@ public class ModalLayerComponent extends UICommand implements Serializable {
             out.write("');");
             out.write("});</script>");
         }
+    }
+
+    protected String getModalHtmlId(FacesContext context) {
+        return WorkflowUtil.getDialogId(context, this);
     }
 
     protected String generateCloseOnClick(FacesContext context) {

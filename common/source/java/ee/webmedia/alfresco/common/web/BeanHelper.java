@@ -124,6 +124,7 @@ import ee.webmedia.alfresco.orgstructure.service.OrganizationStructureService;
 import ee.webmedia.alfresco.orgstructure.web.RsAccessStatusBean;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
 import ee.webmedia.alfresco.parameters.web.ParametersImportDialog;
+import ee.webmedia.alfresco.person.bootstrap.PersonAndOrgStructPropertiesCacheUpdater;
 import ee.webmedia.alfresco.privilege.service.AccessControlListExtDAO;
 import ee.webmedia.alfresco.privilege.service.PrivilegeService;
 import ee.webmedia.alfresco.privilege.web.ManageInheritablePrivilegesDialog;
@@ -481,6 +482,10 @@ public class BeanHelper implements NamespacePrefixResolverProvider {
 
     public static UserContactTableGenerator getUserContactTableGenerator() {
         return getSpringBean(UserContactTableGenerator.class, UserContactTableGenerator.BEAN_NAME);
+    }
+
+    public static PersonAndOrgStructPropertiesCacheUpdater getPersonAndOrgStructPropertiesCacheUpdater() {
+        return getSpringBean(PersonAndOrgStructPropertiesCacheUpdater.class, PersonAndOrgStructPropertiesCacheUpdater.BEAN_NAME);
     }
 
     // END: JSF web beans

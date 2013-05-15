@@ -318,6 +318,8 @@ public interface DocumentSearchService {
 
     List<NodeRef> searchAdrDeletedDocument(NodeRef originalDocumentRef);
 
+    String generateAdrDocumentSearchQuery(List<String> queryParts, Set<String> documentTypeIds);
+
     Pair<List<NodeRef>, Boolean> searchAllDocumentsByParentRef(NodeRef parentRef, int limit);
 
     NodeRef searchLinkedReviewTaskByOriginalNoderefId(String noderefId);
@@ -343,5 +345,7 @@ public interface DocumentSearchService {
     List<NodeRef> searchNodesByTypeAndProps(String input, QName type, Set<QName> props, int limit);
 
     List<NodeRef> searchNodesByTypeAndProps(String input, QName type, Set<QName> props, int limit, String queryAndAddition);
+
+    boolean isFieldByOriginalIdExists(String fieldId);
 
 }
