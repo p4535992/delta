@@ -88,6 +88,7 @@ import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.docconfig.bootstrap.SystematicDocumentType;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamicService;
 import ee.webmedia.alfresco.document.einvoice.service.EInvoiceService;
+import ee.webmedia.alfresco.document.file.model.FileModel;
 import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.file.web.Subfolder;
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
@@ -636,8 +637,9 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
         }
         FileInfo createdFile = fileFolderService.create(
                 document,
-                generalService.getUniqueFileName(document, filename),
+                generalService.getUniqueFileName(document, FilenameUtil.makeSafeFilename(filename)),
                 ContentModel.TYPE_CONTENT);
+        nodeService.setProperty(createdFile.getNodeRef(), FileModel.Props.DISPLAY_NAME, filename);
         ContentWriter writer = fileFolderService.getWriter(createdFile.getNodeRef());
         writer.setMimetype(mimeType);
         writer.setEncoding(encoding);

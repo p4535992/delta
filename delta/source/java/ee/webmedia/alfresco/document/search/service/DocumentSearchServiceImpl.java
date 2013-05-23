@@ -10,7 +10,6 @@ import static ee.webmedia.alfresco.utils.SearchUtil.generateMultiNodeRefQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateMultiStringExactQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateNodeRefQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateNumberPropertyRangeQuery;
-import static ee.webmedia.alfresco.utils.SearchUtil.generateParentQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generatePropertyBooleanQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generatePropertyDateQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generatePropertyNotNullQuery;
@@ -475,7 +474,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         List<String> queryParts = new ArrayList<String>();
         queryParts.add(generateStringNotEmptyQuery(DocumentCommonModel.Props.RECIPIENT_NAME, DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME,
                 DocumentSpecificModel.Props.PARTY_NAME /* on document node, duplicates partyName property values from all contractParty child-nodes */
-        ));
+                ));
         queryParts.add(generateStringExactQuery(DocumentStatus.FINISHED.getValueName(), DocumentCommonModel.Props.DOC_STATUS));
         queryParts.add(generateStringNullQuery(DocumentCommonModel.Props.SEARCHABLE_SEND_MODE));
         String query = generateDocumentSearchQuery(queryParts);
@@ -837,7 +836,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         for (NodeRef nodeRef : storeFunctionRootNodeRefs) {
             storeRefs.add(nodeRef.getStoreRef());
         }
-        String query = generateDocumentSearchQuery(filter);
+        String query = generateDocumentSearchQuery(filter, storeRefs);
         if (StringUtils.isBlank(query)) {
             throw new UnableToPerformException(UnableToPerformException.MessageSeverity.INFO, "docSearch_error_noInput");
         }
@@ -915,7 +914,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
     public List<NodeRef> searchDocumentsForReport(Node filter, StoreRef storeRef) {
         long startTime = System.currentTimeMillis();
         Assert.notNull(storeRef);
-        String query = generateDocumentSearchQuery(filter);
+        String query = generateDocumentSearchQuery(filter, Arrays.asList(storeRef));
         if (StringUtils.isBlank(query)) {
             // this should never happen, web layer must ensure we have some input
             throw new UnableToPerformException(UnableToPerformException.MessageSeverity.INFO, "docSearch_error_noInput");
@@ -1291,7 +1290,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         return nodeIds.size();
     }
 
-    private String generateDocumentSearchQuery(Node filter) {
+    private String generateDocumentSearchQuery(Node filter, List<StoreRef> storeRefs) {
         long startTime = System.currentTimeMillis();
         List<String> queryParts = new ArrayList<String>(50);
         Map<QName, Serializable> props = RepoUtil.toQNameProperties(filter.getProperties(), true);
@@ -1327,7 +1326,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
 
         // END: special cases
 
-        fillQueryFromProps(queryParts, props);
+        fillQueryFromProps(queryParts, props, storeRefs);
 
         String searchFilter = WmNode.toHumanReadableStringIfPossible(RepoUtil.getNotEmptyProperties(props), namespaceService, BeanHelper.getDocumentAdminService());
         log.info("Documents search filter: " + searchFilter);
@@ -1348,7 +1347,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         return query;
     }
 
-    private void fillQueryFromProps(List<String> queryParts, Map<QName, Serializable> props) {
+    private void fillQueryFromProps(List<String> queryParts, Map<QName, Serializable> props, List<StoreRef> storeRefs) {
         // dynamic generation
         for (Entry<QName, Serializable> entry : props.entrySet()) {
             QName propQName = entry.getKey();
@@ -1357,16 +1356,20 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
                 if (StringUtils.isBlank(caseLabel)) {
                     continue;
                 }
-                NodeRef volumeRef = (NodeRef) props.get(DocumentCommonModel.Props.VOLUME);
-                String query = joinQueryPartsAnd(generatePropertyWildcardQuery(CaseModel.Props.TITLE, caseLabel.trim(), false, true),
-                        generateParentQuery(volumeRef));
-                ResultSet result = null;
+                String query = generatePropertyWildcardQuery(CaseModel.Props.TITLE, caseLabel.trim(), false, true);
+                List<ResultSet> results = null;
                 try {
-                    result = doSearch(query, -1, "searchCaseByLabelForDocumentSearch", volumeRef.getStoreRef());
-                    queryParts.add(generateMultiNodeRefQuery(result.getNodeRefs(), DocumentCommonModel.Props.CASE));
+                    results = doSearches(query, -1, "searchCaseByLabelForDocumentSearch", storeRefs);
+                    for (ResultSet result : results) {
+                        queryParts.add(generateMultiNodeRefQuery(result.getNodeRefs(), DocumentCommonModel.Props.CASE));
+                    }
                 } finally {
-                    if (result != null) {
-                        result.close();
+                    if (results != null) {
+                        for (ResultSet result : results) {
+                            if (result != null) {
+                                result.close();
+                            }
+                        }
                     }
                 }
                 continue;
@@ -1435,7 +1438,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         List<String> quickSearchWords = parseQuickSearchWords(searchString);
         log.info("Quick search - words: " + quickSearchWords.toString() + ", from string '" + searchString + "'");
         String query = generateDocumentSearchQuery(generateQuickSearchDocumentQuery(quickSearchWords));
-        if (containerNodeRef != null) {
+        if (StringUtils.isNotBlank(query) && containerNodeRef != null) {
             query = joinQueryPartsAnd(
                     generateNodeRefQuery(containerNodeRef, DocumentCommonModel.Props.FUNCTION, DocumentCommonModel.Props.SERIES, DocumentCommonModel.Props.VOLUME,
                             DocumentCommonModel.Props.CASE),

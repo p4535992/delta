@@ -196,7 +196,8 @@ public class SearchBlockBean implements DocumentDynamicBlock {
     // END: snapshot logic
 
     public void findSimilarDocuments(String senderRegNumber) {
-        if (StringUtils.isNotBlank(senderRegNumber)) {
+        final List<AssociationRef> targetAssocs = BeanHelper.getNodeService().getTargetAssocs(getNode().getNodeRef(), DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP);
+        if (targetAssocs.isEmpty() && StringUtils.isNotBlank(senderRegNumber)) {
             documents = getDocumentSearchService().searchIncomingLetterRegisteredDocuments(senderRegNumber);
             showSimilarDocumentsBlock = documents.size() > 0;
         }
@@ -229,7 +230,7 @@ public class SearchBlockBean implements DocumentDynamicBlock {
     }
 
     public void setShowSimilarDocumentsBlock(boolean foundSimilar) {
-        this.showSimilarDocumentsBlock = foundSimilar;
+        showSimilarDocumentsBlock = foundSimilar;
     }
 
     public int getCount() {

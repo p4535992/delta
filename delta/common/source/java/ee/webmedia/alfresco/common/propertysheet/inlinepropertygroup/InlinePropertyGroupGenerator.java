@@ -140,6 +140,18 @@ public class InlinePropertyGroupGenerator extends BaseComponentGenerator impleme
 
             if (nrOfParts > propIndex && i < textParts.size() - 1) {
                 final ComponentPropVO componentPropVO = propVOs.get(propIndex);
+
+                // Check if the field is mandatory
+                String mandatory = componentPropVO.getCustomAttributes().get("mandatory");
+                if (Boolean.valueOf(mandatory)) {
+                    UIOutput marker = createOutputTextComponent(context, null);
+                    @SuppressWarnings("unchecked")
+                    Map<String, String> attributes = marker.getAttributes();
+                    attributes.put(CustomAttributeNames.STYLE_CLASS, "red");
+                    marker.setValue("* ");
+                    rowChildren.add(marker);
+                }
+
                 componentPropVO.getCustomAttributes().put(VALUE_INDEX_IN_MULTIVALUED_PROPERTY, "-1");
                 ComponentUtil.generateAndAddComponent(context, componentPropVO, propertySheet, rowChildren);
                 propIndex++;

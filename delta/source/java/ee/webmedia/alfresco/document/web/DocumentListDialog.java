@@ -28,6 +28,8 @@ import org.alfresco.web.ui.common.component.UIActionLink;
 import org.alfresco.web.ui.repo.component.UIActions;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import ee.webmedia.alfresco.cases.model.Case;
 import ee.webmedia.alfresco.cases.model.CaseModel;
@@ -53,6 +55,7 @@ import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
+import ee.webmedia.alfresco.utils.UnableToPerformMultiReasonException;
 import ee.webmedia.alfresco.utils.WebUtil;
 import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
@@ -73,6 +76,8 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
 
     private static final String VOLUME_NODE_REF = "volumeNodeRef";
     private static final String CASE_NODE_REF = "caseNodeRef";
+
+    private static final Log LOG = LogFactory.getLog(DocumentListDialog.class);
     private transient VolumeService volumeService;
     private transient CaseService caseService;
 
@@ -222,6 +227,17 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
             }
         } catch (UnableToPerformException e) {
             MessageUtil.addStatusMessage(FacesContext.getCurrentInstance(), e);
+        } catch (UnableToPerformMultiReasonException e) {
+            DocumentDynamic erroneusDocument = e.getDocument();
+            if (erroneusDocument != null) {
+                LOG.debug("Error mass changing document location, erroneous document:\n" + erroneusDocument, e);
+                MessageUtil.addErrorMessage("mass_change_document_location_error", BeanHelper.getDocumentAdminService().getDocumentTypeName(erroneusDocument.getDocumentTypeId()),
+                        erroneusDocument.getDocName(), StringUtils.defaultString(erroneusDocument.getRegNumber(), MessageUtil.getMessage("document_log_status_empty")));
+            } else {
+                LOG.debug("Error mass changing document location", e);
+                MessageUtil.addErrorMessage("mass_change_document_location_general_error");
+            }
+            MessageUtil.addStatusMessages(FacesContext.getCurrentInstance(), e.getMessageDataWrapper());
         }
         doInitialSearch();
         BeanHelper.getVisitedDocumentsBean().clearVisitedDocuments();

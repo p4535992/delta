@@ -160,7 +160,7 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
     public NodeRef getTaskParentNodeRef(NodeRef nodeRef) {
         String sqlQuery = "SELECT store_id, workflow_id FROM delta_task where task_id=?";
         String nodeRefId = nodeRef.getId();
-        List<NodeRef> parentRefs = jdbcTemplate.query(sqlQuery, new TaskParentNodeRefMapper(), nodeRefId);
+        List<NodeRef> parentRefs = queryWorkflowNodeRefs(sqlQuery, nodeRefId);
         explainQuery(sqlQuery, nodeRefId);
         return parentRefs == null || parentRefs.isEmpty() ? null : parentRefs.get(0);
     }
@@ -370,7 +370,7 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
         }
         boolean limited = limit > -1;
         if (limited) {
-            arguments.add(limit + 1);
+            arguments.add(limit);
         }
         TaskRowMapper taskRowMapper = new TaskRowMapper(null, null, null, BeanHelper.getWorkflowService().getTaskPrefixedQNames(), null, null, false, limited);
         String sqlQuery = "SELECT delta_task.* "
@@ -697,15 +697,7 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
     @Override
     public Set<NodeRef> getAllWorflowNodeRefs() {
         String sqlQuery = "SELECT workflow_id, store_id FROM delta_task WHERE workflow_id IS NOT NULL AND store_id IS NOT NULL GROUP BY workflow_id, store_id";
-        List<NodeRef> workflows = jdbcTemplate.query(sqlQuery,
-                new ParameterizedRowMapper<NodeRef>() {
-
-                    @Override
-                    public NodeRef mapRow(ResultSet rs, int rowNum) throws SQLException {
-                        return nodeRefFromRs(rs, WORKFLOW_ID_KEY);
-                    }
-
-                });
+        List<NodeRef> workflows = queryWorkflowNodeRefs(sqlQuery);
         explainQuery(sqlQuery);
         return new HashSet<NodeRef>(workflows);
     }
@@ -947,6 +939,35 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
                 deleteWorkflowTasks(childRef);
             }
         }
+    }
+
+    @Override
+    public Set<NodeRef> getAllWorkflowsWithEmptyTasks() {
+        String sqlQuery = "SELECT task_id, workflow_id, store_id FROM delta_task " +
+                "WHERE workflow_id IS NOT NULL AND store_id IS NOT NULL AND wfc_owner_name IS NULL AND wfs_due_date IS NULL";
+        List<NodeRef> workflows = queryWorkflowNodeRefs(sqlQuery);
+        explainQuery(sqlQuery);
+        return new HashSet<NodeRef>(workflows);
+    }
+
+    @Override
+    public Set<NodeRef> getWorkflowsWithWrongTaskOrder() {
+        String sqlQuery = "select workflow_id, store_id from (" +
+                " select workflow_id, sum(max_index - min_index + 1) as task_ranged_count, sum(task_count) as task_count, max(task_type)  as task_type, " +
+                "max(store_id) as store_id from" +
+                " (select workflow_id, grouped_status, max(index_in_workflow) as max_index, min(index_in_workflow) as min_index, max(task_type) as task_type, " +
+                " max(store_id) as store_id, count(*) as task_count from " +
+                " (select *, case when wfc_status in ('teostamata', 'lõpetatud') then 'lõpetatud_grupp' else wfc_status end as grouped_status from delta_task) as tmp0" +
+                " where task_type NOT IN ('opinionTask', 'informationTask', 'assignmentTask', 'orderAssignmentTask') group by workflow_id, grouped_status" +
+                " order by workflow_id, max_index) as tmp group by workflow_id) as tmp1" +
+                " where task_ranged_count <> task_count";
+        List<NodeRef> workflows = queryWorkflowNodeRefs(sqlQuery);
+        explainQuery(sqlQuery);
+        return new HashSet<NodeRef>(workflows);
+    }
+
+    private List<NodeRef> queryWorkflowNodeRefs(String sqlQuery, Object... args) {
+        return jdbcTemplate.query(sqlQuery, new TaskParentNodeRefMapper(), args);
     }
 
     private boolean isWorkflow(QName type) {

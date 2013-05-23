@@ -422,6 +422,7 @@ public class FileServiceImpl implements FileService {
         item.setCreator(userService.getUserFullName((String) fi.getProperties().get(ContentModel.PROP_CREATOR)));
         item.setModifier(userService.getUserFullName((String) fi.getProperties().get(ContentModel.PROP_MODIFIER)));
         item.setDownloadUrl(generateURL(item.getNodeRef()));
+        item.setReadOnlyUrl(DownloadContentServlet.generateDownloadURL(item.getNodeRef(), item.getDisplayName()));
         return item;
     }
 

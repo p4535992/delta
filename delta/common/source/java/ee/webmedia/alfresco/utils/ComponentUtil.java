@@ -664,10 +664,8 @@ public class ComponentUtil {
             for (SelectItem item : items) {
                 responseWriter.write("<option value=\"");
                 responseWriter.write(item.getValue().toString());
-                if (item.getDescription() != null) {
-                    responseWriter.write("\" title=\"");
-                    responseWriter.write(Utils.encode(item.getDescription()));
-                }
+                responseWriter.write("\" title=\"");
+                responseWriter.write(Utils.encode(StringUtils.defaultIfEmpty(item.getDescription(), item.getLabel())));
                 responseWriter.write("\">");
                 responseWriter.write(Utils.encode(item.getLabel()));
                 responseWriter.write("</option>");
@@ -860,13 +858,17 @@ public class ComponentUtil {
         }
 
         // Add filter info
-        int filter = UserContactGroupSearchBean.USERS_FILTER;
+        int filter = searchAttrs.containsKey(Search.FILTER_INDEX) ? (Integer) searchAttrs.get(Search.FILTER_INDEX) : 0;
         String filters = (String) searchAttrs.get(Search.FILTERS_KEY);
         if (filters != null) {
             SelectItem[] filterSelects = (SelectItem[]) context.getApplication().createValueBinding(filters).getValue(context);
             for (SelectItem selectItem : filterSelects) {
                 filter = filter | ((Integer) selectItem.getValue());
             }
+        }
+
+        if (filter == 0) {
+            filter = UserContactGroupSearchBean.USERS_FILTER; // Default to user search if no other option is applicable.
         }
 
         String containerClientId = ancestorAjaxComponent.getClientId(context);
@@ -1432,7 +1434,7 @@ public class ComponentUtil {
                         fileAllowLink.setValue("");
                         fileAllowLink.setTooltip(fileName);
                         fileAllowLink.setShowLink(false);
-                        fileAllowLink.setHref(file.getDownloadUrl());
+                        fileAllowLink.setHref(file.getReadOnlyUrl());
                         fileAllowLink.setImage(imageText);
                         fileAllowLink.setTarget("_blank");
                         ComponentUtil.getAttributes(fileAllowLink).put("styleClass", "inlineAction webdav-readOnly");

@@ -773,13 +773,13 @@ public class TaskListGenerator extends BaseComponentGenerator {
         Map<String, Object> popupAttributes = getAttributes(commentPopup);
         popupAttributes.put(ModalLayerComponent.ATTR_HEADER_KEY, "task_finish_popup");
         popupAttributes.put(ValidatingModalLayerComponent.ATTR_AJAX_ENABLED, Boolean.TRUE);
-        UIInput commentInput = (UIInput) application.createComponent(HtmlInputText.COMPONENT_TYPE);
+        TextAreaGenerator textAreaGenerator = new TextAreaGenerator();
+        UIInput commentInput = (UIInput) textAreaGenerator.generate(FacesContext.getCurrentInstance(), CompoundWorkflowDialog.MODAL_KEY_ENTRY_COMMENT);
         commentInput.setId(CompoundWorkflowDialog.MODAL_KEY_ENTRY_COMMENT);
         Map<String, Object> attributes = getAttributes(commentInput);
         attributes.put(ValidatingModalLayerComponent.ATTR_LABEL_KEY, "task_finish_comment");
         attributes.put(ValidatingModalLayerComponent.ATTR_MANDATORY, Boolean.TRUE);
         attributes.put("styleClass", "expand19-200");
-        attributes.put("style", "height: 50px;");
         getChildren(commentPopup).add(commentInput);
         return commentPopup;
     }

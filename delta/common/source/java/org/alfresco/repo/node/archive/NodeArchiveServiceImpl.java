@@ -24,6 +24,8 @@
  */
 package org.alfresco.repo.node.archive;
 
+import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.REG_NUMBER;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -48,6 +50,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.document.service.DocumentService;
 
 /**
  * Implementation of the node archive abstraction.
@@ -138,6 +142,12 @@ public class NodeArchiveServiceImpl implements NodeArchiveService
                 {
                     NodeRef restoredNodeRef = nodeService.restoreNode(archivedNodeRef, destinationNodeRef, assocTypeQName, assocQName);
                     BeanHelper.getDocumentLogService().addDeletedObjectLog(restoredNodeRef, "applog_delete_restore");
+                    if (DocumentCommonModel.Types.DOCUMENT.equals(nodeService.getType(restoredNodeRef))) {
+                        DocumentService documentService = BeanHelper.getDocumentService();
+                        documentService.updateParentNodesContainingDocsCount(restoredNodeRef, true);
+                        String regNumber = (String) nodeService.getProperty(restoredNodeRef, REG_NUMBER);
+                        documentService.updateParentDocumentRegNumbers(restoredNodeRef, null, regNumber);
+                    }                    
                     return restoredNodeRef;
                 }
             };

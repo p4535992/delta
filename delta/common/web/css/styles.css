@@ -1283,7 +1283,8 @@ table.recipient th {
 }
 
 input.date,
-input.disabled-date {
+input.disabled-date,
+.modalpopup-filter.modalpopup-content-inner table td input.date {
 	background:#FFFFFF url(../images/icons/ico_cal.gif) no-repeat scroll right 35%;
 	cursor:pointer;
 	padding-right:18px !important;

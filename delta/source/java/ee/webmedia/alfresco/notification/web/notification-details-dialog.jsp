@@ -14,7 +14,7 @@
 </f:verbatim>
 
 <a:panel id="notification-list-panel" label="#{msg.notification_important_notification}">
-   <r:propertySheetGrid id="notificationPropSheet" value="#{NotificationDetailsDialog.notification}" externalConfig="true" labelStyleClass="propertiesLabel" />
+   <r:propertySheetGrid id="notificationPropSheet" value="#{NotificationDetailsDialog.notification}" externalConfig="true" labelStyleClass="propertiesLabel" columns="1" />
 </a:panel>
 
 <f:verbatim>
@@ -35,7 +35,6 @@
          extended_valid_elements : "a[href|target|name],font[face|size|color|style],span[class|align|style]",
          width : "600",
          height : "315",
-         content_css : "../../../css/main.css,../../../css/styles.css",
          auto_focus : "dialog:dialog-body:notificationPropSheet:prop_ntfx003a_message:ntfx003a_message",
          setup : function(editor) {
             editor.onKeyUp.add(function(editor) {

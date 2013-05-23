@@ -15,7 +15,6 @@ import javax.faces.event.ActionEvent;
 import org.alfresco.repo.transaction.RetryingTransactionHelper;
 import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
 import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.Repository;
 
 import ee.webmedia.alfresco.classificator.constant.DocTypeAssocType;
@@ -106,13 +105,16 @@ public abstract class DocTypeAssocsListBean<T extends AssociationModel> implemen
         }
     }
 
-    public String deleteAssoc(ActionEvent event) {
+    public void deleteAssoc(ActionEvent event) {
         NodeRef assocRef = ActionUtil.getParam(event, "nodeRef", NodeRef.class);
         getDocumentAdminService().deleteAssocToDocType(assocRef);
+        doAfterDelete();
+    }
+
+    public void doAfterDelete() {
         // replace docType in memory with fresh copy from repo
         // so that deleted assocs wouldn't be visible when navigating back
         docTypeDetailsDialog.refreshDocType();
-        return BaseDialogBean.getCloseOutcome(1);
     }
 
     public class AssociationToDocTypeListItem extends AssociationModel {

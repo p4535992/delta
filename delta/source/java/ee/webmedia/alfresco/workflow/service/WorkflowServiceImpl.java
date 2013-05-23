@@ -813,39 +813,20 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
     }
 
     private boolean saveWorkflow(WorkflowEventQueue queue, Workflow workflow) {
-        // If this node is not saved, then all children are newly created, then childAssociationIndexes are already in the correct order.
-        // If this node was previously saved and no children are being added or removed, then childAssociationIndexes are already in the correct order.
-        // If this node was previously saved and at least one child is being added or removed, then childAssociationIndexes have to be set on all children
-        // (because maybe all children have assocIndex=-1).
-        boolean setChildAssocIndexes = false;
-        boolean wasSaved = workflow.isSaved();
         boolean changed = createOrUpdate(queue, workflow, workflow.getParent().getNodeRef(), WorkflowCommonModel.Assocs.WORKFLOW);
 
-        // Remove tasks
         for (Task removedTask : workflow.getRemovedTasks()) {
             NodeRef removedTaskNodeRef = removedTask.getNodeRef();
             if (removedTask.isSaved()) {
                 checkTask(getTask(removedTaskNodeRef, workflow, false), Status.NEW);
                 workflowDbService.deleteTask(removedTaskNodeRef);
                 changed = true;
-                setChildAssocIndexes = true;
             }
         }
         workflow.getRemovedTasks().clear();
-
-        if (!setChildAssocIndexes && wasSaved) {
-            for (Task task : workflow.getTasks()) {
-                if (!task.isSaved()) {
-                    setChildAssocIndexes = true;
-                    break;
-                }
-            }
-        }
-
         int index = 0;
         log.debug("Starting to save " + workflow.getTasks().size() + " tasks");
         for (Task task : workflow.getTasks()) {
-            // Create or update task
             task.setTaskIndexInWorkflow(index);
             saveTask(queue, task);
             // TODO: is it necessary to determine if task's index in workflow changed and according to that change value returned by the function?
@@ -1735,7 +1716,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
             throw new WorkflowChangedException("Illegal value\n  Property: " + repoPropertyName + "\n  Required values: "
                     + StringUtils.join(requiredValues, ", ")
                     + "\n  Object value: " + objectValue + "\n  Repo value: " + repoValue + "\n  Object = "
-                    + StringUtils.replace(object.toString(), "\n", "\n  "));
+                    + StringUtils.replace(object.toString(), "\n", "\n  "), null);
         }
     }
 

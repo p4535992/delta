@@ -28,6 +28,7 @@ import org.apache.commons.lang.StringUtils;
 import org.joda.time.LocalDate;
 import org.springframework.util.Assert;
 
+import ee.webmedia.alfresco.classificator.constant.FieldChangeableIf;
 import ee.webmedia.alfresco.classificator.constant.FieldType;
 import ee.webmedia.alfresco.classificator.enums.LeaveType;
 import ee.webmedia.alfresco.classificator.model.ClassificatorValue;
@@ -42,6 +43,7 @@ import ee.webmedia.alfresco.docconfig.generator.GeneratorResults;
 import ee.webmedia.alfresco.docconfig.service.UserContactMappingCode;
 import ee.webmedia.alfresco.docconfig.service.UserContactMappingService;
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
+import ee.webmedia.alfresco.docdynamic.web.DocumentDialogHelperBean;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.utils.CalendarUtil;
@@ -217,9 +219,13 @@ public class UserContactTableGenerator extends BaseSystematicFieldGenerator {
             } else {
                 throw new RuntimeException("FieldType " + field.getFieldTypeEnum() + " is not supported inside a table");
             }
-            if (child.getOriginalFieldId().equals(DocumentSpecificModel.Props.SUBSTITUTE_NAME.getLocalName())) {
+            if (child.getOriginalFieldId().equals(DocumentSpecificModel.Props.SUBSTITUTE_NAME.getLocalName())
+                    || FieldChangeableIf.ALWAYS_NOT_CHANGEABLE.equals(child.getChangeableIfEnum())) {
                 componentGeneratorAndProps += "¤read-only=true";
+            } else if (FieldChangeableIf.CHANGEABLE_IF_WORKING_DOC.equals(child.getChangeableIfEnum())) {
+                componentGeneratorAndProps += "¤readOnlyIf=#{" + DocumentDialogHelperBean.BEAN_NAME + ".notWorkingOrNotEditable}";
             }
+
             if (DocumentSpecificModel.Props.SUBSTITUTION_BEGIN_DATE.getLocalName().equals(child.getOriginalFieldId())
                     || DocumentSpecificModel.Props.SUBSTITUTION_END_DATE.getLocalName().equals(child.getOriginalFieldId())) {
                 Field substituteNameField = group.getFieldsByOriginalId().get(DocumentSpecificModel.Props.SUBSTITUTE_NAME.getLocalName());

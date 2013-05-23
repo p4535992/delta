@@ -17,6 +17,7 @@ import static ee.webmedia.alfresco.privilege.service.PrivilegeUtil.isAdminOrDocm
 import static ee.webmedia.alfresco.utils.ComponentUtil.getAttributes;
 import static ee.webmedia.alfresco.utils.ComponentUtil.getChildren;
 import static ee.webmedia.alfresco.utils.ComponentUtil.putAttribute;
+import static ee.webmedia.alfresco.workflow.web.CompoundWorkflowDialog.handleWorkflowChangedException;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -406,8 +407,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
             task.getRemovedFiles().clear();
             MessageUtil.addInfoMessage("save_success");
         } catch (WorkflowChangedException e) {
-            log.debug("Saving task failed", e);
-            MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "workflow_task_save_failed");
+            handleWorkflowChangedException(e, "Saving task failed", "workflow_task_save_failed", log);
         }
         restore("saveTask");
     }
@@ -484,8 +484,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
             log.error("Finishing task failed", e);
             BeanHelper.getDocumentLockHelperBean().handleLockedNode("task_finish_error_document_locked");
         } catch (WorkflowChangedException e) {
-            log.debug("Finishing task failed", e);
-            MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "workflow_task_save_failed");
+            CompoundWorkflowDialog.handleWorkflowChangedException(e, "Finishing task failed", "workflow_task_save_failed", log);
         } catch (WorkflowActiveResponsibleTaskException e) {
             log.debug("Finishing task failed: more than one active responsible task!", e);
             MessageUtil.addErrorMessage("workflow_compound_save_failed_responsible");
@@ -713,8 +712,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         } catch (UnableToPerformException e) {
             MessageUtil.addStatusMessage(e);
         } catch (WorkflowChangedException e) {
-            log.debug("Finishing signature task failed", e);
-            MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "workflow_task_save_failed");
+            handleWorkflowChangedException(e, "Finishing signature task failed", "workflow_task_save_failed", log);
         } catch (SignatureRuntimeException e) {
             SignatureBlockBean.addSignatureError(e);
         } catch (FileExistsException e) {

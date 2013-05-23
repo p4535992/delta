@@ -18,6 +18,7 @@
                <param name="nodeRef">#{actionContext.nodeRef}</param>
                <param name="confirmMessagePlaceholder0">#{actionContext.name}</param>
                <param name="deleteAfterConfirmHandler">ClassificatorDetailsDialog.deleteClassificator</param>
+               <param name="dialogsToClose">2</param>
             </params>
             <action>dialog:deleteDialog</action>
          </action>

@@ -10,7 +10,7 @@
 <a:panel id="notifications-panel" label="#{msg.notification_ordering_of_email_notifications}">
 <h:outputText value="#{msg.notification_subscribe_to_following_notifications}" styleClass="dialogpanel-title" />
 
-<r:propertySheetGrid value="#{NotificationDialog.userPrefsNode}" var="node" finishButtonId="dialog:finish-button">
+<r:propertySheetGrid value="#{NotificationDialog.userPrefsNode}" var="node" finishButtonId="dialog:finish-button" columns="1">
 
    <h:panelGrid styleClass="table-padding" columns="2">
 

@@ -138,10 +138,9 @@ public abstract class DynamicTypeDetailsDialog<D extends DynamicType, S extends 
     }
 
     /** used by delete action to do actual deleting (after user has confirmed deleting in DeleteDialog) */
-    public String deleteType(ActionEvent event) {
+    public void deleteType(ActionEvent event) {
         NodeRef dynTypeRef = new NodeRef(ActionUtil.getParam(event, "nodeRef"));
         BeanHelper.getDocumentAdminService().deleteDynamicType(dynTypeRef);
-        return getCloseOutcome(2);
     }
 
     /** replace dynType in memory with fresh copy from repo */

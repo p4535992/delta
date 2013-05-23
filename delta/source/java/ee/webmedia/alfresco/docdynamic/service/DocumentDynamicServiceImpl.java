@@ -558,7 +558,7 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
                 saveListener.validate(document, validationHelper);
             }
             if (!validationHelper.errorMessages.isEmpty()) {
-                throw new UnableToPerformMultiReasonException(new MessageDataWrapper(validationHelper.errorMessages));
+                throw new UnableToPerformMultiReasonException(new MessageDataWrapper(validationHelper.errorMessages), documentOriginal);
             }
             for (String saveListenerBeanName : saveListenerBeanNames) {
                 SaveListener saveListener = (SaveListener) beanFactory.getBean(saveListenerBeanName, SaveListener.class);

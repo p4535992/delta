@@ -15,12 +15,12 @@ TODO: ALSeadist CL_TASK 181259 181260 DocTypeDetailsDialog
    <f:facet name="title">
       <a:booleanEvaluator value="#{DialogManager.bean.dynamicTypeDetailsDialog.showingLatestVersion}">
          <a:booleanEvaluator value="#{DialogManager.bean != FieldGroupDetailsDialog || FieldGroupDetailsDialog.showAddExistingField}">
-            <wm:search id="searchFieldDef" pickerCallback="#{DialogManager.bean.fieldsListBean.searchFieldDefinitions}" setterCallback="#{DialogManager.bean.fieldsListBean.addExistingField}"
+            <wm:search id="searchFieldDef" pickerCallback="#{DialogManager.bean.fieldsListBean.searchFieldDefinitions}" setterCallback="#{DialogManager.bean.fieldsListBean.addExistingField}" renderPlain="true"
                searchLinkLabel="docType_metadataList_add_existingField" dialogTitleId="docType_metadataList_add_existingField_pickerTitle" value="#{DialogManager.bean.fieldsListBean.dummy}" ajaxParentLevel="100" searchLinkTooltip="docType_metadataList_add_existingField_tooltip"
             />
          </a:booleanEvaluator>
          <a:booleanEvaluator value="#{DialogManager.bean == DocTypeDetailsDialog || DialogManager.bean == CaseFileTypeDetailsDialog}">
-            <wm:search id="searchFieldGroup" pickerCallback="#{DialogManager.bean.fieldsListBean.searchFieldGroups}" setterCallback="#{DialogManager.bean.fieldsListBean.addExistingFieldGroup}"
+            <wm:search id="searchFieldGroup" pickerCallback="#{DialogManager.bean.fieldsListBean.searchFieldGroups}" setterCallback="#{DialogManager.bean.fieldsListBean.addExistingFieldGroup}" renderPlain="true"
                searchLinkLabel="docType_metadataList_add_existingFieldGroup" dialogTitleId="docType_metadataList_add_existingFieldGroup_pickerTitle" value="#{DialogManager.bean.fieldsListBean.dummy}" ajaxParentLevel="100" searchLinkTooltip="docType_metadataList_add_existingFieldGroup_tooltip"
             />
          </a:booleanEvaluator>

@@ -63,7 +63,7 @@ import ee.webmedia.alfresco.utils.TextUtil;
 public class AccessRestrictionGenerator extends BaseSystematicFieldGenerator {
 
     private static final String VIEW_MODE_PROP_SUFFIX = "View";
-    public static final String ACCESS_RESTRICTION_CHANGE_REASON_ERROR = "accessRestrictionChangeReasonError";
+    public static final String ACCESS_RESTRICTION_CHANGE_REASON_ERROR = "access_restriction_change_reason_error";
 
     public static final QName[] ACCESS_RESTRICTION_PROPS = {
             ACCESS_RESTRICTION,
@@ -98,7 +98,8 @@ public class AccessRestrictionGenerator extends BaseSystematicFieldGenerator {
             return;
         }
 
-        Map<String, Field> fieldsByOriginalId = ((FieldGroup) field.getParent()).getFieldsByOriginalId();
+        FieldGroup group = (FieldGroup) field.getParent();
+        Map<String, Field> fieldsByOriginalId = group.getFieldsByOriginalId();
         QName accessRestrictionProp = getProp(fieldsByOriginalId, ACCESS_RESTRICTION);
         QName accessRestrictionReasonProp = getProp(fieldsByOriginalId, ACCESS_RESTRICTION_REASON);
         QName accessRestrictionBeginDateProp = getProp(fieldsByOriginalId, ACCESS_RESTRICTION_BEGIN_DATE);
@@ -131,8 +132,7 @@ public class AccessRestrictionGenerator extends BaseSystematicFieldGenerator {
             } else if (field.getOriginalFieldId().equals(ACCESS_RESTRICTION_BEGIN_DATE.getLocalName())) {
                 String itemLabel = MessageUtil.getMessage("document_accessRestrictionDate");
                 List<String> components = DurationGenerator.generateDurationFields(field, item, accessRestrictionBeginDateProp, accessRestrictionEndDateProp,
-                        itemLabel,
-                        namespaceService);
+                        itemLabel, group, namespaceService);
                 List<String> componentsWithMandatoryIf = new ArrayList<String>();
                 componentsWithMandatoryIf.add(components.get(0) + "¤mandatoryIf=" + accessRestrictionPropName);
                 componentsWithMandatoryIf.add(components.get(1) + "¤mandatoryIf=" + accessRestrictionPropName + "," + accessRestrictionEndDescProp.getLocalName() + "=null");
@@ -148,8 +148,7 @@ public class AccessRestrictionGenerator extends BaseSystematicFieldGenerator {
                         RepoUtil.createTransientProp(accessRestrictionBeginDateProp.getLocalName() + VIEW_MODE_PROP_SUFFIX).toString(), itemLabel);
                 viewModeItem.setRendered(getBindingName("renderAllAccessRestrictionFields", stateHolderKey));
                 components = DurationGenerator.generateDurationFields(field, viewModeItem, accessRestrictionBeginDateProp, accessRestrictionEndDateProp,
-                        itemLabel,
-                        namespaceService);
+                        itemLabel, group, namespaceService);
                 viewModeItem.setOptionsSeparator(PropsBuilder.DEFAULT_OPTIONS_SEPARATOR);
                 viewModeItem.setProps(StringUtils.join(components, ','));
                 viewModeItem.setTextId("document_accessRestrictionDates_templateText");

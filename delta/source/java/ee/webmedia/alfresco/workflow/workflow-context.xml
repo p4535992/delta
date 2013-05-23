@@ -603,6 +603,34 @@
             <ref bean="taskTableAddColumnBootstrap7" />
          </list>
       </property>
+   </bean>
+   
+   <bean id="deleteEmptyTasksUpdater" class="ee.webmedia.alfresco.workflow.bootstrap.DeleteEmptyTasksUpdater" parent="abstractNodeUpdater" >
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />   
+      <property name="workflowDbService" ref="WorkflowDbService"/>
+      <property name="workflowService" ref="WmWorkflowService"/>
+      <property name="batchSize" value="1" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="taskTableInsertMissingTasksBootstrap" />
+         </list>
+      </property>    
+   </bean>    
+   
+   <bean id="reorderNotParallelWorkflowTasks" class="ee.webmedia.alfresco.workflow.bootstrap.ReorderNotParallelWorkflowTasks" parent="abstractNodeUpdater" >
+      <property name="moduleId" value="simdhs" />
+      <property name="enabled" value="${updater.reorderNotParallelWorkflowTasks.enabled}" />
+      <property name="executeOnceOnly" value="true" />   
+      <property name="workflowDbService" ref="WorkflowDbService"/>
+      <property name="workflowService" ref="WmWorkflowService"/>
+      <property name="batchSize" value="1" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="taskTableInsertMissingTasksBootstrap" />
+            <ref bean="deleteEmptyTasksUpdater" />
+         </list>
+      </property>    
    </bean>    
 
    <!-- START: web beans: -->

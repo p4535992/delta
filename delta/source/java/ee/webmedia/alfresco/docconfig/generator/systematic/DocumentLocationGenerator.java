@@ -17,6 +17,7 @@ import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.VOLU
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -49,6 +50,7 @@ import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigEle
 import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement.ItemConfigVO.ConfigItemType;
 import ee.webmedia.alfresco.common.propertysheet.converter.NodeRefConverter;
 import ee.webmedia.alfresco.common.propertysheet.suggester.SuggesterGenerator;
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 import ee.webmedia.alfresco.docadmin.service.Field;
 import ee.webmedia.alfresco.docadmin.service.FieldGroup;
@@ -221,17 +223,25 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
                 caseLabelEditableItem.setDontRenderIfDisabled(true);
             }
             caseLabelEditableItem.setComponentGenerator("SuggesterGenerator");
-            caseLabelEditableItem.setSuggesterValues(getBindingName("getCasesEditable", stateHolderKey));
+            String bindingName = "getCasesEditable";
+            if (forSearch) {
+                // NB! We also need to be able to search by case label alone. Returning null from getCasesEditable sets the suggester to read-only.
+                bindingName += "OrEmptyList";
+            }
+            caseLabelEditableItem.setSuggesterValues(getBindingName(bindingName, stateHolderKey));
             caseLabelEditableItem.setStyleClass("long");
             caseLabelEditableItem.setShowInViewMode(false);
             generatorResults.addItem(caseLabelEditableItem);
 
             // View mode: text item
-            ItemConfigVO caseLabelItem = generatorResults.generateAndAddViewModeText(caseLabelProp.toString(), field.getName());
-            caseLabelItem.setComponentGenerator("ActionLinkGenerator");
-            caseLabelItem.setAction("dialog:documentListDialog");
-            caseLabelItem.setActionListener("#{DocumentListDialog.setup}");
-            caseLabelItem.setActionListenerParams("caseNodeRef=" + getBindingName("case", stateHolderKey));
+            NodeRef nodeRef = BeanHelper.getDocumentDialogHelperBean().getNodeRef();
+            if (nodeRef == null || BeanHelper.getGeneralService().getAncestorNodeRefWithType(nodeRef, CaseModel.Types.CASE) != null) {
+                ItemConfigVO caseLabelItem = generatorResults.generateAndAddViewModeText(caseLabelProp.toString(), field.getName());
+                caseLabelItem.setComponentGenerator("ActionLinkGenerator");
+                caseLabelItem.setAction("dialog:documentListDialog");
+                caseLabelItem.setActionListener("#{DocumentListDialog.setup}");
+                caseLabelItem.setActionListenerParams("caseNodeRef=" + getBindingName("case", stateHolderKey));
+            }
             return;
         }
         throw new RuntimeException("Unsupported field: " + field);
@@ -369,6 +379,16 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
         }
 
         public List<String> getCasesEditable(FacesContext context, UIInput selectComponent) {
+            return casesEditable;
+        }
+
+        /**
+         * Alternative case listing for search dialogs. If we return null for casesEditable, then the Suggester component is rendered as read-only.
+         */
+        public List<String> getCasesEditableOrEmptyList(FacesContext context, UIInput selectComponent) {
+            if (casesEditable == null) {
+                return Collections.<String> emptyList();
+            }
             return casesEditable;
         }
 
@@ -610,26 +630,27 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
                 @SuppressWarnings("unchecked")
                 List<UIComponent> children = ps.getChildren();
                 for (UIComponent component : children) {
+                    FacesContext context = FacesContext.getCurrentInstance();
                     if (component.getId().endsWith("_" + functionProp.getLocalName())) {
                         HtmlSelectOneMenu functionList = (HtmlSelectOneMenu) component.getChildren().get(1);
-                        ComponentUtil.setSelectItems(FacesContext.getCurrentInstance(), functionList, functions);
+                        ComponentUtil.setSelectItems(context, functionList, functions);
                         functionList.setValue(functionRef);
                     } else if (component.getId().endsWith("_" + seriesProp.getLocalName())) {
                         HtmlSelectOneMenu seriesList = (HtmlSelectOneMenu) component.getChildren().get(1);
-                        ComponentUtil.setSelectItems(FacesContext.getCurrentInstance(), seriesList, series);
+                        ComponentUtil.setSelectItems(context, seriesList, series);
                         seriesList.setValue(seriesRef);
                     } else if (component.getId().endsWith("_" + volumeProp.getLocalName())) {
                         HtmlSelectOneMenu volumeList = (HtmlSelectOneMenu) component.getChildren().get(1);
-                        ComponentUtil.setSelectItems(FacesContext.getCurrentInstance(), volumeList, volumes);
+                        ComponentUtil.setSelectItems(context, volumeList, volumes);
                         volumeList.setValue(volumeRef);
                     } else if (component.getId().endsWith("_" + caseProp.getLocalName())) {
                         HtmlSelectOneMenu caseList = (HtmlSelectOneMenu) component.getChildren().get(1);
-                        ComponentUtil.setSelectItems(FacesContext.getCurrentInstance(), caseList, cases);
+                        ComponentUtil.setSelectItems(context, caseList, cases);
                         caseList.setValue(caseRef);
                         component.setRendered(cases != null && !isSearchFilter);
                     } else if (component.getId().endsWith("_" + caseLabelEditableProp.getLocalName())) {
                         UIInput caseList = (UIInput) component.getChildren().get(1);
-                        SuggesterGenerator.setValue(caseList, casesEditable);
+                        SuggesterGenerator.setValue(caseList, (isSearchFilter ? getCasesEditableOrEmptyList(context, caseList) : casesEditable));
                         caseList.setValue(caseLabel);
                         component.setRendered(casesEditable != null || isSearchFilter);
                     }
@@ -654,7 +675,15 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
             List<NodeRef> selectedStores = (List<NodeRef>) document.getProperties().get(DocumentDynamicSearchDialog.SELECTED_STORES);
             if (selectedStores == null || selectedStores.isEmpty()) { // Check if the search filter is already saved
                 List<String> storeStrings = (List<String>) document.getProperties().get(DocumentSearchModel.Props.STORE);
-                if (storeStrings == null || storeStrings.isEmpty()) {
+                if (storeStrings == null) {
+                    return getFunctionsService().getAllFunctions();
+                }
+                for (Iterator<String> i = storeStrings.iterator(); i.hasNext();) {
+                    if (StringUtils.isBlank(i.next())) {
+                        i.remove();
+                    }
+                }
+                if (storeStrings.isEmpty()) {
                     return getFunctionsService().getAllFunctions();
                 }
 

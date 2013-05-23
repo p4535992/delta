@@ -89,4 +89,8 @@ public interface WorkflowDbService {
 
     List<NodeRef> getWorkflowTaskNodeRefs(NodeRef workflowRef);
 
+    Set<NodeRef> getAllWorkflowsWithEmptyTasks();
+
+    Set<NodeRef> getWorkflowsWithWrongTaskOrder();
+
 }

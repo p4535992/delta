@@ -1571,8 +1571,9 @@ public abstract class AbstractLuceneIndexerAndSearcherFactory implements LuceneI
                     logger.info("Skipping searching holes and indexing, it is disabled");
                 }
     
-                IndexIntegrityCheckerBootstrap indexIntegrityCheckerBootstrap = BeanHelper.getSpringBean(IndexIntegrityCheckerBootstrap.class, "indexIntegrityCheckerBootstrap");
-//                indexIntegrityCheckerBootstrap.execute(true, null);
+                // XXX Disable because PPA data is quite large
+                // IndexIntegrityCheckerBootstrap indexIntegrityCheckerBootstrap = BeanHelper.getSpringBean(IndexIntegrityCheckerBootstrap.class, "indexIntegrityCheckerBootstrap");
+                // indexIntegrityCheckerBootstrap.execute(true, null);
     
                 final LuceneIndexerAndSearcher indexerAndSearcher = BeanHelper.getSpringBean(LuceneIndexerAndSearcher.class, "admLuceneIndexerAndSearcherFactory");
                 RetryingTransactionHelper txHelper = BeanHelper.getTransactionService().getRetryingTransactionHelper();
@@ -1600,8 +1601,6 @@ public abstract class AbstractLuceneIndexerAndSearcherFactory implements LuceneI
                 logger.info("Starting lucene index backup");
                 backupComponent.backup();
                 logger.info("Completed lucene index backup");
-    
-                indexIntegrityCheckerBootstrap.execute(false, null);
             } finally {
                 NightlyDataFixJob.nightlyMaintenanceJobLock.unlock();
             }

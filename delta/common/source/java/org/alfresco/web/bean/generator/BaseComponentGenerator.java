@@ -638,11 +638,11 @@ public abstract class BaseComponentGenerator implements IComponentGenerator, Cus
          catch (NullPointerException npe)
          {
             // workaround a NPE bug in MyFaces
-            logger.warn("Converter " + converterId + " could not be applied");
+            logger.warn("Converter " + converterId + " could not be applied to component: " + component.getId());
          }
          catch (FacesException fe)
          {
-            logger.warn("Converter " + converterId + " could not be applied");
+            logger.warn("Converter " + converterId + " could not be applied to component: " + component.getId());
          }
       }
    }

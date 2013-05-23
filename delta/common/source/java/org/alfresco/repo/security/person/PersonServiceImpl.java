@@ -372,7 +372,7 @@ public class PersonServiceImpl extends TransactionListenerAdapter implements Per
         }
     }
 
-	@Override
+    @Override
     public Map<QName, Serializable> getPersonProperties(String userName) {
         if (StringUtils.isBlank(userName)) {
             return null;

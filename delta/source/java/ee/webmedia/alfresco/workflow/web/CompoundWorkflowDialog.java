@@ -44,8 +44,10 @@ import org.apache.commons.collections.comparators.NullComparator;
 import org.apache.commons.collections.comparators.TransformingComparator;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateUtils;
+import org.apache.commons.logging.Log;
 import org.joda.time.LocalDate;
 import org.joda.time.LocalTime;
+import org.springframework.util.Assert;
 import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
@@ -360,6 +362,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
             }
             // clear panelGroup to avoid memory issues when working with large worflows
             panelGroup.getChildren().clear();
+            preprocessWorkflow();
             compoundWorkflow = getWorkflowService().startCompoundWorkflow(compoundWorkflow);
             if (isUnsavedWorkFlow) {
                 isUnsavedWorkFlow = false;
@@ -456,6 +459,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
         try {
             // clear panelGroup to avoid memory issues when working with large worflows
             panelGroup.getChildren().clear();
+            preprocessWorkflow();
             compoundWorkflow = getWorkflowService().stopCompoundWorkflow(compoundWorkflow);
             MessageUtil.addInfoMessage("workflow_compound_stop_success");
         } catch (Exception e) {
@@ -501,6 +505,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
         try {
             // clear panelGroup to avoid memory issues when working with large worflows
             panelGroup.getChildren().clear();
+            preprocessWorkflow();
             compoundWorkflow = getWorkflowService().continueCompoundWorkflow(compoundWorkflow);
             MessageUtil.addInfoMessage("workflow_compound_continue_success");
         } catch (Exception e) {
@@ -890,8 +895,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
     public static void handleException(Exception e, String failMsg) {
         FacesContext context = FacesContext.getCurrentInstance();
         if (e instanceof WorkflowChangedException) {
-            log.debug("Compound workflow action failed: data changed!", e);
-            MessageUtil.addErrorMessage(context, "workflow_compound_save_failed");
+            handleWorkflowChangedException((WorkflowChangedException) e, "Compound workflow action failed: data changed! ", "workflow_compound_save_failed", log);
         } else if (e instanceof WorkflowActiveResponsibleTaskException) {
             log.debug("Compound workflow action failed: more than one active responsible task!", e);
             MessageUtil.addErrorMessage(context, "workflow_compound_save_failed_responsible");
@@ -926,16 +930,23 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
         }
     }
 
+    public static void handleWorkflowChangedException(WorkflowChangedException workflowChangedException, String logMessage, String displayMessageKey, Log log) {
+        if (!log.isDebugEnabled()) {
+            log.error(logMessage + workflowChangedException.getShortMessage());
+        } else {
+            log.debug(logMessage, workflowChangedException);
+        }
+        MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), displayMessageKey);
+    }
+
     private boolean validate(FacesContext context, boolean checkFinished, boolean checkInvoice) {
         boolean valid = true;
         boolean activeResponsibleAssignTaskInSomeWorkFlow = false;
         // true if some orderAssignmentWorkflow in status NEW has no active responible task (but has some co-responsible tasks)
         boolean checkOrderAssignmentResponsibleTask = false;
         boolean missingOwnerAssignment = false;
-        Boolean missingInformationTasks = null;
         Set<String> missingOwnerMessageKeys = null;
         boolean hasForbiddenFlowsForFinished = false;
-        DueDateRegressionHelper regressionTest = new DueDateRegressionHelper();
         boolean isCategoryEnabled = BeanHelper.getWorkflowService().getOrderAssignmentCategoryEnabled();
         Document doc = getParentDocument();
         boolean adminOrDocmanagerWithPermission = isAdminOrDocmanagerWithPermission(doc, Privileges.VIEW_DOCUMENT_FILES, Privileges.VIEW_DOCUMENT_META_DATA);
@@ -976,44 +987,9 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
                 }
                 hasOrderAssignmentActiveResponsible |= activeResponsible;
                 foundOwner |= StringUtils.isNotBlank(task.getOwnerName());
-                QName taskType = task.getNode().getType();
-                String taskOwnerMsg = getTaskOwnerMessage(block, taskType, task.isResponsible());
-                if (activeResponsible) {
-                    // both fields must be empty or filled
-                    if (hasNoOwnerOrDueDate(task)) {
-                        valid = false;
-                        MessageUtil.addErrorMessage(context, "task_name_and_due_required", taskOwnerMsg);
-                        break;
-                    }
-                } else {
-                    // only name is required for information tasks
-                    if (taskType.equals(WorkflowSpecificModel.Types.INFORMATION_TASK)) {
-                        if (StringUtils.isBlank(task.getOwnerName())) {
-                            if (missingInformationTasks == null) {
-                                missingInformationTasks = true; // delay showing error message
-                            }
-                        } else {
-                            missingInformationTasks = false;
-                        }
-                    }
-                    // institutionName and dueDate are required for externalReviewTask
-                    else if (taskType.equals(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK)) {
-                        if (StringUtils.isBlank(task.getInstitutionName()) || task.getDueDate() == null) {
-                            MessageUtil.addErrorMessage(context, "task_name_and_due_required", taskOwnerMsg);
-                            break;
-                        }
-                    }
-                    // both fields must be filled
-                    else {
-                        if (hasNoOwnerOrDueDate(task)) {
-                            valid = false;
-                            MessageUtil.addErrorMessage(context, "task_name_and_due_required", taskOwnerMsg);
-                            break;
-                        }
-                    }
-                }
-                if (task.isStatus(Status.NEW)) {
-                    regressionTest.checkDueDate(task);
+                valid = validateTaskOwnerAndDueDate(context, block, task);
+                if (!valid) {
+                    break;
                 }
             }
             checkOrderAssignmentResponsibleTask |= !hasOrderAssignmentActiveResponsible;
@@ -1029,12 +1005,6 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
                 }
                 continue;
             }
-            if (Boolean.TRUE.equals(missingInformationTasks)) {
-                valid = false;
-                String taskOwnerMsg = MessageUtil.getMessage(block.getNode().getType().getLocalName() + "_tasks");
-                MessageUtil.addErrorMessage(context, "task_name_required", taskOwnerMsg);
-                break;
-            }
             if (!foundOwner) {
                 String missingOwnerMsgKey = getMissingOwnerMessageKey(blockType);
                 if (missingOwnerMsgKey != null) {
@@ -1044,7 +1014,8 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
             }
         }
 
-        valid &= regressionTest.valid;
+        valid &= checkTaskDueDateRegression(compoundWorkflow.getWorkflows());
+
         if (missingOwnerAssignment) {
             valid = false;
             MessageUtil.addErrorMessage(context, "workflow_save_error_missingOwner_assignmentWorkflow1");
@@ -1073,6 +1044,124 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
         return valid;
     }
 
+    private boolean validateTaskOwnerAndDueDate(FacesContext context, Workflow block, Task task) {
+        QName taskType = task.getNode().getType();
+        String taskOwnerMsg = getTaskOwnerMessage(block, taskType, task.isResponsible());
+        if (taskType.equals(WorkflowSpecificModel.Types.INFORMATION_TASK)) {
+            if (StringUtils.isBlank(task.getOwnerName())) {
+                MessageUtil.addErrorMessage(context, "task_name_required", taskOwnerMsg);
+                return false;
+            }
+        }
+        else if (taskType.equals(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK)) {
+            if (StringUtils.isBlank(task.getInstitutionName()) || task.getDueDate() == null) {
+                MessageUtil.addErrorMessage(context, "task_name_and_due_required", taskOwnerMsg);
+                return false;
+            }
+        }
+        else if (StringUtils.isBlank(task.getOwnerName()) || task.getDueDate() == null) {
+            MessageUtil.addErrorMessage(context, "task_name_and_due_required", taskOwnerMsg);
+            return false;
+        }
+        return true;
+    }
+
+    private boolean checkTaskDueDateRegression(List<Workflow> workflows) {
+        List<List<Workflow>> parallelWorkflowBlocks = collectParallelWorkflowBlocks(workflows);
+        Date minAllowedDueDate = null;
+        if (parallelWorkflowBlocks.size() == 1 && !parallelWorkflowBlocks.get(0).isEmpty() && parallelWorkflowBlocks.get(0).get(0).isParallelTasks()) {
+            // one block with parallel tasks needs no additional check
+            return true;
+        }
+        // these blocks must have strict due date order between each other:
+        // minimum due date of block must be >= maximum due date in preceeding blocks
+        // maximum due date of block must be <= minimum due date in succeeding blocks
+        for (List<Workflow> block : parallelWorkflowBlocks) {
+            if (block.isEmpty()) {
+                // shouldn't normally happen, but this check is performed elsewhere
+                continue;
+            }
+            Workflow blockFirstWorkflow = block.get(0);
+            boolean checkTasksInsideBlock = !blockFirstWorkflow.isParallelTasks();
+            Assert.isTrue(!checkTasksInsideBlock || block.size() == 1, "Not parallel tasks inside parallel block are not allowed.");
+            Pair<Date, Date> minMaxDateInBlock = getCheckAndGetMaxDueDate(block, minAllowedDueDate, checkTasksInsideBlock);
+            if (minMaxDateInBlock == null) {
+                return false;
+            }
+            Date minDueDateInBlock = minMaxDateInBlock.getFirst();
+            Date maxDueDateInBlock = minMaxDateInBlock.getSecond();
+            // date mandatory check is not performed here, null values are ignored
+            if (minDueDateInBlock != null && minAllowedDueDate != null && minDueDateInBlock.before(minAllowedDueDate)) {
+                MessageUtil.addErrorMessage("workflow_save_error_dueDate_decreaseNotAllowed");
+                return false;
+            }
+            if (minAllowedDueDate == null || maxDueDateInBlock != null) {
+                minAllowedDueDate = maxDueDateInBlock;
+            }
+        }
+        return true;
+    }
+
+    /** Return null indicating that regression inside the workflow block was wrong */
+    private Pair<Date, Date> getCheckAndGetMaxDueDate(List<Workflow> block, Date minAllowedDueDate, boolean checkTasksInsideBlock) {
+        Date minDueDate = null;
+        Date maxDueDate = null;
+        Date previousDueDate = null;
+        for (Workflow workflow : block) {
+            for (Task task : workflow.getTasks()) {
+                if (!task.isStatus(Status.NEW)) {
+                    continue;
+                }
+                Date taskDueDate = task.getDueDate();
+                if (taskDueDate == null) {
+                    continue;
+                }
+                if (checkTasksInsideBlock) {
+                    if (previousDueDate != null && taskDueDate.before(previousDueDate)) {
+                        MessageUtil.addErrorMessage("workflow_save_error_dueDate_decreaseNotAllowed");
+                        return null;
+                    }
+                    previousDueDate = taskDueDate;
+                }
+                if (minDueDate == null || minDueDate.after(taskDueDate)) {
+                    minDueDate = taskDueDate;
+                }
+                if (maxDueDate == null || taskDueDate.after(maxDueDate)) {
+                    maxDueDate = taskDueDate;
+                }
+            }
+        }
+        return new Pair<Date, Date>(minDueDate, maxDueDate);
+    }
+
+    /**
+     * Collect workflow blocks that don't need due date comparing between each others tasks inside one block,
+     * but need comparing between different blocks
+     * and may need comparing within single workflow depending on the workflow type
+     */
+    private List<List<Workflow>> collectParallelWorkflowBlocks(List<Workflow> workflows) {
+        List<List<Workflow>> parallelWorkflowBlocks = new ArrayList<List<Workflow>>();
+        List<Workflow> currentBlock = new ArrayList<Workflow>();
+        for (Workflow currentWorkflow : workflows) {
+            if (!currentBlock.isEmpty()) {
+                Workflow previousWorkflow = currentBlock.get(currentBlock.size() - 1);
+                if (previousWorkflow.isType(WorkflowSpecificModel.CAN_START_PARALLEL) && currentWorkflow.isType(WorkflowSpecificModel.CAN_START_PARALLEL)) {
+                    currentBlock.add(currentWorkflow);
+                } else {
+                    parallelWorkflowBlocks.add(currentBlock);
+                    currentBlock = new ArrayList<Workflow>();
+                    currentBlock.add(currentWorkflow);
+                }
+            } else {
+                currentBlock.add(currentWorkflow);
+            }
+        }
+        if (!currentBlock.isEmpty()) {
+            parallelWorkflowBlocks.add(currentBlock);
+        }
+        return parallelWorkflowBlocks;
+    }
+
     private String getTaskOwnerMessage(Workflow block, QName taskType, boolean isResponsible) {
         String suffix = "";
         if (isResponsibleAllowed(taskType) && !isResponsible) {
@@ -1084,83 +1173,6 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
 
     private boolean isResponsibleAllowed(QName taskType) {
         return taskType.equals(WorkflowSpecificModel.Types.ASSIGNMENT_TASK) || taskType.equals(WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_TASK);
-    }
-
-    private boolean hasNoOwnerOrDueDate(Task task) {
-        return StringUtils.isBlank(task.getOwnerName()) != (task.getDueDate() == null && task.getDueDateDays() == null);
-    }
-
-    /**
-     * Helper class that validates that dueDates are not getting smaller for consecutive tasks(that run after each other)
-     * Exceptions to this rule are tasks inside blocks that are started at the same time:
-     * 1) tasks inside one parallel workflow
-     * 2) tasks inside assignment, opinion and information workflows immediately following each other in any number and any order
-     * Tasks inside each of these blocks are not compared to each other, BUT must still be compared to tasks outside these blocks
-     * 
-     * @author Ats Uiboupin
-     */
-    private static class DueDateRegressionHelper {
-        boolean valid = true;
-        Date earliestAllowedDueDate;
-        Date latestDueDateParallel;
-        int workflowIndex = -1;
-        boolean insideParallelBlock = false; // task is in block of assignment, opinion and information workflows following each other
-        boolean insideParallelWorkflow = false; // task is in workflow with parallel property set to true and NOT insideParallelBlock
-
-        private void checkDueDate(Task task) {
-
-            setParallelCheckDates(task);
-
-            Date taskDueDate = task.getDueDate();
-            if (taskDueDate == null) {
-                return;
-            }
-            if (earliestAllowedDueDate == null && !(insideParallelBlock || insideParallelWorkflow)) {
-                earliestAllowedDueDate = taskDueDate;
-                return;
-            }
-
-            if (insideParallelBlock || insideParallelWorkflow) {
-                // collect maximum date of the current block
-                if (latestDueDateParallel == null || latestDueDateParallel.before(taskDueDate)) {
-                    latestDueDateParallel = taskDueDate;
-                }
-            } else if (earliestAllowedDueDate == null || taskDueDate.after(earliestAllowedDueDate)) {
-                earliestAllowedDueDate = taskDueDate;
-            }
-
-            if (earliestAllowedDueDate != null && taskDueDate.before(earliestAllowedDueDate)) {
-                invalid("workflow_save_error_dueDate_decreaseNotAllowed");
-            }
-        }
-
-        private void setParallelCheckDates(Task task) {
-            int indexInCompoundWorkflow = task.getParent().getIndexInCompoundWorkflow();
-            if (parallelBlockEnded(task, indexInCompoundWorkflow)) {
-                setCheckDate();
-            }
-            insideParallelBlock = task.getParent().isType(WorkflowSpecificModel.CAN_START_PARALLEL);
-            insideParallelWorkflow = !insideParallelBlock && task.getParent().isParallelTasks();
-            workflowIndex = indexInCompoundWorkflow;
-        }
-
-        private boolean parallelBlockEnded(Task task, int indexInCompoundWorkflow) {
-            return indexInCompoundWorkflow != workflowIndex
-                    && (insideParallelWorkflow
-                    || (insideParallelBlock && !task.getParent().isType(WorkflowSpecificModel.CAN_START_PARALLEL)));
-        }
-
-        private void setCheckDate() {
-            earliestAllowedDueDate = latestDueDateParallel;
-            latestDueDateParallel = null;
-        }
-
-        private void invalid(String msg) {
-            if (valid) {
-                MessageUtil.addErrorMessage(msg);
-            }
-            valid = false;
-        }
     }
 
     private boolean validateInvoice() {

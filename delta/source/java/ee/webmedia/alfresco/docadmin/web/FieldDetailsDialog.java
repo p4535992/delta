@@ -162,9 +162,8 @@ public class FieldDetailsDialog extends BaseDialogBean {
         return valid;
     }
 
-    public String deleteField(ActionEvent event) {
+    public void deleteField(ActionEvent event) {
         getDocumentAdminService().deleteFieldDefinition(field);
-        return getCloseOutcome(2);
     }
 
     @Override

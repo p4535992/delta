@@ -72,7 +72,7 @@ public class ValidatingModalLayerComponent extends ModalLayerComponent {
             Map<String, Object> attributes = ComponentUtil.getAttributes(child);
             boolean isHidden = attrIsTrue(attributes, ATTR_IS_HIDDEN);
             out.write("<tr><td class=\"propertiesLabel" + (isHidden ? " hidden" : "") + "\">");
-            out.write(MessageUtil.getMessage((String) attributes.get(ATTR_LABEL_KEY)) + ":</td>");
+            out.write(MessageUtil.getMessage((String) attributes.get(ATTR_LABEL_KEY)) + " </td>");
             out.write("<td>");
             if (child instanceof UIInput && !isHidden && !attrIsTrue(attributes, ATTR_PRESERVE_VALUES)) {
                 ((UIInput) child).setValue(null);
