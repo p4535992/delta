@@ -231,7 +231,13 @@ public class TextUtil {
             
             for (int i = 0; i < nameArray.length; i++) {
                 String nameS = (String) nameArray[i];
-                String personNameS = (String) personNameArray[i];
+                // 
+                // TODO: fix this mess
+                // an ugly hack to overcome an issue no # (Jaanika will send)
+                // basically names and personal names must come in same numbers
+                // if not, there's a problem with data an it must be investigated!
+                // 
+                String personNameS = personNameArray.length > i ? (String) personNameArray[i] : "";
                 if (StringUtils.isNotBlank(nameS) || StringUtils.isNotBlank(personNameS)) {
                     if (result.length() > 0) {
                         result.append(TextUtil.LIST_SEPARATOR);
