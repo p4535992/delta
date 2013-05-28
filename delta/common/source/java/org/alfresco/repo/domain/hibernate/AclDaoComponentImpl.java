@@ -2571,20 +2571,5 @@ public class AclDaoComponentImpl extends HibernateDaoSupport implements AclDaoCo
     {
         return createAccessControlListImpl(properties, aces, inherited);
     }
-    
-    public void fixSharedAcl(Long shared, Long defining)
-    {
-        if (defining == null)
-        {
-            throw new IllegalArgumentException("Null defining acl");
-        }
-
-        if (shared == null)
-        {
-            throw new IllegalArgumentException("Null shared acl");
-        }
-        List<AclChange> changes = new ArrayList<AclChange>();
-        getWritable(shared, defining, null, null, defining, true, changes, WriteMode.CHANGE_INHERITED);
-    }    
 
 }

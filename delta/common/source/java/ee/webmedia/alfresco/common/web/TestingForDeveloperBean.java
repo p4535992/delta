@@ -25,9 +25,7 @@ import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.cmr.search.SearchService;
 import org.alfresco.service.transaction.TransactionService;
 import org.apache.commons.lang.time.FastDateFormat;
-import org.quartz.JobExecutionException;
 
-import ee.webmedia.alfresco.common.job.NightlyDataFixJob;
 import ee.webmedia.alfresco.common.service.CustomReindexComponent;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.dvk.service.DvkService;
@@ -156,11 +154,7 @@ public class TestingForDeveloperBean implements Serializable {
         return storeRefs;
     }
 
-    public void runNightly0230DataMaintenanceJobNow(@SuppressWarnings("unused") ActionEvent event) throws JobExecutionException {
-        new NightlyDataFixJob().execute(null);
-    }
-
-    public void runNightly0300IndexMaintenanceJobNow(@SuppressWarnings("unused") ActionEvent event) {
+    public void runMergeNowOnAllIndexesAndPerformIndexBackup(ActionEvent event) {
         LuceneIndexBackupComponent luceneIndexBackupComponent = BeanHelper.getSpringBean(LuceneIndexBackupComponent.class, "luceneIndexBackupComponent");
         new LuceneIndexBackupJob().executeInternal(luceneIndexBackupComponent);
     }

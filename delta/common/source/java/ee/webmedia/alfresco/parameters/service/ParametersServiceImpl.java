@@ -73,10 +73,8 @@ public class ParametersServiceImpl implements ParametersService {
     @Override
     public Parameter<?> getParameter(Parameters parameter) {
         String xPath = parameter.toString();
-        log.debug("Parameter: " + xPath);
         final NodeRef nodeRef = generalService.getNodeRef(xPath);
         if (nodeRef == null) {
-        	log.debug("Unable to get nodeRef for parameter with xPath: '" + xPath + "'");
             throw new RuntimeException("Unable to get nodeRef for parameter with xPath: '" + xPath + "'");
         }
 
@@ -85,7 +83,6 @@ public class ParametersServiceImpl implements ParametersService {
 
         List<ChildAssociationRef> parentAssocs = nodeService.getParentAssocs(nodeRef);
         if (parentAssocs.size() != 1) {
-        	log.debug("Parameter is expected to have only one parent, but got " + parentAssocs.size() + ".");
             throw new RuntimeException("Parameter is expected to have only one parent, but got " + parentAssocs.size() + ".");
         }
         ChildAssociationRef parentRef = parentAssocs.get(0);
@@ -99,16 +96,11 @@ public class ParametersServiceImpl implements ParametersService {
     @SuppressWarnings("unchecked")
     public <T> T getParameter(Parameters parameter, Class<T> requiredClazz) {
         String xPath = parameter.toString();
-        log.debug("xPath: " + xPath);
         final NodeRef nodeRef = generalService.getNodeRef(xPath);
         if (nodeRef == null) {
-        	log.debug("Unable to get nodeRef for parameter with xPath: '" + xPath + "'");
             throw new RuntimeException("Unable to get nodeRef for parameter with xPath: '" + xPath + "'");
         }
-        log.debug("nodeRef: ID:" + nodeRef.getId() +"; HASH: "+ nodeRef.hashCode() +"; String: "+ nodeRef.toString());
-        log.debug("Trying to read param value... " + ParametersModel.Props.Parameter.VALUE.toString());
         final Serializable parameterValue = nodeService.getProperty(nodeRef, ParametersModel.Props.Parameter.VALUE);
-        log.debug("Param value: " + parameterValue.toString());
         if (requiredClazz != null) {
             return DefaultTypeConverter.INSTANCE.convert(requiredClazz, parameterValue);
         }
@@ -206,8 +198,6 @@ public class ParametersServiceImpl implements ParametersService {
     public void setParameterNextFireTime(Parameter<? extends Serializable> parameter) {
         final Parameters parameterEnum = Parameters.get(parameter);
         final String xPath = parameterEnum.toString();
-
-        log.trace("xPath: ["+xPath+"]");
         final NodeRef nodeRef = generalService.getNodeRef(xPath);
         if (log.isDebugEnabled()) {
             log.debug("updating parameter next fire time: " + parameter + "; nextFire=" + parameter.getNextFireTime());

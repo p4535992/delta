@@ -108,7 +108,6 @@ import ee.webmedia.alfresco.orgstructure.service.OrganizationStructureService;
 import ee.webmedia.alfresco.orgstructure.web.RsAccessStatusBean;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
 import ee.webmedia.alfresco.parameters.web.ParametersImportDialog;
-import ee.webmedia.alfresco.privilege.service.AccessControlListExtDAO;
 import ee.webmedia.alfresco.privilege.service.PrivilegeService;
 import ee.webmedia.alfresco.privilege.web.ManageInheritablePrivilegesDialog;
 import ee.webmedia.alfresco.register.service.RegisterService;
@@ -155,10 +154,6 @@ public class BeanHelper implements NamespacePrefixResolverProvider {
     @Override
     public NamespacePrefixResolver getNamespacePrefixResolver() {
         return getNamespaceService();
-    }
-
-    public static AccessControlListExtDAO getAccessControlListDao() {
-        return getSpringBean(AccessControlListExtDAO.class, "accessControlListDAO");
     }
 
     // START: web beans

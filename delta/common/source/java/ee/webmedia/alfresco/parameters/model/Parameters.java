@@ -2,15 +2,12 @@ package ee.webmedia.alfresco.parameters.model;
 
 import org.apache.commons.lang.StringUtils;
 
-import ee.webmedia.alfresco.parameters.job.ParameterRescheduledTriggerBean;
 import ee.webmedia.alfresco.parameters.model.ParametersModel.Repo;
 
 /**
  * @author Ats Uiboupin
  */
 public enum Parameters {
-	
-	
     /** Maximal number of documents that is fetched with single service call(multiple calls will be created if needed) */
     DVK_MAX_RECEIVE_DOCUMENTS_NR("dvkReceiveDocumentsNumber"),
     /** Number of days the document will be retained */
@@ -122,8 +119,6 @@ public enum Parameters {
     private String xPath;
     private String parameterName;
 
-	private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(Parameters.class);
-
     Parameters(String parameterName) {
         xPath = Repo.PARAMETERS_SPACE + "/" + ParametersModel.PREFIX + parameterName;
         this.parameterName = parameterName;
@@ -132,13 +127,10 @@ public enum Parameters {
     public static Parameters get(String parameterName) {
         final Parameters[] values = Parameters.values();
         for (Parameters parameter : values) {
-        	log.trace("Looking for parameter... ("+parameterName+") == " + parameter.toString());
             if (parameter.parameterName.equals(parameterName)) {
-            	log.debug("Parameter found! " + parameter.toString());
                 return parameter;
             }
         }
-        log.error("Unknown parameterName: " + parameterName + ". Known values: " + StringUtils.join(values, ", "));
         throw new IllegalArgumentException("Unknown parameterName: " + parameterName + ". Known values: " + StringUtils.join(values, ", "));
     }
 

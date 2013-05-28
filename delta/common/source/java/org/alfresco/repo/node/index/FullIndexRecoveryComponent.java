@@ -24,8 +24,6 @@
  */
 package org.alfresco.repo.node.index;
 
-import static ee.webmedia.alfresco.common.web.BeanHelper.getSpringBean;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -40,11 +38,8 @@ import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransacti
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeRef.Status;
-import org.alfresco.util.Pair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
-import ee.webmedia.alfresco.common.bootstrap.InvalidNodeFixerBootstrap;
 
 /**
  * Component to check and recover the indexes.  By default, the server is
@@ -170,12 +165,6 @@ public class FullIndexRecoveryComponent extends AbstractReindexComponent
     }
 
     @Override
-    protected boolean requireTransaction()
-    {
-        return false;
-    }
-
-    @Override
     protected void reindexImpl()
     {
         if (logger.isDebugEnabled())
@@ -199,24 +188,13 @@ public class FullIndexRecoveryComponent extends AbstractReindexComponent
                 transactionService.setAllowWrite(false);
             }
             
-
-            Pair<Boolean, Boolean> result = transactionService.getRetryingTransactionHelper().doInTransaction(new RetryingTransactionCallback<Pair<Boolean, Boolean>>()
-            {
-                @Override
-                public Pair<Boolean, Boolean> execute() throws Exception
-                {
-                    // Check that the first and last meaningful transactions are indexed 
-                    List<Transaction> startTxns = nodeDaoService.getTxnsByCommitTimeAscending(
-                            Long.MIN_VALUE, Long.MAX_VALUE, 10, null, false);
-                    boolean startAllPresent = areTxnsInIndex(startTxns);
-                    List<Transaction> endTxns = nodeDaoService.getTxnsByCommitTimeDescending(
-                            Long.MIN_VALUE, Long.MAX_VALUE, 10, null, false);
-                    boolean endAllPresent = areTxnsInIndex(endTxns);
-                    return Pair.newInstance(startAllPresent, endAllPresent);
-                }
-            }, true);
-            boolean startAllPresent = result.getFirst();
-            boolean endAllPresent = result.getSecond();
+            // Check that the first and last meaningful transactions are indexed 
+            List<Transaction> startTxns = nodeDaoService.getTxnsByCommitTimeAscending(
+                    Long.MIN_VALUE, Long.MAX_VALUE, 10, null, false);
+            boolean startAllPresent = areTxnsInIndex(startTxns);
+            List<Transaction> endTxns = nodeDaoService.getTxnsByCommitTimeDescending(
+                    Long.MIN_VALUE, Long.MAX_VALUE, 10, null, false);
+            boolean endAllPresent = areTxnsInIndex(endTxns);
             
             // check the level of cover required
             switch (recoveryMode)
@@ -224,29 +202,12 @@ public class FullIndexRecoveryComponent extends AbstractReindexComponent
             case AUTO:
                 if (!startAllPresent)
                 {
-                    performInvalidNodesFix();
                     // Initial transactions are missing - rebuild
-                    transactionService.getRetryingTransactionHelper().doInTransaction(new RetryingTransactionCallback<Object>()
-                    {
-                        @Override
-                        public Object execute() throws Exception
-                        {
-                            performFullRecovery();
-                            return null;
-                        }
-                    }, true);
+                    performFullRecovery();
                 }
                 else if (!endAllPresent)
                 {
-                    transactionService.getRetryingTransactionHelper().doInTransaction(new RetryingTransactionCallback<Object>()
-                    {
-                        @Override
-                        public Object execute() throws Exception
-                        {
-                            performPartialRecovery();
-                            return null;
-                        }
-                    }, true);
+                    performPartialRecovery();
                 }
                 break;
             case VALIDATE:
@@ -258,16 +219,7 @@ public class FullIndexRecoveryComponent extends AbstractReindexComponent
                 }
                 break;
             case FULL:
-                performInvalidNodesFix();
-                transactionService.getRetryingTransactionHelper().doInTransaction(new RetryingTransactionCallback<Object>()
-                {
-                    @Override
-                    public Object execute() throws Exception
-                    {
-                        performFullRecovery();
-                        return null;
-                    }
-                }, true);
+                performFullRecovery();
                 break;
             }
         }
@@ -277,12 +229,6 @@ public class FullIndexRecoveryComponent extends AbstractReindexComponent
             transactionService.setAllowWrite(allowWrite);
         }
         
-    }
-    
-    private void performInvalidNodesFix()
-    {
-        InvalidNodeFixerBootstrap invalidNodeFixerBootstrap = getSpringBean(InvalidNodeFixerBootstrap.class, "invalidNodeFixerBootstrap");
-        invalidNodeFixerBootstrap.execute();
     }
     
     private void performPartialRecovery()

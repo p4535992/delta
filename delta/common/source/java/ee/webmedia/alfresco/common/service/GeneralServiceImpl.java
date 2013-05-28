@@ -145,13 +145,6 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
     }
 
     @Override
-    public LinkedHashSet<StoreRef> getAllStoreRefsWithTrashCan() {
-        LinkedHashSet<StoreRef> allStoreRefs = new LinkedHashSet<StoreRef>(getAllWithArchivalsStoreRefs());
-        allStoreRefs.add(StoreRef.STORE_REF_ARCHIVE_SPACESSTORE);
-        return allStoreRefs;
-    }
-
-    @Override
     public LinkedHashSet<StoreRef> getArchivalsStoreRefs() {
         if (archivalsStoreRefs == null) {
             LinkedHashSet<StoreRef> stores = new LinkedHashSet<StoreRef>();
@@ -203,7 +196,6 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
 
     @Override
     public NodeRef getNodeRef(String nodeRefXPath, NodeRef root) {
-    	log.debug("nodeRefXPath: " + nodeRefXPath);
         Assert.notNull(root, "rootRef is a mandatory parameter");
         NodeRef nodeRef = root;
         String[] xPathParts;
@@ -222,38 +214,11 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
 
             QName qName = QName.resolveToQName(namespaceService, xPathPart);
 
-            log.debug("QName: " + qName.toString());
             nodeRef = getChildByAssocName(nodeRef, qName, nodeRefXPath);
             if (++partNr < xPathParts.length && nodeRef == null) {
-            	log.error("started to resolve xpath based on '" + nodeRefXPath
-                        + "'\nxPathParts='" + xPathParts + "'\npart that is incorrect='" + xPathPart + "'");
                 throw new IllegalArgumentException("started to resolve xpath based on '" + nodeRefXPath
                         + "'\nxPathParts='" + xPathParts + "'\npart that is incorrect='" + xPathPart + "'");
             }
-            
-            String logText = "";
-            if(nodeRef != null){
-            	if(nodeRef.toString() != null){
-            		logText += "nodeRef found: " + nodeRef.toString() + "; ";
-            	} else {
-            		logText += "nodeRef.toString() returned NULL!; ";
-            	}
-            	if(nodeRef.getId() != null){
-            		logText += "ID: " + nodeRef.getId() +"; ";
-            	} else {
-            		logText += "ID is NULL; ";
-            	}
-            	
-            	logText += "hashCode:" + nodeRef.hashCode() + ";";
-            	if(nodeRef.getStoreRef() != null){
-            		logText += "getStoreRef():" + nodeRef.getStoreRef().toString()+";";
-            	} else {
-            		logText += "getStoreRef() is NULL; ";
-            	}
-            } else {
-            	logText = "nodeRef is NULL!";
-            }
-            log.trace(logText);
         }
         return nodeRef;
     }
@@ -280,7 +245,6 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
             for (ChildAssociationRef childAssociationRef : childAssocs) {
                 msg.append("\n").append(childAssociationRef.getChildRef());
             }
-            log.error("ERROR: " + msg.toString());
             throw new RuntimeException(msg.toString());
         }
         parentRef = childAssocs.get(0).getChildRef();

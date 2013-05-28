@@ -82,10 +82,10 @@ import org.alfresco.repo.security.permissions.impl.AclChange;
 import org.alfresco.repo.security.permissions.impl.AclDaoComponent;
 import org.alfresco.repo.transaction.AlfrescoTransactionSupport;
 import org.alfresco.repo.transaction.RetryingTransactionHelper;
-import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
 import org.alfresco.repo.transaction.TransactionAwareSingleton;
 import org.alfresco.repo.transaction.TransactionListenerAdapter;
 import org.alfresco.repo.transaction.TransactionalDao;
+import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
 import org.alfresco.service.cmr.dictionary.AssociationDefinition;
 import org.alfresco.service.cmr.dictionary.ChildAssociationDefinition;
 import org.alfresco.service.cmr.dictionary.DataTypeDefinition;
@@ -128,9 +128,6 @@ import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.orm.hibernate3.HibernateCallback;
 import org.springframework.orm.hibernate3.support.HibernateDaoSupport;
-
-import ee.webmedia.alfresco.common.web.BeanHelper;
-import ee.webmedia.alfresco.privilege.bootstrap.FixAclInheritanceUpdater;
 
 /**
  * Hibernate-specific implementation of the persistence-independent <b>node</b> DAO interface
@@ -1727,35 +1724,10 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         propagateTimestamps(node);
         
         Set<Long> deletedChildAssocIds = new HashSet<Long>(10);
-        node = fixAclAndReloadIfNeeded(node);
         deleteNodeInternal(node, false, deletedChildAssocIds);
         
         // Record change ID
         recordNodeDelete(node);
-    }
-
-    private Node fixAclAndReloadIfNeeded(Node node) {
-        DbAccessControlList dbAcl = node.getAccessControlList();
-        Long childAclId = dbAcl.getId();
-        Long childNodeId = node.getId();
-        if (dbAcl != null && dbAcl.getAclType() == ACLType.SHARED && dbAcl.getInheritsFrom() == null) {
-            Pair<Long, ChildAssociationRef> primaryParentAssoc = getPrimaryParentAssoc(childNodeId);
-            Node parent = primaryParentAssoc != null ? getNodeOrNull(getNodePair(primaryParentAssoc.getSecond().getParentRef()).getFirst()) : null;
-            Long primaryParentAclId = parent != null ? parent.getAccessControlList().getId() : null;
-            if (primaryParentAclId != null) {
-                FixAclInheritanceUpdater.fixAclInheritFromNull(childAclId, primaryParentAclId, parent.getNodeRef(), BeanHelper.getAccessControlListDao());
-                node = getNodeNotNull(node.getId());
-                DbAccessControlList fixedAcl = aclDaoComponent.getDbAccessControlList(node.getAccessControlList().getId());
-                logger.info("Fixed invalid acl.inheritFrom on node delete: nodeRef=" + node.getNodeRef() + ", new inheritFrom=" + fixedAcl != null ? fixedAcl.getInheritsFrom() : null);
-                if(fixedAcl.getInheritsFrom() == null){
-                    logger.debug("Fixing not visible from acl or not successful.");
-                }
-                if(node.getAccessControlList().getInheritsFrom() == null){
-                    logger.debug("Fixing not visible from node or not successful.");
-                }
-            }
-        }
-        return node;
     }
 
     /**
@@ -4926,5 +4898,4 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
                     e);
         }
     }
-    
 }

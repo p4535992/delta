@@ -108,6 +108,7 @@
          <mandatory-aspects>
             <aspect>docadmin:object</aspect>
             <aspect>wfc:compoundWorkflowContainer</aspect>
+            <aspect>priv:userGroupMapping</aspect>
          </mandatory-aspects>
       </type>
 
