@@ -94,6 +94,8 @@ public interface WorkflowService {
 
     int getActiveResponsibleTasks(NodeRef document, QName workflowType, boolean allowFinished);
 
+    int getActiveResponsibleTasks(NodeRef parent, QName workflowType, boolean allowFinished, NodeRef compoundWorkflowToSkip);
+
     /**
      * @param compoundWorkflow
      * @param workflowTypeQName

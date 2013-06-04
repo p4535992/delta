@@ -924,6 +924,14 @@ function ajaxSuccess(responseText, componentClientId, componentContainerId) {
       }
       // Split response
       var i = responseText.lastIndexOf('VIEWSTATE:');
+      if (i < 0){
+         try {
+            window.location.href = window.location.protocol + "://" + window.location.hostname + "/" + window.location.pathname;
+            return false;
+         } finally {
+            setScreenProtected(false);
+         }         
+      }
       var html = responseText.substr(0, i);
       var hiddenInputsIndex = responseText.lastIndexOf("HIDDEN_INPUT_NAMES_JSON:");
       var viewState = responseText.substr(i + 'VIEWSTATE:'.length, hiddenInputsIndex);

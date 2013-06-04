@@ -611,19 +611,19 @@ public abstract class DvkServiceImpl implements DvkService {
             final AccessRightsType accessRights = AccessRightsType.Factory.newInstance();
             accessRights.setRestriction(dvkSendDocuments.getLetterAccessRestriction());
 
-            final Calendar accessRestrBeginCal = Calendar.getInstance();
             final Date arBeginDate = dvkSendDocuments.getLetterAccessRestrictionBeginDate();
             if (arBeginDate != null) {
+                final Calendar accessRestrBeginCal = Calendar.getInstance();
                 accessRestrBeginCal.setTime(arBeginDate);
+                accessRights.setBeginDate(accessRestrBeginCal);
             }
-            accessRights.setBeginDate(accessRestrBeginCal);
 
-            final Calendar accessRestrEndCal = Calendar.getInstance();
             final Date arEndDate = dvkSendDocuments.getLetterAccessRestrictionEndDate();
             if (arEndDate != null) {
+                final Calendar accessRestrEndCal = Calendar.getInstance();
                 accessRestrEndCal.setTime(arEndDate);
+                accessRights.setEndDate(accessRestrEndCal);
             }
-            accessRights.setEndDate(accessRestrEndCal);
 
             accessRights.setReason(dvkSendDocuments.getLetterAccessRestrictionReason());
 

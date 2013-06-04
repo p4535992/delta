@@ -1518,11 +1518,16 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
 
     @Override
     public int getActiveResponsibleTasks(NodeRef document, QName workflowType, boolean allowFinished) {
+        return getActiveResponsibleTasks(document, workflowType, allowFinished, null);
+    }
+
+    @Override
+    public int getActiveResponsibleTasks(NodeRef document, QName workflowType, boolean allowFinished, NodeRef compoundWorkflowToSkip) {
         Status[] allowedStatuses = allowFinished ? new Status[] { Status.NEW, Status.IN_PROGRESS, Status.STOPPED, Status.FINISHED } :
                 new Status[] { Status.NEW, Status.IN_PROGRESS, Status.STOPPED };
         int counter = 0;
         for (CompoundWorkflow compoundWorkflow : getCompoundWorkflowsOfType(document, Collections.singletonList(workflowType))) {
-            if (!compoundWorkflow.isStatus(allowedStatuses)) {
+            if (!compoundWorkflow.isStatus(allowedStatuses) || compoundWorkflow.getNodeRef().equals(compoundWorkflowToSkip)) {
                 continue;
             }
             for (Workflow workflow : compoundWorkflow.getWorkflows()) {

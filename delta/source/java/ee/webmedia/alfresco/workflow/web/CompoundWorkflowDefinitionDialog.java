@@ -1167,7 +1167,7 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
 
     protected boolean isActiveResponsibleAssignedForDocument(QName workflowType, boolean allowFinished) {
         try {
-            return 0 < getWorkflowService().getActiveResponsibleTasks(compoundWorkflow.getParent(), workflowType, allowFinished);
+            return 0 < getWorkflowService().getActiveResponsibleTasks(compoundWorkflow.getParent(), workflowType, allowFinished, compoundWorkflow.getNodeRef());
         } catch (InvalidNodeRefException e) {
             final FacesContext context = FacesContext.getCurrentInstance();
             MessageUtil.addErrorMessage(context, "workflow_compound_add_block_error_docDeleted");

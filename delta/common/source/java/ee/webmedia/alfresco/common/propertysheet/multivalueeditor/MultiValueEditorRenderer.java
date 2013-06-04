@@ -127,8 +127,7 @@ public class MultiValueEditorRenderer extends BaseRenderer {
                 // Field help:
                 String property = StringUtils.substringAfter(propVO.getPropertyName(), ":");
                 if (HelpTextUtil.hasHelpText(context, HelpTextUtil.TYPE_FIELD, property)) {
-                    out.write("&nbsp;");
-                    HelpTextUtil.writeHelpTextLink(out, context, HelpTextUtil.TYPE_FIELD, property);
+                    Utils.encodeRecursive(context, HelpTextUtil.createHelpTextLink(context, HelpTextUtil.TYPE_FIELD, property));
                 }
                 out.write("</th>");
             }
@@ -332,8 +331,8 @@ public class MultiValueEditorRenderer extends BaseRenderer {
         return StringUtils.startsWith(id, FacesHelper.makeLegalId(DocumentCommonModel.PREFIX + DocumentCommonModel.Props.RECIPIENT_NAME.getLocalName()))
                 || StringUtils.startsWith(id,
                         FacesHelper.makeLegalId(DocumentCommonModel.PREFIX + DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME.getLocalName()))
-                || StringUtils.startsWith(id,
-                        FacesHelper.makeLegalId(DocumentSpecificModel.PREFIX + DocumentSpecificModel.Props.PROCUREMENT_APPLICANT_NAME.getLocalName()));
+                        || StringUtils.startsWith(id,
+                                FacesHelper.makeLegalId(DocumentSpecificModel.PREFIX + DocumentSpecificModel.Props.PROCUREMENT_APPLICANT_NAME.getLocalName()));
     }
 
     private void renderAddLink(FacesContext context, UIComponent component, ResponseWriter out) throws IOException {

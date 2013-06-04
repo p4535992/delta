@@ -563,9 +563,11 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
             boolean casesCreatableByUser = false;
             if (volumeRef == null) {
                 cases = null;
-                casesEditable = null;
                 caseRef = null;
-                caseLabel = null;
+                if (!isSearchFilter) {
+                    casesEditable = null;
+                    caseLabel = null;
+                }
             } else {
                 Volume volume = getVolumeService().getVolumeByNodeRef(volumeRef);
                 if (volume.isContainsCases()) {

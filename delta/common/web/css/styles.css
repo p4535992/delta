@@ -2265,3 +2265,7 @@ DIV.trans-scroll TABLE {
 .vertical-align-middle {
 	vertical-align: middle;	
 }
+
+.padding-3 {
+   padding: 3px !important;
+}

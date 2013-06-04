@@ -266,7 +266,7 @@ public class PrivilegeServiceImpl implements PrivilegeService {
                 if (LOG.isDebugEnabled()) {
                     LOG.debug("Previously deleted permission " + permission + " from " + authority + " on " + manageableRef + " - nothing to do");
                 }
-                return;
+                continue;
             }
             long startTime = 0L;
             if (LOG.isDebugEnabled()) {
@@ -298,7 +298,7 @@ public class PrivilegeServiceImpl implements PrivilegeService {
                 if (LOG.isDebugEnabled()) {
                     LOG.debug("Previously set permission " + permission + " to " + authority + " on " + manageableRef + " - nothing to do");
                 }
-                return;
+                continue;
             }
             try {
                 long startTime = 0L;
