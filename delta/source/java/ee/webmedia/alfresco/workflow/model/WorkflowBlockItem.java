@@ -108,7 +108,17 @@ public class WorkflowBlockItem implements Serializable {
         }
         if (task.isType(WorkflowSpecificModel.Types.DUE_DATE_EXTENSION_TASK)) {
             Date proposedDueDate = task.getProposedDueDate();
-            return MessageUtil.getMessage("task_due_date_extension_resolution", DATE_FORMAT.format(proposedDueDate), task.getResolution());
+            String proposedDueDateString = "";
+            
+            // Aare Puusepp
+            // TODO: Parandada. Ajutine hotfix selleks, kui õnnestub ilma uut tähtaeg panemata edasi minna.
+            if(proposedDueDate != null){
+            	proposedDueDateString = DATE_FORMAT.format(proposedDueDate);
+            } else {
+            	proposedDueDateString = "PUUDUB!";
+            }
+            
+        	return MessageUtil.getMessage("task_due_date_extension_resolution", proposedDueDateString, task.getResolution());
         }
         return task.getResolution();
     }
