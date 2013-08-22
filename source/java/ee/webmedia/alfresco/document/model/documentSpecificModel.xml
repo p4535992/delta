@@ -3,21 +3,19 @@
    xsi:schemaLocation="http://www.alfresco.org/model/dictionary/1.0 http://svn.alfresco.com/repos/alfresco-open-mirror/alfresco/HEAD/root/projects/repository/config/alfresco/model/modelSchema.xsd">
 
    <imports>
-   <!-- FIXME: remove the following imports after all existing static documents are migrated to dynamic documents -->
-       <import uri="http://www.alfresco.org/model/dictionary/1.0" prefix="d" />
-       <import uri="http://www.alfresco.org/model/content/1.0" prefix="cm" />
-       <import uri="http://alfresco.webmedia.ee/model/document/common/1.0" prefix="doccom" />
-       <import uri="http://www.alfresco.org/model/system/1.0" prefix="sys" />
+      <import uri="http://www.alfresco.org/model/dictionary/1.0" prefix="d" />
+      <import uri="http://www.alfresco.org/model/content/1.0" prefix="cm" />
+      <import uri="http://alfresco.webmedia.ee/model/document/common/1.0" prefix="doccom" />
+      <import uri="http://www.alfresco.org/model/system/1.0" prefix="sys" />
    </imports>
 
    <namespaces>
       <namespace uri="http://alfresco.webmedia.ee/model/document/specific/1.0" prefix="docspec" />
    </namespaces>
 
-<!-- FIXME: remove the following definitions after all existing static documents are migrated to dynamic documents -->
 
    <types>
-      <type name="docspec:errandOrderApplicantAbroadType">
+      <type name="docspec:errandOrderApplicantAbroadType"><!-- VälisLähetuse taotleja(dokument->taotleja) -->
          <parent>doccom:metadataContainer</parent>
          <mandatory-aspects>
             <aspect>docspec:errandApplicant</aspect>
@@ -25,7 +23,7 @@
          </mandatory-aspects>
       </type>
       
-      <type name="docspec:errandOrderApplicantAbroadTypeV2">
+      <type name="docspec:errandOrderApplicantAbroadTypeV2"><!-- VälisLähetuse taotleja(dokument->taotleja) -->
          <parent>doccom:metadataContainer</parent>
          <mandatory-aspects>
             <aspect>docspec:errandApplicant</aspect>
@@ -33,7 +31,7 @@
          </mandatory-aspects>
       </type>
 
-      <type name="docspec:errandOrderAbroadMvApplicantType">
+      <type name="docspec:errandOrderAbroadMvApplicantType"><!-- VälisLähetuse (MV) taotleja(dokument->taotleja) -->
          <parent>doccom:metadataContainer</parent>
          <mandatory-aspects>
             <aspect>docspec:errandApplicant</aspect>
@@ -41,7 +39,7 @@
          </mandatory-aspects>
       </type>      
 
-      <type name="docspec:errandApplicationDomesticApplicantType">
+      <type name="docspec:errandApplicationDomesticApplicantType"><!-- Siselähetuse taotleja(dokument->taotleja) -->
          <parent>doccom:metadataContainer</parent>
          <mandatory-aspects>
             <aspect>docspec:errandApplicant</aspect>
@@ -49,7 +47,7 @@
          </mandatory-aspects>
       </type>
 
-      <type name="docspec:errandApplicationDomesticApplicantTypeV2">
+      <type name="docspec:errandApplicationDomesticApplicantTypeV2"><!-- Siselähetuse taotleja(dokument->taotleja) -->
          <parent>doccom:metadataContainer</parent>
          <properties>
             <property name="docspec:costElement">
@@ -76,7 +74,7 @@
          </mandatory-aspects>
       </type>
 
-      <type name="docspec:trainingApplicationApplicantType">
+      <type name="docspec:trainingApplicationApplicantType"><!-- Koolitustaotluse taotleja(dokument->taotleja) -->
          <parent>doccom:metadataContainer</parent>
          <mandatory-aspects>
             <aspect>docspec:errandApplicant</aspect>
@@ -89,7 +87,7 @@
          </mandatory-aspects>
       </type>
 
-      <type name="docspec:trainingApplicationApplicantTypeV2">
+      <type name="docspec:trainingApplicationApplicantTypeV2"><!-- Koolitustaotluse taotleja(dokument->taotleja) -->
          <parent>doccom:metadataContainer</parent>
          <mandatory-aspects>
             <aspect>docspec:errandApplicant</aspect>
@@ -103,7 +101,7 @@
          </mandatory-aspects>
       </type>
 
-      <type name="docspec:errandsAbroadType">
+      <type name="docspec:errandsAbroadType"><!-- VälisLähetuse blokk (dokument->taotleja->lähetus) -->
          <parent>doccom:metadataContainer</parent>
          <mandatory-aspects>
             <aspect>docspec:errandBlockCommon</aspect>
@@ -114,7 +112,7 @@
          </mandatory-aspects>
       </type>
 
-      <type name="docspec:errandsAbroadTypeV2">
+      <type name="docspec:errandsAbroadTypeV2"><!-- VälisLähetuse blokk (dokument->taotleja->lähetus) -->
          <parent>doccom:metadataContainer</parent>
          <mandatory-aspects>
             <aspect>docspec:travelPurpose</aspect>
@@ -128,7 +126,7 @@
          </mandatory-aspects>
       </type>
       
-      <type name="docspec:errandsAbroadMvType">
+      <type name="docspec:errandsAbroadMvType"><!-- VälisLähetuse (MV) blokk (dokument->taotleja->lähetus) -->
          <parent>doccom:metadataContainer</parent>
          <mandatory-aspects>
             <aspect>docspec:errandBlockCommon</aspect>
@@ -139,7 +137,7 @@
          </mandatory-aspects>
       </type>      
 
-      <type name="docspec:errandsDomesticType">
+      <type name="docspec:errandsDomesticType"><!-- Siselähetuse blokk (dokument->taotleja->lähetus) -->
          <parent>doccom:metadataContainer</parent>
          <mandatory-aspects>
             <aspect>docspec:errandBlockCommon</aspect>
@@ -148,7 +146,7 @@
          </mandatory-aspects>
       </type>
 
-      <type name="docspec:errandsDomesticTypeV2">
+      <type name="docspec:errandsDomesticTypeV2"><!-- Siselähetuse blokk (dokument->taotleja->lähetus) -->
          <parent>doccom:metadataContainer</parent>
          <mandatory-aspects>
             <aspect>docspec:errandDoc</aspect>
@@ -159,14 +157,14 @@
          </mandatory-aspects>
       </type>
       
-      <type name="docspec:contractMvPartyType">
+      <type name="docspec:contractMvPartyType"><!-- Leping (MV) (dokument->lepingu osapool) -->
          <parent>doccom:metadataContainer</parent>
          <mandatory-aspects>
             <aspect>docspec:contractParty</aspect>
          </mandatory-aspects>
       </type>      
       
-      <type name="docspec:contractPartyType">
+      <type name="docspec:contractPartyType"><!-- Leping (dokument->lepingu osapool) -->
          <parent>docspec:contractMvPartyType</parent>
       </type>
    </types>
@@ -189,7 +187,7 @@
          </properties>
       </aspect>
 
-      
+      <!-- Aspect to mark documents recieved from DVK with external review task -->
       <aspect name="docspec:notEditable">
          <properties>
             <property name="docspec:notEditable">
@@ -200,7 +198,7 @@
          </properties>
       </aspect>   
 
-      
+      <!-- Aspect to mark invoices generated from e-invoice xml files -->
       <aspect name="docspec:invoiceXml">
          <properties>
             <property name="docspec:invoiceXml">
@@ -255,16 +253,16 @@
       
       <aspect name="docspec:sender">
          <properties>
-            <property name="docspec:senderRegNumber">
+            <property name="docspec:senderRegNumber"><!-- Saatja kirja reg nr -->
                <type>d:text</type>
             </property>
-            <property name="docspec:senderRegDate">
+            <property name="docspec:senderRegDate"><!-- Saatja kirja reg kpv -->
                <type>d:date</type>
             </property>
          </properties>
       </aspect>
 
-      
+      <!-- Used in Memo sub-type -->
       <aspect name="docspec:whom">
          <properties>
             <property name="docspec:whomName">
@@ -284,16 +282,16 @@
          </properties>
       </aspect>
 
-      
+      <!-- Used in Memo and Minutes sub-type -->
       <aspect name="docspec:template">
          <properties>
-            <property name="docspec:templateName">
+            <property name="docspec:templateName"><!-- Mall -->
                <type>d:text</type>
             </property>
          </properties>
       </aspect>
       
-      
+      <!-- Used in Minutes sub-type -->
       <aspect name="docspec:minutes">
          <properties>
             <property name="docspec:minutesNo">
@@ -302,7 +300,7 @@
          </properties>
       </aspect>
       
-      
+      <!-- Used in Minutes sub-type -->
       <aspect name="docspec:report">
          <properties>
             <property name="docspec:rapporteur">
@@ -599,7 +597,7 @@
          </properties>
       </aspect>
 
-      
+      <!-- Advisers, Deputies and Officials on the leavingLetter form -->
       <aspect name="docspec:leaveOfficials">
          <properties>
             <property name="docspec:trainingAdviser">
@@ -858,7 +856,7 @@
          </properties>
       </aspect>
       
-      
+      <!-- TODO: Riigihanke läbiviimise taotluse dokumenndi tüübi aspekt -->
       <aspect name="docspec:tenderingApplication">
          <properties>
             <property name="docspec:procurementType">
@@ -1007,10 +1005,10 @@
          </properties>
       </aspect>
 
-      
+      <!-- VälisLähetuse ja siselähetuse DOKUMENDI ühised väljad -->
       <aspect name="docspec:errandDocCommon">
          <properties>
-            
+            <!-- Ürituse toimumise aeg -->
             <property name="docspec:eventBeginDate">
                <type>d:date</type>
                <mandatory>true</mandatory>
@@ -1035,26 +1033,26 @@
          </mandatory-aspects>         
       </aspect>
 
-      
+      <!-- lähetuse taotleja (välislähetuse ja siselähetuse puhul taotleja ühised väljad) -->
       <aspect name="docspec:errandApplicant">
          <properties>
-            <property name="docspec:applicantName">
+            <property name="docspec:applicantName"><!-- Taotleja -->
                <type>d:text</type>
                <mandatory>true</mandatory>
             </property>
-            <property name="docspec:applicantJobTitle">
+            <property name="docspec:applicantJobTitle"><!-- Ametinimetus -->
                <type>d:text</type>
             </property>
-            <property name="docspec:applicantStructUnitName">
+            <property name="docspec:applicantStructUnitName"><!-- Osakond -->
                <type>d:text</type>
             </property>
          </properties>
       </aspect>
 
-      
+      <!-- välisLähetuse taotleja spetsiifilised väljad -->
       <aspect name="docspec:errandOrderApplicantAbroadBase">
          <properties>
-            <property name="docspec:expenditureItem">
+            <property name="docspec:expenditureItem"><!-- Kulukoht -->
                <type>d:text</type>
             </property>
          </properties>
@@ -1113,9 +1111,9 @@
          </associations>
       </aspect>      
       
-      
+      <!-- siseLähetuse taotleja spetsiifilised väljad -->
       <aspect name="docspec:errandApplicationApplicantDomestic">
-         
+         <!-- täiendavaid välju pole lisaks välis- ja siselähetuse ühistele väljadele -->
          <associations>
             <child-association name="docspec:errandsDomestic">
                <source>
@@ -1142,7 +1140,7 @@
          </properties>
       </aspect>
       
-      
+      <!-- LÄHETUSE BLOKI (välis- ja sise) ühised andmed -->
       <aspect name="docspec:errandBlockCommon">
          <properties>
             <property name="docspec:city">
@@ -1185,7 +1183,7 @@
 
    <aspect name="docspec:expensesBase">
       <properties>
-         <property name="docspec:expenseType">
+         <property name="docspec:expenseType"><!-- Kulu -->
             <type>d:text</type>
             <multiple>true</multiple>
          </property>
@@ -1195,11 +1193,11 @@
    <aspect name="docspec:expenses">
       <parent>docspec:expensesBase</parent>
       <properties>
-         <property name="docspec:expenseDesc">
+         <property name="docspec:expenseDesc"><!-- Kirjeldus -->
             <type>d:text</type>
             <multiple>true</multiple>
          </property>
-         <property name="docspec:expenseFinancingSource">
+         <property name="docspec:expenseFinancingSource"><!-- Finantseerimisallikas -->
             <type>d:text</type>
             <multiple>true</multiple>
          </property>
@@ -1236,7 +1234,7 @@
    </aspect>
 
    
-      
+      <!-- Välislähetuse lähetuse blokk (dok -> taotleja -> lähetus) -->
       <aspect name="docspec:errandBlockAbroad">
          <properties>
             <property name="docspec:country">
@@ -1287,7 +1285,7 @@
          </properties>
       </aspect>
       
-      
+      <!-- siseLähetuse lähetuse blokk (dok -> taotleja -> lähetus) -->
       <aspect name="docspec:errandBlockDomestic">
          <properties>
             <property name="docspec:county">
@@ -1308,7 +1306,7 @@
          </properties>
       </aspect>
       
-      
+      <!-- VälisLähetuse dokumendi spetsiifilised väljad -->
       <aspect name="docspec:reportDueDate">
          <properties>
             <property name="docspec:reportDueDate">
@@ -1394,7 +1392,7 @@
          </properties>
       </aspect>
 
-      
+      <!-- Siselähetuse dokumendi spetsiifilised väljad -->
       <aspect name="docspec:errandApplicationDomestic">
          <associations>
             <child-association name="docspec:errandApplicationDomesticApplicants">

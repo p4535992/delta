@@ -1,8 +1,8 @@
 package ee.webmedia.alfresco.workflow.web;
 
-import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.TASK_INDEX;
 import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.isGeneratedByDelegation;
 import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.markAsGeneratedByDelegation;
+import static ee.webmedia.alfresco.workflow.web.TaskListCommentComponent.TASK_INDEX;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -19,9 +19,13 @@ import javax.faces.event.ActionEvent;
 
 import org.alfresco.model.ContentModel;
 import org.alfresco.service.cmr.lock.NodeLockedException;
+import org.alfresco.service.cmr.repository.AssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
+import org.alfresco.service.cmr.security.AuthorityService;
+import org.alfresco.service.cmr.security.AuthorityType;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.service.namespace.RegexQNamePattern;
 import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.Repository;
@@ -48,6 +52,7 @@ import ee.webmedia.alfresco.workflow.exception.WorkflowChangedException;
 import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
+import ee.webmedia.alfresco.workflow.service.AssignmentWorkflow;
 import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
 import ee.webmedia.alfresco.workflow.service.Task;
 import ee.webmedia.alfresco.workflow.service.Task.Action;
@@ -75,6 +80,7 @@ public class DelegationBean implements Serializable {
     private static final String TMP_GENERATE_OPINION_TASK_DELEGATION = "{temp}delegateAsOpinionTask";
 
     private transient NodeService nodeService;
+    private transient AuthorityService authorityService;
     private transient OrganizationStructureService organizationStructureService;
     private transient WorkflowService workflowService;
     private transient UserService userService;
@@ -97,35 +103,31 @@ public class DelegationBean implements Serializable {
             defaultResolution = delegatableTasks.get(originalTaskIndex).getResolutionOfTask();
         }
         addDelegationTask(delegateTaskType, workflowForNewTask, taskIndex, defaultResolution);
-        updatePanelGroup("addDelegationTask");
+        updatePanelGroup();
     }
 
     private void addDelegationTask(DelegatableTaskType delegateTaskType, Workflow workflow, Integer taskIndex, String defaultResolution) {
-        addDelegationTask(delegateTaskType.isResponsibleTask(), workflow, taskIndex, defaultResolution);
-    }
-
-    public void addDelegationTask(boolean hasResponsibleAspect, Workflow workflow, Integer taskIndex, String defaultResolution) {
         Task task = taskIndex != null ? workflow.addTask(taskIndex) : workflow.addTask();
         markAsGeneratedByDelegation(task);
         task.setParallel(true);
-        if (hasResponsibleAspect) {
+        if (DelegatableTaskType.ASSIGNMENT_RESPONSIBLE.equals(delegateTaskType)) {
             task.setResponsible(true);
             task.setActive(true);
         }
-        if (workflow.hasTaskResolution()) {
+        if (task.isType(WorkflowSpecificModel.Types.ASSIGNMENT_TASK)) {
             task.setResolution(defaultResolution);
         }
     }
 
-    private void updatePanelGroup(String action) {
-        workflowBlockBean.constructTaskPanelGroup(action);
+    private void updatePanelGroup() {
+        workflowBlockBean.constructTaskPanelGroup();
     }
 
     public void removeDelegationTask(ActionEvent event) {
         Workflow workflow = getWorkflowByAction(event);
-        int taskIndex = ActionUtil.getParam(event, TASK_INDEX, Integer.class);
+        int taskIndex = ActionUtil.getParam(event, TaskListCommentComponent.TASK_INDEX, Integer.class);
         workflow.removeTask(taskIndex);
-        updatePanelGroup("removeDelegationTask");
+        updatePanelGroup();
     }
 
     public void resetDelegationTask(ActionEvent event) {
@@ -141,10 +143,10 @@ public class DelegationBean implements Serializable {
      * @return pair(delegatableTaskIndex, delegatableTask). delegatableTask == assignmentTask when task with the same noderef hasn't been added yet
      */
     public Pair<Integer, Task> initDelegatableTask(Task assignmentTask) {
-        NodeRef delegatableTaskRef = assignmentTask.getNodeRef();
+        NodeRef delegatableTaskRef = assignmentTask.getNode().getNodeRef();
         int delegatableTaskIndex = 0;
         for (Task t : delegatableTasks) {
-            if (delegatableTaskRef.equals(t.getNodeRef())) {
+            if (delegatableTaskRef.equals(t.getNode().getNodeRef())) {
                 // don't add new delegatable task if this is yet another clone of existing task or this method was called after update.
                 return new Pair<Integer, Task>(delegatableTaskIndex, t);
             }
@@ -152,14 +154,14 @@ public class DelegationBean implements Serializable {
         }
         delegatableTasks.add(assignmentTask);
         delegatableTaskIndex = delegatableTasks.size() - 1;
-        Workflow workflow = assignmentTask.getParent();
+        AssignmentWorkflow workflow = (AssignmentWorkflow) assignmentTask.getParent();
         { // by default there should be one empty responsible assignment task and one empty non-responsible assignment task for delegating
             String resolutionOfTask = assignmentTask.getResolutionOfTask();
             if (assignmentTask.isResponsible()) {
                 assignmentTask.getNode().getProperties().put(TMP_GENERATE_RESPONSIBLE_ASSIGNMENT_TASK_DELEGATION, Boolean.TRUE);
-                addDelegationTask(true, workflow, null, resolutionOfTask);
+                addDelegationTask(DelegatableTaskType.ASSIGNMENT_RESPONSIBLE, workflow, null, resolutionOfTask);
             } else {
-                addDelegationTask(false, workflow, null, resolutionOfTask);
+                addDelegationTask(DelegatableTaskType.ASSIGNMENT_NOT_RESPONSIBLE, workflow, null, resolutionOfTask);
             }
         }
         // create information and opinion workflows under the compoundWorkflow of the assignment task in case user adds corresponding task.
@@ -182,7 +184,7 @@ public class DelegationBean implements Serializable {
     private Workflow getWorkflowByAction(ActionEvent event) {
         UIComponent component = event.getComponent();
         DelegatableTaskType dTaskType;
-        Workflow originalTaskWorkflow;
+        AssignmentWorkflow originalTaskWorkflow;
         if (component instanceof UIActionLink && ActionUtil.hasParam(event, ATTRIB_DELEGATABLE_TASK_INDEX)) {
             originalTaskWorkflow = getWorkflowByOriginalTask(ActionUtil.getParam(event, ATTRIB_DELEGATABLE_TASK_INDEX, Integer.class));
             dTaskType = DelegatableTaskType.valueOf(ActionUtil.getParam(event, DelegationTaskListGenerator.ATTRIB_DELEGATE_TASK_TYPE));
@@ -192,10 +194,10 @@ public class DelegationBean implements Serializable {
             originalTaskWorkflow = getWorkflowByOriginalTask(delegatableTaskIndex);
             dTaskType = (DelegatableTaskType) attributes.get(DelegationTaskListGenerator.ATTRIB_DELEGATE_TASK_TYPE);
         }
-        return dTaskType.isOrderAssignmentOrAssignmentWorkflow() ? originalTaskWorkflow : getOrCreateWorkflow(originalTaskWorkflow, dTaskType);
+        return dTaskType.isAssignmentWorkflow() ? originalTaskWorkflow : getOrCreateWorkflow(originalTaskWorkflow, dTaskType);
     }
 
-    private Workflow getOrCreateWorkflow(Workflow originalTaskWorkflow, DelegatableTaskType dTaskType) {
+    private Workflow getOrCreateWorkflow(AssignmentWorkflow originalTaskWorkflow, DelegatableTaskType dTaskType) {
         boolean isInformation = DelegatableTaskType.INFORMATION.equals(dTaskType);
         if (!isInformation && !DelegatableTaskType.OPINION.equals(dTaskType)) {
             throw new IllegalStateException("Unknown DelegatableTaskType=" + dTaskType);
@@ -223,12 +225,12 @@ public class DelegationBean implements Serializable {
 
     private Task getTaskByActionParams(ActionEvent event) {
         Workflow workflow = getWorkflowByAction(event);
-        int taskIndex = ActionUtil.getParam(event, TASK_INDEX, Integer.class);
+        int taskIndex = ActionUtil.getParam(event, TaskListCommentComponent.TASK_INDEX, Integer.class);
         return workflow.getTasks().get(taskIndex);
     }
 
-    private Workflow getWorkflowByOriginalTask(int delegatableTaskIndex) {
-        return delegatableTasks.get(delegatableTaskIndex).getParent();
+    private AssignmentWorkflow getWorkflowByOriginalTask(int delegatableTaskIndex) {
+        return (AssignmentWorkflow) delegatableTasks.get(delegatableTaskIndex).getParent();
     }
 
     /**
@@ -243,7 +245,7 @@ public class DelegationBean implements Serializable {
     public List<Task> getTasks(int delegatableTaskIndex, DelegatableTaskType dTaskType) {
         Workflow workflow = getWorkflowByOriginalTask(delegatableTaskIndex);
         List<Task> tasks;
-        if (dTaskType.isOrderAssignmentOrAssignmentWorkflow()) {
+        if (dTaskType.isAssignmentWorkflow()) {
             tasks = workflow.getTasks();
         } else {
             tasks = getNonAssignmentTasks(dTaskType, workflow.getParent().getWorkflows());
@@ -258,17 +260,15 @@ public class DelegationBean implements Serializable {
      */
     public void delegate(ActionEvent event) throws Exception {
         Task originalTask = delegatableTasks.get(ActionUtil.getParam(event, ATTRIB_DELEGATABLE_TASK_INDEX, Integer.class));
-        if (originalTask.isType(WorkflowSpecificModel.Types.ASSIGNMENT_TASK)) {
-            originalTask.setAction(Action.FINISH);
-        }
+        originalTask.setAction(Action.FINISH);
         FacesContext context = FacesContext.getCurrentInstance();
         try {
             MessageDataWrapper feedback = getWorkflowService().delegate(originalTask);
             MessageUtil.addStatusMessages(context, feedback);
             if (!feedback.hasErrors()) {
-                workflowBlockBean.restore("delegate");
-                MessageUtil.addInfoMessage("delegated_successfully_" + originalTask.getType().getLocalName());
-                BeanHelper.getDocumentDynamicDialog().switchMode(false); // document metadata might have changed (for example owner)
+                workflowBlockBean.restore();
+                MessageUtil.addInfoMessage("delegated_successfully");
+                BeanHelper.getDocumentDialog().restored(); // document metadata might have changed(for example owner)
             }
         } catch (UnableToPerformMultiReasonException e) {
             MessageUtil.addStatusMessages(context, e.getMessageDataWrapper());
@@ -280,8 +280,7 @@ public class DelegationBean implements Serializable {
         } catch (WorkflowChangedException e) {
             CompoundWorkflowDialog.handleException(e, null);
         } catch (Exception e) {
-            LOG.error("Compound workflow action failed!", e);
-            MessageUtil.addErrorMessage(context, null);
+            throw e;
         }
     }
 
@@ -386,7 +385,7 @@ public class DelegationBean implements Serializable {
             }
             // user groups
             else if (filterIndex == 1) {
-                Set<String> children = BeanHelper.getUserService().getUserNamesInGroup(result);
+                Set<String> children = getAuthorityService().getContainedAuthorities(AuthorityType.USER, result, true);
                 int j = 0;
                 Task task = workflow.getTasks().get(taskIndex);
                 DelegatableTaskType delegateTaskType = DelegatableTaskType.getTypeByTask(task);
@@ -405,13 +404,13 @@ public class DelegationBean implements Serializable {
             }
             // contact groups
             else if (filterIndex == 3) {
-                List<NodeRef> contacts = BeanHelper.getAddressbookService().getContactGroupContents(new NodeRef(result));
-                taskIndex = addContactGroupTasks(taskIndex, workflow, contacts);
+                List<AssociationRef> assocs = getNodeService().getTargetAssocs(new NodeRef(result), RegexQNamePattern.MATCH_ALL);
+                taskIndex = addContactGroupTasks(taskIndex, workflow, assocs);
             } else {
                 throw new RuntimeException("Unknown filter index value: " + filterIndex);
             }
         }
-        updatePanelGroup("processOwnerSearchResults");
+        updatePanelGroup();
     }
 
     private void setPersonPropsToTask(Workflow workflow, int taskIndex, String userName) {
@@ -419,7 +418,7 @@ public class DelegationBean implements Serializable {
         String name = UserUtil.getPersonFullName1(resultProps);
         Serializable id = resultProps.get(ContentModel.PROP_USERNAME);
         Serializable email = resultProps.get(ContentModel.PROP_EMAIL);
-        Serializable orgName = (Serializable) getOrganizationStructureService().getOrganizationStructurePaths((String) resultProps.get(ContentModel.PROP_ORGID));
+        Serializable orgName = getOrganizationStructureService().getOrganizationStructure((String) resultProps.get(ContentModel.PROP_ORGID));
         Serializable jobTitle = resultProps.get(ContentModel.PROP_JOBTITLE);
         setPropsToTask(workflow, taskIndex, name, id, email, orgName, jobTitle);
     }
@@ -449,19 +448,19 @@ public class DelegationBean implements Serializable {
         setPropsToTask(block, index, name, null, resultProps.get(AddressbookModel.Props.EMAIL), null, null);
     }
 
-    public int addContactGroupTasks(int taskIndex, Workflow block, List<NodeRef> contacts) {
+    private int addContactGroupTasks(int taskIndex, Workflow block, List<AssociationRef> assocs) {
         int taskCounter = 0;
         Task task = block.getTasks().get(taskIndex);
         DelegatableTaskType delegateTaskType = DelegatableTaskType.getTypeByTask(task);
         String resolution = task.getResolution();
-        for (int j = 0; j < contacts.size(); j++) {
-            Map<QName, Serializable> contactProps = getNodeService().getProperties(contacts.get(j));
-            if (getNodeService().hasAspect(contacts.get(j), AddressbookModel.Aspects.ORGANIZATION_PROPERTIES)
+        for (int j = 0; j < assocs.size(); j++) {
+            Map<QName, Serializable> contactProps = getNodeService().getProperties(assocs.get(j).getTargetRef());
+            if (getNodeService().hasAspect(assocs.get(j).getTargetRef(), AddressbookModel.Aspects.ORGANIZATION_PROPERTIES)
                     && Boolean.TRUE.equals(contactProps.get(AddressbookModel.Props.TASK_CAPABLE))) {
                 if (taskCounter > 0) {
                     addDelegationTask(delegateTaskType, block, ++taskIndex, resolution);
                 }
-                setContactPropsToTask(block, taskIndex, contacts.get(j));
+                setContactPropsToTask(block, taskIndex, assocs.get(j).getTargetRef());
                 taskCounter++;
             }
         }
@@ -473,6 +472,13 @@ public class DelegationBean implements Serializable {
             nodeService = Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getNodeService();
         }
         return nodeService;
+    }
+
+    private AuthorityService getAuthorityService() {
+        if (authorityService == null) {
+            authorityService = Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getAuthorityService();
+        }
+        return authorityService;
     }
 
     private OrganizationStructureService getOrganizationStructureService() {

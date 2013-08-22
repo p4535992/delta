@@ -33,17 +33,6 @@
 </script>
 </f:verbatim>
 
-<h:panelGroup rendered="#{DocumentSendOutDialog.modalId != null}">
-   <h:panelGroup id="dialog-modal-container" binding="#{DocumentSendOutDialog.modalContainer}" />
-   <f:verbatim>
-      <script type="text/javascript">
-         $jQ(document).ready(function () {
-            showModal("</f:verbatim><a:outputText value="#{DocumentSendOutDialog.modalId}" /><f:verbatim>");
-         });
-      </script>
-   </f:verbatim>
-</h:panelGroup>
-
 <a:panel id="send-out-panel" label="#{DocumentSendOutDialog.panelTitle}" styleClass="panel-100" progressive="true">
 
    <a:booleanEvaluator value="#{not empty DocumentSendOutDialog.model.sendDesc}">
@@ -75,17 +64,14 @@
          propsGeneration="
           recipientName¤TextAreaGenerator¤styleClass=expand19-200 medium
          ,recipientEmail¤TextAreaGenerator¤styleClass=expand19-200 medium
-         ,recipientSendMode¤ClassificatorSelectorGenerator¤classificatorName=sendMode¤styleClass=width120 resetSendOutGroupSendMode
+         ,recipientSendMode¤ClassificatorSelectorGenerator¤classificatorName=sendMode¤styleClass=width120
          "
-         hiddenPropNames="recipientGroup"
-         groupByColumnName="recipientGroup"
-         groupRowControls="sendOut"
          titles="document_name,document_email,document_send_mode" 
          pickerCallback="#{CompoundWorkflowDefinitionDialog.executeOwnerSearch}"
-         preprocessCallback="#{UserContactGroupSearchBean.preprocessResultsToNodeRefs}"
+         preprocessCallback="#{DocumentSendOutDialog.preprocessSearchResult}"
          setterCallback="#{DocumentSendOutDialog.fetchContactData}"
          dialogTitleId="contacts_search_title"
-         filters="#{UserContactGroupSearchBean.usersGroupsContactsGroupsFilters}"
+         filters="#{DocumentSendOutDialog.recipientSearchFilters}"
          filterIndex="2"
           />
 
@@ -103,11 +89,6 @@
          <f:verbatim><span></f:verbatim><h:outputText value="#{msg.document_zip}" /><f:verbatim></span></f:verbatim>
       </h:panelGroup>
       <h:selectBooleanCheckbox value="#{DocumentSendOutDialog.model.zip}" />
-      
-      <h:panelGroup>
-         <f:verbatim><span></f:verbatim><h:outputText value="#{msg.document_encrypt}" /><f:verbatim></span></f:verbatim>
-      </h:panelGroup>
-      <h:selectBooleanCheckbox value="#{DocumentSendOutDialog.model.encrypt}" />
       
       <h:panelGroup>
          <f:verbatim><span></f:verbatim><h:outputText value="#{msg.document_send_subject}" /><f:verbatim></span></f:verbatim>
@@ -133,7 +114,5 @@
       <h:inputTextarea id="editor" value="#{DocumentSendOutDialog.model.content}" rows="5" cols="40" />
       
    </h:panelGrid>
-
-   <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/docdynamic/web/metadata-block-lockRefresh.jsp" />
 
 </a:panel>

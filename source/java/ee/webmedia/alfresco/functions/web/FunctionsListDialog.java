@@ -1,7 +1,6 @@
 package ee.webmedia.alfresco.functions.web;
 
 import static ee.webmedia.alfresco.app.AppConstants.CHARSET;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentListService;
 
 import java.io.File;
 import java.io.IOException;
@@ -14,6 +13,7 @@ import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 import javax.servlet.http.HttpServletResponse;
 
+import org.alfresco.repo.content.MimetypeMap;
 import org.alfresco.repo.exporter.ACPExportPackageHandler;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.MimetypeService;
@@ -30,12 +30,12 @@ import org.apache.myfaces.application.jsp.JspStateManagerImpl;
 import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.common.service.GeneralService;
-import ee.webmedia.alfresco.common.web.BeanHelper;
-import ee.webmedia.alfresco.common.web.WMAdminNodeBrowseBean;
 import ee.webmedia.alfresco.functions.model.Function;
 import ee.webmedia.alfresco.functions.model.FunctionsModel;
 import ee.webmedia.alfresco.functions.service.FunctionsService;
 import ee.webmedia.alfresco.importer.excel.bootstrap.SmitExcelImporter;
+import ee.webmedia.alfresco.postipoiss.PostipoissDocumentsImporter;
+import ee.webmedia.alfresco.postipoiss.PostipoissStructureImporter;
 import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.MessageUtil;
@@ -82,7 +82,7 @@ public class FunctionsListDialog extends BaseDialogBean {
     }
 
     public void updateDocCounters(@SuppressWarnings("unused") ActionEvent event) {
-        final long docCount = BeanHelper.getDocumentListService().updateDocCounters();
+        final long docCount = getFunctionsService().updateDocCounters();
         MessageUtil.addInfoMessage(FacesContext.getCurrentInstance(), "docList_updateDocCounters_success", docCount);
     }
 
@@ -94,7 +94,7 @@ public class FunctionsListDialog extends BaseDialogBean {
      * @param event
      */
     public void deleteAllDocuments(@SuppressWarnings("unused") ActionEvent event) {
-        final Pair<List<NodeRef>, Long> allDocumentAndCaseRefs = BeanHelper.getDocumentListService().getAllDocumentAndCaseRefs();
+        final Pair<List<NodeRef>, Long> allDocumentAndCaseRefs = getFunctionsService().getAllDocumentAndCaseRefs();
         final List<NodeRef> refsToDelete = allDocumentAndCaseRefs.getFirst();
         final int batchMaxSize = 30;
         ArrayList<NodeRef> nodeRefsBatch = new ArrayList<NodeRef>(batchMaxSize);
@@ -123,7 +123,7 @@ public class FunctionsListDialog extends BaseDialogBean {
             File dataFile = new File(packageName);
             File contentDir = new File(packageName);
 
-            outputStream = WMAdminNodeBrowseBean.getExportOutStream(response, "functions-list.acp");
+            outputStream = getExportOutStream(response);
             // setup an ACP Package Handler to export to an ACP file format
             MimetypeService mimetypeService = Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getMimetypeService();
             ExportPackageHandler handler = new ACPExportPackageHandler(outputStream, dataFile, contentDir, mimetypeService);
@@ -148,7 +148,7 @@ public class FunctionsListDialog extends BaseDialogBean {
     }
 
     public void createNewYearBasedVolumes(@SuppressWarnings("unused") ActionEvent event) {
-        final long createdVolumesCount = BeanHelper.getDocumentListService().createNewYearBasedVolumes();
+        final long createdVolumesCount = getFunctionsService().createNewYearBasedVolumes();
         MessageUtil.addInfoMessage(FacesContext.getCurrentInstance(), "docList_createNewYearBasedVolumes_success", createdVolumesCount);
     }
 
@@ -164,30 +164,6 @@ public class FunctionsListDialog extends BaseDialogBean {
         }
     }
 
-    public void exportDocumentConsolidatedList(@SuppressWarnings("unused") ActionEvent event) {
-        exportConsolidatedList(functionsService.getFunctionsRoot());
-    }
-
-    public static void exportConsolidatedList(NodeRef nodeRef) {
-        log.info("consolidated docList started");
-        HttpServletResponse response = (HttpServletResponse) FacesContext.getCurrentInstance().getExternalContext().getResponse();
-        response.setCharacterEncoding(CHARSET);
-        OutputStream outputStream = null;
-        try {
-            outputStream = WMAdminNodeBrowseBean.getExportOutStream(response, "consolidated-list.csv");
-            getDocumentListService().getExportCsv(outputStream, nodeRef);
-            outputStream.flush();
-        } catch (Exception e) {
-            final String msg = "Failed to export consolidated docList";
-            log.error(msg, e);
-            throw new RuntimeException(msg, e);
-        } finally {
-            FacesContext.getCurrentInstance().responseComplete();
-            JspStateManagerImpl.ignoreCurrentViewSequenceHack();
-            log.info("consolidated docList export completed");
-        }
-    }
-
     // END: JSP event handlers
 
     private ExporterCrawlerParameters getExportParameters() {
@@ -196,11 +172,70 @@ public class FunctionsListDialog extends BaseDialogBean {
         return parameters;
     }
 
+    private OutputStream getExportOutStream(HttpServletResponse response) throws IOException {
+        OutputStream outputStream;
+        response.setContentType(MimetypeMap.MIMETYPE_BINARY);
+        response.setHeader("Expires", "0");
+        response.setHeader("Cache-Control", "must-revalidate, post-check=0, pre-check=0");
+        response.setHeader("Pragma", "public");
+        response.setHeader("Content-disposition", "attachment;filename=functions-list.acp");
+        outputStream = response.getOutputStream();
+        return outputStream;
+    }
+
     @Override
     public Object getActionsContext() {
         return new Node(getFunctionsService().getFunctionsRoot());
     }
 
+    public void startPostipoissStructureImport(javax.faces.event.ActionEvent ev) {
+        PostipoissStructureImporter importer = (PostipoissStructureImporter)
+                FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
+                        .getBean("postipoissStructureImporter");
+        if (importer.isStarted()) {
+            log.info("Not running structure import, already started");
+            return;
+        }
+        try {
+            importer.runImport();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void startPostipoissDocumentsImport(javax.faces.event.ActionEvent ev) {
+        PostipoissDocumentsImporter importer = (PostipoissDocumentsImporter)
+                FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
+                        .getBean("postipoissDocumentsImporter");
+        if (importer.isStarted()) {
+            log.info("Not running documents import, already started");
+            return;
+        }
+        try {
+            importer.runImport();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    // @formatter:off
+    /*
+    public void startPostipoissDocumentsFix(javax.faces.event.ActionEvent ev) {
+        PostipoissDocumentsImporter importer = (PostipoissDocumentsImporter) 
+            FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
+            .getBean("postipoissDocumentsImporter");
+        if (importer.isStarted()) {
+            log.info("Not running documents fix, already started");
+            return;
+        }
+        try {
+            importer.runFixDocuments();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+     */
+    // @formatter:on
     // START: private methods
     protected void loadFunctions() {
         functions = getFunctionsService().getAllFunctions();

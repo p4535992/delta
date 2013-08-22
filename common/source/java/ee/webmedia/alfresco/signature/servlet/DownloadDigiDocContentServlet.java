@@ -13,7 +13,6 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
-import org.alfresco.repo.security.permissions.AccessDeniedException;
 import org.alfresco.repo.transaction.RetryingTransactionHelper;
 import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
 import org.alfresco.service.ServiceRegistry;
@@ -21,6 +20,8 @@ import org.alfresco.service.cmr.repository.ContentIOException;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.repository.StoreRef;
+import org.alfresco.service.cmr.security.AccessStatus;
+import org.alfresco.service.cmr.security.PermissionService;
 import org.alfresco.service.transaction.TransactionService;
 import org.alfresco.util.URLDecoder;
 import org.alfresco.util.URLEncoder;
@@ -33,13 +34,12 @@ import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.context.support.WebApplicationContextUtils;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.signature.exception.SignatureException;
 import ee.webmedia.alfresco.signature.model.DataItem;
 import ee.webmedia.alfresco.signature.model.SignatureItemsAndDataItems;
 import ee.webmedia.alfresco.signature.service.SignatureService;
-import ee.webmedia.alfresco.substitute.model.SubstitutionInfo;
 import ee.webmedia.alfresco.utils.FilenameUtil;
-import ee.webmedia.alfresco.webdav.WebDAVCustomHelper;
 
 /**
  * Servlet that can read and return selected files from the DigiDoc container.
@@ -86,22 +86,22 @@ public class DownloadDigiDocContentServlet extends DownloadContentServlet {
     protected void processDownloadRequest(final HttpServletRequest req, final HttpServletResponse res, final boolean redirectToLogin)
             throws ServletException, IOException {
         Log logger = getLogger();
-        // req.getPathInfo = /workspace/SpacesStore/371b7748-74cd-45d4-ac2a-e6ade845afe4/1/xyz.pdf
-        // req.getRequestURI = /dhs/ddc/workspace/SpacesStore/371b7748-74cd-45d4-ac2a-e6ade845afe4/1/xyz.pdf;JSESSIONID=CFE6CC4F12D658B180EB61EF7ABC1C9
-        String uri = req.getPathInfo();
+        String uri = req.getRequestURI();
 
         if (logger.isDebugEnabled()) {
             String queryString = req.getQueryString();
             logger.debug("Processing URL: " + uri + (queryString != null && queryString.length() > 0 ? "?" + queryString : ""));
         }
 
+        uri = uri.substring(req.getContextPath().length());
         StringTokenizer t = new StringTokenizer(uri, "/");
         int tokenCount = t.countTokens();
 
+        t.nextToken(); // skip servlet name
         // always attachment mode
 
         // a NodeRef must have been specified if no path has been found
-        if (tokenCount < 5) {
+        if (tokenCount < 6) {
             throw new IllegalArgumentException("Download URL did not contain all required args: " + uri);
         }
 
@@ -156,18 +156,13 @@ public class DownloadDigiDocContentServlet extends DownloadContentServlet {
 
         ServiceRegistry serviceRegistry = getServiceRegistry(getServletContext());
         NodeService nodeService = serviceRegistry.getNodeService();
+        PermissionService permissionService = serviceRegistry.getPermissionService();
         // check that the user has at least READ_CONTENT access - else redirect to the login
         // page
-        try {
-            // FIXME Somehow SubstitutionFilter and PermissionService get hold of different ContextHolders and thus filter effect is lost
-            SubstitutionInfo substInfo = BeanHelper.getSubstitutionBean().getSubstitutionInfo();
-            if (substInfo.isSubstituting()) {
-                AuthenticationUtil.setRunAsUser(substInfo.getSubstitution().getReplacedPersonUserName());
-            }
-            WebDAVCustomHelper.checkDocumentFileReadPermission(dDocRef);
-        } catch (AccessDeniedException e) {
+        NodeRef docRef = BeanHelper.getGeneralService().getAncestorNodeRefWithType(dDocRef, DocumentCommonModel.Types.DOCUMENT, true, false);
+        if (permissionService.hasPermission(docRef, DocumentCommonModel.Privileges.VIEW_DOCUMENT_FILES) == AccessStatus.DENIED) {
             if (logger.isDebugEnabled()) {
-                logger.debug("User does not have permissions to read content for NodeRef: " + dDocRef.toString() + " - " + e.getMessage());
+                logger.debug("User does not have permissions to read content for NodeRef: " + dDocRef.toString());
             }
 
             if (redirectToLogin) {

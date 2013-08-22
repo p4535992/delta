@@ -25,6 +25,7 @@
          ,/WEB-INF/classes/ee/webmedia/alfresco/common/common-faces-config.xml
          ,/WEB-INF/classes/ee/webmedia/alfresco/common/propertysheet/common-propertysheet-faces-config.xml
          ,/WEB-INF/classes/ee/webmedia/alfresco/signature/signature-faces-config.xml
+         ,/WEB-INF/classes/ee/webmedia/alfresco/addressbook/addressbook-faces-config.xml
          ,/WEB-INF/classes/ee/webmedia/alfresco/menu/menu-faces-config.xml
          ,/WEB-INF/classes/ee/webmedia/alfresco/classificator/classificator-faces-config.xml
          ,/WEB-INF/classes/ee/webmedia/alfresco/orgstructure/organizationStructure-faces-config.xml
@@ -39,6 +40,7 @@
          ,/WEB-INF/classes/ee/webmedia/alfresco/versions/versions-faces-config.xml
          ,/WEB-INF/classes/ee/webmedia/alfresco/imap/imap-faces-config.xml
          ,/WEB-INF/classes/ee/webmedia/alfresco/document/forum/forum-faces-config.xml
+         ,/WEB-INF/classes/ee/webmedia/alfresco/substitute/substitute-faces-config.xml
          ,/WEB-INF/classes/ee/webmedia/alfresco/workflow/workflow-faces-config.xml
          ,/WEB-INF/classes/ee/webmedia/alfresco/workflow/search/task-search-faces-config.xml
          ,/WEB-INF/classes/ee/webmedia/alfresco/notification/notification-faces-config.xml
@@ -46,7 +48,6 @@
          ,/WEB-INF/classes/ee/webmedia/alfresco/document/register/register-faces-config.xml
          ,/WEB-INF/classes/ee/webmedia/alfresco/archivals/archivals-faces-config.xml
          ,/WEB-INF/classes/ee/webmedia/alfresco/common/propertysheet/common-propertysheet-sim-faces-config.xml
-         ,/WEB-INF/classes/ee/webmedia/alfresco/thesaurus/thesaurus-faces-config.xml
       </param-value>
    </context-param>
 
@@ -125,6 +126,14 @@
          <param-value>workspace://SpacesStore</param-value>
    </context-param>
    
+   <!-- ExternalAccessServlet uses these values to search for existing document.
+         In case of duplicate node-id-s in several stores first match is returned. -->
+   <context-param>
+         <param-name>documentStores</param-name>
+         <param-value>workspace://SpacesStore
+                     ,workspace://ArchivalsStore
+         </param-value>
+   </context-param>   
    <context-param>
          <param-name>rootPath</param-name>
          <param-value>/app:company_home</param-value>
@@ -225,9 +234,6 @@
 
    <!-- ========== Filter mappings ========== -->
 
-   <!-- FacesContextFilter must always be before Authentication Filter and SubstitutionFilter,
-        because latter ones may want to use FacesContext -->
-
    <filter-mapping>
       <filter-name>RequestControlFilter</filter-name>
       <url-pattern>/uploadFileServlet</url-pattern>
@@ -250,10 +256,6 @@
    </filter-mapping>
    <filter-mapping>
       <filter-name>RequestContext Filter</filter-name>
-      <url-pattern>/uploadFileServlet/*</url-pattern>
-   </filter-mapping>
-   <filter-mapping>
-      <filter-name>FacesContextFilter</filter-name>
       <url-pattern>/uploadFileServlet/*</url-pattern>
    </filter-mapping>
    <filter-mapping>
@@ -290,10 +292,6 @@
       <url-pattern>/download/*</url-pattern>
    </filter-mapping>
    <filter-mapping>
-      <filter-name>FacesContextFilter</filter-name>
-      <url-pattern>/download/*</url-pattern>
-   </filter-mapping>
-   <filter-mapping>
       <filter-name>Authentication Filter</filter-name>
       <url-pattern>/download/*</url-pattern>
    </filter-mapping>
@@ -324,10 +322,6 @@
    </filter-mapping>
    <filter-mapping>
       <filter-name>RequestContext Filter</filter-name>
-      <url-pattern>/d/*</url-pattern>
-   </filter-mapping>
-   <filter-mapping>
-      <filter-name>FacesContextFilter</filter-name>
       <url-pattern>/d/*</url-pattern>
    </filter-mapping>
    <filter-mapping>
@@ -364,10 +358,6 @@
       <url-pattern>/ddc/*</url-pattern>
    </filter-mapping>
    <filter-mapping>
-      <filter-name>FacesContextFilter</filter-name>
-      <url-pattern>/ddc/*</url-pattern>
-   </filter-mapping>
-   <filter-mapping>
       <filter-name>Authentication Filter</filter-name>
       <url-pattern>/ddc/*</url-pattern>
    </filter-mapping>
@@ -401,92 +391,14 @@
       <url-pattern>/navigate/*</url-pattern>
    </filter-mapping>
    <filter-mapping>
-      <filter-name>FacesContextFilter</filter-name>
-      <url-pattern>/navigate/*</url-pattern>
-   </filter-mapping>
-   <filter-mapping>
       <filter-name>Authentication Filter</filter-name>
       <url-pattern>/navigate/*</url-pattern>
    </filter-mapping>
    <filter-mapping>
       <filter-name>SubstitutionFilter</filter-name>
       <url-pattern>/navigate/*</url-pattern>
-   </filter-mapping>
-
-   <filter-mapping>
-      <filter-name>RequestControlFilter</filter-name>
-      <url-pattern>/printTable/*</url-pattern>
-   </filter-mapping>
-   <filter-mapping>
-      <filter-name>SerializingFilter</filter-name>
-      <url-pattern>/printTable/*</url-pattern>
-   </filter-mapping>
-   <filter-mapping>
-      <filter-name>CAS Authentication Filter</filter-name>
-      <url-pattern>/printTable/*</url-pattern>
-   </filter-mapping>
-   <filter-mapping>
-      <filter-name>CAS Ticket Validation Filter</filter-name>
-      <url-pattern>/printTable/*</url-pattern>
-   </filter-mapping>
-   <filter-mapping>
-      <filter-name>CAS HttpServletRequest Wrapper Filter</filter-name>
-      <url-pattern>/printTable/*</url-pattern>
-   </filter-mapping>
-   <filter-mapping>
-      <filter-name>RequestContext Filter</filter-name>
-      <url-pattern>/printTable/*</url-pattern>
-   </filter-mapping>
-   <filter-mapping>
-      <filter-name>FacesContextFilter</filter-name>
-      <url-pattern>/printTable/*</url-pattern>
-   </filter-mapping>
-   <filter-mapping>
-      <filter-name>Authentication Filter</filter-name>
-      <url-pattern>/printTable/*</url-pattern>
-   </filter-mapping>
-   <filter-mapping>
-      <filter-name>SubstitutionFilter</filter-name>
-      <url-pattern>/printTable/*</url-pattern>
-   </filter-mapping>
-
-   <filter-mapping>
-      <filter-name>RequestControlFilter</filter-name>
-      <url-pattern>/help/*</url-pattern>
-   </filter-mapping>
-   <filter-mapping>
-      <filter-name>SerializingFilter</filter-name>
-      <url-pattern>/help/*</url-pattern>
-   </filter-mapping>
-   <filter-mapping>
-      <filter-name>CAS Authentication Filter</filter-name>
-      <url-pattern>/help/*</url-pattern>
-   </filter-mapping>
-   <filter-mapping>
-      <filter-name>CAS Ticket Validation Filter</filter-name>
-      <url-pattern>/help/*</url-pattern>
-   </filter-mapping>
-   <filter-mapping>
-      <filter-name>CAS HttpServletRequest Wrapper Filter</filter-name>
-      <url-pattern>/help/*</url-pattern>
-   </filter-mapping>
-   <filter-mapping>
-      <filter-name>RequestContext Filter</filter-name>
-      <url-pattern>/help/*</url-pattern>
-   </filter-mapping>
-   <filter-mapping>
-      <filter-name>FacesContextFilter</filter-name>
-      <url-pattern>/help/*</url-pattern>
-   </filter-mapping>
-   <filter-mapping>
-      <filter-name>Authentication Filter</filter-name>
-      <url-pattern>/help/*</url-pattern>
-   </filter-mapping>
-   <filter-mapping>
-      <filter-name>SubstitutionFilter</filter-name>
-      <url-pattern>/help/*</url-pattern>
-   </filter-mapping>
-
+   </filter-mapping>  
+      
    <filter-mapping>
       <filter-name>RequestControlFilter</filter-name>
       <url-pattern>/n/*</url-pattern>
@@ -511,10 +423,6 @@
       <filter-name>RequestContext Filter</filter-name>
       <url-pattern>/n/*</url-pattern>
    </filter-mapping>
-   <filter-mapping>
-      <filter-name>FacesContextFilter</filter-name>
-      <url-pattern>/n/*</url-pattern>
-   </filter-mapping>     
    <filter-mapping>
       <filter-name>Authentication Filter</filter-name>
       <url-pattern>/n/*</url-pattern>
@@ -549,10 +457,6 @@
       <url-pattern>/ajax/*</url-pattern>
    </filter-mapping>
    <filter-mapping>
-      <filter-name>FacesContextFilter</filter-name>
-      <url-pattern>/ajax/*</url-pattern>
-   </filter-mapping>
-   <filter-mapping>
       <filter-name>Authentication Filter</filter-name>
       <url-pattern>/ajax/*</url-pattern>
    </filter-mapping>
@@ -585,10 +489,6 @@
       <filter-name>RequestContext Filter</filter-name>
       <url-pattern>/faces/*</url-pattern>
    </filter-mapping>
-   <filter-mapping>
-      <filter-name>FacesContextFilter</filter-name>
-      <url-pattern>/faces/*</url-pattern>
-   </filter-mapping>     
    <filter-mapping>
       <filter-name>Authentication Filter</filter-name>
       <url-pattern>/faces/*</url-pattern>
@@ -641,10 +541,6 @@
       <url-pattern>/webdav/*</url-pattern>
    </filter-mapping>
    <filter-mapping>
-      <filter-name>FacesContextFilter</filter-name>
-      <url-pattern>/webdav/*</url-pattern>
-   </filter-mapping>
-   <filter-mapping>
       <filter-name>WebDAV Authentication Filter</filter-name>
       <url-pattern>/webdav/*</url-pattern>
    </filter-mapping>
@@ -660,23 +556,11 @@
 
    <filter-mapping>
       <filter-name>Header Filter</filter-name>
-      <url-pattern>/css/*</url-pattern>
+      <url-pattern>*.css</url-pattern>
    </filter-mapping>
    <filter-mapping>
       <filter-name>Header Filter</filter-name>
-      <url-pattern>/images/*</url-pattern>
-   </filter-mapping>
-   <filter-mapping>
-      <filter-name>Header Filter</filter-name>
-      <url-pattern>/scripts/*</url-pattern>
-   </filter-mapping>
-   <filter-mapping>
-      <filter-name>Header Filter</filter-name>
-      <url-pattern>/blank.html</url-pattern>
-   </filter-mapping>
-   <filter-mapping>
-      <filter-name>Header Filter</filter-name>
-      <url-pattern>/favicon.ico</url-pattern>
+      <url-pattern>*.js</url-pattern>
    </filter-mapping>
 
    <!-- ========== Listeners ========== -->
@@ -699,10 +583,6 @@
 
    <listener>
       <listener-class>com.sun.xml.ws.transport.http.servlet.WSServletContextListener</listener-class>
-   </listener>
-
-   <listener>
-      <listener-class>ee.webmedia.alfresco.help.web.HelpTextInitListener</listener-class>
    </listener>
 
    <!-- ========== Servlets ========== -->
@@ -748,24 +628,7 @@
       <servlet-name>jax-ws</servlet-name>
 <!--      <servlet-class>com.sun.xml.ws.transport.http.servlet.WSSpringServlet</servlet-class>-->
       <servlet-class>com.sun.xml.ws.transport.http.servlet.WSServlet</servlet-class>
-      <load-on-startup>6</load-on-startup>
-   </servlet>
-
-   <servlet>
-      <!-- Because servlet name is 'spring-ws', it expects to load its application context from WEB-INF/spring-ws-servlet.xml -->
-      <servlet-name>spring-ws</servlet-name>
-      <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
-      <load-on-startup>7</load-on-startup>
-   </servlet>
-
-   <servlet>
-      <servlet-name>PrintTableServlet</servlet-name>
-      <servlet-class>ee.webmedia.alfresco.workflow.web.PrintTableServlet</servlet-class>
-   </servlet>
-
-   <servlet>
-      <servlet-name>HelpTextServlet</servlet-name>
-      <servlet-class>ee.webmedia.alfresco.help.web.HelpTextServlet</servlet-class>
+      <load-on-startup>1</load-on-startup>
    </servlet>
 
    <!-- ========== Servlet mappings ========== -->
@@ -801,11 +664,6 @@
    </servlet-mapping>
 
    <servlet-mapping>
-      <servlet-name>PrintTableServlet</servlet-name>
-      <url-pattern>/printTable/*</url-pattern>
-   </servlet-mapping>
-
-   <servlet-mapping>
       <servlet-name>ajaxServlet</servlet-name>
       <url-pattern>/ajax/*</url-pattern>
    </servlet-mapping>
@@ -819,20 +677,10 @@
       <servlet-name>WebDAV</servlet-name>
       <url-pattern>/webdav/*</url-pattern>
    </servlet-mapping>
-
+   
    <servlet-mapping>
       <servlet-name>jax-ws</servlet-name>
       <url-pattern>/service/*</url-pattern>
-   </servlet-mapping>
-
-   <servlet-mapping>
-      <servlet-name>spring-ws</servlet-name>
-      <url-pattern>/service2/*</url-pattern>
-   </servlet-mapping>
-
-   <servlet-mapping>
-      <servlet-name>HelpTextServlet</servlet-name>
-      <url-pattern>/help/*</url-pattern>
    </servlet-mapping>
 
    <!-- ========== Other ========== -->

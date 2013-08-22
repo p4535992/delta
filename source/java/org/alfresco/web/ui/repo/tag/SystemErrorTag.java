@@ -27,8 +27,6 @@ package org.alfresco.web.ui.repo.tag;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.ResourceBundle;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import javax.portlet.PortletSession;
 import javax.portlet.PortletURL;
@@ -41,7 +39,6 @@ import javax.servlet.jsp.tagext.TagSupport;
 import org.alfresco.web.app.Application;
 import org.alfresco.web.app.servlet.BaseServlet;
 import org.alfresco.web.bean.ErrorBean;
-import org.apache.commons.lang.time.FastDateFormat;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -68,7 +65,6 @@ public class SystemErrorTag extends TagSupport
    private String detailsStyleClass;
    private boolean showDetails = false;
    
-   public static FastDateFormat dateTimeFormat = FastDateFormat.getInstance("dd.MM.yyyy HH:mm:ss.SSS Z");
    
    /**
     * @return Returns the showDetails.
@@ -171,8 +167,6 @@ public class SystemErrorTag extends TagSupport
          
          ResourceBundle bundle = Application.getBundle(pageContext.getSession());
          String appVersion = "Rakenduse versioon: " + BeanHelper.getApplicationService().getProjectVersion() + "\n";
-         String server = "Server: " + ((HttpServletRequest) pageContext.getRequest()).getHeader("host") + "\n";
-         String time = "Aeg: " + dateTimeFormat.format(System.currentTimeMillis()) + "\n";
          
          out.write("<div style='margin: 20px;'");
          
@@ -185,8 +179,6 @@ public class SystemErrorTag extends TagSupport
          
          out.write(">");
          out.write(appVersion + "<br>");
-         out.write(server + "<br>");
-         out.write(time + "<br>");
          out.write(errorMessage);
          out.write("</div>");
          
@@ -239,9 +231,7 @@ public class SystemErrorTag extends TagSupport
          
          out.write("><pre>");
          out.write(appVersion);
-         out.write(server);
-         out.write(time);
-         out.write(highLightEE(errorDetails).replaceAll("<br>Caused by:", "\n\n<b>Caused by</b>:").replaceAll("<br>", "\n")); 
+         out.write(errorDetails.replaceAll("<br>", "\n"));
          out.write("<pre></div>");
          
          // output a link to return to the application
@@ -325,18 +315,4 @@ public class SystemErrorTag extends TagSupport
       
       super.release();
    }
-
-    private String highLightEE(String input) {
-        String patternStr = "<br>(\\s*at ee\\.webmedia\\..*?)<br>";
-        Pattern pattern = Pattern.compile(patternStr);
-        input = input.replaceAll("\r", ""); // this is needed on windows platform(otherwise match will not be found and rows not highlighted)
-        Matcher matcher = pattern.matcher(input);
-        String output = input.toString();
-        while (matcher.find()) {
-            String groupStr = matcher.group(1);
-            output = output.replaceFirst(patternStr, Matcher.quoteReplacement("<br><b class='red'>" + groupStr + "</b><br>"));
-        }
-        return output;
-    }
-
 }

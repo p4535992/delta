@@ -24,7 +24,6 @@
  */
 package org.alfresco.repo.security.sync;
 
-import java.io.Serializable;
 import java.text.DateFormat;
 import java.util.Date;
 import java.util.HashSet;
@@ -43,13 +42,10 @@ import org.alfresco.repo.management.subsystems.ActivateableBean;
 import org.alfresco.repo.management.subsystems.ChildApplicationContextManager;
 import org.alfresco.repo.security.authentication.AuthenticationException;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
-import org.alfresco.repo.security.person.PersonServiceImpl;
 import org.alfresco.service.cmr.attributes.AttributeService;
-import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.security.AuthorityService;
 import org.alfresco.service.cmr.security.AuthorityType;
 import org.alfresco.service.cmr.security.PersonService;
-import org.alfresco.service.namespace.QName;
 import org.alfresco.util.PropertyMap;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -57,13 +53,7 @@ import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.context.ApplicationContext;
 
 import ee.webmedia.alfresco.common.service.ApplicationService;
-import ee.webmedia.alfresco.common.web.BeanHelper;
-import ee.webmedia.alfresco.log.PropDiffHelper;
-import ee.webmedia.alfresco.log.model.LogEntry;
-import ee.webmedia.alfresco.log.model.LogObject;
 import ee.webmedia.alfresco.user.service.UserService;
-import ee.webmedia.alfresco.utils.RepoUtil;
-import ee.webmedia.alfresco.utils.UserUtil;
 
 /**
  * A <code>ChainingUserRegistrySynchronizer</code> is responsible for synchronizing Alfresco's local user (person) and
@@ -416,20 +406,7 @@ public class ChainingUserRegistrySynchronizer implements UserRegistrySynchronize
             {
                 // The person already existed in this zone: update the person
                 ChainingUserRegistrySynchronizer.logger.info("Updating user '" + personName + "'");
-
-                NodeRef personRef = personService.getPerson(personName); // creates home folder if necessary
-                Map<QName, Serializable> personOldProperties = BeanHelper.getNodeService().getProperties(personRef);
-
-                String diff = new PropDiffHelper()
-                        .watchUser()
-                        .diff(RepoUtil.getPropertiesIgnoringSystem(personOldProperties, BeanHelper.getDictionaryService()), personProperties);
-
-                if (diff != null) {
-                    BeanHelper.getLogService().addLogEntry(
-                            LogEntry.create(LogObject.USER, personName, UserUtil.getPersonFullName1(personOldProperties), (NodeRef) null, "applog_user_edit",
-                                    UserUtil.getUserFullNameAndId(personProperties), diff));
-                }
-                personService.setPersonProperties(personName, personProperties);
+                this.personService.setPersonProperties(personName, personProperties);
             }
             else
             {
@@ -455,13 +432,7 @@ public class ChainingUserRegistrySynchronizer implements UserRegistrySynchronize
                     // The person did not exist at all
                     ChainingUserRegistrySynchronizer.logger.info("Creating user '" + personName + "'");
                 }
-                PersonServiceImpl.validCreatePersonCall.set(Boolean.TRUE);
-                try {
-                    personService.createPerson(personProperties, getZones(zoneId));
-                } finally {
-                    PersonServiceImpl.validCreatePersonCall.set(null);
-                }
-                NodeRef personRef = this.personService.getPerson(personName); // creates home folder if necessary
+                this.personService.createPerson(personProperties, getZones(zoneId));
             }
             // Increment the count of processed people
             processedCount++;
@@ -626,17 +597,9 @@ public class ChainingUserRegistrySynchronizer implements UserRegistrySynchronize
             for (String child : entry.getValue())
             {
                 String groupName = entry.getKey();
-                if (AuthorityType.getAuthorityType(child) == AuthorityType.USER && !this.personService.personExists(child))
-                {
-                    ChainingUserRegistrySynchronizer.logger.warn("Not adding '" + this.authorityService.getShortName(child)
-                            + "' to group '" + this.authorityService.getShortName(groupName) + "', user does not exist");
-                }
-                else
-                {
-                    ChainingUserRegistrySynchronizer.logger.info("Adding '" + this.authorityService.getShortName(child)
-                            + "' to group '" + this.authorityService.getShortName(groupName) + "'");
-                    this.authorityService.addAuthority(groupName, child);
-                }
+                ChainingUserRegistrySynchronizer.logger.info("Adding '" + this.authorityService.getShortName(child)
+                        + "' to group '" + this.authorityService.getShortName(groupName) + "'");
+                this.authorityService.addAuthority(groupName, child);
             }
 
         }

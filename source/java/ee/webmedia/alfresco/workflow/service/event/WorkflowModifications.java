@@ -23,5 +23,4 @@ public interface WorkflowModifications {
 
     void addOtherCompundWorkflows(CompoundWorkflow compoundWorkflow);
 
-    void changeInitiatingTaskDueDate(Task task, WorkflowEventQueue queue);
 }

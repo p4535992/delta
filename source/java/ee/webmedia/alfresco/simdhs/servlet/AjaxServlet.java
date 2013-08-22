@@ -34,14 +34,12 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.alfresco.error.AlfrescoRuntimeException;
 import org.alfresco.web.app.servlet.BaseServlet;
+import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.app.servlet.ajax.AjaxCommand;
 import org.alfresco.web.app.servlet.ajax.GetCommand;
 import org.alfresco.web.app.servlet.ajax.InvokeCommand;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
-import ee.webmedia.alfresco.common.listener.StatisticsPhaseListener;
-import ee.webmedia.alfresco.common.listener.StatisticsPhaseListenerLogColumn;
 
 /**
  * Servlet responsible for processing AJAX requests.
@@ -113,7 +111,7 @@ public class AjaxServlet extends BaseServlet {
             final String expression = tokens[2];
 
             // setup the faces context
-            final FacesContext facesContext = FacesContext.getCurrentInstance();
+            final FacesContext facesContext = FacesHelper.getFacesContext(request, response, getServletContext());
 
             // start a timer
             if (perfLogger.isDebugEnabled()) {
@@ -129,8 +127,6 @@ public class AjaxServlet extends BaseServlet {
             } else {
                 throw new AlfrescoRuntimeException("Unrecognised command received: " + commandName);
             }
-
-            StatisticsPhaseListener.add(StatisticsPhaseListenerLogColumn.ACTION, commandName + "/" + expression);
 
             // execute the command
             command.execute(facesContext, expression, request, response);

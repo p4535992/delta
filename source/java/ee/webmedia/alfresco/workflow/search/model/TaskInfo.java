@@ -1,10 +1,7 @@
 package ee.webmedia.alfresco.workflow.search.model;
 
-import static ee.webmedia.alfresco.workflow.service.Task.dateFormat;
-
 import java.io.Serializable;
 import java.util.Date;
-import java.util.List;
 
 import org.alfresco.model.ContentModel;
 import org.alfresco.web.bean.repository.Node;
@@ -12,12 +9,10 @@ import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.common.web.CssStylable;
-import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 import ee.webmedia.alfresco.document.model.CreatedAndRegistered;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.type.web.DocumentTypeConverter;
 import ee.webmedia.alfresco.utils.MessageUtil;
-import ee.webmedia.alfresco.utils.UserUtil;
 import ee.webmedia.alfresco.workflow.model.TaskAndDocument;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
@@ -71,8 +66,7 @@ public class TaskInfo implements Serializable, Comparable<TaskInfo>, CssStylable
 
     public Object getDocType() {
         DocumentTypeConverter docTypeConverter = new DocumentTypeConverter();
-        String docTypeId = (String) document.getProperties().get(DocumentAdminModel.Props.OBJECT_TYPE_ID);
-        return docTypeConverter.convertSelectedValueToString(docTypeId);
+        return docTypeConverter.convertSelectedValueToString(document.getType());
     }
 
     public Object getRegNum() {
@@ -100,7 +94,7 @@ public class TaskInfo implements Serializable, Comparable<TaskInfo>, CssStylable
     }
 
     public Object getOwnerOrganizationName() {
-        return UserUtil.getDisplayUnit((List<String>) task.getProperties().get(WorkflowCommonModel.Props.OWNER_ORGANIZATION_NAME));
+        return task.getProperties().get(WorkflowCommonModel.Props.OWNER_ORGANIZATION_NAME);
     }
 
     public Object getOwnerJobTitle() {
@@ -122,26 +116,6 @@ public class TaskInfo implements Serializable, Comparable<TaskInfo>, CssStylable
     @Override
     public Date getRegDateTime() {
         return (Date) getRegDate();
-    }
-
-    public String getRegDateStr() {
-        return getRegDateTime() != null ? dateFormat.format(getRegDateTime()) : "";
-    }
-
-    public String getStartedDateStr() {
-        return (Date) getStartedDate() != null ? dateFormat.format(getStartedDate()) : "";
-    }
-
-    public String getDueDateStr() {
-        return (Date) getDueDate() != null ? dateFormat.format(getDueDate()) : "";
-    }
-
-    public String getCompletedDateStr() {
-        return (Date) getCompletedDate() != null ? dateFormat.format(getCompletedDate()) : "";
-    }
-
-    public String getStoppedDateStr() {
-        return (Date) getStoppedDate() != null ? dateFormat.format(getStoppedDate()) : "";
     }
 
     @Override

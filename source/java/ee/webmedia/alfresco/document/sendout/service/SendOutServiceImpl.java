@@ -1,18 +1,20 @@
 package ee.webmedia.alfresco.document.sendout.service;
 
-import java.io.IOException;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.Serializable;
-import java.security.cert.X509Certificate;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
+import org.alfresco.repo.content.MimetypeMap;
+import org.alfresco.service.cmr.model.FileFolderService;
+import org.alfresco.service.cmr.model.FileInfo;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
+import org.alfresco.service.cmr.repository.ContentReader;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.namespace.QName;
@@ -24,28 +26,25 @@ import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.addressbook.service.AddressbookService;
 import ee.webmedia.alfresco.classificator.enums.SendMode;
 import ee.webmedia.alfresco.common.service.GeneralService;
-import ee.webmedia.alfresco.common.web.BeanHelper;
-import ee.webmedia.alfresco.docdynamic.service.DocumentDynamicService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.sendout.model.DocumentSendInfo;
 import ee.webmedia.alfresco.document.sendout.model.SendInfo;
+import ee.webmedia.alfresco.document.type.service.DocumentTypeHelper;
+import ee.webmedia.alfresco.document.type.service.DocumentTypeService;
 import ee.webmedia.alfresco.dvk.model.DvkSendLetterDocuments;
 import ee.webmedia.alfresco.dvk.model.DvkSendLetterDocumentsImpl;
 import ee.webmedia.alfresco.dvk.service.DvkService;
-import ee.webmedia.alfresco.email.model.EmailAttachment;
 import ee.webmedia.alfresco.email.service.EmailException;
 import ee.webmedia.alfresco.email.service.EmailService;
 import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
-import ee.webmedia.alfresco.signature.model.SkLdapCertificate;
-import ee.webmedia.alfresco.signature.service.SignatureService;
-import ee.webmedia.alfresco.signature.service.SkLdapService;
-import ee.webmedia.alfresco.utils.UnableToPerformException;
+import ee.webmedia.alfresco.utils.FilenameUtil;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 import ee.webmedia.alfresco.workflow.sendout.TaskSendInfo;
 import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
 import ee.webmedia.alfresco.workflow.service.Task;
 import ee.webmedia.alfresco.workflow.service.Workflow;
+import ee.webmedia.alfresco.workflow.service.WorkflowService;
 import ee.webmedia.xtee.client.dhl.DhlXTeeService.ContentToSend;
 import ee.webmedia.xtee.client.dhl.DhlXTeeService.SendStatus;
 
@@ -64,8 +63,9 @@ public class SendOutServiceImpl implements SendOutService {
     private AddressbookService addressbookService;
     private DvkService dvkService;
     private ParametersService parametersService;
-    private SignatureService signatureService;
-    private SkLdapService skLdapService;
+    private DocumentTypeService documentTypeService;
+    private FileFolderService fileFolderService;
+    private WorkflowService workflowService;
 
     @Override
     public List<SendInfo> getDocumentSendInfos(NodeRef document) {
@@ -75,12 +75,6 @@ public class SendOutServiceImpl implements SendOutService {
             result.add(new DocumentSendInfo(generalService.fetchNode(assoc.getChildRef())));
         }
         return result;
-    }
-
-    @Override
-    public boolean hasDocumentSendInfos(NodeRef document) {
-        List<ChildAssociationRef> assocs = nodeService.getChildAssocs(document, RegexQNamePattern.MATCH_ALL, DocumentCommonModel.Assocs.SEND_INFO);
-        return !assocs.isEmpty();
     }
 
     @Override
@@ -101,27 +95,10 @@ public class SendOutServiceImpl implements SendOutService {
     }
 
     @Override
-    public boolean sendOut(NodeRef document, List<String> names, List<String> emails, List<String> modes, List<String> encryptionIdCodes, String fromEmail, String subject,
-            String content, List<NodeRef> fileRefs, boolean zipIt) {
+    public boolean sendOut(NodeRef document, List<String> names, List<String> emails, List<String> modes, String fromEmail, String subject, String content,
+            List<String> fileNodeRefs, boolean zipIt) {
 
-        List<X509Certificate> allCertificates = new ArrayList<X509Certificate>();
-        if (encryptionIdCodes != null) {
-            Set<String> encryptionIdCodesSet = new HashSet<String>();
-            for (int i = 0; i < names.size(); i++) {
-                String encryptionIdCode = encryptionIdCodes.get(i);
-                if (encryptionIdCodesSet.contains(encryptionIdCode)) {
-                    continue;
-                }
-                List<SkLdapCertificate> skLdapCertificates = skLdapService.getCertificates(encryptionIdCode);
-                List<X509Certificate> certificates = signatureService.getCertificatesForEncryption(skLdapCertificates);
-                if (certificates.isEmpty()) {
-                    throw new UnableToPerformException("document_send_out_encryptionRecipient_notFound", names.get(i), encryptionIdCode);
-                }
-                allCertificates.addAll(certificates);
-                encryptionIdCodesSet.add(encryptionIdCode);
-            }
-        }
-
+        QName docType = nodeService.getType(document);
         Map<QName, Serializable> docProperties = nodeService.getProperties(document);
         List<Map<QName, Serializable>> sendInfoProps = new ArrayList<Map<QName, Serializable>>();
         Date now = new Date();
@@ -132,8 +109,6 @@ public class SendOutServiceImpl implements SendOutService {
         // Collect email data
         List<String> toEmails = new ArrayList<String>();
         List<String> toNames = new ArrayList<String>();
-        List<String> toBccEmails = new ArrayList<String>();
-        List<String> toBccNames = new ArrayList<String>();
 
         // Loop through all recipients, keep a list for DVK sending, a list for email sending and prepare sendInfo properties
         for (int i = 0; i < names.size(); i++) {
@@ -173,9 +148,6 @@ public class SendOutServiceImpl implements SendOutService {
                 } else if (SendMode.EMAIL.equals(modes.get(i))) {
                     toEmails.add(email);
                     toNames.add(recipientName);
-                } else if (SendMode.EMAIL_BCC.equals(modes.get(i))) {
-                    toBccEmails.add(email);
-                    toBccNames.add(recipientName);
                 }
 
                 Map<QName, Serializable> props = new HashMap<QName, Serializable>();
@@ -191,12 +163,10 @@ public class SendOutServiceImpl implements SendOutService {
         }
 
         // Prepare zip file name if needed
-        String zipOrEncryptFileTitle = null;
-        if (fileRefs != null && fileRefs.size() > 0 && (zipIt || !allCertificates.isEmpty()) && (toRegNums.size() > 0 || toEmails.size() > 0)) {
-            zipOrEncryptFileTitle = buildZipAndEncryptFileTitle(docProperties);
+        String zipFileName = null;
+        if (fileNodeRefs != null && fileNodeRefs.size() > 0 && zipIt && (toRegNums.size() > 0 || toEmails.size() > 0)) {
+            zipFileName = buildZipFileName(docProperties);
         }
-
-        List<EmailAttachment> attachments = emailService.getAttachments(fileRefs, zipIt, allCertificates, zipOrEncryptFileTitle);
 
         // Send through DVK
         String dvkId = "";
@@ -227,25 +197,24 @@ public class SendOutServiceImpl implements SendOutService {
             sd.setLetterCompilatorFirstname(ownerFirstname);
             sd.setLetterCompilatorSurname(ownerSurname);
             sd.setLetterCompilatorJobTitle((String) docProperties.get(DocumentCommonModel.Props.OWNER_JOB_TITLE));
-            DocumentDynamicService documentDynamicService = getDocumentDynamicService();
-            if (documentDynamicService.isOutgoingLetter(document)) {
+            if (DocumentTypeHelper.isOutgoingLetter(docType)) {
                 sd.setDocType("Kiri");
             } else {
-                sd.setDocType(documentDynamicService.getDocumentTypeName(document));
+                sd.setDocType(documentTypeService.getDocumentType(docType).getName());
             }
             sd.setRecipientsRegNrs(toRegNums);
 
             // Construct content items
-            List<ContentToSend> contentsToSend = prepareContents(attachments);
+            List<ContentToSend> contentsToSend = prepareContents(document, fileNodeRefs, zipIt, zipFileName);
 
             // Send it out
             dvkId = dvkService.sendLetterDocuments(document, contentsToSend, sd);
         }
 
         // Send through email
-        if (!toEmails.isEmpty() || !toBccEmails.isEmpty()) {
+        if (toEmails.size() > 0) {
             try {
-                emailService.sendEmail(toEmails, toNames, toBccEmails, toBccNames, fromEmail, subject, content, true, document, attachments);
+                emailService.sendEmail(toEmails, toNames, fromEmail, subject, content, true, document, fileNodeRefs, zipIt, zipFileName);
             } catch (EmailException e) {
                 throw new RuntimeException("Document e-mail sending failed", e);
             }
@@ -263,7 +232,9 @@ public class SendOutServiceImpl implements SendOutService {
         return true;
     }
 
-    private String buildZipAndEncryptFileTitle(Map<QName, Serializable> docProperties) {
+    @Override
+    public String buildZipFileName(Map<QName, Serializable> docProperties) {
+        String zipFileName;
         SimpleDateFormat format = new SimpleDateFormat("dd.MM.yyyy");
         StringBuilder docName = new StringBuilder();
         String regNum = (String) docProperties.get(DocumentCommonModel.Props.REG_NUMBER);
@@ -280,7 +251,8 @@ public class SendOutServiceImpl implements SendOutService {
         if (docName.length() == 0) {
             docName.append("dokument");
         }
-        return docName.toString();
+        zipFileName = FilenameUtil.buildFileName(docName.toString(), "zip");
+        return zipFileName;
     }
 
     @Override
@@ -309,28 +281,36 @@ public class SendOutServiceImpl implements SendOutService {
     }
 
     @Override
-    public List<ContentToSend> prepareContents(NodeRef document, List<NodeRef> fileRefs, boolean zipIt) {
-        String zipAndEncryptFileName = null;
-        if (fileRefs != null && fileRefs.size() > 0 && zipIt) {
-            Map<QName, Serializable> docProperties = nodeService.getProperties(document);
-            zipAndEncryptFileName = buildZipAndEncryptFileTitle(docProperties);
-        }
-        List<EmailAttachment> attachments = emailService.getAttachments(fileRefs, zipIt, null, zipAndEncryptFileName);
-        return prepareContents(attachments);
-    }
-
-    private List<ContentToSend> prepareContents(List<EmailAttachment> attachments) {
+    public List<ContentToSend> prepareContents(NodeRef document, List<String> fileNodeRefs, boolean zipIt, String zipFileName) {
         List<ContentToSend> result = new ArrayList<ContentToSend>();
-        for (EmailAttachment attachment : attachments) {
+        if (fileNodeRefs == null || fileNodeRefs.size() == 0) {
+            return result;
+        }
+        if (zipIt) {
+            ByteArrayOutputStream byteStream = generalService.getZipFileFromFiles(document, fileNodeRefs);
             ContentToSend content = new ContentToSend();
-            content.setFileName(attachment.getFileName());
-            content.setMimeType(attachment.getMimeType());
-            try {
-                content.setInputStream(attachment.getInputStreamSource().getInputStream());
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+            content.setFileName(zipFileName);
+            content.setMimeType(MimetypeMap.MIMETYPE_ZIP);
+            byte[] byteArray = byteStream.toByteArray();
+            content.setInputStream(new ByteArrayInputStream(byteArray));
             result.add(content);
+        } else {
+            for (FileInfo fileInfo : fileFolderService.listFiles(document)) {
+                if (fileNodeRefs.contains(fileInfo.getNodeRef().toString())) {
+                    ContentReader reader = fileFolderService.getReader(fileInfo.getNodeRef());
+                    ContentToSend content = new ContentToSend();
+                    content.setFileName(fileInfo.getName());
+                    content.setMimeType(reader.getMimetype());
+                    // Instead of directly setting reader.getContentInputStream into ContentToSend, we read the bytes
+                    // and set a new ByteArrayInputStream to avoid tight coupling between ContentToSend and ContentReader
+                    // input stream life-cycle.
+                    ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
+                    reader.getContent(byteStream);
+                    byte[] byteArray = byteStream.toByteArray();
+                    content.setInputStream(new ByteArrayInputStream(byteArray));
+                    result.add(content);
+                }
+            }
         }
         return result;
     }
@@ -360,19 +340,16 @@ public class SendOutServiceImpl implements SendOutService {
         this.parametersService = parametersService;
     }
 
-    /**
-     * Dependency cicle: dvkService -> documentService -> sendOutService -> documentDynamicService -> documentService
-     */
-    public DocumentDynamicService getDocumentDynamicService() {
-        return BeanHelper.getDocumentDynamicService();
+    public void setDocumentTypeService(DocumentTypeService documentTypeService) {
+        this.documentTypeService = documentTypeService;
     }
 
-    public void setSignatureService(SignatureService signatureService) {
-        this.signatureService = signatureService;
+    public void setFileFolderService(FileFolderService fileFolderService) {
+        this.fileFolderService = fileFolderService;
     }
 
-    public void setSkLdapService(SkLdapService skLdapService) {
-        this.skLdapService = skLdapService;
+    public void setWorkflowService(WorkflowService workflowService) {
+        this.workflowService = workflowService;
     }
 
     @Override

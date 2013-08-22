@@ -62,33 +62,7 @@ public class PermissionEvaluator extends BaseEvaluator
       try
       {
          Object obj = getValue();
-         result = evaluate(result, obj);
-      }
-      catch (Exception err)
-      {
-         handleEvaluationError(err);
-         return false;
-      }
-      
-      return result;
-   }
-   
-    public boolean evaluate(Object obj) {
-        try {
-            return evaluate(true, obj);
-        } catch (Exception err) {
-            handleEvaluationError(err);
-            return false;
-        }
-    }
-
-    public void handleEvaluationError(Exception err) {
-        // return default value on error
-         s_logger.warn("Error during PermissionEvaluator evaluation: " + err.getMessage(), err);
-    }
-
-    public boolean evaluate(boolean result, Object obj) {
-        if (obj instanceof Node)
+         if (obj instanceof Node)
          {
             // used the cached permissions checks in the Node instance
             // this means multiple calls to evaluators don't need to keep calling services
@@ -131,8 +105,16 @@ public class PermissionEvaluator extends BaseEvaluator
                }
             }
          }
-        return result;
-    }
+      }
+      catch (Exception err)
+      {
+         // return default value on error
+         s_logger.warn("Error during PermissionEvaluator evaluation: " + err.getMessage(), err);
+         return false;
+      }
+      
+      return result;
+   }
    
    /**
     * @see javax.faces.component.StateHolder#restoreState(javax.faces.context.FacesContext, java.lang.Object)

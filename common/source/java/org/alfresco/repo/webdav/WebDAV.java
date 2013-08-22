@@ -115,8 +115,6 @@ public class WebDAV
     public static final String HEADER_TIMEOUT = "Timeout";
     public static final String HEADER_USER_AGENT = "User-agent";
 
-    public static final String AGENT_MICROSOFT_DATA_ACCESS_INTERNET_PUBLISHING_PROVIDER_DAV = "Microsoft Data Access Internet Publishing Provider DAV";
-
     // If-Modified/If-Unmodified date format
     
     public static final String HEADER_IF_DATE_FORMAT = "EEE, dd MMM yyyy HH:mm:ss zzz";

@@ -27,7 +27,7 @@
       <%-- Comment column --%>
       <a:column id="col2">
          <f:facet name="header">
-            <a:sortLink id="col2-sort" label="#{msg.template_comment}" value="comment" mode="case-insensitive" />
+            <h:outputText id="col2-txt" value="#{msg.template_comment}" />
          </f:facet>
          <h:outputText value="#{r.comment}" />
       </a:column>
@@ -48,10 +48,6 @@
          <a:actionLink id="act-col-act1" value="#{msg.template_delete}" tooltip="#{msg.template_delete}" actionListener="#{BrowseBean.setupContentAction}" action="dialog:deleteFile" showLink="false"
             image="/images/icons/delete.gif">
             <f:param name="id" value="#{r.nodeRef.id}" />
-         </a:actionLink>
-         <a:actionLink id="col6-act1" value="#{msg.template_edit}" tooltip="#{msg.template_edit}" image="/images/icons/edit_properties.gif" action="dialog:documentTemplateDetailsDialog"
-            showLink="false" actionListener="#{DocumentTemplateDetailsDialog.setupDocTemplate}">
-            <f:param name="docTemplateNodeRef" value="#{r.nodeRef}" />
          </a:actionLink>
       </a:column>
 

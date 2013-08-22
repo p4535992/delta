@@ -2,7 +2,6 @@ package ee.webmedia.alfresco.menu.service;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -16,7 +15,6 @@ import org.alfresco.service.cmr.model.FileFolderService;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.apache.log4j.Logger;
-import org.springframework.beans.factory.InitializingBean;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
@@ -24,20 +22,18 @@ import org.springframework.core.io.ResourceLoader;
 import com.thoughtworks.xstream.XStream;
 
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.menu.model.BrowseMenuItem;
 import ee.webmedia.alfresco.menu.model.DropdownMenuItem;
 import ee.webmedia.alfresco.menu.model.Menu;
 import ee.webmedia.alfresco.menu.model.MenuItem;
 import ee.webmedia.alfresco.menu.model.MenuModel;
 import ee.webmedia.alfresco.menu.ui.component.UIMenuComponent;
-import ee.webmedia.alfresco.parameters.model.Parameters;
-import ee.webmedia.alfresco.parameters.service.ParametersService;
-import ee.webmedia.alfresco.parameters.service.ParametersService.ParameterChangedCallback;
 import ee.webmedia.alfresco.user.service.UserService;
 
 /**
  * @author Kaarel Jõgeva
  */
-public class MenuServiceImpl implements MenuService, InitializingBean {
+public class MenuServiceImpl implements MenuService {
     private static Logger log = Logger.getLogger(MenuServiceImpl.class);
 
     private String menuConfigLocation;
@@ -45,7 +41,6 @@ public class MenuServiceImpl implements MenuService, InitializingBean {
     private GeneralService generalService;
     private NodeService nodeService;
     private UserService userService;
-    private ParametersService parametersService;
 
     private int updateCount;
 
@@ -62,26 +57,14 @@ public class MenuServiceImpl implements MenuService, InitializingBean {
         public MenuItemProcessor processor;
         public boolean runOnce;
         public boolean isExecutable;
-        public boolean isSessionScoped;
 
-        public ProcessorWrapper(String menuItemId, MenuItemProcessor processor, boolean runOnce, boolean isSessionScoped) {
+        public ProcessorWrapper(String menuItemId, MenuItemProcessor processor, boolean runOnce) {
             this.menuItemId = menuItemId;
             this.processor = processor;
             this.runOnce = runOnce;
             isExecutable = true;
-            this.isSessionScoped = isSessionScoped;
 
         }
-    }
-
-    @Override
-    public void afterPropertiesSet() throws Exception {
-        parametersService.addParameterChangeListener(Parameters.WORKING_DOCUMENTS_ADDRESS.getParameterName(), new ParameterChangedCallback() {
-            @Override
-            public void doWithParameter(Serializable value) {
-                menuUpdated();
-            }
-        });
     }
 
     @Override
@@ -92,7 +75,9 @@ public class MenuServiceImpl implements MenuService, InitializingBean {
     @Override
     public void processTasks(Menu menu, Collection<String> onlyMenuItemIds) {
         long start = System.currentTimeMillis();
-        process(menu, false, onlyMenuItemIds, false);
+        System.out.println("PERFORMANCE: MENU PROCESS TASK START");
+        process(menu, false, onlyMenuItemIds);
+        System.out.println("PERFORMANCE: MENU PROCESS TASK END: " + (System.currentTimeMillis() - start) + "ms");
     }
 
     @Override
@@ -128,6 +113,7 @@ public class MenuServiceImpl implements MenuService, InitializingBean {
             xstream.processAnnotations(Menu.class);
             xstream.processAnnotations(MenuItem.class);
             xstream.processAnnotations(DropdownMenuItem.class);
+            xstream.processAnnotations(BrowseMenuItem.class);
             Menu loadedMenu = (Menu) xstream.fromXML(resource.getInputStream());
             process(loadedMenu, true);
             menu = loadedMenu; // this is performed here at the end, atomically
@@ -154,13 +140,8 @@ public class MenuServiceImpl implements MenuService, InitializingBean {
     }
 
     @Override
-    public void addProcessor(String menuItemId, MenuItemProcessor processor, boolean runOnce, boolean sessionScope) {
-        processors.add(new ProcessorWrapper(menuItemId, processor, runOnce, sessionScope));
-    }
-
-    @Override
     public void addProcessor(String menuItemId, MenuItemProcessor processor, boolean runOnce) {
-        addProcessor(menuItemId, processor, runOnce, false);
+        processors.add(new ProcessorWrapper(menuItemId, processor, runOnce));
     }
 
     @Override
@@ -188,17 +169,12 @@ public class MenuServiceImpl implements MenuService, InitializingBean {
     }
 
     private void process(Menu loadedMenu, boolean reloaded) {
-        process(loadedMenu, reloaded, null, false);
+        process(loadedMenu, reloaded, null);
     }
 
-    @Override
-    public void process(Menu loadedMenu, boolean reloaded, boolean sessionScope) {
-        process(loadedMenu, reloaded, null, sessionScope);
-    }
-
-    private void process(Menu loadedMenu, boolean reloaded, Collection<String> onlyMenuItemIds, boolean sessionScope) {
+    private void process(Menu loadedMenu, boolean reloaded, Collection<String> onlyMenuItemIds) {
         for (ProcessorWrapper processorWrapper : processors) {
-            if (reloaded || (processorWrapper.isExecutable && processorWrapper.isSessionScoped == sessionScope)) {
+            if (processorWrapper.isExecutable || reloaded) {
                 if (processorWrapper.runOnce) {
                     processorWrapper.isExecutable = false;
                 }
@@ -291,10 +267,6 @@ public class MenuServiceImpl implements MenuService, InitializingBean {
 
     public void setMenuItemFilters(Map<String, MenuItemFilter> menuItemFilters) {
         this.menuItemFilters = menuItemFilters;
-    }
-
-    public void setParametersService(ParametersService parametersService) {
-        this.parametersService = parametersService;
     }
 
     // END: getters / setters

@@ -1,10 +1,13 @@
 package ee.webmedia.alfresco.document.service;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.alfresco.service.cmr.repository.AssociationRef;
+import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.ContentData;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
@@ -12,11 +15,13 @@ import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 import org.springframework.beans.factory.InitializingBean;
 
+import ee.webmedia.alfresco.document.associations.model.DocAssocInfo;
 import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.DocumentParentNodesVO;
+import ee.webmedia.alfresco.document.permissions.SeriesDocManagerDynamicAuthority;
+import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.signature.exception.SignatureException;
 import ee.webmedia.alfresco.signature.exception.SignatureRuntimeException;
-import ee.webmedia.alfresco.signature.model.SignatureChallenge;
 import ee.webmedia.alfresco.signature.model.SignatureDigest;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
@@ -30,24 +35,18 @@ import ee.webmedia.alfresco.workflow.service.Task;
 public interface DocumentService {
 
     public abstract class TransientProps { // using abstract class instead of interface to be able to add/change constants without reDeploy
-        public static final String FUNCTION_LABEL = RepoUtil.createTransientProp("function_Lbl").toString();
-        public static final String SERIES_LABEL = RepoUtil.createTransientProp("series_Lbl").toString();
-        public static final String VOLUME_LABEL = RepoUtil.createTransientProp("volume_Lbl").toString();
-        public static final String CASE_LABEL = RepoUtil.createTransientProp("case_Lbl").toString();
-        public static final String CASE_LABEL_EDITABLE = RepoUtil.createTransientProp("case_Lbl_Editable").toString();
+        public static final String FUNCTION_LABEL = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "function_Lbl").toString();
+        public static final String SERIES_LABEL = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "series_Lbl").toString();
+        public static final String VOLUME_LABEL = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "volume_Lbl").toString();
+        public static final String CASE_LABEL = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "case_Lbl").toString();
+        public static final String CASE_LABEL_EDITABLE = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "case_Lbl_Editable").toString();
         //
-        public static final String FUNCTION_NODEREF = RepoUtil.createTransientProp("function").toString();
-        public static final String SERIES_NODEREF = RepoUtil.createTransientProp("series").toString();
-        public static final String VOLUME_NODEREF = RepoUtil.createTransientProp("volume").toString();
-        public static final String CASE_NODEREF = RepoUtil.createTransientProp("case").toString();
-        public static final QName TEMP_DOCUMENT_IS_DRAFT_OR_IMAP_OR_DVK_QNAME = RepoUtil.createTransientProp("isDraftOrImapOrDvk");
-        public static final QName TEMP_DOCUMENT_IS_INCOMING_INVOICE_QNAME = RepoUtil.createTransientProp("isIncomingInvoice");
-        public static final QName TEMP_DOCUMENT_IS_DVK_QNAME = RepoUtil.createTransientProp("isDvk");
-        public static final QName TEMP_DOCUMENT_IS_DRAFT_QNAME = RepoUtil.createTransientProp("isDraft");
-        public static final String TEMP_DOCUMENT_IS_DRAFT = TEMP_DOCUMENT_IS_DRAFT_QNAME.toString();
+        public static final String FUNCTION_NODEREF = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "function").toString();
+        public static final String SERIES_NODEREF = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "series").toString();
+        public static final String VOLUME_NODEREF = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "volume").toString();
+        public static final String CASE_NODEREF = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "case").toString();
+        public static final String TEMP_DOCUMENT_IS_DRAFT = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "isDraft").toString();
         public static final String TEMP_LOGGING_DISABLED_DOCUMENT_METADATA_CHANGED = "{temp}logging_disabled_docMetadataChanged";
-        public static final QName TEMP_DOCUMENT_DISABLE_UPDATE_INITIAL_ACCESS_RESTRICTION_PROPS = RepoUtil.createTransientProp("disableUpdateInitialAccessRestrictionProps");
-        public static final QName TEMP_DOCUMENT_ACCESS_RESTRICTION_PROPS_CHANGED = RepoUtil.createTransientProp("accessRestrictionPropsChanged");
     }
 
     String BEAN_NAME = "DocumentService";
@@ -82,6 +81,14 @@ public interface DocumentService {
 
     Node createPPImportDocument(QName documentTypeId, NodeRef parentRef, Map<QName, Serializable> properties);
 
+    /**
+     * Save new values for document properties to repository.
+     * 
+     * @param node document with new property values
+     * @return new Node representing document if node had reference to volumeNodeRef
+     */
+    Node updateDocument(Node node);
+
     void updateSearchableFiles(NodeRef document);
 
     void updateSearchableFiles(NodeRef document, Map<QName, Serializable> props);
@@ -113,12 +120,34 @@ public interface DocumentService {
      * @param nodeRef
      * @return
      */
-    @Deprecated
     Node createFollowUp(QName docType, NodeRef nodeRef);
+
+    /**
+     * @param volumeRef
+     * @return all documents that have been assigned under given volume
+     */
+    List<Document> getAllDocumentsByVolume(NodeRef volumeRef);
+
+    List<Document> getAllDocumentsByCase(NodeRef caseRef);
 
     List<Document> getAllDocumentFromDvk();
 
     int getAllDocumentFromDvkCount();
+
+    List<DocAssocInfo> getAssocInfos(Node document);
+
+    /**
+     * Deletes association between nodes
+     * 
+     * @param sourceNodeRef
+     * @param targetNodeRef
+     * @param assocQName if null, defaults to <code>DocumentCommonModel.Assocs.DOCUMENT_2_DOCUMENT</code>
+     */
+    void deleteAssoc(NodeRef sourceNodeRef, NodeRef targetNodeRef, QName assocQName);
+
+    void createAssoc(NodeRef sourceNodeRef, NodeRef targetNodeRef, QName assocQName);
+
+    DocAssocInfo getDocAssocInfo(AssociationRef assocRef, boolean isSourceAssoc);
 
     /**
      * Get list of incoming email.
@@ -139,8 +168,6 @@ public interface DocumentService {
     int getSentEmailsCount();
 
     void deleteDocument(NodeRef nodeRef);
-
-    void deleteDocument(NodeRef nodeRef, String comment);
 
     /**
      * Add callback to document creation phase, where default values for the properties could be created or overridden when creatable document has given
@@ -209,8 +236,6 @@ public interface DocumentService {
      */
     Node getVolumeByDocument(NodeRef nodeRef);
 
-    Node getVolumeByDocument(NodeRef docRef, Node caseNode);
-
     Node getCaseByDocument(NodeRef nodeRef);
 
     /**
@@ -224,9 +249,7 @@ public interface DocumentService {
      */
     DocumentParentNodesVO getAncestorNodesByDocument(NodeRef nodeRef);
 
-    boolean registerDocumentIfNotRegistered(NodeRef document, boolean logging);
-
-    void registerDocumentRelocating(Node docNode, Node previousVolume);
+    void registerDocumentIfNotRegistered(NodeRef document, boolean logging);
 
     /**
      * @param documentNode
@@ -299,12 +322,41 @@ public interface DocumentService {
     void changeTypeInMemory(Node node, QName newType);
 
     /**
+     * @param document
+     * @param user
+     * @return true when the user is the document's OWNER_ID property
+     */
+    boolean isDocumentOwner(NodeRef document, String user);
+
+    void setDocumentOwner(NodeRef document, String userName);
+
+    /**
+     * @param docNode
+     * @return true when docNode is registered.
+     */
+    boolean isRegistered(Node docNode);
+
+    /**
      * Fetches document objects for tasks
      * 
      * @param tasks
      * @return
      */
     List<TaskAndDocument> getTasksWithDocuments(List<Task> tasks);
+
+    /**
+     * Updates the status of the document ant it's compound workflows to stopped.
+     * 
+     * @param nodeRef
+     */
+    void stopDocumentPreceedingAndUpdateStatus(NodeRef nodeRef);
+
+    /**
+     * Updates the status of the document ant it's compound workflows to working.
+     * 
+     * @param nodeRef
+     */
+    void continueDocumentPreceedingAndUpdateStatus(NodeRef nodeRef);
 
     /**
      * Ends document.
@@ -329,31 +381,17 @@ public interface DocumentService {
 
     SignatureDigest prepareDocumentDigest(NodeRef document, String certHex) throws SignatureException;
 
-    SignatureChallenge prepareDocumentChallenge(NodeRef document, String phoneNo) throws SignatureException;
+    List<Document> getFavorites();
 
-    /**
-     * Returns a List with favorite documents, associated with favorite directory or with user directly(if parameter is null).
-     * 
-     * @param containerNodeRef
-     * @return
-     */
-    List<Document> getFavorites(NodeRef containerNodeRef);
-
-    /**
-     * Returns a pair where first boolean value indicates if given document is favorite for currently authenticated user. Second value contains source NodeRef of the association.
-     * 
-     * @param document document to check
-     * @return
-     */
-    NodeRef isFavorite(NodeRef document);
+    boolean isFavorite(NodeRef document);
 
     boolean isFavoriteAddable(NodeRef document);
 
     void addFavorite(NodeRef document);
 
-    boolean addFavorite(NodeRef docRef, String favDirName, boolean updateMenu);
+    void removeFavorite(NodeRef document);
 
-    void removeFavorite(NodeRef nodeRef);
+    List<Document> processExtendedSearchResults(List<Document> documents, Node filter);
 
     /**
      * @param base
@@ -362,8 +400,6 @@ public interface DocumentService {
     List<Document> getReplyOrFollowUpDocuments(NodeRef base);
 
     void updateParentNodesContainingDocsCount(NodeRef documentNodeRef, boolean documentAdded);
-
-    void updateParentDocumentRegNumbers(NodeRef docRef, String removedRegNumber, String addedRegNumber);
 
     /**
      * @param parentRef
@@ -375,7 +411,11 @@ public interface DocumentService {
 
     ContentData getSearchableFileContents(NodeRef document);
 
+    StringBuilder getChildNodesPropsForIndexing(NodeRef parentRef, StringBuilder sb);
+
     Map<QName, NodeRef> getDocumentParents(NodeRef documentRef);
+
+    ArrayList<Serializable> collectProperties(NodeRef nodeRef, List<ChildAssociationRef> childAssocs, QName... propNames);
 
     void setDocStatusFinished(final NodeRef docRef);
 
@@ -389,29 +429,22 @@ public interface DocumentService {
 
     boolean isIncomingInvoice(NodeRef nodeRef);
 
-    List<String> getFavoriteDirectoryNames();
+    /**
+     * Adds privileges to the users that<br>
+     * 1) are added to the list of {@link SeriesModel.Props#STRUCT_UNIT} of the document ancestor series<br>
+     * 2) have {@link SeriesDocManagerDynamicAuthority#SERIES_MANAGEABLE_PERMISSION} (directly, not trough group)
+     * 
+     * @param docRef
+     * @param docProps
+     * @param parentRef
+     * @return groups that have {@link SeriesDocManagerDynamicAuthority#SERIES_MANAGEABLE_PERMISSION}
+     */
+    Set<String> addPrivilegesBasedOnSeries(NodeRef docRef, Map<String, Object> docProps, NodeRef parentRef);
+
+    Pair<Set<String> /* users */, Set<String> /* groups */> getSeriesAuthorities(NodeRef seriesRef);
 
     List<Document> getIncomingEInvoicesForUser(String userFullName);
 
     int getUserDocumentFromIncomingInvoiceCount(String userFullName);
-
-    boolean isReplyOrFollowupDoc(final NodeRef docRef, List<AssociationRef> replyAssocs);
-
-    // FIXME DLSeadist - selle meetodi peaks eemaldama igalt poolt pärast DLSeadist valmimist kui staatilised dokumendid on konverditud dünaamilisteks
-    void throwIfNotDynamicDoc(Node docNode);
-
-    List<Document> getIncomingDocuments(NodeRef incomingNodeRef);
-
-    Pair<List<Document>, Boolean> searchAllDocumentsByParentNodeRef(NodeRef parentRef, int limit);
-
-    /**
-     * NB! In 3.11 this method implementation changes from repo fetching (accurate) to lucene search (should be accurate if indexes are healthy)
-     */
-    List<NodeRef> getAllDocumentRefsByParentRef(NodeRef parentRef);
-
-    /**
-     * NB! In 3.11 this method implementation changes from repo fetching (accurate) to lucene search (should be accurate if indexes are healthy)
-     */
-    List<Document> getAllDocumentsByParentNodeRef(NodeRef parentRef);
 
 }

@@ -91,8 +91,8 @@
       
    </bean>
    
-   <bean id="webClientConfigAdminInterpreter" class="org.alfresco.web.config.ConfigAdminInterpreter" parent="interpreterBase">    
-      <property name="repoXMLConfigService" ref="webClientConfigService"/>    
+   <bean id="webClientConfigAdminInterpreter" class="org.alfresco.web.config.ConfigAdminInterpreter" parent="interpreterBase">
+      <property name="repoXMLConfigService" ref="webClientConfigService"/>
    </bean>
    
    <bean id="webClientConfigAdminInterpreterHelp" class="org.alfresco.i18n.ResourceBundleBootstrapComponent"> 

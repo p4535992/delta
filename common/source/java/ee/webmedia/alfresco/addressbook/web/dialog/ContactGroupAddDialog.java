@@ -1,7 +1,5 @@
 package ee.webmedia.alfresco.addressbook.web.dialog;
 
-import static ee.webmedia.alfresco.common.web.BeanHelper.getAddressbookService;
-
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -15,21 +13,19 @@ import javax.faces.model.SelectItem;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.web.app.Application;
 import org.alfresco.web.bean.repository.Node;
-import org.alfresco.web.ui.common.component.PickerSearchParams;
 import org.alfresco.web.ui.common.component.UIGenericPicker;
 import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel.Types;
-import ee.webmedia.alfresco.addressbook.util.AddressbookUtil;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageDataWrapper;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UserUtil;
 
 public class ContactGroupAddDialog extends ContactGroupBaseDialog {
-    private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(ContactGroupAddDialog.class);
 
     private static final long serialVersionUID = 1L;
     public static final String PARAM_GROUP_NODEREF = "nodeRef";
@@ -67,7 +63,7 @@ public class ContactGroupAddDialog extends ContactGroupBaseDialog {
                 MessageUtil.addInfoMessage("save_success");
             }
         } catch (RuntimeException e) {
-            LOG.error("got error while saving", e); // no sysouts please
+            System.out.println(e);
             throw e;
         }
         reset();
@@ -80,12 +76,8 @@ public class ContactGroupAddDialog extends ContactGroupBaseDialog {
             for (UserDetails userDetails : usersForGroup) {
                 Node contact = getAddressbookService().getNode(new NodeRef(userDetails.getNodeRef()));
                 if (contact != null) {
-                    if (contact.getType().equals(AddressbookModel.Types.ORGANIZATION) && StringUtils.isBlank((String) contact.getProperties().get(AddressbookModel.Props.EMAIL))) {
+                    if (StringUtils.isBlank((String) contact.getProperties().get(AddressbookModel.Props.EMAIL))) {
                         MessageUtil.addInfoMessage("addressbook_contactgroup_add_contact_empty_email_error", userDetails.getName());
-                        validUsers = false;
-                    }
-                    if (contact.getType().equals(AddressbookModel.Types.ORGPERSON) || contact.getType().equals(AddressbookModel.Types.PRIV_PERSON)) {
-                        MessageUtil.addInfoMessage("addressbook_contactgroup_edit_contains_people_error2");
                         validUsers = false;
                     }
                 }
@@ -111,9 +103,11 @@ public class ContactGroupAddDialog extends ContactGroupBaseDialog {
         setCurrentNode(getAddressbookService().getNode(new NodeRef(groupNodeRef)));
     }
 
-    public SelectItem[] pickerCallback(PickerSearchParams params) {
-        List<Node> nodes = getAddressbookService().search(params.getSearchString(), params.getLimit());
-        return AddressbookUtil.transformAddressbookNodesToSelectItems(nodes);
+    public SelectItem[] pickerCallback(@SuppressWarnings("unused") int filterIndex, final String contains) {
+        final String privPersonLabel = Application.getMessage(FacesContext.getCurrentInstance(), "addressbook_private_person").toLowerCase();
+        final String organizationLabel = Application.getMessage(FacesContext.getCurrentInstance(), "addressbook_org").toLowerCase();
+        List<Node> nodes = getAddressbookService().search(contains);
+        return AddressbookMainViewDialog.transformNodesToSelectItems(nodes, privPersonLabel, organizationLabel);
     }
 
     public void addSelectedUsers(ActionEvent event) {

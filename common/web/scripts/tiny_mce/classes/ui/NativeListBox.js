@@ -1,15 +1,15 @@
 /**
  * NativeListBox.js
  *
- * Copyright, Moxiecode Systems AB
+ * Copyright 2009, Moxiecode Systems AB
  * Released under LGPL License.
  *
- * License: http://www.tinymce.com/license
- * Contributing: http://www.tinymce.com/contributing
+ * License: http://tinymce.moxiecode.com/license
+ * Contributing: http://tinymce.moxiecode.com/contributing
  */
 
 (function(tinymce) {
-	var DOM = tinymce.DOM, Event = tinymce.dom.Event, each = tinymce.each, Dispatcher = tinymce.util.Dispatcher, undef;
+	var DOM = tinymce.DOM, Event = tinymce.dom.Event, each = tinymce.each, Dispatcher = tinymce.util.Dispatcher;
 
 	/**
 	 * This class is used to create list boxes/select list. This one will generate
@@ -41,7 +41,6 @@
 		 */
 		setDisabled : function(s) {
 			DOM.get(this.id).disabled = s;
-			this.setAriaProperty('disabled', s);
 		},
 
 		/**
@@ -65,11 +64,11 @@
 		select : function(va) {
 			var t = this, fv, f;
 
-			if (va == undef)
+			if (va == undefined)
 				return t.selectByIndex(-1);
 
 			// Is string or number make function selector
-			if (va && typeof(va)=="function")
+			if (va && va.call)
 				f = va;
 			else {
 				f = function(v) {
@@ -157,8 +156,8 @@
 				h += DOM.createHTML('option', {value : it.value}, it.title);
 			});
 
-			h = DOM.createHTML('select', {id : t.id, 'class' : 'mceNativeListBox', 'aria-labelledby': t.id + '_aria'}, h);
-			h += DOM.createHTML('span', {id : t.id + '_aria', 'style': 'display: none'}, t.settings.title);
+			h = DOM.createHTML('select', {id : t.id, 'class' : 'mceNativeListBox'}, h);
+
 			return h;
 		},
 
@@ -169,7 +168,7 @@
 		 * @method postRender
 		 */
 		postRender : function() {
-			var t = this, ch, changeListenerAdded = true;
+			var t = this, ch;
 
 			t.rendered = true;
 
@@ -191,20 +190,12 @@
 				var bf;
 
 				Event.remove(t.id, 'change', ch);
-				changeListenerAdded = false;
 
 				bf = Event.add(t.id, 'blur', function() {
-					if (changeListenerAdded) return;
-					changeListenerAdded = true;
 					Event.add(t.id, 'change', onChange);
 					Event.remove(t.id, 'blur', bf);
 				});
 
-				//prevent default left and right keys on chrome - so that the keyboard navigation is used.
-				if (tinymce.isWebKit && (e.keyCode==37 ||e.keyCode==39)) {
-					return Event.prevent(e);
-				}
-				
 				if (e.keyCode == 13 || e.keyCode == 32) {
 					onChange(e);
 					return Event.cancel(e);

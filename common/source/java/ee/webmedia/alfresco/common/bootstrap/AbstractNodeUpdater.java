@@ -38,17 +38,12 @@ import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.InitializingBean;
-import org.springframework.util.Assert;
 
 import com.csvreader.CsvReader;
 import com.csvreader.CsvWriter;
 
 import ee.webmedia.alfresco.common.service.GeneralService;
-import ee.webmedia.alfresco.utils.ProgressTracker;
 
-/**
- * @author Alar Kvell
- */
 public abstract class AbstractNodeUpdater extends AbstractModuleComponent implements InitializingBean {
     protected final Log log = LogFactory.getLog(getClass());
 
@@ -171,53 +166,25 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
         executeUpdater();
     }
 
-    protected boolean usePreviousState() {
-        return true;
-    }
-
-    protected boolean usePreviousInputState() {
-        return usePreviousState();
-    }
-
-    protected boolean usePreviousCompletedState() {
-        return usePreviousState();
-    }
-
     protected void executeUpdater() throws Exception {
-        try {
-            log.info("Starting node updater");
-            nodesFile = new File(inputFolder, getNodesCsvFileName());
-            nodes = null;
-            if (usePreviousInputState()) {
-                nodes = loadNodesFromFile(nodesFile, false);
-            }
+        log.info("Starting node updater");
+        nodesFile = new File(inputFolder, getNodesCsvFileName());
+        nodes = loadNodesFromFile(nodesFile, false);
+        if (nodes == null) {
+            nodes = loadNodesFromRepo();
             if (nodes == null) {
-                nodes = loadNodesFromRepo();
-                if (nodes == null) {
-                    log.info("Cancelling node update");
-                    return;
-                }
-                writeNodesToFile(nodesFile, nodes);
+                log.info("Cancelling node update");
+                return;
             }
-            completedNodesFile = new File(inputFolder, getCompletedNodesCsvFileName());
-            completedNodes = null;
-            if (usePreviousCompletedState()) {
-                completedNodes = loadNodesFromFile(completedNodesFile, true);
-            } else {
-                if (completedNodesFile.exists()) {
-                    log.info("Completed nodes file exists, deleting: " + completedNodesFile.getAbsolutePath());
-                    Assert.isTrue(completedNodesFile.delete());
-                }
-            }
-            if (completedNodes != null) {
-                nodes.removeAll(completedNodes);
-                log.info("Removed " + completedNodes.size() + " completed nodes from nodes list, " + nodes.size() + " nodes remained");
-            } else {
-                completedNodes = new HashSet<NodeRef>();
-            }
-        } catch (Exception e) {
-            stopFlag.set(true);
-            throw e;
+            writeNodesToFile(nodesFile, nodes);
+        }
+        completedNodesFile = new File(inputFolder, getCompletedNodesCsvFileName());
+        completedNodes = loadNodesFromFile(completedNodesFile, true);
+        if (completedNodes != null) {
+            nodes.removeAll(completedNodes);
+            log.info("Removed " + completedNodes.size() + " completed nodes from nodes list, " + nodes.size() + " nodes remained");
+        } else {
+            completedNodes = new HashSet<NodeRef>();
         }
         log.info("Starting to update " + nodes.size() + " nodes");
         if (nodes.size() > 0) {
@@ -231,23 +198,23 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
         log.info("Completed nodes updater");
     }
 
-    final protected String getBaseFileName() {
-        return getName();
+    protected String getBaseFileName() {
+        return getClass().getSimpleName();
     }
 
-    private String getNodesCsvFileName() {
+    protected String getNodesCsvFileName() {
         return getBaseFileName() + ".csv";
     }
 
-    private String getCompletedNodesCsvFileName() {
+    protected String getCompletedNodesCsvFileName() {
         return getBaseFileName() + "Completed.csv";
     }
 
-    private String getRollbackNodesCsvFileName() {
+    protected String getRollbackNodesCsvFileName() {
         return getBaseFileName() + "Rollback-" + dateTimeFormat.format(new Date()) + ".csv";
     }
 
-    private Set<NodeRef> loadNodesFromFile(File file, boolean readHeaders) throws Exception {
+    protected Set<NodeRef> loadNodesFromFile(File file, boolean readHeaders) throws Exception {
         if (!file.exists()) {
             log.info("Skipping loading nodes, file does not exist: " + file.getAbsolutePath());
             return null;
@@ -272,21 +239,13 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
         return loadedNodes;
     }
 
-    private void writeNodesToFile(File file, Set<NodeRef> nodesToWrite) throws Exception {
+    protected void writeNodesToFile(File file, Set<NodeRef> nodesToWrite) throws Exception {
         log.info("Writing " + nodesToWrite.size() + " nodes to file " + file.getAbsolutePath());
-        List<String[]> records = new ArrayList<String[]>();
-        for (NodeRef nodeRef : nodesToWrite) {
-            records.add(new String[] { nodeRef.toString() });
-        }
-        writeRecordsToCsvFile(file, records);
-    }
-
-    public static void writeRecordsToCsvFile(File file, List<String[]> records) {
         try {
             CsvWriter writer = new CsvWriter(new FileOutputStream(file), CSV_SEPARATOR, CSV_CHARSET);
             try {
-                for (String[] record : records) {
-                    writer.writeRecord(record);
+                for (NodeRef nodeRef : nodesToWrite) {
+                    writer.writeRecord(new String[] { nodeRef.toString() });
                 }
             } finally {
                 writer.close();
@@ -331,8 +290,8 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
 
         public UpdateNodesBatchProgress() {
             origin = nodes;
+            completedSize = completedNodes.size();
             processName = "Nodes updating";
-            progress = new ProgressTracker(completedNodes.size() + origin.size(), completedNodes.size());
         }
 
         @Override
@@ -341,8 +300,8 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
         }
     }
 
-    private void updateNodesBatch(final List<NodeRef> batchList) throws Exception {
-        final List<String[]> batchInfos = new ArrayList<String[]>(batchList.size());
+    protected void updateNodesBatch(final List<NodeRef> batchList) throws Exception {
+        final List<String[]> batchInfos = new ArrayList<String[]>(batchSize);
         for (NodeRef nodeRef : batchList) {
             if (!nodeService.exists(nodeRef)) {
                 batchInfos.add(new String[] { nodeRef.toString(), "nodeDoesNotExist" });
@@ -389,21 +348,25 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
         return new String[] { "nodeRef" };
     }
 
-    @Override
-    public boolean isRequiresNewTransaction() {
-        return false;
-    }
-
     private abstract class BatchProgress<E> {
         Collection<E> origin;
         List<E> batchList;
         @SuppressWarnings("hiding")
         int batchSize = AbstractNodeUpdater.this.batchSize;
+        int totalSize;
+        int i;
+        int completedSize;
+        int thisRunCompletedSize;
+        long thisRunStartTime;
+        long startTime;
         String processName;
         File stopFile;
-        ProgressTracker progress;
 
         private void init() {
+            totalSize = completedSize + origin.size();
+            thisRunStartTime = System.currentTimeMillis();
+            startTime = thisRunStartTime;
+            i = 0;
             batchList = new ArrayList<E>(batchSize);
             stopFile = new File(inputFolder, "stop.file");
         }
@@ -432,16 +395,35 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
 
         private void step() {
             executeInTransaction();
-            String info = progress.step(batchList.size());
-            if (info != null) {
-                info = processName + ": " + info;
-                int sleepTime2 = getSleepTime();
-                if (sleepTime2 > 0) {
-                    info += ", sleep n * " + sleepTime2 + " ms";
-                }
-                log.info(info);
-            }
+            completedSize += batchList.size();
+            thisRunCompletedSize += batchList.size();
             batchList = new ArrayList<E>(batchSize);
+            long endTime = System.currentTimeMillis();
+            double completedPercent = (completedSize) * 100L / ((double) totalSize);
+            double lastDocsPerSec = (i) * 1000L / ((double) (endTime - startTime));
+            long thisRunTotalTime = endTime - thisRunStartTime;
+            double totalDocsPerSec = (thisRunCompletedSize) * 1000L / ((double) thisRunTotalTime);
+            long remainingSize = ((long) totalSize) - ((long) completedSize);
+            long divisor = (thisRunCompletedSize) * 60000L;
+            int etaMinutes = ((int) (remainingSize * thisRunTotalTime / divisor)) + 1;
+            int etaHours = 0;
+            if (etaMinutes > 59) {
+                etaHours = etaMinutes / 60;
+                etaMinutes = etaMinutes % 60;
+            }
+            String eta = etaMinutes + "m";
+            if (etaHours > 0) {
+                eta = etaHours + "h " + eta;
+            }
+            i = 0;
+            String info = "%s: %6.2f%% completed - %7d of %7d, %5.1f docs per second (last), %5.1f (total), ETA %s";
+            int sleepTime2 = getSleepTime();
+            if (sleepTime2 > 0) {
+                info += ", sleep n * " + sleepTime2 + " ms";
+            }
+            log.info(String.format(info, processName,
+                    completedPercent, completedSize, totalSize, lastDocsPerSec, totalDocsPerSec, eta));
+            startTime = endTime;
         }
 
         public void run() {
@@ -451,7 +433,8 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
             }
             for (E e : origin) {
                 batchList.add(e);
-                if (batchList.size() >= batchSize) {
+                i++;
+                if (i >= batchSize) {
                     step();
                     if (isStopRequested()) {
                         return;
@@ -538,10 +521,6 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
         helper.setMaxRetries(3);
         helper.setTransactionService(serviceRegistry.getTransactionService());
         return helper;
-    }
-
-    public int getBatchSize() {
-        return batchSize;
     }
 
     public void setBatchSize(int batchSize) {

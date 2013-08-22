@@ -19,7 +19,10 @@ public enum Parameters {
     /** period in minutes */
     DVK_RECEIVE_DOC_SEND_STATUSES("dvkReceiveDocSendStatusesInterval"),
     DVK_ORGANIZATION_NAME("dvkOrganizationName"), // kui tühi, kasutatakse xtee confist
-    SYNC_USERS_GROUPS_STRUCT_UNITS_TIME("syncUsersGroupsStructUnitsTime"),
+    EMPLOYEE_REG_RECEIVE_STRUCT_UNITS_TIME("employeeRegReceiveStructUnitsTime"),
+    /** period that is used to update users registry */
+    EMPLOYEE_REG_RECEIVE_USERS_PERIOD("employeeRegReceiveUsersPeriod"),
+    EMPLOYEE_REG_ORGANISATION_ID("employeeRegOrganisationId"),
     EXTERNAL_REVIEW_AUTOMATIC_FOLDER("externalReviewAutomaticFolder"),
     // Default sender email value when sending out a document
     DOC_SENDER_EMAIL("docSenderEmail"),
@@ -61,7 +64,6 @@ public enum Parameters {
     TASK_DUE_DATE_NOTIFICATION_DAYS("taskDueDateNotificationDays"),
     VOLUME_DISPOSITION_DATE_NOTIFICATION_DAYS("volumeDispositionDateNotificationDays"),
     ACCESS_RESTRICTION_END_DATE_NOTIFICATION_DAYS("accessRestrictionEndDateNotificationDays"),
-    CONTRACT_DUE_DATE_NOTIFICATION_DAYS("contractDueDateNotificationDays"),
     ASSIGN_RESPONSIBILITY_INSTRUCTION("assignResponsibilityInstruction"),
     DAYS_FOR_SUBSTITUTION_TASKS_CALC("daysForSubstitutionTasksCalc"),
     DOC_PROP_LICENCE_DOC_NAME("docPropLicenceDocName"),
@@ -69,13 +71,10 @@ public enum Parameters {
     DOC_PROP_ERRAND_ORDER_ABROAD_DOC_NAME("docPropErrandOrderAbroadDocName"),
     DOC_PROP_ERRAND_APPLICATION_DOMESTIC_DOC_NAME("docPropErrandApplicationDomesticDocName"),
     DOC_PROP_MANAGEMENTS_ORDER_DOC_NAME("docPropManagementsOrderDocName"),
-    DOC_PROP_SUPERVISION_REPORT_DOC_NAME("docPropSupervisionReportDocName"),
     DOC_PROP_VACATION_ORDER_DOC_NAME("docPropVacationOrderDocName"),
     DOC_PROP_VACATION_ORDER_LEGAL_BASIS_NAME("docPropVacationOrderLegalBasisName"),
     DOC_PROP_CHANCELLORS_ORDER_SIGNER_NAME("docPropChancellorsOrderSignerName"),
-    MAX_MODAL_SEARCH_RESULT_ROWS("maxModalSearchResultRows"),
-    MAX_SEARCH_RESULT_ROWS("maxSearchResultRows"),
-    MAX_SEARCH_SHOW_ALL_RESULT_ROWS("maxSearchShowAllResultRows"),
+    SEARCH_RESULTS_LIMIT("searchResultsLimit"),
     HEADER_TEXT("headerText"),
     FOOTER_TEXT("footerText"),
     VOLUME_AUTOMATIC_CLOSING_TIME("volumeAutomaticClosingTime"),
@@ -95,8 +94,6 @@ public enum Parameters {
     REVIEW_WORKFLOW_COST_MANAGER_WORKFLOW_NUMBER("reviewWorkflowCostManagerWorkflowNumber"),
     INVOICE_ENTRY_DATE_ONLY_IN_CURRENT_YEAR("invoiceEntryDateOnlyInCurrentYear"),
 
-    EXTERNAL_SESSION_EXPIRATION_TIME("externalSessionExpirationTime"),
-
     // dimension parameters
     DIMENSION_CODE_INVOICE_FUNDS_CENTERS("dimensionCodeInvoiceFundsCenters"),
     DIMENSION_CODE_INVOICE_COST_CENTERS("dimensionCodeInvoiceCostCenters"),
@@ -113,10 +110,7 @@ public enum Parameters {
     DIMENSION_CODE_INVOICE_HOUSE_BANK_CODES("dimensionCodeInvoiceHouseBankCodes"),
 
     DIMENSION_DELETION_PERIOD("dimensionDeletionPeriod"),
-    DIMENSION_DELETION_TIME("dimensionDeletionTime"),
-
-    WORKING_DOCUMENTS_ADDRESS("workingDocumentsAddress"),
-    QUICK_SEARCH_WORDS_COUNT("quickSearchWordsCount");
+    DIMENSION_DELETION_TIME("dimensionDeletionTime");
 
     private String xPath;
     private String parameterName;

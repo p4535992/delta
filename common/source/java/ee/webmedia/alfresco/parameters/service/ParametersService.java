@@ -20,7 +20,7 @@ public interface ParametersService {
     String BEAN_NAME = "ParametersService";
 
     public interface ParameterChangedCallback {
-        void doWithParameter(Serializable paramValue);
+        void doWithParameter(Serializable serializable);
     }
 
     Parameter<?> getParameter(Parameters parameter);
@@ -68,7 +68,5 @@ public interface ParametersService {
      * @return
      */
     Map<String, Set<Parameters>> getSwappedStringParameters(List<Parameters> collection);
-
-    boolean isJobsEnabled();
 
 }

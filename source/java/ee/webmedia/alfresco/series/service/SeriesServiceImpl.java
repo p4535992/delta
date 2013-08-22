@@ -2,20 +2,20 @@ package ee.webmedia.alfresco.series.service;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.Date;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
+import org.alfresco.i18n.I18NUtil;
 import org.alfresco.service.cmr.dictionary.DictionaryService;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
+import org.alfresco.service.cmr.repository.CopyService;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
-import org.alfresco.service.cmr.security.PermissionService;
+import org.alfresco.service.cmr.search.SearchService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.service.namespace.RegexQNamePattern;
 import org.alfresco.web.bean.repository.Node;
@@ -27,23 +27,12 @@ import org.springframework.beans.factory.BeanFactoryAware;
 
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
 import ee.webmedia.alfresco.common.service.GeneralService;
-import ee.webmedia.alfresco.docadmin.web.ListReorderHelper;
-import ee.webmedia.alfresco.docadmin.web.NodeOrderModifier;
-import ee.webmedia.alfresco.docconfig.generator.systematic.AccessRestrictionGenerator;
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
-import ee.webmedia.alfresco.document.model.DocumentCommonModel.Privileges;
-import ee.webmedia.alfresco.functions.model.FunctionsModel;
 import ee.webmedia.alfresco.functions.service.FunctionsService;
-import ee.webmedia.alfresco.log.PropDiffHelper;
-import ee.webmedia.alfresco.log.model.LogEntry;
-import ee.webmedia.alfresco.log.model.LogObject;
-import ee.webmedia.alfresco.log.service.LogService;
 import ee.webmedia.alfresco.series.model.Series;
 import ee.webmedia.alfresco.series.model.SeriesModel;
-import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.RepoUtil;
-import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.beanmapper.BeanPropertyMapper;
 import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
@@ -55,32 +44,27 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
 
     private DictionaryService dictionaryService;
     private NodeService nodeService;
-    private PermissionService permissionService;
     private GeneralService generalService;
-    private UserService userService;
-    private DocumentLogService docLogService;
-    private LogService appLogService;
+    private DocumentLogService logService;
+    private CopyService copyService;
     private BeanFactory beanFactory;
     /** NB! not injected - use getter to obtain instance of volumeService */
     private VolumeService _volumeService;
     /** NB! not injected - use getter to obtain instance of functionsService */
     private FunctionsService _functionsService;
+    private SearchService searchService;
 
     @Override
-    public List<NodeRef> getAllSeriesRefsByFunction(NodeRef functionRef) {
-        List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(functionRef, RegexQNamePattern.MATCH_ALL, SeriesModel.Associations.SERIES);
-        List<NodeRef> seriesRefs = new ArrayList<NodeRef>(childAssocs.size());
-        for (ChildAssociationRef series : childAssocs) {
-            seriesRefs.add(series.getChildRef());
-        }
-        return seriesRefs;
+    public List<ChildAssociationRef> getAllSeriesAssocsByFunction(NodeRef functionRef) {
+        return nodeService.getChildAssocs(functionRef, RegexQNamePattern.MATCH_ALL, SeriesModel.Associations.SERIES);
     }
 
     @Override
     public List<Series> getAllSeriesByFunction(NodeRef functionNodeRef) {
-        List<NodeRef> seriesRefs = getAllSeriesRefsByFunction(functionNodeRef);
-        List<Series> seriesOfFunction = new ArrayList<Series>(seriesRefs.size());
-        for (NodeRef seriesNodeRef : seriesRefs) {
+        List<ChildAssociationRef> seriesAssocs = getAllSeriesAssocsByFunction(functionNodeRef);
+        List<Series> seriesOfFunction = new ArrayList<Series>(seriesAssocs.size());
+        for (ChildAssociationRef series : seriesAssocs) {
+            NodeRef seriesNodeRef = series.getChildRef();
             seriesOfFunction.add(getSeriesByNoderef(seriesNodeRef, functionNodeRef));
         }
         Collections.sort(seriesOfFunction);
@@ -88,11 +72,11 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
     }
 
     @Override
-    public List<Series> getAllSeriesByFunction(NodeRef functionNodeRef, DocListUnitStatus status, Set<String> docTypeIds) {
+    public List<Series> getAllSeriesByFunction(NodeRef functionNodeRef, DocListUnitStatus status, QName docTypeId) {
         List<Series> series = getAllSeriesByFunction(functionNodeRef);
         for (Iterator<Series> i = series.iterator(); i.hasNext();) {
             Series s = i.next();
-            if (!status.getValueName().equals(s.getStatus()) || !s.getDocType().containsAll(docTypeIds)) {
+            if (!status.getValueName().equals(s.getStatus()) || (docTypeId != null && !s.getDocType().contains(docTypeId))) {
                 i.remove();
             }
         }
@@ -137,87 +121,60 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
 
     private void saveOrUpdate(Series series, boolean performReorder) {
         Map<String, Object> stringQNameProperties = series.getNode().getProperties();
-        Integer previousOrder = null;
+        final NodeRef seriesRef = series.getNode().getNodeRef();
         if (series.getNode() instanceof TransientNode) { // save
             NodeRef seriesNodeRef = nodeService.createNode(series.getFunctionNodeRef(),
                     SeriesModel.Associations.SERIES, SeriesModel.Associations.SERIES, SeriesModel.Types.SERIES,
                     RepoUtil.toQNameProperties(stringQNameProperties, false, true)).getChildRef();
-            setSeriesDefaultPermissionsOnCreate(seriesNodeRef);
             series.setNode(generalService.fetchNode(seriesNodeRef));
-
-            Map<String, Object> props = series.getNode().getProperties();
-            appLogService.addLogEntry(LogEntry.create(LogObject.SERIES, userService, seriesNodeRef, "applog_space_add",
-                    props.get(SeriesModel.Props.SERIES_IDENTIFIER.toString()), props.get(SeriesModel.Props.TITLE.toString())));
+            logService.addSeriesLog(seriesNodeRef, I18NUtil.getMessage("series_log_status_created"));
         } else { // update
-            final NodeRef seriesRef = series.getNode().getNodeRef();
-            previousOrder = (Integer) nodeService.getProperty(seriesRef, SeriesModel.Props.ORDER);
-
-            Map<QName, Serializable> repoProps = nodeService.getProperties(seriesRef);
-            Map<QName, Serializable> newProps = RepoUtil.toQNameProperties(stringQNameProperties);
-            String propDiff = new PropDiffHelper()
-                    .label(SeriesModel.Props.STATUS, "series_status")
-                    .label(SeriesModel.Props.ORDER, "series_order")
-                    .label(SeriesModel.Props.SERIES_IDENTIFIER, "series_seriesIdentifier")
-                    .label(SeriesModel.Props.TITLE, "series_title")
-                    .label(SeriesModel.Props.REGISTER, "series_register")
-                    .label(SeriesModel.Props.INDIVIDUALIZING_NUMBERS, "series_individualizingNumbers")
-                    .label(SeriesModel.Props.STRUCT_UNIT, "series_structUnit")
-                    .label(SeriesModel.Props.TYPE, "series_type")
-                    .label(SeriesModel.Props.DOC_TYPE, "series_docType")
-                    .label(SeriesModel.Props.RETENTION_PERIOD, "series_retentionPeriod")
-                    .label(SeriesModel.Props.DOC_NUMBER_PATTERN, "series_docNumberPattern")
-                    .label(SeriesModel.Props.NEW_NUMBER_FOR_EVERY_DOC, "series_newNumberForEveryDoc")
-                    .label(SeriesModel.Props.VALID_FROM_DATE, "series_validFromDate")
-                    .label(SeriesModel.Props.VALID_TO_DATE, "series_validToDate")
-                    .label(SeriesModel.Props.VOL_TYPE, "series_volType")
-                    .label(SeriesModel.Props.VOL_REGISTER, "series_volRegister")
-                    .label(SeriesModel.Props.VOL_NUMBER_PATTERN, "series_volNumberPattern")
-                    .diff(repoProps, newProps);
-
-            if (propDiff != null) {
-                appLogService.addLogEntry(LogEntry.create(LogObject.SERIES, userService, seriesRef, "applog_space_edit",
-                        series.getSeriesIdentifier(), series.getTitle(), propDiff));
-            }
-
-            PropDiffHelper labelProvider = new PropDiffHelper().watchAccessRights();
-            for (QName accessRestrictionProp : AccessRestrictionGenerator.ACCESS_RESTRICTION_PROPS) {
-                QName docComProp = QName.createQName(DocumentCommonModel.DOCCOM_URI, accessRestrictionProp.getLocalName());
-                String accessReasonDiff = new PropDiffHelper().label(docComProp, labelProvider.getPropLabels().get(accessRestrictionProp)).diff(repoProps, newProps);
-                if (accessReasonDiff != null) {
-                    appLogService.addLogEntry(LogEntry.create(LogObject.SERIES, userService, seriesRef, "series_log_status_accessRestrictionChanged", accessReasonDiff));
-                }
-            }
+            final String previousAccessrestriction = (String) nodeService.getProperty(seriesRef, DocumentCommonModel.Props.ACCESS_RESTRICTION);
             generalService.setPropertiesIgnoringSystem(seriesRef, stringQNameProperties);
+            logService.addSeriesLog(seriesRef, I18NUtil.getMessage("series_log_status_changed"));
+            final String newAccessrestriction = (String) stringQNameProperties.get(DocumentCommonModel.Props.ACCESS_RESTRICTION.toString());
+            if (!StringUtils.equals(previousAccessrestriction, newAccessrestriction)) {
+                logService.addSeriesLog(seriesRef, I18NUtil.getMessage("series_log_status_accessRestrictionChanged"));
+            }
         }
         if (performReorder) {
-            reorderSeries(series, previousOrder);
+            reorderSeries(series);
         }
     }
 
-    private void reorderSeries(Series series, Integer previousSeriesOrder) {
+    private void reorderSeries(Series series) {
+        final int order = series.getOrder();
         final List<Series> allSeriesByFunction = getAllSeriesByFunction(series.getFunctionNodeRef());
-        // get Nodes of the Series
-        List<Node> allSeriesNodesByFunction = new ArrayList<Node>(allSeriesByFunction.size());
-        for (Series ser : allSeriesByFunction) {
-            allSeriesNodesByFunction.add(ser.getNode());
-        }
+        Collections.sort(allSeriesByFunction, new Comparator<Series>() {
 
-        // set previous order for each element
-        NodeOrderModifier modifier = new NodeOrderModifier(SeriesModel.Props.ORDER);
-        modifier.markBaseState(allSeriesNodesByFunction);
-        for (Node node : allSeriesNodesByFunction) {
-            if (node.getNodeRef().equals(series.getNode().getNodeRef())) {
-                modifier.setPreviousOrder(node, previousSeriesOrder);
+            @Override
+            public int compare(Series s1, Series s2) {
+                final int order1 = getSeriesOrder(s1);
+                final int order2 = getSeriesOrder(s2);
+                if (order1 == order2) {
+                    return 0;
+                }
+                return order1 < order2 ? -1 : 1;
+            }
+
+        });
+
+        for (Series otherSeries : allSeriesByFunction) {
+            if (series.getNode().getNodeRef().equals(otherSeries.getNode().getNodeRef())) {
+                continue;
+            }
+            final int order2 = (Integer) otherSeries.getNode().getProperties().get(SeriesModel.Props.ORDER.toString());
+            if (order2 == order) {
+                otherSeries.getNode().getProperties().put(SeriesModel.Props.ORDER.toString(), order2 + 1);
+                // reorderSeries is recursively called on all following series in the list by saveOrUpdate
+                saveOrUpdate(otherSeries);
+                break;
             }
         }
+    }
 
-        // reorder
-        ListReorderHelper.reorder(allSeriesNodesByFunction, modifier);
-
-        // save new order
-        for (Series series2 : allSeriesByFunction) {
-            saveOrUpdate(series2, false);
-        }
+    private Integer getSeriesOrder(Series series) {
+        return (Integer) series.getNode().getProperties().get(SeriesModel.Props.ORDER.toString());
     }
 
     @Override
@@ -234,32 +191,7 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
         final String initialSeriesIdentifier = functionMark + "-";
         series.setSeriesIdentifier(initialSeriesIdentifier);
         series.setInitialSeriesIdentifier(initialSeriesIdentifier);
-        series.setValidFromDate(new Date());
         return series;
-    }
-
-    @Override
-    public void setSeriesDefaultPermissionsOnCreate(NodeRef seriesRef) {
-        addPermissions(seriesRef, UserService.AUTH_DOCUMENT_MANAGERS_GROUP, Arrays.asList(Privileges.VIEW_DOCUMENT_META_DATA));
-
-        List<String> archivistsPermissionsToAdd = new ArrayList<String>();
-        archivistsPermissionsToAdd.add(Privileges.VIEW_DOCUMENT_META_DATA);
-        boolean caseVolumeEnabled = getVolumeService().isCaseVolumeEnabled();
-        if (caseVolumeEnabled) {
-            archivistsPermissionsToAdd.add(Privileges.VIEW_CASE_FILE);
-        }
-        addPermissions(seriesRef, UserService.AUTH_ARCHIVIST_GROUP, archivistsPermissionsToAdd);
-
-        List<String> supervisionsPermissionsToAdd = new ArrayList<String>();
-        supervisionsPermissionsToAdd.add(Privileges.VIEW_DOCUMENT_META_DATA);
-        supervisionsPermissionsToAdd.add(Privileges.VIEW_DOCUMENT_FILES);
-        addPermissions(seriesRef, UserService.AUTH_SUPERVISION_GROUP, supervisionsPermissionsToAdd);
-    }
-
-    private void addPermissions(NodeRef seriesRef, String authority, List<String> permissionsToAdd) {
-        for (String permission : permissionsToAdd) {
-            permissionService.setPermission(seriesRef, authority, permission, true);
-        }
     }
 
     @Override
@@ -291,26 +223,8 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
         }
         props.put(SeriesModel.Props.STATUS.toString(), DocListUnitStatus.CLOSED.getValueName());
         saveOrUpdate(series);
+        logService.addSeriesLog(seriesRef, I18NUtil.getMessage("series_log_status_closed"));
         return true;
-    }
-
-    private boolean isInClosedFunction(Series series) {
-        Serializable functionStatus = nodeService.getProperty(series.getFunctionNodeRef(), FunctionsModel.Props.STATUS);
-        return DocListUnitStatus.CLOSED.getValueName().equals(functionStatus);
-    }
-
-    @Override
-    public void openSeries(Series series) {
-        final Node seriesNode = series.getNode();
-        if (!isClosed(seriesNode)) {
-            return;
-        }
-        if (isInClosedFunction(series)) {
-            throw new UnableToPerformException("series_open_error_inClosedFunction");
-        }
-        Map<String, Object> props = seriesNode.getProperties();
-        props.put(SeriesModel.Props.STATUS.toString(), DocListUnitStatus.OPEN.getValueName());
-        saveOrUpdate(series);
     }
 
     @Override
@@ -370,24 +284,16 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
         this.nodeService = nodeService;
     }
 
-    public void setPermissionService(PermissionService permissionService) {
-        this.permissionService = permissionService;
-    }
-
     public void setGeneralService(GeneralService generalService) {
         this.generalService = generalService;
     }
 
-    public void setUserService(UserService userService) {
-        this.userService = userService;
+    public void setLogService(DocumentLogService logService) {
+        this.logService = logService;
     }
 
-    public void setDocLogService(DocumentLogService docLogService) {
-        this.docLogService = docLogService;
-    }
-
-    public void setAppLogService(LogService appLogService) {
-        this.appLogService = appLogService;
+    public void setSearchService(SearchService searchService) {
+        this.searchService = searchService;
     }
 
     @Override

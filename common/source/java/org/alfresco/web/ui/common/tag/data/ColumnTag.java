@@ -34,13 +34,12 @@ import org.alfresco.web.ui.common.tag.BaseComponentTag;
  */
 public class ColumnTag extends BaseComponentTag
 {
-    public static final String COMPONENT_TYPE = "org.alfresco.faces.RichListColumn";
    /**
     * @see javax.faces.webapp.UIComponentTag#getComponentType()
     */
    public String getComponentType()
    {
-      return COMPONENT_TYPE;
+      return "org.alfresco.faces.RichListColumn";
    }
 
    /**

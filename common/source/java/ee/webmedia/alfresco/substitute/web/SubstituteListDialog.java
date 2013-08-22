@@ -1,9 +1,5 @@
 package ee.webmedia.alfresco.substitute.web;
 
-import static ee.webmedia.alfresco.common.web.BeanHelper.getParametersService;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getSubstituteService;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
-
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -19,8 +15,11 @@ import javax.faces.event.ActionEvent;
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.service.namespace.QName;
+import org.alfresco.service.cmr.security.PersonService;
+import org.alfresco.util.GUID;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
+import org.alfresco.web.bean.repository.Repository;
+import org.apache.commons.collections.Transformer;
 import org.apache.commons.collections.comparators.NullComparator;
 import org.apache.commons.collections.comparators.TransformingComparator;
 import org.apache.commons.lang.StringUtils;
@@ -28,14 +27,15 @@ import org.apache.commons.lang.time.DateUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.util.Assert;
+import org.springframework.web.jsf.FacesContextUtils;
 
-import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.parameters.model.Parameters;
+import ee.webmedia.alfresco.parameters.service.ParametersService;
 import ee.webmedia.alfresco.substitute.model.Substitute;
+import ee.webmedia.alfresco.substitute.service.SubstituteService;
+import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
-import ee.webmedia.alfresco.utils.Transformer;
-import ee.webmedia.alfresco.utils.UserUtil;
 
 /**
  * Dialog for substitutes list.
@@ -45,18 +45,18 @@ import ee.webmedia.alfresco.utils.UserUtil;
 public class SubstituteListDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;
     private static final Log log = LogFactory.getLog(SubstituteListDialog.class);
-    private static final TransformingComparator SUBSTITUTE_START_DATE_COMPARATOR = new TransformingComparator(new Transformer<Substitute, Date>() {
-        @Override
-        public Date tr(Substitute component) {
-            return component.getSubstitutionStartDate();
-        }
-    }, new NullComparator());
+
+    private transient SubstituteService substituteService;
+    private transient PersonService personService;
+    private transient ParametersService parametersService;
+    private transient UserService userService;
 
     private NodeRef userNodeRef;
     private Map<String, Substitute> originalSubstitutes = new HashMap<String, Substitute>();
     private List<Substitute> substitutes;
     private Map<String, Substitute> addedSubstitutes;
     private Map<String, String> emailAddresses;
+    private NotificationSender notificationSender = new EmptyNotificationSender();
 
     @Override
     public void init(Map<String, String> params) {
@@ -72,12 +72,17 @@ public class SubstituteListDialog extends BaseDialogBean {
     @SuppressWarnings("unchecked")
     public void refreshData() {
         substitutes = getSubstituteService().getSubstitutes(userNodeRef);
-        Collections.sort(substitutes, SUBSTITUTE_START_DATE_COMPARATOR);
+        Collections.sort(substitutes, new TransformingComparator(new Transformer() {
+            @Override
+            public Object transform(Object input) {
+                return ((Substitute) input).getSubstitutionStartDate();
+            }
+        }, new NullComparator()));
         originalSubstitutes = new HashMap<String, Substitute>();
         emailAddresses = new HashMap<String, String>();
         for (Substitute substitute : substitutes) {
             originalSubstitutes.put(substitute.getNodeRef().toString(), new Substitute(substitute));
-            NodeRef personRef = BeanHelper.getUserService().getPerson(substitute.getSubstituteId());
+            NodeRef personRef = getPersonService().getPerson(substitute.getSubstituteId());
             addEmailAddress(substitute, personRef);
         }
         addedSubstitutes = new HashMap<String, Substitute>();
@@ -107,13 +112,13 @@ public class SubstituteListDialog extends BaseDialogBean {
         if (log.isDebugEnabled()) {
             log.debug("Saving substitutes changes");
         }
-        save();
+        save(context);
         isFinished = false;
         return null;
     }
 
-    public void save() {
-        if (validate()) {
+    public void save(FacesContext context) {
+        if (validate(context)) {
             List<Substitute> savedSubstitutes = new ArrayList<Substitute>();
             addSubstitutes(savedSubstitutes);
             updateSubstitutes(savedSubstitutes);
@@ -126,50 +131,50 @@ public class SubstituteListDialog extends BaseDialogBean {
         }
     }
 
-    private boolean validate() {
+    private boolean validate(FacesContext context) {
         boolean isValid = true;
         for (Substitute substitute : substitutes) {
-            if (substitute.equals(originalSubstitutes.get(substitute.getNodeRef().toString())) && substitute.isReadOnly()) {
-                continue; // Only validate substitutes that user can change or is changed
+            if (substitute.isReadOnly()) {
+                continue; // Only validate substitutes that user can change
             }
             // check mandatory fields
             if (StringUtils.isEmpty(substitute.getSubstituteName())) {
                 isValid = false;
-                addRequiredFieldValidationError("substitute_name");
+                addRequiredFieldValidationError(context, "substitute_name");
             }
             final Date substitutionStartDate = substitute.getSubstitutionStartDate();
             if (substitutionStartDate == null) {
                 isValid = false;
-                addRequiredFieldValidationError("substitute_startdate");
+                addRequiredFieldValidationError(context, "substitute_startdate");
             }
             final Date substitutionEndDate = substitute.getSubstitutionEndDate();
             if (substitutionEndDate == null) {
                 isValid = false;
-                addRequiredFieldValidationError("substitute_enddate");
+                addRequiredFieldValidationError(context, "substitute_enddate");
             }
 
             if (isValid && substitutionStartDate.after(substitutionEndDate)) {
                 isValid = false;
-                MessageUtil.addErrorMessage("substitute_start_after_end");
+                MessageUtil.addErrorMessage(context, "substitute_start_after_end");
             }
 
             if (isValid && substitutionEndDate.before(DateUtils.truncate(new Date(), Calendar.DATE))) {
                 isValid = false;
-                MessageUtil.addErrorMessage("substitute_end_before_now");
+                MessageUtil.addErrorMessage(context, "substitute_end_before_now");
             }
 
-            if (isValid &&
+            if (isValid && 
                     !getSubstituteService().findSubstitutionDutiesInPeriod(userNodeRef, substitutionStartDate, substitutionEndDate).isEmpty()) {
                 isValid = false;
-                MessageUtil.addErrorMessage("substitute_substitution_while_substituting");
+                MessageUtil.addErrorMessage(context, "substitute_substitution_while_substituting");
             }
-            substitute.setValid(isValid);
+
         }
         return isValid;
     }
 
-    private static void addRequiredFieldValidationError(String field) {
-        MessageUtil.addErrorMessage("common_propertysheet_validator_mandatory", MessageUtil.getMessage(field));
+    private static void addRequiredFieldValidationError(FacesContext context, String field) {
+        MessageUtil.addErrorMessage(context, "common_propertysheet_validator_mandatory", MessageUtil.getMessage(context, field));
     }
 
     @Override
@@ -210,7 +215,7 @@ public class SubstituteListDialog extends BaseDialogBean {
 
     private void sendNotificationEmails(List<Substitute> savedSubstitutes) {
         for (Substitute savedSubstitute : savedSubstitutes) {
-            BeanHelper.getNotificationService().notifySubstitutionEvent(savedSubstitute);
+            notificationSender.sendNotification(savedSubstitute);
         }
     }
 
@@ -246,19 +251,20 @@ public class SubstituteListDialog extends BaseDialogBean {
         Assert.hasText(userName, "User name not provided");
         Assert.notNull(substitute, "Substitute not provided");
 
-        NodeRef personNodeRef = BeanHelper.getUserService().getPerson(userName);
-        if (personNodeRef == null) {
-            return;
-        }
+        NodeRef personNodeRef = getPersonService().getPerson(userName);
+        String firstName = (String) getNodeService().getProperty(personNodeRef, ContentModel.PROP_FIRSTNAME);
+        String lastName = (String) getNodeService().getProperty(personNodeRef, ContentModel.PROP_LASTNAME);
 
-        Map<QName, Serializable> personProps = getNodeService().getProperties(personNodeRef);
         substitute.setSubstituteId(userName);
-        substitute.setSubstituteName(UserUtil.getPersonFullName1(personProps));
+        substitute.setSubstituteName(firstName + " " + lastName);
         addEmailAddress(substitute, personNodeRef);
     }
 
     public void addNewValue(ActionEvent event) {
-        Substitute newSubstitute = Substitute.newInstance();
+        Substitute newSubstitute = new Substitute();
+        newSubstitute.setValid(false);
+        // set the temporary random unique ID to be used in the UI form
+        newSubstitute.setNodeRef(new NodeRef(newSubstitute.hashCode() + "", event.hashCode() + "", GUID.generate()));
         substitutes.add(newSubstitute);
         addedSubstitutes.put(newSubstitute.getNodeRef().toString(), newSubstitute);
     }
@@ -270,7 +276,23 @@ public class SubstituteListDialog extends BaseDialogBean {
         return null;
     }
 
+    public static interface NotificationSender extends Serializable {
+        void sendNotification(Substitute substitute);
+    }
+
     // default implementation that doesn't send any notification
+    public static class EmptyNotificationSender implements NotificationSender {
+        private static final long serialVersionUID = 1L;
+
+        @Override
+        public void sendNotification(Substitute substitute) {
+            // to nothing
+        }
+    }
+
+    public void setNotificationSender(NotificationSender notificationSender) {
+        this.notificationSender = notificationSender;
+    }
 
     // used from JSP
     public String getEmailSubject() {
@@ -280,5 +302,36 @@ public class SubstituteListDialog extends BaseDialogBean {
     // used from JSP
     public Map<String, String> getEmailAddress() {
         return emailAddresses;
+    }
+
+    protected SubstituteService getSubstituteService() {
+        if (substituteService == null) {
+            substituteService = (SubstituteService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
+                    .getBean(SubstituteService.BEAN_NAME);
+        }
+        return substituteService;
+    }
+
+    protected PersonService getPersonService() {
+        if (personService == null) {
+            personService = Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getPersonService();
+        }
+        return personService;
+    }
+
+    protected ParametersService getParametersService() {
+        if (parametersService == null) {
+            parametersService = (ParametersService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
+                    .getBean(ParametersService.BEAN_NAME);
+        }
+        return parametersService;
+    }
+
+    protected UserService getUserService() {
+        if (userService == null) {
+            userService = (UserService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
+                    .getBean(UserService.BEAN_NAME);
+        }
+        return userService;
     }
 }

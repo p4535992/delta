@@ -32,25 +32,23 @@ public interface TaskSearchModel {
     interface Props {
         QName NAME = QName.createQName(URI, "name");
         QName STARTED_DATE_TIME_BEGIN = QName.createQName(URI, "startedDateTimeBegin");
-        QName STARTED_DATE_TIME_END = QName.createQName(URI, "startedDateTimeBegin_EndDate");
+        QName STARTED_DATE_TIME_END = QName.createQName(URI, "startedDateTimeEnd");
         QName TASK_TYPE = QName.createQName(URI, "taskType");
-        QName DOC_TYPE = QName.createQName(URI, "docType");
         QName OWNER_NAME = QName.createQName(URI, "ownerName");
         QName CREATOR_NAME = QName.createQName(URI, "creatorName");
         QName ORGANIZATION_NAME = QName.createQName(URI, "organizationName");
         QName JOB_TITLE = QName.createQName(URI, "jobTitle");
         QName DUE_DATE_TIME_BEGIN = QName.createQName(URI, "dueDateTimeBegin");
-        QName DUE_DATE_TIME_END = QName.createQName(URI, "dueDateTimeBegin_EndDate");
+        QName DUE_DATE_TIME_END = QName.createQName(URI, "dueDateTimeEnd");
         QName ONLY_RESPONSIBLE = QName.createQName(URI, "onlyResponsible");
         QName COMPLETED_DATE_TIME_BEGIN = QName.createQName(URI, "completedDateTimeBegin");
-        QName COMPLETED_DATE_TIME_END = QName.createQName(URI, "completedDateTimeBegin_EndDate");
+        QName COMPLETED_DATE_TIME_END = QName.createQName(URI, "completedDateTimeEnd");
         QName COMMENT = QName.createQName(URI, "comment");
-        QName OUTCOME = QName.createQName(URI, "outcome");
         QName RESOLUTION = QName.createQName(URI, "resolution");
         QName STATUS = QName.createQName(URI, "status");
         QName COMPLETED_OVERDUE = QName.createQName(URI, "completedOverdue");
         QName STOPPED_DATE_TIME_BEGIN = QName.createQName(URI, "stoppedDateTimeBegin");
-        QName STOPPED_DATE_TIME_END = QName.createQName(URI, "stoppedDateTimeBegin_EndDate");
+        QName STOPPED_DATE_TIME_END = QName.createQName(URI, "stoppedDateTimeEnd");
     }
 
 }

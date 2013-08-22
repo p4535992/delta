@@ -1,6 +1,5 @@
 package ee.webmedia.alfresco.dvk.service;
 
-import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.REG_NUMBER;
 import static ee.webmedia.alfresco.utils.XmlUtil.findChildByQName;
 
 import java.io.ByteArrayInputStream;
@@ -44,11 +43,10 @@ import org.w3c.dom.NodeList;
 
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
+import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.classificator.enums.StorageType;
 import ee.webmedia.alfresco.classificator.enums.TransmittalMode;
 import ee.webmedia.alfresco.classificator.enums.VolumeType;
-import ee.webmedia.alfresco.docconfig.bootstrap.SystematicDocumentType;
-import ee.webmedia.alfresco.docdynamic.service.DocumentDynamicService;
 import ee.webmedia.alfresco.document.einvoice.model.Transaction;
 import ee.webmedia.alfresco.document.einvoice.service.EInvoiceService;
 import ee.webmedia.alfresco.document.file.model.File;
@@ -59,6 +57,7 @@ import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
 import ee.webmedia.alfresco.document.sendout.service.SendOutService;
 import ee.webmedia.alfresco.document.service.DocumentService;
+import ee.webmedia.alfresco.document.type.service.DocumentTypeService;
 import ee.webmedia.alfresco.dvk.model.DvkModel;
 import ee.webmedia.alfresco.dvk.model.DvkReceivedLetterDocument;
 import ee.webmedia.alfresco.dvk.model.DvkSendWorkflowDocuments;
@@ -68,6 +67,7 @@ import ee.webmedia.alfresco.notification.model.NotificationModel;
 import ee.webmedia.alfresco.notification.service.NotificationService;
 import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.series.model.Series;
+import ee.webmedia.alfresco.series.service.SeriesService;
 import ee.webmedia.alfresco.utils.FilenameUtil;
 import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.volume.service.VolumeService;
@@ -97,7 +97,8 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
     private DocumentService documentService;
     private DocumentLogService documentLogService;
     private DocumentSearchService documentSearchService;
-    private DocumentDynamicService documentDynamicService;
+    private DocumentTypeService documentTypeService;
+    private SeriesService seriesService;
     private VolumeService volumeService;
     private ExternalReviewWorkflowImporterService importerService;
     private ExporterService exporterService;
@@ -169,17 +170,16 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
 
     @Override
     protected NodeRef createDocumentNode(DvkReceivedLetterDocument rd, NodeRef dvkIncomingFolder, String nvlDocumentTitle) {
-        final NodeRef docRef = documentDynamicService.createNewDocument(
-                SystematicDocumentType.INCOMING_LETTER.getId(),
-                dvkIncomingFolder).getFirst().getNodeRef();
-
         final Map<QName, Serializable> props = new HashMap<QName, Serializable>();
         fillPropsFromDvkReceivedDocument(rd, props);
         props.put(DocumentCommonModel.Props.DOC_NAME, nvlDocumentTitle);
+        props.put(DocumentCommonModel.Props.DOC_STATUS, DocumentStatus.WORKING.getValueName());
         props.put(DocumentCommonModel.Props.STORAGE_TYPE, StorageType.DIGITAL.getValueName());
-        props.put(DocumentSpecificModel.Props.TRANSMITTAL_MODE, TransmittalMode.DVK.getValueName());
-        nodeService.addProperties(docRef, props);
+        props.put(DocumentSpecificModel.Props.TRANSMITTAL_MODE, TransmittalMode.DVK);
 
+        QName documentType = documentTypeService.getIncomingLetterType();
+        final Node document = documentService.createDocument(documentType, dvkIncomingFolder, props);
+        final NodeRef docRef = document.getNodeRef();
         documentLogService.addDocumentLog(docRef, I18NUtil.getMessage("document_log_status_imported"
                 , I18NUtil.getMessage("document_log_creator_dvk")), I18NUtil.getMessage("document_log_creator_dvk"));
         return docRef;
@@ -246,18 +246,10 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
             List<String> statusErrorNotificationContents = checkDvkDocumentVersionAndStatus(dvkTasks, dvkId, existingDocumentNodeRef, originalDvkIdsAndStatuses);
             try {
                 Map<QName, Task> notifications = new HashMap<QName, Task>();
-                String oldRegNumber = null;
-                if (existingDocumentNodeRef != null) {
-                    oldRegNumber = (String) nodeService.getProperty(existingDocumentNodeRef, REG_NUMBER);
-                }
                 NodeRef importedDoc = importerService.importWorkflowDocument(XmlObject.Factory.parse(docNode).newReader(), location, existingDocumentNodeRef,
                         dataFileList, dvkId, notifications);
                 if (existingDocumentNodeRef == null && importedDoc != null) {
                     documentService.updateParentNodesContainingDocsCount(importedDoc, true);
-                }
-                if (importedDoc != null) {
-                    String regNumber = (String) nodeService.getProperty(importedDoc, REG_NUMBER);
-                    documentService.updateParentDocumentRegNumbers(importedDoc, oldRegNumber, regNumber);
                 }
                 if (existingDocumentNodeRef == null && !locationWithCheck.getSecond()) {
                     // new document was imported to wrong (default) location
@@ -461,7 +453,7 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
                                 getPropByName(taskNode, WorkflowCommonModel.Props.OUTCOME),
                                 DefaultTypeConverter.INSTANCE.convert(Date.class, getPropByName(taskNode, WorkflowCommonModel.Props.COMPLETED_DATE_TIME)),
                                 dvkId);
-                        return originalTask.getNodeRef();
+                        return originalTask.getNode().getNodeRef();
                     } else {
                         throw new ExternalReviewException(ExceptionType.TASK_OVERWRITE_WRONG_STATUS, originalTask, dvkId, attemptedStatus);
                     }
@@ -642,7 +634,7 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
                 dvkDocVolume.setTitle(senderName);
                 dvkDocVolume.setStatus(DocListUnitStatus.OPEN.getValueName());
                 dvkDocVolume.setVolumeMark(dvkWorkflowSeriesMark + "-" + senderName);
-                dvkDocVolume.setVolumeTypeEnum(VolumeType.ANNUAL_FILE);
+                dvkDocVolume.setVolumeType(VolumeType.YEAR_BASED.getValueName());
                 volumeService.saveOrUpdate(dvkDocVolume, false);
             }
 
@@ -658,15 +650,15 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
         Task task = obj;
         List<Node> dvkCapableOrgs = addressbookService.getDvkCapableOrgs();
         if (isDvkCapable(dvkCapableOrgs, task.getInstitutionCode())) {
-            ExcludingExporterCrawlerParameters exportParameters = getTaskExportParameters(task.getNodeRef());
+            ExcludingExporterCrawlerParameters exportParameters = getTaskExportParameters(task.getNode().getNodeRef());
             org.w3c.dom.Node taskDomNode = exportDom(exportParameters);
             DvkSendWorkflowDocuments sd = new DvkSendWorkflowDocumentsImpl();
             sd.setIsDocumentNode(false);
             sd.setRecipientsRegNr(task.getCreatorInstitutionCode());
             sd.setRecipientDocNode(taskDomNode);
             String dvkId = sendExternalReviewWorkflowData(new ArrayList<ContentToSend>(), sd);
-            nodeService.setProperty(task.getNodeRef(), WorkflowSpecificModel.Props.SENT_DVK_ID, dvkId);
-            nodeService.setProperty(task.getNodeRef(), WorkflowSpecificModel.Props.SEND_STATUS, SendStatus.SENT);
+            nodeService.setProperty(task.getNode().getNodeRef(), WorkflowSpecificModel.Props.SENT_DVK_ID, dvkId);
+            nodeService.setProperty(task.getNode().getNodeRef(), WorkflowSpecificModel.Props.SEND_STATUS, SendStatus.SENT);
         }
     }
 
@@ -700,16 +692,17 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
         List<CompoundWorkflow> compoundWorkflows = workflowService.getCompoundWorkflows(documentNodeRef);
         List<String> recipients = getAllRecipients(documentNodeRef, compoundWorkflowRef, compoundWorkflows, additionalRecipients);
 
+        Map<QName, Serializable> docProps = nodeService.getProperties(documentNodeRef);
         @SuppressWarnings("unchecked")
-        List<NodeRef> fileNodeRefs = (List<NodeRef>) CollectionUtils.collect(fileService.getAllFilesExcludingDigidocSubitems(documentNodeRef), new Transformer() {
+        List<String> fileNodeRefs = (List<String>) CollectionUtils.collect(fileService.getAllFiles(documentNodeRef), new Transformer() {
             @Override
-            public Object transform(Object file) {
-                return ((File) file).getNode().getNodeRef();
+            public Object transform(Object compWorkflow) {
+                return ((File) compWorkflow).getNode().getNodeRef().toString();
             }
         });
 
         boolean zipIt = false; // fileNodeRefs.size() > 0;
-        Collection<ContentToSend> content = sendOutService.prepareContents(documentNodeRef, fileNodeRefs, zipIt);
+        Collection<ContentToSend> content = sendOutService.prepareContents(documentNodeRef, fileNodeRefs, zipIt, sendOutService.buildZipFileName(docProps));
 
         DvkSendWorkflowDocuments sd = new DvkSendWorkflowDocumentsImpl();
         // collect compoundWorkflows and workflows to send for each taskCapable and dvkCapable recipient
@@ -720,11 +713,11 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
         Map<String, Set<NodeRef>> sendableWorkflowNodeRefs = new HashMap();
 
         for (CompoundWorkflow compoundWorkflow : compoundWorkflows) {
-            NodeRef compoundWorkflowNodeRef = compoundWorkflow.getNodeRef();
+            NodeRef compoundWorkflowNodeRef = compoundWorkflow.getNode().getNodeRef();
             // all workflows before this workflow plus this workflow
             List<NodeRef> traversedWorkflows = new ArrayList<NodeRef>();
             for (Workflow wf : compoundWorkflow.getWorkflows()) {
-                NodeRef wfNodeRef = wf.getNodeRef();
+                NodeRef wfNodeRef = wf.getNode().getNodeRef();
                 traversedWorkflows.add(wfNodeRef);
                 if (wf.isType(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_WORKFLOW)) {
                     for (Task task : wf.getTasks()) {
@@ -754,7 +747,7 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
 
             @Override
             public Object transform(Object compWorkflow) {
-                return ((CompoundWorkflow) compWorkflow).getNodeRef();
+                return ((CompoundWorkflow) compWorkflow).getNode().getNodeRef();
             }
 
         });
@@ -795,7 +788,7 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
         List<NodeRef> workflows = new ArrayList<NodeRef>();
         for (CompoundWorkflow compoundWorkflow : compoundWorkflows) {
             for (Workflow workflow : compoundWorkflow.getWorkflows()) {
-                workflows.add(workflow.getNodeRef());
+                workflows.add(workflow.getNode().getNodeRef());
             }
         }
         return workflows;
@@ -808,7 +801,7 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
         List<String> recipients = new ArrayList<String>();
         String dvkCapabilityErrorMessage = null;
         for (CompoundWorkflow compoundWorkflow : compoundWorkflows) {
-            if (compoundWorkflowRef == null || compoundWorkflowRef.equals(compoundWorkflow.getNodeRef())) {
+            if (compoundWorkflowRef == null || compoundWorkflowRef.equals(compoundWorkflow.getNode().getNodeRef())) {
                 for (Workflow workflow : compoundWorkflow.getWorkflows()) {
                     if (workflow.isType(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_WORKFLOW)) {
                         for (Task task : workflow.getTasks()) {
@@ -875,8 +868,7 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
                         WorkflowSpecificModel.Props.SEND_DATE_TIME,
                         WorkflowSpecificModel.Props.SEND_STATUS }));
         parameters.getExcludedAssocTypes().addAll(
-                Arrays.asList(new QName[] { /* DocumentCommonModel.Assocs.DOCUMENT_LOG */
-                        // TODO send log messages separately, if needed
+                Arrays.asList(new QName[] { DocumentCommonModel.Assocs.DOCUMENT_LOG,
                         DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP,
                         DocumentCommonModel.Assocs.DOCUMENT_REPLY,
                         DocumentCommonModel.Assocs.DOCUMENT_2_DOCUMENT }));
@@ -913,8 +905,12 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
         this.documentLogService = documentLogService;
     }
 
-    public void setDocumentDynamicService(DocumentDynamicService documentDynamicService) {
-        this.documentDynamicService = documentDynamicService;
+    public void setDocumentTypeService(DocumentTypeService documentTypeService) {
+        this.documentTypeService = documentTypeService;
+    }
+
+    public void setSeriesService(SeriesService seriesService) {
+        this.seriesService = seriesService;
     }
 
     public void setVolumeService(VolumeService volumeService) {

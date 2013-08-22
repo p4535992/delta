@@ -69,41 +69,9 @@
             <aspect>wfs:commonWorkflow</aspect>
          </mandatory-aspects>
       </type>
-      
-      <type name="wfs:orderAssignmentWorkflow"><!-- always parallel tasks -->
-         <parent>wfc:workflow</parent>
-         <properties>
-            <property name="wfs:category">
-               <type>d:text</type>
-               <mandatory enforced="true">true</mandatory>
-            </property>
-         </properties>         
-         <mandatory-aspects>
-            <aspect>wfs:commonWorkflow</aspect>
-         </mandatory-aspects>
-      </type>      
 
       <type name="wfs:docRegistrationWorkflow"><!-- does not have any tasks, so sequential/parallel does not matter -->
          <parent>wfc:workflow</parent>
-      </type>
-      
-      <type name="wfs:confirmationWorkflow"><!-- always sequential tasks -->
-         <parent>wfc:workflow</parent>
-         <overrides>
-            <property name="wfc:parallelTasks">
-               <default>false</default>
-            </property>
-         </overrides>         
-         <mandatory-aspects>
-            <aspect>wfs:commonWorkflow</aspect>
-         </mandatory-aspects>
-      </type>
-      
-      <type name="wfs:dueDateExtensionWorkflow"><!-- always parallel tasks -->
-         <parent>wfc:workflow</parent>
-         <mandatory-aspects>
-            <aspect>wfs:commonWorkflow</aspect>
-         </mandatory-aspects>
       </type>
 
       <!-- ========================== TASKS ========================== -->
@@ -119,6 +87,7 @@
          <parent>wfc:task</parent>
          <mandatory-aspects>
             <aspect>wfs:commonTask</aspect>
+            <aspect>wfs:file</aspect>
          </mandatory-aspects>
       </type>
 
@@ -126,7 +95,6 @@
          <parent>wfc:task</parent>
          <mandatory-aspects>
             <aspect>wfs:commonTask</aspect>
-            <aspect>wfs:fileVersions</aspect>            
          </mandatory-aspects>
       </type>
       
@@ -150,44 +118,6 @@
          <mandatory-aspects>
             <aspect>wfs:commonTask</aspect>
             <aspect>wfs:resolution</aspect>
-            <aspect>wfs:taskDueDateExtensionContainer</aspect>
-         </mandatory-aspects>
-      </type>
-
-      <type name="wfs:orderAssignmentTask"><!-- some orderAssignmentTask-s have aspect wfs:responsible, see specification -->
-         <parent>wfc:task</parent>
-         <properties>
-            <property name="wfs:sendOrderAssignmentCompletedEmail">
-               <type>d:boolean</type>
-            </property>
-         </properties>         
-         <mandatory-aspects>
-            <aspect>wfs:commonTask</aspect>
-            <aspect>wfs:resolution</aspect>
-            <aspect>wfs:taskDueDateExtensionContainer</aspect>
-         </mandatory-aspects>
-      </type>
-      
-      <type name="wfs:confirmationTask">
-         <parent>wfc:task</parent>
-         <mandatory-aspects>
-            <aspect>wfs:commonTask</aspect>
-            <aspect>wfs:resolution</aspect>
-         </mandatory-aspects>
-      </type>  
-      
-      <type name="wfs:dueDateExtensionTask">
-         <parent>wfc:task</parent>
-         <properties>
-            <property name="wfs:proposedDueDate">
-               <type>d:date</type>
-            </property>
-            <property name="wfs:confirmedDueDate">
-               <type>d:date</type>
-            </property>            
-         </properties>         
-         <mandatory-aspects>
-            <aspect>wfs:commonTask</aspect>
          </mandatory-aspects>
       </type>
 
@@ -214,12 +144,6 @@
                <type>d:boolean</type>
                <default>false</default>
             </property>
-            <property name="wfs:creatorId">
-               <type>d:text</type>
-            </property>
-            <property name="wfs:creatorEmail">
-               <type>d:text</type>
-            </property>  
          </properties>
          <mandatory-aspects>
             <aspect>wfs:dueDate</aspect>
@@ -255,12 +179,6 @@
          <properties>
             <property name="wfs:dueDate">
                <type>d:date</type>
-            </property>
-            <property name="wfs:dueDateDays">
-               <type>d:int</type>
-            </property>
-            <property name="wfs:isDueDateDaysWorkingDays">
-               <type>d:boolean</type>
             </property>
          </properties>
       </aspect>
@@ -306,16 +224,15 @@
          </properties>
       </aspect>
 
-      <!-- XXX Deprecated: This aspect is not used in new tasks any more -->
-      <aspect name="wfs:file">   
-          <properties>   
-             <property name="wfs:file">    
-                <type>d:content</type>  
-             </property>    
-          </properties>  
+      <aspect name="wfs:file">
+         <properties>
+            <property name="wfs:file">
+               <type>d:content</type>
+            </property>
+         </properties>
       </aspect>
 
-      <!-- some assignmentTasks and orderAssignmentTasks have aspect wfs:responsible, see specification -->
+      <!-- some assignmentTask-s have aspect wfs:responsible, see specification -->
       <aspect name="wfs:responsible">
          <properties>
             <property name="wfs:active">
@@ -328,43 +245,6 @@
 
       <!-- gets added to all tasks which are saved under document compound workflow -->
       <aspect name="wfs:searchable"></aspect>
-      
-      <aspect name="wfs:taskDueDateExtensionContainer">      
-         <associations>
-            <!-- DEPRECATED: do not create new assocs of that type; taskDueDateExtension info should be saved in delta_task_due_date_extension_assoc table only. -->
-            <association name="wfs:taskDueDateExtension">
-               <source>
-                  <mandatory>false</mandatory>
-                  <many>true</many>
-               </source>
-               <target>
-                  <class>wfs:dueDateExtensionTask</class>
-                  <mandatory>false</mandatory>
-                  <many>true</many>
-               </target>
-            </association>
-            <!-- DEPRECATED: do not create new assocs of that type; taskDueDateHistory info should be saved in delta_task_due_date_history table only. -->
-            <child-association name="wfs:taskDueDateExtensionHistory">
-               <source>
-                  <mandatory>false</mandatory>
-                  <many>true</many>
-               </source>
-               <target>
-                  <class>wfc:dueDateHistory</class>
-                  <mandatory>false</mandatory>
-                  <many>true</many>
-               </target>
-            </child-association>           
-         </associations>
-      </aspect> 
-      
-     <aspect name="wfs:fileVersions">
-         <properties>
-            <property name="wfs:fileVersions">
-               <type>d:text</type>
-            </property>
-         </properties>
-      </aspect>
       
    </aspects>
 

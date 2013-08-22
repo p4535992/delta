@@ -2,7 +2,6 @@ package ee.webmedia.alfresco.utils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -13,12 +12,10 @@ import javax.faces.model.SelectItem;
 
 import org.alfresco.web.data.IDataContainer;
 import org.alfresco.web.data.QuickSort;
-import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.web.util.HtmlUtils;
 
 import ee.webmedia.alfresco.app.AppConstants;
-import ee.webmedia.alfresco.common.web.BeanHelper;
 
 public class WebUtil {
     /**
@@ -85,9 +82,6 @@ public class WebUtil {
 
         // Escape text surrounding links and weave text back together
         String[] parts = text.split(HTML_A_REGEX);
-        if (parts.length == 0) {
-            return text;
-        }
         StringBuffer b = new StringBuffer();
         final int linkCount = links.size();
         for (int i = 0; i < parts.length; i++) {
@@ -100,33 +94,8 @@ public class WebUtil {
         return b.toString();
     }
 
-    public static String getValuesAsJsArrayString(Collection<String> suggesterValues) {
-        final StringBuilder sb = new StringBuilder("[");
-        int i = 0;
-        for (String value : suggesterValues) {
-            final String escapedValue = StringEscapeUtils.escapeJavaScript(value);
-            sb.append("\"" + escapedValue + "\"");
-            if (i != suggesterValues.size() - 1) {
-                sb.append(", ");
-            }
-            i++;
-        }
-        return sb.append("]").toString();
-    }
-
-    public static String removeHtmlComments(String input) {
-        // For example, MS Word HTML files contain comments like <!--[if gte mso 9]><xml>...
-        // And this kind of HTML cannot be rendered to browser inside our page HTML,
-        // because it breaks Internet Explorer (but not Firefox) - IE stops page rendering entirely at the point of this comment
-        return StringUtils.defaultString(input).replaceAll("(?s)<!--.*?-->", "");
-    }
-
     public static void navigateTo(String navigationOutcome) {
         navigateTo(navigationOutcome, null);
-    }
-
-    public static void navigateWithCancel() {
-        navigateTo(BeanHelper.getDialogManager().cancel());
     }
 
     public static void navigateTo(String navigationOutcome, FacesContext context) {
@@ -135,5 +104,4 @@ public class WebUtil {
         }
         context.getApplication().getNavigationHandler().handleNavigation(context, null, navigationOutcome);
     }
-
 }

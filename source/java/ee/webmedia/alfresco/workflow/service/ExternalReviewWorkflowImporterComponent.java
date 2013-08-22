@@ -42,7 +42,6 @@ import ee.webmedia.alfresco.dvk.service.ExternalReviewException;
 import ee.webmedia.alfresco.dvk.service.ExternalReviewException.ExceptionType;
 import ee.webmedia.alfresco.notification.model.NotificationModel;
 import ee.webmedia.alfresco.user.service.UserService;
-import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.UserUtil;
 import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
@@ -57,7 +56,6 @@ public class ExternalReviewWorkflowImporterComponent extends ImporterComponent i
 
     private DocumentService documentService;
     private WorkflowService workflowService;
-    private WorkflowDbService workflowDbService;
     private ClassificatorService classificatorService;
     private UserService userService;
     private MimetypeService mimetypeService;
@@ -121,7 +119,7 @@ public class ExternalReviewWorkflowImporterComponent extends ImporterComponent i
                     for (Task task : workflow.getTasks()) {
                         // compound workflow is created by other institution, delete it
                         if (task.getInstitutionCode().equalsIgnoreCase(currentInstitutionCode)) {
-                            compoundWorkflowsToRemove.add(compoundWorkflow.getNodeRef());
+                            compoundWorkflowsToRemove.add(compoundWorkflow.getNode().getNodeRef());
                         }
                     }
                 }
@@ -133,7 +131,7 @@ public class ExternalReviewWorkflowImporterComponent extends ImporterComponent i
             }
         }
         // remove all files
-        List<File> files = fileService.getAllFilesExcludingDigidocSubitems(existingDocumentRef);
+        List<File> files = fileService.getAllFiles(existingDocumentRef);
         for (File file : files) {
             if (nodeService.exists(file.getNodeRef())) {
                 nodeService.deleteNode(file.getNodeRef());
@@ -147,7 +145,7 @@ public class ExternalReviewWorkflowImporterComponent extends ImporterComponent i
             for (Workflow workflow : compoundWorkflow.getWorkflows()) {
                 for (Task task : workflow.getTasks()) {
                     if (task.isType(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK)) {
-                        Map<QName, Serializable> taskOriginalProps = nodeService.getProperties(task.getNodeRef());
+                        Map<QName, Serializable> taskOriginalProps = nodeService.getProperties(task.getNode().getNodeRef());
                         Map<QName, Serializable> taskNewProps = new HashMap<QName, Serializable>();
                         if (!taskOriginalProps.containsKey(WorkflowSpecificModel.Props.SENT_DVK_ID)) {
                             taskNewProps.put(WorkflowSpecificModel.Props.SENT_DVK_ID, null);
@@ -183,10 +181,8 @@ public class ExternalReviewWorkflowImporterComponent extends ImporterComponent i
                         }
                         if (taskNewProps.size() > 0) {
                             nodeService.addProperties(task.getNode().getNodeRef(), taskNewProps);
-                            task.getNode().getProperties().putAll(RepoUtil.toStringProperties(taskNewProps));
                         }
                     }
-                    workflowDbService.createTaskEntry(task);
                 }
             }
         }
@@ -310,9 +306,7 @@ public class ExternalReviewWorkflowImporterComponent extends ImporterComponent i
                     if (objVal instanceof String) {
                         importContent(nodeRef, property.getKey(), (String) objVal, filename);
                     } else if (objVal instanceof Collection) {
-                        @SuppressWarnings("unchecked")
-                        Collection<String> importContents = (Collection<String>) objVal;
-                        for (String value : importContents) {
+                        for (String value : (Collection<String>) objVal) {
                             importContent(nodeRef, property.getKey(), value, filename);
                         }
                     }
@@ -343,7 +337,7 @@ public class ExternalReviewWorkflowImporterComponent extends ImporterComponent i
                     throw new RuntimeException("Failed to decode", e);
                 } catch (IOException e) {
                     throw new RuntimeException("Failed write output to nodeRef=" + nodeRef + " contentUrl="
-                            + writer.getContentUrl(), e);
+                                + writer.getContentUrl(), e);
                 }
                 reportContentCreated(nodeRef, fileName);
             }
@@ -413,10 +407,6 @@ public class ExternalReviewWorkflowImporterComponent extends ImporterComponent i
 
     public void setWorkflowService(WorkflowService workflowService) {
         this.workflowService = workflowService;
-    }
-
-    public void setWorkflowDbService(WorkflowDbService workflowDbService) {
-        this.workflowDbService = workflowDbService;
     }
 
     public void setClassificatorService(ClassificatorService classificatorService) {

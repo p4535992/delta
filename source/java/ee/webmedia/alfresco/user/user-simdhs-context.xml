@@ -29,12 +29,7 @@
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
    </bean>
-
-   <bean id="archivistsGroupBootstrap" class="ee.webmedia.alfresco.user.bootstrap.ArchivistsGroupBootstrap" parent="module.baseComponent">
-      <property name="moduleId" value="simdhs" />
-      <property name="executeOnceOnly" value="true" />
-   </bean>
-
+   
    <bean id="accountantsGroupNameChangeBootstrap" class="ee.webmedia.alfresco.user.bootstrap.AccountantsGroupNameChangeBootstrap" parent="module.baseComponent">
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
@@ -48,33 +43,6 @@
    <bean id="deleteDummyUserBootstrap" class="ee.webmedia.alfresco.user.bootstrap.DeleteDummyUserBootstrap" parent="module.baseComponent">
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
-   </bean>
-
-   <bean id="supervisionGroupBootstrap" class="ee.webmedia.alfresco.user.bootstrap.SupervisionGroupBootstrap" parent="module.baseComponent">
-      <property name="moduleId" value="simdhs" />
-      <property name="executeOnceOnly" value="true" />
-   </bean>
-
-   <!-- this is only needed when updating from 3.3.1 to 3.5.3 (because it was possible to delete this group)  -->
-   <bean id="supervisionGroupRestoreBootstrap" class="ee.webmedia.alfresco.user.bootstrap.SupervisionGroupRestoreBootstrap" parent="module.baseComponent">
-      <property name="moduleId" value="simdhs" />
-      <property name="executeOnceOnly" value="true" />
-      <property name="dependsOn">
-         <list>
-            <ref bean="supervisionGroupBootstrap" />
-         </list>
-      </property>
-   </bean>
-
-   <!-- this is only needed when updating from 3.3.1 to 3.4.5 (because group name was incorrect) -->
-   <bean id="supervisionGroupNameChangeBootstrap" class="ee.webmedia.alfresco.user.bootstrap.SupervisionGroupNameChangeBootstrap" parent="module.baseComponent">
-      <property name="moduleId" value="simdhs" />
-      <property name="executeOnceOnly" value="true" />
-      <property name="dependsOn">
-         <list>
-            <ref bean="supervisionGroupBootstrap" />
-         </list>
-      </property>
    </bean>
 
    <bean id="userHomesSpacesBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">

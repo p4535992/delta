@@ -42,7 +42,6 @@ import org.alfresco.web.config.DialogsConfigElement.DialogButtonConfig;
 import org.alfresco.web.ui.common.ComponentConstants;
 import org.alfresco.web.ui.common.Utils;
 import org.alfresco.web.ui.common.component.SelfRenderingComponent;
-import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -113,7 +112,7 @@ public class UIDialogButtons extends SelfRenderingComponent
    protected void generateButtons(FacesContext context, boolean secondRendering)
    {
       // generate the OK button, if necessary
-      if (Application.getDialogManager().getBean().isFinishButtonVisible(Application.getDialogManager().isOKButtonVisible()))
+      if (Application.getDialogManager().isOKButtonVisible())
       {
          UICommand okButton = (UICommand)context.getApplication().
                createComponent(HtmlCommandButton.COMPONENT_TYPE);
@@ -132,13 +131,15 @@ public class UIDialogButtons extends SelfRenderingComponent
                "#{DialogManager.finish}", null);
          okButton.setAction(methodBinding);
          
+         // create the binding for whether the button is disabled
+         valueBinding = context.getApplication().createValueBinding(
+               "#{DialogManager.finishButtonDisabled}");
+         okButton.setValueBinding("disabled", valueBinding);
+         
          // setup CSS class for button
-         StringBuilder sb = new StringBuilder(StringUtils.defaultIfEmpty((String) this.getAttributes().get("styleClass"), ""));
-         sb.append(" dialog-button primary");
-         if (!secondRendering) {
-             sb.append(" defaultAction");
-         }
-         okButton.getAttributes().put("styleClass", sb.toString());
+         String styleClass = (String)this.getAttributes().get("styleClass");
+         styleClass = (styleClass == null) ? "dialog-button primary" : styleClass + " dialog-button primary";
+         okButton.getAttributes().put("styleClass", styleClass);
          
          // add the OK button
          this.getChildren().add(okButton);

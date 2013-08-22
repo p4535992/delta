@@ -2,7 +2,6 @@ package ee.webmedia.alfresco.common.filter;
 
 import java.io.IOException;
 
-import javax.faces.context.FacesContext;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
@@ -29,12 +28,8 @@ public class FacesContextFilter implements Filter {
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
         // sets thread-local FacesContext
-        FacesContext context = FacesHelper.getFacesContext(request, response, filterConfig.getServletContext());
-        try {
-            chain.doFilter(request, response);
-        } finally {
-            context.release();
-        }
+        FacesHelper.getFacesContext(request, response, filterConfig.getServletContext());
+        chain.doFilter(request, response);
     }
 
     @Override

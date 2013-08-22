@@ -90,7 +90,6 @@ public class UIPropertySheet extends UIPanel implements NamingContainer, AjaxUpd
    private String configArea;
    private String nextButtonId;
    private String finishButtonId;
-   private PropertySheetConfigElement config;
    
    /**
     * Default constructor
@@ -141,25 +140,22 @@ public class UIPropertySheet extends UIPanel implements NamingContainer, AjaxUpd
             if (logger.isDebugEnabled())
                logger.debug("Configuring property sheet using ConfigService");
 
-            PropertySheetConfigElement itemsToDisplay = getConfig();
-            if (itemsToDisplay == null)
+            // get the properties to display
+            ConfigService configSvc = Application.getConfigService(FacesContext.getCurrentInstance());
+            Config configProps = null;
+            if (getConfigArea() == null)
             {
-               Config configProps;
-               // get the properties to display
-               ConfigService configSvc = Application.getConfigService(FacesContext.getCurrentInstance());
-               if (getConfigArea() == null)
-               {
-                  configProps = configSvc.getConfig(node);
-               }
-               else
-               {
-                  // only look within the given area
-                  configProps = configSvc.getConfig(node, new ConfigLookupContext(getConfigArea()));
-               }
-               itemsToDisplay = (PropertySheetConfigElement)configProps.
-                  getConfigElement("property-sheet");
+               configProps = configSvc.getConfig(node);
             }
-
+            else
+            {
+               // only look within the given area
+               configProps = configSvc.getConfig(node, new ConfigLookupContext(getConfigArea()));
+            }
+            
+            PropertySheetConfigElement itemsToDisplay = (PropertySheetConfigElement)configProps.
+               getConfigElement("property-sheet");
+            
             if (itemsToDisplay != null)
             {
                Collection<ItemConfig> itemsToRender = null;
@@ -233,7 +229,7 @@ public class UIPropertySheet extends UIPanel implements NamingContainer, AjaxUpd
       //       Until we support multiple client types this will be OK.
       
       // output the JavaScript to enforce the required validations (if validation is enabled)
-      if (isValidationEnabled())
+      if (isValidationEnabled() && this.validations.size() > 0)
       {
          renderValidationScript(context);
       }
@@ -262,7 +258,6 @@ public class UIPropertySheet extends UIPanel implements NamingContainer, AjaxUpd
       this.validations = (List<ClientValidation>)values[8];
       this.finishButtonId = (String)values[9];
       this.nextButtonId = (String)values[10];
-      this.config = (PropertySheetConfigElement)values[11];
    }
    
    /**
@@ -271,7 +266,7 @@ public class UIPropertySheet extends UIPanel implements NamingContainer, AjaxUpd
    @Override
    public Object saveState(FacesContext context)
    {
-      Object values[] = new Object[12];
+      Object values[] = new Object[11];
       // standard component attributes are saved by the super class
       values[0] = super.saveState(context);
       values[1] = this.nodeRef;
@@ -284,7 +279,6 @@ public class UIPropertySheet extends UIPanel implements NamingContainer, AjaxUpd
       values[8] = this.validations;
       values[9] = this.finishButtonId;
       values[10] = this.nextButtonId;
-      values[11] = this.config;
       return (values);
    }
    
@@ -541,24 +535,7 @@ public class UIPropertySheet extends UIPanel implements NamingContainer, AjaxUpd
    {
       return this.validations;
    }
-
-    public void setConfig(PropertySheetConfigElement config)
-    {
-        this.config = config;
-    }
-
-    public PropertySheetConfigElement getConfig() {
-        if (this.config == null)
-        {
-            ValueBinding vb = getValueBinding("config");
-            if (vb != null)
-            {
-                this.config = (PropertySheetConfigElement)vb.getValue(getFacesContext());
-            }
-        }
-        return config;
-    }
-
+   
     /**
      * @param text
      * @return text where special characters are replaced with "_" 
@@ -588,21 +565,69 @@ public class UIPropertySheet extends UIPanel implements NamingContainer, AjaxUpd
       out.write("   return (");
       int numberValidations = this.validations.size();
       List<ClientValidation> realTimeValidations = new ArrayList<ClientValidation>(numberValidations);
-      if (numberValidations > 0) {
-         for (int x = 0; x < numberValidations; x++) {
-            ClientValidation validation = this.validations.get(x);
-            if (validation.RealTimeChecking) {
-               realTimeValidations.add(validation);
-            }
-            renderValidationMethod(out, validation, (x == (numberValidations-1)), true, false);
+      for (int x = 0; x < numberValidations; x++) {
+         ClientValidation validation = this.validations.get(x);
+         if (validation.RealTimeChecking) {
+            realTimeValidations.add(validation);
          }
-      } else {
-         out.write("true)");
+         renderValidationMethod(out, validation, (x == (numberValidations-1)), true, false);
       }
       out.write(";\n}\n\n");
       
+      // output the validateBtn() function (if necessary)
+      int numberRealTimeValidations = realTimeValidations.size();
+      String validateBtnFnName = "null";// argument null for javascript
+      if (numberRealTimeValidations > 0) {
+         validateBtnFnName = prefix + "validateBtn";
+         out.write("function " + validateBtnFnName + "() {\n   if (");
+         for (int x = 0; x < numberRealTimeValidations; x++) {
+            renderValidationMethod(out, realTimeValidations.get(x), (x == (numberRealTimeValidations-1)), false, true);
+         }
+         // disable the finish button if validation failed and also the next button if it is present
+         out.write(" {\n      var btn = document.getElementById('");
+         final String finishBtnId = form.getClientId(context) + NamingContainer.SEPARATOR_CHAR + getFinishButtonId();
+         out.write(finishBtnId);
+         out.write("');\n");
+         out.write("if (btn != null) {\n");
+         out.write("   btn.disabled = true; \n");
+         out.write("}\n");
+         out.write("btn = document.getElementById('" + finishBtnId + "-2');\n");
+         out.write("if (btn != null) {\n");
+         out.write("   btn.disabled = true;");
+         out.write("}\n");
+         if (this.nextButtonId != null && this.nextButtonId.length() > 0) {
+             out.write("      var nextElement = document.getElementById('");
+            out.write(form.getClientId(context));
+            out.write(NamingContainer.SEPARATOR_CHAR);
+            out.write(this.nextButtonId);
+            out.write("'); \n");
+            out.write("      if(nextElement != null){");
+            out.write("         nextElement.disabled = true; \n");
+            out.write("      }");
+         }
+         out.write("   }\n");
+         out.write("   else {\n      var btn = document.getElementById('");
+         out.write(finishBtnId);
+         out.write("');\n");
+         out.write("if(btn != null){\n");
+         out.write("   btn.disabled = false;\n");
+         out.write("}\n");
+         out.write("var btn = document.getElementById('"+form.getClientId(context) + NamingContainer.SEPARATOR_CHAR + getFinishButtonId() + "-2')\n");
+         out.write("if ( btn != null) {\n");
+         out.write("   btn.disabled = false;");
+         out.write("}\n");
+         if (this.nextButtonId != null && this.nextButtonId.length() > 0) {
+            out.write("\n      document.getElementById('");
+            out.write(form.getClientId(context));
+            out.write(NamingContainer.SEPARATOR_CHAR);
+            out.write(this.nextButtonId);
+            out.write("').disabled = false;");
+         }
+         out.write("\n   }\n}\n\n");
+         
+      } 
       // register our validation methods so that they are called by general validation methods in scripts.js
-      out.write("registerPropertySheetValidator(" + prefix + "validateSubmit, '" + form.getClientId(context) + "', '"
+      out.write("registerPropertySheetValidator(" + validateBtnFnName + ", " + prefix + "validateSubmit, '" + form.getClientId(context) + "', '"
               + getFinishButtonId() + "', '" + (this.nextButtonId != null ? this.nextButtonId : "") + "');\n");
       
       // close out the script block

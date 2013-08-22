@@ -6,8 +6,8 @@
 
 <%@ page buffer="32kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
+
 <a:booleanEvaluator id="workflowBlockEvaluator" value="#{DocumentDialog.meta.inEditMode == false}">
-   <h:panelGroup binding="#{DocumentDialog.modalContainer}" />
    <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/workflow/web/workflow-block.jsp" />
 </a:booleanEvaluator>
 <a:booleanEvaluator id="foundSimilarEvaluator" value="#{DocumentDialog.showFoundSimilar}">
@@ -21,6 +21,13 @@
    <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/document/einvoice/web/transactions-block.jsp" />
 </a:booleanEvaluator>
 <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/document/file/web/file-block.jsp" />
+
+<a:panel label="PDF" id="pdf-panel" styleClass="panel-100" progressive="true" rendered="#{DocumentDialog.file.pdfUrl != null}">
+   <f:verbatim>
+      <iframe width="100%" height="450" style="z-index: -1;" wmode="transparent" tabindex="-1" src="<%=request.getContextPath()%></f:verbatim><h:outputText value="#{DocumentDialog.file.pdfUrl}" /><f:verbatim>" class="fileViewerFrame" name="embedpdf_1" id="embedpdf_1">
+      </iframe>
+   </f:verbatim>
+</a:panel>
 
 <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/workflow/web/review-note-block.jsp" />
 <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/workflow/web/opinion-note-block.jsp" />

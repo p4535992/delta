@@ -8,7 +8,6 @@ import ee.webmedia.alfresco.menu.model.MenuItem;
 import ee.webmedia.alfresco.menu.service.CountAddingMenuItemProcessor;
 import ee.webmedia.alfresco.menu.service.MenuItemCountHandler;
 import ee.webmedia.alfresco.menu.service.MenuService;
-import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 
 /**
  * @author Kaarel Jõgeva
@@ -21,23 +20,17 @@ public class TaskMenuItemProcessor extends CountAddingMenuItemProcessor implemen
     @Override
     public int getCount(MenuItem menuItem) {
         QName taskType = QName.createQName(menuItem.getProcessor());
-        int currentUsersTaskCount = documentSearchService.getCurrentUsersTaskCount(taskType);
-        if (taskType.equals(WorkflowSpecificModel.Types.CONFIRMATION_TASK)) {
-            currentUsersTaskCount += documentSearchService.getCurrentUsersTaskCount(WorkflowSpecificModel.Types.DUE_DATE_EXTENSION_TASK);
-        }
-        return currentUsersTaskCount;
+        return documentSearchService.getCurrentUsersTaskCount(taskType);
     }
 
     @Override
     public void afterPropertiesSet() throws Exception {
         menuService.setCountHandler("assignmentTasks", this);
-        menuService.setCountHandler("orderAssignmentTasks", this);
         menuService.setCountHandler("informationTasks", this);
         menuService.setCountHandler("opinionTasks", this);
         menuService.setCountHandler("reviewTasks", this);
         menuService.setCountHandler("externalReviewTasks", this);
         menuService.setCountHandler("signatureTasks", this);
-        menuService.setCountHandler("confirmationTasks", this);
     }
 
     // START: getters / setters

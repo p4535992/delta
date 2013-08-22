@@ -1,23 +1,21 @@
 package ee.webmedia.alfresco.register.web;
 
-import static ee.webmedia.alfresco.common.web.BeanHelper.getRegisterService;
-
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.Node;
-import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
+import org.springframework.web.jsf.FacesContextUtils;
 
-import ee.webmedia.alfresco.register.model.RegisterModel;
+import ee.webmedia.alfresco.register.service.RegisterService;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
 public class RegisterDetailsDialog extends BaseDialogBean {
 
     private static final long serialVersionUID = 1L;
+    private transient RegisterService registerService;
     private Node register;
-    private transient UIPropertySheet propertySheet;
 
     /**
      * Action listener for JSP pages
@@ -33,12 +31,6 @@ public class RegisterDetailsDialog extends BaseDialogBean {
      */
     public void resetCounter() {
         getRegisterService().resetCounter(getRegister());
-        if (propertySheet != null) {
-            propertySheet.getChildren().clear();
-            propertySheet.getClientValidations().clear();
-            propertySheet.setMode(null);
-            propertySheet.setNode(null);
-        }
     }
 
     /**
@@ -57,7 +49,6 @@ public class RegisterDetailsDialog extends BaseDialogBean {
     @Override
     public String cancel() {
         register = null;
-        propertySheet = null;
         return super.cancel();
     }
 
@@ -66,7 +57,6 @@ public class RegisterDetailsDialog extends BaseDialogBean {
         // set updated values
         getRegisterService().updateProperties(register);
         register = null;
-        propertySheet = null;
         MessageUtil.addInfoMessage("save_success");
         return outcome;
     }
@@ -79,16 +69,19 @@ public class RegisterDetailsDialog extends BaseDialogBean {
         this.register = register;
     }
 
-    public boolean isCounterReadOnly() {
-        int counter = ((Integer) register.getProperties().get(RegisterModel.Prop.COUNTER)).intValue();
-        return !(counter == 0 || getRegisterService().isValueEditable());
+    // START: setters/getters
+
+    public void setRegisterService(RegisterService registerService) {
+        this.registerService = registerService;
     }
 
-    public UIPropertySheet getPropertySheet() {
-        return propertySheet;
+    public RegisterService getRegisterService() {
+        if (registerService == null) {
+            registerService = (RegisterService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
+                    .getBean(RegisterService.BEAN_NAME);
+        }
+        return registerService;
     }
+    // END: setters/getters
 
-    public void setPropertySheet(UIPropertySheet propertySheet) {
-        this.propertySheet = propertySheet;
-    }
 }

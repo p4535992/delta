@@ -63,6 +63,4 @@ public interface DvkService {
 
     String generateAndSendInvoiceFileToSap(Node node, List<Transaction> transactions) throws IOException;
 
-    String getReceivedDvkDocumentsPath();
-
 }

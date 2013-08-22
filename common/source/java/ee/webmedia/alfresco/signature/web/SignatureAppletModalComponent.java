@@ -6,10 +6,9 @@ import javax.faces.component.UICommand;
 import javax.faces.context.FacesContext;
 import javax.faces.context.ResponseWriter;
 
-import org.alfresco.web.app.Application;
 import org.apache.commons.lang.StringUtils;
 
-import ee.webmedia.alfresco.utils.ComponentUtil;
+import ee.webmedia.alfresco.common.propertysheet.search.SearchRenderer;
 
 public class SignatureAppletModalComponent extends UICommand {
 
@@ -53,10 +52,20 @@ public class SignatureAppletModalComponent extends UICommand {
             return;
         }
         ResponseWriter out = context.getResponseWriter();
-        ComponentUtil.writeModalHeader(out, getDialogId(context), Application.getMessage(context, "task_title_signatureTask"), "signatureModalWrap",
-                "return cancelSign();");
+
+        out.write("<div id=\"overlay\" style=\"display: block;\"></div>");
+        out.write("<div id=\"");
+        out.write(getDialogId(context));
+        out.write("\" class=\"modalpopup modalwrap\" style=\"display: block; height: 143px;\">");
+        out.write("<div class=\"modalpopup-header clear\"><h1>");
+        out.write(org.alfresco.web.app.Application.getMessage(context, "task_title_signatureTask"));
+        out.write("</h1><p class=\"close\"><a href=\"#\" onclick=\"return cancelSign();\">");
+        out.write(org.alfresco.web.app.Application.getMessage(context, SearchRenderer.CLOSE_WINDOW_MSG));
+        out.write("</a></p></div><div class=\"modalpopup-content\"><div class=\"modalpopup-content-inner\">");
+
         out.write(generateApplet(context));
-        ComponentUtil.writeModalFooter(out);
+
+        out.write("</div></div></div>");
 
         out.write("<script type=\"text/javascript\">$jQ(document).ready(function(){");
         out.write("showModal('");
@@ -70,12 +79,12 @@ public class SignatureAppletModalComponent extends UICommand {
         String path = context.getExternalContext().getRequestContextPath();
 
         sb.append("<div id=\"signature-div\" style=\"text-align: center\">\n");
+        sb.append("   <div id=\"pluginLocation\" style=\"display: none;\"></div>\n");
         sb.append("   <p id=\"signWait\">Palun oodake...</p>\n");
         sb.append("</div>\n");
 
-        sb.append("<script type=\"text/javascript\" src=\"" + path + "/scripts/idCard.js\"></script>\n");
         sb.append("<script type=\"text/javascript\">\n");
-        sb.append("$jQ(document).ready(function() { performSigningPluginOperation('");
+        sb.append("$jQ(document).ready(function() { loadSigningPlugin('");
         sb.append(operation);
         sb.append("', '");
         sb.append(digestHex);

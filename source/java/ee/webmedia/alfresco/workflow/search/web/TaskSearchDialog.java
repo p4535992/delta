@@ -2,7 +2,6 @@ package ee.webmedia.alfresco.workflow.search.web;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -16,20 +15,20 @@ import org.alfresco.service.namespace.QName;
 import org.alfresco.web.app.AlfrescoNavigationHandler;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.TransientNode;
-import org.alfresco.web.ui.common.component.PickerSearchParams;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel.Types;
 import ee.webmedia.alfresco.addressbook.service.AddressbookService;
-import ee.webmedia.alfresco.addressbook.util.AddressbookUtil;
+import ee.webmedia.alfresco.addressbook.web.dialog.AddressbookMainViewDialog;
 import ee.webmedia.alfresco.filter.web.AbstractSearchFilterBlockBean;
 import ee.webmedia.alfresco.user.web.UserListDialog;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UserUtil;
 import ee.webmedia.alfresco.utils.WebUtil;
 import ee.webmedia.alfresco.workflow.model.Status;
+import ee.webmedia.alfresco.workflow.search.model.TaskInfo;
 import ee.webmedia.alfresco.workflow.search.model.TaskSearchModel;
 import ee.webmedia.alfresco.workflow.search.service.TaskSearchFilterService;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
@@ -82,34 +81,21 @@ public class TaskSearchDialog extends AbstractSearchFilterBlockBean<TaskSearchFi
             ownerSearchFilters = new SelectItem[] { new SelectItem(0, MessageUtil.getMessage("task_owner_users")),
                     new SelectItem(1, MessageUtil.getMessage("task_owner_contacts")), };
         }
+
         loadAllFilters();
     }
 
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
-        taskSearchResultsDialog.setup(filter);
+        List<TaskInfo> tasks = getDocumentSearchService().searchTasks(filter);
+        taskSearchResultsDialog.setup(tasks);
         super.isFinished = false;
         return AlfrescoNavigationHandler.DIALOG_PREFIX + "taskSearchResultsDialog";
     }
 
     @Override
-    public String getManageSavedBlockTitle() {
-        return MessageUtil.getMessage("task_search_saved_manage");
-    }
-
-    @Override
-    public String getSavedFilterSelectTitle() {
-        return MessageUtil.getMessage("task_search_saved");
-    }
-
-    @Override
-    public String getFilterPanelTitle() {
-        return MessageUtil.getMessage("task_search");
-    }
-
-    @Override
     public String getFinishButtonLabel() {
-        return MessageUtil.getMessage("search");
+        return MessageUtil.getMessage(FacesContext.getCurrentInstance(), "search");
     }
 
     @Override
@@ -135,54 +121,45 @@ public class TaskSearchDialog extends AbstractSearchFilterBlockBean<TaskSearchFi
     @Override
     protected Node getNewFilter() {
         // New empty filter
-        Node node = new TransientNode(getFilterType(), null, null);
+        Node node = new TransientNode(TaskSearchModel.Types.FILTER, null, null);
         // UISelectMany components don't want null as initial value
-        Map<String, Object> properties = node.getProperties();
-        properties.put(TaskSearchModel.Props.TASK_TYPE.toString(), new ArrayList<QName>());
-        properties.put(TaskSearchModel.Props.STATUS.toString(), new ArrayList<String>());
-        properties.put(TaskSearchModel.Props.DOC_TYPE.toString(), new ArrayList<String>());
-        List<String> ownerNames = new ArrayList<String>();
-        ownerNames.add("");
-        properties.put(TaskSearchModel.Props.OWNER_NAME.toString(), ownerNames);
-        properties.put(TaskSearchModel.Props.OUTCOME.toString(), new ArrayList<String>());
+        node.getProperties().put(TaskSearchModel.Props.TASK_TYPE.toString(), new ArrayList<QName>());
+        node.getProperties().put(TaskSearchModel.Props.STATUS.toString(), new ArrayList<String>());
         return node;
     }
 
-    @Override
-    protected QName getFilterType() {
-        return TaskSearchModel.Types.FILTER;
-    }
-
     /**
      * Action listener for JSP.
      */
-    public SelectItem[] executeOwnerSearch(PickerSearchParams params) {
-        log.debug("executeOwnerSearch: " + params.getFilterIndex() + ", " + params.getSearchString());
-        if (params.isFilterIndex(0)) { // users
-            return userListDialog.searchUsers(params);
-        } else if (params.isFilterIndex(1)) { // contacts
-            List<Node> nodes = getAddressbookService().search(params.getSearchString(), params.getLimit());
-            return AddressbookUtil.transformAddressbookNodesToSelectItems(nodes);
+    public SelectItem[] executeOwnerSearch(int filterIndex, String contains) {
+        log.debug("executeOwnerSearch: " + filterIndex + ", " + contains);
+        if (filterIndex == 0) { // users
+            return userListDialog.searchUsers(-1, contains);
+        } else if (filterIndex == 1) { // contacts
+            final String personLabel = MessageUtil.getMessage("addressbook_private_person").toLowerCase();
+            final String organizationLabel = MessageUtil.getMessage("addressbook_org").toLowerCase();
+            List<Node> nodes = getAddressbookService().search(contains);
+            return AddressbookMainViewDialog.transformNodesToSelectItems(nodes, personLabel, organizationLabel);
         } else {
-            throw new RuntimeException("Unknown filter index value: " + params.getFilterIndex());
+            throw new RuntimeException("Unknown filter index value: " + filterIndex);
         }
     }
 
     /**
      * Action listener for JSP.
      */
-    public List<String> processOwnerSearchResults(String searchResult) {
+    public void processOwnerSearchResults(String searchResult) {
         log.debug("processOwnerSearchResults: " + searchResult);
         if (StringUtils.isBlank(searchResult)) {
-            return null;
+            return;
         }
-        String name = null;
+        Serializable name = null;
         if (searchResult.indexOf('/') > -1) { // contact
             NodeRef contact = new NodeRef(searchResult);
             Map<QName, Serializable> resultProps = getNodeService().getProperties(contact);
             QName resultType = getNodeService().getType(contact);
             if (resultType.equals(Types.ORGANIZATION)) {
-                name = (String) resultProps.get(AddressbookModel.Props.ORGANIZATION_NAME);
+                name = resultProps.get(AddressbookModel.Props.ORGANIZATION_NAME);
             } else {
                 name = UserUtil.getPersonFullName((String) resultProps.get(AddressbookModel.Props.PERSON_FIRST_NAME), (String) resultProps
                         .get(AddressbookModel.Props.PERSON_LAST_NAME));
@@ -191,7 +168,7 @@ public class TaskSearchDialog extends AbstractSearchFilterBlockBean<TaskSearchFi
             Map<QName, Serializable> personProps = getUserService().getUserProperties(searchResult);
             name = UserUtil.getPersonFullName1(personProps);
         }
-        return Collections.singletonList(name);
+        filter.getProperties().put(TaskSearchModel.Props.OWNER_NAME.toString(), name);
     }
 
     /**

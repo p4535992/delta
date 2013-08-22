@@ -8,21 +8,14 @@
          <dialog name="userDetailsDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/user/web/user-details-dialog.jsp" managed-bean="UserDetailsDialog"
             icon="/images/icons/user_console_large.gif" title-id="user_data" actions-config-id="user_actions" />
 
-         <dialog name="userConsole" page="/jsp/users/user-console.jsp" managed-bean="UserDetailsDialog" icon="/images/icons/user_console_large.gif" 
-            title-id="user_console_info" description-id="user_console_description" actions-config-id="user_add_to_group_actions"/>
-
          <dialog name="permissionsListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/user/web/permissions-list-dialog.jsp" managed-bean="PermissionsListDialog"
             icon="/images/icons/users_large.gif" title-id="manage_invited_users" actions-config-id="browse_actions_permissions" />
 
          <dialog name="permissionsAddDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/user/web/permissions-add-dialog.jsp" managed-bean="PermissionsAddDialog"
-            icon="/images/icons/users_large.gif" />
+            icon="/images/icons/users_large.gif" title-id="manage_invited_users" />
 
          <dialog name="permissionsDeleteDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/user/web/permissions-delete-dialog.jsp" managed-bean="PermissionsDeleteDialog"
-            icon="/images/icons/users_large.gif" title-id="permission_delete_userOrGroup" />
-            
-         <dialog name="groupUsersListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/user/web/group-users-list-dialog.jsp" managed-bean="GroupUsersListDialog"
-                 icon="/images/icons/group_large.gif" title-id="groups_management" 
-                 description-id="groups_description" />
+            icon="/images/icons/users_large.gif" title-id="manage_invited_users" />
 
       </dialogs>
       <actions>
@@ -35,7 +28,6 @@
             <params>
                <param name="nodeRef">#{PermissionsListDialog.nodeRef}</param>
                <param name="permission">#{PermissionsListDialog.permission}</param>
-               <param name="dialogTitleId">#{PermissionsListDialog.alternateDialogTitleId}</param>
             </params>
          </action>
 
@@ -44,25 +36,13 @@
               <image>/images/icons/versioned_properties.gif</image>
               <action-listener>#{UserDetailsDialog.addNewValue}</action-listener>
           </action>
-          
-          <action id="user_add_to_group">
-              <evaluator>ee.webmedia.alfresco.document.web.evaluator.AddUserToGroupEvaluator</evaluator>
-              <label-id>add_to_group</label-id>
-              <image>/images/icons/add_user.gif</image>
-              <onclick>showModal('dialog:dialog-body:userGroupSearch_popup'); return false;</onclick>
-          </action>
 
          <action-group id="browse_actions_permissions">
             <action idref="permissions_add" />
          </action-group>
 
-          <action-group id="user_add_to_group_actions">
-              <action idref="user_add_to_group" />
-          </action-group>
-          
           <action-group id="user_actions">
               <action idref="user_add_substitute"/>
-              <action idref="user_add_to_group" />
           </action-group>
 
       </actions>
@@ -74,15 +54,11 @@
          <show-property name="cm:lastName" />
          <show-property name="cm:userName" display-label-id="user_username" />
          <show-property name="cm:firstName" />
-         <show-property name="{temp}unit" display-label-id="unit" />
-         <show-property name="{temp}jobAddress" display-label-id="user_jobAddress" />
+         <show-property name="unit" display-label-id="unit" />
          <show-property name="cm:jobtitle" display-label-id="jobtitle" />
-         <show-property name="cm:serviceRank" display-label-id="user_serviceRank" rendered="#{UserDetailsDialog.isServiceRankRendered}"/>
          <show-property name="cm:telephone" display-label-id="telephone" />
          <show-property name="cm:email" display-label-id="user_email" />
          <show-property name="cm:homeFolder" display-label-id="user_home_folder" component-generator="HomespaceLinkGenerator" />
-         <show-property name="{temp}showEmptyTaskMenu" display-label-id="user_showEmptyTaskMenu" rendered="#{UserDetailsDialog.isShowEmptyTaskMenuNotEditable}" component-generator="UnescapedOutputTextGenerator" />
-         <show-property name="cm:showEmptyTaskMenu" display-label-id="user_showEmptyTaskMenu" rendered="#{UserDetailsDialog.isShowEmptyTaskMenuEditable}" isAlwaysEdit="true" component-generator="CheckboxGenerator" valueChangeListener="#{UserDetailsDialog.showEmptyTaskMenuChanged}" />
          <show-property name="{temp}relatedFundsCenter" display-label-id="user_relatedFundsCenter" rendered="#{UserDetailsDialog.isRelatedFundsCenterNotEditable}" component-generator="UnescapedOutputTextGenerator" />
          <show-property name="cm:relatedFundsCenter" display-label-id="user_relatedFundsCenter" component-generator="MultiValueEditorGenerator"
             showHeaders="false" rendered="#{UserDetailsDialog.isRelatedFundsCenterEditable}" styleClass="add-default" 

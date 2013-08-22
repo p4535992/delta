@@ -2,10 +2,8 @@ package ee.webmedia.alfresco.orgstructure.model;
 
 import java.io.Serializable;
 import java.util.Comparator;
-import java.util.List;
 
 import ee.webmedia.alfresco.app.AppConstants;
-import ee.webmedia.alfresco.utils.UserUtil;
 import ee.webmedia.alfresco.utils.beanmapper.AlfrescoModelProperty;
 import ee.webmedia.alfresco.utils.beanmapper.AlfrescoModelType;
 
@@ -17,10 +15,6 @@ public class OrganizationStructure implements Serializable {
     private String name;
     private int unitId;
     private int superUnitId;
-    private List<String> organizationPath;
-
-    @AlfrescoModelProperty(isMappable = false)
-    private String organizationDisplayPath;
 
     @AlfrescoModelProperty(isMappable = false)
     private String superValueName;
@@ -55,22 +49,6 @@ public class OrganizationStructure implements Serializable {
 
     public void setSuperUnitId(int superUnitId) {
         this.superUnitId = superUnitId;
-    }
-
-    public void setOrganizationPath(List<String> organizationPath) {
-        this.organizationPath = organizationPath;
-    }
-
-    public List<String> getOrganizationPath() {
-        return organizationPath;
-    }
-
-    public String getOrganizationDisplayPath() {
-        return UserUtil.getDisplayUnit(organizationPath);
-    }
-
-    public void setOrganizationDisplayPath(String organizationDisplayPath) {
-        this.organizationDisplayPath = organizationDisplayPath;
     }
 
     @Override

@@ -52,15 +52,12 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import ee.webmedia.alfresco.common.web.BeanHelper;
-import ee.webmedia.alfresco.common.web.DisableFocusingBean;
 import ee.webmedia.alfresco.menu.ui.MenuBean;
 
 /**
  * @author gavinc
  */
 public class AlfrescoNavigationHandler extends NavigationHandler {
-    private static final String DO_NOT_SAVE_VIEW = "doNotSaveView";
     public final static String OUTCOME_SEPARATOR = ":";
     public final static String DIALOG_PREFIX = "dialog" + OUTCOME_SEPARATOR;
     public final static String WIZARD_PREFIX = "wizard" + OUTCOME_SEPARATOR;
@@ -126,17 +123,7 @@ public class AlfrescoNavigationHandler extends NavigationHandler {
             }
         }
         
-        boolean emptyOutcome = StringUtils.isEmpty(outcome);
-        DisableFocusingBean disableFocusingBean = BeanHelper.getDisableFocusingBean();
-        if (disableFocusingBean != null) {
-            // NB! setDisableInputFocus sets focus only first time it is called during one request!
-            if (emptyOutcome) {
-                disableFocusingBean.setDisableInputFocus(true);
-            } else {
-                disableFocusingBean.setDisableInputFocus(false);
-            }
-        }        
-        if(emptyOutcome) {
+        if(StringUtils.isEmpty(outcome)) {
             return; // this enables to navigate to anchor on a page from actionlistener
         }
         
@@ -154,7 +141,7 @@ public class AlfrescoNavigationHandler extends NavigationHandler {
                 handleDialogOrWizardClose(context, fromAction, outcome, isDialog);
             } else {
                 if (isDialog) {
-                    handleDialogOpen(context, fromAction, outcome, !DO_NOT_SAVE_VIEW.equals(fromAction));
+                    handleDialogOpen(context, fromAction, outcome);
                 } else {
                     handleWizardOpen(context, fromAction, outcome);
                 }
@@ -226,10 +213,6 @@ public class AlfrescoNavigationHandler extends NavigationHandler {
         }
 
         return closing;
-    }
-    
-    public static String getMultipleCloseOutcome(int numberToClose){
-        return CLOSE_DIALOG_OUTCOME + CLOSE_MULTIPLE_START + numberToClose + CLOSE_MULTIPLE_END;
     }
 
     protected int getNumberToClose(String outcome) {
@@ -581,14 +564,12 @@ public class AlfrescoNavigationHandler extends NavigationHandler {
      * @param fromAction The fromAction
      * @param name The name of the dialog to open
      */
-    protected void handleDialogOpen(FacesContext context, String fromAction, String name, boolean saveCurrentView) {
+    protected void handleDialogOpen(FacesContext context, String fromAction, String name) {
         if (logger.isDebugEnabled())
             logger.debug("Opening dialog '" + name + "'");
 
         // firstly add the current view to the stack so we know where to go back to
-        if(saveCurrentView){
-            addCurrentViewToStack(context);
-        }
+        addCurrentViewToStack(context);
 
         DialogConfig config = getDialogConfig(context, name, getDispatchContextNode(context));
         if (config != null) {
@@ -743,27 +724,12 @@ public class AlfrescoNavigationHandler extends NavigationHandler {
                 // KAAREL: Since we need to preserve back button (application, not browser) functionality, we can't just clear the stack anymore.
                 // When override is provided, we are opening a wizard or dialog (browse is obsolete) ie we won't make it to else statement.
                 // String previousViewId = getViewIdFromStackObject(context, getViewStack(context).peek());
-                // getViewStack(context).clear();
+                //  getViewStack(context).clear();
                 
-                // KEIT: Fix described in CL 192351:
-                // Old behavior was: if viewStack contained "dialog1, dialog2, dialog3" and dialog4 is currently open and finish outcome is "dialog:close:dialog:dialog5", then
-                // dialog4 is thrown away, dialog3 is restored and put back into viewStack and dialog5 is opened.
-                // New behavior is: dialog4 is thrown away and dialog5 is opened -- that means dialog4 is replaced with dialog5. Importand change is that dialog3 restored method is
-                // no longer called.
-                boolean isDialogOrWizard = isDialog(overriddenOutcome) || isWizard(overriddenOutcome);
-                Object topOfStack = viewStack.peek();
-                String previousViewId;
-                if (isDialogOrWizard && topOfStack instanceof DialogState) {
-                    previousViewId = getDialogContainer(context);
-                    fromAction = DO_NOT_SAVE_VIEW;
-                } else if (isDialogOrWizard && topOfStack instanceof WizardState) {
-                    previousViewId = getWizardContainer(context);
-                    fromAction = DO_NOT_SAVE_VIEW;
-                } else {
-                    viewStack.pop();
-                    previousViewId = getViewIdFromStackObject(context, topOfStack);
-                }
-                if (explicitCancel) {
+                // We need to close this dialog, restore second state from stack
+                // XXX - this may break something, thorough testing needed
+                String previousViewId = getViewIdFromStackObject(context, viewStack.pop());
+                if(explicitCancel) {
                     dialogManager.cancel();
                 }
                 
@@ -777,7 +743,7 @@ public class AlfrescoNavigationHandler extends NavigationHandler {
 
                 // if the override is calling another dialog or wizard come back through
                 // the navigation handler from the beginning
-                if (isDialogOrWizard) {
+                if (isDialog(overriddenOutcome) || isWizard(overriddenOutcome)) {
                     // set the view id to the page at the top of the stack so when
                     // the new dialog or wizard closes it goes back to the correct page
                     context.getViewRoot().setViewId(previousViewId);

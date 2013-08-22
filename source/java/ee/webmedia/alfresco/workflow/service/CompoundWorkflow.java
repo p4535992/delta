@@ -29,7 +29,7 @@ public class CompoundWorkflow extends BaseWorkflowObject implements Serializable
     }
 
     protected CompoundWorkflow copy() {
-        return copyImpl(new CompoundWorkflow(getNode().clone(), parent));
+        return copyImpl(new CompoundWorkflow(getNode().copy(), parent));
     }
 
     @Override

@@ -1,6 +1,5 @@
 package ee.webmedia.alfresco.notification.service;
 
-import java.util.Date;
 import java.util.List;
 
 import javax.faces.event.ActionEvent;
@@ -9,10 +8,7 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
 
-import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
-import ee.webmedia.alfresco.document.sendout.model.SendInfo;
 import ee.webmedia.alfresco.notification.model.GeneralNotification;
-import ee.webmedia.alfresco.substitute.model.Substitute;
 import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
 import ee.webmedia.alfresco.workflow.service.Task;
 import ee.webmedia.alfresco.workflow.service.Workflow;
@@ -31,29 +27,23 @@ public interface NotificationService {
 
     public void notifyCompoundWorkflowEvent(CompoundWorkflow compoundWorkflowEvent);
 
-    public void notifySubstitutionEvent(Substitute substitute);
-
     public void addMissingConfigurations(Node userPreferencesNode);
 
     public void saveConfigurationChanges(Node userPreferencesNode);
 
     public boolean processOutgoingInformationTask(Task task);
 
-    public int processTaskDueDateNotificationsIfWorkingDay(Date firingDate);
+    public int processTaskDueDateNotifications();
 
     public int processVolumeDispositionDateNotifications();
 
     public int processAccessRestrictionEndDateNotifications();
-
-    public int processContractDueDateNotifications();
 
     public void processTaskDueDateNotifications(ActionEvent event);
 
     public void processVolumeDispositionDateNotifications(ActionEvent event);
 
     public void processAccessRestrictionEndDateNotifications(ActionEvent event);
-
-    public void processContractDueDateNotifications(ActionEvent event);
 
     public GeneralNotification getGeneralNotificationByNodeRef(NodeRef nodeRef);
 
@@ -67,17 +57,12 @@ public interface NotificationService {
 
     public int getUpdateCount();
 
-    public void notifyTaskUnfinishedEvent(Task task, boolean manuallyCancelled);
+    public void notifyTaskUnfinishedEvent(Task task);
 
     String generateTemplateContent(QName notificationType, Task task);
 
     void notifyExternalReviewError(Task task);
 
     void notifyExternalReviewError(String notificationContent);
-
-    public void processAccessRestrictionChangedNotification(DocumentDynamic document, List<SendInfo> sendInfos);
-
-    List<QName> getAllNotificationProps();
-
 
 }

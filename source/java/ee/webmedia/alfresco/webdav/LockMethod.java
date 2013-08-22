@@ -44,10 +44,6 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
 import org.dom4j.io.XMLWriter;
 
-import ee.webmedia.alfresco.common.web.BeanHelper;
-import ee.webmedia.alfresco.document.file.service.FileService;
-import ee.webmedia.alfresco.document.model.DocumentCommonModel;
-
 /**
  * Implements the WebDAV LOCK method
  * 
@@ -102,8 +98,6 @@ public class LockMethod extends WebDAVMethod {
         // Get the lock token, if any
 
         m_strLockToken = parseIfHeader();
-
-        m_userAgent = m_request.getHeader(WebDAV.HEADER_USER_AGENT);
 
         // Get the lock timeout value
 
@@ -177,35 +171,26 @@ public class LockMethod extends WebDAVMethod {
             // create not allowed
             throw new WebDAVServerException(HttpServletResponse.SC_FORBIDDEN);
         }
-        NodeRef fileRef = lockNodeInfo.getNodeRef();
-        WebDAVCustomHelper.checkDocumentFileWritePermission(fileRef);
-        Map<QName, Serializable> originalProps = getNodeService().getProperties(fileRef);
+        WebDAVCustomHelper.checkDocumentFileWritePermission(lockNodeInfo);
+        Map<QName, Serializable> originalProps = getNodeService().getProperties(lockNodeInfo.getNodeRef());
 
-        int responseStatus = HttpServletResponse.SC_OK;
-        try {
-            // Check if this is a new lock or a refresh
-            if (hasLockToken()) {
-                // Refresh an existing lock
-                refreshLock(fileRef, userName);
-            } else {
-                // Create a new lock
-                createLock(fileRef, userName);
-            }
-            // Set modifier and modified properties to original, so that locking doesn't appear to change the file
-            Map<QName, Serializable> props = new HashMap<QName, Serializable>();
-            props.put(ContentModel.PROP_MODIFIER, originalProps.get(ContentModel.PROP_MODIFIER));
-            props.put(ContentModel.PROP_MODIFIED, originalProps.get(ContentModel.PROP_MODIFIED));
-            getBehaviourFilter().disableBehaviour(ContentModel.ASPECT_AUDITABLE);
-            getNodeService().addProperties(fileRef, props);
-        } catch (WebDAVServerException e) {
-            responseStatus = e.getHttpStatusCode();
-            logger.error("Failed to refresh or create WebDAV lock", e);
-        } finally {
-            m_response.setHeader(WebDAV.HEADER_LOCK_TOKEN, "<" + WebDAV.makeLockToken(lockNodeInfo.getNodeRef(), userName) + ">");
-            m_response.setHeader(WebDAV.HEADER_CONTENT_TYPE, WebDAV.XML_CONTENT_TYPE);
-            // We either created a new lock or refreshed an existing lock, send back the lock details
-            generateResponse(fileRef, userName, responseStatus);
+        // Check if this is a new lock or a refresh
+        if (hasLockToken()) {
+            // Refresh an existing lock
+            refreshLock(lockNodeInfo.getNodeRef(), userName);
+        } else {
+            // Create a new lock
+            createLock(lockNodeInfo.getNodeRef(), userName);
         }
+        // Set modifier and modified properties to original, so that locking doesn't appear to change the file
+        Map<QName, Serializable> props = new HashMap<QName, Serializable>();
+        props.put(ContentModel.PROP_MODIFIER, originalProps.get(ContentModel.PROP_MODIFIER));
+        props.put(ContentModel.PROP_MODIFIED, originalProps.get(ContentModel.PROP_MODIFIED));
+        getBehaviourFilter().disableBehaviour(ContentModel.ASPECT_AUDITABLE);
+        getNodeService().addProperties(lockNodeInfo.getNodeRef(), props);
+
+        // We either created a new lock or refreshed an existing lock, send back the lock details
+        generateResponse(lockNodeInfo.getNodeRef(), userName);
     }
 
     protected BehaviourFilter getBehaviourFilter() {
@@ -226,22 +211,12 @@ public class LockMethod extends WebDAVMethod {
         // Check the lock status of the node
         LockStatus lockSts = lockService.getLockStatus(lockNode);
 
-        // ALF-3681 fix. WebDrive 10 client doesn't send If header when locked resource is updated so check the node by lockOwner.
-        boolean webDrive10Fix = false;
-        if (m_userAgent != null && m_userAgent.equals(WebDAV.AGENT_MICROSOFT_DATA_ACCESS_INTERNET_PUBLISHING_PROVIDER_DAV))
-        {
-            String currentUser = getAuthenticationService().getCurrentUserName();
-            String lockOwner = (String) getNodeService().getProperty(lockNode, ContentModel.PROP_LOCK_OWNER);
-            // OK to write - lock is owned by current user.
-            webDrive10Fix = lockOwner != null && lockOwner.equals(currentUser);
-        }
-
         // DEBUG
         if (logger.isDebugEnabled()) {
             logger.debug("Create lock status=" + lockSts);
         }
 
-        if (lockSts == LockStatus.LOCKED && !webDrive10Fix || isLockingDisabled(lockNode)) {
+        if (lockSts == LockStatus.LOCKED) {
             // Indicate that the resource is already locked
             throw new WebDAVServerException(WebDAV.WEBDAV_SC_LOCKED);
         }
@@ -251,16 +226,9 @@ public class LockMethod extends WebDAVMethod {
 
         // Lock the node
         lockService.lock(lockNode, LockType.WRITE_LOCK, getLockTimeout());
-        generatedFileDocumentLock(lockNode);
 
         ((WebDAVCustomHelper) getDAVHelper()).getVersionsService().addVersionLockableAspect(lockNode);
         ((WebDAVCustomHelper) getDAVHelper()).getVersionsService().setVersionLockableAspect(lockNode, false);
-    }
-
-    private boolean isLockingDisabled(NodeRef lockNode) {
-        FileService fileService = BeanHelper.getFileService();
-        return (fileService.isFileGeneratedFromTemplate(lockNode) || fileService.isFileAssociatedWithDocMetadata(lockNode))
-                && BeanHelper.getDocLockService().isGeneratedFileDocumentLocked(lockNode);
     }
 
     /**
@@ -288,27 +256,12 @@ public class LockMethod extends WebDAVMethod {
 
         // Update the expiry for the lock
         lockService.lock(lockNode, LockType.WRITE_LOCK, getLockTimeout());
-        generatedFileDocumentLock(lockNode);
-    }
-
-    private final void generatedFileDocumentLock(NodeRef lockNode) {
-        if (!BeanHelper.getFileService().isFileGenerated(lockNode)) {
-            return;
-        }
-
-        NodeRef docRef = BeanHelper.getGeneralService().getAncestorNodeRefWithType(lockNode, DocumentCommonModel.Types.DOCUMENT);
-        if (docRef != null) {
-            getLockService().lock(docRef, LockType.WRITE_LOCK, getLockTimeout());
-        }
     }
 
     /**
      * Generates the XML lock discovery response body
      */
-    private void generateResponse(NodeRef lockNode, String userName, int responseStatus) throws Exception {
-        // Send the XML back to the client
-        m_response.setStatus(responseStatus);
-
+    private void generateResponse(NodeRef lockNode, String userName) throws Exception {
         XMLWriter xml = createXMLWriter();
 
         xml.startDocument();
@@ -323,6 +276,8 @@ public class LockMethod extends WebDAVMethod {
         // Close off the XML
         xml.endElement(WebDAV.DAV_NS, WebDAV.XML_MULTI_STATUS, WebDAV.XML_NS_MULTI_STATUS);
 
+        // Send the XML back to the client
+        m_response.setStatus(HttpServletResponse.SC_OK);
         xml.flush();
     }
 }

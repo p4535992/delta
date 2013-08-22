@@ -69,12 +69,6 @@ public interface ContentModel
     static final QName PROP_ARCHIVED_CHILD_ASSOCS = QName.createQName(NamespaceService.SYSTEM_MODEL_1_0_URI, "archivedChildAssocs");
     static final QName PROP_ARCHIVED_SOURCE_ASSOCS = QName.createQName(NamespaceService.SYSTEM_MODEL_1_0_URI, "archivedSourceAssocs");
     static final QName PROP_ARCHIVED_TARGET_ASSOCS = QName.createQName(NamespaceService.SYSTEM_MODEL_1_0_URI, "archivedTargetAssocs");
-    static final QName PROP_ARCHIVED_ORIGINAL_OWNER_NAME = QName.createQName(NamespaceService.SYSTEM_MODEL_1_0_URI, "archivedOriginalOwnerName");
-    static final QName PROP_ARCHIVED_ORIGINAL_LOCATION_STRING = QName.createQName(NamespaceService.SYSTEM_MODEL_1_0_URI, "archivedOriginalLocationString");
-    static final QName PROP_ARCHIVED_OBJECT_TYPE_STRING = QName.createQName(NamespaceService.SYSTEM_MODEL_1_0_URI, "archivedObjectTypeString");
-    static final QName PROP_ARCHIVED_OBJECT_TYPE = QName.createQName(NamespaceService.SYSTEM_MODEL_1_0_URI, "archivedObjectType");
-    static final QName PROP_ARCHIVED_OBJECT_NAME = QName.createQName(NamespaceService.SYSTEM_MODEL_1_0_URI, "archivedObjectName");
-    static final QName PROP_ARCHIVED_BY_NAME = QName.createQName(NamespaceService.SYSTEM_MODEL_1_0_URI, "archivedByName");
     
     // referenceable aspect constants
     static final QName TYPE_REFERENCE = QName.createQName(NamespaceService.SYSTEM_MODEL_1_0_URI, "reference");
@@ -189,13 +183,6 @@ public interface ContentModel
     static final QName PROP_PRESENCEUSERNAME = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "presenceUsername");
     static final QName PROP_ORGANIZATION = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "organization");
     static final QName PROP_JOBTITLE = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "jobtitle");
-    static final QName PROP_ORGANIZATION_PATH = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "organizationPath");
-    static final QName PROP_COUNTY = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "county");
-    static final QName PROP_MUNICIPALITY = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "municipality");
-    static final QName PROP_VILLAGE = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "village");
-    static final QName PROP_STREET_HOUSE = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "streetHouse");
-    static final QName PROP_POSTAL_CODE = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "postalCode");
-    static final QName PROP_SERVICE_RANK = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "serviceRank");    
     static final QName PROP_LOCATION = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "location");
     static final QName PROP_PERSONDESC = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "persondescription");
     static final QName PROP_TELEPHONE = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "telephone");
@@ -210,7 +197,6 @@ public interface ContentModel
     static final QName PROP_SKYPE = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "skype");
     static final QName PROP_INSTANTMSG = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "instantmsg");
     static final QName PROP_RELATED_FUNDS_CENTER = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "relatedFundsCenter");
-    static final QName SHOW_EMPTY_TASK_MENU = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "showEmptyTaskMenu");
     
     static final QName PROP_SIZE_CURRENT = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "sizeCurrent");
     static final QName PROP_SIZE_QUOTA = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "sizeQuota");

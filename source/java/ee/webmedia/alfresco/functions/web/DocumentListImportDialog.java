@@ -9,7 +9,6 @@ import org.alfresco.repo.importer.ImportTimerProgress;
 import org.alfresco.service.cmr.view.ImporterException;
 import org.alfresco.service.cmr.view.ImporterService;
 import org.alfresco.service.cmr.view.Location;
-import org.apache.commons.lang.StringUtils;
 import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.app.AppConstants;
@@ -31,7 +30,7 @@ public class DocumentListImportDialog extends AbstractImportDialog {
     private transient FunctionsService functionsService;
 
     public DocumentListImportDialog() {
-        super("acp", "docList_import_error_wrongExtension");
+        super(".acp", "docList_import_error_wrongExtension");
     }
 
     @Override
@@ -52,16 +51,12 @@ public class DocumentListImportDialog extends AbstractImportDialog {
 
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
-        if (StringUtils.isBlank(getFileName())) {
-            MessageUtil.addErrorMessage("docList_import_error_wrongExtension", getFileName());
-            return null;
-        }
         if (file == null) {
-            MessageUtil.addErrorMessage("docList_import_error_noFile");
+            MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "docList_import_error_noFile");
             return outcome;
         }
         if (!isCorrectExtension(getFileName())) {
-            MessageUtil.addErrorMessage("docList_import_error_wrongExtension", getFileName());
+            MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "docList_import_error_wrongExtension", getFileName());
             return outcome;
         }
         log.info("Starting to import docList");
@@ -70,10 +65,10 @@ public class DocumentListImportDialog extends AbstractImportDialog {
         try {
             getImporterService().importView(importHandler, location, null, new ImportTimerProgress(log));
             log.info("Finished importing docList");
-            MessageUtil.addInfoMessage("docList_import_success", getFileName());
+            MessageUtil.addInfoMessage(FacesContext.getCurrentInstance(), "docList_import_success", getFileName());
         } catch (ImporterException e) {
             log.error("Failed to import documents list", e);
-            MessageUtil.addErrorMessage("docList_import_error_wrongFileContent", getFileName());
+            MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "docList_import_error_wrongFileContent", getFileName());
             // show file upload again
             reset();
             isFinished = false;

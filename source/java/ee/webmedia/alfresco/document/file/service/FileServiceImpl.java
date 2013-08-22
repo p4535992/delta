@@ -2,7 +2,6 @@ package ee.webmedia.alfresco.document.file.service;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -29,14 +28,12 @@ import org.alfresco.service.cmr.repository.ContentWriter;
 import org.alfresco.service.cmr.repository.DuplicateChildNodeNameException;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
-import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
 import org.alfresco.service.cmr.security.AuthenticationService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.service.namespace.RegexQNamePattern;
 import org.alfresco.util.URLEncoder;
 import org.alfresco.web.app.servlet.DownloadContentServlet;
-import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.util.Assert;
@@ -45,7 +42,6 @@ import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.file.model.FileModel;
 import ee.webmedia.alfresco.document.file.model.GeneratedFileType;
-import ee.webmedia.alfresco.document.file.web.Subfolder;
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
 import ee.webmedia.alfresco.signature.exception.SignatureException;
 import ee.webmedia.alfresco.signature.model.SignatureItemsAndDataItems;
@@ -53,7 +49,6 @@ import ee.webmedia.alfresco.signature.service.SignatureService;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.FilenameUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
-import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.versions.model.VersionsModel;
 
 /**
@@ -76,9 +71,6 @@ public class FileServiceImpl implements FileService {
     @Override
     public boolean toggleActive(NodeRef nodeRef) {
         boolean active = true; // If file doesn't have the flag set, then it hasn't been toggled yet, thus active
-        if (!nodeService.exists(nodeRef)) {
-            throw new UnableToPerformException("file_toggle_failed");
-        }
         if (nodeService.getProperty(nodeRef, FileModel.Props.ACTIVE) != null) {
             active = Boolean.parseBoolean(nodeService.getProperty(nodeRef, FileModel.Props.ACTIVE).toString());
         }
@@ -97,22 +89,9 @@ public class FileServiceImpl implements FileService {
         return getAllFiles(nodeRef, true, false);
     }
 
-    @Override
-    public List<File> getFiles(List<NodeRef> nodeRefs) {
-        List<FileInfo> fileInfos = new ArrayList<FileInfo>();
-        for (NodeRef fileRef : nodeRefs) {
-            fileInfos.add(fileFolderService.getFileInfo(fileRef));
-        }
-        return getAllFiles(fileInfos, false, false);
-    }
-
     private List<File> getAllFiles(NodeRef nodeRef, boolean includeDigidocSubitems, boolean onlyActive) {
-        List<FileInfo> fileInfos = fileFolderService.listFiles(nodeRef);
-        return getAllFiles(fileInfos, includeDigidocSubitems, onlyActive);
-    }
-
-    private List<File> getAllFiles(List<FileInfo> fileInfos, boolean includeDigidocSubitems, boolean onlyActive) {
         List<File> files = new ArrayList<File>();
+        List<FileInfo> fileInfos = fileFolderService.listFiles(nodeRef);
         for (FileInfo fi : fileInfos) {
             final File item = createFile(fi);
             boolean isDdoc = signatureService.isDigiDocContainer(item.getNodeRef());
@@ -206,9 +185,6 @@ public class FileServiceImpl implements FileService {
 
     @Override
     public FileInfo transformToPdf(NodeRef file) {
-        if (!nodeService.exists(file)) {
-            throw new UnableToPerformException("file_generate_pdf_error_deleted");
-        }
         return generatePdf(nodeService.getPrimaryParent(file).getParentRef(), file);
     }
 
@@ -264,11 +240,6 @@ public class FileServiceImpl implements FileService {
     public void moveAllFiles(NodeRef fromRef, NodeRef toRef) throws FileNotFoundException {
         List<FileInfo> fileInfos = fileFolderService.listFiles(fromRef);
         for (FileInfo fileInfo : fileInfos) {
-            if (FilenameUtil.isEncryptedFile(fileInfo.getName())) {
-                throw new UnableToPerformException("file_encrypted_forbidden");
-            }
-        }
-        for (FileInfo fileInfo : fileInfos) {
             try {
                 fileFolderService.move(fileInfo.getNodeRef(), toRef, null);
 
@@ -293,11 +264,6 @@ public class FileServiceImpl implements FileService {
 
     @Override
     public NodeRef addFileToDocument(final String name, final String displayName, final NodeRef documentNodeRef, final NodeRef fileNodeRef) {
-        return addFileToDocument(name, displayName, documentNodeRef, fileNodeRef, true);
-    }
-
-    @Override
-    public NodeRef addFileToDocument(final String name, final String displayName, final NodeRef documentNodeRef, final NodeRef fileNodeRef, boolean active) {
         // Moving is executed with System user rights, because this is not appropriate to implement in permissions model
         NodeRef movedFileNodeRef = AuthenticationUtil.runAs(new RunAsWork<NodeRef>() {
             @Override
@@ -309,65 +275,33 @@ public class FileServiceImpl implements FileService {
                         ContentModel.ASSOC_CONTAINS, ContentModel.ASSOC_CONTAINS).getChildRef();
             }
         }, AuthenticationUtil.getSystemUserName());
-        nodeService.setProperty(fileNodeRef, FileModel.Props.ACTIVE, active);
         addFileToDocument(displayName, documentNodeRef, movedFileNodeRef);
         return movedFileNodeRef;
     }
 
     @Override
     public NodeRef addFileToDocument(String name, String displayName, NodeRef documentNodeRef, java.io.File file, String mimeType) {
-        return addFileToDocument(name, displayName, documentNodeRef, file, mimeType, true);
-    }
-
-    @Override
-    public NodeRef addFileToDocument(String name, String displayName, NodeRef documentNodeRef, java.io.File file, String mimeType, boolean active) {
-        NodeRef fileNodeRef = addFile(name, displayName, documentNodeRef, file, mimeType, active);
-        addFileToDocument(displayName, documentNodeRef, fileNodeRef);
-        return fileNodeRef;
-    }
-
-    @Override
-    public NodeRef addFile(String name, String displayName, NodeRef nodeRef, java.io.File file, String mimeType) {
-        return addFile(name, displayName, nodeRef, file, mimeType, true);
-    }
-
-    @Override
-    public NodeRef addFile(String name, String displayName, NodeRef nodeRef, java.io.File file, String mimeType, boolean active) {
         FileInfo fileInfo = fileFolderService.create(
-                nodeRef,
+                documentNodeRef,
                 name,
                 ContentModel.TYPE_CONTENT);
         NodeRef fileNodeRef = fileInfo.getNodeRef();
         ContentWriter writer = fileFolderService.getWriter(fileNodeRef);
         generalService.writeFile(writer, file, name, mimeType);
-        nodeService.setProperty(fileNodeRef, FileModel.Props.DISPLAY_NAME, displayName);
-        nodeService.setProperty(fileNodeRef, FileModel.Props.ACTIVE, active);
 
-        return fileNodeRef;
-    }
+        addFileToDocument(displayName, documentNodeRef, fileNodeRef);
 
-    @Override
-    public NodeRef addFile(String name, String displayName, NodeRef parentNodeRef, ContentReader reader) {
-        FileInfo fileInfo = fileFolderService.create(
-                parentNodeRef,
-                name,
-                ContentModel.TYPE_CONTENT);
-        NodeRef fileNodeRef = fileInfo.getNodeRef();
-        ContentWriter writer = fileFolderService.getWriter(fileNodeRef);
-        writer.setEncoding(reader.getEncoding());
-        writer.setMimetype(reader.getMimetype());
-        writer.putContent(reader.getContentInputStream());
-        nodeService.setProperty(fileNodeRef, FileModel.Props.DISPLAY_NAME, displayName);
         return fileNodeRef;
     }
 
     private void addFileToDocument(String displayName, NodeRef documentNodeRef, NodeRef fileNodeRef) {
+        nodeService.setProperty(fileNodeRef, FileModel.Props.DISPLAY_NAME, displayName);
         addVersionModifiedAspect(fileNodeRef);
         documentLogService.addDocumentLog(documentNodeRef, MessageUtil.getMessage("document_log_status_fileAdded", displayName));
     }
 
     private void addVersionModifiedAspect(NodeRef nodeRef) {
-        if (!nodeService.hasAspect(nodeRef, VersionsModel.Aspects.VERSION_MODIFIED)) {
+        if (nodeService.hasAspect(nodeRef, VersionsModel.Aspects.VERSION_MODIFIED) == false) {
             Map<QName, Serializable> properties = nodeService.getProperties(nodeRef);
 
             String user = (String) properties.get(ContentModel.PROP_CREATOR);
@@ -407,6 +341,19 @@ public class FileServiceImpl implements FileService {
     }
 
     @Override
+    public List<File> getAllScannedFiles() {
+        NodeRef scannedNodeRef = generalService.getNodeRef(scannedFilesPath);
+        Assert.notNull(scannedNodeRef, "Scanned files node reference not found");
+        List<FileInfo> fileInfos = fileFolderService.listFolders(scannedNodeRef);
+        List<File> files = new ArrayList<File>(fileInfos.size());
+        for (FileInfo fileInfo : fileInfos) {
+            final List<File> filesInFolder = getScannedFiles(fileInfo.getNodeRef());
+            files.addAll(filesInFolder);
+        }
+        return files;
+    }
+
+    @Override
     public List<File> getScannedFiles(NodeRef folderRef) {
         if (log.isDebugEnabled()) {
             log.debug("Getting scanned files");
@@ -434,11 +381,11 @@ public class FileServiceImpl implements FileService {
 
     @Override
     public String generateURL(NodeRef nodeRef) {
-        String runAsUser = AuthenticationUtil.getRunAsUser();
-        String name = fileFolderService.getFileInfo(nodeRef).getName();
-        if (!nodeRef.getStoreRef().getProtocol().equals(StoreRef.PROTOCOL_WORKSPACE) || StringUtils.isBlank(runAsUser) || AuthenticationUtil.isRunAsUserTheSystemUser()) {
+        if (!generalService.getStore().equals(nodeRef.getStoreRef())) {
+            String name = fileFolderService.getFileInfo(nodeRef).getName();
             return DownloadContentServlet.generateDownloadURL(nodeRef, name);
         }
+
         // calculate a WebDAV URL for the given node
         StringBuilder path = new StringBuilder("/").append(WebDAVServlet.WEBDAV_PREFIX);
 
@@ -454,6 +401,7 @@ public class FileServiceImpl implements FileService {
         NodeRef parent = nodeService.getPrimaryParent(nodeRef).getParentRef();
         path.append("/").append(URLEncoder.encode(parent.getId()));
 
+        String name = fileFolderService.getFileInfo(nodeRef).getName();
         path.append("/").append(URLEncoder.encode(name));
 
         return path.toString();
@@ -491,45 +439,6 @@ public class FileServiceImpl implements FileService {
                 }
             }
         }
-    }
-
-    @Override
-    public List<Subfolder> getSubfolders(NodeRef parentRef, QName childNodeType, QName countableChildNodeType) {
-        List<Subfolder> subfolders = new ArrayList<Subfolder>();
-        List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(parentRef, Collections.singleton(childNodeType));
-        for (ChildAssociationRef childAssocRef : childAssocs) {
-            NodeRef childRef = childAssocRef.getChildRef();
-            Node folder = new Node(childRef);
-            List<ChildAssociationRef> documents = nodeService.getChildAssocs(childRef, Collections.singleton(countableChildNodeType));
-            subfolders.add(new Subfolder(folder, documents == null ? 0 : documents.size()));
-        }
-        return subfolders;
-    }
-
-    @Override
-    public NodeRef findSubfolderWithName(NodeRef parentNodeRef, String folderName, QName subfolderType) {
-        List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(parentNodeRef, Collections.singleton(subfolderType));
-        for (ChildAssociationRef childAssoc : childAssocs) {
-            if (childAssoc.getQName().getLocalName().equals(folderName)) {
-                return childAssoc.getChildRef();
-            }
-        }
-        return null;
-    }
-
-    @Override
-    public boolean isFileGenerated(NodeRef fileRef) {
-        return isFileGeneratedFromTemplate(fileRef) || nodeService.getProperty(fileRef, FileModel.Props.GENERATION_TYPE) != null;
-    }
-
-    @Override
-    public boolean isFileGeneratedFromTemplate(NodeRef fileRef) {
-        return nodeService.getProperty(fileRef, FileModel.Props.GENERATED_FROM_TEMPLATE) != null;
-    }
-
-    @Override
-    public boolean isFileAssociatedWithDocMetadata(NodeRef fileRef) {
-        return fileRef != null && Boolean.TRUE.equals(nodeService.getProperty(fileRef, FileModel.Props.UPDATE_METADATA_IN_FILES));
     }
 
     // START: getters / setters

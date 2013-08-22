@@ -7,7 +7,6 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.bean.repository.Node;
 
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
-import ee.webmedia.alfresco.volume.model.DeletedDocument;
 import ee.webmedia.alfresco.volume.model.Volume;
 
 /**
@@ -65,16 +64,4 @@ public interface VolumeService {
     void closeVolume(Volume volume);
 
     boolean isClosed(Node volumeNode);
-
-    boolean isCaseVolumeEnabled();
-
-    void openVolume(Volume volume);
-
-    boolean isOpened(Node node);
-
-    void saveDeletedDocument(NodeRef volumeNodeRef, DeletedDocument deletedDocument);
-
-    List<DeletedDocument> getDeletedDocuments(NodeRef volumeNodeRef);
-
-    DeletedDocument getDeletedDocument(NodeRef deletedDocumentNodeRef);
 }

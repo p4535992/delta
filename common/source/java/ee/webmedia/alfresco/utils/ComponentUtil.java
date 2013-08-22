@@ -1,18 +1,13 @@
 package ee.webmedia.alfresco.utils;
 
-import static org.alfresco.web.bean.generator.BaseComponentGenerator.CustomAttributeNames.STYLE_CLASS;
-
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.ResourceBundle;
 import java.util.Set;
 
 import javax.faces.FacesException;
@@ -25,15 +20,11 @@ import javax.faces.component.UIParameter;
 import javax.faces.component.UISelectItem;
 import javax.faces.component.UIViewRoot;
 import javax.faces.component.ValueHolder;
-import javax.faces.component.html.HtmlGraphicImage;
 import javax.faces.component.html.HtmlSelectManyListbox;
 import javax.faces.context.FacesContext;
 import javax.faces.context.ResponseWriter;
 import javax.faces.convert.Converter;
 import javax.faces.el.ValueBinding;
-import javax.faces.event.ActionEvent;
-import javax.faces.event.FacesEvent;
-import javax.faces.event.PhaseId;
 import javax.faces.model.SelectItem;
 
 import org.alfresco.service.cmr.dictionary.DataTypeDefinition;
@@ -41,7 +32,6 @@ import org.alfresco.service.cmr.dictionary.PropertyDefinition;
 import org.alfresco.service.cmr.dictionary.TypeDefinition;
 import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
 import org.alfresco.service.cmr.repository.datatype.TypeConversionException;
-import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
 import org.alfresco.web.app.servlet.FacesHelper;
@@ -49,23 +39,14 @@ import org.alfresco.web.bean.generator.BaseComponentGenerator;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.Repository;
 import org.alfresco.web.config.ActionsConfigElement.ActionDefinition;
-import org.alfresco.web.config.PropertySheetElementReader;
 import org.alfresco.web.ui.common.ComponentConstants;
 import org.alfresco.web.ui.common.Utils;
 import org.alfresco.web.ui.common.component.UIActionLink;
-import org.alfresco.web.ui.common.component.UIPanel;
-import org.alfresco.web.ui.common.component.data.UIColumn;
-import org.alfresco.web.ui.common.component.data.UISortLink;
-import org.alfresco.web.ui.common.renderer.ActionLinkRenderer;
 import org.alfresco.web.ui.repo.RepoConstants;
 import org.alfresco.web.ui.repo.component.UIActions;
 import org.alfresco.web.ui.repo.component.property.PropertySheetItem;
 import org.alfresco.web.ui.repo.component.property.UIProperty;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
-import org.alfresco.web.ui.repo.tag.LoadBundleTag;
-import org.apache.commons.collections.Closure;
-import org.apache.commons.collections.comparators.NullComparator;
-import org.apache.commons.collections.comparators.TransformingComparator;
 import org.apache.commons.lang.StringUtils;
 import org.apache.myfaces.shared_impl.renderkit.html.HtmlFormRendererBase;
 import org.apache.myfaces.shared_impl.taglib.UIComponentTagUtils;
@@ -79,20 +60,12 @@ import ee.webmedia.alfresco.common.propertysheet.component.SubPropertySheetItem;
 import ee.webmedia.alfresco.common.propertysheet.component.SubPropertySheetItem.AddRemoveActionListener;
 import ee.webmedia.alfresco.common.propertysheet.component.WMUIProperty;
 import ee.webmedia.alfresco.common.propertysheet.component.WMUIPropertySheet;
-import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement.ItemConfigVO;
-import ee.webmedia.alfresco.common.propertysheet.customchildrencontainer.CustomChildrenCreator;
 import ee.webmedia.alfresco.common.propertysheet.datepicker.DatePickerConverter;
 import ee.webmedia.alfresco.common.propertysheet.generator.CustomAttributes;
-import ee.webmedia.alfresco.common.propertysheet.generator.GeneralSelectorGenerator;
 import ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.ComponentPropVO;
 import ee.webmedia.alfresco.common.propertysheet.multivalueeditor.MultiValueEditor;
 import ee.webmedia.alfresco.common.propertysheet.search.Search;
 import ee.webmedia.alfresco.common.service.GeneralService;
-import ee.webmedia.alfresco.common.web.BeanHelper;
-import ee.webmedia.alfresco.docadmin.service.Field;
-import ee.webmedia.alfresco.document.file.model.File;
-import ee.webmedia.alfresco.document.model.DocumentCommonModel;
-import ee.webmedia.alfresco.privilege.web.DocPermissionEvaluator;
 
 /**
  * Util methods for JSF components/component trees
@@ -100,64 +73,14 @@ import ee.webmedia.alfresco.privilege.web.DocPermissionEvaluator;
  * @author Ats Uiboupin
  */
 public class ComponentUtil {
-    private static final String ATTR_STYLE_CLASS = "styleClass";
     private static final String JSF_CONVERTER = "jsfConverter";
     public static final String IS_ALWAYS_EDIT = "isAlwaysEdit";
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(ComponentUtil.class);
     private static GeneralService generalService;
-    public static final String DEFAULT_SELECT_VALUE = "";
-
-    private static final Comparator<UIComponent> BY_LABEL_COMPARATOR;
-    static {
-        @SuppressWarnings("unchecked")
-        Comparator<UIComponent> byLabelComparator = new TransformingComparator(new ComparableTransformer<UIComponent>() {
-            @Override
-            public Comparable<?> tr(UIComponent input) {
-                if (input instanceof UISelectItem) {
-                    return ((UISelectItem) input).getItemLabel();
-                }
-                return null;
-            }
-        }, new NullComparator());
-        BY_LABEL_COMPARATOR = byLabelComparator;
-    }
-
-    public static void sortByLabel(List<UIComponent> selectOptions) {
-        Collections.sort(selectOptions, BY_LABEL_COMPARATOR);
-    }
 
     public static UIComponent makeCondenced(final UIComponent component, int condenceSize) {
-        putAttribute(component, ATTR_STYLE_CLASS, "condence" + condenceSize);
+        ComponentUtil.putAttribute(component, "styleClass", "condence" + condenceSize);
         return component;
-    }
-
-    public static void writeModalHeader(ResponseWriter out, String modalId, String modalTitle, String closeOnClick) throws IOException {
-        writeModalHeader(out, modalId, modalTitle, "", closeOnClick);
-    }
-
-    public static void writeModalHeader(ResponseWriter out, String modalId, String modalTitle, String modalWrapStyleClass, String closeOnClick) throws IOException {
-        StringBuilder sb = new StringBuilder();
-        sb.append("<div id=\"");
-        sb.append(modalId);
-        sb.append("\" class=\"modalpopup modalwrap " + modalWrapStyleClass + "\">");
-        sb.append("<div class=\"modalpopup-header clear\"><h1>");
-        sb.append(modalTitle);
-        sb.append("</h1><p class=\"close\"><a href=\"#\" onclick=\"");
-        if (StringUtils.isBlank(closeOnClick)) {
-            sb.append("return hideModal()");
-        } else {
-            sb.append(closeOnClick);
-        }
-        sb.append("\">");
-        sb.append(MessageUtil.getMessage("close_window"));
-        sb.append("</a></p></div><div class=\"modalpopup-content\"><div class=\"modalpopup-content-inner modalpopup-filter\">");
-
-        out.write(sb.toString());
-    }
-
-    public static void writeModalFooter(ResponseWriter out) throws IOException {
-        // close modal popup
-        out.write("</div></div></div>");
     }
 
     /**
@@ -172,17 +95,6 @@ public class ComponentUtil {
         @SuppressWarnings("unchecked")
         final Map<String, Object> attributes = component.getAttributes();
         attributes.put(key, value);
-        return attributes;
-    }
-
-    /**
-     * Add all attributes from given map to given component
-     */
-    public static Map<String, Object> addAttributes(UIComponent component, Map<String, Object> attributesToAdd) {
-        final Map<String, Object> attributes = getAttributes(component);
-        if (attributesToAdd != null) {
-            attributes.putAll(attributesToAdd);
-        }
         return attributes;
     }
 
@@ -255,16 +167,6 @@ public class ComponentUtil {
         final AddRemoveActionListener listener = new AddRemoveActionListener();
         link.addActionListener(listener);
         link.setShowLink(actionDef.ShowLink);
-
-        @SuppressWarnings("unchecked")
-        List<UIComponent> children = link.getChildren();
-        for (Entry<String, String> entry : actionDef.getParams().entrySet()) {
-            UIParameter param = (UIParameter) application.createComponent(UIParameter.COMPONENT_TYPE);
-            param.setName(entry.getKey());
-            param.setValue(entry.getValue());
-            children.add(param);
-        }
-
         return link;
     }
 
@@ -290,11 +192,13 @@ public class ComponentUtil {
         return componentChildren;
     }
 
+    @SuppressWarnings("unchecked")
     public static List<UIComponent> getChildren(UIComponent component) {
         return component.getChildren();
     }
 
     public static Map<String, UIComponent> addFacet(UIComponent component, String facetName, UIComponent facet) {
+        @SuppressWarnings("unchecked")
         final Map<String, UIComponent> facets = component.getFacets();
         facets.put(facetName, facet);
         return facets;
@@ -307,8 +211,8 @@ public class ComponentUtil {
      * @return UIInput from the same UIPropertySheet as the given <code>component</code> where id ends with given <code>searchPropertyIdSuffix</code>
      */
     public static UIInput getInputFromSamePropertySheet(UIComponent component, String searchPropertyIdSuffix) {
-        UIPropertySheet propSheetComponent = getAncestorComponent(component, UIPropertySheet.class, true);
-        UIProperty matchingProperty = findUIPropertyByIdSuffix(propSheetComponent, searchPropertyIdSuffix);
+        UIPropertySheet propSheetComponent = ComponentUtil.getAncestorComponent(component, UIPropertySheet.class, true);
+        UIProperty matchingProperty = ComponentUtil.findUIPropertyByIdSuffix(propSheetComponent, searchPropertyIdSuffix);
         UIInput propertyInput = getInputOfProperty(matchingProperty);
         return propertyInput;
     }
@@ -458,69 +362,6 @@ public class ComponentUtil {
         throw new RuntimeException("Can't find the lable for '" + propertyName + "'");
     }
 
-    public static String getDisplayLabel(UIComponent component) {
-        String labelTranslated = (String) component.getAttributes().get(ATTR_DISPLAY_LABEL);
-        if (StringUtils.isBlank(labelTranslated)) {
-            UIProperty thisUIProperty = getAncestorComponent(component, UIProperty.class, true);
-            if (thisUIProperty != null) {
-                labelTranslated = getPropertyLabel(thisUIProperty, component.getId());
-                if (StringUtils.isBlank(labelTranslated)) {
-                    QName propName = QName.createQName(thisUIProperty.getName(), BeanHelper.getNamespaceService());
-                    PropertyDefinition propDef = BeanHelper.getDictionaryService().getProperty(propName);
-                    labelTranslated = propDef.getTitle();
-                }
-            }
-        }
-        return StringUtils.trim(labelTranslated);
-    }
-
-    public static String getPanelLabel(UIComponent descendantOfPanel) {
-        UIPanel panel = getAncestorComponent(descendantOfPanel, UIPanel.class, true);
-        String panelLabel = ""; // if panel not found then ignore
-        if (panel != null) {
-            FacesContext facesContext = FacesContext.getCurrentInstance();
-            loadMsgBundleIfNeeded(facesContext, "msg"); // needed to translate panel label
-            panelLabel = panel.getLabel();
-            Assert.notNull(panelLabel, "Panel lable shouldn't be null"); // panel found, but without label - this shouldn't happen
-        }
-        return StringUtils.trim(panelLabel);
-    }
-
-    public static String getColumnLabel(UIComponent descendantOfColumn) {
-        UIColumn column = getAncestorComponent(descendantOfColumn, UIColumn.class, true);
-        String label = ""; // if column not found then ignore
-        if (column != null) {
-            FacesContext facesContext = FacesContext.getCurrentInstance();
-            UIComponent headerFacet = column.getFacet("header");
-            if (headerFacet instanceof UISortLink) {
-                UISortLink sortLink = (UISortLink) headerFacet;
-                loadMsgBundleIfNeeded(facesContext, "msg"); // needed to translate panel label
-                label = sortLink.getLabel();
-            } else if (headerFacet instanceof UIOutput) {
-                UIOutput sortLink = (UIOutput) headerFacet;
-                loadMsgBundleIfNeeded(facesContext, "msg"); // needed to translate panel label
-                label = DefaultTypeConverter.INSTANCE.convert(String.class, sortLink.getValue());
-            } else {
-                String msg = "TODO: unimplemented - see example few lines above in code.";
-                if (headerFacet != null) {
-                    msg += " facetClass=" + headerFacet.getClass();
-                }
-                throw new RuntimeException(msg);
-            }
-            Assert.notNull(label, "Column lable shouldn't be null"); // column found, but without label - this shouldn't happen
-        }
-        return StringUtils.trim(label);
-    }
-
-    private static void loadMsgBundleIfNeeded(FacesContext facesContext, String msgBundleVar) {
-        @SuppressWarnings("unchecked")
-        Map<String, Object> requestMap = facesContext.getExternalContext().getRequestMap();
-        if (!requestMap.containsKey(msgBundleVar)) { // bundle is not jet loaded using var msgBundleVar
-            ResourceBundle bundle = org.alfresco.web.app.Application.getBundle(facesContext);
-            requestMap.put(msgBundleVar, new LoadBundleTag.BundleMap(bundle));
-        }
-    }
-
     /**
      * @param uiProperty
      * @return first(hopefully the only) input of given <code>uiProperty</code>
@@ -537,13 +378,13 @@ public class ComponentUtil {
     }
 
     /**
-     * @param component - this component and all its children will recursively be set readonly
+     * @param component - this component and all its children will recursively be set disabled
      */
-    public static void setReadonlyAttributeRecursively(UIComponent component) {
-        setReadonlyAttributeRecursively(component, Boolean.TRUE);
+    public static void setDisabledAttributeRecursively(UIComponent component) {
+        setDisabledAttributeRecursively(component, Boolean.TRUE);
     }
 
-    public static void setReadonlyAttributeRecursively(UIComponent component, Boolean value) {
+    public static void setDisabledAttributeRecursively(UIComponent component, Boolean value) {
         if (isAlwaysEditComponent(component)) {
             return;
         }
@@ -557,7 +398,7 @@ public class ComponentUtil {
             return;
         }
         for (UIComponent childComponent : children) {
-            setReadonlyAttributeRecursively(childComponent, value);
+            setDisabledAttributeRecursively(childComponent, value);
         }
     }
 
@@ -582,7 +423,7 @@ public class ComponentUtil {
             readOnly = readOnlyAttr.equals(Boolean.TRUE);
         }
 
-        return (disabled || readOnly) && !isAlwaysEditComponent(component);
+        return (disabled || readOnly) && !ComponentUtil.isAlwaysEditComponent(component);
     }
 
     /**
@@ -610,7 +451,7 @@ public class ComponentUtil {
         @SuppressWarnings("unchecked")
         List<UIComponent> children = component.getChildren();
         children.clear();
-        setReadonlyAttributeRecursively(component, selectItems == null);
+        setDisabledAttributeRecursively(component, selectItems == null);
         if (selectItems == null) {
             component.setValue(null);
         } else {
@@ -720,10 +561,7 @@ public class ComponentUtil {
         return generateAjaxFormSubmit(context, component, fieldId, value, params, 0);
     }
 
-    public static String generateAjaxFormSubmit(FacesContext context, UIComponent component, String fieldId, String value, Integer parentLevel) {
-        if (parentLevel == null) {
-            parentLevel = 0;
-        }
+    public static String generateAjaxFormSubmit(FacesContext context, UIComponent component, String fieldId, String value, int parentLevel) {
         return generateAjaxFormSubmit(context, component, fieldId, value, null, parentLevel);
     }
 
@@ -824,21 +662,21 @@ public class ComponentUtil {
      * @param out
      * @throws IOException
      */
-    public static String generateSuggestScript(FacesContext context, UIComponent child, String pickerCallback) {
-        if (!(child instanceof UIInput) || StringUtils.isBlank(pickerCallback) || isComponentDisabledOrReadOnly(child)) {
-            return "";
+    public static void generateSuggestScript(FacesContext context, UIComponent child, String pickerCallback, ResponseWriter out) throws IOException {
+        if (!(child instanceof UIInput) || StringUtils.isBlank(pickerCallback)) {
+            return;
         }
 
         String clientId = child.getClientId(context);
         // Strip method binding delimiters for javascript
-        if (StringUtils.isNotBlank(pickerCallback) && pickerCallback.contains("#{")) {
+        if (pickerCallback.contains("#{")) {
             pickerCallback = pickerCallback.substring("#{".length(), pickerCallback.length() - 1);
         }
 
         int ajaxParentLevel = 0;
-        UIComponent searchComponent = getAncestorComponent(child, Search.class);
+        UIComponent searchComponent = ComponentUtil.getAncestorComponent(child, Search.class);
         if (searchComponent == null) {
-            searchComponent = getAncestorComponent(child, MultiValueEditor.class);
+            searchComponent = ComponentUtil.getAncestorComponent(child, MultiValueEditor.class);
             ajaxParentLevel++;
         }
 
@@ -852,7 +690,7 @@ public class ComponentUtil {
         } else if (ajaxParentLevel == 0) {
             ajaxParentLevel++; // set default level to 1
         }
-        UIComponent ancestorAjaxComponent = findAncestorAjaxComponent(searchComponent, null, ajaxParentLevel).getSecond();
+        UIComponent ancestorAjaxComponent = ComponentUtil.findAncestorAjaxComponent(searchComponent, null, ajaxParentLevel).getSecond();
         if (ancestorAjaxComponent == null) {
             throw new RuntimeException("Couldn't find parent ajax component to update for " + clientId + "!");
         }
@@ -869,7 +707,7 @@ public class ComponentUtil {
                 .append(pickerCallback).append(sep)
                 .append(submitUri).append("\");");
         sb.append("</script>");
-        return sb.toString();
+        out.write(sb.toString());
     }
 
     public static void setAjaxDisabled(UIComponent component) {
@@ -897,14 +735,13 @@ public class ComponentUtil {
     public static UIComponent generateAndAddComponent(FacesContext context, ComponentPropVO componentPropVO, UIPropertySheet propertySheet,
             final List<UIComponent> children) {
         if (!componentPropVO.isUseComponentGenerator()) {
-            final UIComponent component = createCellComponent(context, componentPropVO, propertySheet);
+            final UIComponent component = createCellComponent(context, componentPropVO);
             children.add(component);
             return component;
         }
-        final Map<String, String> customAttributes = componentPropVO.getCustomAttributes();
         final String propName = componentPropVO.getPropertyName();
-        final String label = componentPropVO.getPropertyLabel();
 
+        final String label = componentPropVO.getPropertyLabel();
         PropertySheetItem fakeItem = new WMUIProperty() {
             @Override
             public String getName() {
@@ -917,36 +754,13 @@ public class ComponentUtil {
             }
 
             @Override
-            public List<UIComponent> getChildren() {
+            @SuppressWarnings("unchecked")
+            public List getChildren() {
                 return children;
             }
-
-            @Override
-            public String getComponentGenerator() {
-                return customAttributes.get(PropertySheetElementReader.ATTR_COMPONENT_GENERATOR);
-            }
-
-            @Override
-            public String getDisplayLabel() {
-                return customAttributes.get(PropertySheetElementReader.ATTR_DISPLAY_LABEL);
-            }
-
-            @Override
-            public String getConverter() {
-                return customAttributes.get(PropertySheetElementReader.ATTR_CONVERTER);
-            }
-
-            @Override
-            public boolean getIgnoreIfMissing() {
-                return Boolean.parseBoolean(customAttributes.get(PropertySheetElementReader.ATTR_IGNORE_IF_MISSING));
-            }
-
-            @Override
-            public boolean isReadOnly() {
-                return Boolean.parseBoolean(customAttributes.get(PropertySheetElementReader.ATTR_READ_ONLY));
-            }
-
         };
+
+        Map<String, String> customAttributes = componentPropVO.getCustomAttributes();
         ((CustomAttributes) fakeItem).setCustomAttributes(customAttributes);
 
         UIComponent component = componentPropVO.getComponentGenerator(context).generateAndAdd(context, propertySheet, fakeItem);
@@ -978,10 +792,9 @@ public class ComponentUtil {
      * 
      * @param context
      * @param vo
-     * @param propertySheet
      * @return
      */
-    private static UIComponent createCellComponent(FacesContext context, ComponentPropVO vo, UIPropertySheet propertySheet) {
+    private static UIComponent createCellComponent(FacesContext context, ComponentPropVO vo) {
         UIComponent component = null;
 
         String type = vo.getGeneratorName();
@@ -993,14 +806,14 @@ public class ComponentUtil {
             component = context.getApplication().createComponent(ComponentConstants.JAVAX_FACES_INPUT);
             @SuppressWarnings("unchecked")
             Map<String, Object> attributes = component.getAttributes();
-            attributes.put(ATTR_STYLE_CLASS, "date");
-            createAndSetConverter(context, DatePickerConverter.CONVERTER_ID, component);
+            attributes.put("styleClass", "date");
+            ComponentUtil.createAndSetConverter(context, DatePickerConverter.CONVERTER_ID, component);
         } else if (StringUtils.equals("ClassificatorSelectorGenerator", type)) {
             if (voCustomAttributes.containsKey(ClassificatorSelectorGenerator.ATTR_CLASSIFICATOR_NAME)) {
                 ClassificatorSelectorGenerator classificGenerator = new ClassificatorSelectorGenerator();
                 classificGenerator.setCustomAttributes(voCustomAttributes);
                 component = classificGenerator.generateSelectComponent(context, null, false);
-                classificGenerator.setupSelectComponent(context, propertySheet, null, null, component, false);
+                classificGenerator.setupSelectComponent(context, null, null, null, component, false);
             } else {
                 throw new RuntimeException("Component type '" + type + "' requires a classificator name in definition. Failing fast!");
             }
@@ -1033,14 +846,11 @@ public class ComponentUtil {
     }
 
     public static PropertyDefinition getPropertyDefinition(FacesContext context, Node node, String propName) {
-        QName propertyQName = Repository.resolveToQName(propName);
-        PropertyDefinition propDef = BeanHelper.getDocumentConfigService().getPropertyDefinition(node, propertyQName);
-        if (propDef == null) {
-            TypeDefinition typeDef = getGeneralService().getAnonymousType(node);
-            if (typeDef != null) {
-                Map<QName, PropertyDefinition> properties = typeDef.getProperties();
-                propDef = properties.get(propertyQName);
-            }
+        PropertyDefinition propDef = null;
+        TypeDefinition typeDef = getGeneralService().getAnonymousType(node);
+        if (typeDef != null) {
+            Map<QName, PropertyDefinition> properties = typeDef.getProperties();
+            propDef = properties.get(Repository.resolveToQName(propName));
         }
         return propDef;
     }
@@ -1079,11 +889,9 @@ public class ComponentUtil {
     public static UIComponent findComponentById(FacesContext context, UIComponent root, String id) {
         UIComponent component = null;
 
-        for (UIComponent child : getChildren(root)) {
+        for (int i = 0; i < root.getChildCount() && component == null; i++) {
+            UIComponent child = (UIComponent) root.getChildren().get(i);
             component = findComponentById(context, child, id);
-            if (component != null) {
-                break;
-            }
         }
 
         if (root.getId() != null) {
@@ -1095,29 +903,17 @@ public class ComponentUtil {
     }
 
     public static UIComponent findChildComponentById(FacesContext context, UIComponent component, String clientId) {
-        return findChildComponentById(context, component, clientId, false);
-    }
-
-    public static UIComponent findChildComponentById(FacesContext context, UIComponent component, String clientId, boolean includeFacets) {
         if (component == null) {
             return null;
         }
         if (clientId.equals(component.getClientId(context))) {
             return component;
         }
-        for (UIComponent child : getChildren(component)) {
-            UIComponent result = findChildComponentById(context, child, clientId, includeFacets);
+        for (int i = 0; i < component.getChildCount(); i++) {
+            UIComponent child = (UIComponent) component.getChildren().get(i);
+            UIComponent result = findChildComponentById(context, child, clientId);
             if (result != null) {
                 return result;
-            }
-        }
-        if (includeFacets) {
-            Collection<UIComponent> facetComponents = component.getFacets().values();
-            for (UIComponent facet : facetComponents) {
-                UIComponent result = findChildComponentById(context, facet, clientId, true);
-                if (result != null) {
-                    return result;
-                }
             }
         }
         return null;
@@ -1128,7 +924,8 @@ public class ComponentUtil {
         if (component == null) {
             return null;
         }
-        for (UIComponent child : getChildren(component)) {
+        for (int i = 0; i < component.getChildCount(); i++) {
+            UIComponent child = (UIComponent) component.getChildren().get(i);
             List<T> results2 = findChildComponentsByClass(context, child, clazz);
             if (results2 != null) {
                 if (results == null) {
@@ -1161,18 +958,6 @@ public class ComponentUtil {
         return null;
     }
 
-    @SuppressWarnings("unchecked")
-    public static <T extends UIComponent> T findParentWithClass(FacesContext context, UIComponent component, Class<T> clazz) {
-        UIComponent parent = component.getParent();
-        while (parent != null) {
-            if (parent.getClass().isAssignableFrom(clazz)) {
-                return (T) parent;
-            }
-            parent = parent.getParent();
-        }
-        return null;
-    }
-
     /**
      * @param context
      * @param propertySheet
@@ -1190,13 +975,13 @@ public class ComponentUtil {
                 final Integer associationIndex = wmPropSheet.getAssociationIndex();
                 if (associationIndex != null) {
                     final AssocInfoHolder assocInfoHolder = new AssocInfoHolder();
-                    final SubPropertySheetItem subPropSheetItem = getAncestorComponent(ancestorPropSheet, SubPropertySheetItem.class, true);
+                    final SubPropertySheetItem subPropSheetItem = ComponentUtil.getAncestorComponent(ancestorPropSheet, SubPropertySheetItem.class, true);
                     assocInfoHolder.assocTypeQName = subPropSheetItem.getAssocTypeQName();
                     assocInfoHolder.associationBrand = wmPropSheet.getAssociationBrand();
                     assocInfoHolder.associationIndex = associationIndex;
                     assocInfoHolder.validate();
                     pathInfos.add(assocInfoHolder);
-                    UIPropertySheet nextAncestorPropSheet = getAncestorComponent(subPropSheetItem, UIPropertySheet.class, true);
+                    UIPropertySheet nextAncestorPropSheet = ComponentUtil.getAncestorComponent(subPropSheetItem, UIPropertySheet.class, true);
                     if (nextAncestorPropSheet != null) {
                         ancestorPropSheet = nextAncestorPropSheet;
                         continue;
@@ -1229,25 +1014,6 @@ public class ComponentUtil {
         return generalService;
     }
 
-    public static <T extends PropertySheetItem> T getPropSheetItem(UIPropertySheet propertySheet, Class<T> componentClass, QName uiPropertyName) {
-        String localName = uiPropertyName.getLocalName();
-        NamespaceService namespaceService = BeanHelper.getNamespaceService();
-        for (UIComponent uiComponent : getChildren(propertySheet)) {
-            if (componentClass.isAssignableFrom(uiComponent.getClass())) {
-                @SuppressWarnings("unchecked")
-                T propSheetItem = (T) uiComponent;
-                String psItemLocalName = propSheetItem.getName();
-                if (psItemLocalName.endsWith(localName)) {
-                    String resolveToQNameString = QName.resolveToQNameString(namespaceService, propSheetItem.getName());
-                    if (uiPropertyName.toString().equals(resolveToQNameString)) {
-                        return propSheetItem;
-                    }
-                }
-            }
-        }
-        throw new IllegalArgumentException("Didn't find " + componentClass.getSimpleName() + " with name " + uiPropertyName + " from given propertySheet");
-    }
-
     /** private class to hold association info for creating value binding */
     private static class AssocInfoHolder {
         int associationIndex;
@@ -1273,43 +1039,13 @@ public class ComponentUtil {
         }
     }
 
-    /**
-     * Creates new {@link FacesEvent} using closure, that is executed once in given phase
-     * 
-     * @param phaseId
-     * @param uiComponent
-     * @param closure
-     */
-    public static void executeLater(PhaseId phaseId, UIComponent uiComponent, final Closure closure) {
-        @SuppressWarnings("unused")
-        ExecuteLater executeLater = new ExecuteLater(phaseId, uiComponent) {
-            private static final long serialVersionUID = 1L;
-
-            @Override
-            public void execute() {
-                closure.execute(null);
-            }
-        };
-    }
-
-    /**
-     * Similar method for {@link UISelectItem} objects is {@link GeneralSelectorGenerator#addDefault(FacesContext, List)}
-     * 
-     * @param results
-     * @param context
-     */
-    public static void addDefault(List<SelectItem> results, FacesContext context) {
-        SelectItem selectItem = new SelectItem(DEFAULT_SELECT_VALUE, MessageUtil.getMessage(context, "select_default_label"));
-        results.add(0, selectItem);
-    }
-
     public static boolean isAlwaysEditComponent(UIComponent component) {
         @SuppressWarnings("unchecked")
         Map<String, Object> attributes = component.getAttributes();
         return attributes.containsKey(IS_ALWAYS_EDIT) && Boolean.valueOf((Boolean) attributes.get(IS_ALWAYS_EDIT));
     }
 
-    public static int getRenderedChildrenCount(UIComponent parent) {
+    public static int getRenderedChildrenCount(UIComponent parent, Class clazz) {
         if (parent == null || parent.getChildCount() == 0) {
             return 0;
         }
@@ -1321,150 +1057,4 @@ public class ComponentUtil {
         }
         return count;
     }
-
-    public static void addOnchangeClickLink(Application application, List<UIComponent> children, String methodBindingStr, String linkId, UIParameter... parameters) {
-        UIActionLink hiddenLink = (UIActionLink) application.createComponent("org.alfresco.faces.ActionLink");
-        hiddenLink.setId(linkId);
-        hiddenLink.setValue(linkId);
-        hiddenLink.setActionListener(application.createMethodBinding(methodBindingStr, new Class[] { ActionEvent.class }));
-        children.add(hiddenLink);
-        hiddenLink.getAttributes().put("style", "display: none;");
-        for (UIParameter parameter : parameters) {
-            addChildren(hiddenLink, parameter);
-        }
-    }
-
-    public static void addOnchangeJavascript(UIComponent component) {
-        Map<String, Object> attributes = getAttributes(component);
-        String styleClass = (String) attributes.get(ATTR_STYLE_CLASS);
-        attributes.put(ATTR_STYLE_CLASS, (StringUtils.isNotBlank(styleClass) ? styleClass + " " : "") + getOnChangeStyleClass());
-    }
-
-    public static String getOnChangeStyleClass() {
-        return GeneralSelectorGenerator.ONCHANGE_PARAM_MARKER_CLASS + GeneralSelectorGenerator.ONCHANGE_SCRIPT_START_MARKER
-                + "var link = jQuery('#' + escapeId4JQ(currElId)).nextAll('a').eq(0); link.click();";
-    }
-
-    public static void addStyleClass(UIComponent uiComponent, String styleClassName) {
-        String styleClass = (String) getAttribute(uiComponent, STYLE_CLASS);
-        styleClass = styleClassName + (StringUtils.isBlank(styleClass) ? "" : " " + styleClass);
-        putAttribute(uiComponent, STYLE_CLASS, styleClass);
-    }
-
-    public static Integer getIndexFromValueBinding(String vb) {
-        Integer index = null;
-        if (vb.endsWith("]}")) {
-            String indexStr = vb.substring(vb.lastIndexOf('[') + 1, vb.length() - 2);
-            try {
-                index = Integer.parseInt(indexStr);
-            } catch (NumberFormatException e) {
-                // Do nothing
-            }
-        }
-        return index;
-    }
-
-    public static void addRecipientGrouping(Field field, ItemConfigVO item, NamespaceService namespaceService) {
-        if (field == null || namespaceService == null) {
-            return;
-        }
-
-        QName groupColumnProp = null;
-        if (DocumentCommonModel.Props.RECIPIENT_NAME.getLocalName().equals(field.getOriginalFieldId())) {
-            groupColumnProp = DocumentCommonModel.Props.RECIPIENT_GROUP;
-        } else if (DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME.getLocalName().equals(field.getOriginalFieldId())) {
-            groupColumnProp = DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_GROUP;
-        }
-
-        if (groupColumnProp != null && item != null) {
-            String prefixProp = groupColumnProp.getPrefixedQName(namespaceService).getPrefixString();
-            String hiddenPropNames = item.getCustomAttributes().get(MultiValueEditor.HIDDEN_PROP_NAMES);
-            hiddenPropNames = StringUtils.isBlank(hiddenPropNames) ? prefixProp : hiddenPropNames + "," + prefixProp;
-            item.getCustomAttributes().put(MultiValueEditor.GROUP_BY_COLUMN_NAME, prefixProp);
-        }
-    }
-
-    public static CustomChildrenCreator getDocumentRowFileGenerator(final Application application) {
-        return new CustomChildrenCreator() {
-
-            @Override
-            public List<UIComponent> createChildren(List<Object> params, int rowCounter) {
-                List<UIComponent> components = new ArrayList<UIComponent>();
-                if (params != null) {
-                    int fileCounter = 0;
-                    for (Object obj : params) {
-                        File file = (File) obj;
-                        final DocPermissionEvaluator evaluatorAllow = createEvaluator(application, fileCounter, "evalAllow-" + rowCounter + "-");
-                        evaluatorAllow.setAllow("viewDocumentFiles");
-
-                        String fileName = file.getDisplayName();
-                        String imageText = file.isDigiDocContainer() ? "/images/icons/ddoc_sign_small.gif" : "/images/icons/attachment.gif";
-
-                        final UIActionLink fileAllowLink = (UIActionLink) application.createComponent("org.alfresco.faces.ActionLink");
-                        fileAllowLink.setId("doc-file-link-" + rowCounter + "-" + fileCounter);
-                        fileAllowLink.setValue("");
-                        fileAllowLink.setTooltip(fileName);
-                        fileAllowLink.setShowLink(false);
-                        fileAllowLink.setHref(file.getDownloadUrl());
-                        fileAllowLink.setImage(imageText);
-                        fileAllowLink.setTarget("_blank");
-                        ComponentUtil.getAttributes(fileAllowLink).put("styleClass", "inlineAction webdav-readOnly");
-                        ComponentUtil.addChildren(evaluatorAllow, fileAllowLink);
-                        components.add(evaluatorAllow);
-
-                        final DocPermissionEvaluator evaluatorDeny = createEvaluator(application, fileCounter, "evalDeny-" + rowCounter + "-");
-                        evaluatorDeny.setDeny("viewDocumentFiles");
-
-                        final HtmlGraphicImage image = (HtmlGraphicImage) application.createComponent(HtmlGraphicImage.COMPONENT_TYPE);
-                        image.setValue(imageText);
-                        image.setId("doc-file-img-" + rowCounter + "-" + fileCounter);
-                        image.setTitle(fileName);
-                        image.setRendered(file != null);
-                        image.setAlt(fileName);
-
-                        ComponentUtil.addChildren(evaluatorDeny, image);
-                        components.add(evaluatorDeny);
-                        fileCounter++;
-                    }
-                    rowCounter++;
-                }
-                return components;
-            }
-
-            private DocPermissionEvaluator createEvaluator(Application application, int fileCounter, String evalNamePrefix) {
-                final DocPermissionEvaluator evaluatorAllow = (DocPermissionEvaluator) application
-                        .createComponent("ee.webmedia.alfresco.privilege.web.DocPermissionEvaluator");
-                evaluatorAllow.setId(evalNamePrefix + fileCounter);
-                evaluatorAllow.setValueBinding("value", application.createValueBinding("#{r.files[" + fileCounter + "].node}"));
-                return evaluatorAllow;
-            }
-        };
-    }
-
-    public static void setAjaxEnabledOnActionLinksRecursive(UIComponent component, int ajaxParentLevel) {
-        if (component instanceof UIActionLink) {
-            component.getAttributes().put(ActionLinkRenderer.AJAX_ENABLED, Boolean.TRUE);
-            component.getAttributes().put(ActionLinkRenderer.AJAX_PARENT_LEVEL, ajaxParentLevel);
-        }
-        @SuppressWarnings("unchecked")
-        List<UIComponent> children = component.getChildren();
-        if (children == null) {
-            return;
-        }
-        if (component instanceof AjaxUpdateable) {
-            ajaxParentLevel++;
-        }
-        for (UIComponent childComponent : children) {
-            setAjaxEnabledOnActionLinksRecursive(childComponent, ajaxParentLevel);
-        }
-        @SuppressWarnings("unchecked")
-        Collection<UIComponent> facets = component.getFacets().values();
-        if (facets == null) {
-            return;
-        }
-        for (UIComponent facet : facets) {
-            setAjaxEnabledOnActionLinksRecursive(facet, ajaxParentLevel);
-        }
-    }
-
 }

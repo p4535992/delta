@@ -2,6 +2,32 @@
 <beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
    xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
 
+   <!-- Job definition to import people (and possibly groups) from one or more external user registries in the authentication chain (e.g. LDAP directory) -->
+   <bean id="syncTrigger" class="ee.webmedia.alfresco.parameters.job.ParameterRescheduledTriggerBean" parent="parameterRescheduledTriggerParent">
+      <property name="parameterName" value="employeeRegReceiveUsersPeriod" />
+      <property name="parameterFormat" value="m" />
+      <property name="jobDetail">
+         <!--
+            The same content (different bean name) as inner bean ldapPeopleJobDetail of bean syncTrigger defined in
+            classpath:alfresco/subsystems/Synchronization/default/default-synchronization-context.xml
+         -->
+         <bean id="syncPeopleJobDetail" class="org.springframework.scheduling.quartz.JobDetailBean">
+            <property name="jobClass" value="org.alfresco.repo.security.sync.UserRegistrySynchronizerJob" />
+            <property name="jobDataAsMap">
+               <map>
+                  <entry key="userRegistrySynchronizer">
+                     <ref bean="UserRegistrySynchronizer" />
+                  </entry>
+                  <entry key="synchronizeChangesOnly">
+                     <value>${synchronization.synchronizeChangesOnly}</value>
+                  </entry>
+               </map>
+            </property>
+         </bean>
+
+      </property>
+   </bean>
+
    <!-- The chaining user registry synchronizer -->
    <bean id="userRegistrySynchronizer" class="org.alfresco.repo.security.sync.ChainingUserRegistrySynchronizer">
       <property name="syncWhenMissingPeopleLogIn">

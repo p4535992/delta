@@ -8,44 +8,35 @@
 <%@ page isELIgnored="false"%>
 
 <a:panel id="documenttype-panel" label="#{msg.document_types}" styleClass="panel-100 with-pager">
-   <a:richList id="documentTypeList" value="#{DocumentTypeDialog.documentTypes}" var="type" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}"
+   <a:richList id="documentTypeList" value="#{DialogManager.bean.documentTypes}" var="type" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}"
       rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt" width="100%" initialSortColumn="name">
 
       <a:column id="documentTypeUsedCol">
          <f:facet name="header">
             <a:outputText value="#{msg.document_type_used}" />
          </f:facet>
-         <h:outputText value="#{type.used}"><a:convertBoolean /></h:outputText>
+         <h:selectBooleanCheckbox value="#{type.used}" />
       </a:column>
 
       <a:column id="documentTypePublicAdrCol">
          <f:facet name="header">
             <a:outputText value="#{msg.document_type_public_adr}" />
          </f:facet>
-         <h:outputText value="#{type.publicAdr}"><a:convertBoolean /></h:outputText>
+         <h:selectBooleanCheckbox value="#{type.publicAdr}" />
       </a:column>
 
       <a:column id="documentTypeNameCol" primary="true">
          <f:facet name="header">
             <a:sortLink id="documentTypeNameCol-sort" label="#{msg.document_type_name}" value="name" mode="case-insensitive" />
          </f:facet>
-         <a:actionLink id="documentTypeNameCol-input" value="#{type.name}" action="dialog:documentTypeDetailsDialog" actionListener="#{DocumentTypeDetailsDialog.showDetails}">
-            <f:param name="currentDocTypeId" value="#{type.id}" />
-         </a:actionLink>
-      </a:column>
-
-      <a:column id="idCol" primary="true">
-         <f:facet name="header">
-            <a:sortLink id="idCol-sort" label="#{msg.document_type_id}" value="id" mode="case-insensitive" />
-         </f:facet>
-         <h:outputText value="#{type.id.localName}"/>
+         <h:inputText id="documentTypeNameCol-input" value="#{type.name}" size="45" />
       </a:column>
 
       <a:column id="documentTypeCommentCol">
          <f:facet name="header">
             <a:outputText value="#{msg.document_type_comment}" />
          </f:facet>
-         <h:inputTextarea rows="1" cols="45" value="#{type.comment}" styleClass="expand19-200 borderless" readonly="true" />
+         <h:inputTextarea rows="1" cols="45" value="#{type.comment}" styleClass="expand19-200" />
       </a:column>
 
       <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/page-size.jsp" />

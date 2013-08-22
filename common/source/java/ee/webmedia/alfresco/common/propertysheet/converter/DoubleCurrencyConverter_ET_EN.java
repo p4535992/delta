@@ -21,24 +21,19 @@ public class DoubleCurrencyConverter_ET_EN extends DoubleConverter {
 
     @Override
     public Object getAsObject(FacesContext facesContext, UIComponent uiComponent, String value) {
-        String modifiedValue = prepareDoubleString(value);
-        // assume that super.getAsObject performs no rounding
-        Double exactDouble = (Double) super.getAsObject(facesContext, uiComponent, modifiedValue);
-
-        return exactDouble != null ? EInvoiceUtil.roundDouble2Decimals(exactDouble) : null;
-    }
-
-    public static String prepareDoubleString(String value) {
         String modifiedValue = value;
         if (modifiedValue != null) {
             modifiedValue = StringUtils.replace(modifiedValue, ",", ".");
             modifiedValue = StringUtils.deleteWhitespace(modifiedValue);
             modifiedValue = replaceNonBreakingSpace(modifiedValue, false);
         }
-        return modifiedValue;
+        // assume that super.getAsObject performs no rounding
+        Double exactDouble = (Double) super.getAsObject(facesContext, uiComponent, modifiedValue);
+
+        return exactDouble != null ? EInvoiceUtil.roundDouble2Decimals(exactDouble) : null;
     }
 
-    private static String replaceNonBreakingSpace(String modifiedValue, boolean addSpace) {
+    private String replaceNonBreakingSpace(String modifiedValue, boolean addSpace) {
         StringBuilder sb = new StringBuilder();
         // remove non-breaking spaces
         for (int i = 0; i < modifiedValue.length(); i++) {

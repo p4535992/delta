@@ -67,7 +67,6 @@
         </property>
     </bean>
     
-    <bean id="SubstituteListDialog" class="ee.webmedia.alfresco.substitute.web.SubstituteListDialog" scope="session" />
     <bean id="SubstitutionBean" class="ee.webmedia.alfresco.substitute.web.SubstitutionBean" scope="session" />
    
 </beans>

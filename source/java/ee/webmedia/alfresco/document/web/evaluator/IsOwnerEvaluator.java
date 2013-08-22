@@ -20,7 +20,7 @@ public class IsOwnerEvaluator extends BaseActionEvaluator {
         if (obj instanceof NodeRef) {
             return evaluate(new Node((NodeRef) obj));
         }
-        throw new RuntimeException("Expected nodeRef (or Node), got " + obj);
+        return false;
     }
 
     @Override

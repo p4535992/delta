@@ -20,7 +20,6 @@ public class ClassificatorValue implements Serializable, Comparable<Classificato
 
     private String valueName;
     private String classificatorDescription;
-    private String valueData;
     private int order;
     private boolean byDefault;
     private boolean readOnly;
@@ -48,7 +47,6 @@ public class ClassificatorValue implements Serializable, Comparable<Classificato
         byDefault = classificatorValue.isByDefault();
         readOnly = classificatorValue.isReadOnly();
         active = classificatorValue.isActive();
-        valueData = classificatorValue.getValueData();
         nodeRef = classificatorValue.getNodeRef();
     }
 
@@ -242,14 +240,6 @@ public class ClassificatorValue implements Serializable, Comparable<Classificato
     @Override
     public String getSelectorValueName() {
         return getValueName();
-    }
-
-    public void setValueData(String valueData) {
-        this.valueData = valueData;
-    }
-
-    public String getValueData() {
-        return valueData;
     }
 
 }

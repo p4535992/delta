@@ -22,10 +22,17 @@
 * the FLOSS exception, and it is also available here:
 * http://www.alfresco.com/legal/licensing"
 --%>
+<%@ taglib uri="http://java.sun.com/jsf/html" prefix="h" %>
+<%@ taglib uri="http://java.sun.com/jsf/core" prefix="f" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="/WEB-INF/alfresco.tld" prefix="a" %>
+<%@ taglib uri="/WEB-INF/repo.tld" prefix="r" %>
 
-<jsp:include page="/jsp/dialog/deleteConfirmMessage.jsp" />
+<%@ page buffer="32kb" contentType="text/html;charset=UTF-8" %>
+<%@ page isELIgnored="false" %>
 
-<a:booleanEvaluator value="#{DocumentDialogHelperBean.inEditMode}" id="deletefile-metaInEditMode2">
-   <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/docdynamic/web/metadata-block-lockRefresh.jsp" />
+<h:outputText value="#{DialogManager.bean.confirmMessage}" styleClass="mainSubTitle" />
+
+<a:booleanEvaluator value="#{MetadataBlockBean.inEditMode}" id="deletefile-metaInEditMode2">
+   <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/document/metadata/web/metadata-block-lockRefresh.jsp" />
 </a:booleanEvaluator>

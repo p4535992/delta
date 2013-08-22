@@ -1,7 +1,5 @@
 package ee.webmedia.alfresco.importer.excel.service;
 
-import static ee.webmedia.alfresco.report.service.ExcelUtil.setCellValueTruncateIfNeeded;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -34,7 +32,6 @@ import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.cases.model.Case;
-import ee.webmedia.alfresco.classificator.constant.DocTypeAssocType;
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
 import ee.webmedia.alfresco.classificator.enums.TransmittalMode;
 import ee.webmedia.alfresco.classificator.enums.VolumeType;
@@ -42,7 +39,6 @@ import ee.webmedia.alfresco.classificator.model.Classificator;
 import ee.webmedia.alfresco.classificator.model.ClassificatorValue;
 import ee.webmedia.alfresco.classificator.service.ClassificatorService;
 import ee.webmedia.alfresco.common.service.IClonable;
-import ee.webmedia.alfresco.document.assocsdyn.service.DocumentAssociationsService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentParentNodesVO;
 import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
@@ -79,7 +75,6 @@ public class DocumentImportServiceImpl extends DocumentServiceImpl implements Do
 
     /** NB! not injected, use getter to access this service */
     private FunctionsService _functionsService;
-    private DocumentAssociationsService documentAssociationsService;
     private Classificator transmittalModeClassificator;
     private HashMap<String/* transmittalMode valueName in lowerCase */, ClassificatorValue> transmittalModes;
 
@@ -316,7 +311,7 @@ public class DocumentImportServiceImpl extends DocumentServiceImpl implements Do
                 if (StringUtils.isBlank(docRef)) {
                     throw new RuntimeException("Document has still no nodeRef: doc=\n" + doc);
                 }
-                setCellValueTruncateIfNeeded(cell, docRef.toString(), log);
+                setCellValueTruncateIfNeeded(cell, docRef.toString());
                 final Map<String, String> fileLocationsMissing = doc.getFileLocationsMissing();
                 String filesMissing = "";
                 String debugInformation = "";
@@ -329,8 +324,8 @@ public class DocumentImportServiceImpl extends DocumentServiceImpl implements Do
                 }
                 final Cell missingFilesCell = row.createCell(/* col X */23);
                 final Cell debugInformationCell = row.createCell(/* col Y */24);
-                setCellValueTruncateIfNeeded(missingFilesCell, filesMissing, log);
-                setCellValueTruncateIfNeeded(debugInformationCell, debugInformation, log);
+                setCellValueTruncateIfNeeded(missingFilesCell, filesMissing);
+                setCellValueTruncateIfNeeded(debugInformationCell, debugInformation);
             }
             final boolean canWrite = rowSourceFile.canWrite();
             if (!canWrite) {
@@ -348,6 +343,21 @@ public class DocumentImportServiceImpl extends DocumentServiceImpl implements Do
             IOUtils.closeQuietly(inp);
             IOUtils.closeQuietly(fileOut);
         }
+    }
+
+    private final static int EXCEL_CELL_MAX_SIZE = 32767;
+    private final static String EXCEL_CELL_MAX_SIZE_NOTIFICATION_SUFFIX = "\n\n\nNB! end of the input was removed, as it exceeded maximum length that excel cell can hold("
+            + EXCEL_CELL_MAX_SIZE + " characters)";
+
+    private void setCellValueTruncateIfNeeded(final Cell debugInformationCell, String textToWrite) {
+        if (textToWrite == null || textToWrite.length() == 0) {
+            return;
+        }
+        if (textToWrite.length() >= EXCEL_CELL_MAX_SIZE) {
+            log.warn("Following text is too long to fit into excel cell(trunkating it):\n" + textToWrite);
+            textToWrite = textToWrite.substring(0, (EXCEL_CELL_MAX_SIZE - EXCEL_CELL_MAX_SIZE_NOTIFICATION_SUFFIX.length() - 1));
+        }
+        debugInformationCell.setCellValue(textToWrite);
     }
 
     @Override
@@ -370,18 +380,18 @@ public class DocumentImportServiceImpl extends DocumentServiceImpl implements Do
                     final QName relatedDocType = relatedDoc.getType();
                     if (DocumentSubtypeModel.Types.INCOMING_LETTER.equals(initialDocType)) {
                         if (DocumentSubtypeModel.Types.INCOMING_LETTER.equals(relatedDocType)) {
-                            documentAssociationsService.createAssoc(relatedDoc.getNodeRef(), initialDoc.getNodeRef(), DocTypeAssocType.FOLLOWUP.getAssocBetweenDocs());
+                            addFollowupAssoc(relatedDoc.getNodeRef(), initialDoc.getNodeRef());
                             nrOfFollowUps++;
                         } else {
-                            documentAssociationsService.createAssoc(relatedDoc.getNodeRef(), initialDoc.getNodeRef(), DocTypeAssocType.REPLY.getAssocBetweenDocs());
+                            addReplyAssoc(relatedDoc.getNodeRef(), initialDoc.getNodeRef());
                             nrOfReplies++;
                         }
                     } else if (DocumentSubtypeModel.Types.OUTGOING_LETTER.equals(initialDocType)) {
                         if (DocumentSubtypeModel.Types.INCOMING_LETTER.equals(relatedDocType)) {
-                            documentAssociationsService.createAssoc(relatedDoc.getNodeRef(), initialDoc.getNodeRef(), DocTypeAssocType.REPLY.getAssocBetweenDocs());
+                            addReplyAssoc(relatedDoc.getNodeRef(), initialDoc.getNodeRef());
                             nrOfReplies++;
                         } else {
-                            documentAssociationsService.createAssoc(relatedDoc.getNodeRef(), initialDoc.getNodeRef(), DocTypeAssocType.FOLLOWUP.getAssocBetweenDocs());
+                            addFollowupAssoc(relatedDoc.getNodeRef(), initialDoc.getNodeRef());
                             nrOfFollowUps++;
                         }
                     } else {
@@ -595,7 +605,7 @@ public class DocumentImportServiceImpl extends DocumentServiceImpl implements Do
                     final Volume newVolume = volumeService.createVolume(seriesRef);
                     newVolume.setVolumeMark(volumeMark);
                     newVolume.setTitle(((ContractSmitDocument) doc).getVolumeTitle());
-                    newVolume.setVolumeTypeEnum(VolumeType.ANNUAL_FILE);
+                    newVolume.setVolumeType(VolumeType.YEAR_BASED.getValueName());
                     newVolume.setContainsCases(false);
                     volumeService.saveOrUpdate(newVolume, false);
                     volumesMap.put(newVolume.getVolumeMark(), newVolume);
@@ -764,7 +774,7 @@ public class DocumentImportServiceImpl extends DocumentServiceImpl implements Do
 
         /**
          * rule 2.1.12.a from spec SMIT andmete ülekandmine.docx:
-         * Teema nimeks määratakse kõige varasema Kuupäev väärtusega dokumendi nimi; kui leidub mitu sama Kuupäevaga dokumenti, võetakse pealkiri nimekirjas
+         * Asja nimeks määratakse kõige varasema Kuupäev väärtusega dokumendi nimi; kui leidub mitu sama Kuupäevaga dokumenti, võetakse pealkiri nimekirjas
          * eespool olevast dokumendist.
          */
         private Case changeCaseNameIfNeeded(CaseImportVO targetCaseCandidate, ImportDocument doc) {
@@ -910,10 +920,6 @@ public class DocumentImportServiceImpl extends DocumentServiceImpl implements Do
 
     public void setClassificatorService(ClassificatorService classificatorService) {
         this.classificatorService = classificatorService;
-    }
-
-    public void setDocumentAssociationsService(DocumentAssociationsService documentAssociationsService) {
-        this.documentAssociationsService = documentAssociationsService;
     }
 
 }

@@ -2,13 +2,11 @@ package ee.webmedia.alfresco.document.model;
 
 import org.alfresco.service.namespace.QName;
 
-@Deprecated
 public interface DocumentSubtypeModel {
     String URI = "http://alfresco.webmedia.ee/model/document/subtype/1.0";
     String PREFIX = "docsub:";
     QName MODEL_NAME = QName.createQName(URI, "documentSubtypeModel");
 
-    // TODO DLSeadist remove these and rewrite all places to use SystematicDocumentType enum
     public interface Types {
         QName INCOMING_LETTER = QName.createQName(URI, "incomingLetter");
         QName INCOMING_LETTER_MV = QName.createQName(URI, "incomingLetterMv");

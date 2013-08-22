@@ -295,9 +295,8 @@
       
       <!-- START: delta permissions -->
       <permission name="viewDocumentMetaData" expose="false" />
-      <permission name="viewCaseFile" expose="false" />
-      <permission name="editCaseFile" expose="false" />
-      <permission name="editDocument" expose="false" />
+      <permission name="editDocumentMetaData" expose="false" />
+      <permission name="deleteDocumentMetaData" expose="false" />
       <!-- to check following(file permissions), perform check on document nodeRef, not on file NodeRef
       (because even static permissions are inherited document, dynamic authorities don't check if given node is file - for better performance)
       docRef = file.parentRef;
@@ -306,17 +305,11 @@
       }
        -->
       <permission name="viewDocumentFiles" expose="false" />
-      <permission name="createDocument" expose="false" />
-      <permission name="createCaseFile" expose="false" />
-      <!-- END: delta permissions -->
-
-      <!-- FIXME PRIV2 - editDocumentMetaData, editDocumentFiles, deleteDocumentMetaData, deleteDocumentFiles peaks ära kaduma, aga neid ei saa enne eemaldada, kui kõigi nodede küljest on need permissionid eemaldatud -->
-      <permission name="editDocumentMetaData" expose="false" />
       <permission name="editDocumentFiles" expose="false" />
-      <permission name="deleteDocumentMetaData" expose="false" />
       <permission name="deleteDocumentFiles" expose="false" />
+      <!-- END: delta permissions -->
    </permissionSet>
-
+   
    <!-- ================================================ -->
    <!-- Permissions available to all content and folders -->
    <!-- ================================================ -->
@@ -578,15 +571,32 @@
 <!-- START: delta permissions -->
    <!-- permission granted to the current owner of the document -->
    <globalPermission permission="viewDocumentMetaData" authority="ROLE_PROP_DOC_OWNER"/>
+   <globalPermission permission="editDocumentMetaData" authority="ROLE_PROP_DOC_OWNER"/>
    <globalPermission permission="viewDocumentFiles" authority="ROLE_PROP_DOC_OWNER"/>
-   <globalPermission permission="editDocument" authority="ROLE_PROP_DOC_OWNER"/>
+   <globalPermission permission="editDocumentFiles" authority="ROLE_PROP_DOC_OWNER"/>
+   <globalPermission permission="deleteDocumentFiles" authority="ROLE_PROP_DOC_OWNER"/>
+   <globalPermission permission="deleteDocumentMetaData" authority="ROLE_PROP_DOC_OWNER"/>
 
    <!-- permission granted to members of ALFRESCO_ADMINISTRATORS -->
    <globalPermission permission="viewDocumentMetaData" authority="GROUP_ALFRESCO_ADMINISTRATORS"/>
+   <globalPermission permission="editDocumentMetaData" authority="GROUP_ALFRESCO_ADMINISTRATORS"/>
    <globalPermission permission="viewDocumentFiles" authority="GROUP_ALFRESCO_ADMINISTRATORS"/>
-   <globalPermission permission="editDocument" authority="GROUP_ALFRESCO_ADMINISTRATORS"/>
-   <globalPermission permission="editCaseFile" authority="GROUP_ALFRESCO_ADMINISTRATORS"/>
-   <globalPermission permission="viewCaseFile" authority="GROUP_ALFRESCO_ADMINISTRATORS"/>
+   <globalPermission permission="editDocumentFiles" authority="GROUP_ALFRESCO_ADMINISTRATORS"/>
+   <globalPermission permission="deleteDocumentFiles" authority="GROUP_ALFRESCO_ADMINISTRATORS"/>
+   <globalPermission permission="deleteDocumentMetaData" authority="GROUP_ALFRESCO_ADMINISTRATORS"/>
+
+   <!-- permission granted to members of DOCUMENT_MANAGERS -->
+   <globalPermission permission="viewDocumentMetaData" authority="GROUP_DOCUMENT_MANAGERS"/>
+   <globalPermission permission="editDocumentMetaData" authority="GROUP_DOCUMENT_MANAGERS"/>
+   <globalPermission permission="deleteDocumentMetaData" authority="GROUP_DOCUMENT_MANAGERS"/>
+   
+   <!-- permission granted to members of DOCUMENT_MANAGERS that are added to the series through management interface -->
+   <globalPermission permission="viewDocumentMetaData" authority="ROLE_SERIES_DOCUMENT_MANAGERS"/>
+   <globalPermission permission="editDocumentMetaData" authority="ROLE_SERIES_DOCUMENT_MANAGERS"/>
+   <globalPermission permission="viewDocumentFiles" authority="ROLE_SERIES_DOCUMENT_MANAGERS"/>
+   <globalPermission permission="editDocumentFiles" authority="ROLE_SERIES_DOCUMENT_MANAGERS"/>
+   <globalPermission permission="deleteDocumentFiles" authority="ROLE_SERIES_DOCUMENT_MANAGERS"/>
+   <globalPermission permission="deleteDocumentMetaData" authority="ROLE_SERIES_DOCUMENT_MANAGERS"/>
 
    <!-- permission granted when document is public -->
    <globalPermission permission="viewDocumentMetaData" authority="ROLE_PUBLIC_DOCUMENT"/>

@@ -21,14 +21,15 @@ import ee.webmedia.alfresco.parameters.service.ParametersService;
  */
 public class ParameterInputAttributeGenerator extends TextFieldGenerator {
 
-    public static final String PARAMETER_NAME = "parameterName";
+    private static final String PARAMETER_NAME = "parameterName";
     private ParametersService parametersService;
 
     @Override
     protected void setupProperty(FacesContext context, UIPropertySheet propertySheet, PropertySheetItem item, PropertyDefinition propertyDef,
             UIComponent component) {
         super.setupProperty(context, propertySheet, item, propertyDef, component);
-        Map<String, Object> attributes = component.getAttributes();
+        @SuppressWarnings("unchecked")
+        Map<Object, Object> attributes = component.getAttributes();
         attributes.put("datafld", getParameterValue().toString());
     }
 

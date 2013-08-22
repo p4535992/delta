@@ -7,10 +7,8 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.security.PermissionService;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.Repository;
-import org.apache.commons.lang.StringUtils;
 import org.springframework.web.jsf.FacesContextUtils;
 
-import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.user.model.Authority;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.ActionUtil;
@@ -35,11 +33,6 @@ public class PermissionsDeleteDialog extends BaseDialogBean {
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
         getPermissionService().deletePermission(nodeRef, authority.getAuthority(), permission);
-        // Execute callback
-        String callbackMethodBinding = BeanHelper.getPermissionsListDialog().getCallbackMethodBinding();
-        if (StringUtils.isNotBlank(callbackMethodBinding)) {
-            context.getApplication().createMethodBinding(callbackMethodBinding, new Class[] {}).invoke(context, new Object[] {});
-        }
         reset();
         return outcome;
     }

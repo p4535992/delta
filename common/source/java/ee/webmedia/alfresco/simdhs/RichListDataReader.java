@@ -15,8 +15,6 @@ import org.alfresco.web.ui.common.component.data.UISortLink;
 import org.apache.log4j.Logger;
 import org.springframework.util.Assert;
 
-import ee.webmedia.alfresco.utils.ComponentUtil;
-
 /**
  * Reads data directly from rich list data model.
  * <p/>
@@ -50,6 +48,16 @@ public class RichListDataReader implements DataReader {
             data.add(getDataRow(fc, columnsToExport));
         }
         return data;
+    }
+
+    private List<String> getDataFromRow(Object row, List<UIColumn> columnsToExport) {
+        for (UIColumn uiColumn : columnsToExport) {
+            System.out.println(row);
+            // row.getClass().getMethods()
+            // uiColumn.get
+        }
+        // TODO Auto-generated method stub
+        return null;
     }
 
     @SuppressWarnings("unchecked")
@@ -102,21 +110,13 @@ public class RichListDataReader implements DataReader {
     private List<String> getDataRow(FacesContext facesContext, List<UIColumn> columns) {
         List<String> row = new ArrayList<String>();
         for (UIColumn column : columns) {
-            List<UIComponent> children = ComponentUtil.getChildren(column);
-            if (children != null && !children.isEmpty()) {
-                UIComponent component = children.get(0);
-                row.add(getRowValue(facesContext, component));
-            } else {
-                row.add("");
-            }
+            UIComponent component = (UIComponent) column.getChildren().get(0);
+            row.add(getRowValue(facesContext, component));
         }
         return row;
     }
 
     private static String getRowValue(FacesContext facesContext, UIComponent component) {
-        if (component == null) {
-            return "";
-        }
         if (component instanceof ValueHolder) { // handle texts
             ValueHolder valueHolder = (ValueHolder) component;
             Object value = valueHolder.getValue();
@@ -129,8 +129,7 @@ public class RichListDataReader implements DataReader {
             return value != null ? value.toString() : "";
         } else if (component instanceof UICommand) { // handle links
             UICommand command = (UICommand) component;
-            Object value = command.getValue();
-            return value != null ? value.toString() : "";
+            return command.getValue().toString();
         } else { // unsupported component type
             String componentClass = component.getClass().getName();
             if (log.isDebugEnabled()) {

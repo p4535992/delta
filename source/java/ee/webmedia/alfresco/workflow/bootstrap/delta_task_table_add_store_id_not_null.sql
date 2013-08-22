@@ -1,1 +1,0 @@
-ALTER TABLE delta_task ALTER COLUMN store_id SET NOT NULL;

@@ -4,15 +4,12 @@
 
    <!-- Entry point to include other components -->
    <!-- Be sure to also include necessary JSF configuration files in web/WEB-INF/web.xml -->
-   <import resource="classpath:ee/webmedia/alfresco/log/log-context.xml" />
-   <import resource="classpath:ee/webmedia/alfresco/help/help-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/signature/signature-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/dvk/dvk-sim-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/addressbook/addressbook-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/menu/menu-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/classificator/classificator-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/parameters/parameters-context.xml" />
-   <import resource="classpath:ee/webmedia/alfresco/search/search-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/orgstructure/organizationStructure-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/cases/case-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/volume/volume-context.xml" />
@@ -36,17 +33,6 @@
    <import resource="classpath:ee/webmedia/alfresco/postipoiss/postipoiss-simdhs-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/mso/mso-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/privilege/privilege-context.xml" />
-   <import resource="classpath:ee/webmedia/alfresco/thesaurus/thesaurus-context.xml" />
-   <import resource="classpath:ee/webmedia/alfresco/docdynamic/docdyn-context.xml" />
-   <import resource="classpath:ee/webmedia/alfresco/docadmin/docadmin-context.xml" />
-   <import resource="classpath:ee/webmedia/alfresco/docconfig/docconfig-context.xml" />
-   <import resource="classpath:ee/webmedia/alfresco/base/base-context.xml" />
-   <import resource="classpath:ee/webmedia/alfresco/relvastus/relvastus-context.xml" />
-   <import resource="classpath:ee/webmedia/alfresco/ikt/ikt-context.xml" />
-   <import resource="classpath:ee/webmedia/alfresco/testdata/testdata-context.xml" />
-   <import resource="classpath:ee/webmedia/alfresco/doclist/doclist-context.xml"/>
-   <import resource="classpath:ee/webmedia/alfresco/report/report-context.xml" />
-   <import resource="classpath:org/alfresco/web/bean/trashcan/trashcan-context.xml" />
 
    <bean class="org.alfresco.web.config.WebClientConfigBootstrap" init-method="init" depends-on="commonWebClientConfigBootstrap">
       <property name="configs">
@@ -91,10 +77,6 @@
    <!-- START: web beans: -->
 
    <bean id="InformingDeleteNodeDialog" class="ee.webmedia.alfresco.common.web.InformingDeleteNodeDialog" scope="session" />
-   
-   <bean id="DeleteDialog" class="ee.webmedia.alfresco.common.web.DeleteDialog" scope="session" />
-   
-   <bean id="ConfirmDialog" class="ee.webmedia.alfresco.common.web.ConfirmDialog" scope="session" />
 
    <!-- END: web beans: -->
 </beans>

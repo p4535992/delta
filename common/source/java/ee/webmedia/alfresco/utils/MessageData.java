@@ -18,9 +18,4 @@ public interface MessageData extends Serializable {
 
     MessageSeverity getSeverity();
 
-    /**
-     * @return message that should be used, if failed to translate message based on {@link #getMessageKey()}
-     */
-    MessageData getFallbackMessage();
-
 }

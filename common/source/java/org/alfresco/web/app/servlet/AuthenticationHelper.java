@@ -110,7 +110,7 @@ public final class AuthenticationHelper
    public static void setupThread(ServletContext sc, HttpServletRequest req, HttpServletResponse res)
    {
       // setup faces context
-      FacesContext fc = FacesContext.getCurrentInstance();
+      FacesContext fc = FacesHelper.getFacesContext(req, res, sc);
    
       // Set the current locale and language
       if (Application.getClientConfig(fc).isLanguageSelect())

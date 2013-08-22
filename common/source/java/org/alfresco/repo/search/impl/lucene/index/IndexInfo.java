@@ -38,8 +38,8 @@ import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
-import java.nio.channels.FileChannel.MapMode;
 import java.nio.channels.FileLock;
+import java.nio.channels.FileChannel.MapMode;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
@@ -80,14 +80,14 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.FilterIndexReader;
 import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.index.IndexReader.FieldOption;
 import org.apache.lucene.index.IndexWriter;
-import org.apache.lucene.index.IndexWriter.MaxFieldLength;
 import org.apache.lucene.index.LogDocMergePolicy;
 import org.apache.lucene.index.MultiReader;
 import org.apache.lucene.index.SerialMergeScheduler;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermEnum;
+import org.apache.lucene.index.IndexReader.FieldOption;
+import org.apache.lucene.index.IndexWriter.MaxFieldLength;
 import org.apache.lucene.search.Hits;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
@@ -151,8 +151,6 @@ public class IndexInfo implements IndexMonitor
      * The logger.
      */
     private static Log s_logger = LogFactory.getLog(IndexInfo.class);
-    private static Log l_logger = LogFactory.getLog("org.alfresco.repo.search.impl.lucene.index.IndexInfo.Locking");
-    private static Log g_logger = LogFactory.getLog("org.alfresco.repo.search.impl.lucene.index.IndexInfo.General");
 
     /**
      * Use NIO memory mapping to wite the index control file.
@@ -322,14 +320,6 @@ public class IndexInfo implements IndexMonitor
     private boolean mergerUseCompoundFile = true;
 
     private int mergerTargetOverlays = 5;
-    
-    private int mergerTargetOverlaysBlockingFactor = 1;
-
-    private Object mergerTargetLock = new Object();
-    
-    // To avoid deadlock (a thread with multiple deltas never proceeding to commit) we track whether each thread is
-    // already in the prepare phase.
-    private static ThreadLocal<IndexInfo> thisThreadPreparing = new ThreadLocal<IndexInfo>();
 
     // Common properties for indexers
 
@@ -379,9 +369,9 @@ public class IndexInfo implements IndexMonitor
                 }
             }
 
-            if (l_logger.isDebugEnabled())
+            if (s_logger.isDebugEnabled())
             {
-                l_logger.debug("Got " + indexInfo + " for " + file.getAbsolutePath());
+                s_logger.debug("Got " + indexInfo + " for " + file.getAbsolutePath());
             }
             return indexInfo;
         }
@@ -417,7 +407,6 @@ public class IndexInfo implements IndexMonitor
             this.mergerMaxMergeDocs = config.getMergerMaxMergeDocs();
             this.termIndexInterval = config.getTermIndexInterval();
             this.mergerTargetOverlays = config.getMergerTargetOverlayCount();
-            this.mergerTargetOverlaysBlockingFactor = config.getMergerTargetOverlaysBlockingFactor();
             // Work out the relative path of the index
             try
             {
@@ -1130,9 +1119,9 @@ public class IndexInfo implements IndexMonitor
             }
             // Manage reference counting
             mainIndexReader.incRef();
-            if (l_logger.isDebugEnabled())
+            if (s_logger.isDebugEnabled())
             {
-                l_logger.debug("Main index reader references = " + ((ReferenceCounting)mainIndexReader).getReferenceCount());
+                s_logger.debug("Main index reader references = " + ((ReferenceCounting)mainIndexReader).getReferenceCount());
             }
             
             // Prevent close calls from really closing the main reader
@@ -1245,9 +1234,9 @@ public class IndexInfo implements IndexMonitor
 
             // The reference count would have been incremented automatically by MultiReader / FilterIndexReaderByStringId
             deltaReader.decRef();
-            if (l_logger.isDebugEnabled())
+            if (s_logger.isDebugEnabled())
             {
-                l_logger.debug("Main index reader references = " + ((ReferenceCounting)mainIndexReader).getReferenceCount());
+                s_logger.debug("Main index reader references = " + ((ReferenceCounting)mainIndexReader).getReferenceCount());
             }
             reader = ReferenceCountingReadOnlyIndexReaderFactory.createReader(MAIN_READER + id, reader, false, config);
             ReferenceCounting refCounting = (ReferenceCounting) reader;
@@ -1259,28 +1248,6 @@ public class IndexInfo implements IndexMonitor
         {
             releaseReadLock();
         }
-    }
-
-    private boolean shouldBlock()
-    {
-        int pendingDeltas = 0;
-        int maxDeltas = mergerTargetOverlaysBlockingFactor * mergerTargetOverlays;
-        for (IndexEntry entry : indexEntries.values())
-        {
-            if (entry.getType() == IndexType.DELTA)
-            {
-                TransactionStatus status = entry.getStatus();
-                if (status == TransactionStatus.PREPARED || status == TransactionStatus.COMMITTING
-                        || status.isCommitted())
-                {
-                    if (++pendingDeltas > maxDeltas)
-                    {
-                        return true;
-                    }
-                }
-            }
-        }
-        return false;
     }
 
     public void setStatus(final String id, final TransactionStatus state, final Set<Term> toDelete, final Set<Term> read) throws IOException
@@ -1299,62 +1266,6 @@ public class IndexInfo implements IndexMonitor
             getWriteLock();
             try
             {
-                // we may need to block for some deltas to be merged / rolled back
-                IndexInfo alreadyPreparing = thisThreadPreparing.get(); 
-                if (state == TransactionStatus.PREPARED)
-                {
-                    // To avoid deadlock (a thread with multiple deltas never proceeding to commit) we don't block if
-                    // this thread is already in the prepare phase
-                    if (alreadyPreparing != null)
-                    {
-                        if (s_logger.isDebugEnabled())
-                        {
-                            s_logger.debug("Can't throttle - " + Thread.currentThread().getName() + " already preparing");
-                        }                                                
-                    }
-                    else
-                    {
-                        boolean timedOut = false;
-                        while (shouldBlock())
-                        {
-                            if (timedOut)
-                            {
-                                g_logger.warn("Timed out while throttling for merges. IndexInfo: " + toString() + dumpInfoAsString());
-                                break;
-                            }
-                            synchronized (mergerTargetLock)
-                            {
-                                if (s_logger.isDebugEnabled())
-                                {
-                                    s_logger.debug("THROTTLING: " + Thread.currentThread().getName() + " " + indexEntries.size());
-                                }
-                                releaseWriteLock();
-                                try
-                                {
-                                    // If no progress is made for 3 seconds, error out to untangle deadlocks.
-                                    // Mustn't sleep longer than index recovery job reschedule rate to avoid
-                                    // all recovery needing to sleep.
-                                    mergerTargetLock.wait(3000);
-                                    timedOut = true;
-                                }
-                                catch (InterruptedException e)
-                                {
-                                }
-                            }
-                            getWriteLock();
-                        }
-                        thisThreadPreparing.set(this);
-                    }
-                }
-                else
-                {
-                    // Only clear the flag when the outermost thread exits prepare
-                    if (alreadyPreparing == this)
-                    {
-                        thisThreadPreparing.set(null);
-                    }
-                }
-
                 if (transition.requiresFileLock())
                 {
                     doWithFileLock(new LockWork<Object>()
@@ -2250,14 +2161,6 @@ public class IndexInfo implements IndexMonitor
         version++;
         writeStatusToFile(indexInfoChannel);
         writeStatusToFile(indexInfoBackupChannel);
-        // We have a state that allows more transactions. Notify waiting threads
-        if (!shouldBlock())
-        {
-            synchronized (mergerTargetLock)
-            {
-                mergerTargetLock.notifyAll();
-            }            
-        }
     }
 
     private void writeStatusToFile(FileChannel channel) throws IOException
@@ -3003,62 +2906,6 @@ public class IndexInfo implements IndexMonitor
     private abstract class AbstractSchedulable implements Schedulable, Runnable
     {
         ScheduledState scheduledState = ScheduledState.UN_SCHEDULED;
-        boolean special = false;
-
-        public void runNow()
-        {
-            while (true)
-            {
-                // schedule() is the only public synchronized method here;
-                // and all schedule() calls are made from places that have obtained readWriteLock.writeLock,
-                // so there should not happen a deadlock here
-
-                g_logger.info("Obtaining write lock for IndexInfo: " + IndexInfo.this.toString());
-                readWriteLock.writeLock().lock();
-                try
-                {
-                    g_logger.info("Obtaining monitor lock for " + getLogName() + " of IndexInfo: " + IndexInfo.this.toString());
-                    synchronized (this)
-                    {
-                        if (scheduledState == ScheduledState.FAILED || scheduledState == ScheduledState.UN_SCHEDULED)
-                        {
-                            g_logger.info("Current scheduledState = " + scheduledState + " - scheduling merger now");
-                            special = true;
-                            switch (scheduledState)
-                            {
-                            case FAILED:
-                                scheduledState = ScheduledState.RECOVERY_SCHEDULED;
-                                run();
-                                break;
-                            case UN_SCHEDULED:
-                                scheduledState = ScheduledState.SCHEDULED;
-                                run();
-                                break;
-                            case RECOVERY_SCHEDULED:
-                            case SCHEDULED:
-                            default:
-                                // Nothing to do
-                                break;
-                            }
-                            return;
-                        }
-                        g_logger.info("Current scheduledState = " + scheduledState + " - releasing locks, sleeping 1 sec and trying again");
-                    }
-                }
-                finally
-                {
-                    readWriteLock.writeLock().unlock();
-                }
-                try
-                {
-                    Thread.sleep(1000);
-                }
-                catch (InterruptedException e)
-                {
-                    throw new RuntimeException(e);
-                }
-            }
-        }
 
         public synchronized void schedule()
         {
@@ -3157,25 +3004,13 @@ public class IndexInfo implements IndexMonitor
                         break;
                     }
                 case SCHEDULED:
-                    if (s_logger.isDebugEnabled())
-                    {
-                        s_logger.debug(getLogName() + " running ... ");
-                    }
                     reschedule = runImpl();
                     if (reschedule == ExitState.RESCHEDULE)
                     {
-                        if (s_logger.isDebugEnabled())
-                        {
-                            s_logger.debug(getLogName() + " rescheduling ... ");
-                        }
                         reschedule();
                     }
                     else
                     {
-                        if (s_logger.isDebugEnabled())
-                        {
-                            s_logger.debug(getLogName() + " done ");
-                        }
                         done();
                     }
                     break;
@@ -3228,13 +3063,6 @@ public class IndexInfo implements IndexMonitor
             // Get the read local to decide what to do
             // Single JVM to start with
             MergeAction action = MergeAction.NONE;
-
-            if (special)
-            {
-                action = MergeAction.MERGE_INDEX;
-            }
-            else
-            {
 
             getReadLock();
             try
@@ -3333,7 +3161,6 @@ public class IndexInfo implements IndexMonitor
             {
                 releaseReadLock();
             }
-            }
 
             if (action == MergeAction.APPLY_DELTA_DELETION)
             {
@@ -3346,20 +3173,10 @@ public class IndexInfo implements IndexMonitor
 
             if (action == MergeAction.NONE)
             {
-                if (s_logger.isDebugEnabled())
-                {
-                    s_logger.debug(getLogName() + " Merger exiting with MergeAction.NONE. DONE. ");
-                    dumpInfo();
-                }                
                 return ExitState.DONE;
             }
             else
             {
-                if (s_logger.isDebugEnabled())
-                {
-                    s_logger.debug(getLogName() + " Merger exiting with MergeAction." + action.toString() + ". RESCHEDULE. ");
-                    dumpInfo();
-                }                
                 return ExitState.RESCHEDULE;
             }
         }
@@ -3538,10 +3355,6 @@ public class IndexInfo implements IndexMonitor
                     }
 
                 });
-                if (toDelete.size() == 0)
-                {
-                    g_logger.warn("Cannot apply deletions. Sleeping 100 milliseconds to throttle retries. IndexInfo: " + toString() + dumpInfoAsString());
-                }
             }
             finally
             {
@@ -3568,14 +3381,6 @@ public class IndexInfo implements IndexMonitor
 
             if (toDelete.size() == 0)
             {
-                try
-                {
-                    Thread.sleep(100);
-                }
-                catch (InterruptedException e)
-                {
-                    throw new RuntimeException(e);
-                }
                 return;
             }
             // Build readers
@@ -3836,34 +3641,7 @@ public class IndexInfo implements IndexMonitor
                             }
                         }
 
-                        int position;
-                        if (special)
-                        {
-                            special = false;
-                            g_logger.info("Special merge - using position=0; " + toString() + dumpInfoAsString());
-                            int sum = 0;
-                            for (int i = 1; i < mergeList.size(); i++)
-                            {
-                                IndexEntry indexEntry = mergeList.get(i);
-                                sum += indexEntry.getDocumentCount();
-                            }
-                            if (sum <= 10000)
-                            {
-                                g_logger.info("Sum of documentCount of indexEntry[1.." + (mergeList.size() - 1) + "] is "  + sum + ", skipping special merge");
-                                return set;
-                            }
-                            position = 0;
-                        }
-                        else
-                        {
-                            position = findMergeIndex(1, mergerMaxMergeDocs, mergerMergeFactor, mergeList);
-                        }
-                        if (position >= mergeList.size())
-                        {
-                            g_logger.info("Calculated position " + position + " is larger than mergeList size " + mergeList.size() + ", skipping merge - " + toString()
-                                    + dumpInfoAsString());
-                            return set;
-                        }
+                        int position = findMergeIndex(1, mergerMaxMergeDocs, mergerMergeFactor, mergeList);
                         String firstMergeId = mergeList.get(position).getName();
 
                         long count = 0;
@@ -4121,12 +3899,6 @@ public class IndexInfo implements IndexMonitor
     {
         if (s_logger.isDebugEnabled())
         {
-            s_logger.debug(toString() + dumpInfoAsString());
-        }
-    }
-
-    public String dumpInfoAsString()
-    {
             int count = 0;
             StringBuilder builder = new StringBuilder();
             readWriteLock.writeLock().lock();
@@ -4138,37 +3910,39 @@ public class IndexInfo implements IndexMonitor
                 {
                     builder.append(++count + "        " + entry.toString()).append("\n");
                 }
-                return builder.toString();
+                s_logger.debug(builder.toString());
             }
             finally
             {
                 readWriteLock.writeLock().unlock();
             }
+        }
+
     }
 
     private void getWriteLock()
     {
         String threadName = null;
         long start = 0l;
-        if (l_logger.isDebugEnabled())
+        if (s_logger.isDebugEnabled())
         {
             threadName = Thread.currentThread().getName();
-            l_logger.debug("Waiting for WRITE lock  - " + threadName);
+            s_logger.debug("Waiting for WRITE lock  - " + threadName);
             start = System.nanoTime();
         }
         readWriteLock.writeLock().lock();
-        if (l_logger.isDebugEnabled())
+        if (s_logger.isDebugEnabled())
         {
             long end = System.nanoTime();
-            l_logger.debug("...GOT WRITE LOCK  - " + threadName + " -  in " + ((end - start) / 10e6f) + " ms");
+            s_logger.debug("...GOT WRITE LOCK  - " + threadName + " -  in " + ((end - start) / 10e6f) + " ms");
         }
     }
 
     private void releaseWriteLock()
     {
-        if (l_logger.isDebugEnabled())
+        if (s_logger.isDebugEnabled())
         {
-            l_logger.debug("RELEASED WRITE LOCK  - " + Thread.currentThread().getName());
+            s_logger.debug("RELEASED WRITE LOCK  - " + Thread.currentThread().getName());
         }
         readWriteLock.writeLock().unlock();
     }
@@ -4177,25 +3951,25 @@ public class IndexInfo implements IndexMonitor
     {
         String threadName = null;
         long start = 0l;
-        if (l_logger.isDebugEnabled())
+        if (s_logger.isDebugEnabled())
         {
             threadName = Thread.currentThread().getName();
-            l_logger.debug("Waiting for READ lock  - " + threadName);
+            s_logger.debug("Waiting for READ lock  - " + threadName);
             start = System.nanoTime();
         }
         readWriteLock.readLock().lock();
-        if (l_logger.isDebugEnabled())
+        if (s_logger.isDebugEnabled())
         {
             long end = System.nanoTime();
-            l_logger.debug("...GOT READ LOCK  - " + threadName + " -  in " + ((end - start) / 10e6f) + " ms");
+            s_logger.debug("...GOT READ LOCK  - " + threadName + " -  in " + ((end - start) / 10e6f) + " ms");
         }
     }
 
     private void releaseReadLock()
     {
-        if (l_logger.isDebugEnabled())
+        if (s_logger.isDebugEnabled())
         {
-            l_logger.debug("RELEASED READ LOCK  - " + Thread.currentThread().getName());
+            s_logger.debug("RELEASED READ LOCK  - " + Thread.currentThread().getName());
         }
         readWriteLock.readLock().unlock();
     }
@@ -4438,10 +4212,4 @@ public class IndexInfo implements IndexMonitor
     {
         void schedule();
     }
-
-    public void runMergeNow()
-    {
-        merger.runNow();
-    }
-
 }

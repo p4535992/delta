@@ -10,7 +10,7 @@
    $jQ(document).ready(function() {
       prependOnclick($jQ("a.delete"), function(e) {
          var userOrGroup = $jQ(e).closest('tr').children().eq(0).text();
-         return confirmWithPlaceholders(confirmMsg, userOrGroup);
+         return confirm(confirmMsg.replace('{0}', userOrGroup));
       });
    });
    </script>
@@ -44,3 +44,5 @@
       <a:dataPager id="pager1" styleClass="pager" />
    </a:richList>
 </a:panel>
+
+<jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/disable-dialog-finish-button.jsp" />

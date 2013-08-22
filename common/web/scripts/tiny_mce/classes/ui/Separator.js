@@ -1,11 +1,11 @@
 /**
  * Separator.js
  *
- * Copyright, Moxiecode Systems AB
+ * Copyright 2009, Moxiecode Systems AB
  * Released under LGPL License.
  *
- * License: http://www.tinymce.com/license
- * Contributing: http://www.tinymce.com/contributing
+ * License: http://tinymce.moxiecode.com/license
+ * Contributing: http://tinymce.moxiecode.com/contributing
  */
 
 /**
@@ -26,7 +26,6 @@ tinymce.create('tinymce.ui.Separator:tinymce.ui.Control', {
 	Separator : function(id, s) {
 		this.parent(id, s);
 		this.classPrefix = 'mceSeparator';
-		this.setDisabled(true);
 	},
 
 	/**
@@ -37,6 +36,6 @@ tinymce.create('tinymce.ui.Separator:tinymce.ui.Control', {
 	 * @return {String} HTML for the separator control element.
 	 */
 	renderHTML : function() {
-		return tinymce.DOM.createHTML('span', {'class' : this.classPrefix, role : 'separator', 'aria-orientation' : 'vertical', tabindex : '-1'});
+		return tinymce.DOM.createHTML('span', {'class' : this.classPrefix});
 	}
 });

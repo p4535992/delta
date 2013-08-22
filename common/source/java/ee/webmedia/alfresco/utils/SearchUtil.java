@@ -8,15 +8,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.StringTokenizer;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.alfresco.service.cmr.dictionary.DataTypeDefinition;
 import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.service.cmr.repository.StoreRef;
-import org.alfresco.service.cmr.search.LimitBy;
-import org.alfresco.service.cmr.search.SearchParameters;
-import org.alfresco.service.cmr.search.SearchService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Repository;
 import org.apache.commons.lang.StringUtils;
@@ -30,13 +24,6 @@ public class SearchUtil {
 
     public static FastDateFormat luceneDateFormat = FastDateFormat.getInstance("yyyy-MM-dd'T'00:00:00.000");
 
-    private static final Pattern DATE_PATTERN = Pattern.compile("\\d\\d?\\.\\d\\d?\\.\\d\\d\\d\\d");
-
-    /**
-     * @param date
-     * @param residual
-     * @return "yyyy-MM-dd'T'00:00:00.000" if the property is not residual, else "yyyy-MM-dd"
-     */
     public static String formatLuceneDate(Date date) {
         return luceneDateFormat.format(date);
     }
@@ -168,32 +155,14 @@ public class SearchUtil {
 
     // Low-level generation
 
-    /**
-     * @param propName
-     * @param acceptablePropertyValues
-     * @param escape - should values be escaped?
-     * @return Lucene query string that accepts any given property value for given property
-     */
-    public static String generatePropertyExactQuery(QName propName, Collection<String> acceptablePropertyValues, boolean escape) {
-        List<String> queryParts = new ArrayList<String>();
-        for (String value : acceptablePropertyValues) {
-            queryParts.add(generatePropertyExactQuery(propName, value, escape));
-        }
-        return joinQueryPartsOr(queryParts);
-    }
-
-    public static String generatePropertyExactQuery(QName propName, String value, boolean escape) {
+    public static String generatePropertyExactQuery(QName documentPropName, String value, boolean escape) {
         if (StringUtils.isBlank(value)) {
             return null;
         }
         if (escape) {
             value = QueryParser.escape(stripCustom(value));
         }
-        return "@" + Repository.escapeQName(propName) + ":\"" + value + "\"";
-    }
-
-    public static String generatePropertyExactNotQuery(QName documentPropName, String value, boolean escape) {
-        return "NOT " + generatePropertyExactQuery(documentPropName, value, escape);
+        return "@" + Repository.escapeQName(documentPropName) + ":\"" + value + "\"";
     }
 
     private static String generatePropertyNotEmptyQuery(QName documentPropName) {
@@ -216,21 +185,6 @@ public class SearchUtil {
         return "ISUNSET:" + Repository.escapeQName(documentPropName);
     }
 
-    /**
-     * Generates "VALUE:xxx" query where VALUE is a custom indexed Field with document property values. So this clause can only be used in document search.
-     * <p>
-     * Only String and date (in format: dd.MM.yyyy) values are indexed there. File contents are not indexed there.
-     * 
-     * @param value The document property value to search for.
-     * @return The generated clause as string.
-     */
-    public static String generateValueQuery(String value, boolean escape) {
-        if (escape) {
-            value = QueryParser.escape(stripCustom(value));
-        }
-        return "VALUES:" + value + "*";
-    }
-
     public static String generatePropertyWildcardQuery(QName documentPropName, String value, boolean escape, boolean leftWildcard, boolean rightWildcard) {
         if (StringUtils.isBlank(value)) {
             return null;
@@ -241,33 +195,26 @@ public class SearchUtil {
         return "@" + Repository.escapeQName(documentPropName) + ":\"" + (leftWildcard ? "*" : "") + value + (rightWildcard ? "*" : "") + "\"";
     }
 
-    public static String generateParentQuery(NodeRef parentRef) {
-        return "PARENT:\"" + parentRef.toString() + "\"";
-    }
-
-    public static String generatePrimaryParentQuery(NodeRef parentRef) {
-        return "PRIMARYPARENT:\"" + parentRef.toString() + "\"";
-    }
-
     public static String generatePropertyDateQuery(QName documentPropName, Date date) {
         if (date == null) {
             return null;
         }
+        // format is like dateProp:"2010-01-08T00:00:00.000"
         return generatePropertyExactQuery(documentPropName, formatLuceneDate(date), false);
     }
 
     // High-level generation
 
-    public static String generateTypeQuery(QName... nodeTypes) {
-        return generateTypeQuery(Arrays.asList(nodeTypes));
+    public static String generateTypeQuery(QName... documentTypes) {
+        return generateTypeQuery(Arrays.asList(documentTypes));
     }
 
-    public static String generateTypeQuery(Collection<QName> nodeTypes) {
-        if (nodeTypes == null || nodeTypes.isEmpty()) {
+    public static String generateTypeQuery(Collection<QName> documentTypes) {
+        if (documentTypes == null || documentTypes.size() == 0) {
             return null;
         }
-        List<String> queryParts = new ArrayList<String>(nodeTypes.size());
-        for (QName documentType : nodeTypes) {
+        List<String> queryParts = new ArrayList<String>(documentTypes.size());
+        for (QName documentType : documentTypes) {
             queryParts.add("TYPE:" + Repository.escapeQName(documentType));
         }
         return joinQueryPartsOr(queryParts, false);
@@ -278,7 +225,7 @@ public class SearchUtil {
     }
 
     public static String generateNotTypeQuery(List<QName> documentTypes) {
-        if (documentTypes == null || documentTypes.isEmpty()) {
+        if (documentTypes == null || documentTypes.size() == 0) {
             return null;
         }
         List<String> queryParts = new ArrayList<String>(documentTypes.size());
@@ -349,10 +296,6 @@ public class SearchUtil {
         return joinQueryPartsOr(queryParts, false);
     }
 
-    public static String generateAndNotQuery(String query1, String query2) {
-        return "(" + query1 + ") AND NOT (" + query2 + ")";
-    }
-
     public static String generateStringNullQuery(QName... documentPropNames) {
         List<String> queryParts = new ArrayList<String>(documentPropNames.length);
         for (QName documentPropName : documentPropNames) {
@@ -404,7 +347,7 @@ public class SearchUtil {
         return joinQueryPartsOr(queryParts, false);
     }
 
-    public static String generateNumberPropertyRangeQuery(Number minValue, Number maxValue, QName... documentPropNames) {
+    public static String generateDoublePropertyRangeQuery(Double minValue, Double maxValue, QName... documentPropNames) {
         if (minValue == null && maxValue == null) {
             return null;
         }
@@ -428,20 +371,12 @@ public class SearchUtil {
 
     // Join
 
-    public static String joinQueryPartsAnd(String... queryParts) {
-        return joinQueryPartsAnd(Arrays.asList(queryParts));
-    }
-
     public static String joinQueryPartsAnd(List<String> queryParts) {
         return joinQueryParts(queryParts, "AND", true);
     }
 
     public static String joinQueryPartsAnd(List<String> queryParts, boolean parenthesis) {
         return joinQueryParts(queryParts, "AND", parenthesis);
-    }
-
-    public static String joinQueryPartsOr(String... queryParts) {
-        return joinQueryPartsOr(Arrays.asList(queryParts));
     }
 
     public static String joinQueryPartsOr(List<String> queryParts) {
@@ -486,46 +421,4 @@ public class SearchUtil {
         return dataType.equals(DataTypeDefinition.DATE) || dataType.equals(DataTypeDefinition.DATETIME);
     }
 
-    public static SearchParameters generateLuceneSearchParams(String query, StoreRef store, int limit) {
-        SearchParameters sp = new SearchParameters();
-        sp.setLanguage(SearchService.LANGUAGE_LUCENE);
-        sp.setQuery(query);
-        sp.addStore(store);
-        if (limit < 0) {
-            sp.setLimitBy(LimitBy.UNLIMITED);
-        } else {
-            sp.setLimit(limit + 1);
-            sp.setLimitBy(LimitBy.FINAL_SIZE);
-        }
-        return sp;
-    }
-
-    /**
-     * Extracts dates (as 'dd.MM.yyyy' from given text) and stores them in given list in format 'ddMMyyyy'.
-     * Duplicate formatted date values won't be added to the list.
-     * 
-     * @param text A not null String value.
-     * @param list A not null list where found dates will be stored.
-     */
-    public static void extractDates(String text, List<String> list) {
-        Matcher matcher = DATE_PATTERN.matcher(text);
-        while (matcher.find()) {
-            String date = matcher.group();
-
-            // When day or month is not in two-digit form, add these missing zeros.
-            if (date.length() < 10) {
-                if (date.indexOf('.') != 2) {
-                    date = "0" + date;
-                }
-                if (date.indexOf('.', 3) != 5) {
-                    date = date.substring(0, 3) + "0" + date.substring(3);
-                }
-            }
-
-            date = StringUtils.remove(date, '.'); // Store date as 'ddMMyyyy' (8-digit number).
-            if (!list.contains(date)) {
-                list.add(date);
-            }
-        }
-    }
 }

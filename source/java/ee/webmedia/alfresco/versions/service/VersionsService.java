@@ -33,14 +33,13 @@ public interface VersionsService {
     void updateVersionModifiedAspect(NodeRef nodeRef);
 
     /**
-     * Updates the version if the node is unlocked and last version was not saved.. (.. today or ..by authenticated user)
+     * Updates the version if the node is unlocked.
      * Sets VersionsModel.Props.VersionLockable.LOCKED property of the VersionsModel.Aspects.VERSION_LOCKABLE aspect to true.
      * 
      * @param nodeRef
      * @param filename TODO
-     * @return true if new version was created
      */
-    boolean updateVersion(NodeRef nodeRef, String filename, boolean updateOnlyIfNeeded);
+    void updateVersion(NodeRef nodeRef, String filename);
 
     /**
      * Returns the value of the VersionsModel.Props.VersionLockable.LOCKED property if the node has VersionsModel.Aspects.VERSION_LOCKABLE aspect.
@@ -66,13 +65,4 @@ public interface VersionsService {
      * @param lockNode
      */
     void addVersionLockableAspect(NodeRef lockNode);
-
-    /**
-     * Calculate next version label based on current version (no new version is actually created)
-     * 
-     * @param nodeRef
-     * @return
-     */
-    String calculateNextVersionLabel(NodeRef fileRef);
-
 }

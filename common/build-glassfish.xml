@@ -14,7 +14,7 @@
 
    <!-- TODO clean-glassfish target -->
 
-   <target name="installcert" depends="compile" description="Retrieve HTTPS certificate from remote HTTPS connection and add it to application server Keystore (use if CAS connection is over HTTPS)">
+   <target name="installcert" depends="compile" description="Install a SSL certificate into application server KeyStore">
       <java dir="${project.basedir}" fork="true" classname="ee.webmedia.alfresco.utils.InstallCert" classpathref="classpath.test.compile">
          <arg path="${file.glassfish.domain.config.cacerts}" />
       </java>
@@ -33,16 +33,16 @@
       </exec>
       <echo message="Wait for the server domain start (see ${dir.glassfish}/domains/${glassfish.domain.name}/logs/server.log)" />
       <waitfor maxwait="300" maxwaitunit="second" checkevery="2" checkeveryunit="second" timeoutproperty="wait.timeout">
-         <http url="${server.domain.protocol}://${server.host}:${server.domain.port}/" />
+         <http url="http://${server.host}:${server.domain.port}/" />
       </waitfor>
       <fail if="wait.timeout"
-            message="Didn't get response from deployment management url: ${server.domain.protocol}://${server.host}:${server.domain.port}. Maybe server.domain.port shouldn't be ${server.domain.port}?" />
-      <echo message="Server started - see ${server.domain.protocol}://${server.host}:${server.domain.port}" />
+            message="Didn't get response from deployment management url: http://${server.host}:${server.domain.port}. Maybe server.domain.port shouldn't be ${server.domain.port}?" />
+      <echo message="Server started - see http://${server.host}:${server.domain.port}" />
    </target>
 
    <target name="glassfish-start-done" depends="setup-glassfish">
       <condition property="glassfish.start.done">
-         <http url="${server.domain.protocol}://${server.host}:${server.domain.port}/" />
+         <http url="http://${server.host}:${server.domain.port}/" />
       </condition>
       <antcall target="glassfish-start-conditionally" />
    </target>
@@ -63,7 +63,7 @@
 
    <target name="deploy" depends="compile,glassfish-start-done" description="Deploy exploded directory to GlassFish">
       <condition property="glassfish.deploy.done">
-         <http url="${server.domain.protocol}://${server.host}:${server.domain.port}/${project.name}" />
+         <http url="http://${server.host}:${server.domain.port}/${project.name}" />
       </condition>
       <fail if="glassfish.deploy.done" message="Project '${project.name}' is already deployed, please execute undeploy first" />
 
@@ -75,11 +75,11 @@
          <arg value="--name=${project.name}" />
          <arg file="${project.dir.exploded}" />
       </exec>
-      <echo message="Checking if project is deployed as '${server.domain.protocol}://${server.host}:${server.domain.port}/${project.name}'" />
+      <echo message="Checking if project is deployed as 'http://${server.host}:${server.domain.port}/${project.name}'" />
       <waitfor maxwait="10" maxwaitunit="second" checkevery="500" checkeveryunit="millisecond" timeoutproperty="wait.timeout">
-         <http url="${server.domain.protocol}://${server.host}:${server.domain.port}/${project.name}" />
+         <http url="http://${server.host}:${server.domain.port}/${project.name}" />
       </waitfor>
-      <fail if="wait.timeout" message="Didn't get response from deployment url: ${server.domain.protocol}://${server.host}:${server.domain.port}/${project.name}" />
+      <fail if="wait.timeout" message="Didn't get response from deployment url: http://${server.host}:${server.domain.port}/${project.name}" />
       <echo message="Project is deployed to ${server.host} with context path '/${project.name}'" />
    </target>
 
@@ -114,8 +114,7 @@
 
    <target name="p-deploy" description="Paralel startGF(if needed)+deploy">
       <parallel>
-         <antcall target="glassfish-start-done" />
-         <!-- start glassfish if needed -->
+         <antcall target="glassfish-start-done" /><!-- start glassfish if needed -->
          <antcall target="deploy" />
       </parallel>
    </target>

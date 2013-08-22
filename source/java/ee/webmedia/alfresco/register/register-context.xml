@@ -2,8 +2,6 @@
 <beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
    xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
 
-   <bean id="registerTableBootstrap" class="ee.webmedia.alfresco.register.bootstrap.RegisterTableBootstrap" parent="createTableBootstrap" />
-
    <bean id="registerModelBootstrap" parent="dictionaryModelBootstrap" depends-on="dictionaryBootstrap">
       <property name="models">
          <list>
@@ -42,27 +40,11 @@
          </list>
       </property>
    </bean>
-
-   <bean id="changeRegisterSequenceToTableRowUpdater" class="ee.webmedia.alfresco.register.bootstrap.ChangeRegisterSequenceToTableRow" parent="abstractNodeUpdater" >
-      <property name="moduleId" value="common" />
-      <property name="executeOnceOnly" value="true" />
-      <property name="dataSource" ref="dataSource" />
-      <property name="registerService" ref="RegisterService" />
-      <property name="dependsOn">
-         <list>
-            <ref bean="registerTableBootstrap"/>
-            <ref bean="registerRootBootstrap"/>
-         </list>
-      </property>
-   </bean>
    
    <bean id="registerService" class="ee.webmedia.alfresco.register.service.RegisterServiceImpl">
       <property name="generalService" ref="GeneralService" />
       <property name="nodeService" ref="NodeService" />
-      <property name="logService" ref="LogService" />
-      <property name="userService" ref="UserService" />
       <property name="dataSource" ref="dataSource" />
-      <property name="valueEditable" value="${conf.register-value.editable}" />
    </bean>
 
    <bean id="RegisterService" class="org.springframework.aop.framework.ProxyFactoryBean">

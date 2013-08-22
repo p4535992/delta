@@ -1,24 +1,16 @@
 package ee.webmedia.alfresco.workflow.model;
 
 import java.io.Serializable;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
-import java.util.List;
 
 import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.util.Pair;
 import org.apache.commons.collections.Transformer;
 import org.apache.commons.collections.comparators.ComparatorChain;
 import org.apache.commons.collections.comparators.NullComparator;
 import org.apache.commons.collections.comparators.TransformingComparator;
-import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateFormatUtils;
-import org.apache.commons.lang.time.FastDateFormat;
-import org.springframework.util.Assert;
 import org.springframework.web.util.HtmlUtils;
 
 import ee.webmedia.alfresco.utils.MessageUtil;
@@ -31,30 +23,14 @@ import ee.webmedia.alfresco.workflow.service.Task;
 public class WorkflowBlockItem implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    private static final FastDateFormat DATE_FORMAT = FastDateFormat.getInstance("dd.MM.yyyy");
     private final Task task;
-    private List<WorkflowBlockItem> groupItems;
-    private String groupName;
-    private int groupWorkflowIndex = -1;
     private boolean raisedRights = false;
     private boolean separator = false;
     private boolean zebra = false;
-    private boolean isGroupBlockItem = false;
-    private String workflowGroupTasksUrl;
 
     public WorkflowBlockItem(Task task, boolean raisedRights) {
         this.task = task;
         this.raisedRights = raisedRights;
-        isGroupBlockItem = false;
-    }
-
-    public WorkflowBlockItem(String groupName, int groupWorkflowIndex, boolean raisedRights) {
-        Assert.isTrue(StringUtils.isNotBlank(groupName));
-        task = null;
-        this.groupName = groupName;
-        this.groupWorkflowIndex = groupWorkflowIndex;
-        this.raisedRights = raisedRights;
-        isGroupBlockItem = true;
     }
 
     public WorkflowBlockItem(boolean separatorAndNotZebra) {
@@ -63,53 +39,34 @@ public class WorkflowBlockItem implements Serializable {
         zebra = !separatorAndNotZebra;
     }
 
-    public List<WorkflowBlockItem> getGroupItems() {
-        if (groupItems == null) {
-            groupItems = new ArrayList<WorkflowBlockItem>();
-        }
-        return groupItems;
-    }
-
     public Date getStartedDateTime() {
-        return !isGroupBlockItem ? task.getStartedDateTime() : null;
+        return task.getStartedDateTime();
     }
 
     public Date getDueDate() {
-        return !isGroupBlockItem ? task.getDueDate() : null;
+        return task.getDueDate();
     }
 
     public String getTaskCreatorName() {
-        return !isGroupBlockItem ? task.getCreatorName() : null;
+        return task.getCreatorName();
     }
 
     public String getWorkflowType() {
-        if (isCoResponsibleTask()) {
+        if (isResponsibleTask()) {
             return MessageUtil.getMessage("assignmentWorkflow_coOwner");
         }
-        Task tmpTask = task != null ? task : groupItems.get(0).getTask();
-        return MessageUtil.getMessage(tmpTask.getParent().getType().getLocalName());
+        return MessageUtil.getMessage(task.getParent().getType().getLocalName());
     }
 
-    public Task getTask() {
-        return task;
-    }
-
-    private boolean isCoResponsibleTask() {
-        return task != null ? WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW.equals(task.getParent().getType()) && !task.isResponsible() : false;
+    private boolean isResponsibleTask() {
+        return WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW.equals(task.getParent().getType()) && !task.isResponsible();
     }
 
     public String getTaskOwnerName() {
-        return isGroupBlockItem ? groupName : task.getOwnerName();
+        return task.getOwnerName();
     }
 
     public String getTaskResolution() {
-        if (isGroupBlockItem) {
-            return "";
-        }
-        if (task.isType(WorkflowSpecificModel.Types.DUE_DATE_EXTENSION_TASK)) {
-            Date proposedDueDate = task.getProposedDueDate();
-            return MessageUtil.getMessage("task_due_date_extension_resolution", DATE_FORMAT.format(proposedDueDate), task.getResolution());
-        }
         return task.getResolution();
     }
 
@@ -118,7 +75,7 @@ public class WorkflowBlockItem implements Serializable {
     }
 
     public int getWorkflowIndex() {
-        return isGroupBlockItem ? groupWorkflowIndex : task.getWorkflowIndex();
+        return task.getWorkflowIndex();
     }
 
     public int getTaskIndexInWorkflow() {
@@ -126,9 +83,6 @@ public class WorkflowBlockItem implements Serializable {
     }
 
     public String getTaskOutcome() {
-        if (isGroupBlockItem) {
-            return "";
-        }
         StringBuffer sb = new StringBuffer(200);
         if (StringUtils.isNotBlank(task.getOutcome())) {
             sb.append(HtmlUtils.htmlEscape(task.getOutcome()));
@@ -150,11 +104,7 @@ public class WorkflowBlockItem implements Serializable {
     }
 
     public String getTaskStatus() {
-        return !isGroupBlockItem ? task.getStatus() : "";
-    }
-
-    public String getOwnerGroup() {
-        return task.getOwnerGroup();
+        return task.getStatus();
     }
 
     public boolean isRaisedRights() {
@@ -162,8 +112,7 @@ public class WorkflowBlockItem implements Serializable {
     }
 
     public NodeRef getCompoundWorkflowNodeRef() {
-        Task tmpTask = task != null ? task : groupItems.get(0).getTask();
-        return tmpTask.getParent().getParent().getNodeRef();
+        return task.getParent().getParent().getNode().getNodeRef();
     }
 
     public void setSeparator(boolean isSeparator) {
@@ -186,52 +135,6 @@ public class WorkflowBlockItem implements Serializable {
         return !zebra && !separator;
     }
 
-    public String getDueDateHistory() {
-        if (isGroupBlockItem) {
-            return "";
-        }
-        StringBuilder sb = new StringBuilder("");
-        List<Pair<String, Date>> dueDateHistoryRecords = task.getDueDateHistoryRecords();
-        if (!dueDateHistoryRecords.isEmpty()) {
-            sb.append("<a href=\"\" onclick=\"alert('");
-            DateFormat dateFormat = new SimpleDateFormat("dd.M.yyyy");
-            int recordCounter = 0;
-            for (Pair<String, Date> historyRecord : dueDateHistoryRecords) {
-                sb.append(StringEscapeUtils.escapeJavaScript(MessageUtil.getMessage("task_due_date_history_previous_date"))).append(" ");
-                sb.append(StringEscapeUtils.escapeJavaScript(dateFormat.format(historyRecord.getSecond())));
-                sb.append(StringEscapeUtils.escapeJavaScript(MessageUtil.getMessage("task_due_date_history_change_reason"))).append(" ");
-                sb.append(StringEscapeUtils.escapeJavaScript(historyRecord.getFirst()));
-                recordCounter++;
-                if (recordCounter < dueDateHistoryRecords.size()) {
-                    sb.append("\\n");
-                }
-            }
-            sb.append("');return false;\">" + StringEscapeUtils.escapeHtml(MessageUtil.getMessage("task_due_date_history_show_history_start")) + "&nbsp;"
-                    + StringEscapeUtils.escapeHtml(MessageUtil.getMessage("task_due_date_history_show_history_end")) + "</a>");
-        }
-        return sb.toString();
-    }
-
-    public boolean isGroupBlockItem() {
-        return isGroupBlockItem;
-    }
-
-    public String getGroupName() {
-        return groupName;
-    }
-
-    public String getWorkflowGroupTasksUrl() {
-        return workflowGroupTasksUrl;
-    }
-
-    public void setWorkflowGroupTasksUrl(String workflowGroupTasksUrl) {
-        this.workflowGroupTasksUrl = workflowGroupTasksUrl;
-    }
-
-    public int getGroupWorkflowIndex() {
-        return groupWorkflowIndex;
-    }
-
     public static final Comparator<WorkflowBlockItem> COMPARATOR;
     static {
         // ComparatorChain is not thread-safe at construction time, but it is thread-safe to perform multiple comparisons after all the setup operations are
@@ -249,11 +152,11 @@ public class WorkflowBlockItem implements Serializable {
                 return ((WorkflowBlockItem) input).getWorkflowIndex();
             }
         }, new NullComparator()));
-        // in case of assignment ant order assignment tasks, responsible tasks come first
+        // in case of assignment tasks, responsible tasks come first
         chain.addComparator(new TransformingComparator(new Transformer() {
             @Override
             public Object transform(Object input) {
-                return ((WorkflowBlockItem) input).isCoResponsibleTask() ? 1 : 0;
+                return ((WorkflowBlockItem) input).isResponsibleTask() ? 1 : 0;
             }
         }, new NullComparator()));
         chain.addComparator(new TransformingComparator(new Transformer() {

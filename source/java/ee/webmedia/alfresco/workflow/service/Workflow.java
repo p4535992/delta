@@ -54,7 +54,7 @@ public class Workflow extends BaseWorkflowObject implements Serializable {
 
     protected Workflow copy(CompoundWorkflow copyParent) {
         // no need to copy newTaskTemplate, it is not changed ever
-        return copyImpl(new Workflow(getNode().clone(), copyParent, newTaskTemplate, newTaskClass, newTaskOutcomes));
+        return copyImpl(new Workflow(getNode().copy(), copyParent, newTaskTemplate, newTaskClass, newTaskOutcomes));
     }
 
     @Override
@@ -99,20 +99,12 @@ public class Workflow extends BaseWorkflowObject implements Serializable {
         tasks.add(task);
     }
 
-    protected void addTasks(List<Task> tasks) {
-        this.tasks.addAll(tasks);
-    }
-
     public boolean isAddTaskAllowed() {
         return newTaskTemplate != null && newTaskClass != null;
     }
 
     public Task addTask() {
         return addTask(tasks.size());
-    }
-
-    public boolean hasTaskResolution() {
-        return newTaskTemplate.hasAspect(WorkflowSpecificModel.Aspects.RESOLUTION);
     }
 
     public Task addTask(int index) {
@@ -133,28 +125,8 @@ public class Workflow extends BaseWorkflowObject implements Serializable {
         return parallelTasks;
     }
 
-    public boolean isMandatory() {
-        Boolean mandatory = getProp(WorkflowCommonModel.Props.MANDATORY);
-        if (mandatory == null) {
-            return false;
-        }
-        return mandatory;
-    }
-
-    public void setMandatory(boolean mandatory) {
-        setProp(WorkflowCommonModel.Props.MANDATORY, mandatory);
-    }
-
-    public Boolean getMandatory() {
-        return getProp(WorkflowCommonModel.Props.MANDATORY);
-    }
-
     public void setParallelTasks(boolean parallelTasks) {
         setProp(WorkflowCommonModel.Props.PARALLEL_TASKS, parallelTasks);
-    }
-
-    public Boolean getParallelTasks() {
-        return getProp(WorkflowCommonModel.Props.PARALLEL_TASKS);
     }
 
     public boolean isStopOnFinish() {
@@ -164,34 +136,6 @@ public class Workflow extends BaseWorkflowObject implements Serializable {
 
     public void setStopOnFinish(boolean stopOnFinish) {
         setProp(WorkflowCommonModel.Props.STOP_ON_FINISH, stopOnFinish);
-    }
-
-    public Boolean getStopOnFinish() {
-        return getProp(WorkflowCommonModel.Props.STOP_ON_FINISH);
-    }
-
-    public void setDescription(String description) {
-        setProp(WorkflowSpecificModel.Props.DESCRIPTION, description);
-    }
-
-    public String getDescription() {
-        return getProp(WorkflowSpecificModel.Props.DESCRIPTION);
-    }
-
-    public void setResolution(String resolution) {
-        setProp(WorkflowSpecificModel.Props.RESOLUTION, resolution);
-    }
-
-    public String getResolution() {
-        return getProp(WorkflowSpecificModel.Props.RESOLUTION);
-    }
-
-    public void setCategory(String category) {
-        setProp(WorkflowSpecificModel.Props.CATEGORY, category);
-    }
-
-    public String getCategory() {
-        return getProp(WorkflowSpecificModel.Props.CATEGORY);
     }
 
     @Override

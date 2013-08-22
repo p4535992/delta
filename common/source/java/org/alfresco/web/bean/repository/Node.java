@@ -79,8 +79,8 @@ public class Node implements Serializable, NamespacePrefixResolverProvider
    protected boolean assocsRetrieved = false;
    protected QNameNodeMap<String, List<AssociationRef>> associations;
    
-   protected Map<String/*assocTypeQName*/, Map<String/*childRef*/, ChildAssociationRef>> childAssociationsAdded;
-   protected Map<String/*assocTypeQName*/, Map<String/*childRef*/, ChildAssociationRef>> childAssociationsRemoved;
+   private Map<String/*assocTypeQName*/, Map<String/*childRef*/, ChildAssociationRef>> childAssociationsAdded;
+   private Map<String/*assocTypeQName*/, Map<String/*childRef*/, ChildAssociationRef>> childAssociationsRemoved;
    private Map<String, Map<String, AssociationRef>> associationsAdded;
    private Map<String, Map<String, AssociationRef>> associationsRemoved;
    
@@ -402,21 +402,6 @@ public class Node implements Serializable, NamespacePrefixResolverProvider
       return valid.booleanValue();
    }
 
-   public boolean hasPermissions(String... permissionsToCheck) {
-       if (permissionsToCheck != null) {
-           for (String permission : permissionsToCheck) {
-               if (!hasPermission(permission)) {
-                   return false;
-               }
-           }
-       }
-       return true;
-   }
-
-   /** Clear permissions cache - for example to validate that permission is not lost meanwhile */
-   public void clearPermissionsCache() {
-       permissions = null;
-   }
    /**
     * @return The GUID for the node
     */
@@ -576,7 +561,7 @@ public class Node implements Serializable, NamespacePrefixResolverProvider
    
    
     protected boolean allChildAssociationsByAssocTypeRetrieved = false;
-    protected Map<String/* assocTypeQName */, List<Node>> allChildAssociationsByAssocType;
+    private Map<String/* assocTypeQName */, List<Node>> allChildAssociationsByAssocType;
 
     /**
      * This method is used by {@link BaseComponentGenerator} to create value binding for propertySheetItems on subPropertySheets.

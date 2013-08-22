@@ -5,11 +5,7 @@ import javax.mail.internet.ParseException;
 
 import org.alfresco.service.cmr.repository.ContentReader;
 import org.alfresco.util.Pair;
-import org.apache.commons.lang.StringUtils;
 
-/**
- * @author Alar Kvell
- */
 public class MimeUtil {
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(MimeUtil.class);
 
@@ -38,7 +34,7 @@ public class MimeUtil {
         ContentType contentType = new ContentType(inputContentType);
         String mimeType = contentType.getBaseType().toLowerCase();
         String encoding = contentType.getParameter("charset");
-        if (StringUtils.isBlank(encoding)) {
+        if (encoding == null) {
             encoding = "UTF-8";
         }
         return new Pair<String, String>(mimeType, encoding);

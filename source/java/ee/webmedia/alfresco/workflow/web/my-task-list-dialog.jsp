@@ -7,7 +7,6 @@
 <%@ page isELIgnored="false"%>
 
 <h:outputText escape="false" value="#{SubstitutionBean.substitutionMessages}"/>
-<h:outputText escape="false" value="#{AssignResponsibilityBean.assingResponsibilityMessage}"/>
 
 <a:panel id="my-tasks-wrapper">
 <a:panel id="assignment-tasks-panel" styleClass="panel-100 #{(MyTasksBean.assignmentPagerVisible) ? 'with-pager' : ''}" label="#{msg.task_list_assignment_title}" progressive="true" rendered="#{not empty MyTasksBean.assignmentTasks}">
@@ -39,20 +38,6 @@
 
 </a:panel>
 
-<a:panel id="order-assignment-tasks-panel" styleClass="panel-100 #{(MyTasksBean.orderAssignmentPagerVisible) ? 'with-pager' : ''}" label="#{msg.task_list_order_assignment_title}" progressive="true" rendered="#{not empty MyTasksBean.orderAssignmentTasks}">
-
-   <%-- Main List --%>
-   <a:richList id="order-assignment-task-list" viewMode="details" pageSize="#{MyTasksBean.pageSize}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
-      width="100%" value="#{MyTasksBean.orderAssignmentTasks}" var="r">
-
-      <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/workflow/web/task-list-dialog-columns.jsp" />
-      <a:booleanEvaluator value="#{MyTasksBean.orderAssignmentPagerVisible}">
-         <a:dataPager id="order-assignment-pager" styleClass="pager" />
-      </a:booleanEvaluator>
-   </a:richList>
-
-</a:panel>
-
 <a:panel id="opinion-tasks-panel" styleClass="panel-100 #{(MyTasksBean.opinionPagerVisible) ? 'with-pager' : ''}" label="#{msg.task_list_opinion_title}" progressive="true" rendered="#{not empty MyTasksBean.opinionTasks}">
 
    <%-- Main List --%>
@@ -77,20 +62,6 @@
 
       <a:booleanEvaluator value="#{MyTasksBean.reviewPagerVisible}">
          <a:dataPager id="review-pager" styleClass="pager" />
-      </a:booleanEvaluator>
-   </a:richList>
-
-</a:panel>
-
-<a:panel id="confirmation-tasks-panel" styleClass="panel-100 #{(MyTasksBean.confirmationPagerVisible) ? 'with-pager' : ''}" label="#{msg.task_list_confirmation_title}" progressive="true" rendered="#{not empty MyTasksBean.confirmationTasks}">
-
-   <%-- Main List --%>
-   <a:richList id="confirmation-task-list" viewMode="details" pageSize="#{MyTasksBean.pageSize}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
-      width="100%" value="#{MyTasksBean.confirmationTasks}" var="r">
-
-      <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/workflow/web/task-list-dialog-columns.jsp" />
-      <a:booleanEvaluator value="#{MyTasksBean.confirmationPagerVisible}">
-         <a:dataPager id="confirmation-pager" styleClass="pager" />
       </a:booleanEvaluator>
    </a:richList>
 

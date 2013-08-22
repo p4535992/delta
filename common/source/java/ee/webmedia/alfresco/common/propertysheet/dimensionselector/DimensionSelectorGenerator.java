@@ -13,8 +13,6 @@ import javax.faces.component.UIInput;
 import javax.faces.context.FacesContext;
 
 import org.alfresco.service.cmr.repository.NodeRef;
-
-import org.alfresco.web.bean.repository.Node;
 import org.alfresco.util.Pair;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.Predicate;
@@ -102,7 +100,7 @@ public class DimensionSelectorGenerator extends SuggesterGenerator {
         return filter;
     }
 
-    protected String getValueProviderName(Node node) {
+    protected String getValueProviderName() {
         return getCustomAttributes().get(ATTR_DIMENSION_NAME);
     }
 

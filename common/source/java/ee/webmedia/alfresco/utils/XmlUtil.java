@@ -19,18 +19,6 @@ import org.w3c.dom.NodeList;
  */
 public class XmlUtil {
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(XmlUtil.class);
-    private static DatatypeFactory datatypeFactory; // JAXP RI implements DatatypeFactory in a thread-safe way
-
-    private static DatatypeFactory getDatatypeFactory() {
-        if (datatypeFactory == null) {
-            try {
-                datatypeFactory = DatatypeFactory.newInstance();
-            } catch (DatatypeConfigurationException e) {
-                throw new RuntimeException(e);
-            }
-        }
-        return datatypeFactory;
-    }
 
     /**
      * @param <T> instance of this class will be returned if parsing <code>inputXml</code> is successful.
@@ -88,7 +76,11 @@ public class XmlUtil {
         if (date != null) {
             GregorianCalendar gCal = new GregorianCalendar();
             gCal.setTime(date);
-            return getDatatypeFactory().newXMLGregorianCalendar(gCal);
+            try {
+                return DatatypeFactory.newInstance().newXMLGregorianCalendar(gCal);
+            } catch (DatatypeConfigurationException e) {
+                log.error("Error instantiating datatype factory", e);
+            }
         }
         return null;
     }

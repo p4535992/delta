@@ -34,6 +34,14 @@
          <property-name>properties</property-name>
          <value>#{UsersBeanProperties}</value>
       </managed-property>
+      <managed-property>
+         <property-name>userService</property-name>
+         <value>#{UserService}</value>
+      </managed-property>
+      <managed-property>
+         <property-name>organizationStructureService</property-name>
+         <value>#{OrganizationStructureService}</value>
+      </managed-property>
    </managed-bean>
 
    <managed-bean>
@@ -61,6 +69,16 @@
    </managed-bean>
 
    <managed-bean>
+      <managed-bean-name>UserGroupSearchBean</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.user.web.UserGroupSearchBean</managed-bean-class>
+      <managed-bean-scope>session</managed-bean-scope>
+      <managed-property>
+         <property-name>userListDialog</property-name>
+         <value>#{UserListDialog}</value>
+      </managed-property>
+   </managed-bean>
+
+   <managed-bean>
       <managed-bean-name>PermissionsDeleteDialog</managed-bean-name>
       <managed-bean-class>ee.webmedia.alfresco.user.web.PermissionsDeleteDialog</managed-bean-class>
       <managed-bean-scope>session</managed-bean-scope>
@@ -73,10 +91,5 @@
          <value>#{PermissionService}</value>
       </managed-property>
    </managed-bean>
-   
-   <converter>
-      <converter-id>ee.webmedia.alfresco.user.web.UserConverter</converter-id>
-      <converter-class>ee.webmedia.alfresco.user.web.UserConverter</converter-class>
-   </converter>
 
 </faces-config>

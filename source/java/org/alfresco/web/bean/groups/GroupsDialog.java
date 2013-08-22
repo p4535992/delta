@@ -59,11 +59,7 @@ import org.alfresco.web.ui.common.component.data.UIRichList;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import ee.webmedia.alfresco.common.web.BeanHelper;
-import ee.webmedia.alfresco.orgstructure.service.OrganizationStructureService;
-import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.MessageUtil;
-import ee.webmedia.alfresco.utils.UserUtil;
 
 /**
  * Backing Bean for the Groups Management pages.
@@ -79,9 +75,6 @@ public class GroupsDialog extends BaseDialogBean
    public static final String PARAM_GROUP = "group";
    public static final String PARAM_GROUP_NAME = "groupName";
    
-   public static final String BEAN_NAME = "GroupsDialog";
-   private boolean disableActions;
-
    /** The AuthorityService to be used by the bean */
    transient private AuthorityService authService;
 
@@ -95,8 +88,6 @@ public class GroupsDialog extends BaseDialogBean
    /** Currently visible Group Authority */
    protected String group = null;
    protected String groupName = null;
-   private List<Map<String, String>> groups = null;
-   private List<Map> users = null;
    
    /** RichList view mode */
    protected String viewMode = VIEW_ICONS;
@@ -119,7 +110,7 @@ public class GroupsDialog extends BaseDialogBean
    
    private static final String MSG_ROOT_GROUPS = "root_groups";
    private static final String MSG_CLOSE = "close";
-
+   
    private static Log logger = LogFactory.getLog(GroupsDialog.class);
    
    // ------------------------------------------------------------------------------
@@ -176,37 +167,10 @@ public class GroupsDialog extends BaseDialogBean
    @Override
     public String cancel() {
         setCurrentGroup(null, Application.getMessage(FacesContext.getCurrentInstance(), MSG_ROOT_GROUPS));
-        return "dialog:close";
+        return "dialog:close:dialog:manageGroups";
     }
-
-    public void setDisableActions(boolean disableActions) {
-        this.disableActions = disableActions;
-    }
-
-    public boolean isDisableActions() {
-        return disableActions;
-    }
-
-    /** class that helps to decide for jsp whether to render deleting group button or not */
-    public class DeleteEnambledDeciderMap extends HashMap<String, Boolean> {
-        private static final long serialVersionUID = 1L;
-
-        @Override
-        public Boolean get(Object gr) {
-            String group = (String) gr;
-            UserService userService = BeanHelper.getUserService();
-            return userService.isGroupDeleteAllowed(group);
-        }
-    }
-
-    private DeleteEnambledDeciderMap deleteEnabledDeciderMap = new DeleteEnambledDeciderMap();
-
-    public Map<String, Boolean> getDeleteEnabledByGroup() {
-        return deleteEnabledDeciderMap;
-    }
-
+   
    public void reset(ActionEvent event) {
-       disableActions = false;
        restored();
    }
    
@@ -385,48 +349,62 @@ public class GroupsDialog extends BaseDialogBean
     * @return The list of group objects to display. Returns the list of root groups or the
     *         list of sub-groups for the current group if set.
     */
-   public List<Map<String, String>> getGroups()
+   public List<Map> getGroups()
    {
-      if (groups == null){
-          UserTransaction tx = null;
-          try
-          {
-             FacesContext context = FacesContext.getCurrentInstance();
-             tx = Repository.getUserTransaction(context);
-             tx.begin();
-             
-             Set<String> authorities;
-             boolean immediate = (this.filterMode.equals(FILTER_CHILDREN));
-             if (this.group == null)
-             {
-                // root groups
-                if (immediate == true)
-                {
-                   authorities = this.getAuthorityService().getAllRootAuthoritiesInZone(AuthorityService.ZONE_APP_DEFAULT, AuthorityType.GROUP);
-                }
-                else
-                {
-                   authorities = this.getAuthorityService().getAllAuthoritiesInZone(AuthorityService.ZONE_APP_DEFAULT, AuthorityType.GROUP);
-                }
-             }
-             else
-             {
-                // sub-group of an existing group
-                authorities = this.getAuthorityService().getContainedAuthorities(AuthorityType.GROUP, this.group, immediate);
-             }
-             groups = UserUtil.getGroupsFromAuthorities(this.getAuthorityService(), authorities); 
-             
-             // commit the transaction
-             tx.commit();
-          }
-          catch (Throwable err)
-          {
-             Utils.addErrorMessage(MessageFormat.format(Application.getMessage(
-                   FacesContext.getCurrentInstance(), Repository.ERROR_GENERIC), err.getMessage()), err);
-             groups = Collections.<Map<String, String>>emptyList();
-             try { if (tx != null) {tx.rollback();} } catch (Exception tex) {}
-          }
+      List<Map> groups;
+      
+      UserTransaction tx = null;
+      try
+      {
+         FacesContext context = FacesContext.getCurrentInstance();
+         tx = Repository.getUserTransaction(context);
+         tx.begin();
+         
+         Set<String> authorities;
+         boolean immediate = (this.filterMode.equals(FILTER_CHILDREN));
+         if (this.group == null)
+         {
+            // root groups
+            if (immediate == true)
+            {
+               authorities = this.getAuthorityService().getAllRootAuthoritiesInZone(AuthorityService.ZONE_APP_DEFAULT, AuthorityType.GROUP);
+            }
+            else
+            {
+               authorities = this.getAuthorityService().getAllAuthoritiesInZone(AuthorityService.ZONE_APP_DEFAULT, AuthorityType.GROUP);
+            }
+         }
+         else
+         {
+            // sub-group of an existing group
+            authorities = this.getAuthorityService().getContainedAuthorities(AuthorityType.GROUP, this.group, immediate);
+         }
+         groups = new ArrayList<Map>(authorities.size());
+         for (String authority : authorities)
+         {
+            Map<String, String> authMap = new HashMap<String, String>(3, 1.0f);
+
+            String name = this.getAuthorityService().getShortName(authority);
+            authMap.put("name", name);
+            authMap.put("id", authority);
+            authMap.put("group", authority);
+            authMap.put("groupName", name);
+            authMap.put("displayName", this.getAuthorityService().getAuthorityDisplayName(authority));
+            
+            groups.add(authMap);
+         }
+         
+         // commit the transaction
+         tx.commit();
       }
+      catch (Throwable err)
+      {
+         Utils.addErrorMessage(MessageFormat.format(Application.getMessage(
+               FacesContext.getCurrentInstance(), Repository.ERROR_GENERIC), err.getMessage()), err);
+         groups = Collections.<Map>emptyList();
+         try { if (tx != null) {tx.rollback();} } catch (Exception tex) {}
+      }
+      
       return groups;
    }
    
@@ -435,63 +413,61 @@ public class GroupsDialog extends BaseDialogBean
     */
    public List<Map> getUsers()
    {
-      if (users == null){
-          UserTransaction tx = null;
-          try
-          {
-             FacesContext context = FacesContext.getCurrentInstance();
-             tx = Repository.getUserTransaction(context, true);
-             tx.begin();
-             
-             Set<String> authorities;
-             boolean structUnitBased = false;
-             if (this.group == null)
-             {
-                authorities = Collections.<String>emptySet();
-             }
-             else
-             {
-                // users of an existing group
-                boolean immediate = (this.filterMode.equals(FILTER_CHILDREN));
-                authorities = this.getAuthorityService().getContainedAuthorities(AuthorityType.USER, this.group, immediate);
-                structUnitBased = this.getAuthorityService().getAuthorityZones(this.group).contains(OrganizationStructureService.STRUCT_UNIT_BASED);
-             }
-             users = new ArrayList<Map>(authorities.size());
-             for (String authority : authorities)
-             {
-                Map<String, String> authMap = new HashMap<String, String>(4, 1.0f);
-                
-                String userName = this.getAuthorityService().getShortName(authority);
-                authMap.put("userName", userName);
-                authMap.put("id", authority);
-                authMap.put("structUnitBased", (structUnitBased) ? "true" : "false");
-                
-                // get Person details for this Authority
-                NodeRef ref = this.getPersonService().getPerson(authority);
-                String firstName = (String)this.getNodeService().getProperty(ref, ContentModel.PROP_FIRSTNAME);
-                String lastName = (String)this.getNodeService().getProperty(ref, ContentModel.PROP_LASTNAME);
-                
-                // build a sensible label for display
-                StringBuilder label = new StringBuilder(48);
-                label.append(firstName)
-                     .append(' ')
-                     .append(lastName);
-                authMap.put("name", label.toString());
-                
-                users.add(authMap);
-             }
-             
-             // commit the transaction
-             tx.commit();
-          }
-          catch (Throwable err)
-          {
-             Utils.addErrorMessage(MessageFormat.format(Application.getMessage(
-                   FacesContext.getCurrentInstance(), Repository.ERROR_GENERIC), err.getMessage()), err);
-             users = Collections.<Map>emptyList();
-             try { if (tx != null) {tx.rollback();} } catch (Exception tex) {}
-          }
+      List<Map> users;
+      
+      UserTransaction tx = null;
+      try
+      {
+         FacesContext context = FacesContext.getCurrentInstance();
+         tx = Repository.getUserTransaction(context, true);
+         tx.begin();
+         
+         Set<String> authorities;
+         if (this.group == null)
+         {
+            authorities = Collections.<String>emptySet();
+         }
+         else
+         {
+            // users of an existing group
+            boolean immediate = (this.filterMode.equals(FILTER_CHILDREN));
+            authorities = this.getAuthorityService().getContainedAuthorities(AuthorityType.USER, this.group, immediate);
+         }
+         users = new ArrayList<Map>(authorities.size());
+         for (String authority : authorities)
+         {
+            Map<String, String> authMap = new HashMap<String, String>(3, 1.0f);
+            
+            String userName = this.getAuthorityService().getShortName(authority);
+            authMap.put("userName", userName);
+            authMap.put("id", authority);
+            
+            // get Person details for this Authority
+            NodeRef ref = this.getPersonService().getPerson(authority);
+            String firstName = (String)this.getNodeService().getProperty(ref, ContentModel.PROP_FIRSTNAME);
+            String lastName = (String)this.getNodeService().getProperty(ref, ContentModel.PROP_LASTNAME);
+            
+            // build a sensible label for display
+            StringBuilder label = new StringBuilder(48);
+            label.append(firstName)
+                 .append(' ')
+                 .append(lastName);
+            authMap.put("name", label.toString());
+            
+            users.add(authMap);
+         }
+         
+         // commit the transaction
+         tx.commit();
       }
+      catch (Throwable err)
+      {
+         Utils.addErrorMessage(MessageFormat.format(Application.getMessage(
+               FacesContext.getCurrentInstance(), Repository.ERROR_GENERIC), err.getMessage()), err);
+         users = Collections.<Map>emptyList();
+         try { if (tx != null) {tx.rollback();} } catch (Exception tex) {}
+      }
+      
       return users;
    }
    
@@ -510,8 +486,6 @@ public class GroupsDialog extends BaseDialogBean
       // set the current Group Authority for our UI context operations
       this.group = group;
       this.groupName = groupName;
-      groups = null;
-      users = null;
       
       // inform that the UI needs updating after this change 
       contextUpdated();
@@ -544,7 +518,6 @@ public class GroupsDialog extends BaseDialogBean
       UIActionLink link = (UIActionLink)event.getComponent();
       Map<String, String> params = link.getParameterMap();
       String authority = params.get("id");
-      users = null;
       if (authority != null && authority.length() != 0)
       {
          UserTransaction tx = null;

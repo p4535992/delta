@@ -75,20 +75,6 @@
             <%-- Status and Actions --%>
             <a:panel id="titlebar">
             
-               <a:panel id="constrained-quicksearch" styleClass="search-box alt" rendered="#{DialogManager.currentDialog.name eq 'seriesListDialog' or DialogManager.currentDialog.name eq 'volumeListDialog' or DialogManager.currentDialog.name eq 'caseListDialog' or DialogManager.currentDialog.name eq 'documentListDialog'}">
-                  <h:graphicImage value="/images/parts/search_controls_left.png" width="3" height="21" styleClass="simple" />
-                  <h:inputText value="#{DocumentQuickSearchResultsDialog.searchValue}" maxlength="50" id="constrainedQuickSearch" styleClass="constrainedQuickSearch-input" />
-                  <h:commandButton id="constrainedQuickSearchBtn" value="#{msg.search}" type="submit" action="dialog:documentQuickSearchResultsDialog" actionListener="#{DocumentQuickSearchResultsDialog.setup}">
-                     <f:param name="containerNodeRef" value="#{DialogManager.bean.actionsContext.nodeRef}" />
-                  </h:commandButton>
-               </a:panel>
-
-               <a:panel id="constrained-quicksearch-today-registered" styleClass="search-box alt" rendered="#{DialogManager.currentDialog.name eq 'todayRegisteredDocumentsSearchResultsDialog'}">
-                  <h:graphicImage value="/images/parts/search_controls_left.png" width="3" height="21" styleClass="simple" />
-                  <h:inputText value="#{TodayRegisteredDocumentsSearchResultsDialog.searchValue}" maxlength="50" id="constrainedQuickSearch" styleClass="constrainedQuickSearch-input" />
-                  <h:commandButton id="constrainedQuickSearchBtn" value="#{msg.search}" type="submit" actionListener="#{TodayRegisteredDocumentsSearchResultsDialog.setupSearch}" />
-               </a:panel>
-
                <a:panel id="titlebar-dialog-buttons-panel" styleClass="titlebar-buttons" rendered="#{DialogManager.OKButtonVisible || (DialogManager.currentDialog.name eq 'manageGroups' && GroupsDialog.group ne null)}">
                   <r:dialogButtons id="titlebar-dialog-buttons" styleClass="wizardButton" />
                </a:panel>
@@ -112,7 +98,7 @@
 
             <a:panel id="actions">
             <%--<f:subview id="extra-actions" rendered="#{DialogManager.filterListVisible or DialogManager.moreActionsId != null}"> --%>
-            <f:subview id="extra-actions" rendered="#{DialogManager.filterListVisible and DialogManager.currentDialog.name ne 'manageGroups' or (DialogManager.currentDialog.name eq 'document' or DialogManager.currentDialog.name eq 'documentDynamicDialog') and (WorkflowBlockBean.workflowMethodBindingName != null or AssocsBlockBean.repliesAssocsBindingName != null or AssocsBlockBean.followupAssocsBindingName != null) and DocumentDialogHelperBean.inEditMode == false}">
+            <f:subview id="extra-actions" rendered="#{DialogManager.filterListVisible and DialogManager.currentDialog.name ne 'manageGroups' or DialogManager.currentDialog.name eq 'document' and DocumentDialog.workflow.workflowMethodBindingName != null and DocumentDialog.meta.inEditMode == false}">
                <f:verbatim>
                <ul class="actions-menu extra-actions">
                </f:verbatim>
@@ -144,42 +130,17 @@
                      </a:menu>
                   <f:verbatim></li></f:verbatim>
                </f:subview>
-
-               <f:subview id="more-actions-panel-replies" rendered="#{DialogManager.currentDialog.name eq 'documentDynamicDialog' and DocumentDialogHelperBean.inWorkspace and AssocsBlockBean.repliesAssocsBindingName != null and DocumentDialogHelperBean.inEditMode == false}">
-                  <f:verbatim><li></f:verbatim>
-                     <a:menu id="replies_menu" style="white-space:nowrap" menuStyleClass="dropdown-menu right"
-                        label="#{AssocsBlockBean.addRepliesLabel}" image="/images/icons/arrow-down.png" >
-                        <%-- Here the method call of the value parameter is actually returning a string in the form "#{method binding}"
-                             UIActions class has been modified to interpret such strings as method bindings that take 1 parameter and
-                             return a list of ActionDefinition objects. See UIActions and WorkflowBlockBean classes for details.
-                              --%>
-                        <r:actions id="reply_menu_items" value="#{AssocsBlockBean.repliesAssocsBindingName}" context="#{DialogManager.actionsContext}" />
-                     </a:menu>
-               <f:verbatim></li></f:verbatim>
-               </f:subview>
-
-               <f:subview id="more-actions-panel-followups" rendered="#{DialogManager.currentDialog.name eq 'documentDynamicDialog' and DocumentDialogHelperBean.inWorkspace and AssocsBlockBean.followupAssocsBindingName != null and DocumentDialogHelperBean.inEditMode == false}">
-                  <f:verbatim><li></f:verbatim>
-                     <a:menu id="followups_menu" style="white-space:nowrap" menuStyleClass="dropdown-menu right"
-                        label="#{AssocsBlockBean.addFollowUpsLabel}"  image="/images/icons/arrow-down.png" >
-                        <%-- Here the method call of the value parameter is actually returning a string in the form "#{method binding}"
-                             UIActions class has been modified to interpret such strings as method bindings that take 1 parameter and
-                             return a list of ActionDefinition objects. See UIActions and WorkflowBlockBean classes for details.
-                              --%>
-                        <r:actions id="followup_menu_items" value="#{AssocsBlockBean.followupAssocsBindingName}" context="#{DialogManager.actionsContext}" />
-                     </a:menu>
-               <f:verbatim></li></f:verbatim>
-               </f:subview>
-
-               <f:subview id="more-actions-panel-sub2" rendered="#{(DialogManager.currentDialog.name eq 'document' or DialogManager.currentDialog.name eq 'documentDynamicDialog') and DocumentDialogHelperBean.inWorkspace and WorkflowBlockBean.workflowMethodBindingName != null and DocumentDialogHelperBean.inEditMode == false}">
+               
+               <f:subview id="more-actions-panel-sub2" rendered="#{DialogManager.currentDialog.name eq 'document' and DocumentDialog.workflow.workflowMethodBindingName != null and DocumentDialog.meta.inEditMode == false}">
                   <f:verbatim><li></f:verbatim>
                      <a:menu id="workflow_menu" style="white-space:nowrap" menuStyleClass="dropdown-menu right"
-                        label="#{WorkflowBlockBean.workflowMenuLabel}" image="/images/icons/arrow-down.png" >
+                        label="#{DocumentDialog.workflow.workflowMenuLabel}" image="/images/icons/arrow-down.png" 
+                        rendered="#{DialogManager.currentDialog.name eq 'document' and DocumentDialog.workflow.workflowMethodBindingName != null and DocumentDialog.meta.inEditMode == false}">
                         <%-- Here the method call of the value parameter is actually returning a string in the form "#{method binding}"
                              UIActions class has been modified to interpret such strings as method bindings that take 1 parameter and
                              return a list of ActionDefinition objects. See UIActions and WorkflowBlockBean classes for details.
                               --%>
-                        <r:actions id="workflow_menu_items" value="#{WorkflowBlockBean.workflowMethodBindingName}" context="#{DialogManager.actionsContext}" />
+                        <r:actions id="workflow_menu_items" value="#{DocumentDialog.workflow.workflowMethodBindingName}" context="#{DialogManager.actionsContext}" />
                      </a:menu>
                <f:verbatim></li></f:verbatim>
                </f:subview>
@@ -208,7 +169,7 @@
                         <r:actions id="more_actions_menu_items" value="#{DialogManager.moreActionsId}" context="#{DialogManager.actionsContext}"/>
                      </a:menu>--%>
                   </f:subview>
-                  <f:subview id="empty-main-actions-subview" rendered="#{not (DialogManager.currentDialog.name eq 'manageGroups' and not empty DialogManager.bean.groups or DialogManager.currentDialog.name ne 'manageGroups') and (DialogManager.filterListVisible and DialogManager.currentDialog.name ne 'manageGroups' or (DialogManager.currentDialog.name eq 'document' or DialogManager.currentDialog.name eq 'documentDynamicDialog') and WorkflowBlockBean.workflowMethodBindingName != null and DocumentDialogHelperBean.inEditMode == false)}">
+                  <f:subview id="empty-main-actions-subview" rendered="#{not (DialogManager.currentDialog.name eq 'manageGroups' and not empty DialogManager.bean.groups or DialogManager.currentDialog.name ne 'manageGroups') and (DialogManager.filterListVisible and DialogManager.currentDialog.name ne 'manageGroups' or DialogManager.currentDialog.name eq 'document' and DocumentDialog.workflow.workflowMethodBindingName != null and DocumentDialog.meta.inEditMode == false)}">
                      <h:outputText value="&nbsp;" escape="false" style="line-height:20px;" />
                   </f:subview>
                </a:panel>
@@ -293,7 +254,7 @@
 
             <a:panel id="footer-actions">
             <%--<f:subview id="footer-extra-actions" rendered="#{DialogManager.filterListVisible or DialogManager.moreActionsId != null}"> --%>
-            <f:subview id="footer-extra-actions" rendered="#{DialogManager.filterListVisible and DialogManager.currentDialog.name ne 'manageGroups' or (DialogManager.currentDialog.name eq 'document' or DialogManager.currentDialog.name eq 'documentDynamicDialog') and DocumentDialogHelperBean.inWorkspace and WorkflowBlockBean.workflowMethodBindingName != null and DocumentDialogHelperBean.inEditMode == false}">
+            <f:subview id="footer-extra-actions" rendered="#{DialogManager.filterListVisible and DialogManager.currentDialog.name ne 'manageGroups' or DialogManager.currentDialog.name eq 'document' and DocumentDialog.workflow.workflowMethodBindingName != null and DocumentDialog.meta.inEditMode == false}">
                <f:verbatim>
                <ul class="actions-menu extra-actions">
                </f:verbatim>
@@ -329,13 +290,13 @@
                   <li>
                   </f:verbatim>   
                      <a:menu id="footer-workflow_menu" style="white-space:nowrap" menuStyleClass="dropdown-menu right"
-                        label="#{WorkflowBlockBean.workflowMenuLabel}" image="/images/icons/arrow-down.png" 
-                        rendered="#{(DialogManager.currentDialog.name eq 'document' or DialogManager.currentDialog.name eq 'documentDynamicDialog') and DocumentDialogHelperBean.inWorkspace and WorkflowBlockBean.workflowMethodBindingName != null and DocumentDialogHelperBean.inEditMode == false}">
+                        label="#{DocumentDialog.workflow.workflowMenuLabel}" image="/images/icons/arrow-down.png" 
+                        rendered="#{DialogManager.currentDialog.name eq 'document' and DocumentDialog.workflow.workflowMethodBindingName != null and DocumentDialog.meta.inEditMode == false}">
                         <%-- Here the method call of the value parameter is actually returning a string in the form "#{method binding}"
                              UIActions class has been modified to interpret such strings as method bindings that take 1 parameter and
                              return a list of ActionDefinition objects. See UIActions and WorkflowBlockBean classes for details.
                               --%>
-                        <r:actions id="footer-workflow_menu_items" value="#{WorkflowBlockBean.workflowMethodBindingName}" context="#{DialogManager.actionsContext}" />
+                        <r:actions id="footer-workflow_menu_items" value="#{DocumentDialog.workflow.workflowMethodBindingName}" context="#{DialogManager.actionsContext}" />
                      </a:menu>
                   <f:verbatim>
                   </li>
@@ -365,7 +326,7 @@
                         <r:actions id="footer-more_actions_menu_items" value="#{DialogManager.moreActionsId}" context="#{DialogManager.actionsContext}"/>
                      </a:menu>--%>
                   </f:subview>
-                  <f:subview id="footer-empty-main-actions-subview" rendered="#{not (DialogManager.currentDialog.name eq 'manageGroups' and not empty DialogManager.bean.groups or DialogManager.currentDialog.name ne 'manageGroups') and (DialogManager.filterListVisible and DialogManager.currentDialog.name ne 'manageGroups' or (DialogManager.currentDialog.name eq 'document' or DialogManager.currentDialog.name eq 'documentDynamicDialog') and DocumentDialogHelperBean.inWorkspace and WorkflowBlockBean.workflowMethodBindingName != null and DocumentDialogHelperBean.inEditMode == false)}">
+                  <f:subview id="footer-empty-main-actions-subview" rendered="#{not (DialogManager.currentDialog.name eq 'manageGroups' and not empty DialogManager.bean.groups or DialogManager.currentDialog.name ne 'manageGroups') and (DialogManager.filterListVisible and DialogManager.currentDialog.name ne 'manageGroups' or DialogManager.currentDialog.name eq 'document' and DocumentDialog.workflow.workflowMethodBindingName != null and DocumentDialog.meta.inEditMode == false)}">
                      <h:outputText value="&nbsp;" escape="false" style="line-height:20px;" />
                   </f:subview>
                </a:panel>
@@ -418,7 +379,6 @@
       <% } %>
       </a:panel>
    </a:panel>
-   <h:panelGroup binding="#{UserConfirmHelper.confirmContainer}" />
    <%@ include file="../parts/footer.jsp"%>
    </h:form>
 </f:view>

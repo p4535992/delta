@@ -1,19 +1,16 @@
 package ee.webmedia.alfresco.common.service;
 
-import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentSearchService;
 import static org.alfresco.web.bean.generator.BaseComponentGenerator.CustomConstants.VALUE_INDEX_IN_MULTIVALUED_PROPERTY;
 
 import java.io.BufferedInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.Serializable;
 import java.nio.charset.Charset;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -23,8 +20,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.zip.Deflater;
 
 import javax.faces.context.FacesContext;
@@ -56,43 +51,36 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
+import org.alfresco.service.cmr.search.LimitBy;
+import org.alfresco.service.cmr.search.ResultSet;
+import org.alfresco.service.cmr.search.SearchParameters;
 import org.alfresco.service.cmr.search.SearchService;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
-import org.alfresco.service.namespace.QNamePattern;
 import org.alfresco.service.namespace.RegexQNamePattern;
 import org.alfresco.service.transaction.TransactionService;
+import org.alfresco.util.GUID;
 import org.alfresco.util.Pair;
 import org.alfresco.web.app.Application;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.Repository;
-import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream.UnicodeExtraFieldPolicy;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
-import org.apache.commons.logging.Log;
-import org.postgresql.util.PGobject;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
-import org.springframework.jdbc.core.simple.ParameterizedRowMapper;
-import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.app.AppConstants;
-import ee.webmedia.alfresco.archivals.model.ArchivalsStoreVO;
 import ee.webmedia.alfresco.common.propertysheet.component.WMUIProperty;
 import ee.webmedia.alfresco.common.propertysheet.upload.UploadFileInput.FileWithContentType;
 import ee.webmedia.alfresco.common.web.WmNode;
-import ee.webmedia.alfresco.document.log.service.DocumentPropertiesChangeHolder;
-import ee.webmedia.alfresco.utils.AdjustableSemaphore;
-import ee.webmedia.alfresco.utils.CalendarUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.SearchUtil;
-import ee.webmedia.alfresco.utils.TextUtil;
 
 /**
  * @author Ats Uiboupin
@@ -110,7 +98,6 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
     private ContentService contentService;
     private MimetypeService mimetypeService;
     private TransactionService transactionService;
-    private SimpleJdbcTemplate jdbcTemplate;
 
     private final AtomicLong backgroundThreadCounter = new AtomicLong();
 
@@ -128,78 +115,18 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
         return store;
     }
 
-    private LinkedHashSet<ArchivalsStoreVO> archivalsStoreVOs;
-    private LinkedHashSet<StoreRef> archivalsStoreRefs;
-    private LinkedHashSet<StoreRef> allWithArchivalsStoreRefs;
-
-    @Override
-    public void setArchivalsStoreVOs(LinkedHashSet<ArchivalsStoreVO> archivalsStoreVOs) {
-        this.archivalsStoreVOs = new LinkedHashSet<ArchivalsStoreVO>(archivalsStoreVOs);
-    }
-
-    @Override
-    public LinkedHashSet<ArchivalsStoreVO> getArchivalsStoreVOs() {
-        return archivalsStoreVOs;
-    }
-
-    @Override
-    public LinkedHashSet<StoreRef> getAllWithArchivalsStoreRefs() {
-        if (allWithArchivalsStoreRefs == null) {
-            LinkedHashSet<StoreRef> stores = new LinkedHashSet<StoreRef>();
-            stores.add(store);
-            for (ArchivalsStoreVO storeVO : getArchivalsStoreVOs()) {
-                stores.add(storeVO.getStoreRef());
-            }
-            allWithArchivalsStoreRefs = stores;
-        }
-        return allWithArchivalsStoreRefs;
-    }
-
-    @Override
-    public LinkedHashSet<StoreRef> getAllStoreRefsWithTrashCan() {
-        LinkedHashSet<StoreRef> allStoreRefs = new LinkedHashSet<StoreRef>(getAllWithArchivalsStoreRefs());
-        allStoreRefs.add(StoreRef.STORE_REF_ARCHIVE_SPACESSTORE);
-        return allStoreRefs;
-    }
-
-    @Override
-    public LinkedHashSet<StoreRef> getArchivalsStoreRefs() {
-        if (archivalsStoreRefs == null) {
-            LinkedHashSet<StoreRef> stores = new LinkedHashSet<StoreRef>();
-            for (ArchivalsStoreVO storeVO : getArchivalsStoreVOs()) {
-                stores.add(storeVO.getStoreRef());
-            }
-            archivalsStoreRefs = stores;
-        }
-        return archivalsStoreRefs;
-    }
-
-    @Override
-    public NodeRef getPrimaryArchivalsNodeRef() {
-        return archivalsStoreVOs.iterator().next().getNodeRef();
-    }
-
     @Override
     public StoreRef getArchivalsStoreRef() {
         return archivalsStore;
     }
 
     @Override
-    public boolean isArchivalsStoreRef(StoreRef storeRef) {
-        if (storeRef == null) {
-            return false;
-        }
-        if (storeRef.equals(archivalsStore)) {
-            return true;
-        }
-        if (archivalsStoreVOs != null) {
-            for (ArchivalsStoreVO storeVO : archivalsStoreVOs) {
-                if (storeVO.getStoreRef().equals(storeRef)) {
-                    return true;
-                }
-            }
-        }
-        return false;
+    public LinkedHashSet<StoreRef> getAllStoreRefsWithTrashCan() {
+        LinkedHashSet<StoreRef> allStoreRefs = new LinkedHashSet<StoreRef>();
+        allStoreRefs.add(getStore());
+        allStoreRefs.add(getArchivalsStoreRef());
+        allStoreRefs.add(StoreRef.STORE_REF_ARCHIVE_SPACESSTORE);
+        return allStoreRefs;
     }
 
     @Override
@@ -214,7 +141,6 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
 
     @Override
     public NodeRef getNodeRef(String nodeRefXPath, NodeRef root) {
-        Assert.notNull(root, "rootRef is a mandatory parameter");
         NodeRef nodeRef = root;
         String[] xPathParts;
 
@@ -224,7 +150,6 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
             xPathParts = StringUtils.split(nodeRefXPath, "/");
         }
 
-        int partNr = 0;
         for (String xPathPart : xPathParts) {
             if (xPathPart.startsWith("/")) {
                 xPathPart = StringUtils.removeStart(xPathPart, "/");
@@ -232,41 +157,19 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
 
             QName qName = QName.resolveToQName(namespaceService, xPathPart);
 
-            nodeRef = getChildByAssocName(nodeRef, qName, nodeRefXPath);
-            if (++partNr < xPathParts.length && nodeRef == null) {
-                throw new IllegalArgumentException("started to resolve xpath based on '" + nodeRefXPath
-                        + "'\nxPathParts='" + xPathParts + "'\npart that is incorrect='" + xPathPart + "'");
+            List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(nodeRef, RegexQNamePattern.MATCH_ALL, qName);
+            if (childAssocs.size() != 1) {
+                String msg = "Expected 1, got " + childAssocs.size() + " childAssocs for xPathPart '"
+                        + xPathPart + "' when searching for node with xPath '" + nodeRefXPath + "'";
+                if (childAssocs.size() == 0) {
+                    log.trace(msg);
+                    return null;
+                }
+                throw new RuntimeException(msg);
             }
+            nodeRef = childAssocs.get(0).getChildRef();
         }
         return nodeRef;
-    }
-
-    @Override
-    public NodeRef getChildByAssocName(NodeRef parentRef, QNamePattern assocNamePattern) {
-        return getChildByAssocName(parentRef, assocNamePattern, null);
-    }
-
-    private NodeRef getChildByAssocName(NodeRef parentRef, QNamePattern assocNamePattern, String nodeRefXPath) {
-        Assert.notNull(parentRef, "parentRef is a mandatory parameter");
-        List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(parentRef, RegexQNamePattern.MATCH_ALL, assocNamePattern);
-        if (childAssocs.size() != 1) {
-            StringBuilder msg = new StringBuilder("Expected 1, got ").append(childAssocs.size()).append(" childAssocs for assocName '")
-                    .append(assocNamePattern instanceof QName ? ((QName) assocNamePattern).toPrefixString(namespaceService) : assocNamePattern).append("'");
-            if (nodeRefXPath != null) {
-                msg.append(" when searching for node with xPath '").append(nodeRefXPath).append("'");
-            }
-            if (childAssocs.size() == 0) {
-                log.trace(msg);
-                return null;
-            }
-            msg.append(".\nNodeRefs with same xPath:");
-            for (ChildAssociationRef childAssociationRef : childAssocs) {
-                msg.append("\n").append(childAssociationRef.getChildRef());
-            }
-            throw new RuntimeException(msg.toString());
-        }
-        parentRef = childAssocs.get(0).getChildRef();
-        return parentRef;
     }
 
     @Override
@@ -330,22 +233,18 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
     }
 
     @Override
-    public void saveRemovedChildAssocs(Node node, DocumentPropertiesChangeHolder docPropsChangeHolder) {
+    public int saveRemovedChildAssocs(Node node) {
         Map<String, Map<String, ChildAssociationRef>> removedChildAssocs = node.getRemovedChildAssociations();
+        int removedAssocs = 0;
         for (Map<String, ChildAssociationRef> typedAssoc : removedChildAssocs.values()) {
             for (ChildAssociationRef assoc : typedAssoc.values()) {
                 final NodeRef childRef = assoc.getChildRef();
-
-                if (RepoUtil.isSaved(childRef) && nodeService.exists(childRef)) {
-                    for (ChildAssociationRef childAssoc : nodeService.getChildAssocs(childRef)) {
-                        docPropsChangeHolder.addChange(childRef, childAssoc.getTypeQName(), childAssoc.getChildRef(), null);
-                    }
-
-                    docPropsChangeHolder.addChange(node.getNodeRef(), assoc.getTypeQName(), childRef, null);
-                    nodeService.deleteNode(childRef);
+                if (!WmNode.NOT_SAVED_STORE.equals(childRef.getStoreRef())) {
+                    nodeService.removeChild(assoc.getParentRef(), childRef);
                 }
             }
         }
+        return removedAssocs;
     }
 
     /**
@@ -363,20 +262,10 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
     }
 
     @Override
-    public WmNode fetchObjectNode(NodeRef objectRef, QName objectType) {
-        QName type = nodeService.getType(objectRef);
-        Assert.isTrue(objectType.equals(type), objectRef + " is typed as " + type + " but was requested as " + objectType);
-        Set<QName> aspects = RepoUtil.getAspectsIgnoringSystem(nodeService.getAspects(objectRef));
-        Map<QName, Serializable> props = RepoUtil.getPropertiesIgnoringSystem(nodeService.getProperties(objectRef), dictionaryService);
-
-        return new WmNode(objectRef, type, aspects, props);
-    }
-
-    @Override
     public WmNode createNewUnSaved(QName type, Map<QName, Serializable> props) {
         Set<QName> aspects = getDefaultAspects(type);
         props = addDefaultValues(type, aspects, props);
-        return new WmNode(/* unsaved */RepoUtil.createNewUnsavedNodeRef(), type, aspects, props);
+        return new WmNode(/* unsaved */new NodeRef(WmNode.NOT_SAVED_STORE, GUID.generate()), type, aspects, props);
     }
 
     /**
@@ -462,54 +351,23 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
     }
 
     @Override
-    public boolean setAspectsIgnoringSystem(Node node) {
-        return setAspectsIgnoringSystem(node.getNodeRef(), node.getAspects());
-    }
-
-    @Override
-    public boolean setAspectsIgnoringSystem(NodeRef nodeRef, Set<QName> nodeAspects) {
-        boolean modified = false;
-        Set<QName> repoAspects = RepoUtil.getAspectsIgnoringSystem(nodeService.getAspects(nodeRef));
-        nodeAspects = RepoUtil.getAspectsIgnoringSystem(nodeAspects);
-
-        List<QName> aspectsToRemove = new ArrayList<QName>(repoAspects);
-        aspectsToRemove.removeAll(nodeAspects);
-        for (QName aspect : aspectsToRemove) {
-            nodeService.removeAspect(nodeRef, aspect);
-            modified = true;
-        }
-        List<QName> aspectsToAdd = new ArrayList<QName>(nodeAspects);
-        aspectsToAdd.removeAll(repoAspects);
-        for (QName aspect : aspectsToAdd) {
-            nodeService.addAspect(nodeRef, aspect, null);
-            modified = true;
-        }
-        return modified;
-    }
-
-    @Override
     public ChildAssociationRef getLastChildAssocRef(String nodeRefXPath) {
         ChildAssociationRef ref = null;
         String[] xPathParts = StringUtils.split(nodeRefXPath, '/');
         for (String xPathPart : xPathParts) {
             QName qName = QName.resolveToQName(namespaceService, xPathPart);
             NodeRef parent = (ref == null ? nodeService.getRootNode(store) : ref.getChildRef());
-            try {
-                List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(parent, RegexQNamePattern.MATCH_ALL, qName);
-                if (childAssocs.size() != 1) {
-                    String msg = "Expected 1, got " + childAssocs.size() + " childAssocs for xPathPart '"
-                            + xPathPart + "' when searching for node with xPath '" + nodeRefXPath + "'";
-                    if (childAssocs.size() == 0) {
-                        log.trace(msg);
-                        return null;
-                    }
-                    throw new RuntimeException(msg);
+            List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(parent, RegexQNamePattern.MATCH_ALL, qName);
+            if (childAssocs.size() != 1) {
+                String msg = "Expected 1, got " + childAssocs.size() + " childAssocs for xPathPart '"
+                        + xPathPart + "' when searching for node with xPath '" + nodeRefXPath + "'";
+                if (childAssocs.size() == 0) {
+                    log.trace(msg);
+                    return null;
                 }
-                ref = childAssocs.get(0);
-            } catch (RuntimeException e) {
-                throw new RuntimeException("Failed to get children of node " + parent + " by xPathPart '" + xPathPart
-                        + "'(qName=" + qName + "), when searching for node with xPath '" + nodeRefXPath + "'" + ", qName=" + qName, e);
+                throw new RuntimeException(msg);
             }
+            ref = childAssocs.get(0);
         }
         return ref;
     }
@@ -521,7 +379,6 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
 
     @Override
     public List<NodeRef> searchNodes(String input, QName type, Set<QName> props, int limit) {
-        limit = limit < 0 ? 100 : limit;
         if (input == null) {
             return null;
         }
@@ -533,7 +390,28 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
         String query = SearchUtil.generateQuery(parsedInput, type, props);
         log.debug("Query: " + query);
 
-        return getDocumentSearchService().searchNodes(query, limit, "searchNodesByTypeAndProps");
+        SearchParameters sp = new SearchParameters();
+        sp.addStore(store);
+        sp.setLanguage(SearchService.LANGUAGE_LUCENE);
+        // sp.addSort("@" + OrganizationStructureModel.Props.NAME, true); // XXX why doesn't lucene sorting work?
+        sp.setQuery(query);
+
+        // This limit does not work when ACLEntryAfterInvocationProvider has been disabled
+        // So we perform our own limiting in this method also
+        sp.setLimit(limit);
+        sp.setLimitBy(LimitBy.FINAL_SIZE);
+
+        ResultSet resultSet = searchService.query(sp);
+        try {
+            log.debug("Found " + resultSet.length() + " nodes");
+            List<NodeRef> nodeRefs = resultSet.getNodeRefs();
+            if (nodeRefs.size() > limit) {
+                return nodeRefs.subList(0, limit);
+            }
+            return nodeRefs;
+        } finally {
+            resultSet.close();
+        }
     }
 
     @Override
@@ -714,28 +592,28 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
     }
 
     @Override
-    public void writeZipFileFromFiles(OutputStream output, List<NodeRef> fileRefs) {
-        ZipArchiveOutputStream out = new ZipArchiveOutputStream(output);
+    public ByteArrayOutputStream getZipFileFromFiles(NodeRef document, List<String> fileNodeRefs) {
+        ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
+        ZipArchiveOutputStream out = new ZipArchiveOutputStream(byteStream);
+        InputStream in = null;
         try {
             out.setLevel(Deflater.DEFAULT_COMPRESSION);
             out.setEncoding("Cp437");
             out.setCreateUnicodeExtraFields(UnicodeExtraFieldPolicy.NOT_ENCODEABLE);
             byte[] buffer = new byte[10240];
-            for (NodeRef fileRef : fileRefs) {
-                FileInfo fileInfo = fileFolderService.getFileInfo(fileRef);
-                ZipArchiveEntry entry = new ZipArchiveEntry(fileInfo.getName());
-                entry.setSize(fileInfo.getContentData().getSize());
-                out.putArchiveEntry(entry);
-                InputStream in = fileFolderService.getReader(fileInfo.getNodeRef()).getContentInputStream();
-                try {
+            for (FileInfo fileInfo : fileFolderService.listFiles(document)) {
+                if (fileNodeRefs.contains(fileInfo.getNodeRef().toString())) {
+                    ZipArchiveEntry entry = new ZipArchiveEntry(fileInfo.getName());
+                    entry.setSize(fileInfo.getContentData().getSize());
+                    out.putArchiveEntry(entry);
+                    in = fileFolderService.getReader(fileInfo.getNodeRef()).getContentInputStream();
                     int length = 0;
                     while ((length = in.read(buffer)) > 0) {
                         out.write(buffer, 0, length);
                     }
-                } finally {
+                    out.closeArchiveEntry();
                     in.close();
                 }
-                out.closeArchiveEntry();
             }
             out.finish();
         } catch (IOException e) {
@@ -743,16 +621,13 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
             throw new RuntimeException("Failed to zip up files.", e);
         } finally {
             IOUtils.closeQuietly(out);
+            IOUtils.closeQuietly(in);
         }
+        return byteStream;
     }
 
     @Override
     public String getUniqueFileName(NodeRef folder, String fileName) {
-        return getUniqueFileName(fileName, null, folder);
-    }
-
-    @Override
-    public String getUniqueFileName(String fileName, List<NodeRef> filesToCheck, NodeRef... parentRefs) {
         String baseName = FilenameUtils.getBaseName(fileName);
         String extension = FilenameUtils.getExtension(fileName);
         if (StringUtils.isBlank(extension)) {
@@ -760,34 +635,19 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
         }
         String suffix = "";
         int i = 1;
-        List<NodeRef> existingFilesWithName = getExistingFilesWithName(baseName + suffix + "." + extension, parentRefs);
-        while ((filesToCheck == null && !existingFilesWithName.isEmpty()) || (filesToCheck != null && CollectionUtils.containsAny(existingFilesWithName, filesToCheck))) {
+        while (fileFolderService.searchSimple(folder, baseName + suffix + "." + extension) != null) {
             suffix = " (" + i + ")";
+
             i++;
-            existingFilesWithName = getExistingFilesWithName(baseName + suffix + "." + extension, parentRefs);
         }
         return baseName + suffix + "." + extension;
 
     }
 
-    private List<NodeRef> getExistingFilesWithName(String filenameToCheck, NodeRef... parentRefs) {
-        List<NodeRef> fileRefs = new ArrayList<NodeRef>();
-        for (NodeRef parentRef : parentRefs) {
-            if (!nodeService.exists(parentRef)) {
-                continue;
-            }
-            NodeRef fileRef = fileFolderService.searchSimple(parentRef, filenameToCheck);
-            if (fileRef != null) {
-                fileRefs.add(fileRef);
-            }
-        }
-        return fileRefs;
-    }
-
     @Override
     // TODO: current implementation doesn't worry about situation where more than one transaction tries to update documents count on same object
     // (but maybe alfresco prevents it?)
-    public void updateParentContainingDocsCount(final NodeRef parentNodeRef, final QName propertyName, Boolean added, Integer count) {
+    public void updateParentContainingDocsCount(final NodeRef parentNodeRef, final QName propertyName, boolean added, Integer count) {
         if (parentNodeRef == null) {
             return;
         }
@@ -799,22 +659,13 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
 
         int value = Integer.parseInt(valueProperty.toString());
         count = (count == null) ? 1 : count;
-        int newValue;
-        if (added != null) {
-            newValue = (added) ? value + count : value - count;
-        } else {
-            newValue = value + count;
-        }
-        if (newValue < 0) {
-            newValue = 0;
-        }
-        final int finalNewValue = newValue;
+        final int newValue = (added) ? value + count : value - count;
 
         // Update property with elevated rights
         AuthenticationUtil.runAs(new RunAsWork<Object>() {
             @Override
             public Object doWork() throws Exception {
-                nodeService.setProperty(parentNodeRef, propertyName, finalNewValue);
+                nodeService.setProperty(parentNodeRef, propertyName, newValue);
                 return null;
             }
         }, AuthenticationUtil.getSystemUserName());
@@ -823,47 +674,12 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
     @Override
     public void deleteNodeRefs(Collection<NodeRef> nodeRefs) {
         for (NodeRef nodeRef : nodeRefs) {
-            if (nodeService.exists(nodeRef)) {
-                nodeService.deleteNode(nodeRef);
-            }
+            nodeService.deleteNode(nodeRef);
         }
     }
 
     @Override
-    public <T> T runSemaphored(AdjustableSemaphore semaphore, ExecuteCallback<T> semaphoredCallback) {
-        boolean semaphoreAcquired = false;
-        try {
-            long start = System.nanoTime();
-
-            semaphore.acquire();
-            semaphoreAcquired = true;
-
-            long stop = System.nanoTime();
-            long duration = CalendarUtil.duration(start, stop);
-            if (duration > 20) {
-                log.info("Semaphore wait " + duration + " ms, " + semaphore.getMaxPermits() + " max permits allowed");
-            }
-
-            log.debug("Semaphore aquired.");
-            return semaphoredCallback.execute();
-        } catch (InterruptedException e) {
-            // TODO: is this correct? Should never happen under normal conditions
-            return null;
-        } finally {
-            if (semaphoreAcquired) {
-                semaphore.release();
-                log.debug("Semaphore released.");
-            }
-        }
-    }
-
-    @Override
-    public void runOnBackground(final RunAsWork<Void> work, final String threadNamePrefix, final boolean createTransaction) {
-        runOnBackground(work, threadNamePrefix, createTransaction, null);
-    }
-
-    @Override
-    public void runOnBackground(final RunAsWork<Void> work, final String threadNamePrefix, final boolean createTransaction, final RunAsWork<Void> workAfterCommit) {
+    public void runOnBackground(final RunAsWork<Void> work, final String threadNamePrefix) {
         Assert.notNull(threadNamePrefix, "threadName");
         final String threadName = threadNamePrefix + "-" + backgroundThreadCounter.getAndIncrement();
         AlfrescoTransactionSupport.bindListener(new TransactionListenerAdapter() {
@@ -875,34 +691,24 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
                         log.info("Started new background thread: " + Thread.currentThread().getName());
                         long startTime = System.nanoTime();
                         try {
-                            Pair<Long, Long> workTime;
-                            if (createTransaction) {
-                                RetryingTransactionHelper txHelper = transactionService.getRetryingTransactionHelper();
-                                workTime = txHelper.doInTransaction(new RetryingTransactionCallback<Pair<Long, Long>>() {
-                                    @Override
-                                    public Pair<Long, Long> execute() throws Throwable {
-                                        log.info("Started new transaction in background thread: " + Thread.currentThread().getName());
-                                        long start = System.nanoTime();
-                                        AuthenticationUtil.runAs(work, AuthenticationUtil.getSystemUserName());
-                                        long stop = System.nanoTime();
-                                        return new Pair<Long, Long>(start, stop);
-                                    }
-                                }, false, true);
-                            } else {
-                                long start = System.nanoTime();
-                                AuthenticationUtil.runAs(work, AuthenticationUtil.getSystemUserName());
-                                long stop = System.nanoTime();
-                                workTime = new Pair<Long, Long>(start, stop);
-                            }
+                            RetryingTransactionHelper txHelper = transactionService.getRetryingTransactionHelper();
+                            Pair<Long, Long> workTime = txHelper.doInTransaction(new RetryingTransactionCallback<Pair<Long, Long>>() {
+                                @Override
+                                public Pair<Long, Long> execute() throws Throwable {
+                                    log.info("Started new transaction in background thread: " + Thread.currentThread().getName());
+                                    long start = System.nanoTime();
+                                    AuthenticationUtil.runAs(work, AuthenticationUtil.getSystemUserName());
+                                    long stop = System.nanoTime();
+                                    return new Pair<Long, Long>(start, stop);
+                                }
+                            }, false, true);
                             long stopTime = System.nanoTime();
-                            log.info("Finished " + (createTransaction ? "transaction and " : "") + "background thread: " + Thread.currentThread().getName() + " total time = "
-                                    + CalendarUtil.duration(startTime, stopTime)
-                                    + "ms, last work time = " + CalendarUtil.duration(workTime.getFirst(), workTime.getSecond())
-                                    + " ms" + (createTransaction ? ", last transaction commit time = " + CalendarUtil.duration(workTime.getSecond(), stopTime) + " ms" : ""));
+                            log.info("Finished transaction and background thread: " + Thread.currentThread().getName() + " total time = " + duration(startTime, stopTime)
+                                    + "ms, last transaction work time = " + duration(workTime.getFirst(), workTime.getSecond()) + " ms, last transaction commit time = "
+                                    + duration(workTime.getSecond(), stopTime) + " ms");
                         } catch (Exception e) {
                             long stopTime = System.nanoTime();
-                            log.error("Exception in background thread: " + Thread.currentThread().getName() + " total time = " + CalendarUtil.duration(startTime, stopTime) + "ms",
-                                    e);
+                            log.error("Exception in background thread: " + Thread.currentThread().getName() + " total time = " + duration(startTime, stopTime) + "ms", e);
                         }
                     }
 
@@ -910,83 +716,12 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
                 log.info("Creating and starting a new background thread: " + threadName);
                 Thread thread = new Thread(runnable, threadName);
                 thread.start();
-
-                if (workAfterCommit != null) {
-                    try {
-                        workAfterCommit.doWork();
-                    } catch (Exception e) {
-                        log.error("Exception in work after commit!", e);
-                    }
-                }
             }
         });
     }
 
-    @Override
-    public NodeRef getExistingNodeRefAllStores(String id) {
-        if (id == null) {
-            return null;
-        }
-        for (StoreRef storeRef : getAllWithArchivalsStoreRefs()) {
-            NodeRef nodeRef = new NodeRef(storeRef, id);
-            if (nodeService.exists(nodeRef)) {
-                return nodeRef;
-            }
-        }
-        return null;
-    }
-
-    @Override
-    public String getTsquery(String input) {
-        if (input == null) {
-            input = "";
-        }
-        PGobject res = jdbcTemplate.queryForObject("SELECT plainto_tsquery('simple', ?)", PGobject.class, input);
-        List<String> lexems = new ArrayList<String>();
-        Pattern pattern = Pattern.compile("'[^']+'");
-        String originalTsquery = res.getValue();
-        Matcher matcher = pattern.matcher(originalTsquery);
-        while (matcher.find()) {
-            String lexemValue = matcher.group().substring(1, matcher.group().length() - 1);
-            if (lexemValue.length() < 3) {
-                continue;
-            }
-            String lexem = "'" + lexemValue + "':*";
-            if (!lexems.contains(lexem)) {
-                lexems.add(lexem);
-            }
-        }
-        String tsquery = StringUtils.join(lexems, " & ");
-        if (log.isDebugEnabled()) {
-            log.debug("Parsed:\n  input[" + input.length() + " chars]=" + input + "\n  original tsquery=" + originalTsquery + "\n  new tsquery[" + lexems.size() + " lexems]="
-                    + tsquery);
-        }
-        return tsquery;
-    }
-
-    @Override
-    public void explainQuery(String sqlQuery, Log traceLog, Object... args) {
-        if (traceLog.isTraceEnabled()) {
-            jdbcTemplate.getJdbcOperations().execute("SET enable_seqscan TO off");
-            List<String> explanation = jdbcTemplate.query("EXPLAIN " + sqlQuery, new ParameterizedRowMapper<String>() {
-
-                @Override
-                public String mapRow(ResultSet rs, int rowNum) throws SQLException {
-                    return rs.getString(1);
-                }
-            }, args);
-            StringBuffer sb = new StringBuffer("Explaining database query, slq='" + sqlQuery + "', args=\n");
-            if (args != null && args.length > 0) {
-                int argsCounter = 1;
-                for (Object arg : args) {
-                    sb.append(argsCounter++ + ") ").append(arg != null ? arg.toString() : arg).append("\n");
-                }
-            } else {
-                sb.append(args).append("\n");
-            }
-            sb.append(TextUtil.joinNonBlankStrings(explanation, "\n"));
-            traceLog.trace(sb.toString());
-        }
+    private static long duration(long startTime, long stopTime) {
+        return (stopTime - startTime) / 1000000L;
     }
 
     // START: getters / setters
@@ -1029,11 +764,6 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
     public void setTransactionService(TransactionService transactionService) {
         this.transactionService = transactionService;
     }
-
-    public void setJdbcTemplate(SimpleJdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
-    }
-
     // END: getters / setters
 
 }

@@ -54,6 +54,7 @@
       <type name="cm:folder">
          <title>Folder</title>
          <parent>cm:cmobject</parent>
+         <archive>true</archive>
          <associations>
             <child-association name="cm:contains">
                <source>
@@ -152,7 +153,7 @@
         <title>Alfresco Authority Abstract Type</title>
          <parent>sys:base</parent>
       </type>
-      
+
       <type name="cm:person">
          <title>Person</title>
          <parent>cm:authority</parent>
@@ -205,28 +206,6 @@
             <property name="cm:jobtitle">
             	<type>d:text</type>
             </property>
-            <property name="cm:organizationPath">
-               <type>d:text</type>
-               <multiple>true</multiple>
-            </property>            
-            <property name="cm:county">
-               <type>d:text</type>
-            </property>
-            <property name="cm:municipality">
-               <type>d:text</type>
-            </property>
-            <property name="cm:village">
-               <type>d:text</type>
-            </property>
-            <property name="cm:streetHouse">
-               <type>d:text</type>
-            </property>            
-            <property name="cm:postalCode">
-               <type>d:text</type>
-            </property>
-            <property name="cm:serviceRank">
-               <type>d:text</type>
-            </property>            
             <property name="cm:location">
             	<type>d:text</type>
             </property>
@@ -269,10 +248,7 @@
             <property name="cm:relatedFundsCenter">
                <type>d:text</type>
                <multiple>true</multiple>
-            </property>
-            <property name="cm:showEmptyTaskMenu">
-               <type>d:boolean</type>
-            </property>         
+            </property>            
             
             <!-- system maintained values -->
             <property name="cm:sizeCurrent">
@@ -443,6 +419,7 @@
       <type name="cm:thumbnail">
 	     <title>Thumbnail</title>
 		 <parent>cm:content</parent>
+		 <archive>true</archive>
 		 <properties>     
 		    <property name="cm:thumbnailName">
 		        <title>Thumbnail Name</title>

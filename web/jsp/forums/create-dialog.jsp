@@ -40,6 +40,19 @@ function pageLoaded()
 document.getElementById("dialog:dialog-body:name").focus();
 document.getElementById("dialog").onsubmit = validate;
 document.getElementById("dialog:finish-button").onclick = function() {finishButtonPressed = true; clear_dialog();}
+checkButtonState();
+}
+
+function checkButtonState()
+{
+if (document.getElementById("dialog:dialog-body:name").value.length == 0 )
+{
+document.getElementById("dialog:finish-button").disabled = true;
+}
+else
+{
+document.getElementById("dialog:finish-button").disabled = false;
+}
 }
 
 function validate()
@@ -80,7 +93,8 @@ return true;
 </td>
 <td width="85%">
 </f:verbatim>
-<h:inputText id="name" value="#{DialogManager.bean.name}" size="35" maxlength="1024" />
+<h:inputText id="name" value="#{DialogManager.bean.name}" size="35" maxlength="1024"
+onkeyup="javascript:checkButtonState();" onchange="javascript:checkButtonState();" />
 <f:verbatim>
 </td>
 </tr>

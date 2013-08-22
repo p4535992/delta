@@ -44,8 +44,6 @@ public class ForcedMandatoryValidator implements Validator {
         Object submittedValue = dependant.getSubmittedValue();
         if (submittedValue instanceof String) {
             return StringUtils.isNotBlank((String) submittedValue);
-        } else if (submittedValue == null) {
-            return false; // dropDown select may submit null
         } else {
             throw new RuntimeException("Not implemented to handing submited value with type: " + submittedValue.getClass().getCanonicalName());
         }

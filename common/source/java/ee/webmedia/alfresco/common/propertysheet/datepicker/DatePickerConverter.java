@@ -1,6 +1,5 @@
 package ee.webmedia.alfresco.common.propertysheet.datepicker;
 
-import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -28,28 +27,18 @@ public class DatePickerConverter implements Converter {
         simpleDateFormat.setLenient(false);
     }
 
-    public DateFormat getDateFormat() {
-        return simpleDateFormat;
-    }
-
     @Override
     public Object getAsObject(FacesContext context, UIComponent component, String value) throws ConverterException {
         Date date;
         try {
             if (StringUtils.isNotEmpty(value)) {
-                date = getDateFormat().parse(value);
+                date = simpleDateFormat.parse(value);
             } else {
                 return null;
             }
         } catch (ParseException e) {
             log.warn("Formatting date failed! Input was:" + value, e);
-            UIProperty property = ComponentUtil.getAncestorComponent(component, UIProperty.class);
-            final String propertyLabel;
-            if (property == null) {
-                propertyLabel = ComponentUtil.getColumnLabel(component);
-            } else {
-                propertyLabel = ComponentUtil.getPropertyLabel(property, "");
-            }
+            final String propertyLabel = ComponentUtil.getPropertyLabel(ComponentUtil.getAncestorComponent(component, UIProperty.class), "");
             final String msg = MessageUtil.getMessage(context, "validation_date_failed", propertyLabel);
             throw new ConverterException(new FacesMessage(FacesMessage.SEVERITY_ERROR, msg, msg));
         }
@@ -59,7 +48,7 @@ public class DatePickerConverter implements Converter {
     @Override
     public String getAsString(FacesContext context, UIComponent component, Object value) {
         if (value != null && value instanceof Date) {
-            return getDateFormat().format((Date) value);
+            return simpleDateFormat.format((Date) value);
         }
 
         // If there is no default value, then field should be blank

@@ -23,7 +23,6 @@
       <property name="nodeService" ref="NodeService" />
       <property name="generalService" ref="GeneralService" />
       <property name="userService" ref="UserService" />
-      <property name="logService" ref="LogService" />
    </bean>
 
    <bean id="DocumentLogService" class="org.springframework.aop.framework.ProxyFactoryBean">

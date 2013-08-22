@@ -23,18 +23,11 @@ import ee.webmedia.alfresco.cases.service.CaseService;
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.document.service.DocumentService;
-import ee.webmedia.alfresco.log.PropDiffHelper;
-import ee.webmedia.alfresco.log.model.LogEntry;
-import ee.webmedia.alfresco.log.model.LogObject;
-import ee.webmedia.alfresco.log.service.LogService;
 import ee.webmedia.alfresco.series.model.Series;
-import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.series.service.SeriesService;
-import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.RepoUtil;
-import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.beanmapper.BeanPropertyMapper;
-import ee.webmedia.alfresco.volume.model.DeletedDocument;
+import ee.webmedia.alfresco.volume.exception.VolumeContainsCasesException;
 import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
 
@@ -44,7 +37,6 @@ import ee.webmedia.alfresco.volume.model.VolumeModel;
 public class VolumeServiceImpl implements VolumeService {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(VolumeServiceImpl.class);
     private static final BeanPropertyMapper<Volume> volumeBeanPropertyMapper = BeanPropertyMapper.newInstance(Volume.class);
-    private static final BeanPropertyMapper<DeletedDocument> deletedDocumentBeanPropertyMapper = BeanPropertyMapper.newInstance(DeletedDocument.class);
 
     private DictionaryService dictionaryService;
     private NodeService nodeService;
@@ -52,9 +44,6 @@ public class VolumeServiceImpl implements VolumeService {
     private SeriesService seriesService;
     private CaseService caseService;
     private DocumentService documentService;
-    private UserService userService;
-    private LogService logService;
-    private boolean caseVolumeEnabled;
 
     @Override
     public List<ChildAssociationRef> getAllVolumeRefsBySeries(NodeRef seriesNodeRef) {
@@ -142,7 +131,7 @@ public class VolumeServiceImpl implements VolumeService {
             validTo.set(Calendar.SECOND, 59);
             if (!cal.after(validTo)) {
                 log.debug("Skipping volume '" + volume.getTitle() + "', current date " + cal.getTime() + " is not later than volume valid to date "
-                        + validTo.getTime());
+                            + validTo.getTime());
                 i.remove();
                 continue;
             }
@@ -167,51 +156,23 @@ public class VolumeServiceImpl implements VolumeService {
 
     @Override
     public void saveOrUpdate(Volume volume, boolean fromNodeProps) {
-        Node volumeNode = volume.getNode();
-        if (volumeNode instanceof TransientNode) { // save
-            Map<QName, Serializable> qNameProperties = fromNodeProps ? RepoUtil.toQNameProperties(volumeNode.getProperties())
+        if (volume.getNode() instanceof TransientNode) { // save
+            Map<QName, Serializable> qNameProperties = fromNodeProps ? RepoUtil.toQNameProperties(volume.getNode().getProperties())
                     : volumeBeanPropertyMapper.toProperties(volume);
             volume.setNode(createVolumeNode(volume.getSeriesNodeRef(), qNameProperties));
-
-            Map<String, Object> props = volume.getNode().getProperties();
-            logService.addLogEntry(LogEntry.create(LogObject.VOLUME, userService, volume.getNode().getNodeRef(), "applog_space_add",
-                    props.get(VolumeModel.Props.VOLUME_MARK.toString()), props.get(VolumeModel.Props.TITLE.toString())));
         } else { // update
-            if (!checkContainsCasesValue(volume)) {
-                throw new UnableToPerformException("volume_contains_docs_or_cases");
-            }
-
-            String propDiff = new PropDiffHelper()
-                    .label(VolumeModel.Props.STATUS, "volume_status")
-                    .label(VolumeModel.Props.VOLUME_TYPE, "volume_volumeType")
-                    .label(VolumeModel.Props.VOLUME_MARK, "volume_volumeMark")
-                    .label(VolumeModel.Props.TITLE, "volume_title")
-                    .label(VolumeModel.Props.DESCRIPTION, "volume_description")
-                    .label(VolumeModel.Props.VALID_FROM, "volume_validFrom")
-                    .label(VolumeModel.Props.VALID_TO, "volume_validTo")
-                    .label(VolumeModel.Props.ARCHIVING_NOTE, "volume_archive_note")
-                    .label(VolumeModel.Props.SEND_TO_DESTRUCTION, "volume_sendToDestruction")
-                    .label(VolumeModel.Props.CASES_CREATABLE_BY_USER, "volume_casesCreatableByUser")
-                    .diff(nodeService.getProperties(volumeNode.getNodeRef()), RepoUtil.toQNameProperties(volumeNode.getProperties()));
-
-            if (propDiff != null) {
-                logService.addLogEntry(LogEntry.create(LogObject.VOLUME, userService, volumeNode.getNodeRef(), "applog_space_edit",
-                        volume.getVolumeMark(), volume.getTitle(), propDiff));
-            }
-
-            if (fromNodeProps) {
-                generalService.setPropertiesIgnoringSystem(volumeNode.getNodeRef(), volumeNode.getProperties());
+            if (checkContainsCasesValue(volume)) {
+                if (fromNodeProps) {
+                    generalService.setPropertiesIgnoringSystem(volume.getNode().getNodeRef(), volume.getNode().getProperties());
+                } else {
+                    generalService.setPropertiesIgnoringSystem(volume.getNode().getNodeRef(), RepoUtil.toStringProperties(volumeBeanPropertyMapper
+                            .toProperties(volume)));
+                }
             } else {
-                generalService.setPropertiesIgnoringSystem(volumeNode.getNodeRef(), RepoUtil.toStringProperties(volumeBeanPropertyMapper
-                        .toProperties(volume)));
+                throw new VolumeContainsCasesException();
             }
 
         }
-    }
-
-    private boolean isInClosedSeries(Volume volume) {
-        Serializable seriesStatus = nodeService.getProperty(volume.getSeriesNodeRef(), SeriesModel.Props.STATUS);
-        return DocListUnitStatus.CLOSED.getValueName().equals(seriesStatus);
     }
 
     private boolean checkContainsCasesValue(Volume volume) {
@@ -309,26 +270,6 @@ public class VolumeServiceImpl implements VolumeService {
     }
 
     @Override
-    public boolean isOpened(Node node) {
-        return RepoUtil.isExistingPropertyValueEqualTo(node, VolumeModel.Props.STATUS, DocListUnitStatus.OPEN.getValueName());
-    }
-
-    @Override
-    public void openVolume(Volume volume) {
-        final Node volumeNode = volume.getNode();
-        if (isOpened(volumeNode)) {
-            return;
-        }
-        if (isInClosedSeries(volume)) {
-            throw new UnableToPerformException("volume_open_error_inClosedSeries");
-        }
-        Map<String, Object> props = volumeNode.getProperties();
-        props.put(VolumeModel.Props.STATUS.toString(), DocListUnitStatus.OPEN.getValueName());
-        saveOrUpdate(volume);
-
-    }
-
-    @Override
     public void closeVolume(Volume volume) {
         final Node volumeNode = volume.getNode();
         if (isClosed(volumeNode)) {
@@ -353,7 +294,10 @@ public class VolumeServiceImpl implements VolumeService {
         }
         try {
             saveOrUpdate(volume);
-        } catch (UnableToPerformException e) {
+        } catch (VolumeContainsCasesException e) {
+            throw e;
+        } catch (RuntimeException e) {
+            log.error("CloseVolume failed\n    volume=" + volume + "\n    node=" + volumeNode + "\n    exception: " + e.getMessage(), e);
             throw e;
         }
     }
@@ -361,11 +305,6 @@ public class VolumeServiceImpl implements VolumeService {
     @Override
     public Node getVolumeNodeByRef(NodeRef volumeNodeRef) {
         return generalService.fetchNode(volumeNodeRef);
-    }
-
-    @Override
-    public boolean isCaseVolumeEnabled() {
-        return caseVolumeEnabled;
     }
 
     /**
@@ -389,39 +328,11 @@ public class VolumeServiceImpl implements VolumeService {
             seriesNodeRef = parentAssocs.get(0).getParentRef();
         }
         volume.setVolumeType((String) nodeService.getProperty(volumeNodeRef, VolumeModel.Props.VOLUME_TYPE));
-        volume.setTitle((String) nodeService.getProperty(volumeNodeRef, VolumeModel.Props.TITLE));
         volume.setSeriesNodeRef(seriesNodeRef);
         if (log.isDebugEnabled()) {
             log.debug("Found volume: " + volume);
         }
         return volume;
-    }
-
-    @Override
-    public void saveDeletedDocument(NodeRef volumeNodeRef, DeletedDocument deletedDocument) {
-        nodeService.createNode(volumeNodeRef, VolumeModel.Associations.DELETED_DOCUMENT, VolumeModel.Associations.DELETED_DOCUMENT
-                , VolumeModel.Types.DELETED_DOCUMENT, deletedDocumentBeanPropertyMapper.toProperties(deletedDocument));
-    }
-
-    @Override
-    public List<DeletedDocument> getDeletedDocuments(NodeRef volumeNodeRef) {
-        List<ChildAssociationRef> documentAssocs = nodeService.getChildAssocs(volumeNodeRef, RegexQNamePattern.MATCH_ALL, VolumeModel.Associations.DELETED_DOCUMENT);
-        List<DeletedDocument> deletedDocuments = new ArrayList<DeletedDocument>(documentAssocs.size());
-        for (ChildAssociationRef docAssoc : documentAssocs) {
-            NodeRef deletedDocNodeRef = docAssoc.getChildRef();
-            deletedDocuments.add(getDeletedDocument(deletedDocNodeRef));
-        }
-        Collections.sort(deletedDocuments);
-        return deletedDocuments;
-    }
-
-    @Override
-    public DeletedDocument getDeletedDocument(NodeRef deletedDocumentNodeRef) {
-        if (!VolumeModel.Types.DELETED_DOCUMENT.equals(nodeService.getType(deletedDocumentNodeRef))) {
-            throw new RuntimeException("Given noderef '" + deletedDocumentNodeRef + "' is not deletedDocument type:\n\texpected '" //
-                    + VolumeModel.Types.DELETED_DOCUMENT + "'\n\tbut got '" + nodeService.getType(deletedDocumentNodeRef) + "'");
-        }
-        return deletedDocumentBeanPropertyMapper.toObject(nodeService.getProperties(deletedDocumentNodeRef), new DeletedDocument());
     }
 
     // START: getters / setters
@@ -449,17 +360,6 @@ public class VolumeServiceImpl implements VolumeService {
         this.documentService = documentService;
     }
 
-    public void setLogService(LogService logService) {
-        this.logService = logService;
-    }
-
-    public void setUserService(UserService userService) {
-        this.userService = userService;
-    }
-
-    public void setCaseVolumeEnabled(boolean caseVolumeEnabled) {
-        this.caseVolumeEnabled = caseVolumeEnabled;
-    }
     // END: getters / setters
 
 }

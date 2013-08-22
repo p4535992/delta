@@ -4,9 +4,8 @@ import java.util.List;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 
-import ee.webmedia.alfresco.docdynamic.service.DocumentDynamicService;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
-import ee.webmedia.alfresco.user.service.UserService;
+import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
 
 /**
@@ -15,39 +14,34 @@ import ee.webmedia.alfresco.workflow.service.WorkflowService;
 public class AssignResponsibilityServiceImpl implements AssignResponsibilityService {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(AssignResponsibilityServiceImpl.class);
 
-    private DocumentDynamicService documentDynamicService;
+    private DocumentService documentService;
     private WorkflowService workflowService;
     private DocumentSearchService documentSearchService;
-    private UserService userService;
 
     @Override
-    public void changeOwnerOfAllDocumentsAndTasks(String fromOwnerId, String toOwnerId, boolean isLeaving) {
+    public void changeOwnerOfAllDocumentsAndTasks(String fromOwnerId, String toOwnerId) {
         if (log.isDebugEnabled()) {
             log.debug("Assigning responsibility of working documents and new tasks from " + fromOwnerId + " to " + toOwnerId);
         }
         long startTime = System.currentTimeMillis();
-        List<NodeRef> documents = documentSearchService.searchWorkingDocumentsByOwnerId(fromOwnerId, !isLeaving);
-        String newOwnerId = (isLeaving) ? toOwnerId : fromOwnerId;
+        List<NodeRef> documents = documentSearchService.searchWorkingDocumentsByOwnerId(fromOwnerId);
         for (NodeRef document : documents) {
-            documentDynamicService.setOwner(document, newOwnerId, isLeaving);
+            documentService.setDocumentOwner(document, toOwnerId);
         }
-        List<NodeRef> tasks = documentSearchService.searchNewTasksByOwnerId(fromOwnerId, !isLeaving);
+        List<NodeRef> tasks = documentSearchService.searchNewTasksByOwnerId(fromOwnerId);
         for (NodeRef task : tasks) {
-            workflowService.setTaskOwner(task, newOwnerId, isLeaving);
+            workflowService.setTaskOwner(task, toOwnerId);
         }
         if (log.isDebugEnabled()) {
             log.debug("Assigning responsibility of " + documents.size() + " working documents and " + tasks.size() + " new tasks from " + fromOwnerId + " to "
                     + toOwnerId + " took " + (System.currentTimeMillis() - startTime) + " ms");
         }
-
-        // Mark or remove the leaving aspect
-        userService.markUserLeaving(fromOwnerId, toOwnerId, isLeaving);
     }
 
     // START: getters / setters
 
-    public void setDocumentDynamicService(DocumentDynamicService documentDynamicService) {
-        this.documentDynamicService = documentDynamicService;
+    public void setDocumentService(DocumentService documentService) {
+        this.documentService = documentService;
     }
 
     public void setWorkflowService(WorkflowService workflowService) {
@@ -56,10 +50,6 @@ public class AssignResponsibilityServiceImpl implements AssignResponsibilityServ
 
     public void setDocumentSearchService(DocumentSearchService documentSearchService) {
         this.documentSearchService = documentSearchService;
-    }
-
-    public void setUserService(UserService userService) {
-        this.userService = userService;
     }
 
     // END: getters / setters

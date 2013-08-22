@@ -20,8 +20,7 @@ fi
 date >> jvm-error.log
 echo "PID=$PPID" >> jvm-error.log
 
-# Send e-mail - test it before enabling
-#echo "Killing JVM process PID=$PPID and starting Tomcat again..."|mailx -s "JVM error on $(hostname -f)" example@example.com
+echo "Killing JVM process PID=$PPID and starting Tomcat again..."|mailx -s "JVM error on $(hostname -f)" example@example.com
 
 # Send TERM signal to JVM process
 kill $PPID
@@ -32,9 +31,11 @@ sleep 15
 # Kill JVM process by force
 kill -9 $PPID
 
-# Wait some more and start Tomcat - test it before enabling
-#sleep 240
-#./tomcat.sh start
+# Wait some more
+sleep 5
+
+# Start Tomcat
+./tomcat.sh start
 
 # Exit with success
 exit 0

@@ -9,7 +9,7 @@
 
 <h:panelGroup id="metadata-panel-facets">
    <f:facet name="title">
-      <r:permissionEvaluator value="#{DialogManager.bean.meta.document}" allow="editDocument">
+      <r:permissionEvaluator value="#{DialogManager.bean.meta.document}" allow="editDocumentMetaData">
          <a:actionLink id="metadata-link-edit" showLink="false" image="/images/icons/edit_properties.gif" value="#{msg.modify}" tooltip="#{msg.modify}"
             actionListener="#{DialogManager.bean.meta.edit}" action="#{MetadataBlockBean.editAction}" rendered="#{!DialogManager.bean.meta.inEditMode}" />
       </r:permissionEvaluator>
@@ -21,18 +21,24 @@
       mode="#{DialogManager.bean.meta.mode}" externalConfig="true" labelStyleClass="propertiesLabel" />
 </a:panel>
 
+<a:booleanEvaluator value="#{!DialogManager.bean.meta.inEditMode}">
+   <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/disable-dialog-finish-button.jsp" />
+</a:booleanEvaluator>
+<a:booleanEvaluator value="#{DialogManager.bean.meta.inEditMode}" id="docMeta-InEditMode">
+   <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/document/metadata/web/metadata-block-lockRefresh.jsp" />
+</a:booleanEvaluator>
 <f:verbatim>
 <script type="text/javascript">
    function postProcessButtonState(){
       var registerBtn = $jQ("#" + escapeId4JQ("dialog:documentRegisterButton"));
       if (registerBtn) {
          var finishBtn = $jQ("#"+escapeId4JQ("dialog:finish-button"));
-         var finishDisabled = finishBtn.prop("disabled");
-         registerBtn.prop("disabled", finishDisabled);
+         var finishDisabled = finishBtn.attr("disabled");
+         registerBtn.attr("disabled", finishDisabled);
 
          var registerBtn2 = $jQ("#" + escapeId4JQ("dialog:documentRegisterButton-2"));
          if (registerBtn2) {
-            registerBtn2.prop("disabled", finishDisabled);
+            registerBtn2.attr("disabled", finishDisabled);
          }
       }
    }

@@ -18,13 +18,11 @@ import javax.faces.event.ActionListener;
 import javax.faces.event.FacesEvent;
 
 import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
-import org.alfresco.util.Pair;
 import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.ui.common.ComponentConstants;
 import org.alfresco.web.ui.common.component.UIGenericPicker;
 import org.alfresco.web.ui.common.component.data.UIRichList;
-import org.alfresco.web.ui.common.tag.GenericPickerTag;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.apache.commons.lang.StringUtils;
 
@@ -40,7 +38,6 @@ import ee.webmedia.alfresco.utils.ComponentUtil;
 public class Search extends UIComponentBase implements AjaxUpdateable, NamingContainer {
 
     public static final String SETTER_CALLBACK = "setterCallback";
-    public static final String PREPROCESS_CALLBACK = "preprocessCallback";
 
     public static final String SETTER_CALLBACK_TAKES_NODE = "setterCallbackTakesNode";
 
@@ -49,8 +46,6 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
     public static final String OPEN_DIALOG_KEY = "openDialog";
     public static final String DATA_TYPE_KEY = "dataType";
     public static final String DATA_MULTI_VALUED = "dataMultiValued";
-    public static final String SEARCH_LINK_LABEL = "searchLinkLabel";
-    public static final String SEARCH_LINK_TOOLTIP = "searchLinkTooltip";
     /** determines if only unique values should be added to multiValued property values. Default value (if attribute is missing) is true */
     public static final String ALLOW_DUPLICATES_KEY = "allowDuplicates";
     public static final String DIALOG_TITLE_ID_KEY = "dialogTitleId";
@@ -62,12 +57,6 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
     public static final String ID_KEY = "id";
     public static final String STYLE_CLASS_KEY = "styleClass";
     public static final String AJAX_PARENT_LEVEL_KEY = "ajaxParentLevel";
-    /** method binding that can be used to add tooltip to rows added using search component */
-    public static final String ATTR_TOOLTIP_MB = "tooltip";
-    /** should delete(clear value) link be rendered when component is singlevalued (by default not rendered) */
-    public static final String ALLOW_CLEAR_SINGLE_VALUED = "allowClearSingleValued";
-    public static final String FILTER_INDEX = "filterIndex";
-    public static final String SEARCH_SUGGEST_DISABLED = "searchSuggestDisabled";
 
     @Override
     public String getFamily() {
@@ -81,10 +70,11 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
 
     @Override
     public void encodeBegin(FacesContext context) throws IOException {
-        getChildren().clear();
-        createExistingComponents(context);
-        if (!isDisabled() || isChildOfUIRichList()) {
-            createPicker(context);
+        if (getChildCount() == 0) {
+            createExistingComponents(context);
+            if (!isDisabled() || isChildOfUIRichList()) {
+                createPicker(context);
+            }
         }
 
         boolean empty;
@@ -113,15 +103,9 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
             } else if (isMandatory()) {
                 throw new RuntimeException("Single-valued mandatory component should not fire SearchRemoveEvent: " + getId());
             } else {
-                ComponentUtil.getChildren(this).get(0).getChildren().remove(0);
+                ((UIComponent) getChildren().get(0)).getChildren().remove(0);
                 setValue(context, null);
-                invokeSetterCallbackIfNeeded(context, null); // so that if needed, related components could be updated
             }
-        } else if (event instanceof SearchAddEvent) {
-            if (isDisabled() || !isMultiValued() || !isEditable()) {
-                throw new RuntimeException("Disabled or single-valued or non-editable component should not fire SearchAddEvent: " + getId());
-            }
-            appendRow(context, null);
         } else {
             super.broadcast(event);
         }
@@ -134,22 +118,17 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
         UIGenericPicker picker = (UIGenericPicker) context.getApplication().createComponent("org.alfresco.faces.GenericPicker");
         String id = (String) getAttributes().get(ID_KEY);
         FacesHelper.setupComponentId(context, picker, "picker_" + id);
-        picker.setShowFilter(isAttributeTrue(SHOW_FILTER_KEY));
+        picker.setShowFilter(getAttributes().containsKey(SHOW_FILTER_KEY) && Boolean.valueOf((String) getAttributes().get(SHOW_FILTER_KEY)));
         if (picker.getShowFilter()) {
             ValueBinding pickerV = context.getApplication().createValueBinding((String) getAttributes().get(FILTERS_KEY));
             picker.setValueBinding("filters", pickerV);
         }
         picker.setWidth(400);
-        picker.setMultiSelect(isMultiSelect());
+        picker.setMultiSelect(isMultiValued());
         String pickerCallback = (String) getAttributes().get(PICKER_CALLBACK_KEY);
-        MethodBinding b = getFacesContext().getApplication().createMethodBinding(pickerCallback, GenericPickerTag.QUERYCALLBACK_CLASS_ARGS);
+        MethodBinding b = getFacesContext().getApplication().createMethodBinding(pickerCallback, new Class[] { int.class, String.class });
         picker.setQueryCallback(b);
         picker.addActionListener(new PickerFinishActionListener());
-
-        Integer filterIndex = (Integer) getAttributes().get(FILTER_INDEX);
-        if (filterIndex != null) {
-            picker.setDefaultFilterIndex(filterIndex);
-        }
 
         // Disable AJAX if inside RichList
         if (isChildOfUIRichList()) {
@@ -160,37 +139,17 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
         children.add(picker);
     }
 
-    protected boolean isMultiSelect() {
-        return isMultiValued();
-    }
-
-    protected void pickerFinish(UIGenericPicker picker, int index) {
+    protected void pickerFinish(UIGenericPicker picker) {
         String[] results = picker.getSelectedResults();
-        FacesContext context = FacesContext.getCurrentInstance();
-
-        String preprocessCallback = getPreprocesCallback();
-        if (StringUtils.isNotBlank(preprocessCallback)) {
-            MethodBinding preprocessBind = getFacesContext().getApplication().createMethodBinding(preprocessCallback, new Class[] { int.class, String[].class });
-            List<Pair<String, String>> groupedResults = null;
-            Object preprocessed = preprocessBind.invoke(context, new Object[] { picker.getFilterIndex(), results });
-            if (preprocessed instanceof List) {
-                groupedResults = (List<Pair<String, String>>) preprocessed;
-                String[] extractedResults = new String[groupedResults.size()];
-                for (int i = 0; i < groupedResults.size(); i++) {
-                    extractedResults[i] = groupedResults.get(i).getSecond();
-                }
-                results = extractedResults;
-            } else {
-                results = (String[]) preprocessed;
-            }
-        }
-
         if (results == null) {
             return;
         }
+        FacesContext context = FacesContext.getCurrentInstance();
 
         if (isMultiValued()) {
-            multiValuedPickerFinish(results, context, index);
+            for (String result : results) {
+                appendRow(context, result);
+            }
         } else {
             if (results.length > 1) {
                 throw new RuntimeException("Single-valued property does not support multiple values");
@@ -200,58 +159,17 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
             }
         }
         getAttributes().remove(OPEN_DIALOG_KEY);
-        picker.queueEvent(new UIGenericPicker.PickerEvent(picker, UIGenericPicker.ACTION_CLEAR, 0, null, null));
-    }
-
-    /**
-     * Multi-value picker will try to add the new value to the row where the search icon was clicked. When the row is filled, it continues until the end of the list to find an
-     * empty row. When all rows are filled
-     * 
-     * @param results
-     * @param context
-     * @param index
-     */
-    protected void multiValuedPickerFinish(String[] results, FacesContext context, int index) {
-        @SuppressWarnings("unchecked")
-        List<String> list = (List<String>) getList(context);
-        // collect new values
-        boolean firstItem = true;
-        for (String result : results) {
-            if (!isAllowDuplicates() && list.contains(result)) {
-                continue;
-            }
-            if (index == -1) {
-                list.add(result);
-            } else if (firstItem) {
-                list.set(index++, result);
-                firstItem = false;
-            } else {
-                list.add(index++, result);
-            }
-        }
-        // clear old components
-        clearChildren();
-        // create components for new values
-        for (int rowIndex = 0; rowIndex < list.size(); rowIndex++) {
-            appendRowComponent(context, rowIndex);
-        }
+        picker.queueEvent(new UIGenericPicker.PickerEvent(picker, 1 /* ACTION_CLEAR */, 0, null, null));
     }
 
     public void singleValuedPickerFinish(FacesContext context, String value) {
-        clearChildren();
+        @SuppressWarnings("unchecked")
+        List<UIComponent> children = ((UIComponent) getChildren().get(0)).getChildren();
+        if (!children.isEmpty()) {
+            children.remove(0);
+        }
         appendRow(context, value);
 
-        invokeSetterCallbackIfNeeded(context, value);
-    }
-
-    public void clearChildren() {
-        List<UIComponent> children = ComponentUtil.getChildren(ComponentUtil.getChildren(this).get(0));
-        if (!children.isEmpty()) {
-            children.clear();
-        }
-    }
-
-    protected void invokeSetterCallbackIfNeeded(FacesContext context, String value) {
         // Invoke setter callback if needed
         String setterCallback = getSetterCallback();
         if (StringUtils.isBlank(setterCallback)) {
@@ -279,7 +197,7 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
             argValues.add(node);
         }
         MethodBinding b = getFacesContext().getApplication()
-                .createMethodBinding(setterCallback, paramsTypes.toArray(new Class[paramsTypes.size()]));
+                    .createMethodBinding(setterCallback, paramsTypes.toArray(new Class[paramsTypes.size()]));
         b.invoke(context, argValues.toArray());
     }
 
@@ -313,23 +231,16 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
     }
 
     protected void appendRowComponent(FacesContext context, int rowIndex) {
-        List<UIComponent> children = ComponentUtil.getChildren(this).get(0).getChildren();
+        @SuppressWarnings("unchecked")
+        List<UIComponent> children = ((UIComponent) getChildren().get(0)).getChildren();
         String id = (String) getAttributes().get(ID_KEY);
         UIOutput component = (UIOutput) context.getApplication().createComponent(
                 isEditable() ? ComponentConstants.JAVAX_FACES_INPUT : ComponentConstants.JAVAX_FACES_OUTPUT);
         FacesHelper.setupComponentId(context, component, "picker_" + id + "row_" + getNextCounterValue());
-        ValueBinding vb = setValueBinding(context, component, rowIndex);
-        String tooltipVB = ComponentUtil.getAttribute(this, ATTR_TOOLTIP_MB, String.class);
-        if (StringUtils.isNotBlank(tooltipVB)) {
-            Object value = vb.getValue(context);
-            String tooltip = (String) context.getApplication().createMethodBinding(tooltipVB, new Class[] { Object.class }).invoke(context, new Object[] { value });
-            if (StringUtils.isNotBlank(tooltip)) {
-                ComponentUtil.putAttribute(component, "title", tooltip); // add tooltip
-            }
-        }
+        setValueBinding(context, component, rowIndex);
         ComponentUtil.createAndSetConverter(context, (String) getAttributes().get(CONVERTER_KEY), component);
         if (isDisabled()) {
-            ComponentUtil.setReadonlyAttributeRecursively(component);
+            ComponentUtil.setDisabledAttributeRecursively(component);
         } else if (isEditable()) {
             @SuppressWarnings("unchecked")
             final Map<String, Object> attributes = component.getAttributes();
@@ -357,11 +268,16 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
         }
     }
 
+    private boolean isAllowDuplicates() {
+        return (Boolean) getAttributes().get(ALLOW_DUPLICATES_KEY);
+    }
+
     protected void removeRow(FacesContext context, int removeIndex) {
         List<?> list = getList(context);
         list.remove(removeIndex);
 
-        List<UIComponent> children = ComponentUtil.getChildren(this).get(0).getChildren();
+        @SuppressWarnings("unchecked")
+        List<UIComponent> children = ((UIComponent) getChildren().get(0)).getChildren();
 
         // remove a row from the middle
         children.remove(removeIndex);
@@ -373,15 +289,15 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
         }
     }
 
-    protected ValueBinding setValueBinding(FacesContext context, UIComponent component, int rowIndex) {
+    protected void setValueBinding(FacesContext context, UIComponent component, int rowIndex) {
         ValueBinding vb = createValueBinding(context, rowIndex);
         component.setValueBinding(VALUE_KEY, vb);
-        return vb;
     }
 
     protected ValueBinding createValueBinding(FacesContext context, int rowIndex) {
         String list = getValueBinding(VALUE_KEY).getExpressionString();
-        return context.getApplication().createValueBinding(list.substring(0, list.length() - 1) + (rowIndex >= 0 ? "[" + rowIndex + "]" : "") + "}");
+        ValueBinding vb = context.getApplication().createValueBinding(list.substring(0, list.length() - 1) + (rowIndex >= 0 ? "[" + rowIndex + "]" : "") + "}");
+        return vb;
     }
 
     protected Object getValue(FacesContext context) {
@@ -404,22 +320,17 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
         return list;
     }
 
+    private boolean setterCallbackTakesNode() {
+        @SuppressWarnings("unchecked")
+        Map<String, Object> attributes = getAttributes();
+        final Boolean takesNode = (Boolean) attributes.get(Search.SETTER_CALLBACK_TAKES_NODE);
+        return takesNode == null ? false : takesNode;
+    }
+
     protected String getSetterCallback() {
         @SuppressWarnings("unchecked")
         Map<String, Object> attributes = getAttributes();
         return (String) attributes.get(SETTER_CALLBACK);
-    }
-
-    private boolean setterCallbackTakesNode() {
-        return isAttributeTrue(Search.SETTER_CALLBACK_TAKES_NODE);
-    }
-
-    protected String getPreprocesCallback() {
-        return (String) ComponentUtil.getAttribute(this, PREPROCESS_CALLBACK);
-    }
-
-    private boolean isAllowDuplicates() {
-        return isAttributeTrue(ALLOW_DUPLICATES_KEY);
     }
 
     protected boolean isDisabled() {
@@ -427,36 +338,27 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
     }
 
     protected boolean isMultiValued() {
-        return isAttributeTrue(DATA_MULTI_VALUED);
-    }
-
-    protected String getSearchLinkLabel() {
-        return (String) ComponentUtil.getAttribute(this, SEARCH_LINK_LABEL);
-    }
-
-    protected String getSearchLinkTooltip() {
-        return (String) ComponentUtil.getAttribute(this, SEARCH_LINK_TOOLTIP);
+        @SuppressWarnings("unchecked")
+        Map<String, Object> attributes = getAttributes();
+        return attributes.containsKey(DATA_MULTI_VALUED) && (Boolean) attributes.get(DATA_MULTI_VALUED);
     }
 
     protected boolean isMandatory() {
-        return isAttributeTrue("dataMandatory");
+        @SuppressWarnings("unchecked")
+        Map<String, Object> attributes = getAttributes();
+        return attributes.containsKey("dataMandatory") && (Boolean) attributes.get("dataMandatory");
     }
 
     protected boolean isEmpty() {
-        return isAttributeTrue("empty");
+        @SuppressWarnings("unchecked")
+        Map<String, Object> attributes = getAttributes();
+        return attributes.containsKey("empty") && (Boolean) attributes.get("empty");
     }
 
     protected boolean isEditable() {
-        return isAttributeTrue("editable");
-    }
-
-    private boolean isAttributeTrue(String attributeName) {
-        Boolean val = (Boolean) ComponentUtil.getAttribute(this, attributeName);
-        return val != null && val;
-    }
-
-    protected boolean isRemoveLinkRendered() {
-        return !isDisabled() && (isMultiValued() || isAttributeTrue(ALLOW_CLEAR_SINGLE_VALUED));
+        @SuppressWarnings("unchecked")
+        Map<String, Object> attributes = getAttributes();
+        return attributes.containsKey("editable") && (Boolean) attributes.get("editable");
     }
 
     private int getNextCounterValue() {
@@ -478,11 +380,7 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
         public void processAction(ActionEvent actionEvent) throws AbortProcessingException {
             UIComponent parent = actionEvent.getComponent().getParent();
             if (parent instanceof Search) {
-                FacesContext context = FacesContext.getCurrentInstance();
-                Map params = context.getExternalContext().getRequestParameterMap();
-                String indexStr = StringUtils.substringAfter((String) params.get(parent.getClientId(context) + "_action"), ";");
-                int index = StringUtils.isNumeric(indexStr) && !indexStr.isEmpty() ? Integer.parseInt(indexStr) : -1;
-                ((Search) parent).pickerFinish((UIGenericPicker) actionEvent.getComponent(), index);
+                ((Search) parent).pickerFinish((UIGenericPicker) actionEvent.getComponent());
             } else {
                 throw new RuntimeException();
             }
@@ -498,15 +396,6 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
         public SearchRemoveEvent(UIComponent uiComponent, int index) {
             super(uiComponent);
             this.index = index;
-        }
-
-    }
-
-    public static class SearchAddEvent extends ActionEvent {
-        private static final long serialVersionUID = 1L;
-
-        public SearchAddEvent(UIComponent uiComponent) {
-            super(uiComponent);
         }
 
     }

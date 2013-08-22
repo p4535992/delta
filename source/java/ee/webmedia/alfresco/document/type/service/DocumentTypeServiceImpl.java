@@ -2,6 +2,7 @@ package ee.webmedia.alfresco.document.type.service;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -13,35 +14,32 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
-import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
 
 import ee.webmedia.alfresco.adr.service.AdrService;
 import ee.webmedia.alfresco.common.service.GeneralService;
-import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
 import ee.webmedia.alfresco.document.type.model.DocumentType;
 import ee.webmedia.alfresco.document.type.model.DocumentTypeModel;
-import ee.webmedia.alfresco.document.type.model.DocumentTypeModel.Assocs;
-import ee.webmedia.alfresco.document.type.model.DocumentTypeModel.Types;
 import ee.webmedia.alfresco.menu.service.MenuService;
-import ee.webmedia.alfresco.utils.RepoUtil;
-import ee.webmedia.alfresco.utils.UnableToPerformException;
+import ee.webmedia.alfresco.utils.beanmapper.BeanPropertyMapper;
 
 /**
  * @author Alar Kvell
  */
 public class DocumentTypeServiceImpl implements DocumentTypeService, BeanFactoryAware {
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DocumentTypeServiceImpl.class);
+
     private GeneralService generalService;
     private NamespaceService namespaceService;
     private NodeService nodeService;
     private MenuService menuService;
     private AdrService _adrService;
     private BeanFactory beanFactory;
-    private NodeRef documentTypesRef;
+
+    private static final BeanPropertyMapper<DocumentType> documentTypeBeanPropertyMapper = BeanPropertyMapper.newInstance(DocumentType.class);
 
     @Override
     public List<DocumentType> getAllDocumentTypes() {
@@ -88,76 +86,52 @@ public class DocumentTypeServiceImpl implements DocumentTypeService, BeanFactory
         List<ChildAssociationRef> childAssocs = getAllDocumentTypeChildAssocs();
         List<DocumentType> documentTypes = new ArrayList<DocumentType>(childAssocs.size());
         for (ChildAssociationRef childAssoc : childAssocs) {
-            DocumentType documentType = constructDocumentType(childAssoc.getChildRef(), childAssoc.getQName());
+            DocumentType documentType = documentTypeBeanPropertyMapper.toObject(nodeService.getProperties(childAssoc.getChildRef()));
             if (used != null && documentType.isUsed() != used) {
                 continue;
             }
+            documentType.setId(childAssoc.getQName());
             documentTypes.add(documentType);
         }
         return documentTypes;
     }
 
     @Override
-    public void saveOrUpdateDocumentType(DocumentType documentType) {
-        QName id = documentType.getId();
-        boolean isNew = false;
-        if (id == null) {
-            String tmpId = documentType.getTmpId();
-            if (StringUtils.isBlank(tmpId)) {
-                throw new UnableToPerformException("document_type_error_id_mandatory");
-            } else if (tmpId.length() > QName.MAX_LENGTH) {
-                throw new UnableToPerformException("document_type_error_id_tooLong");
-            }
-            id = QName.createQName(DocumentTypeModel.URI, tmpId);
-            isNew = true;
-            documentType.setId(id);
-        }
-        String xPath = DocumentTypeModel.Repo.DOCUMENT_TYPES_SPACE + "/" + id.toPrefixString(namespaceService);
-        NodeRef nodeRef = generalService.getNodeRef(xPath);
-        if (isNew && nodeRef != null) {
-            throw new UnableToPerformException("document_type_error_id_alreadyExists", id.getLocalName());
-        }
-        Map<QName, Serializable> props = RepoUtil.toQNameProperties(documentType.getNode().getProperties());
-        if (log.isDebugEnabled()) {
-            log.debug("Updating documentType xPath=" + xPath + " nodeRef=" + nodeRef + " with properties:\n" + props);
-        }
-
-        Boolean oldPublicAdr = isNew ? false : (Boolean) nodeService.getProperty(nodeRef, DocumentTypeModel.Props.PUBLIC_ADR);
-        if (oldPublicAdr == null) {
-            oldPublicAdr = Boolean.FALSE;
-        }
-
-        Boolean newPublicAdr = (Boolean) props.get(DocumentTypeModel.Props.PUBLIC_ADR);
-        if (newPublicAdr == null) {
-            newPublicAdr = Boolean.FALSE;
-        }
-
-        if (oldPublicAdr.booleanValue() != newPublicAdr.booleanValue()) {
+    public void updateDocumentTypes(Collection<DocumentType> documentTypes) {
+        for (DocumentType documentType : documentTypes) {
+            String xPath = DocumentTypeModel.Repo.DOCUMENT_TYPES_SPACE + "/" + documentType.getId().toPrefixString(namespaceService);
+            NodeRef nodeRef = generalService.getNodeRef(xPath);
+            Map<QName, Serializable> props = documentTypeBeanPropertyMapper.toProperties(documentType);
             if (log.isDebugEnabled()) {
-                log.debug("Changing publicAdr of DocumentType " + id.toPrefixString(namespaceService) + " from "
-                        + oldPublicAdr.toString().toUpperCase() + " to " + newPublicAdr.toString().toUpperCase());
+                log.debug("Updating documentType xPath=" + xPath + " nodeRef=" + nodeRef + " with properties:\n" + props);
             }
-            if (newPublicAdr) {
-                getAdrService().addDocumentType(id);
-            } else {
-                getAdrService().deleteDocumentType(id);
-            }
-        }
-        props = generalService.getPropertiesIgnoringSys(props);
-        if (isNew) {
-            nodeService.createNode(getDocumentTypesRef(), Assocs.DOCUMENT_TYPE, id, Types.DOCUMENT_TYPE, props);
-        } else {
-            generalService.setPropertiesIgnoringSystem(props, nodeRef);
-        }
-        menuService.menuUpdated();
-    }
 
-    private NodeRef getDocumentTypesRef() {
-        if (documentTypesRef == null) {
-            String xPath = DocumentTypeModel.Repo.DOCUMENT_TYPES_SPACE;
-            documentTypesRef = generalService.getNodeRef(xPath);
+            Boolean oldPublicAdr = (Boolean) nodeService.getProperty(nodeRef, DocumentTypeModel.Props.PUBLIC_ADR);
+            if (oldPublicAdr == null) {
+                oldPublicAdr = Boolean.FALSE;
+            }
+
+            Boolean newPublicAdr = (Boolean) props.get(DocumentTypeModel.Props.PUBLIC_ADR);
+            if (newPublicAdr == null) {
+                newPublicAdr = Boolean.FALSE;
+            }
+
+            if (oldPublicAdr.booleanValue() != newPublicAdr.booleanValue()) {
+                if (log.isDebugEnabled()) {
+                    log.debug("Changing publicAdr of DocumentType " + documentType.getId().toPrefixString(namespaceService) + " from "
+                            + oldPublicAdr.toString().toUpperCase() + " to " + newPublicAdr.toString().toUpperCase());
+                }
+                if (newPublicAdr) {
+                    getAdrService().addDocumentType(documentType.getId());
+                } else {
+                    getAdrService().deleteDocumentType(documentType.getId());
+                }
+            }
+
+            nodeService.addProperties(nodeRef, props);
         }
-        return documentTypesRef;
+        menuService.reload();
+        menuService.menuUpdated();
     }
 
     @Override
@@ -167,11 +141,9 @@ public class DocumentTypeServiceImpl implements DocumentTypeService, BeanFactory
         if (childAssoc == null) {
             return null;
         }
-        return constructDocumentType(childAssoc.getChildRef(), childAssoc.getQName());
-    }
-
-    private DocumentType constructDocumentType(NodeRef docTypeRef, QName id) {
-        return new DocumentType(id, new WmNode(docTypeRef, DocumentTypeModel.Types.DOCUMENT_TYPE));
+        DocumentType documentType = documentTypeBeanPropertyMapper.toObject(nodeService.getProperties(childAssoc.getChildRef()));
+        documentType.setId(childAssoc.getQName());
+        return documentType;
     }
 
     @Override
@@ -243,12 +215,6 @@ public class DocumentTypeServiceImpl implements DocumentTypeService, BeanFactory
     public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
         this.beanFactory = beanFactory;
     }
-
     // END: getters / setters
-
-    @Override
-    public DocumentType createNewUnSavedDocumentType() {
-        return new DocumentType(generalService.createNewUnSaved(DocumentTypeModel.Types.DOCUMENT_TYPE, null));
-    }
 
 }

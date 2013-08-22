@@ -58,12 +58,6 @@ public class EscapingCSVExporter extends CSVExporter {
 
             HttpServletResponse response = (HttpServletResponse) facesContext.getExternalContext().getResponse();
             response.setCharacterEncoding(CHARSET);
-            response.setContentType("text/csv; charset=" + CHARSET);
-            response.setHeader("Expires", "0");
-            response.setHeader("Cache-Control", "must-revalidate, post-check=0, pre-check=0");
-            response.setHeader("Pragma", "public");
-            response.setHeader("Content-disposition", "attachment;filename=export.csv");
-
             OutputStream outputStream = response.getOutputStream();
             // final CsvWriter writer = new CsvWriter(outputStream, ',', Charset.forName(CHARSET));
             final CsvWriter writer = new CsvWriter(outputStream, SEPARATOR, Charset.forName(CHARSET));
@@ -84,6 +78,12 @@ public class EscapingCSVExporter extends CSVExporter {
                 writeRow(writer, dataRow);
                 writer.endRecord();
             }
+
+            response.setContentType("text/csv; charset=" + CHARSET);
+            response.setHeader("Expires", "0");
+            response.setHeader("Cache-Control", "must-revalidate, post-check=0, pre-check=0");
+            response.setHeader("Pragma", "public");
+            response.setHeader("Content-disposition", "attachment;filename=export.csv");
 
             writer.flush();
             writer.close();

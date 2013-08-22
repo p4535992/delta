@@ -54,14 +54,11 @@ import org.alfresco.web.bean.repository.Repository;
 import org.alfresco.web.config.DialogsConfigElement.DialogButtonConfig;
 import org.alfresco.web.ui.common.ReportedException;
 import org.alfresco.web.ui.common.Utils;
-import org.alfresco.web.ui.common.component.data.UIRichList;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
-import ee.webmedia.alfresco.utils.MessageData;
 import ee.webmedia.alfresco.utils.MessageDataImpl;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
-import ee.webmedia.alfresco.utils.UnableToPerformMultiReasonException;
 
 /**
  * Base class for all dialog beans providing common functionality
@@ -113,10 +110,7 @@ public abstract class BaseDialogBean implements IDialogBean, Serializable
       }
       
       // reset the isFinished flag
-      isFinished = false;
-      
-      // Restore default richlist ordering when we initialize the list
-      customAttributes.remove(UIRichList.RICH_LIST_PAGE_BOOKMARKS);
+      this.isFinished = false;
    }
    
    public void restored()
@@ -141,9 +135,9 @@ public abstract class BaseDialogBean implements IDialogBean, Serializable
       
       // check the isFinished flag to stop the finish button
       // being pressed multiple times
-      if (isFinished == false)
+      if (this.isFinished == false)
       {
-         isFinished = true;
+         this.isFinished = true;
       
          RetryingTransactionHelper txnHelper = Repository.getRetryingTransactionHelper(context);
          RetryingTransactionCallback<String> callback = new RetryingTransactionCallback<String>()
@@ -167,13 +161,8 @@ public abstract class BaseDialogBean implements IDialogBean, Serializable
             context.getExternalContext().getSessionMap().remove(
                     AlfrescoNavigationHandler.EXTERNAL_CONTAINER_SESSION);
             clearCustomAttributes();
-
-            if (outcome == null) {
-                isFinished = false;
-            }
          } catch (UnableToPerformException e) {
-             outcome = handleException(e);
-         } catch (UnableToPerformMultiReasonException e) {
+             MessageUtil.addStatusMessage(e);
              outcome = handleException(e);
          }
          catch (Throwable e)
@@ -189,21 +178,12 @@ public abstract class BaseDialogBean implements IDialogBean, Serializable
       return outcome;
    }
 
-    public String handleException(Throwable e) {
+    private String handleException(Throwable e) {
         String outcome;
         // reset the flag so we can re-attempt the operation
         isFinished = false;
-        Throwable cause = e.getCause();
-        if(cause!=null && (e instanceof UnableToPerformException || e instanceof UnableToPerformMultiReasonException)) {
-            e = cause;
-        }
         outcome = getErrorOutcome(e);
-        if (e instanceof UnableToPerformException) {
-            MessageUtil.addStatusMessage((MessageData) e);
-        } else if (e instanceof UnableToPerformMultiReasonException) {
-            MessageUtil.addStatusMessages(FacesContext.getCurrentInstance(), ((UnableToPerformMultiReasonException) e).getMessageDataWrapper());
-        } else 
-        if (outcome == null && e instanceof ReportedException == false)
+        if (outcome == null && e instanceof ReportedException == false && !(e instanceof UnableToPerformException))
         {
             Utils.addErrorMessage(formatErrorMessage(e), e);
         }
@@ -238,11 +218,6 @@ public abstract class BaseDialogBean implements IDialogBean, Serializable
       return true;
    }
 
-   @Override
-    public boolean isFinishButtonVisible(boolean dialogConfOKButtonVisible) {
-        return dialogConfOKButtonVisible;
-    }
-
    public String getContainerTitle()
    {
       // nothing by default, subclasses can override if necessary
@@ -266,10 +241,17 @@ public abstract class BaseDialogBean implements IDialogBean, Serializable
    
    public Object getActionsContext()
    {
+      // return the current node as the context for actions be default
       // dialog implementations can override this method to return the
       // appropriate object for their use case
       
-      return null;
+      if (this.navigator == null)
+      {
+         throw new AlfrescoRuntimeException("To use actions in the dialog the 'navigator' " +
+                  "property must be injected with an instance of NavigationBean!");
+      }
+      
+      return this.navigator.getCurrentNode();
    }
 
    public String getActionsConfigId()
@@ -304,11 +286,11 @@ public abstract class BaseDialogBean implements IDialogBean, Serializable
    
    protected TransactionService getTransactionService()
    {
-      if (transactionService == null)
+      if (this.transactionService == null)
       {
-         transactionService = Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getTransactionService();
+         this.transactionService = Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getTransactionService();
       }
-      return transactionService;
+      return this.transactionService;
    }
    
    /**
@@ -321,11 +303,11 @@ public abstract class BaseDialogBean implements IDialogBean, Serializable
    
    protected NodeService getNodeService()
    {
-      if (nodeService == null)
+      if (this.nodeService == null)
       {
-         nodeService = Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getNodeService();
+         this.nodeService = Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getNodeService();
       }
-      return nodeService;
+      return this.nodeService;
    }
    
    /**
@@ -338,11 +320,11 @@ public abstract class BaseDialogBean implements IDialogBean, Serializable
    
    protected FileFolderService getFileFolderService()
    {
-      if (fileFolderService == null)
+      if (this.fileFolderService == null)
       {
-         fileFolderService = Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getFileFolderService();
+         this.fileFolderService = Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getFileFolderService();
       }
-      return fileFolderService;
+      return this.fileFolderService;
    }
 
    /**
@@ -355,11 +337,11 @@ public abstract class BaseDialogBean implements IDialogBean, Serializable
    
    protected SearchService getSearchService()
    {
-      if (searchService == null)
+      if (this.searchService == null)
       {
-         searchService = Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getSearchService();
+         this.searchService = Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getSearchService();
       }
-      return searchService;
+      return this.searchService;
    }
    
    /**
@@ -374,11 +356,11 @@ public abstract class BaseDialogBean implements IDialogBean, Serializable
    
    protected DictionaryService getDictionaryService()
    {
-      if (dictionaryService == null)
+      if (this.dictionaryService == null)
       {
-         dictionaryService = Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getDictionaryService();
+         this.dictionaryService = Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getDictionaryService();
       }
-      return dictionaryService;
+      return this.dictionaryService;
    }
    
    /**
@@ -391,11 +373,11 @@ public abstract class BaseDialogBean implements IDialogBean, Serializable
    
    protected NamespaceService getNamespaceService()
    {
-      if (namespaceService == null)
+      if (this.namespaceService == null)
       {
-         namespaceService = Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getNamespaceService();
+         this.namespaceService = Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getNamespaceService();
       }
-      return namespaceService;
+      return this.namespaceService;
    }
    
    /**
@@ -406,19 +388,6 @@ public abstract class BaseDialogBean implements IDialogBean, Serializable
    protected String getDefaultCancelOutcome()
    {
       return AlfrescoNavigationHandler.CLOSE_DIALOG_OUTCOME;
-   }
-
-   public static String getCloseOutcome(Integer dialogsToClose) {
-       if (dialogsToClose == null || dialogsToClose == 0) {
-           return null;
-       }
-       if (dialogsToClose == 1) {
-           return AlfrescoNavigationHandler.CLOSE_DIALOG_OUTCOME;
-       } else if (dialogsToClose > 1) {
-           return AlfrescoNavigationHandler.CLOSE_DIALOG_OUTCOME+"[" + dialogsToClose + "]";
-       } else {
-           throw new IllegalArgumentException("Can't close " + dialogsToClose + " dialogs");
-       }
    }
    
    /**
@@ -506,9 +475,7 @@ public abstract class BaseDialogBean implements IDialogBean, Serializable
 
    public static void validatePermission(NodeRef documentNodeRef, String permission) {
        if (!hasPermission(documentNodeRef, permission)) {
-           UnableToPerformException e = new UnableToPerformException("action_failed_missingPermission_" + permission, new MessageDataImpl("permission_" + permission));
-           e.setFallbackMessage(new MessageDataImpl("action_failed_missingPermission", new MessageDataImpl("permission_" + permission)));
-           throw e;
+           throw new UnableToPerformException("action_failed_missingPermission", new MessageDataImpl("permission_" + permission));
        }
    }
 

@@ -1,7 +1,5 @@
 package ee.webmedia.alfresco.addressbook.web.dialog;
 
-import static ee.webmedia.alfresco.common.web.BeanHelper.getAddressbookService;
-
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
@@ -14,7 +12,7 @@ public class ContactGroupCreateDialog extends ContactGroupBaseDialog {
 
     private static final long serialVersionUID = 1L;
 
-    private static final String MSG_BUTTON_NEW_GROUP = "addressbook_contactgroup_create_title";
+    private static final String MSG_BUTTON_NEW_GROUP = "new_group";
 
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {

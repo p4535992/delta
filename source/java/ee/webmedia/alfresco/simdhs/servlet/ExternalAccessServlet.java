@@ -14,8 +14,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import ee.webmedia.alfresco.common.listener.ExternalAccessPhaseListener;
-import ee.webmedia.alfresco.common.listener.StatisticsPhaseListener;
-import ee.webmedia.alfresco.common.listener.StatisticsPhaseListenerLogColumn;
 
 /**
  * Servlet allowing external URL access to various global JSF views in the Web Client.
@@ -30,9 +28,7 @@ public class ExternalAccessServlet extends BaseServlet {
 
     @Override
     protected void service(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
-        // req.getPathInfo = /document/3ab24e39-f9b1-4e8a-9e4e-129134a4fed0
-        // req.getRequestURI = /dhs/n/document/3ab24e39-f9b1-4e8a-9e4e-129134a4fed0;jSESSIONID=CFE6CC4F12D658B180EB61EF7ABC1C9
-        String uri = req.getPathInfo();
+        String uri = req.getRequestURI();
 
         if (logger.isDebugEnabled()) {
             logger.debug("Processing URL: " + uri + (req.getQueryString() != null ? ("?" + req.getQueryString()) : ""));
@@ -43,32 +39,35 @@ public class ExternalAccessServlet extends BaseServlet {
         }
         setNoCacheHeaders(res);
 
-        Pair<String, String[]> outcomeAndArgs = getDocumentUriTokens(uri);
+        Pair<String, String[]> outcomeAndArgs = getDocumentUriTokens(req.getContextPath().length(), uri);
         req.setAttribute(ExternalAccessPhaseListener.OUTCOME_AND_ARGS_ATTR, outcomeAndArgs);
-
-        StatisticsPhaseListener.add(StatisticsPhaseListenerLogColumn.ACTION, outcomeAndArgs.getFirst());
 
         // Now handleNavigation puts this as the first item in the view stack
         getServletContext().getRequestDispatcher(FACES_SERVLET + "/jsp/dashboards/container.jsp").forward(req, res);
     }
 
-    public static Pair<String, String[]> getDocumentUriTokens(String uri) {
+    public static Pair<String, String[]> getDocumentUriTokens(int substringLength, String uri) {
         Pair<String, String[]> outcomeAndArgs = new Pair<String, String[]>(null, null);
+        if (substringLength > 0) {
+            uri = uri.substring(substringLength);
+        }
         StringTokenizer t = new StringTokenizer(uri, "/");
         int tokenCount = t.countTokens();
         if (tokenCount < 2) {
             throw new IllegalArgumentException("Externally addressable URL did not contain all required args: " + uri);
         }
-        // 1. outcome
+        // 1. servlet name (not used)
+        t.nextToken();
+        // 2. outcome
         outcomeAndArgs.setFirst(t.nextToken());
-        // 2. rest of the tokens arguments
+        // 3. rest of the tokens arguments
         outcomeAndArgs.setSecond(extractArguments(t, tokenCount));
         return outcomeAndArgs;
     }
 
     private static String[] extractArguments(StringTokenizer t, int tokenCount) {
-        String[] args = new String[tokenCount - 1];
-        for (int i = 0; i < tokenCount - 1; i++) {
+        String[] args = new String[tokenCount - 2];
+        for (int i = 0; i < tokenCount - 2; i++) {
             args[i] = t.nextToken();
         }
         return args;

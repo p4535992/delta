@@ -25,7 +25,6 @@
  */
 package org.alfresco.web.config;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -283,9 +282,9 @@ public class PropertySheetConfigElement extends ConfigElementAdapter
    /**
     * Inner class to represent a configured property sheet item
     */
-   public static abstract class ItemConfig implements Serializable
+   public static abstract class ItemConfig
    {
-      protected String name;
+      final protected String name;
       protected String displayLabel;
       protected String displayLabelId;
       protected String converter;
@@ -294,13 +293,8 @@ public class PropertySheetConfigElement extends ConfigElementAdapter
       protected boolean showInViewMode = true;
       protected boolean showInEditMode = true;
       protected boolean ignoreIfMissing = true;
-      // XXX ALAR: boolean rendered and customAttributes.get(BaseComponentGenerator.RENDERED) have different purposes, TODO fix it 
       protected boolean rendered = true;
-
-      protected ItemConfig() {
-          // For deserialization
-      }
-
+      
         public ItemConfig(String name) {//
             if (name == null || name.length() == 0) {
                 throw new ConfigException("You must specify a name for a proprty sheet item");

@@ -1,6 +1,5 @@
 package ee.webmedia.alfresco.substitute.service;
 
-import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentSearchService;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateDatePropertyRangeQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateStringExactQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateTypeQuery;
@@ -20,37 +19,32 @@ import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
+import org.alfresco.service.cmr.search.LimitBy;
+import org.alfresco.service.cmr.search.ResultSet;
+import org.alfresco.service.cmr.search.ResultSetRow;
+import org.alfresco.service.cmr.search.SearchParameters;
 import org.alfresco.service.cmr.search.SearchService;
 import org.alfresco.service.namespace.QName;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.springframework.beans.factory.BeanFactory;
-import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.common.service.GeneralService;
-import ee.webmedia.alfresco.common.web.BeanHelper;
-import ee.webmedia.alfresco.log.PropDiffHelper;
-import ee.webmedia.alfresco.log.model.LogEntry;
-import ee.webmedia.alfresco.log.model.LogObject;
-import ee.webmedia.alfresco.log.service.LogService;
 import ee.webmedia.alfresco.substitute.model.Substitute;
 import ee.webmedia.alfresco.substitute.model.SubstituteModel;
-import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.beanmapper.BeanPropertyMapper;
 
 /**
  * @author Romet Aidla
  */
-public class SubstituteServiceImpl implements SubstituteService, BeanFactoryAware {
+public class SubstituteServiceImpl implements SubstituteService {
     private static final Log log = LogFactory.getLog(SubstituteServiceImpl.class);
 
     private NodeService nodeService;
     private GeneralService generalService;
     private SearchService searchService;
-    private BeanFactory beanFactory;
 
     private static BeanPropertyMapper<Substitute> substituteBeanPropertyMapper;
 
@@ -108,9 +102,6 @@ public class SubstituteServiceImpl implements SubstituteService, BeanFactoryAwar
         if (log.isDebugEnabled()) {
             log.debug("Substitute node added: " + assoc.getChildRef());
         }
-
-        addLogEntry(userNodeRef, substitute, "applog_user_substitute_set");
-
         substitute.setNodeRef(assoc.getChildRef());
         return substitute.getNodeRef();
     }
@@ -121,33 +112,15 @@ public class SubstituteServiceImpl implements SubstituteService, BeanFactoryAwar
         Assert.notNull(substitute.getNodeRef(), "Substitute must have node ref");
         Assert.isTrue(nodeService.exists(substitute.getNodeRef()), "Substitute must exist");
 
-        Map<QName, Serializable> oldProps = nodeService.getProperties(substitute.getNodeRef());
-        Map<QName, Serializable> newProps = substituteBeanPropertyMapper.toProperties(substitute);
-
-        String diff = new PropDiffHelper()
-                .label(SubstituteModel.Props.SUBSTITUTE_NAME, "substitute_name")
-                .label(SubstituteModel.Props.SUBSTITUTION_START_DATE, "substitute_startdate")
-                .label(SubstituteModel.Props.SUBSTITUTION_END_DATE, "substitute_enddate")
-                .diff(oldProps, oldProps);
-
-        nodeService.setProperties(substitute.getNodeRef(), newProps);
+        nodeService.setProperties(substitute.getNodeRef(), substituteBeanPropertyMapper.toProperties(substitute));
         if (log.isDebugEnabled()) {
             log.debug("Substitute (" + substitute.getNodeRef() + ") properties updated");
-        }
-
-        if (diff != null) {
-            NodeRef userRef = nodeService.getPrimaryParent(nodeService.getPrimaryParent(substitute.getNodeRef()).getParentRef()).getParentRef();
-            addLogEntry(userRef, null, diff);
         }
     }
 
     @Override
     public void deleteSubstitute(NodeRef substituteNodeRef) {
         Assert.notNull(substituteNodeRef, "Substitute reference not provided");
-
-        NodeRef userRef = nodeService.getPrimaryParent(nodeService.getPrimaryParent(substituteNodeRef).getParentRef()).getParentRef();
-        addLogEntry(userRef, getSubstitute(substituteNodeRef), "applog_user_substitute_rem");
-
         if (log.isDebugEnabled()) {
             log.debug("Starting to delete substitute:" + substituteNodeRef);
         }
@@ -167,10 +140,13 @@ public class SubstituteServiceImpl implements SubstituteService, BeanFactoryAwar
         queryParts.add(generateDatePropertyRangeQuery(today, null, SubstituteModel.Props.SUBSTITUTION_END_DATE));
         String query = joinQueryPartsAnd(queryParts);
         List<Substitute> substitutes = new ArrayList<Substitute>();
-
-        List<NodeRef> nodeRefs = getDocumentSearchService().searchNodes(query, -1, "activeSubstitutionDuties");
-        for (NodeRef nodeRef : nodeRefs) {
-            substitutes.add(getSubstitute(nodeRef));
+        ResultSet resultSet = doSearch(query);
+        try {
+            for (ResultSetRow row : resultSet) {
+                substitutes.add(getSubstitute(row.getNodeRef()));
+            }
+        } finally {
+            resultSet.close();
         }
         return substitutes;
     }
@@ -198,23 +174,29 @@ public class SubstituteServiceImpl implements SubstituteService, BeanFactoryAwar
                 generateTypeQuery(SubstituteModel.Types.SUBSTITUTE),
                 generateStringExactQuery(userName, SubstituteModel.Props.SUBSTITUTE_ID),
                 joinQueryPartsOr(Arrays.asList(
-                        joinQueryPartsOr(Arrays.asList(
-                                generateDatePropertyRangeQuery(startDate, endDate, SubstituteModel.Props.SUBSTITUTION_START_DATE),
-                                generateDatePropertyRangeQuery(startDate, endDate, SubstituteModel.Props.SUBSTITUTION_END_DATE)
-                                ), true),
-                        joinQueryPartsAnd(Arrays.asList(
-                                generateDatePropertyRangeQuery(null, startDate, SubstituteModel.Props.SUBSTITUTION_START_DATE),
-                                generateDatePropertyRangeQuery(endDate, null, SubstituteModel.Props.SUBSTITUTION_END_DATE)
-                                ), true)
-
+                        generateDatePropertyRangeQuery(startDate, endDate, SubstituteModel.Props.SUBSTITUTION_START_DATE),
+                        generateDatePropertyRangeQuery(startDate, endDate, SubstituteModel.Props.SUBSTITUTION_END_DATE)
                         ), true)
                 ));
 
-        List<NodeRef> nodeRefs = getDocumentSearchService().searchNodes(query, -1, "substitutionDutiesInPeriod");
-        for (NodeRef nodeRef : nodeRefs) {
-            substitutes.add(getSubstitute(nodeRef));
+        ResultSet resultSet = doSearch(query);
+        try {
+            for (ResultSetRow row : resultSet) {
+                substitutes.add(getSubstitute(row.getNodeRef()));
+            }
+        } finally {
+            resultSet.close();
         }
         return substitutes;
+    }
+
+    private ResultSet doSearch(String query) {
+        SearchParameters sp = new SearchParameters();
+        sp.setLanguage(SearchService.LANGUAGE_LUCENE);
+        sp.setQuery(query);
+        sp.addStore(generalService.getStore());
+        sp.setLimitBy(LimitBy.UNLIMITED);
+        return searchService.query(sp);
     }
 
     private NodeRef getSubstitutesNode(NodeRef userNodeRef, boolean createIfNotExist) {
@@ -255,26 +237,5 @@ public class SubstituteServiceImpl implements SubstituteService, BeanFactoryAwar
         this.searchService = searchService;
     }
 
-    @Override
-    public void setBeanFactory(BeanFactory beanFactory) {
-        this.beanFactory = beanFactory;
-    }
-
-    private void addLogEntry(NodeRef userRef, Substitute substitute, String msgCode) {
-        LogService logService = BeanHelper.getLogService();
-        UserService userService = BeanHelper.getUserService();
-
-        String username = (String) nodeService.getProperty(userRef, ContentModel.PROP_USERNAME);
-
-        if (substitute != null) {
-            logService.addLogEntry(LogEntry.create(LogObject.USER, userService, userRef, msgCode,
-                    userService.getUserFullNameAndId(username),
-                    substitute.getSubstitutionStartDate(), substitute.getSubstitutionEndDate(),
-                    userService.getUserFullNameAndId(substitute.getSubstituteId())));
-        } else {
-            logService.addLogEntry(LogEntry.create(LogObject.USER, userService, userRef, "applog_user_substitute_edit",
-                    userService.getUserFullNameAndId(username), msgCode));
-        }
-    }
     // END: getters / setters
 }

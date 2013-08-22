@@ -27,7 +27,6 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@ taglib uri="/WEB-INF/alfresco.tld" prefix="a"%>
 <%@ taglib uri="/WEB-INF/repo.tld" prefix="r"%>
-<%@ taglib uri="/WEB-INF/wm.tld" prefix="wm"%>
 
 <%@ page buffer="32kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
@@ -48,11 +47,13 @@
    {
       if (document.getElementById("dialog:dialog-body:search-text").value.length == 0)
       {
-         document.getElementById("dialog:dialog-body:search-btn").disabled = true;
+         document.getElementById("dialog:dialog-body:search-btn1").disabled = true;
+         document.getElementById("dialog:dialog-body:search-btn2").disabled = true;
       }
       else
       {
-         document.getElementById("dialog:dialog-body:search-btn").disabled = false;
+         document.getElementById("dialog:dialog-body:search-btn1").disabled = false;
+         document.getElementById("dialog:dialog-body:search-btn2").disabled = false;
       }
    }
    
@@ -91,12 +92,16 @@
    <a:panel id="search-panel">
       <h:inputText id="search-text" value="#{TrashcanDialogProperty.searchText}" size="35" maxlength="1024" onkeyup="updateButtonState();"
          onchange="updateButtonState();" />
-      <f:verbatim>&nbsp;</f:verbatim>      
-      <h:commandButton id="search-btn" value="#{msg.search}" styleClass="specificAction" actionListener="#{DialogManager.bean.searchObjects}" disabled="true" />      
+      <f:verbatim>&nbsp;</f:verbatim>
+      <h:commandButton id="search-btn1" value="#{msg.search_deleted_items_name}" actionListener="#{DialogManager.bean.searchName}" disabled="true" />
+      <f:verbatim>&nbsp;</f:verbatim>
+      <h:commandButton id="search-btn2" value="#{msg.search_deleted_items_text}" actionListener="#{DialogManager.bean.searchContent}" disabled="true" />
+      <f:verbatim>&nbsp;</f:verbatim>
+      <h:commandButton id="clear-btn" value="#{msg.show_all}" actionListener="#{DialogManager.bean.clearSearch}" />
    </a:panel>
 
    <%-- Filter controls --%>
-   <a:panel id="filter-panel" styleClass="trashfilter-list">
+   <a:panel id="filter-panel" styleClass="filter-list">
       <f:verbatim>
          <img src="<%=request.getContextPath()%>/images/icons/filter.gif" width="16" height="16">
       </f:verbatim>
@@ -111,9 +116,9 @@
          <a:listItem value="month" label="#{msg.date_filter_month}" />
       </a:modeList>
    </a:panel>
-   
+
    <%-- Only the admin user needs the username filter --%>
-   <a:panel id="userfilter-panel" styleClass="trashfilter-list" rendered="#{NavigationBean.currentUser.admin == true}">
+   <a:panel id="userfilter-panel" styleClass="filter-list" rendered="#{NavigationBean.currentUser.admin == true}">
       <f:verbatim>
          <img src="<%=request.getContextPath()%>/images/icons/filter.gif" width=16 height=16>
       </f:verbatim>
@@ -125,48 +130,8 @@
          <a:listItem value="all" label="#{msg.user_filter_all}" />
          <a:listItem value="user" label="#{msg.user_filter_user}" />
       </a:modeList>
-      <wm:search id="userSearchDialog"
-           value="#{TrashcanDialogProperty.userSearchText}"
-           dataMultiValued="false"
-           dataMandatory="false"
-           pickerCallback="#{UserListDialog.searchUsers}"
-           setterCallback="#{TrashcanDialogProperty.setUserSearchText}"
-           dialogTitleId="users_search_title"
-           editable="false"
-           readonly="false"
-           converter="ee.webmedia.alfresco.user.web.UserConverter"        
-        />
-        <a:actionLink value="#{msg.delete}" image="/images/icons/delete_all.gif"
-         actionListener="#{TrashcanDialog.userFilterClear}" showLink="false"/>
+      <h:inputText id="user-search" value="#{TrashcanDialogProperty.userSearchText}" size="12" maxlength="100" onkeyup="return userSearch(event);" />
    </a:panel>
-   
-   <a:panel id="doctypefilter-panel" styleClass="trashfilter-list" rendered="#{NavigationBean.currentUser.admin == true}">
-      <f:verbatim>
-         <img src="<%=request.getContextPath()%>/images/icons/filter.gif" width=16 height=16>
-      </f:verbatim>
-      <h:outputText value="#{msg.document_docType}" />
-      <f:verbatim>:
-               </f:verbatim>
-      <a:modeList id="doctype-filter" itemSpacing="2" iconColumnWidth="0" horizontal="true" selectedLinkStyle="font-weight:bold"
-         value="#{TrashcanDialogProperty.docTypeFilter}" actionListener="#{DialogManager.bean.docTypeFilterChanged}">
-         <a:listItem value="all" label="#{msg.All}" />
-         <a:listItem value="type" label="#{msg.document_docType}" />
-      </a:modeList>
-      <wm:search id="docTypeSearchDialog"
-           value="#{TrashcanDialogProperty.docTypeSearchText}"
-           dataMultiValued="false"
-           dataMandatory="true"
-           pickerCallback="#{DocTypeListDialog.searchUsedDocTypes}"
-           setterCallback="#{TrashcanDialogProperty.setDocTypeSearchText}"
-           dialogTitleId="series_docType_popUpInfo"
-           editable="false"
-           readonly="true"
-           converter="ee.webmedia.alfresco.document.type.web.DocumentTypeConverter"
-        />
-        <a:actionLink value="#{msg.delete}" image="/images/icons/delete_all.gif"
-         actionListener="#{TrashcanDialog.docTypeFilterClear}" showLink="false"/>
-   </a:panel>
-   
 
    <%-- Recover Listed Items actions --%>
    <a:panel id="recover-items-panel">
@@ -177,37 +142,31 @@
          actionListener="#{TrashcanDeleteListedItemsDialog.setupListAction}" />
    </a:panel>
 
-   <a:richList id="trashcan-list" binding="#{TrashcanDialogProperty.itemsRichList}" pageSize="#{BrowseBean.pageSizeContent}" viewMode="details" rowStyleClass="recordSetRow"
+   <a:richList id="trashcan-list" binding="#{TrashcanDialogProperty.itemsRichList}" viewMode="details" pageSize="10" rowStyleClass="recordSetRow"
       altRowStyleClass="recordSetRowAlt" width="100%" value="#{DialogManager.bean.items}" var="r" initialSortColumn="deletedDate" initialSortDescending="true">
 
-      <%-- Primary column showing object type --%>
-      <a:column width="120" style="text-align:left">
-         <f:facet name="header">
-            <a:sortLink label="#{msg.trashcan_object_type}" value="objectTypeStr" styleClass="header" />
-         </f:facet>
-         <h:outputText value="#{r.objectTypeStr}" />
-      </a:column>      
-      
-      <%-- item name --%>
+      <%-- Primary column showing item name --%>
       <a:column primary="true" width="150" style="padding:2px;text-align:left">
          <f:facet name="header">
             <a:sortLink label="#{msg.name}" value="name" mode="case-insensitive" styleClass="header" />
-         </f:facet>  
-         <a:actionLink value="#{r.objectName}" action="#{DocumentDialog.action}" actionListener="#{DocumentDialog.open}" rendered="#{r.objectType == 'document'}">
-            <f:param name="nodeRef" value="#{r.nodeRef}" />
+         </f:facet>
+         <f:facet name="small-icon">
+            <a:actionLink value="#{r.name}" action="dialog:itemDetails" actionListener="#{TrashcanItemDetailsDialog.setupItemAction}" image="#{r.typeIcon}"
+               showLink="false" styleClass="inlineAction">
+               <f:param name="id" value="#{r.id}" />
+            </a:actionLink>
+         </f:facet>
+         <a:actionLink value="#{r.name}" action="dialog:itemDetails" actionListener="#{TrashcanItemDetailsDialog.setupItemAction}">
+            <f:param name="id" value="#{r.id}" />
          </a:actionLink>
-         <a:actionLink value="#{r.objectName}" action="dialog:documentTemplateDetailsDialog" actionListener="#{DocumentTemplateDetailsDialog.setupDocTemplate}" rendered="#{r.objectType == 'content'}">            
-            <f:param name="docTemplateNodeRef" value="#{r.nodeRef}" />
-         </a:actionLink>
-         <a:actionLink value="#{r.objectName}" href="#{r.downloadURL}" target="_blank" rendered="#{r.objectType == 'file'}"/>
       </a:column>
- 
+
       <%-- Original Location Path column --%>
       <a:column style="text-align:left">
          <f:facet name="header">
             <a:sortLink label="#{msg.original_location}" value="displayPath" styleClass="header" />
          </f:facet>
-         <h:outputText value="#{r.displayPath}"/>                  
+         <r:nodePath value="#{r.locationPath}" actionListener="#{BrowseBean.clickSpacePath}" showLeaf="true" />
       </a:column>
 
       <%-- Deleted Date column --%>
@@ -242,7 +201,7 @@
             <f:param name="id" value="#{r.id}" />
          </a:actionLink>
       </a:column>
-      <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/page-size.jsp" />
-      <a:dataPager id="pager1" styleClass="pager" />
+
+      <a:dataPager styleClass="pager" />
    </a:richList>
 </a:panel>

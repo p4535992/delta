@@ -26,10 +26,6 @@ public class SearchTag extends UIComponentTag {
     private String readonly;
     private Boolean showFilter;
     private String filters;
-    private Integer ajaxParentLevel;
-    private String searchLinkLabel;
-    private String searchLinkTooltip;
-    private String converter;
 
     @Override
     public String getComponentType() {
@@ -56,19 +52,10 @@ public class SearchTag extends UIComponentTag {
         }
         attributes.put(Search.DATA_TYPE_KEY, String.class);
         attributes.put(Search.DATA_MULTI_VALUED, dataMultiValued != null ? dataMultiValued : Boolean.FALSE);
-        if (searchLinkLabel != null) {
-            attributes.put(Search.SEARCH_LINK_LABEL, searchLinkLabel);
-        }
-        if (searchLinkTooltip != null) {
-            attributes.put(Search.SEARCH_LINK_TOOLTIP, searchLinkTooltip);
-        }
         attributes.put("dataMandatory", dataMandatory != null ? dataMandatory : Boolean.TRUE);
         attributes.put(Search.PICKER_CALLBACK_KEY, pickerCallback);
         if (setterCallback != null) {
             attributes.put("setterCallback", setterCallback);
-        }
-        if (ajaxParentLevel != null) {
-            attributes.put(Search.AJAX_PARENT_LEVEL_KEY, ajaxParentLevel);
         }
         if (dialogTitleId != null) {
             attributes.put(Search.DIALOG_TITLE_ID_KEY, dialogTitleId);
@@ -84,9 +71,6 @@ public class SearchTag extends UIComponentTag {
             }
 
         }
-        if (converter != null) {
-            attributes.put(Search.CONVERTER_KEY, converter);
-        }
     }
 
     @Override
@@ -100,8 +84,6 @@ public class SearchTag extends UIComponentTag {
         dialogTitleId = null;
         editable = null;
         readonly = null;
-        ajaxParentLevel = null;
-        converter = null;
     }
 
     public void setValue(String value) {
@@ -150,29 +132,5 @@ public class SearchTag extends UIComponentTag {
 
     public String getFilters() {
         return filters;
-    }
-
-    public void setAjaxParentLevel(Integer ajaxParentLevel) {
-        this.ajaxParentLevel = ajaxParentLevel;
-    }
-
-    public Integer getAjaxParentLevel() {
-        return ajaxParentLevel;
-    }
-
-    public void setSearchLinkLabel(String searchLinkLabel) {
-        this.searchLinkLabel = searchLinkLabel;
-    }
-
-    public void setSearchLinkTooltip(String searchLinkTooltip) {
-        this.searchLinkTooltip = searchLinkTooltip;
-    }
-
-    public void setConverter(String converter) {
-        this.converter = converter;
-    }
-
-    public String getConverter() {
-        return converter;
     }
 }

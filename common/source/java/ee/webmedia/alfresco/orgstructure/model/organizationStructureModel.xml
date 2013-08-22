@@ -47,10 +47,6 @@
                <type>d:int</type>
                <mandatory>true</mandatory>
             </property>
-            <property name="os:organizationPath">
-               <type>d:text</type>
-               <multiple>true</multiple>
-            </property>            
          </properties>
       </type>
    </types>

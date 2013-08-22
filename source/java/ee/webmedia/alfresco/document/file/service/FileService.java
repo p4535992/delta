@@ -6,11 +6,9 @@ import org.alfresco.service.cmr.model.FileInfo;
 import org.alfresco.service.cmr.model.FileNotFoundException;
 import org.alfresco.service.cmr.repository.ContentReader;
 import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.service.namespace.QName;
 
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.file.model.GeneratedFileType;
-import ee.webmedia.alfresco.document.file.web.Subfolder;
 
 /**
  * @author Dmitri Melnikov
@@ -73,19 +71,11 @@ public interface FileService {
      */
     NodeRef addFileToDocument(String name, String displayName, NodeRef documentNodeRef, NodeRef fileNodeRef);
 
-    NodeRef addFileToDocument(String name, String displayName, NodeRef documentNodeRef, NodeRef fileNodeRef, boolean active);
-
     NodeRef addFileToDocument(String name, String displayName, NodeRef documentNodeRef, java.io.File file, String mimeType);
 
-    NodeRef addFileToDocument(String name, String displayName, NodeRef documentNodeRef, java.io.File file, String mimeType, boolean active);
-
-    NodeRef addFile(String name, String displayName, NodeRef taskNodeRef, java.io.File file, String mimeType);
-
-    NodeRef addFile(String name, String displayName, NodeRef taskNodeRef, java.io.File file, String mimeType, boolean active);
-
-    NodeRef addFile(String name, String displayName, NodeRef taskNodeRef, ContentReader reader);
-
     List<File> getScannedFolders();
+
+    List<File> getAllScannedFiles();
 
     /**
      * Gets list of scanned files.
@@ -131,24 +121,6 @@ public interface FileService {
 
     void deleteGeneratedFilesByType(NodeRef parentRef, GeneratedFileType type);
 
-    boolean isFileGenerated(NodeRef fileRef);
-
-    boolean isFileGeneratedFromTemplate(NodeRef fileRef);
-
-    boolean isFileAssociatedWithDocMetadata(NodeRef fileRef);
-
     List<String> getDocumentFileDisplayNames(NodeRef folder);
-
-    /**
-     * @param parentRef
-     * @param subfolderNodeType - type to get as subfolder
-     * @param countableChildNodeType - type for counting non-subfolder children
-     * @return
-     */
-    List<Subfolder> getSubfolders(NodeRef parentRef, QName subfolderNodeType, QName countableChildNodeType);
-
-    NodeRef findSubfolderWithName(NodeRef parentNodeRef, String folderName, QName subfolderType);
-
-    List<File> getFiles(List<NodeRef> taskFileNodeRefs);
 
 }

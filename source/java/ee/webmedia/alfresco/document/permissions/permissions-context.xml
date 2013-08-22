@@ -17,15 +17,118 @@
       <property name="userService" ref="userService" />
       <property name="modelDAO" ref="permissionsModelDAO" />
    </bean>
+
+   <bean class="ee.webmedia.alfresco.document.permissions.DocumentOwnerDynamicAuthority" parent="dynamicAuthority">
+      <property name="requiredFor">
+         <list>
+            <value>DocumentWrite</value>
+         </list>
+      </property>
+   </bean>
+
+   <bean class="ee.webmedia.alfresco.document.permissions.DocumentFileReadDynamicAuthority" parent="dynamicAuthority">
+      <property name="requiredFor">
+         <list>
+            <value>DocumentFileRead</value>
+         </list>
+      </property>
+   </bean>
+
+   <bean id="documentFileWriteDynamicAuthority" class="ee.webmedia.alfresco.document.permissions.DocumentFileWriteDynamicAuthority" parent="dynamicAuthority">
+      <property name="workflowService" ref="WmWorkflowService" />
+      <property name="requiredFor">
+         <list>
+            <value>DocumentFileWrite</value>
+         </list>
+      </property>
+   </bean>
+
+   <bean class="ee.webmedia.alfresco.document.permissions.DocumentListCreateDynamicAuthority" parent="dynamicAuthority">
+      <property name="requiredFor">
+         <list>
+            <value>DocumentListCreate</value>
+         </list>
+      </property>
+   </bean>
+
+   <bean class="ee.webmedia.alfresco.document.permissions.DocumentListWriteDynamicAuthority" parent="dynamicAuthority">
+      <property name="requiredFor">
+         <list>
+            <value>DocumentListWrite</value>
+         </list>
+      </property>
+   </bean>
+
+   <bean class="ee.webmedia.alfresco.document.permissions.DocumentDraftDynamicAuthority" parent="dynamicAuthority">
+      <property name="requiredFor">
+         <list>
+            <value>DocumentDelete</value>
+         </list>
+      </property>
+   </bean>
+
+   <bean class="ee.webmedia.alfresco.document.permissions.DocumentChildMetadataDynamicAuthority" parent="dynamicAuthority">
+      <property name="requiredFor">
+         <list>
+            <value>DocumentChildMetadata</value>
+         </list>
+      </property>
+   </bean>
+
+   <bean class="ee.webmedia.alfresco.document.permissions.ForumDynamicAuthority" parent="dynamicAuthority">
+      <property name="requiredFor">
+         <list>
+            <value>Forum</value>
+         </list>
+      </property>
+   </bean>
+
+   <bean class="ee.webmedia.alfresco.document.permissions.TopicCreatorDynamicAuthority" parent="dynamicAuthority">
+      <property name="requiredFor">
+         <list>
+            <value>TopicCreator</value>
+         </list>
+      </property>
+   </bean>
+
+   <bean class="ee.webmedia.alfresco.document.permissions.WorkflowUserDynamicAuthority" parent="dynamicAuthority">
+      <property name="requiredFor">
+         <list>
+            <value>WorkflowUser</value>
+         </list>
+      </property>
+   </bean>
+
+   <bean class="ee.webmedia.alfresco.document.permissions.WorkflowOwnerDynamicAuthority" parent="dynamicAuthority">
+      <property name="requiredFor">
+         <list>
+            <value>WorkflowOwner</value>
+         </list>
+      </property>
+   </bean>
    
    <bean class="ee.webmedia.alfresco.document.permissions.PropDocOwnerDynamicAuthority" parent="dynamicAuthority">
       <property name="requiredFor">
          <list>
             <value>viewDocumentMetaData</value>
-            <value>editDocument</value>
+            <value>editDocumentMetaData</value>
             <value>viewDocumentFiles</value>
+            <value>editDocumentFiles</value>
+            <value>deleteDocumentFiles</value>
+            <value>deleteDocumentMetaData</value>
          </list>
       </property>
+   </bean>
+
+   <bean class="ee.webmedia.alfresco.document.permissions.SeriesDocManagerDynamicAuthority" parent="dynamicAuthority">
+      <property name="requiredFor">
+         <list>
+            <value>viewDocumentFiles</value>
+            <value>editDocumentFiles</value>
+            <value>deleteDocumentFiles</value>
+         </list>
+      </property>
+      <property name="generalService" ref="GeneralService" />
    </bean>
 
    <bean class="ee.webmedia.alfresco.document.permissions.PublicDocumentDynamicAuthority" parent="dynamicAuthority">

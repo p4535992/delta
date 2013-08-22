@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.document.sendout.web;
 
+import java.io.Serializable;
 import java.util.List;
 
 import javax.faces.context.FacesContext;
@@ -8,41 +9,32 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.bean.repository.Node;
 import org.springframework.web.jsf.FacesContextUtils;
 
-import ee.webmedia.alfresco.common.web.BeanHelper;
-import ee.webmedia.alfresco.docconfig.generator.DialogDataProvider;
-import ee.webmedia.alfresco.docdynamic.web.DocumentDynamicBlock;
 import ee.webmedia.alfresco.document.sendout.model.SendInfo;
 import ee.webmedia.alfresco.document.sendout.service.SendOutService;
+import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
 
 /**
  * @author Erko Hansar
  */
-public class SendOutBlockBean implements DocumentDynamicBlock {
-    private static final long serialVersionUID = 1L;
+public class SendOutBlockBean implements Serializable {
 
-    public static final String BEAN_NAME = "SendOutBlockBean";
+    private static final long serialVersionUID = 1L;
 
     private transient SendOutService sendOutService;
 
     private NodeRef document;
     private List<SendInfo> sendInfos;
+    private List<CompoundWorkflow> compoundWorkflows;
 
-    @Override
-    public void resetOrInit(DialogDataProvider provider) {
-        if (provider == null) {
-            reset();
-        } else {
-            init(provider.getNode());
-        }
-    }
-
-    public void init(Node node) {
+    public void init(Node node, List<CompoundWorkflow> compoundWorkflows) {
         reset();
         document = node.getNodeRef();
+        this.compoundWorkflows = compoundWorkflows;
+        restore();
     }
 
     public void restore() {
-        sendInfos = null;
+        sendInfos = getSendOutService().getDocumentAndTaskSendInfos(document, compoundWorkflows);
     }
 
     public void reset() {
@@ -51,15 +43,12 @@ public class SendOutBlockBean implements DocumentDynamicBlock {
     }
 
     public boolean isRendered() {
-        return getSendInfos() != null && getSendInfos().size() > 0;
+        return sendInfos != null && sendInfos.size() > 0;
     }
 
     // START: getters / setters
 
     public List<SendInfo> getSendInfos() {
-        if (sendInfos == null && document != null) {
-            sendInfos = getSendOutService().getDocumentAndTaskSendInfos(document, BeanHelper.getWorkflowBlockBean().getCompoundWorkflows());
-        }
         return sendInfos;
     }
 

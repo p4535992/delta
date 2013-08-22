@@ -37,7 +37,6 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.alfresco.i18n.I18NUtil;
 import org.alfresco.repo.content.filestore.FileContentReader;
-import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
 import org.alfresco.service.cmr.model.FileFolderService;
 import org.alfresco.service.cmr.model.FileInfo;
 import org.alfresco.service.cmr.model.FileNotFoundException;
@@ -46,12 +45,6 @@ import org.alfresco.service.cmr.repository.MimetypeService;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
 import org.alfresco.service.cmr.repository.datatype.TypeConverter;
-import org.alfresco.service.transaction.TransactionService;
-
-import ee.webmedia.alfresco.common.web.BeanHelper;
-import ee.webmedia.alfresco.document.model.DocumentCommonModel;
-import ee.webmedia.alfresco.utils.MessageUtil;
-import ee.webmedia.alfresco.webdav.WebDAVCustomHelper;
 
 /**
  * Implements the WebDAV GET method
@@ -202,17 +195,6 @@ public class GetMethod extends WebDAVMethod
 
             // Build the response header
             m_response.setHeader(WebDAV.HEADER_ETAG, getDAVHelper().makeQuotedETag(pathNodeRef));
-            // Ats: FIXME VIGA, mis avaldub firefox'iga:
-            // 1) avatakse dokumendi ekraan, kasutajal on faili vaatamise õigus
-            // 2) kasutaja avab faili, fail avaneb(fail läheb brauseri cache'sse)
-            // 3) kasutajalt eemaldatakse faili vaatamise õigus
-            // 4) kasutaja avab sama faili, fail avaneb HOOLIMATA PUUDUVATEST ÕIGUSTEST (fail võetakse brauseri cache'st)
-            // 
-            // Praeguse HTTP response headerite komplekti puhul FF ei tee mingit päringut serverisse, kui tal on olemas cachetud fail.
-            // Seega pole võimalik teada saada, kas faili vaatamise õigus on alles või ei.
-            // XXX: et firefox cache'ks faili sisu aga kontrolliks ikkagi enne faili cahce'st avamist serverilt õiguseid, peaks headereid muutma.
-            // Tundub, et järgnev header paneb asja toimima firefox'i jaoks, aga pole kindel, et see mõnda uut viga mõne IE või MS Office versiooniga ei tekita!
-            // m_response.setHeader("Cache-control", "must-revalidate");
 
             Date modifiedDate = nodeInfo.getModifiedDate();
             if (modifiedDate != null)
@@ -229,24 +211,11 @@ public class GetMethod extends WebDAVMethod
                     nodeInfo.getNodeRef(), reader);
             // there is content associated with the node
             m_response.setHeader(WebDAV.HEADER_CONTENT_LENGTH, Long.toString(reader.getSize()));
-            String guessedMimetype = BeanHelper.getMimetypeService().guessMimetype(nodeInfo.getName());
-            m_response.setContentType(guessedMimetype);
+            m_response.setContentType(reader.getMimetype());
             m_response.setCharacterEncoding(reader.getEncoding());
 
             if (m_returnContent)
             {
-                final NodeRef parentRef = ((WebDAVCustomHelper) getDAVHelper()).getNodeService().getPrimaryParent(nodeInfo.getNodeRef()).getParentRef();
-                if (DocumentCommonModel.Types.DOCUMENT.equals(((WebDAVCustomHelper) getDAVHelper()).getNodeService().getType(parentRef))) {
-                    final String name = nodeInfo.getName();
-                    ((WebDAVCustomHelper) getDAVHelper()).getTransactionService().getRetryingTransactionHelper().doInTransaction(new RetryingTransactionCallback<Void>() {
-                        @Override
-                        public Void execute() throws Throwable {
-                            ((WebDAVCustomHelper) getDAVHelper()).getDocumentLogService().addDocumentLog(
-                                    parentRef, MessageUtil.getMessage("file_opened", name));
-                            return null;
-                        }
-                    }, false, true);
-                }
                 // copy the content to the response output stream
                 reader.getContent(m_response.getOutputStream());
             }

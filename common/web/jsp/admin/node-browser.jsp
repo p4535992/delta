@@ -78,17 +78,6 @@
       <p>Export as .ACP file: 
       <h:commandButton id="export" styleClass="node-export" value="Export" type="submit"
          actionListener="#{AdminNodeBrowseBean.export}" />
-      <p>Export as .xml file: 
-      <h:commandButton id="exportXml" styleClass="node-export" value="Export XML" type="submit"
-         actionListener="#{AdminNodeBrowseBean.exportXml}" />
-      <br />Delete node:
-      <h:commandButton id="delete" styleClass="node-delete" value="Delete node" type="submit"
-         actionListener="#{AdminNodeBrowseBean.delete}" rendered="#{ApplicationService.test}" />
-      <br />
-         <h:outputText value="ACP või XML faili asukoht serveri kõvakettal, millest importida: "/><br/>
-         <h:inputText id="fileNameInputText" value="#{AdminNodeBrowseBean.importFileName}" size="70" /><br/>
-         <h:commandButton id="importAcp" value="Impordi ACP fail" type="submit"
-            actionListener="#{AdminNodeBrowseBean.importACP}" />
       </p>
 
       <br/>
@@ -195,7 +184,7 @@
       
       <table>
       <tr>
-         <td><b>Inherit from parent nodes:</b></td><td><h:outputText id="inheritPermissions" value="#{AdminNodeBrowseBean.inheritPermissions}"/></td>
+         <td><b>Inherit:</b></td><td><h:outputText id="inheritPermissions" value="#{AdminNodeBrowseBean.inheritPermissions}"/></td>
       </tr>
       </table>
       
@@ -363,12 +352,6 @@
               <h:outputText value="#{parent.typeQName.prefixString}"/>
           </h:column>
       </h:dataTable>
-      
-      <hr/>
-      
-      <h:outputText styleClass="mainTitle" value="Lucene Index"/>
-      <br/>
-      <h:inputTextarea id="luceneIndexInfo" value="#{AdminNodeBrowseBean.luceneIndexInfo}" readonly="true" styleClass="expand19-200" />
       
       <br/>
       <h:panelGroup id="storePropsPanel" rendered="#{AdminNodeBrowseBean.inAVMStore}">

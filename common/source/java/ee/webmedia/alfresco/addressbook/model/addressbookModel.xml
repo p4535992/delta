@@ -80,8 +80,6 @@
          <mandatory-aspects>
             <aspect>ab:organizationProperties</aspect>
             <aspect>ab:orgPrivate</aspect>
-            <aspect>ab:taskCapable</aspect>
-            <aspect>ab:encryptionPersonId</aspect>
          </mandatory-aspects>
       </type>
       
@@ -133,6 +131,7 @@
       <type name="ab:privPerson">
          <parent>ab:personBase</parent>
          <mandatory-aspects>
+            <aspect>ab:skype</aspect>
             <aspect>ab:orgPrivate</aspect>
          </mandatory-aspects>
       </type>
@@ -146,13 +145,8 @@
                <type>d:text</type>
                <mandatory>true</mandatory>
             </property>
-            <property name="ab:manageableForAdmin">
-               <type>d:boolean</type>
-               <default>true</default>
-            </property>
          </properties>
          <mandatory-aspects>
-            <!-- FIXME taskCapable also contains ab:sapAccount, which is not needed here. This probably also requires a node updater job -->
             <aspect>ab:taskCapable</aspect>
          </mandatory-aspects>
       </aspect>
@@ -161,7 +155,6 @@
          <properties>
             <property name="ab:orgName">
                <type>d:text</type>
-               <mandatory>true</mandatory>
             </property>
             <property name="ab:orgAltName">
                <type>d:text</type>
@@ -178,18 +171,6 @@
             <property name="ab:dvkCapable">
                <type>d:boolean</type>
             </property>
-	        <property name="ab:firstAdditionalEmail">
-               <type>d:text</type>
-            </property>
-            <property name="ab:secondAdditionalEmail">
-               <type>d:text</type>
-            </property>
-            <property name="ab:firstAdditionalPhone">
-               <type>d:text</type>
-            </property>
-            <property name="ab:secondAdditionalPhone">
-               <type>d:text</type>
-            </property> 
          </properties>
       </aspect>
 
@@ -204,14 +185,6 @@
       <aspect name="ab:skype">
          <properties>
             <property name="ab:skype">
-               <type>d:text</type>
-            </property>
-         </properties>
-      </aspect>
-
-      <aspect name="ab:encryptionPersonId">
-         <properties>
-            <property name="ab:encryptionPersonId">
                <type>d:text</type>
             </property>
          </properties>
@@ -256,6 +229,9 @@
                <type>d:text</type>
             </property>
          </properties>
+         <mandatory-aspects>
+            <aspect>ab:taskCapable</aspect>
+         </mandatory-aspects>
       </aspect>
       
       <aspect name="ab:taskCapable">
@@ -275,11 +251,9 @@
          <properties>
             <property name="ab:personFirstName">
                <type>d:text</type>
-               <mandatory>true</mandatory>
             </property>
             <property name="ab:personLastName">
                <type>d:text</type>
-               <mandatory>true</mandatory>
             </property>
             <property name="ab:personId">
                <type>d:text</type>
@@ -291,9 +265,6 @@
                <type>d:text</type>
             </property>
          </properties>
-         <mandatory-aspects>
-            <aspect>ab:skype</aspect>
-         </mandatory-aspects>
       </aspect>
 
    </aspects>

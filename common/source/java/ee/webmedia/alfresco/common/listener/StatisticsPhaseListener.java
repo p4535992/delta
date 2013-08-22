@@ -7,7 +7,6 @@ import javax.faces.event.PhaseEvent;
 import javax.faces.event.PhaseId;
 import javax.faces.event.PhaseListener;
 
-import org.alfresco.util.Pair;
 import org.alfresco.web.app.Application;
 import org.apache.log4j.Logger;
 
@@ -25,19 +24,13 @@ public class StatisticsPhaseListener implements PhaseListener {
             return new HashMap<StatisticsPhaseListenerLogColumn, String>();
         }
     };
-    private static ThreadLocal<Map<StatisticsPhaseListenerLogColumn, Pair<Long, Long>>> timings = new ThreadLocal<Map<StatisticsPhaseListenerLogColumn, Pair<Long, Long>>>() {
-        @Override
-        protected Map<StatisticsPhaseListenerLogColumn, Pair<Long, Long>> initialValue() {
-            return new HashMap<StatisticsPhaseListenerLogColumn, Pair<Long, Long>>();
-        }
-    };
 
     @Override
     public void beforePhase(PhaseEvent event) {
         if (!log.isInfoEnabled()) {
             return;
         }
-        phaseStartTime.set(new Long(System.nanoTime()));
+        phaseStartTime.set(new Long(System.currentTimeMillis()));
     }
 
     @Override
@@ -45,7 +38,7 @@ public class StatisticsPhaseListener implements PhaseListener {
         if (!log.isInfoEnabled()) {
             return;
         }
-        long duration = (System.nanoTime() - phaseStartTime.get().longValue()) / 1000000L;
+        long duration = System.currentTimeMillis() - phaseStartTime.get().longValue();
         if (PhaseId.RESTORE_VIEW.equals(event.getPhaseId())) {
             add(StatisticsPhaseListenerLogColumn.PHASE_1RESTORE_VIEW, Long.toString(duration));
         } else if (PhaseId.APPLY_REQUEST_VALUES.equals(event.getPhaseId())) {
@@ -89,7 +82,6 @@ public class StatisticsPhaseListener implements PhaseListener {
             return;
         }
         stats.get().clear();
-        timings.get().clear();
     }
 
     public static void add(StatisticsPhaseListenerLogColumn logColumn, String value) {
@@ -104,47 +96,19 @@ public class StatisticsPhaseListener implements PhaseListener {
         }
     }
 
-    public static void addTimingNano(StatisticsPhaseListenerLogColumn logColumn, long startTimeNano) {
-        addTiming(logColumn, System.nanoTime() - startTimeNano);
-    }
-
-    private static void addTiming(StatisticsPhaseListenerLogColumn logColumn, long value) {
-        if (!log.isInfoEnabled()) {
-            return;
-        }
-        Map<StatisticsPhaseListenerLogColumn, Pair<Long, Long>> map = timings.get();
-        if (map.containsKey(logColumn)) {
-            Pair<Long, Long> existing = map.get(logColumn);
-            map.put(logColumn, new Pair<Long, Long>(existing.getFirst() + 1L, existing.getSecond() + value));
-        } else {
-            map.put(logColumn, new Pair<Long, Long>(1L, value));
-        }
-    }
-
     public static void log() {
         if (!log.isInfoEnabled()) {
             return;
         }
         StringBuilder s = new StringBuilder();
         Map<StatisticsPhaseListenerLogColumn, String> map = stats.get();
-        Map<StatisticsPhaseListenerLogColumn, Pair<Long, Long>> map2 = timings.get();
         for (StatisticsPhaseListenerLogColumn logColumn : StatisticsPhaseListenerLogColumn.values()) {
+            String value = map.get(logColumn);
             if (s.length() > 0) {
                 s.append("|");
             }
-
-            String value = map.get(logColumn);
             if (value != null) {
-                s.append(logColumn.toString()).append(",").append(value);
-            }
-
-            Pair<Long, Long> timing = map2.get(logColumn);
-            if (timing != null) {
-                if (value == null) {
-                    s.append(logColumn.toString());
-                }
-                s.append(",");
-                s.append(timing.getFirst()).append(",").append(timing.getSecond() / 1000000L);
+                s.append(logColumn.toString() + "," + value);
             }
         }
         log.info(s);

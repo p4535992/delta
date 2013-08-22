@@ -217,6 +217,7 @@ public class DhlXTeeServiceImplTest extends TestCase {
         receivedDocumentsFailed = true;
         receivedDocumentIds = new ArrayList<String>(); // using static field to be able to use the result in other tests
         receiveFaileddDocumentIds = new ArrayList<String>(); // using static field to be able to use the result in other tests
+        System.gc();// perform GC to free max memory for receiving documents before opening remote connection
         final ReceivedDocumentsWrapper receiveDocuments = dhl.receiveDocuments(300);
         assertTrue(receiveDocuments.size() > 0 || sentDocIds.size() == 0);
         for (String dhlId : receiveDocuments) {

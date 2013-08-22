@@ -1,9 +1,10 @@
 package ee.webmedia.alfresco.series.service;
 
 import java.util.List;
-import java.util.Set;
 
+import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
 
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
@@ -26,7 +27,7 @@ public interface SeriesService {
 
     List<Series> getAllSeriesByFunction(NodeRef functionNodeRef);
 
-    List<Series> getAllSeriesByFunction(NodeRef functionNodeRef, DocListUnitStatus status, Set<String> docTypeIds);
+    List<Series> getAllSeriesByFunction(NodeRef functionNodeRef, DocListUnitStatus status, QName docTypeId);
 
     List<Series> getAllSeriesByFunctionForStructUnit(NodeRef functionNodeRef, Integer structUnitId);
 
@@ -50,13 +51,8 @@ public interface SeriesService {
 
     boolean isClosed(Node currentNode);
 
-    void openSeries(Series series);
-
     void updateContainingDocsCountByVolume(NodeRef seriesNodeRef, NodeRef volumeNodeRef, boolean volumeAdded);
 
-    List<NodeRef> getAllSeriesRefsByFunction(NodeRef functionRef);
-
-    /** this method should only be called by the updater */
-    void setSeriesDefaultPermissionsOnCreate(NodeRef seriesRef);
+    List<ChildAssociationRef> getAllSeriesAssocsByFunction(NodeRef functionRef);
 
 }

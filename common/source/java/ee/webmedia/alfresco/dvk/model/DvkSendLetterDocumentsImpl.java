@@ -8,7 +8,6 @@ import junit.framework.AssertionFailedError;
 import org.apache.commons.lang.builder.ToStringBuilder;
 import org.apache.commons.lang.builder.ToStringStyle;
 
-import ee.webmedia.alfresco.utils.MessageDataImpl;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
 
@@ -44,7 +43,9 @@ public class DvkSendLetterDocumentsImpl extends AbstractLetterDocument implement
         } catch (AssertionFailedError e) {
             log.debug("Object that was validated: '" + ToStringBuilder.reflectionToString(this, ToStringStyle.MULTI_LINE_STYLE) + "'");
             final UnableToPerformException unableToPerformException = new UnableToPerformException(MessageSeverity.ERROR, "dvk_send_error_missingData", e);
-            unableToPerformException.setMessageValuesForHolders(new MessageDataImpl(e.getMessage()));
+            final UnableToPerformException.UntransaltedMessageValueHolder untransalted = new UnableToPerformException.UntransaltedMessageValueHolder(
+                    e.getMessage());
+            unableToPerformException.setMessageValuesForHolders(untransalted);
             throw unableToPerformException;
         }
     }

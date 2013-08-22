@@ -14,7 +14,7 @@ import ee.webmedia.alfresco.utils.MessageDataWrapper;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 
 /**
- * @author Keit Tehvan 29.09.2009
+ * @author Keit Tehvan
  */
 public interface AddressbookService {
 
@@ -28,16 +28,9 @@ public interface AddressbookService {
     boolean hasManagePermission();
 
     /**
-     * @return list of nodes of type ab:organization and ab:privPerson
-     */
-    List<Node> listOrganizationAndPerson();
-
-    /**
      * @return list of nodes of type ab:organization
      */
     List<Node> listOrganization();
-
-    List<AddressbookEntry> listAddressbookEntries(QName type);
 
     /**
      * @return list of nodes of type ab:contactGroups
@@ -82,7 +75,6 @@ public interface AddressbookService {
      * @param node - the transient node with set properties to create
      * @param parent - the parent nodeRef of the node to be created, can be null
      * @return the nodeRef of the newly created node
-     * @throws UnableToPerformException when contact group name exists
      */
     NodeRef addOrUpdateNode(Node node, NodeRef parent);
 
@@ -123,19 +115,17 @@ public interface AddressbookService {
      * searches the addressbook for private contacts, organizations and organization contacts
      * 
      * @param searchCriteria - the search string
-     * @param limit
      * @return list of node results
      */
-    List<Node> search(String searchCriteria, int limit);
+    List<Node> search(String searchCriteria);
 
     /**
      * Searches the addressbook for contact groups only
      * 
      * @param searchCriteria - the search string
-     * @param limit
      * @return list of node results
      */
-    List<Node> searchTaskCapableContactGroups(String searchCriteria, boolean orgOnly, boolean dvkCapableOnly, String institutionToRemove, int limit);
+    List<Node> searchTaskCapableContactGroups(String searchCriteria, boolean orgOnly, String institutionToRemove);
 
     /**
      * returns the parent of the given node
@@ -144,6 +134,8 @@ public interface AddressbookService {
      * @return org node ref
      */
     NodeRef getOrgOfPerson(NodeRef ref);
+
+    Node getRoot();
 
     /**
      * Returns a list of nodes of a given type that nodeRef if associated with.
@@ -162,18 +154,13 @@ public interface AddressbookService {
      */
     List<Node> getContacts(NodeRef nodeRef);
 
-    /**
-     * Returns the NodeRef of the addressbook
-     * 
-     * @return
-     */
-    NodeRef getAddressbookRoot();
+    NodeRef getAddressbookNodeRef();
 
-    List<Node> searchTaskCapableContacts(String searchCriteria, boolean orgOnly, boolean dvkCapableOnly, String institutionToRemove, int limit);
+    List<Node> searchTaskCapableContacts(String searchCriteria, boolean orgOnly, String institutionToRemove);
 
     List<Node> getDvkCapableOrgs();
 
-    List<Node> searchContactGroups(String searchCriteria, boolean showAdminManageable, boolean excludeTaskCapable, int limit);
+    List<Node> searchContactGroups(String searchCriteria);
 
     /**
      * @param regNumber
@@ -182,22 +169,16 @@ public interface AddressbookService {
      */
     List<Node> getContactsByRegNumber(String regNumber);
 
-    List<Node> searchPersonContacts(String searchCriteria, int limit);
+    List<Node> searchPersonContacts(String searchCriteria);
 
     List<Node> getPersonContactsByCode(String code);
 
-    List<Node> searchOrgContacts(String searchCriteria, int limit);
+    List<Node> searchOrgContacts(String searchCriteria);
 
     boolean isTaskCapableGroupMember(NodeRef contactRef);
 
     NodeRef createOrganization(Map<QName, Serializable> data);
 
     List<Node> getContactsWithSapAccount();
-
-    List<Node> getContactsGroups(NodeRef contactNodeRef);
-
-    boolean hasCreatePermission();
-
-    List<NodeRef> getContactGroupContents(NodeRef contactGroupRef);
 
 }

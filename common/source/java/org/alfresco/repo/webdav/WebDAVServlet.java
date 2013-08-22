@@ -53,9 +53,6 @@ import org.apache.commons.logging.LogFactory;
 import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.context.support.WebApplicationContextUtils;
 
-import ee.webmedia.alfresco.common.listener.StatisticsPhaseListener;
-import ee.webmedia.alfresco.common.listener.StatisticsPhaseListenerLogColumn;
-
 /**
  * Servlet that accepts WebDAV requests for the hub. The request is served by the hub's content
  * repository framework and the response sent back using the WebDAV protocol.
@@ -222,8 +219,6 @@ public class WebDAVServlet extends HttpServlet
         // Get the type of the current request
         
         String strHttpMethod = request.getMethod();
-
-        StatisticsPhaseListener.add(StatisticsPhaseListenerLogColumn.ACTION, strHttpMethod);
 
         if (logger.isDebugEnabled())
             logger.debug("WebDAV request " + strHttpMethod + " on path "

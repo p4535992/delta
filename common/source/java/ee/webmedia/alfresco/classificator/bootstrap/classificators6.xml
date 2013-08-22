@@ -9,8 +9,9 @@
 
             <cl:classificatorValue view:childName="cl:classificatorValue">
                <view:properties>
-                  <cl:valueName>puhkusele (põhipuhkus või lisapuhkus teenistusstaaži eest vastavalt saadaolevate puhkusepäevade järjestusele)</cl:valueName>
-                  <cl:classificatorDescription></cl:classificatorDescription>
+                  <cl:valueName>leaveAnnual</cl:valueName>
+                  <cl:classificatorDescription>puhkusele (põhipuhkus või lisapuhkus teenistusstaaži eest vastavalt saadaolevate puhkusepäevade järjestusele)
+                  </cl:classificatorDescription>
                   <cl:order>1</cl:order>
                   <cl:byDefault>false</cl:byDefault>
                   <cl:readOnly>false</cl:readOnly>
@@ -20,8 +21,8 @@
 
             <cl:classificatorValue view:childName="cl:classificatorValue">
                <view:properties>
-                  <cl:valueName>tasustamata puhkusele</cl:valueName>
-                  <cl:classificatorDescription></cl:classificatorDescription>
+                  <cl:valueName>leaveWithoutPay</cl:valueName>
+                  <cl:classificatorDescription>tasustamata puhkusele</cl:classificatorDescription>
                   <cl:order>2</cl:order>
                   <cl:byDefault>false</cl:byDefault>
                   <cl:readOnly>false</cl:readOnly>
@@ -31,8 +32,8 @@
 
             <cl:classificatorValue view:childName="cl:classificatorValue">
                <view:properties>
-                  <cl:valueName>lapsepuhkusele</cl:valueName>
-                  <cl:classificatorDescription></cl:classificatorDescription>
+                  <cl:valueName>leaveChild</cl:valueName>
+                  <cl:classificatorDescription>lapsepuhkusele</cl:classificatorDescription>
                   <cl:order>3</cl:order>
                   <cl:byDefault>false</cl:byDefault>
                   <cl:readOnly>false</cl:readOnly>
@@ -42,13 +43,12 @@
 
             <cl:classificatorValue view:childName="cl:classificatorValue">
                <view:properties>
-                  <cl:valueName>õppepuhkusele</cl:valueName>
-                  <cl:classificatorDescription></cl:classificatorDescription>
+                  <cl:valueName>leaveStudy</cl:valueName>
+                  <cl:classificatorDescription>õppepuhkusele</cl:classificatorDescription>
                   <cl:order>4</cl:order>
                   <cl:byDefault>false</cl:byDefault>
-                  <cl:readOnly>true</cl:readOnly>
+                  <cl:readOnly>false</cl:readOnly>
                   <cl:active>true</cl:active>
-                  <cl:valueData>leaveStudy</cl:valueData>
                </view:properties>
             </cl:classificatorValue>
 

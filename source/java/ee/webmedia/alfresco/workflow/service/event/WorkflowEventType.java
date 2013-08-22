@@ -8,6 +8,5 @@ public enum WorkflowEventType {
     WORKFLOW_STARTED_AUTOMATICALLY,
     WORKFLOW_CHECK_EXTERNAL_REVIEW, // used to send one event if multiple workflows and/or tasks are changed
     CREATED,
-    /** NB! Currently this event is not queued for tasks (due to performance issues) */
     UPDATED
 }

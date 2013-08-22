@@ -17,12 +17,28 @@
       <managed-bean-name>ClassificatorDetailsDialog</managed-bean-name>
       <managed-bean-class>ee.webmedia.alfresco.classificator.web.ClassificatorDetailsDialog</managed-bean-class>
       <managed-bean-scope>session</managed-bean-scope>
+      <managed-property>
+         <property-name>classificatorService</property-name>
+         <value>#{ClassificatorService}</value>
+      </managed-property>
+      <managed-property>
+         <property-name>navigator</property-name>
+         <value>#{NavigationBean}</value>
+      </managed-property>
    </managed-bean>
 
    <managed-bean>
       <managed-bean-name>ClassificatorListDialog</managed-bean-name>
       <managed-bean-class>ee.webmedia.alfresco.classificator.web.ClassificatorListDialog</managed-bean-class>
       <managed-bean-scope>session</managed-bean-scope>
+      <managed-property>
+         <property-name>classificatorService</property-name>
+         <value>#{ClassificatorService}</value>
+      </managed-property>
+      <managed-property>
+         <property-name>navigator</property-name>
+         <value>#{NavigationBean}</value>
+      </managed-property>
    </managed-bean>
-   
+
 </faces-config>

@@ -15,7 +15,7 @@ public class ReviewWorkflow extends Workflow {
     @Override
     protected Workflow copy(CompoundWorkflow parent) {
         // no need to copy newTaskTemplate, it is not changed ever
-        return copyImpl(new ReviewWorkflow(getNode().clone(), parent, newTaskTemplate, newTaskClass, newTaskOutcomes));
+        return copyImpl(new ReviewWorkflow(getNode().copy(), parent, newTaskTemplate, newTaskClass, newTaskOutcomes));
     }
 
     @Override

@@ -14,15 +14,12 @@ import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.Repository;
 import org.alfresco.web.bean.users.UsersBeanProperties;
-import org.alfresco.web.ui.common.component.PickerSearchParams;
 import org.alfresco.web.ui.common.component.data.UIRichList;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.orgstructure.service.OrganizationStructureService;
-import ee.webmedia.alfresco.user.model.UserListRowVO;
-import ee.webmedia.alfresco.user.model.UserModel;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.UserUtil;
 import ee.webmedia.alfresco.utils.WebUtil;
@@ -36,7 +33,7 @@ public class UserListDialog extends BaseDialogBean {
     private UsersBeanProperties properties;
 
     private transient UIRichList usersList;
-    private List<UserListRowVO> users = Collections.<UserListRowVO> emptyList();
+    private List<Node> users = Collections.<Node> emptyList();
 
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
@@ -48,6 +45,7 @@ public class UserListDialog extends BaseDialogBean {
     public void init(Map<String, String> params) {
         super.init(params);
         reset();
+        showAll();
     }
 
     @Override
@@ -68,7 +66,7 @@ public class UserListDialog extends BaseDialogBean {
      * @return the list of user Nodes to display
      * @throws Exception
      */
-    public List<UserListRowVO> getUsers() throws Exception {
+    public List<Node> getUsers() throws Exception {
         if (users == null) {
             search();
         }
@@ -84,7 +82,7 @@ public class UserListDialog extends BaseDialogBean {
         if (usersList != null) {
             usersList.setValue(null);
         }
-        users = getUserListVOs(getOrganizationStructureService().setUsersUnit(getUserService().searchUsers(properties.getSearchCriteria(), false, -1)));
+        users = getOrganizationStructureService().setUsersUnit(getUserService().searchUsers(properties.getSearchCriteria(), false));
 
         // return null to stay on the same page
         return null;
@@ -99,24 +97,10 @@ public class UserListDialog extends BaseDialogBean {
         if (usersList != null) {
             usersList.setValue(null);
         }
-        if (properties != null) {
-            properties.setSearchCriteria(null);
-        }
-        users = getUserListVOs(getOrganizationStructureService().setUsersUnit(
-                Repository.getUsers(FacesContext.getCurrentInstance(), properties.getNodeService(), properties.getSearchService())));
+        users = getOrganizationStructureService().setUsersUnit(Repository.getUsers(FacesContext.getCurrentInstance(), properties.getNodeService(), properties.getSearchService()));
 
         // return null to stay on the same page
         return null;
-    }
-
-    private List<UserListRowVO> getUserListVOs(List<Node> userNodes) {
-        List<UserListRowVO> userListVOs = new ArrayList<UserListRowVO>();
-        if (userNodes != null) {
-            for (Node userNode : userNodes) {
-                userListVOs.add(new UserListRowVO(userNode));
-            }
-        }
-        return userListVOs;
     }
 
     /**
@@ -124,31 +108,24 @@ public class UserListDialog extends BaseDialogBean {
      * This method is part of the contract to the Generic Picker, it is up to the backing bean
      * to execute whatever query is appropriate and return the results.
      * 
-     * @param params Search parameters
+     * @param filterIndex Index of the filter drop-down selection
+     * @param contains Text from the contains textbox
      * @return An array of SelectItem objects containing the results to display in the picker.
      */
-    public SelectItem[] searchUsers(PickerSearchParams params) {
-        return searchUsers(params, false, false, true);
-    }
-
-    public SelectItem[] searchUsersWithoutSubstitutionInfoShown(PickerSearchParams params) {
-        return searchUsers(params, false, false, false);
+    public SelectItem[] searchUsers(int filterIndex, String contains) {
+        return searchUsers(contains, false);
     }
 
     /**
      * @see #searchUsers(int, String)
      * @return SelectItems representing users. Current user is excluded.
      */
-    public SelectItem[] searchOtherUsers(PickerSearchParams params) {
-        return searchUsers(params, true, false, true);
+    public SelectItem[] searchOtherUsers(int filterIndex, String contains) {
+        return searchUsers(contains, true);
     }
 
-    public SelectItem[] searchUsersWithNameValue(PickerSearchParams params) {
-        return searchUsers(params, false, true, true);
-    }
-
-    private SelectItem[] searchUsers(PickerSearchParams params, boolean excludeCurrentUser, boolean useNameAsValue, boolean showSubstitutionInfo) {
-        List<Node> nodes = getOrganizationStructureService().setUsersUnit(getUserService().searchUsers(params.getSearchString(), true, params.getLimit()));
+    private SelectItem[] searchUsers(String contains, boolean excludeCurrentUser) {
+        List<Node> nodes = getOrganizationStructureService().setUsersUnit(getUserService().searchUsers(contains, true));
         int nodesSize = nodes.size();
         List<SelectItem> results = new ArrayList<SelectItem>(nodesSize);
 
@@ -164,12 +141,12 @@ public class UserListDialog extends BaseDialogBean {
 
         for (Node node : nodes) {
             String userName = (String) node.getProperties().get(ContentModel.PROP_USERNAME);
-            if (excludeCurrentUser && StringUtils.equals(userName, currentUser) || node.hasAspect(UserModel.Aspects.LEAVING)) {
+            if (excludeCurrentUser && StringUtils.equals(userName, currentUser)) {
                 continue;
             }
-            String label = UserUtil.getPersonFullNameWithUnitName(node.getProperties(), showSubstitutionInfo);
-            String value = userName;
-            results.add(new SelectItem(value, label));
+
+            String label = UserUtil.getPersonFullNameWithUnitName(node.getProperties());
+            results.add(new SelectItem(userName, label));
         }
 
         WebUtil.sort(results);
@@ -180,7 +157,7 @@ public class UserListDialog extends BaseDialogBean {
         this.properties = properties;
     }
 
-    public void setUsers(List<UserListRowVO> users) {
+    public void setUsers(List<Node> users) {
         this.users = users;
     }
 
@@ -195,7 +172,7 @@ public class UserListDialog extends BaseDialogBean {
     protected UserService getUserService() {
         if (userService == null) {
             userService = (UserService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
-                    .getBean(UserService.BEAN_NAME);
+            .getBean(UserService.BEAN_NAME);
         }
         return userService;
     }
@@ -207,7 +184,7 @@ public class UserListDialog extends BaseDialogBean {
     protected OrganizationStructureService getOrganizationStructureService() {
         if (organizationStructureService == null) {
             organizationStructureService = (OrganizationStructureService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
-                    .getBean(OrganizationStructureService.BEAN_NAME);
+            .getBean(OrganizationStructureService.BEAN_NAME);
         }
         return organizationStructureService;
     }

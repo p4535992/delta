@@ -28,7 +28,6 @@ import org.apache.log4j.Logger;
 
 import ee.webmedia.alfresco.common.listener.StatisticsPhaseListener;
 import ee.webmedia.alfresco.common.listener.StatisticsPhaseListenerLogColumn;
-import ee.webmedia.alfresco.log.LogHelper;
 
 /**
  * NOTE by Erko Hansar
@@ -132,13 +131,9 @@ public class RequestControlFilter implements Filter {
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
         HttpServletRequest httpRequest = (HttpServletRequest) request;
         HttpSession session = httpRequest.getSession();
-
-        LogHelper.gatherUserInfo(httpRequest);
-
         // if this request is excluded from the filter, then just process it
         if (!isFilteredRequest(httpRequest)) {
             chain.doFilter(request, response);
-            LogHelper.resetUserInfo();
             return;
         }
         StatisticsPhaseListener.clear();
@@ -157,15 +152,15 @@ public class RequestControlFilter implements Filter {
                 // Put this request in the queue and wait
                 enqueueRequest(httpRequest, syncObject);
                 log(logPrefix, "check 3");
-                startWaitTime = System.nanoTime();
+                startWaitTime = System.currentTimeMillis();
                 if (!waitForRelease(httpRequest, syncObject)) {
-                    stopWaitTime = System.nanoTime();
-                    StatisticsPhaseListener.add(StatisticsPhaseListenerLogColumn.REQUEST_CANCEL, Long.toString((stopWaitTime - startWaitTime) / 1000000L));
+                    stopWaitTime = System.currentTimeMillis();
+                    StatisticsPhaseListener.add(StatisticsPhaseListenerLogColumn.REQUEST_CANCEL, Long.toString(stopWaitTime - startWaitTime));
                     // this request was replaced in the queue by another request,
                     // so it need not be processed
                     return;
                 }
-                stopWaitTime = System.nanoTime();
+                stopWaitTime = System.currentTimeMillis();
             }
             log(logPrefix, "check 5");
             // lock the session, so that no other requests are processed until this one finishes
@@ -173,18 +168,16 @@ public class RequestControlFilter implements Filter {
         }
         // process this request, and then release the session lock regardless of
         // any exceptions thrown farther down the chain.
-        long startWorkTime = System.nanoTime();
+        long startWorkTime = System.currentTimeMillis();
         try {
             log(logPrefix, "check 6 - START WORK");
             chain.doFilter(request, response);
             log(logPrefix, "check 7 - STOP WORK");
         } finally {
-            long stopWorkTime = System.nanoTime();
+            long stopWorkTime = System.currentTimeMillis();
             log(logPrefix, "check 8");
             releaseQueuedRequest(httpRequest, syncObject);
-            LogHelper.resetUserInfo();
-            StatisticsPhaseListener.add(StatisticsPhaseListenerLogColumn.REQUEST_END,
-                    ((stopWorkTime - startWorkTime) / 1000000L) + "," + ((stopWaitTime - startWaitTime) / 1000000L));
+            StatisticsPhaseListener.add(StatisticsPhaseListenerLogColumn.REQUEST_END, (stopWorkTime - startWorkTime) + "," + (stopWaitTime - startWaitTime));
             StatisticsPhaseListener.log();
         }
     }

@@ -2,9 +2,7 @@ package ee.webmedia.alfresco.notification.model;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import ee.webmedia.alfresco.common.web.WmNode;
 
@@ -19,7 +17,6 @@ public class Notification implements Serializable {
     private String subject;
     private boolean attachFiles;
     private boolean failOnError;
-    private Map<String, String> additionalFormulas;
 
     public void clearRecipients() {
         setToEmails(null);
@@ -37,14 +34,7 @@ public class Notification implements Serializable {
         toEmails.add(email);
     }
 
-    public void addAdditionalFomula(String formulaKey, String formulaValue) {
-        getAdditionalFormulas().put(formulaKey, formulaValue);
-    }
-
     public List<String> getToEmails() {
-        if (toEmails == null) {
-            toEmails = new ArrayList<String>();
-        }
         return toEmails;
     }
 
@@ -53,9 +43,6 @@ public class Notification implements Serializable {
     }
 
     public List<String> getToNames() {
-        if (toNames == null) {
-            toNames = new ArrayList<String>();
-        }
         return toNames;
     }
 
@@ -101,17 +88,6 @@ public class Notification implements Serializable {
 
     public void setFailOnError(boolean failOnError) {
         this.failOnError = failOnError;
-    }
-
-    public Map<String, String> getAdditionalFormulas() {
-        if (additionalFormulas == null) {
-            additionalFormulas = new HashMap<String, String>();
-        }
-        return additionalFormulas;
-    }
-
-    public void setAdditionalFormulas(Map<String, String> additionalFormulas) {
-        this.additionalFormulas = additionalFormulas;
     }
 
     @Override

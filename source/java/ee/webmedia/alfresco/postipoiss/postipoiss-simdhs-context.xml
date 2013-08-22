@@ -1,10 +1,55 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-   xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
 
-   <bean id="postipoissImporter" class="ee.webmedia.alfresco.postipoiss.PostipoissImporter">
-      <property name="generalService" ref="GeneralService" />
-      <property name="functionsService" ref="FunctionsService" />
-   </bean>
+	<bean id="postipoissStructureImporter"
+		class="ee.webmedia.alfresco.postipoiss.PostipoissStructureImporter">
+		<property name="generalService" ref="generalService" />
+		<property name="addressbookService" ref="AddressbookService" />
+		<property name="functionsService" ref="FunctionsService" />
+		<property name="seriesService" ref="SeriesService" />
+		<property name="volumeService" ref="VolumeService" />
+		<property name="documentTypeService" ref="DocumentTypeService" />
+		<property name="registerService" ref="RegisterService" />
+		<property name="transactionService" ref="TransactionService" />
+		<property name="nodeService" ref="NodeService" />
+		<property name="caseService" ref="CaseService" />
+        <property name="behaviourFilter" ref="policyBehaviourFilter" />
+		<property name="enabled" value="${import.postipoiss.structure.enabled}" />
+		<property name="inputFolderPath"
+			value="${import.postipoiss.structure.inputFolderPath}" />
+		<property name="archivalStore" value="workspace://ArchivalsStore" />
+	</bean>
+
+	<bean id="postipoissDocumentsImporter"
+		class="ee.webmedia.alfresco.postipoiss.PostipoissDocumentsImporter">
+		<property name="enabled" value="${import.postipoiss.documents.enabled}" />
+		<property name="indexingEnabled" value="${import.postipoiss.documents.index_enabled}" />
+		<property name="inputFolderPath"
+			value="${import.postipoiss.documents.inputFolderPath}" />
+		<property name="inputFolderCsv"
+			value="${import.postipoiss.structure.inputFolderPath}" />
+		<property name="stopAfterDocumentId"
+			value="${import.postipoiss.documents.stopAfterDocumentId}" />
+		<property name="mappingsFileName"
+			value="${import.postipoiss.documents.mappingsFileName}" />
+		<property name="documentService" ref="DocumentService" />
+		<property name="transactionService" ref="TransactionService" />
+		<property name="generalService" ref="GeneralService" />
+		<property name="fileFolderService" ref="FileFolderService" />
+		<property name="nodeService" ref="NodeService" />
+        <property name="personService" ref="PersonService" />
+		<property name="sendOutService" ref="SendOutService" />
+		<property name="postipoissDocumentsMapper" ref="postipoissDocumentsMapper" />
+		<property name="behaviourFilter" ref="policyBehaviourFilter" />
+	</bean>
+
+	<bean id="postipoissDocumentsMapper"
+		class="ee.webmedia.alfresco.postipoiss.PostipoissDocumentsMapper">
+		<property name="namespaceService" ref="NamespaceService" />
+		<property name="dictionaryService" ref="DictionaryService" />
+		<property name="generalService" ref="GeneralService" />
+	</bean>
 
 </beans>

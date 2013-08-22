@@ -45,12 +45,5 @@
             });
          }     
       });
-      var intervalId = setInterval(function(){
-	     var areaToPutFocusOn = $jQ('iframe').contents().find('html');
-         areaToPutFocusOn.focus();
-         areaToPutFocusOn.focus(function(){
-      	   clearInterval(intervalId)
-      	});
-      },2);
    </script>
 </f:verbatim>

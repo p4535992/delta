@@ -5,6 +5,7 @@ import org.alfresco.service.cmr.repository.NodeRef;
 
 import ee.webmedia.alfresco.cases.model.CaseModel;
 import ee.webmedia.alfresco.document.model.Document;
+import ee.webmedia.alfresco.document.type.model.DocumentType;
 
 /**
  * Used to show case title in documents list
@@ -18,6 +19,11 @@ public class FakeDocument extends Document {
 
     public FakeDocument(NodeRef nodeRef) {
         super(nodeRef);
+    }
+
+    @Override
+    public DocumentType getDocumentType() {
+        return null;// not a real document - hence no real document type
     }
 
     @Override

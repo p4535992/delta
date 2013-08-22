@@ -1,13 +1,5 @@
 package ee.webmedia.alfresco.orgstructure.amr;
 
-import static ee.webmedia.alfresco.common.web.BeanHelper.getApplicationService;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getDictionaryService;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getLogService;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getRsAccessStatusBean;
-import static ee.webmedia.alfresco.utils.RepoUtil.getPropertiesIgnoringSystem;
-import static ee.webmedia.alfresco.utils.UserUtil.getPersonFullName1;
-import static ee.webmedia.alfresco.utils.UserUtil.getUserFullNameAndId;
-
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
@@ -17,7 +9,6 @@ import net.sf.acegisecurity.Authentication;
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.security.authentication.AuthenticationException;
 import org.alfresco.repo.security.authentication.SimpleAcceptOrRejectAllAuthenticationComponentImpl;
-import org.alfresco.repo.security.person.PersonServiceImpl;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.security.AuthorityService;
@@ -26,15 +17,11 @@ import org.alfresco.service.namespace.QName;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.ws.client.WebServiceIOException;
 import org.springframework.ws.client.WebServiceTransportException;
-import org.springframework.ws.client.core.WebServiceTemplate;
 import org.springframework.ws.soap.client.SoapFaultClientException;
 
-import smit.ametnik.services.AmetnikExt;
-import ee.webmedia.alfresco.log.PropDiffHelper;
-import ee.webmedia.alfresco.log.model.LogEntry;
-import ee.webmedia.alfresco.log.model.LogObject;
+import smit.ametnik.services.Ametnik;
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.orgstructure.amr.service.AMRService;
-import ee.webmedia.alfresco.orgstructure.amr.service.RSService;
 import ee.webmedia.alfresco.user.service.UserNotFoundException;
 
 /**
@@ -46,7 +33,6 @@ import ee.webmedia.alfresco.user.service.UserNotFoundException;
 public class AMRSimpleAuthenticationImpl extends SimpleAcceptOrRejectAllAuthenticationComponentImpl {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(AMRSimpleAuthenticationImpl.class);
     private AMRService amrService;
-    private RSService rsService;
     private NamespacePrefixResolver namespacePrefixResolver;
     private AuthorityService authorityService;
     private AMRUserRegistry userRegistry;
@@ -67,10 +53,10 @@ public class AMRSimpleAuthenticationImpl extends SimpleAcceptOrRejectAllAuthenti
             return;
         }
         try {
-            AmetnikExt user = amrService.getAmetnikByIsikukood(userName);
+            Ametnik user = amrService.getAmetnikByIsikukood(userName);
             if (user == null) {
                 String msg = "Didn't manage to get user with id '" + userName + "' from AMRService.";
-                if (getApplicationService().isTest()) {
+                if (BeanHelper.getApplicationService().isTest()) {
                     log.warn(msg + ". Ignoring, as project.test=true");
                     return;
                 }
@@ -81,32 +67,10 @@ public class AMRSimpleAuthenticationImpl extends SimpleAcceptOrRejectAllAuthenti
             if (!StringUtils.equals(userName, user.getIsikukood())) {
                 throw new AuthenticationException("Social security id is supposed to be equal to userName");
             }
-            boolean hasRsAccess = false;
-            if (rsService.isRestrictedDelta() || StringUtils.isNotBlank(((WebServiceTemplate) rsService).getDefaultUri())) {
-                hasRsAccess = rsService.hasRsLubaByIsikukood(userName);
-            }
-            if (rsService.isRestrictedDelta() && !hasRsAccess) {
-                throw new AuthenticationException("User " + userName + " has been granted no access to this instance of restricted Delta.");
-            }
-            getRsAccessStatusBean().setCanUserAccessRestrictedDelta(hasRsAccess);
-            PersonServiceImpl.validCreatePersonCall.set(Boolean.TRUE);
-            NodeRef person;
-            try {
-                person = getPersonService().getPerson(userName);
-            } finally {
-                PersonServiceImpl.validCreatePersonCall.set(null);
-            }
+            NodeRef person = getPersonService().getPerson(userName);
             Map<QName, Serializable> personProperties = getNodeService().getProperties(person);
-            Map<QName, Serializable> personOldProperties = getPropertiesIgnoringSystem(personProperties, getDictionaryService());
             userRegistry.fillPropertiesFromAmetnik(user, personProperties);
             getPersonService().setPersonProperties(userName, personProperties);
-
-            String diff = new PropDiffHelper().watchUser().diff(personOldProperties, getPropertiesIgnoringSystem(personProperties, getDictionaryService()));
-            if (diff != null) {
-                getLogService().addLogEntry(LogEntry.create(LogObject.USER, userName, getPersonFullName1(personOldProperties), "applog_user_edit",
-                        getUserFullNameAndId(personProperties), diff));
-            }
-
             addToAuthorityZone(person, userName, "AUTH.EXT.amr1");
         } catch (WebServiceTransportException e) {
             if (StringUtils.equals(e.getMessage(), "Not Found [404]")) {
@@ -120,7 +84,7 @@ public class AMRSimpleAuthenticationImpl extends SimpleAcceptOrRejectAllAuthenti
             log.warn("AMRService is not available", e);
         } catch (SoapFaultClientException e) {
             String msg = "Didn't get response from AMR to get user with id '" + userName + "'";
-            if (getApplicationService().isTest()) {
+            if (BeanHelper.getApplicationService().isTest()) {
                 log.warn(msg + ". Ignoring, as project.test=true"); // Web service is down - Just log in and ignore failure
             } else {
                 log.error(msg, e);
@@ -156,10 +120,6 @@ public class AMRSimpleAuthenticationImpl extends SimpleAcceptOrRejectAllAuthenti
 
     public void setUserRegistry(AMRUserRegistry userRegistry) {
         this.userRegistry = userRegistry;
-    }
-
-    public void setRsService(RSService rsService) {
-        this.rsService = rsService;
     }
     // END: getters / setters
 

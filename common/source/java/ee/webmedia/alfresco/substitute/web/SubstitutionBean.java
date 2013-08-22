@@ -1,10 +1,5 @@
 package ee.webmedia.alfresco.substitute.web;
 
-import static ee.webmedia.alfresco.common.web.BeanHelper.getApplicationService;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getMenuBean;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getSubstituteService;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
-
 import java.io.IOException;
 import java.io.Serializable;
 import java.text.DateFormat;
@@ -21,14 +16,18 @@ import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.app.Application;
 import org.alfresco.web.app.servlet.BaseServlet;
+import org.alfresco.web.app.servlet.FacesHelper;
 import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.common.propertysheet.generator.GeneralSelectorGenerator;
+import ee.webmedia.alfresco.common.service.ApplicationService;
+import ee.webmedia.alfresco.menu.service.MenuService;
 import ee.webmedia.alfresco.menu.ui.MenuBean;
 import ee.webmedia.alfresco.substitute.model.Substitute;
 import ee.webmedia.alfresco.substitute.model.SubstitutionInfo;
+import ee.webmedia.alfresco.substitute.service.SubstituteService;
+import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.MessageUtil;
-import ee.webmedia.alfresco.utils.WebUtil;
 
 /**
  * Bean for handling substitution selection.
@@ -39,6 +38,10 @@ public class SubstitutionBean implements Serializable {
     private static final long serialVersionUID = 1L;
 
     public static final String BEAN_NAME = "SubstitutionBean";
+    private transient SubstituteService substituteService;
+    private transient ApplicationService applicationService;
+    private transient UserService userService;
+    private transient MenuService menuService;
     private SubstitutionInfo substitutionInfo = new SubstitutionInfo();
     private boolean forceSubstituteTaskReload = false;
 
@@ -53,6 +56,7 @@ public class SubstitutionBean implements Serializable {
             NodeRef userNodeRef = new NodeRef(selectedSubstitution);
             substitutionInfo = new SubstitutionInfo(getSubstituteService().getSubstitute(userNodeRef));
         }
+        setSubstitutionInfo(substitutionInfo);
         setForceSubstituteTaskReload(true);
     }
 
@@ -66,9 +70,10 @@ public class SubstitutionBean implements Serializable {
         FacesContext fc = FacesContext.getCurrentInstance();
 
         MenuBean.clearViewStack(String.valueOf(MenuBean.MY_TASKS_AND_DOCUMENTS_ID), null);
-        getMenuBean().reset();
+        MenuBean menuBean = (MenuBean) FacesHelper.getManagedBean(fc, MenuBean.BEAN_NAME);
+        menuBean.reset();
 
-        WebUtil.navigateTo("myalfresco", fc);
+        fc.getApplication().getNavigationHandler().handleNavigation(fc, null, "myalfresco");
         fc.responseComplete();
         try {
             // todo: find better solution
@@ -96,22 +101,36 @@ public class SubstitutionBean implements Serializable {
         List<Substitute> substitutions = getSubstituteService().findActiveSubstitutionDuties(AuthenticationUtil.getRunAsUser());
         DateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
         StringBuilder builder = new StringBuilder();
-        for (int i = 0; i < substitutions.size(); i++) {
-            Substitute subs = substitutions.get(i);
-            if (i == 0) {
-                builder.append("<div class=\"message message-red\">");
-            }
+        for (Substitute subs : substitutions) {
+            builder.append("<div class=\"message message-red\">");
             builder.append(MessageUtil.getMessage(FacesContext.getCurrentInstance(), "substitution_message",
                     getUserService().getUserFullName(subs.getReplacedPersonUserName()),
                     dateFormat.format(subs.getSubstitutionStartDate()),
                     dateFormat.format(subs.getSubstitutionEndDate())));
-            if (i != substitutions.size() - 1) {
-                builder.append("<br/>");
-            } else {
-                builder.append("</div>");
-            }
+            builder.append("</div>");
         }
         return builder.toString();
+    }
+
+    protected SubstituteService getSubstituteService() {
+        if (substituteService == null) {
+            substituteService = (SubstituteService) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), SubstituteService.BEAN_NAME);
+        }
+        return substituteService;
+    }
+
+    protected UserService getUserService() {
+        if (userService == null) {
+            userService = (UserService) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), UserService.BEAN_NAME);
+        }
+        return userService;
+    }
+
+    protected MenuService getMenuService() {
+        if (menuService == null) {
+            menuService = (MenuService) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), MenuService.BEAN_NAME);
+        }
+        return menuService;
     }
 
     public String getOnChangeStyleClass() {
@@ -128,8 +147,19 @@ public class SubstitutionBean implements Serializable {
         return forceSubstituteTaskReload;
     }
 
+    private void setSubstitutionInfo(SubstitutionInfo substitutionInfo) {
+        this.substitutionInfo = substitutionInfo;
+    }
+
     public SubstitutionInfo getSubstitutionInfo() {
         return substitutionInfo;
+    }
+
+    public ApplicationService getApplicationService() {
+        if (applicationService == null) {
+            applicationService = (ApplicationService) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), ApplicationService.BEAN_NAME);
+        }
+        return applicationService;
     }
 
 }

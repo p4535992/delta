@@ -16,7 +16,6 @@ public interface ImapModel {
         String INCOMING_SPACE = IMAP_SPACE + "/" + IMAP_EXT_MODEL_PREFIX + ":" + "incoming";
         String ATTACHMENT_SPACE = IMAP_SPACE + "/" + IMAP_EXT_MODEL_PREFIX + ":" + "attachments";
         String SENT_SPACE = IMAP_SPACE + "/" + IMAP_EXT_MODEL_PREFIX + ":" + "sent";
-        String SEND_FAILURE_NOTICE_SPACE = IMAP_SPACE + "/" + IMAP_EXT_MODEL_PREFIX + ":" + "sendFailureNotices";
     }
 
     interface Types {

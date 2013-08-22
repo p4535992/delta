@@ -31,7 +31,6 @@ import java.util.List;
 
 import javax.faces.context.FacesContext;
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
 import javax.servlet.jsp.JspException;
 import javax.servlet.jsp.tagext.TagSupport;
 
@@ -41,10 +40,8 @@ import org.alfresco.web.bean.coci.CCProperties;
 import org.alfresco.web.ui.common.Utils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.springframework.beans.factory.BeanCreationException;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
-import ee.webmedia.alfresco.common.web.DisableFocusingBean;
 
 /**
  * A non-JSF tag library that adds the HTML begin and end tags if running in servlet mode
@@ -52,7 +49,7 @@ import ee.webmedia.alfresco.common.web.DisableFocusingBean;
  * @author gavinc
  */
 public class PageTag extends TagSupport
-{ 
+{
    private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(PageTag.class);
    private static final long serialVersionUID = 8142765393181557228L;
    
@@ -73,32 +70,23 @@ public class PageTag extends TagSupport
        urlSuffix = System.currentTimeMillis();
    }
 
-   public static long getUrlsuffix() {
-       if (BeanHelper.getApplicationService().isTest()) {
-           return System.currentTimeMillis();
-       }
-       return urlSuffix;
-   }
-
     private static List<String> getScripts() {
         List<String> scriptsList = Arrays.asList(
                         // jQuery
                 "/scripts/jquery/jquery" + (log.isDebugEnabled() ? "" : "-min") + ".js",
                 "/scripts/jquery/jquery.scrollTo" + (log.isDebugEnabled() ? "" : "-min") + ".js",
                                 // jQuery UI
-                "/scripts/jquery/jquery.ui.core.min.js",
-                "/scripts/jquery/jquery.ui.datepicker.min.js",
-                "/scripts/jquery/jquery.ui.datepicker-et.min.js",
+                "/scripts/jquery/jquery.ui.core.js",
+                "/scripts/jquery/ui.datepicker.js",
                                 // jQuery Plugins
                 "/scripts/jquery/jquery.textarea-expander.js",
                 "/scripts/jquery/jquery.tooltip.js",
                 "/scripts/jquery/jquery.hoverIntent.js",
                 "/scripts/jquery/jquery.textmetrix.js",
                 "/scripts/jquery/jquery.autocomplete.js",
-                "/scripts/jquery/jquery.ui.widget.min.js",
-                "/scripts/jquery/jquery.ui.position.min.js",
-                "/scripts/jquery/jquery.ui.menu.js",
-                "/scripts/jquery/jquery.ui.autocomplete.js",
+                "/scripts/jquery/jquery.ui.widget.js",
+                "/scripts/jquery/jquery.ui.position.js",                
+                "/scripts/jquery/jquery.ui.autocomplete.js",                
                 "/scripts/jquery/jquery.jLog-min.js",
                 "/scripts/jquery/jquery.condense.js",
                 "/scripts/jquery/jquery.ajaxqueue.js",
@@ -143,11 +131,7 @@ public class PageTag extends TagSupport
       "/css/main.css",
       "/css/picker.css",
       "/scripts/jquery/jquery.autocomplete.css",
-      "/scripts/jquery/jquery.ui.core.min.css",
-      "/scripts/jquery/jquery.ui.datepicker.min.css",
-      "/scripts/jquery/jquery.ui.menu.min.css",
-      "/scripts/jquery/jquery.ui.autocomplete.min.css",
-      "/scripts/jquery/jquery.ui.theme.min.css",
+      "/scripts/jquery/jquery.ui.autocomplete.css",
       "/css/styles.css"
    };
 
@@ -254,16 +238,10 @@ public class PageTag extends TagSupport
       if (logger.isDebugEnabled())
          startTime = System.currentTimeMillis();
       
-      HttpServletRequest httpServletRequest = (HttpServletRequest)pageContext.getRequest();
-      doStartTag(httpServletRequest, pageContext.getOut(), pageContext.getSession());
-      
-      return EVAL_BODY_INCLUDE;
-   }
-
-   public void doStartTag(HttpServletRequest httpServletRequest, Writer out, HttpSession session) throws JspException {
       try
       {
-         String reqPath = httpServletRequest.getContextPath();
+         String reqPath = ((HttpServletRequest)pageContext.getRequest()).getContextPath();
+         Writer out = pageContext.getOut();
          
          if (!Application.inPortalServer())
          {
@@ -287,7 +265,7 @@ public class PageTag extends TagSupport
             out.write("<html><head><title>");
             if (this.titleId != null && this.titleId.length() != 0)
             {
-            out.write(Utils.encode(Application.getMessage(session, this.titleId)));
+               out.write(Utils.encode(Application.getMessage(pageContext.getSession(), this.titleId)));
             }
             else if (this.title != null && this.title.length() != 0)
             {
@@ -312,7 +290,7 @@ public class PageTag extends TagSupport
             out.write(STYLES_START);
             out.write(reqPath);
             out.write(css);
-            out.write("?r=" + getUrlsuffix());
+            out.write("?r=" + urlSuffix);
             out.write(STYLES_MAIN);
          }
          
@@ -323,7 +301,7 @@ public class PageTag extends TagSupport
             out.write(STYLES_START);
             out.write(reqPath);
             out.write(ie7cond_css);
-            out.write("?r=" + getUrlsuffix());
+            out.write("?r=" + urlSuffix);
             out.write(STYLES_MAIN);
          }
          out.write(IE7COND_END);
@@ -335,28 +313,18 @@ public class PageTag extends TagSupport
             out.write(STYLES_START);
             out.write(reqPath);
             out.write(ie6cond_css);
-            out.write("?r=" + getUrlsuffix());
+            out.write("?r=" + urlSuffix);
             out.write(STYLES_MAIN);
          }
          out.write(IE6COND_END);
 
-         // ensure that setInputFocus is defined before any function defined in $jQ(document).ready(function (){...}) is called
-         out.write("<script type=\"text/javascript\">");
-         DisableFocusingBean disableFocusingBean = null;
-         try {
-             disableFocusingBean = BeanHelper.getDisableFocusingBean();
-         } catch (BeanCreationException e) {
-             // ignore
-         }
-         out.write("var setInputFocus = " + ((disableFocusingBean != null ? disableFocusingBean.isDisableInputFocus() : true) ? "false" : "true") + ";");
-         out.write("</script>");
          // JavaScript includes
          for (final String s : PageTag.SCRIPTS)
          {
             out.write(SCRIPTS_START);
             out.write(reqPath);
             out.write(s);
-            out.write("?r=" + getUrlsuffix());
+            out.write("?r=" + urlSuffix);
             out.write(SCRIPTS_END);
          }
          
@@ -390,6 +358,8 @@ public class PageTag extends TagSupport
       {
          throw new JspException(ioe.toString());
       }
+      
+      return EVAL_BODY_INCLUDE;
    }
 
 /**
@@ -397,30 +367,25 @@ public class PageTag extends TagSupport
     */
    public int doEndTag() throws JspException
    {
-      return doEndTag(!Application.inPortalServer() ? pageContext.getOut() : null);
-   }
-
-   public int doEndTag(Writer out) throws JspException
-   {
-       try
-       {
-           if (!Application.inPortalServer())
-           {
-               out.write("\n</div></body></html>");
-           }
-       }
-       catch (IOException ioe)
-       {
-           throw new JspException(ioe.toString());
-       }
-       
-       final int result = super.doEndTag();
-       if (logger.isDebugEnabled())
-       {
-           long endTime = System.currentTimeMillis();
-           logger.debug("Time to generate JSF page: " + (endTime - startTime) + "ms");
-       }
-       return result;
+      try
+      {
+         if (!Application.inPortalServer())
+         {
+            pageContext.getOut().write("\n</div></body></html>");
+         }
+      }
+      catch (IOException ioe)
+      {
+         throw new JspException(ioe.toString());
+      }
+      
+      final int result = super.doEndTag();
+      if (logger.isDebugEnabled())
+      {
+         long endTime = System.currentTimeMillis();
+         logger.debug("Time to generate JSF page: " + (endTime - startTime) + "ms");
+      }
+      return result;
    }
    
    /**

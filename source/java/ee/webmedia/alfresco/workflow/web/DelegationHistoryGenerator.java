@@ -21,7 +21,6 @@ import org.alfresco.web.ui.common.component.data.UIColumn;
 import org.alfresco.web.ui.common.component.data.UIRichList;
 import org.alfresco.web.ui.common.component.data.UISortLink;
 import org.alfresco.web.ui.common.converter.XMLDateConverter;
-import org.alfresco.web.ui.common.tag.data.ColumnTag;
 import org.alfresco.web.ui.repo.component.property.PropertySheetItem;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.apache.commons.collections.comparators.ComparatorChain;
@@ -33,9 +32,9 @@ import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.common.web.WmNode;
-import ee.webmedia.alfresco.utils.ComparableTransformer;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
+import ee.webmedia.alfresco.utils.Transformer;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 import ee.webmedia.alfresco.workflow.service.Task;
@@ -47,9 +46,10 @@ import ee.webmedia.alfresco.workflow.service.WorkflowService;
  * @author Ats Uiboupin
  */
 public class DelegationHistoryGenerator extends BaseComponentGenerator {
-    private static final QName TMP_MAIN_OWNER = RepoUtil.createTransientProp("mainOwner");
-    private static final QName TMP_CO_OWNER = RepoUtil.createTransientProp("coOwner");
-    private static final QName TMP_STYLE_CLASS = RepoUtil.createTransientProp("styleClass");
+    private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(DelegationHistoryGenerator.class);
+    private static final QName TMP_MAIN_OWNER = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "mainOwner");
+    private static final QName TMP_CO_OWNER = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "coOwner");
+    private static final QName TMP_STYLE_CLASS = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "styleClass");
     public static final Comparator<Task> COMPARATOR;
     static {
         COMPARATOR = getTaskComparator();
@@ -57,21 +57,21 @@ public class DelegationHistoryGenerator extends BaseComponentGenerator {
 
     private static Comparator<Task> getTaskComparator() {
         ComparatorChain chain = new ComparatorChain();
-        chain.addComparator(new TransformingComparator(new ComparableTransformer<Task>() {
+        chain.addComparator(new TransformingComparator(new Transformer<Task>() {
             @Override
-            public Comparable<?> tr(Task input) {
+            public Object tr(Task input) {
                 return input.getStartedDateTime();
             }
         }, new NullComparator()));
-        chain.addComparator(new TransformingComparator(new ComparableTransformer<Task>() {
+        chain.addComparator(new TransformingComparator(new Transformer<Task>() {
             @Override
-            public Comparable<?> tr(Task input) {
+            public Object tr(Task input) {
                 return input.getDueDate();
             }
         }, new NullComparator()));
-        chain.addComparator(new TransformingComparator(new ComparableTransformer<Task>() {
+        chain.addComparator(new TransformingComparator(new Transformer<Task>() {
             @Override
-            public Comparable<?> tr(Task input) {
+            public Object tr(Task input) {
                 return input.getOwnerName();
             }
         }, new NullComparator(AppConstants.DEFAULT_COLLATOR)));
@@ -103,14 +103,9 @@ public class DelegationHistoryGenerator extends BaseComponentGenerator {
                 , createColumn(TMP_MAIN_OWNER, context)
                 , createColumn(TMP_CO_OWNER, context)
                 , createColumn(WorkflowSpecificModel.Props.RESOLUTION, context)
-                , createColumn(WorkflowSpecificModel.Props.DUE_DATE, context, MessageUtil.getMessage("date_time_pattern")) //
+                , createColumn(WorkflowSpecificModel.Props.DUE_DATE, context, MessageUtil.getMessage("date_pattern")) //
         );
         return richList;
-    }
-
-    public int getPageSize() {
-        // no paging, show all values
-        return -1;
     }
 
     private UIColumn createColumn(QName property, FacesContext context) {
@@ -119,7 +114,7 @@ public class DelegationHistoryGenerator extends BaseComponentGenerator {
 
     private UIColumn createColumn(QName property, FacesContext context, String dateFormat) {
         Application application = context.getApplication();
-        UIColumn column = (UIColumn) application.createComponent(ColumnTag.COMPONENT_TYPE);
+        UIColumn column = (UIColumn) application.createComponent("org.alfresco.faces.RichListColumn");
 
         UISortLink sortLink = (UISortLink) application.createComponent("org.alfresco.faces.SortLink");
         sortLink.setLabel(MessageUtil.getMessage("delegHist" + StringUtils.capitalize(property.getLocalName())));
@@ -156,7 +151,7 @@ public class DelegationHistoryGenerator extends BaseComponentGenerator {
             }
             Map<String, Object> props = taskNode.getProperties();
             props.put(mainOrCoOwner.toString(), task.getOwnerName());
-            if (delegatableTask.getNodeRef().equals(task.getNodeRef())) {
+            if (delegatableTask.getNodeRef().equals(task.getNode().getNodeRef())) {
                 props.put(TMP_STYLE_CLASS.toString(), "bold");
             }
             delegationHistories.add(taskNode);

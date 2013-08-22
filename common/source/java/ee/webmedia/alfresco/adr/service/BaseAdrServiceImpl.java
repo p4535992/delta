@@ -92,17 +92,17 @@ public abstract class BaseAdrServiceImpl implements AdrService {
         }
     }
 
-    protected NodeRef addDeletedDocument(NodeRef nodeRef, String regNumber, Date regDateTime) {
+    protected void addDeletedDocument(NodeRef nodeRef, String regNumber, Date regDateTime) {
         if (nodeRef == null || StringUtils.isEmpty(regNumber) || regDateTime == null) {
-            return null;
+            return;
         }
         NodeRef root = generalService.getNodeRef(AdrModel.Repo.ADR_DELETED_DOCUMENTS);
         Map<QName, Serializable> props = new HashMap<QName, Serializable>();
-        props.put(AdrModel.Props.NODEREF, nodeRef.toString());
+        props.put(AdrModel.Props.NODEREF, nodeRef);
         props.put(AdrModel.Props.REG_NUMBER, regNumber);
         props.put(AdrModel.Props.REG_DATE_TIME, regDateTime);
         props.put(AdrModel.Props.DELETED_DATE_TIME, new Date());
-        return nodeService.createNode(root, AdrModel.Types.ADR_DELETED_DOCUMENT, AdrModel.Types.ADR_DELETED_DOCUMENT, AdrModel.Types.ADR_DELETED_DOCUMENT, props).getChildRef();
+        nodeService.createNode(root, AdrModel.Types.ADR_DELETED_DOCUMENT, AdrModel.Types.ADR_DELETED_DOCUMENT, AdrModel.Types.ADR_DELETED_DOCUMENT, props);
     }
 
     @Override

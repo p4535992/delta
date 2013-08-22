@@ -59,8 +59,6 @@ import org.springframework.jdbc.UncategorizedSQLException;
 
 import com.ibatis.common.jdbc.exception.NestedSQLException;
 
-import ee.webmedia.alfresco.common.listener.StatisticsPhaseListener;
-import ee.webmedia.alfresco.common.listener.StatisticsPhaseListenerLogColumn;
 import ee.webmedia.alfresco.common.transaction.TransactionHelperWrapperException;
 
 /**
@@ -287,7 +285,6 @@ public class RetryingTransactionHelper
         RuntimeException lastException = null;
         for (int count = 0; count == 0 || count < maxRetries; count++)
         {
-            long iterationStartTime = System.nanoTime();
             UserTransaction txn = null;
             try
             {
@@ -340,23 +337,13 @@ public class RetryingTransactionHelper
                     {
                         // Something caused the transaction to be marked for rollback
                         // There is no recovery or retrying with this
-                        long startTime = System.nanoTime();
-                        try {
-                            txn.rollback();
-                        } finally {
-                            StatisticsPhaseListener.addTimingNano(readOnly ? StatisticsPhaseListenerLogColumn.TX_ROLLBACK_RO : StatisticsPhaseListenerLogColumn.TX_ROLLBACK_RW, startTime);
-                        }
+                        txn.rollback();
                     }
                     else
                     {
                         // The transaction hasn't been flagged for failure so the commit
                         // sould still be good.
-                        long startTime = System.nanoTime();
-                        try {
-                            txn.commit();
-                        } finally {
-                            StatisticsPhaseListener.addTimingNano(readOnly ? StatisticsPhaseListenerLogColumn.TX_COMMIT_RO : StatisticsPhaseListenerLogColumn.TX_COMMIT_RW, startTime);
-                        }
+                        txn.commit();
                     }
                 }
                 if (logger.isDebugEnabled())
@@ -377,7 +364,7 @@ public class RetryingTransactionHelper
                 // Somebody else 'owns' the transaction, so just rethrow.
                 if (txn == null)
                 {
-                    if (throwOriginalException) {
+                    if (throwOriginalException){
                         throw new TransactionHelperWrapperException(e);
                     }
                     RuntimeException ee = AlfrescoRuntimeException.makeRuntimeException(
@@ -406,12 +393,7 @@ public class RetryingTransactionHelper
                         // then the status will be NO_TRANSACTION.
                         if (txnStatus != Status.STATUS_NO_TRANSACTION && txnStatus != Status.STATUS_ROLLEDBACK)
                         {
-                            long startTime = System.nanoTime();
-                            try {
-                                txn.rollback();
-                            } finally {
-                                StatisticsPhaseListener.addTimingNano(readOnly ? StatisticsPhaseListenerLogColumn.TX_ROLLBACK_RO : StatisticsPhaseListenerLogColumn.TX_ROLLBACK_RW, startTime);
-                            }
+                            txn.rollback();
                         }
                     }
                     catch (Throwable e1)
@@ -422,39 +404,13 @@ public class RetryingTransactionHelper
                 }
                 if (e instanceof RollbackException)
                 {
-                    if (e.getCause() instanceof RuntimeException)
-                    {
-                        lastException = (RuntimeException) e.getCause();
-                    }
-                    else
-                    {
-                        if (throwOriginalException)
-                        {
-                            lastException = new TransactionHelperWrapperException(e.getCause());
-                        }
-                        else
-                        {
-                            lastException = new AlfrescoRuntimeException("Exception in Transaction.", e.getCause());
-                        }
-                    }
+                    lastException = (e.getCause() instanceof RuntimeException) ?
+                         (RuntimeException)e.getCause() : new AlfrescoRuntimeException("Exception in Transaction.", e.getCause());
                 }
                 else
                 {
-                    if (e instanceof RuntimeException)
-                    {
-                        lastException = (RuntimeException) e;
-                    }
-                    else
-                    {
-                        if (throwOriginalException)
-                        {
-                            lastException = new TransactionHelperWrapperException(e);
-                        }
-                        else
-                        {
-                            lastException = new AlfrescoRuntimeException("Exception in Transaction.", e);
-                        }
-                    }
+                    lastException = (e instanceof RuntimeException) ?
+                         (RuntimeException)e : new AlfrescoRuntimeException("Exception in Transaction.", e);
                 }
                 // Check if there is a cause for retrying
                 Throwable retryCause = extractRetryCause(e);
@@ -473,7 +429,7 @@ public class RetryingTransactionHelper
                                 count, (double)sleepInterval/1000D,
                                 retryCause.getMessage(),
                                 retryCause.getClass().getName());
-                        logger.info(msg, e);
+                        logger.info(msg);
                     }
                     try
                     {
@@ -483,7 +439,6 @@ public class RetryingTransactionHelper
                     {
                         // Do nothing.
                     }
-                    StatisticsPhaseListener.addTimingNano(StatisticsPhaseListenerLogColumn.TX_RETRY, iterationStartTime);
                     // Try again
                     continue;
                 }

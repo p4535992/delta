@@ -83,7 +83,6 @@
             <xs:complexContent>
                <xs:extension base="tns:fail">
                   <xs:sequence>
-                     <xs:element name="id" type="xs:string" />
                      <xs:element name="pealkiri" type="xs:string" />
                      <xs:element name="muutmiseAeg" type="xs:dateTime" />
                   </xs:sequence>
@@ -155,8 +154,6 @@
                      <xs:element name="osapool" type="xs:string" minOccurs="0" />
                      <xs:element name="fail" type="tns:failV2" nillable="true" minOccurs="0" maxOccurs="unbounded" />
                      <xs:element name="seotudDokument" type="tns:seotudDokument" nillable="true" minOccurs="0" maxOccurs="unbounded" />
-                     <xs:element name="ainultTeabenoudeKorras" type="xs:boolean" minOccurs="0" />
-                     <xs:element name="juurdepaasuPiiranguMuutmisePohjus" type="xs:string" minOccurs="0" />
                   </xs:sequence>
                </xs:extension>
             </xs:complexContent>

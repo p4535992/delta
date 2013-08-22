@@ -8,8 +8,6 @@
       <import uri="http://www.alfresco.org/model/content/1.0" prefix="cm" />
       <import uri="http://alfresco.webmedia.ee/model/workflow/common/1.0" prefix="wfc" />
       <import uri="http://alfresco.webmedia.ee/model/privilege/1.0" prefix="priv" />
-      <import uri="http://alfresco.webmedia.ee/model/document/admin/1.0" prefix="docadmin" />
-      <import uri="http://alfresco.webmedia.ee/model/document/dynamic/1.0" prefix="docdyn" />
    </imports>
 
    <namespaces>
@@ -21,18 +19,6 @@
 
       <type name="doccom:document">
          <parent>cm:folder</parent>
-         <archive>true</archive>
-         <!-- TODO FIXME Temporary properties for CL 188299 -->
-         <properties>
-            <property name="docdyn:regDateTime">
-               <type>d:datetime</type>
-            </property>
-            <property name="docdyn:accessRestrictionBeginDate">
-               <type>d:date</type>
-            </property><property name="docdyn:accessRestrictionEndDate">
-               <type>d:date</type>
-            </property>
-         </properties>
          <associations>
             <association name="doccom:reply">
                <source>
@@ -78,9 +64,6 @@
                   <many>true</many>
                </target>
             </child-association>
-          
-         <!-- Deprecated - document log is not saved under document node any more, but only in application log.
-          Don't create new associations of this type. Can be deleted when all existing associations have been migrated to application log (Riina). -->
             <child-association name="doccom:documentLog">
                <source>
                   <mandatory>true</mandatory>
@@ -92,21 +75,9 @@
                   <many>true</many>
                </target>
             </child-association>
-            <!-- FIXME: remove the following child-association after all existing static documents are migrated to dynamic documents -->
-            <child-association name="doccom:metadataContainer">
-               <source>
-                  <mandatory>true</mandatory>
-                  <many>false</many>
-               </source>
-               <target>
-                  <class>doccom:metadataContainer</class>
-                  <mandatory>false</mandatory>
-                  <many>true</many>
-               </target>
-            </child-association>
          </associations>
          <mandatory-aspects>
-            <aspect>docadmin:object</aspect>
+            <aspect>doccom:common</aspect>
             <aspect>wfc:compoundWorkflowContainer</aspect>
             <aspect>priv:userGroupMapping</aspect>
          </mandatory-aspects>
@@ -119,18 +90,8 @@
          </mandatory-aspects>
       </type>
 
-      <!-- Currently child-nodes are not directly doccom:metadataContainer type, but one of its subtypes;
-           this is because different child nodes are referenced by assocTypeQName
-      -->
-      <!-- XXX Actually, it would be a more general solution to reference differenct subnodes by assocQName
-           * then we could use the same fieldgroup multiple times on one documentType 
-           * we could get rid of different child-node types, child-assoc types and container aspects
-      -->
       <type name="doccom:metadataContainer">
          <parent>sys:base</parent>
-         <mandatory-aspects>
-            <aspect>docadmin:object</aspect>
-         </mandatory-aspects>
       </type>
 
        <type name="doccom:scannedDocs">
@@ -167,8 +128,6 @@
          </properties>
       </type>
       
-      <!-- Deprecated - document log is not saved under document node any more, but only in application log.
-           Don't create new nodes of this type. Can be deleted when all existing associations have been migrated to application log (Riina). -->
       <type name="doccom:documentLog">
          <parent>sys:base</parent>
          <mandatory-aspects>
@@ -176,11 +135,6 @@
          </mandatory-aspects>
       </type>
       
-      <type name="doccom:favoriteDirectory">
-         <mandatory-aspects>
-            <aspect>doccom:favoriteContainer</aspect>
-         </mandatory-aspects>
-      </type>
    </types>
 
    <aspects>
@@ -203,43 +157,18 @@
 
       <aspect name="doccom:favoriteContainer">
          <associations>
-            <association name="doccom:favorite">
+            <child-association name="doccom:favorite">
                <source>
                   <mandatory>false</mandatory>
-                  <many>true</many>
+                  <many>false</many>
                </source>
                <target>
                   <class>doccom:document</class>
                   <mandatory>false</mandatory>
                   <many>true</many>
                </target>
-            </association>
-         </associations>
-      </aspect>
-      
-      <aspect name="doccom:favoriteDirectoryAspect">
-         <associations>
-            <child-association name="doccom:favoriteDirectory">
-               <source>
-                  <mandatory>false</mandatory>
-                  <many>true</many>
-               </source>
-               <target>
-                  <class>doccom:favoriteDirectory</class>
-                  <mandatory>false</mandatory>
-                  <many>true</many>
-               </target>
             </child-association>
          </associations>
-      </aspect>
-
-      <aspect name="doccom:documentRegNumbersContainer">
-         <properties>
-            <property name="doccom:documentRegNumbers">
-               <type>d:text</type>
-               <multiple>true</multiple>
-            </property>
-         </properties>
       </aspect>
 
       <aspect name="doccom:documentContainer">
@@ -262,6 +191,18 @@
       <aspect name="doccom:searchable">
          <properties>
             <!-- Document's function and series noderefs are duplicated here, because we need to use them during lucene search -->
+            <property name="doccom:function">
+               <type>d:noderef</type>
+            </property>
+            <property name="doccom:series">
+               <type>d:noderef</type>
+            </property>
+            <property name="doccom:volume">
+               <type>d:noderef</type>
+            </property>
+            <property name="doccom:case">
+               <type>d:noderef</type>
+            </property>
             <property name="doccom:fileNames">
                <type>d:text</type>
                <multiple>true</multiple>
@@ -283,7 +224,6 @@
                <type>d:text</type>
                <multiple>true</multiple>
             </property>
-<!--
             <property name="doccom:searchableCostManager">
                <type>d:text</type>
                <multiple>true</multiple>
@@ -319,11 +259,7 @@
             <property name="doccom:searchableSubNodeProperties">
                <type>d:text</type>
             </property>
--->
             <property name="doccom:searchableHasStartedCompoundWorkflows">
-               <type>d:boolean</type>
-            </property>
-            <property name="doccom:searchableHasAllFinishedCompoundWorkflows">
                <type>d:boolean</type>
             </property>
             <property name="doccom:searchableFund">
@@ -341,56 +277,8 @@
          </properties>
       </aspect>
 
-      <aspect name="doccom:forumParticipants">
-         <properties>
-            <property name="doccom:forumParticipants">
-               <type>d:text</type>
-               <multiple>true</multiple>
-            </property>
-         </properties>
-      </aspect>      
-
-      <!-- Needed for series -->
-      <aspect name="doccom:accessRights">
-         <properties>
-            <property name="doccom:accessRestriction"><!-- Juurdepääsupiirang -->
-               <type>d:text</type>
-               <mandatory>true</mandatory>
-               <!-- Valik klassifikaatori väärtuste hulgast -->
-            </property>
-            <property name="doccom:accessRestrictionReason"><!-- Juurdepääsupiirangu alus -->
-               <type>d:text</type>
-               <!-- Valik klassifikaatori väärtuste hulgast -->
-            </property>
-            <property name="doccom:accessRestrictionBeginDate"><!-- Kehtiv alates -->
-               <type>d:date</type>
-            </property>
-            <property name="doccom:accessRestrictionEndDate"><!-- Kehtiv kuni -->
-               <type>d:date</type>
-            </property>
-            <property name="doccom:accessRestrictionEndDesc"><!-- Kehtiv kuni kirjeldus -->
-               <type>d:text</type>
-            </property>
-         </properties>
-      </aspect>
-
-   <!-- ============================================================================================================= -->
-   <!-- FIXME: remove the following definitions after all existing static documents are migrated to dynamic documents -->
-
       <aspect name="doccom:common">
          <properties>
-            <property name="doccom:function">
-               <type>d:noderef</type>
-            </property>
-            <property name="doccom:series">
-               <type>d:noderef</type>
-            </property>
-            <property name="doccom:volume">
-               <type>d:noderef</type>
-            </property>
-            <property name="doccom:case">
-               <type>d:noderef</type>
-            </property>
             <property name="doccom:docName"><!-- Pealkiri -->
                <type>d:text</type>
                <mandatory enforced="false">true</mandatory>
@@ -399,9 +287,6 @@
                <type>d:text</type>
             </property>
             <property name="doccom:shortRegNumber"><!-- Registreerimisnumber -->
-               <type>d:text</type>
-            </property>
-            <property name="doccom:individualNumber"><!-- Registreerimisnumber -->
                <type>d:text</type>
             </property>
             <property name="doccom:regDateTime"><!-- Registreerimise kuupäev -->
@@ -442,7 +327,7 @@
       <aspect name="doccom:owner">
          <!--
             Valik DHS kasutajate hulgast (kõik gruppi kuuluvad väljad täidetakse valitud kasutaja andmetega)
-            või sisestatakse tekstina va. prevoiusOwnerId väli
+            või sisestatakse tekstina
          -->
          <properties>
             <property name="doccom:ownerName"><!-- Koostaja -->
@@ -463,7 +348,6 @@
             </property>
             <property name="doccom:ownerOrgStructUnit"><!-- Koostaja osakond -->
                <type>d:text</type>
-               <multiple>true</multiple><!-- dynamic documents have multi-valued, old static documents have single-valued -->
             </property>
             <property name="doccom:ownerEmail"><!-- Koostaja e-post -->
                <type>d:text</type>
@@ -471,7 +355,27 @@
             <property name="doccom:ownerPhone"><!-- Koostaja telefon -->
                <type>d:text</type>
             </property>
-            <property name="doccom:previousOwnerId"><!-- Eelmise omaniku ownerId vastutuse tagasivõtmise jaoks -->
+         </properties>
+      </aspect>
+
+      <aspect name="doccom:accessRights">
+         <properties>
+            <property name="doccom:accessRestriction"><!-- Juurdepääsupiirang -->
+               <type>d:text</type>
+               <mandatory>true</mandatory>
+               <!-- Valik klassifikaatori väärtuste hulgast -->
+            </property>
+            <property name="doccom:accessRestrictionReason"><!-- Juurdepääsupiirangu alus -->
+               <type>d:text</type>
+               <!-- Valik klassifikaatori väärtuste hulgast -->
+            </property>
+            <property name="doccom:accessRestrictionBeginDate"><!-- Kehtiv alates -->
+               <type>d:date</type>
+            </property>
+            <property name="doccom:accessRestrictionEndDate"><!-- Kehtiv kuni -->
+               <type>d:date</type>
+            </property>
+            <property name="doccom:accessRestrictionEndDesc"><!-- Kehtiv kuni kirjeldus -->
                <type>d:text</type>
             </property>
          </properties>
@@ -544,8 +448,8 @@
                <type>d:text</type>
             </property>
          </properties>
-      </aspect>      
-
+      </aspect>
+      
    </aspects>
 
 </model>

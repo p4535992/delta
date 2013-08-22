@@ -129,23 +129,14 @@
       </property>
    </bean>      
 
-   <bean id="deleteLeaveTypeClassificatorsUpdater" class="ee.webmedia.alfresco.common.bootstrap.DeleteNodeByXPathBootstrap" parent="abstractDeleteNodeByXPathBootstrap">
-      <property name="moduleId" value="common" />
-      <property name="nodeXPath" value="/cl:classificators/cl:leaveType" />
-      <property name="dependsOn">
-         <list>
-            <ref bean="classificatorRootBootstrap" />
-         </list>
-      </property>
-   </bean>
-
-   <bean id="classificatorRootBootstrap6_2" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
+   
+   <bean id="classificatorRootBootstrap6" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
       <property name="moduleId" value="common" />
       <property name="executeOnceOnly" value="true" />
       <property name="importer" ref="spacesBootstrap" />
       <property name="dependsOn">
          <list>
-            <ref bean="deleteLeaveTypeClassificatorsUpdater" />
+            <ref bean="classificatorRootBootstrap" />
          </list>
       </property>      
       <property name="bootstrapViews">
@@ -159,238 +150,7 @@
          </list>
       </property>
    </bean>
-
-   <bean id="classificatorRootBootstrap7" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
-      <property name="moduleId" value="common" />
-      <property name="executeOnceOnly" value="true" />
-      <property name="importer" ref="spacesBootstrap" />
-      <property name="dependsOn">
-         <list>
-            <ref bean="classificatorRootBootstrap" />
-         </list>
-      </property>      
-      <property name="bootstrapViews">
-         <list>
-            <props>
-               <prop key="encoding">UTF-8</prop>
-               <prop key="path">${classificators.parent.folder.xpath}${classificators.folder.name}</prop>
-               <prop key="location">ee/webmedia/alfresco/classificator/bootstrap/classificators7.xml</prop>
-               <prop key="messages">ee/webmedia/alfresco/classificator/bootstrap/classificators-bootstrap</prop>
-            </props>
-         </list>
-      </property>
-   </bean>
-
-   <bean id="classificatorRootBootstrap8" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
-      <property name="moduleId" value="common" />
-      <property name="executeOnceOnly" value="true" />
-      <property name="importer" ref="spacesBootstrap" />
-      <property name="dependsOn">
-         <list>
-            <ref bean="classificatorRootBootstrap" />
-         </list>
-      </property>      
-      <property name="bootstrapViews">
-         <list>
-            <props>
-               <prop key="encoding">UTF-8</prop>
-               <prop key="path">${classificators.parent.folder.xpath}${classificators.folder.name}</prop>
-               <prop key="location">ee/webmedia/alfresco/classificator/bootstrap/classificators8.xml</prop>
-               <prop key="messages">ee/webmedia/alfresco/classificator/bootstrap/classificators-bootstrap</prop>
-            </props>
-         </list>
-      </property>
-   </bean>
    
-   <bean id="classificatorRootBootstrap9" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
-      <property name="moduleId" value="common" />
-      <property name="executeOnceOnly" value="true" />
-      <property name="importer" ref="spacesBootstrap" />
-      <property name="dependsOn">
-         <list>
-            <ref bean="classificatorRootBootstrap" />
-         </list>
-      </property>      
-      <property name="bootstrapViews">
-         <list>
-            <props>
-               <prop key="encoding">UTF-8</prop>
-               <prop key="path">${classificators.parent.folder.xpath}${classificators.folder.name}</prop>
-               <prop key="location">ee/webmedia/alfresco/classificator/bootstrap/classificators9.xml</prop>
-               <prop key="messages">ee/webmedia/alfresco/classificator/bootstrap/classificators-bootstrap</prop>
-            </props>
-         </list>
-      </property>
-   </bean>   
-
-   <bean id="classificatorRootBootstrap10" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
-      <property name="moduleId" value="common" />
-      <property name="executeOnceOnly" value="true" />
-      <property name="importer" ref="spacesBootstrap" />
-      <property name="dependsOn">
-         <list>
-            <ref bean="classificatorRootBootstrap" />
-         </list>
-      </property>      
-      <property name="bootstrapViews">
-         <list>
-            <props>
-               <prop key="encoding">UTF-8</prop>
-               <prop key="path">${classificators.parent.folder.xpath}${classificators.folder.name}</prop>
-               <prop key="location">ee/webmedia/alfresco/classificator/bootstrap/classificators10.xml</prop>
-               <prop key="messages">ee/webmedia/alfresco/classificator/bootstrap/classificators-bootstrap</prop>
-            </props>
-         </list>
-      </property>
-   </bean>
-   
-   <bean id="classificatorRootBootstrap11" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
-      <property name="moduleId" value="common" />
-      <property name="executeOnceOnly" value="true" />
-      <property name="importer" ref="spacesBootstrap" />
-      <property name="dependsOn">
-         <list>
-            <ref bean="classificatorRootBootstrap" />
-         </list>
-      </property>      
-      <property name="bootstrapViews">
-         <list>
-            <props>
-               <prop key="encoding">UTF-8</prop>
-               <prop key="path">${classificators.parent.folder.xpath}${classificators.folder.name}</prop>
-               <prop key="location">ee/webmedia/alfresco/classificator/bootstrap/classificators11.xml</prop>
-               <prop key="messages">ee/webmedia/alfresco/classificator/bootstrap/classificators-bootstrap</prop>
-            </props>
-         </list>
-      </property>
-   </bean>   
-
-   <bean id="classificatorRootBootstrap12" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
-      <property name="moduleId" value="common" />
-      <property name="executeOnceOnly" value="true" />
-      <property name="importer" ref="spacesBootstrap" />
-      <property name="dependsOn">
-         <list>
-            <ref bean="classificatorRootBootstrap" />
-         </list>
-      </property>      
-      <property name="bootstrapViews">
-         <list>
-            <props>
-               <prop key="encoding">UTF-8</prop>
-               <prop key="path">${classificators.parent.folder.xpath}${classificators.folder.name}</prop>
-               <prop key="location">ee/webmedia/alfresco/classificator/bootstrap/classificators12.xml</prop>
-               <prop key="messages">ee/webmedia/alfresco/classificator/bootstrap/classificators-bootstrap</prop>
-            </props>
-         </list>
-      </property>
-   </bean>
-   
-   <bean id="classificatorRootBootstrap13" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
-      <property name="moduleId" value="common" />
-      <property name="executeOnceOnly" value="true" />
-      <property name="importer" ref="spacesBootstrap" />
-      <property name="dependsOn">
-         <list>
-            <ref bean="classificatorRootBootstrap" />
-         </list>
-      </property>      
-      <property name="bootstrapViews">
-         <list>
-            <props>
-               <prop key="encoding">UTF-8</prop>
-               <prop key="path">${classificators.parent.folder.xpath}${classificators.folder.name}</prop>
-               <prop key="location">ee/webmedia/alfresco/classificator/bootstrap/classificators13.xml</prop>
-               <prop key="messages">ee/webmedia/alfresco/classificator/bootstrap/classificators-bootstrap</prop>
-            </props>
-         </list>
-      </property>
-   </bean>   
-
-   <bean id="classificatorRootBootstrap14" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
-      <property name="moduleId" value="common" />
-      <property name="executeOnceOnly" value="true" />
-      <property name="importer" ref="spacesBootstrap" />
-      <property name="dependsOn">
-         <list>
-            <ref bean="classificatorRootBootstrap" />
-         </list>
-      </property>      
-      <property name="bootstrapViews">
-         <list>
-            <props>
-               <prop key="encoding">UTF-8</prop>
-               <prop key="path">${classificators.parent.folder.xpath}${classificators.folder.name}</prop>
-               <prop key="location">ee/webmedia/alfresco/classificator/bootstrap/classificators14.xml</prop>
-               <prop key="messages">ee/webmedia/alfresco/classificator/bootstrap/classificators-bootstrap</prop>
-            </props>
-         </list>
-      </property>
-   </bean>
-
-   <bean id="classificatorRootBootstrap15" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
-      <property name="moduleId" value="common" />
-      <property name="executeOnceOnly" value="true" />
-      <property name="importer" ref="spacesBootstrap" />
-      <property name="dependsOn">
-         <list>
-            <ref bean="classificatorRootBootstrap" />
-         </list>
-      </property>      
-      <property name="bootstrapViews">
-         <list>
-            <props>
-               <prop key="encoding">UTF-8</prop>
-               <prop key="path">${classificators.parent.folder.xpath}${classificators.folder.name}</prop>
-               <prop key="location">ee/webmedia/alfresco/classificator/bootstrap/classificators15.xml</prop>
-               <prop key="messages">ee/webmedia/alfresco/classificator/bootstrap/classificators-bootstrap</prop>
-            </props>
-         </list>
-      </property>
-   </bean>
-   
-   <bean id="classificatorRootBootstrap16" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
-      <property name="moduleId" value="common" />
-      <property name="executeOnceOnly" value="true" />
-      <property name="importer" ref="spacesBootstrap" />
-      <property name="dependsOn">
-         <list>
-            <ref bean="classificatorRootBootstrap" />
-         </list>
-      </property>      
-      <property name="bootstrapViews">
-         <list>
-            <props>
-               <prop key="encoding">UTF-8</prop>
-               <prop key="path">${classificators.parent.folder.xpath}${classificators.folder.name}</prop>
-               <prop key="location">ee/webmedia/alfresco/classificator/bootstrap/classificators16.xml</prop>
-               <prop key="messages">ee/webmedia/alfresco/classificator/bootstrap/classificators-bootstrap</prop>
-            </props>
-         </list>
-      </property>
-   </bean>
-
-   <bean id="accessRestrictionTypeClassificatorValueBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
-      <property name="moduleId" value="common" />
-      <property name="executeOnceOnly" value="true" />
-      <property name="importer" ref="spacesBootstrap" />
-      <property name="dependsOn">
-         <list>
-            <ref bean="classificatorRootBootstrap" />
-         </list>
-      </property>      
-      <property name="bootstrapViews">
-         <list>
-            <props>
-               <prop key="encoding">UTF-8</prop>
-               <prop key="path">${classificators.parent.folder.xpath}${classificators.folder.name}/cl:accessRestriction</prop>
-               <prop key="location">ee/webmedia/alfresco/classificator/bootstrap/accessRestrictionClassificatorValues.xml</prop>
-               <prop key="messages">ee/webmedia/alfresco/classificator/bootstrap/classificators-bootstrap</prop>
-            </props>
-         </list>
-      </property>
-   </bean>
-
    <bean id="invoiceTypesClassificatorValueBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
       <property name="moduleId" value="common" />
       <property name="executeOnceOnly" value="true" />
@@ -410,29 +170,7 @@
             </props>
          </list>
       </property>
-   </bean>
-   
-   <bean id="sendModeClassificatorValueBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
-      <property name="moduleId" value="common" />
-      <property name="name" value="sendModeClassificatorValueBootstrap" />
-      <property name="executeOnceOnly" value="true" />
-      <property name="importer" ref="spacesBootstrap" />
-      <property name="dependsOn">
-         <list>
-            <ref bean="classificatorRootBootstrap" />
-         </list>
-      </property>      
-      <property name="bootstrapViews">
-         <list>
-            <props>
-               <prop key="encoding">UTF-8</prop>
-               <prop key="path">${classificators.parent.folder.xpath}${classificators.folder.name}/cl:sendMode</prop>
-               <prop key="location">ee/webmedia/alfresco/classificator/bootstrap/sendModeClassificatorValues.xml</prop>
-               <prop key="messages">ee/webmedia/alfresco/classificator/bootstrap/classificators-bootstrap</prop>
-            </props>
-         </list>
-      </property>
-   </bean>
+   </bean>   
    
    <bean id="invoiceTypesClassificatorValueBootstrap1" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
       <property name="moduleId" value="common" />
@@ -465,18 +203,6 @@
             <ref bean="invoiceTypesClassificatorValueBootstrap1" />
          </list>
       </property>       
-   </bean>
-       
-   <bean id="storageTypeClassificatorUpdaterBootstrap" class="ee.webmedia.alfresco.classificator.bootstrap.StorageTypeClassificatorUpdaterBootstrap" parent="module.baseComponent">
-      <property name="moduleId" value="common" />
-      <property name="executeOnceOnly" value="true" />
-      <property name="generalService" ref="GeneralService" />
-      <property name="nodeService" ref="NodeService" />
-      <property name="dependsOn">
-         <list>
-            <ref bean="classificatorRootBootstrap" />
-         </list>
-      </property>       
    </bean>    
    
    <bean id="storageTypeClassificatorValueBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
@@ -507,22 +233,10 @@
          </list>
       </property>
    </bean>
-   
-   <!-- Used to delete classificator "volumeType" node. CL task: 177957 -->
-   <bean id="VolumeTypeDeleteClassificatorsUpdater" class="ee.webmedia.alfresco.common.bootstrap.DeleteNodeByXPathBootstrap" parent="abstractDeleteNodeByXPathBootstrap">
-      <property name="moduleId" value="simdhs" />
-      <property name="nodeXPath" value="/cl:classificators/cl:volumeType" />
-      <property name="dependsOn">
-         <list>
-            <ref bean="classificatorRootBootstrap" />
-         </list>
-      </property>
-   </bean>
 
-   <bean id="classificatorService" class="ee.webmedia.alfresco.classificator.service.ClassificatorServiceImpl" depends-on="classificatorModelBootstrap">
+   <bean id="classificatorService" class="ee.webmedia.alfresco.classificator.service.ClassificatorServiceImpl">
       <property name="generalService" ref="GeneralService" />
       <property name="nodeService" ref="NodeService" />
-      <property name="documentSearchService" ref="DocumentSearchService" />
       <property name="classificatorsPath" value="${classificators.parent.folder.xpath}${classificators.folder.name}" />
    </bean>
 

@@ -123,7 +123,7 @@ html, body {
 	/*z-index: 100;*/
 }
 
-.search-box {
+#search {
 	/*z-index: 95;*/
 }
 
@@ -191,7 +191,7 @@ html, body {
 			margin: 17px;
 		}
 		
-		.search-box {
+		#search {
 			position:absolute;
 			right:10px;
 			top:20px;
@@ -199,37 +199,25 @@ html, body {
 			padding-right: 260px;
 		}
 		
-		.search-box.alt {
-		    position:relative;
-		    float: right;
-		    top: 0;
-		}
-		    
-		    .search-box input[type="submit"]:hover,
-		    .search-box input[type="submit"]:focus,
-		    .search-box input[type="submit"]:active {
-		       background-position: 0 0;
-		    }
-		
-			.search-box > a, 
-			.search-box > span {
+			#search > a, 
+			#search > span {
 				margin-right:40px;
 			}
 			
-			.search-box > img {
+			#search > img {
 				position: absolute;
 				top: -2px;
 				right: 225px;
 				cursor: pointer;
 			}
 
-			.search-box > img.simple {
+			#search > img.simple {
 				border-width: 0px;
 				vertical-align: -1px;
 				cursor: auto;
 			}
       
-			.search-box input[type="text"] {
+			#search input[type="text"] {
 				position: absolute;
 				top: -3px;
 				padding-top: 2px; 
@@ -240,7 +228,7 @@ html, body {
 				border: none;
 			}
 			
-			.search-box input[type="submit"] {
+			#search input[type="submit"] {
 				position: absolute;
 				top: -2px;
 				right: 5px;
@@ -745,11 +733,6 @@ td .dropdown-menu {
 		margin: -22px 5px 0 0;
 	}
 	
-	.panel-wrapper .title-component-nonfloating {
-		float: none;
-		margin: -22px 5px 0 0;
-	}
-	
 		.panel-wrapper .title-component a,
 		.panel-wrapper .title-component a img {
 			margin-left: 4px;
@@ -783,7 +766,7 @@ td .dropdown-menu {
 	.message .error-message,
 	.message .info-message {
 		line-height: 16px;
-		margin: 4px 0 4px 4px;
+		margin: 4px 0 4px 40px;
 		padding-left: 15px;
 	}
 	
@@ -884,15 +867,16 @@ td.actions-column * {
 }
 
 .propertiesLabel + td .propertiesLabel {
-	width: 122px;
+	width: 65px;
 }
 
-.subPropertySheetTR .propertiesLabel + td .propertiesLabel {
-	width: 113px;
+.propertiesLabel,
+.propertiesLabel span {
+	white-space: nowrap;
 }
 
-.icon-space {
-	margin-right: 35px;
+.propertiesLabel span.wrap {
+	white-space: normal;
 }
 
 /* PAGE CONTROLS */
@@ -1085,25 +1069,6 @@ td.actions-column * {
 	}
 	
 	.filter-list a {
-		margin-right: 20px;
-	}
-	
-.trashfilter-list {
-	margin:10px 0;
-	padding:5px;
-}
-
-	.trashfilter-list ul,
-	.trashfilter-list li{
-		display: inline;
-	}
-	
-	.trashfilter-list img {
-		margin: 0 5px;
-		vertical-align: -3px;
-	}
-	
-	.trashfilter-list a {
 		margin-right: 20px;
 	}
 

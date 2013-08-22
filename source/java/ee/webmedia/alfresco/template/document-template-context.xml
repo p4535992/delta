@@ -50,18 +50,6 @@
       </property>
    </bean>
    
-   <bean id="DocumentTemplateEmailTypeIdUpdater" class="ee.webmedia.alfresco.template.bootstrap.DocumentTemplateEmailTypeIdUpdater" parent="abstractNodeUpdater" >
-      <property name="moduleId" value="simdhs" />
-   </bean>
-   
-   <bean id="DocumentTemplateTypeUpdater" class="ee.webmedia.alfresco.template.bootstrap.DocumentTemplateTypeUpdater" parent="abstractNodeUpdater">
-      <property name="moduleId" value="simdhs" />
-   </bean>
-   
-   <bean id="documentTemplateMimetypeUpdater" class="ee.webmedia.alfresco.template.bootstrap.DocumentTemplateMimetypeUpdater" parent="abstractNodeUpdater">
-      <property name="moduleId" value="simdhs" />
-   </bean>
-   
    <!-- Import the OpenOfficeService from the third party subsystem -->
    <bean id="openOfficeService" class="org.alfresco.repo.management.subsystems.SubsystemProxyFactory">
       <property name="sourceApplicationContextFactory">
@@ -88,10 +76,6 @@
       <property name="openOfficeService" ref="openOfficeService" />
       <property name="dictionaryService" ref="DictionaryService" />
       <property name="msoService" ref="msoService" />
-      <property name="userService" ref="UserService" />
-      <property name="documentConfigService" ref="DocumentConfigService" />
-      <property name="documentAdminService" ref="DocumentAdminService" />
-      <property name="versionsService" ref="VersionsService" />
    </bean>
 
    <bean id="DocumentTemplateService" class="org.springframework.aop.framework.ProxyFactoryBean">
@@ -107,13 +91,4 @@
          </list>
       </property>
    </bean>
-   
-   <bean id="DocumentTemplateDetailsDialog" class="ee.webmedia.alfresco.template.web.DocumentTemplateDetailsDialog" scope="session"/>
-   
-   <!-- Task CL 163201: remove generated field and set generatedFromTemplate field -->
-   <bean id="generatedFileFieldUpdater" class="ee.webmedia.alfresco.template.bootstrap.GeneratedFileFieldUpdater" parent="abstractNodeUpdater" >
-      <property name="moduleId" value="simdhs" />
-      <property name="executeOnceOnly" value="true" />
-   </bean>
-   
 </beans>

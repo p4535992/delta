@@ -29,8 +29,6 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.commons.io.FilenameUtils;
-
 /**
  * Bean to hold the results of a file upload
  * 
@@ -57,17 +55,7 @@ public final class FileUploadBean implements Serializable
    private List<String> filePath;
    private List<String> contentType;
    private boolean multiple = false;
-
-   private boolean problematicFile = false;
-
-   public void setProblematicFile(boolean problematicFile) {
-       this.problematicFile = problematicFile;
-   }
-
-   public boolean isProblematicFile() {
-       return problematicFile;
-   }
-
+   
    /**
     * @return Returns the file
     */
@@ -86,7 +74,6 @@ public final class FileUploadBean implements Serializable
     */
    public void setFile(File file)
    {
-        setProblematicFile(false);
         if(this.file == null) 
             this.file = new ArrayList<File>();
         
@@ -102,7 +89,6 @@ public final class FileUploadBean implements Serializable
    }
 
    public void setFile(List<File> file) {
-       setProblematicFile(false);
        this.file = file;
    }
 
@@ -130,13 +116,12 @@ public final class FileUploadBean implements Serializable
        if(this.fileNameWithoutExtension == null)
            this.fileNameWithoutExtension = new ArrayList<String>(10);
 
-        String filenameWithoutExtension = FilenameUtils.removeExtension(fileName);
         if (!multiple) {
             this.fileName.add(0, fileName);
-            this.fileNameWithoutExtension.add(0, filenameWithoutExtension);
+            this.fileNameWithoutExtension.add(0, fileName.substring(0, fileName.lastIndexOf(".")));
         } else {
             this.fileName.add(fileName);
-            this.fileNameWithoutExtension.add(filenameWithoutExtension);
+            this.fileNameWithoutExtension.add(fileName.substring(0, fileName.lastIndexOf(".")));
         }
         
    }

@@ -25,7 +25,7 @@
    <config evaluator="aspect-name" condition="doccom:common">
       <property-sheet>
          <show-property name="owner" show-in-edit-mode="false" display-label-id="document_owner" component-generator="UnescapedOutputTextGenerator" />
-         <show-property name="doccom:ownerName" show-in-view-mode="false" component-generator="UserSearchGenerator" usernameProp="doccom:ownerId" pickerCallback="#{UserListDialog.searchUsers}" setterCallback="#{MetadataBlockBean.setOwner}" dialogTitleId="users_search_title" editable="false" ajaxParentLevel="1" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" />
+         <show-property name="doccom:ownerName" show-in-view-mode="false" component-generator="SearchGenerator" pickerCallback="#{UserListDialog.searchUsers}" setterCallback="#{MetadataBlockBean.setOwner}" dialogTitleId="users_search_title" editable="false" ajaxParentLevel="1" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" />
       </property-sheet>
    </config>
 
@@ -33,7 +33,7 @@
       <property-sheet>
          <show-property name="owner" show-in-edit-mode="false" display-label-id="document_owner2" component-generator="UnescapedOutputTextGenerator" />
          <!-- TODO: shouldn't this be readOnly also when status <> 'töös'? -->
-         <show-property name="doccom:ownerName" show-in-view-mode="false" component-generator="UserSearchGenerator" usernameProp="doccom:ownerId" pickerCallback="#{UserListDialog.searchUsers}" setterCallback="#{MetadataBlockBean.setOwner}" dialogTitleId="users_search_title" editable="false" ajaxParentLevel="1" display-label-id="document_owner2" readOnlyIf="#{DocumentDialog.isNotEditable}" />
+         <show-property name="doccom:ownerName" show-in-view-mode="false" component-generator="SearchGenerator" pickerCallback="#{UserListDialog.searchUsers}" setterCallback="#{MetadataBlockBean.setOwner}" dialogTitleId="users_search_title" editable="false" ajaxParentLevel="1" display-label-id="document_owner2" readOnlyIf="#{DocumentDialog.isNotEditable}" />
       </property-sheet>
    </config>
 
@@ -126,7 +126,7 @@
    <config evaluator="aspect-name" condition="docspec:invoice">
       <property-sheet>
          <separator name="invoice-separator" component-generator="SeparatorGenerator" />
-         <show-property name="docspec:sellerPartyName" show-in-view-mode="false" styleClass="expand19-200 medium" component-generator="SearchGenerator" pickerCallback="#{AddressbookSearchBean.searchOrgContacts}" setterCallback="#{MetadataBlockBean.setSellerPartyName}" dialogTitleId="contacts_search_title" forcedMandatory="true" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}" ajaxParentLevel="1" />
+         <show-property name="docspec:sellerPartyName" show-in-view-mode="false" styleClass="expand19-200 medium" component-generator="SearchGenerator" pickerCallback="#{AddressbookDialog.searchOrgContacts}" setterCallback="#{MetadataBlockBean.setSellerPartyName}" dialogTitleId="contacts_search_title" forcedMandatory="true" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}" ajaxParentLevel="1" />
          <show-property name="docspec:sellerPartyRegNumber" show-in-view-mode="false" styleClass="expand19-200 medium" forcedMandatory="true" display="inline" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}"/>
          <show-property name="docspec:sellerPartySapAccount" show-in-view-mode="false" styleClass="expand19-200 medium" read-only="true" />
          <show-property name="{temp}invoiceSeller" show-in-edit-mode="false" display-label-id="document_invoiceSeller" />
@@ -179,10 +179,10 @@
    <config evaluator="aspect-name" condition="docspec:projectApplication">
       <property-sheet>
          <show-property name="{temp}applicantInstitutionPerson" show-in-edit-mode="false" display-label-id="document_applicantInstitutionPerson" />
-         <show-property name="docspec:applicantInstitution" show-in-view-mode="false" component-generator="SearchGenerator" pickerCallback="#{AddressbookSearchBean.searchContacts}" setterCallback="#{MetadataBlockBean.setApplicantInstitution}" dialogTitleId="contacts_search_title" styleClass="medium" readOnlyIf="#{DocumentDialog.isNotEditable}" />
+         <show-property name="docspec:applicantInstitution" show-in-view-mode="false" component-generator="SearchGenerator" pickerCallback="#{AddressbookDialog.searchContacts}" setterCallback="#{MetadataBlockBean.setApplicantInstitution}" dialogTitleId="contacts_search_title" styleClass="medium" readOnlyIf="#{DocumentDialog.isNotEditable}" />
          <show-property name="docspec:applicantPerson" show-in-view-mode="false" component-generator="SearchGenerator" pickerCallback="#{MetadataBlockBean.searchUsersOrContacts}" setterCallback="#{MetadataBlockBean.setApplicantPerson}" dialogTitleId="contacts_search_title" styleClass="medium" forcedMandatory="true" showFilter="true" filters="#{MetadataBlockBean.userOrContactSearchFilters}" readOnlyIf="#{DocumentDialog.isNotEditable}" />
          <show-property name="{temp}coApplicantInstitutionPerson" show-in-edit-mode="false" display-label-id="document_coApplicantInstitutionPerson" />
-         <show-property name="docspec:coApplicantInstitution" show-in-view-mode="false" component-generator="SearchGenerator" pickerCallback="#{AddressbookSearchBean.searchContacts}" setterCallback="#{MetadataBlockBean.setCoApplicantInstitution}" dialogTitleId="contacts_search_title" styleClass="medium" readOnlyIf="#{DocumentDialog.isNotEditable}" />
+         <show-property name="docspec:coApplicantInstitution" show-in-view-mode="false" component-generator="SearchGenerator" pickerCallback="#{AddressbookDialog.searchContacts}" setterCallback="#{MetadataBlockBean.setCoApplicantInstitution}" dialogTitleId="contacts_search_title" styleClass="medium" readOnlyIf="#{DocumentDialog.isNotEditable}" />
          <show-property name="docspec:coApplicantPerson" show-in-view-mode="false" component-generator="SearchGenerator" pickerCallback="#{MetadataBlockBean.searchUsersOrContacts}" setterCallback="#{MetadataBlockBean.setCoApplicantPerson}" dialogTitleId="contacts_search_title" styleClass="medium" showFilter="true" filters="#{MetadataBlockBean.userOrContactSearchFilters}" readOnlyIf="#{DocumentDialog.isNotEditable}" />
          <show-property name="docspec:applicationSum" styleClass="expand19-200 medium" converter="ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter" forcedMandatory="true" readOnlyIf="#{DocumentDialog.isNotEditable}" />
 
@@ -738,7 +738,7 @@
    
    <config evaluator="aspect-name" condition="docspec:firstParty">
       <property-sheet>
-         <show-property name="docspec:firstPartyName" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" component-generator="SearchGenerator" pickerCallback="#{AddressbookSearchBean.searchContacts}" setterCallback="#{MetadataBlockBean.setFirstParty}" dialogTitleId="contacts_search_title" styleClass="medium" />
+         <show-property name="docspec:firstPartyName" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" component-generator="SearchGenerator" pickerCallback="#{AddressbookDialog.searchContacts}" setterCallback="#{MetadataBlockBean.setFirstParty}" dialogTitleId="contacts_search_title" styleClass="medium" />
       </property-sheet>
    </config>
    
@@ -782,7 +782,7 @@
          <show-property name="responsible" show-in-edit-mode="false" display-label-id="document_responsibleName" component-generator="UnescapedOutputTextGenerator" />
          <show-property name="docspec:responsibleName" show-in-view-mode="false" component-generator="SearchGenerator" pickerCallback="#{UserListDialog.searchUsers}" setterCallback="#{MetadataBlockBean.setResponsible}" dialogTitleId="users_search_title" ajaxParentLevel="1" readOnlyIf="#{DocumentDialog.isNotEditable}" />
          <show-property name="docspec:responsibleStructUnit" show-in-view-mode="false" styleClass="expand19-200" component-generator="TextAreaGenerator" readOnlyIf="#{DocumentDialog.isNotEditable}" />
-         <show-property name="docspec:responsibleOrganization" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" component-generator="SearchGenerator" pickerCallback="#{AddressbookSearchBean.searchContacts}" setterCallback="#{MetadataBlockBean.setOrganization}" dialogTitleId="contacts_search_title" />
+         <show-property name="docspec:responsibleOrganization" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" component-generator="SearchGenerator" pickerCallback="#{AddressbookDialog.searchContacts}" setterCallback="#{MetadataBlockBean.setOrganization}" dialogTitleId="contacts_search_title" />
          <show-property name="docspec:coResponsibles" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" styleClass="expand19-200" component-generator="TextAreaGenerator" />
          <show-property name="docspec:managementsOrderDueDate" component-generator="DatePickerGenerator" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" />
          <show-property name="docspec:managementsOrderComplienceDate" component-generator="DatePickerGenerator" readOnlyIf="#{DocumentDialog.isNotWorkingAndFinishedOrNotEditable}" />
@@ -796,7 +796,7 @@
       <property-sheet>
          <show-property name="senderNameEmail" show-in-edit-mode="false" display-label-id="document_senderNameEmail" />
          <show-property name="docspec:senderName" show-in-view-mode="false" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" forcedMandatory="true" 
-                 component-generator="SearchGenerator" pickerCallback="#{AddressbookSearchBean.searchContacts}"
+                 component-generator="SearchGenerator" pickerCallback="#{AddressbookDialog.searchContacts}"
                  setterCallback="#{MetadataBlockBean.setSender}" dialogTitleId="document_sender_name_search_title" />
       </property-sheet>
    </config>
@@ -804,10 +804,10 @@
    <config evaluator="aspect-name" condition="docspec:senderDetailsMv">
       <property-sheet>
          <show-property name="docspec:senderSigner" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}"  
-                 component-generator="SearchGenerator" pickerCallback="#{AddressbookSearchBean.searchContacts}"
+                 component-generator="SearchGenerator" pickerCallback="#{AddressbookDialog.searchContacts}"
                  setterCallback="#{MetadataBlockBean.setSenderSigner}" dialogTitleId="contacts_search_title" />
          <show-property name="docspec:senderWriter" show-in-view-mode="false" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" 
-                 component-generator="SearchGenerator" pickerCallback="#{AddressbookSearchBean.searchContacts}"
+                 component-generator="SearchGenerator" pickerCallback="#{AddressbookDialog.searchContacts}"
                  setterCallback="#{MetadataBlockBean.setSenderWriter}" dialogTitleId="contacts_search_title" />
          <show-property name="{temp}senderWriterEmailPhone" show-in-edit-mode="false" display-label-id="document_senderWriterEmailPhone"/>
       </property-sheet>
@@ -1093,7 +1093,7 @@
    <!-- search contacts for report rapporteur -->
    <config evaluator="aspect-name" condition="docspec:report" >
       <property-sheet>
-         <show-property name="docspec:rapporteur" display-label-id="document_rapporteur" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" component-generator="SearchGenerator" pickerCallback="#{AddressbookSearchBean.searchContacts}" setterCallback="#{MetadataBlockBean.setRapporteur}" dialogTitleId="contacts_search_title" />
+         <show-property name="docspec:rapporteur" display-label-id="document_rapporteur" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" component-generator="SearchGenerator" pickerCallback="#{AddressbookDialog.searchContacts}" setterCallback="#{MetadataBlockBean.setRapporteur}" dialogTitleId="contacts_search_title" />
       </property-sheet>
    </config>      
    
@@ -1195,12 +1195,12 @@
 
    <config evaluator="aspect-name" condition="docspec:contractDetailsV1">
       <property-sheet>
-         <show-property name="docspec:secondPartyName" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" component-generator="SearchGenerator" pickerCallback="#{AddressbookSearchBean.searchContacts}" setterCallback="#{MetadataBlockBean.setSecondParty}" dialogTitleId="contacts_search_title" styleClass="medium" />
+         <show-property name="docspec:secondPartyName" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" component-generator="SearchGenerator" pickerCallback="#{AddressbookDialog.searchContacts}" setterCallback="#{MetadataBlockBean.setSecondParty}" dialogTitleId="contacts_search_title" styleClass="medium" />
          <show-property name="docspec:secondPartySigner" show-in-edit-mode="false" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" labelStyleClass="secondary" styleClass="expand19-200 medium" component-generator="TextAreaGenerator" />
          <show-property name="docspec:secondPartySigner" show-in-view-mode="false" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" labelStyleClass="secondary" styleClass="expand19-200 medium" component-generator="TextAreaGenerator" display="inline" />
          <show-property name="docspec:secondPartyContactPerson" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" labelStyleClass="secondary left44" styleClass="expand19-200 medium" component-generator="TextAreaGenerator" />
          <show-property name="docspec:secondPartyEmail" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" labelStyleClass="secondary" styleClass="expand19-200 medium" component-generator="TextAreaGenerator" />
-         <show-property name="docspec:thirdPartyName" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" component-generator="SearchGenerator" pickerCallback="#{AddressbookSearchBean.searchContacts}" setterCallback="#{MetadataBlockBean.setThirdParty}" dialogTitleId="contacts_search_title" styleClass="medium" />
+         <show-property name="docspec:thirdPartyName" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" component-generator="SearchGenerator" pickerCallback="#{AddressbookDialog.searchContacts}" setterCallback="#{MetadataBlockBean.setThirdParty}" dialogTitleId="contacts_search_title" styleClass="medium" />
          <show-property name="docspec:thirdPartySigner" show-in-edit-mode="false" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" labelStyleClass="secondary" styleClass="expand19-200 medium" component-generator="TextAreaGenerator" />
          <show-property name="docspec:thirdPartySigner" show-in-view-mode="false" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" labelStyleClass="secondary" styleClass="expand19-200 medium" component-generator="TextAreaGenerator" display="inline" />
          <show-property name="docspec:thirdPartyContactPerson" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" labelStyleClass="secondary left44" styleClass="expand19-200 medium" component-generator="TextAreaGenerator" />
@@ -1251,7 +1251,7 @@
    
    <config evaluator="node-type" condition="docspec:contractPartyType">
       <property-sheet>
-         <show-property name="docspec:partyName" component-generator="SearchGenerator" pickerCallback="#{AddressbookSearchBean.searchContacts}" setterCallback="#{MetadataBlockBean.setPartyName}" setterCallbackTakesNode="true" editable="true" dialogTitleId="contacts_search_title" ajaxParentLevel="1" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" display="inline" styleClass="medium" forcedMandatory="true" />
+         <show-property name="docspec:partyName" component-generator="SearchGenerator" pickerCallback="#{AddressbookDialog.searchContacts}" setterCallback="#{MetadataBlockBean.setPartyName}" setterCallbackTakesNode="true" editable="true" dialogTitleId="contacts_search_title" ajaxParentLevel="1" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" display="inline" styleClass="medium" forcedMandatory="true" />
          <show-property name="docspec:partySigner" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" labelStyleClass="secondary" styleClass="expand19-200 medium" component-generator="TextAreaGenerator" />
          <show-property name="docspec:partyContactPerson" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" styleClass="expand19-200 medium" labelStyleClass="secondary" display="inline" />
          <show-property name="docspec:partyEmail" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" styleClass="expand19-200 medium" labelStyleClass="secondary"/>
@@ -1260,7 +1260,7 @@
    
    <config evaluator="node-type" condition="docspec:contractMvPartyType">
       <property-sheet>
-         <show-property name="docspec:partyName" component-generator="SearchGenerator" pickerCallback="#{AddressbookSearchBean.searchContacts}" setterCallback="#{MetadataBlockBean.setPartyName}" setterCallbackTakesNode="true" editable="true" dialogTitleId="contacts_search_title" ajaxParentLevel="1" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" display="inline" styleClass="medium" />
+         <show-property name="docspec:partyName" component-generator="SearchGenerator" pickerCallback="#{AddressbookDialog.searchContacts}" setterCallback="#{MetadataBlockBean.setPartyName}" setterCallbackTakesNode="true" editable="true" dialogTitleId="contacts_search_title" ajaxParentLevel="1" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" display="inline" styleClass="medium" />
          <show-property name="docspec:partyContactPerson" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" styleClass="expand19-200 medium" labelStyleClass="secondary" />         
          <show-property name="docspec:partySigner" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" labelStyleClass="secondary" styleClass="expand19-200 medium" component-generator="TextAreaGenerator" display="inline" />
          <show-property name="docspec:partyEmail" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" styleClass="expand19-200 medium" labelStyleClass="secondary" />
@@ -1342,7 +1342,7 @@
          <separator name="recipient-note-sep" component-generator="RecipientNoteGenerator" show-in-view-mode="false" />
          <show-property name="recipients" show-in-edit-mode="false" display-label-id="document_recipients" component-generator="UnescapedOutputTextGenerator" />
          <show-property name="doccom:recipientName" show-in-view-mode="false" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" display-label-id="document_recipients"
-         pickerCallback="#{AddressbookSearchBean.searchContacts}" setterCallback="#{AddressbookSearchBean.getContactData}" dialogTitleId="contacts_search_title"  
+         pickerCallback="#{AddressbookDialog.searchContacts}" setterCallback="#{AddressbookDialog.getContactData}" dialogTitleId="contacts_search_title"  
          component-generator="MultiValueEditorGenerator" addLabelId="document_add_recipient" propsGeneration="
           doccom:recipientName¤TextAreaGenerator¤styleClass=expand19-200
          ,doccom:recipientEmail¤TextAreaGenerator¤styleClass=expand19-200
@@ -1363,7 +1363,7 @@
       <property-sheet>
          <show-property name="additionalRecipients" show-in-edit-mode="false" display-label-id="document_additional_recipients" component-generator="UnescapedOutputTextGenerator" />
          <show-property name="doccom:additionalRecipientName" show-in-view-mode="false" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" display-label-id="document_additional_recipients"
-            pickerCallback="#{AddressbookSearchBean.searchContacts}" setterCallback="#{AddressbookSearchBean.getContactData}" dialogTitleId="contacts_search_title" 
+            pickerCallback="#{AddressbookDialog.searchContacts}" setterCallback="#{AddressbookDialog.getContactData}" dialogTitleId="contacts_search_title" 
             component-generator="MultiValueEditorGenerator" addLabelId="document_add_additional_recipient" propsGeneration="
              doccom:additionalRecipientName¤TextAreaGenerator¤styleClass=expand19-200
             ,doccom:additionalRecipientEmail¤TextAreaGenerator¤styleClass=expand19-200

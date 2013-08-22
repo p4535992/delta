@@ -175,6 +175,7 @@ public abstract class DvkServiceImpl implements DvkService {
      */
     private Pair<Collection<String>, Collection<String>> receiveDocumentsServiceCall(final int maxReceiveDocumentsNr
             , NodeRef dvkIncomingFolder, Collection<String> previouslyFailedDvkIds, String dvkReceiveDocumentsInvoiceFolder) {
+        System.gc();// perform GC to free max memory for receiving documents
         final ReceivedDocumentsWrapper receiveDocuments = dhlXTeeService.receiveDocuments(maxReceiveDocumentsNr);
 
         final Set<String> receivedDocumentIds = new HashSet<String>();
@@ -762,11 +763,6 @@ public abstract class DvkServiceImpl implements DvkService {
 
     public void setReceivedDvkDocumentsPath(String receivedDvkDocumentsPath) {
         this.receivedDvkDocumentsPath = receivedDvkDocumentsPath;
-    }
-
-    @Override
-    public String getReceivedDvkDocumentsPath() {
-        return receivedDvkDocumentsPath;
     }
 
     public void setCorruptDvkDocumentsPath(String receivedDvkDocumentsPath) {

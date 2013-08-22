@@ -7,7 +7,6 @@
 <%@ page buffer="32kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
 <%@ page import="ee.webmedia.alfresco.utils.MessageUtil"%>
-<%@ page import="ee.webmedia.alfresco.utils.ComponentUtil"%>
 <%@ page import="javax.faces.context.FacesContext"%>
 <%@ page import="org.alfresco.web.app.Application"%>
 <%@ page import="org.alfresco.web.app.servlet.FacesHelper"%>
@@ -38,9 +37,6 @@
 %>
 
 </f:verbatim>
-
-   <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/document/file/web/file-block.jsp" />
-
 <%
     if (fileUploaded == false) {
 %>
@@ -64,25 +60,10 @@
    
    <script type="text/javascript">
    $jQ(document).ready(function() {
-      var uploaderInitialized = false;
-      try {
-         var uploader = document.jumpLoaderApplet.getUploader();
-         var attrSet = uploader.getAttributeSet();
-         var returnPage = attrSet.createStringAttribute("return-page", "ajax");
-         returnPage.setSendToServer(true);
-         uploaderInitialized = true;
-      } catch (e) {
-         if (typeof $jQ.log !== "undefined") {
-            $jQ.log('jumpLoaderApplet error: ' + e);
-         }
-      }
-      if (typeof $jQ.log !== "undefined"){
-         $jQ.log('jumpLoaderApplet initialized = ' + uploaderInitialized);
-      }
-      if (uploaderInitialized !== true) {
-         $jQ('#uploader-wrapper').hide();
-         $jQ('#' + escapeId4JQ('dialog:dialog-body:upload_panel')).show();
-      }
+	var uploader = document.jumpLoaderApplet.getUploader();
+	var attrSet = uploader.getAttributeSet();
+	var returnPage = attrSet.createStringAttribute("return-page", "ajax");
+	returnPage.setSendToServer(true);
    });
 
    function uploaderStatusChanged( uploader ) {
@@ -105,48 +86,19 @@
    
    </script>
    </f:verbatim>
-
-   <h:panelGrid id="upload_panel" columns="2" cellpadding="2" cellspacing="2" border="0" width="100%"
-      columnClasses="panelGridLabelColumn,panelGridValueColumn,panelGridRequiredImageColumn" style="display: none;">
-      <h:outputText id="out_schema" value="#{msg.file_location}:" style="padding-left:8px" />
-      <r:upload id="uploader" value="" framework="dialog" />
-   </h:panelGrid>
-
    </a:panel>
 
-   <a:panel styleClass="column panel-50" id="attachment-upload" label="#{msg.file_add_attachment}" rendered="#{UserService.documentManager}">
-      <a:panel id="attachment-folder-panel" rendered="#{AddFileDialog.showAttachmentFolderSelect}">
-         <h:panelGrid id="attachment-folder-select-panel" columns="2" columnClasses="vertical-align-middle,vertical-align-middle" >
-            <h:outputText id="attachment-folder-label" value="#{msg.file_add_folder_label}" />
-            <a:panel id="att-folder-panel">
-               <h:selectOneMenu id="attachment-folder-select" styleClass="#{AddFileDialog.onChangeStyleClass}">
-                  <f:selectItems value="#{AddFileDialog.attachmentFolders}" />
-               </h:selectOneMenu>
-               <a:actionLink id="submit-att-folder-link" value="" actionListener="#{AddFileDialog.attachmentFolderSelected}" styleClass="hidden" />
-            </a:panel>
-         </h:panelGrid>
-      </a:panel>
-      <h:outputText id="out_attachment" value="#{msg.file_add_attachment_label}" styleClass="dialogpanel-title block" />
-      <h:selectManyMenu id="select_attachment" style="width: 100%; height: 200px;" binding="#{AddFileDialog.attachmentSelect}" validator="#{AddFileDialog.validate}">
-         <f:selectItems value="#{AddFileDialog.attachments}" />
-      </h:selectManyMenu>
-   </a:panel>
+    <a:panel styleClass="column panel-50" id="attachment-upload" label="#{msg.file_add_attachment}">
+       <h:outputText id="out_attachment" value="#{msg.file_add_attachment_label}" styleClass="dialogpanel-title block"/>
+       <h:selectManyMenu id="select_attachment" style="width: 100%; height: 200px;" binding="#{AddFileDialog.attachmentSelect}" validator="#{AddFileDialog.validate}">
+           <f:selectItems value="#{DialogManager.bean.attachments}"/>
+       </h:selectManyMenu>
+    </a:panel>
 
-    <a:panel styleClass="column panel-50-f" id="scanned-file-upload" label="#{msg.file_add_scanned}" rendered="#{UserService.documentManager}">
-      <a:panel id="scanned-folder-panel" rendered="#{AddFileDialog.showScannedFolderSelect}">
-         <h:panelGrid id="scanned-folder-select-panel" columns="2" columnClasses="vertical-align-middle,vertical-align-middle" >
-            <h:outputText id="scanned-folder-label" value="#{msg.file_add_folder_label}" />
-            <a:panel id="scan-folder-panel">
-               <h:selectOneMenu id="scanned-folder-select" styleClass="#{AddFileDialog.onChangeStyleClass}">
-                  <f:selectItems value="#{AddFileDialog.scannedFolders}" />
-               </h:selectOneMenu>
-               <a:actionLink id="submit-scan-folder-link" value="" actionListener="#{AddFileDialog.scannedFolderSelected}" styleClass="hidden" />
-            </a:panel>
-         </h:panelGrid>
-      </a:panel>    
+    <a:panel styleClass="column panel-50-f" id="scanned-file-upload" label="#{msg.file_add_scanned}">
        <h:outputText id="out_scanned_file" value="#{msg.file_add_scanned_label}" styleClass="dialogpanel-title block"/>
        <h:selectManyMenu id="select_scanned_file" style="width: 100%; height: 200px;" binding="#{AddFileDialog.scannedSelect}" validator="#{AddFileDialog.validate}">
-           <f:selectItems value="#{AddFileDialog.scannedFiles}"/>
+           <f:selectItems value="#{DialogManager.bean.scannedFiles}"/>
        </h:selectManyMenu>
     </a:panel>
    
@@ -163,7 +115,10 @@
    <f:verbatim>
 
 <script type="text/javascript">
-$jQ(document).ready(function(){
+      window.onload = pageLoaded;
+
+      function pageLoaded()
+      {
         var finishButton = document.getElementById("dialog:finish-button");
         if(finishButton != null) {
 	    	document.getElementById("dialog:finish-button").disabled = false;
@@ -178,12 +133,12 @@ $jQ(document).ready(function(){
 	           clear_dialog();
 	        }
         }
-      })
+      }
 </script>
 </f:verbatim>
 <% if (!fileUploaded) { %>
 	<jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/disable-dialog-finish-button.jsp" />
 <% } %>
-<a:booleanEvaluator value="#{DocumentDialogHelperBean.inEditMode}" id="addfile-docMetaInEditMode">
-   <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/docdynamic/web/metadata-block-lockRefresh.jsp" />
+<a:booleanEvaluator value="#{MetadataBlockBean.inEditMode}" id="addfile-docMetaInEditMode">
+   <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/document/metadata/web/metadata-block-lockRefresh.jsp" />
 </a:booleanEvaluator>

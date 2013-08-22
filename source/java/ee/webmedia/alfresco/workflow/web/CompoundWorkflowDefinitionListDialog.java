@@ -30,7 +30,7 @@ public class CompoundWorkflowDefinitionListDialog extends BaseDialogBean {
 
     @Override
     public void restored() {
-        workflows = getWorkflowService().getCompoundWorkflowDefinitions(true);
+        workflows = getWorkflowService().getCompoundWorkflowDefinitions();
     }
 
     @Override

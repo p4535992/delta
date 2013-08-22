@@ -50,9 +50,6 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 
-/**
- * Retrieve HTTPS certificate from remote HTTPS connection and add it to application server Keystore. For example, use if CAS connection is over HTTPS.
- */
 public class InstallCert {
 
     public static void main(String[] args) throws Exception {

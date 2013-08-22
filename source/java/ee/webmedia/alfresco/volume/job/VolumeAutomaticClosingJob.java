@@ -9,7 +9,7 @@ import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 import org.quartz.StatefulJob;
 
-import ee.webmedia.alfresco.doclist.service.DocumentListService;
+import ee.webmedia.alfresco.functions.service.FunctionsService;
 
 public class VolumeAutomaticClosingJob implements StatefulJob {
     private static Log log = LogFactory.getLog(VolumeAutomaticClosingJob.class);
@@ -20,13 +20,13 @@ public class VolumeAutomaticClosingJob implements StatefulJob {
             log.debug("Starting VolumeAutomaticClosingJob");
         }
         JobDataMap jobData = jobExecutionContext.getJobDetail().getJobDataMap();
-        Object workerObj = jobData.get("documentListService");
+        Object workerObj = jobData.get("functionsService");
 
-        if (workerObj == null || !(workerObj instanceof DocumentListService)) {
-            throw new AlfrescoRuntimeException("VolumeAutomaticClosingJob data must contain valid 'documentListService' reference, but contained: "
+        if (workerObj == null || !(workerObj instanceof FunctionsService)) {
+            throw new AlfrescoRuntimeException("VolumeAutomaticClosingJob data must contain valid 'functionsService' reference, but contained: "
                     + workerObj);
         }
-        final DocumentListService worker = (DocumentListService) workerObj;
+        final FunctionsService worker = (FunctionsService) workerObj;
 
         // Run job as with systemUser privileges
         try {

@@ -24,66 +24,24 @@
  */
 package ee.webmedia.alfresco.webdav;
 
-import static ee.webmedia.alfresco.common.web.BeanHelper.getDocLockService;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getMsoService;
-
 import java.io.BufferedInputStream;
 import java.io.InputStream;
 import java.io.PrintWriter;
-import java.io.Serializable;
 import java.nio.charset.Charset;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.Enumeration;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 
 import javax.servlet.http.HttpServletResponse;
 
-import org.alfresco.model.ContentModel;
 import org.alfresco.repo.content.encoding.ContentCharsetFinder;
 import org.alfresco.repo.webdav.WebDAV;
 import org.alfresco.repo.webdav.WebDAVMethod;
 import org.alfresco.repo.webdav.WebDAVServerException;
-import org.alfresco.service.cmr.dictionary.DataTypeDefinition;
-import org.alfresco.service.cmr.dictionary.PropertyDefinition;
-import org.alfresco.service.cmr.lock.LockStatus;
 import org.alfresco.service.cmr.model.FileFolderService;
 import org.alfresco.service.cmr.model.FileInfo;
 import org.alfresco.service.cmr.model.FileNotFoundException;
-import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.ContentData;
 import org.alfresco.service.cmr.repository.ContentWriter;
 import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.service.cmr.repository.NodeService;
-import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
-import org.alfresco.service.namespace.QName;
-import org.alfresco.service.namespace.RegexQNamePattern;
-import org.alfresco.util.Pair;
-import org.apache.commons.lang.StringUtils;
-
-import ee.webmedia.alfresco.base.BaseObject;
-import ee.webmedia.alfresco.classificator.constant.FieldChangeableIf;
-import ee.webmedia.alfresco.classificator.constant.FieldType;
-import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
-import ee.webmedia.alfresco.classificator.service.ClassificatorService;
-import ee.webmedia.alfresco.common.web.BeanHelper;
-import ee.webmedia.alfresco.docadmin.service.Field;
-import ee.webmedia.alfresco.docadmin.service.FieldGroup;
-import ee.webmedia.alfresco.docconfig.bootstrap.SystematicFieldGroupNames;
-import ee.webmedia.alfresco.docconfig.service.DynamicPropertyDefinition;
-import ee.webmedia.alfresco.docdynamic.model.DocumentChildModel;
-import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
-import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
-import ee.webmedia.alfresco.docdynamic.service.DocumentDynamicService;
-import ee.webmedia.alfresco.document.file.model.FileModel;
-import ee.webmedia.alfresco.document.file.model.GeneratedFileType;
-import ee.webmedia.alfresco.document.model.DocumentCommonModel;
-import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 
 /**
  * Implements the WebDAV PUT method
@@ -143,15 +101,7 @@ public class PutMethod extends WebDAVMethod {
             // create not allowed
             throw new WebDAVServerException(HttpServletResponse.SC_FORBIDDEN);
         }
-        NodeRef fileRef = contentNodeInfo.getNodeRef();
-        WebDAVCustomHelper.checkDocumentFileWritePermission(fileRef);
-
-        // Require the file to be locked for current user
-        LockStatus lockStatus = getDocLockService().getLockStatus(fileRef);
-        if (!LockStatus.LOCK_OWNER.equals(lockStatus)) {
-            log.info("Not saving " + fileRef + ". LockStatus is " + lockStatus.name() + ", lock owner " + getDocLockService().getLockOwnerIfLocked(fileRef));
-            throw new WebDAVServerException(WebDAV.WEBDAV_SC_LOCKED);
-        }
+        WebDAVCustomHelper.checkDocumentFileWritePermission(contentNodeInfo);
 
         if (m_request.getContentLength() <= 0) {
             StringBuilder s = new StringBuilder("Client is trying to save zero-length content, ignoring and returning success; request headers:");
@@ -180,10 +130,10 @@ public class PutMethod extends WebDAVMethod {
         }
 
         // Update the version if the node is unlocked
-        boolean createdNewVersion = ((WebDAVCustomHelper) getDAVHelper()).getVersionsService().updateVersion(fileRef, contentNodeInfo.getName(), true);
+        ((WebDAVCustomHelper) getDAVHelper()).getVersionsService().updateVersion(contentNodeInfo.getNodeRef(), contentNodeInfo.getName());
 
         // Access the content
-        ContentWriter writer = fileFolderService.getWriter(fileRef);
+        ContentWriter writer = fileFolderService.getWriter(contentNodeInfo.getNodeRef());
 
         // Get the input stream from the request data
         InputStream is = m_request.getInputStream();
@@ -191,7 +141,7 @@ public class PutMethod extends WebDAVMethod {
         // Do not allow to change mimeType or locale, use the same values as were set during file creation
         ContentData contentData = contentNodeInfo.getContentData();
         if (contentData == null) {
-            log.warn("ContentData for node is null: " + fileRef);
+            log.warn("ContentData for node is null: " + contentNodeInfo.getNodeRef());
 
             // set content properties
             String mimetype = getMimetypeService().guessMimetype(contentNodeInfo.getName());
@@ -212,190 +162,23 @@ public class PutMethod extends WebDAVMethod {
                 log.info("Client sent different mimetype '" + m_strContentType + "' when updating file with original mimetype '" + mimetype + "', ignoring");
             }
         }
-        
+
         // Write the new data to the content node
         writer.putContent(is);
 
         if (writer.getSize() <= 0) {
-            throw new RuntimeException("Saving zero-length content is not allowed" + ", is=" + is);
+            throw new RuntimeException("Saving zero-length content is not allowed");
         }
 
         // add the user and date information to the custom aspect properties
-        ((WebDAVCustomHelper) getDAVHelper()).getVersionsService().updateVersionModifiedAspect(fileRef);
+        ((WebDAVCustomHelper) getDAVHelper()).getVersionsService().updateVersionModifiedAspect(contentNodeInfo.getNodeRef());
 
         // Update document search info
-        NodeRef document = getNodeService().getPrimaryParent(fileRef).getParentRef();
+        NodeRef document = getNodeService().getPrimaryParent(contentNodeInfo.getNodeRef()).getParentRef();
         ((WebDAVCustomHelper) getDAVHelper()).getDocumentService().updateSearchableFiles(document);
-
-        // Update Document meta data and generated files
-        updateDocumentAndGeneratedFiles(contentNodeInfo, document);
 
         // Set the response status, depending if the node existed or not
         m_response.setStatus(created ? HttpServletResponse.SC_CREATED : HttpServletResponse.SC_NO_CONTENT);
-        logger.debug("saved file " + fileRef + ", " + (createdNewVersion ? "created" : "didn't crerate") + " new version");
     }
 
-    private void updateDocumentAndGeneratedFiles(FileInfo contentNodeInfo, NodeRef document) throws Exception, ParseException {
-        String generationType = (String) getNodeService().getProperty(contentNodeInfo.getNodeRef(), FileModel.Props.GENERATION_TYPE);
-        if (!GeneratedFileType.WORD_TEMPLATE.name().equals(generationType)) {
-            return;
-        }
-
-        if (!getMsoService().isAvailable()) {
-            log.debug("MsoService is not available, skipping updating document");
-            return;
-        }
-        Map<String, String> formulas = getMsoService().modifiedFormulas(getContentService().getReader(contentNodeInfo.getNodeRef(), ContentModel.PROP_CONTENT));
-
-        if (formulas == null || formulas.isEmpty()) {
-            return;
-        }
-
-        DocumentDynamicService documentDynamicService = BeanHelper.getDocumentDynamicService();
-        DocumentDynamic doc = documentDynamicService.getDocument(document);
-        /*
-         * TODO CL 179488, Mallide loomine.docx 3.1.8.1
-         * if (!doc.isUpdateMetadataInFile()) {
-         * return;
-         * }
-         */
-
-        Map<String, Pair<DynamicPropertyDefinition, Field>> propertyDefinitions = BeanHelper.getDocumentConfigService().getPropertyDefinitions(doc.getNode());
-
-        List<String> updateDisabled = Arrays.asList(
-                DocumentCommonModel.Props.OWNER_NAME.getLocalName(), DocumentCommonModel.Props.SIGNER_NAME.getLocalName()
-                , DocumentSpecificModel.Props.SUBSTITUTE_NAME.getLocalName(), DocumentCommonModel.Props.OWNER_ID.getLocalName()
-                , DocumentDynamicModel.Props.SIGNER_ID.getLocalName(), DocumentDynamicModel.Props.SUBSTITUTE_ID.getLocalName()
-                , DocumentCommonModel.Props.DOC_STATUS.getLocalName(), DocumentCommonModel.Props.REG_NUMBER.getLocalName()
-                , DocumentCommonModel.Props.SHORT_REG_NUMBER.getLocalName(), DocumentCommonModel.Props.REG_DATE_TIME.getLocalName()
-                , DocumentCommonModel.Props.INDIVIDUAL_NUMBER.getLocalName());
-        List<FieldType> readOnlyFields = Arrays.asList(FieldType.COMBOBOX_AND_TEXT_NOT_EDITABLE, FieldType.LISTBOX, FieldType.CHECKBOX, FieldType.INFORMATION_TEXT);
-        List<ContractPartyField> partyFields = new ArrayList<ContractPartyField>();
-        ClassificatorService classificatorService = BeanHelper.getClassificatorService();
-
-        for (Entry<String, String> entry : formulas.entrySet()) {
-            String formulaKey = entry.getKey();
-            String formulaValue = entry.getValue();
-
-            // Check for special fields like recipients or contract parties
-            int propIndex = -1;
-            if (formulaKey.contains(".")) {
-                String[] split = StringUtils.split(formulaKey, '.');
-                formulaKey = split[0];
-                propIndex = Integer.parseInt(split[1]) - 1; // Formula uses base 1 index
-
-                // Since contract party is implemented using child nodes, we cannot check directly from document property definitions
-                QName fieldQName = null;
-                if (DocumentSpecificModel.Props.PARTY_NAME.getLocalName().equals(formulaKey)) {
-                    fieldQName = DocumentSpecificModel.Props.PARTY_NAME;
-                } else if (DocumentSpecificModel.Props.PARTY_EMAIL.getLocalName().equals(formulaKey)) {
-                    fieldQName = DocumentSpecificModel.Props.PARTY_EMAIL;
-                } else if (DocumentSpecificModel.Props.PARTY_SIGNER.getLocalName().equals(formulaKey)) {
-                    fieldQName = DocumentSpecificModel.Props.PARTY_SIGNER;
-                } else if (DocumentSpecificModel.Props.PARTY_CONTACT_PERSON.getLocalName().equals(formulaKey)) {
-                    fieldQName = DocumentSpecificModel.Props.PARTY_CONTACT_PERSON;
-                }
-                if (fieldQName != null) {
-                    partyFields.add(new ContractPartyField(propIndex, fieldQName, formulaValue));
-                }
-            }
-
-            Pair<DynamicPropertyDefinition, Field> propDefAndField = propertyDefinitions.get(formulaKey);
-            if (propDefAndField == null || propDefAndField.getSecond() == null) {
-                continue;
-            }
-
-            PropertyDefinition propDef = propDefAndField.getFirst();
-            Field field = propDefAndField.getSecond();
-
-            // If field is not changeable, then don't allow it.
-            if (isFieldUnchangeable(doc, updateDisabled, readOnlyFields, field, classificatorService, formulaValue)) {
-                continue;
-            }
-
-            BaseObject parent = field.getParent();
-            DataTypeDefinition dataType = propDef.getDataType();
-            if (parent instanceof FieldGroup) {
-                FieldGroup group = (FieldGroup) parent;
-                String name = group.getName();
-
-                if (group.isSystematic() && (SystematicFieldGroupNames.RECIPIENTS.equals(name) || SystematicFieldGroupNames.ADDITIONAL_RECIPIENTS.equals(name))) {
-                    Serializable propValue = doc.getProp(field.getQName());
-                    if (propDef.isMultiValued()) {
-                        @SuppressWarnings("unchecked")
-                        List<Serializable> values = (List<Serializable>) propValue;
-                        if (propIndex > -1 && propIndex < values.size()) {
-                            values.set(propIndex, (Serializable) DefaultTypeConverter.INSTANCE.convert(dataType, formulaValue));
-                        }
-                        propValue = (Serializable) values;
-                    }
-                    doc.setProp(field.getQName(), propValue);
-                    continue;
-                }
-            }
-
-            Serializable value;
-            // Handle dates separately
-            if ("date".equals(dataType.getName().getLocalName())) {
-                value = new SimpleDateFormat("dd.MM.yyyy").parse(formulaValue);
-            } else {
-                value = (Serializable) DefaultTypeConverter.INSTANCE.convert(dataType, formulaValue);
-            }
-            if (propDef.isMultiValued()) {
-                value = (Serializable) Collections.singletonList(value); // is this correct?
-            }
-            doc.setProp(field.getQName(), value);
-        }
-
-        // Update sub-nodes
-        // TODO from Alar: implement generic child-node support using propertyDefinition.getChildAssocTypeQNameHierarchy()
-        if (!partyFields.isEmpty()) {
-            NodeService nodeService = getNodeService();
-            List<ChildAssociationRef> contractPartyChildAssocs = nodeService.getChildAssocs(document, DocumentChildModel.Assocs.CONTRACT_PARTY, RegexQNamePattern.MATCH_ALL);
-            for (ContractPartyField field : partyFields) {
-                nodeService.setProperty(contractPartyChildAssocs.get(field.getIndex()).getChildRef(), field.getField(), field.getValue());
-            }
-        }
-
-        documentDynamicService.updateDocument(doc, null, false); // This also updates generated files
-    }
-
-    private boolean isFieldUnchangeable(DocumentDynamic doc, List<String> updateDisabled, List<FieldType> readOnlyFields, Field field, ClassificatorService classificatorService,
-            String formulaValue) {
-        return FieldChangeableIf.ALWAYS_NOT_CHANGEABLE == field.getChangeableIfEnum()
-                || FieldChangeableIf.CHANGEABLE_IF_WORKING_DOC == field.getChangeableIfEnum()
-                && !DocumentStatus.WORKING.getValueName().equals(doc.getProp(DocumentCommonModel.Props.DOC_STATUS))
-                || updateDisabled.contains(field.getFieldId()) || readOnlyFields.contains(field.getFieldTypeEnum())
-                || DocumentDynamicModel.Props.FIRST_KEYWORD_LEVEL.getLocalName().equals(field.getOriginalFieldId())
-                || DocumentDynamicModel.Props.SECOND_KEYWORD_LEVEL.getLocalName().equals(field.getOriginalFieldId())
-                || FieldType.STRUCT_UNIT == field.getFieldTypeEnum()
-                || FieldType.COMBOBOX == field.getFieldTypeEnum() && field.isComboboxNotRelatedToClassificator()
-                || FieldType.COMBOBOX == field.getFieldTypeEnum() && !classificatorService.hasClassificatorValueName(field.getClassificator(), formulaValue);
-    }
-
-    private class ContractPartyField implements Serializable {
-        private static final long serialVersionUID = 1L;
-
-        final private int index;
-        final private QName field;
-        final private Serializable value;
-
-        public ContractPartyField(int index, QName field, Serializable value) {
-            this.index = index;
-            this.field = field;
-            this.value = value;
-        }
-
-        public int getIndex() {
-            return index;
-        }
-
-        public QName getField() {
-            return field;
-        }
-
-        public Serializable getValue() {
-            return value;
-        }
-    }
 }

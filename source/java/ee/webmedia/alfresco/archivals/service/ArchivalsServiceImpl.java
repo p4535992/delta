@@ -4,19 +4,12 @@ import static ee.webmedia.alfresco.utils.SearchUtil.generateStringExactQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateTypeQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.joinQueryPartsAnd;
 
-import java.io.Serializable;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
-import javax.faces.event.ActionEvent;
-
-import org.alfresco.repo.security.authentication.AuthenticationUtil;
-import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
 import org.alfresco.service.cmr.dictionary.DictionaryService;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.CopyService;
@@ -28,18 +21,14 @@ import org.alfresco.service.cmr.search.ResultSet;
 import org.alfresco.service.cmr.search.ResultSetRow;
 import org.alfresco.service.cmr.search.SearchParameters;
 import org.alfresco.service.cmr.search.SearchService;
-import org.alfresco.service.namespace.QName;
 import org.alfresco.service.namespace.RegexQNamePattern;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.adr.service.AdrService;
 import ee.webmedia.alfresco.archivals.model.ArchivalsModel;
-import ee.webmedia.alfresco.cases.model.Case;
-import ee.webmedia.alfresco.cases.service.CaseService;
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
-import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.functions.model.Function;
 import ee.webmedia.alfresco.functions.model.FunctionsModel;
 import ee.webmedia.alfresco.functions.service.FunctionsService;
@@ -63,8 +52,6 @@ public class ArchivalsServiceImpl implements ArchivalsService {
     private SearchService searchService;
     private DictionaryService dictionaryService;
     private AdrService adrService;
-    private DocumentService documentService;
-    private CaseService caseService;
 
     private StoreRef archivalsStore;
 
@@ -110,42 +97,18 @@ public class ArchivalsServiceImpl implements ArchivalsService {
                 VolumeModel.Associations.VOLUME, VolumeModel.Associations.VOLUME).getChildRef();
         nodeService.setProperty(archivedVolumeNodeRef, VolumeModel.Props.ARCHIVING_NOTE, archivingNote);
         seriesService.updateContainingDocsCountByVolume(archivedSeriesRef, archivedVolumeNodeRef, true);
-        updateDocumentLocation(volume, archivedFunRef, archivedSeriesRef, archivedVolumeNodeRef);
         return archivedVolumeNodeRef;
-    }
-
-    private void updateDocumentLocation(Volume originalVolume, NodeRef archivedFunRef, NodeRef archivedSeriesRef, NodeRef archivedVolumeRef) {
-        if (originalVolume.isContainsCases()) {
-            for (Case aCase : caseService.getAllCasesByVolume(archivedVolumeRef)) {
-                List<NodeRef> documents = documentService.getAllDocumentRefsByParentRef(aCase.getNode().getNodeRef());
-                updateDocumentLocationProps(archivedFunRef, archivedSeriesRef, archivedVolumeRef, aCase.getNode().getNodeRef(), documents);
-            }
-        } else {
-            List<NodeRef> documents = documentService.getAllDocumentRefsByParentRef(archivedVolumeRef);
-            updateDocumentLocationProps(archivedFunRef, archivedSeriesRef, archivedVolumeRef, null, documents);
-        }
-    }
-
-    private void updateDocumentLocationProps(NodeRef archivedFunRef, NodeRef archivedSeriesRef, NodeRef archivedVolumeRef, NodeRef archivedCaseRef, List<NodeRef> docRefs) {
-        for (NodeRef docRef : docRefs) {
-            Map<QName, Serializable> props = new HashMap<QName, Serializable>();
-            props.put(DocumentCommonModel.Props.FUNCTION, archivedFunRef);
-            props.put(DocumentCommonModel.Props.SERIES, archivedSeriesRef);
-            props.put(DocumentCommonModel.Props.VOLUME, archivedVolumeRef);
-            props.put(DocumentCommonModel.Props.CASE, archivedCaseRef);
-            nodeService.addProperties(docRef, props);
-        }
     }
 
     @Override
     public int destroyArchivedVolumes() {
-        DateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy HH:mm");
         List<NodeRef> volumesForDestruction = searchVolumesForDestruction();
         for (NodeRef volumeNodeRef : volumesForDestruction) {
-            HashMap<QName, Serializable> props = new HashMap<QName, Serializable>();
-            props.put(VolumeModel.Props.STATUS, DocListUnitStatus.DESTROYED.getValueName());
+            nodeService.setProperty(volumeNodeRef, VolumeModel.Props.STATUS, DocListUnitStatus.DESTROYED.getValueName());
             String archivingnote = (String) nodeService.getProperty(volumeNodeRef, VolumeModel.Props.ARCHIVING_NOTE);
-            props.put(VolumeModel.Props.ARCHIVING_NOTE, archivingnote + " Hävitatud: " + dateFormat.format(new Date()));
+            DateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy HH:mm");
+            nodeService.setProperty(volumeNodeRef, VolumeModel.Props.ARCHIVING_NOTE,
+                    archivingnote + " Hävitatud: " + dateFormat.format(new Date()));
 
             // remove all childs
             List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(volumeNodeRef);
@@ -157,24 +120,10 @@ public class ArchivalsServiceImpl implements ArchivalsService {
                 nodeService.deleteNode(nodeRef);
             }
             seriesService.updateContainingDocsCountByVolume(volumeService.getVolumeByNodeRef(volumeNodeRef).getSeriesNodeRef(), volumeNodeRef, false);
-            props.put(VolumeModel.Props.CONTAINING_DOCS_COUNT, 0);
-            if (nodeService.hasAspect(volumeNodeRef, DocumentCommonModel.Aspects.DOCUMENT_REG_NUMBERS_CONTAINER)) {
-                props.put(DocumentCommonModel.Props.DOCUMENT_REG_NUMBERS, null);
-            }
-            nodeService.addProperties(volumeNodeRef, props);
+            nodeService.setProperty(volumeNodeRef, VolumeModel.Props.CONTAINING_DOCS_COUNT, 0); // all documents are deleted
         }
 
         return volumesForDestruction.size();
-    }
-
-    @Override
-    public void destroyArchivedVolumes(ActionEvent event) {
-        AuthenticationUtil.runAs(new RunAsWork<Integer>() {
-            @Override
-            public Integer doWork() throws Exception {
-                return destroyArchivedVolumes();
-            }
-        }, AuthenticationUtil.getSystemUserName());
     }
 
     private List<NodeRef> searchVolumesForDestruction() {
@@ -187,11 +136,7 @@ public class ArchivalsServiceImpl implements ArchivalsService {
         try {
             List<NodeRef> volumesForDestruction = new ArrayList<NodeRef>();
             for (ResultSetRow resultSetRow : resultSet) {
-                NodeRef nodeRef = resultSetRow.getNodeRef();
-                if (!nodeService.exists(nodeRef)) {
-                    continue;
-                }
-                volumesForDestruction.add(nodeRef);
+                volumesForDestruction.add(resultSetRow.getNodeRef());
             }
             return volumesForDestruction;
         } finally {
@@ -239,7 +184,7 @@ public class ArchivalsServiceImpl implements ArchivalsService {
     }
 
     private NodeRef getArchivalRoot() {
-        return generalService.getPrimaryArchivalsNodeRef();
+        return generalService.getNodeRef(ArchivalsModel.Repo.ARCHIVALS_SPACE, archivalsStore);
     }
 
     private NodeRef getTempArchivalRoot() {
@@ -282,16 +227,7 @@ public class ArchivalsServiceImpl implements ArchivalsService {
         this.adrService = adrService;
     }
 
-    public void setDocumentService(DocumentService documentService) {
-        this.documentService = documentService;
-    }
-
-    public void setCaseService(CaseService caseService) {
-        this.caseService = caseService;
-    }
-
     public void setArchivalsStore(String archivalsStore) {
         this.archivalsStore = new StoreRef(archivalsStore);
     }
-
 }

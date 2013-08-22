@@ -20,6 +20,7 @@ import javax.faces.component.UIInput;
 import javax.faces.component.UIOutput;
 import javax.faces.component.UIParameter;
 import javax.faces.component.html.HtmlCommandButton;
+import javax.faces.component.html.HtmlCommandLink;
 import javax.faces.component.html.HtmlInputText;
 import javax.faces.component.html.HtmlOutputLink;
 import javax.faces.component.html.HtmlPanelGrid;
@@ -51,8 +52,6 @@ import org.apache.myfaces.shared_impl.renderkit.JSFAttr;
 import ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter_ET_EN;
 import ee.webmedia.alfresco.common.propertysheet.dimensionselector.DimensionSelectorGenerator;
 import ee.webmedia.alfresco.common.propertysheet.generator.GeneralSelectorGenerator;
-import ee.webmedia.alfresco.common.propertysheet.modalLayer.ModalLayerComponent;
-import ee.webmedia.alfresco.common.propertysheet.modalLayer.ValidatingModalLayerComponent;
 import ee.webmedia.alfresco.common.propertysheet.renderkit.HtmlGridCustomChildAttrRenderer;
 import ee.webmedia.alfresco.common.propertysheet.renderkit.HtmlGroupCustomRenderer;
 import ee.webmedia.alfresco.common.propertysheet.suggester.SuggesterGenerator;
@@ -73,8 +72,6 @@ import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.TextUtil;
 
 public class TransactionsTemplateDetailsDialog extends BaseDialogBean implements Serializable {
-
-    public static final String MODAL_KEY_ENTRY_SAP_NUMBER = "entrySapNumber";
 
     private static final String EA_COMMITMENT_ITEM_HEADING_KEY = "transaction_eaCommitmentItem";
     private static final String ORIGINAL_TAX_OPTION_SEPARATOR = "¤";
@@ -433,15 +430,8 @@ public class TransactionsTemplateDetailsDialog extends BaseDialogBean implements
         }
 
         // popup to manually enter sap entry number
-        ValidatingModalLayerComponent entrySapNumber = (ValidatingModalLayerComponent) application.createComponent(ValidatingModalLayerComponent.class.getCanonicalName());
-        entrySapNumber.setId("entrySapNumber");
-        entrySapNumber.getAttributes().put(ModalLayerComponent.ATTR_HEADER_KEY, "document_invoiceEntrySapNumber_insert");
-        UIInput entryNumberInput = (UIInput) application.createComponent(HtmlInputText.COMPONENT_TYPE);
-        entryNumberInput.setId(MODAL_KEY_ENTRY_SAP_NUMBER);
-        Map attributes = entryNumberInput.getAttributes();
-        attributes.put(ValidatingModalLayerComponent.ATTR_LABEL_KEY, "document_invoiceEntrySapNumber");
-        attributes.put(ValidatingModalLayerComponent.ATTR_MANDATORY, Boolean.TRUE);
-        entrySapNumber.getChildren().add(entryNumberInput);
+        SendManuallyToSapModalComponent entrySapNumber = (SendManuallyToSapModalComponent) application.createComponent(SendManuallyToSapModalComponent.class.getCanonicalName());
+        entrySapNumber.setId("entry-sap-popup-" + listId);
         entrySapNumber.setActionListener(application.createMethodBinding("#{DialogManager.bean.sendToSapManually}", UIActions.ACTION_CLASS_ARGS));
         transactionPanel.getChildren().add(entrySapNumber);
 
@@ -668,7 +658,7 @@ public class TransactionsTemplateDetailsDialog extends BaseDialogBean implements
         tranSaveAsTemplateGrid.getChildren().add(selectTemplatelabel);
 
         SuggesterGenerator suggesterGenerator = new SuggesterGenerator();
-        suggesterGenerator.getCustomAttributes().put(SuggesterGenerator.ComponentAttributeNames.SUGGESTER_VALUES, "#{" + getBeanName() + ".getActiveTransactionTemplateNames}");
+        suggesterGenerator.getCustomAttributes().put("suggesterValues", "#{" + getBeanName() + ".getActiveTransactionTemplateNames}");
         UIComponent suggester = suggesterGenerator.generate(context, SAVEAS_TEMPLATE_NAME);
         tranSaveAsTemplateGrid.getChildren().add(suggester);
 
@@ -705,19 +695,27 @@ public class TransactionsTemplateDetailsDialog extends BaseDialogBean implements
         transTemplateSelectGroup.setId(TRANS_COMPONENT_ID_PREFIX + "select-template-panel-" + listId);
         UIOutput selectTemplatelabel = (UIOutput) application.createComponent(UIOutput.COMPONENT_TYPE);
         selectTemplatelabel.setValue(MessageUtil.getMessage("transactions_select_tempalte") + ": ");
-        List<UIComponent> children = ComponentUtil.getChildren(transTemplateSelectGroup);
-        children.add(selectTemplatelabel);
+        transTemplateSelectGroup.getChildren().add(selectTemplatelabel);
 
         GeneralSelectorGenerator selectorGenerator = new GeneralSelectorGenerator();
         HtmlSelectOneMenu transTemplateSelector = (HtmlSelectOneMenu) selectorGenerator.generateSelectComponent(context, SELECT_TEMPLATE_NAME, false);
         selectorGenerator.getCustomAttributes().put("selectionItems", "#{" + getBeanName() + ".getTransactionTemplates}");
         selectorGenerator.setupSelectComponent(context, null, null, null, transTemplateSelector, false);
         transTemplateSelector.setId(TRANS_TEMPLATE_SELECTOR);
-        ComponentUtil.addOnchangeJavascript(transTemplateSelector);
-        children.add(transTemplateSelector);
+        transTemplateSelector.getAttributes().put(
+                "styleClass",
+                GeneralSelectorGenerator.ONCHANGE_PARAM_MARKER_CLASS + GeneralSelectorGenerator.ONCHANGE_SCRIPT_START_MARKER
+                        + "var link = jQuery('#' + escapeId4JQ(currElId)).nextAll('a').get(0); link.click();");
+        transTemplateSelectGroup.getChildren().add(transTemplateSelector);
 
         // hidden link for submitting form when transTemplateSelector onchange event occurs
-        ComponentUtil.addOnchangeClickLink(application, children, "#{" + getBeanName() + ".copyFromTemplate}", TRANS_COMPONENT_ID_PREFIX + "trans-select-template-link-" + listId);
+        HtmlCommandLink transTemplateSelectorHiddenLink = new HtmlCommandLink();
+        transTemplateSelectorHiddenLink.setId(TRANS_COMPONENT_ID_PREFIX + "trans-select-template-link-" + listId);
+        transTemplateSelectorHiddenLink.setActionListener(application.createMethodBinding("#{" + getBeanName() + ".copyFromTemplate}", new Class[] { ActionEvent.class }));
+        transTemplateSelectorHiddenLink.setStyle(INLINE_STYLE_DISPLAY_NONE);
+        transTemplateSelectorHiddenLink.setOnclick("setPageScrollY();");
+
+        transTemplateSelectGroup.getChildren().add(transTemplateSelectorHiddenLink);
 
         transactionPanel.getFacets().put("title", transTemplateSelectGroup);
     }

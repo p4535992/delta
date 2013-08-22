@@ -1,27 +1,23 @@
 package ee.webmedia.alfresco.common.propertysheet.component;
 
 import java.io.IOException;
-import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
 
 import javax.faces.component.UIComponent;
 import javax.faces.component.html.HtmlOutputText;
-import javax.faces.component.html.HtmlPanelGrid;
 import javax.faces.context.FacesContext;
-import javax.faces.el.ValueBinding;
 
-import org.alfresco.service.namespace.QName;
 import org.alfresco.web.app.servlet.FacesHelper;
-import org.alfresco.web.bean.repository.Node;
+import org.alfresco.web.bean.generator.IComponentGenerator;
 import org.alfresco.web.ui.common.ComponentConstants;
 import org.alfresco.web.ui.repo.component.property.UIProperty;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 
-import ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.InlinePropertyGroupGenerator;
+import ee.webmedia.alfresco.common.propertysheet.generator.CustomAttributes;
 import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
 import ee.webmedia.alfresco.utils.ComponentUtil;
-import ee.webmedia.alfresco.utils.TextUtil;
 
 /**
  * Class that supports having custom attributes on property-sheet/show-property element, <br>
@@ -29,14 +25,24 @@ import ee.webmedia.alfresco.utils.TextUtil;
  * 
  * @author Ats Uiboupin
  */
-public class WMUIProperty extends UIProperty {
+public class WMUIProperty extends UIProperty implements CustomAttributes {
 
-    public static final String AFTER_LABEL_BOOLEAN = "_AfterLabelBoolean";
     public static final String LABEL_STYLE_CLASS = "labelStyleClass";
     public static final String DISPLAY_LABEL_PARAMETER = "displayLabelParameter";
     public static final String REPO_NODE = "__repo_node";
     public static final String DONT_RENDER_IF_DISABLED_ATTR = "dontRenderIfDisabled";
-    public static final String RENDER_CHECKBOX_AFTER_LABEL = "renderCheckboxAfterLabel";
+    protected Map<String, String> propertySheetItemAttributes;
+
+    @Override
+    protected IComponentGenerator getComponentGenerator(FacesContext context, String componentGeneratorName) {
+        IComponentGenerator compGenerator = FacesHelper.getComponentGenerator(context, componentGeneratorName);
+        // add all attributes from property-sheet/show-property element if current generator supports custom attributes
+        if (compGenerator instanceof CustomAttributes) {
+            CustomAttributes gen = (CustomAttributes) compGenerator;
+            gen.setCustomAttributes(propertySheetItemAttributes);
+        }
+        return compGenerator;
+    }
 
     @Override
     public boolean isRendered() {
@@ -45,7 +51,7 @@ public class WMUIProperty extends UIProperty {
         if (getChildCount() == 0) {
             // get the variable being used from the parent
             UIComponent parent = getParent();
-            if (!(parent instanceof UIPropertySheet)) {
+            if ((parent instanceof UIPropertySheet) == false) {
                 throw new IllegalStateException(getIncorrectParentMsg());
             }
             // only build the components if there are currently no children
@@ -60,44 +66,26 @@ public class WMUIProperty extends UIProperty {
         }
         // --------------------------------------------------------
         if (getChildCount() >= 2) {
-            UIComponent child = getChildren().get(1);
+            UIComponent child = (UIComponent) getChildren().get(1);
             if (Boolean.TRUE.equals(child.getAttributes().get(DONT_RENDER_IF_DISABLED_ATTR)) && ComponentUtil.isComponentDisabledOrReadOnly(child)) {
                 return false;
             }
-            if (getParent() instanceof WMUIPropertySheet) {
-                WMUIPropertySheet parent = (WMUIPropertySheet) getParent();
-                if (!parent.inEditMode() && !parent.isShowUnvalued()) {
-                    if (child instanceof HandlesShowUnvalued) {
-                        if (!((HandlesShowUnvalued) child).isShow()) {
-                            return false;
-                        }
-                    } else {
-                        @SuppressWarnings("unchecked")
-                        List<QName> inlinePropertyGroupPropNames = (List<QName>) ComponentUtil.getAttributes(child).get(
-                                InlinePropertyGroupGenerator.INLINE_PROPERTY_GROUP_PROP_NAMES_ATTR);
-                        if (inlinePropertyGroupPropNames != null) {
-                            Node node = parent.getNode();
-                            for (QName propName : inlinePropertyGroupPropNames) {
-                                Object value = node.getProperties().get(propName.toString());
-                                if (TextUtil.isValueOrListNotBlank(value)) {
-                                    return super.isRendered();
-                                }
-                            }
-                            return false;
-                        }
-                        ValueBinding vb = child.getValueBinding("value");
-                        if (vb == null) {
-                            return false;
-                        }
-                        Object value = vb.getValue(getFacesContext());
-                        if (!TextUtil.isValueOrListNotBlank(value)) {
-                            return false;
-                        }
-                    }
-                }
-            }
         }
         return super.isRendered();
+    }
+
+    // START: getters / setters
+    @Override
+    public Map<String, String> getCustomAttributes() {
+        if (propertySheetItemAttributes == null) {
+            propertySheetItemAttributes = new HashMap<String, String>(0);
+        }
+        return propertySheetItemAttributes;
+    }
+
+    @Override
+    public void setCustomAttributes(Map<String, String> propertySheetItemAttributes) {
+        this.propertySheetItemAttributes = propertySheetItemAttributes;
     }
 
     @Override
@@ -105,11 +93,7 @@ public class WMUIProperty extends UIProperty {
         HtmlOutputText label = (HtmlOutputText) context.getApplication().createComponent("javax.faces.HtmlOutputText");
         label.setRendererType(ComponentConstants.JAVAX_FACES_TEXT);
         FacesHelper.setupComponentId(context, label, "label_" + getName());
-        if (isCheckboxRendered()) {
-            getChildren().add(createCheckboxAfterLabel(context, propSheet, label));
-        } else {
-            getChildren().add(label);
-        }
+        getChildren().add(label);
 
         // Check if config has overriden the label with parameter
         if (getCustomAttributes().containsKey(DISPLAY_LABEL_PARAMETER)) {
@@ -125,29 +109,7 @@ public class WMUIProperty extends UIProperty {
         label.setStyleClass(getCustomAttributes().get(LABEL_STYLE_CLASS));
     }
 
-    private boolean isCheckboxRendered() {
-        return new Boolean(getCustomAttributes().get(RENDER_CHECKBOX_AFTER_LABEL));
-    }
-
-    private UIComponent createCheckboxAfterLabel(FacesContext context, UIPropertySheet propSheet, HtmlOutputText label) {
-        final HtmlPanelGrid container = (HtmlPanelGrid) context.getApplication().createComponent(HtmlPanelGrid.COMPONENT_TYPE);
-        container.setWidth("100%");
-        container.setColumns(2);
-        UIComponent component = context.getApplication().createComponent(ComponentConstants.JAVAX_FACES_SELECT_BOOLEAN);
-        component.setRendererType(ComponentConstants.JAVAX_FACES_CHECKBOX);
-        component.setValueBinding("value", ComponentUtil.createValueBinding(context, propSheet.getVar(), getName() + AFTER_LABEL_BOOLEAN));
-        ComponentUtil.addChildren(container, label, component);
-        container.setColumnClasses((String) propSheet.getAttributes().get("labelStyleClass"));
-        return container;
-    }
-
-    public static QName getLabelBoolean(QName propQname) {
-        return QName.createQName(propQname.toString() + WMUIProperty.AFTER_LABEL_BOOLEAN);
-    }
-
-    public static QName getPropertyFromLabelBoolean(QName labelBooleanQname) {
-        return QName.createQName(TextUtil.replaceLast(labelBooleanQname.toString(), WMUIProperty.AFTER_LABEL_BOOLEAN, ""));
-    }
+    // END: getters / setters
 
     @SuppressWarnings("unchecked")
     @Override

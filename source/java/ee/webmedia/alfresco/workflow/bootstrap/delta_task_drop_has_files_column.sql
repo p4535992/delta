@@ -1,1 +1,0 @@
-ALTER TABLE delta_task DROP COLUMN has_files;

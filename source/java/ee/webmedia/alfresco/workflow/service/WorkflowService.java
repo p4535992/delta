@@ -1,7 +1,5 @@
 package ee.webmedia.alfresco.workflow.service;
 
-import java.io.Serializable;
-import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -19,7 +17,6 @@ import ee.webmedia.alfresco.workflow.exception.WorkflowChangedException;
 import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowEventListener;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowEventListenerWithModifications;
-import ee.webmedia.alfresco.workflow.service.event.WorkflowMultiEventListener;
 import ee.webmedia.alfresco.workflow.service.type.WorkflowType;
 
 /**
@@ -50,13 +47,16 @@ public interface WorkflowService {
 
     // Eelseadistatud terviktöövoogude majandamine administraatori all
 
-    List<CompoundWorkflowDefinition> getCompoundWorkflowDefinitions(boolean getUserFullName);
+    List<CompoundWorkflowDefinition> getCompoundWorkflowDefinitions();
 
     CompoundWorkflowDefinition getCompoundWorkflowDefinition(NodeRef compoundWorkflowDefinition);
 
     CompoundWorkflowDefinition saveCompoundWorkflowDefinition(CompoundWorkflowDefinition compoundWorkflowDefinition);
 
     CompoundWorkflowDefinition getNewCompoundWorkflowDefinition();
+
+    // Dokumendi ekraanil terviktöövoo alustamise menüü
+    List<CompoundWorkflowDefinition> getCompoundWorkflowDefinitions(QName documentType, String documentStatus);
 
     // new in-memory object, based on existing compoundWorkflow definition
     CompoundWorkflow getNewCompoundWorkflow(NodeRef compoundWorkflowDefinition, NodeRef parent);
@@ -80,17 +80,27 @@ public interface WorkflowService {
 
     List<Task> getTasks4DelegationHistory(Node delegatableTask);
 
-    CompoundWorkflow startCompoundWorkflow(CompoundWorkflow compoundWorkflow);
+    CompoundWorkflow saveAndStartCompoundWorkflow(CompoundWorkflow compoundWorkflow);
 
-    CompoundWorkflow finishCompoundWorkflow(CompoundWorkflow compoundWorkflow);
+    CompoundWorkflow startCompoundWorkflow(NodeRef compoundWorkflow);
 
-    CompoundWorkflow stopCompoundWorkflow(CompoundWorkflow compoundWorkflow);
+    CompoundWorkflow saveAndFinishCompoundWorkflow(CompoundWorkflow compoundWorkflow);
 
-    CompoundWorkflow continueCompoundWorkflow(CompoundWorkflow compoundWorkflow);
+    CompoundWorkflow saveAndStopCompoundWorkflow(CompoundWorkflow compoundWorkflow);
+
+    CompoundWorkflow stopCompoundWorkflow(NodeRef compoundWorkflow);
+
+    CompoundWorkflow saveAndContinueCompoundWorkflow(CompoundWorkflow compoundWorkflow);
+
+    CompoundWorkflow continueCompoundWorkflow(NodeRef compoundWorkflow);
+
+    void stopAllCompoundWorkflows(NodeRef parent);
+
+    void continueAllCompoundWorkflows(NodeRef parent);
 
     CompoundWorkflow saveAndCopyCompoundWorkflow(CompoundWorkflow compoundWorkflow);
 
-    int getActiveResponsibleTasks(NodeRef document, QName workflowType);
+    int getActiveResponsibleAssignmentTasks(NodeRef document);
 
     /**
      * @param compoundWorkflow
@@ -111,7 +121,6 @@ public interface WorkflowService {
     /**
      * Save task properties and finish task with specified outcome.
      * 
-     * @param removedFiles
      * @throws WorkflowChangedException If task's status is not IN_PROGRESS or ownerId does not equal to current run-as user.
      */
     void finishInProgressTask(Task task, int outcomeIndex) throws WorkflowChangedException;
@@ -126,7 +135,7 @@ public interface WorkflowService {
 
     Set<Task> getTasks(NodeRef docRef, Predicate<Task> predicate);
 
-    void setTaskOwner(NodeRef task, String ownerId, boolean retainPreviousOwnerId);
+    void setTaskOwner(NodeRef task, String ownerId);
 
     // Filtering
 
@@ -159,7 +168,7 @@ public interface WorkflowService {
 
     boolean hasNoStoppedOrInprogressCompoundWorkflows(NodeRef parent);
 
-    void finishTasksOrCompoundWorkflowsOnRegisterDoc(NodeRef docRef, String comment);
+    void finishCompoundWorkflowsOnRegisterDoc(NodeRef docRef, String comment);
 
     boolean isSendableExternalWorkflowDoc(NodeRef docNodeRef);
 
@@ -179,50 +188,6 @@ public interface WorkflowService {
 
     boolean hasUnfinishedReviewTasks(NodeRef docNode);
 
-    boolean hasTaskOfType(NodeRef docRef, QName... workflowTypes);
-
-    boolean getOrderAssignmentCategoryEnabled();
-
-    boolean isOrderAssignmentWorkflowEnabled();
-
-    boolean isConfirmationWorkflowEnabled();
-
-    boolean hasInProgressActiveResponsibleTasks(NodeRef document);
-
-    boolean hasInProgressOtherUserOrderAssignmentTasks(NodeRef originalDocRef);
-
-    CompoundWorkflow getNewCompoundWorkflow(Node compoundWorkflowDefinition, NodeRef parent);
-
-    void createDueDateExtension(CompoundWorkflow compoundWorkflow, NodeRef nodeRef);
-
-    void registerMultiEventListener(WorkflowMultiEventListener listener);
-
-    Task getTaskWithoutParentAndChildren(NodeRef nodeRef, Workflow workflow, boolean copy);
-
-    Map<QName, WorkflowType> getWorkflowTypesByTask();
-
-    NodeRef getCompoundWorkflowDefinitionByName(String newCompWorkflowDefinitionName, String runAsUser, boolean checkGlobalDefinitions);
-
-    NodeRef createCompoundWorkflowDefinition(CompoundWorkflow compoundWorkflow, String userId, String newCompWorkflowDefinitionName);
-
-    NodeRef overwriteExistingCompoundWorkflowDefinition(CompoundWorkflow compoundWorkflow, String userId, String existingCompWorkflowDefinitionName);
-
-    void deleteCompoundWorkflowDefinition(String existingCompWorkflowDefinitionName, String runAsUser);
-
-    List<CompoundWorkflowDefinition> getUserCompoundWorkflowDefinitions(String userId);
-
-    List<Task> getWorkflowTasks(NodeRef workflow);
-
-    Map<QName, Collection<QName>> getTaskDataTypeDefaultAspects();
-
-    Map<QName, QName> getTaskPrefixedQNames();
-
-    Map<QName, List<QName>> getTaskDataTypeDefaultProps();
-
-    QName getNodeRefType(NodeRef nodeRef);
-
-    Task createTaskInMemory(NodeRef wfRef, WorkflowType workflowType, Map<QName, Serializable> props);
-
-    void retrieveTaskFiles(Task task, List<NodeRef> taskFiles);
+    boolean hasReviewTask(Node docNode);
 
 }

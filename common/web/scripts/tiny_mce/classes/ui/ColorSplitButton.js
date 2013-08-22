@@ -1,11 +1,11 @@
 /**
  * ColorSplitButton.js
  *
- * Copyright, Moxiecode Systems AB
+ * Copyright 2009, Moxiecode Systems AB
  * Released under LGPL License.
  *
- * License: http://www.tinymce.com/license
- * Contributing: http://www.tinymce.com/contributing
+ * License: http://tinymce.moxiecode.com/license
+ * Contributing: http://tinymce.moxiecode.com/contributing
  */
 
 (function(tinymce) {
@@ -26,12 +26,11 @@
 		 * @method ColorSplitButton
 		 * @param {String} id Control id for the color split button.
 		 * @param {Object} s Optional name/value settings object.
-		 * @param {Editor} ed The editor instance this button is for.
 		 */
-		ColorSplitButton : function(id, s, ed) {
+		ColorSplitButton : function(id, s) {
 			var t = this;
 
-			t.parent(id, s, ed);
+			t.parent(id, s);
 
 			/**
 			 * Settings object.
@@ -94,7 +93,7 @@
 			p2 = DOM.getPos(e);
 			DOM.setStyles(t.id + '_menu', {
 				left : p2.x,
-				top : p2.y + e.firstChild.clientHeight,
+				top : p2.y + e.clientHeight,
 				zIndex : 200000
 			});
 			e = 0;
@@ -111,16 +110,6 @@
 				DOM.select('a', t.id + '_menu')[0].focus(); // Select first link
 			}
 
-			t.keyboardNav = new tinymce.ui.KeyboardNavigation({
-				root: t.id + '_menu',
-				items: DOM.select('a', t.id + '_menu'),
-				onCancel: function() {
-					t.hideMenu();
-					t.focus();
-				}
-			});
-
-			t.keyboardNav.focus();
 			t.isMenuVisible = 1;
 		},
 
@@ -134,22 +123,20 @@
 		hideMenu : function(e) {
 			var t = this;
 
-			if (t.isMenuVisible) {
-				// Prevent double toogles by canceling the mouse click event to the button
-				if (e && e.type == "mousedown" && DOM.getParent(e.target, function(e) {return e.id === t.id + '_open';}))
-					return;
+			// Prevent double toogles by canceling the mouse click event to the button
+			if (e && e.type == "mousedown" && DOM.getParent(e.target, function(e) {return e.id === t.id + '_open';}))
+				return;
 
-				if (!e || !DOM.getParent(e.target, '.mceSplitButtonMenu')) {
-					DOM.removeClass(t.id, 'mceSplitButtonSelected');
-					Event.remove(DOM.doc, 'mousedown', t.hideMenu, t);
-					Event.remove(t.id + '_menu', 'keydown', t._keyHandler);
-					DOM.hide(t.id + '_menu');
-				}
-
-				t.isMenuVisible = 0;
-				t.onHideMenu.dispatch();
-				t.keyboardNav.destroy();
+			if (!e || !DOM.getParent(e.target, '.mceSplitButtonMenu')) {
+				DOM.removeClass(t.id, 'mceSplitButtonSelected');
+				Event.remove(DOM.doc, 'mousedown', t.hideMenu, t);
+				Event.remove(t.id + '_menu', 'keydown', t._keyHandler);
+				DOM.hide(t.id + '_menu');
 			}
+
+			t.onHideMenu.dispatch(t);
+
+			t.isMenuVisible = 0;
 		},
 
 		/**
@@ -158,13 +145,13 @@
 		 * @method renderMenu
 		 */
 		renderMenu : function() {
-			var t = this, m, i = 0, s = t.settings, n, tb, tr, w, context;
+			var t = this, m, i = 0, s = t.settings, n, tb, tr, w;
 
-			w = DOM.add(s.menu_container, 'div', {role: 'listbox', id : t.id + '_menu', 'class' : s.menu_class + ' ' + s['class'], style : 'position:absolute;left:0;top:-1000px;'});
+			w = DOM.add(s.menu_container, 'div', {id : t.id + '_menu', 'class' : s['menu_class'] + ' ' + s['class'], style : 'position:absolute;left:0;top:-1000px;'});
 			m = DOM.add(w, 'div', {'class' : s['class'] + ' mceSplitButtonMenu'});
 			DOM.add(m, 'span', {'class' : 'mceMenuLine'});
 
-			n = DOM.add(m, 'table', {role: 'presentation', 'class' : 'mceColorSplitMenu'});
+			n = DOM.add(m, 'table', {'class' : 'mceColorSplitMenu'});
 			tb = DOM.add(n, 'tbody');
 
 			// Generate color grid
@@ -178,38 +165,20 @@
 				}
 
 				n = DOM.add(tr, 'td');
-				var settings = {
+
+				n = DOM.add(n, 'a', {
 					href : 'javascript:;',
 					style : {
 						backgroundColor : '#' + c
 					},
-					'title': t.editor.getLang('colors.' + c, c),
-					'data-mce-color' : '#' + c
-				};
-
-				// adding a proper ARIA role = button causes JAWS to read things incorrectly on IE.
-				if (!tinymce.isIE ) {
-					settings.role = 'option';
-				}
-
-				n = DOM.add(n, 'a', settings);
-
-				if (t.editor.forcedHighContrastMode) {
-					n = DOM.add(n, 'canvas', { width: 16, height: 16, 'aria-hidden': 'true' });
-					if (n.getContext && (context = n.getContext("2d"))) {
-						context.fillStyle = '#' + c;
-						context.fillRect(0, 0, 16, 16);
-					} else {
-						// No point leaving a canvas element around if it's not supported for drawing on anyway.
-						DOM.remove(n);
-					}
-				}
+					_mce_color : '#' + c
+				});
 			});
 
 			if (s.more_colors_func) {
 				n = DOM.add(tb, 'tr');
 				n = DOM.add(n, 'td', {colspan : s.grid_width, 'class' : 'mceMoreColors'});
-				n = DOM.add(n, 'a', {role: 'option', id : t.id + '_more', href : 'javascript:;', onclick : 'return false;', 'class' : 'mceMoreColors'}, s.more_colors_title);
+				n = DOM.add(n, 'a', {id : t.id + '_more', href : 'javascript:;', onclick : 'return false;', 'class' : 'mceMoreColors'}, s.more_colors_title);
 
 				Event.add(n, 'click', function(e) {
 					s.more_colors_func.call(s.more_colors_scope || this);
@@ -219,18 +188,15 @@
 
 			DOM.addClass(m, 'mceColorSplitMenu');
 
-			// Prevent IE from scrolling and hindering click to occur #4019
-			Event.add(t.id + '_menu', 'mousedown', function(e) {return Event.cancel(e);});
-
 			Event.add(t.id + '_menu', 'click', function(e) {
 				var c;
 
-				e = DOM.getParent(e.target, 'a', tb);
+				e = e.target;
 
-				if (e && e.nodeName.toLowerCase() == 'a' && (c = e.getAttribute('data-mce-color')))
+				if (e.nodeName == 'A' && (c = e.getAttribute('_mce_color')))
 					t.setColor(c);
 
-				return false; // Prevent IE auto save warning
+				return Event.cancel(e); // Prevent IE auto save warning
 			});
 
 			return w;
@@ -243,23 +209,13 @@
 		 * @param {String} c Color code value in hex for example: #FF00FF
 		 */
 		setColor : function(c) {
-			this.displayColor(c);
-			this.hideMenu();
-			this.settings.onselect(c);
-		},
-		
-		/**
-		 * Change the currently selected color for the control.
-		 *
-		 * @method displayColor
-		 * @param {String} c Color code value in hex for example: #FF00FF
-		 */
-		displayColor : function(c) {
 			var t = this;
 
 			DOM.setStyle(t.id + '_preview', 'backgroundColor', c);
 
 			t.value = c;
+			t.hideMenu();
+			t.settings.onselect(c);
 		},
 
 		/**
@@ -283,17 +239,11 @@
 		 * @method destroy
 		 */
 		destroy : function() {
-			var self = this;
+			this.parent();
 
-			self.parent();
-
-			Event.clear(self.id + '_menu');
-			Event.clear(self.id + '_more');
-			DOM.remove(self.id + '_menu');
-
-			if (self.keyboardNav) {
-				self.keyboardNav.destroy();
-			}
+			Event.clear(this.id + '_menu');
+			Event.clear(this.id + '_more');
+			DOM.remove(this.id + '_menu');
 		}
 	});
 })(tinymce);

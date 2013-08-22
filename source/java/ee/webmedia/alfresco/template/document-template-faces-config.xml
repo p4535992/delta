@@ -19,7 +19,7 @@
          <value>#{BrowseBean}</value>
       </managed-property>
    </managed-bean>
-   
+
    <managed-bean>
       <managed-bean-name>AddDocumentTemplateDialog</managed-bean-name>
       <managed-bean-class>ee.webmedia.alfresco.template.web.AddDocumentTemplateDialog</managed-bean-class>
@@ -52,10 +52,9 @@
          <property-name>dictionaryService</property-name>
          <value>#{DictionaryService}</value>
       </managed-property>
+      <managed-property>
+         <property-name>generalService</property-name>
+         <value>#{GeneralService}</value>
+      </managed-property>
    </managed-bean>
-   
-   <converter>
-      <converter-id>ee.webmedia.alfresco.template.web.DocumentTemplateTypeConverter</converter-id>
-      <converter-class>ee.webmedia.alfresco.template.web.DocumentTemplateTypeConverter</converter-class>
-   </converter>
 </faces-config>

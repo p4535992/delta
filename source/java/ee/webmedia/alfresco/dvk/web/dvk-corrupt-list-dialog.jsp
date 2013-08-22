@@ -45,24 +45,18 @@
          <f:facet name="header">
             <h:outputText id="col3-header" value="#{msg.file_added_time}" styleClass="header" />
          </f:facet>
-         <r:permissionEvaluator value="#{r.node}" allow="viewDocumentFiles">
-             <a:actionLink id="col3-act1" value="#{r.createdTimeStr}" href="#{r.downloadUrl}" target="_blank" showLink="false"
-               styleClass="inlineAction no-underline" rendered="#{r.digiDocItem == false}" />
-          </r:permissionEvaluator>
-          <r:permissionEvaluator value="#{r.node}" deny="viewDocumentFiles">
-          	 <h:outputText id="col3-txt" value="#{r.created}" rendered="#{r.digiDocItem == false}">
-            	<a:convertXMLDate type="both" pattern="#{msg.date_time_pattern}" />
-         	</h:outputText>
-           </r:permissionEvaluator>
+         <h:outputText id="col3-txt" value="#{r.created}" rendered="#{r.digiDocItem == false}">
+            <a:convertXMLDate type="both" pattern="#{msg.date_time_pattern}" />
+         </h:outputText>
       </a:column>
 
       <%-- Remove column --%>
       <a:column id="col7">
          <r:permissionEvaluator value="#{r.node}" allow="DeleteNode">
-            <a:actionLink id="col7-act" value="#{r.name}" actionListener="#{DeleteDialog.setupDeleteDialog}" action="dialog:deleteDialog" showLink="false"
+            <a:actionLink id="col7-act" value="#{r.name}" actionListener="#{BrowseBean.setupContentAction}" action="dialog:deleteFile" showLink="false"
                image="/images/icons/delete.gif" tooltip="#{msg.file_remove}">
-               <f:param name="nodeRef" value="#{r.nodeRef}"/>
-               <f:param name="confirmMessagePlaceholder0" value="#{r.name}"/>
+               <f:param name="id" value="#{r.id}" />
+               <f:param name="ref" value="#{r.nodeRef}" />
             </a:actionLink>
          </r:permissionEvaluator>
       </a:column>
