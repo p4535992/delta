@@ -623,22 +623,34 @@ function showModal(target, height){
    openModalContent = target;
 
    $jQ("#overlay").css("display","block");
-   $jQ("#" + target).css("display","block");
-   if (height != null) {
-      $jQ("#" + target).css("height",height);
+   var modal = $jQ("#" + target);
+   modal.css("display","block");
+   var parentModal = modal.parent().closest(".modalwrap");
+   
+   if (parentModal) {
+      parentModal.show(); // regulates display property
+      height = parentModal.height();
    }
-   $jQ("#" + target).show();
-   $jQ("#" + target).find(".genericpicker-input").focus();
+
+   if (height != null) {
+      modal.css("min-height", height);
+   }
+   modal.show();
+   modal.find(".genericpicker-input").focus();
    return false;
 }
 
 function hideModal(){
-   if (openModalContent != null){
-     if(isIE(7) && titlebarIndex != null) {
-        $jQ("#titlebar").css("zIndex", titlebarIndex);
-     }
-     $jQ("#" + openModalContent).hide();
-      $jQ("#overlay").remove();
+   if (openModalContent != null) {
+      if(isIE(7) && titlebarIndex != null) {
+         $jQ("#titlebar").css("zIndex", titlebarIndex);
+      }
+      var modal = $jQ("#" + openModalContent);
+      modal.hide();
+      var parentModal = modal.parent().closest(".modalwrap");
+      if (parentModal.length < 1) {
+         $jQ("#overlay").remove();
+      }
    }
    return false;
 }
@@ -1451,7 +1463,7 @@ function initWithScreenProtected() {
    window.dhtmlHistory.add(randomHistoryHash(), null);
 
 
-   jQuery(".dailyAllowanceDaysField, .dailyAllowanceRateField").live('change', function(event) {
+   jQuery(".dailyAllowanceDaysField:input, .dailyAllowanceRateField:input").live('change', function(event) {
       var elem = $jQ(this);
       // Calculate sum for current row
       var row = elem.closest("tr");
@@ -1478,10 +1490,10 @@ function initWithScreenProtected() {
          }
       });
 
-      row.closest("div").closest("tr").next().find(".dailyAllowanceTotalSumField").val(totalSum);
+      row.closest("div").closest("tr").next().find(".dailyAllowanceTotalSumField").first().text(totalSum);
    });
 
-   jQuery(".expectedExpenseSumField").live('keyup', function(event) {
+   jQuery(".expectedExpenseSumField:input").live('keyup', function(event) {
       var elem = $jQ(this);
       var totalSum = 0;
       var sum = 0;
@@ -1495,8 +1507,8 @@ function initWithScreenProtected() {
          }
       });
 
-      var totalField = elem.closest("div").closest("tr").next().find(".expensesTotalSumField");
-      totalField.val(totalSum);
+      var totalField = elem.closest("div").closest("tr").next().find(".expensesTotalSumField").first();
+      totalField.text(totalSum);
    });
 
    jQuery(".invoiceTotalSum, .invoiceVat").live('change', function(event) {
@@ -2071,7 +2083,8 @@ function handleHtmlLoaded(context, setFocus, selects) {
    propSheetValidateRegisterOnDocumentReady();
 
    // this method should be called after critical activities have been done in handleHtmlLoaded as it displays alerts and possibly submits page
-   confirmWorkflow();
+   confirmWorkflow('workflow-confirmation-messages', 'workflow-after-confirmation-link');
+   confirmWorkflow("workflow-delegation-confirmation-messages", "workflow-after-delegation-confirmation-link");
 
    // trigger keyup event (for validation & textarea resize) on paste. Can't use live() because of IE
    $jQ("textarea, input[type='text']", context).bind("paste", function(){
@@ -2190,8 +2203,8 @@ function sendToSapManually(){
    return showModal('entrySapNumber_popup');
 }
 
-function confirmWorkflow(){
-   var confirmationMessagesSelect = $jQ("[class='workflow-confirmation-messages']").get(0);
+function confirmWorkflow(selectClass, confirmationLinkClass){
+   var confirmationMessagesSelect = $jQ("[class='" + selectClass + "']").get(0);
    if(confirmationMessagesSelect == undefined){
       return false;
    }
@@ -2200,7 +2213,7 @@ function confirmWorkflow(){
          return false;
       }
    }
-   $jQ("[class='workflow-after-confirmation-link']").eq(0).click();
+   $jQ("[class='" + confirmationLinkClass + "']").eq(0).click();
 }
 
 function clearFormHiddenParams(currFormName, newTargetVal) {

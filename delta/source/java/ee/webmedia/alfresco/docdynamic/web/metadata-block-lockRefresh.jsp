@@ -42,5 +42,13 @@ function requestForLockRefreshSuccess(xml) {
 function requestForLockRefreshFailure() {
    $jQ.log("Refreshing lock in server side failed");
 }
+$jQ(window).on('beforeunload', function(){
+   var uri = getContextPath() + '/ajax/invoke/DocumentLockHelperBean.unlockNode';
+   $jQ.ajax({
+      type: 'POST',
+      url: uri,
+      async: false
+   });
+});
 </script>
 </f:verbatim>

@@ -83,7 +83,10 @@ import ee.webmedia.alfresco.common.propertysheet.modalLayer.ModalLayerComponent.
 import ee.webmedia.alfresco.common.propertysheet.modalLayer.ValidatingModalLayerComponent;
 import ee.webmedia.alfresco.common.propertysheet.renderer.HtmlButtonRenderer;
 import ee.webmedia.alfresco.common.propertysheet.renderkit.PropertySheetGridRenderer;
+import ee.webmedia.alfresco.common.propertysheet.search.Search;
+import ee.webmedia.alfresco.common.propertysheet.search.UserSearchGenerator;
 import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.common.web.UserContactGroupSearchBean;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 import ee.webmedia.alfresco.docconfig.generator.DialogDataProvider;
 import ee.webmedia.alfresco.docdynamic.web.DocumentDynamicBlock;
@@ -145,6 +148,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
     /** task index attribute name */
     private static final String ATTRIB_INDEX = "index";
     private static final String MODAL_KEY_REASON = "reason";
+    private static final String MODAL_KEY_EXTENDER = "extender";
     private static final String MODAL_KEY_DUE_DATE = "dueDate";
     private static final String MODAL_KEY_PROPOSED_DUE_DATE = "proposedDueDate";
     private FileBlockBean fileBlockBean;
@@ -169,6 +173,8 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
     private String challengeId;
     private String signature;
     private MessageData signatureError;
+    private String dueDateExtenderUsername;
+    private String dueDateExtenderUserFullname;
 
     @Override
     public void resetOrInit(DialogDataProvider provider) {
@@ -200,6 +206,8 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         removedFiles = null;
         delegationBean.reset();
         reviewNotesRichList = null;
+        dueDateExtenderUsername = null;
+        dueDateExtenderUserFullname = null;
     }
 
     public void restore(String action) {
@@ -519,7 +527,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         }
         Task initiatingTask = myTasks.get(taskIndex);
 
-        getWorkflowService().createDueDateExtension(reason, newDate, dueDate, initiatingTask, docRef);
+        getWorkflowService().createDueDateExtension(reason, newDate, dueDate, initiatingTask, docRef, dueDateExtenderUsername, dueDateExtenderUserFullname);
 
         MessageUtil.addInfoMessage("task_sendDueDateExtensionRequest_success_defaultMsg");
         getDocumentDialogHelperBean().switchMode(false);
@@ -898,7 +906,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         ValidatingModalLayerComponent dueDateExtensionLayer = null;
         for (Task task : getMyTasks()) {
             if (task.isType(WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_TASK, WorkflowSpecificModel.Types.ASSIGNMENT_TASK)) {
-                dueDateExtensionLayer = addDueDateExtensionLayer(panelGroupChildren, context, app);
+                dueDateExtensionLayer = addDueDateExtensionLayer(panelGroupChildren, context, app, task.getCreatorId(), task.getCreatorName());
                 log.debug("Added dueDateExtensionLayer to parent=" + dueDateExtensionLayer.getParent());
                 break;
             }
@@ -1023,7 +1031,8 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         }
     }
 
-    private ValidatingModalLayerComponent addDueDateExtensionLayer(List<UIComponent> panelGroupChildren, FacesContext context, Application app) {
+    private ValidatingModalLayerComponent addDueDateExtensionLayer(List<UIComponent> panelGroupChildren, FacesContext context, Application app, String defaultUsername,
+            String defaultUserFullname) {
 
         ValidatingModalLayerComponent dueDateExtensionLayer = (ValidatingModalLayerComponent) app.createComponent(ValidatingModalLayerComponent.class.getCanonicalName());
         dueDateExtensionLayer.setId(TASK_DUE_DATE_EXTENSION_ID);
@@ -1046,6 +1055,21 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         reasonInput.setValue(null);
         layerChildren.add(reasonInput);
 
+        UserSearchGenerator userGenerator = new UserSearchGenerator();
+        Search search = (Search) userGenerator.generate(context, "workflow_dueDateExtension_extender");
+        search.setId(MODAL_KEY_EXTENDER);
+        Map<String, Object> attributes = ComponentUtil.getAttributes(search);
+        attributes.put(ValidatingModalLayerComponent.ATTR_LABEL_KEY, "workflow_dueDateExtension_extender");
+        attributes.put(ValidatingModalLayerComponent.ATTR_MANDATORY, Boolean.TRUE);
+        attributes.put(Search.PICKER_CALLBACK_KEY, "#{UserContactGroupSearchBean.searchAll}");
+        attributes.put(Search.FILTER_INDEX, UserContactGroupSearchBean.USERS_FILTER);
+        attributes.put(Search.SETTER_CALLBACK, "#{WorkflowBlockBean.assignDueDateExtender}");
+        attributes.put(Search.DATA_TYPE_KEY, String.class);
+        dueDateExtenderUsername = defaultUsername;
+        dueDateExtenderUserFullname = defaultUserFullname;
+        search.setValueBinding("value", context.getApplication().createValueBinding("#{WorkflowBlockBean.dueDateExtenderUserFullname}"));
+        layerChildren.add(search);
+
         UIInput dueDateInput = addDateInput(context, layerChildren, "workflow_dueDateExtension_dueDate", MODAL_KEY_DUE_DATE);
         dueDateInput.setValue(CalendarUtil.addWorkingDaysToDate(new LocalDate(), 2, getClassificatorService()).toDateTimeAtCurrentTime().toDate());
         ComponentUtil.putAttribute(dueDateInput, ValidatingModalLayerComponent.ATTR_PRESERVE_VALUES, Boolean.TRUE);
@@ -1054,6 +1078,15 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         panelGroupChildren.add(dueDateExtensionLayer);
 
         return dueDateExtensionLayer;
+    }
+
+    public void assignDueDateExtender(String result) {
+        if (StringUtils.isBlank(result)) {
+            return;
+        }
+
+        dueDateExtenderUsername = result;
+        dueDateExtenderUserFullname = BeanHelper.getUserService().getUserFullName(dueDateExtenderUsername);
     }
 
     public UIInput addDateInput(FacesContext context, List<UIComponent> layerChildren, String labelKey, String inputId) {
@@ -1310,6 +1343,22 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
 
     public void setSignature(String signature) {
         this.signature = signature;
+    }
+
+    public String getDueDateExtenderUsername() {
+        return dueDateExtenderUsername;
+    }
+
+    public void setDueDateExtenderUsername(String dueDateExtenderUsername) {
+        this.dueDateExtenderUsername = dueDateExtenderUsername;
+    }
+
+    public String getDueDateExtenderUserFullname() {
+        return dueDateExtenderUserFullname;
+    }
+
+    public void setDueDateExtenderUserFullname(String dueDateExtenderUserFullname) {
+        this.dueDateExtenderUserFullname = dueDateExtenderUserFullname;
     }
 
     // END: getters / setters

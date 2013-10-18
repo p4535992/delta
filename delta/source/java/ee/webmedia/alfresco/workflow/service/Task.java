@@ -325,6 +325,10 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
         return getDueDate() != null ? dateFormat.format(getDueDate()) : "";
     }
 
+    public String getDueDateTimeStr() {
+        return getDueDate() != null ? dateTimeFormat.format(getDueDate()) : "";
+    }
+
     public Date getProposedDueDate() {
         return getProp(WorkflowSpecificModel.Props.PROPOSED_DUE_DATE);
     }

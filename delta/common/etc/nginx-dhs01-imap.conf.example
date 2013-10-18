@@ -8,7 +8,7 @@ tcp {
 
     upstream dhs01-imap {
         # Not mandatory, but it's more efficient if same user stays on the same backend server.
-    	ip_hash;
+        ip_hash;
         server dhs-n1.example.com:1143;
     }
 

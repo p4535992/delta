@@ -28,7 +28,7 @@ public class CompoundWorkflow extends BaseWorkflowObject implements Serializable
         this.parent = parent;
     }
 
-    protected CompoundWorkflow copy() {
+    public CompoundWorkflow copy() {
         return copyImpl(new CompoundWorkflow(getNode().clone(), parent));
     }
 
@@ -86,10 +86,12 @@ public class CompoundWorkflow extends BaseWorkflowObject implements Serializable
         workflows.add(index, workflow);
     }
 
+    @Override
     public String getOwnerId() {
         return getProp(WorkflowCommonModel.Props.OWNER_ID);
     }
 
+    @Override
     public void setOwnerId(String ownerId) {
         setProp(WorkflowCommonModel.Props.OWNER_ID, ownerId);
     }

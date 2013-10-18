@@ -560,9 +560,15 @@ public class TaskListGenerator extends BaseComponentGenerator {
         String signerName = (String) docProps.get(DocumentCommonModel.Props.SIGNER_NAME);
         boolean assignSigner = StringUtils.isNotBlank(signerId) && StringUtils.isNotBlank(signerName);
         if (assignSigner) {
+            @SuppressWarnings("unchecked")
+            List<String> orgStructUnit = (List<String>) docProps.get(DocumentCommonModel.Props.SIGNER_ORG_STRUCT_UNIT);
+
             Map<String, Object> signatureTaskOwnerProps = new HashMap<String, Object>();
             signatureTaskOwnerProps.put(WorkflowCommonModel.Props.OWNER_ID.toString(), signerId);
             signatureTaskOwnerProps.put(WorkflowCommonModel.Props.OWNER_NAME.toString(), signerName);
+            if (orgStructUnit != null && !orgStructUnit.isEmpty()) {
+                signatureTaskOwnerProps.put(WorkflowCommonModel.Props.OWNER_ORGANIZATION_NAME.toString(), orgStructUnit);
+            }
             String signerEmail = (String) docProps.get(DocumentDynamicModel.Props.SIGNER_EMAIL);
             Map<QName, Serializable> userProps = BeanHelper.getUserService().getUserProperties(signerId);
             if (userProps != null) {
@@ -571,8 +577,11 @@ public class TaskListGenerator extends BaseComponentGenerator {
                 }
                 signatureTaskOwnerProps.put(WorkflowCommonModel.Props.OWNER_EMAIL.toString(), signerEmail);
                 signatureTaskOwnerProps.put(WorkflowCommonModel.Props.OWNER_JOB_TITLE.toString(), userProps.get(ContentModel.PROP_JOBTITLE));
-                signatureTaskOwnerProps.put(WorkflowCommonModel.Props.OWNER_ORGANIZATION_NAME.toString(), getOrganizationStructureService()
-                        .getOrganizationStructurePaths((String) userProps.get(ContentModel.PROP_ORGID)));
+                List<String> organizationStructurePaths = getOrganizationStructureService().getOrganizationStructurePaths((String) userProps.get(ContentModel.PROP_ORGID));
+                // Don't reset if user has manually assigned structure unit in document properties
+                if (organizationStructurePaths != null && !organizationStructurePaths.isEmpty()) {
+                    signatureTaskOwnerProps.put(WorkflowCommonModel.Props.OWNER_ORGANIZATION_NAME.toString(), organizationStructurePaths);
+                }
                 return signatureTaskOwnerProps;
             }
         }

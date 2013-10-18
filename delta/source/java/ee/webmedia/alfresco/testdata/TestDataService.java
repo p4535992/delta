@@ -302,7 +302,7 @@ public class TestDataService implements SaveListener {
         files = loadCsvMultiCols("files.csv");
         // transmittalModes?
 
-        filterFiles();
+        //filterFiles();
 
         // FUTURE: document creation, registration, file creation and workflow times that vary in the past
 
@@ -733,6 +733,7 @@ public class TestDataService implements SaveListener {
 
     private void createUsers(int count) throws Exception {
         log.info("Creating users");
+        userDataByUserName = new ConcurrentHashMap<String, Pair<NodeRef, Map<QName, Serializable>>>();
         DefaultChildApplicationContextManager authentication = BeanHelper.getSpringBean(DefaultChildApplicationContextManager.class, "Authentication");
         Collection<String> instanceIds = authentication.getInstanceIds();
         Set<String> zones = new HashSet<String>();
@@ -770,7 +771,6 @@ public class TestDataService implements SaveListener {
     private Map<String, Pair<NodeRef, Map<QName, Serializable>>> userDataByUserName;
 
     private void createSubstitutes() {
-        userDataByUserName = new ConcurrentHashMap<String, Pair<NodeRef, Map<QName, Serializable>>>();
         if (userNamesList.size() < 2) {
             return;
         }
@@ -1814,7 +1814,7 @@ public class TestDataService implements SaveListener {
                 }
                 String taskOwnerUserName = getRandom(userNamesListCopy);
                 userNamesListCopy.remove(taskOwnerUserName);
-                Map<QName, Serializable> taskOwnerProps = userDataByUserName.get(taskOwnerUserName).getSecond();
+                Map<QName, Serializable> taskOwnerProps = getUserData(taskOwnerUserName).getSecond();
                 String taskOwnerFullName = UserUtil.getPersonFullName1(taskOwnerProps);
                 String taskOwnerEmail = (String) taskOwnerProps.get(ContentModel.PROP_EMAIL);
                 String taskOwnerJobTitle = (String) taskOwnerProps.get(ContentModel.PROP_JOBTITLE);
@@ -1835,7 +1835,7 @@ public class TestDataService implements SaveListener {
                 props.put(WorkflowCommonModel.Props.OWNER_NAME, taskOwnerFullName);
                 props.put(WorkflowCommonModel.Props.OWNER_EMAIL, taskOwnerEmail);
                 props.put(WorkflowCommonModel.Props.OWNER_JOB_TITLE, taskOwnerJobTitle);
-                props.put(WorkflowCommonModel.Props.OWNER_ORGANIZATION_NAME, (Serializable) (taskOwnerStructUnit != null ? Collections.singleton(taskOwnerStructUnit.getName())
+                props.put(WorkflowCommonModel.Props.OWNER_ORGANIZATION_NAME, (Serializable) (taskOwnerStructUnit != null ? new ArrayList<String>(Arrays.asList(taskOwnerStructUnit.getName()))
                         : null));
 
                 props.put(WorkflowCommonModel.Props.DOCUMENT_TYPE, docTypeId);

@@ -2269,3 +2269,7 @@ DIV.trans-scroll TABLE {
 .padding-3 {
    padding: 3px !important;
 }
+
+.workflow-confirmation-messages, .workflow-after-confirmation-link, .workflow-delegation-confirmation-messages, .workflow-after-delegation-confirmation-link {
+   display: none;
+}

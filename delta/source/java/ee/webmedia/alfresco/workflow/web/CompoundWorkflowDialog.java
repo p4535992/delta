@@ -8,7 +8,6 @@ import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.TASK_INDEX;
 import static ee.webmedia.alfresco.workflow.web.TaskListGenerator.WF_INDEX;
 
 import java.io.Serializable;
-import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -37,7 +36,6 @@ import org.alfresco.util.Pair;
 import org.alfresco.web.app.AlfrescoNavigationHandler;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.config.DialogsConfigElement.DialogButtonConfig;
-import org.alfresco.web.ui.common.Utils;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.apache.commons.collections.Transformer;
 import org.apache.commons.collections.comparators.NullComparator;
@@ -129,6 +127,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
             , WorkflowSpecificModel.Types.CONFIRMATION_WORKFLOW
             );
     public static final String MODAL_KEY_ENTRY_COMMENT = "popup_comment";
+    List<String> profileDurations;
 
     /**
      * @param propSheet
@@ -404,14 +403,10 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
                         if (invoiceDueDate != null) {
                             Date invoiceDueDateMinus3Days = DateUtils.addDays(invoiceDueDate, -3);
                             if (!DateUtils.isSameDay(invoiceDueDateMinus3Days, taskDueDate) && taskDueDate.after(invoiceDueDateMinus3Days)) {
-                                getAndAddMessage(messages, workflow, taskDueDate, "task_confirm_invoice_task_due_date", invoiceDueDate);
+                                WorkflowUtil.getAndAddMessage(messages, workflow, taskDueDate, "task_confirm_invoice_task_due_date", invoiceDueDate);
                             }
                         }
-                        if (notInvoiceDueDate != null) {
-                            if (!DateUtils.isSameDay(notInvoiceDueDate, taskDueDate) && taskDueDate.after(notInvoiceDueDate)) {
-                                getAndAddMessage(messages, workflow, taskDueDate, "task_confirm_not_invoice_task_due_date", notInvoiceDueDate);
-                            }
-                        }
+                        WorkflowUtil.getDocmentDueDateMessage(notInvoiceDueDate, messages, workflow, taskDueDate);
                     }
                     if (!addedDueDateInPastMsg && task.isStatus(Status.NEW) && taskDueDate.before(now)) {
                         messages.add(MessageUtil.getMessage("task_confirm_due_date_in_past"));
@@ -421,15 +416,6 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
             }
         }
         return messages;
-    }
-
-    private void getAndAddMessage(List<String> messages, Workflow workflow, Date taskDueDate, String msgKey, Date date) {
-        FacesContext fc = FacesContext.getCurrentInstance();
-        DateFormat dateFormat = Utils.getDateFormat(fc);
-        String invoiceTaskDueDateConfirmationMsg = MessageUtil.getMessage(msgKey,
-                MessageUtil.getMessage(workflow.getType().getLocalName()),
-                dateFormat.format(taskDueDate), dateFormat.format(date));
-        messages.add(invoiceTaskDueDateConfirmationMsg);
     }
 
     /**
@@ -940,6 +926,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
     }
 
     private boolean validate(FacesContext context, boolean checkFinished, boolean checkInvoice) {
+        long profileStartTime = System.nanoTime();
         boolean valid = true;
         boolean activeResponsibleAssignTaskInSomeWorkFlow = false;
         // true if some orderAssignmentWorkflow in status NEW has no active responible task (but has some co-responsible tasks)
@@ -978,6 +965,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
             }
 
             boolean hasOrderAssignmentActiveResponsible = !(block.isType(WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_WORKFLOW) && block.isStatus(Status.NEW));
+            boolean validOwnerAndDueDate = true;
             for (Task task : block.getTasks()) {
                 final boolean activeResponsible = WorkflowUtil.isActiveResponsible(task) && !task.isStatus(Status.UNFINISHED);
                 if (activeResponsibleAssigneeNeeded && StringUtils.isNotBlank(task.getOwnerName()) && activeResponsible) {
@@ -987,11 +975,12 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
                 }
                 hasOrderAssignmentActiveResponsible |= activeResponsible;
                 foundOwner |= StringUtils.isNotBlank(task.getOwnerName());
-                valid = validateTaskOwnerAndDueDate(context, block, task);
-                if (!valid) {
+                validOwnerAndDueDate = validateTaskOwnerAndDueDate(context, block, task);
+                if (!validOwnerAndDueDate) {
                     break;
                 }
             }
+            valid &= validOwnerAndDueDate;
             checkOrderAssignmentResponsibleTask |= !hasOrderAssignmentActiveResponsible;
             if (activeResponsibleAssigneeNeeded && !activeResponsibleAssigneeAssigned) {
                 missingOwnerAssignment = true;

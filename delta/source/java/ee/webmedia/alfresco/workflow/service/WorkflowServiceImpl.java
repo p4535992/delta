@@ -66,14 +66,11 @@ import ee.webmedia.alfresco.parameters.service.ParametersService;
 import ee.webmedia.alfresco.privilege.service.PrivilegeService;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.FilenameUtil;
-import ee.webmedia.alfresco.utils.MessageDataImpl;
-import ee.webmedia.alfresco.utils.MessageDataWrapper;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.Predicate;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
-import ee.webmedia.alfresco.utils.UnableToPerformMultiReasonException;
 import ee.webmedia.alfresco.utils.UserUtil;
 import ee.webmedia.alfresco.versions.service.VersionsService;
 import ee.webmedia.alfresco.workflow.exception.WorkflowActiveResponsibleTaskException;
@@ -837,13 +834,22 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
     }
 
     @Override
-    public MessageDataWrapper delegate(Task assignmentTaskOriginal) throws UnableToPerformMultiReasonException {
-        MessageDataWrapper feedback = new MessageDataWrapper();
+    public void delegate(Task assignmentTaskOriginal) {
+        CompoundWorkflow compoundWorkflow = preprocessAndCopyCompoundWorkflow(assignmentTaskOriginal);
+        WorkflowEventQueue queue = getNewEventQueue();
+        for (Workflow workflow : compoundWorkflow.getWorkflows()) {
+            if (isGeneratedByDelegation(workflow)) {
+                setStatus(queue, workflow, Status.IN_PROGRESS);
+            }
+        }
+        saveCompoundWorkflow(compoundWorkflow, queue);
+    }
+
+    private CompoundWorkflow preprocessAndCopyCompoundWorkflow(Task assignmentTaskOriginal) {
         Workflow workflowOriginal = assignmentTaskOriginal.getParent();
         CompoundWorkflow cWorkflowOriginal = workflowOriginal.getParent();
         // assuming that originalWFIndex doesn't change after removing or saving
         int originalWFIndex = cWorkflowOriginal.getWorkflows().indexOf(workflowOriginal);
-        log.debug("originalCWorkflow=" + cWorkflowOriginal);
         CompoundWorkflow cWorkflowCopy = cWorkflowOriginal.copy();
         List<Workflow> cWorkflowWorkflowsCopy = cWorkflowCopy.getWorkflows();
         Workflow assignmentWorkflowCopy = cWorkflowWorkflowsCopy.get(originalWFIndex);
@@ -860,75 +866,34 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
             }
         }
 
-        { // removeEmptyDelegationTasks
-            WorkflowUtil.removeEmptyTasks(cWorkflowCopy);
-            // also remove empty workflows that could be created when information or opinion tasks are added during delegating assignment task
-            ArrayList<Integer> emptyWfIndexes = new ArrayList<Integer>();
-            int wfIndex = 0;
-            for (Workflow workflow1 : cWorkflowWorkflowsCopy) {
-                if (WorkflowUtil.isGeneratedByDelegation(workflow1) && workflow1.getTasks().isEmpty()) {
-                    emptyWfIndexes.add(wfIndex);
-                }
-                wfIndex++;
+        WorkflowUtil.removeEmptyTasks(cWorkflowCopy);
+        // also remove empty workflows that could be created when information or opinion tasks are added during delegating assignment task
+        ArrayList<Integer> emptyWfIndexes = new ArrayList<Integer>();
+        int wfIndex = 0;
+        for (Workflow workflow : cWorkflowWorkflowsCopy) {
+            if (WorkflowUtil.isGeneratedByDelegation(workflow) && workflow.getTasks().isEmpty()) {
+                emptyWfIndexes.add(wfIndex);
             }
-            Collections.reverse(emptyWfIndexes);
-            for (int emptyWfIndex : emptyWfIndexes) {
-                cWorkflowCopy.removeWorkflow(emptyWfIndex);
-            }
+            wfIndex++;
+        }
+        Collections.reverse(emptyWfIndexes);
+        for (int emptyWfIndex : emptyWfIndexes) {
+            cWorkflowCopy.removeWorkflow(emptyWfIndex);
         }
 
-        WorkflowEventQueue queue = getNewEventQueue();
-
-        { // validate that at least one new equivalent task is created (and it contains minimal information)
-            boolean searchResponsibleTask = WorkflowUtil.isActiveResponsible(assignmentTaskOriginal);
-            boolean isAssignmentWorkflow = assignmentTaskOriginal.isType(WorkflowSpecificModel.Types.ASSIGNMENT_TASK);
-            Task newMandatoryTask = null;
-            boolean hasAtLeastOneDelegationTask = false;
-            { // validate that tasks added during delegation have all mandatory fields filled and at least one task equivalent to delegatable task is also added
-                for (Workflow workflow : cWorkflowWorkflowsCopy) {
-                    if (isGeneratedByDelegation(workflow)) {
-                        setStatus(queue, workflow, Status.IN_PROGRESS);
-                    }
-                    for (Task task : workflow.getTasks()) {
-                        if (isGeneratedByDelegation(task)) {
-                            hasAtLeastOneDelegationTask = true;
-                            delegationTaskMandatoryFieldsFilled(task, feedback);
-                            Date dueDate = task.getDueDate();
-                            if (dueDate != null) {
-                                dueDate.setHours(23);
-                                dueDate.setMinutes(59);
-                            }
-                            if (isAssignmentWorkflow && workflow.isType(WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW) && newMandatoryTask == null) {
-                                if (!searchResponsibleTask) {
-                                    newMandatoryTask = task;
-                                } else if (WorkflowUtil.isActiveResponsible(task)) {
-                                    newMandatoryTask = task;
-                                }
-                            }
-                        }
+        for (Workflow workflow : cWorkflowWorkflowsCopy) {
+            for (Task task : workflow.getTasks()) {
+                if (isGeneratedByDelegation(task)) {
+                    Date dueDate = task.getDueDate();
+                    if (dueDate != null) {
+                        dueDate.setHours(23);
+                        dueDate.setMinutes(59);
                     }
                 }
             }
-            if (isAssignmentWorkflow) {
-                if (newMandatoryTask == null) {
-                    if (searchResponsibleTask) {
-                        feedback.addFeedbackItem(new MessageDataImpl(MessageSeverity.ERROR, "delegate_error_noNewResponsibleTask"));
-                    } else {
-                        feedback.addFeedbackItem(new MessageDataImpl(MessageSeverity.ERROR, "delegate_error_noNewTask"));
-                    }
-                }
-            } else if (!hasAtLeastOneDelegationTask) {
-                feedback.addFeedbackItem(new MessageDataImpl(MessageSeverity.ERROR, "delegate_error_noDelegationTask"));
-            }
         }
 
-        if (feedback.hasErrors()) {
-            throw new UnableToPerformMultiReasonException(feedback);
-        }
-        CompoundWorkflow savedCompoundWorkflow = saveCompoundWorkflow(cWorkflowCopy, queue);
-
-        savedCompoundWorkflow.getWorkflows().get(originalWFIndex);
-        return feedback;
+        return cWorkflowCopy;
     }
 
     @Override
@@ -985,27 +950,6 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
             }
         }
         return assignmentTasks;
-    }
-
-    private static void delegationTaskMandatoryFieldsFilled(Task task, MessageDataWrapper feedback) {
-        boolean noOwner = StringUtils.isBlank(task.getOwnerName());
-        QName taskType = task.getType();
-        String key = "delegate_error_taskMandatory_" + taskType.getLocalName();
-        if (taskType.equals(WorkflowSpecificModel.Types.INFORMATION_TASK)) {
-            if (noOwner) {
-                feedback.addFeedbackItem(new MessageDataImpl(MessageSeverity.ERROR, key));
-            }
-        } else if (noOwner || task.getDueDate() == null) {
-            if (taskType.equals(WorkflowSpecificModel.Types.OPINION_TASK)) {
-                feedback.addFeedbackItem(new MessageDataImpl(MessageSeverity.ERROR, key));
-            } else {
-                if (task.isResponsible()) {
-                    key += "_responsible";
-                }
-                feedback.addFeedbackItem(new MessageDataImpl(MessageSeverity.ERROR, key));
-            }
-
-        }
     }
 
     private boolean saveTask(WorkflowEventQueue queue, Task task) {
@@ -1174,9 +1118,11 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         if (log.isDebugEnabled()) {
             log.debug("Deleting " + compoundWorkflow);
         }
-        nodeService.deleteNode(nodeRef);
 
         final NodeRef docRef = compoundWorkflow.getParent();
+
+        BeanHelper.getDocumentLogService().addDocumentLog(docRef, MessageUtil.getMessage("document_log_status_workflow_deleted"));
+        nodeService.deleteNode(nodeRef);
         final boolean hasAllFinishedCompoundWorkflows = hasAllFinishedCompoundWorkflows(docRef);
 
         // Ignore document locking, because we are not changing a property that is user-editable or related to one
@@ -1377,6 +1323,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
             }
             stepAndCheck(queue, compoundWorkflow, Status.STOPPED);
             saveCompoundWorkflow(queue, compoundWorkflow, null);
+            logService.addLogEntry(LogEntry.create(LogObject.WORKFLOW, userService, compoundWorkflowOriginal.getNodeRef(), "applog_workflow_stopped"));
             if (log.isDebugEnabled()) {
                 log.debug("Stopped " + compoundWorkflow);
             }
@@ -1414,6 +1361,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
             }
             stepAndCheck(queue, compoundWorkflow, Status.IN_PROGRESS, Status.STOPPED, Status.FINISHED);
             saveCompoundWorkflow(queue, compoundWorkflow, null);
+            logService.addLogEntry(LogEntry.create(LogObject.WORKFLOW, userService, compoundWorkflowOriginal.getNodeRef(), "applog_workflow_continue"));
             if (log.isDebugEnabled()) {
                 log.debug("Continued " + compoundWorkflow);
             }
@@ -2446,14 +2394,15 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
     }
 
     @Override
-    public void createDueDateExtension(String reason, Date newDate, Date dueDate, Task initiatingTask, NodeRef containerRef) {
+    public void createDueDateExtension(String reason, Date newDate, Date dueDate, Task initiatingTask, NodeRef containerRef, String dueDateExtenderUsername,
+            String dueDateExtenderUserFullname) {
         CompoundWorkflow extensionCompoundWorkflow = getNewCompoundWorkflow(getNewCompoundWorkflowDefinition().getNode(), containerRef);
         Workflow workflow = getWorkflowService().addNewWorkflow(extensionCompoundWorkflow, WorkflowSpecificModel.Types.DUE_DATE_EXTENSION_WORKFLOW,
                 extensionCompoundWorkflow.getWorkflows().size(), true);
         Task extensionTask = workflow.addTask();
-        String creatorName = initiatingTask.getCreatorName();
+        String creatorName = StringUtils.isBlank(dueDateExtenderUserFullname) ? initiatingTask.getCreatorName() : dueDateExtenderUserFullname;
         extensionTask.setOwnerName(creatorName);
-        extensionTask.setOwnerId(initiatingTask.getCreatorId());
+        extensionTask.setOwnerId(StringUtils.isBlank(dueDateExtenderUsername) ? initiatingTask.getCreatorId() : dueDateExtenderUsername);
         extensionTask.setOwnerEmail(initiatingTask.getCreatorEmail()); // updater
         Map<QName, Serializable> creatorProps = userService.getUserProperties(initiatingTask.getCreatorId());
         if (creatorProps != null) {

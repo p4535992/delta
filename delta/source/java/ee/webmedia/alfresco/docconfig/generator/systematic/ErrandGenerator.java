@@ -22,6 +22,7 @@ import javax.faces.el.MethodBinding;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
+import org.alfresco.web.bean.generator.BaseComponentGenerator.CustomAttributeNames;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.ArrayUtils;
@@ -308,9 +309,24 @@ public class ErrandGenerator extends BaseSystematicGroupGenerator implements Sav
         ItemConfigVO item = result.getFirst();
         item.setComponentGenerator("InlinePropertyGroupGenerator");
         item.setTextId(textId);
-        item.setProps(result.getSecond());
-
+        String props = result.getSecond();
+        
+        if (relatedFields.size() >= 2) {
+            item.setProps(addMandatoryMarkers(relatedFields, props));
+        } else {
+            item.setProps(props);
+        }
         return item;
+    }
+
+    private String addMandatoryMarkers(List<Field> relatedFields, String props) {
+        String[] prop = props.split(CombinedPropReader.AttributeNames.DEFAULT_PROPERTIES_SEPARATOR);
+        for (int i = 0; i < relatedFields.size(); i++) {
+            if (relatedFields.get(i).isMandatory()) {
+                prop[i] += PropsBuilder.DEFAULT_OPTIONS_SEPARATOR + CustomAttributeNames.ATTR_MANDATORY + "=true";
+            }
+        }
+        return StringUtils.join(prop, CombinedPropReader.AttributeNames.DEFAULT_PROPERTIES_SEPARATOR);
     }
 
     private Pair<ItemConfigVO, String> generateBasePropsItem(FieldGroupGeneratorResults generatorResults, Map<String, ItemConfigVO> items, ErrandState primaryStateHolder,

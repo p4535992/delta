@@ -5,6 +5,7 @@ import java.util.List;
 import org.alfresco.model.ContentModel;
 import org.alfresco.service.cmr.model.FileFolderService;
 import org.alfresco.service.cmr.model.FileInfo;
+import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.namespace.RegexQNamePattern;
 import org.springframework.beans.factory.InitializingBean;
@@ -32,13 +33,14 @@ public class ScannedDocumentsMenuItemProcessor extends CountAddingMenuItemProces
 
     @Override
     public int getCount(MenuItem menuItem) {
-        List<FileInfo> folders = fileFolderService.listFolders(generalService.getNodeRef(scannedFilesPath));
+        NodeRef nodeRef = generalService.getNodeRef(scannedFilesPath);
+        List<FileInfo> folders = fileFolderService.listFolders(nodeRef);
         int count = 0;
         for (FileInfo fileInfo : folders) {
             count += nodeService.getChildAssocs(fileInfo.getNodeRef(), ContentModel.ASSOC_CONTAINS, RegexQNamePattern.MATCH_ALL).size();
         }
 
-        return count;
+        return count + fileFolderService.listFiles(nodeRef).size();
     }
 
     // START: getters / setters

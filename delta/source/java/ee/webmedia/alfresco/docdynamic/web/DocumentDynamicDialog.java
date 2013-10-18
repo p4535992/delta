@@ -610,7 +610,11 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
             LOG.warn(e.getMessage(), e);
             return cancel(false);
         }
-        if (!isInEditMode() || !getCurrentSnapshot().viewModeWasOpenedInThePast || !canRestore()) {
+        boolean isInEditMode = isInEditMode();
+        if (isInEditMode) {
+            BeanHelper.getDocumentLockHelperBean().lockOrUnlockIfNeeded(false);
+        }
+        if (!isInEditMode || !getCurrentSnapshot().viewModeWasOpenedInThePast || !canRestore()) {
             getDocumentDynamicService().deleteDocumentIfDraft(getDocument().getNodeRef());
             return super.cancel(); // closeDialogSnapshot
         }

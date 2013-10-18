@@ -8,6 +8,7 @@ import org.alfresco.util.Pair;
 import org.alfresco.web.app.AlfrescoNavigationHandler;
 import org.alfresco.web.bean.content.DeleteContentDialog;
 import org.alfresco.web.bean.repository.Node;
+import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
@@ -24,6 +25,7 @@ public class InformingDeleteNodeDialog extends DeleteContentDialog {
     private NodeRef nodeRefToDelete;
     private String deletableObjectNameProp;
     private String containerTitleMsgKey;
+    private String callback;
 
     public void setupDelete(ActionEvent event) {
         nodeRefToDelete = new NodeRef(ActionUtil.getParam(event, "nodeRef"));
@@ -31,6 +33,7 @@ public class InformingDeleteNodeDialog extends DeleteContentDialog {
         confirmMsgKey = ActionUtil.getParam(event, "confirmMsgKey", getDefaultConfirmMsgKey());
         successMsgKey = ActionUtil.getParam(event, "successMsgKey", getDefaultMsgKey());
         deletableObjectNameProp = ActionUtil.getParam(event, "deletableObjectNameProp", "");
+        callback = ActionUtil.getParam(event, "callback", "");
     }
 
     protected String getDefaultConfirmMsgKey() {
@@ -47,6 +50,7 @@ public class InformingDeleteNodeDialog extends DeleteContentDialog {
     protected String finishImpl(FacesContext context, String outcome) throws Exception {
         super.finishImpl(context, outcome);
         addSuccessMessage();
+        processCallback(context);
         return outcome;
     }
 
@@ -60,6 +64,14 @@ public class InformingDeleteNodeDialog extends DeleteContentDialog {
 
     private void addSuccessMessage() {
         MessageUtil.addInfoMessage(successMsgKey); // notification_delete_success
+    }
+
+    private void processCallback(FacesContext context) {
+        if (StringUtils.isBlank(callback)) {
+            return;
+        }
+
+        context.getApplication().createMethodBinding("#{" + callback + "}", new Class[0]).invoke(context, null);
     }
 
     @Override

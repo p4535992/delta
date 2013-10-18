@@ -120,7 +120,7 @@ public class AccessRestrictionGenerator extends BaseSystematicFieldGenerator {
             item.setValueChangeListener(getBindingName("accessRestrictionValueChanged", stateHolderKey));
             item.setAjaxParentLevel(1);
         } else {
-            item.getCustomAttributes().put("rendered", getBindingName("renderAllAccessRestrictionFields", stateHolderKey));
+            item.setRendered(getBindingName("renderAllAccessRestrictionFields", stateHolderKey));
             if (field.getOriginalFieldId().equals(ACCESS_RESTRICTION_REASON.getLocalName())) {
                 item.setValueChangeListener(getBindingName("accessRestrictionReasonValueChanged", stateHolderKey));
                 item.setAjaxParentLevel(1);

@@ -1,6 +1,7 @@
 package ee.webmedia.alfresco.document.search.service;
 
 import static ee.webmedia.alfresco.common.search.DbSearchUtil.generateTaskDatePropertyRangeQuery;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getNotificationService;
 import static ee.webmedia.alfresco.docconfig.bootstrap.SystematicDocumentType.INCOMING_LETTER;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateAndNotQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateAspectQuery;
@@ -641,7 +642,12 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
 
             }));
         }
+        boolean einvoiceEnabled = BeanHelper.getEInvoiceService().isEinvoiceEnabled();
+        String accountantsGroup = userService.getAccountantsGroup();
         for (String result : results) {
+            if (!einvoiceEnabled && accountantsGroup.equals(result)) {
+                continue;
+            }
             if (withAdminsAndDocManagers || (!userService.getAdministratorsGroup().equals(result) && !userService.getDocumentManagersGroup().equals(result))) {
                 authorities.add(userService.getAuthority(result));
             }
@@ -744,7 +750,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         List<TaskInfo> taskInfos = new ArrayList<TaskInfo>();
         boolean resultLimited = false;
         if (queryAndArguments != null) {
-            Pair<List<Task>, Boolean> taskResults = BeanHelper.getWorkflowDbService().searchTasksMainStore(queryAndArguments.getFirst(), queryAndArguments.getSecond(), limit);
+            Pair<List<Task>, Boolean> taskResults = BeanHelper.getWorkflowDbService().searchTasksAllStores(queryAndArguments.getFirst(), queryAndArguments.getSecond(), limit);
             for (Task task : taskResults.getFirst()) {
                 Node workflow = generalService.fetchNode(task.getParentNodeRef());
                 NodeRef compoundWorkflowRef = nodeService.getPrimaryParent(workflow.getNodeRef()).getParentRef();
@@ -771,6 +777,9 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
     }
 
     private void addSubstitutionRestriction(Pair<List<String>, List<Object>> queryPartsAndArgs) {
+        if (!getNotificationService().isSubstitutionTaskEndDateRestricted()) {
+            return;
+        }
         SubstitutionBean substitutionBean = (SubstitutionBean) FacesContextUtils.getRequiredWebApplicationContext( //
                 FacesContext.getCurrentInstance()).getBean(SubstitutionBean.BEAN_NAME);
         SubstitutionInfo subInfo = substitutionBean.getSubstitutionInfo();
@@ -826,6 +835,21 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         return count;
     }
 
+    private void filterBySendMode(List<Document> results, Map<String, Object> properties) {
+        @SuppressWarnings("unchecked")
+        List<String> sendModes = (List<String>) properties.get(DocumentSearchModel.Props.SEND_MODE.toString());
+
+        if (sendModes != null && !sendModes.isEmpty()) {
+            for (Iterator<Document> it = results.iterator(); it.hasNext();) {
+                Document doc = it.next();
+                List<String> modes = doc.getSendModesAsList();
+                if (!CollectionUtils.containsAny(sendModes, modes)) {
+                    it.remove();
+                }
+            }
+        }
+    }
+
     @Override
     public Pair<List<Document>, Boolean> searchDocuments(Node filter, int limit) {
         long startTime = System.currentTimeMillis();
@@ -845,6 +869,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
             if (results != null) {
                 filterByStructUnit(results.getFirst(), filter);
             }
+            filterBySendMode(results.getFirst(), properties);
             if (log.isDebugEnabled()) {
                 log.debug("Documents search total time " + (System.currentTimeMillis() - startTime) + " ms");
             }

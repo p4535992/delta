@@ -401,7 +401,8 @@ public class AddressbookServiceImpl extends AbstractSearchServiceImpl implements
                 dvkCapableOnly,
                 orgOnly ? Collections.singleton(Types.ORGANIZATION) : Collections.<QName> emptySet(),
                 institutionToRemove,
-                limit);
+                limit,
+                false); // Contact groups don't have AddressbookModel.Props.ACTIVESTATUS property
     }
 
     private List<Node> executeSearch(String searchCriteria, Set<QName> fields, boolean taskCapableOnly, boolean dvkCapableOnly, Set<QName> types, String institutionToRemove,

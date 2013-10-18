@@ -152,6 +152,17 @@ public class DocumentLockHelperBean implements Serializable {
         LOG.debug("returning XML: " + xml.toString());
     }
 
+    /**
+     * AJAX: unlock document after the leaving page
+     */
+    public void unlockNode() {
+        final NodeRef docRef = getDocumentDialogHelperBean().getNodeRef();
+        boolean isLocked = !isLockable(docRef);
+        if (docRef != null && isLocked) {
+            lockOrUnlockIfNeeded(false);
+        }
+    }
+
     public void handleLockedNode(String messageId) {
         handleLockedNode(messageId, getDocumentDialogHelperBean().getNodeRef());
     }

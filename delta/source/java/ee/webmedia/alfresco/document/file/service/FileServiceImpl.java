@@ -378,9 +378,15 @@ public class FileServiceImpl implements FileService {
             Map<QName, Serializable> aspectProperties = new HashMap<QName, Serializable>(3);
             aspectProperties.put(VersionsModel.Props.VersionModified.MODIFIED, modified);
 
+            String first = null;
+            String last = null;
             Map<QName, Serializable> personProps = userService.getUserProperties(user);
-            String first = (String) personProps.get(ContentModel.PROP_FIRSTNAME);
-            String last = (String) personProps.get(ContentModel.PROP_LASTNAME);
+            if (personProps != null) {
+                first = (String) personProps.get(ContentModel.PROP_FIRSTNAME);
+                last = (String) personProps.get(ContentModel.PROP_LASTNAME);
+            } else {
+                last = user;
+            }
 
             aspectProperties.put(VersionsModel.Props.VersionModified.FIRSTNAME, first);
             aspectProperties.put(VersionsModel.Props.VersionModified.LASTNAME, last);

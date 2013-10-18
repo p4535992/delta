@@ -22,7 +22,7 @@ public class CompoundWorkflowDefinition extends CompoundWorkflow {
     }
 
     @Override
-    protected CompoundWorkflowDefinition copy() {
+    public CompoundWorkflowDefinition copy() {
         return copyImpl(new CompoundWorkflowDefinition(getNode().clone(), getParent()));
     }
 

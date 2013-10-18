@@ -126,7 +126,7 @@
          <docadmin:name>Uue puhkuse kalendripäevi kokku</docadmin:name>
          <docadmin:systematic>true</docadmin:systematic>
          <docadmin:fieldType>LONG</docadmin:fieldType>
-         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:removableFromSystematicFieldGroup>true</docadmin:removableFromSystematicFieldGroup>
          <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
          <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
       </view:properties>
@@ -178,7 +178,7 @@
          <docadmin:name>Tühistatud puhkuse kalendripäevi kokku</docadmin:name>
          <docadmin:systematic>true</docadmin:systematic>
          <docadmin:fieldType>LONG</docadmin:fieldType>
-         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:removableFromSystematicFieldGroup>true</docadmin:removableFromSystematicFieldGroup>
          <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
          <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
       </view:properties>

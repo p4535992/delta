@@ -188,7 +188,7 @@ public class SubPropertySheetItem extends PropertySheetItem {
         }
         writer.writeAttribute(HTML.CLASS_ATTR, styleClass, null);
         writer.startElement(HTML.TD_ELEM, this);
-        writer.writeAttribute(HTML.COLSPAN_ATTR, 2, null);
+        writer.writeAttribute(HTML.COLSPAN_ATTR, 4, null);
     }
 
     @Override

@@ -27,13 +27,13 @@ public class DeleteUsersNotInExternalZoneBootstrap extends AbstractNodeUpdater {
     private final Set<String> usersInExternalZones = new HashSet<String>();
 
     @Override
-    public void afterPropertiesSet() throws Exception {
-        super.afterPropertiesSet();
+    protected void executeUpdater() throws Exception {
         AuthorityService authorityService = BeanHelper.getAuthorityService();
         for (String id : applicationContextManager.getInstanceIds()) {
             String zoneId = AuthorityService.ZONE_AUTH_EXT_PREFIX + id;
             usersInExternalZones.addAll(authorityService.getAllAuthoritiesInZone(zoneId, AuthorityType.USER));
         }
+        super.executeUpdater();
     }
 
     @Override

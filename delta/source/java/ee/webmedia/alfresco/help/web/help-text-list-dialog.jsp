@@ -52,6 +52,7 @@
             <f:param name="confirmMsgKey" value="help_text_delete_confirm" />
             <f:param name="deletableObjectNameProp" value="hlt:name" />
             <f:param name="successMsgKey" value="help_text_delete_success" />
+            <f:param name="callback" value="HelpTextListDialog.deleteCallback" />
          </a:actionLink>
       </a:column>
 

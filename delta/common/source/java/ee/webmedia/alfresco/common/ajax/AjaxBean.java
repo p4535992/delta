@@ -29,6 +29,7 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.app.servlet.ajax.InvokeCommand.ResponseMimetype;
 import org.alfresco.web.ui.common.Utils;
 import org.alfresco.web.ui.common.component.data.UIRichList;
+import org.apache.commons.lang.StringUtils;
 import org.apache.myfaces.shared_impl.renderkit.html.HtmlFormRendererBase;
 import org.apache.myfaces.shared_impl.util.RestoreStateUtils;
 import org.apache.myfaces.shared_impl.util.StateUtils;
@@ -64,7 +65,11 @@ public class AjaxBean implements Serializable {
         @SuppressWarnings("unchecked")
         Map<String, String> params = context.getExternalContext().getRequestParameterMap();
         String path = params.get("path");
-        Assert.hasLength(path, "path was not found in request");
+        if (StringUtils.isBlank(path)) {
+            // Assert.hasLength(path, "path was not found in request");
+            // FIXME this may happen, when session has expired, but why?
+            return;
+        }
 
         String[] parts = path.split(WebDAVHelper.PathSeperator);
         String id = parts[parts.length - 2];

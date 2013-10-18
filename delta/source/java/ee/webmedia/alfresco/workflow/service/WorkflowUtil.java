@@ -1,6 +1,7 @@
 package ee.webmedia.alfresco.workflow.service;
 
 import java.io.Serializable;
+import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -19,8 +20,11 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.GUID;
 import org.alfresco.util.Pair;
+import org.alfresco.web.ui.common.Utils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.time.DateUtils;
 
+import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.Predicate;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.TextUtil;
@@ -532,7 +536,7 @@ public class WorkflowUtil {
         }
     }
 
-    private static boolean isEmptyTask(Task task) {
+    public static boolean isEmptyTask(Task task) {
         return StringUtils.isBlank(task.getOwnerName()) && task.getDueDate() == null && task.getDueDateDays() == null && StringUtils.isBlank(task.getResolutionOfTask())
                 && !(isGeneratedByDelegation(task) && WorkflowUtil.isActiveResponsible(task) && !task.isType(WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_TASK));
     }
@@ -667,11 +671,17 @@ public class WorkflowUtil {
         List<Workflow> workflows = compound.getWorkflows();
 
         for (Map<String, List<TaskGroup>> group : taskGroups) {
+            if (workflows.size() == workflowId) {
+                break;
+            }
             Workflow workflow = workflows.get(workflowId);
             List<Task> wfTasks = workflow.getTasks();
             for (List<TaskGroup> groupList : group.values()) {
                 for (TaskGroup taskGroup : groupList) {
                     for (Integer taskId : taskGroup.getTaskIds()) {
+                        if (wfTasks.size() <= taskId) {
+                            continue;
+                        }
                         Task task = wfTasks.get(taskId);
                         if (task.getDueDate() == null) {
                             task.setDueDate(taskGroup.getDueDate());
@@ -711,6 +721,23 @@ public class WorkflowUtil {
             }
         }
         return selectedTasks;
+    }
+
+    public static void getDocmentDueDateMessage(Date notInvoiceDueDate, List<String> messages, Workflow workflow, Date taskDueDate) {
+        if (notInvoiceDueDate != null) {
+            if (!DateUtils.isSameDay(notInvoiceDueDate, taskDueDate) && taskDueDate.after(notInvoiceDueDate)) {
+                getAndAddMessage(messages, workflow, taskDueDate, "task_confirm_not_invoice_task_due_date", notInvoiceDueDate);
+            }
+        }
+    }
+
+    public static void getAndAddMessage(List<String> messages, Workflow workflow, Date taskDueDate, String msgKey, Date date) {
+        FacesContext fc = FacesContext.getCurrentInstance();
+        DateFormat dateFormat = Utils.getDateFormat(fc);
+        String invoiceTaskDueDateConfirmationMsg = MessageUtil.getMessage(msgKey,
+                MessageUtil.getMessage(workflow.getType().getLocalName()),
+                dateFormat.format(taskDueDate), dateFormat.format(date));
+        messages.add(invoiceTaskDueDateConfirmationMsg);
     }
 
 }

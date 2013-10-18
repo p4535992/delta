@@ -20,6 +20,7 @@ import javax.faces.component.UIInput;
 import javax.faces.component.html.HtmlSelectManyListbox;
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
+import javax.faces.event.PhaseId;
 import javax.faces.event.ValueChangeEvent;
 import javax.faces.model.SelectItem;
 
@@ -30,6 +31,8 @@ import org.alfresco.web.app.AlfrescoNavigationHandler;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.TransientNode;
 import org.alfresco.web.config.PropertySheetConfigElement;
+import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
+import org.apache.commons.collections.Closure;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -42,9 +45,11 @@ import ee.webmedia.alfresco.docconfig.generator.PropertySheetStateHolder;
 import ee.webmedia.alfresco.docconfig.generator.systematic.DocumentLocationGenerator.DocumentLocationState;
 import ee.webmedia.alfresco.docconfig.service.DocumentConfig;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
+import ee.webmedia.alfresco.document.search.model.DocumentReportModel;
 import ee.webmedia.alfresco.document.search.model.DocumentSearchModel;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchFilterService;
 import ee.webmedia.alfresco.filter.web.AbstractSearchFilterBlockBean;
+import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
 
@@ -64,6 +69,7 @@ public class DocumentDynamicSearchDialog extends AbstractSearchFilterBlockBean<D
             "dueDate",
             "complienceDate");
     public static final QName SELECTED_STORES = RepoUtil.createTransientProp("selectedStores");
+    public static final QName SELECTED_REPORT_TYPE = RepoUtil.createTransientProp("selectedReportOutputType");
 
     protected List<SelectItem> stores;
     protected DocumentConfig config;
@@ -189,6 +195,32 @@ public class DocumentDynamicSearchDialog extends AbstractSearchFilterBlockBean<D
         @SuppressWarnings("unchecked")
         List<NodeRef> selectedStores = (List<NodeRef>) event.getNewValue();
         getNode().getProperties().put(SELECTED_STORES.toString(), selectedStores);
+    }
+
+    public void reportTypeChanged(ValueChangeEvent event) {
+        final String selectedType = (String) event.getNewValue();
+
+        ComponentUtil.executeLater(PhaseId.INVOKE_APPLICATION, getPropertySheet(), new Closure() {
+
+            @Override
+            public void execute(Object arg0) {
+                final Map<String, Object> props = getNode().getProperties();
+                QName type = DocumentReportModel.Props.REPORT_OUTPUT_TYPE;
+                props.put(type.toString(), selectedType);
+                props.put(type.getLocalName(), selectedType);
+
+                clearPropertySheet();
+            }
+        });
+
+    }
+
+    private void clearPropertySheet() {
+        UIPropertySheet propertySheet = getPropertySheet();
+        if (propertySheet != null) {
+            propertySheet.getChildren().clear();
+            propertySheet.getClientValidations().clear();
+        }
     }
 
     protected void resetDocumentLocationState() {

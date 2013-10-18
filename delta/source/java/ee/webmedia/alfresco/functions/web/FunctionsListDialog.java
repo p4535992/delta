@@ -1,7 +1,6 @@
 package ee.webmedia.alfresco.functions.web;
 
 import static ee.webmedia.alfresco.app.AppConstants.CHARSET;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentListService;
 
 import java.io.File;
 import java.io.IOException;
@@ -175,21 +174,15 @@ public class FunctionsListDialog extends BaseDialogBean {
 
     public static void exportConsolidatedList(NodeRef nodeRef) {
         log.info("consolidated docList started");
-        HttpServletResponse response = (HttpServletResponse) FacesContext.getCurrentInstance().getExternalContext().getResponse();
-        response.setCharacterEncoding(CHARSET);
-        OutputStream outputStream = null;
         try {
-            outputStream = WMAdminNodeBrowseBean.getExportOutStream(response, "consolidated-list.csv");
-            getDocumentListService().getExportCsv(outputStream, nodeRef);
-            outputStream.flush();
+            BeanHelper.getReportService().createCsvReportResult(nodeRef);
+            MessageUtil.addInfoMessage("docList_consolidatedList_background_job");
         } catch (Exception e) {
             final String msg = "Failed to export consolidated docList";
             log.error(msg, e);
             throw new RuntimeException(msg, e);
         } finally {
-            FacesContext.getCurrentInstance().responseComplete();
-            JspStateManagerImpl.ignoreCurrentViewSequenceHack();
-            log.info("consolidated docList export completed");
+            log.info("consolidated list job started in background");
         }
     }
 

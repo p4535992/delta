@@ -309,6 +309,7 @@
    <!-- ALUSTA UUT DOKUMENTI -->
    <dropdown id="documentDynamicTypes" title-id="menu_start_new_document" skinnable="true" temporary="true">
       <submenu-id>new-document-dynamic-submenu</submenu-id>
+      <hidden>#{MenuBean.isMenuItemHidden}</hidden>
    </dropdown>
 
 </menu>

@@ -38,6 +38,7 @@ import org.alfresco.web.ui.common.renderer.BaseRenderer;
 import org.alfresco.web.ui.repo.component.property.PropertySheetItem;
 import org.apache.commons.lang.StringUtils;
 
+import ee.webmedia.alfresco.common.propertysheet.renderkit.PropertySheetGridRenderer;
 import ee.webmedia.alfresco.help.web.HelpTextUtil;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 
@@ -116,7 +117,11 @@ public void encodeBegin(FacesContext context, UIComponent component) throws IOEx
          }
 
          // encode the control
-         out.write("</td><td>");
+         out.write("</td><td");
+         if (!PropertySheetGridRenderer.isInlineComponent(component)) {
+             out.write(" colspan=\"3\"");
+         }
+         out.write(">");
          Utils.encodeRecursive(context, control);
          
          // NOTE: we'll allow the property sheet's grid renderer close off the last <td>

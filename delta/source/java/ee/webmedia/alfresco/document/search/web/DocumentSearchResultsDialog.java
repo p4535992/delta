@@ -96,6 +96,9 @@ public class DocumentSearchResultsDialog extends BaseDocumentListDialog {
         try {
             DocumentSearchService documentSearchService = getDocumentSearchService();
             documents = setLimited(documentSearchService.searchDocuments(searchFilter, getLimit()));
+            if (log.isDebugEnabled()) {
+                log.debug("Found " + documents.size() + " document(s) during initial search. Limit: " + getLimit());
+            }
             Collections.sort(documents, new TransformingComparator(new ComparableTransformer<Document>() {
                 @Override
                 public Comparable<Date> tr(Document document) {

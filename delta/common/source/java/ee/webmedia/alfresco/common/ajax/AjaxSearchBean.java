@@ -3,7 +3,6 @@ package ee.webmedia.alfresco.common.ajax;
 import static ee.webmedia.alfresco.common.propertysheet.dimensionselector.DimensionSelectorGenerator.predefinedFilters;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getParametersService;
 import static ee.webmedia.alfresco.common.web.UserContactGroupSearchBean.FILTER_INDEX_SEPARATOR;
-import static ee.webmedia.alfresco.common.web.UserContactGroupSearchBean.USERS_FILTER;
 import static ee.webmedia.alfresco.parameters.model.Parameters.MAX_MODAL_SEARCH_RESULT_ROWS;
 import static org.apache.commons.lang.StringUtils.substringBeforeLast;
 import static org.apache.commons.lang.StringUtils.substringBetween;
@@ -166,7 +165,7 @@ public class AjaxSearchBean extends AjaxBean {
     @Override
     protected void executeCallback(FacesContext context, String componentClientId, UIComponent component) {
         String value = StringUtils.substringBetween(getParam(context, DATA), VALUE_MARKUP_START, VALUE_MARKUP_END);
-        int filterIndex = USERS_FILTER;
+        int filterIndex = UserContactGroupSearchBean.USERS_FILTER; // Default;
         if (value.lastIndexOf(FILTER_INDEX_SEPARATOR) > -1) {
             filterIndex = Integer.parseInt(StringUtils.substringAfterLast(value, FILTER_INDEX_SEPARATOR));
             value = StringUtils.substringBeforeLast(value, FILTER_INDEX_SEPARATOR);

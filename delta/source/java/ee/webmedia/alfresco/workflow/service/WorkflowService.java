@@ -12,9 +12,7 @@ import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
 
 import ee.webmedia.alfresco.common.web.WmNode;
-import ee.webmedia.alfresco.utils.MessageDataWrapper;
 import ee.webmedia.alfresco.utils.Predicate;
-import ee.webmedia.alfresco.utils.UnableToPerformMultiReasonException;
 import ee.webmedia.alfresco.workflow.exception.WorkflowChangedException;
 import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowEventListener;
@@ -68,13 +66,7 @@ public interface WorkflowService {
 
     CompoundWorkflow saveCompoundWorkflow(CompoundWorkflow compoundWorkflow);
 
-    /**
-     * @param originalAssignmentTask - task that will be delegated(originalAssignmentTask.parent contains information about new tasks and
-     *            originalAssignmentTask.parent.parent contains information about new workflows)
-     * @return MessageDataWrapper with 0 or more non-error messages to be shown to the user
-     * @throws UnableToPerformMultiReasonException - when at least one error-message should be shown to the user
-     */
-    MessageDataWrapper delegate(Task originalAssignmentTask) throws UnableToPerformMultiReasonException;
+    void delegate(Task assignmentTaskOriginal);
 
     void deleteCompoundWorkflow(NodeRef compoundWorkflow);
 
@@ -197,7 +189,8 @@ public interface WorkflowService {
 
     CompoundWorkflow getNewCompoundWorkflow(Node compoundWorkflowDefinition, NodeRef parent);
 
-    void createDueDateExtension(String reason, Date newDate, Date dueDate, Task initiatingTask, NodeRef containerRef);
+    void createDueDateExtension(String reason, Date newDate, Date dueDate, Task initiatingTask, NodeRef containerRef, String dueDateExtenderUsername,
+            String dueDateExtenderUserFullname);
 
     void registerMultiEventListener(WorkflowMultiEventListener listener);
 

@@ -55,6 +55,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.context.ApplicationContext;
+import org.springframework.ws.client.WebServiceIOException;
 
 import ee.webmedia.alfresco.common.service.ApplicationService;
 import ee.webmedia.alfresco.common.web.BeanHelper;
@@ -71,21 +72,17 @@ import ee.webmedia.alfresco.utils.UserUtil;
  * directories). When the {@link #synchronize(boolean)} method is called, it visits each {@link UserRegistry} bean in
  * the 'chain' of application contexts, managed by a {@link ChildApplicationContextManager}, and compares its
  * timestamped user and group information with the local users and groups last retrieved from the same source. Any
- * updates and additions made to those users and groups are applied to the local copies. The ordering of each
- * {@link UserRegistry} in the chain determines its precedence when it comes to user and group name collisions.
+ * updates and additions made to those users and groups are applied to the local copies. The ordering of each {@link UserRegistry} in the chain determines its precedence when it
+ * comes to user and group name collisions.
  * <p>
- * The <code>force</code> argument determines whether a complete or partial set of information is queried from the
- * {@link UserRegistry}. When <code>true</code> then <i>all</i> users and groups are queried. With this complete set of
- * information, the synchronizer is able to identify which users and groups have been deleted, so it will delete users
- * and groups as well as update and create them. Since processing all users and groups may be fairly time consuming, it
- * is recommended this mode is only used by a background scheduled synchronization job. When the argument is
- * <code>false</code> then only those users and groups modified since the most recent modification date of all the
- * objects last queried from the same {@link UserRegistry} are retrieved. In this mode, local users and groups are
- * created and updated, but not deleted (except where a name collision with a lower priority {@link UserRegistry} is
- * detected). This 'differential' mode is much faster, and by default is triggered by
- * {@link #createMissingPerson(String)} when a user is successfully authenticated who doesn't yet have a local person
- * object in Alfresco. This should mean that new users and their group information are pulled over from LDAP servers as
- * and when required.
+ * The <code>force</code> argument determines whether a complete or partial set of information is queried from the {@link UserRegistry}. When <code>true</code> then <i>all</i>
+ * users and groups are queried. With this complete set of information, the synchronizer is able to identify which users and groups have been deleted, so it will delete users and
+ * groups as well as update and create them. Since processing all users and groups may be fairly time consuming, it is recommended this mode is only used by a background scheduled
+ * synchronization job. When the argument is <code>false</code> then only those users and groups modified since the most recent modification date of all the objects last queried
+ * from the same {@link UserRegistry} are retrieved. In this mode, local users and groups are created and updated, but not deleted (except where a name collision with a lower
+ * priority {@link UserRegistry} is detected). This 'differential' mode is much faster, and by default is triggered by {@link #createMissingPerson(String)} when a user is
+ * successfully authenticated who doesn't yet have a local person object in Alfresco. This should mean that new users and their group information are pulled over from LDAP servers
+ * as and when required.
  * 
  * @author dward
  */
@@ -218,19 +215,20 @@ public class ChainingUserRegistrySynchronizer implements UserRegistrySynchronize
      * (non-Javadoc)
      * @see org.alfresco.repo.security.sync.UserRegistrySynchronizer#synchronize(boolean)
      */
+    @Override
     public void synchronize(boolean force)
     {
         Set<String> visitedZoneIds = new TreeSet<String>();
-        for (String id : this.applicationContextManager.getInstanceIds())
+        for (String id : applicationContextManager.getInstanceIds())
         {
             StringBuilder builder = new StringBuilder(32);
             builder.append(AuthorityService.ZONE_AUTH_EXT_PREFIX);
             builder.append(id);
             String zoneId = builder.toString();
-            ApplicationContext context = this.applicationContextManager.getApplicationContext(id);
+            ApplicationContext context = applicationContextManager.getApplicationContext(id);
             try
             {
-                UserRegistry plugin = (UserRegistry) context.getBean(this.sourceBeanName);
+                UserRegistry plugin = (UserRegistry) context.getBean(sourceBeanName);
                 if (!(plugin instanceof ActivateableBean) || ((ActivateableBean) plugin).isActive())
                 {
                     ChainingUserRegistrySynchronizer.logger.info("Synchronizing users and groups with user registry '"
@@ -249,8 +247,7 @@ public class ChainingUserRegistrySynchronizer implements UserRegistrySynchronize
                     ChainingUserRegistrySynchronizer.logger.info(personsProcessed + " user(s) and " + groupsProcessed
                             + " group(s) processed");
                 }
-            }
-            catch (NoSuchBeanDefinitionException e)
+            } catch (NoSuchBeanDefinitionException e)
             {
                 // Ignore and continue
             }
@@ -260,16 +257,16 @@ public class ChainingUserRegistrySynchronizer implements UserRegistrySynchronize
 
     private String synchronize(String userName, boolean idCode) {
         Set<String> visitedZoneIds = new TreeSet<String>();
-        for (String id : this.applicationContextManager.getInstanceIds())
+        for (String id : applicationContextManager.getInstanceIds())
         {
             StringBuilder builder = new StringBuilder(32);
             builder.append(AuthorityService.ZONE_AUTH_EXT_PREFIX);
             builder.append(id);
             String zoneId = builder.toString();
-            ApplicationContext context = this.applicationContextManager.getApplicationContext(id);
+            ApplicationContext context = applicationContextManager.getApplicationContext(id);
             try
             {
-                UserRegistry plugin = (UserRegistry) context.getBean(this.sourceBeanName);
+                UserRegistry plugin = (UserRegistry) context.getBean(sourceBeanName);
                 if (!(plugin instanceof ActivateableBean) || ((ActivateableBean) plugin).isActive())
                 {
                     SyncPersonsResult result = syncPersonsWithPlugin(zoneId, plugin, true, userName, visitedZoneIds, idCode);
@@ -277,8 +274,7 @@ public class ChainingUserRegistrySynchronizer implements UserRegistrySynchronize
                         return result.userId;
                     }
                 }
-            }
-            catch (NoSuchBeanDefinitionException e)
+            } catch (NoSuchBeanDefinitionException e)
             {
                 // Ignore and continue
             }
@@ -291,25 +287,26 @@ public class ChainingUserRegistrySynchronizer implements UserRegistrySynchronize
      * (non-Javadoc)
      * @see org.alfresco.repo.security.sync.UserRegistrySynchronizer#ensureExists(java.lang.String)
      */
+    @Override
     public boolean createMissingPerson(String userName)
     {
         // synchronize or auto-create the missing person if we are allowed
         if (userName != null && !userName.equals(AuthenticationUtil.getSystemUserName()))
         {
-            if (this.syncWhenMissingPeopleLogIn)
+            if (syncWhenMissingPeopleLogIn)
             {
                 synchronize(false);
-                if (this.personService.personExists(userName))
+                if (personService.personExists(userName))
                 {
                     return true;
                 }
             }
-            if (this.autoCreatePeopleOnLogin && this.personService.createMissingPeople())
+            if (autoCreatePeopleOnLogin && personService.createMissingPeople())
             {
                 AuthorityType authorityType = AuthorityType.getAuthorityType(userName);
                 if (authorityType == AuthorityType.USER)
                 {
-                    this.personService.getPerson(userName);
+                    personService.getPerson(userName);
                     return true;
                 }
             }
@@ -321,7 +318,7 @@ public class ChainingUserRegistrySynchronizer implements UserRegistrySynchronize
     public String createOrUpdatePersonByUsername(String username) {
         return createOrUpdatePerson(username, false);
     }
-    
+
     @Override
     public String createOrUpdatePersonByIdCode(String idCode) {
         return createOrUpdatePerson(idCode, true);
@@ -338,6 +335,13 @@ public class ChainingUserRegistrySynchronizer implements UserRegistrySynchronize
                 } catch (AuthenticationException e) {
                     // When LDAP connection fails, it throws AuthenticationException
                     logger.warn("User synchronization failed on login, ignoring", e);
+                } catch (WebServiceIOException e) {
+                    if (BeanHelper.getApplicationService().isTest()) {
+                        userId = idCodeOrUsername;
+                        logger.warn("User synchronization failed on login, ignoring and continuing with not-synchronized user " + idCodeOrUsername, e);
+                    } else {
+                        throw e;
+                    }
                 }
                 if (userId != null && personService.personExists(userId)) {
                     return userId;
@@ -402,7 +406,7 @@ public class ChainingUserRegistrySynchronizer implements UserRegistrySynchronize
         } else {
             persons = userRegistry.getPersons(lastModified);
         }
-        Set<String> personsToDelete = this.authorityService.getAllAuthoritiesInZone(zoneId, AuthorityType.USER);
+        Set<String> personsToDelete = authorityService.getAllAuthoritiesInZone(zoneId, AuthorityType.USER);
         while (persons.hasNext())
         {
             NodeDescription person = persons.next();
@@ -434,7 +438,7 @@ public class ChainingUserRegistrySynchronizer implements UserRegistrySynchronize
             else
             {
                 // The person does not exist in this zone, but may exist in another zone
-                Set<String> zones = this.authorityService.getAuthorityZones(personName);
+                Set<String> zones = authorityService.getAuthorityZones(personName);
                 if (zones != null)
                 {
                     zones.retainAll(visitedZoneIds);
@@ -448,7 +452,7 @@ public class ChainingUserRegistrySynchronizer implements UserRegistrySynchronize
                             .warn("Recreating occluded user '"
                                     + personName
                                     + "'. This user was previously created manually or through synchronization with a lower priority user registry.");
-                    this.personService.deletePerson(personName);
+                    personService.deletePerson(personName);
                 }
                 else
                 {
@@ -461,7 +465,7 @@ public class ChainingUserRegistrySynchronizer implements UserRegistrySynchronize
                 } finally {
                     PersonServiceImpl.validCreatePersonCall.set(null);
                 }
-                NodeRef personRef = this.personService.getPerson(personName); // creates home folder if necessary
+                NodeRef personRef = personService.getPerson(personName); // creates home folder if necessary
             }
             // Increment the count of processed people
             processedCount++;
@@ -480,7 +484,7 @@ public class ChainingUserRegistrySynchronizer implements UserRegistrySynchronize
             for (String personName : personsToDelete)
             {
                 ChainingUserRegistrySynchronizer.logger.warn("Deleting user '" + personName + "'");
-                this.personService.deletePerson(personName);
+                personService.deletePerson(personName);
                 processedCount++;
             }
         }
@@ -530,7 +534,7 @@ public class ChainingUserRegistrySynchronizer implements UserRegistrySynchronize
 
         Iterator<NodeDescription> groups = userRegistry.getGroups(lastModified);
         Map<String, Set<String>> groupAssocsToCreate = new TreeMap<String, Set<String>>();
-        Set<String> groupsToDelete = this.authorityService.getAllAuthoritiesInZone(zoneId, AuthorityType.GROUP);
+        Set<String> groupsToDelete = authorityService.getAllAuthoritiesInZone(zoneId, AuthorityType.GROUP);
         while (groups.hasNext())
         {
             NodeDescription group = groups.next();
@@ -557,7 +561,7 @@ public class ChainingUserRegistrySynchronizer implements UserRegistrySynchronize
             if (groupsToDelete.remove(groupName))
             {
                 // update an existing group in the same zone
-                Set<String> oldChildren = this.authorityService.getContainedAuthorities(null, groupName, true);
+                Set<String> oldChildren = authorityService.getContainedAuthorities(null, groupName, true);
                 Set<String> newChildren = group.getChildAssociations();
                 Set<String> toDelete = new TreeSet<String>(oldChildren);
                 Set<String> toAdd = new TreeSet<String>(newChildren);
@@ -570,15 +574,15 @@ public class ChainingUserRegistrySynchronizer implements UserRegistrySynchronize
                 for (String child : toDelete)
                 {
                     ChainingUserRegistrySynchronizer.logger.info("Removing '"
-                            + this.authorityService.getShortName(child) + "' from group '"
-                            + this.authorityService.getShortName(groupName) + "'");
-                    this.authorityService.removeAuthority(groupName, child);
+                            + authorityService.getShortName(child) + "' from group '"
+                            + authorityService.getShortName(groupName) + "'");
+                    authorityService.removeAuthority(groupName, child);
                 }
             }
             else
             {
-                String groupShortName = this.authorityService.getShortName(groupName);
-                Set<String> groupZones = this.authorityService.getAuthorityZones(groupName);
+                String groupShortName = authorityService.getShortName(groupName);
+                Set<String> groupZones = authorityService.getAuthorityZones(groupName);
                 if (groupZones != null)
                 {
                     groupZones.retainAll(visitedZoneIds);
@@ -592,7 +596,7 @@ public class ChainingUserRegistrySynchronizer implements UserRegistrySynchronize
                             .warn("Recreating occluded group '"
                                     + groupShortName
                                     + "'. This group was previously created manually or through synchronization with a lower priority user registry.");
-                    this.authorityService.deleteAuthority(groupName);
+                    authorityService.deleteAuthority(groupName);
                 }
                 else
                 {
@@ -600,7 +604,7 @@ public class ChainingUserRegistrySynchronizer implements UserRegistrySynchronize
                 }
 
                 // create the group
-                this.authorityService.createAuthority(AuthorityType.getAuthorityType(groupName), groupShortName,
+                authorityService.createAuthority(AuthorityType.getAuthorityType(groupName), groupShortName,
                         (String) groupProperties.get(ContentModel.PROP_AUTHORITY_DISPLAY_NAME), getZones(zoneId));
                 Set<String> children = group.getChildAssociations();
                 if (!children.isEmpty())
@@ -626,16 +630,16 @@ public class ChainingUserRegistrySynchronizer implements UserRegistrySynchronize
             for (String child : entry.getValue())
             {
                 String groupName = entry.getKey();
-                if (AuthorityType.getAuthorityType(child) == AuthorityType.USER && !this.personService.personExists(child))
+                if (AuthorityType.getAuthorityType(child) == AuthorityType.USER && !personService.personExists(child))
                 {
-                    ChainingUserRegistrySynchronizer.logger.warn("Not adding '" + this.authorityService.getShortName(child)
-                            + "' to group '" + this.authorityService.getShortName(groupName) + "', user does not exist");
+                    ChainingUserRegistrySynchronizer.logger.warn("Not adding '" + authorityService.getShortName(child)
+                            + "' to group '" + authorityService.getShortName(groupName) + "', user does not exist");
                 }
                 else
                 {
-                    ChainingUserRegistrySynchronizer.logger.info("Adding '" + this.authorityService.getShortName(child)
-                            + "' to group '" + this.authorityService.getShortName(groupName) + "'");
-                    this.authorityService.addAuthority(groupName, child);
+                    ChainingUserRegistrySynchronizer.logger.info("Adding '" + authorityService.getShortName(child)
+                            + "' to group '" + authorityService.getShortName(groupName) + "'");
+                    authorityService.addAuthority(groupName, child);
                 }
             }
 
@@ -647,8 +651,8 @@ public class ChainingUserRegistrySynchronizer implements UserRegistrySynchronize
             for (String group : groupsToDelete)
             {
                 ChainingUserRegistrySynchronizer.logger.warn("Deleting group '"
-                        + this.authorityService.getShortName(group) + "'");
-                this.authorityService.deleteAuthority(group);
+                        + authorityService.getShortName(group) + "'");
+                authorityService.deleteAuthority(group);
                 processedCount++;
             }
         }
@@ -673,7 +677,7 @@ public class ChainingUserRegistrySynchronizer implements UserRegistrySynchronize
      */
     private long getMostRecentUpdateTime(String label, String zoneId)
     {
-        Attribute attribute = this.attributeService.getAttribute(ChainingUserRegistrySynchronizer.ROOT_ATTRIBUTE_PATH
+        Attribute attribute = attributeService.getAttribute(ChainingUserRegistrySynchronizer.ROOT_ATTRIBUTE_PATH
                 + '/' + label + '/' + zoneId);
         return attribute == null ? -1 : attribute.getLongValue();
     }
@@ -691,17 +695,17 @@ public class ChainingUserRegistrySynchronizer implements UserRegistrySynchronize
     private void setMostRecentUpdateTime(String label, String zoneId, long lastModifiedMillis)
     {
         String path = ChainingUserRegistrySynchronizer.ROOT_ATTRIBUTE_PATH + '/' + label;
-        if (!this.attributeService.exists(path))
+        if (!attributeService.exists(path))
         {
-            if (!this.attributeService.exists(ChainingUserRegistrySynchronizer.ROOT_ATTRIBUTE_PATH))
+            if (!attributeService.exists(ChainingUserRegistrySynchronizer.ROOT_ATTRIBUTE_PATH))
             {
-                this.attributeService.setAttribute("", ChainingUserRegistrySynchronizer.ROOT_ATTRIBUTE_PATH,
+                attributeService.setAttribute("", ChainingUserRegistrySynchronizer.ROOT_ATTRIBUTE_PATH,
                         new MapAttributeValue());
             }
-            this.attributeService.setAttribute(ChainingUserRegistrySynchronizer.ROOT_ATTRIBUTE_PATH, label,
+            attributeService.setAttribute(ChainingUserRegistrySynchronizer.ROOT_ATTRIBUTE_PATH, label,
                     new MapAttributeValue());
         }
-        this.attributeService.setAttribute(path, zoneId, new LongAttributeValue(lastModifiedMillis));
+        attributeService.setAttribute(path, zoneId, new LongAttributeValue(lastModifiedMillis));
     }
 
     /**

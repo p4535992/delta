@@ -46,6 +46,7 @@ import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
 import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.generator.BaseComponentGenerator;
+import org.alfresco.web.bean.generator.BaseComponentGenerator.CustomAttributeNames;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.Repository;
 import org.alfresco.web.config.ActionsConfigElement.ActionDefinition;
@@ -1494,6 +1495,17 @@ public class ComponentUtil {
         for (UIComponent facet : facets) {
             setAjaxEnabledOnActionLinksRecursive(facet, ajaxParentLevel);
         }
+    }
+
+    public static UIOutput createMandatoryMarker(FacesContext context) {
+        UIOutput marker = (UIOutput) context.getApplication().createComponent(ComponentConstants.JAVAX_FACES_OUTPUT);
+        marker.setRendererType(ComponentConstants.JAVAX_FACES_TEXT);
+        FacesHelper.setupComponentId(context, marker, null);
+        @SuppressWarnings("unchecked")
+        Map<String, String> attributes = marker.getAttributes();
+        attributes.put(CustomAttributeNames.STYLE_CLASS, "red");
+        marker.setValue("* ");
+        return marker;
     }
 
 }

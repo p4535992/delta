@@ -13,13 +13,13 @@ import javax.faces.model.SelectItem;
 
 import org.alfresco.service.cmr.dictionary.PropertyDefinition;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.TransientNode;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import ee.webmedia.alfresco.classificator.enums.TemplateReportOutputType;
 import ee.webmedia.alfresco.classificator.enums.TemplateReportType;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docadmin.service.FieldDefinition;
@@ -39,7 +39,8 @@ public class DocumentDynamicReportDialog extends DocumentDynamicSearchDialog {
     private static final long serialVersionUID = 1L;
     private static final Log LOG = LogFactory.getLog(DocumentDynamicReportDialog.class);
 
-    private List<SelectItem> reportTemplates;
+    private final List<SelectItem> reportTemplates = new ArrayList<SelectItem>();
+    private List<Pair<SelectItem, String>> reportTemplatesWithOutputTypes;
 
     @Override
     protected DocumentSearchFilterService getFilterService() {
@@ -52,8 +53,7 @@ public class DocumentDynamicReportDialog extends DocumentDynamicSearchDialog {
     @Override
     public void init(Map<String, String> params) {
         super.init(params);
-        reportTemplates = BeanHelper.getDocumentTemplateService().getReportTemplates(TemplateReportType.DOCUMENTS_REPORT);
-        reportTemplates.add(0, new SelectItem("", MessageUtil.getMessage("select_default_label")));
+        reportTemplatesWithOutputTypes = BeanHelper.getDocumentTemplateService().getReportTemplatesWithOutputTypes(TemplateReportType.DOCUMENTS_REPORT);
     }
 
     @Override
@@ -91,7 +91,21 @@ public class DocumentDynamicReportDialog extends DocumentDynamicSearchDialog {
     }
 
     public List<SelectItem> getReportTemplates(FacesContext context, UIInput selectComponent) {
-        return reportTemplates;
+        String selectedTemplateType = (String) filter.getProperties().get(DocumentReportModel.Props.REPORT_OUTPUT_TYPE.getLocalName());
+        if (!reportTemplates.isEmpty()) {
+            reportTemplates.clear();
+        }
+        if (selectedTemplateType != null && !reportTemplatesWithOutputTypes.isEmpty()) {
+            for (Pair<SelectItem, String> item : reportTemplatesWithOutputTypes) {
+                if (item.getSecond().equals(selectedTemplateType)) {
+                    reportTemplates.add(item.getFirst());
+                }
+            }
+            if (!reportTemplates.isEmpty()) {
+                reportTemplates.add(0, new SelectItem("", MessageUtil.getMessage("select_default_label")));
+            }
+        }
+        return reportTemplates.isEmpty() ? null : reportTemplates;
     }
 
     @Override
@@ -108,7 +122,6 @@ public class DocumentDynamicReportDialog extends DocumentDynamicSearchDialog {
                     filterProps.put(fieldDefinition.getQName().toString(), new ArrayList<Object>());
                 }
             }
-            filterProps.put(DocumentReportModel.Props.REPORT_OUTPUT_TYPE.toString(), TemplateReportOutputType.DOCS_ONLY.toString());
             return transientNode;
         } finally {
             LOG.info("New report filter generation: " + (System.currentTimeMillis() - start) + "ms");

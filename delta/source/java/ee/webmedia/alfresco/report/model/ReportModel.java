@@ -38,6 +38,7 @@ public interface ReportModel {
         QName RUN_FINISH_START_TIME = QName.createQName(URI, "runFinishDateTime");
         QName CANCEL_DATE_TIME = QName.createQName(URI, "cancelDateTime");
         QName FIRST_DOWNLOAD_DATE_TIME = QName.createQName(URI, "firstDownloadDateTime");
+        QName CSV_FUNCTION_STORE_NODE_REF = QName.createQName(URI, "nodeRef");
         /**
          * All values for this property are defined in Enum {@link ReportStatus}
          */

@@ -65,7 +65,7 @@ public class MsoService2Impl implements MsoService, InitializingBean {
         // Set HTTP request read timeout at CXF layer
         // http://lhein.blogspot.com/2008/09/apache-cxf-and-time-outs.html
         HTTPConduit http = (HTTPConduit) ClientProxy.getClient(port).getConduit();
-        http.getClient().setReceiveTimeout(httpClientReceiveTimeout * 1000);
+        http.getClient().setReceiveTimeout(httpClientReceiveTimeout * 1000); // Takes milliseconds
 
         SOAPBinding binding = (SOAPBinding) bp.getBinding();
         binding.setMTOMEnabled(true);

@@ -79,5 +79,6 @@ public interface NotificationService {
 
     List<QName> getAllNotificationProps();
 
+    boolean isSubstitutionTaskEndDateRestricted();
 
 }

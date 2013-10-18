@@ -34,9 +34,13 @@ import ee.webmedia.alfresco.classificator.enums.LeaveType;
 import ee.webmedia.alfresco.classificator.model.ClassificatorValue;
 import ee.webmedia.alfresco.classificator.service.ClassificatorService;
 import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement.ItemConfigVO;
+import ee.webmedia.alfresco.common.propertysheet.modalLayer.ValidatingModalLayerComponent;
+import ee.webmedia.alfresco.common.propertysheet.search.Search;
 import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.common.web.UserContactGroupSearchBean;
 import ee.webmedia.alfresco.docadmin.service.Field;
 import ee.webmedia.alfresco.docadmin.service.FieldGroup;
+import ee.webmedia.alfresco.docconfig.bootstrap.SystematicFieldGroupNames;
 import ee.webmedia.alfresco.docconfig.generator.BasePropertySheetStateHolder;
 import ee.webmedia.alfresco.docconfig.generator.BaseSystematicFieldGenerator;
 import ee.webmedia.alfresco.docconfig.generator.GeneratorResults;
@@ -201,6 +205,9 @@ public class UserContactTableGenerator extends BaseSystematicFieldGenerator {
         String leaveValueChanged = "¤valueChangeListener=" + getBindingName("leaveTypeOrDateValueChanged", stateHolderKey);
         List<String> props = new ArrayList<String>();
         List<QName> propNames = new ArrayList<QName>();
+        Map<String, Field> fieldsByOriginalId = group.getFieldsByOriginalId();
+        boolean isLeaveChangedDays = fieldsByOriginalId.containsKey("leaveChangedDays");
+        boolean isLeaveCancelledDays = fieldsByOriginalId.containsKey("leaveCancelledDays");
         for (Field child : group.getFields()) {
             QName fieldId = child.getQName();
 
@@ -219,19 +226,20 @@ public class UserContactTableGenerator extends BaseSystematicFieldGenerator {
             } else {
                 throw new RuntimeException("FieldType " + field.getFieldTypeEnum() + " is not supported inside a table");
             }
-            if (child.getOriginalFieldId().equals(DocumentSpecificModel.Props.SUBSTITUTE_NAME.getLocalName())
+            String originalFieldId = child.getOriginalFieldId();
+            if (originalFieldId.equals(DocumentSpecificModel.Props.SUBSTITUTE_NAME.getLocalName())
                     || FieldChangeableIf.ALWAYS_NOT_CHANGEABLE.equals(child.getChangeableIfEnum())) {
                 componentGeneratorAndProps += "¤read-only=true";
             } else if (FieldChangeableIf.CHANGEABLE_IF_WORKING_DOC.equals(child.getChangeableIfEnum())) {
                 componentGeneratorAndProps += "¤readOnlyIf=#{" + DocumentDialogHelperBean.BEAN_NAME + ".notWorkingOrNotEditable}";
             }
 
-            if (DocumentSpecificModel.Props.SUBSTITUTION_BEGIN_DATE.getLocalName().equals(child.getOriginalFieldId())
-                    || DocumentSpecificModel.Props.SUBSTITUTION_END_DATE.getLocalName().equals(child.getOriginalFieldId())) {
-                Field substituteNameField = group.getFieldsByOriginalId().get(DocumentSpecificModel.Props.SUBSTITUTE_NAME.getLocalName());
+            if (DocumentSpecificModel.Props.SUBSTITUTION_BEGIN_DATE.getLocalName().equals(originalFieldId)
+                    || DocumentSpecificModel.Props.SUBSTITUTION_END_DATE.getLocalName().equals(originalFieldId)) {
+                Field substituteNameField = fieldsByOriginalId.get(DocumentSpecificModel.Props.SUBSTITUTE_NAME.getLocalName());
                 componentGeneratorAndProps += "¤mandatoryIf=" + substituteNameField.getQName().toPrefixString(namespaceService) + "!=null";
             }
-            if (DocumentSpecificModel.Props.LEAVE_TYPE.getLocalName().equals(child.getOriginalFieldId())) {
+            if (DocumentSpecificModel.Props.LEAVE_TYPE.getLocalName().equals(originalFieldId)) {
                 componentGeneratorAndProps += leaveValueChanged;
                 leaveTypeProp = fieldId;
                 String leaveTypeClassificator = child.getClassificator();
@@ -244,20 +252,24 @@ public class UserContactTableGenerator extends BaseSystematicFieldGenerator {
                         }
                     }
                 }
-            } else if (DocumentDynamicModel.Props.LEAVE_BEGIN_DATE.getLocalName().equals(child.getOriginalFieldId())
-                    || DocumentSpecificModel.Props.LEAVE_NEW_BEGIN_DATE.getLocalName().equals(child.getOriginalFieldId())
-                    || DocumentSpecificModel.Props.LEAVE_CANCEL_BEGIN_DATE.getLocalName().equals(child.getOriginalFieldId())) {
+            } else if (DocumentDynamicModel.Props.LEAVE_BEGIN_DATE.getLocalName().equals(originalFieldId)
+                    || (isLeaveChangedDays && DocumentSpecificModel.Props.LEAVE_NEW_BEGIN_DATE.getLocalName().equals(originalFieldId))
+                    || (isLeaveCancelledDays && DocumentSpecificModel.Props.LEAVE_CANCEL_BEGIN_DATE.getLocalName().equals(originalFieldId))) {
                 componentGeneratorAndProps += leaveValueChanged;
                 beginDateProp = fieldId;
-            } else if (DocumentDynamicModel.Props.LEAVE_END_DATE.getLocalName().equals(child.getOriginalFieldId())
-                    || DocumentSpecificModel.Props.LEAVE_NEW_END_DATE.getLocalName().equals(child.getOriginalFieldId())
-                    || DocumentSpecificModel.Props.LEAVE_CANCEL_END_DATE.getLocalName().equals(child.getOriginalFieldId())) {
+            } else if (DocumentDynamicModel.Props.LEAVE_END_DATE.getLocalName().equals(originalFieldId)
+                    || (isLeaveChangedDays && DocumentSpecificModel.Props.LEAVE_NEW_END_DATE.getLocalName().equals(originalFieldId))
+                    || (isLeaveCancelledDays && DocumentSpecificModel.Props.LEAVE_CANCEL_END_DATE.getLocalName().equals(originalFieldId))) {
                 componentGeneratorAndProps += leaveValueChanged;
                 endDateProp = fieldId;
-            } else if (DocumentSpecificModel.Props.LEAVE_DAYS.getLocalName().equals(child.getOriginalFieldId())
-                    || DocumentDynamicModel.Props.LEAVE_CHANGED_DAYS.getLocalName().equals(child.getOriginalFieldId())
-                    || DocumentSpecificModel.Props.LEAVE_CANCELLED_DAYS.getLocalName().equals(child.getOriginalFieldId())) {
+            } else if (DocumentSpecificModel.Props.LEAVE_DAYS.getLocalName().equals(originalFieldId)
+                    || DocumentDynamicModel.Props.LEAVE_CHANGED_DAYS.getLocalName().equals(originalFieldId)
+                    || DocumentSpecificModel.Props.LEAVE_CANCELLED_DAYS.getLocalName().equals(originalFieldId)) {
                 calculatedDaysProp = fieldId;
+            }
+
+            if (child.isMandatory()) {
+                componentGeneratorAndProps += "¤" + ValidatingModalLayerComponent.ATTR_MANDATORY + "=true";
             }
             props.add(fieldId.toPrefixString(namespaceService) + "¤" + componentGeneratorAndProps);
             propNames.add(fieldId);
@@ -272,8 +284,14 @@ public class UserContactTableGenerator extends BaseSystematicFieldGenerator {
         item.setDisplayLabel(group.getReadonlyFieldsName());
         if (field.getOriginalFieldId().equals(DocumentCommonModel.Props.RECIPIENT_NAME.getLocalName())) {
             item.setAddLabelId("document_add_recipient");
+            if (SystematicFieldGroupNames.RECIPIENTS.equals(group.getName())) {
+                item.getCustomAttributes().put(Search.FILTER_INDEX, Integer.toString(UserContactGroupSearchBean.CONTACTS_FILTER));
+            }
         } else if (field.getOriginalFieldId().equals(DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME.getLocalName())) {
             item.setAddLabelId("document_add_additional_recipient");
+            if (SystematicFieldGroupNames.ADDITIONAL_RECIPIENTS.equals(group.getName())) {
+                item.getCustomAttributes().put(Search.FILTER_INDEX, Integer.toString(UserContactGroupSearchBean.CONTACTS_FILTER));
+            }
         } else {
             item.setAddLabelId("add");
         }

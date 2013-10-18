@@ -1,9 +1,11 @@
 package ee.webmedia.alfresco.doclist.service;
 
-import java.io.OutputStream;
+import java.io.Serializable;
 import java.util.List;
+import java.util.Map;
 
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
 
 /**
@@ -16,7 +18,7 @@ public interface DocumentListService {
 
     String BEAN_NAME = "DocumentListService";
 
-    void getExportCsv(OutputStream outputStream, NodeRef rootRef);
+    Map<QName, Serializable> exportCsv(NodeRef rootRef, NodeRef reportsSpaceRef);
 
     long createNewYearBasedVolumes();
 

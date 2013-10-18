@@ -48,6 +48,7 @@
       <property name="classificatorService" ref="ClassificatorService" />
       <property name="workflowService" ref="wmWorkflowService" />
       <property name="logService" ref="LogService" />
+      <property name="substitutionTaskEndDateRestricted" value="${conf.notifications.substitutionTaskEndDateRestricted}"></property>
    </bean>
 
    <bean id="NotificationService" class="org.springframework.aop.framework.ProxyFactoryBean">
@@ -113,6 +114,17 @@
          </list>
       </property>
    </bean>
+   
+   <bean id="notificationParametersBootstrap4" parent="notificationImportBootstrap">
+      <property name="bootstrapViews">
+         <list>
+            <props>
+               <prop key="path">/param:parameters</prop>
+               <prop key="location">ee/webmedia/alfresco/notification/bootstrap/notification-parameters4.xml</prop>
+            </props>
+         </list>
+      </property>
+   </bean>   
    
    <bean id="notificationRootBootstrap" parent="notificationImportBootstrap">
       <property name="bootstrapViews">

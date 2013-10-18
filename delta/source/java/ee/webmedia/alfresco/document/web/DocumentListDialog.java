@@ -4,6 +4,7 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentConfigServic
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDynamicService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getPropertySheetStateBean;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -18,6 +19,8 @@ import javax.faces.component.UIComponent;
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
+import org.alfresco.repo.transaction.RetryingTransactionHelper;
+import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
@@ -197,33 +200,30 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
     public void massChangeDocLocationConfirmed(ActionEvent event) {
         resetConfirmation(event);
         Map<String, Object> locationProps = getLocationNode().getProperties();
-        NodeRef function = (NodeRef) locationProps.get(DocumentCommonModel.Props.FUNCTION.toString());
-        NodeRef series = (NodeRef) locationProps.get(DocumentCommonModel.Props.SERIES.toString());
-        NodeRef volume = (NodeRef) locationProps.get(DocumentCommonModel.Props.VOLUME.toString());
-        String caseLabel = (String) locationProps.get(DocumentLocationGenerator.CASE_LABEL_EDITABLE);
-        Set<NodeRef> updatedNodeRefs = new HashSet<NodeRef>();
+        final NodeRef function = (NodeRef) locationProps.get(DocumentCommonModel.Props.FUNCTION.toString());
+        final NodeRef series = (NodeRef) locationProps.get(DocumentCommonModel.Props.SERIES.toString());
+        final NodeRef volume = (NodeRef) locationProps.get(DocumentCommonModel.Props.VOLUME.toString());
+        final String caseLabel = (String) locationProps.get(DocumentLocationGenerator.CASE_LABEL_EDITABLE);
+        final Set<NodeRef> updatedNodeRefs = new HashSet<NodeRef>();
         try {
+            RetryingTransactionHelper retryingTransactionHelper = BeanHelper.getTransactionService().getRetryingTransactionHelper();
             for (Entry<NodeRef, Boolean> entry : getListCheckboxes().entrySet()) {
                 if (!entry.getValue()) {
                     continue;
                 }
-                NodeRef docRef = entry.getKey();
+                final NodeRef docRef = entry.getKey();
                 if (updatedNodeRefs.contains(docRef)) {
                     // document was already moved as followup or reply document of some selected document
                     continue;
                 }
-                DocumentDynamic document = getDocumentDynamicService().getDocument(docRef);
-                DocumentConfig cfg = getDocumentConfigService().getConfig(document.getNode());
-                document.setFunction(function);
-                document.setSeries(series);
-                document.setVolume(volume);
-                document.setCase(null);
-                document.getNode().getProperties().put(DocumentLocationGenerator.CASE_LABEL_EDITABLE.toString(), caseLabel);
-                List<Pair<NodeRef, NodeRef>> updatedRefs = getDocumentDynamicService().updateDocumentGetDocAndNodeRefs(document, cfg.getSaveListenerBeanNames(), true).getSecond();
-                for (Pair<NodeRef, NodeRef> pair : updatedRefs) {
-                    updatedNodeRefs.add(pair.getFirst());
-                    updatedNodeRefs.add(pair.getSecond());
-                }
+                retryingTransactionHelper.doInTransaction(new RetryingTransactionCallback<Void>() {
+
+                    @Override
+                    public Void execute() throws Throwable {
+                        updateDocumentInMassChangeLocation(function, series, volume, caseLabel, updatedNodeRefs, docRef);
+                        return null;
+                    }
+                }, false, true);
             }
         } catch (UnableToPerformException e) {
             MessageUtil.addStatusMessage(FacesContext.getCurrentInstance(), e);
@@ -241,6 +241,22 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
         }
         doInitialSearch();
         BeanHelper.getVisitedDocumentsBean().clearVisitedDocuments();
+    }
+
+    private void updateDocumentInMassChangeLocation(NodeRef function, NodeRef series, NodeRef volume, String caseLabel, Set<NodeRef> updatedNodeRefs, NodeRef docRef) {
+        DocumentDynamic document = getDocumentDynamicService().getDocument(docRef);
+        DocumentConfig cfg = getDocumentConfigService().getConfig(document.getNode());
+        document.setFunction(function);
+        document.setSeries(series);
+        document.setVolume(volume);
+        document.setCase(null);
+        document.getNode().getProperties().put(DocumentLocationGenerator.CASE_LABEL_EDITABLE.toString(), caseLabel);
+        List<Pair<NodeRef, NodeRef>> updatedRefs = getDocumentDynamicService().updateDocumentGetDocAndNodeRefs(document, cfg.getSaveListenerBeanNames(), true)
+                .getSecond();
+        for (Pair<NodeRef, NodeRef> pair : updatedRefs) {
+            updatedNodeRefs.add(pair.getFirst());
+            updatedNodeRefs.add(pair.getSecond());
+        }
     }
 
     public void resetConfirmation(@SuppressWarnings("unused") ActionEvent event) {
@@ -297,23 +313,32 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
             parentRef = parentVolume.getNode().getNodeRef();
         }
         documents = setLimited(getChildNodes(parentRef, getLimit()));
+        final boolean debugEnabled = LOG.isDebugEnabled();
+        if (debugEnabled) {
+            LOG.debug("Found " + documents.size() + " document(s) during initial search. Limit: " + getLimit());
+        }
 
         // Because documents are fetched from search, the results may not be accurate if indexing is done in background
         // and mass change location was done during the last few seconds
         // Therefore filter out documents, that are not under this volume or case
+        List<Document> removedDocs = null;
+        if (debugEnabled) {
+            removedDocs = new ArrayList<Document>();
+        }
         for (Iterator<Document> i = documents.iterator(); i.hasNext();) {
             Document document = i.next();
-            if (parentCase != null) {
-                NodeRef caseRef = (NodeRef) document.getProperties().get(DocumentCommonModel.Props.CASE.toString());
-                if (!parentCase.getNode().getNodeRef().equals(caseRef)) {
-                    i.remove();
-                }
-            } else {
-                NodeRef volumeRef = (NodeRef) document.getProperties().get(DocumentCommonModel.Props.VOLUME.toString());
-                if (!parentVolume.getNode().getNodeRef().equals(volumeRef)) {
-                    i.remove();
+            QName parentRefProperty = (parentCase != null) ? DocumentCommonModel.Props.CASE : DocumentCommonModel.Props.VOLUME;
+
+            NodeRef documentParentRef = (NodeRef) document.getProperties().get(parentRefProperty.toString());
+            if (!parentRef.equals(documentParentRef)) {
+                i.remove();
+                if (debugEnabled) {
+                    removedDocs.add(document);
                 }
             }
+        }
+        if (debugEnabled) {
+            LOG.debug("Removed " + removedDocs.size() + " documents from " + parentRef + " children listing during filtering: " + removedDocs.toString());
         }
 
         Collections.sort(documents); // always sort, because at first user gets only limited amount of documents;

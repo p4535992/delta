@@ -87,7 +87,7 @@
       <property-sheet>
       <!-- DialogManager.bean value is 'DocumentTemplateDetailsDialog' or 'AddDocumentTemplateDialog'  -->
          <show-property name="docTempl:reportType" display-label-id="template_reportType" editable="false" component-generator="EnumSelectorGenerator" 
-            enumClass="ee.webmedia.alfresco.classificator.enums.TemplateReportType" readOnlyIf="#{DialogManager.bean == DocumentTemplateDetailsDialog}" valueChangeListener="#{AddDocumentTemplateDialog.reportTypeValueChanged}"/>
+            enumClass="ee.webmedia.alfresco.classificator.enums.TemplateReportType" readOnlyIf="#{DialogManager.bean == DocumentTemplateDetailsDialog}" valueChangeListener="#{AddDocumentTemplateDialog.reportTypeValueChanged}" excludeValue="CONSOLIDATED_LIST" />
          <show-property name="docTempl:reportOutputType" display-label-id="template_reportOutputType" editable="false" component-generator="EnumSelectorGenerator" 
             enumClass="ee.webmedia.alfresco.classificator.enums.TemplateReportOutputType" readOnlyIf="#{DialogManager.bean == DocumentTemplateDetailsDialog}" show="#{DialogManager.bean.showReportOutputType}" forcedMandatory="#{DialogManager.bean.showReportOutputType}"/>
       </property-sheet>

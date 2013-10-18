@@ -136,6 +136,7 @@ import ee.webmedia.alfresco.workflow.search.service.TaskReportFilterService;
 import ee.webmedia.alfresco.workflow.search.service.TaskSearchFilterService;
 import ee.webmedia.alfresco.workflow.service.WorkflowDbService;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
+import ee.webmedia.alfresco.workflow.web.DelegationBean;
 import ee.webmedia.alfresco.workflow.web.WorkflowBlockBean;
 import ee.webmedia.xtee.client.dhl.DhlXTeeServiceImplFSStub;
 
@@ -268,10 +269,10 @@ public class BeanHelper implements NamespacePrefixResolverProvider {
     public static <D extends DynamicType, S extends DynTypeDialogSnapshot<D>> DynamicTypeDetailsDialog<D, S> getDynamicTypeDetailsDialog(Class<D> dynTypeClass) {
         if (DocumentType.class.equals(dynTypeClass)) {
             // not using getDocTypeDetailsDialog() as unlike smarter eclipse compiler javac can't handle complicated generics
-            DynamicTypeDetailsDialog tmp = (DynamicTypeDetailsDialog) getJsfBean(DocTypeDetailsDialog.class, DocTypeDetailsDialog.BEAN_NAME);
+            DynamicTypeDetailsDialog tmp = getJsfBean(DocTypeDetailsDialog.class, DocTypeDetailsDialog.BEAN_NAME);
             return tmp;
         } else if (CaseFileType.class.equals(dynTypeClass)) {
-            DynamicTypeDetailsDialog tmp = (DynamicTypeDetailsDialog) getJsfBean(CaseFileTypeDetailsDialog.class, CaseFileTypeDetailsDialog.BEAN_NAME);
+            DynamicTypeDetailsDialog tmp = getJsfBean(CaseFileTypeDetailsDialog.class, CaseFileTypeDetailsDialog.BEAN_NAME);
             return tmp;
         } else {
             throw new RuntimeException("Returning details dialog for " + dynTypeClass.getSimpleName() + " is unimplemented");
@@ -356,6 +357,10 @@ public class BeanHelper implements NamespacePrefixResolverProvider {
 
     public static WorkflowBlockBean getWorkflowBlockBean() {
         return getJsfBean(WorkflowBlockBean.class, WorkflowBlockBean.BEAN_NAME);
+    }
+
+    public static DelegationBean getDelegationBean() {
+        return getJsfBean(DelegationBean.class, DelegationBean.BEAN_NAME);
     }
 
     public static SendOutBlockBean getSendOutBlockBean() {

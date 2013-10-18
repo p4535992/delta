@@ -46,6 +46,7 @@ import org.springframework.util.Assert;
 import ee.webmedia.alfresco.classificator.enums.TemplateReportOutputType;
 import ee.webmedia.alfresco.classificator.enums.TemplateReportType;
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
 import ee.webmedia.alfresco.document.file.service.FileService;
@@ -130,11 +131,31 @@ public class ReportServiceImpl implements ReportService {
     }
 
     @Override
+    public NodeRef createCsvReportResult(NodeRef nodeRef) {
+        Map<QName, Serializable> reportResultProps = new HashMap<QName, Serializable>();
+        String reportName = MessageUtil.getMessage("report_consolidated_list_default_title");
+        reportResultProps.put(ReportModel.Props.USERNAME, userService.getCurrentUserName());
+        reportResultProps.put(ReportModel.Props.REPORT_NAME, reportName);
+        reportResultProps.put(ReportModel.Props.REPORT_TYPE, TemplateReportType.CONSOLIDATED_LIST.toString());
+        reportResultProps.put(ReportModel.Props.USER_START_DATE_TIME, new Date());
+        reportResultProps.put(ReportModel.Props.STATUS, ReportStatus.IN_QUEUE.toString());
+        reportResultProps.put(ReportModel.Props.CSV_FUNCTION_STORE_NODE_REF, nodeRef);
+
+        NodeRef reportResultRef = nodeService.createNode(getReportsSpaceRef(), ReportModel.Assocs.REPORT_RESULT,
+                ReportModel.Assocs.REPORT_RESULT, ReportModel.Types.REPORT_RESULT, reportResultProps).getChildRef();
+        return reportResultRef;
+    }
+
+    @Override
     public ReportDataCollector getReportFileInMemory(ReportDataCollector reportDataCollector) {
         NodeRef reportResultRef = reportDataCollector.getReportResultNodeRef();
         Map<QName, Serializable> reportResultProps = reportDataCollector.getReportResultProps();
         String reportTypeStr = (String) reportResultProps.get(ReportModel.Props.REPORT_TYPE);
         TemplateReportType reportType = TemplateReportType.valueOf(reportTypeStr);
+        if (TemplateReportType.CONSOLIDATED_LIST == reportType) {
+            NodeRef functionsRoot = (NodeRef) reportResultProps.get(ReportModel.Props.CSV_FUNCTION_STORE_NODE_REF);
+            return createCsvFileInMemory(reportDataCollector, functionsRoot);
+        }
         List<ChildAssociationRef> filters = nodeService.getChildAssocs(reportResultRef, Collections.singleton(ReportHelper.getFilterAssoc(reportType)));
         Assert.isTrue(filters != null && filters.size() == 1, "reportResult must have exactly one taskReportFilter child node!");
         Node filter = new Node(filters.get(0).getChildRef());
@@ -189,6 +210,14 @@ public class ReportServiceImpl implements ReportService {
             reportDataCollector.setResultStatus(ReportStatus.FAILED);
             return reportDataCollector;
         }
+    }
+
+    private ReportDataCollector createCsvFileInMemory(ReportDataCollector reportDataCollector, NodeRef rootRef) {
+        Map<QName, Serializable> resultProps = BeanHelper.getDocumentListService().exportCsv(rootRef, reportDataCollector.getReportResultNodeRef());
+        reportDataCollector.addReportResultProps(resultProps);
+        reportDataCollector.setEncoding("UTF-8");
+        reportDataCollector.setResultStatus(ReportStatus.FINISHED);
+        return reportDataCollector;
     }
 
     @Override
@@ -339,6 +368,9 @@ public class ReportServiceImpl implements ReportService {
             }
             reportResultProps.put(ReportModel.Props.RUN_FINISH_START_TIME, completeDate);
         }
+        else if (TemplateReportType.CONSOLIDATED_LIST.name().equals(reportDataProvider.getReportResultProps().get(ReportModel.Props.REPORT_TYPE))) {
+            reportResultProps.put(ReportModel.Props.RUN_FINISH_START_TIME, completeDate);
+        }
         reportResultProps.put(ReportModel.Props.STATUS, resultStatus.toString());
         if (ReportStatus.CANCELLED.equals(resultStatus)) {
             reportResultProps.put(ReportModel.Props.CANCEL_DATE_TIME, completeDate);
@@ -422,9 +454,11 @@ public class ReportServiceImpl implements ReportService {
         NodeRef reportResultRef = reportNode.getNodeRef();
         String reportTypeStr = (String) reportProps.get(ReportModel.Props.REPORT_TYPE);
         TemplateReportType reportType = TemplateReportType.valueOf(reportTypeStr);
-        List<ChildAssociationRef> filters = nodeService.getChildAssocs(reportResultRef, Collections.singleton(ReportHelper.getFilterType(reportType)));
-        if (filters != null && !filters.isEmpty()) {
-            reportResult.setTemplateName((String) nodeService.getProperty(filters.get(0).getChildRef(), ReportHelper.getTemplateNameProp(reportType)));
+        if (!TemplateReportType.CONSOLIDATED_LIST.name().equals(reportTypeStr)) {
+            List<ChildAssociationRef> filters = nodeService.getChildAssocs(reportResultRef, Collections.singleton(ReportHelper.getFilterType(reportType)));
+            if (filters != null && !filters.isEmpty()) {
+                reportResult.setTemplateName((String) nodeService.getProperty(filters.get(0).getChildRef(), ReportHelper.getTemplateNameProp(reportType)));
+            }
         }
         NodeRef reportResultFileRef = getReportResultFile(reportResultRef);
         if (reportResultFileRef != null) {

@@ -283,7 +283,7 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
             @SuppressWarnings("unchecked")
             Map.Entry<QName, Serializable> entry = (Map.Entry<QName, Serializable>) entryObj;
             @SuppressWarnings({ "cast" })
-            QName propName = (QName) entry.getKey();
+            QName propName = entry.getKey();
             if (!WorkflowCommonModel.URI.equals(propName.getNamespaceURI()) && !WorkflowSpecificModel.URI.equals(propName.getNamespaceURI())) {
                 continue;
             }
@@ -559,7 +559,6 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
 
     private boolean isEmptyInsert(@SuppressWarnings("rawtypes") final List files) {
         if (files == null || files.isEmpty()) {
-            LOG.info("No file input provided, skipping insert");
             return true;
         }
         return false;
@@ -709,7 +708,7 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
             List<String> valueList = new ArrayList<String>();
             ResultSet resultSet = array.getResultSet();
             while (resultSet.next()) {
-                valueList.add(resultSet.getString(1));
+                valueList.add(resultSet.getString(2));
             }
             return (Serializable) valueList;
         }

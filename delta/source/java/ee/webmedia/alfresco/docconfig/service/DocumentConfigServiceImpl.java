@@ -53,6 +53,7 @@ import ee.webmedia.alfresco.common.propertysheet.component.WMUIProperty;
 import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement;
 import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement.ItemConfigVO;
 import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement.ItemConfigVO.ConfigItemType;
+import ee.webmedia.alfresco.common.propertysheet.modalLayer.ValidatingModalLayerComponent;
 import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
 import ee.webmedia.alfresco.docadmin.service.DocumentType;
 import ee.webmedia.alfresco.docadmin.service.DocumentTypeVersion;
@@ -403,6 +404,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
             itemConfig.setDisplayLabelId(searchLabelIds.get(prop));
             itemConfig.setComponentGenerator("EnumSelectorGenerator");
             itemConfig.getCustomAttributes().put("enumClass", TemplateReportOutputType.class.getCanonicalName());
+            itemConfig.setValueChangeListener("#{DialogManager.bean.reportTypeChanged}");
             itemConfig.setConfigItemType(ConfigItemType.PROPERTY);
             config.getPropertySheetConfigElement().addItem(itemConfig);
         }
@@ -714,12 +716,19 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
                 break;
             case ALWAYS_NOT_CHANGEABLE:
                 item.setReadOnly(true);
+                item.setOutputTextPropertyValue(true);
                 break;
             case CHANGEABLE_IF_WORKING_DOC:
                 item.setReadOnlyIf("#{" + DocumentDialogHelperBean.BEAN_NAME + ".notWorkingOrNotEditable}");
                 break;
             }
         }
+
+        if (field.isMandatory()) {
+            item.setForcedMandatory(Boolean.TRUE);
+            item.getCustomAttributes().put(ValidatingModalLayerComponent.ATTR_MANDATORY, Boolean.TRUE.toString());
+        }
+
         return item;
     }
 

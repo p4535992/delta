@@ -11,7 +11,7 @@
          <f:facet name="header">
             <a:sortLink id="dueDate-sort" label="#{msg.task_property_dueDate}" value="dueDate" styleClass="header" />
          </f:facet>
-         <a:actionLink id="dueDate-text" value="#{r.task.dueDateStr}" action="#{DocumentDialog.action}" tooltip="#{r.task.dueDateStr}" actionListener="#{DocumentDialog.open}" styleClass="no-underline" >
+         <a:actionLink id="dueDate-text" value="#{r.task.dueDateTimeStr}" action="#{DocumentDialog.action}" tooltip="#{r.task.dueDateTimeStr}" actionListener="#{DocumentDialog.open}" styleClass="no-underline" >
             <f:param name="nodeRef" value="#{r.document.node.nodeRef}" />
          </a:actionLink>
       </a:column>

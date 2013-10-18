@@ -992,6 +992,24 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
         return result;
     }
 
+    @Override
+    public List<Pair<SelectItem, String>> getReportTemplatesWithOutputTypes(TemplateReportType typeId) {
+        Assert.notNull(typeId, "Parameter typeId is mandatory.");
+        List<Pair<SelectItem, String>> result = new ArrayList<Pair<SelectItem, String>>();
+        String typeStr = typeId.toString();
+        for (DocumentTemplate template : getTemplates()) {
+            if (nodeService.hasAspect(template.getNodeRef(), DocumentTemplateModel.Aspects.TEMPLATE_REPORT) && typeStr.equals(template.getReportType())) {
+                Serializable outputType = BeanHelper.getNodeService().getProperty(template.getNodeRef(), DocumentTemplateModel.Prop.REPORT_OUTPUT_TYPE);
+                if (outputType != null) {
+                    String templateOutputType = outputType.toString();
+                    SelectItem item = new SelectItem(template.getName());
+                    result.add(new Pair<SelectItem, String>(item, templateOutputType));
+                }
+            }
+        }
+        return result;
+    }
+
     private String escapeXml(String replaceString) {
         if (replaceString == null) {
             return "";

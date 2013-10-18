@@ -9,6 +9,7 @@ import java.util.Map;
 import javax.faces.component.UIComponent;
 import javax.faces.webapp.UIComponentTag;
 
+import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
 import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.CombinedPropReader;
@@ -124,7 +125,7 @@ public class MultiValueEditorTag extends UIComponentTag {
             attributes.put(MultiValueEditor.FILTERS, filters);
         }
         if (StringUtils.isNotBlank(filterIndex)) {
-            attributes.put(MultiValueEditor.FILTER_INDEX, filterIndex);
+            attributes.put(Search.FILTER_INDEX, DefaultTypeConverter.INSTANCE.convert(Integer.class, filterIndex));
         }
         if (StringUtils.isNotBlank(preprocessCallback)) {
             attributes.put(MultiValueEditor.PREPROCESS_CALLBACK, preprocessCallback);

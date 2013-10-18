@@ -23,6 +23,8 @@ import org.alfresco.i18n.I18NUtil;
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
+import org.alfresco.repo.transaction.RetryingTransactionHelper;
+import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
@@ -32,6 +34,7 @@ import org.alfresco.web.bean.repository.TransientNode;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateUtils;
 import org.joda.time.LocalDate;
+import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.addressbook.service.AddressbookService;
@@ -64,6 +67,7 @@ import ee.webmedia.alfresco.substitute.service.SubstituteService;
 import ee.webmedia.alfresco.template.service.DocumentTemplateService;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.CalendarUtil;
+import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.Predicate;
 import ee.webmedia.alfresco.utils.UserUtil;
 import ee.webmedia.alfresco.utils.beanmapper.BeanPropertyMapper;
@@ -87,6 +91,7 @@ public class NotificationServiceImpl implements NotificationService {
     private static final String NOTIFICATION_PREFIX = "notification_";
     private static final String TEMPLATE_SUFFIX = "_template";
     private static final String SUBJECT_SUFFIX = "_subject";
+    private static final long DEFAULT_MAX_DOCUMENTS_IN_ACCESS_RESTRICTION_NOTIFICATION = 500;
     private EmailService emailService;
     private NodeService nodeService;
     private GeneralService generalService;
@@ -101,6 +106,7 @@ public class NotificationServiceImpl implements NotificationService {
     private WorkflowService workflowService;
     private LogService logService;
     private int updateCount = 0;
+    private boolean substitutionTaskEndDateRestricted;
 
     private static BeanPropertyMapper<GeneralNotification> generalNotificationBeanPropertyMapper;
     static {
@@ -542,19 +548,22 @@ public class NotificationServiceImpl implements NotificationService {
         if (substitutes.isEmpty()) {
             return null;
         }
-        int daysForSubstitutionTasksCalc = parametersService.getLongParameter(Parameters.DAYS_FOR_SUBSTITUTION_TASKS_CALC).intValue();
+        int daysForSubstitutionTasksCalc = substitutionTaskEndDateRestricted ? parametersService.getLongParameter(Parameters.DAYS_FOR_SUBSTITUTION_TASKS_CALC).intValue() : 0;
         Calendar calendar = Calendar.getInstance();
         Date now = new Date();
         for (Substitute sub : substitutes) {
-            calendar.setTime(sub.getSubstitutionEndDate());
-            if (daysForSubstitutionTasksCalc > 0) {
-                calendar.add(Calendar.DATE, daysForSubstitutionTasksCalc);
+            if (substitutionTaskEndDateRestricted) {
+                calendar.setTime(sub.getSubstitutionEndDate());
+                if (daysForSubstitutionTasksCalc > 0) {
+                    calendar.add(Calendar.DATE, daysForSubstitutionTasksCalc);
+                }
             }
             Date substitutionStartDate = sub.getSubstitutionStartDate();
             Date substitutionEndDate = sub.getSubstitutionEndDate();
             boolean result = false;
-            if (isSubstituting(substitutionStartDate, substitutionEndDate, now) && substitutionStartDate.before(task.getDueDate())
-                    && calendar.getTime().after(task.getDueDate())) {
+            if (isSubstituting(substitutionStartDate, substitutionEndDate, now)
+                    && substitutionStartDate.before(task.getDueDate())
+                    && (!substitutionTaskEndDateRestricted || calendar.getTime().after(task.getDueDate()))) {
                 notification.addRecipient(sub.getSubstituteName(), userService.getUserEmail(sub.getSubstituteId()));
                 notification.addAdditionalFomula(DocumentSpecificModel.Props.SUBSTITUTION_BEGIN_DATE.getLocalName(), Task.dateFormat.format(substitutionStartDate));
                 notification.addAdditionalFomula(DocumentSpecificModel.Props.SUBSTITUTION_END_DATE.getLocalName(), Task.dateFormat.format(substitutionEndDate));
@@ -1041,7 +1050,7 @@ public class NotificationServiceImpl implements NotificationService {
         return sendAccessRestrictionEndDateNotifications(documents, documentsByUser);
     }
 
-    private int sendAccessRestrictionEndDateNotifications(List<Document> documents, Map<String, List<Document>> documentsByUser) {
+    private int sendAccessRestrictionEndDateNotifications(final List<Document> documents, Map<String, List<Document>> documentsByUser) {
         int sentNotificationCount = 0;
         Notification notification = setupNotification(new Notification(), NotificationModel.NotificationType.ACCESS_RESTRICTION_END_DATE);
 
@@ -1053,34 +1062,33 @@ public class NotificationServiceImpl implements NotificationService {
             }
             return sentNotificationCount; // if the admins are lazy and we don't have a template, we don't have to send out notifications... :)
         }
-
+        Long maxDocumentsInNotification = parametersService.getLongParameter(Parameters.ACCESS_RESTRICTION_END_DATE_NOTIFICATION_MAX_DOCUMENTS);
+        int documentsInNotification = (int) (maxDocumentsInNotification != null && maxDocumentsInNotification > 0 ? maxDocumentsInNotification
+                : DEFAULT_MAX_DOCUMENTS_IN_ACCESS_RESTRICTION_NOTIFICATION);
         DocumentAccessRestrictionEndDateComparator endDateComparator = new DocumentAccessRestrictionEndDateComparator();
+        String originalSubject = notification.getSubject();
         for (Entry<String, List<Document>> entry : documentsByUser.entrySet()) {
-            String userName = entry.getKey();
-            String userFullName = userService.getUserFullName(userName);
+            final String userName = entry.getKey();
+            final String userFullName = userService.getUserFullName(userName);
             if (userFullName == null) {
                 // User does not exist
                 continue;
             }
             String userEmail = userService.getUserEmail(userName);
             notification.addRecipient(userFullName, userEmail);
-            List<Document> userDocuments = entry.getValue();
+            final List<Document> userDocuments = entry.getValue();
             Collections.sort(userDocuments, endDateComparator);
-            String content = templateService.getProcessedAccessRestrictionEndDateTemplate(userDocuments, notificationTemplateByName);
-
-            try {
-                if (sendEmail(notification, content, null)) {
-                    sentNotificationCount++;
-                }
-            } catch (EmailException e) {
-                log.error("Access restriction due date notification e-mail sending to " + userFullName + " (" + userName + ") <"
-                        + userEmail + "> failed, ignoring and continuing", e);
-            }
+            final String errorMessage = "Access restriction due date notification e-mail sending to " + userFullName + " (" + userName + ") <"
+                    + userEmail + "> failed, ignoring and continuing";
+            sentNotificationCount += sendAccessRestrictionNotifications(userDocuments, notification, notificationTemplateByName, documentsInNotification, originalSubject,
+                    errorMessage);
+            notification.setSubject(originalSubject);
             notification.clearRecipients();
         }
 
         notification.clearRecipients();
         notification = setupNotification(notification, NotificationModel.NotificationType.ACCESS_RESTRICTION_END_DATE, 1);
+        originalSubject = notification.getSubject();
 
         notificationTemplateByName = templateService.getNotificationTemplateByName(notification.getTemplateName());
         if (notificationTemplateByName == null) {
@@ -1094,17 +1102,66 @@ public class NotificationServiceImpl implements NotificationService {
         notification = addDocumentManagersAsRecipients(notification);
         DocumentRegNrComparator regNrComparator = new DocumentRegNrComparator();
         Collections.sort(documents, regNrComparator);
-        String content = templateService.getProcessedAccessRestrictionEndDateTemplate(documents, notificationTemplateByName);
-
-        try {
-            if (sendEmail(notification, content, null)) {
-                sentNotificationCount++;
-            }
-        } catch (EmailException e) {
-            log.error("Access restriction due date notification e-mail sending to document managers failed, ignoring and continuing", e);
-        }
-
+        final String errorMessage = "Access restriction due date notification e-mail sending to document managers failed, ignoring and continuing";
+        sentNotificationCount += sendAccessRestrictionNotifications(documents, notification, notificationTemplateByName, documentsInNotification, originalSubject, errorMessage);
         return sentNotificationCount;
+    }
+
+    private int sendAccessRestrictionNotifications(final List<Document> documents, final Notification notification, final NodeRef notificationTemplate,
+            int documentsInNotification, String originalSubject, final String errorMessage) {
+        int sentNotificationCount = 0;
+        RetryingTransactionHelper transactionHelper = BeanHelper.getTransactionService().getRetryingTransactionHelper();
+        final List<List<Document>> slicedDocuments = sliceList(documents, documentsInNotification);
+        int notificationCount = slicedDocuments.size();
+        boolean addSubjectCounter = notificationCount > 0;
+        int notificationCounter = 1;
+        for (final List<Document> documentSlice : slicedDocuments) {
+            if (addSubjectCounter) {
+                notification.setSubject(MessageUtil.getMessage("notification_subject_counter", originalSubject, notificationCounter, notificationCount));
+            }
+            sentNotificationCount += transactionHelper.doInTransaction(new RetryingTransactionCallback<Integer>() {
+
+                @Override
+                public Integer execute() throws Throwable {
+                    String content = templateService.getProcessedAccessRestrictionEndDateTemplate(documentSlice, notificationTemplate);
+                    int sentCount = 0;
+                    try {
+                        if (sendEmail(notification, content, null)) {
+                            sentCount++;
+                        }
+                    } catch (EmailException e) {
+                        log.error(errorMessage, e);
+                    }
+                    return sentCount;
+                }
+            }
+                    , false, true);
+            notificationCounter++;
+        }
+        return sentNotificationCount;
+    }
+
+    private <T> List<List<T>> sliceList(List<T> list, int sliceSize) {
+        Assert.isTrue(sliceSize > 0);
+        if (list == null || list.isEmpty()) {
+            return new ArrayList<List<T>>();
+        }
+        List<List<T>> slicedList = new ArrayList<List<T>>();
+        int sliceElem = 0;
+        List<T> slice = null;
+        for (T obj : list) {
+            if (sliceElem == 0) {
+                slice = new ArrayList<T>();
+                slicedList.add(slice);
+            }
+            slice.add(obj);
+            if (slice.size() >= sliceSize) {
+                sliceElem = 0;
+            } else {
+                sliceElem++;
+            }
+        }
+        return slicedList;
     }
 
     @Override
@@ -1448,6 +1505,15 @@ public class NotificationServiceImpl implements NotificationService {
 
     public void setUpdateCount(int updateCount) {
         this.updateCount = updateCount;
+    }
+
+    @Override
+    public boolean isSubstitutionTaskEndDateRestricted() {
+        return substitutionTaskEndDateRestricted;
+    }
+
+    public void setSubstitutionTaskEndDateRestricted(boolean substitutionTaskEndDateRestricted) {
+        this.substitutionTaskEndDateRestricted = substitutionTaskEndDateRestricted;
     }
 
 }
