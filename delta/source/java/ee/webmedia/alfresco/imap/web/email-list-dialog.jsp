@@ -53,7 +53,7 @@
             <a:sortLink id="column-ownerName-sort" label="#{msg.imap_ownerName}" value="ownerName" styleClass="header" />
          </f:facet>
          <a:actionLink id="column-ownerName-text" value="#{r.ownerName}" action="#{DocumentDialog.action}" tooltip="#{r.ownerName}" styleClass="no-underline tooltip condence20-"
-            actionListener="#{DocumentDialog.open}" >
+            actionListener="#{DocumentDialog.open}">
             <f:param name="nodeRef" value="#{r.node.nodeRef}" />
          </a:actionLink>
       </a:column>

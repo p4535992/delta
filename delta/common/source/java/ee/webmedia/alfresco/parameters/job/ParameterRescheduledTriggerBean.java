@@ -94,12 +94,17 @@ public class ParameterRescheduledTriggerBean extends AbstractTriggerBean {
         try {
             log.debug("scheduling trigger with name '" + getBeanName() + "'");
             if (startupCompleted) {
+            	log.debug("Job wit trigger name '" + getBeanName() + "' has alredy been started.");
                 throw new RuntimeException("Job wit trigger name '" + getBeanName() + "' has alredy been started.");
             }
+            
+            log.debug("Resolve schedule... " + parameterName);
             resolveSchedule(parameterName, getParamValue(parameterName), parameterName);
+            log.debug("afterPropertiesSet()... " + parameterName);
             super.afterPropertiesSet();
             info(getTrigger(), null, false);
         } catch (Exception e) {
+        	log.error("ERROR: " + e);
             throw new RuntimeException(e);
         }
         startupCompleted = true;
@@ -140,7 +145,7 @@ public class ParameterRescheduledTriggerBean extends AbstractTriggerBean {
                 Parameter param = parametersService.getParameter(Parameters.get(parameterName));
                 if (param.getNextFireTime() != null) {
                     if (log.isDebugEnabled()) {
-                        log.debug("Got next fire time from parameter: " + param.getNextFireTime());
+                        log.debug("Got next fire time from parameter ["+parameterName+"]: " + param.getNextFireTime());
                     }
                     startTime = param.getNextFireTime();
                 }
@@ -256,21 +261,27 @@ public class ParameterRescheduledTriggerBean extends AbstractTriggerBean {
      */
     private void resolveSchedule(String paramName, String paramValue, String triggeringParameterName) {
         if (!hasTimeParameter()) {
+        	log.debug("hasTimeParameter()... not true");
             if (parameterFormat.equals("H:mm") || parameterFormat.equals("H:m")) {// hours and minutes
+            	log.debug("Set cron ["+paramName+": "+paramValue+"]");
                 setCron(paramValue, parameterFormat, paramName);
 
             } else { // repeatInterval is set using timeunit specified in format (format notation is similar to SimpleDateFormat)
+            	log.debug("Set period ["+paramName+": "+paramValue+"]");
                 setPeriod(paramValue);
             }
         } else {
+        	log.debug("hasTimeParameter()... true");
             String timeVal;
             String periodVal;
             if (timeParameterName.equals(triggeringParameterName)) {
                 timeVal = paramValue;
                 periodVal = getParamValue(parameterName);
+            	log.debug("Time parameter name("+timeParameterName+") == triggering parameter name (Name: "+triggeringParameterName+"; period: "+periodVal+")");
             } else {
                 timeVal = getParamValue(timeParameterName);
                 periodVal = paramValue;
+                log.debug("Time parameter name ("+timeParameterName+") != triggering parameter name (Name: "+triggeringParameterName+"; period: "+periodVal+")");
             }
             Calendar cal = parseTime(timeVal, "H:mm", paramName);
             time = cal.get(Calendar.MINUTE) * getMinuteMultiplier() + cal.get(Calendar.HOUR_OF_DAY) * getHourMultiplier();
@@ -306,6 +317,7 @@ public class ParameterRescheduledTriggerBean extends AbstractTriggerBean {
         } else if (parameterFormat.equals("D")) {// day in year/decade/century ...
             multiplier *= 1000L * 60L * 60L * 24L;
         } else {
+        	log.error("Unknown schedule format '" + parameterFormat + "' for parameter with value '" + paramValue + "'");
             throw new RuntimeException("Unknown schedule format '" + parameterFormat + "' for parameter with value '" + paramValue + "'");
         }
         repeatInterval = multiplier * DefaultTypeConverter.INSTANCE.convert(Long.class, paramValue);

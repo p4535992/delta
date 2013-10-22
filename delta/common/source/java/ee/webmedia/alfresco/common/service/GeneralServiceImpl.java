@@ -213,6 +213,9 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
 
     @Override
     public NodeRef getNodeRef(String nodeRefXPath, NodeRef root) {
+	
+		log.debug("nodeRefXPath: " + nodeRefXPath);
+		
         Assert.notNull(root, "rootRef is a mandatory parameter");
         NodeRef nodeRef = root;
         String[] xPathParts;
@@ -231,8 +234,39 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
 
             QName qName = QName.resolveToQName(namespaceService, xPathPart);
 
+			if(qName != null){
+				log.debug("QName: " + qName.toString());
+			}
+			
             nodeRef = getChildByAssocName(nodeRef, qName, nodeRefXPath);
+			
+			String logText = "";
+            if(nodeRef != null){
+            	if(nodeRef.toString() != null){
+            		logText += "nodeRef found: " + nodeRef.toString() + "; ";
+            	} else {
+            		logText += "nodeRef.toString() returned NULL!; ";
+            	}
+            	if(nodeRef.getId() != null){
+            		logText += "ID: " + nodeRef.getId() +"; ";
+            	} else {
+            		logText += "ID is NULL; ";
+            	}
+            	
+            	logText += "hashCode:" + nodeRef.hashCode() + ";";
+            	if(nodeRef.getStoreRef() != null){
+            		logText += "getStoreRef():" + nodeRef.getStoreRef().toString()+";";
+            	} else {
+            		logText += "getStoreRef() is NULL; ";
+            	}
+            } else {
+            	logText = "nodeRef is NULL!";
+            }
+            log.trace(logText);
+			
             if (++partNr < xPathParts.length && nodeRef == null) {
+				log.error("started to resolve xpath based on '" + nodeRefXPath
+                        + "'\nxPathParts='" + xPathParts + "'\npart that is incorrect='" + xPathPart + "'");
                 throw new IllegalArgumentException("started to resolve xpath based on '" + nodeRefXPath
                         + "'\nxPathParts='" + xPathParts + "'\npart that is incorrect='" + xPathPart + "'");
             }

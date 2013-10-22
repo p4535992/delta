@@ -8,7 +8,7 @@
 
 <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/document/web/limited-message-panel.jsp" />
 
-<a:panel id="task-panel" styleClass="panel-100" label="#{msg.task_search_results}" progressive="true" styleClass="with-pager">
+<a:panel id="task-panel" styleClass="panel-100 with-pager" label="#{msg.task_search_results}" progressive="true">
    <a:panel id="task-panel-search-results" styleClass="overflow-wrapper">   
 
    <a:richList id="taskList" styleClass="duplicate-header" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"

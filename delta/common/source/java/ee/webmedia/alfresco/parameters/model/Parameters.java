@@ -123,6 +123,7 @@ public enum Parameters {
     private String xPath;
     private String parameterName;
 
+	private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(Parameters.class);
     Parameters(String parameterName) {
         xPath = Repo.PARAMETERS_SPACE + "/" + ParametersModel.PREFIX + parameterName;
         this.parameterName = parameterName;
@@ -131,10 +132,13 @@ public enum Parameters {
     public static Parameters get(String parameterName) {
         final Parameters[] values = Parameters.values();
         for (Parameters parameter : values) {
+        	log.trace("Looking for parameter... ("+parameterName+") == " + parameter.toString());
             if (parameter.parameterName.equals(parameterName)) {
+            	log.debug("Parameter found! " + parameter.toString());
                 return parameter;
             }
         }
+        log.error("Unknown parameterName: " + parameterName + ". Known values: " + StringUtils.join(values, ", "));
         throw new IllegalArgumentException("Unknown parameterName: " + parameterName + ". Known values: " + StringUtils.join(values, ", "));
     }
 

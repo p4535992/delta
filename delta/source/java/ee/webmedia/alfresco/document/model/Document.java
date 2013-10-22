@@ -39,6 +39,10 @@ import ee.webmedia.alfresco.utils.TextUtil;
 import ee.webmedia.alfresco.utils.UserUtil;
 import ee.webmedia.alfresco.volume.model.Volume;
 
+/**
+ * @author Some Modest Person
+ * @author Allar Allas (allar@concept.ee)
+ */
 public class Document extends Node implements Comparable<Document>, CssStylable, CreatedAndRegistered {
     private static final long serialVersionUID = 1L;
 
@@ -158,6 +162,50 @@ public class Document extends Node implements Comparable<Document>, CssStylable,
         lazyInit();
         return TextUtil.join(getProperties(), DocumentCommonModel.Props.RECIPIENT_NAME, DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME,
                 DocumentSpecificModel.Props.SECOND_PARTY_NAME, DocumentSpecificModel.Props.THIRD_PARTY_NAME, DocumentSpecificModel.Props.PARTY_NAME);
+    }
+
+    /**
+     * Method to implement following requirement (Lisa PPA_DHSi väikearendus tellimus-pakkumuse kokkuleppele nr 2012/1):
+     * 6. Kõigis nimekirjades Delta’s, kuhu on kaasatud veerg Saatja nimega või (Lisa)adressaadi nimega, tuleb lisada täiendavad reeglid:
+     * b. Kui (Lisa)adressaadi nimi (recipientName, additionalRecipientName) on väärtustamata, siis kuvatakse (Lisa)adressaadi kontaktisiku/eraisiku nimi (recipientPersonName,
+     * additionalRecipientPersonName)
+     * 
+     * @return
+     */
+    public String getAllRecipientsAsNameOrPerson() {
+        lazyInit();
+
+        StringBuilder result = new StringBuilder();
+        result = TextUtil.joinCompanyOrPerson(
+                result,
+                getProperties().get(DocumentCommonModel.Props.RECIPIENT_NAME),
+                getProperties().get(DocumentCommonModel.Props.RECIPIENT_PERSON_NAME));
+        result = TextUtil.joinCompanyOrPerson(
+                result,
+                getProperties().get(DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME),
+                getProperties().get(DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_PERSON_NAME));
+
+        return result.toString();
+
+    }
+	
+	/**
+	* 
+	* @return
+	*/
+	// TODO: Vaja tuvastada, milleks see meetod on 3.6.21 versioonis
+
+    public String getSenderOrRecipientsAsNameOrPerson() {
+        String docDynType = objectTypeId();
+        if (SystematicDocumentType.INCOMING_LETTER.isSameType(docDynType)) {
+            return TextUtil.joinCompanyOrPerson(
+                    new StringBuilder(),
+                    getProperties().get(DocumentSpecificModel.Props.SENDER_DETAILS_NAME),
+                    getProperties().get(DocumentSpecificModel.Props.SENDER_DETAILS_PERSON_NAME)).toString();
+        } else if (SystematicDocumentType.INVOICE.isSameType(docDynType)) {
+            return (String) getProperties().get(DocumentSpecificModel.Props.SELLER_PARTY_NAME);
+        }
+        return getAllRecipients();
     }
 
     public String getSenderOrRecipients() {

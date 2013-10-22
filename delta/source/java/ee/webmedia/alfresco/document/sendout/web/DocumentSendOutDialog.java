@@ -77,6 +77,7 @@ import ee.webmedia.alfresco.template.model.DocumentTemplate;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
+import ee.webmedia.alfresco.utils.TextUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UserUtil;
 import ee.webmedia.alfresco.utils.WebUtil;
@@ -249,7 +250,10 @@ public class DocumentSendOutDialog extends BaseDialogBean {
         }
         model.setDefaultSendMode(defaultSendMode);
 
-        List<String> names = newListIfNull((List<String>) props.get(DocumentCommonModel.Props.RECIPIENT_NAME), false);
+        List<String> names = TextUtil.conflateNames(
+                newListIfNull((List<String>) props.get(DocumentCommonModel.Props.RECIPIENT_NAME), false),
+                newListIfNull((List<String>) props.get(DocumentCommonModel.Props.RECIPIENT_PERSON_NAME), false));
+
         List<String> emails = newListIfNull((List<String>) props.get(DocumentCommonModel.Props.RECIPIENT_EMAIL), false);
         List<String> groups = newListIfNull((List<String>) props.get(DocumentCommonModel.Props.RECIPIENT_GROUP), false);
         while (groups.size() < names.size()) {
@@ -296,7 +300,10 @@ public class DocumentSendOutDialog extends BaseDialogBean {
 
     private void addAdditionalRecipients(Map<String, Object> props, List<String> names, List<String> emails, List<String> groups) {
         @SuppressWarnings("unchecked")
-        List<String> namesAdd = newListIfNull((List<String>) props.get(DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME), false);
+        List<String> namesAdd = TextUtil.conflateNames(
+                newListIfNull((List<String>) props.get(DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME), false),
+                newListIfNull((List<String>) props.get(DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_PERSON_NAME), false));
+
         @SuppressWarnings("unchecked")
         List<String> emailsAdd = newListIfNull((List<String>) props.get(DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_EMAIL), false);
         @SuppressWarnings("unchecked")

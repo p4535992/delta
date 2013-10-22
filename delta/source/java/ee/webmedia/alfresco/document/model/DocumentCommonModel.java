@@ -121,10 +121,12 @@ public interface DocumentCommonModel {
         QName COMMENT = QName.createQName(URI, "comment");
 
         QName RECIPIENT_NAME = QName.createQName(URI, "recipientName");
+        QName RECIPIENT_PERSON_NAME = QName.createQName(URI, "recipientPersonName");
         QName RECIPIENT_EMAIL = QName.createQName(URI, "recipientEmail");
         QName RECIPIENT_GROUP = QName.createQName(URI, "recipientGroup");
 
         QName ADDITIONAL_RECIPIENT_NAME = QName.createQName(URI, "additionalRecipientName");
+        QName ADDITIONAL_RECIPIENT_PERSON_NAME = QName.createQName(URI, "additionalRecipientPersonName");
         QName ADDITIONAL_RECIPIENT_EMAIL = QName.createQName(URI, "additionalRecipientEmail");
         QName ADDITIONAL_RECIPIENT_GROUP = QName.createQName(URI, "additionalRecipientGroup");
 

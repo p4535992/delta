@@ -189,6 +189,29 @@ public class DocumentDynamic extends NodeBaseVO implements Cloneable, Comparable
         return TextUtil.join(getNode().getProperties(), DocumentCommonModel.Props.RECIPIENT_NAME, DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME);
     }
 
+    /**
+     * Method 
+     * @return
+     */
+    public String getRecipientsWInitials() {
+    	// TODO : move getCompanyOrInitials to UserUtil etc... 
+    	
+        StringBuilder result = new StringBuilder();
+        result = TextUtil.joinCompanyOrInitials(
+        			result,
+        			getNode().getProperties().get(DocumentCommonModel.Props.RECIPIENT_NAME),
+        			getNode().getProperties().get(DocumentCommonModel.Props.RECIPIENT_PERSON_NAME));
+        result = TextUtil.joinCompanyOrInitials(
+	    			result,
+	    			getNode().getProperties().get(DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME),
+	    			getNode().getProperties().get(DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_PERSON_NAME));
+        
+        return result.toString();
+    }
+    
+    
+    
+
     @Override
     public int compareTo(DocumentDynamic other) {
         if (StringUtils.equals(getRegNumber(), other.getRegNumber())) {
