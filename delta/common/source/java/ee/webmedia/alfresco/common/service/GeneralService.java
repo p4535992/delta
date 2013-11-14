@@ -49,6 +49,8 @@ public interface GeneralService {
 
     LinkedHashSet<StoreRef> getAllWithArchivalsStoreRefs();
 
+    LinkedHashSet<StoreRef> getAllStoreRefsWithTrashCan();
+
     /**
      * @return store where archived documents are stored
      */

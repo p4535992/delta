@@ -39,6 +39,7 @@ import org.alfresco.error.AlfrescoRuntimeException;
 import org.alfresco.error.ExceptionStackUtil;
 import org.alfresco.repo.security.permissions.AccessDeniedException;
 import org.alfresco.repo.transaction.AlfrescoTransactionSupport.TxnReadState;
+import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.transaction.TransactionService;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -130,6 +131,8 @@ public class RetryingTransactionHelper
     private int maxRetryWaitMs;
     /** How much to increase the wait time with each retry. */
     private int retryWaitIncrementMs;
+
+    public static final StoreRef version2StoreRef = new StoreRef(StoreRef.PROTOCOL_WORKSPACE, "version2Store");
     
     /**
      * Whether the the transactions may only be reads

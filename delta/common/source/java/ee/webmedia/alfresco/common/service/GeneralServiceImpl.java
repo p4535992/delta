@@ -145,6 +145,13 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
     }
 
     @Override
+    public LinkedHashSet<StoreRef> getAllStoreRefsWithTrashCan() {
+        LinkedHashSet<StoreRef> allStoreRefs = new LinkedHashSet<StoreRef>(getAllWithArchivalsStoreRefs());
+        allStoreRefs.add(StoreRef.STORE_REF_ARCHIVE_SPACESSTORE);
+        return allStoreRefs;
+    }
+
+    @Override
     public LinkedHashSet<StoreRef> getArchivalsStoreRefs() {
         if (archivalsStoreRefs == null) {
             LinkedHashSet<StoreRef> stores = new LinkedHashSet<StoreRef>();

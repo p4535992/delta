@@ -81,6 +81,9 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.ConfigurableApplicationContext;
 
+import ee.webmedia.alfresco.common.bootstrap.IndexIntegrityCheckerBootstrap;
+import ee.webmedia.alfresco.common.bootstrap.InvalidNodeFixerBootstrap;
+import ee.webmedia.alfresco.common.job.NightlyDataFixJob;
 import ee.webmedia.alfresco.common.service.CustomReindexComponent;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 
@@ -1558,40 +1561,56 @@ public abstract class AbstractLuceneIndexerAndSearcherFactory implements LuceneI
         }
 
         public void executeInternal(LuceneIndexBackupComponent backupComponent) {
-            CustomReindexComponent customReindexComponent = BeanHelper.getSpringBean(CustomReindexComponent.class, "customReindexComponent");
-            if (customReindexComponent.isEnabled()) {
-                customReindexComponent.setLookBackMinutes(1500); // 25 hours
-                customReindexComponent.reindex();
-            } else {
-                logger.info("Skipping searching holes and indexing, it is disabled");
-            }
-
-            final LuceneIndexerAndSearcher indexerAndSearcher = BeanHelper.getSpringBean(LuceneIndexerAndSearcher.class, "admLuceneIndexerAndSearcherFactory");
-            RetryingTransactionHelper txHelper = BeanHelper.getTransactionService().getRetryingTransactionHelper();
-            List<StoreRef> stores = BeanHelper.getNodeService().getStores();
-            for (final StoreRef storeRef : stores) {
-                try {
-                    txHelper.doInTransaction(new RetryingTransactionCallback<Void>() {
-                        @Override
-                        public Void execute() throws Throwable {
-                            Indexer indexer = indexerAndSearcher.getIndexer(storeRef);
-                            Field indexInfoField = AbstractLuceneBase.class.getDeclaredField("indexInfo");
-                            indexInfoField.setAccessible(true);
-                            IndexInfo indexInfo = (IndexInfo) indexInfoField.get(indexer);
-                            logger.info("Starting special merge on indexInfo: " + indexInfo.toString() + indexInfo.dumpInfoAsString());
-                            indexInfo.runMergeNow();
-                            logger.info("Completed special merge on indexInfo: " + indexInfo.toString() + indexInfo.dumpInfoAsString());
-                            return null;
-                        }
-                    });
-                } catch (Exception e) {
-                    logger.error("Error running special merge on store " + storeRef + ", continuing with next store (if available)", e);
+            NightlyDataFixJob.nightlyMaintenanceJobLock.lock();
+            try {
+    
+                CustomReindexComponent customReindexComponent = BeanHelper.getSpringBean(CustomReindexComponent.class, "customReindexComponent");
+                if (customReindexComponent.isEnabled()) {
+                    customReindexComponent.setLookBackMinutes(1500); // 25 hours
+                    customReindexComponent.reindex();
+                } else {
+                    logger.info("Skipping searching holes and indexing, it is disabled");
                 }
+    
+                InvalidNodeFixerBootstrap invalidNodeFixerBootstrap = BeanHelper.getSpringBean(InvalidNodeFixerBootstrap.class, "invalidNodeFixerBootstrap");
+                IndexIntegrityCheckerBootstrap indexIntegrityCheckerBootstrap = BeanHelper.getSpringBean(IndexIntegrityCheckerBootstrap.class, "indexIntegrityCheckerBootstrap");
+                if (invalidNodeFixerBootstrap.isNewMaintenanceJobsEnabled()) {
+                    indexIntegrityCheckerBootstrap.execute(true, null);
+                }
+    
+                final LuceneIndexerAndSearcher indexerAndSearcher = BeanHelper.getSpringBean(LuceneIndexerAndSearcher.class, "admLuceneIndexerAndSearcherFactory");
+                RetryingTransactionHelper txHelper = BeanHelper.getTransactionService().getRetryingTransactionHelper();
+                List<StoreRef> stores = BeanHelper.getNodeService().getStores();
+                for (final StoreRef storeRef : stores) {
+                    try {
+                        txHelper.doInTransaction(new RetryingTransactionCallback<Void>() {
+                            @Override
+                            public Void execute() throws Throwable {
+                                Indexer indexer = indexerAndSearcher.getIndexer(storeRef);
+                                Field indexInfoField = AbstractLuceneBase.class.getDeclaredField("indexInfo");
+                                indexInfoField.setAccessible(true);
+                                IndexInfo indexInfo = (IndexInfo) indexInfoField.get(indexer);
+                                logger.info("Starting special merge on indexInfo: " + indexInfo.toString() + indexInfo.dumpInfoAsString());
+                                indexInfo.runMergeNow();
+                                logger.info("Completed special merge on indexInfo: " + indexInfo.toString() + indexInfo.dumpInfoAsString());
+                                return null;
+                            }
+                        });
+                    } catch (Exception e) {
+                        logger.error("Error running special merge on store " + storeRef + ", continuing with next store (if available)", e);
+                    }
+                }
+                // perform the backup
+                logger.info("Starting lucene index backup");
+                backupComponent.backup();
+                logger.info("Completed lucene index backup");
+    
+                if (invalidNodeFixerBootstrap.isNewMaintenanceJobsEnabled()) {
+                    indexIntegrityCheckerBootstrap.execute(false, null);
+                }
+            } finally {
+                NightlyDataFixJob.nightlyMaintenanceJobLock.unlock();
             }
-            // perform the backup
-            logger.info("Starting lucene index backup");
-            backupComponent.backup();
-            logger.info("Completed lucene index backup");
         }
     }
 

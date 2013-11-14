@@ -48,6 +48,7 @@ import ee.webmedia.alfresco.classificator.constant.FieldType;
 import ee.webmedia.alfresco.classificator.enums.TemplateReportOutputType;
 import ee.webmedia.alfresco.classificator.model.ClassificatorValue;
 import ee.webmedia.alfresco.classificator.service.ClassificatorService;
+import ee.webmedia.alfresco.common.propertysheet.component.WMUIProperty;
 import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement;
 import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement.ItemConfigVO;
 import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement.ItemConfigVO.ConfigItemType;
@@ -975,7 +976,18 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
         FieldDefinition field;
         if (fieldId.contains("_")) {
             field = documentAdminService.getFieldDefinition(fieldId.substring(0, fieldId.indexOf("_")));
-            field.setFieldId(fieldId);
+            if (field != null) {
+                field.setFieldId(fieldId);
+                if (fieldId.endsWith(WMUIProperty.AFTER_LABEL_BOOLEAN)) {
+                    field.setOriginalFieldId(fieldId);
+                    field.setFieldTypeEnum(FieldType.CHECKBOX);
+                    field.setMandatory(false);
+                } else if (fieldId.endsWith(DateGenerator.PICKER_PREFIX)) {
+                    field.setOriginalFieldId(fieldId);
+                    field.setFieldTypeEnum(FieldType.COMBOBOX);
+                    field.setMandatory(false);
+                }
+            }
         } else {
             field = documentAdminService.getFieldDefinition(fieldId);
         }
@@ -1111,8 +1123,14 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
 
         propertyDefinition = getPropDefForSearch(fieldId, false);
         if (propertyDefinition == null) {
-            if (hiddenFieldDependencies.containsKey(fieldId)) {
-                String originalFieldId = hiddenFieldDependencies.get(fieldId);
+            String fieldIdWithoutSuffix = fieldId;
+            String fieldIdSuffix = "";
+            if (fieldId.contains("_")) {
+                fieldIdWithoutSuffix = fieldId.substring(0, fieldId.indexOf("_"));
+                fieldIdSuffix = fieldId.substring(fieldId.indexOf("_"));
+            }
+            if (hiddenFieldDependencies.containsKey(fieldIdWithoutSuffix)) {
+                String originalFieldId = hiddenFieldDependencies.get(fieldIdWithoutSuffix) + fieldIdSuffix;
                 DynamicPropertyDefinition originalPropDef = getPropDefForSearch(originalFieldId, false);
                 if (originalPropDef == null) {
                     LOG.warn("PropertyDefinition docdyn:" + fieldId + " not found (hidden field, whose originalFieldId is " + originalFieldId + ")");
@@ -1135,7 +1153,8 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
     private static final List<String> comboboxFieldsNotMultiple = Arrays.asList("function", "series", "volume");
 
     private Boolean isFieldForcedMultipleInSearch(FieldDefinition field) {
-        if (field.getFieldTypeEnum().equals(FieldType.COMBOBOX) && !comboboxFieldsNotMultiple.contains(field.getFieldId())) {
+        if (field.getFieldTypeEnum().equals(FieldType.COMBOBOX) && !comboboxFieldsNotMultiple.contains(field.getOriginalFieldId())
+                && !field.getFieldId().endsWith(DateGenerator.PICKER_PREFIX)) {
             return true;
         }
         return null;

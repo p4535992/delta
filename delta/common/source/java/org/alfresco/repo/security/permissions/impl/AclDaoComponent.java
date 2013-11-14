@@ -259,4 +259,8 @@ public interface AclDaoComponent extends TransactionalDao
      */
     @DirtySessionAnnotation(markDirty=false)
     Long getNewInStore();
+    
+    @DirtySessionAnnotation(markDirty = true)
+    void fixSharedAcl(Long shared, Long defining);
+    
 }

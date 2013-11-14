@@ -352,15 +352,24 @@ public class ManageInheritablePrivilegesDialog extends BaseDialogBean {
 
     /** @return permissions table for JSF value binding */
     public Collection<UserPrivileges> getUserPrivilegesRows() {
+        // get privileges from current state
         List<UserPrivileges> userPrivileges = state.getUserPrivileges();
+        // we have valid privileges and no need to rebuild them
         if (userPrivileges != null && !rebuildUserPrivilegesRows) {
             return userPrivileges;
         }
+        // we have a need to rebuild privileges
+        // let's start from scratch
         userPrivileges = new ArrayList<UserPrivileges>();
+        // set the pointer
         state.userPrivileges = userPrivileges;
+        // facets based cleanup ?
         permissionsRichList.getFacets().clear(); // remove also group rows that are actually rendered from facets
+        // ??
         getOrCreateFacetRows().clear();
+        // let's be optimistic about end-result
         rebuildUserPrivilegesRows = false;
+        // get current mappings, for both users??? and groups
         PrivMappings privMappings = state.privMappings;
         Collection<UserPrivileges> privileges = null;
         if (privMappings != null) {
@@ -373,8 +382,9 @@ public class ManageInheritablePrivilegesDialog extends BaseDialogBean {
                 }
             }
         }
-
+        // add or update owner's privileges.
         addDynamicOwnerPrivileges();
+        //
         Map<String, UserPrivileges> privilegesByGroup = privMappings.getPrivilegesByGroup();
         addTbodyAttributesByGroup(GROUPLESS_GROUP); // this group is not in privilegesByGroup - need to call it so that groupless group header wouldn't disappear after refreshing
         for (Entry<String, UserPrivileges> entry : privilegesByGroup.entrySet()) {
@@ -384,19 +394,25 @@ public class ManageInheritablePrivilegesDialog extends BaseDialogBean {
             addTbodyAttributesByGroup(groupCode);
             addGroupRowIfNeeded(groupCode);
             String inheritedFromGroupReason = MessageUtil.getMessage("manage_permissions_extraInfo_inherited_fromGroup", groupNamesByCode.get(groupCode));
+
+            // iterate through usernames belonging to group
             for (String userName : getUserService().getUserNamesInGroup(groupCode)) {
-                UserPrivileges userPrivs = addUser(userName, GROUPLESS_GROUP.equals(groupCode));
-                if (!userPrivs.isDeleted()) {
-                    for (String groupPriv : groupPrivCodes) {
-                        userPrivs.addPrivilegeDynamic(groupPriv, inheritedFromGroupReason);
-                    }
-                    if (!userPrivileges.contains(userPrivs) && GROUPLESS_GROUP.equals(groupCode)) {
-                        userPrivileges.add(userPrivs);
+                // check if group username is in the list of userPrivileges already compiled (owner, responsible, hand picked)
+                for (UserPrivileges userPrivilege : userPrivileges) {
+                    // if is, then add userprivs
+                    if (userName.equals(userPrivilege.getUserName())) {
+                        // add privileges from group
+                        for (String groupPriv : groupPrivCodes) {
+                            userPrivilege.addPrivilegeDynamic(groupPriv, inheritedFromGroupReason);
+                        }
+                        // found and processed the right one, break the iteration through already choosen userPrivs
+                        break;
                     }
                 }
             }
         }
 
+        // set up rights related to document_manage_permissions_extraInfo_documentIsPublic
         typeHandler.addDynamicPrivileges();
 
         if (markPrivilegesBaseState) {
@@ -694,7 +710,7 @@ public class ManageInheritablePrivilegesDialog extends BaseDialogBean {
     }
 
     private enum RemoveLink {
-         REMOVE_PERSON("remove_user.gif", "remove_user", "removePerson")
+        REMOVE_PERSON("remove_user.gif", "remove_user", "removePerson")
         , REMOVE_GROUP_WITH_USERS("delete_group.gif", "manage_permissions_tooltip_removeGroupWithUsers", "removeGroupWithUsers")
         , INLINE_GROUP_USERS("edit_group.gif", "manage_permissions_tooltip_inlineGroupUsers", "inlineGroupUsers");
 

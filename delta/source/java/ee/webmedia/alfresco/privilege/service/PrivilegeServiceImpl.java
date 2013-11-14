@@ -34,6 +34,7 @@ import ee.webmedia.alfresco.privilege.model.PrivMappings;
 import ee.webmedia.alfresco.privilege.model.UserPrivileges;
 import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.user.service.UserService;
+import ee.webmedia.alfresco.utils.CalendarUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
 
@@ -189,7 +190,15 @@ public class PrivilegeServiceImpl implements PrivilegeService {
 
             Set<String> privilegesToDelete = vo.getPrivilegesToDelete();
             for (String permission : privilegesToDelete) {
+                long startTime = 0L;
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Deleting permission " + permission + " from " + authority + " on " + manageableRef);
+                    startTime = System.nanoTime();
+                }
                 permissionService.deletePermission(manageableRef, authority, permission);
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Deleted permission " + permission + " from " + authority + " on " + manageableRef + " - took " + CalendarUtil.duration(startTime) + " ms");
+                }
             }
             if (!vo.isDeleted() && !privilegesToDelete.isEmpty()) {
                 logMemberPrivRem(manageableRef, authority, group, privilegesToDelete);
@@ -229,7 +238,15 @@ public class PrivilegeServiceImpl implements PrivilegeService {
         Set<String> permissionsWithDependencies = PrivilegeUtil.getPrivsWithDependencies(privilegesToAdd);
         for (String permission : permissionsWithDependencies) {
             try {
+                long startTime = 0L;
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Setting permission " + permission + " to " + authority + " on " + manageableRef);
+                    startTime = System.nanoTime();
+                }
                 permissionService.setPermission(manageableRef, authority, permission, true);
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Set permission " + permission + " to " + authority + " on " + manageableRef + " - took " + CalendarUtil.duration(startTime) + " ms");
+                }
             } catch (Exception e) {
                 throw new RuntimeException("failed to set permission " + permission + " to authority " + authority + " on node " + manageableRef, e);
             }
