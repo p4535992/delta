@@ -6,6 +6,7 @@ import static ee.webmedia.alfresco.utils.XmlUtil.initSchema;
 
 import java.io.InputStream;
 import java.io.Serializable;
+import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -28,9 +29,13 @@ import javax.xml.validation.Schema;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.util.GUID;
 import org.alfresco.util.Pair;
+import org.alfresco.web.ui.common.Utils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.time.DateUtils;
 
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.Predicate;
@@ -54,6 +59,7 @@ public class WorkflowUtil {
      * but generated for delegating original assignment task to other people
      */
     private static final QName TMP_ADDED_BY_DELEGATION = RepoUtil.createTransientProp("addedByDelegation");
+    private static final QName TMP_GUID = RepoUtil.createTransientProp("tmpGuid");
     public static final String TASK_INDEX = "taskIndex";
     private static final Map<CompoundWorkflowType, String> compoundWorkflowTemplateSuffixes;
     private static final Set<String> independentWorkflowDefaultDocPermissions;
@@ -321,11 +327,23 @@ public class WorkflowUtil {
                 String ownerEmail = task.getOwnerEmail();
                 String ownerName = task.getOwnerName();
                 if (StringUtils.isNotBlank(ownerName) && StringUtils.isBlank(ownerEmail)) {
+                    if (addUserEmailToTaskIfPossible(task)) {
+                        continue;
+                    }
                     ownersNames.add(ownerName);
                 }
             }
         }
         return ownersNames;
+    }
+
+    private static boolean addUserEmailToTaskIfPossible(Task task) {
+        String ownerEmail = BeanHelper.getUserService().getUserEmail(task.getOwnerId());
+        if (StringUtils.isNotBlank(ownerEmail)) {
+            task.setOwnerEmail(ownerEmail);
+            return true;
+        }
+        return false;
     }
 
     public static Status checkWorkflow(Workflow workflow, boolean skipPropChecks, Status... requiredStatuses) {
@@ -618,7 +636,7 @@ public class WorkflowUtil {
         }
     }
 
-    private static boolean isEmptyTask(Task task) {
+    public static boolean isEmptyTask(Task task) {
         return StringUtils.isBlank(task.getOwnerName()) && task.getDueDate() == null && task.getDueDateDays() == null && StringUtils.isBlank(task.getResolutionOfTask())
                 && !(isGeneratedByDelegation(task) && WorkflowUtil.isActiveResponsible(task) && !task.isType(WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_TASK));
     }
@@ -632,7 +650,8 @@ public class WorkflowUtil {
     }
 
     /**
-     * Controls if there are tasks with same type and ownerId, except tasks with status NEW or UNFINISHED
+     * Controls for newly created tasks if there are tasks with same type and ownerId,
+     * except tasks with status UNFINISHED
      * 
      * @param compoundWorkflow
      * @return
@@ -640,11 +659,14 @@ public class WorkflowUtil {
     public static Set<Pair<String, QName>> haveSameTask(CompoundWorkflow compoundWorkflow, List<CompoundWorkflow> otherCompoundWorkflows) {
         Set<Pair<String, QName>> ownerNameTypeSet = new HashSet<Pair<String, QName>>();
         Map<QName, Set<String>> thisTasks = new HashMap<QName, Set<String>>();
-        Set<NodeRef> firstTasks = new HashSet<NodeRef>();
-        // collect all task types by user from current compound workflow
+        Set<String> firstTasks = new HashSet<String>();
+        // collect all new task types by user from current compound workflow
         for (Workflow wf : compoundWorkflow.getWorkflows()) {
             QName workflowType = wf.getType();
             for (Task task : wf.getTasks()) {
+                if (task.isSaved()) {
+                    continue;
+                }
                 String ownerId = task.getOwnerId();
                 if (StringUtils.isBlank(ownerId)) {
                     continue;
@@ -655,7 +677,9 @@ public class WorkflowUtil {
                     thisTasks.put(workflowType, users);
                 }
                 if (!users.contains(ownerId)) {
-                    firstTasks.add(task.getNodeRef());
+                    String tmpGuid = GUID.generate();
+                    task.getNode().getProperties().put(TMP_GUID.toString(), tmpGuid);
+                    firstTasks.add(tmpGuid);
                 }
                 users.add(ownerId);
             }
@@ -668,29 +692,26 @@ public class WorkflowUtil {
             for (CompoundWorkflow compWf : otherCompoundWorkflows) {
                 haveSameTask(ownerNameTypeSet, firstTasks, entry, workflowQName, compWf, false);
             }
-            haveSameTask(ownerNameTypeSet, firstTasks, entry, workflowQName, compoundWorkflow, false);
+            haveSameTask(ownerNameTypeSet, firstTasks, entry, workflowQName, compoundWorkflow, true);
         }
 
         return ownerNameTypeSet;
     }
 
-    private static void haveSameTask(Set<Pair<String, QName>> ownerNameTypeSet, Set<NodeRef> firstTasks, Entry<QName, Set<String>> entry, QName workflowQName,
+    private static void haveSameTask(Set<Pair<String, QName>> ownerNameTypeSet, Set<String> firstTasks, Entry<QName, Set<String>> entry, QName workflowQName,
             CompoundWorkflow compWf, boolean isCurrentWorkflow) {
-        if (isStatus(compWf, Status.NEW)) {
-            return;
-        }
         for (Workflow workflow : compWf.getWorkflows()) {
             QName currentWorkflowType = workflow.getType();
-            if (!currentWorkflowType.equals(workflowQName) || isStatus(workflow, Status.NEW)) {
+            if (!currentWorkflowType.equals(workflowQName)) {
                 continue;
             }
             for (Task task : workflow.getTasks()) {
                 String ownerId = task.getOwnerId();
-                if (task.isStatus(Status.NEW, Status.UNFINISHED) || StringUtils.isBlank(ownerId)) {
+                if (task.isStatus(Status.UNFINISHED) || StringUtils.isBlank(ownerId)) {
                     continue;
                 }
                 QName taskType = task.getType();
-                if ((!isCurrentWorkflow || !firstTasks.contains(task.getNodeRef())) && entry.getValue().contains(ownerId)) {
+                if ((!isCurrentWorkflow || !firstTasks.contains(task.getNode().getProperties().get(TMP_GUID))) && entry.getValue().contains(ownerId)) {
                     ownerNameTypeSet.add(new Pair<String, QName>(getTaskOwnerName(task), taskType));
                 }
             }
@@ -750,11 +771,17 @@ public class WorkflowUtil {
         List<Workflow> workflows = compound.getWorkflows();
 
         for (Map<String, List<TaskGroup>> group : taskGroups) {
+            if (workflows.size() == workflowId) {
+                break;
+            }
             Workflow workflow = workflows.get(workflowId);
             List<Task> wfTasks = workflow.getTasks();
             for (List<TaskGroup> groupList : group.values()) {
                 for (TaskGroup taskGroup : groupList) {
                     for (Integer taskId : taskGroup.getTaskIds()) {
+                        if (wfTasks.size() <= taskId) {
+                            continue;
+                        }
                         Task task = wfTasks.get(taskId);
                         if (task.getDueDate() == null) {
                             task.setDueDate(taskGroup.getDueDate());
@@ -867,7 +894,6 @@ public class WorkflowUtil {
         Map<QName, Serializable> taskSearchableProps = new HashMap<QName, Serializable>();
         if (compoundWorkflowProps != null) {
             taskSearchableProps.put(WorkflowSpecificModel.Props.COMPOUND_WORKFLOW_TITLE, compoundWorkflowProps.get(WorkflowCommonModel.Props.TITLE));
-            taskSearchableProps.put(WorkflowSpecificModel.Props.COMPOUND_WORKFLOW_COMMENT, compoundWorkflowProps.get(WorkflowCommonModel.Props.COMMENT));
             taskSearchableProps.put(WorkflowSpecificModel.Props.SEARCHABLE_COMPOUND_WORKFLOW_CREATED_DATE_TIME,
                     compoundWorkflowProps.get(WorkflowCommonModel.Props.CREATED_DATE_TIME));
             taskSearchableProps.put(WorkflowSpecificModel.Props.SEARCHABLE_COMPOUND_WORKFLOW_OWNER_JOB_TITLE, compoundWorkflowProps.get(WorkflowCommonModel.Props.OWNER_JOB_TITLE));
@@ -916,6 +942,23 @@ public class WorkflowUtil {
                 workflow.removeTask(delegatedTaskIndex);
             }
         }
+    }
+
+    public static void getDocmentDueDateMessage(Date notInvoiceDueDate, List<String> messages, Workflow workflow, Date taskDueDate) {
+        if (notInvoiceDueDate != null) {
+            if (!DateUtils.isSameDay(notInvoiceDueDate, taskDueDate) && taskDueDate.after(notInvoiceDueDate)) {
+                getAndAddMessage(messages, workflow, taskDueDate, "task_confirm_not_invoice_task_due_date", notInvoiceDueDate);
+            }
+        }
+    }
+
+    public static void getAndAddMessage(List<String> messages, Workflow workflow, Date taskDueDate, String msgKey, Date date) {
+        FacesContext fc = FacesContext.getCurrentInstance();
+        DateFormat dateFormat = Utils.getDateFormat(fc);
+        String invoiceTaskDueDateConfirmationMsg = MessageUtil.getMessage(msgKey,
+                MessageUtil.getMessage(workflow.getType().getLocalName()),
+                dateFormat.format(taskDueDate), dateFormat.format(date));
+        messages.add(invoiceTaskDueDateConfirmationMsg);
     }
 
 }

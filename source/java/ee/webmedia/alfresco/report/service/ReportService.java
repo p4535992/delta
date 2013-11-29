@@ -20,6 +20,8 @@ public interface ReportService {
 
     NodeRef createReportResult(Node filter, TemplateReportType reportType, QName parentToChildAssoc);
 
+    NodeRef createCsvReportResult(NodeRef nodeRef);
+
     List<NodeRef> getAllRunningReports();
 
     List<Node> getAllInQueueReports();

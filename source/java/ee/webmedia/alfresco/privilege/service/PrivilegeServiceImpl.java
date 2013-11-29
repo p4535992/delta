@@ -37,8 +37,8 @@ import ee.webmedia.alfresco.cases.model.CaseModel;
 import ee.webmedia.alfresco.common.service.ApplicationService;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.BeanHelper;
-import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.common.web.WmNode;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.log.model.LogEntry;
 import ee.webmedia.alfresco.log.model.LogObject;
 import ee.webmedia.alfresco.log.service.LogService;
@@ -310,7 +310,7 @@ public class PrivilegeServiceImpl implements PrivilegeService {
                 if (LOG.isDebugEnabled()) {
                     LOG.debug("Previously deleted permission " + permission + " from " + authority + " on " + manageableRef + " - nothing to do");
                 }
-                return;
+                continue;
             }
             long startTime = 0L;
             if (LOG.isDebugEnabled()) {
@@ -342,7 +342,7 @@ public class PrivilegeServiceImpl implements PrivilegeService {
                 if (LOG.isDebugEnabled()) {
                     LOG.debug("Previously set permission " + permission + " to " + authority + " on " + manageableRef + " - nothing to do");
                 }
-                return;
+                continue;
             }
             try {
                 long startTime = 0L;

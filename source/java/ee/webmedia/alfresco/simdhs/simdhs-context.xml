@@ -67,7 +67,7 @@
       <property name="serverName" value="${server.url}" />
    </bean>
 
-   <bean name="casTicketValidationFilter" class="org.jasig.cas.client.validation.Cas20ProxyReceivingTicketValidationFilter">
+   <bean name="casTicketValidationFilter" class="ee.webmedia.alfresco.user.service.Cas20ProxyReceivingRedirectingTicketValidationFilter">
       <property name="redirectAfterValidation" value="true" />
       <property name="serverName" value="${server.url}" />
       <property name="ticketValidator">

@@ -7,7 +7,7 @@
 <%@ page isELIgnored="false"%>
 <%@ page import="ee.webmedia.alfresco.utils.MessageUtil"%>
 
-<a:panel id="tasks-panel" styleClass="panel-100 with-pager" label="#{MyTasksBean.listTitle}" progressive="true">
+<a:panel id="tasks-panel" styleClass="panel-100 with-pager" label="#{MyTasksBean.listTitle}" progressive="true" rendered="#{not MyTasksBean.hidePrimaryList}">
 
    <%-- Main List --%>
    <a:booleanEvaluator value="#{not MyTasksBean.lessColumns}">
@@ -62,7 +62,7 @@
 
 </a:panel>
 
-<a:panel id="linkedreview-tasks-panel" styleClass="panel-100 with-pager" label="#{msg.task_list_linked_review_title}" progressive="true" rendered="#{not empty MyTasksBean.linkedReviewTasks}" >
+<a:panel id="linkedreview-tasks-panel" styleClass="panel-100 with-pager" label="#{msg.task_list_linked_review_title}" progressive="true" rendered="#{MyTasksBean.linkedReviewTaskEnabled}" >
    <%-- LinkedView List --%>
    <a:richList id="linkedReviewTaskList" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
       width="100%" value="#{MyTasksBean.linkedReviewTasks}"  var="r">
@@ -73,12 +73,6 @@
       <a:dataPager id="pagerLinked1" styleClass="pager" />
    </a:richList>   
 </a:panel>
-
-<script>
-   prependOnclick($jQ(".originalTaskObjectUrl"), function(){
-         return confirm('<%= MessageUtil.getMessageAndEscapeJS("task_original_object_open_confirm")%>');
-   });
-</script>
 
 <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/disable-dialog-finish-button.jsp" />
 <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/disable-dialog-cancel-button.jsp" />

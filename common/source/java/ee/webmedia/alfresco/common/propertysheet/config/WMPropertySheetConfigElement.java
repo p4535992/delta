@@ -122,6 +122,10 @@ public class WMPropertySheetConfigElement extends PropertySheetConfigElement {
             this.componentGenerator = componentGenerator;
             setCustomAttributeAndIgnoreNullValue(PropertySheetElementReader.ATTR_COMPONENT_GENERATOR, componentGenerator);
         }
+        
+        public void setOutputTextPropertyValue(boolean showText) {
+            setCustomAttribute(BaseComponentGenerator.OUTPUT_TEXT, Boolean.toString(showText));
+        }
 
         public void setReadOnly(boolean readOnly) {
             this.readOnly = readOnly;

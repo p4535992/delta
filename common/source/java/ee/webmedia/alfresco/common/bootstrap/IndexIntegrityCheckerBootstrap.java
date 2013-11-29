@@ -86,19 +86,6 @@ public class IndexIntegrityCheckerBootstrap {
             LOG.error("Error reindexing", e);
             return;
         }
-        if (reindexMissingNodes) {
-            try {
-                transactionService.getRetryingTransactionHelper().doInTransaction(new RetryingTransactionCallback<Map<StoreRef, Set<NodeRef>>>() {
-                    @Override
-                    public Map<StoreRef, Set<NodeRef>> execute() throws Throwable {
-                        return checkIndexIntegrityImpl(limitStoreRef);
-                    }
-                }, true);
-            } catch (Exception e) {
-                LOG.error("Error checking index integrity", e);
-                return;
-            }
-        }
     }
 
     private Map<StoreRef, Set<NodeRef>> checkIndexIntegrityImpl(final StoreRef limitStoreRef) {

@@ -95,15 +95,6 @@
          </a:actionLink>         
       </a:column>
       
-      <a:column id="col10" primary="true" >
-         <f:facet name="header">
-            <a:sortLink id="col10-header" label="#{msg.cw_search_comment}" value="comment" styleClass="header" />
-         </f:facet>
-         <a:actionLink id="col10-txt1" value="#{r.comment}" action="#{r.action}" tooltip="#{r.comment}" showLink="false" actionListener="#{r.actionListener}" styleClass="no-underline" >
-            <f:param name="nodeRef" value="#{r.nodeRef}" />
-         </a:actionLink>         
-      </a:column>
-      
       <a:column id="col11" primary="true" >
          <f:facet name="header">
             <a:sortLink id="col11-header" label="#{msg.cw_search_status}" value="status" styleClass="header" />

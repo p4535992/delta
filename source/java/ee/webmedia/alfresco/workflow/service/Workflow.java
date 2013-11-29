@@ -10,6 +10,7 @@ import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.workflow.model.SigningType;
+import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 
@@ -119,7 +120,7 @@ public class Workflow extends BaseWorkflowObject implements Serializable {
     }
 
     public boolean hasTaskResolution() {
-        return newTaskTemplate.hasAspect(WorkflowSpecificModel.Aspects.RESOLUTION);
+        return newTaskTemplate != null && newTaskTemplate.hasAspect(WorkflowSpecificModel.Aspects.RESOLUTION);
     }
 
     public Task addTask(int index) {
@@ -228,7 +229,9 @@ public class Workflow extends BaseWorkflowObject implements Serializable {
     @Override
     protected void preSave() {
         super.preSave();
-
+        if (hasTaskResolution()) {
+            WorkflowUtil.setWorkflowResolution(getTasks(), getProp(WorkflowSpecificModel.Props.RESOLUTION), Status.NEW, Status.IN_PROGRESS);
+        }
         if (getChangedProperties().containsKey(WorkflowSpecificModel.Props.RESOLUTION)) {
             for (Task task : getTasks()) {
                 task.setProp(WorkflowSpecificModel.Props.WORKFLOW_RESOLUTION, getProp(WorkflowSpecificModel.Props.RESOLUTION));

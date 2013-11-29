@@ -1,6 +1,7 @@
 package ee.webmedia.alfresco.workflow.web;
 
 import static ee.webmedia.alfresco.common.web.BeanHelper.getSubstitutionBean;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getWorkflowService;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -66,6 +67,7 @@ public class MyTasksBean extends BaseDialogBean {
     private transient DocumentService documentService;
     private transient DocumentSearchService documentSearchService;
     private String additionalListTitle;
+    private boolean hidePrimaryList;
 
     // START: dialog overrides
 
@@ -168,10 +170,16 @@ public class MyTasksBean extends BaseDialogBean {
         dialogTitle = MessageUtil.getMessage("externalReviewWorkflow");
         listTitle = MessageUtil.getMessage("task_list_external_review_title");
         lessColumns = true;
-        specificList = LIST_EXTERNAL_REVIEW;
-        loadTasks();
-        specificList = LIST_LINKED_REVIEW;
-        loadTasks();
+        if (getWorkflowService().externalReviewWorkflowEnabled()) {
+            specificList = LIST_EXTERNAL_REVIEW;
+            loadTasks();
+        } else {
+            hidePrimaryList = true;
+        }
+        if (getWorkflowService().isReviewToOtherOrgEnabled()) {
+            specificList = LIST_LINKED_REVIEW;
+            loadTasks();
+        }
     }
 
     public void setupConfirmationTasks(@SuppressWarnings("unused") ActionEvent event) {
@@ -322,6 +330,14 @@ public class MyTasksBean extends BaseDialogBean {
         return BeanHelper.getWorkflowService().isDocumentWorkflowEnabled();
     }
 
+    public boolean isLinkedReviewTaskEnabled() {
+        return linkedReviewTasks != null && getWorkflowService().isReviewToOtherOrgEnabled();
+    }
+
+    public boolean isHidePrimaryList() {
+        return hidePrimaryList;
+    }
+
     // START: getters/setters
 
     protected ParametersService getParametersService() {
@@ -383,6 +399,7 @@ public class MyTasksBean extends BaseDialogBean {
         confirmationTasks = null;
         additionalTasks = null;
         lastLoadMillis = 0;
+        hidePrimaryList = false;
     }
 
     private List<TaskAndDocument> filterTasksByDate(List<TaskAndDocument> tasks) {

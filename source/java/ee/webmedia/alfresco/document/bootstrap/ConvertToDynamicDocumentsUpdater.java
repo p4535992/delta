@@ -60,6 +60,7 @@ import ee.webmedia.alfresco.docconfig.service.PropDefCacheKey;
 import ee.webmedia.alfresco.docdynamic.bootstrap.DocumentAccessRestrictionUpdater;
 import ee.webmedia.alfresco.docdynamic.bootstrap.DocumentChangedTypePropertiesUpdater;
 import ee.webmedia.alfresco.docdynamic.bootstrap.DocumentCompWorkflowSearchPropsUpdater;
+import ee.webmedia.alfresco.docdynamic.bootstrap.DocumentPartyPropsUpdater;
 import ee.webmedia.alfresco.docdynamic.bootstrap.DocumentUpdater;
 import ee.webmedia.alfresco.docdynamic.bootstrap.LogAndDeleteObjectsWithMissingType;
 import ee.webmedia.alfresco.docdynamic.model.DocumentChildModel;
@@ -163,6 +164,7 @@ public class ConvertToDynamicDocumentsUpdater extends AbstractNodeUpdater {
     private ContractPartyAssocUpdater contractPartyAssocUpdater;
     private DocumentCompWorkflowSearchPropsUpdater documentCompWorkflowSearchPropsUpdater;
     private DocumentAccessRestrictionUpdater documentAccessRestrictionUpdater;
+    private DocumentPartyPropsUpdater documentPartyPropsUpdater;
     private Workflow25To313DynamicDocTypeUpdater workflow25To313DynamicDocTypeUpdater;
     private TaskUpdater taskUpdater;
     private LogAndDeleteNotExistingWorkflowTasks logAndDeleteNotExistingWorkflowTasks;
@@ -181,6 +183,7 @@ public class ConvertToDynamicDocumentsUpdater extends AbstractNodeUpdater {
     private final Set<NodeRef> nodesToRemoveAspects = new HashSet<NodeRef>();
     private File nodesToDeleteFile;
     private File nodesToRemoveAspectsFile;
+    private boolean smitUpdater;
 
     static {
         STATIC_TO_DYNAMIC_ASSOC_QNAMES.put(DocumentSpecificModel.Types.CONTRACT_PARTY_TYPE, DocumentChildModel.Assocs.CONTRACT_PARTY);
@@ -247,6 +250,17 @@ public class ConvertToDynamicDocumentsUpdater extends AbstractNodeUpdater {
         STATIC_TO_DYNAMIC_PROP_QNAME.put(createDocspecProp(DocumentSpecificModel.Props.THIRD_PARTY_SIGNER), DocumentSpecificModel.Props.PARTY_SIGNER);
         STATIC_TO_DYNAMIC_PROP_QNAME.put(createDocspecProp(DocumentSpecificModel.Props.THIRD_PARTY_EMAIL), DocumentSpecificModel.Props.PARTY_EMAIL);
         STATIC_TO_DYNAMIC_PROP_QNAME.put(createDocspecProp(DocumentSpecificModel.Props.THIRD_PARTY_CONTACT_PERSON), DocumentSpecificModel.Props.PARTY_CONTACT_PERSON);
+    }
+
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        super.afterPropertiesSet();
+
+        if (smitUpdater) {
+            STATIC_TO_DYNAMIC_ASSOC_QNAMES.put(DocumentSpecificModel.Types.ERRAND_ORDER_ABROAD_MV_APPLICANT_MV, DocumentChildModel.Assocs.APPLICANT_ERRAND);
+            STATIC_TO_DYNAMIC_ASSOC_QNAMES.put(DocumentSpecificModel.Types.ERRAND_ABROAD_MV_TYPE, DocumentChildModel.Assocs.ERRAND);
+            STATIC_TO_DYNAMIC_DOC_TYPE.put(DocumentSubtypeModel.Types.ERRAND_ORDER_ABROAD_MV, "errandOrderAbroadSmit");
+        }
     }
 
     private static QName createDocspecProp(String localName) {
@@ -353,6 +367,7 @@ public class ConvertToDynamicDocumentsUpdater extends AbstractNodeUpdater {
         documentChangedTypePropertiesUpdater.setEnabled(false);
         logAndDeleteObjectsWithMissingType.setEnabled(false);
         registrationNumberReinventedUpdater.setEnabled(false);
+        documentPartyPropsUpdater.setEnabled(false);
         contractPartyAssocUpdater.setEnabled(false);
         documentCompWorkflowSearchPropsUpdater.setEnabled(false);
         documentAccessRestrictionUpdater.setEnabled(false);
@@ -471,7 +486,7 @@ public class ConvertToDynamicDocumentsUpdater extends AbstractNodeUpdater {
             if (StringUtils.isNotBlank(holder.getShortRegNrWithoutIndividualizingNr())) {
                 newDocumentProperties.put(DocumentCommonModel.Props.SHORT_REG_NUMBER, holder.getShortRegNrWithoutIndividualizingNr());
             }
-            if (holder.getIndividualizingNr() != null && holder.getIndividualizingNr().intValue() > 1) {
+            if (holder.getIndividualizingNr() != null && holder.getIndividualizingNr().intValue() >= 1) {
                 newDocumentProperties.put(DocumentCommonModel.Props.INDIVIDUAL_NUMBER, holder.getIndividualizingNr().intValue() + "");
             }
         }
@@ -483,6 +498,7 @@ public class ConvertToDynamicDocumentsUpdater extends AbstractNodeUpdater {
 
         List<Pair<Pair<NodeRef, QName>, Node>> updatableChildNodes = new ArrayList<Pair<Pair<NodeRef, QName>, Node>>();
         boolean isErrandV1 = originalDocumentAspects.contains(DocumentSpecificModel.Aspects.ERRAND_ORDER_ABROAD)
+                || originalDocumentAspects.contains(DocumentSpecificModel.Aspects.ERRAND_ORDER_ABROAD_MV)
                 || originalDocumentAspects.contains(DocumentSpecificModel.Aspects.ERRAND_APPLICATION_DOMESTIC);
         Map<QName, Serializable> errandPropsToAdd = getErrandV1ChildProps(documentProperties, isErrandV1);
         if (originalDocumentAspects.contains(DocumentSpecificModel.Aspects.CONTRACT_DETAILS_V1)
@@ -544,7 +560,8 @@ public class ConvertToDynamicDocumentsUpdater extends AbstractNodeUpdater {
                                 dictionaryService);
                         if (isErrandV1
                                 && (DocumentChildModel.Assocs.ERRAND_ABROAD.equals(dynamicGrandChildAssocQName)
-                                || DocumentChildModel.Assocs.ERRAND_DOMESTIC.equals(dynamicGrandChildAssocQName))) {
+                                        || DocumentChildModel.Assocs.ERRAND_DOMESTIC.equals(dynamicGrandChildAssocQName) || DocumentChildModel.Assocs.ERRAND
+                                            .equals(dynamicGrandChildAssocQName))) {
                             existingGrandChildProps.putAll(errandPropsToAdd);
                         }
                         Node dynamicGrandChildNode = getOrCreateDynamicChildNode(dynamicChildNode, dynamicDocTypeId, childAssocTypeQNameTree, dynamicGrandChildAssocQName,
@@ -829,7 +846,8 @@ public class ConvertToDynamicDocumentsUpdater extends AbstractNodeUpdater {
         Pair<Serializable, Serializable> expenses = null;
         boolean isTrainingApplicationV1 = staticDocumentAspects.contains(DocumentSpecificModel.Aspects.TRAINING_APPLICATION);
         boolean isErrandDomesticApplicationV1 = staticDocumentAspects.contains(DocumentSpecificModel.Aspects.ERRAND_APPLICATION_DOMESTIC);
-        boolean isErrandAbroadApplicationV1 = staticDocumentAspects.contains(DocumentSpecificModel.Aspects.ERRAND_ORDER_ABROAD);
+        boolean isErrandAbroadApplicationV1 = staticDocumentAspects.contains(DocumentSpecificModel.Aspects.ERRAND_ORDER_ABROAD)
+                || (staticDocumentAspects.contains(DocumentSpecificModel.Aspects.ERRAND_ORDER_ABROAD_MV) && !smitUpdater);
         boolean isContractSim = staticDocumentAspects.contains(DocumentSpecificModel.Aspects.CONTRACT_SIM_DETAILS);
         // properties that need additional processing
         Map<QName, String> collectedProps = new HashMap<QName, String>();
@@ -847,11 +865,11 @@ public class ConvertToDynamicDocumentsUpdater extends AbstractNodeUpdater {
                 newProperties.put(propName, propValue);
             } else if (DocumentSpecificModel.DOCSPEC_URI.equals(namespaceURI) || DocumentCommonModel.DOCCOM_URI.equals(namespaceURI)) {
                 if (isTrainingApplicationV1 || isErrandDomesticApplicationV1 || isErrandAbroadApplicationV1) {
-                    if (isTrainingApplicationV1 && DocumentSpecificModel.Props.DAILY_ALLOWANCE_CATERING_COUNT.equals(propName)) {
+                    if ((isTrainingApplicationV1 || isErrandAbroadApplicationV1) && createDocspecProp(DocumentSpecificModel.Props.DAILY_ALLOWANCE_CATERING_COUNT).equals(propName)) {
                         dailyAllowance = getSerializablePair(dailyAllowance);
                         dailyAllowance.setFirst(propValue);
                         continue;
-                    } else if (isTrainingApplicationV1 && DAILY_ALLOWANCE_FINANCING_SOURCE.equals(propName)) {
+                    } else if ((isTrainingApplicationV1 || isErrandAbroadApplicationV1) && DAILY_ALLOWANCE_FINANCING_SOURCE.equals(propName)) {
                         dailyAllowance = getSerializablePair(dailyAllowance);
                         dailyAllowance.setSecond(propValue);
                         continue;
@@ -1145,6 +1163,10 @@ public class ConvertToDynamicDocumentsUpdater extends AbstractNodeUpdater {
         this.registrationNumberReinventedUpdater = registrationNumberReinventedUpdater;
     }
 
+    public void setDocumentPartyPropsUpdater(DocumentPartyPropsUpdater documentPartyPropsUpdater) {
+        this.documentPartyPropsUpdater = documentPartyPropsUpdater;
+    }
+
     public void setTransactionService(TransactionService transactionService) {
         this.transactionService = transactionService;
     }
@@ -1167,6 +1189,10 @@ public class ConvertToDynamicDocumentsUpdater extends AbstractNodeUpdater {
 
     public void setWorkflow25To313DynamicDocTypeUpdater(Workflow25To313DynamicDocTypeUpdater workflow25To313DynamicDocTypeUpdater) {
         this.workflow25To313DynamicDocTypeUpdater = workflow25To313DynamicDocTypeUpdater;
+    }
+
+    public void setSmitUpdater(boolean smitUpdater) {
+        this.smitUpdater = smitUpdater;
     }
 
 }

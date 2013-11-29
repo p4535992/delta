@@ -66,6 +66,7 @@ import ee.webmedia.alfresco.casefile.model.CaseFileModel;
 import ee.webmedia.alfresco.casefile.web.CaseFileDialog;
 import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.common.propertysheet.datepicker.DatePickerWithDueDateGenerator;
+import ee.webmedia.alfresco.common.propertysheet.datepicker.DateTimePicker;
 import ee.webmedia.alfresco.common.propertysheet.modalLayer.ModalLayerComponent.ModalLayerSubmitEvent;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.Confirmable;
@@ -95,7 +96,6 @@ import ee.webmedia.alfresco.menu.ui.component.UIMenuComponent;
 import ee.webmedia.alfresco.notification.exception.EmailAttachmentSizeLimitException;
 import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
-import ee.webmedia.alfresco.privilege.service.PrivilegeUtil;
 import ee.webmedia.alfresco.user.model.UserModel;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.ComponentUtil;
@@ -212,6 +212,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
         getLog().init(compoundWorkflow);
         if (!fromRestore || compoundWorkflow.getNode().isSaved()) {
             BeanHelper.getRelatedUrlListBlock().setup(compoundWorkflow);
+            BeanHelper.getCommentListBlock().setup(compoundWorkflow);
         }
         DialogDataProvider dataProvider = BeanHelper.getDocumentDialogHelperBean().getDataProvider();
         if (dataProvider instanceof CaseFileDialog && dataProvider.getCaseFile() != null && ((CaseFileDialog) dataProvider).canRestore()) {
@@ -220,7 +221,9 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
     }
 
     public void initWorkflowBlockBean() {
-        getWorkflowBlockBean().initIndependentWorkflow(compoundWorkflow, this);
+        if (compoundWorkflow != null && compoundWorkflow.isIndependentWorkflow()) {
+            getWorkflowBlockBean().initIndependentWorkflow(compoundWorkflow, this);
+        }
     }
 
     public boolean isShowAssocSearchObjectType() {
@@ -297,7 +300,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
             updatePanelGroup(null, null, true, true, null, !finishingTask);
             initBlocks(false, !finishingTask);
             if (finishingTask) {
-                return "SAVED";
+                return saveSucceeded ? "SAVED" : null;
             }
         }
         return confirmationOutcome;
@@ -377,7 +380,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
             log.debug("Compound workflow action failed: document locked!", e);
             BeanHelper.getDocumentLockHelperBean().handleLockedNode("workflow_compound_save_failed_docLocked", e.getNodeRef());
         } catch (Exception e) {
-            handleException(e, null);
+            handleException(e, "workflow_compound_save_failed_general");
         }
         return false;
     }
@@ -657,14 +660,15 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
                             if (invoiceDueDate != null) {
                                 Date invoiceDueDateMinus3Days = DateUtils.addDays(invoiceDueDate, -3);
                                 if (!isSameDay(invoiceDueDateMinus3Days, taskDueDate) && taskDueDate.after(invoiceDueDateMinus3Days)) {
-                                    getAndAddMessage(messages, workflow, taskDueDate, "task_confirm_invoice_task_due_date", invoiceDueDate);
+                                    WorkflowUtil.getAndAddMessage(messages, workflow, taskDueDate, "task_confirm_invoice_task_due_date", invoiceDueDate);
                                 }
                             }
                             if (notInvoiceDueDate != null) {
                                 if (!isSameDay(notInvoiceDueDate, taskDueDate) && taskDueDate.after(notInvoiceDueDate)) {
-                                    getAndAddMessage(messages, workflow, taskDueDate, "task_confirm_not_invoice_task_due_date", notInvoiceDueDate);
+                                    WorkflowUtil.getAndAddMessage(messages, workflow, taskDueDate, "task_confirm_not_invoice_task_due_date", notInvoiceDueDate);
                                 }
                             }
+
                         } else if (independentWorkflow && independentCompWorkflowDocs != null && task.isStatus(Status.NEW)) {
                             for (Document document : independentCompWorkflowDocs) {
                                 if (SystematicDocumentType.INVOICE.isSameType((String) document.getProperties().get(DocumentAdminModel.Props.OBJECT_TYPE_ID))) {
@@ -689,15 +693,6 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
             }
         }
         return messages;
-    }
-
-    private void getAndAddMessage(List<String> messages, Workflow workflow, Date taskDueDate, String msgKey, Date date) {
-        FacesContext fc = FacesContext.getCurrentInstance();
-        DateFormat dateFormat = Utils.getDateFormat(fc);
-        String invoiceTaskDueDateConfirmationMsg = MessageUtil.getMessage(msgKey,
-                MessageUtil.getMessage(workflow.getType().getLocalName()),
-                dateFormat.format(taskDueDate), dateFormat.format(date));
-        messages.add(invoiceTaskDueDateConfirmationMsg);
     }
 
     /**
@@ -1023,21 +1018,50 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
     }
 
     public void calculateTaskGroupDueDate(ActionEvent event) {
-        String selectorId = ActionUtil.getParam(event, "selector");
         int wfIndex = ActionUtil.getParam(event, WF_INDEX, Integer.class);
+        UIComponent selector = getUIComponent(event);
 
-        UIComponent selector = ComponentUtil.findComponentById(FacesContext.getCurrentInstance(), event.getComponent().getParent(), selectorId);
-        List value = (List) ((HtmlSelectOneMenu) selector).getValue();
-        if (value == null) {
-            return;
-        }
-
+        Date newDueDate = null;
         TaskGroup taskGroup = findTaskGroup(event);
-        Date existingDueDate = taskGroup.getDueDate();
-        taskGroup.setDueDate(getNewDueDate((Boolean) value.get(1), (Integer) value.get(0), existingDueDate));
-
+        if (selector instanceof DateTimePicker) {
+            Object selectedDateTime = ((DateTimePicker) selector).getValueFromChildren(FacesContext.getCurrentInstance());
+            if (selectedDateTime == null) {
+                return;
+            }
+            newDueDate = getNewDueDateFromPair((Pair) selectedDateTime);
+        } else { // must be an instance of HtmlSelectOneMenu
+            List value = (List) ((HtmlSelectOneMenu) selector).getValue();
+            if (value == null) {
+                return;
+            }
+            Date existingDueDate = taskGroup.getDueDate();
+            newDueDate = getNewDueDate((Boolean) value.get(1), (Integer) value.get(0), existingDueDate);
+        }
+        taskGroup.setDueDate(newDueDate);
         // Set the due dates according to the group
         WorkflowUtil.setGroupTasksDueDates(taskGroup, getWorkflow().getWorkflows().get(wfIndex).getTasks());
+    }
+
+    private UIComponent getUIComponent(ActionEvent event) {
+        String selectorId = null;
+        if (ActionUtil.hasParam(event, "datepicker")) {
+            selectorId = ActionUtil.getParam(event, "datepicker");
+        } else {
+            selectorId = ActionUtil.getParam(event, "selector");
+        }
+        return ComponentUtil.findComponentById(FacesContext.getCurrentInstance(), event.getComponent().getParent(), selectorId);
+    }
+
+    private Date getNewDueDateFromPair(Pair pair) {
+        Date days = (Date) pair.getFirst();
+        Date time = (Date) pair.getSecond();
+        if (days == null) {
+            return null;
+        }
+        if (time == null) {
+            return new Date(days.getYear(), days.getMonth(), days.getDate());
+        }
+        return new Date(days.getYear(), days.getMonth(), days.getDate(), time.getHours(), time.getMinutes());
     }
 
     private Date getNewDueDate(Boolean isWorkingDays, Integer dueDateDays, Date existingDueDate) {
@@ -1060,6 +1084,14 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
         addNewAssocs();
         addNewRelatedUrls();
         addAssociatedDocumentsData();
+        addNewComments();
+    }
+
+    private void addNewComments() {
+        if (compoundWorkflow != null && !compoundWorkflow.isSaved()) {
+            compoundWorkflow.getNewComments().clear();
+            compoundWorkflow.getNewComments().addAll(BeanHelper.getCommentListBlock().getComments());
+        }
     }
 
     private void addNewAssocs() {
@@ -1384,8 +1416,12 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
                 boolean isRegistrationError = errorCause == ErrorCause.INDEPENDENT_WORKFLOW_REGISTRATION_NO_DOCUMENTS;
                 if (START_VALIDATED_WORKFLOW.equals(handledAction)) {
                     displayMessageKey = isRegistrationError ? "workflow_compound_start_failed_registration_no_documents" : "workflow_compound_start_failed_signature_no_documents";
+                    if (!isRegistrationError) {
+                        BeanHelper.getCompoundWorkflowAssocListDialog().setResetNewAssocs(false);
+                    }
                 } else if (CONTINUE_VALIDATED_WORKFLOW.equals(handledAction)) {
-                    displayMessageKey = isRegistrationError ? "workflow_compound_continue_failed_registration_no_documents" : "workflow_compound_continue_failed_signature_no_documents";
+                    displayMessageKey = isRegistrationError ? "workflow_compound_continue_failed_registration_no_documents"
+                            : "workflow_compound_continue_failed_signature_no_documents";
                 } else {
                     displayMessageKey = e.getMessage();
                 }
@@ -1443,8 +1479,8 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
             log.debug(logMessage, workflowChangedException);
         }
         MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), displayMessageKey);
-    }    
-    
+    }
+
     private boolean validate(FacesContext context, boolean checkFinished, boolean checkInvoice, boolean finishingTask) {
         boolean valid = true;
         boolean activeResponsibleAssignTaskInSomeWorkFlow = false;
@@ -1467,6 +1503,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
         for (Workflow block : compoundWorkflow.getWorkflows()) {
             boolean foundOwner = false;
             QName blockType = block.getNode().getType();
+            boolean isFinishedWorkflow = block.isStatus(Status.FINISHED);
             boolean activeResponsibleAssigneeNeeded = blockType.equals(WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW)
                     && !activeResponsibleAssignTaskInSomeWorkFlow && !isActiveResponsibleAssignedForDocument(WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW, true);
             boolean activeResponsibleAssigneeAssigned = !activeResponsibleAssigneeNeeded;
@@ -1503,6 +1540,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
             }
 
             boolean hasOrderAssignmentActiveResponsible = !(block.isType(WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_WORKFLOW) && block.isStatus(Status.NEW));
+            boolean validOwnerAndDueDate = true;
             for (Task task : block.getTasks()) {
                 final boolean activeResponsible = WorkflowUtil.isActiveResponsible(task) && !task.isStatus(Status.UNFINISHED);
                 if (activeResponsibleAssigneeNeeded && StringUtils.isNotBlank(task.getOwnerName()) && activeResponsible) {
@@ -1512,13 +1550,14 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
                 }
                 hasOrderAssignmentActiveResponsible |= activeResponsible;
                 foundOwner |= StringUtils.isNotBlank(task.getOwnerName());
-                valid = validateTaskOwnerAndDueDate(context, block, task);
-                if (!valid) {
+                validOwnerAndDueDate = validateTaskOwnerAndDueDate(context, block, task);
+                if (!validOwnerAndDueDate) {
                     break;
                 }
             }
+            valid &= validOwnerAndDueDate;
             checkOrderAssignmentResponsibleTask |= !hasOrderAssignmentActiveResponsible;
-            if (activeResponsibleAssigneeNeeded && !activeResponsibleAssigneeAssigned) {
+            if (activeResponsibleAssigneeNeeded && !activeResponsibleAssigneeAssigned && !isFinishedWorkflow) {
                 missingOwnerAssignment = true;
                 if (!foundOwner) {
                     valid = false;
@@ -1602,35 +1641,24 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
         return taskType.equals(WorkflowSpecificModel.Types.ASSIGNMENT_TASK) || taskType.equals(WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_TASK);
     }
 
-    private boolean hasNoOwnerOrDueDate(Task task) {
-        return StringUtils.isBlank(task.getOwnerName()) != (task.getDueDate() == null && task.getDueDateDays() == null);
-    }
-
-    public boolean isShowComment() {
-        return compoundWorkflow.isIndependentWorkflow() || compoundWorkflow.isCaseFileWorkflow();
-    }
-
-    public boolean isCommentReadonly() {
-        return compoundWorkflow.isStatus(Status.FINISHED) || !isOwnerOrDocManagerOrHasInProgressTask();
-    }
-
     public boolean isOwnerNameReadonly() {
-        return (compoundWorkflow.isDocumentWorkflow() && (!fullAccess || compoundWorkflow.isStatus(Status.IN_PROGRESS)))
-                || (compoundWorkflow.isIndependentWorkflow() && (!isCompoundWorkflowOwner(compoundWorkflow) || compoundWorkflow.isStatus(Status.FINISHED)))
-                || (compoundWorkflow.isCaseFileWorkflow() && compoundWorkflow.isStatus(Status.FINISHED) && !(isCompoundWorkflowOwner(compoundWorkflow) || PrivilegeUtil
-                        .isAdminOrDocmanagerWithPermission(compoundWorkflow.getParent(), Privileges.VIEW_CASE_FILE)));
+        if (getUserService().isAdministrator() && !compoundWorkflow.isStatus(Status.FINISHED)) {
+            return false;
+        }
+        return true;
     }
 
     public boolean isShowEmptyWorkflowMessage() {
         return showEmptyWorkflowMessage && compoundWorkflow == null;
     }
-    
+
     public boolean isShowTitle() {
         return BeanHelper.getWorkflowService().isWorkflowTitleEnabled();
     }
-    
+
     public boolean isTitleReadonly() {
-        return !(compoundWorkflow.isStatus(Status.NEW) && (StringUtils.equals(AuthenticationUtil.getRunAsUser(), compoundWorkflow.getOwnerId()) || BeanHelper.getUserService()
+        return !(!compoundWorkflow.isStatus(Status.FINISHED) && (StringUtils.equals(AuthenticationUtil.getRunAsUser(), compoundWorkflow.getOwnerId()) || BeanHelper
+                .getUserService()
                 .isDocumentManager()));
     }
 

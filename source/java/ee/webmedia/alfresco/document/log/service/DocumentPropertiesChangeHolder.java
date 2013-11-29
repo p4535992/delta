@@ -125,7 +125,7 @@ public class DocumentPropertiesChangeHolder {
         }
 
         if (type.equals(DocumentChildModel.Assocs.APPLICANT_ABROAD) || type.equals(DocumentChildModel.Assocs.APPLICANT_DOMESTIC)
-                || type.equals(DocumentChildModel.Assocs.APPLICANT_TRAINING)) {
+                || type.equals(DocumentChildModel.Assocs.APPLICANT_TRAINING) || type.equals(DocumentChildModel.Assocs.APPLICANT_ERRAND)) {
             String applicant = (String) nodeService.getProperty(node, DocumentSpecificModel.Props.APPLICANT_NAME);
 
             if (applicant != null && oldChild != null) {

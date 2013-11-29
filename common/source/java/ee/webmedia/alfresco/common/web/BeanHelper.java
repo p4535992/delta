@@ -157,10 +157,12 @@ import ee.webmedia.alfresco.workflow.search.web.TaskSearchResultsDialog;
 import ee.webmedia.alfresco.workflow.service.CompoundWorkflowFavoritesService;
 import ee.webmedia.alfresco.workflow.service.WorkflowDbService;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
+import ee.webmedia.alfresco.workflow.web.CommentListBlock;
 import ee.webmedia.alfresco.workflow.web.CompoundWorkflowAssocListDialog;
 import ee.webmedia.alfresco.workflow.web.CompoundWorkflowAssocSearchBlock;
 import ee.webmedia.alfresco.workflow.web.CompoundWorkflowDialog;
 import ee.webmedia.alfresco.workflow.web.CompoundWorkflowLogBlockBean;
+import ee.webmedia.alfresco.workflow.web.DelegationBean;
 import ee.webmedia.alfresco.workflow.web.RelatedUrlListBlock;
 import ee.webmedia.alfresco.workflow.web.WorkflowBlockBean;
 import ee.webmedia.xtee.client.dhl.DhlXTeeServiceImplFSStub;
@@ -306,10 +308,10 @@ public class BeanHelper implements NamespacePrefixResolverProvider {
     public static <D extends DynamicType, S extends DynTypeDialogSnapshot<D>> DynamicTypeDetailsDialog<D, S> getDynamicTypeDetailsDialog(Class<D> dynTypeClass) {
         if (DocumentType.class.equals(dynTypeClass)) {
             // not using getDocTypeDetailsDialog() as unlike smarter eclipse compiler javac can't handle complicated generics
-            DynamicTypeDetailsDialog tmp = (DynamicTypeDetailsDialog) getJsfBean(DocTypeDetailsDialog.class, DocTypeDetailsDialog.BEAN_NAME);
+            DynamicTypeDetailsDialog tmp = getJsfBean(DocTypeDetailsDialog.class, DocTypeDetailsDialog.BEAN_NAME);
             return tmp;
         } else if (CaseFileType.class.equals(dynTypeClass)) {
-            DynamicTypeDetailsDialog tmp = (DynamicTypeDetailsDialog) getJsfBean(CaseFileTypeDetailsDialog.class, CaseFileTypeDetailsDialog.BEAN_NAME);
+            DynamicTypeDetailsDialog tmp = getJsfBean(CaseFileTypeDetailsDialog.class, CaseFileTypeDetailsDialog.BEAN_NAME);
             return tmp;
         } else {
             throw new RuntimeException("Returning details dialog for " + dynTypeClass.getSimpleName() + " is unimplemented");
@@ -408,6 +410,10 @@ public class BeanHelper implements NamespacePrefixResolverProvider {
         return getJsfBean(WorkflowBlockBean.class, WorkflowBlockBean.BEAN_NAME);
     }
 
+    public static DelegationBean getDelegationBean() {
+        return getJsfBean(DelegationBean.class, DelegationBean.BEAN_NAME);
+    }
+
     public static SendOutBlockBean getSendOutBlockBean() {
         return getJsfBean(SendOutBlockBean.class, SendOutBlockBean.BEAN_NAME);
     }
@@ -466,6 +472,10 @@ public class BeanHelper implements NamespacePrefixResolverProvider {
 
     public static RelatedUrlListBlock getRelatedUrlListBlock() {
         return getJsfBean(RelatedUrlListBlock.class, RelatedUrlListBlock.BEAN_NAME);
+    }
+
+    public static CommentListBlock getCommentListBlock() {
+        return getJsfBean(CommentListBlock.class, CommentListBlock.BEAN_NAME);
     }
 
     public static CaseFileLogBlockBean getCaseFileLogBlockBean() {

@@ -45,6 +45,10 @@ public interface CompoundWorkflowSearchModel {
         QName ENDING_DATE = QName.createQName(URI, "endingDate");
         QName ENDING_DATE_END = QName.createQName(URI, "endingDate_EndDate");
         QName STATUS = QName.createQName(URI, "status");
+        /**
+         * Not used in search any more (compound workflow comments were moved to delta_compound_workflow_comment table)
+         */
+        @Deprecated
         QName COMMENT = QName.createQName(URI, "comment");
     }
 

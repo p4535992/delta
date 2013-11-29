@@ -54,6 +54,7 @@ public class WebDAVCustomServlet extends WebDAVServlet {
         m_davMethods.put(WebDAV.METHOD_LOCK, LockMethod.class);
         m_davMethods.put(WebDAV.METHOD_PUT, PutMethod.class);
         m_davMethods.put(WebDAV.METHOD_UNLOCK, UnlockMethod.class);
+        m_davMethods.put(WebDAV.METHOD_PROPFIND, PropFindMethod.class);
     }
 
     @Override

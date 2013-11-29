@@ -10,6 +10,7 @@ import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.util.Pair;
 import org.alfresco.web.app.servlet.AuthenticationStatus;
 import org.alfresco.web.app.servlet.BaseServlet;
@@ -20,6 +21,8 @@ import org.springframework.util.FileCopyUtils;
 import ee.webmedia.alfresco.common.listener.ExternalAccessPhaseListener;
 import ee.webmedia.alfresco.common.listener.StatisticsPhaseListener;
 import ee.webmedia.alfresco.common.listener.StatisticsPhaseListenerLogColumn;
+import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.substitute.model.SubstitutionInfo;
 
 /**
  * Servlet allowing external URL access to various global JSF views in the Web Client.
@@ -44,6 +47,12 @@ public class ExternalAccessServlet extends BaseServlet {
 
         if (AuthenticationStatus.Failure == servletAuthenticate(req, res)) {
             return;
+        }
+
+        SubstitutionInfo subInf = BeanHelper.getSubstitutionBean().getSubstitutionInfo();
+        if (subInf.isSubstituting()) {
+            // must be added manually or AuthenticationUtil.getRunAsUser() will return currentUser instead of runAsUser
+            AuthenticationUtil.setRunAsUser(subInf.getSubstitution().getReplacedPersonUserName());
         }
 
         if ("/logo".equals(uri)) {

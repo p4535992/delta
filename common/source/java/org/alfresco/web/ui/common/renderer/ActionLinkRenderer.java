@@ -33,6 +33,7 @@ import java.net.URLEncoder;
 import java.util.Map;
 
 import javax.faces.component.UIComponent;
+import javax.faces.component.UIViewRoot;
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
@@ -248,12 +249,17 @@ public class ActionLinkRenderer extends BaseRenderer
       }
       
       // common link attributes
-      if (attrs.get("id") != null)
+      out.write(" id='");
+      String attrId = (String) attrs.get("id");
+      if (attrId != null && !attrId.startsWith(UIViewRoot.UNIQUE_ID_PREFIX))
       {
-         out.write(" id='");
-         out.write((String)attrs.get("id"));
-         out.write("'");
+         out.write(attrId);
+      } 
+      else 
+      {
+         out.write(link.getClientId(context));
       }
+      out.write("'");
       boolean appliedStyle = false;
 
       if (link.getImage() != null)

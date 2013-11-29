@@ -1,0 +1,1 @@
+ALTER TABLE delta_task ADD COLUMN wfc_owner_substitute_name text;

@@ -5,6 +5,7 @@ import static ee.webmedia.alfresco.common.search.DbSearchUtil.generateTaskDatePr
 import static ee.webmedia.alfresco.common.search.DbSearchUtil.generateTaskFieldExactQuery;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentAdminService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getGeneralService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getNotificationService;
 import static ee.webmedia.alfresco.docconfig.bootstrap.SystematicDocumentType.INCOMING_LETTER;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateAndNotQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateAspectQuery;
@@ -104,6 +105,7 @@ import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
 import ee.webmedia.alfresco.document.search.model.AssocSearchObjectType;
 import ee.webmedia.alfresco.document.search.model.DocumentSearchModel;
 import ee.webmedia.alfresco.document.search.model.FakeDocument;
+import ee.webmedia.alfresco.document.search.web.DocumentDynamicSearchDialog;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.document.type.service.DocumentTypeHelper;
 import ee.webmedia.alfresco.eventplan.model.EventPlanModel;
@@ -524,7 +526,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         List<String> queryParts = new ArrayList<String>();
         queryParts.add(generateStringNotEmptyQuery(DocumentCommonModel.Props.RECIPIENT_NAME, DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME,
                 DocumentSpecificModel.Props.PARTY_NAME /* on document node, duplicates partyName property values from all contractParty child-nodes */
-        ));
+                ));
         queryParts.add(generateStringExactQuery(DocumentStatus.FINISHED.getValueName(), DocumentCommonModel.Props.DOC_STATUS));
         queryParts.add(generateStringNullQuery(DocumentCommonModel.Props.SEARCHABLE_SEND_MODE));
         queryParts.add(joinQueryPartsOr(
@@ -851,7 +853,12 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
 
             }));
         }
+        boolean einvoiceEnabled = BeanHelper.getEInvoiceService().isEinvoiceEnabled();
+        String accountantsGroup = userService.getAccountantsGroup();
         for (String result : results) {
+            if (!einvoiceEnabled && accountantsGroup.equals(result)) {
+                continue;
+            }
             if (withAdminsAndDocManagers || (!userService.getAdministratorsGroup().equals(result) && !userService.getDocumentManagersGroup().equals(result))) {
                 authorities.add(userService.getAuthority(result));
             }
@@ -986,7 +993,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         List<TaskInfo> taskInfos = new ArrayList<TaskInfo>();
         boolean resultLimited = false;
         if (queryAndArguments != null) {
-            Pair<List<Task>, Boolean> taskResults = BeanHelper.getWorkflowDbService().searchTasksMainStore(queryAndArguments.getFirst(), queryAndArguments.getSecond(), limit);
+            Pair<List<Task>, Boolean> taskResults = BeanHelper.getWorkflowDbService().searchTasksAllStores(queryAndArguments.getFirst(), queryAndArguments.getSecond(), limit);
             for (Task task : taskResults.getFirst()) {
                 NodeRef workflowNodeRef = task.getWorkflowNodeRef();
                 Node workflow = null;
@@ -1069,6 +1076,9 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
     }
 
     private void addSubstitutionRestriction(Pair<List<String>, List<Object>> queryPartsAndArgs) {
+        if (!getNotificationService().isSubstitutionTaskEndDateRestricted()) {
+            return;
+        }
         SubstitutionBean substitutionBean = (SubstitutionBean) FacesContextUtils.getRequiredWebApplicationContext( //
                 FacesContext.getCurrentInstance()).getBean(SubstitutionBean.BEAN_NAME);
         SubstitutionInfo subInfo = substitutionBean.getSubstitutionInfo();
@@ -1124,6 +1134,21 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         return count;
     }
 
+    private void filterBySendMode(List<Document> results, Map<String, Object> properties) {
+        @SuppressWarnings("unchecked")
+        List<String> sendModes = (List<String>) properties.get(DocumentSearchModel.Props.SEND_MODE.toString());
+
+        if (sendModes != null && !sendModes.isEmpty()) {
+            for (Iterator<Document> it = results.iterator(); it.hasNext();) {
+                Document doc = it.next();
+                List<String> modes = doc.getSendModesAsList();
+                if (!CollectionUtils.containsAny(sendModes, modes)) {
+                    it.remove();
+                }
+            }
+        }
+    }
+
     @Override
     public Pair<List<Document>, Boolean> searchDocuments(Node filter, int limit) {
         long startTime = System.currentTimeMillis();
@@ -1143,6 +1168,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
             if (results != null) {
                 filterByStructUnit(results.getFirst(), filter);
             }
+            filterBySendMode(results.getFirst(), properties);
             if (log.isDebugEnabled()) {
                 log.debug("Documents search total time " + (System.currentTimeMillis() - startTime) + " ms");
             }
@@ -1245,17 +1271,28 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         throw e;
     }
 
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public List<StoreRef> getVolumeSearchStoreRefs(Map<String, Object> properties) {
-        @SuppressWarnings("unchecked")
-        List<NodeRef> storeFunctionRootNodeRefs = (List<NodeRef>) properties.get(VolumeSearchModel.Props.STORE);
-        boolean storRefsNotNull = storeFunctionRootNodeRefs != null;
+        List storeFunctionRootNodeRefs = (List) properties.get(VolumeSearchModel.Props.STORE);
+        boolean storRefsNotNull = storeFunctionRootNodeRefs != null && !storeFunctionRootNodeRefs.isEmpty();
         List<StoreRef> storeRefs = new ArrayList<StoreRef>(storRefsNotNull ? storeFunctionRootNodeRefs.size() : 0);
         if (storRefsNotNull) {
-            for (NodeRef nodeRef : storeFunctionRootNodeRefs) {
+            if (storeFunctionRootNodeRefs.get(0) instanceof String) {
+                storeFunctionRootNodeRefs = convertStringsToNodeRefs(storeFunctionRootNodeRefs);
+            }
+            for (NodeRef nodeRef : (List<NodeRef>) storeFunctionRootNodeRefs) {
                 storeRefs.add(nodeRef.getStoreRef());
             }
         }
         return storeRefs;
+    }
+
+    private List<NodeRef> convertStringsToNodeRefs(List<String> stores) {
+        List<NodeRef> storeFunctionRootNodeRefs = new ArrayList<NodeRef>();
+        for (String storeStr : stores) {
+            storeFunctionRootNodeRefs.add(new NodeRef(storeStr));
+        }
+        return storeFunctionRootNodeRefs;
     }
 
     @Override
@@ -1532,6 +1569,14 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         String objectTitle = (String) filterProps.get(DocumentSearchModel.Props.OBJECT_TITLE);
         Object function = filterProps.get(DocumentCommonModel.Props.FUNCTION);
         Object series = filterProps.get(DocumentCommonModel.Props.SERIES);
+        ArrayList<NodeRef> stores = (ArrayList<NodeRef>) filterProps.get(DocumentDynamicSearchDialog.SELECTED_STORES);
+        Set<StoreRef> storeRefs = null;
+        if (stores != null && !stores.isEmpty()) {
+            storeRefs = new HashSet<StoreRef>();
+            for (NodeRef ref : stores) {
+                storeRefs.add(ref.getStoreRef());
+            }
+        }
         if (objectType == null
                 || (docTypeIsNull && volumeIsNull && docCreatedIsNull && docRegisteredIsNull
                         && StringUtils.isBlank(searchString) && StringUtils.isBlank(objectTitle)
@@ -1556,7 +1601,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
                     generateDatePropertyRangeQuery(docRegisteredStart, docRegisteredEnd, DocumentCommonModel.Props.REG_DATE_TIME),
                     generateMultiStringExactQuery(documentTypes, DocumentAdminModel.Props.OBJECT_TYPE_ID),
                     functionQuery, seriesQuery, volumeQuery));
-            List<NodeRef> resultNodeRefs = searchAssociatedObjects(query);
+            List<NodeRef> resultNodeRefs = searchAssociatedObjects(query, storeRefs);
             for (NodeRef nodeRef : resultNodeRefs) {
                 results.add(new AssocBlockObject(documentService.getDocumentByNodeRef(nodeRef)));
             }
@@ -1566,7 +1611,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
                     generateStringWordsWildcardQuery(searchString, CaseModel.Props.TITLE), // There are no other meaningful properties besides TITLE to perform "quickSearch" on
                     generateStringWordsWildcardQuery(objectTitle, CaseModel.Props.TITLE),
                     functionQuery, seriesQuery, volumeQuery));
-            List<NodeRef> resultNodeRefs = searchAssociatedObjects(query);
+            List<NodeRef> resultNodeRefs = searchAssociatedObjects(query, storeRefs);
             for (NodeRef nodeRef : resultNodeRefs) {
                 results.add(new AssocBlockObject(BeanHelper.getCaseService().getCaseByNoderef(nodeRef)));
             }
@@ -1576,7 +1621,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
                     documentModelQuickSearchQuery,
                     generateStringWordsWildcardQuery(objectTitle, VolumeModel.Props.TITLE),
                     functionQuery, seriesQuery, volumeQuery));
-            List<NodeRef> resultNodeRefs = searchAssociatedObjects(query);
+            List<NodeRef> resultNodeRefs = searchAssociatedObjects(query, storeRefs);
             for (NodeRef nodeRef : resultNodeRefs) {
                 results.add(new AssocBlockObject(BeanHelper.getVolumeService().getVolumeByNodeRef(nodeRef)));
             }
@@ -1586,7 +1631,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
                     documentModelQuickSearchQuery,
                     generateStringWordsWildcardQuery(objectTitle, DocumentDynamicModel.Props.TITLE),
                     functionQuery, seriesQuery, volumeQuery));
-            resultNodeRefs = searchAssociatedObjects(query);
+            resultNodeRefs = searchAssociatedObjects(query, storeRefs);
             for (NodeRef nodeRef : resultNodeRefs) {
                 results.add(new AssocBlockObject(BeanHelper.getVolumeService().getVolumeByNodeRef(nodeRef)));
             }
@@ -1595,9 +1640,9 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         return results;
     }
 
-    private List<NodeRef> searchAssociatedObjects(String query) {
+    private List<NodeRef> searchAssociatedObjects(String query, Set<StoreRef> storeRefs) {
         int limit = parametersService.getLongParameter(Parameters.MAX_SEARCH_RESULT_ROWS).intValue();
-        return searchNodes(query, limit, "searchAssocObjects", null).getFirst();
+        return searchNodes(query, limit, "searchAssocObjects", storeRefs).getFirst();
     }
 
     private Pair<List<Document>, Boolean> searchDocumentsAndOrCases(String query, String searchString, boolean includeCaseTitles, int limit) {
@@ -1790,7 +1835,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
                 SearchUtil.generateTypeQuery(DocumentAdminModel.Types.FIELD));
         query = SearchUtil.generateAndNotQuery(query, SearchUtil.generateTypeQuery(DocumentAdminModel.Types.FIELD_DEFINITION));
         return isMatch(query);
-    }    
+    }
 
     private Pair<List<String>, List<Object>> getTaskQuery(QName taskType, String ownerId, Status status, boolean isPreviousOwnerId) {
         QName ownerField = (isPreviousOwnerId) ? WorkflowCommonModel.Props.PREVIOUS_OWNER_ID : WorkflowCommonModel.Props.OWNER_ID;
@@ -1944,6 +1989,27 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         @SuppressWarnings("unchecked")
         List<String> sendMode = (List<String>) props.get(DocumentSearchModel.Props.SEND_MODE);
         queryParts.add(generateMultiStringExactQuery(sendMode, DocumentCommonModel.Props.SEARCHABLE_SEND_MODE, DocumentSpecificModel.Props.TRANSMITTAL_MODE));
+        // Saaja
+        String sendInfoRecipient = (String) props.get(DocumentSearchModel.Props.SEND_INFO_RECIPIENT);
+        if (sendInfoRecipient != null) {
+            queryParts.add(generatePropertyWildcardQuery(DocumentCommonModel.Props.SEARCHABLE_SEND_INFO_RECIPIENT, sendInfoRecipient, false, true));
+        }
+        // Saatmise ajavahemik
+        Date sendDateTime = (Date) props.get(DocumentSearchModel.Props.SEND_INFO_SEND_DATE_TIME);
+        Date sendDateTimeEnd = (Date) props.get(DocumentSearchModel.Props.SEND_INFO_SEND_DATE_TIME_END);
+        if (sendDateTime != null || sendDateTimeEnd != null) {
+            queryParts.add(generateDatePropertyRangeQuery(sendDateTime, sendDateTimeEnd, DocumentCommonModel.Props.SEARCHABLE_SEND_INFO_SEND_DATE_TIME));
+        }
+        // Saatmise resolutsioon
+        String sendInfoResolution = (String) props.get(DocumentSearchModel.Props.SEND_INFO_RESOLUTION);
+        if (StringUtils.isNotBlank(sendInfoResolution)) {
+            List<String> searchWords = parseQuickSearchWords(sendInfoResolution);
+            for (String searchWord : searchWords) {
+                if (StringUtils.isNotBlank(searchWord)) {
+                    queryParts.add(joinQueryPartsOr(SearchUtil.generateValuesWildcardQuery(searchWord)));
+                }
+            }
+        }
         // Dokumendi reg. number
         queryParts.add(generateStringExactQuery((String) props.get(DocumentCommonModel.Props.SHORT_REG_NUMBER), DocumentCommonModel.Props.SHORT_REG_NUMBER));
         // Projekt
@@ -2145,7 +2211,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         List<String> quickSearchWords = parseQuickSearchWords(searchString);
         log.info("Quick search - words: " + quickSearchWords.toString() + ", from string '" + searchString + "'");
         String query = generateDocumentSearchQuery(generateQuickSearchDocumentQuery(quickSearchWords), storeRefs);
-        if (containerNodeRef != null) {
+        if (StringUtils.isNotBlank(query) && containerNodeRef != null) {
             query = joinQueryPartsAnd(
                     generateNodeRefQuery(containerNodeRef, DocumentCommonModel.Props.FUNCTION, DocumentCommonModel.Props.SERIES, DocumentCommonModel.Props.VOLUME,
                             DocumentCommonModel.Props.CASE),
@@ -2305,7 +2371,6 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         if (StringUtils.isNotBlank(statusString)) {
             queryParts.add(generateStringExactQuery(Status.valueOf(statusString).getName(), WorkflowCommonModel.Props.STATUS));
         }
-        queryParts.add(generateStringWordsWildcardQuery((String) props.get(CompoundWorkflowSearchModel.Props.COMMENT), true, true, 2, WorkflowCommonModel.Props.COMMENT));
         String searchFilter = WmNode.toHumanReadableStringIfPossible(RepoUtil.getNotEmptyProperties(RepoUtil.toQNameProperties(props)), namespaceService, null);
         log.info("Tasks search filter: " + searchFilter);
         // Searches are made by user. Reports are generated by DHS. We need to log only searches.
@@ -2344,8 +2409,6 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         if (StringUtils.isNotBlank(statusString)) {
             addTaskStringExactPartsAndArgs(queryParts, arguments, Status.valueOf(statusString).getName(), WorkflowSpecificModel.Props.SEARCHABLE_COMPOUND_WORKFLOW_STATUS);
         }
-        addTaskStringWordsWildcardPartsAndArgs(queryParts, arguments, (String) props.get(CompoundWorkflowSearchModel.Props.COMMENT),
-                WorkflowSpecificModel.Props.COMPOUND_WORKFLOW_COMMENT);
     }
 
     @SuppressWarnings({ "unchecked" })

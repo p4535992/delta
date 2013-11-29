@@ -20,6 +20,7 @@ import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.UserUtil;
+import ee.webmedia.alfresco.workflow.model.Comment;
 import ee.webmedia.alfresco.workflow.model.CompoundWorkflowType;
 import ee.webmedia.alfresco.workflow.model.RelatedUrl;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
@@ -37,6 +38,7 @@ public class CompoundWorkflow extends BaseWorkflowObject implements Serializable
     private Integer numberOfDocuments;
     private final List<NodeRef> newAssocs = new ArrayList<NodeRef>();
     private final List<RelatedUrl> newRelatedUrls = new ArrayList<RelatedUrl>();
+    private final List<Comment> newComments = new ArrayList<Comment>();
 
     private List<Pair<String, Object[]>> reviewTaskDvkInfoMessages;
 
@@ -46,7 +48,7 @@ public class CompoundWorkflow extends BaseWorkflowObject implements Serializable
         this.parent = parent;
     }
 
-    protected CompoundWorkflow copy() {
+    public CompoundWorkflow copy() {
         return copyImpl(new CompoundWorkflow(getNode().clone(), parent));
     }
 
@@ -64,6 +66,9 @@ public class CompoundWorkflow extends BaseWorkflowObject implements Serializable
         }
         for (RelatedUrl relatedUrl : newRelatedUrls) {
             compoundWorkflow.newRelatedUrls.add(relatedUrl);
+        }
+        for (Comment comment : newComments) {
+            compoundWorkflow.newComments.add(comment);
         }
         @SuppressWarnings("unchecked")
         T result = (T) compoundWorkflow;
@@ -187,10 +192,6 @@ public class CompoundWorkflow extends BaseWorkflowObject implements Serializable
         return getProp(WorkflowCommonModel.Props.FINISHED_DATE_TIME);
     }
 
-    public String getComment() {
-        return getProp(WorkflowCommonModel.Props.COMMENT);
-    }
-
     public String getWorkflowTypeString() {
         return MessageUtil.getMessage(getTypeEnum());
     }
@@ -286,7 +287,11 @@ public class CompoundWorkflow extends BaseWorkflowObject implements Serializable
             if (isDocumentWorkflow()) {
                 numberOfDocuments = 1;
             } else {
-                numberOfDocuments = BeanHelper.getWorkflowService().getCompoundWorkflowDocumentCount(getNodeRef());
+                if (getNodeRef() == null) {
+                    numberOfDocuments = 0;
+                } else {
+                    numberOfDocuments = BeanHelper.getWorkflowService().getCompoundWorkflowDocumentCount(getNodeRef());
+                }
             }
         }
         return numberOfDocuments;
@@ -314,6 +319,10 @@ public class CompoundWorkflow extends BaseWorkflowObject implements Serializable
 
     public List<RelatedUrl> getNewRelatedUrls() {
         return newRelatedUrls;
+    }
+
+    public List<Comment> getNewComments() {
+        return newComments;
     }
 
     public List<Pair<String, Object[]>> getReviewTaskDvkInfoMessages() {

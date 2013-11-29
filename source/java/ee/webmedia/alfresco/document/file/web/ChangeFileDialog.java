@@ -102,11 +102,10 @@ public class ChangeFileDialog extends BaseDialogBean {
             if (getDocLockService().setLockIfFree(fileRef) == LockStatus.LOCKED) {
                 throw new NodeLockedException(fileRef);
             }
-            getDocLockService().lockGeneratedFileDocument(fileRef);
+            getDocLockService().lockFile(fileRef);
             return true;
         }
-        getDocLockService().unlockIfOwner(fileRef);
-        getDocLockService().releaseGeneratedFileDocument(fileRef);
+        getDocLockService().unlockFile(fileRef);
         return false;
     }
 

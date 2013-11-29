@@ -56,6 +56,7 @@ import ee.webmedia.alfresco.utils.SearchUtil;
 import ee.webmedia.alfresco.utils.TextUtil;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
 import ee.webmedia.alfresco.workflow.bootstrap.MoveTaskFileToChildAssoc;
+import ee.webmedia.alfresco.workflow.model.Comment;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 import ee.webmedia.alfresco.workflow.service.type.WorkflowType;
@@ -70,7 +71,6 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
     private static final String IS_SEARCHABLE_FIELD = "is_searchable";
     private static final String INDEX_IN_WORKFLOW_FIELD = "index_in_workflow";
     private static final String TASK_ID_FIELD = "task_id";
-    private static final String DUE_DATE_HISTORY_FIELD = "has_due_date_history";
     private static final String WORKFLOW_ID_KEY = "workflow_id";
     private static final String STORE_ID_FIELD = "store_id";
     private static final String INITIATING_COMPOUND_WORKFLOW_ID_KEY = "initiating_compound_workflow_id";
@@ -336,7 +336,7 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
             @SuppressWarnings("unchecked")
             Map.Entry<QName, Serializable> entry = (Map.Entry<QName, Serializable>) entryObj;
             @SuppressWarnings({ "cast" })
-            QName propName = (QName) entry.getKey();
+            QName propName = entry.getKey();
             if (!WorkflowCommonModel.URI.equals(propName.getNamespaceURI()) && !WorkflowSpecificModel.URI.equals(propName.getNamespaceURI())) {
                 continue;
             }
@@ -387,7 +387,7 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
         explainQuery(sqlQuery, parentId);
         return tasks;
     }
-    
+
     @Override
     public List<NodeRef> getWorkflowTaskNodeRefs(NodeRef workflowRef) {
         String sqlQuery = "SELECT task_id, store_id FROM delta_task where workflow_id=? ORDER BY index_in_workflow";
@@ -401,7 +401,7 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
         }, parentId);
         explainQuery(sqlQuery, parentId);
         return taskRefs;
-    }    
+    }
 
     @Override
     public Pair<List<Task>, Boolean> searchTasksMainStore(String queryCondition, List<Object> arguments, int limit) {
@@ -430,7 +430,7 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
         }
         boolean limited = limit > -1;
         if (limited) {
-            arguments.add(limit + 1);
+            arguments.add(limit);
         }
         TaskRowMapper taskRowMapper = new TaskRowMapper(null, null, null, BeanHelper.getWorkflowService().getTaskPrefixedQNames(), null, null, false, limited);
         String sqlQuery = "SELECT delta_task.* "
@@ -786,7 +786,7 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
             List<String> valueList = new ArrayList<String>();
             ResultSet resultSet = array.getResultSet();
             while (resultSet.next()) {
-                valueList.add(resultSet.getString(1));
+                valueList.add(resultSet.getString(2));
             }
             return (Serializable) valueList;
         }
@@ -1059,9 +1059,48 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
         return new HashSet<NodeRef>(workflows);
     }
 
+    @Override
+    public List<Comment> getCompoundWorkflowComments(String compoundWorkflowId) {
+        String sqlQuery = "SELECT * FROM delta_compound_workflow_comment where compound_workflow_id=? order by created DESC";
+        List<Comment> comments = jdbcTemplate.query(sqlQuery, new ParameterizedRowMapper<Comment>() {
+
+            @Override
+            public Comment mapRow(ResultSet rs, int rowNum) throws SQLException {
+                String compWorkflowId = (String) rs.getObject("compound_workflow_id");
+                Date created = (Date) rs.getObject("created");
+                String creatorId = (String) rs.getObject("creator_id");
+                String creatorName = (String) rs.getObject("creator_name");
+                String commentText = (String) rs.getObject("comment_text");
+                Comment comment = new Comment(compWorkflowId, created, creatorId, creatorName, commentText);
+                comment.setCommentId((Long) rs.getObject("comment_id"));
+                return comment;
+            }
+        }, compoundWorkflowId);
+        explainQuery(sqlQuery, compoundWorkflowId);
+        return comments;
+    }
+
+    @Override
+    public void addCompoundWorkfowComment(Comment comment) {
+        int rowsInserted = jdbcTemplate.update(
+                "INSERT INTO delta_compound_workflow_comment (compound_workflow_id, created, creator_id, creator_name, comment_text) VALUES (?, ?, ?, ?, ?)",
+                new Object[] { comment.getCompoundWorkflowId(), comment.getCreated(), comment.getCreatorId(), comment.getCreatorName(), comment.getCommentText() });
+        if (rowsInserted != 1) {
+            throw new RuntimeException("Insert failed: inserted " + rowsInserted + " rows for compoundWorkflowId=" + comment.getCompoundWorkflowId());
+        }
+    }
+
+    @Override
+    public void editCompoundWorkflowComment(Long commentId, String commentText) {
+        String sqlQuery = "UPDATE delta_compound_workflow_comment SET comment_text=? WHERE comment_id=?";
+        Object[] args = new Object[] { commentText, commentId };
+        jdbcTemplate.update(sqlQuery, args);
+        explainQuery(sqlQuery, args);
+    }
+
     private List<NodeRef> queryWorkflowNodeRefs(String sqlQuery, Object... args) {
         return jdbcTemplate.query(sqlQuery, new TaskParentNodeRefMapper(), args);
-    }  
+    }
 
     private boolean isWorkflow(QName type) {
         return dictionaryService.isSubClass(type, WorkflowCommonModel.Types.WORKFLOW);

@@ -11,6 +11,7 @@ import javax.faces.context.FacesContext;
 import javax.faces.context.ResponseWriter;
 
 import org.alfresco.model.ContentModel;
+import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.lock.LockStatus;
 import org.alfresco.service.cmr.lock.NodeLockedException;
 import org.alfresco.service.cmr.repository.NodeRef;
@@ -22,6 +23,7 @@ import org.apache.commons.lang.StringUtils;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.file.model.FileModel;
 import ee.webmedia.alfresco.document.lock.service.DocLockService;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.sendout.web.DocumentSendOutDialog;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
@@ -167,6 +169,24 @@ public class DocumentLockHelperBean implements Serializable {
         xml.append(" />");
         out.write(xml.toString());
         LOG.debug("returning XML: " + xml.toString());
+    }
+
+    /**
+     * AJAX: unlock document after leaving the page
+     */
+    public void unlockNode() {
+        final NodeRef docRef = getDocumentDialogHelperBean().getNodeRef();
+        if (docRef != null) {
+            LockStatus status = getDocLockService().getLockStatus(docRef, AuthenticationUtil.getRunAsUser());
+            boolean isDraft = BeanHelper.getDocumentDynamicService().isDraft(docRef);
+            Object newRestriction = getDocumentDialogHelperBean().getNode().getProperties().get(DocumentCommonModel.Props.ACCESS_RESTRICTION);
+            Object oldRestriction = BeanHelper.getNodeService().getProperty(docRef, DocumentCommonModel.Props.ACCESS_RESTRICTION);
+            // lock must not be released here when access restriction was changed
+            boolean accessResctricionChanged = !(newRestriction != null && newRestriction.equals(oldRestriction));
+            if (LockStatus.LOCK_OWNER.equals(status) && !isDraft && !accessResctricionChanged) {
+                lockOrUnlockIfNeeded(false);
+            }
+        }
     }
 
     public void handleLockedNode(String messageId) {

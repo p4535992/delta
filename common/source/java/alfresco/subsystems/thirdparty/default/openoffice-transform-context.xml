@@ -115,7 +115,6 @@
    <bean id="openOfficeService" class="ee.webmedia.alfresco.common.service.OpenOfficeServiceImpl">
       <property name="mimetypeService" ref="MimetypeService" />
       <property name="openOfficeConnection" ref="openOfficeConnection" />
-      <property name="documentTemplateService" ref="DocumentTemplateService" />
    </bean>
 
 </beans>

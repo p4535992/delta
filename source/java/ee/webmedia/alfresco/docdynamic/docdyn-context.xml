@@ -177,7 +177,18 @@
          </list>
       </property>
       <property name="delete" value="true" /> <!-- Should be set true only in 3.11 branch -->
-   </bean>   
+   </bean>
+   
+   <bean id="documentPartyPropsUpdater" class="ee.webmedia.alfresco.docdynamic.bootstrap.DocumentPartyPropsUpdater" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="archivalsStoresBootstrap" />
+            <ref bean="convertToDynamicDocumentsUpdater" />
+         </list>
+      </property>
+   </bean>
 
    <bean id="deleteDraftsBootstrap" class="ee.webmedia.alfresco.docdynamic.bootstrap.DeleteDraftsBootstrap" parent="module.baseComponent">
       <property name="moduleId" value="simdhs" />

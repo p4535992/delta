@@ -70,6 +70,7 @@ public abstract class AbstractSearchBlockBean implements DialogDataProvider {
 
     protected Node getNewFilter() {
         Map<QName, Serializable> data = new HashMap<QName, Serializable>();
+        data.put(DocumentSearchModel.Props.STORE, new ArrayList<String>());
         data.put(DocumentSearchModel.Props.DOCUMENT_TYPE, new ArrayList<String>());
         data.put(DocumentSearchModel.Props.OBJECT_TYPE, AssocSearchObjectType.DOCUMENT.name());
         return new TransientNode(DocumentSearchModel.Types.OBJECT_FILTER, null, data);
@@ -174,6 +175,9 @@ public abstract class AbstractSearchBlockBean implements DialogDataProvider {
 
     public void hideSearchBlock(@SuppressWarnings("unused") ActionEvent event) {
         expanded = false;
+        if (filter != null && filter.getProperties() != null) {
+            filter.getProperties().put(DocumentSearchModel.Props.STORE.toString(), new ArrayList<String>());
+        }
     }
 
     public abstract String getSearchBlockTitle();

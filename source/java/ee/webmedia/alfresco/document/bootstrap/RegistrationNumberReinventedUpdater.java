@@ -39,7 +39,7 @@ public class RegistrationNumberReinventedUpdater extends AbstractNodeUpdater {
         if (StringUtils.isNotBlank(holder.getShortRegNrWithoutIndividualizingNr())) {
             nodeService.setProperty(nodeRef, DocumentCommonModel.Props.SHORT_REG_NUMBER, holder.getShortRegNrWithoutIndividualizingNr());
         }
-        if (holder.getIndividualizingNr() != null && holder.getIndividualizingNr().intValue() > 1) {
+        if (holder.getIndividualizingNr() != null && holder.getIndividualizingNr().intValue() >= 1) {
             nodeService.setProperty(nodeRef, DocumentCommonModel.Props.INDIVIDUAL_NUMBER, holder.getIndividualizingNr().intValue() + "");
         }
         return new String[] { regNr, holder.getShortRegNrWithoutIndividualizingNr(), holder.getIndividualizingNr() + "" };

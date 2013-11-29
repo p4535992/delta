@@ -1,11 +1,13 @@
 package ee.webmedia.alfresco.common.propertysheet.suggester;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 import javax.faces.component.UIComponent;
 import javax.faces.component.UIInput;
 import javax.faces.context.FacesContext;
+import javax.faces.el.EvaluationException;
 import javax.faces.el.MethodBinding;
 
 import org.alfresco.util.Pair;
@@ -24,6 +26,7 @@ import ee.webmedia.alfresco.utils.ComponentUtil;
  */
 public class SuggesterGenerator extends TextAreaGenerator {
 
+    private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(SuggesterGenerator.class);
     private GeneralService generalService;
 
     public interface ComponentAttributeNames {
@@ -72,11 +75,19 @@ public class SuggesterGenerator extends TextAreaGenerator {
         ComponentUtil.setReadonlyAttributeRecursively(component, list == null);
     }
 
+    @SuppressWarnings("unchecked")
     public Pair<List<String>, String> getSuggesterValues(FacesContext context, UIInput component) {
         MethodBinding mb = context.getApplication().createMethodBinding(
                 getCustomAttributes().get(ComponentAttributeNames.SUGGESTER_VALUES), new Class[] { FacesContext.class, UIInput.class });
-        @SuppressWarnings("unchecked")
-        List<String> suggesterValues = (List<String>) mb.invoke(context, new Object[] { context, component });
+        List<String> suggesterValues = new ArrayList<String>();
+
+        try {
+            suggesterValues = (List<String>) mb.invoke(context, new Object[] { context, component });
+        } catch (EvaluationException e) {
+            // Continue
+            LOG.debug("Failed to evaluate expression " + mb.getExpressionString(), e);
+        }
+
         return new Pair<List<String>, String>(suggesterValues, null);
     }
 

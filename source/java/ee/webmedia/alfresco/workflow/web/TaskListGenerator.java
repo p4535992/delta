@@ -4,6 +4,7 @@ import static ee.webmedia.alfresco.common.propertysheet.datepicker.DatePickerWit
 import static ee.webmedia.alfresco.common.web.BeanHelper.getOrganizationStructureService;
 import static ee.webmedia.alfresco.utils.ComponentUtil.addAttributes;
 import static ee.webmedia.alfresco.utils.ComponentUtil.addChildren;
+import static ee.webmedia.alfresco.utils.ComponentUtil.addOnChangeJavascript;
 import static ee.webmedia.alfresco.utils.ComponentUtil.addOnchangeClickLink;
 import static ee.webmedia.alfresco.utils.ComponentUtil.addOnchangeJavascript;
 import static ee.webmedia.alfresco.utils.ComponentUtil.createUIParam;
@@ -126,25 +127,15 @@ public class TaskListGenerator extends BaseComponentGenerator {
         CompoundWorkflow compoundWorkflow = compoundWorkflowDefinitionDialog.getWorkflow();
         Workflow workflow = compoundWorkflow.getWorkflows().get(wfIndex);
 
-        TaskOwnerSearchType searchType = TaskOwnerSearchType.TASK_OWNER_SEARCH_DEFAULT;
         boolean responsible = new Boolean(getCustomAttributes().get(ATTR_RESPONSIBLE));
 
         QName blockType = workflow.getNode().getType();
         boolean isExternalReviewWorkflow = blockType.equals(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_WORKFLOW);
-        if (workflow.getType().equals(WorkflowSpecificModel.Types.REVIEW_WORKFLOW)) {
-            searchType = TaskOwnerSearchType.TASK_OWNER_SEARCH_REVIEW;
-        } else if (workflow.isType(WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW) && responsible) {
-            searchType = TaskOwnerSearchType.TASK_OWNER_SEARCH_RESPONSIBLE;
-        } else if (workflow.isType(WorkflowSpecificModel.Types.DUE_DATE_EXTENSION_WORKFLOW)) {
-            searchType = TaskOwnerSearchType.TASK_OWNER_SEARCH_DUE_DATE_EXTENSION;
-        } else if (isExternalReviewWorkflow) {
-            searchType = TaskOwnerSearchType.TASK_OWNER_SEARCH_EXTERNAL_REVIEW;
-        }
+        TaskOwnerSearchType searchType = getSearchType(workflow, responsible, isExternalReviewWorkflow);
         boolean fullAccess = propertySheet.inEditMode()
                 || ((blockType.equals(WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW) || blockType.equals(WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_WORKFLOW)) && !responsible);
 
-        final HtmlPanelGroup result = (HtmlPanelGroup) application.createComponent(HtmlPanelGroup.COMPONENT_TYPE);
-        result.setId("task-panel-" + listId);
+        final HtmlPanelGroup result = createHtmlPanelGroupWithId(application, "task-panel-" + listId);
 
         addChildren(item, result);
 
@@ -167,8 +158,7 @@ public class TaskListGenerator extends BaseComponentGenerator {
         MethodBinding addTaskMB = application.createMethodBinding("#{DialogManager.bean.addWorkflowTask}", UIActions.ACTION_CLASS_ARGS);
 
         if (!visibleTasks.isEmpty()) {
-            HtmlPanelGroup pickerPanel = (HtmlPanelGroup) application.createComponent(HtmlPanelGroup.COMPONENT_TYPE);
-            pickerPanel.setId("task-picker-panel-" + listId);
+            HtmlPanelGroup pickerPanel = createHtmlPanelGroupWithId(application, "task-picker-panel-" + listId);
             pickerPanel.setRendererType(TaskListPickerRenderer.class.getCanonicalName());
             resultChildren.add(pickerPanel);
 
@@ -367,8 +357,7 @@ public class TaskListGenerator extends BaseComponentGenerator {
                 if (ownerId != null && !hideExtraInfo) {
                     String info = UserUtil.getSubstitute(ownerId);
                     if (StringUtils.isNotBlank(info)) {
-                        final HtmlPanelGroup userPanelGroup = (HtmlPanelGroup) application.createComponent(HtmlPanelGroup.COMPONENT_TYPE);
-                        userPanelGroup.setId("task-name-group-" + taskRowId);
+                        final HtmlPanelGroup userPanelGroup = createHtmlPanelGroupWithId(application, "task-name-group-" + taskRowId);
                         HtmlOutputText substitutionInfoOutput = (HtmlOutputText) application.createComponent(HtmlOutputText.COMPONENT_TYPE);
                         substitutionInfoOutput.setValue(info);
                         putAttribute(substitutionInfoOutput, "styleClass", "fieldExtraInfo");
@@ -412,8 +401,7 @@ public class TaskListGenerator extends BaseComponentGenerator {
                         if (!isTaskRowEditable) {
                             taskGridChildren.add(classificatorSelector);
                         } else {
-                            final HtmlPanelGroup panel = (HtmlPanelGroup) context.getApplication().createComponent(HtmlPanelGroup.COMPONENT_TYPE);
-                            panel.setId("task-dueDateDays-panel" + taskRowId);
+                            final HtmlPanelGroup panel = createHtmlPanelGroupWithId(application, "task-dueDateDays-panel" + taskRowId);
                             addChildren(panel, classificatorSelector);
                             addOnchangeJavascript(classificatorSelector);
                             addOnchangeClickLink(application, getChildren(panel), "#{CompoundWorkflowDialog.calculateDueDate}",
@@ -462,8 +450,7 @@ public class TaskListGenerator extends BaseComponentGenerator {
                     }
                 }
 
-                final HtmlPanelGroup columnActions = (HtmlPanelGroup) application.createComponent(HtmlPanelGroup.COMPONENT_TYPE);
-                columnActions.setId("column-actions-" + taskRowId);
+                final HtmlPanelGroup columnActions = createHtmlPanelGroupWithId(application, "column-actions-" + taskRowId);
                 taskGridChildren.add(columnActions);
 
                 Action taskAction = task.getAction();
@@ -478,7 +465,8 @@ public class TaskListGenerator extends BaseComponentGenerator {
                 }
 
                 if (isTaskRowEditable) {
-                    UIActionLink taskDeleteLink = createDeleteLink(application, deleteLinkTooltipMsg, deleteLinkActionListenerMB, "task-remove-link-" + taskRowId);
+                    UIActionLink taskDeleteLink = createUIActionLink(application, deleteLinkTooltipMsg, deleteLinkActionListenerMB, "task-remove-link-" + taskRowId);
+                    putAttribute(taskDeleteLink, "styleClass", "icon-link margin-left-4 delete");
                     addChildren(taskDeleteLink, createWfIndexPraram(wfIndex, application), createTaskIndexParam(counter, application));
                     actionChildren.add(taskDeleteLink);
                 }
@@ -487,12 +475,7 @@ public class TaskListGenerator extends BaseComponentGenerator {
                     if (fullAccess && (Status.IN_PROGRESS.equals(taskStatus) || Status.STOPPED.equals(taskStatus))
                             && !WorkflowUtil.isInactiveResponsible(task)) {
 
-                        final UIActionLink taskCancelLink = (UIActionLink) application.createComponent("org.alfresco.faces.ActionLink");
-                        taskCancelLink.setId("task-cancel-link-" + taskRowId);
-                        taskCancelLink.setValue("");
-                        taskCancelLink.setTooltip(cancelLinkTooltipMsg);
-                        taskCancelLink.setActionListener(cancelLinkActionListenerMB);
-                        taskCancelLink.setShowLink(false);
+                        final UIActionLink taskCancelLink = createUIActionLink(application, cancelLinkTooltipMsg, cancelLinkActionListenerMB, "task-cancel-link-" + taskRowId);
                         putAttribute(taskCancelLink, "styleClass", "icon-link margin-left-4 cancel-task");
                         addChildren(taskCancelLink, createWfIndexPraram(wfIndex, application), createTaskIndexParam(counter, application));
                         actionChildren.add(taskCancelLink);
@@ -500,13 +483,8 @@ public class TaskListGenerator extends BaseComponentGenerator {
 
                     if (fullAccess && (Status.IN_PROGRESS.equals(taskStatus) || Status.STOPPED.equals(taskStatus) || Status.UNFINISHED.equals(taskStatus))
                             && !WorkflowUtil.isInactiveResponsible(task)) {
-                        QName taskType = task.getNode().getType();
                         if (addCommentPopup) {
-                            UIActionLink taskFinishLink = (UIActionLink) application.createComponent("org.alfresco.faces.ActionLink");
-                            taskFinishLink.setId("task-finish-link-" + taskRowId);
-                            taskFinishLink.setValue("");
-                            taskFinishLink.setTooltip(finishLinkTooltipMsg);
-                            taskFinishLink.setShowLink(false);
+                            UIActionLink taskFinishLink = createUIActionLink(application, finishLinkTooltipMsg, null, "task-finsih-link-" + taskRowId);
                             putAttribute(taskFinishLink, "styleClass", "icon-link margin-left-4 finish-task");
                             String onclick = generateFieldSetter(context, commentPopup, commentPopupActionId,
                                     ModalLayerComponent.ACTION_INDEX + ";" + counter) + commentPopupModalJsCall;
@@ -557,6 +535,38 @@ public class TaskListGenerator extends BaseComponentGenerator {
         return result;
     }
 
+    private HtmlPanelGroup createHtmlPanelGroupWithId(Application application, String Id) {
+        HtmlPanelGroup result = (HtmlPanelGroup) application.createComponent(HtmlPanelGroup.COMPONENT_TYPE);
+        result.setId(Id);
+        return result;
+    }
+
+    private UIActionLink createUIActionLink(Application application, String linkTooltipMsg, MethodBinding linkActionListenerMB, String taskRowIdentifier) {
+        UIActionLink uIActionLink = (UIActionLink) application.createComponent("org.alfresco.faces.ActionLink");
+        uIActionLink.setId(taskRowIdentifier);
+        uIActionLink.setValue("");
+        uIActionLink.setTooltip(linkTooltipMsg);
+        if (linkActionListenerMB != null) {
+            uIActionLink.setActionListener(linkActionListenerMB);
+        }
+        uIActionLink.setShowLink(false);
+        return uIActionLink;
+    }
+
+    private TaskOwnerSearchType getSearchType(Workflow workflow, boolean responsible, boolean isExternalReviewWorkflow) {
+        TaskOwnerSearchType searchType = TaskOwnerSearchType.TASK_OWNER_SEARCH_DEFAULT;
+        if (workflow.getType().equals(WorkflowSpecificModel.Types.REVIEW_WORKFLOW)) {
+            searchType = TaskOwnerSearchType.TASK_OWNER_SEARCH_REVIEW;
+        } else if (workflow.isType(WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW) && responsible) {
+            searchType = TaskOwnerSearchType.TASK_OWNER_SEARCH_RESPONSIBLE;
+        } else if (workflow.isType(WorkflowSpecificModel.Types.DUE_DATE_EXTENSION_WORKFLOW)) {
+            searchType = TaskOwnerSearchType.TASK_OWNER_SEARCH_DUE_DATE_EXTENSION;
+        } else if (isExternalReviewWorkflow) {
+            searchType = TaskOwnerSearchType.TASK_OWNER_SEARCH_EXTERNAL_REVIEW;
+        }
+        return searchType;
+    }
+
     public static Map<String, Object> loadSignatureTaskOwnerProps(NodeRef docRef) {
         if (docRef == null) {
             return null;
@@ -567,9 +577,15 @@ public class TaskListGenerator extends BaseComponentGenerator {
         String signerName = (String) docProps.get(DocumentCommonModel.Props.SIGNER_NAME);
         boolean assignSigner = StringUtils.isNotBlank(signerId) && StringUtils.isNotBlank(signerName);
         if (assignSigner) {
+            @SuppressWarnings("unchecked")
+            List<String> orgStructUnit = (List<String>) docProps.get(DocumentCommonModel.Props.SIGNER_ORG_STRUCT_UNIT);
+
             Map<String, Object> signatureTaskOwnerProps = new HashMap<String, Object>();
             signatureTaskOwnerProps.put(WorkflowCommonModel.Props.OWNER_ID.toString(), signerId);
             signatureTaskOwnerProps.put(WorkflowCommonModel.Props.OWNER_NAME.toString(), signerName);
+            if (orgStructUnit != null && !orgStructUnit.isEmpty()) {
+                signatureTaskOwnerProps.put(WorkflowCommonModel.Props.OWNER_ORGANIZATION_NAME.toString(), orgStructUnit);
+            }
             String signerEmail = (String) docProps.get(DocumentDynamicModel.Props.SIGNER_EMAIL);
             Map<QName, Serializable> userProps = BeanHelper.getUserService().getUserProperties(signerId);
             if (userProps != null) {
@@ -578,8 +594,11 @@ public class TaskListGenerator extends BaseComponentGenerator {
                 }
                 signatureTaskOwnerProps.put(WorkflowCommonModel.Props.OWNER_EMAIL.toString(), signerEmail);
                 signatureTaskOwnerProps.put(WorkflowCommonModel.Props.OWNER_JOB_TITLE.toString(), userProps.get(ContentModel.PROP_JOBTITLE));
-                signatureTaskOwnerProps.put(WorkflowCommonModel.Props.OWNER_ORGANIZATION_NAME.toString(), getOrganizationStructureService()
-                        .getOrganizationStructurePaths((String) userProps.get(ContentModel.PROP_ORGID)));
+                List<String> organizationStructurePaths = getOrganizationStructureService().getOrganizationStructurePaths((String) userProps.get(ContentModel.PROP_ORGID));
+                // Don't reset if user has manually assigned structure unit in document properties
+                if (organizationStructurePaths != null && !organizationStructurePaths.isEmpty()) {
+                    signatureTaskOwnerProps.put(WorkflowCommonModel.Props.OWNER_ORGANIZATION_NAME.toString(), organizationStructurePaths);
+                }
                 return signatureTaskOwnerProps;
             }
         }
@@ -604,36 +623,22 @@ public class TaskListGenerator extends BaseComponentGenerator {
         return new Pair<Integer, TaskGroup>(groupNr, null);
     }
 
-    private UIActionLink createDeleteLink(Application application, String deleteLinkTooltipMsg, MethodBinding deleteLinkActionListenerMB, String linkId) {
-        final UIActionLink taskDeleteLink = (UIActionLink) application.createComponent("org.alfresco.faces.ActionLink");
-        taskDeleteLink.setId(linkId);
-        taskDeleteLink.setValue("");
-        taskDeleteLink.setTooltip(deleteLinkTooltipMsg);
-        taskDeleteLink.setActionListener(deleteLinkActionListenerMB);
-        taskDeleteLink.setShowLink(false);
-        putAttribute(taskDeleteLink, "styleClass", "icon-link margin-left-4 delete");
-        return taskDeleteLink;
-    }
-
     private String generateGroupRow(FacesContext context, Application application, int wfIndex, boolean isNewWorkflow, TaskGroup group, HtmlPanelGrid taskGrid,
             String deleteLinkTooltipMsg, QName blockType, Integer maxTaskNr, boolean responsible, String addLinkText, MethodBinding addTaskMB, Map<String, Object> dueDateTimeAttr,
             Integer order, boolean hasResolutionColumn) {
         HtmlPanelGroup iconAndName = (HtmlPanelGroup) context.getApplication().createComponent(HtmlPanelGroup.COMPONENT_TYPE);
         String dueDateVbString = null;
 
-        UIActionLink toggle = (UIActionLink) application.createComponent("org.alfresco.faces.ActionLink");
-
-        String groupName = group.getGroupName();
+        String toggleTooltipMessage = MessageUtil.getMessage((group.isExpanded() ? "hide_details" : "show_details"));
         String rowId = makeLegalId(group.getGroupId());
-        toggle.setId("task-group-toggle-" + rowId + order);
+
+        UIActionLink toggle = createUIActionLink(application, toggleTooltipMessage,
+                application.createMethodBinding("#{TaskListGenerator.toggleGroup}", UIActions.ACTION_CLASS_ARGS), "task-group-toggle-" + rowId + order);
         toggle.setImage("/images/icons/" + (group.isExpanded() ? "minus" : "plus") + ".gif");
-        toggle.setValue("");
-        toggle.setTooltip(MessageUtil.getMessage((group.isExpanded() ? "hide_details" : "show_details")));
-        toggle.setActionListener(application.createMethodBinding("#{TaskListGenerator.toggleGroup}", UIActions.ACTION_CLASS_ARGS));
         addChildren(toggle, createUIParam("groupName", group.getGroupName(), application), createUIParam("groupId", group.getGroupId(), application),
                 createWfIndexPraram(wfIndex, application));
-        toggle.setShowLink(false);
 
+        String groupName = group.getGroupName();
         // Name
         UIComponent groupNameLabel = application.createComponent(UIOutput.COMPONENT_TYPE);
         groupNameLabel.setValueBinding("value", application.createValueBinding("#{DialogManager.bean.taskGroups[" + wfIndex + "]['" + groupName + "'][" + order + "].groupName}"));
@@ -651,16 +656,24 @@ public class TaskListGenerator extends BaseComponentGenerator {
 
         if (dialogManager.getBean() instanceof CompoundWorkflowDialog) {
             // Date
-            DateTimePickerGenerator dateTimePickerGenerator = new DateTimePickerGenerator();
-            final DateTimePicker dueDateTimeInput = (DateTimePicker) dateTimePickerGenerator.generate(context, "group-duedate-" + rowId + order);
+            final HtmlPanelGroup dateTimePickerPanel = createHtmlPanelGroupWithId(application, "task-dueDateDaysAndTime-panel" + group.getGroupId());
+            final DateTimePickerGenerator dateTimePickerGenerator = new DateTimePickerGenerator();
+
+            DateTimePicker dueDateTimeInput = (DateTimePicker) dateTimePickerGenerator.generate(context, "group-duedate-" + rowId + order);
             dueDateVbString = "#{DialogManager.bean.taskGroups[" + wfIndex + "]['" + groupName + "'][" + order + "].dueDate}";
             dueDateTimeInput.setValueBinding("value", application.createValueBinding(dueDateVbString));
+
             addAttributes(dueDateTimeInput, dueDateTimeAttr);
-            addChildren(taskGrid, dueDateTimeInput);
+            addOnChangeJavascript(dueDateTimeInput, "processTaskDueDateDateInput(jQuery('#' + escapeId4JQ(currElId)));");
+
+            addChildren(dateTimePickerPanel, dueDateTimeInput);
+            addOnchangeClickLink(application, getChildren(dateTimePickerPanel), "#{CompoundWorkflowDialog.calculateTaskGroupDueDate}",
+                    "task-dueDateDaysAndTime-onclick" + rowId, createUIParam("datepicker", dueDateTimeInput.getClientId(context), application),
+                    createUIParam("groupName", groupName, application), createUIParam("groupId", group.getGroupId(), application), createWfIndexPraram(wfIndex, application));
+            addChildren(taskGrid, dateTimePickerPanel);
 
             // Selector
-            final HtmlPanelGroup selectorPanel = (HtmlPanelGroup) context.getApplication().createComponent(HtmlPanelGroup.COMPONENT_TYPE);
-            selectorPanel.setId("task-dueDateDays-panel" + group.getGroupId());
+            final HtmlPanelGroup selectorPanel = createHtmlPanelGroupWithId(application, "task-dueDateDays-panel" + group.getGroupId());
             UIComponent selector = createDueDateDaysSelector(context, rowId, true, null);
             addOnchangeJavascript(selector);
             addChildren(selectorPanel, selector);
@@ -685,8 +698,9 @@ public class TaskListGenerator extends BaseComponentGenerator {
         // Icons
         final HtmlPanelGroup iconsPanel = (HtmlPanelGroup) context.getApplication().createComponent(HtmlPanelGroup.COMPONENT_TYPE);
         if (isNewWorkflow) {
-            UIActionLink deleteLink = createDeleteLink(application, deleteLinkTooltipMsg,
+            UIActionLink deleteLink = createUIActionLink(application, deleteLinkTooltipMsg,
                     application.createMethodBinding("#{TaskListGenerator.deleteGroup}", UIActions.ACTION_CLASS_ARGS), "delete-" + rowId);
+            putAttribute(deleteLink, "styleClass", "icon-link margin-left-4 delete");
             addChildren(deleteLink, createUIParam("groupName", groupName, application), createUIParam("groupId", group.getGroupId(), application),
                     createWfIndexPraram(wfIndex, application));
             addChildren(iconsPanel, deleteLink);
@@ -739,12 +753,8 @@ public class TaskListGenerator extends BaseComponentGenerator {
     }
 
     private UIActionLink createAddDateLink(Application application, String taskRowId, int wfIndex, int counter) {
-        UIActionLink taskSetDateLink = (UIActionLink) application.createComponent("org.alfresco.faces.ActionLink");
-        taskSetDateLink.setId("task-add-date-link-" + taskRowId);
-        taskSetDateLink.setValue("");
-        taskSetDateLink.setTooltip(MessageUtil.getMessage("add_date_for_all"));
-        taskSetDateLink.setActionListener(application.createMethodBinding("#{DialogManager.bean.addDateForAllTasks}", UIActions.ACTION_CLASS_ARGS));
-        taskSetDateLink.setShowLink(false);
+        UIActionLink taskSetDateLink = createUIActionLink(application, MessageUtil.getMessage("add_date_for_all"),
+                application.createMethodBinding("#{DialogManager.bean.addDateForAllTasks}", UIActions.ACTION_CLASS_ARGS), "task-add-date-link-" + taskRowId);
         putAttribute(taskSetDateLink, "styleClass", "icon-link margin-left-4 add_date");
         addChildren(taskSetDateLink, createWfIndexPraram(wfIndex, application), createTaskIndexParam(counter, application));
         return taskSetDateLink;
@@ -757,12 +767,12 @@ public class TaskListGenerator extends BaseComponentGenerator {
     private void addResolutionInput(FacesContext context, Application application, int wfIndex, final List<UIComponent> taskGridChildren, int counter, String taskRowId, Task task,
             TextAreaGenerator textAreaGenerator) {
         UIComponent resolutionInput;
-        if (task.isType(WorkflowSpecificModel.Types.ASSIGNMENT_TASK, WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_TASK) || !task.isStatus(Status.NEW)) {
-            resolutionInput = application.createComponent(UIOutput.COMPONENT_TYPE);
-            putAttribute(resolutionInput, "styleClass", "condence50");
-        } else {
+        if (task.isStatus(Status.NEW, Status.STOPPED)) {
             resolutionInput = textAreaGenerator.generate(context, "task-resolution-" + taskRowId);
             putAttribute(resolutionInput, "styleClass", "expand19-200 width190");
+        } else {
+            resolutionInput = application.createComponent(UIOutput.COMPONENT_TYPE);
+            putAttribute(resolutionInput, "styleClass", "condence50");
         }
         String reolutionValueBinding = createPropValueBinding(wfIndex, counter, WorkflowSpecificModel.Props.RESOLUTION);
         resolutionInput.setValueBinding("value", application.createValueBinding(reolutionValueBinding));
@@ -817,12 +827,8 @@ public class TaskListGenerator extends BaseComponentGenerator {
 
     private void createAddTaskLink(Application application, String linkId, QName blockType, HtmlPanelGroup parentComponent, int wfIndex,
             int taskIndexValue, boolean setValue, boolean responsible, String addLinkText, MethodBinding addTaskMB) {
-        UIActionLink taskAddLink = (UIActionLink) application.createComponent("org.alfresco.faces.ActionLink");
-        taskAddLink.setId("task-add-link-" + linkId);
+        UIActionLink taskAddLink = createUIActionLink(application, addLinkText, addTaskMB, "task-add-link-" + linkId);
         taskAddLink.setValue(setValue ? addLinkText : "");
-        taskAddLink.setTooltip(addLinkText);
-        taskAddLink.setActionListener(addTaskMB);
-        taskAddLink.setShowLink(false);
         putAttribute(taskAddLink, "styleClass", "icon-link add-person");
         addChildren(taskAddLink, createWfIndexPraram(wfIndex, application), createTaskIndexParam(taskIndexValue, application),
                 createUIParam(ATTR_RESPONSIBLE, responsible, application));

@@ -27,16 +27,26 @@
             </property>
          </properties>
       </aspect>
+      
+      <aspect name="docTempl:subject">
+         <properties>
+            <property name="docTempl:notificationSubject">
+               <type>d:text</type>
+            </property>
+         </properties>
+      </aspect>
 
       <aspect name="docTempl:emailTemplate">
          <mandatory-aspects>
             <aspect>docTempl:template</aspect>
+            <aspect>docTempl:subject</aspect>
          </mandatory-aspects>
       </aspect>
 
       <aspect name="docTempl:notificationTemplate">
          <mandatory-aspects>
             <aspect>docTempl:template</aspect>
+            <aspect>docTempl:subject</aspect>
          </mandatory-aspects>
       </aspect>
 

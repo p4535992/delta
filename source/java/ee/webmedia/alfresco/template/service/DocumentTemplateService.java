@@ -8,12 +8,14 @@ import javax.servlet.ServletContext;
 
 import org.alfresco.service.cmr.model.FileNotFoundException;
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 
 import ee.webmedia.alfresco.classificator.enums.TemplateReportType;
 import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.template.exception.ExistingFileFromTemplateException;
 import ee.webmedia.alfresco.template.model.DocumentTemplate;
+import ee.webmedia.alfresco.template.model.ProcessedEmailTemplate;
 import ee.webmedia.alfresco.volume.model.Volume;
 
 /**
@@ -72,9 +74,9 @@ public interface DocumentTemplateService {
      * @param dataNodeRefs Map where key is prefix in the formulas and value is NodeRef that has properties for that formula group. Prefix may also be null or
      *            empty, in that case this formula group is used without prefix.
      * @param templatetemplate file NodeRef
-     * @return processed content, where formulas are replaced with their values (if formula has a non-empty value)
+     * @return processed content and subject (if available), where formulas are replaced with their values (if formula has a non-empty value)
      */
-    String getProcessedEmailTemplate(Map<String, NodeRef> dataNodeRefs, NodeRef template);
+    ProcessedEmailTemplate getProcessedEmailTemplate(Map<String, NodeRef> dataNodeRefs, NodeRef template);
 
     /**
      * Fetches template content, processes the formulas and returns the processed content.
@@ -83,9 +85,9 @@ public interface DocumentTemplateService {
      *            empty, in that case this formula group is used without prefix.
      * @param templatetemplate file NodeRef
      * @param additionalFormulas additional formulas that can be used. Can be null.
-     * @return processed content, where formulas are replaced with their values (if formula has a non-empty value)
+     * @return processed content and subject (if available), where formulas are replaced with their values (if formula has a non-empty value)
      */
-    String getProcessedEmailTemplate(Map<String, NodeRef> dataNodeRefs, NodeRef template, Map<String, String> additionalFormulas);
+    ProcessedEmailTemplate getProcessedEmailTemplate(Map<String, NodeRef> dataNodeRefs, NodeRef template, Map<String, String> additionalFormulas);
 
     /**
      * Check if supplied document has a template that can be used
@@ -121,6 +123,8 @@ public interface DocumentTemplateService {
 
     List<SelectItem> getReportTemplates(TemplateReportType typeId);
 
+    List<Pair<SelectItem, String>> getReportTemplatesWithOutputTypes(TemplateReportType typeId);
+
     NodeRef getReportTemplateByName(String templateName, TemplateReportType reportType);
 
     String getCompoundWorkflowUrl(NodeRef compoundWorkflowRef);
@@ -144,13 +148,6 @@ public interface DocumentTemplateService {
      * @return
      */
     Map<String, String> getDocumentFormulas(NodeRef documentRef);
-
-    /**
-     * @param fileNodeRef
-     * @return Returned map implementation must be serializable!
-     * @throws Exception
-     */
-    Map<String, String> getDefaultFieldValues(NodeRef fileNodeRef) throws Exception;
 
     DocumentTemplate getTemplateByName(String name) throws FileNotFoundException;
 

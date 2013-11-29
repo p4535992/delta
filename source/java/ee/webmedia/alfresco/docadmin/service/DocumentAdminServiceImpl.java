@@ -108,6 +108,7 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
     private final Set<String> forbiddenFieldIds = new HashSet<String>();
     private final Set<String> groupShowShowInTwoColumnsOriginalFieldIds = new HashSet<String>();
     private final Set<String> groupNamesLimitSingle = new HashSet<String>();
+    private final Map<String, DocumentTypeValidator> documentTypeValidators = new HashMap<String, DocumentTypeValidator>();
 
     /**
      * Get nodeRef lazily.
@@ -181,6 +182,13 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
         Assert.notNull(forbiddenFieldId);
         Assert.isTrue(!forbiddenFieldIds.contains(forbiddenFieldId));
         forbiddenFieldIds.add(forbiddenFieldId);
+    }
+
+    @Override
+    public void registerDocumentTypeValidator(String validatorKey, DocumentTypeValidator documentTypeValidator) {
+        Assert.notNull(documentTypeValidator);
+        Assert.isTrue(!documentTypeValidators.containsKey(validatorKey));
+        documentTypeValidators.put(validatorKey, documentTypeValidator);
     }
 
     @Override
@@ -1083,6 +1091,17 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
         }
         String userId = AuthenticationUtil.getFullyAuthenticatedUser();
         DocumentTypeVersion docVer = dynType.getLatestDocumentTypeVersion();
+        Map<String, String> errorMessages = new HashMap<String, String>();
+        for (DocumentTypeValidator documentTypeValidator : documentTypeValidators.values()) {
+            documentTypeValidator.validate(docVer, errorMessages);
+        }
+        if (!errorMessages.isEmpty()) {
+            Collection<MessageData> messageData = new ArrayList<MessageData>();
+            for (Entry<String, String> errorMessage : errorMessages.entrySet()) {
+                messageData.add(new MessageDataImpl(errorMessage.getKey(), errorMessage.getValue()));
+            }
+            throw new UnableToPerformMultiReasonException(new MessageDataWrapper(messageData));
+        }
         docVer.setCreatorId(userId);
         docVer.setCreatorName(userService.getUserFullName(userId));
         docVer.setVersionNr(versionNr);

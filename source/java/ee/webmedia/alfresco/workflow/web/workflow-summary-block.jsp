@@ -31,7 +31,7 @@
             <h:outputText id="col2-sort" value="#{msg.task_property_due_date}" styleClass="header" />
          </f:facet>
             <h:outputText id="col2-text" value="#{r.dueDate}">
-               <a:convertXMLDate pattern="#{msg.date_pattern}" />
+               <a:convertXMLDate pattern="#{msg.date_time_pattern}" />
             </h:outputText>
             <h:outputText id="col2-br" value="<br/>" escape="false"/>
             <a:actionLink id="task-list-due-date-history-link" value="<%=historyLinkLabel%>" onclick="return showModal('#{r.dueDateHistoryModalId}');" rendered="#{r.showDueDateHistoryModal}"/>
@@ -80,7 +80,7 @@
          <f:facet name="header">
             <h:outputText id="col7-header" value="#{msg.task_property_comment_assignmentTask}" styleClass="header" />
          </f:facet>
-         <h:outputText id="col7-text" value="#{r.taskOutcome}" escape="false" styleClass="condence150" />
+         <h:outputText id="col7-text" value="#{r.taskOutcomeWithSubstituteNote}" escape="false" styleClass="condence150" />
       </a:column>
       
       <%-- taskStatus --%>

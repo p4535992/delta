@@ -37,11 +37,7 @@ public class UserContactGenerator extends BaseTypeFieldGenerator {
     @Override
     public void generateField(Field field, GeneratorResults generatorResults) {
         final ItemConfigVO item = generatorResults.getAndAddPreGeneratedItem();
-        item.setComponentGenerator("SearchGenerator");
-        item.setStyleClass("expand19-200 medium");
-        item.setEditable(true);
-        item.setPickerCallback("#{UserContactGroupSearchBean.searchAllWithAdminsAndDocManagers}");
-        item.setPreprocessCallback("#{UserContactGroupSearchBean.preprocessResultsToNames}");
+        setupDefaultUserSearch(item);
         String stateHolderKey = field.getFieldId();
         boolean handledById = field.getOriginalFieldId() != null && (
                 getUserContactRelatedGroupGenerator().handlesOriginalFieldId(field.getOriginalFieldId())
@@ -98,5 +94,13 @@ public class UserContactGenerator extends BaseTypeFieldGenerator {
         default:
             throw new RuntimeException("Unsupported field: " + field);
         }
+    }
+
+    public static void setupDefaultUserSearch(final ItemConfigVO item) {
+        item.setComponentGenerator("SearchGenerator");
+        item.setStyleClass("expand19-200 medium");
+        item.setEditable(true);
+        item.setPickerCallback("#{UserContactGroupSearchBean.searchAllWithAdminsAndDocManagers}");
+        item.setPreprocessCallback("#{UserContactGroupSearchBean.preprocessResultsToNames}");
     }
 }

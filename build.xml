@@ -8,6 +8,7 @@
    <import file="common/build-common.xml" />
    <import file="common/build-${appserver}.xml" />
    <import file="common/build-postgresql.xml" />
+   <import file="hgdk-build.xml" />
 
 </project>
 

@@ -42,6 +42,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.web.jsf.FacesContextUtils;
 
+import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
  * Wrapper around Alfresco Resource Bundle objects. Used to catch and handle missing
@@ -223,7 +224,8 @@ public final class ResourceBundleWrapper extends ResourceBundle implements Seria
       // if the key was not found return a default string 
       if (result == null)
       {
-         if (logger.isWarnEnabled() == true)
+         boolean hasI18nTranslation = MessageUtil.hasI18nTranslation(key);
+         if (logger.isWarnEnabled() == true && !hasI18nTranslation)
          {
             logger.warn("Failed to find I18N message string key: " + key);
          }

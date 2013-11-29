@@ -16,7 +16,6 @@ import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamicServiceImpl;
-import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.menu.ui.MenuBean;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.WebUtil;
@@ -77,12 +76,7 @@ public class ExternalAccessPhaseListener implements PhaseListener {
                     // select correct menu
                     MenuBean.clearViewStack(String.valueOf(MenuBean.DOCUMENT_REGISTER_ID), null);
                     // open document dialog
-                    if (DocumentCommonModel.Types.DOCUMENT.equals(BeanHelper.getNodeService().getType(nodeRef))) {
-                        BeanHelper.getDocumentDynamicDialog().openFromUrl(nodeRef);
-                    } else {
-                        BeanHelper.getDocumentDialog().open(nodeRef);
-                        WebUtil.navigateTo(AlfrescoNavigationHandler.DIALOG_PREFIX + "document", context);
-                    }
+                    BeanHelper.getDocumentDynamicDialog().openFromUrl(nodeRef);
                 } else {
                     MessageUtil.addErrorMessage("document_restore_error_docDeleted");
                 }

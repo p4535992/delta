@@ -128,5 +128,10 @@
       <property name="executeOnceOnly" value="true" />
       <property name="transactionHelperMinRetryWaits" value="6000" />
    </bean>
+
+   <bean id="defaultValuesFieldUpdater" class="ee.webmedia.alfresco.template.bootstrap.DefaultValuesFieldUpdater" parent="abstractNodeUpdater" >
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+   </bean>
    
 </beans>

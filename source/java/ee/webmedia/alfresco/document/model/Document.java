@@ -173,6 +173,14 @@ public class Document extends Node implements Comparable<Document>, CssStylable,
                 );
     }
 
+    public String getSenderOrOwner() {
+        String docDynType = objectTypeId();
+        if (SystematicDocumentType.INCOMING_LETTER.isSameType(docDynType)) {
+            return (String) getProperties().get(DocumentSpecificModel.Props.SENDER_DETAILS_NAME);
+        }
+        return (String) getProperties().get(DocumentCommonModel.Props.OWNER_NAME);
+    }
+
     public String getSenderNameOrEmail() {
         String senderDetails = (String) getProperties().get(DocumentSpecificModel.Props.SENDER_DETAILS_NAME);
         if (StringUtils.isBlank(senderDetails)) {
@@ -445,6 +453,46 @@ public class Document extends Node implements Comparable<Document>, CssStylable,
     public String getSendMode() {
         List<String> searchableSendMode = getSearchableSendModeFromGeneralProps();
         return TextUtil.joinStringAndStringWithComma(getTransmittalMode(), searchableSendMode != null ? TextUtil.joinNonBlankStringsWithComma(searchableSendMode) : "");
+    }
+
+    @SuppressWarnings("unchecked")
+    public String getSendInfoRecipient() {
+        return TextUtil.joinNonBlankStringsWithComma((List<String>) getProperties().get(DocumentCommonModel.Props.SEARCHABLE_SEND_INFO_RECIPIENT));
+    }
+
+    public String getSendInfoSendDateTime() {
+        @SuppressWarnings("unchecked")
+        List<Date> dates = (List<Date>) getProperties().get(DocumentCommonModel.Props.SEARCHABLE_SEND_INFO_SEND_DATE_TIME);
+        String result = "";
+        if (dates != null && !dates.isEmpty()) {
+            StringBuilder sb = new StringBuilder();
+            boolean firstAppended = false;
+            for (int i = 0; i < dates.size(); i++) {
+                Date date = dates.get(i);
+                if (date == null) {
+                    continue;
+                }
+                if (firstAppended) {
+                    sb.append(", ");
+                }
+                sb.append(dateTimeFormat.format(date));
+                firstAppended = true;
+            }
+            result = sb.toString();
+        }
+        return result;
+    }
+
+    @SuppressWarnings("unchecked")
+    public String getSendInfoResolution() {
+        return TextUtil.joinNonBlankStringsWithComma((List<String>) getProperties().get(DocumentCommonModel.Props.SEARCHABLE_SEND_INFO_RESOLUTION));
+    }
+
+    public List<String> getSendModesAsList() {
+        List<String> modes = new ArrayList<String>();
+        modes.addAll(getSearchableSendModeFromGeneralProps());
+        modes.add(getTransmittalMode());
+        return modes;
     }
 
     @SuppressWarnings("unchecked")

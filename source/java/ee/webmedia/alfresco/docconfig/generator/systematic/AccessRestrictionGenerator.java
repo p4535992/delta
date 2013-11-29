@@ -68,7 +68,7 @@ public class AccessRestrictionGenerator extends BaseSystematicFieldGenerator {
     public static final String BEAN_NAME = "accessRestrictionGenerator";
 
     private static final String VIEW_MODE_PROP_SUFFIX = "View";
-    public static final String ACCESS_RESTRICTION_CHANGE_REASON_ERROR = "accessRestrictionChangeReasonError";
+    public static final String ACCESS_RESTRICTION_CHANGE_REASON_ERROR = "access_restriction_change_reason_error";
 
     public static final QName[] ACCESS_RESTRICTION_PROPS = {
             ACCESS_RESTRICTION,
@@ -125,7 +125,7 @@ public class AccessRestrictionGenerator extends BaseSystematicFieldGenerator {
             item.setValueChangeListener(getBindingName("accessRestrictionValueChanged", stateHolderKey));
             item.setAjaxParentLevel(1);
         } else {
-            item.getCustomAttributes().put("rendered", getBindingName("renderAllAccessRestrictionFields", stateHolderKey));
+            item.setRendered(getBindingName("renderAllAccessRestrictionFields", stateHolderKey));
             if (field.getOriginalFieldId().equals(ACCESS_RESTRICTION_REASON.getLocalName())) {
                 item.setValueChangeListener(getBindingName("accessRestrictionReasonValueChanged", stateHolderKey));
                 item.setAjaxParentLevel(1);

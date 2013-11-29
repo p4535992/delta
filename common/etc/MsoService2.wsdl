@@ -34,6 +34,7 @@
             <xs:complexType>
                <xs:sequence>
                   <xs:element minOccurs="0" name="documentFile" nillable="true" type="xs:base64Binary" />
+                  <xs:element minOccurs="0" name="dontSaveIfUnmodified" nillable="false" type="xs:boolean" /> 
                   <xs:element minOccurs="0" name="fileEncoding" nillable="true" type="xs:string" />
                   <xs:element minOccurs="0" name="fileType" nillable="true" type="xs:string" />
                   <xs:element minOccurs="0" name="formulas" nillable="true" type="q1:ArrayOfformula" xmlns:q1="http://schemas.datacontract.org/2004/07/MSOService" />

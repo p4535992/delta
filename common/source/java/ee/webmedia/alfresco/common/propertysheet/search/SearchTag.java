@@ -31,6 +31,7 @@ public class SearchTag extends UIComponentTag {
     private String searchLinkLabel;
     private String searchLinkTooltip;
     private String converter;
+    private Boolean renderPlain;
 
     @Override
     public String getComponentType() {
@@ -95,6 +96,9 @@ public class SearchTag extends UIComponentTag {
         if (filters != null) {
             attributes.put(Search.FILTERS_KEY, filters);
         }
+        if (renderPlain != null) {
+            attributes.put(Search.RENDER_PLAIN, renderPlain);
+        }
     }
 
     @Override
@@ -110,6 +114,7 @@ public class SearchTag extends UIComponentTag {
         readonly = null;
         ajaxParentLevel = null;
         converter = null;
+        renderPlain = null;
     }
 
     public void setValue(String value) {
@@ -191,4 +196,13 @@ public class SearchTag extends UIComponentTag {
     public void setTextarea(Boolean textarea) {
         this.textarea = textarea;
     }
+
+    public Boolean getRenderPlain() {
+        return renderPlain;
+    }
+
+    public void setRenderPlain(Boolean renderPlain) {
+        this.renderPlain = renderPlain;
+    }
+
 }

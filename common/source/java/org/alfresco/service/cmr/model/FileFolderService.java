@@ -302,6 +302,8 @@ public interface FileFolderService
     @Auditable(key = Auditable.Key.ARG_0, parameters = {"nodeRef"})
     public ContentWriter getWriter(NodeRef nodeRef);
     
+    @Auditable(key = Auditable.Key.ARG_0, parameters = {"nodeRef"})
+    public ContentWriter getWriter(NodeRef nodeRef, boolean update);
     
     /**
      * Check the validity of a node reference

@@ -19,8 +19,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import javax.faces.context.FacesContext;
-import javax.faces.el.ValueBinding;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -34,7 +32,6 @@ import org.alfresco.service.cmr.security.PermissionService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
-import org.alfresco.web.ui.common.component.data.UIRichList;
 import org.alfresco.web.ui.repo.tag.PageTag;
 import org.apache.commons.collections.comparators.ComparatorChain;
 import org.apache.commons.collections.comparators.TransformingComparator;
@@ -190,12 +187,6 @@ public class PrintTableServlet extends HttpServlet {
             printTableLabelCell(out, MessageUtil.getMessage("compoundWorkflow_table_compoundWorkflow_stopped"));
             printTableCell(out, compoundWorkflow.getStoppedDateStr());
             finishTableRow(out);
-            startTableRow(out);
-            printTableLabelCell(out, MessageUtil.getMessage("compoundWorkflow_table_compoundWorkflow_comment"));
-            printTableCell(out, compoundWorkflow.getComment());
-            printEmptyTableCell(out);
-            printEmptyTableCell(out);
-            finishTableRow(out);
             renderTableEnd(out);
 
             List<WorkflowBlockItem> groupedWorkflowBlockItems = BeanHelper.getWorkflowBlockBean().getWorkflowBlockItems();
@@ -221,9 +212,9 @@ public class PrintTableServlet extends HttpServlet {
                 Date startedDateTime = item.getStartedDateTime();
                 Date dueDate = item.getDueDate();
                 taskRows.add(new Row(asList(startedDateTime != null ? Task.dateTimeFormat.format(startedDateTime) : "",
-                        (dueDate != null ? Task.dateFormat.format(dueDate) : "")
-                                + (StringUtils.isNotBlank(item.getDueDateHistoryAlert()) ? "<br/>" + item.getDueDateHistoryAlert() : ""),
-                        item.getTaskCreatorName(), item.getWorkflowType(), item.getTaskOwnerName(), item.getTaskResolution(), item.getTaskOutcome(), item.getTaskStatus())));
+                        (dueDate != null ? Task.dateFormat.format(dueDate) : ""),
+                        item.getTaskCreatorName(), item.getWorkflowType(), item.getTaskOwnerName(), item.getTaskResolution(), item.getTaskOutcomeWithSubstituteNote(),
+                        item.getTaskStatus())));
             }
             printTableHeading(out, outerDiv, "compoundWorkflow_table_tasks");
             renderTableStart(out, TableMode.WORKFLOW_GROUP_TASKS, false);
@@ -376,49 +367,20 @@ public class PrintTableServlet extends HttpServlet {
     }
 
     private List<Row> getReviewNotesData() {
-        UIRichList richList = BeanHelper.getWorkflowBlockBean().getReviewNotesRichList();
-        if (richList != null) {
-            int origPageSize;
-            ValueBinding pageSizeVB;
-            { // need to show all elements of the richlist - before changing pageSize remember original value
-                pageSizeVB = richList.getValueBinding("pageSize");
-                if (pageSizeVB != null) {
-                    origPageSize = (Integer) pageSizeVB.getValue(FacesContext.getCurrentInstance());
-                } else {
-                    origPageSize = richList.getPageSize();
-                }
-            }
-            { // show all rows on single page
-                if (pageSizeVB != null) {
-                    richList.setValueBinding("pageSize", null);
-                }
-                richList.setPageSize(Integer.MAX_VALUE);
-            }
-            richList.bind();// prepare the component current row against the current page settings
+        List<Row> data = new ArrayList<Row>();
+        List<Task> finishedReviewTasks = BeanHelper.getWorkflowBlockBean().getFinishedReviewTasks();
 
-            List<Row> data = new ArrayList<Row>();
-            { // Fetch data
-                if (richList.isDataAvailable()) {
-                    while (richList.isDataAvailable()) {
-                        Task task = (Task) richList.nextRow();
-                        Date completedDateTime = task.getCompletedDateTime();
-                        String completedDTStr = completedDateTime != null ? Task.dateFormat.format(completedDateTime) : "";
-                        data.add(new Row(asList(task.getOwnerName(), completedDTStr, task.getOutcome() + ": " + task.getComment())));
-                    }
-                }
-            }
-
-            { // restore original pageSize
-                if (pageSizeVB != null) {
-                    richList.setValueBinding("pageSize", pageSizeVB);
-                }
-                richList.setPageSize(origPageSize);
-            }
-
+        if (finishedReviewTasks == null) {
             return data;
         }
 
-        return Collections.emptyList();
+        for (Task task : finishedReviewTasks) {
+            Date completedDateTime = task.getCompletedDateTime();
+            String completedDTStr = completedDateTime != null ? Task.dateFormat.format(completedDateTime) : "";
+            data.add(new Row(asList(task.getOwnerNameWithSubstitute(), completedDTStr, task.getOutcome() + ": " + task.getComment())));
+        }
+
+        return data;
     }
 
     private List<Row> getWorkflowGroupData(HttpServletRequest request) {
@@ -534,6 +496,8 @@ public class PrintTableServlet extends HttpServlet {
         getApplicationsData(docRef1, docRef2, propDefs, result, DocumentChildModel.Assocs.APPLICANT_DOMESTIC, DocumentChildModel.Assocs.ERRAND_DOMESTIC);
         // Abroad applications
         getApplicationsData(docRef1, docRef2, propDefs, result, DocumentChildModel.Assocs.APPLICANT_ABROAD, DocumentChildModel.Assocs.ERRAND_ABROAD);
+        // Errand applications
+        getApplicationsData(docRef1, docRef2, propDefs, result, DocumentChildModel.Assocs.APPLICANT_ERRAND, DocumentChildModel.Assocs.ERRAND);
         // Training applications
         getApplicationsData(docRef1, docRef2, propDefs, result, DocumentChildModel.Assocs.APPLICANT_TRAINING, null);
 

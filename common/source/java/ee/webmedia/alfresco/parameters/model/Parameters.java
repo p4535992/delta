@@ -125,7 +125,8 @@ public enum Parameters {
     DOC_MANAGER_EMAIL("docManagerEmail"),
     DVK_FAILED_SENDS_RESEND_TIME("dvkFailedSendsResendTime"),
     MOVE_TO_ARCHIVE_LIST_DEFAULT_MONTHS("moveToArchiveListDefaultMonths"),
-    ARCHIVAL_ACTIVITY_DOC_TYPE_ID("archivalActivityDocTypeId");
+    ARCHIVAL_ACTIVITY_DOC_TYPE_ID("archivalActivityDocTypeId"),
+    ACCESS_RESTRICTION_END_DATE_NOTIFICATION_MAX_DOCUMENTS("accessRestrictionEndDateNotificationMaxDocuments");
 
     private String xPath;
     private String parameterName;

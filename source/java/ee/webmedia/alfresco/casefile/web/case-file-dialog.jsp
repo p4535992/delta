@@ -13,7 +13,9 @@
    <f:verbatim>
       <script type="text/javascript">
          $jQ(document).ready(function () {
-            showModal("</f:verbatim><a:outputText value="#{CaseFileDialog.renderedModal}" /><f:verbatim>");
+            var modalId = "</f:verbatim><a:outputText value="#{CaseFileDialog.renderedModal}" /><f:verbatim>";
+            showModal(modalId);
+            initExpanders($jQ("#" + modalId));
          });
       </script>
    </f:verbatim>

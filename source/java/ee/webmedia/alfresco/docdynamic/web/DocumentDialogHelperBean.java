@@ -59,7 +59,8 @@ public class DocumentDialogHelperBean implements Serializable {
     }
 
     public NodeRef getNodeRef() {
-        return getNode().getNodeRef();
+        Node node = getNode();
+        return node == null ? null : node.getNodeRef();
     }
 
     public Map<String, Object> getProps() {

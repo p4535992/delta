@@ -42,6 +42,7 @@ public class EnumSelectorGenerator extends GeneralSelectorGenerator implements H
     public static final String ATTR_DISABLE_DEFAULT = "disableDefault";
     public static final String ATTR_ENUM_CLASS = "enumClass";
     public static final String ATTR_ENUM_PROP = "enumProp";
+    public static final String ATTR_EXCLUDE_VALUE = "excludeValue";
 
     @Override
     protected UIComponent createComponent(FacesContext context, UIPropertySheet propertySheet, PropertySheetItem item) {
@@ -93,8 +94,9 @@ public class EnumSelectorGenerator extends GeneralSelectorGenerator implements H
         Class<? extends Enum<?>> en = EnumConverter.getEnumClass(enumClassName);
         EnumSelectorItemFilter<Enum<?>> filter = getFilter();
         List<UIComponent> selectOptions = new ArrayList<UIComponent>();
+        String excludedValue = getCustomAttributes().get(ATTR_EXCLUDE_VALUE);
         for (Enum<?> c : en.getEnumConstants()) {
-            if (filter != null && !filter.showItem(c) && !isBoundValue(c, boundValue)) {
+            if (filter != null && !filter.showItem(c) && !isBoundValue(c, boundValue) || c.name().equals(excludedValue)) {
                 continue;
             }
             UISelectItem selectItem = (UISelectItem) context.getApplication().createComponent(UISelectItem.COMPONENT_TYPE);

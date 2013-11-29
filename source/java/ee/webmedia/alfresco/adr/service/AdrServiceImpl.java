@@ -840,7 +840,7 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
         chain.addComparator(new TransformingComparator(new Transformer() {
             @Override
             public Object transform(Object input) {
-                return ((AdrDocument) input).nodeRef;
+                return ((AdrDocument) input).nodeRef.toString();
             }
         }, new NullComparator()));
         @SuppressWarnings("unchecked")
