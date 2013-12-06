@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<model name="archivals:archivalsModel" xmlns="http://www.alfresco.org/model/dictionary/1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.alfresco.org/model/dictionary/1.0 http://svn.alfresco.com/repos/alfresco-open-mirror/alfresco/HEAD/root/projects/repository/config/alfresco/model/modelSchema.xsd">
+
+   <imports>
+      <import uri="http://www.alfresco.org/model/dictionary/1.0" prefix="d" />
+      <import uri="http://www.alfresco.org/model/system/1.0" prefix="sys" />
+      <import uri="http://www.alfresco.org/model/content/1.0" prefix="cm" />
+   </imports>
+
+   <namespaces>
+      <namespace uri="http://alfresco.webmedia.ee/model/archivals/1.0" prefix="archivals" />
+   </namespaces>
+   
+   <types>
+      <type name="archivals:archivalsQueue">
+         <parent>sys:base</parent>
+         <mandatory-aspects>
+            <aspect>archivals:archivalsResultContainer</aspect>
+         </mandatory-aspects>
+      </type>
+
+      <type name="archivals:archivingJob">
+         <parent>sys:base</parent>
+         <properties>
+            <property name="archivals:userName">
+               <type>d:text</type>
+               <mandatory>true</mandatory>
+            </property>
+            <property name="archivals:archivingStartTime">
+               <type>d:date</type>
+            </property>
+            <property name="archivals:archivingEndTime">
+               <type>d:date</type>
+            </property>
+            <property name="archivals:volumeRef">
+               <type>d:noderef</type>
+               <mandatory>true</mandatory>
+            </property>
+            <property name="archivals:archivingJobStatus">
+               <type>d:text</type>
+            </property>
+            <property name="archivals:archiveNote">
+               <type>d:text</type>
+            </property>
+            <property name="archivals:errorMessage">
+               <type>d:text</type>
+            </property>
+         </properties>
+      </type>
+   </types>
+   
+   <aspects>
+      <aspect name="archivals:archivalsResultContainer">
+         <associations>
+            <child-association name="archivals:archivingJob">
+               <source>
+                  <mandatory>true</mandatory>
+                  <many>false</many>
+               </source>
+               <target>
+                  <class>archivals:archivingJob</class>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </target>
+            </child-association>
+         </associations>
+      </aspect>
+   </aspects>
+
+</model>

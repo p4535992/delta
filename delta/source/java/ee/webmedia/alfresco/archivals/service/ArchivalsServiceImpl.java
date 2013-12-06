@@ -39,6 +39,7 @@ import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.adr.service.AdrService;
 import ee.webmedia.alfresco.archivals.model.ArchivalsModel;
+import ee.webmedia.alfresco.archivals.model.ArchiveJobStatus;
 import ee.webmedia.alfresco.cases.model.CaseModel;
 import ee.webmedia.alfresco.cases.service.CaseService;
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
@@ -52,6 +53,7 @@ import ee.webmedia.alfresco.functions.service.FunctionsService;
 import ee.webmedia.alfresco.series.model.Series;
 import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.series.service.SeriesService;
+import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.ProgressTracker;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.volume.model.Volume;
@@ -78,22 +80,82 @@ public class ArchivalsServiceImpl implements ArchivalsService {
     private CaseService caseService;
 
     private StoreRef archivalsStore;
+    private boolean archivingPaused;
 
     @Override
-    public void archiveVolume(final NodeRef volumeNodeRef, final String archivingNote) {
-        generalService.runOnBackground(new RunAsWork<Void>() {
-
-            @Override
-            public Void doWork() throws Exception {
-                archiveVolumeImpl(volumeNodeRef, archivingNote);
-                return null;
-            }
-        }, "archiveVolume", false);
+    public void archiveVolume(final NodeRef archivingJobRef) {
+        final RetryingTransactionHelper transactionHelper = BeanHelper.getTransactionService().getRetryingTransactionHelper();
+        try {
+            archiveVolumeImpl(archivingJobRef);
+            transactionHelper.doInTransaction(new RetryingTransactionCallback<Void>() {
+                @Override
+                public Void execute() throws Throwable {
+                    Map<QName, Serializable> props = new HashMap<QName, Serializable>();
+                    props.put(ArchivalsModel.Props.ARCHIVING_JOB_STATUS, ArchiveJobStatus.FINISHED);
+                    props.put(ArchivalsModel.Props.ARCHIVING_END_TIME, new Date());
+                    nodeService.addProperties(archivingJobRef, props);
+                    return null;
+                }
+            }, false, true);
+        } catch (final Exception e) {
+            transactionHelper.doInTransaction(new RetryingTransactionCallback<Void>() {
+                @Override
+                public Void execute() throws Throwable {
+                    Map<QName, Serializable> props = new HashMap<QName, Serializable>();
+                    props.put(ArchivalsModel.Props.ARCHIVING_JOB_STATUS, ArchiveJobStatus.FAILED);
+                    props.put(ArchivalsModel.Props.ARCHIVING_END_TIME, new Date());
+                    props.put(ArchivalsModel.Props.ERROR_MESSAGE, e.getMessage() + "\n" + e);
+                    nodeService.addProperties(archivingJobRef, props);
+                    return null;
+                }
+            }, false, true);
+        }
     }
 
-    private NodeRef archiveVolumeImpl(final NodeRef volumeNodeRef, final String archivingNote) {
-        Assert.notNull(volumeNodeRef, "Reference to volume node must be provided");
+    @Override
+    public void addVolumeToArchivingList(NodeRef volumeRef) {
+        NodeRef archivingJobRef = nodeService.createNode(getArchivalsSpaceRef(), ArchivalsModel.Assocs.ARCHIVING_JOB,
+                ArchivalsModel.Assocs.ARCHIVING_JOB, ArchivalsModel.Types.ARCHIVING_JOB).getChildRef();
+        Map<QName, Serializable> props = new HashMap<QName, Serializable>();
+        DateFormat df = new SimpleDateFormat("dd.MM.yyyy HH:mm");
+        props.put(ArchivalsModel.Props.VOLUME_REF, volumeRef);
+        props.put(ArchivalsModel.Props.ARCHIVE_NOTE, String.format(MessageUtil.getMessage("volume_archiving_note"), df.format(new Date())));
+        props.put(ArchivalsModel.Props.ARCHIVING_JOB_STATUS, ArchiveJobStatus.IN_QUEUE);
+        nodeService.addProperties(archivingJobRef, props);
 
+    }
+
+    @Override
+    public List<NodeRef> getAllInQueueJobs() {
+        List<NodeRef> volumeRefs = new ArrayList<NodeRef>();
+        for (ChildAssociationRef ref : getArchivingJobChildAssocs()) {
+            volumeRefs.add(ref.getChildRef());
+        }
+        return volumeRefs;
+    }
+
+    @Override
+    public ArchiveJobStatus getArchivingStatus(NodeRef archivingJobNodeRef) {
+        return archivingJobNodeRef == null ? null : ArchiveJobStatus.valueOf((String) nodeService.getProperty(archivingJobNodeRef, ArchivalsModel.Props.ARCHIVING_JOB_STATUS));
+    }
+
+    private NodeRef getArchivalsSpaceRef() {
+        return generalService.getNodeRef(ArchivalsModel.Repo.ARCHIVALS_SPACE);
+    }
+
+    @Override
+    public void markArchivingJobAsRunning(NodeRef archivingJobNodeRef) {
+        nodeService.setProperty(archivingJobNodeRef, ArchivalsModel.Props.ARCHIVING_JOB_STATUS, ArchiveJobStatus.IN_PROGRESS);
+    }
+
+    private List<ChildAssociationRef> getArchivingJobChildAssocs() {
+        return nodeService.getChildAssocs(getArchivalsSpaceRef(), Collections.singleton(ArchivalsModel.Types.ARCHIVING_JOB));
+    }
+
+    private NodeRef archiveVolumeImpl(final NodeRef archivingJobRef) {
+        final NodeRef volumeNodeRef = (NodeRef) nodeService.getProperty(archivingJobRef, ArchivalsModel.Props.VOLUME_REF);
+        Assert.notNull(volumeNodeRef, "Reference to volume node must be provided");
+        final String archivingNote = (String) nodeService.getProperty(archivingJobRef, ArchivalsModel.Props.ARCHIVE_NOTE);
         final RetryingTransactionHelper transactionHelper = BeanHelper.getTransactionService().getRetryingTransactionHelper();
 
         Volume volume = volumeService.getVolumeByNodeRef(volumeNodeRef);
@@ -148,6 +210,7 @@ public class ArchivalsServiceImpl implements ArchivalsService {
             }
             final NodeRef archivedParentRefFinal = archivedParentRef;
             for (final ChildAssociationRef childAssocRef : entry.getValue()) {
+                doPauseArchiving();
                 final NodeRef childRef = childAssocRef.getChildRef();
                 if (!nodeService.exists(childRef) || !originalParentRef.equals(nodeService.getPrimaryParent(childRef).getParentRef())) {
                     // node has been deleted or moved, skip it
@@ -204,6 +267,7 @@ public class ArchivalsServiceImpl implements ArchivalsService {
             @Override
             public Void execute() {
                 nodeService.setProperty(archivedVolumeRef, VolumeModel.Props.ARCHIVING_NOTE, archivingNote);
+                nodeService.removeProperty(archivedVolumeRef, VolumeModel.Props.MARKED_FOR_ARCHIVING);
                 return null;
             }
         }, false, true);
@@ -569,6 +633,71 @@ public class ArchivalsServiceImpl implements ArchivalsService {
 
     public void setArchivalsStore(String archivalsStore) {
         this.archivalsStore = new StoreRef(archivalsStore);
+    }
+
+    @Override
+    public void removeJobNodeFromArchivingList(NodeRef archivingJobRef) {
+        if (archivingJobRef != null) {
+            nodeService.deleteNode(archivingJobRef);
+        }
+    }
+
+    @Override
+    public void removeVolumeFromArchivingList(NodeRef volumeRef) {
+        if (volumeRef == null) {
+            return;
+        }
+        for (NodeRef archivingJobNodeRef : getAllInQueueJobs()) {
+            if (volumeRef.equals(nodeService.getProperty(archivingJobNodeRef, ArchivalsModel.Props.VOLUME_REF))) {
+                nodeService.deleteNode(archivingJobNodeRef);
+                LOG.info("Volume with nodeRef=" + volumeRef + " was removed from archiving queue.");
+                return;
+            }
+        }
+    }
+
+    @Override
+    public void cancelAllArchivingJobs(ActionEvent event) {
+        StringBuilder sb = new StringBuilder();
+        for (NodeRef archivingJobNodeRef : getAllInQueueJobs()) {
+            Map<QName, Serializable> props = nodeService.getProperties(archivingJobNodeRef);
+            NodeRef volumeRef = (NodeRef) props.get(ArchivalsModel.Props.VOLUME_REF);
+            String status = (String) props.get(ArchivalsModel.Props.ARCHIVING_JOB_STATUS);
+            if (volumeRef != null && nodeService.exists(volumeRef)) {
+                nodeService.setProperty(volumeRef, VolumeModel.Props.MARKED_FOR_ARCHIVING, Boolean.FALSE);
+            }
+            removeJobNodeFromArchivingList(archivingJobNodeRef);
+            sb.append(volumeRef + "\t(status: " + status + ")+\n");
+        }
+        LOG.info("The archiving of the following volumes was cancelled: " + sb.toString());
+    }
+
+    @Override
+    public void pauseArchiving(ActionEvent event) {
+        archivingPaused = true;
+        LOG.info("Volume archiving was paused");
+    }
+
+    @Override
+    public void continueArchiving(ActionEvent event) {
+        archivingPaused = false;
+        LOG.info("Volume archiving was resumed");
+    }
+
+    @Override
+    public boolean isArchivingPaused() {
+        return archivingPaused;
+    }
+
+    @Override
+    public void doPauseArchiving() {
+        while (archivingPaused) {
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                // Do nothing
+            }
+        }
     }
 
 }

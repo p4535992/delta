@@ -203,6 +203,10 @@ public abstract class BaseDialogBean implements IDialogBean, Serializable
    public boolean isRequiresNewTransaction() {
        return true;
    }
+   
+   protected boolean nodeExists(NodeRef nodeRef) {
+       return BeanHelper.getNodeService().exists(nodeRef);
+   }
 
    public String handleException(Throwable e) {
         String outcome;

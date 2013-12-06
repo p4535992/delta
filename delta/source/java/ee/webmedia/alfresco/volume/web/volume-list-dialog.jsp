@@ -26,11 +26,11 @@
          <f:facet name="header">
             <a:sortLink id="col2-sort" label="#{msg.volume_title}" value="title" styleClass="header" />
          </f:facet>
-         <a:actionLink id="col2-link2documents" value="#{r.title} (#{r.containingDocsCount})" action="dialog:documentListDialog" tooltip="#{msg.document_list_info}"
+         <a:actionLink id="col2-link2documents" value="#{r.title} (#{r.containingDocsCount})" action="#{DocumentListDialog.action}" tooltip="#{msg.document_list_info}"
             showLink="false" actionListener="#{DocumentListDialog.setup}" rendered="#{!r.containsCases}" >
             <f:param name="volumeNodeRef" value="#{r.node.nodeRef}" />
          </a:actionLink>
-         <a:actionLink id="col2-link2cases" value="#{r.title} (#{r.containingDocsCount})" action="dialog:caseListDialog" tooltip="#{msg.case_list_info}"
+         <a:actionLink id="col2-link2cases" value="#{r.title} (#{r.containingDocsCount})" action="#{CaseListDialog.action}" tooltip="#{msg.case_list_info}"
             showLink="false" actionListener="#{CaseListDialog.showAll}" rendered="#{r.containsCases}" >
             <f:param name="volumeNodeRef" value="#{r.node.nodeRef}" />
          </a:actionLink>
@@ -89,7 +89,7 @@
          <f:facet name="header">
             <h:outputText value="&nbsp;" escape="false" />
          </f:facet>
-         <a:actionLink id="col8-act1" value="#{r.title}" image="/images/icons/edit_properties.gif" action="dialog:volumeDetailsDialog" showLink="false"
+         <a:actionLink id="col8-act1" value="#{r.title}" image="/images/icons/edit_properties.gif" action="#{VolumeDetailsDialog.action}" showLink="false"
             actionListener="#{VolumeDetailsDialog.showDetails}" tooltip="#{msg.volume_details_info}">
             <f:param name="volumeNodeRef" value="#{r.node.nodeRef}" />
          </a:actionLink>

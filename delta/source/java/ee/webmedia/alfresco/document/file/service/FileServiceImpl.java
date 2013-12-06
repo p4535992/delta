@@ -47,6 +47,7 @@ import ee.webmedia.alfresco.document.file.model.FileModel;
 import ee.webmedia.alfresco.document.file.model.GeneratedFileType;
 import ee.webmedia.alfresco.document.file.web.Subfolder;
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.signature.exception.SignatureException;
 import ee.webmedia.alfresco.signature.model.SignatureItemsAndDataItems;
 import ee.webmedia.alfresco.signature.service.SignatureService;
@@ -445,7 +446,10 @@ public class FileServiceImpl implements FileService {
     public String generateURL(NodeRef nodeRef) {
         String runAsUser = AuthenticationUtil.getRunAsUser();
         String name = fileFolderService.getFileInfo(nodeRef).getName();
-        if (!nodeRef.getStoreRef().getProtocol().equals(StoreRef.PROTOCOL_WORKSPACE) || StringUtils.isBlank(runAsUser) || AuthenticationUtil.isRunAsUserTheSystemUser()) {
+        NodeRef primaryParentRef = nodeService.getPrimaryParent(nodeRef).getParentRef();
+        boolean isUnderDocument = DocumentCommonModel.Types.DOCUMENT.equals(nodeService.getType(primaryParentRef));
+        if (!nodeRef.getStoreRef().getProtocol().equals(StoreRef.PROTOCOL_WORKSPACE) || StringUtils.isBlank(runAsUser) || AuthenticationUtil.isRunAsUserTheSystemUser()
+                || !isUnderDocument) {
             return DownloadContentServlet.generateDownloadURL(nodeRef, name);
         }
         // calculate a WebDAV URL for the given node

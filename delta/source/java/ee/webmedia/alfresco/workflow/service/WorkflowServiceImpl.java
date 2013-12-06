@@ -1169,6 +1169,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         proccessPreSave(queue, compoundWorkflow);
         CompoundWorkflow freshCompoundWorkflow = finishCompoundWorkflow(queue, compoundWorkflow, "task_outcome_finished_manually");
         handleEvents(queue);
+        logService.addLogEntry(LogEntry.create(LogObject.WORKFLOW, userService, compoundWorkflowOriginal.getNodeRef(), "applog_workflow_finished"));
         return freshCompoundWorkflow;
     }
 

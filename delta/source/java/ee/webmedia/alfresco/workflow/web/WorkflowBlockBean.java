@@ -1061,7 +1061,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         Map<String, Object> attributes = ComponentUtil.getAttributes(search);
         attributes.put(ValidatingModalLayerComponent.ATTR_LABEL_KEY, "workflow_dueDateExtension_extender");
         attributes.put(ValidatingModalLayerComponent.ATTR_MANDATORY, Boolean.TRUE);
-        attributes.put(Search.PICKER_CALLBACK_KEY, "#{UserContactGroupSearchBean.searchAll}");
+        attributes.put(Search.PICKER_CALLBACK_KEY, "#{UserContactGroupSearchBean.searchAllWithoutLogOnUser}");
         attributes.put(Search.FILTER_INDEX, UserContactGroupSearchBean.USERS_FILTER);
         attributes.put(Search.SETTER_CALLBACK, "#{WorkflowBlockBean.assignDueDateExtender}");
         attributes.put(Search.DATA_TYPE_KEY, String.class);
