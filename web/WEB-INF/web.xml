@@ -1,0 +1,928 @@
+<?xml version='1.0' encoding='UTF-8'?>
+
+<!DOCTYPE web-app PUBLIC
+  "-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN"
+  "http://java.sun.com/dtd/web-app_2_3.dtd">
+
+<web-app>
+   <display-name>Alfresco Web Client</display-name>
+
+   <description>Alfresco Web Client</description>
+
+   <context-param>
+      <param-name>org.jboss.jbossfaces.WAR_BUNDLES_JSF_IMPL</param-name>
+      <param-value>true</param-value>
+   </context-param>
+
+   <context-param>
+      <param-name>javax.faces.STATE_SAVING_METHOD</param-name>
+      <param-value>server</param-value>
+   </context-param>
+
+   <context-param>
+      <param-name>javax.faces.CONFIG_FILES</param-name>
+      <param-value>/WEB-INF/faces-config-app.xml,/WEB-INF/faces-config-beans.xml,/WEB-INF/faces-config-navigation.xml,/WEB-INF/faces-config-common.xml,/WEB-INF/faces-config-repo.xml,/WEB-INF/faces-config-wcm.xml,/WEB-INF/faces-config-custom.xml
+         ,/WEB-INF/classes/ee/webmedia/alfresco/common/common-faces-config.xml
+         ,/WEB-INF/classes/ee/webmedia/alfresco/common/propertysheet/common-propertysheet-faces-config.xml
+         ,/WEB-INF/classes/ee/webmedia/alfresco/signature/signature-faces-config.xml
+         ,/WEB-INF/classes/ee/webmedia/alfresco/menu/menu-faces-config.xml
+         ,/WEB-INF/classes/ee/webmedia/alfresco/classificator/classificator-faces-config.xml
+         ,/WEB-INF/classes/ee/webmedia/alfresco/orgstructure/organizationStructure-faces-config.xml
+         ,/WEB-INF/classes/ee/webmedia/alfresco/document/document-faces-config.xml
+         ,/WEB-INF/classes/ee/webmedia/alfresco/functions/functions-faces-config.xml
+         ,/WEB-INF/classes/ee/webmedia/alfresco/user/user-faces-config.xml
+         ,/WEB-INF/classes/ee/webmedia/alfresco/register/register-faces-config.xml
+         ,/WEB-INF/classes/ee/webmedia/alfresco/template/document-template-faces-config.xml
+         ,/WEB-INF/classes/ee/webmedia/alfresco/series/series-faces-config.xml
+         ,/WEB-INF/classes/ee/webmedia/alfresco/volume/volume-faces-config.xml
+         ,/WEB-INF/classes/ee/webmedia/alfresco/cases/case-faces-config.xml
+         ,/WEB-INF/classes/ee/webmedia/alfresco/versions/versions-faces-config.xml
+         ,/WEB-INF/classes/ee/webmedia/alfresco/imap/imap-faces-config.xml
+         ,/WEB-INF/classes/ee/webmedia/alfresco/document/forum/forum-faces-config.xml
+         ,/WEB-INF/classes/ee/webmedia/alfresco/workflow/workflow-faces-config.xml
+         ,/WEB-INF/classes/ee/webmedia/alfresco/workflow/search/task-search-faces-config.xml
+         ,/WEB-INF/classes/ee/webmedia/alfresco/notification/notification-faces-config.xml
+         ,/WEB-INF/classes/ee/webmedia/alfresco/document/scanned/scanned-faces-config.xml
+         ,/WEB-INF/classes/ee/webmedia/alfresco/document/register/register-faces-config.xml
+         ,/WEB-INF/classes/ee/webmedia/alfresco/archivals/archivals-faces-config.xml
+         ,/WEB-INF/classes/ee/webmedia/alfresco/common/propertysheet/common-propertysheet-sim-faces-config.xml
+         ,/WEB-INF/classes/ee/webmedia/alfresco/thesaurus/thesaurus-faces-config.xml
+      </param-value>
+   </context-param>
+
+   <context-param>
+      <param-name>org.apache.myfaces.ALLOW_JAVASCRIPT</param-name>
+      <param-value>true</param-value>
+   </context-param>
+
+   <context-param>
+      <param-name>org.apache.myfaces.DETECT_JAVASCRIPT</param-name>
+      <param-value>false</param-value>
+      <description>This is an EXPERIMENTAL feature, so leave it off for now!</description>
+   </context-param>
+
+   <context-param>
+      <param-name>org.apache.myfaces.SERIALIZE_STATE_IN_SESSION</param-name>
+      <param-value>false</param-value>
+      <description>Stop MyFaces from Serializing the state to the session</description>
+   </context-param>
+
+   <context-param>
+      <param-name>org.apache.myfaces.NUMBER_OF_VIEWS_IN_SESSION</param-name>
+      <param-value>1</param-value>
+      <description>
+         Defines the number of the latest views that are stored in session. This option 
+         is only applicable if the state saving method is set to server. The default for 
+         this parameter is 20.
+      </description>
+   </context-param>
+
+    <context-param>
+        <param-name>org.apache.myfaces.PRETTY_HTML</param-name>
+        <param-value>false</param-value>
+        <description>
+            If true, rendered HTML code will be formatted, so that it is "human readable".
+            i.e. additional line separators and whitespace will be written, that do not
+            influence the HTML code.
+            Default: "true"
+        </description>
+    </context-param>
+
+    <context-param>
+        <param-name>org.apache.myfaces.AUTO_SCROLL</param-name>
+        <param-value>false</param-value>
+        <description>
+            If true, a javascript function will be rendered that is able to restore the
+            former vertical scroll on every request. Convenient feature if you have pages
+            with long lists and you do not want the browser page to always jump to the top
+            if you trigger a link or button action that stays on the same page.
+            Default: "false"
+        </description>
+    </context-param>
+
+   <context-param>
+      <param-name>contextConfigLocation</param-name>
+      <param-value>/WEB-INF/web-application-context.xml</param-value>
+      <description>Spring config file location</description>
+   </context-param>
+   <context-param>
+      <param-name>contextClass</param-name>
+      <param-value>org.alfresco.config.JBossEnabledWebApplicationContext</param-value>
+      <description>Spring context class</description>
+   </context-param>
+   <context-param>
+      <param-name>log4jExposeWebAppRoot</param-name>
+      <param-value>false</param-value>
+      <description>Do not try to resolve web app root as file</description>
+   </context-param>
+
+	<!--  These were previously init params for the WebDAV servlet,
+	      but since they are also needed to MT-enable the 
+	      ExternalAccess servlet, I have made them context wide.
+-->
+   <context-param>
+         <param-name>store</param-name>
+         <param-value>workspace://SpacesStore</param-value>
+   </context-param>
+   
+   <context-param>
+         <param-name>rootPath</param-name>
+         <param-value>/app:company_home</param-value>
+   </context-param>
+
+
+   <!-- ========== Filters ========== -->
+
+   <filter>
+      <filter-name>RequestContext Filter</filter-name>
+      <filter-class>org.springframework.web.filter.RequestContextFilter</filter-class>
+   </filter>
+   
+   <filter>
+      <filter-name>SubstitutionFilter</filter-name>
+      <filter-class>ee.webmedia.alfresco.common.filter.SubstitutionFilter</filter-class>
+   </filter>   
+   
+   <filter>
+      <filter-name>FacesContextFilter</filter-name>
+      <filter-class>ee.webmedia.alfresco.common.filter.FacesContextFilter</filter-class>
+   </filter>   
+
+   <filter>
+      <filter-name>CAS Authentication Filter</filter-name>
+      <filter-class>org.springframework.web.filter.DelegatingFilterProxy</filter-class>
+      <init-param>
+         <param-name>targetBeanName</param-name>
+         <param-value>casAuthenticationFilter</param-value>
+      </init-param>
+   </filter>
+
+   <filter>
+      <filter-name>CAS Ticket Validation Filter</filter-name>
+      <filter-class>org.springframework.web.filter.DelegatingFilterProxy</filter-class>
+      <init-param>
+         <param-name>targetBeanName</param-name>
+         <param-value>casTicketValidationFilter</param-value>
+      </init-param>
+   </filter>
+
+   <filter>
+      <filter-name>CAS HttpServletRequest Wrapper Filter</filter-name>
+      <filter-class>org.jasig.cas.client.util.HttpServletRequestWrapperFilter</filter-class>
+   </filter>
+
+   <filter>
+      <filter-name>RequestControlFilter</filter-name>
+      <filter-class>ee.webmedia.alfresco.common.filter.RequestControlFilter</filter-class>
+   </filter>
+
+   <filter>
+      <filter-name>SerializingFilter</filter-name>
+      <filter-class>org.alfresco.repo.web.filter.beans.BeanProxyFilter</filter-class>
+      <init-param>
+         <param-name>beanName</param-name>
+         <param-value>serializingFilter</param-value>
+      </init-param>
+   </filter>
+
+   <filter>
+      <filter-name>Authentication Filter</filter-name>
+      <description>Authentication filter mapped only to faces URLs. Other URLs generally use proprietary means to talk to the AuthenticationComponent</description>
+      <filter-class>org.alfresco.repo.web.filter.beans.BeanProxyFilter</filter-class>
+      <init-param>
+         <param-name>beanName</param-name>
+         <param-value>AuthenticationFilter</param-value>
+      </init-param>
+   </filter>
+
+   <filter>
+      <filter-name>WebDAV Authentication Filter</filter-name>
+      <filter-class>org.alfresco.repo.web.filter.beans.BeanProxyFilter</filter-class>
+      <init-param>
+         <param-name>beanName</param-name>
+         <param-value>WebDavAuthenticationFilter</param-value>
+      </init-param>
+   </filter>
+
+   <filter>
+      <filter-name>Admin Authentication Filter</filter-name>
+      <filter-class>org.alfresco.web.app.servlet.AdminAuthenticationFilter</filter-class>
+   </filter>
+
+   <filter>
+      <filter-name>Header Filter</filter-name>
+      <filter-class>ee.webmedia.alfresco.common.filter.HeaderFilter</filter-class>
+      <init-param>
+         <param-name>Cache-Control</param-name>
+         <param-value>max-age=28800, public</param-value> <!-- 8 hours -->
+      </init-param>
+      <init-param>
+         <param-name>Expires</param-name>
+         <param-value>28800</param-value>
+      </init-param>
+   </filter>
+
+
+   <!-- ========== Filter mappings ========== -->
+
+   <!-- FacesContextFilter must always be before Authentication Filter and SubstitutionFilter,
+        because latter ones may want to use FacesContext -->
+
+   <filter-mapping>
+      <filter-name>RequestControlFilter</filter-name>
+      <url-pattern>/uploadFileServlet</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>SerializingFilter</filter-name>
+      <url-pattern>/uploadFileServlet</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>CAS Authentication Filter</filter-name>
+      <url-pattern>/uploadFileServlet</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>CAS Ticket Validation Filter</filter-name>
+      <url-pattern>/uploadFileServlet</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>CAS HttpServletRequest Wrapper Filter</filter-name>
+      <url-pattern>/uploadFileServlet</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>RequestContext Filter</filter-name>
+      <url-pattern>/uploadFileServlet/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>FacesContextFilter</filter-name>
+      <url-pattern>/uploadFileServlet/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>Authentication Filter</filter-name>
+      <url-pattern>/uploadFileServlet</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>SubstitutionFilter</filter-name>
+      <url-pattern>/uploadFileServlet/*</url-pattern>
+   </filter-mapping> 
+   
+   <filter-mapping>
+      <filter-name>RequestControlFilter</filter-name>
+      <url-pattern>/download/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>SerializingFilter</filter-name>
+      <url-pattern>/download/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>CAS Authentication Filter</filter-name>
+      <url-pattern>/download/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>CAS Ticket Validation Filter</filter-name>
+      <url-pattern>/download/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>CAS HttpServletRequest Wrapper Filter</filter-name>
+      <url-pattern>/download/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>RequestContext Filter</filter-name>
+      <url-pattern>/download/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>FacesContextFilter</filter-name>
+      <url-pattern>/download/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>Authentication Filter</filter-name>
+      <url-pattern>/download/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>SubstitutionFilter</filter-name>
+      <url-pattern>/download/*</url-pattern>
+   </filter-mapping> 
+      
+   <filter-mapping>
+      <filter-name>RequestControlFilter</filter-name>
+      <url-pattern>/d/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>SerializingFilter</filter-name>
+      <url-pattern>/d/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>CAS Authentication Filter</filter-name>
+      <url-pattern>/d/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>CAS Ticket Validation Filter</filter-name>
+      <url-pattern>/d/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>CAS HttpServletRequest Wrapper Filter</filter-name>
+      <url-pattern>/d/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>RequestContext Filter</filter-name>
+      <url-pattern>/d/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>FacesContextFilter</filter-name>
+      <url-pattern>/d/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>Authentication Filter</filter-name>
+      <url-pattern>/d/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>SubstitutionFilter</filter-name>
+      <url-pattern>/d/*</url-pattern>
+   </filter-mapping> 
+      
+   <filter-mapping>
+      <filter-name>RequestControlFilter</filter-name>
+      <url-pattern>/ddc/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>SerializingFilter</filter-name>
+      <url-pattern>/ddc/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>CAS Authentication Filter</filter-name>
+      <url-pattern>/ddc/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>CAS Ticket Validation Filter</filter-name>
+      <url-pattern>/ddc/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>CAS HttpServletRequest Wrapper Filter</filter-name>
+      <url-pattern>/ddc/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>RequestContext Filter</filter-name>
+      <url-pattern>/ddc/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>FacesContextFilter</filter-name>
+      <url-pattern>/ddc/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>Authentication Filter</filter-name>
+      <url-pattern>/ddc/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>SubstitutionFilter</filter-name>
+      <url-pattern>/ddc/*</url-pattern>
+   </filter-mapping> 
+      
+   <filter-mapping>
+      <filter-name>RequestControlFilter</filter-name>
+      <url-pattern>/navigate/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>SerializingFilter</filter-name>
+      <url-pattern>/navigate/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>CAS Authentication Filter</filter-name>
+      <url-pattern>/navigate/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>CAS Ticket Validation Filter</filter-name>
+      <url-pattern>/navigate/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>CAS HttpServletRequest Wrapper Filter</filter-name>
+      <url-pattern>/navigate/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>RequestContext Filter</filter-name>
+      <url-pattern>/navigate/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>FacesContextFilter</filter-name>
+      <url-pattern>/navigate/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>Authentication Filter</filter-name>
+      <url-pattern>/navigate/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>SubstitutionFilter</filter-name>
+      <url-pattern>/navigate/*</url-pattern>
+   </filter-mapping>
+
+   <filter-mapping>
+      <filter-name>RequestControlFilter</filter-name>
+      <url-pattern>/printTable/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>SerializingFilter</filter-name>
+      <url-pattern>/printTable/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>CAS Authentication Filter</filter-name>
+      <url-pattern>/printTable/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>CAS Ticket Validation Filter</filter-name>
+      <url-pattern>/printTable/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>CAS HttpServletRequest Wrapper Filter</filter-name>
+      <url-pattern>/printTable/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>RequestContext Filter</filter-name>
+      <url-pattern>/printTable/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>FacesContextFilter</filter-name>
+      <url-pattern>/printTable/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>Authentication Filter</filter-name>
+      <url-pattern>/printTable/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>SubstitutionFilter</filter-name>
+      <url-pattern>/printTable/*</url-pattern>
+   </filter-mapping>
+
+   <filter-mapping>
+      <filter-name>RequestControlFilter</filter-name>
+      <url-pattern>/help/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>SerializingFilter</filter-name>
+      <url-pattern>/help/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>CAS Authentication Filter</filter-name>
+      <url-pattern>/help/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>CAS Ticket Validation Filter</filter-name>
+      <url-pattern>/help/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>CAS HttpServletRequest Wrapper Filter</filter-name>
+      <url-pattern>/help/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>RequestContext Filter</filter-name>
+      <url-pattern>/help/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>FacesContextFilter</filter-name>
+      <url-pattern>/help/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>Authentication Filter</filter-name>
+      <url-pattern>/help/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>SubstitutionFilter</filter-name>
+      <url-pattern>/help/*</url-pattern>
+   </filter-mapping>
+
+   <filter-mapping>
+      <filter-name>RequestControlFilter</filter-name>
+      <url-pattern>/n/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>SerializingFilter</filter-name>
+      <url-pattern>/n/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>CAS Authentication Filter</filter-name>
+      <url-pattern>/n/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>CAS Ticket Validation Filter</filter-name>
+      <url-pattern>/n/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>CAS HttpServletRequest Wrapper Filter</filter-name>
+      <url-pattern>/n/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>RequestContext Filter</filter-name>
+      <url-pattern>/n/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>FacesContextFilter</filter-name>
+      <url-pattern>/n/*</url-pattern>
+   </filter-mapping>     
+   <filter-mapping>
+      <filter-name>Authentication Filter</filter-name>
+      <url-pattern>/n/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>SubstitutionFilter</filter-name>
+      <url-pattern>/n/*</url-pattern>
+   </filter-mapping>    
+   
+   <filter-mapping>
+      <filter-name>RequestControlFilter</filter-name>
+      <url-pattern>/ajax/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>SerializingFilter</filter-name>
+      <url-pattern>/ajax/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>CAS Authentication Filter</filter-name>
+      <url-pattern>/ajax/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>CAS Ticket Validation Filter</filter-name>
+      <url-pattern>/ajax/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>CAS HttpServletRequest Wrapper Filter</filter-name>
+      <url-pattern>/ajax/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>RequestContext Filter</filter-name>
+      <url-pattern>/ajax/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>FacesContextFilter</filter-name>
+      <url-pattern>/ajax/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>Authentication Filter</filter-name>
+      <url-pattern>/ajax/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>SubstitutionFilter</filter-name>
+      <url-pattern>/ajax/*</url-pattern>
+   </filter-mapping>    
+      
+   <filter-mapping>
+      <filter-name>RequestControlFilter</filter-name>
+      <url-pattern>/faces/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>SerializingFilter</filter-name>
+      <url-pattern>/faces/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>CAS Authentication Filter</filter-name>
+      <url-pattern>/faces/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>CAS Ticket Validation Filter</filter-name>
+      <url-pattern>/faces/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>CAS HttpServletRequest Wrapper Filter</filter-name>
+      <url-pattern>/faces/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>RequestContext Filter</filter-name>
+      <url-pattern>/faces/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>FacesContextFilter</filter-name>
+      <url-pattern>/faces/*</url-pattern>
+   </filter-mapping>     
+   <filter-mapping>
+      <filter-name>Authentication Filter</filter-name>
+      <url-pattern>/faces/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>SubstitutionFilter</filter-name>
+      <url-pattern>/faces/*</url-pattern>
+   </filter-mapping>    
+   
+   <filter-mapping>
+      <filter-name>Admin Authentication Filter</filter-name>
+      <url-pattern>/faces/jsp/admin/*</url-pattern>
+   </filter-mapping>
+
+   <filter-mapping>
+      <filter-name>Admin Authentication Filter</filter-name>
+      <url-pattern>/faces/jsp/categories/*</url-pattern>
+   </filter-mapping>
+
+   <filter-mapping>
+      <filter-name>Admin Authentication Filter</filter-name>
+      <url-pattern>/faces/jsp/groups/*</url-pattern>
+   </filter-mapping>
+
+   <filter-mapping>
+      <filter-name>Admin Authentication Filter</filter-name>
+      <url-pattern>/faces/jsp/users/delete-user.jsp</url-pattern>
+   </filter-mapping>
+
+   <filter-mapping>
+      <filter-name>Admin Authentication Filter</filter-name>
+      <url-pattern>/faces/jsp/users/users.jsp</url-pattern>
+   </filter-mapping>
+
+   <filter-mapping>
+      <filter-name>Admin Authentication Filter</filter-name>
+      <url-pattern>/faces/jsp/admin/system-info.jsp</url-pattern>
+   </filter-mapping>
+
+   <filter-mapping>
+      <filter-name>RequestControlFilter</filter-name>
+      <url-pattern>/webdav/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>SerializingFilter</filter-name>
+      <url-pattern>/webdav/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>RequestContext Filter</filter-name>
+      <url-pattern>/webdav/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>FacesContextFilter</filter-name>
+      <url-pattern>/webdav/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>WebDAV Authentication Filter</filter-name>
+      <url-pattern>/webdav/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>SubstitutionFilter</filter-name>
+      <url-pattern>/webdav/*</url-pattern>
+   </filter-mapping>     
+
+   <filter-mapping>
+      <filter-name>FacesContextFilter</filter-name>
+      <url-pattern>/service/*</url-pattern>
+   </filter-mapping>     
+
+   <filter-mapping>
+      <filter-name>Header Filter</filter-name>
+      <url-pattern>/css/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>Header Filter</filter-name>
+      <url-pattern>/images/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>Header Filter</filter-name>
+      <url-pattern>/scripts/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>Header Filter</filter-name>
+      <url-pattern>/blank.html</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>Header Filter</filter-name>
+      <url-pattern>/favicon.ico</url-pattern>
+   </filter-mapping>
+
+   <!-- ========== Listeners ========== -->
+
+   <listener>
+      <listener-class>org.apache.myfaces.webapp.StartupServletContextListener</listener-class>
+   </listener>
+
+   <listener>
+      <listener-class>org.springframework.web.util.Log4jConfigListener</listener-class>
+   </listener>
+   
+   <listener>
+      <listener-class>org.alfresco.web.app.ContextLoaderListener</listener-class>
+   </listener>
+
+   <listener>
+      <listener-class>org.alfresco.web.app.ContextListener</listener-class>
+   </listener>
+
+   <listener>
+      <listener-class>com.sun.xml.ws.transport.http.servlet.WSServletContextListener</listener-class>
+   </listener>
+
+   <listener>
+      <listener-class>ee.webmedia.alfresco.help.web.HelpTextInitListener</listener-class>
+   </listener>
+
+   <!-- ========== Servlets ========== -->
+
+   <servlet>
+      <servlet-name>Faces Servlet</servlet-name>
+      <servlet-class>javax.faces.webapp.FacesServlet</servlet-class>
+      <load-on-startup>1</load-on-startup>
+   </servlet>
+
+   <servlet>
+      <servlet-name>uploadFile</servlet-name>
+      <servlet-class>org.alfresco.web.app.servlet.UploadFileServlet</servlet-class>
+   </servlet>
+
+   <servlet>
+      <servlet-name>downloadContent</servlet-name>
+      <servlet-class>org.alfresco.web.app.servlet.DownloadContentServlet</servlet-class>
+   </servlet>
+
+   <servlet>
+      <servlet-name>downloadDigiDocContent</servlet-name>
+      <servlet-class>ee.webmedia.alfresco.signature.servlet.DownloadDigiDocContentServlet</servlet-class>
+   </servlet>
+
+   <servlet>
+      <servlet-name>externalAccess</servlet-name>
+      <servlet-class>ee.webmedia.alfresco.simdhs.servlet.ExternalAccessServlet</servlet-class>
+   </servlet>
+
+   <servlet>
+      <servlet-name>ajaxServlet</servlet-name>
+      <servlet-class>ee.webmedia.alfresco.simdhs.servlet.AjaxServlet</servlet-class>
+   </servlet>
+
+   <servlet>
+      <servlet-name>WebDAV</servlet-name>
+      <servlet-class>ee.webmedia.alfresco.webdav.WebDAVCustomServlet</servlet-class>
+      <load-on-startup>5</load-on-startup>
+   </servlet>
+   
+   <servlet>
+      <servlet-name>jax-ws</servlet-name>
+<!--      <servlet-class>com.sun.xml.ws.transport.http.servlet.WSSpringServlet</servlet-class>-->
+      <servlet-class>com.sun.xml.ws.transport.http.servlet.WSServlet</servlet-class>
+      <load-on-startup>6</load-on-startup>
+   </servlet>
+
+   <servlet>
+      <!-- Because servlet name is 'spring-ws', it expects to load its application context from WEB-INF/spring-ws-servlet.xml -->
+      <servlet-name>spring-ws</servlet-name>
+      <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+      <load-on-startup>7</load-on-startup>
+   </servlet>
+
+   <servlet>
+      <servlet-name>PrintTableServlet</servlet-name>
+      <servlet-class>ee.webmedia.alfresco.workflow.web.PrintTableServlet</servlet-class>
+   </servlet>
+
+   <servlet>
+      <servlet-name>HelpTextServlet</servlet-name>
+      <servlet-class>ee.webmedia.alfresco.help.web.HelpTextServlet</servlet-class>
+   </servlet>
+
+   <servlet>
+      <servlet-name>EHCacheJsonReporter</servlet-name>
+      <servlet-class>org.alfresco.web.app.servlet.EHCacheJsonReporter</servlet-class>
+   </servlet>
+
+   <!-- ========== Servlet mappings ========== -->
+
+   <servlet-mapping>
+      <servlet-name>EHCacheJsonReporter</servlet-name>
+      <url-pattern>/EHCacheJsonReporter</url-pattern>
+   </servlet-mapping>
+
+   <servlet-mapping>
+      <servlet-name>uploadFile</servlet-name>
+      <url-pattern>/uploadFileServlet</url-pattern>
+   </servlet-mapping>
+
+   <servlet-mapping>
+      <servlet-name>downloadContent</servlet-name>
+      <url-pattern>/download/*</url-pattern>
+   </servlet-mapping>
+
+   <servlet-mapping>
+      <servlet-name>downloadContent</servlet-name>
+      <url-pattern>/d/*</url-pattern>
+   </servlet-mapping>
+
+   <servlet-mapping>
+      <servlet-name>downloadDigiDocContent</servlet-name>
+      <url-pattern>/ddc/*</url-pattern>
+   </servlet-mapping>
+
+   <servlet-mapping>
+      <servlet-name>externalAccess</servlet-name>
+      <url-pattern>/navigate/*</url-pattern>
+   </servlet-mapping>
+
+   <servlet-mapping>
+      <servlet-name>externalAccess</servlet-name>
+      <url-pattern>/n/*</url-pattern>
+   </servlet-mapping>
+
+   <servlet-mapping>
+      <servlet-name>PrintTableServlet</servlet-name>
+      <url-pattern>/printTable/*</url-pattern>
+   </servlet-mapping>
+
+   <servlet-mapping>
+      <servlet-name>ajaxServlet</servlet-name>
+      <url-pattern>/ajax/*</url-pattern>
+   </servlet-mapping>
+
+   <servlet-mapping>
+      <servlet-name>Faces Servlet</servlet-name>
+      <url-pattern>/faces/*</url-pattern>
+   </servlet-mapping>
+
+   <servlet-mapping>
+      <servlet-name>WebDAV</servlet-name>
+      <url-pattern>/webdav/*</url-pattern>
+   </servlet-mapping>
+
+   <servlet-mapping>
+      <servlet-name>jax-ws</servlet-name>
+      <url-pattern>/service/*</url-pattern>
+   </servlet-mapping>
+
+   <servlet-mapping>
+      <servlet-name>spring-ws</servlet-name>
+      <url-pattern>/service2/*</url-pattern>
+   </servlet-mapping>
+
+   <servlet-mapping>
+      <servlet-name>HelpTextServlet</servlet-name>
+      <url-pattern>/help/*</url-pattern>
+   </servlet-mapping>
+
+   <!-- ========== Other ========== -->
+
+   <session-config>
+      <session-timeout>60</session-timeout>
+   </session-config>
+
+   <welcome-file-list>
+      <welcome-file>index.jsp</welcome-file>
+   </welcome-file-list>
+   
+   <error-page>
+     <error-code>403</error-code>
+     <location>/jsp/error403.jsp</location>
+   </error-page>   
+
+   <error-page>
+      <exception-type>java.lang.Exception</exception-type>
+      <location>/jsp/error.jsp</location>
+   </error-page>
+
+   <resource-ref>
+      <description>The Alfresco database connection</description>
+      <res-ref-name>jdbc/dataSource</res-ref-name>
+      <res-type>javax.sql.DataSource</res-type>
+      <res-auth>Container</res-auth>
+      <res-sharing-scope>Unshareable</res-sharing-scope>
+   </resource-ref>
+
+   <env-entry>
+      <description>A flag that globally enables or disables startup of the major Alfresco subsystems.</description>
+      <env-entry-name>properties/startup.enable</env-entry-name>
+      <env-entry-value>true</env-entry-value>
+      <env-entry-type>java.lang.Boolean</env-entry-type>
+   </env-entry>
+
+   <env-entry>
+      <description>The filesystem directory below which content and index data is stored. Should be on a shared disk
+         if this is a clustered installation.</description>
+      <env-entry-name>properties/dir.root</env-entry-name>
+      <env-entry-value/> <!-- Empty value included for JBoss compatibility -->
+      <env-entry-type>java.lang.String</env-entry-type>
+   </env-entry>
+
+   <env-entry>
+      <description>The fully qualified name of a org.hibernate.dialect.Dialect subclass that allows Hibernate to
+         generate SQL optimized for a particular relational database. Choose from org.hibernate.dialect.DerbyDialect,
+         org.hibernate.dialect.MySQLInnoDBDialect,
+         org.alfresco.repo.domain.hibernate.dialect.AlfrescoOracle9Dialect,
+         org.alfresco.repo.domain.hibernate.dialect.AlfrescoSybaseAnywhereDialect,
+         org.alfresco.repo.domain.hibernate.dialect.AlfrescoSQLServerDialect, org.hibernate.dialect.PostgreSQLDialect</description>
+      <env-entry-name>properties/hibernate.dialect</env-entry-name>
+      <env-entry-value/> <!-- Empty value included for JBoss compatibility -->
+      <env-entry-type>java.lang.String</env-entry-type>
+   </env-entry>
+
+   <env-entry>
+      <description>Mapping from tokens in Hibernate queries to SQL tokens. For PostgreSQL, set this to "true
+         TRUE, false FALSE".</description>
+      <env-entry-name>properties/hibernate.query.substitutions</env-entry-name>
+      <env-entry-value/> <!-- Empty value included for JBoss compatibility -->
+      <env-entry-type>java.lang.String</env-entry-type>
+   </env-entry>
+
+   <env-entry>
+      <description>Enable use of JDBC3 PreparedStatement.getGeneratedKeys() to retrieve natively generated keys
+         after insert. Requires JDBC3+ driver. Set to false if your driver has problems with the Hibernate identifier
+         generators. By default, tries to determine the driver capabilities using connection metadata. </description>
+      <env-entry-name>properties/hibernate.jdbc.use_get_generated_keys</env-entry-name>
+      <env-entry-value/> <!-- Empty value included for JBoss compatibility -->
+      <env-entry-type>java.lang.String</env-entry-type>
+   </env-entry>
+
+   <env-entry>
+      <description>Qualify unqualified table names with the given schema/tablespace in generated SQL. It may be
+         necessary to set this when the target database has more than one schema.</description>
+      <env-entry-name>properties/hibernate.default_schema</env-entry-name>
+      <env-entry-value/> <!-- Empty value included for JBoss compatibility -->
+      <env-entry-type>java.lang.String</env-entry-type>
+   </env-entry>
+
+</web-app>

@@ -1,0 +1,11 @@
+<alfresco-config>
+   <config>
+
+      <dialogs>
+
+         <dialog name="orgstructureListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/orgstructure/web/organizationStructure-list-dialog.jsp" managed-bean="OrganizationStructureListDialog"
+            icon="/images/icons/versioned_properties_large.gif" title-id="orgstructure_title" show-ok-button="false" />
+
+      </dialogs>
+   </config>
+</alfresco-config>

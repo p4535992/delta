@@ -1,9 +1,0 @@
-<alfresco-config>
-   <config>
-      <dialogs>
-         <dialog name="deleteAssoc" page="/jsp/dialog/delete.jsp" managed-bean="DeleteAssocDialog" icon="/images/icons/delete_large.gif" title-id="document_deleteAssocDialog_deleteAssoc"
-            description-id="delete_file_info" />
-
-      </dialogs>
-   </config>
-</alfresco-config>

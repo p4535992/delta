@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<model name="ser:seriesModel" xmlns="http://www.alfresco.org/model/dictionary/1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.alfresco.org/model/dictionary/1.0 http://svn.alfresco.com/repos/alfresco-open-mirror/alfresco/HEAD/root/projects/repository/config/alfresco/model/modelSchema.xsd">
+
+   <imports>
+      <import uri="http://www.alfresco.org/model/dictionary/1.0" prefix="d" />
+      <import uri="http://www.alfresco.org/model/system/1.0" prefix="sys" />
+      <import uri="http://www.alfresco.org/model/content/1.0" prefix="cm" />
+      <import uri="http://alfresco.webmedia.ee/model/document/common/1.0" prefix="doccom" />
+      <import uri="http://alfresco.webmedia.ee/model/volume/1.0" prefix="vol" />
+   </imports>
+
+   <namespaces>
+      <namespace uri="http://alfresco.webmedia.ee/model/series/1.0" prefix="ser" />
+   </namespaces>
+
+   <types>
+      <type name="ser:series">
+         <parent>sys:base</parent>
+         <properties>
+            <property name="ser:type">
+               <type>d:text</type>
+               <mandatory>true</mandatory>
+            </property>
+            <property name="ser:title">
+               <type>d:text</type>
+               <mandatory>true</mandatory>
+            </property>
+            <property name="ser:description">
+               <type>d:text</type>
+            </property>
+            <property name="ser:status">
+               <type>d:text</type>
+               <mandatory>true</mandatory>
+            </property>
+            <property name="ser:order">
+               <type>d:int</type>
+            </property>
+
+            <property name="ser:seriesIdentifier">
+               <type>d:text</type>
+               <mandatory>true</mandatory>
+            </property>
+            <property name="ser:register">
+               <type>d:int</type>
+               <mandatory>true</mandatory>
+            </property>
+            <property name="ser:structUnit">
+               <type>d:int</type><!-- viide asutuse struktuuriüksus(t)ele; üksuse unitId -->
+               <multiple>true</multiple>
+            </property>
+            <property name="ser:retentionPeriod">
+               <type>d:int</type>
+            </property>
+            <property name="ser:docType">
+               <type>d:text</type>
+               <mandatory>true</mandatory>
+               <multiple>true</multiple>
+            </property>
+            <property name="ser:retentionDesc">
+               <type>d:text</type>
+            </property>
+            <property name="ser:individualizingNumbers">
+               <type>d:boolean</type>
+            </property>
+            <property name="ser:containingDocsCount">
+               <type>d:int</type>
+               <default>0</default>
+            </property>
+            <property name="ser:docNumberPattern">
+               <type>d:text</type>
+               <mandatory>true</mandatory>
+               <default>{S}/{DN}</default>
+            </property>
+            <property name="ser:newNumberForEveryDoc">
+               <type>d:boolean</type>
+            </property>
+            <property name="ser:validFromDate">
+               <type>d:date</type>
+            </property>
+            <property name="ser:validToDate">
+               <type>d:date</type>
+            </property>
+            <property name="ser:volType">
+               <type>d:text</type>
+               <mandatory>true</mandatory>
+               <multiple>true</multiple>
+            </property>
+            <property name="ser:volRegister">
+               <type>d:int</type>
+            </property>
+            <property name="ser:volNumberPattern">
+               <type>d:text</type>
+            </property>
+         </properties>
+         <associations>
+            <child-association name="vol:volume">
+               <source>
+                  <mandatory>true</mandatory>
+                  <many>false</many>
+               </source>
+               <target>
+                  <class>vol:volume</class>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </target>
+            </child-association>
+         <!-- Deprecated - series log is not saved under series node any more, but only in application log.
+          Don't create new associations of this type. Can be deleted when all existing associations have been migrated to application log (Riina). -->            
+            <child-association name="ser:seriesLog">
+               <source>
+                  <mandatory>true</mandatory>
+                  <many>false</many>
+               </source>
+               <target>
+                  <class>doccom:documentLog</class>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </target>
+            </child-association>
+         </associations>
+         <mandatory-aspects>
+            <aspect>doccom:accessRights</aspect>
+         </mandatory-aspects>
+      </type>
+
+   </types>
+
+</model>

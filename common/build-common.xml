@@ -1,0 +1,794 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="common" basedir=".">
+   
+    <import file="../hgdk-build.xml" />
+   
+	<dirname property="common.basedir" file="${ant.file.common}" />
+
+	<property name="common.dir.lib" location="${common.basedir}/lib" />
+	<property name="common.dir.lib.dev" location="${common.basedir}/lib-dev" />
+	<property name="common.dir.lib.server" location="${common.basedir}/lib-server" />
+	<property name="common.dir.src" location="${common.basedir}/source/java" />
+	<property name="common.dir.src.test" location="${common.basedir}/source/test/java" />
+	<property name="common.dir.web" location="${common.basedir}/web" />
+	<property name="common.dir.etc" location="${common.basedir}/etc" />
+	<property name="common.alfresco.war" location="${common.dir.etc}/alfresco.war" />
+
+	<property name="project.dir.amp" location="${project.basedir}/amp" />
+	<property name="project.dir.etc" location="${project.basedir}/etc" />
+	<property name="project.dir.lib" location="${project.basedir}/lib" />
+	<property name="project.dir.src" location="${project.basedir}/source/java" />
+	<property name="project.dir.src.test" location="${project.basedir}/source/test/java" />
+	<property name="project.dir.web" location="${project.basedir}/web" />
+	<property name="project.dir.webinf" location="${project.basedir}/WEB-INF" />
+	<property name="project.dir.build" location="${project.basedir}/build" />
+	<property name="project.dir.exploded" location="${project.dir.build}/exploded" />
+	<property name="project.dir.exploded.lib" location="${project.dir.exploded}/WEB-INF/lib" />
+	<property name="project.dir.exploded.classes" location="${project.dir.exploded}/WEB-INF/classes" />
+	<property name="project.dir.test" location="${project.dir.build}/test" />
+	<property name="project.dir.test.classes" location="${project.dir.test}/classes" />
+	<property name="project.dir.test.reports" location="${project.dir.test}/reports" />
+	<property name="project.dir.coverage.reports" location="${project.dir.test.reports}/coverage" />
+	<property name="project.dir.coverage.instrumented" location="${project.dir.test}/classes-instrumented" />
+	<property name="project.build.temporary.war" location="${project.dir.build}/temporary.war" />
+
+	<property name="conf.basedir" location="${project.dir.etc}/conf" />
+	<property name="conf.organization.basedir" location="${project.dir.etc}/conf-organization" />
+	<property name="conf.name.file" location="${project.basedir}/conf-name.properties" />
+	<!-- Provides ${conf.name} and ${conf.organization.name} and ${appserver} -->
+	<property file="${conf.name.file}" />
+	<!-- Provide default value -->
+	<property name="conf.organization.name" value="default" />
+	<property name="appserver" value="glassfish" />
+	<property name="project.build.result.war" location="${project.dir.build}/dhs-${currentVersion}-${conf.organization.name}-${appserver}.war" />
+	<property name="project.build.result.zip" location="${project.dir.build}/delta-${currentVersion}.zip" />
+
+	<path id="classpath">
+		<fileset dir="${project.dir.exploded.lib}" includes="**/*.jar" />
+		<fileset dir="${common.dir.lib.dev}" includes="**/*.jar" />
+		<fileset dir="${common.basedir}/lib-dev-${appserver}" includes="**/*.jar" />
+	</path>
+
+	<!-- XXX: emma/findbugs need some classes from other jars than unit tests -->
+	<path id="classpath.test.base">
+		<pathelement path="${conf.basedir}/${conf.name}/classes" />
+		<pathelement path="${project.dir.exploded.classes}" />
+		<pathelement path="${project.dir.test.classes}" />
+	</path>
+
+	<path id="classpath.test.junit">
+		<path refid="classpath.test.base" />
+		<path refid="classpath" />
+	</path>
+
+	<path id="classpath.test.compile">
+		<path refid="classpath.test.base" />
+
+		<!-- XXX: järgnevaid kolme fileset'i ei saa asendada viitega 
+      <path refid="classpath" />, 
+      kuna mingi sama nimega klass kahes jar'is(common.dir.lib.dev ja project.dir.exploded.lib kataloogides), ühte vaja ühel, teist teisel juhul 
+	  -->
+		<fileset dir="${common.dir.lib.dev}" includes="**/*.jar" />
+		<fileset dir="${project.dir.exploded.lib}" includes="**/*.jar" />
+		<fileset dir="${common.basedir}/lib-dev-${appserver}" includes="**/*.jar" />
+		<path refid="classpath.test.base" />
+	</path>
+
+
+	<target name="clean" description="Remove build directory">
+		<delete dir="${project.dir.build}" failonerror="false" />
+		<delete dir="${project.dir.webinf}" failonerror="false" />
+	</target>
+
+	<target name="clean-all" depends="clean,clean-project" description="Remove build directory and all extracted libraries" />
+
+	<!-- ============= General project setup targets ============= -->
+
+	<target name="clean-project">
+		<delete dir="${common.dir.lib.server}" failonerror="true" />
+	</target>
+
+	<target name="setup-project" depends="clean-project" description="Extract libraries that are needed for building the project">
+		<!-- Eclipse can't use libraries from output folders; also mmt needs classpath before war is extracted to exploded dir -->
+		<mkdir dir="${common.dir.lib.server}" />
+		<unwar src="${common.alfresco.war}" dest="${common.dir.lib.server}">
+			<patternset>
+				<include name="WEB-INF/lib/**/*.jar" />
+			</patternset>
+			<flattenmapper />
+		</unwar>
+
+		<!-- Newer version of XStream is added from common/lib folder -->
+		<delete file="${common.dir.lib.server}/xstream-1.2.2.jar" />
+		<!-- Newer version (2.4) of commons-lang is added from common/lib folder -->
+		<delete file="${common.dir.lib.server}/commons-lang-2.1.jar" />
+		<!-- Newer version (3.6) of poi is added from common/lib folder -->
+		<delete file="${common.dir.lib.server}/poi-3.1.jar" />
+		<!-- Newer version (1.4) of commons-codec is added from common/lib folder -->
+		<delete file="${common.dir.lib.server}/commons-codec-1.3.jar" />
+		<!-- Newer version (1.4) of commons-io is added from common/lib folder -->
+		<delete file="${common.dir.lib.server}/commons-io-1.1.jar" />
+		<!-- Newer version (1.4) of commons-dbcp is added from common/lib folder -->
+		<delete file="${common.dir.lib.server}/commons-dbcp-1.2.2.jar" />
+		<!-- Newer version (1.6.2) of joda-time is added from common/lib folder -->
+		<delete file="${common.dir.lib.server}/joda-time-1.2.1.jar" />
+		<!-- Newer version (1.4.4) of javax.mail is added from common/lib folder -->
+		<delete file="${common.dir.lib.server}/mail.jar" />
+        <!-- Newer version (2.1.3) of CXF is added from common/lib folder -->
+        <!-- 2.1.3 resolves issue https://issues.apache.org/jira/browse/CXF-1624 -->
+        <!-- Cannot use newest 2.1.x version - when generating classes with 2.1.10, there is an error:
+	         java.util.ServiceConfigurationError: com.sun.tools.xjc.Plugin: Provider org.apache.cxf.xjc.ts.ToStringPlugin could not be instantiated: java.lang.ClassCastException
+	    -->
+        <delete file="${common.dir.lib.server}/cxf-2.1.2.jar" />
+	</target>
+
+	<target name="setup-project-done">
+		<available file="${common.dir.lib.server}" property="setup.project.done" />
+		<antcall target="setup-project-conditionally" />
+	</target>
+
+	<target name="setup-project-conditionally" unless="setup.project.done">
+		<antcall target="setup-project" />
+	</target>
+
+	<!-- ============= Exploded setup targets ============= -->
+
+	<target name="clean-exploded">
+		<delete dir="${project.dir.exploded}" failonerror="false" />
+	</target>
+
+	<target name="setup-exploded" depends="setup-project-done,clean-exploded" description="Setup exploded directory">
+		<copy file="${common.alfresco.war}" tofile="${project.build.temporary.war}" preservelastmodified="true" overwrite="true" />
+		<java dir="${project.basedir}" fork="true" classname="org.alfresco.repo.module.tool.ModuleManagementTool">
+			<classpath>
+				<fileset dir="${common.dir.lib.server}" includes="**/*.jar" />
+			</classpath>
+			<arg line="install ${project.dir.amp} ${project.build.temporary.war} -directory -nobackup" />
+		</java>
+		<mkdir dir="${project.dir.exploded}" />
+		<unwar src="${project.build.temporary.war}" dest="${project.dir.exploded}" />
+		<delete file="${project.build.temporary.war}" />
+
+		<!-- Keep libraries in sync with common/lib-server -->
+		<delete dir="${project.dir.exploded.lib}" />
+		<mkdir dir="${project.dir.exploded.lib}" />
+		<copy todir="${project.dir.exploded.lib}" preservelastmodified="true">
+			<fileset dir="${common.dir.lib.server}" />
+		</copy>
+
+		<mkdir dir="${project.dir.webinf}" />
+	</target>
+
+	<target name="setup-exploded-done">
+		<available file="${project.dir.exploded}/index.jsp" property="setup.exploded.done" />
+		<antcall target="setup-exploded-conditionally" />
+		<taskdef resource="emma_ant.properties" classpathref="classpath" />
+	</target>
+
+	<target name="setup-exploded-conditionally" unless="setup.exploded.done">
+		<antcall target="setup-exploded" />
+	</target>
+
+	<!-- ============= Exploded development targets ============= -->
+
+	<target name="init" depends="load-conf,setup-project-done,setup-exploded-done,generate-all" />
+
+	<target name="create-version-file">
+		<property file="${source}" />
+		<echo file="${target}">currentVersion=${stage}.${milestone}.${submilestone}.${version}${line.separator}</echo>
+	</target>
+   
+	<target name="project-version-file-available" >
+	   <available file="${project.basedir}/project.properties" property="is.project.properties.available" />
+	</target>
+ 
+	<target name="version-from-project-properties-file" depends="project-version-file-available" if="${is.project.properties.available}" >
+	   <property file="${project.basedir}/project.properties" />
+	   <echo message="Read current version from project.properties file, currentVersion=${currentVersion}" />
+	</target>
+
+	<target name="compile" depends="init,project-version-file-available,version-from-project-properties-file" description="Copy all files and compile sources to exploded directory">
+	   <loadresource property="currentVersionNumbers">
+	     <propertyresource name="currentVersion"/>
+	     <filterchain>
+	       <tokenfilter>
+	         <replacestring from="ver-" to=""/>
+	       </tokenfilter>
+	     </filterchain>
+	   </loadresource>   
+	    <echo file="${project.dir.build}/project-version.properties" message="currentVersion=${currentVersionNumbers}" />
+		<antcall target="create-version-file">
+			<param name="source" value="${common.basedir}/version.properties" />
+			<param name="target" value="${project.dir.build}/common-version.properties" />
+		</antcall>
+	   <copy tofile="${project.dir.exploded.classes}/ee/webmedia/alfresco/common/project-version.properties"
+	        file="${project.dir.build}/project-version.properties"
+ 	        preservelastmodified="true"
+	 	    overwrite="true" />	   
+		<!-- Project files overwrite common files, they are always defined later -->
+		<!-- You must also define source folders in Eclipse in a certain order - common ones first and project ones later -->
+		<copy todir="${project.dir.exploded.lib}" preservelastmodified="true" overwrite="true">
+			<fileset dir="${common.dir.lib}" includes="**/*.jar" />
+		    <fileset dir="${common.basedir}/lib-${appserver}" includes="**/*.jar" />
+		</copy>
+		<copy todir="${project.dir.exploded.lib}" preservelastmodified="true" overwrite="true">
+			<fileset dir="${project.dir.lib}" includes="**/*.jar" />
+		</copy>
+		<copy todir="${project.dir.exploded}" preservelastmodified="true" overwrite="true">
+			<fileset dir="${common.dir.web}" />
+		</copy>
+		<copy todir="${project.dir.exploded}" preservelastmodified="true" overwrite="true">
+			<fileset dir="${project.dir.web}" />
+		</copy>
+
+		<copy todir="${project.dir.exploded.classes}" preservelastmodified="true" overwrite="true">
+			<fileset dir="${common.dir.src}" excludes="**/*.java,**/*_en_US.properties" />
+		</copy>
+		<copy todir="${project.dir.exploded.classes}" preservelastmodified="true" overwrite="true">
+			<fileset dir="${common.dir.src}" includes="**/*_et_EE.properties" excludes="alfresco/messages/**,alfresco/workflow/**" />
+			<globmapper from="*_et_EE.properties" to="*.properties" />
+		</copy>
+
+		<copy todir="${project.dir.exploded.classes}" preservelastmodified="true" overwrite="true">
+			<fileset dir="${project.dir.src}" excludes="**/*.java,**/*_en_US.properties" />
+		</copy>
+		<copy todir="${project.dir.exploded.classes}" preservelastmodified="true" overwrite="true">
+			<fileset dir="${project.dir.src}" includes="**/*_et_EE.properties" excludes="alfresco/messages/**,alfresco/workflow/**" />
+			<globmapper from="*_et_EE.properties" to="*.properties" />
+		</copy>
+
+		<!-- PropertyPlaceholderConfigurer can't resolve properties on itself -->
+		<move file="${project.dir.exploded.classes}/ee/webmedia/alfresco/${project.name}/${project.name}-alfresco-global.properties"
+            tofile="${project.dir.exploded.classes}/ee/webmedia/alfresco/common/project-alfresco-global.properties"
+            preservelastmodified="true"
+            overwrite="true" />
+		<!-- Provide version information -->
+		<copy tofile="${project.dir.exploded.classes}/ee/webmedia/alfresco/common/common-version.properties"
+            file="${common.basedir}/project.properties"
+            preservelastmodified="true"
+            overwrite="true" />
+		<replace file="${project.dir.exploded.classes}/alfresco/module/${project.name}/module.properties"
+               propertyfile="${project.dir.build}/project-version.properties">
+			<replacefilter token="@currentVersion@" property="currentVersion" />
+		</replace>
+		<replace file="${project.dir.exploded.classes}/alfresco/module/common/module.properties" propertyfile="${project.dir.build}/common-version.properties">
+			<replacefilter token="@currentVersion@" property="currentVersion" />
+		</replace>
+		<!-- Provide project name -->
+		<echo file="${project.dir.exploded.classes}/ee/webmedia/alfresco/common/project-name.properties">project.name=${project.name}${line.separator}</echo>
+		<!-- Organization config override -->
+		<copy tofile="${project.dir.exploded.classes}/organization-alfresco-global.properties"
+            file="${conf.organization.basedir}/${conf.organization.name}/organization-alfresco-global.properties"
+            preservelastmodified="true"
+            overwrite="true" />
+
+		<!-- Compile alfresco classes separately from ee.webmedia, because alfresco classes should not contain references to ee.webmedia -->
+		<javac destdir="${project.dir.exploded.classes}" classpathref="classpath" source="1.6" target="1.6" debug="on" fork="yes" encoding="UTF-8">
+			<src path="${common.dir.src}" />
+			<src path="${project.dir.src}" />
+			<exclude name="ee/webmedia/**" />
+		</javac>
+		<javac destdir="${project.dir.exploded.classes}" classpathref="classpath" source="1.6" target="1.6" debug="on" fork="yes" encoding="UTF-8">
+			<compilerarg value="-Xlint" />
+			<compilerarg value="-Xlint:-deprecation" />
+			<!-- XXX why do I have "bad path element" warnings, where do these path elements come from? -->
+			<compilerarg value="-Xlint:-path" />
+			<src path="${common.dir.src}" />
+			<src path="${project.dir.src}" />
+			<include name="ee/webmedia/**" />
+		</javac>
+
+		<available file="${conf.basedir}/${conf.name}/override" property="exists.dir.override" />
+		<antcall target="copy-override" />
+
+		<copy todir="${project.dir.webinf}" preservelastmodified="true" overwrite="true">
+			<fileset dir="${project.dir.exploded}/WEB-INF" includes="*.tld" />
+		</copy>
+	</target>
+
+	<target name="copy-override" if="exists.dir.override">
+		<copy todir="${project.dir.exploded}" preservelastmodified="true" overwrite="true">
+			<fileset dir="${conf.basedir}/${conf.name}/override" />
+		</copy>
+	</target>
+
+	<target name="war" depends="compile" description="Build WAR file from exploded directory">
+		<delete file="${project.build.result.war}" failonerror="false" />
+		<war destfile="${project.build.result.war}" duplicate="fail">
+			<fileset dir="${project.dir.exploded}" />
+		</war>
+	</target>
+
+	<target name="zip" depends="war" description="Build ZIP file from WAR and helper files needed for distributsion package">
+<!--
+	   <delete file="${project.dir.build}/menetlus-import-sql.zip" failonerror="false" />
+		<zip destfile="${project.dir.build}/menetlus-import-sql.zip" duplicate="fail">
+			<zipfileset dir="${project.dir.etc}/import-sql" includes="*.sql" prefix="sql" />
+		</zip>
+-->
+		<delete file="${project.build.result.zip}" failonerror="false" />
+		<zip destfile="${project.build.result.zip}" duplicate="fail">
+			<zipfileset file="${project.build.result.war}" fullpath="dhs.war" />
+			<zipfileset dir="${project.basedir}/doc" includes="Delta_P*.docx" />
+			<zipfileset file="${conf.basedir}/${conf.name}/classes/alfresco-global.properties" />
+			<zipfileset dir="${common.dir.etc}" includes="index.jsp,jvm-error.sh,krb5.conf,nginx-*.conf.example,soffice-monitor.sh,tomcat-sslvalve-fixed.jar,tomcat.sh" />
+<!--
+		    <zipfileset file="${project.dir.build}/menetlus-import-sql.zip" />
+-->
+		</zip>
+	</target>
+
+	<!-- ============= Code coverage targets ============= -->
+
+	<target name="coverage" depends="compile" description="Prepare code coverage measuring for tests">
+		<delete dir="${project.dir.coverage.instrumented}" failonerror="false" />
+		<mkdir dir="${project.dir.coverage.instrumented}" />
+		<emma>
+			<instr instrpath="${project.dir.exploded.classes}"
+                destdir="${project.dir.coverage.instrumented}"
+                outfile="${project.dir.coverage.instrumented}/coverage.em">
+				<filter includes="ee.webmedia.alfresco.*.service.*" />
+				<filter includes="ee.webmedia.alfresco.signature.transform.*" />
+				<filter includes="ee.webmedia.alfresco.signature.servlet.*" />
+				<filter includes="ee.webmedia.xtee.client.service.*" />
+			</instr>
+		</emma>
+	</target>
+
+	<target name="coverage-report" if="exists.coverage.file">
+		<delete dir="${project.dir.coverage.reports}" failonerror="false" />
+		<mkdir dir="${project.dir.coverage.reports}" />
+		<emma>
+			<report sourcepath="${common.dir.src}">
+				<fileset dir="${project.dir.coverage.instrumented}">
+					<include name="coverage.*" />
+				</fileset>
+				<xml outfile="${project.dir.coverage.reports}/coverage.xml" />
+				<html outfile="${project.dir.coverage.reports}/coverage.html" />
+			</report>
+		</emma>
+	</target>
+
+	<!-- ============= Testing targets ============= -->
+
+	<target name="clean-test" description="Remove test directory">
+		<delete dir="${project.dir.test}" failonerror="false" />
+	</target>
+
+	<target name="compile-test" depends="compile" description="Compiles test sources">
+		<delete dir="${project.dir.test.classes}" failonerror="false" />
+		<mkdir dir="${project.dir.test.classes}" />
+		<copy todir="${project.dir.test.classes}" preservelastmodified="true" overwrite="true">
+			<fileset dir="${common.dir.src.test}" excludes="**/*.java,**/*_en_US.properties" />
+		</copy>
+		<copy todir="${project.dir.test.classes}" preservelastmodified="true" overwrite="true">
+			<fileset dir="${project.dir.src.test}" excludes="**/*.java,**/*_en_US.properties" />
+		</copy>
+		<copy todir="${project.dir.test.classes}" preservelastmodified="true" overwrite="true" verbose="true">
+			<fileset dir="${conf.basedir}/${conf.name}/classes" excludes="**/*.java,**/*_en_US.properties" />
+		</copy>
+		<javac destdir="${project.dir.test.classes}" classpathref="classpath.test.compile" source="1.6" target="1.6" debug="on" fork="yes" encoding="UTF-8">
+			<compilerarg value="-Xlint" />
+			<compilerarg value="-Xlint:-deprecation" />
+			<!-- XXX why do I have "bad path element" warnings, where do these path elements come from? -->
+			<compilerarg value="-Xlint:-path" />
+			<src path="${common.dir.src.test}" />
+			<src path="${project.dir.src.test}" />
+		</javac>
+	</target>
+
+    <!-- TODO Problem: while testing, alfresco doesn't load alfresco-global.properties,
+         so AMR test fails because ${amr.org.id} has no value -->
+
+	<target name="test" depends="compile-test" description="Run test">
+		<delete dir="${project.dir.test.reports}" failonerror="false" />
+		<mkdir dir="${project.dir.test.reports}" />
+		<junit printsummary="yes" fork="yes" forkmode="perBatch" haltonfailure="yes">
+			<classpath>
+				<pathelement location="${project.dir.coverage.instrumented}" />
+				<path refid="classpath.test.junit" />
+			</classpath>
+			<jvmarg value="-Demma.coverage.out.file=${project.dir.coverage.instrumented}/coverage.ec" />
+			<formatter type="xml" />
+			<batchtest todir="${project.dir.test.reports}" haltonerror="false" errorproperty="junit.error" haltonfailure="false" failureproperty="junit.failure">
+				<fileset dir="${common.dir.src.test}" includes="**/*Test.java" />
+				<fileset dir="${project.dir.src.test}" includes="**/*Test.java" />
+			</batchtest>
+		</junit>
+		<antcall target="create-junit-reports" />
+		<available file="${project.dir.coverage.instrumented}/coverage.ec" property="exists.coverage.file" />
+		<antcall target="coverage-report" />
+		<antcall target="test-completed" />
+	</target>
+
+	<target name="test-completed">
+		<fail if="junit.error" message="Error occured while running junit test" />
+		<fail if="junit.failure" message="Failure occured while running junit test" />
+	</target>
+
+	<target name="show-report" description="Show test results report in web browser">
+		<available file="${project.dir.test.reports}" property="exists.test.report" />
+		<antcall target="show-test-report" />
+
+		<available file="${project.dir.coverage.reports}" property="exists.coverage.report" />
+		<property name="report.coverage" location="${project.dir.coverage.reports}/coverage.html" />
+		<antcall target="show-coverage-report" />
+	</target>
+
+	<target name="show-test-report" depends="init" if="exists.test.report">
+		<exec executable="${browser}" spawn="true">
+			<arg file="${project.dir.test.reports}/index.html" />
+		</exec>
+	</target>
+
+	<target name="show-coverage-report" depends="init" if="exists.coverage.report">
+		<exec executable="${browser}" spawn="true">
+			<arg file="${report.coverage}" />
+		</exec>
+	</target>
+
+	<target name="singleClassTest" description="Run test" depends="compile-test">
+		<delete dir="${project.dir.test.reports}" failonerror="false" />
+		<mkdir dir="${project.dir.test.reports}" />
+		<property name="test.single.out" value="build/test/reports/TEST-${classToTest}" />
+		<junit printsummary="yes" fork="yes" haltonfailure="yes">
+			<formatter type="xml" />
+			<test name="${classToTest}"
+               haltonerror="false"
+               errorproperty="junit.error"
+               haltonfailure="false"
+               failureproperty="junit.failure"
+               outfile="${test.single.out}" />
+			<classpath refid="classpath.test.junit" />
+		</junit>
+
+		<echo message="Test-report generated to '${test.single.out}.xml'" />
+		<antcall target="create-junit-reports" />
+		<available file="${project.dir.test.reports}" property="exists.test.report" />
+		<antcall target="show-test-report" />
+		<antcall target="test-completed" />
+	</target>
+
+	<target name="create-junit-reports">
+		<junitreport todir="${project.dir.test.reports}">
+			<fileset dir="${project.dir.test.reports}" includes="TEST-*.xml" />
+			<report todir="${project.dir.test.reports}" />
+		</junitreport>
+	</target>
+
+	<target name="test-all" description="Run all tests with coverage analysis and show the report" depends="coverage, test, show-report" />
+
+	<!-- ============= Code analyzer targets ============= -->
+
+	<target name="findbugs" description="Checks codebase with FindBugs tool">
+		<delete dir="${project.dir.test.reports}/findbugs" failonerror="false" />
+		<mkdir dir="${project.dir.test.reports}/findbugs" />
+
+		<taskdef resource="edu/umd/cs/findbugs/anttask/tasks.properties" classpathref="classpath" />
+		<!-- TODO use excludeFilter for bugs? -->
+		<findbugs classpathref="classpath"
+                pluginlist="${common.dir.lib.dev}/findbugs.jar"
+                output="xml:withMessages"
+                outputFile="${project.dir.test.reports}/findbugs/findbugs.xml"
+                projectName="${project.name}"
+                includeFilter="${common.dir.etc}/findbugsIncludePackages.xml"
+                failOnError="true"
+                timeout="900000">
+			<auxClasspath refid="classpath" />
+			<sourcePath path="${common.dir.src}" />
+			<sourcePath path="${project.dir.src}" />
+			<class location="${project.dir.exploded.classes}" />
+		</findbugs>
+	</target>
+
+	<target name="show-findbugs-report" depends="init">
+		<exec executable="${browser}" spawn="true">
+			<arg file="${project.dir.test.reports}/findbugs/findbugs.xml" />
+		</exec>
+	</target>
+
+	<!-- ============= Configuration file targets ============= -->
+
+	<target name="clean-conf">
+		<delete file="${conf.name.file}" failonerror="false" />
+	</target>
+
+	<target name="load-conf" depends="create-conf">
+		<antcall target="check-conf" />
+		<property file="${conf.basedir}/${conf.name}/build.properties" />
+		<property file="${conf.basedir}/build-default.properties" />
+		<property file="${common.basedir}/etc/conf/build-default.properties" />
+	</target>
+
+	<target name="create-conf" unless="conf.name">
+		<available file="${conf.name.file}" property="exists.file.conf-name.properties" />
+		<fail if="exists.file.conf-name.properties"
+            message="File '${conf.name.file}' exists, but conf.name property does not point to a valid configuration directory, please configure '${conf.name.file}' correctly" />
+
+		<input message="Enter name of the configuration directory name to be used (directory name from directory ${conf.basedir}/&lt;dirname&gt;)"
+             addproperty="conf.name" />
+		<antcall target="check-conf" />
+
+		<input message="Enter name of the organization configuration directory name to be used (directory name from directory ${conf.organization.basedir}/&lt;dirname&gt;)"
+             addproperty="conf.organization.name" />
+		<antcall target="check-organization-conf" />
+
+		<input message="Enter name of application server [tomcat,glassfish]"
+            addproperty="appserver" />
+
+		<echo file="${conf.name.file}">## environment configuration to be used (name of the folder under etc/conf/)${line.separator}</echo>
+		<echo file="${conf.name.file}" append="true">conf.name=${conf.name}${line.separator}</echo>
+		<echo file="${conf.name.file}" append="true">conf.organization.name=${conf.organization.name}${line.separator}</echo>
+		<echo file="${conf.name.file}" append="true">appserver=${appserver}${line.separator}</echo>
+	</target>
+
+	<target name="check-conf">
+		<available file="${conf.basedir}/${conf.name}/build.properties" property="exists.file.build.properties" />
+		<fail unless="exists.file.build.properties"
+            message="File '${conf.basedir}/${conf.name}/build.properties' does not exist, please create it based on 'build.properties.sample'" />
+	</target>
+
+	<target name="check-organization-conf">
+		<available file="${conf.organization.basedir}/${conf.organization.name}/organization-alfresco-global.properties" property="exists.file.organization.properties" />
+		<fail unless="exists.file.organization.properties"
+            message="File '${conf.organization.basedir}/${conf.organization.name}/organization-alfresco-global.properties' does not exist, please create an empty file" />
+	</target>
+
+	<!-- ============= Changelogic ============= -->
+
+	<target name="check-common-version">
+		<available file="${common.basedir}/change.properties" property="common.change.properties.present" />
+		<fail if="common.change.properties.present" message="Project version must point to a specific common version, not a change" />
+	</target>
+
+	<target name="prepare-conf">
+		<echo>Copying conf-name.properties to: ${cl.targetDir}/conf-name.properties</echo>
+		<copy todir="${cl.targetDir}" file="${project.basedir}/conf-name.properties" />
+	</target>
+
+	<!-- ============= Code generation ============= -->
+
+    <available file="${common.basedir}/lib-${appserver}" property="lib.appserver.exists" />
+   
+	<path id="classpath-generate">
+		<fileset dir="${common.dir.lib}" includes="**/*.jar" />
+		<fileset dir="${common.dir.lib.dev}" includes="**/*.jar" />
+		<fileset dir="${common.dir.lib.server}" includes="**/*.jar" />
+	    <fileset dir="${common.basedir}/lib-${appserver}" includes="**/*.jar" />
+		<fileset dir="${common.basedir}/lib-dev-${appserver}" includes="**/*.jar" />
+	</path>
+   
+	<target name="add-dummy-lib-glassfish-dir" unless="lib.appserver.exists" >
+	   <mkdir dir="${common.basedir}/lib-${appserver}" />
+	</target>   
+
+   <target name="generate-all" depends="setup-exploded-done" description="Generate code from WSDL files using JAX-WS">
+      <antcall target="generate-xmlbeans-conditionally">
+         <param name="name" value="amr" />
+         <param name="wsdl" value="amr.wsdl" />
+      </antcall>
+    <antcall target="generate-xmlbeans-conditionally">
+       <param name="name" value="rs" />
+       <param name="wsdl" value="rs.wsdl" />
+    </antcall>    	
+      <antcall target="generate-jaxws-conditionally">
+         <param name="name" value="adr" />
+         <param name="wsdl" value="AvalikDokumendiRegisterService.wsdl" />
+      </antcall>
+      <antcall target="generate-jaxws-conditionally">
+         <param name="name" value="mso" />
+         <param name="wsdl" value="MsoService.wsdl" />
+      </antcall>
+      <antcall target="generate-jaxws-conditionally">
+         <param name="name" value="mso2" />
+         <param name="wsdl" value="MsoService2.wsdl" />
+         <param name="extension" value="true" />
+         <param name="additionalCopy" value="MsoService2-*.xsd" />
+      </antcall>
+      <antcall target="generate-jaxws-conditionally">
+         <param name="name" value="ocr" />
+         <param name="wsdl" value="OcrService.wsdl" />
+      </antcall>
+	 <antcall target="generate-jaxb-conditionally" >
+	 	<param name="name" value="einvoice" />
+	 	<param name="xsd" value="e-invoice_ver1.1.xsd" />
+	 	<param name="package" value="ee.webmedia.alfresco.document.einvoice.generated" />
+	 	<param name="folder" value="ee/webmedia/alfresco/document/einvoice/generated" />
+	 </antcall>
+	 <antcall target="generate-jaxb-conditionally" >
+	 	<param name="name" value="dimensionslist" />
+	 	<param name="xsd" value="DimensioonideNimekiri.xsd" />
+	 	<param name="package" value="ee.webmedia.alfresco.document.einvoice.dimensionslist.generated" />
+	 	<param name="folder" value="ee/webmedia/alfresco/document/einvoice/dimensionslist/generated" />
+	 	<param name="namespace" value="http://www.riik.ee/schemas/e-arve/DimensioonideNimekiri.xsd" />
+	 </antcall>
+	 <antcall target="generate-jaxb-conditionally" >
+	 	<param name="name" value="sellerslist" />
+	 	<param name="xsd" value="HankijaNimekiri.xsd" />
+	 	<param name="package" value="ee.webmedia.alfresco.document.einvoice.sellerslist.generated" />
+	 	<param name="folder" value="ee/webmedia/alfresco/document/einvoice/sellerslist/generated" />
+	 	<param name="namespace" value="http://www.riik.ee/schemas/e-arve/HankijaNimekiri.xsd" />
+	 </antcall> 
+	 <antcall target="generate-jaxb-conditionally" >
+	 	<param name="name" value="vatcodelist" />
+	 	<param name="xsd" value="KaibemaksuKoodNimekiri.xsd" />
+	 	<param name="package" value="ee.webmedia.alfresco.document.einvoice.vatcodelist.generated" />
+	 	<param name="folder" value="ee/webmedia/alfresco/document/einvoice/vatcodelist/generated" />
+	 	<param name="namespace" value="http://www.riik.ee/schemas/e-arve/KaibemaksuKoodNimekiri.xsd" />
+	 </antcall>
+	 <antcall target="generate-jaxb-conditionally" >
+	 	<param name="name" value="accountlist" />
+	 	<param name="xsd" value="KontoNimekiri.xsd" />
+	 	<param name="package" value="ee.webmedia.alfresco.document.einvoice.accountlist.generated" />
+	 	<param name="folder" value="ee/webmedia/alfresco/document/einvoice/accountlist/generated" />
+	 	<param name="namespace" value="http://www.riik.ee/schemas/e-arve/KontoNimekiri.xsd" />
+	 </antcall> 
+	 <antcall target="generate-jaxb-conditionally" >
+	 	<param name="name" value="account" />
+	 	<param name="xsd" value="OstuarveKonteering.xsd" />
+	 	<param name="package" value="ee.webmedia.alfresco.document.einvoice.account.generated" />
+	 	<param name="folder" value="ee/webmedia/alfresco/document/einvoice/account/generated" />
+	 	<param name="namespace" value="http://www.riik.ee/schemas/e-arve/OstuarveKonteering.xsd" />
+	 </antcall>    	
+ 	 <antcall target="generate-jaxb-conditionally" >
+ 	 	<param name="name" value="relvastus" />
+ 	 	<param name="xsd" value="relvastus.xsd" />
+ 	 	<param name="package" value="ee.webmedia.alfresco.relvastus.generated" />
+ 	 	<param name="folder" value="ee/webmedia/alfresco/relvastus/generated" />
+ 	 </antcall>    	
+  	 <antcall target="generate-jaxb-conditionally" >
+  	 	<param name="name" value="ikt" />
+  	 	<param name="xsd" value="ikt.xsd" />
+  	 	<param name="package" value="ee.webmedia.alfresco.ikt.generated" />
+  	 	<param name="folder" value="ee/webmedia/alfresco/ikt/generated" />
+  	 </antcall>    	
+     <antcall target="generate-cxf-conditionally" >
+        <param name="name" value="digidocservice" />
+        <param name="wsdl" value="DigiDocService_2_3.wsdl" />
+        <param name="package" value="ee.sk.digidocservice" />
+        <param name="folder" value="ee/sk/digidocservice" />
+     </antcall>
+   </target>
+
+	<target name="generate-xmlbeans-conditionally">
+		<uptodate property="generate.xmlbeans.done" srcfile="${common.dir.etc}/${wsdl}" targetfile="${common.dir.lib.server}/${name}-ws.jar" />
+		<antcall target="generate-xmlbeans" />
+	</target>
+
+	<target name="generate-xmlbeans" depends="add-dummy-lib-glassfish-dir" unless="generate.xmlbeans.done">
+		<echo>Generating ${name}-ws.jar from ${wsdl}</echo>
+		<delete dir="${project.dir.build}/${name}" failonerror="false" />
+		<taskdef name="xmlbean" classname="org.apache.xmlbeans.impl.tool.XMLBean" classpathref="classpath-generate" />
+		<xmlbean classpathref="classpath-generate" schema="${common.dir.etc}/${wsdl}" javasource="1.6" srconly="true" srcgendir="${project.dir.build}/${name}" classgendir="${project.dir.build}/${name}" noupa="true" fork="true" />
+		<javac destdir="${project.dir.build}/${name}" classpathref="classpath-generate" source="1.6" target="1.6" debug="on" fork="yes" encoding="UTF-8">
+			<src path="${project.dir.build}/${name}" />
+		</javac>
+		<delete file="${common.dir.lib.server}/${name}-ws.jar" failonerror="false" />
+		<jar destfile="${common.dir.lib.server}/${name}-ws.jar" basedir="${project.dir.build}/${name}" />
+		<copy todir="${project.dir.exploded.lib}" preservelastmodified="true" file="${common.dir.lib.server}/${name}-ws.jar" />
+	</target>
+
+	<target name="generate-jaxws-conditionally">
+		<!-- (re-)generate xyz-ws.jar if it doesn't exist or if wsdl modification time is later than xyz-ws.jar modification time -->
+		<uptodate property="generate.jaxws.done" srcfile="${common.dir.etc}/${wsdl}" targetfile="${common.dir.lib.server}/${name}-ws.jar" />
+		<antcall target="generate-jaxws" />
+	</target>
+
+	<target name="generate-jaxws" depends="add-dummy-lib-glassfish-dir" unless="generate.jaxws.done">
+		<echo>Generating ${name}-ws.jar from ${wsdl}</echo>
+		<delete dir="${project.dir.build}/${name}" failonerror="false" />
+		<delete dir="${project.dir.build}/${name}-classes" failonerror="false" />
+		<mkdir dir="${project.dir.build}/${name}" />
+		<mkdir dir="${project.dir.build}/${name}-classes" />
+		<taskdef name="wsimport" classname="com.sun.tools.ws.ant.WsImport" classpathref="classpath-generate" />
+		<wsimport
+         wsdl="${common.dir.etc}/${wsdl}"
+         package="ee.webmedia.alfresco.${name}.ws"
+         sourcedestdir="${project.dir.build}/${name}"
+         destdir="${project.dir.build}/${name}-classes"
+         debug="true"
+         extension="${extension}"
+      />
+		<!-- wsimport writes full path of wsdl file into java file - remove full path, filename stays as "xyz.wsdl" -->
+		<replaceregexp match="file:[^'&quot;]*/([^/]*\.wsdl)" replace="\1" flags="g">
+			<fileset dir="${project.dir.build}/${name}" includes="**/*.java"/>
+		</replaceregexp>
+		<!-- getResource(".") doesn't work, but getResource("") does - maybe it's a JRebel bug... -->
+		<replaceregexp match="\.getResource\(&quot;\.&quot;\)" replace=".getResource(&quot;&quot;)" flags="g">
+			<fileset dir="${project.dir.build}/${name}" includes="**/*.java"/>
+		</replaceregexp>
+		<javac destdir="${project.dir.build}/${name}" classpathref="classpath-generate" source="1.6" target="1.6" debug="on" fork="yes" encoding="UTF-8">
+			<src path="${project.dir.build}/${name}" />
+		</javac>
+		<copy todir="${project.dir.build}/${name}/ee/webmedia/alfresco/${name}/ws" preservelastmodified="true" file="${common.dir.etc}/${wsdl}" />
+		<copy todir="${project.dir.build}/${name}/ee/webmedia/alfresco/${name}/ws" preservelastmodified="true">
+			<fileset dir="${common.dir.etc}" includes="${additionalCopy}"/>
+		</copy>
+		<delete file="${common.dir.lib.server}/${name}-ws.jar" failonerror="false" />
+		<jar destfile="${common.dir.lib.server}/${name}-ws.jar" basedir="${project.dir.build}/${name}" />
+		<copy todir="${project.dir.exploded.lib}" preservelastmodified="true" file="${common.dir.lib.server}/${name}-ws.jar" />
+	</target>
+
+	<!-- e-invoice code generation -->
+	<path id="classpath-jaxb">
+		<!-- In case of includes="**/*.jar" xjc task gives error, when using different jaxb version from jdk jaxb version -->
+		<fileset dir="${common.dir.lib.server}" includes="**/jaxb*.jar" />
+	</path>
+
+	<target name="generate-jaxb-conditionally">
+		<!-- (re-)generate xyz.jar if it doesn't exist or if xsd modification time is later than xyz.jar modification time -->
+		<uptodate property="generate.jaxb.done" srcfile="${common.dir.etc}/${xsd}" targetfile="${common.dir.lib.server}/${name}.jar" />
+		<antcall target="generate-jaxb" />
+	</target>
+
+	<target name="generate-jaxb" depends="add-dummy-lib-glassfish-dir" unless="generate.jaxb.done" description="Generate jaxb code from XSD">
+		<echo>Generating ${name}.jar from ${xsd}</echo>
+		<delete dir="${project.dir.build}/${name}" />
+		<mkdir dir="${project.dir.build}/${name}" />
+		<!-- xjc fails if classpath is directing to main library location (classpath-generate) -->
+		<taskdef name="xjc" classname="com.sun.tools.xjc.XJCTask" classpathref="classpath-jaxb" />
+		<xjc destdir="${project.dir.build}/${name}" package="${package}" removeOldOutput="true">
+		    <!-- TODO binding="${common.dir.etc}/jaxb-bindings.xjb" -->
+			<schema dir="${common.dir.etc}" includes="${xsd}" />
+		</xjc>
+		<!-- Add namespace to root elements (if namespace is given), as some versions of jdk (jaxb? xerces?) 
+			cannot erroneously validate root elements without that -->
+		<antcall target="replace-namespace-conditionally">
+			<param name="name" value="${name}" />
+			<param name="rootNamespace" value="${namespace}" />
+		</antcall>
+		<!-- encoding="UTF-8" attribute is removed because otherwise character reference 
+			(like <xs:pattern value="[&#x0020;-&#x00FF;]*"/>) causes compilation error) -->
+		<javac destdir="${project.dir.build}/${name}" classpathref="classpath-generate" source="1.6" target="1.6" debug="on" fork="yes" >
+			<src path="${project.dir.build}/${name}" />
+		</javac>
+		<copy todir="${project.dir.build}/${name}/${folder}" preservelastmodified="true" file="${common.dir.etc}/${xsd}" />
+		<delete file="${common.dir.lib.server}/${name}.jar" failonerror="false" />
+		<jar destfile="${common.dir.lib.server}/${name}.jar" basedir="${project.dir.build}/${name}" />
+		<copy todir="${project.dir.exploded.lib}" preservelastmodified="true" file="${common.dir.lib.server}/${name}.jar" />
+	</target>
+	
+	<target name="replace-namespace-conditionally" if="namespace">
+		<replaceregexp match="@XmlRootElement\(" replace="@XmlRootElement\(namespace=&quot;${rootNamespace}&quot;, " >
+			<fileset dir="${project.dir.build}/${name}" includes="**/*.java"/>
+		</replaceregexp>
+		<replaceregexp match="@XmlElement\(" replace="@XmlElement\(namespace=&quot;${rootNamespace}&quot;, " flags="g" >
+			<fileset dir="${project.dir.build}/${name}" includes="**/DimensioonideNimekiri.java,**/dimensionslist/*/Dimensioon.java"/>
+		</replaceregexp>
+		<replaceregexp match="@XmlElement\(name = &quot;Nimetus&quot;" replace="@XmlElement\(name = &quot;Nimetus&quot;, namespace=&quot;${rootNamespace}&quot;" flags="g" >
+			<fileset dir="${project.dir.build}/${name}" includes="**/Vaartus.java"/>
+		</replaceregexp>
+		<replaceregexp match="@XmlElement\(name = &quot;Id&quot;" replace="@XmlElement\(name = &quot;Id&quot;, namespace=&quot;${rootNamespace}&quot;" flags="g" >
+			<fileset dir="${project.dir.build}/${name}" includes="**/Vaartus.java"/>
+		</replaceregexp>
+	</target>
+
+	<target name="generate-cxf-conditionally">
+		<!-- (re-)generate xyz.jar if it doesn't exist or if wsdl modification time is later than xyz.jar modification time -->
+		<uptodate property="generate.cxf.done" srcfile="${common.dir.etc}/${wsdl}" targetfile="${common.dir.lib.server}/${name}.jar" />
+		<antcall target="generate-cxf" />
+	</target>
+
+	<target name="generate-cxf" depends="add-dummy-lib-glassfish-dir" unless="generate.cxf.done" description="Generate CXF code from WSDL">
+		<echo>Generating ${name}.jar from ${wsdl}</echo>
+		<delete dir="${project.dir.build}/${name}" />
+		<mkdir dir="${project.dir.build}/${name}" />
+		<java classname="org.apache.cxf.tools.wsdlto.WSDLToJava" failonerror="true" fork="true" classpathref="classpath-generate">
+			<arg value="-verbose"/>
+			<arg value="-client"/>
+			<arg value="-d"/>
+			<arg value="${project.dir.build}/${name}"/>
+			<arg value="-p"/>
+			<arg value="${package}"/>
+			<arg value="${common.dir.etc}/${wsdl}"/>
+		</java>
+		<javac destdir="${project.dir.build}/${name}" classpathref="classpath-generate" source="1.6" target="1.6" debug="on" fork="yes" >
+			<src path="${project.dir.build}/${name}" />
+		</javac>
+		<copy todir="${project.dir.build}/${name}/${folder}" preservelastmodified="true" file="${common.dir.etc}/${wsdl}" />
+		<delete file="${common.dir.lib.server}/${name}.jar" failonerror="false" />
+		<jar destfile="${common.dir.lib.server}/${name}.jar" basedir="${project.dir.build}/${name}" />
+		<copy todir="${project.dir.exploded.lib}" preservelastmodified="true" file="${common.dir.lib.server}/${name}.jar" />
+	</target>
+
+</project>

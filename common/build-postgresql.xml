@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="postgresql" basedir="..">
+
+   <import file="build-common.xml" />
+
+   <target name="loadDbConf" depends="load-conf">
+      <property file="${project.basedir}/source/java/ee/webmedia/alfresco/${project.name}/${project.name}-alfresco-global.properties" />
+      <property file="${conf.basedir}/${conf.name}/classes/alfresco-global.properties" userproperty="true" />
+      <property name="db.pgadmin.url" value="jdbc:postgresql://${db.host}:${db.port}/postgres" />
+   </target>
+
+   <target name="recreateDbAndRepository" depends="loadDbConf" description="delete all data and create what is needed: delete database, user, ${dir.root} and recreate them">
+      <antcall target="dropDB" />
+      <echo>Droping database user '${db.username}'</echo>
+      <sql driver="${db.driver}" password="${db.pgadmin.pass}" url="${db.pgadmin.url}" userid="${db.pgadmin.user}" autocommit="true" onerror="continue">
+         <classpath location="lib/postgresql-9.1-901.jdbc4.jar" />
+         DROP ROLE ${db.username};
+      </sql>
+      <echo>Creating database user '${db.username}' (with password given by property $${db.password})</echo>
+      <sql driver="${db.driver}" password="${db.pgadmin.pass}" url="${db.pgadmin.url}" userid="${db.pgadmin.user}" autocommit="true" onerror="continue">
+         <classpath location="lib/postgresql-9.1-901.jdbc4.jar" />
+         CREATE ROLE ${db.username} LOGIN PASSWORD '${db.password}' NOSUPERUSER NOINHERIT NOCREATEDB NOCREATEROLE;
+      </sql>
+      <antcall target="createDB" />
+      <echo>Deleting alfresco repository data directory '${dir.root}'</echo>
+      <delete dir="${dir.root}" />
+   </target>
+
+   <target name="dropDB" depends="loadDbConf" description="backup db and repo">
+      <echo>Dropping database '${db.name}'</echo>
+      <sql driver="${db.driver}" password="${db.pgadmin.pass}" url="${db.pgadmin.url}" userid="${db.pgadmin.user}" autocommit="true" onerror="continue">
+         <classpath location="lib/postgresql-9.1-901.jdbc4.jar" />
+         DROP DATABASE ${db.name};
+      </sql>
+   </target>
+
+   <target name="createDB" depends="loadDbConf" description="backup db and repo">
+      <echo>Creating database '${db.name}'</echo>
+      <sql driver="${db.driver}" password="${db.pgadmin.pass}" url="${db.pgadmin.url}" userid="${db.pgadmin.user}" autocommit="true" onerror="continue">
+         <classpath location="lib/postgresql-9.1-901.jdbc4.jar" />
+         CREATE DATABASE ${db.name} WITH OWNER = ${db.username} ENCODING ='UTF8';
+      </sql>
+   </target>
+
+   <target name="backupDbAndRepository" depends="load-conf" description="backup db and repo">
+      <!-- can't create backup when app is deployed -->
+      <input message="You can't create backup if application is deployed. Is application deployed?" validargs="y,n" addproperty="do.backup" />
+      <condition property="do.abort">
+         <equals arg1="y" arg2="${do.backup}" />
+      </condition>
+      <fail if="do.abort">Please undeploy application before creating backup.</fail>
+
+      <!-- ask backup directory suffix -->
+      <input message="Enter directory-name suffix for the backup" addproperty="dir.suffix" />
+
+      <!-- setup properties -->
+      <property file="${conf.basedir}/${conf.name}/classes/alfresco-global.properties" />
+      <property name="dir.backup" location="${dir.root}-${dir.suffix}" />
+      <property name="db.backup.file" value="${dir.backup}/db-dump.db" />
+
+      <!-- fail if backup dir or file already exists with the same name -->
+      <available file="${dir.backup}" property="dir.backup.exists" />
+      <fail if="dir.backup.exists" message="Directory '${dir.backup}' exists, choose another directory-name suffix" />
+
+      <!-- create backup from alfresco data directory -->
+      <copy todir="${dir.backup}">
+         <fileset dir="${dir.root}"/>
+      </copy>
+
+      <!-- create backup from DB -->
+      <property name="pg_dump.args" value="--host ${db.host} --port ${db.port} --username ${db.pgadmin.user} --format custom --blobs --verbose --file ${db.backup.file} ${db.name}" />
+      <exec executable="pg_dump">
+         <arg line="${pg_dump.args}" />
+      </exec>
+
+      <!-- check that DB backup file was created -->
+      <available file="${db.backup.file}" property="exists.dbBackupFile.after" />
+      <fail unless="exists.dbBackupFile.after" message="Failed to backup DB" />
+
+      <property name="file.readme" value="${dir.backup}/README.backup.txt" />
+      <tstamp>
+         <format property="time.backup" pattern="yyyy-MM-dd HH:mm.ss.SSS" />
+      </tstamp>
+      <echo file="${file.readme}" append="false">## Created backup ${line.separator}</echo>
+      <echo file="${file.readme}" append="true"># op-system user creating backup ${line.separator}</echo>
+      <echo file="${file.readme}" append="true">user.name=${user.name} ${line.separator}</echo>
+      <echo file="${file.readme}" append="true"># configuration folder name ${line.separator}</echo>
+      <echo file="${file.readme}" append="true">conf.name=${conf.name} ${line.separator}</echo>
+      <echo file="${file.readme}" append="true"># alfresco data folder ${line.separator}</echo>
+      <echo file="${file.readme}" append="true">dir.root=${dir.root} ${line.separator}</echo>
+      <echo file="${file.readme}" append="true"># db schema name ${line.separator}</echo>
+      <echo file="${file.readme}" append="true">db.name=${db.name} ${line.separator}</echo>
+      <echo file="${file.readme}" append="true"># dir where unzipped backup was created ${line.separator}</echo>
+      <echo file="${file.readme}" append="true">dir.backup=${dir.backup} ${line.separator}</echo>
+      <echo file="${file.readme}" append="true"># file where DB backup was created ${line.separator}</echo>
+      <echo file="${file.readme}" append="true">db.backup.file=${db.backup.file} ${line.separator}</echo>
+      <echo file="${file.readme}" append="true"># command executed to create backup ${line.separator}</echo>
+      <echo file="${file.readme}" append="true">pg_dump ${pg_dump.args} ${line.separator}</echo>
+
+      <echo level="warning">Created backup:</echo>
+      <echo level="info">backup dir=${dir.backup}</echo>
+      <echo level="info">DB backup file=${db.backup.file}</echo>
+      <echo level="info">creating zip from backup dir</echo>
+      <available file="${dir.backup}.zip" property="exists.zip" />
+      <fail if="exists.zip" message="${dir.backup}.zip already exists - not zipping backup directory" />
+      <zip destfile="${dir.backup}.zip" basedir="${dir.backup}" />
+      <delete dir="${dir.backup}" />
+   </target>
+
+   <target name="restoreDbAndRepository" depends="load-conf" description="TODO: restore backup">
+      <input message="You must create backup before restoring backup. Did you back up current state?" validargs="y,n" addproperty="did.backup" />
+      <condition property="do.abort">
+         <equals arg1="n" arg2="${did.backup}" />
+      </condition>
+      <fail if="do.abort">Please do backup before restoring backup</fail>
+
+      <input message="Enter location of backup file. For example c:/tmp/delta_data_3_2-bak3.5.2.zip"  addproperty="file.backup" />
+      <available file="${file.backup}" property="exists.file.backup" />
+      <fail unless="exists.file.backup" message="file doesn't exist: ${file.backup}" />
+      <delete dir="${project.dir.build}/backupUnzipped" />
+
+      <!-- setup properties -->
+      <property file="${conf.basedir}/${conf.name}/classes/alfresco-global.properties" />
+      <property name="dir.unzipped" location="${project.dir.build}/backupUnzipped" />
+
+      <echo>unzip backup from ${file.backup} to ${dir.unzipped}</echo>
+      <unzip dest="${dir.unzipped}" src="${file.backup}" />
+
+      <!-- recreate database -->
+      <antcall target="dropDB" /><!-- needed for example when recovering from different machine -->
+      <antcall target="createDB" /><!-- ... and also needed when configuration changed and DB doesn't exist -->
+
+      <property name="db.backup.file" value="${dir.unzipped}/db-dump.db" />
+      <echo>restoring database from db dump file in backup dir: ${db.backup.file}</echo>
+      <property name="pg_restore.args" value="--host ${db.host} --port ${db.port} --username ${db.pgadmin.user} --dbname ${db.name} --verbose ${db.backup.file}" />
+      <exec executable="pg_restore">
+         <arg line="${pg_restore.args}" />
+      </exec>
+
+      <!-- write readme file containing info about restoring process -->
+      <property name="file.readme" value="${dir.unzipped}/README.restore.txt" />
+      <tstamp>
+         <format property="time.backup" pattern="yyyy-MM-dd HH:mm.ss.SSS" />
+      </tstamp>
+      <echo file="${file.readme}" append="false">## Restored backup ${line.separator}</echo>
+      <echo file="${file.readme}" append="true"># op-system user creating backup ${line.separator}</echo>
+      <echo file="${file.readme}" append="true">user.name=${user.name} ${line.separator}</echo>
+      <echo file="${file.readme}" append="true"># configuration folder name ${line.separator}</echo>
+      <echo file="${file.readme}" append="true">conf.name=${conf.name} ${line.separator}</echo>
+      <echo file="${file.readme}" append="true"># alfresco data folder ${line.separator}</echo>
+      <echo file="${file.readme}" append="true">dir.root=${dir.root} ${line.separator}</echo>
+      <echo file="${file.readme}" append="true"># db schema name ${line.separator}</echo>
+      <echo file="${file.readme}" append="true">db.name=${db.name} ${line.separator}</echo>
+      <echo file="${file.readme}" append="true"># file used to restore backup ${line.separator}</echo>
+      <echo file="${file.readme}" append="true">file.backup=${file.backup} ${line.separator}</echo>
+      <echo file="${file.readme}" append="true"># command executed to restore backup ${line.separator}</echo>
+      <echo file="${file.readme}" append="true">pg_restore ${pg_restore.args} ${line.separator}</echo>
+
+      <copy todir="${dir.root}.bak" failonerror="false">
+         <fileset dir="${dir.root}"/>
+      </copy>
+      <delete dir="${dir.root}" />
+      <delete file="${db.backup.file}" />
+      <echo>Replacing original ${dir.root} folder with folder extracted from backup</echo>
+      <copy todir="${dir.root}">
+         <fileset dir="${project.dir.build}/backupUnzipped"/>
+      </copy>
+      <delete dir="${project.dir.build}/backupUnzipped" />
+      <delete dir="${dir.root}.bak" />
+   </target>
+
+</project>

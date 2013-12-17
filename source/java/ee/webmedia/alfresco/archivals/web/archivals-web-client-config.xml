@@ -1,0 +1,21 @@
+<alfresco-config>
+   <config>
+      <dialogs>
+          <dialog name="archivedFunctionsListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/functions/web/functions-list-dialog.jsp"
+                  managed-bean="ArchivedFunctionsListDialog" icon="/images/icons/versioned_properties_large.gif"
+                  show-ok-button="false" actions-config-id="browse_archivals_actions_functions" />
+      </dialogs>
+      <actions>
+         <action id="docList_exportArchivalsConsolidatedList">
+            <evaluator>ee.webmedia.alfresco.document.web.evaluator.IsAdminOrDocManagerEvaluator</evaluator>
+            <label-id>docList_consolidatedList</label-id>
+            <action-listener>#{ArchivedFunctionsListDialog.exportArchivalsConsolidatedList}</action-listener>
+            <style-class>docList_exportArchivalsConsolidatedList</style-class>
+            <target>no_wait_workaround</target>
+         </action>
+         <action-group id="browse_archivals_actions_functions">
+            <action idref="docList_exportArchivalsConsolidatedList" />            
+         </action-group>
+      </actions>      
+   </config>   
+</alfresco-config>

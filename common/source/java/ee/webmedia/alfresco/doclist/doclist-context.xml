@@ -1,0 +1,61 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
+   
+   <bean id="documentListService" class="ee.webmedia.alfresco.doclist.service.DocumentListServiceImpl">
+      <property name="nodeService" ref="NodeService" />
+      <property name="seriesService" ref="SeriesService" />
+      <property name="volumeService" ref="VolumeService" />
+      <property name="caseService" ref="CaseService" />
+      <property name="documentService" ref="DocumentService" />
+      <property name="documentDynamicService" ref="DocumentDynamicService" />
+      <property name="functionsService" ref="FunctionsService" />
+      <property name="generalService" ref="GeneralService" />
+   </bean>
+   
+   <bean id="DocumentListService" class="org.springframework.aop.framework.ProxyFactoryBean">
+      <property name="proxyInterfaces">
+         <list>
+            <value>ee.webmedia.alfresco.doclist.service.DocumentListService</value>
+         </list>
+      </property>
+      <property name="target" ref="documentListService" />
+      <property name="interceptorNames">
+         <list>
+            <idref bean="commonTransactionInterceptor" />
+         </list>
+      </property>
+   </bean>
+   
+   <bean class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
+      <property name="resourceBundles">
+         <list>
+            <value>ee/webmedia/alfresco/doclist/web/doclist-webclient</value>
+         </list>
+      </property>
+   </bean>
+   
+   <bean class="org.alfresco.web.app.ResourceBundleBootstrap">
+      <property name="resourceBundles">
+         <list>
+            <value>ee/webmedia/alfresco/doclist/web/doclist-webclient</value>
+         </list>
+      </property>
+   </bean>
+   
+   <bean id="updateDocumentListCountersBootstrap" class="ee.webmedia.alfresco.doclist.bootstrap.UpdateDocumentListCountersBootstrap" parent="module.baseComponent" >
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="functionsRootBootstrap" />
+            <ref bean="archivalsStoresBootstrap" />
+         </list>
+      </property>
+      <property name="generalService" ref="GeneralService" />
+      <property name="functionsService" ref="FunctionsService" />
+      <property name="transactionService" ref="TransactionService" />
+      <property name="documentListService" ref="DocumentListService" />
+   </bean>
+
+</beans>

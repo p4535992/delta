@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<alfresco-config>
+   <config>
+      <actions>
+         <action id="register_add_new">
+            <label-id>add_new_register</label-id>
+            <image>/images/icons/add.gif</image>
+            <action>dialog:registerDetailsDialog</action>
+            <action-listener>#{RegisterDetailsDialog.setupNewRegister}</action-listener>
+         </action>
+
+         <action-group id="register_list_actions">
+            <action idref="register_add_new" />
+         </action-group>
+      </actions>
+
+      <dialogs>
+         <dialog name="registerListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/register/web/register-list-dialog.jsp" managed-bean="RegisterListDialog"
+            icon="/images/icons/view_properties_large.gif" title-id="registers" show-ok-button="false" actions-config-id="register_list_actions" />
+         <dialog name="registerDetailsDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/register/web/register-details-dialog.jsp" managed-bean="RegisterDetailsDialog"
+            icon="/images/icons/edit_properties_large.gif" title-id="register_data" show-ok-button="true">
+            <buttons>
+               <button id="reset-counter" label-id="reset_counter" action="#{RegisterDetailsDialog.resetCounter}" />
+            </buttons>
+         </dialog>
+      </dialogs>
+   </config>
+   <config evaluator="node-type" condition="reg:register">
+      <property-sheet>
+         <show-property name="reg:id" read-only="true" display-label-id="id" />
+         <show-property name="reg:name" display-label-id="register_name" styleClass="focus"/>
+         <show-property name="reg:counter" readOnlyIf="#{RegisterDetailsDialog.isCounterReadOnly}" display-label-id="register_counter" />
+         <show-property name="reg:comment" display-label-id="register_comment" styleClass="expand19-200" />
+         <show-property name="reg:active" display-label-id="register_active" />
+         <show-property name="reg:autoReset" display-label-id="register_autoReset" />
+      </property-sheet>
+   </config>
+</alfresco-config>
+
