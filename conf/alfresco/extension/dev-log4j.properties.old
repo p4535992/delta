@@ -1,0 +1,36 @@
+# For all other servers: Comment out the Log4J listener in web.xml to activate Log4J.
+log4j.rootLogger=ERROR, stdout, logfile
+
+log4j.appender.stdout=org.apache.log4j.ConsoleAppender
+log4j.appender.stdout.layout=org.apache.log4j.PatternLayout
+log4j.appender.stdout.layout.ConversionPattern=%d{ISO8601} %x %-5p [%t] [%c] %m%n
+
+log4j.appender.logfile=org.apache.log4j.RollingFileAppender
+log4j.appender.logfile.File=/var/log/tomcat/tomcat.log
+log4j.appender.logfile.MaxFileSize=10MB
+
+# Keep three backup files.
+log4j.appender.logfile.MaxBackupIndex=3
+# Pattern to output: date priority [category] - message
+log4j.appender.logfile.layout=org.apache.log4j.PatternLayout
+log4j.appender.logfile.layout.ConversionPattern=%d{ISO8601} %x %-5p [%t] [%c] %m%n
+
+log4j.logger.net.sf.ehcache.distribution=WARN
+
+# Eraldi logifail debug logi jaoks. Hõivab kuni 200MB kettaruumi
+log4j.appender.debuglog=org.apache.log4j.RollingFileAppender
+log4j.appender.debuglog.File=/var/log/tomcat/debug.log
+log4j.appender.debuglog.MaxFileSize=10MB
+log4j.appender.debuglog.MaxBackupIndex=20
+log4j.appender.debuglog.layout=org.apache.log4j.PatternLayout
+log4j.appender.debuglog.layout.ConversionPattern=%d{ISO8601} %x %-5p [%t] [%c] %m%n
+
+# IndexInfo sisaldab indeksite majandamise loogikat, logime debug tasemel ja ainult debug loggerisse.
+log4j.additivity.org.alfresco.repo.search.impl.lucene.index.IndexInfo=false
+log4j.additivity.org.alfresco.repo.search.impl.lucene.index.IndexInfo.Locking=false
+
+log4j.logger.org.alfresco.repo.search.impl.lucene.index.IndexInfo=DEBUG, debuglog
+# Alates versioonist 3.5.11.11 on võimalik lukkude logimine eraldi maha keerata.
+# Need tekitavad liiga palju logi.
+log4j.logger.org.alfresco.repo.search.impl.lucene.index.IndexInfo.Locking=WARN, debuglog
+
