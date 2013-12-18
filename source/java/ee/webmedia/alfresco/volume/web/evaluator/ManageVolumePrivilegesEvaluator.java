@@ -14,7 +14,7 @@ public class ManageVolumePrivilegesEvaluator extends BaseActionEvaluator {
 
     @Override
     public boolean evaluate(Object obj) {
-        return evaluate((Node) obj);
+        return obj != null && evaluate((Node) obj);
     }
 
     @Override

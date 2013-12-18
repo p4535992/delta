@@ -334,6 +334,9 @@ public class VolumeServiceImpl implements VolumeService {
         }
         Map<String, Object> props = volumeNode.getProperties();
         props.put(VolumeModel.Props.STATUS.toString(), DocListUnitStatus.OPEN.getValueName());
+        if (props.containsKey(VolumeModel.Props.MARKED_FOR_ARCHIVING.toString())) {
+            props.put(VolumeModel.Props.MARKED_FOR_ARCHIVING.toString(), Boolean.FALSE);
+        }
         saveOrUpdate(volume);
 
     }

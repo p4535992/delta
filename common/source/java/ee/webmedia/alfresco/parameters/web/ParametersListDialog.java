@@ -65,7 +65,10 @@ public class ParametersListDialog extends BaseDialogBean {
                     || Parameters.SAP_FINANCIAL_DIMENSIONS_FOLDER_IN_DVK.equals(parameter)
                     || Parameters.SEND_INVOICE_TO_DVK_FOLDER.equals(parameter)
                     || Parameters.SEND_PURCHASE_ORDER_INVOICE_TO_DVK_FOLDER.equals(parameter)
-                    || Parameters.SEND_XXL_INVOICE_TO_DVK_FOLDER.equals(parameter)) {
+                    || Parameters.SEND_XXL_INVOICE_TO_DVK_FOLDER.equals(parameter)
+                    || Parameters.REVIEW_WORKFLOW_COST_MANAGER_WORKFLOW_NUMBER.equals(parameter)
+                    || Parameters.DVK_RECEIVE_DOCUMENTS_INVOICE_FOLDER.equals(parameter))
+            {
                 parametersToRemove.add(param);
             }
         }

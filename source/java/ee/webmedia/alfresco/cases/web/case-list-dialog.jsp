@@ -17,7 +17,7 @@
          <f:facet name="header">
             <a:sortLink id="col2-sort" label="#{msg.case_title}" value="title" styleClass="header" />
          </f:facet>
-         <a:actionLink id="col2-link" value="#{r.title} (#{r.containingDocsCount})" action="dialog:documentListDialog" tooltip="#{msg.case_document_list_info}" showLink="false"
+         <a:actionLink id="col2-link" value="#{r.title} (#{r.containingDocsCount})" action="#{DocumentListDialog.action}" tooltip="#{msg.case_document_list_info}" showLink="false"
             actionListener="#{DocumentListDialog.setup}">
             <f:param name="caseNodeRef" value="#{r.node.nodeRef}" />
          </a:actionLink>
@@ -36,7 +36,7 @@
          <f:facet name="header">
             <h:outputText value="&nbsp;" escape="false" />
          </f:facet>
-         <a:actionLink id="col7-act1" value="#{r.title}" image="/images/icons/edit_properties.gif" action="dialog:caseDetailsDialog" showLink="false"
+         <a:actionLink id="col7-act1" value="#{r.title}" image="/images/icons/edit_properties.gif" action="#{CaseDetailsDialog.action}" showLink="false"
             actionListener="#{CaseDetailsDialog.showDetails}" tooltip="#{msg.case_details_info}">
             <f:param name="caseNodeRef" value="#{r.node.nodeRef}" />
          </a:actionLink>

@@ -612,7 +612,12 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         }
         boolean isInEditMode = isInEditMode();
         if (isInEditMode) {
-            BeanHelper.getDocumentLockHelperBean().lockOrUnlockIfNeeded(false);
+            try {
+                BeanHelper.getDocumentLockHelperBean().lockOrUnlockIfNeeded(false);
+            } catch (UnableToPerformException e) {
+                MessageUtil.addErrorMessage("docdyn_deleted");
+                return super.cancel();
+            }
         }
         if (!isInEditMode || !getCurrentSnapshot().viewModeWasOpenedInThePast || !canRestore()) {
             getDocumentDynamicService().deleteDocumentIfDraft(getDocument().getNodeRef());
@@ -623,10 +628,19 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         return null;
     }
 
+    private boolean isNodeRefValid() {
+        NodeRef docRef = getDocument().getNodeRef();
+        return BeanHelper.getNodeService().exists(docRef);
+    }
+
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
         if (!isInEditMode()) {
             throw new RuntimeException("Document metadata block is not in edit mode");
+        }
+        if (!isNodeRefValid()) {
+            MessageUtil.addErrorMessage("docdyn_deleted");
+            return null;
         }
         if (isSaveAndRegister()) {
             // select followup document before saving

@@ -6,6 +6,7 @@ import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.web.app.AlfrescoNavigationHandler;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.TransientNode;
@@ -16,6 +17,7 @@ import ee.webmedia.alfresco.cases.service.CaseService;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
+import ee.webmedia.alfresco.volume.web.VolumeListDialog;
 
 /**
  * Form backing component for cases details page
@@ -32,6 +34,7 @@ public class CaseDetailsDialog extends BaseDialogBean {
     private transient CaseService caseService;
     private Case currentEntry;
     private boolean newCase;
+    private boolean caseRefInvalid;
 
     @Override
     public void init(Map<String, String> params) {
@@ -61,10 +64,22 @@ public class CaseDetailsDialog extends BaseDialogBean {
     // START: jsf actions/accessors
     public void showDetails(ActionEvent event) {
         String caseRef = ActionUtil.getParam(event, PARAM_CASE_NODEREF);
+        if (!nodeExists(new NodeRef(caseRef))) {
+            MessageUtil.addInfoMessage("volume_noderef_not_found");
+            caseRefInvalid = true;
+            return;
+        }
         currentEntry = getCaseService().getCaseByNoderef(caseRef);
         if (null == currentEntry) {
             throw new RuntimeException("Didn't find currentEntry");
         }
+    }
+
+    public String action() {
+        String dialogPrefix = AlfrescoNavigationHandler.DIALOG_PREFIX;
+        boolean tempState = caseRefInvalid;
+        caseRefInvalid = false;
+        return dialogPrefix + (tempState ? VolumeListDialog.DIALOG_NAME : "caseDetailsDialog");
     }
 
     public void addNewCase(ActionEvent event) {

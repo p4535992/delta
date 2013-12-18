@@ -187,7 +187,16 @@
 	   <echo message="Read current version from project.properties file, currentVersion=${currentVersion}" />
 	</target>
 
-	<target name="compile" depends="init,project-version-file-available,version-from-project-properties-file" description="Copy all files and compile sources to exploded directory">
+   <!-- Override tip-version target defined in hgdk-build.xml, so that when project version is read from project.properties,
+        then tip-version is not executed and no error is arised in case hg repo is not accessible -->
+   <target name="tip-version" description="Sets the latest branch tip version as property 'currentVersion'" unless="${is.project.properties.available}" >
+     <echo message="Calling modified tip-version" />
+     <java failonerror="yes" classpathref="hgdk.class.path" classname="eu.webmedia.vcs.tag.CurrentVersionResolver" outputproperty="currentVersion">
+       <arg value="${basedir}" />
+     </java>
+   </target>  
+   
+	<target name="compile" depends="init,project-version-file-available,version-from-project-properties-file,tip-version" description="Copy all files and compile sources to exploded directory">
 	   <loadresource property="currentVersionNumbers">
 	     <propertyresource name="currentVersion"/>
 	     <filterchain>

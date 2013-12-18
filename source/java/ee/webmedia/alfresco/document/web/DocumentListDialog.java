@@ -63,6 +63,7 @@ import ee.webmedia.alfresco.utils.WebUtil;
 import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
 import ee.webmedia.alfresco.volume.service.VolumeService;
+import ee.webmedia.alfresco.volume.web.VolumeListDialog;
 
 /**
  * Form backing bean for Document list. <br>
@@ -131,10 +132,16 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
         final String param;
         if (parameterMap.containsKey(VOLUME_NODE_REF)) {
             param = ActionUtil.getParam(event, VOLUME_NODE_REF);
+            if (!nodeExists(new NodeRef(param))) {
+                return;
+            }
             parentVolume = getVolumeService().getVolumeByNodeRef(param);
             parentCase = null;
         } else {
             param = ActionUtil.getParam(event, CASE_NODE_REF);
+            if (!nodeExists(new NodeRef(param))) {
+                return;
+            }
             parentCase = getCaseService().getCaseByNoderef(param);
             parentVolume = null;
         }
@@ -142,6 +149,15 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
         doInitialSearch();
         BeanHelper.getVisitedDocumentsBean().clearVisitedDocuments();
         WebUtil.navigateTo(AlfrescoNavigationHandler.DIALOG_PREFIX + "documentListDialog");
+    }
+
+    public String action() {
+        String dialogPrefix = AlfrescoNavigationHandler.DIALOG_PREFIX;
+        if (parentVolume == null && parentCase == null) {
+            MessageUtil.addInfoMessage("volume_noderef_not_found");
+            return dialogPrefix + VolumeListDialog.DIALOG_NAME;
+        }
+        return dialogPrefix + "documentListDialog";
     }
 
     public void updateLocationSelect(@SuppressWarnings("unused") ActionEvent event) {
