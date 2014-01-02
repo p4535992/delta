@@ -375,7 +375,7 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
         }
     }
 
-    private void addSignature(SignedDoc signedDoc, SignatureDigest signatureDigest, String signatureHex) throws DigiDocException, SignatureException {
+    private void addSignature(SignedDoc signedDoc, SignatureDigest signatureDigest, String signatureHex) throws Exception {
         byte[] signatureBytes = SignedDoc.hex2bin(signatureHex);
         Signature sig = prepareSignature(signedDoc, signatureDigest.getCertHex());
 
