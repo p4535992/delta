@@ -60,6 +60,8 @@ import org.springframework.core.io.DefaultResourceLoader;
 
 import ee.webmedia.alfresco.common.listener.StatisticsPhaseListener;
 import ee.webmedia.alfresco.common.listener.StatisticsPhaseListenerLogColumn;
+import ee.webmedia.alfresco.monitoring.MonitoredService;
+import ee.webmedia.alfresco.monitoring.MonitoringUtil;
 import ee.webmedia.alfresco.mso.service.MsoService;
 
 /**
@@ -302,13 +304,20 @@ public class OpenOfficeContentTransformerWorker extends ContentTransformerHelper
         try
         {
             this.converter.convert(tempFromFile, sourceFormat, tempToFile, targetFormat);
+            MonitoringUtil.logSuccess(MonitoredService.OUT_OPENOFFICE);
             // conversion success
         }
         catch (OpenOfficeException e)
         {
+            MonitoringUtil.logError(MonitoredService.OUT_OPENOFFICE, e);
             throw new ContentIOException("OpenOffice server conversion failed: \n" + "   reader: " + reader + "\n"
                     + "   writer: " + writer + "\n" + "   from file: " + tempFromFile + "\n" + "   to file: "
                     + tempToFile, e);
+        } 
+        catch (RuntimeException e) 
+        {
+            MonitoringUtil.logError(MonitoredService.OUT_OPENOFFICE, e);
+            throw e;
         } finally {
             StatisticsPhaseListener.addTimingNano(StatisticsPhaseListenerLogColumn.SRV_OOO, startTime);
         }

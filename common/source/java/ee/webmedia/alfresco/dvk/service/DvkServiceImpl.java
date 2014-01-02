@@ -131,12 +131,21 @@ public abstract class DvkServiceImpl implements DvkService {
 
     @Override
     public Map<String, String> getSendingOptions() {
-        return dhlXTeeService.getSendingOptions();
+        try {
+            Map<String, String> sendingOptions = dhlXTeeService.getSendingOptions();
+            MonitoringUtil.logSuccess(MonitoredService.OUT_XTEE_DVK);
+            return sendingOptions;
     }
 
     @Override
     public void updateOrganizationList() {
-        dhlXTeeService.getDvkOrganizationsHelper().updateDvkCapableOrganisationsCache();
+        try {
+            dhlXTeeService.getDvkOrganizationsHelper().updateDvkCapableOrganisationsCache();
+            MonitoringUtil.logSuccess(MonitoredService.OUT_XTEE_DVK);
+        } catch (RuntimeException e) {
+            MonitoringUtil.logError(MonitoredService.OUT_XTEE_DVK, e);
+            throw e;
+        }
     }
 
     @Override
@@ -191,7 +200,17 @@ public abstract class DvkServiceImpl implements DvkService {
 
             lastReceiveDocuments = results.getFirst();
             lastFailedDocuments = results.getSecond();
-            receiveDocuments.addAll(lastReceiveDocuments);
+            if (lastReceiveDocuments.size() != 0 || lastFailedDocuments.size() != 0) {
+                final ArrayList<String> markReceived = new ArrayList<String>(lastReceiveDocuments);
+                markReceived.addAll(lastFailedDocuments);
+                try {
+                    dhlXTeeService.markDocumentsReceived(markReceived);
+                    MonitoringUtil.logSuccess(MonitoredService.OUT_XTEE_DVK);
+                } catch (RuntimeException e) {
+                    MonitoringUtil.logError(MonitoredService.OUT_XTEE_DVK, e);
+                    throw e;
+                }
+                receiveDocuments.addAll(lastReceiveDocuments);
             failedDocuments.addAll(lastFailedDocuments);
 
             countServiceCalls++;
@@ -214,7 +233,14 @@ public abstract class DvkServiceImpl implements DvkService {
      */
     private Pair<Collection<String>, Collection<String>> receiveDocumentsServiceCall(final int maxReceiveDocumentsNr
             , NodeRef dvkIncomingFolder, Collection<String> previouslyFailedDvkIds, String dvkReceiveDocumentsInvoiceFolder) {
-        final ReceivedDocumentsWrapper receiveDocuments = dhlXTeeService.receiveDocuments(maxReceiveDocumentsNr);
+        ReceivedDocumentsWrapper receiveDocuments = null;
+        try {
+            receiveDocuments = dhlXTeeService.receiveDocuments(maxReceiveDocumentsNr);
+            MonitoringUtil.logSuccess(MonitoredService.OUT_XTEE_DVK);
+        } catch (RuntimeException e) {
+            MonitoringUtil.logError(MonitoredService.OUT_XTEE_DVK, e);
+            throw e;
+        }
 
         final Set<String> receivedDocumentIds = new HashSet<String>();
         final List<String> receiveFaileddDocumentIds = new ArrayList<String>();
@@ -527,19 +553,26 @@ public abstract class DvkServiceImpl implements DvkService {
     public String sendLetterDocuments(NodeRef document, Collection<ContentToSend> contentsToSend, final DvkSendLetterDocuments sd) {
         final Collection<String> recipientsRegNrs = sd.getRecipientsRegNrs();
         verifyEnoughData(contentsToSend, recipientsRegNrs, true);
-        final Set<String> sendDocuments = dhlXTeeService.sendDocuments(contentsToSend, getRecipients(recipientsRegNrs), getSenderAddress(),
-                new SimDhsSendDocumentsCallback(sd), new SendDocumentsRequestCallback() {
+        try {
+        	final Set<String> sendDocuments = dhlXTeeService.sendDocuments(contentsToSend, getRecipients(recipientsRegNrs), getSenderAddress(),
+        	       new SimDhsSendDocumentsCallback(sd), new SendDocumentsRequestCallback() {
 
-            @Override
-            public void doWithRequest(SendDocumentsV2RequestType dokumentDocument) {
-                final Long dvkRetainDaysPeriod = parametersService.getLongParameter(Parameters.DVK_RETAIN_PERIOD);
-                final Calendar retainCal = Calendar.getInstance();
-                retainCal.add(Calendar.DAY_OF_MONTH, dvkRetainDaysPeriod.intValue());
-                dokumentDocument.setSailitustahtaeg(retainCal);
-            }
-        });
-        Assert.isTrue(1 == sendDocuments.size(), "Supprise! Size of sendDocuments is " + sendDocuments.size());
-        return sendDocuments.iterator().next();
+         	   @Override
+         	   public void doWithRequest(SendDocumentsV2RequestType dokumentDocument) {
+         	       final Long dvkRetainDaysPeriod = parametersService.getLongParameter(Parameters.DVK_RETAIN_PERIOD);
+         	       final Calendar retainCal = Calendar.getInstance();
+         	       retainCal.add(Calendar.DAY_OF_MONTH, dvkRetainDaysPeriod.intValue());
+         	       dokumentDocument.setSailitustahtaeg(retainCal);
+         	   }
+       	 });
+	        Assert.isTrue(1 == sendDocuments.size(), "Supprise! Size of sendDocuments is " + sendDocuments.size());
+    	    return sendDocuments.iterator().next();
+           MonitoringUtil.logSuccess(MonitoredService.OUT_XTEE_DVK);
+            return next;
+        } catch (RuntimeException e) {
+            MonitoringUtil.logError(MonitoredService.OUT_XTEE_DVK, e);
+            throw e;
+        }
     }
 
     @Override
@@ -552,10 +585,16 @@ public abstract class DvkServiceImpl implements DvkService {
         final Collection<String> recipientsRegNrs = new ArrayList<String>();
         recipientsRegNrs.add(sd.getRecipientsRegNr());
         verifyEnoughData(contentsToSend, recipientsRegNrs, false);
-        final Set<String> sendDocuments = dhlXTeeService.sendDocuments(contentsToSend, getRecipients(recipientsRegNrs), getSenderAddress(),
+		try {
+        	final Set<String> sendDocuments = dhlXTeeService.sendDocuments(contentsToSend, getRecipients(recipientsRegNrs), getSenderAddress(),
                 new DhsSendWorkflowCallback(sd), getSendDocumentRequestCallback());
-        Assert.isTrue(1 == sendDocuments.size(), "Supprise! Size of sendDocuments is " + sendDocuments.size());
-        return sendDocuments.iterator().next();
+        	Assert.isTrue(1 == sendDocuments.size(), "Supprise! Size of sendDocuments is " + sendDocuments.size());
+			MonitoringUtil.logSuccess(MonitoredService.OUT_XTEE_DVK);
+        	return sendDocuments.iterator().next();
+		} catch (RuntimeException e) {
+            MonitoringUtil.logError(MonitoredService.OUT_XTEE_DVK, e);
+            throw e;
+        }
     }
 
     @Override
@@ -602,7 +641,13 @@ public abstract class DvkServiceImpl implements DvkService {
 
     private String getOrganisationName(String addresseeRegNum) {
         // TODO: implementation will probably change
-        return dhlXTeeService.getDvkOrganizationsHelper().getOrganizationName(addresseeRegNum);
+		try {
+			MonitoringUtil.logSuccess(MonitoredService.OUT_XTEE_DVK);
+        	return dhlXTeeService.getDvkOrganizationsHelper().getOrganizationName(addresseeRegNum);
+		} catch (RuntimeException e) {
+            MonitoringUtil.logError(MonitoredService.OUT_XTEE_DVK, e);
+            throw e;
+        }
     }
 
     protected AadressType[] getRecipients(Collection<String> recipientsRegNrs) {

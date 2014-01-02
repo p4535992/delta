@@ -42,6 +42,8 @@ import org.apache.commons.logging.LogFactory;
 
 import ee.webmedia.alfresco.common.listener.StatisticsPhaseListener;
 import ee.webmedia.alfresco.common.listener.StatisticsPhaseListenerLogColumn;
+import ee.webmedia.alfresco.monitoring.MonitoredService;
+import ee.webmedia.alfresco.monitoring.MonitoringUtil;
 
 /**
  * Servlet responsible for processing AJAX requests.
@@ -176,6 +178,7 @@ public class AjaxServlet extends BaseServlet {
             }
 
             // send the error
+            MonitoringUtil.logError(MonitoredService.IN_WWW, cause);
             response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg);
         } else {
             // the response has already been comitted, not much we can do but

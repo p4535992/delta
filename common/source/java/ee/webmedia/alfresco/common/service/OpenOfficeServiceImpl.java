@@ -29,6 +29,8 @@ import com.sun.star.util.XSearchable;
 
 import ee.webmedia.alfresco.common.listener.StatisticsPhaseListener;
 import ee.webmedia.alfresco.common.listener.StatisticsPhaseListenerLogColumn;
+import ee.webmedia.alfresco.monitoring.MonitoredService;
+import ee.webmedia.alfresco.monitoring.MonitoringUtil;
 
 public class OpenOfficeServiceImpl implements OpenOfficeService {
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(OpenOfficeServiceImpl.class);
@@ -104,7 +106,11 @@ public class OpenOfficeServiceImpl implements OpenOfficeService {
                     storeProps[0].Value = "MS Word 97"; // "Microsoft Word 97/2000/XP"
                     XStorable storable = queryInterface(XStorable.class, xComponent);
                     storable.storeToURL(tempToFileUrl, storeProps); // Second replacing run requires new URL
+                    MonitoringUtil.logSuccess(MonitoredService.OUT_OPENOFFICE);
                 }
+            } catch (Exception e) {
+                MonitoringUtil.logError(MonitoredService.OUT_OPENOFFICE, e);
+                throw e;
             } finally {
                 StatisticsPhaseListener.addTimingNano(StatisticsPhaseListenerLogColumn.SRV_OOO, startTime);
             }

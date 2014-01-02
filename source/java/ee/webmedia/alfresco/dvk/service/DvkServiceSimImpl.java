@@ -64,6 +64,8 @@ import ee.webmedia.alfresco.dvk.model.DvkReceivedLetterDocument;
 import ee.webmedia.alfresco.dvk.model.DvkSendWorkflowDocuments;
 import ee.webmedia.alfresco.dvk.model.DvkSendWorkflowDocumentsImpl;
 import ee.webmedia.alfresco.dvk.service.ExternalReviewException.ExceptionType;
+import ee.webmedia.alfresco.monitoring.MonitoredService;
+import ee.webmedia.alfresco.monitoring.MonitoringUtil;
 import ee.webmedia.alfresco.notification.model.NotificationModel;
 import ee.webmedia.alfresco.notification.service.NotificationService;
 import ee.webmedia.alfresco.parameters.model.Parameters;
@@ -127,7 +129,13 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
 
         List<Item> sendStatuses = null;
         // get sendStatus for each dvkId
-        sendStatuses = dhlXTeeService.getSendStatuses(dvkIds);
+        try {
+            sendStatuses = dhlXTeeService.getSendStatuses(dvkIds);
+            MonitoringUtil.logSuccess(MonitoredService.OUT_XTEE_DVK);
+        } catch (RuntimeException e) {
+            MonitoringUtil.logError(MonitoredService.OUT_XTEE_DVK, e);
+            throw e;
+        }
         // fill map containing statuses by ids
         final HashMap<String /* dhlId */, Map<String, SendStatus>> statusesByIds = new HashMap<String, Map<String, SendStatus>>();
         for (Item item : sendStatuses) {
@@ -677,12 +685,18 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
         final Collection<String> recipientsRegNrs = new ArrayList<String>();
         recipientsRegNrs.add(parametersService.getStringParameter(Parameters.SAP_DVK_CODE));
         verifyEnoughData(contentsToSend, recipientsRegNrs, true);
-        final Set<String> sendDocuments = dhlXTeeService.sendDocuments(contentsToSend, getRecipients(recipientsRegNrs), getSenderAddress(),
-                new DhsSendInvoiceToSapCallback(), getSendDocumentToFolderRequestCallback(folder));
-        Assert.isTrue(1 == sendDocuments.size(), "Supprise! Size of sendDocuments is " + sendDocuments.size());
-        String dvkId = sendDocuments.iterator().next();
-        sendOutService.addSapSendInfo(document, dvkId);
-        return dvkId;
+		try {
+	        final Set<String> sendDocuments = dhlXTeeService.sendDocuments(contentsToSend, getRecipients(recipientsRegNrs), getSenderAddress(),
+	                new DhsSendInvoiceToSapCallback(), getSendDocumentToFolderRequestCallback(folder));
+	        Assert.isTrue(1 == sendDocuments.size(), "Supprise! Size of sendDocuments is " + sendDocuments.size());
+	        String dvkId = sendDocuments.iterator().next();
+	        sendOutService.addSapSendInfo(document, dvkId);
+			MonitoringUtil.logSuccess(MonitoredService.OUT_XTEE_DVK);
+        	return dvkId;
+		} catch (RuntimeException e) {
+            MonitoringUtil.logError(MonitoredService.OUT_XTEE_DVK, e);
+            throw e;
+        }
     }
 
     @Override

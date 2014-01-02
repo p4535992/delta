@@ -13,6 +13,8 @@ import org.springframework.ldap.core.simple.SimpleLdapTemplate;
 import org.springframework.ldap.core.support.LdapContextSource;
 import org.springframework.util.Assert;
 
+import ee.webmedia.alfresco.monitoring.MonitoredService;
+import ee.webmedia.alfresco.monitoring.MonitoringUtil;
 import ee.webmedia.alfresco.signature.model.SkLdapCertificate;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 
@@ -40,11 +42,16 @@ public class SkLdapServiceImpl implements SkLdapService {
             List<SkLdapCertificate> list = ldapTemplate.search("", filter, new SkLdapCertificateMapper());
             long stopTime = System.nanoTime();
             LOG.info("PERFORMANCE: query skLdapSearchBySerialNumber - " + duration(startTime, stopTime) + " ms");
+            MonitoringUtil.logSuccess(MonitoredService.OUT_SK_LDAP);
             return list;
         } catch (NamingException e) {
             long stopTime = System.nanoTime();
+            MonitoringUtil.logError(MonitoredService.OUT_SK_LDAP, e);
             LOG.error("Error performing query from SK LDAP service (took " + duration(startTime, stopTime) + " ms) : " + filter, e);
             throw new UnableToPerformException("sk_ldap_error");
+        } catch (RuntimeException e) {
+            MonitoringUtil.logError(MonitoredService.OUT_SK_LDAP, e);
+            throw e;
         }
     }
 

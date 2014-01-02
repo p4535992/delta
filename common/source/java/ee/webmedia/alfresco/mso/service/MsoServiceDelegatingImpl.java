@@ -7,6 +7,9 @@ import org.alfresco.service.cmr.repository.ContentReader;
 import org.alfresco.service.cmr.repository.ContentWriter;
 import org.springframework.beans.factory.InitializingBean;
 
+import ee.webmedia.alfresco.monitoring.MonitoredService;
+import ee.webmedia.alfresco.monitoring.MonitoringUtil;
+
 /**
  * @author Alar Kvell
  */
@@ -73,23 +76,48 @@ public class MsoServiceDelegatingImpl implements MsoService, InitializingBean {
 
     @Override
     public void transformToPdf(ContentReader documentReader, ContentWriter pdfWriter) throws Exception {
-        delegate.transformToPdf(documentReader, pdfWriter);
+        try {
+            delegate.transformToPdf(documentReader, pdfWriter);
+            MonitoringUtil.logSuccess(MonitoredService.OUT_MSO);
+        } catch (Exception e) {
+            MonitoringUtil.logError(MonitoredService.OUT_MSO, e);
+            throw e;
+        }
     }
 
     @Override
     public void replaceFormulas(Map<String, String> formulas, ContentReader documentReader, ContentWriter documentWriter) throws Exception {
-        delegate.replaceFormulas(formulas, documentReader, documentWriter);
+        try {
+            delegate.replaceFormulas(formulas, documentReader, documentWriter);
+            MonitoringUtil.logSuccess(MonitoredService.OUT_MSO);
+        } catch (Exception e) {
+            MonitoringUtil.logError(MonitoredService.OUT_MSO, e);
+            throw e;
+        }
     }
 
     @Override
     public void replaceFormulasAndTransformToPdf(Map<String, String> formulas, ContentReader documentReader, ContentWriter documentWriter, ContentWriter pdfWriter)
             throws Exception {
-        delegate.replaceFormulasAndTransformToPdf(formulas, documentReader, documentWriter, pdfWriter);
+        try {
+            delegate.replaceFormulasAndTransformToPdf(formulas, documentReader, documentWriter, pdfWriter);
+            MonitoringUtil.logSuccess(MonitoredService.OUT_MSO);
+        } catch (Exception e) {
+            MonitoringUtil.logError(MonitoredService.OUT_MSO, e);
+            throw e;
+        }
     }
 
     @Override
     public Map<String, String> modifiedFormulas(ContentReader documentReader) throws Exception {
-        return delegate.modifiedFormulas(documentReader);
+        try {
+            Map<String, String> modifiedFormulas = delegate.modifiedFormulas(documentReader);
+            MonitoringUtil.logSuccess(MonitoredService.OUT_MSO);
+            return modifiedFormulas;
+        } catch (Exception e) {
+            MonitoringUtil.logError(MonitoredService.OUT_MSO, e);
+            throw e;
+        }
     }
 
 }

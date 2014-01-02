@@ -730,6 +730,11 @@
    </servlet>
 
    <servlet>
+      <servlet-name>monitoringServlet</servlet-name>
+      <servlet-class>ee.webmedia.alfresco.monitoring.MonitoringServlet</servlet-class>
+   </servlet>
+
+   <servlet>
       <servlet-name>uploadFile</servlet-name>
       <servlet-class>org.alfresco.web.app.servlet.UploadFileServlet</servlet-class>
    </servlet>
@@ -801,6 +806,11 @@
       <url-pattern>/uploadFileServlet</url-pattern>
    </servlet-mapping>
 
+  <servlet-mapping>
+    <servlet-name>monitoringServlet</servlet-name>
+    <url-pattern>/service/monitor/*</url-pattern>
+  </servlet-mapping>
+
    <servlet-mapping>
       <servlet-name>downloadContent</servlet-name>
       <url-pattern>/download/*</url-pattern>
@@ -864,7 +874,7 @@
    <!-- ========== Other ========== -->
 
    <session-config>
-      <session-timeout>60</session-timeout>
+      <session-timeout>10</session-timeout>
    </session-config>
 
    <welcome-file-list>
