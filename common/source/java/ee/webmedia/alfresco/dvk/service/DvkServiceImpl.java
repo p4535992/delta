@@ -50,6 +50,8 @@ import ee.webmedia.alfresco.dvk.model.DvkSendLetterDocuments;
 import ee.webmedia.alfresco.dvk.model.DvkSendWorkflowDocuments;
 import ee.webmedia.alfresco.dvk.model.IDocument;
 import ee.webmedia.alfresco.dvk.service.ExternalReviewException.ExceptionType;
+import ee.webmedia.alfresco.monitoring.MonitoredService;
+import ee.webmedia.alfresco.monitoring.MonitoringUtil;
 import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
 import ee.webmedia.alfresco.utils.FilenameUtil;
@@ -135,6 +137,10 @@ public abstract class DvkServiceImpl implements DvkService {
             Map<String, String> sendingOptions = dhlXTeeService.getSendingOptions();
             MonitoringUtil.logSuccess(MonitoredService.OUT_XTEE_DVK);
             return sendingOptions;
+        } catch (RuntimeException e) {
+            MonitoringUtil.logError(MonitoredService.OUT_XTEE_DVK, e);
+            throw e;
+        }
     }
 
     @Override
@@ -211,8 +217,8 @@ public abstract class DvkServiceImpl implements DvkService {
                     throw e;
                 }
                 receiveDocuments.addAll(lastReceiveDocuments);
-            failedDocuments.addAll(lastFailedDocuments);
-
+            	failedDocuments.addAll(lastFailedDocuments);
+ 			}
             countServiceCalls++;
             log.info("Finished service call " + countServiceCalls);
         } while (lastReceiveDocuments.size() >= maxReceiveDocumentsNr);
@@ -566,7 +572,7 @@ public abstract class DvkServiceImpl implements DvkService {
          	   }
        	 });
 	        Assert.isTrue(1 == sendDocuments.size(), "Supprise! Size of sendDocuments is " + sendDocuments.size());
-    	    return sendDocuments.iterator().next();
+    	    String next = sendDocuments.iterator().next();
            MonitoringUtil.logSuccess(MonitoredService.OUT_XTEE_DVK);
             return next;
         } catch (RuntimeException e) {
@@ -585,13 +591,14 @@ public abstract class DvkServiceImpl implements DvkService {
         final Collection<String> recipientsRegNrs = new ArrayList<String>();
         recipientsRegNrs.add(sd.getRecipientsRegNr());
         verifyEnoughData(contentsToSend, recipientsRegNrs, false);
-		try {
-        	final Set<String> sendDocuments = dhlXTeeService.sendDocuments(contentsToSend, getRecipients(recipientsRegNrs), getSenderAddress(),
-                new DhsSendWorkflowCallback(sd), getSendDocumentRequestCallback());
-        	Assert.isTrue(1 == sendDocuments.size(), "Supprise! Size of sendDocuments is " + sendDocuments.size());
-			MonitoringUtil.logSuccess(MonitoredService.OUT_XTEE_DVK);
-        	return sendDocuments.iterator().next();
-		} catch (RuntimeException e) {
+        try {
+            final Set<String> sendDocuments = dhlXTeeService.sendDocuments(contentsToSend, getRecipients(recipientsRegNrs), getSenderAddress(),
+                    new DhsSendWorkflowCallback(sd), getSendDocumentRequestCallback());
+            Assert.isTrue(1 == sendDocuments.size(), "Supprise! Size of sendDocuments is " + sendDocuments.size());
+            String next = sendDocuments.iterator().next();
+            MonitoringUtil.logSuccess(MonitoredService.OUT_XTEE_DVK);
+            return next;
+        } catch (RuntimeException e) {
             MonitoringUtil.logError(MonitoredService.OUT_XTEE_DVK, e);
             throw e;
         }
@@ -641,10 +648,11 @@ public abstract class DvkServiceImpl implements DvkService {
 
     private String getOrganisationName(String addresseeRegNum) {
         // TODO: implementation will probably change
-		try {
-			MonitoringUtil.logSuccess(MonitoredService.OUT_XTEE_DVK);
-        	return dhlXTeeService.getDvkOrganizationsHelper().getOrganizationName(addresseeRegNum);
-		} catch (RuntimeException e) {
+        try {
+            String organizationName = dhlXTeeService.getDvkOrganizationsHelper().getOrganizationName(addresseeRegNum);
+            MonitoringUtil.logSuccess(MonitoredService.OUT_XTEE_DVK);
+            return organizationName;
+        } catch (RuntimeException e) {
             MonitoringUtil.logError(MonitoredService.OUT_XTEE_DVK, e);
             throw e;
         }
@@ -820,6 +828,46 @@ public abstract class DvkServiceImpl implements DvkService {
         }
     }
 
+/*
+    protected class DhsSendReviewNotificationCallback implements SendDocumentsDokumentCallback {
+        private final DvkSendReviewTask dvkSendReviewTask;
+
+        public DhsSendReviewNotificationCallback(DvkSendReviewTask dvkSendReviewTask) {
+            this.dvkSendReviewTask = dvkSendReviewTask;
+        }
+
+        @Override
+        public void doWithDocument(DokumentDocument dokumentDocument) {
+            log.debug("altering dokument");
+
+            final DhlDokumentType dhlDokument = dokumentDocument.getDokument();
+            final Transport transport = dhlDokument.getTransport();
+            fillDefaultSenderData(transport, dvkSendReviewTask);
+            AadressType transportSaatja = transport.getSaatja();
+            transportSaatja.setNimi(dvkSendReviewTask.getSenderName());
+            transportSaatja.setEpost(dvkSendReviewTask.getSenderEmail());
+
+            Metaxml metaxml = null;
+            try {
+                metaxml = composeReviewNotificationMetaxml(dvkSendReviewTask.getRecipientDocNode());
+            } catch (XmlException e) {
+                log.debug("Unable to parse deltaKK document xml, error: " + e.getMessage());
+                throw new ReviewTaskException(ExceptionType.PARSING_EXCEPTION);
+            }
+            dhlDokument.setMetaxml(metaxml);
+
+            dhlDokument.setTransport(transport);
+        }
+
+        private Metaxml composeReviewNotificationMetaxml(org.w3c.dom.Node domNode) throws XmlException {
+            final XmlObject documentXml = XmlObject.Factory.parse(domNode);
+            final Metaxml metaXml = Metaxml.Factory.newInstance();
+            final XmlCursor cursorM = metaXml.newCursor();
+            cursorM.toNextToken();
+            return composeMetaxml(documentXml, null);
+        }
+    }
+*/
     private Metaxml composeMetaxml(final XmlObject documentXml, List<javax.xml.namespace.QName> wrappers) {
         final Metaxml metaXml = Metaxml.Factory.newInstance();
         final XmlCursor cursorL = documentXml.newCursor();
