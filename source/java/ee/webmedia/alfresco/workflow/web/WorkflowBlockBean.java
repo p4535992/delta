@@ -179,7 +179,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
     @Override
     public void resetOrInit(DialogDataProvider provider) {
         if (provider == null) {
-            reset();
+            reset(false);
         } else {
             init(provider.getNode());
         }
@@ -192,9 +192,11 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         restore("init");
     }
 
-    public void reset() {
+    public void reset(boolean preserveDocRef) {
         document = null;
-        docRef = null;
+        if (!preserveDocRef) {
+            docRef = null;
+        }
         compoundWorkflows = null;
         myTasks = null;
         finishedReviewTasks = null;
@@ -637,7 +639,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
     }
 
     public boolean getReviewNoteBlockRendered() {
-        return getFinishedReviewTasks().size() != 0;
+        return !BeanHelper.getDocumentDialogHelperBean().isInEditMode() && getFinishedReviewTasks().size() != 0;
     }
 
     public String getReviewNotesPrintUrl() {
@@ -660,11 +662,11 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
     }
 
     public boolean getOpinionNoteBlockRendered() {
-        return getFinishedOpinionTasks().size() != 0;
+        return !BeanHelper.getDocumentDialogHelperBean().isInEditMode() && getFinishedOpinionTasks().size() != 0;
     }
 
     public boolean getOrderAssignmentNoteBlockRendered() {
-        return getFinishedOrderAssignmentTasks().size() != 0;
+        return !BeanHelper.getDocumentDialogHelperBean().isInEditMode() && getFinishedOrderAssignmentTasks().size() != 0;
     }
 
     public String getWorkflowMenuLabel() {
@@ -1061,7 +1063,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         Map<String, Object> attributes = ComponentUtil.getAttributes(search);
         attributes.put(ValidatingModalLayerComponent.ATTR_LABEL_KEY, "workflow_dueDateExtension_extender");
         attributes.put(ValidatingModalLayerComponent.ATTR_MANDATORY, Boolean.TRUE);
-        attributes.put(Search.PICKER_CALLBACK_KEY, "#{UserContactGroupSearchBean.searchAll}");
+        attributes.put(Search.PICKER_CALLBACK_KEY, "#{UserContactGroupSearchBean.searchAllWithoutLogOnUser}");
         attributes.put(Search.FILTER_INDEX, UserContactGroupSearchBean.USERS_FILTER);
         attributes.put(Search.SETTER_CALLBACK, "#{WorkflowBlockBean.assignDueDateExtender}");
         attributes.put(Search.DATA_TYPE_KEY, String.class);

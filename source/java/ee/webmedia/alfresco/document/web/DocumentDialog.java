@@ -651,7 +651,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
         sendOutBlockBean.reset();
         searchBlockBean.reset();
         assocsBlockBean.reset();
-        workflowBlockBean.reset();
+        workflowBlockBean.reset(false);
         logBlockBean.reset();
         transactionsBlockBean.reset();
         isDraft = false;

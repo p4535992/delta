@@ -42,11 +42,11 @@ import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.wizard.WizardManager;
 import org.alfresco.web.bean.wizard.WizardState;
 import org.alfresco.web.config.DialogsConfigElement;
+import org.alfresco.web.config.DialogsConfigElement.DialogConfig;
 import org.alfresco.web.config.NavigationConfigElement;
 import org.alfresco.web.config.NavigationElementReader;
 import org.alfresco.web.config.NavigationResult;
 import org.alfresco.web.config.WizardsConfigElement;
-import org.alfresco.web.config.DialogsConfigElement.DialogConfig;
 import org.alfresco.web.config.WizardsConfigElement.WizardConfig;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
@@ -54,6 +54,7 @@ import org.apache.commons.logging.LogFactory;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.DisableFocusingBean;
+import ee.webmedia.alfresco.docdynamic.web.DocumentDynamicDialog;
 import ee.webmedia.alfresco.menu.ui.MenuBean;
 
 /**
@@ -106,7 +107,7 @@ public class AlfrescoNavigationHandler extends NavigationHandler {
             logger.debug("handleNavigation (fromAction=" + fromAction + ", outcome=" + outcome + ")");
             logger.debug("Current view id: " + context.getViewRoot().getViewId());
         }
-        
+
         // "Support" for navigating to anchors when page loads
         MenuBean mb = getMenuBean(context);
         if (mb != null) {
@@ -115,10 +116,10 @@ public class AlfrescoNavigationHandler extends NavigationHandler {
             // Also reset previous scrolling value
             mb.setScrollToY(null);
 
-            if(outcome != null) {
+            if (outcome != null) {
                 // Check if anchor is set
                 int anchorIndex = outcome.indexOf("#");
-                if(anchorIndex > -1) {
+                if (anchorIndex > -1) {
                     String anchor = outcome.substring(anchorIndex);
                     mb.setScrollToAnchor(anchor);
                     // Restore original outcome for normal processing
@@ -126,7 +127,7 @@ public class AlfrescoNavigationHandler extends NavigationHandler {
                 }
             }
         }
-        
+
         boolean emptyOutcome = StringUtils.isEmpty(outcome);
         DisableFocusingBean disableFocusingBean = BeanHelper.getDisableFocusingBean();
         if (disableFocusingBean != null) {
@@ -136,12 +137,12 @@ public class AlfrescoNavigationHandler extends NavigationHandler {
             } else {
                 disableFocusingBean.setDisableInputFocus(false);
             }
-        }        
-        if(emptyOutcome) {
+        }
+        if (emptyOutcome) {
             return; // this enables to navigate to anchor on a page from actionlistener
         }
-        
-        if(mb != null) {
+
+        if (mb != null) {
             // If we get past previous condition, we don't have a postback, so let's inform MenuBean
             mb.setScrollToY("0");
         }
@@ -174,8 +175,9 @@ public class AlfrescoNavigationHandler extends NavigationHandler {
             ((NavigationBean) bean).resetDispatchContext();
         }
 
-        if (logger.isDebugEnabled())
+        if (logger.isDebugEnabled()) {
             logger.debug("view stack: " + getViewStack(context));
+        }
     }
 
     /**
@@ -228,8 +230,8 @@ public class AlfrescoNavigationHandler extends NavigationHandler {
 
         return closing;
     }
-    
-    public static String getMultipleCloseOutcome(int numberToClose){
+
+    public static String getMultipleCloseOutcome(int numberToClose) {
         return CLOSE_DIALOG_OUTCOME + CLOSE_MULTIPLE_START + numberToClose + CLOSE_MULTIPLE_END;
     }
 
@@ -244,13 +246,15 @@ public class AlfrescoNavigationHandler extends NavigationHandler {
                 try {
                     toClose = Integer.parseInt(closeNum);
                 } catch (NumberFormatException nfe) {
-                    if (logger.isWarnEnabled())
+                    if (logger.isWarnEnabled()) {
                         logger.warn("Could not determine number of containers to close, defaulting to 1");
+                    }
                 }
             }
 
-            if (logger.isDebugEnabled())
+            if (logger.isDebugEnabled()) {
                 logger.debug("Closing " + toClose + " levels of container");
+            }
         }
 
         return toClose;
@@ -330,15 +334,17 @@ public class AlfrescoNavigationHandler extends NavigationHandler {
         Config config = null;
 
         if (dispatchContext != null) {
-            if (logger.isDebugEnabled())
+            if (logger.isDebugEnabled()) {
                 logger.debug("Using dispatch context for dialog lookup: " +
                         dispatchContext.getType().toString());
+            }
 
             // use the node to perform the lookup (this will include the global section)
             config = configSvc.getConfig(dispatchContext);
         } else {
-            if (logger.isDebugEnabled())
+            if (logger.isDebugEnabled()) {
                 logger.debug("Looking up dialog in global config");
+            }
 
             // just use the global
             config = configSvc.getGlobalConfig();
@@ -371,15 +377,17 @@ public class AlfrescoNavigationHandler extends NavigationHandler {
         Config config = null;
 
         if (dispatchContext != null) {
-            if (logger.isDebugEnabled())
+            if (logger.isDebugEnabled()) {
                 logger.debug("Using dispatch context for wizard lookup: " +
                         dispatchContext.getType().toString());
+            }
 
             // use the node to perform the lookup (this will include the global section)
             config = configSvc.getConfig(dispatchContext);
         } else {
-            if (logger.isDebugEnabled())
+            if (logger.isDebugEnabled()) {
                 logger.debug("Looking up wizard in global config");
+            }
 
             // just use the global
             config = configSvc.getGlobalConfig();
@@ -410,31 +418,32 @@ public class AlfrescoNavigationHandler extends NavigationHandler {
         Object obj = context.getExternalContext().getSessionMap().get(EXTERNAL_CONTAINER_SESSION);
 
         if (obj != null && obj instanceof Boolean && ((Boolean) obj).booleanValue()) {
-            if ((this.plainDialogContainer == null) || (Application.isDynamicConfig(FacesContext.getCurrentInstance()))) {
+            if ((plainDialogContainer == null) || (Application.isDynamicConfig(FacesContext.getCurrentInstance()))) {
                 ConfigService configSvc = Application.getConfigService(context);
                 Config globalConfig = configSvc.getGlobalConfig();
 
                 if (globalConfig != null) {
-                    this.plainDialogContainer = globalConfig.getConfigElement("plain-dialog-container").getValue();
+                    plainDialogContainer = globalConfig.getConfigElement("plain-dialog-container").getValue();
                 }
             }
 
-            container = this.plainDialogContainer;
+            container = plainDialogContainer;
         } else {
-            if ((this.dialogContainer == null) || (Application.isDynamicConfig(FacesContext.getCurrentInstance()))) {
+            if ((dialogContainer == null) || (Application.isDynamicConfig(FacesContext.getCurrentInstance()))) {
                 ConfigService configSvc = Application.getConfigService(context);
                 Config globalConfig = configSvc.getGlobalConfig();
 
                 if (globalConfig != null) {
-                    this.dialogContainer = globalConfig.getConfigElement("dialog-container").getValue();
+                    dialogContainer = globalConfig.getConfigElement("dialog-container").getValue();
                 }
             }
 
-            container = this.dialogContainer;
+            container = dialogContainer;
         }
 
-        if (logger.isDebugEnabled())
+        if (logger.isDebugEnabled()) {
             logger.debug("Using dialog container: " + container);
+        }
 
         return container;
     }
@@ -453,31 +462,32 @@ public class AlfrescoNavigationHandler extends NavigationHandler {
         Object obj = context.getExternalContext().getSessionMap().get(EXTERNAL_CONTAINER_SESSION);
 
         if (obj != null && obj instanceof Boolean && ((Boolean) obj).booleanValue()) {
-            if ((this.plainWizardContainer == null) || (Application.isDynamicConfig(FacesContext.getCurrentInstance()))) {
+            if ((plainWizardContainer == null) || (Application.isDynamicConfig(FacesContext.getCurrentInstance()))) {
                 ConfigService configSvc = Application.getConfigService(context);
                 Config globalConfig = configSvc.getGlobalConfig();
 
                 if (globalConfig != null) {
-                    this.plainWizardContainer = globalConfig.getConfigElement("plain-wizard-container").getValue();
+                    plainWizardContainer = globalConfig.getConfigElement("plain-wizard-container").getValue();
                 }
             }
 
-            container = this.plainWizardContainer;
+            container = plainWizardContainer;
         } else {
-            if ((this.wizardContainer == null) || (Application.isDynamicConfig(FacesContext.getCurrentInstance()))) {
+            if ((wizardContainer == null) || (Application.isDynamicConfig(FacesContext.getCurrentInstance()))) {
                 ConfigService configSvc = Application.getConfigService(context);
                 Config globalConfig = configSvc.getGlobalConfig();
 
                 if (globalConfig != null) {
-                    this.wizardContainer = globalConfig.getConfigElement("wizard-container").getValue();
+                    wizardContainer = globalConfig.getConfigElement("wizard-container").getValue();
                 }
             }
 
-            container = this.wizardContainer;
+            container = wizardContainer;
         }
 
-        if (logger.isDebugEnabled())
+        if (logger.isDebugEnabled()) {
             logger.debug("Using wizard container: " + container);
+        }
 
         return container;
     }
@@ -512,9 +522,10 @@ public class AlfrescoNavigationHandler extends NavigationHandler {
         Node dispatchNode = getDispatchContextNode(context);
 
         if (dispatchNode != null) {
-            if (logger.isDebugEnabled())
+            if (logger.isDebugEnabled()) {
                 logger.debug("Found node with type '" + dispatchNode.getType().toString() +
                         "' in dispatch context");
+            }
 
             // get the current view id
             String viewId = context.getViewRoot().getViewId();
@@ -530,8 +541,9 @@ public class AlfrescoNavigationHandler extends NavigationHandler {
                 NavigationResult navResult = navigationCfg.getOverride(viewId, outcome);
 
                 if (navResult != null) {
-                    if (logger.isDebugEnabled())
+                    if (logger.isDebugEnabled()) {
                         logger.debug("Found navigation config: " + navResult);
+                    }
 
                     if (navResult.isOutcome()) {
                         navigate(context, fromAction, navResult.getResult());
@@ -539,26 +551,30 @@ public class AlfrescoNavigationHandler extends NavigationHandler {
                         String newViewId = navResult.getResult();
 
                         if (newViewId.equals(viewId) == false) {
-                            if (logger.isDebugEnabled())
+                            if (logger.isDebugEnabled()) {
                                 logger.debug("Dispatching to new view id: " + newViewId);
+                            }
 
                             goToView(context, newViewId);
                         } else {
-                            if (logger.isDebugEnabled())
+                            if (logger.isDebugEnabled()) {
                                 logger.debug("New view id is the same as the current one so setting outcome to null");
+                            }
 
                             navigate(context, fromAction, null);
                         }
                     }
                 } else {
-                    if (logger.isDebugEnabled())
+                    if (logger.isDebugEnabled()) {
                         logger.debug("No override configuration found for current view or outcome");
+                    }
 
                     navigate(context, fromAction, outcome);
                 }
             } else {
-                if (logger.isDebugEnabled())
+                if (logger.isDebugEnabled()) {
                     logger.debug("No navigation configuration found for node");
+                }
 
                 navigate(context, fromAction, outcome);
             }
@@ -567,8 +583,9 @@ public class AlfrescoNavigationHandler extends NavigationHandler {
             ((NavigationBean) context.getExternalContext().getSessionMap().
                     get(NavigationBean.BEAN_NAME)).resetDispatchContext();
         } else {
-            if (logger.isDebugEnabled())
+            if (logger.isDebugEnabled()) {
                 logger.debug("No dispatch context found");
+            }
 
             // pass off to the original handler
             navigate(context, fromAction, outcome);
@@ -583,22 +600,25 @@ public class AlfrescoNavigationHandler extends NavigationHandler {
      * @param name The name of the dialog to open
      */
     protected void handleDialogOpen(FacesContext context, String fromAction, String name, boolean saveCurrentView) {
-        if (logger.isDebugEnabled())
+        if (logger.isDebugEnabled()) {
             logger.debug("Opening dialog '" + name + "'");
+        }
 
         // firstly add the current view to the stack so we know where to go back to
-        if(saveCurrentView){
+        if (saveCurrentView) {
             addCurrentViewToStack(context);
         }
 
         DialogConfig config = getDialogConfig(context, name, getDispatchContextNode(context));
         if (config != null) {
-            if (logger.isDebugEnabled())
+            if (logger.isDebugEnabled()) {
                 logger.debug("Found config for dialog '" + name + "': " + config);
+            }
 
             // set the dialog manager up with the retrieved config
             DialogManager dialogManager = Application.getDialogManager();
             dialogManager.setCurrentDialog(config);
+            resetWorkflowBlockBeanIfNeeded();
             MenuBean mb = getMenuBean(context);
             if (mb != null) {
                 mb.addBreadcrumbItem(config);
@@ -622,16 +642,18 @@ public class AlfrescoNavigationHandler extends NavigationHandler {
      * @param name The name of the wizard to open
      */
     protected void handleWizardOpen(FacesContext context, String fromAction, String name) {
-        if (logger.isDebugEnabled())
+        if (logger.isDebugEnabled()) {
             logger.debug("Opening wizard '" + name + "'");
+        }
 
         // firstly add the current view to the stack so we know where to go back to
         addCurrentViewToStack(context);
 
         WizardConfig wizard = getWizardConfig(context, name, getDispatchContextNode(context));
         if (wizard != null) {
-            if (logger.isDebugEnabled())
+            if (logger.isDebugEnabled()) {
                 logger.debug("Found config for wizard '" + name + "': " + wizard);
+            }
 
             // set the wizard manager up with the retrieved config
             WizardManager wizardManager = Application.getWizardManager();
@@ -665,12 +687,12 @@ public class AlfrescoNavigationHandler extends NavigationHandler {
         if (dialog) {
             dialogManager = Application.getDialogManager();
         }
-        
-        boolean explicitCancel = false; 
-        if(dialogManager != null && "closeBreadcrumbItem".equals(fromAction)) {
+
+        boolean explicitCancel = false;
+        if (dialogManager != null && "closeBreadcrumbItem".equals(fromAction)) {
             explicitCancel = true;
         }
-        
+
         // if we are closing a wizard or dialog take the view off the
         // top of the stack then decide whether to use the view
         // or any overridden outcome that may be present
@@ -681,8 +703,9 @@ public class AlfrescoNavigationHandler extends NavigationHandler {
             String overriddenOutcome = getOutcomeOverride(outcome);
             if (overriddenOutcome == null) {
                 // there isn't an overidden outcome so go back to the previous view
-                if (logger.isDebugEnabled())
+                if (logger.isDebugEnabled()) {
                     logger.debug("Closing " + closingItem);
+                }
 
                 // determine how many levels of dialog we need to close
                 int numberToClose = getNumberToClose(outcome);
@@ -695,21 +718,23 @@ public class AlfrescoNavigationHandler extends NavigationHandler {
                     if (mb != null) {
                         mb.removeBreadcrumbItem();
                     }
-                    if(explicitCancel) {
+                    if (explicitCancel) {
                         dialogManager.cancel();
                     }
 
-                    if (logger.isDebugEnabled())
+                    if (logger.isDebugEnabled()) {
                         logger.debug("Popped item from the top of the view stack: " + stackObject);
+                    }
                 } else {
                     // check there are enough items on the stack, if there
                     // isn't just get the last one (effectively going back
                     // to the beginning)
                     int itemsOnStack = viewStack.size();
                     if (itemsOnStack < numberToClose) {
-                        if (logger.isDebugEnabled())
+                        if (logger.isDebugEnabled()) {
                             logger.debug("Returning to first item on the view stack as there aren't " +
                                     numberToClose + " containers to close!");
+                        }
 
                         numberToClose = itemsOnStack;
                     }
@@ -717,7 +742,7 @@ public class AlfrescoNavigationHandler extends NavigationHandler {
                     // pop the right object from the stack
                     for (int x = 1; x <= numberToClose; x++) {
                         stackObject = viewStack.pop();
-                        if(explicitCancel) {
+                        if (explicitCancel) {
                             dialogManager.cancel();
                         }
                     }
@@ -726,8 +751,9 @@ public class AlfrescoNavigationHandler extends NavigationHandler {
                         getMenuBean(context).removeBreadcrumbItems(numberToClose);
                     }
 
-                    if (logger.isDebugEnabled())
+                    if (logger.isDebugEnabled()) {
                         logger.debug("Popped item from the stack: " + stackObject);
+                    }
                 }
 
                 // get the appropriate view id for the stack object
@@ -744,12 +770,12 @@ public class AlfrescoNavigationHandler extends NavigationHandler {
                 // an overidden outcome as we could be going anywhere in the app.
                 // grab the current top item first though in case we need to open
                 // another dialog or wizard
-                
+
                 // KAAREL: Since we need to preserve back button (application, not browser) functionality, we can't just clear the stack anymore.
                 // When override is provided, we are opening a wizard or dialog (browse is obsolete) ie we won't make it to else statement.
                 // String previousViewId = getViewIdFromStackObject(context, getViewStack(context).peek());
                 // getViewStack(context).clear();
-                
+
                 // KEIT: Fix described in CL 192351:
                 // Old behavior was: if viewStack contained "dialog1, dialog2, dialog3" and dialog4 is currently open and finish outcome is "dialog:close:dialog:dialog5", then
                 // dialog4 is thrown away, dialog3 is restored and put back into viewStack and dialog5 is opened.
@@ -771,14 +797,15 @@ public class AlfrescoNavigationHandler extends NavigationHandler {
                 if (explicitCancel) {
                     dialogManager.cancel();
                 }
-                
+
                 MenuBean mb = getMenuBean(context);
                 if (mb != null) {
                     mb.removeBreadcrumbItem();
                 }
 
-                if (logger.isDebugEnabled())
+                if (logger.isDebugEnabled()) {
                     logger.debug("Closing " + closingItem + " with an overridden outcome of '" + overriddenOutcome + "'");
+                }
 
                 // if the override is calling another dialog or wizard come back through
                 // the navigation handler from the beginning
@@ -794,7 +821,7 @@ public class AlfrescoNavigationHandler extends NavigationHandler {
                                 " close using view id: " + previousViewId);
                     }
 
-                    this.handleNavigation(context, fromAction, overriddenOutcome);
+                    handleNavigation(context, fromAction, overriddenOutcome);
                 } else {
                     navigate(context, fromAction, overriddenOutcome);
                 }
@@ -848,6 +875,7 @@ public class AlfrescoNavigationHandler extends NavigationHandler {
             IDialogBean bean = dialogState.getDialog();
             if (bean.canRestore()) {
                 Application.getDialogManager().restoreState(dialogState);
+                resetWorkflowBlockBeanIfNeeded();
                 viewId = getDialogContainer(context);
             } else {
                 bean.cancel();
@@ -858,11 +886,19 @@ public class AlfrescoNavigationHandler extends NavigationHandler {
             Application.getWizardManager().restoreState((WizardState) topOfStack);
             viewId = getWizardContainer(context);
         } else {
-            if (logger.isWarnEnabled())
+            if (logger.isWarnEnabled()) {
                 logger.warn("Invalid object found on view stack: " + topOfStack);
+            }
         }
 
         return viewId;
+    }
+
+    private void resetWorkflowBlockBeanIfNeeded() {
+        DialogConfig currentDialog = Application.getDialogManager().getCurrentDialog();
+        if (currentDialog != null && !DocumentDynamicDialog.BEAN_NAME.equals(currentDialog.getManagedBean())) {
+            BeanHelper.getWorkflowBlockBean().reset(true);
+        }
     }
 
     /**
@@ -897,13 +933,14 @@ public class AlfrescoNavigationHandler extends NavigationHandler {
             objectForStack = viewId;
         }
 
-      // if the stack is currently empty add the item
+        // if the stack is currently empty add the item
         Stack stack = getViewStack(context);
         if (stack.empty()) {
             stack.push(objectForStack);
 
-            if (logger.isDebugEnabled())
+            if (logger.isDebugEnabled()) {
                 logger.debug("Pushed item to view stack: " + objectForStack);
+            }
         } else {
             // if the item to go on to the stack and the top of
             // stack are both Strings and equals to each other
@@ -913,13 +950,15 @@ public class AlfrescoNavigationHandler extends NavigationHandler {
             if (objectForStack instanceof String &&
                     topOfStack instanceof String &&
                     topOfStack.equals(objectForStack)) {
-                if (logger.isDebugEnabled())
+                if (logger.isDebugEnabled()) {
                     logger.debug("current view is already top of the view stack!");
+                }
             } else {
                 stack.push(objectForStack);
 
-                if (logger.isDebugEnabled())
+                if (logger.isDebugEnabled()) {
                     logger.debug("Pushed item to view stack: " + objectForStack);
+                }
             }
         }
     }
@@ -932,10 +971,11 @@ public class AlfrescoNavigationHandler extends NavigationHandler {
      * @param outcome The outcome
      */
     private void navigate(FacesContext context, String fromAction, String outcome) {
-        if (logger.isDebugEnabled())
+        if (logger.isDebugEnabled()) {
             logger.debug("Passing outcome '" + outcome + "' to original navigation handler");
+        }
 
-        this.origHandler.handleNavigation(context, fromAction, outcome);
+        origHandler.handleNavigation(context, fromAction, outcome);
     }
 
     /**

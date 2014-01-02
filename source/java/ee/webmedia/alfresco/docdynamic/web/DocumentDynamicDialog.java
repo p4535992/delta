@@ -1131,7 +1131,14 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         getDocumentDialogHelperBean().reset(provider);
         resetModals();
         setShowSaveAndRegisterButton(false);
-        super.resetOrInit(provider); // reset blocks
+        boolean hideWorkflowBlocks = provider == null || provider.isInEditMode();
+        for (DocumentDynamicBlock block : getBlocks().values()) {
+            if (hideWorkflowBlocks && block instanceof WorkflowBlockBean) {
+                ((WorkflowBlockBean) block).reset(provider != null);
+                continue;
+            }
+            block.resetOrInit(provider);
+        }
     }
 
     @Override

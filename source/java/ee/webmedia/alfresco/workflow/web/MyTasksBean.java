@@ -14,6 +14,7 @@ import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.apache.commons.lang.time.DateUtils;
 import org.springframework.web.jsf.FacesContextUtils;
 
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.parameters.model.Parameters;
@@ -95,6 +96,8 @@ public class MyTasksBean extends BaseDialogBean {
         if (forceReload) {
             getSubstitutionBean().setForceSubstituteTaskReload(false);
         }
+        // also due to issue mentioned in Erko's comment this action is performed here
+        BeanHelper.getWorkflowBlockBean().reset(true);
         return null;
     }
 

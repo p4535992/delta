@@ -1,7 +1,5 @@
 package ee.webmedia.alfresco.document.log.web;
 
-import static ee.webmedia.alfresco.common.web.BeanHelper.getLogService;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -21,10 +19,8 @@ import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docconfig.generator.DialogDataProvider;
 import ee.webmedia.alfresco.docdynamic.web.DocumentDynamicBlock;
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
-import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.log.model.LogEntry;
 import ee.webmedia.alfresco.log.model.LogFilter;
-import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
 public class LogBlockBean implements DocumentDynamicBlock {
@@ -58,16 +54,19 @@ public class LogBlockBean implements DocumentDynamicBlock {
 
     @SuppressWarnings("unchecked")
     public void restore() {
-        @SuppressWarnings("rawtypes")
-        List tmpLog;
-        if (SeriesModel.Types.SERIES.equals(parentNodeType)) {
-            tmpLog = getLogService().getLogEntries(getSeriesLogFilter());
-        } else if (getDictionaryService().isSubClass(parentNodeType, DocumentCommonModel.Types.DOCUMENT)) {
-            tmpLog = getLogService().getLogEntries(getDocumentLogFilter());
-        } else {
-            throw new IllegalArgumentException("Unexpected type of parent node for loging block. type='" + parentNodeType + "'");
-        }
-        logs = tmpLog;
+        // FIXME: currently log block is not shown as it causes performance issues
+        // See DELTAPPA-22 for details. NB! This is meant to be temporary hotfix
+        // until better solution is found
+        // @SuppressWarnings("rawtypes")
+        // List tmpLog;
+        // if (SeriesModel.Types.SERIES.equals(parentNodeType)) {
+        // tmpLog = getLogService().getLogEntries(getSeriesLogFilter());
+        // } else if (getDictionaryService().isSubClass(parentNodeType, DocumentCommonModel.Types.DOCUMENT)) {
+        // tmpLog = getLogService().getLogEntries(getDocumentLogFilter());
+        // } else {
+        // throw new IllegalArgumentException("Unexpected type of parent node for loging block. type='" + parentNodeType + "'");
+        // }
+        // logs = tmpLog;
     }
 
     private LogFilter getDocumentLogFilter() {

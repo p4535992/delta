@@ -51,7 +51,7 @@ public class SendOutBlockBean implements DocumentDynamicBlock {
     }
 
     public boolean isRendered() {
-        return getSendInfos() != null && getSendInfos().size() > 0;
+        return !BeanHelper.getDocumentDialogHelperBean().isInEditMode() && getSendInfos() != null && getSendInfos().size() > 0;
     }
 
     // START: getters / setters

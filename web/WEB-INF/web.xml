@@ -134,7 +134,7 @@
    <param-name>facelets.DEVELOPMENT</param-name>
    <param-value>false</param-value>
    </context-param>
-   
+<!--   
    <context-param>
    <param-name>facelets.BUILD_BEFORE_RESTORE</param-name>
    <param-value>true</param-value>
@@ -144,7 +144,7 @@
       <param-name>facelets.BUFFER_SIZE</param-name>
       <param-value>500000</param-value>
    </context-param>
-
+-->
 
 
    <!-- ========== Filters ========== -->
