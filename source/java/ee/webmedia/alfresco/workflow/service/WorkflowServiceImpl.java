@@ -224,24 +224,26 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         List<CompoundWorkflowDefinition> compoundWorkflowDefinitions = new ArrayList<CompoundWorkflowDefinition>(childAssocs.size());
         for (ChildAssociationRef childAssoc : childAssocs) {
             NodeRef nodeRef = childAssoc.getChildRef();
-            compoundWorkflowDefinitions.add(getCompoundWorkflowDefinition(nodeRef, root, getUserFullName));
+            compoundWorkflowDefinitions.add(getCompoundWorkflowDefinition(nodeRef, root, getUserFullName, false));
         }
         return compoundWorkflowDefinitions;
     }
 
     @Override
     public CompoundWorkflowDefinition getCompoundWorkflowDefinition(NodeRef nodeRef) {
-        return getCompoundWorkflowDefinition(nodeRef, nodeService.getPrimaryParent(nodeRef).getParentRef(), true);
+        return getCompoundWorkflowDefinition(nodeRef, nodeService.getPrimaryParent(nodeRef).getParentRef(), true, true);
     }
 
-    private CompoundWorkflowDefinition getCompoundWorkflowDefinition(NodeRef nodeRef, NodeRef parent, boolean getUserFullName) {
+    private CompoundWorkflowDefinition getCompoundWorkflowDefinition(NodeRef nodeRef, NodeRef parent, boolean getUserFullName, boolean addWorkflows) {
         WmNode node = getNode(nodeRef, WorkflowCommonModel.Types.COMPOUND_WORKFLOW_DEFINITION, false, false);
         CompoundWorkflowDefinition compoundWorkflowDefinition = new CompoundWorkflowDefinition(node, parent);
         String userId = compoundWorkflowDefinition.getUserId();
         if (StringUtils.isNotBlank(userId) && getUserFullName) {
             compoundWorkflowDefinition.setUserFullName(userService.getUserFullName(userId));
         }
-        getAndAddWorkflows(nodeRef, compoundWorkflowDefinition, false, true);
+        if (addWorkflows) {
+            getAndAddWorkflows(nodeRef, compoundWorkflowDefinition, false, true);
+        }
         return compoundWorkflowDefinition;
     }
 
