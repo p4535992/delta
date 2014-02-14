@@ -77,8 +77,10 @@ public class ChildNodeChangeInfo {
         childrenMap.put(DocumentChildModel.Assocs.APPLICANT_ABROAD, ChildNodeChangeInfo.APPLICANT);
         childrenMap.put(DocumentChildModel.Assocs.APPLICANT_DOMESTIC, ChildNodeChangeInfo.APPLICANT);
         childrenMap.put(DocumentChildModel.Assocs.APPLICANT_TRAINING, ChildNodeChangeInfo.APPLICANT);
+        childrenMap.put(DocumentChildModel.Assocs.APPLICANT_ERRAND, ChildNodeChangeInfo.APPLICANT);
         childrenMap.put(DocumentChildModel.Assocs.ERRAND_ABROAD, ChildNodeChangeInfo.ERRAND);
         childrenMap.put(DocumentChildModel.Assocs.ERRAND_DOMESTIC, ChildNodeChangeInfo.ERRAND);
+        childrenMap.put(DocumentChildModel.Assocs.ERRAND, ChildNodeChangeInfo.ERRAND);
         childrenMap.put(DocumentChildModel.Assocs.CONTRACT_PARTY, ChildNodeChangeInfo.PARTY);
         CHILD_NODE_CHANGE_INFO = Collections.unmodifiableMap(childrenMap);
     }

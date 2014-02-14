@@ -118,5 +118,7 @@
 
    <bean id="CaseFileLogBlockBean" class="ee.webmedia.alfresco.casefile.web.CaseFileLogBlockBean" scope="session" />   
       
+   <bean id="CaseFileSendForInformationDialog" class="ee.webmedia.alfresco.casefile.web.CaseFileSendForInformationDialog" scope="session" />
+      
    <!-- END: web beans: -->
 </beans>

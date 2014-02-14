@@ -105,10 +105,11 @@ public class CaseFileDialog extends BaseSnapshotCapableWithBlocksDialog<CaseFile
     /** @param event */
     public void createDraft(ActionEvent event) {
         String typeId = ActionUtil.getParam(event, "typeId");
-        createCaseFile(typeId, null, false, false, null);
+        createCaseFile(typeId, null, false, false, null, false);
     }
 
-    public void createCaseFile(String typeId, DocumentDynamic documentToAdd, boolean registerDoc, boolean sendDocNotifications, List<String> docSaveListeners) {
+    public void createCaseFile(String typeId, DocumentDynamic documentToAdd, boolean registerDoc, boolean sendDocNotifications, List<String> docSaveListeners,
+            boolean isRelocatingAssociations) {
         CaseFile caseFile = createCaseFile(typeId);
         if (documentToAdd != null) {
             caseFile.setFunction(documentToAdd.getFunction());
@@ -121,6 +122,7 @@ public class CaseFileDialog extends BaseSnapshotCapableWithBlocksDialog<CaseFile
             currentSnapshot.registerDoc = registerDoc;
             currentSnapshot.sendDocNotifications = sendDocNotifications;
             currentSnapshot.docSaveListeners = docSaveListeners;
+            currentSnapshot.isRelocatingAssociationsNeeded = isRelocatingAssociations;
         }
     }
 
@@ -222,6 +224,10 @@ public class CaseFileDialog extends BaseSnapshotCapableWithBlocksDialog<CaseFile
         // go back
         WebUtil.navigateWithCancel();
         MessageUtil.addInfoMessage("caseFile_delete_success");
+    }
+
+    public void showCaseFileLink(@SuppressWarnings("unused") ActionEvent event) {
+        renderedModal = CaseFileLinkGeneratorModalComponent.CASE_FILE_LINK_MODAL_ID;
     }
 
     public void archiveCaseFile(@SuppressWarnings("unused") ActionEvent event) {
@@ -395,6 +401,7 @@ public class CaseFileDialog extends BaseSnapshotCapableWithBlocksDialog<CaseFile
         private List<String> docSaveListeners;
         private List<NodeRef> massChangeLocationSelectedDocs;
         private Node massChangeLocationNode;
+        private boolean isRelocatingAssociationsNeeded;
 
         @Override
         public String getOpenDialogNavigationOutcome() {
@@ -603,7 +610,8 @@ public class CaseFileDialog extends BaseSnapshotCapableWithBlocksDialog<CaseFile
                                 documentToAdd.setFunction(result.getFunction());
                                 final boolean isDraft = documentToAdd.isDraft();
                                 DocumentDynamicDialog documentDynamicDialog = BeanHelper.getDocumentDynamicDialog();
-                                savedDocumentRef = documentDynamicDialog.save(documentToAdd, currentSnapshot.docSaveListeners, false, false).getNodeRef();
+                                savedDocumentRef = documentDynamicDialog.save(documentToAdd, currentSnapshot.docSaveListeners, currentSnapshot.isRelocatingAssociationsNeeded,
+                                        false).getNodeRef();
                                 if (currentSnapshot.registerDoc) {
                                     WmNode node = documentToAdd.getNode();
                                     documentDynamicDialog.register(isDraft, documentToAdd, node, node);
@@ -793,10 +801,14 @@ public class CaseFileDialog extends BaseSnapshotCapableWithBlocksDialog<CaseFile
         deleteReasonModal.setFinishButtonLabelId("delete");
         deleteReasonModal.setId("caseFile-delete-reason-popup-" + context.getViewRoot().createUniqueId());
 
+        CaseFileLinkGeneratorModalComponent linkModal = new CaseFileLinkGeneratorModalComponent();
+        linkModal.setId("caseFile-link-modal-" + context.getViewRoot().createUniqueId());
+
         List<UIComponent> children = ComponentUtil.getChildren(getModalContainer());
         children.clear();
         children.add(favoritesModal);
         children.add(deleteReasonModal);
+        children.add(linkModal);
     }
 
     public boolean isVolumeMarkValidationDisabled() {
@@ -804,12 +816,16 @@ public class CaseFileDialog extends BaseSnapshotCapableWithBlocksDialog<CaseFile
     }
 
     private boolean validateOpen(CaseFile caseFile, boolean inEditMode) {
+        boolean isOpen = caseFile.isStatus(DocListUnitStatus.OPEN);
+        boolean isClosed = caseFile.isStatus(DocListUnitStatus.CLOSED);
+        if (!isOpen && !isClosed) {
+            MessageUtil.addErrorMessage("caseFile_open_error_wrong_status", DocListUnitStatus.OPEN.getValueName(), DocListUnitStatus.CLOSED.getValueName());
+        }
         return !inEditMode
                 && validatePermissionWithErrorMessage(caseFile.getNodeRef(), DocumentCommonModel.Privileges.VIEW_CASE_FILE)
                 || inEditMode
                 && getDocumentLockHelperBean().isLockable(caseFile.getNodeRef())
-                && (caseFile.isStatus(DocListUnitStatus.OPEN) && validatePermissionWithErrorMessage(caseFile.getNodeRef(), DocumentCommonModel.Privileges.EDIT_CASE_FILE) || caseFile
-                        .isStatus(DocListUnitStatus.CLOSED)
+                && (isOpen && validatePermissionWithErrorMessage(caseFile.getNodeRef(), DocumentCommonModel.Privileges.EDIT_CASE_FILE) || isClosed
                         && getUserService().isAdministrator());
     }
 }

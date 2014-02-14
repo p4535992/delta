@@ -20,12 +20,15 @@ import ee.webmedia.alfresco.log.model.LogEntry;
 import ee.webmedia.alfresco.log.model.LogObject;
 import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.privilege.service.PrivilegeService;
+import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.workflow.model.Status;
+import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowEvent;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowEventListener;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowEventQueue;
+import ee.webmedia.alfresco.workflow.service.event.WorkflowEventQueue.WorkflowQueueParameter;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowEventType;
 
 /**
@@ -103,6 +106,24 @@ public class IndependentWorkflowTaskStatusChangeListener implements WorkflowEven
                                 return null;
                             }
                         }, "sendReviewTaskToDvk", true);
+                    }
+                }
+                if (task.isType(WorkflowSpecificModel.Types.ASSIGNMENT_TASK) && task.isStatus(Status.IN_PROGRESS)) {
+                    String newOwner = (String) queue.getParameter(WorkflowQueueParameter.ASSIGNEMNT_TASK_STARTED_WITH_RESPONSIBLE_ASPECT);
+                    if (newOwner != null) {
+                        UserService userService = BeanHelper.getUserService();
+                        String previousOwnerId = compoundWorkflow.getOwnerId();
+                        String previousOwnerInMemory = compoundWorkflow.getProp(WorkflowCommonModel.Props.PREVIOUS_OWNER_ID);
+                        if (!(previousOwnerInMemory != null && previousOwnerInMemory.equals(previousOwnerId))) {
+                            BeanHelper.getWorkflowService().setCompoundWorkflowOwner(compoundWorkflow.getNodeRef(), newOwner, false);
+                            if (WorkflowEventType.CREATED.equals(queue.getEvents().get(0).getType())) {
+                                BeanHelper.getLogService().addLogEntry(
+                                        LogEntry.create(LogObject.COMPOUND_WORKFLOW, userService, compoundWorkflow.getNodeRef(), "applog_compoundWorkflow_data_changed",
+                                                MessageUtil.getMessage("workflow_responsible"), userService.getUserFullName(previousOwnerId),
+                                                userService.getUserFullName(newOwner)));
+                                compoundWorkflow.setProp(WorkflowCommonModel.Props.PREVIOUS_OWNER_ID, previousOwnerId);
+                            }
+                        }
                     }
                 }
             }

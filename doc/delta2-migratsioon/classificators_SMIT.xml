@@ -1,0 +1,38 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<list>
+   <classificator>
+    <name>expensesFinancingSource</name>
+    <deleteEnabled>true</deleteEnabled>
+    <description>Lähetuse kulu finantseerimise allikas</description>
+    <classificatorValues/>
+  </classificator>
+  <classificator>
+    <name>dailyAllowanceFinancingSource</name>
+    <deleteEnabled>true</deleteEnabled>
+    <description>Päevaraha finantseerimise allikas</description>
+    <classificatorValues/>
+  </classificator>
+  <classificator>
+    <name>dailyAllowanceCateringCount</name>
+    <deleteEnabled>true</deleteEnabled>
+    <description></description>
+    <classificatorValues/>
+  </classificator>
+  <classificator>
+    <name>errandApplicationDocName</name>
+    <deleteEnabled>true</deleteEnabled>
+    <description></description>
+    <classificatorValues>
+      <classificatorValue>
+        <valueName>Siselähetuse taotlus / Välislähetuse taotlus</valueName>
+        <classificatorDescription></classificatorDescription>
+        <valueData></valueData>
+        <order>1</order>
+        <originalOrder>0</originalOrder>
+        <byDefault>false</byDefault>
+        <readOnly>false</readOnly>
+        <active>true</active>
+      </classificatorValue>
+    </classificatorValues>
+  </classificator>
+</list>

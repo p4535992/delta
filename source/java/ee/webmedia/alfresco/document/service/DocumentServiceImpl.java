@@ -81,6 +81,7 @@ import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.ui.common.Utils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.BooleanUtils;
+import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateFormatUtils;
 import org.hibernate.StaleObjectStateException;
@@ -538,7 +539,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
             }
         }
         // docProps.putAll(getSearchableOtherProps(docNode));
-        docProps.put(DocumentCommonModel.Props.SEARCHABLE_SEND_MODE.toString(), sendOutService.buildSearchableSendMode(docNodeRef));
+        docProps.putAll(RepoUtil.toStringProperties(sendOutService.buildSearchableSendInfo(docNodeRef)));
 
         boolean markAsDeleted = false;
         // If accessRestriction changes from OPEN/AK to INTERNAL/LIMITED
@@ -1860,7 +1861,9 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
         if (!isReplyOrFollowupDoc) {
             log.debug("Starting to " + (isRelocating ? "reregister document" : "register initialDocument") + ", docRef=" + docRef);
             // registration of initial document ("Algatusdokument") or reregistering document during relocating
-            setRegNrBasedOnPattern(series, volumeNodeRef, register, volRegister, holder, now, series.getDocNumberPattern(), false);
+            if (!retainOldRegNr(docNode, holder, series, isRelocating, previousVolume)) {
+                setRegNrBasedOnPattern(series, volumeNodeRef, register, volRegister, holder, now, series.getDocNumberPattern(), false);
+            }
             if (!series.isNewNumberForEveryDoc() && series.isIndividualizingNumbers() && StringUtils.isBlank(holder.getIndividualNumber())) {
                 holder.setRegNumber(holder.getRegNumber() + "-1");
                 holder.setIndividualNumber("1");
@@ -1888,27 +1891,22 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
                 allDocs = result.getSecond();
             } else if (initDocRegNrNotBlank && !series.isNewNumberForEveryDoc() && series.isIndividualizingNumbers()) {
                 { // add individualizing number to regNr
+                    Pair<Integer, List<String>> result;
                     if (StringUtils.isNotBlank(initDocIndividualNr)) {
-                        Pair<Integer, List<String>> result = getMaxIndivNrInParent(holder.getRegNumber(), initDocRegNr, initDocParentRef, Integer.parseInt(initDocIndividualNr));
-                        int maxIndivNr = result.getFirst();
-                        allDocs = result.getSecond();
-                        String individualNr = Integer.toString(maxIndivNr + 1);
-                        holder.setRegNumber(new RegNrHolder(initDocRegNr).getRegNrWithoutIndividualizingNr() + individualNr);
-                        holder.setShortRegNumber(initDocShortRegNr);
-                        holder.setIndividualNumber(individualNr);
-
-                        Pair<String, List<String>> result2 = addUniqueNumberIfNeccessary(holder.getRegNumber(), initDocParentRef, isRelocating, allDocs);
-                        holder.setRegNumber(result2.getFirst());
-                        allDocs = result2.getSecond();
+                        result = getMaxIndivNrInParent(holder.getRegNumber(), initDocRegNr, initDocParentRef, Integer.parseInt(initDocIndividualNr));
                     } else {
-                        // with correct data and *current* expected user behaviors this code should not be reached,
-                        // however Maiga insisted that this behavior would be applied if smth. goes wrong
-                        Pair<String, List<String>> result = addUniqueNumberIfNeccessary(initDocRegNr, initDocParentRef, isRelocating, null);
-                        holder.setRegNumber(result.getFirst());
-                        holder.setShortRegNumber(initDocShortRegNr);
-                        holder.setIndividualNumber(initDocIndividualNr);
-                        allDocs = result.getSecond();
+                        result = getMaxIndivNrInParent(holder.getRegNumber(), initDocRegNr, initDocParentRef, 1);
                     }
+                    int maxIndivNr = result.getFirst();
+                    allDocs = result.getSecond();
+                    String individualNr = Integer.toString(maxIndivNr + 1);
+                    holder.setRegNumber(new RegNrHolder(initDocRegNr).getRegNrWithoutIndividualizingNr() + individualNr);
+                    holder.setShortRegNumber(initDocShortRegNr);
+                    holder.setIndividualNumber(individualNr);
+
+                    Pair<String, List<String>> result2 = addUniqueNumberIfNeccessary(holder.getRegNumber(), initDocParentRef, isRelocating, allDocs);
+                    holder.setRegNumber(result2.getFirst());
+                    allDocs = result2.getSecond();
                 }
             }
         }
@@ -2037,6 +2035,28 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
         throw new UnableToPerformException(MessageSeverity.INFO, "document_errorMsg_register_initialDocNotRegistered");
     }
 
+    private boolean retainOldRegNr(Node docNode, RegNrHolder2 holder, Series series, boolean isRelocating, Node previousVolume) {
+        if (!isRelocating) {
+            return false;
+        }
+
+        if (generateNewRegNumberInReregistration && StringUtils.isNotBlank(holder.getRegNumber()) && previousVolume != null) {
+            NodeRef oldSeriesNodeRef = generalService.getAncestorNodeRefWithType(previousVolume.getNodeRef(), SeriesModel.Types.SERIES);
+            if (oldSeriesNodeRef == null) {
+                return false; // If we couldn't find previous series, generate new regNumber.
+            }
+            Series previousSeries = seriesService.getSeriesByNodeRef(oldSeriesNodeRef);
+            boolean sameRegister = ObjectUtils.equals(series.getRegister(), previousSeries.getRegister());
+            boolean sameDocNumberPattern = StringUtils.equals(series.getDocNumberPattern(), previousSeries.getDocNumberPattern());
+            boolean seriesRequiresNewRegNr = series.isNewNumberForEveryDoc() && !previousSeries.isNewNumberForEveryDoc();
+            if (sameRegister && sameDocNumberPattern && !seriesRequiresNewRegNr) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private Map<String, Pair<DynamicPropertyDefinition, Field>> getPropDefs(final NodeRef originalDocRef) {
         return getDocumentConfigService().getPropertyDefinitions(new Node(originalDocRef));
     }
@@ -2076,7 +2096,9 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
                 }
             }
         }
-        return Pair.newInstance(regNumber + (uniqueNumber < 0 ? "" : "(" + (uniqueNumber + 1) + ")"), allRegNumbers);
+        // DocumentLocationGenerator.save(DynamicBase) has already updated source and target parents DOCUMENT_REG_NUMBERS property when relocating so we should allow one
+        // "duplicate".
+        return Pair.newInstance(regNumber + (uniqueNumber < 1 ? "" : "(" + uniqueNumber + ")"), allRegNumbers);
     }
 
     private Pair<Integer, List<String>> getMaxIndivNrInParent(final String docRegNumber, final String initDocRegNr, final NodeRef initDocParentRef, int maxIndivNr) {

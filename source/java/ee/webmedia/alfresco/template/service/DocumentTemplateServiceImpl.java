@@ -79,6 +79,7 @@ import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.template.exception.ExistingFileFromTemplateException;
 import ee.webmedia.alfresco.template.model.DocumentTemplate;
 import ee.webmedia.alfresco.template.model.DocumentTemplateModel;
+import ee.webmedia.alfresco.template.model.ProcessedEmailTemplate;
 import ee.webmedia.alfresco.template.web.AddDocumentTemplateDialog;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.FilenameUtil;
@@ -160,7 +161,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
             if (StringUtils.isNotBlank((String) file.getProperties().get(FileModel.Props.GENERATED_FROM_TEMPLATE))
                     || Boolean.TRUE.equals(file.getProperties().get(FileModel.Props.UPDATE_METADATA_IN_FILES))) {
 
-                replaceFormulas(docRef, file.getNodeRef(), file.getNodeRef(), file.getName(), isRegistering);
+                replaceFormulas(docRef, file.getNodeRef(), file.getNodeRef(), file.getName(), isRegistering, true);
             }
         }
     }
@@ -244,23 +245,6 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
         dt.setNodeRef(fileInfo.getNodeRef());
         dt.setDownloadUrl(fileService.generateURL(fileInfo.getNodeRef()));
         return dt;
-    }
-
-    @Override
-    public Map<String, String> getDefaultFieldValues(NodeRef fileNodeRef) throws Exception {
-        Assert.notNull(fileNodeRef, "NodeRef is mandatory");
-        if (!openOfficeService.isAvailable()) {
-            throw new UnableToPerformException("template_add_oo_service_unavailable");
-        }
-        NodeRef templateNodeRef = null;
-        if (nodeService.hasAspect(fileNodeRef, DocumentTemplateModel.Aspects.TEMPLATE_DOCUMENT)
-                || nodeService.hasAspect(fileNodeRef, DocumentTemplateModel.Aspects.TEMPLATE_ARCHIVAL_REPORT)) {
-            templateNodeRef = fileNodeRef;
-        } else {
-            String genTemplName = (String) nodeService.getProperty(fileNodeRef, FileModel.Props.GENERATED_FROM_TEMPLATE);
-            templateNodeRef = getTemplateByName(genTemplName).getNodeRef();
-        }
-        return openOfficeService.getUsedFormulasAndValues(fileFolderService.getReader(templateNodeRef));
     }
 
     @Override
@@ -371,16 +355,16 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
         String filenameWithoutExtension = FilenameUtils.removeExtension(templateFilename);
         templateFilename = filenameWithoutExtension + " " + FastDateFormat.getInstance("yyyyMMdd").format(new Date()) + ".docx";
         NodeRef generatedFile = fileFolderService.create(parentRef, templateFilename, ContentModel.TYPE_CONTENT).getNodeRef();
-        replaceFormulas(volumeRefs, templateRef, generatedFile, templateFilename, true);
+        replaceFormulas(volumeRefs, templateRef, generatedFile, templateFilename, true, false);
         nodeService.setProperty(generatedFile, FileModel.Props.ACTIVITY_FILE_TYPE, ActivityFileType.GENERATED_DOCX.name());
     }
 
     private void replaceFormulas(NodeRef document, NodeRef sourceFile, NodeRef destinationFile, String sourceFileName) {
-        replaceFormulas(document, sourceFile, destinationFile, sourceFileName, false);
+        replaceFormulas(document, sourceFile, destinationFile, sourceFileName, false, false);
     }
 
     @SuppressWarnings("unchecked")
-    private void replaceFormulas(Object documentOrVolumeRefList, NodeRef sourceFile, NodeRef destinationFile, String sourceFileName, boolean finalize) {
+    private void replaceFormulas(Object documentOrVolumeRefList, NodeRef sourceFile, NodeRef destinationFile, String sourceFileName, boolean finalize, boolean dontSaveIfUnmodified) {
         Assert.isTrue(documentOrVolumeRefList instanceof NodeRef || documentOrVolumeRefList instanceof List);
         // Basically the same check is performed in MsoService#isFormulasReplaceable, but with MIME types
         boolean msoFile = StringUtils.endsWithIgnoreCase(sourceFileName, ".doc") || StringUtils.endsWithIgnoreCase(sourceFileName, ".docx")
@@ -406,9 +390,14 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
                 formulas.put("$FINALIZE", "1");
             }
             ContentReader documentReader = fileFolderService.getReader(sourceFile);
-            ContentWriter documentWriter = fileFolderService.getWriter(destinationFile);
+            // Disable automatic update if writing is not to be performed in case file is actually not changed by mso service
+            ContentWriter documentWriter = fileFolderService.getWriter(destinationFile, !dontSaveIfUnmodified);
             try {
-                msoService.replaceFormulas(formulas, documentReader, documentWriter);
+                boolean fileActuallyChanged = msoService.replaceFormulas(formulas, documentReader, documentWriter, dontSaveIfUnmodified);
+                if (dontSaveIfUnmodified && fileActuallyChanged) {
+                    // automatic saving has been turned off for checked saving, so save manually
+                    nodeService.setProperty(destinationFile, ContentModel.PROP_CONTENT, documentWriter.getContentData());
+                }
             } catch (SOAPFaultException se) {
                 String errorKey = "template_replace_formulas_failed";
                 if (se.getMessage().contains("Err001")) {
@@ -420,19 +409,25 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
             }
         } else if (ooFile && openOfficeService.isAvailable()) {
             // generating document for volume list is not implemented for OpenOffice
-            replaceFormulasWithOpenOffice(document, sourceFile, destinationFile, sourceFileName, formulas, finalize);
+            replaceFormulasWithOpenOffice(document, sourceFile, destinationFile, sourceFileName, formulas, finalize, dontSaveIfUnmodified);
         }
     }
 
-    private void replaceFormulasWithOpenOffice(NodeRef document, NodeRef sourceFile, NodeRef destinationFile, String sourceFileName, Map<String, String> formulas, boolean finalize) {
+    private void replaceFormulasWithOpenOffice(NodeRef document, NodeRef sourceFile, NodeRef destinationFile, String sourceFileName, Map<String, String> formulas,
+            boolean finalize, boolean dontSaveIfUnmodified) {
         int retry = 3;
         do {
             ContentReader reader = fileFolderService.getReader(sourceFile);
-            ContentWriter writer = fileFolderService.getWriter(destinationFile);
+            // Disable automatic update if writing is not to be performed in case file is actually not changed by oo service
+            ContentWriter writer = fileFolderService.getWriter(destinationFile, !dontSaveIfUnmodified);
             writer.setMimetype(MimetypeMap.MIMETYPE_OPENDOCUMENT_TEXT);
 
             try {
-                openOfficeService.replace(reader, writer, formulas, finalize);
+                boolean fileActuallyChanged = openOfficeService.replace(reader, writer, formulas, finalize);
+                if (dontSaveIfUnmodified && fileActuallyChanged) {
+                    // automatic saving has been turned off for checked saving, so save manually
+                    nodeService.setProperty(destinationFile, ContentModel.PROP_CONTENT, writer.getContentData());
+                }
                 retry = 0;
             } catch (OpenOfficeService.OpenOfficeReturnedNullInterfaceException e) {
                 retry--;
@@ -544,16 +539,17 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
     }
 
     @Override
-    public String getProcessedEmailTemplate(Map<String, NodeRef> dataNodeRefs, NodeRef template) {
+    public ProcessedEmailTemplate getProcessedEmailTemplate(Map<String, NodeRef> dataNodeRefs, NodeRef template) {
         return getProcessedEmailTemplate(dataNodeRefs, template, null);
     }
 
     @Override
-    public String getProcessedEmailTemplate(Map<String, NodeRef> dataNodeRefs, NodeRef template, Map<String, String> additionalFormulas) {
+    public ProcessedEmailTemplate getProcessedEmailTemplate(Map<String, NodeRef> dataNodeRefs, NodeRef template, Map<String, String> additionalFormulas) {
         ContentReader templateReader = fileFolderService.getReader(template);
         String templateTxt = templateReader.getContentString();
+        String subject = (String) nodeService.getProperty(template, DocumentTemplateModel.Prop.NOTIFICATION_SUBJECT);
         if (dataNodeRefs.size() == 0) {
-            return templateTxt;
+            return new ProcessedEmailTemplate(subject, templateTxt);
         }
 
         // Use existing values as baseline if possible
@@ -574,12 +570,19 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
         if (log.isDebugEnabled()) {
             log.debug("Produced formulas " + WmNode.toString(allFormulas.entrySet()));
         }
+        if (subject != null) {
+            subject = processEmailTemplate(subject, allFormulas);
+        }
+        String content = processEmailTemplate(templateTxt, allFormulas);
+        return new ProcessedEmailTemplate(subject, content);
+    }
 
+    private String processEmailTemplate(String templateTxt, Map<String, String> formulas) {
         StringBuffer result = new StringBuffer();
         Matcher matcher = TEMPLATE_FORMULA_GROUP_PATTERN.matcher(templateTxt);
         while (matcher.find()) {
             String group = matcher.group();
-            String subResult = replaceCurlyBracesFormulas(group, allFormulas, false);
+            String subResult = replaceCurlyBracesFormulas(group, formulas, false);
 
             if (group.equals(subResult)) { // If no replacement occurred then remove this group
                 matcher.appendReplacement(result, "");
@@ -591,7 +594,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
         matcher.appendTail(result);
 
         // Replace remaining curly braces formulae that weren't in a group
-        return replaceCurlyBracesFormulas(result.toString(), allFormulas, true);
+        return replaceCurlyBracesFormulas(result.toString(), formulas, true);
     }
 
     private String replaceCurlyBracesFormulas(String templateText, Map<String, String> formulas, boolean removeUnmatchedFormulas) {
@@ -1145,6 +1148,24 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
         for (DocumentTemplate template : getTemplates()) {
             if (nodeService.hasAspect(template.getNodeRef(), DocumentTemplateModel.Aspects.TEMPLATE_REPORT) && typeStr.equals(template.getReportType())) {
                 result.add(new SelectItem(template.getName()));
+            }
+        }
+        return result;
+    }
+
+    @Override
+    public List<Pair<SelectItem, String>> getReportTemplatesWithOutputTypes(TemplateReportType typeId) {
+        Assert.notNull(typeId, "Parameter typeId is mandatory.");
+        List<Pair<SelectItem, String>> result = new ArrayList<Pair<SelectItem, String>>();
+        String typeStr = typeId.toString();
+        for (DocumentTemplate template : getTemplates()) {
+            if (nodeService.hasAspect(template.getNodeRef(), DocumentTemplateModel.Aspects.TEMPLATE_REPORT) && typeStr.equals(template.getReportType())) {
+                Serializable outputType = BeanHelper.getNodeService().getProperty(template.getNodeRef(), DocumentTemplateModel.Prop.REPORT_OUTPUT_TYPE);
+                if (outputType != null) {
+                    String templateOutputType = outputType.toString();
+                    SelectItem item = new SelectItem(template.getName());
+                    result.add(new Pair<SelectItem, String>(item, templateOutputType));
+                }
             }
         }
         return result;

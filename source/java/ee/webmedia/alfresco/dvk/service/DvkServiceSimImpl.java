@@ -874,8 +874,7 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
         CompoundWorkflow compoundWorkflow = workflow != null && workflow.getParent() != null ? workflow.getParent() : workflowService.getCompoundWorkflow(generalService
                 .getPrimaryParent(task.getWorkflowNodeRef()).getNodeRef());
         linkedReviewTaskType.setCompoundWorkflowTitle(compoundWorkflow.getTitle());
-        linkedReviewTaskType.setCompoundWorkflowComment(compoundWorkflow.getComment());
-        linkedReviewTaskType.setWorkflowResolution(workflow.getResolution());
+        linkedReviewTaskType.setTaskResolution(task.getResolution());
         linkedReviewTaskType.setCreatorInstitutionCode(task.getCreatorInstitutionCode());
         linkedReviewTaskType.setCreatorInstitutionName(task.getCreatorInstitutionName());
         linkedReviewTaskType.setOriginalNoderefId(task.getNodeRef().getId());

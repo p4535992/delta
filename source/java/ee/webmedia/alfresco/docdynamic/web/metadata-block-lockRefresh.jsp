@@ -7,14 +7,20 @@
 
 <f:verbatim>
 <script type="text/javascript" id="metaLockRefreshScript" >
+var finishButtonClicked = false;
 $jQ(document).ready(function(){
    var lockingAllowed = <%= BeanHelper.getDocumentLockHelperBean().isLockingAllowed() %>;
    if(lockingAllowed){
       var clientLockRefreshFrequency = <%= BeanHelper.getDocumentLockHelperBean().getLockExpiryPeriod() %>;
       setTimeout(requestForLockRefresh, clientLockRefreshFrequency/3); // We need to lock sooner for the first time (add file dialog etc.)
+      document.getElementById("dialog:finish-button").addEventListener('click', function() {
+         finishButtonClicked = true;
+      });
+      document.getElementById("dialog:finish-button-2").addEventListener('click', function() {
+         finishButtonClicked = true;
+      });
    }
 });
-
 function requestForLockRefresh() {
    var uri = getContextPath() + '/ajax/invoke/DocumentLockHelperBean.refreshLockClientHandler';
    $jQ.ajax({
@@ -42,5 +48,16 @@ function requestForLockRefreshSuccess(xml) {
 function requestForLockRefreshFailure() {
    $jQ.log("Refreshing lock in server side failed");
 }
+$jQ(window).on('beforeunload', function(){
+   if(finishButtonClicked) {
+	  return;
+   }
+   var uri = getContextPath() + '/ajax/invoke/DocumentLockHelperBean.unlockNode';
+   $jQ.ajax({
+      type: 'POST',
+      url: uri,
+      async: false
+   });
+});
 </script>
 </f:verbatim>

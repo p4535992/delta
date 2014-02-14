@@ -64,25 +64,11 @@ public interface FileService {
      */
     void moveAllFiles(NodeRef fromRef, NodeRef toRef) throws FileNotFoundException;
 
-    /**
-     * Adds file to given document.
-     * 
-     * @param name New name of the file
-     * @param fileNodeRef Reference to file node
-     * @param documentNodeRef Reference to document node
-     * @return Reference to created node/file
-     */
-    NodeRef addFileToDocument(String name, String displayName, NodeRef documentNodeRef, NodeRef fileNodeRef);
+    boolean addExistingFileToDocument(String name, String displayName, NodeRef documentNodeRef, NodeRef fileNodeRef, boolean active, boolean associatedWithMetaData);
 
-    NodeRef addFileToDocument(String name, String displayName, NodeRef documentNodeRef, NodeRef fileNodeRef, boolean active, boolean associatedWithMetaData);
+    boolean addUploadedFileToDocument(String name, String displayName, NodeRef documentNodeRef, java.io.File file, String mimeType, boolean active, boolean associatedWithMetaData);
 
-    NodeRef addFileToDocument(String name, String displayName, NodeRef documentNodeRef, java.io.File file, String mimeType);
-
-    NodeRef addFileToDocument(String name, String displayName, NodeRef documentNodeRef, java.io.File file, String mimeType, boolean active, boolean associatedWithMetaData);
-
-    NodeRef addFile(String name, String displayName, NodeRef taskNodeRef, java.io.File file, String mimeType);
-
-    NodeRef addFile(String name, String displayName, NodeRef taskNodeRef, java.io.File file, String mimeType, boolean active, boolean associatedWithMetaData);
+    NodeRef addFileToTask(String name, String displayName, NodeRef taskNodeRef, java.io.File file, String mimeType);
 
     NodeRef addFile(String name, String displayName, NodeRef taskNodeRef, ContentReader reader);
 

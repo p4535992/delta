@@ -31,7 +31,8 @@
       theme_advanced_disable: "styleselect",
       extended_valid_elements : "a[href|target|name],font[face|size|color|style],span[class|align|style]",
       width : "600",
-      height : "315"
+      height : "315",
+      entity_encoding : "raw"
    });
    function propSheetValidateCustom() {
       tinyMCE.triggerSave();

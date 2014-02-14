@@ -26,6 +26,7 @@ import javax.faces.component.UISelectItem;
 import javax.faces.component.UIViewRoot;
 import javax.faces.component.ValueHolder;
 import javax.faces.component.html.HtmlGraphicImage;
+import javax.faces.component.html.HtmlOutputText;
 import javax.faces.component.html.HtmlSelectManyListbox;
 import javax.faces.context.FacesContext;
 import javax.faces.context.ResponseWriter;
@@ -46,6 +47,7 @@ import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
 import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.generator.BaseComponentGenerator;
+import org.alfresco.web.bean.generator.BaseComponentGenerator.CustomAttributeNames;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.Repository;
 import org.alfresco.web.config.ActionsConfigElement.ActionDefinition;
@@ -664,10 +666,8 @@ public class ComponentUtil {
             for (SelectItem item : items) {
                 responseWriter.write("<option value=\"");
                 responseWriter.write(item.getValue().toString());
-                if (item.getDescription() != null) {
-                    responseWriter.write("\" title=\"");
-                    responseWriter.write(Utils.encode(item.getDescription()));
-                }
+                responseWriter.write("\" title=\"");
+                responseWriter.write(Utils.encode(StringUtils.defaultIfEmpty(item.getDescription(), item.getLabel())));
                 responseWriter.write("\">");
                 responseWriter.write(Utils.encode(item.getLabel()));
                 responseWriter.write("</option>");
@@ -1366,14 +1366,23 @@ public class ComponentUtil {
     }
 
     public static void addOnchangeJavascript(UIComponent component) {
+        addOnChangeJavascript(component, null);
+    }
+
+    public static void addOnChangeJavascript(UIComponent component, String prependJs) {
         Map<String, Object> attributes = getAttributes(component);
         String styleClass = (String) attributes.get(ATTR_STYLE_CLASS);
-        attributes.put(ATTR_STYLE_CLASS, (StringUtils.isNotBlank(styleClass) ? styleClass + " " : "") + getOnChangeStyleClass());
+        attributes.put(ATTR_STYLE_CLASS, (StringUtils.isNotBlank(styleClass) ? styleClass + " " : "") + getOnChangeStyleClass(prependJs));
     }
 
     public static String getOnChangeStyleClass() {
+        return getOnChangeStyleClass(null);
+    }
+
+    private static String getOnChangeStyleClass(String prependJs) {
+        String prepend = StringUtils.isNotBlank(prependJs) ? prependJs : "";
         return GeneralSelectorGenerator.ONCHANGE_PARAM_MARKER_CLASS + GeneralSelectorGenerator.ONCHANGE_SCRIPT_START_MARKER
-                + "var link = jQuery('#' + escapeId4JQ(currElId)).nextAll('a').eq(0); link.click();";
+                + prepend + "var link = jQuery('#' + escapeId4JQ(currElId)).nextAll('a').eq(0); link.click();";
     }
 
     public static void addStyleClass(UIComponent uiComponent, String styleClassName) {
@@ -1492,10 +1501,10 @@ public class ComponentUtil {
         fileAllowLink.setValue("");
         fileAllowLink.setTooltip(fileName);
         fileAllowLink.setShowLink(false);
-        fileAllowLink.setHref(file.getDownloadUrl());
+        fileAllowLink.setHref(file.getReadOnlyUrl());
         fileAllowLink.setImage(imageText);
         fileAllowLink.setTarget("_blank");
-        ComponentUtil.getAttributes(fileAllowLink).put("styleClass", "inlineAction webdav-readOnly");
+        ComponentUtil.getAttributes(fileAllowLink).put("styleClass", "inlineAction");
         return fileAllowLink;
     }
 
@@ -1527,6 +1536,24 @@ public class ComponentUtil {
         for (UIComponent facet : facets) {
             setAjaxEnabledOnActionLinksRecursive(facet, ajaxParentLevel);
         }
+    }
+
+    public static UIOutput createMandatoryMarker(FacesContext context) {
+        UIOutput marker = (UIOutput) context.getApplication().createComponent(ComponentConstants.JAVAX_FACES_OUTPUT);
+        marker.setRendererType(ComponentConstants.JAVAX_FACES_TEXT);
+        FacesHelper.setupComponentId(context, marker, null);
+        @SuppressWarnings("unchecked")
+        Map<String, String> attributes = marker.getAttributes();
+        attributes.put(CustomAttributeNames.STYLE_CLASS, "red");
+        marker.setValue("* ");
+        return marker;
+    }
+
+    public static UIOutput createUnescapedOutputText(FacesContext context, String id) {
+        HtmlOutputText outputText = (HtmlOutputText) context.getApplication().createComponent("javax.faces.HtmlOutputText");
+        FacesHelper.setupComponentId(context, outputText, id);
+        outputText.setEscape(false);
+        return outputText;
     }
 
 }

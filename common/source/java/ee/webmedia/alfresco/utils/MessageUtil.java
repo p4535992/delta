@@ -75,6 +75,14 @@ public class MessageUtil {
         return message;
     }
 
+    public static boolean hasI18nTranslation(String messageId) {
+        String i18nUtilMsg = getI18nUtilMessage(new MessageDataImpl(messageId));
+        if (isMessageTranslatedByI18nUtil(i18nUtilMsg)) {
+            return true;
+        }
+        return false;
+    }
+
     private static String format(String message, final Object[] translatedValuesForHolders) {
         try {
             return MessageFormat.format(message, translatedValuesForHolders);

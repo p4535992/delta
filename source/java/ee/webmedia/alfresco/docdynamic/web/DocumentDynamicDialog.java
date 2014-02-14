@@ -29,6 +29,7 @@ import javax.faces.component.UIInput;
 import javax.faces.component.UIPanel;
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
+import javax.faces.event.ValueChangeEvent;
 import javax.faces.model.SelectItem;
 
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
@@ -82,6 +83,7 @@ import ee.webmedia.alfresco.document.model.DocumentParentNodesVO;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.search.web.AbstractSearchBlockBean;
 import ee.webmedia.alfresco.document.search.web.BlockBeanProviderProvider;
+import ee.webmedia.alfresco.document.search.web.DocumentDynamicSearchDialog;
 import ee.webmedia.alfresco.document.search.web.SearchBlockBean;
 import ee.webmedia.alfresco.document.sendout.model.SendInfo;
 import ee.webmedia.alfresco.document.sendout.web.SendOutBlockBean;
@@ -97,6 +99,7 @@ import ee.webmedia.alfresco.log.model.LogObject;
 import ee.webmedia.alfresco.menu.ui.MenuBean;
 import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.series.model.Series;
+import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.simdhs.servlet.ExternalAccessServlet;
 import ee.webmedia.alfresco.user.model.UserModel;
 import ee.webmedia.alfresco.utils.ActionUtil;
@@ -743,7 +746,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
     public void sendAccessRestrictionChangedEmails(ActionEvent event) {
         if (isCreateNewCaseFile()) {
             getCurrentSnapshot().needSendNotificationAfterCreateCaseFile = true;
-            navigateCreateNewCaseFile();
+            navigateCreateNewCaseFile(false);
         } else {
             DocumentDynamic document = getDocument();
             notifyAccessRestrictionChanged(document,
@@ -783,13 +786,24 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
             LOG.warn(e.getMessage(), e);
             return cancel(false);
         }
-        if (!isInEditMode() || !getCurrentSnapshot().viewModeWasOpenedInThePast || !canRestore()) {
+        boolean isInEditMode = isInEditMode();
+        if (isInEditMode) {
+            BeanHelper.getDocumentLockHelperBean().lockOrUnlockIfNeeded(false);
+        }
+        if (!isInEditMode || !getCurrentSnapshot().viewModeWasOpenedInThePast || !canRestore()) {
             getDocumentDynamicService().deleteDocumentIfDraft(getDocument().getNodeRef());
             return super.cancel(); // closeDialogSnapshot
         }
         // Switch from edit mode back to view mode
         switchMode(false);
         return null;
+    }
+
+    private boolean isIncorrectSeries() {
+        DocumentDynamic doc = getDocument();
+        String docType = doc.getDocumentTypeId();
+        List<String> allowedTypes = (List) BeanHelper.getNodeService().getProperty(doc.getSeries(), SeriesModel.Props.DOC_TYPE);
+        return !allowedTypes.contains(docType);
     }
 
     @Override
@@ -808,6 +822,10 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
             WebUtil.navigateTo("dialog:close");
             return null;
         }
+        if (isIncorrectSeries()) {
+            MessageUtil.addErrorMessage(context, "document_save_error_invalid_series");
+            return null;
+        }
 
         if (isSaveAndRegister()) {
             // select followup document before saving
@@ -817,7 +835,8 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
                 return null;
             }
         }
-        if (!getCurrentSnapshot().moveAssociatedDocumentsConfirmed && isRelocatingAssociations()) {
+        final boolean relocateAssociations = isRelocatingAssociations();
+        if (!getCurrentSnapshot().moveAssociatedDocumentsConfirmed && relocateAssociations) {
             BeanHelper.getUserConfirmHelper().setup(new MessageDataImpl("document_move_associated_documents_confirmation"), null,
                     "#{DocumentDynamicDialog.changeDocLocationConfirmed}", null, null, null, null);
             getCurrentSnapshot().confirmMoveAssociatedDocuments = true;
@@ -877,7 +896,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
                     // Switch from edit mode back to view mode
                     switchMode(false);
                 } else {
-                    navigateCreateNewCaseFile();
+                    navigateCreateNewCaseFile(relocateAssociations);
                 }
                 return null;
             }
@@ -921,10 +940,10 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         return savedDocument;
     }
 
-    private void navigateCreateNewCaseFile() {
+    private void navigateCreateNewCaseFile(boolean isRelocatingAssociations) {
         String caseFileType = getDocument().getProp(DocumentLocationGenerator.CASE_FILE_TYPE_PROP);
         BeanHelper.getCaseFileDialog().createCaseFile(caseFileType, getDocument(), getCurrentSnapshot().needRegisteringAfterCreateCaseFile,
-                getCurrentSnapshot().needSendNotificationAfterCreateCaseFile, getConfig().getSaveListenerBeanNames());
+                getCurrentSnapshot().needSendNotificationAfterCreateCaseFile, getConfig().getSaveListenerBeanNames(), isRelocatingAssociations);
     }
 
     private boolean isCreateNewCaseFile() {
@@ -936,6 +955,10 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
     private boolean isRelocatingAssociations() {
         DocumentDynamic document = getDocument();
 
+        List<DocAssocInfo> docAssocs = getAssocsBlockBean().getDocAssocInfos();
+        if (isCreateNewCaseFile() && docAssocs != null && !docAssocs.isEmpty()) {
+            return true;
+        }
         if (!RepoUtil.isSaved(document.getVolume())) {
             return false;
         }
@@ -944,7 +967,6 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         // For documents not under volume or case, check location change against associated document
         // TODO : Riina: in 3.10 branch, add document.isFromWebService() check here
         if (document.isDraftOrImapOrDvk() || document.isIncomingInvoice()) {
-            List<DocAssocInfo> docAssocs = getAssocsBlockBean().getDocAssocInfos();
             if (docAssocs == null || docAssocs.isEmpty()) {
                 return false;
             }

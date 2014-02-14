@@ -26,11 +26,15 @@ public interface DocLockService extends LockService {
 
     int getLockTimeout();
 
+    String getLockOwnerIfLockedByOther(NodeRef nodeRef);
+
     String getLockOwnerIfLocked(NodeRef nodeRef);
 
-    void lockGeneratedFileDocument(NodeRef lockedFileNodeRef);
+    void lockFile(NodeRef lockedFileNodeRef);
 
-    void releaseGeneratedFileDocument(NodeRef lockedFileNodeRef);
+    void lockFile(NodeRef fileNodeRef, int timeToExpire, boolean lockedManually);
+
+    void unlockFile(NodeRef lockedFileNodeRef);
 
     boolean isGeneratedFileDocumentLocked(NodeRef fileRef);
 

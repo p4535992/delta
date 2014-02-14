@@ -85,7 +85,7 @@ public interface NotificationService {
 
     void notifyCompoundWorkflowStoppedAutomatically(Workflow workflow);
 
-    void sendDocumentForInformationNotification(List<Authority> authorities, Node docNode, String emailTemplate);
+    void sendForInformationNotification(List<Authority> authorities, Node docNode, String emailTemplate, String subject, String content);
 
     void addNotificationAssocForCurrentUser(NodeRef targetNodeRef, QName assocQName, QName aspectQName);
 
@@ -94,5 +94,13 @@ public interface NotificationService {
     public boolean isNotificationAssocExists(NodeRef userRef, NodeRef nodeRef, QName assocType);
 
     Pair<List<String>, List<SendInfo>> getExistingAndMissingEmails(List<SendInfo> sendInfos);
+
+    public void addUserSpecificNotification(String userKey, String notification);
+
+    public List<String> getUserSpecificNotification(String userKey);
+
+    public void deleteUserSpecificNotification(String userKey);
+
+    boolean isSubstitutionTaskEndDateRestricted();
 
 }

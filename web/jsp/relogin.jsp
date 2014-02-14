@@ -22,6 +22,7 @@
  * the FLOSS exception, and it is also available here: 
  * http://www.alfresco.com/legal/licensing"
 --%>
+<%@page import="ee.webmedia.alfresco.utils.MessageUtil"%>
 <%@ taglib uri="http://java.sun.com/jsf/html" prefix="h" %>
 <%@ taglib uri="http://java.sun.com/jsf/core" prefix="f" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
@@ -30,6 +31,7 @@
 
 <%@ page import="org.alfresco.web.app.servlet.AuthenticationHelper" %>
 <%@ page import="javax.servlet.http.Cookie" %>
+<%@ page import="ee.webmedia.alfresco.user.service.Cas20ProxyReceivingRedirectingTicketValidationFilter" %>
 <%@ page import="ee.webmedia.alfresco.user.service.SimpleAuthenticationFilter" %>
 <%@ page import="ee.webmedia.alfresco.common.service.ApplicationService" %>
 <%@ page import="org.alfresco.web.app.servlet.FacesHelper"%>
@@ -71,8 +73,9 @@
              
             <%
                if (session.getAttribute(SimpleAuthenticationFilter.AUTHENTICATION_EXCEPTION) != null) {
-            %>
-	              <h:outputText value="#{msg.error_login_user}" styleClass="login-instructions center" />
+               String message = MessageUtil.getMessage((session.getAttribute(Cas20ProxyReceivingRedirectingTicketValidationFilter.CAS_VALIDATION_ERROR) != null ? "error_ticket_validate" : "error_login_user"));
+            %>    
+                  <f:verbatim><span class="login-instructions center"><%=message%></span></f:verbatim>
                   <a:actionLink href="#{ApplicationService.logoutRedirectUrl}" value="#{msg.logout}" />
             <%
                } else {

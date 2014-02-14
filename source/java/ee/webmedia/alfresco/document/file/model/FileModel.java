@@ -30,5 +30,6 @@ public interface FileModel {
         QName PDF_GENERATED_FROM_FILE = QName.createQName(URI, "pdfGeneratedFromFile");
         QName LOCKED_FILE_NODEREF = QName.createQName(URI, "lockedFileNodeRef");
         QName ACTIVITY_FILE_TYPE = QName.createQName(URI, "activityFileType");
+        QName MANUAL_LOCK = QName.createQName(URI, "manualLock");
     }
 }

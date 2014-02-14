@@ -89,9 +89,11 @@ public class AddDocumentTemplateDialog extends AddContentDialog {
             defaultComment = "template_doc_template";
         } else if (TemplateType.EMAIL_TEMPLATE.name().equals(templateType)) {
             docTemplateNode.getAspects().add(DocumentTemplateModel.Aspects.TEMPLATE_EMAIL);
+            docTemplateNode.getAspects().add(DocumentTemplateModel.Aspects.SUBJECT);
             defaultComment = "template_email_template";
         } else if (TemplateType.NOTIFICATION_TEMPLATE.name().equals(templateType)) {
             docTemplateNode.getAspects().add(DocumentTemplateModel.Aspects.TEMPLATE_NOTIFICATION);
+            docTemplateNode.getAspects().add(DocumentTemplateModel.Aspects.SUBJECT);
             defaultComment = "template_system_template";
         } else if (TemplateType.ARCHIVAL_REPORT_TEMPLATE.name().equals(templateType)) {
             docTemplateNode.getAspects().add(DocumentTemplateModel.Aspects.TEMPLATE_ARCHIVAL_REPORT);
@@ -160,11 +162,6 @@ public class AddDocumentTemplateDialog extends AddContentDialog {
                 getNodeService().addAspect(createdNode, DocumentTemplateModel.Aspects.TEMPLATE_DOCUMENT, properties);
             } else if (archivalReportTemplate) {
                 getNodeService().addAspect(createdNode, DocumentTemplateModel.Aspects.TEMPLATE_ARCHIVAL_REPORT, properties);
-            }
-            if (StringUtils.equalsIgnoreCase("ott", FilenameUtils.getExtension(newName))) {
-                Map<QName, Serializable> defaultValues = new HashMap<QName, Serializable>(1);
-                defaultValues.put(DocumentTemplateModel.Prop.DEFAULT_VALUES, (Serializable) BeanHelper.getDocumentTemplateService().getDefaultFieldValues(createdNode));
-                getNodeService().addProperties(createdNode, defaultValues);
             }
         }
         return outcome;

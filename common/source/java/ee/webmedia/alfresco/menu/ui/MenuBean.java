@@ -121,6 +121,8 @@ public class MenuBean implements Serializable {
             , "myDocuments"
             );
 
+    public static final List<String> HIDDEN_FROM_SUBSTITUTOR = Arrays.asList("documentDynamicTypes");
+
     private transient HtmlPanelGroup shortcutsPanelGroup;
     private transient HtmlPanelGroup breadcrumb;
 
@@ -971,6 +973,10 @@ public class MenuBean implements Serializable {
                 log.debug("Setting menu_my_tasks subitem " + menuItemId + " hidden");
             }
             return result;
+        }
+
+        if (HIDDEN_FROM_SUBSTITUTOR.contains(menuItemId)) {
+            return BeanHelper.getSubstitutionBean().getSubstitutionInfo().isSubstituting();
         }
 
         if (HIDDEN_TO_OTHER_STRUCT_UNIT_PEOPLE.contains(menuItemId)) {

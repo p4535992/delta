@@ -364,6 +364,7 @@
             <ref bean="caseFileStatusFieldFixBootstrap" />
             <ref bean="contactSystematicGroupAddFieldsUpdater" />
             <ref bean="documentRegNrFieldUpdater" />
+            <ref bean="documentRegDateFieldUpdater" />
             <ref bean="documentSenderRegNrFieldGroupUpdater" />
             <ref bean="leaveCancelEndDateNameFixBootstrap2" />
             <ref bean="leaveTypeFieldTypeUpdater" />
@@ -416,6 +417,8 @@
       <property name="logAndDeleteNotExistingWorkflowTasks" ref="logAndDeleteNotExistingWorkflowTasks2" />
       <property name="documentCompWorkflowSearchPropsUpdater" ref="documentCompWorkflowSearchPropsUpdater" />
       <property name="documentAccessRestrictionUpdater" ref="documentAccessRestrictionUpdater2" />
+      <property name="documentPartyPropsUpdater" ref="documentPartyPropsUpdater" />
+      <property name="smitUpdater" value="${updater.version25To313.smitUpdater}" />
    </bean>
    
    <bean id="deleteNodesAfterConvertToDynamicDocumentUpdater" class="ee.webmedia.alfresco.document.bootstrap.DeleteNodesAfterConvertToDynamicDocumentUpdater" parent="abstractNodeUpdater" >
@@ -445,6 +448,14 @@
       <property name="convertToDynamicDocumentsUpdater" ref="convertToDynamicDocumentsUpdater" />
       <!-- batchSize should always be 1 for this updater, to minimize possible failures -->
       <property name="batchSize" value="1" />
+   </bean>   
+   
+   <!-- This updater should run only in SIM 3.13 environment to import missing delivererName that was erroneously not imported during 2.5 -> 3.13 migration. See cl task 215711 for details. -->
+   <bean id="importDelivererName" class="ee.webmedia.alfresco.document.bootstrap.ImportDelivererName" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />  
+      <property name="enabled" value="${updater.version25To313.fixDelivererNameAfterUpdate.enabled}" /> 
+      <property name="csvFileName" value="${updater.version25To313.fixDelivererNameAfterUpdate.csvFileName}" />
    </bean>   
 
    <bean id="registrationNumberReinventedUpdater" class="ee.webmedia.alfresco.document.bootstrap.RegistrationNumberReinventedUpdater" parent="abstractNodeUpdater">
@@ -504,6 +515,17 @@
          </list>
       </property>
       <property name="mimetypeService" ref="MimetypeService" />
+   </bean>
+
+   <bean id="searchableSendInfoUpdater" class="ee.webmedia.alfresco.document.bootstrap.SearchableSendInfoUpdater" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="convertToDynamicDocumentsUpdater" />
+         </list>
+      </property>
+      <property name="sendOutService" ref="SendOutService" />
    </bean>
 
    <!-- temp bean - might help to fix problems related to permission inheritance in PPA live environment -->

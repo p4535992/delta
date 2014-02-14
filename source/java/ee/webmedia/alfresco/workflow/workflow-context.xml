@@ -159,6 +159,26 @@
       </property>
    </bean>
    
+   <bean id="workflowParametersBootstrap2" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
+      <property name="moduleId" value="common" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="parametersSpacesBootstrap" />
+         </list>
+      </property>
+      <property name="importer" ref="spacesBootstrap" />
+      <property name="bootstrapViews">
+         <list>
+            <props>
+               <prop key="encoding">UTF-8</prop>
+               <prop key="path">/param:parameters</prop>
+               <prop key="location">ee/webmedia/alfresco/workflow/bootstrap/workflow-parameters2.xml</prop>
+            </props>
+         </list>
+      </property>
+   </bean>     
+   
    <bean id="workflowParametersBootstrap3" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
       <property name="moduleId" value="common" />
       <property name="executeOnceOnly" value="true" />
@@ -264,6 +284,18 @@
       </property>
    </bean>
    
+   <bean id="taskTableAddColumnBootstrap10" parent="executeStatementsBootstrap" >
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dataSource" ref="dataSource" />
+      <property name="resourceName" value="ee/webmedia/alfresco/workflow/bootstrap/delta_task_table_add_columns5.sql" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="taskTableBootstrap3" />
+         </list>
+      </property>      
+   </bean>
+
    <bean id="taskDueDateHistoryTableAddColumnBootstrap" parent="executeStatementsBootstrap" >
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
@@ -329,7 +361,11 @@
             <ref bean="ParallelTasksPropertiesUpdater" />
          </list>
       </property>
-   </bean>    
+   </bean> 
+   
+   <bean id="compoundWorkflowCommentTableBootstrap" class="ee.webmedia.alfresco.workflow.bootstrap.CompoundWorkflowCommentTableBootstrap" parent="createTableBootstrap" >
+      <property name="executeOnceOnly" value="true" />
+   </bean>   
 
    <bean id="wmWorkflowService" class="ee.webmedia.alfresco.workflow.service.WorkflowServiceImpl">
       <property name="nodeService" ref="NodeService" />
@@ -601,7 +637,18 @@
       </property>
       <property name="userService" ref="UserService" />
    </bean>
-   
+
+   <bean id="compoundWorkflowCommentTableInsertUpdater" class="ee.webmedia.alfresco.workflow.bootstrap.CompoundWorkflowCommentTableInsertUpdater" parent="abstractNodeUpdater" >
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="archivalsStoresBootstrap" />
+         </list>
+      </property>
+      <property name="workflowService" ref="WmWorkflowService" />
+   </bean>
+      
    <bean id="taskUpdater" class="ee.webmedia.alfresco.workflow.bootstrap.TaskUpdater" parent="abstractNodeUpdater" >
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
@@ -871,6 +918,23 @@
       </property>
    </bean>
    
+   <bean id="finishUnfinshedDocumentsInCompWorkflows" class="ee.webmedia.alfresco.workflow.bootstrap.FinishUnfinshedDocumentsInCompWorkflows" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="false" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="archivalsStoresBootstrap" />
+         </list>
+      </property>
+      <property name="workflowService" ref="WmWorkflowService" />
+      <property name="documentService" ref="DocumentService" />
+      <property name="jdbcTemplate">
+         <bean class="org.springframework.jdbc.core.simple.SimpleJdbcTemplate">
+            <constructor-arg ref="dataSource" />
+         </bean>
+      </property>      
+   </bean>   
+   
    <!-- START: web beans: -->
       
    <bean id="DvkWorkflowExporter" class="ee.webmedia.alfresco.workflow.web.DvkWorkflowExporter" scope="session" />
@@ -888,6 +952,10 @@
    <bean id="RelatedUrlListBlock" class="ee.webmedia.alfresco.workflow.web.RelatedUrlListBlock" scope="session" />
    
    <bean id="RelatedUrlDetailsDialog" class="ee.webmedia.alfresco.workflow.web.RelatedUrlDetailsDialog" scope="session" />
+   
+   <bean id="CompoundWorkflowSendForInformationDialog" class="ee.webmedia.alfresco.workflow.web.CompoundWorkflowSendForInformationDialog" scope="session" />
+   
+   <bean id="CommentListBlock" class="ee.webmedia.alfresco.workflow.web.CommentListBlock" scope="session" />
    
    <!-- END: web beans: -->
 

@@ -28,6 +28,14 @@
       </property>
    </bean>
    
+   <bean class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
+      <property name="resourceBundles">
+         <list>
+            <value>ee/webmedia/alfresco/doclist/web/doclist-webclient</value>
+         </list>
+      </property>
+   </bean>
+   
    <bean class="org.alfresco.web.app.ResourceBundleBootstrap">
       <property name="resourceBundles">
          <list>
@@ -61,10 +69,11 @@
             <ref bean="documentUpdater9" />
             <ref bean="volumeTypeAndNamespaceUpdater" />
             <ref bean="seriesUpdaterGuard" />
+            <ref bean="archivalsStoresBootstrap" />
          </list>
       </property>
       <property name="documentUpdater" ref="documentUpdater9" />
-   </bean>    
+   </bean>
     
     <bean id="seriesUpdaterGuard" class="ee.webmedia.alfresco.series.bootstrap.SeriesUpdaterGuard" parent="module.baseComponent">
       <property name="moduleId" value="simdhs" />

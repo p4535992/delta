@@ -86,10 +86,11 @@ public class MsoServiceDelegatingImpl implements MsoService, InitializingBean {
     }
 
     @Override
-    public void replaceFormulas(Map<String, String> formulas, ContentReader documentReader, ContentWriter documentWriter) throws Exception {
+    public boolean replaceFormulas(Map<String, String> formulas, ContentReader documentReader, ContentWriter documentWriter, boolean dontSaveIfUnmodified) throws Exception {
         try {
-            delegate.replaceFormulas(formulas, documentReader, documentWriter);
+            boolean fileActuallyChanged = delegate.replaceFormulas(formulas, documentReader, documentWriter, dontSaveIfUnmodified);
             MonitoringUtil.logSuccess(MonitoredService.OUT_MSO);
+            return fileActuallyChanged;
         } catch (Exception e) {
             MonitoringUtil.logError(MonitoredService.OUT_MSO, e);
             throw e;

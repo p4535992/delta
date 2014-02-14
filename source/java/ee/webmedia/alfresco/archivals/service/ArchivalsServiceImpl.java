@@ -1,5 +1,7 @@
 package ee.webmedia.alfresco.archivals.service;
 
+import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.REG_NUMBER;
+
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Serializable;
@@ -741,12 +743,18 @@ public class ArchivalsServiceImpl implements ArchivalsService {
                     LOG.info("Node not found in volume any more, skipping nodeRef=" + childRef);
                     continue;
                 }
-                boolean isDocument = DocumentCommonModel.Types.DOCUMENT.equals(nodeService.getType(childRef));
+                final boolean isDocument = DocumentCommonModel.Types.DOCUMENT.equals(nodeService.getType(childRef));
                 try {
                     transactionHelper.doInTransaction(new RetryingTransactionCallback<Void>() {
 
                         @Override
                         public Void execute() throws Throwable {
+                            if (isDocument) {
+                                String existingRegNr = (String) nodeService.getProperty(childRef, REG_NUMBER);
+                                if (StringUtils.isNotBlank(existingRegNr)) {
+                                    BeanHelper.getAdrService().addDeletedDocument(childRef);
+                                }
+                            }
                             NodeRef archivedNodeRef = nodeService.moveNode(childRef, archivedParentRefFinal, childAssocRef.getTypeQName(),
                                     childAssocRef.getQName()).getChildRef();
                             updateDocumentLocationProps(archivedFunctionRef, archivedSeriesRef, archivedVolumeRef, isInCase ? archivedParentRefFinal : null,

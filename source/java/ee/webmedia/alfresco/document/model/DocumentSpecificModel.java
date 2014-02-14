@@ -163,6 +163,7 @@ public interface DocumentSpecificModel {
         QName DAILY_ALLOWANCE_SUM = QName.createQName(URI, "dailyAllowanceSum");
         QName DAILY_ALLOWANCE_TOTAL_SUM = QName.createQName(URI, "dailyAllowanceTotalSum");
         // END: properties of aspect ERRAND_ORDER_ABROAD_BLOCK (errandBlockAbroad)
+        QName DAILY_ALLOWANCE_FINANCING_SOURCE = QName.createQName(URI, "dailyAllowanceFinancingSource");
 
         // START: properties of aspect docspec:procurementApplicants
         QName PROCUREMENT_APPLICANT_NAME = QName.createQName(URI, "procurementApplicantName");
@@ -403,6 +404,7 @@ public interface DocumentSpecificModel {
         QName DRIVE_TOTAL_KM = QName.createQName(URI, "driveTotalKm");
         QName DRIVE_TOTAL_COMPENSATION = QName.createQName(URI, "driveTotalCompensation");
         QName DRIVE_COMPENSATION = QName.createQName(URI, "driveCompensation");
+        QName EXPENSES_FINANCING_SOURCE = QName.createQName(URI, "expensesFinancingSource");
     }
 
 }

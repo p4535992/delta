@@ -149,6 +149,14 @@ public class WorkflowBlockItem implements Serializable {
         return sb.toString();
     }
 
+    public String getTaskOutcomeWithSubstituteNote() {
+        if (isGroupBlockItem) {
+            return "";
+        }
+        String substitute = task.getOwnerSubstituteName();
+        return getTaskOutcome() + (StringUtils.isNotBlank(substitute) ? " " + MessageUtil.getMessage("task_substitute_summary", substitute) : "");
+    }
+
     public String getTaskComment() {
         return task.getComment();
     }

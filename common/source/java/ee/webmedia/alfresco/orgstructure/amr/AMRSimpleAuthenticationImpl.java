@@ -9,6 +9,7 @@ import static ee.webmedia.alfresco.utils.UserUtil.getPersonFullName1;
 import static ee.webmedia.alfresco.utils.UserUtil.getUserFullNameAndId;
 
 import java.io.Serializable;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -21,6 +22,7 @@ import org.alfresco.repo.security.person.PersonServiceImpl;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.security.AuthorityService;
+import org.alfresco.service.cmr.security.NoSuchPersonException;
 import org.alfresco.service.namespace.NamespacePrefixResolver;
 import org.alfresco.service.namespace.QName;
 import org.apache.commons.lang.StringUtils;
@@ -30,6 +32,7 @@ import org.springframework.ws.client.core.WebServiceTemplate;
 import org.springframework.ws.soap.client.SoapFaultClientException;
 
 import smit.ametnik.services.AmetnikExt;
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.log.PropDiffHelper;
 import ee.webmedia.alfresco.log.model.LogEntry;
 import ee.webmedia.alfresco.log.model.LogObject;
@@ -70,10 +73,6 @@ public class AMRSimpleAuthenticationImpl extends SimpleAcceptOrRejectAllAuthenti
             AmetnikExt user = amrService.getAmetnikByIsikukood(userName);
             if (user == null) {
                 String msg = "Didn't manage to get user with id '" + userName + "' from AMRService.";
-                if (getApplicationService().isTest()) {
-                    log.warn(msg + ". Ignoring, as project.test=true");
-                    return;
-                }
                 log.debug(msg);
                 throw new UserNotFoundException("Didn't manage to get user with id '" + userName + "' from AMRService.");
             }
@@ -89,24 +88,33 @@ public class AMRSimpleAuthenticationImpl extends SimpleAcceptOrRejectAllAuthenti
                 throw new AuthenticationException("User " + userName + " has been granted no access to this instance of restricted Delta.");
             }
             getRsAccessStatusBean().setCanUserAccessRestrictedDelta(hasRsAccess);
-            PersonServiceImpl.validCreatePersonCall.set(Boolean.TRUE);
-            NodeRef person;
+            NodeRef person = null;
             try {
                 person = getPersonService().getPerson(userName);
-            } finally {
-                PersonServiceImpl.validCreatePersonCall.set(null);
+                Map<QName, Serializable> personProperties = getNodeService().getProperties(person);
+                Map<QName, Serializable> personOldProperties = getPropertiesIgnoringSystem(personProperties, getDictionaryService());
+                userRegistry.fillPropertiesFromAmetnik(user, personProperties);
+                getPersonService().setPersonProperties(userName, personProperties);
+                String diff = new PropDiffHelper().watchUser().diff(personOldProperties, getPropertiesIgnoringSystem(personProperties, getDictionaryService()));
+                if (diff != null) {
+                    getLogService().addLogEntry(LogEntry.create(LogObject.USER, userName, getPersonFullName1(personOldProperties), "applog_user_edit",
+                            getUserFullNameAndId(personProperties), diff));
+                }
+            } catch (NoSuchPersonException e) {
+                // try to create person
             }
-            Map<QName, Serializable> personProperties = getNodeService().getProperties(person);
-            Map<QName, Serializable> personOldProperties = getPropertiesIgnoringSystem(personProperties, getDictionaryService());
-            userRegistry.fillPropertiesFromAmetnik(user, personProperties);
-            getPersonService().setPersonProperties(userName, personProperties);
-
-            String diff = new PropDiffHelper().watchUser().diff(personOldProperties, getPropertiesIgnoringSystem(personProperties, getDictionaryService()));
-            if (diff != null) {
-                getLogService().addLogEntry(LogEntry.create(LogObject.USER, userName, getPersonFullName1(personOldProperties), "applog_user_edit",
-                        getUserFullNameAndId(personProperties), diff));
+            if (person == null) {
+                PersonServiceImpl.validCreatePersonCall.set(Boolean.TRUE);
+                try {
+                    Map<QName, Serializable> personProperties = new HashMap<QName, Serializable>();
+                    userRegistry.fillPropertiesFromAmetnik(user, personProperties);
+                    person = getPersonService().createPerson(personProperties);
+                    person = getPersonService().getPerson(userName); // creates home folder if necessary
+                    BeanHelper.getMenuService().addAllFunctionVolumeShortcuts(person);
+                } finally {
+                    PersonServiceImpl.validCreatePersonCall.set(null);
+                }
             }
-
             addToAuthorityZone(person, userName, "AUTH.EXT.amr1");
         } catch (WebServiceTransportException e) {
             if (StringUtils.equals(e.getMessage(), "Not Found [404]")) {

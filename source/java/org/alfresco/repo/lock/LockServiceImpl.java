@@ -36,9 +36,6 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.faces.context.FacesContext;
-import javax.servlet.ServletRequest;
-import javax.servlet.http.HttpSession;
-
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.copy.CopyBehaviourCallback;
 import org.alfresco.repo.copy.CopyDetails;
@@ -49,9 +46,9 @@ import org.alfresco.repo.policy.JavaBehaviour;
 import org.alfresco.repo.policy.PolicyComponent;
 import org.alfresco.repo.policy.PolicyScope;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
+import org.alfresco.repo.security.authentication.InMemoryTicketComponentImpl;
 import org.alfresco.repo.tenant.TenantService;
 import org.alfresco.repo.version.VersionServicePolicies;
-import org.alfresco.repo.webdav.WebDAVMethod;
 import org.alfresco.service.cmr.lock.LockService;
 import org.alfresco.service.cmr.lock.LockStatus;
 import org.alfresco.service.cmr.lock.LockType;
@@ -111,7 +108,7 @@ public class LockServiceImpl implements LockService,
     /**
      * The authentication service
      */
-    private AuthenticationService authenticationService;
+    protected AuthenticationService authenticationService;
 
     /**
      * The ownable service
@@ -245,7 +242,7 @@ public class LockServiceImpl implements LockService,
         checkForLockApsect(nodeRef);
         
         // Get the current user name
-        String userName = getUserName();
+        String userName = isManualLock(nodeRef) ? getManualLockOwner() : getUserName();
 
         // Set a default value
         if (lockType == null)
@@ -337,22 +334,22 @@ public class LockServiceImpl implements LockService,
      */
     public synchronized void unlock(NodeRef nodeRef) throws UnableToReleaseLockException
     {
-        nodeRef = tenantService.getName(nodeRef);
+        final NodeRef unlockRef = tenantService.getName(nodeRef);
         
         // Check for lock aspect
-        checkForLockApsect(nodeRef);
+        checkForLockApsect(unlockRef);
         
-        this.ignoreNodeRefs.add(nodeRef);
+        this.ignoreNodeRefs.add(unlockRef);
         try
         {
-            // Clear the lock owner
             this.nodeService.setProperty(nodeRef, ContentModel.PROP_LOCK_OWNER, null);
             this.nodeService.setProperty(nodeRef, ContentModel.PROP_LOCK_TYPE, null);
             this.nodeService.setProperty(nodeRef, FileModel.Props.LOCKED_FILE_NODEREF, null); // Reset the potential generated file induced lock
+            this.nodeService.removeProperty(nodeRef, FileModel.Props.MANUAL_LOCK); // Remove the potential manual lock
         }
         finally
         {
-            this.ignoreNodeRefs.remove(nodeRef);
+            this.ignoreNodeRefs.remove(unlockRef);
         }
     }
 
@@ -413,7 +410,7 @@ public class LockServiceImpl implements LockService,
         if (this.nodeService.hasAspect(nodeRef, ContentModel.ASPECT_LOCKABLE) == true)
         {
             // Get the current lock owner
-            String currentUserRef = getUserNameAndSession((String) this.nodeService.getProperty(nodeRef, ContentModel.PROP_LOCK_OWNER));
+            String currentUserRef = isManualLock(nodeRef) ? getManualLockOwner() : getUserNameAndSession((String) this.nodeService.getProperty(nodeRef, ContentModel.PROP_LOCK_OWNER));
             String owner = ownableService.getOwner(nodeRef);
             if (currentUserRef != null)
             {
@@ -484,7 +481,8 @@ public class LockServiceImpl implements LockService,
      */
     public void checkForLock(NodeRef nodeRef) throws NodeLockedException
     {
-        String userName = getUserName();
+        // Get the current user name
+        String userName = isManualLock(nodeRef) ? getManualLockOwner() : getUserName();
         
         nodeRef = tenantService.getName(nodeRef);
  
@@ -684,5 +682,29 @@ public class LockServiceImpl implements LockService,
                 "ASPECT:\"" + ContentModel.ASPECT_LOCKABLE.toString() + 
                 "\" +@\\{http\\://www.alfresco.org/model/content/1.0\\}" + ContentModel.PROP_LOCK_OWNER.getLocalName() + ":\"" + getUserName() + "\"" +
                 " +@\\{http\\://www.alfresco.org/model/content/1.0\\}" + ContentModel.PROP_LOCK_TYPE.getLocalName() + ":\"" + lockType.toString() + "\"");
+    }
+    
+    /**
+     * Manual locks are generated based on authentication, not by browser/client session.
+     * 
+     * @return currently authenticated user
+     */
+    protected String getManualLockOwner() {
+        return authenticationService.getCurrentUserName();
+    }
+
+    /**
+     * Check if this node has been locked manually
+     * 
+     * @param nodeRef node to check
+     * @return true, if node has been locked manually
+     */
+    protected boolean isManualLock(NodeRef nodeRef) {
+        boolean manualLock = false;
+        if (nodeRef != null) {
+            manualLock = Boolean.TRUE.equals(this.nodeService.getProperty(nodeRef, FileModel.Props.MANUAL_LOCK));
+        }
+        
+        return manualLock;
     }
 }

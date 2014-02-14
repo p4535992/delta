@@ -11,6 +11,7 @@ import javax.faces.context.FacesContext;
 import javax.faces.context.ResponseWriter;
 
 import org.alfresco.web.ui.common.Utils;
+import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
@@ -71,8 +72,11 @@ public class ValidatingModalLayerComponent extends ModalLayerComponent {
         for (UIComponent child : ComponentUtil.getChildren(this)) {
             Map<String, Object> attributes = ComponentUtil.getAttributes(child);
             boolean isHidden = attrIsTrue(attributes, ATTR_IS_HIDDEN);
+            String styleClass = (String) attributes.get("styleClass");
+            String style = (String) attributes.get("style");
             out.write("<tr><td class=\"propertiesLabel" + (isHidden ? " hidden" : "") + "\">");
-            out.write(MessageUtil.getMessage((String) attributes.get(ATTR_LABEL_KEY)) + " </td>");
+            String labelKey = (String) attributes.get(ATTR_LABEL_KEY);
+            out.write(StringUtils.isNotBlank(labelKey) ? MessageUtil.getMessage(labelKey) : "" + " </td>");
             out.write("<td>");
             if (child instanceof UIInput && !isHidden && !attrIsTrue(attributes, ATTR_PRESERVE_VALUES)) {
                 ((UIInput) child).setValue(null);

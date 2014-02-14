@@ -954,12 +954,17 @@ public class FileFolderServiceImpl implements FileFolderService
 
     public ContentWriter getWriter(NodeRef nodeRef)
     {
+        return getWriter(nodeRef, true);
+    }
+    
+    @Override
+    public ContentWriter getWriter(NodeRef nodeRef, boolean update){
         FileInfo fileInfo = toFileInfo(nodeRef, false);
         if (fileInfo.isFolder())
         {
             throw new InvalidTypeException("Unable to get a content writer for a folder: " + fileInfo);
         }
-        return contentService.getWriter(nodeRef, ContentModel.PROP_CONTENT, true);
+        return contentService.getWriter(nodeRef, ContentModel.PROP_CONTENT, update);        
     }
     
     /**

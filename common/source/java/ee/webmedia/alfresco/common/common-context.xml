@@ -346,6 +346,10 @@
       <property name="enabled" value="${jobs.enabled}" />
    </bean>
 
+<!--
+   XXX In 3.6.21->3.6.30 upgrade the procedure is to perform full index rebuild at the beginning of upgrade, so this bootstrap is not needed.
+       It is left active for for 3.13 upgrades.
+-->
    <bean id="invalidNodeFixerAndIndexIntegrityCheckerBootstrap" class="ee.webmedia.alfresco.common.bootstrap.InvalidNodeFixerAndIndexIntegrityCheckerBootstrap" parent="module.baseComponent">
       <property name="moduleId" value="common" />
       <property name="executeOnceOnly" value="true" />

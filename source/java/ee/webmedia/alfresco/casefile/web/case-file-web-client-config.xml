@@ -48,6 +48,13 @@
             <image>/images/icons/versioned_properties.gif</image>
             <action-listener>#{CaseFileDialog.deleteCaseFile}</action-listener>
          </action>
+         
+         <action id="case_show_link">
+            <evaluator>ee.webmedia.alfresco.document.web.evaluator.ViewStateActionEvaluator</evaluator>
+            <label-id>caseFile_show_url</label-id>
+            <image>/images/icons/versioned_properties.gif</image>
+            <action-listener>#{CaseFileDialog.showCaseFileLink}</action-listener>
+         </action>
 
          <action id="case_file_eventplan">
             <evaluator>ee.webmedia.alfresco.casefile.web.evaluator.CaseFileEventPlanEvaluator</evaluator>
@@ -65,6 +72,15 @@
             <label-id>caseFile_archive</label-id>
             <image>/images/icons/versioned_properties.gif</image>
             <action-listener>#{CaseFileDialog.archiveCaseFile}</action-listener>
+         </action>
+         
+         <action id="case_file_send_for_information">
+            <evaluator>ee.webmedia.alfresco.casefile.web.evaluator.CaseFileSendForInformationEvaluator</evaluator>
+            <label-id>caseFile_send_for_information_button</label-id>
+            <image>/images/icons/versioned_properties.gif</image>
+            <action>#{CaseFileSendForInformationDialog.init}</action>
+            <action-listener>#{CaseFileSendForInformationDialog.loadDocument}</action-listener>
+            <params><param name="caseFileNodeRef">#{CaseFileDialog.node.nodeRef}</param></params>
          </action>
          
          <action id="case_file_add_notification">
@@ -88,8 +104,10 @@
             <action idref="case_file_close" />
             <action idref="case_file_open" />
             <action idref="case_file_delete" />
+            <action idref="case_show_link" />
             <action idref="case_file_eventplan" />              
             <action idref="case_file_archive" />
+            <action idref="case_file_send_for_information" />
             <action idref="case_file_add_notification" />
             <action idref="case_file_remove_notification" />              
          </action-group>
@@ -101,6 +119,8 @@
          </dialog>
          <dialog name="caseFileListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/casefile/web/case-file-list-dialog.jsp"
             managed-bean="CaseFileListDialog" icon="/images/icons/workflow_large.gif" title-id="casefile_list_dialog_title" show-ok-button="false" />
+         <dialog name="caseFileSendForInformationDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/document/sendout/web/document-send-for-information-dialog.jsp"
+            managed-bean="CaseFileSendForInformationDialog" icon="/images/icons/details_large.gif" title-id="caseFile_send_for_information_dialog" />
       </dialogs>
    </config>
 

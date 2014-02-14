@@ -21,7 +21,9 @@ public interface DocumentChildModel {
         QName APPLICANT_DOMESTIC = QName.createQName(URI, "applicantDomestic");
         QName ERRAND_DOMESTIC = QName.createQName(URI, "errandDomestic");
         QName APPLICANT_TRAINING = QName.createQName(URI, "applicantTraining");
-        QName[] ALL_ASSOCS = new QName[] { CONTRACT_PARTY, APPLICANT_ABROAD, ERRAND_ABROAD, APPLICANT_DOMESTIC, ERRAND_DOMESTIC, APPLICANT_TRAINING };
+        QName APPLICANT_ERRAND = QName.createQName(URI, "applicantErrand");
+        QName ERRAND = QName.createQName(URI, "errand");
+        QName[] ALL_ASSOCS = new QName[] { CONTRACT_PARTY, APPLICANT_ABROAD, ERRAND_ABROAD, APPLICANT_DOMESTIC, ERRAND_DOMESTIC, APPLICANT_TRAINING, APPLICANT_ERRAND, ERRAND };
     }
 
     interface Aspects {

@@ -861,8 +861,7 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
                 if (tmpType.equals(WorkflowSpecificModel.Types.DUE_DATE_EXTENSION_WORKFLOW)) {
                     continue;
                 }
-                if (tmpType.equals(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_WORKFLOW)
-                        && !(getWorkflowService().externalReviewWorkflowEnabled() || getWorkflowService().isReviewToOtherOrgEnabled())) {
+                if (tmpType.equals(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_WORKFLOW) && !getWorkflowService().externalReviewWorkflowEnabled()) {
                     continue;
                 }
                 if (isNotAllowedConfirmationWorkflow(tmpType)) {
@@ -1142,7 +1141,7 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
         addChildren(commonDataPanel, sheetC);
         addChildren(commonDataGroup, commonDataPanel);
     }
-    
+
     protected void addLargeWorkflowWarning() {
         if (compoundWorkflow == null) {
             return;
@@ -1436,7 +1435,8 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
 
     protected boolean isActiveResponsibleAssignedForDocument(QName workflowType, boolean allowFinished) {
         try {
-            return 0 < getWorkflowService().getConnectedActiveResponsibleTasksCount(compoundWorkflow, workflowType, allowFinished);
+            return 0 < getWorkflowService().getConnectedActiveResponsibleTasksCount(compoundWorkflow, workflowType, allowFinished,
+                    allowFinished ? compoundWorkflow.getNodeRef() : null);
         } catch (InvalidNodeRefException e) {
             final FacesContext context = FacesContext.getCurrentInstance();
             MessageUtil.addErrorMessage(context, "workflow_compound_add_block_error_docDeleted");

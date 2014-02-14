@@ -264,4 +264,6 @@ public interface DocumentAdminService {
 
     Map<String, DocumentTypeVersion> getLatestDocTypeVersions();
 
+    void registerDocumentTypeValidator(String validatorKey, DocumentTypeValidator documentTypeValidator);
+
 }

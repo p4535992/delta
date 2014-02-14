@@ -12,6 +12,7 @@ import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
 
 import ee.webmedia.alfresco.document.file.model.File;
+import ee.webmedia.alfresco.workflow.model.Comment;
 import ee.webmedia.alfresco.workflow.service.type.WorkflowType;
 
 /**
@@ -90,17 +91,23 @@ public interface WorkflowDbService {
     Map<NodeRef, List<NodeRef>> getCompoundWorkflowsTaskFiles(List<CompoundWorkflow> compoundWorkflows);
 
     int replaceTaskOutcomes(String oldOutcome, String newOutcome, String taskType);
-    
+
     void deleteTask(NodeRef removedTaskNodeRef);
 
     void deleteWorkflowTasks(NodeRef removedWorkflowNodeRef);
 
-    Set<NodeRef> getAllWorflowNodeRefs();    
+    Set<NodeRef> getAllWorflowNodeRefs();
 
     List<NodeRef> getWorkflowTaskNodeRefs(NodeRef workflowRef);
 
     Set<NodeRef> getAllWorkflowsWithEmptyTasks();
 
     Set<NodeRef> getWorkflowsWithWrongTaskOrder();
+
+    List<Comment> getCompoundWorkflowComments(String compoundWorkflowId);
+
+    void addCompoundWorkfowComment(Comment comment);
+
+    void editCompoundWorkflowComment(Long commentId, String commentText);
 
 }

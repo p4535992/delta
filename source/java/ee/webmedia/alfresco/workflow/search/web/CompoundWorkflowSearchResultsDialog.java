@@ -2,19 +2,27 @@ package ee.webmedia.alfresco.workflow.search.web;
 
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentSearchService;
 
+import java.io.Serializable;
 import java.util.List;
+import java.util.Map;
 
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
+import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.ui.common.component.data.UIRichList;
+import org.apache.lucene.search.BooleanQuery;
 import org.apache.myfaces.application.jsp.JspStateManagerImpl;
 
+import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.document.web.BaseLimitedListDialog;
 import ee.webmedia.alfresco.simdhs.CSVExporter;
 import ee.webmedia.alfresco.simdhs.DataReader;
 import ee.webmedia.alfresco.simdhs.RichListDataReader;
+import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
 
 /**
@@ -26,6 +34,7 @@ public class CompoundWorkflowSearchResultsDialog extends BaseLimitedListDialog {
 
     private static final long serialVersionUID = 1L;
     public static final String BEAN_NAME = "CompoundWorkflowSearchResultsDialog";
+    private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(CompoundWorkflowSearchResultsDialog.class);
 
     private List<CompoundWorkflow> workflows;
     private Node filter;
@@ -56,7 +65,17 @@ public class CompoundWorkflowSearchResultsDialog extends BaseLimitedListDialog {
     }
 
     public void doInitialSearch() {
-        workflows = setLimited(getDocumentSearchService().searchCompoundWorkflows(filter, getLimit()));
+        try {
+            workflows = setLimited(getDocumentSearchService().searchCompoundWorkflows(filter, getLimit()));
+        } catch (BooleanQuery.TooManyClauses e) {
+            Map<QName, Serializable> filterProps = RepoUtil.getNotEmptyProperties(RepoUtil.toQNameProperties(filter.getProperties()));
+            LOG.error("Compound workflow search failed: "
+                    + e.getMessage()
+                    + "\n  searchFilter="
+                    + WmNode.toString(filterProps, BeanHelper.getNamespaceService()));
+            workflows = setLimitedEmpty();
+            MessageUtil.addErrorMessage("cw_search_toomanyclauses");
+        }
         clearRichList();
     }
 

@@ -189,11 +189,11 @@ public class MsoService1Impl implements MsoService, InitializingBean {
     }
 
     @Override
-    public void replaceFormulas(Map<String, String> formulas, ContentReader documentReader, ContentWriter documentWriter) throws Exception {
+    public boolean replaceFormulas(Map<String, String> formulas, ContentReader documentReader, ContentWriter documentWriter, boolean dontSaveIfUnmodified) throws Exception {
         try {
             MsoDocumentAndFormulasInput input = replaceFormulasPrepare(formulas, documentReader);
             if (input == null) {
-                return;
+                return false;
             }
 
             long duration = -1;
@@ -215,7 +215,7 @@ public class MsoService1Impl implements MsoService, InitializingBean {
                 documentWriter.setMimetype(outputMimeType);
                 documentWriter.setEncoding(pair.getSecond());
                 documentWriter.putContent(output.getDocumentFile().getInputStream());
-
+                return true;
             } finally {
                 log.info("PERFORMANCE: query mso1.replaceFormulas - " + duration + " ms|" + documentReader.getSize() + "|" + documentReader.getMimetype() + "|"
                         + documentReader.getEncoding() + "|" + documentWriter.getSize() + "|" + formulas.size());

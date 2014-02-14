@@ -41,7 +41,8 @@ public class DocumentTemplateDetailsDialog extends BaseDialogBean {
     public void setupDocTemplate(ActionEvent event) {
         NodeRef docTemplateNodeRef = ActionUtil.getParam(event, "docTemplateNodeRef", NodeRef.class);
         docTemplNode = BeanHelper.getGeneralService().fetchNode(docTemplateNodeRef);
-        if (TemplateType.REPORT_TEMPLATE.name().equals(docTemplNode.getProperties().get(DocumentTemplateModel.Prop.TEMPLATE_TYPE))
+        String templateType = (String) docTemplNode.getProperties().get(DocumentTemplateModel.Prop.TEMPLATE_TYPE);
+        if (TemplateType.REPORT_TEMPLATE.name().equals(templateType)
                 && TemplateReportType.DOCUMENTS_REPORT.name().equals(docTemplNode.getProperties().get(DocumentTemplateModel.Prop.REPORT_TYPE))) {
             showReportOutputType = true;
         }
@@ -50,6 +51,11 @@ public class DocumentTemplateDetailsDialog extends BaseDialogBean {
         String fileNameExtension = FilenameUtils.getExtension(templateName);
         docTemplNode.getProperties().put(DocumentTemplateServiceImpl.TEMP_PROP_FILE_NAME_BASE.toString(), fileNameBase);
         docTemplNode.getProperties().put(DocumentTemplateServiceImpl.TEMP_PROP_FILE_NAME_EXTENSION.toString(), "." + fileNameExtension);
+        // Safe-guard for old data
+        if ((TemplateType.EMAIL_TEMPLATE.name().equals(templateType) || TemplateType.NOTIFICATION_TEMPLATE.name().equals(templateType))
+                && !docTemplNode.hasAspect(DocumentTemplateModel.Aspects.SUBJECT)) {
+            docTemplNode.getAspects().add(DocumentTemplateModel.Aspects.SUBJECT);
+        }
     }
 
     public Node getCurrentNode() {

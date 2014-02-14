@@ -175,7 +175,7 @@ public class VolumeDynamicSearchDialog extends AbstractSearchFilterBlockBean<Vol
         return config.getPropertySheetConfigElement();
     }
 
-    public void storeValueChangeListener(ValueChangeEvent event) {
+    public void storeValueChanged(ValueChangeEvent event) {
         @SuppressWarnings("unchecked")
         List<NodeRef> selectedStores = (List<NodeRef>) event.getNewValue();
         getNode().getProperties().put(SELECTED_STORES.toString(), selectedStores);

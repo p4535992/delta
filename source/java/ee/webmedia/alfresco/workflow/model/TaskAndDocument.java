@@ -45,7 +45,7 @@ public class TaskAndDocument implements Serializable {
         final String cssStyleClass;
         if (completedDate == null) {
             final Date now = new Date();
-            if (dueDate != null && dueDate.before(now) && !DateUtils.isSameDay(dueDate, now)) {
+            if (dueDate != null && dueDate.before(now)) {
                 cssStyleClass = STYLECLASS_TASK_OVERDUE;
             } else {
                 cssStyleClass = docStyleClass;
@@ -108,7 +108,7 @@ public class TaskAndDocument implements Serializable {
     }
 
     public String getSender() {
-        return hasDocument() ? document.getSender() : "";
+        return hasDocument() ? document.getSenderOrOwner() : "";
     }
 
     public Date getDocumentDueDate() {

@@ -86,6 +86,7 @@ import ee.webmedia.alfresco.common.propertysheet.component.WMUIProperty;
 import ee.webmedia.alfresco.common.propertysheet.converter.ListNonBlankStringsWithCommaConverter;
 import ee.webmedia.alfresco.common.propertysheet.generator.CustomAttributes;
 import ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.HandlesViewMode;
+import ee.webmedia.alfresco.common.propertysheet.parameter.ParameterInputAttributeGenerator;
 import ee.webmedia.alfresco.common.propertysheet.validator.ForcedMandatoryValidator;
 import ee.webmedia.alfresco.common.propertysheet.validator.MandatoryIfValidator;
 import ee.webmedia.alfresco.common.web.BeanHelper;
@@ -121,6 +122,7 @@ public abstract class BaseComponentGenerator implements IComponentGenerator, Cus
         String STYLE_CLASS = "styleClass";
         String ATTR_FORCED_MANDATORY = "forcedMandatory";
         String VALDIATION_DISABLED = "validationDisabled";
+        String ATTR_MANDATORY = "mandatory";
         //enable to show mandatory marker independently of VALDIATION_DISABLED value
         String VALIDATION_MARKER_DISABLED = "validationMarkerDisabled";
     }
@@ -610,7 +612,8 @@ public abstract class BaseComponentGenerator implements IComponentGenerator, Cus
 
     protected boolean isCreateOutputText(FacesContext context) {
         String outputTextAttr = getCustomAttributes().get(OUTPUT_TEXT);
-        return isNotBlank(outputTextAttr) ? evaluateBoolean(outputTextAttr, context) : false;
+        boolean hasParameter = StringUtils.hasText(getCustomAttributes().get(ParameterInputAttributeGenerator.PARAMETER_NAME));
+        return !hasParameter && isNotBlank(outputTextAttr) ? evaluateBoolean(outputTextAttr, context) : false;
     }
 
     protected boolean isAlwaysEdit(FacesContext context) {

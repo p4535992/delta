@@ -23,6 +23,7 @@ import org.springframework.util.Assert;
 import ee.webmedia.alfresco.common.web.CssStylable;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.document.file.model.File;
+import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.UserUtil;
 import ee.webmedia.alfresco.utils.WebUtil;
@@ -51,8 +52,6 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
     private static final QName PROP_WORKFLOW_CATEGORY = RepoUtil.createTransientProp("category");
     private static final QName PROP_TEMP_FILES = RepoUtil.createTransientProp("files");
     private static final QName PROP_DUE_DATE_TIME_STR = RepoUtil.createTransientProp("dueDateTimeStr");
-    private static final QName PROP_COMPOUNDWORKFLOW_NODEREF = RepoUtil.createTransientProp("compountWorkflowNodeRef");
-
     private final Workflow parent;
     private final int outcomes;
     private int outcomeIndex = -1;
@@ -140,6 +139,11 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
         return getProp(WorkflowCommonModel.Props.OWNER_NAME);
     }
 
+    public String getOwnerNameWithSubstitute() {
+        String substitute = getOwnerSubstituteName();
+        return getOwnerName() + (StringUtils.isNotBlank(substitute) ? " " + MessageUtil.getMessage("task_substitute", substitute) : "");
+    }
+
     public void setOwnerName(String ownerName) {
         setProp(WorkflowCommonModel.Props.OWNER_NAME, ownerName);
     }
@@ -192,6 +196,14 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
 
     protected void setCompletedDateTime(Date completedDateTime) {
         setProp(WorkflowCommonModel.Props.COMPLETED_DATE_TIME, completedDateTime);
+    }
+
+    public String getOwnerSubstituteName() {
+        return getProp(WorkflowCommonModel.Props.OWNER_SUBSTITUTE_NAME);
+    }
+
+    protected void setOwnerSubstituteName(String ownerSubstituteName) {
+        setProp(WorkflowCommonModel.Props.OWNER_SUBSTITUTE_NAME, ownerSubstituteName);
     }
 
     public String getOutcome() {
@@ -340,6 +352,10 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
         return getDueDate() != null ? dateFormat.format(getDueDate()) : "";
     }
 
+    public String getDueDateTimeStr() {
+        return getDueDate() != null ? dateTimeFormat.format(getDueDate()) : "";
+    }
+
     public Date getProposedDueDate() {
         return getProp(WorkflowSpecificModel.Props.PROPOSED_DUE_DATE);
     }
@@ -432,8 +448,9 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
 
         @Override
         public Object get(Node node) {
-            if (node.hasAspect(WorkflowSpecificModel.Props.RESOLUTION)) {
-                return node.getProperties().get(WorkflowSpecificModel.Props.RESOLUTION);
+            String taskResolution = (String) node.getProperties().get(WorkflowSpecificModel.Props.RESOLUTION);
+            if (StringUtils.isNotBlank(taskResolution)) {
+                return taskResolution;
             }
             if (getParent() == null) {
                 // if it occurs that task workflowResolution property is not valid value here (although it should be),
@@ -593,14 +610,6 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
 
     public String getCompoundWorkflowTitle() {
         return getProp(WorkflowSpecificModel.Props.COMPOUND_WORKFLOW_TITLE);
-    }
-
-    public void setCompoundWorkflowComment(String compoundWorkflowComment) {
-        setProp(WorkflowSpecificModel.Props.COMPOUND_WORKFLOW_COMMENT, compoundWorkflowComment);
-    }
-
-    public String getCompoundWorkflowComment() {
-        return getProp(WorkflowSpecificModel.Props.COMPOUND_WORKFLOW_COMMENT);
     }
 
     public void setOriginalNoderefId(String originalNoderefId) {

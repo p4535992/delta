@@ -213,7 +213,7 @@ public abstract class DocumentMetadata {
             created = ImportUtil.getDateTime(form.elementTextTrim("Create_Time"));
             modified = ImportUtil.getDateTime(form.elementTextTrim("Edit_Time"));
 
-            List<String> additionalRegDateTimeMappingsFrom = Arrays.asList("Doc_date", "Document_date");
+            List<String> additionalRegDateTimeMappingsFrom = Arrays.asList("Doc_date", "Document_date", "Create_Time", "Arrive_date");
             for (String fromElement : additionalRegDateTimeMappingsFrom) {
                 additionalRegDateTime = trimToNull(form.elementTextTrim(fromElement));
                 if (additionalRegDateTime != null) {

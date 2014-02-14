@@ -7,9 +7,11 @@ import java.io.Serializable;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 import javax.faces.convert.ConverterException;
@@ -22,6 +24,7 @@ import org.dom4j.Node;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.utils.TextUtil;
 
 public class PropMapping {
 
@@ -113,6 +116,34 @@ public class PropMapping {
         } else if (expression.equals("xpath")) {
             Node node = root.selectSingleNode(from);
             value = node != null ? StringUtils.trim(node.getText()) : null;
+        } else if (expression.equals("xpathContractParty")) {
+            List<List<String>> values = new ArrayList<List<String>>();
+            for (String fromXpath : from.split(",")) {
+                List<Node> nodes = root.selectNodes(fromXpath);
+                if (nodes != null) {
+                    int i = 1;
+                    for (Node node : nodes) {
+                        String columnValue = node != null ? StringUtils.trim(node.getText()) : null;
+                        List<String> rowValues;
+                        if (values.size() < i) {
+                            rowValues = new ArrayList<String>();
+                            values.add(rowValues);
+                        } else {
+                            rowValues = values.get(i - 1);
+                        }
+                        rowValues.add(columnValue);
+                        i++;
+                    }
+                }
+            }
+            List<String> rows = new ArrayList<String>();
+            for (List<String> rowValues : values) {
+                String rowValue = TextUtil.joinNonBlankStringsWithComma(rowValues);
+                if (StringUtils.isNotBlank(rowValue)) {
+                    rows.add("Lepingu osapool: " + rowValue);
+                }
+            }
+            value = TextUtil.joinNonBlankStrings(rows, "\n");
         } else if (expression.equals("const")) {
             value = from;
         } else {
@@ -206,4 +237,5 @@ public class PropMapping {
 
         SPLITTERS = Collections.singletonMap("period", (Splitter) new PeriodSplitter());
     }
+
 }

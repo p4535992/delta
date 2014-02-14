@@ -84,6 +84,10 @@
                   <constraint ref="report:reportStatus" />
                </constraints>               
             </property>
+            <property name="report:nodeRef">
+               <type>d:noderef</type>
+               <mandatory>true</mandatory>
+            </property>
          </properties>
          <mandatory-aspects>
             <aspect>taskreport:taskReportFilterContainer</aspect>

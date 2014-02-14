@@ -36,6 +36,7 @@ public class ModalLayerComponent extends UICommand implements Serializable {
     public static final String ATTR_SET_RENDERED_FALSE_ON_CLOSE = "setRenderedFalseOnClose";
     public static final String ATTR_AUTO_SHOW = "autoShow";
     public static final String ACTION_INDEX = "actionIndex";
+    public static final String ATTR_STYLE_CLASS = "modalStyleClass";
 
     public final static int ACTION_CLEAR = 1;
     public final static int ACTION_SUBMIT = 2;
@@ -79,11 +80,12 @@ public class ModalLayerComponent extends UICommand implements Serializable {
 
         ResponseWriter out = context.getResponseWriter();
         JSONSerializer serializer = new JSONSerializer();
-
+        String modalStyleClass = (String) getAttributes().get(ATTR_STYLE_CLASS);
         ComponentUtil.writeModalHeader(
                 out,
                 getModalHtmlId(context),
                 MessageUtil.getMessage((String) getAttributes().get(ATTR_HEADER_KEY)),
+                StringUtils.isBlank(modalStyleClass) ? "" : modalStyleClass,
                 ComponentUtil.generateFieldSetter(context, this, getActionId(context, this), "")
                         + generateCloseOnClick(context));
 

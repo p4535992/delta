@@ -54,7 +54,7 @@
          <f:facet name="header">
             <h:outputText id="col01-sort" value="#{msg.compoundWorkflow_object_list_documentToSign}" styleClass="header" />
          </f:facet>
-         <h:selectBooleanCheckbox id="co01-checkbox" value="#{r.documentToSign}" disabled="#{CompoundWorkflowAssocListDialog.disableDocSelect}" />
+         <h:selectBooleanCheckbox id="co01-checkbox" value="#{r.documentToSign}" disabled="#{CompoundWorkflowAssocListDialog.disableSignSelect}" />
       </a:column>      
       
       <%-- regNumber --%>

@@ -321,6 +321,18 @@
                <type>d:text</type>
                <multiple>true</multiple>
             </property>
+            <property name="doccom:searchableSendInfoRecipient">
+               <type>d:text</type>
+               <multiple>true</multiple>
+            </property>
+            <property name="doccom:searchableSendInfoDateTime">
+               <type>d:datetime</type>
+               <multiple>true</multiple>
+            </property>
+            <property name="doccom:searchableSendInfoResolution">
+               <type>d:text</type>
+               <multiple>true</multiple>
+            </property>
 <!--
             <property name="doccom:searchableCostManager">
                <type>d:text</type>

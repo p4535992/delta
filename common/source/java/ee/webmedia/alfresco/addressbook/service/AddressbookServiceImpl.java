@@ -20,6 +20,7 @@ import java.util.Set;
 
 import org.alfresco.service.cmr.repository.AssociationRef;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
+import org.alfresco.service.cmr.repository.InvalidNodeRefException;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.cmr.security.AccessStatus;
@@ -57,6 +58,8 @@ import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
  */
 public class AddressbookServiceImpl extends AbstractSearchServiceImpl implements AddressbookService {
 
+    private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(AddressbookServiceImpl.class);
+
     private NamespaceService namespaceService;
     private AuthorityService authorityService;
     private PermissionService permissionService;
@@ -90,7 +93,14 @@ public class AddressbookServiceImpl extends AbstractSearchServiceImpl implements
         List<ChildAssociationRef> childRefs = nodeService.getChildAssocs(getAddressbookRoot(), type, RegexQNamePattern.MATCH_ALL);
         List<AddressbookEntry> addressbooks = new ArrayList<AddressbookEntry>(childRefs.size());
         for (ChildAssociationRef ref : childRefs) {
-            addressbooks.add(new AddressbookEntry(getNode(ref.getChildRef())));
+            try {
+                addressbooks.add(new AddressbookEntry(getNode(ref.getChildRef())));
+            } catch (InvalidNodeRefException e) {
+                // This can happen if two users modify the addressbook simultaneously and one of them deletes a contact/organization
+                // We can ignore this situation since the node doesn't exist any more and therefore it can be excluded from the listing.
+                LOG.error("Unable to get addressbook entrys properties with type " + type, e);
+                continue;
+            }
         }
         return addressbooks;
     }
@@ -400,7 +410,8 @@ public class AddressbookServiceImpl extends AbstractSearchServiceImpl implements
                 dvkCapableOnly,
                 orgOnly ? Collections.singleton(Types.ORGANIZATION) : Collections.<QName> emptySet(),
                 institutionToRemove,
-                limit);
+                limit,
+                false); // Contact groups don't have AddressbookModel.Props.ACTIVESTATUS property
     }
 
     private List<Node> executeSearch(String searchCriteria, Set<QName> fields, boolean taskCapableOnly, boolean dvkCapableOnly, Set<QName> types, String institutionToRemove,
@@ -559,7 +570,14 @@ public class AddressbookServiceImpl extends AbstractSearchServiceImpl implements
         List<ChildAssociationRef> childRefs = nodeService.getChildAssocs(parent, type, RegexQNamePattern.MATCH_ALL);
         List<Node> entryNodes = new ArrayList<Node>(childRefs.size());
         for (ChildAssociationRef ref : childRefs) {
-            entryNodes.add(getNode(ref.getChildRef()));
+            try {
+                entryNodes.add(getNode(ref.getChildRef()));
+            } catch (InvalidNodeRefException e) {
+                // This can happen if two users modify the addressbook simultaneously and one of them deletes a contact/organization
+                // We can ignore this situation since the node doesn't exist any more and therefore it can be excluded from the listing.
+                LOG.error("Unable to get " + parent + " childs properties with type " + type, e);
+                continue;
+            }
         }
         return entryNodes;
     }
