@@ -124,6 +124,10 @@ public abstract class BaseDialogBean implements IDialogBean, Serializable
       // do nothing by default, subclasses can override if necessary
    }
    
+   public boolean canRestore() {
+       return true;
+   }
+   
    public String cancel()
    {
       // remove container variable
@@ -157,7 +161,14 @@ public abstract class BaseDialogBean implements IDialogBean, Serializable
          try
          {
             // Execute
-            outcome = txnHelper.doInTransaction(callback, false, true);
+            if (isRequiresNewTransaction())
+            {
+               outcome = txnHelper.doInTransaction(callback, false, true);
+            }
+            else
+            {
+                outcome = callback.execute();
+            }
             
             // allow any subclasses to perform post commit processing 
             // i.e. resetting state or setting status messages
@@ -189,7 +200,15 @@ public abstract class BaseDialogBean implements IDialogBean, Serializable
       return outcome;
    }
 
-    public String handleException(Throwable e) {
+   public boolean isRequiresNewTransaction() {
+       return true;
+   }
+   
+   protected boolean nodeExists(NodeRef nodeRef) {
+       return BeanHelper.getNodeService().exists(nodeRef);
+   }
+
+   public String handleException(Throwable e) {
         String outcome;
         // reset the flag so we can re-attempt the operation
         isFinished = false;

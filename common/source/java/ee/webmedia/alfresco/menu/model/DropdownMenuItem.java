@@ -130,6 +130,13 @@ public class DropdownMenuItem extends MenuItem {
         } else {
             link.setOnclick("_togglePersistentMenu(event, '" + getSubmenuId() + "'); return false;");
         }
+        // Check if MenuItem should be initially hidden
+        if (StringUtils.isNotBlank(getHidden())) {
+            boolean hideIt = getHidden().startsWith("#{")
+                    ? (Boolean) application.createMethodBinding(getHidden(), new Class[] { String.class }).invoke(context, new Object[] { getId() })
+                    : Boolean.valueOf(getHidden());
+            wrapper.setRendered(!hideIt);
+        }
 
         @SuppressWarnings("unchecked")
         List<UIComponent> children = wrapper.getChildren();

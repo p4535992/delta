@@ -6,15 +6,12 @@ import java.util.List;
 import java.util.Map;
 
 import javax.faces.context.FacesContext;
-import javax.faces.event.ActionEvent;
 
-import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.ui.common.component.data.UIRichList;
 import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.docadmin.service.FieldDefinition;
-import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
@@ -75,13 +72,6 @@ public class FieldDefinitionListDialog extends BaseDialogBean {
         fieldDefinitions = null;
         searchCriteria = null;
         return super.cancel();
-    }
-
-    public void deleteField(ActionEvent event) {
-        NodeRef fieldDefRef = new NodeRef(ActionUtil.getParam(event, "nodeRef"));
-        getDocumentAdminService().deleteFieldDefinition(fieldDefRef);
-        MessageUtil.addInfoMessage("fieldDefinitions_list_action_delete_success");
-        initFields();
     }
 
     private void clearRichList() {

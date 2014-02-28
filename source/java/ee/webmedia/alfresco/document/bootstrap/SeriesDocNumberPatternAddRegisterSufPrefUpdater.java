@@ -36,7 +36,7 @@ public class SeriesDocNumberPatternAddRegisterSufPrefUpdater extends AbstractNod
     protected List<ResultSet> getNodeLoadingResultSet() {
         String query = joinQueryPartsAnd(Arrays.asList(
                 generateTypeQuery(SeriesModel.Types.SERIES),
-                SearchUtil.generatePropertyWildcardQuery(SeriesModel.Props.DOC_NUMBER_PATTERN, RegisterNumberPatternParams.DN.name(), false, true, true)
+                SearchUtil.generatePropertyWildcardQuery(SeriesModel.Props.DOC_NUMBER_PATTERN, RegisterNumberPatternParams.DN.name(), true, true)
                 ));
         List<ResultSet> result = new ArrayList<ResultSet>(2);
         result.add(searchService.query(generalService.getStore(), SearchService.LANGUAGE_LUCENE, query));

@@ -22,6 +22,7 @@ import javax.faces.el.MethodBinding;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
+import org.alfresco.web.bean.generator.BaseComponentGenerator.CustomAttributeNames;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.ArrayUtils;
@@ -308,9 +309,24 @@ public class ErrandGenerator extends BaseSystematicGroupGenerator implements Sav
         ItemConfigVO item = result.getFirst();
         item.setComponentGenerator("InlinePropertyGroupGenerator");
         item.setTextId(textId);
-        item.setProps(result.getSecond());
-
+        String props = result.getSecond();
+        
+        if (relatedFields.size() >= 2) {
+            item.setProps(addMandatoryMarkers(relatedFields, props));
+        } else {
+            item.setProps(props);
+        }
         return item;
+    }
+
+    private String addMandatoryMarkers(List<Field> relatedFields, String props) {
+        String[] prop = props.split(CombinedPropReader.AttributeNames.DEFAULT_PROPERTIES_SEPARATOR);
+        for (int i = 0; i < relatedFields.size(); i++) {
+            if (relatedFields.get(i).isMandatory()) {
+                prop[i] += PropsBuilder.DEFAULT_OPTIONS_SEPARATOR + CustomAttributeNames.ATTR_MANDATORY + "=true";
+            }
+        }
+        return StringUtils.join(prop, CombinedPropReader.AttributeNames.DEFAULT_PROPERTIES_SEPARATOR);
     }
 
     private Pair<ItemConfigVO, String> generateBasePropsItem(FieldGroupGeneratorResults generatorResults, Map<String, ItemConfigVO> items, ErrandState primaryStateHolder,
@@ -702,7 +718,38 @@ public class ErrandGenerator extends BaseSystematicGroupGenerator implements Sav
 
     @Override
     public void validate(DocumentDynamic document, ValidationHelper validationHelper) {
-        // Do nothing
+        ErrandState errandStateHolder = BeanHelper.getPropertySheetStateBean().getStateHolder(ERRAND_STATE_HOLDER_KEY, ErrandState.class);
+        // errandStateHolder may be null if save action is not initiated from document dialog.
+        // At present, it is assumed that there is no need to check values when saving not from document dialog.
+        if (errandStateHolder != null) {
+            List<Node> applicants = document.getNode().getAllChildAssociations(DocumentChildModel.Assocs.APPLICANT_ABROAD);
+            if (applicants != null) {
+                for (Node applicant : applicants) {
+                    List<Node> errands = applicant.getAllChildAssociations(DocumentChildModel.Assocs.ERRAND_ABROAD);
+                    if (errands != null) {
+                        validateErrandDailyAllowance(validationHelper, errandStateHolder, errands);
+                    }
+                }
+            }
+        }
+    }
+
+    private void validateErrandDailyAllowance(ValidationHelper validationHelper, ErrandState errandStateHolder, List<Node> errands) {
+        outer: for (Node errand : errands) {
+            Map<String, Object> properties = errand.getProperties();
+            @SuppressWarnings("unchecked")
+            List<Long> dailyAllowanceDays = (List<Long>) properties.get(errandStateHolder.dailyAllowanceDaysProp.toString());
+            @SuppressWarnings("unchecked")
+            List<String> dailyAllowanceRates = (List<String>) properties.get(errandStateHolder.dailyAllowanceRateProp.toString());
+            if (dailyAllowanceDays != null) {
+                for (int i = 0; i < dailyAllowanceDays.size(); i++) {
+                    if (dailyAllowanceDays.get(i) != null && StringUtils.isNotBlank(dailyAllowanceRates.get(i))) {
+                        continue outer;
+                    }
+                }
+            }
+            validationHelper.addErrorMessage("document_validationMsg_mandatory_daily_allowance");
+        }
     }
 
     @Override

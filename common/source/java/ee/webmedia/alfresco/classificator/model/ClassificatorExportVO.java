@@ -165,6 +165,10 @@ public class ClassificatorExportVO extends Classificator {
 
     class ClassificatorValueComparator implements Comparator<ClassificatorValue> {
         @Override
+        /** This method is not correctly implemented, because it's results depend on the order comparable objects are given to 
+         * the method: comparisons "o1.isActive() != o.isActive()", "o1.isByDefault() != o.isByDefault()" and "!StringUtils.equals(o1.getValueData(), o.getValueData())"
+         * only check if objects are equal, for not equal objects order is unpredicted.
+         * Still, currently this method is used only for defining if object are equal and not ordering objects and for that purpose its result is valid. */
         public int compare(ClassificatorValue o1, ClassificatorValue o) {
             // comparing by name and readOnly is left out as readOnly must not be changed and should not compare values with different names
             if (o1 == o) {
@@ -185,6 +189,9 @@ public class ClassificatorExportVO extends Classificator {
             } else if (o1.isByDefault() != o.isByDefault()) {
                 return 1;
             } else if (!StringUtils.equals(o1.getValueData(), o.getValueData())) {
+                // It is probably correct not to use AppConstants.DEFAULT_COLLATOR here
+                // because for classificator import we also want to get changes involving only uppercase-lowercase change in value
+                // See also current method javadoc for this comparison
                 return 1;
             } else {
                 return 0;

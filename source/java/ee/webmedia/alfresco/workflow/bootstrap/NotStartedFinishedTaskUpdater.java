@@ -25,8 +25,8 @@ public class NotStartedFinishedTaskUpdater extends AbstractNodeUpdater {
     protected List<ResultSet> getNodeLoadingResultSet() throws Exception {
         String query = SearchUtil.joinQueryPartsAnd(Arrays.asList(
                 SearchUtil.generateTypeQuery(WorkflowCommonModel.Types.TASK),
-                SearchUtil.generatePropertyNullQuery(WorkflowCommonModel.Props.STARTED_DATE_TIME),
-                SearchUtil.generatePropertyExactQuery(WorkflowCommonModel.Props.STATUS, Status.FINISHED.getName(), false)
+                SearchUtil.generateStringNullQuery(WorkflowCommonModel.Props.STARTED_DATE_TIME),
+                SearchUtil.generateStringExactQuery(Status.FINISHED.getName(), WorkflowCommonModel.Props.STATUS)
                 ));
         List<ResultSet> result = new ArrayList<ResultSet>(2);
         result.add(searchService.query(generalService.getStore(), SearchService.LANGUAGE_LUCENE, query));

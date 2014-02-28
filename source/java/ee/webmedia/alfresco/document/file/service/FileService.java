@@ -151,4 +151,6 @@ public interface FileService {
 
     List<File> getFiles(List<NodeRef> taskFileNodeRefs);
 
+    void removePreviousParentReference(NodeRef docRef, boolean moveToPreviousParent);
+
 }

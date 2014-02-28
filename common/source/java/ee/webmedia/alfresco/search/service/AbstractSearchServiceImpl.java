@@ -36,7 +36,6 @@ import org.alfresco.util.Pair;
 import org.apache.commons.lang.StringUtils;
 import org.apache.lucene.analysis.Token;
 import org.apache.lucene.analysis.TokenStream;
-import org.apache.lucene.queryParser.QueryParser;
 import org.apache.lucene.search.BooleanQuery;
 
 import ee.webmedia.alfresco.common.service.GeneralService;
@@ -62,12 +61,21 @@ public abstract class AbstractSearchServiceImpl {
      * Default is without left wildcard and with right wildcard.
      */
     public String generateStringWordsWildcardQuery(String value, QName... documentPropNames) {
-        return SearchUtil.generateStringWordsWildcardQuery(parseQuickSearchWords(value), false, true, documentPropNames);
+        return generateStringWordsWildcardQuery(value, false, true, documentPropNames);
     }
 
     public String generateStringWordsWildcardQuery(String value, boolean leftWildcard, boolean rightWildcard, QName... documentPropNames) {
         return SearchUtil.generateStringWordsWildcardQuery(parseQuickSearchWords(value), leftWildcard, rightWildcard, documentPropNames);
     }
+
+    public String generateStringWordsWildcardQuery(String value, int minTextLength, QName... documentPropNames) {
+        return generateStringWordsWildcardQuery(value, false, true, minTextLength, documentPropNames);
+    }
+
+    public String generateStringWordsWildcardQuery(String value, boolean leftWildcard, boolean rightWildcard, int minTextLength, QName... documentPropNames) {
+        return SearchUtil.generateStringWordsWildcardQuery(parseQuickSearchWords(value, minTextLength), leftWildcard, rightWildcard, documentPropNames);
+    }
+
 
     /**
      * Default is without left wildcard and with right wildcard.
@@ -76,14 +84,22 @@ public abstract class AbstractSearchServiceImpl {
         return generateMultiStringWordsWildcardQuery(values, false, true, documentPropNames);
     }
 
+    public String generateMultiStringWordsWildcardQuery(List<String> values, int minTextLength, QName... documentPropNames) {
+        return generateMultiStringWordsWildcardQuery(values, false, true, minTextLength, documentPropNames);
+    }
+
     public String generateMultiStringWordsWildcardQuery(List<String> values, boolean leftWildcard, boolean rightWildcard, QName... documentPropNames) {
+        return generateMultiStringWordsWildcardQuery(values, leftWildcard, rightWildcard, 3, documentPropNames);
+    }
+
+    public String generateMultiStringWordsWildcardQuery(List<String> values, boolean leftWildcard, boolean rightWildcard, int minTextLength, QName... documentPropNames) {
         if (values == null || values.isEmpty()) {
             return null;
         }
 
         List<String> queryParts = new ArrayList<String>(values.size());
         for (String value : values) {
-            queryParts.add(generateStringWordsWildcardQuery(value, leftWildcard, rightWildcard, documentPropNames));
+            queryParts.add(generateStringWordsWildcardQuery(value, leftWildcard, rightWildcard, minTextLength, documentPropNames));
         }
         return SearchUtil.joinQueryPartsOr(queryParts);
     }
@@ -111,12 +127,9 @@ public abstract class AbstractSearchServiceImpl {
             SearchUtil.extractDates(searchWord, searchWords);
 
             // Tokenize the search word (even if contained only full date - textual content also needs to be searched):
-            String searchWordStripped = SearchUtil.stripCustom(SearchUtil.replaceCustom(searchWord, ""));
-            for (Token token : getTokens(searchWordStripped)) {
+            for (Token token : getTokens(searchWord)) {
                 String termText = token.term();
                 if (termText.length() >= minTextLength && searchWords.size() < maxWords) {
-                    termText = QueryParser.escape(termText);
-
                     boolean exists = false;
                     for (String tmpWord : searchWords) {
                         exists |= tmpWord.equalsIgnoreCase(termText);
@@ -258,13 +271,15 @@ public abstract class AbstractSearchServiceImpl {
         }
         final Collection<StoreRef> stores = (storeRefs == null || storeRefs.size() == 0) ? Arrays.asList(generalService.getStore()) : storeRefs;
         List<ResultSet> results = new ArrayList<ResultSet>(stores.size());
+        int resultsTotalSize = 0;
         for (StoreRef storeRef : stores) {
             sp.getStores().clear();
             sp.addStore(storeRef);
-            results.add(doSearchQuery(sp, queryName));
-
+            ResultSet resultSet = doSearchQuery(sp, queryName);
+            results.add(resultSet);
+            resultsTotalSize += resultSet.length();
             // Optimization: don't search from other stores if limit is reached
-            if (limit > -1 && results.size() > limit) {
+            if (limit > -1 && resultsTotalSize > limit) {
                 break;
             }
         }

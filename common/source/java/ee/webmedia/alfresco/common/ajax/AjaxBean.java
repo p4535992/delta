@@ -1,14 +1,19 @@
 package ee.webmedia.alfresco.common.ajax;
 
+import static org.apache.myfaces.shared_impl.renderkit.ViewSequenceUtils.getCurrentSequence;
+
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.faces.application.Application;
 import javax.faces.application.StateManager;
 import javax.faces.application.ViewHandler;
+import javax.faces.component.NamingContainer;
 import javax.faces.component.UIComponent;
 import javax.faces.component.UIForm;
 import javax.faces.component.UIInput;
@@ -23,6 +28,8 @@ import org.alfresco.repo.webdav.WebDAVHelper;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.app.servlet.ajax.InvokeCommand.ResponseMimetype;
 import org.alfresco.web.ui.common.Utils;
+import org.alfresco.web.ui.common.component.data.UIRichList;
+import org.apache.commons.lang.StringUtils;
 import org.apache.myfaces.shared_impl.renderkit.html.HtmlFormRendererBase;
 import org.apache.myfaces.shared_impl.util.RestoreStateUtils;
 import org.apache.myfaces.shared_impl.util.StateUtils;
@@ -39,10 +46,13 @@ import flexjson.JSONSerializer;
  * @author Romet Aidla
  */
 public class AjaxBean implements Serializable {
+    public static final String AJAX_REQUEST_PARAM = "ajaxRequest";
+
     private static final long serialVersionUID = 1L;
 
     public static final String COMPONENT_CLIENT_ID_PARAM = "componentClientId";
     protected static final String VIEW_NAME_PARAM = "viewName";
+    private static final Pattern DATA_CONTAINER_ROW_PATTERN = Pattern.compile(NamingContainer.SEPARATOR_CHAR + "\\d+" + NamingContainer.SEPARATOR_CHAR);
 
     // ------------------------------------------------------------------------------
     // AJAX handler methods
@@ -55,7 +65,11 @@ public class AjaxBean implements Serializable {
         @SuppressWarnings("unchecked")
         Map<String, String> params = context.getExternalContext().getRequestParameterMap();
         String path = params.get("path");
-        Assert.hasLength(path, "path was not found in request");
+        if (StringUtils.isBlank(path)) {
+            // Assert.hasLength(path, "path was not found in request");
+            // FIXME this may happen, when session has expired, but why?
+            return;
+        }
 
         String[] parts = path.split(WebDAVHelper.PathSeperator);
         String id = parts[parts.length - 2];
@@ -102,10 +116,15 @@ public class AjaxBean implements Serializable {
         String viewName = getParam(params, VIEW_NAME_PARAM);
 
         Utils.setRequestValidationDisabled(context);
+        ResponseWriter out = context.getResponseWriter();
 
         // Phase 1: Restore view
         UIViewRoot viewRoot = restoreViewRoot(context, viewName);
+        if (viewRoot == null) {
+            return;
+        }
 
+        setupDataContainer(context, viewRoot, componentClientId);
         UIComponent component = ComponentUtil.findChildComponentById(context, viewRoot, componentClientId, true);
         Assert.notNull(component, String.format("Component with clientId=%s was not found", componentClientId));
         UIForm form = Utils.getParentForm(context, component);
@@ -184,8 +203,7 @@ public class AjaxBean implements Serializable {
         Utils.encodeRecursive(context, renderedContainer);
 
         String viewState = saveView(context, viewRoot);
-        ResponseWriter out = context.getResponseWriter();
-        out.write("VIEWSTATE:" + viewState);
+        writeViewState(out, viewState);
 
         @SuppressWarnings("unchecked")
         Set<String> formHiddenInputs = (Set<String>) context.getExternalContext().getRequestMap().get(
@@ -195,6 +213,25 @@ public class AjaxBean implements Serializable {
         }
         String jsonHiddenInputNames = new JSONSerializer().serialize(formHiddenInputs);
         out.write("HIDDEN_INPUT_NAMES_JSON:" + jsonHiddenInputNames);
+    }
+
+    public static void writeViewState(ResponseWriter out, String viewState) throws IOException {
+        out.write("VIEWSTATE:" + viewState);
+    }
+
+    private void setupDataContainer(FacesContext context, UIViewRoot viewRoot, String componentClientId) {
+        Matcher matcher = DATA_CONTAINER_ROW_PATTERN.matcher(componentClientId);
+        if (!matcher.find()) {
+            return;
+        }
+
+        String dataContainerClientId = componentClientId.substring(0, matcher.start());
+        UIComponent dataContainer = ComponentUtil.findChildComponentById(context, viewRoot, dataContainerClientId, false);
+        if (dataContainer instanceof UIRichList) {
+            String indexString = componentClientId.substring(matcher.start() + 1, matcher.end() - 1);
+            int index = Integer.parseInt(indexString);
+            ((UIRichList) dataContainer).setRowIndex(index);
+        }
     }
 
     protected String getParam(FacesContext context, String paramKey) {
@@ -243,28 +280,43 @@ public class AjaxBean implements Serializable {
         boolean execute(FacesContext context, UIViewRoot viewRoot, UIComponent component);
     }
 
-    protected String saveView(FacesContext fc, UIViewRoot viewRoot) {
+    public static String saveView(FacesContext fc, UIViewRoot viewRoot) {
         StateManager stateManager = fc.getApplication().getStateManager();
         stateManager.saveSerializedView(fc);
         return createViewState(fc, viewRoot);
     }
 
-    protected UIViewRoot restoreViewRoot(FacesContext fc, String viewName) {
-        Application application = fc.getApplication();
-        ViewHandler viewHandler = application.getViewHandler();
-
-        // Because there is no javax.faces.ViewState request parameter, last view state is restored.
-        UIViewRoot viewRoot = viewHandler.restoreView(fc, viewName);
-        fc.setViewRoot(viewRoot);
+    public static UIViewRoot restoreViewRoot(FacesContext fc, String viewName) throws IOException {
+        UIViewRoot viewRoot = null;
+        fc.getExternalContext().getRequestMap().put(AJAX_REQUEST_PARAM, Boolean.TRUE);
+        try {
+            Application application = fc.getApplication();
+            ViewHandler viewHandler = application.getViewHandler();
+            viewRoot = viewHandler.restoreView(fc, viewName);
+            if (viewRoot != null) {
+                fc.setViewRoot(viewRoot);
+            } else {
+                writeViewStateError(fc, null);
+            }
+        } catch (AjaxIllegalViewStateException e) {
+            writeViewStateError(fc, e);
+        }
         return viewRoot;
     }
 
-    private String createViewState(FacesContext fc, UIViewRoot viewRoot) {
+    private static void writeViewStateError(FacesContext fc, AjaxIllegalViewStateException e) throws IOException {
+        ResponseWriter out = fc.getResponseWriter();
+        String currentViewId = e.getCurrentViewId();
+        String currentUrl = BeanHelper.getDocumentTemplateService().getServerUrl() + "/faces" + (currentViewId != null ? currentViewId : "");
+        fc.getResponseWriter().write("ERROR_VIEW_STATE_CHANGED:" + new JSONSerializer().serialize(currentUrl));
+    }
+
+    private static String createViewState(FacesContext fc, UIViewRoot viewRoot) {
         // See HtmlResponseStateManager#writeState for meaning of different objects in saved state array.
-        // TREE_PARAM is set to null, so that last view state will be restored during next form submit
-        // (not the view state that was used to generate the form).
         // It creates dependency to implementation of HtmlResponseStateManager, but no better solution was found.
         Object[] savedState = new Object[3];
+        Integer currentSequence = getCurrentSequence(fc);
+        savedState[0] = currentSequence != null ? currentSequence.toString() : null;
         savedState[2] = viewRoot.getViewId();
         return StateUtils.construct(savedState, fc.getExternalContext());
     }

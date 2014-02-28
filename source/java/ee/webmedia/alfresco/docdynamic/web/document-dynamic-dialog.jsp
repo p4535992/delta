@@ -1,4 +1,5 @@
 <%@page import="ee.webmedia.alfresco.utils.MessageUtil"%>
+<%@page import="ee.webmedia.alfresco.common.web.BeanHelper"%>
 <%@ taglib uri="http://java.sun.com/jsf/html" prefix="h"%>
 <%@ taglib uri="http://java.sun.com/jsf/core" prefix="f"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
@@ -49,14 +50,47 @@
       </r:permissionEvaluator>
    </f:facet>
 </h:panelGroup>
+<jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/docdynamic/web/metadata-unlocking-helper.jsp" />
 <f:verbatim>
 <script type="text/javascript">
 $jQ(document).ready(function() {
    if (setInputFocus) {
-		var container = $jQ("#"+escapeId4JQ('container-content'));
-         $jQ("input:text, textarea", container).filter(':visible:enabled[readonly!="readonly"]').first().focus();
+      var container = $jQ("#"+escapeId4JQ('container-content'));
+      $jQ("input:text, textarea", container).filter(':visible:enabled[readonly!="readonly"]').first().focus();
+   }
+   var inEdit = <%= BeanHelper.getDocumentDialogHelperBean().isInEditMode() %>;
+   if(inEdit) {
+      addTitleComponentsToExcludedList();
+      addAdditionalBlockElementsToExcludedList();
+      disableUnlockOnSelectElement("dialog:dialog-body:doc-types-select");
+      disableUnlockOnPager();
    }
 });
+function addTitleComponentsToExcludedList() {
+   var elems = $jQ(".title-component");
+   for(var i = 0; elems != null && i < elems.length; i++) {
+      var anchors = elems[i].getElementsByTagName("a");
+      disable(anchors);
+   }
+}
+function disableAssocsSearchElements() {
+   if(excludedElementsSpecific != null) {
+      excludedElementsSpecific.push("dialog:dialog-body:quickSearchBtn2");
+   }
+   var tableId = "search-documentList";
+   var searchResultList = document.getElementById(tableId);
+   if(searchResultList == null) {
+      return;
+   }
+   var iconLinks = $jQ(".icon-link");
+   for(var i = 0; iconLinks != null && i < iconLinks.length; i++) {
+      $jQ(iconLinks[i]).on('mouseup', function() {
+         // all these elements have same "id" value so behaviour is specified here
+         finishButtonClicked = true;
+      });
+   }
+   addSubelementsWithClassToExcludedList(tableId,"header"); // sortable headers
+}
 </script>
 </f:verbatim>
 <a:panel id="metadata-panel" facetsId="dialog:dialog-body:metadata-panel-facets" label="#{msg.document_metadata}"

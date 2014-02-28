@@ -24,6 +24,7 @@
  */
 package org.alfresco.web.bean.trashcan;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentSearchService;
 import static ee.webmedia.alfresco.utils.SearchUtil.generatePropertyExactQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generatePropertyWildcardQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.joinQueryPartsAnd;
@@ -76,6 +77,9 @@ import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.template.model.DocumentTemplateModel;
+import ee.webmedia.alfresco.utils.RepoUtil;
 
 /**
  * Backing bean for the Manage Deleted Items (soft delete and archiving) pages.
@@ -123,6 +127,7 @@ public class TrashcanDialog extends BaseDialogBean implements IContextListener
    
    @Override
    public void init(Map<String, String> parameters) {
+       super.init(parameters);
        property.resetFilters();
        contextUpdated();       
    }
@@ -295,7 +300,13 @@ public class TrashcanDialog extends BaseDialogBean implements IContextListener
        
        @Override
        public Object get(Node node) {
-           return node.getProperties().get(ContentModel.PROP_ARCHIVED_OBJECT_NAME);
+           Map<String, Object> properties = node.getProperties();
+           Object archivedObjectName = properties.get(ContentModel.PROP_ARCHIVED_OBJECT_NAME);
+           if (archivedObjectName == null) {
+               QName type = node.getType();
+               archivedObjectName = RepoUtil.getArchivedObjectName(type, RepoUtil.toQNameProperties(properties));
+           }
+           return archivedObjectName;
        }
     };
     
@@ -661,14 +672,11 @@ public class TrashcanDialog extends BaseDialogBean implements IContextListener
        String searchText = filter.getSearchText();
        if (searchText != null && !StringUtils.isEmpty(searchText)) {
            queryParts.add(
-                   joinQueryPartsOr(
-                                  BeanHelper.getDocumentSearchService().generateDeletedSearchQuery(searchText, null),
-                                  generatePropertyWildcardQuery(ContentModel.PROP_NAME, searchText, true, false, true)
-                        )
-                   );
+                   getDocumentSearchService().generateDeletedSearchQuery(searchText, null)
+           );
        }
        if (FILTER_DOCU_TYPE.equals(property.getDocTypeFilter())) {
-           queryParts.add(generatePropertyExactQuery(DocumentAdminModel.Props.OBJECT_TYPE_ID, property.getDocTypeSearchText(), true));
+           queryParts.add(generateStringExactQuery(property.getDocTypeSearchText(), DocumentAdminModel.Props.OBJECT_TYPE_ID));
        }
        if (FILTER_DATE_ALL.equals(property.getDateFilter()) == false) {
            Date toDate = new Date();

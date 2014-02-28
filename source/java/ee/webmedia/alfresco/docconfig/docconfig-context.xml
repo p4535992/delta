@@ -9,6 +9,9 @@
       <property name="userContactMappingService" ref="UserContactMappingService" />
       <property name="userService" ref="UserService" />
       <property name="classificatorService" ref="ClassificatorService" />
+      <property name="propertyDefinitionCache" ref="propertyDefinitionCache" />
+      <property name="childAssocTypeQNameTreeCache" ref="childAssocTypeQNameTreeCache" />
+      <property name="propertyDefinitionForSearchCache" ref="propertyDefinitionForSearchCache" />
    </bean>
 
    <bean id="DocumentConfigService" class="org.springframework.aop.framework.ProxyFactoryBean">
@@ -601,6 +604,16 @@
       <property name="dependsOn">
          <list>
             <ref bean="readonlyFieldsFixBootstrap2" />
+         </list>
+      </property>
+   </bean>
+
+   <bean id="leaveChangedCancelledDaysUpdater" class="ee.webmedia.alfresco.docconfig.bootstrap.LeaveChangedCancelledDaysUpdater" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="systematicDocumentTypesBootstrap" />
          </list>
       </property>
    </bean>     

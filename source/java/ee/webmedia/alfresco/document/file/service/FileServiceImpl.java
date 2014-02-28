@@ -47,6 +47,7 @@ import ee.webmedia.alfresco.document.file.model.FileModel;
 import ee.webmedia.alfresco.document.file.model.GeneratedFileType;
 import ee.webmedia.alfresco.document.file.web.Subfolder;
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.signature.exception.SignatureException;
 import ee.webmedia.alfresco.signature.model.SignatureItemsAndDataItems;
 import ee.webmedia.alfresco.signature.service.SignatureService;
@@ -84,6 +85,8 @@ public class FileServiceImpl implements FileService {
         }
         active = !active;
         nodeService.setProperty(nodeRef, FileModel.Props.ACTIVE, active);
+        NodeRef documentRef = nodeService.getPrimaryParent(nodeRef).getParentRef();
+        generalService.setModifiedToNow(documentRef);
         return active;
     }
 
@@ -256,7 +259,7 @@ public class FileServiceImpl implements FileService {
         displayName = FilenameUtils.removeExtension(displayName);
         displayName += ".pdf";
         nodeService.setProperty(createdFile.getNodeRef(), FileModel.Props.DISPLAY_NAME, getUniqueFileDisplayName(parent, displayName));
-
+        generalService.setModifiedToNow(parent);
         return createdFile;
     }
 
@@ -304,6 +307,8 @@ public class FileServiceImpl implements FileService {
             public NodeRef doWork() throws Exception {
                 // change file name
                 nodeService.setProperty(fileNodeRef, ContentModel.PROP_NAME, name);
+                // Store current location (as string!) (in case where user decides to abort document creation)
+                nodeService.setProperty(fileNodeRef, FileModel.Props.PREVIOUS_FILE_PARENT, nodeService.getPrimaryParent(fileNodeRef).getParentRef().toString());
                 // move file
                 return nodeService.moveNode(fileNodeRef, documentNodeRef,
                         ContentModel.ASSOC_CONTAINS, ContentModel.ASSOC_CONTAINS).getChildRef();
@@ -376,14 +381,43 @@ public class FileServiceImpl implements FileService {
             Map<QName, Serializable> aspectProperties = new HashMap<QName, Serializable>(3);
             aspectProperties.put(VersionsModel.Props.VersionModified.MODIFIED, modified);
 
+            String first = null;
+            String last = null;
             Map<QName, Serializable> personProps = userService.getUserProperties(user);
-            String first = (String) personProps.get(ContentModel.PROP_FIRSTNAME);
-            String last = (String) personProps.get(ContentModel.PROP_LASTNAME);
+            if (personProps != null) {
+                first = (String) personProps.get(ContentModel.PROP_FIRSTNAME);
+                last = (String) personProps.get(ContentModel.PROP_LASTNAME);
+            } else {
+                last = user;
+            }
 
             aspectProperties.put(VersionsModel.Props.VersionModified.FIRSTNAME, first);
             aspectProperties.put(VersionsModel.Props.VersionModified.LASTNAME, last);
 
             nodeService.addAspect(nodeRef, VersionsModel.Aspects.VERSION_MODIFIED, aspectProperties);
+        }
+    }
+
+    @Override
+    public void removePreviousParentReference(NodeRef docRef, boolean moveToPreviousParent) {
+        List<FileInfo> listFiles = fileFolderService.listFiles(docRef);
+        for (FileInfo fileInfo : listFiles) {
+            String parentRefString = (String) fileInfo.getProperties().get(FileModel.Props.PREVIOUS_FILE_PARENT);
+            if (StringUtils.isBlank(parentRefString)) {
+                continue;
+            }
+
+            NodeRef previousParent = new NodeRef(parentRefString);
+            if (!nodeService.exists(previousParent)) {
+                continue;
+            }
+
+            NodeRef fileRef = fileInfo.getNodeRef();
+            // Move node back to previous parent and remove property if still present.
+            if (moveToPreviousParent) {
+                fileRef = nodeService.moveNode(fileRef, previousParent, ContentModel.ASSOC_CONTAINS, ContentModel.ASSOC_CONTAINS).getChildRef();
+            }
+            nodeService.removeProperty(fileRef, FileModel.Props.PREVIOUS_FILE_PARENT);
         }
     }
 
@@ -420,6 +454,7 @@ public class FileServiceImpl implements FileService {
         item.setCreator(userService.getUserFullName((String) fi.getProperties().get(ContentModel.PROP_CREATOR)));
         item.setModifier(userService.getUserFullName((String) fi.getProperties().get(ContentModel.PROP_MODIFIER)));
         item.setDownloadUrl(generateURL(item.getNodeRef()));
+        item.setReadOnlyUrl(DownloadContentServlet.generateDownloadURL(item.getNodeRef(), item.getDisplayName()));
         return item;
     }
 
@@ -436,7 +471,10 @@ public class FileServiceImpl implements FileService {
     public String generateURL(NodeRef nodeRef) {
         String runAsUser = AuthenticationUtil.getRunAsUser();
         String name = fileFolderService.getFileInfo(nodeRef).getName();
-        if (!nodeRef.getStoreRef().getProtocol().equals(StoreRef.PROTOCOL_WORKSPACE) || StringUtils.isBlank(runAsUser) || AuthenticationUtil.isRunAsUserTheSystemUser()) {
+        NodeRef primaryParentRef = nodeService.getPrimaryParent(nodeRef).getParentRef();
+        boolean isUnderDocument = DocumentCommonModel.Types.DOCUMENT.equals(nodeService.getType(primaryParentRef));
+        if (!nodeRef.getStoreRef().getProtocol().equals(StoreRef.PROTOCOL_WORKSPACE) || StringUtils.isBlank(runAsUser) || AuthenticationUtil.isRunAsUserTheSystemUser()
+                || !isUnderDocument) {
             return DownloadContentServlet.generateDownloadURL(nodeRef, name);
         }
         // calculate a WebDAV URL for the given node

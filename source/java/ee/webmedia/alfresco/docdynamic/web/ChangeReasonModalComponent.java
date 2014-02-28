@@ -65,8 +65,8 @@ public class ChangeReasonModalComponent extends UICommand {
         out.write("<tr><td>" + MessageUtil.getMessage(reasonLabel) + ":</td></tr>");
         out.write("<tr><td>");
         out.write("<textarea class=\"expand19-200\" id=\"" + getClientId(context) + "_reason\" name=\"" + getClientId(context) + "_reason\" onkeyup=\"");
-        out.write("document.getElementById('" + getClientId(context) + "_reason_btn').disabled = (document.getElementById('" + getClientId(context)
-                + "_reason').value == null);");
+        out.write("document.getElementById('" + getClientId(context) + "_reason_btn').disabled = (!document.getElementById('" + getClientId(context)
+                + "_reason').value);");
         out.write("\" ></textarea>");
         out.write("</td></tr>");
         out.write("<tr><td>");

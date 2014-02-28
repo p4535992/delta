@@ -8,6 +8,7 @@ import javax.servlet.ServletContext;
 
 import org.alfresco.service.cmr.model.FileNotFoundException;
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 
 import ee.webmedia.alfresco.classificator.enums.TemplateReportType;
@@ -120,6 +121,8 @@ public interface DocumentTemplateService {
     void updateDocTemplate(Node docTemplNode);
 
     List<SelectItem> getReportTemplates(TemplateReportType typeId);
+
+    List<Pair<SelectItem, String>> getReportTemplatesWithOutputTypes(TemplateReportType typeId);
 
     NodeRef getReportTemplateByName(String templateName, TemplateReportType reportType);
 

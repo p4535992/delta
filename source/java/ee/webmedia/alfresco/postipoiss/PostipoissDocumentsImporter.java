@@ -858,6 +858,12 @@ public class PostipoissDocumentsImporter {
                 throw new RuntimeException("accessRestrictionEndDate is null and accessRestrictionEndDesc is blank, but accessRestriction = " + accessRestriction);
             }
         }
+        if (AccessRestriction.OPEN.equals(accessRestriction) || AccessRestriction.INTERNAL.equals(accessRestriction)) {
+            props.put(DocumentCommonModel.Props.ACCESS_RESTRICTION_REASON, null);
+            props.put(DocumentCommonModel.Props.ACCESS_RESTRICTION_BEGIN_DATE, null);
+            props.put(DocumentCommonModel.Props.ACCESS_RESTRICTION_END_DATE, null);
+            props.put(DocumentCommonModel.Props.ACCESS_RESTRICTION_END_DESC, null);
+        }
     }
 
     private static String cleanUserFullName(String strippedOwnerName) {

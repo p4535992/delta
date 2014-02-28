@@ -60,4 +60,6 @@ public interface LogService extends FilterService {
 
     List<NodeRef> getDocumentsWithImapImportLog();
 
+    long getLogSequenceNextval();
+
 }

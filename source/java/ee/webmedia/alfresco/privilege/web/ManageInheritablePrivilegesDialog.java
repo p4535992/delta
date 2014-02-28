@@ -33,9 +33,11 @@ import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.security.AccessStatus;
+import org.alfresco.service.cmr.security.AuthorityType;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
+import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.ui.common.component.UIActionLink;
 import org.alfresco.web.ui.common.component.UIGenericPicker;
 import org.alfresco.web.ui.common.component.UIPanel;
@@ -55,8 +57,10 @@ import ee.alfresco.web.ui.common.UITableRow;
 import ee.alfresco.web.ui.common.renderer.data.RichListMultiTbodyRenderer.DetailsViewRenderer;
 import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.common.web.UserContactGroupSearchBean;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.privilege.model.PrivMappings;
+import ee.webmedia.alfresco.privilege.model.PrivilegeModel;
 import ee.webmedia.alfresco.privilege.model.UserPrivileges;
 import ee.webmedia.alfresco.user.model.Authority;
 import ee.webmedia.alfresco.user.service.UserService;
@@ -65,6 +69,7 @@ import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.ComparableTransformer;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.utils.TextUtil;
 import ee.webmedia.alfresco.utils.WebUtil;
 import flexjson.JSONSerializer;
 
@@ -156,6 +161,27 @@ public class ManageInheritablePrivilegesDialog extends BaseDialogBean {
         MessageUtil.addStatusMessage(typeHandler.getInfoMessage());
         state.privMappings = getPrivilegeService().getPrivMappings(manageableRef, typeHandler.getManageablePermissions());
         markPrivilegesBaseState = true;
+
+        List<Node> privilegeActions = getPrivilegeService().getAllInQueuePrivilegeActions(manageableRef);
+        for (Node privilegeAction : privilegeActions) {
+            String actionType = (String) privilegeAction.getProperties().get(PrivilegeModel.Props.PRIVILEGE_ACTION_TYPE);
+            @SuppressWarnings("unchecked")
+            List<String> permissions = (List<String>) privilegeAction.getProperties().get(PrivilegeModel.Props.PERMISSIONS);
+            List<String> permissionTitles = new ArrayList<String>(permissions.size());
+            for (String permission : permissions) {
+                permissionTitles.add("\"" + MessageUtil.getMessage("permission_" + permission) + "\"");
+            }
+            String authority = (String) privilegeAction.getProperties().get(PrivilegeModel.Props.AUTHORITY);
+            String authorityType = AuthorityType.getAuthorityType(authority).name();
+            String authorityTitle = authority;
+            if (AuthorityType.GROUP.name().equals(authorityType)) {
+                authorityTitle = getAuthorityService().getAuthorityDisplayName(authority);
+            } else if (AuthorityType.USER.name().equals(authorityType)) {
+                authorityTitle = getUserService().getUserFullNameWithOrganizationPath(authority);
+            }
+            MessageUtil.addInfoMessage("manage_permissions_background_action_" + authorityType + "_" + actionType, authorityTitle,
+                    TextUtil.joinNonBlankStringsWithComma(permissionTitles));
+        }
     }
 
     @Override
@@ -190,7 +216,7 @@ public class ManageInheritablePrivilegesDialog extends BaseDialogBean {
             }
             init(state.getManageableRef(), true);
             rebuildUserPrivilegesRows = true;
-            picker.queueEvent(new UIGenericPicker.PickerEvent(picker, UIGenericPicker.ACTION_CLEAR, 0, null, null));
+            picker.queueEvent(new UIGenericPicker.PickerEvent(picker, UIGenericPicker.ACTION_CLEAR, UserContactGroupSearchBean.USERS_FILTER, null, null));
         }
         return null;
     }
@@ -770,5 +796,27 @@ public class ManageInheritablePrivilegesDialog extends BaseDialogBean {
         UIComponentTagUtils.setValueBinding(context, cb, "title", "#{" + rowBindingVar + ".explanationByPrivilege['" + permission + "']}");
         return cb;
     }
+
+    // BEGIN Methods for generally pausing/continuing privilege actions from nodeBrowser
+    public boolean isPrivilegeActionsEnabled() {
+        return getPrivilegeService().isPrivilegeActionsEnabled();
+    }
+
+    public boolean isShowPausePrivilegeActions() {
+        return isPrivilegeActionsEnabled() && !getPrivilegeService().isPrivilegeActionsPaused();
+    }
+
+    public boolean isShowContinuePrivilegeActions() {
+        return isPrivilegeActionsEnabled() && getPrivilegeService().isPrivilegeActionsPaused();
+    }
+
+    public void pausePrivilegeActions(@SuppressWarnings("unused") ActionEvent event) {
+        getPrivilegeService().setPrivilegeActionsPaused(true);
+    }
+
+    public void continuePrivilegeActions(@SuppressWarnings("unused") ActionEvent event) {
+        getPrivilegeService().setPrivilegeActionsPaused(false);
+    }
+    // END Methods for generally pausing/continuing privilege actions from nodeBrowser
 
 }

@@ -101,9 +101,9 @@ function zIndexWorkaround(context)
 
       if(isIE(7)) {
          var zIndexNumber = 5000;
-         $jQ("div", containerContext).each(function() {
+         $jQ("div,ul", containerContext).each(function() {
             $jQ(this).css('zIndex', zIndexNumber);
-            $jQ(this).children('span').each(function() {
+            $jQ(this).children('span,li').each(function() {
                $jQ(this).css('zIndex', zIndexNumber);
                zIndexNumber -= 10;
             });
@@ -217,7 +217,11 @@ function prependFunction(jQHtmlElem, prependFn, eventAttributeName) {
       jQElem.attr(eventAttributeName, "return false;");
       var jQEventType = eventAttributeName.substring(2, eventAttributeName.length);
       jQElem.bind(jQEventType, function() {
-         return prependFn(jQElem) && originalClickHandler();
+         if(typeof(originalClickHandler) == "function"){
+            return prependFn(jQElem) && originalClickHandler();
+         } else {
+            return prependFn(jQElem) && eval("(function() {" + originalClickHandler + "})();");
+         }
       });
    });
 }
@@ -425,14 +429,18 @@ function isSameDate(date1, date2){
 }
 
 function addSearchSuggest(clientId, containerClientId, pickerCallback, submitUri) {
-   addSearchSuggest(clientId, containerClientId, pickerCallback, submitUri, null);
+   addSearchSuggest(clientId, containerClientId, pickerCallback, null, submitUri, null);
 }
 
-function addSearchSuggest(clientId, containerClientId, pickerCallback, submitUri, autoCompleteCallback) {
+function addSearchSuggest(clientId, containerClientId, pickerCallback, pickerCallbackParams, submitUri) {
+   addSearchSuggest(clientId, containerClientId, pickerCallback, pickerCallbackParams, submitUri, null);
+}
+
+function addSearchSuggest(clientId, containerClientId, pickerCallback, pickerCallbackParams, submitUri, autoCompleteCallback) {
    autocompleters.push(function addAutocompleter() {
       var jQInput = $jQ("#"+escapeId4JQ(clientId));
       var uri = getContextPath() + "/ajax/invoke/AjaxSearchBean.searchSuggest";
-      var suggest = jQInput.autocomplete(uri, {extraParams: {'pickerCallback' : pickerCallback}, matchContains: 1, minChars: 3, suggestAll: 1, delay: 50,
+      var suggest = jQInput.autocomplete(uri, {extraParams: {'pickerCallback' : pickerCallback, 'pickerCallbackParams' : pickerCallbackParams}, matchContains: 1, minChars: 3, suggestAll: 1, delay: 50,
       onItemSelect: function (li) {
          processButtonState();
       },
@@ -448,11 +456,14 @@ function addSearchSuggest(clientId, containerClientId, pickerCallback, submitUri
       suggest.bind("autoComplete", function handleAutocomplete(event, data) {
          handleEnterKeySkip = true;
          setScreenProtected(true, "FIXME: palun oodake, ühendus serveriga");
+         // Get other field values from updateable container and append AC data 
+         var postData = getContainerFields(containerClientId, clientId, []);
+         postData += "&" + $jQ.param({'data' : data.newVal});
          $jQ.ajax({
             type: 'POST',
             url: submitUri,
             mode: 'queue',
-            data: $jQ.param({'data' : data.newVal}),
+            data: postData,
             success: function autocompleteSuccess(responseText) {
                if (autoCompleteCallback) {
                   autoCompleteCallback.call(data.newVal);
@@ -511,21 +522,44 @@ function setPageScrollY() {
    $jQ('#wrapper form').append('<input type="hidden" name="scrollToY" value="'+ scrollTop +'" />');
 }
 
-function getSharePointObject() {
-   var agent = navigator.userAgent.toLowerCase();
-   if (agent.indexOf('msie') != -1) {
-      var sharePointObject = new ActiveXObject('SharePoint.OpenDocuments.1');
-      return sharePointObject;
+function getOffice13Link(url) {
+   var programs = {
+         "word" : ["doc", "dot", "docx", "docm", "dotx", "dotm"],
+         "excel" : ["xls", "xlt", "xlm", "xlsx", "xlsm", "xltx", "xltm"],
+         "powerpoint" : ["ppt", "pps", "pptx", "pptm", "potx", "potm", "ppam", "ppsx", "ppsm", "sldx", "sldm"]
    }
-   return null;
+   
+   var link = null;
+   var extension = url.substring(url.lastIndexOf(".") + 1, url.length);
+   for (var program in programs) {
+      if (jQuery.inArray(extension, programs[program]) > -1) {
+         link = "ms-" + program + ":ofe|u|" + url;
+         break;
+      }
+   }
+
+   return link;
 }
 
-function webdavOpen(url, sharePointObject) {
+function webdavOpen(url) {
    var showDoc = true;
-   if (sharePointObject) {
-      // if the link represents an Office document and we are in IE try and
-      // open the file directly to get WebDAV editing capabilities
-      showDoc = !sharePointObject.EditDocument(url);
+   // Try to open using MSOffice and WebDAV capabilities
+   if (window.ActiveXObject !== undefined) {
+      try {
+         // If we are able to instantiate this component, we have Office 2013 installed
+         var isOffice2013Installed = new ActiveXObject("SharePoint.OpenDocuments.5");
+         var link = getOffice13Link(url);
+         if (link) {
+            window.open(link, '_blank');
+            showDoc = false;
+         }
+      } catch (e) {
+         try {
+            showDoc = !(new ActiveXObject("SharePoint.OpenDocuments").EditDocument(url));
+         } catch (e2) {
+            // Continue and try to open the document 
+         }
+      }
    }
    if (showDoc == true) {
       window.open(url, '_blank');
@@ -612,22 +646,34 @@ function showModal(target, height){
    openModalContent = target;
 
    $jQ("#overlay").css("display","block");
-   $jQ("#" + target).css("display","block");
-   if (height != null) {
-      $jQ("#" + target).css("height",height);
+   var modal = $jQ("#" + target);
+   modal.css("display","block");
+   var parentModal = modal.parent().closest(".modalwrap");
+   
+   if (parentModal) {
+      parentModal.show(); // regulates display property
+      height = parentModal.height();
    }
-   $jQ("#" + target).show();
-   $jQ("#" + target).find(".genericpicker-input").focus();
+
+   if (height != null) {
+      modal.css("min-height", height);
+   }
+   modal.show();
+   modal.find(".genericpicker-input").focus();
    return false;
 }
 
 function hideModal(){
-   if (openModalContent != null){
-     if(isIE(7) && titlebarIndex != null) {
-        $jQ("#titlebar").css("zIndex", titlebarIndex);
-     }
-     $jQ("#" + openModalContent).hide();
-      $jQ("#overlay").remove();
+   if (openModalContent != null) {
+      if(isIE(7) && titlebarIndex != null) {
+         $jQ("#titlebar").css("zIndex", titlebarIndex);
+      }
+      var modal = $jQ("#" + openModalContent);
+      modal.hide();
+      var parentModal = modal.parent().closest(".modalwrap");
+      if (parentModal.length < 1) {
+         $jQ("#overlay").remove();
+      }
    }
    return false;
 }
@@ -637,6 +683,7 @@ var propSheetValidateFormId = '';
 var propSheetValidateFinishId = '';
 var propSheetValidateSecondaryFinishId = '';
 var propSheetValidateNextId = '';
+var propSheetValidateSecondaryNextId = '';
 var propSheetFinishBtnPressed = false;
 var propSheetNextBtnPressed = false;
 
@@ -649,6 +696,7 @@ function registerPropertySheetValidator(submitFn, formId, finishBtnId, nextBtnId
    propSheetValidateFinishId = finishBtnId;
    propSheetValidateSecondaryFinishId = finishBtnId + "-2";
    propSheetValidateNextId = nextBtnId;
+   propSheetValidateSecondaryNextId = nextBtnId + "-2";
 }
 
 function processButtonState() {
@@ -745,6 +793,12 @@ function propSheetValidateOnDocumentReady() {
             validateNextId.onclick = function() { propSheetNextBtnPressed = true; };
          }
       }
+      if (propSheetValidateSecondaryNextId.length > 0) {
+         var validateSecondaryNextId = document.getElementById(propSheetValidateFormId + ':' + propSheetValidateSecondaryNextId);
+         if (validateSecondaryNextId != null){
+            validateSecondaryNextId.onclick = function() { propSheetNextBtnPressed = true; };
+         }
+      }      
       processButtonState();
    }
 }
@@ -752,11 +806,16 @@ function propSheetValidateOnDocumentReady() {
 function propSheetValidateRegisterOnDocumentReady() {
    if (propSheetValidateSubmitFn.length > 0) {
       document.getElementById(propSheetValidateFormId).onsubmit = propSheetValidateSubmit;
-      var registerBtn = document.getElementById(propSheetValidateFormId + ':documentRegisterButton');
-      if(registerBtn){
-         registerBtn.onclick = function() { propSheetFinishBtnPressed = true; };
-      }
+      setButtonPropSheetFinish(propSheetValidateFormId + ':documentRegisterButton');
+      setButtonPropSheetFinish(propSheetValidateFormId + ':documentRegisterButton-2');
       processButtonState();
+   }
+}
+
+function setButtonPropSheetFinish(elementId){
+   var button = document.getElementById(elementId);
+   if(button){
+      button.onclick = function() { propSheetFinishBtnPressed = true; };
    }
 }
 
@@ -786,29 +845,44 @@ function setScreenProtected(isProtected, reason) {
 }
 
 function updateState(divId, panelId, viewName) {
+   setScreenProtected(true, "FIXME: palun oodake, ühendus serveriga");
     var uri = getContextPath() + '/ajax/invoke/PanelStateBean.updatePanelState?panelId=' + panelId +
               '&panelState=' + $jQ(divId).is(":visible") + '&viewName=' + viewName;
 
     $jQ.ajax({
        type: 'POST',
        url: uri,
+       data: addViewStateElement(null).serialize(),
        mode: 'queue',
        success: requestUpdatePanelStateSuccess,
        error: requestUpdatePanelStateFailure,
-       dataType: 'xml'
+       dataType: 'html'
     });
 }
 
-function requestUpdatePanelStateSuccess(xml) {
-   if (!xml) { // check that response is not empty
-      return;
+function requestUpdatePanelStateSuccess(responseText) {
+   try {
+      if (!responseText) { // check that response is not empty
+         return;
+      }
+      if (isAjaxViewStateError(responseText)) {
+         handleAjaxViewStateError(responseText);
+         return;
+      }
+      // Set new value to view state, so when form is submitted next time, correct state is restored.
+      var viewState = responseText.substr('VIEWSTATE:'.length);
+      document.getElementById("javax.faces.ViewState").value = viewState;
+   } finally {
+      setScreenProtected(false);
    }
-   // Set new value to view state, so when form is submitted next time, correct state is restored.
-   document.getElementById("javax.faces.ViewState").value = xml.documentElement.getAttribute('view-state');
 }
 
 function requestUpdatePanelStateFailure() {
-    $jQ.log("Updating panel status in server side failed");
+   try {
+      $jQ.log("Updating panel status in server side failed");
+   } finally {
+      setScreenProtected(false);
+   }    
 }
 
 function ajaxError(request, textStatus, errorThrown) {
@@ -833,15 +907,7 @@ function ajaxSubmit(componentClientId, componentContainerId, submittableParams, 
 function ajaxSubmit(componentClientId, componentContainerId, submittableParams, uri, payload) {
    setScreenProtected(true, "FIXME: palun oodake, ühendus serveriga");
 
-   // Find all form fields that are inside this component
-   var componentChildFormElements = $jQ('#' + escapeId4JQ(componentContainerId)).find('input,select,textarea');
-
-   // Find additional hidden fields at the end of the page that HtmlFormRendererBase renders
-   var hiddenFormElements = $jQ('input[type=hidden]').filter(function() {
-      return componentClientId == this.name.substring(0, componentClientId.length) || $jQ.inArray(this.name, submittableParams) >= 0;
-   });
-
-   var postData = componentChildFormElements.add(hiddenFormElements).serialize();
+   var postData = getContainerFields(componentContainerId, componentClientId, submittableParams);
    if (payload != null) {
       postData += "&" + $jQ.param(payload);
    }
@@ -858,10 +924,49 @@ function ajaxSubmit(componentClientId, componentContainerId, submittableParams, 
    });
 }
 
+function getContainerFields(componentContainerId, componentClientId, submittableParams) {
+// Find all form fields that are inside this component
+   var componentChildFormElements = $jQ('#' + escapeId4JQ(componentContainerId)).find('input,select,textarea');
+
+   // Find additional hidden fields at the end of the page that HtmlFormRendererBase renders
+   var hiddenFormElements = $jQ('input[type=hidden]').filter(function() {
+      return componentClientId == this.name.substring(0, componentClientId.length) || $jQ.inArray(this.name, submittableParams) >= 0;
+   });
+
+   componentChildFormElements = componentChildFormElements.add(hiddenFormElements);
+   componentChildFormElements = addViewStateElement(componentChildFormElements);
+   return componentChildFormElements.serialize();
+}
+
+function addViewStateElement(elements){
+   var viewState = $jQ('#javax\\.faces\\.ViewState');
+   if(elements != null){
+      elements = elements.add(viewState);
+   } else {
+      elements = viewState;
+   }
+   return elements;
+}
+
 function ajaxSuccess(responseText, componentClientId, componentContainerId) {
    if (responseText) { // check that response is not empty
+      if (isAjaxViewStateError(responseText)) {
+         try {
+            return handleAjaxViewStateError(responseText);
+         } finally {
+            setScreenProtected(false);
+         }
+      }
       // Split response
       var i = responseText.lastIndexOf('VIEWSTATE:');
+      if (i < 0){
+         try {
+            window.location.href = window.location.protocol + "://" + window.location.hostname + "/" + window.location.pathname;
+            return false;
+         } finally {
+            setScreenProtected(false);
+         }         
+      }
       var html = responseText.substr(0, i);
       var hiddenInputsIndex = responseText.lastIndexOf("HIDDEN_INPUT_NAMES_JSON:");
       var viewState = responseText.substr(i + 'VIEWSTATE:'.length, hiddenInputsIndex);
@@ -906,7 +1011,21 @@ function ajaxSuccess(responseText, componentClientId, componentContainerId) {
    }
 }
 
-//-----------------------------------------------------------------------------
+function isAjaxViewStateError(responseText){
+   try {
+      return responseText.lastIndexOf('ERROR_VIEW_STATE_CHANGED') > -1;
+   } catch (e){
+      return false;
+   }
+}
+
+function handleAjaxViewStateError(responseText) {
+   var redirectUrl = $jQ.parseJSON(responseText.substr("ERROR_VIEW_STATE_CHANGED:".length));
+   window.location.href = redirectUrl;
+   return false;
+}
+
+// -----------------------------------------------------------------------------
 //MENU ITEM COUNT UPDATE
 //-----------------------------------------------------------------------------
 
@@ -1126,7 +1245,7 @@ function initWithScreenProtected() {
       $jQ(this).toggleClass("plus").toggleClass("minus");
    });
 
-   $jQ(".genericpicker-input").live('keyup', function (event) {
+   $jQ(".genericpicker-input").live('keyup', throttle(function (event) {
       var input = $jQ(this);
       var filter = input.prev();
       var filterValue;
@@ -1134,26 +1253,33 @@ function initWithScreenProtected() {
          filterValue = filter.val();
       }
 
-      var tbody = input.closest('tbody');
-      var select = tbody.find('.genericpicker-results');
-
       var successCallback = function(responseText) {
+         var tbody = input.closest('tbody');
+         var select = tbody.find('.genericpicker-results');
          select.children().remove();
          var index = responseText.indexOf("|");
          select.attr("size", responseText.substring(0, index));
          select.append(responseText.substring(index + 1, responseText.length));
-         tbody.find('.hidden').toggleClass('hidden');
+         var resultCount = select.children().length;
+         
+         if (select.attr("data-initialresults") == undefined) { // After the first fresh search, record the initial result count
+            select.attr("data-initialresults", resultCount);
+         }
+         
+         // Check if resultset is limited and show/hide message accordingly
+         if (resultCount == select.attr("data-rowlimit")) {
+            tbody.find('.modalResultsLimited').show();
+         } else {
+            tbody.find('.modalResultsLimited').hide();
+         }
+         
+         tbody.find('tr.hidden').toggleClass('hidden');
       };
 
       // Workaround for IE/WebKit, since it cannot hide option elements...
-      var backSpaceCallback = function(inputValue){
-         select.children('option').each(function (i) {
-            var option = $jQ(this);
-            if (option.text().toLowerCase().indexOf(inputValue.toLowerCase()) < 0) {
-               option.prop('disabled', 'disabled').hide();
-               option.wrap('<span />').hide();
-            }
-         });
+      var backSpaceCallback = function(inputValue, callbackContext){
+         var tbody = $jQ(callbackContext);
+         var select = tbody.find('.genericpicker-results');
          select.children('span').each(function (i) {
             var option = $jQ(this).find('option');
             if (option.text().toLowerCase().indexOf(inputValue.toLowerCase()) > -1) {
@@ -1163,10 +1289,11 @@ function initWithScreenProtected() {
          });
       };
 
-      doSearch(input, filterValue, event, successCallback, backSpaceCallback);
-   });
+      doSearch(input, filterValue, event, successCallback, backSpaceCallback, input.closest('tbody'));
+   }, 500));
 
-   function doSearch(input, filterValue, event, successCallback, backSpaceCallback) {
+   var reSearch = true;
+   function doSearch(input, filterValue, event, successCallback, backSpaceCallback, select, callbackContext) {
       var callback = input.attr('datasrc');
       if(!callback){
          alert("no search callback found");
@@ -1176,7 +1303,7 @@ function initWithScreenProtected() {
          return;
       }
       if(!filterValue){
-         filterValue = 0;
+         filterValue = 1; // UserContactGroupSearchBean.USERS_FILTER
       }
 
       var index = callback.indexOf("|");
@@ -1185,8 +1312,20 @@ function initWithScreenProtected() {
          callback = callback.substring(index + 1);
       }
 
+      var tbody = $jQ(callbackContext);
+      var select = tbody.find('.genericpicker-results');
+      var opts = select.children('option');
+
+      // Determine if we are dealing with limited resultset
+      var limited = false;
+      if (value.length < 3) {
+         select.removeAttr("data-initialresults"); // Reset the initial result count
+      } else {
+         limited = select.attr("data-initialresults") == select.attr("data-rowlimit");
+      }
+
       var backspace = event.keyCode == 8;
-      if (value.length == 3 && !backspace) {
+      if (value.length > 2 && reSearch && !backspace || limited) {
          $jQ.ajax({
             type: 'POST',
             url: getContextPath() + "/ajax/invoke/AjaxSearchBean.searchPickerResults",
@@ -1196,8 +1335,20 @@ function initWithScreenProtected() {
             error: ajaxError,
             dataType: 'html'
          });
-      } else if (value.length > 3 || backspace) {
-         backSpaceCallback(value);
+      } else if (value.length > 3 && !backspace) {
+         opts.each(function (i) {
+            var option = $jQ(this);
+            if (option.text().toLowerCase().indexOf(value.toLowerCase()) < 0) {
+               option.attr('disabled', 'disabled').hide();
+               option.wrap('<span />').hide();
+            }
+         });
+      } else if (value.length > 2 || backspace) {
+         backSpaceCallback(value, callbackContext);
+      }
+      
+      if (value.length < 3) {
+         reSearch = true;
       }
    };
 
@@ -1288,7 +1439,7 @@ function initWithScreenProtected() {
       } else if (elem.hasClass("eventEndDate")) {
          dateField = row.next().find(".errandEndDate");
       }
-      if (dateField != null) {
+      if (dateField != null && !dateField.val()) { // Only update if a value isn't specified
          dateField.datepicker('setDate', elem.datepicker('getDate'));
          dateField.change();
       }
@@ -1335,19 +1486,21 @@ function initWithScreenProtected() {
    window.dhtmlHistory.add(randomHistoryHash(), null);
 
 
-   jQuery(".dailyAllowanceDaysField, .dailyAllowanceRateField").live('change', function(event) {
+   jQuery(".dailyAllowanceDaysField:input, .dailyAllowanceRateField:input").live('change', function(event) {
       var elem = $jQ(this);
       // Calculate sum for current row
       var row = elem.closest("tr");
       var allowanceDays = parseInt(row.find(".dailyAllowanceDaysField").val());
       var allowanceRate = parseInt(row.find(".dailyAllowanceRateField").val());
       var sumField = row.find(".dailyAllowanceSumField");
-      if(!allowanceDays || !allowanceRate) {
-         return;
+      var sum = 0;
+      if (allowanceDays && allowanceRate) {
+         var sum = allowanceDays * (allowanceRate / 100) * sumField.attr("datafld");
       }
-      var sum = allowanceDays * (allowanceRate / 100) * sumField.attr("datafld");
       if (sum) {
          sumField.val(round(sum, 2));
+      } else {
+         sumField.val(0);
       }
 
       // Sum all rows in this block and set total daily allowance sum
@@ -1360,10 +1513,10 @@ function initWithScreenProtected() {
          }
       });
 
-      row.closest("div").closest("tr").next().find(".dailyAllowanceTotalSumField").val(totalSum);
+      row.closest("div").closest("tr").next().find(".dailyAllowanceTotalSumField").first().text(totalSum);
    });
 
-   jQuery(".expectedExpenseSumField").live('keyup', function(event) {
+   jQuery(".expectedExpenseSumField:input").live('keyup', function(event) {
       var elem = $jQ(this);
       var totalSum = 0;
       var sum = 0;
@@ -1377,8 +1530,8 @@ function initWithScreenProtected() {
          }
       });
 
-      var totalField = elem.closest("div").closest("tr").next().find(".expensesTotalSumField");
-      totalField.val(totalSum);
+      var totalField = elem.closest("div").closest("tr").next().find(".expensesTotalSumField").first();
+      totalField.text(totalSum);
    });
 
    jQuery(".invoiceTotalSum, .invoiceVat").live('change', function(event) {
@@ -1670,7 +1823,7 @@ function initSelectTooltips(selects) {
 
 function setSelectTooltips(jqSelect){
    var selected = jqSelect.find("option:selected");
-   if(!jqSelect.hasClass('noOptionTitle')){
+   if(jqSelect.hasClass('noOptionTitle')){
       jqSelect.attr("title", selected.text());
    } else {
       jqSelect.attr("title", selected.attr("title"));
@@ -1750,10 +1903,18 @@ function handleHtmlLoaded(context, setFocus, selects) {
       var jqSelects = (selects==undefined) ? $jQ("select") : selects;
       jqSelects.each(function(){
          var jqSelect = $jQ(this);
-         if(!jqSelect.hasClass('noOptionTitle')) {
+         if(jqSelect.hasClass('noOptionTitle')) {
             jqSelect.children().each(function() {
                $jQ(this).attr('title', $jQ(this).text());
             });
+         } else {
+            jqSelect.children().each(function() {
+               var i = $jQ(this);
+               if (i.attr('title') == undefined) {
+                  i.attr('title', i.text());
+               }
+            });
+            jqSelect.attr("title", jqSelect.find("option:selected").attr("title"));
          }
       });
       if(ieVer==7){
@@ -1772,8 +1933,7 @@ function handleHtmlLoaded(context, setFocus, selects) {
       // 2) $jQ(this).attr('href') = '/dhs/webdav/xxx/yyy/zzz/abc.doc'
       var path = this.href; // SharePoint ActiveXObject methods need to get full URL
 
-      var sharePointObject = getSharePointObject();
-      if (sharePointObject) {
+      if (window.ActiveXObject !== undefined) {
          // When page is submitted, user sees an hourglass cursor
          $jQ(".submit-protection-layer").show().focus();
          var uri = getContextPath() + '/ajax/invoke/AjaxBean.isFileLocked';
@@ -1793,7 +1953,7 @@ function handleHtmlLoaded(context, setFocus, selects) {
                 alert("Faili ei saa avada, fail on kustutatud");
                 return false;
              } else if (responseText.indexOf("NOT_LOCKED") > -1) {
-                webdavOpen(path, sharePointObject);
+                webdavOpen(path);
              } else if (confirm(getTranslation("webdav_openReadOnly").replace("#", responseText))) {
                 // TODO CL 161673: responseText might contain HTML of CAS page if session has timed out
                 webdavOpenReadOnly(path);
@@ -1805,7 +1965,7 @@ function handleHtmlLoaded(context, setFocus, selects) {
            datatype: 'html'
          });
       } else {
-         webdavOpen(path, sharePointObject);
+         webdavOpen(path);
       }
       return false;
    });
@@ -1945,7 +2105,8 @@ function handleHtmlLoaded(context, setFocus, selects) {
    propSheetValidateRegisterOnDocumentReady();
 
    // this method should be called after critical activities have been done in handleHtmlLoaded as it displays alerts and possibly submits page
-   confirmWorkflow();
+   confirmWorkflow('workflow-confirmation-messages', 'workflow-after-confirmation-link');
+   confirmWorkflow("workflow-delegation-confirmation-messages", "workflow-after-delegation-confirmation-link");
 
    // trigger keyup event (for validation & textarea resize) on paste. Can't use live() because of IE
    $jQ("textarea, input[type='text']", context).bind("paste", function(){
@@ -2040,10 +2201,12 @@ function performSigningPluginOperation(operation, hashHex, certId, path) {
 
 function getMobileIdSignature() {
    var uri = getContextPath() + "/ajax/invoke/WorkflowBlockBean.getMobileIdSignature";
+   var mobileIdChallengeId = $jQ('#mobileIdChallengeId').text();
    $jQ.ajax({
       type: 'POST',
       mode: 'queue',
       url: uri,
+      data: $jQ.param({'mobileIdChallengeId' : mobileIdChallengeId }),
       dataType: 'html',
       success: function( responseText, status, xhr ) {
          if (responseText == 'FINISH') {
@@ -2051,6 +2214,8 @@ function getMobileIdSignature() {
             $jQ('#' + escapeId4JQ('dialog:dialog-body:mobileIdChallengeModal_submit_btn')).click();
          } else if (responseText == 'REPEAT') {
             window.setTimeout(getMobileIdSignature, 2000);
+         } else if (responseText.indexOf('ERROR') == 0){
+            $jQ('#mobileIdChallengeMessage').html('<p>' + responseText.substring(5) + '</p>');            
          }
       }
    });
@@ -2060,8 +2225,8 @@ function sendToSapManually(){
    return showModal('entrySapNumber_popup');
 }
 
-function confirmWorkflow(){
-   var confirmationMessagesSelect = $jQ("[class='workflow-confirmation-messages']").get(0);
+function confirmWorkflow(selectClass, confirmationLinkClass){
+   var confirmationMessagesSelect = $jQ("[class='" + selectClass + "']").get(0);
    if(confirmationMessagesSelect == undefined){
       return false;
    }
@@ -2070,7 +2235,7 @@ function confirmWorkflow(){
          return false;
       }
    }
-   $jQ("[class='workflow-after-confirmation-link']").eq(0).click();
+   $jQ("[class='" + confirmationLinkClass + "']").eq(0).click();
 }
 
 function clearFormHiddenParams(currFormName, newTargetVal) {
@@ -2167,4 +2332,16 @@ function help(url) {
       win.focus();
    }
    return false;
+}
+
+//http://remysharp.com/2010/07/21/throttling-function-calls/
+function throttle(fn, delay) {
+   var timer = null;
+   return function() {
+      var context = this, args = arguments;
+      clearTimeout(timer);
+      timer = setTimeout(function() {
+         fn.apply(context, args);
+      }, delay);
+   };
 }

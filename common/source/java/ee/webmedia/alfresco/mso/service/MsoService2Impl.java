@@ -2,7 +2,7 @@ package ee.webmedia.alfresco.mso.service;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -65,7 +65,7 @@ public class MsoService2Impl implements MsoService, InitializingBean {
         // Set HTTP request read timeout at CXF layer
         // http://lhein.blogspot.com/2008/09/apache-cxf-and-time-outs.html
         HTTPConduit http = (HTTPConduit) ClientProxy.getClient(port).getConduit();
-        http.getClient().setReceiveTimeout(httpClientReceiveTimeout * 1000);
+        http.getClient().setReceiveTimeout(httpClientReceiveTimeout * 1000); // Takes milliseconds
 
         SOAPBinding binding = (SOAPBinding) bp.getBinding();
         binding.setMTOMEnabled(true);
@@ -98,7 +98,7 @@ public class MsoService2Impl implements MsoService, InitializingBean {
                 return null;
             }
 
-            Map<String, String> formulas = new HashMap<String, String>();
+            Map<String, String> formulas = new LinkedHashMap<String, String>();
             long duration = -1;
             try {
 
@@ -174,7 +174,7 @@ public class MsoService2Impl implements MsoService, InitializingBean {
                         + documentReader.getEncoding() + "|" + pdfWriter.getSize());
             }
         } catch (Exception e) {
-            log.error("Error in transformToPdf", e);
+            log.error("Error in transformToPdf! | ContentURL: " + documentReader.getContentUrl() + " | Input mimetype: " + documentReader.getMimetype().toLowerCase(), e);
             throw e;
         }
     }
@@ -305,6 +305,7 @@ public class MsoService2Impl implements MsoService, InitializingBean {
         documentReader.getContent(bos);
         JAXBElement<byte[]> documentFile = objectFactory.createMsoDocumentAndFormulasInputDocumentFile(bos.toByteArray());
 
+        JAXBElement<String> fileEncoding = objectFactory.createMsoDocumentAndFormulasInputFileEncoding(documentReader.getEncoding());
         JAXBElement<String> fileType = objectFactory.createMsoDocumentAndFormulasInputFileType(documentReader.getMimetype());
 
         ArrayOfformula arrayOfformula = objectFactory.createArrayOfformula();
@@ -318,6 +319,7 @@ public class MsoService2Impl implements MsoService, InitializingBean {
 
         MsoDocumentAndFormulasInput input = objectFactory.createMsoDocumentAndFormulasInput();
         input.setDocumentFile(documentFile);
+        input.setFileEncoding(fileEncoding);
         input.setFileType(fileType);
         input.setFormulas(msoFormulas);
         return input;
@@ -328,10 +330,12 @@ public class MsoService2Impl implements MsoService, InitializingBean {
         documentReader.getContent(bos);
         JAXBElement<byte[]> documentFile = objectFactory.createMsoDocumentInputDocumentFile(bos.toByteArray());
 
+        JAXBElement<String> fileEncoding = objectFactory.createMsoDocumentInputFileEncoding(documentReader.getEncoding());
         JAXBElement<String> fileType = objectFactory.createMsoDocumentInputFileType(documentReader.getMimetype());
 
         final MsoDocumentInput input = objectFactory.createMsoDocumentInput();
         input.setDocumentFile(documentFile);
+        input.setFileEncoding(fileEncoding);
         input.setFileType(fileType);
         return input;
     }

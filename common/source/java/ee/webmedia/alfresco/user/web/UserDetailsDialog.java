@@ -1,9 +1,7 @@
 package ee.webmedia.alfresco.user.web;
 
 import static ee.webmedia.alfresco.common.web.BeanHelper.getAuthorityService;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getLogService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getOrganizationStructureService;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
 import static ee.webmedia.alfresco.utils.UserUtil.getUserDisplayUnit;
 
 import java.util.ArrayList;
@@ -34,13 +32,10 @@ import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.einvoice.model.DimensionValue;
 import ee.webmedia.alfresco.document.einvoice.model.Dimensions;
 import ee.webmedia.alfresco.document.einvoice.service.EInvoiceService;
-import ee.webmedia.alfresco.log.model.LogEntry;
-import ee.webmedia.alfresco.log.model.LogObject;
 import ee.webmedia.alfresco.substitute.model.Substitute;
 import ee.webmedia.alfresco.substitute.web.SubstituteListDialog;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
-import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.TextUtil;
 import ee.webmedia.alfresco.utils.UserUtil;
 
@@ -228,11 +223,7 @@ public class UserDetailsDialog extends BaseDialogBean {
         if (StringUtils.isBlank(group)) {
             return;
         }
-        getAuthorityService().removeAuthority(group, (String) user.getProperties().get(ContentModel.PROP_USERNAME));
-
-        String userFullInfo = UserUtil.getUserFullNameAndId(RepoUtil.toQNameProperties(user.getProperties()));
-        getLogService().addLogEntry(LogEntry.create(LogObject.USER_GROUP, getUserService(), user.getNodeRef(), "applog_group_user_rem", group, userFullInfo));
-
+        BeanHelper.getUserService().removeUserFromGroup(group, user);
         setupGroups();
         MessageUtil.addInfoMessage("user_removed_from_group");
     }
@@ -241,12 +232,7 @@ public class UserDetailsDialog extends BaseDialogBean {
         if (StringUtils.isBlank(group)) {
             return;
         }
-
-        getAuthorityService().addAuthority(group, (String) user.getProperties().get(ContentModel.PROP_USERNAME));
-
-        String userFullInfo = UserUtil.getUserFullNameAndId(RepoUtil.toQNameProperties(user.getProperties()));
-        getLogService().addLogEntry(LogEntry.create(LogObject.USER_GROUP, getUserService(), user.getNodeRef(), "applog_group_user_add", group, userFullInfo));
-
+        BeanHelper.getUserService().addUserToGroup(group, user);
         setupGroups();
         MessageUtil.addInfoMessage("user_added_to_group");
     }

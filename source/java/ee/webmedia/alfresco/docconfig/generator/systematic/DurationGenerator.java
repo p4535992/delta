@@ -64,7 +64,7 @@ public class DurationGenerator extends BaseSystematicFieldGenerator {
 
         if (field.getQName().equals(beginDateProp)) {
             ItemConfigVO item = generatorResults.getAndAddPreGeneratedItem();
-            List<String> components = generateDurationFields(field, item, beginDateProp, endDateProp, group.getReadonlyFieldsName(), namespaceService, calculatedDaysProp,
+            List<String> components = generateDurationFields(field, item, beginDateProp, endDateProp, group.getReadonlyFieldsName(), group, namespaceService, calculatedDaysProp,
                     stateHolderKey);
             if (calculatedDaysProp != null) {
                 item.setTextId("document_eventDatesWithDuration_templateText");
@@ -78,7 +78,7 @@ public class DurationGenerator extends BaseSystematicFieldGenerator {
         }
     }
 
-    private static List<String> generateDurationFields(Field field, ItemConfigVO item, QName beginDateProp, QName endDateProp, String itemLabel,
+    private static List<String> generateDurationFields(Field field, ItemConfigVO item, QName beginDateProp, QName endDateProp, String itemLabel, FieldGroup group,
             NamespaceService namespaceService,
             QName calculatedDaysProp,
             String stateHolderKey) {
@@ -95,6 +95,7 @@ public class DurationGenerator extends BaseSystematicFieldGenerator {
             beginDateComponent += "¤valueChangeListener=" + getBindingName("beginDateValueChanged", stateHolderKey);
         }
         beginDateComponent = addItemReadOnlyOptions(item, beginDateComponent);
+        beginDateComponent = addItemMandatoryOptions(group.getFieldById(beginDateProp.getLocalName()), beginDateComponent);
         components.add(beginDateComponent);
 
         // <show-property name="{temp}xxlInvoice" show-in-edit-mode="false" display-label-id="document_empty_label" component-generator="UnescapedOutputTextGenerator" />
@@ -103,14 +104,15 @@ public class DurationGenerator extends BaseSystematicFieldGenerator {
             endDateComponent += "¤valueChangeListener=" + getBindingName("endDateValueChanged", stateHolderKey);
         }
         endDateComponent = addItemReadOnlyOptions(item, endDateComponent);
+        endDateComponent = addItemMandatoryOptions(group.getFieldById(endDateProp.getLocalName()), endDateComponent);
         components.add(endDateComponent);
 
         return components;
     }
 
-    public static List<String> generateDurationFields(Field field, ItemConfigVO item, QName beginDateProp, QName endDateProp, String itemLabel,
+    public static List<String> generateDurationFields(Field field, ItemConfigVO item, QName beginDateProp, QName endDateProp, String itemLabel, FieldGroup group,
             NamespaceService namespaceService) {
-        return generateDurationFields(field, item, beginDateProp, endDateProp, itemLabel, namespaceService, null, null);
+        return generateDurationFields(field, item, beginDateProp, endDateProp, itemLabel, group, namespaceService, null, null);
     }
 
     private static String addItemReadOnlyOptions(final ItemConfigVO item, String beginDateComponent) {
@@ -121,6 +123,13 @@ public class DurationGenerator extends BaseSystematicFieldGenerator {
             beginDateComponent += "¤read-only=" + item.getCustomAttributes().get(PropertySheetElementReader.ATTR_READ_ONLY);
         }
         return beginDateComponent;
+    }
+
+    private static String addItemMandatoryOptions(Field field, String dateComponent) {
+        if (field.isMandatory()) {
+            dateComponent += "¤mandatory=true";
+        }
+        return dateComponent;
     }
 
     private QName getProp(Map<String, Field> fieldsByOriginalId, QName propName) {

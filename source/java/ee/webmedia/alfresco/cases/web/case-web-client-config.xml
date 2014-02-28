@@ -4,9 +4,6 @@
       <actions>
 
          <action id="case_add_new">
-            <permissions>
-               <permission allow="true">CreateChildren</permission>
-            </permissions>
             <!-- regular users shouldn't be able to add new case from here, even they are able to create case when classifying document -->
             <evaluator>ee.webmedia.alfresco.cases.web.AddCaseEvaluator</evaluator>
             <label-id>case_add_new</label-id>

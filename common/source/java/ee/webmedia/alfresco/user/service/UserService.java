@@ -207,4 +207,16 @@ public interface UserService {
 
     NodeRef retrieveUserReportsFolderRef(String username);
 
+    Set<String> getSystematicGroups();
+
+    Set<String> getAllUsersUsernames();
+
+    void removeUserFromGroup(String group, String username);
+
+    void removeUserFromGroup(String group, Node user);
+
+    void addUserToGroup(String group, Node user);
+
+    void addUserToGroup(String group, String username);
+
 }

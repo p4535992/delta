@@ -355,12 +355,7 @@ hr {
 	height: 200px;
 }
 
-.subPropertySheetTR table {
-	width: auto !important;
-}
-
 .subPropertySheetTR div:first-child {
-	float: left;
 	overflow: visible;
 }
 
@@ -394,4 +389,8 @@ table.privileges .linkReplacement{
 
 .sys-error-details {
 	overflow: hidden;
+}
+
+#metadata-panel table.inline:first-child {
+   table-layout: auto;
 }

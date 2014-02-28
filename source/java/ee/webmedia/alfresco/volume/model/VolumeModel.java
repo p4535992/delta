@@ -41,5 +41,7 @@ public interface VolumeModel {
         QName DELETED_DATE_TIME = QName.createQName(URI, "deletedDateTime");
         QName DOCUMENT_DATA = QName.createQName(URI, "documentData");
         QName COMMENT = QName.createQName(URI, "comment");
+        QName ORIGINAL_VOLUME = QName.createQName(URI, "originalVolume");
+        QName MARKED_FOR_ARCHIVING = QName.createQName(URI, "markedForArchiving");
     }
 }

@@ -125,6 +125,7 @@ public class InlinePropertyGroupGenerator extends BaseComponentGenerator impleme
             textParts.set(0, first.substring(1));
             textParts.add(0, "");
         }
+        boolean propSheetReadOnly = UIPropertySheet.VIEW_MODE.equals(propertySheet.getMode());
         for (int i = 0; i < textParts.size(); i++) {
             final String textPart = textParts.get(i);
             if (StringUtils.isNotEmpty(textPart)) {
@@ -140,6 +141,13 @@ public class InlinePropertyGroupGenerator extends BaseComponentGenerator impleme
 
             if (nrOfParts > propIndex && i < textParts.size() - 1) {
                 final ComponentPropVO componentPropVO = propVOs.get(propIndex);
+
+                // Check if the field is mandatory
+                String mandatory = componentPropVO.getCustomAttributes().get(CustomAttributeNames.ATTR_MANDATORY);
+                if (!propSheetReadOnly && Boolean.valueOf(mandatory)) {
+                    rowChildren.add(ComponentUtil.createMandatoryMarker(context));
+                }
+
                 componentPropVO.getCustomAttributes().put(VALUE_INDEX_IN_MULTIVALUED_PROPERTY, "-1");
                 ComponentUtil.generateAndAddComponent(context, componentPropVO, propertySheet, rowChildren);
                 propIndex++;

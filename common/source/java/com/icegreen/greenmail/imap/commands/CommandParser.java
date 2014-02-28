@@ -6,21 +6,23 @@
  */
 package com.icegreen.greenmail.imap.commands;
 
-import com.icegreen.greenmail.imap.ImapConstants;
-import com.icegreen.greenmail.imap.ImapRequestLineReader;
-import com.icegreen.greenmail.imap.ProtocolException;
-import com.icegreen.greenmail.store.MessageFlags;
-
-import javax.mail.Flags;
-
-import org.apache.commons.logging.LogFactory;
-
+import java.nio.CharBuffer;
+import java.nio.charset.Charset;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Locale;
+
+import javax.mail.Flags;
+
+import org.apache.commons.logging.LogFactory;
+
+import com.icegreen.greenmail.imap.ImapConstants;
+import com.icegreen.greenmail.imap.ImapRequestLineReader;
+import com.icegreen.greenmail.imap.ProtocolException;
+import com.icegreen.greenmail.store.MessageFlags;
 
 /**
  * @author Darrell DeBoer <darrell@apache.org>
@@ -234,10 +236,10 @@ public class CommandParser {
         }
 
         int size = Integer.parseInt(digits.toString());
-        byte[] buffer = new byte[size];
+        char[] buffer = new char[size];
         request.read(buffer);
 
-        return buffer;
+        return Charset.forName("UTF-8").encode(CharBuffer.wrap(buffer)).array();
     }
 
     /**

@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="common" basedir=".">
+   
+    <import file="../hgdk-build.xml" />
+   
 	<dirname property="common.basedir" file="${ant.file.common}" />
 
 	<property name="common.dir.lib" location="${common.basedir}/lib" />
@@ -14,7 +17,6 @@
 	<property name="project.dir.amp" location="${project.basedir}/amp" />
 	<property name="project.dir.etc" location="${project.basedir}/etc" />
 	<property name="project.dir.lib" location="${project.basedir}/lib" />
-	<property name="project.dir.lib.dev" location="${project.basedir}/lib-dev" />
 	<property name="project.dir.src" location="${project.basedir}/source/java" />
 	<property name="project.dir.src.test" location="${project.basedir}/source/test/java" />
 	<property name="project.dir.web" location="${project.basedir}/web" />
@@ -29,8 +31,6 @@
 	<property name="project.dir.coverage.reports" location="${project.dir.test.reports}/coverage" />
 	<property name="project.dir.coverage.instrumented" location="${project.dir.test}/classes-instrumented" />
 	<property name="project.build.temporary.war" location="${project.dir.build}/temporary.war" />
-
-	<property file="${project.basedir}/project.properties" />
 
 	<property name="conf.basedir" location="${project.dir.etc}/conf" />
 	<property name="conf.organization.basedir" location="${project.dir.etc}/conf-organization" />
@@ -47,7 +47,6 @@
 		<fileset dir="${project.dir.exploded.lib}" includes="**/*.jar" />
 		<fileset dir="${common.dir.lib.dev}" includes="**/*.jar" />
 		<fileset dir="${common.basedir}/lib-dev-${appserver}" includes="**/*.jar" />
-		<fileset dir="${project.dir.lib.dev}" includes="**/*.jar" />
 	</path>
 
 	<!-- XXX: emma/findbugs need some classes from other jars than unit tests -->
@@ -72,7 +71,7 @@
 		<fileset dir="${common.dir.lib.dev}" includes="**/*.jar" />
 		<fileset dir="${project.dir.exploded.lib}" includes="**/*.jar" />
 		<fileset dir="${common.basedir}/lib-dev-${appserver}" includes="**/*.jar" />
-		<fileset dir="${project.dir.lib.dev}" includes="**/*.jar" />
+		<path refid="classpath.test.base" />
 	</path>
 
 
@@ -115,6 +114,8 @@
 		<delete file="${common.dir.lib.server}/joda-time-1.2.1.jar" />
 		<!-- Newer version (1.4.4) of javax.mail is added from common/lib folder -->
 		<delete file="${common.dir.lib.server}/mail.jar" />
+		<!-- Newer version (1.3-alfresco-20121114) of greenmail is added from common/lib folder -->
+		<delete file="${common.dir.lib.server}/greenmail-1.3-patched.jar" />
         <!-- Newer version (2.1.3) of CXF is added from common/lib folder -->
         <!-- 2.1.3 resolves issue https://issues.apache.org/jira/browse/CXF-1624 -->
         <!-- Cannot use newest 2.1.x version - when generating classes with 2.1.10, there is an error:
@@ -178,22 +179,48 @@
 		<property file="${source}" />
 		<echo file="${target}">currentVersion=${stage}.${milestone}.${submilestone}.${version}${line.separator}</echo>
 	</target>
+   
+	<target name="project-version-file-available" >
+	   <available file="${project.basedir}/project.properties" property="is.project.properties.available" />
+	</target>
+ 
+	<target name="version-from-project-properties-file" depends="project-version-file-available" if="${is.project.properties.available}" >
+	   <property file="${project.basedir}/project.properties" />
+	   <echo message="Read current version from project.properties file, currentVersion=${currentVersion}" />
+	</target>
 
-	<target name="compile" depends="init" description="Copy all files and compile sources to exploded directory">
-		<antcall target="create-version-file">
-			<param name="source" value="${project.basedir}/version.properties" />
-			<param name="target" value="${project.dir.build}/project-version.properties" />
-		</antcall>
+   <!-- Override tip-version target defined in hgdk-build.xml, so that when project version is read from project.properties,
+        then tip-version is not executed and no error is arised in case hg repo is not accessible -->
+   <target name="tip-version" description="Sets the latest branch tip version as property 'currentVersion'" unless="${is.project.properties.available}" >
+     <echo message="Calling modified tip-version" />
+     <java failonerror="yes" classpathref="hgdk.class.path" classname="eu.webmedia.vcs.tag.CurrentVersionResolver" outputproperty="currentVersion">
+       <arg value="${basedir}" />
+     </java>
+   </target>  
+   
+	<target name="compile" depends="init,project-version-file-available,version-from-project-properties-file,tip-version" description="Copy all files and compile sources to exploded directory">
+	   <loadresource property="currentVersionNumbers">
+	     <propertyresource name="currentVersion"/>
+	     <filterchain>
+	       <tokenfilter>
+	         <replacestring from="ver-" to=""/>
+	       </tokenfilter>
+	     </filterchain>
+	   </loadresource>   
+	    <echo file="${project.dir.build}/project-version.properties" message="currentVersion=${currentVersionNumbers}" />
 		<antcall target="create-version-file">
 			<param name="source" value="${common.basedir}/version.properties" />
 			<param name="target" value="${project.dir.build}/common-version.properties" />
 		</antcall>
-
+	   <copy tofile="${project.dir.exploded.classes}/ee/webmedia/alfresco/common/project-version.properties"
+	        file="${project.dir.build}/project-version.properties"
+ 	        preservelastmodified="true"
+	 	    overwrite="true" />	   
 		<!-- Project files overwrite common files, they are always defined later -->
 		<!-- You must also define source folders in Eclipse in a certain order - common ones first and project ones later -->
 		<copy todir="${project.dir.exploded.lib}" preservelastmodified="true" overwrite="true">
 			<fileset dir="${common.dir.lib}" includes="**/*.jar" />
-			<fileset dir="${common.basedir}/lib-${appserver}" includes="**/*.jar" />
+		    <fileset dir="${common.basedir}/lib-${appserver}" includes="**/*.jar" />
 		</copy>
 		<copy todir="${project.dir.exploded.lib}" preservelastmodified="true" overwrite="true">
 			<fileset dir="${project.dir.lib}" includes="**/*.jar" />
@@ -212,9 +239,6 @@
 			<fileset dir="${common.dir.src}" includes="**/*_et_EE.properties" excludes="alfresco/messages/**,alfresco/workflow/**" />
 			<globmapper from="*_et_EE.properties" to="*.properties" />
 		</copy>
-		<replace dir="${project.dir.exploded.classes}" includes="ee/webmedia/alfresco/**/*.xml" propertyfile="${project.dir.build}/common-version.properties">
-			<replacefilter token="@currentVersion@" property="currentVersion" />
-		</replace>
 
 		<copy todir="${project.dir.exploded.classes}" preservelastmodified="true" overwrite="true">
 			<fileset dir="${project.dir.src}" excludes="**/*.java,**/*_en_US.properties" />
@@ -223,9 +247,6 @@
 			<fileset dir="${project.dir.src}" includes="**/*_et_EE.properties" excludes="alfresco/messages/**,alfresco/workflow/**" />
 			<globmapper from="*_et_EE.properties" to="*.properties" />
 		</copy>
-		<replace dir="${project.dir.exploded.classes}" includes="ee/webmedia/alfresco/**/*.xml" propertyfile="${project.dir.build}/project-version.properties">
-			<replacefilter token="@currentVersion@" property="currentVersion" />
-		</replace>
 
 		<!-- PropertyPlaceholderConfigurer can't resolve properties on itself -->
 		<move file="${project.dir.exploded.classes}/ee/webmedia/alfresco/${project.name}/${project.name}-alfresco-global.properties"
@@ -241,10 +262,6 @@
                propertyfile="${project.dir.build}/project-version.properties">
 			<replacefilter token="@currentVersion@" property="currentVersion" />
 		</replace>
-		<copy tofile="${project.dir.exploded.classes}/ee/webmedia/alfresco/common/project-version.properties"
-            file="${project.basedir}/project.properties"
-            preservelastmodified="true"
-            overwrite="true" />
 		<replace file="${project.dir.exploded.classes}/alfresco/module/common/module.properties" propertyfile="${project.dir.build}/common-version.properties">
 			<replacefilter token="@currentVersion@" property="currentVersion" />
 		</replace>
@@ -264,6 +281,7 @@
 		</javac>
 		<javac destdir="${project.dir.exploded.classes}" classpathref="classpath" source="1.6" target="1.6" debug="on" fork="yes" encoding="UTF-8">
 			<compilerarg value="-Xlint" />
+			<compilerarg value="-Xlint:-deprecation" />
 			<!-- XXX why do I have "bad path element" warnings, where do these path elements come from? -->
 			<compilerarg value="-Xlint:-path" />
 			<src path="${common.dir.src}" />
@@ -362,6 +380,7 @@
 		</copy>
 		<javac destdir="${project.dir.test.classes}" classpathref="classpath.test.compile" source="1.6" target="1.6" debug="on" fork="yes" encoding="UTF-8">
 			<compilerarg value="-Xlint" />
+			<compilerarg value="-Xlint:-deprecation" />
 			<!-- XXX why do I have "bad path element" warnings, where do these path elements come from? -->
 			<compilerarg value="-Xlint:-path" />
 			<src path="${common.dir.src.test}" />
@@ -533,14 +552,6 @@
 		<fail if="common.change.properties.present" message="Project version must point to a specific common version, not a change" />
 	</target>
 
-	<target name="replace-version">
-		<property file="project.properties" />
-		<echo>Replacing @currentVersion@ = ${currentVersion}${line.separator}in source/java/ee/webmedia/alfresco/**/*.xml</echo>
-		<replace dir="source/java" includes="ee/webmedia/alfresco/**/*.xml" propertyfile="project.properties" summary="true">
-			<replacefilter token="@currentVersion@" property="currentVersion" />
-		</replace>
-	</target>
-
 	<target name="prepare-conf">
 		<echo>Copying conf-name.properties to: ${cl.targetDir}/conf-name.properties</echo>
 		<copy todir="${cl.targetDir}" file="${project.basedir}/conf-name.properties" />
@@ -548,14 +559,19 @@
 
 	<!-- ============= Code generation ============= -->
 
+    <available file="${common.basedir}/lib-${appserver}" property="lib.appserver.exists" />
+   
 	<path id="classpath-generate">
 		<fileset dir="${common.dir.lib}" includes="**/*.jar" />
 		<fileset dir="${common.dir.lib.dev}" includes="**/*.jar" />
-		<fileset dir="${project.dir.lib.dev}" includes="**/*.jar" />
 		<fileset dir="${common.dir.lib.server}" includes="**/*.jar" />
-		<fileset dir="${common.basedir}/lib-${appserver}" includes="**/*.jar" />
+	    <fileset dir="${common.basedir}/lib-${appserver}" includes="**/*.jar" />
 		<fileset dir="${common.basedir}/lib-dev-${appserver}" includes="**/*.jar" />
 	</path>
+   
+	<target name="add-dummy-lib-glassfish-dir" unless="lib.appserver.exists" >
+	   <mkdir dir="${common.basedir}/lib-${appserver}" />
+	</target>   
 
    <target name="generate-all" depends="setup-exploded-done" description="Generate code from WSDL files using JAX-WS">
       <antcall target="generate-xmlbeans-conditionally">
@@ -650,7 +666,7 @@
 		<antcall target="generate-xmlbeans" />
 	</target>
 
-	<target name="generate-xmlbeans" unless="generate.xmlbeans.done">
+	<target name="generate-xmlbeans" depends="add-dummy-lib-glassfish-dir" unless="generate.xmlbeans.done">
 		<echo>Generating ${name}-ws.jar from ${wsdl}</echo>
 		<delete dir="${project.dir.build}/${name}" failonerror="false" />
 		<taskdef name="xmlbean" classname="org.apache.xmlbeans.impl.tool.XMLBean" classpathref="classpath-generate" />
@@ -669,7 +685,7 @@
 		<antcall target="generate-jaxws" />
 	</target>
 
-	<target name="generate-jaxws" unless="generate.jaxws.done">
+	<target name="generate-jaxws" depends="add-dummy-lib-glassfish-dir" unless="generate.jaxws.done">
 		<echo>Generating ${name}-ws.jar from ${wsdl}</echo>
 		<delete dir="${project.dir.build}/${name}" failonerror="false" />
 		<delete dir="${project.dir.build}/${name}-classes" failonerror="false" />
@@ -716,7 +732,7 @@
 		<antcall target="generate-jaxb" />
 	</target>
 
-	<target name="generate-jaxb" unless="generate.jaxb.done" description="Generate jaxb code from XSD">
+	<target name="generate-jaxb" depends="add-dummy-lib-glassfish-dir" unless="generate.jaxb.done" description="Generate jaxb code from XSD">
 		<echo>Generating ${name}.jar from ${xsd}</echo>
 		<delete dir="${project.dir.build}/${name}" />
 		<mkdir dir="${project.dir.build}/${name}" />
@@ -764,7 +780,7 @@
 		<antcall target="generate-cxf" />
 	</target>
 
-	<target name="generate-cxf" unless="generate.cxf.done" description="Generate CXF code from WSDL">
+	<target name="generate-cxf" depends="add-dummy-lib-glassfish-dir" unless="generate.cxf.done" description="Generate CXF code from WSDL">
 		<echo>Generating ${name}.jar from ${wsdl}</echo>
 		<delete dir="${project.dir.build}/${name}" />
 		<mkdir dir="${project.dir.build}/${name}" />

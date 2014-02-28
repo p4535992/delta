@@ -10,6 +10,7 @@ import javax.mail.search.SearchTerm;
 
 import org.alfresco.repo.imap.AlfrescoImapFolder;
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.util.Assert;
@@ -53,7 +54,11 @@ public class ImmutableFolder implements MailFolder {
 
     @Override
     public String getFullName() {
-        return innerMailFolder.getFullName();
+        String fullName = innerMailFolder.getFullName();
+        if (StringUtils.isNotBlank(fullName)) {
+            fullName = StringUtils.remove(fullName, '"'); // Trim double quotes, since they are not used in Delta and cause crashing in Outlook 2010/2013
+        }
+        return fullName;
     }
 
     @Override
@@ -184,5 +189,10 @@ public class ImmutableFolder implements MailFolder {
     @Override
     public List getNonDeletedMessages() {
         return Collections.EMPTY_LIST;
+    }
+    
+    @Override
+    public boolean isMarked() {
+        return false;
     }
 }

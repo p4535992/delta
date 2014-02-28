@@ -18,12 +18,6 @@
          <f:facet name="header">
             <a:sortLink id="colName-sort" label="#{msg.register_name}" value="name" mode="case-insensitive" styleClass="header" />
          </f:facet>
-         <f:facet name="small-icon">
-            <a:actionLink id="colName-act1" value="#{msg.register_edit}" tooltip="#{msg.register_edit}" image="/images/icons/view_properties.gif" action="dialog:registerDetailsDialog"
-               showLink="false" actionListener="#{RegisterDetailsDialog.setupRegister}">
-               <f:param name="id" value="#{r.id}" />
-            </a:actionLink>
-         </f:facet>
          <a:actionLink id="colName-act2" value="#{r.name}" action="dialog:registerDetailsDialog" actionListener="#{RegisterDetailsDialog.setupRegister}" tooltip="#{msg.register_edit}">
             <f:param name="id" value="#{r.id}" />
          </a:actionLink>

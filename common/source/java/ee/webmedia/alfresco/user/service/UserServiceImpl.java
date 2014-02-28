@@ -1,5 +1,8 @@
 package ee.webmedia.alfresco.user.service;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentSearchService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -68,7 +71,7 @@ public class UserServiceImpl implements UserService {
     private NamespaceService namespaceService;
     private LogService logService;
     private boolean groupsEditingAllowed;
-    private List<String> systematicGroups;
+    private Set<String> systematicGroups;
 
     @Override
     public NodeRef retrieveUsersPreferenceNodeRef(String userName) {
@@ -130,9 +133,13 @@ public class UserServiceImpl implements UserService {
         }
         if (!nodeService.hasAspect(personRef, ReportModel.Aspects.REPORTS_QUEUE_CONTAINER)) {
             nodeService.addAspect(personRef, ReportModel.Aspects.REPORTS_QUEUE_CONTAINER, null);
-            nodeService.createNode(personRef, ReportModel.Assocs.REPORTS_QUEUE, ReportModel.Assocs.REPORTS_QUEUE, ReportModel.Types.REPORTS_QUEUE_ROOT);
         }
-        return getReportsFolder(personRef);
+        NodeRef reportsFolder = getReportsFolder(personRef);
+        if (reportsFolder == null) {
+            reportsFolder = nodeService.createNode(personRef, ReportModel.Assocs.REPORTS_QUEUE, ReportModel.Assocs.REPORTS_QUEUE, ReportModel.Types.REPORTS_QUEUE_ROOT)
+                    .getChildRef();
+        }
+        return reportsFolder;
     }
 
     private NodeRef getReportsFolder(NodeRef userRef) {
@@ -223,6 +230,34 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public void addUserToGroup(String group, String username) {
+        addUserToGroup(group, getUser(username));
+    }
+
+    @Override
+    public void addUserToGroup(String group, Node user) {
+        authorityService.addAuthority(group, (String) user.getProperties().get(ContentModel.PROP_USERNAME));
+        logUserGroupAction(group, user, "applog_group_user_add");
+    }
+
+    private void logUserGroupAction(String group, Node user, String logMessageKey) {
+        String userFullInfo = UserUtil.getUserFullNameAndId(RepoUtil.toQNameProperties(user.getProperties()));
+        String groupName = authorityService.getAuthorityDisplayName(group);
+        logService.addLogEntry(LogEntry.create(LogObject.USER_GROUP, getUserService(), user.getNodeRef(), logMessageKey, groupName, userFullInfo));
+    }
+
+    @Override
+    public void removeUserFromGroup(String group, String username) {
+        removeUserFromGroup(group, getUser(username));
+    }
+
+    @Override
+    public void removeUserFromGroup(String group, Node user) {
+        authorityService.removeAuthority(group, (String) user.getProperties().get(ContentModel.PROP_USERNAME));
+        logUserGroupAction(group, user, "applog_group_user_rem");
+    }
+
+    @Override
     public List<Node> searchUsers(String input, boolean returnAllUsers, int limit) {
         return searchUsers(input, returnAllUsers, null, limit);
     }
@@ -238,7 +273,7 @@ public class UserServiceImpl implements UserService {
 
     // XXX filtering by group is not optimal - it is done after searching/getting all users
     private List<Node> searchUsersByProps(String input, boolean returnAllUsers, String group, Set<QName> props, int limit) {
-        List<NodeRef> nodeRefs = generalService.searchNodes(input, ContentModel.TYPE_PERSON, props, limit);
+        List<NodeRef> nodeRefs = getDocumentSearchService().searchNodesByTypeAndProps(input, ContentModel.TYPE_PERSON, props, limit);
         if (nodeRefs == null) {
             if (returnAllUsers) {
                 // XXX use alfresco services instead
@@ -311,11 +346,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Map<QName, Serializable> getUserProperties(String userName) {
-        NodeRef personRef = getPerson(userName);
-        if (personRef == null) {
-            return null;
-        }
-        return nodeService.getProperties(personRef);
+        return personService.getPersonProperties(userName);
     }
 
     @Override
@@ -452,16 +483,20 @@ public class UserServiceImpl implements UserService {
         return isGroupsEditingAllowed() && !getSystematicGroups().contains(group);
     }
 
-    private List<String> getSystematicGroups() {
+    @Override
+    public Set<String> getSystematicGroups() {
         if (systematicGroups == null) {
-            systematicGroups = Arrays.asList(getAdministratorsGroup(), getDocumentManagersGroup(), getAccountantsGroup()
-                    , getSupervisionGroup(), getAccountantsGroup(), getArchivistsGroup());
+            systematicGroups = new HashSet<String>(Arrays.asList(getAdministratorsGroup(), getDocumentManagersGroup(), getAccountantsGroup(), getSupervisionGroup(),
+                    getArchivistsGroup()));
         }
         return systematicGroups;
     }
 
     @Override
     public boolean markUserLeaving(String leavingUserId, String replacementUserId, boolean isLeaving) {
+        if (StringUtils.isBlank(leavingUserId) || StringUtils.isBlank(replacementUserId)) {
+            return false;
+        }
         if (!personService.personExists(leavingUserId) || !personService.personExists(replacementUserId)) {
             return false;
         }
@@ -475,16 +510,14 @@ public class UserServiceImpl implements UserService {
             properties.put(UserModel.Props.LEAVING_DATE_TIME, new Date());
             properties.put(UserModel.Props.LIABILITY_GIVEN_TO_PERSON_ID, replacementUserId);
             nodeService.addAspect(leavingUser.getNodeRef(), UserModel.Aspects.LEAVING, properties);
-
             logService.addLogEntry(LogEntry.create(LogObject.USER, this, leavingUser.getNodeRef(), "applog_user_rights_transfer",
                     getUserFullNameAndId(leavingUserId), getUserFullNameAndId(replacementUserId)));
         } else {
             nodeService.removeAspect(leavingUser.getNodeRef(), UserModel.Aspects.LEAVING);
-
             logService.addLogEntry(LogEntry.create(LogObject.USER, this, leavingUser.getNodeRef(), "applog_user_rights_return",
                     getUserFullNameAndId(leavingUserId)));
         }
-
+        personService.removeFromPersonPropertiesCache(leavingUserId);
         return true;
     }
 
@@ -503,7 +536,7 @@ public class UserServiceImpl implements UserService {
         }
 
         // Update user node
-        nodeService.addProperties(user.getNodeRef(), props);
+        personService.setPersonProperties((String) props.get(ContentModel.PROP_USERNAME), props);
     }
 
     @Override
@@ -588,6 +621,20 @@ public class UserServiceImpl implements UserService {
             }
         }
         return personNodes;
+    }
+
+    @Override
+    public Set<String> getAllUsersUsernames() {
+        Set<String> usernames = null;
+        List<ChildAssociationRef> childRefs = nodeService.getChildAssocs(personService.getPeopleContainer());
+        usernames = new HashSet<String>(childRefs.size());
+        for (ChildAssociationRef ref : childRefs) {
+            NodeRef nodeRef = ref.getChildRef();
+            if (nodeService.getType(nodeRef).equals(ContentModel.TYPE_PERSON)) {
+                usernames.add((String) nodeService.getProperty(nodeRef, ContentModel.PROP_USERNAME));
+            }
+        }
+        return usernames;
     }
 
     // START: setters/getters

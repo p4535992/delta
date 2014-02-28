@@ -10,8 +10,10 @@
 <%@ page import="ee.webmedia.alfresco.document.file.web.AddFileDialog"%>
 <%@ page import="org.alfresco.web.app.Application" %>
 
+
 <%
-   String webdavOpenMode = "webdav-" + (Application.getDialogManager().getBean() instanceof AddFileDialog? "readOnly": "open");
+   boolean readOnly = Application.getDialogManager().getBean() instanceof AddFileDialog;
+   String webdavClass = readOnly ? "" : " webdav-open";
 %>
 
 <h:panelGroup id="files-panel-facets">
@@ -39,8 +41,8 @@
          <f:facet name="small-icon">
             <h:panelGroup>
                <wm:docPermissionEvaluator id="col1-act1-eval-allow" value="#{r.node}" allow="viewDocumentFiles">
-                  <a:actionLink id="col1-act1" value="#{r.displayName}" href="#{r.downloadUrl}" target="_blank" image="#{r.fileType16}" showLink="false"
-                     styleClass='<%="inlineAction " + webdavOpenMode %>' />
+                  <a:actionLink id="col1-act1" value="#{r.displayName}" href='<%=(readOnly ? "#{r.readOnlyUrl}" : "#{r.downloadUrl}")%>' target="_blank" image="#{r.fileType16}" showLink="false"
+                     styleClass="inlineAction<%=webdavClass%>" />
                </wm:docPermissionEvaluator>
                <wm:docPermissionEvaluator id="col1-act1-eval-deny" value="#{r.node}" deny="viewDocumentFiles">
                   <h:graphicImage id="col1-act1-deny" value="#{r.fileType16}" />
@@ -48,7 +50,7 @@
             </h:panelGroup>
          </f:facet>
          <wm:docPermissionEvaluator id="col1-act2-eval-allow" value="#{r.node}" allow="viewDocumentFiles">
-            <a:actionLink id="col1-act2" value="#{r.displayName}" href="#{r.downloadUrl}" target="_blank" styleClass="<%=webdavOpenMode %>" />
+            <a:actionLink id="col1-act2" value="#{r.displayName}" href='<%=(readOnly ? "#{r.readOnlyUrl}" : "#{r.downloadUrl}")%>' target="_blank" styleClass="<%=webdavClass%>" />
          </wm:docPermissionEvaluator>
          <wm:docPermissionEvaluator id="col1-act2a-eval-deny" value="#{r.node}" deny="viewDocumentFiles">
             <h:outputText value="#{r.displayName}" />
@@ -207,8 +209,8 @@
          <f:facet name="small-icon">
             <h:panelGroup>
                <wm:docPermissionEvaluator id="col21-act1-eval-allow" value="#{r.node}" allow="viewDocumentFiles">
-                  <a:actionLink id="col21-act1" value="#{r.displayName}" href="#{r.downloadUrl}" target="_blank" image="#{r.fileType16}" showLink="false"
-                     styleClass='<%="inlineAction " + webdavOpenMode %>' />
+                  <a:actionLink id="col21-act1" value="#{r.displayName}" href='<%=(readOnly ? "#{r.readOnlyUrl}" : "#{r.downloadUrl}")%>' target="_blank" image="#{r.fileType16}" showLink="false"
+                     styleClass="inlineAction<%=webdavClass%>" />
                </wm:docPermissionEvaluator>
                <wm:docPermissionEvaluator id="col21-act1-eval-deny" value="#{r.node}" deny="viewDocumentFiles">
                   <h:graphicImage id="col21-act1-deny" value="#{r.fileType16}" />
@@ -216,7 +218,7 @@
             </h:panelGroup>
          </f:facet>
          <wm:docPermissionEvaluator id="col21-act2-eval-allow" value="#{r.node}" allow="viewDocumentFiles">
-            <a:actionLink id="col21-act2" value="#{r.displayName}" href="#{r.downloadUrl}" target="_blank" styleClass="<%=webdavOpenMode %>" />
+            <a:actionLink id="col21-act2" value="#{r.displayName}" href='<%=(readOnly ? "#{r.readOnlyUrl}" : "#{r.downloadUrl}")%>' target="_blank" styleClass="<%=webdavClass%>" />
          </wm:docPermissionEvaluator>
          <wm:docPermissionEvaluator id="col21-act2-eval-deny" value="#{r.node}" deny="viewDocumentFiles">
             <h:outputText value="#{r.displayName}" />
@@ -287,9 +289,9 @@
             <f:param name="id" value="#{r.id}" />
             <f:param name="ref" value="#{r.nodeRef}" />
          </a:actionLink>
-         <wm:docPermissionEvaluator id="col27-act5-eval-allow" value="#{r.node}" allow="WriteContent">
+         <wm:docPermissionEvaluator id="col27-act5-eval-allow" value="#{r.node}" allow="viewDocumentFiles">
             <a:actionLink id="col27-act5" value="#{r.name}" actionListener="#{FileBlockBean.viewPdf}" showLink="false"
-               image="/images/filetypes/file-small-gray.png" tooltip="#{msg.file_view_pdf}" rendered="#{r.pdf}">
+               image="/images/icons/file-small-gray.png" tooltip="#{msg.file_view_pdf}" rendered="#{r.pdf}">
                <f:param name="nodeRef" value="#{r.nodeRef}" />
             </a:actionLink>
          </wm:docPermissionEvaluator>         

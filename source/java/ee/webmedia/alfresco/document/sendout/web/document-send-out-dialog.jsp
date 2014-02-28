@@ -44,6 +44,23 @@
    </f:verbatim>
 </h:panelGroup>
 
+<f:verbatim>
+   <script type="text/javascript">
+      var excludedElementsSpecific = new Array();
+      $jQ(document).ready(function () {
+         disableUnlockOnAddingPersonAndActionLinks();
+      });
+      function disableUnlockOnAddingPersonAndActionLinks() {
+         var element = $jQ(".add-person")[0];
+         excludedElementsSpecific.push(element.id);
+         var elements = $jQ(".disableUnlock");
+         for(var i = 0; elements != null && i < elements.length; i++) {
+            excludedElementsSpecific.push(elements[i].id);
+         }
+      }
+   </script>
+</f:verbatim>
+
 <a:panel id="send-out-panel" label="#{DocumentSendOutDialog.panelTitle}" styleClass="panel-100" progressive="true">
 
    <a:booleanEvaluator value="#{not empty DocumentSendOutDialog.model.sendDesc}">
@@ -73,8 +90,8 @@
       <wm:multiValueEditor 
          varName="DocumentSendOutDialog.model" 
          propsGeneration="
-          recipientName¤TextAreaGenerator¤styleClass=expand19-200 medium
-         ,recipientEmail¤TextAreaGenerator¤styleClass=expand19-200 medium
+          recipientName¤TextAreaGenerator¤styleClass=expand19-200
+         ,recipientEmail¤TextAreaGenerator¤styleClass=expand19-200
          ,recipientSendMode¤ClassificatorSelectorGenerator¤classificatorName=sendMode¤styleClass=width120 resetSendOutGroupSendMode
          "
          hiddenPropNames="recipientGroup"
@@ -86,7 +103,7 @@
          setterCallback="#{DocumentSendOutDialog.fetchContactData}"
          dialogTitleId="contacts_search_title"
          filters="#{UserContactGroupSearchBean.usersGroupsContactsGroupsFilters}"
-         filterIndex="2"
+         filterIndex="4"
           />
 
       <h:panelGroup>
@@ -96,7 +113,7 @@
          <h:selectOneMenu value="#{DocumentSendOutDialog.model.sendMode}">
             <f:selectItems value="#{DocumentSendOutDialog.sendModes}" />
          </h:selectOneMenu>
-         <h:commandLink id="setSendModeBtn" value="#{msg.document_set_to_all}" actionListener="#{DocumentSendOutDialog.updateSendModes}" />
+         <h:commandLink id="setSendModeBtn" value="#{msg.document_set_to_all}" actionListener="#{DocumentSendOutDialog.updateSendModes}" styleClass="disableUnlock"/>
       </h:panelGroup>
       
       <h:panelGroup>
@@ -121,7 +138,7 @@
          <h:selectOneMenu value="#{DocumentSendOutDialog.model.template}">
             <f:selectItems value="#{DocumentSendOutDialog.emailTemplates}" />
          </h:selectOneMenu>
-         <h:commandLink id="setTemplateBtn" value="#{msg.document_set_template}" actionListener="#{DocumentSendOutDialog.updateTemplate}" />
+         <h:commandLink id="setTemplateBtn" value="#{msg.document_set_template}" actionListener="#{DocumentSendOutDialog.updateTemplate}" styleClass="disableUnlock" />
          <a:booleanEvaluator value="#{not empty DocumentSendOutDialog.model.sendoutInfo}">
             <f:verbatim><br/><br/><div class="message"></f:verbatim><h:outputText value="#{DocumentSendOutDialog.model.sendoutInfo}" /><f:verbatim></div></f:verbatim>
          </a:booleanEvaluator>                  

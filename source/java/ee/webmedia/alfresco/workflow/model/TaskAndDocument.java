@@ -3,8 +3,6 @@ package ee.webmedia.alfresco.workflow.model;
 import java.io.Serializable;
 import java.util.Date;
 
-import org.apache.commons.lang.time.DateUtils;
-
 import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.workflow.service.Task;
 
@@ -28,7 +26,7 @@ public class TaskAndDocument implements Serializable {
         final String cssStyleClass;
         if (completedDate == null) {
             final Date now = new Date();
-            if (dueDate != null && dueDate.before(now) && !DateUtils.isSameDay(dueDate, now)) {
+            if (dueDate != null && dueDate.before(now)) {
                 cssStyleClass = STYLECLASS_TASK_OVERDUE;
             } else {
                 cssStyleClass = docStyleClass;

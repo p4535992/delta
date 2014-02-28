@@ -46,6 +46,7 @@ import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
 import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.generator.BaseComponentGenerator;
+import org.alfresco.web.bean.generator.BaseComponentGenerator.CustomAttributeNames;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.Repository;
 import org.alfresco.web.config.ActionsConfigElement.ActionDefinition;
@@ -66,6 +67,7 @@ import org.alfresco.web.ui.repo.tag.LoadBundleTag;
 import org.apache.commons.collections.Closure;
 import org.apache.commons.collections.comparators.NullComparator;
 import org.apache.commons.collections.comparators.TransformingComparator;
+import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.myfaces.shared_impl.renderkit.html.HtmlFormRendererBase;
 import org.apache.myfaces.shared_impl.taglib.UIComponentTagUtils;
@@ -89,6 +91,7 @@ import ee.webmedia.alfresco.common.propertysheet.multivalueeditor.MultiValueEdit
 import ee.webmedia.alfresco.common.propertysheet.search.Search;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.common.web.UserContactGroupSearchBean;
 import ee.webmedia.alfresco.docadmin.service.Field;
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
@@ -662,10 +665,8 @@ public class ComponentUtil {
             for (SelectItem item : items) {
                 responseWriter.write("<option value=\"");
                 responseWriter.write(item.getValue().toString());
-                if (item.getDescription() != null) {
-                    responseWriter.write("\" title=\"");
-                    responseWriter.write(Utils.encode(item.getDescription()));
-                }
+                responseWriter.write("\" title=\"");
+                responseWriter.write(Utils.encode(StringUtils.defaultIfEmpty(item.getDescription(), item.getLabel())));
                 responseWriter.write("\">");
                 responseWriter.write(Utils.encode(item.getLabel()));
                 responseWriter.write("</option>");
@@ -697,13 +698,11 @@ public class ComponentUtil {
         HtmlFormRendererBase.addHiddenCommandParameter(context, form, fieldId);
         StringBuilder buf = new StringBuilder(200);
         buf.append("document.forms['");
-        buf.append(formClientId);
+        buf.append(StringEscapeUtils.escapeJavaScript(formClientId));
         buf.append("']['");
-        buf.append(fieldId);
+        buf.append(StringEscapeUtils.escapeJavaScript(fieldId));
         buf.append("'].value='");
-        String val = StringUtils.replace(value, "\\", "\\\\"); // encode escape character
-        val = StringUtils.replace(val, "'", "\\'"); // encode single quote as we wrap string with that
-        buf.append(val);
+        buf.append(StringEscapeUtils.escapeJavaScript(value));
         buf.append("';");
         return buf.toString();
     }
@@ -846,7 +845,9 @@ public class ComponentUtil {
             throw new RuntimeException("Missing parent component with search capabilities! (Search or MultiValueEditor)");
         }
 
-        Integer addition = (Integer) searchComponent.getAttributes().get(Search.AJAX_PARENT_LEVEL_KEY);
+        @SuppressWarnings("unchecked")
+        Map<String, Object> searchAttrs = searchComponent.getAttributes();
+        Integer addition = (Integer) searchAttrs.get(Search.AJAX_PARENT_LEVEL_KEY);
         if (addition != null) {
             ajaxParentLevel += addition;
         } else if (ajaxParentLevel == 0) {
@@ -855,6 +856,20 @@ public class ComponentUtil {
         UIComponent ancestorAjaxComponent = findAncestorAjaxComponent(searchComponent, null, ajaxParentLevel).getSecond();
         if (ancestorAjaxComponent == null) {
             throw new RuntimeException("Couldn't find parent ajax component to update for " + clientId + "!");
+        }
+
+        // Add filter info
+        int filter = searchAttrs.containsKey(Search.FILTER_INDEX) ? (Integer) searchAttrs.get(Search.FILTER_INDEX) : 0;
+        String filters = (String) searchAttrs.get(Search.FILTERS_KEY);
+        if (filters != null) {
+            SelectItem[] filterSelects = (SelectItem[]) context.getApplication().createValueBinding(filters).getValue(context);
+            for (SelectItem selectItem : filterSelects) {
+                filter = filter | ((Integer) selectItem.getValue());
+            }
+        }
+
+        if (filter == 0) {
+            filter = UserContactGroupSearchBean.USERS_FILTER; // Default to user search if no other option is applicable.
         }
 
         String containerClientId = ancestorAjaxComponent.getClientId(context);
@@ -867,6 +882,7 @@ public class ComponentUtil {
                 .append(clientId).append(sep)
                 .append(containerClientId).append(sep)
                 .append(pickerCallback).append(sep)
+                .append(filter).append(sep)
                 .append(submitUri).append("\");");
         sb.append("</script>");
         return sb.toString();
@@ -1050,9 +1066,23 @@ public class ComponentUtil {
         if (propDef != null) {
             // try and get the repository assigned label
             displayLabel = propDef.getTitle();
+
+            // If title is null, it is most probably because property is on a non-dynamic node. Meaning the property
+            // definition couldn't be fetched using DocumentConfigService. Relying on naming conventions, we could try
+            // to fetch the translation from *.properties files.
+            String propLocalName = propDef.getName().getLocalName();
             if (displayLabel == null) {
-                // if the label is still null default to the local name of the property
-                displayLabel = propDef.getName().getLocalName();
+                String containerName = propDef.getContainerClass().getName().getLocalName();
+                String messageKey = containerName + "_" + propLocalName;
+                displayLabel = MessageUtil.getMessage(messageKey);
+                if (!MessageUtil.isMessageTranslated(messageKey, displayLabel)) {
+                    displayLabel = null; // Don't display missing message key (I18NUtil already returns null)
+                }
+            }
+
+            // If the label is still null default to the local name of the property
+            if (displayLabel == null) {
+                displayLabel = propLocalName;
             }
         }
         if (displayLabel == null) {
@@ -1405,7 +1435,7 @@ public class ComponentUtil {
                         fileAllowLink.setValue("");
                         fileAllowLink.setTooltip(fileName);
                         fileAllowLink.setShowLink(false);
-                        fileAllowLink.setHref(file.getDownloadUrl());
+                        fileAllowLink.setHref(file.getReadOnlyUrl());
                         fileAllowLink.setImage(imageText);
                         fileAllowLink.setTarget("_blank");
                         ComponentUtil.getAttributes(fileAllowLink).put("styleClass", "inlineAction webdav-readOnly");
@@ -1465,6 +1495,17 @@ public class ComponentUtil {
         for (UIComponent facet : facets) {
             setAjaxEnabledOnActionLinksRecursive(facet, ajaxParentLevel);
         }
+    }
+
+    public static UIOutput createMandatoryMarker(FacesContext context) {
+        UIOutput marker = (UIOutput) context.getApplication().createComponent(ComponentConstants.JAVAX_FACES_OUTPUT);
+        marker.setRendererType(ComponentConstants.JAVAX_FACES_TEXT);
+        FacesHelper.setupComponentId(context, marker, null);
+        @SuppressWarnings("unchecked")
+        Map<String, String> attributes = marker.getAttributes();
+        attributes.put(CustomAttributeNames.STYLE_CLASS, "red");
+        marker.setValue("* ");
+        return marker;
     }
 
 }

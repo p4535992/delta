@@ -88,6 +88,7 @@
          </list>
       </property>
       <property name="mimetypeService" ref="MimetypeService" />
+      <property name="transactionHelperMinRetryWaits" value="6000" />
    </bean>
 
    <bean id="documentUpdater7" class="ee.webmedia.alfresco.docdynamic.bootstrap.DocumentUpdater" parent="abstractNodeUpdater">
@@ -105,6 +106,22 @@
       <property name="documentService" ref="DocumentService" />
       <property name="fileEncodingUpdater" ref="fileEncodingUpdater" />
    </bean>
+   
+   <bean id="documentUpdater_2" class="ee.webmedia.alfresco.docdynamic.bootstrap.DocumentUpdater2" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="enabled" value="false" /> <!-- Executed from nodeBrowser -->
+      <property name="batchSize" value="1" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="archivalsStoresBootstrap" />
+         </list>
+      </property>
+      <property name="documentChangedTypePropertiesUpdater" ref="documentChangedTypePropertiesUpdater2" />
+      <property name="documentAccessRestrictionUpdater" ref="documentAccessRestrictionUpdater2" />
+      <property name="logAndDeleteObjectsWithMissingType" ref="logAndDeleteObjectsWithMissingType" />
+      <property name="docLockService" ref="DocLockService" />
+   </bean>   
 
    <bean id="documentRegNumbersUpdater2" class="ee.webmedia.alfresco.docdynamic.bootstrap.DocumentRegNumbersUpdater" parent="abstractNodeUpdater" >
       <property name="moduleId" value="simdhs" />
@@ -120,6 +137,7 @@
    <bean id="documentChangedTypePropertiesUpdater2" class="ee.webmedia.alfresco.docdynamic.bootstrap.DocumentChangedTypePropertiesUpdater" parent="abstractNodeUpdater" >
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
+      <property name="enabled" value="false" /> <!-- Called by documentUpdater_2 from nodeBrowser -->
        <property name="dependsOn">
          <list>
             <ref bean="archivalsStoresBootstrap" />
@@ -130,7 +148,8 @@
    <bean id="documentAccessRestrictionUpdater2" class="ee.webmedia.alfresco.docdynamic.bootstrap.DocumentAccessRestrictionUpdater" parent="abstractNodeUpdater" >
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
-       <property name="dependsOn">
+      <property name="enabled" value="false" /> <!-- Called by documentUpdater_2 from nodeBrowser -->
+      <property name="dependsOn">
          <list>
             <ref bean="archivalsStoresBootstrap" />
          </list>
@@ -145,7 +164,39 @@
             <ref bean="archivalsStoresBootstrap" />
          </list>
       </property>
+      <property name="transactionHelperMinRetryWaits" value="6000" />
    </bean>
+   
+   <bean id="logAndDeleteObjectsWithMissingType" class="ee.webmedia.alfresco.docdynamic.bootstrap.LogAndDeleteObjectsWithMissingType" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="enabled" value="false" /> <!-- Called by documentUpdater_2 from nodeBrowser -->
+      <property name="dependsOn">
+         <list>
+            <ref bean="archivalsStoresBootstrap" />
+         </list>
+      </property>
+      <property name="delete" value="false" /> <!-- Should be set true only in 3.11 branch -->
+   </bean>   
+
+   <bean id="deleteDraftsBootstrap" class="ee.webmedia.alfresco.docdynamic.bootstrap.DeleteDraftsBootstrap" parent="module.baseComponent">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="documentDraftsSpacesBootstrap" />
+         </list>
+      </property>
+      <property name="nodeService" ref="NodeService" />
+      <property name="documentService" ref="DocumentService" />
+      <property name="transactionService" ref="TransactionService" />
+   </bean>
+
+   <bean id="invalidShortRegNumberUpdater" class="ee.webmedia.alfresco.docdynamic.bootstrap.InvalidShortRegNumberUpdater" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="enabled" value="false" /><!-- Executed manually from node-browser -->
+   </bean>   
 
    <!-- START: web beans: -->
 

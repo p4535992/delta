@@ -128,7 +128,7 @@ public class SubstituteServiceImpl implements SubstituteService, BeanFactoryAwar
                 .label(SubstituteModel.Props.SUBSTITUTE_NAME, "substitute_name")
                 .label(SubstituteModel.Props.SUBSTITUTION_START_DATE, "substitute_startdate")
                 .label(SubstituteModel.Props.SUBSTITUTION_END_DATE, "substitute_enddate")
-                .diff(oldProps, oldProps);
+                .diff(oldProps, newProps);
 
         nodeService.setProperties(substitute.getNodeRef(), newProps);
         if (log.isDebugEnabled()) {

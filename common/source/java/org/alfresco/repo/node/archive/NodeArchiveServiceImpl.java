@@ -24,6 +24,8 @@
  */
 package org.alfresco.repo.node.archive;
 
+import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.REG_NUMBER;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -46,6 +48,10 @@ import org.alfresco.service.transaction.TransactionService;
 import org.alfresco.util.EqualsHelper;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
+import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.document.service.DocumentService;
 
 /**
  * Implementation of the node archive abstraction.
@@ -134,7 +140,15 @@ public class NodeArchiveServiceImpl implements NodeArchiveService
             {
                 public NodeRef execute() throws Exception
                 {
-                    return nodeService.restoreNode(archivedNodeRef, destinationNodeRef, assocTypeQName, assocQName);
+                    NodeRef restoredNodeRef = nodeService.restoreNode(archivedNodeRef, destinationNodeRef, assocTypeQName, assocQName);
+                    BeanHelper.getDocumentLogService().addDeletedObjectLog(restoredNodeRef, "applog_delete_restore");
+                    if (DocumentCommonModel.Types.DOCUMENT.equals(nodeService.getType(restoredNodeRef))) {
+                        DocumentService documentService = BeanHelper.getDocumentService();
+                        documentService.updateParentNodesContainingDocsCount(restoredNodeRef, true);
+                        String regNumber = (String) nodeService.getProperty(restoredNodeRef, REG_NUMBER);
+                        documentService.updateParentDocumentRegNumbers(restoredNodeRef, null, regNumber);
+                    }                    
+                    return restoredNodeRef;
                 }
             };
             NodeRef newNodeRef = txnHelper.doInTransaction(restoreCallback, false, true);
@@ -284,37 +298,46 @@ public class NodeArchiveServiceImpl implements NodeArchiveService
      * This is the primary purge methd that all purge methods fall back on.  It isolates the delete
      * work in a new transaction.
      */
-    public void purgeArchivedNode(final NodeRef archivedNodeRef)
+    public boolean purgeArchivedNode(final NodeRef archivedNodeRef)
     {
         RetryingTransactionHelper txnHelper = transactionService.getRetryingTransactionHelper();
-        RetryingTransactionCallback<Object> deleteCallback = new RetryingTransactionCallback<Object>()
+        RetryingTransactionCallback<Boolean> deleteCallback = new RetryingTransactionCallback<Boolean>()
         {
-            public Object execute() throws Exception
+            public Boolean execute() throws Exception
             {
                 try
                 {
+                    BeanHelper.getDocumentLogService().addDeletedObjectLog(archivedNodeRef, "applog_delete_done");
                     nodeService.deleteNode(archivedNodeRef);
+                    return true;
                 }
-                catch (InvalidNodeRefException e)
+                catch (InvalidNodeRefException nodeRefEx)
                 {
-                    // ignore
+                    // not error, node has already been deleted
+                    return true;
                 }
-                return null;
+                catch (Exception e)
+                {
+                    logger.error("Deleting node from trashcan failed: ", e);
+                    return false;
+                }
             }
         };
-        txnHelper.doInTransaction(deleteCallback, false, true);
+        return txnHelper.doInTransaction(deleteCallback, false, true);
     }
 
     /**
      * @see #purgeArchivedNode(NodeRef)
      */
-    public void purgeArchivedNodes(List<NodeRef> archivedNodes)
+    public int purgeArchivedNodes(List<NodeRef> archivedNodes)
     {
+        int succeeded = 0;
         for (NodeRef archivedNodeRef : archivedNodes)
         {
-            purgeArchivedNode(archivedNodeRef);
+            boolean success = purgeArchivedNode(archivedNodeRef);
+            succeeded += success ? 1 : 0;
         }
-        // done
+        return succeeded;
     }
 
     public void purgeAllArchivedNodes(StoreRef originalStoreRef)

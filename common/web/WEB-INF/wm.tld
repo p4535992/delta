@@ -302,6 +302,12 @@
          <rtexprvalue>true</rtexprvalue>
          <description>custom message key for the tooltip to be used for search link</description>
       </attribute>
+      <attribute>
+         <name>renderPlain</name>
+         <required>false</required>
+         <rtexprvalue>true</rtexprvalue>
+         <description>Sets if the container DIV and TABLE is needed in output for single valued picker</description>
+      </attribute>
    </tag>
    
    <tag>

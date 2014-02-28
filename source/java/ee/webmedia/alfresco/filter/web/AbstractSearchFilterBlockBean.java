@@ -26,12 +26,17 @@ import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.web.jsf.FacesContextUtils;
 
+import ee.webmedia.alfresco.cases.model.Case;
+import ee.webmedia.alfresco.common.propertysheet.component.WMUIProperty;
 import ee.webmedia.alfresco.common.propertysheet.generator.GeneralSelectorGenerator;
+import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
 import ee.webmedia.alfresco.filter.model.FilterVO;
 import ee.webmedia.alfresco.filter.service.FilterService;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.WebUtil;
 
 /**
@@ -77,7 +82,7 @@ public abstract class AbstractSearchFilterBlockBean<T extends FilterService> ext
         publicFilterRefs = new HashSet<String>(filters.size());
         for (FilterVO filter : filters) {
             final NodeRef nodeRef = filter.getFilterRef();
-            final SelectItem selectItem = new SelectItem(nodeRef, filter.getFilterName());
+            final SelectItem selectItem = new SelectItem(nodeRef, StringUtils.abbreviate(filter.getFilterName(), 75), filter.getFilterName());
             if (!filter.isPrivate()) {
                 publicFilterRefs.add(nodeRef.toString());
             }
@@ -95,7 +100,21 @@ public abstract class AbstractSearchFilterBlockBean<T extends FilterService> ext
             MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), getBlankFilterNameMessageKey());
             return;
         }
-        filter.getProperties().put(getFilterNameProperty().toString(), newFilterName);
+        Map<String, Object> properties = filter.getProperties();
+        properties.put(getFilterNameProperty().toString(), newFilterName);
+        Case caseByTitle = null;
+        NodeRef volumeRef = (NodeRef) properties.get(DocumentCommonModel.Props.VOLUME.toString());
+        if (volumeRef != null) {
+            caseByTitle = BeanHelper.getCaseService().getCaseByTitle((String) properties.get(RepoUtil.createTransientProp("caseLabelEditable").toString()), volumeRef, null);
+        }
+        if (caseByTitle != null) {
+            properties.put(DocumentCommonModel.Props.CASE.toString(), caseByTitle.getNode().getNodeRef());
+        } else if (properties.containsKey(DocumentCommonModel.Props.CASE.toString())) {
+            properties.put(DocumentCommonModel.Props.CASE.toString(), null);
+        }
+        properties.put(DocumentCommonModel.Props.CASE.toString() + WMUIProperty.AFTER_LABEL_BOOLEAN,
+                properties.get(RepoUtil.createTransientProp("caseLabelEditable" + WMUIProperty.AFTER_LABEL_BOOLEAN).toString()));
+
         if (isNew) {
             filter = getFilterService().createFilter(filter, isPrivate);
         } else {
@@ -106,6 +125,7 @@ public abstract class AbstractSearchFilterBlockBean<T extends FilterService> ext
                 return;
             }
         }
+        setFilterCaseProps();
         propertySheet.getChildren().clear();
         loadAllFilters();
         selectedFilter = filter.getNodeRef();
@@ -192,6 +212,16 @@ public abstract class AbstractSearchFilterBlockBean<T extends FilterService> ext
         }
         propertySheet.getChildren().clear();
         setPublicFilter(newValue);
+    }
+
+    protected void setFilterCaseProps() {
+        Map<String, Object> filterProps = filter.getProperties();
+        if (filterProps.containsKey(DocumentCommonModel.Props.CASE.toString())) {
+            // caseLabelEditable is set by DocumentLocationGenerator
+            String caseAfterLabelBooleanProp = DocumentCommonModel.Props.CASE.toString() + WMUIProperty.AFTER_LABEL_BOOLEAN;
+            filterProps.put(RepoUtil.createTransientProp("caseLabelEditable" + WMUIProperty.AFTER_LABEL_BOOLEAN).toString(), filterProps.get(caseAfterLabelBooleanProp));
+            filterProps.remove(caseAfterLabelBooleanProp);
+        }
     }
 
     protected boolean isPrivateFilter() {

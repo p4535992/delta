@@ -16,6 +16,7 @@ import org.alfresco.web.ui.common.component.PickerSearchParams;
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.addressbook.util.AddressbookUtil;
 import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.common.web.UserContactGroupSearchBean;
 
 /**
  * @author Keit Tehvan
@@ -33,7 +34,8 @@ public class AddressbookSearchBean {
      * @return An array of SelectItem objects containing the results to display in the picker.
      */
     public SelectItem[] searchContacts(PickerSearchParams params) {
-        return transformAddressbookNodesToSelectItems(getAddressbookService().search(params.getSearchString(), params.getLimit()));
+        Integer filter = params.isIncludeFilterIndex() ? UserContactGroupSearchBean.CONTACTS_FILTER : null;
+        return transformAddressbookNodesToSelectItems(getAddressbookService().search(params.getSearchString(), params.getLimit()), filter);
     }
 
     /**
@@ -45,7 +47,8 @@ public class AddressbookSearchBean {
      * @return An array of SelectItem objects containing the results to display in the picker.
      */
     public SelectItem[] searchOrgContacts(PickerSearchParams params) {
-        return transformAddressbookNodesToSelectItems(getAddressbookService().searchOrgContacts(params.getSearchString(), params.getLimit()));
+        Integer filter = params.isIncludeFilterIndex() ? UserContactGroupSearchBean.CONTACTS_FILTER : null;
+        return transformAddressbookNodesToSelectItems(getAddressbookService().searchOrgContacts(params.getSearchString(), params.getLimit()), filter);
     }
 
     /**
@@ -57,7 +60,8 @@ public class AddressbookSearchBean {
      * @return An array of SelectItem objects containing the results to display in the picker.
      */
     public SelectItem[] searchContactGroups(PickerSearchParams params) {
-        return transformAddressbookNodesToSelectItems(getAddressbookService().searchContactGroups(params.getSearchString(), false, false, params.getLimit()));
+        Integer filter = params.isIncludeFilterIndex() ? UserContactGroupSearchBean.CONTACT_GROUPS_FILTER : null;
+        return transformAddressbookNodesToSelectItems(getAddressbookService().searchContactGroups(params.getSearchString(), false, false, params.getLimit()), filter);
     }
 
     public List<String> getContactData(String nodeRef) {

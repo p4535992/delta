@@ -87,13 +87,15 @@ public class OrganizationStructureListDialog extends BaseDialogBean {
         try {
             Integer unitId = Integer.parseInt(results[index]);
             OrganizationStructure orgStruct = getOrganizationStructureService().getOrganizationStructure(unitId);
-            if (longestOnly) {
-                organizationPaths.add(orgStruct.getOrganizationDisplayPath());
-            } else {
-                organizationPaths.addAll(orgStruct.getOrganizationPath());
-            }
-            if (organizationPaths.isEmpty()) {
-                organizationPaths.add(orgStruct.getName());
+            if (orgStruct != null) {
+                if (longestOnly) {
+                    organizationPaths.add(orgStruct.getOrganizationDisplayPath());
+                } else {
+                    organizationPaths.addAll(orgStruct.getOrganizationPath());
+                }
+                if (organizationPaths.isEmpty()) {
+                    organizationPaths.add(orgStruct.getName());
+                }
             }
         } catch (NumberFormatException e) {
 

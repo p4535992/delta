@@ -1,7 +1,9 @@
 package ee.webmedia.alfresco.common.web;
 
 import javax.faces.context.FacesContext;
+import javax.sql.DataSource;
 
+import org.alfresco.repo.node.db.NodeDaoService;
 import org.alfresco.repo.policy.BehaviourFilter;
 import org.alfresco.service.ServiceRegistry;
 import org.alfresco.service.cmr.dictionary.DictionaryService;
@@ -109,6 +111,8 @@ import ee.webmedia.alfresco.orgstructure.service.OrganizationStructureService;
 import ee.webmedia.alfresco.orgstructure.web.RsAccessStatusBean;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
 import ee.webmedia.alfresco.parameters.web.ParametersImportDialog;
+import ee.webmedia.alfresco.person.bootstrap.PersonAndOrgStructPropertiesCacheUpdater;
+import ee.webmedia.alfresco.privilege.service.AccessControlListExtDAO;
 import ee.webmedia.alfresco.privilege.service.PrivilegeService;
 import ee.webmedia.alfresco.privilege.web.ManageInheritablePrivilegesDialog;
 import ee.webmedia.alfresco.register.service.RegisterService;
@@ -132,6 +136,7 @@ import ee.webmedia.alfresco.workflow.search.service.TaskReportFilterService;
 import ee.webmedia.alfresco.workflow.search.service.TaskSearchFilterService;
 import ee.webmedia.alfresco.workflow.service.WorkflowDbService;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
+import ee.webmedia.alfresco.workflow.web.DelegationBean;
 import ee.webmedia.alfresco.workflow.web.WorkflowBlockBean;
 import ee.webmedia.xtee.client.dhl.DhlXTeeServiceImplFSStub;
 
@@ -156,6 +161,18 @@ public class BeanHelper implements NamespacePrefixResolverProvider {
     @Override
     public NamespacePrefixResolver getNamespacePrefixResolver() {
         return getNamespaceService();
+    }
+
+    public static DataSource getDataSource() {
+        return getSpringBean(DataSource.class, "dataSource");
+    }
+
+    public static NodeDaoService getNodeDaoService() {
+        return getSpringBean(NodeDaoService.class, "nodeDaoService");
+    }
+
+    public static AccessControlListExtDAO getAccessControlListDao() {
+        return getSpringBean(AccessControlListExtDAO.class, "accessControlListDAO");
     }
 
     // START: web beans
@@ -252,10 +269,10 @@ public class BeanHelper implements NamespacePrefixResolverProvider {
     public static <D extends DynamicType, S extends DynTypeDialogSnapshot<D>> DynamicTypeDetailsDialog<D, S> getDynamicTypeDetailsDialog(Class<D> dynTypeClass) {
         if (DocumentType.class.equals(dynTypeClass)) {
             // not using getDocTypeDetailsDialog() as unlike smarter eclipse compiler javac can't handle complicated generics
-            DynamicTypeDetailsDialog tmp = (DynamicTypeDetailsDialog) getJsfBean(DocTypeDetailsDialog.class, DocTypeDetailsDialog.BEAN_NAME);
+            DynamicTypeDetailsDialog tmp = getJsfBean(DocTypeDetailsDialog.class, DocTypeDetailsDialog.BEAN_NAME);
             return tmp;
         } else if (CaseFileType.class.equals(dynTypeClass)) {
-            DynamicTypeDetailsDialog tmp = (DynamicTypeDetailsDialog) getJsfBean(CaseFileTypeDetailsDialog.class, CaseFileTypeDetailsDialog.BEAN_NAME);
+            DynamicTypeDetailsDialog tmp = getJsfBean(CaseFileTypeDetailsDialog.class, CaseFileTypeDetailsDialog.BEAN_NAME);
             return tmp;
         } else {
             throw new RuntimeException("Returning details dialog for " + dynTypeClass.getSimpleName() + " is unimplemented");
@@ -342,6 +359,10 @@ public class BeanHelper implements NamespacePrefixResolverProvider {
         return getJsfBean(WorkflowBlockBean.class, WorkflowBlockBean.BEAN_NAME);
     }
 
+    public static DelegationBean getDelegationBean() {
+        return getJsfBean(DelegationBean.class, DelegationBean.BEAN_NAME);
+    }
+
     public static SendOutBlockBean getSendOutBlockBean() {
         return getJsfBean(SendOutBlockBean.class, SendOutBlockBean.BEAN_NAME);
     }
@@ -392,6 +413,10 @@ public class BeanHelper implements NamespacePrefixResolverProvider {
 
     public static UserContactTableGenerator getUserContactTableGenerator() {
         return getSpringBean(UserContactTableGenerator.class, UserContactTableGenerator.BEAN_NAME);
+    }
+
+    public static PersonAndOrgStructPropertiesCacheUpdater getPersonAndOrgStructPropertiesCacheUpdater() {
+        return getSpringBean(PersonAndOrgStructPropertiesCacheUpdater.class, PersonAndOrgStructPropertiesCacheUpdater.BEAN_NAME);
     }
 
     // END: JSF web beans

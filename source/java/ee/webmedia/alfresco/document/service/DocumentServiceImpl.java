@@ -47,6 +47,8 @@ import org.alfresco.i18n.I18NUtil;
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.content.MimetypeMap;
 import org.alfresco.repo.content.transform.ContentTransformer;
+import org.alfresco.repo.node.NodeServicePolicies;
+import org.alfresco.repo.policy.JavaBehaviour;
 import org.alfresco.repo.policy.PolicyComponent;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
@@ -85,7 +87,6 @@ import org.joda.time.Instant;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
-import org.springframework.beans.factory.InitializingBean;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.adr.service.AdrService;
@@ -119,6 +120,7 @@ import ee.webmedia.alfresco.document.model.DocumentParentNodesVO;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
 import ee.webmedia.alfresco.document.register.model.RegNrHolder;
+import ee.webmedia.alfresco.document.register.model.RegNrHolder2;
 import ee.webmedia.alfresco.document.search.model.DocumentSearchModel;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
 import ee.webmedia.alfresco.document.sendout.model.SendInfo;
@@ -167,7 +169,7 @@ import ee.webmedia.alfresco.workflow.service.WorkflowService;
 /**
  * @author Alar Kvell
  */
-public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, InitializingBean {
+public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, NodeServicePolicies.BeforeDeleteNodePolicy {
 
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DocumentServiceImpl.class);
 
@@ -212,13 +214,15 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
     // doesn't need to be synchronized, because it is not modified during runtime
     private final Map<QName/* nodeType/nodeAspect */, PropertiesModifierCallback> creationPropertiesModifierCallbacks = new LinkedHashMap<QName, PropertiesModifierCallback>();
 
-    private static final String REGISTRATION_INDIVIDUALIZING_NUM_SUFFIX = "-1";
     private static final String TEMP_LOGGING_DISABLED_REGISTERED_BY_USER = "{temp}logging_registeredByUser";
     private PropertyChangesMonitorHelper propertyChangesMonitorHelper = new PropertyChangesMonitorHelper();
 
-    @Override
-    public void afterPropertiesSet() throws Exception {
-        beanFactory.getBean("policyComponent", PolicyComponent.class);
+    public void init() {
+        PolicyComponent policyComponent = (PolicyComponent) beanFactory.getBean("policyComponent", PolicyComponent.class);
+        // XXX: DocumentCommonModel.Types.DOCUMENT generates IllegalArgumentException at startup (Class {http://alfresco.webmedia.ee/model/document/common/1.0}document has not been
+        // defined in the data dictionary). Why?
+        policyComponent.bindClassBehaviour(QName.createQName(NamespaceService.ALFRESCO_URI, "beforeDeleteNode"), ContentModel.TYPE_FOLDER, new JavaBehaviour(this,
+                "beforeDeleteNode"));
     }
 
     @Override
@@ -1362,18 +1366,18 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
     public void deleteDocument(NodeRef nodeRef, String comment) {
         log.debug("Deleting document: " + nodeRef);
         getAdrService().addDeletedDocument(nodeRef);
-        List<AssociationRef> assocs = nodeService.getTargetAssocs(nodeRef, RegexQNamePattern.MATCH_ALL);
+        Set<AssociationRef> assocs = new HashSet<AssociationRef>(nodeService.getTargetAssocs(nodeRef, RegexQNamePattern.MATCH_ALL));
         assocs.addAll(nodeService.getSourceAssocs(nodeRef, RegexQNamePattern.MATCH_ALL));
-        boolean favDirRemoved = false;
         DocumentAssociationsService documentAssociationsService = getDocumentAssociationsService();
+        boolean updateMenu = false;
         for (AssociationRef assoc : assocs) {
             NodeRef sourceRef = assoc.getSourceRef();
-            if ((DocumentCommonModel.Assocs.FAVORITE.equals(assoc.getTypeQName())) &&
-                    DocumentCommonModel.Types.FAVORITE_DIRECTORY.equals(nodeService.getType(sourceRef))) {
-                if (nodeService.getTargetAssocs(sourceRef, DocumentCommonModel.Assocs.FAVORITE).size() == 1) {
-                    nodeService.deleteNode(sourceRef);
-                    favDirRemoved = true;
-                }
+            if (DocumentCommonModel.Assocs.FAVORITE.equals(assoc.getTypeQName()) &&
+                    DocumentCommonModel.Types.FAVORITE_DIRECTORY.equals(nodeService.getType(sourceRef))
+                    && nodeService.getTargetAssocs(sourceRef, DocumentCommonModel.Assocs.FAVORITE).size() == 1) {
+                // assoc is deleted when deleting node
+                nodeService.deleteNode(sourceRef);
+                updateMenu = true;
             } else {
                 nodeService.removeAssociation(sourceRef, assoc.getTargetRef(), assoc.getTypeQName());
                 documentAssociationsService.updateModifiedDateTime(sourceRef, assoc.getTargetRef());
@@ -1398,8 +1402,15 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
         String location = nodeService.exists(archivedRef) ? (String) nodeService.getProperty(archivedRef, ContentModel.PROP_ARCHIVED_ORIGINAL_LOCATION_STRING) : "";
         logService.addLogEntry(LogEntry.create(LogObject.DOCUMENT, userService, nodeRef, "document_log_status_deleted", status, location));
 
-        if (favDirRemoved) {
+        if (updateMenu) {
             menuService.process(BeanHelper.getMenuBean().getMenu(), false, true);
+        }
+    }
+
+    @Override
+    public void beforeDeleteNode(NodeRef nodeRef) {
+        if (nodeRef != null && DocumentCommonModel.Types.DOCUMENT.equals(nodeService.getType(nodeRef))) {
+            fileService.removePreviousParentReference(nodeRef, true);
         }
     }
 
@@ -1661,11 +1672,16 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
     /**
      * NB! This method can be called only once per registration. Otherwise register sequence is increased without a reason.
      */
-    private String parseRegNrPattern(final Series series, NodeRef volumeNodeRef, final Register register, final String existingRegNumber, final Date regDateTime) {
+    private void setRegNrBasedOnPattern(final Series series, NodeRef volumeNodeRef, final Register register, final RegNrHolder2 holder, final Date regDateTime) {
         String pattern = series.getDocNumberPattern();
         final Volume volume = pattern.indexOf("{T") >= 0 ? volumeService.getVolumeByNodeRef(volumeNodeRef) : null;
         final int registerCounter = register.getCounter();
 
+        final String existingShortRegNumber = holder.getShortRegNumber();
+        final String existingIndividualNumber = holder.getIndividualNumber();
+        holder.setRegNumber(null);
+        holder.setShortRegNumber(null);
+        holder.setIndividualNumber(null);
         Transformer<String, String> paramValueLookup = new Transformer<String, String>() {
             @Override
             public String tr(String input) {
@@ -1685,14 +1701,16 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
                 case TN:
                     return ""; // FIXME DLSeadist kui asjatoimik saab tehtud, peaks ka sellele asendus tekkima.
                 case DN:
-                    if (existingRegNumber != null && !generateNewRegNumberInReregistration) {
-                        RegNrHolder holder = new RegNrHolder(existingRegNumber);
-                        return holder.getShortRegNrWithoutIndividualizingNr();
+                    String counter;
+                    if (StringUtils.isNotBlank(existingShortRegNumber) && !generateNewRegNumberInReregistration) {
+                        counter = existingShortRegNumber;
+                    } else {
+                        if (registerCounter == register.getCounter()) { // Increase if first time
+                            register.setCounter(registerService.increaseCount(register.getId()));
+                        }
+                        counter = Integer.toString(register.getCounter());
                     }
-                    if (registerCounter == register.getCounter()) { // Increase if first time
-                        register.setCounter(registerService.increaseCount(register.getId()));
-                    }
-                    String counter = Integer.toString(register.getCounter());
+                    holder.setShortRegNumber(counter);
                     if (RegisterNumberPatternParams.getValidDigitParam(input) == null) {
                         return counter;
                     }
@@ -1711,7 +1729,11 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
                 }
             }
         };
-        return TextPatternUtil.getResult(pattern, paramValueLookup);
+        holder.setRegNumber(TextPatternUtil.getResult(pattern, paramValueLookup));
+        if (StringUtils.isNotBlank(existingIndividualNumber)) {
+            holder.setIndividualNumber(existingIndividualNumber);
+            holder.setRegNumber(holder.getRegNumber() + "-" + existingIndividualNumber);
+        }
     }
 
     @Override
@@ -1745,50 +1767,66 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
         final boolean isReplyOrFollowupDoc = isReplyOrFollowupDoc(docRef, replyAssocs);
         final Series series = seriesService.getSeriesByNodeRef(seriesNodeRef);
         Register register = registerService.getRegister(series.getRegister());
-        String regNumber = (String) props.get(DocumentCommonModel.Props.REG_NUMBER);
+        RegNrHolder2 holder = new RegNrHolder2(
+                (String) props.get(DocumentCommonModel.Props.REG_NUMBER),
+                (String) props.get(DocumentCommonModel.Props.SHORT_REG_NUMBER),
+                (String) props.get(DocumentCommonModel.Props.INDIVIDUAL_NUMBER)
+                );
         final Date now = new Date();
         final NodeRef initDocParentRef = caseNodeRef != null ? caseNodeRef : volumeNodeRef;
         List<String> allDocs = null;
         long startTime = System.currentTimeMillis();
+
         if (!isReplyOrFollowupDoc) {
             log.debug("Starting to " + (isRelocating ? "reregister document" : "register initialDocument") + ", docRef=" + docRef);
             // registration of initial document ("Algatusdokument") or reregistering document during relocating
-            regNumber = parseRegNrPattern(series, volumeNodeRef, register, regNumber, now);
-            if (!series.isNewNumberForEveryDoc() && series.isIndividualizingNumbers()) {
-                regNumber += REGISTRATION_INDIVIDUALIZING_NUM_SUFFIX;
+            setRegNrBasedOnPattern(series, volumeNodeRef, register, holder, now);
+            if (!series.isNewNumberForEveryDoc() && series.isIndividualizingNumbers() && StringUtils.isBlank(holder.getIndividualNumber())) {
+                holder.setRegNumber(holder.getRegNumber() + "-1");
+                holder.setIndividualNumber("1");
             }
-            Pair<String, List<String>> result = addUniqueNumberIfNeccessary(regNumber, initDocParentRef, isRelocating, null);
-            regNumber = result.getFirst();
+            Pair<String, List<String>> result = addUniqueNumberIfNeccessary(holder.getRegNumber(), initDocParentRef, isRelocating, null);
+            holder.setRegNumber(result.getFirst());
             allDocs = result.getSecond();
         } else { // registration of reply/followUp("Järg- või vastusdokument")
             log.debug("Starting to register " + (replyAssocs.size() > 0 ? "reply" : "followUp") + " document, docRef=" + docRef);
             final Node initialDoc = getDocument(getInitialDocument(docRef));
             final String initDocRegNr = (String) initialDoc.getProperties().get(REG_NUMBER.toString());
+            String initDocShortRegNr = (String) initialDoc.getProperties().get(SHORT_REG_NUMBER.toString());
+            final String initDocIndividualNr = (String) initialDoc.getProperties().get(INDIVIDUAL_NUMBER.toString());
             boolean initDocRegNrNotBlank = StringUtils.isNotBlank(initDocRegNr);
             if (series.isNewNumberForEveryDoc()) {
-                Pair<String, List<String>> result = addUniqueNumberIfNeccessary(parseRegNrPattern(series, volumeNodeRef, register, regNumber, now), initDocParentRef,
-                        isRelocating, null);
-                regNumber = result.getFirst();
+                setRegNrBasedOnPattern(series, volumeNodeRef, register, holder, now);
+                Pair<String, List<String>> result = addUniqueNumberIfNeccessary(holder.getRegNumber(), initDocParentRef, isRelocating, null);
+                holder.setRegNumber(result.getFirst());
                 allDocs = result.getSecond();
             } else if (initDocRegNrNotBlank && !series.isIndividualizingNumbers() && !series.isNewNumberForEveryDoc()) {
                 Pair<String, List<String>> result = addUniqueNumberIfNeccessary(initDocRegNr, initDocParentRef, isRelocating, null);
-                regNumber = result.getFirst();
+                holder.setRegNumber(result.getFirst());
+                holder.setShortRegNumber(initDocShortRegNr);
+                holder.setIndividualNumber(initDocIndividualNr);
                 allDocs = result.getSecond();
             } else if (initDocRegNrNotBlank && !series.isNewNumberForEveryDoc() && series.isIndividualizingNumbers()) {
                 { // add individualizing number to regNr
-                    final RegNrHolder initDocRegNrHolder = new RegNrHolder(initDocRegNr);
-                    if (initDocRegNrHolder.getIndividualizingNr() != null) {
-                        String docRegNumber = (String) nodeService.getProperty(docRef, REG_NUMBER);
-                        Pair<Integer, List<String>> result = getMaxIndivNrInParent(docRegNumber, initDocRegNrHolder, initDocParentRef, initDocRegNrHolder.getIndividualizingNr());
+                    if (StringUtils.isNotBlank(initDocIndividualNr)) {
+                        Pair<Integer, List<String>> result = getMaxIndivNrInParent(holder.getRegNumber(), initDocRegNr, initDocParentRef, Integer.parseInt(initDocIndividualNr));
                         int maxIndivNr = result.getFirst();
                         allDocs = result.getSecond();
-                        regNumber = initDocRegNrHolder.getRegNrWithoutIndividualizingNr() + (maxIndivNr + 1);
-                        regNumber = addUniqueNumberIfNeccessary(regNumber, initDocParentRef, isRelocating, result.getSecond()).getFirst();
+                        String individualNr = Integer.toString(maxIndivNr + 1);
+                        holder.setRegNumber(new RegNrHolder(initDocRegNr).getRegNrWithoutIndividualizingNr() + individualNr);
+                        holder.setShortRegNumber(initDocShortRegNr);
+                        holder.setIndividualNumber(individualNr);
+
+                        Pair<String, List<String>> result2 = addUniqueNumberIfNeccessary(holder.getRegNumber(), initDocParentRef, isRelocating, allDocs);
+                        holder.setRegNumber(result2.getFirst());
+                        allDocs = result2.getSecond();
                     } else {
                         // with correct data and *current* expected user behaviors this code should not be reached,
                         // however Maiga insisted that this behavior would be applied if smth. goes wrong
                         Pair<String, List<String>> result = addUniqueNumberIfNeccessary(initDocRegNr, initDocParentRef, isRelocating, null);
-                        regNumber = result.getFirst();
+                        holder.setRegNumber(result.getFirst());
+                        holder.setShortRegNumber(initDocShortRegNr);
+                        holder.setIndividualNumber(initDocIndividualNr);
                         allDocs = result.getSecond();
                     }
                 }
@@ -1796,7 +1834,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
         }
         long stopTime = System.currentTimeMillis();
         log.info("PERFORMANCE: registerDocument calculating regNumber " + (stopTime - startTime) + " ms" + (allDocs == null ? "" : ", scanned " + allDocs.size() + " documents"));
-        if (StringUtils.isNotBlank(regNumber)) {
+        if (StringUtils.isNotBlank(holder.getRegNumber())) {
 
             if (DocumentSubtypeModel.Types.INSTRUMENT_OF_DELIVERY_AND_RECEIPT.getLocalName().equals(documentTypeId)) {
                 if (replyAssocs.size() > 0) {
@@ -1815,7 +1853,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
                 if (replyAssocs.size() > 0) {
                     final NodeRef originalDocRef = replyAssocs.get(0).getTargetRef();
                     DateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
-                    String comment = MessageUtil.getMessage("task_comment_finished_by_register_doc", regNumber, dateFormat.format(now));
+                    String comment = MessageUtil.getMessage("task_comment_finished_by_register_doc", holder.getRegNumber(), dateFormat.format(now));
                     if (!workflowService.hasInProgressOtherUserOrderAssignmentTasks(originalDocRef)) {
                         Map<String, Pair<DynamicPropertyDefinition, Field>> propDefs = getPropDefs(originalDocRef);
                         if (hasProp(DocumentSpecificModel.Props.COMPLIENCE_DATE, propDefs)) {
@@ -1831,7 +1869,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
                                     + " " + comment, originalDocRef);
                         }
                     }
-                    workflowService.finishTasksOrCompoundWorkflowsOnRegisterDoc(originalDocRef, comment);
+                    workflowService.finishTasksByRegisteringReplyLetter(originalDocRef, comment);
                 }
             }
             // Check if its a reply outgoing mv letter and update originating document info (if needed)
@@ -1851,23 +1889,21 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
             }
             String oldRegNumber = (String) nodeService.getProperty(docRef, REG_NUMBER);
             boolean adrDeletedDocumentAdded = false;
-            if (oldRegNumber != null && !StringUtils.equals(oldRegNumber, regNumber)) {
+            if (oldRegNumber != null && !StringUtils.equals(oldRegNumber, holder.getRegNumber())) {
                 getAdrService().addDeletedDocument(docRef);
                 adrDeletedDocumentAdded = true;
             }
 
-            updateParentDocumentRegNumbers(docNode.getNodeRef(), (String) props.get(REG_NUMBER.toString()), regNumber);
-            props.put(REG_NUMBER.toString(), regNumber);
+            updateParentDocumentRegNumbers(docNode.getNodeRef(), (String) props.get(REG_NUMBER.toString()), holder.getRegNumber());
+            props.put(REG_NUMBER.toString(), holder.getRegNumber());
             propertyChangesMonitorHelper.addIgnoredProps(props, REG_NUMBER);
-            if (!isRelocating || (generateNewRegNumberInReregistration && changeShortRegAndIndividualOnRelocatingDoc(previousVolume, series))) {
-                RegNrHolder regNrHolder = new RegNrHolder(regNumber);
-                props.put(SHORT_REG_NUMBER.toString(), regNrHolder.getShortRegNrWithoutIndividualizingNr());
-                propertyChangesMonitorHelper.addIgnoredProps(props, SHORT_REG_NUMBER);
-                if (regNrHolder.getIndividualizingNr() != null) {
-                    props.put(INDIVIDUAL_NUMBER.toString(), regNrHolder.getIndividualizingNr().toString());
-                    propertyChangesMonitorHelper.addIgnoredProps(props, INDIVIDUAL_NUMBER);
-                }
-            }
+            // TODO ALAR review this
+            // if (!isRelocating || (generateNewRegNumberInReregistration && changeShortRegAndIndividualOnRelocatingDoc(previousVolume, series))) {
+            props.put(SHORT_REG_NUMBER.toString(), holder.getShortRegNumber());
+            propertyChangesMonitorHelper.addIgnoredProps(props, SHORT_REG_NUMBER);
+            props.put(INDIVIDUAL_NUMBER.toString(), holder.getIndividualNumber());
+            propertyChangesMonitorHelper.addIgnoredProps(props, INDIVIDUAL_NUMBER);
+            // }
             if (!isRelocating) {
                 Date oldRegDateTime = (Date) nodeService.getProperty(docRef, REG_DATE_TIME);
                 if (oldRegDateTime != null && !adrDeletedDocumentAdded) {
@@ -1885,13 +1921,17 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
             boolean creatorDhs = false;
             if (getDocumentAdminService().getDocumentTypeProperty(documentTypeId, DocumentAdminModel.Props.FINISH_DOC_BY_REGISTRATION, Boolean.class)) {
                 props.put(DOC_STATUS.toString(), DocumentStatus.FINISHED.getValueName());
+                String docStatus = (String) nodeService.getProperty(docRef, DOC_STATUS);
+                if (!DocumentStatus.FINISHED.getValueName().equals(docStatus)) {
+                    addDocProceedingFinishedLog(docRef);
+                }
                 propertyChangesMonitorHelper.addIgnoredProps(props, DOC_STATUS);
             } else {
                 if (EventsLoggingHelper.isLoggingDisabled(docNode, TEMP_LOGGING_DISABLED_REGISTERED_BY_USER)) {
                     creatorDhs = true;
                 }
             }
-            if (StringUtils.isBlank(oldRegNumber) && StringUtils.isNotBlank(regNumber)) {
+            if (StringUtils.isBlank(oldRegNumber) && StringUtils.isNotBlank(holder.getRegNumber())) {
                 if (creatorDhs) {
                     documentLogService.addDocumentLog(docRef, I18NUtil.getMessage("document_log_status_registered") //
                             , I18NUtil.getMessage("document_log_creator_dhs"));
@@ -1927,7 +1967,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
             return Pair.newInstance(regNumber, null);
         }
         final RegNrHolder initDocRegNrHolder = new RegNrHolder(regNumber);
-        int uniqueNumber = 0;
+        int uniqueNumber = -1;
         if (allRegNumbers == null) {
             allRegNumbers = (List<String>) nodeService.getProperty(initDocParentRef, DocumentCommonModel.Props.DOCUMENT_REG_NUMBERS);
         }
@@ -1935,6 +1975,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
             for (String anotherDocRegNumber : allRegNumbers) {
                 final RegNrHolder anotherDocRegNrHolder = new RegNrHolder(anotherDocRegNumber);
                 if (StringUtils.equals(initDocRegNrHolder.getRegNrWithIndividualizingNr(), anotherDocRegNrHolder.getRegNrWithIndividualizingNr())) {
+                    uniqueNumber = Math.max(uniqueNumber, 0);
                     final Integer anotherDocUniqueNr = anotherDocRegNrHolder.getUniqueNumber();
                     if (anotherDocUniqueNr != null) {
                         uniqueNumber = Math.max(uniqueNumber, anotherDocUniqueNr);
@@ -1942,13 +1983,14 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
                 }
             }
         }
-        return Pair.newInstance(regNumber + (uniqueNumber == 0 ? "" : "(" + (uniqueNumber + 1) + ")"), allRegNumbers);
+        return Pair.newInstance(regNumber + (uniqueNumber < 0 ? "" : "(" + (uniqueNumber + 1) + ")"), allRegNumbers);
     }
 
-    private Pair<Integer, List<String>> getMaxIndivNrInParent(final String docRegNumber, final RegNrHolder initDocRegNrHolder, final NodeRef initDocParentRef, int maxIndivNr) {
+    private Pair<Integer, List<String>> getMaxIndivNrInParent(final String docRegNumber, final String initDocRegNr, final NodeRef initDocParentRef, int maxIndivNr) {
         @SuppressWarnings("unchecked")
         List<String> allRegNumbers = (List<String>) nodeService.getProperty(initDocParentRef, DocumentCommonModel.Props.DOCUMENT_REG_NUMBERS);
         if (allRegNumbers != null) {
+            final RegNrHolder initDocRegNrHolder = new RegNrHolder(initDocRegNr);
             boolean encounteredOnce = false;
             for (String anotherDocRegNumber : allRegNumbers) {
                 if (!encounteredOnce && StringUtils.equals(docRegNumber, anotherDocRegNumber)) { // TODO discuss this change with Maiga
@@ -1987,7 +2029,8 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
         List<Date> substituteBeginDates = (List<Date>) props.get(DocumentSpecificModel.Props.SUBSTITUTION_BEGIN_DATE);
         @SuppressWarnings("unchecked")
         List<Date> substituteEndDates = (List<Date>) props.get(DocumentSpecificModel.Props.SUBSTITUTION_END_DATE);
-        NodeRef ownerRef = userService.getPerson((String) props.get(DocumentDynamicModel.Props.OWNER_ID));
+        String ownerId = (String) props.get(DocumentDynamicModel.Props.OWNER_ID);
+        NodeRef ownerRef = userService.getPerson(ownerId);
         if (ownerRef != null) {
             List<Substitute> addedSubstitutes = new ArrayList<Substitute>();
             for (int i = 0; i < substituteIds.size(); i++) {
@@ -1998,6 +2041,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
                 }
                 substitute.setSubstituteId(substituteId);
                 substitute.setSubstituteName(substituteNames.get(i));
+                substitute.setReplacedPersonUserName(ownerId);
                 Date substitutionEndDate = substituteEndDates.get(i);
                 Date substitutionStartDate = substituteBeginDates.get(i);
                 if (substitutionEndDate == null || substitutionStartDate == null) {
@@ -2019,9 +2063,13 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
         String docStatus = (String) nodeService.getProperty(originalDocRef, DOC_STATUS);
         if (!DocumentStatus.FINISHED.getValueName().equals(docStatus)) {
             setPropertyAsSystemUser(DOC_STATUS, DocumentStatus.FINISHED.getValueName(), originalDocRef);
-            documentLogService.addDocumentLog(originalDocRef, I18NUtil.getMessage("document_log_status_proceedingFinish") //
-                    , I18NUtil.getMessage("document_log_creator_dhs"));
+            addDocProceedingFinishedLog(originalDocRef);
         }
+    }
+
+    private void addDocProceedingFinishedLog(final NodeRef originalDocRef) {
+        documentLogService.addDocumentLog(originalDocRef, I18NUtil.getMessage("document_log_status_proceedingFinish") //
+                , I18NUtil.getMessage("document_log_creator_dhs"));
     }
 
     @Override
@@ -2204,6 +2252,13 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
                 final QName key = entry.getKey();
                 Serializable newValue = entry.getValue();
                 Serializable oldValue = oldPropsClone.remove(key);
+                // Ignore differences between null values as empty strings
+                if (newValue instanceof String && StringUtils.isBlank((String) newValue)) {
+                    newValue = null;
+                }
+                if (oldValue instanceof String && StringUtils.isBlank((String) oldValue)) {
+                    oldValue = null;
+                }
                 if (!EqualsHelper.nullSafeEquals(oldValue, newValue) && !key.getNamespaceURI().equals(NamespaceService.CONTENT_MODEL_1_0_URI)
                         && !ignoredProps.contains(key) && !TEMP_PROPERTY_CHANGES_IGNORED_PROPS.equals(key)) {
                     if (extraIgnoredProps == null) {
@@ -2483,6 +2538,10 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
         for (AssociationRef assoc : assocs) {
             NodeRef docRef = assoc.getTargetRef();
             if (!DocumentCommonModel.Types.DOCUMENT.equals(nodeService.getType(docRef))) { // XXX DLSeadist filter out old document types
+                continue;
+            }
+            if (nodeService.getStoreArchiveNode(docRef.getStoreRef()) == null) {
+                // this is trashcan document
                 continue;
             }
             favorites.add(getDocumentByNodeRef(docRef));

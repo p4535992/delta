@@ -2,7 +2,10 @@ package ee.webmedia.alfresco.common.ajax;
 
 import static ee.webmedia.alfresco.common.propertysheet.dimensionselector.DimensionSelectorGenerator.predefinedFilters;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getParametersService;
+import static ee.webmedia.alfresco.common.web.UserContactGroupSearchBean.FILTER_INDEX_SEPARATOR;
 import static ee.webmedia.alfresco.parameters.model.Parameters.MAX_MODAL_SEARCH_RESULT_ROWS;
+import static org.apache.commons.lang.StringUtils.substringBeforeLast;
+import static org.apache.commons.lang.StringUtils.substringBetween;
 
 import java.io.IOException;
 import java.text.DateFormat;
@@ -21,6 +24,7 @@ import javax.faces.el.MethodBinding;
 import javax.faces.model.SelectItem;
 
 import org.alfresco.repo.content.MimetypeMap;
+import org.alfresco.util.Pair;
 import org.alfresco.web.app.servlet.ajax.InvokeCommand.ResponseMimetype;
 import org.alfresco.web.ui.common.component.PickerSearchParams;
 import org.alfresco.web.ui.common.component.UIGenericPicker;
@@ -34,6 +38,7 @@ import ee.webmedia.alfresco.common.propertysheet.dimensionselector.DimensionSele
 import ee.webmedia.alfresco.common.propertysheet.multivalueeditor.MultiValueEditor;
 import ee.webmedia.alfresco.common.propertysheet.search.Search;
 import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.common.web.UserContactGroupSearchBean;
 import ee.webmedia.alfresco.document.einvoice.model.DimensionValue;
 import ee.webmedia.alfresco.document.einvoice.model.Dimensions;
 import ee.webmedia.alfresco.utils.ComponentUtil;
@@ -65,7 +70,7 @@ public class AjaxSearchBean extends AjaxBean {
             return;
         }
 
-        SelectItem[] result = getSelectItems(context, callback, query, null);
+        SelectItem[] result = getSelectItems(context, callback, query, getParam(params, Search.PICKER_CALLBACK_KEY_PARAM), true);
         if (result == null || result.length < 1) {
             return;
         }
@@ -84,7 +89,7 @@ public class AjaxSearchBean extends AjaxBean {
         @SuppressWarnings("unchecked")
         Map<String, String> params = context.getExternalContext().getRequestParameterMap();
         SelectItem[] results = getSelectItems(context, getParam(params, Search.PICKER_CALLBACK_KEY), getParam(params, CONTAINS),
-                getParam(params, "filterValue"));
+                getParam(params, "filterValue"), false);
 
         ResponseWriter responseWriter = context.getResponseWriter();
         responseWriter.write(UIGenericPicker.getResultSize(results) + "|");
@@ -133,22 +138,22 @@ public class AjaxSearchBean extends AjaxBean {
         Map<String, String> params = context.getExternalContext().getRequestParameterMap();
 
         // Fetch data
-        String data = StringUtils.substringBetween(getParam(context, DATA), VALUE_MARKUP_START, VALUE_MARKUP_END);
+        String data = substringBeforeLast(substringBetween(getParam(context, DATA), VALUE_MARKUP_START, VALUE_MARKUP_END), FILTER_INDEX_SEPARATOR);
         String actionListener = getParam(params, "actionListener");
 
         // Invoke action listener
         context.getApplication().createMethodBinding("#{" + actionListener + "}", new Class[] { String.class }).invoke(context, new Object[] { data });
     }
 
-    private SelectItem[] getSelectItems(FacesContext context, String callback, String contains, String filterValue) {
-        int filter = -1;
-        if (StringUtils.isNotBlank(filterValue) && !"undefined".equals(filterValue)) {
+    private SelectItem[] getSelectItems(FacesContext context, String callback, String contains, String filterValue, boolean includeFilterIndex) {
+        int filter = UserContactGroupSearchBean.USERS_FILTER; // Default to this
+        if (StringUtils.isNotBlank(filterValue) && !"undefined".equals(filterValue) && StringUtils.isNumeric(filterValue)) {
             filter = Integer.parseInt(filterValue);
         }
 
         MethodBinding b = context.getApplication().createMethodBinding("#{" + callback + "}", GenericPickerTag.QUERYCALLBACK_CLASS_ARGS);
         SelectItem[] result = (SelectItem[]) b.invoke(context,
-                new Object[] { new PickerSearchParams(filter, contains, getParametersService().getLongParameter(MAX_MODAL_SEARCH_RESULT_ROWS).intValue()) });
+                new Object[] { new PickerSearchParams(filter, contains, getParametersService().getLongParameter(MAX_MODAL_SEARCH_RESULT_ROWS).intValue(), includeFilterIndex) });
         return result;
     }
 
@@ -160,13 +165,27 @@ public class AjaxSearchBean extends AjaxBean {
     @Override
     protected void executeCallback(FacesContext context, String componentClientId, UIComponent component) {
         String value = StringUtils.substringBetween(getParam(context, DATA), VALUE_MARKUP_START, VALUE_MARKUP_END);
+        int filterIndex = UserContactGroupSearchBean.USERS_FILTER; // Default;
+        if (value.lastIndexOf(FILTER_INDEX_SEPARATOR) > -1) {
+            filterIndex = Integer.parseInt(StringUtils.substringAfterLast(value, FILTER_INDEX_SEPARATOR));
+            value = StringUtils.substringBeforeLast(value, FILTER_INDEX_SEPARATOR);
+        }
+
         // Call out setter callback if it exists and then update web-client state
         UIComponent searchComponent = null;
         if ((searchComponent = ComponentUtil.getAncestorComponent(component, Search.class)) != null) {
-            ((Search) searchComponent).singleValuedPickerFinish(context, value);
+            Search search = (Search) searchComponent;
+            if (!search.isMultiValued()) {
+                search.singleValuedPickerFinish(context, value);
+            } else {
+                String[] results = new String[] { value };
+                Pair<String[], String[]> preprocessedResults = MultiValueEditor.preprocessResults(context, search.getPreprocesCallback(), results, filterIndex);
+                int rowIndex = Integer.parseInt(StringUtils.substringAfterLast(componentClientId, "_"));
+                search.multiValuedPickerFinish(preprocessedResults.getFirst(), context, rowIndex);
+            }
         } else if ((searchComponent = ComponentUtil.getAncestorComponent(component, MultiValueEditor.class)) != null) {
             int rowIndex = Integer.parseInt(StringUtils.substringAfterLast(componentClientId, "_"));
-            ((MultiValueEditor) searchComponent).innerPickerFinish(0, rowIndex, new String[] { value }, context);
+            ((MultiValueEditor) searchComponent).innerPickerFinish(filterIndex, rowIndex, new String[] { value }, context);
         } else {
             throw new RuntimeException("Missing parent component with search capabilities! (Search or MultiValueEditor)");
         }

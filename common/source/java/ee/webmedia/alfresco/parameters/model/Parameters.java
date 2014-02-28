@@ -116,7 +116,9 @@ public enum Parameters {
     DIMENSION_DELETION_TIME("dimensionDeletionTime"),
 
     WORKING_DOCUMENTS_ADDRESS("workingDocumentsAddress"),
-    QUICK_SEARCH_WORDS_COUNT("quickSearchWordsCount");
+    QUICK_SEARCH_WORDS_COUNT("quickSearchWordsCount"),
+    LARGE_WORKFLOW_WARNING_TASK_COUNT("largeWorkflowWarningTaskCount"),
+    ACCESS_RESTRICTION_END_DATE_NOTIFICATION_MAX_DOCUMENTS("accessRestrictionEndDateNotificationMaxDocuments");
 
     private String xPath;
     private String parameterName;

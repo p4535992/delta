@@ -29,17 +29,18 @@ public class UserContactGroupSearchBean implements Serializable {
     private static final long serialVersionUID = 1L;
 
     public static final String BEAN_NAME = "UserContactGroupSearchBean";
+    public static final String FILTER_INDEX_SEPARATOR = "¤";
 
     private SelectItem[] usersGroupsFilters;
     private SelectItem[] contactsGroupsFilters;
     private SelectItem[] usersContactsFilters;
     private SelectItem[] usersGroupsContactsGroupsFilters;
 
-    public static final int USERS_AND_CONTACTS_FILTER = -1;
-    public static final int USERS_FILTER = 0;
-    public static final int USER_GROUPS_FILTER = 1;
-    public static final int CONTACTS_FILTER = 2;
-    public static final int CONTACT_GROUPS_FILTER = 3;
+    // Filters
+    public static final int USERS_FILTER = 1;
+    public static final int USER_GROUPS_FILTER = 2;
+    public static final int CONTACTS_FILTER = 4;
+    public static final int CONTACT_GROUPS_FILTER = 8;
 
     /*
      * filters methods
@@ -123,24 +124,32 @@ public class UserContactGroupSearchBean implements Serializable {
         return searchGroups(params, true);
     }
 
+    public SelectItem[] searchAllWithoutLogOnUser(PickerSearchParams params) {
+        SelectItem[] results = BeanHelper.getUserListDialog().searchUsersWithoutCurrentUser(params);
+        return results;
+    }
+
     /*
      * Methods that can be used programmatically
      */
 
     // TODO merge CompoundWorkflowDefinitionDialog#executeOwnerSearch to here
     private SelectItem[] searchAll(PickerSearchParams params, boolean withAdminsAndDocManagers) {
+        SelectItem[] results = new SelectItem[0];
         if (params.isFilterIndex(USERS_FILTER)) {
-            return BeanHelper.getUserListDialog().searchUsers(params);
-        } else if (params.isFilterIndex(USER_GROUPS_FILTER)) {
-            return searchGroups(params, withAdminsAndDocManagers);
-        } else if (params.isFilterIndex(CONTACTS_FILTER)) {
-            return BeanHelper.getAddressbookSearchBean().searchContacts(params);
-        } else if (params.isFilterIndex(CONTACT_GROUPS_FILTER)) {
-            return BeanHelper.getAddressbookSearchBean().searchContactGroups(params);
-        } else if (params.isFilterIndex(USERS_AND_CONTACTS_FILTER)) {
-            return (SelectItem[]) ArrayUtils.addAll(BeanHelper.getUserListDialog().searchUsers(params), BeanHelper.getAddressbookSearchBean().searchContacts(params));
+            results = (SelectItem[]) ArrayUtils.addAll(results, BeanHelper.getUserListDialog().searchUsers(params));
         }
-        throw new RuntimeException("filterIndex out of range: " + params.getFilterIndex());
+        if (params.isFilterIndex(USER_GROUPS_FILTER)) {
+            results = (SelectItem[]) ArrayUtils.addAll(results, searchGroups(params, withAdminsAndDocManagers));
+        }
+        if (params.isFilterIndex(CONTACTS_FILTER)) {
+            results = (SelectItem[]) ArrayUtils.addAll(results, BeanHelper.getAddressbookSearchBean().searchContacts(params));
+        }
+        if (params.isFilterIndex(CONTACT_GROUPS_FILTER)) {
+            results = (SelectItem[]) ArrayUtils.addAll(results, BeanHelper.getAddressbookSearchBean().searchContactGroups(params));
+        }
+
+        return results;
     }
 
     public SelectItem[] searchGroups(PickerSearchParams params, boolean withAdminsAndDocManagers) {
@@ -148,7 +157,8 @@ public class UserContactGroupSearchBean implements Serializable {
         SelectItem[] selectItems = new SelectItem[results.size()];
         int i = 0;
         for (Authority authority : results) {
-            selectItems[i++] = new SelectItem(authority.getAuthority(), authority.getName());
+            String auth = params.isIncludeFilterIndex() ? (authority.getAuthority() + FILTER_INDEX_SEPARATOR + USER_GROUPS_FILTER) : authority.getAuthority();
+            selectItems[i++] = new SelectItem(auth, authority.getName());
         }
         WebUtil.sort(selectItems);
         return selectItems;

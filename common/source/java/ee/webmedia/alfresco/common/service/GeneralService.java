@@ -1,6 +1,7 @@
 package ee.webmedia.alfresco.common.service;
 
 import java.io.File;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
 import java.util.Collection;
@@ -21,6 +22,7 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.service.namespace.QNamePattern;
+import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.logging.Log;
 
@@ -95,26 +97,6 @@ public interface GeneralService {
     NodeRef getChildByAssocName(NodeRef parentRef, QNamePattern assocNamePattern);
 
     ChildAssociationRef getLastChildAssocRef(String nodeRefXPath);
-
-    /**
-     * Search for nodes by property values. Search results are limited by default limit.
-     * 
-     * @see #searchNodes(String, QName, Set, int)
-     */
-    List<NodeRef> searchNodes(String input, QName type, Set<QName> props);
-
-    /**
-     * Search for nodes by property values. All special characters are ignored in input string. If input string is too short, then search is not
-     * performed, and {@code null} is returned to distinguish this condition from empty result. Input string is tokenized by space and search query is
-     * constructed so that all tokens must be present in any node property (AND search).
-     * 
-     * @param input search string
-     * @param type node type, may be {@code null}
-     * @param props node properties that are searched
-     * @param limit limit the total number of search results returned after pruning by permissions
-     * @return search results or {@code null} if search was not performed
-     */
-    List<NodeRef> searchNodes(String input, QName type, Set<QName> props, int limit);
 
     /**
      * Sets nodeProps to given nodeRef excluding system and contentModel properties
@@ -284,6 +266,8 @@ public interface GeneralService {
      */
     void writeFile(ContentWriter writer, File file, String fileName, String mimetype);
 
+    Pair<String, String> getMimetypeAndEncoding(InputStream is, String fileName, String mimetype);
+
     NodeRef addFileOrFolder(File file, NodeRef parentNodeRef, boolean flatten);
 
     NodeRef addFile(File file, NodeRef parentNodeRef);
@@ -315,6 +299,15 @@ public interface GeneralService {
 
     String getTsquery(String input);
 
+    String getTsquery(String input, int minLexemLength);
+
     void explainQuery(String sqlQuery, Log log, Object... args);
+
+    NodeRef deleteBootstrapNodeRef(String moduleName, String bootstrapName);
+
+    /**
+     * Set node modified time to current time. Use this on document, so changes would be detected on next ADR sync.
+     */
+    void setModifiedToNow(NodeRef nodeRef);
 
 }

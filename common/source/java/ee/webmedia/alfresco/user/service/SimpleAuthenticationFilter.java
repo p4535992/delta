@@ -10,16 +10,22 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.alfresco.model.ContentModel;
+import org.alfresco.repo.security.authentication.AuthenticationException;
 import org.alfresco.service.cmr.repository.InvalidNodeRefException;
+import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.web.app.Application;
 import org.alfresco.web.app.servlet.AuthenticationFilter;
 import org.alfresco.web.app.servlet.AuthenticationHelper;
 import org.alfresco.web.app.servlet.AuthenticationStatus;
 import org.alfresco.web.app.servlet.BaseServlet;
 
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.log.model.LogEntry;
 import ee.webmedia.alfresco.log.model.LogObject;
 import ee.webmedia.alfresco.log.service.LogService;
+import ee.webmedia.alfresco.utils.UserUtil;
 
 /**
  * AuthenticationFilter that uses AMRService for authentication.
@@ -49,7 +55,7 @@ public class SimpleAuthenticationFilter extends AuthenticationFilter {
             AuthenticationStatus status;
             try {
                 status = AuthenticationHelper.authenticate(context, httpReq, httpRes, false);
-            } catch (UserNotFoundException e) {
+            } catch (AuthenticationException e) {
                 if (log.isWarnEnabled()) {
                     log.warn("Authentication failed: ", e);
                 }
@@ -85,7 +91,15 @@ public class SimpleAuthenticationFilter extends AuthenticationFilter {
     }
 
     private void logSuccess(String userName) {
-        logService.addLogEntry(LogEntry.create(LogObject.LOG_IN_OUT, userName, "applog_login_success"));
+        NodeRef personRef = BeanHelper.getPersonService().getPerson(userName);
+        String userFullName = null;
+        if (personRef != null) {
+            NodeService nodeService = BeanHelper.getNodeService();
+            String firstName = (String) nodeService.getProperty(personRef, ContentModel.PROP_FIRSTNAME);
+            String lastName = (String) nodeService.getProperty(personRef, ContentModel.PROP_LASTNAME);
+            userFullName = UserUtil.getPersonFullName(userName, firstName, lastName, false);
+        }
+        logService.addLogEntry(LogEntry.create(LogObject.LOG_IN_OUT, userName, userFullName, null, "applog_login_success"));
     }
 
     private void logFail(String userName) {

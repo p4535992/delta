@@ -1,6 +1,6 @@
 package ee.webmedia.alfresco.template.bootstrap;
 
-import static ee.webmedia.alfresco.utils.SearchUtil.generatePropertyExactQuery;
+import static ee.webmedia.alfresco.utils.SearchUtil.generateStringExactQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateTypeQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.joinQueryPartsAnd;
 
@@ -30,7 +30,7 @@ public class DocumentTemplateEmailTypeIdUpdater extends AbstractNodeUpdater {
     protected List<ResultSet> getNodeLoadingResultSet() {
         String query = joinQueryPartsAnd(Arrays.asList(
                 generateTypeQuery(SeriesModel.Types.SERIES),
-                generatePropertyExactQuery(DocumentTemplateModel.Prop.DOCTYPE_ID, "E-maili mall", false)
+                generateStringExactQuery("E-maili mall", DocumentTemplateModel.Prop.DOCTYPE_ID)
                 ));
         List<ResultSet> result = new ArrayList<ResultSet>(2);
         result.add(searchService.query(generalService.getStore(), SearchService.LANGUAGE_LUCENE, query));

@@ -27,6 +27,14 @@
       </property>
    </bean>
    
+   <bean class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
+      <property name="resourceBundles">
+         <list>
+            <value>ee/webmedia/alfresco/doclist/web/doclist-webclient</value>
+         </list>
+      </property>
+   </bean>
+   
    <bean class="org.alfresco.web.app.ResourceBundleBootstrap">
       <property name="resourceBundles">
          <list>
@@ -34,7 +42,7 @@
          </list>
       </property>
    </bean>
-
+   
    <bean id="updateDocumentListCountersBootstrap" class="ee.webmedia.alfresco.doclist.bootstrap.UpdateDocumentListCountersBootstrap" parent="module.baseComponent" >
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />

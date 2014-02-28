@@ -50,7 +50,11 @@ server {
     ssl_verify_client on;
     ssl_verify_depth 2;
     ssl_client_certificate /etc/pki/esteid/ca-all.crt;
-    ssl_crl /etc/pki/esteid/crl-all.crl;
+    ssl_crl /etc/pki/esteid/crl-all.crl; # If CAS application does OCSP checks (if jdigidoc.ocsp.enabled=true in cas-config.properties)
+                                         # then you may comment out this setting if you wish; or you can leave it in, double checking
+                                         # (CRL and OCSP) does no harm.
+                                         # But if CAS application doesn't do OCSP checks (if jdigidoc.ocsp.enabled=false in cas-config.properties)
+                                         # then this setting (CRL checking) must be used.
     proxy_set_header SSL_CLIENT_CERT $ssl_client_cert;
 
     # Not mandatory, just recommended somewhere...

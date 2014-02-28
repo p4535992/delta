@@ -1,6 +1,6 @@
 package ee.webmedia.alfresco.docadmin.bootstrap;
 
-import static ee.webmedia.alfresco.utils.SearchUtil.generatePropertyExactQuery;
+import static ee.webmedia.alfresco.utils.SearchUtil.generateStringExactQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.joinQueryPartsOr;
 
 import java.util.Arrays;
@@ -34,8 +34,8 @@ public class ThesauriFieldsUpdater extends AbstractNodeUpdater {
                         SearchUtil.generateTypeQuery(DocumentAdminModel.Types.FIELD_DEFINITION)
                 )
                 , joinQueryPartsOr(
-                        generatePropertyExactQuery(DocumentAdminModel.Props.FIELD_TYPE, "HIERARCHICAL_KEYWORD_LEVEL1", false),
-                        generatePropertyExactQuery(DocumentAdminModel.Props.FIELD_TYPE, "HIERARCHICAL_KEYWORD_LEVEL2", false)
+                        generateStringExactQuery("HIERARCHICAL_KEYWORD_LEVEL1", DocumentAdminModel.Props.FIELD_TYPE),
+                        generateStringExactQuery("HIERARCHICAL_KEYWORD_LEVEL2", DocumentAdminModel.Props.FIELD_TYPE)
                         )
                 ));
         return Arrays.asList(searchService.query(generalService.getStore(), SearchService.LANGUAGE_LUCENE, query));

@@ -1,5 +1,10 @@
 package ee.webmedia.alfresco.workflow.web;
 
+import static ee.webmedia.alfresco.common.web.UserContactGroupSearchBean.CONTACTS_FILTER;
+import static ee.webmedia.alfresco.common.web.UserContactGroupSearchBean.CONTACT_GROUPS_FILTER;
+import static ee.webmedia.alfresco.common.web.UserContactGroupSearchBean.USERS_FILTER;
+import static ee.webmedia.alfresco.common.web.UserContactGroupSearchBean.USER_GROUPS_FILTER;
+
 import java.io.Serializable;
 
 import javax.faces.model.SelectItem;
@@ -27,8 +32,8 @@ public class OwnerSearchBean implements Serializable {
     public SelectItem[] getResponsibleOwnerSearchFilters() {
         if (responsibleOwnerSearchFilters == null) {
             responsibleOwnerSearchFilters = new SelectItem[] {
-                    new SelectItem(0, MessageUtil.getMessage("task_owner_users")),
-                    new SelectItem(1, MessageUtil.getMessage("task_owner_contacts")),
+                    new SelectItem(USERS_FILTER, MessageUtil.getMessage("task_owner_users")),
+                    new SelectItem(CONTACTS_FILTER, MessageUtil.getMessage("task_owner_contacts")),
             };
         }
         return responsibleOwnerSearchFilters;
@@ -37,8 +42,8 @@ public class OwnerSearchBean implements Serializable {
     public SelectItem[] getReviewOwnerSearchFilters() {
         if (reviewOwnerSearchFilters == null) {
             reviewOwnerSearchFilters = new SelectItem[] {
-                    new SelectItem(0, MessageUtil.getMessage("task_owner_users")),
-                    new SelectItem(1, MessageUtil.getMessage("task_owner_usergroups"))
+                    new SelectItem(USERS_FILTER, MessageUtil.getMessage("task_owner_users")),
+                    new SelectItem(USER_GROUPS_FILTER, MessageUtil.getMessage("task_owner_usergroups"))
             };
         }
         return reviewOwnerSearchFilters;
@@ -47,10 +52,10 @@ public class OwnerSearchBean implements Serializable {
     public SelectItem[] getOwnerSearchFilters() {
         if (ownerSearchFilters == null) {
             ownerSearchFilters = new SelectItem[] {
-                    new SelectItem(0, MessageUtil.getMessage("task_owner_users")),
-                    new SelectItem(1, MessageUtil.getMessage("task_owner_usergroups")),
-                    new SelectItem(2, MessageUtil.getMessage("task_owner_contacts")),
-                    new SelectItem(3, MessageUtil.getMessage("task_owner_contactgroups"))
+                    new SelectItem(USERS_FILTER, MessageUtil.getMessage("task_owner_users")),
+                    new SelectItem(USER_GROUPS_FILTER, MessageUtil.getMessage("task_owner_usergroups")),
+                    new SelectItem(CONTACTS_FILTER, MessageUtil.getMessage("task_owner_contacts")),
+                    new SelectItem(CONTACT_GROUPS_FILTER, MessageUtil.getMessage("task_owner_contactgroups"))
             };
         }
         return ownerSearchFilters;

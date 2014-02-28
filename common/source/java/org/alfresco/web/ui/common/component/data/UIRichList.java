@@ -93,8 +93,8 @@ public class UIRichList extends UIComponentBase implements IDataContainer,Serial
             IRichListRenderer renderer = (IRichListRenderer)clazz.newInstance();
             viewRenderers.put(renderer.getViewModeID(), renderer);
             
-            if (logger.isDebugEnabled())
-               logger.debug("Added view '" + renderer.getViewModeID() + "' to UIRichList");
+            if (logger.isTraceEnabled())
+               logger.trace("Added view '" + renderer.getViewModeID() + "' to UIRichList");
          }
          catch (Exception e)
          {
@@ -564,6 +564,7 @@ public class UIRichList extends UIComponentBase implements IDataContainer,Serial
 
    public void bind(boolean ignoreRefreshOnBind)
    {
+      String log = "DataModel row count";
       if (!ignoreRefreshOnBind && getRefreshOnBind() == true)
       {
          this.value = null;
@@ -574,9 +575,13 @@ public class UIRichList extends UIComponentBase implements IDataContainer,Serial
          // relation between objects in the _rowStates and the
          // corresponding DataModel element.
          _rowStates.clear();
+         log += " after refresh";
       }
       int rowCount = getDataModel().size();
       this.absoluteRwCount = rowCount;
+      if (logger.isDebugEnabled()) {
+          logger.debug(log + " is " + rowCount);
+      }
 
       removeNodesWithoutPermissionFromDataModel();
 
@@ -623,24 +628,35 @@ public class UIRichList extends UIComponentBase implements IDataContainer,Serial
    private void removeNodesWithoutPermissionFromDataModel() {
        IGridDataModel myDataModel = getDataModel();
        int rowCount = myDataModel.size();
-       if (getDoPermissionCheck() != null && myDataModel.size() != 0) {
+       String permission = getDoPermissionCheck();
+       if (permission != null && myDataModel.size() != 0) {
+           if (logger.isDebugEnabled()) {
+               logger.debug("Checking DataModel for " + permission + " permission");
+           }
            int start = this.currentPage * this.pageSize - 1;
            if (start < 0)
                start = 0;
+           int removedDataModel = 0;
+           int removedChildren = 0;
            while (start <= ((this.currentPage + 1) * this.pageSize) + 1 && start < rowCount) {
                Node nood = (Node) myDataModel.getRow(start);
-               boolean check = nood.hasPermission(getDoPermissionCheck());
+               boolean check = nood.hasPermission(permission);
                if (check) {
                    start++;
                } else {
                    Object removed = myDataModel.remove(start);
+                   removedDataModel++;
                    if(getChildren().contains(removed)){
                        getChildren().remove(removed);
+                       removedChildren++;
                    }
                    rowCount--;
                    this.absoluteRwCount--;
                    this.maxRowIndex = (rowCount - 1);
                }
+           }
+           if (logger.isDebugEnabled()) {
+               logger.debug("Removed " + removedDataModel + " items from data model and " + removedChildren + " child UIComponents.");
            }
        }
    }
@@ -757,7 +773,7 @@ public class UIRichList extends UIComponentBase implements IDataContainer,Serial
    private int pageCount = 1;
    private boolean sortOrPageChanged = false;
    
-   private static Log logger = LogFactory.getLog(IDataContainer.class);
+   private static Log logger = LogFactory.getLog(UIRichList.class);
 
     // ------------------------------------------------------------------------------
     // Alar Kvell: Support EditableValueHolder components (for example UIInput) inside UIRichList

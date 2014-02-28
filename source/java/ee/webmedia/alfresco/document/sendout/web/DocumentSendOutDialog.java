@@ -493,6 +493,7 @@ public class DocumentSendOutDialog extends BaseDialogBean {
 
     private boolean sendOut(FacesContext context) {
         boolean result = true;
+        boolean isEncrypt = model.isEncrypt();
         List<String> names = new ArrayList<String>();
         List<String> emails = new ArrayList<String>();
         List<String> modes = new ArrayList<String>();
@@ -502,7 +503,7 @@ public class DocumentSendOutDialog extends BaseDialogBean {
         emails.addAll(model.getProperties().get(PROP_KEYS[1]));
         modes.addAll(model.getProperties().get(PROP_KEYS[2]));
 
-        if (model.isEncrypt()) {
+        if (isEncrypt) {
             encryptionIdCodes = new ArrayList<String>();
             for (EncryptionRecipient encryptionRecipient : getEncryptionRecipients()) {
                 if (StringUtils.isBlank(encryptionRecipient.getIdCode())) {
@@ -525,14 +526,15 @@ public class DocumentSendOutDialog extends BaseDialogBean {
                     "Sending out document failed\n  nodeRef=" + model.getNodeRef() + "\n  names=" + names + "\n  emails=" + emails + "\n  modes=" + modes
                             + "\n  encryptionIdCodes=" + encryptionIdCodes + "\n  senderEmail=" + model.getSenderEmail() + "\n  subject=" + model.getSubject() + "\n  content="
                             + (model.getContent() == null ? "null" : "String[" + model.getContent().length() + "]") + "\n  fileRefs=" + fileRefs + "\n  zip=" + model.isZip()
-                            + "\n  encrypt=" + model.isEncrypt(), e);
+                            + "\n  encrypt=" + isEncrypt, e);
             result = false;
         }
         if (!result) {
             MessageUtil.addErrorMessage(context, "document_send_failed");
             getDocumentLogService().addDocumentLog(model.getNodeRef(), MessageUtil.getMessage("document_log_status_sending_failed"));
         } else {
-            getDocumentLogService().addDocumentLog(model.getNodeRef(), MessageUtil.getMessage("document_log_status_sent"));
+            getDocumentLogService().addDocumentLog(model.getNodeRef(),
+                    MessageUtil.getMessage(isEncrypt ? "document_log_status_encrypted_sent" : "document_log_status_sent"));
             ((MenuBean) FacesHelper.getManagedBean(context, MenuBean.BEAN_NAME)).processTaskItem(
                     OutboxDocumentMenuItemProcessor.OUTBOX_DOCUMENT,
                     UnsentDocumentMenuItemProcessor.UNSENT_DOCUMENT);

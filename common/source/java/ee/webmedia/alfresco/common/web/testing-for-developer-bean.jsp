@@ -27,6 +27,63 @@
       rendered="#{deleteAllTasksFromRepo.updaterRunning}"
       disabled="#{deleteAllTasksFromRepo.updaterStopping}" />
 	<f:verbatim><br/></f:verbatim>
+
+	<h:outputText value="Logikirjete kustutamine repost. NB!!! Enne kasutamist veendu, et kõik updaterid, mis logikirjete andmeid repost andmebaasi tabelitesse kirjutavad, on edukalt lõpuni jooksnud!!!! Vastasel korral ei saa logide andmeid enam taastada!!!"/>
+	<f:verbatim><br/></f:verbatim>
+	<h:outputText value="numberOfLogNodesInSingleTransaction: "/>
+    <h:inputText id="deleteAllLogNodesUpdaterBatchSize" value="#{deleteAllLogNodesFromRepo.batchSize}" size="4" />
+    <f:verbatim><br/></f:verbatim>    
+    <h:outputText value="Paus pärast iga logikirje töötlemist (ms): "/>
+    <h:inputText id="deleteAllLogNodesUpdaterSleepTime" value="#{deleteAllLogNodesFromRepo.sleepTime}" size="4" />
+    <f:verbatim><br/></f:verbatim>
+    <h:commandButton id="startDeleteAllLogNodesFromRepoUpdater" value="Käivita logikirjete kustutamise skript" type="submit"
+      actionListener="#{deleteAllLogNodesFromRepo.executeUpdaterInBackground}"
+      rendered="#{!deleteAllLogNodesFromRepo.updaterRunning}" />
+    <h:commandButton id="stopDeleteAllLogNodesFromRepoUpdater" value="Peata logikirjete kustutamise skript" type="submit"
+      actionListener="#{deleteAllLogNodesFromRepo.stopUpdater}"
+      rendered="#{deleteAllLogNodesFromRepo.updaterRunning}"
+      disabled="#{deleteAllLogNodesFromRepo.updaterStopping}" />
+	<f:verbatim><br/></f:verbatim>	
+
+   <f:verbatim><br/><hr/></f:verbatim>
+   <h:outputText value="Dokumentide shortRegNumber korrigeerimine numbriliseks väärtuseks ja regNumber korrigeerimine vastavalt"/>
+   <f:verbatim><br/></f:verbatim>
+   <h:outputText value="Päriselt muuda andmeid: "/>
+   <h:selectBooleanCheckbox value="#{invalidShortRegNumberUpdater.writeValues}" />
+   <f:verbatim><br/></f:verbatim>
+   <h:outputText value="numberOfDocumentsInSingleTransaction: "/>
+    <h:inputText id="invalidShortRegNumberUpdaterBatchSize" value="#{invalidShortRegNumberUpdater.batchSize}" size="4" />
+    <f:verbatim><br/></f:verbatim>    
+    <h:outputText value="Paus pärast iga dokumendi töötlemist (ms): "/>
+    <h:inputText id="invalidShortRegNumberUpdaterSleepTime" value="#{invalidShortRegNumberUpdater.sleepTime}" size="4" />
+    <f:verbatim><br/></f:verbatim>
+    <h:commandButton id="startinvalidShortRegNumberUpdaterUpdater" value="Käivita shortRegNumber korrigeerimise skript" type="submit"
+      actionListener="#{invalidShortRegNumberUpdater.executeUpdaterInBackground}"
+      rendered="#{!invalidShortRegNumberUpdater.updaterRunning}" />
+    <h:commandButton id="stopinvalidShortRegNumberUpdaterUpdater" value="Peata shortRegNumber korrigeerimise skript" type="submit"
+      actionListener="#{invalidShortRegNumberUpdater.stopUpdater}"
+      rendered="#{invalidShortRegNumberUpdater.updaterRunning}"
+      disabled="#{invalidShortRegNumberUpdater.updaterStopping}" />
+   <f:verbatim><br/></f:verbatim>   
+	
+   <f:verbatim><br/><hr/></f:verbatim>
+	<h:outputText value="Dokumendi andmete uuendamine pärast 3.6.21 -> 3.6.30 üleminekut"/>
+	<f:verbatim><br/></f:verbatim>
+	<h:outputText value="numberOfDocumentsSingleTransaction: "/>
+    <h:inputText id="documentUpdater_2BatchSize" value="#{documentUpdater_2.batchSize}" size="4" />
+    <f:verbatim><br/></f:verbatim>    
+    <h:outputText value="Paus pärast iga dokumendi töötlemist (ms): "/>
+    <h:inputText id="documentUpdater_2SleepTime" value="#{documentUpdater_2.sleepTime}" size="4" />
+    <f:verbatim><br/></f:verbatim>
+    <h:commandButton id="startDocumentUpdater_2" value="Käivita dokumentide uuendamise skript" type="submit"
+      actionListener="#{documentUpdater_2.executeUpdaterInBackground}"
+      rendered="#{!documentUpdater_2.updaterRunning}" />
+    <h:commandButton id="stopdocumentUpdater_2" value="Peata dokumentide uuendamise skript" type="submit"
+      actionListener="#{documentUpdater_2.stopUpdater}"
+      rendered="#{documentUpdater_2.updaterRunning}"
+      disabled="#{documentUpdater_2.updaterStopping}" />
+	<f:verbatim><br/></f:verbatim>	
+	
 <%--   <br/>
    <u>Dokumendi õiguste uuendamise skript (enne 2.5 versiooni)</u>
    <br/>
@@ -86,27 +143,19 @@
 <f:verbatim><hr/></f:verbatim>
 <h:commandButton id="docList_updateDocCounters" value="Uuenda dokumentide loendureid" type="submit" 
       actionListener="#{FunctionsListDialog.updateDocCounters}" />
+<h:commandButton id="docList_updateArchivedDocCounters" value="Uuenda arhiveeritud dokumentide loendureid" type="submit" 
+      actionListener="#{FunctionsListDialog.updateArchivedDocCounters}" />      
+
 <f:verbatim><hr/></f:verbatim>
-<h:outputText value="Dokumentidele õiguste lisamine lähtuvalt tööülesannetest"/>
+
+<h:commandButton id="volume_archive_pause_all" value="Peata kõik arhiveerimistööd" type="submit" 
+   actionListener="#{ArchivalsService.pauseArchiving}" />
 <f:verbatim><br/></f:verbatim>
-<h:outputText value="Kasutajate isikukoodid (tühikute või reavahetustega eraldatud): "/>
-<h:inputTextarea id="addTaskPrivilegesToDocumentUpdaterValidUsers" value="#{addTaskPrivilegesToDocumentUpdater.validUsers}" rows="5" cols="30" styleClass="expand19-200" />
+<h:commandButton id="volume_archive_continue_all" value="Jätka kõiki arhiveerimistöid" type="submit" 
+   actionListener="#{ArchivalsService.continueArchiving}" />
 <f:verbatim><br/></f:verbatim>
-<h:outputText value="Mitu tööülesannet ühes transaktsioonis töödelda: "/>
-<h:inputText id="addTaskPrivilegesToDocumentUpdaterBatchSize" value="#{addTaskPrivilegesToDocumentUpdater.batchSize}" converter="javax.faces.Integer" size="4" />
-<f:verbatim><br/></f:verbatim>
-<h:commandButton id="startAddTaskPrivilegesToDocumentUpdater" value="Käivita õiguste lisamine" type="submit"
-   actionListener="#{addTaskPrivilegesToDocumentUpdater.executeUpdaterInBackground}"
-   rendered="#{addTaskPrivilegesToDocumentUpdater.updaterRunning == false}" />
-<h:commandButton id="stopAddTaskPrivilegesToDocumentUpdater" value="Peata õiguste lisamine" type="submit"
-   actionListener="#{addTaskPrivilegesToDocumentUpdater.stopUpdater}"
-   rendered="#{addTaskPrivilegesToDocumentUpdater.updaterRunning == true}"
-   disabled="#{addTaskPrivilegesToDocumentUpdater.updaterStopping == true}" />
-<f:verbatim><br/></f:verbatim>
-<h:outputText value="Paus pärast iga tööülesande töötlemist (ms): "/>
-<h:inputText id="addTaskPrivilegesToDocumentUpdaterSleepTime" value="#{addTaskPrivilegesToDocumentUpdater.sleepTime}" converter="javax.faces.Integer" size="4" />
-<h:commandButton id="updateAddTaskPrivilegesToDocumentUpdaterSleepTime" value="Uuenda" type="submit"
-      actionListener="#{addTaskPrivilegesToDocumentUpdater.updateSleepTime}" />
+<h:commandButton id="volume_archive_cancel_all" value="Tühjenda arhiveerimistööde nimekiri" type="submit" 
+   actionListener="#{ArchivalsService.cancelAllArchivingJobs}" />
 
 <f:verbatim><hr/></f:verbatim>
 
@@ -168,9 +217,16 @@
 <h:commandButton id="destroyArchivedVolumes" value="destroyArchivedVolumes" type="submit"
    actionListener="#{ArchivalsService.destroyArchivedVolumes}" rendered="#{ApplicationService.test}" />
 <f:verbatim><br/></f:verbatim>
+<h:commandButton id="updateOrganisationStructures" value="updateOrganisationStructures" type="submit"
+   actionListener="#{OrganizationStructureService.updateOrganisationStructures}" />
+<f:verbatim><br/></f:verbatim>
+<h:commandButton id="updateUsersAndGroups" value="updateUsersAndGroups" type="submit"
+   actionListener="#{TestingForDeveloperBean.updateUsersAndGroups}" />
+<f:verbatim><br/></f:verbatim>
 <h:commandButton id="updateOrganisationStructureBasedGroups" value="updateOrganisationStructureBasedGroups" type="submit"
    actionListener="#{OrganizationStructureService.updateOrganisationStructureBasedGroups}" rendered="#{ApplicationService.test}" />
    <f:verbatim><br/></f:verbatim>
+
 <h:outputText id="reportGenerationTitle" value="Aruannete genereerimine: " />
 <f:verbatim><br/></f:verbatim>
 <h:outputText id="reportGenerationStatus" value=" Selles klastri õlas aruannete genereerimine ei jookse." rendered="#{!ReportListDialog.reportGenerationEnabled}" />
@@ -178,6 +234,15 @@
    actionListener="#{ReportListDialog.pauseReportGeneration}" rendered="#{ReportListDialog.showPauseReportGeneration}" />
 <h:commandButton id="continueReportGeneration" value="Jätka aruannete genereerimist" type="submit"
    actionListener="#{ReportListDialog.continueReportGeneration}" rendered="#{ReportListDialog.showContinueReportGeneration}" />
+<f:verbatim><br/></f:verbatim>
+
+<h:outputText id="privilegeActionsTitle" value="Õiguste lisamine ja eemaldamine: " />
+<f:verbatim><br/></f:verbatim>
+<h:outputText id="privilegeActionsStatus" value=" Selles klastri õlas õiguste lisamine ja eemaldamine ei jookse." rendered="#{!ManageInheritablePrivilegesDialog.privilegeActionsEnabled}" />
+<h:commandButton id="pausePrivilegeActions" value="Peata õiguste lisamine ja eemaldamine" type="submit"
+   actionListener="#{ManageInheritablePrivilegesDialog.pausePrivilegeActions}" rendered="#{ManageInheritablePrivilegesDialog.showPausePrivilegeActions}" />
+<h:commandButton id="continuePrivilegeActions" value="Jätka õiguste lisamist ja eemaldamist" type="submit"
+   actionListener="#{ManageInheritablePrivilegesDialog.continuePrivilegeActions}" rendered="#{ManageInheritablePrivilegesDialog.showContinuePrivilegeActions}" />
 <f:verbatim><br/></f:verbatim>
 
 <f:verbatim><hr/></f:verbatim>
@@ -446,16 +511,63 @@
    <h:outputText value="Loodetavasti oli ühest eelnevatest lahendustest kasu. Kui ka sellest tekstist üleval asuva nupu vajutusest ka polnud kasu, siis vajutage järgnevat nuppu, et eelneva nupu tegevused tühistada" />
    <h:commandButton id="test3Undo" value="võimalus 3 undo: eemalda õigused imap-root kataloogi otseste alamkataloogide alamkataloogidelt" type="submit" actionListener="#{ArrivedDocumentsPermissionsModifier.test3Undo}" />
 
-   <f:verbatim><br/><br/></f:verbatim>
 
 <f:verbatim><hr/></f:verbatim>
 
-<h:outputText styleClass="mainTitle" value="Indeksite mergemine"/>
+<f:verbatim><br/></f:verbatim>
+<h:outputText value="Maintenance tasks for data" style="font-weight: bold;" />
+
+<f:verbatim><br/><br/></f:verbatim>
+<h:commandButton id="deleteDrafts" value="deleteDrafts" type="submit" actionListener="#{deleteDraftsBootstrap.execute}"/>  
+
+<f:verbatim><br/><br/></f:verbatim>
+<h:commandButton id="findAndFixInvalidNodes" value="findAndFixInvalidNodes" type="submit" actionListener="#{invalidNodeFixerBootstrap.execute}"/>  
+
+<f:verbatim><br/><br/></f:verbatim>
+<h:outputText styleClass="mainTitle" value="Acl vigade parandamine. NB! Kui vigu on palju, võib parandamine võtta kaua aega! Live keskkondades ei ole soovitatav funktsionaalsust käivitada, kui rakendus on aktiivselt kasutusel.
+ Enne käivitamist live keskkondades tuleb kindlasti veendud, kui palju parandatavaid vigu keskkonnas tegelikult on."/>
+<f:verbatim><br/></f:verbatim>
+<h:outputText value="Paranda acl p4 vead (inheritWithInheritanceUnset) määratud uuid-ga node'i jaoks (kõik node'id kui uuid on määramata): "/>
+<f:verbatim><br/></f:verbatim>
+<h:inputText value="#{fixAclInheritanceUpdater2.nodeUuidP4}" />
+ <h:commandButton id="fixAclP4" value="fixAclP4" type="submit" actionListener="#{fixAclInheritanceUpdater2.fixAclsThatInheritWithInheritanceUnset}"/>
+<f:verbatim><br/></f:verbatim>
+<h:outputText value="Paranda acl p3 vead (inheritFromNonPrimaryParent) määratud uuid-ga node'i jaoks (kõik node'id kui uuid on määramata): "/>
+<f:verbatim><br/></f:verbatim>
+<h:inputText value="#{fixAclInheritanceUpdater2.nodeUuidP3}" />
+ <h:commandButton id="fixAclP3" value="fixAclP3" type="submit" actionListener="#{fixAclInheritanceUpdater2.fixAclsThatInheritFromNonPrimaryParent}"/>  
+
+<f:verbatim><br/><br/><u></f:verbatim>
+<h:outputText value="Nightly 02:30 data maintenance job (runs only on primary cluster node, aka where jobs.enabled=true): "/>
+<f:verbatim></u><br/></f:verbatim>
+<h:outputText value="1) deleteDrafts"/>
+<f:verbatim><br/></f:verbatim>
+<h:outputText value="2) findAndFixInvalidNodes"/>
+<f:verbatim><br/></f:verbatim>
+<h:outputText value="3) fixAclP3"/>
+<f:verbatim><br/></f:verbatim>
+<h:commandButton id="runNightly0230DataMaintenanceJobNow" value="runNightly0230DataMaintenanceJobNow" type="submit" actionListener="#{TestingForDeveloperBean.runNightly0230DataMaintenanceJobNow}" />
+
+<f:verbatim><br/><br/></f:verbatim>
+<f:verbatim><hr/></f:verbatim>
+
+<f:verbatim><br/></f:verbatim>
+<h:outputText value="Maintenance tasks for Lucene indexes" style="font-weight: bold;" />
+
+<f:verbatim><br/><br/></f:verbatim>
    <h:dataTable value="#{TestingForDeveloperBean.storeRefs}" var="row" rowClasses="selectedItemsRow,selectedItemsRowAlt" headerClass="selectedItemsHeader">
       <h:column>
          <h:outputText value="#{row}" />
       </h:column>
       <h:column>
+         <h:commandButton id="checkIndexIntegrity" value="checkIndexIntegrity" type="submit" actionListener="#{indexIntegrityCheckerBootstrap.execute}">
+           <f:param name="storeRef" value="#{row}" />
+         </h:commandButton>
+         <f:verbatim>&nbsp;</f:verbatim>
+         <h:commandButton id="checkIndexIntegrityAndReindex" value="checkIndexIntegrityAndReindex" type="submit" actionListener="#{indexIntegrityCheckerBootstrap.executeWithReindex}">
+           <f:param name="storeRef" value="#{row}" />
+         </h:commandButton>
+         <f:verbatim>&nbsp;</f:verbatim>
          <h:commandButton id="runMergeNow" value="runMergeNow" type="submit" actionListener="#{TestingForDeveloperBean.runMergeNow}">
            <f:param name="storeRef" value="#{row}" />
          </h:commandButton>
@@ -467,17 +579,44 @@
    </h:dataTable>
 
 <f:verbatim><br/></f:verbatim>
-<h:commandButton id="runMergeNowOnAllIndexesAndPerformIndexBackup" value="runMergeNowOnAllIndexesAndPerformIndexBackup" type="submit" actionListener="#{TestingForDeveloperBean.runMergeNowOnAllIndexesAndPerformIndexBackup}" />
+<h:commandButton id="checkIndexIntegrityOnAllIndexes" value="checkIndexIntegrityOnAllIndexes" type="submit" actionListener="#{indexIntegrityCheckerBootstrap.execute}"/>  
+<f:verbatim><br/></f:verbatim>
+<h:commandButton id="checkIndexIntegrityOnAllIndexesAndReindex" value="checkIndexIntegrityOnAllIndexesAndReindex" type="submit" actionListener="#{indexIntegrityCheckerBootstrap.executeWithReindex}"/>  
+
+<f:verbatim><br/><br/></f:verbatim>
+<h:outputText value="lookBackMinutes: "/>
+<h:inputText value="#{customReindexComponent.lookBackMinutes}" size="6" converter="javax.faces.Integer" />
+<f:verbatim><br/></f:verbatim>
+<h:outputText value="changeTxnIds (mitu eralda tühikuga; kui see on täidetud, siis lookBackMinutes ei arvestata): "/>
+<h:inputText value="#{customReindexComponent.customChangeTxnIds}" />
+<f:verbatim><br/></f:verbatim>
+<h:commandButton id="searchHolesOnAllIndexesAndReindex" value="searchHolesOnAllIndexesAndReindex" type="submit" actionListener="#{TestingForDeveloperBean.searchHolesAndIndex}" />
+
+<f:verbatim><br/><br/><u></f:verbatim>
+<h:outputText value="Nightly 03:00 index maintenance job (runs on all cluster nodes): "/>
+<f:verbatim></u><br/></f:verbatim>
+<h:outputText value="1) searchHoldesOnAllIndexesAndReindex (lookBackMinutes=1500, aka 25 hours)"/>
+<f:verbatim><br/></f:verbatim>
+<h:outputText value="2) checkIndexIntegrityOnAllIndexesAndReindex"/>
+<f:verbatim><br/></f:verbatim>
+<h:outputText value="3) runMergeOnAllIndexes"/>
+<f:verbatim><br/></f:verbatim>
+<h:outputText value="4) performIndexBackupOnAllIndexes (copies clean state into backup-lucene-indexes folder)"/>
+<f:verbatim><br/></f:verbatim>
+<h:outputText value="5) checkIndexIntegrityOnAllIndexes"/>
+<f:verbatim><br/></f:verbatim>
+<h:commandButton id="runNightly0300IndexMaintenanceJobNow" value="runNightly0300IndexMaintenanceJobNow" type="submit" actionListener="#{TestingForDeveloperBean.runNightly0300IndexMaintenanceJobNow}" />
 
 <f:verbatim><br/><br/></f:verbatim>
 <h:inputTextarea id="indexInfo" value="#{TestingForDeveloperBean.indexInfoText}" readonly="true" styleClass="expand19-200" style="font-family: monospace;" />
 
 <f:verbatim><hr/></f:verbatim>
-
-<h:outputText value="lookBackMinutes: "/>
-<h:inputText value="#{customReindexComponent.lookBackMinutes}" size="6" converter="javax.faces.Integer" />
-<f:verbatim>&nbsp;</f:verbatim>
-<h:commandButton id="searchHolesAndIndex" value="searchHolesAndIndex" type="submit" actionListener="#{TestingForDeveloperBean.searchHolesAndIndex}" />
+<f:verbatim><br/><br/></f:verbatim>
+<h:outputText value="Puuduva ownerId väljaga dokumendid:"/>
+<f:verbatim><br /></f:verbatim>
+<h:commandButton id="searchMissingOwnerId" value="searchMissingOwnerId" type="submit" actionListener="#{TestingForDeveloperBean.searchMissingOwnerId}" />
+<f:verbatim><br /><br /></f:verbatim>
+<h:inputTextarea id="missingOwnerIdArea" value="#{TestingForDeveloperBean.missingOwnerId}" readonly="true" styleClass="expand19-200" style="font-family: monospace;" />
 
 <f:verbatim><hr/></f:verbatim>
 
@@ -485,6 +624,10 @@
 <f:verbatim><br/></f:verbatim>
 
 <a:actionLink value="Lisa sessiooni mitteserialiseeruv objekt" actionListener="#{TestingForDeveloperBean.addNonSerializableObjectToSession}" rendered="#{ApplicationService.test}" />
+
+<f:verbatim><br/></f:verbatim>
+
+<a:actionLink value="executeCacheStatistics" actionListener="#{TestingForDeveloperBean.executeCacheStatistics}" />
 
 <f:verbatim><br/></f:verbatim>
 

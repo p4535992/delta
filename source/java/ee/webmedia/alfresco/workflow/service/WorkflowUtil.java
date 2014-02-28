@@ -1,13 +1,16 @@
 package ee.webmedia.alfresco.workflow.service;
 
 import java.io.Serializable;
+import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import javax.faces.component.UIComponent;
@@ -15,9 +18,13 @@ import javax.faces.context.FacesContext;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.util.GUID;
 import org.alfresco.util.Pair;
+import org.alfresco.web.ui.common.Utils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.time.DateUtils;
 
+import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.Predicate;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.TextUtil;
@@ -37,6 +44,7 @@ public class WorkflowUtil {
      * but generated for delegating original assignment task to other people
      */
     private static final QName TMP_ADDED_BY_DELEGATION = RepoUtil.createTransientProp("addedByDelegation");
+    private static final QName TMP_GUID = RepoUtil.createTransientProp("tmpGuid");
     public static final String TASK_INDEX = "taskIndex";
 
     // -------------
@@ -233,7 +241,7 @@ public class WorkflowUtil {
         }
         Status status = Status.of(task.getStatus());
         if (requiredStatuses.length > 0 && !isStatus(task, requiredStatuses)) {
-            throw new WorkflowChangedException("Task status must be one of [" + StringUtils.join(requiredStatuses, ", ") + "]\n" + task);
+            throw new WorkflowChangedException("Task status must be one of [" + StringUtils.join(requiredStatuses, ", ") + "]", task);
         }
         return status;
     }
@@ -260,7 +268,7 @@ public class WorkflowUtil {
         Status status = Status.of(workflow.getStatus());
         List<Task> tasks = workflow.getTasks();
         if (tasks.size() == 0 && status != Status.NEW && status != Status.FINISHED) {
-            throw new WorkflowChangedException("Workflow must have at least one task if status is not NEW nor FINISHED\n" + workflow);
+            throw new WorkflowChangedException("Workflow must have at least one task if status is not NEW nor FINISHED", workflow);
         }
         for (Task task : tasks) {
             checkTask(task, skipPropChecks);
@@ -268,49 +276,49 @@ public class WorkflowUtil {
         switch (status) {
         case NEW:
             if (!isStatusAll(tasks, Status.NEW)) {
-                throw new WorkflowChangedException("If workflow status is NEW, then all tasks must have status NEW\n" + workflow);
+                throw new WorkflowChangedException("If workflow status is NEW, then all tasks must have status NEW", workflow);
             }
             break;
         case IN_PROGRESS:
             if (workflow.isParallelTasks()) {
                 if (!isStatusAny(tasks, Status.IN_PROGRESS) || !isStatusAll(tasks, Status.IN_PROGRESS, Status.FINISHED, Status.UNFINISHED)) {
                     throw new WorkflowChangedException(
-                            "If workflow status is IN_PROGRESS, then at least one task must have status IN_PROGRESS and other must have status FINISHED or UNFINISHED\n"
-                                    + workflow);
+                            "If workflow status is IN_PROGRESS, then at least one task must have status IN_PROGRESS and other must have status FINISHED or UNFINISHED",
+                            workflow);
                 }
             } else {
                 if (!isStatusOrder(tasks).requireAny(Status.FINISHED, Status.UNFINISHED).requireOne(Status.IN_PROGRESS).requireAny(Status.NEW).check()) {
                     throw new WorkflowChangedException(
-                            "If workflow status is IN_PROGRESS, then tasks must have the following statuses, in order: 0..* FINISHED or UNFINISHED, 1 IN_PROGRESS, 0..* NEW\n"
-                                    + workflow);
+                            "If workflow status is IN_PROGRESS, then tasks must have the following statuses, in order: 0..* FINISHED or UNFINISHED, 1 IN_PROGRESS, 0..* NEW",
+                            workflow);
                 }
             }
             break;
         case STOPPED:
             if (workflow.isParallelTasks()) {
                 if (!isStatusAll(tasks, Status.NEW, Status.STOPPED, Status.FINISHED, Status.UNFINISHED)) {
-                    throw new WorkflowChangedException("If workflow status is STOPPED, then all tasks must have status STOPPED or FINISHED or UNFINISHED\n"
-                            + workflow);
+                    throw new WorkflowChangedException("If workflow status is STOPPED, then all tasks must have status STOPPED or FINISHED or UNFINISHED",
+                            workflow);
                 }
             } else {
                 if (!isStatusOrder(tasks).requireAny(Status.FINISHED, Status.UNFINISHED).requireOne(Status.STOPPED).requireAny(Status.NEW).check()
                         && !isStatusOrder(tasks).requireAtLeastOne(Status.FINISHED, Status.UNFINISHED).requireAny(Status.NEW).check()) {
                     throw new WorkflowChangedException(
-                            "If workflow status is STOPPED, then tasks must have the following statuses, in order: (0..* FINISHED or UNFINISHED, 1 STOPPED, 0..* NEW) or (1..* FINISHED or UNFINISHED, 0..* NEW)\n"
-                                    + workflow);
+                            "If workflow status is STOPPED, then tasks must have the following statuses, in order: (0..* FINISHED or UNFINISHED, 1 STOPPED, 0..* NEW) or (1..* FINISHED or UNFINISHED, 0..* NEW)",
+                            workflow);
                 }
             }
             break;
         case FINISHED:
             if (!isStatusAll(tasks, Status.FINISHED, Status.UNFINISHED)) {
-                throw new WorkflowChangedException("If workflow status is FINISHED, then all tasks must have status FINISHED or UNFINISHED\n" + workflow);
+                throw new WorkflowChangedException("If workflow status is FINISHED, then all tasks must have status FINISHED or UNFINISHED", workflow);
             }
             break;
         case UNFINISHED:
-            throw new WorkflowChangedException("Workflow cannot have status UNFINISHED\n" + workflow);
+            throw new WorkflowChangedException("Workflow cannot have status UNFINISHED", workflow);
         }
         if (requiredStatuses.length > 0 && !isStatus(workflow, requiredStatuses)) {
-            throw new WorkflowChangedException("Workflow status must be one of [" + StringUtils.join(requiredStatuses, ", ") + "]\n" + workflow);
+            throw new WorkflowChangedException("Workflow status must be one of [" + StringUtils.join(requiredStatuses, ", ") + "]", workflow);
         }
         return status;
     }
@@ -323,7 +331,7 @@ public class WorkflowUtil {
         Status cWfStatus = Status.of(compoundWorkflow.getStatus());
         List<Workflow> workflows = compoundWorkflow.getWorkflows();
         if (workflows.size() == 0 && cWfStatus != Status.NEW && cWfStatus != Status.FINISHED) {
-            throw new WorkflowChangedException("CompoundWorkflow must have at least one workflow if status is not NEW nor FINISHED\n" + compoundWorkflow);
+            throw new WorkflowChangedException("CompoundWorkflow must have at least one workflow if status is not NEW nor FINISHED", compoundWorkflow);
         }
         for (Workflow workflow : workflows) {
             checkWorkflow(workflow, skipPropChecks);
@@ -331,13 +339,13 @@ public class WorkflowUtil {
         switch (cWfStatus) {
         case NEW:
             if (!isStatusAll(workflows, Status.NEW)) {
-                throw new WorkflowChangedException("If compoundWorkflow status is NEW, then all workflows must have status NEW\n" + compoundWorkflow);
+                throw new WorkflowChangedException("If compoundWorkflow status is NEW, then all workflows must have status NEW", compoundWorkflow);
             }
             break;
         case IN_PROGRESS:
             Status[] inProgressAllowedStatuses = { Status.IN_PROGRESS, Status.FINISHED };
             if (!isValidInProgressOrStopped(workflows, cWfStatus, inProgressAllowedStatuses)) {
-                throw new WorkflowChangedException(getNotValidInProgressOrStoppedMsg(compoundWorkflow, cWfStatus, inProgressAllowedStatuses));
+                throw new WorkflowChangedException(getNotValidInProgressOrStoppedMsg(compoundWorkflow, cWfStatus, inProgressAllowedStatuses), compoundWorkflow);
             }
             break;
         case STOPPED:
@@ -345,19 +353,19 @@ public class WorkflowUtil {
             if (!isValidInProgressOrStopped(workflows, cWfStatus, stoppedAllowedStatuses)
                     && !isStatusOrder(workflows).requireAtLeastOne(Status.FINISHED).requireAny(Status.NEW, Status.FINISHED).check()) {
                 throw new WorkflowChangedException(getNotValidInProgressOrStoppedMsg(compoundWorkflow, cWfStatus, stoppedAllowedStatuses)
-                        + "\nOR as an alternative following order: 1..* FINISHED, 0..* NEW or FINISHED\n" + compoundWorkflow);
+                        + "\nOR as an alternative following order: 1..* FINISHED, 0..* NEW or FINISHED", compoundWorkflow);
             }
             break;
         case FINISHED:
             if (!isStatusAll(workflows, Status.FINISHED)) {
-                throw new WorkflowChangedException("If compoundWorkflow status is FINISHED, then all workflows must have status FINISHED\n" + compoundWorkflow);
+                throw new WorkflowChangedException("If compoundWorkflow status is FINISHED, then all workflows must have status FINISHED", compoundWorkflow);
             }
             break;
         case UNFINISHED:
-            throw new WorkflowChangedException("CompoundWorkflow cannot have status UNFINISHED\n" + compoundWorkflow);
+            throw new WorkflowChangedException("CompoundWorkflow cannot have status UNFINISHED", compoundWorkflow);
         }
         if (requiredStatuses.length > 0 && !isStatus(compoundWorkflow, requiredStatuses)) {
-            throw new WorkflowChangedException("CompoundWorkflow status must be one of [" + StringUtils.join(requiredStatuses, ", ") + "]\n" + compoundWorkflow);
+            throw new WorkflowChangedException("CompoundWorkflow status must be one of [" + StringUtils.join(requiredStatuses, ", ") + "]", compoundWorkflow);
         }
         return cWfStatus;
     }
@@ -369,7 +377,7 @@ public class WorkflowUtil {
         }
         return "If compoundWorkflow status is " + cWfStatus.name() + ", then workflows must have the following statuses, in order:" +
                 " 0..* FINISHED, (1 " + cWfStatus.name() + " OR (1..* parallely startable workflows " + TextUtil.joinNonBlankStrings(statusNames, " OR ")
-                + " with at least one " + cWfStatus.name() + ")), 0..* NEW or FINISHED\n" + compoundWorkflow;
+                + " with at least one " + cWfStatus.name() + ")), 0..* NEW or FINISHED";
     }
 
     private static boolean isValidInProgressOrStopped(List<Workflow> workflows, Status requiredStatus, Status... cWfStatuses) {
@@ -404,7 +412,7 @@ public class WorkflowUtil {
 
     public static void requireStatusUnchanged(BaseWorkflowObject object) {
         if (isStatusChanged(object)) {
-            throw new WorkflowChangedException("Changing status is not permitted outside of service:\n" + object);
+            throw new WorkflowChangedException("Changing status is not permitted outside of service", object);
         }
     }
 
@@ -528,7 +536,7 @@ public class WorkflowUtil {
         }
     }
 
-    private static boolean isEmptyTask(Task task) {
+    public static boolean isEmptyTask(Task task) {
         return StringUtils.isBlank(task.getOwnerName()) && task.getDueDate() == null && task.getDueDateDays() == null && StringUtils.isBlank(task.getResolutionOfTask())
                 && !(isGeneratedByDelegation(task) && WorkflowUtil.isActiveResponsible(task) && !task.isType(WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_TASK));
     }
@@ -542,53 +550,77 @@ public class WorkflowUtil {
     }
 
     /**
-     * Controls if there are tasks with same type and ownerId, except tasks with status NEW or UNFINISHED
+     * Controls for newly created tasks if there are tasks with same type and ownerId,
+     * except tasks with status UNFINISHED
      * 
      * @param compoundWorkflow
      * @return
      */
-    public static Set<Pair<String, QName>> haveSameTask(CompoundWorkflow compoundWorkflow) {
+    public static Set<Pair<String, QName>> haveSameTask(CompoundWorkflow compoundWorkflow, List<CompoundWorkflow> otherCompoundWorkflows) {
         Set<Pair<String, QName>> ownerNameTypeSet = new HashSet<Pair<String, QName>>();
-        Set<Pair<String, QName>> thisTasks = new HashSet<Pair<String, QName>>();
+        Map<QName, Set<String>> thisTasks = new HashMap<QName, Set<String>>();
+        Set<String> firstTasks = new HashSet<String>();
+        // collect all new task types by user from current compound workflow
         for (Workflow wf : compoundWorkflow.getWorkflows()) {
+            QName workflowType = wf.getType();
             for (Task task : wf.getTasks()) {
-                if (StringUtils.isBlank(task.getOwnerId())) {
+                if (task.isSaved()) {
                     continue;
                 }
-                Pair<String, QName> taskOwnerNameAndType = new Pair<String, QName>(task.getOwnerId(), task.getType());
-                if (thisTasks.contains(taskOwnerNameAndType)) {
-                    if (!task.isStatus(Status.NEW, Status.UNFINISHED)) {
-                        ownerNameTypeSet.add(taskOwnerNameAndType);
-                    }
-                } else {
-                    thisTasks.add(taskOwnerNameAndType);
+                String ownerId = task.getOwnerId();
+                if (StringUtils.isBlank(ownerId)) {
+                    continue;
                 }
+                Set<String> users = thisTasks.get(workflowType);
+                if (users == null) {
+                    users = new HashSet<String>();
+                    thisTasks.put(workflowType, users);
+                }
+                if (!users.contains(ownerId)) {
+                    String tmpGuid = GUID.generate();
+                    task.getNode().getProperties().put(TMP_GUID.toString(), tmpGuid);
+                    firstTasks.add(tmpGuid);
+                }
+                users.add(ownerId);
             }
         }
         if (thisTasks.isEmpty()) {
             return ownerNameTypeSet;
         }
-        for (CompoundWorkflow compWf : compoundWorkflow.getOtherCompoundWorkflows()) {
-            if (isStatus(compWf, Status.NEW)) {
-                continue;
+        for (Map.Entry<QName, Set<String>> entry : thisTasks.entrySet()) {
+            QName workflowQName = entry.getKey();
+            for (CompoundWorkflow compWf : otherCompoundWorkflows) {
+                haveSameTask(ownerNameTypeSet, firstTasks, entry, workflowQName, compWf, false);
             }
-            for (Workflow workflow : compWf.getWorkflows()) {
-                if (isStatus(workflow, Status.NEW)) {
-                    continue;
-                }
-                for (Task task : workflow.getTasks()) {
-                    if (task.isStatus(Status.NEW, Status.UNFINISHED) || StringUtils.isBlank(task.getOwnerId())) {
-                        continue;
-                    }
-                    Pair<String, QName> taskOwnerNameAndType = new Pair<String, QName>(task.getOwnerId(), task.getType());
-                    if (thisTasks.contains(taskOwnerNameAndType)) {
-                        ownerNameTypeSet.add(taskOwnerNameAndType);
-                    }
-                }
-            }
+            haveSameTask(ownerNameTypeSet, firstTasks, entry, workflowQName, compoundWorkflow, true);
         }
 
         return ownerNameTypeSet;
+    }
+
+    private static void haveSameTask(Set<Pair<String, QName>> ownerNameTypeSet, Set<String> firstTasks, Entry<QName, Set<String>> entry, QName workflowQName,
+            CompoundWorkflow compWf, boolean isCurrentWorkflow) {
+        for (Workflow workflow : compWf.getWorkflows()) {
+            QName currentWorkflowType = workflow.getType();
+            if (!currentWorkflowType.equals(workflowQName)) {
+                continue;
+            }
+            for (Task task : workflow.getTasks()) {
+                String ownerId = task.getOwnerId();
+                if (task.isStatus(Status.UNFINISHED) || StringUtils.isBlank(ownerId)) {
+                    continue;
+                }
+                QName taskType = task.getType();
+                if ((!isCurrentWorkflow || !firstTasks.contains(task.getNode().getProperties().get(TMP_GUID))) && entry.getValue().contains(ownerId)) {
+                    ownerNameTypeSet.add(new Pair<String, QName>(getTaskOwnerName(task), taskType));
+                }
+            }
+        }
+    }
+
+    private static String getTaskOwnerName(Task task) {
+        String ownerName = StringUtils.isNotBlank(task.getOwnerName()) ? task.getOwnerName() : task.getOwnerId();
+        return ownerName;
     }
 
     public static Task createTaskCopy(Task myTask) {
@@ -639,11 +671,17 @@ public class WorkflowUtil {
         List<Workflow> workflows = compound.getWorkflows();
 
         for (Map<String, List<TaskGroup>> group : taskGroups) {
+            if (workflows.size() == workflowId) {
+                break;
+            }
             Workflow workflow = workflows.get(workflowId);
             List<Task> wfTasks = workflow.getTasks();
             for (List<TaskGroup> groupList : group.values()) {
                 for (TaskGroup taskGroup : groupList) {
                     for (Integer taskId : taskGroup.getTaskIds()) {
+                        if (wfTasks.size() <= taskId) {
+                            continue;
+                        }
                         Task task = wfTasks.get(taskId);
                         if (task.getDueDate() == null) {
                             task.setDueDate(taskGroup.getDueDate());
@@ -683,6 +721,23 @@ public class WorkflowUtil {
             }
         }
         return selectedTasks;
+    }
+
+    public static void getDocmentDueDateMessage(Date notInvoiceDueDate, List<String> messages, Workflow workflow, Date taskDueDate) {
+        if (notInvoiceDueDate != null) {
+            if (!DateUtils.isSameDay(notInvoiceDueDate, taskDueDate) && taskDueDate.after(notInvoiceDueDate)) {
+                getAndAddMessage(messages, workflow, taskDueDate, "task_confirm_not_invoice_task_due_date", notInvoiceDueDate);
+            }
+        }
+    }
+
+    public static void getAndAddMessage(List<String> messages, Workflow workflow, Date taskDueDate, String msgKey, Date date) {
+        FacesContext fc = FacesContext.getCurrentInstance();
+        DateFormat dateFormat = Utils.getDateFormat(fc);
+        String invoiceTaskDueDateConfirmationMsg = MessageUtil.getMessage(msgKey,
+                MessageUtil.getMessage(workflow.getType().getLocalName()),
+                dateFormat.format(taskDueDate), dateFormat.format(date));
+        messages.add(invoiceTaskDueDateConfirmationMsg);
     }
 
 }

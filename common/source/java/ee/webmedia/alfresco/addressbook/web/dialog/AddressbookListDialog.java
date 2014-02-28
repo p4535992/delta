@@ -70,14 +70,24 @@ public class AddressbookListDialog extends BaseDialogBean {
      */
     public String showAll() {
         setSearchCriteria("");
-        setOrgPeople(new ArrayList<AddressbookEntry>());
         setOrganizations(getAddressbookService().listAddressbookEntries(AddressbookModel.Assocs.ORGANIZATIONS));
         setPeople(getAddressbookService().listAddressbookEntries(AddressbookModel.Assocs.ABPEOPLE));
+
+        List<AddressbookEntry> organizationPeople = new ArrayList<AddressbookEntry>();
+        for (AddressbookEntry orgEntry : getOrganizations()) {
+            for (Node node : getAddressbookService().listPerson(orgEntry.getNode().getNodeRef())) {
+                node.addPropertyResolver("parentOrgName", AddressbookUtil.resolverParentOrgName);
+                node.addPropertyResolver("parentOrgRef", AddressbookUtil.resolverParentOrgRef);
+                organizationPeople.add(new AddressbookEntry(node));
+            }
+        }
+        setOrgPeople(organizationPeople);
+
         return null;
     }
 
     public String search() {
-        List<Node> a = getAddressbookService().search(getSearchCriteria(), -1);
+        List<Node> a = getAddressbookService().search(getSearchCriteria(), -1, false);
         setOrganizations(new ArrayList<AddressbookEntry>());
         setPeople(new ArrayList<AddressbookEntry>());
         setOrgPeople(new ArrayList<AddressbookEntry>());

@@ -3,6 +3,7 @@ package ee.webmedia.alfresco.log.model;
 import java.io.Serializable;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -30,7 +31,7 @@ public class LogFilter implements Serializable {
 
     private String objectName;
 
-    private String objectId;
+    private List<String> objectId;
     private boolean isExactObjectId;
 
     public String getLogEntryId() {
@@ -89,11 +90,11 @@ public class LogFilter implements Serializable {
         this.objectName = objectName;
     }
 
-    public String getObjectId() {
+    public List<String> getObjectId() {
         return objectId;
     }
 
-    public void setObjectId(String objectId) {
+    public void setObjectId(List<String> objectId) {
         this.objectId = objectId;
     }
 

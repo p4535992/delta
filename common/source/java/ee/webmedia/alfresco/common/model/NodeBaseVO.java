@@ -59,6 +59,15 @@ public class NodeBaseVO implements Serializable {
         getNode().getProperties().put(propName.toString(), propValue);
     }
 
+    public void setPropIgnoringEmpty(QName propName, Serializable propValue) {
+        Serializable origPropValue = getProp(propName);
+        if ((propValue == null || ((propValue instanceof String) && ((String) propValue).isEmpty()))
+                && (origPropValue == null || ((origPropValue instanceof String) && ((String) origPropValue).isEmpty()))) {
+            return;
+        }
+        setProp(propName, propValue);
+    }
+
     protected void setPropList(QName propName, List<? extends Serializable> propValue) {
         if (propValue == null) {
             propValue = new ArrayList<Serializable>(0);

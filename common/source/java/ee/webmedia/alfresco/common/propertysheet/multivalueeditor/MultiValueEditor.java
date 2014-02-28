@@ -47,6 +47,7 @@ import ee.webmedia.alfresco.common.propertysheet.component.HandlesShowUnvalued;
 import ee.webmedia.alfresco.common.propertysheet.converter.ListNonBlankStringsWithCommaConverter;
 import ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.ComponentPropVO;
 import ee.webmedia.alfresco.common.propertysheet.search.Search;
+import ee.webmedia.alfresco.common.web.UserContactGroupSearchBean;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 
 /**
@@ -63,7 +64,6 @@ public class MultiValueEditor extends UIComponentBase implements AjaxUpdateable,
     protected static final String PROPERTY_SHEET_VAR = "propertySheetVar";
     public static final String PREPROCESS_CALLBACK = "preprocessCallback";
     protected static final String FILTERS = "filters";
-    protected static final String FILTER_INDEX = "filterIndex";
     public static final String ATTR_CLICK_LINK_ID = "clickLinkId";
 
     public static final String MULTI_VALUE_EDITOR_FAMILY = MultiValueEditor.class.getCanonicalName();
@@ -133,9 +133,11 @@ public class MultiValueEditor extends UIComponentBase implements AjaxUpdateable,
             picker.setShowFilter(true);
         }
 
-        String filterIndex = (String) getAttributes().get(FILTER_INDEX);
-        if (StringUtils.isNotBlank(filterIndex) && StringUtils.isNumeric(filterIndex)) {
-            picker.setDefaultFilterIndex(Integer.parseInt(filterIndex));
+        Object filterIndex = getAttributes().get(Search.FILTER_INDEX);
+        if (filterIndex instanceof Integer) {
+            picker.setDefaultFilterIndex((Integer) filterIndex);
+        } else {
+            picker.setDefaultFilterIndex(UserContactGroupSearchBean.USERS_FILTER);
         }
 
         picker.addActionListener(new PickerFinishActionListener());
@@ -157,28 +159,11 @@ public class MultiValueEditor extends UIComponentBase implements AjaxUpdateable,
 
     }
 
-    private void pickerFinish(UIGenericPicker picker) {
-        String[] results = picker.getSelectedResults();
-        String strRowIndex = (String) getAttributes().get(Search.OPEN_DIALOG_KEY);
-        if (results == null || StringUtils.isBlank(strRowIndex)) {
-            return;
-        }
-
-        int rowIndex = Integer.parseInt(strRowIndex);
-        innerPickerFinish(picker.getFilterIndex(), rowIndex, results, FacesContext.getCurrentInstance());
-
-        getAttributes().remove(Search.OPEN_DIALOG_KEY);
-        picker.queueEvent(new UIGenericPicker.PickerEvent(picker, UIGenericPicker.ACTION_CLEAR, 0, null, null));
-    }
-
-    public void innerPickerFinish(int pickerFilterIndex, int rowIndex, String[] results, FacesContext context) {
-        log.debug("Selected rowIndex=" + rowIndex + ", adding results: " + StringUtils.join(results, ", "));
-
-        String preprocessCallback = (String) getAttributes().get(PREPROCESS_CALLBACK);
-        String groupByColumn = (String) getAttributes().get(GROUP_BY_COLUMN_NAME);
+    public static Pair<String[] /* results */, String[] /* resultDetails */> preprocessResults(FacesContext context, String preprocessCallback, String[] results,
+            int pickerFilterIndex) {
         String[] resultDetails = null;
         if (StringUtils.isNotBlank(preprocessCallback)) {
-            MethodBinding preprocessBind = getFacesContext().getApplication().createMethodBinding(preprocessCallback, new Class[] { int.class, String[].class });
+            MethodBinding preprocessBind = context.getApplication().createMethodBinding(preprocessCallback, new Class[] { int.class, String[].class });
             List<Pair<String, String>> groupedResults = null;
             Object preprocessed = preprocessBind.invoke(context, new Object[] { pickerFilterIndex, results });
             if (preprocessed instanceof List) {
@@ -197,6 +182,32 @@ public class MultiValueEditor extends UIComponentBase implements AjaxUpdateable,
                 results = (String[]) preprocessed;
             }
         }
+
+        return new Pair<String[], String[]>(results, resultDetails);
+    }
+
+    private void pickerFinish(UIGenericPicker picker) {
+        String[] results = picker.getSelectedResults();
+        String strRowIndex = (String) getAttributes().get(Search.OPEN_DIALOG_KEY);
+        if (results == null || StringUtils.isBlank(strRowIndex)) {
+            return;
+        }
+
+        int rowIndex = Integer.parseInt(strRowIndex);
+        innerPickerFinish(picker.getFilterIndex(), rowIndex, results, FacesContext.getCurrentInstance());
+
+        getAttributes().remove(Search.OPEN_DIALOG_KEY);
+        picker.queueEvent(new UIGenericPicker.PickerEvent(picker, UIGenericPicker.ACTION_CLEAR, UserContactGroupSearchBean.USERS_FILTER, null, null));
+    }
+
+    public void innerPickerFinish(int pickerFilterIndex, int rowIndex, String[] results, FacesContext context) {
+        log.debug("Selected rowIndex=" + rowIndex + ", adding results: " + StringUtils.join(results, ", "));
+
+        String preprocessCallback = (String) getAttributes().get(PREPROCESS_CALLBACK);
+        String groupByColumn = (String) getAttributes().get(GROUP_BY_COLUMN_NAME);
+        Pair<String[], String[]> preprocessedResults = preprocessResults(context, preprocessCallback, results, pickerFilterIndex);
+        results = preprocessedResults.getFirst();
+        String[] resultDetails = preprocessedResults.getSecond();
 
         NamespaceService namespaceService = getNamespaceService();
         List<String> propNames = getRegularAndHiddenPropNames();

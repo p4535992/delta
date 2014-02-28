@@ -29,6 +29,7 @@ import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.common.ajax.AjaxUpdateable;
+import ee.webmedia.alfresco.common.web.UserContactGroupSearchBean;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 
 /**
@@ -56,6 +57,7 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
     public static final String DIALOG_TITLE_ID_KEY = "dialogTitleId";
     public static final String CONVERTER_KEY = "converter";
     public static final String PICKER_CALLBACK_KEY = "pickerCallback";
+    public static final String PICKER_CALLBACK_KEY_PARAM = "pickerCallbackParams";
     public static final String VALUE_KEY = "value";
     public static final String SHOW_FILTER_KEY = "showFilter";
     public static final String FILTERS_KEY = "filters";
@@ -68,6 +70,7 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
     public static final String ALLOW_CLEAR_SINGLE_VALUED = "allowClearSingleValued";
     public static final String FILTER_INDEX = "filterIndex";
     public static final String SEARCH_SUGGEST_DISABLED = "searchSuggestDisabled";
+    public static final String RENDER_PLAIN = "renderPlain";
 
     @Override
     public String getFamily() {
@@ -149,12 +152,8 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
         Integer filterIndex = (Integer) getAttributes().get(FILTER_INDEX);
         if (filterIndex != null) {
             picker.setDefaultFilterIndex(filterIndex);
-        }
-
-        // Disable AJAX if inside RichList
-        if (isChildOfUIRichList()) {
-            ComponentUtil.setAjaxDisabled(this);
-            ComponentUtil.setAjaxDisabled(picker);
+        } else {
+            picker.setDefaultFilterIndex(UserContactGroupSearchBean.USERS_FILTER);
         }
 
         children.add(picker);
@@ -200,7 +199,7 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
             }
         }
         getAttributes().remove(OPEN_DIALOG_KEY);
-        picker.queueEvent(new UIGenericPicker.PickerEvent(picker, UIGenericPicker.ACTION_CLEAR, 0, null, null));
+        picker.queueEvent(new UIGenericPicker.PickerEvent(picker, UIGenericPicker.ACTION_CLEAR, UserContactGroupSearchBean.USERS_FILTER, null, null));
     }
 
     /**
@@ -211,7 +210,7 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
      * @param context
      * @param index
      */
-    protected void multiValuedPickerFinish(String[] results, FacesContext context, int index) {
+    public void multiValuedPickerFinish(String[] results, FacesContext context, int index) {
         @SuppressWarnings("unchecked")
         List<String> list = (List<String>) getList(context);
         // collect new values
@@ -414,7 +413,7 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
         return isAttributeTrue(Search.SETTER_CALLBACK_TAKES_NODE);
     }
 
-    protected String getPreprocesCallback() {
+    public String getPreprocesCallback() {
         return (String) ComponentUtil.getAttribute(this, PREPROCESS_CALLBACK);
     }
 
@@ -426,7 +425,7 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
         return ComponentUtil.isComponentDisabledOrReadOnly(this);
     }
 
-    protected boolean isMultiValued() {
+    public boolean isMultiValued() {
         return isAttributeTrue(DATA_MULTI_VALUED);
     }
 
@@ -436,6 +435,10 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
 
     protected String getSearchLinkTooltip() {
         return (String) ComponentUtil.getAttribute(this, SEARCH_LINK_TOOLTIP);
+    }
+
+    protected boolean isRenderPlain() {
+        return isAttributeTrue(RENDER_PLAIN);
     }
 
     protected boolean isMandatory() {

@@ -57,7 +57,7 @@
       </property>
    </bean>
 
-   <bean id="documentService" class="ee.webmedia.alfresco.document.service.DocumentServiceImpl">
+   <bean id="documentService" class="ee.webmedia.alfresco.document.service.DocumentServiceImpl" init-method="init">
       <property name="dictionaryService" ref="DictionaryService" />
       <property name="namespaceService" ref="NamespaceService" />
       <property name="nodeService" ref="NodeService" />
@@ -375,6 +375,21 @@
          </list>
       </property>
    </bean>
+   
+   <bean id="draftsPermissionsUpdater" class="ee.webmedia.alfresco.document.bootstrap.DraftsPermissionsUpdater" parent="module.baseComponent">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="documentDraftsSpacesBootstrap" />
+         </list>
+      </property>
+   </bean>   
+   
+   <bean id="favoritesDeletedDocumentsUpdater4" class="ee.webmedia.alfresco.document.bootstrap.FavoritesDeletedDocumentsUpdater" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+   </bean>    
 
    <!-- temp bean - might help to fix problems related to permission inheritance in PPA live environment -->
    <bean id="ArrivedDocumentsPermissionsModifier" class="ee.webmedia.alfresco.document.bootstrap.ArrivedDocumentsPermissionsModifier" />

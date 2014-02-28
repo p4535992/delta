@@ -53,6 +53,7 @@ import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
 import org.springframework.util.Assert;
 import org.springframework.util.FileCopyUtils;
 
+import ee.webmedia.alfresco.common.propertysheet.component.WMUIProperty;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.docconfig.generator.fieldtype.DateGenerator;
@@ -159,6 +160,7 @@ public class UserDataRestoreService {
                 Substitute newSubstitute = Substitute.newInstance();
                 newSubstitute.setSubstituteId((String) props.get(SubstituteModel.Props.SUBSTITUTE_ID));
                 newSubstitute.setSubstituteName((String) props.get(SubstituteModel.Props.SUBSTITUTE_NAME));
+                newSubstitute.setReplacedPersonUserName((String) getNodeService().getProperty(myPersonRef, ContentModel.PROP_USERNAME));
                 newSubstitute.setSubstitutionStartDate((Date) props.get(SubstituteModel.Props.SUBSTITUTION_START_DATE));
                 newSubstitute.setSubstitutionEndDate((Date) props.get(SubstituteModel.Props.SUBSTITUTION_END_DATE));
                 getSubstituteService().addSubstitute(myPersonRef, newSubstitute);
@@ -491,7 +493,7 @@ public class UserDataRestoreService {
                 if (RepoUtil.TRANSIENT_PROPS_NAMESPACE.equals(propQName.getNamespaceURI())) {
                     continue;
                 }
-                if (propQName.getLocalName().endsWith("_AfterLabelBoolean")) {
+                if (propQName.getLocalName().endsWith(WMUIProperty.AFTER_LABEL_BOOLEAN)) {
                     dataType = getDictionaryService().getDataType(DataTypeDefinition.BOOLEAN);
                 } else if (propQName.getLocalName().endsWith(DateGenerator.PICKER_PREFIX)) {
                     dataType = getDictionaryService().getDataType(DataTypeDefinition.TEXT);

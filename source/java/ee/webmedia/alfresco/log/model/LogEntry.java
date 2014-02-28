@@ -9,6 +9,7 @@ import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.log.LogHelper;
 import ee.webmedia.alfresco.user.service.UserService;
+import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
  * Entity object for storing log table data.
@@ -178,6 +179,11 @@ public class LogEntry implements Serializable {
     public static LogEntry create(LogObject object, String userId, String userName, NodeRef nodeRef, String msgCode, Object... params) {
         String desc = I18NUtil.getMessage(msgCode, params);
         return createLoc(object, userId, userName, nodeRef, desc);
+    }
+
+    public static LogEntry createWithSystemUser(LogObject object, NodeRef nodeRef, String msgCode, Object... params) {
+        String desc = MessageUtil.getMessage(msgCode, params);
+        return createLoc(object, null, null, nodeRef, desc);
     }
 
     /**

@@ -1,13 +1,16 @@
 package ee.webmedia.alfresco.report.job;
 
+import java.io.Serializable;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 import org.alfresco.repo.transaction.RetryingTransactionHelper;
 import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
+import org.alfresco.service.namespace.QName;
 import org.alfresco.service.transaction.TransactionService;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.collections.comparators.NullComparator;
@@ -19,6 +22,7 @@ import org.quartz.JobExecutionException;
 import org.quartz.StatefulJob;
 import org.springframework.util.Assert;
 
+import ee.webmedia.alfresco.classificator.enums.TemplateReportType;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.report.model.ReportDataCollector;
 import ee.webmedia.alfresco.report.model.ReportModel;
@@ -162,8 +166,11 @@ public class ExecuteReportsJob implements StatefulJob {
         public Object processNodeRef(ReportDataCollector reportDataProvider) {
             ReportStatus resultStatus = reportDataProvider.getResultStatus();
             Assert.notNull(resultStatus);
+            Map<QName, Serializable> props = reportDataProvider.getReportResultProps();
             boolean resultCancelled = ReportStatus.CANCELLED == resultStatus || ReportStatus.FAILED == resultStatus || ReportStatus.DELETED == resultStatus;
-            Assert.isTrue(resultCancelled || reportDataProvider.getWorkbook() != null);
+            boolean isConsolidatedList = (props != null) && (props.get(ReportModel.Props.REPORT_TYPE) != null)
+                    && TemplateReportType.CONSOLIDATED_LIST.name().equals(props.get(ReportModel.Props.REPORT_TYPE));
+            Assert.isTrue(resultCancelled || reportDataProvider.getWorkbook() != null || isConsolidatedList);
             Assert.isTrue(resultCancelled || reportDataProvider.getEncoding() != null);
             return reportService.completeReportResult(reportDataProvider);
         }

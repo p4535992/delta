@@ -42,13 +42,13 @@ import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
 import org.alfresco.repo.tenant.Tenant;
 import org.alfresco.repo.tenant.TenantAdminService;
 import org.alfresco.repo.tenant.TenantService;
+import org.alfresco.repo.transaction.RetryingTransactionHelper;
 import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
 import org.alfresco.service.ServiceRegistry;
 import org.alfresco.service.cmr.module.ModuleDependency;
 import org.alfresco.service.cmr.module.ModuleDetails;
 import org.alfresco.service.cmr.module.ModuleService;
 import org.alfresco.service.descriptor.DescriptorService;
-import org.alfresco.service.transaction.TransactionService;
 import org.alfresco.util.PropertyCheck;
 import org.alfresco.util.VersionNumber;
 import org.apache.commons.logging.Log;
@@ -196,6 +196,7 @@ public class ModuleComponentHelper
         PropertyCheck.mandatory(this, "registryService", registryService);
         PropertyCheck.mandatory(this, "moduleService", moduleService);
         PropertyCheck.mandatory(this, "tenantAdminService", tenantAdminService);
+        RetryingTransactionHelper.transactionIntegrityCheckerInMainThreadEnabled = true;
         /*
          * Ensure transactionality and the correct authentication
          */

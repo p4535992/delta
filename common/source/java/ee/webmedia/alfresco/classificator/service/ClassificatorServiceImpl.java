@@ -1,6 +1,6 @@
 package ee.webmedia.alfresco.classificator.service;
 
-import static ee.webmedia.alfresco.utils.SearchUtil.generatePropertyExactQuery;
+import static ee.webmedia.alfresco.utils.SearchUtil.generateStringExactQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateTypeQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.joinQueryPartsAnd;
 import static ee.webmedia.alfresco.utils.SearchUtil.joinQueryPartsOr;
@@ -288,7 +288,7 @@ public class ClassificatorServiceImpl implements ClassificatorService {
                                 generateTypeQuery(DocumentAdminModel.Types.FIELD)
                                 , generateTypeQuery(DocumentAdminModel.Types.FIELD_DEFINITION)
                         )
-                        , generatePropertyExactQuery(DocumentAdminModel.Props.CLASSIFICATOR, classificatorName, false))
+                        , generateStringExactQuery(classificatorName, DocumentAdminModel.Props.CLASSIFICATOR))
                 );
         return used;
     }

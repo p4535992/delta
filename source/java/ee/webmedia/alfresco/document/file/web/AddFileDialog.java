@@ -373,6 +373,14 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
         return getScannedFolders().size() > 1;
     }
 
+    public boolean isShowBlankForAttachmentBlock() {
+        return !isShowAttachmentFolderSelect() && isShowScannedFolderSelect();
+    }
+
+    public boolean isShowBlankForScannedBlock() {
+        return isShowAttachmentFolderSelect() && !isShowScannedFolderSelect();
+    }
+
     @Override
     public void restored() {
         refreshUploadedFilesPanelGroup();

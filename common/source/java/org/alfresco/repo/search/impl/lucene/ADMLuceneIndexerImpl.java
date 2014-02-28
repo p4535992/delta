@@ -58,6 +58,7 @@ import org.alfresco.repo.search.impl.lucene.fts.FTSIndexerAware;
 import org.alfresco.repo.search.impl.lucene.fts.FullTextSearchIndexer;
 import org.alfresco.repo.tenant.TenantService;
 import org.alfresco.repo.transaction.AlfrescoTransactionSupport;
+import org.alfresco.repo.transaction.RetryingTransactionHelper;
 import org.alfresco.service.cmr.dictionary.AspectDefinition;
 import org.alfresco.service.cmr.dictionary.DataTypeDefinition;
 import org.alfresco.service.cmr.dictionary.PropertyDefinition;
@@ -80,6 +81,7 @@ import org.alfresco.service.namespace.QName;
 import org.alfresco.util.CachingDateFormat;
 import org.alfresco.util.EqualsHelper;
 import org.alfresco.util.ISO9075;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.FastDateFormat;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -267,6 +269,37 @@ public class ADMLuceneIndexerImpl extends AbstractLuceneIndexerImpl<NodeRef> imp
         {
             s_logger.debug("Update node " + nodeRef);
         }
+        String threadName = Thread.currentThread().getName();
+        if (RetryingTransactionHelper.transactionIntegrityCheckerEnabled && (RetryingTransactionHelper.transactionIntegrityCheckerInMainThreadEnabled || !"main".equals(threadName)) && !StringUtils.startsWith(threadName, "indexTrackerThread"))
+        {
+            LinkedList<Set<NodeRef>> nodesUpdatedList = RetryingTransactionHelper.nodesUpdated.get();
+            Set<NodeRef> nodesUpdated = nodesUpdatedList.peekLast();
+            if (nodesUpdated == null)
+            {
+                try
+                {
+                    throw new RuntimeException("Node update without read-write transaction: " + nodeRef);
+                }
+                catch (Exception e)
+                {
+                    s_logger.warn("TransactionIntegrityChecker:", e);
+                }
+            }
+            else
+            {
+                nodesUpdated.add(nodeRef);
+                for (int i = nodesUpdatedList.size() - 2; i >= 0; i--)
+                {
+                    Set<NodeRef> parentNodesUpdated = nodesUpdatedList.get(i);
+                    if (parentNodesUpdated != null && !parentNodesUpdated.isEmpty())
+                    {
+                        s_logger.warn("TransactionIntegrityChecker: parent transaction [" + i + "] has updated or deleted nodes, and we are updating a node in this transaction ["
+                                + (nodesUpdatedList.size() - 1) + "], it may result in inconsistent index\n  currentNodeRef=" + nodeRef
+                                + "\n  currentNodesUpdated=" + nodesUpdated + "\n  parentNodesUpdated=" + parentNodesUpdated);
+                    }
+                }
+            }
+        }
         checkAbleToDoWork(IndexUpdateStatus.SYNCRONOUS);
         try
         {
@@ -288,6 +321,38 @@ public class ADMLuceneIndexerImpl extends AbstractLuceneIndexerImpl<NodeRef> imp
         if (s_logger.isDebugEnabled())
         {
             s_logger.debug("Delete node " + relationshipRef.getChildRef());
+        }
+        String threadName = Thread.currentThread().getName();
+        if (RetryingTransactionHelper.transactionIntegrityCheckerEnabled && (RetryingTransactionHelper.transactionIntegrityCheckerInMainThreadEnabled || !"main".equals(threadName)) && !StringUtils.startsWith(threadName, "indexTrackerThread"))
+        {
+            LinkedList<Set<NodeRef>> nodesUpdatedList = RetryingTransactionHelper.nodesUpdated.get();
+            Set<NodeRef> nodesUpdated = nodesUpdatedList.peekLast();
+            if (nodesUpdated == null)
+            {
+                try
+                {
+                    throw new RuntimeException("Node delete without read-write transaction: " + relationshipRef.getChildRef());
+                }
+                catch (Exception e)
+                {
+                    s_logger.warn("TransactionIntegrityChecker:", e);
+                }
+            }
+            else
+            {
+                nodesUpdated.remove(relationshipRef.getChildRef());
+                nodesUpdated.add(RetryingTransactionHelper.deleteNode);
+                for (int i = nodesUpdatedList.size() - 2; i >= 0; i--)
+                {
+                    Set<NodeRef> parentNodesUpdated = nodesUpdatedList.get(i);
+                    if (parentNodesUpdated != null && !parentNodesUpdated.isEmpty())
+                    {
+                        s_logger.warn("TransactionIntegrityChecker: parent transaction [" + i + "] has updated or deleted nodes, and we are deleting a node in this transaction ["
+                                + (nodesUpdatedList.size() - 1) + "], it may result in inconsistent index\n  currentNodeRef=" + relationshipRef.getChildRef()
+                                + "\n  currentNodesUpdated=" + nodesUpdated + "\n  parentNodesUpdated=" + parentNodesUpdated);
+                    }
+                }
+            }
         }
         checkAbleToDoWork(IndexUpdateStatus.SYNCRONOUS);
         try

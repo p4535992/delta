@@ -16,17 +16,25 @@ import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
 import org.alfresco.repo.transaction.RetryingTransactionHelper;
 import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.namespace.QName;
 import org.alfresco.service.transaction.TransactionService;
 import org.alfresco.web.app.servlet.FacesHelper;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.logging.Log;
 import org.springframework.beans.factory.InitializingBean;
 
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.file.service.FileService;
+import ee.webmedia.alfresco.log.model.LogEntry;
+import ee.webmedia.alfresco.log.model.LogObject;
+import ee.webmedia.alfresco.log.service.LogService;
 import ee.webmedia.alfresco.menu.ui.MenuBean;
 import ee.webmedia.alfresco.notification.service.NotificationService;
 import ee.webmedia.alfresco.privilege.service.PrivilegeService;
 import ee.webmedia.alfresco.privilege.service.PrivilegeUtil;
+import ee.webmedia.alfresco.user.service.UserService;
+import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 import ee.webmedia.alfresco.workflow.service.BaseWorkflowObject;
@@ -39,6 +47,7 @@ import ee.webmedia.alfresco.workflow.service.event.WorkflowEventQueue;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowEventQueue.WorkflowQueueParameter;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowEventType;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowMultiEventListener;
+import ee.webmedia.alfresco.workflow.web.CompoundWorkflowDialog;
 
 public class WorkflowStatusEventListener implements WorkflowMultiEventListener, InitializingBean {
     private static org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(WorkflowStatusEventListener.class);
@@ -83,6 +92,28 @@ public class WorkflowStatusEventListener implements WorkflowMultiEventListener, 
             }
 
         }, "workflowPermissionsAndNotifications", false);
+        LogService logService = BeanHelper.getLogService();
+        UserService userService = BeanHelper.getUserService();
+        Map<QName, String> taskTypeNames = new HashMap<QName, String>();
+        for (WorkflowEvent event : queue.getEvents()) {
+            BaseWorkflowObject object = event.getObject();
+            if (object instanceof Task && WorkflowEventType.STATUS_CHANGED.equals(event.getType())
+                    && Status.NEW.equals(event.getOriginalStatus()) && ((Task) object).isStatus(Status.IN_PROGRESS)) {
+                Task task = (Task) object;
+                logService.addLogEntry(LogEntry.create(LogObject.TASK, userService, task.getNodeRef(), "applog_task_assigned",
+                        task.getOwnerName(), getTaskTypeName(task, taskTypeNames)));
+            }
+        }
+    }
+
+    private String getTaskTypeName(Task task, Map<QName, String> taskTypeNames) {
+        QName taskType = task.getNode().getType();
+        String taskTypeName = taskTypeNames.get(taskType);
+        if (StringUtils.isBlank(taskTypeName)) {
+            taskTypeName = MessageUtil.getTypeName(taskType);
+            taskTypeNames.put(taskType, taskTypeName);
+        }
+        return taskTypeName;
     }
 
     private Void doWork(final List<WorkflowEvent> events, final Task initiatingTask, final boolean sendNotifications) {

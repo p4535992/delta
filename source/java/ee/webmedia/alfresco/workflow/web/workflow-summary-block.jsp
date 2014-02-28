@@ -27,7 +27,7 @@
             <h:outputText id="col2-sort" value="#{msg.task_property_due_date}" styleClass="header" />
          </f:facet>
             <h:outputText id="col2-text" value="#{r.dueDate}">
-               <a:convertXMLDate pattern="#{msg.date_pattern}" />
+               <a:convertXMLDate pattern="#{msg.date_time_pattern}" />
             </h:outputText>
             <h:outputText value="<br/>" escape="false"/>
             <h:outputText id="col2-popup-link" value="#{r.dueDateHistory}" escape="false" />

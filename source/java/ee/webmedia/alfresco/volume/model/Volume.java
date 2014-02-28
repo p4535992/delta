@@ -125,6 +125,14 @@ public class Volume implements Serializable, Comparable<Volume> {
         return seriesNodeRef;
     }
 
+    public void setProperty(String key, Object value) {
+        node.getProperties().put(key, value);
+    }
+
+    public Object getProperty(String key) {
+        return node.getProperties().get(key);
+    }
+
     public void setSeriesNodeRef(NodeRef seriesNodeRef) {
         this.seriesNodeRef = seriesNodeRef;
     }

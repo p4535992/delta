@@ -69,7 +69,7 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
 
     private String cssStyleClass;
 
-    protected static <T extends Task> T create(Class<T> taskClass, WmNode taskNode, Workflow taskParent, int outcomes) {
+    public static <T extends Task> T create(Class<T> taskClass, WmNode taskNode, Workflow taskParent, int outcomes) {
         try {
             return taskClass.getDeclaredConstructor(WmNode.class, Workflow.class, Integer.class).newInstance(taskNode, taskParent, outcomes);
         } catch (Exception e) {
@@ -103,6 +103,10 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
         Task task = (Task) super.copyImpl(copy);
         task.outcomeIndex = outcomeIndex;
         task.action = action;
+        boolean hasNoParentNodeRef = parent == null || parent.getNodeRef() == null;
+        task.parentNodeRefId = hasNoParentNodeRef ? null : parent.getNodeRef().getId();
+        task.storeRef = hasNoParentNodeRef ? null : parent.getNodeRef().getStoreRef().toString();
+        task.taskIndexInWorkflow = taskIndexInWorkflow;
         @SuppressWarnings("unchecked")
         T result = (T) task;
         return result;
@@ -319,6 +323,10 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
 
     public String getDueDateStr() {
         return getDueDate() != null ? dateFormat.format(getDueDate()) : "";
+    }
+
+    public String getDueDateTimeStr() {
+        return getDueDate() != null ? dateTimeFormat.format(getDueDate()) : "";
     }
 
     public Date getProposedDueDate() {
@@ -569,6 +577,9 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
     }
 
     public NodeRef getParentNodeRef() {
+        if (parentNodeRefId == null) {
+            return parent == null ? null : parent.getNodeRef();
+        }
         return new NodeRef(new StoreRef(storeRef), parentNodeRefId);
     }
 

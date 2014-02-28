@@ -4,6 +4,7 @@
 
    <!-- Entry point to include other components -->
    <!-- Be sure to also include necessary JSF configuration files in web/WEB-INF/web.xml -->
+   <import resource="classpath:ee/webmedia/alfresco/person/person-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/log/log-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/help/help-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/signature/signature-context.xml" />
@@ -61,7 +62,7 @@
       <property name="serverName" value="${server.url}" />
    </bean>
 
-   <bean name="casTicketValidationFilter" class="org.jasig.cas.client.validation.Cas20ProxyReceivingTicketValidationFilter">
+   <bean name="casTicketValidationFilter" class="ee.webmedia.alfresco.user.service.Cas20ProxyReceivingRedirectingTicketValidationFilter">
       <property name="redirectAfterValidation" value="true" />
       <property name="serverName" value="${server.url}" />
       <property name="ticketValidator">

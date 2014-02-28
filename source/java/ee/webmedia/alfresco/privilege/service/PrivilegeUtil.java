@@ -2,6 +2,7 @@ package ee.webmedia.alfresco.privilege.service;
 
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentAdminService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getPrivilegeService;
+import static ee.webmedia.alfresco.document.permissions.PublicDocumentDynamicAuthority.isPublicAccessRestriction;
 import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.isResponsible;
 import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.isStatus;
 
@@ -44,8 +45,30 @@ public class PrivilegeUtil {
             throw new IllegalArgumentException("no permissions given for permissions check");
         }
         UserService userService = BeanHelper.getUserService();
-        return userService.isAdministrator() || (userService.isDocumentManager()
-                && getPrivilegeService().hasPermissionOnAuthority(docNode.getNodeRef(), UserService.AUTH_DOCUMENT_MANAGERS_GROUP, permissions));
+        if (userService.isAdministrator()) {
+            return true;
+        }
+        if (userService.isDocumentManager()) {
+            boolean hasPermissions = true;
+            boolean isPublicAssessRestriction = isPublicAccessRestriction((String) docNode.getProperties().get(DocumentCommonModel.Props.ACCESS_RESTRICTION));
+            for (String permission : permissions) {
+                boolean hasInheritedOrStaticPermissions = getPrivilegeService()
+                        .hasPermissionOnAuthority(docNode.getNodeRef(), UserService.AUTH_DOCUMENT_MANAGERS_GROUP, permission);
+                if (!hasInheritedOrStaticPermissions && isPublicAssessRestriction && DocumentCommonModel.Privileges.VIEW_DOCUMENT_FILES.equals(permission)) {
+                    // viewDocumentFiles may be available dynamically, when document accessRestriction="Avalik",
+                    // but it is taken in account here only if document managers have (at least) viewDocumentMetadata
+                    // assigned as static or inherited privilege, i.e. doc. managers group is displayed in
+                    // document's permissions managing dialog
+                    boolean hasViewDocumentMetadataPermission = getPrivilegeService().hasPermissionOnAuthority(docNode.getNodeRef(), UserService.AUTH_DOCUMENT_MANAGERS_GROUP,
+                            DocumentCommonModel.Privileges.VIEW_DOCUMENT_META_DATA);
+                    hasPermissions &= hasViewDocumentMetadataPermission;
+                } else {
+                    hasPermissions &= hasInheritedOrStaticPermissions;
+                }
+            }
+            return hasPermissions;
+        }
+        return false;
     }
 
     public static Set<String> getPrivsWithDependencies(Set<String> permissions) {
@@ -60,9 +83,16 @@ public class PrivilegeUtil {
     }
 
     public static Set<String> getRequiredPrivsForInprogressTask(Task task, NodeRef docRef, FileService fileService) {
+        if (isStatus(task, Status.IN_PROGRESS)) {
+            return getRequiredPrivsForTask(task, docRef, fileService);
+        }
+        return new HashSet<String>();
+    }
+
+    public static Set<String> getRequiredPrivsForTask(Task task, NodeRef docRef, FileService fileService) {
         String taskOwnerId = task.getOwnerId();
         Set<String> requiredPrivileges = new HashSet<String>(4);
-        if (!StringUtils.isBlank(taskOwnerId) && isStatus(task, Status.IN_PROGRESS)) {
+        if (!StringUtils.isBlank(taskOwnerId)) {
             // give permissions to task owner
             boolean isSignatureTaskWith1Digidoc = false;
             boolean isSignatureTaskWithFiles = false;

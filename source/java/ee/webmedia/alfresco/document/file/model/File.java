@@ -31,6 +31,7 @@ public class File implements Serializable, IClonable<File> {
     private String name;
     private String displayName;
     private String downloadUrl;
+    private String readOnlyUrl;
     private String creator;
     private String modifier;
     private String encoding;
@@ -98,6 +99,14 @@ public class File implements Serializable, IClonable<File> {
 
     public void setDownloadUrl(String url) {
         downloadUrl = url;
+    }
+    
+    public String getReadOnlyUrl() {
+        return readOnlyUrl;
+    }
+
+    public void setReadOnlyUrl(String readOnlyUrl) {
+        this.readOnlyUrl = readOnlyUrl;
     }
 
     public String getCreator() {

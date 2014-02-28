@@ -12,9 +12,7 @@ import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
 
 import ee.webmedia.alfresco.common.web.WmNode;
-import ee.webmedia.alfresco.utils.MessageDataWrapper;
 import ee.webmedia.alfresco.utils.Predicate;
-import ee.webmedia.alfresco.utils.UnableToPerformMultiReasonException;
 import ee.webmedia.alfresco.workflow.exception.WorkflowChangedException;
 import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowEventListener;
@@ -68,13 +66,7 @@ public interface WorkflowService {
 
     CompoundWorkflow saveCompoundWorkflow(CompoundWorkflow compoundWorkflow);
 
-    /**
-     * @param originalAssignmentTask - task that will be delegated(originalAssignmentTask.parent contains information about new tasks and
-     *            originalAssignmentTask.parent.parent contains information about new workflows)
-     * @return MessageDataWrapper with 0 or more non-error messages to be shown to the user
-     * @throws UnableToPerformMultiReasonException - when at least one error-message should be shown to the user
-     */
-    MessageDataWrapper delegate(Task originalAssignmentTask) throws UnableToPerformMultiReasonException;
+    void delegate(Task assignmentTaskOriginal);
 
     void deleteCompoundWorkflow(NodeRef compoundWorkflow);
 
@@ -88,9 +80,13 @@ public interface WorkflowService {
 
     CompoundWorkflow continueCompoundWorkflow(CompoundWorkflow compoundWorkflow);
 
-    CompoundWorkflow saveAndCopyCompoundWorkflow(CompoundWorkflow compoundWorkflow);
+    CompoundWorkflow copyAndResetCompoundWorkflow(NodeRef compoundWorkflowRef);
 
     int getActiveResponsibleTasks(NodeRef document, QName workflowType);
+
+    int getActiveResponsibleTasks(NodeRef document, QName workflowType, boolean allowFinished);
+
+    int getActiveResponsibleTasks(NodeRef parent, QName workflowType, boolean allowFinished, NodeRef compoundWorkflowToSkip);
 
     /**
      * @param compoundWorkflow
@@ -159,7 +155,7 @@ public interface WorkflowService {
 
     boolean hasNoStoppedOrInprogressCompoundWorkflows(NodeRef parent);
 
-    void finishTasksOrCompoundWorkflowsOnRegisterDoc(NodeRef docRef, String comment);
+    void finishTasksByRegisteringReplyLetter(NodeRef docRef, String comment);
 
     boolean isSendableExternalWorkflowDoc(NodeRef docNodeRef);
 
@@ -193,7 +189,8 @@ public interface WorkflowService {
 
     CompoundWorkflow getNewCompoundWorkflow(Node compoundWorkflowDefinition, NodeRef parent);
 
-    void createDueDateExtension(CompoundWorkflow compoundWorkflow, NodeRef nodeRef);
+    void createDueDateExtension(String reason, Date newDate, Date dueDate, Task initiatingTask, NodeRef containerRef, String dueDateExtenderUsername,
+            String dueDateExtenderUserFullname);
 
     void registerMultiEventListener(WorkflowMultiEventListener listener);
 
@@ -224,5 +221,9 @@ public interface WorkflowService {
     Task createTaskInMemory(NodeRef wfRef, WorkflowType workflowType, Map<QName, Serializable> props);
 
     void retrieveTaskFiles(Task task, List<NodeRef> taskFiles);
+
+    List<CompoundWorkflow> getOtherCompoundWorkflows(CompoundWorkflow compoundWorkflow);
+
+    List<NodeRef> getCompoundWorkflowAndTaskNodeRefs(NodeRef parentRef);
 
 }

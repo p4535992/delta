@@ -4,6 +4,7 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentConfigServic
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDynamicService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getPropertySheetStateBean;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -18,6 +19,8 @@ import javax.faces.component.UIComponent;
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
+import org.alfresco.repo.transaction.RetryingTransactionHelper;
+import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
@@ -28,6 +31,8 @@ import org.alfresco.web.ui.common.component.UIActionLink;
 import org.alfresco.web.ui.repo.component.UIActions;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import ee.webmedia.alfresco.cases.model.Case;
 import ee.webmedia.alfresco.cases.model.CaseModel;
@@ -53,10 +58,12 @@ import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
+import ee.webmedia.alfresco.utils.UnableToPerformMultiReasonException;
 import ee.webmedia.alfresco.utils.WebUtil;
 import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
 import ee.webmedia.alfresco.volume.service.VolumeService;
+import ee.webmedia.alfresco.volume.web.VolumeListDialog;
 
 /**
  * Form backing bean for Document list. <br>
@@ -73,6 +80,8 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
 
     private static final String VOLUME_NODE_REF = "volumeNodeRef";
     private static final String CASE_NODE_REF = "caseNodeRef";
+
+    private static final Log LOG = LogFactory.getLog(DocumentListDialog.class);
     private transient VolumeService volumeService;
     private transient CaseService caseService;
 
@@ -123,10 +132,16 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
         final String param;
         if (parameterMap.containsKey(VOLUME_NODE_REF)) {
             param = ActionUtil.getParam(event, VOLUME_NODE_REF);
+            if (!nodeExists(new NodeRef(param))) {
+                return;
+            }
             parentVolume = getVolumeService().getVolumeByNodeRef(param);
             parentCase = null;
         } else {
             param = ActionUtil.getParam(event, CASE_NODE_REF);
+            if (!nodeExists(new NodeRef(param))) {
+                return;
+            }
             parentCase = getCaseService().getCaseByNoderef(param);
             parentVolume = null;
         }
@@ -134,6 +149,15 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
         doInitialSearch();
         BeanHelper.getVisitedDocumentsBean().clearVisitedDocuments();
         WebUtil.navigateTo(AlfrescoNavigationHandler.DIALOG_PREFIX + "documentListDialog");
+    }
+
+    public String action() {
+        String dialogPrefix = AlfrescoNavigationHandler.DIALOG_PREFIX;
+        if (parentVolume == null && parentCase == null) {
+            MessageUtil.addInfoMessage("volume_noderef_not_found");
+            return dialogPrefix + VolumeListDialog.DIALOG_NAME;
+        }
+        return dialogPrefix + "documentListDialog";
     }
 
     public void updateLocationSelect(@SuppressWarnings("unused") ActionEvent event) {
@@ -192,39 +216,63 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
     public void massChangeDocLocationConfirmed(ActionEvent event) {
         resetConfirmation(event);
         Map<String, Object> locationProps = getLocationNode().getProperties();
-        NodeRef function = (NodeRef) locationProps.get(DocumentCommonModel.Props.FUNCTION.toString());
-        NodeRef series = (NodeRef) locationProps.get(DocumentCommonModel.Props.SERIES.toString());
-        NodeRef volume = (NodeRef) locationProps.get(DocumentCommonModel.Props.VOLUME.toString());
-        String caseLabel = (String) locationProps.get(DocumentLocationGenerator.CASE_LABEL_EDITABLE);
-        Set<NodeRef> updatedNodeRefs = new HashSet<NodeRef>();
+        final NodeRef function = (NodeRef) locationProps.get(DocumentCommonModel.Props.FUNCTION.toString());
+        final NodeRef series = (NodeRef) locationProps.get(DocumentCommonModel.Props.SERIES.toString());
+        final NodeRef volume = (NodeRef) locationProps.get(DocumentCommonModel.Props.VOLUME.toString());
+        final String caseLabel = (String) locationProps.get(DocumentLocationGenerator.CASE_LABEL_EDITABLE);
+        final Set<NodeRef> updatedNodeRefs = new HashSet<NodeRef>();
         try {
+            RetryingTransactionHelper retryingTransactionHelper = BeanHelper.getTransactionService().getRetryingTransactionHelper();
             for (Entry<NodeRef, Boolean> entry : getListCheckboxes().entrySet()) {
                 if (!entry.getValue()) {
                     continue;
                 }
-                NodeRef docRef = entry.getKey();
+                final NodeRef docRef = entry.getKey();
                 if (updatedNodeRefs.contains(docRef)) {
                     // document was already moved as followup or reply document of some selected document
                     continue;
                 }
-                DocumentDynamic document = getDocumentDynamicService().getDocument(docRef);
-                DocumentConfig cfg = getDocumentConfigService().getConfig(document.getNode());
-                document.setFunction(function);
-                document.setSeries(series);
-                document.setVolume(volume);
-                document.setCase(null);
-                document.getNode().getProperties().put(DocumentLocationGenerator.CASE_LABEL_EDITABLE.toString(), caseLabel);
-                List<Pair<NodeRef, NodeRef>> updatedRefs = getDocumentDynamicService().updateDocumentGetDocAndNodeRefs(document, cfg.getSaveListenerBeanNames(), true).getSecond();
-                for (Pair<NodeRef, NodeRef> pair : updatedRefs) {
-                    updatedNodeRefs.add(pair.getFirst());
-                    updatedNodeRefs.add(pair.getSecond());
-                }
+                retryingTransactionHelper.doInTransaction(new RetryingTransactionCallback<Void>() {
+
+                    @Override
+                    public Void execute() throws Throwable {
+                        updateDocumentInMassChangeLocation(function, series, volume, caseLabel, updatedNodeRefs, docRef);
+                        return null;
+                    }
+                }, false, true);
             }
         } catch (UnableToPerformException e) {
             MessageUtil.addStatusMessage(FacesContext.getCurrentInstance(), e);
+        } catch (UnableToPerformMultiReasonException e) {
+            DocumentDynamic erroneusDocument = e.getDocument();
+            if (erroneusDocument != null) {
+                LOG.debug("Error mass changing document location, erroneous document:\n" + erroneusDocument, e);
+                MessageUtil.addErrorMessage("mass_change_document_location_error", BeanHelper.getDocumentAdminService().getDocumentTypeName(erroneusDocument.getDocumentTypeId()),
+                        erroneusDocument.getDocName(), StringUtils.defaultString(erroneusDocument.getRegNumber(), MessageUtil.getMessage("document_log_status_empty")));
+            } else {
+                LOG.debug("Error mass changing document location", e);
+                MessageUtil.addErrorMessage("mass_change_document_location_general_error");
+            }
+            MessageUtil.addStatusMessages(FacesContext.getCurrentInstance(), e.getMessageDataWrapper());
         }
         doInitialSearch();
         BeanHelper.getVisitedDocumentsBean().clearVisitedDocuments();
+    }
+
+    private void updateDocumentInMassChangeLocation(NodeRef function, NodeRef series, NodeRef volume, String caseLabel, Set<NodeRef> updatedNodeRefs, NodeRef docRef) {
+        DocumentDynamic document = getDocumentDynamicService().getDocument(docRef);
+        DocumentConfig cfg = getDocumentConfigService().getConfig(document.getNode());
+        document.setFunction(function);
+        document.setSeries(series);
+        document.setVolume(volume);
+        document.setCase(null);
+        document.getNode().getProperties().put(DocumentLocationGenerator.CASE_LABEL_EDITABLE.toString(), caseLabel);
+        List<Pair<NodeRef, NodeRef>> updatedRefs = getDocumentDynamicService().updateDocumentGetDocAndNodeRefs(document, cfg.getSaveListenerBeanNames(), true)
+                .getSecond();
+        for (Pair<NodeRef, NodeRef> pair : updatedRefs) {
+            updatedNodeRefs.add(pair.getFirst());
+            updatedNodeRefs.add(pair.getSecond());
+        }
     }
 
     public void resetConfirmation(@SuppressWarnings("unused") ActionEvent event) {
@@ -241,10 +289,12 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
 
     private boolean isValidLocation(NodeRef functionRef, NodeRef seriesRef, NodeRef volumeRef, String caseLabel) {
         if (functionRef == null || seriesRef == null || volumeRef == null) {
+            MessageUtil.addErrorMessage("document_validationMsg_mandatory_functionSeriesVolume");
             return false;
         }
         Volume volume = BeanHelper.getVolumeService().getVolumeByNodeRef(volumeRef);
         if (volume.isContainsCases() && StringUtils.isBlank(caseLabel)) {
+            MessageUtil.addErrorMessage("document_validationMsg_mandatory_case");
             return false;
         }
         return true;
@@ -279,27 +329,36 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
             parentRef = parentVolume.getNode().getNodeRef();
         }
         documents = setLimited(getChildNodes(parentRef, getLimit()));
+        final boolean debugEnabled = LOG.isDebugEnabled();
+        if (debugEnabled) {
+            LOG.debug("Found " + documents.size() + " document(s) during initial search. Limit: " + getLimit());
+        }
 
         // Because documents are fetched from search, the results may not be accurate if indexing is done in background
         // and mass change location was done during the last few seconds
         // Therefore filter out documents, that are not under this volume or case
+        List<Document> removedDocs = null;
+        if (debugEnabled) {
+            removedDocs = new ArrayList<Document>();
+        }
         for (Iterator<Document> i = documents.iterator(); i.hasNext();) {
             Document document = i.next();
-            if (parentCase != null) {
-                NodeRef caseRef = (NodeRef) document.getProperties().get(DocumentCommonModel.Props.CASE.toString());
-                if (!parentCase.getNode().getNodeRef().equals(caseRef)) {
-                    i.remove();
-                }
-            } else {
-                NodeRef volumeRef = (NodeRef) document.getProperties().get(DocumentCommonModel.Props.VOLUME.toString());
-                if (!parentVolume.getNode().getNodeRef().equals(volumeRef)) {
-                    i.remove();
+            QName parentRefProperty = (parentCase != null) ? DocumentCommonModel.Props.CASE : DocumentCommonModel.Props.VOLUME;
+
+            NodeRef documentParentRef = (NodeRef) document.getProperties().get(parentRefProperty.toString());
+            if (!parentRef.equals(documentParentRef)) {
+                i.remove();
+                if (debugEnabled) {
+                    removedDocs.add(document);
                 }
             }
         }
+        if (debugEnabled) {
+            LOG.debug("Removed " + removedDocs.size() + " documents from " + parentRef + " children listing during filtering: " + removedDocs.toString());
+        }
 
         Collections.sort(documents); // always sort, because at first user gets only limited amount of documents;
-                                     // and if user presses show all, then he/she knows it will take time
+        // and if user presses show all, then he/she knows it will take time
         resetModals();
         clearRichList();
     }

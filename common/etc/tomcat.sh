@@ -11,7 +11,7 @@ export CATALINA_OUT="$(pwd)/logs/catalina.out.$(date +%Y-%m-%d)"
 export CATALINA_PID="$(pwd)/tomcat.pid"
 
 # JVM settings
-export JAVA_OPTS="${JAVA_OPTS} -XX:MaxPermSize=192m -Xmx1024m"
+export JAVA_OPTS="${JAVA_OPTS} -XX:ReservedCodeCacheSize=72m -XX:MaxPermSize=192m -Xmx768m"
 
 if [ "$1" = "start" ]; then
 

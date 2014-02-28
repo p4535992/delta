@@ -254,9 +254,10 @@ jQuery.autocomplete = function(input, options) {
       });
 */
       // reposition
+      var topPos =  isIE(8) ? ($input.offset().top + $input.height()) : (pos.y + input.offsetHeight);
       $results.css({
          width: parseInt(iWidth) + "px",
-         top: (pos.y + input.offsetHeight) + "px",
+         top: topPos + "px",
          left: pos.x + "px"
       }).show();
    };

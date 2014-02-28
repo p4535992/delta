@@ -6,11 +6,11 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -114,6 +114,11 @@ public class LogServiceImpl implements LogService, InitializingBean {
     }
 
     @Override
+    public long getLogSequenceNextval() {
+        return jdbcTemplate.queryForLong("SELECT nextval('delta_log_seq')");
+    }
+
+    @Override
     public void addImportedLogEntry(LogEntry log, Date dateCreated, String idPrefix, long idSuffix) {
         if (!checkDescriptionNotNull(log)) {
             return;
@@ -164,41 +169,71 @@ public class LogServiceImpl implements LogService, InitializingBean {
         Object[] values = {};
 
         if (filter != null) {
-            Map<String, Object> filterMap = new LinkedHashMap<String, Object>();
+            List<String> queryParts = new ArrayList<String>();
+            List<Object> parameters = new ArrayList<Object>();
             if (hasLength(filter.getLogEntryId())) {
-                filterMap.put("log_entry_id LIKE ?", filter.getLogEntryId() + "%");
+                queryParts.add("log_entry_id LIKE ?");
+                parameters.add(filter.getLogEntryId() + "%");
             }
             if (filter.getDateCreatedStart() != null) {
-                filterMap.put("date(created_date_time) >= ?", filter.getDateCreatedStart());
+                queryParts.add("date(created_date_time) >= ?");
+                parameters.add(filter.getDateCreatedStart());
             }
             if (filter.getDateCreatedEnd() != null) {
-                filterMap.put("date(created_date_time) <= ?", filter.getDateCreatedEnd());
+                queryParts.add("date(created_date_time) <= ?");
+                parameters.add(filter.getDateCreatedEnd());
             }
             if (hasLength(filter.getCreatorName())) {
-                filterMap.put(DbSearchUtil.generateStringWordsWildcardQuery("creator_name"), generalService.getTsquery(filter.getCreatorName()));
+                queryParts.add(DbSearchUtil.generateStringWordsWildcardQuery("creator_name"));
+                parameters.add(generalService.getTsquery(filter.getCreatorName()));
             }
             if (hasLength(filter.getComputerId())) {
                 // creating indexes for these fields is future development (can be done used trigram index); currently these fields are not indexed
                 String computerId = "%" + filter.getComputerId().toLowerCase() + "%";
-                filterMap.put("(lower(computer_ip) LIKE ? OR lower(computer_name) LIKE ?)", computerId);
-                filterMap.put(null, computerId);
+                queryParts.add("(lower(computer_ip) LIKE ? OR lower(computer_name) LIKE ?)");
+                parameters.add(computerId);
+                parameters.add(computerId);
             }
             if (hasLength(filter.getDescription())) {
-                filterMap.put(DbSearchUtil.generateStringWordsWildcardQuery("description"), generalService.getTsquery(filter.getDescription()));
+                queryParts.add(DbSearchUtil.generateStringWordsWildcardQuery("description"));
+                parameters.add(generalService.getTsquery(filter.getDescription()));
             }
             if (hasLength(filter.getObjectName())) {
                 // creating index for this field is future development (can be done used trigram index); currently the field is not indexed
-                filterMap.put("lower(object_name) LIKE ?", "%" + filter.getObjectName().toLowerCase() + "%");
+                queryParts.add("lower(object_name) LIKE ?");
+                parameters.add("%" + filter.getObjectName().toLowerCase() + "%");
             }
-            if (hasLength(filter.getObjectId())) {
-                String sep = filter.isExactObjectId() ? "" : "%";
-                filterMap.put("object_id LIKE ?", sep + filter.getObjectId() + sep);
+            List<String> objectIds = filter.getObjectId();
+            if (objectIds != null && !objectIds.isEmpty()) {
+                List<String> notEmptyObjectIds = new ArrayList<String>();
+                for (String objectId : objectIds) {
+                    if (hasLength(objectId)) {
+                        notEmptyObjectIds.add(objectId);
+                    }
+                }
+                if (!notEmptyObjectIds.isEmpty()) {
+                    StringBuilder objectCondition;
+                    boolean exactObjectId = filter.isExactObjectId();
+                    if (exactObjectId) {
+                        objectCondition = new StringBuilder("object_id IN (").append(org.apache.commons.lang.StringUtils.repeat("?, ", notEmptyObjectIds.size()));
+                        objectCondition.setLength(objectCondition.length() - 2);
+                    } else {
+                        objectCondition = new StringBuilder(org.apache.commons.lang.StringUtils.repeat("(object_id LIKE ? OR ", notEmptyObjectIds.size()));
+                        objectCondition.setLength(objectCondition.length() - 4);
+                    }
+                    objectCondition.append(')').toString();
+                    queryParts.add(objectCondition.toString());
+                    String sep = exactObjectId ? "" : "%";
+                    for (String objectId : notEmptyObjectIds) {
+                        parameters.add(sep + objectId + sep);
+                    }
+                }
             }
 
-            if (!filterMap.isEmpty()) {
+            if (!queryParts.isEmpty()) {
                 q.append(" WHERE ");
                 boolean firstCondition = true;
-                for (String condition : filterMap.keySet()) {
+                for (String condition : queryParts) {
                     if (condition != null) {
                         if (!firstCondition) {
                             q.append(" AND ");
@@ -209,7 +244,7 @@ public class LogServiceImpl implements LogService, InitializingBean {
                     }
                 }
             }
-            values = filterMap.values().toArray(new Object[filterMap.values().size()]);
+            values = parameters.toArray(new Object[parameters.size()]);
 
             Set<String> excludedDescriptions = filter.getExcludedDescriptions();
             if (excludedDescriptions != null) {
@@ -228,7 +263,9 @@ public class LogServiceImpl implements LogService, InitializingBean {
 
         q.append(" ORDER BY created_date_time ASC");
         String query = q.toString();
+        Long logQueryStart = System.currentTimeMillis();
         List<LogEntry> results = jdbcTemplate.query(query, new LogRowMapper(), values);
+        LOG.info("Log entry query duration: " + (System.currentTimeMillis() - logQueryStart));
         explainQuery(query, values);
         return results;
     }

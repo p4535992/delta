@@ -4,6 +4,8 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentAdminService
 import static ee.webmedia.alfresco.utils.ComponentUtil.addDefault;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -15,6 +17,7 @@ import javax.faces.model.SelectItem;
 
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 
+import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.classificator.constant.DocTypeAssocType;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docadmin.service.AssociationModel;
@@ -90,7 +93,6 @@ public class AssociationModelDetailsDialog extends BaseDialogBean {
     public List<SelectItem> getDocTypes(FacesContext context, @SuppressWarnings("unused") UIInput selectComponent) {
         List<DocumentType> docTypes = getDocumentAdminService().getDocumentTypes(DocumentAdminService.DONT_INCLUDE_CHILDREN, true);
         List<SelectItem> results = new ArrayList<SelectItem>(docTypes.size() + 1);
-        addDefault(results, context);
         Set<String> associatedDocTypes = new HashSet<String>();
         DocTypeAssocType associationTypeEnum = associationModel.getAssociationType();
         for (AssociationModel assocModel : documentType.getAssociationModels(associationTypeEnum)) {
@@ -103,6 +105,16 @@ public class AssociationModelDetailsDialog extends BaseDialogBean {
             SelectItem selectItem = new SelectItem(docType.getId(), docType.getNameAndId());
             results.add(selectItem);
         }
+
+        Collections.sort(results, new Comparator<SelectItem>() {
+
+            @Override
+            public int compare(SelectItem o1, SelectItem o2) {
+                return AppConstants.DEFAULT_COLLATOR.compare(o1.getLabel(), o2.getLabel());
+            }
+
+        });
+        addDefault(results, context);
         return results;
     }
 

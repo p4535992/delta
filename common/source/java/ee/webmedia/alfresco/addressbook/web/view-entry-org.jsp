@@ -35,7 +35,7 @@
 
                   <a:column>
                      <f:facet name="header">
-                        <h:outputText value="#{msg.email}" />
+                        <h:outputText value="#{msg.document_email}" />
                      </f:facet>
                      <h:outputText value="#{r['ab:email']}" />
                   </a:column>

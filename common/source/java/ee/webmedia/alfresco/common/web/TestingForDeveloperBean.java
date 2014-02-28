@@ -1,5 +1,11 @@
 package ee.webmedia.alfresco.common.web;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getSpringBean;
+import static ee.webmedia.alfresco.utils.SearchUtil.generateAspectQuery;
+import static ee.webmedia.alfresco.utils.SearchUtil.generateStringExactQuery;
+import static ee.webmedia.alfresco.utils.SearchUtil.generateTypeQuery;
+import static ee.webmedia.alfresco.utils.SearchUtil.joinQueryPartsAnd;
+
 import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -9,6 +15,7 @@ import java.util.List;
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
+import org.alfresco.repo.cache.EhCacheTracerJob;
 import org.alfresco.repo.search.Indexer;
 import org.alfresco.repo.search.impl.lucene.ADMLuceneTest;
 import org.alfresco.repo.search.impl.lucene.AbstractLuceneBase;
@@ -16,6 +23,7 @@ import org.alfresco.repo.search.impl.lucene.AbstractLuceneIndexerAndSearcherFact
 import org.alfresco.repo.search.impl.lucene.AbstractLuceneIndexerAndSearcherFactory.LuceneIndexBackupJob;
 import org.alfresco.repo.search.impl.lucene.LuceneIndexerAndSearcher;
 import org.alfresco.repo.search.impl.lucene.index.IndexInfo;
+import org.alfresco.repo.security.sync.UserRegistrySynchronizer;
 import org.alfresco.repo.transaction.RetryingTransactionHelper;
 import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
@@ -24,12 +32,18 @@ import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.cmr.search.SearchService;
 import org.alfresco.service.transaction.TransactionService;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.FastDateFormat;
+import org.quartz.JobExecutionException;
 
+import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
+import ee.webmedia.alfresco.common.job.NightlyDataFixJob;
 import ee.webmedia.alfresco.common.service.CustomReindexComponent;
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.dvk.service.DvkService;
 import ee.webmedia.alfresco.utils.ActionUtil;
+import ee.webmedia.alfresco.utils.SearchUtil;
 import ee.webmedia.xtee.client.dhl.DhlXTeeServiceImplFSStub;
 
 /**
@@ -60,6 +74,32 @@ public class TestingForDeveloperBean implements Serializable {
 
     public String getIndexInfoText() {
         return indexInfoText;
+    }
+
+    private String missingOwnerId;
+
+    public String getMissingOwnerId() {
+        return missingOwnerId;
+    }
+
+    public void setMissingOwnerId(String missingOwnerId) {
+        this.missingOwnerId = missingOwnerId;
+    }
+
+    public void searchMissingOwnerId(@SuppressWarnings("unused") ActionEvent event) {
+        List<String> queryParts = new ArrayList<String>();
+        queryParts.add(generateTypeQuery(DocumentCommonModel.Types.DOCUMENT));
+        queryParts.add(generateAspectQuery(DocumentCommonModel.Aspects.SEARCHABLE));
+        queryParts.add(SearchUtil.generatePropertyNullQuery(DocumentCommonModel.Props.OWNER_ID));
+        queryParts.add(SearchUtil.generatePropertyNotNullQuery(DocumentCommonModel.Props.OWNER_NAME));
+        queryParts.add(generateStringExactQuery(DocumentStatus.WORKING.getValueName(), DocumentCommonModel.Props.DOC_STATUS));
+        String query = joinQueryPartsAnd(queryParts);
+        String result = StringUtils.join(BeanHelper.getDocumentSearchService().searchNodes(query, 0, "missingOwnerId"), '\n');
+        if (StringUtils.isBlank(result)) {
+            result = "0";
+        }
+
+        setMissingOwnerId(result);
     }
 
     public void addNonSerializableObjectToSession(@SuppressWarnings("unused") ActionEvent event) {
@@ -110,13 +150,10 @@ public class TestingForDeveloperBean implements Serializable {
     }
 
     private void deleteBootstrap(String moduleName, String bootstrapName) {
-        String systematicFieldGroupDefinitionsBootstrap1 = getBootstrapXPath(moduleName, bootstrapName);
-        StoreRef store = new StoreRef("system://system");
-        final NodeRef nodeRef = getNodeRef(systematicFieldGroupDefinitionsBootstrap1, store);
+        final NodeRef nodeRef = getGeneralService().deleteBootstrapNodeRef(moduleName, bootstrapName);
         if (nodeRef == null) {
             LOG.info("from module '" + moduleName + "' bootstrap '" + bootstrapName + "' does not exist");
         } else {
-            getNodeService().deleteNode(nodeRef);
             LOG.info("from module '" + moduleName + "' deleted bootstrap '" + bootstrapName + "' (noderef=" + nodeRef + ")");
         }
     }
@@ -137,10 +174,6 @@ public class TestingForDeveloperBean implements Serializable {
         }
     }
 
-    private String getBootstrapXPath(String moduleName, String bootstrapName) {
-        return "/sys:system-registry/module:modules/module:" + moduleName + "/module:components/module:" + bootstrapName;
-    }
-
     private List<String> storeRefs = null;
 
     public List<String> getStoreRefs() {
@@ -154,7 +187,11 @@ public class TestingForDeveloperBean implements Serializable {
         return storeRefs;
     }
 
-    public void runMergeNowOnAllIndexesAndPerformIndexBackup(ActionEvent event) {
+    public void runNightly0230DataMaintenanceJobNow(@SuppressWarnings("unused") ActionEvent event) throws JobExecutionException {
+        new NightlyDataFixJob().execute(null);
+    }
+
+    public void runNightly0300IndexMaintenanceJobNow(@SuppressWarnings("unused") ActionEvent event) {
         LuceneIndexBackupComponent luceneIndexBackupComponent = BeanHelper.getSpringBean(LuceneIndexBackupComponent.class, "luceneIndexBackupComponent");
         new LuceneIndexBackupJob().executeInternal(luceneIndexBackupComponent);
     }
@@ -208,9 +245,20 @@ public class TestingForDeveloperBean implements Serializable {
         LOG.info(indexInfoTextWithoutDate);
     }
 
+    public void updateUsersAndGroups(ActionEvent event) {
+        LOG.debug("Starting to update users and usergroups");
+        UserRegistrySynchronizer userRegistrySynchronizer = getSpringBean(UserRegistrySynchronizer.class, "UserRegistrySynchronizer");
+        userRegistrySynchronizer.synchronize(true);
+        LOG.debug("Finished updating users and usergroups");
+    }
+
     public void searchHolesAndIndex(ActionEvent event) {
         CustomReindexComponent customReindexComponent = BeanHelper.getSpringBean(CustomReindexComponent.class, "customReindexComponent");
         customReindexComponent.reindex();
+    }
+
+    public void executeCacheStatistics(ActionEvent event) throws JobExecutionException {
+        (new EhCacheTracerJob()).execute(null);
     }
 
     protected RetryingTransactionHelper getTransactionHelper() {

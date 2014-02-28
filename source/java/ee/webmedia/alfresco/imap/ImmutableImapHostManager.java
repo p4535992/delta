@@ -55,7 +55,8 @@ public class ImmutableImapHostManager implements ImapHostManager {
 
     @Override
     public MailFolder createMailbox(GreenMailUser greenMailUser, String s) throws AuthorizationException, FolderException {
-        throw new UnsupportedOperationException();
+        // Return null and OK result to support Office 2013
+        return null;
     }
 
     @Override
@@ -80,12 +81,12 @@ public class ImmutableImapHostManager implements ImapHostManager {
 
     @Override
     public void subscribe(GreenMailUser greenMailUser, String s) throws FolderException {
-        throw new UnsupportedOperationException();
+        // Real subscription management occurs in Delta, Oultook just fetches the results following this request so let's pretend to be co-operative.
     }
 
     @Override
     public void unsubscribe(GreenMailUser greenMailUser, String s) throws FolderException {
-        throw new UnsupportedOperationException();
+        // Real subscription management occurs in Delta, Oultook just fetches the results following this request so let's pretend to be co-operative.
     }
 
     private static AlfrescoImapUser getAlfrescoImapUser(GreenMailUser user) {

@@ -35,6 +35,7 @@ public class VolumeListDialog extends BaseDialogBean {
     private Series parent;
 
     public static final String BEAN_NAME = "VolumeListDialog";
+    public static final String DIALOG_NAME = "volumeListDialog";
 
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {

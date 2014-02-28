@@ -83,6 +83,8 @@ public class MenuBean implements Serializable {
     public static final List<String> HIDDEN_WHEN_EMPTY = Arrays.asList("assignmentTasks", "informationTasks", "orderAssignmentTasks", "opinionTasks", "discussions", "reviewTasks",
             "externalReviewTasks", "confirmationTasks", "signatureTasks", "forRegisteringList", "userWorkingDocuments");
 
+    public static final List<String> HIDDEN_FROM_SUBSTITUTOR = Arrays.asList("documentDynamicTypes");
+
     private transient HtmlPanelGroup shortcutsPanelGroup;
     private transient HtmlPanelGroup breadcrumb;
 
@@ -596,6 +598,9 @@ public class MenuBean implements Serializable {
     }
 
     private boolean generateAndAddShortcut(String menuItemId) {
+        if (StringUtils.isBlank(menuItemId)) {
+            return false;
+        }
         FacesContext context = FacesContext.getCurrentInstance();
         Pair<MenuItem, String[]> menuItemAndPath = getMenuItemAndPathFromMenuItemId(menuItemId);
         if (menuItemAndPath == null) {
@@ -827,6 +832,10 @@ public class MenuBean implements Serializable {
         if (HIDDEN_WHEN_EMPTY.contains(menuItemId)) {
             Boolean showEmpty = (Boolean) getUserService().getUserProperties(AuthenticationUtil.getRunAsUser()).get(ContentModel.SHOW_EMPTY_TASK_MENU);
             return showEmpty == null || !showEmpty;
+        }
+
+        if (HIDDEN_FROM_SUBSTITUTOR.contains(menuItemId)) {
+            return BeanHelper.getSubstitutionBean().getSubstitutionInfo().isSubstituting();
         }
 
         return false;

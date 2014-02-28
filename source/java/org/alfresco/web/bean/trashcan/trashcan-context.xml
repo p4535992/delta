@@ -13,5 +13,15 @@
       <property name="documentListService" ref="DocumentListService" />
       <property name="userService" ref="UserService" />
       <property name="documentService" ref="DocumentService" />
+      <property name="transactionService" ref="TransactionService" />
+      <property name="transactionHelperMinRetryWaits" value="6000" />
    </bean>
+   
+   <!-- This updater is present only in 3.6.30 branch to fix bugs while upgrading 3.6.21 to 3.6.30 branch -->
+   <bean id="deleteOldTrashcanItems" class="org.alfresco.web.bean.trashcan.bootstrap.DeleteOldTrashcanItems" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="batchSize" value="1" />
+   </bean>
+      
 </beans>

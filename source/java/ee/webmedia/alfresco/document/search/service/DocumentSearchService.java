@@ -262,6 +262,8 @@ public interface DocumentSearchService {
     // TODO not document specific
     boolean isMatch(String query);
 
+    boolean isMatchAllStoresWithTrashcan(String query);
+
     boolean isMatch(String query, boolean allStores, String queryName);
 
     /**
@@ -280,5 +282,9 @@ public interface DocumentSearchService {
     String generateDeletedSearchQuery(String searchValue, NodeRef containerNodeRef);
 
     Pair<List<NodeRef>, Boolean> searchAllDocumentsByParentRef(NodeRef parentRef, int limit);
+
+    List<NodeRef> searchNodesByTypeAndProps(String input, QName type, Set<QName> props, int limit);
+
+    boolean isFieldByOriginalIdExists(String fieldId);
 
 }

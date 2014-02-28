@@ -42,9 +42,12 @@ function updateButtonState()
             <h:commandButton id="show-all-button" value="#{msg.show_all}" action="#{AddressbookListDialog.showAll}" style="margin-left: 5px;"/>
             <f:verbatim>
             <script type="text/javascript">
-               addSearchSuggest("dialog:dialog-body:search-text", "dialog:dialog-body:search-text", "AddressbookSearchBean.searchContacts", "<%=request.getContextPath()%>/ajax/invoke/AjaxSearchBean.invokeActionListener?actionListener=AddressbookSearchBean.setupViewEntry",
+               addSearchSuggest("dialog:dialog-body:search-text", "dialog:dialog-body:search-text", "AddressbookSearchBean.searchContacts", null, "<%=request.getContextPath()%>/ajax/invoke/AjaxSearchBean.invokeActionListener?actionListener=AddressbookSearchBean.setupViewEntry",
                      function() {
-                        var type = this.slice(this.lastIndexOf("(") + 1, this.lastIndexOf(")")); // eraisik or organisatsioon
+                        var lastComma = this.lastIndexOf(",");
+                        var lastCloseParen = this.lastIndexOf(")");
+                        var endIndex = (lastComma > -1 && lastComma < lastCloseParen) ? lastComma : lastCloseParen; // Check for e-mail  
+                        var type = this.slice(this.lastIndexOf("(") + 1, endIndex); // eraisik or organisatsioon
                         $jQ("#" + type).click();
                });
             </script>

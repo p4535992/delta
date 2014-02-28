@@ -29,13 +29,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.alfresco.repo.domain.AccessControlListDAO;
 import org.alfresco.repo.domain.DbAccessControlList;
 import org.alfresco.repo.domain.Node;
 import org.alfresco.repo.domain.hibernate.AVMAccessControlListDAO.CounterSet;
 import org.alfresco.repo.node.db.NodeDaoService;
 import org.alfresco.repo.security.permissions.ACLType;
-import org.alfresco.repo.security.permissions.AccessControlEntry;
 import org.alfresco.repo.security.permissions.AccessControlList;
 import org.alfresco.repo.security.permissions.SimpleAccessControlListProperties;
 import org.alfresco.repo.security.permissions.impl.AclChange;
@@ -47,13 +45,15 @@ import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.util.Pair;
 
+import ee.webmedia.alfresco.privilege.service.AccessControlListExtDAO;
+
 /**
  * DAO layer for the improved ACL implemtentation. This layer is responsible for setting ACLs and any cascade behaviour
  * required. It also implements the migration from the old implementation to the new.
  * 
  * @author andyh
  */
-public class DMAccessControlListDAO implements AccessControlListDAO
+public class DMAccessControlListDAO implements AccessControlListExtDAO
 {
     /**
      * The DAO for Nodes.
@@ -325,6 +325,23 @@ public class DMAccessControlListDAO implements AccessControlListDAO
     public void updateChangedAcls(NodeRef startingPoint, List<AclChange> changes)
     {
         // Nothing to do: no nodes change as a result of ACL changes
+    }
+    
+    public void fixAclInheritFromNull(Long childAclId, Long primaryParentAclId, NodeRef parentNodeRef) {
+        Long inheritedAclId = getInheritedAccessControlList(primaryParentAclId); // kasut. AclDaoComponentImpl sama meetodit
+        if (inheritedAclId.equals(childAclId)) {
+            // child acl does match inherited from primary parent
+            // needs to set inherits_from correctly and fix up
+            aclDaoComponent.fixSharedAcl(childAclId, primaryParentAclId);
+        } else {
+            // child acl does not match inherited from primary parent
+            // need to replace the shared acl
+            setFixedAcls(parentNodeRef, primaryParentAclId, null, new ArrayList<AclChange>(), true); // DMAccessControlListDAO.setFixedAcls
+        }
+    }
+    
+    public Long getInheritedAccessControlList(Long aclId) {
+        return aclDaoComponent.getInheritedAccessControlList(aclId);
     }
 
     /**

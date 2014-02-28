@@ -12,6 +12,7 @@ import org.alfresco.web.bean.repository.Node;
 import ee.webmedia.alfresco.docadmin.service.DocumentTypeVersion;
 import ee.webmedia.alfresco.docadmin.service.Field;
 import ee.webmedia.alfresco.docconfig.service.DynamicPropertyDefinition;
+import ee.webmedia.alfresco.utils.TreeNode;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UnableToPerformMultiReasonException;
 
@@ -95,5 +96,7 @@ public interface DocumentDynamicService {
             boolean relocateAssocDocs);
 
     String getDocumentType(NodeRef documentRef);
+
+    TreeNode<QName> getChildNodeQNameHierarchy(QName[] hierarchy, TreeNode<QName> root);
 
 }

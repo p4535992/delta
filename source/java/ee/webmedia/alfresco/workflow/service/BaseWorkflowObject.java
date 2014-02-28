@@ -1,6 +1,7 @@
 package ee.webmedia.alfresco.workflow.service;
 
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -154,6 +155,10 @@ public abstract class BaseWorkflowObject extends NodeBaseVO {
 
     protected void preSave() {
         // Subclasses can override
+    }
+
+    protected Map<QName, Serializable> getOriginalProperties() {
+        return Collections.unmodifiableMap(originalProperties);
     }
 
 }

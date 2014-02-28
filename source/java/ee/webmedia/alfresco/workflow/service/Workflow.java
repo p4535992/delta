@@ -30,7 +30,7 @@ public class Workflow extends BaseWorkflowObject implements Serializable {
      */
     private int indexInCompoundWorkflow;
 
-    protected static <T extends Workflow> T create(Class<T> workflowClass, WmNode node, CompoundWorkflow parent, WmNode newTaskTemplate,
+    public static <T extends Workflow> T create(Class<T> workflowClass, WmNode node, CompoundWorkflow parent, WmNode newTaskTemplate,
             Class<? extends Task> newTaskClass, int newTaskOutcomes) {
         try {
             return workflowClass.getDeclaredConstructor(WmNode.class, CompoundWorkflow.class, WmNode.class, Class.class, Integer.class).newInstance(node,
@@ -95,7 +95,7 @@ public class Workflow extends BaseWorkflowObject implements Serializable {
         removedTasks.add(tasks.remove(index));
     }
 
-    protected void addTask(Task task) {
+    public void addTask(Task task) {
         tasks.add(task);
     }
 

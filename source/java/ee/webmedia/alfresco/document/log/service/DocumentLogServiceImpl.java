@@ -2,12 +2,15 @@ package ee.webmedia.alfresco.document.log.service;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
+import org.alfresco.service.namespace.QName;
 
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.log.model.LogEntry;
 import ee.webmedia.alfresco.log.model.LogObject;
 import ee.webmedia.alfresco.log.service.LogService;
 import ee.webmedia.alfresco.user.service.UserService;
+import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.utils.RepoUtil;
 
 public class DocumentLogServiceImpl implements DocumentLogService {
 
@@ -30,6 +33,14 @@ public class DocumentLogServiceImpl implements DocumentLogService {
     private void addAppLogEntry(NodeRef nodeRef, String creator, String description) {
         String creatorId = userService.getCurrentUserName();
         logService.addLogEntry(LogEntry.createLoc(LogObject.DOCUMENT, creatorId, creator, nodeRef, description));
+    }
+
+    @Override
+    public void addDeletedObjectLog(NodeRef objectRef, String msgKey) {
+        QName objectType = nodeService.getType(objectRef);
+        LogEntry logEntry = LogEntry.create(LogObject.RESTORE, userService, objectRef, msgKey, RepoUtil.getArchivedObjectName(objectType, nodeService.getProperties(objectRef)));
+        logEntry.setObjectName(MessageUtil.getTypeName(objectType));
+        logService.addLogEntry(logEntry);
     }
 
     // START: getters / setters

@@ -24,7 +24,7 @@
             <a:sortLink id="col2-sort" label="#{msg.applog_item_datetime}" value="createdDateTime" styleClass="header" />
          </f:facet>
          <h:outputText id="col2-text" value="#{r.createdDateTime}">
-            <a:convertXMLDate type="both" pattern="#{msg.date_time_pattern}" />
+            <a:convertXMLDate type="both" pattern="#{msg.date_time_with_second_pattern}" />
          </h:outputText>
       </a:column>
 

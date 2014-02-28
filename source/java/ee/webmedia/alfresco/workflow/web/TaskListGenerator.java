@@ -1,6 +1,7 @@
 package ee.webmedia.alfresco.workflow.web;
 
 import static ee.webmedia.alfresco.common.propertysheet.datepicker.DatePickerWithDueDateGenerator.createDueDateDaysSelector;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getOrganizationStructureService;
 import static ee.webmedia.alfresco.utils.ComponentUtil.addAttributes;
 import static ee.webmedia.alfresco.utils.ComponentUtil.addChildren;
 import static ee.webmedia.alfresco.utils.ComponentUtil.addOnchangeClickLink;
@@ -16,6 +17,7 @@ import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.getDialogId;
 import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.isTaskRowEditable;
 import static org.alfresco.web.app.servlet.FacesHelper.makeLegalId;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -39,6 +41,7 @@ import javax.faces.el.MethodBinding;
 import javax.faces.el.ValueBinding;
 import javax.faces.event.ActionEvent;
 
+import org.alfresco.model.ContentModel;
 import org.alfresco.service.cmr.dictionary.PropertyDefinition;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
@@ -180,7 +183,7 @@ public class TaskListGenerator extends BaseComponentGenerator {
             boolean addCommentPopup = blockType.equals(WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW) || blockType.equals(WorkflowSpecificModel.Types.OPINION_WORKFLOW)
                     || blockType.equals(WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_WORKFLOW);
             if (addCommentPopup) {
-                commentPopup = createCommentPopup(application, listId);
+                commentPopup = createCommentPopup(application, wfIndex);
                 putAttribute(commentPopup, TaskListGenerator.ATTR_WORKFLOW_INDEX, wfIndex);
                 commentPopup.setActionListener(application.createMethodBinding("#{DialogManager.bean.finishWorkflowTask}", UIActions.ACTION_CLASS_ARGS));
                 resultChildren.add(commentPopup);
@@ -241,20 +244,11 @@ public class TaskListGenerator extends BaseComponentGenerator {
             // due to performance issues
             boolean isSignatureWorkflow = blockType.equals(WorkflowSpecificModel.Types.SIGNATURE_WORKFLOW);
             boolean isConfirmationWorkflow = blockType.equals(WorkflowSpecificModel.Types.CONFIRMATION_WORKFLOW);
-            String signerName = null;
-            String signerId = null;
-            String signerEmail = null;
+            Map<String, Object> signatureTaskOwnerProps = null;
+            boolean assignSigner = false;
             if (isSignatureWorkflow) {
-                NodeRef docRef = workflow.getParent().getParent();
-                if (docRef != null) {
-                    NodeService nodeService = BeanHelper.getNodeService();
-                    signerName = (String) nodeService.getProperty(docRef, DocumentCommonModel.Props.SIGNER_NAME);
-                    signerId = (String) nodeService.getProperty(docRef, DocumentDynamicModel.Props.SIGNER_ID);
-                    signerEmail = (String) nodeService.getProperty(docRef, DocumentDynamicModel.Props.SIGNER_EMAIL);
-                    if (StringUtils.isBlank(signerEmail)) {
-                        signerEmail = BeanHelper.getUserService().getUserEmail(signerId);
-                    }
-                }
+                signatureTaskOwnerProps = loadSignatureTaskOwnerProps(workflow.getParent().getParent());
+                assignSigner = signatureTaskOwnerProps != null;
             }
 
             Map<String, Object> dueDateTimeAttr = new HashMap<String, Object>();
@@ -325,6 +319,9 @@ public class TaskListGenerator extends BaseComponentGenerator {
                     }
                 } else if (StringUtils.isNotBlank(ownerGroup) && taskGroup == null) {
                     taskGroup = new TaskGroup(ownerGroup, counter, responsible, fullAccess);
+                    if (task.getDueDate() != null) { // If we add a group under a task that has a due date set, we must also copy it to the group
+                        taskGroup.setDueDate(task.getDueDate());
+                    }
                     List<TaskGroup> groups = taskGroups.get(ownerGroup);
                     if (groups == null) {
                         groups = new ArrayList<TaskGroup>();
@@ -352,10 +349,8 @@ public class TaskListGenerator extends BaseComponentGenerator {
                     nameValueBinding = createPropValueBinding(wfIndex, counter, WorkflowSpecificModel.Props.INSTITUTION_NAME);
                 } else {
                     nameValueBinding = createPropValueBinding(wfIndex, counter, WorkflowCommonModel.Props.OWNER_NAME);
-                    if (isSignatureWorkflow && counter == 0 && task.getOwnerId() == null && StringUtils.isNotBlank(signerId)) {
-                        task.setOwnerName(signerName);
-                        task.setOwnerId(signerId);
-                        task.setOwnerEmail(signerEmail);
+                    if (isSignatureWorkflow && counter == 0 && task.getOwnerId() == null && assignSigner) {
+                        task.getNode().getProperties().putAll(signatureTaskOwnerProps);
                     }
                 }
                 nameInput.setValueBinding("value", application.createValueBinding(nameValueBinding));
@@ -555,6 +550,44 @@ public class TaskListGenerator extends BaseComponentGenerator {
         return result;
     }
 
+    public static Map<String, Object> loadSignatureTaskOwnerProps(NodeRef docRef) {
+        if (docRef == null) {
+            return null;
+        }
+        NodeService nodeService = BeanHelper.getNodeService();
+        Map<QName, Serializable> docProps = nodeService.getProperties(docRef);
+        String signerId = (String) docProps.get(DocumentDynamicModel.Props.SIGNER_ID);
+        String signerName = (String) docProps.get(DocumentCommonModel.Props.SIGNER_NAME);
+        boolean assignSigner = StringUtils.isNotBlank(signerId) && StringUtils.isNotBlank(signerName);
+        if (assignSigner) {
+            @SuppressWarnings("unchecked")
+            List<String> orgStructUnit = (List<String>) docProps.get(DocumentCommonModel.Props.SIGNER_ORG_STRUCT_UNIT);
+
+            Map<String, Object> signatureTaskOwnerProps = new HashMap<String, Object>();
+            signatureTaskOwnerProps.put(WorkflowCommonModel.Props.OWNER_ID.toString(), signerId);
+            signatureTaskOwnerProps.put(WorkflowCommonModel.Props.OWNER_NAME.toString(), signerName);
+            if (orgStructUnit != null && !orgStructUnit.isEmpty()) {
+                signatureTaskOwnerProps.put(WorkflowCommonModel.Props.OWNER_ORGANIZATION_NAME.toString(), orgStructUnit);
+            }
+            String signerEmail = (String) docProps.get(DocumentDynamicModel.Props.SIGNER_EMAIL);
+            Map<QName, Serializable> userProps = BeanHelper.getUserService().getUserProperties(signerId);
+            if (userProps != null) {
+                if (StringUtils.isBlank(signerEmail)) {
+                    signerEmail = (String) userProps.get(ContentModel.PROP_EMAIL);
+                }
+                signatureTaskOwnerProps.put(WorkflowCommonModel.Props.OWNER_EMAIL.toString(), signerEmail);
+                signatureTaskOwnerProps.put(WorkflowCommonModel.Props.OWNER_JOB_TITLE.toString(), userProps.get(ContentModel.PROP_JOBTITLE));
+                List<String> organizationStructurePaths = getOrganizationStructureService().getOrganizationStructurePaths((String) userProps.get(ContentModel.PROP_ORGID));
+                // Don't reset if user has manually assigned structure unit in document properties
+                if (organizationStructurePaths != null && !organizationStructurePaths.isEmpty()) {
+                    signatureTaskOwnerProps.put(WorkflowCommonModel.Props.OWNER_ORGANIZATION_NAME.toString(), organizationStructurePaths);
+                }
+                return signatureTaskOwnerProps;
+            }
+        }
+        return null;
+    }
+
     private Pair<Integer, TaskGroup> getAdjacentTaskGroup(List<TaskGroup> taskGroupsByGroupName, Integer counter) {
         int groupNr = 0;
         if (taskGroupsByGroupName == null) {
@@ -743,19 +776,19 @@ public class TaskListGenerator extends BaseComponentGenerator {
         taskGridChildren.add(dueDateDaysHeading);
     }
 
-    private ValidatingModalLayerComponent createCommentPopup(Application application, String listId) {
+    private ValidatingModalLayerComponent createCommentPopup(Application application, int wfIndex) {
         ValidatingModalLayerComponent commentPopup = (ValidatingModalLayerComponent) application.createComponent(ValidatingModalLayerComponent.class.getCanonicalName());
-        commentPopup.setId("task-comment-popup-" + listId);
+        commentPopup.setId("task-comment-popup-" + wfIndex);
         Map<String, Object> popupAttributes = getAttributes(commentPopup);
         popupAttributes.put(ModalLayerComponent.ATTR_HEADER_KEY, "task_finish_popup");
         popupAttributes.put(ValidatingModalLayerComponent.ATTR_AJAX_ENABLED, Boolean.TRUE);
-        UIInput commentInput = (UIInput) application.createComponent(HtmlInputText.COMPONENT_TYPE);
+        TextAreaGenerator textAreaGenerator = new TextAreaGenerator();
+        UIInput commentInput = (UIInput) textAreaGenerator.generate(FacesContext.getCurrentInstance(), CompoundWorkflowDialog.MODAL_KEY_ENTRY_COMMENT);
         commentInput.setId(CompoundWorkflowDialog.MODAL_KEY_ENTRY_COMMENT);
         Map<String, Object> attributes = getAttributes(commentInput);
         attributes.put(ValidatingModalLayerComponent.ATTR_LABEL_KEY, "task_finish_comment");
         attributes.put(ValidatingModalLayerComponent.ATTR_MANDATORY, Boolean.TRUE);
         attributes.put("styleClass", "expand19-200");
-        attributes.put("style", "height: 50px;");
         getChildren(commentPopup).add(commentInput);
         return commentPopup;
     }

@@ -68,4 +68,12 @@ public class ReportDataCollector {
         return reportResultProps;
     }
 
+    public void addReportResultProps(Map<QName, Serializable> reportResultProps) {
+        if (this.reportResultProps != null && !this.reportResultProps.isEmpty()) {
+            this.reportResultProps.putAll(reportResultProps);
+        } else {
+            setReportResultProps(reportResultProps);
+        }
+    }
+
 }

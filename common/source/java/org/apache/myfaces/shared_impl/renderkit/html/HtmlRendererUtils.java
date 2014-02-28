@@ -451,6 +451,10 @@ public final class HtmlRendererUtils {
                                                                true); //default is to escape
                 }
 
+                if (StringUtils.isNotBlank(selectItem.getDescription())) {
+                    writer.writeAttribute(HTML.TITLE_ATTR, selectItem.getDescription(), "description");
+                }
+
                 if (escape) {
                     writer.writeText(selectItem.getLabel(), null);
                 }

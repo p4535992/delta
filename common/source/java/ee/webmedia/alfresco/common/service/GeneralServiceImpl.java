@@ -1,6 +1,5 @@
 package ee.webmedia.alfresco.common.service;
 
-import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentSearchService;
 import static org.alfresco.web.bean.generator.BaseComponentGenerator.CustomConstants.VALUE_INDEX_IN_MULTIVALUED_PROPERTY;
 
 import java.io.BufferedInputStream;
@@ -16,6 +15,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -91,7 +91,6 @@ import ee.webmedia.alfresco.document.log.service.DocumentPropertiesChangeHolder;
 import ee.webmedia.alfresco.utils.AdjustableSemaphore;
 import ee.webmedia.alfresco.utils.CalendarUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
-import ee.webmedia.alfresco.utils.SearchUtil;
 import ee.webmedia.alfresco.utils.TextUtil;
 
 /**
@@ -515,28 +514,6 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
     }
 
     @Override
-    public List<NodeRef> searchNodes(String input, QName type, Set<QName> props) {
-        return searchNodes(input, type, props, 100);
-    }
-
-    @Override
-    public List<NodeRef> searchNodes(String input, QName type, Set<QName> props, int limit) {
-        limit = limit < 0 ? 100 : limit;
-        if (input == null) {
-            return null;
-        }
-        String parsedInput = SearchUtil.replace(input, " ").trim();
-        if (parsedInput.length() < 1) {
-            return null;
-        }
-
-        String query = SearchUtil.generateQuery(parsedInput, type, props);
-        log.debug("Query: " + query);
-
-        return getDocumentSearchService().searchNodes(query, limit, "searchNodesByTypeAndProps");
-    }
-
-    @Override
     public Map<QName, Serializable> setPropertiesIgnoringSystem(Map<QName, Serializable> properties, NodeRef nodeRef) {
         properties = getPropertiesIgnoringSys(properties);
         nodeService.addProperties(nodeRef, properties);
@@ -641,6 +618,19 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
 
     @Override
     public void writeFile(ContentWriter writer, File file, String fileName, String mimetype) {
+        try {
+            InputStream is = new BufferedInputStream(new FileInputStream(file));
+            Pair<String, String> result = getMimetypeAndEncoding(is, fileName, mimetype);
+            writer.setMimetype(result.getFirst());
+            writer.setEncoding(result.getSecond());
+            writer.putContent(file);
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public Pair<String, String> getMimetypeAndEncoding(InputStream is, String fileName, String mimetype) {
         // Always ignore user-provided mime-type
         String oldMimetype = StringUtils.lowerCase(mimetype);
         mimetype = mimetypeService.guessMimetype(fileName);
@@ -650,26 +640,18 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
         }
 
         String encoding;
-        InputStream is = null;
         try {
-            is = new BufferedInputStream(new FileInputStream(file));
             Charset charset = mimetypeService.getContentCharsetFinder().getCharset(is, mimetype);
             encoding = charset.name();
-        } catch (FileNotFoundException e) {
-            throw new RuntimeException(e);
         } finally {
             try {
-                if (is != null) {
-                    is.close();
-                }
+                is.close();
             } catch (IOException e) {
-                // Do nothing
+                throw new RuntimeException(e);
             }
         }
-
-        writer.setMimetype(mimetype);
-        writer.setEncoding(encoding);
-        writer.putContent(file);
+        Pair<String, String> result = Pair.newInstance(mimetype, encoding);
+        return result;
     }
 
     @Override
@@ -938,6 +920,11 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
 
     @Override
     public String getTsquery(String input) {
+        return getTsquery(input, 3);
+    }
+
+    @Override
+    public String getTsquery(String input, int minLexemLength) {
         if (input == null) {
             input = "";
         }
@@ -948,7 +935,7 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
         Matcher matcher = pattern.matcher(originalTsquery);
         while (matcher.find()) {
             String lexemValue = matcher.group().substring(1, matcher.group().length() - 1);
-            if (lexemValue.length() < 3) {
+            if (lexemValue.length() < minLexemLength) {
                 continue;
             }
             String lexem = "'" + lexemValue + "':*";
@@ -987,6 +974,33 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
             sb.append(TextUtil.joinNonBlankStrings(explanation, "\n"));
             traceLog.trace(sb.toString());
         }
+    }
+
+    @Override
+    public NodeRef deleteBootstrapNodeRef(String moduleName, String bootstrapName) {
+        String bootstrap = getBootstrapXPath(moduleName, bootstrapName);
+        StoreRef bootstrapStore = new StoreRef("system://system");
+        NodeRef bootstrapRef = getNodeRef(bootstrap, bootstrapStore);
+        if (bootstrapRef != null) {
+            nodeService.deleteNode(bootstrapRef);
+        }
+        return bootstrapRef;
+    }
+
+    private String getBootstrapXPath(String moduleName, String bootstrapName) {
+        return "/sys:system-registry/module:modules/module:" + moduleName + "/module:components/module:" + bootstrapName;
+    }
+
+    @Override
+    public void setModifiedToNow(final NodeRef nodeRef) {
+        // Change document modified time, so it would be detected on next ADR sync
+        AuthenticationUtil.runAs(new RunAsWork<Void>() {
+            @Override
+            public Void doWork() throws Exception {
+                nodeService.setProperty(nodeRef, ContentModel.PROP_MODIFIED, new Date(AlfrescoTransactionSupport.getTransactionStartTime()));
+                return null;
+            }
+        }, AuthenticationUtil.getSystemUserName());
     }
 
     // START: getters / setters
