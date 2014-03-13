@@ -25,9 +25,6 @@ import ee.webmedia.alfresco.util.ContentCreatorHelper;
 import ee.webmedia.xtee.client.dhl.DhlXTeeService.ContentToSend;
 import ee.webmedia.xtee.client.dhl.DhlXTeeServiceImplTest;
 
-/**
- * @author Ats Uiboupin
- */
 public class DvkServiceImplTest extends BaseAlfrescoSpringTest {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DvkServiceImplTest.class);
     public static final String TEST_FILE_1 = "testFile1.txt";

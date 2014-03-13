@@ -9,8 +9,6 @@ import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 
 /**
  * Generates <div class="message">PROP_VALUE_FROM_NODE</div> message box.
- * 
- * @author Erko Hansar
  */
 public class PropValueSeparatorGenerator extends BaseComponentGenerator {
 

@@ -10,7 +10,6 @@ import ee.alfresco.web.ui.common.renderer.SimpleHtmlElementRenderer;
 
 /**
  * Component representing table row
- * @author Ats Uiboupin
  */
 public class UITableRow extends UIComponentBase {
 

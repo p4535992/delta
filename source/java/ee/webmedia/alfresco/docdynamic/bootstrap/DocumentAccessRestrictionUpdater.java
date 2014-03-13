@@ -21,8 +21,6 @@ import ee.webmedia.alfresco.utils.SearchUtil;
 /**
  * Set access restriction reason, restriction begin and end date and ending description to null
  * for documents where access restriction="Avalik" or "Majasisene"
- * 
- * @author Riina Tens
  */
 public class DocumentAccessRestrictionUpdater extends AbstractNodeUpdater {
 

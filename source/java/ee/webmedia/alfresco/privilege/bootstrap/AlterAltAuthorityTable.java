@@ -12,8 +12,6 @@ import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
  * because we have user groups with longer names than current restriction 100 chars
  * NB! It may not be possible to create groups with longer names than 100 chars in future releases of Alfresco
  * (user groups synchronization should be checked when upgrading to newer version of Alfresco).
- * 
- * @author Riina Tens
  */
 public class AlterAltAuthorityTable extends AbstractModuleComponent {
     protected final Log LOG = LogFactory.getLog(getClass());

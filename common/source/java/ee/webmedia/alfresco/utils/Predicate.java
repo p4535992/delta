@@ -6,7 +6,6 @@ package ee.webmedia.alfresco.utils;
  * Instead of implementing unparameterized {@link org.apache.commons.collections.Predicate#evaluate(Object)} implement {@link #eval(T)}
  * 
  * @param <T> - type of the object that is given as an argument to the {@link #evaluate(Object)} method
- * @author Ats Uiboupin
  */
 public abstract class Predicate<T> implements org.apache.commons.collections.Predicate {
     @Override

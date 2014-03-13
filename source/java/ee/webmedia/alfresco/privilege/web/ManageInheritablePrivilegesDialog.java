@@ -75,8 +75,6 @@ import flexjson.JSONSerializer;
 
 /**
  * Dialog bean for managing privileges that could be inherited to the user through group and/or through parent nodes.
- * 
- * @author Ats Uiboupin
  */
 public class ManageInheritablePrivilegesDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;
@@ -186,7 +184,7 @@ public class ManageInheritablePrivilegesDialog extends BaseDialogBean {
 
     @Override
     public boolean getFinishButtonDisabled() {
-        // FIXME Kaarel - seda meetodit ei arvestata (seoses "Salvesta nupp alati nähtavaks" ümber tegemisega) - see meetod võiks määrata kas nupp on disabled.
+        // FIXME seda meetodit ei arvestata (seoses "Salvesta nupp alati nähtavaks" ümber tegemisega) - see meetod võiks määrata kas nupp on disabled.
         // ajutise workaround'ina on finishImpl'is kontroll + veateate kuvamine
         return !typeHandler.isEditable();
     }

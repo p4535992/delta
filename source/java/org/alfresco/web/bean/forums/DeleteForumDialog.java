@@ -12,9 +12,6 @@ import org.alfresco.web.bean.spaces.DeleteSpaceDialog;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
-/**
- * @author Kaarel Jõgeva
- */
 public class DeleteForumDialog extends DeleteSpaceDialog {
 
     private static final long serialVersionUID = 1L;

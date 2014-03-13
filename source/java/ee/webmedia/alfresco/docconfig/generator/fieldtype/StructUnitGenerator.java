@@ -16,8 +16,6 @@ import ee.webmedia.alfresco.utils.UserUtil;
 
 /**
  * Not editable search for organization structure units
- * 
- * @author Riina Tens
  */
 public class StructUnitGenerator extends BaseTypeFieldGenerator {
 

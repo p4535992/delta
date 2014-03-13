@@ -23,9 +23,6 @@ import flexjson.JSONSerializer;
 
 /**
  * Modal popup to display child components and one submit button.
- * 
- * @author Riina Tens
- * @author Alar Kvell
  */
 public class ModalLayerComponent extends UICommand implements Serializable {
     private static final long serialVersionUID = 1L;

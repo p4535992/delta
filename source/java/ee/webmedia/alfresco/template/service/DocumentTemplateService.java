@@ -17,9 +17,6 @@ import ee.webmedia.alfresco.template.exception.ExistingFileFromTemplateException
 import ee.webmedia.alfresco.template.model.DocumentTemplate;
 import ee.webmedia.alfresco.volume.model.Volume;
 
-/**
- * @author Kaarel Jõgeva
- */
 public interface DocumentTemplateService {
 
     String BEAN_NAME = "DocumentTemplateService";

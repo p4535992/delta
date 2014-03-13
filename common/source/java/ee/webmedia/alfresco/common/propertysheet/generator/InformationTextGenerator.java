@@ -10,9 +10,6 @@ import org.alfresco.web.ui.common.Utils;
 import org.alfresco.web.ui.repo.component.property.PropertySheetItem;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 
-/**
- * @author Alar Kvell
- */
 public class InformationTextGenerator extends BaseComponentGenerator {
 
     @Override

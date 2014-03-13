@@ -14,8 +14,6 @@ import ee.webmedia.alfresco.docadmin.service.FieldDefinition;
 
 /**
  * Fix for task 179069 in already existing data.
- * 
- * @author Alar Kvell
  */
 public class FieldDefinitionDocTypesUpdater extends AbstractModuleComponent {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(FieldDefinitionDocTypesUpdater.class);

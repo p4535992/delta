@@ -11,8 +11,6 @@ import ee.webmedia.alfresco.volume.service.VolumeService;
 
 /**
  * Disables rendering for menu items
- * 
- * @author Kaarel Jõgeva
  */
 public class HiddenMenuItemProcessor implements MenuItemProcessor, InitializingBean {
 

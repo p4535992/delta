@@ -17,9 +17,6 @@ import org.apache.myfaces.shared_impl.taglib.UIComponentTagUtils;
 
 import ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.HandlesViewMode;
 
-/**
- * @author Alar Kvell
- */
 public class ActionLinkGenerator extends BaseComponentGenerator implements HandlesViewMode {
 
     public static final String ACTION_KEY = "action";

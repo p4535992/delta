@@ -7,8 +7,6 @@ import ee.webmedia.alfresco.signature.model.SkLdapCertificate;
 /**
  * Service for fetching certificates from SK LDAP directory - http://www.sk.ee/repositoorium/ldap/
  * Directory contains only valid certificates. Revoked certificates are immediately removed from directory, expired certificates are removed during the next day.
- * 
- * @author Alar Kvell
  */
 public interface SkLdapService {
 

@@ -2,9 +2,6 @@ package ee.webmedia.alfresco.substitute.model;
 
 import java.io.Serializable;
 
-/**
- * @author Romet Aidla
- */
 public class SubstitutionInfo implements Serializable {
     private static final long serialVersionUID = 1L;
 

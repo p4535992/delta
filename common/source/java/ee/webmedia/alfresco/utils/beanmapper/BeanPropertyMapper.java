@@ -32,8 +32,6 @@ import ee.webmedia.alfresco.utils.RepoUtil;
  * If URI is not defined by above rules, empty URI is used (resulting value for mappableFieldWithoutUri woult be: qName.toString() ==
  * "{}mappableFieldWithoutUri"<br>
  * TODO: Kui kunagi tekib vajadus eelistada mõne konkreetse välja puhul mingit muud URI't, kui eelnevates reeglites kirjas, võib antud klassi edasi arendada.
- * 
- * @author Ats Uiboupin
  * @param <T> class to be mapped
  */
 public class BeanPropertyMapper<T> {

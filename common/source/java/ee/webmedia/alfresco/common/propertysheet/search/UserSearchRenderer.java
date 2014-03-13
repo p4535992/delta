@@ -4,9 +4,6 @@ import java.io.IOException;
 
 import javax.faces.context.ResponseWriter;
 
-/**
- * @author Keit Tehvan
- */
 public class UserSearchRenderer extends SearchRenderer {
     public static final String USER_SEARCH_RENDERER_TYPE = UserSearchRenderer.class.getCanonicalName();
 

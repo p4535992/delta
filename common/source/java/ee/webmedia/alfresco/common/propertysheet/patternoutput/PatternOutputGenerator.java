@@ -12,7 +12,6 @@ import ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.HandlesView
 
 /**
  * @see PatternOutput
- * @author Alar Kvell
  */
 public class PatternOutputGenerator extends BaseComponentGenerator implements HandlesViewMode {
 

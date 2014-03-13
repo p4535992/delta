@@ -17,9 +17,6 @@ import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.utils.SearchUtil;
 
-/**
- * @author Alar Kvell
- */
 public class SystematicClearBootstrap extends AbstractModuleComponent implements BeanFactoryAware {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(SystematicClearBootstrap.class);
 

@@ -7,8 +7,6 @@ import java.util.Arrays;
  * could/should be shown to the user. <br>
  * If message should be shown to the user, use {@link MessageUtil#addStatusMessage(javax.faces.context.FacesContext, UnableToPerformException)}. <br>
  * Severity of the message is determined using <code>severity</code>
- * 
- * @author Ats Uiboupin
  */
 public class UnableToPerformException extends RuntimeException implements MessageData {
     private static final long serialVersionUID = 1L;

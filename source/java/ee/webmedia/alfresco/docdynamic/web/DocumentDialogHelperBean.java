@@ -24,9 +24,6 @@ import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 
-/**
- * @author Alar Kvell
- */
 public class DocumentDialogHelperBean implements Serializable {
     private static final long serialVersionUID = 1L;
 

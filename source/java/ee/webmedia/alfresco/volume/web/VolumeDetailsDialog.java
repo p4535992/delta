@@ -44,8 +44,6 @@ import ee.webmedia.alfresco.volume.model.VolumeModel;
 
 /**
  * Form backing bean for Volumes details
- * 
- * @author Ats Uiboupin
  */
 public class VolumeDetailsDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;
@@ -264,7 +262,7 @@ public class VolumeDetailsDialog extends BaseDialogBean {
                 || DocListUnitStatus.DESTROYED.equals(currentEntry.getStatus());
     }
 
-    // TODO Vladimir: should be with is prefix
+    // TODO should be with is prefix
     public Boolean volumeMarkFieldReadOnly() {
         Map<String, Object> properties = currentEntry.getNode().getProperties();
         String status = (String) properties.get(VolumeModel.Props.STATUS);
@@ -329,7 +327,7 @@ public class VolumeDetailsDialog extends BaseDialogBean {
         return deletedDocuments == null ? new ArrayList<DeletedDocument>() : deletedDocuments;
     }
 
-    // FIXME Ats to Kaarel - milleks see meetod?
+    // FIXME to milleks see meetod?
     public void setDeletedDocuments(List<DeletedDocument> deletedDocuments) {
         this.deletedDocuments = deletedDocuments;
     }

@@ -40,7 +40,7 @@
    <script type="text/javascript" src="<%=request.getContextPath()%>/scripts/manage-inheritable-privileges-dialog.js?r=<%=PageTag.urlSuffix%>"> </script>
 </f:verbatim>
 
-<%-- FIXME PRIV2 - jätan selle Kaareli soovil alles, et õiguseid lihtsam debugida oleks
+<%-- FIXME PRIV2 - jätan selle soovil alles, et õiguseid lihtsam debugida oleks
 <h:outputText value="#{ManageInheritablePrivilegesDialog.state.manageableRef}" />
  --%>
 

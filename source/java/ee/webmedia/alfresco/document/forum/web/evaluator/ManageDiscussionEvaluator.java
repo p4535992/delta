@@ -22,9 +22,6 @@ import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
 import ee.webmedia.alfresco.workflow.service.Task;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
 
-/**
- * @author Ats Uiboupin
- */
 public class ManageDiscussionEvaluator extends BaseActionEvaluator {
     private static final long serialVersionUID = 1L;
     private transient WorkflowService workflowService;

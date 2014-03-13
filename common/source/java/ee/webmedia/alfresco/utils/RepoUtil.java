@@ -41,8 +41,6 @@ import ee.webmedia.alfresco.document.service.DocumentPropertySets;
 
 /**
  * Utility class related to Alfresco repository
- * 
- * @author Ats Uiboupin
  */
 public class RepoUtil {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(RepoUtil.class);

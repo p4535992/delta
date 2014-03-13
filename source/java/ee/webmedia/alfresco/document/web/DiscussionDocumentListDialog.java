@@ -7,8 +7,6 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
  * List dialog for documents where user is participant in discussions.
- * 
- * @author Kaarel Jõgeva
  */
 public class DiscussionDocumentListDialog extends BaseDocumentListDialog {
     private static final long serialVersionUID = 1L;

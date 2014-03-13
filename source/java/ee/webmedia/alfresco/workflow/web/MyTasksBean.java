@@ -23,9 +23,6 @@ import ee.webmedia.alfresco.workflow.model.TaskAndDocument;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 import ee.webmedia.alfresco.workflow.service.Task;
 
-/**
- * @author Kaarel Jõgeva
- */
 public class MyTasksBean extends BaseDialogBean {
 
     private static final long serialVersionUID = 1L;
@@ -84,7 +81,7 @@ public class MyTasksBean extends BaseDialogBean {
     // START: dialog setup
 
     public String getSetupMyTasks() {
-        // see Erko's comment in /web/jsp/dashboards/container.jsp before <h:outputText value="#{MyTasksBean.setupMyTasks}" /> (line 72)
+        // see comment in /web/jsp/dashboards/container.jsp before <h:outputText value="#{MyTasksBean.setupMyTasks}" /> (line 72)
         boolean forceReload = getSubstitutionBean().getForceSubstituteTaskReload();
         if (forceReload || (System.currentTimeMillis() - lastLoadMillis) > 30000) { // 30 seconds
             reset();

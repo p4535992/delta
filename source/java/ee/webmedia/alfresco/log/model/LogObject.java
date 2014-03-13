@@ -2,8 +2,6 @@ package ee.webmedia.alfresco.log.model;
 
 /**
  * Defines all objects (object names) that get logged. Each object has corresponding log level.
- * 
- * @author Martti Tamm
  */
 public enum LogObject {
     FUNCTION("Funktsioon", LogLevel.SPACES),

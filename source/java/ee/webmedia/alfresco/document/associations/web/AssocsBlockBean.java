@@ -26,8 +26,6 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
  * Block that shows associations of given document with other documents and related cases
- * 
- * @author Ats Uiboupin
  */
 public class AssocsBlockBean implements DocumentDynamicBlock {
     private static final long serialVersionUID = 1L;

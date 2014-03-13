@@ -4,8 +4,6 @@ import org.alfresco.service.cmr.view.ImporterException;
 
 /**
  * Thrown to notify that found reference that doesn't refer to existing node
- * 
- * @author Ats Uiboupin
  */
 public class ImporterMissingRefException extends ImporterException {
 

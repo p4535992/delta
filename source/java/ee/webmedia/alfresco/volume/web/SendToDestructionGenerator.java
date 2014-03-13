@@ -20,8 +20,6 @@ import ee.webmedia.alfresco.volume.model.Volume;
 
 /**
  * Generates usual check box, but makes it readonly if necessary: {@link SendToDestructionGenerator#isReadOnly()}.
- * 
- * @author Romet Aidla
  */
 public class SendToDestructionGenerator extends BaseComponentGenerator {
     private DialogManager dialogManager;

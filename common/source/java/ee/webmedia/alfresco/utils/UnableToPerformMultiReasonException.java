@@ -4,8 +4,6 @@ import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
 
 /**
  * Exception that wraps MessageDataWrapper that could contain multiple error/information messages useful to the user
- * 
- * @author Ats Uiboupin
  */
 public class UnableToPerformMultiReasonException extends RuntimeException {
     private static final long serialVersionUID = 1L;

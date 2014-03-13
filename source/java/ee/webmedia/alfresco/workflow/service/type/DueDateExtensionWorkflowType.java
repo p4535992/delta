@@ -8,9 +8,6 @@ import ee.webmedia.alfresco.workflow.service.event.WorkflowEventQueue;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowEventType;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowModifications;
 
-/**
- * @author Riina Tens
- */
 public class DueDateExtensionWorkflowType extends BaseWorkflowType implements WorkflowEventListenerWithModifications {
 
     public static final int DUE_DATE_EXTENSION_OUTCOME_NOT_ACCEPTED = 1;

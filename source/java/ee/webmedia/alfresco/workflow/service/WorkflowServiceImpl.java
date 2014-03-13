@@ -91,9 +91,6 @@ import ee.webmedia.alfresco.workflow.service.event.WorkflowMultiEventListener;
 import ee.webmedia.alfresco.workflow.service.type.AssignmentWorkflowType;
 import ee.webmedia.alfresco.workflow.service.type.WorkflowType;
 
-/**
- * @author Alar Kvell
- */
 public class WorkflowServiceImpl implements WorkflowService, WorkflowModifications {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(WorkflowServiceImpl.class);
     private static final int SIGNATURE_TASK_OUTCOME_NOT_SIGNED = 0;
@@ -2191,7 +2188,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         } else if (task.isType(Types.REVIEW_TASK)) {
             // sometimes here value of TEMP_OUTCOME is Integer, sometimes String
             final Integer tempOutcome = DefaultTypeConverter.INSTANCE.convert(Integer.class, task.getProp(WorkflowSpecificModel.Props.TEMP_OUTCOME));
-            if (tempOutcome != null && tempOutcome == REVIEW_TASK_OUTCOME_REJECTED) { // KAAREL: What is tempOutcome and why was it null?
+            if (tempOutcome != null && tempOutcome == REVIEW_TASK_OUTCOME_REJECTED) { // What is tempOutcome and why was it null?
                 return true;
             }
         } else if (outcomeIndex == CONFIRMATION_TASK_OUTCOME_REJECTED && task.isType(Types.CONFIRMATION_TASK)) {
@@ -2581,8 +2578,6 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
 
     /**
      * The type of action performs (after getting confirmation)
-     * 
-     * @author Vladimir Drozdik
      */
     public static enum DialogAction {
         SAVING, STARTING, CONTINUING;

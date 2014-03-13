@@ -41,8 +41,6 @@ import ee.webmedia.alfresco.workflow.search.model.TaskSearchModel;
 
 /**
  * Render {@link MultiValueEditor} as HTML table. Direct children of {@link MultiValueEditor} must be {@link HtmlPanelGroup} components.
- * 
- * @author Alar Kvell
  */
 // Extends BaseMultiValueRenderer, because only decode method implementation is needed from there.
 public class MultiValueEditorRenderer extends BaseRenderer {

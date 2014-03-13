@@ -31,9 +31,6 @@ import ee.webmedia.alfresco.volume.model.VolumeModel;
  * Asjatoimik -> CASE_FILE
  * (CL task 177957)
  * 2) changes namespaces of the volume properties
- * 
- * @author Vladimir Drozdik
- * @author Ats Uiboupin
  */
 public class VolumeTypeUpdater extends AbstractNodeUpdater {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(VolumeTypeUpdater.class);

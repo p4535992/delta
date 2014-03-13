@@ -70,8 +70,6 @@ import ee.webmedia.alfresco.volume.web.VolumeListDialog;
  * <br>
  * This Class has logic of two diferent, but similar versions of documents(when parent is volume or case). <br>
  * Reason is that we don't have to worry about what the parent of document in jsp files.
- * 
- * @author Ats Uiboupin
  */
 public class DocumentListDialog extends BaseDocumentListDialog implements DialogDataProvider {
     private static final long serialVersionUID = 1L;

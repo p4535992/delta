@@ -6,8 +6,6 @@ import javax.faces.component.UIComponent;
 
 /**
  * Generates UIComponent elements based on given parameter list
- * 
- * @author Riina Tens
  */
 public interface CustomChildrenCreator {
 

@@ -30,9 +30,6 @@ import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.orgstructure.service.OrganizationStructureService;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
-/**
- * @author Keit Tehvan
- */
 public class GroupUsersListDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;
 

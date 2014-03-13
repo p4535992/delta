@@ -10,9 +10,6 @@ import ee.webmedia.alfresco.orgstructure.model.OrganizationStructure;
 import ee.webmedia.alfresco.orgstructure.service.OrganizationStructureService;
 import ee.webmedia.alfresco.orgstructure.service.OrganizationStructureServiceImpl;
 
-/**
- * @author Alar Kvell
- */
 public class OrganizationStructureConverter extends MultiSelectConverterBase {
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(OrganizationStructureServiceImpl.class);
 

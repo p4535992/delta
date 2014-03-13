@@ -13,8 +13,6 @@ import ee.webmedia.alfresco.utils.RepoUtil;
 
 /**
  * Base class for Java VO's that represent nodes in repository
- * 
- * @author Ats Uiboupin
  */
 public class NodeBaseVO implements Serializable {
     private static final long serialVersionUID = 1L;

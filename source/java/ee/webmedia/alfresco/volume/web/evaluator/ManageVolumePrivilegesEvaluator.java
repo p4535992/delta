@@ -6,8 +6,6 @@ import org.alfresco.web.bean.repository.TransientNode;
 
 /**
  * Evaluator, that evaluates to true if privileges management button is visible
- * 
- * @author Alar Kvell
  */
 public class ManageVolumePrivilegesEvaluator extends BaseActionEvaluator {
     private static final long serialVersionUID = 1L;

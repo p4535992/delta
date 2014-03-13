@@ -10,9 +10,6 @@ import ee.webmedia.alfresco.classificator.enums.SendMode;
 import ee.webmedia.alfresco.document.sendout.model.SendInfo;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 
-/**
- * @author Riina Tens
- */
 public class TaskSendInfo implements Serializable, SendInfo {
 
     private static final long serialVersionUID = 1L;

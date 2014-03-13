@@ -16,8 +16,6 @@ import ee.webmedia.alfresco.utils.SearchUtil;
 
 /**
  * MenuGroupName of {@link DocumentType} used to be in "docadmin:documentTypeGroup" property, but now it is in "docadmin:menuGroupName"
- * 
- * @author Ats Uiboupin
  */
 public class DocTypesMenuGroupNameRefactorUpdater extends AbstractNodeUpdater {
     private static final QName OLD_MENU_GROUP_NAME = QName.createQName(DocumentAdminModel.URI, "documentTypeGroup");

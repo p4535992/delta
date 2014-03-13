@@ -46,9 +46,6 @@ import ee.webmedia.alfresco.signature.service.SignatureService;
 import ee.webmedia.alfresco.utils.FilenameUtil;
 import ee.webmedia.alfresco.utils.MimeUtil;
 
-/**
- * @author Erko Hansar
- */
 public class EmailServiceImpl implements EmailService {
 
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(EmailServiceImpl.class);

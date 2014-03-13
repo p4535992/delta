@@ -19,9 +19,6 @@ import ee.webmedia.alfresco.addressbook.service.AddressbookEntry;
 import ee.webmedia.alfresco.addressbook.util.AddressbookUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
-/**
- * @author Keit Tehvan
- */
 public class AddressbookListDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;
     public static final String BEAN_NAME = "AddressbookListDialog";

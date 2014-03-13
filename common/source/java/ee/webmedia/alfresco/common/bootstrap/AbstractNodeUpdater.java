@@ -46,9 +46,6 @@ import com.csvreader.CsvWriter;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.utils.ProgressTracker;
 
-/**
- * @author Alar Kvell
- */
 public abstract class AbstractNodeUpdater extends AbstractModuleComponent implements InitializingBean {
     protected final Log log = LogFactory.getLog(getClass());
 

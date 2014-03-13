@@ -18,10 +18,6 @@ import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.workflow.search.model.TaskInfo;
 import ee.webmedia.alfresco.workflow.service.Task;
 
-/**
- * @author Alar Kvell
- * @author Erko Hansar
- */
 public interface DocumentSearchService {
 
     String BEAN_NAME = "DocumentSearchService";

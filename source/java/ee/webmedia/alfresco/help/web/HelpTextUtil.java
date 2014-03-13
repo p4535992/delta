@@ -13,8 +13,6 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
  * Globally useful methods and constants for working with help texts.
- * 
- * @author Martti Tamm
  */
 public class HelpTextUtil {
 

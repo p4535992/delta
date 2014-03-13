@@ -13,9 +13,6 @@ import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
-/**
- * @author Alar Kvell
- */
 public class FavoritesDocumentListDialog extends BaseDocumentListDialog {
     private static final long serialVersionUID = 1L;
     private NodeRef containerNodeRef;

@@ -99,8 +99,6 @@ import ee.webmedia.alfresco.privilege.web.DocPermissionEvaluator;
 
 /**
  * Util methods for JSF components/component trees
- * 
- * @author Ats Uiboupin
  */
 public class ComponentUtil {
     private static final String ATTR_STYLE_CLASS = "styleClass";

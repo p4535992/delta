@@ -20,8 +20,6 @@ import ee.webmedia.alfresco.utils.SearchUtil;
  * Deletes static documents with type defined in DocumentSubtypeModel.MODEL_NAME
  * and update number of documents in functions/series/volumes/cases.
  * NB! In the future replace this with 2.5 -> 3.x migration script.
- * 
- * @author Riina Tens
  */
 public class DeleteSubtypedDocuments extends AbstractNodeUpdater {
 

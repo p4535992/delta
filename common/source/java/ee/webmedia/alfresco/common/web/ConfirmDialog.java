@@ -10,7 +10,6 @@ import ee.webmedia.alfresco.utils.MessageData;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
- * @author Vladimir Drozdik
  *         Ask confirmation from user. Can be setup by giving message title and confirmable object,
  *         which means that object has methods to execute when ok button pushed;
  *         also confirmContext as additional parameter can be used when same class calls confirmDialog several times,

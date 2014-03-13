@@ -17,8 +17,6 @@ import ee.webmedia.alfresco.utils.SearchUtil;
 /**
  * Delete archived items that are archived earlier than 3 months.
  * This updater is present only in 3.6.30 branch to fix bugs while upgrading 3.6.21 to 3.6.30 branch
- * 
- * @author Riina Tens
  */
 public class DeleteOldTrashcanItems extends AbstractNodeUpdater {
 

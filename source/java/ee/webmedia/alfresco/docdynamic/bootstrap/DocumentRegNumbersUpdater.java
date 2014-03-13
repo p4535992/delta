@@ -20,9 +20,6 @@ import ee.webmedia.alfresco.common.bootstrap.AbstractNodeUpdater;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
 
-/**
- * @author Alar Kvell
- */
 public class DocumentRegNumbersUpdater extends AbstractNodeUpdater {
 
     private DocumentUpdater documentUpdater;

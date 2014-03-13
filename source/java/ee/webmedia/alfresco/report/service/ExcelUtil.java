@@ -3,9 +3,6 @@ package ee.webmedia.alfresco.report.service;
 import org.apache.commons.logging.Log;
 import org.apache.poi.ss.usermodel.Cell;
 
-/**
- * @author Riina Tens
- */
 public class ExcelUtil {
 
     private final static int EXCEL_CELL_MAX_SIZE = 32767;

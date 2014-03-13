@@ -16,8 +16,6 @@ import ee.webmedia.alfresco.imap.service.ImapServiceExt;
 
 /**
  * TODO: add comment
- * 
- * @author Romet Aidla
  */
 public class ImmutableImapHostManager implements ImapHostManager {
     private ImapServiceExt imapServiceExt;

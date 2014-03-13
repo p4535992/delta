@@ -15,8 +15,6 @@ import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 
 /**
  * Update task ownerOrganizationName property to multivalued property (String -> List<String>)
- * 
- * @author Riina Tens
  */
 public class OwnerOrganizationNameToMultivaluedUpdater extends AbstractNodeUpdater {
 

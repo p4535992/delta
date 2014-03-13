@@ -69,9 +69,6 @@ import ee.webmedia.alfresco.workflow.service.Task;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
 import ee.webmedia.alfresco.workflow.service.type.WorkflowType;
 
-/**
- * @author Riina Tens
- */
 public class ReportServiceImpl implements ReportService {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(ReportServiceImpl.class);
     private static final int EXCEL_SHEET_MAX_ROWS = 1048576;
@@ -832,8 +829,8 @@ public class ReportServiceImpl implements ReportService {
             }
         }
 
-        private boolean isNotEmptyList(List<String> costManagers) {
-            return costManagers != null && !document.getCostManagers().isEmpty();
+        private boolean isNotEmptyList(List<String> list) {
+            return list != null && !list.isEmpty();
         }
 
         private int addEmptyCells(Row row, int startIndex, int numRows) {

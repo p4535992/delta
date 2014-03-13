@@ -34,10 +34,6 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 
-/**
- * @author Kaarel Jõgeva
- * @author Vladimir Drozdik
- */
 public class AddDocumentTemplateDialog extends AddContentDialog {
 
     private static final long serialVersionUID = 1L;

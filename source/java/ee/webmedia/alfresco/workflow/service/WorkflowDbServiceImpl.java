@@ -60,8 +60,6 @@ import ee.webmedia.alfresco.workflow.service.type.WorkflowType;
 
 /**
  * Main implementation of {@link WorkflowDbService}. This class does not rely on Alfresco, and exchanges data with the database using JDBC(Template) directly.
- * 
- * @author Riina Tens
  */
 public class WorkflowDbServiceImpl implements WorkflowDbService {
 

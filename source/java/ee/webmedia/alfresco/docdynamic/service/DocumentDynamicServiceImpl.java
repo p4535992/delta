@@ -85,9 +85,6 @@ import ee.webmedia.alfresco.utils.TreeNode;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UnableToPerformMultiReasonException;
 
-/**
- * @author Alar Kvell
- */
 public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanFactoryAware {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(DocumentDynamicServiceImpl.class);
 

@@ -55,8 +55,6 @@ import ee.webmedia.alfresco.utils.ComponentUtil;
  * an empty row at the end (a {@code null} element is added to each {@link List}). When cells are first generated, it is ensured that each column's {@link List} contains the same
  * amount of elements as the list with greatest amount of elements. Again, {@code null} elements are appended, where necessary. <br>
  * Component configuration attributes are documented at {@link MultiValueEditorGenerator}.
- * 
- * @author Alar Kvell
  */
 public class MultiValueEditor extends UIComponentBase implements AjaxUpdateable, NamingContainer, HandlesShowUnvalued {
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(MultiValueEditor.class);

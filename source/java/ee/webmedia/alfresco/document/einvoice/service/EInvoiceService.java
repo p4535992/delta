@@ -28,8 +28,6 @@ import ee.webmedia.xtee.client.dhl.types.ee.sk.digiDoc.v13.DataFileType;
 
 /**
  * Handle e-invoices conversion between document and xml
- * 
- * @author Riina Tens
  */
 
 public interface EInvoiceService {

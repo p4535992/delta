@@ -19,8 +19,6 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
  * Changes filedDefinition with ID "case" name from "Asi" to "Teema"
- * 
- * @author Vladimir Drozdik
  */
 public class FieldDefinitionCaseNameUpdater extends AbstractNodeUpdater {
 

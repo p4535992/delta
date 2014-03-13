@@ -21,8 +21,6 @@ import ee.webmedia.alfresco.utils.MessageUtil;
  * Follwing show-property configuration element attributes are used to display lables for true and false radiobutton:<br>
  * 1) {@link BooleanRadioGenerator#ATTR_LABEL_TRUE} <br>
  * 2) {@link BooleanRadioGenerator#ATTR_LABEL_FALSE}
- * 
- * @author Ats Uiboupin
  */
 public class BooleanRadioGenerator extends BaseComponentGenerator {
 

@@ -80,9 +80,6 @@ import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
 import ee.webmedia.alfresco.volume.service.VolumeService;
 
-/**
- * @author Alar Kvell
- */
 public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DocumentLocationGenerator.class);
     public static final String[] NODE_REF_FIELD_IDS = new String[] {

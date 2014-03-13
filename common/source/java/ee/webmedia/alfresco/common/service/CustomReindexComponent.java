@@ -24,9 +24,6 @@ import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
 
 import ee.webmedia.alfresco.utils.ProgressTracker;
 
-/**
- * @author Alar Kvell
- */
 public class CustomReindexComponent extends AbstractReindexComponent {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(CustomReindexComponent.class);
 

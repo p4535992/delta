@@ -7,7 +7,6 @@ import ee.webmedia.alfresco.common.propertysheet.search.MultiSelectConverterBase
 import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
- * @author Vladimir Drozdik
  *         Converts enum object name (document template type) into necessary local name.
  */
 public class DocumentTemplateTypeConverter extends MultiSelectConverterBase {

@@ -2,9 +2,6 @@ package ee.webmedia.alfresco.workflow.search.model;
 
 import org.alfresco.service.namespace.QName;
 
-/**
- * @author Riina Tens
- */
 public interface TaskReportModel {
 
     String URI = "http://alfresco.webmedia.ee/model/task/report/1.0";

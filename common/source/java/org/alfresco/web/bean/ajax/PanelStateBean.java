@@ -18,8 +18,6 @@ import ee.webmedia.alfresco.utils.ComponentUtil;
  * Always last view state is restored and view state hidden input (with id="javax.faces.ViewState") must be
  * changed to value that is returned in response, otherwise old view state is restored with the next form submit.
  * This implementation works only when the view state is stored in server side (http session).
- * 
- * @author Romet Aidla
  */
 public class PanelStateBean implements Serializable {
     private static final long serialVersionUID = 1L;

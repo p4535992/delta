@@ -25,9 +25,6 @@ import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.utils.TextUtil;
 import ee.webmedia.alfresco.utils.UserUtil;
 
-/**
- * @author Alar Kvell
- */
 public class DocumentDynamic extends NodeBaseVO implements Cloneable, Comparable<DocumentDynamic> {
     private static final long serialVersionUID = 1L;
 

@@ -166,9 +166,6 @@ import ee.webmedia.alfresco.workflow.service.SignatureTask;
 import ee.webmedia.alfresco.workflow.service.Task;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
 
-/**
- * @author Alar Kvell
- */
 public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, NodeServicePolicies.BeforeDeleteNodePolicy {
 
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DocumentServiceImpl.class);
@@ -1897,7 +1894,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, N
             updateParentDocumentRegNumbers(docNode.getNodeRef(), (String) props.get(REG_NUMBER.toString()), holder.getRegNumber());
             props.put(REG_NUMBER.toString(), holder.getRegNumber());
             propertyChangesMonitorHelper.addIgnoredProps(props, REG_NUMBER);
-            // TODO ALAR review this
+            // TODO review this
             // if (!isRelocating || (generateNewRegNumberInReregistration && changeShortRegAndIndividualOnRelocatingDoc(previousVolume, series))) {
             props.put(SHORT_REG_NUMBER.toString(), holder.getShortRegNumber());
             propertyChangesMonitorHelper.addIgnoredProps(props, SHORT_REG_NUMBER);
@@ -2159,8 +2156,6 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, N
 
     /**
      * Helps to identify if properties(that should not be ignored for given properties map) that have been changed
-     * 
-     * @author Ats Uiboupin
      */
     public static class PropertyChangesMonitorHelper {
         private final QName TEMP_PROPERTY_CHANGES_IGNORED_PROPS = QName.createQName("{temp}propertyChanges_ignoredProps");

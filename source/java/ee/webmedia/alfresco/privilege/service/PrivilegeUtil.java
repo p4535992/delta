@@ -31,9 +31,6 @@ import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 import ee.webmedia.alfresco.workflow.service.Task;
 
-/**
- * @author Ats Uiboupin
- */
 public class PrivilegeUtil {
 
     public static boolean isAdminOrDocmanagerWithViewDocPermission(Node docNode) {

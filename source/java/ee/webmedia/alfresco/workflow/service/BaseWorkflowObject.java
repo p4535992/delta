@@ -20,9 +20,6 @@ import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 
-/**
- * @author Alar Kvell
- */
 public abstract class BaseWorkflowObject extends NodeBaseVO {
 
     private Map<QName, Serializable> originalProperties;

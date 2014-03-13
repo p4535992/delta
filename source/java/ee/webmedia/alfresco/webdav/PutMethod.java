@@ -367,7 +367,7 @@ public class PutMethod extends WebDAVMethod {
         }
 
         // Update sub-nodes
-        // TODO from Alar: implement generic child-node support using propertyDefinition.getChildAssocTypeQNameHierarchy()
+        // TODO from implement generic child-node support using propertyDefinition.getChildAssocTypeQNameHierarchy()
         if (!partyFields.isEmpty()) {
             NodeService nodeService = getNodeService();
             List<ChildAssociationRef> contractPartyChildAssocs = nodeService.getChildAssocs(document, DocumentChildModel.Assocs.CONTRACT_PARTY, RegexQNamePattern.MATCH_ALL);

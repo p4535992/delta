@@ -12,8 +12,6 @@ import ee.webmedia.alfresco.log.model.LogSetup;
 
 /**
  * Delta business logic specific logging service.
- * 
- * @author Martti Tamm
  */
 public interface LogService extends FilterService {
 

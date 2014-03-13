@@ -9,8 +9,6 @@ import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
 
 /**
  * Create partial unique constraint on alf_access_control_entry to prevent duplicate rows where context_id is null.
- * 
- * @author Alar Kvell
  */
 public class CreateAccessControlEntryUniqueIndexBootstrap extends AbstractModuleComponent {
     protected final Log LOG = LogFactory.getLog(getClass());

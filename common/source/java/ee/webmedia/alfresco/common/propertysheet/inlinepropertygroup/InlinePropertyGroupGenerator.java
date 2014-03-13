@@ -43,8 +43,6 @@ import ee.webmedia.alfresco.utils.ComponentUtil;
  * The following options after component generator name are set as component's attributes, these must be in the format {@code attributeName=attributeValue}.<br/>
  * For example: {@code props="ex:regNr1,ex:name1||styleClass=green,ex:date1|CustomDatePicker|styleClass=date inline|mandatoryIf=ex:other1"}</li>
  * </ul>
- * 
- * @author Alar Kvell
  */
 public class InlinePropertyGroupGenerator extends BaseComponentGenerator implements HandlesViewMode {
 

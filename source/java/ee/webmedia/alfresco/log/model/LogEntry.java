@@ -13,8 +13,6 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
  * Entity object for storing log table data.
- * 
- * @author Martti Tamm
  */
 public class LogEntry implements Serializable {
 

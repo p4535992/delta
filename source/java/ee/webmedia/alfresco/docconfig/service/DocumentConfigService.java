@@ -19,9 +19,6 @@ import ee.webmedia.alfresco.docconfig.generator.FieldGenerator;
 import ee.webmedia.alfresco.docconfig.generator.FieldGroupGenerator;
 import ee.webmedia.alfresco.utils.TreeNode;
 
-/**
- * @author Alar Kvell
- */
 public interface DocumentConfigService {
 
     String BEAN_NAME = "DocumentConfigService";

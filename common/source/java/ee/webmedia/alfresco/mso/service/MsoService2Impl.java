@@ -32,9 +32,6 @@ import ee.webmedia.alfresco.mso2.ws.MsoPortBinding;
 import ee.webmedia.alfresco.mso2.ws.ObjectFactory;
 import ee.webmedia.alfresco.utils.CalendarUtil;
 
-/**
- * @author Alar Kvell
- */
 public class MsoService2Impl implements MsoService, InitializingBean {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(MsoService2Impl.class);
 

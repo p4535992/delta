@@ -24,8 +24,6 @@ import ee.webmedia.alfresco.parameters.service.ParametersService;
 
 /**
  * Callback that creates default applicant (as childNode) for errandOrderAbroad document and default errand (as childNode for applicant)
- * 
- * @author Ats Uiboupin
  */
 public class ErrandDocDomesticPropertiesModifierCallback extends AbstractDocChildCreator {
 

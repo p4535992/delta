@@ -10,9 +10,6 @@ import com.thoughtworks.xstream.annotations.XStreamOmitField;
 
 import ee.webmedia.alfresco.utils.RepoUtil;
 
-/**
- * @author Kaarel Jõgeva
- */
 @XStreamAlias("keyword")
 public class HierarchicalKeyword implements Comparable<HierarchicalKeyword>, Serializable {
     private static final long serialVersionUID = 1L;

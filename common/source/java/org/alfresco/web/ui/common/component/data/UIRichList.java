@@ -274,7 +274,7 @@ public class UIRichList extends UIComponentBase implements IDataContainer,Serial
       // corresponding DataModel element.
       _rowStates.clear();
 
-      // KAAREL: When we replace the data model it makes sense to clear the sorting and paging settings also.
+      // When we replace the data model it makes sense to clear the sorting and paging settings also.
       sortColumn = null;
       sortDescending = true;
       currentPage = 0;
@@ -776,7 +776,7 @@ public class UIRichList extends UIComponentBase implements IDataContainer,Serial
    private static Log logger = LogFactory.getLog(UIRichList.class);
 
     // ------------------------------------------------------------------------------
-    // Alar Kvell: Support EditableValueHolder components (for example UIInput) inside UIRichList
+    // Support EditableValueHolder components (for example UIInput) inside UIRichList
     // Implementation copied from MyFaces class javax.faces.component.UIData class,
     // only few places changed, there are appropriate comments about this
 
@@ -842,7 +842,7 @@ public class UIRichList extends UIComponentBase implements IDataContainer,Serial
 
         this.rowIndex = rowIndex;
 
-        // Alar Kvell: data model and "var" are UIRichList specific
+        // data model and "var" are UIRichList specific
 /*
         DataModel dataModel = getDataModel();
         dataModel.setRowIndex(rowIndex);
@@ -861,7 +861,7 @@ public class UIRichList extends UIComponentBase implements IDataContainer,Serial
         {
             if (var != null)
             {
-                // Alar Kvell: isRowAvailable method is not available on UIRichList data model
+                // isRowAvailable method is not available on UIRichList data model
 /*
                 if (isRowAvailable())
                 {
@@ -1081,7 +1081,7 @@ public class UIRichList extends UIComponentBase implements IDataContainer,Serial
                     .getWrappedFacesEvent();
             int eventRowIndex = ((FacesEventWrapper) event).getRowIndex();
             int currentRowIndex = getRowIndex();
-            // Romet: UIGenericPicker.PickerEvent is broadcasted also when row is deleted,
+            // UIGenericPicker.PickerEvent is broadcasted also when row is deleted,
             // so we would get index out of bounds exception without this check.
             // Probably there should be better way to handle this.
             if (getDataModel().size() > eventRowIndex) {
@@ -1110,7 +1110,7 @@ public class UIRichList extends UIComponentBase implements IDataContainer,Serial
     public void encodeBegin(FacesContext context) throws IOException
     {
         _initialDescendantComponentState = null;
-       // Alar Kvell: UIData clears data model before each clean rendering
+       // UIData clears data model before each clean rendering
        // UIRichList clears data model only on setValue calls or when refreshOnBind = true
 /*       
         if (_isValidChilds && !hasErrorMessages(context))
@@ -1175,7 +1175,7 @@ public class UIRichList extends UIComponentBase implements IDataContainer,Serial
         processNonColumns(context, PROCESS_VALIDATORS);
         setRowIndex(-1);
 
-       // Alar Kvell: We don't need to clear data model before each clean rendering
+       // We don't need to clear data model before each clean rendering
        // As mentioned in encodeBegin
 /*
         // check if an validation error forces the render response for our data
@@ -1199,7 +1199,7 @@ public class UIRichList extends UIComponentBase implements IDataContainer,Serial
         processNonColumns(context, PROCESS_UPDATES);
         setRowIndex(-1);
 
-       // Alar Kvell: We don't need to clear data model before each clean rendering
+       // We don't need to clear data model before each clean rendering
        // As mentioned in encodeBegin
 /*
         if (context.getRenderResponse())
@@ -1278,7 +1278,7 @@ public class UIRichList extends UIComponentBase implements IDataContainer,Serial
             if (!isRowAvailable())
                 break;
 */
-        // Alar Kvell: Iterating over all the rows is performed UIRichList specific
+        // Iterating over all the rows is performed UIRichList specific
         // RichListRenderer.encodeChildren performs it the same way
         bind(true);
         while (isDataAvailable())
@@ -1347,7 +1347,7 @@ public class UIRichList extends UIComponentBase implements IDataContainer,Serial
         private FacesEvent _wrappedFacesEvent;
         private int _rowIndex;
 
-        // Alar Kvell: third constructor argument is UIRichList
+        // third constructor argument is UIRichList
         public FacesEventWrapper(FacesEvent facesEvent, int rowIndex,
                 UIRichList redirectComponent)
         {

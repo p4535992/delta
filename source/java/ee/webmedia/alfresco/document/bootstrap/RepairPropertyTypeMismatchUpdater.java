@@ -28,9 +28,6 @@ import ee.webmedia.alfresco.docconfig.service.DynamicPropertyDefinition;
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 
-/**
- * @author Keit Tehvan
- */
 public class RepairPropertyTypeMismatchUpdater extends AbstractNodeUpdater {
 
     private DocumentConfigService documentConfigService;

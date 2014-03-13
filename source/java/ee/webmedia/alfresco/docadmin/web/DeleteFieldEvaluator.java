@@ -8,9 +8,6 @@ import org.apache.commons.lang.StringUtils;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docadmin.service.FieldDefinition;
 
-/**
- * @author Riina Tens
- */
 public class DeleteFieldEvaluator extends BaseActionEvaluator {
     private static final long serialVersionUID = 0L;
 

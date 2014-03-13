@@ -96,8 +96,6 @@ import ee.webmedia.alfresco.workflow.web.evaluator.WorkflowNewEvaluator;
 
 /**
  * Dialog bean for working with one compound workflow instance which is tied to a document.
- * 
- * @author Erko Hansar
  */
 public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog implements Confirmable {
 

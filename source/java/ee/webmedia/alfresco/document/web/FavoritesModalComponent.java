@@ -19,8 +19,6 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
  * Provides functionality for modal that adds documents to users favorites
- * 
- * @author Vladimir Drozdik
  */
 public class FavoritesModalComponent extends UICommand {
 

@@ -13,8 +13,6 @@ import ee.webmedia.alfresco.workflow.service.WorkflowService;
 
 /**
  * Dialog bean for compound workflow list.
- * 
- * @author Erko Hansar
  */
 public class CompoundWorkflowDefinitionListDialog extends BaseDialogBean {
 

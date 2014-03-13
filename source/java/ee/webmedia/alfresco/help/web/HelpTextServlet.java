@@ -11,8 +11,6 @@ import javax.servlet.http.HttpServletResponse;
 /**
  * A servlet for viewing dialog, document-type, or field help. The URL must contain data <code>/helpType/helpCode</code> following the servlet URL. When an item is not found, HTTP
  * 404 response will be returned.
- * 
- * @author Martti Tamm
  */
 public class HelpTextServlet extends HttpServlet {
 

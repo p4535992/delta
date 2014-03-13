@@ -5,9 +5,6 @@ import java.util.List;
 
 import org.alfresco.web.bean.search.SearchContext;
 
-/**
- * @author Alar Kvell
- */
 public class SearchExtensionServiceImpl implements SearchExtensionService {
 
     private final List<SearchQueryBuilderFactory> extensionFactorys = new ArrayList<SearchQueryBuilderFactory>();

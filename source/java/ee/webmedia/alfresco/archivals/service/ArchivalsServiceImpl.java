@@ -60,9 +60,6 @@ import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
 import ee.webmedia.alfresco.volume.service.VolumeService;
 
-/**
- * @author Romet Aidla
- */
 public class ArchivalsServiceImpl implements ArchivalsService {
 
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(ArchivalsServiceImpl.class);
@@ -310,7 +307,7 @@ public class ArchivalsServiceImpl implements ArchivalsService {
                     NodeRef childNodeRef = childRef.getChildRef();
                     if (caseNodeRefs.contains(childNodeRef)) {
                         if (nodeService.getChildAssocs(childNodeRef).size() == 0) {
-                            // TODO: Riina - could be optimized, assuming that it is very likely that whole volume is going to be deleted,
+                            // TODO: could be optimized, assuming that it is very likely that whole volume is going to be deleted,
                             // but as this runs in background and case has no children, deleting shouldn't take much time either
                             nodeService.deleteNode(childNodeRef);
                             LOG.info("Deleted empty case, nodeRef=" + childNodeRef);

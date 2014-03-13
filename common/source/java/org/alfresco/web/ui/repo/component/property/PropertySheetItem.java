@@ -72,7 +72,6 @@ public abstract class PropertySheetItem extends UIPanel implements NamingContain
     * @param context FacesContext
     * @param generatorName The name of the component generator to retrieve
     * @return component generated and optionally changed as well
-    * @author Ats Uiboupin
     */
     protected final IComponentGenerator getComponentGenerator(FacesContext context, String componentGeneratorName) {
         IComponentGenerator compGenerator = FacesHelper.getComponentGenerator(context, componentGeneratorName);

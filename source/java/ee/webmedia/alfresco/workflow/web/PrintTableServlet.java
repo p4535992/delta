@@ -60,9 +60,6 @@ import ee.webmedia.alfresco.workflow.service.Task;
 /**
  * Servlet that render review notes block form document dialog - could be used to view all review notes and/or print them without rest of the document dialog
  * Also supports comparing metadata of two documents
- * 
- * @author Ats Uiboupin
- * @author Kaarel Jõgeva
  */
 @SuppressWarnings("deprecation")
 public class PrintTableServlet extends HttpServlet {

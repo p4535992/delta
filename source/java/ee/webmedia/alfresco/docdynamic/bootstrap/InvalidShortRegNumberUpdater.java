@@ -22,8 +22,6 @@ import ee.webmedia.alfresco.utils.SearchUtil;
 
 /**
  * Fix for 204783. Removes all non-numeric characters from document shortRegNumber property value and makes the same substitution in regNumber property value.
- * 
- * @author Alar Kvell
  */
 public class InvalidShortRegNumberUpdater extends AbstractNodeUpdater {
 

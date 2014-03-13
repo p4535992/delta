@@ -4,8 +4,6 @@ import java.io.Serializable;
 
 /**
  * Request-scoped bean for disabling/enabling focusing.
- * 
- * @author Riina Tens
  */
 public class DisableFocusingBean implements Serializable {
 

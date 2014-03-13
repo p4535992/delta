@@ -9,8 +9,6 @@ import org.apache.poi.ss.usermodel.Workbook;
 
 /**
  * Helper class to pass data between report creation phases
- * 
- * @author Riina Tens
  */
 public class ReportDataCollector {
 

@@ -31,7 +31,7 @@ import ee.webmedia.alfresco.common.listener.StatisticsPhaseListenerLogColumn;
 import ee.webmedia.alfresco.log.LogHelper;
 
 /**
- * NOTE by Erko Hansar
+ * NOTE by
  * <p>
  * Modified the source to use serializable objects in session:
  * <ul>

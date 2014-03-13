@@ -2,9 +2,6 @@ package ee.webmedia.alfresco.help.model;
 
 import org.alfresco.service.namespace.QName;
 
-/**
- * @author Martti Tamm
- */
 public interface HelpTextModel {
 
     String URI = "http://alfresco.webmedia.ee/model/helpText/1.0";

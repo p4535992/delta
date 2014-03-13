@@ -31,8 +31,6 @@ import ee.webmedia.alfresco.common.propertysheet.validator.MandatoryIfValidator;
 
 /**
  * Custom PropertySheetConfigElement that also holds custom attributes read from "show-property" element.
- * 
- * @author Ats Uiboupin
  */
 public class WMPropertySheetConfigElement extends PropertySheetConfigElement {
     private static final long serialVersionUID = 1L;
@@ -62,9 +60,6 @@ public class WMPropertySheetConfigElement extends PropertySheetConfigElement {
         ItemConfig copyAsReadOnly();
     }
 
-    /**
-     * @author Ats Uiboupin
-     */
     public static class ItemConfigVO extends ItemConfig implements CustomAttributes, ReadOnlyCopiableItemConfig {
         private static final long serialVersionUID = 1L;
 
@@ -159,7 +154,7 @@ public class WMPropertySheetConfigElement extends PropertySheetConfigElement {
 
         private void setRendered(boolean rendered) {
             this.rendered = rendered;
-            // XXX ALAR: boolean rendered and customAttributes.get(BaseComponentGenerator.RENDERED) have different purposes, TODO fix it
+            // XXX boolean rendered and customAttributes.get(BaseComponentGenerator.RENDERED) have different purposes, TODO fix it
             // setCustomAttribute(BaseComponentGenerator.RENDERED, Boolean.toString(rendered));
         }
 
@@ -257,7 +252,7 @@ public class WMPropertySheetConfigElement extends PropertySheetConfigElement {
             if (propertySheetItemAttributes.containsKey(PropertySheetElementReader.ATTR_SHOW_IN_EDIT_MODE)) {
                 showInEditMode = Boolean.parseBoolean(propertySheetItemAttributes.get(PropertySheetElementReader.ATTR_SHOW_IN_EDIT_MODE));
             }
-            // XXX ALAR: boolean rendered and customAttributes.get(BaseComponentGenerator.RENDERED) have different purposes, TODO fix it
+            // XXX boolean rendered and customAttributes.get(BaseComponentGenerator.RENDERED) have different purposes, TODO fix it
             // if (propertySheetItemAttributes.containsKey(BaseComponentGenerator.RENDERED)) {
             // rendered = Boolean.parseBoolean(propertySheetItemAttributes.get(BaseComponentGenerator.RENDERED));
             // }

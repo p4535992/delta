@@ -14,8 +14,6 @@ import ee.webmedia.alfresco.utils.SearchUtil;
 
 /**
  * Remove imapSubfolderContainer aspect from all nodes that have it
- * 
- * @author Riina Tens
  */
 public class RemoveImapSubfolderContainerAspect extends AbstractNodeUpdater {
 

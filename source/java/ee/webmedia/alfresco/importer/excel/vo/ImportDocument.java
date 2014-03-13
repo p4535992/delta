@@ -15,8 +15,6 @@ import ee.webmedia.alfresco.utils.beanmapper.AlfrescoModelProperty;
 
 /**
  * Base class for Importable documents
- * 
- * @author Ats Uiboupin
  */
 public class ImportDocument extends CommonDocument {
     @AlfrescoModelProperty(isMappable = false)

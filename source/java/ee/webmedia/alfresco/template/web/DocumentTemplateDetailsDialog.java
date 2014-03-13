@@ -17,8 +17,6 @@ import ee.webmedia.alfresco.utils.ActionUtil;
 
 /**
  * Form backing bean for DocumentTemplate details view.
- * 
- * @author Vladimir Drozdik
  */
 public class DocumentTemplateDetailsDialog extends BaseDialogBean {
 

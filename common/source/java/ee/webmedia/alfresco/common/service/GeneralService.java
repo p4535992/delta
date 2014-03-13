@@ -32,10 +32,6 @@ import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.document.log.service.DocumentPropertiesChangeHolder;
 import ee.webmedia.alfresco.utils.AdjustableSemaphore;
 
-/**
- * @author Ats Uiboupin
- * @author Alar Kvell
- */
 public interface GeneralService {
     String BEAN_NAME = "GeneralService";
 

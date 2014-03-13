@@ -11,8 +11,6 @@ import org.apache.commons.lang.StringUtils;
 
 /**
  * Convert list of non-blank strings to comma separated string.
- * 
- * @author Alar Kvell
  */
 public class ListNonBlankStringsWithCommaConverter implements Converter {
 

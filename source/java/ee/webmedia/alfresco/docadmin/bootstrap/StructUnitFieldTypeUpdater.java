@@ -19,8 +19,6 @@ import ee.webmedia.alfresco.utils.SearchUtil;
 
 /**
  * Change field type to STRUCT_UNIT for fields where field name contains "OrgStructUnit"
- * 
- * @author Riina Tens
  */
 public class StructUnitFieldTypeUpdater extends AbstractNodeUpdater {
 

@@ -24,8 +24,6 @@ import ee.webmedia.alfresco.utils.ActionUtil;
 
 /**
  * Base bean for associations list
- * 
- * @author Ats Uiboupin
  */
 public abstract class DocTypeAssocsListBean<T extends AssociationModel> implements DialogBlockBean<DocTypeDetailsDialog> {
     private static final long serialVersionUID = 1L;
@@ -54,7 +52,7 @@ public abstract class DocTypeAssocsListBean<T extends AssociationModel> implemen
                 results.add(new AssociationToDocTypeListItem(associationModel, docTypeNames.get(associationModel.getDocType())));
             }
         } catch (NullPointerException e) {
-            // FIXME CL_TASK 177667 Kaarel
+            // FIXME CL_TASK 177667
             return Collections.emptyList();
         }
         @SuppressWarnings("unchecked")

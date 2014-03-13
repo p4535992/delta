@@ -24,8 +24,6 @@ import ee.webmedia.alfresco.workflow.service.HasNoStoppedOrInprogressWorkflowsEv
 
 /**
  * Evaluator, that is used to decide if we should show registrDoc button or not
- * 
- * @author Ats Uiboupin
  */
 public class RegisterDocumentEvaluator extends BaseActionEvaluator {
     private static final long serialVersionUID = 2958297435415449179L;

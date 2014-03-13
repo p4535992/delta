@@ -21,8 +21,6 @@ import ee.webmedia.alfresco.utils.SearchUtil;
 
 /**
  * Updates the NodeRef type property to Text
- * 
- * @author Kaarel Jõgeva
  */
 public class AdrDeletedDocumentNodeRefToTextUpdater extends AbstractNodeUpdater {
 

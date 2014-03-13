@@ -15,9 +15,6 @@ import ee.webmedia.alfresco.workflow.service.Task;
 import ee.webmedia.xtee.client.dhl.DhlXTeeService.ContentToSend;
 import ee.webmedia.xtee.client.dhl.types.ee.sk.digiDoc.v13.DataFileType;
 
-/**
- * @author Ats Uiboupin
- */
 public interface DvkService {
     String BEAN_NAME = "DvkService";
 

@@ -2,8 +2,6 @@ package ee.webmedia.alfresco.signature.exception;
 
 /**
  * Checked exception to wrap DigiDocException.
- * 
- * @author Alar Kvell
  */
 public class SignatureException extends Exception {
     private static final long serialVersionUID = 1L;

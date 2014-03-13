@@ -2,9 +2,6 @@ package ee.webmedia.alfresco.parameters.model;
 
 import org.alfresco.service.namespace.QName;
 
-/**
- * @author Ats Uiboupin
- */
 public interface ParametersModel {
     String URI = "http://alfresco.webmedia.ee/model/parameters/1.0";
     String PREFIX = "param:";

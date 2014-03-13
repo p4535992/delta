@@ -13,9 +13,6 @@ import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.xtee.client.dhl.DhlXTeeService.SendStatus;
 
-/**
- * @author Alar Kvell
- */
 public interface DocumentCommonModel {
     String DOCCOM_URI = "http://alfresco.webmedia.ee/model/document/common/1.0";
     String DOCCOM_PREFIX = "doccom:";
@@ -146,8 +143,6 @@ public interface DocumentCommonModel {
 
     /**
      * Document related privileges (and dependencies)
-     * 
-     * @author Ats Uiboupin
      */
     abstract class Privileges {
         /** Permission used on dynamic document types. Indicates that user can create new document of specific type. */

@@ -2,9 +2,6 @@ package ee.webmedia.alfresco.parameters.model;
 
 import org.apache.commons.lang.StringUtils;
 
-/**
- * @author Ats Uiboupin
- */
 public class DoubleParameter extends Parameter<Double> {
     private static final long serialVersionUID = 1L;
 

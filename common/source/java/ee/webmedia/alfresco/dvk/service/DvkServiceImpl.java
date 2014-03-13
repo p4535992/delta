@@ -82,9 +82,6 @@ import ee.webmedia.xtee.client.dhl.types.ee.sk.digiDoc.v13.DataFileType;
 import ee.webmedia.xtee.client.dhl.types.ee.sk.digiDoc.v13.SignedDocType;
 import ee.webmedia.xtee.client.service.configuration.provider.XTeeProviderPropertiesResolver;
 
-/**
- * @author Ats Uiboupin
- */
 public abstract class DvkServiceImpl implements DvkService {
 
     private static Log log = LogFactory.getLog(DvkServiceImpl.class);

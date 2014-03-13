@@ -5,8 +5,6 @@ import org.springframework.orm.hibernate3.HibernateTransactionManager;
 
 /**
  * TransactionManager to access RetryingTransactionHelper via transactionService
- * 
- * @author Riina Tens
  */
 public class RetryingTransactionManager extends HibernateTransactionManager {
 

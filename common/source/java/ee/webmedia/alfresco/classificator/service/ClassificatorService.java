@@ -14,8 +14,6 @@ import ee.webmedia.alfresco.classificator.model.ClassificatorValue;
 
 /**
  * Service for searching and modifying classificators from the model.
- * 
- * @author dmitrim
  */
 public interface ClassificatorService {
 
