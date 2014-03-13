@@ -2,9 +2,6 @@ package ee.webmedia.alfresco.document.search.model;
 
 import org.alfresco.service.namespace.QName;
 
-/**
- * @author Alar Kvell
- */
 public interface DocumentSearchModel {
     String URI = "http://alfresco.webmedia.ee/model/document/search/1.0";
     String PREFIX = "docsearch:";
@@ -38,6 +35,10 @@ public interface DocumentSearchModel {
         QName EA_COMMITMENT_ITEM = QName.createQName(URI, "eaCommitmentItem");
         QName DOCUMENT_CREATED = QName.createQName(URI, "documentCreated");
         QName DOCUMENT_CREATED_END_DATE = QName.createQName(URI, "documentCreated_EndDate");
+        QName SEND_INFO_RECIPIENT = QName.createQName(URI, "sendInfoRecipient");
+        QName SEND_INFO_SEND_DATE_TIME = QName.createQName(URI, "sendInfoDateTime");
+        QName SEND_INFO_SEND_DATE_TIME_END = QName.createQName(URI, "sendInfoDateTime_EndDate");
+        QName SEND_INFO_RESOLUTION = QName.createQName(URI, "sendInfoResolution");
 
         // objectFilter properties
         QName OBJECT_TYPE = QName.createQName(URI, "objectType");

@@ -21,8 +21,6 @@ import smit.ametnik.services.YksusExt;
 
 /**
  * Web service, to communicate with AmetnikeRegister
- * 
- * @author Ats Uiboupin
  */
 public class AMRServiceImpl extends WebServiceTemplate implements AMRService {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(AMRServiceImpl.class);

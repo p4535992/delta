@@ -39,6 +39,7 @@ import org.alfresco.service.cmr.repository.MimetypeService;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.util.Pair;
 import org.alfresco.util.TempFileProvider;
 import org.apache.commons.codec.binary.Base64OutputStream;
 import org.apache.commons.io.FilenameUtils;
@@ -48,7 +49,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.cxf.jaxws.JaxWsProxyFactoryBean;
 import org.apache.log4j.Logger;
 import org.bouncycastle.asn1.ASN1InputStream;
-import org.bouncycastle.asn1.DERObject;
+import org.bouncycastle.asn1.ASN1Primitive;
 import org.bouncycastle.asn1.DERObjectIdentifier;
 import org.bouncycastle.asn1.DEROctetString;
 import org.bouncycastle.asn1.DERSequence;
@@ -90,10 +91,10 @@ import ee.webmedia.alfresco.utils.FilenameUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UserUtil;
 
-/**
- * @author Alar Kvell
- */
 public class SignatureServiceImpl implements SignatureService, InitializingBean {
+
+    private static final String ID_CODE_COUNTRY_EE = "EE";
+    private static final String ID_CODE_COUNTRY_LT = "LT";
 
     private static Logger log = Logger.getLogger(SignatureServiceImpl.class);
 
@@ -114,6 +115,31 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
     private String testMobileIdServiceName;
 
     private DigiDocServicePortType digiDocService;
+
+    private static final Map<String, Pair<String, String>> testPhoneNumbers = new HashMap<String, Pair<String, String>>();
+
+    static {
+        testPhoneNumbers.put("37200007", Pair.newInstance("14212128025", ID_CODE_COUNTRY_EE));
+        testPhoneNumbers.put("37260000007", Pair.newInstance("51001091072", ID_CODE_COUNTRY_EE));
+        testPhoneNumbers.put("37200001", Pair.newInstance("38002240211", ID_CODE_COUNTRY_EE));
+        testPhoneNumbers.put("37200002", Pair.newInstance("14212128020", ID_CODE_COUNTRY_EE));
+        testPhoneNumbers.put("37200003", Pair.newInstance("14212128021", ID_CODE_COUNTRY_EE));
+        testPhoneNumbers.put("37200004", Pair.newInstance("14212128022", ID_CODE_COUNTRY_EE));
+        testPhoneNumbers.put("37200005", Pair.newInstance("14212128023", ID_CODE_COUNTRY_EE));
+        testPhoneNumbers.put("37200006", Pair.newInstance("14212128024", ID_CODE_COUNTRY_EE));
+        testPhoneNumbers.put("37200008", Pair.newInstance("14212128026", ID_CODE_COUNTRY_EE));
+        testPhoneNumbers.put("37200009", Pair.newInstance("14212128027", ID_CODE_COUNTRY_EE));
+
+        testPhoneNumbers.put("37060000007", Pair.newInstance("51001091072", ID_CODE_COUNTRY_LT));
+        testPhoneNumbers.put("37060000001", Pair.newInstance("51001091006", ID_CODE_COUNTRY_LT));
+        testPhoneNumbers.put("37060000002", Pair.newInstance("51001091017", ID_CODE_COUNTRY_LT));
+        testPhoneNumbers.put("37060000003", Pair.newInstance("51001091028", ID_CODE_COUNTRY_LT));
+        testPhoneNumbers.put("37060000004", Pair.newInstance("51001091039", ID_CODE_COUNTRY_LT));
+        testPhoneNumbers.put("37060000005", Pair.newInstance("51001091050", ID_CODE_COUNTRY_LT));
+        testPhoneNumbers.put("37060000006", Pair.newInstance("51001091061", ID_CODE_COUNTRY_LT));
+        testPhoneNumbers.put("37060000008", Pair.newInstance("51001091083", ID_CODE_COUNTRY_LT));
+        testPhoneNumbers.put("37060000009", Pair.newInstance("51001091094", ID_CODE_COUNTRY_LT));
+    }
 
     public void setFileFolderService(FileFolderService fileFolderService) {
         this.fileFolderService = fileFolderService;
@@ -198,7 +224,7 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
         }
         digiDocServiceFactory.setAddress(isTest() ? testDigiDocServiceUrl : digiDocServiceUrl);
         digiDocServiceFactory.setServiceName(new javax.xml.namespace.QName("http://www.sk.ee/DigiDocService/DigiDocService_2_3.wsdl", "DigiDocService"));
-        digiDocServiceFactory.setEndpointName(new javax.xml.namespace.QName("http://www.sk.ee/DigiDocService/DigiDocService_2_3.wsdl", "DigiDocServicePortType"));
+        digiDocServiceFactory.setEndpointName(new javax.xml.namespace.QName("http://www.sk.ee/DigiDocService/DigiDocService_2_3.wsdl", "DigiDocService"));
         digiDocService = (DigiDocServicePortType) digiDocServiceFactory.create();
     }
 
@@ -254,11 +280,11 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
     }
 
     @Override
-    public SignatureChallenge getSignatureChallenge(NodeRef nodeRef, String phoneNo) throws SignatureException {
+    public SignatureChallenge getSignatureChallenge(NodeRef nodeRef, String phoneNo, String idCode) throws SignatureException {
         SignedDoc signedDoc = null;
         try {
             signedDoc = getSignedDoc(nodeRef, true);
-            SignatureChallenge signatureChallenge = getSignatureChallenge(signedDoc, phoneNo);
+            SignatureChallenge signatureChallenge = getSignatureChallenge(signedDoc, phoneNo, idCode);
             return signatureChallenge;
         } catch (UnableToPerformException e) {
             throw e;
@@ -280,11 +306,11 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
     }
 
     @Override
-    public SignatureChallenge getSignatureChallenge(List<NodeRef> contents, String phoneNo) throws SignatureException {
+    public SignatureChallenge getSignatureChallenge(List<NodeRef> contents, String phoneNo, String idCode) throws SignatureException {
         SignedDoc signedDoc = null;
         try {
             signedDoc = createSignedDoc(contents);
-            SignatureChallenge signatureDigest = getSignatureChallenge(signedDoc, phoneNo);
+            SignatureChallenge signatureDigest = getSignatureChallenge(signedDoc, phoneNo, idCode);
             return signatureDigest;
         } catch (UnableToPerformException e) {
             throw e;
@@ -514,7 +540,15 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
 
             // Cannot use more generic read method that detects type (DDOC/BDOC), beacuse it is buggy
             // (detect method reads from stream, and when parse is invoked, stream is not at the beginning any more)
-            SignedDoc signedDoc = digiDocFactory.readSignedDocOfType(contentInputStream, false, fileContents);
+            ArrayList<DigiDocException> errors = new ArrayList<DigiDocException>();
+            SignedDoc signedDoc = digiDocFactory.readSignedDocFromStreamOfType(contentInputStream, false, errors);
+            for (DigiDocException ex : errors) {
+                // See DELTA-295
+                if (ex.getCode() == DigiDocException.ERR_ISSUER_XMLNS) {
+                    continue;
+                }
+                throw ex;
+            }
             if (fileContents) {
                 bindCleanTempFiles(signedDoc);
             }
@@ -626,8 +660,9 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
         document.addDataFile(datafile);
     }
 
-    private SignatureChallenge getSignatureChallenge(SignedDoc signedDoc, String phoneNo) throws DigiDocException {
+    private SignatureChallenge getSignatureChallenge(SignedDoc signedDoc, String phoneNo, String idCode) throws DigiDocException {
         phoneNo = StringUtils.stripToEmpty(phoneNo);
+        idCode = StringUtils.stripToEmpty(idCode);
 
         ObjectFactory objectFactory = new ObjectFactory();
 
@@ -673,10 +708,12 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
         Holder<String> challengeId = new Holder<String>();
         Holder<String> status = new Holder<String>();
         long startTime = System.nanoTime();
+        Pair<String, String> testIdCodeAndCountry = getTestPhoneNumberAndCountry(phoneNo);
+        boolean isTestNumber = testIdCodeAndCountry != null;
         try {
             digiDocService.mobileCreateSignature(
-                    "",
-                    "",
+                    isTestNumber ? testIdCodeAndCountry.getFirst() : idCode,
+                    isTestNumber ? testIdCodeAndCountry.getSecond() : ID_CODE_COUNTRY_EE,
                     phoneNo,
                     "EST",
                     getMobileIdServiceName(),
@@ -725,6 +762,13 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
         return new SignatureChallenge(sesscode.value, challengeId.value, digestHexs, signatureId, format, version);
     }
 
+    private Pair<String, String> getTestPhoneNumberAndCountry(String phoneNo) {
+        if (StringUtils.startsWith(phoneNo, "+")) {
+            phoneNo = phoneNo.substring(1);
+        }
+        return testPhoneNumbers.get(phoneNo);
+    }
+
     @Override
     public String getMobileIdSignature(SignatureChallenge signatureChallenge) {
 
@@ -744,18 +788,14 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
             digiDocService.getMobileCreateSignatureStatus(sesscode, false, status, signature);
             long stopTime = System.nanoTime();
             if (!Arrays.asList("SIGNATURE", "OUTSTANDING_TRANSACTION", "EXPIRED_TRANSACTION", "USER_CANCEL", "MID_NOT_READY", "PHONE_ABSENT", "SIM_ERROR", "SENDING_ERROR",
-                    "INTERNAL_ERROR").contains(status.value)) {
+                    "REVOKED_CERTIFICATE", "INTERNAL_ERROR").contains(status.value)) {
                 String string = "Error performing query skDigiDocServiceGetMobileCreateSignatureStatus - " + duration(startTime, stopTime) + " ms: status=" + status.value;
                 log.error(string);
                 MonitoringUtil.logError(MonitoredService.OUT_SK_DIGIDOCSERVICE, string);
                 throw new UnableToPerformException("sk_digidocservice_error");
             }
             log.info("PERFORMANCE: query skDigiDocServiceGetMobileCreateSignatureStatus - " + duration(startTime, stopTime) + " ms, status=" + status.value);
-            if ("INTERNAL_ERROR".equals(status.value)) {
-                MonitoringUtil.logError(MonitoredService.OUT_SK_DIGIDOCSERVICE, status.value);
-            } else {
-                MonitoringUtil.logSuccess(MonitoredService.OUT_SK_DIGIDOCSERVICE);
-            }
+            MonitoringUtil.logSuccess(MonitoredService.OUT_SK_DIGIDOCSERVICE);
             if ("SIGNATURE".equals(status.value)) {
                 return signature.value;
             } else if ("OUTSTANDING_TRANSACTION".equals(status.value)) {
@@ -766,6 +806,9 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
         } catch (SOAPFaultException e) {
             long stopTime = System.nanoTime();
             handleDigiDocServiceSoapFault(e, startTime, stopTime, "skDigiDocServiceGetMobileCreateSignatureStatus");
+        } catch (UnableToPerformException e) {
+            // MonitoringUtil.logSuccess was called
+            throw e;
         } catch (RuntimeException e) {
             MonitoringUtil.logError(MonitoredService.OUT_SK_DIGIDOCSERVICE, e);
             throw e;
@@ -786,14 +829,18 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
     private void handleDigiDocServiceSoapFault(SOAPFaultException e, long startTime, long stopTime, String queryName) {
         try {
             int faultCode = Integer.parseInt(e.getMessage());
-            if (faultCode >= 200 && faultCode < 300) {
-                log.info("PERFORMANCE: query " + queryName + " - " + duration(startTime, stopTime) + " ms, faultCode=" + faultCode);
-                MonitoringUtil.logError(MonitoredService.OUT_SK_DIGIDOCSERVICE, e);
-                throw new UnableToPerformException("ddoc_signature_failed_INTERNAL_ERROR");
-            } else if (faultCode == 101 || (faultCode >= 300 && faultCode <= 303)) {
+            if (faultCode == 101 || (faultCode >= 300 && faultCode <= 305)) {
                 log.info("PERFORMANCE: query " + queryName + " - " + duration(startTime, stopTime) + " ms, faultCode=" + faultCode);
                 MonitoringUtil.logSuccess(MonitoredService.OUT_SK_DIGIDOCSERVICE);
                 throw new UnableToPerformException("ddoc_signature_failed_" + faultCode);
+            } else if (faultCode >= 200 && faultCode < 300) {
+                log.info("PERFORMANCE: query " + queryName + " - " + duration(startTime, stopTime) + " ms, faultCode=" + faultCode);
+                MonitoringUtil.logSuccess(MonitoredService.OUT_SK_DIGIDOCSERVICE);
+                throw new UnableToPerformException("ddoc_signature_failed_2xx", Integer.toString(faultCode));
+            } else if (faultCode >= 300 && faultCode < 400) {
+                log.info("PERFORMANCE: query " + queryName + " - " + duration(startTime, stopTime) + " ms, faultCode=" + faultCode);
+                MonitoringUtil.logSuccess(MonitoredService.OUT_SK_DIGIDOCSERVICE);
+                throw new UnableToPerformException("ddoc_signature_failed_3xx", Integer.toString(faultCode));
             }
         } catch (NumberFormatException e2) {
             // do nothing
@@ -804,7 +851,7 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
     }
 
     private void addSignature(SignedDoc signedDoc, SignatureChallenge signatureChallenge, String signature) throws DigiDocException, SignatureException,
-            UnsupportedEncodingException {
+    UnsupportedEncodingException {
 
         List<String> digestHexs = new ArrayList<String>();
         for (int i = 0; i < signedDoc.countDataFiles(); i++) {
@@ -895,11 +942,12 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
             try {
                 X509Certificate cert = SignedDoc.readCertificate(skLdapCertificate.getUserCertificate());
 
-                // In DigiDoc Client 2 and 3, only certificates which contain DataEncipherment in KeyUsage, are suitable for encryption
+                // In DigiDoc Client 2 and 3, only certificates which contain KeyEncipherment in KeyUsage, are suitable for encryption
+                // (in DigiDoc Client < 3.6 DataEncipherment was checked)
                 // According to https://svn.eesti.ee/projektid/idkaart_public/trunk/qdigidoc/crypto/KeyDialog.cpp
-                // * c.keyUsage().contains( SslCertificate::DataEncipherment )
-                boolean dataEncipherment = cert.getKeyUsage()[3];
-                if (!dataEncipherment) {
+                // * c.keyUsage().contains( SslCertificate::KeyEncipherment )
+                boolean keyEncipherment = cert.getKeyUsage()[2];
+                if (!keyEncipherment) {
                     continue;
                 }
 
@@ -911,8 +959,6 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
                 // * if( p.indexOf( QRegExp( "^1\\.3\\.6\\.1\\.4\\.1\\.10015\\.1\\.3.*" ) ) != -1 ||
                 // * p.indexOf( QRegExp( "^1\\.3\\.6\\.1\\.4\\.1\\.10015\\.11\\.1.*" ) ) != -1 )
                 // * return MobileIDType;
-                // 1.3.6.1.4.1.10015.1
-
                 List<String> objectIdentifiers = getPolicyObjectIdentifiers(cert);
                 for (String objectIdentifier : objectIdentifiers) {
                     if (objectIdentifier.startsWith("1.3.6.1.4.1.10015.1.3") || objectIdentifier.startsWith("1.3.6.1.4.1.10015.11.1")) {
@@ -933,7 +979,7 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
             List<String> objectIdentifiers = new ArrayList<String>();
             byte[] policies = cert.getExtensionValue("2.5.29.32");
             if (policies != null) {
-                DERObject derObject;
+                ASN1Primitive derObject;
                 derObject = toDerObject(policies);
                 if (derObject instanceof DEROctetString) {
                     derObject = toDerObject(((DEROctetString) derObject).getOctets());
@@ -948,7 +994,7 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
         }
     }
 
-    private static DERObject toDerObject(byte[] data) throws IOException {
+    private static ASN1Primitive toDerObject(byte[] data) throws IOException {
         return new ASN1InputStream(new ByteArrayInputStream(data)).readObject();
     }
 

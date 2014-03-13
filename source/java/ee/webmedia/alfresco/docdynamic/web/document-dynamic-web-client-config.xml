@@ -169,7 +169,57 @@
          <action-group id="subPropSheet_applicantTraining">
             <action idref="subPropSheet_applicantTraining_add" />
             <action idref="subPropSheet_applicantTraining_remove" />
-         </action-group>  
+         </action-group>
+
+         <action id="subPropSheet_applicantErrand_add">
+            <label-id>subPropSheet_applicantErrand_add</label-id>
+            <tooltip-id>subPropSheet_applicantErrand_add_tooltip</tooltip-id>
+            <image>/images/icons/add_user.gif</image>
+            <action-listener>#{DocumentDynamicDialog.addChildNode}</action-listener>
+            <params>
+               <param name="childAssocTypeQNameHierarchy">docchild:applicantErrand</param>
+            </params>
+         </action>
+
+         <action id="subPropSheet_applicantErrand_remove">
+            <label-id>subPropSheet_applicantErrand_remove</label-id>
+            <tooltip-id>subPropSheet_applicantErrand_remove_tooltip</tooltip-id>
+            <image>/images/icons/remove_user.gif</image>
+            <action-listener>#{DocumentDynamicDialog.removeChildNode}</action-listener>
+            <params>
+               <param name="childAssocTypeQNameHierarchy">docchild:applicantErrand</param>
+            </params>
+         </action>
+
+         <action-group id="subPropSheet_applicantErrand">
+            <action idref="subPropSheet_applicantErrand_add" />
+            <action idref="subPropSheet_applicantErrand_remove" />
+         </action-group>         
+
+         <action id="subPropSheet_applicantErrand_errand_add">
+            <label-id>subPropSheet_applicantErrand_errand_add</label-id>
+            <tooltip-id>subPropSheet_applicantErrand_errand_add_tooltip</tooltip-id>
+            <image>/images/icons/add_item.gif</image>
+            <action-listener>#{DocumentDynamicDialog.addChildNode}</action-listener>
+            <params>
+               <param name="childAssocTypeQNameHierarchy">docchild:applicantErrand/docchild:errand</param>
+            </params>
+         </action>
+
+         <action id="subPropSheet_applicantErrand_errand_remove">
+            <label-id>subPropSheet_applicantErrand_errand_remove</label-id>
+            <tooltip-id>subPropSheet_applicantErrand_errand_remove_tooltip</tooltip-id>
+            <image>/images/icons/remove_item.gif</image>
+            <action-listener>#{DocumentDynamicDialog.removeChildNode}</action-listener>
+            <params>
+               <param name="childAssocTypeQNameHierarchy">docchild:applicantErrand/docchild:errand</param>
+            </params>
+         </action>
+
+         <action-group id="subPropSheet_applicantErrand_errand">
+            <action idref="subPropSheet_applicantErrand_errand_add" />
+            <action idref="subPropSheet_applicantErrand_errand_remove" />
+         </action-group>
 
          <action id="document_createFollowUpReport">
             <evaluator>ee.webmedia.alfresco.document.assocsdyn.web.AddFollowUpReportAssocEvaluator</evaluator>

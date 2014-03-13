@@ -68,9 +68,6 @@ import ee.webmedia.alfresco.substitute.model.SubstituteModel;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.workflow.search.model.TaskSearchModel;
 
-/**
- * @author Alar Kvell
- */
 public class UserDataRestoreService {
     protected final Log log = LogFactory.getLog(getClass());
 

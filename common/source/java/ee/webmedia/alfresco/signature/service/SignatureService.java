@@ -18,9 +18,6 @@ import ee.webmedia.alfresco.signature.model.SkLdapCertificate;
 /**
  * Service class that handles DigiDoc containers.
  * Has methods that create, check, sign, retrieve signatures, signature digests and files from the container.
- * 
- * @author Dmitri Melnikov
- * @author Alar Kvell
  */
 public interface SignatureService {
 
@@ -63,10 +60,11 @@ public interface SignatureService {
      * 
      * @param nodeRef existing .ddoc file that signature is added to
      * @param phoneNo signer's phone number, must start with international call prefix (e.g. +372)
+     * @param idCode TODO
      * @return
      * @throws SignatureException
      */
-    SignatureChallenge getSignatureChallenge(NodeRef nodeRef, String phoneNo) throws SignatureException;
+    SignatureChallenge getSignatureChallenge(NodeRef nodeRef, String phoneNo, String idCode) throws SignatureException;
 
     /**
      * Returns the signature digest made from the cert and data pointed to by selectedNodeRefs. Used for creating a new .ddoc file and adding a signature to it.
@@ -83,10 +81,11 @@ public interface SignatureService {
      * 
      * @param contents files that are added into new .ddoc container
      * @param phoneNo signer's phone number, must start with international call prefix (e.g. +372)
+     * @param idCode TODO
      * @return
      * @throws SignatureException
      */
-    SignatureChallenge getSignatureChallenge(List<NodeRef> contents, String phoneNo) throws SignatureException;
+    SignatureChallenge getSignatureChallenge(List<NodeRef> contents, String phoneNo, String idCode) throws SignatureException;
 
     /**
      * Returns data files and signatures in a map. Keys are "signatureItems" for signature items and

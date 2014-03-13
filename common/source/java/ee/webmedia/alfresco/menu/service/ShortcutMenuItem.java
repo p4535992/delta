@@ -8,9 +8,6 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.util.EqualsHelper;
 import org.springframework.util.Assert;
 
-/**
- * @author Riina Tens
- */
 public class ShortcutMenuItem implements Serializable {
 
     private static final long serialVersionUID = 1L;

@@ -11,8 +11,6 @@ import ee.webmedia.alfresco.series.model.Series;
 
 /**
  * Service class for series
- * 
- * @author Ats Uiboupin
  */
 public interface SeriesService {
     String BEAN_NAME = "SeriesService";

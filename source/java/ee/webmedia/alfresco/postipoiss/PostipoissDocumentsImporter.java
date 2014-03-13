@@ -110,16 +110,13 @@ import ee.webmedia.alfresco.workflow.service.type.WorkflowType;
 
 /**
  * Imports documents and files from Postipoiss.
- * 
- * @author Aleksei Lissitsin
- * @author Alar Kvell
  */
 public class PostipoissDocumentsImporter {
 
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(PostipoissDocumentsImporter.class);
 
     private static final String PP_ELEMENT_DOK_NR = "dok_nr";
-    private static final String PP_ELEMENT_ALUS_DOK_NR = "alus_dok_nr";
+    private static final String PP_ELEMENT_ALUS_DOK_NR = "alg_dok_nr";
     /**
      * SIM "toimik_sari", MV "toimik", PPA "volume", now comes from mappings.xml {@code <prop from="..." to="_regNumberWithoutIndividual"/>}.
      * For example
@@ -1298,6 +1295,9 @@ public class PostipoissDocumentsImporter {
                 accessRestriction = (String) props.get(DocumentCommonModel.Props.ACCESS_RESTRICTION);
                 accessRestrictionReason = (String) props.get(DocumentCommonModel.Props.ACCESS_RESTRICTION_REASON);
             }
+            if ("Akt".equals(dokLiik) || "Leping".equals(dokLiik)) {
+                docName = dokLiik;
+            }
         }
     }
 
@@ -2213,6 +2213,9 @@ public class PostipoissDocumentsImporter {
         String origin = root.elementText(PP_ELEMENT_PARITOLU);
         if (StringUtils.isBlank(origin)) {
             origin = root.elementText(PP_ELEMENT_PARITOLU2);
+        }
+        if (StringUtils.isBlank(origin)) {
+            origin = PP_VALUE_PARITOLU_ALGATUSDOKUMENT;
         }
         if (initialDocumentId != null && !documentId.equals(initialDocumentId)) {
             AssocType assocType;

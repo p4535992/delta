@@ -1,8 +1,5 @@
 package ee.webmedia.alfresco.archivals.model;
 
-/**
- * @author Riina Tens
- */
 public enum ActivityStatus {
 
     IN_PROGRESS("teostamisel"),

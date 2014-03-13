@@ -16,9 +16,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.faces.application.Application;
 import javax.faces.component.UIComponent;
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
+import javax.faces.model.SelectItem;
 
 import org.alfresco.model.ContentModel;
 import org.alfresco.service.cmr.lock.NodeLockedException;
@@ -30,6 +32,7 @@ import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.Repository;
 import org.alfresco.web.ui.common.component.UIActionLink;
 import org.alfresco.web.ui.common.component.UIGenericPicker;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
@@ -39,13 +42,16 @@ import ee.webmedia.alfresco.common.propertysheet.search.Search;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.UserContactGroupSearchBean;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.orgstructure.service.OrganizationStructureService;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.ComponentUtil;
+import ee.webmedia.alfresco.utils.MessageDataImpl;
 import ee.webmedia.alfresco.utils.MessageDataWrapper;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
+import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
 import ee.webmedia.alfresco.utils.UnableToPerformMultiReasonException;
 import ee.webmedia.alfresco.utils.UserUtil;
 import ee.webmedia.alfresco.workflow.exception.WorkflowChangedException;
@@ -62,10 +68,9 @@ import ee.webmedia.alfresco.workflow.web.DelegationTaskListGenerator.Delegatable
 
 /**
  * Bean that helps to create controls and manage state related to delegating assignment task
- * 
- * @author Ats Uiboupin
  */
 public class DelegationBean implements Serializable {
+    private static final String DELEGATION_CONFIRMATION_RENDERED = "delegationConfirmationRendered";
     private static final long serialVersionUID = 1L;
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(DelegationBean.class);
     public static final String BEAN_NAME = "DelegationBean";
@@ -85,6 +90,9 @@ public class DelegationBean implements Serializable {
     private transient UserService userService;
     private WorkflowBlockBean workflowBlockBean;
     private final List<Task> delegatableTasks = new ArrayList<Task>();
+    private List<SelectItem> confirmationMessages;
+    // used to keep reference to delegatable task during delegation confirming
+    private Task assignmentTaskOriginal;
 
     /**
      * @param event passed to MethodBinding
@@ -116,7 +124,7 @@ public class DelegationBean implements Serializable {
             task.setResponsible(true);
             task.setActive(true);
         }
-        if (workflow.hasTaskResolution()) {
+        if (task.isType(WorkflowSpecificModel.Types.ASSIGNMENT_TASK, WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_TASK)) {
             task.setResolution(defaultResolution);
         }
         task.setDueDate(dueDate);
@@ -182,6 +190,8 @@ public class DelegationBean implements Serializable {
 
     public void reset() {
         delegatableTasks.clear();
+        confirmationMessages = null;
+        assignmentTaskOriginal = null;
     }
 
     private Workflow getWorkflowByAction(ActionEvent event) {
@@ -261,6 +271,7 @@ public class DelegationBean implements Serializable {
      * 
      * @throws Exception
      */
+    @SuppressWarnings("unchecked")
     public void delegate(ActionEvent event) throws Exception {
         Integer delegatableTaskIndex = ActionUtil.getParam(event, ATTRIB_DELEGATABLE_TASK_INDEX, Integer.class);
         List<Pair<String, Object>> params = new ArrayList<Pair<String, Object>>();
@@ -269,22 +280,37 @@ public class DelegationBean implements Serializable {
         if (!workflowBlockBean.saveIfIndependentWorkflow(params, DELEGATE, event)) {
             return;
         }
-
-        Task originalTask = reloadWorkflow(ActionUtil.getParam(event, ATTRIB_DELEGATABLE_TASK_INDEX, Integer.class));
-        if (originalTask == null) {
+        assignmentTaskOriginal = reloadWorkflow(ActionUtil.getParam(event, ATTRIB_DELEGATABLE_TASK_INDEX, Integer.class));
+        if (assignmentTaskOriginal == null) {
             return;
         }
-        if (originalTask.isType(WorkflowSpecificModel.Types.ASSIGNMENT_TASK)) {
-            originalTask.setAction(Action.FINISH);
+        if (validate(assignmentTaskOriginal.getParent().getParent())) {
+            populateConfirmationMessage();
+            if (confirmationMessages != null && !confirmationMessages.isEmpty()) {
+                FacesContext.getCurrentInstance().getExternalContext().getRequestMap().put(DELEGATION_CONFIRMATION_RENDERED, Boolean.TRUE);
+                return;
+            }
+            delegateConfirmed(event);
+        }
+    }
+
+    /**
+     * This method assumes that compound workflow has been validated and assignmentTaskOriginal has been set correctly
+     * by delegate method
+     */
+    public void delegateConfirmed(ActionEvent event) {
+        if (assignmentTaskOriginal.isType(WorkflowSpecificModel.Types.ASSIGNMENT_TASK)) {
+            assignmentTaskOriginal.setAction(Action.FINISH);
         }
         FacesContext context = FacesContext.getCurrentInstance();
         try {
-            MessageDataWrapper feedback = getWorkflowService().delegate(originalTask);
-            MessageUtil.addStatusMessages(context, feedback);
-            if (!feedback.hasErrors()) {
-                workflowBlockBean.restore("delegate");
-                MessageUtil.addInfoMessage("delegated_successfully_" + originalTask.getType().getLocalName());
-                workflowBlockBean.notifyDialogsIfNeeded(true, true); // document metadata might have changed (for example owner)
+            boolean isDocumentWorkflow = assignmentTaskOriginal.getParent().getParent().isDocumentWorkflow();
+            CompoundWorkflow newCWF = getWorkflowService().delegate(assignmentTaskOriginal);
+            String assignmentTaskType = assignmentTaskOriginal.getType().getLocalName();
+            workflowBlockBean.refreshCompoundWorkflowAndRestore(newCWF, "delegate");
+            MessageUtil.addInfoMessage("delegated_successfully_" + assignmentTaskType);
+            if (isDocumentWorkflow) {
+                BeanHelper.getDocumentDynamicDialog().switchMode(false); // document metadata might have changed (for example owner)
             }
         } catch (UnableToPerformMultiReasonException e) {
             MessageUtil.addStatusMessages(context, e.getMessageDataWrapper());
@@ -297,7 +323,112 @@ public class DelegationBean implements Serializable {
             CompoundWorkflowDialog.handleException(e, null);
         } catch (Exception e) {
             LOG.error("Compound workflow action failed!", e);
-            MessageUtil.addErrorMessage(context, null);
+            MessageUtil.addErrorMessage(context, "workflow_compound_save_failed_general");
+        }
+    }
+
+    private void populateConfirmationMessage() {
+        Workflow parentWorkflow = assignmentTaskOriginal.getParent();
+        if (!parentWorkflow.getParent().isDocumentWorkflow()) {
+            confirmationMessages = null;
+            return;
+        }
+        NodeRef docRef = parentWorkflow.getParent().getParent();
+        Serializable documentDueDate = nodeService.getProperty(docRef, DocumentSpecificModel.Props.DUE_DATE);
+        if (!(documentDueDate instanceof Date)) {
+            confirmationMessages = null;
+            return;
+        }
+        List<String> messages = new ArrayList<String>();
+        for (Workflow workflow : assignmentTaskOriginal.getParent().getParent().getWorkflows()) {
+            for (Task task : workflow.getTasks()) {
+                if (!WorkflowUtil.isEmptyTask(task) && isGeneratedByDelegation(task)) {
+                    Date taskDueDate = task.getDueDate();
+                    if (taskDueDate != null) {
+                        WorkflowUtil.getDocmentDueDateMessage((Date) documentDueDate, messages, workflow, taskDueDate);
+                    }
+                }
+            }
+        }
+        Application application = FacesContext.getCurrentInstance().getApplication();
+        confirmationMessages = new ArrayList<SelectItem>();
+        for (String message : messages) {
+            confirmationMessages.add(new SelectItem(message));
+        }
+    }
+
+    public List<SelectItem> getConfirmationMessages() {
+        return confirmationMessages;
+    }
+
+    public boolean isConfirmationRendered() {
+        boolean isConfirmationRequest = Boolean.TRUE.equals(FacesContext.getCurrentInstance().getExternalContext().getRequestMap().get(DELEGATION_CONFIRMATION_RENDERED));
+        return isConfirmationRequest && confirmationMessages != null && !confirmationMessages.isEmpty();
+    }
+
+    private boolean validate(CompoundWorkflow compoundWorkflow) {
+        MessageDataWrapper feedback = new MessageDataWrapper();
+        boolean searchResponsibleTask = WorkflowUtil.isActiveResponsible(assignmentTaskOriginal);
+        boolean isAssignmentWorkflow = assignmentTaskOriginal.isType(WorkflowSpecificModel.Types.ASSIGNMENT_TASK);
+        Task newMandatoryTask = null;
+        boolean hasAtLeastOneDelegationTask = false;
+        for (Workflow workflow : compoundWorkflow.getWorkflows()) {
+            for (Task task : workflow.getTasks()) {
+                if (!WorkflowUtil.isEmptyTask(task) && isGeneratedByDelegation(task)) {
+                    hasAtLeastOneDelegationTask = true;
+                    delegationTaskMandatoryFieldsFilled(task, feedback);
+                    Date dueDate = task.getDueDate();
+                    if (dueDate != null) {
+                        dueDate.setHours(23);
+                        dueDate.setMinutes(59);
+                    }
+                    if (isAssignmentWorkflow && workflow.isType(WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW) && newMandatoryTask == null) {
+                        if (!searchResponsibleTask) {
+                            newMandatoryTask = task;
+                        } else if (WorkflowUtil.isActiveResponsible(task)) {
+                            newMandatoryTask = task;
+                        }
+                    }
+                }
+            }
+        }
+        if (isAssignmentWorkflow) {
+            if (newMandatoryTask == null) {
+                if (searchResponsibleTask) {
+                    feedback.addFeedbackItem(new MessageDataImpl(MessageSeverity.ERROR, "delegate_error_noNewResponsibleTask"));
+                } else {
+                    feedback.addFeedbackItem(new MessageDataImpl(MessageSeverity.ERROR, "delegate_error_noNewTask"));
+                }
+            }
+        } else if (!hasAtLeastOneDelegationTask) {
+            feedback.addFeedbackItem(new MessageDataImpl(MessageSeverity.ERROR, "delegate_error_noDelegationTask"));
+        }
+        if (feedback.hasErrors()) {
+            MessageUtil.addStatusMessages(FacesContext.getCurrentInstance(), feedback);
+            return false;
+        }
+
+        return true;
+    }
+
+    private void delegationTaskMandatoryFieldsFilled(Task task, MessageDataWrapper feedback) {
+        boolean noOwner = StringUtils.isBlank(task.getOwnerName());
+        QName taskType = task.getType();
+        String key = "delegate_error_taskMandatory_" + taskType.getLocalName();
+        if (taskType.equals(WorkflowSpecificModel.Types.INFORMATION_TASK)) {
+            if (noOwner) {
+                feedback.addFeedbackItem(new MessageDataImpl(MessageSeverity.ERROR, key));
+            }
+        } else if (noOwner || task.getDueDate() == null) {
+            if (taskType.equals(WorkflowSpecificModel.Types.OPINION_TASK)) {
+                feedback.addFeedbackItem(new MessageDataImpl(MessageSeverity.ERROR, key));
+            } else {
+                if (task.isResponsible()) {
+                    key += "_responsible";
+                }
+                feedback.addFeedbackItem(new MessageDataImpl(MessageSeverity.ERROR, key));
+            }
+
         }
     }
 

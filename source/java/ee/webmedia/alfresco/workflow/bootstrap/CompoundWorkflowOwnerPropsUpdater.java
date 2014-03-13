@@ -24,8 +24,6 @@ import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 
 /**
  * Add ownerOrganizationName and ownerJobTitle properties used in compound workflow search.
- * 
- * @author Riina Tens
  */
 public class CompoundWorkflowOwnerPropsUpdater extends AbstractNodeUpdater {
 

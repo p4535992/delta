@@ -78,8 +78,8 @@ public class WorkflowStatusEventListener implements WorkflowMultiEventListener, 
         final Task initiatingTask = queue.getParameter(WorkflowQueueParameter.ORDER_ASSIGNMENT_FINISH_TRIGGERING_TASK);
         final List<NodeRef> groupAssignmentTasksFinishedAutomatically = queue.getParameter(WorkflowQueueParameter.TASKS_FINISHED_BY_GROUP_TASK);
         // Send notifications in background in separate thread.
-        // TODO: Riina - implement correctly - save information about emails to send to repo to avoid loss of data, cl task 189285.
-        // TODO: Alar - same for permissions.
+        // TODO: implement correctly - save information about emails to send to repo to avoid loss of data, cl task 189285.
+        // TODO: same for permissions.
         generalService.runOnBackground(new RunAsWork<Void>() {
 
             @Override
@@ -98,7 +98,7 @@ public class WorkflowStatusEventListener implements WorkflowMultiEventListener, 
                 logService.addLogEntry(LogEntry.create(LogObject.TASK, userService, taskRef, "applog_task_assigned",
                         ((Task) object).getOwnerName(), MessageUtil.getTypeName(workflowService.getNodeRefType(taskRef))));
             }
-        }        
+        }
     }
 
     private Void doWork(final List<WorkflowEvent> events, final Task initiatingTask, final boolean sendNotifications, final List<NodeRef> groupAssignmentTasksFinishedAutomatically) {
@@ -125,7 +125,7 @@ public class WorkflowStatusEventListener implements WorkflowMultiEventListener, 
                     handleNotifications(events, initiatingTask, groupAssignmentTasksFinishedAutomatically);
                     return null;
                 }
-            }, true, true);
+            }, false, true);
         }
         return null;
     }
@@ -202,6 +202,7 @@ public class WorkflowStatusEventListener implements WorkflowMultiEventListener, 
 
     private void refreshMenuTaskCount() {
         // Let's assume that this never gets called from a job, and there is an existing context :)
+        // TODO: this is not needed for mDelta
         FacesContext context = FacesContext.getCurrentInstance();
         if (context != null) {
             MenuBean menuBean = (MenuBean) FacesHelper.getManagedBean(context, MenuBean.BEAN_NAME);

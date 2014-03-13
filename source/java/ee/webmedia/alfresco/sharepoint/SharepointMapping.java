@@ -27,9 +27,6 @@ import ee.webmedia.alfresco.sharepoint.mapping.TypeInfoContext;
 
 /**
  * Mapping class handles information from the mappings XML file and applies the read mapping when reading document XML files.
- * 
- * @author Aleksei Lissitsin
- * @author Martti Tamm
  */
 public class SharepointMapping {
 

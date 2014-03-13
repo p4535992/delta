@@ -130,6 +130,14 @@
          </list>
       </property>
    </bean>
+   
+   <bean class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
+      <property name="resourceBundles">
+         <list>
+            <value>ee.webmedia.alfresco.log.web.app-log</value>
+         </list>
+      </property>
+   </bean>
 
    <bean id="logWebClientConfigBootstrap" class="org.alfresco.web.config.WebClientConfigBootstrap" init-method="init" depends-on="commonWebClientConfigBootstrap">
       <property name="configs">

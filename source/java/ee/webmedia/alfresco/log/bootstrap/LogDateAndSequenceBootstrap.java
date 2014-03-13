@@ -7,9 +7,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
 
-/**
- * @author Alar Kvell
- */
 public class LogDateAndSequenceBootstrap extends AbstractModuleComponent {
     protected final Log LOG = LogFactory.getLog(getClass());
 

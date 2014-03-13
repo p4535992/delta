@@ -26,9 +26,6 @@ import ee.webmedia.alfresco.utils.WebUtil;
 import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.volume.search.model.VolumeSearchModel;
 
-/**
- * @author Riina Tens
- */
 public class TransferringToUamVolumeListDialog extends VolumeArchiveBaseDialog {
 
     private static final long serialVersionUID = 1L;

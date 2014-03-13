@@ -11,8 +11,6 @@ import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 
 /**
  * Callback that creates default party (as childNode) for contractMv document
- * 
- * @author Riina Tens
  */
 
 public class ContractMvDocChildCreator extends ContractDocChildCreator {

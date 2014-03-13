@@ -25,8 +25,6 @@ import org.alfresco.web.ui.common.component.data.UIColumn;
  * translation.properties:
  * myProp_error=expected number from my prop, but got {1} (from element with JSF id {0})
  * </code>
- * 
- * @author Ats Uiboupin
  */
 public class ConvertIntWithMsgTag extends ConverterTag {
     private static final long serialVersionUID = 1L;

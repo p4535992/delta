@@ -26,8 +26,6 @@ import ee.webmedia.alfresco.user.service.UserService;
 
 /**
  * Add permissions to all folders related to arrived/sent documents/files
- * 
- * @author Ats Uiboupin
  */
 public class ArrivedDocumentsPermissionsUpdateBootstrap extends AbstractModuleComponent {
     protected final Log LOG = LogFactory.getLog(getClass());

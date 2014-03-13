@@ -5,9 +5,6 @@ import org.alfresco.service.namespace.QName;
 import ee.webmedia.alfresco.workflow.service.Task;
 import ee.webmedia.alfresco.workflow.service.Workflow;
 
-/**
- * @author Alar Kvell
- */
 public interface WorkflowType {
 
     QName getWorkflowType();

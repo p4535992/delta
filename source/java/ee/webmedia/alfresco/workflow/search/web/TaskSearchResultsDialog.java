@@ -21,8 +21,6 @@ import ee.webmedia.alfresco.workflow.search.model.TaskInfo;
 
 /**
  * Task search results dialog bean.
- * 
- * @author Erko Hansar
  */
 public class TaskSearchResultsDialog extends BaseLimitedListDialog {
 
@@ -63,7 +61,7 @@ public class TaskSearchResultsDialog extends BaseLimitedListDialog {
     }
 
     private void doInitialSearch() {
-        tasks = setLimited(getDocumentSearchService().searchTasks(filter, getLimit()));
+        tasks = setLimited(getDocumentSearchService().queryTasks(filter, getLimit()));
         clearRichList();
         Collections.sort(tasks, CreatedOrRegistratedDateComparator.getComparator());
     }
@@ -73,7 +71,7 @@ public class TaskSearchResultsDialog extends BaseLimitedListDialog {
         CSVExporter exporter = new CSVExporter(dataReader);
         exporter.export("taskList");
 
-        // Erko hack for incorrect view id in the next request
+        // hack for incorrect view id in the next request
         JspStateManagerImpl.ignoreCurrentViewSequenceHack();
     }
 

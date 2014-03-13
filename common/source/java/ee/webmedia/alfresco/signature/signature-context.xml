@@ -14,7 +14,7 @@
       <property name="pkcs12Password" value="${jdigidoc.pkcs12.passwd}" />
       <property name="pkcs12CertSerial" value="${jdigidoc.pkcs12.cert_serial}" />
       <property name="digiDocServiceUrl" value="https://digidocservice.sk.ee/DigiDocService" />
-      <property name="testDigiDocServiceUrl" value="https://www.openxades.org:8443/DigiDocService" />
+      <property name="testDigiDocServiceUrl" value="https://www.openxades.org:9443/DigiDocService" />
       <property name="mobileIdServiceName" value="${mobile-id.service-name}" />
       <property name="testMobileIdServiceName" value="Testimine" />
    </bean>

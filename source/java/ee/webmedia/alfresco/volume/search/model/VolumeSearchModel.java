@@ -2,9 +2,6 @@ package ee.webmedia.alfresco.volume.search.model;
 
 import org.alfresco.service.namespace.QName;
 
-/**
- * @author Keit Tehvan
- */
 public interface VolumeSearchModel {
     String URI = "http://alfresco.webmedia.ee/model/volume/search/1.0";
     String PREFIX = "volumesearch:";

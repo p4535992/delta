@@ -2,9 +2,6 @@ package ee.webmedia.alfresco.casefile.model;
 
 import org.alfresco.service.namespace.QName;
 
-/**
- * @author Kaarel Jõgeva
- */
 public interface CaseFileModel {
     String URI = "http://alfresco.webmedia.ee/model/casefile/1.0";
 

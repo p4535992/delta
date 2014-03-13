@@ -5,8 +5,6 @@ import org.springframework.context.ApplicationContext;
 
 /**
  * Information about specific project and common project.
- * 
- * @author Alar Kvell
  */
 public interface ApplicationService {
 
@@ -50,6 +48,8 @@ public interface ApplicationService {
      * Text to display at the bottom part of web page. Text can contain HTML, should not be escaped.
      */
     String getFooterText();
+
+    String getMDeltaFooterText();
 
     ApplicationContext getApplicationContext();
 

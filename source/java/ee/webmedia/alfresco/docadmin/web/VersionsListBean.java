@@ -21,8 +21,6 @@ import ee.webmedia.alfresco.utils.ComparableTransformer;
 
 /**
  * Shows the list of saved {@link DocumentTypeVersion} under {@link DynamicType}
- * 
- * @author Ats Uiboupin
  */
 public class VersionsListBean<D extends DynamicType> implements DialogBlockBean<D> {
     private static final long serialVersionUID = 1L;
@@ -75,8 +73,6 @@ public class VersionsListBean<D extends DynamicType> implements DialogBlockBean<
 
     /**
      * UI Wrapper for showing extra information in versions list
-     * 
-     * @author Ats Uiboupin
      */
     public static class DocumentTypeVersionListItem extends DocumentTypeVersion {
         private static final long serialVersionUID = 1L;

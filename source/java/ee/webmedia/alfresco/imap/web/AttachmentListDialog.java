@@ -21,8 +21,6 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
  * Email attachments list dialog.
- * 
- * @author Romet Aidla
  */
 public class AttachmentListDialog extends BaseDialogBean implements FolderListDialog {
     private static final long serialVersionUID = 1L;

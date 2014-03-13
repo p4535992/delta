@@ -2,8 +2,6 @@ package ee.webmedia.alfresco.classificator.enums;
 
 /**
  * Enum for "sendMode" classificator values
- * 
- * @author Erko Hansar
  */
 public enum SendMode {
 

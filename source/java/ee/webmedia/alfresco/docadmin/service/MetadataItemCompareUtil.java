@@ -22,8 +22,6 @@ import ee.webmedia.alfresco.utils.RepoUtil;
  * Utility class that helps to compare two latest {@link ChildrenList} objects
  * FIXME DLSeadist - at the moment contains double check - may be removed when stable
  * TODO DLSeadist - when double check is removed then it could be generalized from ChildrenList<MetadataItem> to ChildrenList<BaseObject>
- * 
- * @author Ats Uiboupin
  */
 public class MetadataItemCompareUtil {
     private static final Comparator<FieldGroup> FIELD_GROUP_COMPARATOR = getFieldGroupComparator();

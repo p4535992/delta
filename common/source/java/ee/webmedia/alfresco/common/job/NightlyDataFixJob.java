@@ -15,8 +15,6 @@ import ee.webmedia.alfresco.privilege.bootstrap.FixAclInheritanceUpdater;
 
 /**
  * Finds and fixes problems in data. Runs before {@link LuceneIndexBackupJob}, and prevents {@link LuceneIndexBackupJob} frmo starting before this job completes.
- * 
- * @author Alar Kvell
  */
 public class NightlyDataFixJob implements StatefulJob {
 

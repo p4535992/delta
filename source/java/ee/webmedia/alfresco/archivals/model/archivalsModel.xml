@@ -99,6 +99,42 @@
             </property>
          </properties>
       </type>
+      
+      <type name="arch:archivalsQueue">
+         <parent>sys:base</parent>
+         <mandatory-aspects>
+            <aspect>arch:archivalsResultContainer</aspect>
+         </mandatory-aspects>
+      </type>
+
+      <type name="arch:archivingJob">
+         <parent>sys:base</parent>
+         <properties>
+            <property name="arch:userName">
+               <type>d:text</type>
+               <mandatory>true</mandatory>
+            </property>
+            <property name="arch:archivingStartTime">
+               <type>d:date</type>
+            </property>
+            <property name="arch:archivingEndTime">
+               <type>d:date</type>
+            </property>
+            <property name="arch:volumeRef">
+               <type>d:noderef</type>
+               <mandatory>true</mandatory>
+            </property>
+            <property name="arch:archivingJobStatus">
+               <type>d:text</type>
+            </property>
+            <property name="arch:archiveNote">
+               <type>d:text</type>
+            </property>
+            <property name="arch:errorMessage">
+               <type>d:text</type>
+            </property>
+         </properties>
+      </type>
    
    </types>
    
@@ -113,6 +149,22 @@
                </source>
                <target>
                   <class>arch:archivalActivity</class>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </target>
+            </child-association>
+         </associations>
+      </aspect>
+      
+      <aspect name="arch:archivalsResultContainer">
+         <associations>
+            <child-association name="arch:archivingJob">
+               <source>
+                  <mandatory>true</mandatory>
+                  <many>false</many>
+               </source>
+               <target>
+                  <class>arch:archivingJob</class>
                   <mandatory>false</mandatory>
                   <many>true</many>
                </target>

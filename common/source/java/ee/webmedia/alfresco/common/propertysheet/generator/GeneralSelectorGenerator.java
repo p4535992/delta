@@ -35,8 +35,6 @@ import ee.webmedia.alfresco.utils.MessageUtil;
  * Component that generates a HtmlSelectOneMenu component that will receive values from method binding defined with "selectionItems" attribute.<br>
  * Method must be public void<br>
  * Method must declare two parameter FacesContext and HtmlSelectOneMenu for creating adding items to selection
- * 
- * @author Ats Uiboupin
  */
 public class GeneralSelectorGenerator extends BaseComponentGenerator {
 
@@ -127,9 +125,9 @@ public class GeneralSelectorGenerator extends BaseComponentGenerator {
     @Override
     protected void setupMandatoryPropertyIfNecessary(FacesContext context, UIPropertySheet propertySheet, PropertySheetItem property,
             PropertyDefinition propertyDef, UIComponent component) {
-
-        super.setupMandatoryPropertyIfNecessary(context, propertySheet, property, propertyDef, component);
-
+        if (!isValidationDisabled(context, propertySheet)) {
+            super.setupMandatoryPropertyIfNecessary(context, propertySheet, property, propertyDef, component);
+        }
         // Must do this after component has beed added to tree
         setupValueChangeListener(context, component, getCustomAttributes());
     }
@@ -179,15 +177,19 @@ public class GeneralSelectorGenerator extends BaseComponentGenerator {
     @Override
     protected void setupMandatoryValidation(FacesContext context, UIPropertySheet propertySheet, PropertySheetItem item, UIComponent component,
             boolean realTimeChecking, String idSuffix) {
-
-        super.setupMandatoryValidation(context, propertySheet, item, component, true, idSuffix);
-
+        if (!isValidationDisabled(context, propertySheet)) {
+            super.setupMandatoryValidation(context, propertySheet, item, component, true, idSuffix);
+        }
         // currently valuechangelistener and mandatory validation are not used together in any property sheet
         if (StringUtils.isBlank(getCustomAttributes().get(ATTR_VALUE_CHANGE_LISTENER))) {
             // add event handler to kick off real time checks
             Map<String, Object> attributes = component.getAttributes();
             attributes.put("onchange", "processButtonState();");
         }
+    }
+
+    private boolean isValidationDisabled(FacesContext context, UIPropertySheet propertySheet) {
+        return StringUtils.endsWith(propertySheet.getClientId(context), "assoc-object-search-filter") || isValidationDisabled();
     }
 
     protected String getSelectionItems() {

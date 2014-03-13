@@ -102,6 +102,7 @@
             <property name="wfc:title">
                <type>d:text</type>
             </property>
+            <!-- DEPRECATED - comments are moved to delta_compound_workflow_comment table, this property can be removed when old data has been updated. -->
             <property name="wfc:comment">
                <type>d:text</type>
             </property>
@@ -142,7 +143,7 @@
                   <mandatory>false</mandatory>
                   <many>true</many>
                </target>
-            </child-association>            
+            </child-association> 
          </associations>
          <mandatory-aspects>
             <aspect>wfc:common</aspect>
@@ -201,6 +202,9 @@
             <property name="wfc:ownerGroup">
                <type>d:text</type>
             </property>
+            <property name="wfc:ownerSubstituteName">
+               <type>d:text</type>
+            </property>
             <property name="wfc:outcome">
                <type>d:text</type>
             </property>
@@ -209,6 +213,10 @@
             </property>
             <property name="wfc:completedDateTime">
                <type>d:datetime</type>
+            </property>
+            <property name="wfc:viewedByOwner">
+               <type>d:boolean</type>
+               <default>false</default>
             </property>
          </properties>
          <mandatory-aspects>
@@ -258,7 +266,7 @@
                <mandatory>true</mandatory>
             </property>
          </properties>
-      </type>      
+      </type>  
 
    </types>
 

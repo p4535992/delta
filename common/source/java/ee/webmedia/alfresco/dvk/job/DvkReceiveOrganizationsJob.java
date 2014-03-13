@@ -17,8 +17,6 @@ import ee.webmedia.alfresco.dvk.service.DvkService;
  * Scheduled job to call a {@link AddressbookService#updateOrganizationsDvkCapability()}.
  * <p>
  * Job data is: <b>AddressbookService</b>
- * 
- * @author Ats Uiboupin
  */
 public class DvkReceiveOrganizationsJob implements StatefulJob {
     private static Log log = LogFactory.getLog(DvkReceiveOrganizationsJob.class);

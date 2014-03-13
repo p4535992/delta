@@ -14,8 +14,6 @@ import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 
 /**
  * Common base class for {@link DocumentType} and {@link CaseFileType}
- * 
- * @author Ats Uiboupin
  */
 public class DynamicType extends BaseObject {
     private static final long serialVersionUID = 1L;

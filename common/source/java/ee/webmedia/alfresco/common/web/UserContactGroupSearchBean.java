@@ -22,9 +22,6 @@ import ee.webmedia.alfresco.user.model.Authority;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.WebUtil;
 
-/**
- * @author Alar Kvell
- */
 public class UserContactGroupSearchBean implements Serializable {
     private static final long serialVersionUID = 1L;
 
@@ -122,6 +119,11 @@ public class UserContactGroupSearchBean implements Serializable {
 
     public SelectItem[] searchGroupsWithAdminsAndDocManagers(PickerSearchParams params) {
         return searchGroups(params, true);
+    }
+
+    public SelectItem[] searchAllWithoutLogOnUser(PickerSearchParams params) {
+        SelectItem[] results = BeanHelper.getUserListDialog().searchUsersWithoutCurrentUser(params);
+        return results;
     }
 
     /*

@@ -2,9 +2,6 @@ package ee.webmedia.alfresco.thesaurus.model;
 
 import org.alfresco.service.namespace.QName;
 
-/**
- * @author Kaarel Jõgeva
- */
 public interface ThesaurusModel {
     String URI = "http://alfresco.webmedia.ee/model/thesaurus/1.0";
     String NAMESPACE_PREFFIX = "the:";

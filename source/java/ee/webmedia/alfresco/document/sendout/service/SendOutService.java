@@ -1,7 +1,6 @@
 package ee.webmedia.alfresco.document.sendout.service;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -15,8 +14,6 @@ import ee.webmedia.xtee.client.dhl.DhlXTeeService.ContentToSend;
 
 /**
  * Provides service methods for sending out documents and managing the sendInfo blocks.
- * 
- * @author Erko Hansar
  */
 public interface SendOutService {
 
@@ -31,19 +28,19 @@ public interface SendOutService {
     List<SendInfo> getDocumentSendInfos(NodeRef document);
 
     /**
-     * Update searchableSendMode property according to document's sendInfo.sendMode values
+     * Update searchable send info properties according to document's sendInfo child nodes
      * 
      * @param document document NodeRef
      */
-    void updateSearchableSendMode(NodeRef document);
+    void updateSearchableSendInfo(NodeRef document);
 
     /**
-     * Build searchableSendMode list from document's sendInfo.sendMode values
+     * Build searchable send info data from document's sendInfo child nodes
      * 
      * @param document document NodeRef
-     * @return List of document's sendInfo.sendMode values
+     * @return Map with documents properties populated with document's sendInfo values
      */
-    ArrayList<String> buildSearchableSendMode(NodeRef document);
+    Map<QName, Serializable> buildSearchableSendInfo(NodeRef document);
 
     /**
      * Sends out document.
@@ -74,6 +71,6 @@ public interface SendOutService {
 
     boolean hasDocumentSendInfos(NodeRef document);
 
-    void sendDocumentForInformation(List<String> authorityIds, Node docNode, String emailTemplate);
+    void sendForInformation(List<String> authorityIds, Node docNode, String emailTemplate, String subject, String content);
 
 }

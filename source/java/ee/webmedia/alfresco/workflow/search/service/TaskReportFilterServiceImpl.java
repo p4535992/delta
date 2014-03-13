@@ -5,9 +5,6 @@ import org.alfresco.service.namespace.QName;
 
 import ee.webmedia.alfresco.workflow.search.model.TaskReportModel;
 
-/**
- * @author Riina Tens
- */
 public class TaskReportFilterServiceImpl extends TaskSearchFilterServiceImpl implements TaskReportFilterService {
 
     @Override

@@ -31,6 +31,14 @@
          </list>
       </property>
    </bean>
+   
+   <bean id="docReportResourceBundles" class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
+      <property name="resourceBundles">
+         <list>
+            <value>ee.webmedia.alfresco.document.search.web.document-search-webclient</value>
+         </list>
+      </property>
+   </bean>
 
    <bean id="docSearchResourceBundles" class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
       <property name="resourceBundles">
@@ -85,7 +93,6 @@
       <property name="searchService" ref="SearchService" />
       <property name="dictionaryService" ref="DictionaryService" />
       <property name="seriesService" ref="SeriesService" />
-      <property name="workflowService" ref="WmWorkflowService" />
       <property name="volumeService" ref="VolumeService" />
       <property name="parametersService" ref="ParametersService" />
       <property name="namespaceService" ref="NamespaceService" />

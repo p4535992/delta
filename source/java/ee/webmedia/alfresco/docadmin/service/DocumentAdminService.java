@@ -16,9 +16,6 @@ import ee.webmedia.alfresco.base.BaseService.Effort;
 import ee.webmedia.alfresco.docadmin.service.DocumentAdminServiceImpl.ImportHelper;
 import ee.webmedia.alfresco.utils.MessageData;
 
-/**
- * @author Ats Uiboupin
- */
 public interface DocumentAdminService {
 
     String BEAN_NAME = "DocumentAdminService";
@@ -263,5 +260,7 @@ public interface DocumentAdminService {
     DocumentTypeVersion getLatestDocTypeVer(String documentTypeId);
 
     Map<String, DocumentTypeVersion> getLatestDocTypeVersions();
+
+    void registerDocumentTypeValidator(String validatorKey, DocumentTypeValidator documentTypeValidator);
 
 }

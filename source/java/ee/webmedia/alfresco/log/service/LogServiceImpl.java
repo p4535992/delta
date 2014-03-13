@@ -40,8 +40,6 @@ import ee.webmedia.alfresco.log.model.LogSetup;
 
 /**
  * Main implementation of {@link LogService}. This class does not rely on Alfresco, and exchanges data with the database using JDBC(Template) directly.
- * 
- * @author Martti Tamm
  */
 public class LogServiceImpl implements LogService, InitializingBean {
 
@@ -179,7 +177,7 @@ public class LogServiceImpl implements LogService, InitializingBean {
     }
 
     @Override
-    public long getLogSequenceNextval() {
+    public long retrieveLogSequenceNextval() {
         return jdbcTemplate.queryForLong("SELECT nextval('delta_log_seq')");
     }
 

@@ -37,9 +37,6 @@ import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 import ee.webmedia.alfresco.workflow.service.Task;
 
-/**
- * @author Ats Uiboupin
- */
 public class PrivilegeUtil {
 
     public static boolean isAdminOrDocmanagerWithViewDocPermission(Node docNode) {
@@ -108,6 +105,10 @@ public class PrivilegeUtil {
     }
 
     public static Set<String> getRequiredPrivsForTask(Task task, NodeRef docRef, FileService fileService, boolean isForCaseFile) {
+        return getRequiredPrivsForTask(task, docRef, fileService, isForCaseFile, task.getParent().getParent().isCaseFileWorkflow());
+    }
+
+    public static Set<String> getRequiredPrivsForTask(Task task, NodeRef docRef, FileService fileService, boolean isForCaseFile, boolean isUnderCaseFile) {
         String taskOwnerId = task.getOwnerId();
         Set<String> requiredPrivileges = new HashSet<String>(4);
         if (!StringUtils.isBlank(taskOwnerId)) {
@@ -123,7 +124,7 @@ public class PrivilegeUtil {
                 }
             }
             boolean isResponsible = isResponsible(task);
-            if (task.getParent().getParent().isCaseFileWorkflow()) { // Check if task is under case file workflow
+            if (isUnderCaseFile) { // Check if task is under case file workflow
                 if (task.isType(WorkflowSpecificModel.Types.INFORMATION_TASK, WorkflowSpecificModel.Types.CONFIRMATION_TASK, WorkflowSpecificModel.Types.REVIEW_TASK,
                         WorkflowSpecificModel.Types.DUE_DATE_EXTENSION_TASK)) {
                     requiredPrivileges.add(Privileges.VIEW_DOCUMENT_FILES); // with dependencies
@@ -136,17 +137,17 @@ public class PrivilegeUtil {
                         requiredPrivileges.add(Privileges.EDIT_CASE_FILE); // with dependencies
                     }
                 }
+            } else if (isSignatureTaskWithFiles
+                    || (task.isType(WorkflowSpecificModel.Types.ASSIGNMENT_TASK) && isResponsible)
+                    || task.isType(WorkflowSpecificModel.Types.REVIEW_TASK, WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK)
+                    || (task.isType(WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_TASK) && isResponsible)) {
+                requiredPrivileges.add(Privileges.EDIT_DOCUMENT); // with dependencies                
             } else if (isSignatureTaskWith1Digidoc // ... or under a document
                     || (task.isType(WorkflowSpecificModel.Types.ASSIGNMENT_TASK) && !isResponsible)
                     || (task.isType(WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_TASK) && !isResponsible)
                     || task.isType(WorkflowSpecificModel.Types.OPINION_TASK, WorkflowSpecificModel.Types.INFORMATION_TASK, WorkflowSpecificModel.Types.CONFIRMATION_TASK,
                             WorkflowSpecificModel.Types.DUE_DATE_EXTENSION_TASK, WorkflowSpecificModel.Types.SIGNATURE_TASK)) {
                 requiredPrivileges.add(Privileges.VIEW_DOCUMENT_FILES); // with dependencies
-            } else if (isSignatureTaskWithFiles
-                    || (task.isType(WorkflowSpecificModel.Types.ASSIGNMENT_TASK) && isResponsible)
-                    || task.isType(WorkflowSpecificModel.Types.REVIEW_TASK, WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK)
-                    || (task.isType(WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_TASK) && isResponsible)) {
-                requiredPrivileges.add(Privileges.EDIT_DOCUMENT); // with dependencies
             } else {
                 MessageUtil.addWarningMessage("task " + task.getType().getLocalName()
                         + ": failed to determine required permissions for the owner of task that is now in progress. Task ownerId=" + taskOwnerId);

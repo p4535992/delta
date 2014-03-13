@@ -36,9 +36,6 @@ import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.workflow.web.DueDateDaysConverter;
 
-/**
- * @author Kaarel Jõgeva
- */
 public class DatePickerWithDueDateGenerator extends DatePickerGenerator {
 
     private final MultiClassificatorSelectorGenerator classificatorSelectorGenerator = new MultiClassificatorSelectorGenerator();

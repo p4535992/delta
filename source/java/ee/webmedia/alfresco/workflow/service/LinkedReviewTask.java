@@ -4,9 +4,6 @@ import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 
-/**
- * @author Riina Tens
- */
 public class LinkedReviewTask extends Task {
 
     private static final long serialVersionUID = 1L;

@@ -38,8 +38,6 @@ public class DateTimePickerRenderer extends BaseRenderer {
     @Override
     public void encodeBegin(FacesContext context, UIComponent component) throws IOException {
         setupChildren(context, component);
-        ResponseWriter out = context.getResponseWriter();
-        out.startElement("span", component);
     }
 
     /** Propagate parent's value and attributes to child elements, add styleclasses */
@@ -79,6 +77,5 @@ public class DateTimePickerRenderer extends BaseRenderer {
     @Override
     public void encodeEnd(FacesContext context, UIComponent component) throws IOException {
         ResponseWriter out = context.getResponseWriter();
-        out.endElement("span");
     }
 }

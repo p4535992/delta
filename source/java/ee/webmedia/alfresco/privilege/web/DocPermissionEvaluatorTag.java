@@ -4,8 +4,6 @@ import org.alfresco.web.ui.repo.tag.evaluator.PermissionEvaluatorTag;
 
 /**
  * Evaluates permissions on ancestor document
- * 
- * @author Ats Uiboupin
  */
 public class DocPermissionEvaluatorTag extends PermissionEvaluatorTag {
 

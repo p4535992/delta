@@ -21,8 +21,6 @@ import ee.webmedia.alfresco.workflow.service.WorkflowService;
 
 /**
  * Insert tasks' multivalued properties into corresponding tables.
- * 
- * @author Riina Tens
  */
 public class TaskAssociatedDataTableInsertBootstrap2 extends AbstractNodeUpdater {
 

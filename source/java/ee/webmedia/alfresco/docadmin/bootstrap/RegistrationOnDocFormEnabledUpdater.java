@@ -13,8 +13,6 @@ import ee.webmedia.alfresco.utils.SearchUtil;
 
 /**
  * Set registrationOnDocFormEnabled property on all document types.
- * 
- * @author Riina Tens
  */
 public class RegistrationOnDocFormEnabledUpdater extends AbstractNodeUpdater {
 

@@ -9,8 +9,6 @@ import org.alfresco.util.GUID;
 
 /**
  * Model object for task groups
- * 
- * @author Kaarel Jõgeva
  */
 public class TaskGroup implements Serializable {
 

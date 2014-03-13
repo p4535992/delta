@@ -2,8 +2,6 @@ package ee.webmedia.alfresco.document.einvoice.model;
 
 /**
  * enum for classificator invoiceTypes known values
- * 
- * @author Riina Tens
  */
 
 public enum InvoiceType {

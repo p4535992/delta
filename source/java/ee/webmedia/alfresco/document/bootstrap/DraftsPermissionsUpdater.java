@@ -8,8 +8,6 @@ import ee.webmedia.alfresco.document.model.DocumentCommonModel.Privileges;
 
 /**
  * Set all document privileges to drafts folder.
- * 
- * @author Riina Tens
  */
 public class DraftsPermissionsUpdater extends AbstractModuleComponent {
 

@@ -5,7 +5,6 @@ import junit.framework.TestCase;
 
 /**
  * test DatePickerGeneratorTest.testContainsCamelCaseWord
- * @author Ats Uiboupin
  */
 public class DatePickerGeneratorTest extends TestCase {
 

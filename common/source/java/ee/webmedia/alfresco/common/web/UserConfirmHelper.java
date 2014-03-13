@@ -27,8 +27,6 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
  * Enables prompting users with a question and invoking methods based on user input.
- * 
- * @author Kaarel Jõgeva
  */
 public class UserConfirmHelper implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -92,6 +90,8 @@ public class UserConfirmHelper implements Serializable {
                 .append("var response = confirm(\"")
                 .append(StringEscapeUtils.escapeJavaScript(MessageUtil.getMessage(confirmMessage)))
                 .append("\");")
+                .append("if(typeof finishButtonClicked !== 'undefined'){")
+                .append("finishButtonClicked=true;}")
                 .append("var btnId = response ? \"").append(CONFIRM_ID).append("\" : \"").append(DENY_ID).append("\";")
                 .append("var btn = $jQ(escapeId4JQ(\"#dialog:\" + btnId));")
                 .append("btn.click();")
@@ -125,8 +125,6 @@ public class UserConfirmHelper implements Serializable {
 
     /**
      * ActionListener that clears the active confirm from the session
-     * 
-     * @author Kaarel Jõgeva
      */
     private class ClearUserConfirmActionListener implements ActionListener, Serializable {
 

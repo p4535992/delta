@@ -5,8 +5,6 @@ import smit.ametnik.services.YksusExt;
 
 /**
  * Web service, to communicate with AmetnikeRegister
- * 
- * @author Ats Uiboupin
  */
 public interface AMRService {
     String BEAN_NAME = "AmrService";

@@ -4,9 +4,6 @@ import ee.webmedia.alfresco.common.propertysheet.classificatorselector.EnumSelec
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.workflow.model.CompoundWorkflowType;
 
-/**
- * @author Riina Tens
- */
 public class CompoundWorkflowDefinitionTypeFilter implements EnumSelectorItemFilter<CompoundWorkflowType> {
 
     @Override

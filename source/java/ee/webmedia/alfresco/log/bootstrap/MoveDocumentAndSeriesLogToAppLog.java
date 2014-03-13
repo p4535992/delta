@@ -32,8 +32,6 @@ import ee.webmedia.alfresco.utils.SearchUtil;
  * Delete log objects after that.
  * One minute delay is supposed to be enough time for different logs created during same transaction taken in account
  * and not long enough that application can be restarted with different logging functionality.
- * 
- * @author Riina Tens
  */
 public class MoveDocumentAndSeriesLogToAppLog extends AbstractNodeUpdater {
 
@@ -99,7 +97,7 @@ public class MoveDocumentAndSeriesLogToAppLog extends AbstractNodeUpdater {
         }
         idPrefixDate = DateUtils.addDays(idPrefixDate, -1);
         idPrefix = idDateFormat.format(idPrefixDate);
-        logTableSequence = BeanHelper.getLogService().getLogSequenceNextval();
+        logTableSequence = BeanHelper.getLogService().retrieveLogSequenceNextval();
 
         super.executeUpdater();
     }

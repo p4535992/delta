@@ -104,7 +104,7 @@
             </child-association>
           
          <!-- Deprecated - document log is not saved under document node any more, but only in application log.
-          Don't create new associations of this type. Can be deleted when all existing associations have been migrated to application log (Riina). -->
+          Don't create new associations of this type. Can be deleted when all existing associations have been migrated to application log ). -->
             <child-association name="doccom:documentLog">
                <source>
                   <mandatory>true</mandatory>
@@ -195,7 +195,7 @@
       </type>
       
       <!-- Deprecated - document log is not saved under document node any more, but only in application log.
-           Don't create new nodes of this type. Can be deleted when all existing associations have been migrated to application log (Riina). -->
+           Don't create new nodes of this type. Can be deleted when all existing associations have been migrated to application log ). -->
       <type name="doccom:documentLog">
          <parent>sys:base</parent>
          <mandatory-aspects>
@@ -318,6 +318,18 @@
                </index>
             </property>
             <property name="doccom:searchableSendMode">
+               <type>d:text</type>
+               <multiple>true</multiple>
+            </property>
+            <property name="doccom:searchableSendInfoRecipient">
+               <type>d:text</type>
+               <multiple>true</multiple>
+            </property>
+            <property name="doccom:searchableSendInfoDateTime">
+               <type>d:datetime</type>
+               <multiple>true</multiple>
+            </property>
+            <property name="doccom:searchableSendInfoResolution">
                <type>d:text</type>
                <multiple>true</multiple>
             </property>

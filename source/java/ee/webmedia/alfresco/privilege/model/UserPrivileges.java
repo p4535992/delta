@@ -21,10 +21,8 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
  * VO that maintains information about user privileges(permissions, group belongings)
- * 
- * @author Ats Uiboupin
  */
-// FIXME PRIV2 Ats - rename to AuthPrivileges - algselt oli see ainult kasutajate jaoks, nüüd ka gruppide jaoks sama objekt
+// FIXME PRIV2 rename to AuthPrivileges - algselt oli see ainult kasutajate jaoks, nüüd ka gruppide jaoks sama objekt
 public class UserPrivileges implements Serializable {
     private static final long serialVersionUID = 1L;
 
@@ -353,8 +351,6 @@ public class UserPrivileges implements Serializable {
      * dynamic=2;
      * inherited=4;
      * ...but since I didn't have that much time on my last day of work it is just an idea for optimization
-     * 
-     * @author Ats Uiboupin
      */
     static class PrivPosition implements Serializable {
         private static final long serialVersionUID = 1L;
@@ -422,8 +418,6 @@ public class UserPrivileges implements Serializable {
 
     /**
      * {@link Map} entry that is used to show and modify static privilege granted to the authority
-     * 
-     * @author Ats Uiboupin
      */
     class StaticPermissionModifyingEntry implements Entry<String, Boolean>, Serializable {
         private static final long serialVersionUID = 1L;

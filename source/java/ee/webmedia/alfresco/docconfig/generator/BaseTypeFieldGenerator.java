@@ -5,9 +5,6 @@ import org.springframework.beans.factory.InitializingBean;
 import ee.webmedia.alfresco.classificator.constant.FieldType;
 import ee.webmedia.alfresco.docconfig.service.DocumentConfigService;
 
-/**
- * @author Alar Kvell
- */
 public abstract class BaseTypeFieldGenerator implements FieldGenerator, InitializingBean {
 
     private DocumentConfigService documentConfigService;

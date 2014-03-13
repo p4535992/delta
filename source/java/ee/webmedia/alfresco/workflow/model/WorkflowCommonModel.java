@@ -2,9 +2,6 @@ package ee.webmedia.alfresco.workflow.model;
 
 import org.alfresco.service.namespace.QName;
 
-/**
- * @author Alar Kvell
- */
 public interface WorkflowCommonModel {
     String URI = "http://alfresco.webmedia.ee/model/workflow/common/1.0";
     String PREFIX = "wfc:";
@@ -28,6 +25,7 @@ public interface WorkflowCommonModel {
         @Deprecated
         QName DUE_DATE_HISTORY = QName.createQName(URI, "dueDateHistory");
         QName RELATED_URL = QName.createQName(URI, "relatedUrl");
+        QName COMMENT = QName.createQName(URI, "comment");
     }
 
     interface Assocs {
@@ -69,6 +67,10 @@ public interface WorkflowCommonModel {
         QName TYPE = QName.createQName(URI, "type");
         QName CASE_FILE_TYPES = QName.createQName(URI, "caseFileTypes");
         QName TITLE = QName.createQName(URI, "title");
+        /**
+         * Deprecated - comments are moved to delta_compound_workflow_comment table, this property can be removed when old data has been updated.
+         */
+        @Deprecated
         QName COMMENT = QName.createQName(URI, "comment");
         QName MAIN_DOCUMENT = QName.createQName(URI, "mainDocument");
         QName DOCUMENTS_TO_SIGN = QName.createQName(URI, "documentsToSign");
@@ -82,11 +84,13 @@ public interface WorkflowCommonModel {
         // Task
         QName OWNER_EMAIL = QName.createQName(URI, "ownerEmail");
         QName OWNER_GROUP = QName.createQName(URI, "ownerGroup");
+        QName OWNER_SUBSTITUTE_NAME = QName.createQName(URI, "ownerSubstituteName");
         QName OUTCOME = QName.createQName(URI, "outcome");
         QName DOCUMENT_TYPE = QName.createQName(URI, "documentType");
         QName COMPLETED_DATE_TIME = QName.createQName(URI, "completedDateTime");
         QName OWNER_ORGANIZATION_NAME = QName.createQName(URI, "ownerOrganizationName");
         QName OWNER_JOB_TITLE = QName.createQName(URI, "ownerJobTitle");
+        QName VIEWED_BY_OWNER = QName.createQName(URI, "viewedByOwner");
 
         // Due date history
         QName PREVIOUS_DUE_DATE = QName.createQName(URI, "previousDueDate");
@@ -99,6 +103,7 @@ public interface WorkflowCommonModel {
         QName CREATED = QName.createQName(URI, "created");
         QName URL_MODIFIER_NAME = QName.createQName(URI, "urlModifierName");
         QName MODIFIED = QName.createQName(URI, "modified");
+
     }
 
 }

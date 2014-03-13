@@ -11,8 +11,6 @@ import ee.webmedia.alfresco.orgstructure.model.OrganizationStructure;
 
 /**
  * Service for searching and listing organization structures.
- * 
- * @author Dmitri Melnikov
  */
 public interface OrganizationStructureService {
 

@@ -31,9 +31,6 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.WebUtil;
 
-/**
- * @author Kaarel Jõgeva
- */
 public class ThesaurusDetailsDialog extends BaseDialogBean {
 
     private static final long serialVersionUID = 1L;

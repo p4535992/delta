@@ -17,18 +17,17 @@ import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateFormatUtils;
 import org.apache.commons.lang.time.FastDateFormat;
+import org.springframework.context.MessageSource;
 import org.springframework.util.Assert;
 import org.springframework.web.util.HtmlUtils;
 
+import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.WebUtil;
 import ee.webmedia.alfresco.workflow.service.DueDateHistoryRecord;
 import ee.webmedia.alfresco.workflow.service.Task;
 import ee.webmedia.alfresco.workflow.web.DueDateHistoryModalComponent;
 
-/**
- * @author Kaarel Jõgeva
- */
 public class WorkflowBlockItem implements Serializable {
     private static final long serialVersionUID = 1L;
 
@@ -42,6 +41,7 @@ public class WorkflowBlockItem implements Serializable {
     private boolean zebra = false;
     private boolean isGroupBlockItem = false;
     private String workflowGroupTasksUrl;
+    private MessageSource messageSource;
 
     public WorkflowBlockItem(Task task, boolean raisedRights) {
         this.task = task;
@@ -149,6 +149,43 @@ public class WorkflowBlockItem implements Serializable {
         return sb.toString();
     }
 
+    public String getFirstTaskId() {
+        Task firstTask = getFirstTask();
+        return firstTask != null ? firstTask.getNodeRef().getId() : null;
+    }
+
+    private Task getFirstTask() {
+        if (isGroupBlockItem) {
+            if (groupItems != null && !groupItems.isEmpty()) {
+                return groupItems.get(0).task;
+            }
+            return null;
+        }
+        return task;
+    }
+
+    public String getCompoundWorkflowId() {
+        Task firstTask = getFirstTask();
+        return firstTask != null ? firstTask.getParent().getParent().getNodeRef().getId() : null;
+    }
+
+    public String getTaskOutcomeWithSubstituteNote() {
+        if (isGroupBlockItem) {
+            return "";
+        }
+        String substitute = task.getOwnerSubstituteName();
+        String substititeMessage = "";
+        if (StringUtils.isNotBlank(substitute)) {
+            substititeMessage = " ";
+            if (messageSource != null) {
+                substititeMessage += messageSource.getMessage("workflow.task.substitute.summary", new String[] { substitute }, AppConstants.getDefaultLocale());
+            } else {
+                substititeMessage += MessageUtil.getMessage("task_substitute_summary", substitute);
+            }
+        }
+        return getTaskOutcome() + HtmlUtils.htmlEscape(substititeMessage);
+    }
+
     public String getTaskComment() {
         return task.getComment();
     }
@@ -253,6 +290,10 @@ public class WorkflowBlockItem implements Serializable {
 
     public int getGroupWorkflowIndex() {
         return groupWorkflowIndex;
+    }
+
+    public void setMessageSource(MessageSource messageSource) {
+        this.messageSource = messageSource;
     }
 
     public static final Comparator<WorkflowBlockItem> COMPARATOR;

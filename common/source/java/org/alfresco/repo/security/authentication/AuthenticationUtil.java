@@ -61,31 +61,33 @@ public class AuthenticationUtil implements InitializingBean
     }
 
     private static boolean initialized = false;
-    
+
     public static final String SYSTEM_USER_NAME = "System";
     private static String defaultAdminUserName = PermissionService.ADMINISTRATOR_AUTHORITY;
-    private static String defaultGuestUserName = PermissionService.GUEST_AUTHORITY; 
+    private static String defaultGuestUserName = PermissionService.GUEST_AUTHORITY;
     private static boolean mtEnabled = false;
-    
-    /* (non-Javadoc)
+
+    /*
+     * (non-Javadoc)
      * @see org.springframework.beans.factory.InitializingBean#afterPropertiesSet()
      */
+    @Override
     public void afterPropertiesSet() throws Exception
     {
         // at this point default admin and guest names have been assigned
         initialized = true;
     }
-    
+
     public void setDefaultAdminUserName(String defaultAdminUserName)
     {
         AuthenticationUtil.defaultAdminUserName = defaultAdminUserName;
     }
-    
+
     public void setDefaultGuestUserName(String defaultGuestUserName)
     {
         AuthenticationUtil.defaultGuestUserName = defaultGuestUserName;
     }
-    
+
     public static void setMtEnabled(boolean mtEnabled)
     {
         if (!AuthenticationUtil.mtEnabled)
@@ -166,17 +168,17 @@ public class AuthenticationUtil implements InitializingBean
     }
 
     /**
-     * Authenticate as the given user.  The user will be authenticated and all operations
+     * Authenticate as the given user. The user will be authenticated and all operations
      * with be run in the context of this user.
      * 
-     * @param userName              the user name
-     * @return                      the authentication token
+     * @param userName the user name
+     * @return the authentication token
      */
     public static Authentication setFullyAuthenticatedUser(String userName)
     {
         return setFullyAuthenticatedUser(userName, getDefaultUserDetails(userName));
     }
-    
+
     private static Authentication setFullyAuthenticatedUser(String userName, UserDetails providedDetails) throws AuthenticationException
     {
         if (userName == null)
@@ -188,8 +190,7 @@ public class AuthenticationUtil implements InitializingBean
         {
             UsernamePasswordAuthenticationToken auth = getAuthenticationToken(userName, providedDetails);
             return setFullAuthentication(auth);
-        }
-        catch (net.sf.acegisecurity.AuthenticationException ae)
+        } catch (net.sf.acegisecurity.AuthenticationException ae)
         {
             throw new AuthenticationException(ae.getMessage(), ae);
         }
@@ -225,13 +226,12 @@ public class AuthenticationUtil implements InitializingBean
             return authentication;
         }
     }
-    
+
     /**
      * <b>WARN: Advanced usage only.</b><br/>
      * Set the system user as the currently running user for authentication purposes.
      * 
      * @return Authentication
-     * 
      * @see #setRunAsUser(String)
      */
     public static Authentication setRunAsUserSystem()
@@ -241,18 +241,18 @@ public class AuthenticationUtil implements InitializingBean
 
     /**
      * <b>WARN: Advanced usage only.</b><br/>
-     * Switch to the given user for all authenticated operations.  The original, authenticated user
+     * Switch to the given user for all authenticated operations. The original, authenticated user
      * can still be found using {@link #getAuthenticatedUser()}.
      * 
-     * @param userName          the user to run as
-     * @return                  the new authentication
+     * @param userName the user to run as
+     * @return the new authentication
      */
     public static Authentication setRunAsUser(String userName)
     {
         return setRunAsUser(userName, getDefaultUserDetails(userName));
     }
-    
-    /*package*/ static Authentication setRunAsUser(String userName, UserDetails providedDetails) throws AuthenticationException
+
+    /* package */static Authentication setRunAsUser(String userName, UserDetails providedDetails) throws AuthenticationException
     {
         if (userName == null)
         {
@@ -263,14 +263,13 @@ public class AuthenticationUtil implements InitializingBean
         {
             UsernamePasswordAuthenticationToken auth = getAuthenticationToken(userName, providedDetails);
             return setRunAsAuthentication(auth);
-        }
-        catch (net.sf.acegisecurity.AuthenticationException ae)
+        } catch (net.sf.acegisecurity.AuthenticationException ae)
         {
             throw new AuthenticationException(ae.getMessage(), ae);
         }
     }
 
-    /*package*/ static Authentication setRunAsAuthentication(Authentication authentication)
+    /* package */static Authentication setRunAsAuthentication(Authentication authentication)
     {
         if (authentication == null)
         {
@@ -300,12 +299,12 @@ public class AuthenticationUtil implements InitializingBean
             return authentication;
         }
     }
-    
+
     /**
-     * Get the current authentication for application of permissions.  This includes
+     * Get the current authentication for application of permissions. This includes
      * the any overlay details set by {@link #setRunAsUser(String)}.
      * 
-     * @return Authentication               Returns the running authentication
+     * @return Authentication Returns the running authentication
      * @throws AuthenticationException
      */
     public static Authentication getRunAsAuthentication() throws AuthenticationException
@@ -317,12 +316,12 @@ public class AuthenticationUtil implements InitializingBean
         }
         return ((AlfrescoSecureContext) context).getEffectiveAuthentication();
     }
-    
+
     /**
      * <b>WARN: Advanced usage only.</b><br/>
      * Get the authentication for that was set by an real authentication.
      * 
-     * @return Authentication               Returns the real authentication
+     * @return Authentication Returns the real authentication
      * @throws AuthenticationException
      */
     public static Authentication getFullAuthentication() throws AuthenticationException
@@ -334,12 +333,12 @@ public class AuthenticationUtil implements InitializingBean
         }
         return ((AlfrescoSecureContext) context).getRealAuthentication();
     }
-    
+
     /**
-     * Get the user that is currently in effect for purposes of authentication.  This includes
+     * Get the user that is currently in effect for purposes of authentication. This includes
      * any overlays introduced by {@link #setRunAsUser(String) runAs}.
      * 
-     * @return              Returns the name of the user
+     * @return Returns the name of the user
      * @throws AuthenticationException
      */
     public static String getRunAsUser() throws AuthenticationException
@@ -356,7 +355,7 @@ public class AuthenticationUtil implements InitializingBean
         }
         return getUserName(ctx.getEffectiveAuthentication());
     }
-    
+
     public static boolean isRunAsUserTheSystemUser()
     {
         String runAsUser = getRunAsUser();
@@ -371,13 +370,13 @@ public class AuthenticationUtil implements InitializingBean
         }
         return EqualsHelper.nullSafeEquals(runAsUser, AuthenticationUtil.SYSTEM_USER_NAME);
     }
-    
+
     /**
-     * Get the fully authenticated user. 
+     * Get the fully authenticated user.
      * It returns the name of the user that last authenticated and excludes any overlay authentication set
      * by {@link #runAs(org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork, String) runAs}.
      * 
-     * @return              Returns the name of the authenticated user
+     * @return Returns the name of the authenticated user
      * @throws AuthenticationException
      */
     public static String getFullyAuthenticatedUser() throws AuthenticationException
@@ -394,7 +393,7 @@ public class AuthenticationUtil implements InitializingBean
         }
         return getUserName(ctx.getRealAuthentication());
     }
-    
+
     /**
      * Get the name of the system user
      * 
@@ -404,7 +403,7 @@ public class AuthenticationUtil implements InitializingBean
     {
         return SYSTEM_USER_NAME;
     }
-    
+
     /**
      * Get the name of the default admin user (the admin user created during bootstrap)
      * 
@@ -426,7 +425,7 @@ public class AuthenticationUtil implements InitializingBean
     {
         return PermissionService.ADMINISTRATOR_AUTHORITY;
     }
-    
+
     /**
      * Get the name of the Guest User
      */
@@ -495,8 +494,7 @@ public class AuthenticationUtil implements InitializingBean
             }
             result = runAsWork.doWork();
             return result;
-        }
-        catch (Throwable exception)
+        } catch (Throwable exception)
         {
             // Re-throw the exception
             if (exception instanceof RuntimeException)
@@ -507,8 +505,7 @@ public class AuthenticationUtil implements InitializingBean
             {
                 throw new RuntimeException("Error during run as.", exception);
             }
-        }
-        finally
+        } finally
         {
             if (originalFullAuthentication == null)
             {
@@ -543,7 +540,8 @@ public class AuthenticationUtil implements InitializingBean
 
     static class ThreadLocalStack extends ThreadLocal<Stack<Authentication>> {
 
-        /* (non-Javadoc)
+        /*
+         * (non-Javadoc)
          * @see java.lang.ThreadLocal#initialValue()
          */
         @Override
@@ -551,11 +549,12 @@ public class AuthenticationUtil implements InitializingBean
         {
             return new Stack<Authentication>();
         }
-        
-    }    
+
+    }
+
     private static ThreadLocal<Stack<Authentication>> threadLocalFullAuthenticationStack = new ThreadLocalStack();
     private static ThreadLocal<Stack<Authentication>> threadLocalRunAsAuthenticationStack = new ThreadLocalStack();
-    
+
     /**
      * Push the current authentication context onto a threadlocal stack.
      */
@@ -566,7 +565,7 @@ public class AuthenticationUtil implements InitializingBean
         threadLocalFullAuthenticationStack.get().push(originalFullAuthentication);
         threadLocalRunAsAuthenticationStack.get().push(originalRunAsAuthentication);
     }
-    
+
     /**
      * Pop the authentication context from a threadlocal stack.
      */
@@ -594,8 +593,8 @@ public class AuthenticationUtil implements InitializingBean
         {
             s_logger.debug(
                     "Authentication: \n" +
-                    "   Fully authenticated: " + AuthenticationUtil.getFullyAuthenticatedUser() + "\n" +
-                    "   Run as:              " + AuthenticationUtil.getRunAsUser());
+                            "   Fully authenticated: " + AuthenticationUtil.getFullyAuthenticatedUser() + "\n" +
+                            "   Run as:              " + AuthenticationUtil.getRunAsUser());
         }
     }
 

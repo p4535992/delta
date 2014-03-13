@@ -24,9 +24,6 @@ import ee.webmedia.alfresco.volume.model.VolumeModel;
 import ee.webmedia.alfresco.workflow.model.CompoundWorkflowType;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 
-/**
- * @author Alar Kvell
- */
 public class CaseFileKeywordsStringUpdater extends AbstractNodeUpdater {
 
     private String lisavaljaVaartusCsvPath;

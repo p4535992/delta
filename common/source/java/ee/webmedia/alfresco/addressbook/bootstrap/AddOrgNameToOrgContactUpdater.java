@@ -12,9 +12,6 @@ import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.common.bootstrap.AbstractNodeUpdater;
 import ee.webmedia.alfresco.utils.SearchUtil;
 
-/**
- * @author Keit Tehvan
- */
 public class AddOrgNameToOrgContactUpdater extends AbstractNodeUpdater {
 
     @Override

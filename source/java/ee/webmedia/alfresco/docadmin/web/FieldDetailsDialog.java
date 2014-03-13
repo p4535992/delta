@@ -57,8 +57,6 @@ import ee.webmedia.alfresco.utils.TextUtil;
 
 /**
  * Details dialog for creating/editing objects of type field or fieldDefinition
- * 
- * @author Ats Uiboupin
  */
 public class FieldDetailsDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;

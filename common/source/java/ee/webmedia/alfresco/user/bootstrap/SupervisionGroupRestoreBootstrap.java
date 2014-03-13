@@ -16,8 +16,6 @@ import ee.webmedia.alfresco.user.service.UserService;
 
 /**
  * this is only needed when updating from 3.3.1 to 3.5.3 (because it was possible to delete this group)
- * 
- * @author Ats Uiboupin
  */
 public class SupervisionGroupRestoreBootstrap extends AbstractModuleComponent {
     protected final Log LOG = LogFactory.getLog(getClass());

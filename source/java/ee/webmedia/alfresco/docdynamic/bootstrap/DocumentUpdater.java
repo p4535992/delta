@@ -45,10 +45,6 @@ import ee.webmedia.alfresco.workflow.service.WorkflowService;
  * 3) Remove old permissions from all documents and replace them with new ones if needed
  * 4) Update searchableFileContents if necessary (because of {@link FileEncodingUpdater})
  * 5) Always call addProperties, to trigger re-indexing of document (ADMLuceneIndexerImpl writes special fields VALUES and xxx)
- * 
- * @author Riina Tens - STRUCT_UNIT update
- * @author Alar Kvell - setting searchableHasAllFinishedCompoundWorkflows
- * @author Ats Uiboupin - replacing permissions
  */
 public class DocumentUpdater extends AbstractNodeUpdater {
 

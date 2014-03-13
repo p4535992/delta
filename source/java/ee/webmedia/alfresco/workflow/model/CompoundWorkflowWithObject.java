@@ -11,14 +11,13 @@ import ee.webmedia.alfresco.workflow.service.WorkflowUtil;
 
 /**
  * Wrapper class for displaying compound workflow info in list
- * 
- * @author Riina Tens
  */
 public class CompoundWorkflowWithObject implements Serializable {
 
     private static final long serialVersionUID = 1L;
     private final CompoundWorkflow compoundWorkflow;
     private String objectTitle;
+    private String workflowStatus;
 
     public CompoundWorkflowWithObject(CompoundWorkflow compoundWorkflow) {
         Assert.notNull(compoundWorkflow);
@@ -58,6 +57,14 @@ public class CompoundWorkflowWithObject implements Serializable {
 
     public Date getCreatedDateTime() {
         return compoundWorkflow.getCreatedDateTime();
+    }
+
+    public String getWorkflowStatus() {
+        return workflowStatus;
+    }
+
+    public void setWorkflowStatus(String workflowStatus) {
+        this.workflowStatus = workflowStatus;
     }
 
 }

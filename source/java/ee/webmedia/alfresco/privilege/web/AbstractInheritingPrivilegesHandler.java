@@ -10,8 +10,6 @@ import ee.webmedia.alfresco.utils.CalendarUtil;
 
 /**
  * Base class for PrivilegesHandler that allow users to change inheriting permissions from parent nodes
- * 
- * @author Ats Uiboupin
  */
 public abstract class AbstractInheritingPrivilegesHandler extends PrivilegesHandler {
     private static final long serialVersionUID = 1L;

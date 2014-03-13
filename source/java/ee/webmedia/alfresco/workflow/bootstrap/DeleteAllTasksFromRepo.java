@@ -17,8 +17,6 @@ import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
  * Delete all tasks fom repo.
  * NB! Assumes that all bootstraps tranfering data from repo to delta_task_... tables have been executed,
  * otherwise task data is lost.
- * 
- * @author Riina Tens
  */
 public class DeleteAllTasksFromRepo extends AbstractNodeUpdater {
 

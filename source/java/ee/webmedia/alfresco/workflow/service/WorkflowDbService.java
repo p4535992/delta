@@ -10,13 +10,12 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
+import org.springframework.jdbc.core.RowMapper;
 
 import ee.webmedia.alfresco.document.file.model.File;
+import ee.webmedia.alfresco.workflow.model.Comment;
 import ee.webmedia.alfresco.workflow.service.type.WorkflowType;
 
-/**
- * @author Riina Tens
- */
 public interface WorkflowDbService {
 
     String BEAN_NAME = "WorkflowDbService";
@@ -34,9 +33,13 @@ public interface WorkflowDbService {
 
     void updateTaskEntry(Task task, Map<QName, Serializable> changedProps);
 
+    void updateTaskSingleProperty(Task task, QName key, Serializable value);
+
     void updateTaskProperties(NodeRef taskRef, Map<QName, Serializable> props);
 
     void updateTaskEntry(Task task, Map<QName, Serializable> changedProps, NodeRef parentRef);
+
+    void updateTaskEntryIgnoringParent(Task task, Map<QName, Serializable> changedProps);
 
     void createTaskDueDateExtensionAssocEntry(NodeRef initiatingTaskRef, NodeRef nodeRef);
 
@@ -76,6 +79,10 @@ public interface WorkflowDbService {
 
     Pair<List<Task>, Boolean> searchTasksAllStores(String queryCondition, List<Object> arguments, int limit);
 
+    <T extends Object> Pair<List<T>, Boolean> searchTasksAllStores(String queryCondition, List<Object> arguments, int limit, RowMapper<T> rowMapper);
+
+    Map<QName, Integer> countTasksByType(String queryCondition, List<Object> arguments, QName... taskType);
+
     int countTasks(String queryCondition, List<Object> arguments);
 
     /**
@@ -90,17 +97,23 @@ public interface WorkflowDbService {
     Map<NodeRef, List<NodeRef>> getCompoundWorkflowsTaskFiles(List<CompoundWorkflow> compoundWorkflows);
 
     int replaceTaskOutcomes(String oldOutcome, String newOutcome, String taskType);
-    
+
     void deleteTask(NodeRef removedTaskNodeRef);
 
     void deleteWorkflowTasks(NodeRef removedWorkflowNodeRef);
 
-    Set<NodeRef> getAllWorflowNodeRefs();    
+    Set<NodeRef> getAllWorflowNodeRefs();
 
     List<NodeRef> getWorkflowTaskNodeRefs(NodeRef workflowRef);
 
     Set<NodeRef> getAllWorkflowsWithEmptyTasks();
 
     Set<NodeRef> getWorkflowsWithWrongTaskOrder();
+
+    List<Comment> getCompoundWorkflowComments(String compoundWorkflowId);
+
+    void addCompoundWorkfowComment(Comment comment);
+
+    void editCompoundWorkflowComment(Long commentId, String commentText);
 
 }

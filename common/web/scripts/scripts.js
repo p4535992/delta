@@ -258,7 +258,6 @@ function disableAndRemoveButton(buttonId) {
 }
 /**
  * append selection of source element to the element with id ending with "toItemIdSuffix" and beginning with the same id prefix as selectBox
- * @author Ats Uiboupin
  */
 function appendSelection(source, targetId) {
    var selectItem = $jQ('#' + escapeId4JQ(source.attr("id")) + ' :selected');
@@ -278,7 +277,6 @@ function appendSelection(source, targetId) {
  * Add autoComplete functionality to input using given values to for suggestion(allows to enter also values not given with <code>valuesArray</code>)
  * @param inputId - id of the input component that should have autoComplete functionality based on values from <code>valuesArray</code>
  * @param valuesArray - values to be suggested int the input
- * @author Ats Uiboupin
  */
 var autocompleters = new Array();
 function addAutocompleter(inputId, valuesArray){
@@ -522,59 +520,118 @@ function setPageScrollY() {
    $jQ('#wrapper form').append('<input type="hidden" name="scrollToY" value="'+ scrollTop +'" />');
 }
 
-function getSharePointObject() {
-   var agent = navigator.userAgent.toLowerCase();
-   if (agent.indexOf('msie') != -1) {
-      var sharePointObject = new ActiveXObject('SharePoint.OpenDocuments.1');
-      return sharePointObject;
+function getOffice13Link(url) {
+   var programs = {
+         "word" : ["doc", "dot", "docx", "docm", "dotx", "dotm"],
+         "excel" : ["xls", "xlt", "xlm", "xlsx", "xlsm", "xltx", "xltm"],
+         "powerpoint" : ["ppt", "pps", "pptx", "pptm", "potx", "potm", "ppam", "ppsx", "ppsm", "sldx", "sldm"]
    }
-   return null;
+
+   var link = null;
+   var extension = url.substring(url.lastIndexOf(".") + 1, url.length);
+   for (var program in programs) {
+      if (jQuery.inArray(extension, programs[program]) > -1) {
+         link = "ms-" + program + ":ofe|u|" + url;
+         break;
+      }
+   }
+
+   return link;
 }
 
-function webdavOpen(url, sharePointObject) {
+function webdavOpen(url) {
    var showDoc = true;
-   if (sharePointObject) {
-      // if the link represents an Office document and we are in IE try and
-      // open the file directly to get WebDAV editing capabilities
-      showDoc = !sharePointObject.EditDocument(url);
+   // Try to open using MSOffice and WebDAV capabilities
+   if (window.ActiveXObject !== undefined) {
+      try {
+         // If we are able to instantiate this component, we have Office 2013 installed
+         var isOffice2013Installed = new ActiveXObject("SharePoint.OpenDocuments.5");
+         var link = getOffice13Link(url);
+         if (link) {
+            window.open(link, '_blank');
+            showDoc = false;
+         }
+      } catch (e) {
+         try {
+            showDoc = !(new ActiveXObject("SharePoint.OpenDocuments").EditDocument(url));
+         } catch (e2) {
+            // Continue and try to open the document 
+         }
+      }
    }
-   if (showDoc == true) {
-      window.open(url, '_blank');
+   if (showDoc == true) { // If we weren't able to open with ActiveX, check for OpenOffice WebDAV protocol and try to lock/open manually
+      var openDocumentCallback = function(url, readOnly, refresh) {
+         if (readOnly) {
+            webdavOpenReadOnly(url, false);
+         } else {
+            window.open(url, '_blank');
+            if (!refresh) {
+               return;
+            }
+
+            var selector = "a.webdav-open.icon-link[href='"+url+"']";
+            var link = $jQ(selector);
+            var tableId = link.closest("table").attr("id");
+            if (tableId) {
+               var linkId = link.attr("id");
+               // Request new HTML for the surrounding table to show unlock action
+               var ajaxUri = getContextPath() + "/ajax/invoke/AjaxBean.submit";
+               ajaxSubmit(linkId, tableId, [], ajaxUri, {"viewName": "/jsp/dialog/container.jsp", "componentClientId": linkId, "containerClientId": tableId});
+            }
+         }
+      };
+
+      var protocol = "vnd.sun.star.webdav";
+      if (url.substring(0, protocol.length) === protocol) { // Check if we are dealing with OpenOffice webdav
+         if (!confirm("Kas soovid faili avada muutmiseks ja lukustada selle enda nimele 12 tunniks? NB! Pärast faili sulgemist vajuta Deltas nupule \"Vabasta lukk\"!")) {
+            webdavOpenReadOnly(url, false);
+            return false;
+         }
+
+         // Attempt to lock the file and open document for OO if possible
+         lockFileManually(url, openDocumentCallback);
+      } else {
+         openDocumentCallback(url, false, false); // Open in a new window to maintain compatibility with other configurations
+      }
    }
+   userMessageChecker.init();
+   window.name += "checkMessages";
    return false;
 }
-
+function requestNewMessages(xml){
+   if(!xml){
+      return;
+   }
+   xml = xml.documentElement;
+   if(xml.getAttribute('success') == 'true'){
+      alert(xml.getAttribute('message'));
+   }
+}
+var numberOfInstances = 0;
+var userMessageChecker = {
+   init : function(){
+      if(numberOfInstances != 0){
+         return; // allow only one instance
+      }
+      numberOfInstances++;
+      $jQ(window).focus(this.requestMessages);
+   },
+   requestMessages : function(){
+      var uri = getContextPath() + '/ajax/invoke/NotificationBean.getCurrentUserNotifications';
+      $jQ.ajax({
+         type: 'POST',
+         url: uri,
+         mode: 'queue',
+         success: requestNewMessages,
+         dataType: 'xml'
+      });
+   }
+};
 /**
  * Open file in read-only mode (TODO: with webdav, if file is office document)
  * @return false
  */
-function webdavOpenReadOnly(url) {
-   // TODO: at the moment it just always provides a download link even for office documents
-//   // if the link represents an Office document and we are in IE try and
-//   // open the file directly to get WebDAV editing capabilities
-//   var agent = navigator.userAgent.toLowerCase();
-//   if (agent.indexOf('msie') != -1) {
-//         var wordDoc = new ActiveXObject('SharePoint.OpenDocuments.3');
-//         //var wordDoc = new CreateObject("SharePoint.OpenDocuments.3");
-//         if (wordDoc) {
-//            /** iOpenFlag codes:
-//            0 - When checked out, or when the document library does not require check out, the user can read or edit the document.
-//            1 - When another user has checked it out, the user can only read the document.
-//            2 - When the current user has checked it out, the user can only edit the document.
-//            3 - When the document is not checked out and the document library requires that documents be checked out to be edited, the user can only read the document, or check it out and edit it.
-//            4 - When the current user has checked it out, the user can only edit the local copy of the document.
-//            */
-//            var iOpenFlag = 0;
-//            var szAppendId = "";
-////            alert("starting to open(\nwindow"+window+"\n,'"+this.href+"'\n,"+iOpenFlag+"\n, '"+szAppendId+"'\n)");
-//            var success = wordDoc.ViewDocument3(window, this.href, iOpenFlag, szAppendId); // Open document in memory from webdaw
-////            alert("success?"+success);
-//            return false;
-//         }
-//   } else {
-//      alert("To open using webdaw you must have IE compatible browser(for example firefox with IEtab or Internet Explorer)");
-//   }
-//   alert("regular file download");
+function webdavOpenReadOnly(url, omitConfirmation) {
    var uri = getContextPath() + '/ajax/invoke/AjaxBean.getDownloadUrl?path=' + url;
 
    $jQ.ajax({
@@ -583,7 +640,7 @@ function webdavOpenReadOnly(url) {
       data: 'url=' + url, // path is already escaped, so disable jquery escaping by giving it a string directly
       mode: 'queue',
       success: function openForDownload(responseText) {
-        if (confirm(getTranslation("webdav_noPermissionsDownloadConfirm"))) {
+        if (omitConfirmation || confirm(getTranslation("webdav_noPermissionsDownloadConfirm"))) {
            window.open(responseText, '_blank');// regular file saveAs/open by downloading it to HD
         }
       },
@@ -637,22 +694,34 @@ function showModal(target, height){
    openModalContent = target;
 
    $jQ("#overlay").css("display","block");
-   $jQ("#" + target).css("display","block");
-   if (height != null) {
-      $jQ("#" + target).css("height",height);
+   var modal = $jQ("#" + target);
+   modal.css("display","block");
+   var parentModal = modal.parent().closest(".modalwrap");
+   
+   if (parentModal) {
+      parentModal.show(); // regulates display property
+      height = parentModal.height();
    }
-   $jQ("#" + target).show();
-   $jQ("#" + target).find(".genericpicker-input").focus();
+
+   if (height != null) {
+      modal.css("min-height", height);
+   }
+   modal.show();
+   modal.find(".genericpicker-input").focus();
    return false;
 }
 
 function hideModal(){
-   if (openModalContent != null){
-     if(isIE(7) && titlebarIndex != null) {
-        $jQ("#titlebar").css("zIndex", titlebarIndex);
-     }
-     $jQ("#" + openModalContent).hide();
-      $jQ("#overlay").remove();
+   if (openModalContent != null) {
+      if(isIE(7) && titlebarIndex != null) {
+         $jQ("#titlebar").css("zIndex", titlebarIndex);
+      }
+      var modal = $jQ("#" + openModalContent);
+      modal.hide();
+      var parentModal = modal.parent().closest(".modalwrap");
+      if (parentModal.length < 1) {
+         $jQ("#overlay").remove();
+      }
    }
    return false;
 }
@@ -960,6 +1029,14 @@ function ajaxSuccess(responseText, componentClientId, componentContainerId) {
       }
       // Split response
       var i = responseText.lastIndexOf('VIEWSTATE:');
+      if (i < 0){
+         try {
+            window.location.href = window.location.protocol + "://" + window.location.hostname + "/" + window.location.pathname;
+            return false;
+         } finally {
+            setScreenProtected(false);
+         }         
+      }
       var html = responseText.substr(0, i);
       var hiddenInputsIndex = responseText.lastIndexOf("HIDDEN_INPUT_NAMES_JSON:");
       var viewState = responseText.substr(i + 'VIEWSTATE:'.length, hiddenInputsIndex);
@@ -1228,6 +1305,9 @@ function handleEnterKey(event) {
 $jQ(document).ready(function() {
    try {
       initWithScreenProtected();
+      if(window.name.indexOf("checkMessages") != -1){
+         userMessageChecker.init();
+      }
    } catch (e) {
       alert("Failed to initialize page! "+e);
    } finally {
@@ -1466,8 +1546,8 @@ function initWithScreenProtected() {
    $jQ(".driveTotalKm").live('change', function (event) {
       var kmElem = $jQ(this);
       var propSheet = kmElem.closest("table");
-      var rateElem = $jQ(propSheet.find(".driveCompensationRate")[0]);
-      var compElem = $jQ(propSheet.find(".driveTotalCompensation")[0]);
+      var rateElem = propSheet.find(".driveCompensationRate").first();
+      var compElem = propSheet.find(".driveTotalCompensation").first();
       if (!rateElem || !compElem) {
          return;
       }
@@ -1475,11 +1555,10 @@ function initWithScreenProtected() {
       var kmVal = kmElem.val();
       var rateVal = rateElem.val();
       if (!isNumeric(kmVal, true) || !isNumeric(rateVal)) {
-         compElem.val("");
+         compElem.text("");
       } else {
-         compElem.val(round((kmVal * rateVal), 2));
+         compElem.text(round((kmVal * rateVal), 2));
       }
-      compElem.change();
    });
 
    $jQ(".beginTotalCount,.endTotalCount").live('change', function (event) {
@@ -1584,7 +1663,7 @@ function initWithScreenProtected() {
    window.dhtmlHistory.add(randomHistoryHash(), null);
 
 
-   jQuery(".dailyAllowanceDaysField, .dailyAllowanceRateField").live('change', function(event) {
+   jQuery(".dailyAllowanceDaysField:input, .dailyAllowanceRateField:input").live('change', function(event) {
       var elem = $jQ(this);
       // Calculate sum for current row
       var row = elem.closest("tr");
@@ -1611,10 +1690,10 @@ function initWithScreenProtected() {
          }
       });
 
-      row.closest("div").closest("tr").next().find(".dailyAllowanceTotalSumField").val(totalSum);
+      row.closest("div").closest("tr").next().find(".dailyAllowanceTotalSumField").first().text(totalSum);
    });
 
-   jQuery(".expectedExpenseSumField").live('keyup', function(event) {
+   jQuery(".expectedExpenseSumField:input").live('keyup', function(event) {
       var elem = $jQ(this);
       var totalSum = 0;
       var sum = 0;
@@ -1628,8 +1707,8 @@ function initWithScreenProtected() {
          }
       });
 
-      var totalField = elem.closest("div").closest("tr").next().find(".expensesTotalSumField");
-      totalField.val(totalSum);
+      var totalField = elem.closest("div").closest("tr").next().find(".expensesTotalSumField").first();
+      totalField.text(totalSum);
    });
 
    jQuery(".invoiceTotalSum, .invoiceVat").live('change', function(event) {
@@ -1697,12 +1776,12 @@ function initWithScreenProtected() {
       totalField.val(round(totalSum, 2));
    });
    
-   jQuery(".driveTotalKmField, .driveCompensationRateField").live('change', function(event) {
+   jQuery(".driveTotalKmField:input, .driveCompensationRateField:input").live('change', function(event) {
       var driveTotalCompensation = $jQ(".driveTotalCompensationField");
       var driveTotalKmField = getFloatOrNull($jQ(".driveTotalKmField").val());
       var driveCompensationRate = getFloatOrNull($jQ(".driveCompensationRateField").val());
       if(driveTotalKmField && driveCompensationRate) {
-         driveTotalCompensation.val(round((driveTotalKmField * driveCompensationRate), 2));
+         driveTotalCompensation.text(round((driveTotalKmField * driveCompensationRate), 2));
       }      
    });
 
@@ -1901,7 +1980,10 @@ function isNumeric(numberStr, integer){
    return true;
 }
 function processTaskDueDateDate(){
-   var dueDateInput = $jQ(this);
+   processTaskDueDateDateInput($jQ(this));
+}
+
+function processTaskDueDateDateInput(dueDateInput){
    var taskRow = dueDateInput.closest("tr");
    var taskDueDateTime = taskRow.find(".task-due-date-time");
    var taskDueDateDays = taskRow.find(".task-due-date-days");
@@ -2112,47 +2194,25 @@ function handleHtmlLoaded(context, setFocus, selects) {
       // 1) this.href = 'https://dhs.example.com/dhs/webdav/xxx/yyy/zzz/abc.doc'
       // 2) $jQ(this).attr('href') = '/dhs/webdav/xxx/yyy/zzz/abc.doc'
       var path = this.href; // SharePoint ActiveXObject methods need to get full URL
+      checkFileLock(path, function webdavOpenCallback(filePath, status) {
+         if (status.code < 1) {
+            if (status.code == 0 || confirm(getTranslation("webdav_openReadOnly").replace("#", status.data))) {
+               webdavOpenReadOnly(filePath, status.code != 0);
+            }
+         } else if (status.code == 1) {
+            webdavOpen(filePath);
+         } else if (status.code == 2) {
+            alert("Faili ei saa avada, dokument on kustutatud");
+         } else if (status.code == 3) {
+            alert("Faili ei saa avada, fail on kustutatud");
+         }
+      });
 
-      var sharePointObject = getSharePointObject();
-      if (sharePointObject) {
-         // When page is submitted, user sees an hourglass cursor
-         $jQ(".submit-protection-layer").show().focus();
-         var uri = getContextPath() + '/ajax/invoke/AjaxBean.isFileLocked';
-         $jQ.ajax({
-           type: 'POST',
-           url: uri,
-           data: 'path=' + path, // path is already escaped, so disable jquery escaping by giving it a string directly
-           mode: 'queue',
-           success: function (responseText) {
-             $jQ(".submit-protection-layer").hide();
-             if (responseText.length == 0) { // If we get an empty response, then open read-only (other conditions prevent from editing - incoming letter, finished, some running workflow)
-                webdavOpenReadOnly(path); 
-             } else if (responseText.indexOf("DOCUMENT_DELETED") > -1) {
-                alert("Faili ei saa avada, dokument on kustutatud");
-                return false;
-             } else if (responseText.indexOf("FILE_DELETED") > -1) {
-                alert("Faili ei saa avada, fail on kustutatud");
-                return false;
-             } else if (responseText.indexOf("NOT_LOCKED") > -1) {
-                webdavOpen(path, sharePointObject);
-             } else if (confirm(getTranslation("webdav_openReadOnly").replace("#", responseText))) {
-                // TODO CL 161673: responseText might contain HTML of CAS page if session has timed out
-                webdavOpenReadOnly(path);
-             } else {
-                return false;
-             }
-           },
-           error: ajaxError,
-           datatype: 'html'
-         });
-      } else {
-         webdavOpen(path, sharePointObject);
-      }
       return false;
    });
 
    $jQ('a.webdav-readOnly', context).click(function () {
-      webdavOpenReadOnly(this.href);
+      webdavOpenReadOnly(this.href, false);
       return false;
    });
 
@@ -2212,8 +2272,6 @@ function handleHtmlLoaded(context, setFocus, selects) {
          dateElem.trigger("change");
          var onchange = '' + dateElem.attr("onchange");
          if (onchange.indexOf('ajaxSubmit(') == -1) {
-            var date_all = jQuery.datepicker.parseDate(dateElem.data("datepicker").settings.dateFormat,selectedDate,dateElem.data("datepicker").settings);
-            dp_dates.datepicker("option","defaultDate",date_all);
             setMinEndDate(this, dateElem, true);
          }
       }
@@ -2247,7 +2305,6 @@ function handleHtmlLoaded(context, setFocus, selects) {
    /**
     * Binder for alfresco properties that are generated with ClassificatorSelectorAndTextGenerator.class
     * Binds all elements that have class="selectBoundWithText" with corresponding textAreas/inputs(assumed to have same id prefix and suffix specified with TARGET_SUFFIX)
-    * @author Ats Uiboupin
     */
    $jQ(".selectBoundWithText", context).each(function (intIndex)
    {
@@ -2268,13 +2325,12 @@ function handleHtmlLoaded(context, setFocus, selects) {
 
    /**
     * Add onChange functionality to jQuery change event (we can't use onChange attribute because of jQuery bug in IE)
-    * @author Riina Tens
     */
    $jQ("[class*=selectWithOnchangeEvent]", context).each(function (intIndex, selectElement)
    {
       var classString = selectElement.className;
       var currElId = selectElement.id;
-      var onChangeJavascript = classString.substring(classString.lastIndexOf('¤¤¤¤') + 4);
+      var onChangeJavascript = classString.substring(classString.lastIndexOf('¤¤¤¤') + 4, classString.lastIndexOf(';') + 1);
       if(onChangeJavascript != ""){
             $jQ(this).change(function(){
                //assume onChangeJavascript contains valid function body
@@ -2287,7 +2343,8 @@ function handleHtmlLoaded(context, setFocus, selects) {
    propSheetValidateRegisterOnDocumentReady();
 
    // this method should be called after critical activities have been done in handleHtmlLoaded as it displays alerts and possibly submits page
-   confirmWorkflow();
+   confirmWorkflow('workflow-confirmation-messages', 'workflow-after-confirmation-link');
+   confirmWorkflow("workflow-delegation-confirmation-messages", "workflow-after-delegation-confirmation-link");
 
    // trigger keyup event (for validation & textarea resize) on paste. Can't use live() because of IE
    $jQ("textarea, input[type='text']", context).bind("paste", function(){
@@ -2319,6 +2376,63 @@ function handleHtmlLoaded(context, setFocus, selects) {
    }
 
    $jQ(".readonly", context).attr('readonly', 'readonly');   
+}
+
+function checkFileLock(filePath, callback) {
+   // When page is submitted, user sees an hourglass cursor
+   $jQ(".submit-protection-layer").show().focus();
+   
+   var uri = getContextPath() + '/ajax/invoke/AjaxBean.isFileLocked';
+   $jQ.ajax({
+     type: 'POST',
+     url: uri,
+     data: 'path=' + filePath, // path is already escaped, so disable jquery escaping by giving it a string directly
+     mode: 'queue',
+     success: function (responseText) {
+       $jQ(".submit-protection-layer").hide();
+       var status = { code: -1, data: "" };
+       if (responseText.length == 0) { // If we get an empty response, then open read-only (other conditions prevent from editing - incoming letter, finished, some running workflow)
+          status.code = 0;
+       } else if (responseText.indexOf("NOT_LOCKED") > -1) {
+          status.code = 1;
+       } else if (responseText.indexOf("DOCUMENT_DELETED") > -1) {
+          status.code = 2;
+       } else if (responseText.indexOf("FILE_DELETED") > -1) {
+          status.code = 3;
+       } else {
+          status.data = responseText;
+       }
+       
+       if (callback && typeof(callback) === "function") {
+          callback(filePath, status);
+       }
+     },
+     error: ajaxError,
+     datatype: 'html'
+   });
+}
+
+function lockFileManually(filePath, callback) {
+   var uri = getContextPath() + '/ajax/invoke/AjaxBean.lockFileManually';
+   $jQ.ajax({
+     type: 'POST',
+     url: uri,
+     data: 'path=' + filePath, // path is already escaped, so disable jquery escaping by giving it a string directly
+     mode: 'queue',
+     success: function (responseText) {
+       $jQ(".submit-protection-layer").hide();
+       var edit = false;
+       if (responseText.indexOf("LOCKING_SUCCESSFUL") > -1) {
+          edit = true;
+       }
+       
+       if (callback && typeof(callback) === "function") {
+          callback(filePath, !edit, edit);
+       }
+     },
+     error: ajaxError,
+     datatype: 'html'
+   });
 }
 
 //-----------------------------------------------------------------------------
@@ -2406,8 +2520,8 @@ function sendToSapManually(){
    return showModal('entrySapNumber_popup');
 }
 
-function confirmWorkflow(){
-   var confirmationMessagesSelect = $jQ("[class='workflow-confirmation-messages']").get(0);
+function confirmWorkflow(selectClass, confirmationLinkClass){
+   var confirmationMessagesSelect = $jQ("[class='" + selectClass + "']").get(0);
    if(confirmationMessagesSelect == undefined){
       return false;
    }
@@ -2416,7 +2530,7 @@ function confirmWorkflow(){
          return false;
       }
    }
-   $jQ("[class='workflow-after-confirmation-link']").eq(0).click();
+   $jQ("[class='" + confirmationLinkClass + "']").eq(0).click();
 }
 
 function clearFormHiddenParams(currFormName, newTargetVal) {
@@ -2515,7 +2629,7 @@ function help(url) {
    return false;
 }
 
-// http://remysharp.com/2010/07/21/throttling-function-calls/
+//http://remysharp.com/2010/07/21/throttling-function-calls/
 function throttle(fn, delay) {
    var timer = null;
    return function() {

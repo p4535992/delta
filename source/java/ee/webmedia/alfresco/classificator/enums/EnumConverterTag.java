@@ -8,8 +8,6 @@ import ee.webmedia.alfresco.common.propertysheet.converter.EnumTranslationConver
 
 /**
  * Tag definition to use the EnumTranslationConverter on a page
- * 
- * @author Vladimir Drozdik
  */
 public class EnumConverterTag extends ConverterTag {
 

@@ -23,7 +23,6 @@ import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 
 /**
- * @author Riina Tens
  *         Refactored from DocumentServiceImpl.
  */
 public abstract class AbstractFavoritesServiceImpl implements FavoritesService {

@@ -6,9 +6,6 @@ import org.alfresco.service.namespace.QName;
 import ee.webmedia.alfresco.filter.service.AbstractFilterServiceImpl;
 import ee.webmedia.alfresco.workflow.search.model.CompoundWorkflowSearchModel;
 
-/**
- * @author Keit tehvan
- */
 public class CompoundWorkflowSearchFilterServiceImpl extends AbstractFilterServiceImpl implements CompoundWorkflowSearchFilterService {
 
     @Override

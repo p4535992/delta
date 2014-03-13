@@ -31,9 +31,6 @@ import ee.webmedia.alfresco.orgstructure.amr.service.RSService;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
 
-/**
- * @author Kaarel Jõgeva
- */
 @XStreamAlias("dropdown")
 public class DropdownMenuItem extends MenuItem {
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DropdownMenuItem.class);

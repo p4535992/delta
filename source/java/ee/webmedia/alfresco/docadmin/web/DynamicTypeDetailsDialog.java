@@ -21,8 +21,6 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
  * Base dialog for editing {@link DynamicType} details
- * 
- * @author Ats Uiboupin
  */
 public abstract class DynamicTypeDetailsDialog<D extends DynamicType, S extends DynTypeDialogSnapshot<D>> extends BaseSnapshotCapableDialog<S, D> {
     private static final long serialVersionUID = 1L;
@@ -38,8 +36,6 @@ public abstract class DynamicTypeDetailsDialog<D extends DynamicType, S extends 
 
     /**
      * Contains fields that contain state to be used when restoring dialog
-     * 
-     * @author Ats Uiboupin
      */
     public abstract static class DynTypeDialogSnapshot<D extends DynamicType> implements BaseSnapshotCapableDialog.Snapshot {
         private static final long serialVersionUID = 1L;
@@ -263,7 +259,7 @@ public abstract class DynamicTypeDetailsDialog<D extends DynamicType, S extends 
             // Workaround to NullpointerException
             // FIXME current dialog is DocTypeDetailsDialog and user clicks some menu item (for example to open DocTypeListDialog)
             //
-            // FIXME CL_TASK 177667 Ats -> Kaarel: when leaving dialog clearState() method (that clears snapshots) is called in
+            // FIXME CL_TASK 177667 -> when leaving dialog clearState() method (that clears snapshots) is called in
             // ApplyRequestValues phase by calling MenuBean.clearViewStack(menuBean.getActiveItemId(), clientId);
             //
             // Better JSF components method bindings are evaluated in the same phase

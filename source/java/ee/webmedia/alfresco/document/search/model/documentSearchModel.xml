@@ -45,6 +45,18 @@
                <type>d:text</type>
                <multiple>true</multiple>
             </property>
+            <property name="docsearch:sendInfoRecipient">
+               <type>d:text</type>
+            </property>
+            <property name="docsearch:sendInfoDateTime">
+               <type>d:date</type>
+            </property>
+            <property name="docsearch:sendInfoDateTime_EndDate">
+               <type>d:date</type>
+            </property>
+            <property name="docsearch:sendInfoResolution">
+               <type>d:text</type>
+            </property>
             <property name="docsearch:fund">
                <type>d:text</type>
                <multiple>true</multiple>

@@ -98,7 +98,8 @@
           delta = clone.html().length - cloneTextLength; 
           debug ("condensing... [html-length:"+cloneHtmlLength+" text-length:"+cloneTextLength+" delta: "+delta+" break-point: "+loc+"]");
           //is the length of the clone text long enough?
-       }while(clone.text().length < opts.condensedLength )
+          // see jquery.condence fix for infinite loop https://github.com/eventualbuddha/jquery-condense-plugin/commit/1b084ed762a2082f4b16295d24b4c622a16c22c6
+       }while(delta && clone.text().length < opts.condensedLength )
     }
 
     //  after skipping ahead to the delimiter, do we still have enough trailing text?

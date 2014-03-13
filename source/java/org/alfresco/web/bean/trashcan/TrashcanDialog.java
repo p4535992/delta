@@ -77,6 +77,9 @@ import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.template.model.DocumentTemplateModel;
+import ee.webmedia.alfresco.utils.RepoUtil;
 
 /**
  * Backing bean for the Manage Deleted Items (soft delete and archiving) pages.
@@ -297,7 +300,13 @@ public class TrashcanDialog extends BaseDialogBean implements IContextListener
        
        @Override
        public Object get(Node node) {
-           return node.getProperties().get(ContentModel.PROP_ARCHIVED_OBJECT_NAME);
+           Map<String, Object> properties = node.getProperties();
+           Object archivedObjectName = properties.get(ContentModel.PROP_ARCHIVED_OBJECT_NAME);
+           if (archivedObjectName == null) {
+               QName type = node.getType();
+               archivedObjectName = RepoUtil.getArchivedObjectName(type, RepoUtil.toQNameProperties(properties));
+           }
+           return archivedObjectName;
        }
     };
     

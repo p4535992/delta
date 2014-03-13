@@ -10,9 +10,6 @@ import ee.webmedia.alfresco.workflow.service.event.WorkflowEventQueue;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowEventType;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowModifications;
 
-/**
- * @author Alar Kvell
- */
 public class InformationWorkflowType extends BaseWorkflowType implements WorkflowEventListenerWithModifications {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(InformationWorkflowType.class);
 

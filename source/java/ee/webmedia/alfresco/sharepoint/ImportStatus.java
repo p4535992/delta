@@ -9,8 +9,6 @@ import org.apache.commons.lang.StringUtils;
 
 /**
  * An object definition for keeping status progress of current import.
- * 
- * @author Martti Tamm
  */
 public class ImportStatus implements Serializable {
 

@@ -18,8 +18,6 @@ import ee.webmedia.alfresco.versions.service.VersionsService;
 
 /**
  * Updater that unlocks versions that might be locked accidentally.
- * 
- * @author Kaarel Jõgeva
  */
 public class VersionUnlockUpdater extends AbstractNodeUpdater {
 

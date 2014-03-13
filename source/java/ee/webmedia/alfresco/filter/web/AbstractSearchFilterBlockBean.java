@@ -42,8 +42,6 @@ import ee.webmedia.alfresco.utils.WebUtil;
 /**
  * Base class for dialogs, that have searching functionality using filters <br>
  * that could be saved for later private use (or to all if user has admin rights).
- * 
- * @author Ats Uiboupin
  */
 public abstract class AbstractSearchFilterBlockBean<T extends FilterService> extends BaseDialogBean {
     private static final long serialVersionUID = 1L;

@@ -9,6 +9,7 @@ import org.springframework.beans.factory.BeanFactory;
 
 public abstract class AppConstants {
     public static final String CHARSET = "UTF-8";
+    public static final String DEVICE_DETECTION_OVERRIDE = "deviceDetectionOverride";
     private static BeanFactory beanFactory;
     /**
      * Case-insensitive

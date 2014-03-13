@@ -14,8 +14,6 @@ import ee.webmedia.alfresco.workflow.service.WorkflowService;
 
 /**
  * Delete invalid (actually deleted) tasks with non-existing workflow refs.
- * 
- * @author Riina Tens
  */
 public class LogAndDeleteNotExistingWorkflowTasks extends AbstractNodeUpdater {
 

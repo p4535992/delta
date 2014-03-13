@@ -51,6 +51,11 @@
             showLink="false"
             actionListener="#{NavigationBean.toggleShelf}" />
 --%>
+<%--             <a:actionLink id="override_device" --%>
+<%--             value="#{msg.override_device}" --%>
+<%--             image="/images/icons/deploy_server.gif" --%>
+<%--             showLink="false" --%>
+<%--             href="/?deviceDetectionOverride" /> --%>
 <%--
             <r:actions context="#{BrowseBean.document}" value="navigator_actions" showLink="false" />
 --%>

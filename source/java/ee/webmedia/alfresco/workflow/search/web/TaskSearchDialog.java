@@ -39,9 +39,6 @@ import ee.webmedia.alfresco.workflow.search.service.TaskSearchFilterService;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
 import ee.webmedia.alfresco.workflow.service.type.WorkflowType;
 
-/**
- * @author Erko Hansar
- */
 public class TaskSearchDialog extends AbstractSearchFilterBlockBean<TaskSearchFilterService> {
 
     private static final long serialVersionUID = 1L;
@@ -80,8 +77,8 @@ public class TaskSearchDialog extends AbstractSearchFilterBlockBean<TaskSearchFi
         }
 
         if (ownerSearchFilters == null) {
-            ownerSearchFilters = new SelectItem[] { new SelectItem(0, MessageUtil.getMessage("task_owner_users")),
-                    new SelectItem(1, MessageUtil.getMessage("task_owner_contacts")), };
+            ownerSearchFilters = new SelectItem[] { new SelectItem(UserContactGroupSearchBean.USERS_FILTER, MessageUtil.getMessage("task_owner_users")),
+                    new SelectItem(UserContactGroupSearchBean.CONTACTS_FILTER, MessageUtil.getMessage("task_owner_contacts")), };
         }
         loadAllFilters();
     }

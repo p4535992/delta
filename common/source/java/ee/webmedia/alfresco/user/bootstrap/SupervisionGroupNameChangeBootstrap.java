@@ -7,9 +7,6 @@ import org.alfresco.service.cmr.security.AuthorityType;
 
 import ee.webmedia.alfresco.user.service.UserService;
 
-/**
- * @author Keit Tehvan
- */
 public class SupervisionGroupNameChangeBootstrap extends AbstractModuleComponent {
 
     @Override

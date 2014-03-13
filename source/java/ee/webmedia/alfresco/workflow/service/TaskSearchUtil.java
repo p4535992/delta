@@ -21,8 +21,6 @@ import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 
 /**
  * Utility methods for creating db queries for searching tasks.
- * 
- * @author Riina Tens
  */
 public class TaskSearchUtil {
 

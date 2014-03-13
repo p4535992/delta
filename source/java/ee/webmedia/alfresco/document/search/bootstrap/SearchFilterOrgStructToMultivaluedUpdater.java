@@ -21,8 +21,6 @@ import ee.webmedia.alfresco.workflow.search.model.TaskSearchModel;
 /**
  * Update search filter struct_unit type properties to multivalued
  * and fill appropriate data from organization properties if possible.
- * 
- * @author Riina Tens
  */
 public class SearchFilterOrgStructToMultivaluedUpdater extends AbstractNodeUpdater {
 

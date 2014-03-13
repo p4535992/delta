@@ -1602,8 +1602,6 @@ public abstract class AbstractLuceneIndexerAndSearcherFactory implements LuceneI
                 logger.info("Starting lucene index backup");
                 backupComponent.backup();
                 logger.info("Completed lucene index backup");
-    
-                indexIntegrityCheckerBootstrap.execute(false, null);
             } finally {
                 NightlyDataFixJob.nightlyMaintenanceJobLock.unlock();
             }

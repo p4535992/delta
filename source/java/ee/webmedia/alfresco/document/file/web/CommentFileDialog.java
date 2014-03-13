@@ -22,9 +22,6 @@ import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.WebUtil;
 
-/**
- * @author Priit Pikk
- */
 public class CommentFileDialog extends BaseDialogBean {
     public static final String BEAN_NAME = "CommentFileDialog";
     private static final long serialVersionUID = 1L;
@@ -78,11 +75,10 @@ public class CommentFileDialog extends BaseDialogBean {
             if (getDocLockService().setLockIfFree(fileRef) == LockStatus.LOCKED) {
                 throw new NodeLockedException(fileRef);
             }
-            getDocLockService().lockGeneratedFileDocument(fileRef);
+            getDocLockService().lockFile(fileRef);
             return true;
         }
-        getDocLockService().unlockIfOwner(fileRef);
-        getDocLockService().releaseGeneratedFileDocument(fileRef);
+        getDocLockService().unlockFile(fileRef);
         return false;
     }
 

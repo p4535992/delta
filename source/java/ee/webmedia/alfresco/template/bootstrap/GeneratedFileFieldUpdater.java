@@ -18,8 +18,6 @@ import ee.webmedia.alfresco.utils.SearchUtil;
 
 /**
  * CL 163201: remove generated field and set generatedFromTemplate field
- * 
- * @author Kaarel Jõgeva
  */
 public class GeneratedFileFieldUpdater extends AbstractNodeUpdater {
 

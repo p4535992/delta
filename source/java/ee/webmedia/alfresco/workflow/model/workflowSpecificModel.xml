@@ -152,6 +152,7 @@
          <parent>wfc:task</parent>
          <mandatory-aspects>
             <aspect>wfs:commonTask</aspect>
+            <aspect>wfs:resolution</aspect>
          </mandatory-aspects>
       </type>
 
@@ -159,6 +160,7 @@
          <parent>wfc:task</parent>
          <mandatory-aspects>
             <aspect>wfs:commonTask</aspect>
+            <aspect>wfs:resolution</aspect>
          </mandatory-aspects>
       </type>
 
@@ -169,7 +171,8 @@
             <aspect>wfs:fileVersions</aspect> 
             <aspect>wfs:institution</aspect>
             <aspect>wfs:creatorInstitution</aspect>
-            <aspect>wfs:sentDvkData</aspect>     
+            <aspect>wfs:sentDvkData</aspect>    
+            <aspect>wfs:resolution</aspect> 
          </mandatory-aspects>
       </type>
       
@@ -200,6 +203,7 @@
          <parent>wfc:task</parent>
          <mandatory-aspects>
             <aspect>wfs:commonTask</aspect>
+            <aspect>wfs:resolution</aspect>
          </mandatory-aspects>
       </type>
 
@@ -253,6 +257,7 @@
          <parent>wfc:task</parent>
          <mandatory-aspects>
             <aspect>wfs:commonTask</aspect>
+            <aspect>wfs:resolution</aspect>
          </mandatory-aspects>
       </type>      
 
@@ -406,6 +411,7 @@
             <property name="wfs:compoundWorkflowTitle">
                <type>d:text</type>
             </property>
+            <!-- Deprecated - compound workflow comments are not used in search any more; comments are moved to delta_compound_workflow_comment table -->
             <property name="wfs:compoundWorkflowComment">
                <type>d:text</type>
             </property>             

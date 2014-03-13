@@ -10,8 +10,6 @@ import ee.webmedia.alfresco.utils.beanmapper.AlfrescoModelType;
 
 /**
  * Parent class for incoming and outgoing letters
- * 
- * @author Ats Uiboupin
  */
 @AlfrescoModelType(uri = DocumentSpecificModel.URI)
 public abstract class LetterDocument extends ImportDocument {

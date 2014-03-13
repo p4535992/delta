@@ -17,6 +17,8 @@ import org.alfresco.service.cmr.repository.InvalidNodeRefException;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.Predicate;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.FastDateFormat;
 import org.springframework.util.Assert;
@@ -55,6 +57,7 @@ public class Document extends Node implements Comparable<Document>, CssStylable,
     public static FastDateFormat dateTimeFormat = FastDateFormat.getInstance("dd.MM.yyyy HH:mm");
 
     private List<File> files; // load lazily
+    private List<File> inactiveFiles; // load lazily
     private String workflowStatus;
     private Map<QName, Serializable> searchableProperties;
     private boolean initialized;
@@ -75,6 +78,7 @@ public class Document extends Node implements Comparable<Document>, CssStylable,
         nodeRef = source.nodeRef;
         Assert.notNull(source, "Source document is mandatory");
         files = source.getFiles();
+        inactiveFiles = source.getInactiveFiles();
         searchableProperties = new HashMap<QName, Serializable>(source.getSearchableProperties());
         initialized = source.initialized;
     }
@@ -171,6 +175,14 @@ public class Document extends Node implements Comparable<Document>, CssStylable,
                 , DocumentCommonModel.Props.RECIPIENT_NAME
                 , DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME
                 );
+    }
+
+    public String getSenderOrOwner() {
+        String docDynType = objectTypeId();
+        if (SystematicDocumentType.INCOMING_LETTER.isSameType(docDynType)) {
+            return (String) getProperties().get(DocumentSpecificModel.Props.SENDER_DETAILS_NAME);
+        }
+        return (String) getProperties().get(DocumentCommonModel.Props.OWNER_NAME);
     }
 
     public String getSenderNameOrEmail() {
@@ -448,6 +460,46 @@ public class Document extends Node implements Comparable<Document>, CssStylable,
     }
 
     @SuppressWarnings("unchecked")
+    public String getSendInfoRecipient() {
+        return TextUtil.joinNonBlankStringsWithComma((List<String>) getProperties().get(DocumentCommonModel.Props.SEARCHABLE_SEND_INFO_RECIPIENT));
+    }
+
+    public String getSendInfoSendDateTime() {
+        @SuppressWarnings("unchecked")
+        List<Date> dates = (List<Date>) getProperties().get(DocumentCommonModel.Props.SEARCHABLE_SEND_INFO_SEND_DATE_TIME);
+        String result = "";
+        if (dates != null && !dates.isEmpty()) {
+            StringBuilder sb = new StringBuilder();
+            boolean firstAppended = false;
+            for (int i = 0; i < dates.size(); i++) {
+                Date date = dates.get(i);
+                if (date == null) {
+                    continue;
+                }
+                if (firstAppended) {
+                    sb.append(", ");
+                }
+                sb.append(dateTimeFormat.format(date));
+                firstAppended = true;
+            }
+            result = sb.toString();
+        }
+        return result;
+    }
+
+    @SuppressWarnings("unchecked")
+    public String getSendInfoResolution() {
+        return TextUtil.joinNonBlankStringsWithComma((List<String>) getProperties().get(DocumentCommonModel.Props.SEARCHABLE_SEND_INFO_RESOLUTION));
+    }
+
+    public List<String> getSendModesAsList() {
+        List<String> modes = new ArrayList<String>();
+        modes.addAll(getSearchableSendModeFromGeneralProps());
+        modes.add(getTransmittalMode());
+        return modes;
+    }
+
+    @SuppressWarnings("unchecked")
     public List<String> getSearchableSendMode() {
         return (List<String>) getSearchableProperties().get(DocumentCommonModel.Props.SEARCHABLE_SEND_MODE);
     }
@@ -542,8 +594,7 @@ public class Document extends Node implements Comparable<Document>, CssStylable,
     public List<File> getFiles() {
         if (files == null) {
             // probably not the best idea to call service from model, but alternatives get probably too complex
-            FileService fileService = (FileService) FacesContextUtils.getRequiredWebApplicationContext( //
-                    FacesContext.getCurrentInstance()).getBean(FileService.BEAN_NAME);
+            FileService fileService = BeanHelper.getFileService();
             try {
                 files = fileService.getAllActiveFiles(getNodeRef());
             } catch (InvalidNodeRefException e) {
@@ -555,6 +606,30 @@ public class Document extends Node implements Comparable<Document>, CssStylable,
             }
         }
         return files;
+    }
+
+    public List<File> getInactiveFiles() {
+        if (inactiveFiles == null) {
+            // probably not the best idea to call service from model, but alternatives get probably too complex
+            FileService fileService = BeanHelper.getFileService();
+            try {
+                inactiveFiles = (List<File>) CollectionUtils.select(fileService.getAllActiveAndInactiveFiles(nodeRef), new Predicate<File>() { // TODO - Can be optimized.
+
+                            @Override
+                            public boolean evaluate(File file) {
+                                return !file.isActive();
+                            }
+
+                        });
+            } catch (InvalidNodeRefException e) {
+                // Document has been deleted between initial transaction (that constructed document list)
+                // and this transaction (JSF rendering phase, value-binding from JSP is being resolved).
+                // Removing a row at current stage would be too complicated and displaying an error message too confusing,
+                // so just silence the exception - user sees document row with no file icons.
+                inactiveFiles = new ArrayList<File>();
+            }
+        }
+        return inactiveFiles;
     }
 
     @Override

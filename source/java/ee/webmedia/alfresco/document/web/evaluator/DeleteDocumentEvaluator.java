@@ -1,7 +1,5 @@
 package ee.webmedia.alfresco.document.web.evaluator;
 
-import static ee.webmedia.alfresco.privilege.service.PrivilegeUtil.isAdminOrDocmanagerWithViewDocPermission;
-
 import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.web.action.evaluator.BaseActionEvaluator;
 import org.alfresco.web.bean.repository.Node;
@@ -11,9 +9,6 @@ import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 
 /**
  * UI action evaluator for validating whether user can delete current document.
- * 
- * @author Romet Aidla
- * @author Ats Uiboupin - dropped most of the code in favor to permissions
  */
 public class DeleteDocumentEvaluator extends BaseActionEvaluator {
     private static final long serialVersionUID = 0L;
@@ -26,8 +21,7 @@ public class DeleteDocumentEvaluator extends BaseActionEvaluator {
         if (!new ViewStateActionEvaluator().evaluate(docNode)) {
             return false;
         }
-        return isAdminOrDocmanagerWithViewDocPermission(docNode)
+        return new IsAdminOrDocManagerEvaluator().evaluate(docNode)
                 || (StringUtils.isBlank((String) docNode.getProperties().get(DocumentCommonModel.Props.REG_NUMBER)) && new IsOwnerEvaluator().evaluate(docNode));
     }
-
 }

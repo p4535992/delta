@@ -1,6 +1,7 @@
 package ee.webmedia.alfresco.docconfig.generator.systematic;
 
 import static ee.webmedia.alfresco.common.web.BeanHelper.getClassificatorService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentAdminService;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -22,6 +23,7 @@ import javax.faces.el.MethodBinding;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
+import org.alfresco.web.bean.generator.BaseComponentGenerator.CustomAttributeNames;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.ArrayUtils;
@@ -40,6 +42,8 @@ import ee.webmedia.alfresco.common.propertysheet.multivalueeditor.PropsBuilder;
 import ee.webmedia.alfresco.common.propertysheet.search.Search;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.WmNode;
+import ee.webmedia.alfresco.docadmin.service.DocumentTypeValidator;
+import ee.webmedia.alfresco.docadmin.service.DocumentTypeVersion;
 import ee.webmedia.alfresco.docadmin.service.Field;
 import ee.webmedia.alfresco.docadmin.service.FieldGroup;
 import ee.webmedia.alfresco.docconfig.bootstrap.SystematicFieldGroupNames;
@@ -57,13 +61,13 @@ import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
 import ee.webmedia.alfresco.utils.CalendarUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
+import ee.webmedia.alfresco.utils.TextUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UserUtil;
 
-/**
- * @author Alar Kvell
- */
-public class ErrandGenerator extends BaseSystematicGroupGenerator implements SaveListener, BeanNameAware {
+public class ErrandGenerator extends BaseSystematicGroupGenerator implements SaveListener, BeanNameAware, DocumentTypeValidator {
+    private static final String SUBSTITUTE_JOB_TITLE_FIELD_ID = "substituteJobTitle";
+
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(ErrandGenerator.class);
 
     private static final String ERRAND_STATE_HOLDER_KEY = "errandGroup";
@@ -86,15 +90,24 @@ public class ErrandGenerator extends BaseSystematicGroupGenerator implements Sav
     // Table, UserContactTableGenerator
     private final List<String> substituteTableFieldIds = Arrays.asList(
             "substituteName", // NOT removable from systematic group
-            "substituteJobTitle",
+            SUBSTITUTE_JOB_TITLE_FIELD_ID,
             "substitutionBeginDate", // NOT removable from systematic group
             "substitutionEndDate"); // NOT removable from systematic group
+
+    private List<String> substituteTableMandatoryFieldIds;
 
     // Table -- only on abroad
     private final List<String> dailyAllowanceTableFieldIds = Arrays.asList(
             "dailyAllowanceDays", // NOT removable from systematic group
             "dailyAllowanceRate", // NOT removable from systematic group
             "dailyAllowanceSum"); // NOT removable from systematic group
+
+    // Table -- only on errand
+    private final List<String> dailyAllowanceTableErrandFieldIds = Arrays.asList(
+            "dailyAllowanceCateringCount", // NOT removable from systematic group
+            "dailyAllowanceDays", // NOT removable from systematic group
+            "dailyAllowanceRate", // NOT removable from systematic group
+            "dailyAllowanceFinancingSource"); // NOT removable from systematic group
 
     // Table
     private final List<String> expenseTableFieldIds = Arrays.asList(
@@ -115,6 +128,14 @@ public class ErrandGenerator extends BaseSystematicGroupGenerator implements Sav
     private final List<String> advancePaymentInlineFieldIds = Arrays.asList(
             "advancePaymentSum", // NOT removable from systematic group; DOUBLE
             "advancePaymentDesc"); // NOT removable from systematic group
+
+    @Override
+    public void afterPropertiesSet() {
+        substituteTableMandatoryFieldIds = new ArrayList<String>(substituteTableFieldIds);
+        substituteTableMandatoryFieldIds.remove(SUBSTITUTE_JOB_TITLE_FIELD_ID);
+        getDocumentAdminService().registerDocumentTypeValidator("substituteFieldConsistency", this);
+        super.afterPropertiesSet();
+    }
 
     @Override
     protected String[] getSystematicGroupNames() {
@@ -145,6 +166,19 @@ public class ErrandGenerator extends BaseSystematicGroupGenerator implements Sav
         errandAbroadFieldIds.add("dailyAllowanceTotalSum"); // NOT removable from systematic group
         errandAbroadFieldIds.add("reportDueDate");
 
+        Set<String> errandFieldIds = new HashSet<String>();
+        errandFieldIds.addAll(errandDateInlineFieldIds);
+        errandFieldIds.add("country");
+        errandFieldIds.add("city");
+        errandFieldIds.addAll(dailyAllowanceTableErrandFieldIds);
+        errandFieldIds.add("expenseType");
+        errandFieldIds.add("expenseDesc");
+        errandFieldIds.add("expensesFinancingSource");
+        errandFieldIds.add("advancePaymentSum");
+        errandFieldIds.add("advancePaymentDesc");
+        errandFieldIds.addAll(substituteTableFieldIds);
+        errandFieldIds.add("errandComment");
+
         Map<QName[], Set<String>> applicantDomesticAdditionalHierarchy = new HashMap<QName[], Set<String>>();
         applicantDomesticAdditionalHierarchy.put(new QName[] { DocumentChildModel.Assocs.ERRAND_DOMESTIC }, errandDomesticFieldIds);
         documentConfigService.registerChildAssocTypeQNameHierarchy(SystematicFieldGroupNames.ERRAND_DOMESTIC_APPLICANT, DocumentChildModel.Assocs.APPLICANT_DOMESTIC,
@@ -157,6 +191,11 @@ public class ErrandGenerator extends BaseSystematicGroupGenerator implements Sav
 
         documentConfigService.registerChildAssocTypeQNameHierarchy(SystematicFieldGroupNames.TRAINING_APPLICANT, DocumentChildModel.Assocs.APPLICANT_TRAINING, null);
 
+        Map<QName[], Set<String>> applicantErrandAdditionalHierarchy = new HashMap<QName[], Set<String>>();
+        applicantErrandAdditionalHierarchy.put(new QName[] { DocumentChildModel.Assocs.ERRAND }, errandFieldIds);
+        documentConfigService.registerChildAssocTypeQNameHierarchy(SystematicFieldGroupNames.ERRAND_APPLICANT, DocumentChildModel.Assocs.APPLICANT_ERRAND,
+                applicantErrandAdditionalHierarchy);
+
         Set<String> multiValueOverrideFieldOriginalIds = new HashSet<String>();
         multiValueOverrideFieldOriginalIds.addAll(substituteTableFieldIds);
         multiValueOverrideFieldOriginalIds.addAll(dailyAllowanceTableFieldIds);
@@ -164,8 +203,11 @@ public class ErrandGenerator extends BaseSystematicGroupGenerator implements Sav
         documentConfigService.registerMultiValuedOverrideBySystematicGroupName(SystematicFieldGroupNames.ERRAND_DOMESTIC_APPLICANT, multiValueOverrideFieldOriginalIds);
         documentConfigService.registerMultiValuedOverrideBySystematicGroupName(SystematicFieldGroupNames.ERRAND_ABROAD_APPLICANT, multiValueOverrideFieldOriginalIds);
         documentConfigService.registerMultiValuedOverrideBySystematicGroupName(SystematicFieldGroupNames.TRAINING_APPLICANT, multiValueOverrideFieldOriginalIds);
+        multiValueOverrideFieldOriginalIds.addAll(Arrays.asList("dailyAllowanceCateringCount", "dailyAllowanceFinancingSource", "expenseDesc", "expensesFinancingSource"));
+        documentConfigService.registerMultiValuedOverrideBySystematicGroupName(SystematicFieldGroupNames.ERRAND_APPLICANT, multiValueOverrideFieldOriginalIds);
 
-        return new String[] { SystematicFieldGroupNames.ERRAND_DOMESTIC_APPLICANT, SystematicFieldGroupNames.ERRAND_ABROAD_APPLICANT, SystematicFieldGroupNames.TRAINING_APPLICANT };
+        return new String[] { SystematicFieldGroupNames.ERRAND_DOMESTIC_APPLICANT, SystematicFieldGroupNames.ERRAND_ABROAD_APPLICANT, SystematicFieldGroupNames.TRAINING_APPLICANT,
+                SystematicFieldGroupNames.ERRAND_APPLICANT };
     }
 
     @Override
@@ -220,21 +262,43 @@ public class ErrandGenerator extends BaseSystematicGroupGenerator implements Sav
             if (relatedFields != null) {
                 boolean forceEditMode = false;
                 if (!relatedFields.isEmpty()) {
-                    forceEditMode = generateReadonlyGroupItem(relatedFields2.getFirst(), relatedFields, "applicantName", convertHierarchyToString(hierarchy), generatorResults,
+                    forceEditMode = generateReadonlyGroupItem(relatedFields2.getFirst(), relatedFields, Arrays.asList("applicantName", "country"),
+                            convertHierarchyToString(hierarchy), generatorResults,
                             fieldsByOriginalId);
                 }
                 generateFields(generatorResults, items, primaryStateHolder, stateHolders, hierarchy, forceEditMode, relatedFields.toArray(new Field[relatedFields.size()]));
                 continue;
             }
-            relatedFields = collectAndRemoveFieldsInOriginalOrder(notProcessedFields, field, dailyAllowanceTableFieldIds);
+            List<String> dailyAllowanceFields = new ArrayList<String>();
+            dailyAllowanceFields.add("dailyAllowanceCateringCount");
+            dailyAllowanceFields.addAll(dailyAllowanceTableFieldIds);
+            dailyAllowanceFields.add("dailyAllowanceFinancingSource");
+
+            relatedFields = collectAndRemoveFieldsInOriginalOrder(notProcessedFields, field, dailyAllowanceFields);
             if (relatedFields != null) {
-                List<String> columnStyleClasses = Arrays.asList("dailyAllowanceDaysField", "dailyAllowanceRateField", "dailyAllowanceSumField");
+                List<String> columnStyleClasses = relatedFields.size() < 4 ? Arrays.asList("dailyAllowanceDaysField", "dailyAllowanceRateField", "dailyAllowanceSumField")
+                        : Collections.<String> emptyList();
                 setDailyAllowanceSumParameter(relatedFields);
-                ItemConfigVO item = generateTable(generatorResults, items, primaryStateHolder, hierarchy, relatedFields, field, "Päevaraha", "add", columnStyleClasses, true);
+
+                // Check if any of the fields for daily allowance are mandatory
+                for (String originalFieldId : dailyAllowanceTableFieldIds) {
+                    Field allowanceField = fieldsByOriginalId.get(originalFieldId);
+                    if (allowanceField != null && allowanceField.isMandatory()) {
+                        primaryStateHolder.dailyAllowanceMandatory = true;
+                        break;
+                    }
+                }
+
+                ItemConfigVO item = generateTable(generatorResults, items, primaryStateHolder, hierarchy, relatedFields, field, "Päevaraha", "add", columnStyleClasses, primaryStateHolder.dailyAllowanceMandatory);
                 item.setStyleClass("add-expense");
                 continue;
             }
-            relatedFields = collectAndRemoveFieldsInOriginalOrder(notProcessedFields, field, expenseTableFieldIds);
+
+            List<String> expenseFields = new ArrayList<String>(expenseTableFieldIds);
+            expenseFields.add("expenseType");
+            expenseFields.add("expenseDesc");
+            expenseFields.add("expensesFinancingSource");
+            relatedFields = collectAndRemoveFieldsInOriginalOrder(notProcessedFields, field, expenseFields);
             if (relatedFields != null) {
                 List<String> columnStyleClasses = Arrays.asList("", "expectedExpenseSumField");
                 ItemConfigVO item = generateTable(generatorResults, items, primaryStateHolder, hierarchy, relatedFields, field, "Kulud", "add", columnStyleClasses, false);
@@ -317,9 +381,24 @@ public class ErrandGenerator extends BaseSystematicGroupGenerator implements Sav
         ItemConfigVO item = result.getFirst();
         item.setComponentGenerator("InlinePropertyGroupGenerator");
         item.setTextId(textId);
-        item.setProps(result.getSecond());
-
+        String props = result.getSecond();
+        
+        if (relatedFields.size() >= 2) {
+            item.setProps(addMandatoryMarkers(relatedFields, props));
+        } else {
+            item.setProps(props);
+        }
         return item;
+    }
+
+    private String addMandatoryMarkers(List<Field> relatedFields, String props) {
+        String[] prop = props.split(CombinedPropReader.AttributeNames.DEFAULT_PROPERTIES_SEPARATOR);
+        for (int i = 0; i < relatedFields.size(); i++) {
+            if (relatedFields.get(i).isMandatory()) {
+                prop[i] += PropsBuilder.DEFAULT_OPTIONS_SEPARATOR + CustomAttributeNames.ATTR_MANDATORY + "=true";
+            }
+        }
+        return StringUtils.join(prop, CombinedPropReader.AttributeNames.DEFAULT_PROPERTIES_SEPARATOR);
     }
 
     private Pair<ItemConfigVO, String> generateBasePropsItem(FieldGroupGeneratorResults generatorResults, Map<String, ItemConfigVO> items, ErrandState primaryStateHolder,
@@ -384,6 +463,10 @@ public class ErrandGenerator extends BaseSystematicGroupGenerator implements Sav
             readonlyFieldsName = "Määrata asendajaks";
         }
         if (relatedFields == null) {
+            relatedFields = collectAndRemoveFieldsInSpecifiedOrder(modifiableFieldsList, field, Arrays.asList("country", "city"));
+            readonlyFieldsName = "Toimumiskoht";
+        }
+        if (relatedFields == null) {
             return null;
         }
         FieldGroup fakeGroup = new FieldGroup(field.getParent().getParent());
@@ -403,20 +486,34 @@ public class ErrandGenerator extends BaseSystematicGroupGenerator implements Sav
         return Pair.newInstance(primaryFakeField, fakeFields);
     }
 
-    private boolean generateReadonlyGroupItem(Field primaryField, List<Field> fields, String primaryFieldRequiredId, String subpropSheetId,
+    private boolean generateReadonlyGroupItem(Field primaryField, List<Field> fields, List<String> primaryFieldRequiredId, String subpropSheetId,
             FieldGroupGeneratorResults generatorResults, Map<String, Field> fieldsByOriginalId) {
         String primaryFakeFieldId = primaryField != null ? primaryField.getFieldId() : null;
-        if (!fieldsByOriginalId.get(primaryFieldRequiredId).getFieldId().equals(primaryFakeFieldId)) {
+        boolean foundRequiredField = false;
+        for (String requiredId : primaryFieldRequiredId) {
+            Field field = fieldsByOriginalId.get(requiredId);
+            if (field != null && field.getFieldId().equals(primaryFakeFieldId)) {
+                foundRequiredField = true;
+                break;
+            }
+        }
+
+        if (!foundRequiredField) {
             return false;
         }
+
         FieldGroup fieldGroup = (FieldGroup) primaryField.getParent();
         StringBuffer readonlyFieldsRule = new StringBuffer("{" + primaryFakeFieldId + "}");
 
         List<Field> readonlyViewFields = new ArrayList<Field>();
+        List<String> ignoredFields = Arrays.asList("applicantName", "applicantId", "country", "city");
         for (Field fakeField : fields) {
             String originalFieldId = fakeField.getOriginalFieldId();
-            if (!"applicantName".equals(originalFieldId) && !"applicantId".equals(originalFieldId)) {
+            if (!ignoredFields.contains(originalFieldId)) {
                 readonlyViewFields.add(fakeField);
+            }
+            if ("city".equals(originalFieldId)) {
+                readonlyFieldsRule.append(", {" + fakeField.getFieldId() + "}");
             }
         }
 
@@ -459,51 +556,70 @@ public class ErrandGenerator extends BaseSystematicGroupGenerator implements Sav
     }
 
     private void setSpecificItemProps(ItemConfigVO item, Field field, ErrandState primaryStateHolder) {
-        if (DocumentSpecificModel.Props.DAILY_ALLOWANCE_TOTAL_SUM.getLocalName().equals(field.getOriginalFieldId())) {
+        String originalFieldId = field.getOriginalFieldId();
+        if (DocumentSpecificModel.Props.DAILY_ALLOWANCE_TOTAL_SUM.getLocalName().equals(originalFieldId)) {
             addStyleClass(item, "dailyAllowanceTotalSumField");
             primaryStateHolder.dailyAllowanceTotalSumProp = field.getQName();
-        } else if (DocumentSpecificModel.Props.DAILY_ALLOWANCE_DAYS.getLocalName().equals(field.getOriginalFieldId())) {
+        } else if (DocumentSpecificModel.Props.DAILY_ALLOWANCE_DAYS.getLocalName().equals(originalFieldId)) {
             primaryStateHolder.dailyAllowanceDaysProp = field.getQName();
-        } else if (DocumentSpecificModel.Props.DAILY_ALLOWANCE_RATE.getLocalName().equals(field.getOriginalFieldId())) {
+            Field cateringCountField = ((FieldGroup) field.getParent()).getFieldsByOriginalId().get(DocumentSpecificModel.Props.DAILY_ALLOWANCE_CATERING_COUNT.getLocalName());
+            if (cateringCountField != null) {
+                item.setMandatoryIf(cateringCountField.getQName().toPrefixString(namespaceService) + "!=null");
+            }
+        } else if (DocumentSpecificModel.Props.DAILY_ALLOWANCE_RATE.getLocalName().equals(originalFieldId)) {
             primaryStateHolder.dailyAllowanceRateProp = field.getQName();
-        } else if (DocumentSpecificModel.Props.DAILY_ALLOWANCE_SUM.getLocalName().equals(field.getOriginalFieldId())) {
+            Field cateringCountField = ((FieldGroup) field.getParent()).getFieldsByOriginalId().get(DocumentSpecificModel.Props.DAILY_ALLOWANCE_CATERING_COUNT.getLocalName());
+            if (cateringCountField != null) {
+                item.setMandatoryIf(cateringCountField.getQName().toPrefixString(namespaceService) + "!=null");
+            }
+        } else if (DocumentSpecificModel.Props.DAILY_ALLOWANCE_SUM.getLocalName().equals(originalFieldId)) {
             primaryStateHolder.dailyAllowanceSumProp = field.getQName();
-        } else if (DocumentSpecificModel.Props.EXPENSES_TOTAL_SUM.getLocalName().equals(field.getOriginalFieldId())) {
+        } else if (DocumentSpecificModel.Props.EXPENSES_TOTAL_SUM.getLocalName().equals(originalFieldId)) {
             addStyleClass(item, "expensesTotalSumField");
             primaryStateHolder.expensesTotalSumProp = field.getQName();
-        } else if (DocumentDynamicModel.Props.REPORT_DUE_DATE.getLocalName().equals(field.getOriginalFieldId())) {
+        } else if (DocumentDynamicModel.Props.REPORT_DUE_DATE.getLocalName().equals(originalFieldId)) {
             addStyleClass(item, "date reportDueDate");
-        } else if (DocumentSpecificModel.Props.EVENT_BEGIN_DATE.getLocalName().equals(field.getOriginalFieldId())) {
+        } else if (DocumentSpecificModel.Props.EVENT_BEGIN_DATE.getLocalName().equals(originalFieldId)) {
             addStyleClass(item, "date eventBeginDate");
-        } else if (DocumentSpecificModel.Props.EVENT_END_DATE.getLocalName().equals(field.getOriginalFieldId())) {
+        } else if (DocumentSpecificModel.Props.EVENT_END_DATE.getLocalName().equals(originalFieldId)) {
             addStyleClass(item, "date eventEndDate");
-        } else if (DocumentSpecificModel.Props.ERRAND_BEGIN_DATE.getLocalName().equals(field.getOriginalFieldId())) {
+        } else if (DocumentSpecificModel.Props.ERRAND_BEGIN_DATE.getLocalName().equals(originalFieldId)) {
             addStyleClass(item, "date errandBeginDate");
             primaryStateHolder.errandBeginDateProp = field.getQName();
-        } else if (DocumentSpecificModel.Props.ERRAND_END_DATE.getLocalName().equals(field.getOriginalFieldId())) {
+        } else if (DocumentSpecificModel.Props.ERRAND_END_DATE.getLocalName().equals(originalFieldId)) {
             addStyleClass(item, "date errandEndDate errandReportDateBase");
             primaryStateHolder.errandEndDateProp = field.getQName();
-        } else if (DocumentSpecificModel.Props.EXPECTED_EXPENSE_SUM.getLocalName().equals(field.getOriginalFieldId())) {
+        } else if (DocumentSpecificModel.Props.DAILY_ALLOWANCE_FINANCING_SOURCE.getLocalName().equals(originalFieldId)) {
+            Field cateringCountField = ((FieldGroup) field.getParent()).getFieldsByOriginalId().get(DocumentSpecificModel.Props.DAILY_ALLOWANCE_CATERING_COUNT.getLocalName());
+            if (cateringCountField != null) {
+                item.setMandatoryIf(cateringCountField.getQName().toPrefixString(namespaceService) + "!=null");
+            }
+        } else if (DocumentSpecificModel.Props.EXPECTED_EXPENSE_SUM.getLocalName().equals(originalFieldId)
+                || DocumentSpecificModel.Props.EXPENSES_FINANCING_SOURCE.getLocalName().equals(originalFieldId)) {
             Field expenseTypeField = ((FieldGroup) field.getParent()).getFieldsByOriginalId().get(DocumentDynamicModel.Props.EXPENSE_TYPE.getLocalName());
-            item.setMandatoryIf(expenseTypeField.getQName().toPrefixString(namespaceService) + "!=null");
-            primaryStateHolder.expectedExpenseSumProp = field.getQName();
-        } else if (DocumentSpecificModel.Props.APPLICANT_NAME.getLocalName().equals(field.getOriginalFieldId())) {
+            if (expenseTypeField != null) {
+                item.setMandatoryIf(expenseTypeField.getQName().toPrefixString(namespaceService) + "!=null");
+            }
+            if (DocumentSpecificModel.Props.EXPECTED_EXPENSE_SUM.getLocalName().equals(originalFieldId)) {
+                primaryStateHolder.expectedExpenseSumProp = field.getQName();
+            }
+        } else if (DocumentSpecificModel.Props.APPLICANT_NAME.getLocalName().equals(originalFieldId)) {
             Assert.isTrue(Boolean.valueOf(item.getCustomAttributes().get(Search.SETTER_CALLBACK_TAKES_NODE)));
             primaryStateHolder.originalApplicantNameSetterCallback = item.getCustomAttributes().get(Search.SETTER_CALLBACK);
             item.setSetterCallback(getBindingName("setApplicantName", ERRAND_STATE_HOLDER_KEY));
-        } else if (DocumentDynamicModel.Props.APPLICANT_ORG_STRUCT_UNIT.getLocalName().equals(field.getOriginalFieldId())) {
+        } else if (DocumentDynamicModel.Props.APPLICANT_ORG_STRUCT_UNIT.getLocalName().equals(originalFieldId)) {
             item.setSetterCallbackTakesNode(true);
             item.setSetterCallback(getBindingName("setApplicantOrgStructUnit", ERRAND_STATE_HOLDER_KEY));
             item.setAjaxParentLevel(1);
             primaryStateHolder.applicantOrgStructUnitProp = field.getQName();
-        } else if (DocumentSpecificModel.Props.COST_MANAGER.getLocalName().equals(field.getOriginalFieldId())) {
+        } else if (DocumentSpecificModel.Props.COST_MANAGER.getLocalName().equals(originalFieldId)) {
             primaryStateHolder.costManagerProp = field.getQName();
             String classificatorName = field.getClassificator();
             if (StringUtils.isNotBlank(classificatorName)) {
                 primaryStateHolder.costManagerClassificatorValues = getClassificatorService().getActiveClassificatorValues(
                         getClassificatorService().getClassificatorByName(classificatorName));
             }
-        } else if (DocumentDynamicModel.Props.COST_CENTER.getLocalName().equals(field.getOriginalFieldId())) {
+        } else if (DocumentDynamicModel.Props.COST_CENTER.getLocalName().equals(originalFieldId)) {
             primaryStateHolder.costCenterProp = field.getQName();
             String classificatorName = field.getClassificator();
             if (StringUtils.isNotBlank(classificatorName)) {
@@ -589,6 +705,7 @@ public class ErrandGenerator extends BaseSystematicGroupGenerator implements Sav
         private QName dailyAllowanceTotalSumProp; // NOT removable from systematic group
         private QName errandBeginDateProp; // NOT removable from systematic group
         private QName errandEndDateProp; // NOT removable from systematic group
+        private boolean dailyAllowanceMandatory;
 
         public ErrandState(Double dailyAllowanceSumParamValue) {
             dailyAllowanceSum = dailyAllowanceSumParamValue != null ? new BigDecimal(dailyAllowanceSumParamValue) : BigDecimal.ZERO;
@@ -729,7 +846,7 @@ public class ErrandGenerator extends BaseSystematicGroupGenerator implements Sav
                 Date errandEnd = (Date) properties.get(errandEndDateProp.toString());
                 if (errandBegin != null && errandEnd != null) {
                     int calculatedDays = CalendarUtil.getDaysBetween(new LocalDate(errandBegin.getTime()), new LocalDate(errandEnd.getTime()));
-                    if (dailyAllowanceDaysTotal != calculatedDays) {
+                    if (dailyAllowanceMandatory && dailyAllowanceDaysTotal != calculatedDays) {
                         throw new UnableToPerformException("document_errand_dailyAllowance_days_sum_match_totalDays");
                     }
                 }
@@ -776,6 +893,10 @@ public class ErrandGenerator extends BaseSystematicGroupGenerator implements Sav
     }
 
     private void validateErrandDailyAllowance(ValidationHelper validationHelper, ErrandState errandStateHolder, List<Node> errands) {
+        if (!errandStateHolder.dailyAllowanceMandatory) {
+            return;
+        }
+
         outer: for (Node errand : errands) {
             Map<String, Object> properties = errand.getProperties();
             @SuppressWarnings("unchecked")
@@ -809,4 +930,21 @@ public class ErrandGenerator extends BaseSystematicGroupGenerator implements Sav
         this.parametersService = parametersService;
     }
 
+    @Override
+    public boolean validate(DocumentTypeVersion type, Map<String, String> errorMessages) {
+        boolean valid = true;
+        for (Field field : type.getFieldsDeeply()) {
+            if (field.getParent() instanceof FieldGroup) {
+                FieldGroup parentGroup = (FieldGroup) field.getParent();
+                if (parentGroup.isSystematic() && substituteTableFieldIds.contains(field.getOriginalFieldId())) {
+                    valid &= parentGroup.getFieldsByOriginalId().keySet().containsAll(substituteTableMandatoryFieldIds);
+                    if (!valid && errorMessages.size() == 0) {
+                        errorMessages.put("docType_save_error_missing_substitute_field", TextUtil.joinNonBlankStringsWithComma(substituteTableMandatoryFieldIds));
+                    }
+                }
+            }
+
+        }
+        return valid;
+    }
 }

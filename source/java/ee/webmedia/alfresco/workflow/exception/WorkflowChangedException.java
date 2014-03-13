@@ -2,9 +2,6 @@ package ee.webmedia.alfresco.workflow.exception;
 
 import ee.webmedia.alfresco.workflow.service.BaseWorkflowObject;
 
-/**
- * @author Alar Kvell
- */
 public class WorkflowChangedException extends RuntimeException {
     private static final long serialVersionUID = 1L;
 

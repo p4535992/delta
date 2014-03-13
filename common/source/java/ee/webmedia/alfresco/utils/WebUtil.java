@@ -1,5 +1,7 @@
 package ee.webmedia.alfresco.utils;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getGeneralService;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -11,6 +13,7 @@ import java.util.regex.Pattern;
 import javax.faces.context.FacesContext;
 import javax.faces.model.SelectItem;
 
+import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.data.IDataContainer;
 import org.alfresco.web.data.QuickSort;
 import org.apache.commons.lang.StringEscapeUtils;
@@ -19,6 +22,7 @@ import org.springframework.web.util.HtmlUtils;
 
 import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.workflow.model.RelatedUrl;
 
 public class WebUtil {
     /**
@@ -142,6 +146,21 @@ public class WebUtil {
             context = FacesContext.getCurrentInstance();
         }
         context.getApplication().getNavigationHandler().handleNavigation(context, null, navigationOutcome);
+    }
+
+    public static NodeRef getNodeRefFromNodeId(String currentNodeId) {
+        return StringUtils.isNotBlank(currentNodeId) ? getGeneralService().getExistingNodeRefAllStores(currentNodeId) : null;
+    }
+
+    public static void toggleSystemUrlTarget(String currentDeltaUrlPrefix, Collection<RelatedUrl> urls) {
+        if (StringUtils.isNotBlank(currentDeltaUrlPrefix)) {
+            for (RelatedUrl relatedUrl : urls) {
+                String url = relatedUrl.getUrl();
+                if (StringUtils.isNotBlank(url) && url.startsWith(currentDeltaUrlPrefix)) {
+                    relatedUrl.setTarget(RelatedUrl.TARGET_SELF);
+                }
+            }
+        }
     }
 
 }

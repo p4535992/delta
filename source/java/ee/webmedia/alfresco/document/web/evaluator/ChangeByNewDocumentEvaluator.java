@@ -10,9 +10,6 @@ import org.alfresco.web.bean.repository.Node;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel.Props;
 
-/**
- * @author Kaarel Jõgeva
- */
 public class ChangeByNewDocumentEvaluator extends BaseActionEvaluator {
 
     private static final long serialVersionUID = 1L;

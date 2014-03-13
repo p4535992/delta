@@ -32,8 +32,6 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
  * Util methods used by several classes
- * 
- * @author Ats Uiboupin
  */
 public class DocAdminUtil {
     /**

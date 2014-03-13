@@ -4,8 +4,6 @@ import org.alfresco.repo.security.authentication.AuthenticationException;
 
 /**
  * Used to notify {@link SimpleAuthenticationFilter} that user does not exist, even after synchronizing from userRegistry.
- * 
- * @author Ats Uiboupin
  */
 public class UserNotFoundException extends AuthenticationException {
     private static final long serialVersionUID = 1L;

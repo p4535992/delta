@@ -15,7 +15,7 @@
          <f:facet name="header">
             <a:sortLink id="col1-header" label="#{msg.workflow_task_opinion_doer_role}" value="ownerName" styleClass="header" />
          </f:facet>
-         <h:outputText id="col1-txt" value="#{r.ownerName}" />
+         <h:outputText id="col1-txt" value="#{r.ownerNameWithSubstitute}" />
       </a:column>
 
       <a:column id="col2" style="width: 10%;">

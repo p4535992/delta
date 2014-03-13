@@ -101,6 +101,17 @@ public class Node implements Serializable, NamespacePrefixResolverProvider
       
       this.properties = new QNameNodeMap<String, Object>(this, this);
    }
+   
+   public void updateNodeRef(NodeRef newRef)
+   {
+       if (newRef == null)
+       {
+           throw new IllegalArgumentException("NodeRef cannot be changed to null.");
+       }
+
+       nodeRef = newRef;
+       id = newRef.getId();
+   }
 
    /**
     * @return All the properties known about this node.

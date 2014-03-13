@@ -7,8 +7,6 @@ import ee.webmedia.alfresco.volume.web.VolumeTypePrivilegesHandler;
 
 /**
  * {@link PrivilegesHandler} for nodes of type {@link CaseFileModel.Types#CASE_FILE}
- * 
- * @author Kaarel Jõgeva
  */
 public class CaseFileTypePrivilegesHandler extends DocumentTypePrivilegesHandler {
 

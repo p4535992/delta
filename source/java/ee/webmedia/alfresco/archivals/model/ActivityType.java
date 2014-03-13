@@ -1,8 +1,5 @@
 package ee.webmedia.alfresco.archivals.model;
 
-/**
- * @author Riina Tens
- */
 public enum ActivityType {
 
     TO_REVIEW_DOC,

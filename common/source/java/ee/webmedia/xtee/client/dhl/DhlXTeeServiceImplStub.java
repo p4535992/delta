@@ -35,8 +35,6 @@ import ee.webmedia.xtee.client.dhl.types.ee.sk.digiDoc.v13.SignedDocType;
  * Base class that helps to imitate importing documents from DVK web service. Subclass just needs to <br>
  * 1) implement {@link #getDvkDokumentXml()} that returns String containing <dhl:dokument> element <br>
  * 2) call {@link #setHasDocuments(boolean)} method before executing {@link #receiveDocuments(int)}.
- * 
- * @author Ats Uiboupin
  */
 public abstract class DhlXTeeServiceImplStub extends DhlXTeeServiceImpl {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(DhlXTeeServiceImplStub.class);

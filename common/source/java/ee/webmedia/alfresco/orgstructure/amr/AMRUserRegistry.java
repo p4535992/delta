@@ -30,8 +30,6 @@ import ee.webmedia.alfresco.utils.UserUtil;
 
 /**
  * A {@link UserRegistry} implementation with the ability to query Alfresco-like descriptions of users and groups from a SIM "Ametnikeregister".
- * 
- * @author Ats Uiboupin
  */
 public class AMRUserRegistry implements UserRegistry, ActivateableBean {
     private static Log log = LogFactory.getLog(AMRUserRegistry.class);

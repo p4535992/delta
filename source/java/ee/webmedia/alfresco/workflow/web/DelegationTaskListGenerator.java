@@ -43,8 +43,6 @@ import ee.webmedia.alfresco.workflow.service.WorkflowUtil;
 /**
  * Depending on "taskType" attribute it generates taskList for delegating assignment task as
  * new ASSIGNMENT_RESPONSIBLE, ASSIGNMENT_NOT_RESPONSIBLE, INFORMATION or OPINION task
- * 
- * @author Ats Uiboupin
  */
 public class DelegationTaskListGenerator extends TaskListGenerator {
     /**

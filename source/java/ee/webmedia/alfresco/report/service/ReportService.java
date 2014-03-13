@@ -9,9 +9,6 @@ import org.alfresco.web.bean.repository.Node;
 import ee.webmedia.alfresco.classificator.enums.TemplateReportType;
 import ee.webmedia.alfresco.report.model.ReportDataCollector;
 
-/**
- * @author Riina Tens
- */
 public interface ReportService {
 
     String BEAN_NAME = "ReportService";
@@ -19,6 +16,8 @@ public interface ReportService {
     ReportDataCollector getReportFileInMemory(ReportDataCollector reportDataCollector);
 
     NodeRef createReportResult(Node filter, TemplateReportType reportType, QName parentToChildAssoc);
+
+    NodeRef createCsvReportResult(NodeRef nodeRef);
 
     List<NodeRef> getAllRunningReports();
 

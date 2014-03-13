@@ -16,8 +16,6 @@ import ee.webmedia.alfresco.utils.SearchUtil;
 
 /**
  * Id of {@link DocumentType} used to be in "docadmin:documentTypeId" property, but now it is in "docadmin:id"
- * 
- * @author Ats Uiboupin
  */
 public class DocTypesIdRefactorUpdater extends AbstractNodeUpdater {
     private static final QName OLD_ID = QName.createQName(DocumentAdminModel.URI, "documentTypeId");

@@ -16,8 +16,6 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
  * Validates that input string only contains letters
- * 
- * @author Ats Uiboupin
  */
 public class OnlyLettersValidator extends ForcedMandatoryValidator implements StateHolder {
     private static final long serialVersionUID = 1L;

@@ -21,8 +21,6 @@ import ee.webmedia.alfresco.volume.model.VolumeModel;
 
 /**
  * Add or update location properties for existing case and volume nodes.
- * 
- * @author Riina Tens
  */
 public class VolumeAndCaseLocationPropUpdater extends AbstractNodeUpdater {
 

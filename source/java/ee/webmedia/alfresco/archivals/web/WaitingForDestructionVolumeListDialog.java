@@ -27,9 +27,6 @@ import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.volume.search.model.VolumeSearchModel;
 import ee.webmedia.alfresco.volume.service.VolumeService;
 
-/**
- * @author Riina Tens
- */
 public class WaitingForDestructionVolumeListDialog extends VolumeArchiveBaseDialog {
 
     private static final long serialVersionUID = 1L;

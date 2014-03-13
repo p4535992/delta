@@ -16,8 +16,6 @@ import ee.webmedia.alfresco.utils.TextUtil;
 
 /**
  * Remove delete documents from favorites directories. Cl task 213149.
- * 
- * @author Riina Tens
  */
 public class FavoritesDeletedDocumentsUpdater extends AbstractNodeUpdater {
 

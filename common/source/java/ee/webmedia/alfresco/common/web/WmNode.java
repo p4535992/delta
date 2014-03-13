@@ -52,8 +52,6 @@ import ee.webmedia.alfresco.workflow.search.model.CompoundWorkflowSearchModel;
  * Node that does not fetch properties (or anything) lazily, but takes data on creation. Thus does not depend on static FacesContext and can be used in service
  * layer (but see additional TODO in {@link #getNamespacePrefixResolver()}.
  * Can be used to both represent nodes loaded from repository or new nodes not saved to repository yet (see {@link #NOT_SAVED}.
- * 
- * @author Alar Kvell
  */
 public class WmNode extends TransientNode {
     private static final long serialVersionUID = 1L;
@@ -145,7 +143,7 @@ public class WmNode extends TransientNode {
     public WmNode clone() {
         WmNode clone = new WmNode(getNodeRef(), getType(), getAspects(), RepoUtil.toQNameProperties(getProperties(), true), getAddedAssociations());
 
-        // TODO Alar: deep cloning of values would be more correct
+        // TODO deep cloning of values would be more correct
         clone.allChildAssociationsByAssocType = allChildAssociationsByAssocType;
         clone.allChildAssociationsByAssocTypeRetrieved = allChildAssociationsByAssocTypeRetrieved;
         clone.childAssocsRetrieved = childAssocsRetrieved;
@@ -156,12 +154,12 @@ public class WmNode extends TransientNode {
         return clone;
     }
 
+    @Override
     public void updateNodeRef(NodeRef newRef) {
         if (newRef == null) {
             newRef = RepoUtil.createNewUnsavedNodeRef();
         }
-        nodeRef = newRef;
-        id = newRef.getId();
+        super.updateNodeRef(newRef);
     }
 
     @Override

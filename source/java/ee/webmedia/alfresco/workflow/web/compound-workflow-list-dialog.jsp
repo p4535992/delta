@@ -42,6 +42,16 @@
          </a:actionLink>
       </a:column>
       
+      <%-- State column --%>
+      <a:column id="col2_1">
+         <f:facet name="header">
+            <a:sortLink id="col2_1-lbl" label="#{msg.workflow_compound_state}" value="status" styleClass="header" />
+         </f:facet>
+         <a:actionLink id="col2_1-act" value="#{r.workflowStatus}" action="dialog:compoundWorkflowDialog" actionListener="#{CompoundWorkflowDialog.setupWorkflowFromList}">
+            <f:param name="nodeRef" value="#{r.compoundWorkflow.nodeRef}" />
+         </a:actionLink>
+      </a:column>
+      
       <%-- Object column --%>
       <a:column id="col3">
          <f:facet name="header">

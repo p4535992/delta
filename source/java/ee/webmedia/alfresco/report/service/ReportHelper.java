@@ -21,9 +21,6 @@ import ee.webmedia.alfresco.volume.search.model.VolumeSearchModel;
 import ee.webmedia.alfresco.workflow.search.model.TaskReportModel;
 import ee.webmedia.alfresco.workflow.search.model.TaskSearchModel;
 
-/**
- * @author Riina Tens
- */
 public class ReportHelper {
 
     /** Document report headings that are displayed conditionally (depending whether or not corresponding field is used) */
@@ -96,7 +93,7 @@ public class ReportHelper {
                         "task_search_result_compound_workflow_owner_organization_path", "task_search_result_compound_workflow_owner_job_title",
                         "task_search_result_compound_workflow_created_date_time", "task_search_result_compound_workflow_started_date_time",
                         "task_search_result_compound_workflow_stopped_date_time", "task_search_result_compound_workflow_finished_date_time",
-                        "task_search_result_compound_workflow_comment", "task_search_result_compound_workflow_status", "task_search_result_compound_workflow_document_count"));
+                        "task_search_result_compound_workflow_status", "task_search_result_compound_workflow_document_count"));
         reportHeaderMsgKeys.put(TemplateReportType.DOCUMENTS_REPORT,
                 Arrays.asList("document_report_regNumber", "document_report_regDate", "document_report_docType", "document_report_function", "document_report_series",
                         "document_report_volume", "document_report_case", "document_report_docName", "document_report_accessRestriction",

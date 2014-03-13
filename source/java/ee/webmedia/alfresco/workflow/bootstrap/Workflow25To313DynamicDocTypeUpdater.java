@@ -31,8 +31,6 @@ import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 
 /**
  * Update compound workflow docType property to dynamic type. Should run only when migrating from 2.5 to 3.13.
- * 
- * @author Riina Tens
  */
 public class Workflow25To313DynamicDocTypeUpdater extends AbstractNodeUpdater {
 

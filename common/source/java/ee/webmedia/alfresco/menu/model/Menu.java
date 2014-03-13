@@ -8,9 +8,6 @@ import com.thoughtworks.xstream.annotations.XStreamAlias;
 import com.thoughtworks.xstream.annotations.XStreamImplicit;
 import com.thoughtworks.xstream.annotations.XStreamOmitField;
 
-/**
- * @author Kaarel Jõgeva
- */
 @XStreamAlias("menu")
 public class Menu implements Serializable {
 

@@ -10,9 +10,6 @@ import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 
-/**
- * @author Alar Kvell
- */
 public class CompoundWorkflowDefinition extends CompoundWorkflow {
     private static final long serialVersionUID = 1L;
     private static final QName USER_FULL_NAME = RepoUtil.createTransientProp("userFullName");
@@ -22,7 +19,7 @@ public class CompoundWorkflowDefinition extends CompoundWorkflow {
     }
 
     @Override
-    protected CompoundWorkflowDefinition copy() {
+    public CompoundWorkflowDefinition copy() {
         return copyImpl(new CompoundWorkflowDefinition(getNode().clone(), getParent()));
     }
 

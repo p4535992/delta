@@ -12,8 +12,6 @@ import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel.Props;
 
 /**
  * Constant for different type of fields that can be added under document type
- * 
- * @author Ats Uiboupin
  */
 public enum FieldType {
     /** Tekstiväli */

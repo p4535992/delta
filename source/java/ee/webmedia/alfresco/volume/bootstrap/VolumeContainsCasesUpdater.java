@@ -18,8 +18,6 @@ import ee.webmedia.alfresco.volume.model.VolumeModel;
 
 /**
  * Updater for volumes that sets containsCases property true if it contains cases.
- * 
- * @author Kaarel Jõgeva
  */
 public class VolumeContainsCasesUpdater extends AbstractNodeUpdater {
 

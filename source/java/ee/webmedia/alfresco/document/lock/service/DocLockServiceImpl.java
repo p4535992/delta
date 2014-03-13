@@ -29,7 +29,7 @@ public class DocLockServiceImpl extends LockServiceImpl implements DocLockServic
     /** timeOut in seconds how long lock is kept after creation(refreshing) before expiring */
     private final int lockTimeout = 180;
 
-    private FileService fileService;
+    private FileService _fileService;
     private DocumentSearchService _documentSearchService;
     private UserService userService;
     private DocumentDynamicService _documentDynamicService;
@@ -66,7 +66,7 @@ public class DocLockServiceImpl extends LockServiceImpl implements DocLockServic
         } else if (ContentModel.TYPE_CONTENT.equals(type)) { // a file
             docNodeRef = nodeService.getPrimaryParent(nodeRef).getParentRef();
             lock.setFileName((String) nodeService.getProperty(nodeRef, FileModel.Props.DISPLAY_NAME));
-            lock.setFileUrl(fileService.generateURL(nodeRef));
+            lock.setFileUrl(getFileService().generateURL(nodeRef));
         } else {
             return null;
         }
@@ -76,17 +76,32 @@ public class DocLockServiceImpl extends LockServiceImpl implements DocLockServic
         lock.setDocName((String) docProps.get(DocumentCommonModel.Props.DOC_NAME));
         lock.setDocRegDate((Date) docProps.get(DocumentCommonModel.Props.REG_DATE_TIME));
         lock.setDocRegNr((String) docProps.get(DocumentCommonModel.Props.REG_NUMBER));
-        lock.setLockedBy(userService.getUserFullNameAndId(getLockOwnerIfLocked(docNodeRef)));
+        String lockOwner = StringUtils.substringBefore(getLockOwnerIfLocked(nodeRef), "_");
+        lock.setLockedBy(userService.getUserFullNameAndId(lockOwner));
 
         return lock;
     }
 
     @Override
-    public String getLockOwnerIfLocked(NodeRef nodeRef) {
+    public String getLockOwnerIfLockedByOther(NodeRef nodeRef) {
         Assert.notNull(nodeRef, "NodeRef cannot be null!");
         if (isLockByOther(nodeRef)) {
             return StringUtils.substringBefore((String) nodeService.getProperty(nodeRef, ContentModel.PROP_LOCK_OWNER), "_");
         }
+        return null;
+    }
+
+    @Override
+    public String getLockOwnerIfLocked(NodeRef nodeRef) {
+        Assert.notNull(nodeRef, "NodeRef cannot be null!");
+        String currentLockOwner = (String) nodeService.getProperty(nodeRef, ContentModel.PROP_LOCK_OWNER);
+        if (StringUtils.isNotBlank(currentLockOwner)) {
+            Date expiryDate = (Date) nodeService.getProperty(nodeRef, ContentModel.PROP_EXPIRY_DATE);
+            if (expiryDate != null && expiryDate.after(new Date())) {
+                return currentLockOwner;
+            }
+        }
+
         return null;
     }
 
@@ -108,7 +123,7 @@ public class DocLockServiceImpl extends LockServiceImpl implements DocLockServic
         if (nodeService.hasAspect(nodeRef, ContentModel.ASPECT_LOCKABLE)) {
             // Get the current lock owner
             String repoUsername = (String) nodeService.getProperty(nodeRef, ContentModel.PROP_LOCK_OWNER);
-            String currentLockOwner = repoUsername == null ? null : getUserNameAndSession(repoUsername);
+            String currentLockOwner = repoUsername == null ? null : isManualLock(nodeRef) ? getManualLockOwner() : getUserNameAndSession(repoUsername);
             String nodeOwner = ownableService.getOwner(nodeRef);
             if (currentLockOwner != null) {
                 Date expiryDate = (Date) nodeService.getProperty(nodeRef, ContentModel.PROP_EXPIRY_DATE);
@@ -116,7 +131,8 @@ public class DocLockServiceImpl extends LockServiceImpl implements DocLockServic
                     // Indicate that the lock has expired
                     result = LockStatus.LOCK_EXPIRED;
                 } else {
-                    if (currentLockOwner.equals(getUserNameAndSession(userName))) {
+                    String userNameAndSession = isManualLock(nodeRef) ? getManualLockOwner() : getUserNameAndSession(userName);
+                    if (currentLockOwner.equals(userNameAndSession)) {
                         result = LockStatus.LOCK_OWNER;
                     } else if ((nodeOwner != null) && nodeOwner.equals(userName)) {
                         // this else-if block could be omitted, but is left here to point to the only difference with parent method
@@ -165,23 +181,38 @@ public class DocLockServiceImpl extends LockServiceImpl implements DocLockServic
     }
 
     @Override
-    public void lockGeneratedFileDocument(NodeRef lockedFileNodeRef) {
-        if (!fileService.isFileGenerated(lockedFileNodeRef)) {
+    public void lockFile(NodeRef fileNodeRef) {
+        lockFile(fileNodeRef, getLockTimeout(), false);
+    }
+
+    @Override
+    public void lockFile(NodeRef fileNodeRef, int timeToExpire, final boolean lockedManually) {
+        // Manual lock must be set before actual locking
+        nodeService.setProperty(fileNodeRef, FileModel.Props.MANUAL_LOCK, lockedManually);
+        lock(fileNodeRef, LockType.WRITE_LOCK, timeToExpire);
+
+        // If the file is generated, lock the document also
+        if (!getFileService().isFileGenerated(fileNodeRef)) {
             return;
         }
 
-        NodeRef docRef = BeanHelper.getGeneralService().getAncestorNodeRefWithType(lockedFileNodeRef, DocumentCommonModel.Types.DOCUMENT);
+        NodeRef docRef = BeanHelper.getGeneralService().getAncestorNodeRefWithType(fileNodeRef, DocumentCommonModel.Types.DOCUMENT);
         if (docRef != null) {
+            // Manual lock must be set before actual locking
+            nodeService.setProperty(docRef, FileModel.Props.MANUAL_LOCK, lockedManually);
             if (getLockStatus(docRef) != LockStatus.LOCKED) {
-                lock(docRef, LockType.WRITE_LOCK, getLockTimeout());
+                lock(docRef, LockType.WRITE_LOCK, timeToExpire);
             }
-            nodeService.setProperty(docRef, FileModel.Props.LOCKED_FILE_NODEREF, lockedFileNodeRef);
+            nodeService.setProperty(docRef, FileModel.Props.LOCKED_FILE_NODEREF, fileNodeRef);
         }
     }
 
     @Override
-    public void releaseGeneratedFileDocument(NodeRef lockedFileNodeRef) {
-        if (!fileService.isFileGenerated(lockedFileNodeRef)) {
+    public void unlockFile(NodeRef lockedFileNodeRef) {
+        unlockIfOwner(lockedFileNodeRef);
+
+        // If the file is generated, unlock the document also
+        if (!getFileService().isFileGenerated(lockedFileNodeRef)) {
             return;
         }
 
@@ -193,7 +224,7 @@ public class DocLockServiceImpl extends LockServiceImpl implements DocLockServic
 
     @Override
     public boolean isGeneratedFileDocumentLocked(NodeRef fileRef) {
-        if (!fileService.isFileGenerated(fileRef)) {
+        if (!getFileService().isFileGenerated(fileRef)) {
             return false;
         }
 
@@ -235,7 +266,7 @@ public class DocLockServiceImpl extends LockServiceImpl implements DocLockServic
                 isLockOwnedByOther = false; // LockStatus.LOCK_EXPIRED;
                 log.debug("existing lock has expired");
             } else {
-                userName = getUserNameAndSession(userName);
+                userName = isManualLock(nodeRef) ? getManualLockOwner() : getUserNameAndSession(userName);
                 if (currentLockOwner.equals(userName)) {
                     log.debug("user '" + userName + "' owns the lock");
                     isLockOwnedByOther = false; // LockStatus.LOCK_OWNER;
@@ -256,10 +287,6 @@ public class DocLockServiceImpl extends LockServiceImpl implements DocLockServic
         return lockTimeout;
     }
 
-    public void setFileService(FileService fileService) {
-        this.fileService = fileService;
-    }
-
     public DocumentSearchService getDocumentSearchService() {
         if (_documentSearchService == null) {
             _documentSearchService = BeanHelper.getDocumentSearchService();
@@ -276,6 +303,13 @@ public class DocLockServiceImpl extends LockServiceImpl implements DocLockServic
             _documentDynamicService = BeanHelper.getDocumentDynamicService();
         }
         return _documentDynamicService;
+    }
+
+    private FileService getFileService() {
+        if (_fileService == null) {
+            _fileService = BeanHelper.getFileService();
+        }
+        return _fileService;
     }
 
     // END: getters / setters

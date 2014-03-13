@@ -32,9 +32,6 @@ import ee.webmedia.alfresco.common.listener.StatisticsPhaseListenerLogColumn;
 import ee.webmedia.alfresco.monitoring.MonitoredService;
 import ee.webmedia.alfresco.monitoring.MonitoringUtil;
 
-/**
- * @author Alar Kvell
- */
 public class StatisticsCollectingStatement implements PreparedStatement {
 
     private final Statement statement;

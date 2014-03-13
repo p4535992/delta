@@ -8,7 +8,7 @@
 
 <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/document/web/limited-message-panel.jsp" />
 
-<a:panel id="cw-panel" styleClass="panel-100" label="#{msg.cw_search_results}" progressive="true" styleClass="with-pager">
+<a:panel id="cw-panel" styleClass="panel-100 with-pager" label="#{msg.cw_search_results}" progressive="true">
    <a:panel id="cw-panel-search-results" styleClass="overflow-wrapper">   
 
    <a:richList id="workflowList" styleClass="duplicate-header" width="100%" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
@@ -91,15 +91,6 @@
             <a:sortLink id="col9-header" label="#{msg.cw_search_ending_date}" value="endedDateTime" styleClass="header" />
          </f:facet>
            <a:actionLink id="col9-txt1" value="#{r.endedDateStr}" action="#{r.action}" tooltip="#{r.endedDateStr}" showLink="false" actionListener="#{r.actionListener}" styleClass="no-underline" >
-            <f:param name="nodeRef" value="#{r.nodeRef}" />
-         </a:actionLink>         
-      </a:column>
-      
-      <a:column id="col10" primary="true" >
-         <f:facet name="header">
-            <a:sortLink id="col10-header" label="#{msg.cw_search_comment}" value="comment" styleClass="header" />
-         </f:facet>
-         <a:actionLink id="col10-txt1" value="#{r.comment}" action="#{r.action}" tooltip="#{r.comment}" showLink="false" actionListener="#{r.actionListener}" styleClass="no-underline" >
             <f:param name="nodeRef" value="#{r.nodeRef}" />
          </a:actionLink>         
       </a:column>

@@ -14,8 +14,6 @@ import ee.webmedia.alfresco.docadmin.web.ListReorderHelper.OrderModifier;
 /**
  * FIXME DLSeadist liigutada test kataloogi<br>
  * Test class for {@link ListReorderHelper#reorder(List, OrderModifier)}
- * 
- * @author Ats Uiboupin
  */
 public class ListReorderHelperTest extends TestCase {
 

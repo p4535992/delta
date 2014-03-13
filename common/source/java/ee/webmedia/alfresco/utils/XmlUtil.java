@@ -21,9 +21,6 @@ import org.apache.xmlbeans.XmlObject;
 import org.apache.xmlbeans.XmlOptions;
 import org.w3c.dom.NodeList;
 
-/**
- * @author ats.uiboupin
- */
 public class XmlUtil {
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(XmlUtil.class);
     private static final String W3C_XML_SCHEMA_NS_URI = "http://www.w3.org/2001/XMLSchema";

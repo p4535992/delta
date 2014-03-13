@@ -4,9 +4,6 @@ import java.io.Serializable;
 
 import org.springframework.util.Assert;
 
-/**
- * @author Alar Kvell
- */
 public class ProgressTracker implements Serializable {
     private static final long serialVersionUID = 1L;
 
@@ -18,7 +15,7 @@ public class ProgressTracker implements Serializable {
     private long stepCompletedSize = 0;
 
     public ProgressTracker(long totalSize, long completedSize) {
-        Assert.isTrue(totalSize > 0);
+        Assert.isTrue(totalSize >= 0);
         Assert.isTrue(completedSize >= 0);
         Assert.isTrue(completedSize <= totalSize);
         this.totalSize = totalSize;
@@ -40,7 +37,7 @@ public class ProgressTracker implements Serializable {
             // If completedSize == totalSize, then we still want to display the last info line, even though stepTime = 0, so prevent division by zero
             stepEndTime++;
         }
-        double completedPercent = completedSize * 100L / ((double) totalSize);
+        double completedPercent = totalSize == 0 ? 100d : (completedSize * 100L / ((double) totalSize));
         double lastDocsPerSec = stepCompletedSize * 1000L / ((double) stepTime);
         long thisRunTotalTime = stepEndTime - thisRunStartTime;
         double totalDocsPerSec = thisRunCompletedSize * 1000L / ((double) thisRunTotalTime);

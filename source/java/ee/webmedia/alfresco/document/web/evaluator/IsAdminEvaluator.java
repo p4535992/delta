@@ -7,8 +7,6 @@ import ee.webmedia.alfresco.common.web.BeanHelper;
 
 /**
  * UI action evaluator for validating whether current user is in Administrators user group.
- * 
- * @author Alar Kvell
  */
 public class IsAdminEvaluator extends BaseActionEvaluator {
     private static final long serialVersionUID = 0L;

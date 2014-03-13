@@ -10,6 +10,7 @@ import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.util.Pair;
 import org.alfresco.web.app.servlet.AuthenticationStatus;
 import org.alfresco.web.app.servlet.BaseServlet;
@@ -20,12 +21,12 @@ import org.springframework.util.FileCopyUtils;
 import ee.webmedia.alfresco.common.listener.ExternalAccessPhaseListener;
 import ee.webmedia.alfresco.common.listener.StatisticsPhaseListener;
 import ee.webmedia.alfresco.common.listener.StatisticsPhaseListenerLogColumn;
+import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.substitute.model.SubstitutionInfo;
 
 /**
  * Servlet allowing external URL access to various global JSF views in the Web Client.
  * Available URL-s: <li><code>http://&lt;server&gt;/simdhs/&lt;servlet name&gt;/document/&lt;document node ref&gt;</code> - for viewing document</li>
- * 
- * @author Romet Aidla
  */
 public class ExternalAccessServlet extends BaseServlet {
     private static final long serialVersionUID = 7348802704715012097L;
@@ -46,7 +47,13 @@ public class ExternalAccessServlet extends BaseServlet {
             return;
         }
 
-        if ("/logo".equals(uri)) {
+        SubstitutionInfo subInf = BeanHelper.getSubstitutionBean().getSubstitutionInfo();
+        if (subInf.isSubstituting()) {
+            // must be added manually or AuthenticationUtil.getRunAsUser() will return currentUser instead of runAsUser
+            AuthenticationUtil.setRunAsUser(subInf.getSubstitution().getReplacedPersonUserName());
+        }
+
+        if (isLogoUri(uri)) {
             Pair<byte[], String> logo = getApplicationService().getCustomLogo();
             if (logo != null) {
                 res.setHeader("Content-Length", Integer.toString(logo.getFirst().length));
@@ -57,7 +64,7 @@ public class ExternalAccessServlet extends BaseServlet {
             return;
         }
 
-        if ("/jumploader".equals(uri)) {
+        if (isJumploaderUri(uri)) {
             Pair<byte[], String> applet = getApplicationService().getJumploaderApplet();
             if (applet != null) {
                 res.setHeader("Content-Length", Integer.toString(applet.getFirst().length));
@@ -69,13 +76,20 @@ public class ExternalAccessServlet extends BaseServlet {
         }
 
         setNoCacheHeaders(res);
-        Pair<String, String[]> outcomeAndArgs = getDocumentUriTokens(uri);
-        req.setAttribute(ExternalAccessPhaseListener.OUTCOME_AND_ARGS_ATTR, outcomeAndArgs);
-
+        @SuppressWarnings("unchecked")
+        Pair<String, String[]> outcomeAndArgs = (Pair<String, String[]>) req.getAttribute(ExternalAccessPhaseListener.OUTCOME_AND_ARGS_ATTR);
         StatisticsPhaseListener.add(StatisticsPhaseListenerLogColumn.ACTION, outcomeAndArgs.getFirst());
 
         // Now handleNavigation puts this as the first item in the view stack
         getServletContext().getRequestDispatcher(FACES_SERVLET + "/jsp/dashboards/container.jsp").forward(req, res);
+    }
+
+    public static boolean isJumploaderUri(String uri) {
+        return "/jumploader".equals(uri);
+    }
+
+    public static boolean isLogoUri(String uri) {
+        return "/logo".equals(uri);
     }
 
     public static Pair<String, String[]> getDocumentUriTokens(String uri) {
