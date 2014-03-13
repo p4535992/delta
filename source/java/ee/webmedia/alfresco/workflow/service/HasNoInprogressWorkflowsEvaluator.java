@@ -8,9 +8,6 @@ import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 
-/**
- * @author Ats Uiboupin
- */
 public class HasNoInprogressWorkflowsEvaluator extends BaseActionEvaluator {
 
     private static final long serialVersionUID = 778943700049418316L;

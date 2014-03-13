@@ -27,8 +27,6 @@ import ee.webmedia.alfresco.user.service.UserNotFoundException;
 /**
  * Authenticator that uses AMRService for authentication. SYSTEM_USER_NAME will go through without amrService call, <br>
  * but other userNames will pass only if amrService returns a user with given userName.
- * 
- * @author Ats Uiboupin
  */
 public class AMRSimpleAuthenticationImpl extends SimpleAcceptOrRejectAllAuthenticationComponentImpl {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(AMRSimpleAuthenticationImpl.class);

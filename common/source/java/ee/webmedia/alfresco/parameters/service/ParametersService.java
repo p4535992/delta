@@ -12,8 +12,6 @@ import ee.webmedia.alfresco.parameters.model.Parameters;
 
 /**
  * Class to retrieve user-configurable parameters
- * 
- * @author Ats Uiboupin
  */
 public interface ParametersService {
 

@@ -9,8 +9,6 @@ import ee.webmedia.alfresco.common.propertysheet.generator.CustomAttributes;
 
 /**
  * Custom PropertySheetConfigElement that also holds custom attributes read from "show-property" element.
- * 
- * @author Ats Uiboupin
  */
 public class WMPropertySheetConfigElement extends PropertySheetConfigElement {
     private static final long serialVersionUID = 1L;
@@ -38,9 +36,6 @@ public class WMPropertySheetConfigElement extends PropertySheetConfigElement {
         ItemConfig copyAsReadOnly();
     }
 
-    /**
-     * @author Ats Uiboupin
-     */
     public static class ItemConfigVO extends ItemConfig implements CustomAttributes, ReadOnlyCopiableItemConfig {
 
         // additional fields not present in parent class

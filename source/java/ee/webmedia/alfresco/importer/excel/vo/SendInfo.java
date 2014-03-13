@@ -3,9 +3,6 @@ package ee.webmedia.alfresco.importer.excel.vo;
 import org.apache.commons.lang.builder.ToStringBuilder;
 import org.apache.commons.lang.builder.ToStringStyle;
 
-/**
- * @author Ats Uiboupin
- */
 public class SendInfo {
     /** doccom:sendMode */
     private String sendMode;

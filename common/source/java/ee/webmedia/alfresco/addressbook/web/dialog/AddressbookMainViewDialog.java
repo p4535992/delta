@@ -25,9 +25,6 @@ import ee.webmedia.alfresco.addressbook.model.AddressbookModel.Types;
 import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.utils.UserUtil;
 
-/**
- * @author Keit Tehvan
- */
 public class AddressbookMainViewDialog extends AddressbookBaseDialog implements IContextListener {
     private static final long serialVersionUID = 1L;
 

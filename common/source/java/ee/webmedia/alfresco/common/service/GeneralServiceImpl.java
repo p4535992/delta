@@ -82,9 +82,6 @@ import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.SearchUtil;
 
-/**
- * @author Ats Uiboupin
- */
 public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(GeneralServiceImpl.class);
 
@@ -118,6 +115,15 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
     @Override
     public StoreRef getArchivalsStoreRef() {
         return archivalsStore;
+    }
+
+    @Override
+    public LinkedHashSet<StoreRef> getAllStoreRefsWithTrashCan() {
+        LinkedHashSet<StoreRef> allStoreRefs = new LinkedHashSet<StoreRef>();
+        allStoreRefs.add(getStore());
+        allStoreRefs.add(getArchivalsStoreRef());
+        allStoreRefs.add(StoreRef.STORE_REF_ARCHIVE_SPACESSTORE);
+        return allStoreRefs;
     }
 
     @Override

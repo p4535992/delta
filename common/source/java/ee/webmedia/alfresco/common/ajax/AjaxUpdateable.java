@@ -4,8 +4,6 @@ import javax.faces.context.FacesContext;
 
 /**
  * If component implements AjaxUpdateable and also contains child components, then this component should also implement NamingContainer.
- * 
- * @author Alar Kvell
  */
 public interface AjaxUpdateable {
 

@@ -4,8 +4,6 @@ import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
 
 /**
  * Evaluates to true if given workflow has been saved into the repository.
- * 
- * @author Erko Hansar
  */
 public class WorkflowSavedEvaluator extends AbstractFullAccessEvaluator {
 

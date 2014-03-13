@@ -8,9 +8,6 @@ import org.alfresco.service.namespace.QName;
 
 import ee.webmedia.alfresco.document.type.model.DocumentType;
 
-/**
- * @author Alar Kvell
- */
 public interface DocumentTypeService {
 
     String BEAN_NAME = "DocumentTypeService";

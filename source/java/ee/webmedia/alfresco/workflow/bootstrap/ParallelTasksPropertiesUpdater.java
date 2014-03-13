@@ -20,8 +20,6 @@ import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
  * (the situation is actually not allowed in current model, but it somehow appears in live environment)
  * and also rewrites all properties for all tasks in such workflow
  * to force lucene index update (CL task 155454)
- * 
- * @author Riina Tens
  */
 
 public class ParallelTasksPropertiesUpdater extends AbstractNodeUpdater {

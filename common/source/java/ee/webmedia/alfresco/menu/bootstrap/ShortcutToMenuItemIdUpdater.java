@@ -21,8 +21,6 @@ import ee.webmedia.alfresco.menu.ui.MenuBean;
 
 /**
  * Changes shortcut to menuItemId (CL task 158558)
- * 
- * @author Alar Kvell
  */
 public class ShortcutToMenuItemIdUpdater extends AbstractNodeUpdater {
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(ShortcutToMenuItemIdUpdater.class);

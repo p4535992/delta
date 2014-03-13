@@ -14,8 +14,6 @@ import ee.webmedia.alfresco.utils.ComponentUtil;
 
 /**
  * Generator for a dimension selector which is editable even if the propertySheet is not in edit mode.
- * 
- * @author Riina Tens
  */
 public class DimensionSelectorAlwaysEditGenerator extends DimensionSelectorGenerator implements GeneratorsWrapper {
 

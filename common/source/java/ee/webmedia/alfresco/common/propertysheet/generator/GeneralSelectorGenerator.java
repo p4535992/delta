@@ -33,8 +33,6 @@ import ee.webmedia.alfresco.utils.ComponentUtil;
  * Component that generates a HtmlSelectOneMenu component that will receive values from method binding defined with "selectionItems" attribute.<br>
  * Method must be public void<br>
  * Method must declare two parameter FacesContext and HtmlSelectOneMenu for creating adding items to selection
- * 
- * @author Ats Uiboupin
  */
 public class GeneralSelectorGenerator extends BaseComponentGenerator {
 

@@ -542,6 +542,12 @@
          </list>
       </property>
    </bean>
+   
+   <bean id="exportInstrumentOfDeliveryAndReceipt" class="ee.webmedia.alfresco.document.bootstrap.ExportInstrumentOfDeliveryAndReceipt" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="enabled" value="false" /><!-- Executed only from node-browser -->
+   </bean>
 
    <!-- =================================================================== -->
 

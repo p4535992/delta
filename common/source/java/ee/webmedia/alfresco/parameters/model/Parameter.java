@@ -13,7 +13,6 @@ import org.alfresco.service.namespace.QName;
 import org.apache.commons.lang.StringUtils;
 
 /**
- * @author Ats Uiboupin
  *         Class representing abstract configurable system parameter of generic type <T>
  * @param <T>
  */

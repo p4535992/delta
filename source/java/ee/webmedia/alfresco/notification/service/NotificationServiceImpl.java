@@ -56,9 +56,6 @@ import ee.webmedia.alfresco.workflow.service.Task;
 import ee.webmedia.alfresco.workflow.service.Workflow;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowEventType;
 
-/**
- * @author Kaarel Jõgeva
- */
 public class NotificationServiceImpl implements NotificationService {
 
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(NotificationServiceImpl.class);

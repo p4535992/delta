@@ -23,9 +23,6 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.common.service.GeneralService;
 
-/**
- * @author Erko Hansar
- */
 public class EmailServiceImpl implements EmailService {
 
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(EmailServiceImpl.class);

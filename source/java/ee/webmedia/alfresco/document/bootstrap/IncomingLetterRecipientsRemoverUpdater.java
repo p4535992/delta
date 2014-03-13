@@ -22,8 +22,6 @@ import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
  * Analysis mistake caused copying following properties(and adding aspects) to the followUp incomingLetter:
  * props of aspect recipient: recipientName, recipientEmail
  * props of aspect additionalRecipient: additionalRecipientName, additionalRecipientEmail
- * 
- * @author Ats Uiboupin
  */
 public class IncomingLetterRecipientsRemoverUpdater extends AbstractNodeUpdater {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(IncomingLetterRecipientsRemoverUpdater.class);

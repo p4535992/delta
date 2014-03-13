@@ -46,9 +46,6 @@ import ee.webmedia.alfresco.utils.UserUtil;
 import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.volume.service.VolumeService;
 
-/**
- * @author Alar Kvell
- */
 public class DocumentSearchDialog extends AbstractSearchFilterBlockBean<DocumentSearchFilterService> {
 
     private static final long serialVersionUID = 1L;

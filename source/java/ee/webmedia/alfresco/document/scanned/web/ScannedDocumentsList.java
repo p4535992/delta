@@ -17,8 +17,6 @@ import ee.webmedia.alfresco.utils.ActionUtil;
 
 /**
  * Dialog for scanned documents list
- * 
- * @author Romet Aidla
  */
 public class ScannedDocumentsList extends BaseDialogBean {
     private static final long serialVersionUID = 0L;

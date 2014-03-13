@@ -14,8 +14,6 @@ import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 
 /**
  * Callback that creates parties from V1 data to V2 document
- * 
- * @author Kaarel Jõgeva
  */
 
 public class ContractV1CopyPropertiesModifierCallback extends AbstractDocChildCreator {

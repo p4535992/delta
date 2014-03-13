@@ -8,8 +8,6 @@ import org.alfresco.web.bean.repository.Node;
 
 /**
  * Evaluator that decides whether to show both INCOMING_LETTER and OUTGOING_LETTER followUps
- * 
- * @author Ats Uiboupin
  */
 public class LetterFollowupEvaluator extends AbstractFollowUpNodeTypeEvaluator {
 

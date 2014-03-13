@@ -28,9 +28,6 @@ import ee.webmedia.alfresco.user.web.UserDetailsDialog;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UserUtil;
 
-/**
- * @author Alar Kvell
- */
 public class AssignResponsibilityBean implements Serializable {
     private static final long serialVersionUID = 1L;
 

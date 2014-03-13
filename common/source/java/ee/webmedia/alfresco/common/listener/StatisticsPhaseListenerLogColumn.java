@@ -1,7 +1,7 @@
 package ee.webmedia.alfresco.common.listener;
 
 /**
- * KAAREL: I refactored this enum out from StatisticsPhaseListener, to prevent NPE during development
+ * I refactored this enum out from StatisticsPhaseListener, to prevent NPE during development
  */
 public enum StatisticsPhaseListenerLogColumn {
     REQUEST_END,

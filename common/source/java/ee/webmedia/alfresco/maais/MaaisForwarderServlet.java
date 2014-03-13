@@ -17,9 +17,6 @@ import org.apache.commons.lang.StringUtils;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.maais.service.MaaisService;
 
-/**
- * @author Keit Tehvan
- */
 public class MaaisForwarderServlet extends BaseServlet {
     private static final long serialVersionUID = 0L;
 

@@ -21,8 +21,6 @@ import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 
 /**
  * Finds all compoundWorkflows that have been started and sets SEARCHABLE_HAS_STARTED_COMPOUND_WORKFLOWS to true on the document of the workflow
- * 
- * @author Ats Uiboupin
  */
 public class SearchableHasStartedCompoundWorkflowsUpdater extends AbstractNodeUpdater {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(SearchableHasStartedCompoundWorkflowsUpdater.class);

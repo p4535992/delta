@@ -14,8 +14,6 @@ import ee.webmedia.alfresco.document.einvoice.service.EInvoiceUtil;
  * and allows whitespaces (including non-breaking space) between digits (i.e. grouping is supported).
  * In output string replaces non-breaking spaces with regular spaces to avoid dealing with non-breaking spaces in javascript.
  * Round both input and output to two decimal numbers (i.e. saving more than two decimal places is not allowed)
- * 
- * @author Riina Tens
  */
 public class DoubleCurrencyConverter_ET_EN extends DoubleConverter {
 

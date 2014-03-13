@@ -25,7 +25,6 @@ import ee.webmedia.alfresco.common.propertysheet.generator.GeneralSelectorGenera
  * Generator that generates selection (dropdown) components that can depend on other components of this type.<br>
  * 
  * @see {@link RelatedDropdown}
- * @author Ats Uiboupin
  */
 public class RelatedDropdownGenerator extends GeneralSelectorGenerator {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(RelatedDropdownGenerator.class);

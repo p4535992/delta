@@ -34,9 +34,6 @@ import ee.webmedia.alfresco.workflow.search.service.TaskSearchFilterService;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
 import ee.webmedia.alfresco.workflow.service.type.WorkflowType;
 
-/**
- * @author Erko Hansar
- */
 public class TaskSearchDialog extends AbstractSearchFilterBlockBean<TaskSearchFilterService> {
 
     private static final long serialVersionUID = 1L;

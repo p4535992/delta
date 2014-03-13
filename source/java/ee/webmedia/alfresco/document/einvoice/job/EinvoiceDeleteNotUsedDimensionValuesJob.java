@@ -14,8 +14,6 @@ import ee.webmedia.alfresco.document.einvoice.service.EInvoiceService;
 
 /**
  * Delete expired dimension values that are not used in any document or transaction template
- * 
- * @author Riina Tens
  */
 public class EinvoiceDeleteNotUsedDimensionValuesJob implements StatefulJob {
     private static final Log LOG = LogFactory.getLog(EinvoiceDeleteNotUsedDimensionValuesJob.class);

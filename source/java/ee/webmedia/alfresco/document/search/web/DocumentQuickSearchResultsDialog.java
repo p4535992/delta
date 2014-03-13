@@ -15,9 +15,6 @@ import ee.webmedia.alfresco.document.web.BaseDocumentListDialog;
 import ee.webmedia.alfresco.menu.ui.MenuBean;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
-/**
- * @author Alar Kvell
- */
 public class DocumentQuickSearchResultsDialog extends BaseDocumentListDialog {
     private static final long serialVersionUID = 1L;
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DocumentQuickSearchResultsDialog.class);

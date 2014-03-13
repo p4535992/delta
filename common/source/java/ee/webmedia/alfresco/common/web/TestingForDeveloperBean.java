@@ -17,8 +17,6 @@ import ee.webmedia.xtee.client.dhl.DhlXTeeServiceImplFSStub;
 
 /**
  * Bean with method {@link #handleTestEvent(ActionEvent)} that developers can use to test arbitrary code
- * 
- * @author Ats Uiboupin
  */
 public class TestingForDeveloperBean implements Serializable {
     private static final long serialVersionUID = 1L;

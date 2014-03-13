@@ -16,9 +16,6 @@ import org.springframework.web.jsf.FacesContextUtils;
 import ee.webmedia.alfresco.addressbook.service.AddressbookService;
 import ee.webmedia.alfresco.utils.ActionUtil;
 
-/**
- * @author Keit Tehvan
- */
 // this class is to be extended by other classes!!
 public abstract class AddressbookBaseDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;

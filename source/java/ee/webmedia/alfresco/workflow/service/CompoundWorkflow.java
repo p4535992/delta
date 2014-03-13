@@ -11,9 +11,6 @@ import org.springframework.util.Assert;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 
-/**
- * @author Alar Kvell
- */
 public class CompoundWorkflow extends BaseWorkflowObject implements Serializable {
     private static final long serialVersionUID = 1L;
 

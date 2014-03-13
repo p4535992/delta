@@ -2,9 +2,6 @@ package ee.webmedia.alfresco.document.assignresponsibility.model;
 
 import org.alfresco.service.namespace.QName;
 
-/**
- * @author Alar Kvell
- */
 public interface AssignResponsibilityModel {
     String URI = "http://alfresco.webmedia.ee/model/assignresponsibility/common/1.0";
     String PREFIX = "asr:";

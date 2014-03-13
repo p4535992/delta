@@ -33,8 +33,6 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
  * Dialog for importing classificators
- * 
- * @author Ats Uiboupin
  */
 public class ClassificatorsImportDialog extends AbstractImportDialog {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(ClassificatorsImportDialog.class);

@@ -31,8 +31,6 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
  * Bean for handling substitution selection.
- * 
- * @author Romet Aidla
  */
 public class SubstitutionBean implements Serializable {
     private static final long serialVersionUID = 1L;

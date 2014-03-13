@@ -9,9 +9,6 @@ import java.util.Date;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.parameters.model.Parameters;
 
-/**
- * @author Keit Tehvan
- */
 public class MaaisSessionBean implements Serializable {
 
     private static final long serialVersionUID = 1L;

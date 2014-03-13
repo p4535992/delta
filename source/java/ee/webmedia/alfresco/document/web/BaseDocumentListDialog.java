@@ -12,9 +12,6 @@ import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
 import ee.webmedia.alfresco.document.service.DocumentService;
 
-/**
- * @author Alar Kvell
- */
 public abstract class BaseDocumentListDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;
 

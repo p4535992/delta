@@ -8,9 +8,6 @@ import org.alfresco.service.namespace.QName;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 
-/**
- * @author Alar Kvell
- */
 public class CompoundWorkflowDefinition extends CompoundWorkflow {
     private static final long serialVersionUID = 1L;
 

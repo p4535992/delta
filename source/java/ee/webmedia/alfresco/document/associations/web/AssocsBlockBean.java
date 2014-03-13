@@ -11,8 +11,6 @@ import ee.webmedia.alfresco.document.service.DocumentService;
 
 /**
  * Block that shows associations of given document with other documents and related cases
- * 
- * @author Ats Uiboupin
  */
 public class AssocsBlockBean implements Serializable {
 

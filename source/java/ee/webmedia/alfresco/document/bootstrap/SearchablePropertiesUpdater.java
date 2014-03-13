@@ -23,8 +23,6 @@ import ee.webmedia.alfresco.utils.SearchUtil;
 /**
  * Checks document's searchable properties and if needed adds missing properties
  * Used to add searchable properties to documents imported from Postipoiss (CL task 143388)
- * 
- * @author Riina Tens
  */
 public class SearchablePropertiesUpdater extends AbstractNodeUpdater {
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(SearchablePropertiesUpdater.class);

@@ -21,8 +21,6 @@ import ee.webmedia.alfresco.utils.SearchUtil;
 
 /**
  * Used to update contract details.
- * 
- * @author Kaarel Jõgeva
  */
 public class ContractDetailsUpdater extends AbstractNodeUpdater {
 

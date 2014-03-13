@@ -15,8 +15,6 @@ import ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.GeneratorsW
 /**
  * Generator for a text area which is editable even if the propertySheet is not in edit mode.
  * Implements GeneratorsWrapper
- * 
- * @author Erko Hansar
  */
 public class TextAreaAlwaysEditGenerator extends TextAreaGenerator implements GeneratorsWrapper {
 

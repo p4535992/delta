@@ -27,8 +27,6 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
  * Notification send that send notification as email.
- * 
- * @author Romet Aidla
  */
 public class NotificationEmailSender implements SubstituteListDialog.NotificationSender {
     private static final long serialVersionUID = 1L;

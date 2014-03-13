@@ -274,7 +274,6 @@ public class UIProperty extends PropertySheetItem
     * @param context FacesContext
     * @param generatorName The name of the component generator to retrieve
     * @return component generated and optionally changed as well
-    * @author Ats Uiboupin
     */
    protected IComponentGenerator getComponentGenerator(FacesContext context, String componentGeneratorName) {
        return FacesHelper.getComponentGenerator(context, componentGeneratorName);

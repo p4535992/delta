@@ -39,8 +39,6 @@ import ee.webmedia.alfresco.utils.ComponentUtil;
  * Edit multiple multi-valued properties as a table. A {@code javax.faces.Input} component is generated for each cell. Supports deleting any row and appending
  * an empty row at the end (a {@code null} element is added to each {@link List}). When cells are first generated, it is ensured that each column's {@link List} contains the same
  * amount of elements as the list with greatest amount of elements. Again, {@code null} elements are appended, where necessary.
- * 
- * @author Alar Kvell
  */
 public class MultiValueEditor extends UIComponentBase implements AjaxUpdateable, NamingContainer {
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(MultiValueEditor.class);

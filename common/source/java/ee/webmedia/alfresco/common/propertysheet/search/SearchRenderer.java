@@ -22,8 +22,6 @@ import ee.webmedia.alfresco.utils.ComponentUtil;
 /**
  * Render {@link Search} component. Child component of type {@link HtmlPanelGroup} is rendered as HTML table. Child component of type {@link UIGenericPicker} is
  * rendered as modal popup dialog.
- * 
- * @author Alar Kvell
  */
 public class SearchRenderer extends BaseRenderer {
 

@@ -12,8 +12,6 @@ import ee.webmedia.alfresco.series.model.SeriesModel;
 
 /**
  * Evaluates if current runAsUser is member of documentManagers group and also has permission set for series of the document.
- * 
- * @author Ats Uiboupin
  */
 public class SeriesDocManagerDynamicAuthority extends BaseDynamicAuthority {
     public static final String SERIES_MANAGEABLE_PERMISSION = "DocumentFileRead";

@@ -25,10 +25,6 @@ import org.alfresco.web.bean.repository.Node;
 import ee.webmedia.alfresco.common.propertysheet.component.WMUIProperty;
 import ee.webmedia.alfresco.common.web.WmNode;
 
-/**
- * @author Ats Uiboupin
- * @author Alar Kvell
- */
 public interface GeneralService {
     String BEAN_NAME = "GeneralService";
 
@@ -41,6 +37,8 @@ public interface GeneralService {
      * @return store where archived documents are stored
      */
     StoreRef getArchivalsStoreRef();
+
+    LinkedHashSet<StoreRef> getAllStoreRefsWithTrashCan();
 
     /**
      * Search for NodeRef with an XPath expression.

@@ -17,9 +17,6 @@ import org.alfresco.web.ui.repo.component.UIActions;
 import org.alfresco.web.ui.repo.component.property.PropertySheetItem;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 
-/**
- * @author Kaarel Jõgeva
- */
 public class SpaceLinkGenerator extends BaseComponentGenerator {
 
     public UIComponent generateLink(FacesContext context, UIPropertySheet propertySheet, PropertySheetItem item) {

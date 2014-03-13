@@ -63,8 +63,6 @@ import ee.webmedia.alfresco.workflow.web.DelegationTaskListGenerator.Delegatable
 
 /**
  * Bean that helps to create controls and manage state related to delegating assignment task
- * 
- * @author Ats Uiboupin
  */
 public class DelegationBean implements Serializable {
     private static final long serialVersionUID = 1L;

@@ -60,9 +60,6 @@ import ee.webmedia.alfresco.volume.model.VolumeModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 
-/**
- * @author Kaarel Jõgeva
- */
 public class DocumentTemplateServiceImpl implements DocumentTemplateService, ServletContextAware {
 
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DocumentTemplateServiceImpl.class);

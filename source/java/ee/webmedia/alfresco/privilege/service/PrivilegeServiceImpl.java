@@ -32,9 +32,6 @@ import ee.webmedia.alfresco.privilege.model.UserPrivileges;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.RepoUtil;
 
-/**
- * @author Ats Uiboupin
- */
 public class PrivilegeServiceImpl implements PrivilegeService {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(PrivilegeServiceImpl.class);
     private PermissionService permissionService;

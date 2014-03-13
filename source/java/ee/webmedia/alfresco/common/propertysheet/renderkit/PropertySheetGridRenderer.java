@@ -21,10 +21,6 @@ import ee.webmedia.alfresco.common.propertysheet.component.WMUIPropertySheet;
 import ee.webmedia.alfresco.common.propertysheet.generator.CustomAttributes;
 import ee.webmedia.alfresco.common.propertysheet.search.Search;
 
-/**
- * @author Erko Hansar
- * @author Kaarel Jõgeva
- */
 public class PropertySheetGridRenderer extends HtmlGridRenderer {
 
     /**

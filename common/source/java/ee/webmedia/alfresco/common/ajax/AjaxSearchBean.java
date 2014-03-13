@@ -34,8 +34,6 @@ import ee.webmedia.alfresco.utils.ComponentUtil;
 
 /**
  * Class that various search implementations can use to fetch data using AJAX.
- * 
- * @author Kaarel Jõgeva
  */
 public class AjaxSearchBean extends AjaxBean {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(AjaxSearchBean.class);

@@ -14,9 +14,6 @@ import ee.webmedia.alfresco.workflow.service.Task;
 import ee.webmedia.alfresco.workflow.service.Workflow;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowEventType;
 
-/**
- * @author Kaarel Jõgeva
- */
 public interface NotificationService {
 
     public static String BEAN_NAME = "NotificationService";

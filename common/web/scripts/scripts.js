@@ -233,7 +233,6 @@ function disableAndRemoveButton(buttonId) {
 }
 /**
  * append selection of source element to the element with id ending with "toItemIdSuffix" and beginning with the same id prefix as selectBox
- * @author Ats Uiboupin
  */
 function appendSelection(source, targetId) {
    var appendSepparator = ', ';
@@ -250,7 +249,6 @@ function appendSelection(source, targetId) {
  * Add autoComplete functionality to input using given values to for suggestion(allows to enter also values not given with <code>valuesArray</code>)
  * @param inputId - id of the input component that should have autoComplete functionality based on values from <code>valuesArray</code>
  * @param valuesArray - values to be suggested int the input
- * @author Ats Uiboupin
  */
 var autocompleters = new Array();
 function addAutocompleter(inputId, valuesArray){
@@ -1543,7 +1541,6 @@ function handleHtmlLoaded(context, selects) {
    /**
     * Binder for alfresco properties that are generated with ClassificatorSelectorAndTextGenerator.class
     * Binds all elements that have class="selectBoundWithText" with corresponding textAreas/inputs(assumed to have same id prefix and suffix specified with TARGET_SUFFIX)
-    * @author Ats Uiboupin
     */
    $jQ(".selectBoundWithText", context).each(function (intIndex)
    {
@@ -1565,7 +1562,6 @@ function handleHtmlLoaded(context, selects) {
 
    /**
     * Add onChange functionality to jQuery change event (we can't use onChange attribute because of jQuery bug in IE)
-    * @author Riina Tens
     */
    $jQ("[class^=selectWithOnchangeEvent]", context).each(function (intIndex, selectElement)
    {
@@ -1645,159 +1641,41 @@ function cancelSign() {
  return oamSubmitForm('dialog','dialog:dialog-body:cancelSign',null,[[]]);
 }
 
-function driverError() {
-}
+function performSigningPluginOperation(operation, hashHex, certId, path) {
+   try {
+      // plugin works when it's the first child of body; doesn't work when it's somewhere in the middle
+      $jQ('body').prepend('<div id="pluginLocation"></div>');
 
-//Some parts based on https://digidoc.sk.ee/include/JS/idCard.js
-//Some parts based on https://id.smartlink.ee/plugin_tests/legacy-plugin/load-legacy.js
-function loadSigningPlugin(operation, hashHex, certId, path) {
+      loadSigningPlugin('est');
+      var plugin = new IdCardPluginHandler('est');
 
- if (isIE())
- {
-    //activeX
-    document.getElementById('pluginLocation').innerHTML = '<OBJECT id="IdCardSigning" codebase="' + path + '/applet/EIDCard.cab#Version=1,0,2,4" classid="clsid:FC5B7BD2-584A-4153-92D7-4C5840E4BC28"></OBJECT>';
+      if (operation == 'PREPARE') {
+         var selectedCertificate = plugin.getCertificate();
+         var certHex = selectedCertificate.cert;
+         var certId = selectedCertificate.id;
 
-    if (!this.isActiveXOK(document.getElementById('IdCardSigning')))
-    {
-       $jQ('#signWait').html('ID-kaardi draiverid ei ole paigaldatud!');
-       return;
-    }
-    var plugin = document.getElementById('IdCardSigning');
+         if (certHex) {
+            processCert(certHex, certId);
+         } else {
+            throw new IdCardException(1601, 'Sertifikaadi lugemine ebaõnnestus');
+         }
 
-    if (operation == 'PREPARE') {
-       var certHex = plugin.getSigningCertificate();
-       if (certHex) {
-          var certId = plugin.selectedCertNumber;
-          processCert(certHex, certId);
-       } else {
-          $jQ('#signWait').html('Sertifikaati ei valitud või sertifikaadid on registreerimata!');
-       }
+      } else if (operation == 'FINALIZE') {
+         var signedHashHex = plugin.sign(certId, hashHex);
+         if (signedHashHex) {
+            signDocument(signedHashHex);
+         } else {
+            throw new IdCardException(1602, 'Allkirjastamine ebaõnnestus');
+         }
+      }
 
-    } else if (operation == 'FINALIZE') {
-       var signedHashHex = plugin.getSignedHash(hashHex, certId);
-       if (signedHashHex) {
-          signDocument(signedHashHex);
-       } else {
-          $jQ('#signWait').html('Allkirjastamine katkestati või ID-kaart ei ole lugejas!');
-       }
-    }
- }
- else if (navigator.userAgent.indexOf('Firefox') != -1)
- {
-    navigator.plugins.refresh();
-    if (!navigator.mimeTypes['application/x-idcard-plugin']) {
-       $jQ('#signWait').html('ID-kaardi draiverid ei ole paigaldatud!');
-       return;
-    }
-
-    var s = document.createElement('embed');
-    s.id           = 'IdCardSigning';
-    s.type         = 'application/x-idcard-plugin';
-    s.style.width  = "1px";
-    s.style.height = "1px";
-    var b = document.getElementsByTagName("body")[0];
-    b.appendChild(s); // why does it work when appended here?
-
-    var plugin = document.getElementById('IdCardSigning');
-    $jQ.log('Loaded Mozilla plugin ' + plugin.getVersion());
-
-    if (operation == 'PREPARE') {
-       var response = eval('' + plugin.getCertificates());
-       if (response.returnCode != 0 || response.certificates.length < 1) {
-           firefoxSigningPluginError(response.returnCode);
-           return;
-       }
-
-       /* Find correct certificate */
-       var reg = new RegExp("(^| |,)Non-Repudiation($|,)");
-       var cert = null;
-       for (var i in response.certificates) {
-           cert = response.certificates[i];
-           if (reg.exec(cert.keyUsage)) break;
-       }
-
-       if (cert) {
-          var certHex = cert.cert;
-          var certId = cert.id;
-          processCert(certHex, certId);
-       } else {
-          $jQ('#signWait').html('Sertifikaati ei leitud!');
-       }
-
-    } else if (operation == 'FINALIZE') {
-       var response = eval('' + plugin.sign(certId, hashHex));
-       if (response.returnCode != 0) {
-          firefoxSigningPluginError(response.returnCode);
-          return;
-       }
-
-       var signedHashHex = response.signature;
-       signDocument(signedHashHex);
-    }
- }
- else
- {
-    $jQ('#signWait').html('Digiallkirjastamine ei ole toetatud!');
-/*
-    //applet
-    $jQ('#signWait').hide();
-    $jQ('#pluginLocation').show();
-
-    document.getElementById('pluginLocation').innerHTML = '<embed'
-       + ' id="signApplet"'
-       + ' type="application/x-java-applet;version=1.4"'
-       + ' width="400"'
-       + ' height="80"'
-       + ' pluginspage="http://javadl.sun.com/webapps/download/GetFile/1.6.0_18-b07/windows-i586/xpiinstall.exe"'
-       + ' java_code="SignApplet.class"'
-       + ' java_codebase="' + path + '/applet"'
-       + ' java_archive="SignApplet_sig.jar, iaikPkcs11Wrapper_sig.jar"'
-       + ' NAME="SignApplet"'
-       + ' MAYSCRIPT="true"'
-       + ' LANGUAGE="EST"'
-       + ' FUNC_SET_CERT="window.processCert"'
-       + ' FUNC_SET_SIGN="window.signDocument"'
-       + ' FUNC_CANCEL="window.cancelSign"'
-       + ' FUNC_DRIVER_ERR="window.driverError"'
-       + ' DEBUG_LEVEL="4"'
-       + ' OPERATION="' + operation + '"'
-       + ' HASH="' + hashHex + '"'
-       + ' TOKEN_ID=""'
-       + ' LEGACY_LIFECYCLE="true"'
-       + '><noembed></noembed></embed>';
-*/
- }
-}
-
-function firefoxSigningPluginError(returnCode) {
-   $jQ.log('returnCode=' + returnCode);
-   if (returnCode == 1) {
-      $jQ('#signWait').html('Allkirjastamine katkestati!');
-   } else if (returnCode == 12) {
-      $jQ('#signWait').html('ID-kaart ei ole lugejas!');
-   } else if (returnCode == 16) {
-      $jQ('#signWait').html('Vale ID-kaart on lugejas!');
-   } else {
-      $jQ('#signWait').html('Allkirjastamine ebaõnnestus (vea kood ' + returnCode + ')!');
+   } catch(ex) {
+      if (ex instanceof IdCardException) {
+         $jQ('#signWait').html(ex.message + ' (vea kood ' + ex.returnCode + ')');
+      } else {
+         $jQ('#signWait').html('Viga: ' + (ex.message != undefined ? ex.message : ex));
+      }
    }
-}
-
-//https://digidoc.sk.ee/include/JS/idCard.js
-function isActiveXOK(plugin) {
-
- if (plugin == null)
-    return false;
-
- if (typeof(plugin) == "undefined")
-    return false;
-
- if (plugin.readyState != 4 )
-    return false;
-
- if (plugin.object == null )
-    return false;
-
- return true;
 }
 
 function sendToSapManually(){

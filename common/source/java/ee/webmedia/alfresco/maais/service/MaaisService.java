@@ -9,9 +9,6 @@ import ee.webmedia.alfresco.maais.generated.server.CatalogStructureElement;
 import ee.webmedia.alfresco.maais.generated.server.RegisterDocumentRequest;
 import ee.webmedia.alfresco.maais.generated.server.RegisterDocumentResponse;
 
-/**
- * @author Keit Tehvan
- */
 public interface MaaisService {
     String BEAN_NAME = "MaaisService";
 

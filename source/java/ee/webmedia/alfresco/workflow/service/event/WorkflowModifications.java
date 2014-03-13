@@ -7,9 +7,6 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
 import ee.webmedia.alfresco.workflow.service.Task;
 
-/**
- * @author Alar Kvell
- */
 public interface WorkflowModifications {
 
     /**

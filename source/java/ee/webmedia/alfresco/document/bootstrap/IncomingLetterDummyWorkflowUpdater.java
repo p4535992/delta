@@ -34,8 +34,6 @@ import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 
 /**
  * Used to add dummy workflow to old incoming letters to prevent them from appearing in "Menetluses" menu (CL task 158704)
- * 
- * @author Alar Kvell
  */
 public class IncomingLetterDummyWorkflowUpdater extends AbstractNodeUpdater {
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(ContractSendInfoUpdater.class);

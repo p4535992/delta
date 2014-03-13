@@ -109,9 +109,6 @@ import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.volume.service.VolumeService;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
 
-/**
- * @author Alar Kvell
- */
 public class MetadataBlockBean implements Serializable {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(MetadataBlockBean.class);
     private static final long serialVersionUID = 1L;
@@ -2040,6 +2037,7 @@ public class MetadataBlockBean implements Serializable {
     public void registerDocument(@SuppressWarnings("unused") ActionEvent event) {
         try {
             BaseDialogBean.validatePermission(document, DocumentCommonModel.Privileges.EDIT_DOCUMENT_META_DATA);
+            log.info("Registering document " + document.getNodeRef());
             document = getDocumentService().registerDocument(document);// this method deep inside calls MaaisService.notifyAssoc(nodeRef);
             nodeRef = document.getNodeRef(); // reloadDoc uses NodeRef
             getDocumentTemplateService().updateGeneratedFilesOnRegistration(nodeRef);// file is being changed here and we need to send the info to MaaIS once more
@@ -2047,11 +2045,10 @@ public class MetadataBlockBean implements Serializable {
             ((MenuBean) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), MenuBean.BEAN_NAME)).processTaskItems();
             MessageUtil.addInfoMessage("document_registerDoc_success");
         } catch (UnableToPerformException e) {
-            if (log.isDebugEnabled()) {
-                log.warn("failed to register: " + e.getMessage());
-            }
+            log.warn("Failed to register: " + e.getMessage(), e);
             MessageUtil.addStatusMessage(FacesContext.getCurrentInstance(), e);
         } catch (NodeLockedException e) {
+            log.warn("Failed to register: the document was locked! " + e.getMessage(), e);
             MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "document_registerDoc_error_docLocked");
         }
         reloadDoc();

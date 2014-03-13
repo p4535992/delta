@@ -69,8 +69,6 @@ import ee.webmedia.alfresco.common.service.GeneralService;
 
 /**
  * Util methods for JSF components/component trees
- * 
- * @author Ats Uiboupin
  */
 public class ComponentUtil {
     private static final String JSF_CONVERTER = "jsfConverter";

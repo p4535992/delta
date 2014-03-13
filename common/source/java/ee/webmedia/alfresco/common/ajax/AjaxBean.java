@@ -24,10 +24,6 @@ import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.utils.ComponentUtil;
 
-/**
- * @author Alar Kvell
- * @author Romet Aidla
- */
 public class AjaxBean implements Serializable {
     private static final long serialVersionUID = 1L;
 

@@ -19,8 +19,6 @@ import ee.webmedia.alfresco.dvk.service.DvkServiceImpl;
  * Scheduled job to call a {@link DvkServiceImpl#receiveDocuments()}.
  * <p>
  * Job data is: <b>DvkService</b>
- * 
- * @author Ats Uiboupin
  */
 public class DvkReceiveDocumentsJob implements StatefulJob {
     private static Log log = LogFactory.getLog(DvkReceiveDocumentsJob.class);
@@ -39,7 +37,16 @@ public class DvkReceiveDocumentsJob implements StatefulJob {
         final Collection<String> receivedDocumentDhlIds = AuthenticationUtil.runAs(new RunAsWork<Collection<String>>() {
             @Override
             public Collection<String> doWork() throws Exception {
-                return worker.receiveDocuments();
+                Collection<String> receiveDocuments = null;
+                try {
+                    receiveDocuments = worker.receiveDocuments();
+                } catch (Throwable e) { // Catch-all for possible exceptions that may slip out
+                    String message = "Worker job threw an exception! " + e.getMessage();
+                    log.error(message, e);
+                    log.error("DvkReceiveDocumentsJob failed!");
+                    throw new JobExecutionException(message, e);
+                }
+                return receiveDocuments;
             }
         }, AuthenticationUtil.getSystemUserName());
         // Done

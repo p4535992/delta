@@ -29,9 +29,6 @@ import ee.webmedia.alfresco.workflow.model.TaskAndDocument;
 import ee.webmedia.alfresco.workflow.service.SignatureTask;
 import ee.webmedia.alfresco.workflow.service.Task;
 
-/**
- * @author Alar Kvell
- */
 public interface DocumentService {
 
     public abstract class TransientProps { // using abstract class instead of interface to be able to add/change constants without reDeploy
@@ -184,7 +181,6 @@ public interface DocumentService {
      * You can change properties of creatable document by registering implementation of this callback interface.<br>
      * 
      * @see {@link DocumentService#addPropertiesModifierCallback(QName, PropertiesModifierCallback)}
-     * @author Ats Uiboupin
      */
     public static abstract class PropertiesModifierCallback implements InitializingBean {
         private DocumentService documentService;

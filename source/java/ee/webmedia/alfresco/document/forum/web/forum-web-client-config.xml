@@ -28,7 +28,7 @@
 
          <action id="forum_permissions">
             <evaluator>ee.webmedia.alfresco.document.forum.web.evaluator.ManageDiscussionEvaluator</evaluator>
-            <!-- FIXME: Kaarel, Alar: bug CL 122928 siin on õiguste süsteemiga midagi tegemata ja üsna tõenäoliselt ka valesti tehtud.
+            <!-- FIXME: bug CL 122928 siin on õiguste süsteemiga midagi tegemata ja üsna tõenäoliselt ka valesti tehtud.
              -->
 <!--            <permissions>-->
 <!--               <permission allow="true">ReadPermissions</permission>-->
@@ -39,7 +39,7 @@
             <action>dialog:forumPermissionsListDialog</action>
             <params>
                <param name="nodeRef">#{ForumsBean.forumNodeRef}</param>
-               <!-- FIXME: Kaarel, Alar: bug CL 122928 milleks peab olema DocumentFileRead permission antud foorumi nodele?
+               <!-- FIXME: bug CL 122928 milleks peab olema DocumentFileRead permission antud foorumi nodele?
                Tegelikult ei olnud otsest seost foorumil DocumentFileRead õigusega - seda võib-olla anti ainult ReadContent õiguse pärast.
                Aga peale *_security interceptory'ite välja lülitamist ei tohiks ka seda enam vaja olla.
                Nii et tegelikult ei tohiks  DocumentFileRead permissionil mingit pistmist olla foorumiga ja võib-olla võiks selle hoopis teisiti ümber nimetada

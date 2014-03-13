@@ -37,8 +37,6 @@ import ee.webmedia.alfresco.utils.MessageUtil;
  * Another example: <br>
  * <code>docspec:substituteName=String value that makes this component mandatory</code> <br>
  * to make this component mandatory if other component value is equal to given text.
- * 
- * @author Ats Uiboupin
  */
 public class MandatoryIfValidator extends ForcedMandatoryValidator implements StateHolder {
     private static final long serialVersionUID = 1L;

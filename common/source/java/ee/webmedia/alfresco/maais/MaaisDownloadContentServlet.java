@@ -17,8 +17,6 @@ import ee.webmedia.alfresco.common.web.BeanHelper;
 
 /**
  * security hazard if not properly firewalled.. allows unauthorized download of files
- * 
- * @author Keit Tehvan
  */
 public class MaaisDownloadContentServlet extends BaseDownloadContentServlet {
     private static final long serialVersionUID = -576405943603122206L;

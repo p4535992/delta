@@ -26,8 +26,6 @@ import ee.webmedia.alfresco.volume.model.VolumeModel;
 /**
  * ViewParser, that counts documents created/imported under series, volumes and cases.
  * NB! It just ignores missing references if found!
- * 
- * @author Ats Uiboupin
  */
 public class DocListImportViewParser extends ViewParser {
     private static final Log logger = LogFactory.getLog(DocListImportViewParser.class);

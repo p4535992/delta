@@ -2,7 +2,7 @@
 <wsdl:definitions xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:sch="http://ametnik.smit/services" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
    xmlns:tns="http://ametnik.smit/services/definitions" targetNamespace="http://ametnik.smit/services/definitions">
    <wsdl:types>
-      <!-- Ats: attribute value changed elementFormDefault="unqualified" to elementFormDefault="qualified" -->
+      <!-- attribute value changed elementFormDefault="unqualified" to elementFormDefault="qualified" -->
       <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:s1="http://ametnik.smit/services" attributeFormDefault="unqualified"
          elementFormDefault="qualified" targetNamespace="http://ametnik.smit/services" >
          <xs:element name="Ametnik" type="s1:Ametnik" xmlns:xs="http://www.w3.org/2001/XMLSchema" />
@@ -11,7 +11,7 @@
                <xs:element name="eesnimi" type="xs:string" xmlns:xs="http://www.w3.org/2001/XMLSchema" />
                <xs:element name="perekonnanimi" type="xs:string" xmlns:xs="http://www.w3.org/2001/XMLSchema" />
                <xs:element name="isikukood" type="xs:string" xmlns:xs="http://www.w3.org/2001/XMLSchema" />
-               <!-- Ats: added default value -->
+               <!-- added default value -->
                <xs:element minOccurs="0" name="yksusId" default="-1" type="xs:integer" xmlns:xs="http://www.w3.org/2001/XMLSchema" />
                <xs:element name="asutusId" type="xs:integer" xmlns:xs="http://www.w3.org/2001/XMLSchema" />
                <xs:element name="ametikoht" type="xs:string" xmlns:xs="http://www.w3.org/2001/XMLSchema" />

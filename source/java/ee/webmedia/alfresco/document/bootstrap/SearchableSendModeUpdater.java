@@ -24,8 +24,6 @@ import ee.webmedia.alfresco.utils.SearchUtil;
 /**
  * Checks document's searchableSendMode property and if needed updates it to correct value
  * Used to remove sequences of document copying bug (CL task 131723)
- * 
- * @author Riina Tens
  */
 public class SearchableSendModeUpdater extends AbstractNodeUpdater {
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(SearchableSendModeUpdater.class);

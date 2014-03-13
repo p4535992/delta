@@ -24,8 +24,6 @@ import com.icegreen.greenmail.store.SimpleStoredMessage;
 /**
  * Mail folder implementation, that disables most activities on folder: makes it immutable, unlistable etc.
  * Append behaviour can be defined using {@link ee.webmedia.alfresco.imap.AppendBehaviour}.
- * 
- * @author Romet Aidla
  */
 public class ImmutableFolder implements MailFolder {
     public static final String PERMISSION_DENIED = "Permission denied.";

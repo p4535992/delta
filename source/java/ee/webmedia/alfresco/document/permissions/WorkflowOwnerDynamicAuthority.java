@@ -6,9 +6,6 @@ import org.alfresco.util.EqualsHelper;
 
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 
-/**
- * @author Alar Kvell
- */
 public class WorkflowOwnerDynamicAuthority extends BaseDynamicAuthority {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(WorkflowOwnerDynamicAuthority.class);
 

@@ -8,9 +8,6 @@ import ee.webmedia.alfresco.dvk.model.AbstractLetterDocument;
 import ee.webmedia.alfresco.utils.beanmapper.AlfrescoModelProperty;
 import ee.webmedia.alfresco.utils.beanmapper.AlfrescoModelType;
 
-/**
- * @author Ats Uiboupin
- */
 @AlfrescoModelType(uri = DocumentCommonModel.URI)
 abstract public class CommonDocument extends AbstractLetterDocument {
 

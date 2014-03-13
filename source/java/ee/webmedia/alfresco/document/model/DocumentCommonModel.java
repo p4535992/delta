@@ -11,9 +11,6 @@ import org.alfresco.service.namespace.QName;
 
 import ee.webmedia.xtee.client.dhl.DhlXTeeService.SendStatus;
 
-/**
- * @author Alar Kvell
- */
 public interface DocumentCommonModel {
     String URI = "http://alfresco.webmedia.ee/model/document/common/1.0";
     String PREFIX = "doccom:";
@@ -140,8 +137,6 @@ public interface DocumentCommonModel {
 
     /**
      * Document related privileges (and dependencies)
-     * 
-     * @author Ats Uiboupin
      */
     abstract class Privileges {
         public static final String VIEW_DOCUMENT_META_DATA = "viewDocumentMetaData";

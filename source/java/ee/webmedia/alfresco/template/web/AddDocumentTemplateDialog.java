@@ -24,9 +24,6 @@ import ee.webmedia.alfresco.document.file.web.AddFileDialog;
 import ee.webmedia.alfresco.template.model.DocumentTemplateModel;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
-/**
- * @author Kaarel Jõgeva
- */
 public class AddDocumentTemplateDialog extends AddContentDialog {
 
     private static final long serialVersionUID = 1L;

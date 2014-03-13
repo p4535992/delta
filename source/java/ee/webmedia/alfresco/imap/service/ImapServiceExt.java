@@ -15,8 +15,6 @@ import com.icegreen.greenmail.store.MailFolder;
 
 /**
  * Extended imap service.
- * 
- * @author Romet Aidla
  */
 public interface ImapServiceExt {
 

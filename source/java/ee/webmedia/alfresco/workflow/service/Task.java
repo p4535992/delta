@@ -22,9 +22,6 @@ import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 
-/**
- * @author Alar Kvell
- */
 public class Task extends BaseWorkflowObject implements Serializable, Comparable<Task>, CssStylable {
     private static final long serialVersionUID = 1L;
 

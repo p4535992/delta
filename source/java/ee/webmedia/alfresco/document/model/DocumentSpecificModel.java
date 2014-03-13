@@ -4,9 +4,6 @@ import org.alfresco.service.namespace.QName;
 
 import ee.webmedia.alfresco.classificator.enums.TransmittalMode;
 
-/**
- * @author Alar Kvell
- */
 public interface DocumentSpecificModel {
     String URI = "http://alfresco.webmedia.ee/model/document/specific/1.0";
     String PREFIX = "docspec:";

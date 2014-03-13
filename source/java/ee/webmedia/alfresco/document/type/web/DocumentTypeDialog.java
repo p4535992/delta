@@ -19,9 +19,6 @@ import ee.webmedia.alfresco.document.type.model.DocumentType;
 import ee.webmedia.alfresco.document.type.service.DocumentTypeService;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
-/**
- * @author Alar Kvell
- */
 public class DocumentTypeDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;
 

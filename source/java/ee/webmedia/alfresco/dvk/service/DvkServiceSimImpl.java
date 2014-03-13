@@ -89,9 +89,6 @@ import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.dhl.MetaxmlDocument.Met
 import ee.webmedia.xtee.client.dhl.types.ee.riik.xtee.dhl.producers.producer.dhl.GetSendStatusResponseTypeUnencoded.Item;
 import ee.webmedia.xtee.client.dhl.types.ee.sk.digiDoc.v13.DataFileType;
 
-/**
- * @author Ats Uiboupin
- */
 public class DvkServiceSimImpl extends DvkServiceImpl {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DvkServiceSimImpl.class);
     private DocumentService documentService;
@@ -180,6 +177,8 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
         QName documentType = documentTypeService.getIncomingLetterType();
         final Node document = documentService.createDocument(documentType, dvkIncomingFolder, props);
         final NodeRef docRef = document.getNodeRef();
+        log.info("Created node " + docRef + " for DVK document '" + nvlDocumentTitle + "' (ID: " + rd.getDvkId() + ")");
+
         documentLogService.addDocumentLog(docRef, I18NUtil.getMessage("document_log_status_imported"
                 , I18NUtil.getMessage("document_log_creator_dvk")), I18NUtil.getMessage("document_log_creator_dvk"));
         return docRef;
@@ -555,7 +554,7 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
             handleExternalReviewException((ExternalReviewException) e);
         }
         if (previouslyFailedDvkIds.contains(dhlId)) {
-            log.debug("tried to receive document with dvkId='" + dhlId + "' that we had already failed to receive before");
+            log.info("tried to receive document with dvkId='" + dhlId + "' that we had already failed to receive before");
             return;
         }
         previouslyFailedDvkIds.add(dhlId);
@@ -563,8 +562,8 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
         try {
             String corruptDocName = dhlId + " " + metaInfoHelper.getDhlSaatjaAsutuseNr() + " " + metaInfoHelper.getDhlSaatjaAsutuseNimi();
             corruptDocName = FilenameUtil.buildFileName(corruptDocName, "xml");
-            log.debug("trygin to store DVK document to '" + corruptDvkDocumentsPath + "+/" + corruptDocName + "'");
             NodeRef corruptFolder = generalService.getNodeRef(corruptDvkDocumentsPath);
+            log.info("Trying to store DVK document to '" + corruptDvkDocumentsPath + "/" + corruptDocName + "' (" + corruptFolder + ")");
             final NodeRef corruptDocNodeRef = fileFolderService.create(corruptFolder, corruptDocName, DvkModel.Types.FAILED_DOC).getNodeRef();
             nodeService.setProperty(corruptDocNodeRef, DvkModel.Props.DVK_ID, dhlId);
             final ContentWriter writer = fileFolderService.getWriter(corruptDocNodeRef);
@@ -573,11 +572,15 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
             try {
                 os.write(dhlDocument.toString().getBytes());
             } catch (IOException e3) {
-                throw new RuntimeException("Failed write output to repository: '" + corruptDvkDocumentsPath + "' nodeRef=" + corruptDocNodeRef + " contentUrl="
-                        + writer.getContentUrl(), e);
+                String msg = "Failed write output to repository: '" + corruptDvkDocumentsPath + "' nodeRef=" + corruptDocNodeRef + " contentUrl="
+                        + writer.getContentUrl();
+                RuntimeException ex = new RuntimeException(msg, e);
+                log.error(msg, ex);
+                throw ex;
             } finally {
                 os.close();
             }
+            log.info("Stored a failed document [" + dhlId + "] to " + corruptDocNodeRef);
         } catch (Exception e3) {
             final String msg = "Failed to store DVK document and failed to handle storage failure of document with dhlId=" + dhlId + ".";
             log.fatal(msg, e3);

@@ -2,9 +2,6 @@ package ee.webmedia.alfresco.dvk.model;
 
 import java.util.Date;
 
-/**
- * @author Ats Uiboupin
- */
 public abstract class AbstractLetterDocument extends AbstractDocument implements ILetterDocument {
 
     /**

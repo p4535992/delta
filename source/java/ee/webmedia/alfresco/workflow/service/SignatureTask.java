@@ -3,9 +3,6 @@ package ee.webmedia.alfresco.workflow.service;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.signature.model.SignatureDigest;
 
-/**
- * @author Dmitri Melnikov
- */
 public class SignatureTask extends Task {
     private static final long serialVersionUID = 1L;
 

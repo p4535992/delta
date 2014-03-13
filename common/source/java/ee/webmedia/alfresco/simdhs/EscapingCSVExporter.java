@@ -23,7 +23,6 @@ import ee.webmedia.alfresco.utils.ComponentUtil;
  * CVS exporter, that uses CSVExporter to export JSF lists to CSV files, but this class uses more complex escaping.
  * 
  * @see CSVExporter
- * @author Ats Uiboupin
  */
 public class EscapingCSVExporter extends CSVExporter {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(EscapingCSVExporter.class);

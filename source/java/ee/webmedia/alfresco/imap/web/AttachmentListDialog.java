@@ -18,8 +18,6 @@ import ee.webmedia.alfresco.imap.service.ImapServiceExt;
 
 /**
  * Email attachments list dialog.
- * 
- * @author Romet Aidla
  */
 public class AttachmentListDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;

@@ -12,8 +12,6 @@ import ee.webmedia.alfresco.utils.UnableToPerformException;
 
 /**
  * Implementation of DhlXTeeServiceImplStub that creates <dhl:dokument> element from file in File System
- * 
- * @author Ats Uiboupin
  */
 public class DhlXTeeServiceImplFSStub extends DhlXTeeServiceImplStub {
     public static String BEAN_NAME = "stubDhlXTeeService";

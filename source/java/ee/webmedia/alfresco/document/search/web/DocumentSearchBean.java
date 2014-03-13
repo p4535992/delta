@@ -17,8 +17,6 @@ import ee.webmedia.alfresco.utils.WebUtil;
 
 /**
  * Bean used to create values for common components for searching documents, such as select containing used documentTypes
- * 
- * @author Ats Uiboupin
  */
 public class DocumentSearchBean implements Serializable {
     private static final long serialVersionUID = 1L;

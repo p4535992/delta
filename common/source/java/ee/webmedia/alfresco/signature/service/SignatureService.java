@@ -14,8 +14,6 @@ import ee.webmedia.alfresco.signature.model.SignatureItemsAndDataItems;
 /**
  * Service class that handles DigiDoc containers.
  * Has methods that create, check, sign, retrieve signatures, signature digests and files from the container.
- * 
- * @author Dmitri Melnikov
  */
 public interface SignatureService {
 

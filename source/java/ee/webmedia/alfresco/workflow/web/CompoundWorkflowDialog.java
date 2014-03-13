@@ -69,8 +69,6 @@ import ee.webmedia.alfresco.workflow.web.evaluator.WorkflowNewEvaluator;
 
 /**
  * Dialog bean for working with one compound workflow instance which is tied to a document.
- * 
- * @author Erko Hansar
  */
 public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
 
@@ -714,8 +712,6 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
      * 1) tasks inside one parallel workflow
      * 2) tasks inside assignment, opinion and information workflows immediately following each other in any number and any order
      * Tasks inside each of these blocks are not compared to each other, BUT must still be compared to tasks outside these blocks
-     * 
-     * @author Ats Uiboupin
      */
     private static class DueDateRegressionHelper {
         boolean valid = true;

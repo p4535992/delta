@@ -67,8 +67,6 @@ import ee.webmedia.alfresco.volume.model.Volume;
  * with another document). <br>
  * <br>
  * There is also field {@link #locationCache} that keep in memory functions, series and volumes for performance reasons.
- * 
- * @author Ats Uiboupin
  */
 public class DocumentImportServiceImpl extends DocumentServiceImpl implements DocumentImportService {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DocumentImportServiceImpl.class);
@@ -517,8 +515,6 @@ public class DocumentImportServiceImpl extends DocumentServiceImpl implements Do
 
     /**
      * Cache functions, series and volumes for performance reasons
-     * 
-     * @author Ats Uiboupin
      */
     private class LocationCache implements IClonable<LocationCache> {
         private HashMap<String /* functionMark */, NodeRef> functionsCache;
@@ -623,8 +619,6 @@ public class DocumentImportServiceImpl extends DocumentServiceImpl implements Do
 
     /**
      * Keeps track of associations that need to be created.
-     * 
-     * @author Ats Uiboupin
      */
     static class AssocVO implements IClonable<AssocVO> {
         private Node initialDoc;

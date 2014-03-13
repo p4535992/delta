@@ -17,8 +17,6 @@ import org.apache.myfaces.shared_impl.renderkit.html.HtmlRendererUtils;
  * added rendering <div> element when attribute layout="block" and rendering {@code<p>} element
  * when attribute layout="paragraph" . In later releases of MyFaces rendering <div> can
  * be done using setLayout/getLayout properties.
- * 
- * @author Riina Tens
  */
 public class HtmlGroupCustomRenderer extends HtmlGroupRenderer {
 

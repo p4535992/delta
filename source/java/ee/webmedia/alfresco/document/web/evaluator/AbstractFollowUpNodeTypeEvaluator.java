@@ -4,8 +4,6 @@ import org.alfresco.web.bean.repository.Node;
 
 /**
  * Abstract evaluator of followUps
- * 
- * @author Ats Uiboupin
  */
 public class AbstractFollowUpNodeTypeEvaluator extends NodeTypeEvaluator {
 

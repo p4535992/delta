@@ -33,8 +33,6 @@ import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
  * Start time is current date and time provided by parameter; period is added to the start time.
  * This means that when time changes from summer-time to winter-time and vice versa,
  * the start time given by parameter is shifted by one hour.
- * 
- * @author Ats Uiboupin
  */
 public class ParameterRescheduledTriggerBean extends AbstractTriggerBean {
 

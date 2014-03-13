@@ -30,9 +30,6 @@ import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 
-/**
- * @author Aleksei Lissitsin
- */
 public class PostipoissDocumentsMapper {
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(PostipoissDocumentsMapper.class);
 

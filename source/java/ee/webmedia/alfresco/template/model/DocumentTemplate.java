@@ -8,9 +8,6 @@ import org.alfresco.service.namespace.QName;
 import ee.webmedia.alfresco.utils.beanmapper.AlfrescoModelProperty;
 import ee.webmedia.alfresco.utils.beanmapper.AlfrescoModelType;
 
-/**
- * @author Kaarel Jõgeva
- */
 @AlfrescoModelType(uri = DocumentTemplateModel.URI)
 public class DocumentTemplate implements Serializable {
 

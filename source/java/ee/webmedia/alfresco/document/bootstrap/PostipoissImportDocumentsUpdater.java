@@ -28,8 +28,6 @@ import ee.webmedia.alfresco.utils.SearchUtil;
 
 /**
  * Update documents that are imported from Postipoiss.
- * 
- * @author Kaarel Jõgeva
  */
 public class PostipoissImportDocumentsUpdater extends AbstractNodeUpdater {
 

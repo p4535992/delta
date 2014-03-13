@@ -2,9 +2,6 @@ package ee.webmedia.alfresco.document.file.model;
 
 import org.alfresco.service.namespace.QName;
 
-/**
- * @author Ats Uiboupin
- */
 public interface FileModel {
     String URI = "http://alfresco.webmedia.ee/model/file/1.0";
 

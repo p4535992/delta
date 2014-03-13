@@ -1636,7 +1636,7 @@ window.DP_jQuery = jQuery;
 })(jQuery);
 
 /* Estonian initialisation for the jQuery UI date picker plugin. */
-/* Written by Kaarel Jõgeva (Kaarel.Jogeva@webmedia.ee). */
+/* Written by */
 jQuery(function($){
  $.datepicker.regional['ee'] = {
   closeText: 'sulge',

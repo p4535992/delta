@@ -39,9 +39,6 @@ import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
 import ee.webmedia.alfresco.volume.service.VolumeService;
 
-/**
- * @author Romet Aidla
- */
 public class ArchivalsServiceImpl implements ArchivalsService {
     private NodeService nodeService;
     private GeneralService generalService;

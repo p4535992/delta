@@ -22,8 +22,6 @@ import ee.webmedia.alfresco.utils.SearchUtil;
 
 /**
  * Fixes mimeType on files (CL task 151423)
- * 
- * @author Alar Kvell
  */
 public class GeneratedFileMimeTypeUpdater extends AbstractNodeUpdater {
 

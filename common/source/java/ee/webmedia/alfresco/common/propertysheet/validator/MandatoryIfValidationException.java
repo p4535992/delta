@@ -4,8 +4,6 @@ import javax.faces.event.AbortProcessingException;
 
 /**
  * Marker class to allow different processing of mandatory if validation exception
- * 
- * @author Riina Tens
  */
 public class MandatoryIfValidationException extends AbortProcessingException {
 

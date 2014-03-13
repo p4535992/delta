@@ -12,8 +12,6 @@ import ee.webmedia.alfresco.addressbook.service.AddressbookService;
 
 /**
  * Evaluator to check if creating children (orgainzations, persons, groups) to addressbook is enabled
- * 
- * @author Ats Uiboupin
  */
 public class AddressbookCreateChildrenEvaluator extends BaseActionEvaluator {
 

@@ -9,8 +9,6 @@ import com.icegreen.greenmail.store.FolderException;
 
 /**
  * All implementations must be <b>thread-safe</b>.
- * 
- * @author Romet Aidla
  */
 public interface AppendBehaviour {
     /**

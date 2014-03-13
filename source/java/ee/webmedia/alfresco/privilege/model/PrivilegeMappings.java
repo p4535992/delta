@@ -12,8 +12,6 @@ import ee.webmedia.alfresco.common.web.BeanHelper;
 
 /**
  * Holds information about user privileges and user-group mappings
- * 
- * @author Ats Uiboupin
  */
 public class PrivilegeMappings implements Serializable {
     private static final long serialVersionUID = 1L;

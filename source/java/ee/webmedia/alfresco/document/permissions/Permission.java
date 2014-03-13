@@ -2,8 +2,6 @@ package ee.webmedia.alfresco.document.permissions;
 
 /**
  * Enum for permissions
- * 
- * @author Erko Hansar
  */
 public enum Permission {
 

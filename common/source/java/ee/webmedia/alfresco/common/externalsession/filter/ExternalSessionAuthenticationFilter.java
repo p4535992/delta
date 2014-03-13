@@ -25,9 +25,6 @@ import org.jasig.cas.client.validation.AssertionImpl;
 
 import ee.webmedia.alfresco.common.externalsession.service.ExternalSessionService;
 
-/**
- * @author Keit Tehvan
- */
 public class ExternalSessionAuthenticationFilter implements DependencyInjectedFilter {
     private static Log logger = LogFactory.getLog(ExternalSessionAuthenticationFilter.class);
 

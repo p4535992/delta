@@ -29,8 +29,6 @@ import ee.webmedia.alfresco.user.service.UserService;
 
 /**
  * Handler to handle scanned emails.
- * 
- * @author Ats Uiboupin
  */
 public class ScannedEmailHandler extends AbstractForumEmailMessageHandler {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(ScannedEmailHandler.class);
@@ -141,8 +139,6 @@ public class ScannedEmailHandler extends AbstractForumEmailMessageHandler {
 
     /**
      * Helper that splits SocalSecurityNumber from rest of the file name
-     * 
-     * @author Ats Uiboupin
      */
     private static class FileNameSplitter {
         private static final Pattern fileNamePattern = Pattern.compile("(\\d{11})\\w*(.*)");

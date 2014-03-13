@@ -7,8 +7,6 @@ import org.alfresco.web.bean.repository.Node;
 
 /**
  * Evaluator that decides whether to show both INCOMING_LETTER_MV and OUTGOING_LETTER_MV followUps
- * 
- * @author Riina Tens
  */
 public class LetterMvFollowupEvaluator extends AbstractFollowUpNodeTypeEvaluator {
 

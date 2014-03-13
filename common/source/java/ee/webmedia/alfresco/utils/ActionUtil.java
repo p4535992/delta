@@ -9,9 +9,6 @@ import javax.faces.event.ActionEvent;
 import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
 import org.alfresco.web.ui.common.component.UIActionLink;
 
-/**
- * @author Keit Tehvan
- */
 public class ActionUtil {
 
     public static String getParam(ActionEvent event, String key, String defaultValue) {

@@ -27,8 +27,6 @@ import org.springframework.beans.factory.InitializingBean;
 /**
  * Serializes all session attributes. This filter helps to be aware of serializing issues during development. If the session does not serialize, exception is
  * thrown. In production configuration, this filter should never be enabled, thus it is disabled by default.
- * 
- * @author Alar Kvell (alar.kvell@webmedia.ee)
  */
 public class SerializingFilter implements DependencyInjectedFilter, InitializingBean {
 
