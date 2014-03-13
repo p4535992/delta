@@ -76,8 +76,6 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
  * Component to represent a child propertySheet as a PropertySheetItem within a parent property sheet
- * 
- * @author Ats Uiboupin
  */
 public class SubPropertySheetItem extends PropertySheetItem implements CustomAttributes {
     public static final String SUB_PROPERTY_SHEET_ITEM = SubPropertySheetItem.class.getCanonicalName();
@@ -464,7 +462,6 @@ public class SubPropertySheetItem extends PropertySheetItem implements CustomAtt
      * @param context FacesContext
      * @param generatorName The name of the component generator to retrieve
      * @return component generated and optionally changed as well
-     * @author Ats Uiboupin
      */
     protected IComponentGenerator getComponentGenerator(FacesContext context, String componentGeneratorName) {
         return FacesHelper.getComponentGenerator(context, componentGeneratorName);

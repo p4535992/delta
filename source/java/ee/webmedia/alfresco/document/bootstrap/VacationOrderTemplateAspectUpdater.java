@@ -22,8 +22,6 @@ import ee.webmedia.alfresco.utils.SearchUtil;
 
 /**
  * Removes docspec:template aspect from docsub:vacationOrder documents
- * 
- * @author Kaarel Jõgeva
  */
 public class VacationOrderTemplateAspectUpdater extends AbstractNodeUpdater {
 

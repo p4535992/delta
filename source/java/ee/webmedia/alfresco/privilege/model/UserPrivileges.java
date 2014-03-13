@@ -18,8 +18,6 @@ import org.apache.commons.lang.builder.ToStringStyle;
 
 /**
  * VO that maintains information about user privileges(permissions, group belongings)
- * 
- * @author Ats Uiboupin
  */
 public class UserPrivileges implements Serializable {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(UserPrivileges.class);

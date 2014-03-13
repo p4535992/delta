@@ -10,8 +10,6 @@ import ee.webmedia.alfresco.document.metadata.web.MetadataBlockBean;
 
 /**
  * UI action evaluator for validating whether document screen is in view mode.
- * 
- * @author Romet Aidla
  */
 public class ViewStateActionEvaluator extends BaseActionEvaluator {
     private static final long serialVersionUID = 1L;

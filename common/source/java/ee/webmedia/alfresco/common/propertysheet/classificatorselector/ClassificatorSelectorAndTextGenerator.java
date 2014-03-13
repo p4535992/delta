@@ -38,8 +38,6 @@ import ee.webmedia.alfresco.common.service.GeneralService;
  * <li>{@link #RENDERER_TYPE} - renderer that will be used(to generate textArea(by default) or for example plain input(ComponentConstants#JAVAX_FACES_PANELGROUP)</li>
  * <li>{@link #LAYOUT} - {@value #LAYOUT_SIDE_BY_SIDE} will give side-by-side layout opposed to default row-by-row</li>
  * <ul>
- * 
- * @author Ats Uiboupin
  */
 public class ClassificatorSelectorAndTextGenerator extends TextAreaGenerator {
     private static final String SELECT_SOURCE = "select_source"; // id attribute suffix of HTML select element

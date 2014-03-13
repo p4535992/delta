@@ -9,9 +9,6 @@ import javax.servlet.http.HttpSessionListener;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
 
-/**
- * @author Keit Tehvan
- */
 public class SessionListener implements HttpSessionListener {
 
     public static Set<String> loggedInUsers = Collections.synchronizedSet(new HashSet<String>());

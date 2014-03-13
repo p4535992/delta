@@ -76,8 +76,6 @@ import ee.webmedia.alfresco.imap.model.ImapModel;
 
 /**
  * SimDhs specific IMAP logic.
- * 
- * @author Romet Aidla
  */
 public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
     private static final Log log = LogFactory.getLog(ImapServiceExtImpl.class);

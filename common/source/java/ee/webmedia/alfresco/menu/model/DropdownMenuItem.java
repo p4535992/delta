@@ -25,9 +25,6 @@ import ee.webmedia.alfresco.menu.ui.component.UIMenuComponent;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
 
-/**
- * @author Kaarel Jõgeva
- */
 @XStreamAlias("dropdown")
 public class DropdownMenuItem extends MenuItem {
 

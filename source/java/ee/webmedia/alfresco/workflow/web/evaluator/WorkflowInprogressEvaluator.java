@@ -6,8 +6,6 @@ import ee.webmedia.alfresco.workflow.service.WorkflowUtil;
 
 /**
  * Evaluates to true if given workflow has status "teostamisel".
- * 
- * @author Erko Hansar
  */
 public class WorkflowInprogressEvaluator extends AbstractFullAccessEvaluator {
 

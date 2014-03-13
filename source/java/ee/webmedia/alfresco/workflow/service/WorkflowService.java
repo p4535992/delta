@@ -19,9 +19,6 @@ import ee.webmedia.alfresco.workflow.service.event.WorkflowEventListener;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowEventListenerWithModifications;
 import ee.webmedia.alfresco.workflow.service.type.WorkflowType;
 
-/**
- * @author Alar Kvell
- */
 public interface WorkflowService {
     String BEAN_NAME = "WmWorkflowService";
 

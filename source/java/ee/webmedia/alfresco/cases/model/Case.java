@@ -16,8 +16,6 @@ import ee.webmedia.alfresco.utils.beanmapper.AlfrescoModelType;
 
 /**
  * Java class representing case:case defined in caseModel.xml
- * 
- * @author Ats Uiboupin
  */
 @AlfrescoModelType(uri = CaseModel.URI)
 public class Case implements Serializable, Comparable<Case> {

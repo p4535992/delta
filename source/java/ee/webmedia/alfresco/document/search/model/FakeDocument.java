@@ -11,8 +11,6 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
  * Used to show case title in documents list
- * 
- * @author Ats Uiboupin
  */
 public class FakeDocument extends Document {
     private static final String CASE = "case";

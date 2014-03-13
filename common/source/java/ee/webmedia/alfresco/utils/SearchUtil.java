@@ -17,9 +17,6 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.FastDateFormat;
 import org.apache.lucene.queryParser.QueryParser;
 
-/**
- * @author Alar Kvell
- */
 public class SearchUtil {
 
     public static FastDateFormat luceneDateFormat = FastDateFormat.getInstance("yyyy-MM-dd'T'00:00:00.000");

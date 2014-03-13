@@ -12,9 +12,6 @@ import org.quartz.StatefulJob;
 
 import ee.webmedia.alfresco.maais.service.MaaisService;
 
-/**
- * @author Keit Tehvan
- */
 public class SendMaaisChangedDocumentsJob implements StatefulJob {
     private static Log log = LogFactory.getLog(SendMaaisChangedDocumentsJob.class);
 

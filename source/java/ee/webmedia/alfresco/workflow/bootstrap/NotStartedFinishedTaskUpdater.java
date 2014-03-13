@@ -15,8 +15,6 @@ import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 
 /**
  * Used to fix invalid tasks where starDateTime=null and status="lõpetatud" (CL task 158082)
- * 
- * @author Riina tens
  */
 
 public class NotStartedFinishedTaskUpdater extends AbstractNodeUpdater {

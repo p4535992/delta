@@ -15,8 +15,6 @@ import ee.webmedia.alfresco.user.service.UserService;
 
 /**
  * Implements the WebDAV GET method, checks if {@link DocumentCommonModel.Privileges#VIEW_DOCUMENT_FILES} is granted to the document of the file
- * 
- * @author Ats Uiboupin
  */
 public class GetMethod extends org.alfresco.repo.webdav.GetMethod {
 

@@ -10,9 +10,6 @@ import org.springframework.web.jsf.FacesContextUtils;
 import ee.webmedia.alfresco.template.model.DocumentTemplate;
 import ee.webmedia.alfresco.template.service.DocumentTemplateService;
 
-/**
- * @author Kaarel Jõgeva
- */
 public class DocumentTemplateListDialog extends BaseDialogBean {
 
     private static final long serialVersionUID = 1L;

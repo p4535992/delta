@@ -84,8 +84,6 @@ import flexjson.JSONSerializer;
 
 /**
  * Dialog bean for managing privileges.
- * 
- * @author Ats Uiboupin
  */
 @SuppressWarnings("unchecked")
 public class ManagePrivilegesDialog extends BaseDialogBean {

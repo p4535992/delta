@@ -13,9 +13,6 @@ import ee.webmedia.alfresco.document.sendout.model.SendInfo;
 import ee.webmedia.alfresco.document.sendout.service.SendOutService;
 import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
 
-/**
- * @author Erko Hansar
- */
 public class SendOutBlockBean implements Serializable {
 
     private static final long serialVersionUID = 1L;

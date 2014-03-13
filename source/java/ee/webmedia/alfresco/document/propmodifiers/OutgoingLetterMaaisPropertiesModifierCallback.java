@@ -11,9 +11,6 @@ import ee.webmedia.alfresco.document.service.DocumentService.PropertiesModifierC
 import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
 
-/**
- * @author Keit Tehvan
- */
 public class OutgoingLetterMaaisPropertiesModifierCallback extends PropertiesModifierCallback {
 
     private ParametersService parametersService;

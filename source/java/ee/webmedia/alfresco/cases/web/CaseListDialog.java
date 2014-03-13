@@ -16,8 +16,6 @@ import ee.webmedia.alfresco.volume.service.VolumeService;
 
 /**
  * Form backing component for cases list page
- * 
- * @author Ats Uiboupin
  */
 public class CaseListDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;

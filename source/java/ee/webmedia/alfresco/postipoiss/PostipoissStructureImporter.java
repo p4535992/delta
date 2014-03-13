@@ -69,9 +69,6 @@ import ee.webmedia.alfresco.volume.service.VolumeService;
 
 /**
  * Imports structure (contacts, functions and volumes) from postipoiss.
- * 
- * @author Taimo Peelo (taimo@webmedia.ee)
- * @author Aleksei Lissitsin
  */
 public class PostipoissStructureImporter {
 

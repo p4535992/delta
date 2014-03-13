@@ -5,9 +5,6 @@ import org.alfresco.service.namespace.QName;
 
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 
-/**
- * @author Alar Kvell
- */
 public class WorkflowUserDynamicAuthority extends BaseDynamicAuthority {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(WorkflowUserDynamicAuthority.class);
 

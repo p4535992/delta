@@ -56,8 +56,6 @@ import ee.webmedia.xtee.client.dhl.DhlXTeeServiceImplFSStub;
 
 /**
  * Helper class for web environment for accessing beans simply through getter. If getter for your bean is missing then just add it
- * 
- * @author Ats Uiboupin
  */
 public class BeanHelper {
 

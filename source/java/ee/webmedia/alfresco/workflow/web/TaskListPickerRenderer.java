@@ -20,8 +20,6 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 /**
  * This custom renderer must be set to an HtmlPanelGroup that wraps a UIGenericPicker as the only child.
  * It writes the HTML to open the picker component in a modal dialog which is hidden by default.
- * 
- * @author Erko Hansar
  */
 public class TaskListPickerRenderer extends BaseRenderer {
 

@@ -36,9 +36,6 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.myfaces.application.jsp.JspStateManagerImpl;
 
-/**
- * @author Ats Uiboupin
- */
 public class WMAdminNodeBrowseBean extends AdminNodeBrowseBean {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(WMAdminNodeBrowseBean.class);
 
@@ -179,7 +176,7 @@ public class WMAdminNodeBrowseBean extends AdminNodeBrowseBean {
             IOUtils.closeQuietly(outputStream);
             FacesContext.getCurrentInstance().responseComplete();
 
-            // Erko hack for incorrect view id in the next request
+            // hack for incorrect view id in the next request
             JspStateManagerImpl.ignoreCurrentViewSequenceHack();
 
             LOG.info("Node export completed: " + getNodeRef());

@@ -19,8 +19,6 @@ import ee.webmedia.alfresco.utils.ComponentUtil;
 /**
  * Generator, that generates a TextArea that suggests values (defined using "suggesterValues" attribute in the show-property
  * element, which contains a value-binding ...), and allows to insert value that is not predefined
- * 
- * @author Ats Uiboupin
  */
 public class SuggesterGenerator extends TextAreaGenerator {
 

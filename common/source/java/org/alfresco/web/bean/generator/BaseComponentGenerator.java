@@ -236,7 +236,6 @@ public abstract class BaseComponentGenerator implements IComponentGenerator, Cus
     * 
     * @param context FacesContext
     * @param component
-    * @author Ats Uiboupin 
     */
     protected void addMandatoryIfValidator(FacesContext context, UIInput component) {
         if (isValidationDisabled()) {
@@ -293,7 +292,6 @@ public abstract class BaseComponentGenerator implements IComponentGenerator, Cus
      *            component should be disabled or not.
      * @param context - FacesContext
      * @param propertySheet - UIPropertySheet where this <code>component</code> is located
-     * @author Ats Uiboupin
      */
     private void setReadOnlyBasedOnExpressionIfNessesary(UIComponent component, PropertySheetItem item, FacesContext context, UIPropertySheet propertySheet) {
         if (item instanceof CustomAttributes) {

@@ -18,8 +18,6 @@ import ee.webmedia.alfresco.dvk.service.DvkService;
 
 /**
  * Email attachments list dialog.
- * 
- * @author Ats Uiboupin
  */
 public class DvkCorruptListDialog extends BaseDialogBean {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DvkCorruptListDialog.class);

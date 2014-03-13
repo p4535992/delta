@@ -8,8 +8,6 @@ import java.util.Arrays;
  * could/should be shown to the user. <br>
  * If message should be shown to the user, use {@link MessageUtil#addStatusMessage(javax.faces.context.FacesContext, UnableToPerformException)}. <br>
  * Severity of the message is determined using <code>severity</code>
- * 
- * @author Ats Uiboupin
  */
 public class UnableToPerformException extends RuntimeException implements MessageData {
     private static final long serialVersionUID = 1L;
@@ -63,8 +61,6 @@ public class UnableToPerformException extends RuntimeException implements Messag
      * Can be used to add translation keys to be used in message value holders.<br>
      * Useful if you need to pass message from service layer(where you shouldn't use web layer translation mechanisms to loosely couple components) to web layer
      * where message key and values could be translated (most likely by {@link MessageUtil})
-     * 
-     * @author Ats Uiboupin
      */
     public static class UntransaltedMessageValueHolder {
         private final String messageKey;

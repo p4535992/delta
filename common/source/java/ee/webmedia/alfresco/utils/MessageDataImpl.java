@@ -6,8 +6,6 @@ import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
 
 /**
  * This class can be used to give feedback about actions done service layer to web layer (where content could be formated into faces message using {@link MessageUtil})
- * 
- * @author Ats Uiboupin
  */
 public class MessageDataImpl implements MessageData {
     private static final long serialVersionUID = 1L;

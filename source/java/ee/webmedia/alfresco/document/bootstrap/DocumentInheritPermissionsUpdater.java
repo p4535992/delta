@@ -13,8 +13,6 @@ import ee.webmedia.alfresco.utils.SearchUtil;
 
 /**
  * Set document permission inheritance to false.
- * 
- * @author Alar Kvell
  */
 public class DocumentInheritPermissionsUpdater extends AbstractNodeUpdater {
 

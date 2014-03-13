@@ -15,8 +15,6 @@ import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
 /**
  * Helps to add/remove applicant childNodes to document and errands to application
  * Helper/service class that doesn't use repository.
- * 
- * @author Ats Uiboupin
  */
 public class InMemoryChildNodeHelper {
     public static final String BEAN_NAME = "inMemoryChildNodeHelper";

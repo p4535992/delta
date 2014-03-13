@@ -8,9 +8,6 @@ import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
 
-/**
- * @author Alar Kvell
- */
 public class AssignResponsibilityServiceImpl implements AssignResponsibilityService {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(AssignResponsibilityServiceImpl.class);
 

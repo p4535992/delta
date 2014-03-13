@@ -28,8 +28,6 @@ import ee.webmedia.alfresco.volume.service.VolumeService;
 
 /**
  * Form backing bean for Volumes details
- * 
- * @author Ats Uiboupin
  */
 public class VolumeDetailsDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;

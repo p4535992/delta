@@ -107,6 +107,13 @@
          <h:commandButton id="receiveDocStub" value="Jäljenda DVK importi faili alusel" type="submit"
             actionListener="#{TestingForDeveloperBean.receiveDocStub}" />
       <hr/>
+      
+      <br />
+      <h:commandButton id="exportInstrumentOfDeliveryAndReceiptDelivererName" value="exportInstrumentOfDeliveryAndReceiptDelivererName" type="submit"
+         actionListener="#{exportInstrumentOfDeliveryAndReceipt.executeUpdaterInBackground}" />
+      <br />
+      <br />
+                  
       <h:outputText styleClass="mainTitle" value="Arendajale testimiseks"/><br/>
 
          <a:actionLink value="TestingForDeveloper" actionListener="#{TestingForDeveloperBean.handleTestEvent}" >
@@ -122,6 +129,7 @@
          <br/>
          <h:commandButton id="processVolumeDispositionDateNotifications" value="processVolumeDispositionDateNotifications" type="submit"
             actionListener="#{NotificationService.processVolumeDispositionDateNotifications}" rendered="#{ApplicationService.test}" />
+         <br/>         
    </h:form>
 </f:view>
 

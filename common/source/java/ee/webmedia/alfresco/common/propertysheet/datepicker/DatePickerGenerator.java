@@ -26,8 +26,6 @@ import ee.webmedia.alfresco.utils.ComponentUtil;
 /**
  * Generates text field for a date. UIInput has "date" class for jQuery date picker plug-in.
  * Also adds JavaScript validation.
- * 
- * @author Kaarel Jõgeva
  */
 public class DatePickerGenerator extends BaseComponentGenerator {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(DatePickerGenerator.class);

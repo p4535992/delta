@@ -361,7 +361,15 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
 
             // Cannot use more generic read method that detects type (DDOC/BDOC), beacuse it is buggy
             // (detect method reads from stream, and when parse is invoked, stream is not at the beginning any more)
-            SignedDoc signedDoc = digiDocFactory.readSignedDocOfType(contentInputStream, false, fileContents);
+            ArrayList<DigiDocException> errors = new ArrayList<DigiDocException>();
+            SignedDoc signedDoc = digiDocFactory.readSignedDocFromStreamOfType(contentInputStream, false, errors);
+            for (DigiDocException ex : errors) {
+                // See DELTA-295
+                if (ex.getCode() == DigiDocException.ERR_ISSUER_XMLNS) {
+                    continue;
+                }
+                throw ex;
+            }
             if (fileContents) {
                 bindCleanTempFiles(signedDoc);
             }

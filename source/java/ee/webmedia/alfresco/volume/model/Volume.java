@@ -28,7 +28,7 @@ public class Volume implements Serializable, Comparable<Volume> {
     private Date validTo;
     private String status;
     private Date dispositionDate;
-    // FIXME: Alar, milleks see väli? On see üldse kuskil kasutusel?
+    // FIXME: milleks see väli? On see üldse kuskil kasutusel?
     private Date seriesIdentifier;
     private boolean containsCases;
     private int containingDocsCount;

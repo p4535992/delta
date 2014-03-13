@@ -17,8 +17,6 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
  * This custom component provides the "Mark task as finished" comment field modal popup for workflow tasks.
- * 
- * @author Erko Hansar
  */
 public class TaskListCommentComponent extends UICommand {
 

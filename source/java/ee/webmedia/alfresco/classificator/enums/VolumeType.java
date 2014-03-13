@@ -2,8 +2,6 @@ package ee.webmedia.alfresco.classificator.enums;
 
 /**
  * Enum for "volumeType" classificator values
- * 
- * @author Ats Uiboupin
  */
 public enum VolumeType {
     YEAR_BASED("aastapõhine"),

@@ -9,8 +9,6 @@ import org.alfresco.service.cmr.repository.StoreRef;
 
 /**
  * JSF converter for {@link StoreRef} class
- * 
- * @author Ats Uiboupin
  */
 public class StoreRefConverter implements Converter {
 

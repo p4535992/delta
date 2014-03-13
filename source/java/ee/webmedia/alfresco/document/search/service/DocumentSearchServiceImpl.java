@@ -102,10 +102,6 @@ import ee.webmedia.alfresco.workflow.service.Task;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
 import ee.webmedia.xtee.client.dhl.DhlXTeeService.SendStatus;
 
-/**
- * @author Alar Kvell
- * @author Erko Hansar
- */
 public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl implements DocumentSearchService {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DocumentSearchServiceImpl.class);
 

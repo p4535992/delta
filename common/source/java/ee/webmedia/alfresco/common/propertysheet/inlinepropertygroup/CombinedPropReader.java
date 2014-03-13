@@ -21,8 +21,6 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
  * Read property definition into list of ComponentPropVO
- * 
- * @author Ats Uiboupin
  */
 public class CombinedPropReader {
     private static Log missingPropsLogger = LogFactory.getLog("alfresco.missingProperties");

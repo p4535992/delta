@@ -10,9 +10,6 @@ import org.apache.commons.lang.time.DateUtils;
 import ee.webmedia.alfresco.utils.beanmapper.AlfrescoModelProperty;
 import ee.webmedia.alfresco.utils.beanmapper.AlfrescoModelType;
 
-/**
- * @author Romet Aidla
- */
 @AlfrescoModelType(uri = SubstituteModel.URI)
 public class Substitute implements Serializable {
     private static final long serialVersionUID = 0L;

@@ -38,8 +38,6 @@ import ee.webmedia.xtee.client.dhl.DhlXTeeService.SendStatus;
 
 /**
  * Used to add sendinfos to contracts (CL task 156770)
- * 
- * @author Alar Kvell
  */
 public class ContractSendInfoUpdater extends AbstractNodeUpdater {
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(ContractSendInfoUpdater.class);

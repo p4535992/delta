@@ -16,9 +16,6 @@ import org.quartz.StatefulJob;
 import ee.webmedia.alfresco.common.listener.SessionListener;
 import ee.webmedia.alfresco.maais.service.MaaisService;
 
-/**
- * @author Keit Tehvan
- */
 public class UpdateMaaisAuthJob implements StatefulJob {
     private static Log log = LogFactory.getLog(UpdateMaaisAuthJob.class);
 

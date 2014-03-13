@@ -2,9 +2,6 @@ package ee.webmedia.alfresco.imap.model;
 
 import org.alfresco.service.namespace.QName;
 
-/**
- * @author Romet Aidla
- */
 public interface ImapModel {
     String URI = "http://alfresco.webmedia.ee/model/imap/1.0";
     String IMAP_EXT_MODEL_PREFIX = "imap-ext";

@@ -45,9 +45,6 @@ import ee.webmedia.alfresco.utils.MessageDataWrapper;
 import ee.webmedia.alfresco.utils.SearchUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
 
-/**
- * @author Keit Tehvan
- */
 public class AddressbookServiceImpl implements AddressbookService {
 
     private NodeService nodeService;

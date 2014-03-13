@@ -81,9 +81,6 @@ import ee.webmedia.alfresco.workflow.service.Workflow;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
 import ee.webmedia.alfresco.workflow.service.WorkflowUtil;
 
-/**
- * @author Dmitri Melnikov
- */
 public class WorkflowBlockBean implements Serializable {
     private static final long serialVersionUID = 1L;
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(WorkflowBlockBean.class);

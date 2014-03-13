@@ -542,7 +542,7 @@ jQuery.fn.autocomplete = function(url, options, data) {
    options.autoFill = options.autoFill || false;
    options.width = parseInt(options.width, 10) || 0;
 
-   // XXX: Ats: additional functionality:
+   // XXX: additional functionality:
    // suggest all values(no input needed to show all items - set options.minChars to -1)
    options.suggestAll = options.suggestAll || 0;
 

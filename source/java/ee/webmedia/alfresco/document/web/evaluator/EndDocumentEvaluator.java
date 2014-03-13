@@ -9,8 +9,6 @@ import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 
 /**
  * UI action evaluator for validating whether user can end current document.
- * 
- * @author Romet Aidla
  */
 public class EndDocumentEvaluator extends BaseActionEvaluator {
     private static final long serialVersionUID = 0L;

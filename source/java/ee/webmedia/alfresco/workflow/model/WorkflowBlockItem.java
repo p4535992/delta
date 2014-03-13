@@ -17,9 +17,6 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.WebUtil;
 import ee.webmedia.alfresco.workflow.service.Task;
 
-/**
- * @author Kaarel Jõgeva
- */
 public class WorkflowBlockItem implements Serializable {
     private static final long serialVersionUID = 1L;
 

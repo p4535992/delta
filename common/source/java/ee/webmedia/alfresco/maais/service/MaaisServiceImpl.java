@@ -84,9 +84,6 @@ import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
 import ee.webmedia.alfresco.volume.service.VolumeService;
 
-/**
- * @author Keit Tehvan
- */
 public class MaaisServiceImpl implements MaaisService {
     private static final String METHOD_CALL_URL = "http://www.maais.ee/delta/:";
 

@@ -35,8 +35,6 @@ import ee.webmedia.alfresco.workflow.service.WorkflowUtil;
 
 /**
  * Update document privileges according to new document privileges system
- * 
- * @author Ats Uiboupin
  */
 public class DocumentPrivilegesUpdater extends AbstractNodeUpdater {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(DocumentPrivilegesUpdater.class);

@@ -882,7 +882,6 @@ public class UIPropertySheet extends UIPanel implements NamingContainer, AjaxUpd
      * 
      * @param item - configuration item
      * @param propSheetItem - item to be changed
-     * @author Ats Uiboupin
      */
     protected void changePropSheetItem(ItemConfig item, PropertySheetItem propSheetItem) {
         // Alfresco implementation doesn't need this, but WM subclass needs it
@@ -895,7 +894,6 @@ public class UIPropertySheet extends UIPanel implements NamingContainer, AjaxUpd
      * @param context
      * @return Pair&lt;PropertySheetItem, String&gt; or null if this class don't know how to create PropertySheetItem out of given item, and subclass should
      *         create the PropertySheetItem and id pair
-     * @author Ats Uiboupin
      */
     protected Pair<PropertySheetItem, String> createPropertySheetItemAndId(ItemConfig item, FacesContext context) {
         final String id;

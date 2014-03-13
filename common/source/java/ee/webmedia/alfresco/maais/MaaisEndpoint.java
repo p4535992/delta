@@ -25,9 +25,6 @@ import ee.webmedia.alfresco.maais.service.MaaisServiceImpl;
 import ee.webmedia.alfresco.template.service.DocumentTemplateService;
 import ee.webmedia.alfresco.utils.XmlUtil;
 
-/**
- * @author Keit Tehvan
- */
 @Endpoint
 public class MaaisEndpoint {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(MaaisEndpoint.class);

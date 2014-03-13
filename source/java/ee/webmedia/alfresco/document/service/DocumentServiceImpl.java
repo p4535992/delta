@@ -164,9 +164,6 @@ import ee.webmedia.alfresco.workflow.service.SignatureTask;
 import ee.webmedia.alfresco.workflow.service.Task;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
 
-/**
- * @author Alar Kvell
- */
 public class DocumentServiceImpl implements DocumentService, NodeServicePolicies.OnCreateAssociationPolicy, BeanFactoryAware, PrivilegesChangedListener, InitializingBean {
 
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DocumentServiceImpl.class);
@@ -1895,7 +1892,7 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
     private Node registerDocument(Node docNode, boolean isRelocating) {
         final Map<String, Object> props = docNode.getProperties();
         if (isRegistered(docNode) && !isRelocating) {
-            throw new RuntimeException("Document already registered! docNode=" + docNode);
+            throw new RuntimeException("Document " + docNode.getNodeRef() + " already registered! docNode=" + docNode);
         }
         // only register when no existingRegNr or when relocating
         final NodeRef volumeNodeRef = (NodeRef) props.get(TransientProps.VOLUME_NODEREF);
@@ -1909,7 +1906,7 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
         String regNumber = null;
         final Date now = new Date();
         if (!isReplyOrFollowupDoc) {
-            log.debug("Starting to register initialDocument, docRef=" + docRef);
+            log.info("Starting to register initialDocument, docRef=" + docRef);
             // registration of initial document ("Algatusdokument")
             final Series series = seriesService.getSeriesByNodeRef(seriesNodeRef);
             final Map<String, Object> serProps = series.getNode().getProperties();
@@ -1924,7 +1921,7 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
                 regNumber += REGISTRATION_INDIVIDUALIZING_NUM_SUFFIX;
             }
         } else { // registration of reply/followUp("Järg- või vastusdokument")
-            log.debug("Starting to register " + (replyAssocs.size() > 0 ? "reply" : "followUp") + " document, docRef=" + docRef);
+            log.info("Starting to register " + (replyAssocs.size() > 0 ? "reply" : "followUp") + " document, docRef=" + docRef);
             final Node initialDoc = getDocument(getInitialDocument(docRef));
             final Map<String, Object> initDocProps = initialDoc.getProperties();
             final String initDocRegNr = (String) initDocProps.get(REG_NUMBER.toString());
@@ -2215,8 +2212,6 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
 
     /**
      * Helps to identify if properties(that should not be ignored for given properties map) that have been changed
-     * 
-     * @author Ats Uiboupin
      */
     private class PropertyChangesMonitorHelper {
         private final QName TEMP_PROPERTY_CHANGES_IGNORED_PROPS = QName.createQName("{temp}propertyChanges_ignoredProps");
@@ -2322,8 +2317,6 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
 
     /**
      * Class that divides whole regNumber, that might contain individualizing number into individualizing number and rest of it
-     * 
-     * @author Ats Uiboupin
      */
     private static class RegNrHolder {
         /**

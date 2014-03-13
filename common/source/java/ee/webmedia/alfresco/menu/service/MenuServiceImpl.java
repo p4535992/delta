@@ -30,9 +30,6 @@ import ee.webmedia.alfresco.menu.model.MenuModel;
 import ee.webmedia.alfresco.menu.ui.component.UIMenuComponent;
 import ee.webmedia.alfresco.user.service.UserService;
 
-/**
- * @author Kaarel Jõgeva
- */
 public class MenuServiceImpl implements MenuService {
     private static Logger log = Logger.getLogger(MenuServiceImpl.class);
 

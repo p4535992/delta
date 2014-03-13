@@ -46,8 +46,6 @@ import ee.webmedia.alfresco.workflow.service.HasNoStoppedOrInprogressWorkflowsEv
 
 /**
  * Evaluator, that evaluates to true if user is admin or document manager or document owner.
- * 
- * @author Erko Hansar
  */
 public class SendOutActionEvaluator extends BaseActionEvaluator {
 

@@ -12,8 +12,6 @@ import org.apache.commons.lang.StringUtils;
 
 /**
  * JSF tag for Search.
- * 
- * @author Romet Aidla
  */
 public class SearchTag extends UIComponentTag {
     private String value;

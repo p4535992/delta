@@ -2,9 +2,6 @@ package ee.webmedia.alfresco.privilege.model;
 
 import org.alfresco.service.namespace.QName;
 
-/**
- * @author Ats Uiboupin
- */
 public interface PrivilegeModel {
     String URI = "http://alfresco.webmedia.ee/model/privilege/1.0";
 

@@ -23,8 +23,6 @@ import ee.webmedia.alfresco.utils.SearchUtil;
 
 /**
  * Adds docspec:reportDueDate to docspec:errandOrderAbroad and docspec:eventName to docspec:errandApplicationDomestic
- * 
- * @author Kaarel Jõgeva
  */
 public class ErrandAspectUpdater extends AbstractNodeUpdater {
 

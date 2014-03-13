@@ -9,9 +9,6 @@ import org.alfresco.web.app.Application;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
-/**
- * @author Keit Tehvan
- */
 public class AddressbookDeleteDialog extends AddressbookBaseDialog {
     private static final long serialVersionUID = 1L;
 

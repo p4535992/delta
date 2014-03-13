@@ -16,8 +16,6 @@ import ee.webmedia.alfresco.parameters.service.ParametersService;
 /**
  * Adds parameter value to input datafld attribute.
  * NB! Currently supports only double parameters!
- * 
- * @author Kaarel Jõgeva
  */
 public class ParameterInputAttributeGenerator extends TextFieldGenerator {
 

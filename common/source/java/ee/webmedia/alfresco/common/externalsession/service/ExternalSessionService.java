@@ -4,9 +4,6 @@ import java.util.Date;
 
 import org.alfresco.util.Pair;
 
-/**
- * @author Keit Tehvan
- */
 public interface ExternalSessionService {
 
     String BEAN_NAME = "ExternalSessionService";

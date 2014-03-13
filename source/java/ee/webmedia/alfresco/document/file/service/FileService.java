@@ -10,9 +10,6 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.file.model.GeneratedFileType;
 
-/**
- * @author Dmitri Melnikov
- */
 public interface FileService {
 
     String BEAN_NAME = "FileService";

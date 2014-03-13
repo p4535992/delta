@@ -2,9 +2,6 @@ package ee.webmedia.alfresco.workflow.model;
 
 import org.alfresco.service.namespace.QName;
 
-/**
- * @author Alar Kvell
- */
 public interface WorkflowSpecificModel {
     String URI = "http://alfresco.webmedia.ee/model/workflow/specific/1.0";
     String PREFIX = "wfs:";

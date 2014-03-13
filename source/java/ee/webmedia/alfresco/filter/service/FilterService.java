@@ -10,8 +10,6 @@ import ee.webmedia.alfresco.filter.model.FilterVO;
 
 /**
  * Base interface for filtering services
- * 
- * @author Ats Uiboupin
  */
 public interface FilterService {
 

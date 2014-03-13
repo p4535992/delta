@@ -26,9 +26,6 @@ import ee.webmedia.alfresco.document.type.model.DocumentTypeModel;
 import ee.webmedia.alfresco.menu.service.MenuService;
 import ee.webmedia.alfresco.utils.beanmapper.BeanPropertyMapper;
 
-/**
- * @author Alar Kvell
- */
 public class DocumentTypeServiceImpl implements DocumentTypeService, BeanFactoryAware {
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DocumentTypeServiceImpl.class);
 

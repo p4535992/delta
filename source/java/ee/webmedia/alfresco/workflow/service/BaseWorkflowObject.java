@@ -19,9 +19,6 @@ import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 
-/**
- * @author Alar Kvell
- */
 public abstract class BaseWorkflowObject {
 
     private final WmNode node;

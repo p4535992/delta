@@ -19,8 +19,6 @@ import ee.webmedia.alfresco.common.service.GeneralService;
 
 /**
  * Email service implementation, that selects target folder based on emailPrefixToFolderMap
- * 
- * @author Ats Uiboupin
  */
 public class DeltaEmailServiceImpl extends EmailServiceImpl {
 

@@ -11,8 +11,6 @@ import ee.webmedia.alfresco.volume.model.Volume;
 
 /**
  * Service class for volumes
- * 
- * @author Ats Uiboupin
  */
 public interface VolumeService {
     String BEAN_NAME = "VolumeService";

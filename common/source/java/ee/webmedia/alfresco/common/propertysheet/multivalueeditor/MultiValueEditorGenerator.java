@@ -32,8 +32,6 @@ import ee.webmedia.alfresco.utils.ComponentUtil;
  * comma-separated list of property names. For example: {@code props="xx:prop1,xx:prop2"}<br>
  * If {@code props} attribute is omitted, only one column is used, it is taken from {@code name} attribute. If {@code props} attribute is specified, then {@code name} attribute is
  * ignored. All properties specified must be multi-valued.
- * 
- * @author Alar Kvell
  */
 public class MultiValueEditorGenerator extends BaseComponentGenerator implements GeneratorsWrapper {
 

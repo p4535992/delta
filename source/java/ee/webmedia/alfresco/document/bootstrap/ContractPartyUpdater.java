@@ -20,8 +20,6 @@ import ee.webmedia.alfresco.utils.SearchUtil;
 
 /**
  * Used to update contract parties. V1 uses fields for two parties, V2 uses child nodes and supports unlimited parties.
- * 
- * @author Kaarel Jõgeva
  */
 public class ContractPartyUpdater extends AbstractNodeUpdater {
 

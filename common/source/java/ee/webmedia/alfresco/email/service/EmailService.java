@@ -6,8 +6,6 @@ import org.alfresco.service.cmr.repository.NodeRef;
 
 /**
  * Common service for sending emails.
- * 
- * @author Erko Hansar
  */
 public interface EmailService {
 

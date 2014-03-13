@@ -25,8 +25,6 @@ import ee.webmedia.alfresco.document.service.DocumentService;
 
 /**
  * Populates shortRegNr field for registered documents. Updates only SpacesStore.
- * 
- * @author Kaarel Jõgeva
  */
 public class ShortRegNumberUpdater extends AbstractNodeUpdater {
 

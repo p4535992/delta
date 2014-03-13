@@ -24,9 +24,6 @@ import ee.webmedia.alfresco.menu.ui.MenuBean;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.WebUtil;
 
-/**
- * @author Alar Kvell
- */
 public class ExternalAccessPhaseListener implements PhaseListener {
     private static final long serialVersionUID = 1L;
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(ExternalAccessPhaseListener.class);
@@ -61,7 +58,7 @@ public class ExternalAccessPhaseListener implements PhaseListener {
 
     private void processExternalAcessAction(FacesContext context, Pair<String, String[]> outcomeAndArgs) {
 
-        // TODO Alar -> Riina - is this needed any more?
+        // TODO -> is this needed any more?
         // always allow missing bindings from ExternalAccessServlet:
         // when redirecting from ExternalAccessServlet, jsp binding attribute value may be queried from wrong bean
         // CL task 143975

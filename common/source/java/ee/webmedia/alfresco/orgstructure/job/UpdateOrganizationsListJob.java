@@ -16,8 +16,6 @@ import ee.webmedia.alfresco.orgstructure.service.OrganizationStructureService;
  * Scheduled job to call a {@link OrganizationStructureService#updateOrganisationStructures()}.
  * <p>
  * Job data is: <b>OrganizationStructureService</b>
- * 
- * @author Ats Uiboupin
  */
 public class UpdateOrganizationsListJob implements StatefulJob {
     private static Log log = LogFactory.getLog(UpdateOrganizationsListJob.class);

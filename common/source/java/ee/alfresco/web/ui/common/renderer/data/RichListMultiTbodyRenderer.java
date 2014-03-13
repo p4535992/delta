@@ -22,16 +22,11 @@ import org.springframework.util.Assert;
 import ee.alfresco.web.ui.common.UITableRow;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 
-/**
- * @author Ats Uiboupin
- */
 public class RichListMultiTbodyRenderer extends RichListRenderer {
     private static final String NULL = new String();
 
     /**
      * Class that implements richList VIEWMODEID = "detailsMultiTbody" that allows to create multiple tbody elements
-     * 
-     * @author Ats Uiboupin
      */
     public static class DetailsViewRenderer extends RichListRenderer.DetailsViewRenderer {
         private static final long serialVersionUID = 1L;

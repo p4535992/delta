@@ -8,9 +8,6 @@ import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.document.service.DocumentService;
 
-/**
- * @author Alar Kvell
- */
 public class RemoveFavoritesDocumentEvaluator extends BaseActionEvaluator {
     private static final long serialVersionUID = 1L;
 

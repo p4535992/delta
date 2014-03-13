@@ -9,9 +9,6 @@ import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.utils.beanmapper.AlfrescoModelProperty;
 import ee.webmedia.alfresco.utils.beanmapper.AlfrescoModelType;
 
-/**
- * @author Alar Kvell
- */
 @AlfrescoModelType(uri = DocumentTypeModel.URI)
 public class DocumentType implements Serializable, Comparable<DocumentType> {
     private static final long serialVersionUID = 1L;

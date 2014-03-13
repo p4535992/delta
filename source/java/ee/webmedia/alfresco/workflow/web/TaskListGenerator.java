@@ -49,8 +49,6 @@ import ee.webmedia.xtee.client.dhl.DhlXTeeService.SendStatus;
 
 /**
  * Generator for compound workflow tasks setup block.
- * 
- * @author Erko Hansar
  */
 public class TaskListGenerator extends BaseComponentGenerator {
 

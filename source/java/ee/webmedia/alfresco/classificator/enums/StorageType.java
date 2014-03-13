@@ -2,8 +2,6 @@ package ee.webmedia.alfresco.classificator.enums;
 
 /**
  * Enum constants for KNOWN "storageType" classificator values
- * 
- * @author Ats Uiboupin
  */
 public enum StorageType {
     DIGITAL("Digitaalne"),

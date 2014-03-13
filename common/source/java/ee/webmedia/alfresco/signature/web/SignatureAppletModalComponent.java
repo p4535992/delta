@@ -79,12 +79,12 @@ public class SignatureAppletModalComponent extends UICommand {
         String path = context.getExternalContext().getRequestContextPath();
 
         sb.append("<div id=\"signature-div\" style=\"text-align: center\">\n");
-        sb.append("   <div id=\"pluginLocation\" style=\"display: none;\"></div>\n");
         sb.append("   <p id=\"signWait\">Palun oodake...</p>\n");
         sb.append("</div>\n");
 
+        sb.append("<script type=\"text/javascript\" src=\"" + path + "/scripts/idCard.js\"></script>\n");
         sb.append("<script type=\"text/javascript\">\n");
-        sb.append("$jQ(document).ready(function() { loadSigningPlugin('");
+        sb.append("$jQ(document).ready(function() { performSigningPluginOperation('");
         sb.append(operation);
         sb.append("', '");
         sb.append(digestHex);

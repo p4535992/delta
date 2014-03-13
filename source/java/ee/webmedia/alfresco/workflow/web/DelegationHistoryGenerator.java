@@ -42,8 +42,6 @@ import ee.webmedia.alfresco.workflow.service.WorkflowService;
 
 /**
  * Generates component that shows the history of delegation
- * 
- * @author Ats Uiboupin
  */
 public class DelegationHistoryGenerator extends BaseComponentGenerator {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(DelegationHistoryGenerator.class);

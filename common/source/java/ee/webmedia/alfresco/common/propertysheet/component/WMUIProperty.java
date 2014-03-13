@@ -22,8 +22,6 @@ import ee.webmedia.alfresco.utils.ComponentUtil;
 /**
  * Class that supports having custom attributes on property-sheet/show-property element, <br>
  * that for example generators could be read by ClassificatorSelectorAndTextGenerator.
- * 
- * @author Ats Uiboupin
  */
 public class WMUIProperty extends UIProperty implements CustomAttributes {
 

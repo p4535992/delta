@@ -79,9 +79,6 @@ import ee.webmedia.alfresco.utils.UserUtil;
 
 /**
  * Imports documents and files from Postipoiss.
- * 
- * @author Aleksei Lissitsin
- * @author Alar Kvell
  */
 public class PostipoissDocumentsImporter {
 

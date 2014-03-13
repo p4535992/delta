@@ -22,8 +22,6 @@ import java.util.Map;
  * changed to value that is returned in response, otherwise old view state is restored with the next form submit. 
  *
  * This implementation works only when the view state is stored in server side (http session).
- *
- * @author Romet Aidla
  */
 public class PanelStateBean implements Serializable {
     private static final long serialVersionUID = 1L;

@@ -34,9 +34,6 @@ import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.web.DocumentDialog;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
-/**
- * @author Riina Tens
- */
 public class TransactionsBlockBean extends TransactionsTemplateDetailsDialog implements Serializable {
 
     private static final long serialVersionUID = 1L;

@@ -11,9 +11,6 @@ import org.apache.commons.collections.comparators.ComparatorChain;
 import org.apache.commons.collections.comparators.NullComparator;
 import org.apache.commons.collections.comparators.TransformingComparator;
 
-/**
- * @author Kaarel Jõgeva
- */
 public class WorkflowBlockItemGroup implements Serializable {
     private static final long serialVersionUID = 1L;
     private List<WorkflowBlockItem> items;

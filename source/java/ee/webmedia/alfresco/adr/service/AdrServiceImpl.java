@@ -72,10 +72,6 @@ import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.TextUtil;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
 
-/**
- * @author Dmitri Melnikov
- * @author Alar Kvell
- */
 public class AdrServiceImpl extends BaseAdrServiceImpl {
 
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(AdrServiceImpl.class);

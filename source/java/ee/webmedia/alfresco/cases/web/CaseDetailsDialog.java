@@ -19,8 +19,6 @@ import ee.webmedia.alfresco.utils.UnableToPerformException;
 
 /**
  * Form backing component for cases details page
- * 
- * @author Ats Uiboupin
  */
 public class CaseDetailsDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;

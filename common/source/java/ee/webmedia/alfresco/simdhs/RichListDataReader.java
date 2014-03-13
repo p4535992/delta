@@ -23,8 +23,6 @@ import org.springframework.util.Assert;
  *  <a:param value="false"/>
  * </f:facet>
  * }
- * 
- * @author Romet Aidla
  */
 public class RichListDataReader implements DataReader {
     private static Logger log = Logger.getLogger(RichListDataReader.class);

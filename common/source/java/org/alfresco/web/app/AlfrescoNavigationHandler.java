@@ -721,7 +721,7 @@ public class AlfrescoNavigationHandler extends NavigationHandler {
                 // grab the current top item first though in case we need to open
                 // another dialog or wizard
                 
-                // KAAREL: Since we need to preserve back button (application, not browser) functionality, we can't just clear the stack anymore.
+                // Since we need to preserve back button (application, not browser) functionality, we can't just clear the stack anymore.
                 // When override is provided, we are opening a wizard or dialog (browse is obsolete) ie we won't make it to else statement.
                 // String previousViewId = getViewIdFromStackObject(context, getViewStack(context).peek());
                 //  getViewStack(context).clear();

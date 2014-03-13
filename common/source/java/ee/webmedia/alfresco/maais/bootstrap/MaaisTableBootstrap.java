@@ -6,9 +6,6 @@ import java.sql.Statement;
 
 import ee.webmedia.alfresco.common.bootstrap.CreateTableBootstrap;
 
-/**
- * @author Keit Tehvan
- */
 public class MaaisTableBootstrap extends CreateTableBootstrap {
 
     @Override

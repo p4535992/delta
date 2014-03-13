@@ -30,8 +30,6 @@ import ee.webmedia.alfresco.document.service.DocumentPropertySets;
 
 /**
  * Utility class related to Alfresco repository
- * 
- * @author Ats Uiboupin
  */
 public class RepoUtil {
     public static final String TRANSIENT_PROPS_NAMESPACE = "temp";

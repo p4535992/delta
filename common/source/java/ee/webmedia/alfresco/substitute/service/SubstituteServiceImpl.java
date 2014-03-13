@@ -36,9 +36,6 @@ import ee.webmedia.alfresco.substitute.model.Substitute;
 import ee.webmedia.alfresco.substitute.model.SubstituteModel;
 import ee.webmedia.alfresco.utils.beanmapper.BeanPropertyMapper;
 
-/**
- * @author Romet Aidla
- */
 public class SubstituteServiceImpl implements SubstituteService {
     private static final Log log = LogFactory.getLog(SubstituteServiceImpl.class);
 
