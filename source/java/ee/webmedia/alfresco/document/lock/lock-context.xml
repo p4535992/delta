@@ -19,7 +19,6 @@
    </bean>
    
    <bean id="docLockService" class="ee.webmedia.alfresco.document.lock.service.DocLockServiceImpl" parent="lockService" init-method="init">
-      <property name="fileService" ref="FileService" />
       <property name="userService" ref="UserService" />
    </bean>
 

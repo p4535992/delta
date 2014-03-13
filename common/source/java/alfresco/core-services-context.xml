@@ -435,22 +435,9 @@
     <!-- Indexing and Search API -->
     <!--                         -->
 
-    <bean id="indexerComponent" class="org.alfresco.repo.search.IndexerComponent">
-        <property name="storeRedirectorProxyFactory">
-            <ref bean="&amp;indexerAndSearcherFactory" />
-        </property>
-<!--
-        <property name="indexerAndSearcherFactory">
-            <ref bean="indexerAndSearcherFactory" />
-        </property>
-   -->
-    </bean>
+    <bean id="indexerComponent" class="org.alfresco.repo.search.IndexerComponent" />
 
-    <bean id="searchService" class="org.alfresco.repo.search.SearcherComponent">
-        <property name="indexerAndSearcherFactory">
-            <ref bean="indexerAndSearcherFactory" />
-        </property>
-    </bean>
+    <bean id="searchService" class="org.alfresco.repo.search.SearcherComponent" />
 
     <bean id="admSearchService" class="org.alfresco.repo.search.SearcherComponent">
         <property name="indexerAndSearcherFactory">
@@ -1152,11 +1139,7 @@
         </property>
     </bean>
 
-     <bean id="luceneFullTextSearchIndexer" class="org.alfresco.repo.search.impl.lucene.fts.FullTextSearchIndexerImpl">
-        <property name="indexerAndSearcherFactory">
-           <ref bean="indexerAndSearcherFactory" />
-        </property>
-     </bean>
+     <bean id="luceneFullTextSearchIndexer" class="org.alfresco.repo.search.impl.lucene.fts.FullTextSearchIndexerImpl" />
 
     <!-- Bean to backup Lucene indexes -->
     <bean id="luceneIndexBackupComponent"
@@ -1284,9 +1267,6 @@
        <property name="name">
            <value>system.descriptor.current.childname</value>
        </property>
-       <property name="systemBootstrap">
-           <ref bean="systemBootstrap"/>
-       </property>
        <property name="transactionService">
            <ref bean="transactionService"/>
        </property>
@@ -1307,9 +1287,6 @@
     <bean id="installedRepoDescriptorDAO" class="org.alfresco.repo.descriptor.RepositoryDescriptorDAOImpl">
        <property name="name">
            <value>system.descriptor.childname</value>
-       </property>
-       <property name="systemBootstrap">
-           <ref bean="systemBootstrap"/>
        </property>
        <property name="transactionService">
            <ref bean="transactionService"/>

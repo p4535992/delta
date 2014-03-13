@@ -127,8 +127,19 @@
       actionListener="#{FunctionsListDialog.updateDocCounters}" />
 <h:commandButton id="docList_updateArchivedDocCounters" value="Uuenda arhiveeritud dokumentide loendureid" type="submit"
 	actionListener="#{FunctionsListDialog.updateArchivedDocCounters}" />      
-<%--
---%>
+
+<f:verbatim><hr/></f:verbatim>
+
+<h:commandButton id="volume_archive_pause_all" value="Peata kõik arhiveerimistööd" type="submit" 
+   actionListener="#{ArchivalsService.pauseArchiving}" />
+<f:verbatim><br/></f:verbatim>
+<h:commandButton id="volume_archive_continue_all" value="Jätka kõiki arhiveerimistöid" type="submit" 
+   actionListener="#{ArchivalsService.continueArchiving}" />
+<f:verbatim><br/></f:verbatim>
+<h:commandButton id="volume_archive_cancel_all" value="Tühjenda arhiveerimistööde nimekiri" type="submit" 
+   actionListener="#{ArchivalsService.cancelAllArchivingJobs}" />
+
+<f:verbatim><hr/></f:verbatim>
 
 <f:verbatim><hr/></f:verbatim>
 <h:outputText value="Versioonide lahtilukustamine"/>
@@ -282,6 +293,38 @@
    actionListener="#{caseFileKeywordsStringUpdater.stopUpdater}"
    rendered="#{caseFileKeywordsStringUpdater.updaterRunning == true}"
    disabled="#{caseFileKeywordsStringUpdater.updaterStopping == true}" />
+<f:verbatim><br/></f:verbatim>
+
+<f:verbatim><hr/></f:verbatim>
+
+<h:outputText value="Dokumendi storageType väärtustamine"/>
+<f:verbatim><br/></f:verbatim>
+<h:outputText value="Mitu dokumenti ühes transaktsioonis töödelda: "/>
+<h:inputText id="storageTypeUpdaterBatchSize" value="#{storageTypeUpdater.batchSize}" converter="javax.faces.Integer" size="4" />
+<f:verbatim><br/></f:verbatim>
+<h:commandButton id="startStorageTypeUpdater" value="Käivita" type="submit"
+   actionListener="#{storageTypeUpdater.executeUpdaterInBackground}"
+   rendered="#{storageTypeUpdater.updaterRunning == false}" />
+<h:commandButton id="stopStorageTypeUpdater" value="Peata" type="submit"
+   actionListener="#{storageTypeUpdater.stopUpdater}"
+   rendered="#{storageTypeUpdater.updaterRunning == true}"
+   disabled="#{storageTypeUpdater.updaterStopping == true}" />
+<f:verbatim><br/></f:verbatim>
+
+<f:verbatim><hr/></f:verbatim>
+
+<h:outputText value="Dokumentide content väljalt HTML spetsiifiliste sümbolite eemaldamine"/>
+<f:verbatim><br/></f:verbatim>
+<h:outputText value="Mitu dokumenti ühes transaktsioonis töödelda: "/>
+<h:inputText id="documentContentPropertyHtmlUpdaterBatchSize" value="#{documentContentPropertyHtmlUpdater.batchSize}" converter="javax.faces.Integer" size="4" />
+<f:verbatim><br/></f:verbatim>
+<h:commandButton id="startDocumentContentPropertyHtmlUpdater" value="Käivita" type="submit"
+   actionListener="#{documentContentPropertyHtmlUpdater.executeUpdaterInBackground}"
+   rendered="#{documentContentPropertyHtmlUpdater.updaterRunning == false}" />
+<h:commandButton id="stopDocumentContentPropertyHtmlUpdater" value="Peata" type="submit"
+   actionListener="#{documentContentPropertyHtmlUpdater.stopUpdater}"
+   rendered="#{documentContentPropertyHtmlUpdater.updaterRunning == true}"
+   disabled="#{documentContentPropertyHtmlUpdater.updaterStopping == true}" />
 <f:verbatim><br/></f:verbatim>
 
 <f:verbatim><hr/></f:verbatim>

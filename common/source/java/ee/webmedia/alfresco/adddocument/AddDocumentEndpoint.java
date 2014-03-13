@@ -11,9 +11,6 @@ import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.monitoring.MonitoredService;
 import ee.webmedia.alfresco.monitoring.MonitoringUtil;
 
-/**
- * @author Riina Tens
- */
 @Endpoint
 public class AddDocumentEndpoint {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(AddDocumentEndpoint.class);

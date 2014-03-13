@@ -8,7 +8,7 @@
          <docadmin:name>Asendaja</docadmin:name>
          <docadmin:systematic>true</docadmin:systematic>
          <docadmin:fieldType>USER</docadmin:fieldType>
-         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:removableFromSystematicFieldGroup>true</docadmin:removableFromSystematicFieldGroup>
          <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
          <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
       </view:properties>
@@ -33,7 +33,7 @@
          <docadmin:name>Asendus alates</docadmin:name>
          <docadmin:systematic>true</docadmin:systematic>
          <docadmin:fieldType>DATE</docadmin:fieldType>
-         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:removableFromSystematicFieldGroup>true</docadmin:removableFromSystematicFieldGroup>
          <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
          <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
       </view:properties>
@@ -46,7 +46,7 @@
          <docadmin:name>Asendus kuni</docadmin:name>
          <docadmin:systematic>true</docadmin:systematic>
          <docadmin:fieldType>DATE</docadmin:fieldType>
-         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:removableFromSystematicFieldGroup>true</docadmin:removableFromSystematicFieldGroup>
          <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
          <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
       </view:properties>

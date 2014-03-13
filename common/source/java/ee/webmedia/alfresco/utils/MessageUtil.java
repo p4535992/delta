@@ -31,8 +31,6 @@ import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
 
 /**
  * Util class that helps to I18N messages.
- * 
- * @author Ats Uiboupin
  */
 public class MessageUtil {
     private static final Log LOG = org.apache.commons.logging.LogFactory.getLog(MessageUtil.class);
@@ -73,6 +71,14 @@ public class MessageUtil {
             }
         }
         return message;
+    }
+
+    public static boolean hasI18nTranslation(String messageId) {
+        String i18nUtilMsg = getI18nUtilMessage(new MessageDataImpl(messageId));
+        if (isMessageTranslatedByI18nUtil(i18nUtilMsg)) {
+            return true;
+        }
+        return false;
     }
 
     private static String format(String message, final Object[] translatedValuesForHolders) {

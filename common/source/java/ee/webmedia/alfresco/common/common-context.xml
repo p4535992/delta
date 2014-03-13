@@ -234,6 +234,26 @@
          </list>
       </property>
    </bean>
+   
+   <bean id="applicationParametersBootstrap2" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
+      <property name="moduleId" value="common" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="parametersSpacesBootstrap" />
+         </list>
+      </property>
+      <property name="importer" ref="spacesBootstrap" />
+      <property name="bootstrapViews">
+         <list>
+            <props>
+               <prop key="encoding">UTF-8</prop>
+               <prop key="path">/param:parameters</prop>
+               <prop key="location">ee/webmedia/alfresco/common/bootstrap/application-parameters2.xml</prop>
+            </props>
+         </list>
+      </property>
+   </bean>
 
    <bean id="modalSearchParametersBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
       <property name="moduleId" value="common" />
@@ -346,6 +366,10 @@
       <property name="enabled" value="${jobs.enabled}" />
    </bean>
 
+<!--
+   XXX In 3.6.21->3.6.30 upgrade the procedure is to perform full index rebuild at the beginning of upgrade, so this bootstrap is not needed.
+       It is left active for for 3.13 upgrades.
+-->
    <bean id="invalidNodeFixerAndIndexIntegrityCheckerBootstrap" class="ee.webmedia.alfresco.common.bootstrap.InvalidNodeFixerAndIndexIntegrityCheckerBootstrap" parent="module.baseComponent">
       <property name="moduleId" value="common" />
       <property name="executeOnceOnly" value="true" />

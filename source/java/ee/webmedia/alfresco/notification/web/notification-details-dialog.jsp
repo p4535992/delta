@@ -35,6 +35,7 @@
          extended_valid_elements : "a[href|target|name],font[face|size|color|style],span[class|align|style]",
          width : "600",
          height : "315",
+         entity_encoding : "raw",
          auto_focus : "dialog:dialog-body:notificationPropSheet:prop_ntfx003a_message:ntfx003a_message",
          setup : function(editor) {
             editor.onKeyUp.add(function(editor) {

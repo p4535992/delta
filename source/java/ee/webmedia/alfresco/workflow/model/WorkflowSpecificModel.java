@@ -5,9 +5,6 @@ import java.util.List;
 
 import org.alfresco.service.namespace.QName;
 
-/**
- * @author Alar Kvell
- */
 public interface WorkflowSpecificModel {
     String URI = "http://alfresco.webmedia.ee/model/workflow/specific/1.0";
     String PREFIX = "wfs:";
@@ -140,6 +137,10 @@ public interface WorkflowSpecificModel {
         QName SIGNING_TYPE = QName.createQName(URI, "signingType");
         // properties duplicated from compound workflow for task search
         QName COMPOUND_WORKFLOW_TITLE = QName.createQName(URI, "compoundWorkflowTitle");
+        /**
+         * Deprecated - compound workflow comments are not used in search any more; comments are moved to delta_compound_workflow_comment table
+         */
+        @Deprecated
         QName COMPOUND_WORKFLOW_COMMENT = QName.createQName(URI, "compoundWorkflowComment");
         QName SEARCHABLE_COMPOUND_WORKFLOW_TYPE = QName.createQName(URI, "searchableCompoundWorkflowType");
         QName SEARCHABLE_COMPOUND_WORKFLOW_OWNER_NAME = QName.createQName(URI, "searchableCompoundWorkflowOwnerName");

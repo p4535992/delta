@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.repository.NodeRef;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
@@ -12,11 +13,11 @@ import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.web.BaseDocumentListDialog;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.workflow.model.Status;
+import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
+import ee.webmedia.alfresco.workflow.service.Task;
+import ee.webmedia.alfresco.workflow.service.Workflow;
 
-/**
- * @author Riina Tens
- */
 public class CompoundWorkflowAssocListDialog extends BaseDocumentListDialog {
 
     private static final long serialVersionUID = 1L;
@@ -131,8 +132,24 @@ public class CompoundWorkflowAssocListDialog extends BaseDocumentListDialog {
         return DocumentCommonModel.Assocs.WORKFLOW_DOCUMENT.toString();
     }
 
+    public boolean isDisableSignSelect() {
+        return compoundWorkflow.isStatus(Status.FINISHED) || !(BeanHelper.getCompoundWorkflowDialog().isOwnerOrDocManager() || containsSignatureTaskAssignedToRunAsUser());
+    }
+
     public boolean isDisableDocSelect() {
-        return compoundWorkflow.isStatus(Status.FINISHED) || !BeanHelper.getCompoundWorkflowDialog().isOwnerOrDocManager();
+        return compoundWorkflow.getNumberOfDocuments() <= 1 || isDisableSignSelect();
+    }
+
+    private boolean containsSignatureTaskAssignedToRunAsUser() {
+        String runAsUser = AuthenticationUtil.getRunAsUser();
+        for (Workflow flow : compoundWorkflow.getWorkflows()) {
+            for (Task task : flow.getTasks()) {
+                if (Status.IN_PROGRESS.equals(task.getStatus()) && WorkflowSpecificModel.Types.SIGNATURE_TASK.equals(task.getType()) && runAsUser.equals(task.getOwnerId())) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     public List<NodeRef> getNewAssocs() {

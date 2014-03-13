@@ -27,8 +27,6 @@ import ee.webmedia.alfresco.user.service.UserService;
 
 /**
  * Class that might help to solve problems related to inheriting permissions in LIVE environment
- * 
- * @author Ats Uiboupin
  */
 public class ArrivedDocumentsPermissionsModifier extends ArrivedDocumentsPermissionsUpdateBootstrap {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(ArrivedDocumentsPermissionsModifier.class);

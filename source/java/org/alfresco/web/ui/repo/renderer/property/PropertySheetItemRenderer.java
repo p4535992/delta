@@ -28,15 +28,19 @@ import java.io.IOException;
 import java.util.List;
 
 import javax.faces.component.UIComponent;
+import javax.faces.component.html.HtmlPanelGrid;
 import javax.faces.context.FacesContext;
 import javax.faces.context.ResponseWriter;
 
 import org.alfresco.web.ui.common.Utils;
+import org.alfresco.web.ui.common.component.UIActionLink;
 import org.alfresco.web.ui.common.renderer.BaseRenderer;
 import org.alfresco.web.ui.repo.component.property.PropertySheetItem;
 import org.apache.commons.lang.StringUtils;
 
+import ee.webmedia.alfresco.common.propertysheet.renderkit.PropertySheetGridRenderer;
 import ee.webmedia.alfresco.help.web.HelpTextUtil;
+import ee.webmedia.alfresco.utils.ComponentUtil;
 
 /**
  * Renderer for a PropertySheetItem component
@@ -87,19 +91,37 @@ public void encodeBegin(FacesContext context, UIComponent component) throws IOEx
          {
              out.write("<span class=\"red\">*&nbsp;</span>");
          }
-         // encode the label
-         Utils.encodeRecursive(context, label);
 
          // Field help:
          String property = StringUtils.substringAfter(((PropertySheetItem) component).getName(), ":");
+         UIActionLink help = null;
          if (HelpTextUtil.hasHelpText(context, HelpTextUtil.TYPE_FIELD, property)) {
-             out.write("<span>&nbsp;&nbsp;&nbsp;&nbsp;");
-             HelpTextUtil.writeHelpTextLink(out, context, HelpTextUtil.TYPE_FIELD, property);
-             out.write("</span>");
+             help = HelpTextUtil.createHelpTextLink(context, HelpTextUtil.TYPE_FIELD, property);
+         }
+
+         boolean helpAdded = false;
+         if (label instanceof HtmlPanelGrid && help != null) { // Search screens have checkboxes
+             if (label.getChildCount() < 3) { // Check, if we have already added the help
+                 label.getChildren().add(1, help); // Always after the label itself
+                 ((HtmlPanelGrid) label).setColumns(label.getChildCount());
+                 ((HtmlPanelGrid) label).setColumnClasses("propertiesLabel,padding-3," + StringUtils.chop(StringUtils.repeat("vertical-align-middle,", label.getChildCount()-2)));
+             }
+             helpAdded = true;
+         }
+
+         Utils.encodeRecursive(context, label);
+
+         if (help != null && !helpAdded) {
+             ComponentUtil.addStyleClass(help, "margin-left-4");
+             Utils.encodeRecursive(context, help);
          }
 
          // encode the control
-         out.write("</td><td>");
+         out.write("</td><td");
+         if (!PropertySheetGridRenderer.isInlineComponent(component)) {
+             out.write(" colspan=\"3\"");
+         }
+         out.write(">");
          Utils.encodeRecursive(context, control);
          
          // NOTE: we'll allow the property sheet's grid renderer close off the last <td>

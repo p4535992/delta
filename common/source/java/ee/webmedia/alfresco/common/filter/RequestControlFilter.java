@@ -33,7 +33,7 @@ import ee.webmedia.alfresco.monitoring.MonitoredService;
 import ee.webmedia.alfresco.monitoring.MonitoringUtil;
 
 /**
- * NOTE by Erko Hansar
+ * NOTE by
  * <p>
  * Modified the source to use serializable objects in session:
  * <ul>
@@ -82,6 +82,7 @@ public class RequestControlFilter implements Filter {
     public final static String REQUEST_COUNTER_KEY = "RequestControlFilter.requestCounter";
     /** The default maximum number of milliseconds to wait for a request (15 minutes) */
     private final static long DEFAULT_DURATION = 60000L * 15;
+    private boolean containerRequestInQueue;
 
     /**
      * Initialize this filter by reading its configuration parameters
@@ -141,7 +142,10 @@ public class RequestControlFilter implements Filter {
         }
 
         LogHelper.gatherUserInfo(httpRequest);
-
+        boolean isContainerRequest = false;
+        if (isContainerRequest(httpRequest)) {
+            isContainerRequest = true;
+        }
         // if this request is excluded from the filter, then just process it
         if (!isFilteredRequest(httpRequest)) {
             try {
@@ -228,10 +232,18 @@ public class RequestControlFilter implements Filter {
             log(logPrefix, "check 8");
             releaseQueuedRequest(httpRequest, syncObject);
             LogHelper.resetUserInfo();
+            if (isContainerRequest) {
+                containerRequestInQueue = false;
+            }
             StatisticsPhaseListener.add(StatisticsPhaseListenerLogColumn.REQUEST_END,
                     ((stopWorkTime - startWorkTime) / 1000000L) + "," + ((stopWaitTime - startWaitTime) / 1000000L));
             StatisticsPhaseListener.log();
         }
+    }
+
+    private boolean isContainerRequest(HttpServletRequest request) {
+        String pathInfo = request.getPathInfo();
+        return pathInfo != null && pathInfo.endsWith("container.jsp");
     }
 
     /**
@@ -323,6 +335,14 @@ public class RequestControlFilter implements Filter {
      */
     private void enqueueRequest(HttpServletRequest request, Object syncObject) {
         HttpSession session = request.getSession();
+        if (isContainerRequest(request)) {
+            containerRequestInQueue = true;
+        }
+        if ("/ajax".equals(request.getServletPath()) && containerRequestInQueue) {
+            // Do not enqueue ajax requests before container.jsp is served.
+            // Otherwise container is dropped and user is left with a blank screen.
+            return;
+        }
         // Put this request in the queue, replacing whoever was there before
         session.setAttribute(REQUEST_QUEUE, new Integer(request.hashCode()));
         // if another request was waiting, notify it so it can discover that

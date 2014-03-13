@@ -95,9 +95,6 @@ import ee.webmedia.alfresco.utils.WebUtil;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
 import ee.webmedia.alfresco.workflow.web.WorkflowBlockBean;
 
-/**
- * @author Alar Kvell
- */
 public class DocumentDialog extends BaseDialogBean implements ClearStateNotificationHandler.ClearStateListener, RefreshEventListener, DialogDataProvider {
     private static final long serialVersionUID = 1L;
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DocumentDialog.class);
@@ -232,32 +229,8 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
     private boolean openDynamicDocument = false;
 
     public void open(ActionEvent event) {
-        final NodeRef docRef = new NodeRef(ActionUtil.getParam(event, PARAM_NODEREF));
-        // TODO DLSeadist temporary
-        if (DocumentCommonModel.Types.DOCUMENT.equals(getNodeService().getType(docRef))) {
-            openDynamicDocument = true;
-            BeanHelper.getDocumentDynamicDialog().openFromDocumentList(event);
-            return;
-        }
-        open(docRef);
-    }
-
-    public void open(NodeRef docRef) {
-        Node permissionCheckNode = new Node(docRef);
-        if (!permissionCheckNode.hasPermission(DocumentCommonModel.Privileges.VIEW_DOCUMENT_META_DATA)) {
-            node = permissionCheckNode; // update node for action() method!
-            return; // in action() method error will be shown
-        }
-        createSnapshot();
-        node = getDocumentService().getDocument(docRef);
-        /** open a doc for editing if it's from dvk */
-        if (isFromDVK() || isFromImap() || isIncomingInvoice()) {
-            isDraft = true;
-        } else {
-            isDraft = false;
-        }
-        metadataBlockBean.init(docRef, false, this);
-        metadataBlockBean.setSkipInvoiceMessages(true);
+        openDynamicDocument = true;
+        BeanHelper.getDocumentDynamicDialog().openFromDocumentList(event);
     }
 
     public void copy(@SuppressWarnings("unused") ActionEvent event) {

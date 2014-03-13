@@ -21,9 +21,6 @@ import ee.webmedia.alfresco.signature.model.DataItem;
 import ee.webmedia.alfresco.signature.model.SignatureItem;
 import ee.webmedia.alfresco.signature.model.SignatureItemsAndDataItems;
 
-/**
- * @author Dmitri Melnikov
- */
 public class File implements Serializable, IClonable<File> {
 
     private static final long serialVersionUID = 1L;
@@ -52,6 +49,7 @@ public class File implements Serializable, IClonable<File> {
     private boolean convertToPdfIfSigned; //
     private long nrOfChildren; // used to show childCount if the file represents folder
     private boolean isPdf;
+    private String activeLockOwner;
     public static FastDateFormat dateFormat = FastDateFormat.getInstance("dd.MM.yyyy HH:mm");
 
     public File() {
@@ -103,7 +101,7 @@ public class File implements Serializable, IClonable<File> {
     public void setDownloadUrl(String url) {
         downloadUrl = url;
     }
-    
+
     public String getReadOnlyUrl() {
         return readOnlyUrl;
     }
@@ -318,6 +316,14 @@ public class File implements Serializable, IClonable<File> {
 
     public boolean isPdf() {
         return isPdf;
+    }
+
+    public String getActiveLockOwner() {
+        return activeLockOwner;
+    }
+
+    public void setActiveLockOwner(String activeLockOwner) {
+        this.activeLockOwner = activeLockOwner;
     }
 
     @Override

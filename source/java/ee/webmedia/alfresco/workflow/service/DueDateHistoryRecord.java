@@ -5,9 +5,6 @@ import java.util.Date;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 
-/**
- * @author Priit Pikk
- */
 public class DueDateHistoryRecord implements Serializable {
 
     private static final long serialVersionUID = 1L;

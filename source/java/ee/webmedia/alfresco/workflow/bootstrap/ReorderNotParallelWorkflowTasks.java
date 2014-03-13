@@ -22,8 +22,6 @@ import ee.webmedia.alfresco.workflow.service.WorkflowService;
  * Enabled with conf parameter updater.reorderNotParallelWorkflowTasks.enabled.
  * NB! It should be validated that this updater's algorithm is suitable for repairing data
  * before executing it.
- * 
- * @author Riina Tens
  */
 public class ReorderNotParallelWorkflowTasks extends AbstractNodeUpdater {
 

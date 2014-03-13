@@ -28,6 +28,7 @@ import org.alfresco.web.bean.NavigationBean;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.Repository;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.common.listener.RefreshEventListener;
@@ -46,9 +47,6 @@ import ee.webmedia.alfresco.utils.MessageDataImpl;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 
-/**
- * @author Dmitri Melnikov
- */
 public class FileBlockBean implements DocumentDynamicBlock, RefreshEventListener {
     private static final long serialVersionUID = 1L;
 
@@ -62,6 +60,14 @@ public class FileBlockBean implements DocumentDynamicBlock, RefreshEventListener
     private int notActiveFilesCount;
     private NodeRef docRef;
     private String pdfUrl;
+
+    public void unlock(ActionEvent event) {
+        String filenodeRefStr = ActionUtil.getParam(event, "nodeRef");
+        if (StringUtils.isNotBlank(filenodeRefStr)) {
+            BeanHelper.getDocLockService().unlockFile(new NodeRef(filenodeRefStr));
+            refresh();
+        }
+    }
 
     public void toggleActive(ActionEvent event) {
         NodeRef fileNodeRef = new NodeRef(ActionUtil.getParam(event, "nodeRef"));
@@ -89,10 +95,15 @@ public class FileBlockBean implements DocumentDynamicBlock, RefreshEventListener
             public Void doWork() throws Exception {
                 NodeService nodeService = BeanHelper.getNodeService();
                 for (File file : files) {
-                    if (file != null && file.getNodeRef() != null) {
-                        nodeService.setProperty(file.getNodeRef(), FileModel.Props.CONVERT_TO_PDF_IF_SIGNED, file.isConvertToPdfIfSigned());
-                        if (LOG.isDebugEnabled()) {
-                            LOG.debug("changed file" + ", nodeRef=" + file.getNodeRef() + ", convertToPdfIfSigned=" + file.isConvertToPdfIfSigned());
+                    NodeRef fileRef = file.getNodeRef();
+                    if (file != null && fileRef != null) {
+                        Boolean convertToPdfRepoValue = (Boolean) nodeService.getProperty(fileRef, FileModel.Props.CONVERT_TO_PDF_IF_SIGNED);
+                        boolean convertToPdfNewValue = file.isConvertToPdfIfSigned();
+                        if (convertToPdfRepoValue == null || convertToPdfRepoValue != convertToPdfNewValue) {
+                            nodeService.setProperty(fileRef, FileModel.Props.CONVERT_TO_PDF_IF_SIGNED, convertToPdfNewValue);
+                            if (LOG.isDebugEnabled()) {
+                                LOG.debug("changed file" + ", nodeRef=" + fileRef + ", convertToPdfIfSigned=" + convertToPdfNewValue);
+                            }
                         }
                     }
                 }

@@ -2,9 +2,6 @@ package ee.webmedia.alfresco.report.model;
 
 import org.alfresco.service.namespace.QName;
 
-/**
- * @author Riina Tens
- */
 public interface ReportModel {
     String URI = "http://alfresco.webmedia.ee/model/report/1.0";
     String PREFIX = "report:";
@@ -38,6 +35,7 @@ public interface ReportModel {
         QName RUN_FINISH_START_TIME = QName.createQName(URI, "runFinishDateTime");
         QName CANCEL_DATE_TIME = QName.createQName(URI, "cancelDateTime");
         QName FIRST_DOWNLOAD_DATE_TIME = QName.createQName(URI, "firstDownloadDateTime");
+        QName CSV_FUNCTION_STORE_NODE_REF = QName.createQName(URI, "nodeRef");
         /**
          * All values for this property are defined in Enum {@link ReportStatus}
          */

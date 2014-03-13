@@ -82,8 +82,6 @@ import ee.webmedia.alfresco.volume.model.VolumeModel;
 
 /**
  * Imports structure (functions, series, volumes and cases) from JuM Sharepoint.
- * 
- * @author Martti Tamm
  */
 public class StructureImporter {
 

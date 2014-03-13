@@ -18,10 +18,10 @@ import ee.webmedia.alfresco.utils.ComparableTransformer;
 
 /**
  * Helper class that (re)evaluates order property of items in list
- * 
- * @author Ats Uiboupin
  */
 public class ListReorderHelper {
+
+    private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(ListReorderHelper.class);
 
     /**
      * Accessor and mutator for order property/field of the object
@@ -61,6 +61,8 @@ public class ListReorderHelper {
             Assert.isTrue(field != null && !sortedMap.containsKey(field));
             sortedMap.put(field, object);
         }
+
+        LOG.debug("Reordered items: " + sortedMap.values());
         return new ArrayList<O>(sortedMap.values()); // return list that contains elements in the new order - sometimes it might be needed
     }
 

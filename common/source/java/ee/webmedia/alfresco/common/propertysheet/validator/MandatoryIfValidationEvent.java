@@ -5,8 +5,6 @@ import javax.faces.event.ActionEvent;
 
 /**
  * Marker class to allow different processing of mandatory if validation event
- * 
- * @author Riina Tens
  */
 public class MandatoryIfValidationEvent extends ActionEvent {
 

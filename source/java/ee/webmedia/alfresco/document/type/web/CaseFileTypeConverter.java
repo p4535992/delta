@@ -4,9 +4,6 @@ import org.alfresco.service.cmr.repository.NodeRef;
 
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 
-/**
- * @author Riina Tens
- */
 public class CaseFileTypeConverter extends DocumentTypeConverter {
 
     @Override

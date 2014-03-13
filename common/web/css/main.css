@@ -1305,6 +1305,10 @@ input[type="checkbox"] {
 	padding-bottom: 4px;
 }
 
+.workflow-panel .modalpopup-content-inner table td {
+   padding-left: 0;
+}
+
 .modalpopup-content-inner table td.propertiesLabel {
    padding-right: 6px !important;
 }

@@ -11,8 +11,6 @@ import ee.webmedia.alfresco.imap.service.ImapServiceExt;
 
 /**
  * Saves mail content and subject to content object.
- * 
- * @author Riina Tens
  */
 public class SendFailureAppendBehaviour implements AppendBehaviour {
     public static final String BEHAVIOUR_NAME = "sendFailureBehaviour";

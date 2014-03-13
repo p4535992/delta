@@ -52,9 +52,6 @@ import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.volume.search.model.VolumeSearchModel;
 import ee.webmedia.alfresco.volume.search.web.VolumeDynamicSearchDialog;
 
-/**
- * @author Riina Tens
- */
 public abstract class VolumeArchiveBaseDialog extends BaseDialogBean {
 
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(VolumeArchiveBaseDialog.class);

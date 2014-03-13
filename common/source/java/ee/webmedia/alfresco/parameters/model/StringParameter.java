@@ -1,8 +1,5 @@
 package ee.webmedia.alfresco.parameters.model;
 
-/**
- * @author Ats Uiboupin
- */
 public class StringParameter extends Parameter<String> {
     private static final long serialVersionUID = 1L;
 

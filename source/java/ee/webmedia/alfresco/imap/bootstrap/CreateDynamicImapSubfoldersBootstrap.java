@@ -11,8 +11,6 @@ import ee.webmedia.alfresco.imap.service.ImapServiceExt;
 
 /**
  * Dynamically create subfolders for fixed type imap folders
- * 
- * @author Riina Tens
  */
 public class CreateDynamicImapSubfoldersBootstrap extends AbstractModuleComponent {
 

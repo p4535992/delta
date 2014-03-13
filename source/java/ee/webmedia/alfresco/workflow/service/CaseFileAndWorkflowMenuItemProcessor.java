@@ -22,9 +22,6 @@ import ee.webmedia.alfresco.menu.service.MenuService;
 import ee.webmedia.alfresco.menu.service.MenuService.MenuItemProcessor;
 import ee.webmedia.alfresco.volume.service.VolumeService;
 
-/**
- * @author Riina Tens
- */
 public class CaseFileAndWorkflowMenuItemProcessor implements InitializingBean, MenuItemProcessor {
 
     private MenuService menuService;

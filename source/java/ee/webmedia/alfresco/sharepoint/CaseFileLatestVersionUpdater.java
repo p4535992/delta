@@ -17,9 +17,6 @@ import ee.webmedia.alfresco.docadmin.service.CaseFileType;
 import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
 import ee.webmedia.alfresco.utils.SearchUtil;
 
-/**
- * @author Alar Kvell
- */
 public class CaseFileLatestVersionUpdater extends AbstractNodeUpdater {
 
     private Integer newVersionNr;

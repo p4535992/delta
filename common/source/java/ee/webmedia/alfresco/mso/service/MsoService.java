@@ -8,8 +8,6 @@ import org.alfresco.service.cmr.repository.ContentWriter;
 
 /**
  * Interface to MSO (Microsoft Office) webservice.
- * 
- * @author Alar Kvell
  */
 public interface MsoService {
 
@@ -31,7 +29,7 @@ public interface MsoService {
 
     void transformToPdf(ContentReader documentReader, ContentWriter pdfWriter) throws Exception;
 
-    void replaceFormulas(Map<String, String> formulas, ContentReader documentReader, ContentWriter documentWriter) throws Exception;
+    boolean replaceFormulas(Map<String, String> formulas, ContentReader documentReader, ContentWriter documentWriter, boolean dontSaveIfUnmodified) throws Exception;
 
     void replaceFormulasAndTransformToPdf(Map<String, String> formulas, ContentReader documentReader, ContentWriter documentWriter, ContentWriter pdfWriter) throws Exception;
 

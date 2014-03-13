@@ -26,8 +26,6 @@ import ee.webmedia.alfresco.utils.TextUtil;
 
 /**
  * Update series docType property to dynamic type. Should run only when migrating from 2.5 to 3.13.
- * 
- * @author Riina Tens
  */
 public class Series25To313DynamicDocTypeUpdater extends AbstractNodeUpdater {
 

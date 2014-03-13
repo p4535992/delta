@@ -233,13 +233,15 @@ public interface UserService {
     Set<String> getUserNamesInGroup(List<String> groupNames);
 
     Set<String> getAllUsersUsernames();
-    
+
     void removeUserFromGroup(String group, String username);
 
     void removeUserFromGroup(String group, Node user);
 
     void addUserToGroup(String group, Node user);
 
-    void addUserToGroup(String group, String username);    
+    void addUserToGroup(String group, String username);
+
+    String getUserMobilePhone(String userName);
 
 }

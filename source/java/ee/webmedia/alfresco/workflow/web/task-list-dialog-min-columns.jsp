@@ -11,13 +11,13 @@
          <f:facet name="header">
             <a:sortLink id="dueDate-sort" label="#{msg.task_property_dueDate}" value="dueDate" styleClass="header" />
          </f:facet>
-         <a:actionLink id="dueDate-text" value="#{r.task.dueDateStr}" action="#{DocumentDialog.action}" tooltip="#{r.task.dueDateStr}" actionListener="#{DocumentDialog.open}" styleClass="no-underline" rendered="#{r.compoundWorkflow.documentWorkflow}" >
+         <a:actionLink id="dueDate-text" value="#{r.task.dueDateTimeStr}" action="#{DocumentDialog.action}" tooltip="#{r.task.dueDateTimeStr}" actionListener="#{DocumentDialog.open}" styleClass="no-underline" rendered="#{r.compoundWorkflow.documentWorkflow}" >
             <f:param name="nodeRef" value="#{r.document.node.nodeRef}" />
          </a:actionLink>
-         <a:actionLink id="dueDate-text1" value="#{r.task.dueDateStr}" action="dialog:compoundWorkflowDialog" tooltip="#{r.task.dueDateStr}" actionListener="#{CompoundWorkflowDialog.setupWorkflowFromList}" styleClass="no-underline" rendered="#{r.compoundWorkflow.independentWorkflow}" >
+         <a:actionLink id="dueDate-text1" value="#{r.task.dueDateTimeStr}" action="dialog:compoundWorkflowDialog" tooltip="#{r.task.dueDateTimeStr}" actionListener="#{CompoundWorkflowDialog.setupWorkflowFromList}" styleClass="no-underline" rendered="#{r.compoundWorkflow.independentWorkflow}" >
 	 	 	<f:param name="nodeRef" value="#{r.compoundWorkflow.nodeRef}" />
  	     </a:actionLink>            
-         <a:actionLink id="dueDate-text2" value="#{r.task.dueDateStr}" tooltip="#{r.task.dueDateStr}" actionListener="#{CaseFileDialog.openFromDocumentList}" styleClass="no-underline" rendered="#{r.compoundWorkflow.caseFileWorkflow}">
+         <a:actionLink id="dueDate-text2" value="#{r.task.dueDateTimeStr}" tooltip="#{r.task.dueDateTimeStr}" actionListener="#{CaseFileDialog.openFromDocumentList}" styleClass="no-underline" rendered="#{r.compoundWorkflow.caseFileWorkflow}">
             <f:param name="nodeRef" value="#{r.document.node.nodeRef}" />
          </a:actionLink>
       </a:column>

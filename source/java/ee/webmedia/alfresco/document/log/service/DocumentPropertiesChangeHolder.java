@@ -38,9 +38,6 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
  * Holds document node property changes, and generates log messages.
- * 
- * @author Vladimir Drozdik
- * @author Martti Tamm
  */
 public class DocumentPropertiesChangeHolder {
 
@@ -125,7 +122,7 @@ public class DocumentPropertiesChangeHolder {
         }
 
         if (type.equals(DocumentChildModel.Assocs.APPLICANT_ABROAD) || type.equals(DocumentChildModel.Assocs.APPLICANT_DOMESTIC)
-                || type.equals(DocumentChildModel.Assocs.APPLICANT_TRAINING)) {
+                || type.equals(DocumentChildModel.Assocs.APPLICANT_TRAINING) || type.equals(DocumentChildModel.Assocs.APPLICANT_ERRAND)) {
             String applicant = (String) nodeService.getProperty(node, DocumentSpecificModel.Props.APPLICANT_NAME);
 
             if (applicant != null && oldChild != null) {

@@ -160,8 +160,6 @@ import ee.webmedia.xtee.client.dhl.DhlXTeeService.SendStatus;
 
 /**
  * Test data generator. Can't use any Lucene searches, because lucene indexing may be turned off during test data generation and then lucene search results would be out-of-date.
- * 
- * @author Alar Kvell
  */
 public class TestDataService implements SaveListener {
     protected final Log log = LogFactory.getLog(getClass());
@@ -330,7 +328,7 @@ public class TestDataService implements SaveListener {
         files = loadCsvMultiCols("files.csv");
         // transmittalModes?
 
-        filterFiles();
+        //filterFiles();
 
         // FUTURE: document creation, registration, file creation and workflow times that vary in the past
 
@@ -770,6 +768,7 @@ public class TestDataService implements SaveListener {
 
     private void createUsers(int count) throws Exception {
         log.info("Creating users");
+        userDataByUserName = new ConcurrentHashMap<String, Pair<NodeRef, Map<QName, Serializable>>>();
         DefaultChildApplicationContextManager authentication = BeanHelper.getSpringBean(DefaultChildApplicationContextManager.class, "Authentication");
         Collection<String> instanceIds = authentication.getInstanceIds();
         Set<String> zones = new HashSet<String>();
@@ -821,7 +820,6 @@ public class TestDataService implements SaveListener {
     private Map<String, Pair<NodeRef, Map<QName, Serializable>>> userDataByUserName;
 
     private void createSubstitutes() {
-        userDataByUserName = new ConcurrentHashMap<String, Pair<NodeRef, Map<QName, Serializable>>>();
         if (userNamesList.size() < 2) {
             return;
         }
@@ -2152,7 +2150,7 @@ public class TestDataService implements SaveListener {
                 }
                 String taskOwnerUserName = getRandom(userNamesListCopy);
                 userNamesListCopy.remove(taskOwnerUserName);
-                Map<QName, Serializable> taskOwnerProps = userDataByUserName.get(taskOwnerUserName).getSecond();
+                Map<QName, Serializable> taskOwnerProps = getUserData(taskOwnerUserName).getSecond();
                 String taskOwnerFullName = UserUtil.getPersonFullName1(taskOwnerProps);
                 String taskOwnerEmail = (String) taskOwnerProps.get(ContentModel.PROP_EMAIL);
                 String taskOwnerJobTitle = (String) taskOwnerProps.get(ContentModel.PROP_JOBTITLE);
@@ -2173,7 +2171,7 @@ public class TestDataService implements SaveListener {
                 props.put(WorkflowCommonModel.Props.OWNER_NAME, taskOwnerFullName);
                 props.put(WorkflowCommonModel.Props.OWNER_EMAIL, taskOwnerEmail);
                 props.put(WorkflowCommonModel.Props.OWNER_JOB_TITLE, taskOwnerJobTitle);
-                props.put(WorkflowCommonModel.Props.OWNER_ORGANIZATION_NAME, (Serializable) (taskOwnerStructUnit != null ? Collections.singleton(taskOwnerStructUnit.getName())
+                props.put(WorkflowCommonModel.Props.OWNER_ORGANIZATION_NAME, (Serializable) (taskOwnerStructUnit != null ? new ArrayList<String>(Arrays.asList(taskOwnerStructUnit.getName()))
                         : null));
 
                 props.put(WorkflowCommonModel.Props.DOCUMENT_TYPE, docTypeId);
@@ -2231,12 +2229,12 @@ public class TestDataService implements SaveListener {
                     if (StringUtils.isNotBlank(ownerId)) {
                         // document workflow
                         if (isDocumentWorkflow) {
-                            Set<String> requiredPrivileges = getRequiredPrivsForTask(task, docRef, fileService, false);
+                            Set<String> requiredPrivileges = getRequiredPrivsForTask(task, docRef, fileService, false, false);
                             addOwnerPermissions(permissionsByTaskOwnerId, ownerId, requiredPrivileges);
                         }
                     } else if (isCaseFileWorkflow) {
                         // case file workflow
-                        addOwnerPermissions(permissionsByTaskOwnerId, ownerId, getPrivsWithDependencies(getRequiredPrivsForTask(task, null, null, true)));
+                        addOwnerPermissions(permissionsByTaskOwnerId, ownerId, getPrivsWithDependencies(getRequiredPrivsForTask(task, null, null, true, true)));
                     } else {
                         // independent workflow
                         Set<String> privileges = WorkflowUtil.getIndependentWorkflowDefaultDocPermissions();

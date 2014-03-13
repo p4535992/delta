@@ -98,8 +98,6 @@ import ee.webmedia.alfresco.volume.model.VolumeModel;
 
 /**
  * Imports documents and files from Sharepoint.
- * 
- * @author Martti Tamm
  */
 public class DocumentImporter {
 
@@ -775,10 +773,10 @@ public class DocumentImporter {
             }
             return new DocumentImportResult(currentMeta, documentXml, e.getMessage(), e.isReportAsSuccess());
         } catch (Exception e) {
+            LOG.warn("Caught unexpected exception during document XML import.", e);
             if (doc != null && nodeService.exists(doc.getNodeRef())) {
                 nodeService.deleteNode(doc.getNodeRef());
             }
-            LOG.warn("Caught unexpected exception during document XML import.", e);
             return new DocumentImportResult(currentMeta, documentXml, e.toString());
         }
     }
@@ -891,7 +889,11 @@ public class DocumentImporter {
         String individualNumber = (String) props.get(DocumentCommonModel.Props.INDIVIDUAL_NUMBER);
 
         if (regDateTime == null && StringUtils.isNotBlank(regNumber) && meta.getAdditionalRegDateTime() != null) {
-            regDateTime = ImportUtil.getDate(meta.getAdditionalRegDateTime());
+            if (meta.getAdditionalRegDateTime().length() >= 13) {
+                regDateTime = ImportUtil.getDateTime(meta.getAdditionalRegDateTime());
+            } else {
+                regDateTime = ImportUtil.getDate(meta.getAdditionalRegDateTime());
+            }
             props.put(DocumentCommonModel.Props.REG_DATE_TIME, regDateTime);
         }
 
@@ -1101,7 +1103,6 @@ public class DocumentImporter {
 
         nodeService.setProperty(fileRef, FileModel.Props.DISPLAY_NAME, file.getTitle());
         nodeService.setProperty(fileRef, FileModel.Props.ACTIVE, file.isActive());
-        nodeService.setProperty(fileRef, ContentModel.PROP_NAME, file.getTitle()); // Should be set to same value as found in original XML
         nodeService.setProperty(fileRef, ContentModel.PROP_CREATED, file.getCreated());
         nodeService.setProperty(fileRef, ContentModel.PROP_MODIFIED, file.getModified());
         nodeService.setProperty(fileRef, ContentModel.PROP_CREATOR, file.getCreator());

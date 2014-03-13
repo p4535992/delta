@@ -26,6 +26,7 @@ import ee.webmedia.alfresco.email.service.EmailException;
 import ee.webmedia.alfresco.email.service.EmailService;
 import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
+import ee.webmedia.alfresco.template.model.ProcessedEmailTemplate;
 import ee.webmedia.alfresco.template.service.DocumentTemplateService;
 import ee.webmedia.alfresco.user.model.Authority;
 import ee.webmedia.alfresco.user.web.PermissionsAddDialog;
@@ -135,8 +136,6 @@ public class InviteUsersDialog extends PermissionsAddDialog {
 
         final List<ChildAssociationRef> parentAssocs = getNodeService().getParentAssocs(getNodeRef()); // Get the parent document
         NodeRef documentNodeRef = parentAssocs.get(0).getParentRef();
-        String subject = MessageUtil.getMessage(FacesContext.getCurrentInstance(), "forum_invited_to_subject",
-                getNodeService().getProperty(documentNodeRef, DocumentCommonModel.Props.DOC_NAME));
         if (templateName == null) {
             log.debug("Sending invitation to discussion failed, template to be used is not specified!");
             return;
@@ -150,7 +149,7 @@ public class InviteUsersDialog extends PermissionsAddDialog {
         LinkedHashMap<String, NodeRef> nodeRefs = new LinkedHashMap<String, NodeRef>();
         nodeRefs.put(null, documentNodeRef);
         nodeRefs.put("discussion", getNodeRef()); // Add discussion also for special formulae
-        String content = getDocumentTemplateService().getProcessedEmailTemplate(nodeRefs, templateNodeRef);
+        ProcessedEmailTemplate template = getDocumentTemplateService().getProcessedEmailTemplate(nodeRefs, templateNodeRef);
 
         for (Authority a : auth) {
             String authority = a.getAuthority();
@@ -165,7 +164,7 @@ public class InviteUsersDialog extends PermissionsAddDialog {
         }
 
         try {
-            emailService.sendEmail(toEmails, toNames, fromEmail, subject, content, true, null, null);
+            emailService.sendEmail(toEmails, toNames, fromEmail, template.getSubject(), template.getContent(), true, null, null);
         } catch (EmailException e) {
             log.error("Discussion invitation notification e-mail sending failed, ignoring and continuing", e);
             return;

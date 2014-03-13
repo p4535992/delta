@@ -42,9 +42,6 @@ import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.volume.model.Volume;
 
-/**
- * @author Kaarel Jõgeva
- */
 public class MenuServiceImpl implements MenuService, InitializingBean {
     private static Logger log = Logger.getLogger(MenuServiceImpl.class);
 
@@ -234,6 +231,10 @@ public class MenuServiceImpl implements MenuService, InitializingBean {
     }
 
     private void process(Menu loadedMenu, boolean reloaded, Collection<String> onlyMenuItemIds, boolean sessionScope) {
+        if (loadedMenu == null) {
+            // may happen in mDelta context
+            return;
+        }
         for (ProcessorWrapper processorWrapper : processors) {
             if (reloaded || (processorWrapper.isExecutable && processorWrapper.isSessionScoped == sessionScope)) {
                 if (processorWrapper.runOnce) {

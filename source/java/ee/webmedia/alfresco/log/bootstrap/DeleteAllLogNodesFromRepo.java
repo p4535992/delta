@@ -16,8 +16,6 @@ import ee.webmedia.alfresco.utils.SearchUtil;
  * Delete all log nodes from repo.
  * NB! Assumes that all bootstraps transferring data from repo to delta_log table have been executed,
  * otherwise log data is lost.
- * 
- * @author Riina Tens
  */
 public class DeleteAllLogNodesFromRepo extends AbstractNodeUpdater {
 

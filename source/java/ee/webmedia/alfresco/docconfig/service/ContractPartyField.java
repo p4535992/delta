@@ -5,7 +5,6 @@ import java.io.Serializable;
 import org.alfresco.service.namespace.QName;
 
 /**
- * @author Alar Kvell
  *
  */
 public class ContractPartyField implements Serializable {

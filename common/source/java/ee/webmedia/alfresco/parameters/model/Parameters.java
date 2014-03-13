@@ -4,9 +4,6 @@ import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.parameters.model.ParametersModel.Repo;
 
-/**
- * @author Ats Uiboupin
- */
 public enum Parameters {
     /** Maximal number of documents that is fetched with single service call(multiple calls will be created if needed) */
     DVK_MAX_RECEIVE_DOCUMENTS_NR("dvkReceiveDocumentsNumber"),
@@ -78,6 +75,7 @@ public enum Parameters {
     MAX_SEARCH_SHOW_ALL_RESULT_ROWS("maxSearchShowAllResultRows"),
     HEADER_TEXT("headerText"),
     FOOTER_TEXT("footerText"),
+    M_DELTA_FOOTER_TEXT("mDeltaFooterText"),
     VOLUME_AUTOMATIC_CLOSING_TIME("volumeAutomaticClosingTime"),
     SIGNER_NAME("signerName"),
     CONTRACT_FIRST_PARTY_NAME("contractFirstPartyName"),
@@ -125,7 +123,8 @@ public enum Parameters {
     DOC_MANAGER_EMAIL("docManagerEmail"),
     DVK_FAILED_SENDS_RESEND_TIME("dvkFailedSendsResendTime"),
     MOVE_TO_ARCHIVE_LIST_DEFAULT_MONTHS("moveToArchiveListDefaultMonths"),
-    ARCHIVAL_ACTIVITY_DOC_TYPE_ID("archivalActivityDocTypeId");
+    ARCHIVAL_ACTIVITY_DOC_TYPE_ID("archivalActivityDocTypeId"),
+    ACCESS_RESTRICTION_END_DATE_NOTIFICATION_MAX_DOCUMENTS("accessRestrictionEndDateNotificationMaxDocuments");
 
     private String xPath;
     private String parameterName;

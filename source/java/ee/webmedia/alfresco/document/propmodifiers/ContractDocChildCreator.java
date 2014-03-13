@@ -11,8 +11,6 @@ import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 
 /**
  * Callback that creates default party (as childNode) for contractSim and contractSmit document
- * 
- * @author Kaarel Jõgeva
  */
 
 public class ContractDocChildCreator extends AbstractDocChildCreator {

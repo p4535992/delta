@@ -9,8 +9,6 @@ import com.icegreen.greenmail.store.FolderException;
 
 /**
  * Behaviour denies appending message.
- * 
- * @author Romet Aidla
  */
 public class PermissionDeniedAppendBehaviour implements AppendBehaviour {
     public static final String BEHAVIOUR_NAME = "permissionDeniedBehaviour";

@@ -24,8 +24,6 @@ import ee.webmedia.alfresco.utils.UnableToPerformException;
 
 /**
  * Details dialog for editing {@link FieldGroup}
- * 
- * @author Ats Uiboupin
  */
 public class FieldGroupDetailsDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;

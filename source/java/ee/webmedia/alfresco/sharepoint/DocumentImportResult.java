@@ -19,8 +19,6 @@ import ee.webmedia.alfresco.sharepoint.mapping.MappedDocument;
 
 /**
  * A class representing a document import result. For each processed document, exactly one result is created. This object can be logged to the log file once import is completed.
- * 
- * @author Martti Tamm
  */
 public class DocumentImportResult {
 

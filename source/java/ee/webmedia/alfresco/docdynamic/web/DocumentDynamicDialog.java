@@ -97,6 +97,7 @@ import ee.webmedia.alfresco.log.model.LogObject;
 import ee.webmedia.alfresco.menu.ui.MenuBean;
 import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.series.model.Series;
+import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.simdhs.servlet.ExternalAccessServlet;
 import ee.webmedia.alfresco.user.model.UserModel;
 import ee.webmedia.alfresco.utils.ActionUtil;
@@ -123,8 +124,6 @@ import ee.webmedia.alfresco.workflow.web.WorkflowBlockBean;
  * <p>
  * For example, to open this dialog manually, (for example {@link ExternalAccessServlet} does this), you should call {@code documentDynamicDialog.open...(nodeRef)}
  * </p>
- * 
- * @author Alar Kvell
  */
 public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<DocDialogSnapshot, DocumentDynamicBlock, DialogDataProvider> implements DialogDataProvider,
         BlockBeanProviderProvider {
@@ -412,7 +411,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
     private void addTargetAssoc(NodeRef targetRef, QName targetType, boolean isSourceAssoc, boolean skipNotSearchable) {
         AssocsBlockBean assocsBlockBean = getAssocsBlockBean();
         AssociationRef assocRef = RepoUtil.addAssoc(getNode(), targetRef, targetType, true);
-        // TODO: Riina: clarify this logic (would be better if retrieving associations could be done on common basis,
+        // TODO: clarify this logic (would be better if retrieving associations could be done on common basis,
         // but as compoundWorkflow associations are retrieved differently, this is workaround to retrieve workflow associations here)
         boolean getAsSourceAssoc = DocumentCommonModel.Assocs.WORKFLOW_DOCUMENT.equals(targetType) ? !isSourceAssoc : isSourceAssoc;
         final DocAssocInfo docAssocInfo = getDocumentAssociationsService().getDocListUnitAssocInfo(assocRef, getAsSourceAssoc, skipNotSearchable);
@@ -533,6 +532,11 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         DocumentConfig config = snapshot.config;
         DocumentDynamic document = snapshot.document;
         WmNode node = document.getNode();
+
+        if (config == null && node != null) {
+            snapshot.config = BeanHelper.getDocumentConfigService().getConfig(node);
+            config = snapshot.config;
+        }
 
         List<DialogButtonConfig> buttons = new ArrayList<DialogButtonConfig>(1);
         DocumentType docType = (DocumentType) config.getDocType();
@@ -743,7 +747,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
     public void sendAccessRestrictionChangedEmails(ActionEvent event) {
         if (isCreateNewCaseFile()) {
             getCurrentSnapshot().needSendNotificationAfterCreateCaseFile = true;
-            navigateCreateNewCaseFile();
+            navigateCreateNewCaseFile(false);
         } else {
             DocumentDynamic document = getDocument();
             notifyAccessRestrictionChanged(document,
@@ -783,13 +787,34 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
             LOG.warn(e.getMessage(), e);
             return cancel(false);
         }
-        if (!isInEditMode() || !getCurrentSnapshot().viewModeWasOpenedInThePast || !canRestore()) {
+        boolean isInEditMode = isInEditMode();
+        if (isInEditMode) {
+            try {
+                BeanHelper.getDocumentLockHelperBean().lockOrUnlockIfNeeded(false);
+            } catch (UnableToPerformException e) {
+                MessageUtil.addErrorMessage("document_deleted");
+                return null;
+            }
+        }
+        if (!isInEditMode || !getCurrentSnapshot().viewModeWasOpenedInThePast || !canRestore()) {
             getDocumentDynamicService().deleteDocumentIfDraft(getDocument().getNodeRef());
             return super.cancel(); // closeDialogSnapshot
         }
         // Switch from edit mode back to view mode
         switchMode(false);
         return null;
+    }
+
+    private boolean isIncorrectSeries() {
+        DocumentDynamic doc = getDocument();
+        String docType = doc.getDocumentTypeId();
+        List<String> allowedTypes = (List) BeanHelper.getNodeService().getProperty(doc.getSeries(), SeriesModel.Props.DOC_TYPE);
+        return !allowedTypes.contains(docType);
+    }
+
+    private boolean isNodeRefValid() {
+        NodeRef docRef = getDocument().getNodeRef();
+        return BeanHelper.getNodeService().exists(docRef);
     }
 
     @Override
@@ -802,10 +827,17 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         if (!isInEditMode()) {
             throw new RuntimeException("Document metadata block is not in edit mode");
         }
-
+        if (!isNodeRefValid()) {
+            MessageUtil.addErrorMessage("docdyn_deleted");
+            return null;
+        }
         if (BeanHelper.getDocumentLockHelperBean().isLockReleased(getDocument().getNodeRef())) {
             MessageUtil.addErrorMessage("lock_document_administrator_released");
             WebUtil.navigateTo("dialog:close");
+            return null;
+        }
+        if (isIncorrectSeries()) {
+            MessageUtil.addErrorMessage(context, "document_save_error_invalid_series");
             return null;
         }
 
@@ -817,7 +849,8 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
                 return null;
             }
         }
-        if (!getCurrentSnapshot().moveAssociatedDocumentsConfirmed && isRelocatingAssociations()) {
+        final boolean relocateAssociations = isRelocatingAssociations();
+        if (!getCurrentSnapshot().moveAssociatedDocumentsConfirmed && relocateAssociations) {
             BeanHelper.getUserConfirmHelper().setup(new MessageDataImpl("document_move_associated_documents_confirmation"), null,
                     "#{DocumentDynamicDialog.changeDocLocationConfirmed}", null, null, null, null);
             getCurrentSnapshot().confirmMoveAssociatedDocuments = true;
@@ -829,7 +862,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         final boolean createNewCaseFile = isCreateNewCaseFile();
         try {
             if (!createNewCaseFile) {
-                savedDocument = save(getDocument(), getConfig().getSaveListenerBeanNames(), getCurrentSnapshot().confirmMoveAssociatedDocuments, true);
+                savedDocument = save(getDocument(), getConfig().getSaveListenerBeanNames(), getCurrentSnapshot().confirmMoveAssociatedDocuments, true).getFirst();
             }
             // when new case file is created, actual saving (and registering, if required) is postponed to after saving case file
             else {
@@ -874,10 +907,20 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
                     return null;
                 }
                 if (!createNewCaseFile) {
+                    NodeRef newRef = savedDocument.getNodeRef();
+                    NodeRef oldRef = null;
+                    DocDialogSnapshot snap = getCurrentSnapshot();
+                    if (snap != null && snap.document != null) {
+                        oldRef = snap.document.getNodeRef();
+                    }
                     // Switch from edit mode back to view mode
-                    switchMode(false);
+                    if (!(newRef == null || oldRef == null) && !newRef.equals(oldRef)) {
+                        openOrSwitchModeCommon(newRef, false);
+                    } else {
+                        switchMode(false);
+                    }
                 } else {
-                    navigateCreateNewCaseFile();
+                    navigateCreateNewCaseFile(relocateAssociations);
                 }
                 return null;
             }
@@ -885,8 +928,8 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         }, false, true);
     }
 
-    public DocumentDynamic save(final DocumentDynamic document, final List<String> saveListenerBeanNames, final boolean relocateAssocDocs, boolean newTransaction) {
-        final DocumentDynamic savedDocument;
+    public Pair<DocumentDynamic, List<Pair<NodeRef, NodeRef>>> save(final DocumentDynamic document, final List<String> saveListenerBeanNames, final boolean relocateAssocDocs,
+            boolean newTransaction) {
         Pair<DocumentDynamic, List<Pair<NodeRef, NodeRef>>> result;
         // Do in new transaction, because we want to catch integrity checker exceptions now, not at the end of this method when mode is already switched
         RetryingTransactionCallback<Pair<DocumentDynamic, List<Pair<NodeRef, NodeRef>>>> callback = new RetryingTransactionCallback<Pair<DocumentDynamic, List<Pair<NodeRef, NodeRef>>>>() {
@@ -906,7 +949,6 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
                 throw new RuntimeException(e);
             }
         }
-        savedDocument = result.getFirst();
         for (Pair<NodeRef, NodeRef> pair : result.getSecond()) {
             if (pair.getFirst().equals(pair.getSecond())) {
                 continue;
@@ -918,13 +960,13 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
                 snapshot.document.getNode().updateNodeRef(pair.getSecond());
             }
         }
-        return savedDocument;
+        return result;
     }
 
-    private void navigateCreateNewCaseFile() {
+    private void navigateCreateNewCaseFile(boolean isRelocatingAssociations) {
         String caseFileType = getDocument().getProp(DocumentLocationGenerator.CASE_FILE_TYPE_PROP);
         BeanHelper.getCaseFileDialog().createCaseFile(caseFileType, getDocument(), getCurrentSnapshot().needRegisteringAfterCreateCaseFile,
-                getCurrentSnapshot().needSendNotificationAfterCreateCaseFile, getConfig().getSaveListenerBeanNames());
+                getCurrentSnapshot().needSendNotificationAfterCreateCaseFile, getConfig().getSaveListenerBeanNames(), isRelocatingAssociations);
     }
 
     private boolean isCreateNewCaseFile() {
@@ -936,15 +978,18 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
     private boolean isRelocatingAssociations() {
         DocumentDynamic document = getDocument();
 
+        List<DocAssocInfo> docAssocs = getAssocsBlockBean().getDocAssocInfos();
+        if (isCreateNewCaseFile() && docAssocs != null && !docAssocs.isEmpty()) {
+            return true;
+        }
         if (!RepoUtil.isSaved(document.getVolume())) {
             return false;
         }
 
         NodeRef newParentRef = getParent(document.getVolume(), StringUtils.trimToNull((String) document.getProp(DocumentLocationGenerator.CASE_LABEL_EDITABLE)));
         // For documents not under volume or case, check location change against associated document
-        // TODO : Riina: in 3.10 branch, add document.isFromWebService() check here
+        // TODO : in 3.10 branch, add document.isFromWebService() check here
         if (document.isDraftOrImapOrDvk() || document.isIncomingInvoice()) {
-            List<DocAssocInfo> docAssocs = getAssocsBlockBean().getDocAssocInfos();
             if (docAssocs == null || docAssocs.isEmpty()) {
                 return false;
             }

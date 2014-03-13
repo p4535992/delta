@@ -1,0 +1,9 @@
+#http {
+
+    gzip on;
+    gzip_min_length 1024;
+    gzip_types text/plain application/xml text/css text/javascript; # text/html is always compressed
+
+    client_max_body_size 8M; # How large files users want to upload
+
+#}

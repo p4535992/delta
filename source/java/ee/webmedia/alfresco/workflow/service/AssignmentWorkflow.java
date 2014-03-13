@@ -2,12 +2,8 @@ package ee.webmedia.alfresco.workflow.service;
 
 import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.isActiveResponsible;
 import ee.webmedia.alfresco.common.web.WmNode;
-import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 
-/**
- * @author Erko Hansar
- */
 public class AssignmentWorkflow extends Workflow {
 
     private static final long serialVersionUID = 1L;
@@ -20,12 +16,6 @@ public class AssignmentWorkflow extends Workflow {
     protected Workflow copy(CompoundWorkflow parent) {
         // no need to copy newTaskTemplate, it is not changed ever
         return copyImpl(new AssignmentWorkflow(getNode().clone(), parent, newTaskTemplate, newTaskClass, newTaskOutcomes));
-    }
-
-    @Override
-    protected void preSave() {
-        super.preSave();
-        WorkflowUtil.setWorkflowResolution(getTasks(), getProp(WorkflowSpecificModel.Props.RESOLUTION), Status.NEW, Status.IN_PROGRESS);
     }
 
     public Task addResponsibleTask() {

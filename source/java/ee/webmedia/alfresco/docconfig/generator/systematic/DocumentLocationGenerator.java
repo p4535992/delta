@@ -16,6 +16,7 @@ import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.VOLU
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -97,9 +98,6 @@ import ee.webmedia.alfresco.volume.search.model.VolumeReportModel;
 import ee.webmedia.alfresco.volume.search.model.VolumeSearchModel;
 import ee.webmedia.alfresco.volume.service.VolumeService;
 
-/**
- * @author Alar Kvell
- */
 public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DocumentLocationGenerator.class);
     public static final String[] NODE_REF_FIELD_IDS = new String[] {
@@ -285,11 +283,14 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
             generatorResults.addItem(caseLabelEditableItem);
 
             // View mode: text item
-            ItemConfigVO caseLabelItem = generatorResults.generateAndAddViewModeText(caseLabelProp.toString(), field.getName());
-            caseLabelItem.setComponentGenerator(labelGenerator);
-            caseLabelItem.setAction("dialog:documentListDialog");
-            caseLabelItem.setActionListener("#{DocumentListDialog.setup}");
-            caseLabelItem.setActionListenerParams("caseNodeRef=" + getStateHolderBindingName("case", stateHolderKey));
+            NodeRef nodeRef = BeanHelper.getDocumentDialogHelperBean().getNodeRef();
+            if (nodeRef == null || nodeService.exists(nodeRef) && BeanHelper.getGeneralService().getAncestorNodeRefWithType(nodeRef, CaseModel.Types.CASE) != null) {
+                ItemConfigVO caseLabelItem = generatorResults.generateAndAddViewModeText(caseLabelProp.toString(), field.getName());
+                caseLabelItem.setComponentGenerator(labelGenerator);
+                caseLabelItem.setAction("dialog:documentListDialog");
+                caseLabelItem.setActionListener("#{DocumentListDialog.setup}");
+                caseLabelItem.setActionListenerParams("caseNodeRef=" + getBindingName("case", stateHolderKey));
+            }
             return;
         }
         throw new RuntimeException("Unsupported field: " + field);
@@ -356,7 +357,7 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
             if (inEditMode) {
                 String caseLabel = documentType ? (String) docProps.get(caseLabelEditableProp) : null;
                 if (caseRef != null) {
-                    String caseLabelByCaseRef = getCaseLabel(getCaseService().getCaseByNoderef(caseRef));
+                    String caseLabelByCaseRef = getNodeService().exists(caseRef) ? getCaseLabel(getCaseService().getCaseByNoderef(caseRef)) : null;
                     if (StringUtils.isNotBlank(caseLabel)) {
                         if (!StringUtils.equals(caseLabel, caseLabelByCaseRef)) {
                             // reset is using document snapshot data, where user has entered different case name
@@ -650,7 +651,6 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
             boolean casesCreatableByUser = false;
             if (volumeRef == null || RepoUtil.isUnsaved(volumeRef) || !documentType || isAssocObjectSearchFilter) {
                 cases = null;
-                casesEditable = null;
                 caseRef = null;
                 if (!isSearchFilter) {
                     caseLabel = null;
@@ -669,8 +669,9 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
                     } else {
                         allCases = Collections.emptyList();
                     }
-                    cases = new ArrayList<SelectItem>(allCases.size());
-                    casesEditable = new ArrayList<String>(allCases.size());
+                    int allCasesSize = allCases.size();
+                    cases = new ArrayList<SelectItem>(allCasesSize);
+                    casesEditable = new ArrayList<String>(allCasesSize);
                     cases.add(new SelectItem("", ""));
                     boolean caseFound = false;
                     for (Case tmpCase : allCases) {
@@ -687,16 +688,6 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
                             cases.add(1, new SelectItem(tmpCase.getNode().getNodeRef(), getCaseLabel(tmpCase)));
                         } else {
                             caseRef = null;
-                        }
-                    }
-                    // If list contains only one value, then select it right away
-                    if (!useCaseLabel && StringUtils.isBlank(caseLabel) && casesEditable.size() == 1 && !isDocTypeDef) {
-                        caseLabel = StringUtils.trim(casesEditable.get(0));
-                    }
-                    if (cases.size() == 2 && !isDocTypeDef) {
-                        cases.remove(0);
-                        if (caseRef == null && !useCaseLabel) {
-                            caseRef = (NodeRef) cases.get(0).getValue();
                         }
                     }
                 } else {
@@ -731,33 +722,36 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
                     });
                 } else {
                     List<UIComponent> children = ps.getChildren();
+                    FacesContext context = FacesContext.getCurrentInstance();
                     for (UIComponent component : children) {
                         List<UIComponent> componentChildren = component.getChildren();
                         if (componentChildren.size() < 2) {
                             continue;
                         }
                         if (component.getId().endsWith("_" + functionProp.getLocalName())) {
-                            HtmlSelectOneMenu functionList = (HtmlSelectOneMenu) componentChildren.get(1);
-                            ComponentUtil.setSelectItems(FacesContext.getCurrentInstance(), functionList, functions);
+                            HtmlSelectOneMenu functionList = (HtmlSelectOneMenu) component.getChildren().get(1);
+                            ComponentUtil.setSelectItems(context, functionList, functions);
                             functionList.setValue(functionRef);
                         } else if (component.getId().endsWith("_" + seriesProp.getLocalName())) {
-                            HtmlSelectOneMenu seriesList = (HtmlSelectOneMenu) componentChildren.get(1);
-                            ComponentUtil.setSelectItems(FacesContext.getCurrentInstance(), seriesList, series);
+                            HtmlSelectOneMenu seriesList = (HtmlSelectOneMenu) component.getChildren().get(1);
+                            ComponentUtil.setSelectItems(context, seriesList, series);
                             seriesList.setValue(seriesRef);
-                        } else if (documentType && component.getId().endsWith("_" + volumeProp.getLocalName())) {
-                            HtmlSelectOneMenu volumeList = (HtmlSelectOneMenu) componentChildren.get(1);
-                            ComponentUtil.setSelectItems(FacesContext.getCurrentInstance(), volumeList, volumes);
+                        } else if (volumeProp != null && component.getId().endsWith("_" + volumeProp.getLocalName())) {
+                            HtmlSelectOneMenu volumeList = (HtmlSelectOneMenu) component.getChildren().get(1);
+                            ComponentUtil.setSelectItems(context, volumeList, volumes);
                             volumeList.setValue(volumeRef);
-                        } else if (documentType && component.getId().endsWith("_" + caseProp.getLocalName())) {
-                            HtmlSelectOneMenu caseList = (HtmlSelectOneMenu) componentChildren.get(1);
-                            ComponentUtil.setSelectItems(FacesContext.getCurrentInstance(), caseList, cases);
+                        } else if (caseProp != null && component.getId().endsWith("_" + caseProp.getLocalName())) {
+                            HtmlSelectOneMenu caseList = (HtmlSelectOneMenu) component.getChildren().get(1);
+                            ComponentUtil.setSelectItems(context, caseList, cases);
                             caseList.setValue(caseRef);
                             component.setRendered(cases != null && !isSearchFilter);
-                        } else if (documentType && component.getId().endsWith("_" + caseLabelEditableProp.getLocalName())) {
-                            UIInput caseList = (UIInput) componentChildren.get(1);
-                            SuggesterGenerator.setValue(caseList, (isSearchFilter && casesEditable == null ? Collections.<String> emptyList() : casesEditable));
+                        } else if (caseLabelEditableProp != null && component.getId().endsWith("_" + caseLabelEditableProp.getLocalName())) {
+                            UIInput caseList = (UIInput) component.getChildren().get(1);
+                            SuggesterGenerator.setValue(caseList, (isSearchFilter ? getCasesEditableOrEmptyList(context, caseList) : casesEditable));
                             caseList.setValue(caseLabel);
                             component.setRendered(casesEditable != null || isSearchFilter);
+                        } else if (component.getId().endsWith(CASE_FILE_TYPE_PROP.getLocalName()) && !showCaseFileTypes) {
+                            component.setRendered(showCaseFileTypes);
                         }
                     }
                 }
@@ -792,7 +786,7 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
             return caseFileTypes;
         }
 
-        public boolean showCaseFileTypes() {
+        public boolean isShowCaseFileTypes() {
             return showCaseFileTypes;
         }
 
@@ -1069,6 +1063,10 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
                     throw new RuntimeException("NodeRef changed while moving");
                 }
                 document.getNode().updateNodeRef(newDocNodeRef);
+                if (!docNodeRef.equals(newDocNodeRef)) {
+                    updateChildAssocNodeRefsRecursively(newDocNodeRef, document.getNode());
+                }
+                NodeRef oldDocNodeRef = docNodeRef;
                 docNodeRef = newDocNodeRef;
                 if (isDocument) {
                     documentService.updateParentNodesContainingDocsCount(docNodeRef, true);
@@ -1086,11 +1084,16 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
                 if (existingParentNode != null && !targetParentRef.equals(existingParentNode.getNodeRef())) {
                     if (isDocument) {
                         final String existingRegNr = (String) document.getProp(REG_NUMBER);
+                        final Date existingRegDate = (Date) document.getProp(DocumentCommonModel.Props.REG_DATE_TIME);
                         if (StringUtils.isNotBlank(existingRegNr)) {
                             // reg. number is changed if function, series or volume is changed
                             if (previousVolume != null && !previousVolume.getNodeRef().equals(volumeNodeRef)) {
                                 documentService.registerDocumentRelocating(document.getNode(), previousVolume);
-                                BeanHelper.getAdrService().addDeletedDocument(docNodeRef);
+                                if (oldDocNodeRef != null && "ArchivalsStore".equals(oldDocNodeRef.getStoreRef().getIdentifier())) {
+                                    BeanHelper.getAdrService().addDeletedDocumentFromArchive(oldDocNodeRef, existingRegNr, existingRegDate);
+                                } else {
+                                    BeanHelper.getAdrService().addDeletedDocument(oldDocNodeRef);
+                                }
                             }
                         }
                     } else {
@@ -1105,6 +1108,23 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
             } catch (RuntimeException e) {
                 log.error("Failed to move document to volumes folder", e);
                 throw new UnableToPerformException(MessageSeverity.ERROR, "document_errorMsg_register_movingNotEnabled_isReplyOrFollowUp", e);
+            }
+        }
+    }
+
+    private void updateChildAssocNodeRefsRecursively(final NodeRef newNodeRef, Node node) {
+        Map<String, List<Node>> childAssocs = node.getAllChildAssociationsByAssocType();
+        if (childAssocs != null) {
+            for (List<Node> nodeList : childAssocs.values()) {
+                for (Node childAssoc : nodeList) {
+                    NodeRef oldRef = childAssoc.getNodeRef();
+                    if (nodeService.exists(oldRef) || RepoUtil.isUnsaved(oldRef)) {
+                        continue;
+                    }
+                    NodeRef newRef = new NodeRef(newNodeRef.getStoreRef(), oldRef.getId());
+                    childAssoc.updateNodeRef(newRef);
+                    updateChildAssocNodeRefsRecursively(newNodeRef, childAssoc);
+                }
             }
         }
     }

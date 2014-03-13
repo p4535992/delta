@@ -18,8 +18,6 @@ import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 
 /**
  * Sets changeableIf=CHANGEABLE_IF_WORKING_DOC for field definitions where id="regNumber". See Cl task 210404.
- * 
- * @author Riina Tens
  */
 public class DocumentRegNrFieldUpdater extends AbstractNodeUpdater {
 

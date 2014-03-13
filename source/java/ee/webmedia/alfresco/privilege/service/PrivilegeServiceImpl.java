@@ -37,8 +37,8 @@ import ee.webmedia.alfresco.cases.model.CaseModel;
 import ee.webmedia.alfresco.common.service.ApplicationService;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.BeanHelper;
-import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.common.web.WmNode;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.log.model.LogEntry;
 import ee.webmedia.alfresco.log.model.LogObject;
 import ee.webmedia.alfresco.log.service.LogService;
@@ -53,9 +53,6 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
 
-/**
- * @author Ats Uiboupin
- */
 public class PrivilegeServiceImpl implements PrivilegeService {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(PrivilegeServiceImpl.class);
 
@@ -310,7 +307,7 @@ public class PrivilegeServiceImpl implements PrivilegeService {
                 if (LOG.isDebugEnabled()) {
                     LOG.debug("Previously deleted permission " + permission + " from " + authority + " on " + manageableRef + " - nothing to do");
                 }
-                return;
+                continue;
             }
             long startTime = 0L;
             if (LOG.isDebugEnabled()) {
@@ -342,7 +339,7 @@ public class PrivilegeServiceImpl implements PrivilegeService {
                 if (LOG.isDebugEnabled()) {
                     LOG.debug("Previously set permission " + permission + " to " + authority + " on " + manageableRef + " - nothing to do");
                 }
-                return;
+                continue;
             }
             try {
                 long startTime = 0L;
@@ -556,8 +553,6 @@ public class PrivilegeServiceImpl implements PrivilegeService {
 
     /**
      * {@link AccessPermission#isInherited()} == false does not mean, that the same permission is not also inherited - it just says that this permission is set directly as well
-     * 
-     * @author Ats Uiboupin
      */
     class ThoroughInheritanceChecker {
         private final Set<String> userNamesInAdminsGroup;
@@ -671,8 +666,8 @@ public class PrivilegeServiceImpl implements PrivilegeService {
                         }
                     }
                 }
-                // XXX FROM KAAREL: When document is saved under case file for the first time then case file ownerId is added to document rights with editDocument permissions.
-                // Ats had inserted this verification here that now seems obsolete but is left as a comment for future wanderers...
+                // XXX FROM When document is saved under case file for the first time then case file ownerId is added to document rights with editDocument permissions.
+                // had inserted this verification here that now seems obsolete but is left as a comment for future wanderers...
                 // MessageUtil.addErrorMessage(authority + " has permission " + permission + " on parentNode, however it is NOT INHERITED, but it is still somehow granted");
             }
             return null;

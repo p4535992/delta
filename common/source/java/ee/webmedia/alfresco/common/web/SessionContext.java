@@ -6,8 +6,6 @@ import java.util.Random;
 /**
  * Session context.<br>
  * NB! Unsynchronized - should be accessed from single thread
- * 
- * @author Ats Uiboupin
  */
 public class SessionContext extends HashMap<String, Object> {
     private static final long serialVersionUID = 1L;

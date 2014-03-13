@@ -32,9 +32,6 @@ import ee.webmedia.alfresco.utils.TextUtil;
 import ee.webmedia.alfresco.volume.model.VolumeOrCaseFile;
 import ee.webmedia.alfresco.workflow.service.WorkflowUtil;
 
-/**
- * @author Kaarel Jõgeva
- */
 public class CaseFile extends DynamicBase implements Cloneable, VolumeOrCaseFile {
 
     private static final long serialVersionUID = 1L;

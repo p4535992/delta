@@ -5,6 +5,7 @@ import static ee.webmedia.alfresco.utils.MimeUtil.isPdf;
 import java.io.InputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -38,6 +39,7 @@ import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.cmr.security.AuthenticationService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.service.namespace.RegexQNamePattern;
+import org.alfresco.util.Pair;
 import org.alfresco.util.URLEncoder;
 import org.alfresco.web.app.servlet.DownloadContentServlet;
 import org.alfresco.web.bean.repository.Node;
@@ -53,6 +55,7 @@ import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.file.model.FileModel;
 import ee.webmedia.alfresco.document.file.model.GeneratedFileType;
 import ee.webmedia.alfresco.document.file.web.Subfolder;
+import ee.webmedia.alfresco.document.lock.service.DocLockService;
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.signature.exception.SignatureException;
@@ -66,9 +69,6 @@ import ee.webmedia.alfresco.utils.MimeUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.versions.service.VersionsService;
 
-/**
- * @author Dmitri Melnikov
- */
 public class FileServiceImpl implements FileService {
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(FileServiceImpl.class);
 
@@ -83,6 +83,7 @@ public class FileServiceImpl implements FileService {
     private DocumentDynamicService _documentDynamicService;
     private VersionsService versionsService;
     private DocumentTemplateService _documentTemplateService;
+    private DocLockService _docLockService;
     private Set<String> openOfficeFiles;
     private String jumploaderPath;
 
@@ -181,6 +182,11 @@ public class FileServiceImpl implements FileService {
     @Override
     public List<File> getAllActiveFiles(NodeRef nodeRef) {
         return getAllFiles(nodeRef, false, true);
+    }
+
+    @Override
+    public List<File> getAllActiveAndInactiveFiles(NodeRef nodeRef) {
+        return getAllFiles(nodeRef, false, false);
     }
 
     @Override
@@ -369,49 +375,80 @@ public class FileServiceImpl implements FileService {
     }
 
     @Override
-    public NodeRef addFileToDocument(final String name, final String displayName, final NodeRef documentNodeRef, final NodeRef fileNodeRef) {
-        return addFileToDocument(name, displayName, documentNodeRef, fileNodeRef, true, false);
-    }
-
-    @Override
-    public NodeRef addFileToDocument(final String name, final String displayName, final NodeRef documentNodeRef, final NodeRef fileNodeRef, boolean active,
+    public boolean addExistingFileToDocument(final String name, final String displayName, final NodeRef documentNodeRef, final NodeRef fileNodeRef, boolean active,
             boolean associatedWithMetaData) {
         // Moving is executed with System user rights, because this is not appropriate to implement in permissions model
         NodeRef movedFileNodeRef = AuthenticationUtil.runAs(new RunAsWork<NodeRef>() {
             @Override
             public NodeRef doWork() throws Exception {
                 // change file name
-                nodeService.setProperty(fileNodeRef, ContentModel.PROP_NAME, name);
+                Map<QName, Serializable> props = new HashMap<QName, Serializable>();
+                props.put(ContentModel.PROP_NAME, name);
+                if (!StringUtils.isBlank(displayName)) {
+                    props.put(FileModel.Props.DISPLAY_NAME, displayName);
+                }
+                // Store current location (as string!) (in case where user decides to abort document creation)
+                props.put(FileModel.Props.PREVIOUS_FILE_PARENT, nodeService.getPrimaryParent(fileNodeRef).getParentRef().toString());
+                nodeService.addProperties(fileNodeRef, props);
+
                 // move file
                 return nodeService.moveNode(fileNodeRef, documentNodeRef,
                         ContentModel.ASSOC_CONTAINS, ContentModel.ASSOC_CONTAINS).getChildRef();
             }
         }, AuthenticationUtil.getSystemUserName());
-        checkAssociatedWithMetaData(fileNodeRef, associatedWithMetaData);
-        nodeService.setProperty(fileNodeRef, FileModel.Props.ACTIVE, active);
-        addFileToDocument(displayName, documentNodeRef, movedFileNodeRef);
-        return movedFileNodeRef;
+
+        associatedWithMetaData = addFilePropsAndUpdateDocumentMetadata(documentNodeRef, fileNodeRef, associatedWithMetaData, active, fileFolderService.getWriter(movedFileNodeRef)
+                .getMimetype(), null, name);
+
+        addDocumentFileVersionAndLog(displayName, documentNodeRef, movedFileNodeRef);
+        return associatedWithMetaData;
     }
 
     @Override
-    public NodeRef addFileToDocument(String name, String displayName, NodeRef documentNodeRef, java.io.File file, String mimeType) {
-        return addFileToDocument(name, displayName, documentNodeRef, file, mimeType, true, false);
+    public boolean addUploadedFileToDocument(String name, String displayName, NodeRef documentNodeRef, java.io.File file, String mimeType, boolean active,
+            boolean associatedWithMetaData) {
+        Pair<NodeRef, Boolean> fileNodeRefAndHasFormulae = addFile(name, displayName, documentNodeRef, file, mimeType, active, associatedWithMetaData);
+        addDocumentFileVersionAndLog(displayName, documentNodeRef, fileNodeRefAndHasFormulae.getFirst());
+        return fileNodeRefAndHasFormulae.getSecond();
     }
 
     @Override
-    public NodeRef addFileToDocument(String name, String displayName, NodeRef documentNodeRef, java.io.File file, String mimeType, boolean active, boolean associatedWithMetaData) {
-        NodeRef fileNodeRef = addFile(name, displayName, documentNodeRef, file, mimeType, active, associatedWithMetaData);
-        addFileToDocument(displayName, documentNodeRef, fileNodeRef);
-        return fileNodeRef;
+    public NodeRef addFileToTask(String name, String displayName, NodeRef nodeRef, java.io.File file, String mimeType) {
+        return addFile(name, displayName, nodeRef, file, mimeType, true, false).getFirst();
     }
 
-    @Override
-    public NodeRef addFile(String name, String displayName, NodeRef nodeRef, java.io.File file, String mimeType) {
-        return addFile(name, displayName, nodeRef, file, mimeType, true, false);
+    private boolean addFilePropsAndUpdateDocumentMetadata(final NodeRef documentNodeRef, final NodeRef fileNodeRef, boolean associatedWithMetaData, boolean active,
+            String mimetype, Map<QName, Serializable> props, String filename) {
+        if (props == null) {
+            props = new HashMap<QName, Serializable>(3);
+        }
+        props.put(FileModel.Props.ACTIVE, active);
+        props.put(FileModel.Props.CONVERT_TO_PDF_IF_SIGNED, isTransformableToPdf(mimetype));
+        if (associatedWithMetaData) {
+            GeneratedFileType generationType = null;
+            if (FilenameUtils.isExtension(filename, Arrays.asList("doc", "docx", "xls", "xlsx", "rtf"))) {
+                generationType = GeneratedFileType.WORD_TEMPLATE;
+            } else if (FilenameUtils.isExtension(filename, Arrays.asList("odt", "ods"))) {
+                generationType = GeneratedFileType.OPENOFFICE_TEMPLATE;
+            } else {
+                throw new RuntimeException("Unknown generation type for filename " + filename);
+            }
+            props.put(FileModel.Props.GENERATION_TYPE, generationType.name());
+            props.put(FileModel.Props.GENERATED_FROM_TEMPLATE, MessageUtil.getMessage("file_uploaded_by_user"));
+            props.put(FileModel.Props.UPDATE_METADATA_IN_FILES, Boolean.TRUE);
+        }
+        nodeService.addProperties(fileNodeRef, props);
+        if (associatedWithMetaData) {
+            associatedWithMetaData = getDocumentDynamicService().updateDocumentAndGeneratedFiles(fileNodeRef, documentNodeRef, false);
+            // if document contained no Delta formulae, remove association between document metadata and file
+            if (!associatedWithMetaData) {
+                nodeService.setProperty(fileNodeRef, FileModel.Props.UPDATE_METADATA_IN_FILES, Boolean.FALSE);
+            }
+        }
+        return associatedWithMetaData;
     }
 
-    @Override
-    public NodeRef addFile(String name, String displayName, NodeRef nodeRef, java.io.File file, String mimeType, boolean active, boolean associatedWithMetaData) {
+    private Pair<NodeRef, Boolean> addFile(String name, String displayName, NodeRef nodeRef, java.io.File file, String mimeType, boolean active, boolean associatedWithMetaData) {
         FileInfo fileInfo = fileFolderService.create(
                 nodeRef,
                 name,
@@ -419,35 +456,13 @@ public class FileServiceImpl implements FileService {
         NodeRef fileNodeRef = fileInfo.getNodeRef();
         ContentWriter writer = fileFolderService.getWriter(fileNodeRef);
         generalService.writeFile(writer, file, name, mimeType);
+
         Map<QName, Serializable> props = new HashMap<QName, Serializable>();
-        checkAssociatedWithMetaData(associatedWithMetaData, props);
         props.put(FileModel.Props.DISPLAY_NAME, displayName);
-        props.put(FileModel.Props.ACTIVE, active);
-        props.put(FileModel.Props.CONVERT_TO_PDF_IF_SIGNED, isTransformableToPdf(writer.getMimetype()));
-        nodeService.addProperties(fileNodeRef, props);
-        if (associatedWithMetaData) {
-            getDocumentDynamicService().updateDocumentAndGeneratedFiles(fileNodeRef, nodeRef, false);
-        }
 
-        return fileNodeRef;
-    }
+        associatedWithMetaData = addFilePropsAndUpdateDocumentMetadata(nodeRef, fileNodeRef, associatedWithMetaData, active, writer.getMimetype(), props, name);
 
-    private Map<QName, Serializable> checkAssociatedWithMetaData(boolean associatedWithMetaData, Map<QName, Serializable> props) {
-        if (props == null) {
-            props = new HashMap<QName, Serializable>(2);
-        }
-        if (!associatedWithMetaData) {
-            return props;
-        }
-        props.put(FileModel.Props.GENERATED_FROM_TEMPLATE, MessageUtil.getMessage("file_uploaded_by_user"));
-        props.put(FileModel.Props.GENERATION_TYPE, GeneratedFileType.WORD_TEMPLATE.name());
-        props.put(FileModel.Props.UPDATE_METADATA_IN_FILES, Boolean.TRUE);
-
-        return props;
-    }
-
-    private void checkAssociatedWithMetaData(NodeRef fileNodeRef, boolean associatedWithMetaData) {
-        nodeService.addProperties(fileNodeRef, checkAssociatedWithMetaData(associatedWithMetaData, null));
+        return Pair.newInstance(fileNodeRef, associatedWithMetaData);
     }
 
     @Override
@@ -465,10 +480,33 @@ public class FileServiceImpl implements FileService {
         return fileNodeRef;
     }
 
-    private void addFileToDocument(String displayName, NodeRef documentNodeRef, NodeRef fileNodeRef) {
+    private void addDocumentFileVersionAndLog(String displayName, NodeRef documentNodeRef, NodeRef fileNodeRef) {
         versionsService.addVersionModifiedAspect(fileNodeRef);
         versionsService.addVersionLockableAspect(fileNodeRef);
         documentLogService.addDocumentLog(documentNodeRef, MessageUtil.getMessage("document_log_status_fileAdded", displayName));
+    }
+
+    @Override
+    public void removePreviousParentReference(NodeRef docRef, boolean moveToPreviousParent) {
+        List<FileInfo> listFiles = fileFolderService.listFiles(docRef);
+        for (FileInfo fileInfo : listFiles) {
+            String parentRefString = (String) fileInfo.getProperties().get(FileModel.Props.PREVIOUS_FILE_PARENT);
+            if (StringUtils.isBlank(parentRefString)) {
+                continue;
+            }
+
+            NodeRef previousParent = new NodeRef(parentRefString);
+            if (!nodeService.exists(previousParent)) {
+                continue;
+            }
+
+            NodeRef fileRef = fileInfo.getNodeRef();
+            // Move node back to previous parent and remove property if still present.
+            if (moveToPreviousParent) {
+                fileRef = nodeService.moveNode(fileRef, previousParent, ContentModel.ASSOC_CONTAINS, ContentModel.ASSOC_CONTAINS).getChildRef();
+            }
+            nodeService.removeProperty(fileRef, FileModel.Props.PREVIOUS_FILE_PARENT);
+        }
     }
 
     @Override
@@ -503,8 +541,15 @@ public class FileServiceImpl implements FileService {
         File item = new File(fi);
         item.setCreator(userService.getUserFullName((String) fi.getProperties().get(ContentModel.PROP_CREATOR)));
         item.setModifier(userService.getUserFullName((String) fi.getProperties().get(ContentModel.PROP_MODIFIER)));
-        item.setDownloadUrl(generateURL(item.getNodeRef()));
-        item.setReadOnlyUrl(DownloadContentServlet.generateDownloadURL(item.getNodeRef(), item.getDisplayName()));
+        NodeRef nodeRef = item.getNodeRef();
+        item.setDownloadUrl(generateURL(nodeRef));
+        item.setReadOnlyUrl(DownloadContentServlet.generateDownloadURL(nodeRef, item.getDisplayName()));
+
+        String lockOwnerIfLocked = getDocLockService().getLockOwnerIfLocked(nodeRef);
+        if (lockOwnerIfLocked != null && Boolean.TRUE.equals(nodeService.getProperty(nodeRef, FileModel.Props.MANUAL_LOCK))) {
+            item.setActiveLockOwner(StringUtils.substringBefore(lockOwnerIfLocked, "_")); // Store only user name part, to enable actions in different sessions.
+        }
+
         return item;
     }
 
@@ -694,6 +739,13 @@ public class FileServiceImpl implements FileService {
 
     public void setScannedFilesPath(String scannedDocumentsPath) {
         scannedFilesPath = scannedDocumentsPath;
+    }
+
+    public DocLockService getDocLockService() {
+        if (_docLockService == null) {
+            _docLockService = BeanHelper.getDocLockService();
+        }
+        return _docLockService;
     }
 
     public DocumentDynamicService getDocumentDynamicService() {

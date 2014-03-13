@@ -7,9 +7,6 @@ import java.util.Map;
 
 import ee.webmedia.alfresco.monitoring.model.ServiceStatus;
 
-/**
- * @author Keit Tehvan
- */
 public class MonitoringUtil {
 
     private static Map<MonitoredService, ServiceStatus> statusHolder;

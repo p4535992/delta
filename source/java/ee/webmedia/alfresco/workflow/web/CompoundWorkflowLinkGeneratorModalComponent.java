@@ -13,9 +13,6 @@ import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
 
-/**
- * @author Keit Tehvan
- */
 public class CompoundWorkflowLinkGeneratorModalComponent extends UICommand {
 
     public static final String COMPOUND_WORKFLOW_LINK_MODAL_ID = "generateCompoundWorkflowLinkModal";

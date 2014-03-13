@@ -20,8 +20,6 @@ import ee.webmedia.alfresco.utils.SearchUtil;
 /**
  * There were {@link FieldType}s {@link FieldType#HIERARCHICAL_KEYWORD_LEVEL1} and {@link FieldType#HIERARCHICAL_KEYWORD_LEVEL2} that were deleted.
  * This updater updates fieldTypes of {@link Field} and {@link FieldDefinition} objects
- * 
- * @author Ats Uiboupin
  */
 
 public class ThesauriFieldsUpdater extends AbstractNodeUpdater {

@@ -15,9 +15,6 @@ import org.apache.commons.lang.StringUtils;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
-/**
- * @author Kaarel Jõgeva
- */
 public class ChangeReasonModalComponent extends UICommand {
 
     public static final String ACCESS_RESTRICTION_CHANGE_REASON_MODAL_ID = "accessRestrictionChangeReason_popup";
@@ -136,9 +133,6 @@ public class ChangeReasonModalComponent extends UICommand {
 
     // END: getters/setters
 
-    /**
-     * @author Kaarel Jõgeva
-     */
     public static class ChangeReasonEvent extends ActionEvent {
 
         private static final long serialVersionUID = 1L;

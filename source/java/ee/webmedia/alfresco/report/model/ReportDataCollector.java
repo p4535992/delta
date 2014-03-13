@@ -9,8 +9,6 @@ import org.apache.poi.ss.usermodel.Workbook;
 
 /**
  * Helper class to pass data between report creation phases
- * 
- * @author Riina Tens
  */
 public class ReportDataCollector {
 
@@ -66,6 +64,14 @@ public class ReportDataCollector {
 
     public Map<QName, Serializable> getReportResultProps() {
         return reportResultProps;
+    }
+
+    public void addReportResultProps(Map<QName, Serializable> reportResultProps) {
+        if (this.reportResultProps != null && !this.reportResultProps.isEmpty()) {
+            this.reportResultProps.putAll(reportResultProps);
+        } else {
+            setReportResultProps(reportResultProps);
+        }
     }
 
 }

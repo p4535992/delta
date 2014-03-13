@@ -1,8 +1,6 @@
 #!/bin/sh
 set -eu
 
-# @author Alar Kvell
-
 cd "$(dirname $0)"
 fgrep '.html' ../../source/java/ee/webmedia/alfresco/notification/model/notification-messages_et_EE.properties|sed -e 's/.*=//' -e 's/\\u00F5/õ/g' -e 's/\\u00E4/ä/g' -e 's/\\u00F6/ö/g' -e 's/\\u00FC/ü/g' > system-templates.txt
 dos2unix -q system-templates.txt

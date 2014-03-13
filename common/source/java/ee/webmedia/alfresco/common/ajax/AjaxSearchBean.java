@@ -3,7 +3,6 @@ package ee.webmedia.alfresco.common.ajax;
 import static ee.webmedia.alfresco.common.propertysheet.dimensionselector.DimensionSelectorGenerator.predefinedFilters;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getParametersService;
 import static ee.webmedia.alfresco.common.web.UserContactGroupSearchBean.FILTER_INDEX_SEPARATOR;
-import static ee.webmedia.alfresco.common.web.UserContactGroupSearchBean.USERS_FILTER;
 import static ee.webmedia.alfresco.parameters.model.Parameters.MAX_MODAL_SEARCH_RESULT_ROWS;
 import static org.apache.commons.lang.StringUtils.substringBeforeLast;
 import static org.apache.commons.lang.StringUtils.substringBetween;
@@ -46,15 +45,13 @@ import ee.webmedia.alfresco.utils.ComponentUtil;
 
 /**
  * Class that various search implementations can use to fetch data using AJAX.
- * 
- * @author Kaarel Jõgeva
  */
 public class AjaxSearchBean extends AjaxBean {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(AjaxSearchBean.class);
     private static final long serialVersionUID = 1L;
 
     private static final String DATA = "data";
-    private static final String CONTAINER_CLIENT_ID = "containerClientId";
+    public static final String CONTAINER_CLIENT_ID = "containerClientId";
     private static final String CONTAINS = "contains";
     private static final String VALUE_MARKUP_START = "<span style=\"display: none;\">";
     private static final String VALUE_MARKUP_END = "</span>";
@@ -168,7 +165,7 @@ public class AjaxSearchBean extends AjaxBean {
     @Override
     protected void executeCallback(FacesContext context, String componentClientId, UIComponent component) {
         String value = StringUtils.substringBetween(getParam(context, DATA), VALUE_MARKUP_START, VALUE_MARKUP_END);
-        int filterIndex = USERS_FILTER;
+        int filterIndex = UserContactGroupSearchBean.USERS_FILTER; // Default;
         if (value.lastIndexOf(FILTER_INDEX_SEPARATOR) > -1) {
             filterIndex = Integer.parseInt(StringUtils.substringAfterLast(value, FILTER_INDEX_SEPARATOR));
             value = StringUtils.substringBeforeLast(value, FILTER_INDEX_SEPARATOR);
@@ -199,4 +196,10 @@ public class AjaxSearchBean extends AjaxBean {
         String containerClientId = getParam(context, CONTAINER_CLIENT_ID);
         return ComponentUtil.findChildComponentById(context, viewRoot, containerClientId);
     }
+
+    @Override
+    protected UIComponent getRenderedContainer(FacesContext context, UIViewRoot viewRoot, UIComponent dataContainer) {
+        return getRenderedContainer(context, viewRoot);
+    }
+
 }

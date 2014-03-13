@@ -27,7 +27,6 @@ package org.alfresco.model;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
 
-
 /**
  * Content Model Constants
  */
@@ -36,7 +35,7 @@ public interface ContentModel
     //
     // System Model Definitions
     //
-    
+
     // base type constants
     static final QName TYPE_BASE = QName.createQName(NamespaceService.SYSTEM_MODEL_1_0_URI, "base");
     static final QName ASPECT_REFERENCEABLE = QName.createQName(NamespaceService.SYSTEM_MODEL_1_0_URI, "referenceable");
@@ -44,20 +43,20 @@ public interface ContentModel
     static final QName PROP_STORE_IDENTIFIER = QName.createQName(NamespaceService.SYSTEM_MODEL_1_0_URI, "store-identifier");
     static final QName PROP_NODE_UUID = QName.createQName(NamespaceService.SYSTEM_MODEL_1_0_URI, "node-uuid");
     static final QName PROP_NODE_DBID = QName.createQName(NamespaceService.SYSTEM_MODEL_1_0_URI, "node-dbid");
-    
+
     // tag for incomplete nodes
     static final QName ASPECT_INCOMPLETE = QName.createQName(NamespaceService.SYSTEM_MODEL_1_0_URI, "incomplete");
-    
+
     // tag for temporary nodes
     static final QName ASPECT_TEMPORARY = QName.createQName(NamespaceService.SYSTEM_MODEL_1_0_URI, "temporary");
-    
+
     // tag for localized nodes
     static final QName ASPECT_LOCALIZED = QName.createQName(NamespaceService.SYSTEM_MODEL_1_0_URI, "localized");
     static final QName PROP_LOCALE = QName.createQName(NamespaceService.SYSTEM_MODEL_1_0_URI, "locale");
-    
+
     // cascade index
     static final QName ASPECT_INDEX_CHILDREN = QName.createQName(NamespaceService.SYSTEM_MODEL_1_0_URI, "indexChildren");
-    
+
     // archived nodes aspect constants
     static final QName ASPECT_ARCHIVED = QName.createQName(NamespaceService.SYSTEM_MODEL_1_0_URI, "archived");
     static final QName PROP_ARCHIVED_ORIGINAL_PARENT_ASSOC = QName.createQName(NamespaceService.SYSTEM_MODEL_1_0_URI, "archivedOriginalParentAssoc");
@@ -75,7 +74,7 @@ public interface ContentModel
     static final QName PROP_ARCHIVED_OBJECT_TYPE = QName.createQName(NamespaceService.SYSTEM_MODEL_1_0_URI, "archivedObjectType");
     static final QName PROP_ARCHIVED_OBJECT_NAME = QName.createQName(NamespaceService.SYSTEM_MODEL_1_0_URI, "archivedObjectName");
     static final QName PROP_ARCHIVED_BY_NAME = QName.createQName(NamespaceService.SYSTEM_MODEL_1_0_URI, "archivedByName");
-    
+
     // referenceable aspect constants
     static final QName TYPE_REFERENCE = QName.createQName(NamespaceService.SYSTEM_MODEL_1_0_URI, "reference");
     static final QName PROP_REFERENCE = QName.createQName(NamespaceService.SYSTEM_MODEL_1_0_URI, "reference");
@@ -83,7 +82,7 @@ public interface ContentModel
     // container type constants
     static final QName TYPE_CONTAINER = QName.createQName(NamespaceService.SYSTEM_MODEL_1_0_URI, "container");
     /** child association type supported by {@link #TYPE_CONTAINER} */
-    static final QName ASSOC_CHILDREN =QName.createQName(NamespaceService.SYSTEM_MODEL_1_0_URI, "children");
+    static final QName ASSOC_CHILDREN = QName.createQName(NamespaceService.SYSTEM_MODEL_1_0_URI, "children");
 
     // roots
     static final QName ASPECT_ROOT = QName.createQName(NamespaceService.SYSTEM_MODEL_1_0_URI, "aspect_root");
@@ -97,35 +96,35 @@ public interface ContentModel
     static final QName PROP_SYS_VERSION_LABEL = QName.createQName(NamespaceService.SYSTEM_MODEL_1_0_URI, "versionLabel");
     static final QName PROP_SYS_VERSION_BUILD = QName.createQName(NamespaceService.SYSTEM_MODEL_1_0_URI, "versionBuild");
     static final QName PROP_SYS_VERSION_SCHEMA = QName.createQName(NamespaceService.SYSTEM_MODEL_1_0_URI, "versionSchema");
-    static final QName PROP_SYS_VERSION_EDITION = QName.createQName(NamespaceService.SYSTEM_MODEL_1_0_URI, "versionEdition"); 
-    static final QName PROP_SYS_VERSION_PROPERTIES = QName.createQName(NamespaceService.SYSTEM_MODEL_1_0_URI, "versionProperties"); 
-    
+    static final QName PROP_SYS_VERSION_EDITION = QName.createQName(NamespaceService.SYSTEM_MODEL_1_0_URI, "versionEdition");
+    static final QName PROP_SYS_VERSION_PROPERTIES = QName.createQName(NamespaceService.SYSTEM_MODEL_1_0_URI, "versionProperties");
+
     //
     // Content Model Definitions
     //
-    
+
     // content management type constants
     static final QName TYPE_CMOBJECT = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "cmobject");
     static final QName PROP_NAME = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "name");
-    
+
     // copy aspect constants
     static final QName ASPECT_COPIEDFROM = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "copiedfrom");
     static final QName PROP_COPY_REFERENCE = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "source");
-    
+
     // working copy aspect contants
     static final QName ASPECT_WORKING_COPY = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "workingcopy");
     static final QName PROP_WORKING_COPY_OWNER = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "workingCopyOwner");
     static final QName PROP_WORKING_COPY_MODE = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "workingCopyMode");
-    
+
     // content type and aspect constants
     static final QName TYPE_CONTENT = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "content");
     static final QName PROP_CONTENT = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "content");
-    
+
     // title aspect
     static final QName ASPECT_TITLED = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "titled");
     static final QName PROP_TITLE = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "title");
     static final QName PROP_DESCRIPTION = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "description");
-    
+
     // auditable aspect
     static final QName ASPECT_AUDITABLE = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "auditable");
     static final QName PROP_CREATED = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "created");
@@ -133,15 +132,15 @@ public interface ContentModel
     static final QName PROP_MODIFIED = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "modified");
     static final QName PROP_MODIFIER = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "modifier");
     static final QName PROP_ACCESSED = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "accessed");
-    
+
     // author aspect
     static final QName ASPECT_AUTHOR = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "author");
     static final QName PROP_AUTHOR = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "author");
-    
+
     // categories
-    static final QName TYPE_CATEGORYROOT = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "category_root");  
+    static final QName TYPE_CATEGORYROOT = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "category_root");
     static final QName ASPECT_CLASSIFIABLE = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "classifiable");
-    //static final QName ASPECT_CATEGORISATION = QName.createQName(NamespaceService.ALFRESCO_URI, "aspect_categorisation");
+    // static final QName ASPECT_CATEGORISATION = QName.createQName(NamespaceService.ALFRESCO_URI, "aspect_categorisation");
     static final QName ASPECT_GEN_CLASSIFIABLE = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "generalclassifiable");
     static final QName TYPE_CATEGORY = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "category");
     static final QName PROP_CATEGORIES = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "categories");
@@ -151,30 +150,30 @@ public interface ContentModel
     // tags - a subsection of categories
     static final QName ASPECT_TAGGABLE = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "taggable");
     static final QName PROP_TAGS = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "taggable");
-    
+
     // tagscope aspect
     static final QName ASPECT_TAGSCOPE = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "tagscope");
     static final QName PROP_TAGSCOPE_CACHE = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "tagScopeCache");
-    
+
     // lock aspect
     public final static QName ASPECT_LOCKABLE = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "lockable");
     public final static QName PROP_LOCK_OWNER = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "lockOwner");
     public final static QName PROP_LOCK_TYPE = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "lockType");
     public final static QName PROP_EXPIRY_DATE = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "expiryDate");
-    
+
     // version aspect
     static final QName ASPECT_VERSIONABLE = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "versionable");
     static final QName PROP_VERSION_LABEL = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "versionLabel");
     static final QName PROP_INITIAL_VERSION = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "initialVersion");
     static final QName PROP_AUTO_VERSION = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "autoVersion");
     static final QName PROP_AUTO_VERSION_PROPS = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "autoVersionOnUpdateProps");
-    
+
     // folders
     static final QName TYPE_SYSTEM_FOLDER = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "systemfolder");
     static final QName TYPE_FOLDER = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "folder");
     /** child association type supported by {@link #TYPE_FOLDER} */
     static final QName ASSOC_CONTAINS = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "contains");
-    
+
     // person
     static final QName TYPE_PERSON = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "person");
     static final QName PROP_USERNAME = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "userName");
@@ -195,7 +194,7 @@ public interface ContentModel
     static final QName PROP_VILLAGE = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "village");
     static final QName PROP_STREET_HOUSE = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "streetHouse");
     static final QName PROP_POSTAL_CODE = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "postalCode");
-    static final QName PROP_SERVICE_RANK = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "serviceRank");    
+    static final QName PROP_SERVICE_RANK = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "serviceRank");
     static final QName PROP_LOCATION = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "location");
     static final QName PROP_PERSONDESC = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "persondescription");
     static final QName PROP_TELEPHONE = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "telephone");
@@ -211,37 +210,38 @@ public interface ContentModel
     static final QName PROP_INSTANTMSG = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "instantmsg");
     static final QName PROP_RELATED_FUNDS_CENTER = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "relatedFundsCenter");
     static final QName SHOW_EMPTY_TASK_MENU = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "showEmptyTaskMenu");
-    
+    static final QName MOBILE_PHONE = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "mobilePhone");
+
     static final QName PROP_SIZE_CURRENT = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "sizeCurrent");
     static final QName PROP_SIZE_QUOTA = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "sizeQuota");
-    
+
     static final QName ASSOC_AVATAR = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "avatar");
-    
+
     // Authority
     static final QName TYPE_AUTHORITY = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "authority");
-    
+
     static final QName TYPE_AUTHORITY_CONTAINER = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "authorityContainer");
     static final QName PROP_AUTHORITY_NAME = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "authorityName");
     static final QName PROP_AUTHORITY_DISPLAY_NAME = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "authorityDisplayName");
-    
+
     static final QName ASSOC_MEMBER = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "member");
 
     // Zone
     static final QName TYPE_ZONE = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "zone");
     static final QName ASSOC_IN_ZONE = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "inZone");
 
-    // Ownable aspect  
+    // Ownable aspect
     static final QName ASPECT_OWNABLE = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "ownable");
     static final QName PROP_OWNER = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "owner");
-    
+
     // Templatable aspect
     static final QName ASPECT_TEMPLATABLE = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "templatable");
     static final QName PROP_TEMPLATE = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "template");
-    
+
     // Webscriptable aspect
     static final QName ASPECT_WEBSCRIPTABLE = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "webscriptable");
     static final QName PROP_WEBSCRIPT = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "webscript");
-    
+
     // Dictionary model
     static final QName TYPE_DICTIONARY_MODEL = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "dictionaryModel");
     static final QName PROP_MODEL_NAME = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "modelName");
@@ -250,15 +250,15 @@ public interface ContentModel
     static final QName PROP_MODEL_PUBLISHED_DATE = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "modelPublishedDate");
     static final QName PROP_MODEL_VERSION = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "modelVersion");
     static final QName PROP_MODEL_ACTIVE = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "modelActive");
-    
+
     // referencing aspect
     static final QName ASPECT_REFERENCING = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "referencing");
     static final QName ASSOC_REFERENCES = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "references");
-    
+
     // link object
     static final QName TYPE_LINK = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "link");
     static final QName PROP_LINK_DESTINATION = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "destination");
-    
+
     // attachable aspect
     static final QName ASPECT_ATTACHABLE = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "attachable");
     static final QName ASSOC_ATTACHMENTS = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "attachments");
@@ -270,48 +270,48 @@ public interface ContentModel
     static final QName PROP_ADDRESSEE = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "addressee");
     static final QName PROP_ADDRESSEES = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "addressees");
     static final QName PROP_SUBJECT = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "subjectline");
-    
+
     // countable aspect
     static final QName ASPECT_COUNTABLE = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "countable");
     static final QName PROP_HITS = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "hits");
     static final QName PROP_COUNTER = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "counter");
-    
+
     // References Node Aspect.
     static final QName ASPECT_REFERENCES_NODE = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "referencesnode");
     static final QName PROP_NODE_REF = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "noderef");
-    
+
     // Multilingual Type
     static final QName TYPE_MULTILINGUAL_CONTAINER = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "mlContainer");
     static final QName ASSOC_MULTILINGUAL_CHILD = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "mlChild");
     static final QName ASPECT_MULTILINGUAL_DOCUMENT = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "mlDocument");
     static final QName ASPECT_MULTILINGUAL_EMPTY_TRANSLATION = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "mlEmptyTranslation");
-    
+
     // Thumbnail Type
     static final QName TYPE_THUMBNAIL = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "thumbnail");
     static final QName PROP_THUMBNAIL_NAME = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "thumbnailName");
     static final QName PROP_CONTENT_PROPERTY_NAME = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "contentPropertyName");
     static final QName PROP_AUTOMATIC_UPDATE = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "automaticUpdate");
-    
+
     // Thumbnailed Aspect
     static final QName ASPECT_THUMBNAILED = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "thumbnailed");
     static final QName ASSOC_THUMBNAILS = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "thumbnails");
-    
+
     // StoreSelector Aspect
     static final QName ASPECT_STORE_SELECTOR = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "storeSelector");
     static final QName PROP_STORE_NAME = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "storeName");
-    
+
     // Preference Aspect
     static final QName ASPECT_PREFERENCES = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "preferences");
     static final QName PROP_PREFERENCE_VALUES = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "preferenceValues");
     static final QName ASSOC_PREFERENCE_IMAGE = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "preferenceImage");
-    
+
     //
     // User Model Definitions
     //
-    
+
     static final String USER_MODEL_URI = "http://www.alfresco.org/model/user/1.0";
     static final String USER_MODEL_PREFIX = "usr";
-    
+
     static final QName TYPE_USER = QName.createQName(USER_MODEL_URI, "user");
     static final QName PROP_USER_USERNAME = QName.createQName(USER_MODEL_URI, "username");
     static final QName PROP_PASSWORD = QName.createQName(USER_MODEL_URI, "password");
@@ -321,5 +321,5 @@ public interface ContentModel
     static final QName PROP_CREDENTIALS_EXPIRE = QName.createQName(USER_MODEL_URI, "credentialsExpire");
     static final QName PROP_CREDENTIALS_EXPIRY_DATE = QName.createQName(USER_MODEL_URI, "credentialsExpiryDate");
     static final QName PROP_ACCOUNT_LOCKED = QName.createQName(USER_MODEL_URI, "accountLocked");
-    static final QName PROP_SALT = QName.createQName(USER_MODEL_URI, "salt");    
+    static final QName PROP_SALT = QName.createQName(USER_MODEL_URI, "salt");
 }

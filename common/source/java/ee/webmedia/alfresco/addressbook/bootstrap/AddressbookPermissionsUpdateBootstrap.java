@@ -9,8 +9,6 @@ import ee.webmedia.alfresco.user.service.UserService;
 
 /**
  * Adds AddressbookManage permission to GROUP_DOCUMENT_MANAGERS if it is missing
- * 
- * @author Ats Uiboupin
  */
 public class AddressbookPermissionsUpdateBootstrap extends AbstractModuleComponent {
 

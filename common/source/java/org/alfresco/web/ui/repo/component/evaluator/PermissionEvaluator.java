@@ -33,13 +33,12 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.security.AccessStatus;
 import org.alfresco.service.cmr.security.PermissionService;
 import org.alfresco.web.bean.repository.Node;
-import org.alfresco.web.bean.repository.Repository;
 import org.alfresco.web.ui.common.component.evaluator.BaseEvaluator;
+import org.apache.commons.lang.ArrayUtils;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.series.model.SeriesModel;
-import ee.webmedia.alfresco.user.service.UserService;
 
 /**
  * Evaulator for returning whether a Node is Allowed/Denied a list of permissions
@@ -117,32 +116,39 @@ public class PermissionEvaluator extends BaseEvaluator
          }
          else if (obj instanceof NodeRef)
          {
-            // perform the check for permissions here against NodeRef using service
-            PermissionService service = Repository.getServiceRegistry(getFacesContext()).getPermissionService();
-            String[] allow = getAllowPermissions();
-            if (allow.length != 0)
-            {
-               for (int i=0; i<allow.length; i++)
-               {
-                  result = result & (AccessStatus.ALLOWED == service.hasPermission(((NodeRef)obj), allow[i]));
-               }
-            }
-            String[] deny = getDenyPermissions();
-            if (deny.length != 0)
-            {
-               for (int i=0; i<deny.length; i++)
-               {
-                  result = result & (AccessStatus.DENIED == service.hasPermission(((NodeRef)obj), deny[i]));
-               }
-            }
-
-            if (!result && allow.length > 0 && DocumentCommonModel.Privileges.VIEW_DOCUMENT_META_DATA.equals(allow[0])) {
-                NodeRef seriesRef = BeanHelper.getGeneralService().getAncestorNodeRefWithType((NodeRef) obj, SeriesModel.Types.SERIES);
-                result = seriesRef != null && !Boolean.FALSE.equals(BeanHelper.getNodeService().getProperty(seriesRef, SeriesModel.Props.DOCUMENTS_VISIBLE_FOR_USERS_WITHOUT_ACCESS));
-            }
+            result = evaluatePermissions(result, (NodeRef) obj, getAllowPermissions(), getDenyPermissions());
          }
         return result;
     }
+
+	public static boolean evaluatePermissions(boolean result, NodeRef nodeRef, String[] allowPermissions, String[] denyPermissions) {
+	    if (nodeRef == null || ArrayUtils.isEmpty(allowPermissions) && ArrayUtils.isEmpty(denyPermissions)) {
+	        return result;
+	    }
+
+		// perform the check for permissions here against NodeRef using service
+		PermissionService service = BeanHelper.getPermissionService();
+		if (allowPermissions.length != 0)
+		{
+		   for (int i=0; i<allowPermissions.length; i++)
+		   {
+		      result = result & (AccessStatus.ALLOWED == service.hasPermission(nodeRef, allowPermissions[i]));
+		   }
+		}
+		if (denyPermissions.length != 0)
+		{
+		   for (int i=0; i<denyPermissions.length; i++)
+		   {
+		      result = result & (AccessStatus.DENIED == service.hasPermission(nodeRef, denyPermissions[i]));
+		   }
+		}
+
+		if (!result && allowPermissions.length > 0 && DocumentCommonModel.Privileges.VIEW_DOCUMENT_META_DATA.equals(allowPermissions[0])) {
+		    NodeRef seriesRef = BeanHelper.getGeneralService().getAncestorNodeRefWithType(nodeRef, SeriesModel.Types.SERIES);
+		    result = seriesRef != null && !Boolean.FALSE.equals(BeanHelper.getNodeService().getProperty(seriesRef, SeriesModel.Props.DOCUMENTS_VISIBLE_FOR_USERS_WITHOUT_ACCESS));
+		}
+		return result;
+	}
    
    /**
     * @see javax.faces.component.StateHolder#restoreState(javax.faces.context.FacesContext, java.lang.Object)

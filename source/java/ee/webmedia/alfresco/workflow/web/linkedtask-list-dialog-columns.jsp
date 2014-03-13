@@ -6,6 +6,8 @@
 <%@ page buffer="32kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
 
+<jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/workflow/web/linked-review-task-redirect-js.jsp" />
+
       <%-- dueDate --%>
       <a:column id="dueDate" primary="true" styleClass="#{r.cssStyleClass}" style="width: 10%;" >
          <f:facet name="header">
@@ -35,12 +37,5 @@
          <f:facet name="header">
             <a:sortLink id="title-sort" label="#{msg.document_docName}" value="compoundWorkflowTitle" styleClass="header" />
          </f:facet>
-         <a:actionLink id="title-text2" value="#{r.compoundWorkflowTitle}" tooltip="#{r.compoundWorkflowTitle}" href="#{r.originalTaskObjectUrl}" target="_blank" styleClass="tooltip condence50- no-underline originalTaskObjectUrl" />
+         <a:actionLink id="title-text2" value="#{r.compoundWorkflowTitle}" tooltip="#{r.compoundWorkflowTitle}" onclick="return redirectLinkedReviewTask('#{r.originalTaskObjectUrl}')" target="_blank" styleClass="tooltip condence50- no-underline originalTaskObjectUrl" />
       </a:column>
-      
-      <a:column id="colx" primary="true" styleClass="#{r.cssStyleClass}" >
-         <f:facet name="header">
-            <a:sortLink id="colx-sort" label="#{msg.task_property_comment}" value="compoundWorkflowComment" styleClass="header" />
-         </f:facet>
-         <h:outputText id="creatorName-text" value="#{r.compoundWorkflowComment}" title="#{r.compoundWorkflowComment}" styleClass="tooltip condence50-" />         
-      </a:column>      

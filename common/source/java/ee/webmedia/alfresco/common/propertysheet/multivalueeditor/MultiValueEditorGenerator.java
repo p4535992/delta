@@ -47,8 +47,6 @@ import ee.webmedia.alfresco.utils.ComponentUtil;
  * </ul>
  * </li>
  * </ul>
- * 
- * @author Alar Kvell
  */
 public class MultiValueEditorGenerator extends BaseComponentGenerator implements HandlesViewMode {
 
@@ -86,7 +84,7 @@ public class MultiValueEditorGenerator extends BaseComponentGenerator implements
         addValueFromCustomAttributes(Search.AJAX_PARENT_LEVEL_KEY, attributes, Integer.class);
         addValueFromCustomAttributes(MultiValueEditor.INITIAL_ROWS, attributes, Integer.class);
         addValueFromCustomAttributes(MultiValueEditor.FILTERS, attributes);
-        addValueFromCustomAttributes(MultiValueEditor.FILTER_INDEX, attributes, Integer.class);
+        addValueFromCustomAttributes(Search.FILTER_INDEX, attributes, Integer.class);
         addValueFromCustomAttributes(MultiValueEditor.PREPROCESS_CALLBACK, attributes);
         addValueFromCustomAttributes(MultiValueEditor.NO_ADD_LINK_LABEL, attributes);
         addValueFromCustomAttributes(MultiValueEditor.IS_AUTOMATICALLY_ADD_ROWS, attributes, Boolean.class);

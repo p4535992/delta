@@ -8,10 +8,6 @@ import ee.webmedia.alfresco.common.model.NodeBaseVO;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.utils.RepoUtil;
 
-/**
- * @author Alar Kvell
- * @author Ats Uiboupin
- */
 public class DocumentType extends NodeBaseVO implements Comparable<DocumentType> {
     private static final long serialVersionUID = 1L;
     private static final QName TMP_ID = RepoUtil.createTransientProp("id");

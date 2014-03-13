@@ -11,8 +11,6 @@ import ee.webmedia.alfresco.user.service.UserService;
 
 /**
  * Add permissions to web service documents' folder
- * 
- * @author Riina Tens
  */
 public class WebServiceDocumentsPermissionsUpdateBootstrap extends AbstractModuleComponent {
     protected final Log LOG = LogFactory.getLog(getClass());

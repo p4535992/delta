@@ -8,8 +8,6 @@ import ee.webmedia.alfresco.parameters.model.ParametersModel;
 
 /**
  * Update taskOwnerStructUnit parameter description.
- * 
- * @author Riina Tens
  */
 public class TaskOwnerStructUnitParameterUpdater extends AbstractModuleComponent {
 

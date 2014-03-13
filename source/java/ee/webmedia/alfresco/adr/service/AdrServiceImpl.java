@@ -87,10 +87,6 @@ import ee.webmedia.alfresco.utils.TextUtil;
 import ee.webmedia.alfresco.utils.UserUtil;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
 
-/**
- * @author Dmitri Melnikov
- * @author Alar Kvell
- */
 public class AdrServiceImpl extends BaseAdrServiceImpl {
 
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(AdrServiceImpl.class);
@@ -840,7 +836,7 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
         chain.addComparator(new TransformingComparator(new Transformer() {
             @Override
             public Object transform(Object input) {
-                return ((AdrDocument) input).nodeRef;
+                return ((AdrDocument) input).nodeRef.toString();
             }
         }, new NullComparator()));
         @SuppressWarnings("unchecked")
@@ -856,6 +852,11 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
     public NodeRef addDeletedDocument(NodeRef document) {
         String regNumber = (String) nodeService.getProperty(document, DocumentCommonModel.Props.REG_NUMBER);
         Date regDateTime = (Date) nodeService.getProperty(document, DocumentCommonModel.Props.REG_DATE_TIME);
+        return addDeletedDocument(document, regNumber, regDateTime);
+    }
+
+    @Override
+    public NodeRef addDeletedDocumentFromArchive(NodeRef document, String regNumber, Date regDateTime) {
         return addDeletedDocument(document, regNumber, regDateTime);
     }
 

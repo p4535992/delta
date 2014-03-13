@@ -427,6 +427,29 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public String getUserMobilePhone(String userName) {
+        Map<QName, Serializable> personProps = getPersonProperties(userName);
+        if (personProps == null) {
+            return null;
+        }
+        return (String) personProps.get(ContentModel.MOBILE_PHONE);
+    }
+
+    public Map<QName, Serializable> getPersonProperties(String userName) {
+        if (StringUtils.isBlank(userName)) {
+            return null;
+        }
+        try {
+            if (personService.personExists(userName)) {
+                return personService.getPersonProperties(userName);
+            }
+            return null;
+        } catch (NoSuchPersonException e) {
+            return null;
+        }
+    }
+
+    @Override
     public String getCurrentUsersStructUnitId() {
         Map<QName, Serializable> userProperties = getUserProperties(AuthenticationUtil.getRunAsUser());
         String orgId = (String) userProperties.get(ContentModel.PROP_ORGID);
@@ -467,6 +490,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public String getUserFullName(String userName) {
+        userName = StringUtils.substringBefore(userName, "_");
         Map<QName, Serializable> props = getUserProperties(userName);
         if (props == null) {
             return userName;

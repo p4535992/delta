@@ -23,8 +23,6 @@ import ee.webmedia.alfresco.series.model.SeriesModel;
 
 /**
  * Populates docNumberPattern field for existing series.
- * 
- * @author Vladimir Drozdik
  */
 public class SeriesDocNumberPatternUpdater extends AbstractNodeUpdater {
 

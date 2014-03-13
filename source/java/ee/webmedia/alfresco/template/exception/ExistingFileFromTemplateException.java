@@ -1,8 +1,5 @@
 package ee.webmedia.alfresco.template.exception;
 
-/**
- * @author Kaarel Jõgeva
- */
 public class ExistingFileFromTemplateException extends RuntimeException {
     private static final long serialVersionUID = 1L;
 

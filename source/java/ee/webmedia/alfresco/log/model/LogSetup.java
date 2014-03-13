@@ -8,8 +8,6 @@ import java.util.Set;
 
 /**
  * Wrapper object for maintaining logging setup.
- * 
- * @author Martti Tamm
  */
 public class LogSetup implements Serializable {
 

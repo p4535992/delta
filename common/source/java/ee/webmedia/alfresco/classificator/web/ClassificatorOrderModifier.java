@@ -7,9 +7,6 @@ import ee.webmedia.alfresco.docadmin.web.ListReorderHelper;
 import ee.webmedia.alfresco.docadmin.web.ListReorderHelper.OrderModifier;
 import ee.webmedia.alfresco.utils.Transformer;
 
-/**
- * @author Priit Pikk
- */
 public class ClassificatorOrderModifier<B extends ClassificatorValue> implements OrderModifier<B, Integer> {
 
     @Override

@@ -9,9 +9,6 @@ import ee.webmedia.alfresco.cases.model.CaseModel;
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 
-/**
- * @author Keit Tehvan
- */
 public class CaseIsClosedEvaluator extends BaseActionEvaluator {
     private static final long serialVersionUID = 1L;
 

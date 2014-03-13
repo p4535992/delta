@@ -22,8 +22,6 @@ import ee.webmedia.alfresco.utils.SearchUtil;
 
 /**
  * Updates document templates mimetypes.
- * 
- * @author Kaarel Jõgeva
  */
 public class DocumentTemplateMimetypeUpdater extends AbstractNodeUpdater {
 

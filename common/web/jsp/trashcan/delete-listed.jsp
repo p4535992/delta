@@ -37,6 +37,9 @@
 </td>
 </tr>
 <tr>
+<td colspan="2" class="mainSubTitle">&nbsp;</td>
+</tr>
+<tr>
 <td>
 </f:verbatim><h:outputText value="#{TrashcanDeleteListedItemsDialog.listedItemsTable}" escape="false" />
 <f:verbatim>

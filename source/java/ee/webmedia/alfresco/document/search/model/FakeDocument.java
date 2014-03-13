@@ -8,8 +8,6 @@ import ee.webmedia.alfresco.document.model.Document;
 
 /**
  * Used to show case title in documents list
- * 
- * @author Ats Uiboupin
  */
 public class FakeDocument extends Document {
     private static final String CASE = "case";

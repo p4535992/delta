@@ -152,7 +152,7 @@
         <!--     ${server.transaction.allow-writes}                   -->
         <!--     false                                                -->
         <property name="createMissingPeople">
-           <value>${server.transaction.allow-writes}</value>
+           <value>false</value>
         </property>
         <property name="userNameMatcher">
            <ref bean="userNameMatcher" />

@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import org.alfresco.service.cmr.repository.InvalidNodeRefException;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.config.ActionsConfigElement.ActionDefinition;
 import org.apache.commons.lang.StringUtils;
@@ -29,8 +30,6 @@ import ee.webmedia.alfresco.workflow.web.WorkflowBlockBean;
 
 /**
  * Block that shows associations of given document/volume/caseFile/case with other documents/volumes/caseFiles/cases
- * 
- * @author Ats Uiboupin
  */
 public class AssocsBlockBean implements DocumentDynamicBlock {
     private static final long serialVersionUID = 1L;
@@ -82,12 +81,20 @@ public class AssocsBlockBean implements DocumentDynamicBlock {
         }
     }
 
+    public int getAssocsCount() {
+        return docAssocInfos.size();
+    }
+
     public String getFollowupAssocsBindingName() {
+        WmNode document = null;
         try {
-            WmNode document = getDocumentFromDialog();// FIXME document should be provided by bean
+            document = getDocumentFromDialog();// FIXME document should be provided by bean
             if (new AddFollowUpAssocEvaluator().evaluate(document)) {
                 return FOLLOWUPS_METHOD_BINDING_NAME;
             }
+            return null;
+        } catch (InvalidNodeRefException ne) {
+            LOG.warn("Node " + document + " in invalid!");
             return null;
         } catch (RuntimeException e) {
             // Log error here, because JSF EL evaluator does not log detailed error cause
@@ -111,11 +118,15 @@ public class AssocsBlockBean implements DocumentDynamicBlock {
     }
 
     public String getRepliesAssocsBindingName() {
+        WmNode document = null;
         try {
-            WmNode document = getDocumentFromDialog();
+            document = getDocumentFromDialog();
             if (new AddReplyAssocEvaluator().evaluate(document)) {
                 return REPLIES_METHOD_BINDING_NAME;
             }
+            return null;
+        } catch (InvalidNodeRefException ne) {
+            LOG.warn("Node " + document + " in invalid!");
             return null;
         } catch (RuntimeException e) {
             // Log error here, because JSF EL evaluator does not log detailed error cause

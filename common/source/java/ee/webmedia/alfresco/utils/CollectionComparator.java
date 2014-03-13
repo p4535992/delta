@@ -10,8 +10,6 @@ import java.util.Iterator;
  * Comparator that compares two collections based on comparing elements at the same index. <br>
  * If <code>elementComparator</code> is given at construction time, then elementComparator is used, otherwise when element implements {@link Comparable}, then it will be used. <br>
  * Note - it is not jet thoroughly tested (at first created to double validate equality)
- * 
- * @author Ats Uiboupin
  */
 public class CollectionComparator<E> extends AbstractCollection<E> implements Comparator<Collection<E>>, Comparable<Collection<E>> {
     private Collection<E> wrappedCollection;

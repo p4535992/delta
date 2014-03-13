@@ -53,9 +53,6 @@ import ee.webmedia.alfresco.workflow.service.Workflow;
 import ee.webmedia.xtee.client.dhl.DhlXTeeService.ContentToSend;
 import ee.webmedia.xtee.client.dhl.DhlXTeeService.SendStatus;
 
-/**
- * @author Erko Hansar
- */
 public class SendOutServiceImpl implements SendOutService {
 
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(SendOutServiceImpl.class);
@@ -66,9 +63,9 @@ public class SendOutServiceImpl implements SendOutService {
     private GeneralService generalService;
     private EmailService emailService;
     private AddressbookService addressbookService;
-    private DvkService dvkService;
+    private DvkService _dvkService;
     private ParametersService parametersService;
-    private SignatureService signatureService;
+    private SignatureService _signatureService;
     private SkLdapService skLdapService;
 
     @Override
@@ -117,7 +114,7 @@ public class SendOutServiceImpl implements SendOutService {
                     continue;
                 }
                 List<SkLdapCertificate> skLdapCertificates = skLdapService.getCertificates(encryptionIdCode);
-                List<X509Certificate> certificates = signatureService.getCertificatesForEncryption(skLdapCertificates);
+                List<X509Certificate> certificates = getSignatureService().getCertificatesForEncryption(skLdapCertificates);
                 if (certificates.isEmpty()) {
                     throw new UnableToPerformException("document_send_out_encryptionRecipient_notFound", names.get(i), encryptionIdCode);
                 }
@@ -243,7 +240,7 @@ public class SendOutServiceImpl implements SendOutService {
             List<ContentToSend> contentsToSend = prepareContents(attachments);
 
             // Send it out
-            dvkId = dvkService.sendLetterDocuments(document, contentsToSend, sd);
+            dvkId = getDvkService().sendLetterDocuments(document, contentsToSend, sd);
         }
 
         // Send through email
@@ -288,7 +285,7 @@ public class SendOutServiceImpl implements SendOutService {
     }
 
     @Override
-    public void sendDocumentForInformation(List<String> authorityIds, Node docNode, String emailTemplate) {
+    public void sendForInformation(List<String> authorityIds, Node docNode, String emailTemplate, String subject, String content) {
         List<Authority> authorities = new ArrayList<Authority>();
         PrivilegeService privilegeService = BeanHelper.getPrivilegeService();
         UserService userService = BeanHelper.getUserService();
@@ -307,7 +304,7 @@ public class SendOutServiceImpl implements SendOutService {
                 privilegeService.setPermissions(docRef, authorityStr, privilegesToAdd);
             }
         }
-        BeanHelper.getNotificationService().sendDocumentForInformationNotification(authorities, docNode, emailTemplate);
+        BeanHelper.getNotificationService().sendForInformationNotification(authorities, docNode, emailTemplate, subject, content);
     }
 
     @Override
@@ -315,24 +312,37 @@ public class SendOutServiceImpl implements SendOutService {
         final NodeRef sendInfoRef = nodeService.createNode(document, //
                 DocumentCommonModel.Assocs.SEND_INFO, DocumentCommonModel.Assocs.SEND_INFO, DocumentCommonModel.Types.SEND_INFO, props).getChildRef();
         log.debug("created new sendInfo '" + sendInfoRef + "' for sent document '" + document + "'");
-        updateSearchableSendMode(document);
+        updateSearchableSendInfo(document);
         return sendInfoRef;
     }
 
     @Override
-    public void updateSearchableSendMode(NodeRef document) {
-        ArrayList<String> sendModes = buildSearchableSendMode(document);
-        nodeService.setProperty(document, DocumentCommonModel.Props.SEARCHABLE_SEND_MODE, sendModes);
+    public void updateSearchableSendInfo(NodeRef document) {
+        nodeService.addProperties(document, buildSearchableSendInfo(document));
     }
 
     @Override
-    public ArrayList<String> buildSearchableSendMode(NodeRef document) {
+    public Map<QName, Serializable> buildSearchableSendInfo(NodeRef document) {
         List<SendInfo> sendInfos = getDocumentSendInfos(document);
-        ArrayList<String> sendModes = new ArrayList<String>(sendInfos.size());
+        int size = sendInfos.size();
+        ArrayList<String> sendModes = new ArrayList<String>(size);
+        ArrayList<String> sendRecipients = new ArrayList<String>(size);
+        ArrayList<Date> sendTimes = new ArrayList<Date>(size);
+        ArrayList<String> sendResolutions = new ArrayList<String>(size);
         for (SendInfo sendInfo : sendInfos) {
             sendModes.add(sendInfo.getSendMode());
+            sendRecipients.add(sendInfo.getRecipient());
+            sendTimes.add(sendInfo.getSendDateTime());
+            sendResolutions.add(sendInfo.getResolution());
         }
-        return sendModes;
+
+        Map<QName, Serializable> props = new HashMap<QName, Serializable>();
+        props.put(DocumentCommonModel.Props.SEARCHABLE_SEND_MODE, sendModes);
+        props.put(DocumentCommonModel.Props.SEARCHABLE_SEND_INFO_RECIPIENT, sendRecipients);
+        props.put(DocumentCommonModel.Props.SEARCHABLE_SEND_INFO_SEND_DATE_TIME, sendTimes);
+        props.put(DocumentCommonModel.Props.SEARCHABLE_SEND_INFO_RESOLUTION, sendResolutions);
+
+        return props;
     }
 
     @Override
@@ -379,10 +389,6 @@ public class SendOutServiceImpl implements SendOutService {
         this.addressbookService = addressbookService;
     }
 
-    public void setDvkService(DvkService dvkService) {
-        this.dvkService = dvkService;
-    }
-
     public void setParametersService(ParametersService parametersService) {
         this.parametersService = parametersService;
     }
@@ -392,10 +398,6 @@ public class SendOutServiceImpl implements SendOutService {
      */
     public DocumentDynamicService getDocumentDynamicService() {
         return BeanHelper.getDocumentDynamicService();
-    }
-
-    public void setSignatureService(SignatureService signatureService) {
-        this.signatureService = signatureService;
     }
 
     public void setSkLdapService(SkLdapService skLdapService) {
@@ -412,6 +414,20 @@ public class SendOutServiceImpl implements SendOutService {
         props.put(DocumentCommonModel.Props.SEND_INFO_SEND_STATUS, SendStatus.SENT.toString());
         props.put(DocumentCommonModel.Props.SEND_INFO_DVK_ID, dvkId);
         addSendinfo(document.getNodeRef(), props);
+    }
+
+    private DvkService getDvkService() {
+        if (_dvkService == null) {
+            _dvkService = BeanHelper.getDvkService();
+        }
+        return _dvkService;
+    }
+
+    private SignatureService getSignatureService() {
+        if (_signatureService == null) {
+            _signatureService = BeanHelper.getSignatureService();
+        }
+        return _signatureService;
     }
 
     // END: getters / setters

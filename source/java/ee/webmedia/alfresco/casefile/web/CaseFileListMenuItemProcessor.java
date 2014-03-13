@@ -8,9 +8,6 @@ import ee.webmedia.alfresco.menu.service.CountAddingMenuItemProcessor;
 import ee.webmedia.alfresco.menu.service.MenuItemCountHandler;
 import ee.webmedia.alfresco.menu.service.MenuService;
 
-/**
- * @author Priit Pikk
- */
 public class CaseFileListMenuItemProcessor extends CountAddingMenuItemProcessor implements MenuItemCountHandler, InitializingBean {
 
     private MenuService menuService;

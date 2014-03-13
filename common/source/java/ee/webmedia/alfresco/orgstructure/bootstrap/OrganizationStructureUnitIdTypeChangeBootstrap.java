@@ -10,8 +10,6 @@ import ee.webmedia.alfresco.orgstructure.service.OrganizationStructureService;
 
 /**
  * Set superUnitId from "0" to null on organization structures.
- * 
- * @author Alar Kvell
  */
 public class OrganizationStructureUnitIdTypeChangeBootstrap extends AbstractModuleComponent {
 

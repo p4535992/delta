@@ -59,7 +59,9 @@ import ee.webmedia.alfresco.common.propertysheet.component.WMUIProperty;
 import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement;
 import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement.ItemConfigVO;
 import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement.ItemConfigVO.ConfigItemType;
+import ee.webmedia.alfresco.common.propertysheet.modalLayer.ValidatingModalLayerComponent;
 import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.common.web.UserContactGroupSearchBean;
 import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
 import ee.webmedia.alfresco.docadmin.service.DocumentType;
 import ee.webmedia.alfresco.docadmin.service.DocumentTypeVersion;
@@ -79,9 +81,9 @@ import ee.webmedia.alfresco.docconfig.generator.GeneratorResults;
 import ee.webmedia.alfresco.docconfig.generator.PropertySheetStateHolder;
 import ee.webmedia.alfresco.docconfig.generator.SaveListener;
 import ee.webmedia.alfresco.docconfig.generator.fieldtype.DateGenerator;
+import ee.webmedia.alfresco.docconfig.generator.fieldtype.UserContactGenerator;
 import ee.webmedia.alfresco.docconfig.generator.systematic.AccessRestrictionGenerator;
 import ee.webmedia.alfresco.docconfig.generator.systematic.DocumentLocationGenerator;
-import ee.webmedia.alfresco.docconfig.service.PropDefCacheKey;
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.docdynamic.web.DocumentDialogHelperBean;
 import ee.webmedia.alfresco.document.einvoice.service.EInvoiceService;
@@ -90,6 +92,7 @@ import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.search.model.DocumentReportModel;
 import ee.webmedia.alfresco.document.search.model.DocumentSearchModel;
 import ee.webmedia.alfresco.document.search.web.DocumentDynamicSearchDialog;
+import ee.webmedia.alfresco.document.search.web.SearchBlockBean;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.TreeNode;
@@ -100,9 +103,6 @@ import ee.webmedia.alfresco.volume.search.model.VolumeSearchModel;
 import ee.webmedia.alfresco.workflow.search.model.CompoundWorkflowSearchModel;
 import ee.webmedia.alfresco.workflow.search.model.TaskSearchModel;
 
-/**
- * @author Alar Kvell
- */
 public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFactoryAware {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(DocumentConfigServiceImpl.class);
 
@@ -130,6 +130,9 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
         searchLabelIds.put(DocumentSearchModel.Props.INPUT, "document_search_input");
         searchLabelIds.put(DocumentSearchModel.Props.DOCUMENT_TYPE, "document_docType");
         searchLabelIds.put(DocumentSearchModel.Props.SEND_MODE, "document_send_mode");
+        searchLabelIds.put(DocumentSearchModel.Props.SEND_INFO_RECIPIENT, "document_search_export_recipient");
+        searchLabelIds.put(DocumentSearchModel.Props.SEND_INFO_SEND_DATE_TIME, "document_search_send_info_time_period");
+        searchLabelIds.put(DocumentSearchModel.Props.SEND_INFO_RESOLUTION, "document_search_send_info_resolution");
         searchLabelIds.put(DocumentSearchModel.Props.FUND, "transaction_fund");
         searchLabelIds.put(DocumentSearchModel.Props.FUNDS_CENTER, "transaction_fundsCenter");
         searchLabelIds.put(DocumentSearchModel.Props.EA_COMMITMENT_ITEM, "transaction_eaCommitmentItem");
@@ -259,11 +262,17 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
     }
 
     private void addDocLocationConfigFields(DocumentConfig config, boolean forceEditMode, String additionalStateHolderKey) {
+        addDocLocationConfigFields(config, forceEditMode, additionalStateHolderKey, true);
+    }
+
+    private void addDocLocationConfigFields(DocumentConfig config, boolean forceEditMode, String additionalStateHolderKey, boolean addCase) {
         List<String> defList = new ArrayList<String>();
         defList.add(DocumentCommonModel.Props.FUNCTION.getLocalName());
         defList.add(DocumentCommonModel.Props.SERIES.getLocalName());
         defList.add(DocumentCommonModel.Props.VOLUME.getLocalName());
-        defList.add(DocumentCommonModel.Props.CASE.getLocalName());
+        if (addCase) {
+            defList.add(DocumentCommonModel.Props.CASE.getLocalName());
+        }
         for (String localName : defList) {
             FieldDefinition fieldDefinition = documentAdminService.getFieldDefinition(localName);
             fieldDefinition.setChangeableIfEnum(FieldChangeableIf.ALWAYS_CHANGEABLE);
@@ -274,6 +283,18 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
     @Override
     public DocumentConfig getAssocObjectSearchConfig(String additionalStateHolderKey, String renderAssocObjectFieldValueBinding) {
         DocumentConfig config = getEmptyConfig(null, null);
+
+        // docsearch:store
+        if (SearchBlockBean.BEAN_NAME.equals(additionalStateHolderKey)) {
+            QName prop = DocumentSearchModel.Props.STORE;
+            ItemConfigVO itemConfig = createItemConfigVO(prop);
+            itemConfig.setComponentGenerator("GeneralSelectorGenerator");
+            itemConfig.setSelectionItems("#{DialogManager.bean.search.getStores}");
+            itemConfig.setConverter("ee.webmedia.alfresco.common.propertysheet.converter.NodeRefConverter");
+            itemConfig.setValueChangeListener("#{DialogManager.bean.search.storeValueChanged}");
+            itemConfig.setConfigItemType(ConfigItemType.PROPERTY);
+            config.getPropertySheetConfigElement().addItem(itemConfig);
+        }
 
         {
             // docsearch:objectType
@@ -299,7 +320,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
             config.getPropertySheetConfigElement().addItem(itemConfig);
         }
 
-        addDocLocationConfigFields(config, true, additionalStateHolderKey);
+        addDocLocationConfigFields(config, true, additionalStateHolderKey, false);
 
         addDocumentCreatedConfigItem(config);
 
@@ -336,7 +357,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
             itemConfig.setComponentGenerator("GeneralSelectorGenerator");
             itemConfig.setSelectionItems("#{DialogManager.bean.getStores}");
             itemConfig.setConverter("ee.webmedia.alfresco.common.propertysheet.converter.NodeRefConverter");
-            itemConfig.setValueChangeListener("#{DialogManager.bean.storeValueChangeListener}");
+            itemConfig.setValueChangeListener("#{DialogManager.bean.storeValueChanged}");
             itemConfig.setConfigItemType(ConfigItemType.PROPERTY);
             propertySheetConfigElement.addItem(itemConfig);
         }
@@ -358,6 +379,8 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
             itemConfig.setConfigItemType(ConfigItemType.PROPERTY);
             propertySheetConfigElement.addItem(itemConfig);
         }
+
+        addSendInfoConfigItems(withCheckboxes, propertySheetConfigElement);
 
         List<FieldDefinition> fields = documentAdminService.getSearchableDocumentFieldDefinitions();
         for (FieldDefinition fieldDefinition : fields) {
@@ -443,6 +466,37 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
         addDocumentCreatedConfigItem(config);
 
         return config;
+    }
+
+    public void addSendInfoConfigItems(boolean withCheckboxes, WMPropertySheetConfigElement propertySheetConfigElement) {
+        {
+            QName prop = DocumentSearchModel.Props.SEND_INFO_RECIPIENT;
+            ItemConfigVO itemConfig = createItemConfigVO(prop);
+            itemConfig.setSearchSuggestDisabled(Boolean.TRUE);
+            UserContactGenerator.setupDefaultUserSearch(itemConfig);
+            itemConfig.setFilterIndex(UserContactGroupSearchBean.CONTACTS_FILTER);
+            itemConfig.setRenderCheckboxAfterLabel(withCheckboxes);
+            itemConfig.setConfigItemType(ConfigItemType.PROPERTY);
+            propertySheetConfigElement.addItem(itemConfig);
+        }
+
+        {
+            QName prop = DocumentSearchModel.Props.SEND_INFO_SEND_DATE_TIME;
+            ItemConfigVO itemConfig = createItemConfigVO(prop);
+            itemConfig.setRenderCheckboxAfterLabel(withCheckboxes);
+            itemConfig.setConfigItemType(ConfigItemType.PROPERTY);
+            DateGenerator.setupDateFilterItemConfig(itemConfig, prop);
+            propertySheetConfigElement.addItem(itemConfig);
+        }
+
+        {
+            QName prop = DocumentSearchModel.Props.SEND_INFO_RESOLUTION;
+            ItemConfigVO itemConfig = createItemConfigVO(prop);
+            itemConfig.setComponentGenerator("TextAreaGenerator");
+            itemConfig.setRenderCheckboxAfterLabel(withCheckboxes);
+            itemConfig.setConfigItemType(ConfigItemType.PROPERTY);
+            propertySheetConfigElement.addItem(itemConfig);
+        }
     }
 
     private void addDocumentTypeConfigItem(boolean withCheckboxes, DocumentConfig config) {
@@ -532,7 +586,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
             itemConfig.setComponentGenerator("GeneralSelectorGenerator");
             itemConfig.setSelectionItems("#{DialogManager.bean.getStores}");
             itemConfig.setConverter("ee.webmedia.alfresco.common.propertysheet.converter.NodeRefConverter");
-            itemConfig.setValueChangeListener("#{DialogManager.bean.storeValueChangeListener}");
+            itemConfig.setValueChangeListener("#{DialogManager.bean.storeValueChanged}");
             itemConfig.setConfigItemType(ConfigItemType.PROPERTY);
             propertySheetConfigElement.addItem(itemConfig);
         }
@@ -597,6 +651,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
             ItemConfigVO itemConfig = createItemConfigVO(prop);
             itemConfig.setComponentGenerator("EnumSelectorGenerator");
             itemConfig.getCustomAttributes().put("enumClass", TemplateReportOutputType.class.getCanonicalName());
+            itemConfig.setValueChangeListener("#{DialogManager.bean.reportTypeChanged}");
             itemConfig.setConfigItemType(ConfigItemType.PROPERTY);
             config.getPropertySheetConfigElement().addItem(itemConfig);
         }
@@ -938,12 +993,19 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
                 break;
             case ALWAYS_NOT_CHANGEABLE:
                 item.setReadOnly(true);
+                item.setOutputTextPropertyValue(true);
                 break;
             case CHANGEABLE_IF_WORKING_DOC:
                 item.setReadOnlyIf("#{" + DocumentDialogHelperBean.BEAN_NAME + ".notWorkingOrNotEditable}");
                 break;
             }
         }
+
+        if (field.isMandatory()) {
+            item.setForcedMandatory(Boolean.TRUE);
+            item.getCustomAttributes().put(ValidatingModalLayerComponent.ATTR_MANDATORY, Boolean.TRUE.toString());
+        }
+
         return item;
     }
 
@@ -1025,7 +1087,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
                 }
             }
 
-            // TODO Alar: would be better to refactor this to be more efficient and happen in a more general place (one or two methods above)
+            // TODO would be better to refactor this to be more efficient and happen in a more general place (one or two methods above)
             if (field.getParent() instanceof FieldGroup) {
                 FieldGroup group = (FieldGroup) field.getParent();
                 if (group.isSystematic()) {
@@ -1539,7 +1601,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
     @Override
     public Map<String, Pair<DynamicPropertyDefinition, Field>> getPropertyDefinitions(Node node) {
         QName type = node.getType();
-        // XXX Alar: checking hasAspect(OBJECT) would be the same
+        // XXX checking hasAspect(OBJECT) would be the same
         if (getDynamicTypeClass(node) == null && !dictionaryService.isSubClass(type, DocumentCommonModel.Types.METADATA_CONTAINER)) {
             return null;
         }

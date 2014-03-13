@@ -26,8 +26,6 @@ import ee.webmedia.alfresco.utils.RepoUtil;
 
 /**
  * Remove identical contacts (persons and organizations). Contacts are considered identical when all non-system properties have identical values.
- * 
- * @author Riina Tens
  */
 public class RemoveIdenticalContacts extends AbstractModuleComponent {
 

@@ -30,9 +30,6 @@ import ee.webmedia.alfresco.menu.service.MenuService;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 
-/**
- * @author Alar Kvell
- */
 public class DocumentTypeServiceImpl implements DocumentTypeService, BeanFactoryAware {
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DocumentTypeServiceImpl.class);
     private GeneralService generalService;

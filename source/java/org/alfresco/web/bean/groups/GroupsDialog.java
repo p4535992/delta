@@ -414,8 +414,10 @@ public class GroupsDialog extends BaseDialogBean
                 // sub-group of an existing group
                 authorities = this.getAuthorityService().getContainedAuthorities(AuthorityType.GROUP, this.group, immediate);
              }
+             if(!BeanHelper.getEInvoiceService().isEinvoiceEnabled()){
+                 authorities.remove(BeanHelper.getUserService().getAccountantsGroup());
+             }
              groups = UserUtil.getGroupsFromAuthorities(this.getAuthorityService(), authorities); 
-             
              // commit the transaction
              tx.commit();
           }

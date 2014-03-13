@@ -9,14 +9,8 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.lang.StringUtils;
 
-/**
- * @author Keit Tehvan
- */
 public class NumberPatternParser {
 
-    /**
-     * @author Kaarel Jõgeva
-     */
     public enum RegisterNumberPatternParams {
         S, T, TA, TN(true), DA, DN(true);
 

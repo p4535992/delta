@@ -2,15 +2,12 @@
 <list>
   <classificator>
     <name>managementsOrderDocName</name>
-    <deleteEnabled>true</deleteEnabled>
     <description>Juhtkonna korralduse vaikimisi pealkiri</description>
     <classificatorValues>
       <classificatorValue>
         <valueName>Juhtkonna korraldus</valueName>
         <classificatorDescription></classificatorDescription>
-        <valueData></valueData>
         <order>1</order>
-        <originalOrder>0</originalOrder>
         <byDefault>false</byDefault>
         <readOnly>false</readOnly>
         <active>true</active>
@@ -19,15 +16,12 @@
   </classificator>
   <classificator>
     <name>licenceDocName</name>
-    <deleteEnabled>true</deleteEnabled>
     <description>Dokumendi liigi Luba vaikimisi pealkiri</description>
     <classificatorValues>
       <classificatorValue>
         <valueName>Luba</valueName>
         <classificatorDescription></classificatorDescription>
-        <valueData></valueData>
         <order>1</order>
-        <originalOrder>0</originalOrder>
         <byDefault>false</byDefault>
         <readOnly>false</readOnly>
         <active>true</active>
@@ -36,15 +30,12 @@
   </classificator>
   <classificator>
     <name>trainingApplicationDocName</name>
-    <deleteEnabled>true</deleteEnabled>
     <description>Koolitustaotluse vaikimisi pealkiri</description>
     <classificatorValues>
       <classificatorValue>
         <valueName>Koolitustaotlus</valueName>
         <classificatorDescription></classificatorDescription>
-        <valueData></valueData>
         <order>1</order>
-        <originalOrder>0</originalOrder>
         <byDefault>false</byDefault>
         <readOnly>false</readOnly>
         <active>true</active>
@@ -53,15 +44,12 @@
   </classificator>
   <classificator>
     <name>leavingLetterDocName</name>
-    <deleteEnabled>true</deleteEnabled>
     <description>Lahkumislehe vaikimisi pealkiri</description>
     <classificatorValues>
       <classificatorValue>
         <valueName>Lahkumisleht</valueName>
         <classificatorDescription></classificatorDescription>
-        <valueData></valueData>
         <order>1</order>
-        <originalOrder>0</originalOrder>
         <byDefault>false</byDefault>
         <readOnly>false</readOnly>
         <active>true</active>
@@ -70,15 +58,12 @@
   </classificator>
   <classificator>
     <name>tenderingApplicationDocName</name>
-    <deleteEnabled>true</deleteEnabled>
     <description>Riigihanke läbiviimise taotluse vaikimisi pealkiri</description>
     <classificatorValues>
       <classificatorValue>
         <valueName>Riigihanke läbiviimise taotlus</valueName>
         <classificatorDescription></classificatorDescription>
-        <valueData></valueData>
         <order>1</order>
-        <originalOrder>0</originalOrder>
         <byDefault>false</byDefault>
         <readOnly>false</readOnly>
         <active>true</active>
@@ -87,15 +72,12 @@
   </classificator>
   <classificator>
     <name>errandApplicationDomesticDocName</name>
-    <deleteEnabled>true</deleteEnabled>
     <description>Siselähetuse taotluse vaikimisi pealkiri</description>
     <classificatorValues>
       <classificatorValue>
         <valueName>Siselähetuse taotlus</valueName>
         <classificatorDescription></classificatorDescription>
-        <valueData></valueData>
         <order>1</order>
-        <originalOrder>0</originalOrder>
         <byDefault>false</byDefault>
         <readOnly>false</readOnly>
         <active>true</active>
@@ -104,15 +86,12 @@
   </classificator>
   <classificator>
     <name>errandOrderAbroadDocName</name>
-    <deleteEnabled>true</deleteEnabled>
     <description>Välislähetuse korralduse vaikimisi pealkiri</description>
     <classificatorValues>
       <classificatorValue>
         <valueName>Välislähetuse korraldus</valueName>
         <classificatorDescription></classificatorDescription>
-        <valueData></valueData>
         <order>1</order>
-        <originalOrder>0</originalOrder>
         <byDefault>false</byDefault>
         <readOnly>false</readOnly>
         <active>true</active>
@@ -121,15 +100,12 @@
   </classificator>
   <classificator>
     <name>vacationApplicationDocName</name>
-    <deleteEnabled>true</deleteEnabled>
     <description>Puhkuse andmise korralduse vaikimisi pealkiri</description>
     <classificatorValues>
       <classificatorValue>
         <valueName>Puhkuse avaldus</valueName>
         <classificatorDescription></classificatorDescription>
-        <valueData></valueData>
         <order>1</order>
-        <originalOrder>0</originalOrder>
         <byDefault>false</byDefault>
         <readOnly>false</readOnly>
         <active>true</active>

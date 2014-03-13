@@ -39,8 +39,6 @@ import ee.webmedia.alfresco.utils.WebUtil;
 
 /**
  * Bean related to showing list of {@link FieldMapping} objects bellow {@link AssociationModel}
- * 
- * @author Ats Uiboupin
  */
 public class FieldMappingsListBean implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -188,8 +186,6 @@ public class FieldMappingsListBean implements Serializable {
 
     /**
      * ListItem that provides some extra information about the object, but uses internally node of the object that is saved to repository
-     * 
-     * @author Ats Uiboupin
      */
     public class FieldMappingListItem extends FieldMapping {
         private static final long serialVersionUID = 1L;

@@ -4,9 +4,6 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
 import ee.webmedia.alfresco.common.propertysheet.search.MultiSelectConverterBase;
 import ee.webmedia.alfresco.user.model.Authority;
 
-/**
- * @author Riina Tens
- */
 public class AuthorityConverter extends MultiSelectConverterBase {
 
     @Override

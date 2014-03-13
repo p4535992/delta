@@ -16,8 +16,6 @@ import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 
 /**
  * Used to add cf:favorite aspect to existing doccom:favoriteContainer aspect nodes to avoid circular dependency between cf and doccom model
- * 
- * @author Kaarel Jõgeva
  */
 public class CaseFileFavoriteAspectUpdater extends AbstractNodeUpdater {
 

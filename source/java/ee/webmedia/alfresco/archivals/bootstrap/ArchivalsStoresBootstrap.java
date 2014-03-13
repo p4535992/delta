@@ -17,9 +17,6 @@ import ee.webmedia.alfresco.archivals.model.ArchivalsStoreVO;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.functions.model.FunctionsModel;
 
-/**
- * @author Alar Kvell
- */
 public class ArchivalsStoresBootstrap extends AbstractModuleComponent {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(ArchivalsStoresBootstrap.class);
 

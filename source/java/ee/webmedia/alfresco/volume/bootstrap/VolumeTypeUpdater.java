@@ -4,7 +4,6 @@ import static ee.webmedia.alfresco.utils.SearchUtil.generateTypeQuery;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -13,6 +12,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.cmr.search.ResultSet;
 import org.alfresco.service.cmr.search.SearchService;
 import org.alfresco.service.namespace.QName;
@@ -31,9 +31,6 @@ import ee.webmedia.alfresco.volume.model.VolumeModel;
  * Asjatoimik -> CASE_FILE
  * (CL task 177957)
  * 2) changes namespaces of the volume properties
- * 
- * @author Vladimir Drozdik
- * @author Ats Uiboupin
  */
 public class VolumeTypeUpdater extends AbstractNodeUpdater {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(VolumeTypeUpdater.class);
@@ -41,10 +38,11 @@ public class VolumeTypeUpdater extends AbstractNodeUpdater {
     @Override
     protected List<ResultSet> getNodeLoadingResultSet() {
         String query = generateTypeQuery(VolumeModel.Types.VOLUME);
-        return Arrays.asList(
-                searchService.query(generalService.getStore(), SearchService.LANGUAGE_LUCENE, query)
-                , searchService.query(generalService.getArchivalsStoreRef(), SearchService.LANGUAGE_LUCENE, query)
-                );
+        List<ResultSet> result = new ArrayList<ResultSet>();
+        for (StoreRef storeRef : generalService.getAllStoreRefsWithTrashCan()) {
+            result.add(searchService.query(storeRef, SearchService.LANGUAGE_LUCENE, query));
+        }
+        return result;
     }
 
     @Override

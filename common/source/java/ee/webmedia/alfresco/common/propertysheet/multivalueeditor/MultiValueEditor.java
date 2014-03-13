@@ -56,8 +56,6 @@ import ee.webmedia.alfresco.utils.ComponentUtil;
  * an empty row at the end (a {@code null} element is added to each {@link List}). When cells are first generated, it is ensured that each column's {@link List} contains the same
  * amount of elements as the list with greatest amount of elements. Again, {@code null} elements are appended, where necessary. <br>
  * Component configuration attributes are documented at {@link MultiValueEditorGenerator}.
- * 
- * @author Alar Kvell
  */
 public class MultiValueEditor extends UIComponentBase implements AjaxUpdateable, NamingContainer, HandlesShowUnvalued {
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(MultiValueEditor.class);
@@ -65,7 +63,6 @@ public class MultiValueEditor extends UIComponentBase implements AjaxUpdateable,
     protected static final String PROPERTY_SHEET_VAR = "propertySheetVar";
     public static final String PREPROCESS_CALLBACK = "preprocessCallback";
     protected static final String FILTERS = "filters";
-    protected static final String FILTER_INDEX = "filterIndex";
     public static final String ATTR_CLICK_LINK_ID = "clickLinkId";
 
     public static final String MULTI_VALUE_EDITOR_FAMILY = MultiValueEditor.class.getCanonicalName();
@@ -136,9 +133,9 @@ public class MultiValueEditor extends UIComponentBase implements AjaxUpdateable,
             picker.setShowFilter(true);
         }
 
-        String filterIndex = (String) getAttributes().get(FILTER_INDEX);
-        if (StringUtils.isNotBlank(filterIndex) && StringUtils.isNumeric(filterIndex)) {
-            picker.setDefaultFilterIndex(Integer.parseInt(filterIndex));
+        Object filterIndex = getAttributes().get(Search.FILTER_INDEX);
+        if (filterIndex instanceof Integer) {
+            picker.setDefaultFilterIndex((Integer) filterIndex);
         } else {
             picker.setDefaultFilterIndex(UserContactGroupSearchBean.USERS_FILTER);
         }

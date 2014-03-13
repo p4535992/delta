@@ -10,8 +10,6 @@ import ee.webmedia.alfresco.common.web.BeanHelper;
  * UI action evaluator for validating whether document is saved (is not draft).
  * <p/>
  * Can be used only with {@link ee.webmedia.alfresco.document.web.DocumentDialog}.
- * 
- * @author Romet Aidla
  */
 public class DocumentSavedActionEvaluator extends BaseActionEvaluator {
     private static final long serialVersionUID = 1L;

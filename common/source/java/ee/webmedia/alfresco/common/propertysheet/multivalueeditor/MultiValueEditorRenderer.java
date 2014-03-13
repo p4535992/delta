@@ -16,6 +16,7 @@ import javax.faces.event.PhaseId;
 
 import org.alfresco.web.app.Application;
 import org.alfresco.web.app.servlet.FacesHelper;
+import org.alfresco.web.bean.generator.BaseComponentGenerator.CustomAttributeNames;
 import org.alfresco.web.ui.common.Utils;
 import org.alfresco.web.ui.common.component.UIGenericPicker;
 import org.alfresco.web.ui.common.renderer.BaseRenderer;
@@ -26,6 +27,7 @@ import org.apache.commons.lang.StringUtils;
 import ee.webmedia.alfresco.classificator.model.ClassificatorValue;
 import ee.webmedia.alfresco.classificator.service.ClassificatorService;
 import ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.ComponentPropVO;
+import ee.webmedia.alfresco.common.propertysheet.modalLayer.ValidatingModalLayerComponent;
 import ee.webmedia.alfresco.common.propertysheet.search.Search;
 import ee.webmedia.alfresco.common.propertysheet.search.SearchRenderer;
 import ee.webmedia.alfresco.common.web.BeanHelper;
@@ -35,11 +37,11 @@ import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.help.web.HelpTextUtil;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.workflow.search.model.CompoundWorkflowSearchModel;
+import ee.webmedia.alfresco.workflow.search.model.TaskSearchModel;
 
 /**
  * Render {@link MultiValueEditor} as HTML table. Direct children of {@link MultiValueEditor} must be {@link HtmlPanelGroup} components.
- * 
- * @author Alar Kvell
  */
 // Extends BaseMultiValueRenderer, because only decode method implementation is needed from there.
 public class MultiValueEditorRenderer extends BaseRenderer {
@@ -120,16 +122,23 @@ public class MultiValueEditorRenderer extends BaseRenderer {
         final Map<String, Object> attributes = component.getAttributes();
         String showHeaders = (String) attributes.get(MultiValueEditor.SHOW_HEADERS);
         if (StringUtils.isBlank(showHeaders) || Boolean.parseBoolean(showHeaders)) {
+            boolean disabledOrReadOnly = ComponentUtil.isComponentDisabledOrReadOnly(component);
             out.write("<thead><tr>");
             for (ComponentPropVO propVO : propVOs) {
                 out.write("<th>");
+
+                // Render mandatory marker if needed
+                String mandatory = propVO.getCustomAttributes().get(ValidatingModalLayerComponent.ATTR_MANDATORY);
+                if (!disabledOrReadOnly && Boolean.valueOf(mandatory)) {
+                    Utils.encodeRecursive(context, ComponentUtil.createMandatoryMarker(context));
+                }
+
                 out.writeText(propVO.getPropertyLabel(), null);
 
                 // Field help:
                 String property = StringUtils.substringAfter(propVO.getPropertyName(), ":");
                 if (HelpTextUtil.hasHelpText(context, HelpTextUtil.TYPE_FIELD, property)) {
-                    out.write("&nbsp;");
-                    HelpTextUtil.writeHelpTextLink(out, context, HelpTextUtil.TYPE_FIELD, property);
+                    Utils.encodeRecursive(context, HelpTextUtil.createHelpTextLink(context, HelpTextUtil.TYPE_FIELD, property));
                 }
                 out.write("</th>");
             }
@@ -335,7 +344,9 @@ public class MultiValueEditorRenderer extends BaseRenderer {
                         FacesHelper.makeLegalId(DocumentCommonModel.PREFIX + DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME.getLocalName()))
                 || StringUtils.startsWith(id,
                         FacesHelper.makeLegalId(DocumentSpecificModel.PREFIX + DocumentSpecificModel.Props.PROCUREMENT_APPLICANT_NAME.getLocalName()))
-                || StringUtils.startsWith(id, FacesHelper.makeLegalId(DocumentDynamicModel.PREFIX + DocumentDynamicModel.Props.USER_NAME.getLocalName()));
+                || StringUtils.startsWith(id, FacesHelper.makeLegalId(DocumentDynamicModel.PREFIX + DocumentDynamicModel.Props.USER_NAME.getLocalName()))
+                || StringUtils.startsWith(id, FacesHelper.makeLegalId(TaskSearchModel.PREFIX + DocumentDynamicModel.Props.OWNER_NAME.getLocalName()))
+                || StringUtils.startsWith(id, FacesHelper.makeLegalId(CompoundWorkflowSearchModel.PREFIX + DocumentDynamicModel.Props.OWNER_NAME.getLocalName()));
     }
 
     private void renderAddLink(FacesContext context, UIComponent component, ResponseWriter out) throws IOException {

@@ -83,9 +83,6 @@ import ee.webmedia.xtee.client.dhl.types.ee.sk.digiDoc.v13.DataFileType;
 import ee.webmedia.xtee.client.dhl.types.ee.sk.digiDoc.v13.SignedDocType;
 import ee.webmedia.xtee.client.service.configuration.provider.XTeeProviderPropertiesResolver;
 
-/**
- * @author Ats Uiboupin
- */
 public abstract class DvkServiceImpl implements DvkService {
 
     private static Log log = LogFactory.getLog(DvkServiceImpl.class);
@@ -158,7 +155,7 @@ public abstract class DvkServiceImpl implements DvkService {
         final long maxReceiveDocumentsNr = parametersService.getLongParameter(Parameters.DVK_MAX_RECEIVE_DOCUMENTS_NR);
         final String dvkReceiveDocumentsInvoiceFolder = parametersService.getStringParameter(Parameters.DVK_RECEIVE_DOCUMENTS_INVOICE_FOLDER);
         NodeRef dvkIncomingFolder = generalService.getNodeRef(receivedDvkDocumentsPath);
-        log.info("Starting to receive documents(max " + maxReceiveDocumentsNr + " documents at the time)");
+        log.info("Starting to receive documents (max " + maxReceiveDocumentsNr + " documents at the time)");
         final Set<String> receiveDocuments = new HashSet<String>();
         Collection<String> lastReceiveDocuments;
         Collection<String> lastFailedDocuments;
@@ -209,7 +206,7 @@ public abstract class DvkServiceImpl implements DvkService {
 
         final Set<String> receivedDocumentIds = new HashSet<String>();
         final List<String> receiveFaileddDocumentIds = new ArrayList<String>();
-        log.debug("received " + receiveDocuments.size() + " documents from DVK");
+        log.debug("Received " + receiveDocuments.size() + " documents from DVK");
         List<String> sortedKeys = new ArrayList<String>(receiveDocuments.keySet());
         // sort descending to avoid unnecessary version overwrite
         // when receiving for example external review workflow documents
@@ -234,6 +231,7 @@ public abstract class DvkServiceImpl implements DvkService {
             try {
                 storedDocuments = storeDocument(receivedDocument, dhlId, dvkIncomingFolder, previouslyFailedDvkIds);
             } catch (RuntimeException e) {
+                log.error("Failed to store DVK document " + dhlId + " to " + dvkIncomingFolder, e);
                 throw e;// didn't even manage to handle exception
             }
             if (storedDocuments != null && storedDocuments.size() > 0) {
@@ -243,7 +241,7 @@ public abstract class DvkServiceImpl implements DvkService {
                 receiveFaileddDocumentIds.add(dhlId);
             }
         }
-        log.debug("received " + receivedDocumentIds.size() + " documents: " + receivedDocumentIds + ", created " + createdDocumentCounter + " documents");
+        log.info("Received " + receivedDocumentIds.size() + " documents: " + receivedDocumentIds + ", created " + createdDocumentCounter + " documents");
         if (receiveFaileddDocumentIds.size() > 0) {
             log.error("FAILED to receive " + receiveFaileddDocumentIds.size() + " documents: " + receiveFaileddDocumentIds);
         }
@@ -299,7 +297,7 @@ public abstract class DvkServiceImpl implements DvkService {
                 List<NodeRef> dimensionNodes = importDimensionData(rd, dhlDokument, dhlId, dataFileList);
                 if (dimensionNodes.size() == 0) {
                     String msg = "Failed to parse dimension lists from DVK document with dhlId='" + dhlId + "'";
-                    log.debug(msg);
+                    log.error(msg);
                     throw new RuntimeException(msg);
                 }
                 return dimensionNodes;
@@ -307,18 +305,22 @@ public abstract class DvkServiceImpl implements DvkService {
 
             NodeRef docNode = importWorkflowData(rd, dhlDokument, dvkIncomingFolder, dataFileList, dhlId);
             if (docNode != null) {
+                log.info("Stored workflow data from " + dhlId + " to " + docNode);
                 return Arrays.asList(docNode);
             }
             NodeRef taskNode = importTaskData(rd, dhlDokument, dhlId);
             if (taskNode != null) {
+                log.info("Stored task data from " + dhlId + " to " + taskNode);
                 return Arrays.asList(taskNode);
             }
             List<NodeRef> invoiceNodes = importInvoiceData(rd, dhlDokument, dhlId, dataFileList);
             if (invoiceNodes.size() > 0) {
+                log.info("Stored invoice data from " + dhlId + " to " + invoiceNodes.size() + " invoices.");
                 return invoiceNodes;
             }
             NodeRef sapRegisteredDoc = importSapInvoiceRegistration(rd, dhlDokument, dhlId, dataFileList);
             if (sapRegisteredDoc != null) {
+                log.info("Stored SAP document data from " + dhlId + " to " + sapRegisteredDoc);
                 return Arrays.asList(sapRegisteredDoc);
             }
             NodeRef reviewTaskNotificationNode = importReviewTaskData(rd, dhlDokument, dhlId);
@@ -381,7 +383,7 @@ public abstract class DvkServiceImpl implements DvkService {
      */
     protected void handleStorageFailure(ReceivedDocument receivedDocument, String dhlId, NodeRef dvkIncomingFolder
             , MetainfoHelper metaInfoHelper, Collection<String> previouslyFailedDvkIds, Exception e) {
-        log.error("Failed to store document with dhlId='" + dhlId + "'", e);
+        log.error("Failed to store document " + (metaInfoHelper != null ? metaInfoHelper.getKoostajaFailinimi() : "") + " with dhlId='" + dhlId + "' to " + dvkIncomingFolder, e);
     }
 
     abstract protected NodeRef createDocumentNode(DvkReceivedLetterDocument rd, NodeRef dvkIncomingFolder, String documentFolderName);
@@ -400,9 +402,9 @@ public abstract class DvkServiceImpl implements DvkService {
 
     protected NodeRef storeFile(DvkReceivedLetterDocument rd, NodeRef documentFolder, DataFileType dataFile) throws IOException {
         String filename = FilenameUtil.getDvkFilename(dataFile);
-        log.info("writing file '" + filename + "' from dvk document with dvkId '" + dataFile.getId() + "' to repository space: '"
-                + receivedDvkDocumentsPath + "'");
         NodeRef file = createFileNode(documentFolder, filename);
+        log.info("Writing file '" + filename + "' (fileRef: " + file + ") from DVK document with dvkId '" + rd.getDvkId() + "' to repository space: '"
+                + receivedDvkDocumentsPath + "' (parentRef: " + documentFolder + ")");
 
         final ContentWriter writer = fileFolderService.getWriter(file);
         String originalMimeType = StringUtils.lowerCase(dataFile.getMimeType());
@@ -416,10 +418,15 @@ public abstract class DvkServiceImpl implements DvkService {
         try {
             os.write(Base64.decode(dataFile.getStringValue()));
         } catch (Base64DecodingException e) {
-            throw new RuntimeException("Failed to decode", e);
+            RuntimeException ex = new RuntimeException("Failed to decode", e);
+            log.error("Failed to decode DVK documents (" + rd.getDvkId() + ") file " + filename + " contents", ex);
+            throw ex;
         } catch (IOException e) {
-            throw new RuntimeException("Failed write output to repository: '" + receivedDvkDocumentsPath + "' nodeRef=" + file + " contentUrl="
-                    + writer.getContentUrl(), e);
+            String message = "Failed to write output to repository: '" + receivedDvkDocumentsPath + "' nodeRef=" + file + " contentUrl="
+                    + writer.getContentUrl();
+            RuntimeException ex = new RuntimeException(message, e);
+            log.error(message, ex);
+            throw ex;
         } finally {
             os.close();
         }
@@ -673,19 +680,19 @@ public abstract class DvkServiceImpl implements DvkService {
             final AccessRightsType accessRights = AccessRightsType.Factory.newInstance();
             accessRights.setRestriction(dvkSendDocuments.getLetterAccessRestriction());
 
-            final Calendar accessRestrBeginCal = Calendar.getInstance();
             final Date arBeginDate = dvkSendDocuments.getLetterAccessRestrictionBeginDate();
             if (arBeginDate != null) {
+                final Calendar accessRestrBeginCal = Calendar.getInstance();
                 accessRestrBeginCal.setTime(arBeginDate);
+                accessRights.setBeginDate(accessRestrBeginCal);
             }
-            accessRights.setBeginDate(accessRestrBeginCal);
 
-            final Calendar accessRestrEndCal = Calendar.getInstance();
             final Date arEndDate = dvkSendDocuments.getLetterAccessRestrictionEndDate();
             if (arEndDate != null) {
+                final Calendar accessRestrEndCal = Calendar.getInstance();
                 accessRestrEndCal.setTime(arEndDate);
+                accessRights.setEndDate(accessRestrEndCal);
             }
-            accessRights.setEndDate(accessRestrEndCal);
 
             accessRights.setReason(dvkSendDocuments.getLetterAccessRestrictionReason());
 

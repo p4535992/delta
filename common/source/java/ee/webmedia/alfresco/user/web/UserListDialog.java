@@ -139,6 +139,10 @@ public class UserListDialog extends BaseDialogBean {
         return searchUsers(params, false, false, false);
     }
 
+    public SelectItem[] searchUsersWithoutCurrentUser(PickerSearchParams params) {
+        return searchUsers(params, true, false, false);
+    }
+
     /**
      * @see #searchUsers(int, String)
      * @return SelectItems representing users. Current user is excluded.

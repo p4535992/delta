@@ -59,6 +59,7 @@ import org.alfresco.web.app.Application;
 import org.alfresco.web.bean.LoginBean;
 import org.apache.commons.logging.Log;
 
+import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.webdav.WebDAVCustomHelper;
 
 /**
@@ -78,6 +79,8 @@ public abstract class BaseDownloadContentServlet extends BaseServlet
    private static final String POWER_POINT_DOCUMENT_MIMETYPE = "application/vnd.powerpoint";
 
    private static final String POWER_POINT_2007_DOCUMENT_MIMETYPE = "application/vnd.openxmlformats-officedocument.presentationml.presentation";
+   
+   private static final String EXCEL_XLS_MIMETYPE = "application/vnd.ms-excel";
    
    protected static final String MIMETYPE_OCTET_STREAM = "application/octet-stream";
    
@@ -218,6 +221,12 @@ public abstract class BaseDownloadContentServlet extends BaseServlet
       NodeService nodeService = serviceRegistry.getNodeService();
       ContentService contentService = serviceRegistry.getContentService();
       
+      // Return 404 if we cannot retrieve the content
+      if (nodeRef == null || RepoUtil.isUnsaved(nodeRef) || !nodeService.exists(nodeRef)) {
+          res.setStatus(HttpServletResponse.SC_NOT_FOUND);
+          return;
+      }
+      
       try
       {
           // check that the user has at least READ_CONTENT access - else redirect to the login page
@@ -278,7 +287,7 @@ public abstract class BaseDownloadContentServlet extends BaseServlet
          {
             // set header based on filename - will force a Save As from the browse if it doesn't recognise it
             // this is better than the default response of the browser trying to display the contents
-            res.setHeader("Content-Disposition", "attachment");
+             res.setHeader("Content-Disposition", "attachment;filename=\"" + filename + "\"");
          }
          
          // get the content reader
@@ -311,7 +320,13 @@ public abstract class BaseDownloadContentServlet extends BaseServlet
          if (!attachment && (mimetype.equals(POWER_POINT_2007_DOCUMENT_MIMETYPE) || 
                              mimetype.equals(POWER_POINT_DOCUMENT_MIMETYPE)))
          {
-            res.setHeader("Content-Disposition", "attachment");
+            res.setHeader("Content-Disposition", "attachment;filename=\"" + filename + "\"");
+         }
+         
+         // replace older excel mimetype with official one
+         if ("application/vnd.excel".equals(mimetype)) 
+         {
+             mimetype = EXCEL_XLS_MIMETYPE;
          }
 
          // set mimetype for the content and the character encoding for the stream

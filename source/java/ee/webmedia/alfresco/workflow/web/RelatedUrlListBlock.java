@@ -13,18 +13,15 @@ import javax.faces.event.ActionEvent;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
-import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.utils.WebUtil;
 import ee.webmedia.alfresco.workflow.model.RelatedUrl;
 import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
 import ee.webmedia.alfresco.workflow.service.WorkflowUtil;
 
-/**
- * @author Riina Tens
- */
 public class RelatedUrlListBlock extends BaseDialogBean {
 
     public static final String BEAN_NAME = "RelatedUrlListBlock";
@@ -43,15 +40,7 @@ public class RelatedUrlListBlock extends BaseDialogBean {
     public void restored() {
         if (isSavedCompoundWorkflow()) {
             relatedUrls = BeanHelper.getWorkflowService().getRelatedUrls(compoundWorkflow.getNodeRef());
-            String currentDeltaUrlPrefix = BeanHelper.getDocumentTemplateService().getServerUrl();
-            if (StringUtils.isNotBlank(currentDeltaUrlPrefix)) {
-                for (RelatedUrl relatedUrl : relatedUrls) {
-                    String url = relatedUrl.getUrl();
-                    if (StringUtils.isNotBlank(url) && url.startsWith(currentDeltaUrlPrefix)) {
-                        relatedUrl.setTarget(RelatedUrl.TARGET_SELF);
-                    }
-                }
-            }
+            WebUtil.toggleSystemUrlTarget(BeanHelper.getDocumentTemplateService().getServerUrl(), relatedUrls);
         } else {
             relatedUrls = new ArrayList<RelatedUrl>();
         }

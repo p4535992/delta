@@ -8,9 +8,6 @@ import java.util.Map;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 
-/**
- * @author Alar Kvell
- */
 public class WorkflowEventQueue {
 
     private final List<WorkflowEvent> events = new ArrayList<WorkflowEvent>();
@@ -40,7 +37,9 @@ public class WorkflowEventQueue {
         /** Finishing group task was initiated by finishing given task from user interface, NodeRef */
         INITIATING_GROUP_TASK,
         /** List<NodeRef>, tasks that are set finished when another group assignment task in the same workflow is finished by user */
-        TASKS_FINISHED_BY_GROUP_TASK
+        TASKS_FINISHED_BY_GROUP_TASK,
+        /** New task is now in status "in progress" -> change workflow owner */
+        ASSIGNEMNT_TASK_STARTED_WITH_RESPONSIBLE_ASPECT
     }
 
     public List<WorkflowEvent> getEvents() {

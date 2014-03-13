@@ -12,6 +12,7 @@ import javax.faces.el.ValueBinding;
 
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.app.servlet.FacesHelper;
+import org.alfresco.web.bean.generator.BaseComponentGenerator;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.ui.common.ComponentConstants;
 import org.alfresco.web.ui.repo.component.property.UIProperty;
@@ -26,8 +27,6 @@ import ee.webmedia.alfresco.utils.TextUtil;
 /**
  * Class that supports having custom attributes on property-sheet/show-property element, <br>
  * that for example generators could be read by ClassificatorSelectorAndTextGenerator.
- * 
- * @author Ats Uiboupin
  */
 public class WMUIProperty extends UIProperty {
 
@@ -94,6 +93,21 @@ public class WMUIProperty extends UIProperty {
                             return false;
                         }
                     }
+                }
+            }
+        }
+
+        // Some groups e.g. AccessRestriction expose themselves as a single property to BaseComponentGenerator and therefore rendered attribute
+        // isn't processed on non-primary properties of the group.
+        if (getChildCount() == 1) {
+            String rendered = getCustomAttributes().get(BaseComponentGenerator.RENDERED);
+            if (org.apache.commons.lang.StringUtils.isNotEmpty(rendered)) {
+                try {
+                    setRendered(BaseComponentGenerator.evaluateBoolean(rendered, getFacesContext(), this));
+                } catch (NullPointerException e) {
+                    // Since it cannot determine if UIComponentbase private _rendered property is set or not, the rendered ValueBinding/MetodBinding is resolved.
+                    // If the state holder isn't available anymore, exception might occur. Most probably this method has been invoked before and _rendered value as been set.
+                    // If not, then rely on the default behavior of UIComponentBase.
                 }
             }
         }

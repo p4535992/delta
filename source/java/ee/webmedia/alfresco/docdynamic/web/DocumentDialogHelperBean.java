@@ -27,9 +27,6 @@ import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
 
-/**
- * @author Alar Kvell
- */
 public class DocumentDialogHelperBean implements Serializable {
     private static final long serialVersionUID = 1L;
 
@@ -59,7 +56,8 @@ public class DocumentDialogHelperBean implements Serializable {
     }
 
     public NodeRef getNodeRef() {
-        return getNode().getNodeRef();
+        Node node = getNode();
+        return node == null ? null : node.getNodeRef();
     }
 
     public Map<String, Object> getProps() {

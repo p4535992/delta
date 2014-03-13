@@ -54,7 +54,7 @@
          <f:facet name="header">
             <h:outputText id="col01-sort" value="#{msg.compoundWorkflow_object_list_documentToSign}" styleClass="header" />
          </f:facet>
-         <h:selectBooleanCheckbox id="co01-checkbox" value="#{r.documentToSign}" disabled="#{CompoundWorkflowAssocListDialog.disableDocSelect}" />
+         <h:selectBooleanCheckbox id="co01-checkbox" value="#{r.documentToSign}" disabled="#{CompoundWorkflowAssocListDialog.disableSignSelect}" />
       </a:column>      
       
       <%-- regNumber --%>
@@ -74,7 +74,7 @@
          <f:facet name="header">
             <a:sortLink id="col2-sort" label="#{msg.document_regDateTime}" value="regDateTime" styleClass="header" />
          </f:facet>
-         <a:actionLink id="col2-link" value="#{r.regDateTimeStr}" action="#{DocumentDialog.action}" tooltip="#{r.regDateTimeStr}" styleClass="no-underline"
+         <a:actionLink id="col2-link" value="#{r.regDateTimeStr}" action="#{DocumentDialog.action}" tooltip="#{r.regDateTimeStr}"
           actionListener="#{DocumentDialog.open}" styleClass="no-underline" rendered="#{r.showLink}" >
             <f:param name="nodeRef" value="#{r.node.nodeRef}" />
           </a:actionLink>

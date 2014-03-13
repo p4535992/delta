@@ -11,8 +11,6 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
  * Dialog for incoming e-invoices list.
- * 
- * @author Riina Tens
  */
 public class IncomingEInvoiceListDialog extends BaseDocumentListDialog {
     private static final long serialVersionUID = 0L;

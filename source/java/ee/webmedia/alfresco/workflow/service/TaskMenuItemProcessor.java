@@ -10,9 +10,6 @@ import ee.webmedia.alfresco.menu.service.MenuItemCountHandler;
 import ee.webmedia.alfresco.menu.service.MenuService;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 
-/**
- * @author Kaarel Jõgeva
- */
 public class TaskMenuItemProcessor extends CountAddingMenuItemProcessor implements MenuItemCountHandler, InitializingBean {
 
     private MenuService menuService;
@@ -22,11 +19,11 @@ public class TaskMenuItemProcessor extends CountAddingMenuItemProcessor implemen
     public int getCount(MenuItem menuItem) {
         QName taskType = QName.createQName(menuItem.getProcessor());
         int currentUsersTaskCount = documentSearchService.getCurrentUsersTaskCount(taskType);
-        if (taskType.equals(WorkflowSpecificModel.Types.CONFIRMATION_TASK)) {
+        if (WorkflowSpecificModel.Types.CONFIRMATION_TASK.equals(taskType)) {
             currentUsersTaskCount += documentSearchService.getCurrentUsersTaskCount(WorkflowSpecificModel.Types.DUE_DATE_EXTENSION_TASK);
-        } else if (taskType.equals(WorkflowSpecificModel.Types.ASSIGNMENT_TASK)) {
+        } else if (WorkflowSpecificModel.Types.ASSIGNMENT_TASK.equals(taskType)) {
             currentUsersTaskCount += documentSearchService.getCurrentUsersTaskCount(WorkflowSpecificModel.Types.GROUP_ASSIGNMENT_TASK);
-        } else if (taskType.equals(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK)) {
+        } else if (WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK.equals(taskType)) {
             currentUsersTaskCount += documentSearchService.getCurrentUsersTaskCount(WorkflowSpecificModel.Types.LINKED_REVIEW_TASK);
         }
         return currentUsersTaskCount;

@@ -2,9 +2,6 @@ package ee.webmedia.alfresco.common.bootstrap;
 
 import org.alfresco.repo.module.AbstractModuleComponent;
 
-/**
- * @author Alar Kvell
- */
 public class InvalidNodeFixerAndIndexIntegrityCheckerBootstrap extends AbstractModuleComponent {
 
     private InvalidNodeFixerBootstrap invalidNodeFixerBootstrap;

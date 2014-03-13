@@ -4,9 +4,6 @@ import java.util.Date;
 
 import ee.webmedia.alfresco.utils.beanmapper.AlfrescoModelType;
 
-/**
- * @author Ats Uiboupin
- */
 // use URIs defined by the interfaces
 @AlfrescoModelType(uri = "")
 public class DvkReceivedDocumentImpl extends AbstractLetterDocument implements DvkReceivedLetterDocument {

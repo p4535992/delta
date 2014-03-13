@@ -33,9 +33,6 @@ import ee.webmedia.alfresco.utils.CalendarUtil;
 import ee.webmedia.alfresco.utils.ContentReaderDataSource;
 import ee.webmedia.alfresco.utils.MimeUtil;
 
-/**
- * @author Alar Kvell
- */
 public class MsoService1Impl implements MsoService, InitializingBean {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(MsoService1Impl.class);
 
@@ -56,7 +53,7 @@ public class MsoService1Impl implements MsoService, InitializingBean {
             log.info("Mso service endpoint address not set");
             return;
         }
-
+        System.setProperty("org.apache.cxf.stax.allowInsecureParser", "true");
         log.info("Initializing Mso service port");
         Mso port = (new ee.webmedia.alfresco.mso.ws.MsoService()).getMsoPort();
         BindingProvider bp = (BindingProvider) port;
@@ -189,11 +186,11 @@ public class MsoService1Impl implements MsoService, InitializingBean {
     }
 
     @Override
-    public void replaceFormulas(Map<String, String> formulas, ContentReader documentReader, ContentWriter documentWriter) throws Exception {
+    public boolean replaceFormulas(Map<String, String> formulas, ContentReader documentReader, ContentWriter documentWriter, boolean dontSaveIfUnmodified) throws Exception {
         try {
             MsoDocumentAndFormulasInput input = replaceFormulasPrepare(formulas, documentReader);
             if (input == null) {
-                return;
+                return false;
             }
 
             long duration = -1;
@@ -215,7 +212,7 @@ public class MsoService1Impl implements MsoService, InitializingBean {
                 documentWriter.setMimetype(outputMimeType);
                 documentWriter.setEncoding(pair.getSecond());
                 documentWriter.putContent(output.getDocumentFile().getInputStream());
-
+                return true;
             } finally {
                 log.info("PERFORMANCE: query mso1.replaceFormulas - " + duration + " ms|" + documentReader.getSize() + "|" + documentReader.getMimetype() + "|"
                         + documentReader.getEncoding() + "|" + documentWriter.getSize() + "|" + formulas.size());

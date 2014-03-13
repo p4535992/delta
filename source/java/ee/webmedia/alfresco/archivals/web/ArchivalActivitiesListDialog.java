@@ -23,9 +23,6 @@ import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
-/**
- * @author Riina Tens
- */
 public class ArchivalActivitiesListDialog extends BaseDialogBean {
 
     private static final long serialVersionUID = 1L;

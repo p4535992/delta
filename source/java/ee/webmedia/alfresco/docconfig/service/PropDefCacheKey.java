@@ -6,9 +6,6 @@ import ee.webmedia.alfresco.docadmin.service.CaseFileType;
 import ee.webmedia.alfresco.docadmin.service.DocumentType;
 import ee.webmedia.alfresco.docadmin.service.DynamicType;
 
-/**
- * @author Kaarel Jõgeva
- */
 public class PropDefCacheKey implements Serializable {
     private static final long serialVersionUID = 1L;
 

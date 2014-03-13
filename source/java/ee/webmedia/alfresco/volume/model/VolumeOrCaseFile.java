@@ -3,9 +3,6 @@ package ee.webmedia.alfresco.volume.model;
 import java.util.Date;
 import java.util.Map;
 
-/**
- * @author Keit Tehvan
- */
 public interface VolumeOrCaseFile extends Comparable<VolumeOrCaseFile> {
     String getVolumeMark();
 

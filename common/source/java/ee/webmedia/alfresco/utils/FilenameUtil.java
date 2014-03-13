@@ -22,8 +22,6 @@ import ee.webmedia.xtee.client.dhl.types.ee.sk.digiDoc.v13.DataFileType;
 
 /**
  * Helps to strip illegal characters from filenames
- * 
- * @author Kaarel Jõgeva
  */
 public class FilenameUtil {
 

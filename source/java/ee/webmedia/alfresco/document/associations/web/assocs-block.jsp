@@ -17,7 +17,7 @@
    </f:facet>
 </h:panelGroup>
 
-<a:panel id="assocs-block-panel" label="#{msg.document_assocsBlockBean_panelTitle}" styleClass="panel-100 with-pager" progressive="true"
+<a:panel id="assocs-block-panel" label="#{msg.document_assocsBlockBean_panelTitle} (#{AssocsBlockBean.assocsCount})" styleClass="panel-100 with-pager" progressive="true"
    expanded="#{DialogManager.bean.assocsBlockExpanded}" facetsId="dialog:dialog-body:assocs-panel-facets">
 
    <a:richList id="assocsList" viewMode="details" value="#{AssocsBlockBean.docAssocInfos}" var="r" rowStyleClass="recordSetRow"

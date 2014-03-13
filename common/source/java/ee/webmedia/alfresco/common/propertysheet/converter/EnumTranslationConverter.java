@@ -8,8 +8,6 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
  * Converter that translates enum constant or enum keyword string.
- * 
- * @author Vladimir Drozdik
  */
 public class EnumTranslationConverter extends EnumConverter {
 

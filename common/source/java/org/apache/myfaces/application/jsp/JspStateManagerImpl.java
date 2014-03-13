@@ -486,7 +486,7 @@ public class JspStateManagerImpl
                 else {
                     sequence = new Integer(sequenceStr);
                     
-                    // ERKO: Workaround for problems with browser refresh submiting old view id which throws an exception 
+                    // Workaround for problems with browser refresh submiting old view id which throws an exception 
                     // when trying to restore it's state because Alfresco DialogManager context doesnt support Myfaces back 
                     // button support through view state history.
                     Integer currentSequence = ViewSequenceUtils.getCurrentSequence(context);
@@ -653,7 +653,7 @@ public class JspStateManagerImpl
     }
 
     /**
-     * Erko: useful for export screens, where some data is exported in a new request as attachment but the browsers view is not updated. 
+     * useful for export screens, where some data is exported in a new request as attachment but the browsers view is not updated. 
      * Without calling this hack, the next request by user would be caught in the check that view state id is not the latest available.
      * 
      * Based on ViewSequenceUtils.nextViewSequence.

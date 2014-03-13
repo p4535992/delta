@@ -10,8 +10,6 @@ import org.w3c.dom.ls.LSResourceResolver;
 /**
  * This is an implementation of LSResourceResolver that can resolve XML schemas from the classpath.
  * Example base is copied from http://www.java.net/node/666263.
- * 
- * @author Riina Tens
  */
 public class ClasspathResourceResolver implements LSResourceResolver {
     private final DOMImplementationLS domImplementationLS;

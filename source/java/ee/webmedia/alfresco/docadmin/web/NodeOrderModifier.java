@@ -12,8 +12,6 @@ import ee.webmedia.alfresco.utils.RepoUtil;
 
 /**
  * Implementation of {@link OrderModifier} that knows how to change order property held in {@link Node}
- * 
- * @author Ats Uiboupin
  */
 public class NodeOrderModifier implements OrderModifier<Node, Integer> {
     /** qName of the order property */

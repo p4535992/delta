@@ -4,19 +4,26 @@ import static ee.webmedia.alfresco.utils.MessageUtil.getMessage;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.Serializable;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 
 import org.alfresco.model.ContentModel;
+import org.alfresco.repo.transaction.RetryingTransactionHelper;
+import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
+import org.alfresco.service.cmr.repository.ContentWriter;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.repository.Path;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.time.FastDateFormat;
 
 import com.csvreader.CsvWriter;
@@ -26,16 +33,18 @@ import ee.webmedia.alfresco.cases.model.Case;
 import ee.webmedia.alfresco.cases.model.CaseModel;
 import ee.webmedia.alfresco.cases.service.CaseService;
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
+import ee.webmedia.alfresco.classificator.enums.TemplateReportType;
 import ee.webmedia.alfresco.classificator.enums.VolumeType;
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docconfig.generator.systematic.DocumentLocationGenerator;
-import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamicService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.functions.model.Function;
 import ee.webmedia.alfresco.functions.service.FunctionsService;
 import ee.webmedia.alfresco.register.service.RegisterService;
+import ee.webmedia.alfresco.report.model.ReportModel;
 import ee.webmedia.alfresco.series.model.Series;
 import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.series.service.SeriesService;
@@ -46,8 +55,6 @@ import ee.webmedia.alfresco.volume.service.VolumeService;
 
 /**
  * Service to get consolidated list of documents and hierarchy.
- * 
- * @author Priit Pikk
  */
 public class DocumentListServiceImpl implements DocumentListService {
 
@@ -64,22 +71,50 @@ public class DocumentListServiceImpl implements DocumentListService {
     private RegisterService registerService;
 
     private final FastDateFormat fastDateFormat = FastDateFormat.getInstance("dd.MM.yyyy");
+    
+    private ContentWriter generateCsvFile(final NodeRef parentNodeRef, ContentWriter writer) {
 
-    @Override
-    public void getExportCsv(OutputStream outputStream, NodeRef rootRef) {
-        CsvWriter csvWriter = new CsvWriter(outputStream, ';', Charset.forName("UTF-8"));
+        OutputStream out = null;
+        CsvWriter csvWriter = null;
+        writer.setMimetype("application/csv");
+        writer.setEncoding("UTF-8");
         try {
+            out = writer.getContentOutputStream();
             // the Unicode value for UTF-8 BOM, is needed so that Excel would recognize the file in correct encoding
-            outputStream.write("\ufeff".getBytes("UTF-8"));
+            out.write("\ufeff".getBytes("UTF-8"));
+            csvWriter = new CsvWriter(out, ';', Charset.forName("UTF-8"));
             csvWriter.writeRecord(new String[] { getMessage("doclist_type"), getMessage("doclist_mark"), getMessage("doclist_title"), getMessage("doclist_doc_count"),
                     getMessage("doclist_retention_period"), getMessage("doclist_access_restriction"), getMessage("doclist_status") });
-            printFunctions(csvWriter, functionsService.getFunctions(rootRef));
+            printFunctions(csvWriter, functionsService.getFunctions(parentNodeRef));
+            return writer;
         } catch (IOException e) {
             final String msg = "Outputstream exception while exporting consolidated docList row to CSV-stream";
             throw new RuntimeException(msg, e);
         } finally {
             csvWriter.close();
+            IOUtils.closeQuietly(out);
         }
+    }
+
+    @Override
+    public Map<QName, Serializable> exportCsv(final NodeRef parentNodeRef, final NodeRef reportsSpaceRef) {
+
+        final Map<QName, Serializable> fileProps = new HashMap<QName, Serializable>(2);
+        RetryingTransactionHelper helper = BeanHelper.getTransactionService().getRetryingTransactionHelper();
+        final NodeRef fileRef = helper.doInTransaction(new RetryingTransactionCallback<NodeRef>() {
+
+            @Override
+            public NodeRef execute() throws Throwable {
+                ContentWriter writer = generateCsvFile(parentNodeRef, BeanHelper.getContentService().getWriter(null, null, false));
+                NodeRef fileRef = BeanHelper.getFileFolderService().create(reportsSpaceRef, "result.csv", ContentModel.TYPE_CONTENT).getNodeRef();
+                fileProps.put(ContentModel.PROP_CONTENT, writer.getContentData());
+                fileProps.put(ReportModel.Props.REPORT_TYPE, TemplateReportType.CONSOLIDATED_LIST.name());
+                nodeService.addProperties(fileRef, fileProps);
+                return fileRef;
+            }
+        }, false, true);
+
+        return nodeService.getProperties(fileRef);
     }
 
     private void printFunctions(CsvWriter csvWriter, List<Function> functions) {
@@ -94,7 +129,7 @@ public class DocumentListServiceImpl implements DocumentListService {
     private void printSeries(CsvWriter csvWriter, List<Series> series) {
         for (Series serie : series) {
             printLine(csvWriter, serie.getType(), serie.getSeriesIdentifier(), serie.getTitle(), serie.getContainingDocsCount(), "",
-                    nodeService.getProperty(serie.getNode().getNodeRef(), SeriesModel.Props.ACCESS_RESTRICTION).toString(),
+                    (String) nodeService.getProperty(serie.getNode().getNodeRef(), SeriesModel.Props.ACCESS_RESTRICTION),
                     serie.getStatus());
             printVolumes(csvWriter, serie.getNode().getNodeRef());
         }
@@ -117,7 +152,6 @@ public class DocumentListServiceImpl implements DocumentListService {
                     volume.getContainingDocsCount(), (dispositionDate == null ? "" : fastDateFormat.format(dispositionDate)), "", volume.getStatus());
 
             // If volume contains cases and documents, then documents must be printed first
-            printDocuments(csvWriter, volume.getNode().getNodeRef());
             if (volume.isContainsCases()) {
                 printCases(csvWriter, volume.getNode().getNodeRef());
             }
@@ -130,18 +164,6 @@ public class DocumentListServiceImpl implements DocumentListService {
         for (Case ccase : ccases) {
             printLine(csvWriter, label, "", ccase.getTitle(), ccase.getContainingDocsCount(),
                     "", "", "");
-            printDocuments(csvWriter, ccase.getNode().getNodeRef());
-        }
-    }
-
-    private void printDocuments(CsvWriter csvWriter, NodeRef nodeRef) {
-        List<NodeRef> allDocumentsByCase = documentService.getAllDocumentRefsByParentRef(nodeRef);
-        String label = MessageUtil.getMessage("document");
-        for (NodeRef docuRef : allDocumentsByCase) {
-            DocumentDynamic document = documentDynamicService.getDocument(docuRef);
-            printLine(csvWriter, label, document.getRegNumber(), document.getDocName(), -1, "",
-                    (String) document.getNode().getProperties().get(DocumentCommonModel.Props.ACCESS_RESTRICTION),
-                    document.getDocStatus());
         }
     }
 

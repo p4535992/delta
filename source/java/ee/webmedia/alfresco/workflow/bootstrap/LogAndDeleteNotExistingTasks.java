@@ -13,8 +13,6 @@ import ee.webmedia.alfresco.common.web.BeanHelper;
 
 /**
  * Delete tasks that have no store_id field filled, assuming that those tasks don't exist in repo ant more
- * 
- * @author Riina Tens
  */
 public class LogAndDeleteNotExistingTasks extends AbstractModuleComponent {
     private final Log log = LogFactory.getLog(getClass());

@@ -6,9 +6,6 @@ import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
 
-/**
- * @author Riina Tens
- */
 public class WorkflowReopenEvaluator extends BaseActionEvaluator {
 
     private static final long serialVersionUID = 1L;

@@ -45,6 +45,7 @@ public class ApplicationServiceImpl implements ApplicationService, InitializingB
     // (Although they always hit Hibernate cache, 8 calls to ParametersService add a total of 50 ms to each page render)
     private String headerText;
     private String footerText;
+    private String mDeltaFooterText;
 
     public void setModuleService(ModuleService moduleService) {
         this.moduleService = moduleService;
@@ -90,6 +91,12 @@ public class ApplicationServiceImpl implements ApplicationService, InitializingB
             @Override
             public void doWithParameter(Serializable value) {
                 footerText = (String) value;
+            }
+        });
+        parametersService.addParameterChangeListener(Parameters.M_DELTA_FOOTER_TEXT.getParameterName(), new ParameterChangedCallback() {
+            @Override
+            public void doWithParameter(Serializable value) {
+                mDeltaFooterText = (String) value;
             }
         });
     }
@@ -168,6 +175,20 @@ public class ApplicationServiceImpl implements ApplicationService, InitializingB
             }, AuthenticationUtil.getSystemUserName());
         }
         return footerText;
+    }
+
+    @Override
+    public String getMDeltaFooterText() {
+        if (mDeltaFooterText == null) {
+            AuthenticationUtil.runAs(new RunAsWork<Object>() {
+                @Override
+                public Object doWork() throws Exception {
+                    mDeltaFooterText = parametersService.getStringParameter(Parameters.M_DELTA_FOOTER_TEXT);
+                    return null;
+                }
+            }, AuthenticationUtil.getSystemUserName());
+        }
+        return mDeltaFooterText;
     }
 
     @Override

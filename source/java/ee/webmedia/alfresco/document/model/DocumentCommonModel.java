@@ -13,9 +13,6 @@ import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.xtee.client.dhl.DhlXTeeService.SendStatus;
 
-/**
- * @author Alar Kvell
- */
 public interface DocumentCommonModel {
     String DOCCOM_URI = "http://alfresco.webmedia.ee/model/document/common/1.0";
     String DOCCOM_PREFIX = "doccom:";
@@ -91,6 +88,9 @@ public interface DocumentCommonModel {
         QName FILE_NAMES = QName.createQName(DOCCOM_URI, "fileNames");
         QName FILE_CONTENTS = QName.createQName(DOCCOM_URI, "fileContents");
         QName SEARCHABLE_SEND_MODE = QName.createQName(DOCCOM_URI, "searchableSendMode");
+        QName SEARCHABLE_SEND_INFO_RECIPIENT = QName.createQName(DOCCOM_URI, "searchableSendInfoRecipient");
+        QName SEARCHABLE_SEND_INFO_SEND_DATE_TIME = QName.createQName(DOCCOM_URI, "searchableSendInfoDateTime");
+        QName SEARCHABLE_SEND_INFO_RESOLUTION = QName.createQName(DOCCOM_URI, "searchableSendInfoResolution");
         /** shows if the document contains at least one compoundWorkflow, that has startedDateTime set */
         QName SEARCHABLE_HAS_STARTED_COMPOUND_WORKFLOWS = QName.createQName(DOCCOM_URI, "searchableHasStartedCompoundWorkflows");
         /** If document has at least one compoundWorkflow and all compoundWorkflows have {@link Status#FINISHED}. */
@@ -166,8 +166,6 @@ public interface DocumentCommonModel {
 
     /**
      * Document related privileges (and dependencies)
-     * 
-     * @author Ats Uiboupin
      */
     abstract class Privileges {
         /** Permission used on dynamic document types. Indicates that user can create new document of specific type. */

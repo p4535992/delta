@@ -22,9 +22,6 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.volume.search.model.VolumeSearchModel;
 
-/**
- * @author Riina Tens
- */
 public class WaitingForTransferVolumeListDialog extends VolumeArchiveBaseDialog {
 
     private static final long serialVersionUID = 1L;

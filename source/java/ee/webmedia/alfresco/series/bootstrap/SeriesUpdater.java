@@ -37,10 +37,6 @@ import ee.webmedia.alfresco.series.model.SeriesModel;
  * Asjatoimik -> CASE_FILE
  * and adds SUBJECT_FILE and ANNUAL_FILE if needed.
  * 3) adds caseFileContainer aspect
- * 
- * @author Ats Uiboupin - removing permission
- * @author Vladimir Drozdik - changing series.volType
- * @author Kaarel Jõgeva - adding caseFileContainer aspect
  */
 public class SeriesUpdater extends AbstractNodeUpdater {
     @Deprecated

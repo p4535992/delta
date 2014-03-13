@@ -102,12 +102,6 @@
             component-generator="EnumSelectorGenerator"
             filter="ee.webmedia.alfresco.workflow.web.evaluator.CompoundWorkflowStatusFilter" 
             />
-         <show-property 
-            name="cwsearch:comment" 
-            display-label-id="cw_search_comment" 
-            component-generator="TextAreaGenerator" 
-            styleClass="expand19-200" 
-            />
       </property-sheet>
    </config>
    

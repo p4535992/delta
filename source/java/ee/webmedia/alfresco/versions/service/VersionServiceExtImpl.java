@@ -5,9 +5,6 @@ import org.alfresco.repo.version.Version2ServiceImpl;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
 
-/**
- * @author Riina Tens
- */
 public class VersionServiceExtImpl extends Version2ServiceImpl implements VersionServiceExt {
 
     @Override

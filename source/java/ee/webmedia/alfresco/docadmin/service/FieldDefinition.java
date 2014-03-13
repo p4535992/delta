@@ -12,8 +12,6 @@ import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 
 /**
  * Field that is stored under /fieldDefinitions folder, but not under {@link DocumentTypeVersion} or {@link FieldGroup}
- * 
- * @author Ats Uiboupin
  */
 public class FieldDefinition extends Field {
     private static final long serialVersionUID = 1L;

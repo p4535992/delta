@@ -220,7 +220,9 @@ public class ParametersImportDialog extends AbstractImportDialog {
 
     // END: getters / setters
 
-    private static class ParameterImportLineVo {
+    private static class ParameterImportLineVo implements Serializable {
+        private static final long serialVersionUID = 3754748938974L;
+
         public ParameterImportLineVo(String comment, String value) {
             this.comment = comment;
             this.value = value;

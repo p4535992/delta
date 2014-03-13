@@ -12,9 +12,6 @@ import org.apache.commons.lang.StringUtils;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
-/**
- * @author Alar Kvell
- */
 public class UserSyncDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;
 

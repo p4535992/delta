@@ -76,8 +76,6 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
  * Component to represent a child propertySheet as a PropertySheetItem within a parent property sheet
- * 
- * @author Ats Uiboupin
  */
 public class SubPropertySheetItem extends PropertySheetItem {
     public static final String SUB_PROPERTY_SHEET_ITEM = SubPropertySheetItem.class.getCanonicalName();
@@ -188,7 +186,7 @@ public class SubPropertySheetItem extends PropertySheetItem {
         }
         writer.writeAttribute(HTML.CLASS_ATTR, styleClass, null);
         writer.startElement(HTML.TD_ELEM, this);
-        writer.writeAttribute(HTML.COLSPAN_ATTR, 2, null);
+        writer.writeAttribute(HTML.COLSPAN_ATTR, 4, null);
     }
 
     @Override

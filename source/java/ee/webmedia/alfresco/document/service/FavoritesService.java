@@ -5,7 +5,6 @@ import java.util.List;
 import org.alfresco.service.cmr.repository.NodeRef;
 
 /**
- * @author Riina Tens
  *         Refactored from DocumentService.
  */
 public interface FavoritesService {

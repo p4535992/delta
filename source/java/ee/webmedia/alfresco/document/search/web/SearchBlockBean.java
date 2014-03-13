@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.document.search.web;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getGeneralService;
 import static org.alfresco.web.bean.dialog.BaseDialogBean.hasPermission;
 
 import java.io.Serializable;
@@ -7,9 +8,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import javax.faces.component.UIInput;
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
+import javax.faces.event.ValueChangeEvent;
+import javax.faces.model.SelectItem;
 
+import org.alfresco.service.cmr.repository.AssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
@@ -17,11 +22,15 @@ import org.apache.commons.lang.StringUtils;
 import org.springframework.util.Assert;
 import org.springframework.web.jsf.FacesContextUtils;
 
+import ee.webmedia.alfresco.archivals.model.ArchivalsStoreVO;
 import ee.webmedia.alfresco.casefile.model.CaseFileModel;
 import ee.webmedia.alfresco.cases.model.CaseModel;
 import ee.webmedia.alfresco.cases.service.CaseService;
+import ee.webmedia.alfresco.common.listener.RefreshEventListener;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docconfig.generator.DialogDataProvider;
+import ee.webmedia.alfresco.docconfig.generator.PropertySheetStateHolder;
+import ee.webmedia.alfresco.docconfig.generator.systematic.DocumentLocationGenerator.DocumentLocationState;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
 import ee.webmedia.alfresco.docdynamic.web.DocumentDynamicBlock;
 import ee.webmedia.alfresco.document.model.Document;
@@ -33,7 +42,7 @@ import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
 
-public class SearchBlockBean extends AbstractSearchBlockBean implements DocumentDynamicBlock {
+public class SearchBlockBean extends AbstractSearchBlockBean implements DocumentDynamicBlock, RefreshEventListener {
     private static final long serialVersionUID = 1L;
 
     public static final String BEAN_NAME = "SearchBlockBean";
@@ -46,6 +55,7 @@ public class SearchBlockBean extends AbstractSearchBlockBean implements Document
     private boolean showSimilarDocumentsBlock;
     private DocumentDynamic document;
     private Node node;
+    private List<SelectItem> stores;
 
     public void init(DialogDataProvider provider) {
         document = provider.getDocument();
@@ -59,11 +69,32 @@ public class SearchBlockBean extends AbstractSearchBlockBean implements Document
                 assocBlockObjects.add(new AssocBlockObject(doc));
             }
         }
+        loadStores();
+    }
+
+
+    private void loadStores() {
+        stores = new ArrayList<SelectItem>();
+        stores.add(new SelectItem(BeanHelper.getFunctionsService().getFunctionsRoot(), MessageUtil.getMessage("functions_title")));
+        for (ArchivalsStoreVO archivalsStoreVO : getGeneralService().getArchivalsStoreVOs()) {
+            stores.add(new SelectItem(archivalsStoreVO.getNodeRef(), archivalsStoreVO.getTitle()));
+        }
+    }
+
+    public List<SelectItem> getStores(FacesContext context, UIInput selectComponent) {
+        return stores;
     }
 
     public void init(Node node) {
         this.node = node;
         super.initSearch(node.getNodeRef(), "#{SearchBlockBean.notBaseDocumentSearch}");
+    }
+
+    public void storeValueChanged(ValueChangeEvent event) {
+        @SuppressWarnings("unchecked")
+        final List<NodeRef> selectedStores = (List<NodeRef>) event.getNewValue();
+        getFilter().getProperties().put(DocumentDynamicSearchDialog.SELECTED_STORES.toString(), selectedStores);
+        refresh();
     }
 
     @Override
@@ -80,6 +111,16 @@ public class SearchBlockBean extends AbstractSearchBlockBean implements Document
             reset();
         } else {
             init(provider);
+        }
+    }
+
+    @Override
+    public void refresh() {
+        for (PropertySheetStateHolder stateHolder : config.getStateHolders().values()) {
+            if (stateHolder instanceof DocumentLocationState) {
+                ((DocumentLocationState) stateHolder).reset(isInEditMode());
+                return;
+            }
         }
     }
 
@@ -249,7 +290,8 @@ public class SearchBlockBean extends AbstractSearchBlockBean implements Document
     // END: snapshot logic
 
     public void findSimilarDocuments(String senderRegNumber) {
-        if (StringUtils.isNotBlank(senderRegNumber)) {
+        final List<AssociationRef> targetAssocs = BeanHelper.getNodeService().getTargetAssocs(document.getNodeRef(), DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP);
+        if (targetAssocs.isEmpty() && StringUtils.isNotBlank(senderRegNumber)) {
             List<Document> documents = getDocumentSearchService().searchIncomingLetterRegisteredDocuments(senderRegNumber);
             assocBlockObjects = new ArrayList<AssocBlockObject>();
             for (Document doc : documents) {
@@ -278,7 +320,7 @@ public class SearchBlockBean extends AbstractSearchBlockBean implements Document
     }
 
     public void setShowSimilarDocumentsBlock(boolean foundSimilar) {
-        this.showSimilarDocumentsBlock = foundSimilar;
+        showSimilarDocumentsBlock = foundSimilar;
     }
 
     public void setDocumentSearchBean(DocumentSearchBean documentSearchBean) {

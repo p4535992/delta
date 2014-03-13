@@ -33,6 +33,7 @@ import javax.faces.context.FacesContext;
 import javax.faces.context.ResponseWriter;
 import javax.faces.el.MethodBinding;
 import javax.faces.el.ValueBinding;
+import javax.faces.event.ActionEvent;
 
 import org.alfresco.web.ui.common.PanelGenerator;
 import org.alfresco.web.ui.common.Utils;
@@ -668,4 +669,21 @@ public class UIPanel extends UICommand
    private boolean hasAdornments = false;
    private boolean hasBorderedTitleArea = false;
    private Boolean expanded = Boolean.TRUE;
+   
+   // ------------------------------------------------------------------------------
+   // Inner classes
+   
+   /**
+    * Class representing the an action relevant when the panel is expanded or collapsed.
+    */
+   public static class ExpandedEvent extends ActionEvent
+   {
+      public ExpandedEvent(UIComponent component, boolean state)
+      {
+         super(component);
+         State = state;
+      }
+      
+      public boolean State;
+   }
 }

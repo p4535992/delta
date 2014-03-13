@@ -8,9 +8,6 @@ import org.alfresco.web.bean.repository.Node;
 
 import ee.webmedia.alfresco.docadmin.service.DocumentTypeVersion;
 
-/**
- * @author Kaarel Jõgeva
- */
 public interface CaseFileService {
 
     public static final String BEAN_NAME = "CaseFileService";

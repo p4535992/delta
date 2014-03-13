@@ -25,8 +25,6 @@ import ee.webmedia.alfresco.utils.ProgressTracker;
 /**
  * Updater for fixing invalid acls. Logic is adapted from Alfresco later branch FixAclInheritancePatch.java.
  * See cl task 209621 for details.
- * 
- * @author Riina Tens
  */
 public class FixAclInheritanceUpdater extends AbstractModuleComponent {
 

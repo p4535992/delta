@@ -21,9 +21,6 @@ import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UnableToPerformMultiReasonException;
 import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
 
-/**
- * @author Alar Kvell
- */
 public interface DocumentDynamicService {
 
     String BEAN_NAME = "DocumentDynamicService";
@@ -118,8 +115,9 @@ public interface DocumentDynamicService {
      * @param fileRef file should be a MS Word or OpenOffice writer file
      * @param document document to update
      * @param updateGeneratedFiles if true, then other generated files are also updated
+     * @return TODO
      */
-    void updateDocumentAndGeneratedFiles(NodeRef fileRef, NodeRef document, boolean updateGeneratedFiles);
+    boolean updateDocumentAndGeneratedFiles(NodeRef fileRef, NodeRef document, boolean updateGeneratedFiles);
 
     void validateDocument(List<String> saveListenerBeanNames, DocumentDynamic document);
 

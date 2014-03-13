@@ -93,5 +93,16 @@
       <property name="adrService" ref="adrService" />
       <property name="dataFolder" value="${dir.root.shared}" />
    </bean>
+       
+   <bean id="addAdrDeletedDocForNotExistingDoc" class="ee.webmedia.alfresco.adr.bootstrap.AddAdrDeletedDocForNotExistingDoc" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />  
+      <property name="dependsOn">
+         <list>
+            <ref bean="archivalsStoresBootstrap" />
+            <ref bean="adrDeletedDocumentsBootstrap" />
+         </list>
+      </property>
+   </bean>
 
 </beans>

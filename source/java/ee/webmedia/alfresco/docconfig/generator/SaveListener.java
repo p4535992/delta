@@ -10,9 +10,6 @@ import ee.webmedia.alfresco.docconfig.service.DynamicPropertyDefinition;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 
-/**
- * @author Alar Kvell
- */
 public interface SaveListener {
 
     String getBeanName();

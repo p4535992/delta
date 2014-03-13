@@ -18,9 +18,6 @@ import ee.webmedia.alfresco.menu.ui.MenuBean;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
-/**
- * @author Alar Kvell
- */
 public class DocumentQuickSearchResultsDialog extends BaseDocumentListDialog {
     private static final long serialVersionUID = 1L;
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DocumentQuickSearchResultsDialog.class);
@@ -55,7 +52,7 @@ public class DocumentQuickSearchResultsDialog extends BaseDocumentListDialog {
     protected void doInitialSearch() {
         try {
             DocumentSearchService documentSearchService = getDocumentSearchService();
-            documents = setLimited(documentSearchService.searchDocumentsQuick(searchValue, containerNodeRef, getLimit()));
+            documents = setLimited(documentSearchService.quickSearchDocuments(searchValue, containerNodeRef, getLimit()));
             Collections.sort(documents, CreatedOrRegistratedDateComparator.getComparator());
         } catch (BooleanQuery.TooManyClauses e) {
             log.error("Quick search of '" + searchValue + "' failed: " + e.getMessage()); // stack trace is logged in the service

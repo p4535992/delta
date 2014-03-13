@@ -19,9 +19,6 @@ import ee.webmedia.alfresco.common.propertysheet.modalLayer.ModalLayerComponent.
 import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
-/**
- * @author Keit Tehvan
- */
 public class DocumentLocationModalComponent extends UICommand {
 
     private static final String FIELD_VALUE_SAVE = "SAVE";

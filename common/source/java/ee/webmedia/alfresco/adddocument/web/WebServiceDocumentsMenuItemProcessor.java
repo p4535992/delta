@@ -7,9 +7,6 @@ import ee.webmedia.alfresco.menu.model.MenuItem;
 import ee.webmedia.alfresco.menu.service.CountAddingMenuItemProcessor;
 import ee.webmedia.alfresco.menu.service.MenuItemCountHandler;
 
-/**
- * @author Riina Tens
- */
 public class WebServiceDocumentsMenuItemProcessor extends CountAddingMenuItemProcessor implements MenuItemCountHandler, InitializingBean {
 
     @Override

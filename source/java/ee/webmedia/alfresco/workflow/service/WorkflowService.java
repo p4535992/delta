@@ -15,12 +15,11 @@ import org.alfresco.web.bean.repository.Node;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.model.Document;
-import ee.webmedia.alfresco.utils.MessageDataWrapper;
 import ee.webmedia.alfresco.utils.Predicate;
-import ee.webmedia.alfresco.utils.UnableToPerformMultiReasonException;
 import ee.webmedia.alfresco.workflow.exception.WorkflowChangedException;
 import ee.webmedia.alfresco.workflow.generated.DeleteLinkedReviewTaskType;
 import ee.webmedia.alfresco.workflow.generated.LinkedReviewTaskType;
+import ee.webmedia.alfresco.workflow.model.Comment;
 import ee.webmedia.alfresco.workflow.model.CompoundWorkflowType;
 import ee.webmedia.alfresco.workflow.model.CompoundWorkflowWithObject;
 import ee.webmedia.alfresco.workflow.model.RelatedUrl;
@@ -30,9 +29,6 @@ import ee.webmedia.alfresco.workflow.service.event.WorkflowEventListenerWithModi
 import ee.webmedia.alfresco.workflow.service.event.WorkflowMultiEventListener;
 import ee.webmedia.alfresco.workflow.service.type.WorkflowType;
 
-/**
- * @author Alar Kvell
- */
 public interface WorkflowService {
     String BEAN_NAME = "WmWorkflowService";
 
@@ -72,19 +68,15 @@ public interface WorkflowService {
     // get existing object from repository
     List<CompoundWorkflow> getCompoundWorkflows(NodeRef parent);
 
+    List<CompoundWorkflow> getCompoundWorkflows(NodeRef parent, NodeRef nodeRefToSkip);
+
     CompoundWorkflow getCompoundWorkflow(NodeRef compoundWorkflow);
 
     CompoundWorkflow getCompoundWorkflow(NodeRef nodeRef, boolean loadTasks, boolean loadWorkflows);
 
     CompoundWorkflow saveCompoundWorkflow(CompoundWorkflow compoundWorkflow);
 
-    /**
-     * @param originalAssignmentTask - task that will be delegated(originalAssignmentTask.parent contains information about new tasks and
-     *            originalAssignmentTask.parent.parent contains information about new workflows)
-     * @return MessageDataWrapper with 0 or more non-error messages to be shown to the user
-     * @throws UnableToPerformMultiReasonException - when at least one error-message should be shown to the user
-     */
-    MessageDataWrapper delegate(Task originalAssignmentTask) throws UnableToPerformMultiReasonException;
+    CompoundWorkflow delegate(Task assignmentTaskOriginal);
 
     void deleteCompoundWorkflow(NodeRef compoundWorkflow, boolean validateStatuses);
 
@@ -105,8 +97,10 @@ public interface WorkflowService {
      * for compoundWorkflow.type=INDEPENDENT_WORKFLOW, CASE_FILE_WORKFLOW, count active responsible tasks in given compound workflow only
      */
     int getConnectedActiveResponsibleTasksCount(CompoundWorkflow compoundWorkflow, QName workflowType);
-    
-    int getConnectedActiveResponsibleTasksCount(CompoundWorkflow compoundWorkflow, QName workflowType, boolean allowFinished);
+
+    int getConnectedActiveResponsibleTasksCount(CompoundWorkflow compoundWorkflow, QName workflowType, boolean allowFinished, NodeRef compoundWorkflowToSkip);
+
+    int getConnectedActiveResponsibleTasksCount(List<CompoundWorkflow> compoundWorkflows, boolean allowFinished, NodeRef compoundWorkflowToSkip);
 
     /**
      * @param compoundWorkflow
@@ -145,6 +139,8 @@ public interface WorkflowService {
     Set<Task> getTasksInProgress(NodeRef docRef);
 
     void setTaskOwner(NodeRef task, String ownerId, boolean retainPreviousOwnerId);
+
+    boolean containsDocumentsWithLimitedActivities(NodeRef compoundWorkflowRef);
 
     void setCompoundWorkflowOwner(NodeRef task, String ownerId, boolean retainPreviousOwnerId);
 
@@ -211,7 +207,10 @@ public interface WorkflowService {
 
     CompoundWorkflow getNewCompoundWorkflow(Node compoundWorkflowDefinition, NodeRef parent);
 
-    void createDueDateExtension(String reason, Date newDate, Date dueDate, Task initiatingTask, NodeRef containerRef);
+    List<String> checkAndAddMissingOwnerEmails(CompoundWorkflow compoundWorkflow);
+
+    void createDueDateExtension(String reason, Date newDate, Date dueDate, Task initiatingTask, NodeRef containerRef, String dueDateExtenderUsername,
+            String dueDateExtenderUserFullname);
 
     void registerMultiEventListener(WorkflowMultiEventListener listener);
 
@@ -257,7 +256,7 @@ public interface WorkflowService {
 
     CompoundWorkflowType getWorkflowCompoundWorkflowType(NodeRef workflowRef);
 
-    Map<NodeRef, List<File>> getCompoundWorkflowSigningFiles(CompoundWorkflow compoundWorkflow);
+    Map<NodeRef, List<File>> getCompoundWorkflowSigningFiles(NodeRef compoundWorkflowRef);
 
     String getIndependentCompoundWorkflowProcedureId(NodeRef compoundWorkflowRef);
 
@@ -333,7 +332,17 @@ public interface WorkflowService {
     CompoundWorkflow getCompoundWorkflowOfType(NodeRef nodeRef, List<QName> types);
 
     List<CompoundWorkflow> getOtherCompoundWorkflows(CompoundWorkflow compoundWorkflow);
-    
+
     List<NodeRef> getCompoundWorkflowAndTaskNodeRefs(NodeRef parentRef);
+
+    List<Comment> getComments(NodeRef compoundWorkflowRef);
+
+    void addCompoundWorkflowComment(Comment comment);
+
+    void editCompoundWorkflowComment(Long commentId, String commentText);
+
+    NodeRef getCompoundWorkflowMainDocumentRef(NodeRef compoundWorkflowRef);
+
+    Task getTaskWithParents(NodeRef nodeRef);
 
 }

@@ -1,4 +1,5 @@
 <%@page import="ee.webmedia.alfresco.utils.MessageUtil"%>
+<%@page import="ee.webmedia.alfresco.common.web.BeanHelper"%>
 <%@ taglib uri="http://java.sun.com/jsf/html" prefix="h"%>
 <%@ taglib uri="http://java.sun.com/jsf/core" prefix="f"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
@@ -13,7 +14,9 @@
    <f:verbatim>
       <script type="text/javascript">
          $jQ(document).ready(function () {
-            showModal("</f:verbatim><a:outputText value="#{CaseFileDialog.renderedModal}" /><f:verbatim>");
+            var modalId = "</f:verbatim><a:outputText value="#{CaseFileDialog.renderedModal}" /><f:verbatim>";
+            showModal(modalId);
+            initExpanders($jQ("#" + modalId));
          });
       </script>
    </f:verbatim>
@@ -47,12 +50,18 @@
       </r:permissionEvaluator>
    </f:facet>
 </h:panelGroup>
+<jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/docdynamic/web/metadata-unlocking-helper.jsp" />
 <f:verbatim>
 <script type="text/javascript">
 $jQ(document).ready(function() {
    if (setInputFocus) {
-		var container = $jQ("#"+escapeId4JQ('container-content'));
-         $jQ("input:text, textarea", container).filter(':visible:enabled[readonly!="readonly"]').first().focus();
+      var container = $jQ("#"+escapeId4JQ('container-content'));
+      $jQ("input:text, textarea", container).filter(':visible:enabled[readonly!="readonly"]').first().focus();
+   }
+   var inEdit = <%= BeanHelper.getDocumentDialogHelperBean().isInEditMode() %>;
+   if(inEdit) {
+      addAdditionalBlockElementsToExcludedList();
+      disableUnlockOnPager();
    }
 });
 </script>

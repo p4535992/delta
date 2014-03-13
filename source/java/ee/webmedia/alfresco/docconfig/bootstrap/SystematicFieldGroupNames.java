@@ -2,8 +2,6 @@ package ee.webmedia.alfresco.docconfig.bootstrap;
 
 /**
  * Constants for systematic fieldGroups
- * 
- * @author Ats Uiboupin
  */
 public class SystematicFieldGroupNames {
     public static final String USER = "Kasutaja";
@@ -30,6 +28,7 @@ public class SystematicFieldGroupNames {
     public static final String LEAVE_CANCEL = "Puhkuse tühistamine";
     public static final String SUBSTITUTE = "Asendaja määramine";
     public static final String TRAINING_APPLICANT = "Koolituse taotleja";
+    public static final String ERRAND_APPLICANT = "Lähetuse taotleja";
     public static final String ERRAND_DOMESTIC_APPLICANT = "Siselähetuse taotleja";
     public static final String ERRAND_ABROAD_APPLICANT = "Välislähetuse taotleja";
     public static final String FIRST_PARTY_CONTACT_PERSON = "Esimese lepingu poole kontaktisik";

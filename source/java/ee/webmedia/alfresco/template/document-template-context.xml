@@ -92,7 +92,6 @@
       <property name="generalService" ref="GeneralService" />
       <property name="applicationService" ref="ApplicationService" />
       <property name="nodeService" ref="NodeService" />
-      <property name="fileService" ref="FileService" />
       <property name="mimetypeService" ref="MimetypeService" />
       <property name="fileFolderService" ref="FileFolderService" />
       <property name="documentLogService" ref="DocumentLogService" />
@@ -127,6 +126,11 @@
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
       <property name="transactionHelperMinRetryWaits" value="6000" />
+   </bean>
+
+   <bean id="defaultValuesFieldUpdater" class="ee.webmedia.alfresco.template.bootstrap.DefaultValuesFieldUpdater" parent="abstractNodeUpdater" >
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
    </bean>
    
 </beans>

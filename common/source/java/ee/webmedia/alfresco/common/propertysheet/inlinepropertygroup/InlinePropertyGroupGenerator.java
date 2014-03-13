@@ -43,8 +43,6 @@ import ee.webmedia.alfresco.utils.ComponentUtil;
  * The following options after component generator name are set as component's attributes, these must be in the format {@code attributeName=attributeValue}.<br/>
  * For example: {@code props="ex:regNr1,ex:name1||styleClass=green,ex:date1|CustomDatePicker|styleClass=date inline|mandatoryIf=ex:other1"}</li>
  * </ul>
- * 
- * @author Alar Kvell
  */
 public class InlinePropertyGroupGenerator extends BaseComponentGenerator implements HandlesViewMode {
 
@@ -125,6 +123,7 @@ public class InlinePropertyGroupGenerator extends BaseComponentGenerator impleme
             textParts.set(0, first.substring(1));
             textParts.add(0, "");
         }
+        boolean propSheetReadOnly = UIPropertySheet.VIEW_MODE.equals(propertySheet.getMode());
         for (int i = 0; i < textParts.size(); i++) {
             final String textPart = textParts.get(i);
             if (StringUtils.isNotEmpty(textPart)) {
@@ -142,14 +141,9 @@ public class InlinePropertyGroupGenerator extends BaseComponentGenerator impleme
                 final ComponentPropVO componentPropVO = propVOs.get(propIndex);
 
                 // Check if the field is mandatory
-                String mandatory = componentPropVO.getCustomAttributes().get("mandatory");
-                if (Boolean.valueOf(mandatory)) {
-                    UIOutput marker = createOutputTextComponent(context, null);
-                    @SuppressWarnings("unchecked")
-                    Map<String, String> attributes = marker.getAttributes();
-                    attributes.put(CustomAttributeNames.STYLE_CLASS, "red");
-                    marker.setValue("* ");
-                    rowChildren.add(marker);
+                String mandatory = componentPropVO.getCustomAttributes().get(CustomAttributeNames.ATTR_MANDATORY);
+                if (!propSheetReadOnly && Boolean.valueOf(mandatory)) {
+                    rowChildren.add(ComponentUtil.createMandatoryMarker(context));
                 }
 
                 componentPropVO.getCustomAttributes().put(VALUE_INDEX_IN_MULTIVALUED_PROPERTY, "-1");

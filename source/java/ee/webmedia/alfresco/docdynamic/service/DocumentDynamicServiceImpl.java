@@ -24,6 +24,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -32,6 +33,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import org.alfresco.model.ContentModel;
+import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
 import org.alfresco.service.cmr.dictionary.AspectDefinition;
 import org.alfresco.service.cmr.dictionary.AssociationDefinition;
 import org.alfresco.service.cmr.dictionary.ChildAssociationDefinition;
@@ -128,9 +130,6 @@ import ee.webmedia.alfresco.workflow.service.Workflow;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
 import ee.webmedia.alfresco.workflow.service.WorkflowUtil;
 
-/**
- * @author Alar Kvell
- */
 public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanFactoryAware {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(DocumentDynamicServiceImpl.class);
 
@@ -682,7 +681,7 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
             docNode.getAspects().add(DocumentCommonModel.Aspects.SEARCHABLE);
             docProps.put(FILE_NAMES.toString(), documentService.getSearchableFileNames(docRef));
             docProps.put(FILE_CONTENTS.toString(), documentService.getSearchableFileContents(docRef));
-            docProps.put(DocumentCommonModel.Props.SEARCHABLE_SEND_MODE.toString(), sendOutService.buildSearchableSendMode(docRef));
+            docProps.putAll(RepoUtil.toStringProperties(sendOutService.buildSearchableSendInfo(docRef)));
         }
 
         if (isDraft && !document.isDraft()) { // Check if document is saved under a case file for the first time
@@ -716,6 +715,10 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         Assert.isNull(childAssocTypeQNamesRoot.getData());
 
         updateSearchableChildNodeProps(docNode, null, childAssocTypeQNamesRoot.getChildren(), propDefs);
+        if (isDraft) {
+            // Remove references on first save
+            fileService.removePreviousParentReference(docRef, false);
+        }
 
         { // update properties and log changes made in properties
             String oldRegNumber = (String) nodeService.getProperty(docRef, REG_NUMBER);
@@ -788,13 +791,43 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
     private void validateDocument(List<String> saveListenerBeanNames, DocumentDynamic document, Map<String, Pair<DynamicPropertyDefinition, Field>> propDefs) {
         ValidationHelperImpl validationHelper = new ValidationHelperImpl(propDefs);
         validateDocumentForFormulaPattern(document, validationHelper);
+        validateDueDateFields(document, validationHelper);
         for (String saveListenerBeanName : saveListenerBeanNames) {
             SaveListener saveListener = (SaveListener) beanFactory.getBean(saveListenerBeanName, SaveListener.class);
             saveListener.validate(document, validationHelper);
         }
         if (!validationHelper.errorMessages.isEmpty()) {
-            throw new UnableToPerformMultiReasonException(new MessageDataWrapper(validationHelper.errorMessages));
+            throw new UnableToPerformMultiReasonException(new MessageDataWrapper(validationHelper.errorMessages), document);
         }
+    }
+
+    private void validateDueDateFields(DocumentDynamic document, ValidationHelperImpl validationHelper) {
+        Field dueDateField = null;
+        Field dueDateDescField = null;
+        for (Pair<DynamicPropertyDefinition, Field> propDefPair : validationHelper.getPropDefs().values()) {
+            Field field = propDefPair.getSecond();
+            if (field == null) {
+                continue; // Hidden fields can be ignored
+            }
+            if ("dueDate".equals(field.getFieldId())) {
+                dueDateField = field;
+            } else if ("dueDateDesc".equals(field.getFieldId())) {
+                dueDateDescField = field;
+            }
+            if (dueDateField != null && dueDateDescField != null) {
+                break;
+            }
+        }
+        if (dueDateField != null && dueDateDescField != null) {
+            if (isEmptyValue(document.getProp(dueDateField.getQName())) && isEmptyValue(document.getProp(dueDateDescField.getQName()))) {
+                validationHelper.addErrorMessage("docdyn_save_error_dueDateAndDueDateDescEmpty", dueDateField.getName(), dueDateDescField.getName());
+            }
+        }
+    }
+
+    public boolean isEmptyValue(Object endDateValue) {
+        return endDateValue == null || (endDateValue instanceof String && StringUtils.isBlank((String) endDateValue))
+                || (endDateValue instanceof Collection && ((Collection) endDateValue).isEmpty());
     }
 
     private void validateDocumentForFormulaPattern(DocumentDynamic document, ValidationHelperImpl validationHelper) {
@@ -1142,13 +1175,12 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         return docPropsChangeHolder;
     }
 
-    @Override
-    public void updateDocumentAndGeneratedFiles(NodeRef fileRef, NodeRef document, boolean updateGeneratedFiles) {
+    private Map<String, String> getFormulasFromFile(NodeRef fileRef) {
         String generationType = (String) nodeService.getProperty(fileRef, FileModel.Props.GENERATION_TYPE);
         Boolean updateMetadataInFiles = (Boolean) nodeService.getProperty(fileRef, FileModel.Props.UPDATE_METADATA_IN_FILES);
         if (!GeneratedFileType.WORD_TEMPLATE.name().equals(generationType) && !GeneratedFileType.OPENOFFICE_TEMPLATE.name().equals(generationType)
                 && Boolean.FALSE.equals(updateMetadataInFiles)) {
-            return;
+            return null;
         }
 
         Map<String, String> formulas = null;
@@ -1156,7 +1188,7 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         if (GeneratedFileType.WORD_TEMPLATE.name().equals(generationType)) {
             if (!getMsoService().isAvailable()) {
                 LOG.debug("MsoService is not available, skipping updating document");
-                return;
+                return null;
             }
             try {
                 formulas = getMsoService().modifiedFormulas(contentReader);
@@ -1167,18 +1199,23 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
 
         if (GeneratedFileType.OPENOFFICE_TEMPLATE.name().equals(generationType)) {
             if (!getOpenOfficeService().isAvailable()) {
-                LOG.debug("OpenOffice connection is not available, skipping updating document");
-                return;
+                throw new RuntimeException("OpenOffice connection is not available"); // TODO better error message
             }
             try {
-                formulas = getOpenOfficeService().modifiedFormulas(contentReader, document, fileRef);
+                formulas = getOpenOfficeService().modifiedFormulas(contentReader);
             } catch (Exception e) {
                 throw new RuntimeException("Error getting formulas from OpenOffice Writer file " + fileRef + " : " + e.getMessage(), e);
             }
         }
+        return formulas;
+    }
+
+    @Override
+    public boolean updateDocumentAndGeneratedFiles(NodeRef fileRef, NodeRef document, boolean updateGeneratedFiles) {
+        Map<String, String> formulas = getFormulasFromFile(fileRef);
 
         if (formulas == null || formulas.isEmpty()) {
-            return;
+            return false;
         }
 
         DocumentDynamicService documentDynamicService = BeanHelper.getDocumentDynamicService();
@@ -1196,6 +1233,8 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         List<FieldType> readOnlyFields = Arrays.asList(FieldType.COMBOBOX_AND_TEXT_NOT_EDITABLE, FieldType.LISTBOX, FieldType.CHECKBOX, FieldType.INFORMATION_TEXT);
         List<ContractPartyField> partyFields = new ArrayList<ContractPartyField>();
         ClassificatorService classificatorService = BeanHelper.getClassificatorService();
+
+        List<String> blankMandatoryFields = new ArrayList<String>();
 
         for (Entry<String, String> entry : formulas.entrySet()) {
             String formulaKey = entry.getKey();
@@ -1267,26 +1306,30 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
             Serializable value;
             // Handle dates separately
             if ("date".equals(dataType.getName().getLocalName())) {
-                if (StringUtils.isBlank(formulaValue)) {
-                    value = null;
-                } else {
-                    try {
-                        value = new SimpleDateFormat("dd.MM.yyyy").parse(formulaValue);
-                    } catch (ParseException e) {
-                        throw new RuntimeException("Unable to parse date value from field '" + formulaKey + "': " + e.getMessage(), e);
-                    }
-                }
+                value = getDateValue(formulaKey, formulaValue);
             } else {
                 value = (Serializable) DefaultTypeConverter.INSTANCE.convert(dataType, formulaValue);
+            }
+            if (field.isMandatory() && StringUtils.isBlank(value.toString())) {
+                blankMandatoryFields.add(field.getName());
+                continue;
             }
             if (propDef.isMultiValued()) {
                 value = (Serializable) Collections.singletonList(value); // is this correct?
             }
             doc.setPropIgnoringEmpty(field.getQName(), value);
         }
+        if (!blankMandatoryFields.isEmpty()) {
+            String s = StringUtils.join(blankMandatoryFields, ", ");
+            String fileName = fileService.getFile(fileRef).getName();
+            String docName = doc.getDocName();
+            LOG.warn("File \"" + fileName + "\" in document \"" + docName + "\" was not saved. User tried to save mandatory field(s) \"" + s + "\" as blank!");
+            setSaveFailedLogMessage(document, fileName, s);
+            throw new UnableToPerformException("notification_document_saving_failed_due_to_blank_mandatory_fields", doc.getRegNumber(), docName, fileName, s);
+        }
 
         // Update sub-nodes
-        // TODO from Alar: implement generic child-node support using propertyDefinition.getChildAssocTypeQNameHierarchy()
+        // TODO from implement generic child-node support using propertyDefinition.getChildAssocTypeQNameHierarchy()
         if (!partyFields.isEmpty()) {
             List<ChildAssociationRef> contractPartyChildAssocs = nodeService.getChildAssocs(document, DocumentChildModel.Assocs.CONTRACT_PARTY, RegexQNamePattern.MATCH_ALL);
             for (ContractPartyField field : partyFields) {
@@ -1302,8 +1345,33 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
                 }
             }
         }
-
         updateDocument(doc, null, false, updateGeneratedFiles); // This also updates generated files
+        return true;
+    }
+
+    private void setSaveFailedLogMessage(final NodeRef document, final String fileName, final String blankFields) {
+        try {
+            BeanHelper.getTransactionService().getRetryingTransactionHelper().doInTransaction(new RetryingTransactionCallback<String>() {
+                @Override
+                public String execute() throws Throwable {
+                    documentLogService.addDocumentLog(document, MessageUtil.getMessage("file_save_failed_blank_fields", fileName, blankFields));
+                    return null;
+                }
+            }, false, true);
+        } catch (Exception err) {
+            LOG.error("Unable to add log entry for file " + fileName + ", nodeRef: " + document, err);
+        }
+    }
+
+    private Date getDateValue(String formulaKey, String formulaValue) {
+        if (StringUtils.isBlank(formulaValue)) {
+            return null;
+        }
+        try {
+            return new SimpleDateFormat("dd.MM.yyyy").parse(formulaValue);
+        } catch (ParseException e) {
+            throw new RuntimeException("Unable to parse date value from field '" + formulaKey + "': " + e.getMessage(), e);
+        }
     }
 
     private boolean isFieldUnchangeable(DocumentDynamic doc, List<String> updateDisabled, List<FieldType> readOnlyFields, Field field, ClassificatorService classificatorService,
