@@ -10,9 +10,6 @@ import ee.webmedia.alfresco.common.model.DynamicBase;
 import ee.webmedia.alfresco.docconfig.service.DocumentConfigService;
 import ee.webmedia.alfresco.docconfig.web.PropertySheetStateBean;
 
-/**
- * @author Alar Kvell
- */
 public abstract class BaseSystematicFieldGenerator implements FieldGenerator, SaveListener, BeanNameAware, InitializingBean {
 
     protected DocumentConfigService documentConfigService;

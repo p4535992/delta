@@ -7,8 +7,6 @@ import ee.webmedia.alfresco.common.web.BeanHelper;
 
 /**
  * Evaluator to check if creating children (orgainzations, persons, groups) to addressbook is enabled
- * 
- * @author Ats Uiboupin
  */
 public class AddressbookCreateChildrenEvaluator extends BaseActionEvaluator {
 

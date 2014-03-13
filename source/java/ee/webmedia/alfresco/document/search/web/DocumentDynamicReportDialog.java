@@ -30,9 +30,6 @@ import ee.webmedia.alfresco.document.search.service.DocumentSearchFilterService;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 
-/**
- * @author Riina Tens
- */
 public class DocumentDynamicReportDialog extends DocumentDynamicSearchDialog {
 
     private static final long serialVersionUID = 1L;

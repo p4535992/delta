@@ -15,9 +15,6 @@ import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.web.evaluator.ViewStateActionEvaluator;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 
-/**
- * @author Kaarel Jõgeva
- */
 public class DeleteCaseFileEvaluator extends BaseActionEvaluator {
 
     private static final long serialVersionUID = 1L;

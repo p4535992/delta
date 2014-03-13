@@ -7,9 +7,6 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import ee.webmedia.alfresco.document.service.FavoritesService;
 import ee.webmedia.alfresco.workflow.model.CompoundWorkflowWithObject;
 
-/**
- * @author Riina Tens
- */
 public interface CompoundWorkflowFavoritesService extends FavoritesService {
 
     String BEAN_NAME = "CompoundWorkflowFavoritesService";

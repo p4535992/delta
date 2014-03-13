@@ -1,8 +1,5 @@
 package ee.webmedia.alfresco.report.model;
 
-/**
- * @author Riina Tens
- */
 public enum ReportStatus {
     /** Waiting for execution */
     IN_QUEUE,

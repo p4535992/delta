@@ -26,8 +26,6 @@ import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
 
 /**
  * Base class for node-type specific logic related to {@link ManageInheritablePrivilegesDialog}
- * 
- * @author Ats Uiboupin
  */
 public abstract class PrivilegesHandler implements Serializable {
     private static final long serialVersionUID = 1L;

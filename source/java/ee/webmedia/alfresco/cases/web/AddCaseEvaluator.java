@@ -6,9 +6,6 @@ import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
 import ee.webmedia.alfresco.user.web.DocumentManagerEvaluator;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
 
-/**
- * @author Riina Tens
- */
 public class AddCaseEvaluator extends DocumentManagerEvaluator {
 
     private static final long serialVersionUID = 1L;

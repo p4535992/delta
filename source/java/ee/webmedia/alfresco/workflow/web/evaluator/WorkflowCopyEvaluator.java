@@ -6,8 +6,6 @@ import ee.webmedia.alfresco.workflow.service.Workflow;
 
 /**
  * Evaluates to true if the workflow has been saved to the repository and doesn't contain any {@link WorkflowSpecificModel.Types.DUE_DATE_EXTENSION_TASK} tasks
- * 
- * @author Kaarel Jõgeva
  */
 public class WorkflowCopyEvaluator extends WorkflowSavedEvaluator {
 

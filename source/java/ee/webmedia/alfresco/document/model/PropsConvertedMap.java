@@ -8,7 +8,6 @@ import ee.webmedia.alfresco.classificator.constant.FieldType;
 import ee.webmedia.alfresco.utils.TextUtil;
 
 /**
- * @author Vladimir Drozdik
  *         converts unit structure for binding from JSP.
  *         Refactored from @Document class
  */

@@ -29,8 +29,6 @@ import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 
 /**
  * Checks for files that have .pdf extension but wrong mimetype
- * 
- * @author Kaarel Jõgeva
  */
 public class FileMimetypeUpdater extends AbstractNodeUpdater {
 

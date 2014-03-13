@@ -19,8 +19,6 @@ import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 /**
  * Import delivererName value from csv fail for actOfDeliveryAndReceipt doc. type. Used to add data that was erroneously not converted from 2.5 to 3.13 version by
  * ConvertToDynamicDocumentsUpdater. Should be run only in SIM 3.13 environment after 2.5 -> 3.13 conversion. See cl task 215711 for details.
- * 
- * @author Riina Tens
  */
 public class ImportDelivererName extends AbstractNodeUpdater {
 

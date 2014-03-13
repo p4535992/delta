@@ -27,8 +27,6 @@ import ee.webmedia.alfresco.utils.ComponentUtil;
  * Component with larger <code>order</code> values will be disabled and made empty, components with smaller <code>order</code> will not be modified.<br>
  * <br>
  * <code>afterSelect</code> attribute can be used to call method after selection has been done.
- * 
- * @author Ats Uiboupin
  */
 public class RelatedDropdown extends HtmlSelectOneMenu {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(RelatedDropdown.class);

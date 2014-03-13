@@ -12,9 +12,6 @@ import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
 
-/**
- * @author Riina Tens
- */
 public class IsOpenDocListUnitEvaluator extends BaseActionEvaluator {
 
     private static final long serialVersionUID = 1L;

@@ -9,8 +9,6 @@ import ee.webmedia.alfresco.common.ajax.AjaxUpdateable;
 /**
  * AjaxCapablePanelGroup can be used for generating ajax capable sections in page without altering page formatting.
  * Renders itself as span tag with id.
- * 
- * @author Riina Tens
  */
 public class AjaxCapablePanelGroup extends HtmlPanelGroup implements AjaxUpdateable, NamingContainer {
 

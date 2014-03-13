@@ -29,9 +29,6 @@ import ee.webmedia.alfresco.menu.model.MenuItem;
 import ee.webmedia.alfresco.menu.service.MenuService;
 import ee.webmedia.alfresco.menu.service.MenuService.MenuItemProcessor;
 
-/**
- * @author Kaarel Jõgeva
- */
 public class DocumentDynamicTypeMenuItemProcessor implements InitializingBean, MenuItemProcessor {
 
     public static final Comparator<MenuItem> COMPARATOR = new Comparator<MenuItem>() {

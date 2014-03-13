@@ -2,9 +2,6 @@ package ee.webmedia.alfresco.docadmin.model;
 
 import org.alfresco.service.namespace.QName;
 
-/**
- * @author Alar Kvell
- */
 public interface DocumentAdminModel {
     String URI = "http://alfresco.webmedia.ee/model/document/admin/1.0";
     String PREFIX = "docadmin:";

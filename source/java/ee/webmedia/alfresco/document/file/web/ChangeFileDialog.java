@@ -31,9 +31,6 @@ import ee.webmedia.alfresco.utils.FilenameUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.WebUtil;
 
-/**
- * @author Priit Pikk
- */
 public class ChangeFileDialog extends BaseDialogBean {
     public static final String BEAN_NAME = "ChangeFileDialog";
     private static final long serialVersionUID = 1L;

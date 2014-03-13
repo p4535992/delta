@@ -33,8 +33,6 @@ import ee.webmedia.alfresco.log.LogHelper;
 
 /**
  * Entry point for starting and stopping whole import. Manages input parameters and coordinates structure and document import.
- * 
- * @author Alar Kvell
  */
 public class PostipoissImporter implements SaveListener {
     protected final Log log = LogFactory.getLog(getClass());

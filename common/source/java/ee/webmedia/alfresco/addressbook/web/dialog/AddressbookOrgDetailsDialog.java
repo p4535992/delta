@@ -14,9 +14,6 @@ import org.alfresco.web.bean.repository.Node;
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.utils.TextUtil;
 
-/**
- * @author Keit Tehvan
- */
 public class AddressbookOrgDetailsDialog extends AddressbookPersonDetailsDialog {
     private static final long serialVersionUID = 1L;
     @SuppressWarnings("hiding")

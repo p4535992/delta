@@ -4,8 +4,6 @@ import java.io.Serializable;
 
 /**
  * Data structure for processed e-mail template results
- * 
- * @author Kaarel Jõgeva
  */
 public class ProcessedEmailTemplate implements Serializable {
 

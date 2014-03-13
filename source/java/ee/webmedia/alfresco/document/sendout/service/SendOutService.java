@@ -14,8 +14,6 @@ import ee.webmedia.xtee.client.dhl.DhlXTeeService.ContentToSend;
 
 /**
  * Provides service methods for sending out documents and managing the sendInfo blocks.
- * 
- * @author Erko Hansar
  */
 public interface SendOutService {
 

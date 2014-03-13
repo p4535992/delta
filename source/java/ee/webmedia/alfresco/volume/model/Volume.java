@@ -42,7 +42,7 @@ public class Volume extends EventPlanVolume implements VolumeOrCaseFile {
     private Date validFrom;
     private Date validTo;
     private String status;
-    // FIXME: Alar, milleks see väli? On see üldse kuskil kasutusel?
+    // FIXME: milleks see väli? On see üldse kuskil kasutusel?
     private Date seriesIdentifier;
     private boolean containsCases;
     private boolean casesCreatableByUser;
@@ -148,6 +148,14 @@ public class Volume extends EventPlanVolume implements VolumeOrCaseFile {
 
     public void setSeriesNodeRef(NodeRef seriesNodeRef) {
         this.seriesNodeRef = seriesNodeRef;
+    }
+
+    public void setProperty(String key, Object value) {
+        node.getProperties().put(key, value);
+    }
+
+    public Object getProperty(String key) {
+        return node.getProperties().get(key);
     }
 
     public NodeRef getFunctionNodeRef() {
@@ -280,7 +288,7 @@ public class Volume extends EventPlanVolume implements VolumeOrCaseFile {
         return propsConvertedMap;
     }
 
-    // Keit: JRebel went mad if i did not add these two setters
+    // JRebel went mad if i did not add these two setters
     public void setConvertedPropsMap(PropsConvertedMap convertedPropsMap) {
         this.convertedPropsMap = convertedPropsMap;
     }

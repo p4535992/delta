@@ -1,6 +1,7 @@
 package ee.webmedia.alfresco.adr.service;
 
 import java.io.Serializable;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -98,6 +99,8 @@ public interface AdrService {
     // * hävitamine - kustutatakse ADR'ist
 
     NodeRef addDeletedDocument(NodeRef document);
+
+    NodeRef addDeletedDocumentFromArchive(NodeRef document, String regNumber, Date regDateTime);
 
     void deleteDocumentType(QName documentType);
 

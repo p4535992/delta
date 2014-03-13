@@ -16,8 +16,6 @@ import ee.webmedia.alfresco.substitute.model.SubstitutionInfo;
 
 /**
  * SubstitutionFilter to set substitution info.
- * 
- * @author Riina Tens
  */
 public class SubstitutionFilter implements Filter {
 

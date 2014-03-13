@@ -9,8 +9,6 @@ import ee.webmedia.alfresco.document.service.DocumentService;
 
 /**
  * Adds cf:caseFileContainer aspect to drafts folder to avoid circular dependency between doccom and cf model.
- * 
- * @author Kaarel Jõgeva
  */
 public class AddCaseFileContainerAspectToDrafts extends AbstractModuleComponent {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(AddCaseFileContainerAspectToDrafts.class);

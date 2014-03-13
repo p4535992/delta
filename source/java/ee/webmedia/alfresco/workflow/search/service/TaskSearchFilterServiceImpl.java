@@ -6,9 +6,6 @@ import org.alfresco.service.namespace.QName;
 import ee.webmedia.alfresco.filter.service.AbstractFilterServiceImpl;
 import ee.webmedia.alfresco.workflow.search.model.TaskSearchModel;
 
-/**
- * @author Erko Hansar
- */
 public class TaskSearchFilterServiceImpl extends AbstractFilterServiceImpl implements TaskSearchFilterService {
 
     @Override

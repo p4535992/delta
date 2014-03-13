@@ -37,8 +37,6 @@ import ee.webmedia.alfresco.utils.beanmapper.BeanPropertyMapper;
 
 /**
  * Service class for cases
- * 
- * @author Ats Uiboupin
  */
 public class CaseServiceImpl implements CaseService {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(CaseServiceImpl.class);

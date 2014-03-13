@@ -19,8 +19,6 @@ import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 
 /**
  * Set field with id="regDateTime" value to ALWAYS_NOT_CHANGEABLE. See CL 214605
- * 
- * @author Marti Laast
  */
 public class DocumentRegDateFieldUpdater extends AbstractNodeUpdater {
 

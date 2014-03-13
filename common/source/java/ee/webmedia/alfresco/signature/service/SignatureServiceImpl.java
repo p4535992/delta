@@ -48,7 +48,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.cxf.jaxws.JaxWsProxyFactoryBean;
 import org.apache.log4j.Logger;
 import org.bouncycastle.asn1.ASN1InputStream;
-import org.bouncycastle.asn1.DERObject;
+import org.bouncycastle.asn1.ASN1Primitive;
 import org.bouncycastle.asn1.DERObjectIdentifier;
 import org.bouncycastle.asn1.DEROctetString;
 import org.bouncycastle.asn1.DERSequence;
@@ -90,9 +90,6 @@ import ee.webmedia.alfresco.utils.FilenameUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UserUtil;
 
-/**
- * @author Alar Kvell
- */
 public class SignatureServiceImpl implements SignatureService, InitializingBean {
 
     private static Logger log = Logger.getLogger(SignatureServiceImpl.class);
@@ -514,7 +511,15 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
 
             // Cannot use more generic read method that detects type (DDOC/BDOC), beacuse it is buggy
             // (detect method reads from stream, and when parse is invoked, stream is not at the beginning any more)
-            SignedDoc signedDoc = digiDocFactory.readSignedDocOfType(contentInputStream, false, fileContents);
+            ArrayList<DigiDocException> errors = new ArrayList<DigiDocException>();
+            SignedDoc signedDoc = digiDocFactory.readSignedDocFromStreamOfType(contentInputStream, false, errors);
+            for (DigiDocException ex : errors) {
+                // See DELTA-295
+                if (ex.getCode() == DigiDocException.ERR_ISSUER_XMLNS) {
+                    continue;
+                }
+                throw ex;
+            }
             if (fileContents) {
                 bindCleanTempFiles(signedDoc);
             }
@@ -804,7 +809,7 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
     }
 
     private void addSignature(SignedDoc signedDoc, SignatureChallenge signatureChallenge, String signature) throws DigiDocException, SignatureException,
-            UnsupportedEncodingException {
+    UnsupportedEncodingException {
 
         List<String> digestHexs = new ArrayList<String>();
         for (int i = 0; i < signedDoc.countDataFiles(); i++) {
@@ -933,7 +938,7 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
             List<String> objectIdentifiers = new ArrayList<String>();
             byte[] policies = cert.getExtensionValue("2.5.29.32");
             if (policies != null) {
-                DERObject derObject;
+                ASN1Primitive derObject;
                 derObject = toDerObject(policies);
                 if (derObject instanceof DEROctetString) {
                     derObject = toDerObject(((DEROctetString) derObject).getOctets());
@@ -948,7 +953,7 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
         }
     }
 
-    private static DERObject toDerObject(byte[] data) throws IOException {
+    private static ASN1Primitive toDerObject(byte[] data) throws IOException {
         return new ASN1InputStream(new ByteArrayInputStream(data)).readObject();
     }
 

@@ -67,14 +67,13 @@ import ee.webmedia.alfresco.utils.WebUtil;
 import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
 import ee.webmedia.alfresco.volume.service.VolumeService;
+import ee.webmedia.alfresco.volume.web.VolumeListDialog;
 
 /**
  * Form backing bean for Document list. <br>
  * <br>
  * This Class has logic of two diferent, but similar versions of documents(when parent is volume or case). <br>
  * Reason is that we don't have to worry about what the parent of document in jsp files.
- * 
- * @author Ats Uiboupin
  */
 public class DocumentListDialog extends BaseDocumentListDialog implements DialogDataProvider {
     private static final long serialVersionUID = 1L;
@@ -148,10 +147,16 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
         final String param;
         if (parameterMap.containsKey(VOLUME_NODE_REF)) {
             param = ActionUtil.getParam(event, VOLUME_NODE_REF);
+            if (!nodeExists(new NodeRef(param))) {
+                return;
+            }
             parentVolume = getVolumeService().getVolumeByNodeRef(param);
             parentCase = null;
         } else {
             param = ActionUtil.getParam(event, CASE_NODE_REF);
+            if (!nodeExists(new NodeRef(param))) {
+                return;
+            }
             parentCase = getCaseService().getCaseByNoderef(param);
             parentVolume = null;
         }
@@ -161,6 +166,15 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
         if (navigate) {
             WebUtil.navigateTo(AlfrescoNavigationHandler.DIALOG_PREFIX + "documentListDialog");
         }
+    }
+
+    public String action() {
+        String dialogPrefix = AlfrescoNavigationHandler.DIALOG_PREFIX;
+        if (parentVolume == null && parentCase == null) {
+            MessageUtil.addInfoMessage("volume_noderef_not_found");
+            return dialogPrefix + VolumeListDialog.DIALOG_NAME;
+        }
+        return dialogPrefix + "documentListDialog";
     }
 
     public void setup(ActionEvent event) {
@@ -227,11 +241,10 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
 
     public void massChangeDocLocationConfirmed(ActionEvent event) {
         resetConfirmation(event);
-        massChangeDocLocationSave();
+        massChangeDocLocationSave(false);
     }
 
-    @SuppressWarnings("unchecked")
-    public void massChangeDocLocationSave() {
+    public void massChangeDocLocationSave(boolean isNewCaseFileCreated) {
         Map<String, Object> locationProps = getLocationNode().getProperties();
         final NodeRef function = (NodeRef) locationProps.get(DocumentCommonModel.Props.FUNCTION.toString());
         final NodeRef series = (NodeRef) locationProps.get(DocumentCommonModel.Props.SERIES.toString());
@@ -269,7 +282,7 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
                         updateDocumentInMassChangeLocation(function, series, volume, caseLabel, updatedNodeRefs, docRef);
                         return null;
                     }
-                }, false, true);
+                }, false, !isNewCaseFileCreated);
                 processed++;
             }
         } catch (NodeLockedException e) {

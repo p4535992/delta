@@ -1,8 +1,5 @@
 package ee.webmedia.alfresco.orgstructure.amr.service;
 
-/**
- * @author Riina Tens
- */
 public interface RSService {
 
     String BEAN_NAME = "RsService";

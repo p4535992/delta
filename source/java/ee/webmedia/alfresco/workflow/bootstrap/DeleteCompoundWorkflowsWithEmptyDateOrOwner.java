@@ -24,8 +24,6 @@ import ee.webmedia.alfresco.workflow.service.Task;
  * Cl task 211790 - delete erroneous compound workflows containing
  * tasks with empty dueDate or ownerName property.
  * Should run only in environments where it has been verified that is is acceptable to delete such compound workflows.
- * 
- * @author Riina Tens
  */
 public class DeleteCompoundWorkflowsWithEmptyDateOrOwner extends AbstractNodeUpdater {
 

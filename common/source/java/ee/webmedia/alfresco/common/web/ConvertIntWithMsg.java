@@ -16,8 +16,6 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
  * Converter that can show custom error message based on customMsgKey
- * 
- * @author Ats Uiboupin
  */
 public class ConvertIntWithMsg extends IntegerConverter implements StateHolder {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(ConvertIntWithMsg.class);

@@ -9,8 +9,6 @@ import ee.webmedia.alfresco.email.model.EmailAttachment;
 
 /**
  * Common service for sending emails.
- * 
- * @author Erko Hansar
  */
 public interface EmailService {
 

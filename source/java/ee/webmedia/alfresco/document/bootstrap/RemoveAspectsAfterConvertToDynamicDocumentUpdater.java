@@ -14,8 +14,6 @@ import ee.webmedia.alfresco.common.bootstrap.AbstractNodeUpdater;
  * BatchSize should always be 1 to minimize errors on deleting child nodes (although child nodes should have been deleted
  * by DeleteNodesAfterConvertToDynamicDocumentUpdater before this updater runs).
  * This is not critical updater, nodes where aspects cannot be removed are skipped, existence of these aspects on nodes shouldn't affect application's behavior.
- * 
- * @author Riina Tens
  */
 public class RemoveAspectsAfterConvertToDynamicDocumentUpdater extends AbstractNodeUpdater {
 

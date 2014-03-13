@@ -105,14 +105,14 @@ public class VolumeSearchResultsDialog extends BaseLimitedListDialog {
         clearRichList();
     }
 
-    // TODO LATER Keit: could be made into an interface?
+    // TODO LATER could be made into an interface?
     /** @param event */
     public void exportAsCsv(ActionEvent event) {
         DataReader dataReader = new RichListDataReader();
         CSVExporter exporter = new CSVExporter(dataReader);
         exporter.export("volumeSearchResultsList");
 
-        // Erko hack for incorrect view id in the next request
+        // hack for incorrect view id in the next request
         JspStateManagerImpl.ignoreCurrentViewSequenceHack();
     }
 

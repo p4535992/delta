@@ -19,8 +19,6 @@ import ee.webmedia.alfresco.workflow.service.WorkflowService;
 
 /**
  * Move compound workflow comment from property to delta_compound_workflow_comment table
- * 
- * @author Riina Tens
  */
 public class CompoundWorkflowCommentTableInsertUpdater extends AbstractNodeUpdater {
 

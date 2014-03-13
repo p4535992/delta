@@ -13,8 +13,6 @@ import org.apache.myfaces.el.ValueBindingImpl;
 
 /**
  * Wrapper class to bind multiple properties to one control
- * 
- * @author Riina Tens
  */
 public class ValueBindingsWrapper extends ValueBindingImpl {
 

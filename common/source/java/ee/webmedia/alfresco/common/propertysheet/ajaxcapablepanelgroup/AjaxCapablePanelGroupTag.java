@@ -2,9 +2,6 @@ package ee.webmedia.alfresco.common.propertysheet.ajaxcapablepanelgroup;
 
 import org.apache.myfaces.taglib.html.HtmlPanelGroupTag;
 
-/**
- * @author Riina Tens
- */
 public class AjaxCapablePanelGroupTag extends HtmlPanelGroupTag {
 
     @Override

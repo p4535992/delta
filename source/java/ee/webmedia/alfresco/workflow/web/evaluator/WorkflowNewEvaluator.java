@@ -6,8 +6,6 @@ import ee.webmedia.alfresco.workflow.service.WorkflowUtil;
 
 /**
  * Evaluates to true if given workflow has status "uus".
- * 
- * @author Erko Hansar
  */
 public class WorkflowNewEvaluator extends AbstractFullAccessEvaluator {
 

@@ -6,9 +6,6 @@ import org.alfresco.service.cmr.repository.NodeRef;
 
 import ee.webmedia.alfresco.document.service.FavoritesService;
 
-/**
- * @author Kaarel Jõgeva
- */
 public interface CaseFileFavoritesService extends FavoritesService {
 
     String BEAN_NAME = "CaseFileFavoritesService";

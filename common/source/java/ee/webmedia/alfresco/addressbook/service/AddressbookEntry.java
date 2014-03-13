@@ -8,9 +8,6 @@ import org.alfresco.web.bean.repository.Node;
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel.Types;
 
-/**
- * @author Priit Pikk
- */
 
 public class AddressbookEntry implements Serializable {
 

@@ -2,9 +2,6 @@ package ee.webmedia.alfresco.docdynamic.model;
 
 import org.alfresco.service.namespace.QName;
 
-/**
- * @author Alar Kvell
- */
 public interface DocumentChildModel {
     String URI = "http://alfresco.webmedia.ee/model/document/child/1.0";
     String PREFIX = "docchild:";

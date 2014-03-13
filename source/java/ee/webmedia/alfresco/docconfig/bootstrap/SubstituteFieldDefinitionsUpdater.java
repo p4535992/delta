@@ -16,9 +16,6 @@ import org.alfresco.service.cmr.search.SearchService;
 import ee.webmedia.alfresco.common.bootstrap.AbstractNodeUpdater;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 
-/**
- * @author Riina Tens
- */
 public class SubstituteFieldDefinitionsUpdater extends AbstractNodeUpdater {
 
     @Override

@@ -65,9 +65,6 @@ import ee.webmedia.alfresco.utils.TextUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UserUtil;
 
-/**
- * @author Alar Kvell
- */
 public class ErrandGenerator extends BaseSystematicGroupGenerator implements SaveListener, BeanNameAware, DocumentTypeValidator {
     private static final String SUBSTITUTE_JOB_TITLE_FIELD_ID = "substituteJobTitle";
 

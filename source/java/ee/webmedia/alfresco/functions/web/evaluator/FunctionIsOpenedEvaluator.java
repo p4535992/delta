@@ -4,9 +4,6 @@ import org.alfresco.web.action.evaluator.BaseActionEvaluator;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
 
-/**
- * @author Keit Tehvan
- */
 public class FunctionIsOpenedEvaluator extends BaseActionEvaluator {
     private static final long serialVersionUID = 0L;
 

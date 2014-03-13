@@ -9,8 +9,6 @@ import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 
 /**
  * Constant for different associations between documents
- * 
- * @author Ats Uiboupin
  */
 public enum DocTypeAssocType {
     FOLLOWUP(DocumentAdminModel.Types.FOLLOWUP_ASSOCIATION, DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP),

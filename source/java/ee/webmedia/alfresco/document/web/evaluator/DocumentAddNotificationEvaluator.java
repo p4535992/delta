@@ -7,9 +7,6 @@ import org.alfresco.web.bean.repository.Node;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.user.model.UserModel;
 
-/**
- * @author Riina Tens
- */
 public class DocumentAddNotificationEvaluator extends BaseActionEvaluator {
     private static final long serialVersionUID = 1L;
 

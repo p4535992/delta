@@ -2,9 +2,6 @@ package ee.webmedia.alfresco.monitoring.model;
 
 import java.util.Date;
 
-/**
- * @author Keit Tehvan
- */
 public class Application {
     private String version;
     private String server;

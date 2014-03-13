@@ -10,8 +10,6 @@ import ee.webmedia.alfresco.user.service.UserService;
 
 /**
  * Evaluator, that evaluates to true if user is admin or document manager
- * 
- * @author Ats Uiboupin
  */
 public class DocumentManagerEvaluator extends BaseActionEvaluator {
     private static final long serialVersionUID = 2958297435415449179L;

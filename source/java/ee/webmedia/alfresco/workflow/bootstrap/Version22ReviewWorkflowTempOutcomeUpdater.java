@@ -13,8 +13,6 @@ import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 
 /**
  * Add temOutcome aspect to all review worklfows
- * 
- * @author Riina Tens
  */
 public class Version22ReviewWorkflowTempOutcomeUpdater extends AbstractNodeUpdater {
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(Version22ReviewWorkflowTempOutcomeUpdater.class);

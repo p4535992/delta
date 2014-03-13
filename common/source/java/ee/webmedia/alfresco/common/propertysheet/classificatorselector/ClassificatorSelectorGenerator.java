@@ -36,8 +36,6 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 /**
  * Generator, that generates a DropDown selection with values given by classificator with name defined using "classificatorName" attribute in the show-property
  * element.
- * 
- * @author Ats Uiboupin
  */
 public class ClassificatorSelectorGenerator extends GeneralSelectorGenerator {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(ClassificatorSelectorGenerator.class);

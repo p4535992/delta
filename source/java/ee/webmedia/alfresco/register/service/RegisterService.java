@@ -7,9 +7,6 @@ import org.alfresco.web.bean.repository.Node;
 
 import ee.webmedia.alfresco.register.model.Register;
 
-/**
- * @author Kaarel Jõgeva
- */
 public interface RegisterService {
     public static final String BEAN_NAME = "RegisterService";
 

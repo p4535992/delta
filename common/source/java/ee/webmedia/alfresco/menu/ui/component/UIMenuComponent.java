@@ -17,9 +17,6 @@ import org.alfresco.web.ui.common.component.UIActionLink;
 import ee.webmedia.alfresco.menu.model.DropdownMenuItem;
 import ee.webmedia.alfresco.menu.ui.MenuBean;
 
-/**
- * @author Kaarel Jõgeva
- */
 
 public class UIMenuComponent extends UIComponentBase {
 

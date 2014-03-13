@@ -17,8 +17,6 @@ import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 
 /**
  * Sets mandatoryForVol=false for field group definitions where name="Saatja reg nr ja kpv". See Cl task 210404.
- * 
- * @author Riina Tens
  */
 public class DocumentSenderRegNrFieldGroupUpdater extends AbstractNodeUpdater {
 

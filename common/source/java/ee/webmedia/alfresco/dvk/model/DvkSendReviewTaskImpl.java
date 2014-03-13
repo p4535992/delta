@@ -1,8 +1,5 @@
 package ee.webmedia.alfresco.dvk.model;
 
-/**
- * @author Riina Tens
- */
 public class DvkSendReviewTaskImpl extends DvkSendWorkflowDocumentsImpl implements DvkSendReviewTask {
 
     private String institutionName;

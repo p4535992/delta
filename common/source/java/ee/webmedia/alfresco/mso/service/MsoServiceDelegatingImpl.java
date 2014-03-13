@@ -10,9 +10,6 @@ import org.springframework.beans.factory.InitializingBean;
 import ee.webmedia.alfresco.monitoring.MonitoredService;
 import ee.webmedia.alfresco.monitoring.MonitoringUtil;
 
-/**
- * @author Alar Kvell
- */
 public class MsoServiceDelegatingImpl implements MsoService, InitializingBean {
 
     private MsoService delegate;

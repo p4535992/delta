@@ -11,9 +11,6 @@ import ee.webmedia.alfresco.workflow.service.Task;
 import ee.webmedia.alfresco.workflow.service.Workflow;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
 
-/**
- * @author Alar Kvell
- */
 public class BaseWorkflowType implements WorkflowType, InitializingBean {
 
     private QName workflowType = WorkflowCommonModel.Types.WORKFLOW;

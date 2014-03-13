@@ -47,8 +47,6 @@ import ee.webmedia.alfresco.utils.ComponentUtil;
  * </ul>
  * </li>
  * </ul>
- * 
- * @author Alar Kvell
  */
 public class MultiValueEditorGenerator extends BaseComponentGenerator implements HandlesViewMode {
 

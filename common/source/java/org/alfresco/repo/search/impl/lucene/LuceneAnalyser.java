@@ -46,9 +46,14 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.WhitespaceAnalyzer;
 
+import ee.webmedia.alfresco.classificator.constant.FieldType;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docconfig.service.DocumentConfigService;
+import ee.webmedia.alfresco.docconfig.service.DynamicPropertyDefinition;
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
+import ee.webmedia.alfresco.search.lucene.SimplePhraseAnalyzer;
 
 /**
  * Analyse properties according to the property definition. The default is to use the standard tokeniser. The tokeniser
@@ -66,10 +71,10 @@ public class LuceneAnalyser extends Analyzer
     private DictionaryService dictionaryService;
 
     // If all else fails a fall back analyser
-    private Analyzer defaultAnalyser;
+    private final Analyzer defaultAnalyser;
 
     // Cached analysers for non ML data types.
-    private Map<String, Analyzer> analysers = new HashMap<String, Analyzer>();
+    private final Map<String, Analyzer> analysers = new HashMap<String, Analyzer>();
 
     private MLAnalysisMode mlAlaysisMode;
     private DocumentConfigService documentConfigService;
@@ -117,26 +122,27 @@ public class LuceneAnalyser extends Analyzer
             }
         }
 
-        Analyzer analyser = (Analyzer) analysers.get(fieldName);
+        Analyzer analyser = analysers.get(fieldName);
         if (analyser == null)
         {
             analyser = findAnalyser(fieldName, analysisMode);
         }
         return analyser.tokenStream(fieldName, reader);
     }
-    
+
     // FIXME TODO XXX - This is a temporary workaround for LIVE. Should be fixed properly! See also LuceneQuaryParser for same fix. CL 188070
     private PropertyDefinition getPropertyDefinition(QName qname) {
         return getDocumentConfigService().getStaticOrDynamicPropertyDefinition(qname);
-    }    
-    
+    }
+
     private DocumentConfigService getDocumentConfigService() {
         if (documentConfigService == null) {
             documentConfigService = BeanHelper.getDocumentConfigService();
         }
         return documentConfigService;
-    }    
+    }
 
+    @Override
     public TokenStream tokenStream(String fieldName, Reader reader)
     {
         return tokenStream(fieldName, reader, AnalysisMode.DEFAULT);
@@ -192,12 +198,22 @@ public class LuceneAnalyser extends Analyzer
             else
             {
                 QName propertyQName = QName.createQName(fieldName.substring(1));
-                // Temporary fix for person and user uids
 
+                DynamicPropertyDefinition def = null;
+                if (DocumentDynamicModel.URI.equals(propertyQName.getNamespaceURI())) {
+                    def = documentConfigService.getPropertyDefinitionById(propertyQName.getLocalName());
+                }
+
+                // Temporary fix for person and user uids
                 if (propertyQName.equals(ContentModel.PROP_USER_USERNAME)
                         || propertyQName.equals(ContentModel.PROP_USERNAME) || propertyQName.equals(ContentModel.PROP_AUTHORITY_NAME))
                 {
                     analyser = new VerbatimAnalyser(true);
+                }
+
+                else if (propertyQName.equals(DocumentSpecificModel.Props.TRANSMITTAL_MODE) || propertyQName.equals(DocumentCommonModel.Props.SEARCHABLE_SEND_MODE)
+                        || (def != null && FieldType.STRUCT_UNIT == def.getFieldType())) {
+                    analyser = new SimplePhraseAnalyzer(MLAnalysisMode.ALL_ONLY);
                 }
                 else
                 {
@@ -306,16 +322,13 @@ public class LuceneAnalyser extends Analyzer
                 s_logger.debug("Loaded " + analyserClassName + " for type " + dataType.getName());
             }
             return analyser;
-        }
-        catch (ClassNotFoundException e)
+        } catch (ClassNotFoundException e)
         {
             throw new RuntimeException("Unable to load analyser for property of type " + dataType.getName() + " using " + analyserClassName);
-        }
-        catch (InstantiationException e)
+        } catch (InstantiationException e)
         {
             throw new RuntimeException("Unable to load analyser for property of type " + dataType.getName() + " using " + analyserClassName);
-        }
-        catch (IllegalAccessException e)
+        } catch (IllegalAccessException e)
         {
             throw new RuntimeException("Unable to load analyser for property of type " + dataType.getName() + " using " + analyserClassName);
         }

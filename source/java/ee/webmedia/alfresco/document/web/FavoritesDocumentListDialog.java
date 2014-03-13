@@ -16,9 +16,6 @@ import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.workflow.model.CompoundWorkflowWithObject;
 
-/**
- * @author Alar Kvell
- */
 public class FavoritesDocumentListDialog extends BaseDocumentListDialog {
     private static final long serialVersionUID = 1L;
     private NodeRef containerNodeRef;

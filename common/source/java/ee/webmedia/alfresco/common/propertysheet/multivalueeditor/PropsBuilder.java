@@ -7,8 +7,6 @@ import ee.webmedia.alfresco.common.web.BeanHelper;
 
 /**
  * Helper class for building definitions of inner components of {@link MultiValueEditorGenerator} ( or even {@link InlinePropertyGroupGenerator})
- * 
- * @author Ats Uiboupin
  */
 public class PropsBuilder {
     public static final String DEFAULT_OPTIONS_SEPARATOR = "¤";

@@ -35,7 +35,6 @@ import ee.webmedia.alfresco.volume.model.VolumeModel;
  * Helper class for composing Document property change log messages.
  * 
  * @see DocumentPropertiesChangeHolder
- * @author Martti Tamm
  */
 public class DocumentLogHelper {
 

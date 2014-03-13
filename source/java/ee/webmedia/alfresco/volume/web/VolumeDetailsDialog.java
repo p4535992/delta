@@ -1,6 +1,5 @@
 package ee.webmedia.alfresco.volume.web;
 
-import static ee.webmedia.alfresco.common.web.BeanHelper.getArchivalsService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getCaseService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getVolumeService;
 
@@ -18,10 +17,13 @@ import javax.faces.model.SelectItem;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.util.Pair;
+import org.alfresco.web.app.AlfrescoNavigationHandler;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.apache.commons.collections.Closure;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
@@ -45,8 +47,6 @@ import ee.webmedia.alfresco.volume.model.VolumeModel;
 
 /**
  * Form backing bean for Volumes details
- * 
- * @author Ats Uiboupin
  */
 public class VolumeDetailsDialog extends BaseDialogBean implements BlockBeanProviderProvider {
     private static final long serialVersionUID = 1L;
@@ -59,6 +59,9 @@ public class VolumeDetailsDialog extends BaseDialogBean implements BlockBeanProv
     private List<DeletedDocument> deletedDocuments;
     private boolean newVolume;
     private transient UIPropertySheet propertySheet;
+    private boolean volumeRefInvalid;
+
+    private static final Log LOG = LogFactory.getLog(VolumeDetailsDialog.class);
 
     @Override
     public void init(Map<String, String> parameters) {
@@ -82,10 +85,31 @@ public class VolumeDetailsDialog extends BaseDialogBean implements BlockBeanProv
         return super.cancel();
     }
 
+    public String action() {
+        String dialogPrefix = AlfrescoNavigationHandler.DIALOG_PREFIX;
+        boolean tempState = volumeRefInvalid;
+        volumeRefInvalid = false;
+        return dialogPrefix + (tempState ? VolumeListDialog.DIALOG_NAME : "volumeDetailsDialog");
+    }
+
     // START: jsf actions/accessors
     public void showDetails(ActionEvent event) {
         NodeRef volumeNodeRef = ActionUtil.getParam(event, PARAM_VOLUME_NODEREF, NodeRef.class);
+        if (!nodeExists(volumeNodeRef)) {
+            MessageUtil.addInfoMessage("volume_noderef_not_found");
+            volumeRefInvalid = true;
+            return;
+        }
+        addInfoMessage(volumeNodeRef);
         showDetails(volumeNodeRef);
+    }
+
+    private void addInfoMessage(NodeRef volumeRef) {
+        Volume vol = getVolumeService().getVolumeByNodeRef(volumeRef);
+        Boolean marked = (Boolean) vol.getProperty(VolumeModel.Props.MARKED_FOR_ARCHIVING.toString());
+        if (marked != null && marked) {
+            MessageUtil.addInfoMessage("volume_marked_for_archiving");
+        }
     }
 
     public void showDetails(NodeRef volumeNodeRef) {
@@ -117,7 +141,7 @@ public class VolumeDetailsDialog extends BaseDialogBean implements BlockBeanProv
     }
 
     public Node getCurrentNode() {
-        return currentEntry.getNode();
+        return currentEntry == null ? null : currentEntry.getNode();
     }
 
     public Node getNode() {
@@ -173,6 +197,7 @@ public class VolumeDetailsDialog extends BaseDialogBean implements BlockBeanProv
         }
         if (!isOpened()) {
             try {
+                removeVolumeFromArchiveList(currentVolumeNode.getNodeRef());
                 getVolumeService().openVolume(currentEntry);
                 reload(currentEntry.getNode().getNodeRef());
             } catch (UnableToPerformException e) {
@@ -182,6 +207,10 @@ public class VolumeDetailsDialog extends BaseDialogBean implements BlockBeanProv
             MessageUtil.addInfoMessage("volume_open_success");
             clearPropSheet();
         }
+    }
+
+    private void removeVolumeFromArchiveList(NodeRef volumeNodeRef) {
+        BeanHelper.getArchivalsService().removeVolumeFromArchivingList(volumeNodeRef);
     }
 
     public String delete() {
@@ -211,11 +240,21 @@ public class VolumeDetailsDialog extends BaseDialogBean implements BlockBeanProv
     public void archive(@SuppressWarnings("unused") ActionEvent event) {
         Assert.notNull(currentEntry, "No current volume");
         archiveVolume(currentEntry.getNode().getNodeRef());
-        MessageUtil.addInfoMessage("volume_archive_success");
     }
 
     public void archiveVolume(NodeRef volumeRef) {
-        getArchivalsService().archiveVolumeOrCaseFile(volumeRef);
+        if (!nodeExists(volumeRef)) {
+            MessageUtil.addInfoMessage("volume_noderef_not_found");
+            return;
+        }
+        if (!BeanHelper.getArchivalsService().isVolumeInArchivingQueue(volumeRef)) {
+            BeanHelper.getArchivalsService().addVolumeOrCaseToArchivingList(volumeRef);
+            LOG.info("Volume with nodeRef=" + volumeRef + " was added to archive queue.");
+        } else {
+            MessageUtil.addInfoMessage("volume_archive_already_in_queue");
+            return;
+        }
+        MessageUtil.addInfoMessage("volume_archive_added_to_queue");
     }
 
     /**
@@ -270,7 +309,7 @@ public class VolumeDetailsDialog extends BaseDialogBean implements BlockBeanProv
                 || DocListUnitStatus.DESTROYED.equals(currentEntry.getStatus());
     }
 
-    // TODO Vladimir: should be with is prefix
+    // TODO should be with is prefix
     public Boolean volumeMarkFieldReadOnly() {
         Map<String, Object> properties = currentEntry.getNode().getProperties();
         String status = (String) properties.get(VolumeModel.Props.STATUS);
@@ -317,10 +356,10 @@ public class VolumeDetailsDialog extends BaseDialogBean implements BlockBeanProv
     }
 
     public List<DeletedDocument> getDeletedDocuments() {
-        return deletedDocuments;
+        return deletedDocuments == null ? new ArrayList<DeletedDocument>() : deletedDocuments;
     }
 
-    // FIXME Ats to Kaarel - milleks see meetod?
+    // FIXME to milleks see meetod?
     public void setDeletedDocuments(List<DeletedDocument> deletedDocuments) {
         this.deletedDocuments = deletedDocuments;
     }

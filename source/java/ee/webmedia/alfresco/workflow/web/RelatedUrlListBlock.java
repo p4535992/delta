@@ -22,9 +22,6 @@ import ee.webmedia.alfresco.workflow.model.RelatedUrl;
 import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
 import ee.webmedia.alfresco.workflow.service.WorkflowUtil;
 
-/**
- * @author Riina Tens
- */
 public class RelatedUrlListBlock extends BaseDialogBean {
 
     public static final String BEAN_NAME = "RelatedUrlListBlock";

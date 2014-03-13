@@ -2,7 +2,6 @@
 -- When reason for such entries has been recovered and removed, this trigger should be disabled.
 -- Currently this trigger has been created manually in some Nortal testing environments.
 -- NB! Not recommended in live environments!
--- Author Riina Tens 25.01.2013
 -- DROP FUNCTION check_acl_inheritance() CASCADE;
 CREATE FUNCTION check_acl_inheritance() RETURNS trigger AS $check_acl_inheritance$
     DECLARE

@@ -127,8 +127,19 @@
       actionListener="#{FunctionsListDialog.updateDocCounters}" />
 <h:commandButton id="docList_updateArchivedDocCounters" value="Uuenda arhiveeritud dokumentide loendureid" type="submit"
 	actionListener="#{FunctionsListDialog.updateArchivedDocCounters}" />      
-<%--
---%>
+
+<f:verbatim><hr/></f:verbatim>
+
+<h:commandButton id="volume_archive_pause_all" value="Peata kõik arhiveerimistööd" type="submit" 
+   actionListener="#{ArchivalsService.pauseArchiving}" />
+<f:verbatim><br/></f:verbatim>
+<h:commandButton id="volume_archive_continue_all" value="Jätka kõiki arhiveerimistöid" type="submit" 
+   actionListener="#{ArchivalsService.continueArchiving}" />
+<f:verbatim><br/></f:verbatim>
+<h:commandButton id="volume_archive_cancel_all" value="Tühjenda arhiveerimistööde nimekiri" type="submit" 
+   actionListener="#{ArchivalsService.cancelAllArchivingJobs}" />
+
+<f:verbatim><hr/></f:verbatim>
 
 <f:verbatim><hr/></f:verbatim>
 <h:outputText value="Versioonide lahtilukustamine"/>

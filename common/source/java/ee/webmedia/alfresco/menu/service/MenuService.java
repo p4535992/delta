@@ -13,9 +13,6 @@ import ee.webmedia.alfresco.menu.model.DropdownMenuItem;
 import ee.webmedia.alfresco.menu.model.Menu;
 import ee.webmedia.alfresco.menu.model.MenuItem;
 
-/**
- * @author Kaarel Jõgeva
- */
 public interface MenuService {
 
     String BEAN_NAME = "MenuService";

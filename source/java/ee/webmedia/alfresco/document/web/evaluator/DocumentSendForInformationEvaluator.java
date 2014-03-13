@@ -6,9 +6,6 @@ import org.alfresco.web.bean.repository.Node;
 
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 
-/**
- * @author Riina Tens
- */
 public class DocumentSendForInformationEvaluator extends BaseActionEvaluator {
 
     private static final long serialVersionUID = 1L;

@@ -99,9 +99,6 @@ import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 import ee.webmedia.alfresco.workflow.service.WorkflowDbService;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
 
-/**
- * @author Kaarel Jõgeva
- */
 public class DocumentTemplateServiceImpl implements DocumentTemplateService, ServletContextAware {
 
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DocumentTemplateServiceImpl.class);
@@ -312,7 +309,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
         }
 
         if (existingGeneratedFile == null) { // Create the container for template content
-            // XXX Alar: target file mimeType comes from MSO service, so it would be better to set file extension based on that mimeType
+            // XXX target file mimeType comes from MSO service, so it would be better to set file extension based on that mimeType
             String extension = mimetypeService.getExtension(templateFilename.endsWith(".ott") ? MimetypeMap.MIMETYPE_OPENDOCUMENT_TEXT : MimetypeMap.MIMETYPE_WORD);
             if (StringUtils.endsWithIgnoreCase(templateFilename, ".dotx")) {
                 extension += "x"; // Well, ain't this nice! :) (Filename must end with docx if 2003/2007 template is used)
@@ -790,7 +787,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
     }
 
     private void getContractPartyFormulae(NodeRef objectRef, Map<String, String> formulas) {
-        // TODO from Alar: implement generic child-node support using propertyDefinition.getChildAssocTypeQNameHierarchy()
+        // TODO from implement generic child-node support using propertyDefinition.getChildAssocTypeQNameHierarchy()
         List<ChildAssociationRef> contractPartyChildAssocs = nodeService.getChildAssocs(objectRef, DocumentChildModel.Assocs.CONTRACT_PARTY, RegexQNamePattern.MATCH_ALL);
         int index = 1;
         for (ChildAssociationRef childAssociationRef : contractPartyChildAssocs) {

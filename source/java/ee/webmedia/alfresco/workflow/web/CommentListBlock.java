@@ -29,9 +29,6 @@ import ee.webmedia.alfresco.workflow.model.Comment;
 import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
 import ee.webmedia.alfresco.workflow.service.WorkflowUtil;
 
-/**
- * @author Riina Tens
- */
 public class CommentListBlock extends BaseDialogBean {
 
     private static final String MODAL_KEY_COMMENT_INDEX_IN_WORKFLOW = "comment-index-in-workflow";

@@ -48,9 +48,6 @@ import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
 
-/**
- * @author Kaarel Jõgeva
- */
 public class DriveCompensationGenerator extends BaseSystematicGroupGenerator implements SaveListener, BeanNameAware {
 
     public static final QName[] DRIVE_DIARY_PROPS = {

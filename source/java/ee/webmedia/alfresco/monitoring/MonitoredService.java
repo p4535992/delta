@@ -1,8 +1,5 @@
 package ee.webmedia.alfresco.monitoring;
 
-/**
- * @author Keit Tehvan
- */
 public enum MonitoredService {
     OUT_SK_OCSP,
     OUT_SK_DIGIDOCSERVICE,

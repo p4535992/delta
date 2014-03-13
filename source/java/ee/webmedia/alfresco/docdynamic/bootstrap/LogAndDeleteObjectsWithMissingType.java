@@ -25,8 +25,6 @@ import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 /**
  * Log and optionally delete documents and case files (since 3.11 branch) that have no corresponding dynamic type definition.
  * Deleting should be performed only in test environments (currently only 3.13 branch).
- * 
- * @author Riina Tens
  */
 public class LogAndDeleteObjectsWithMissingType extends AbstractNodeUpdater {
 

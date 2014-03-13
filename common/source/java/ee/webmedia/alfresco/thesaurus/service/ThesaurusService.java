@@ -10,7 +10,6 @@ import ee.webmedia.alfresco.thesaurus.model.HierarchicalKeyword;
 import ee.webmedia.alfresco.thesaurus.model.Thesaurus;
 
 /**
- * @author Kaarel Jõgeva
  *
  */
 public interface ThesaurusService {

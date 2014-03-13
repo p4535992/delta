@@ -16,8 +16,6 @@ import ee.webmedia.alfresco.common.service.GeneralService;
 
 /**
  * Modifies the classificator so user can change values
- * 
- * @author Kaarel Jõgeva
  */
 public class StorageTypeClassificatorUpdaterBootstrap extends AbstractModuleComponent {
     protected final Log LOG = LogFactory.getLog(getClass());

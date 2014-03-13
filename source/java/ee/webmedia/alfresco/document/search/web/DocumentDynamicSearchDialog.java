@@ -59,9 +59,6 @@ import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
 
-/**
- * @author Keit Tehvan
- */
 public class DocumentDynamicSearchDialog extends AbstractSearchFilterBlockBean<DocumentSearchFilterService> implements DialogDataProvider {
     private static final long serialVersionUID = 1L;
 

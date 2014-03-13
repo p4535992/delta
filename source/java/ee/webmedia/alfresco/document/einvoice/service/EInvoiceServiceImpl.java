@@ -124,9 +124,6 @@ import ee.webmedia.alfresco.utils.XmlUtil;
 import ee.webmedia.xtee.client.dhl.DhlXTeeService.ContentToSend;
 import ee.webmedia.xtee.client.dhl.types.ee.sk.digiDoc.v13.DataFileType;
 
-/**
- * @author Riina Tens
- */
 
 public class EInvoiceServiceImpl implements EInvoiceService {
 
@@ -157,7 +154,7 @@ public class EInvoiceServiceImpl implements EInvoiceService {
     private DocumentLogService documentLogService;
     private TransactionService transactionService;
     /**
-     * From CL change 165080 code review by Ats Uiboupin:
+     * From CL change 165080 code review by
      * millalgi, kui klasterdamie toe lisamine päevakorda tuleb, siis see ilmselt ei tööta õigesti, kuna puudub võimalus klastri nodede vahel seisu sünkimiseks - aga sellega peab
      * ilmselt siis tegelema, kui klasterdamine aktuaalseks muutub(kasutama echcache vms teeki) ?
      */

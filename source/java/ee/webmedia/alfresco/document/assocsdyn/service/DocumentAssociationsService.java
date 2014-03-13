@@ -15,8 +15,6 @@ import ee.webmedia.alfresco.document.associations.model.DocAssocInfo;
 
 /**
  * Service class that deals with creating and deleting associations between documents
- * 
- * @author Ats Uiboupin
  */
 public interface DocumentAssociationsService {
     String BEAN_NAME = "DocumentAssociationsService";

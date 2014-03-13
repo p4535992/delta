@@ -13,8 +13,6 @@ import org.alfresco.web.ui.common.Utils;
 /**
  * NB! In RichList this class cannot be used for submitting data, as it clears previous row children when next row is rendered.
  * Currently it is suitable for outputting text and links with external urls or javascript calls.
- * 
- * @author Riina Tens
  */
 public class CustomChildrenContainer extends UIComponentBase {
 

@@ -87,8 +87,6 @@ import ee.webmedia.xtee.client.dhl.DhlXTeeService.SendStatus;
 
 /**
  * Generator for compound workflow tasks setup block.
- * 
- * @author Erko Hansar
  */
 public class TaskListGenerator extends BaseComponentGenerator {
 
@@ -475,10 +473,12 @@ public class TaskListGenerator extends BaseComponentGenerator {
                     if (fullAccess && (Status.IN_PROGRESS.equals(taskStatus) || Status.STOPPED.equals(taskStatus))
                             && !WorkflowUtil.isInactiveResponsible(task)) {
 
-                        final UIActionLink taskCancelLink = createUIActionLink(application, cancelLinkTooltipMsg, cancelLinkActionListenerMB, "task-cancel-link-" + taskRowId);
-                        putAttribute(taskCancelLink, "styleClass", "icon-link margin-left-4 cancel-task");
-                        addChildren(taskCancelLink, createWfIndexPraram(wfIndex, application), createTaskIndexParam(counter, application));
-                        actionChildren.add(taskCancelLink);
+                        if (renderCancelLink(task, compoundWorkflow)) {
+                            final UIActionLink taskCancelLink = createUIActionLink(application, cancelLinkTooltipMsg, cancelLinkActionListenerMB, "task-cancel-link-" + taskRowId);
+                            putAttribute(taskCancelLink, "styleClass", "icon-link margin-left-4 cancel-task");
+                            addChildren(taskCancelLink, createWfIndexPraram(wfIndex, application), createTaskIndexParam(counter, application));
+                            actionChildren.add(taskCancelLink);
+                        }
                     }
 
                     if (fullAccess && (Status.IN_PROGRESS.equals(taskStatus) || Status.STOPPED.equals(taskStatus) || Status.UNFINISHED.equals(taskStatus))
@@ -533,6 +533,34 @@ public class TaskListGenerator extends BaseComponentGenerator {
         }
         ComponentUtil.setAjaxEnabledOnActionLinksRecursive(result, 1);
         return result;
+    }
+
+    private boolean renderCancelLink(Task task, CompoundWorkflow compoundWorkflow) {
+        if (task.isType(WorkflowSpecificModel.Types.ASSIGNMENT_TASK) && task.isResponsible()) {
+            Set<CompoundWorkflow> compoundWorkflows = new HashSet<CompoundWorkflow>();
+            compoundWorkflows.add(compoundWorkflow);
+            if (compoundWorkflow.isDocumentWorkflow()) {
+                NodeRef docRef = compoundWorkflow.getParent();
+                List<CompoundWorkflow> otherDocCompoundWorkflows = BeanHelper.getWorkflowService().getCompoundWorkflows(docRef, compoundWorkflow.getNodeRef());
+                compoundWorkflows.addAll(otherDocCompoundWorkflows);
+            }
+            for (CompoundWorkflow cwf : compoundWorkflows) {
+                for (Workflow wf : cwf.getWorkflows()) {
+                    if (!wf.isType(WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW)) {
+                        continue;
+                    }
+                    for (Task t : wf.getTasks()) {
+                        if (task.equals(t)) {
+                            continue;
+                        }
+                        if (t.isStatus(Status.NEW, Status.STOPPED, Status.IN_PROGRESS) && !Action.UNFINISH.equals(t.getAction())) {
+                            return false;
+                        }
+                    }
+                }
+            }
+        }
+        return true;
     }
 
     private HtmlPanelGroup createHtmlPanelGroupWithId(Application application, String Id) {

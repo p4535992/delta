@@ -35,7 +35,6 @@ import org.alfresco.web.ui.common.Utils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateUtils;
 
-import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.Predicate;
@@ -49,9 +48,6 @@ import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 import ee.webmedia.alfresco.workflow.web.TaskGroup;
 
-/**
- * @author Alar Kvell
- */
 public class WorkflowUtil {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(WorkflowUtil.class);
     /**
@@ -298,7 +294,7 @@ public class WorkflowUtil {
     /** Can be used for checking regular tasks stored under workflow. Deleted status is not allowed. */
     public static Status checkTask(Task task, boolean skipPropChecks, Status... requiredStatuses) {
         if (!skipPropChecks) {
-            // ERKO: Specification and existing code act in a different way. When a user is chosen, both the id and email are stored and used.
+            // Specification and existing code act in a different way. When a user is chosen, both the id and email are stored and used.
             // if (StringUtils.isBlank(task.getOwnerId()) == StringUtils.isBlank(task.getOwnerEmail())) {
             // throw new RuntimeException("Exactly one of task's ownerId or ownerEmail must be filled\n" + task);
             // }
@@ -315,35 +311,6 @@ public class WorkflowUtil {
 
     public static Status checkWorkflow(Workflow workflow, Status... requiredStatuses) {
         return checkWorkflow(workflow, false, requiredStatuses);
-    }
-
-    public static List<String> getOwnersWithNoEmailForNotFinishedTasks(CompoundWorkflow compoundWorkflow) {
-        List<String> ownersNames = new ArrayList<String>();
-        for (Workflow workflow : compoundWorkflow.getWorkflows()) {
-            for (Task task : workflow.getTasks()) {
-                if (task.isStatus(Status.FINISHED, Status.UNFINISHED)) {
-                    continue;
-                }
-                String ownerEmail = task.getOwnerEmail();
-                String ownerName = task.getOwnerName();
-                if (StringUtils.isNotBlank(ownerName) && StringUtils.isBlank(ownerEmail)) {
-                    if (addUserEmailToTaskIfPossible(task)) {
-                        continue;
-                    }
-                    ownersNames.add(ownerName);
-                }
-            }
-        }
-        return ownersNames;
-    }
-
-    private static boolean addUserEmailToTaskIfPossible(Task task) {
-        String ownerEmail = BeanHelper.getUserService().getUserEmail(task.getOwnerId());
-        if (StringUtils.isNotBlank(ownerEmail)) {
-            task.setOwnerEmail(ownerEmail);
-            return true;
-        }
-        return false;
     }
 
     public static Status checkWorkflow(Workflow workflow, boolean skipPropChecks, Status... requiredStatuses) {
@@ -791,6 +758,43 @@ public class WorkflowUtil {
             }
             workflowId++;
         }
+    }
+
+    public static Map<Workflow, List<String>> getWorkflowsAndTaskOwners(CompoundWorkflow compoundWorkflow) {
+        Map<Workflow, List<String>> workflowsAndTaskOwners = new HashMap<Workflow, List<String>>();
+        for (Workflow wf : compoundWorkflow.getWorkflows()) {
+            if (!wf.isStatus(Status.IN_PROGRESS)) {
+                continue;
+            }
+            List<String> taskOwners = new ArrayList<String>();
+            for (Task task : wf.getTasks()) {
+                if (task.isStatus(Status.IN_PROGRESS)) {
+                    taskOwners.add(task.getOwnerName());
+                }
+            }
+            if (!taskOwners.isEmpty()) {
+                workflowsAndTaskOwners.put(wf, taskOwners);
+            }
+        }
+        return workflowsAndTaskOwners;
+    }
+
+    public static String formatWorkflowsAndTaskOwners(Map<Workflow, List<String>> workflows) {
+        StringBuilder workflowsAndTaskOwners = new StringBuilder();
+        for (Entry<Workflow, List<String>> entry : workflows.entrySet()) {
+            if (workflowsAndTaskOwners.length() > 0) {
+                workflowsAndTaskOwners.append("; ");
+            }
+            workflowsAndTaskOwners.append(MessageUtil.getMessage(entry.getKey().getType().getLocalName()))
+                    .append(" (")
+                    .append(StringUtils.join(entry.getValue(), ", "))
+                    .append(")");
+        }
+        return workflowsAndTaskOwners.toString();
+    }
+
+    public static String getFormattedWorkflowsAndTaskOwners(CompoundWorkflow compoundWorkflow) {
+        return formatWorkflowsAndTaskOwners(getWorkflowsAndTaskOwners(compoundWorkflow));
     }
 
     public static void setGroupTasksDueDates(TaskGroup taskGroup, List<Task> tasks) {

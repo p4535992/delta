@@ -13,9 +13,6 @@ import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
 import ee.webmedia.alfresco.docadmin.service.DynamicType;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
-/**
- * @author Ats Uiboupin
- */
 public class CaseFileTypeListDialog extends DynamicTypeListDialog<CaseFileType> {
     private static final long serialVersionUID = 1L;
 

@@ -13,9 +13,6 @@ import ee.webmedia.alfresco.workflow.service.event.WorkflowEventQueue;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowEventType;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowModifications;
 
-/**
- * @author Riina Tens
- */
 public class GroupAssignmnetWorkflowType extends BaseWorkflowType implements WorkflowEventListenerWithModifications {
 
     @Override

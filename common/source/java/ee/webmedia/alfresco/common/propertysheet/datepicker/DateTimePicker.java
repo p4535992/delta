@@ -15,8 +15,6 @@ import ee.webmedia.alfresco.utils.ComponentUtil;
 
 /**
  * Input to divide Date property between date input and time input for editing
- * 
- * @author Riina Tens
  */
 
 public class DateTimePicker extends UIInput {

@@ -43,10 +43,6 @@ import ee.webmedia.alfresco.privilege.service.PrivilegeUtil;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 import flexjson.JSONSerializer;
 
-/**
- * @author Alar Kvell
- * @author Romet Aidla
- */
 public class AjaxBean implements Serializable {
     public static final String AJAX_REQUEST_PARAM = "ajaxRequest";
 
@@ -111,7 +107,7 @@ public class AjaxBean implements Serializable {
         String path = params.get("url");
 
         if (StringUtils.isBlank(path)) {
-            // FIXME: Riina - this may happen, when session has expired, but why? 
+            // FIXME: this may happen, when session has expired, but why? 
             return;
         }
 

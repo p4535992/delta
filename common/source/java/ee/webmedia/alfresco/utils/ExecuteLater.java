@@ -8,8 +8,6 @@ import javax.faces.event.PhaseId;
 /**
  * Use {@link ComponentUtil#executeLater(PhaseId, UIComponent, org.apache.commons.collections.Closure)} for convenience.
  * Simple subclass of ActionEvent that can be used to execute some code (in {@link #execute()} method) later (specified by phaseId).
- * 
- * @author Ats Uiboupin
  */
 abstract class ExecuteLater extends ActionEvent {
     private static final long serialVersionUID = 1L;

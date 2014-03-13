@@ -4,8 +4,6 @@ import ee.webmedia.alfresco.common.propertysheet.renderkit.PropertySheetGridRend
 
 /**
  * Subclass to overwrite renderer type.
- * 
- * @author Erko Hansar
  */
 public class SimUIPropertySheet extends WMUIPropertySheet {
 

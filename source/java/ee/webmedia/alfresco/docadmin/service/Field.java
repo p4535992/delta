@@ -25,8 +25,6 @@ import ee.webmedia.alfresco.utils.RepoUtil;
 
 /**
  * Field that is stored under {@link DocumentTypeVersion} or {@link FieldGroup}, but not under /fieldDefinitions folder
- * 
- * @author Ats Uiboupin
  */
 public class Field extends FieldAndGroupBase {
     private static final long serialVersionUID = 1L;

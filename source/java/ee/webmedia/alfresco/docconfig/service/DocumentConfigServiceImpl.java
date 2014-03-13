@@ -103,9 +103,6 @@ import ee.webmedia.alfresco.volume.search.model.VolumeSearchModel;
 import ee.webmedia.alfresco.workflow.search.model.CompoundWorkflowSearchModel;
 import ee.webmedia.alfresco.workflow.search.model.TaskSearchModel;
 
-/**
- * @author Alar Kvell
- */
 public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFactoryAware {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(DocumentConfigServiceImpl.class);
 
@@ -265,11 +262,17 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
     }
 
     private void addDocLocationConfigFields(DocumentConfig config, boolean forceEditMode, String additionalStateHolderKey) {
+        addDocLocationConfigFields(config, forceEditMode, additionalStateHolderKey, true);
+    }
+
+    private void addDocLocationConfigFields(DocumentConfig config, boolean forceEditMode, String additionalStateHolderKey, boolean addCase) {
         List<String> defList = new ArrayList<String>();
         defList.add(DocumentCommonModel.Props.FUNCTION.getLocalName());
         defList.add(DocumentCommonModel.Props.SERIES.getLocalName());
         defList.add(DocumentCommonModel.Props.VOLUME.getLocalName());
-        defList.add(DocumentCommonModel.Props.CASE.getLocalName());
+        if (addCase) {
+            defList.add(DocumentCommonModel.Props.CASE.getLocalName());
+        }
         for (String localName : defList) {
             FieldDefinition fieldDefinition = documentAdminService.getFieldDefinition(localName);
             fieldDefinition.setChangeableIfEnum(FieldChangeableIf.ALWAYS_CHANGEABLE);
@@ -317,7 +320,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
             config.getPropertySheetConfigElement().addItem(itemConfig);
         }
 
-        addDocLocationConfigFields(config, true, additionalStateHolderKey);
+        addDocLocationConfigFields(config, true, additionalStateHolderKey, false);
 
         addDocumentCreatedConfigItem(config);
 
@@ -1084,7 +1087,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
                 }
             }
 
-            // TODO Alar: would be better to refactor this to be more efficient and happen in a more general place (one or two methods above)
+            // TODO would be better to refactor this to be more efficient and happen in a more general place (one or two methods above)
             if (field.getParent() instanceof FieldGroup) {
                 FieldGroup group = (FieldGroup) field.getParent();
                 if (group.isSystematic()) {
@@ -1598,7 +1601,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
     @Override
     public Map<String, Pair<DynamicPropertyDefinition, Field>> getPropertyDefinitions(Node node) {
         QName type = node.getType();
-        // XXX Alar: checking hasAspect(OBJECT) would be the same
+        // XXX checking hasAspect(OBJECT) would be the same
         if (getDynamicTypeClass(node) == null && !dictionaryService.isSubClass(type, DocumentCommonModel.Types.METADATA_CONTAINER)) {
             return null;
         }

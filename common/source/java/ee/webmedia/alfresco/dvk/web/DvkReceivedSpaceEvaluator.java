@@ -8,9 +8,6 @@ import org.alfresco.web.action.evaluator.BaseActionEvaluator;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.Repository;
 
-/**
- * @author Alar Kvell
- */
 public class DvkReceivedSpaceEvaluator extends BaseActionEvaluator {
     private static final long serialVersionUID = 1L;
 

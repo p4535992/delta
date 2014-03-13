@@ -11,8 +11,6 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
  * Generator that generates (info)message based on messageKey
- * 
- * @author Ats Uiboupin
  */
 public class MessageSeparatorGenerator extends HeaderSeparatorGenerator {
     private String messageKey;

@@ -66,9 +66,6 @@ import ee.webmedia.alfresco.utils.WebUtil;
 import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
 
-/**
- * @author Kaarel Jõgeva
- */
 public class MenuBean implements Serializable {
 
     public static final String SHORTCUT_MENU_ITEM_PREFIX = "shortcut-";

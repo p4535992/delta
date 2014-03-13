@@ -11,9 +11,6 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.web.evaluator.CompoundWorkflowSendForInformationEvaluator;
 
-/**
- * @author Marti Laast
- */
 public class CompoundWorkflowSendForInformationDialog extends DocumentSendForInformationDialog {
 
     private static final long serialVersionUID = 1L;

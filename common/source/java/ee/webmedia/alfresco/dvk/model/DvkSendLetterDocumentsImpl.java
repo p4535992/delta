@@ -12,9 +12,6 @@ import ee.webmedia.alfresco.utils.MessageDataImpl;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
 
-/**
- * @author Ats Uiboupin
- */
 public class DvkSendLetterDocumentsImpl extends AbstractLetterDocument implements DvkSendLetterDocuments {
 
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DvkSendLetterDocumentsImpl.class);

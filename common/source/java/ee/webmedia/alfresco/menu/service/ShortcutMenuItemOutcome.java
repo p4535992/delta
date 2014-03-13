@@ -7,9 +7,6 @@ import org.alfresco.service.namespace.QName;
 
 import ee.webmedia.alfresco.volume.model.VolumeModel;
 
-/**
- * @author Riina Tens
- */
 public enum ShortcutMenuItemOutcome {
 
     /** Case file outcome "dialog:caseFileDialog" is produced by BaseSnapshotCapableDialog.createSnapshot */

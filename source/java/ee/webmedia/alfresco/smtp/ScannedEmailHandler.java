@@ -30,8 +30,6 @@ import ee.webmedia.alfresco.user.service.UserService;
 
 /**
  * Handler to handle scanned emails.
- * 
- * @author Ats Uiboupin
  */
 public class ScannedEmailHandler extends AbstractForumEmailMessageHandler {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(ScannedEmailHandler.class);

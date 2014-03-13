@@ -9,9 +9,6 @@ import javax.faces.convert.ConverterException;
 
 import org.apache.commons.lang.time.FastDateFormat;
 
-/**
- * @author Alar Kvell
- */
 public class DateTimeConverter implements Converter {
 
     public static FastDateFormat dateTimeFormat = FastDateFormat.getInstance("dd.MM.yyyy HH:mm");

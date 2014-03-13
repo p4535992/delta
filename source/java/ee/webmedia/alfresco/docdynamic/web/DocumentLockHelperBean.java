@@ -6,6 +6,7 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getNodeService;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.Map;
 
 import javax.faces.context.FacesContext;
 import javax.faces.context.ResponseWriter;
@@ -15,23 +16,23 @@ import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.lock.LockStatus;
 import org.alfresco.service.cmr.lock.NodeLockedException;
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.namespace.QName;
+import org.alfresco.util.EqualsHelper;
 import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.docconfig.generator.systematic.AccessRestrictionGenerator;
 import ee.webmedia.alfresco.document.file.model.FileModel;
 import ee.webmedia.alfresco.document.lock.service.DocLockService;
-import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.sendout.web.DocumentSendOutDialog;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 
 /**
  * Helper for locking documents
- * 
- * @author Kaarel Jõgeva
  */
 public class DocumentLockHelperBean implements Serializable {
 
@@ -69,7 +70,7 @@ public class DocumentLockHelperBean implements Serializable {
      * @throws UnableToPerformException when node is already locked by another user
      */
     public boolean lockOrUnlockIfNeeded(boolean mustLock4Edit) throws NodeLockedException {
-        // XXX ALAR: It would be correct to lock all nodes in document/caseFile dialog stack which are opened in edit mode.
+        // XXX It would be correct to lock all nodes in document/caseFile dialog stack which are opened in edit mode.
         // But currently we only lock the top most node.
         final Node docNode = getDocumentDialogHelperBean().getNode();
         if (docNode == null) {
@@ -79,7 +80,7 @@ public class DocumentLockHelperBean implements Serializable {
         final NodeRef docRef = docNode.getNodeRef();
         synchronized (docNode) { // to avoid extending lock after unlock(save/cancel)
             if (!getNodeService().exists(docRef)) {
-                throw new UnableToPerformException("document_delete_success"); // XXX: Alar
+                throw new UnableToPerformException("document_delete_success"); // XXX:
             }
             if (mustLock4Edit) {
                 if (lockService.setLockIfFree(docRef) == LockStatus.LOCK_OWNER) {
@@ -176,17 +177,28 @@ public class DocumentLockHelperBean implements Serializable {
      */
     public void unlockNode() {
         final NodeRef docRef = getDocumentDialogHelperBean().getNodeRef();
-        if (docRef != null) {
+        if (docRef != null && getNodeService().exists(docRef)) {
             LockStatus status = getDocLockService().getLockStatus(docRef, AuthenticationUtil.getRunAsUser());
             boolean isDraft = BeanHelper.getDocumentDynamicService().isDraft(docRef);
-            Object newRestriction = getDocumentDialogHelperBean().getNode().getProperties().get(DocumentCommonModel.Props.ACCESS_RESTRICTION);
-            Object oldRestriction = BeanHelper.getNodeService().getProperty(docRef, DocumentCommonModel.Props.ACCESS_RESTRICTION);
             // lock must not be released here when access restriction was changed
-            boolean accessResctricionChanged = !(newRestriction != null && newRestriction.equals(oldRestriction));
-            if (LockStatus.LOCK_OWNER.equals(status) && !isDraft && !accessResctricionChanged) {
+            if (LockStatus.LOCK_OWNER.equals(status) && !isDraft && !isAccessRestrictionPropertiesChanged(docRef)) {
                 lockOrUnlockIfNeeded(false);
             }
         }
+    }
+
+    private boolean isAccessRestrictionPropertiesChanged(NodeRef docRef) {
+        Map<String, Object> newProps = getDocumentDialogHelperBean().getNode().getProperties();
+        Map<QName, Serializable> oldProps = BeanHelper.getNodeService().getProperties(docRef);
+
+        for (QName property : AccessRestrictionGenerator.ACCESS_RESTRICTION_PROPS) {
+            Object newValue = newProps.get(property);
+            Object oldValue = oldProps.get(property);
+            if (!EqualsHelper.nullSafeEquals(newValue, oldValue)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public void handleLockedNode(String messageId) {

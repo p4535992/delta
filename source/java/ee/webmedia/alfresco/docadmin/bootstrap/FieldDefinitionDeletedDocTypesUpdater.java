@@ -13,8 +13,6 @@ import ee.webmedia.alfresco.docadmin.service.FieldDefinition;
 
 /**
  * Deleting {@link DocumentType}s was implemented before updating {@link FieldDefinition#getDocTypes()} - this updater removes references to missing {@link DocumentType}s
- * 
- * @author Ats Uiboupin
  */
 public class FieldDefinitionDeletedDocTypesUpdater extends AbstractModuleComponent {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(FieldDefinitionDocTypesUpdater.class);

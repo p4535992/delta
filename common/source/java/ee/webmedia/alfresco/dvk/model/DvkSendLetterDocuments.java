@@ -2,9 +2,6 @@ package ee.webmedia.alfresco.dvk.model;
 
 import java.util.Collection;
 
-/**
- * @author Ats Uiboupin
- */
 public interface DvkSendLetterDocuments extends ILetterDocument, LetterCompilator {
 
     String getDocType();

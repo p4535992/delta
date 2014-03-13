@@ -125,8 +125,6 @@ import ee.webmedia.alfresco.workflow.web.evaluator.WorkflowNewEvaluator;
 
 /**
  * Dialog bean for working with one compound workflow instance which is tied to a document.
- * 
- * @author Erko Hansar
  */
 public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog implements Confirmable, BlockBeanProviderProvider {
 
@@ -333,7 +331,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
     }
 
     private boolean hasOwnerWithNoEmail(String messageKey) {
-        List<String> ownersWithNoEmail = WorkflowUtil.getOwnersWithNoEmailForNotFinishedTasks(compoundWorkflow);
+        List<String> ownersWithNoEmail = getWorkflowService().checkAndAddMissingOwnerEmails(compoundWorkflow);
         if (!ownersWithNoEmail.isEmpty()) {
             for (String owner : ownersWithNoEmail) {
                 MessageUtil.addErrorMessage(messageKey, owner);

@@ -6,9 +6,6 @@ import javax.faces.event.ActionEvent;
 
 import ee.webmedia.alfresco.document.web.BaseDocumentListDialog;
 
-/**
- * @author Riina Tens
- */
 public class WebServiceDocumentListDialog extends BaseDocumentListDialog {
     private static final long serialVersionUID = 1L;
 

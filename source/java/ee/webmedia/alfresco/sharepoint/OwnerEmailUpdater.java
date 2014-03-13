@@ -15,23 +15,26 @@ import org.alfresco.service.namespace.QName;
 import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.common.bootstrap.AbstractNodeUpdater;
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.SearchUtil;
+import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
+import ee.webmedia.alfresco.workflow.service.Task;
 
-/**
- * @author Alar Kvell
- */
 public class OwnerEmailUpdater extends AbstractNodeUpdater {
 
     private UserService userService;
 
     private Map<String, String> userEmails;
 
+    private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(OwnerEmailUpdater.class);
+
     @Override
     protected void executeUpdater() throws Exception {
         userEmails = new HashMap<String, String>();
         super.executeUpdater();
+        updateTaskEmailsManually();
     }
 
     @Override
@@ -46,6 +49,32 @@ public class OwnerEmailUpdater extends AbstractNodeUpdater {
     @Override
     protected void doAfterTransactionBegin() {
         behaviourFilter.disableBehaviour(ContentModel.ASPECT_AUDITABLE); // Allows us to set our own modifier and modified values
+    }
+
+    // In some cases lucene search fails to find all the e-mails. In this case e-mails must be updated directly in database.
+    protected void updateTaskEmailsManually() {
+        List<Object> arguments = new ArrayList<Object>();
+        String emailToReplace = "test22@just.ee";
+        arguments.add(emailToReplace);
+        List<Task> results = BeanHelper.getWorkflowDbService().searchTasksAllStores("(wfc_owner_email=? )", arguments, -1).getFirst();
+        Map<QName, Serializable> changedProps = new HashMap<QName, Serializable>();
+        for (Task task : results) {
+            changedProps.clear();
+            try {
+                String ownerId = task.getOwnerId();
+                String newTaskOwnerEmail = BeanHelper.getUserService().getUserEmail(ownerId);
+                if (StringUtils.isBlank(newTaskOwnerEmail)) {
+                    LOG.warn("The e-mail of following task was not updated because no user e-mail address was found:\n" + task);
+                    continue;
+                }
+                changedProps.put(WorkflowCommonModel.Props.OWNER_EMAIL, newTaskOwnerEmail);
+                BeanHelper.getWorkflowDbService().updateTaskEntryIgnoringParent(task, changedProps);
+                LOG.info("Updated task [nodeRef=" + task.getNodeRef() + "] e-mail manually: " + emailToReplace + " -> " + newTaskOwnerEmail);
+            } catch (Exception e) {
+                LOG.error(e);
+                continue;
+            }
+        }
     }
 
     @Override

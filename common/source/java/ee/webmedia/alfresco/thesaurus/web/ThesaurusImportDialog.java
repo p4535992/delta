@@ -25,9 +25,6 @@ import ee.webmedia.alfresco.thesaurus.service.ThesaurusService;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.WebUtil;
 
-/**
- * @author Kaarel Jõgeva
- */
 public class ThesaurusImportDialog extends AbstractImportDialog {
 
     protected ThesaurusImportDialog() {

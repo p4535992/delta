@@ -8,9 +8,6 @@ import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.web.evaluator.ViewStateActionEvaluator;
 import ee.webmedia.alfresco.user.model.UserModel;
 
-/**
- * @author Riina Tens
- */
 public class CaseFileAddNotificationEvaluator extends BaseActionEvaluator {
     private static final long serialVersionUID = 1L;
 

@@ -19,9 +19,6 @@ import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.utils.SearchUtil;
 
-/**
- * @author Alar Kvell
- */
 public class DocumentPublishToAdrUpdater extends AbstractNodeUpdater {
 
     private AdrService adrService;

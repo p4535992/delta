@@ -2,9 +2,6 @@ package ee.webmedia.alfresco.email.model;
 
 import org.springframework.core.io.InputStreamSource;
 
-/**
- * @author Alar Kvell
- */
 public class EmailAttachment {
 
     private final String fileName;

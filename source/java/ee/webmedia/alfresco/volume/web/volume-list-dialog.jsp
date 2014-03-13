@@ -96,7 +96,7 @@
          <f:facet name="header">
             <h:outputText value="&nbsp;" escape="false" />
          </f:facet>
-         <a:actionLink id="col8-act1" value="#{r.title}" image="/images/icons/edit_properties.gif" action="dialog:volumeDetailsDialog" showLink="false"
+         <a:actionLink id="col8-act1" value="#{r.title}" image="/images/icons/edit_properties.gif" action="#{VolumeDetailsDialog.action}" showLink="false"
             actionListener="#{VolumeDetailsDialog.showDetails}" tooltip="#{msg.volume_details_info}" rendered="#{!r.dynamic}">
             <f:param name="volumeNodeRef" value="#{r.node.nodeRef}" />
          </a:actionLink>

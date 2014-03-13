@@ -338,7 +338,7 @@ public class UIGenericPicker extends UICommand implements AjaxUpdateable {
             if (items != null) {
                 for (int i = 0; i < items.length; i++) {
                     out.write("<option value=\"");
-                    // KAAREL: I checked and it seems that we are using integers as values everywhere.
+                    // I checked and it seems that we are using integers as values everywhere.
                     // When this is not the case this cast will fail fast.
                     Integer value = (Integer) items[i].getValue();
                     out.write(value.toString());

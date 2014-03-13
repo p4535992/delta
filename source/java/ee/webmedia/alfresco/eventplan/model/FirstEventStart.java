@@ -1,8 +1,5 @@
 package ee.webmedia.alfresco.eventplan.model;
 
-/**
- * @author Martti Tamm
- */
 public enum FirstEventStart {
 
     FROM_CREATION,

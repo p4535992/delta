@@ -26,9 +26,6 @@ import ee.webmedia.alfresco.docadmin.web.FieldGroupDetailsDialog;
 import ee.webmedia.alfresco.thesaurus.model.Thesaurus;
 import ee.webmedia.alfresco.thesaurus.service.ThesaurusService;
 
-/**
- * @author Kaarel Jõgeva
- */
 public class ThesaurusListDialog extends BaseDialogBean {
 
     private static final long serialVersionUID = 1L;
@@ -70,7 +67,7 @@ public class ThesaurusListDialog extends BaseDialogBean {
             IOUtils.closeQuietly(writer);
             FacesContext.getCurrentInstance().responseComplete();
 
-            // Erko hack for incorrect view id in the next request
+            // hack for incorrect view id in the next request
             JspStateManagerImpl.ignoreCurrentViewSequenceHack();
         }
     }

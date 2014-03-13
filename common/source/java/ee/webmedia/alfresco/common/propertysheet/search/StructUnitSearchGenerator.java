@@ -5,9 +5,6 @@ import javax.faces.context.FacesContext;
 
 import org.alfresco.web.app.servlet.FacesHelper;
 
-/**
- * @author Riina Tens
- */
 public class StructUnitSearchGenerator extends SearchGenerator {
 
     public static final String IS_MULTIVALUE_EDITOR_COMPONENT_KEY = "isMultivalueEditorComponent";

@@ -115,12 +115,24 @@
 		<delete file="${common.dir.lib.server}/joda-time-1.2.1.jar" />
 		<!-- Newer version (1.4.4) of javax.mail is added from common/lib folder -->
 		<delete file="${common.dir.lib.server}/mail.jar" />
+		<!-- Newer version (1.3-alfresco-20121114) of greenmail is added from common/lib folder -->
+		<delete file="${common.dir.lib.server}/greenmail-1.3-patched.jar" />
         <!-- Newer version (2.1.3) of CXF is added from common/lib folder -->
         <!-- 2.1.3 resolves issue https://issues.apache.org/jira/browse/CXF-1624 -->
         <!-- Cannot use newest 2.1.x version - when generating classes with 2.1.10, there is an error:
 	         java.util.ServiceConfigurationError: com.sun.tools.xjc.Plugin: Provider org.apache.cxf.xjc.ts.ToStringPlugin could not be instantiated: java.lang.ClassCastException
 	    -->
         <delete file="${common.dir.lib.server}/cxf-2.1.2.jar" />
+		<!-- Newer version (148) of bcmail is added from common/lib folder -->
+		<delete file="${common.dir.lib.server}/bcmail-jdk15-137.jar" />
+		<!-- Newer version (148) of bcprov is added from common/lib folder -->
+		<delete file="${common.dir.lib.server}/bcprov-jdk15-137.jar" />
+		<!-- Newer version (1.5.6) of xmlsec is added from common/lib folder -->
+		<delete file="${common.dir.lib.server}/xmlsec-1.4.1.jar" />
+		<!-- Newer version (2.9.1) of xercesImpl is added from common/lib folder -->
+		<delete file="${common.dir.lib.server}/xercesImpl-2.8.0.jar" />
+		<!-- Newer version (1.3.04) of xml-apis is added from common/lib folder -->
+		<delete file="${common.dir.lib.server}/xml-apis.jar" />
 	</target>
 
 	<target name="setup-project-done">

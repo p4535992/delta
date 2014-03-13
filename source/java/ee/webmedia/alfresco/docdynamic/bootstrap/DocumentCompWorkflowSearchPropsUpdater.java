@@ -23,8 +23,6 @@ import ee.webmedia.alfresco.utils.SearchUtil;
  * NB! Updating searchableHasAllFinishedCompoundWorkflows is not needed, when it is quaranteed that DocumentUpdater also runs
  * (for example when migrating from 2.* to 3.*), because DocumentUpdater calls the same (changed) functionality.
  * During 2.* -> 3.* migration this updater should be merged with DocumentUpdater.
- * 
- * @author Riina Tens
  */
 public class DocumentCompWorkflowSearchPropsUpdater extends AbstractNodeUpdater {
 

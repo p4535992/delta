@@ -13,8 +13,6 @@ import ee.webmedia.alfresco.common.propertysheet.generator.CustomAttributes;
 
 /**
  * VO that hold information about component to be generated
- * 
- * @author Ats Uiboupin
  */
 public class ComponentPropVO implements Serializable, CustomAttributes {
     private static final long serialVersionUID = 1L;

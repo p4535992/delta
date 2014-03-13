@@ -8,9 +8,6 @@ import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.user.model.UserModel;
 import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
 
-/**
- * @author Riina Tens
- */
 public class WorkflowAddNotificationEvaluator extends BaseActionEvaluator {
 
     private static final long serialVersionUID = 1L;

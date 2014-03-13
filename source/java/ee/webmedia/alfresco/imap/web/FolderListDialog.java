@@ -4,9 +4,6 @@ import java.util.List;
 
 import ee.webmedia.alfresco.document.file.web.Subfolder;
 
-/**
- * @author Riina Tens
- */
 public interface FolderListDialog {
 
     public boolean isShowFolderList();

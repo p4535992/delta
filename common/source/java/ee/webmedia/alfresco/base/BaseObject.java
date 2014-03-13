@@ -33,8 +33,6 @@ import ee.webmedia.alfresco.utils.UnableToPerformException;
  * 2) {@link #BaseObject(BaseObject, WmNode)} -- if the object is not the tip of data model, parent object is non-null<br>
  * And the following constructor:<br>
  * 3) {@link #BaseObject(BaseObject, QName)} -- if the object is used as a child of some other object, and in-memory child creation is required<br>
- * 
- * @author Alar Kvell
  */
 public abstract class BaseObject extends NodeBaseVO implements Cloneable {
     private static final long serialVersionUID = 1L;

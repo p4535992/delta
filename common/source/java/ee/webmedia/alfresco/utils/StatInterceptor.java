@@ -9,8 +9,6 @@ import org.apache.commons.lang.StringUtils;
 
 /**
  * Statistic interceptor. Used to log method invocation statistics.
- * 
- * @author Erko Hansar
  */
 public class StatInterceptor implements MethodInterceptor {
 

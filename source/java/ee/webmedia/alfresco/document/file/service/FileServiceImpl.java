@@ -69,9 +69,6 @@ import ee.webmedia.alfresco.utils.MimeUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.versions.service.VersionsService;
 
-/**
- * @author Dmitri Melnikov
- */
 public class FileServiceImpl implements FileService {
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(FileServiceImpl.class);
 
@@ -380,10 +377,15 @@ public class FileServiceImpl implements FileService {
             @Override
             public NodeRef doWork() throws Exception {
                 // change file name
-                nodeService.setProperty(fileNodeRef, ContentModel.PROP_NAME, name);
-                if (displayName != null) {
-                    nodeService.setProperty(fileNodeRef, FileModel.Props.DISPLAY_NAME, displayName);
+                Map<QName, Serializable> props = new HashMap<QName, Serializable>();
+                props.put(ContentModel.PROP_NAME, name);
+                if (!StringUtils.isBlank(displayName)) {
+                    props.put(FileModel.Props.DISPLAY_NAME, displayName);
                 }
+                // Store current location (as string!) (in case where user decides to abort document creation)
+                props.put(FileModel.Props.PREVIOUS_FILE_PARENT, nodeService.getPrimaryParent(fileNodeRef).getParentRef().toString());
+                nodeService.addProperties(fileNodeRef, props);
+
                 // move file
                 return nodeService.moveNode(fileNodeRef, documentNodeRef,
                         ContentModel.ASSOC_CONTAINS, ContentModel.ASSOC_CONTAINS).getChildRef();
@@ -394,7 +396,7 @@ public class FileServiceImpl implements FileService {
                 .getMimetype(), null, name);
 
         addDocumentFileVersionAndLog(displayName, documentNodeRef, movedFileNodeRef);
-        return true;
+        return associatedWithMetaData;
     }
 
     @Override
@@ -477,6 +479,29 @@ public class FileServiceImpl implements FileService {
         versionsService.addVersionModifiedAspect(fileNodeRef);
         versionsService.addVersionLockableAspect(fileNodeRef);
         documentLogService.addDocumentLog(documentNodeRef, MessageUtil.getMessage("document_log_status_fileAdded", displayName));
+    }
+
+    @Override
+    public void removePreviousParentReference(NodeRef docRef, boolean moveToPreviousParent) {
+        List<FileInfo> listFiles = fileFolderService.listFiles(docRef);
+        for (FileInfo fileInfo : listFiles) {
+            String parentRefString = (String) fileInfo.getProperties().get(FileModel.Props.PREVIOUS_FILE_PARENT);
+            if (StringUtils.isBlank(parentRefString)) {
+                continue;
+            }
+
+            NodeRef previousParent = new NodeRef(parentRefString);
+            if (!nodeService.exists(previousParent)) {
+                continue;
+            }
+
+            NodeRef fileRef = fileInfo.getNodeRef();
+            // Move node back to previous parent and remove property if still present.
+            if (moveToPreviousParent) {
+                fileRef = nodeService.moveNode(fileRef, previousParent, ContentModel.ASSOC_CONTAINS, ContentModel.ASSOC_CONTAINS).getChildRef();
+            }
+            nodeService.removeProperty(fileRef, FileModel.Props.PREVIOUS_FILE_PARENT);
+        }
     }
 
     @Override

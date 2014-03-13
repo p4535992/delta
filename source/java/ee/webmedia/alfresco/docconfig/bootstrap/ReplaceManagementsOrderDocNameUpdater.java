@@ -18,8 +18,6 @@ import ee.webmedia.alfresco.docadmin.service.Field;
 /**
  * This updater should run only in SIM 3.13 environment to fix erroneous classificator assignment (doc. type managementsOrder field docName should have
  * classificator managementsOrderDocName instead of managementsOrderDocName123) during 2.5 -> 3.13 migration. See cl task 215710 for details.
- * 
- * @author Riina Tens
  */
 public class ReplaceManagementsOrderDocNameUpdater extends AbstractNodeUpdater {
 

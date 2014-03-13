@@ -61,9 +61,6 @@ import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
 
-/**
- * @author Alar Kvell
- */
 public class DocumentSearchResultsDialog extends BaseDocumentListDialog {
     private static final long serialVersionUID = 1L;
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DocumentSearchResultsDialog.class);
@@ -142,7 +139,7 @@ public class DocumentSearchResultsDialog extends BaseDocumentListDialog {
         CSVExporter exporter = new CSVExporter(dataReader);
         exporter.export("documentList");
 
-        // Erko hack for incorrect view id in the next request
+        // hack for incorrect view id in the next request
         JspStateManagerImpl.ignoreCurrentViewSequenceHack();
     }
 

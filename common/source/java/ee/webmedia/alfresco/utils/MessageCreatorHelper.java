@@ -6,8 +6,6 @@ import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
 
 /**
  * Helps to create error messages for web components that might need to customize its error messages
- * 
- * @author Ats Uiboupin
  */
 public class MessageCreatorHelper implements MessageData {
     private static final long serialVersionUID = 1L;

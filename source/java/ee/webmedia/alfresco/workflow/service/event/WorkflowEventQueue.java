@@ -8,9 +8,6 @@ import java.util.Map;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 
-/**
- * @author Alar Kvell
- */
 public class WorkflowEventQueue {
 
     private final List<WorkflowEvent> events = new ArrayList<WorkflowEvent>();

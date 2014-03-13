@@ -8,8 +8,6 @@ import org.apache.commons.lang.StringUtils;
 /**
  * Used for complex evaluation where both node type and aspect name must match for given object.
  * Condition is string, where node type and aspect name are separated with a comma and are given in correct order.
- * 
- * @author Kaarel Jõgeva
  *
  */
 public class NodeTypeAndAspectNameEvaluator implements Evaluator {

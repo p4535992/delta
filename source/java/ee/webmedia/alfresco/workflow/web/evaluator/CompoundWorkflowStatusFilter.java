@@ -3,9 +3,6 @@ package ee.webmedia.alfresco.workflow.web.evaluator;
 import ee.webmedia.alfresco.common.propertysheet.classificatorselector.EnumSelectorItemFilter;
 import ee.webmedia.alfresco.workflow.model.Status;
 
-/**
- * @author Riina Tens
- */
 public class CompoundWorkflowStatusFilter implements EnumSelectorItemFilter<Status> {
 
     @Override
