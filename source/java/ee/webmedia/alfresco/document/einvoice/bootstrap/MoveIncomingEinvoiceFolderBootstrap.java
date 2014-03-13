@@ -11,8 +11,6 @@ import ee.webmedia.alfresco.imap.model.ImapModel;
 
 /**
  * Moves /imap-ext:receivedInvoices (initial recieved invoices folder) to imap root folder
- * 
- * @author Riina Tens
  */
 public class MoveIncomingEinvoiceFolderBootstrap extends AbstractModuleComponent {
     private static final String INITIAL_RECEIVED_INVOICES = "/imap-ext:receivedInvoices";

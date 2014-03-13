@@ -14,8 +14,6 @@ import org.alfresco.web.app.servlet.FacesHelper;
 
 /**
  * Sets thread-local FacexContext.
- * 
- * @author Alar Kvell
  */
 public class FacesContextFilter implements Filter {
 

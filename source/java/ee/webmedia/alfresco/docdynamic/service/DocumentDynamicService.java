@@ -16,9 +16,6 @@ import ee.webmedia.alfresco.utils.TreeNode;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UnableToPerformMultiReasonException;
 
-/**
- * @author Alar Kvell
- */
 public interface DocumentDynamicService {
 
     String BEAN_NAME = "DocumentDynamicService";

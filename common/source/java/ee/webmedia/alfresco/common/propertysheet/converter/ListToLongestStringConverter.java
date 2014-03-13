@@ -12,8 +12,6 @@ import ee.webmedia.alfresco.utils.UserUtil;
 
 /**
  * Convert list of strings to longest value in the list
- * 
- * @author Riina Tens
  */
 public class ListToLongestStringConverter extends MultiValueConverter {
 

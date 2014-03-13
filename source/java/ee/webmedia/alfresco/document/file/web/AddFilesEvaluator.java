@@ -9,9 +9,6 @@ import org.alfresco.web.bean.repository.Node;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel.Privileges;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 
-/**
- * @author Ats Uiboupin
- */
 public class AddFilesEvaluator extends BaseActionEvaluator {
 
     private static final long serialVersionUID = 778943700049418316L;

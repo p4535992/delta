@@ -8,8 +8,6 @@ import ee.webmedia.alfresco.orgstructure.model.OrganizationStructure;
 
 /**
  * Test {@link OrganizationStructureServiceImpl}
- * 
- * @author Ats Uiboupin
  */
 public class OrganizationStructureServiceImplTest extends BaseAlfrescoSpringTest {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(OrganizationStructureServiceImplTest.class);

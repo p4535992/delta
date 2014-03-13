@@ -35,8 +35,6 @@ import ee.webmedia.alfresco.workflow.service.WorkflowService;
 
 /**
  * {@link PrivilegesHandler} for nodes of type {@link DocumentCommonModel.Types#DOCUMENT}
- * 
- * @author Ats Uiboupin
  */
 public class DocumentTypePrivilegesHandler extends AbstractInheritingPrivilegesHandler {
     private static final long serialVersionUID = 1L;

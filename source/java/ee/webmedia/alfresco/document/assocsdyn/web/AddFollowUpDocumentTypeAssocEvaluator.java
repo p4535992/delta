@@ -8,9 +8,6 @@ import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docadmin.service.AssociationModel;
 import ee.webmedia.alfresco.docadmin.service.DocumentType;
 
-/**
- * @author Alar Kvell
- */
 public abstract class AddFollowUpDocumentTypeAssocEvaluator extends AddFollowUpAssocEvaluator {
     private static final long serialVersionUID = 1L;
 

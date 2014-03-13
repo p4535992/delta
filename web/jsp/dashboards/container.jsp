@@ -69,7 +69,7 @@
          <%-- Breadcrumb --%>
          <%@ include file="../parts/breadcrumb.jsp"%>
          
-         <%-- ERKO: Weird solution for initing my tasks lists. I didn't find a better way to catch all the navigations to myalfresco screen. 
+         <%-- Weird solution for initing my tasks lists. I didn't find a better way to catch all the navigations to myalfresco screen. 
          It's not a dialog, so init method doesn't work. Alfresco navigation handler doesn't catch all different ways to navigate here and so on. --%>
          <h:outputText value="#{MyTasksBean.setupMyTasks}" />
 

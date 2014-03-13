@@ -34,9 +34,6 @@ import ee.webmedia.alfresco.parameters.service.ParametersService;
 import ee.webmedia.alfresco.parameters.service.ParametersService.ParameterChangedCallback;
 import ee.webmedia.alfresco.user.service.UserService;
 
-/**
- * @author Kaarel Jõgeva
- */
 public class MenuServiceImpl implements MenuService, InitializingBean {
     private static Logger log = Logger.getLogger(MenuServiceImpl.class);
 

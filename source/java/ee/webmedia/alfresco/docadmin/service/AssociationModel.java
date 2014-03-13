@@ -11,8 +11,6 @@ import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 
 /**
  * Object that models allowed association between two (document) nodes
- * 
- * @author Ats Uiboupin
  */
 public abstract class AssociationModel extends BaseObject {
     private static final long serialVersionUID = 1L;

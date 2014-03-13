@@ -17,9 +17,6 @@ import org.apache.commons.lang.StringUtils;
 import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
 import ee.webmedia.alfresco.docadmin.service.DocumentType;
 
-/**
- * @author Ats Uiboupin
- */
 public class DocTypeListDialog extends DynamicTypeListDialog<DocumentType> {
     private static final long serialVersionUID = 1L;
 

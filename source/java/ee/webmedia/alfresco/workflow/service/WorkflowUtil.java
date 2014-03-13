@@ -34,9 +34,6 @@ import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 import ee.webmedia.alfresco.workflow.web.TaskGroup;
 
-/**
- * @author Alar Kvell
- */
 public class WorkflowUtil {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(WorkflowUtil.class);
     /**
@@ -234,7 +231,7 @@ public class WorkflowUtil {
 
     public static Status checkTask(Task task, boolean skipPropChecks, Status... requiredStatuses) {
         if (!skipPropChecks) {
-            // ERKO: Specification and existing code act in a different way. When a user is chosen, both the id and email are stored and used.
+            // Specification and existing code act in a different way. When a user is chosen, both the id and email are stored and used.
             // if (StringUtils.isBlank(task.getOwnerId()) == StringUtils.isBlank(task.getOwnerEmail())) {
             // throw new RuntimeException("Exactly one of task's ownerId or ownerEmail must be filled\n" + task);
             // }

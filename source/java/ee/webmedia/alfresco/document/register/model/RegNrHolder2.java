@@ -3,8 +3,6 @@ package ee.webmedia.alfresco.document.register.model;
 
 /**
  * Class that holds regNumber, shortRegNumber and individualNumber together.
- * 
- * @author Alar Kvell
  */
 public class RegNrHolder2 {
 

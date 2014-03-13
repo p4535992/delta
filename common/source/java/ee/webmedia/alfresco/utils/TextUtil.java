@@ -273,7 +273,7 @@ public class TextUtil {
         } else if (value instanceof Date) {
             result = DATE_FORMAT.format((Date) value);
         } else {
-            result = value.toString(); // TODO Alar: do Long and Double need specific formatting?
+            result = value.toString(); // TODO do Long and Double need specific formatting?
         }
         return result;
     }

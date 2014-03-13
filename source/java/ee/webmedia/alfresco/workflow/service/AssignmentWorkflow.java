@@ -5,9 +5,6 @@ import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 
-/**
- * @author Erko Hansar
- */
 public class AssignmentWorkflow extends Workflow {
 
     private static final long serialVersionUID = 1L;

@@ -19,9 +19,6 @@ import ee.webmedia.alfresco.report.model.ReportModel;
 import ee.webmedia.alfresco.workflow.search.model.TaskReportModel;
 import ee.webmedia.alfresco.workflow.search.model.TaskSearchModel;
 
-/**
- * @author Riina Tens
- */
 public class ReportHelper {
 
     /** Document report headings that are displayed conditionally (depending whether or not corresponding field is used) */

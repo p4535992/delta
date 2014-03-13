@@ -20,8 +20,6 @@ import ee.webmedia.alfresco.workflow.service.WorkflowService;
  * Tasks are retireved by compound workflow in order to retrieve task index in workflow.
  * This class is deprecated because updateNode method contains functionality that doesn't exist any more, but it is still preserved to
  * avoid rewriting bean dependencies.
- * 
- * @author Riina Tens
  */
 public class TaskTableInsertBootstrap extends AbstractNodeUpdater {
 

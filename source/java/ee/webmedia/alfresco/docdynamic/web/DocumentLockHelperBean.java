@@ -26,8 +26,6 @@ import ee.webmedia.alfresco.utils.UnableToPerformException;
 
 /**
  * Helper for locking documents
- * 
- * @author Kaarel Jõgeva
  */
 public class DocumentLockHelperBean implements Serializable {
 
@@ -65,7 +63,7 @@ public class DocumentLockHelperBean implements Serializable {
      * @throws UnableToPerformException when node is already locked by another user
      */
     public boolean lockOrUnlockIfNeeded(boolean mustLock4Edit) throws NodeLockedException {
-        // XXX ALAR: It would be correct to lock all nodes in document/caseFile dialog stack which are opened in edit mode.
+        // XXX It would be correct to lock all nodes in document/caseFile dialog stack which are opened in edit mode.
         // But currently we only lock the top most node.
         final Node docNode = getDocumentDialogHelperBean().getNode();
         if (docNode == null) {
@@ -75,7 +73,7 @@ public class DocumentLockHelperBean implements Serializable {
         final NodeRef docRef = docNode.getNodeRef();
         synchronized (docNode) { // to avoid extending lock after unlock(save/cancel)
             if (!getNodeService().exists(docRef)) {
-                throw new UnableToPerformException("document_delete_success"); // XXX: Alar
+                throw new UnableToPerformException("document_delete_success"); // XXX:
             }
             if (mustLock4Edit) {
                 if (lockService.setLockIfFree(docRef) == LockStatus.LOCK_OWNER) {

@@ -132,7 +132,7 @@
       </view:properties>
    </docadmin:fieldGroup>
 
-<!-- TODO DLSeadist Alar
+<!-- TODO DLSeadist
    <docadmin:fieldGroup view:childName="docadmin:users">
       <view:properties>
          <docadmin:name>Kasutajad tabelis</docadmin:name>

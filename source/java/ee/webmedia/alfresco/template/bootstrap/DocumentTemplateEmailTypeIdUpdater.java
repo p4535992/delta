@@ -19,8 +19,6 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
  * Changes document template DOCTYPE_ID "E-maili mall" -> "E-kirja mall"
- * 
- * @author Vladimir Drozdik
  */
 public class DocumentTemplateEmailTypeIdUpdater extends AbstractNodeUpdater {
 

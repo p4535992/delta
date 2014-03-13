@@ -15,9 +15,6 @@ import org.alfresco.util.Pair;
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.workflow.service.type.WorkflowType;
 
-/**
- * @author Riina Tens
- */
 public interface WorkflowDbService {
 
     String BEAN_NAME = "WorkflowDbService";

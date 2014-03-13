@@ -23,8 +23,6 @@ import ee.webmedia.alfresco.user.service.UserService;
 /**
  * Set all existing users' notification properties to TRUE (all users get all available e-mail notifications as default settings)
  * FIXME: NB! This updater MUST NOT run when migrating from 2.5 to 3.*!!!
- * 
- * @author Riina Tens
  */
 public class NotificationPreferencesUpdater extends AbstractModuleComponent {
     protected final Log LOG = LogFactory.getLog(getClass());

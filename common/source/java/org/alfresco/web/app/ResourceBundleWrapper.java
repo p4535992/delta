@@ -112,7 +112,7 @@ public final class ResourceBundleWrapper extends ResourceBundle implements Seria
          // Check for custom bundle (if any) - first try in the repo otherwise try the classpath
          ResourceBundle customBundle = null;
 
-         // ALAR: Don't search from repo, we don't use it, saves time
+         // Don't search from repo, we don't use it, saves time
          
          if (customBundle == null)
          {

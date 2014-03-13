@@ -15,8 +15,6 @@ import ee.webmedia.alfresco.archivals.service.ArchivalsService;
  * Scheduled job to call a {@link ee.webmedia.alfresco.archivals.service.ArchivalsService#destroyArchivedVolumes()}.
  * <p>
  * Job data is: <b>archivalsService</b>
- * 
- * @author Romet Aidla
  */
 public class DestroyVolumesJob implements StatefulJob {
     private static Log log = LogFactory.getLog(DestroyVolumesJob.class);

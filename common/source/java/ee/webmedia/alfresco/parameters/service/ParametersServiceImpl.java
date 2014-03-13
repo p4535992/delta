@@ -26,8 +26,6 @@ import ee.webmedia.alfresco.parameters.model.ParametersModel.Repo;
 
 /**
  * Class to retrieve user-configurable parameters
- * 
- * @author Ats Uiboupin
  */
 public class ParametersServiceImpl implements ParametersService {
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(ParametersServiceImpl.class);

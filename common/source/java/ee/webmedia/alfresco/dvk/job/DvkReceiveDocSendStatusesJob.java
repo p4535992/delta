@@ -17,8 +17,6 @@ import ee.webmedia.alfresco.dvk.service.DvkServiceImpl;
  * Scheduled job to call a {@link DvkServiceImpl#XXXXXXXXXXXX}.
  * <p>
  * Job data is: <b>DvkService</b>
- * 
- * @author Ats Uiboupin
  */
 public class DvkReceiveDocSendStatusesJob implements StatefulJob {
     private static Log log = LogFactory.getLog(DvkReceiveDocSendStatusesJob.class);

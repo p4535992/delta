@@ -13,9 +13,6 @@ import org.springframework.jdbc.core.simple.ParameterizedRowMapper;
 import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
 import org.springframework.util.Assert;
 
-/**
- * @author Alar Kvell
- */
 public class InvalidNodeFixerBootstrap {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(InvalidNodeFixerBootstrap.class);
 

@@ -30,9 +30,6 @@ import ee.webmedia.alfresco.series.model.SeriesModel;
  * Aastapõhine toimik -> ANNUAL_FILE
  * Asjatoimik -> CASE_FILE
  * and adds SUBJECT_FILE and ANNUAL_FILE if needed.
- * 
- * @author Ats Uiboupin - removing permission
- * @author Vladimir Drozdik - changing series.volType
  */
 public class SeriesUpdater extends AbstractNodeUpdater {
     @Deprecated

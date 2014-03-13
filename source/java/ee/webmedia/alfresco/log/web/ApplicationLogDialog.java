@@ -27,8 +27,6 @@ import ee.webmedia.alfresco.utils.WebUtil;
 
 /**
  * Dialog for editing logging settings and for performing log entries search.
- * 
- * @author Martti Tamm
  */
 public class ApplicationLogDialog extends AbstractSearchFilterBlockBean<LogService> {
 

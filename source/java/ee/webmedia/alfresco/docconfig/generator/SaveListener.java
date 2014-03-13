@@ -9,9 +9,6 @@ import ee.webmedia.alfresco.docconfig.service.DynamicPropertyDefinition;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 
-/**
- * @author Alar Kvell
- */
 public interface SaveListener {
 
     // XXX make document class more general, so this system could be used on other types of objects?

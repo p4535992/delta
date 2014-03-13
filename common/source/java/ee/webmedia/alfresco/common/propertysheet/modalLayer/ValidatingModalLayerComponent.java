@@ -19,8 +19,6 @@ import flexjson.JSONSerializer;
 /**
  * Modal popup to display input fields and submit data.
  * If needed, can be extended to use propertysheet to display input fields.
- * 
- * @author Riina Tens (refactored and generalized from TaskListCommentComponent and SendManuallyToSapModalComponent)
  */
 public class ValidatingModalLayerComponent extends ModalLayerComponent {
     private static final long serialVersionUID = 1L;

@@ -121,10 +121,6 @@ import ee.webmedia.alfresco.workflow.service.Workflow;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
 import ee.webmedia.xtee.client.dhl.DhlXTeeService.SendStatus;
 
-/**
- * @author Alar Kvell
- * @author Erko Hansar
- */
 public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl implements DocumentSearchService {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DocumentSearchServiceImpl.class);
 
@@ -1475,7 +1471,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         List<Object> arguments = new ArrayList<Object>();
         Map<String, Object> props = filter.getProperties();
 
-        // TODO: Riina - verify that it is okay NOT to use left wildcard any more.
+        // TODO: verify that it is okay NOT to use left wildcard any more.
         // Use both left and right wildcard in task searches
         addDateQueryPartsAndArguments(queryParts, arguments, props, TaskSearchModel.Props.STARTED_DATE_TIME_BEGIN, TaskSearchModel.Props.STARTED_DATE_TIME_END,
                 WorkflowCommonModel.Props.STARTED_DATE_TIME);

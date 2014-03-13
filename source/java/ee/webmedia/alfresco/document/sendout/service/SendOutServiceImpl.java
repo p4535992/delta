@@ -49,9 +49,6 @@ import ee.webmedia.alfresco.workflow.service.Workflow;
 import ee.webmedia.xtee.client.dhl.DhlXTeeService.ContentToSend;
 import ee.webmedia.xtee.client.dhl.DhlXTeeService.SendStatus;
 
-/**
- * @author Erko Hansar
- */
 public class SendOutServiceImpl implements SendOutService {
 
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(SendOutServiceImpl.class);

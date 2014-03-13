@@ -108,8 +108,6 @@ import ee.webmedia.alfresco.workflow.web.WorkflowBlockBean;
  * <p>
  * For example, to open this dialog manually, (for example {@link ExternalAccessServlet} does this), you should call {@code documentDynamicDialog.open...(nodeRef)}
  * </p>
- * 
- * @author Alar Kvell
  */
 public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<DocDialogSnapshot, DocumentDynamicBlock, DialogDataProvider> implements DialogDataProvider {
     private static final long serialVersionUID = 1L;
@@ -726,7 +724,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         DocumentDynamic document = getDocument();
         NodeRef newParentRef = getParent(document.getVolume(), StringUtils.trimToNull((String) document.getProp(DocumentLocationGenerator.CASE_LABEL_EDITABLE)));
         // For documents not under volume or case, check location change against associated document
-        // TODO : Riina: in 3.10 branch, add document.isFromWebService() check here
+        // TODO : in 3.10 branch, add document.isFromWebService() check here
         if (document.isDraftOrImapOrDvk() || document.isIncomingInvoice()) {
             List<DocAssocInfo> docAssocs = getAssocsBlockBean().getDocAssocInfos();
             if (docAssocs == null || docAssocs.isEmpty()) {

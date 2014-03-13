@@ -83,9 +83,6 @@ import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
 import ee.webmedia.alfresco.utils.UnableToPerformMultiReasonException;
 
-/**
- * @author Ats Uiboupin
- */
 public class DocumentAdminServiceImpl implements DocumentAdminService, InitializingBean {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(DocumentAdminServiceImpl.class);
 
@@ -110,8 +107,6 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
     /**
      * Get nodeRef lazily.
      * Workaround to NPE when trying to get nodeRef from afterProperties set
-     * 
-     * @author Ats Uiboupin
      */
     class NodeRefInitializer {
         private final String xPath;
@@ -597,8 +592,6 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
 
     /**
      * Helps to initialize order or reorder only some items - so that other items will not receive automatically order
-     * 
-     * @author Ats Uiboupin
      */
     private static class FieldDefinitionReorderHelper {
 
@@ -721,8 +714,6 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
      * {@link QNamePattern} that considers {@link QName#getLocalName()} when matching. <br>
      * XXX: created for {@link DocumentAdminServiceImpl#isFieldDefinitionExisting(String)} and {@link DocumentAdminServiceImpl#getFieldDefinition(String)} because at the time there
      * were several diferent namespaces for previous built-in fields and for user defined fields. It must change in future!
-     * 
-     * @author Ats Uiboupin
      */
     private class QNameLocalnameMatcher implements QNamePattern {
         private final String localName;
@@ -1203,8 +1194,6 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
      * for each {@link DocumentTypeVersion}: <br>
      * 1) Add {@link AssociationModel}s or merge {@link FieldMapping}s under existing {@link AssociationModel}s <br>
      * 2) save {@link DocumentTypeVersion}: <br>
-     * 
-     * @author Ats Uiboupin
      */
     public class ImportHelper {
 

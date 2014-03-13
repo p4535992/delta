@@ -8,8 +8,6 @@ import org.jasig.cas.client.validation.Cas20ProxyReceivingTicketValidationFilter
 
 /**
  * TicketValidationFilter that breaks redirection loop after unsucessful validation because of ticket validity timeout.
- * 
- * @author Kaarel Jõgeva
  */
 public class Cas20ProxyReceivingRedirectingTicketValidationFilter extends Cas20ProxyReceivingTicketValidationFilter {
     

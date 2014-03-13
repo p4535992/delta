@@ -7,8 +7,6 @@ import javax.faces.webapp.UIComponentTag;
 
 /**
  * Tag for generating custom children based on attribute values
- * 
- * @author Riina Tens
  */
 public class CustomChildrenContainerTag extends UIComponentTag {
 

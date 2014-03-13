@@ -16,8 +16,6 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
  * Dialog for the list of field definitions
- * 
- * @author Ats Uiboupin
  */
 public class FieldDefinitionListDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;

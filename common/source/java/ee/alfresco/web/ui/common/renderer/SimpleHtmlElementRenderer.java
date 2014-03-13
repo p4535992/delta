@@ -14,8 +14,6 @@ import org.apache.myfaces.shared_impl.renderkit.html.HtmlRendererUtils;
 
 /**
  * more flexible version of {@link HtmlGroupRenderer} that writes id (if needed) and {@link HTML#COMMON_PASSTROUGH_ATTRIBUTES}
- * 
- * @author Ats Uiboupin
  */
 public class SimpleHtmlElementRenderer extends HtmlGroupRenderer {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(SimpleHtmlElementRenderer.class);

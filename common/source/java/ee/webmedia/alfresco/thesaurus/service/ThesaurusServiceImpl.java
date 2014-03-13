@@ -39,8 +39,6 @@ import ee.webmedia.alfresco.utils.UnableToPerformException;
 
 /**
  * Implementation for ThesaurusService.
- * 
- * @author Kaarel Jõgeva
  */
 public class ThesaurusServiceImpl implements ThesaurusService {
 

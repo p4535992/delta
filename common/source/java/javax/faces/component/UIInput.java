@@ -231,7 +231,7 @@ public class UIInput
         setValid(true);
         super.decode(context);
 
-        // KAAREL: Actually we should set the value for read-only inputs. If we would like to skip setting the value, we should use disabled attribute instead.
+        // Actually we should set the value for read-only inputs. If we would like to skip setting the value, we should use disabled attribute instead.
         if (HtmlRendererUtils.isDisabledOrReadOnly(this) && StringUtils.isNotBlank((String) getAttributes().get("styleClass"))
                 && StringUtils.contains((String) getAttributes().get("styleClass"), "editable")) {
             Map<String, String> paramMap = context.getExternalContext().getRequestParameterMap();
@@ -340,7 +340,6 @@ public class UIInput
     }
 	
     /**
-     * @author Ats Uiboupin
      * @return true if this UIInput has at least one instance of MandatoryIfValidator, false otherwise.
      */
     private boolean hasMandatoryIfValidators() {

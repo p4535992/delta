@@ -5,9 +5,6 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.imap.model.ImapModel;
 
-/**
- * @author Riina Tens
- */
 public class IncomingEmailListDialog extends AbstractEmailListDialog {
 
     private static final long serialVersionUID = 1L;

@@ -11,8 +11,6 @@ import ee.webmedia.alfresco.imap.service.ImapServiceExt;
 
 /**
  * Saves mail to the folder without changing.
- * 
- * @author Romet Aidla
  */
 public class IncomingFolderAppendBehaviour implements AppendBehaviour {
     public static final String BEHAVIOUR_NAME = "incomingBehaviour";

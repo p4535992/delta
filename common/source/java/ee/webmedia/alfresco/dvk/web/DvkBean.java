@@ -13,9 +13,6 @@ import org.springframework.web.jsf.FacesContextUtils;
 import ee.webmedia.alfresco.dvk.service.DvkService;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
-/**
- * @author Alar Kvell
- */
 public class DvkBean implements Serializable {
     private static final long serialVersionUID = 1L;
 

@@ -34,8 +34,6 @@ import ee.webmedia.alfresco.workflow.service.type.WorkflowType;
  * Used to fix bug during PPA 3.6.21 -> 3.6.30 upgrade, where trashcan tasks and
  * tasks in compound workflows that are missing from Lucene index are not present in delta_task table.
  * NB! This updater assumes that Lucene index has been fixed!
- * 
- * @author Riina Tens
  */
 public class TaskTableInsertMissingTasksBootstrap extends AbstractNodeUpdater {
 

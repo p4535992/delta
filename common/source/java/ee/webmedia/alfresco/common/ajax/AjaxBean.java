@@ -41,10 +41,6 @@ import ee.webmedia.alfresco.privilege.service.PrivilegeUtil;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 import flexjson.JSONSerializer;
 
-/**
- * @author Alar Kvell
- * @author Romet Aidla
- */
 public class AjaxBean implements Serializable {
     public static final String AJAX_REQUEST_PARAM = "ajaxRequest";
 

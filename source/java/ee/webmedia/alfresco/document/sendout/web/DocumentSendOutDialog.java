@@ -83,8 +83,6 @@ import ee.webmedia.alfresco.utils.WebUtil;
 
 /**
  * Bean for sending out document dialog.
- * 
- * @author Erko Hansar
  */
 public class DocumentSendOutDialog extends BaseDialogBean {
 

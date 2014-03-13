@@ -22,9 +22,6 @@ import ee.webmedia.alfresco.docconfig.generator.systematic.UserContactRelatedGro
 import ee.webmedia.alfresco.docconfig.service.UserContactMappingCode;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 
-/**
- * @author Alar Kvell
- */
 public class UserContactGenerator extends BaseTypeFieldGenerator {
 
     @Override

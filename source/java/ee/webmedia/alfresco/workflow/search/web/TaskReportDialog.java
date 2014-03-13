@@ -17,9 +17,6 @@ import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.workflow.search.model.TaskReportModel;
 import ee.webmedia.alfresco.workflow.search.service.TaskSearchFilterService;
 
-/**
- * @author Riina Tens
- */
 public class TaskReportDialog extends TaskSearchDialog {
 
     private static final long serialVersionUID = 1L;

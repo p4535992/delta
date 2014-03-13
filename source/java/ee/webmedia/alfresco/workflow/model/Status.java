@@ -1,8 +1,5 @@
 package ee.webmedia.alfresco.workflow.model;
 
-/**
- * @author Alar Kvell
- */
 public enum Status {
 
     /** uus */

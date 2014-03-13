@@ -4,9 +4,6 @@ import org.alfresco.repo.module.AbstractModuleComponent;
 
 import ee.webmedia.alfresco.user.service.UserService;
 
-/**
- * @author Kaarel Jõgeva
- */
 public class SupervisionGroupBootstrap extends AbstractModuleComponent {
 
     @Override

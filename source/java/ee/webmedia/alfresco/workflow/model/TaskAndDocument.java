@@ -6,9 +6,6 @@ import java.util.Date;
 import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.workflow.service.Task;
 
-/**
- * @author Alar Kvell
- */
 public class TaskAndDocument implements Serializable {
     private static final long serialVersionUID = 1L;
     public static final String STYLECLASS_TASK_OVERDUE = "taskOverdue";

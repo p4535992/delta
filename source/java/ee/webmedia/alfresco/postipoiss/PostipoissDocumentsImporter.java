@@ -103,9 +103,6 @@ import ee.webmedia.alfresco.workflow.service.type.WorkflowType;
 
 /**
  * Imports documents and files from Postipoiss.
- * 
- * @author Aleksei Lissitsin
- * @author Alar Kvell
  */
 public class PostipoissDocumentsImporter {
 

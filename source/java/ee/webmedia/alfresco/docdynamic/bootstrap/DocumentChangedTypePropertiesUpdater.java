@@ -26,8 +26,6 @@ import ee.webmedia.alfresco.utils.RepoUtil;
 
 /**
  * Fixes invalid properties belonging to different document type that are not removed when changing document type.
- * 
- * @author Riina Tens
  */
 public class DocumentChangedTypePropertiesUpdater extends AbstractNodeUpdater {
 

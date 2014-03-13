@@ -57,9 +57,6 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.versions.model.VersionsModel;
 
-/**
- * @author Dmitri Melnikov
- */
 public class FileServiceImpl implements FileService {
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(FileServiceImpl.class);
 

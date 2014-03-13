@@ -86,9 +86,6 @@ import ee.webmedia.alfresco.utils.TreeNode;
 import ee.webmedia.alfresco.utils.UserUtil;
 import ee.webmedia.alfresco.workflow.search.model.TaskSearchModel;
 
-/**
- * @author Alar Kvell
- */
 public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFactoryAware {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(DocumentConfigServiceImpl.class);
 
@@ -807,7 +804,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
                 }
             }
 
-            // TODO Alar: would be better to refactor this to be more efficient and happen in a more general place (one or two methods above)
+            // TODO would be better to refactor this to be more efficient and happen in a more general place (one or two methods above)
             if (field.getParent() instanceof FieldGroup) {
                 FieldGroup group = (FieldGroup) field.getParent();
                 if (group.isSystematic()) {
@@ -1258,7 +1255,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
     @Override
     public Map<String, Pair<DynamicPropertyDefinition, Field>> getPropertyDefinitions(Node node) {
         QName type = node.getType();
-        // XXX Alar: checking hasAspect(OBJECT) would be the same
+        // XXX checking hasAspect(OBJECT) would be the same
         if (!DocumentCommonModel.Types.DOCUMENT.equals(type) && !dictionaryService.isSubClass(type, DocumentCommonModel.Types.METADATA_CONTAINER)) {
             return null;
         }

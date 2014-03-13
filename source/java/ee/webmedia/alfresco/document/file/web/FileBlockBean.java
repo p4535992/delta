@@ -41,9 +41,6 @@ import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 
-/**
- * @author Dmitri Melnikov
- */
 public class FileBlockBean implements DocumentDynamicBlock, RefreshEventListener {
     private static final long serialVersionUID = 1L;
 

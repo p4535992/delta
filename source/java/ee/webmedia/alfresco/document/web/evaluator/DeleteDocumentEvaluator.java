@@ -11,9 +11,6 @@ import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 
 /**
  * UI action evaluator for validating whether user can delete current document.
- * 
- * @author Romet Aidla
- * @author Ats Uiboupin - dropped most of the code in favor to permissions
  */
 public class DeleteDocumentEvaluator extends BaseActionEvaluator {
     private static final long serialVersionUID = 0L;

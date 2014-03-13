@@ -49,9 +49,6 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
 
-/**
- * @author Ats Uiboupin
- */
 public class PrivilegeServiceImpl implements PrivilegeService {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(PrivilegeServiceImpl.class);
 
@@ -508,8 +505,6 @@ public class PrivilegeServiceImpl implements PrivilegeService {
 
     /**
      * {@link AccessPermission#isInherited()} == false does not mean, that the same permission is not also inherited - it just says that this permission is set directly as well
-     * 
-     * @author Ats Uiboupin
      */
     class ThoroughInheritanceChecker {
         private final Set<String> userNamesInAdminsGroup;

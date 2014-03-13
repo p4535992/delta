@@ -57,9 +57,6 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.TextUtil;
 
-/**
- * @author Alar Kvell
- */
 public class AccessRestrictionGenerator extends BaseSystematicFieldGenerator {
 
     private static final String VIEW_MODE_PROP_SUFFIX = "View";

@@ -258,7 +258,6 @@ function disableAndRemoveButton(buttonId) {
 }
 /**
  * append selection of source element to the element with id ending with "toItemIdSuffix" and beginning with the same id prefix as selectBox
- * @author Ats Uiboupin
  */
 function appendSelection(source, targetId) {
    var selectItem = $jQ('#' + escapeId4JQ(source.attr("id")) + ' :selected');
@@ -278,7 +277,6 @@ function appendSelection(source, targetId) {
  * Add autoComplete functionality to input using given values to for suggestion(allows to enter also values not given with <code>valuesArray</code>)
  * @param inputId - id of the input component that should have autoComplete functionality based on values from <code>valuesArray</code>
  * @param valuesArray - values to be suggested int the input
- * @author Ats Uiboupin
  */
 var autocompleters = new Array();
 function addAutocompleter(inputId, valuesArray){
@@ -2065,7 +2063,6 @@ function handleHtmlLoaded(context, setFocus, selects) {
    /**
     * Binder for alfresco properties that are generated with ClassificatorSelectorAndTextGenerator.class
     * Binds all elements that have class="selectBoundWithText" with corresponding textAreas/inputs(assumed to have same id prefix and suffix specified with TARGET_SUFFIX)
-    * @author Ats Uiboupin
     */
    $jQ(".selectBoundWithText", context).each(function (intIndex)
    {
@@ -2086,7 +2083,6 @@ function handleHtmlLoaded(context, setFocus, selects) {
 
    /**
     * Add onChange functionality to jQuery change event (we can't use onChange attribute because of jQuery bug in IE)
-    * @author Riina Tens
     */
    $jQ("[class*=selectWithOnchangeEvent]", context).each(function (intIndex, selectElement)
    {

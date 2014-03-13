@@ -26,10 +26,6 @@ import ee.webmedia.alfresco.log.model.LogObject;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
-/**
- * @author Vladimir Drozdik
- * @author Ats Uiboupin - refactored to be more flexible and use dialog title/success message based on node type
- */
 public class DeleteDialog extends BaseDialogBean {
     private static final String DELETE_DIALOG_MSG_PREFIX = "deleteDialog_";
     private static final long serialVersionUID = 1L;

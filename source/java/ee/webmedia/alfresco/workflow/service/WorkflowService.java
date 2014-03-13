@@ -20,9 +20,6 @@ import ee.webmedia.alfresco.workflow.service.event.WorkflowEventListenerWithModi
 import ee.webmedia.alfresco.workflow.service.event.WorkflowMultiEventListener;
 import ee.webmedia.alfresco.workflow.service.type.WorkflowType;
 
-/**
- * @author Alar Kvell
- */
 public interface WorkflowService {
     String BEAN_NAME = "WmWorkflowService";
 

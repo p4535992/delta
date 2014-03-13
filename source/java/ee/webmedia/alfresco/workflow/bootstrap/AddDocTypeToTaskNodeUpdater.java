@@ -16,8 +16,6 @@ import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 
 /**
  * Add docType prop to all tasks, needed for searching tasks by docType
- * 
- * @author Keit Tehvan
  */
 public class AddDocTypeToTaskNodeUpdater extends AbstractNodeUpdater {
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(AddDocTypeToTaskNodeUpdater.class);

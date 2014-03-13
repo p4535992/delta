@@ -11,9 +11,6 @@ import ee.webmedia.alfresco.menu.web.MenuItemCountBean;
 /**
  * Menu item processor that can be used as a base class for menu items which need count after title.
  * Just subclass this class and implement {@link CountAddingMenuItemProcessor#getCount()}.
- * 
- * @author Romet Aidla
- * @author Alar Kvell
  */
 public abstract class CountAddingMenuItemProcessor implements MenuService.MenuItemProcessor {
 

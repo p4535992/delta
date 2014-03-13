@@ -7,9 +7,6 @@ import org.alfresco.repo.domain.hibernate.DirtySessionAnnotation;
 import org.alfresco.repo.security.permissions.impl.AclChange;
 import org.alfresco.service.cmr.repository.NodeRef;
 
-/**
- * @author Riina Tens
- */
 public interface AccessControlListExtDAO extends AccessControlListDAO {
 
     @DirtySessionAnnotation(markDirty = true)

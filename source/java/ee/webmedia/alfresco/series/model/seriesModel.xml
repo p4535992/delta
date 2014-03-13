@@ -106,7 +106,7 @@
                </target>
             </child-association>
          <!-- Deprecated - series log is not saved under series node any more, but only in application log.
-          Don't create new associations of this type. Can be deleted when all existing associations have been migrated to application log (Riina). -->            
+          Don't create new associations of this type. Can be deleted when all existing associations have been migrated to application log ). -->            
             <child-association name="ser:seriesLog">
                <source>
                   <mandatory>true</mandatory>

@@ -2,8 +2,6 @@ package ee.webmedia.alfresco.docconfig.bootstrap;
 
 /**
  * Constants for systematic fieldGroups
- * 
- * @author Ats Uiboupin
  */
 public class SystematicFieldGroupNames {
     public static final String USER = "Kasutaja";

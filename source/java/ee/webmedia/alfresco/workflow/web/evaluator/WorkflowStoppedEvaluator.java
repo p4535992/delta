@@ -6,8 +6,6 @@ import ee.webmedia.alfresco.workflow.service.WorkflowUtil;
 
 /**
  * Evaluates to true if given workflow has status "peatatud".
- * 
- * @author Erko Hansar
  */
 public class WorkflowStoppedEvaluator extends AbstractFullAccessEvaluator {
 

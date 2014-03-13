@@ -7,9 +7,6 @@ import org.alfresco.service.cmr.repository.ContentReader;
 import org.alfresco.service.cmr.repository.ContentWriter;
 import org.springframework.beans.factory.InitializingBean;
 
-/**
- * @author Alar Kvell
- */
 public class MsoServiceDelegatingImpl implements MsoService, InitializingBean {
 
     private MsoService delegate;

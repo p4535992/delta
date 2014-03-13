@@ -72,10 +72,6 @@ import ee.webmedia.alfresco.utils.FilenameUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 
-/**
- * @author Dmitri Melnikov
- * @author Kaarel Jõgeva
- */
 public class AddFileDialog extends BaseDialogBean implements Validator {
     private static final long serialVersionUID = 1L;
     public static final String BEAN_NAME = "AddFileDialog";

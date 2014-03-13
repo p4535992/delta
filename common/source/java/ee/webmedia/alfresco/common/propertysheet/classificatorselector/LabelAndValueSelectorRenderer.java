@@ -25,8 +25,6 @@ import ee.webmedia.alfresco.utils.ComponentUtil;
 
 /**
  * Render different texts in value attribute and option label
- * 
- * @author Riina Tens
  */
 public class LabelAndValueSelectorRenderer extends HtmlMenuRenderer {
 

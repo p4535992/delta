@@ -25,8 +25,6 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
  * Enables prompting users with a question and invoking methods based on user input.
- * 
- * @author Kaarel Jõgeva
  */
 public class UserConfirmHelper implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -119,8 +117,6 @@ public class UserConfirmHelper implements Serializable {
 
     /**
      * ActionListener that clears the active confirm from the session
-     * 
-     * @author Kaarel Jõgeva
      */
     private class ClearUserConfirmActionListener implements ActionListener, Serializable {
 

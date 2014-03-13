@@ -21,9 +21,6 @@ import ee.webmedia.alfresco.signature.model.DataItem;
 import ee.webmedia.alfresco.signature.model.SignatureItem;
 import ee.webmedia.alfresco.signature.model.SignatureItemsAndDataItems;
 
-/**
- * @author Dmitri Melnikov
- */
 public class File implements Serializable, IClonable<File> {
 
     private static final long serialVersionUID = 1L;

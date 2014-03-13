@@ -17,8 +17,6 @@ import ee.webmedia.alfresco.workflow.service.event.WorkflowEventType;
 
 /**
  * Performs operations on documents based on events related to workflow status changes
- * 
- * @author Alar Kvell
  */
 public class DocumentWorkflowStatusEventListener implements WorkflowEventListener, InitializingBean {
 

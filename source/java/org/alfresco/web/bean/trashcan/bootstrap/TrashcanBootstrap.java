@@ -24,9 +24,6 @@ import ee.webmedia.alfresco.template.model.DocumentTemplateModel;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
-/**
- * @author Priit Pikk
- */
 public class TrashcanBootstrap extends AbstractNodeUpdater {
 
     private DocumentService documentService;

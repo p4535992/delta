@@ -93,9 +93,6 @@ import ee.webmedia.alfresco.utils.CalendarUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.TextUtil;
 
-/**
- * @author Ats Uiboupin
- */
 public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(GeneralServiceImpl.class);
 

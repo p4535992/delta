@@ -26,8 +26,6 @@ import ee.webmedia.alfresco.series.model.SeriesModel;
  * This updater combines document updates from DocumentChangedTypePropertiesUpdater, DocumentAccessRestrictionUpdater and LogAndDeleteObjectsWithMissingType.
  * It is assumed that the updater is executed from nodeBrower as background job, so check for lock
  * and resolving possibly changed nodeRefs is added.
- * 
- * @author Riina Tens
  */
 public class DocumentUpdater2 extends AbstractNodeUpdater {
 

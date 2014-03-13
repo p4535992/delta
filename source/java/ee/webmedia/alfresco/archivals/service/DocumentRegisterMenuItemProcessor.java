@@ -9,9 +9,6 @@ import ee.webmedia.alfresco.menu.model.MenuItem;
 import ee.webmedia.alfresco.menu.service.MenuService;
 import ee.webmedia.alfresco.menu.service.MenuService.MenuItemProcessor;
 
-/**
- * @author Alar Kvell
- */
 public class DocumentRegisterMenuItemProcessor implements MenuItemProcessor, InitializingBean {
 
     private MenuService menuService;

@@ -2,9 +2,6 @@ package ee.webmedia.alfresco.orgstructure.web;
 
 import java.io.Serializable;
 
-/**
- * @author Riina Tens
- */
 public class RsAccessStatusBean implements Serializable {
 
     private static final long serialVersionUID = 1L;

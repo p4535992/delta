@@ -45,8 +45,6 @@ import ee.webmedia.alfresco.utils.WebUtil;
 
 /**
  * Generates components for Systematic group Keywords
- * 
- * @author Ats Uiboupin
  */
 public class KeywordsGenerator extends BaseSystematicFieldGenerator {
 

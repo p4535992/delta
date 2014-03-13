@@ -16,9 +16,6 @@ import org.springframework.util.Assert;
 import ee.webmedia.alfresco.signature.model.SkLdapCertificate;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 
-/**
- * @author Alar Kvell
- */
 public class SkLdapServiceImpl implements SkLdapService {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(SkLdapServiceImpl.class);
 

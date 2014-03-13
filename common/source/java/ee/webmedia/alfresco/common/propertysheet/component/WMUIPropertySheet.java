@@ -26,8 +26,6 @@ import ee.webmedia.alfresco.common.propertysheet.generator.CustomAttributes;
 
 /**
  * Subclass of UIPropertySheet that copies custom attributes from property-sheet/show-property element to configuration item.
- * 
- * @author Ats Uiboupin
  */
 public class WMUIPropertySheet extends UIPropertySheet {
 

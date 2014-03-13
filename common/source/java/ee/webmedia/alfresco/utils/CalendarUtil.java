@@ -18,8 +18,6 @@ import ee.webmedia.alfresco.classificator.service.ClassificatorService;
 
 /**
  * Utility class to deal with date and time
- * 
- * @author Riina Tens
  */
 
 public class CalendarUtil {

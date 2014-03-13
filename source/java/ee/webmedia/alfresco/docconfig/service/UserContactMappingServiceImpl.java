@@ -133,7 +133,7 @@ public class UserContactMappingServiceImpl implements UserContactMappingService 
         }
     }
 
-    // TODO Alar: could eliminate this method, because it is not used
+    // TODO could eliminate this method, because it is not used
     private List<Serializable> getMappedValues(List<UserContactMappingCode> mappingCodes, NodeRef userOrContactRef) {
         if (userOrContactRef == null || !nodeService.exists(userOrContactRef)) {
             return null;

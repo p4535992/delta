@@ -9,8 +9,6 @@ import ee.webmedia.alfresco.docadmin.service.FollowupAssociation;
 
 /**
  * Bean for showing followup associations list
- * 
- * @author Ats Uiboupin
  */
 public class FollowupAssocsListBean extends DocTypeAssocsListBean<FollowupAssociation> {
     private static final long serialVersionUID = 1L;

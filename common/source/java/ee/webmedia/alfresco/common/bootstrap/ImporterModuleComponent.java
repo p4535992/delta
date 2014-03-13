@@ -3,9 +3,6 @@ package ee.webmedia.alfresco.common.bootstrap;
 import java.util.List;
 import java.util.Properties;
 
-/**
- * @author Alar Kvell
- */
 public class ImporterModuleComponent extends org.alfresco.repo.module.ImporterModuleComponent {
 
     private boolean enabled = true;

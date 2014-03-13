@@ -15,9 +15,6 @@ import ee.webmedia.alfresco.docconfig.generator.GeneratorResults;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.user.service.UserService;
 
-/**
- * @author Alar Kvell
- */
 public class RegNumberGenerator extends BaseSystematicFieldGenerator {
 
     private UserService userService;

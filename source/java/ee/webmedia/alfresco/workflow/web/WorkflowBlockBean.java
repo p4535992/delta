@@ -130,9 +130,6 @@ import ee.webmedia.alfresco.workflow.service.WorkflowUtil;
 import ee.webmedia.alfresco.workflow.service.type.DueDateExtensionWorkflowType;
 import ee.webmedia.alfresco.workflow.web.PrintTableServlet.TableMode;
 
-/**
- * @author Dmitri Melnikov
- */
 public class WorkflowBlockBean implements DocumentDynamicBlock {
 
     private static final long serialVersionUID = 1L;

@@ -2,9 +2,6 @@ package ee.webmedia.alfresco.document.search.model;
 
 import org.alfresco.service.namespace.QName;
 
-/**
- * @author Alar Kvell
- */
 public interface DocumentSearchModel {
     String URI = "http://alfresco.webmedia.ee/model/document/search/1.0";
     String PREFIX = "docsearch:";

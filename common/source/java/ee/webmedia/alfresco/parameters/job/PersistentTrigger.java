@@ -12,8 +12,6 @@ import ee.webmedia.alfresco.parameters.service.ParametersService;
 /**
  * SimpleTrigger that stores next fire time into repository,
  * so that trigger state can be restored between server restarts.
- * 
- * @author Romet Aidla
  */
 public class PersistentTrigger extends SimpleTrigger {
     private static final long serialVersionUID = 1L;

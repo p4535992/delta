@@ -17,8 +17,6 @@ import ee.webmedia.alfresco.volume.web.VolumeTypePrivilegesHandler;
 
 /**
  * {@link PrivilegesHandler} for nodes of type {@link SeriesModel.Types#SERIES}
- * 
- * @author Ats Uiboupin
  */
 public class SeriesTypePrivilegesHandler extends PrivilegesHandler {
     private static final long serialVersionUID = 1L;

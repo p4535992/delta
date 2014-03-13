@@ -4,9 +4,6 @@ import org.alfresco.model.ContentModel;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
 
-/**
- * @author Kaarel Jõgeva
- */
 public interface DocumentTemplateModel {
 
     String URI = "http://alfresco.webmedia.ee/model/document-template/1.0";

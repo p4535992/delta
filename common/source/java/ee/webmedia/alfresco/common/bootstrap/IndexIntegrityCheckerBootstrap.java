@@ -38,8 +38,6 @@ import ee.webmedia.alfresco.utils.ProgressTracker;
 
 /**
  * Check that all nodes are up-to-date in lucene index and reindex if necessary.
- * 
- * @author Alar Kvell
  */
 public class IndexIntegrityCheckerBootstrap {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(IndexIntegrityCheckerBootstrap.class);

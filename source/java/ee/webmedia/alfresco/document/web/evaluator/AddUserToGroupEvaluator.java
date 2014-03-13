@@ -10,8 +10,6 @@ import ee.webmedia.alfresco.user.service.UserService;
 
 /**
  * Check if current user can add users to groups in this installation.
- * 
- * @author Kaarel Jõgeva
  */
 public class AddUserToGroupEvaluator extends BaseActionEvaluator {
 

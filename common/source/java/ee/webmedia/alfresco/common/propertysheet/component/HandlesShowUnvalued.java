@@ -1,8 +1,5 @@
 package ee.webmedia.alfresco.common.propertysheet.component;
 
-/**
- * @author Alar Kvell
- */
 public interface HandlesShowUnvalued {
 
     /**

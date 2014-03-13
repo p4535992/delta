@@ -76,8 +76,6 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
  * Component to represent a child propertySheet as a PropertySheetItem within a parent property sheet
- * 
- * @author Ats Uiboupin
  */
 public class SubPropertySheetItem extends PropertySheetItem {
     public static final String SUB_PROPERTY_SHEET_ITEM = SubPropertySheetItem.class.getCanonicalName();

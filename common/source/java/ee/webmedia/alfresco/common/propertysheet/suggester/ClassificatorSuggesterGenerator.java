@@ -24,8 +24,6 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 /**
  * Generator, that generates a TextArea that suggests values of classificator name (defined using "classificatorName" attribute in the show-property
  * element), but allows to insert value that is not in classificator values
- * 
- * @author Ats Uiboupin
  */
 public class ClassificatorSuggesterGenerator extends SuggesterGenerator {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(ClassificatorSuggesterGenerator.class);

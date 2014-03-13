@@ -7,9 +7,6 @@ import org.alfresco.service.cmr.repository.NodeRef;
 
 import ee.webmedia.alfresco.document.service.DocumentService.AssocType;
 
-/**
- * @author Ats Uiboupin
- */
 public class DocAssocInfo implements Serializable {
 
     private static final long serialVersionUID = 1L;

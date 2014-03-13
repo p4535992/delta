@@ -4,9 +4,6 @@ import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.parameters.model.ParametersModel.Repo;
 
-/**
- * @author Ats Uiboupin
- */
 public enum Parameters {
     /** Maximal number of documents that is fetched with single service call(multiple calls will be created if needed) */
     DVK_MAX_RECEIVE_DOCUMENTS_NR("dvkReceiveDocumentsNumber"),

@@ -16,9 +16,6 @@ import ee.webmedia.alfresco.docconfig.generator.BaseTypeFieldGenerator;
 import ee.webmedia.alfresco.docconfig.generator.GeneratorResults;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 
-/**
- * @author Alar Kvell
- */
 public class DateGenerator extends BaseTypeFieldGenerator {
 
     public static final String END_PREFIX = "_EndDate";

@@ -21,9 +21,6 @@ import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.utils.RepoUtil;
 
-/**
- * @author Alar Kvell
- */
 public class NodeServiceTest extends BaseAlfrescoSpringTest {
 
     public void testSetAndGetDynamicProperty() {
