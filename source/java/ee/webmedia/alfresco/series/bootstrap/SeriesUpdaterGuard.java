@@ -10,8 +10,6 @@ import ee.webmedia.alfresco.common.web.BeanHelper;
 
 /**
  * Updater finishes when seriesUpdater (running in separate tread) has finished.
- * 
- * @author Riina Tens
  */
 public class SeriesUpdaterGuard extends AbstractModuleComponent {
 

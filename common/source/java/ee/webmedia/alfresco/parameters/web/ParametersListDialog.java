@@ -66,7 +66,8 @@ public class ParametersListDialog extends BaseDialogBean {
                     || Parameters.SEND_INVOICE_TO_DVK_FOLDER.equals(parameter)
                     || Parameters.SEND_PURCHASE_ORDER_INVOICE_TO_DVK_FOLDER.equals(parameter)
                     || Parameters.SEND_XXL_INVOICE_TO_DVK_FOLDER.equals(parameter)
-                    || Parameters.REVIEW_WORKFLOW_COST_MANAGER_WORKFLOW_NUMBER.equals(parameter))
+                    || Parameters.REVIEW_WORKFLOW_COST_MANAGER_WORKFLOW_NUMBER.equals(parameter)
+                    || Parameters.DVK_RECEIVE_DOCUMENTS_INVOICE_FOLDER.equals(parameter))
             {
                 parametersToRemove.add(param);
             }
@@ -121,7 +122,7 @@ public class ParametersListDialog extends BaseDialogBean {
         DataReader dataReader = new RichListDataReader();
         CSVExporter exporter = new EscapingCSVExporter(dataReader);
         exporter.export("parametersList");
-        // Erko hack for incorrect view id in the next request
+        // hack for incorrect view id in the next request
         JspStateManagerImpl.ignoreCurrentViewSequenceHack();
     }
 

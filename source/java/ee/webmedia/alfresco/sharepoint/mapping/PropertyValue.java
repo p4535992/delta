@@ -15,8 +15,6 @@ import ee.webmedia.alfresco.common.web.BeanHelper;
 
 /**
  * General property value handler class.
- * 
- * @author Martti Tamm
  */
 public abstract class PropertyValue {
 

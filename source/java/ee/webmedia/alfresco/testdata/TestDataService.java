@@ -160,8 +160,6 @@ import ee.webmedia.xtee.client.dhl.DhlXTeeService.SendStatus;
 
 /**
  * Test data generator. Can't use any Lucene searches, because lucene indexing may be turned off during test data generation and then lucene search results would be out-of-date.
- * 
- * @author Alar Kvell
  */
 public class TestDataService implements SaveListener {
     protected final Log log = LogFactory.getLog(getClass());

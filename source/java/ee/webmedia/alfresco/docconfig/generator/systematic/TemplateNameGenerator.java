@@ -21,9 +21,6 @@ import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.template.model.DocumentTemplate;
 import ee.webmedia.alfresco.utils.WebUtil;
 
-/**
- * @author Alar Kvell
- */
 public class TemplateNameGenerator extends BaseSystematicFieldGenerator {
 
     @Override

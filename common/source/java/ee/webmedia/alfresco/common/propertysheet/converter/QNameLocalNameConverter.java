@@ -17,8 +17,6 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
  * Converter that can convert String to QName (if namespace is set) and always convert QName to String by returning localName of the QName
- * 
- * @author Ats Uiboupin
  */
 public class QNameLocalNameConverter extends QNameConverter implements StateHolder {
 

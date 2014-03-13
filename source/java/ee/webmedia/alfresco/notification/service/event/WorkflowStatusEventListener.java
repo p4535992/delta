@@ -78,8 +78,8 @@ public class WorkflowStatusEventListener implements WorkflowMultiEventListener, 
         final Task initiatingTask = queue.getParameter(WorkflowQueueParameter.ORDER_ASSIGNMENT_FINISH_TRIGGERING_TASK);
         final List<NodeRef> groupAssignmentTasksFinishedAutomatically = queue.getParameter(WorkflowQueueParameter.TASKS_FINISHED_BY_GROUP_TASK);
         // Send notifications in background in separate thread.
-        // TODO: Riina - implement correctly - save information about emails to send to repo to avoid loss of data, cl task 189285.
-        // TODO: Alar - same for permissions.
+        // TODO: implement correctly - save information about emails to send to repo to avoid loss of data, cl task 189285.
+        // TODO: same for permissions.
         generalService.runOnBackground(new RunAsWork<Void>() {
 
             @Override

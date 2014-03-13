@@ -20,8 +20,6 @@ import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 
 /**
  * Updater to move task file from wfs:file property to child association
- * 
- * @author Riina Tens
  */
 public class MoveTaskFileToChildAssoc extends AbstractNodeUpdater {
 

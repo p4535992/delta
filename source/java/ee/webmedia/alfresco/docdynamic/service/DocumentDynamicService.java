@@ -21,9 +21,6 @@ import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UnableToPerformMultiReasonException;
 import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
 
-/**
- * @author Alar Kvell
- */
 public interface DocumentDynamicService {
 
     String BEAN_NAME = "DocumentDynamicService";

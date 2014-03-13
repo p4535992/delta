@@ -22,9 +22,6 @@ import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.WebUtil;
 
-/**
- * @author Priit Pikk
- */
 public class CommentFileDialog extends BaseDialogBean {
     public static final String BEAN_NAME = "CommentFileDialog";
     private static final long serialVersionUID = 1L;

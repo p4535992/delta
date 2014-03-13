@@ -8,8 +8,6 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
  * List dialog for document available for registering.
- * 
- * @author Romet Aidla
  */
 public class ForRegisteringListDialog extends BaseDocumentListDialog {
     private static final long serialVersionUID = 0L;

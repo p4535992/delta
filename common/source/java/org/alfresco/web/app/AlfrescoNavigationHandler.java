@@ -745,12 +745,12 @@ public class AlfrescoNavigationHandler extends NavigationHandler {
                 // grab the current top item first though in case we need to open
                 // another dialog or wizard
                 
-                // KAAREL: Since we need to preserve back button (application, not browser) functionality, we can't just clear the stack anymore.
+                // Since we need to preserve back button (application, not browser) functionality, we can't just clear the stack anymore.
                 // When override is provided, we are opening a wizard or dialog (browse is obsolete) ie we won't make it to else statement.
                 // String previousViewId = getViewIdFromStackObject(context, getViewStack(context).peek());
                 // getViewStack(context).clear();
                 
-                // KEIT: Fix described in CL 192351:
+                // Fix described in CL 192351:
                 // Old behavior was: if viewStack contained "dialog1, dialog2, dialog3" and dialog4 is currently open and finish outcome is "dialog:close:dialog:dialog5", then
                 // dialog4 is thrown away, dialog3 is restored and put back into viewStack and dialog5 is opened.
                 // New behavior is: dialog4 is thrown away and dialog5 is opened -- that means dialog4 is replaced with dialog5. Importand change is that dialog3 restored method is

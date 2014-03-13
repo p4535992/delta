@@ -4,9 +4,6 @@ import org.apache.commons.lang.builder.ToStringBuilder;
 import org.apache.commons.lang.builder.ToStringStyle;
 import org.dom4j.Element;
 
-/**
- * @author Martti Tamm
- */
 public class GeneralMappingData {
 
     private final String documentTypeElement;

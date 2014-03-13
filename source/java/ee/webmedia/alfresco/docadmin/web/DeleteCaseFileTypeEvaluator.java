@@ -13,8 +13,6 @@ import ee.webmedia.alfresco.docadmin.service.DocumentType;
 
 /**
  * UI action evaluator that decides whether {@link CaseFileType} can be deleted
- * 
- * @author Ats Uiboupin
  */
 public class DeleteCaseFileTypeEvaluator extends BaseActionEvaluator {
     private static final long serialVersionUID = 0L;

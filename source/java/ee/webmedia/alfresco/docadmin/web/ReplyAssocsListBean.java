@@ -9,8 +9,6 @@ import ee.webmedia.alfresco.docadmin.service.ReplyAssociation;
 
 /**
  * Bean for showing reply associations list
- * 
- * @author Ats Uiboupin
  */
 public class ReplyAssocsListBean extends DocTypeAssocsListBean<ReplyAssociation> {
     private static final long serialVersionUID = 1L;

@@ -8,9 +8,6 @@ import org.alfresco.web.bean.repository.Node;
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
 
-/**
- * @author Vladimir Drozdik
- */
 public class VolumeIsOpenedEvaluator extends BaseActionEvaluator {
 
     private static final long serialVersionUID = 0L;

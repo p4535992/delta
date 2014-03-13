@@ -18,8 +18,6 @@ import ee.webmedia.alfresco.workflow.service.WorkflowService;
 /**
  * Delete tasks where ownerName and dueDate is null (see cl task 214260 for reasons how such tasks could be created)
  * and launch regular saving process on containing compound workflow.
- * 
- * @author Riina Tens
  */
 public class DeleteEmptyTasksUpdater extends AbstractNodeUpdater {
 

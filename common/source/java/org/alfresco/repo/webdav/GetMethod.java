@@ -202,7 +202,7 @@ public class GetMethod extends WebDAVMethod
 
             // Build the response header
             m_response.setHeader(WebDAV.HEADER_ETAG, getDAVHelper().makeQuotedETag(pathNodeRef));
-            // Ats: FIXME VIGA, mis avaldub firefox'iga:
+            // FIXME VIGA, mis avaldub firefox'iga:
             // 1) avatakse dokumendi ekraan, kasutajal on faili vaatamise õigus
             // 2) kasutaja avab faili, fail avaneb(fail läheb brauseri cache'sse)
             // 3) kasutajalt eemaldatakse faili vaatamise õigus

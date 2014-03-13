@@ -7,9 +7,6 @@ import org.alfresco.web.bean.repository.Node;
 
 import ee.webmedia.alfresco.document.web.evaluator.ViewStateActionEvaluator;
 
-/**
- * @author Alar Kvell
- */
 public class CaseFileEventPlanEvaluator extends BaseActionEvaluator {
     private static final long serialVersionUID = 1L;
 

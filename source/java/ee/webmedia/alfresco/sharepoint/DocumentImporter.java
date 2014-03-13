@@ -98,8 +98,6 @@ import ee.webmedia.alfresco.volume.model.VolumeModel;
 
 /**
  * Imports documents and files from Sharepoint.
- * 
- * @author Martti Tamm
  */
 public class DocumentImporter {
 

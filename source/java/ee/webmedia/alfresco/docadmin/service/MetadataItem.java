@@ -10,8 +10,6 @@ import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 
 /**
  * Base class for objects that can be stored under {@link DocumentTypeVersion}
- * 
- * @author Ats Uiboupin
  */
 public abstract class MetadataItem extends BaseObject {
     private static final long serialVersionUID = 1L;

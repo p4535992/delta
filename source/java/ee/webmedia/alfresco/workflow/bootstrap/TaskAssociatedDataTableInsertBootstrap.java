@@ -37,8 +37,6 @@ import ee.webmedia.alfresco.workflow.service.WorkflowService;
 /**
  * Insert tasks' due date extension data, due date extension history, files, multivalued properties etc
  * into corresponding tables.
- * 
- * @author Riina Tens
  */
 public class TaskAssociatedDataTableInsertBootstrap extends AbstractNodeUpdater {
 

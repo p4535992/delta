@@ -1,8 +1,5 @@
 package ee.webmedia.alfresco.docconfig.service;
 
-/**
- * @author Alar Kvell
- */
 public enum UserContactMappingCode {
     NAME,
     CODE,

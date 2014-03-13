@@ -12,9 +12,6 @@ import ee.webmedia.alfresco.document.assocsdyn.service.DocumentAssociationsServi
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.service.DocumentService.AssocType;
 
-/**
- * @author Ats Uiboupin
- */
 public class DocAssocInfo implements Serializable, Comparable<DocAssocInfo> {
 
     private static final long serialVersionUID = 1L;

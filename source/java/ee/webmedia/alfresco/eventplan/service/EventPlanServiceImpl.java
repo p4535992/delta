@@ -46,10 +46,6 @@ import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.SearchUtil;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
 
-/**
- * @author Martti Tamm
- * @author Alar Kvell
- */
 public class EventPlanServiceImpl implements EventPlanService {
 
     private NodeService nodeService;

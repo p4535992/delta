@@ -31,9 +31,6 @@ import ee.webmedia.alfresco.report.service.ReportService;
 import ee.webmedia.alfresco.utils.Transformer;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 
-/**
- * @author Riina Tens
- */
 public class ExecuteReportsJob implements StatefulJob {
     private static final Log LOG = LogFactory.getLog(ExecuteReportsJob.class);
 

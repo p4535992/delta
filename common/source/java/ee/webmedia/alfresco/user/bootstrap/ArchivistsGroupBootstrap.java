@@ -6,8 +6,6 @@ import ee.webmedia.alfresco.user.service.UserService;
 
 /**
  * Create group for archivists
- * 
- * @author Ats Uiboupin
  */
 public class ArchivistsGroupBootstrap extends AbstractModuleComponent {
 

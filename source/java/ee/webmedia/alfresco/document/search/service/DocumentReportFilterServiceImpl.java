@@ -5,9 +5,6 @@ import org.alfresco.service.namespace.QName;
 
 import ee.webmedia.alfresco.document.search.model.DocumentReportModel;
 
-/**
- * @author Riina Tens
- */
 public class DocumentReportFilterServiceImpl extends DocumentSearchFilterServiceImpl implements DocumentReportFilterService {
 
     @Override

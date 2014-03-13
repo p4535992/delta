@@ -2,9 +2,6 @@ package ee.webmedia.alfresco.monitoring.model;
 
 import java.util.Date;
 
-/**
- * @author Keit Tehvan
- */
 public class ServiceStatus {
     private String name;
     private String status = "OK";

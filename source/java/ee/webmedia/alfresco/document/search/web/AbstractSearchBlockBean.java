@@ -40,8 +40,6 @@ import ee.webmedia.alfresco.utils.UnableToPerformException;
 
 /**
  * Refactored from SearchBlockBean.
- * 
- * @author Riina Tens
  */
 public abstract class AbstractSearchBlockBean implements DialogDataProvider {
     public static final String PARAM_NODEREF = "nodeRef";

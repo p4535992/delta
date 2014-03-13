@@ -10,9 +10,6 @@ import ee.webmedia.alfresco.menu.service.MenuItemCountHandler;
 import ee.webmedia.alfresco.menu.service.MenuService;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 
-/**
- * @author Kaarel Jõgeva
- */
 public class TaskMenuItemProcessor extends CountAddingMenuItemProcessor implements MenuItemCountHandler, InitializingBean {
 
     private MenuService menuService;

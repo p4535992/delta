@@ -18,9 +18,6 @@ import ee.webmedia.alfresco.document.web.evaluator.ViewStateActionEvaluator;
 import ee.webmedia.alfresco.utils.CalendarUtil;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
 
-/**
- * @author Priit Pikk
- */
 public class CaseFileIsClosedEvaluator extends BaseActionEvaluator {
     private static final long serialVersionUID = 0L;
 

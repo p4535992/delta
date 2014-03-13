@@ -13,9 +13,6 @@ import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
 
-/**
- * @author Alar Kvell
- */
 public class RemoveDuplicateAccessControlEntryRowsBootstrap extends AbstractLifecycleBean {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(RemoveDuplicateAccessControlEntryRowsBootstrap.class);
 

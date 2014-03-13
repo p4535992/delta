@@ -5,9 +5,6 @@ import java.util.List;
 import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.service.BaseWorkflowObject;
 
-/**
- * @author Alar Kvell
- */
 public interface WorkflowEvent {
 
     WorkflowEventType getType();

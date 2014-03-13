@@ -11,8 +11,6 @@ import ee.webmedia.alfresco.imap.service.ImapServiceExt;
 
 /**
  * Saves attachments to the folder.
- * 
- * @author Romet Aidla
  */
 public class AttachmentsFolderAppendBehaviour implements AppendBehaviour {
     public static final String BEHAVIOUR_NAME = "attachmentBehaviour";

@@ -5,8 +5,6 @@ import java.util.Map;
 /**
  * Interface that enables class to have custom attributes. <br>
  * Created to be able to pass custom attributes from property-sheet/show-property element to the componentGenerator
- * 
- * @author Ats Uiboupin
  */
 public interface CustomAttributes {
 

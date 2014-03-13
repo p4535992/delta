@@ -9,8 +9,6 @@ import ee.webmedia.alfresco.document.service.DocumentServiceImpl;
 
 /**
  * Class that divides whole regNumber, that might contain individualizing number into individualizing number and rest of it
- * 
- * @author Ats Uiboupin
  */
 public class RegNrHolder {
     /**

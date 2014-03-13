@@ -14,8 +14,6 @@ import ee.webmedia.alfresco.docadmin.service.DocumentType;
 
 /**
  * Import dynamic document types during 2.5 -> 3.13 migration.
- * 
- * @author Riina Tens
  */
 public class Import25To313DynamicDocumentTypes extends AbstractModuleComponent {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(Import25To313DynamicDocumentTypes.class);

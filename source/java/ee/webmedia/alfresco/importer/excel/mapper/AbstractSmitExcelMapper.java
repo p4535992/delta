@@ -22,8 +22,6 @@ import ee.webmedia.alfresco.importer.excel.vo.SendInfo;
 /**
  * Abstract baseclass for reading excel files into documents. This class takes advantage of {@link ExcelColumn} annotation, that can be used to define what
  * column is desired to be mapped into corresponding field.
- * 
- * @author Ats Uiboupin
  */
 public abstract class AbstractSmitExcelMapper<IDoc extends ImportDocument> extends ExcelRowMapper<IDoc> {
 

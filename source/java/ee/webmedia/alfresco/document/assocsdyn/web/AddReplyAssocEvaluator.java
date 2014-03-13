@@ -5,8 +5,6 @@ import ee.webmedia.alfresco.docadmin.service.DocumentType;
 
 /**
  * Decides if add reply association button should be visible
- * 
- * @author Ats Uiboupin
  */
 public class AddReplyAssocEvaluator extends BaseAddAssocEvaluator {
     private static final long serialVersionUID = 1L;

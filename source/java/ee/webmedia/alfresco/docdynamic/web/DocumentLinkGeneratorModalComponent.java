@@ -12,9 +12,6 @@ import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
-/**
- * @author Keit Tehvan
- */
 public class DocumentLinkGeneratorModalComponent extends UICommand {
 
     public static final String DOCUMENT_LINK_MODAL_ID = "generateDocumentLinkModal";

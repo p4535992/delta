@@ -13,9 +13,6 @@ import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.einvoice.model.TransactionTemplate;
 import ee.webmedia.alfresco.utils.ActionUtil;
 
-/**
- * @author Riina Tens
- */
 public class TransactionTemplateListDialog extends BaseDialogBean {
 
     private static final long serialVersionUID = 1L;

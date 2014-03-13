@@ -15,9 +15,6 @@ import ee.webmedia.alfresco.volume.model.VolumeModel;
 import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
 import ee.webmedia.alfresco.workflow.service.Task;
 
-/**
- * @author Alar Kvell
- */
 public class TaskAndDocument implements Serializable {
     private static final String MSG_CASE_FILE_TITLE = MessageUtil.getMessage("compoundWorkflow_caseFile_title");
     private static final long serialVersionUID = 1L;

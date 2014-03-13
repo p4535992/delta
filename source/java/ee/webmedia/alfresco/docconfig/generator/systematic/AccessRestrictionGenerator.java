@@ -60,9 +60,6 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.TextUtil;
 
-/**
- * @author Alar Kvell
- */
 public class AccessRestrictionGenerator extends BaseSystematicFieldGenerator {
 
     public static final String BEAN_NAME = "accessRestrictionGenerator";

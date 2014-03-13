@@ -20,8 +20,6 @@ import ee.webmedia.alfresco.utils.MessageDataImpl;
 
 /**
  * Dialog or releasing locked documents and files
- * 
- * @author Kaarel Jõgeva
  */
 public class ManageLocksDialog extends BaseDialogBean {
 

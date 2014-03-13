@@ -18,8 +18,6 @@ import ee.webmedia.alfresco.common.web.BeanHelper;
 
 /**
  * Remove users that are not present in any configured AUTH.EXT.* zones. See CL task 195954 for details.
- * 
- * @author Riina Tens
  */
 public class DeleteUsersNotInExternalZoneBootstrap extends AbstractNodeUpdater {
 

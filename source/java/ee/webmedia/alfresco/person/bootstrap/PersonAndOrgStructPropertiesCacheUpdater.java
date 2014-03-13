@@ -19,8 +19,6 @@ import ee.webmedia.alfresco.utils.ProgressTracker;
 
 /**
  * Fill person and organization structure properties cache.
- * 
- * @author Riina Tens
  */
 public class PersonAndOrgStructPropertiesCacheUpdater extends AbstractModuleComponent {
 

@@ -21,8 +21,6 @@ import ee.webmedia.alfresco.workflow.service.WorkflowDbService;
 
 /**
  * Fill store_id field by parent workflow (or linkedReviewRoot) storeRef value
- * 
- * @author Riina Tens
  */
 public class FixTaskStoreIdFromWorkflow extends AbstractNodeUpdater {
 

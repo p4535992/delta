@@ -40,8 +40,6 @@ import ee.webmedia.alfresco.utils.UserUtil;
 
 /**
  * Dialog for substitutes list.
- * 
- * @author Romet Aidla
  */
 public class SubstituteListDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;

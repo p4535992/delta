@@ -6,9 +6,6 @@ import org.alfresco.web.bean.repository.Node;
 import ee.webmedia.alfresco.classificator.model.Classificator;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 
-/**
- * @author Vladimir Drozdik
- */
 public class ClassificatorDeleteEnabledEvaluator extends BaseActionEvaluator {
 
     private static final long serialVersionUID = 1L;

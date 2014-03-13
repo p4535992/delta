@@ -8,8 +8,6 @@ import ee.webmedia.alfresco.common.service.GeneralService;
 
 /**
  * Deletes node by finding it based on <code>nodeXPath</code> from workspace://SpacesStore
- * 
- * @author Ats Uiboupin
  */
 public class DeleteNodeByXPathBootstrap extends AbstractModuleComponent {
     private GeneralService generalService;

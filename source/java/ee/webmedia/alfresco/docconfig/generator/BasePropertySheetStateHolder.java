@@ -1,8 +1,5 @@
 package ee.webmedia.alfresco.docconfig.generator;
 
-/**
- * @author Alar Kvell
- */
 public abstract class BasePropertySheetStateHolder implements PropertySheetStateHolder {
     private static final long serialVersionUID = 1L;
 

@@ -2,9 +2,6 @@ package ee.webmedia.alfresco.addressbook.model;
 
 import org.alfresco.service.namespace.QName;
 
-/**
- * @author Keit Tehvan
- */
 public interface AddressbookModel {
     String URI = "http://alfresco.webmedia.ee/model/addressbook/1.0";
     String PREFIX = "ab:";

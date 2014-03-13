@@ -17,8 +17,6 @@ import ee.webmedia.alfresco.utils.ComponentUtil;
 
 /**
  * Separator that receives custom attributes from ancestor class (PropertySheetItem) so it could be potentially displayed conditionally
- * 
- * @author Ats Uiboupin
  */
 public class WMUISeparator extends UISeparator {
 

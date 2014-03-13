@@ -13,9 +13,6 @@ import ee.webmedia.alfresco.report.model.ReportModel;
 import ee.webmedia.alfresco.report.model.ReportStatus;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
-/**
- * @author Riina Tens
- */
 public class ReportResult extends NodeBaseVO {
 
     private static final long serialVersionUID = 1L;

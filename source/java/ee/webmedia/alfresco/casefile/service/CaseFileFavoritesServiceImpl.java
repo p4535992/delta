@@ -9,9 +9,6 @@ import org.alfresco.service.namespace.QName;
 import ee.webmedia.alfresco.casefile.model.CaseFileModel;
 import ee.webmedia.alfresco.document.service.DocumentFavoritesServiceImpl;
 
-/**
- * @author Kaarel Jõgeva
- */
 public class CaseFileFavoritesServiceImpl extends DocumentFavoritesServiceImpl implements CaseFileFavoritesService {
 
     private CaseFileService caseFileService;

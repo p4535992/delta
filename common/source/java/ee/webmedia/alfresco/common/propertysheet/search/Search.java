@@ -36,8 +36,6 @@ import ee.webmedia.alfresco.utils.ComponentUtil;
 /**
  * Edit a multi-valued property. Supports removing any element. Supports appending elements at the end by using a search component which returns selected
  * results.
- * 
- * @author Alar Kvell
  */
 public class Search extends UIComponentBase implements AjaxUpdateable, NamingContainer {
 

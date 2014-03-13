@@ -14,8 +14,6 @@ import ee.webmedia.alfresco.privilege.model.UserPrivileges;
 
 /**
  * Service that helps to manage privileges(permissions and group belongings of a user)
- * 
- * @author Ats Uiboupin
  */
 public interface PrivilegeService {
     String BEAN_NAME = "PrivilegeService";

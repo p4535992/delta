@@ -9,8 +9,6 @@ import ee.webmedia.alfresco.utils.beanmapper.AlfrescoModelType;
 
 /**
  * Represents a deleted document entry under volume node
- * 
- * @author Kaarel Jõgeva
  */
 @AlfrescoModelType(uri = VolumeModel.URI)
 public class DeletedDocument implements Serializable, Comparable<DeletedDocument> {

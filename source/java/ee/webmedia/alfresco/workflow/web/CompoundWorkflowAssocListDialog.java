@@ -18,9 +18,6 @@ import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
 import ee.webmedia.alfresco.workflow.service.Task;
 import ee.webmedia.alfresco.workflow.service.Workflow;
 
-/**
- * @author Riina Tens
- */
 public class CompoundWorkflowAssocListDialog extends BaseDocumentListDialog {
 
     private static final long serialVersionUID = 1L;

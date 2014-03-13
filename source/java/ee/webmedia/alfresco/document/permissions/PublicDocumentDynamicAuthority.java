@@ -9,8 +9,6 @@ import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 
 /**
  * Checks if document is public based on {@link DocumentCommonModel.Props#ACCESS_RESTRICTION}
- * 
- * @author Ats Uiboupin
  */
 public class PublicDocumentDynamicAuthority extends BaseDynamicAuthority {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(PublicDocumentDynamicAuthority.class);

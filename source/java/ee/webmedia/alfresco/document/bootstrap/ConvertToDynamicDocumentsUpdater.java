@@ -90,8 +90,6 @@ import ee.webmedia.alfresco.workflow.service.WorkflowService;
 
 /**
  * Convert static documents in 2.5 branch to dynamic documents in 3.13 branch.
- * 
- * @author Riina Tens
  */
 public class ConvertToDynamicDocumentsUpdater extends AbstractNodeUpdater {
 

@@ -27,9 +27,6 @@ import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.volume.search.model.VolumeReportModel;
 import ee.webmedia.alfresco.volume.search.service.VolumeSearchFilterService;
 
-/**
- * @author Keit tehvan
- */
 public class VolumeDynamicReportDialog extends VolumeDynamicSearchDialog {
 
     private static final long serialVersionUID = 1L;

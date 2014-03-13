@@ -13,8 +13,6 @@ import ee.webmedia.alfresco.user.service.UserService;
 
 /**
  * reverts what ScannedDocumentManagersPermissionsBootstrap used to do
- * 
- * @author Ats Uiboupin
  */
 public class UndoScannedDocumentManagersPermissionsBootstrap extends AbstractModuleComponent {
     protected final Log LOG = LogFactory.getLog(getClass());

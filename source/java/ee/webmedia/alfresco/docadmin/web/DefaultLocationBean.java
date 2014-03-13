@@ -15,9 +15,6 @@ import ee.webmedia.alfresco.docdynamic.web.DialogBlockBean;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.utils.RepoUtil;
 
-/**
- * @author Kaarel Jõgeva
- */
 public class DefaultLocationBean implements DialogBlockBean<DocTypeDetailsDialog>, DialogDataProvider {
 
     private static final long serialVersionUID = 1L;

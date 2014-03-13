@@ -10,9 +10,6 @@ import ee.webmedia.alfresco.document.service.AbstractFavoritesServiceImpl;
 import ee.webmedia.alfresco.workflow.model.CompoundWorkflowWithObject;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 
-/**
- * @author Riina Tens
- */
 public class CompoundWorkflowFavoritesServiceImpl extends AbstractFavoritesServiceImpl implements CompoundWorkflowFavoritesService {
 
     private WorkflowService workflowService;

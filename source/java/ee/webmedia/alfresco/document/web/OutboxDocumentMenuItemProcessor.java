@@ -8,9 +8,6 @@ import ee.webmedia.alfresco.menu.service.CountAddingMenuItemProcessor;
 import ee.webmedia.alfresco.menu.service.MenuItemCountHandler;
 import ee.webmedia.alfresco.menu.service.MenuService;
 
-/**
- * @author Kaarel Jõgeva
- */
 public class OutboxDocumentMenuItemProcessor extends CountAddingMenuItemProcessor implements MenuItemCountHandler, InitializingBean {
     public static final String OUTBOX_DOCUMENT = "outboxDocument";
     private MenuService menuService;

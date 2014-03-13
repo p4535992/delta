@@ -34,8 +34,6 @@ import ee.webmedia.alfresco.workflow.service.WorkflowService;
  * 5) and that don't belong to other in process compound workflows.
  * I.e. close documents that should have been closed by closing compound workflow ant that are not opened by hand later than closing compound wokrflow.
  * See https://jira.nortal.com/browse/SIMDHS-4068 for details.
- * 
- * @author Riina Tens
  */
 public class FinishUnfinshedDocumentsInCompWorkflows extends AbstractNodeUpdater {
 

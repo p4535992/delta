@@ -16,9 +16,6 @@ import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.report.service.ReportResult;
 import ee.webmedia.alfresco.utils.ActionUtil;
 
-/**
- * @author Riina Tens
- */
 public class ReportListDialog extends BaseDialogBean {
 
     private static final String REPORT_RESULT_NODE_REF_PARAM = "reportResultNodeRef";

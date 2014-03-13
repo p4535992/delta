@@ -17,14 +17,13 @@ import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.volume.search.model.VolumeSearchModel;
 
-/**
- * @author Riina Tens
- */
 public class MoveVolumeToArchiveListDialog extends VolumeArchiveBaseDialog {
 
     private static final long serialVersionUID = 1L;
 
     private boolean confirmArchive;
+
+    private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(MoveVolumeToArchiveListDialog.class);
 
     @Override
     protected void initFilterItems() {
@@ -75,8 +74,20 @@ public class MoveVolumeToArchiveListDialog extends VolumeArchiveBaseDialog {
     public void archive(ActionEvent event) {
         confirmArchive = false;
         final List<NodeRef> volumesToArchive = getSelectedVolumes();
+        for (NodeRef ref : volumesToArchive) {
+            if (!nodeExists(ref)) {
+                LOG.warn("Archiving of volume [nodeRef=" + ref + "] failed. Node does not exist!");
+                continue;
+            }
+            if (!BeanHelper.getArchivalsService().isVolumeInArchivingQueue(ref)) {
+                BeanHelper.getArchivalsService().addVolumeOrCaseToArchivingList(ref);
+                LOG.info("Volume with nodeRef=" + ref + " was added to archive queue.");
+            } else {
+                LOG.info("Volume [nodeRef=" + ref + "] has already been added to archiving queue.");
+                continue;
+            }
+        }
         MessageUtil.addInfoMessage("archivals_volume_archive_started", volumesToArchive.size());
-        BeanHelper.getArchivalsService().archiveVolumesOrCaseFiles(getSelectedVolumes());
     }
 
     @Override

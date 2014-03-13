@@ -50,9 +50,6 @@ import ee.webmedia.alfresco.volume.model.DeletedDocument;
 import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
 
-/**
- * @author Ats Uiboupin
- */
 public class VolumeServiceImpl implements VolumeService {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(VolumeServiceImpl.class);
     private static final BeanPropertyMapper<Volume> volumeBeanPropertyMapper = BeanPropertyMapper.newInstance(Volume.class);
@@ -382,6 +379,9 @@ public class VolumeServiceImpl implements VolumeService {
         }
         Map<String, Object> props = volumeNode.getProperties();
         props.put(VolumeModel.Props.STATUS.toString(), DocListUnitStatus.OPEN.getValueName());
+        if (props.containsKey(VolumeModel.Props.MARKED_FOR_ARCHIVING.toString())) {
+            props.put(VolumeModel.Props.MARKED_FOR_ARCHIVING.toString(), Boolean.FALSE);
+        }
         saveOrUpdate(volume);
 
     }

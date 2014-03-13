@@ -10,9 +10,6 @@ import org.alfresco.web.bean.dialog.BaseDialogBean;
 import ee.webmedia.alfresco.casefile.service.CaseFile;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 
-/**
- * @author Priit Pikk
- */
 public class CaseFileListDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;
 

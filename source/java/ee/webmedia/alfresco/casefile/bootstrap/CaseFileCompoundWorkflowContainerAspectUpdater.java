@@ -15,8 +15,6 @@ import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 
 /**
  * Used to add wfc:compoundWorkflowContainer aspect to existing cf:caseFile type nodes
- * 
- * @author Riina Tens
  */
 public class CaseFileCompoundWorkflowContainerAspectUpdater extends AbstractNodeUpdater {
 

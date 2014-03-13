@@ -30,8 +30,6 @@ import ee.webmedia.alfresco.workflow.web.WorkflowBlockBean;
 
 /**
  * Block that shows associations of given document/volume/caseFile/case with other documents/volumes/caseFiles/cases
- * 
- * @author Ats Uiboupin
  */
 public class AssocsBlockBean implements DocumentDynamicBlock {
     private static final long serialVersionUID = 1L;

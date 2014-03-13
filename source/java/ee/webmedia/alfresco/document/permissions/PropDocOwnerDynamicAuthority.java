@@ -9,8 +9,6 @@ import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 
 /**
  * Checks if {@link DocumentCommonModel.Props#OWNER_ID} of given docRef refers to current user
- * 
- * @author Ats Uiboupin
  */
 public class PropDocOwnerDynamicAuthority extends BaseDynamicAuthority {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(PropDocOwnerDynamicAuthority.class);

@@ -2,9 +2,6 @@ package ee.webmedia.alfresco.volume.search.model;
 
 import org.alfresco.service.namespace.QName;
 
-/**
- * @author Keit Tehvan
- */
 public interface VolumeReportModel {
 
     String URI = "http://alfresco.webmedia.ee/model/volume/report/1.0";

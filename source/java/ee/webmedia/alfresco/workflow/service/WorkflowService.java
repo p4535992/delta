@@ -29,9 +29,6 @@ import ee.webmedia.alfresco.workflow.service.event.WorkflowEventListenerWithModi
 import ee.webmedia.alfresco.workflow.service.event.WorkflowMultiEventListener;
 import ee.webmedia.alfresco.workflow.service.type.WorkflowType;
 
-/**
- * @author Alar Kvell
- */
 public interface WorkflowService {
     String BEAN_NAME = "WmWorkflowService";
 
@@ -70,6 +67,8 @@ public interface WorkflowService {
 
     // get existing object from repository
     List<CompoundWorkflow> getCompoundWorkflows(NodeRef parent);
+
+    List<CompoundWorkflow> getCompoundWorkflows(NodeRef parent, NodeRef nodeRefToSkip);
 
     CompoundWorkflow getCompoundWorkflow(NodeRef compoundWorkflow);
 
@@ -207,6 +206,8 @@ public interface WorkflowService {
     boolean hasInProgressOtherUserOrderAssignmentTasks(NodeRef originalDocRef);
 
     CompoundWorkflow getNewCompoundWorkflow(Node compoundWorkflowDefinition, NodeRef parent);
+
+    List<String> checkAndAddMissingOwnerEmails(CompoundWorkflow compoundWorkflow);
 
     void createDueDateExtension(String reason, Date newDate, Date dueDate, Task initiatingTask, NodeRef containerRef, String dueDateExtenderUsername,
             String dueDateExtenderUserFullname);

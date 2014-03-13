@@ -20,9 +20,6 @@ import ee.webmedia.alfresco.workflow.service.event.WorkflowEventListener;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowEventQueue;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowEventType;
 
-/**
- * @author Kaarel Jõgeva
- */
 public class CaseFileWorkflowTaskStatusChangeListener implements WorkflowEventListener, InitializingBean {
 
     private WorkflowService workflowService;

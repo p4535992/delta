@@ -92,9 +92,6 @@ import ee.webmedia.alfresco.workflow.service.WorkflowUtil;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowEvent;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowEventType;
 
-/**
- * @author Kaarel Jõgeva
- */
 public class NotificationServiceImpl implements NotificationService {
 
     private static final String CASE_FILE_TEMPLATE_KEY = "caseFile";
@@ -769,14 +766,20 @@ public class NotificationServiceImpl implements NotificationService {
             return null;
         }
         if (task.getDueDate() == null) {
+            boolean nullEndDateAllowed = false;
             if (WorkflowSpecificModel.Types.INFORMATION_TASK.equals(task.getNode().getType())) {
-                if (log.isDebugEnabled()) {
+                if (!substitutionTaskEndDateRestricted) {
+                    nullEndDateAllowed = true;
+                }
+                else if (log.isDebugEnabled()) {
                     log.debug("Not sending new task notification to substitutes, because informationTask has no dueDate");
                 }
             } else {
                 log.error("Duedate is null for task: " + task);
             }
-            return null;
+            if (!nullEndDateAllowed) {
+                return null;
+            }
         }
         Node taskOwnerUser = userService.getUser(task.getOwnerId());
         if (taskOwnerUser == null) {
@@ -807,7 +810,7 @@ public class NotificationServiceImpl implements NotificationService {
             Date substitutionEndDate = sub.getSubstitutionEndDate();
             boolean result = false;
             if (isSubstituting(substitutionStartDate, substitutionEndDate, now)
-                    && substitutionStartDate.before(task.getDueDate())
+                    && (!substitutionTaskEndDateRestricted || substitutionStartDate.before(task.getDueDate()))
                     && (!substitutionTaskEndDateRestricted || calendar.getTime().after(task.getDueDate()))) {
                 notification.addRecipient(sub.getSubstituteName(), userService.getUserEmail(sub.getSubstituteId()));
                 notification.addAdditionalFomula(DocumentSpecificModel.Props.SUBSTITUTION_BEGIN_DATE.getLocalName(), Task.dateFormat.format(substitutionStartDate));

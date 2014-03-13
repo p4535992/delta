@@ -9,8 +9,6 @@ import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 
 /**
  * When added to {@link DocumentType} then means that that document type can have reply association to another document
- * 
- * @author Ats Uiboupin
  */
 public class ReplyAssociation extends AssociationModel {
     private static final long serialVersionUID = 1L;

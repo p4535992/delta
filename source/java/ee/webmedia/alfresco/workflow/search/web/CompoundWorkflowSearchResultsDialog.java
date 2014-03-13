@@ -27,8 +27,6 @@ import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
 
 /**
  * Compount workflow search results dialog bean.
- * 
- * @author Keit Tehvan
  */
 public class CompoundWorkflowSearchResultsDialog extends BaseLimitedListDialog {
 
@@ -97,7 +95,7 @@ public class CompoundWorkflowSearchResultsDialog extends BaseLimitedListDialog {
         CSVExporter exporter = new CSVExporter(dataReader);
         exporter.export("workflowList");
 
-        // Erko hack for incorrect view id in the next request
+        // hack for incorrect view id in the next request
         JspStateManagerImpl.ignoreCurrentViewSequenceHack();
     }
 

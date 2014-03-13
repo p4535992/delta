@@ -25,9 +25,6 @@ import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 
-/**
- * @author Alar Kvell
- */
 public class SystematicDocumentTypesBootstrap extends AbstractModuleComponent {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(SystematicDocumentTypesBootstrap.class);
 

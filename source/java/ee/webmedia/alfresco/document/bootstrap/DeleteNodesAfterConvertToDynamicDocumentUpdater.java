@@ -12,8 +12,6 @@ import ee.webmedia.alfresco.common.bootstrap.AbstractNodeUpdater;
  * Read nodeRefs that have been marked by ConvertToDynamicDocumentsUpdater for deleting and delete them.
  * BatchSize should always be 1 to minimize errors on deleting.
  * This is not critical updater, nodes that cannot be deleted are skipped, their existence shouldn't affect application's behavior.
- * 
- * @author Riina Tens
  */
 public class DeleteNodesAfterConvertToDynamicDocumentUpdater extends AbstractNodeUpdater {
 

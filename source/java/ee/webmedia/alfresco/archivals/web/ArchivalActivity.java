@@ -13,9 +13,6 @@ import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
-/**
- * @author Riina Tens
- */
 public class ArchivalActivity extends NodeBaseVO implements Comparable<ArchivalActivity> {
 
     private static final long serialVersionUID = 1L;

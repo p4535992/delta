@@ -5,9 +5,6 @@ import javax.faces.event.ActionEvent;
 
 import ee.webmedia.alfresco.utils.MessageUtil;
 
-/**
- * @author Ats Uiboupin
- */
 public class OutboxDocumentListDialog extends BaseDocumentListDialog {
     private static final long serialVersionUID = 1L;
 

@@ -4,7 +4,6 @@ import org.alfresco.repo.security.permissions.AccessDeniedException;
 
 /**
  * Extends {@link AccessDeniedException} and contains additional information about navigationOutcome for JSF action
- * @author Ats Uiboupin
  */
 public class PermissionDeniedException extends AccessDeniedException {
     private static final long serialVersionUID = 1L;

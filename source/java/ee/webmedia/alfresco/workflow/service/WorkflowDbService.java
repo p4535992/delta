@@ -15,9 +15,6 @@ import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.workflow.model.Comment;
 import ee.webmedia.alfresco.workflow.service.type.WorkflowType;
 
-/**
- * @author Riina Tens
- */
 public interface WorkflowDbService {
 
     String BEAN_NAME = "WorkflowDbService";
@@ -38,6 +35,8 @@ public interface WorkflowDbService {
     void updateTaskProperties(NodeRef taskRef, Map<QName, Serializable> props);
 
     void updateTaskEntry(Task task, Map<QName, Serializable> changedProps, NodeRef parentRef);
+
+    void updateTaskEntryIgnoringParent(Task task, Map<QName, Serializable> changedProps);
 
     void createTaskDueDateExtensionAssocEntry(NodeRef initiatingTaskRef, NodeRef nodeRef);
 

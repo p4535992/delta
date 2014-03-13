@@ -4,9 +4,6 @@ import org.alfresco.web.action.evaluator.BaseActionEvaluator;
 
 import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
 
-/**
- * @author Riina Tens
- */
 public class WorkflowSavedIndependentEvaluator extends BaseActionEvaluator {
 
     private static final long serialVersionUID = 1L;

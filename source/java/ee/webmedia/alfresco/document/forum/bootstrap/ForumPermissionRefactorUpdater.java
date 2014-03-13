@@ -26,8 +26,6 @@ import ee.webmedia.alfresco.document.model.DocumentCommonModel;
  * <br>
  * To allow optimization of counting and listing documents that have forums where given user is invited following was done:
  * When adding user/group to forum, it is added to the document property {@link DocumentCommonModel.Props#FORUM_PARTICIPANTS} as well.
- * 
- * @author Ats Uiboupin
  */
 public class ForumPermissionRefactorUpdater extends AbstractNodeUpdater {
     private static final String OLD_PARTICIPATE_AT_FORUM = "DocumentFileRead";

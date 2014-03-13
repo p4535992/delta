@@ -294,7 +294,7 @@ public class PropertySheetConfigElement extends ConfigElementAdapter
       protected boolean showInViewMode = true;
       protected boolean showInEditMode = true;
       protected boolean ignoreIfMissing = true;
-      // XXX ALAR: boolean rendered and customAttributes.get(BaseComponentGenerator.RENDERED) have different purposes, TODO fix it 
+      // XXX boolean rendered and customAttributes.get(BaseComponentGenerator.RENDERED) have different purposes, TODO fix it 
       protected boolean rendered = true;
 
       protected ItemConfig() {

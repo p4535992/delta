@@ -18,8 +18,6 @@ import ee.webmedia.alfresco.utils.SearchUtil;
 
 /**
  * Removes defaultValues property from .ott templates
- * 
- * @author Kaarel Jõgeva
  */
 public class DefaultValuesFieldUpdater extends AbstractNodeUpdater {
 

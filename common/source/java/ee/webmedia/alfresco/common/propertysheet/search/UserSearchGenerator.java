@@ -8,9 +8,6 @@ import javax.faces.context.FacesContext;
 
 import org.alfresco.service.cmr.dictionary.PropertyDefinition;
 
-/**
- * @author Keit Tehvan
- */
 public class UserSearchGenerator extends SearchGenerator {
 
     public static final String USERNAME_PROP_ATTR = "usernameProp";

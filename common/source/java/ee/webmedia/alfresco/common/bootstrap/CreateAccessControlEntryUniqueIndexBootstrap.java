@@ -12,8 +12,6 @@ import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
  * if the index doesn't exist. It is possible that the index has been created already by the bootstrap,
  * because this bootstrap's module was changed from common to simdhs. So in some upgrades from 3.13.15 to 3.13.16 branch
  * it may run twice.
- * 
- * @author Alar Kvell
  */
 public class CreateAccessControlEntryUniqueIndexBootstrap extends AbstractModuleComponent {
     protected final Log LOG = LogFactory.getLog(getClass());

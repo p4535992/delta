@@ -42,9 +42,6 @@ import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.volume.model.Volume;
 
-/**
- * @author Kaarel Jõgeva
- */
 public class MenuServiceImpl implements MenuService, InitializingBean {
     private static Logger log = Logger.getLogger(MenuServiceImpl.class);
 

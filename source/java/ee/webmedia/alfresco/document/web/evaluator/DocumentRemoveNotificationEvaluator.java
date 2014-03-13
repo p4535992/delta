@@ -2,9 +2,6 @@ package ee.webmedia.alfresco.document.web.evaluator;
 
 import org.alfresco.web.bean.repository.Node;
 
-/**
- * @author Riina Tens
- */
 public class DocumentRemoveNotificationEvaluator extends DocumentAddNotificationEvaluator {
 
     private static final long serialVersionUID = 1L;

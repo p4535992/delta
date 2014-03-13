@@ -28,8 +28,6 @@ import ee.webmedia.alfresco.utils.SearchUtil;
 
 /**
  * Adds to docNumberPattern register prefix and suffix if they exist.
- * 
- * @author Vladimir Drozdik
  */
 public class SeriesDocNumberPatternAddRegisterSufPrefUpdater extends AbstractNodeUpdater {
 

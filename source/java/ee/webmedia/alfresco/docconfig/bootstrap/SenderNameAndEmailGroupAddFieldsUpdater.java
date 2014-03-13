@@ -13,8 +13,6 @@ import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 
 /**
  * Updater that adds senderInitialsToAdr field to SenderNameAndEmail field group
- * 
- * @author Kaarel Jõgeva
  */
 public class SenderNameAndEmailGroupAddFieldsUpdater extends AbstractModuleComponent {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(SenderNameAndEmailGroupAddFieldsUpdater.class);

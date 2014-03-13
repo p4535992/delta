@@ -13,9 +13,6 @@ import ee.webmedia.alfresco.addressbook.web.dialog.ContactGroupAddDialog.UserDet
 import ee.webmedia.alfresco.utils.MessageDataWrapper;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 
-/**
- * @author Keit Tehvan 29.09.2009
- */
 public interface AddressbookService {
 
     String BEAN_NAME = "AddressbookService";

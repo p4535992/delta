@@ -21,8 +21,6 @@ import ee.webmedia.alfresco.utils.SearchUtil;
 
 /**
  * Add inapplicableForVol=true to {@link FieldGroup}Definitions that need them, but have been created without them
- * 
- * @author Ats Uiboupin
  */
 public class FieldGroupDefPropsUpdater extends AbstractNodeUpdater {
     private static final Set<String> INAPPLICABLE_FOR_VOL = new HashSet<String>(Arrays.asList(

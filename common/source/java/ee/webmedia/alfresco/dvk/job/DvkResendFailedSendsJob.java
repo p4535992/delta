@@ -15,8 +15,6 @@ import ee.webmedia.alfresco.dvk.service.DvkService;
 
 /**
  * Scheduled job to call a {@link DvkService#resendFailedSends()}.
- * 
- * @author Riina Tens
  */
 public class DvkResendFailedSendsJob implements StatefulJob {
 

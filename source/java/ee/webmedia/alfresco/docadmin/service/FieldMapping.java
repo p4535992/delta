@@ -11,8 +11,6 @@ import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 
 /**
  * Used to map field to another field when creating new document so that data from existing document could be copied to new document
- * 
- * @author Ats Uiboupin
  */
 public class FieldMapping extends BaseObject {
     private static final long serialVersionUID = 1L;

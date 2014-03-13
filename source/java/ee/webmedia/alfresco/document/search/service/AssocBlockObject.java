@@ -12,7 +12,6 @@ import org.alfresco.web.bean.repository.Node;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.cases.model.Case;
-import ee.webmedia.alfresco.cases.web.CaseDetailsDialog;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.model.Document;
@@ -25,8 +24,6 @@ import ee.webmedia.alfresco.volume.model.Volume;
  * Object representing document, case, volume or casefile.
  * In order to use document list jsps, document properties are represented as AssocBlockObject properties
  * (to use object.property syntax, not object.document.property syntax in jsp)
- * 
- * @author Riina Tens
  */
 public class AssocBlockObject implements Serializable, DocumentListRowLink {
 
@@ -129,7 +126,7 @@ public class AssocBlockObject implements Serializable, DocumentListRowLink {
 
     @Override
     public String getAction() {
-        return isDocument() ? document.getAction() : (isCase() ? "dialog:caseDetailsDialog" : (volume.isDynamic() ? "dialog:caseFileDialog" : "dialog:caseDocListDialog"));
+        return isDocument() ? document.getAction() : (isCase() ? "dialog:documentListDialog" : (volume.isDynamic() ? "dialog:caseFileDialog" : "dialog:caseDocListDialog"));
     }
 
     @Override
@@ -137,9 +134,8 @@ public class AssocBlockObject implements Serializable, DocumentListRowLink {
         if (isDocument()) {
             document.open(event);
         } else if (isCase()) {
-            String nodeRefStr = ActionUtil.getParam(event, "nodeRef");
-            ActionUtil.getParams(event).put(CaseDetailsDialog.PARAM_CASE_NODEREF, nodeRefStr);
-            BeanHelper.getCaseDetailsDialog().showDetails(event);
+            NodeRef caseRef = new NodeRef(ActionUtil.getParam(event, "nodeRef"));
+            BeanHelper.getDocumentListDialog().init(caseRef);
         } else {
             NodeRef volumeRef = new NodeRef(ActionUtil.getParam(event, "nodeRef"));
             ActionUtil.getParams(event).put("volumeNodeRef", volumeRef.toString());

@@ -11,8 +11,6 @@ import ee.webmedia.alfresco.eventplan.model.EventPlan;
 
 /**
  * Specification: <em>Elukäigud.docx</em>
- * 
- * @author Martti Tamm
  */
 public class EventPlanListDialog extends BaseDialogBean {
 

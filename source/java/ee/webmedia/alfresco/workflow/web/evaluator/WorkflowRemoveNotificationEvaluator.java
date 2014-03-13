@@ -5,9 +5,6 @@ import org.alfresco.service.namespace.QName;
 
 import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
 
-/**
- * @author Riina Tens
- */
 public class WorkflowRemoveNotificationEvaluator extends WorkflowAddNotificationEvaluator {
 
     private static final long serialVersionUID = 1L;

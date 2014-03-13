@@ -18,8 +18,6 @@ import ee.webmedia.alfresco.utils.ComparableTransformer;
 
 /**
  * Helper class that (re)evaluates order property of items in list
- * 
- * @author Ats Uiboupin
  */
 public class ListReorderHelper {
 

@@ -15,8 +15,6 @@ import ee.webmedia.alfresco.utils.SearchUtil;
 
 /**
  * Add inapplicableForVol=true to fieldDefinitions that need them, but have been created without them
- * 
- * @author Ats Uiboupin
  */
 public class FieldDefPropsUpdater extends AbstractNodeUpdater {
     private static final Set<String> MANDATORY_FOR_VOL = new HashSet<String>(Arrays.asList("function", "series", "ownerName"));

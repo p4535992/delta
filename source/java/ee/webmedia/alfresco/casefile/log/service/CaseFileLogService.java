@@ -5,9 +5,6 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
 import ee.webmedia.alfresco.document.log.service.PropertyChange;
 
-/**
- * @author Priit Pikk
- */
 public interface CaseFileLogService {
 
     String BEAN_NAME = "CaseFileLogService";

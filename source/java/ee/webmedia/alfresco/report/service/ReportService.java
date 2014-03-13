@@ -9,9 +9,6 @@ import org.alfresco.web.bean.repository.Node;
 import ee.webmedia.alfresco.classificator.enums.TemplateReportType;
 import ee.webmedia.alfresco.report.model.ReportDataCollector;
 
-/**
- * @author Riina Tens
- */
 public interface ReportService {
 
     String BEAN_NAME = "ReportService";

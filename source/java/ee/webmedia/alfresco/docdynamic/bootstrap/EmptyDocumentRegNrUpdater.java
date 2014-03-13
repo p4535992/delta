@@ -21,8 +21,6 @@ import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 
 /**
  * Updater that fill document registration number with dash if it empty but document is registered.
- * 
- * @author Kaarel Jõgeva
  */
 public class EmptyDocumentRegNrUpdater extends AbstractNodeUpdater {
 

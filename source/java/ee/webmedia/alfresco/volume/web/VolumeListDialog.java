@@ -29,14 +29,13 @@ import ee.webmedia.alfresco.volume.service.VolumeService;
 
 /**
  * Form backing bean for Volumes list
- * 
- * @author Ats Uiboupin
  */
 public class VolumeListDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;
     private Series parent;
 
     public static final String BEAN_NAME = "VolumeListDialog";
+    public static final String DIALOG_NAME = "volumeListDialog";
 
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {

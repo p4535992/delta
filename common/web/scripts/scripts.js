@@ -258,7 +258,6 @@ function disableAndRemoveButton(buttonId) {
 }
 /**
  * append selection of source element to the element with id ending with "toItemIdSuffix" and beginning with the same id prefix as selectBox
- * @author Ats Uiboupin
  */
 function appendSelection(source, targetId) {
    var selectItem = $jQ('#' + escapeId4JQ(source.attr("id")) + ' :selected');
@@ -278,7 +277,6 @@ function appendSelection(source, targetId) {
  * Add autoComplete functionality to input using given values to for suggestion(allows to enter also values not given with <code>valuesArray</code>)
  * @param inputId - id of the input component that should have autoComplete functionality based on values from <code>valuesArray</code>
  * @param valuesArray - values to be suggested int the input
- * @author Ats Uiboupin
  */
 var autocompleters = new Array();
 function addAutocompleter(inputId, valuesArray){
@@ -522,43 +520,49 @@ function setPageScrollY() {
    $jQ('#wrapper form').append('<input type="hidden" name="scrollToY" value="'+ scrollTop +'" />');
 }
 
-function getSharePointObject() {
-   if (window.ActiveXObject) {
-      var ed = null; 
-      var mappings = {
-            "Office 2000/XP": "SharePoint.OpenDocuments.1",
-            "Office 2003": "SharePoint.OpenDocuments.2",
-            "Office 2007/10": "SharePoint.OpenDocuments.3"
-            };
+function getOffice13Link(url) {
+   var programs = {
+         "word" : ["doc", "dot", "docx", "docm", "dotx", "dotm"],
+         "excel" : ["xls", "xlt", "xlm", "xlsx", "xlsm", "xltx", "xltm"],
+         "powerpoint" : ["ppt", "pps", "pptx", "pptm", "potx", "potm", "ppam", "ppsx", "ppsm", "sldx", "sldm"]
+   }
 
-      for (var m in mappings) {
-        try {
-            ed = new ActiveXObject(mappings[m]);
-        } catch (err1) {
-           // Instantiation failed, carry on...
-           continue;
-        }
-        
-        if (ed) {
-           return ed;
-        }
+   var link = null;
+   var extension = url.substring(url.lastIndexOf(".") + 1, url.length);
+   for (var program in programs) {
+      if (jQuery.inArray(extension, programs[program]) > -1) {
+         link = "ms-" + program + ":ofe|u|" + url;
+         break;
       }
    }
-   return null;
+
+   return link;
 }
 
 function webdavOpen(url) {
    var showDoc = true;
-   var sharePointObject = getSharePointObject();
-   if (sharePointObject) {
-      // if the link represents an Office document and we are in IE try and
-      // open the file directly to get WebDAV editing capabilities
-      showDoc = !sharePointObject.EditDocument(url);
+   // Try to open using MSOffice and WebDAV capabilities
+   if (window.ActiveXObject !== undefined) {
+      try {
+         // If we are able to instantiate this component, we have Office 2013 installed
+         var isOffice2013Installed = new ActiveXObject("SharePoint.OpenDocuments.5");
+         var link = getOffice13Link(url);
+         if (link) {
+            window.open(link, '_blank');
+            showDoc = false;
+         }
+      } catch (e) {
+         try {
+            showDoc = !(new ActiveXObject("SharePoint.OpenDocuments").EditDocument(url));
+         } catch (e2) {
+            // Continue and try to open the document 
+         }
+      }
    }
    if (showDoc == true) { // If we weren't able to open with ActiveX, check for OpenOffice WebDAV protocol and try to lock/open manually
       var openDocumentCallback = function(url, readOnly, refresh) {
          if (readOnly) {
-            webdavOpenReadOnly(url);
+            webdavOpenReadOnly(url, false);
          } else {
             window.open(url, '_blank');
             if (!refresh) {
@@ -580,7 +584,7 @@ function webdavOpen(url) {
       var protocol = "vnd.sun.star.webdav";
       if (url.substring(0, protocol.length) === protocol) { // Check if we are dealing with OpenOffice webdav
          if (!confirm("Kas soovid faili avada muutmiseks ja lukustada selle enda nimele 12 tunniks? NB! Pärast faili sulgemist vajuta Deltas nupule \"Vabasta lukk\"!")) {
-            webdavOpenReadOnly(url);
+            webdavOpenReadOnly(url, false);
             return false;
          }
 
@@ -627,7 +631,7 @@ var userMessageChecker = {
  * Open file in read-only mode (TODO: with webdav, if file is office document)
  * @return false
  */
-function webdavOpenReadOnly(url) {
+function webdavOpenReadOnly(url, omitConfirmation) {
    var uri = getContextPath() + '/ajax/invoke/AjaxBean.getDownloadUrl?path=' + url;
 
    $jQ.ajax({
@@ -636,7 +640,7 @@ function webdavOpenReadOnly(url) {
       data: 'url=' + url, // path is already escaped, so disable jquery escaping by giving it a string directly
       mode: 'queue',
       success: function openForDownload(responseText) {
-        if (confirm(getTranslation("webdav_noPermissionsDownloadConfirm"))) {
+        if (omitConfirmation || confirm(getTranslation("webdav_noPermissionsDownloadConfirm"))) {
            window.open(responseText, '_blank');// regular file saveAs/open by downloading it to HD
         }
       },
@@ -2193,7 +2197,7 @@ function handleHtmlLoaded(context, setFocus, selects) {
       checkFileLock(path, function webdavOpenCallback(filePath, status) {
          if (status.code < 1) {
             if (status.code == 0 || confirm(getTranslation("webdav_openReadOnly").replace("#", status.data))) {
-               webdavOpenReadOnly(filePath);
+               webdavOpenReadOnly(filePath, status.code != 0);
             }
          } else if (status.code == 1) {
             webdavOpen(filePath);
@@ -2208,7 +2212,7 @@ function handleHtmlLoaded(context, setFocus, selects) {
    });
 
    $jQ('a.webdav-readOnly', context).click(function () {
-      webdavOpenReadOnly(this.href);
+      webdavOpenReadOnly(this.href, false);
       return false;
    });
 
@@ -2301,7 +2305,6 @@ function handleHtmlLoaded(context, setFocus, selects) {
    /**
     * Binder for alfresco properties that are generated with ClassificatorSelectorAndTextGenerator.class
     * Binds all elements that have class="selectBoundWithText" with corresponding textAreas/inputs(assumed to have same id prefix and suffix specified with TARGET_SUFFIX)
-    * @author Ats Uiboupin
     */
    $jQ(".selectBoundWithText", context).each(function (intIndex)
    {
@@ -2322,7 +2325,6 @@ function handleHtmlLoaded(context, setFocus, selects) {
 
    /**
     * Add onChange functionality to jQuery change event (we can't use onChange attribute because of jQuery bug in IE)
-    * @author Riina Tens
     */
    $jQ("[class*=selectWithOnchangeEvent]", context).each(function (intIndex, selectElement)
    {

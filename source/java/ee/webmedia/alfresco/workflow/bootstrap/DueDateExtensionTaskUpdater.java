@@ -26,9 +26,6 @@ import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 import ee.webmedia.alfresco.workflow.service.WorkflowDbService;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
 
-/**
- * @author Alar Kvell
- */
 public class DueDateExtensionTaskUpdater extends AbstractNodeUpdater {
 
     private WorkflowDbService workflowDbService;

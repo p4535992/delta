@@ -12,8 +12,6 @@ import ee.webmedia.alfresco.user.web.DocumentManagerEvaluator;
 
 /**
  * Evaluates to true if given series has status "avatud" and volume types contains "ANNUAL_FILE" or "SUBJECT_FILE".
- * 
- * @author Vladimir Drozdik
  */
 public class CanAddVolumeEvaluator extends DocumentManagerEvaluator {
 

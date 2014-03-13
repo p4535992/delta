@@ -17,9 +17,6 @@ import ee.webmedia.alfresco.common.bootstrap.AbstractNodeUpdater;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 
-/**
- * @author Alar Kvell
- */
 public class LeaveTypeFieldTypeUpdater extends AbstractNodeUpdater {
 
     @Override

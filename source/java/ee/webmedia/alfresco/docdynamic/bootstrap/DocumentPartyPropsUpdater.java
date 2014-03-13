@@ -19,9 +19,6 @@ import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.utils.SearchUtil;
 
-/**
- * @author Marti Laast
- */
 public class DocumentPartyPropsUpdater extends AbstractNodeUpdater {
 
     @Override

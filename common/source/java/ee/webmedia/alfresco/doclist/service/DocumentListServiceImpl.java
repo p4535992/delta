@@ -55,8 +55,6 @@ import ee.webmedia.alfresco.volume.service.VolumeService;
 
 /**
  * Service to get consolidated list of documents and hierarchy.
- * 
- * @author Priit Pikk
  */
 public class DocumentListServiceImpl implements DocumentListService {
 

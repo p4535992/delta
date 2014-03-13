@@ -46,7 +46,7 @@
          <f:facet name="header">
             <a:sortLink id="col5-sort" label="#{msg.applog_item_description}" value="eventDescription" styleClass="header" />
          </f:facet>
-         <h:outputText id="col5-text" value="#{r.eventDescription}" styleClass="condence150" />
+         <h:outputText id="col5-text" value="#{r.eventDescriptionAndLinks}" styleClass="condence150" escape="false"/>
       </a:column>
 
       <a:column id="col6">

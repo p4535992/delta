@@ -22,9 +22,6 @@ import ee.webmedia.alfresco.user.model.Authority;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.WebUtil;
 
-/**
- * @author Alar Kvell
- */
 public class UserContactGroupSearchBean implements Serializable {
     private static final long serialVersionUID = 1L;
 

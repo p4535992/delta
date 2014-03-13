@@ -13,8 +13,6 @@ import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 
 /**
  * Dynamic document type
- * 
- * @author Ats Uiboupin
  */
 public class DocumentType extends DynamicType {
     private static final long serialVersionUID = 1L;

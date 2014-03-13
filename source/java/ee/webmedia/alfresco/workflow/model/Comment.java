@@ -10,9 +10,6 @@ import org.springframework.util.Assert;
 import ee.webmedia.alfresco.common.model.NodeBaseVO;
 import ee.webmedia.alfresco.workflow.service.Task;
 
-/**
- * @author Riina Tens
- */
 public class Comment extends NodeBaseVO {
 
     private static final long serialVersionUID = 1L;

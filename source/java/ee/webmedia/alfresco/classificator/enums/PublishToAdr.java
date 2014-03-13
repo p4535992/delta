@@ -1,8 +1,5 @@
 package ee.webmedia.alfresco.classificator.enums;
 
-/**
- * @author Kaarel Jõgeva
- */
 public enum PublishToAdr {
     /** Läheb ADR-i */
     TO_ADR("Läheb ADR-i"),

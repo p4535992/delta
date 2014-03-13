@@ -16,8 +16,6 @@ import ee.webmedia.alfresco.document.einvoice.model.InvoiceType;
 
 /**
  * Switch classificator invoiceTypes values' valueName and classificatorDescription properties values
- * 
- * @author Riina Tens
  */
 public class RenameInvoiceTypeClassificatorValuesBootstrap extends AbstractModuleComponent {
     private static final String INVOICE_TYPE_CLASSIFICATOR_PATH = "cl:classificators/cl:invoiceTypes";

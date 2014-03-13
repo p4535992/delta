@@ -58,9 +58,6 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.TreeNode;
 
-/**
- * @author Riina Tens
- */
 public class AddDocumentServiceImpl implements AddDocumentService {
 
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(AddDocumentServiceImpl.class);

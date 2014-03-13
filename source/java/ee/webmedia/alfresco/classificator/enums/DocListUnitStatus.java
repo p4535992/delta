@@ -2,8 +2,6 @@ package ee.webmedia.alfresco.classificator.enums;
 
 /**
  * Enum for "docListUnitStatus" classificator values
- * 
- * @author Ats Uiboupin
  */
 public enum DocListUnitStatus {
     CLOSED("suletud"),

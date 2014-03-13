@@ -14,8 +14,6 @@ import ee.webmedia.alfresco.notification.service.NotificationService;
 
 /**
  * Triggers the notifications for contracts that are nearing their due date or have unspecified due date.
- * 
- * @author Kaarel Jõgeva
  */
 public class ContractDueDateNotificationJob implements StatefulJob {
     private static Log log = LogFactory.getLog(ContractDueDateNotificationJob.class);

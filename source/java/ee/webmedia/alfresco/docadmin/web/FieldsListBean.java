@@ -44,8 +44,6 @@ import ee.webmedia.alfresco.utils.WebUtil;
 
 /**
  * Shows list of {@link Field}, {@link FieldGroup} and {@link SeparatorLine} objects bound to the latest {@link DocumentTypeVersion} of viewable {@link DocumentType}
- * 
- * @author Ats Uiboupin
  */
 public class FieldsListBean implements DialogBlockBean<Void> {
     private static final long serialVersionUID = 1L;

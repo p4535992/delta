@@ -15,9 +15,6 @@ import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
 import ee.webmedia.alfresco.user.service.UserNotFoundException;
 
-/**
- * @author Keit Tehvan
- */
 public class ExternalSessionServiceImpl implements ExternalSessionService {
 
     private ParametersService parametersService;
