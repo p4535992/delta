@@ -2,20 +2,106 @@ package ee.webmedia.alfresco.dvk.model;
 
 import java.util.Date;
 
-import ee.webmedia.alfresco.utils.beanmapper.AlfrescoModelType;
-
-@AlfrescoModelType(uri = DvkModel.URI)
-public interface DvkReceivedLetterDocument extends ILetterDocument {
+public class DvkReceivedLetterDocument extends AbstractDvkDocument {
 
     /**
-     * @return dhl_id - unique id assigned to the sent document by the DVK server
+     * aka dhl_id - unique id assigned to the sent document by the DVK server
      */
-    String getDvkId();
+    private String dvkId;
+    private Date letterDeadLine;
 
-    void setDvkId(String dvkId);
+    /**
+     * DateTime when the document was signed or affirmed
+     */
+    private Date letterSenderDocSignDate;
+    /**
+     * Identificator of the document in the senders system
+     */
+    private String letterSenderDocNr;
+    private String letterSenderTitle;
+    //
 
-    Date getLetterDeadLine();
+    // AccessRights
+    private String letterAccessRestriction;
+    private Date letterAccessRestrictionBeginDate;
+    private Date letterAccessRestrictionEndDate;
+    private String letterAccessRestrictionReason;
 
-    void setLetterDeadLine(Date letterDeadLine);
+    // START: LetterSender
+
+    public Date getLetterSenderDocSignDate() {
+        return letterSenderDocSignDate;
+    }
+
+    public void setLetterSenderDocSignDate(Date letterSenderDocSignDate) {
+        this.letterSenderDocSignDate = letterSenderDocSignDate;
+    }
+
+    public String getLetterSenderDocNr() {
+        return letterSenderDocNr;
+    }
+
+    public void setLetterSenderDocNr(String letterSenderDocNr) {
+        this.letterSenderDocNr = letterSenderDocNr;
+    }
+
+    public String getLetterSenderTitle() {
+        return letterSenderTitle;
+    }
+
+    public void setLetterSenderTitle(String letterSenderTitle) {
+        this.letterSenderTitle = letterSenderTitle;
+    }
+
+    // End: LetterSender
+    // START: AccessRights
+
+    public String getLetterAccessRestriction() {
+        return letterAccessRestriction;
+    }
+
+    public void setLetterAccessRestriction(String letterAccessRestriction) {
+        this.letterAccessRestriction = letterAccessRestriction;
+    }
+
+    public Date getLetterAccessRestrictionBeginDate() {
+        return letterAccessRestrictionBeginDate;
+    }
+
+    public void setLetterAccessRestrictionBeginDate(Date letterAccessRestrictionBeginDate) {
+        this.letterAccessRestrictionBeginDate = letterAccessRestrictionBeginDate;
+    }
+
+    public Date getLetterAccessRestrictionEndDate() {
+        return letterAccessRestrictionEndDate;
+    }
+
+    public void setLetterAccessRestrictionEndDate(Date letterAccessRestrictionEndDate) {
+        this.letterAccessRestrictionEndDate = letterAccessRestrictionEndDate;
+    }
+
+    public String getLetterAccessRestrictionReason() {
+        return letterAccessRestrictionReason;
+    }
+
+    public void setLetterAccessRestrictionReason(String letterAccessRestrictionReason) {
+        this.letterAccessRestrictionReason = letterAccessRestrictionReason;
+    }
+
+    public String getDvkId() {
+        return dvkId;
+    }
+
+    public void setDvkId(String dvkId) {
+        this.dvkId = dvkId;
+    }
+
+    public Date getLetterDeadLine() {
+        return letterDeadLine;
+    }
+
+    public void setLetterDeadLine(Date letterDeadLine) {
+        this.letterDeadLine = letterDeadLine;
+    }
 
 }

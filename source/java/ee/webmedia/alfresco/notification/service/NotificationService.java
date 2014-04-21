@@ -1,7 +1,9 @@
 package ee.webmedia.alfresco.notification.service;
 
+import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 import javax.faces.event.ActionEvent;
 
@@ -26,7 +28,11 @@ public interface NotificationService {
 
     public void notifyTaskEvent(Task task);
 
-    public void notifyTaskEvent(Task task, boolean isGroupAssignmentTaskFinishedAutomatically, Task orderAssignmentFinishTriggeringTask);
+    /**
+     * @return docNodeRef and list of sendInfo props. Will return null if no sendInfos are created.
+     */
+    public Pair<NodeRef, List<Map<QName, Serializable>>> notifyTaskEvent(Task task, boolean isGroupAssignmentTaskFinishedAutomatically, Task orderAssignmentFinishTriggeringTask,
+            boolean sentOverDvk);
 
     public void notifyWorkflowEvent(Workflow workflow, WorkflowEventType eventType);
 

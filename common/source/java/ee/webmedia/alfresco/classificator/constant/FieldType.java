@@ -51,6 +51,7 @@ public enum FieldType {
     /** Struktuuriüksus */
     STRUCT_UNIT(Props.DEFAULT_VALUE);
 
+    private static final List<QName> DVK_FIELDS = Arrays.asList(Props.RELATED_INCOMING_DEC_ELEMENT, Props.RELATED_OUTGOING_DEC_ELEMENT);
     private List<QName> fieldsUsed;
 
     FieldType(QName... fieldsUsed) {
@@ -63,6 +64,9 @@ public enum FieldType {
 
     public List<QName> getFieldsUsed(boolean ignoreClassificatorFields) {
         List<QName> fields = new ArrayList<QName>(fieldsUsed);
+        if (INFORMATION_TEXT != this) {
+            fields.addAll(DVK_FIELDS);
+        }
         if (ignoreClassificatorFields) {
             for (Iterator<QName> it = fields.iterator(); it.hasNext();) {
                 QName type = it.next();

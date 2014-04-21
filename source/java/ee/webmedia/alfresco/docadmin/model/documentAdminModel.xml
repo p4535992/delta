@@ -350,6 +350,14 @@
                   <constraint ref="docadmin:mappingRestriction" />
                </constraints>
             </property>
+            <property name="docadmin:relatedIncomingDecElement">
+               <type>d:text</type>
+               <multiple>true</multiple>
+            </property>
+            <property name="docadmin:relatedOutgoingDecElement">
+               <type>d:text</type>
+               <multiple>true</multiple>
+            </property>            
             <!-- if you add new properties, update MetadataItemCompareUtil.getFieldComparator() -->
          </properties>
          <mandatory-aspects>

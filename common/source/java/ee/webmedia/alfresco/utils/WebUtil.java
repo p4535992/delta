@@ -50,7 +50,7 @@ public class WebUtil {
     /**
      * Replaces textual URLs with HTML hyperlinks
      * Regex from: http://daringfireball.net/2010/07/improved_regex_for_matching_urls
-     * 
+     *
      * @param text
      * @return
      */
@@ -79,7 +79,7 @@ public class WebUtil {
     /**
      * Escapes all HTML except <a/> links
      * Regex from: http://www.mkyong.com/regular-expressions/how-to-extract-html-links-with-regular-expression/
-     * 
+     *
      * @param text
      * @return
      */
@@ -131,6 +131,10 @@ public class WebUtil {
         // And this kind of HTML cannot be rendered to browser inside our page HTML,
         // because it breaks Internet Explorer (but not Firefox) - IE stops page rendering entirely at the point of this comment
         return StringUtils.defaultString(input).replaceAll("(?s)<!--.*?-->", "");
+    }
+
+    public static String removeHtmlTags(String input) {
+        return StringUtils.defaultString(input).replaceAll("\\<.*?>", "");
     }
 
     public static void navigateTo(String navigationOutcome) {

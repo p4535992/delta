@@ -180,6 +180,13 @@ public interface AddressbookService {
 
     List<Node> getDvkCapableOrgs();
 
+    List<String> getDvkCapableOrgNames();
+
+    /**
+     * Find organization nodeRef based on e-mail and organization name
+     */
+    NodeRef getOrganizationNodeRef(String orgEmail, String orgName);
+
     List<Node> searchContactGroups(String searchCriteria, boolean showAdminManageable, boolean excludeTaskCapable, int limit);
 
     /**

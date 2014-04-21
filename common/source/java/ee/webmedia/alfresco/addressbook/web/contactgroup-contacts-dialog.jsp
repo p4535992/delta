@@ -23,11 +23,11 @@
          showLink="false" action="dialog:addressbookOrgDetails" actionListener="#{AddressbookOrgDetailsDialog.setupViewEntry}">
             <f:param name="nodeRef" value="#{r.nodeRef}" />
          </a:actionLink>
-         <a:actionLink id="con-people-list-link" value="#{r.name}"rendered="#{r.dialogType=='privPerson'}"
+         <a:actionLink id="con-people-list-link" value="#{r.name}" rendered="#{r.dialogType=='privPerson'}"
             showLink="false" action="dialog:addressbookPersonDetails" actionListener="#{AddressbookPersonDetailsDialog.setupViewEntry}">
             <f:param name="nodeRef" value="#{r.nodeRef}" />
          </a:actionLink>
-         <a:actionLink id="con-org-people-list-link" value="#{r.name}"rendered="#{r.dialogType=='orgPerson'}"
+         <a:actionLink id="con-org-people-list-link" value="#{r.name}" rendered="#{r.dialogType=='orgPerson'}"
             showLink="false" action="dialog:addressbookOrgPersonDetails" actionListener="#{AddressbookPersonDetailsDialog.setupViewEntry}">
             <f:param name="nodeRef" value="#{r.nodeRef}" />
          </a:actionLink>

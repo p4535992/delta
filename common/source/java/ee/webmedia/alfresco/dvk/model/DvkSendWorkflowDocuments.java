@@ -1,18 +1,43 @@
 package ee.webmedia.alfresco.dvk.model;
 
-public interface DvkSendWorkflowDocuments extends IDocument {
+import org.w3c.dom.Node;
 
-    String getRecipientsRegNr();
+public class DvkSendWorkflowDocuments extends AbstractDvkDocument {
 
-    void setRecipientsRegNr(String regNr);
+    private String recipientsRegNr;
+    private String recipientStructuralUnit;
+    org.w3c.dom.Node docNode;
+    boolean isDocumentNode = true;
 
-    org.w3c.dom.Node getRecipientDocNode();
+    public String getRecipientsRegNr() {
+        return recipientsRegNr;
+    }
 
-    void setRecipientDocNode(org.w3c.dom.Node docNode);
+    public void setRecipientsRegNr(String recipientsRegNr) {
+        this.recipientsRegNr = recipientsRegNr;
+    }
 
-    // indicate whether we are sending document or task
-    boolean isDocumentNode();
+    public Node getRecipientDocNode() {
+        return docNode;
+    }
 
-    void setIsDocumentNode(boolean isDocumentNode);
+    public void setRecipientDocNode(Node docNode) {
+        this.docNode = docNode;
+    }
 
+    public boolean isDocumentNode() {
+        return isDocumentNode;
+    }
+
+    public void setIsDocumentNode(boolean isDocumentNode) {
+        this.isDocumentNode = isDocumentNode;
+    }
+
+    public void setRecipientStructuralUnit(String recipientStructuralUnit) {
+        this.recipientStructuralUnit = recipientStructuralUnit;
+    }
+
+    public String getRecipientStructuralUnit() {
+        return recipientStructuralUnit;
+    }
 }

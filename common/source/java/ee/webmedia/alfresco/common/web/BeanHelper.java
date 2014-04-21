@@ -33,6 +33,7 @@ import ee.webmedia.alfresco.addressbook.service.AddressbookService;
 import ee.webmedia.alfresco.addressbook.web.bean.AddressbookGroupsManagerBean;
 import ee.webmedia.alfresco.addressbook.web.bean.AddressbookSearchBean;
 import ee.webmedia.alfresco.addressbook.web.dialog.AddressbookAddEditDialog;
+import ee.webmedia.alfresco.adit.service.AditService;
 import ee.webmedia.alfresco.adr.service.AdrService;
 import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.archivals.service.ArchivalsService;
@@ -659,6 +660,10 @@ public class BeanHelper implements NamespacePrefixResolverProvider {
 
     public static DvkService getDvkService() {
         return getService(DvkService.class, DvkService.BEAN_NAME);
+    }
+
+    public static AditService getAditService() {
+        return getService(AditService.class, AditService.BEAN_NAME);
     }
 
     public static DvkService getStubDvkService() {

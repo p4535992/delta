@@ -9,10 +9,11 @@ import org.alfresco.service.cmr.view.Location;
 import org.alfresco.service.namespace.QName;
 
 import ee.webmedia.xtee.client.dhl.types.ee.sk.digiDoc.v13.DataFileType;
+import org.apache.xmlbeans.XmlObject;
 
 public interface ExternalReviewWorkflowImporterService {
 
-    NodeRef importWorkflowDocument(Reader viewReader, Location location,
-            NodeRef existingDocumentRef, List<DataFileType> dataFiles, String dvkId, Map<QName, Task> notifications);
+    <F extends XmlObject> NodeRef importWorkflowDocument(Reader viewReader, Location location,
+            NodeRef existingDocumentRef, List<F> dataFiles, String dvkId, Map<QName, Task> notifications);
 
 }

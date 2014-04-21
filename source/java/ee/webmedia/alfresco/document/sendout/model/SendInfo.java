@@ -6,6 +6,8 @@ import org.alfresco.web.bean.repository.Node;
 
 public interface SendInfo {
 
+    public static final String SENT = "saadetud";
+
     public abstract Node getNode();
 
     public abstract String getRecipient();
@@ -17,5 +19,7 @@ public interface SendInfo {
     public abstract String getSendStatus();
 
     public abstract String getResolution();
+
+    String getOpenedDateTime();
 
 }

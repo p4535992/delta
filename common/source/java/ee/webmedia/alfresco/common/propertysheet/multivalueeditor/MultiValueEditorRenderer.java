@@ -2,7 +2,6 @@ package ee.webmedia.alfresco.common.propertysheet.multivalueeditor;
 
 import static ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.CombinedPropReader.AttributeNames.PROP_GENERATOR_DESCRIPTORS;
 import static ee.webmedia.alfresco.common.propertysheet.multivalueeditor.MultiValueEditor.NO_ADD_LINK_LABEL;
-import static org.alfresco.web.bean.generator.BaseComponentGenerator.CustomAttributeNames.STYLE_CLASS;
 
 import java.io.IOException;
 import java.util.List;
@@ -16,7 +15,6 @@ import javax.faces.event.PhaseId;
 
 import org.alfresco.web.app.Application;
 import org.alfresco.web.app.servlet.FacesHelper;
-import org.alfresco.web.bean.generator.BaseComponentGenerator.CustomAttributeNames;
 import org.alfresco.web.ui.common.Utils;
 import org.alfresco.web.ui.common.component.UIGenericPicker;
 import org.alfresco.web.ui.common.renderer.BaseRenderer;
@@ -113,11 +111,15 @@ public class MultiValueEditorRenderer extends BaseRenderer {
     public void encodeBegin(FacesContext context, UIComponent component) throws IOException {
         final List<ComponentPropVO> propVOs = getPropVOs(component);
         ResponseWriter out = context.getResponseWriter();
+        String styleClass = StringUtils.trimToEmpty((String) ((MultiValueEditor) component).getAttributes().get(MultiValueEditor.STYLE_CLASS));
         // class "recipient" should not be hard-coded, i guess
         out.write("<div id=\"");
         out.write(((MultiValueEditor) component).getAjaxClientId(context));
-        out.write("\"><table class=\"recipient multiE cells" + propVOs.size() + "\" cellpadding=\"0\" cellspacing=\"0\">");
-
+        out.write("\"><table class=\"recipient multiE cells" + propVOs.size());
+        if ("hiddenIdCode".equals(styleClass)) {
+            out.write(" " + styleClass);
+        }
+        out.write("\" cellpadding=\"0\" cellspacing=\"0\">");
         @SuppressWarnings("unchecked")
         final Map<String, Object> attributes = component.getAttributes();
         String showHeaders = (String) attributes.get(MultiValueEditor.SHOW_HEADERS);
@@ -228,7 +230,13 @@ public class MultiValueEditorRenderer extends BaseRenderer {
                     if (!column.isRendered()) {
                         continue;
                     }
-                    out.write("<td>");
+                    String styleClass = (String) column.getAttributes().get("styleClass");
+
+                    out.write("<td");
+                    if (StringUtils.isNotBlank(styleClass)) {
+                        out.write(" class=\"" + styleClass + "\"");
+                    }
+                    out.write(">");
                     if ((rowIndex == renderedRowCount - 1) && (columnCount == renderedColumnCount - 1) && ((MultiValueEditor) multiValueEditor).isAutomaticallyAddRows()) {
                         String addLinkId = getAddLinkId(context, multiValueEditor);
                         // component has to implement actual link clicking
@@ -284,7 +292,7 @@ public class MultiValueEditorRenderer extends BaseRenderer {
             ClassificatorService classificatorService = BeanHelper.getClassificatorService();
             List<ClassificatorValue> activeClassificatorValues = classificatorService.getActiveClassificatorValues(classificatorService.getClassificatorByName("sendMode"));
 
-            StringBuilder s = new StringBuilder("<select class=\"changeSendOutMode width120\">");
+            StringBuilder s = new StringBuilder("<select class=\"changeSendOutMode resetSendOutGroupSendMode width120\">");
             s.append("<option value=\"\">").append(MessageUtil.getMessage("select_default_label")).append("</option>");
             for (ClassificatorValue classificatorValue : activeClassificatorValues) {
                 s.append("<option value=\"").append(classificatorValue.getValueName()).append("\">").append(classificatorValue.getValueName()).append("</option>");
@@ -307,9 +315,10 @@ public class MultiValueEditorRenderer extends BaseRenderer {
         }
 
         out.write("<tr><td");
+        out.write(" class=\"sendOutGroup\"");
         if (columnCount > 0) {
             out.write(" colspan=\"");
-            out.write(Integer.toString(columnCount));
+            out.write(Integer.toString(columnCount - 1));
             out.write("\"");
         }
         out.write("><a href=\"#\" onclick=\"return false;\" class=\"icon-link toggle-tbody plus\"></a>");
@@ -359,8 +368,8 @@ public class MultiValueEditorRenderer extends BaseRenderer {
         }
 
         if (!ComponentUtil.isComponentDisabledOrReadOnly(component)) { // don't render adding link when disabled
-            String styleClass = (String) attributes.get(STYLE_CLASS);
-            if (StringUtils.isBlank(styleClass)) {
+            String styleClass = (String) attributes.get(org.alfresco.web.bean.generator.BaseComponentGenerator.CustomAttributeNames.STYLE_CLASS);
+            if (StringUtils.isBlank(styleClass) || "hiddenIdCode".equals(styleClass)) {
                 styleClass = "add-person";
             }
             String addLabel = Application.getMessage(context, addLabelId);

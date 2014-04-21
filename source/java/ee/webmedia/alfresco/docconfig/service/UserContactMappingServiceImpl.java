@@ -166,6 +166,8 @@ public class UserContactMappingServiceImpl implements UserContactMappingService 
         }
         boolean isPerson = ContentModel.TYPE_PERSON.equals(type);
         boolean isOrganization = AddressbookModel.Types.ORGANIZATION.equals(type);
+        boolean isOrgPerson = AddressbookModel.Types.ORGPERSON.equals(type);
+        boolean isPrivPerson = AddressbookModel.Types.PRIV_PERSON.equals(type);
         switch (mappingCode) {
         case NAME:
             if (isPerson) {
@@ -182,6 +184,8 @@ public class UserContactMappingServiceImpl implements UserContactMappingService 
                 return getProp(props, ContentModel.PROP_USERNAME);
             } else if (isOrganization) {
                 return getProp(props, AddressbookModel.Props.ORGANIZATION_CODE);
+            } else if (isOrgPerson || isPrivPerson) {
+                return getProp(props, AddressbookModel.Props.PERSON_ID);
             } else {
                 return null;
             }
@@ -209,7 +213,6 @@ public class UserContactMappingServiceImpl implements UserContactMappingService 
                         ContentModel.PROP_POSTAL_CODE,
                         ContentModel.PROP_COUNTY);
             }
-            boolean isPrivPerson = AddressbookModel.Types.PRIV_PERSON.equals(type);
             if (isOrganization || isPrivPerson) {
                 return getPropsJoinedWithComma(props,
                         AddressbookModel.Props.ADDRESS1,

@@ -17,10 +17,12 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
@@ -58,6 +60,7 @@ import org.apache.myfaces.shared_impl.renderkit.html.HTML;
 
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.addressbook.util.AddressbookUtil;
+import ee.webmedia.alfresco.classificator.enums.AccessRestriction;
 import ee.webmedia.alfresco.classificator.enums.SendMode;
 import ee.webmedia.alfresco.classificator.enums.StorageType;
 import ee.webmedia.alfresco.classificator.model.Classificator;
@@ -65,6 +68,7 @@ import ee.webmedia.alfresco.classificator.model.ClassificatorValue;
 import ee.webmedia.alfresco.common.propertysheet.modalLayer.ModalLayerComponent;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docdynamic.model.DocumentChildModel;
+import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.docdynamic.web.DocumentLockHelperBean;
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
@@ -78,9 +82,11 @@ import ee.webmedia.alfresco.template.model.ProcessedEmailTemplate;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
+import ee.webmedia.alfresco.utils.TextUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UserUtil;
 import ee.webmedia.alfresco.utils.WebUtil;
+import ee.webmedia.xtee.client.exception.XTeeServiceConsumptionException;
 
 /**
  * Bean for sending out document dialog.
@@ -92,7 +98,7 @@ public class DocumentSendOutDialog extends BaseDialogBean {
 
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DocumentSendOutDialog.class);
 
-    private static final String[] PROP_KEYS = { "recipientName", "recipientEmail", "recipientSendMode", "recipientGroup" };
+    private static final String[] PROP_KEYS = { "recipientName", "recipientId", "recipientEmail", "recipientSendMode", "recipientGroup" };
 
     private transient UIPanel modalContainer;
 
@@ -241,20 +247,29 @@ public class DocumentSendOutDialog extends BaseDialogBean {
         model.setSenderEmail(getParametersService().getStringParameter(Parameters.DOC_SENDER_EMAIL));
         model.setSendoutInfo(getParametersService().getStringParameter(Parameters.DOC_SENDOUT_INFO));
         model.setSubject(model.getDocName());
+        model.setDocAccessRestriction(AccessRestriction.valueNameOf((String) props.get(DocumentCommonModel.Props.ACCESS_RESTRICTION)));
         Map<String, List<String>> properties = new HashMap<String, List<String>>();
 
         String defaultSendMode = "";
+        String sendModeByStorageType = "";
         String storageType = (String) props.get(DocumentCommonModel.Props.STORAGE_TYPE);
         if (StringUtils.isNotBlank(storageType)) {
             if (StorageType.DIGITAL.equals(storageType)) {
-                defaultSendMode = SendMode.EMAIL_DVK.getValueName();
+                defaultSendMode = sendModeByStorageType = SendMode.EMAIL_DVK.getValueName();
             } else if (StorageType.PAPER.equals(storageType) || "Paber".equalsIgnoreCase(storageType)) {
-                defaultSendMode = SendMode.MAIL.getValueName();
+                defaultSendMode = sendModeByStorageType = SendMode.MAIL.getValueName();
             }
         }
+        NodeRef initialDocRef = BeanHelper.getDocumentAssociationsService().getInitialDocumentRef(model.getNodeRef());
+        if (initialDocRef != null
+                && SendMode.STATE_PORTAL_EESTI_EE.getValueName().equals(getNodeService().getProperty(initialDocRef, DocumentSpecificModel.Props.TRANSMITTAL_MODE))) {
+            defaultSendMode = SendMode.STATE_PORTAL_EESTI_EE.getValueName();
+        }
         model.setDefaultSendMode(defaultSendMode);
+        model.setSendModeByContentType(sendModeByStorageType);
 
         List<String> names = newListIfNull((List<String>) props.get(DocumentCommonModel.Props.RECIPIENT_NAME), false);
+        List<String> idCodes = newListIfNull((List<String>) props.get(DocumentDynamicModel.Props.RECIPIENT_ID), false);
         List<String> emails = newListIfNull((List<String>) props.get(DocumentCommonModel.Props.RECIPIENT_EMAIL), false);
         List<String> groups = newListIfNull((List<String>) props.get(DocumentCommonModel.Props.RECIPIENT_GROUP), false);
         while (groups.size() < names.size()) {
@@ -270,6 +285,7 @@ public class DocumentSendOutDialog extends BaseDialogBean {
                 }
 
                 names.add(name);
+                idCodes.add("");
                 emails.add(email);
                 groups.add("");
             }
@@ -277,11 +293,12 @@ public class DocumentSendOutDialog extends BaseDialogBean {
 
         if (names.size() == 1 && emails.size() == 1 && StringUtils.isBlank(names.get(0)) && StringUtils.isBlank(emails.get(0))) {
             names = new ArrayList<String>();
+            idCodes = new ArrayList<String>();
             emails = new ArrayList<String>();
             groups = new ArrayList<String>();
         }
 
-        addAdditionalRecipients(props, names, emails, groups);
+        addAdditionalRecipients(props, names, idCodes, emails, groups);
         List<String> recSendModes = new ArrayList<String>(names.size());
         for (int i = 0; i < names.size(); i++) {
             if (StringUtils.isNotBlank(names.get(i)) || StringUtils.isNotBlank(emails.get(i))) {
@@ -292,16 +309,19 @@ public class DocumentSendOutDialog extends BaseDialogBean {
         }
 
         properties.put(PROP_KEYS[0], names);
-        properties.put(PROP_KEYS[1], emails);
-        properties.put(PROP_KEYS[2], recSendModes);
-        properties.put(PROP_KEYS[3], groups);
+        properties.put(PROP_KEYS[1], idCodes);
+        properties.put(PROP_KEYS[2], emails);
+        properties.put(PROP_KEYS[3], recSendModes);
+        properties.put(PROP_KEYS[4], groups);
 
         model.setProperties(properties);
     }
 
-    private void addAdditionalRecipients(Map<String, Object> props, List<String> names, List<String> emails, List<String> groups) {
+    private void addAdditionalRecipients(Map<String, Object> props, List<String> names, List<String> idCodes, List<String> emails, List<String> groups) {
         @SuppressWarnings("unchecked")
         List<String> namesAdd = newListIfNull((List<String>) props.get(DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME), false);
+        @SuppressWarnings("unchecked")
+        List<String> idCodesAdd = newListIfNull((List<String>) props.get(DocumentDynamicModel.Props.ADDITIONAL_RECIPIENT_ID), false);
         @SuppressWarnings("unchecked")
         List<String> emailsAdd = newListIfNull((List<String>) props.get(DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_EMAIL), false);
         @SuppressWarnings("unchecked")
@@ -328,11 +348,15 @@ public class DocumentSendOutDialog extends BaseDialogBean {
         }
 
         names.addAll(namesAdd);
+        idCodes.addAll(idCodesAdd);
         emails.addAll(emailsAdd);
         groups.addAll(groupsAdd);
 
         if (names.isEmpty()) {
             names.add("");
+        }
+        if (idCodes.isEmpty()) {
+            idCodes.add("");
         }
         if (emails.isEmpty()) {
             emails.add("");
@@ -377,7 +401,7 @@ public class DocumentSendOutDialog extends BaseDialogBean {
     }
 
     public void updateSendModes(@SuppressWarnings("unused") ActionEvent event) {
-        List<String> recSendModes = model.getProperties().get(PROP_KEYS[2]);
+        List<String> recSendModes = model.getProperties().get(PROP_KEYS[3]);
         for (int i = 0; i < recSendModes.size(); i++) {
             recSendModes.set(i, model.getSendMode());
         }
@@ -400,16 +424,18 @@ public class DocumentSendOutDialog extends BaseDialogBean {
         } else {
             result = AddressbookUtil.getContactData(nodeRef);
         }
-        result.add(model.getDefaultSendMode());
+        result.add(model.getSendModeByContentType());
         return result;
     }
 
     private List<String> getPersonData(String nodeRef) {
         Map<QName, Serializable> personProps = getNodeService().getProperties(new NodeRef(nodeRef));
         String name = UserUtil.getPersonFullName1(personProps);
+        String id = (String) personProps.get(ContentModel.PROP_USERNAME);
         String email = (String) personProps.get(ContentModel.PROP_EMAIL);
         List<String> data = new ArrayList<String>();
         data.add(name);
+        data.add(id);
         data.add(email);
         return data;
     }
@@ -429,14 +455,19 @@ public class DocumentSendOutDialog extends BaseDialogBean {
 
         boolean hasValidRecipient = false;
         boolean hasInvalidRecipient = false;
+        boolean hasMissingIdCodes = false;
         boolean hasMissingEmails = false;
         boolean hasEmailMode = false;
 
         List<String> names = model.getProperties().get(PROP_KEYS[0]);
-        List<String> emails = model.getProperties().get(PROP_KEYS[1]);
-        List<String> modes = model.getProperties().get(PROP_KEYS[2]);
+        List<String> idCodes = trimAndGetIdCodes();
+        List<String> emails = model.getProperties().get(PROP_KEYS[2]);
+        List<String> modes = model.getProperties().get(PROP_KEYS[3]);
+        List<Pair<String, String>> dvkRecipients = new ArrayList<Pair<String, String>>();
+        Set<String> idCodesToCheck = new HashSet<String>();
         for (int i = 0; i < names.size(); i++) {
             String name = names.get(i);
+            String idCode = idCodes.get(i);
             String email = StringUtils.trim(emails.get(i));
             String mode = modes.get(i);
             if (!hasValidRecipient && StringUtils.isNotBlank(name) && StringUtils.isNotBlank(mode) && (StringUtils.isNotBlank(email)
@@ -448,6 +479,17 @@ public class DocumentSendOutDialog extends BaseDialogBean {
             } else if (!hasInvalidRecipient && (StringUtils.isNotBlank(name) || StringUtils.isNotBlank(mode) || StringUtils.isNotBlank(email))
                     && (StringUtils.isBlank(name) || StringUtils.isBlank(mode))) {
                 hasInvalidRecipient = true;
+            }
+            if (!hasMissingIdCodes && StringUtils.isNotBlank(mode) && SendMode.STATE_PORTAL_EESTI_EE.equals(mode)) {
+                if (StringUtils.isBlank(idCode)) {
+                    hasMissingIdCodes = true;
+                } else {
+                    idCodesToCheck.add(idCode);
+                    dvkRecipients.add(new Pair<String, String>(name, mode));
+                }
+            }
+            if (StringUtils.isNotBlank(mode) && SendMode.EMAIL_DVK.equals(mode)) {
+                dvkRecipients.add(new Pair<String, String>(name, mode));
             }
             if (StringUtils.isNotBlank(email)) {
                 if (!emailValidator.isValid(email)) {
@@ -464,6 +506,10 @@ public class DocumentSendOutDialog extends BaseDialogBean {
             valid = false;
             MessageUtil.addErrorMessage(context, "common_propertysheet_validator_mandatory", MessageUtil.getMessage(context, "document_recipients"));
         }
+        if (hasMissingIdCodes) {
+            valid = false;
+            MessageUtil.addErrorMessage(context, "document_send_out_id_code_req");
+        }
         if (hasMissingEmails) {
             valid = false;
             MessageUtil.addErrorMessage(context, "document_send_out_email_req");
@@ -477,6 +523,14 @@ public class DocumentSendOutDialog extends BaseDialogBean {
         if (StringUtils.isBlank(senderEmail) || !emailValidator.isValid(senderEmail)) {
             valid = false;
             MessageUtil.addErrorMessage(context, "document_docSenderEmail_problem");
+        }
+
+        if (valid && modes.contains(SendMode.EMAIL_DVK.getValueName())) {
+            AccessRestriction restriction = model.getDocAccessRestriction();
+            if (!(AccessRestriction.OPEN.equals(restriction) || AccessRestriction.AK.equals(restriction))) {
+                valid = false;
+                MessageUtil.addErrorMessage(context, "document_send_out_forbidden_wrong_access_restriction_for_dvk");
+            }
         }
 
         if (valid && hasEmailMode && model.getSelectedFiles().size() > 0) {
@@ -493,20 +547,65 @@ public class DocumentSendOutDialog extends BaseDialogBean {
             }
         }
 
+        if (valid && model.isEncrypt()) {
+            List<String> encryptionForbidden = new ArrayList<String>();
+            List<String> dvkCapableOrgs = BeanHelper.getAddressbookService().getDvkCapableOrgNames();
+            for (Pair<String, String> nameAndSendMode : dvkRecipients) {
+                String name = nameAndSendMode.getFirst();
+                String sendMode = nameAndSendMode.getSecond();
+                if (SendMode.STATE_PORTAL_EESTI_EE.equals(sendMode) || SendMode.EMAIL_DVK.equals(sendMode) && dvkCapableOrgs.contains(name)) {
+                    encryptionForbidden.add(name);
+                }
+            }
+            if (!encryptionForbidden.isEmpty()) {
+                valid = false;
+                MessageUtil.addErrorMessage("document_send_out_encryption_forbidden_for_dvk", StringUtils.join(encryptionForbidden, TextUtil.LIST_SEPARATOR));
+            }
+        }
+
+        if (valid && !idCodesToCheck.isEmpty()) {
+            Set<String> unregisteredAditUsers = null;
+            try {
+                unregisteredAditUsers = BeanHelper.getAditService().getUnregisteredAditUsers(idCodesToCheck);
+            } catch (XTeeServiceConsumptionException e) {
+                valid = false;
+                String faultMessage = e.getNonTechnicalFaultString();
+                MessageUtil.addErrorMessage(context, "document_send_failed_xtee_query", StringUtils.isNotBlank(faultMessage) ? faultMessage : e.getFaultString());
+            }
+            if (unregisteredAditUsers != null && !unregisteredAditUsers.isEmpty()) {
+                valid = false;
+                for (String user : unregisteredAditUsers) {
+                    MessageUtil.addErrorMessage(context, "document_send_failed_no_adit_account", user);
+                }
+            }
+        }
+
         return valid;
+    }
+
+    private List<String> trimAndGetIdCodes() {
+        List<String> idCodes = model.getProperties().get(PROP_KEYS[1]);
+        List<String> trimmedIdCodes = new ArrayList<String>(idCodes.size());
+        for (int i = 0; i < idCodes.size(); i++) {
+            trimmedIdCodes.add(i, StringUtils.trim(idCodes.get(i)));
+        }
+        model.getProperties().put(PROP_KEYS[1], trimmedIdCodes);
+        return trimmedIdCodes;
     }
 
     private boolean sendOut(FacesContext context) {
         boolean result = true;
         boolean isEncrypt = model.isEncrypt();
         List<String> names = new ArrayList<String>();
+        List<String> idCodes = new ArrayList<String>();
         List<String> emails = new ArrayList<String>();
         List<String> modes = new ArrayList<String>();
         List<String> encryptionIdCodes = null;
 
         names.addAll(model.getProperties().get(PROP_KEYS[0]));
-        emails.addAll(model.getProperties().get(PROP_KEYS[1]));
-        modes.addAll(model.getProperties().get(PROP_KEYS[2]));
+        idCodes.addAll(model.getProperties().get(PROP_KEYS[1]));
+        emails.addAll(model.getProperties().get(PROP_KEYS[2]));
+        modes.addAll(model.getProperties().get(PROP_KEYS[3]));
 
         if (isEncrypt) {
             encryptionIdCodes = new ArrayList<String>();
@@ -521,17 +620,17 @@ public class DocumentSendOutDialog extends BaseDialogBean {
 
         List<NodeRef> fileRefs = getFileRefs();
         try {
-            result = getSendOutService().sendOut(model.getNodeRef(), names, emails, modes, encryptionIdCodes, model.getSenderEmail(), model.getSubject(), model.getContent(),
-                    fileRefs, model.isZip());
+            result = getSendOutService().sendOut(model.getNodeRef(), names, emails, modes, idCodes, encryptionIdCodes, model.getSenderEmail(), model.getSubject(),
+                    model.getContent(), fileRefs, model.isZip());
         } catch (UnableToPerformException e) {
             MessageUtil.addStatusMessage(context, e);
             return false;
         } catch (Exception e) {
             log.error(
                     "Sending out document failed\n  nodeRef=" + model.getNodeRef() + "\n  names=" + names + "\n  emails=" + emails + "\n  modes=" + modes
-                    + "\n  encryptionIdCodes=" + encryptionIdCodes + "\n  senderEmail=" + model.getSenderEmail() + "\n  subject=" + model.getSubject() + "\n  content="
-                    + (model.getContent() == null ? "null" : "String[" + model.getContent().length() + "]") + "\n  fileRefs=" + fileRefs + "\n  zip=" + model.isZip()
-                    + "\n  encrypt=" + isEncrypt, e);
+                            + "\n  encryptionIdCodes=" + encryptionIdCodes + "\n  senderEmail=" + model.getSenderEmail() + "\n  subject=" + model.getSubject() + "\n  content="
+                            + (model.getContent() == null ? "null" : "String[" + model.getContent().length() + "]") + "\n  fileRefs=" + fileRefs + "\n  zip=" + model.isZip()
+                            + "\n  encrypt=" + isEncrypt, e);
             result = false;
         }
         if (!result) {
@@ -635,15 +734,21 @@ public class DocumentSendOutDialog extends BaseDialogBean {
 
         encryptionRecipients = new ArrayList<EncryptionRecipient>();
         List<String> names = model.getProperties().get(PROP_KEYS[0]);
-        List<String> emails = model.getProperties().get(PROP_KEYS[1]);
+        List<String> idCodes = model.getProperties().get(PROP_KEYS[1]);
+        List<String> emails = model.getProperties().get(PROP_KEYS[2]);
+        List<String> sendModes = model.getProperties().get(PROP_KEYS[3]);
         for (int i = 0; i < names.size(); i++) {
             String name = names.get(i);
             String email = StringUtils.trim(emails.get(i));
-            String idCode = StringUtils.trimToEmpty(idCodesByNameAndEmail.get(Pair.newInstance(name.toLowerCase(), email.toLowerCase())));
+            String idCode = StringUtils.trimToEmpty(idCodes.get(i));
+            if (StringUtils.isBlank(idCode)) { // If user hasn't entered any id code, then try to fetch from repo
+                idCode = StringUtils.trimToEmpty(idCodesByNameAndEmail.get(Pair.newInstance(name.toLowerCase(), email.toLowerCase())));
+            }
 
             EncryptionRecipient encryptionRecipient = new EncryptionRecipient();
             encryptionRecipient.setName(name);
             encryptionRecipient.setIdCode(idCode);
+            encryptionRecipient.setSendMode(sendModes.get(i));
             encryptionRecipients.add(encryptionRecipient);
         }
     }
@@ -692,6 +797,7 @@ public class DocumentSendOutDialog extends BaseDialogBean {
 
         private String name;
         private String idCode;
+        private String sendMode;
 
         public String getName() {
             return name;
@@ -709,6 +815,14 @@ public class DocumentSendOutDialog extends BaseDialogBean {
             this.idCode = idCode;
         }
 
+        public String getSendMode() {
+            return sendMode;
+        }
+
+        public void setSendMode(String sendMode) {
+            this.sendMode = sendMode;
+        }
+
     }
 
     public static class SendOutModel implements Serializable {
@@ -720,11 +834,13 @@ public class DocumentSendOutDialog extends BaseDialogBean {
         }
 
         private NodeRef nodeRef;
+        private AccessRestriction docAccessRestriction;
         private SortedMap<String, String> files;
         private List<String> selectedFiles;
         private String docName;
         private String sendDesc;
         private String sendMode;
+        private String sendModeByContentType;
         private boolean zip;
         private boolean encrypt;
         private String senderEmail;
@@ -853,6 +969,22 @@ public class DocumentSendOutDialog extends BaseDialogBean {
 
         public void setDefaultSendMode(String defaultSendMode) {
             this.defaultSendMode = defaultSendMode;
+        }
+
+        public String getSendModeByContentType() {
+            return sendModeByContentType;
+        }
+
+        public void setSendModeByContentType(String sendModeByContentType) {
+            this.sendModeByContentType = sendModeByContentType;
+        }
+
+        public AccessRestriction getDocAccessRestriction() {
+            return docAccessRestriction;
+        }
+
+        public void setDocAccessRestriction(AccessRestriction docAccessRestriction) {
+            this.docAccessRestriction = docAccessRestriction;
         }
 
     }

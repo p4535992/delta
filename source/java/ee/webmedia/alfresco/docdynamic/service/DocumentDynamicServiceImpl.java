@@ -2,6 +2,7 @@ package ee.webmedia.alfresco.docdynamic.service;
 
 import static ee.webmedia.alfresco.common.web.BeanHelper.getAdrService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentConfigService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDvkService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getMsoService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getOpenOfficeService;
 import static ee.webmedia.alfresco.docadmin.web.DocAdminUtil.getDocTypeIdAndVersionNr;
@@ -526,6 +527,16 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
 
         // set default values in memory - does not overwrite existing values
         documentConfigService.setDefaultPropertyValues(document.getNode(), null, false, true, docVer);
+
+        // Apply mappings from DEC container (overwriting default values) if a container is available
+        if (document.isImapOrDvk()) {
+            NodeRef decContainerNodeRef = fileService.getDecContainer(document.getNodeRef());
+            if (decContainerNodeRef != null) {
+                Map<QName, Serializable> decContainerPropMappings = getDvkService().mapRelatedIncomingElements(newTypeId, decContainerNodeRef);
+                docNode.getProperties().putAll(RepoUtil.toStringProperties(decContainerPropMappings));
+            }
+        }
+
         ((AccessRestrictionGenerator) beanFactory.getBean(AccessRestrictionGenerator.BEAN_NAME, SaveListener.class)).clearHiddenValues(document.getNode());
     }
 

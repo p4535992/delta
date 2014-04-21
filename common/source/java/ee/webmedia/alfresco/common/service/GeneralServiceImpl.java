@@ -72,6 +72,8 @@ import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream.UnicodeExtraFieldPolicy;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.input.CountingInputStream;
+import org.apache.commons.io.output.CountingOutputStream;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
@@ -748,6 +750,50 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
         } finally {
             IOUtils.closeQuietly(out);
         }
+    }
+
+    @Override
+    public long writeZipFileFromStream(OutputStream output, String fileName, InputStream in) {
+        Assert.hasLength(fileName, "No name provided for ZIP archive");
+
+        long bytesWritten = -1;
+        CountingOutputStream counter = null;
+        ZipArchiveOutputStream out = null;
+        try {
+            counter = new CountingOutputStream(output);
+            out = new ZipArchiveOutputStream(counter);
+
+            out.setLevel(Deflater.DEFAULT_COMPRESSION);
+            out.setEncoding("Cp437");
+            out.setCreateUnicodeExtraFields(UnicodeExtraFieldPolicy.NOT_ENCODEABLE);
+            byte[] buffer = new byte[10240];
+            ZipArchiveEntry entry = new ZipArchiveEntry(fileName);
+            CountingInputStream countingStream = new CountingInputStream(in);
+            out.putArchiveEntry(entry);
+
+            try {
+                int length = 0;
+                while ((length = in.read(buffer)) > 0) {
+                    out.write(buffer, 0, length);
+                }
+            } finally {
+                in.close();
+            }
+
+            entry.setSize(countingStream.getByteCount());
+            out.closeArchiveEntry();
+
+            out.finish();
+            bytesWritten = counter.getByteCount();
+        } catch (IOException e) {
+            log.warn("Failed to zip up stream.", e);
+            throw new RuntimeException("Failed to zip up stream.", e);
+        } finally {
+            IOUtils.closeQuietly(counter);
+            IOUtils.closeQuietly(out);
+        }
+
+        return bytesWritten;
     }
 
     @Override

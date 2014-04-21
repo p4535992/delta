@@ -20,7 +20,7 @@
       <c:if test="${ !item.groupBlockItem }" >
       	<tag:valueRow labelId="workflow.task.ownerName" value="${item.taskOwnerName}" hideIfEmpty="true" />
       	<tag:readMore content="${ item.taskOutcomeWithSubstituteNote }" threshold="150" useTagContent="true" >
-      		<tag:valueRow labelId="workflow.task.outcome" value="${item.taskOutcomeWithSubstituteNote}" hideIfEmpty="true" readMore="150" escape="false" />
+      		<tag:valueRow labelId="workflow.task.outcome" value="${item.taskOutcomeWithSubstituteNote}" hideIfEmpty="true" escape="false" />
       	</tag:readMore>
       </c:if>
       <tag:valueRow labelId="workflow.task.status" value="${item.taskStatus}" hideIfEmpty="true" />

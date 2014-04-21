@@ -51,17 +51,23 @@ public interface SendOutService {
      * @param names list of recipient names
      * @param emails list of recipient email addresses
      * @param modes list of recipient send modes
+     * @param idCodes TODO
      * @param fromEmail from email address
      * @param subject mail subject
      * @param content mail content text
-     * @param fileNodeRefs list of file node refs as strings to match those files which should be sent out as attachments from given document
      * @param zipIt if attachments should be zipped into single file, or sent as separate files
+     * @param fileNodeRefs list of file node refs as strings to match those files which should be sent out as attachments from given document
      * @return true
      */
-    boolean sendOut(NodeRef document, List<String> names, List<String> emails, List<String> modes, List<String> encryptionIdCodes, String fromEmail, String subject,
-            String content, List<NodeRef> fileRefs, boolean zipIt);
+    boolean sendOut(NodeRef document, List<String> names, List<String> emails, List<String> modes, List<String> idCodes, List<String> encryptionIdCodes, String fromEmail,
+            String subject, String content, List<NodeRef> fileRefs, boolean zipIt);
 
     NodeRef addSendinfo(NodeRef document, Map<QName, Serializable> props);
+
+    /**
+     * If updateSearchableSendInfo is false then updateSearchableSendInfo() must manually be called later
+     */
+    NodeRef addSendinfo(NodeRef document, Map<QName, Serializable> props, boolean updateSearchableSendInfo);
 
     List<ContentToSend> prepareContents(NodeRef document, List<NodeRef> fileRefs, boolean zipIt);
 

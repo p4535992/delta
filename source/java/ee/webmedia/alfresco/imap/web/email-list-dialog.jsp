@@ -54,7 +54,7 @@
             <a:sortLink id="col7-sort" label="#{DialogManager.bean.emailDateTimeColumnMsg}" value="emailDateTime" styleClass="header" />
          </f:facet>
          <a:actionLink id="col7-text" value="#{r.emailDateTimeStr}" action="#{DocumentDialog.action}" tooltip="#{r.emailDateTimeStr}" styleClass="no-underline"
-          actionListener="#{DocumentDialog.open}" styleClass="no-underline" >
+          actionListener="#{DocumentDialog.open}" >
             <f:param name="nodeRef" value="#{r.node.nodeRef}" />
           </a:actionLink>
       </a:column>      

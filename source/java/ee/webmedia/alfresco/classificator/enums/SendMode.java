@@ -10,7 +10,8 @@ public enum SendMode {
     EMAIL("e-post"),
     EMAIL_BCC("e-post (bcc)"),
     MAIL("post"),
-    REGISTERED_MAIL("tähitud post");
+    REGISTERED_MAIL("tähitud post"),
+    STATE_PORTAL_EESTI_EE("Riigiportaal eesti.ee");
 
     private String valueName;
 

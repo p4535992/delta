@@ -88,9 +88,15 @@
        clone.text(jQuery.trim(fulltext.substring(0,(opts.condensedLength))));
        var cloneTextLength = clone.text().length;
     } else {
+       var previousDelimiterLocation = -1;
        do {
           // find the location of the next potential break-point.
           var loc = findDelimiterLocation(fullbody, opts.delim, (opts.condensedLength + delta));
+          if(loc == previousDelimiterLocation) {
+             debug("condensing... same delimiter location was returned twice: " + loc + " Breaking to avoid infinite loop");
+             break;
+          }
+          previousDelimiterLocation = loc;
           //set the html of the clone to the substring html of the original
           clone.html(jQuery.trim(fullbody.substring(0,(loc+1))));
           var cloneTextLength = clone.text().length;

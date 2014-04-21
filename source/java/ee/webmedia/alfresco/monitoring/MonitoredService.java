@@ -6,6 +6,7 @@ public enum MonitoredService {
     OUT_SK_LDAP,
     OUT_AD_KERBEROS,
     OUT_AD_LDAP,
+    OUT_XTEE_ADIT,
     OUT_XTEE_DVK,
     OUT_SMTP,
     OUT_MSO,

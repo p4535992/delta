@@ -8,6 +8,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
+import ee.webmedia.alfresco.dvk.model.DvkModel;
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.web.scripts.FileTypeImageUtils;
 import org.alfresco.service.cmr.model.FileInfo;
@@ -50,6 +51,7 @@ public class File implements Serializable, IClonable<File> {
     private long nrOfChildren; // used to show childCount if the file represents folder
     private boolean isPdf;
     private String activeLockOwner;
+    private boolean decContainer;
     public static FastDateFormat dateFormat = FastDateFormat.getInstance("dd.MM.yyyy HH:mm");
 
     public File() {
@@ -76,6 +78,7 @@ public class File implements Serializable, IClonable<File> {
         generated = fileProps.get(FileModel.Props.GENERATED_FROM_TEMPLATE) != null || fileProps.get(FileModel.Props.GENERATION_TYPE) != null;
         active = (fileProps.get(ACTIVE) == null) ? true : Boolean.parseBoolean(fileProps.get(ACTIVE).toString());
         convertToPdfIfSigned = Boolean.TRUE.equals(fileProps.get(FileModel.Props.CONVERT_TO_PDF_IF_SIGNED));
+        decContainer = fileProps.containsKey(DvkModel.Props.DVK_ID);
     }
 
     public String getName() {
@@ -316,6 +319,10 @@ public class File implements Serializable, IClonable<File> {
 
     public boolean isPdf() {
         return isPdf;
+    }
+
+    public boolean isDecContainer() {
+        return decContainer;
     }
 
     public String getActiveLockOwner() {

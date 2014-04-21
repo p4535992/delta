@@ -18,7 +18,8 @@
       <property name="fileService" ref="FileService" />
       <property name="workflowService" ref="WmWorkflowService" />
       <property name="notificationService" ref="NotificationService" />
-      <property name="einvoiceService" ref="EInvoiceService" />       
+      <property name="einvoiceService" ref="EInvoiceService" />
+      <property name="documentAdminService" ref="DocumentAdminService" />
    </bean>
 
    <bean id="dvkCorruptDocumentPermissionsBootstrap" class="ee.webmedia.alfresco.dvk.bootstrap.DvkCorruptDocumentPermissionsBootstrap" parent="module.baseComponent">

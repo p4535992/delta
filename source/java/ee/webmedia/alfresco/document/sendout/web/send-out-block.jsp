@@ -41,6 +41,13 @@
          </f:facet>
          <h:outputText id="col4-txt" value="#{r.sendStatus}" />
       </a:column>
+      
+      <a:column id="col4-1">
+         <f:facet name="header">
+            <a:sortLink id="col4-1-header" label="#{msg.document_send_opened}" value="openedDateTime" styleClass="header" />
+         </f:facet>
+         <h:outputText id="col4-1-txt" value="#{r.openedDateTime}" />
+      </a:column>
 
       <a:column id="col5">
          <f:facet name="header">
@@ -48,7 +55,7 @@
          </f:facet>
          <h:outputText id="col5-txt" value="#{r.resolution}" escape="false" />
       </a:column>
-      
+
    </a:richList>
 
 </a:panel>

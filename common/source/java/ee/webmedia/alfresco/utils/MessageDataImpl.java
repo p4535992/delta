@@ -1,6 +1,7 @@
 package ee.webmedia.alfresco.utils;
 
 import java.util.Arrays;
+import java.util.List;
 
 import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
 
@@ -24,6 +25,10 @@ public class MessageDataImpl implements MessageData {
 
     public MessageDataImpl(String messageKey, Object... messageValuesForHolders) {
         this(MessageSeverity.ERROR, messageKey, messageValuesForHolders);
+    }
+
+    public MessageDataImpl(String messageKey, List<Object> messageValuesForHolders) {
+        this(MessageSeverity.ERROR, messageKey, messageValuesForHolders.toArray());
     }
 
     @Override

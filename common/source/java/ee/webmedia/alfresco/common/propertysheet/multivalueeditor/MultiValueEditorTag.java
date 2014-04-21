@@ -43,6 +43,7 @@ public class MultiValueEditorTag extends UIComponentTag {
     private String hiddenPropNames;
     private String groupByColumnName;
     private String groupRowControls;
+    private String styleClass;
 
     public void setVarName(String varName) {
         this.varName = varName;
@@ -96,6 +97,10 @@ public class MultiValueEditorTag extends UIComponentTag {
         this.groupRowControls = groupRowControls;
     }
 
+    public void setStyleClass(String styleClass) {
+        this.styleClass = styleClass;
+    }
+
     @Override
     protected void setProperties(UIComponent component) {
         super.setProperties(component);
@@ -118,6 +123,7 @@ public class MultiValueEditorTag extends UIComponentTag {
         attributes.put(MultiValueEditor.HIDDEN_PROP_NAMES, hiddenPropNames);
         attributes.put(MultiValueEditor.GROUP_BY_COLUMN_NAME, groupByColumnName);
         attributes.put(MultiValueEditor.GROUP_ROW_CONTROLS, groupRowControls);
+        attributes.put(MultiValueEditor.STYLE_CLASS, styleClass);
         attributes.put("setterCallback", setterCallback);
         if (StringUtils.isNotBlank(filters)) {
             attributes.put(MultiValueEditor.FILTERS, filters);
@@ -145,6 +151,7 @@ public class MultiValueEditorTag extends UIComponentTag {
         hiddenPropNames = null;
         groupByColumnName = null;
         groupRowControls = null;
+        styleClass = null;
     }
 
 }

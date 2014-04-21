@@ -125,7 +125,18 @@
             <ref bean="import25To313DynamicDocumentTypes" />            
          </list>
       </property>
-   </bean>   
+   </bean>
+   
+   <bean id="archivedSeriesVolTypeAndVolNumberPatternUpdater" class="ee.webmedia.alfresco.series.bootstrap.ArchivedSeriesVolTypeAndVolNumberPatternUpdater" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="enabled" value="false" /><!-- Executed from node-browser -->
+      <property name="dependsOn">
+         <list>
+            <ref bean="archivalsStoresBootstrap" />
+            <ref bean="volumeTypeAndNamespaceUpdater" />
+         </list>
+      </property>
+   </bean>
 
    <!-- START: web beans: -->
 

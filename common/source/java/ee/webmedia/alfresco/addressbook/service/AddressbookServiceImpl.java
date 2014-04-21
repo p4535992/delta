@@ -563,6 +563,24 @@ public class AddressbookServiceImpl extends AbstractSearchServiceImpl implements
         return dvkCapableOrgs;
     }
 
+    @Override
+    public List<String> getDvkCapableOrgNames() {
+        List<Node> dvkCapableOrgs = getDvkCapableOrgs();
+        List<String> dvkCapableOrgNames = new ArrayList<String>();
+        for (Node organization : dvkCapableOrgs) {
+            dvkCapableOrgNames.add((String) organization.getProperties().get(Props.ORGANIZATION_NAME));
+        }
+        return dvkCapableOrgNames;
+    }
+
+    @Override
+    public NodeRef getOrganizationNodeRef(String orgEmail, String orgName) {
+        if (StringUtils.isBlank(orgName) || StringUtils.isBlank(orgName)) {
+            return null;
+        }
+        return BeanHelper.getDocumentSearchService().searchOrganizationNodeRef(orgEmail, orgName);
+    }
+
     private List<Node> listNodeChildren(QNamePattern type, NodeRef parent) {
         List<ChildAssociationRef> childRefs = nodeService.getChildAssocs(parent, type, RegexQNamePattern.MATCH_ALL);
         List<Node> entryNodes = new ArrayList<Node>(childRefs.size());

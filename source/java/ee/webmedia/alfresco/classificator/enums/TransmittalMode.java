@@ -5,7 +5,8 @@ package ee.webmedia.alfresco.classificator.enums;
  */
 public enum TransmittalMode {
     EMAIL("e-post"),
-    DVK("DVK");
+    DVK("DVK"),
+    STATE_PORTAL_EESTI_EE("Riigiportaal eesti.ee");
 
     private String valueName;
     private static String classificatorName = "transmittalMode";

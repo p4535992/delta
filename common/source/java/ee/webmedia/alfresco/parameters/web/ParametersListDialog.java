@@ -1,5 +1,7 @@
 package ee.webmedia.alfresco.parameters.web;
 
+import java.io.Serializable;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -94,7 +96,7 @@ public class ParametersListDialog extends BaseDialogBean {
             }
         } else {
             try {
-                getParametersService().updateParameters(parameters);
+                getParametersService().updateParameters((Collection<Parameter<? extends Serializable>>) parameters);
                 MessageUtil.addInfoMessage("save_success");
             } catch (UnableToPerformException e) {
                 MessageUtil.addStatusMessage(context, e);

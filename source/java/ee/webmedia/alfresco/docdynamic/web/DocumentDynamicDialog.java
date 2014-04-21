@@ -5,6 +5,7 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDialogHelper
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDynamicService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentLockHelperBean;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getFileService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getLogService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getPropertySheetStateBean;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
@@ -937,7 +938,11 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
             public Pair<DocumentDynamic, List<Pair<NodeRef, NodeRef>>> execute() throws Throwable {
                 // May throw UnableToPerformException or UnableToPerformMultiReasonException
                 ((FileBlockBean) getBlocks().get(FileBlockBean.class)).updateFilesProperties();
-                return getDocumentDynamicService().updateDocumentGetDocAndNodeRefs(document, saveListenerBeanNames, relocateAssocDocs, true);
+                Pair<DocumentDynamic, List<Pair<NodeRef, NodeRef>>> saveResult = getDocumentDynamicService().updateDocumentGetDocAndNodeRefs(document, saveListenerBeanNames, relocateAssocDocs, true);
+                // Delete DecContainer after document saving. Just in case.
+                getFileService().removeDecContainer(saveResult.getFirst().getNodeRef());
+
+                return saveResult;
             }
         };
         if (newTransaction) {

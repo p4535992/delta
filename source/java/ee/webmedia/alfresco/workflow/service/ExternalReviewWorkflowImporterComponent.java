@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import ee.webmedia.alfresco.utils.DvkUtil;
 import org.alfresco.repo.importer.ImportNode;
 import org.alfresco.repo.importer.Importer;
 import org.alfresco.repo.importer.ImporterComponent;
@@ -24,11 +25,11 @@ import org.alfresco.service.cmr.view.Location;
 import org.alfresco.service.namespace.QName;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.Transformer;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.xml.security.exceptions.Base64DecodingException;
-import org.apache.xml.security.utils.Base64;
 
 import ee.webmedia.alfresco.classificator.model.Classificator;
 import ee.webmedia.alfresco.classificator.model.ClassificatorValue;
@@ -47,7 +48,7 @@ import ee.webmedia.alfresco.utils.UserUtil;
 import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
-import ee.webmedia.xtee.client.dhl.types.ee.sk.digiDoc.v13.DataFileType;
+import org.apache.xmlbeans.XmlObject;
 
 public class ExternalReviewWorkflowImporterComponent extends ImporterComponent implements ExternalReviewWorkflowImporterService {
     // Logger
@@ -65,8 +66,8 @@ public class ExternalReviewWorkflowImporterComponent extends ImporterComponent i
     private FileService fileService;
 
     @Override
-    public NodeRef importWorkflowDocument(Reader viewReader, Location location, NodeRef existingDocumentRef
-            , List<DataFileType> dataFiles, String dvkId, Map<QName, Task> notifications) {
+    public <F extends XmlObject> NodeRef importWorkflowDocument(Reader viewReader, Location location, NodeRef existingDocumentRef
+            , List<F> dataFiles, String dvkId, Map<QName, Task> notifications) {
         NodeRef nodeRef = getNodeRef(location, null);
 
         List<Task> originalExternalReviewTasks = getOriginalExternalReviewTasks(existingDocumentRef);
@@ -261,14 +262,14 @@ public class ExternalReviewWorkflowImporterComponent extends ImporterComponent i
         nodeService.addProperties(newDocumentRef, propsToAdd);
     }
 
-    private class DocNodeImporter extends NodeImporter implements DocImporter {
+    private class DocNodeImporter<F extends XmlObject> extends NodeImporter implements DocImporter {
 
         private NodeRef existingDocumentRef = null;
-        private List<DataFileType> dataFiles = null;
+        private List<F> dataFiles = null;
         private NodeRef importedRootNodeRef = null;
 
         private DocNodeImporter(NodeRef rootRef, QName rootAssocType, ImporterBinding binding, ImportPackageHandler streamHandler, ImporterProgress progress,
-                                NodeRef existingDocumentRef, List<DataFileType> dataFiles) {
+                                NodeRef existingDocumentRef, List<F> dataFiles) {
             super(rootRef, rootAssocType, binding, streamHandler, progress);
             this.existingDocumentRef = existingDocumentRef;
             importedRootNodeRef = existingDocumentRef;
@@ -323,13 +324,13 @@ public class ExternalReviewWorkflowImporterComponent extends ImporterComponent i
         private void importContent(NodeRef nodeRef, QName propertyName, String importContentData, String fileName) {
             importContentData = bindPlaceHolder(importContentData, binding);
             if (StringUtils.isNotBlank(fileName)) {
-                DataFileType dataFile = findDataFile(fileName);
+                F dataFile = findDataFile(fileName);
                 if (dataFile == null) {
                     // couldn't find corresponding content
                     return;
                 }
                 ContentWriter writer = contentService.getWriter(nodeRef, propertyName, true);
-                String originalMimeType = StringUtils.lowerCase(dataFile.getMimeType());
+                String originalMimeType = StringUtils.lowerCase(DvkUtil.getFileMimeType(dataFile));
                 String mimeType = mimetypeService.guessMimetype(fileName);
                 if (log.isInfoEnabled() && !StringUtils.equals(mimeType, originalMimeType)) {
                     log.info("Original mimetype '" + originalMimeType + "', but we are guessing mimetype based on filename '" + fileName + "' => '" + mimeType);
@@ -337,7 +338,7 @@ public class ExternalReviewWorkflowImporterComponent extends ImporterComponent i
                 writer.setMimetype(mimeType);
                 try {
                     final OutputStream os = writer.getContentOutputStream();
-                    os.write(Base64.decode(dataFile.getStringValue()));
+                    IOUtils.copy(DvkUtil.getFileContents(dataFile), os);
                     os.close();
                 } catch (Base64DecodingException e) {
                     throw new RuntimeException("Failed to decode", e);
@@ -349,10 +350,10 @@ public class ExternalReviewWorkflowImporterComponent extends ImporterComponent i
             }
         }
 
-        private DataFileType findDataFile(String contentUrl) {
+        private F findDataFile(String contentUrl) {
             if (dataFiles != null) {
-                for (DataFileType dataFile : dataFiles) {
-                    if (StringUtils.equals(dataFile.getFilename(), contentUrl)) {
+                for (F dataFile : dataFiles) {
+                    if (StringUtils.equals(DvkUtil.getFileName(dataFile), contentUrl)) {
                         return dataFile;
                     }
                 }

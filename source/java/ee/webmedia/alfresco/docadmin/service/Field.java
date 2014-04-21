@@ -1,6 +1,10 @@
 package ee.webmedia.alfresco.docadmin.service;
 
+import static ee.webmedia.alfresco.utils.TextUtil.joinNonBlankStringsWithComma;
+
+import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -82,12 +86,33 @@ public class Field extends FieldAndGroupBase {
         if (additionalInfoDefaultValue == null) {
             additionalInfoDefaultValue = "";
         }
-        MessageData msgData = new MessageDataImpl("docType_metadataList_additInfo_field"
-                , MessageUtil.getMessage(getFieldTypeEnum()) // type
+        List<Object> messageValueHolders = new ArrayList<Object>(Arrays.asList(MessageUtil.getMessage(getFieldTypeEnum()) // type
                 , additionalInfoDefaultValue // defaultValue
                 , new MessageDataImpl("docType_metadataList_additInfo_field_systematic_" + isSystematic())
-                , new MessageDataImpl("docType_metadataList_additInfo_field_mandatory_" + isMandatory())
-                );
+                , new MessageDataImpl("docType_metadataList_additInfo_field_mandatory_" + isMandatory())));
+        List<String> relatedIncomingDecElement = getRelatedIncomingDecElement();
+        if (relatedIncomingDecElement != null) {
+            String relatedIncomingDecElementStr = joinNonBlankStringsWithComma(relatedIncomingDecElement);
+            if (StringUtils.isNotBlank(relatedIncomingDecElementStr)) {
+                messageValueHolders.add(new MessageDataImpl("docType_metadataList_additInfo_related_incoming_dec", relatedIncomingDecElementStr));
+            } else {
+                messageValueHolders.add("");
+            }
+        } else {
+            messageValueHolders.add("");
+        }
+        List<String> relatedOutgoingDecElement = getRelatedOutgoingDecElement();
+        if (relatedOutgoingDecElement != null) {
+            String relatedOutgoingDecElementStr = joinNonBlankStringsWithComma(relatedOutgoingDecElement);
+            if (StringUtils.isNotBlank(relatedOutgoingDecElementStr)) {
+                messageValueHolders.add(new MessageDataImpl("docType_metadataList_additInfo_related_outgoing_dec", relatedOutgoingDecElementStr));
+            } else {
+                messageValueHolders.add("");
+            }
+        } else {
+            messageValueHolders.add("");
+        }
+        MessageData msgData = new MessageDataImpl("docType_metadataList_additInfo_field", messageValueHolders);
         return MessageUtil.getMessage(msgData);
     }
 
@@ -282,6 +307,24 @@ public class Field extends FieldAndGroupBase {
 
     public final void setOriginalFieldId(String originalFieldId) {
         setProp(DocumentAdminModel.Props.ORIGINAL_FIELD_ID, originalFieldId);
+    }
+
+    @SuppressWarnings("unchecked")
+    public final List<String> getRelatedIncomingDecElement() {
+        return (List<String>) getNode().getProperties().get(DocumentAdminModel.Props.RELATED_INCOMING_DEC_ELEMENT);
+    }
+
+    public final void setRelatedIncomingDecElement(List<String> relatedIncomingDecElement) {
+        setProp(DocumentAdminModel.Props.RELATED_INCOMING_DEC_ELEMENT, (Serializable) relatedIncomingDecElement);
+    }
+
+    @SuppressWarnings("unchecked")
+    public final List<String> getRelatedOutgoingDecElement() {
+        return (List<String>) getNode().getProperties().get(DocumentAdminModel.Props.RELATED_OUTGOING_DEC_ELEMENT);
+    }
+
+    public final void setRelatedOutgoingDecElement(List<String> relatedOutgoingDecElement) {
+        setProp(DocumentAdminModel.Props.RELATED_OUTGOING_DEC_ELEMENT, (Serializable) relatedOutgoingDecElement);
     }
 
     public MappingRestriction getMappingRestrictionEnum() {

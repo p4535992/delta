@@ -26,6 +26,24 @@ public interface FileService {
     boolean toggleActive(NodeRef nodeRef);
 
     /**
+     * Returns the Dec container from document files. If not available, null is returned.
+     *
+     * @param documentNodeRef document that contains the container file
+     * @return container node ref or null
+     *
+     * @see {@link ee.webmedia.alfresco.dvk.service.DvkService#DEC_CONTAINER_FILE_NAME}
+     */
+    NodeRef getDecContainer(NodeRef documentNodeRef);
+
+    /**
+     * Removes the Dec container from document files if possible.
+     *
+     * @param documentNodeRef document that contains the container file
+     * @return true if removed, false oterwise
+     */
+    boolean removeDecContainer(NodeRef documentNodeRef);
+
+    /**
      * Returns all children of this nodeRef as file items.
      * 
      * @return
@@ -108,6 +126,8 @@ public interface FileService {
      */
     List<File> getAllActiveFiles(NodeRef nodeRef);
 
+    List<NodeRef> getAllFileRefs(NodeRef nodeRef, boolean activeFilesOnly);
+
     List<File> getAllActiveAndInactiveFiles(NodeRef nodeRef);
 
     /** Get all active files, excluding the ones that are sources for generated pdfs */
@@ -150,6 +170,5 @@ public interface FileService {
     void removePreviousParentReference(NodeRef docRef, boolean moveToPreviousParent);
 
     String getJumploaderPath();
-
 
 }

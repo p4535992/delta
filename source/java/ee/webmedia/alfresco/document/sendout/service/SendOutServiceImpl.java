@@ -19,6 +19,7 @@ import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.service.namespace.RegexQNamePattern;
 import org.alfresco.web.bean.repository.Node;
+import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
@@ -30,8 +31,7 @@ import ee.webmedia.alfresco.docdynamic.service.DocumentDynamicService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.sendout.model.DocumentSendInfo;
 import ee.webmedia.alfresco.document.sendout.model.SendInfo;
-import ee.webmedia.alfresco.dvk.model.DvkSendLetterDocuments;
-import ee.webmedia.alfresco.dvk.model.DvkSendLetterDocumentsImpl;
+import ee.webmedia.alfresco.dvk.model.DvkSendDocuments;
 import ee.webmedia.alfresco.dvk.service.DvkService;
 import ee.webmedia.alfresco.email.model.EmailAttachment;
 import ee.webmedia.alfresco.email.service.EmailException;
@@ -45,6 +45,7 @@ import ee.webmedia.alfresco.signature.service.SkLdapService;
 import ee.webmedia.alfresco.user.model.Authority;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
+import ee.webmedia.alfresco.utils.WebUtil;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 import ee.webmedia.alfresco.workflow.sendout.TaskSendInfo;
 import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
@@ -102,8 +103,8 @@ public class SendOutServiceImpl implements SendOutService {
     }
 
     @Override
-    public boolean sendOut(NodeRef document, List<String> names, List<String> emails, List<String> modes, List<String> encryptionIdCodes, String fromEmail, String subject,
-            String content, List<NodeRef> fileRefs, boolean zipIt) {
+    public boolean sendOut(NodeRef document, List<String> names, List<String> emails, List<String> modes, List<String> idCodes, List<String> encryptionIdCodes, String fromEmail,
+            String subject, String content, List<NodeRef> fileRefs, boolean zipIt) {
 
         List<X509Certificate> allCertificates = new ArrayList<X509Certificate>();
         if (encryptionIdCodes != null) {
@@ -135,6 +136,9 @@ public class SendOutServiceImpl implements SendOutService {
         List<String> toNames = new ArrayList<String>();
         List<String> toBccEmails = new ArrayList<String>();
         List<String> toBccNames = new ArrayList<String>();
+        List<String> toDvkOrgNames = new ArrayList<String>();
+        List<String> toDvkPersonNames = new ArrayList<String>();
+        List<String> toDvkIdCodes = new ArrayList<String>();
 
         // Loop through all recipients, keep a list for DVK sending, a list for email sending and prepare sendInfo properties
         for (int i = 0; i < names.size(); i++) {
@@ -158,6 +162,7 @@ public class SendOutServiceImpl implements SendOutService {
                         if (recipientName.equalsIgnoreCase(orgName) && email.equalsIgnoreCase(orgEmail)) {
                             hasDvkContact = true;
                             recipientRegNr = (String) organization.getProperties().get(AddressbookModel.Props.ORGANIZATION_CODE.toString());
+                            toDvkOrgNames.add(recipientName);
                             break;
                         }
                     }
@@ -177,6 +182,11 @@ public class SendOutServiceImpl implements SendOutService {
                 } else if (SendMode.EMAIL_BCC.equals(modes.get(i))) {
                     toBccEmails.add(email);
                     toBccNames.add(recipientName);
+                } else if (SendMode.STATE_PORTAL_EESTI_EE.equals(modes.get(i))) {
+                    toDvkPersonNames.add(recipientName);
+                    recipientRegNr = idCodes.get(i);
+                    toDvkIdCodes.add(recipientRegNr);
+                    sendStatus = SendStatus.SENT;
                 }
 
                 Map<QName, Serializable> props = new HashMap<QName, Serializable>();
@@ -201,46 +211,23 @@ public class SendOutServiceImpl implements SendOutService {
 
         // Send through DVK
         String dvkId = "";
-        if (toRegNums.size() > 0) {
+        if (toRegNums.size() > 0 || toDvkIdCodes.size() > 0) {
             // Construct DvkSendDocument
-            DvkSendLetterDocuments sd = new DvkSendLetterDocumentsImpl();
+            DvkSendDocuments sd = new DvkSendDocuments();
             sd.setSenderOrgName(parametersService.getStringParameter(Parameters.DVK_ORGANIZATION_NAME));
             sd.setSenderEmail(fromEmail);
-            sd.setLetterSenderDocNr((String) docProperties.get(DocumentCommonModel.Props.REG_NUMBER));
-            sd.setLetterSenderDocSignDate((Date) docProperties.get(DocumentCommonModel.Props.REG_DATE_TIME));
-            sd.setLetterSenderTitle((String) docProperties.get(DocumentCommonModel.Props.DOC_NAME));
-            sd.setLetterAccessRestriction((String) docProperties.get(DocumentCommonModel.Props.ACCESS_RESTRICTION));
-            sd.setLetterAccessRestrictionBeginDate((Date) docProperties.get(DocumentCommonModel.Props.ACCESS_RESTRICTION_BEGIN_DATE));
-            sd.setLetterAccessRestrictionEndDate((Date) docProperties.get(DocumentCommonModel.Props.ACCESS_RESTRICTION_END_DATE));
-            sd.setLetterAccessRestrictionReason((String) docProperties.get(DocumentCommonModel.Props.ACCESS_RESTRICTION_REASON));
-            String ownerName = (String) docProperties.get(DocumentCommonModel.Props.OWNER_NAME);
-            String ownerFirstname = "";
-            String ownerSurname = "";
-            if (StringUtils.isNotBlank(ownerName)) {
-                int lastIndx = ownerName.lastIndexOf(" ");
-                if (lastIndx != -1) {
-                    ownerFirstname = ownerName.substring(0, lastIndx);
-                    ownerSurname = ownerName.substring(lastIndx + 1, ownerName.length());
-                } else {
-                    ownerFirstname = ownerName;
-                }
-            }
-            sd.setLetterCompilatorFirstname(ownerFirstname);
-            sd.setLetterCompilatorSurname(ownerSurname);
-            sd.setLetterCompilatorJobTitle((String) docProperties.get(DocumentCommonModel.Props.OWNER_JOB_TITLE));
-            DocumentDynamicService documentDynamicService = getDocumentDynamicService();
-            if (documentDynamicService.isOutgoingLetter(document)) {
-                sd.setDocType("Kiri");
-            } else {
-                sd.setDocType(documentDynamicService.getDocumentTypeName(document));
-            }
             sd.setRecipientsRegNrs(toRegNums);
+            sd.setOrgNames(toDvkOrgNames);
+            sd.setPersonIdCodes(toDvkIdCodes);
+            sd.setPersonNames(toDvkPersonNames);
+            sd.setDocumentNodeRef(document);
+            sd.setTextContent(StringEscapeUtils.unescapeHtml(WebUtil.removeHtmlTags(content)));
 
             // Construct content items
             List<ContentToSend> contentsToSend = prepareContents(attachments);
 
             // Send it out
-            dvkId = getDvkService().sendLetterDocuments(document, contentsToSend, sd);
+            dvkId = getDvkService().sendDocuments(contentsToSend, sd);
         }
 
         // Send through email
@@ -254,7 +241,8 @@ public class SendOutServiceImpl implements SendOutService {
 
         // Create the sendInfo nodes under the document
         for (Map<QName, Serializable> props : sendInfoProps) {
-            if (SendMode.DVK.getValueName().equalsIgnoreCase((String) props.get(DocumentCommonModel.Props.SEND_INFO_SEND_MODE))) {
+            String sendMode = (String) props.get(DocumentCommonModel.Props.SEND_INFO_SEND_MODE);
+            if (SendMode.DVK.getValueName().equalsIgnoreCase(sendMode) || SendMode.STATE_PORTAL_EESTI_EE.getValueName().equalsIgnoreCase(sendMode)) {
                 props.put(DocumentCommonModel.Props.SEND_INFO_DVK_ID, dvkId);
             }
 
@@ -309,10 +297,17 @@ public class SendOutServiceImpl implements SendOutService {
 
     @Override
     public NodeRef addSendinfo(NodeRef document, Map<QName, Serializable> props) {
-        final NodeRef sendInfoRef = nodeService.createNode(document, //
+        return addSendinfo(document, props, true);
+    }
+
+    @Override
+    public NodeRef addSendinfo(NodeRef document, Map<QName, Serializable> props, boolean updateSearchableSendInfo) {
+        final NodeRef sendInfoRef = nodeService.createNode(document,
                 DocumentCommonModel.Assocs.SEND_INFO, DocumentCommonModel.Assocs.SEND_INFO, DocumentCommonModel.Types.SEND_INFO, props).getChildRef();
         log.debug("created new sendInfo '" + sendInfoRef + "' for sent document '" + document + "'");
-        updateSearchableSendInfo(document);
+        if (updateSearchableSendInfo) {
+            updateSearchableSendInfo(document);
+        }
         return sendInfoRef;
     }
 
@@ -362,6 +357,7 @@ public class SendOutServiceImpl implements SendOutService {
             ContentToSend content = new ContentToSend();
             content.setFileName(attachment.getFileName());
             content.setMimeType(attachment.getMimeType());
+            content.setId(attachment.getFileNodeRef().getId());
             try {
                 content.setInputStream(attachment.getInputStreamSource().getInputStream());
             } catch (IOException e) {

@@ -80,6 +80,8 @@ public interface DocumentAdminModel {
         QName VOL_TYPES = QName.createQName(URI, "volTypes");
         QName IS_FIXED_PARAMETER_IN_DOC_SEARCH = QName.createQName(URI, "isFixedParameterInDocSearch");
         QName IS_FIXED_PARAMETER_IN_VOL_SEARCH = QName.createQName(URI, "isFixedParameterInVolSearch");
+        QName RELATED_INCOMING_DEC_ELEMENT = QName.createQName(URI, "relatedIncomingDecElement");
+        QName RELATED_OUTGOING_DEC_ELEMENT = QName.createQName(URI, "relatedOutgoingDecElement");
         // END: properties of type fieldDefinition
 
         // START: properties of type documentTypeVersion

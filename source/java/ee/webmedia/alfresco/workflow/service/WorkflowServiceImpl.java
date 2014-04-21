@@ -119,6 +119,7 @@ import ee.webmedia.alfresco.workflow.service.type.WorkflowType;
 
 public class WorkflowServiceImpl implements WorkflowService, WorkflowModifications, BeanFactoryAware {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(WorkflowServiceImpl.class);
+    private static final org.apache.commons.logging.Log log2 = org.apache.commons.logging.LogFactory.getLog(WorkflowServiceImpl.class.getName() + ".log2");
     private static final int SIGNATURE_TASK_OUTCOME_NOT_SIGNED = 0;
     private static final int REVIEW_TASK_OUTCOME_ACCEPTED = 0;
     private static final int REVIEW_TASK_OUTCOME_ACCEPTED_WITH_COMMENT = 1;
@@ -1574,13 +1575,14 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         workflowDbService.updateTaskProperties(taskRef, taskSearchableProps);
     }
 
-    @Override
-    public void finishInProgressTask(Task taskOriginal, int outcomeIndex) throws WorkflowChangedException {
+    private void finishInProgressTask(Task taskOriginal, int outcomeIndex, boolean requireCurrentUser) throws WorkflowChangedException {
         if (outcomeIndex < 0 || outcomeIndex >= taskOriginal.getOutcomes()) {
             throw new RuntimeException("outcomeIndex '" + outcomeIndex + "' out of bounds for " + taskOriginal);
         }
         // check status==IN_PROGRESS, owner==currentUser
-        requireInProgressCurrentUser(taskOriginal);
+        if (requireCurrentUser) {
+            requireInProgressCurrentUser(taskOriginal);
+        }
         requireStatus(taskOriginal.getParent(), Status.IN_PROGRESS); // XXX this is not needed??
         requireStatusUnchanged(taskOriginal);
 
@@ -1594,7 +1596,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         queue.setParameter(WorkflowQueueParameter.TRIGGERED_BY_FINISHING_EXTERNAL_REVIEW_TASK_ON_CURRENT_SYSTEM,
                 new Boolean(isRecievedExternalReviewTask(task)));
         queue.setParameter(WorkflowQueueParameter.INITIATING_GROUP_TASK, task.isType(WorkflowSpecificModel.Types.GROUP_ASSIGNMENT_TASK) ? task.getNodeRef() : null);
-        if (BeanHelper.getSubstitutionBean().getSubstitutionInfo().isSubstituting()) {
+        if (requireCurrentUser && BeanHelper.getSubstitutionBean().getSubstitutionInfo().isSubstituting()) {
             String user = BeanHelper.getUserService().getUserFullName();
             task.setOwnerSubstituteName(user);
         }
@@ -1611,6 +1613,11 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
             }
         }
         saveAndCheckCompoundWorkflow(queue, compoundWorkflow);
+    }
+
+    @Override
+    public void finishInProgressTask(Task taskOriginal, int outcomeIndex) throws WorkflowChangedException {
+        finishInProgressTask(taskOriginal, outcomeIndex, true);
     }
 
     @Override
@@ -3059,6 +3066,9 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
             task.setCompletedDateTime(queue.getNow());
             task.setOutcome(getOutcomeText(outcomeLabelId, outcomeIndex), outcomeIndex);
         }
+        if (log2.isDebugEnabled()) {
+            log2.debug("Changing task (" + task.getNodeRef() + ") with outcome " + outcomeIndex + " status: " + task.getStatus() + " -> " + newStatus);
+        }
         setStatus(queue, task, newStatus);
         if (isStoppingNeeded(task, outcomeIndex)) {
             stopIfNeeded(task, queue);
@@ -3097,6 +3107,9 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
     }
 
     private boolean isStoppingNeeded(Task task, int outcomeIndex) {
+        if (log2.isDebugEnabled()) {
+            log2.debug("Checking if stopping is needed for " + task.getNode().getType().getLocalName() + " (" + task.getNodeRef() + ")");
+        }
         if (outcomeIndex == SIGNATURE_TASK_OUTCOME_NOT_SIGNED && Types.SIGNATURE_TASK.equals(task.getNode().getType())) {
             return true;
         } else if (task.isType(Types.REVIEW_TASK)) {
@@ -3132,6 +3145,9 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
     private void stopIfNeeded(Task task, WorkflowEventQueue queue) {
         final Workflow parentWorkFlow = task.getParent();
         final CompoundWorkflow compoundWorkflow = parentWorkFlow.getParent();
+        if (log2.isDebugEnabled()) {
+            log2.debug("Stopping of compoundworkflow (" + compoundWorkflow.getNodeRef() + ") triggered by task " + task.getNodeRef());
+        }
         final Date stoppedDateTime = queue.getNow();
         compoundWorkflow.setStoppedDateTime(stoppedDateTime);
         setStatus(queue, compoundWorkflow, Status.STOPPED);
@@ -3159,6 +3175,9 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
                 }
             }
             if (forceStopParentWorkflow) {
+                if (log2.isDebugEnabled()) {
+                    log2.debug("Stopping parent workflow (" + parentWorkFlow.getNodeRef() + ")");
+                }
                 setStatus(queue, parentWorkFlow, Status.STOPPED);
                 parentWorkFlow.setStoppedDateTime(stoppedDateTime);
             }
@@ -3284,7 +3303,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
                     if (!(object instanceof CompoundWorkflow && !(object instanceof CompoundWorkflowDefinition))) {
                         if (!(isTask && onlyOwnerEmailWasAddedToTask(props, (String) object.getOriginalProperties().get(WorkflowCommonModel.Props.OWNER_EMAIL)))) {
                             requireValue(object, (String) object.getOriginalProperties().get(WorkflowCommonModel.Props.STATUS), WorkflowCommonModel.Props.STATUS,
-                                    Status.NEW.getName());
+                                    Status.NEW.getName(), Status.IN_PROGRESS.getName());
                         }
                     } else {
                         CompoundWorkflow compoundWorkflow = (CompoundWorkflow) object;

@@ -16,6 +16,7 @@ public enum Parameters {
     /** period in minutes */
     DVK_RECEIVE_DOC_SEND_STATUSES("dvkReceiveDocSendStatusesInterval"),
     DVK_ORGANIZATION_NAME("dvkOrganizationName"), // kui tühi, kasutatakse xtee confist
+    ADIT_RECEIVE_DOC_SEND_STATUSES("aditReceiveDocSendStatusesInterval"),
     SYNC_USERS_GROUPS_STRUCT_UNITS_TIME("syncUsersGroupsStructUnitsTime"),
     EXTERNAL_REVIEW_AUTOMATIC_FOLDER("externalReviewAutomaticFolder"),
     // Default sender email value when sending out a document

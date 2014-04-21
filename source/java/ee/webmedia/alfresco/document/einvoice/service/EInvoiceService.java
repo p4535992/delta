@@ -25,6 +25,7 @@ import ee.webmedia.alfresco.document.einvoice.model.TransactionTemplate;
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.xtee.client.dhl.DhlXTeeService.ContentToSend;
 import ee.webmedia.xtee.client.dhl.types.ee.sk.digiDoc.v13.DataFileType;
+import org.apache.xmlbeans.XmlObject;
 
 /**
  * Handle e-invoices conversion between document and xml
@@ -95,7 +96,7 @@ public interface EInvoiceService {
      * 
      * @return map of invoice corresponding transaction file
      */
-    Map<NodeRef, Integer> importTransactionsForInvoices(List<NodeRef> newInvoices, List<DataFileType> dataFileList);
+    <F extends XmlObject> Map<NodeRef, Integer> importTransactionsForInvoices(List<NodeRef> newInvoices, List<F> dataFileList);
 
     List<ContentToSend> createContentToSend(File file);
 

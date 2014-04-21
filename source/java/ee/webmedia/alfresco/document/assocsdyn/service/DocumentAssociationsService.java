@@ -44,6 +44,8 @@ public interface DocumentAssociationsService {
 
     List<DocAssocInfo> getAssocInfos(Node docNode);
 
+    NodeRef getInitialDocumentRef(NodeRef docRef);
+
     DocAssocInfo getDocListUnitAssocInfo(AssociationRef assocRef, boolean isSourceAssoc);
 
     DocAssocInfo getDocListUnitAssocInfo(AssociationRef assocRef, boolean isSourceAssoc, boolean skipNotSearchable);

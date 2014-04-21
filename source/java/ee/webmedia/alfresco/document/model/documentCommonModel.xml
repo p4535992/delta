@@ -191,6 +191,12 @@
             <property name="doccom:resolution">
                <type>d:text</type>
             </property>
+            <property name="doccom:receivedDateTime">
+               <type>d:datetime</type>
+            </property>
+            <property name="doccom:openedDateTime">
+               <type>d:datetime</type>
+            </property>
          </properties>
       </type>
       

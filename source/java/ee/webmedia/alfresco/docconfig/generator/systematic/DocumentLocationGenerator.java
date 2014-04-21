@@ -251,7 +251,8 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
             if (forSearch) {
                 item.setShowInEditMode(false);
             }
-            if (field.getParent() != null) {
+            // second condition is true in case of document location modal component
+            if (field.getParent() != null || field.getParent() == null && !forSearch) {
                 item.setDontRenderIfDisabled(true);
             }
 

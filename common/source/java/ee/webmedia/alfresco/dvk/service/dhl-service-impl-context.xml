@@ -15,6 +15,7 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
       <property name="securityServer" value="${x-tee.security-server}" />
       <property name="institution" value="${x-tee.institution}" />
       <property name="idCode" value="${x-tee.id-code}" />
+      <property name="useDeprecatedApi" value="false" />
    </bean>
 
    <bean id="dhlXTeeService" class="ee.webmedia.xtee.client.dhl.DhlXTeeServiceImpl" init-method="init">

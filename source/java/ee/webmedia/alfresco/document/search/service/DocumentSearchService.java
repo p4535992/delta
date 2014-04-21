@@ -93,6 +93,11 @@ public interface DocumentSearchService {
     Map<NodeRef, Pair<String, String>> searchOutboxDvkIds();
 
     /**
+     * @return {@code Map<sendInfoNodeRef, Pair<dvkId, recipientRegNr>> }
+     */
+    Map<NodeRef, Pair<String, String>> searchUnopenedAditDocs();
+
+    /**
      * Fetches list of documents where ownerId = logged in userId and (
      * (docType = incomingLetter* && dokumendi regNumber = null)
      * OR
@@ -310,6 +315,8 @@ public interface DocumentSearchService {
     List<Document> searchDiscussionDocuments();
 
     int getDiscussionDocumentsCount();
+
+    NodeRef searchOrganizationNodeRef(String orgEmail, String orgName);
 
     List<Document> searchDueContracts();
 

@@ -8,7 +8,6 @@
 <%@ attribute name="labelId" required="false" rtexprvalue="true" type="java.lang.String" description="Translation key for value row label." %>
 <%@ attribute name="value" required="true" rtexprvalue="true" type="java.lang.String" description="Value row value" %>
 <%@ attribute name="hideIfEmpty" required="false" rtexprvalue="true" type="java.lang.Boolean" description="If true, don't show rows with empty values" %>
-<%@ attribute name="readMore" required="false" rtexprvalue="true" type="java.lang.Integer" description="If present, enable abbreviation of value" %>
 <%@ attribute name="href" required="false" rtexprvalue="true" type="java.lang.String" description="If present, value will be link to this url" %>
 <%@ attribute name="escape" required="false" rtexprvalue="true" type="java.lang.Boolean" description="If false or not present, escape output html" %>
 

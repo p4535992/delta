@@ -454,7 +454,7 @@ function addSearchSuggest(clientId, containerClientId, pickerCallback, pickerCal
       suggest.bind("autoComplete", function handleAutocomplete(event, data) {
          handleEnterKeySkip = true;
          setScreenProtected(true, "FIXME: palun oodake, ühendus serveriga");
-         // Get other field values from updateable container and append AC data 
+         // Get other field values from updateable container and append AC data
          var postData = getContainerFields(containerClientId, clientId, []);
          postData += "&" + $jQ.param({'data' : data.newVal});
          $jQ.ajax({
@@ -507,7 +507,7 @@ function showDuplicatedTableHeader(context) {
    if (table.length > 0) {
       if($jQ(window).height() < table.offset().top + table.outerHeight()) {
          table.append("<tfoot></tfoot>");
-         
+
          var footer = table.children("tfoot");
          var row = table.children("thead").children("tr");
          row.clone().appendTo(footer);
@@ -555,7 +555,7 @@ function webdavOpen(url) {
          try {
             showDoc = !(new ActiveXObject("SharePoint.OpenDocuments").EditDocument(url));
          } catch (e2) {
-            // Continue and try to open the document 
+            // Continue and try to open the document
          }
       }
    }
@@ -697,7 +697,7 @@ function showModal(target, height){
    var modal = $jQ("#" + target);
    modal.css("display","block");
    var parentModal = modal.parent().closest(".modalwrap");
-   
+
    if (parentModal) {
       parentModal.show(); // regulates display property
       height = parentModal.height();
@@ -727,7 +727,7 @@ function hideModal(){
 }
 
 function selectGroupForModalSearch(selectId, hiddenId, filterId){
-   var selectedValue =$jQ("#" + escapeId4JQ(selectId)).val(); 
+   var selectedValue =$jQ("#" + escapeId4JQ(selectId)).val();
    var hidden = $jQ("#" + escapeId4JQ(hiddenId));
    var filter = $jQ("#" + escapeId4JQ(filterId));
    hidden.val(selectedValue);
@@ -868,7 +868,7 @@ function propSheetValidateOnDocumentReady() {
          if (validateSecondaryNextId != null){
             validateSecondaryNextId.onclick = function() { propSheetNextBtnPressed = true; };
          }
-      }      
+      }
       processButtonState();
    }
 }
@@ -952,7 +952,7 @@ function requestUpdatePanelStateFailure() {
       $jQ.log("Updating panel status in server side failed");
    } finally {
       setScreenProtected(false);
-   }    
+   }
 }
 
 function ajaxError(request, textStatus, errorThrown) {
@@ -1035,7 +1035,7 @@ function ajaxSuccess(responseText, componentClientId, componentContainerId) {
             return false;
          } finally {
             setScreenProtected(false);
-         }         
+         }
       }
       var html = responseText.substr(0, i);
       var hiddenInputsIndex = responseText.lastIndexOf("HIDDEN_INPUT_NAMES_JSON:");
@@ -1243,7 +1243,7 @@ function allowMultiplePageSizeChangers(){ // otherwise the last pageSizeChanger 
 }
 
 /**
- * Returns true if event was handled. 
+ * Returns true if event was handled.
  */
 var handleEnterKeySkip = false;
 function handleEnterKey(event) {
@@ -1253,24 +1253,24 @@ function handleEnterKey(event) {
 
    var target = $jQ(event.target);
    var targetTag = event.target.tagName.toLowerCase();
-   
+
    // Allow normal behaviour for textareas
    if ("textarea" == targetTag) {
       return false;
    }
-   
+
    // Submit search for (constrained)quickSearch by clicking the next button
    var targetId = target.attr('id');
    if (targetId && endsWith(targetId.toLowerCase(), "quicksearch")) {
       target.next().click();
       return true;
    }
-   
+
    // if enter is pressed in association search block, it has higher priority than specificAction and defaultAction
    if(target.hasClass("searchAssocOnEnter") && _searchAssocs(event)){
       return true;
    }
-   
+
    // Are there any specific actions (modal search, dialog search)?
    var specificActions = $jQ('.specificAction').filter(":visible");
    if (specificActions.length == 1) { // Do nothing if multiple actions match
@@ -1282,18 +1282,18 @@ function handleEnterKey(event) {
             return true;
          }
       }
-      
+
       specificActions.click();
       return true;
    }
-   
+
    // Default actions are usually dialog finishImpl buttons
    var defaultActions = $jQ('.defaultAction').filter(":visible");
    if (defaultActions.length == 1) { // Do nothing if multiple actions match
       defaultActions.click();
       return true;
    }
-   
+
    return false;
 }
 
@@ -1353,18 +1353,18 @@ function initWithScreenProtected() {
          select.attr("size", responseText.substring(0, index));
          select.append(responseText.substring(index + 1, responseText.length));
          var resultCount = select.children().length;
-         
+
          if (select.attr("data-initialresults") == undefined) { // After the first fresh search, record the initial result count
             select.attr("data-initialresults", resultCount);
          }
-         
+
          // Check if resultset is limited and show/hide message accordingly
          if (resultCount == select.attr("data-rowlimit")) {
             tbody.find('.modalResultsLimited').show();
          } else {
             tbody.find('.modalResultsLimited').hide();
          }
-         
+
          tbody.find('tr.hidden').toggleClass('hidden');
       };
 
@@ -1446,7 +1446,7 @@ function initWithScreenProtected() {
       } else if (value.length > 2 || backspace) {
          backSpaceCallback(value, callbackContext);
       }
-      
+
       if (value.length < 3) {
          reSearch = true;
       }
@@ -1483,7 +1483,7 @@ function initWithScreenProtected() {
          elem.closest(".panel-border").find(".reportDueDate").datepicker('setDate',  reportDue);
       }
    });
-   
+
    $jQ(".driveCompensationRate").live('change', function(event) {
       $jQ(".driveKm").change(); // Trigger updates
    });
@@ -1495,7 +1495,7 @@ function initWithScreenProtected() {
       if (!elem || !other) {
          return;
       }
-      
+
       var driveKm = elem.closest("tr").find(".driveKm");
       var val1 = elem.val();
       var val2 = other.val();
@@ -1506,18 +1506,18 @@ function initWithScreenProtected() {
       }
       driveKm.change();
    });
-   
+
    $jQ(".driveKm").live('change', function (event) {
       var kmElem = $jQ(this);
       var propSheet = kmElem.closest("table").parent().closest("table");
       var rateElem = propSheet.find(".driveCompensationRate");
-      
+
       if (kmElem == null || rateElem == null) {
          return;
       }
-      
+
       var compCalc = $jQ(kmElem.parent().next().children()[0]);
-      
+
       var kmVal = kmElem.val();
       var rateVal = rateElem.val();
       if (!isNumeric(kmVal, true) || !isNumeric(rateVal)) {
@@ -1526,7 +1526,7 @@ function initWithScreenProtected() {
          compCalc.val(round((kmVal * rateVal), 2));
       }
       compCalc.change();
-      
+
       // Update sum
       var totalKmElem = $jQ(propSheet.find(".driveTotalKm")[0]);
       if (!totalKmElem) {
@@ -1542,7 +1542,7 @@ function initWithScreenProtected() {
       totalKmElem.val(totalKm);
       totalKmElem.change();
    });
-   
+
    $jQ(".driveTotalKm").live('change', function (event) {
       var kmElem = $jQ(this);
       var propSheet = kmElem.closest("table");
@@ -1551,7 +1551,7 @@ function initWithScreenProtected() {
       if (!rateElem || !compElem) {
          return;
       }
-      
+
       var kmVal = kmElem.val();
       var rateVal = rateElem.val();
       if (!isNumeric(kmVal, true) || !isNumeric(rateVal)) {
@@ -1724,13 +1724,13 @@ function initWithScreenProtected() {
       transFooterTotalSumElem = jQuery("#footer-sum-2:first");
       setTransTotalSumColor(transFooterTotalSumElem, invoiceTotalSum, getFloatOrNull(transFooterTotalSumElem.text()));
    });
-   
-   jQuery(".errandReportSumField").live('change', function(event) {      
+
+   jQuery(".errandReportSumField").live('change', function(event) {
       var elem = $jQ(this);
       var totalSum = 0;
       var sum = 0;
       var sumString;
-      elem.closest("table").find(".errandReportSumField").each(function () {         
+      elem.closest("table").find(".errandReportSumField").each(function () {
          sumString = $jQ(this).val();
          sum = getFloatOrNull(sumString);
          if(sum) {
@@ -1741,13 +1741,13 @@ function initWithScreenProtected() {
       var totalField = elem.closest("div").closest("tr").next().find(".errandReportTotalSumField");
       totalField.val(round(totalSum, 2));
    });
-   
-   jQuery(".errandSummaryDebitField").live('change', function(event) {      
+
+   jQuery(".errandSummaryDebitField").live('change', function(event) {
       var elem = $jQ(this);
       var totalSum = 0;
       var sum = 0;
       var sumString;
-      elem.closest("table").find(".errandSummaryDebitField").each(function () {         
+      elem.closest("table").find(".errandSummaryDebitField").each(function () {
          sumString = $jQ(this).val();
          sum = getFloatOrNull(sumString);
          if(sum) {
@@ -1758,13 +1758,13 @@ function initWithScreenProtected() {
       var totalField = elem.closest("div").closest("table").find(".errandSummaryDebitTotalField");
       totalField.val(round(totalSum, 2));
    });
-   
-   jQuery(".errandSummaryCreditField").live('change', function(event) {      
+
+   jQuery(".errandSummaryCreditField").live('change', function(event) {
       var elem = $jQ(this);
       var totalSum = 0;
       var sum = 0;
       var sumString;
-      elem.closest("table").find(".errandSummaryCreditField").each(function () {         
+      elem.closest("table").find(".errandSummaryCreditField").each(function () {
          sumString = $jQ(this).val();
          sum = getFloatOrNull(sumString);
          if(sum) {
@@ -1775,14 +1775,14 @@ function initWithScreenProtected() {
       var totalField = elem.closest("div").closest("table").find(".errandSummaryCreditTotalField");
       totalField.val(round(totalSum, 2));
    });
-   
+
    jQuery(".driveTotalKmField:input, .driveCompensationRateField:input").live('change', function(event) {
       var driveTotalCompensation = $jQ(".driveTotalCompensationField");
       var driveTotalKmField = getFloatOrNull($jQ(".driveTotalKmField").val());
       var driveCompensationRate = getFloatOrNull($jQ(".driveCompensationRateField").val());
       if(driveTotalKmField && driveCompensationRate) {
          driveTotalCompensation.text(round((driveTotalKmField * driveCompensationRate), 2));
-      }      
+      }
    });
 
    jQuery(".trans-row-sum-input").live('change', recalculateInvoiceSums);
@@ -2005,13 +2005,13 @@ function clearGroupRowDate(){
       if(taskRow.length == 0) {
          return;
       }
-      
+
       var groupDateInputs = taskRow.find(".groupRowDate");
       if (groupDateInputs.length > 0) {
          groupDateInputs.each(function () {
             $jQ(this).val("");
          });
-         
+
          return;
       }
    }
@@ -2022,13 +2022,13 @@ function groupRowDateChange() {
    var row = input.closest("tr");
    var dateVal = row.find(".date")[0].value;
    var timeVal = row.find(".time")[0].value;
-   
+
    while (true) {
       row = row.next();
       if(row.length == 0) {
          return;
       }
-      
+
       var dateInput = row.find(".clearGroupRowDate.date");
       var timeInput = row.find(".clearGroupRowDate.time");
       if (dateInput.length < 1 || timeInput.length < 1) {
@@ -2044,7 +2044,7 @@ function changeSendOutMode() {
    if (value == "") {
       return;
    }
-   
+
    $jQ(this).closest("tbody").next().find("select").each(function () {
       this.value = value;
    });
@@ -2055,6 +2055,7 @@ function resetSendOutGroupSendMode() {
    select.closest("tbody").prev().find(".changeSendOutMode").each(function () {
       this.value = "";
    });
+    toggleSendOutIdCodeVisibility();
 }
 
 function setReadonly(element, readonly){
@@ -2096,7 +2097,7 @@ function extendCondencePlugin() {
       if(!(p && p[2] == "-")){
          moreTxt = getTranslation('jQuery.condence.moreText');
       }
-      var isStrictTrim = jQuery(this).hasClass("strictTrim"); 
+      var isStrictTrim = jQuery(this).hasClass("strictTrim");
       jQuery(this).condense({
          moreSpeed: 0,
          lessSpeed: 0,
@@ -2123,7 +2124,7 @@ function setMinEndDate(owner, dateElem, triggerEndDateChange){
    var endDatePicker = endDate.data("datepicker");
    if (endDatePicker == null) return;
    var date = jQuery.datepicker.parseDate(endDatePicker.settings.dateFormat, beginDate, endDatePicker.settings);
-   if (date == null) return;         
+   if (date == null) return;
    endDate.datepicker("option", "minDate", date);
    if (triggerEndDateChange) {
       endDate.change();
@@ -2131,7 +2132,7 @@ function setMinEndDate(owner, dateElem, triggerEndDateChange){
 }
 
 function initExpanders(context){
-   
+
    //initialize all expanding textareas
    var expanders = jQuery("textarea[class*=expand]", context);
    expanders.TextAreaExpander();
@@ -2140,14 +2141,31 @@ function initExpanders(context){
       expanders.keyup();
       jQuery.fn.TextAreaExpander.ieInitialized = true;
    }
-   
+
+}
+
+function toggleSendOutIdCodeVisibility() {
+    var idCodeFieldVisible = false;
+    $jQ(".resetSendOutGroupSendMode").each(function() {
+        var value = $jQ(this).val();
+        if (value == "Riigiportaal eesti.ee") {
+            $jQ(".hiddenIdCode").removeClass("hiddenIdCode").addClass("visibleIdCode");
+            $jQ(".sendOutGroup").attr("colspan", "3");
+            idCodeFieldVisible = true;
+            return false; // break out of the loop
+        }
+    });
+    if (!idCodeFieldVisible) {
+        $jQ(".visibleIdCode").removeClass("visibleIdCode").addClass("hiddenIdCode");
+        $jQ(".sendOutGroup").attr("colspan", "2");
+    }
 }
 
 // These things need to be performed
 // 1) once after full page load
 // *) each time an area is replaced inside the page
 function handleHtmlLoaded(context, setFocus, selects) {
-   
+
    showDuplicatedTableHeader(context);
 
    $jQ(".tooltip", context).tooltip({
@@ -2158,7 +2176,7 @@ function handleHtmlLoaded(context, setFocus, selects) {
 
    var ieVer = isIE();
    initExpanders(context);
-   
+
    if(ieVer) { // Darn IE bugs...
       zIndexWorkaround(context);
 
@@ -2185,7 +2203,7 @@ function handleHtmlLoaded(context, setFocus, selects) {
          fixIEDropdownMinWidth("footer-titlebar .extra-actions .dropdown-menu", "#footer-titlebar .extra-actions .dropdown-menu li", context);
          fixIEDropdownMinWidth(".title-component .dropdown-menu.in-title", ".title-component .dropdown-menu.in-title li", context);
       }
-   }     
+   }
 
    /**
     * Open Office documents directly from server
@@ -2212,7 +2230,7 @@ function handleHtmlLoaded(context, setFocus, selects) {
    });
 
    $jQ('a.webdav-readOnly', context).click(function () {
-      webdavOpenReadOnly(this.href, false);
+      webdavOpenReadOnly(this.href, true);
       return false;
    });
 
@@ -2239,7 +2257,7 @@ function handleHtmlLoaded(context, setFocus, selects) {
       $jQ("input:text,textarea", container).filter(':visible:enabled[readonly!="readonly"].focus').first().focus();
    }
    applyAutocompleters();
-
+   toggleSendOutIdCodeVisibility();
 
    // datepicker
    var activeDatePickers = jQuery("input.date", context).not("input[readonly]");
@@ -2276,7 +2294,7 @@ function handleHtmlLoaded(context, setFocus, selects) {
          }
       }
    });
-   
+
    activeDatePickers.each(function()
          {
             var dateElem = jQuery(this);
@@ -2375,13 +2393,13 @@ function handleHtmlLoaded(context, setFocus, selects) {
       });
    }
 
-   $jQ(".readonly", context).attr('readonly', 'readonly');   
+   $jQ(".readonly", context).attr('readonly', 'readonly');
 }
 
 function checkFileLock(filePath, callback) {
    // When page is submitted, user sees an hourglass cursor
    $jQ(".submit-protection-layer").show().focus();
-   
+
    var uri = getContextPath() + '/ajax/invoke/AjaxBean.isFileLocked';
    $jQ.ajax({
      type: 'POST',
@@ -2402,7 +2420,7 @@ function checkFileLock(filePath, callback) {
        } else {
           status.data = responseText;
        }
-       
+
        if (callback && typeof(callback) === "function") {
           callback(filePath, status);
        }
@@ -2425,7 +2443,7 @@ function lockFileManually(filePath, callback) {
        if (responseText.indexOf("LOCKING_SUCCESSFUL") > -1) {
           edit = true;
        }
-       
+
        if (callback && typeof(callback) === "function") {
           callback(filePath, !edit, edit);
        }
@@ -2510,7 +2528,7 @@ function getMobileIdSignature() {
          } else if (responseText == 'REPEAT') {
             window.setTimeout(getMobileIdSignature, 2000);
          } else if (responseText.indexOf('ERROR') == 0){
-            $jQ('#mobileIdChallengeMessage').html('<p>' + responseText.substring(5) + '</p>');            
+            $jQ('#mobileIdChallengeMessage').html('<p>' + responseText.substring(5) + '</p>');
          }
       }
    });

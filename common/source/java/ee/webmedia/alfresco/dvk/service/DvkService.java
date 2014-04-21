@@ -1,20 +1,21 @@
 package ee.webmedia.alfresco.dvk.service;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 
 import ee.webmedia.alfresco.document.einvoice.model.Transaction;
 import ee.webmedia.alfresco.document.file.model.File;
-import ee.webmedia.alfresco.dvk.model.DvkSendLetterDocuments;
+import ee.webmedia.alfresco.dvk.model.DvkSendDocuments;
 import ee.webmedia.alfresco.workflow.service.Task;
 import ee.webmedia.xtee.client.dhl.DhlXTeeService.ContentToSend;
-import ee.webmedia.xtee.client.dhl.types.ee.sk.digiDoc.v13.DataFileType;
 
 public interface DvkService {
     String BEAN_NAME = "DvkService";
@@ -28,7 +29,11 @@ public interface DvkService {
 
     int updateDocAndTaskSendStatuses();
 
-    String sendLetterDocuments(NodeRef document, Collection<ContentToSend> contentsToSend, DvkSendLetterDocuments sendDocument);
+    String sendDocuments(Collection<ContentToSend> contentsToSend, DvkSendDocuments sendDocument);
+
+    Map<QName, Serializable> mapRelatedIncomingElements(String documentTypeId, NodeRef storedDecContainer);
+
+    Pair<NodeRef, List<Map<QName, Serializable>>> sendTaskNotificationDocument(Task task);
 
     /**
      * Receive all documents from DVK server(using multiple service calls, if server has more documents than can be fetched at a time)
@@ -47,15 +52,15 @@ public interface DvkService {
     /**
      * @param docNodeRef document to send
      * @param compoundWorkflowRef if not null, only this compund workflow recipients are sent updates,
-     *            otherwise all document's compound workflows recipients are sent updates
+     * @param messageForRecipient
      */
-    void sendDvkTasksWithDocument(NodeRef docNodeRef, NodeRef compoundWorkflowRef, Map<NodeRef, List<String>> additionalRecipients);
+    void sendDvkTasksWithDocument(NodeRef docNodeRef, NodeRef compoundWorkflowRef, Map<NodeRef, List<String>> additionalRecipients, String messageForRecipient);
 
     void sendDvkTask(Task task);
 
     String getInstitutionCode();
 
-    boolean isXmlMimetype(DataFileType dataFile);
+    boolean isXmlMimetype(String dataFileName);
 
     String sendInvoiceFileToSap(Node document, File file);
 

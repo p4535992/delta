@@ -472,11 +472,10 @@
       <property name="namespaceService" ref="NamespaceService" />
    </bean>
 
-   <bean class="ee.webmedia.alfresco.workflow.service.type.InformationWorkflowType" parent="workflowType">
+   <bean parent="workflowType">
       <property name="workflowTypeString" value="wfs:informationWorkflow" />
       <property name="taskTypeString" value="wfs:informationTask" />
       <property name="taskOutcomes" value="1" />
-      <property name="notificationService" ref="NotificationService" />
    </bean>
 
    <bean parent="workflowType">

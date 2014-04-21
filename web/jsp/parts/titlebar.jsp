@@ -44,13 +44,12 @@
          <f:verbatim>
          <span>
          </f:verbatim>
-<%--
-            <a:actionLink id="alf_toggle_shelf"
-            value="#{msg.toggle_shelf}"
-            image="/images/icons/shelf.png"
-            showLink="false"
-            actionListener="#{NavigationBean.toggleShelf}" />
---%>
+            <%--<a:actionLink id="alf_toggle_shelf"--%>
+            <%--value="DeveloperBean.doStuff()"--%>
+            <%--image="/images/icons/shelf.png"--%>
+            <%--showLink="false"--%>
+            <%--actionListener="#{TestingForDeveloperBean.doStuff}" />--%>
+
 <%--             <a:actionLink id="override_device" --%>
 <%--             value="#{msg.override_device}" --%>
 <%--             image="/images/icons/deploy_server.gif" --%>

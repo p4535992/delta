@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.notification.service;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getAddressbookService;
 import static org.apache.commons.lang.StringUtils.isNotEmpty;
 
 import java.io.Serializable;
@@ -42,6 +43,7 @@ import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.addressbook.service.AddressbookService;
+import ee.webmedia.alfresco.classificator.enums.SendMode;
 import ee.webmedia.alfresco.classificator.service.ClassificatorService;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.BeanHelper;
@@ -101,6 +103,7 @@ public class NotificationServiceImpl implements NotificationService {
     private static final String NOTIFICATION_PREFIX = "notification_";
     private static final String TEMPLATE_SUFFIX = "_template";
     private static final String SUBJECT_SUFFIX = "_subject";
+    private static final String CONTENT = "content";
     private static final long DEFAULT_MAX_DOCUMENTS_IN_ACCESS_RESTRICTION_NOTIFICATION = 500;
     private EmailService emailService;
     private NodeService nodeService;
@@ -401,29 +404,47 @@ public class NotificationServiceImpl implements NotificationService {
 
     @Override
     public void notifyTaskEvent(Task task) {
-        notifyTaskEvent(task, false, null);
+        notifyTaskEvent(task, false, null, false);
     }
 
     @Override
-    public void notifyTaskEvent(Task task, boolean isGroupAssignmentTaskFinishedAutomatically, Task orderAssignmentFinishTriggeringTask) {
+    public Pair<NodeRef, List<Map<QName, Serializable>>> notifyTaskEvent(Task task, boolean isGroupAssignmentTaskFinishedAutomatically, Task orderAssignmentFinishTriggeringTask,
+            boolean sentOverDvk) {
         if (task instanceof LinkedReviewTask) {
             // no notification whatsoever is sent out for linkedReviweTasks
-            return;
+            return null;
         }
+        List<Map<QName, Serializable>> sendInfoProps = new ArrayList<Map<QName, Serializable>>();
         Notification substitutionNotification = null;
         boolean isNewTaskNotification = task.isStatus(Status.IN_PROGRESS);
         if (isNewTaskNotification) {
             substitutionNotification = processSubstituteNewTask(task, new Notification());
         }
-        List<Notification> notifications = processNotification(task, isGroupAssignmentTaskFinishedAutomatically, orderAssignmentFinishTriggeringTask);
+        List<Notification> notifications = processNotification(task, isGroupAssignmentTaskFinishedAutomatically, orderAssignmentFinishTriggeringTask, sentOverDvk);
         CompoundWorkflow compoundWorkflow = task.getParent().getParent();
         NodeRef docRef = !compoundWorkflow.isIndependentWorkflow() ? compoundWorkflow.getParent() : null;
+        boolean isDocumentWF = compoundWorkflow.isDocumentWorkflow();
         try {
             if (substitutionNotification != null) {
                 sendNotification(substitutionNotification, docRef, setupTemplateData(task));
             }
+            Date now = new Date();
             for (Notification notification : notifications) {
-                sendNotification(notification, docRef, setupTemplateData(task));
+                boolean notificationSent = sendNotification(notification, docRef, setupTemplateData(task), isDocumentWF);
+                if (notificationSent && isDocumentWF && isNewTaskNotification) {
+                    Map<QName, Serializable> props = new HashMap<QName, Serializable>();
+                    props.put(DocumentCommonModel.Props.SEND_INFO_RECIPIENT, task.getOwnerName());
+                    props.put(DocumentCommonModel.Props.SEND_INFO_SEND_DATE_TIME, now);
+                    props.put(DocumentCommonModel.Props.SEND_INFO_SEND_MODE, SendMode.EMAIL.getValueName());
+                    props.put(DocumentCommonModel.Props.SEND_INFO_SEND_STATUS, SendInfo.SENT);
+                    props.put(DocumentCommonModel.Props.SEND_INFO_RESOLUTION, notification.getAdditionalFormulas().get(CONTENT));
+                    NodeRef orgNodeRef = getAddressbookService().getOrganizationNodeRef(task.getOwnerEmail(), task.getOwnerName());
+                    Serializable orgRegNr;
+                    if (orgNodeRef != null && (orgRegNr = nodeService.getProperty(orgNodeRef, AddressbookModel.Props.ORGANIZATION_CODE)) != null) {
+                        props.put(DocumentCommonModel.Props.SEND_INFO_RECIPIENT_REG_NR, orgRegNr);
+                    }
+                    sendInfoProps.add(props);
+                }
             }
         } catch (EmailException e) {
             log.error("Workflow task event notification e-mail sending failed, ignoring and continuing", e);
@@ -440,6 +461,10 @@ public class NotificationServiceImpl implements NotificationService {
                 throw e;
             }
         }
+        if (!sendInfoProps.isEmpty()) {
+            return new Pair<NodeRef, List<Map<QName, Serializable>>>(docRef, sendInfoProps);
+        }
+        return null;
     }
 
     @Override
@@ -480,7 +505,7 @@ public class NotificationServiceImpl implements NotificationService {
         List<Notification> notifications = new ArrayList<Notification>();
         Notification substituteNotification = new Notification();
         substituteNotification.setFailOnError(true);
-        for (Notification notification : processNewTask(task, notifications)) {
+        for (Notification notification : processNewTask(task, notifications, false)) {
             notification.setFailOnError(true);
         }
         substituteNotification = processSubstituteNewTask(task, substituteNotification);
@@ -574,18 +599,23 @@ public class NotificationServiceImpl implements NotificationService {
         return templateService.getProcessedEmailTemplate(templateDataNodeRefs, notificationTemplateByName).getContent();
     }
 
-    private void sendNotification(Notification notification, NodeRef docRef, LinkedHashMap<String, NodeRef> templateDataNodeRefs) throws EmailException {
+    private boolean sendNotification(Notification notification, NodeRef docRef, LinkedHashMap<String, NodeRef> templateDataNodeRefs) throws EmailException {
         NodeRef notificationTemplateByName = templateService.getNotificationTemplateByName(notification.getTemplateName());
-        sendNotification(notification, docRef, templateDataNodeRefs, notificationTemplateByName);
+        return sendNotification(notification, docRef, templateDataNodeRefs, notificationTemplateByName, false);
     }
 
-    private void sendNotification(Notification notification, NodeRef docRef, LinkedHashMap<String, NodeRef> templateDataNodeRefs, NodeRef notificationTemplate)
-            throws EmailException {
+    private boolean sendNotification(Notification notification, NodeRef docRef, LinkedHashMap<String, NodeRef> templateDataNodeRefs, boolean saveContent) throws EmailException {
+        NodeRef notificationTemplateByName = templateService.getNotificationTemplateByName(notification.getTemplateName());
+        return sendNotification(notification, docRef, templateDataNodeRefs, notificationTemplateByName, saveContent);
+    }
+
+    private boolean sendNotification(Notification notification, NodeRef docRef, LinkedHashMap<String, NodeRef> templateDataNodeRefs, NodeRef notificationTemplate,
+            boolean saveContent) throws EmailException {
         if (notificationTemplate == null) {
             if (log.isDebugEnabled()) {
                 log.debug("Workflow notification email template '" + notification.getTemplateName() + "' not found, no notification email is sent");
             }
-            return; // if the admins are lazy and we don't have a template, we don't have to send out notifications... :)
+            return false; // if the admins are lazy and we don't have a template, we don't have to send out notifications... :)
         }
 
         ProcessedEmailTemplate template = templateService.getProcessedEmailTemplate(templateDataNodeRefs, notificationTemplate, notification.getAdditionalFormulas());
@@ -593,8 +623,12 @@ public class NotificationServiceImpl implements NotificationService {
         if (StringUtils.isNotBlank(template.getSubject())) {
             notification.setSubject(template.getSubject());
         }
+        if (saveContent) {
+            notification.addAdditionalFomula(CONTENT, template.getContent());
+        }
 
         sendFilesAndContent(notification, docRef, template.getContent());
+        return true;
     }
 
     private void sendFilesAndContent(Notification notification, NodeRef docRef, String content) throws EmailException {
@@ -670,10 +704,10 @@ public class NotificationServiceImpl implements NotificationService {
 
     }
 
-    private List<Notification> processNotification(Task task, boolean isGroupAssignmentTaskFinishedAutomatically, Task orderAssignmentFinishTriggeringTask) {
+    private List<Notification> processNotification(Task task, boolean isGroupAssignmentTaskFinishedAutomatically, Task orderAssignmentFinishTriggeringTask, boolean sentOverDvk) {
         List<Notification> notifications = new ArrayList<Notification>();
         if (task.isStatus(Status.IN_PROGRESS)) {
-            processNewTask(task, notifications);
+            processNewTask(task, notifications, sentOverDvk);
         } else if (task.isStatus(Status.STOPPED)) {
             notifications.add(processStoppedTask(task, new Notification()));
         } else if (task.isStatus(Status.FINISHED)) {
@@ -741,7 +775,7 @@ public class NotificationServiceImpl implements NotificationService {
         return notification;
     }
 
-    private List<Notification> processNewTask(Task task, List<Notification> notifications) {
+    private List<Notification> processNewTask(Task task, List<Notification> notifications, boolean sentOverDvk) {
         if (StringUtils.isNotEmpty(task.getOwnerId())) {
             if (isSubscribed(task.getOwnerId(), NotificationModel.NotificationType.TASK_NEW_TASK_NOTIFICATION)) {
                 // Send to system user
@@ -750,12 +784,27 @@ public class NotificationServiceImpl implements NotificationService {
                 notifications.add(notification);
             }
         } else if (StringUtils.isEmpty(task.getInstitutionName())) {
-            // Send to third party
-            Notification notification = setupNotification(NotificationModel.NotificationType.TASK_NEW_TASK_NOTIFICATION, 1, getTaskWorkflowType(task));
-            notification.setSenderEmail(parametersService.getStringParameter(Parameters.DOC_SENDER_EMAIL));
-            notification.setAttachFiles(true);
-            notification.addRecipient(task.getOwnerName(), task.getOwnerEmail());
-            notifications.add(notification);
+            String ownerEmail = task.getOwnerEmail();
+            String ownerName = task.getOwnerName();
+
+            CompoundWorkflowType type;
+            if (task.getNodeRef() == null) {
+                type = task.getParent().getParent().getTypeEnum();
+            } else {
+                type = getTaskWorkflowType(task);
+            }
+
+            // if sending over dvk failed then document will be sent via e-mail
+            NodeRef orgNodeRef = getAddressbookService().getOrganizationNodeRef(ownerEmail, ownerName);
+            if (CompoundWorkflowType.INDEPENDENT_WORKFLOW.equals(type) || CompoundWorkflowType.DOCUMENT_WORKFLOW.equals(type) &&
+                    ((orgNodeRef != null && Boolean.FALSE.equals(nodeService.getProperty(orgNodeRef, AddressbookModel.Props.DVK_CAPABLE))) || !sentOverDvk)) {
+                // Send to third party
+                Notification notification = setupNotification(NotificationModel.NotificationType.TASK_NEW_TASK_NOTIFICATION, 1, type);
+                notification.setSenderEmail(parametersService.getStringParameter(Parameters.DOC_SENDER_EMAIL));
+                notification.setAttachFiles(true);
+                notification.addRecipient(ownerName, ownerEmail);
+                notifications.add(notification);
+            }
         }
         return notifications;
 
