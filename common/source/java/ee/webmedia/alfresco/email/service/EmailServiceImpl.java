@@ -221,13 +221,13 @@ public class EmailServiceImpl implements EmailService {
                 InputStreamSource contentSource = new FileSystemResource(tmpFile);
                 String fileName = FilenameUtil.buildFileName(zipAndEncryptFileTitle, containerExtension);
                 String mimeType = mimetypeService.guessMimetype(fileName);
-                attachments.add(new EmailAttachment(fileName, mimeType, AppConstants.CHARSET, contentSource));
+                attachments.add(new EmailAttachment(fileName, mimeType, AppConstants.CHARSET, contentSource, fileRefs.get(0)));
             } else {
                 for (NodeRef fileRef : fileRefs) {
                     FileInfo fileInfo = fileFolderService.getFileInfo(fileRef);
                     ContentData contentData = fileInfo.getContentData();
                     AlfrescoContentSource contentSource = new AlfrescoContentSource(fileRef);
-                    attachments.add(new EmailAttachment(fileInfo.getName(), contentData.getMimetype(), contentData.getEncoding(), contentSource));
+                    attachments.add(new EmailAttachment(fileInfo.getName(), contentData.getMimetype(), contentData.getEncoding(), contentSource, fileRef));
                 }
             }
         }

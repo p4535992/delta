@@ -141,6 +141,18 @@
 
 <f:verbatim><hr/></f:verbatim>
 
+<h:outputText value="Muuda arhiveeritud sarjade property 'volNumberPattern' (väli 'Asjatoimiku viida muster') tühjaks kui 'volType' (väli 'Sisaldab toimikuid') ei sisalda väärtust CASE_FILE (Asjatoimik)"/>
+<f:verbatim><br/></f:verbatim>
+<h:outputText value="Kui väljal 'Sisaldab toimikuid' ei ole ühtegi väärtust valitud, lisatakse uuendamise käigus kõik väärtused peale väärtuse 'Asjatoimik'"/>
+<f:verbatim><br/></f:verbatim>
+<h:commandButton id="archivedSeries_update" value="Uuenda arhiveeritud toimikuid" type="submit" 
+   actionListener="#{archivedSeriesVolTypeAndVolNumberPatternUpdater.executeUpdaterInBackground}" 
+   rendered="#{archivedSeriesVolTypeAndVolNumberPatternUpdater.updaterRunning == false}" />
+<h:commandButton id="archivedSeries_update_stop" value="Peata uuendamine" type="submit"
+   actionListener="#{archivedSeriesVolTypeAndVolNumberPatternUpdater.stopUpdater}"
+   rendered="#{archivedSeriesVolTypeAndVolNumberPatternUpdater.updaterRunning == true}"
+   disabled="#{archivedSeriesVolTypeAndVolNumberPatternUpdater.updaterStopping == true}" />
+
 <f:verbatim><hr/></f:verbatim>
 <h:outputText value="Versioonide lahtilukustamine"/>
 <f:verbatim><br/></f:verbatim>
@@ -681,6 +693,7 @@
 <li>* Struktuuri impordi jaoks loetakse sisse asukohas ...DataFolder olevad failid struktuur.csv ja toimikud.csv. Tekitatakse funktsioonid/sarjad/toimikud arhiivimoodustaja alla, mis on määratud parameetris ...ArchivalsStore. Impordi käigus kirjutatakse asukohta ...WorkFolder fail completed_toimikud.csv.</li>
 <li>* Dokumentide impordil luuakse asukohas ...DataFolder olevad dokumendid ja failid. Mappings.xml faili nimetus on parameetris ...MappingsFileName. Impordi käigus kirjutatakse asukohta ...WorkFolder järgmised failid - completed_docs.csv, completed_files.csv, indexed_files.csv, users_found.csv, users_not_found.csv, postponed_assocs.csv.</li>
 <li>* Impordi progressi, infoteateid ja veateateid saab jälgida rakenduse logist.</li>
+<li>* publishToAdrWithFilesStartingFromDates - kuupäev (PP.KK.AAAA). kui parameetri väärtus &gt; imporditava dokumendi reg kuupäev ja dokumendi JP =Avalik, siis määratakse dokumendi publishToAdr ="Avalik, väljastatakse teabenõude korras". muul juhul publishToAdr ="Läheb ADR-i"</li>
 </ul>
 <br/>
 </f:verbatim>
@@ -707,6 +720,10 @@
 
 <h:outputText value="firstSetPublicFilesToBackgroundFiles: "/>
 <h:selectBooleanCheckbox value="#{postipoissImporter.publicFilesToBackgroundFiles[0]}" />
+<f:verbatim><br/></f:verbatim>
+
+<h:outputText value="firstPublishToAdrWithFilesStartingFromDates: "/>
+<h:inputText value="#{postipoissImporter.publishToAdrWithFilesStartingFromDates[0]}" size="12" />
 <f:verbatim><br/></f:verbatim>
 
 <h:outputText value="firstOpenUnit: "/>
@@ -737,6 +754,10 @@
 <h:selectBooleanCheckbox value="#{postipoissImporter.publicFilesToBackgroundFiles[1]}" />
 <f:verbatim><br/></f:verbatim>
 
+<h:outputText value="secondPublishToAdrWithFilesStartingFromDates: "/>
+<h:inputText value="#{postipoissImporter.publishToAdrWithFilesStartingFromDates[1]}" size="12" />
+<f:verbatim><br/></f:verbatim>
+
 <h:outputText value="secondOpenUnit: "/>
 <h:selectBooleanCheckbox value="#{postipoissImporter.openUnits[1]}" />
 <f:verbatim><br/><br/></f:verbatim>
@@ -763,6 +784,10 @@
 
 <h:outputText value="thirdSetPublicFilesToBackgroundFiles: "/>
 <h:selectBooleanCheckbox value="#{postipoissImporter.publicFilesToBackgroundFiles[2]}" />
+<f:verbatim><br/></f:verbatim>
+
+<h:outputText value="thirdPublishToAdrWithFilesStartingFromDates: "/>
+<h:inputText value="#{postipoissImporter.publishToAdrWithFilesStartingFromDates[2]}" size="12" />
 <f:verbatim><br/></f:verbatim>
 
 <h:outputText value="thirdOpenUnit: "/>
@@ -793,6 +818,10 @@
 <h:selectBooleanCheckbox value="#{postipoissImporter.publicFilesToBackgroundFiles[3]}" />
 <f:verbatim><br/></f:verbatim>
 
+<h:outputText value="fourthPublishToAdrWithFilesStartingFromDates: "/>
+<h:inputText value="#{postipoissImporter.publishToAdrWithFilesStartingFromDates[3]}" size="12" />
+<f:verbatim><br/></f:verbatim>
+
 <h:outputText value="fourthOpenUnit: "/>
 <h:selectBooleanCheckbox value="#{postipoissImporter.openUnits[3]}" />
 <f:verbatim><br/><br/></f:verbatim>
@@ -819,6 +848,10 @@
 
 <h:outputText value="fifthSetPublicFilesToBackgroundFiles: "/>
 <h:selectBooleanCheckbox value="#{postipoissImporter.publicFilesToBackgroundFiles[4]}" />
+<f:verbatim><br/></f:verbatim>
+
+<h:outputText value="fifthPublishToAdrWithFilesStartingFromDates: "/>
+<h:inputText value="#{postipoissImporter.publishToAdrWithFilesStartingFromDates[4]}" size="12" />
 <f:verbatim><br/></f:verbatim>
 
 <h:outputText value="fifthOpenUnit: "/>

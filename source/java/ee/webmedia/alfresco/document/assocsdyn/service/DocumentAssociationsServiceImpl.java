@@ -30,9 +30,11 @@ import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.service.namespace.QNamePattern;
 import org.alfresco.service.namespace.RegexQNamePattern;
 import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.util.Assert;
@@ -490,6 +492,32 @@ public class DocumentAssociationsServiceImpl implements DocumentAssociationsServ
             }
         }
         return assocInfos;
+    }
+
+    @Override
+    public NodeRef getInitialDocumentRef(NodeRef docRef) {
+        List<AssociationRef> initialFollowUpOrReplyAssoc = nodeService.getTargetAssocs(docRef, new QNamePattern() {
+            @Override
+            public boolean isMatch(QName qname) {
+                if (DocumentCommonModel.Assocs.DOCUMENT_REPLY.equals(qname) || DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP.equals(qname)) {
+                    return true;
+                }
+                return false;
+            }
+        });
+        NodeRef initialDocRef = null;
+        if (CollectionUtils.isNotEmpty(initialFollowUpOrReplyAssoc)) {
+            for (int i = 0; i < initialFollowUpOrReplyAssoc.size() && initialDocRef == null; i++) {
+                initialDocRef = initialFollowUpOrReplyAssoc.get(i).getTargetRef();
+                if (isNotSearchableDocument(initialDocRef)) {
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug("not searchable: " + initialDocRef);
+                    }
+                    initialDocRef = null;
+                }
+            }
+        }
+        return initialDocRef;
     }
 
     @Override

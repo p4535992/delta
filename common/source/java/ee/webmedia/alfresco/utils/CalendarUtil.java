@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.utils;
 
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
@@ -117,6 +118,10 @@ public class CalendarUtil {
 
     public static long duration(long startTime, long stopTime) {
         return (stopTime - startTime) / 1000000L;
+    }
+
+    public static Date getDateOrNull(Calendar source) {
+        return source != null ? source.getTime() : null;
     }
 
 }

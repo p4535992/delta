@@ -1,8 +1,12 @@
 package ee.webmedia.xtee.client.dhl;
 
+import static ee.webmedia.xtee.client.dhl.DhlDocumentVersion.VER_1;
+import static ee.webmedia.xtee.client.dhl.DhlDocumentVersion.VER_2;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -25,6 +29,8 @@ import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
+import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.deccontainer.vers21.DecContainerDocument;
+import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.deccontainer.vers21.DecContainerDocument.DecContainer;
 import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.dhl.DhlDokumentType;
 import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.dhl.DokumentDocument;
 import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.dhl.MetainfoDocument.Metainfo;
@@ -52,18 +58,20 @@ public abstract class DhlXTeeServiceImplStub extends DhlXTeeServiceImpl {
     }
 
     public class ReceivedDocumentsWrapperImplStub extends AbstractMap<String, ReceivedDocumentsWrapper.ReceivedDocument> implements ReceivedDocumentsWrapper {
-        private final List<DhlDokumentType> receivedDocuments;
+        private final List<VersionedDhlDocument> receivedDocuments;
         private final Map<String /* dhlId */, ReceivedDocument> dhlDocumentsMap;
         private File responseXml;
 
         public ReceivedDocumentsWrapperImplStub() {
             List<DokumentDocument> dokumentDocuments;
+            List<DecContainerDocument> decContainerDocuments;
             String xml = null;
-            receivedDocuments = new ArrayList<DhlDokumentType>();
+            receivedDocuments = new ArrayList<VersionedDhlDocument>();
             dhlDocumentsMap = new HashMap<String, ReceivedDocument>();
             if (hasDocuments) {
                 xml = getDvkDokumentXml();
                 dokumentDocuments = getTypeFromSoapArray(xml, DokumentDocument.class);
+                decContainerDocuments = getTypeFromSoapArray(xml, DecContainerDocument.class);
                 hasDocuments = false;
                 int newOrInvalidDocCount = 0;
                 for (DokumentDocument dokumentDocument : dokumentDocuments) {
@@ -71,16 +79,23 @@ public abstract class DhlXTeeServiceImplStub extends DhlXTeeServiceImpl {
                     if (dokument == null) {
                         continue;
                     }
-                    receivedDocuments.add(dokument);
-                }
-                LOG.debug("received " + receivedDocuments.size() + " documents");
-                for (DhlDokumentType dhlDokument : receivedDocuments) {
-                    Metainfo metainfo = dhlDokument.getMetainfo();
+                    receivedDocuments.add(new VersionedDhlDocument(dokument));
+                    Metainfo metainfo = dokument.getMetainfo();
                     Assert.notNull(metainfo, "dokument element doesn't contain metainfo element that should be added by dvk server");
                     MetainfoHelper metaInfoHelper = new MetainfoHelper(metainfo);
                     String dhlId = metaInfoHelper.getDhlId();
-                    dhlDocumentsMap.put(dhlId, new ReceivedDocumentImpl(dhlDokument, dhlId, metaInfoHelper));
+                    dhlDocumentsMap.put(dhlId, new ReceivedDocumentImpl(dokument, dhlId, metaInfoHelper));
                 }
+                for (DecContainerDocument decContainerDocument : decContainerDocuments) {
+                    DecContainer decContainer = decContainerDocument.getDecContainer();
+                    if (decContainer == null) {
+                        continue;
+                    }
+                    receivedDocuments.add(new VersionedDhlDocument(decContainer));
+                    BigInteger dhlId = decContainer.getDecMetadata().getDecId();
+                    dhlDocumentsMap.put(dhlId.toString(), new ReceivedDocumentImpl(decContainer, dhlId.toString()));
+                }
+                LOG.debug("received " + receivedDocuments.size() + " documents");
                 LOG.warn(newOrInvalidDocCount + " dhl:dokument elements out of " + receivedDocuments.size()
                         + " are invalid (or unsupported version of dhl:dokument) - those will not be processed");
                 createTempFile(xml);
@@ -161,7 +176,7 @@ public abstract class DhlXTeeServiceImplStub extends DhlXTeeServiceImpl {
         }
 
         @Override
-        public List<DhlDokumentType> getReceivedDocuments() {
+        public List<VersionedDhlDocument> getReceivedDocuments() {
             return receivedDocuments;
         }
 
@@ -184,33 +199,63 @@ public abstract class DhlXTeeServiceImplStub extends DhlXTeeServiceImpl {
             private final String dhlId;
             private final MetainfoHelper metaInfoHelper;
             private final DhlDokumentType dhlDocument;
+            private final DecContainer dhlDocumentV2;
+            private final DhlDocumentVersion version;
 
             public ReceivedDocumentImpl(DhlDokumentType dhlDocument, String dhlId, MetainfoHelper metaInfoHelper) {
+                version = VER_1;
                 this.dhlDocument = dhlDocument;
                 this.dhlId = dhlId;
                 this.metaInfoHelper = metaInfoHelper;
+                dhlDocumentV2 = null;
+            }
+
+            public ReceivedDocumentImpl(DecContainer dhlDocumentV2, String dhlId) {
+                version = VER_2;
+                this.dhlDocumentV2 = dhlDocumentV2;
+                this.dhlId = dhlId;
+                metaInfoHelper = null;
+                dhlDocument = null;
+            }
+
+            private void checkVersion(DhlDocumentVersion versionToCheck) {
+                if (!versionToCheck.equals(version)) {
+                    throw new RuntimeException("Current version " + version + " does not support this method!");
+                }
             }
 
             @Override
             public DhlDokumentType getDhlDocument() {
+                checkVersion(VER_1);
                 return dhlDocument;
             }
 
             @Override
+            public DecContainer getDhlDocumentV2() {
+                checkVersion(VER_2);
+                return dhlDocumentV2;
+            }
+
+            @Override
             public SignedDocType getSignedDoc() {
+                checkVersion(VER_1);
                 return dhlDocument.getSignedDoc();
             }
 
-            // START: getters/setters
             public String getDhlId() {
                 return dhlId;
             }
 
             @Override
             public MetainfoHelper getMetaInfoHelper() {
+                checkVersion(VER_1);
                 return metaInfoHelper;
             }
-            // END: getters/setters
+
+            @Override
+            public DhlDocumentVersion getDocumentVersion() {
+                return version;
+            }
 
         }
 

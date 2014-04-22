@@ -985,4 +985,30 @@ public class WorkflowUtil {
         return taskCount;
     }
 
+    public static String getTaskMessageForRecipient(Task task) {
+        Workflow workflow = task.getParent();
+        String typeName = MessageUtil.getMessage(workflow.getType().getLocalName());
+        String compoundWorkflowOwnerName = workflow.getParent().getOwnerName();
+        String taskResolution = task.getResolution();
+        String workflowResolution = workflow.getResolution();
+        String taskOwnerName = task.getOwnerName();
+        String dueDateStr = task.getDueDateStr();
+
+        String message = MessageUtil.getMessage("notification_dvk_content", typeName, compoundWorkflowOwnerName, taskResolution, workflowResolution, taskOwnerName, dueDateStr);
+        return message;
+    }
+
+
+    public static String getTaskSendInfoResolution(Task task) {
+        Workflow workflow = task.getParent();
+        String typeName = MessageUtil.getMessage(workflow.getType().getLocalName());
+        String compoundWorkflowOwnerName = workflow.getParent().getOwnerName();
+        String taskResolution = task.getResolution();
+        String workflowResolution = workflow.getResolution();
+        String dueDateStr = task.getDueDateStr();
+
+        String resolution = MessageUtil.getMessage("notification_send_info_resolution", typeName, compoundWorkflowOwnerName, taskResolution, workflowResolution, dueDateStr);
+        return resolution;
+    }
+
 }

@@ -287,6 +287,15 @@
           -->
       </property-sheet>
    </config>
+ 
+    <config evaluator="node-type" condition="docadmin:field,docadmin:fieldDefinition">
+      <property-sheet>  
+         <show-property name="docadmin:relatedIncomingDecElement" ignore-if-missing="false" component-generator="MultiValueEditorGenerator" propsGeneration="docadmin:relatedIncomingDecElement" 
+         showHeaders="false" noAddLinkLabel="true" addLabelId="add_row" isAutomaticallyAddRows="true" rendered="#{FieldDetailsDialog.isIncomingDvkInfoRendered}" />
+         <show-property name="docadmin:relatedOutgoingDecElement" ignore-if-missing="false" component-generator="MultiValueEditorGenerator" propsGeneration="docadmin:relatedOutgoingDecElement" 
+         showHeaders="false" noAddLinkLabel="true" addLabelId="add_row" isAutomaticallyAddRows="true" rendered="#{FieldDetailsDialog.isOutgoingDvkInfoRendered}" />
+      </property-sheet>
+   </config>   
 
    <config evaluator="node-type" condition="docadmin:followupAssociation,docadmin:replyAssociation">
       <property-sheet>

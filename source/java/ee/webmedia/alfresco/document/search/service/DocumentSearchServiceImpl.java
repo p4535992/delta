@@ -71,6 +71,7 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.util.Assert;
 import org.springframework.web.jsf.FacesContextUtils;
 
+import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.adr.model.AdrModel;
 import ee.webmedia.alfresco.archivals.model.ArchivalsModel;
 import ee.webmedia.alfresco.archivals.model.ArchivalsStoreVO;
@@ -96,7 +97,6 @@ import ee.webmedia.alfresco.docconfig.bootstrap.SystematicDocumentType;
 import ee.webmedia.alfresco.docconfig.generator.fieldtype.DateGenerator;
 import ee.webmedia.alfresco.docconfig.generator.fieldtype.DoubleGenerator;
 import ee.webmedia.alfresco.docconfig.generator.systematic.DocumentLocationGenerator;
-import ee.webmedia.alfresco.docconfig.service.DynamicPropertyDefinition;
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamicService;
 import ee.webmedia.alfresco.document.model.Document;
@@ -225,6 +225,28 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
                     + ", query: " + query);
         }
         return count;
+    }
+
+    @Override
+    public NodeRef searchOrganizationNodeRef(String orgEmail, String orgName) {
+        long startTime = System.currentTimeMillis();
+        String query = joinQueryPartsAnd(generateTypeQuery(AddressbookModel.Types.ORGANIZATION),
+                SearchUtil.generatePropertyExactQuery(AddressbookModel.Props.EMAIL, orgEmail),
+                SearchUtil.generatePropertyExactQuery(AddressbookModel.Props.ORGANIZATION_NAME, orgName));
+
+        ResultSet resultSet = doSearch(query, 2, "searchOrganizationNodeRef", null);
+        List<NodeRef> orgRefs = resultSet.getNodeRefs();
+        int orgRefsSize = orgRefs != null ? orgRefs.size() : 0;
+        if (orgRefsSize == 1) {
+            return orgRefs.get(0);
+        } else if (orgRefsSize > 1) {
+            log.warn("Organization nodeRef search returned more than 1 result, returning null");
+        }
+        if (log.isDebugEnabled()) {
+            log.debug("Organization nodeRef search total time " + (System.currentTimeMillis() - startTime) + " ms, results " + orgRefs.size()
+                    + ", query: " + query);
+        }
+        return null;
     }
 
     private String generateDiscussionDocumentsQuery() {
@@ -1500,6 +1522,18 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
     }
 
     @Override
+    public Map<NodeRef, Pair<String, String>> searchUnopenedAditDocs() {
+        List<String> queryParts = new ArrayList<String>();
+        queryParts.add(generateTypeQuery(DocumentCommonModel.Types.SEND_INFO));
+        queryParts.add(generateStringExactQuery(SendMode.STATE_PORTAL_EESTI_EE.getValueName(), DocumentCommonModel.Props.SEND_INFO_SEND_MODE));
+        queryParts.add(SearchUtil.generatePropertyNotNullQuery(DocumentCommonModel.Props.SEND_INFO_RECEIVED_DATE_TIME));
+        queryParts.add(SearchUtil.generatePropertyNullQuery(DocumentCommonModel.Props.SEND_INFO_OPENED_DATE_TIME));
+        String query = joinQueryPartsAnd(queryParts, false);
+        log.debug("queryUnopenedAditDocs with query '" + query + "'");
+        return searchDhlIdsBySendInfoImpl(query, -1, "searchUnopenedAditDocs");
+    }
+
+    @Override
     public Pair<List<Document>, Boolean> quickSearchDocuments(String searchValue, NodeRef containerNodeRef, int limit) {
         logService.addLogEntry(LogEntry.create(LogObject.SEARCH_DOCUMENTS, userService, "applog_search_docs_quick", searchValue));
         return searchDocumentsAndOrCases(generateQuickSearchQuery(searchValue, containerNodeRef, null), searchValue, false, limit);
@@ -1886,9 +1920,11 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
     private String getDvkOutboxQuery() {
         List<String> queryParts = new ArrayList<String>();
         queryParts.add(generateTypeQuery(DocumentCommonModel.Types.SEND_INFO));
-        queryParts.add(generateStringExactQuery(SendMode.DVK.getValueName(), DocumentCommonModel.Props.SEND_INFO_SEND_MODE));
-        queryParts.add(generateStringExactQuery(SendStatus.SENT.toString(), DocumentCommonModel.Props.SEND_INFO_SEND_STATUS));
-        return joinQueryPartsAnd(queryParts, false);
+        queryParts.add(SearchUtil.generatePropertyExactQuery(DocumentCommonModel.Props.SEND_INFO_SEND_MODE,
+                Arrays.asList(SendMode.STATE_PORTAL_EESTI_EE.getValueName(), SendMode.DVK.getValueName())));
+        // queryParts.add(generateStringExactQuery(SendStatus.SENT.toString(), DocumentCommonModel.Props.SEND_INFO_SEND_STATUS));
+        queryParts.add(generatePropertyNullQuery(DocumentCommonModel.Props.SEND_INFO_RECEIVED_DATE_TIME));
+        return joinQueryPartsAnd(queryParts, true);
     }
 
     private Map<NodeRef /* sendInfo */, Pair<String /* dvkId */, String /* recipientRegNr */>> searchDhlIdsBySendInfoImpl(String query, int limit,

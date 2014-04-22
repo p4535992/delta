@@ -1423,7 +1423,7 @@ public class MetadataBlockBean implements ClearStateListener {
                     // getDocumentService().updateDocument(invoice);
                 }
                 if (!isDraft && getWorkflowService().isSendableExternalWorkflowDoc(document.getNodeRef())) {
-                    getDvkService().sendDvkTasksWithDocument(document.getNodeRef(), null, null);
+                    getDvkService().sendDvkTasksWithDocument(document.getNodeRef(), null, null, null);
                 }
                 inEditMode = false;
             } catch (UnableToPerformException e) {

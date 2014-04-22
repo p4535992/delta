@@ -147,6 +147,7 @@
                <view:value>recipientEmail</view:value>
                <view:value>recipientStreetHouse</view:value>
                <view:value>recipientPostalCity</view:value>
+               <view:value>recipientId</view:value>
             </view:values>
          </docadmin:fieldDefinitionIds>
       </view:properties>
@@ -167,6 +168,7 @@
                <view:value>additionalRecipientEmail</view:value>
                <view:value>additionalRecipientStreetHouse</view:value>
                <view:value>additionalRecipientPostalCity</view:value>
+               <view:value>additionalRecipientId</view:value>
             </view:values>
          </docadmin:fieldDefinitionIds>
       </view:properties>

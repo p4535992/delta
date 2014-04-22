@@ -12,7 +12,7 @@ import org.apache.commons.lang.builder.ToStringBuilder;
 import org.apache.commons.lang.builder.ToStringStyle;
 
 import ee.webmedia.alfresco.dvk.model.DvkModel;
-import ee.webmedia.alfresco.dvk.model.DvkReceivedDocumentImpl;
+import ee.webmedia.alfresco.dvk.model.DvkReceivedDocument;
 
 public class BeanPropertyMapperTest extends TestCase {
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(BeanPropertyMapperTest.class);
@@ -40,8 +40,6 @@ public class BeanPropertyMapperTest extends TestCase {
 
         testableModel = new TestableModel();
         testableModel.setDvkId(dvkId);// defined by interface, implemented in parent class and overridden in concrete class
-        testableModel.setLetterAccessRestrictionReason(letterAccessRestrictionReason);
-        testableModel.setLetterDeadLine(letterDeadLine);
         testableModel.setSimpleMappable(simpleMappable);
         testableModel.setOtherInterfaceField(otherInterfaceField);
         testableModel.setNotMappable("---------notMappable----");
@@ -84,8 +82,6 @@ public class BeanPropertyMapperTest extends TestCase {
         }
 
         Assert.assertEquals(dvkId, mappedObject2.getDvkId());
-        Assert.assertEquals(letterAccessRestrictionReason, mappedObject2.getLetterAccessRestrictionReason());
-        Assert.assertEquals(letterDeadLine, mappedObject2.getLetterDeadLine());
         Assert.assertEquals(null, mappedObject2.getNotMappable());
         Assert.assertEquals(otherInterfaceField, mappedObject2.getOtherInterfaceField());
         Assert.assertEquals(simpleMappable, mappedObject2.getSimpleMappable());
@@ -103,7 +99,7 @@ interface OtherInterface {
 }
 
 @AlfrescoModelType(uri = BeanPropertyMapperTest.TestableModel_URI)
-class TestableModel extends DvkReceivedDocumentImpl implements OtherInterface, Serializable {
+class TestableModel extends DvkReceivedDocument implements OtherInterface, Serializable {
     private static final long serialVersionUID = 1L;
     @AlfrescoModelProperty(isMappable = false)
     private String notMappable;

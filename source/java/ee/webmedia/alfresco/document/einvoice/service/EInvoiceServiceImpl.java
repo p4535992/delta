@@ -35,6 +35,7 @@ import javax.xml.datatype.XMLGregorianCalendar;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
+import ee.webmedia.alfresco.utils.DvkUtil;
 import org.alfresco.i18n.I18NUtil;
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.content.MimetypeMap;
@@ -59,6 +60,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateUtils;
 import org.apache.xml.security.exceptions.Base64DecodingException;
 import org.apache.xml.security.utils.Base64;
+import org.apache.xmlbeans.XmlObject;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
@@ -745,19 +747,22 @@ public class EInvoiceServiceImpl implements EInvoiceService {
     }
 
     @Override
-    public Map<NodeRef, Integer> importTransactionsForInvoices(List<NodeRef> newInvoices, List<DataFileType> dataFileList) {
+    public <F extends XmlObject> Map<NodeRef, Integer> importTransactionsForInvoices(List<NodeRef> newInvoices, List<F> dataFileList) {
         Map<NodeRef, Integer> transactionDataFileIndexes = new HashMap<NodeRef, Integer>();
         List<Node> invoices = getInvoiceNodes(newInvoices);
-        List<DataFileType> newDataFiles = new ArrayList<DataFileType>();
+        List<F> newDataFiles = new ArrayList<F>();
         int dataFileIndex = 0;
-        for (Iterator<DataFileType> i = dataFileList.iterator(); i.hasNext();) {
-            DataFileType dataFile = i.next();
-            if (dvkService.isXmlMimetype(dataFile)) {
+        for (Iterator<F> i = dataFileList.iterator(); i.hasNext();) {
+            F dataFile = i.next();
+            if (dvkService.isXmlMimetype(DvkUtil.getFileName(dataFile))) {
                 InputStream input;
                 try {
-                    input = new ByteArrayInputStream(Base64.decode(dataFile.getStringValue()));
+                    input = DvkUtil.getFileContents(dataFile);
                 } catch (Base64DecodingException e) {
-                    LOG.debug("Unable to decode file " + dataFile.getFilename(), e);
+                    LOG.debug("Unable to decode file " + DvkUtil.getFileName(dataFile), e);
+                    continue;
+                } catch (IOException e) {
+                    LOG.debug("Unable to get contents from file " + DvkUtil.getFileName(dataFile), e);
                     continue;
                 }
                 Ostuarve ostuarve = EInvoiceUtil.unmarshalAccount(input);
@@ -789,7 +794,7 @@ public class EInvoiceServiceImpl implements EInvoiceService {
                                 if (arveCount == 1) {
                                     transactionDataFileIndexes.put(invoice.getNodeRef(), dataFileIndex);
                                 } else {
-                                    DataFileType newDataFile = (DataFileType) dataFile.copy();
+                                    F newDataFile = (F) dataFile.copy();
                                     int arveIndex = 0;
                                     for (Iterator<Arve> it = ostuarve.getArve().iterator(); i.hasNext();) {
                                         if (arveIndex != currentArveIndex) {
@@ -801,7 +806,11 @@ public class EInvoiceServiceImpl implements EInvoiceService {
                                     Writer writer = new StringWriter();
                                     EInvoiceUtil.marshalAccount(ostuarve, writer);
                                     Ostuarve testOstuarve = EInvoiceUtil.unmarshalAccount(new StringReader(writer.toString()));
-                                    newDataFile.setStringValue(writer.toString());
+                                    try {
+                                        DvkUtil.setFileContents(newDataFile, writer.toString());
+                                    } catch (IOException e) {
+                                        LOG.error("Failed to set file contents!", e);
+                                    }
                                     newDataFiles.add(newDataFile);
 
                                     // restore original ostuarve

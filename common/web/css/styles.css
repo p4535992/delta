@@ -1436,6 +1436,10 @@ table.recipient td {
 	width: 98px !important;
 }
 
+.recipient.cells6 textarea {
+	width: 98px !important;
+}
+
 .recipient.tasks thead tr th {
    border-bottom: 0px none;
 }
@@ -2283,4 +2287,13 @@ DIV.trans-scroll TABLE {
 
 .workflow-confirmation-messages, .workflow-after-confirmation-link, .workflow-delegation-confirmation-messages, .workflow-after-delegation-confirmation-link {
    display: none;
+}
+
+#dialog\:dialog-body\:tableSendOut .recipient.hiddenIdCode th + th,
+#dialog\:dialog-body\:tableSendOut .recipient.hiddenIdCode .sendOutIdCode {
+   display: none;
+}
+
+#dialog\:dialog-body\:tableSendOut .recipient.hiddenIdCode th + th + th {
+   display: table-cell;
 }

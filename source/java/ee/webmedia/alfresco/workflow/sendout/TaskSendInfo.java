@@ -51,4 +51,9 @@ public class TaskSendInfo implements Serializable, SendInfo {
         return (String) node.getProperties().get(WorkflowSpecificModel.Props.RESOLUTION);
     }
 
+    @Override
+    public String getOpenedDateTime() {
+        return "";
+    }
+
 }

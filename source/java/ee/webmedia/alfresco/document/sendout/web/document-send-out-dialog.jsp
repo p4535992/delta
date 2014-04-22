@@ -24,9 +24,6 @@
 <f:verbatim>
    <script type="text/javascript">
       var excludedElementsSpecific = new Array();
-      $jQ(document).ready(function () {
-         disableUnlockOnAddingPersonAndActionLinks();
-      });
       function disableUnlockOnAddingPersonAndActionLinks() {
          var element = $jQ(".add-person")[0];
          excludedElementsSpecific.push(element.id);
@@ -35,6 +32,9 @@
             excludedElementsSpecific.push(elements[i].id);
          }
       }
+      $jQ(document).ready(function () {
+         disableUnlockOnAddingPersonAndActionLinks();
+      });
    </script>
 </f:verbatim>
 
@@ -68,19 +68,21 @@
          varName="DocumentSendOutDialog.model" 
          propsGeneration="
           recipientName¤TextAreaGenerator¤styleClass=expand19-200
+         ,recipientId¤TextAreaGenerator¤styleClass=expand19-200 sendOutIdCode
          ,recipientEmail¤TextAreaGenerator¤styleClass=expand19-200
          ,recipientSendMode¤ClassificatorSelectorGenerator¤classificatorName=sendMode¤styleClass=width120 resetSendOutGroupSendMode
          "
          hiddenPropNames="recipientGroup"
          groupByColumnName="recipientGroup"
          groupRowControls="sendOut"
-         titles="document_name,document_email,document_send_mode" 
+         titles="document_name,document_recipient_id,document_email,document_send_mode" 
          pickerCallback="#{CompoundWorkflowDefinitionDialog.executeOwnerSearch}"
          preprocessCallback="#{UserContactGroupSearchBean.preprocessResultsToNodeRefs}"
          setterCallback="#{DocumentSendOutDialog.fetchContactData}"
          dialogTitleId="contacts_search_title"
          filters="#{UserContactGroupSearchBean.usersGroupsContactsGroupsFilters}"
          filterIndex="4"
+         styleClass="hiddenIdCode"
           />
 
       <h:panelGroup>

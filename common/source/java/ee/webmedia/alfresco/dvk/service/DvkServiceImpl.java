@@ -1,7 +1,15 @@
 package ee.webmedia.alfresco.dvk.service;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getAddressbookService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentConfigService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getParametersService;
+import static ee.webmedia.alfresco.utils.DvkUtil.getFileMimeType;
+
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -9,74 +17,114 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.StringTokenizer;
 
+import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
+import ee.webmedia.alfresco.docadmin.service.DocumentType;
+import ee.webmedia.alfresco.docconfig.bootstrap.SystematicDocumentType;
+import ee.webmedia.alfresco.docconfig.service.DynamicPropertyDefinition;
+import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
+import ee.webmedia.alfresco.utils.DvkUtil;
+import ee.webmedia.alfresco.workflow.service.WorkflowUtil;
+import ee.webmedia.xtee.client.dhl.DhlDocumentVersion;
 import org.alfresco.error.AlfrescoRuntimeException;
 import org.alfresco.model.ContentModel;
+import org.alfresco.repo.transaction.RetryingTransactionHelper;
+import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
 import org.alfresco.service.cmr.model.FileFolderService;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.ContentWriter;
 import org.alfresco.service.cmr.repository.MimetypeService;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
+import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
 import org.alfresco.service.cmr.view.Location;
+import org.alfresco.service.namespace.QName;
+import org.alfresco.util.GUID;
 import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.xml.security.exceptions.Base64DecodingException;
 import org.apache.xml.security.utils.Base64;
+import org.apache.xmlbeans.SchemaType;
 import org.apache.xmlbeans.XmlCursor;
 import org.apache.xmlbeans.XmlException;
 import org.apache.xmlbeans.XmlObject;
+import org.apache.xmlbeans.XmlOptions;
+import org.jsoup.Jsoup;
+import org.jsoup.examples.HtmlToPlainText;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.addressbook.service.AddressbookService;
+import ee.webmedia.alfresco.adit.service.AditService;
+import ee.webmedia.alfresco.classificator.enums.AccessRestriction;
+import ee.webmedia.alfresco.classificator.enums.SendMode;
 import ee.webmedia.alfresco.common.service.ApplicationService;
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.docadmin.service.DocumentTypeVersion;
+import ee.webmedia.alfresco.docadmin.service.Field;
 import ee.webmedia.alfresco.document.file.model.File;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.dvk.model.DvkModel;
-import ee.webmedia.alfresco.dvk.model.DvkReceivedDocumentImpl;
 import ee.webmedia.alfresco.dvk.model.DvkReceivedLetterDocument;
-import ee.webmedia.alfresco.dvk.model.DvkSendLetterDocuments;
+import ee.webmedia.alfresco.dvk.model.DvkSendDocuments;
 import ee.webmedia.alfresco.dvk.model.DvkSendReviewTask;
 import ee.webmedia.alfresco.dvk.model.DvkSendWorkflowDocuments;
-import ee.webmedia.alfresco.dvk.model.IDocument;
-import ee.webmedia.alfresco.dvk.service.ReviewTaskException.ExceptionType;
+import ee.webmedia.alfresco.log.model.LogEntry;
+import ee.webmedia.alfresco.log.model.LogObject;
 import ee.webmedia.alfresco.monitoring.MonitoredService;
 import ee.webmedia.alfresco.monitoring.MonitoringUtil;
 import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
+import ee.webmedia.alfresco.signature.exception.SignatureException;
+import ee.webmedia.alfresco.signature.model.SignatureItem;
+import ee.webmedia.alfresco.signature.model.SignatureItemsAndDataItems;
+import ee.webmedia.alfresco.signature.service.SignatureService;
 import ee.webmedia.alfresco.utils.FilenameUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.TextUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
 import ee.webmedia.alfresco.utils.XmlUtil;
+import ee.webmedia.alfresco.workflow.model.Status;
+import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 import ee.webmedia.alfresco.workflow.service.Task;
+import ee.webmedia.alfresco.workflow.service.Workflow;
 import ee.webmedia.xtee.client.dhl.DhlXTeeService;
 import ee.webmedia.xtee.client.dhl.DhlXTeeService.ContentToSend;
 import ee.webmedia.xtee.client.dhl.DhlXTeeService.MetainfoHelper;
 import ee.webmedia.xtee.client.dhl.DhlXTeeService.ReceivedDocumentsWrapper;
 import ee.webmedia.xtee.client.dhl.DhlXTeeService.ReceivedDocumentsWrapper.ReceivedDocument;
+import ee.webmedia.xtee.client.dhl.DhlXTeeService.SendDocumentsDecContainerCallback;
 import ee.webmedia.xtee.client.dhl.DhlXTeeService.SendDocumentsDokumentCallback;
 import ee.webmedia.xtee.client.dhl.DhlXTeeService.SendDocumentsRequestCallback;
+import ee.webmedia.xtee.client.dhl.DhlXTeeService.SendStatus;
+import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.deccontainer.vers21.AccessConditionType;
+import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.deccontainer.vers21.DecContainerDocument;
+import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.deccontainer.vers21.DecContainerDocument.DecContainer;
+import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.deccontainer.vers21.DecContainerDocument.DecContainer.Access;
+import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.deccontainer.vers21.DecContainerDocument.DecContainer.Recipient;
+import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.deccontainer.vers21.DecContainerDocument.DecContainer.Transport;
+import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.deccontainer.vers21.DecContainerDocument.DecContainer.Transport.DecRecipient;
+import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.deccontainer.vers21.DecContainerDocument.DecContainer.Transport.DecSender;
+import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.deccontainer.vers21.OrganisationType;
+import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.deccontainer.vers21.PersonType;
 import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.dhl.AadressType;
 import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.dhl.DhlDokumentType;
 import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.dhl.DokumentDocument;
 import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.dhl.MetaxmlDocument.Metaxml;
-import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.dhl.TransportDocument.Transport;
-import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.dhl.rkelLetter.AccessRightsType;
-import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.dhl.rkelLetter.Addressee;
 import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.dhl.rkelLetter.Letter;
-import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.dhl.rkelLetter.LetterType;
-import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.dhl.rkelLetter.PartyType;
-import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.dhl.rkelLetter.PersonType;
 import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.dhl_meta_automatic.impl.DhlKaustDocumentImpl;
 import ee.webmedia.xtee.client.dhl.types.ee.riik.xtee.dhl.producers.producer.dhl.SendDocumentsV2RequestType;
 import ee.webmedia.xtee.client.dhl.types.ee.sk.digiDoc.v13.DataFileType;
@@ -103,6 +151,7 @@ public abstract class DvkServiceImpl implements DvkService {
     protected ParametersService parametersService;
     protected AddressbookService addressbookService;
     protected ApplicationService applicationService;
+    private DocumentAdminService documentAdminService;
     private String institutionCode;
 
     private XTeeProviderPropertiesResolver propertiesResolver;
@@ -163,7 +212,7 @@ public abstract class DvkServiceImpl implements DvkService {
         int countServiceCalls = 0;
         do {
             final Pair<Collection<String>, Collection<String>> results //
-            = receiveDocumentsServiceCall((int) maxReceiveDocumentsNr, dvkIncomingFolder, previouslyFailedDvkIds, dvkReceiveDocumentsInvoiceFolder);
+                    = receiveDocumentsServiceCall((int) maxReceiveDocumentsNr, dvkIncomingFolder, previouslyFailedDvkIds, dvkReceiveDocumentsInvoiceFolder);
             lastReceiveDocuments = results.getFirst();
             lastFailedDocuments = results.getSecond();
             if (lastReceiveDocuments.size() != 0 || lastFailedDocuments.size() != 0) {
@@ -250,20 +299,35 @@ public abstract class DvkServiceImpl implements DvkService {
     }
 
     protected List<NodeRef> storeDocument(ReceivedDocument receivedDocument, String dhlId, NodeRef dvkIncomingFolder, Collection<String> previouslyFailedDvkIds) {
+        List<NodeRef> result;
+        if (DhlDocumentVersion.VER_1.equals(receivedDocument.getDocumentVersion())) {
+            result = storeDocumentV1(receivedDocument, dhlId, dvkIncomingFolder, previouslyFailedDvkIds);
+        } else if (DhlDocumentVersion.VER_2.equals(receivedDocument.getDocumentVersion())) {
+            result = storeDocumentV2(receivedDocument, dhlId, dvkIncomingFolder, previouslyFailedDvkIds);
+        } else {
+            throw new IllegalArgumentException("Only DhlDocumentVersion.VER_1 and DhlDocumentVersion.VER_2 are currently supported!");
+        }
+
+        return result;
+    }
+
+    protected List<NodeRef> storeDocumentV1(ReceivedDocument receivedDocument, String dhlId, NodeRef dvkIncomingFolder, Collection<String> previouslyFailedDvkIds) {
         final MetainfoHelper metaInfoHelper = receivedDocument.getMetaInfoHelper();
         final DhlDokumentType dhlDokument = receivedDocument.getDhlDocument();
         final SignedDocType signedDoc = receivedDocument.getSignedDoc();
+        String dhlSaatjaAsutuseNr = metaInfoHelper.getDhlSaatjaAsutuseNr();
         if (log.isTraceEnabled()) {
             log.trace("dokument element=\n" + dhlDokument + "'");
             log.trace("helper.getObject(DhlIdDocumentImpl)=" + dhlId + " " + metaInfoHelper.getDhlSaatjaAsutuseNimi() + " "
-                    + metaInfoHelper.getDhlSaatjaAsutuseNr() + " saadeti: " + metaInfoHelper.getDhlSaatmisAeg() + " saabus: "
+                    + dhlSaatjaAsutuseNr + " saadeti: " + metaInfoHelper.getDhlSaatmisAeg() + " saabus: "
                     + metaInfoHelper.getDhlSaabumisAeg() + "\nmetaManual:\nKoostajaFailinimi: " + metaInfoHelper.getKoostajaFailinimi());
         }
 
         try {
             Assert.isTrue(StringUtils.isNotBlank(dhlId), "dhlId can't be blank");
-            Transport transport = dhlDokument.getTransport();
+            ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.dhl.TransportDocument.Transport transport = dhlDokument.getTransport();
             AadressType saatja = transport.getSaatja();
+
             Assert.isTrue(StringUtils.isNotBlank(saatja.getRegnr()), "sender regNr can't be blank");
             if (log.isDebugEnabled()) {
                 log.debug("sender: " + saatja.getRegnr() + " : " + saatja.getAsutuseNimi());
@@ -273,82 +337,36 @@ public abstract class DvkServiceImpl implements DvkService {
             if (signedDoc == null) {
                 dataFileList = Collections.emptyList();
                 log.warn("document contains 0 datafiles. signedDoc is null\n    dvk id: " + dhlId + ", sender: " + metaInfoHelper.getDhlSaatjaAsutuseNimi()
-                        + " " + metaInfoHelper.getDhlSaatjaAsutuseNr());
+                        + " " + dhlSaatjaAsutuseNr);
             } else {
                 dataFileList = signedDoc.getDataFileList();
                 if (dataFileList.size() == 0) {
                     log.warn("document contains " + dataFileList.size() + " datafiles. signedDoc:\n" + getSignedDocOutput(signedDoc) + "\ndvk id: " + dhlId + ", sender: "
-                            + metaInfoHelper.getDhlSaatjaAsutuseNimi() + " " + metaInfoHelper.getDhlSaatjaAsutuseNr());
+                            + metaInfoHelper.getDhlSaatjaAsutuseNimi() + " " + dhlSaatjaAsutuseNr);
                 } else if (log.isDebugEnabled()) {
                     log.debug("document contains " + dataFileList.size() + " datafiles");
                 }
             }
 
             // gather properties that will be attached to space created for this document
-            final DvkReceivedLetterDocument rd = new DvkReceivedDocumentImpl();
+            final DvkReceivedLetterDocument rd = new DvkReceivedLetterDocument();
             rd.setDvkId(dhlId);
-            rd.setSenderRegNr(metaInfoHelper.getDhlSaatjaAsutuseNr());
+            rd.setSenderRegNr(dhlSaatjaAsutuseNr);
             rd.setSenderOrgName(metaInfoHelper.getDhlSaatjaAsutuseNimi());
             rd.setSenderEmail(metaInfoHelper.getDhlSaatjaEpost());
 
-            // if document is from invoice dimensions folder,
-            // no futher parsing is executed, no matter if import was successful or not
-            if (isFromFolder(parametersService.getStringParameter(Parameters.SAP_FINANCIAL_DIMENSIONS_FOLDER_IN_DVK), metaInfoHelper)) {
-                List<NodeRef> dimensionNodes = importDimensionData(rd, dhlDokument, dhlId, dataFileList);
-                if (dimensionNodes.size() == 0) {
-                    String msg = "Failed to parse dimension lists from DVK document with dhlId='" + dhlId + "'";
-                    log.error(msg);
-                    throw new RuntimeException(msg);
-                }
-                return dimensionNodes;
+            String dhlKaust = (metaInfoHelper.getObject(DhlKaustDocumentImpl.class)).getDhlKaust();
+            List<NodeRef> importedNodeRefs = handleImports(receivedDocument, dhlDokument, dataFileList, dhlId, dhlKaust, dhlSaatjaAsutuseNr, dvkIncomingFolder, previouslyFailedDvkIds);
+            if (importedNodeRefs != null) {
+                return importedNodeRefs;
             }
 
-            NodeRef docNode = importWorkflowData(rd, dhlDokument, dvkIncomingFolder, dataFileList, dhlId);
-            if (docNode != null) {
-                log.info("Stored workflow data from " + dhlId + " to " + docNode);
-                return Arrays.asList(docNode);
-            }
-            NodeRef taskNode = importTaskData(rd, dhlDokument, dhlId);
-            if (taskNode != null) {
-                log.info("Stored task data from " + dhlId + " to " + taskNode);
-                return Arrays.asList(taskNode);
-            }
-            List<NodeRef> invoiceNodes = importInvoiceData(rd, dhlDokument, dhlId, dataFileList);
-            if (invoiceNodes.size() > 0) {
-                log.info("Stored invoice data from " + dhlId + " to " + invoiceNodes.size() + " invoices.");
-                return invoiceNodes;
-            }
-            NodeRef sapRegisteredDoc = importSapInvoiceRegistration(rd, dhlDokument, dhlId, dataFileList);
-            if (sapRegisteredDoc != null) {
-                log.info("Stored SAP document data from " + dhlId + " to " + sapRegisteredDoc);
-                return Arrays.asList(sapRegisteredDoc);
-            }
-            NodeRef reviewTaskNotificationNode = importReviewTaskData(rd, dhlDokument, dhlId);
-            if (reviewTaskNotificationNode != null) {
-                if (RepoUtil.isUnsaved(reviewTaskNotificationNode)) {
-                    handleStorageFailure(receivedDocument, dhlId, dvkIncomingFolder, metaInfoHelper, previouslyFailedDvkIds, new RuntimeException(
-                            "Couldn't find corresponding linkedReviewTask in Delta!"));
-                    return null;
-                }
-                return Arrays.asList(reviewTaskNotificationNode);
-            }
             fillLetterData(rd, dhlDokument);
-            String documentFolderName;
-            if (StringUtils.isNotBlank(rd.getLetterSenderTitle())) {
-                documentFolderName = rd.getLetterSenderTitle();
-            } else {
-                if (dataFileList.size() > 0) {
-                    documentFolderName = noTitleSpacePrefix + dataFileList.get(0).getFilename();
-                } else {
-                    documentFolderName = noTitleSpacePrefix + metaInfoHelper.getDhlSaatjaAsutuseNr() + " " + metaInfoHelper.getDhlSaatjaAsutuseNimi();
-                }
-            }
-
-            NodeRef documentFolder = null;
-            documentFolder = createDocumentNode(rd, dvkIncomingFolder, documentFolderName);
+            String documentFolderName = getDvkDocumentFolderName(dataFileList, dhlSaatjaAsutuseNr, rd.getLetterSenderTitle());
+            NodeRef documentFolder = createDocumentNode(DvkUtil.fillV1PropsFromDvkReceivedDocument(rd), dvkIncomingFolder, documentFolderName, DvkUtil.isAditDocument(dhlSaatjaAsutuseNr), "");
 
             for (DataFileType dataFile : dataFileList) {
-                storeFile(rd, documentFolder, dataFile);
+                storeFile(dhlId, dhlSaatjaAsutuseNr, documentFolder, dataFile);
             }
             return Arrays.asList(documentFolder);
         } catch (AlfrescoRuntimeException e) {
@@ -356,14 +374,302 @@ public abstract class DvkServiceImpl implements DvkService {
             log.fatal(msg, e);
             throw new RuntimeException(msg, e);
         } catch (Exception e) {
-            handleStorageFailure(receivedDocument, dhlId, dvkIncomingFolder, metaInfoHelper, previouslyFailedDvkIds, e);
+            handleStorageFailure(receivedDocument, dhlId, dvkIncomingFolder, previouslyFailedDvkIds, e);
             return null;
         }
     }
 
-    private boolean isFromFolder(String folderName, MetainfoHelper metainfoHelper) {
-        String dhlKaust = (metainfoHelper.getObject(DhlKaustDocumentImpl.class)).getDhlKaust();
-        return TextUtil.isBlankEqual(folderName, dhlKaust);
+    protected List<NodeRef> storeDocumentV2(ReceivedDocument receivedDocument, String dhlId, NodeRef dvkIncomingFolder, Collection<String> previouslyFailedDvkIds) {
+        DecContainer decContainer = receivedDocument.getDhlDocumentV2();
+        if (log.isTraceEnabled()) {
+            log.trace("dokument element=\n" + decContainer + "'");
+            DecSender decSender = decContainer.getTransport().getDecSender();
+            log.trace("helper.getObject(DhlIdDocumentImpl)=" + dhlId + " " + decSender.getOrganisationCode() + " "
+                    + (decSender.isSetPersonalIdCode() ? decSender.getPersonalIdCode() : "") + " saabus: " + decContainer.getDecMetadata().getDecReceiptDate());
+        }
+
+        try {
+            Assert.isTrue(StringUtils.isNotBlank(dhlId), "dhlId can't be blank");
+            Transport decTransport = decContainer.getTransport();
+            DecSender decSender = decTransport.getDecSender();
+            String senderOrganisationCode = decSender.getOrganisationCode();
+            Assert.isTrue(StringUtils.isNotBlank(senderOrganisationCode), "sender regNr can't be blank");
+            if (log.isDebugEnabled()) {
+                log.debug("sender: " + senderOrganisationCode);
+            }
+
+            List<DecContainer.File> fileList = decContainer.getFileList();
+
+            if (fileList == null || fileList.size() == 0) {
+                log.warn("document contains " + fileList.size() + " datafiles.\ndvk id: " + dhlId + ", sender: " + senderOrganisationCode);
+            } else if (log.isDebugEnabled()) {
+                log.debug("document contains " + fileList.size() + " datafiles");
+            }
+
+            // Handle various imports
+            List<NodeRef> importedNodeRefs = handleImports(receivedDocument, decContainer, fileList, dhlId, decContainer.getDecMetadata().getDecFolder(), senderOrganisationCode, dvkIncomingFolder, previouslyFailedDvkIds);
+            if (importedNodeRefs != null) {
+                return importedNodeRefs;
+            }
+
+            String documentFolderName = getDvkDocumentFolderName(fileList, senderOrganisationCode, decContainer.getRecordMetadata().getRecordTitle());
+            Map<QName, Serializable> documentProperties = mapRelatedIncomingElements(SystematicDocumentType.INCOMING_LETTER.getId(), decContainer);
+            boolean isAditDocument = DvkUtil.isAditDocument(senderOrganisationCode);
+            String messageForRecipient = DvkUtil.getMessageForRecipient(decContainer, getSenderAddress().getOrganisationCode());
+            NodeRef documentFolder = createDocumentNode(documentProperties, dvkIncomingFolder, documentFolderName, isAditDocument, messageForRecipient);
+
+            for (DecContainer.File dataFile : fileList) {
+                storeFile(dhlId, senderOrganisationCode, documentFolder, dataFile);
+            }
+            writeDecContainerWithoutFiles(dhlId, decContainer, documentFolder);
+
+            return Arrays.asList(documentFolder);
+        } catch (AlfrescoRuntimeException e) {
+            final String msg = "Failed to store document with dhlId='" + dhlId + "'";
+            log.fatal(msg, e);
+            throw new RuntimeException(msg, e);
+        } catch (Exception e) {
+            handleStorageFailure(receivedDocument, dhlId, dvkIncomingFolder, previouslyFailedDvkIds, e);
+            return null;
+        }
+    }
+
+    private void writeDecContainerWithoutFiles(String dhlId, DecContainer decContainer, NodeRef documentFolder) {
+        DecContainer decCopy = (DecContainer) decContainer.copy();
+        decCopy.setFileArray(new DecContainer.File[0]); // Remove files from DecContainer
+        String fileName = GUID.generate();
+        NodeRef file = createFileNode(documentFolder, fileName);
+        nodeService.setProperty(documentFolder, DvkModel.Props.DEC_CONTAINER, file);
+
+        // Add aspect with DHL ID
+        Map<QName, Serializable> aspectProperties = new HashMap<QName, Serializable>(1);
+        aspectProperties.put(DvkModel.Props.DVK_ID, dhlId);
+        nodeService.addAspect(file, DvkModel.Aspects.DEC_CONTAINER, aspectProperties);
+
+        log.info("Writing file '" + fileName + "' (fileRef: " + file + ") with DVK document dvkId '" + dhlId + "' metadata to repository space: '"
+                + receivedDvkDocumentsPath + "' (parentRef: " + documentFolder + ")");
+
+        final ContentWriter writer = fileFolderService.getWriter(file);
+        OutputStream contentOutputStream = null;
+        try {
+            contentOutputStream = writer.getContentOutputStream();
+            decCopy.save(contentOutputStream, DvkUtil.getDecContainerXmlOptions());
+        } catch (IOException e) {
+            String msg = "Failed to save original DecContainer to document files!";
+            log.error(msg, e);
+            throw new RuntimeException(msg, e);
+        } finally {
+            IOUtils.closeQuietly(contentOutputStream);
+        }
+
+    }
+
+    @Override
+    public Map<QName, Serializable> mapRelatedIncomingElements(String documentTypeId, NodeRef storedDecContainer) {
+        DecContainerDocument decContainerDocumentocument = parseDecContainer(storedDecContainer);
+        return mapRelatedIncomingElements(documentTypeId, decContainerDocumentocument.getDecContainer());
+    }
+
+    private DecContainerDocument parseDecContainer(NodeRef storedDecContainer) {
+        InputStream contentInputStream = null;
+        try {
+            contentInputStream = fileFolderService.getReader(storedDecContainer).getContentInputStream();
+            DecContainerDocument decContainer = getTypeFromDecodedSoapArray(contentInputStream, DecContainerDocument.class);
+            return decContainer;
+        } catch (IOException e) {
+            String msg = "Unable to parse DecContainer from file '" + storedDecContainer + "'.";
+            log.error(msg, e);
+        } finally {
+            IOUtils.closeQuietly(contentInputStream);
+        }
+
+        return null;
+    }
+
+    private static <T> T getTypeFromDecodedSoapArray(InputStream decContainerStream, Class<T> responseClass) throws IOException {
+        SchemaType unencodedType = null;
+        try {
+            unencodedType = (SchemaType) responseClass.getField("type").get(null);
+            log.debug("unencodedType=" + unencodedType);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to get value of '" + responseClass.getCanonicalName() + ".type' to get corresponding SchemaType object: ", e);
+        }
+        if (decContainerStream == null) {
+            return null;
+        }
+        T resultItem = null;
+        try {
+            if (log.isTraceEnabled()) {
+                log.trace("Starting to parse input stream to class: " + responseClass.getCanonicalName() + "\n\n");
+            }
+            resultItem = (T) XmlObject.Factory.parse(decContainerStream, new XmlOptions());
+
+        } catch (XmlException e) {
+            throw new RuntimeException("Failed to parse '" + decContainerStream + "' to class: " + responseClass.getCanonicalName(), e);
+        }
+        return resultItem;
+    }
+
+    private Map<QName, Serializable> mapRelatedIncomingElements(String documentTypeId, DecContainer decContainer) {
+        Assert.hasText(documentTypeId, "Document type ID must be specified!");
+        final Map<QName, Serializable> props = new HashMap<QName, Serializable>();
+        if (decContainer == null) {
+            log.debug("No DecContainer provided for mapping " + documentTypeId);
+            return props;
+        }
+
+        DocumentType documentType = documentAdminService.getDocumentType(documentTypeId, DocumentAdminService.DOC_TYPE_WITHOUT_OLDER_DT_VERSION_CHILDREN);
+        if (documentType == null) {
+            log.error("Couldn't find document type for id '" + documentTypeId + "'");
+        }
+        List<Field> fields = documentType.getLatestDocumentTypeVersion().getFieldsDeeply();
+        Recipient recipient = getCurrentOrganisationRecipient(decContainer);
+        for (Field field : fields) {
+            List<String> relatedIncomingDecElement = field.getRelatedIncomingDecElement();
+            if (relatedIncomingDecElement == null) {
+                continue;
+            }
+            for (String decElement : relatedIncomingDecElement) {
+                StringTokenizer tokenizer = new StringTokenizer(decElement, ",");
+                if (!tokenizer.hasMoreTokens()) {
+                    continue; // Shortcut
+                }
+
+                List<Object> tokenDecValues = new ArrayList<Object>();
+                while (tokenizer.hasMoreTokens()) {
+                    Object value;
+                    String key = StringUtils.trim(tokenizer.nextToken());
+                    try {
+                        // If sender hasn't specified the mapped element or we are unable to retrieve the value, continue with the next mapping if available.
+                        if (recipient != null && key.startsWith("<Recipient>")) {
+                            value = DecContainerHandler.getValue(key, recipient, 1);
+                        } else {
+                            value = DecContainerHandler.getValue(key, decContainer);
+                        }
+                        if (value == null || value instanceof String && StringUtils.isBlank((String) value)) {
+                            continue;
+                        }
+                    } catch (RuntimeException e) {
+                        log.debug("Error occurred while extracting " + key + " from DecContainer.", e);
+                        continue;
+                    }
+                    tokenDecValues.add(value);
+                }
+
+                if (tokenDecValues.isEmpty()) {
+                    continue;
+                }
+
+                Object propertyValue;
+                if (tokenDecValues.size() > 1) { // If we have multiple elements mapped to one field then the type must be string. See FieldDetailsDialog#validateDecMappings()
+                    propertyValue = StringUtils.join(CollectionUtils.collect(tokenDecValues, new org.apache.commons.collections4.Transformer<Object, String>() {
+                        @Override
+                        public String transform(Object input) {
+                            return DefaultTypeConverter.INSTANCE.convert(String.class, input);
+                        }
+                    }), " ");
+                } else {
+                    propertyValue = tokenDecValues.get(0);
+                    if (propertyValue instanceof Calendar) {
+                        propertyValue = ((Calendar) propertyValue).getTime();
+                    }
+                }
+
+                // Check data type and handle multivalued properties
+                DynamicPropertyDefinition propertyDefinition = getDocumentConfigService().createPropertyDefinition(field);
+                Object convertedValue = DefaultTypeConverter.INSTANCE.convert(propertyDefinition.getDataType(), propertyValue);
+                propertyValue = propertyDefinition.isMultiValued() ? Arrays.asList(convertedValue) : convertedValue;
+
+                props.put(QName.createQName(DocumentDynamicModel.URI, field.getFieldId()), (Serializable) propertyValue);
+                break; // If value is found, continue with other fields
+            }
+        }
+
+        // Overwrites access restriction if it is already somehow set
+        return DvkUtil.setAccessRestrictionProperties(decContainer, props);
+    }
+
+    private Recipient getCurrentOrganisationRecipient(DecContainer decContainer) {
+        Recipient recipient = null;
+        for (Recipient r : decContainer.getRecipientList()) {
+            OrganisationType org = r.getOrganisation();
+            if (org == null) {
+                continue;
+            }
+
+            if (StringUtils.equals(org.getOrganisationCode(), getInstitutionCode())
+                    || StringUtils.equals(parametersService.getStringParameter(Parameters.DVK_ORGANIZATION_NAME), org.getName())
+                    || StringUtils.equals(getOrganisationName(getInstitutionCode()), org.getName())) {
+                recipient = r;
+                break;
+            }
+        }
+
+        return recipient;
+    }
+
+    private <F extends XmlObject> String getDvkDocumentFolderName(List<F> fileList, String senderOrgCode, String letterSenderTitle) {
+        String documentFolderName;
+        if (StringUtils.isNotBlank(letterSenderTitle)) {
+            documentFolderName = letterSenderTitle;
+        } else {
+            if (fileList.size() > 0) {
+                documentFolderName = noTitleSpacePrefix + DvkUtil.getFileName(fileList.get(0));
+            } else {
+                documentFolderName = noTitleSpacePrefix + senderOrgCode + " " + getOrganisationName(senderOrgCode);
+            }
+        }
+        return documentFolderName;
+    }
+
+    private <D extends XmlObject, F extends XmlObject> List<NodeRef> handleImports(ReceivedDocument receivedDocument, D decContainer, List<F> fileList, String dhlId, String dvkFolder
+            , String senderOrganisationCode, NodeRef dvkIncomingFolder, Collection<String> previouslyFailedDvkIds) throws IOException {
+
+        if (isFromFolder(parametersService.getStringParameter(Parameters.SAP_FINANCIAL_DIMENSIONS_FOLDER_IN_DVK), dvkFolder)) {
+            List<NodeRef> dimensionNodes = importDimensionData(dhlId, fileList);
+            if (dimensionNodes.size() == 0) {
+                String msg = "Failed to parse dimension lists from DVK document with dhlId='" + dhlId + "'";
+                log.error(msg);
+                throw new RuntimeException(msg);
+            }
+            return dimensionNodes;
+        }
+
+        NodeRef docNode = importWorkflowData(getOrganisationName(senderOrganisationCode), decContainer, dvkIncomingFolder, fileList, dhlId);
+        if (docNode != null) {
+            log.info("Stored workflow data from " + dhlId + " to " + docNode);
+            return Arrays.asList(docNode);
+        }
+        NodeRef taskNode = importTaskData(decContainer, dhlId);
+        if (taskNode != null) {
+            log.info("Stored task data from " + dhlId + " to " + taskNode);
+            return Arrays.asList(taskNode);
+        }
+        List<NodeRef> invoiceNodes = importInvoiceData(dhlId, senderOrganisationCode, fileList);
+        if (invoiceNodes.size() > 0) {
+            log.info("Stored invoice data from " + dhlId + " to " + invoiceNodes.size() + " invoices.");
+            return invoiceNodes;
+        }
+        NodeRef sapRegisteredDoc = importSapInvoiceRegistration(fileList);
+        if (sapRegisteredDoc != null) {
+            log.info("Stored SAP document data from " + dhlId + " to " + sapRegisteredDoc);
+            return Arrays.asList(sapRegisteredDoc);
+        }
+        NodeRef reviewTaskNotificationNode = importReviewTaskData(decContainer, dhlId);
+        if (reviewTaskNotificationNode != null) {
+            if (RepoUtil.isUnsaved(reviewTaskNotificationNode)) {
+                handleStorageFailure(receivedDocument, dhlId, dvkIncomingFolder, previouslyFailedDvkIds, new RuntimeException(
+                        "Couldn't find corresponding linkedReviewTask in Delta!"));
+                return null;
+            }
+            return Arrays.asList(reviewTaskNotificationNode);
+        }
+
+        return null;
+    }
+
+    private boolean isFromFolder(String folderName, String dvkFolderName) {
+        return TextUtil.isBlankEqual(folderName, dvkFolderName);
     }
 
     /**
@@ -381,12 +687,20 @@ public abstract class DvkServiceImpl implements DvkService {
      * @param previouslyFailedDvkIds
      * @param e
      */
-    protected void handleStorageFailure(ReceivedDocument receivedDocument, String dhlId, NodeRef dvkIncomingFolder
-            , MetainfoHelper metaInfoHelper, Collection<String> previouslyFailedDvkIds, Exception e) {
-        log.error("Failed to store document " + (metaInfoHelper != null ? metaInfoHelper.getKoostajaFailinimi() : "") + " with dhlId='" + dhlId + "' to " + dvkIncomingFolder, e);
+    protected void handleStorageFailure(ReceivedDocument receivedDocument, String dhlId, NodeRef dvkIncomingFolder, Collection<String> previouslyFailedDvkIds, Exception e) {
+        XmlObject doc;
+        if (DhlDocumentVersion.VER_1.equals(receivedDocument.getDocumentVersion())) {
+            doc = receivedDocument.getDhlDocument();
+        } else if (DhlDocumentVersion.VER_2.equals(receivedDocument.getDocumentVersion())) {
+            doc = receivedDocument.getDhlDocumentV2();
+        } else {
+            throw new IllegalArgumentException("Only DhlDocumentVersion.VER_1 and DhlDocumentVersion.VER_2 are currently supported!");
+        }
+
+        log.error("Failed to store document with dhlId='" + dhlId + "' to " + dvkIncomingFolder, e);
     }
 
-    abstract protected NodeRef createDocumentNode(DvkReceivedLetterDocument rd, NodeRef dvkIncomingFolder, String documentFolderName);
+    abstract protected NodeRef createDocumentNode(Map<QName, Serializable> documentProperties, NodeRef dvkIncomingFolder, String documentFolderName, boolean isAditDocument, String messageForRecipient);
 
     protected Collection<String> getPreviouslyFailedDvkIds() {
         NodeRef corruptFolderRef = generalService.getNodeRef(corruptDvkDocumentsPath);
@@ -400,26 +714,26 @@ public abstract class DvkServiceImpl implements DvkService {
         return failedDvkIds;
     }
 
-    protected NodeRef storeFile(DvkReceivedLetterDocument rd, NodeRef documentFolder, DataFileType dataFile) throws IOException {
-        String filename = FilenameUtil.getDvkFilename(dataFile);
+    protected <F extends XmlObject> NodeRef storeFile(String dhlId, String senderOrgNr, NodeRef documentFolder, F dataFile) throws IOException {
+        String filename = DvkUtil.getFileName(dataFile);
         NodeRef file = createFileNode(documentFolder, filename);
-        log.info("Writing file '" + filename + "' (fileRef: " + file + ") from DVK document with dvkId '" + rd.getDvkId() + "' to repository space: '"
+        log.info("Writing file '" + filename + "' (fileRef: " + file + ") from DVK document with dvkId '" + dhlId + "' to repository space: '"
                 + receivedDvkDocumentsPath + "' (parentRef: " + documentFolder + ")");
 
         final ContentWriter writer = fileFolderService.getWriter(file);
-        String originalMimeType = StringUtils.lowerCase(dataFile.getMimeType());
+        String originalMimeType = StringUtils.lowerCase(getFileMimeType(dataFile));
         String mimeType = mimetypeService.guessMimetype(filename);
         if (log.isInfoEnabled() && !StringUtils.equals(mimeType, originalMimeType)) {
             log.info("Original mimetype '" + originalMimeType + "', but we are guessing mimetype based on filename '" + filename + "' => '" + mimeType
-                    + "'\n    dvk id: " + rd.getDvkId() + ", sender: " + rd.getSenderRegNr() + " " + rd.getSenderOrgName());
+                    + "'\n    dvk id: " + dhlId + ", sender: " + senderOrgNr);
         }
         writer.setMimetype(mimeType);
         final OutputStream os = writer.getContentOutputStream();
         try {
-            os.write(Base64.decode(dataFile.getStringValue()));
+            IOUtils.copy(DvkUtil.getFileContents(dataFile), os);
         } catch (Base64DecodingException e) {
             RuntimeException ex = new RuntimeException("Failed to decode", e);
-            log.error("Failed to decode DVK documents (" + rd.getDvkId() + ") file " + filename + " contents", ex);
+            log.error("Failed to decode DVK documents (" + dhlId + ") file " + filename + " contents", ex);
             throw ex;
         } catch (IOException e) {
             String message = "Failed to write output to repository: '" + receivedDvkDocumentsPath + "' nodeRef=" + file + " contentUrl="
@@ -434,7 +748,6 @@ public abstract class DvkServiceImpl implements DvkService {
     }
 
     /**
-     * @param rd
      * @param documentFolder
      * @param filename
      * @return
@@ -494,37 +807,37 @@ public abstract class DvkServiceImpl implements DvkService {
         return true;
     }
 
-    protected abstract NodeRef importWorkflowData(DvkReceivedLetterDocument rd, DhlDokumentType dhlDokument
-            , NodeRef dvkDefaultIncomingFolder, List<DataFileType> dataFileList, String dvkId);
+    protected abstract <D extends XmlObject, F extends XmlObject> NodeRef importWorkflowData(String senderOrgName, D dhlDokument, NodeRef dvkDefaultIncomingFolder,
+            List<F> dataFileList, String dvkId);
 
-    abstract protected NodeRef importTaskData(DvkReceivedLetterDocument rd, DhlDokumentType dhlDokument, String dvkId);
+    abstract protected <D extends XmlObject> NodeRef importTaskData(D dhlDokument, String dvkId);
 
     abstract protected Pair<Location, Boolean> getDvkWorkflowDocLocation(String senderName, NodeRef dvkDefaultIncomingFolder);
 
-    abstract protected List<NodeRef> importInvoiceData(DvkReceivedLetterDocument rd, DhlDokumentType dhlDokument, String dhlId, List<DataFileType> dataFileList) throws IOException;
+    abstract protected <F extends XmlObject> List<NodeRef> importInvoiceData(String dhlId, String senderOrgNr, List<F> dataFileList) throws IOException;
 
-    abstract protected List<NodeRef> importDimensionData(DvkReceivedLetterDocument rd, DhlDokumentType dhlDokument, String dhlId, List<DataFileType> dataFileList);
+    abstract protected <F extends XmlObject> List<NodeRef> importDimensionData(String dhlId, List<F> dataFileList);
 
-    abstract protected NodeRef importSapInvoiceRegistration(DvkReceivedLetterDocument rd, DhlDokumentType dhlDokument, String dhlId, List<DataFileType> dataFileList);
+    abstract protected <F extends XmlObject> NodeRef importSapInvoiceRegistration(List<F> dataFileList);
 
-    abstract protected NodeRef importReviewTaskData(DvkReceivedLetterDocument rd, DhlDokumentType dhlDokument, String dvkId);
+    abstract protected <D extends XmlObject> NodeRef importReviewTaskData(D dhlDokument, String dvkId);
 
-    @Override
-    public String sendLetterDocuments(NodeRef document, Collection<ContentToSend> contentsToSend, final DvkSendLetterDocuments sd) {
+    private String sendDocuments(Collection<ContentToSend> contentsToSend, final DvkSendDocuments sd, boolean requireFiles) {
         final Collection<String> recipientsRegNrs = sd.getRecipientsRegNrs();
-        verifyEnoughData(contentsToSend, recipientsRegNrs, true);
+        List<String> personIdCodes = sd.getPersonIdCodes();
+        verifyEnoughData(contentsToSend, recipientsRegNrs, personIdCodes, requireFiles);
         try {
-            final Set<String> sendDocuments = dhlXTeeService.sendDocuments(contentsToSend, getRecipients(recipientsRegNrs), getSenderAddress(),
+            final Set<String> sendDocuments = dhlXTeeService.sendDocuments(contentsToSend, getRecipients(recipientsRegNrs, personIdCodes), getSenderAddress(),
                     new SimDhsSendDocumentsCallback(sd), new SendDocumentsRequestCallback() {
 
-                        @Override
-                        public void doWithRequest(SendDocumentsV2RequestType dokumentDocument) {
-                            final Long dvkRetainDaysPeriod = parametersService.getLongParameter(Parameters.DVK_RETAIN_PERIOD);
-                            final Calendar retainCal = Calendar.getInstance();
-                            retainCal.add(Calendar.DAY_OF_MONTH, dvkRetainDaysPeriod.intValue());
-                            dokumentDocument.setSailitustahtaeg(retainCal);
-                        }
-                    });
+                @Override
+                public void doWithRequest(SendDocumentsV2RequestType dokumentDocument) {
+                    final Long dvkRetainDaysPeriod = parametersService.getLongParameter(Parameters.DVK_RETAIN_PERIOD);
+                    final Calendar retainCal = Calendar.getInstance();
+                    retainCal.add(Calendar.DAY_OF_MONTH, dvkRetainDaysPeriod.intValue());
+                    dokumentDocument.setSailitustahtaeg(retainCal);
+                }
+            });
             Assert.isTrue(1 == sendDocuments.size(), "Supprise! Size of sendDocuments is " + sendDocuments.size());
             String next = sendDocuments.iterator().next();
             MonitoringUtil.logSuccess(MonitoredService.OUT_XTEE_DVK);
@@ -536,7 +849,75 @@ public abstract class DvkServiceImpl implements DvkService {
     }
 
     @Override
-    public abstract void sendDvkTasksWithDocument(NodeRef docNodeRef, NodeRef compoundWorkflowNodeRef, Map<NodeRef, List<String>> additionalRecipients);
+    public String sendDocuments(Collection<ContentToSend> contentsToSend, final DvkSendDocuments sd) {
+        return sendDocuments(contentsToSend, sd, true);
+    }
+
+    @Override
+    public Pair<NodeRef, List<Map<QName, Serializable>>> sendTaskNotificationDocument(Task task) {
+        if (task.isStatus(Status.IN_PROGRESS) && StringUtils.isBlank(task.getOwnerId()) && StringUtils.isBlank(task.getInstitutionName())
+                && !task.isType(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK) && task.getParent().getParent().isDocumentWorkflow()) {
+
+            String taskOwnerName = task.getOwnerName();
+            String taskOwnerEmail = task.getOwnerEmail();
+            NodeRef orgNodeRef = getAddressbookService().getOrganizationNodeRef(taskOwnerEmail, taskOwnerName);
+            boolean isDvkCapable = orgNodeRef != null && Boolean.TRUE.equals(nodeService.getProperty(orgNodeRef, AddressbookModel.Props.DVK_CAPABLE));
+            boolean additionalRequirements = !task.isType(WorkflowSpecificModel.Types.REVIEW_TASK) || !BeanHelper.getWorkflowService().isReviewToOtherOrgEnabled()
+                    || StringUtils.isBlank(task.getOwnerOrgStructUnit());
+            if (isDvkCapable && additionalRequirements) {
+
+                Workflow workflow = task.getParent();
+                final NodeRef docNodeRef = workflow.getParent().getParent();
+                try {
+                    String recipientRegNr = (String) nodeService.getProperty(orgNodeRef, AddressbookModel.Props.ORGANIZATION_CODE);
+                    DvkSendDocuments sd = new DvkSendDocuments();
+                    sd.setSenderOrgName(getParametersService().getStringParameter(Parameters.DVK_ORGANIZATION_NAME));
+                    sd.setSenderEmail(getParametersService().getStringParameter(Parameters.DOC_SENDER_EMAIL));
+                    sd.setRecipientsRegNrs(Collections.singletonList(recipientRegNr));
+                    sd.setOrgNames(Collections.singletonList(taskOwnerName));
+                    sd.setDocumentNodeRef(docNodeRef);
+                    sd.setTextContent(WorkflowUtil.getTaskMessageForRecipient(task));
+                    String dvkId;
+
+                    List<NodeRef> docFileRefs = BeanHelper.getFileService().getAllFileRefs(docNodeRef, true);
+                    if (CollectionUtils.isNotEmpty(docFileRefs)) {
+                        List<ContentToSend> contentsToSend = BeanHelper.getSendOutService().prepareContents(docNodeRef, docFileRefs, false);
+                        dvkId = sendDocuments(contentsToSend, sd, true);
+                    } else {
+                        dvkId = sendDocuments(Collections.<ContentToSend>emptyList(), sd, false);
+                    }
+
+                    Map<QName, Serializable> props = new HashMap<QName, Serializable>();
+                    props.put(DocumentCommonModel.Props.SEND_INFO_RECIPIENT, taskOwnerName);
+                    props.put(DocumentCommonModel.Props.SEND_INFO_RECIPIENT_REG_NR, recipientRegNr);
+                    props.put(DocumentCommonModel.Props.SEND_INFO_SEND_DATE_TIME, new Date());
+                    props.put(DocumentCommonModel.Props.SEND_INFO_SEND_MODE, SendMode.DVK.getValueName());
+                    props.put(DocumentCommonModel.Props.SEND_INFO_SEND_STATUS, SendStatus.SENT.toString());
+                    props.put(DocumentCommonModel.Props.SEND_INFO_DVK_ID, dvkId);
+                    props.put(DocumentCommonModel.Props.SEND_INFO_RESOLUTION, WorkflowUtil.getTaskSendInfoResolution(task));
+                    return new Pair<NodeRef, List<Map<QName, Serializable>>>(docNodeRef, new ArrayList<Map<QName, Serializable>>(Arrays.asList(props)));
+                } catch (RuntimeException e) {
+                    log.debug("Sending document over dvk failed: ", e);
+                    RetryingTransactionHelper txHelper = BeanHelper.getTransactionService().getRetryingTransactionHelper();
+                    try {
+                        txHelper.doInTransaction(new RetryingTransactionCallback<Void>() {
+                            @Override
+                            public Void execute() throws Throwable {
+                                BeanHelper.getLogService().addLogEntry(LogEntry.createWithSystemUser(LogObject.DOCUMENT, docNodeRef, "document_log_status_sending_failed"));
+                                return null;
+                            }
+                        }, false, true);
+                    } catch (Exception e1) {
+                        log.error(e1);
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public abstract void sendDvkTasksWithDocument(NodeRef docNodeRef, NodeRef compoundWorkflowNodeRef, Map<NodeRef, List<String>> additionalRecipients, String messageForRecipient);
 
     @Override
     public abstract void sendDvkTask(Task task);
@@ -544,9 +925,9 @@ public abstract class DvkServiceImpl implements DvkService {
     public String sendExternalReviewWorkflowData(Collection<ContentToSend> contentsToSend, final DvkSendWorkflowDocuments sd) {
         final Collection<String> recipientsRegNrs = new ArrayList<String>();
         recipientsRegNrs.add(sd.getRecipientsRegNr());
-        verifyEnoughData(contentsToSend, recipientsRegNrs, false);
+        verifyEnoughData(contentsToSend, recipientsRegNrs, null, false);
         try {
-            final Set<String> sendDocuments = dhlXTeeService.sendDocuments(contentsToSend, getRecipients(recipientsRegNrs), getSenderAddress(),
+            final Set<String> sendDocuments = dhlXTeeService.sendDocuments(contentsToSend, getRecipients(recipientsRegNrs, null), getSenderAddress(),
                     new DhsSendWorkflowCallback(sd), getSendDocumentRequestCallback());
             Assert.isTrue(1 == sendDocuments.size(), "Supprise! Size of sendDocuments is " + sendDocuments.size());
             String next = sendDocuments.iterator().next();
@@ -590,20 +971,20 @@ public abstract class DvkServiceImpl implements DvkService {
         request.setSailitustahtaeg(retainCal);
     }
 
-    public void verifyEnoughData(Collection<ContentToSend> contentsToSend, final Collection<String> recipientsRegNrs, boolean requireFiles) {
-        if ((requireFiles && contentsToSend.size() == 0) || recipientsRegNrs.size() == 0) {
+    public void verifyEnoughData(Collection<ContentToSend> contentsToSend, final Collection<String> recipientsRegNrs, final Collection<String> personIdCodes, boolean requireFiles) {
+        if ((requireFiles && contentsToSend.size() == 0) || (recipientsRegNrs.size() == 0 && (personIdCodes == null || personIdCodes.isEmpty()))) {
             if (log.isDebugEnabled()) {
                 log.debug("To send files using DVK you must have at least one file and recipient(contentsToSend='" //
-                        + contentsToSend + "', recipientsRegNrs='" + recipientsRegNrs + "')");
+                        + contentsToSend + "', recipientsRegNrs='" + recipientsRegNrs + "', personIdCodes='" + personIdCodes + "')");
             }
             throw new UnableToPerformException(MessageSeverity.ERROR, "dvk_send_error_notEnoughData");
         }
     }
 
-    private String getOrganisationName(String addresseeRegNum) {
+    private String getOrganisationName(String orgRegNum) {
         // TODO: implementation will probably change
         try {
-            String organizationName = dhlXTeeService.getDvkOrganizationsHelper().getOrganizationName(addresseeRegNum);
+            String organizationName = dhlXTeeService.getDvkOrganizationsHelper().getOrganizationName(orgRegNum);
             MonitoringUtil.logSuccess(MonitoredService.OUT_XTEE_DVK);
             return organizationName;
         } catch (RuntimeException e) {
@@ -612,110 +993,231 @@ public abstract class DvkServiceImpl implements DvkService {
         }
     }
 
-    protected AadressType[] getRecipients(Collection<String> recipientsRegNrs) {
-        AadressType[] recipients = new AadressType[recipientsRegNrs.size()];
+    protected DecRecipient[] getRecipients(Collection<String> recipientsRegNrs, List<String> personIdCodes) {
+        DecRecipient[] recipients = new DecRecipient[recipientsRegNrs.size() + (personIdCodes != null ? personIdCodes.size() : 0)];
         int i = 0;
         for (String regNr : recipientsRegNrs) {
-            AadressType recipient = AadressType.Factory.newInstance();
-            recipient.setRegnr(regNr);
+            DecRecipient recipient = DecRecipient.Factory.newInstance();
+            recipient.setOrganisationCode(regNr);
             recipients[i] = recipient;
             i++;
+        }
+        if (personIdCodes != null) {
+            for (String personIdCode : personIdCodes) {
+                DecRecipient recipient = DecRecipient.Factory.newInstance();
+                recipient.setOrganisationCode(AditService.NAME);
+                recipient.setPersonalIdCode(personIdCode);
+                recipients[i] = recipient;
+                i++;
+            }
         }
         return recipients;
     }
 
-    protected AadressType getSenderAddress() {
-        AadressType sender = AadressType.Factory.newInstance();
-        sender.setRegnr(propertiesResolver.getProperty("x-tee.institution"));
+    protected DecSender getSenderAddress() {
+        DecSender sender = DecSender.Factory.newInstance();
+        sender.setOrganisationCode(propertiesResolver.getProperty("x-tee.institution"));
         // sender.setAsutuseNimi(senderName); // set in DhlXTeeServiceImpl.constructDokumentDocument() based on regNr
         return sender;
     }
 
-    private class SimDhsSendDocumentsCallback implements SendDocumentsDokumentCallback {
-        private final DvkSendLetterDocuments dvkSendDocuments;
+    private class SimDhsSendDocumentsCallback implements SendDocumentsDecContainerCallback {
+        private final DvkSendDocuments dvkSendDocuments;
 
-        public SimDhsSendDocumentsCallback(DvkSendLetterDocuments dvkSendDocuments) {
+        public SimDhsSendDocumentsCallback(DvkSendDocuments dvkSendDocuments) {
             dvkSendDocuments.validateOutGoing();
             this.dvkSendDocuments = dvkSendDocuments;
         }
 
         @Override
-        public void doWithDocument(DokumentDocument dokumentDocument) {
-            log.debug("altering dokument");
-            final Letter letter = Letter.Factory.newInstance();
-
-            final Addressee letterAddressees = letter.addNewAddressees();
-            final DhlDokumentType dhlDokument = dokumentDocument.getDokument();
-            final Transport transport = dhlDokument.getTransport();
-            // add senders information
-            final AadressType transportSaatja = transport.getSaatja();
-            final String senderRegNr = dvkSendDocuments.getSenderRegNr();
-            if (StringUtils.isNotBlank(senderRegNr)) { // use senderRegNr from X-Tee conf if senderRegNr not given
-                transportSaatja.setRegnr(senderRegNr);
-            }
-            String senderOrgName = dvkSendDocuments.getSenderOrgName();
-            // use default senderOrgName (from DVK capable orgs list) if senderOrgName not given
-            senderOrgName = StringUtils.isNotBlank(senderOrgName) ? senderOrgName : transportSaatja.getAsutuseNimi();
-            letter.addNewAuthor().addNewOrganisation().setOrganisationName(senderOrgName);
-            transportSaatja.setAsutuseNimi(senderOrgName);
-            // Maiga: paneme senderOrgName nimi elementi (nagu postipoisis) ja dubleerime asutuseNimes
-            transportSaatja.setNimi(senderOrgName);
-            transportSaatja.setEpost(dvkSendDocuments.getSenderEmail());
-            //
-            final LetterType letterMeta = letter.addNewLetterMetaData();
-
-            final Calendar calSignDate = Calendar.getInstance();
-            final Date letterSenderDocSignDate = dvkSendDocuments.getLetterSenderDocSignDate();
-            calSignDate.setTime(letterSenderDocSignDate);
-            letterMeta.setSignDate(calSignDate);
-
-            letterMeta.setSenderIdentifier(dvkSendDocuments.getLetterSenderDocNr());
-            letterMeta.setTitle(dvkSendDocuments.getLetterSenderTitle());
-            letterMeta.setType(dvkSendDocuments.getDocType());
-            final PersonType letterCompilator = letter.addNewCompilators().addNewCompilator();
-            letterCompilator.setFirstname(dvkSendDocuments.getLetterCompilatorFirstname());
-            letterCompilator.setSurname(dvkSendDocuments.getLetterCompilatorSurname());
-            letterCompilator.setJobtitle(dvkSendDocuments.getLetterCompilatorJobTitle());
-            //
-            final AccessRightsType accessRights = AccessRightsType.Factory.newInstance();
-            accessRights.setRestriction(dvkSendDocuments.getLetterAccessRestriction());
-
-            final Date arBeginDate = dvkSendDocuments.getLetterAccessRestrictionBeginDate();
-            if (arBeginDate != null) {
-                final Calendar accessRestrBeginCal = Calendar.getInstance();
-                accessRestrBeginCal.setTime(arBeginDate);
-                accessRights.setBeginDate(accessRestrBeginCal);
+        public void doWithDocument(DecContainerDocument decContainerDocument) {
+            Node document = new Node(dvkSendDocuments.getDocumentNodeRef());
+            Map<String, Object> properties = document.getProperties();
+            DocumentTypeVersion documentTypeVersion = BeanHelper.getDocumentConfigService().getDocumentTypeAndVersion(document).getSecond();
+            final DecContainer decContainer = decContainerDocument.getDecContainer();
+            Pair<Boolean, Map<String, String>> addDocumentMetadata = addDocumentMetadata(properties, documentTypeVersion, decContainer);
+            if (!addDocumentMetadata.getFirst()) {
+                throw new UnableToPerformException(MessageSeverity.ERROR, "dvk_send_error_document_type_configuration_missing");
             }
 
-            final Date arEndDate = dvkSendDocuments.getLetterAccessRestrictionEndDate();
-            if (arEndDate != null) {
-                final Calendar accessRestrEndCal = Calendar.getInstance();
-                accessRestrEndCal.setTime(arEndDate);
-                accessRights.setEndDate(accessRestrEndCal);
+            addAccessRestriction(properties, decContainer);
+            addOrganisationRecipients(decContainer);
+            addPersonRecipients(decContainer);
+            addRecordMetadata(document, decContainer);
+            addSignatureInformation(decContainer);
+
+            if (!DecContainerHandler.validateMandatoryKeysPresent(decContainer, addDocumentMetadata.getSecond())) {
+                throw new RuntimeException("Found missing elements!");
             }
-
-            accessRights.setReason(dvkSendDocuments.getLetterAccessRestrictionReason());
-
-            letterMeta.setAccessRights(accessRights);
-            // kirja saajaid DhlXteeServiceImpl#sendDocuments() saajate järgi ei määra erinevalt dokument/transport/saaja elementidest
-            // (kuna kirja kasutamine pole kohustuslik)
-            for (String addresseeRegNum : dvkSendDocuments.getRecipientsRegNrs()) {
-                final PartyType letterAddressee = letterAddressees.addNewAddressee();
-                letterAddressee.addNewOrganisation().setOrganisationName(getOrganisationName(addresseeRegNum));
-            }
-
-            final Metaxml metaxml = composeLetterMetaxml(letter);
-            dhlDokument.setMetaxml(metaxml);
-
-            dhlDokument.setTransport(transport);
+            decContainerDocument.validate();
         }
 
-        private Metaxml composeLetterMetaxml(Letter letter) {
-            return composeMetaxml(letter, null);
+        private void addRecordMetadata(Node document, DecContainer decContainer) {
+            DecContainer.RecordMetadata recordMetadata = decContainer.getRecordMetadata();
+            recordMetadata.setRecordGuid(document.getNodeRef().getId());
+            String documentTypeName = BeanHelper.getDocumentAdminService().getDocumentTypeName(document);
+            recordMetadata.setRecordType(documentTypeName);
+        }
+
+        private Pair<Boolean, Map<String, String>> addDocumentMetadata(Map<String, Object> properties, DocumentTypeVersion documentTypeVersion, DecContainer decContainer) {
+            Boolean foundRelatedOutgoingField = Boolean.FALSE;
+            Map<String, String> usedFieldNameByKey = new HashMap<String, String>();
+            for (Field field : documentTypeVersion.getFieldsDeeply()) {
+                List<String> decFields = field.getRelatedOutgoingDecElement();
+                if (decFields == null || decFields.isEmpty()) {
+                    continue;
+                }
+                String fieldName = field.getName();
+                Object value = properties.get(field.getQName());
+                for (String decField : decFields) {
+                    StringTokenizer tokenizer = new StringTokenizer(decField, ",");
+                    while (tokenizer.hasMoreTokens()) {
+                        String outgoingField = StringUtils.trim(tokenizer.nextToken());
+                        if (StringUtils.isNotBlank(outgoingField)) {
+                            if (!DecContainerHandler.hasUserKey(outgoingField)) {
+                                throw new RuntimeException("Unable to find outgoing field for key " + outgoingField);
+                            }
+                            usedFieldNameByKey.put(outgoingField, fieldName);
+                            foundRelatedOutgoingField = Boolean.TRUE;
+                            if (value != null) {
+                                DecContainerHandler.setValue(fieldName, outgoingField, decContainer, value);
+                            }
+                        }
+                    }
+                }
+            }
+
+            return new Pair<Boolean, Map<String, String>>(foundRelatedOutgoingField, usedFieldNameByKey);
+        }
+
+        private void addAccessRestriction(Map<String, Object> properties, DecContainer decContainer) {
+            Access access = decContainer.addNewAccess();
+            String accessRestriction = (String) properties.get(DocumentCommonModel.Props.ACCESS_RESTRICTION);
+            boolean openAccessRestriction = AccessRestriction.OPEN.getValueName().equals(accessRestriction);
+            if (openAccessRestriction) {
+                access.setAccessConditionsCode(AccessConditionType.AVALIK);
+            } else if (AccessRestriction.AK.getValueName().equals(accessRestriction)) {
+                access.setAccessConditionsCode(AccessConditionType.AK);
+            } else {
+                throw new UnableToPerformException(MessageSeverity.ERROR, "dvk_send_error_unsupported_access_restriction");
+            }
+
+            if (!openAccessRestriction) {
+                Access.AccessRestriction dvkAccessRestriction = access
+                        .addNewAccessRestriction();
+                Date accessRestrictionBeginDate = (Date) properties.get(DocumentCommonModel.Props.ACCESS_RESTRICTION_BEGIN_DATE);
+                if (accessRestrictionBeginDate != null) {
+                    Calendar beginDate = Calendar.getInstance();
+                    beginDate.setTime(accessRestrictionBeginDate);
+                    dvkAccessRestriction.setRestrictionBeginDate(beginDate);
+                }
+                Date accessRestrictionEndDate = (Date) properties.get(DocumentCommonModel.Props.ACCESS_RESTRICTION_END_DATE);
+                if (accessRestrictionEndDate != null) {
+                    Calendar endDate = Calendar.getInstance();
+                    endDate.setTime(accessRestrictionEndDate);
+                    dvkAccessRestriction.setRestrictionEndDate(endDate);
+                }
+                String accessRestrictionEndEvent = (String) properties.get(DocumentCommonModel.Props.ACCESS_RESTRICTION_END_DESC);
+                if (StringUtils.isNotBlank(accessRestrictionEndEvent)) {
+                    dvkAccessRestriction.setRestrictionEndEvent(accessRestrictionEndEvent);
+                }
+                String accessRestrictionReason = (String) properties.get(DocumentCommonModel.Props.ACCESS_RESTRICTION_REASON);
+                if (StringUtils.isNotBlank(accessRestrictionReason)) {
+                    dvkAccessRestriction.setRestrictionBasis(accessRestrictionReason);
+                }
+                String organisationName = StringUtils.defaultIfEmpty(parametersService.getStringParameter(Parameters.DVK_ORGANIZATION_NAME), getOrganisationName(getInstitutionCode()));
+                dvkAccessRestriction.setInformationOwner(organisationName);
+            }
+        }
+
+        private void addSignatureInformation(DecContainer decContainer) {
+            // Check if we have only one file
+            List<DecContainer.File> fileList = decContainer.getFileList();
+            if (fileList.size() != 1) {
+                return;
+            }
+            //  And if it is a DigiDoc
+            DecContainer.File file = fileList.get(0);
+            if (!SignatureService.DIGIDOC_MIMETYPE.equals(file.getMimeType()) || !FilenameUtil.isDigiDocFile(file.getFileName())) {
+                return;
+            }
+
+            //
+            SignatureItemsAndDataItems signatureItems = null;
+            ByteArrayInputStream signatureInput = null;
+            try {
+                signatureInput = new ByteArrayInputStream(Base64.decode(file.getZipBase64Content()));
+                signatureItems = BeanHelper.getSignatureService().getDataItemsAndSignatureItems(signatureInput, false);
+            } catch (SignatureException e) {
+                log.error("Failed to retrieve signatures from " + file.getFileName() + " (" + file.getFileGuid() + ")!", e);
+                throw new RuntimeException(e);
+            } catch (Base64DecodingException e) {
+                log.error("Failed to decode DigiDoc from " + file.getFileName() + "!", e);
+                throw new RuntimeException(e);
+            } finally {
+                IOUtils.closeQuietly(signatureInput);
+            }
+
+            for (SignatureItem signature : signatureItems.getSignatureItems()) {
+                DecContainer.SignatureMetadata signatureMetadata = decContainer.addNewSignatureMetadata();
+                signatureMetadata.setSignatureType("Digiallkiri");
+                signatureMetadata.setSigner(signature.getName());
+                signatureMetadata.setVerified(signature.isValid() ? "Allkiri on kehtiv" : "Allkiri on kehtetu");
+                Calendar verificationDate = Calendar.getInstance();
+                verificationDate.setTime(signature.getSigningTime());
+                signatureMetadata.setSignatureVerificationDate(verificationDate);
+            }
+        }
+
+        private void addPersonRecipients(DecContainer decContainer) {
+            List<String> personNames = dvkSendDocuments.getPersonNames();
+            if (personNames != null && !personNames.isEmpty()) {
+                List<String> idCodes = dvkSendDocuments.getPersonIdCodes();
+                Assert.isTrue(idCodes != null && personNames.size() == idCodes.size(), "Expected same number of person names and ID codes!");
+
+                // Check if we already have a transport field
+                Transport transport = decContainer.getTransport();
+                if (transport == null) {
+                    transport = decContainer.addNewTransport();
+                }
+
+                String messageForRecipient = new HtmlToPlainText().getPlainText(Jsoup.parse(dvkSendDocuments.getTextContent()));
+                for (int i = 0; i < personNames.size(); i++) {
+                    String personName = personNames.get(i);
+                    String idCode = idCodes.get(i);
+
+                    Recipient recipient = decContainer.addNewRecipient();
+                    PersonType person = recipient.addNewPerson();
+                    person.setName(personName);
+                    person.setPersonalIdCode(idCode);
+
+                    recipient.setMessageForRecipient(messageForRecipient);
+                }
+            }
+        }
+
+        private void addOrganisationRecipients(DecContainer decContainer) {
+            // Organisation DecRecipient elements are added during container creation
+            List<String> orgRegNrs = dvkSendDocuments.getRecipientsRegNrs();
+            if (orgRegNrs != null) {
+                List<String> orgNames = dvkSendDocuments.getOrgNames();
+                Assert.isTrue(orgNames != null && orgRegNrs.size() == orgNames.size(), "Expected same number of organisation names and registration codes!");
+                for (int i = 0; i < orgRegNrs.size(); i++) {
+                    String organisationCode = orgRegNrs.get(i);
+                    String organisationName = orgNames.get(i);
+
+                    Recipient recipient = decContainer.addNewRecipient();
+                    OrganisationType organisation = recipient.addNewOrganisation();
+                    organisation.setName(organisationName);
+                    organisation.setOrganisationCode(organisationCode);
+
+                    recipient.setMessageForRecipient(new HtmlToPlainText().getPlainText(Jsoup.parse(dvkSendDocuments.getTextContent())));
+                }
+            }
         }
     }
 
-    private class DhsSendWorkflowCallback implements SendDocumentsDokumentCallback {
+    private class DhsSendWorkflowCallback implements SendDocumentsDecContainerCallback {
         private final DvkSendWorkflowDocuments dvkSendDocuments;
 
         public DhsSendWorkflowCallback(DvkSendWorkflowDocuments dvkSendDocuments) {
@@ -725,37 +1227,58 @@ public abstract class DvkServiceImpl implements DvkService {
         }
 
         @Override
-        public void doWithDocument(DokumentDocument dokumentDocument) {
-            log.debug("altering dokument");
+        public void doWithDocument(DecContainerDocument decContainerDocument) {
+            DecContainer decContainer = decContainerDocument.getDecContainer();
+            Recipient recipient = decContainer.addNewRecipient();
+            recipient.setMessageForRecipient(dvkSendDocuments.getTextContent());
 
-            final DhlDokumentType dhlDokument = dokumentDocument.getDokument();
-            final Transport transport = dhlDokument.getTransport();
-            fillDefaultSenderData(transport, dvkSendDocuments);
-
-            Metaxml metaxml = null;
+            DecContainer.RecordTypeSpecificMetadata specificMetadata = null;
             try {
                 if (dvkSendDocuments.isDocumentNode()) {
-                    metaxml = composeWorkflowMetaxml(dvkSendDocuments.getRecipientDocNode(), EXTERNAL_REVIEW_DOCUMENT_QNAME);
+                    specificMetadata = composeWorkflowMetaxml(dvkSendDocuments.getRecipientDocNode(), EXTERNAL_REVIEW_DOCUMENT_QNAME);
                 } else {
-                    metaxml = composeWorkflowMetaxml(dvkSendDocuments.getRecipientDocNode(), EXTERNAL_REVIEW_TASK_COMPLETED_QNAME);
+                    specificMetadata = composeWorkflowMetaxml(dvkSendDocuments.getRecipientDocNode(), EXTERNAL_REVIEW_TASK_COMPLETED_QNAME);
                 }
+                decContainer.setRecordTypeSpecificMetadata(specificMetadata);
             } catch (XmlException e) {
                 log.debug("Unable to parse alfresco document xml, error: " + e.getMessage());
-                throw new ReviewTaskException(ExceptionType.PARSING_EXCEPTION);
+                throw new ReviewTaskException(ReviewTaskException.ExceptionType.PARSING_EXCEPTION);
             }
-            dhlDokument.setMetaxml(metaxml);
 
-            dhlDokument.setTransport(transport);
         }
 
-        private Metaxml composeWorkflowMetaxml(org.w3c.dom.Node domNode, javax.xml.namespace.QName... wrappers) throws XmlException {
+        // FIXME remove when doWithDocument(DecContainerDocument arg0) implements this functionality
+        public void doWithDocument(DokumentDocument dokumentDocument) {
+            log.debug("altering dokument");
+            //
+            // final DhlDokumentType dhlDokument = dokumentDocument.getDokument();
+            // final Transport transport = dhlDokument.getTransport();
+            // fillDefaultSenderData(transport, dvkSendDocuments);
+            //
+            // Metaxml metaxml = null;
+            // try {
+            // if (dvkSendDocuments.isDocumentNode()) {
+            // metaxml = composeWorkflowMetaxml(dvkSendDocuments.getRecipientDocNode(), EXTERNAL_REVIEW_DOCUMENT_QNAME);
+            // } else {
+            // metaxml = composeWorkflowMetaxml(dvkSendDocuments.getRecipientDocNode(), EXTERNAL_REVIEW_TASK_COMPLETED_QNAME);
+            // }
+            // } catch (XmlException e) {
+            // log.debug("Unable to parse alfresco document xml, error: " + e.getMessage());
+            // throw new ReviewTaskException(ExceptionType.PARSING_EXCEPTION);
+            // }
+            // dhlDokument.setMetaxml(metaxml);
+            //
+            // dhlDokument.setTransport(transport);
+        }
+
+        private DecContainer.RecordTypeSpecificMetadata composeWorkflowMetaxml(org.w3c.dom.Node domNode, javax.xml.namespace.QName... wrappers) throws XmlException {
             final XmlObject documentXml = XmlObject.Factory.parse(domNode);
-            final Metaxml metaXml = Metaxml.Factory.newInstance();
-            final XmlCursor cursorM = metaXml.newCursor();
+            final DecContainer.RecordTypeSpecificMetadata specificMetadata = DecContainer.RecordTypeSpecificMetadata.Factory.newInstance();
+            final XmlCursor cursorM = specificMetadata.newCursor();
             cursorM.toNextToken();
             cursorM.beginElement(DELTA_QNAME);
             cursorM.insertElementWithText(DELTA_VERSION, applicationService.getProjectVersion());
-            Metaxml docXml = composeMetaxml(documentXml, Arrays.asList(wrappers));
+            DecContainer.RecordTypeSpecificMetadata docXml = composeMetaxml(documentXml, Arrays.asList(wrappers));
             String docXmlStr = docXml.toString();
             // "resolve" relative namespaces (deprecated feature which cannot be interpreted correctly in importer)
             docXmlStr = StringUtils.replace(docXmlStr, "xmlns:view=\"view\"", "");
@@ -764,25 +1287,20 @@ public abstract class DvkServiceImpl implements DvkService {
             XmlObject docXmlResolved = XmlObject.Factory.parse(docXmlStr);
             docXmlResolved.newCursor().copyXmlContents(cursorM);
             cursorM.dispose();
-            return metaXml;
+            return specificMetadata;
         }
+
     }
 
     class DhsSendInvoiceToSapCallback implements SendDocumentsDokumentCallback {
 
         @Override
         public void doWithDocument(DokumentDocument dokumentDocument) {
-            log.debug("altering dokument");
-
-            final DhlDokumentType dhlDokument = dokumentDocument.getDokument();
-            final Transport transport = dhlDokument.getTransport();
-            fillDefaultSenderData(transport, null);
-
-            dhlDokument.setTransport(transport);
+            throw new RuntimeException("This method is not implemented");
         }
     }
 
-    protected class DhsSendReviewNotificationCallback implements SendDocumentsDokumentCallback {
+    protected class DhsSendReviewNotificationCallback implements SendDocumentsDecContainerCallback {
         private final DvkSendReviewTask dvkSendReviewTask;
 
         public DhsSendReviewNotificationCallback(DvkSendReviewTask dvkSendReviewTask) {
@@ -790,41 +1308,50 @@ public abstract class DvkServiceImpl implements DvkService {
         }
 
         @Override
-        public void doWithDocument(DokumentDocument dokumentDocument) {
-            log.debug("altering dokument");
+        public void doWithDocument(DecContainerDocument decContainerDocument) {
+            DecContainer decContainer = decContainerDocument.getDecContainer();
 
-            final DhlDokumentType dhlDokument = dokumentDocument.getDokument();
-            final Transport transport = dhlDokument.getTransport();
-            fillDefaultSenderData(transport, dvkSendReviewTask);
-            AadressType transportSaatja = transport.getSaatja();
-            transportSaatja.setNimi(dvkSendReviewTask.getSenderName());
-            transportSaatja.setEpost(dvkSendReviewTask.getSenderEmail());
+            Recipient recipient = decContainer.addNewRecipient();
+            OrganisationType organisation = recipient.addNewOrganisation();
+            organisation.setName(dvkSendReviewTask.getInstitutionName());
 
-            Metaxml metaxml = null;
+            DecContainer.RecordMetadata recordMetadata = decContainer.getRecordMetadata();
+            if (recordMetadata == null) {
+                recordMetadata = decContainer.addNewRecordMetadata();
+            }
+            recordMetadata.setRecordGuid(dvkSendReviewTask.getTaskId());
+            recordMetadata.setRecordType("Iseseisev terviktöövoog");
+            recordMetadata.setRecordOriginalIdentifier("000");
+            recordMetadata.setRecordDateRegistered(Calendar.getInstance());
+            recordMetadata.setRecordTitle(dvkSendReviewTask.getWorkflowTitle());
+
+            Access access = decContainer.getAccess();
+            if (access == null) {
+                access = decContainer.addNewAccess();
+            }
+            access.setAccessConditionsCode(AccessConditionType.AVALIK);
+
+            DecContainer.RecordTypeSpecificMetadata specificMetadata = null;
             try {
-                metaxml = composeReviewNotificationMetaxml(dvkSendReviewTask.getRecipientDocNode());
+                specificMetadata = composeReviewNotificationMetadata(dvkSendReviewTask.getRecipientDocNode());
             } catch (XmlException e) {
                 log.debug("Unable to parse deltaKK document xml, error: " + e.getMessage());
-                throw new ReviewTaskException(ExceptionType.PARSING_EXCEPTION);
+                throw new ReviewTaskException(ReviewTaskException.ExceptionType.PARSING_EXCEPTION);
             }
-            dhlDokument.setMetaxml(metaxml);
-
-            dhlDokument.setTransport(transport);
+            decContainer.setRecordTypeSpecificMetadata(specificMetadata);
         }
 
-        private Metaxml composeReviewNotificationMetaxml(org.w3c.dom.Node domNode) throws XmlException {
+        private DecContainer.RecordTypeSpecificMetadata composeReviewNotificationMetadata(org.w3c.dom.Node domNode) throws XmlException {
             final XmlObject documentXml = XmlObject.Factory.parse(domNode);
-            final Metaxml metaXml = Metaxml.Factory.newInstance();
-            final XmlCursor cursorM = metaXml.newCursor();
-            cursorM.toNextToken();
             return composeMetaxml(documentXml, null);
         }
+
     }
 
-    private Metaxml composeMetaxml(final XmlObject documentXml, List<javax.xml.namespace.QName> wrappers) {
-        final Metaxml metaXml = Metaxml.Factory.newInstance();
+    private DecContainer.RecordTypeSpecificMetadata composeMetaxml(final XmlObject documentXml, List<javax.xml.namespace.QName> wrappers) {
+        final DecContainer.RecordTypeSpecificMetadata specificMetadata = DecContainer.RecordTypeSpecificMetadata.Factory.newInstance();
         final XmlCursor cursorL = documentXml.newCursor();
-        final XmlCursor cursorM = metaXml.newCursor();
+        final XmlCursor cursorM = specificMetadata.newCursor();
 
         cursorM.toNextToken();
         if (wrappers != null) {
@@ -834,33 +1361,11 @@ public abstract class DvkServiceImpl implements DvkService {
         }
         cursorL.copyXmlContents(cursorM);
         if (log.isDebugEnabled()) {
-            log.debug("metaXml composed based on document node:\n" + metaXml + "\n\n");
+            log.debug("specificMetadata composed based on document node:\n" + specificMetadata + "\n\n");
         }
         cursorL.dispose();
         cursorM.dispose();
-        return metaXml;
-    }
-
-    private void fillDefaultSenderData(final Transport transport, IDocument dvkSendDocuments) {
-        // add senders information
-        final AadressType transportSaatja = transport.getSaatja();
-
-        String senderRegNr = null;
-        String senderOrgName = null;
-        if (dvkSendDocuments != null) {
-            senderRegNr = dvkSendDocuments.getSenderRegNr();
-            senderOrgName = dvkSendDocuments.getSenderOrgName();
-        }
-        if (StringUtils.isNotBlank(senderRegNr)) { // use senderRegNr from X-Tee conf if senderRegNr not given
-            transportSaatja.setRegnr(senderRegNr);
-        }
-        // use default senderOrgName (from DVK capable orgs list) if senderOrgName not given
-        senderOrgName = StringUtils.isNotBlank(senderOrgName) ? senderOrgName : transportSaatja.getAsutuseNimi();
-
-        transportSaatja.setAsutuseNimi(senderOrgName);
-        // Maiga: paneme senderOrgName nimi elementi (nagu postipoisis) ja dubleerime asutuseNimes
-        transportSaatja.setNimi(senderOrgName);
-        transportSaatja.setEpost(parametersService.getStringParameter(Parameters.DOC_SENDER_EMAIL));
+        return specificMetadata;
     }
 
     // START: getters / setters
@@ -920,6 +1425,10 @@ public abstract class DvkServiceImpl implements DvkService {
 
     public void setApplicationService(ApplicationService applicationService) {
         this.applicationService = applicationService;
+    }
+
+    public void setDocumentAdminService(DocumentAdminService documentAdminService) {
+        this.documentAdminService = documentAdminService;
     }
 
     // TODO: move to Application or somewhere else?

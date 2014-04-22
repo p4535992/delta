@@ -4,12 +4,12 @@ import java.util.Date;
 
 import org.alfresco.service.namespace.QName;
 
-import ee.webmedia.alfresco.dvk.model.AbstractLetterDocument;
+import ee.webmedia.alfresco.dvk.model.AbstractDvkDocument;
 import ee.webmedia.alfresco.utils.beanmapper.AlfrescoModelProperty;
 import ee.webmedia.alfresco.utils.beanmapper.AlfrescoModelType;
 
 @AlfrescoModelType(uri = DocumentCommonModel.URI)
-abstract public class CommonDocument extends AbstractLetterDocument {
+abstract public class CommonDocument extends AbstractDvkDocument {
 
     @AlfrescoModelProperty(isMappable = false)
     private QName documentTypeId;

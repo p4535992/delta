@@ -83,6 +83,14 @@
             </property>
          </properties>
       </aspect>
+
+      <!-- Marker aspect for original DEC containers with metadata for additional property mapping -->
+      <aspect name="dvk:decContainer">
+         <mandatory-aspects>
+            <aspect>dvk:dvkId</aspect>
+         </mandatory-aspects>
+      </aspect>
+
    </aspects>
 
 </model>

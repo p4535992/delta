@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -266,13 +267,42 @@ public class MetadataItemCompareUtil {
                 return input.getMappingRestrictionEnum();
             }
         }, new NullComparator()));
-        chain.addComparator(new TransformingComparator(new ComparableTransformer<Field>() {
+        chain.addComparator(new Comparator<Field>() {
+
             @Override
-            public Comparable<?> tr(Field input) {
-                return input.getOriginalFieldId();
+            public int compare(Field field1, Field field2) {
+                if (field1 != null && field2 != null) {
+                    return compareLists(field1.getRelatedIncomingDecElement(), field2.getRelatedIncomingDecElement());
+                }
+                return compareFields(field1, field2);
             }
-        }, new NullComparator()));
+        });
+        chain.addComparator(new Comparator<Field>() {
+
+            @Override
+            public int compare(Field field1, Field field2) {
+                if (field1 != null && field2 != null) {
+                    return compareLists(field1.getRelatedOutgoingDecElement(), field2.getRelatedOutgoingDecElement());
+                }
+                return compareFields(field1, field2);
+            }
+
+        });
         return chain;
+    }
+
+    private static int compareFields(Field field1, Field field2) {
+        if (field1 == null && field2 == null) {
+            return 0;
+        }
+        return field1 == null ? -1 : 1;
+    }
+
+    private static int compareLists(List<String> list1, List<String> list2) {
+        if (list1 != null) {
+            return new CollectionComparator<String>(list1).compareTo(list2);
+        }
+        return list2 == null ? 0 : 1;
     }
 
     private static Comparator<FieldGroup> getFieldGroupComparator() {

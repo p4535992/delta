@@ -76,6 +76,7 @@ public class UserContactTableGenerator extends BaseSystematicFieldGenerator {
         recipientsMapping.put(DocumentDynamicModel.Props.RECIPIENT_PERSON_NAME.getLocalName(), null);
         recipientsMapping.put(DocumentDynamicModel.Props.RECIPIENT_STREET_HOUSE.getLocalName(), UserContactMappingCode.STREET_HOUSE);
         recipientsMapping.put(DocumentDynamicModel.Props.RECIPIENT_POSTAL_CITY.getLocalName(), UserContactMappingCode.POSTAL_CITY);
+        recipientsMapping.put(DocumentDynamicModel.Props.RECIPIENT_ID.getLocalName(), UserContactMappingCode.CODE);
         mappings.add(recipientsMapping);
         userContactMappingService.registerMappingDependency(DocumentCommonModel.Props.RECIPIENT_NAME.getLocalName(), DocumentCommonModel.Props.RECIPIENT_GROUP.getLocalName());
         documentConfigService.registerHiddenFieldDependency(DocumentCommonModel.Props.RECIPIENT_GROUP.getLocalName(), DocumentCommonModel.Props.RECIPIENT_NAME.getLocalName());
@@ -87,6 +88,7 @@ public class UserContactTableGenerator extends BaseSystematicFieldGenerator {
         additionalRecipientsMapping.put(DocumentDynamicModel.Props.ADDITIONAL_RECIPIENT_PERSON_NAME.getLocalName(), null);
         additionalRecipientsMapping.put(DocumentDynamicModel.Props.ADDITIONAL_RECIPIENT_STREET_HOUSE.getLocalName(), UserContactMappingCode.STREET_HOUSE);
         additionalRecipientsMapping.put(DocumentDynamicModel.Props.ADDITIONAL_RECIPIENT_POSTAL_CITY.getLocalName(), UserContactMappingCode.POSTAL_CITY);
+        additionalRecipientsMapping.put(DocumentDynamicModel.Props.ADDITIONAL_RECIPIENT_ID.getLocalName(), UserContactMappingCode.CODE);
         mappings.add(additionalRecipientsMapping);
         userContactMappingService.registerMappingDependency(DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME.getLocalName(),
                 DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_GROUP.getLocalName());

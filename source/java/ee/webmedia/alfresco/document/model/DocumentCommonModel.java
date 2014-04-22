@@ -146,6 +146,8 @@ public interface DocumentCommonModel {
         QName SEND_INFO_SEND_DATE_TIME = QName.createQName(DOCCOM_URI, "sendDateTime");
         QName SEND_INFO_SEND_MODE = QName.createQName(DOCCOM_URI, "sendMode");
         QName SEND_INFO_RESOLUTION = QName.createQName(DOCCOM_URI, "resolution");
+        QName SEND_INFO_RECEIVED_DATE_TIME = QName.createQName(DOCCOM_URI, "receivedDateTime");
+        QName SEND_INFO_OPENED_DATE_TIME = QName.createQName(DOCCOM_URI, "openedDateTime");
         /**
          * all values for this property are defined in Enum {@link SendStatus}
          */

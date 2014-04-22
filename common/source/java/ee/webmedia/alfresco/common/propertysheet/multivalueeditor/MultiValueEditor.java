@@ -76,6 +76,7 @@ public class MultiValueEditor extends UIComponentBase implements AjaxUpdateable,
     public static final String GROUP_BY_COLUMN_NAME = "groupByColumnName";
     public static final String GROUP_BY_COLUMN_VALUE = "groupByColumnValue";
     public static final String GROUP_ROW_CONTROLS = "groupRowControls";
+    public static final String STYLE_CLASS = "styleClass";
     public final static int ACTION_REMOVE_GROUP = 3;
 
     @Override

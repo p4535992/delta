@@ -480,7 +480,7 @@ public class ArchivalsServiceImpl implements ArchivalsService {
         }
 
         if (description.equals("Dokumendi loomine")
-                || description.equals("Dokumendi importimine (DVK)")
+                || description.startsWith("Dokumendi importimine (DVK)")
                 || description.equals("Dokumendi importimine (IMAP)")
                 || description.equals("Dokument on registreeritud")
                 || description.startsWith("Dokumendi juurdepääsupiirangut on muudetud.")

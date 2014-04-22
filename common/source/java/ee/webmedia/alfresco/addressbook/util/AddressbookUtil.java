@@ -53,6 +53,7 @@ public class AddressbookUtil {
         String name = getContactFullName(props, type);
 
         list.add(name);
+        list.add((String) props.get(AddressbookModel.Props.PERSON_ID));
         list.add((String) props.get(AddressbookModel.Props.EMAIL));
         return list;
     }

@@ -14,6 +14,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import ee.webmedia.alfresco.dvk.model.DvkModel;
+import ee.webmedia.alfresco.dvk.service.DvkService;
 import org.alfresco.i18n.I18NUtil;
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.content.MimetypeMap;
@@ -43,6 +45,7 @@ import org.alfresco.util.Pair;
 import org.alfresco.util.URLEncoder;
 import org.alfresco.web.app.servlet.DownloadContentServlet;
 import org.alfresco.web.bean.repository.Node;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.StringUtils;
@@ -117,6 +120,23 @@ public class FileServiceImpl implements FileService {
     }
 
     @Override
+    public NodeRef getDecContainer(NodeRef documentNodeRef) {
+        return (NodeRef) nodeService.getProperty(documentNodeRef, DvkModel.Props.DEC_CONTAINER);
+    }
+
+    @Override
+    public boolean removeDecContainer(NodeRef documentNodeRef) {
+        boolean decContainerDeleted = false;
+        NodeRef decContainer = getDecContainer(documentNodeRef);
+        if (decContainer != null) {
+            nodeService.removeProperty(documentNodeRef, DvkModel.Props.DEC_CONTAINER);
+            generalService.deleteNodeRefs(Arrays.asList(decContainer), false); // Avoid archiving!
+            decContainerDeleted = true;
+        }
+        return decContainerDeleted;
+    }
+
+    @Override
     public List<File> getAllFiles(NodeRef nodeRef) {
         return getAllFiles(nodeRef, true, false);
     }
@@ -139,6 +159,12 @@ public class FileServiceImpl implements FileService {
         List<File> files = new ArrayList<File>();
         for (FileInfo fi : fileInfos) {
             final File item = createFile(fi);
+
+            // Exclude DEC containers
+            if (item.isDecContainer()) {
+                continue;
+            }
+
             boolean isDdoc = signatureService.isDigiDocContainer(item.getNodeRef());
             item.setDigiDocContainer(isDdoc);
             ContentData contentData = fi.getContentData();
@@ -182,6 +208,21 @@ public class FileServiceImpl implements FileService {
     @Override
     public List<File> getAllActiveFiles(NodeRef nodeRef) {
         return getAllFiles(nodeRef, false, true);
+    }
+
+    @Override
+    public List<NodeRef> getAllFileRefs(NodeRef nodeRef, boolean activeFilesOnly) {
+        List<NodeRef> fileRefs = fileFolderService.listFileRefs(nodeRef);
+        if (activeFilesOnly && CollectionUtils.isNotEmpty(fileRefs)) {
+            List<NodeRef> activeFileRefs = new ArrayList<NodeRef>(fileRefs.size());
+            for (NodeRef fileRef : fileRefs) {
+                if (Boolean.TRUE.equals(nodeService.getProperty(fileRef, FileModel.Props.ACTIVE)) && nodeService.getProperty(fileRef, DvkModel.Props.DVK_ID) == null) {
+                    activeFileRefs.add(fileRef);
+                }
+            }
+            return activeFileRefs;
+        }
+        return fileRefs;
     }
 
     @Override

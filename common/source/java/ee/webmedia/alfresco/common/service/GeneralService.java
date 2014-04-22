@@ -196,7 +196,7 @@ public interface GeneralService {
 
     /**
      * Fetches WmNode from repository
-     * 
+     *
      * @param objectRef NodeRef of the desired object
      * @param objectType Type of the object
      * @return WmNode representation of the repository object
@@ -212,7 +212,7 @@ public interface GeneralService {
 
     /**
      * Searches ancestor with specified type. Will go up in hierarchy until found.
-     * 
+     *
      * @param childRef
      * @param ancestorType
      * @return return ancestor node or null if none found
@@ -221,11 +221,13 @@ public interface GeneralService {
 
     /**
      * Zip-s up given files.
-     * 
+     *
      * @param output
      * @param fileRefs selected file nodeRefs.
      */
     void writeZipFileFromFiles(OutputStream output, List<NodeRef> fileRefs);
+
+    long writeZipFileFromStream(OutputStream output, String fileName, InputStream in);
 
     String getUniqueFileName(NodeRef folder, String fileName);
 
@@ -251,7 +253,7 @@ public interface GeneralService {
     /**
      * Updates parent node containingDocsCount property
      * If {@code added} is null, then {@code count} is added to current value (negative or positive);
-     * 
+     *
      * @param parentNodeRef parent to update
      * @param propertyName property name to update
      * @param added should we increase or decrease
@@ -261,7 +263,7 @@ public interface GeneralService {
 
     /**
      * Sets up the writer (mimetype, encoding) and writes contents of the file
-     * 
+     *
      * @param writer ContentWriter where to write
      * @param file file from where content is read
      * @param fileName full file name with extension
@@ -283,7 +285,7 @@ public interface GeneralService {
     /**
      * Perform work in a background thread. Background thread is created and started after current transaction commit successfully completes; if current transaction is rolled back,
      * then work never executes. Work is executed as System user and in a separate transaction ({@link RetryingTransactionHelper} is used).
-     * 
+     *
      * @param work work to execute in a background thread after current transaction commit completes
      * @param threadName name to give the new thread that is created for executing work
      */

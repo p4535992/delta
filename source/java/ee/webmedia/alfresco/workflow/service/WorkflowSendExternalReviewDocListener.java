@@ -57,7 +57,7 @@ public class WorkflowSendExternalReviewDocListener implements WorkflowEventListe
             if (!task.isStatus(Status.FINISHED)) {
                 // send workflow to recipients
                 if (!queue.getExternalReviewProcessedDocuments().contains(docRef)) {
-                    if (sendExternalReviewWorkflow(task.getParent().getParent().getWorkflows(), queue.getAdditionalExternalReviewRecipients())) {
+                    if (sendExternalReviewWorkflow(task.getParent().getParent().getWorkflows(), queue.getAdditionalExternalReviewRecipients(), WorkflowUtil.getTaskMessageForRecipient(task))) {
                         queue.getExternalReviewProcessedDocuments().add(docRef);
                     }
                 }
@@ -88,17 +88,17 @@ public class WorkflowSendExternalReviewDocListener implements WorkflowEventListe
         }
         NodeRef docRef = workflow.getParent().getParent();
         if (!queue.getExternalReviewProcessedDocuments().contains(docRef)) {
-            if (sendExternalReviewWorkflow(workflow.getParent().getWorkflows(), queue.getAdditionalExternalReviewRecipients())) {
+            if (sendExternalReviewWorkflow(workflow.getParent().getWorkflows(), queue.getAdditionalExternalReviewRecipients(), null)) {
                 queue.getExternalReviewProcessedDocuments().add(docRef);
             }
         }
     }
 
     // Send if something is changed in compound workflow containing external review
-    private boolean sendExternalReviewWorkflow(List<Workflow> workflows, Map<NodeRef, List<String>> additionalRecipients) {
+    private boolean sendExternalReviewWorkflow(List<Workflow> workflows, Map<NodeRef, List<String>> additionalRecipients, String messageForRecipient) {
         for (Workflow workflow : workflows) {
             if (workflow.isType(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_WORKFLOW)) {
-                dvkService.sendDvkTasksWithDocument(workflow.getParent().getParent(), workflow.getParent().getNodeRef(), additionalRecipients);
+                dvkService.sendDvkTasksWithDocument(workflow.getParent().getParent(), workflow.getParent().getNodeRef(), additionalRecipients, messageForRecipient);
                 return true;
             }
         }

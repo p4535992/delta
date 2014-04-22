@@ -19,6 +19,7 @@ import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.workflow.service.Task;
 import ee.webmedia.alfresco.workflow.service.WorkflowDbService;
 import ee.webmedia.xtee.client.dhl.types.ee.sk.digiDoc.v13.DataFileType;
+import org.apache.xmlbeans.XmlObject;
 
 /**
  * Helps to strip illegal characters from filenames
@@ -101,15 +102,10 @@ public class FilenameUtil {
         return NON_ASCII.matcher(filename).replaceAll(FILE_NON_ASCII_REPLACEMENT);
     }
 
-    public static String getDvkFilename(DataFileType dataFile) {
-        return dataFile.getId() + " " + dataFile.getFilename();
-    }
-
     /**
      * Shortens the given filename by taking first part that fits in limit and inserts the marker between base name and extension
      * 
      * @param filename name to shorten
-     * @param maxLength maximum length of the name including extension
      * @return shortened filename or <code>null</code> if given name is <code>null</code>
      */
     public static String limitFileNameLength(String filename) {

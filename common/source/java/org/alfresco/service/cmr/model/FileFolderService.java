@@ -80,6 +80,8 @@ public interface FileFolderService
     @Auditable(key = Auditable.Key.ARG_0, parameters = {"folderNodeRef"})
     public List<FileInfo> listFiles(NodeRef folderNodeRef);
     
+    public List<NodeRef> listFileRefs(NodeRef contextNodeRef);
+    
     /**
      * Lists all immediate child folders of the given context node
      * 

@@ -9,12 +9,14 @@ import static ee.webmedia.alfresco.utils.SearchUtil.joinQueryPartsAnd;
 import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
+import ee.webmedia.xtee.client.dhl.DhlXTeeServiceImpl;
 import org.alfresco.repo.cache.EhCacheTracerJob;
 import org.alfresco.repo.search.Indexer;
 import org.alfresco.repo.search.impl.lucene.ADMLuceneTest;
@@ -116,6 +118,14 @@ public class TestingForDeveloperBean implements Serializable {
         dhlXTeeServiceImplFSStub.setDvkXmlFile(xmlFile);
         Collection<String> receiveResults = stubDvkService.receiveDocuments();
         LOG.info("created " + receiveResults.size() + " documents based on given xml file");
+    }
+
+    public void doStuff(ActionEvent event) {
+//        DhlXTeeServiceImpl dhlXTeeService = BeanHelper.getSpringBean(DhlXTeeServiceImpl.class, "dhlXTeeService");
+//        dhlXTeeService.markDocumentsReceived(Arrays.asList("10113"));
+
+        Collection<String> receiveDocuments = BeanHelper.getDvkService().receiveDocuments();
+        LOG.info("Received following documents:" + receiveDocuments);
     }
 
     /** Event handler for link "TestingForDeveloper" in /simdhs/faces/jsp/admin/store-browser.jsp */

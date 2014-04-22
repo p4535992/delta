@@ -1,14 +1,16 @@
 package ee.webmedia.alfresco.dvk.service;
 
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.REG_NUMBER;
+import static ee.webmedia.alfresco.utils.DvkUtil.getFileContents;
+import static ee.webmedia.alfresco.utils.DvkUtil.getFileName;
 import static ee.webmedia.alfresco.utils.XmlUtil.findChildByQName;
 import static ee.webmedia.alfresco.utils.XmlUtil.getXmlGregorianCalendar;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -25,6 +27,13 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
+import ee.webmedia.alfresco.log.model.LogEntry;
+import ee.webmedia.alfresco.log.model.LogObject;
+import ee.webmedia.alfresco.utils.DvkUtil;
+import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.xtee.client.dhl.DhlDocumentVersion;
+import ee.webmedia.xtee.client.dhl.DhlXTeeService;
+import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.deccontainer.vers21.DecContainerDocument;
 import org.alfresco.i18n.I18NUtil;
 import org.alfresco.repo.content.MimetypeMap;
 import org.alfresco.repo.transaction.RetryingTransactionHelper;
@@ -47,11 +56,13 @@ import org.apache.xml.security.exceptions.Base64DecodingException;
 import org.apache.xml.security.utils.Base64;
 import org.apache.xmlbeans.XmlException;
 import org.apache.xmlbeans.XmlObject;
+import org.apache.xmlbeans.XmlTokenSource;
 import org.springframework.util.Assert;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
+import ee.webmedia.alfresco.adit.service.AditService;
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
 import ee.webmedia.alfresco.classificator.enums.StorageType;
 import ee.webmedia.alfresco.classificator.enums.TransmittalMode;
@@ -70,14 +81,9 @@ import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
 import ee.webmedia.alfresco.document.sendout.service.SendOutService;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.dvk.model.DvkModel;
-import ee.webmedia.alfresco.dvk.model.DvkReceivedLetterDocument;
 import ee.webmedia.alfresco.dvk.model.DvkSendReviewTask;
-import ee.webmedia.alfresco.dvk.model.DvkSendReviewTaskImpl;
 import ee.webmedia.alfresco.dvk.model.DvkSendWorkflowDocuments;
-import ee.webmedia.alfresco.dvk.model.DvkSendWorkflowDocumentsImpl;
 import ee.webmedia.alfresco.dvk.service.ReviewTaskException.ExceptionType;
-import ee.webmedia.alfresco.log.model.LogEntry;
-import ee.webmedia.alfresco.log.model.LogObject;
 import ee.webmedia.alfresco.monitoring.MonitoredService;
 import ee.webmedia.alfresco.monitoring.MonitoringUtil;
 import ee.webmedia.alfresco.notification.model.NotificationModel;
@@ -85,7 +91,6 @@ import ee.webmedia.alfresco.notification.service.NotificationService;
 import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.series.model.Series;
 import ee.webmedia.alfresco.utils.FilenameUtil;
-import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.volume.service.VolumeService;
@@ -103,17 +108,13 @@ import ee.webmedia.alfresco.workflow.service.Workflow;
 import ee.webmedia.alfresco.workflow.service.WorkflowDbService;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
 import ee.webmedia.alfresco.workflow.service.WorkflowUtil;
-import ee.webmedia.xtee.client.dhl.DhlXTeeService;
 import ee.webmedia.xtee.client.dhl.DhlXTeeService.ContentToSend;
-import ee.webmedia.xtee.client.dhl.DhlXTeeService.MetainfoHelper;
 import ee.webmedia.xtee.client.dhl.DhlXTeeService.ReceivedDocumentsWrapper.ReceivedDocument;
 import ee.webmedia.xtee.client.dhl.DhlXTeeService.SendStatus;
-import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.dhl.AadressType;
 import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.dhl.DhlDokumentType;
 import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.dhl.EdastusDocument.Edastus;
 import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.dhl.MetaxmlDocument.Metaxml;
 import ee.webmedia.xtee.client.dhl.types.ee.riik.xtee.dhl.producers.producer.dhl.GetSendStatusResponseTypeUnencoded.Item;
-import ee.webmedia.xtee.client.dhl.types.ee.sk.digiDoc.v13.DataFileType;
 
 public class DvkServiceSimImpl extends DvkServiceImpl {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DvkServiceSimImpl.class);
@@ -142,11 +143,14 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
         }
         // get unique dvkIds
         final Set<String> dvkIds = new HashSet<String>(docRefsAndIds.size() + taskRefsAndIds.size());
-        for (Entry<NodeRef, Pair<String, String>> entry : docRefsAndIds.entrySet()) {
-            dvkIds.add(entry.getValue().getFirst());
+        for (Pair<String, String> value : docRefsAndIds.values()) {
+            dvkIds.add(value.getFirst());
         }
-        for (Entry<NodeRef, Pair<String, String>> entry : taskRefsAndIds.entrySet()) {
-            dvkIds.add(entry.getValue().getFirst());
+        Map<String, String> taskDvkIdsAndRegNrs = new HashMap<String, String>();
+        for (Pair<String, String> value : taskRefsAndIds.values()) {
+            String dvkId = value.getFirst();
+            dvkIds.add(dvkId);
+            taskDvkIdsAndRegNrs.put(dvkId, value.getSecond());
         }
 
         List<Item> sendStatuses = null;
@@ -159,13 +163,20 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
             throw e;
         }
         // fill map containing statuses by ids
-        final HashMap<String /* dhlId */, Map<String, SendStatus>> statusesByIds = new HashMap<String, Map<String, SendStatus>>();
+        final HashMap<String /* dhlId */, Map<String, Pair<SendStatus, Date>>> statusesByIds = new HashMap<String, Map<String, Pair<SendStatus, Date>>>();
         for (Item item : sendStatuses) {
-            Map<String, SendStatus> statusesForDvkId = new HashMap<String, SendStatus>();
-            statusesByIds.put(item.getDhlId(), statusesForDvkId);
+            Map<String, Pair<SendStatus, Date>> statusesForDvkId = new HashMap<String, Pair<SendStatus, Date>>();
+            String dhlId = item.getDhlId();
+            statusesByIds.put(dhlId, statusesForDvkId);
             List<Edastus> forwardings = item.getEdastusList();
             for (Edastus forwarding : forwardings) {
-                statusesForDvkId.put(forwarding.getSaaja().getRegnr(), SendStatus.get(forwarding.getStaatus()));
+                Pair<SendStatus, Date> sendStatusAndReceivedTime = new Pair<SendStatus, Date>(SendStatus.get(forwarding.getStaatus()), forwarding.getEdastatud().getTime());
+                String regNr = taskDvkIdsAndRegNrs.containsKey(dhlId) ? taskDvkIdsAndRegNrs.get(dhlId) : forwarding.getSaaja().getRegnr();
+                if (AditService.NAME.equalsIgnoreCase(regNr)) {
+                    // For documents that were sent to "adit" the recipient regNr value will be "adit". Use id codes instead to distinguish between recipients.
+                    regNr = forwarding.getSaaja().getIsikukood();
+                }
+                statusesForDvkId.put(regNr, sendStatusAndReceivedTime);
             }
         }
 
@@ -194,21 +205,40 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
         return new Pair<Integer, Integer>(tasksFound, tasksSent);
     }
 
-    public int updateNodeSendStatus(final Map<NodeRef, Pair<String, String>> refsAndIds, final HashMap<String, Map<String, SendStatus>> statusesByIds, QName propToSet) {
+    private int updateNodeSendStatus(final Map<NodeRef, Pair<String, String>> refsAndIds, final HashMap<String, Map<String, Pair<SendStatus, Date>>> statusesByIds, QName propToSet) {
         final HashSet<String> dhlIdsStatusChanged = new HashSet<String>();
+        boolean isDocSendInfo = DocumentCommonModel.Props.SEND_INFO_SEND_STATUS.equals(propToSet);
+        WorkflowDbService workflowDbService = null;
+        if (!isDocSendInfo) {
+            workflowDbService = BeanHelper.getWorkflowDbService();
+        }
         // update each sendInfoRef if status has changed(from SENT to RECEIVED or CANCELLED)
         for (Entry<NodeRef, Pair<String, String>> refAndDvkId : refsAndIds.entrySet()) {
             final NodeRef sendInfoRef = refAndDvkId.getKey();
             final String dvkId = refAndDvkId.getValue().getFirst();
             final String recipientRegNr = refAndDvkId.getValue().getSecond();
-            Map<String, SendStatus> recipientStatuses = statusesByIds.get(dvkId);
+            Map<String, Pair<SendStatus, Date>> recipientStatuses = statusesByIds.get(dvkId);
             SendStatus status = null;
+            Date receivedDateTime = null;
             if (recipientStatuses != null) {
-                status = recipientStatuses.get(recipientRegNr);
+                Pair<SendStatus, Date> sendStatusAndReceivedTime = recipientStatuses.get(recipientRegNr);
+                if (sendStatusAndReceivedTime != null) {
+                    status = sendStatusAndReceivedTime.getFirst();
+                    receivedDateTime = sendStatusAndReceivedTime.getSecond();
+                }
             }
             if (status != null && !status.equals(SendStatus.SENT)) {
                 dhlIdsStatusChanged.add(dvkId);
-                nodeService.setProperty(sendInfoRef, propToSet, status.toString());
+                Map<QName, Serializable> propsToUpdate = new HashMap<QName, Serializable>();
+                propsToUpdate.put(propToSet, status.toString());
+                if (status.equals(SendStatus.RECEIVED) && receivedDateTime != null) {
+                    propsToUpdate.put(isDocSendInfo ? DocumentCommonModel.Props.SEND_INFO_SEND_STATUS : WorkflowSpecificModel.Props.SEND_DATE_TIME, receivedDateTime);
+                }
+                if (isDocSendInfo) {
+                    nodeService.addProperties(sendInfoRef, propsToUpdate);
+                } else if (workflowDbService != null) {
+                    workflowDbService.updateTaskProperties(sendInfoRef, propsToUpdate);
+                }
             }
         }
 
@@ -219,44 +249,30 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
     }
 
     @Override
-    protected NodeRef createDocumentNode(DvkReceivedLetterDocument rd, NodeRef dvkIncomingFolder, String nvlDocumentTitle) {
+    protected NodeRef createDocumentNode(Map<QName, Serializable> documentProperties, NodeRef dvkIncomingFolder, String nvlDocumentTitle, boolean isAditDocument, String messageForRecipient) {
         final NodeRef docRef = documentDynamicService.createNewDocument(
                 SystematicDocumentType.INCOMING_LETTER.getId(),
                 dvkIncomingFolder).getFirst().getNodeRef();
 
         final Map<QName, Serializable> props = new HashMap<QName, Serializable>();
-        fillPropsFromDvkReceivedDocument(rd, props);
+        props.putAll(documentProperties);
         props.put(DocumentCommonModel.Props.DOC_NAME, nvlDocumentTitle);
         props.put(DocumentCommonModel.Props.STORAGE_TYPE, StorageType.DIGITAL.getValueName());
-        props.put(DocumentSpecificModel.Props.TRANSMITTAL_MODE, TransmittalMode.DVK.getValueName());
+        props.put(DocumentSpecificModel.Props.TRANSMITTAL_MODE, isAditDocument ? TransmittalMode.STATE_PORTAL_EESTI_EE.getValueName() : TransmittalMode.DVK.getValueName());
         nodeService.addProperties(docRef, props);
 
         documentLogService.addDocumentLog(docRef, I18NUtil.getMessage("document_log_status_imported"
-                , I18NUtil.getMessage("document_log_creator_dvk")), I18NUtil.getMessage("document_log_creator_dvk"));
+                , I18NUtil.getMessage("document_log_creator_dvk"), messageForRecipient), I18NUtil.getMessage("document_log_creator_dvk"));
         return docRef;
     }
 
-    private void fillPropsFromDvkReceivedDocument(DvkReceivedLetterDocument rd, Map<QName, Serializable> props) {
-        // common
-        props.put(DocumentCommonModel.Props.ACCESS_RESTRICTION, rd.getLetterAccessRestriction());
-        props.put(DocumentCommonModel.Props.ACCESS_RESTRICTION_BEGIN_DATE, rd.getLetterAccessRestrictionBeginDate());
-        props.put(DocumentCommonModel.Props.ACCESS_RESTRICTION_END_DATE, rd.getLetterAccessRestrictionEndDate());
-        props.put(DocumentCommonModel.Props.ACCESS_RESTRICTION_REASON, rd.getLetterAccessRestrictionReason());
-        // specific
-        props.put(DocumentSpecificModel.Props.SENDER_DETAILS_NAME, rd.getSenderOrgName());
-        props.put(DocumentSpecificModel.Props.SENDER_DETAILS_EMAIL, rd.getSenderEmail());
-        props.put(DocumentSpecificModel.Props.SENDER_REG_DATE, rd.getLetterSenderDocSignDate());
-        props.put(DocumentSpecificModel.Props.SENDER_REG_NUMBER, rd.getLetterSenderDocNr());
-        props.put(DocumentSpecificModel.Props.DUE_DATE, rd.getLetterDeadLine());
-        //
-        props.put(DvkModel.Props.DVK_ID, rd.getDvkId());
-    }
+    private <D extends XmlObject> org.w3c.dom.Node getDhsNodeForParsing(D dhlDokument, javax.xml.namespace.QName dhsNodeName) {
+        XmlTokenSource metaXmlElement = DvkUtil.getMetaXmlElement(dhlDokument);
+        if (metaXmlElement == null) {
+            return null;
+        }
 
-    private org.w3c.dom.Node getDhsNodeForParsing(DhlDokumentType dhlDokument, javax.xml.namespace.QName dhsNodeName) {
-        final Metaxml metaxml = dhlDokument.getMetaxml();
-        org.w3c.dom.Node node = metaxml.newDomNode();
-
-        org.w3c.dom.Node deltaNode = findChildByQName(DELTA_QNAME, node.getFirstChild());
+        org.w3c.dom.Node deltaNode = findChildByQName(DELTA_QNAME, metaXmlElement.getDomNode().getFirstChild());
         if (deltaNode != null) {
             // TODO: log version element?
             org.w3c.dom.Node externalReviewNode = findChildByQName(dhsNodeName, deltaNode);
@@ -273,12 +289,12 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
     }
 
     @Override
-    protected NodeRef importWorkflowData(DvkReceivedLetterDocument rd, DhlDokumentType dhlDokument, NodeRef dvkDefaultIncomingFolder,
-            List<DataFileType> dataFileList, String dvkId) {
+    protected <D extends XmlObject, F extends XmlObject> NodeRef importWorkflowData(String senderOrgName, D dhlDokument, NodeRef dvkDefaultIncomingFolder,
+            List<F> dataFileList, String dvkId) {
         org.w3c.dom.Node docNode = getDhsNodeForParsing(dhlDokument, EXTERNAL_REVIEW_DOCUMENT_QNAME);
         if (docNode != null) {
             // Location will be used for creating new document if document doesn't exist
-            Pair<Location, Boolean> locationWithCheck = getDvkWorkflowDocLocation(rd.getSenderOrgName(), dvkDefaultIncomingFolder);
+            Pair<Location, Boolean> locationWithCheck = getDvkWorkflowDocLocation(senderOrgName, dvkDefaultIncomingFolder);
             Location location = locationWithCheck.getFirst();
             // get original dvk ids here to avoid altering current importing process
             // (create parent -> create children)
@@ -325,7 +341,7 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
     }
 
     @Override
-    protected List<NodeRef> importInvoiceData(DvkReceivedLetterDocument rd, DhlDokumentType dhlDokument, String dhlId, List<DataFileType> dataFileList) {
+    protected <F extends XmlObject> List<NodeRef> importInvoiceData(String dhlId, String senderOrgNr, List<F> dataFileList) {
         List<NodeRef> newInvoices = new ArrayList<NodeRef>();
         if (!einvoiceService.isEinvoiceEnabled()) {
             return newInvoices;
@@ -336,10 +352,9 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
             Map<NodeRef, Integer> invoiceRefToDatafile = new HashMap<NodeRef, Integer>();
             Map<NodeRef, Integer> transactionRefToDataFile = new HashMap<NodeRef, Integer>();
             Integer dataFileIndex = 0;
-            for (DataFileType dataFile : dataFileList) {
-                if (isXmlMimetype(dataFile)) {
-                    InputStream input = new ByteArrayInputStream(Base64.decode(dataFile.getStringValue()));
-                    List<NodeRef> newDocRefs = einvoiceService.importInvoiceFromXml(receivedInvoiceFolder, input, TransmittalMode.DVK);
+            for (F dataFile : dataFileList) {
+                if (isXmlMimetype(getFileName(dataFile))) {
+                    List<NodeRef> newDocRefs = einvoiceService.importInvoiceFromXml(receivedInvoiceFolder, getFileContents(dataFile), TransmittalMode.DVK);
                     newInvoices.addAll(newDocRefs);
                     for (NodeRef newDocRef : newDocRefs) {
                         invoiceRefToDatafile.put(newDocRef, dataFileIndex);
@@ -352,10 +367,10 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
                 documentLogService.addDocumentLog(invoiceRef, I18NUtil.getMessage("document_log_status_imported"
                         , I18NUtil.getMessage("document_log_creator_dvk")), I18NUtil.getMessage("document_log_creator_dvk"));
                 dataFileIndex = 0;
-                for (DataFileType dataFile : dataFileList) {
+                for (F dataFile : dataFileList) {
                     if ((!transactionRefToDataFile.containsValue(dataFileIndex) || transactionRefToDataFile.get(invoiceRef).equals(dataFileIndex))
                             && (!invoiceRefToDatafile.containsValue(dataFileIndex) || invoiceRefToDatafile.get(invoiceRef).equals(dataFileIndex))) {
-                        storeFile(rd, invoiceRef, dataFile);
+                        storeFile(dhlId, senderOrgNr, invoiceRef, dataFile);
                     }
                     dataFileIndex++;
                 }
@@ -370,15 +385,14 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
     }
 
     @Override
-    protected NodeRef importSapInvoiceRegistration(DvkReceivedLetterDocument rd, DhlDokumentType dhlDokument, String dhlId, List<DataFileType> dataFileList) {
-        if (!einvoiceService.isEinvoiceEnabled()) {
+    protected <F extends XmlObject> NodeRef importSapInvoiceRegistration(List<F> dataFileList) {
+        if (!einvoiceService.isEinvoiceEnabled() || dataFileList == null) {
             return null;
         }
         try {
-            for (DataFileType dataFile : dataFileList) {
-                if (isXmlMimetype(dataFile)) {
-                    InputStream input = new ByteArrayInputStream(Base64.decode(dataFile.getStringValue()));
-                    Pair<String, String> docUrlAndErpDocNumber = einvoiceService.getDocUrlAndErpDocNumber(input);
+            for (F dataFile : dataFileList) {
+                if (isXmlMimetype(getFileName(dataFile))) {
+                    Pair<String, String> docUrlAndErpDocNumber = einvoiceService.getDocUrlAndErpDocNumber(getFileContents(dataFile));
                     if (docUrlAndErpDocNumber != null) {
                         NodeRef updatedDoc = einvoiceService.updateDocumentEntrySapNumber(docUrlAndErpDocNumber.getFirst(), docUrlAndErpDocNumber.getSecond());
                         if (updatedDoc == null) {
@@ -394,30 +408,32 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
             }
         } catch (Base64DecodingException e) {
             throw new RuntimeException("Failed to decode", e);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to decode", e);
         }
         return null;
     }
 
     @Override
-    protected List<NodeRef> importDimensionData(DvkReceivedLetterDocument rd, DhlDokumentType dhlDokument, String dhlId, List<DataFileType> dataFileList) {
+    protected <F extends XmlObject> List<NodeRef> importDimensionData(String dhlId, List<F> dataFileList) {
         List<NodeRef> dimensionNodes = new ArrayList<NodeRef>();
-        if (!einvoiceService.isEinvoiceEnabled()) {
+        if (!einvoiceService.isEinvoiceEnabled() || dataFileList == null) {
             return dimensionNodes;
         }
-        for (DataFileType dataFile : dataFileList) {
-            if (isXmlMimetype(dataFile)) {
+        for (XmlObject dataFile : dataFileList) {
+            if (isXmlMimetype(getFileName(dataFile))) {
                 List<NodeRef> fileImportNodes = new ArrayList<NodeRef>();
                 try {
-                    byte[] decode = Base64.decode(dataFile.getStringValue());
-                    fileImportNodes.addAll(einvoiceService.importVatCodeList(new ByteArrayInputStream(decode)));
+                    InputStream inputStream = getFileContents(dataFile);
+                    fileImportNodes.addAll(einvoiceService.importVatCodeList(inputStream));
                     if (fileImportNodes.size() == 0) {
-                        dimensionNodes.addAll(einvoiceService.importAccountList(new ByteArrayInputStream(decode)));
+                        dimensionNodes.addAll(einvoiceService.importAccountList(inputStream));
                     }
                     if (fileImportNodes.size() == 0) {
-                        fileImportNodes.addAll(einvoiceService.importSellerList(new ByteArrayInputStream(decode)));
+                        fileImportNodes.addAll(einvoiceService.importSellerList(inputStream));
                     }
                     if (fileImportNodes.size() == 0) {
-                        fileImportNodes.addAll(einvoiceService.importDimensionsList(new ByteArrayInputStream(decode)));
+                        fileImportNodes.addAll(einvoiceService.importDimensionsList(inputStream));
                     }
                 } catch (Exception e) {
                     throw new RuntimeException("Failed to decode", e);
@@ -429,8 +445,9 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
     }
 
     @Override
-    public boolean isXmlMimetype(DataFileType dataFile) {
-        String mimeType = mimetypeService.guessMimetype(dataFile.getFilename());
+    public boolean isXmlMimetype(String dataFileName) {
+        Assert.hasLength("Must provide file name to check!");
+        String mimeType = mimetypeService.guessMimetype(dataFileName);
         boolean isXmlMimetype = MimetypeMap.MIMETYPE_XML.equalsIgnoreCase(mimeType);
         return isXmlMimetype;
     }
@@ -492,7 +509,7 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
     }
 
     @Override
-    protected NodeRef importTaskData(DvkReceivedLetterDocument rd, DhlDokumentType dhlDokument, String dvkId) throws ReviewTaskException {
+    protected <D extends XmlObject> NodeRef importTaskData(D dhlDokument, String dvkId) throws ReviewTaskException {
         org.w3c.dom.Node taskNode = getDhsNodeForParsing(dhlDokument, EXTERNAL_REVIEW_TASK_COMPLETED_QNAME);
         if (taskNode != null) {
             // get original dvk ids here to avoid altering current importing process
@@ -527,10 +544,10 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
     }
 
     @Override
-    protected NodeRef importReviewTaskData(DvkReceivedLetterDocument rd, DhlDokumentType dhlDokument, String dvkId) throws ReviewTaskException {
-        final Metaxml metaxml = dhlDokument.getMetaxml();
-        InputStream taskInputStream = metaxml.newInputStream();
-        if (taskInputStream != null) {
+    protected <D extends XmlObject> NodeRef importReviewTaskData(D dhlDokument, String dvkId) throws ReviewTaskException {
+        final XmlTokenSource metaxml = DvkUtil.getMetaXmlElement(dhlDokument);
+        if (metaxml != null) {
+            InputStream taskInputStream = metaxml.newInputStream();
             JAXBElement<DeltaKKRootType> deltaKKRoot = null;
             deltaKKRoot = WorkflowUtil.unmarshalDeltaKK(taskInputStream);
             if (deltaKKRoot != null) {
@@ -631,9 +648,8 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
     }
 
     @Override
-    protected void handleStorageFailure(ReceivedDocument receivedDocument, String dhlId, NodeRef dvkIncomingFolder
-            , MetainfoHelper metaInfoHelper, Collection<String> previouslyFailedDvkIds, Exception e) {
-        super.handleStorageFailure(receivedDocument, dhlId, dvkIncomingFolder, metaInfoHelper, previouslyFailedDvkIds, e);
+    protected void handleStorageFailure(ReceivedDocument receivedDocument, String dhlId, NodeRef dvkIncomingFolder, Collection<String> previouslyFailedDvkIds, Exception e) {
+        super.handleStorageFailure(receivedDocument, dhlId, dvkIncomingFolder, previouslyFailedDvkIds, e);
         if (e instanceof ReviewTaskException) {
             handleExternalReviewException((ReviewTaskException) e);
         }
@@ -642,11 +658,13 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
             return;
         }
         previouslyFailedDvkIds.add(dhlId);
-        final DhlDokumentType dhlDocument = receivedDocument.getDhlDocument();
+        final XmlObject dhlDocument = DhlDocumentVersion.VER_1.equals(receivedDocument.getDocumentVersion()) ? receivedDocument.getDhlDocument() : receivedDocument.getDhlDocumentV2();
         try {
-            String corruptDocName = dhlId + " " + metaInfoHelper.getDhlSaatjaAsutuseNr() + " " + metaInfoHelper.getDhlSaatjaAsutuseNimi();
-            corruptDocName = FilenameUtil.buildFileName(corruptDocName, "xml");
-            log.debug("trygin to store DVK document to '" + corruptDvkDocumentsPath + "+/" + corruptDocName + "'");
+            String corruptDocName = DvkUtil.getCorruptedDocumentName(receivedDocument, dhlId);
+            SimpleDateFormat format = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
+            String time = format.format(new Date());
+            corruptDocName = FilenameUtil.buildFileName(corruptDocName + " " + time, "xml");
+            log.debug("Trying to store DVK document to '" + corruptDvkDocumentsPath + "+/" + corruptDocName + "'");
             NodeRef corruptFolder = generalService.getNodeRef(corruptDvkDocumentsPath);
             final NodeRef corruptDocNodeRef = fileFolderService.create(corruptFolder, corruptDocName, DvkModel.Types.FAILED_DOC).getNodeRef();
             nodeService.setProperty(corruptDocNodeRef, DvkModel.Props.DVK_ID, dhlId);
@@ -654,7 +672,7 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
             writer.setMimetype(MimetypeMap.MIMETYPE_XML);
             final OutputStream os = writer.getContentOutputStream();
             try {
-                os.write(dhlDocument.toString().getBytes());
+                dhlDocument.save(os, DvkUtil.getDecContainerXmlOptions());
             } catch (IOException e3) {
                 throw new RuntimeException("Failed write output to repository: '" + corruptDvkDocumentsPath + "' nodeRef=" + corruptDocNodeRef + " contentUrl="
                         + writer.getContentUrl(), e);
@@ -733,10 +751,12 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
         if (isDvkCapable(dvkCapableOrgs, task.getInstitutionCode())) {
             ExcludingExporterCrawlerParameters exportParameters = getTaskExportParameters(task.getNodeRef());
             org.w3c.dom.Node taskDomNode = exportDom(exportParameters);
-            DvkSendWorkflowDocuments sd = new DvkSendWorkflowDocumentsImpl();
+            DvkSendWorkflowDocuments sd = new DvkSendWorkflowDocuments();
             sd.setIsDocumentNode(false);
             sd.setRecipientsRegNr(task.getCreatorInstitutionCode());
+            sd.setRecipientStructuralUnit(task.getOwnerName());
             sd.setRecipientDocNode(taskDomNode);
+            sd.setTextContent(WorkflowUtil.getTaskMessageForRecipient(task));
             String dvkId = sendExternalReviewWorkflowData(new ArrayList<ContentToSend>(), sd);
             nodeService.setProperty(task.getNodeRef(), WorkflowSpecificModel.Props.SENT_DVK_ID, dvkId);
             nodeService.setProperty(task.getNodeRef(), WorkflowSpecificModel.Props.SEND_STATUS, SendStatus.SENT);
@@ -745,23 +765,7 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
 
     @Override
     public String sendInvoiceFileToSap(Node document, File file) {
-        Collection<ContentToSend> contentsToSend = einvoiceService.createContentToSend(file);
-        String folder = einvoiceService.getTransactionDvkFolder(document);
-        final Collection<String> recipientsRegNrs = new ArrayList<String>();
-        recipientsRegNrs.add(parametersService.getStringParameter(Parameters.SAP_DVK_CODE));
-        verifyEnoughData(contentsToSend, recipientsRegNrs, true);
-        try {
-            final Set<String> sendDocuments = dhlXTeeService.sendDocuments(contentsToSend, getRecipients(recipientsRegNrs), getSenderAddress(),
-                    new DhsSendInvoiceToSapCallback(), getSendDocumentToFolderRequestCallback(folder));
-            Assert.isTrue(1 == sendDocuments.size(), "Supprise! Size of sendDocuments is " + sendDocuments.size());
-            String dvkId = sendDocuments.iterator().next();
-            sendOutService.addSapSendInfo(document, dvkId);
-            MonitoringUtil.logSuccess(MonitoredService.OUT_XTEE_DVK);
-            return dvkId;
-        } catch (RuntimeException e) {
-            MonitoringUtil.logError(MonitoredService.OUT_XTEE_DVK, e);
-            throw e;
-        }
+        throw new RuntimeException("This method is not implemented!");
     }
 
     @Override
@@ -788,31 +792,35 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
         props.put(WorkflowSpecificModel.Props.SENT_DVK_ID, null);
         props.put(WorkflowSpecificModel.Props.SEND_STATUS, null);
         workflowDbService.updateTaskProperties(task.getNodeRef(), props);
-        DvkSendReviewTask sendReviewTask = new DvkSendReviewTaskImpl();
+        DvkSendReviewTask sendReviewTask = new DvkSendReviewTask();
         sendReviewTask.setSenderRegNr(task.getCreatorInstitutionCode());
         sendReviewTask.setSenderOrgName(task.getCreatorInstitutionName());
         sendReviewTask.setSenderName(task.getCreatorName());
         sendReviewTask.setSenderEmail(task.getCreatorEmail());
         sendReviewTask.setRecipientsRegNr(task.getInstitutionCode());
+        sendReviewTask.setRecipientStructuralUnit(task.getOwnerName());
         sendReviewTask.setInstitutionName(task.getInstitutionName());
+        sendReviewTask.setWorkflowTitle(task.getCompoundWorkflowTitle());
+        sendReviewTask.setTaskId(task.getNodeRef().getId());
 
         sendReviewTask.setRecipientDocNode(nodeToSend);
 
         try {
-            AadressType recipient;
+            DecContainerDocument.DecContainer.Transport.DecRecipient recipient = DecContainerDocument.DecContainer.Transport.DecRecipient.Factory.newInstance();
             if (!workflowService.isInternalTesting()) {
-                recipient = AadressType.Factory.newInstance();
-                recipient.setRegnr(sendReviewTask.getRecipientsRegNr());
-                recipient.setAsutuseNimi(sendReviewTask.getInstitutionName());
+                recipient.setOrganisationCode(sendReviewTask.getRecipientsRegNr());
+                recipient.setStructuralUnit(sendReviewTask.getInstitutionName());
             } else {
                 // For internal testing, always send task to current organization itself
-                recipient = getSenderAddress();
+                DecContainerDocument.DecContainer.Transport.DecSender senderAddress = getSenderAddress();
+                recipient.setOrganisationCode(senderAddress.getOrganisationCode());
+                recipient.setStructuralUnit(senderAddress.getStructuralUnit());
             }
-            if (isDvkCapable(addressbookService.getDvkCapableOrgs(), recipient.getRegnr())) {
 
+            if (isDvkCapable(addressbookService.getDvkCapableOrgs(), recipient.getOrganisationCode())) {
                 final Set<String> sendDocuments = dhlXTeeService.sendDocuments(new ArrayList<DhlXTeeService.ContentToSend>(),
-                        new AadressType[] { recipient }, getSenderAddress(), new DhsSendReviewNotificationCallback(sendReviewTask), getSendDocumentRequestCallback());
-                Assert.isTrue(1 == sendDocuments.size(), "Supprise! Size of sendDocuments is " + sendDocuments.size());
+                        new DecContainerDocument.DecContainer.Transport.DecRecipient[] { recipient }, getSenderAddress(), new DhsSendReviewNotificationCallback(sendReviewTask), getSendDocumentRequestCallback());
+                Assert.isTrue(1 == sendDocuments.size(), "Surprise! Size of sendDocuments is " + sendDocuments.size());
                 if (!isDeletingNotification) {
                     String dvkId = sendDocuments.iterator().next();
                     props = new HashMap<QName, Serializable>();
@@ -823,11 +831,13 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
                 if (isDeletingNotification) {
                     BeanHelper.getLogService().addLogEntry(
                             LogEntry.create(LogObject.TASK, BeanHelper.getUserService(), task.getNodeRef(), "applog_task_review_delete_sent_to_dvk", task.getOwnerName(),
-                                    task.getInstitutionName(), MessageUtil.getTypeName(task.getType())));
+                                    task.getInstitutionName(), MessageUtil.getTypeName(task.getType()))
+                    );
                 } else {
                     BeanHelper.getLogService().addLogEntry(
                             LogEntry.create(LogObject.TASK, BeanHelper.getUserService(), task.getNodeRef(), "applog_task_review_sent_to_dvk", task.getOwnerName(),
-                                    task.getInstitutionName(), MessageUtil.getTypeName(task.getType())));
+                                    task.getInstitutionName(), MessageUtil.getTypeName(task.getType()))
+                    );
                 }
                 MonitoringUtil.logSuccess(MonitoredService.OUT_XTEE_DVK);
                 return true;
@@ -916,10 +926,10 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
 
     @Override
     /**
-     * compoundWorkflowRef - if not null only this compound workflow recipients get updates; 
+     * compoundWorkflowRef - if not null only this compound workflow recipients get updates;
      * if null all compound workflows are checked for recipients
      */
-    public void sendDvkTasksWithDocument(NodeRef documentNodeRef, NodeRef compoundWorkflowRef, Map<NodeRef, List<String>> additionalRecipients) {
+    public void sendDvkTasksWithDocument(NodeRef documentNodeRef, NodeRef compoundWorkflowRef, Map<NodeRef, List<String>> additionalRecipients, String recipientMessage) {
 
         List<CompoundWorkflow> compoundWorkflows = workflowService.getCompoundWorkflows(documentNodeRef);
         List<String> recipients = getAllRecipients(documentNodeRef, compoundWorkflowRef, compoundWorkflows, additionalRecipients);
@@ -935,7 +945,7 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
         boolean zipIt = false; // fileNodeRefs.size() > 0;
         Collection<ContentToSend> content = sendOutService.prepareContents(documentNodeRef, fileNodeRefs, zipIt);
 
-        DvkSendWorkflowDocuments sd = new DvkSendWorkflowDocumentsImpl();
+        DvkSendWorkflowDocuments sd = new DvkSendWorkflowDocuments();
         // collect compoundWorkflows and workflows to send for each taskCapable and dvkCapable recipient
         Map<String, List<NodeRef>> recipientInclusionMap = new HashMap<String, List<NodeRef>>();
         List<NodeRef> allWorkflowsNodeRefs = getAllWorkflows(compoundWorkflows);
@@ -995,6 +1005,7 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
             org.w3c.dom.Node docDomNode = exportDom(exportParameters);
             sd.setRecipientsRegNr(recipientsRegNr);
             sd.setRecipientDocNode(docDomNode);
+            sd.setTextContent(recipientMessage);
             String dvkId = sendExternalReviewWorkflowData(content, sd);
             for (Task externalReviewTask : externalReviewTasks) {
                 if (!excludedNodeRefs.contains(externalReviewTask.getParent().getNode().getNodeRef())

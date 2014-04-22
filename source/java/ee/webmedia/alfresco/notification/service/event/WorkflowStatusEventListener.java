@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.notification.service.event;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -16,7 +17,9 @@ import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
 import org.alfresco.repo.transaction.RetryingTransactionHelper;
 import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.namespace.QName;
 import org.alfresco.service.transaction.TransactionService;
+import org.alfresco.util.Pair;
 import org.alfresco.web.app.servlet.FacesHelper;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.InitializingBean;
@@ -24,6 +27,7 @@ import org.springframework.beans.factory.InitializingBean;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.file.service.FileService;
+import ee.webmedia.alfresco.document.sendout.service.SendOutService;
 import ee.webmedia.alfresco.log.model.LogEntry;
 import ee.webmedia.alfresco.log.model.LogObject;
 import ee.webmedia.alfresco.log.service.LogService;
@@ -34,6 +38,7 @@ import ee.webmedia.alfresco.privilege.service.PrivilegeUtil;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.workflow.model.Status;
+import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 import ee.webmedia.alfresco.workflow.service.BaseWorkflowObject;
 import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
 import ee.webmedia.alfresco.workflow.service.Task;
@@ -56,6 +61,8 @@ public class WorkflowStatusEventListener implements WorkflowMultiEventListener, 
     private PrivilegeService privilegeService;
     private FileService fileService;
     private TransactionService transactionService;
+
+    private final Set<Task> tasksToFinish = new HashSet<Task>();
 
     @Override
     public void afterPropertiesSet() throws Exception {
@@ -119,13 +126,50 @@ public class WorkflowStatusEventListener implements WorkflowMultiEventListener, 
             LOG.error("Error setting permissions to document, continuing with notification e-mails", e);
         }
         if (sendNotifications) {
-            txHelper.doInTransaction(new RetryingTransactionCallback<Void>() {
-                @Override
-                public Void execute() throws Throwable {
-                    handleNotifications(events, initiatingTask, groupAssignmentTasksFinishedAutomatically);
-                    return null;
+            try {
+                final Map<NodeRef, List<Map<QName, Serializable>>> docSendInfos = txHelper.doInTransaction(
+                        new RetryingTransactionCallback<Map<NodeRef, List<Map<QName, Serializable>>>>() {
+                            @Override
+                            public Map<NodeRef, List<Map<QName, Serializable>>> execute() throws Throwable {
+                                return handleNotifications(events, initiatingTask, groupAssignmentTasksFinishedAutomatically);
+                            }
+                        }, false, true);
+                if (!docSendInfos.isEmpty()) {
+                    txHelper.doInTransaction(new RetryingTransactionCallback<Void>() {
+                        @Override
+                        public Void execute() throws Throwable {
+                            SendOutService sendOutService = BeanHelper.getSendOutService();
+                            for (Entry<NodeRef, List<Map<QName, Serializable>>> entry : docSendInfos.entrySet()) {
+                                NodeRef docRef = entry.getKey();
+                                for (Map<QName, Serializable> props : entry.getValue()) {
+                                    sendOutService.addSendinfo(docRef, props, false);
+                                }
+                                sendOutService.updateSearchableSendInfo(docRef);
+                            }
+                            return null;
+                        }
+                    }, false, true);
                 }
-            }, false, true);
+            } catch (Exception e) {
+                LOG.error("Error sending notifications or updating documents", e);
+            }
+        }
+        if (!tasksToFinish.isEmpty()) {
+            try {
+                for (final Task task : tasksToFinish) {
+                    task.setAction(Task.Action.FINISH);
+                }
+                final CompoundWorkflow compoundWorkflow = tasksToFinish.iterator().next().getParent().getParent();
+                txHelper.doInTransaction(new RetryingTransactionCallback<Void>() {
+                    @Override
+                    public Void execute() throws Throwable {
+                        workflowService.saveCompoundWorkflow(compoundWorkflow);
+                        return null;
+                    }
+                }, false, true);
+            } finally {
+                tasksToFinish.clear();
+            }
         }
         return null;
     }
@@ -187,7 +231,9 @@ public class WorkflowStatusEventListener implements WorkflowMultiEventListener, 
         return;
     }
 
-    private void handleNotifications(final List<WorkflowEvent> events, final Task initiatingTask, List<NodeRef> groupAssignmentTasksFinishedAutomatically) {
+    private Map<NodeRef, List<Map<QName, Serializable>>> handleNotifications(final List<WorkflowEvent> events, final Task initiatingTask,
+            List<NodeRef> groupAssignmentTasksFinishedAutomatically) {
+        Map<NodeRef, List<Map<QName, Serializable>>> docSendInfos = new HashMap<NodeRef, List<Map<QName, Serializable>>>();
         for (WorkflowEvent event : events) {
             BaseWorkflowObject object = event.getObject();
             if (object instanceof CompoundWorkflow) {
@@ -195,9 +241,19 @@ public class WorkflowStatusEventListener implements WorkflowMultiEventListener, 
             } else if (object instanceof Workflow) {
                 handleWorkflowNotifications(event);
             } else if (object instanceof Task) {
-                handleTaskNotifications(event, groupAssignmentTasksFinishedAutomatically, initiatingTask);
+                Pair<NodeRef, List<Map<QName, Serializable>>> docRefAndSendInfoProps = handleTaskNotifications(event, groupAssignmentTasksFinishedAutomatically, initiatingTask);
+                if (docRefAndSendInfoProps != null) {
+                    NodeRef nodeRef = docRefAndSendInfoProps.getFirst();
+                    List<Map<QName, Serializable>> props = docRefAndSendInfoProps.getSecond();
+                    if (docSendInfos.containsKey(nodeRef)) {
+                        docSendInfos.get(nodeRef).addAll(props);
+                    } else {
+                        docSendInfos.put(nodeRef, props);
+                    }
+                }
             }
         }
+        return docSendInfos;
     }
 
     private void refreshMenuTaskCount() {
@@ -210,19 +266,30 @@ public class WorkflowStatusEventListener implements WorkflowMultiEventListener, 
         }
     }
 
-    private void handleTaskNotifications(WorkflowEvent event, List<NodeRef> groupAssignmentTasksFinishedAutomatically, Task orderAssignmentFinishTriggeringTask) {
-        Task task = (Task) event.getObject();
+    private Pair<NodeRef, List<Map<QName, Serializable>>> handleTaskNotifications(WorkflowEvent event, List<NodeRef> groupAssignmentTasksFinishedAutomatically,
+            Task orderAssignmentFinishTriggeringTask) {
+        final Task task = (Task) event.getObject();
+        Pair<NodeRef, List<Map<QName, Serializable>>> docRefAndSendInfoProps = null;
         if (event.getType().equals(WorkflowEventType.STATUS_CHANGED)) {
             if (!task.isStatus(Status.UNFINISHED)) {
-                boolean isGroupAssignmentTaskFinishedAutomatically = groupAssignmentTasksFinishedAutomatically != null
-                        && groupAssignmentTasksFinishedAutomatically.contains(task.getNodeRef());
-                notificationService.notifyTaskEvent(task, isGroupAssignmentTaskFinishedAutomatically, orderAssignmentFinishTriggeringTask);
+                docRefAndSendInfoProps = BeanHelper.getDvkService().sendTaskNotificationDocument(task);
+                boolean sentOverDvk = docRefAndSendInfoProps != null;
+                if (!sentOverDvk) {
+                    boolean isGroupAssignmentTaskFinishedAutomatically = groupAssignmentTasksFinishedAutomatically != null
+                            && groupAssignmentTasksFinishedAutomatically.contains(task.getNodeRef());
+                    docRefAndSendInfoProps = notificationService
+                            .notifyTaskEvent(task, isGroupAssignmentTaskFinishedAutomatically, orderAssignmentFinishTriggeringTask, sentOverDvk);
+                }
+                if (docRefAndSendInfoProps != null && task.isType(WorkflowSpecificModel.Types.INFORMATION_TASK) && task.isStatus(Status.IN_PROGRESS)
+                        && task.getOwnerId() == null) {
+                    tasksToFinish.add(task);
+                }
             } else {
                 boolean cancelledManually = event.getExtras() != null && event.getExtras().contains(WorkflowQueueParameter.WORKFLOW_CANCELLED_MANUALLY);
                 notificationService.notifyTaskUnfinishedEvent(task, cancelledManually);
             }
         }
-
+        return docRefAndSendInfoProps;
     }
 
     private void handleWorkflowNotifications(WorkflowEvent event) {

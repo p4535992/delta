@@ -90,6 +90,7 @@ import ee.webmedia.alfresco.document.register.model.RegNrHolder;
 import ee.webmedia.alfresco.document.sendout.service.SendOutService;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.document.service.DocumentService.AssocType;
+import ee.webmedia.alfresco.functions.model.FunctionsModel;
 import ee.webmedia.alfresco.log.model.LogEntry;
 import ee.webmedia.alfresco.log.model.LogObject;
 import ee.webmedia.alfresco.postipoiss.PostipoissDocumentsMapper.ConvertException;
@@ -918,6 +919,8 @@ public class PostipoissDocumentsImporter {
             Date regDateTime = (Date) props.get(DocumentCommonModel.Props.REG_DATE_TIME);
             if (regDateTime != null && regDateTime.before(publishToAdrWithFilesStartingFromDate)) {
                 props.put(DocumentDynamicModel.Props.PUBLISH_TO_ADR, PublishToAdr.REQUEST_FOR_INFORMATION.getValueName());
+            } else {
+                props.put(DocumentDynamicModel.Props.PUBLISH_TO_ADR, PublishToAdr.NOT_TO_ADR.getValueName());
             }
         }
 
@@ -1631,6 +1634,14 @@ public class PostipoissDocumentsImporter {
             parentRefs = documentService.getDocumentParents(documentRef);
             parentRefsByVolumeRef.put(parentRef, parentRefs);
         }
+        NodeRef functionRef = parentRefs.get(DocumentCommonModel.Props.FUNCTION);
+        if (functionRef != null) {
+            String functionTitle = (String) nodeService.getProperty(functionRef, FunctionsModel.Props.TITLE);
+            if ("Raamatupidamine".equalsIgnoreCase(functionTitle)) {
+                propsMap.put(DocumentDynamicModel.Props.PUBLISH_TO_ADR, PublishToAdr.NOT_TO_ADR.getValueName());
+            }
+        }
+
         propsMap.putAll(parentRefs);
 
         String recipient = getRecipient(type, propsMap); // call before checkProps, because checkProps transforms multi-valued values to Lists-s
