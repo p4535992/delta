@@ -169,6 +169,50 @@ public class Document extends Node implements Comparable<Document>, CssStylable,
         }
         return getAllRecipients();
     }
+    
+    /**
+     * Method to implement following requirement (Lisa PPA_DHSi väikearendus tellimus-pakkumuse kokkuleppele nr 2012/1):
+     * 6. Kõigis nimekirjades Delta’s, kuhu on kaasatud veerg Saatja nimega või (Lisa)adressaadi nimega, tuleb lisada täiendavad reeglid:
+     * b. Kui (Lisa)adressaadi nimi (recipientName, additionalRecipientName) on väärtustamata, siis kuvatakse (Lisa)adressaadi kontaktisiku/eraisiku nimi (recipientPersonName,
+     * additionalRecipientPersonName)
+     * 
+     * @return
+     */
+    public String getAllRecipientsAsNameOrPerson() {
+        lazyInit();
+
+        StringBuilder result = new StringBuilder();
+        result = TextUtil.joinCompanyOrPerson(
+                result,
+                getProperties().get(DocumentCommonModel.Props.RECIPIENT_NAME),
+                getProperties().get(DocumentCommonModel.Props.RECIPIENT_PERSON_NAME));
+        result = TextUtil.joinCompanyOrPerson(
+                result,
+                getProperties().get(DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME),
+                getProperties().get(DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_PERSON_NAME));
+
+        return result.toString();
+
+    }
+	
+	/**
+	* 
+	* @return
+	*/
+	// TODO: Vaja tuvastada, milleks see meetod on 3.6.21 versioonis
+
+    public String getSenderOrRecipientsAsNameOrPerson() {
+        String docDynType = objectTypeId();
+        if (SystematicDocumentType.INCOMING_LETTER.isSameType(docDynType)) {
+            return TextUtil.joinCompanyOrPerson(
+                    new StringBuilder(),
+                    getProperties().get(DocumentSpecificModel.Props.SENDER_DETAILS_NAME),
+                    getProperties().get(DocumentSpecificModel.Props.SENDER_DETAILS_PERSON_NAME)).toString();
+        } else if (SystematicDocumentType.INVOICE.isSameType(docDynType)) {
+            return (String) getProperties().get(DocumentSpecificModel.Props.SELLER_PARTY_NAME);
+        }
+        return getAllRecipients();
+    }
 
     // BEGIN properties collected from child nodes
     @SuppressWarnings("unchecked")

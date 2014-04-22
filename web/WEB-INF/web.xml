@@ -768,8 +768,17 @@
       <servlet-class>ee.webmedia.alfresco.help.web.HelpTextServlet</servlet-class>
    </servlet>
 
+   <servlet>
+      <servlet-name>EHCacheJsonReporter</servlet-name>
+      <servlet-class>org.alfresco.web.app.servlet.EHCacheJsonReporter</servlet-class>
+   </servlet>
    <!-- ========== Servlet mappings ========== -->
 
+   <servlet-mapping>
+      <servlet-name>EHCacheJsonReporter</servlet-name>
+      <url-pattern>/EHCacheJsonReporter</url-pattern>
+   </servlet-mapping>
+   
    <servlet-mapping>
       <servlet-name>uploadFile</servlet-name>
       <url-pattern>/uploadFileServlet</url-pattern>

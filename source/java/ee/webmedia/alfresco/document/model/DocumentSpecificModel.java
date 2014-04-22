@@ -214,6 +214,7 @@ public interface DocumentSpecificModel {
         QName SENDER_REG_DATE = QName.createQName(URI, "senderRegDate");
 
         QName SENDER_DETAILS_NAME = QName.createQName(URI, "senderName");
+        QName SENDER_DETAILS_PERSON_NAME = QName.createQName(URI, "senderPersonName");
         QName SENDER_DETAILS_EMAIL = QName.createQName(URI, "senderEmail");
 
         QName WHOM_NAME = QName.createQName(URI, "whomName");

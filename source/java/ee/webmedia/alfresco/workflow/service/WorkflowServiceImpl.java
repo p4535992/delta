@@ -2404,6 +2404,12 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         extensionTask.setOwnerName(creatorName);
         extensionTask.setOwnerId(StringUtils.isBlank(dueDateExtenderUsername) ? initiatingTask.getCreatorId() : dueDateExtenderUsername);
         extensionTask.setOwnerEmail(initiatingTask.getCreatorEmail()); // updater
+        
+        // -- Allar Allas, 20.07.2012
+        extensionTask.setOwnerJobTitle(initiatingTask.getOwnerJobTitle());
+        extensionTask.setOwnerOrgStructUnitProp(initiatingTask.getOwnerOrgStructUnitProp());
+        // -------------------------
+        
         Map<QName, Serializable> creatorProps = userService.getUserProperties(initiatingTask.getCreatorId());
         if (creatorProps != null) {
             extensionTask.setOwnerJobTitle((String) creatorProps.get(ContentModel.PROP_JOBTITLE));
