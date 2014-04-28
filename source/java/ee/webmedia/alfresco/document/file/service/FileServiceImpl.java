@@ -216,7 +216,7 @@ public class FileServiceImpl implements FileService {
         if (activeFilesOnly && CollectionUtils.isNotEmpty(fileRefs)) {
             List<NodeRef> activeFileRefs = new ArrayList<NodeRef>(fileRefs.size());
             for (NodeRef fileRef : fileRefs) {
-                if (Boolean.TRUE.equals(nodeService.getProperty(fileRef, FileModel.Props.ACTIVE)) && nodeService.getProperty(fileRef, DvkModel.Props.DVK_ID) == null) {
+                if (!Boolean.FALSE.equals(nodeService.getProperty(fileRef, FileModel.Props.ACTIVE)) && nodeService.getProperty(fileRef, DvkModel.Props.DVK_ID) == null) {
                     activeFileRefs.add(fileRef);
                 }
             }

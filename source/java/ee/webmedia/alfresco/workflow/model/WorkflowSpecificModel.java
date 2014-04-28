@@ -126,6 +126,7 @@ public interface WorkflowSpecificModel {
         QName ORIGINAL_DVK_ID = QName.createQName(URI, "originalDvkId");
         QName SEND_STATUS = QName.createQName(URI, "sendStatus");
         QName SEND_DATE_TIME = QName.createQName(URI, "sendDateTime");
+        QName RECEIVED_DATE_TIME = QName.createQName(URI, "receivedDateTime");
         QName CATEGORY = QName.createQName(URI, "category");
         QName CREATOR_ID = QName.createQName(URI, "creatorId");
         QName CREATOR_EMAIL = QName.createQName(URI, "creatorEmail");

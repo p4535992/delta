@@ -39,7 +39,7 @@
          <f:facet name="header">
             <a:sortLink id="col4-header" label="#{msg.document_send_status}" value="sendStatus" styleClass="header" />
          </f:facet>
-         <h:outputText id="col4-txt" value="#{r.sendStatus}" />
+         <h:outputText id="col4-txt" value="#{r.sendStatusWithReceivedDateTime}" />
       </a:column>
       
       <a:column id="col4-1">

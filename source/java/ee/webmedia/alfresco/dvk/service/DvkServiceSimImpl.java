@@ -232,7 +232,7 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
                 Map<QName, Serializable> propsToUpdate = new HashMap<QName, Serializable>();
                 propsToUpdate.put(propToSet, status.toString());
                 if (status.equals(SendStatus.RECEIVED) && receivedDateTime != null) {
-                    propsToUpdate.put(isDocSendInfo ? DocumentCommonModel.Props.SEND_INFO_SEND_STATUS : WorkflowSpecificModel.Props.SEND_DATE_TIME, receivedDateTime);
+                    propsToUpdate.put(isDocSendInfo ? DocumentCommonModel.Props.SEND_INFO_RECEIVED_DATE_TIME : WorkflowSpecificModel.Props.RECEIVED_DATE_TIME, receivedDateTime);
                 }
                 if (isDocSendInfo) {
                     nodeService.addProperties(sendInfoRef, propsToUpdate);

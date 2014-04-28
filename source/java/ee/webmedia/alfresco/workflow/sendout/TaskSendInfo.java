@@ -10,7 +10,7 @@ import ee.webmedia.alfresco.classificator.enums.SendMode;
 import ee.webmedia.alfresco.document.sendout.model.SendInfo;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 
-public class TaskSendInfo implements Serializable, SendInfo {
+public class TaskSendInfo extends SendInfo implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -49,6 +49,11 @@ public class TaskSendInfo implements Serializable, SendInfo {
     @Override
     public String getResolution() {
         return (String) node.getProperties().get(WorkflowSpecificModel.Props.RESOLUTION);
+    }
+
+    @Override
+    public String getReceivedDateTime() {
+        return getFormattedDate(WorkflowSpecificModel.Props.RECEIVED_DATE_TIME);
     }
 
     @Override

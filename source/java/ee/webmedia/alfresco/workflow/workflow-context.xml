@@ -307,7 +307,19 @@
          </list>
       </property>      
    </bean>
-
+   
+   <bean id="taskTableAddColumnBootstrap12" parent="executeStatementsBootstrap" >
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dataSource" ref="dataSource" />
+      <property name="resourceName" value="ee/webmedia/alfresco/workflow/bootstrap/delta_task_table_add_columns7.sql" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="taskTableBootstrap3" />
+         </list>
+      </property>
+   </bean>
+   
    <bean id="taskDueDateHistoryTableAddColumnBootstrap" parent="executeStatementsBootstrap" >
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
