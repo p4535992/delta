@@ -9,6 +9,7 @@ import java.util.Map;
 
 import javax.faces.context.FacesContext;
 
+import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.StringUtils;
@@ -17,6 +18,7 @@ import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel.Types;
 import ee.webmedia.alfresco.addressbook.service.AddressbookEntry;
 import ee.webmedia.alfresco.addressbook.util.AddressbookUtil;
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
 public class AddressbookListDialog extends BaseDialogBean {
@@ -60,6 +62,10 @@ public class AddressbookListDialog extends BaseDialogBean {
         return MessageUtil.getMessage(FacesContext.getCurrentInstance(), "back_button");
     }
 
+    public boolean isShowAction(){
+        return BeanHelper.getUserService().isDocumentManager();
+    }
+    
     /**
      * Action handler to show all the entries currently in the system
      * 

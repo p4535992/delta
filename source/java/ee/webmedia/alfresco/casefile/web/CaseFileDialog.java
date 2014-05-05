@@ -7,7 +7,6 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDialogHelper
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDynamicService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentLockHelperBean;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getNotificationService;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getPrivilegeService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getPropertySheetStateBean;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getSendOutService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
@@ -75,6 +74,7 @@ import ee.webmedia.alfresco.document.web.DocumentListDialog;
 import ee.webmedia.alfresco.document.web.FavoritesModalComponent;
 import ee.webmedia.alfresco.document.web.FavoritesModalComponent.AddToFavoritesEvent;
 import ee.webmedia.alfresco.document.web.evaluator.IsOwnerEvaluator;
+import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.privilege.service.PrivilegeUtil;
 import ee.webmedia.alfresco.user.model.UserModel;
 import ee.webmedia.alfresco.utils.ActionUtil;
@@ -499,9 +499,10 @@ public class CaseFileDialog extends BaseSnapshotCapableWithBlocksDialog<CaseFile
     }
 
     public boolean isWorkflowCreatable() {
+        WmNode caseFileNode = getNode();
         return getCaseFile().isStatus(DocListUnitStatus.OPEN)
-                && (isAdminOrDocmanagerWithPermission(getNode(), DocumentCommonModel.Privileges.VIEW_CASE_FILE) || new IsOwnerEvaluator().evaluate(getNode()) || getPrivilegeService()
-                        .hasPermissions(getNode().getNodeRef(), DocumentCommonModel.Privileges.EDIT_CASE_FILE));
+                && (isAdminOrDocmanagerWithPermission(caseFileNode, Privilege.VIEW_CASE_FILE) || new IsOwnerEvaluator().evaluate(caseFileNode)
+                || caseFileNode.hasPermission(Privilege.EDIT_CASE_FILE));
     }
 
     @Override
@@ -785,7 +786,7 @@ public class CaseFileDialog extends BaseSnapshotCapableWithBlocksDialog<CaseFile
         NodeRef nodeRef = node.getNodeRef();
         final String currentUser = AuthenticationUtil.getRunAsUser();
         return currentUser.equals(node.getProperties().get(DocumentCommonModel.Props.OWNER_ID))
-                || PrivilegeUtil.isAdminOrDocmanagerWithPermission(nodeRef, DocumentCommonModel.Privileges.VIEW_CASE_FILE)
+                || PrivilegeUtil.isAdminOrDocmanagerWithPermission(nodeRef, Privilege.VIEW_CASE_FILE)
                 || CollectionUtils.exists(BeanHelper.getWorkflowService().getTasksInProgress(nodeRef), new Predicate() {
 
                     @Override
@@ -831,10 +832,10 @@ public class CaseFileDialog extends BaseSnapshotCapableWithBlocksDialog<CaseFile
             MessageUtil.addErrorMessage("caseFile_open_error_wrong_status", DocListUnitStatus.OPEN.getValueName(), DocListUnitStatus.CLOSED.getValueName());
         }
         return !inEditMode
-                && validatePermissionWithErrorMessage(caseFile.getNodeRef(), DocumentCommonModel.Privileges.VIEW_CASE_FILE)
+                && validatePermissionWithErrorMessage(caseFile.getNodeRef(), Privilege.VIEW_CASE_FILE)
                 || inEditMode
                 && getDocumentLockHelperBean().isLockable(caseFile.getNodeRef())
-                && (isOpen && validatePermissionWithErrorMessage(caseFile.getNodeRef(), DocumentCommonModel.Privileges.EDIT_CASE_FILE) || isClosed
+                && (isOpen && validatePermissionWithErrorMessage(caseFile.getNodeRef(), Privilege.EDIT_CASE_FILE) || isClosed
                         && getUserService().isAdministrator());
     }
 }

@@ -2,6 +2,7 @@ package ee.webmedia.alfresco.workflow.service;
 
 import static ee.webmedia.alfresco.common.search.DbSearchUtil.TASK_TYPE_FIELD;
 import static ee.webmedia.alfresco.common.search.DbSearchUtil.getDbFieldNameFromPropQName;
+import static ee.webmedia.alfresco.common.search.DbSearchUtil.getQuestionMarks;
 import static ee.webmedia.alfresco.utils.RepoUtil.isSaved;
 import static ee.webmedia.alfresco.workflow.service.Task.INITIATING_COMPOUND_WORKFLOW_REF;
 import static ee.webmedia.alfresco.workflow.service.Task.INITIATING_COMPOUND_WORKFLOW_TITLE;
@@ -313,12 +314,6 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
 
     private String getArgumentQuestionMarks(List<String> fieldNames) {
         return getQuestionMarks(fieldNames.size());
-    }
-
-    private String getQuestionMarks(int size) {
-        String questionMarks = StringUtils.repeat("?, ", size);
-        questionMarks = questionMarks.substring(0, questionMarks.length() - 2);
-        return questionMarks;
     }
 
     private void verifyTask(Task task, NodeRef workflowRef) {

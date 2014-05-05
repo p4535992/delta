@@ -85,6 +85,7 @@ import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.classificator.enums.StorageType;
 import ee.webmedia.alfresco.classificator.enums.TransmittalMode;
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docconfig.bootstrap.SystematicDocumentType;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamicService;
 import ee.webmedia.alfresco.document.einvoice.service.EInvoiceService;
@@ -104,6 +105,7 @@ import ee.webmedia.alfresco.imap.PermissionDeniedAppendBehaviour;
 import ee.webmedia.alfresco.imap.SendFailureAppendBehaviour;
 import ee.webmedia.alfresco.imap.SentFolderAppendBehaviour;
 import ee.webmedia.alfresco.imap.model.ImapModel;
+import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.FilenameUtil;
 
@@ -349,12 +351,14 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
         if (StringUtils.isNotBlank(behaviour)) {
             props.put(ImapModel.Properties.APPEND_BEHAVIOUR, behaviour);
         }
-        return nodeService.createNode(parentFolderNodeRef, ContentModel.ASSOC_CONTAINS, assocName, ImapModel.Types.IMAP_FOLDER, props).getChildRef();
+        NodeRef folderRef = nodeService.createNode(parentFolderNodeRef, ContentModel.ASSOC_CONTAINS, assocName, ImapModel.Types.IMAP_FOLDER, props).getChildRef();
+        BeanHelper.getPrivilegeService().setPermissions(folderRef, UserService.AUTH_DOCUMENT_MANAGERS_GROUP, Privilege.EDIT_DOCUMENT);
+        return folderRef;
     }
 
     @Override
     public void saveAttachmentsToSubfolder(NodeRef document, MimeMessage originalMessage, boolean saveBody) throws IOException, MessagingException, TransformationException,
-            FolderException {
+    FolderException {
         NodeRef parentNodeRef = findOrCreateFolder(document, AttachmentsFolderAppendBehaviour.BEHAVIOUR_NAME);
         saveAttachments(parentNodeRef, originalMessage, saveBody);
     }
@@ -366,7 +370,7 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
     }
 
     private void saveAttachments(NodeRef document, MimeMessage originalMessage, boolean saveBody, Map<NodeRef, Integer> invoiceRefToAttachment) throws IOException,
-            MessagingException {
+    MessagingException {
 
         Object content = originalMessage.getContent();
         Part tnefPart = getTnefPart(content);
@@ -569,7 +573,7 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
     }
 
     private void saveAttachments(NodeRef document, Object content, List<Part> attachments, Map<NodeRef, Integer> invoiceRefToAttachment, Part tnefPart) throws MessagingException,
-            IOException {
+    IOException {
         if (content instanceof Multipart) {
             Multipart multipart = (Multipart) content;
 
@@ -684,7 +688,7 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
             mimeType = mimetypeService.guessMimetype(part.getFileName());
             if (log.isDebugEnabled() && !StringUtils.equals(oldMimetype, mimeType)) {
                 log.debug("Original mimetype '" + oldMimetype + "', but we are guessing mimetype based on filename '" + part.getFileName() + "' => '"
-                            + mimeType + "'");
+                        + mimeType + "'");
             }
         } else if (StringUtils.isBlank(mimeType)) {
             // If mime-type parsing from contentType failed and overrideFilename is used, then use binary mime type
@@ -777,9 +781,16 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
             return p;
         }
 
+        Object content = p.getContent();
+        Multipart mp;
+        if (content instanceof Multipart) {
+            mp = (Multipart) content;
+        } else {
+            return null;
+        }
+
         if (p.isMimeType("multipart/alternative")) {
             // prefer html text over plain text
-            Multipart mp = (Multipart) p.getContent();
             Part text = null;
             for (int i = 0; i < mp.getCount(); i++) {
                 Part bp = mp.getBodyPart(i);
@@ -799,7 +810,6 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
             }
             return text;
         } else if (p.isMimeType("multipart/*")) {
-            Multipart mp = (Multipart) p.getContent();
             for (int i = 0; i < mp.getCount(); i++) {
                 Part s = getText(mp.getBodyPart(i));
                 if (s != null) {

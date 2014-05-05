@@ -37,13 +37,15 @@
    <bean id="privilegeService" class="ee.webmedia.alfresco.privilege.service.PrivilegeServiceImpl">
       <property name="userService" ref="UserService" />
       <property name="authorityService" ref="AuthorityService" />
-      <property name="permissionService" ref="PermissionService" />
       <property name="nodeService" ref="NodeService" />
-      <property name="applicationService" ref="ApplicationService" />
       <property name="logService" ref="LogService" />
       <property name="generalService" ref="GeneralService" />
       <property name="indexerAndSearcher" ref="admLuceneIndexerAndSearcherFactory" />
-      <property name="privilegeActionsEnabled" value="${jobs.enabled}" />
+      <property name="jdbcTemplate">
+         <bean class="org.springframework.jdbc.core.simple.SimpleJdbcTemplate">
+            <constructor-arg ref="dataSource" />
+         </bean>
+      </property>      
    </bean>
 
    <bean id="PrivilegeService" class="org.springframework.aop.framework.ProxyFactoryBean">
@@ -66,64 +68,45 @@
       <property name="dataSource" ref="dataSource" />
    </bean>   
    
-   <bean id="fixAclInheritanceUpdater2" class="ee.webmedia.alfresco.privilege.bootstrap.FixAclInheritanceUpdater" parent="module.baseComponent">
-      <property name="moduleId" value="simdhs" />
+   <bean id="createDeltaPermissionTablesBootstrap" parent="executeStatementsBootstrap" >
+      <property name="moduleId" value="common" />
       <property name="executeOnceOnly" value="true" />
+      <property name="dataSource" ref="dataSource" />
+      <property name="resourceName" value="ee/webmedia/alfresco/privilege/bootstrap/delta_node_permission_tables.sql" />
+   </bean>
+   
+   <bean id="insertDeltaPermissionsBootstrap" class="ee.webmedia.alfresco.privilege.bootstrap.InsertDeltaPermissionsBootstrap" parent="executeStatementsBootstrap" >
+      <property name="moduleId" value="common" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="resourceName" value="ee/webmedia/alfresco/privilege/bootstrap/delta_node_permission_insert.sql" />
       <property name="jdbcTemplate">
          <bean class="org.springframework.jdbc.core.simple.SimpleJdbcTemplate">
             <constructor-arg ref="dataSource" />
          </bean>
-      </property>
-      <property name="aclDaoComponent" ref="aclDaoComponent" />
-      <property name="accessControlListDao" ref="accessControlListDAO" />
-   </bean>
-
-   <!-- This updater is here for testing application state after migrating documents from static to dynamic. Remove if not needed. -->   
-   <bean id="fixAclInheritanceUpdater3" class="ee.webmedia.alfresco.privilege.bootstrap.FixAclInheritanceUpdater" parent="module.baseComponent">
-      <property name="moduleId" value="simdhs" />
-      <property name="executeOnceOnly" value="false" />
-      <property name="enabled" value="${updater.version25To313.enabled}" />
+      </property> 
       <property name="dependsOn">
          <list>
-            <ref bean="deleteNodesAfterConvertToDynamicDocumentUpdater" />
-            <ref bean="removeAspectsAfterConvertToDynamicDocumentUpdater" />
+            <ref bean="createDeltaPermissionTablesBootstrap" />
          </list>
-      </property>
+      </property> 
+   </bean>
+   
+   <bean id="dropAlfrescoPermissionTablesBootstrap" class="ee.webmedia.alfresco.privilege.bootstrap.DeleteAlfrescoPermissionTablesBootstrap" parent="executeStatementsBootstrap" >
+      <property name="moduleId" value="common" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dataSource" ref="dataSource" />
+      <property name="resourceName" value="ee/webmedia/alfresco/privilege/bootstrap/drop_alfresco_permission_tables.sql" />
       <property name="jdbcTemplate">
          <bean class="org.springframework.jdbc.core.simple.SimpleJdbcTemplate">
             <constructor-arg ref="dataSource" />
          </bean>
-      </property>
-      <property name="aclDaoComponent" ref="aclDaoComponent" />
-      <property name="accessControlListDao" ref="accessControlListDAO" />
-   </bean>
-
-   <bean id="privilegeActionsQueueBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
-      <property name="moduleId" value="simdhs" />
-      <property name="executeOnceOnly" value="true" />
-      <property name="importer" ref="spacesBootstrap" />
-      <property name="bootstrapViews">
+      </property>       
+      <property name="dependsOn">
          <list>
-            <props>
-               <prop key="encoding">UTF-8</prop>
-               <prop key="path">/</prop>
-               <prop key="location">ee/webmedia/alfresco/privilege/bootstrap/privilegeActionsQueue.xml</prop>
-            </props>
+            <ref bean="insertDeltaPermissionsBootstrap" />
          </list>
-      </property>
-   </bean>    
-
-   <bean id="executePrivilegeActionsTrigger" class="org.alfresco.util.TriggerBean" >
-      <property name="enabled" value="${jobs.enabled}" />
-      <property name="repeatIntervalMinutes" value="1" />
-      <property name="startDelayMinutes" value="3" />
-      <property name="scheduler" ref="schedulerFactory" />
-      <property name="jobDetail">
-         <bean id="executePrivilegeActionsJobDetails" class="org.springframework.scheduling.quartz.JobDetailBean">
-            <property name="jobClass" value="ee.webmedia.alfresco.privilege.job.ExecutePrivilegeActionsJob" />
-         </bean>
-      </property>
-   </bean> 
+      </property>      
+   </bean>
 
    <!-- START: web beans: -->
 

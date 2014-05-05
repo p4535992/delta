@@ -2,14 +2,10 @@ package ee.webmedia.mobile.alfresco.util;
 
 import java.util.Arrays;
 
-import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.web.ui.repo.component.evaluator.PermissionEvaluator;
 import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Component;
 
 import ee.webmedia.alfresco.app.AppConstants;
-import ee.webmedia.alfresco.common.web.BeanHelper;
-import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 
 @Component
 public class Util {
@@ -38,13 +34,4 @@ public class Util {
         return messages.getMessage(translationKey, placeholderValues, AppConstants.getDefaultLocale());
     }
 
-    public static boolean documentAllowPermission(NodeRef nodeRef, String allowPermission) {
-        return PermissionEvaluator.evaluatePermissions(true, BeanHelper.getGeneralService().getAncestorNodeRefWithType(nodeRef, DocumentCommonModel.Types.DOCUMENT, true, false),
-                new String[] { allowPermission }, new String[0]);
-    }
-
-    public static boolean documentDenyPermission(NodeRef nodeRef, String denyPermission) {
-        return PermissionEvaluator.evaluatePermissions(true, BeanHelper.getGeneralService().getAncestorNodeRefWithType(nodeRef, DocumentCommonModel.Types.DOCUMENT, true, false),
-                new String[0], new String[] { denyPermission });
-    }
 }

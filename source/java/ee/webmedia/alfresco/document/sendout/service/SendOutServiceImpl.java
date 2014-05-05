@@ -38,6 +38,7 @@ import ee.webmedia.alfresco.email.service.EmailException;
 import ee.webmedia.alfresco.email.service.EmailService;
 import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
+import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.privilege.service.PrivilegeService;
 import ee.webmedia.alfresco.signature.model.SkLdapCertificate;
 import ee.webmedia.alfresco.signature.service.SignatureService;
@@ -278,8 +279,8 @@ public class SendOutServiceImpl implements SendOutService {
         PrivilegeService privilegeService = BeanHelper.getPrivilegeService();
         UserService userService = BeanHelper.getUserService();
         NodeRef docRef = docNode.getNodeRef();
-        Set<String> privilegesToAdd = new HashSet<String>(Arrays.asList(DocumentCommonModel.Privileges.VIEW_DOCUMENT_META_DATA,
-                DocumentCommonModel.Privileges.VIEW_DOCUMENT_FILES));
+        Set<Privilege> privilegesToAdd = new HashSet<Privilege>(Arrays.asList(Privilege.VIEW_DOCUMENT_META_DATA,
+                Privilege.VIEW_DOCUMENT_FILES));
         for (String authorityId : authorityIds) {
             Authority authority = userService.getAuthorityOrNull(authorityId);
             if (authority == null) {
@@ -287,8 +288,7 @@ public class SendOutServiceImpl implements SendOutService {
             }
             authorities.add(authority);
             String authorityStr = authority.getAuthority();
-            if (!privilegeService.hasPermissionOnAuthority(docRef, authorityStr, DocumentCommonModel.Privileges.VIEW_DOCUMENT_META_DATA,
-                    DocumentCommonModel.Privileges.VIEW_DOCUMENT_FILES)) {
+            if (!privilegeService.hasPermissionOnAuthority(docRef, authorityStr, Privilege.VIEW_DOCUMENT_META_DATA, Privilege.VIEW_DOCUMENT_FILES)) {
                 privilegeService.setPermissions(docRef, authorityStr, privilegesToAdd);
             }
         }

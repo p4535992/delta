@@ -68,7 +68,6 @@
          </bean>
       </property>
       <property name="useClientIpFromXForwardedForHttpHeader" value="${useClientIpFromXForwardedForHttpHeader}" />
-      <property name="generalService" ref="GeneralService" />
    </bean>
 
    <bean id="LogService" class="org.springframework.aop.framework.ProxyFactoryBean">

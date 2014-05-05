@@ -73,6 +73,8 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import ee.webmedia.alfresco.common.web.BeanHelper;
+
 public class PersonServiceImpl extends TransactionListenerAdapter implements PersonService, NodeServicePolicies.OnCreateNodePolicy, NodeServicePolicies.BeforeDeleteNodePolicy
 {
     private static Log s_logger = LogFactory.getLog(PersonServiceImpl.class);
@@ -722,7 +724,7 @@ public class PersonServiceImpl extends TransactionListenerAdapter implements Per
         }
 
         // remove any user permissions
-        permissionServiceSPI.deletePermissions(userName);
+        BeanHelper.getPrivilegeService().removeAuthorityPermissions(userName);
 
         // delete the person
         NodeRef personNodeRef = getPersonOrNull(userName);
@@ -799,7 +801,6 @@ public class PersonServiceImpl extends TransactionListenerAdapter implements Per
         String username = (String) properties.get(ContentModel.PROP_USERNAME);
         this.personCache.put(username, personRef);
         personPropertiesCache.put(username, properties);
-        permissionsManager.setPermissions(personRef, username, username);
     }
 
     /*

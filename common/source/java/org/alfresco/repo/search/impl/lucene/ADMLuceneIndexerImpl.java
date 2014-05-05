@@ -106,6 +106,7 @@ import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docconfig.service.DocumentConfigService;
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.utils.ClosingTransactionListener;
 import ee.webmedia.alfresco.utils.RepoUtil;
@@ -827,10 +828,9 @@ public class ADMLuceneIndexerImpl extends AbstractLuceneIndexerImpl<NodeRef> imp
                     seriesRef = null;
                 }
                 if (seriesRef == null || Boolean.FALSE.equals(nodeService.getProperty(seriesRef, SeriesModel.Props.DOCUMENTS_VISIBLE_FOR_USERS_WITHOUT_ACCESS))) {
-                    for (AccessPermission permission : BeanHelper.getPermissionService().getAllSetPermissions(nodeRef)) {
-                        if (permission.getAccessStatus() == AccessStatus.ALLOWED && DocumentCommonModel.Privileges.VIEW_DOCUMENT_META_DATA.equals(permission.getPermission())) {
-                            xdoc.add(new Field("DOC_VISIBLE_TO", permission.getAuthority(), Field.Store.NO, Field.Index.NO_NORMS, Field.TermVector.NO));
-                        }
+                    List<String> authorities = BeanHelper.getPrivilegeService().getAuthoritiesWithPrivilege(nodeRef, Privilege.VIEW_DOCUMENT_META_DATA);
+                    for (String authority : authorities) {
+                        xdoc.add(new Field("DOC_VISIBLE_TO", authority, Field.Store.NO, Field.Index.NO_NORMS, Field.TermVector.NO));
                     }
                 }
             }

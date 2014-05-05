@@ -7,7 +7,7 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentSearchServic
 import static ee.webmedia.alfresco.common.web.BeanHelper.getFunctionsService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getGeneralService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getNodeService;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getPermissionService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getPrivilegeService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getRegisterService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getSearchService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getSeriesService;
@@ -41,7 +41,6 @@ import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.search.SearchService;
-import org.alfresco.service.cmr.security.PermissionService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.StringUtils;
@@ -63,12 +62,13 @@ import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
 import ee.webmedia.alfresco.docadmin.service.DocumentTypeVersion;
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
-import ee.webmedia.alfresco.document.model.DocumentCommonModel.Privileges;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
 import ee.webmedia.alfresco.eventplan.model.EventPlanModel;
 import ee.webmedia.alfresco.functions.model.Function;
 import ee.webmedia.alfresco.functions.model.FunctionsModel;
 import ee.webmedia.alfresco.functions.service.FunctionsService;
+import ee.webmedia.alfresco.privilege.model.Privilege;
+import ee.webmedia.alfresco.privilege.service.PrivilegeService;
 import ee.webmedia.alfresco.register.model.Register;
 import ee.webmedia.alfresco.register.model.RegisterModel;
 import ee.webmedia.alfresco.register.service.RegisterService;
@@ -108,7 +108,7 @@ public class StructureImporter {
     private final SeriesService seriesService = getSeriesService();
     private final RegisterService registerService = getRegisterService();
     private final DocumentAdminService documentAdminService = getDocumentAdminService();
-    private final PermissionService permissionService = getPermissionService();
+    private final PrivilegeService privilegeService = getPrivilegeService();
     private final CaseFileService caseFileService = getCaseFileService();
     private final SearchService searchService = getSearchService();
     private final ArchivalsService archivalsService = getArchivalsService();
@@ -376,8 +376,7 @@ public class StructureImporter {
             }
 
             if (StringUtils.isNotEmpty(context.getTaskOwnerStructUnitAuthority())) {
-                permissionService.setPermission(series, context.getTaskOwnerStructUnitAuthority(), Privileges.VIEW_DOCUMENT_META_DATA, true);
-                permissionService.setPermission(series, context.getTaskOwnerStructUnitAuthority(), Privileges.VIEW_DOCUMENT_FILES, true);
+                privilegeService.setPermissions(series, context.getTaskOwnerStructUnitAuthority(), Privilege.VIEW_DOCUMENT_META_DATA, Privilege.VIEW_DOCUMENT_FILES);
             }
         }
 
@@ -419,8 +418,7 @@ public class StructureImporter {
             seriesService.setSeriesDefaultPermissionsOnCreate(series);
 
             if (StringUtils.isNotEmpty(context.getTaskOwnerStructUnitAuthority())) {
-                permissionService.setPermission(series, context.getTaskOwnerStructUnitAuthority(), Privileges.VIEW_DOCUMENT_META_DATA, true);
-                permissionService.setPermission(series, context.getTaskOwnerStructUnitAuthority(), Privileges.VIEW_DOCUMENT_FILES, true);
+                privilegeService.setPermissions(series, context.getTaskOwnerStructUnitAuthority(), Privilege.VIEW_DOCUMENT_META_DATA, Privilege.VIEW_DOCUMENT_FILES);
             }
 
             context.cacheSeries(seriesId + title, series, function);

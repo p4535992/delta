@@ -54,17 +54,15 @@ import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.repository.Path;
 import org.alfresco.service.cmr.repository.datatype.TypeConversionException;
 import org.alfresco.service.cmr.search.SearchService;
-import org.alfresco.service.cmr.security.AccessPermission;
-import org.alfresco.service.cmr.security.AccessStatus;
 import org.alfresco.service.cmr.security.AuthenticationService;
 import org.alfresco.service.cmr.security.PermissionService;
+import org.alfresco.service.cmr.view.ExcludingExporterCrawlerParameters;
 import org.alfresco.service.cmr.view.ExportPackageHandler;
 import org.alfresco.service.cmr.view.Exporter;
 import org.alfresco.service.cmr.view.ExporterContext;
 import org.alfresco.service.cmr.view.ExporterCrawlerParameters;
 import org.alfresco.service.cmr.view.ExporterException;
 import org.alfresco.service.cmr.view.ExporterService;
-import org.alfresco.service.cmr.view.ExcludingExporterCrawlerParameters;
 import org.alfresco.service.cmr.view.ImporterException;
 import org.alfresco.service.cmr.view.Location;
 import org.alfresco.service.cmr.view.ReferenceType;
@@ -460,26 +458,6 @@ public class ExporterComponent
                 }
             }
             exporter.endAspects(nodeRef);
-            
-            // Export node permissions
-            AccessStatus readPermission = permissionService.hasPermission(nodeRef, PermissionService.READ_PERMISSIONS);
-            if (authenticationService.isCurrentUserTheSystemUser() || readPermission.equals(AccessStatus.ALLOWED))
-            {
-                Set<AccessPermission> permissions = permissionService.getAllSetPermissions(nodeRef);
-                boolean inheritPermissions = permissionService.getInheritParentPermissions(nodeRef);
-                if (permissions.size() > 0 || !inheritPermissions)
-                {
-                    exporter.startACL(nodeRef);
-                    for (AccessPermission permission : permissions)
-                    {
-                        if(permission.isSetDirectly())
-                        {
-                            exporter.permission(nodeRef, permission);
-                        }
-                    }
-                    exporter.endACL(nodeRef);
-                }
-            }
             
             // Export node properties
             exporter.startProperties(nodeRef);

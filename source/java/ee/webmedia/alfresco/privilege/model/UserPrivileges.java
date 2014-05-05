@@ -36,14 +36,14 @@ public class UserPrivileges implements Serializable {
     private boolean deleted;
 
     /** privileges added dynamically */
-    private Map<String /* privilege */, String /* reason */> dynamicPrivReasonsCached = new LinkedHashMap<String, String>();
-    private final Map<String /* privilege */, Set<String> /* reason */> dynamicPrivReasons = new LinkedHashMap<String, Set<String>>();
+    private Map<Privilege /* privilege */, String /* reason */> dynamicPrivReasonsCached = new LinkedHashMap<Privilege, String>();
+    private final Map<Privilege /* privilege */, Set<String> /* reason */> dynamicPrivReasons = new LinkedHashMap<Privilege, Set<String>>();
 
     /** static privileges (already saved) */
-    private Set<String> staticPrivilegesBeforeChanges;
+    private Set<Privilege> staticPrivilegesBeforeChanges;
     private String inheritedMsg;
     private String staticMsg;
-    private final Map<String /* privilege */, PrivPosition> positionByPrivilege = new HashMap<String, PrivPosition>();
+    private final Map<Privilege /* privilege */, PrivPosition> positionByPrivilege = new HashMap<Privilege, PrivPosition>();
 
     private final Map<String/* privilege */, Boolean/* active */> privileges = new PrivilegesMap();
 
@@ -53,17 +53,17 @@ public class UserPrivileges implements Serializable {
         @Override
         public Set<Entry<String, Boolean>> entrySet() {
             LinkedHashSet<Entry<String, Boolean>> entrySet = new LinkedHashSet<Entry<String, Boolean>>();
-            Set<Entry<String, PrivPosition>> wrapped = positionByPrivilege.entrySet();
-            for (final Entry<String, PrivPosition> wrappedEntry : wrapped) {
+            Set<Entry<Privilege, PrivPosition>> wrapped = positionByPrivilege.entrySet();
+            for (final Entry<Privilege, PrivPosition> wrappedEntry : wrapped) {
                 entrySet.add(new StaticPermissionModifyingEntry(wrappedEntry));
             }
             return entrySet;
         }
 
         @Override
-        public Boolean put(String privilege, Boolean value) {
+        public Boolean put(String privilegeName, Boolean value) {
             // to be used by JSF when applying request values from checkBoxes of the privileges table
-            PrivPosition privPosition = positionByPrivilege.get(privilege);
+            PrivPosition privPosition = positionByPrivilege.get(Privilege.getPrivilegeByName(privilegeName));
             Boolean oldValue = privPosition.isStatic;
             privPosition.setStatic(value);
             return oldValue;
@@ -80,8 +80,11 @@ public class UserPrivileges implements Serializable {
 
         @Override
         public String get(Object privilege) {
+            if (privilege instanceof String) {
+                privilege = Privilege.getPrivilegeByName((String) privilege);
+            }
             String explanation = getDynamicPrivReasons().get(privilege);
-            PrivPosition privPosition = getOrCreatePrivPosition((String) privilege);
+            PrivPosition privPosition = getOrCreatePrivPosition((Privilege) privilege);
             if (privPosition.isStatic()) {
                 if (staticMsg == null) {
                     staticMsg = MessageUtil.getMessage("manage_permissions_extraInfo_static");
@@ -105,12 +108,19 @@ public class UserPrivileges implements Serializable {
 
         @Override
         public Boolean get(Object privilege) {
-            PrivPosition privPosition = getOrCreatePrivPosition((String) privilege);
+            if (privilege instanceof String) {
+                privilege = Privilege.getPrivilegeByName((String) privilege);
+            }
+            PrivPosition privPosition = getOrCreatePrivPosition((Privilege) privilege);
             return privPosition.isDynamic() || privPosition.isInherited();
         }
     };
 
-    private PrivPosition getOrCreatePrivPosition(String privilege) {
+    public PrivPosition getOrCreatePrivPosition(String privilege) {
+        return getOrCreatePrivPosition(Privilege.getPrivilegeByName(privilege));
+    }
+
+    private PrivPosition getOrCreatePrivPosition(Privilege privilege) {
         PrivPosition privPosition = positionByPrivilege.get(privilege);
         if (privPosition == null) {
             privPosition = new PrivPosition();
@@ -132,7 +142,7 @@ public class UserPrivileges implements Serializable {
         return staticPrivilegesBeforeChanges == null;
     }
 
-    public void addPrivilegeDynamic(String privilege, String reason) {
+    public void addPrivilegeDynamic(Privilege privilege, String reason) {
         PrivPosition privPosition = getOrCreatePrivPosition(privilege);
         privPosition.setDynamic();
 
@@ -146,31 +156,31 @@ public class UserPrivileges implements Serializable {
         }
     }
 
-    public void addPrivilegeInherited(String privToAdd) {
+    public void addPrivilegeInherited(Privilege privToAdd) {
         getOrCreatePrivPosition(privToAdd).setInherited(true);
     }
 
-    public void addPrivilegeStatic(String privToAdd) {
+    public void addPrivilegeStatic(Privilege privToAdd) {
         getOrCreatePrivPosition(privToAdd).setStatic(true);
     }
 
-    public void addPrivilegesStatic(Collection<String> privsToAdd) {
-        for (String privilege : privsToAdd) {
+    public void addPrivilegesStatic(Collection<Privilege> privsToAdd) {
+        for (Privilege privilege : privsToAdd) {
             addPrivilegeStatic(privilege);
         }
     }
 
-    public void deletePrivilegesStatic(Collection<String> privsToDelete) {
-        for (String privilege : privsToDelete) {
+    public void deletePrivilegesStatic(Collection<Privilege> collection) {
+        for (Privilege privilege : collection) {
             getOrCreatePrivPosition(privilege).setStatic(false);
         }
     }
 
-    public Set<String> getPrivilegesToAdd() {
+    public Set<Privilege> getPrivilegesToAdd() {
         if (deleted) {
-            return Collections.<String> emptySet();// don't add any privileges
+            return Collections.<Privilege> emptySet();// don't add any privileges
         }
-        Set<String> privilegesToAdd = getStaticPrivileges();
+        Set<Privilege> privilegesToAdd = getStaticPrivileges();
         if (staticPrivilegesBeforeChanges != null) { // null when authority was added after rendering dialog
             privilegesToAdd.removeAll(staticPrivilegesBeforeChanges);
         }
@@ -184,7 +194,7 @@ public class UserPrivileges implements Serializable {
     }
 
     public void makeInheritedPrivilegesAsStatic() {
-        for (Entry<String, PrivPosition> entry : positionByPrivilege.entrySet()) {
+        for (Entry<Privilege, PrivPosition> entry : positionByPrivilege.entrySet()) {
             PrivPosition position = entry.getValue();
             if (position.isInherited() && !position.isStatic()) {
                 position.setStatic(true);
@@ -193,22 +203,22 @@ public class UserPrivileges implements Serializable {
     }
 
     /** @return set of static privileges (some of them may also be dynamic or inherited) */
-    private Set<String> getStaticPrivileges() {
+    private Set<Privilege> getStaticPrivileges() {
         return filterPrivileges(true, null, null);
     }
 
-    private Set<String> filterDynamicPrivileges() {
+    private Set<Privilege> filterDynamicPrivileges() {
         return filterPrivileges(null, true, null);
     }
 
-    private Set<String> filterInheritedPrivileges() {
+    private Set<Privilege> filterInheritedPrivileges() {
         return filterPrivileges(null, null, true);
     }
 
-    private Set<String> filterPrivileges(Boolean isStatic, Boolean dynamic, Boolean inherited) {
-        Set<String> filteredPrivs = new HashSet<String>();
-        for (Entry<String, PrivPosition> entry : positionByPrivilege.entrySet()) {
-            String privilege = entry.getKey();
+    private Set<Privilege> filterPrivileges(Boolean isStatic, Boolean dynamic, Boolean inherited) {
+        Set<Privilege> filteredPrivs = new HashSet<Privilege>();
+        for (Entry<Privilege, PrivPosition> entry : positionByPrivilege.entrySet()) {
+            Privilege privilege = entry.getKey();
             PrivPosition position = entry.getValue();
             if (position.matches(isStatic, dynamic, inherited)) {
                 filteredPrivs.add(privilege);
@@ -220,10 +230,10 @@ public class UserPrivileges implements Serializable {
     /**
      * @return privileges that user would have when {@link #getPrivilegesToDelete()} are removed and
      */
-    public Set<String> getActivePrivileges() {
-        Set<String> activePrivs = new HashSet<String>();
-        for (Entry<String, PrivPosition> entry : positionByPrivilege.entrySet()) {
-            String privilege = entry.getKey();
+    public Set<Privilege> getActivePrivileges() {
+        Set<Privilege> activePrivs = new HashSet<Privilege>();
+        for (Entry<Privilege, PrivPosition> entry : positionByPrivilege.entrySet()) {
+            Privilege privilege = entry.getKey();
             PrivPosition position = entry.getValue();
             if (position.isActive()) {
                 activePrivs.add(privilege);
@@ -235,14 +245,14 @@ public class UserPrivileges implements Serializable {
     /**
      * @return static privileges that user had, but should be deleted when saving
      */
-    public Set<String> getPrivilegesToDelete() {
+    public Set<Privilege> getPrivilegesToDelete() {
         if (staticPrivilegesBeforeChanges == null) {
-            return Collections.<String> emptySet();
+            return Collections.<Privilege> emptySet();
         }
         if (deleted) {
             return staticPrivilegesBeforeChanges;// remove all static privileges that user had
         }
-        Set<String> privilegesToDelete = new HashSet<String>(staticPrivilegesBeforeChanges);
+        Set<Privilege> privilegesToDelete = new HashSet<Privilege>(staticPrivilegesBeforeChanges);
         privilegesToDelete.removeAll(getActivePrivileges());
         return privilegesToDelete;
     }
@@ -257,12 +267,12 @@ public class UserPrivileges implements Serializable {
         return privileges;
     }
 
-    public Map<String, String> getDynamicPrivReasons() {
+    public Map<Privilege, String> getDynamicPrivReasons() {
         if (dynamicPrivReasonsCached == null) {
-            Set<Entry<String, Set<String>>> entrySet = dynamicPrivReasons.entrySet();
-            dynamicPrivReasonsCached = new HashMap<String, String>(entrySet.size());
-            for (Entry<String, Set<String>> entry : entrySet) {
-                String priv = entry.getKey();
+            Set<Entry<Privilege, Set<String>>> entrySet = dynamicPrivReasons.entrySet();
+            dynamicPrivReasonsCached = new HashMap<Privilege, String>(entrySet.size());
+            for (Entry<Privilege, Set<String>> entry : entrySet) {
+                Privilege priv = entry.getKey();
                 Set<String> reasons = new HashSet<String>(entry.getValue());
                 dynamicPrivReasonsCached.put(priv, StringUtils.join(reasons, "; "));
             }
@@ -422,15 +432,15 @@ public class UserPrivileges implements Serializable {
     class StaticPermissionModifyingEntry implements Entry<String, Boolean>, Serializable {
         private static final long serialVersionUID = 1L;
 
-        private final Entry<String, PrivPosition> wrappedEntry;
+        private final Entry<Privilege, PrivPosition> wrappedEntry;
 
-        public StaticPermissionModifyingEntry(Entry<String, PrivPosition> wrappedEntry) {
+        public StaticPermissionModifyingEntry(Entry<Privilege, PrivPosition> wrappedEntry) {
             this.wrappedEntry = wrappedEntry;
         }
 
         @Override
         public String getKey() {
-            return wrappedEntry.getKey();
+            return wrappedEntry.getKey().getPrivilegeName();
         }
 
         @Override

@@ -69,6 +69,7 @@ import ee.webmedia.alfresco.document.service.DocumentService.AssocType;
 import ee.webmedia.alfresco.log.model.LogEntry;
 import ee.webmedia.alfresco.log.model.LogObject;
 import ee.webmedia.alfresco.log.service.LogService;
+import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.privilege.service.PrivilegeService;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.MessageUtil;
@@ -345,8 +346,8 @@ public class DocumentAssociationsServiceImpl implements DocumentAssociationsServ
 
     private void setIndependentWorkflowDocPermissions(NodeRef docRef, NodeRef workflowRef, boolean setOwnerProps) {
         CompoundWorkflow compoundWorkflow = workflowService.getCompoundWorkflow(workflowRef);
-        Set<String> defaultPrivileges = WorkflowUtil.getIndependentWorkflowDefaultDocPermissions();
-        Map<String, Set<String>> userPrivileges = new HashMap<String, Set<String>>();
+        Set<Privilege> defaultPrivileges = WorkflowUtil.getIndependentWorkflowDefaultDocPermissions();
+        Map<String, Set<Privilege>> userPrivileges = new HashMap<String, Set<Privilege>>();
         boolean isFirstConfirmationTask = true;
         for (Workflow workflow : compoundWorkflow.getWorkflows()) {
             for (Task task : workflow.getTasks()) {
@@ -355,23 +356,23 @@ public class DocumentAssociationsServiceImpl implements DocumentAssociationsServ
                     continue;
                 }
                 if (!userPrivileges.containsKey(ownerId)) {
-                    userPrivileges.put(ownerId, new HashSet<String>());
+                    userPrivileges.put(ownerId, new HashSet<Privilege>());
                 }
-                Set<String> userPriv = userPrivileges.get(ownerId);
+                Set<Privilege> userPriv = userPrivileges.get(ownerId);
                 if (task.isStatus(Status.IN_PROGRESS, Status.FINISHED, Status.STOPPED, Status.UNFINISHED)) {
                     userPriv.addAll(defaultPrivileges);
                 }
                 if (task.isType(WorkflowSpecificModel.Types.ASSIGNMENT_TASK)) {
-                    userPriv.add(DocumentCommonModel.Privileges.EDIT_DOCUMENT);
+                    userPriv.add(Privilege.EDIT_DOCUMENT);
                 }
                 if (isFirstConfirmationTask && task.isType(WorkflowSpecificModel.Types.CONFIRMATION_TASK)) {
-                    userPriv.add(DocumentCommonModel.Privileges.EDIT_DOCUMENT);
+                    userPriv.add(Privilege.EDIT_DOCUMENT);
                     isFirstConfirmationTask = false;
                 }
             }
         }
-        for (Map.Entry<String, Set<String>> entry : userPrivileges.entrySet()) {
-            Set<String> privilegesToAdd = entry.getValue();
+        for (Map.Entry<String, Set<Privilege>> entry : userPrivileges.entrySet()) {
+            Set<Privilege> privilegesToAdd = entry.getValue();
             if (privilegesToAdd != null && !privilegesToAdd.isEmpty()) {
                 privilegeService.setPermissions(docRef, entry.getKey(), privilegesToAdd);
             }
@@ -658,8 +659,8 @@ public class DocumentAssociationsServiceImpl implements DocumentAssociationsServ
         // so retrieving workflow association info is not implemented for "from" associations
         return !ASSOCS_BETWEEN_DOC_LIST_UNIT_ITEMS.contains(assocTypeQName)
                 && (!isDocumentWorkflowAssociation
-                || (isDocumentWorkflowAssociation
-                && (isSourceAssoc || !workflowService.isIndependentWorkflowEnabled() || !workflowService.isWorkflowTitleEnabled())));
+                        || (isDocumentWorkflowAssociation
+                                && (isSourceAssoc || !workflowService.isIndependentWorkflowEnabled() || !workflowService.isWorkflowTitleEnabled())));
     }
 
     private boolean isNotSearchableDocument(final NodeRef targetRef) {

@@ -1,11 +1,14 @@
 package ee.webmedia.alfresco.privilege.service;
 
-import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
+import static ee.webmedia.alfresco.common.search.DbSearchUtil.getQuestionMarks;
 
-import java.io.Serializable;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -16,160 +19,220 @@ import java.util.Set;
 
 import org.alfresco.repo.search.IndexerAndSearcher;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
-import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
-import org.alfresco.repo.security.permissions.impl.AccessPermissionImpl;
-import org.alfresco.service.cmr.repository.AssociationRef;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
-import org.alfresco.service.cmr.security.AccessPermission;
-import org.alfresco.service.cmr.security.AccessStatus;
+import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.cmr.security.AuthorityService;
 import org.alfresco.service.cmr.security.AuthorityType;
-import org.alfresco.service.cmr.security.PermissionService;
 import org.alfresco.service.namespace.QName;
-import org.alfresco.web.bean.repository.Node;
+import org.alfresco.util.Pair;
 import org.apache.commons.lang.StringUtils;
+import org.apache.poi.ss.formula.functions.T;
+import org.springframework.jdbc.core.BatchPreparedStatementSetter;
+import org.springframework.jdbc.core.simple.ParameterizedRowMapper;
+import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.casefile.model.CaseFileModel;
 import ee.webmedia.alfresco.cases.model.CaseModel;
-import ee.webmedia.alfresco.common.service.ApplicationService;
+import ee.webmedia.alfresco.common.search.DbSearchUtil;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.BeanHelper;
-import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.log.model.LogEntry;
 import ee.webmedia.alfresco.log.model.LogObject;
 import ee.webmedia.alfresco.log.service.LogService;
 import ee.webmedia.alfresco.privilege.model.PrivMappings;
-import ee.webmedia.alfresco.privilege.model.PrivilegeActionType;
-import ee.webmedia.alfresco.privilege.model.PrivilegeModel;
+import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.privilege.model.UserPrivileges;
 import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.user.service.UserService;
-import ee.webmedia.alfresco.utils.CalendarUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
-import ee.webmedia.alfresco.utils.RepoUtil;
+import ee.webmedia.alfresco.utils.TextUtil;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
 
 public class PrivilegeServiceImpl implements PrivilegeService {
+    private static final String COLUMN_AUTHORITY = "authority";
+
+    private static final String COLUMN_NODE_UUID = "node_uuid";
+
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(PrivilegeServiceImpl.class);
 
     public static final String GROUPLESS_GROUP = "<groupless>";
 
-    private PermissionService permissionService;
     private NodeService nodeService;
     private UserService userService;
     private GeneralService generalService;
     private AuthorityService authorityService;
     private IndexerAndSearcher indexerAndSearcher;
-    private ApplicationService applicationService;
     private LogService logService;
-    private boolean privilegeActionsEnabled;
+    List<DynamicAuthority> dynamicAuthorities;
+    private SimpleJdbcTemplate jdbcTemplate;
 
-    private boolean privilegeActionsPaused = false;
-
-    // cache some values that shouldn't change during application runtime
-    private Boolean isTest;
     private Set<String> defaultAdmins;
 
+    private static final String HIERARCHY_QUERY_NAME = "node_inherit_hierarchy";
+    private static final String HIERARCHY_QUERY = "WITH RECURSIVE " + HIERARCHY_QUERY_NAME + " (id, store_id, uuid, child_inherits) AS ( " +
+            "    (SELECT id, node.store_id, uuid, CASE WHEN node_permission.inherits IS NULL OR node_permission.inherits = TRUE THEN TRUE ELSE FALSE END " +
+            "    FROM alf_node node " +
+            "    LEFT JOIN delta_node_inheritspermissions node_permission on (node_permission.node_uuid = node.uuid) " +
+            "    WHERE node.uuid = ? " +
+            "    AND node.store_id = (SELECT id from alf_store WHERE protocol = ? AND identifier = ?) " +
+            "    LIMIT 1) " +
+            "     UNION ALL " +
+            "    (SELECT parent.id, parent.store_id, parent.uuid, CASE WHEN node_permission.inherits IS NULL OR node_permission.inherits = TRUE THEN TRUE ELSE FALSE END  " +
+            "    FROM node_inherit_hierarchy " +
+            "    JOIN alf_child_assoc child_assoc ON (child_assoc.child_node_id = node_inherit_hierarchy.id) " +
+            "    JOIN alf_node parent ON (parent.id = child_assoc.parent_node_id) " +
+            "    LEFT JOIN delta_node_inheritspermissions node_permission on (node_permission.node_uuid = parent.uuid) " +
+            "    WHERE child_inherits = TRUE " +
+            "    LIMIT 1 ) " +
+            ") ";
+
     @Override
-    public boolean hasPermissions(NodeRef nodeRef, String... permissions) {
-        if (permissions != null) {
-            for (String permission : permissions) {
-                if (permissionService.hasPermission(nodeRef, permission) == AccessStatus.DENIED) {
-                    return false;
+    public boolean hasPermission(final NodeRef targetRef, String userName, final Privilege... permissions) {
+        if (AuthenticationUtil.isRunAsUserTheSystemUser() || userService.isAdministrator()) {
+            return true;
+        }
+        return hasPermission(targetRef, userName, true, permissions);
+    }
+
+    private boolean hasPermission(final NodeRef targetRef, String userName, boolean addContainingAuthorities, final Privilege... permissions) {
+        List<Object> params = new ArrayList<Object>();
+        String sql = getInheritHierarchyQuery(targetRef, params)
+                + " SELECT count(1) FROM delta_node_permission permission "
+                + " WHERE permission.node_uuid IN (SELECT uuid FROM " + HIERARCHY_QUERY_NAME + ") "
+                + " AND " + getAuthorityCondition(userName, addContainingAuthorities, params)
+                + " AND " + getPrivilegeCondition(permissions)
+                + " LIMIT 1";
+        Object[] paramArray = params.toArray();
+        int count = jdbcTemplate.queryForInt(sql, paramArray);
+        explainQuery(sql, false, paramArray);
+        if (count > 0) {
+            return true;
+        }
+        if (!addContainingAuthorities) {
+            return false;
+        }
+        QName nodeType = nodeService.getType(targetRef);
+        Set<Privilege> dynamicallyGranted = new HashSet<Privilege>();
+        List<Privilege> permissionList = Arrays.asList(permissions);
+        for (DynamicAuthority dynamicAuthority : dynamicAuthorities) {
+            Set<Privilege> requiredFor = dynamicAuthority.getGrantedPrivileges();
+            if (org.apache.commons.collections.CollectionUtils.containsAny(requiredFor, permissionList)
+                    && dynamicAuthority.hasAuthority(targetRef, nodeType, userName)) {
+                dynamicallyGranted.addAll(requiredFor);
+                if (dynamicallyGranted.containsAll(permissionList)) {
+                    return true;
                 }
             }
         }
-        return true;
+        return false;
     }
 
-    @Override
-    public boolean hasPermission(final NodeRef targetRef, final String permission, String userName) {
-        return AuthenticationUtil.runAs(new RunAsWork<Boolean>() {
-            @Override
-            public Boolean doWork() throws Exception {
-                AccessStatus hasPermission = permissionService.hasPermission(targetRef, permission);
-                return AccessStatus.ALLOWED.equals(hasPermission);
-            }
-        }, userName);
+    private String getInheritHierarchyQuery(final NodeRef targetRef, List<Object> params) {
+        params.add(targetRef.getId());
+        StoreRef storeRef = targetRef.getStoreRef();
+        params.add(storeRef.getProtocol());
+        params.add(storeRef.getIdentifier());
+        return HIERARCHY_QUERY;
     }
 
-    @Override
-    public boolean hasPermissionOnAuthority(NodeRef targetRef, String authority, String... permissions) {
-        Set<AccessPermission> accessPermissions = permissionService.getAllSetPermissions(targetRef);
-        int matches = 0;
-        for (String permission : permissions) {
-            for (AccessPermission accessPermission : accessPermissions) {
-                if (accessPermission.getAuthority().equals(authority) && accessPermission.getPermission().equals(permission)
-                        && accessPermission.getAccessStatus() == AccessStatus.ALLOWED) {
-                    matches++;
-                    break;
-                }
-            }
+    private String getAuthorityCondition(String userName, boolean addContainingAuthorities, List<Object> params) {
+        Set<String> allAuthorities = new HashSet<String>();
+        if (addContainingAuthorities) {
+            allAuthorities.addAll(authorityService.getContainingAuthorities(AuthorityType.GROUP, userName, false));
         }
-        return matches >= permissions.length;
+        allAuthorities.add(userName);
+        String sql = "authority IN (" + getQuestionMarks(allAuthorities.size()) + ") ";
+        params.addAll(allAuthorities);
+        return sql;
+    }
+
+    private String getPrivilegeCondition(final Privilege... permissions) {
+        Assert.isTrue(permissions != null && permissions.length > 0);
+        StringBuffer privilegeCondition = new StringBuffer();
+        for (Privilege permission : permissions) {
+            privilegeCondition.append((privilegeCondition.length() > 0 ? " AND " : " ") + permission.getDbFieldName() + " = TRUE ");
+        }
+        return privilegeCondition.toString();
     }
 
     @Override
-    public PrivMappings getPrivMappings(NodeRef manageableRef, Collection<String> manageablePermissions) {
-        PrivMappings privMappings = new PrivMappings(manageableRef);// fillMembersByGroup(manageableRef);
-        Map<String/* userName */, UserPrivileges> privilegesByUsername = new HashMap<String, UserPrivileges>();
-        Map<String/* groupName */, UserPrivileges> privilegesByGroup = new HashMap<String, UserPrivileges>();
+    public boolean hasPermissionOnAuthority(NodeRef targetRef, String authority, Privilege... permissions) {
+        return hasPermission(targetRef, authority, false, permissions);
+    }
 
-        ThoroughInheritanceChecker inheritanceChecker;
+    @Override
+    public PrivMappings getPrivMappings(NodeRef manageableRef, final Collection<Privilege> manageablePermissions) {
+
+        final PrivMappings privMappings = new PrivMappings(manageableRef);// fillMembersByGroup(manageableRef);
+        final Map<String/* userName */, UserPrivileges> privilegesByUsername = new HashMap<String, UserPrivileges>();
+        final Map<String/* groupName */, UserPrivileges> privilegesByGroup = new HashMap<String, UserPrivileges>();
+
         { // regular admin group
             String adminGroup = UserService.AUTH_ADMINISTRATORS_GROUP;
-            inheritanceChecker = new ThoroughInheritanceChecker(manageableRef, adminGroup);
             UserPrivileges adminPrivs = new UserPrivileges(adminGroup, authorityService.getAuthorityDisplayName(adminGroup));
             privilegesByGroup.put(adminGroup, adminPrivs);
             adminPrivs.setReadOnly(true);
-            for (String permission : manageablePermissions) {
+            for (Privilege permission : manageablePermissions) {
                 adminPrivs.addPrivilegeDynamic(permission, MessageUtil.getMessage("manage_permissions_extraInfo_adminGroupHasAllPermissions"));
             }
         }
-
-        for (AccessPermission accessPermission : permissionService.getAllSetPermissions(manageableRef)) {
-            String authority = accessPermission.getAuthority();
-            String permission = accessPermission.getPermission();
-            if (StringUtils.startsWith(authority, AuthorityType.ROLE.getPrefixString()) || !manageablePermissions.contains(permission)) {
-                continue; // not interested in roles added directly to the manageableRef nor permissions that are not requested
-            }
-            boolean setDirectly = accessPermission.isSetDirectly();
-            boolean inherited = inheritanceChecker.checkInheritance(accessPermission);
-            if (StringUtils.startsWith(authority, AuthorityType.GROUP.getPrefixString())) {
-                UserPrivileges authPrivileges = privilegesByGroup.get(authority);
-                if (authPrivileges == null) {
-                    authPrivileges = new UserPrivileges(authority, authorityService.getAuthorityDisplayName(authority));
-                    privilegesByGroup.put(authority, authPrivileges);
-                }
-                boolean allowed = AccessStatus.ALLOWED.equals(accessPermission.getAccessStatus());
-                Assert.isTrue(allowed, "Expected to see only allowed permissions. accessPermission=" + accessPermission + "\nmanageableRef=" + manageableRef);
-                addPrivilege(authPrivileges, permission, setDirectly, inherited);
-            } else {
-                UserPrivileges authPrivileges = privilegesByUsername.get(authority);
-                if (authPrivileges == null) {
-                    authPrivileges = new UserPrivileges(authority, userService.getUserFullNameWithOrganizationPath(authority));
-                    privilegesByUsername.put(authority, authPrivileges);
-                    Set<String> curUserGroups = privMappings.getUserGroups().get(authority);
-                    if (curUserGroups != null) {
-                        authPrivileges.getGroups().addAll(curUserGroups);
-                    }
-                    if (curUserGroups == null || curUserGroups.isEmpty()) {
-                        authPrivileges.getGroups().add(GROUPLESS_GROUP);
-                    }
-                }
-                boolean allowed = AccessStatus.ALLOWED.equals(accessPermission.getAccessStatus());
-                Assert.isTrue(allowed, "Expected to see only allowed permissions. accessPermission=" + accessPermission + "\nmanageableRef=" + manageableRef);
-                if (defaultAdmins.contains(authority)) {
-                    authPrivileges.addPrivilegeDynamic(permission, MessageUtil.getMessage("manage_permissions_extraInfo_defaultAdmin"));
-                } else {
-                    addPrivilege(authPrivileges, permission, setDirectly, inherited);
-                }
-            }
+        if (defaultAdmins == null) {
+            defaultAdmins = BeanHelper.getAuthenticationService().getDefaultAdministratorUserNames();
         }
+
+        final String manageableNodeId = manageableRef.getId();
+        List<Object> parameters = new ArrayList<Object>();
+        String sql = getInheritHierarchyQuery(manageableRef, parameters)
+                + " SELECT * FROM delta_node_permission WHERE "
+                + " node_uuid IN (SELECT uuid FROM " + HIERARCHY_QUERY_NAME + ")";
+
+        jdbcTemplate.query(sql, new ParameterizedRowMapper<Object>() {
+
+            @Override
+            public Object mapRow(ResultSet rs, int rowNum) throws SQLException {
+                String nodeId = rs.getString(COLUMN_NODE_UUID);
+                String authority = rs.getString(COLUMN_AUTHORITY);
+                for (Privilege privilege : manageablePermissions) {
+                    Boolean hasPermission = rs.getBoolean(privilege.getDbFieldName());
+                    if (!hasPermission) {
+                        continue;
+                    }
+                    boolean setDirectly = manageableNodeId.equals(nodeId);
+                    if (StringUtils.startsWith(authority, AuthorityType.GROUP.getPrefixString())) {
+                        UserPrivileges authPrivileges = privilegesByGroup.get(authority);
+                        if (authPrivileges == null) {
+                            authPrivileges = new UserPrivileges(authority, authorityService.getAuthorityDisplayName(authority));
+                            privilegesByGroup.put(authority, authPrivileges);
+                        }
+                        addPrivilege(authPrivileges, privilege, setDirectly);
+                    } else {
+                        UserPrivileges authPrivileges = privilegesByUsername.get(authority);
+                        if (authPrivileges == null) {
+                            authPrivileges = new UserPrivileges(authority, userService.getUserFullNameWithOrganizationPath(authority));
+                            privilegesByUsername.put(authority, authPrivileges);
+                            Set<String> curUserGroups = privMappings.getUserGroups().get(authority);
+                            if (curUserGroups != null) {
+                                authPrivileges.getGroups().addAll(curUserGroups);
+                            }
+                            if (curUserGroups == null || curUserGroups.isEmpty()) {
+                                authPrivileges.getGroups().add(GROUPLESS_GROUP);
+                            }
+                        }
+                        if (defaultAdmins.contains(authority)) {
+                            authPrivileges.addPrivilegeDynamic(privilege, MessageUtil.getMessage("manage_permissions_extraInfo_defaultAdmin"));
+                        } else {
+                            addPrivilege(authPrivileges, privilege, setDirectly);
+                        }
+                    }
+                }
+                return null;
+            }
+        }, parameters.toArray());
+
         privMappings.setPrivilegesByUsername(privilegesByUsername);
         privMappings.setPrivilegesByGroup(privilegesByGroup);
 
@@ -177,55 +240,136 @@ public class PrivilegeServiceImpl implements PrivilegeService {
         for (String defaultAdmin : defaultAdmins) {
             UserPrivileges authPrivileges = privMappings.getOrCreateUserPrivilegesVO(defaultAdmin);
             authPrivileges.setReadOnly(true);
-            for (String permission : manageablePermissions) {
+            for (Privilege permission : manageablePermissions) {
                 authPrivileges.addPrivilegeDynamic(permission, MessageUtil.getMessage("manage_permissions_extraInfo_defaultAdmin"));
             }
         }
         return privMappings;
     }
 
-    private void addPrivilege(UserPrivileges authPrivileges, String permission, boolean setDirectly, boolean inherited) {
-        if (setDirectly) {
-            authPrivileges.addPrivilegeStatic(permission);
-        }
-        // inherited and setDirectly is here non-exclusive
-        if (inherited) {
-            authPrivileges.addPrivilegeInherited(permission);
-        }
+    @Override
+    public List<Permission> getAllSetPrivileges(NodeRef nodeRef) {
+        final List<Permission> setPrivileges = new ArrayList<Permission>();
+
+        final String manageableNodeId = nodeRef.getId();
+        List<Object> parameters = new ArrayList<Object>();
+        String sql = getInheritHierarchyQuery(nodeRef, parameters)
+                + " SELECT * FROM delta_node_permission WHERE "
+                + " node_uuid IN (SELECT uuid FROM " + HIERARCHY_QUERY_NAME + ")"
+                + " ORDER BY authority";
+
+        jdbcTemplate.query(sql, new ParameterizedRowMapper<Object>() {
+
+            @Override
+            public Object mapRow(ResultSet rs, int rowNum) throws SQLException {
+                String nodeId = rs.getString(COLUMN_NODE_UUID);
+                String authority = rs.getString(COLUMN_AUTHORITY);
+                for (Privilege privilege : Privilege.values()) {
+                    Boolean hasPermission = rs.getBoolean(privilege.getDbFieldName());
+                    if (!hasPermission) {
+                        continue;
+                    }
+                    boolean setDirectly = manageableNodeId.equals(nodeId);
+                    setPrivileges.add(new Permission(authority, setDirectly, privilege));
+
+                }
+                return null;
+            }
+        }, parameters.toArray());
+
+        return setPrivileges;
     }
 
     @Override
-    public boolean savePrivileges(NodeRef manageableRef, Map<String, UserPrivileges> privilegesByUsername, Map<String, UserPrivileges> privilegesByGroup, QName listenerCode) {
-        List<Node> privilegeActions = new ArrayList<Node>();
-        updatePrivileges(manageableRef, privilegesByUsername, false, privilegeActions);
-        updatePrivileges(manageableRef, privilegesByGroup, true, privilegeActions);
+    public Set<Privilege> getAllCurrentUserPermissions(NodeRef nodeRef, QName type) {
+        final Set<Privilege> userPrivileges = new HashSet<Privilege>();
+        if (userService.isAdministrator()) {
+            userPrivileges.addAll(Arrays.asList(Privilege.values()));
+        }
+        List<Object> params = new ArrayList<Object>();
+        List<String> privilegeAggregateClause = new ArrayList<String>(Privilege.values().length);
+        for (Privilege privilege : Privilege.values()) {
+            String privilegeDbColumn = privilege.getDbFieldName();
+            privilegeAggregateClause.add("bool_or(" + privilegeDbColumn + ") as " + privilegeDbColumn);
+        }
+        String userName = AuthenticationUtil.getRunAsUser();
+        String sql = getInheritHierarchyQuery(nodeRef, params)
+                + " SELECT " + TextUtil.joinNonBlankStringsWithComma(privilegeAggregateClause) + " FROM delta_node_permission permission "
+                + " WHERE permission.node_uuid IN (SELECT uuid FROM " + HIERARCHY_QUERY_NAME + ") "
+                + " AND " + getAuthorityCondition(userName, true, params);
 
-        int childDocumentsCount = 0; // volumes count is not taken into account, we don't need to be that accurate
-        QName manageableType = nodeService.getType(manageableRef);
-        if (SeriesModel.Types.SERIES.equals(manageableType)) {
-            Integer count = (Integer) nodeService.getProperty(manageableRef, SeriesModel.Props.CONTAINING_DOCS_COUNT);
-            childDocumentsCount = count == null ? 0 : count;
-        } else if (VolumeModel.Types.VOLUME.equals(manageableType) || CaseFileModel.Types.CASE_FILE.equals(manageableType)) {
-            Integer count = (Integer) nodeService.getProperty(manageableRef, VolumeModel.Props.CONTAINING_DOCS_COUNT);
-            childDocumentsCount = count == null ? 0 : count;
-        }
-        int permissionsCount = 0;
-        for (Node privilegeAction : privilegeActions) {
-            @SuppressWarnings("unchecked")
-            List<String> permissions = (List<String>) privilegeAction.getProperties().get(PrivilegeModel.Props.PERMISSIONS);
-            permissionsCount += permissions.size();
-        }
-        // 5768 was 64 sec, so 100 should be 1,1 sec
-        if (childDocumentsCount * permissionsCount <= 100) {
-            for (Node privilegeAction : privilegeActions) {
-                doPrivilegeAction(privilegeAction, manageableRef);
+        Object[] paramArray = params.toArray();
+        jdbcTemplate.query(sql, new ParameterizedRowMapper<Object>() {
+
+            @Override
+            public T mapRow(ResultSet rs, int rowNum) throws SQLException {
+                for (Privilege privilege : Privilege.values()) {
+                    if (rs.getBoolean(privilege.getDbFieldName())) {
+                        userPrivileges.add(privilege);
+                    }
+                }
+                return null;
             }
-            return true;
+        }, paramArray);
+        explainQuery(sql, true, paramArray);
+        int allPrivilegesCount = Privilege.values().length;
+        if (userPrivileges.size() < allPrivilegesCount) {
+            QName nodeType = nodeService.getType(nodeRef);
+            for (DynamicAuthority dynamicAuthority : dynamicAuthorities) {
+                if (dynamicAuthority.hasAuthority(nodeRef, nodeType, userName)) {
+                    userPrivileges.addAll(dynamicAuthority.getGrantedPrivileges());
+                    if (userPrivileges.size() >= allPrivilegesCount) {
+                        break;
+                    }
+                }
+            }
         }
-        for (Node privilegeAction : privilegeActions) {
-            savePrivilegeAction(privilegeAction, manageableRef);
+        return userPrivileges;
+
+    }
+
+    @Override
+    public List<String> getAuthoritiesWithPrivilege(NodeRef nodeRef, Privilege... privileges) {
+        List<Object> parameters = new ArrayList<Object>();
+        String sql = getInheritHierarchyQuery(nodeRef, parameters)
+                + " SELECT DISTINCT authority FROM delta_node_permission WHERE "
+                + " node_uuid IN (SELECT uuid FROM " + HIERARCHY_QUERY_NAME + ")"
+                + " AND " + getPrivilegeCondition(privileges);
+        Object[] paramArray = parameters.toArray();
+        List<String> authorities = jdbcTemplate.query(sql, new ParameterizedRowMapper<String>() {
+
+            @Override
+            public String mapRow(ResultSet rs, int rowNum) throws SQLException {
+                return rs.getString(COLUMN_AUTHORITY);
+            }
+        }, paramArray);
+        explainQuery(sql, false, paramArray);
+        return authorities;
+    }
+
+    @Override
+    public List<String> getAuthoritiesWithDirectPrivilege(NodeRef nodeRef, Privilege... privileges) {
+        String sql = " SELECT DISTINCT authority FROM delta_node_permission WHERE "
+                + " node_uuid = ? "
+                + " AND " + getPrivilegeCondition(privileges);
+        String nodeId = nodeRef.getId();
+        List<String> authorities = jdbcTemplate.query(sql, new ParameterizedRowMapper<String>() {
+
+            @Override
+            public String mapRow(ResultSet rs, int rowNum) throws SQLException {
+                return rs.getString(COLUMN_AUTHORITY);
+            }
+        }, nodeId);
+        explainQuery(sql, false, nodeId);
+        return authorities;
+    }
+
+    private void addPrivilege(UserPrivileges authPrivileges, Privilege privilege, boolean setDirectly) {
+        if (setDirectly) {
+            authPrivileges.addPrivilegeStatic(privilege);
+        } else {
+            authPrivileges.addPrivilegeInherited(privilege);
         }
-        return false;
     }
 
     @Override
@@ -249,7 +393,7 @@ public class PrivilegeServiceImpl implements PrivilegeService {
             for (ChildAssociationRef childAssoc : nodeService.getChildAssocs(nodeRef, assoc, assoc)) {
                 NodeRef childRef = childAssoc.getChildRef();
 
-                if (permissionService.getInheritParentPermissions(childRef)) {
+                if (getInheritParentPermissions(childRef)) {
                     updateIndexedPermissionsImpl(childRef);
                 }
             }
@@ -267,16 +411,32 @@ public class PrivilegeServiceImpl implements PrivilegeService {
         return new QName[0];
     }
 
-    private void updatePrivileges(NodeRef manageableRef, Map<String, UserPrivileges> privilegesByAuthority, boolean group, List<Node> privilegeActions) {
+    @Override
+    public void savePrivileges(NodeRef manageableRef, Map<String, UserPrivileges> privilegesByUsername, Map<String, UserPrivileges> privilegesByGroup, QName listenerCode) {
+        Map<String, Pair<Set<Privilege>, Set<Privilege>>> privilegeActions = new HashMap<String, Pair<Set<Privilege>, Set<Privilege>>>();
+        Set<String> authoritiesToRemove = new HashSet<String>();
+        collectPrivileges(manageableRef, privilegesByUsername, false, privilegeActions, authoritiesToRemove);
+        collectPrivileges(manageableRef, privilegesByGroup, true, privilegeActions, authoritiesToRemove);
+        for (Map.Entry<String, Pair<Set<Privilege>, Set<Privilege>>> entry : privilegeActions.entrySet()) {
+            String authority = entry.getKey();
+            Pair<Set<Privilege>, Set<Privilege>> permissions = entry.getValue();
+            setPermissions(manageableRef, authority, permissions.getFirst(), permissions.getSecond());
+        }
+        if (!authoritiesToRemove.isEmpty()) {
+            removeAllPermissions(manageableRef, authoritiesToRemove.toArray(new String[authoritiesToRemove.size()]));
+        }
+    }
+
+    private void collectPrivileges(NodeRef manageableRef, Map<String, UserPrivileges> privilegesByAuthority, boolean group,
+            Map<String, Pair<Set<Privilege>, Set<Privilege>>> privilegeActions, Set<String> authoritiesToRemove) {
         for (Iterator<Entry<String, UserPrivileges>> it = privilegesByAuthority.entrySet().iterator(); it.hasNext();) {
             Entry<String, UserPrivileges> entry = it.next();
             String authority = entry.getKey();
             UserPrivileges vo = entry.getValue();
 
-            Set<String> privilegesToDelete = vo.getPrivilegesToDelete();
-            if (!privilegesToDelete.isEmpty()) {
-                privilegeActions.add(createPrivilegeAction(PrivilegeActionType.REMOVE, authority, privilegesToDelete));
-            }
+            Set<Privilege> privilegesToDelete = vo.getPrivilegesToDelete();
+            Set<Privilege> privilegesToAdd = null;
+
             if (!vo.isDeleted() && !privilegesToDelete.isEmpty()) {
                 logMemberPrivRem(manageableRef, authority, group, privilegesToDelete);
             }
@@ -284,179 +444,265 @@ public class PrivilegeServiceImpl implements PrivilegeService {
             if (vo.isDeleted()) {
                 it.remove();
                 logMemberRemove(manageableRef, authority, group);
+                authoritiesToRemove.add(authority);
             } else {
-                Set<String> privilegesToAdd = vo.getPrivilegesToAdd();
+                Set<Privilege> voPrivilegesToAdd = vo.getPrivilegesToAdd();
 
                 if (vo.isNew()) {
                     logMemberAdd(manageableRef, authority, group);
-                } else if (!privilegesToAdd.isEmpty()) {
-                    logMemberPrivAdd(manageableRef, authority, group, privilegesToAdd);
+                } else if (!voPrivilegesToAdd.isEmpty()) {
+                    logMemberPrivAdd(manageableRef, authority, group, voPrivilegesToAdd);
                 }
-
-                if (!privilegesToAdd.isEmpty()) {
-                    Set<String> permissionsWithDependencies = PrivilegeUtil.getPrivsWithDependencies(privilegesToAdd);
-                    privilegeActions.add(createPrivilegeAction(PrivilegeActionType.ADD, authority, permissionsWithDependencies));
-                }
-            }
-        }
-    }
-
-    private void deletePermissions(NodeRef manageableRef, String authority, Set<String> privilegesToDelete) {
-        for (String permission : privilegesToDelete) {
-            if (!hasPermissionOnAuthority(manageableRef, authority, permission)) {
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug("Previously deleted permission " + permission + " from " + authority + " on " + manageableRef + " - nothing to do");
-                }
-                continue;
-            }
-            long startTime = 0L;
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Deleting permission " + permission + " from " + authority + " on " + manageableRef);
-                startTime = System.nanoTime();
-            }
-            permissionService.deletePermission(manageableRef, authority, permission);
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Deleted permission " + permission + " from " + authority + " on " + manageableRef + " - took " + CalendarUtil.duration(startTime) + " ms");
+                privilegesToAdd = PrivilegeUtil.getPrivsWithDependencies(voPrivilegesToAdd);
+                privilegeActions.put(authority, Pair.newInstance(privilegesToAdd, privilegesToDelete));
             }
         }
     }
 
     @Override
-    public void setPermissions(NodeRef manageableRef, String authority, String... privilegesToAdd) {
+    public boolean getInheritParentPermissions(NodeRef manageableRef) {
+        String sql = "SELECT inherits FROM delta_node_inheritspermissions WHERE node_uuid = ?";
+        List<Boolean> inherits = jdbcTemplate.query(sql, new ParameterizedRowMapper<Boolean>() {
+
+            @Override
+            public Boolean mapRow(ResultSet rs, int rowNum) throws SQLException {
+                return rs.getBoolean("inherits");
+            }
+        }, manageableRef.getId());
+        return (inherits.isEmpty() || inherits.contains(Boolean.TRUE));
+    }
+
+    @Override
+    public void setInheritParentPermissions(NodeRef manageableRef, boolean inherits) {
+        Object[] params = new Object[] { manageableRef.getId(), inherits };
+        String sql = "WITH new_values (node_uuid, inherits, acl_id) AS (values (?, ?::boolean, -1)),"
+                + "     upsert AS (UPDATE delta_node_inheritspermissions SET inherits = nv.inherits "
+                + "                 FROM new_values nv "
+                + "                 WHERE delta_node_inheritspermissions.node_uuid = nv.node_uuid"
+                + "                 RETURNING delta_node_inheritspermissions.node_uuid ) "
+                + " INSERT INTO delta_node_inheritspermissions (node_uuid, inherits, acl_id) SELECT * FROM new_values WHERE NOT EXISTS (SELECT 1 FROM upsert WHERE upsert.node_uuid = new_values.node_uuid)";
+        jdbcTemplate.update(sql, params);
+        explainQuery(sql, false, params);
+    }
+
+    @Override
+    public void removeAllPermissions(NodeRef manageableRef, String... authorities) {
+        Assert.notNull(manageableRef, "removeAllPermissions() called without manageableRef");
+        Assert.isTrue(authorities != null && authorities.length > 0, "removeAllPermissions() called without authority");
+        String sql = "DELETE FROM delta_node_permission WHERE node_uuid = ? AND authority IN (" + DbSearchUtil.getQuestionMarks(authorities.length) + ")";
+        List<Object> params = new ArrayList<Object>();
+        params.add(manageableRef.getId());
+        params.addAll(Arrays.asList(authorities));
+        Object[] paramArray = params.toArray();
+        jdbcTemplate.update(sql, paramArray);
+        explainQuery(sql, false, paramArray);
+    }
+
+    @Override
+    public void removeNodePermissionData(NodeRef manageableRef) {
+        Assert.notNull(manageableRef, "removePermissions() called manageableRef");
+        String sql = "DELETE FROM delta_node_permission WHERE node_uuid = ? ";
+        String nodeRefId = manageableRef.getId();
+        jdbcTemplate.update(sql, nodeRefId);
+        explainQuery(sql, false, nodeRefId);
+
+        sql = "DELETE FROM delta_node_inheritspermissions WHERE node_uuid = ? ";
+        jdbcTemplate.update(sql, nodeRefId);
+        explainQuery(sql, false, nodeRefId);
+    }
+
+    @Override
+    public void removeAuthorityPermissions(String userName) {
+        Assert.notNull(userName, "Username cannot be null");
+        String sql = "DELETE FROM delta_node_permission WHERE authority = ? ";
+        jdbcTemplate.update(sql, userName);
+        explainQuery(sql, false, userName);
+    }
+
+    @Override
+    public void setPermissions(NodeRef manageableRef, String authority, Privilege... privilegesToAdd) {
         if (privilegesToAdd == null || privilegesToAdd.length == 0) {
             throw new IllegalArgumentException("setPermissions() called without any privilegesToAdd");
         }
-        setPermissions(manageableRef, authority, new HashSet<String>(Arrays.asList(privilegesToAdd)));
+        setPermissions(manageableRef, authority, new HashSet<Privilege>(Arrays.asList(privilegesToAdd)));
     }
 
     @Override
-    public void setPermissions(NodeRef manageableRef, String authority, Set<String> privilegesToAdd) {
+    public void setPermissions(NodeRef manageableRef, String authority, Set<Privilege> privilegesToAdd) {
+        setPermissions(manageableRef, authority, privilegesToAdd, null);
+    }
+
+    private void setPermissions(NodeRef manageableRef, String authority, Set<Privilege> privilegesToAdd, Set<Privilege> privilegesToRemove) {
+        List<String> authorities = new ArrayList<String>(1);
+        authorities.add(authority);
         Assert.notNull(manageableRef, "setPermissions() called manageableRef");
         Assert.notNull(authority, "setPermissions() called without authority");
-        Set<String> permissionsWithDependencies = PrivilegeUtil.getPrivsWithDependencies(privilegesToAdd);
-        for (String permission : permissionsWithDependencies) {
-            if (hasPermissionOnAuthority(manageableRef, authority, permission)) {
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug("Previously set permission " + permission + " to " + authority + " on " + manageableRef + " - nothing to do");
+        List<Privilege> privilegesToAddList = new ArrayList<Privilege>(PrivilegeUtil.getPrivsWithDependencies(privilegesToAdd));
+
+        if (privilegesToAddList.isEmpty() && (privilegesToRemove == null || privilegesToRemove.isEmpty())) {
+            return;
+        }
+
+        Assert.isTrue(
+                privilegesToAdd == null || privilegesToRemove == null
+                || org.apache.commons.collections.CollectionUtils.intersection(privilegesToAddList, privilegesToRemove).size() == 0,
+                "Cannot add and remove privileges at same time: adding " + privilegesToAddList + ", removing: " + privilegesToRemove);
+
+        StringBuffer permissionColumns = new StringBuffer();
+        StringBuffer permissionSetters = new StringBuffer();
+        boolean isFirst = true;
+        int privilegesToRemoveSize = 0;
+        if (privilegesToRemove != null) {
+            privilegesToRemoveSize = privilegesToRemove.size();
+            for (Privilege privilegeToRemove : privilegesToRemove) {
+                String privilegeColumnName = privilegeToRemove.getDbFieldName();
+                permissionColumns.append(", " + privilegeColumnName);
+                if (!isFirst) {
+                    permissionSetters.append(", ");
                 }
-                continue;
+                isFirst = false;
+                permissionSetters.append(privilegeColumnName + " = FALSE ");
             }
-            try {
-                long startTime = 0L;
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug("Setting permission " + permission + " to " + authority + " on " + manageableRef);
-                    startTime = System.nanoTime();
+        }
+
+        for (Privilege permission : privilegesToAddList) {
+            String privilegeColumnName = permission.getDbFieldName();
+            permissionColumns.append(", " + privilegeColumnName);
+            if (!isFirst) {
+                permissionSetters.append(", ");
+            }
+            isFirst = false;
+            permissionSetters.append(privilegeColumnName + " = TRUE ");
+        }
+
+        List<String> typeParameters = Collections.nCopies(privilegesToAddList.size() + privilegesToRemoveSize, "?::boolean");
+        String sql = "WITH new_values (node_uuid, authority" + permissionColumns + ") as (values  (?, ?, " + TextUtil.joinNonBlankStringsWithComma(typeParameters) + "))," +
+                "upsert as (update delta_node_permission list "
+                + " SET " + permissionSetters
+                + " FROM new_values nv"
+                + " WHERE list.node_uuid = nv.node_uuid "
+                + " AND list.authority = nv.authority "
+                + "   RETURNING list.* "
+                + ")"
+                + " INSERT INTO delta_node_permission (node_uuid, authority" + permissionColumns + ")" +
+                "   SELECT * " +
+                "   FROM new_values" +
+                "   WHERE NOT EXISTS (SELECT 1" +
+                "       FROM upsert up" +
+                "       WHERE up.node_uuid = new_values.node_uuid"
+                + "     AND up.authority = new_values.authority)";
+
+        List<List<Boolean>> authorityPrivileges = new ArrayList<List<Boolean>>(1);
+        List<Boolean> authPriv = new ArrayList<Boolean>();
+        authorityPrivileges.add(authPriv);
+        if (privilegesToRemove != null) {
+            authPriv.addAll(Collections.nCopies(privilegesToRemoveSize, Boolean.FALSE));
+        }
+        authPriv.addAll(Collections.nCopies(privilegesToAddList.size(), Boolean.TRUE));
+        jdbcTemplate.getJdbcOperations().batchUpdate(sql, new PermissionUpdateOrCreateParamSetter(manageableRef.getId(), authorities, authorityPrivileges));
+    }
+
+    @Override
+    public void copyPermissions(NodeRef sourceNodeRef, NodeRef destinationNodeRef) {
+        setInheritParentPermissions(destinationNodeRef, getInheritParentPermissions(sourceNodeRef));
+
+        List<String> privilegeColumns = new ArrayList<String>();
+        for (Privilege privilege : Privilege.values()) {
+            privilegeColumns.add(privilege.getDbFieldName());
+        }
+        String permissionFields = TextUtil.joinNonBlankStringsWithComma(privilegeColumns);
+
+        String sql = " INSERT INTO delta_node_permission (node_uuid, authority, " + permissionFields + ")"
+                + " SELECT ?, authority, " + permissionFields + " FROM delta_node_permission "
+                + " WHERE node_uuid = ? ";
+
+        String sourceNodeId = sourceNodeRef.getId();
+        String targetNodeId = destinationNodeRef.getId();
+
+        jdbcTemplate.update(sql, targetNodeId, sourceNodeId);
+        explainQuery(sql, false, targetNodeId, sourceNodeId);
+
+    }
+
+    private class PermissionUpdateOrCreateParamSetter implements BatchPreparedStatementSetter {
+
+        private final String nodeId;
+        private final List<String> authorities;
+        private final List<List<Boolean>> auhtorityPermissions;
+
+        public PermissionUpdateOrCreateParamSetter(String nodeId, List<String> authorities, List<List<Boolean>> list) {
+            this.nodeId = nodeId;
+            this.authorities = authorities;
+            auhtorityPermissions = list;
+        }
+
+        @Override
+        public void setValues(PreparedStatement stmt, int i) throws SQLException {
+            stmt.setString(1, nodeId);
+            Iterator<String> authoritiesIterator = authorities.iterator();
+            stmt.setString(2, authoritiesIterator.next());
+            Iterator<List<Boolean>> permissionsIterator = auhtorityPermissions.iterator();
+            List<Boolean> permissions = permissionsIterator.next();
+            int k = 3;
+            for (Boolean permission : permissions) {
+                stmt.setBoolean(k++, permission);
+            }
+            authoritiesIterator.remove();
+            permissionsIterator.remove();
+        }
+
+        @Override
+        public int getBatchSize() {
+            return authorities.size();
+        }
+    }
+
+    @Override
+    public void addDynamicAuthority(DynamicAuthority dynamicAuthority) {
+        if (dynamicAuthorities == null) {
+            dynamicAuthorities = new ArrayList<DynamicAuthority>();
+        }
+        dynamicAuthorities.add(dynamicAuthority);
+    }
+
+    @Override
+    public Map<String, List<String>> getCreateDocumentPrivileges(Set<String> nodeRefIds) {
+        return getCreateTypePrivileges(nodeRefIds, Privilege.CREATE_DOCUMENT);
+    }
+
+    @Override
+    public Map<String, List<String>> getCreateCaseFilePrivileges(Set<String> nodeRefIds) {
+        return getCreateTypePrivileges(nodeRefIds, Privilege.CREATE_CASE_FILE);
+    }
+
+    private Map<String, List<String>> getCreateTypePrivileges(Set<String> nodeRefIds, Privilege privilege) {
+        Assert.isTrue(nodeRefIds != null && !nodeRefIds.isEmpty());
+        String query = "SELECT node_uuid, authority FROM delta_node_permission WHERE node_uuid IN ( " + DbSearchUtil.getQuestionMarks(nodeRefIds.size())
+                + " ) AND " + privilege.getDbFieldName() + " = TRUE";
+        Object[] ids = nodeRefIds.toArray();
+        final Map<String, List<String>> privileges = new HashMap<String, List<String>>();
+        jdbcTemplate.query(query, new ParameterizedRowMapper<Object>() {
+
+            @Override
+            public Object mapRow(ResultSet rs, int rowNum) throws SQLException {
+                String uuid = rs.getString(COLUMN_NODE_UUID);
+                String authority = rs.getString(COLUMN_AUTHORITY);
+                List<String> authorities = privileges.get(uuid);
+                if (authorities == null) {
+                    authorities = new ArrayList<String>();
+                    privileges.put(uuid, authorities);
                 }
-                permissionService.setPermission(manageableRef, authority, permission, true);
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug("Set permission " + permission + " to " + authority + " on " + manageableRef + " - took " + CalendarUtil.duration(startTime) + " ms");
-                }
-            } catch (Exception e) {
-                throw new RuntimeException("failed to set permission " + permission + " to authority " + authority + " on node " + manageableRef, e);
+                authorities.add(authority);
+                return null;
             }
-        }
+
+        }, ids);
+        explainQuery(query, false, ids);
+        return privileges;
     }
 
-    @Override
-    public boolean isPrivilegeActionsEnabled() {
-        return privilegeActionsEnabled;
-    }
-
-    @Override
-    public boolean isPrivilegeActionsPaused() {
-        return privilegeActionsPaused;
-    }
-
-    @Override
-    public void setPrivilegeActionsPaused(boolean privilegeActionsPaused) {
-        this.privilegeActionsPaused = privilegeActionsPaused;
-    }
-
-    @Override
-    public void doPausePrivilegeActions() {
-        while (privilegeActionsPaused) {
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                // Do nothing
-            }
-        }
-    }
-
-    private NodeRef getPrivilegeActionsSpaceRef() {
-        return generalService.getNodeRef(PrivilegeModel.Repo.PRIVILEGE_ACTIONS_SPACE);
-    }
-
-    @Override
-    public List<Node> getAllInQueuePrivilegeActions() {
-        List<ChildAssociationRef> childAssocRefs = nodeService.getChildAssocs(getPrivilegeActionsSpaceRef());
-        List<Node> privilegeActions = new ArrayList<Node>(childAssocRefs.size());
-        for (ChildAssociationRef childAssocRef : childAssocRefs) {
-            WmNode privilegeAction = getPrivilegeAction(childAssocRef.getChildRef());
-            privilegeActions.add(privilegeAction);
-        }
-        return privilegeActions;
-    }
-
-    private WmNode getPrivilegeAction(NodeRef privilegeActionRef) {
-        return generalService.fetchObjectNode(privilegeActionRef, PrivilegeModel.Types.PRIVILEGE_ACTION);
-    }
-
-    @Override
-    public List<Node> getAllInQueuePrivilegeActions(NodeRef manageableRef) {
-        List<AssociationRef> assocRefs = nodeService.getSourceAssocs(manageableRef, PrivilegeModel.Assocs.PRIVILEGE_ACTION_2_NODE);
-        List<Node> privilegeActions = new ArrayList<Node>(assocRefs.size());
-        for (AssociationRef assocRef : assocRefs) {
-            WmNode privilegeAction = getPrivilegeAction(assocRef.getSourceRef());
-            privilegeActions.add(privilegeAction);
-        }
-        return privilegeActions;
-    }
-
-    private Node createPrivilegeAction(PrivilegeActionType actionType, String authority, Set<String> permissions) {
-        HashMap<QName, Serializable> props = new HashMap<QName, Serializable>();
-        props.put(PrivilegeModel.Props.PRIVILEGE_ACTION_TYPE, actionType.name());
-        props.put(PrivilegeModel.Props.PERMISSIONS, new ArrayList<String>(permissions));
-        props.put(PrivilegeModel.Props.AUTHORITY, authority);
-        return generalService.createNewUnSaved(PrivilegeModel.Types.PRIVILEGE_ACTION, props);
-    }
-
-    private NodeRef savePrivilegeAction(Node privilegeAction, NodeRef manageableRef) {
-        NodeRef privilegeActionRef = nodeService.createNode(getPrivilegeActionsSpaceRef(), PrivilegeModel.Assocs.PRIVILEGE_ACTION, PrivilegeModel.Assocs.PRIVILEGE_ACTION,
-                privilegeAction.getType(),
-                RepoUtil.toQNameProperties(privilegeAction.getProperties())).getChildRef();
-        nodeService.createAssociation(privilegeActionRef, manageableRef, PrivilegeModel.Assocs.PRIVILEGE_ACTION_2_NODE);
-        return privilegeActionRef;
-    }
-
-    @Override
-    public void doPrivilegeAction(Node privilegeAction) {
-        NodeRef manageableRef = null;
-        List<AssociationRef> assocs = nodeService.getTargetAssocs(privilegeAction.getNodeRef(), PrivilegeModel.Assocs.PRIVILEGE_ACTION_2_NODE);
-        if (!assocs.isEmpty()) {
-            manageableRef = assocs.get(0).getTargetRef();
-        }
-        doPrivilegeAction(privilegeAction, manageableRef);
-    }
-
-    private void doPrivilegeAction(Node privilegeAction, NodeRef manageableRef) {
-        NodeRef actionRef = privilegeAction.getNodeRef();
-        LOG.debug("Processing privilege action " + actionRef);
-        if (manageableRef != null) {
-            String actionType = (String) privilegeAction.getProperties().get(PrivilegeModel.Props.PRIVILEGE_ACTION_TYPE);
-            @SuppressWarnings("unchecked")
-            List<String> permissions = (List<String>) privilegeAction.getProperties().get(PrivilegeModel.Props.PERMISSIONS);
-            Set<String> permissionsSet = new HashSet<String>(permissions);
-            String authority = (String) privilegeAction.getProperties().get(PrivilegeModel.Props.AUTHORITY);
-            if (PrivilegeActionType.ADD.name().equals(actionType)) {
-                setPermissions(manageableRef, authority, permissionsSet);
-            } else if (PrivilegeActionType.REMOVE.name().equals(actionType)) {
-                deletePermissions(manageableRef, authority, permissionsSet);
-            }
-        }
-        if (RepoUtil.isSaved(privilegeAction)) {
-            nodeService.deleteNode(privilegeAction.getNodeRef());
-        }
+    private void explainQuery(String sqlQuery, boolean analyze, Object... args) {
+        generalService.explainAnalyzeQuery(sqlQuery, LOG, analyze && BeanHelper.getApplicationService().isTest(), args);
     }
 
     private void log(NodeRef manageableRef, String messageCode, Object... params) {
@@ -490,7 +736,7 @@ public class PrivilegeServiceImpl implements PrivilegeService {
         }
     }
 
-    private void logMemberPrivAdd(NodeRef manageableRef, String authority, boolean group, Set<String> privs) {
+    private void logMemberPrivAdd(NodeRef manageableRef, String authority, boolean group, Set<Privilege> privs) {
         if (group) {
             log(manageableRef, "applog_priv_add_group", getAuthorityName(authority, group), getPrivilegesDisplayNames(privs));
         } else {
@@ -498,7 +744,7 @@ public class PrivilegeServiceImpl implements PrivilegeService {
         }
     }
 
-    private void logMemberPrivRem(NodeRef manageableRef, String authority, boolean group, Set<String> privs) {
+    private void logMemberPrivRem(NodeRef manageableRef, String authority, boolean group, Set<Privilege> privs) {
         if (group) {
             log(manageableRef, "applog_priv_rem_group", getAuthorityName(authority, group), getPrivilegesDisplayNames(privs));
         } else {
@@ -506,10 +752,10 @@ public class PrivilegeServiceImpl implements PrivilegeService {
         }
     }
 
-    private String getPrivilegesDisplayNames(Set<String> privs) {
+    private String getPrivilegesDisplayNames(Set<Privilege> privs) {
         Set<String> displayNames = new HashSet<String>(privs.size());
-        for (String priv : privs) {
-            displayNames.add(MessageUtil.getMessage("permission_" + priv));
+        for (Privilege priv : privs) {
+            displayNames.add(MessageUtil.getMessage("permission_" + priv.getPrivilegeName()));
         }
         return StringUtils.join(displayNames, ", ");
     }
@@ -531,156 +777,21 @@ public class PrivilegeServiceImpl implements PrivilegeService {
         this.indexerAndSearcher = indexerAndSearcher;
     }
 
-    public void setPermissionService(PermissionService permissionService) {
-        this.permissionService = permissionService;
-    }
-
     public void setNodeService(NodeService nodeService) {
         this.nodeService = nodeService;
-    }
-
-    public void setApplicationService(ApplicationService applicationService) {
-        this.applicationService = applicationService;
     }
 
     public void setLogService(LogService logService) {
         this.logService = logService;
     }
 
-    public void setPrivilegeActionsEnabled(boolean privilegeActionsEnabled) {
-        this.privilegeActionsEnabled = privilegeActionsEnabled;
+    public SimpleJdbcTemplate getJdbcTemplate() {
+        return jdbcTemplate;
     }
 
-    /**
-     * {@link AccessPermission#isInherited()} == false does not mean, that the same permission is not also inherited - it just says that this permission is set directly as well
-     */
-    class ThoroughInheritanceChecker {
-        private final Set<String> userNamesInAdminsGroup;
-        private final NodeRef parentRef;
-        private final boolean inheritParentPermissions;
-        private final Map<String, Set<String>> groupsByUser = new HashMap<String, Set<String>>();
-        private Map<String, AccessPermission> ancestorAccessPermissionsMap;
-        private final String adminGroup;
+    public void setJdbcTemplate(SimpleJdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
 
-        ThoroughInheritanceChecker(NodeRef manageableRef, String adminGroup) {
-            parentRef = nodeService.getPrimaryParent(manageableRef).getParentRef();
-            this.adminGroup = adminGroup;
-            userNamesInAdminsGroup = getUserService().getUserNamesInGroup(adminGroup);
-            inheritParentPermissions = BeanHelper.getPermissionService().getInheritParentPermissions(manageableRef);
-            if (isTest == null) {
-                isTest = applicationService.isTest();
-            }
-            if (defaultAdmins == null) {
-                defaultAdmins = BeanHelper.getAuthenticationService().getDefaultAdministratorUserNames();
-            }
-        }
-
-        private void lazyInit() {
-            if (ancestorAccessPermissionsMap == null) {
-                Set<AccessPermission> ancestorAccessPermissions = permissionService.getAllSetPermissions(parentRef);
-                ancestorAccessPermissionsMap = new HashMap<String, AccessPermission>();
-                Set<String> visitedGroups = new HashSet<String>();
-                for (AccessPermission accessPermission : ancestorAccessPermissions) {
-                    String key = customHash(accessPermission);
-                    AccessPermission previousValue = ancestorAccessPermissionsMap.put(key, accessPermission);
-                    if (previousValue != null && isTest) {
-                        // I assume that there are not two AccessPermissions with same customHash, but if I'm wrong, then maybe I'm missing something
-                        MessageUtil.addErrorMessage("Weird, several AccessPermissions on parent node with same hash - check code");
-                    }
-                    // for debugging
-                    if (isTest && accessPermission.getAuthorityType() == AuthorityType.GROUP) {
-                        String authority = accessPermission.getAuthority();
-                        if (!visitedGroups.contains(authority)) {
-                            for (String userName : getUserService().getUserNamesInGroup(authority)) {
-                                Set<String> userGroups = groupsByUser.get(userName);
-                                if (userGroups == null) {
-                                    userGroups = visitedGroups;
-                                    groupsByUser.put(userName, userGroups);
-                                }
-                                userGroups.add(authority);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        /**
-         * @param accessPermission
-         * @return true if the same permission is granted to parent node(either directly or inherited from any other ancestor)
-         */
-        boolean checkInheritance(AccessPermission accessPermission) {
-            boolean inherited = accessPermission.isInherited();
-            if (inherited || !inheritParentPermissions) {
-                return inherited;
-            }
-            Assert.isTrue(accessPermission.isSetDirectly(), "expected that set directly");
-            /**
-             * AccessPermission it is set directly(and based on this AccessPermission not inherited)
-             * THIS DOES NOT MEAN THAT SAME PERMISSION IS NOT INHERITED,
-             * because if permission is set directly then you don't see another record saying that it is also inherited (in case ancestor node has the same permission set directly
-             * or inherited).
-             * THEREFORE WE NEED TO CHECK FIRST PARENT NODE ACCESSPERMISSIONS AS WELL
-             */
-            String authority = accessPermission.getAuthority();
-            String permission = accessPermission.getPermission();
-            // permission is set directly, but we need to know if it is also inherited from ancestor nodes
-            boolean hasPermissionForParentRef = hasPermission(parentRef, permission, authority);
-            if (hasPermissionForParentRef) {
-                Boolean inheritedFromParent = isInherited(accessPermission);
-                if (inheritedFromParent != null) {
-                    inherited = inheritedFromParent;
-                }
-            }
-            return inherited;
-        }
-
-        private Boolean isInherited(AccessPermission origAccessPermission) {
-            String authority = origAccessPermission.getAuthority();
-            lazyInit();
-            String permission = origAccessPermission.getPermission();
-            if (hasAccessPermission(authority, permission)) {
-                return true;
-            }
-            // check being admin after inspecting AccessPermissions
-            if (origAccessPermission.getAuthorityType() == AuthorityType.ADMIN || userNamesInAdminsGroup.contains(authority) || defaultAdmins.contains(authority)
-                    || authority.equals(adminGroup)) {
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug("NOT inherited isAdmin: " + authority + " " + permission);
-                }
-                return false;
-            }
-            if (isTest) {
-                // doing check through group only in test environments - in other environments expecting that this permission is not inherited
-                if (origAccessPermission.getAuthorityType() == AuthorityType.USER) {
-                    Set<String> userGroups = groupsByUser.get(authority);
-                    if (userGroups != null) {
-                        for (String group : userGroups) {
-                            if (hasAccessPermission(group, permission)) {
-                                if (LOG.isDebugEnabled()) {
-                                    LOG.debug("this permission " + permission + " it self is not inherited,"
-                                            + " but it is granted to " + origAccessPermission.getAuthority() + " through parent node and user group " + group);
-                                }
-                                return false; // this permission it self is not inherited, but it is granted through parent node and user group
-                            }
-                        }
-                    }
-                }
-                // XXX FROM When document is saved under case file for the first time then case file ownerId is added to document rights with editDocument permissions.
-                // had inserted this verification here that now seems obsolete but is left as a comment for future wanderers...
-                // MessageUtil.addErrorMessage(authority + " has permission " + permission + " on parentNode, however it is NOT INHERITED, but it is still somehow granted");
-            }
-            return null;
-        }
-
-        private boolean hasAccessPermission(String authority, String permission) {
-            String key = customHash(new AccessPermissionImpl(permission, AccessStatus.ALLOWED, authority, /* position doesn't matter */0));
-            return ancestorAccessPermissionsMap.get(key) != null;
-        }
-
-        private String customHash(AccessPermission accessPermission) {
-            return accessPermission.getPermission() + " ¤ " + accessPermission.getAccessStatus().name() + " ¤ " + accessPermission.getAuthority();
-        }
     }
 
 }

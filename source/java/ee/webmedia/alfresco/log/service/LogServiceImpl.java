@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.log.service;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getGeneralService;
 import static org.springframework.util.StringUtils.hasLength;
 
 import java.sql.PreparedStatement;
@@ -30,7 +31,6 @@ import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.common.search.DbSearchUtil;
-import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.filter.model.FilterVO;
 import ee.webmedia.alfresco.log.LogHelper;
 import ee.webmedia.alfresco.log.model.LogEntry;
@@ -49,7 +49,6 @@ public class LogServiceImpl implements LogService, InitializingBean {
     private SimpleJdbcTemplate jdbcTemplate;
 
     private boolean useClientIpFromXForwardedForHttpHeader;
-    private GeneralService generalService;
 
     @Override
     public void afterPropertiesSet() throws Exception {
@@ -254,7 +253,7 @@ public class LogServiceImpl implements LogService, InitializingBean {
             }
             if (hasLength(filter.getCreatorName())) {
                 queryParts.add(DbSearchUtil.generateStringWordsWildcardQuery("creator_name"));
-                parameters.add(generalService.getTsquery(filter.getCreatorName()));
+                parameters.add(getGeneralService().getTsquery(filter.getCreatorName()));
             }
             if (hasLength(filter.getComputerId())) {
                 // creating indexes for these fields is future development (can be done used trigram index); currently these fields are not indexed
@@ -265,7 +264,7 @@ public class LogServiceImpl implements LogService, InitializingBean {
             }
             if (hasLength(filter.getDescription())) {
                 queryParts.add(DbSearchUtil.generateStringWordsWildcardQuery("description"));
-                parameters.add(generalService.getTsquery(filter.getDescription()));
+                parameters.add(getGeneralService().getTsquery(filter.getDescription()));
             }
             if (hasLength(filter.getObjectName())) {
                 // creating index for this field is future development (can be done used trigram index); currently the field is not indexed
@@ -340,7 +339,7 @@ public class LogServiceImpl implements LogService, InitializingBean {
     }
 
     private void explainQuery(String sqlQuery, Object... args) {
-        generalService.explainQuery(sqlQuery, LOG, args);
+        getGeneralService().explainQuery(sqlQuery, LOG, args);
     }
 
     @Override
@@ -445,10 +444,6 @@ public class LogServiceImpl implements LogService, InitializingBean {
 
     public void setUseClientIpFromXForwardedForHttpHeader(boolean useClientIpFromXForwardedForHttpHeader) {
         this.useClientIpFromXForwardedForHttpHeader = useClientIpFromXForwardedForHttpHeader;
-    }
-
-    public void setGeneralService(GeneralService generalService) {
-        this.generalService = generalService;
     }
 
 }

@@ -12,7 +12,6 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentConfigServic
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDynamicService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentListService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getFileFolderService;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getFileService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getFunctionsService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getGeneralService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getMimetypeService;
@@ -56,7 +55,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -136,8 +134,8 @@ import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.functions.model.Function;
 import ee.webmedia.alfresco.functions.model.FunctionsModel;
 import ee.webmedia.alfresco.orgstructure.model.OrganizationStructure;
+import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.privilege.service.PrivilegeService;
-import ee.webmedia.alfresco.privilege.service.PrivilegeUtil;
 import ee.webmedia.alfresco.register.model.Register;
 import ee.webmedia.alfresco.register.model.RegisterModel;
 import ee.webmedia.alfresco.series.model.Series;
@@ -154,7 +152,6 @@ import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 import ee.webmedia.alfresco.workflow.service.Task;
 import ee.webmedia.alfresco.workflow.service.WorkflowUtil;
-import ee.webmedia.alfresco.workflow.service.Task;
 import ee.webmedia.alfresco.workflow.service.type.WorkflowType;
 import ee.webmedia.xtee.client.dhl.DhlXTeeService.SendStatus;
 
@@ -328,7 +325,7 @@ public class TestDataService implements SaveListener {
         files = loadCsvMultiCols("files.csv");
         // transmittalModes?
 
-        //filterFiles();
+        // filterFiles();
 
         // FUTURE: document creation, registration, file creation and workflow times that vary in the past
 
@@ -1249,8 +1246,8 @@ public class TestDataService implements SaveListener {
         log.info("Created series " + mark + " " + title);
     }
 
-    private final Set<String> priv1 = new HashSet<String>(Arrays.asList(DocumentCommonModel.Privileges.VIEW_DOCUMENT_FILES));
-    private final Set<String> priv2 = new HashSet<String>(Arrays.asList(DocumentCommonModel.Privileges.VIEW_DOCUMENT_FILES, DocumentCommonModel.Privileges.EDIT_DOCUMENT));
+    private final Set<Privilege> priv1 = new HashSet<Privilege>(Arrays.asList(Privilege.VIEW_DOCUMENT_FILES));
+    private final Set<Privilege> priv2 = new HashSet<Privilege>(Arrays.asList(Privilege.VIEW_DOCUMENT_FILES, Privilege.EDIT_DOCUMENT));
 
     private void createVolumes(int count) {
         Random seriesRandom = new Random();
@@ -1853,8 +1850,8 @@ public class TestDataService implements SaveListener {
         @SuppressWarnings("unchecked")
         List<String> additionalRecipientName = (List<String>) doc.getProp(DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME);
         if (DocumentStatus.FINISHED.getValueName().equals(doc.getProp(DocumentCommonModel.Props.DOC_STATUS))
-                        && ((recipientName != null && !recipientName.isEmpty()) || (additionalRecipientName != null && !additionalRecipientName.isEmpty()))
-                        && Math.random() > 0.0002d) {
+                && ((recipientName != null && !recipientName.isEmpty()) || (additionalRecipientName != null && !additionalRecipientName.isEmpty()))
+                && Math.random() > 0.0002d) {
 
             Map<QName, Serializable> sendInfoProps = new HashMap<QName, Serializable>();
             sendInfoProps.put(DocumentCommonModel.Props.SEND_INFO_RESOLUTION, getRandom(docTitles));
@@ -2093,7 +2090,7 @@ public class TestDataService implements SaveListener {
         // FUTURE: orderAssignmentWorkflow -- could be used, but don't remember exact rules right now (must have category...?)?
         Map<QName, WorkflowType> wfTypesByWf = getWorkflowService().getWorkflowTypes();
 
-        Map<String, Set<String>> permissionsByTaskOwnerId = new HashMap<String, Set<String>>();
+        Map<String, Set<Privilege>> permissionsByTaskOwnerId = new HashMap<String, Set<Privilege>>();
         FileService fileService = BeanHelper.getFileService();
 
         boolean isIndependentWorkflow = CompoundWorkflowType.INDEPENDENT_WORKFLOW == compoundWorkflowType;
@@ -2171,8 +2168,8 @@ public class TestDataService implements SaveListener {
                 props.put(WorkflowCommonModel.Props.OWNER_NAME, taskOwnerFullName);
                 props.put(WorkflowCommonModel.Props.OWNER_EMAIL, taskOwnerEmail);
                 props.put(WorkflowCommonModel.Props.OWNER_JOB_TITLE, taskOwnerJobTitle);
-                props.put(WorkflowCommonModel.Props.OWNER_ORGANIZATION_NAME, (Serializable) (taskOwnerStructUnit != null ? new ArrayList<String>(Arrays.asList(taskOwnerStructUnit.getName()))
-                        : null));
+                props.put(WorkflowCommonModel.Props.OWNER_ORGANIZATION_NAME, taskOwnerStructUnit != null ? new ArrayList<String>(Arrays.asList(taskOwnerStructUnit.getName()))
+                        : null);
 
                 props.put(WorkflowCommonModel.Props.DOCUMENT_TYPE, docTypeId);
 
@@ -2229,7 +2226,7 @@ public class TestDataService implements SaveListener {
                     if (StringUtils.isNotBlank(ownerId)) {
                         // document workflow
                         if (isDocumentWorkflow) {
-                            Set<String> requiredPrivileges = getRequiredPrivsForTask(task, docRef, fileService, false, false);
+                            Set<Privilege> requiredPrivileges = getRequiredPrivsForTask(task, docRef, fileService, false, false);
                             addOwnerPermissions(permissionsByTaskOwnerId, ownerId, requiredPrivileges);
                         }
                     } else if (isCaseFileWorkflow) {
@@ -2237,12 +2234,12 @@ public class TestDataService implements SaveListener {
                         addOwnerPermissions(permissionsByTaskOwnerId, ownerId, getPrivsWithDependencies(getRequiredPrivsForTask(task, null, null, true, true)));
                     } else {
                         // independent workflow
-                        Set<String> privileges = WorkflowUtil.getIndependentWorkflowDefaultDocPermissions();
+                        Set<Privilege> privileges = WorkflowUtil.getIndependentWorkflowDefaultDocPermissions();
                         boolean addEditPrivilege = task.isType(WorkflowSpecificModel.Types.ASSIGNMENT_TASK) || WorkflowUtil.isFirstConfirmationTask(task);
-                        Set<String> documentPrivileges = new HashSet<String>();
+                        Set<Privilege> documentPrivileges = new HashSet<Privilege>();
                         documentPrivileges.addAll(privileges);
                         if (addEditPrivilege) {
-                            documentPrivileges.add(DocumentCommonModel.Privileges.EDIT_DOCUMENT);
+                            documentPrivileges.add(Privilege.EDIT_DOCUMENT);
                         }
                         addOwnerPermissions(permissionsByTaskOwnerId, ownerId, documentPrivileges);
                     }
@@ -2281,23 +2278,23 @@ public class TestDataService implements SaveListener {
 
         PrivilegeService privilegeService = BeanHelper.getPrivilegeService();
         if (isDocumentWorkflow) {
-            for (Map.Entry<String, Set<String>> entry : permissionsByTaskOwnerId.entrySet()) {
+            for (Map.Entry<String, Set<Privilege>> entry : permissionsByTaskOwnerId.entrySet()) {
                 privilegeService.setPermissions(docRef, entry.getKey(), entry.getValue());
             }
         } else if (isCaseFileWorkflow) {
             // and to documents under this case file
             for (NodeRef documentRef : BeanHelper.getDocumentService().getAllDocumentRefsByParentRef(docRef)) {
-                for (Map.Entry<String, Set<String>> entry : permissionsByTaskOwnerId.entrySet()) {
+                for (Map.Entry<String, Set<Privilege>> entry : permissionsByTaskOwnerId.entrySet()) {
                     privilegeService.setPermissions(documentRef, entry.getKey(), entry.getValue());
                 }
             }
         } else {
             List<Document> documents = BeanHelper.getWorkflowService().getCompoundWorkflowDocuments(cwfRef);
             for (Document document : documents) {
-                for (Map.Entry<String, Set<String>> entry : permissionsByTaskOwnerId.entrySet()) {
-                    Set<String> privileges = new HashSet<String>(entry.getValue());
+                for (Map.Entry<String, Set<Privilege>> entry : permissionsByTaskOwnerId.entrySet()) {
+                    Set<Privilege> privileges = new HashSet<Privilege>(entry.getValue());
                     if (!document.isDocStatus(DocumentStatus.WORKING)) {
-                        privileges.remove(DocumentCommonModel.Privileges.EDIT_DOCUMENT);
+                        privileges.remove(Privilege.EDIT_DOCUMENT);
                     }
                     privilegeService.setPermissions(document.getNodeRef(), entry.getKey(), privileges);
                 }
@@ -2307,14 +2304,14 @@ public class TestDataService implements SaveListener {
         return new Pair<NodeRef, Integer>(cwfRef, allTaskCount);
     }
 
-    public void addOwnerPermissions(Map<String, Set<String>> permissionsByTaskOwnerId, String ownerId, Set<String> requiredPrivileges) {
-        if (!requiredPrivileges.isEmpty()) {
-            Set<String> ownerPermissions = permissionsByTaskOwnerId.get(ownerId);
+    public void addOwnerPermissions(Map<String, Set<Privilege>> permissionsByTaskOwnerId, String ownerId, Set<Privilege> set) {
+        if (!set.isEmpty()) {
+            Set<Privilege> ownerPermissions = permissionsByTaskOwnerId.get(ownerId);
             if (ownerPermissions == null) {
-                ownerPermissions = new HashSet<String>();
+                ownerPermissions = new HashSet<Privilege>();
                 permissionsByTaskOwnerId.put(ownerId, ownerPermissions);
             }
-            ownerPermissions.addAll(requiredPrivileges);
+            ownerPermissions.addAll(set);
         }
     }
 

@@ -38,9 +38,8 @@ import ee.webmedia.alfresco.docdynamic.web.DocumentDialogHelperBean;
 import ee.webmedia.alfresco.docdynamic.web.DocumentDynamicBlock;
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.file.model.FileModel;
-import ee.webmedia.alfresco.document.model.DocumentCommonModel;
-import ee.webmedia.alfresco.document.model.DocumentCommonModel.Privileges;
 import ee.webmedia.alfresco.document.web.evaluator.IsOwnerEvaluator;
+import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.privilege.service.PrivilegeUtil;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageDataImpl;
@@ -72,7 +71,7 @@ public class FileBlockBean implements DocumentDynamicBlock, RefreshEventListener
     public void toggleActive(ActionEvent event) {
         NodeRef fileNodeRef = new NodeRef(ActionUtil.getParam(event, "nodeRef"));
         try {
-            BaseDialogBean.validatePermission(docRef, DocumentCommonModel.Privileges.EDIT_DOCUMENT);
+            BaseDialogBean.validatePermission(docRef, Privilege.EDIT_DOCUMENT);
             final boolean active = getFileService().toggleActive(fileNodeRef);
             if (LOG.isDebugEnabled()) {
                 LOG.debug("changed file active status, nodeRef=" + fileNodeRef + ", new status=" + active);
@@ -248,7 +247,7 @@ public class FileBlockBean implements DocumentDynamicBlock, RefreshEventListener
 
     /**
      * Used in JSP page.
-     * 
+     *
      * @return
      */
     public List<File> getFiles() {
@@ -275,7 +274,7 @@ public class FileBlockBean implements DocumentDynamicBlock, RefreshEventListener
         DocumentDialogHelperBean documentDialogHelperBean = BeanHelper.getDocumentDialogHelperBean();
         Node docNode = documentDialogHelperBean.getNode();
         return (!fileIsActive || !documentDialogHelperBean.isNotEditable())
-                && (new IsOwnerEvaluator().evaluate(docNode) || PrivilegeUtil.isAdminOrDocmanagerWithPermission(docNode, Privileges.VIEW_DOCUMENT_META_DATA));
+                && (new IsOwnerEvaluator().evaluate(docNode) || PrivilegeUtil.isAdminOrDocmanagerWithViewDocPermission(docNode));
     }
 
     public boolean isDeleteFileAllowed() {

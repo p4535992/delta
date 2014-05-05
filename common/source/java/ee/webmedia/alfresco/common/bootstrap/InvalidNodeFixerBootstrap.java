@@ -40,7 +40,7 @@ public class InvalidNodeFixerBootstrap {
     private void executeInternal() {
         LOG.info("Finding invalid nodes from database...");
         jdbcTemplate.query("SELECT alf_node.id, alf_store.protocol, alf_store.identifier, alf_node.uuid, alf_transaction.change_txn_id, " +
-                "alf_node.acl_id, alf_node.audit_creator, alf_node.audit_created, alf_node.audit_modifier, alf_node.audit_modified, " +
+                "alf_node.audit_creator, alf_node.audit_created, alf_node.audit_modifier, alf_node.audit_modified, " +
                 "alf_qname.local_name, alf_namespace.uri " +
                 "FROM alf_node " +
                 "LEFT JOIN alf_transaction ON alf_node.transaction_id = alf_transaction.id " +
@@ -59,7 +59,6 @@ public class InvalidNodeFixerBootstrap {
                 LOG.warn("Found node with no parents and no root aspect - fixing:"
                         + "\n  nodeRef=" + nodeRef
                         + "\n  changeTxnId=" + rs.getObject("change_txn_id")
-                        + "\n  aclId=" + rs.getObject("acl_id")
                         + "\n  type={" + rs.getObject("uri") + "}" + rs.getObject("local_name")
                         + "\n  creator=" + rs.getObject("audit_creator")
                         + "\n  created=" + rs.getObject("audit_created")
@@ -72,21 +71,6 @@ public class InvalidNodeFixerBootstrap {
                 // TODO log alf_content for files ?
                 Assert.isTrue(jdbcTemplate.update("UPDATE alf_node SET node_deleted = true WHERE id = ?", rs.getObject("id")) == 1);
                 LOG.info("Fixed: set node_deleted = true for node id=" + rs.getObject("id") + " nodeRef=" + nodeRef);
-                return null;
-            }
-        });
-        jdbcTemplate.query("SELECT alf_node.id, alf_store.protocol, alf_store.identifier, alf_node.uuid, alf_transaction.change_txn_id " +
-                "FROM alf_node " +
-                "LEFT JOIN alf_transaction ON alf_node.transaction_id = alf_transaction.id " +
-                "LEFT JOIN alf_store ON alf_node.store_id = alf_store.id " +
-                "WHERE alf_node.node_deleted = false " +
-                "AND alf_node.acl_id IS NULL", new ParameterizedRowMapper<NodeRef>() {
-            @Override
-            public NodeRef mapRow(java.sql.ResultSet rs, int rowNum) throws SQLException {
-                StoreRef storeRef = new StoreRef(rs.getString("protocol"), rs.getString("identifier"));
-                NodeRef nodeRef = new NodeRef(storeRef, rs.getString("uuid"));
-                String changeTxnId = rs.getString("change_txn_id");
-                LOG.error("Found node with NULL acl_id: " + nodeRef + " changeTxnId=" + changeTxnId + " - IT PROBABLY NEEDS TO BE FIXED! We are not fixing it automatically!");
                 return null;
             }
         });

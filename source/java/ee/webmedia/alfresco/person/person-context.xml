@@ -16,6 +16,11 @@
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
       <property name="applicationContextManager" ref="Authentication" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="insertDeltaPermissionsBootstrap"/>
+         </list>
+      </property>      
     </bean>    
     
 </beans>

@@ -4,7 +4,6 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -18,7 +17,6 @@ import org.alfresco.service.cmr.repository.AssociationRef;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
-import org.alfresco.service.cmr.security.AccessStatus;
 import org.alfresco.service.namespace.NamespaceException;
 import org.alfresco.service.namespace.NamespacePrefixResolver;
 import org.alfresco.service.namespace.NamespaceService;
@@ -101,7 +99,7 @@ public class WmNode extends TransientNode {
 
     /**
      * Create new WmNode that will lazy-init its properties and aspects when needed
-     * 
+     *
      * @param nodeRef
      * @param type
      */
@@ -172,17 +170,7 @@ public class WmNode extends TransientNode {
         if (isUnsaved()) {
             throw new IllegalStateException("Not supported");
         }
-        Boolean valid = null;
-        if (permissions != null) {
-            valid = permissions.get(permission);
-        } else {
-            permissions = new HashMap<String, Boolean>(8, 1.0f);
-        }
-        if (valid == null) {
-            valid = BeanHelper.getPermissionService().hasPermission(nodeRef, permission) == AccessStatus.ALLOWED;
-            permissions.put(permission, valid);
-        }
-        return valid;
+        return super.hasPermission(permission);
     }
 
     @Override

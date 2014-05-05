@@ -434,15 +434,6 @@
    actionListener="#{ReportListDialog.continueReportGeneration}" rendered="#{ReportListDialog.showContinueReportGeneration}" />
 <f:verbatim><br/></f:verbatim>
 
-<h:outputText id="privilegeActionsTitle" value="Õiguste lisamine ja eemaldamine: " />
-<f:verbatim><br/></f:verbatim>
-<h:outputText id="privilegeActionsStatus" value=" Selles klastri õlas õiguste lisamine ja eemaldamine ei jookse." rendered="#{!ManageInheritablePrivilegesDialog.privilegeActionsEnabled}" />
-<h:commandButton id="pausePrivilegeActions" value="Peata õiguste lisamine ja eemaldamine" type="submit"
-   actionListener="#{ManageInheritablePrivilegesDialog.pausePrivilegeActions}" rendered="#{ManageInheritablePrivilegesDialog.showPausePrivilegeActions}" />
-<h:commandButton id="continuePrivilegeActions" value="Jätka õiguste lisamist ja eemaldamist" type="submit"
-   actionListener="#{ManageInheritablePrivilegesDialog.continuePrivilegeActions}" rendered="#{ManageInheritablePrivilegesDialog.showContinuePrivilegeActions}" />
-<f:verbatim><br/></f:verbatim>
-
 <f:verbatim><hr/></f:verbatim>
 <f:verbatim><br/></f:verbatim>
 
@@ -879,39 +870,6 @@
 
 <f:verbatim><br/><br/></f:verbatim>
 <f:verbatim><hr/></f:verbatim>
-   <h:outputText value="PPA live: Dokumendihaldurite grupil puuduvate õiguste parandamiseks." />
-   
-   <h:inputTextarea id="inheritanceProblems" value="#{ArrivedDocumentsPermissionsModifier.validationResults}" readonly="true" styleClass="expand19-200" />
-
-   <h:outputText value="Kui teksti kastis on esimesel real OK, siis tõenäoliselt probleemi pole." />
-   <f:verbatim><br/></f:verbatim>
-   <h:outputText value="Kui teksti kastis on esimesel real ERRORS, siis võiks katsetada järgnevaid võimalusi. NB! enne iga järgnevat võimaluse proovimist kontrollige, kas jätkamiseks on põhjust(OK või ERRORS)" />
-   <f:verbatim><br/><br/></f:verbatim>
-
-   <h:outputText value="Esimene võimalus - proovida olemasolevad õigused eemaldada ja tagasi panna. Vajuta järgnevat nuppu kui teksti kastis on esimesel real ERRORS" />
-   <f:verbatim><br/></f:verbatim>
-   <h:commandButton id="rerunArrivedDocumentsPermissionsUpdateBootstrap" value="võimalus 1: eemalda õigused ja lisa uuesti" type="submit" actionListener="#{ArrivedDocumentsPermissionsModifier.rerunArrivedDocumentsPermissionsUpdateBootstrap}" />
-
-   <f:verbatim><br/><br/></f:verbatim>
-
-   <h:outputText value="Kui eelneva nupu vajutusest polnud kasu proovige järgmist lahendust" />
-   <f:verbatim><br/></f:verbatim>
-   <h:commandButton id="test2RemoveImapFolderChildrenPermissionsAndAddPermissionsToImapRoot" value="võimalus 2: eemalda õigused imap-root alamkataloogidelt ja lisa imap-root kataloogile" type="submit" actionListener="#{ArrivedDocumentsPermissionsModifier.test2RemoveImapFolderChildrenPermissionsAndAddPermissionsToImapRoot}" />
-   <f:verbatim><br/></f:verbatim>
-   <h:outputText value="Kui sellest tekstist üleval asuva nupu vajutusest polnud kasu, siis vajutage järgnevat nuppu, et eelneva nupu tegevused tühistada" />
-   <h:commandButton id="test2Undo" value="võimalus 2 undo: lisa õigused imap-root alamkataloogidele ja eemalda imap-root kataloogilt" type="submit" actionListener="#{ArrivedDocumentsPermissionsModifier.test2Undo}" />
-
-   <f:verbatim><br/><br/></f:verbatim>
-
-   <h:outputText value="Kui eelnevate nuppude vajutusest polnud kasu proovige järgmist lahendust:" />
-   <f:verbatim><br/></f:verbatim>
-   <h:commandButton id="test3UndoRedoAndGrandChildrenPermissions" value="võimalus 3: lisa õigused imap-root kataloogi otseste alamkataloogide alamkataloogidele" type="submit" actionListener="#{ArrivedDocumentsPermissionsModifier.test3UndoRedoAndGrandChildrenPermissions}" />
-   <f:verbatim><br/></f:verbatim>
-   <h:outputText value="Loodetavasti oli ühest eelnevatest lahendustest kasu. Kui ka sellest tekstist üleval asuva nupu vajutusest ka polnud kasu, siis vajutage järgnevat nuppu, et eelneva nupu tegevused tühistada" />
-   <h:commandButton id="test3Undo" value="võimalus 3 undo: eemalda õigused imap-root kataloogi otseste alamkataloogide alamkataloogidelt" type="submit" actionListener="#{ArrivedDocumentsPermissionsModifier.test3Undo}" />
-
-
-<f:verbatim><hr/></f:verbatim>
 
 <f:verbatim><br/></f:verbatim>
 <h:outputText value="Maintenance tasks for data" style="font-weight: bold;" />
@@ -922,19 +880,6 @@
 <f:verbatim><br/><br/></f:verbatim>
 <h:commandButton id="findAndFixInvalidNodes" value="findAndFixInvalidNodes" type="submit" actionListener="#{invalidNodeFixerBootstrap.execute}"/>  
 
-<f:verbatim><br/><br/></f:verbatim>
-<h:outputText styleClass="mainTitle" value="Acl vigade parandamine. NB! Kui vigu on palju, võib parandamine võtta kaua aega! Live keskkondades ei ole soovitatav funktsionaalsust käivitada, kui rakendus on aktiivselt kasutusel.
- Enne käivitamist live keskkondades tuleb kindlasti veendud, kui palju parandatavaid vigu keskkonnas tegelikult on."/>
-<f:verbatim><br/></f:verbatim>
-<h:outputText value="Paranda acl p4 vead (inheritWithInheritanceUnset) määratud uuid-ga node'i jaoks (kõik node'id kui uuid on määramata): "/>
-<f:verbatim><br/></f:verbatim>
-<h:inputText value="#{fixAclInheritanceUpdater2.nodeUuidP4}" />
- <h:commandButton id="fixAclP4" value="fixAclP4" type="submit" actionListener="#{fixAclInheritanceUpdater2.fixAclsThatInheritWithInheritanceUnset}"/>
-<f:verbatim><br/></f:verbatim>
-<h:outputText value="Paranda acl p3 vead (inheritFromNonPrimaryParent) määratud uuid-ga node'i jaoks (kõik node'id kui uuid on määramata): "/>
-<f:verbatim><br/></f:verbatim>
-<h:inputText value="#{fixAclInheritanceUpdater2.nodeUuidP3}" />
- <h:commandButton id="fixAclP3" value="fixAclP3" type="submit" actionListener="#{fixAclInheritanceUpdater2.fixAclsThatInheritFromNonPrimaryParent}"/>  
 
 <f:verbatim><br/><br/><u></f:verbatim>
 <h:outputText value="Nightly 02:30 data maintenance job (runs only on primary cluster node, aka where jobs.enabled=true): "/>
@@ -942,8 +887,6 @@
 <h:outputText value="1) deleteDrafts"/>
 <f:verbatim><br/></f:verbatim>
 <h:outputText value="2) findAndFixInvalidNodes"/>
-<f:verbatim><br/></f:verbatim>
-<h:outputText value="3) fixAclP3"/>
 <f:verbatim><br/></f:verbatim>
 <h:commandButton id="runNightly0230DataMaintenanceJobNow" value="runNightly0230DataMaintenanceJobNow" type="submit" actionListener="#{TestingForDeveloperBean.runNightly0230DataMaintenanceJobNow}" />
 

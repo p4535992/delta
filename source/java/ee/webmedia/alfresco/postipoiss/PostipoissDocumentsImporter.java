@@ -27,7 +27,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -85,7 +84,6 @@ import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
 import ee.webmedia.alfresco.document.file.model.FileModel;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
-import ee.webmedia.alfresco.document.model.DocumentCommonModel.Privileges;
 import ee.webmedia.alfresco.document.register.model.RegNrHolder;
 import ee.webmedia.alfresco.document.sendout.service.SendOutService;
 import ee.webmedia.alfresco.document.service.DocumentService;
@@ -99,6 +97,7 @@ import ee.webmedia.alfresco.postipoiss.PostipoissDocumentsMapper.Mapping;
 import ee.webmedia.alfresco.postipoiss.PostipoissDocumentsMapper.Pair;
 import ee.webmedia.alfresco.postipoiss.PostipoissDocumentsMapper.PropMapping;
 import ee.webmedia.alfresco.postipoiss.PostipoissDocumentsMapper.PropertyValue;
+import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.utils.FilenameUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.workflow.model.CompoundWorkflowType;
@@ -121,7 +120,7 @@ public class PostipoissDocumentsImporter {
     /**
      * SIM "toimik_sari", MV "toimik", PPA "volume", now comes from mappings.xml {@code <prop from="..." to="_regNumberWithoutIndividual"/>}.
      * For example
-     * 
+     *
      * <pre>
      * &lt;volume&gt;10.1-01/11/33070&lt;/volume&gt;
      * &lt;regNumber&gt;33070&lt;/regNumber&gt;
@@ -610,7 +609,7 @@ public class PostipoissDocumentsImporter {
             allUsersByOwnerId.put(ownerId, UserUtil.getPersonFullName1(props));
         }
         log.info("Loaded " + allUsersByOwnerId.size() + " users");
-        */
+         */
         // @formatter:on
 
         usersFoundFile = new File(workFolder, "users_found.csv");
@@ -2083,9 +2082,9 @@ public class PostipoissDocumentsImporter {
                     task.getNode().getProperties().put(WorkflowSpecificModel.Props.ACTIVE.toString(), Boolean.TRUE);
                     aspects.add(WorkflowSpecificModel.Aspects.RESPONSIBLE);
                     responsibleActiveSet = true;
-                    getPrivilegeService().setPermissions(docRef, kelleleIkood, Collections.singleton(Privileges.EDIT_DOCUMENT));
+                    getPrivilegeService().setPermissions(docRef, kelleleIkood, Privilege.EDIT_DOCUMENT);
                 } else {
-                    getPrivilegeService().setPermissions(docRef, kelleleIkood, Collections.singleton(Privileges.VIEW_DOCUMENT_FILES));
+                    getPrivilegeService().setPermissions(docRef, kelleleIkood, Privilege.VIEW_DOCUMENT_FILES);
                 }
                 task.setTaskIndexInWorkflow(taskIndex++);
                 BeanHelper.getWorkflowDbService().createTaskEntry(task, wfRef);
@@ -2096,7 +2095,7 @@ public class PostipoissDocumentsImporter {
         if (!responsibleActiveSet && firstTaskRef != null) {
             Map<QName, Serializable> props = new HashMap<QName, Serializable>();
             props.put(WorkflowSpecificModel.Props.ACTIVE, Boolean.TRUE);
-            getPrivilegeService().setPermissions(docRef, firstTaskOwnerId, Collections.singleton(Privileges.EDIT_DOCUMENT));
+            getPrivilegeService().setPermissions(docRef, firstTaskOwnerId, Privilege.EDIT_DOCUMENT);
             BeanHelper.getWorkflowDbService().updateTaskProperties(firstTaskRef, props);
         }
     }

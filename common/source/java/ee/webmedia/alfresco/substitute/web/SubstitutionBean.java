@@ -11,6 +11,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import javax.faces.context.FacesContext;
 import javax.faces.event.ValueChangeEvent;
@@ -26,6 +27,7 @@ import org.apache.commons.lang.StringUtils;
 import ee.webmedia.alfresco.common.propertysheet.generator.GeneralSelectorGenerator;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.menu.ui.MenuBean;
+import ee.webmedia.alfresco.menu.web.MenuItemCountBean.MenuItemCountVO;
 import ee.webmedia.alfresco.substitute.model.Substitute;
 import ee.webmedia.alfresco.substitute.model.SubstitutionInfo;
 import ee.webmedia.alfresco.utils.MessageUtil;
@@ -47,6 +49,10 @@ public class SubstitutionBean implements Serializable {
     }
 
     public void setSelectedSubstitution(String selectedSubstitution) {
+
+    }
+
+    private void selectSubstitution(String selectedSubstitution) {
         currentStructUnitUser = null;
         if (StringUtils.isBlank(selectedSubstitution)) {
             substitutionInfo = new SubstitutionInfo();
@@ -55,6 +61,10 @@ public class SubstitutionBean implements Serializable {
             substitutionInfo = new SubstitutionInfo(getSubstituteService().getSubstitute(userNodeRef));
         }
         setForceSubstituteTaskReload(true);
+        Map<String, MenuItemCountVO> menuItemCountMap = BeanHelper.getMenuItemCountBean().getMap();
+        if (menuItemCountMap != null) {
+            menuItemCountMap.clear();
+        }
     }
 
     public boolean isCurrentStructUnitUser() {
@@ -66,7 +76,7 @@ public class SubstitutionBean implements Serializable {
 
     public void substitutionSelected(ValueChangeEvent event) {
         String substitutionNodeRef = (String) event.getNewValue();
-        setSelectedSubstitution(substitutionNodeRef);
+        selectSubstitution(substitutionNodeRef);
         redirectToHome(getApplicationService().getServerUrl());
     }
 

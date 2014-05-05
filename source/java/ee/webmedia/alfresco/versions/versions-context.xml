@@ -30,7 +30,7 @@
     <bean id="versionService" class="ee.webmedia.alfresco.versions.service.VersionServiceExtImpl" init-method="initialise">
         <property name="nodeService">
             <ref bean="NodeService" />
-        </property>
+        </property>    
         <property name="dbNodeService">
             <ref bean="mtAwareNodeService" />
         </property>
@@ -76,7 +76,6 @@
 
    <bean id="versionsService" class="ee.webmedia.alfresco.versions.service.VersionsServiceImpl">
       <property name="versionServiceExt" ref="VersionService" />
-      <property name="nodeService" ref="NodeService" />
       <property name="userService" ref="UserService" />
       <property name="documentLogService" ref="DocumentLogService" />
       <property name="dictionaryService" ref="DictionaryService" />

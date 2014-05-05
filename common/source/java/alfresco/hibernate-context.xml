@@ -194,14 +194,8 @@
                 <prop key="org.alfresco.repo.domain.hibernate.VersionCountImpl">${cache.strategy}</prop>
                 <prop key="org.alfresco.repo.domain.hibernate.AppliedPatchImpl">${cache.strategy}</prop>
 
-                <prop key="org.alfresco.repo.domain.hibernate.DbAccessControlEntryContextImpl">${cache.strategy}</prop>
-                <prop key="org.alfresco.repo.domain.hibernate.DbAccessControlEntryImpl">${cache.strategy}</prop>
-                <prop key="org.alfresco.repo.domain.hibernate.DbAccessControlListChangeSetImpl">${cache.strategy}</prop>
-                <prop key="org.alfresco.repo.domain.hibernate.DbAccessControlListImpl">${cache.strategy}</prop>
-                <prop key="org.alfresco.repo.domain.hibernate.DbAccessControlListMemberImpl">${cache.strategy}</prop>
                 <prop key="org.alfresco.repo.domain.hibernate.DbAuthorityAliasImpl">${cache.strategy}</prop>
                 <prop key="org.alfresco.repo.domain.hibernate.DbAuthorityImpl">${cache.strategy}</prop>
-                <prop key="org.alfresco.repo.domain.hibernate.DbPermissionImpl">${cache.strategy}</prop>
                  
                 <prop key="org.alfresco.repo.audit.hibernate.AuditConfigImpl">${cache.strategy}</prop>
                 <prop key="org.alfresco.repo.audit.hibernate.AuditDateImpl">${cache.strategy}</prop>
@@ -303,16 +297,10 @@
       </property>
    </bean>
     
-   <bean id="aclDaoComponentImpl" class="org.alfresco.repo.domain.hibernate.AclDaoComponentImpl">
+   <bean id="aclDaoComponentImpl" class="org.alfresco.repo.domain.hibernate.AclDaoComponentImpl" >
       <property name="sessionFactory">
          <ref bean="sessionFactory" />
-      </property>
-      <property name="qnameDAO">
-         <ref bean="qnameDAO" />
-      </property>
-	  <property name="aclCache">
-         <ref bean="aclCache" />
-      </property>
+      </property>   
    </bean>
    
    <bean id="accessControlListDAO" class="org.springframework.aop.framework.ProxyFactoryBean">
@@ -326,20 +314,7 @@
       </property>
    </bean>
    
-    <bean id="nodeACLDAO" class="org.alfresco.repo.domain.hibernate.DMAccessControlListDAO">
-        <property name="nodeDaoService">
-            <ref bean="nodeDaoService" />
-        </property>
-		<property name="aclDaoComponent">
-            <ref bean="aclDaoComponent"/>
-        </property>
-		<property name="hibernateSessionHelper">
-            <ref bean="hibernateSessionHelper"/>
-        </property>
-		<property name="nodeService">
-            <ref bean="dbNodeService"/>
-        </property>
-    </bean>
+    <bean id="nodeACLDAO" class="org.alfresco.repo.domain.hibernate.DMAccessControlListDAO" />
     
     <bean id="avmACLDAO" class="org.alfresco.repo.domain.hibernate.AVMAccessControlListDAO">
         <property name="avmRepository">

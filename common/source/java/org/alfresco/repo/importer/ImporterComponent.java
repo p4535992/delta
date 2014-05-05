@@ -81,6 +81,8 @@ import org.springframework.core.io.ResourceLoader;
 import org.springframework.util.StringUtils;
 import org.xml.sax.ContentHandler;
 
+import ee.webmedia.alfresco.common.web.BeanHelper;
+
 /**
  * Default implementation of the Importer Service
  *  
@@ -104,8 +106,6 @@ public class ImporterComponent
     private SearchService searchService;
     protected ContentService contentService;
     private RuleService ruleService;
-    private PermissionService permissionService;
-    private AuthorityService authorityService;
     private AuthenticationContext authenticationContext;
     private OwnableService ownableService;
 
@@ -178,22 +178,6 @@ public class ImporterComponent
     public void setRuleService(RuleService ruleService)
     {
         this.ruleService = ruleService;
-    }
-    
-    /**
-     * @param permissionService  permissionService
-     */
-    public void setPermissionService(PermissionService permissionService)
-    {
-        this.permissionService = permissionService;
-    }
-    
-    /**
-     * @param authorityService  authorityService
-     */
-    public void setAuthorityService(AuthorityService authorityService)
-    {
-        this.authorityService = authorityService;
     }
 
     /**
@@ -1286,28 +1270,9 @@ public class ImporterComponent
                 NodeRef nodeRef = assocRef.getChildRef();
 
                 // Note: non-admin authorities take ownership of new nodes
-                if (!(authenticationContext.isCurrentUserTheSystemUser() || authorityService.hasAdminAuthority()))
+                if (!(authenticationContext.isCurrentUserTheSystemUser() || BeanHelper.getAuthorityService().hasAdminAuthority()))
                 {
                     ownableService.takeOwnership(nodeRef);
-                }
-
-                // apply permissions
-                List<AccessPermission> permissions = null;
-                AccessStatus writePermission = permissionService.hasPermission(nodeRef, PermissionService.CHANGE_PERMISSIONS);
-                if (authenticationContext.isCurrentUserTheSystemUser() || writePermission.equals(AccessStatus.ALLOWED))
-                {
-                    permissions = bindPermissions(node.getAccessControlEntries());
-                    
-                    for (AccessPermission permission : permissions)
-                    {
-                        permissionService.setPermission(nodeRef, permission.getAuthority(), permission.getPermission(), permission.getAccessStatus().equals(AccessStatus.ALLOWED));
-                    }
-                    // note: apply inheritance after setting permissions as this may affect whether you can apply permissions
-                    boolean inheritPermissions = node.getInheritPermissions();
-                    if (!inheritPermissions)
-                    {
-                        permissionService.setInheritParentPermissions(nodeRef, false);
-                    }
                 }
                 
                 // Disable behaviour for the node until the complete node (and its children have been imported)
@@ -1325,7 +1290,7 @@ public class ImporterComponent
                 // Report creation
                 reportNodeCreated(assocRef);
                 reportPropertySet(nodeRef, initialProperties);
-                reportPermissionSet(nodeRef, permissions);
+                reportPermissionSet(nodeRef, null);
 
                 // return newly created node reference
                 return nodeRef;
@@ -1470,26 +1435,9 @@ public class ImporterComponent
                         nodeService.setProperties(existingNodeRef, existingProperties);
                     }
 
-                    // Apply permissions
-                    List<AccessPermission> permissions = null;
-                    AccessStatus writePermission = permissionService.hasPermission(existingNodeRef, PermissionService.CHANGE_PERMISSIONS);
-                    if (authenticationContext.isCurrentUserTheSystemUser() || writePermission.equals(AccessStatus.ALLOWED)) {
-                        boolean inheritPermissions = node.getInheritPermissions();
-                        if (!inheritPermissions) {
-                            permissionService.setInheritParentPermissions(existingNodeRef, false);
-                        }
-
-                        permissions = bindPermissions(node.getAccessControlEntries());
-
-                        for (AccessPermission permission : permissions) {
-                            permissionService.setPermission(existingNodeRef, permission.getAuthority(), permission.getPermission(), permission
-                                    .getAccessStatus().equals(AccessStatus.ALLOWED));
-                        }
-                    }
-
                     // report update
                     reportPropertySet(existingNodeRef, updateProperties);
-                    reportPermissionSet(existingNodeRef, permissions);
+                    reportPermissionSet(existingNodeRef, null);
 
                     return existingNodeRef;
                 }

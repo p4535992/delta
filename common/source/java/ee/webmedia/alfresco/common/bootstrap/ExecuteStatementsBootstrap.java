@@ -15,7 +15,7 @@ public class ExecuteStatementsBootstrap extends AbstractModuleComponent {
 
     protected static final Logger LOG = Logger.getLogger(ExecuteStatementsBootstrap.class);
 
-    private DataSource dataSource;
+    protected DataSource dataSource;
     private String resourceName;
 
     @Override

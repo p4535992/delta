@@ -22,8 +22,8 @@ import ee.webmedia.alfresco.classificator.enums.AccessRestriction;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
-import ee.webmedia.alfresco.document.model.DocumentCommonModel.Privileges;
 import ee.webmedia.alfresco.document.web.evaluator.IsOwnerEvaluator;
+import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.privilege.model.UserPrivileges;
 import ee.webmedia.alfresco.privilege.service.PrivilegeUtil;
 import ee.webmedia.alfresco.privilege.web.AbstractInheritingPrivilegesHandler;
@@ -42,10 +42,10 @@ public class DocumentTypePrivilegesHandler extends AbstractInheritingPrivilegesH
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(DocumentTypePrivilegesHandler.class);
 
     protected DocumentTypePrivilegesHandler() {
-        this(DocumentCommonModel.Types.DOCUMENT, Arrays.asList(Privileges.VIEW_DOCUMENT_META_DATA, Privileges.VIEW_DOCUMENT_FILES, Privileges.EDIT_DOCUMENT));
+        this(DocumentCommonModel.Types.DOCUMENT, Arrays.asList(Privilege.VIEW_DOCUMENT_META_DATA, Privilege.VIEW_DOCUMENT_FILES, Privilege.EDIT_DOCUMENT));
     }
 
-    protected DocumentTypePrivilegesHandler(QName nodeType, Collection<String> manageablePermissions) {
+    protected DocumentTypePrivilegesHandler(QName nodeType, Collection<Privilege> manageablePermissions) {
         super(nodeType, manageablePermissions);
     }
 
@@ -67,10 +67,10 @@ public class DocumentTypePrivilegesHandler extends AbstractInheritingPrivilegesH
         if (StringUtils.equals(accessRestriction, AccessRestriction.OPEN.getValueName())) {
             String docIsPublic = MessageUtil.getMessage("document_manage_permissions_extraInfo_documentIsPublic");
             for (UserPrivileges privs : state.getUserPrivileges()) {
-                privs.addPrivilegeDynamic(Privileges.VIEW_DOCUMENT_FILES, docIsPublic);
+                privs.addPrivilegeDynamic(Privilege.VIEW_DOCUMENT_FILES, docIsPublic);
             }
             for (UserPrivileges groupPrivs : state.getPrivMappings().getPrivilegesByGroup().values()) {
-                groupPrivs.addPrivilegeDynamic(Privileges.VIEW_DOCUMENT_FILES, docIsPublic);
+                groupPrivs.addPrivilegeDynamic(Privilege.VIEW_DOCUMENT_FILES, docIsPublic);
             }
         }
     }
@@ -95,18 +95,18 @@ public class DocumentTypePrivilegesHandler extends AbstractInheritingPrivilegesH
             return false;
         }
         FileService fileService = BeanHelper.getFileService();
-        Map<String, Set<String>> missingPrivsByUser = new HashMap<String, Set<String>>();
+        Map<String, Set<Privilege>> missingPrivsByUser = new HashMap<String, Set<Privilege>>();
         for (Task task : tasks) {
             String ownerId = task.getOwnerId();
             UserPrivileges userPrivileges = loosingPrivileges.get(ownerId);
             if (userPrivileges == null) {
                 continue;
             }
-            Set<String> requiredPrivileges = PrivilegeUtil.getPrivsWithDependencies(PrivilegeUtil.getRequiredPrivsForInprogressTask(task, docRef, fileService,
+            Set<Privilege> requiredPrivileges = PrivilegeUtil.getPrivsWithDependencies(PrivilegeUtil.getRequiredPrivsForInprogressTask(task, docRef, fileService,
                     CaseFileModel.Types.CASE_FILE.equals(getNodeType())));
             requiredPrivileges.removeAll(userPrivileges.getActivePrivileges());
             if (!requiredPrivileges.isEmpty()) {
-                Set<String> missingPrivileges = missingPrivsByUser.get(userPrivileges.getUserName());
+                Set<Privilege> missingPrivileges = missingPrivsByUser.get(userPrivileges.getUserName());
                 if (missingPrivileges == null) {
                     missingPrivileges = requiredPrivileges;
                 } else {
@@ -119,13 +119,13 @@ public class DocumentTypePrivilegesHandler extends AbstractInheritingPrivilegesH
         boolean removedWFPrivilege = !missingPrivsByUser.isEmpty();
         if (removedWFPrivilege) {
             List<MessageData> missingUserPrivilegeMessages = new ArrayList<MessageData>();
-            for (Entry<String, Set<String>> entry : missingPrivsByUser.entrySet()) {
+            for (Entry<String, Set<Privilege>> entry : missingPrivsByUser.entrySet()) {
                 String userName = entry.getKey();
                 String userDisplayName = loosingPrivileges.get(userName).getUserDisplayName();
                 List<String> missingPrivileges = new ArrayList<String>();
-                for (String privilege : missingPrivsByUser.get(userName)) {
+                for (Privilege privilege : missingPrivsByUser.get(userName)) {
                     FacesContext context = FacesContext.getCurrentInstance();
-                    missingPrivileges.add(MessageUtil.getMessage(context, "permission_" + privilege));
+                    missingPrivileges.add(MessageUtil.getMessage(context, "permission_" + privilege.getPrivilegeName()));
                 }
                 missingUserPrivilegeMessages.add(new MessageDataImpl("document_manage_permissions_save_error_removedWfPrivileges_missingUserPrivileges"
                         , userDisplayName, StringUtils.join(missingPrivileges, ", ")));

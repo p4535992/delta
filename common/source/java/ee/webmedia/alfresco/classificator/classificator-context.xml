@@ -598,6 +598,7 @@
       <property name="dependsOn">
          <list>
             <ref bean="classificatorRootBootstrap" />
+            <ref bean="insertDeltaPermissionsBootstrap" />
          </list>
       </property>
    </bean>

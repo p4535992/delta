@@ -10,7 +10,7 @@
             <action>dialog:createDiscussion</action>
             <action-listener>#{DialogManager.setupParameters}</action-listener>
             <params>
-               <param name="id">#{DocumentDialogHelperBean.node.id}</param>
+               <param name="id">#{DocumentDialogHelperBean.node.nodeRef}</param>
             </params>
          </action>
 

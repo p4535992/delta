@@ -97,6 +97,7 @@ import ee.webmedia.alfresco.log.model.LogEntry;
 import ee.webmedia.alfresco.log.model.LogObject;
 import ee.webmedia.alfresco.menu.ui.MenuBean;
 import ee.webmedia.alfresco.parameters.model.Parameters;
+import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.series.model.Series;
 import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.simdhs.servlet.ExternalAccessServlet;
@@ -127,7 +128,7 @@ import ee.webmedia.alfresco.workflow.web.WorkflowBlockBean;
  * </p>
  */
 public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<DocDialogSnapshot, DocumentDynamicBlock, DialogDataProvider> implements DialogDataProvider,
-        BlockBeanProviderProvider {
+BlockBeanProviderProvider {
     private static final long serialVersionUID = 1L;
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(DocumentDynamicDialog.class);
 
@@ -427,7 +428,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
     /**
      * Called when a new (not yet saved) document is set to be a reply or a follow up to some base document
      * and is filled with some properties of the base document.
-     * 
+     *
      * @param nodeRef to the base document
      */
     private void updateFollowUpOrReplyProperties(NodeRef nodeRef) {
@@ -479,7 +480,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
     /**
      * Move all the files to the selected nodeRef, delete the current doc
      * and show the nodeRef doc.
-     * 
+     *
      * @param event
      */
     public void addFilesHandler(ActionEvent event) {
@@ -656,8 +657,8 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
     private void openOrSwitchModeCommon(NodeRef docRef, boolean inEditMode) {
         DocumentDynamic document = inEditMode
                 ? getDocumentDynamicService().getDocumentWithInMemoryChangesForEditing(docRef)
-                : getDocumentDynamicService().getDocument(docRef);
-        openOrSwitchModeCommon(document, inEditMode);
+                        : getDocumentDynamicService().getDocument(docRef);
+                openOrSwitchModeCommon(document, inEditMode);
     }
 
     private void openOrSwitchModeCommon(DocumentDynamic document, boolean inEditMode) {
@@ -819,9 +820,9 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
     }
 
     @Override
-    /** Transaction created by BaseDialogBean.finish method is not needed by us here, and it would be clearer to turn it off - 
+    /** Transaction created by BaseDialogBean.finish method is not needed by us here, and it would be clearer to turn it off -
      * but we haven't turned it off and thus it is still created and therefore it is the super transaction.
-     * Actions in finishImpl method are performed in two separate child transactions for the following reason: 
+     * Actions in finishImpl method are performed in two separate child transactions for the following reason:
      * integrity checker runs at the end of the transaction and we want integrity checker to run before switchMode is run.
      */
     protected String finishImpl(final FacesContext context, String outcome) throws Throwable {
@@ -1284,14 +1285,14 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
     }
 
     private static boolean validateViewMetaDataPermission(NodeRef docRef) {
-        return validatePermissionWithErrorMessage(docRef, DocumentCommonModel.Privileges.VIEW_DOCUMENT_META_DATA);
+        return validatePermissionWithErrorMessage(docRef, Privilege.VIEW_DOCUMENT_META_DATA);
     }
 
     private static boolean validateEditMetaDataPermission(NodeRef docRef) {
-        return validatePermissionWithErrorMessage(docRef, DocumentCommonModel.Privileges.EDIT_DOCUMENT);
+        return validatePermissionWithErrorMessage(docRef, Privilege.EDIT_DOCUMENT);
     }
 
-    public static boolean validatePermissionWithErrorMessage(NodeRef docRef, String permission) {
+    public static boolean validatePermissionWithErrorMessage(NodeRef docRef, Privilege permission) {
         try {
             validatePermission(docRef, permission);
         } catch (UnableToPerformException e) {

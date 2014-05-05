@@ -86,7 +86,6 @@ import ee.webmedia.alfresco.common.bootstrap.InvalidNodeFixerBootstrap;
 import ee.webmedia.alfresco.common.job.NightlyDataFixJob;
 import ee.webmedia.alfresco.common.service.CustomReindexComponent;
 import ee.webmedia.alfresco.common.web.BeanHelper;
-import ee.webmedia.alfresco.privilege.bootstrap.FixAclInheritanceUpdater;
 
 /**
  * This class is resource manager LuceneIndexers and LuceneSearchers. It supports two phase commit inside XA

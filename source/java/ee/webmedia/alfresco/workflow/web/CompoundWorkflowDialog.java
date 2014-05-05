@@ -44,7 +44,6 @@ import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
 import org.alfresco.web.app.AlfrescoNavigationHandler;
-import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.dialog.DialogState;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.config.DialogsConfigElement.DialogButtonConfig;
@@ -80,7 +79,6 @@ import ee.webmedia.alfresco.document.einvoice.service.EInvoiceUtil;
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
 import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
-import ee.webmedia.alfresco.document.model.DocumentCommonModel.Privileges;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
 import ee.webmedia.alfresco.document.search.web.AbstractSearchBlockBean;
@@ -96,6 +94,7 @@ import ee.webmedia.alfresco.menu.ui.component.UIMenuComponent;
 import ee.webmedia.alfresco.notification.exception.EmailAttachmentSizeLimitException;
 import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
+import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.user.model.UserModel;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.ComponentUtil;
@@ -443,7 +442,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
         List<Document> documents = getWorkflowService().getCompoundWorkflowDocuments(cmpWorkflow.getNodeRef());
         if (documents != null) {
             for (Document document : documents) {
-                if (document.hasPermission(DocumentCommonModel.Privileges.VIEW_DOCUMENT_META_DATA) && document.hasPermission(DocumentCommonModel.Privileges.VIEW_DOCUMENT_FILES)) {
+                if (document.hasPermission(Privilege.VIEW_DOCUMENT_META_DATA) && document.hasPermission(Privilege.VIEW_DOCUMENT_FILES)) {
                     return true;
                 }
             }
@@ -1130,7 +1129,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
                 if (task.isStatus(Status.NEW) && task.getDueDate() != null && task.getDueDateDays() != null) {
                     if (!DateUtils.isSameDay(task.getDueDate(),
                             DatePickerWithDueDateGenerator.calculateDueDate(task.getPropBoolean(WorkflowSpecificModel.Props.IS_DUE_DATE_WORKING_DAYS), task.getDueDateDays())
-                                    .toDateMidnight().toDate())) {
+                            .toDateMidnight().toDate())) {
                         task.setProp(WorkflowSpecificModel.Props.DUE_DATE_DAYS, null);
                         task.setProp(WorkflowSpecificModel.Props.IS_DUE_DATE_WORKING_DAYS, Boolean.FALSE); // reset to default value
                     }
@@ -1211,7 +1210,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
         if (new WorkflowNewEvaluator().evaluate(compoundWorkflow)
                 && !compoundWorkflow.getWorkflows().isEmpty()
                 && (!compoundWorkflow.isIndependentWorkflow()
-                || isOwnerOrDocManager())) {
+                        || isOwnerOrDocManager())) {
             return Arrays.asList(new DialogButtonConfig("compound_workflow_start", null, "workflow_compound_start",
                     "#{CompoundWorkflowDialog.startWorkflow}", "false", null));
 
@@ -1302,7 +1301,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
     private boolean checkDocumentWorkflowType(QName wfType, Document doc, boolean isDocStatusWorking) {
         if (!isDocStatusWorking
                 && ((wfType.equals(WorkflowSpecificModel.Types.SIGNATURE_WORKFLOW)
-                        && !isAdminOrDocmanagerWithPermission(doc, Privileges.VIEW_DOCUMENT_FILES, Privileges.VIEW_DOCUMENT_META_DATA))
+                        && !isAdminOrDocmanagerWithPermission(doc, Privilege.VIEW_DOCUMENT_FILES, Privilege.VIEW_DOCUMENT_META_DATA))
                         || wfType.equals(WorkflowSpecificModel.Types.OPINION_WORKFLOW)
                         || wfType.equals(WorkflowSpecificModel.Types.REVIEW_WORKFLOW)
                         || wfType.equals(WorkflowSpecificModel.Types.GROUP_ASSIGNMENT_WORKFLOW))) {
@@ -1310,9 +1309,8 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
         }
         if ((wfType.equals(WorkflowSpecificModel.Types.OPINION_WORKFLOW)
                 || wfType.equals(WorkflowSpecificModel.Types.CONFIRMATION_WORKFLOW)
-                || wfType.equals(WorkflowSpecificModel.Types.REVIEW_WORKFLOW)
-                || wfType.equals(WorkflowSpecificModel.Types.GROUP_ASSIGNMENT_WORKFLOW))
-                && !BaseDialogBean.hasPermission(doc.getNodeRef(), DocumentCommonModel.Privileges.EDIT_DOCUMENT)) {
+                || wfType.equals(WorkflowSpecificModel.Types.REVIEW_WORKFLOW))
+                && !doc.hasPermission(Privilege.EDIT_DOCUMENT)) {
             return false;
         }
         if (wfType.equals(WorkflowSpecificModel.Types.DOC_REGISTRATION_WORKFLOW)
@@ -1497,11 +1495,11 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
         boolean registeringNotAllowed = false;
         boolean hasUnallowedRegisteringWorkflows = false;
         Document doc = getParentDocument();
+        boolean adminOrDocmanagerWithPermission = isAdminOrDocmanagerWithPermission(doc, Privilege.VIEW_DOCUMENT_FILES, Privilege.VIEW_DOCUMENT_META_DATA);
         if (isDocumentWorkflow) {
             String docTypeId = (String) doc.getProperties().get(Props.OBJECT_TYPE_ID);
             registeringNotAllowed = !getDocumentAdminService().getDocumentTypeProperty(docTypeId, DocumentAdminModel.Props.REGISTRATION_ENABLED, Boolean.class);
         }
-        boolean adminOrDocmanagerWithPermission = isAdminOrDocmanagerWithPermission(doc, Privileges.VIEW_DOCUMENT_FILES, Privileges.VIEW_DOCUMENT_META_DATA);
         for (Workflow block : compoundWorkflow.getWorkflows()) {
             boolean foundOwner = false;
             QName blockType = block.getNode().getType();
@@ -1854,25 +1852,25 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
         }
         boolean addLinkForThisWorkflow = false;
         if (WorkflowSpecificModel.Types.SIGNATURE_WORKFLOW.equals(workflowType)) {
-            if (doc.isDocStatus(DocumentStatus.WORKING) && doc.hasPermission(Privileges.EDIT_DOCUMENT)) {
+            if (doc.isDocStatus(DocumentStatus.WORKING) && doc.hasPermission(Privilege.EDIT_DOCUMENT)) {
                 addLinkForThisWorkflow = true;
-            } else if (doc.isDocStatus(DocumentStatus.FINISHED) && isAdminOrDocmanagerWithPermission(doc, Privileges.VIEW_DOCUMENT_FILES, Privileges.VIEW_DOCUMENT_META_DATA)) {
+            } else if (doc.isDocStatus(DocumentStatus.FINISHED) && isAdminOrDocmanagerWithPermission(doc, Privilege.VIEW_DOCUMENT_FILES, Privilege.VIEW_DOCUMENT_META_DATA)) {
                 addLinkForThisWorkflow = true;
             }
         } else if (WorkflowSpecificModel.Types.OPINION_WORKFLOW.equals(workflowType)) {
-            if (doc.isDocStatus(DocumentStatus.WORKING) && doc.hasPermission(Privileges.EDIT_DOCUMENT)) {
+            if (doc.isDocStatus(DocumentStatus.WORKING) && doc.hasPermission(Privilege.EDIT_DOCUMENT)) {
                 addLinkForThisWorkflow = true;
             }
         } else if (WorkflowSpecificModel.Types.CONFIRMATION_WORKFLOW.equals(workflowType)) {
-            if (doc.isDocStatus(DocumentStatus.WORKING) && doc.hasPermission(Privileges.EDIT_DOCUMENT)) {
+            if (doc.isDocStatus(DocumentStatus.WORKING) && doc.hasPermission(Privilege.EDIT_DOCUMENT)) {
                 addLinkForThisWorkflow = true;
             }
         } else if (WorkflowSpecificModel.Types.REVIEW_WORKFLOW.equals(workflowType)) {
-            if (doc.isDocStatus(DocumentStatus.WORKING) && doc.hasPermission(Privileges.EDIT_DOCUMENT)) {
+            if (doc.isDocStatus(DocumentStatus.WORKING) && doc.hasPermission(Privilege.EDIT_DOCUMENT)) {
                 addLinkForThisWorkflow = true;
             }
         } else if (WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_WORKFLOW.equals(workflowType)) {
-            if (doc.hasPermissions(Privileges.VIEW_DOCUMENT_FILES, Privileges.VIEW_DOCUMENT_META_DATA)) {
+            if (doc.hasPermission(Privilege.VIEW_DOCUMENT_FILES, Privilege.VIEW_DOCUMENT_META_DATA)) {
                 addLinkForThisWorkflow = true;
             }
         } else if (WorkflowSpecificModel.Types.DOC_REGISTRATION_WORKFLOW.equals(workflowType)) {
@@ -1880,19 +1878,19 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
                 addLinkForThisWorkflow = true;
             }
         } else if (WorkflowSpecificModel.Types.INFORMATION_WORKFLOW.equals(workflowType)) {
-            if (doc.hasPermissions(Privileges.VIEW_DOCUMENT_FILES, Privileges.VIEW_DOCUMENT_META_DATA)) {
+            if (doc.hasPermissions(Arrays.asList(Privilege.VIEW_DOCUMENT_FILES, Privilege.VIEW_DOCUMENT_META_DATA))) {
                 addLinkForThisWorkflow = true;
             }
         } else if (WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW.equals(workflowType)) {
-            if (doc.hasPermissions(Privileges.VIEW_DOCUMENT_FILES, Privileges.VIEW_DOCUMENT_META_DATA)) {
+            if (doc.hasPermissions(Arrays.asList(Privilege.VIEW_DOCUMENT_FILES, Privilege.VIEW_DOCUMENT_META_DATA))) {
                 addLinkForThisWorkflow = true;
             }
         } else if (WorkflowSpecificModel.Types.EXTERNAL_REVIEW_WORKFLOW.equals(workflowType)) {
-            if (doc.isDocStatus(DocumentStatus.WORKING) && doc.hasPermission(Privileges.EDIT_DOCUMENT)) {
+            if (doc.isDocStatus(DocumentStatus.WORKING) && doc.hasPermission(Privilege.EDIT_DOCUMENT)) {
                 addLinkForThisWorkflow = true;
             }
         } else if (WorkflowSpecificModel.Types.GROUP_ASSIGNMENT_WORKFLOW.equals(workflowType)) {
-            if (doc.isDocStatus(DocumentStatus.WORKING) && doc.hasPermission(Privileges.EDIT_DOCUMENT)) {
+            if (doc.isDocStatus(DocumentStatus.WORKING) && doc.hasPermission(Privilege.EDIT_DOCUMENT)) {
                 addLinkForThisWorkflow = true;
             }
         } else {

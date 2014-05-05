@@ -4,7 +4,7 @@ import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.web.action.evaluator.BaseActionEvaluator;
 import org.alfresco.web.bean.repository.Node;
 
-import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.privilege.model.Privilege;
 
 public class DocumentSendForInformationEvaluator extends BaseActionEvaluator {
 
@@ -15,7 +15,7 @@ public class DocumentSendForInformationEvaluator extends BaseActionEvaluator {
         return docNode.getNodeRef().getStoreRef().getProtocol().equals(StoreRef.PROTOCOL_WORKSPACE)
                 && new DocumentNotInDraftsFunctionActionEvaluator().evaluate(docNode)
                 && new ViewStateActionEvaluator().evaluate(docNode)
-                && docNode.hasPermissions(DocumentCommonModel.Privileges.VIEW_DOCUMENT_META_DATA, DocumentCommonModel.Privileges.VIEW_DOCUMENT_FILES);
+                && docNode.hasPermission(Privilege.VIEW_DOCUMENT_META_DATA, Privilege.VIEW_DOCUMENT_FILES);
     }
 
 }

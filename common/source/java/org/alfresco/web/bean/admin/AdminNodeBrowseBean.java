@@ -65,8 +65,12 @@ import org.alfresco.util.ISO9075;
 import org.alfresco.web.app.servlet.DownloadContentServlet;
 import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.repository.Repository;
+import org.alfresco.web.bean.wcm.SetPermissionsDialog;
 
 import ee.webmedia.alfresco.common.service.ApplicationService;
+import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.privilege.service.PrivilegeService;
+import ee.webmedia.alfresco.privilege.service.Permission;
 
 // TODO: DownloadServlet - use of request parameter for property name?
 // TODO: Anyway to switch content view url link / property value text?
@@ -118,7 +122,7 @@ public class AdminNodeBrowseBean implements Serializable
     transient private DictionaryService dictionaryService;
     transient private SearchService searchService;
     transient private NamespaceService namespaceService;
-    transient private PermissionService permissionService;
+    transient private PrivilegeService privilegeService;
     transient private AVMService avmService;
 
     /**
@@ -207,20 +211,20 @@ public class AdminNodeBrowseBean implements Serializable
     }
 
     /**
-     * @param permissionService permission service
+     * @param privilegeService permission service
      */
-    public void setPermissionService(PermissionService permissionService)
+    public void setPrivilegeService(PrivilegeService privilegeService)
     {
-        this.permissionService = permissionService;
+        this.privilegeService = privilegeService;
     }
 
-    private PermissionService getPermissionService()
+    private PrivilegeService getPrivilegeService()
     {
-        if (permissionService == null)
+        if (privilegeService == null)
         {
-            permissionService = Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getPermissionService();
+            privilegeService = BeanHelper.getPrivilegeService();
         }
-        return permissionService;
+        return privilegeService;
     }
 
     /**
@@ -398,7 +402,7 @@ public class AdminNodeBrowseBean implements Serializable
     {
         if (inheritPermissions == null)
         {
-            inheritPermissions = this.getPermissionService().getInheritParentPermissions(nodeRef);
+            inheritPermissions = getPrivilegeService().getInheritParentPermissions(nodeRef);
         }
         return inheritPermissions.booleanValue();
     }
@@ -412,25 +416,7 @@ public class AdminNodeBrowseBean implements Serializable
     {
         if (permissions == null)
         {
-            AccessStatus readPermissions = this.getPermissionService().hasPermission(nodeRef, PermissionService.READ_PERMISSIONS);
-            if (readPermissions.equals(AccessStatus.ALLOWED))
-            {
-                List<AccessPermission> nodePermissions = new ArrayList<AccessPermission>(getPermissionService().getAllSetPermissions(nodeRef));
-                Collections.sort(nodePermissions, new Comparator<AccessPermission>() {
-
-                    @Override
-                    public int compare(AccessPermission o1, AccessPermission o2) {
-                        return o1.getAuthority().compareTo(o2.getAuthority());
-                    }
-                });
-                permissions = new ListDataModel(nodePermissions);
-            }
-            else
-            {
-                List<NoReadPermissionGranted> noReadPermissions = new ArrayList<NoReadPermissionGranted>(1);
-                noReadPermissions.add(new NoReadPermissionGranted());
-                permissions = new ListDataModel(noReadPermissions);
-            }
+            permissions = new ListDataModel(privilegeService.getAllSetPrivileges(nodeRef));
         }
         return permissions;
     }
@@ -446,7 +432,7 @@ public class AdminNodeBrowseBean implements Serializable
         {
             if (nodeRef.getStoreRef().getProtocol().equals(StoreRef.PROTOCOL_AVM))
             {
-                List<AccessPermission> nodePermissions = new ArrayList<AccessPermission>(getPermissionService().getAllSetPermissions(nodeRef.getStoreRef()));
+                List<Permission> nodePermissions = new ArrayList<Permission>();
                 permissionMasks = new ListDataModel(nodePermissions);
             }
             else

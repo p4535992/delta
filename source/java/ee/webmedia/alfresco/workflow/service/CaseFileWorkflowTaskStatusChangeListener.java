@@ -12,6 +12,7 @@ import org.springframework.beans.factory.InitializingBean;
 import ee.webmedia.alfresco.casefile.model.CaseFileModel;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.document.service.DocumentService;
+import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.privilege.service.PrivilegeService;
 import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
@@ -60,7 +61,7 @@ public class CaseFileWorkflowTaskStatusChangeListener implements WorkflowEventLi
         // Add task owner privileges to case file
         privilegeService.setPermissions(caseFileRef, ownerId, getPrivsWithDependencies(getRequiredPrivsForInprogressTask(task, null, null, true)));
         // and to documents under this case file
-        Set<String> privsWithDependencies = getPrivsWithDependencies(getRequiredPrivsForInprogressTask(task, null, null, false));
+        Set<Privilege> privsWithDependencies = getPrivsWithDependencies(getRequiredPrivsForInprogressTask(task, null, null, false));
         for (NodeRef docRef : documentService.getAllDocumentRefsByParentRef(caseFileRef)) {
             privilegeService.setPermissions(docRef, ownerId, privsWithDependencies);
         }

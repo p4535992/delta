@@ -9,7 +9,6 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getEInvoiceService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getFileService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getLogService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getNodeService;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getPrivilegeService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getSignatureService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getWorkflowService;
@@ -99,10 +98,10 @@ import ee.webmedia.alfresco.document.einvoice.web.TransactionsBlockBean;
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.file.web.FileBlockBean;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
-import ee.webmedia.alfresco.document.model.DocumentCommonModel.Privileges;
 import ee.webmedia.alfresco.document.web.evaluator.DocumentNotInDraftsFunctionActionEvaluator;
 import ee.webmedia.alfresco.log.model.LogEntry;
 import ee.webmedia.alfresco.log.model.LogObject;
+import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.signature.exception.SignatureException;
 import ee.webmedia.alfresco.signature.model.SignatureDigest;
 import ee.webmedia.alfresco.signature.web.SignatureAppletModalComponent;
@@ -359,8 +358,8 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
 
             boolean isWorking = DocumentStatus.WORKING.getValueName().equals(documentStatus);
             boolean isFinished = DocumentStatus.FINISHED.getValueName().equals(documentStatus);
-            boolean hasPrivEditDoc = getPrivilegeService().hasPermissions(containerRef, Privileges.EDIT_DOCUMENT);
-            boolean hasViewPrivs = getPrivilegeService().hasPermissions(containerRef, Privileges.VIEW_DOCUMENT_META_DATA, Privileges.VIEW_DOCUMENT_FILES);
+            boolean hasPrivEditDoc = container.hasPermission(Privilege.EDIT_DOCUMENT);
+            boolean hasViewPrivs = container.hasPermission(Privilege.VIEW_DOCUMENT_META_DATA, Privilege.VIEW_DOCUMENT_FILES);
             boolean hasViewPrivsWithoutEdit = !hasPrivEditDoc && hasViewPrivs;
             Boolean adminOrDocmanagerWithPermission = null;
             for (CompoundWorkflowDefinition cWorkflowDef : workflowDefs) {
@@ -382,8 +381,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
                 }
                 if (isFinished) {
                     if (adminOrDocmanagerWithPermission == null) {
-                        adminOrDocmanagerWithPermission = isAdminOrDocmanagerWithPermission(new Node(containerRef), Privileges.VIEW_DOCUMENT_META_DATA,
-                                Privileges.VIEW_DOCUMENT_FILES);
+                        adminOrDocmanagerWithPermission = isAdminOrDocmanagerWithPermission(container, Privilege.VIEW_DOCUMENT_META_DATA, Privilege.VIEW_DOCUMENT_FILES);
                     }
                     if (adminOrDocmanagerWithPermission
                             && !hasOtherWFs(cWorkflowDef, WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW, WorkflowSpecificModel.Types.INFORMATION_WORKFLOW,
@@ -479,9 +477,9 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
             if (containerRef != null && getNodeService().exists(containerRef)) {
                 parentType = getNodeService().getType(containerRef);
             }
-            if ((isDocumentWorkflow(parentType) && getWorkflowService().isDocumentWorkflowEnabled() && getPrivilegeService().hasPermissions(containerRef,
-                    Privileges.VIEW_DOCUMENT_META_DATA, Privileges.VIEW_DOCUMENT_FILES)
-                    && (containerRef == null || new DocumentNotInDraftsFunctionActionEvaluator().evaluate(new Node(containerRef))))
+            if ((isDocumentWorkflow(parentType) && getWorkflowService().isDocumentWorkflowEnabled()
+                    && container.hasPermission(Privilege.VIEW_DOCUMENT_META_DATA, Privilege.VIEW_DOCUMENT_FILES)
+                    && (container == null || new DocumentNotInDraftsFunctionActionEvaluator().evaluate(container)))
                     || isCaseWorkflow(parentType) && BeanHelper.getWorkflowService().hasNoStoppedOrInprogressCompoundWorkflows(containerRef)) {
                 return WORKFLOW_METHOD_BINDING_NAME;
             }
@@ -500,9 +498,10 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         try {
             if (compoundWorkflow == null
                     && getWorkflowService().isIndependentWorkflowEnabled()
-                    && getPrivilegeService().hasPermissions(containerRef, Privileges.VIEW_DOCUMENT_META_DATA, Privileges.VIEW_DOCUMENT_FILES)
-                    && (containerRef == null || !isDocumentWorkflow(BeanHelper.getNodeService().getType(containerRef))
-                    || new DocumentNotInDraftsFunctionActionEvaluator().evaluate(new Node(containerRef)))) {
+                    && BeanHelper.getPrivilegeService().hasPermission(containerRef, AuthenticationUtil.getRunAsUser(), Privilege.VIEW_DOCUMENT_META_DATA,
+                            Privilege.VIEW_DOCUMENT_FILES)
+                            && (containerRef == null || !isDocumentWorkflow(BeanHelper.getNodeService().getType(containerRef))
+                            || new DocumentNotInDraftsFunctionActionEvaluator().evaluate(new Node(containerRef)))) {
                 return INDEPENDENT_WORKFLOW_METHOD_BINDING_NAME;
             }
             return null;
@@ -1402,8 +1401,8 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
                     || !hasCurrentInstitutionTask(workflow);
             return localRights && externalReviewRights;
         } else if (isCaseWorkflow(parentType)) {
-            return isOwner || isAdminOrDocmanagerWithPermission(containerRef, DocumentCommonModel.Privileges.VIEW_CASE_FILE)
-                    || BeanHelper.getPrivilegeService().hasPermissions(containerRef, DocumentCommonModel.Privileges.EDIT_CASE_FILE);
+            return isOwner || isAdminOrDocmanagerWithPermission(containerRef, Privilege.VIEW_CASE_FILE)
+                    || container.hasPermission(Privilege.EDIT_CASE_FILE);
         }
         return false;
     }

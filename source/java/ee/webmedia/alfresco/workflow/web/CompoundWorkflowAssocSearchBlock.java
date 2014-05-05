@@ -1,18 +1,18 @@
 package ee.webmedia.alfresco.workflow.web;
 
-import static org.alfresco.web.bean.dialog.BaseDialogBean.hasPermission;
-
 import java.io.Serializable;
 import java.util.List;
 
 import javax.faces.event.ActionEvent;
 
+import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.search.web.AbstractSearchBlockBean;
+import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
@@ -38,8 +38,7 @@ public class CompoundWorkflowAssocSearchBlock extends AbstractSearchBlockBean im
     }
 
     public void addAssocDocHandler(NodeRef nodeRef) {
-        if (!hasPermission(nodeRef, DocumentCommonModel.Privileges.VIEW_DOCUMENT_META_DATA)
-                || !hasPermission(nodeRef, DocumentCommonModel.Privileges.VIEW_DOCUMENT_FILES)) {
+        if (!BeanHelper.getPrivilegeService().hasPermission(nodeRef, AuthenticationUtil.getRunAsUser(), Privilege.VIEW_DOCUMENT_META_DATA, Privilege.VIEW_DOCUMENT_FILES)) {
             MessageUtil.addErrorMessage("compoundWorkflow_addAssoc_erro_no_permissions");
             return;
         }

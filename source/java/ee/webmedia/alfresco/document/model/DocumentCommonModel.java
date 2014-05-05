@@ -1,12 +1,5 @@
 package ee.webmedia.alfresco.document.model;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
 import org.alfresco.service.namespace.QName;
 
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
@@ -164,29 +157,6 @@ public interface DocumentCommonModel {
         QName NOT_EDITABLE = QName.createQName(DOCCOM_URI, "notEditable");
         QName INVOICE_XML = QName.createQName(DOCCOM_URI, "invoiceXml");
 
-    }
-
-    /**
-     * Document related privileges (and dependencies)
-     */
-    abstract class Privileges {
-        /** Permission used on dynamic document types. Indicates that user can create new document of specific type. */
-        public static final String CREATE_DOCUMENT = "createDocument";
-        public static final String VIEW_DOCUMENT_META_DATA = "viewDocumentMetaData";
-        public static final String EDIT_DOCUMENT = "editDocument";
-        public static final String VIEW_DOCUMENT_FILES = "viewDocumentFiles";
-        public static final String CREATE_CASE_FILE = "createCaseFile";
-        public static final String VIEW_CASE_FILE = "viewCaseFile";
-        public static final String EDIT_CASE_FILE = "editCaseFile";
-        /** when entry.key is added, then entry.values should be also added */
-        public static final Map<String, Set<String>> PRIVILEGE_DEPENDENCIES;
-        static {
-            Map<String, Set<String>> m = new HashMap<String, Set<String>>();
-            m.put(EDIT_DOCUMENT, Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(VIEW_DOCUMENT_META_DATA, VIEW_DOCUMENT_FILES))));
-            m.put(VIEW_DOCUMENT_FILES, Collections.singleton(VIEW_DOCUMENT_META_DATA));
-            m.put(EDIT_CASE_FILE, Collections.singleton(VIEW_CASE_FILE));
-            PRIVILEGE_DEPENDENCIES = Collections.unmodifiableMap(m);
-        }
     }
 
 }

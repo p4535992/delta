@@ -12,9 +12,9 @@ import org.alfresco.web.bean.repository.Node;
 import ee.webmedia.alfresco.casefile.service.CaseFile;
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
-import ee.webmedia.alfresco.document.model.DocumentCommonModel.Privileges;
 import ee.webmedia.alfresco.document.web.evaluator.IsOwnerEvaluator;
 import ee.webmedia.alfresco.document.web.evaluator.ViewStateActionEvaluator;
+import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.utils.CalendarUtil;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
 
@@ -29,9 +29,9 @@ public class CaseFileIsClosedEvaluator extends BaseActionEvaluator {
     @Override
     public boolean evaluate(Node caseFileNode) {
         Date validTo = (Date) caseFileNode.getProperties().get(VolumeModel.Props.VALID_TO);
-        return (isAdminOrDocmanagerWithPermission(caseFileNode, Privileges.VIEW_CASE_FILE)
-                    || new IsOwnerEvaluator().evaluate(caseFileNode)
-                    || (getUserService().isArchivist() && validTo != null && CalendarUtil.getDaysBetweenSigned(validTo, new Date()) > 0)
+        return (isAdminOrDocmanagerWithPermission(caseFileNode, Privilege.VIEW_CASE_FILE)
+                || new IsOwnerEvaluator().evaluate(caseFileNode)
+                || (getUserService().isArchivist() && validTo != null && CalendarUtil.getDaysBetweenSigned(validTo, new Date()) > 0)
                 ) &&
                 StoreRef.STORE_REF_WORKSPACE_SPACESSTORE.equals(caseFileNode.getNodeRef().getStoreRef()) &&
                 new ViewStateActionEvaluator().evaluate(caseFileNode)

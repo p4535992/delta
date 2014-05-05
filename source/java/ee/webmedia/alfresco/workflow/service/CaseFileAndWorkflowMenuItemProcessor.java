@@ -1,7 +1,6 @@
 package ee.webmedia.alfresco.workflow.service;
 
 import static ee.webmedia.alfresco.docdynamic.service.DocumentDynamicTypeMenuItemProcessor.processDynamicTypeMenuItem;
-import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Privileges.CREATE_CASE_FILE;
 
 import java.util.Collections;
 import java.util.Iterator;
@@ -13,6 +12,7 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.security.PermissionService;
 import org.springframework.beans.factory.InitializingBean;
 
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docadmin.service.CaseFileType;
 import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamicTypeMenuItemProcessor;
@@ -20,6 +20,7 @@ import ee.webmedia.alfresco.menu.model.DropdownMenuItem;
 import ee.webmedia.alfresco.menu.model.MenuItem;
 import ee.webmedia.alfresco.menu.service.MenuService;
 import ee.webmedia.alfresco.menu.service.MenuService.MenuItemProcessor;
+import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.volume.service.VolumeService;
 
 public class CaseFileAndWorkflowMenuItemProcessor implements InitializingBean, MenuItemProcessor {
@@ -62,7 +63,7 @@ public class CaseFileAndWorkflowMenuItemProcessor implements InitializingBean, M
         children.clear();
 
         List<CaseFileType> caseFileTypes = documentAdminService.getUsedCaseFileTypes(DocumentAdminService.DONT_INCLUDE_CHILDREN);
-        processDynamicTypeMenuItem(permissionService, CREATE_CASE_FILE, caseFileTypes, dropdownItem, "#{CaseFileDialog.createDraft}");
+        processDynamicTypeMenuItem(BeanHelper.getPrivilegeService(), Privilege.CREATE_CASE_FILE, caseFileTypes, dropdownItem, "#{CaseFileDialog.createDraft}");
 
         if (children.isEmpty()) {
             return false;

@@ -82,6 +82,7 @@ import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.document.web.FavoritesModalComponent.AddToFavoritesEvent;
 import ee.webmedia.alfresco.document.web.evaluator.RegisterDocumentEvaluator;
 import ee.webmedia.alfresco.menu.ui.MenuBean;
+import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.template.exception.ExistingFileFromTemplateException;
 import ee.webmedia.alfresco.template.service.DocumentTemplateService;
 import ee.webmedia.alfresco.utils.ActionUtil;
@@ -158,7 +159,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
             throw new PermissionDeniedException("node doesn't exist anymore", getDefaultCancelOutcome());
         }
         try {
-            validatePermission(docNode, null, DocumentCommonModel.Privileges.VIEW_DOCUMENT_META_DATA);
+            validatePermission(docNode, Privilege.VIEW_DOCUMENT_META_DATA);
         } catch (UnableToPerformException e) {
             MessageUtil.addStatusMessage(e);
             throw new PermissionDeniedException(MessageUtil.getMessage(e), null);
@@ -845,7 +846,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
     /**
      * Move all the files to the selected nodeRef, delete the current doc
      * and show the nodeRef doc.
-     * 
+     *
      * @param event
      */
     public void addFilesHandler(ActionEvent event) {
@@ -895,7 +896,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
     // restores DocumentDialog to previous state (if needed)
     /**
      * restores DocumentDialog to previous state if needed - meaning that node is null or doesn't exist.
-     * 
+     *
      * @return false if there was no need to restore document(node was not null and it still existed in repository). <br>
      *         true if node was restored.
      * @throws UnableToPerformException if node should have been restored(because node is null or doesn't exist anymore), but non of the documents in snapshots

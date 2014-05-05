@@ -115,8 +115,8 @@
          <value>#{NamespaceService}</value>
       </managed-property>
       <managed-property>
-         <property-name>permissionService</property-name>
-         <value>#{PermissionService}</value>
+         <property-name>privilegeService</property-name>
+         <value>#{PrivilegenService}</value>
       </managed-property>
    </managed-bean>
    

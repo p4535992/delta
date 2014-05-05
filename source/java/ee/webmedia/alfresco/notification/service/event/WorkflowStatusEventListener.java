@@ -33,6 +33,7 @@ import ee.webmedia.alfresco.log.model.LogObject;
 import ee.webmedia.alfresco.log.service.LogService;
 import ee.webmedia.alfresco.menu.ui.MenuBean;
 import ee.webmedia.alfresco.notification.service.NotificationService;
+import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.privilege.service.PrivilegeService;
 import ee.webmedia.alfresco.privilege.service.PrivilegeUtil;
 import ee.webmedia.alfresco.user.service.UserService;
@@ -111,7 +112,7 @@ public class WorkflowStatusEventListener implements WorkflowMultiEventListener, 
     private Void doWork(final List<WorkflowEvent> events, final Task initiatingTask, final boolean sendNotifications, final List<NodeRef> groupAssignmentTasksFinishedAutomatically) {
         RetryingTransactionHelper txHelper = transactionService.getRetryingTransactionHelper();
         try {
-            final Map<NodeRef, Map<String, Set<String>>> permissions = getPermissions(events);
+            final Map<NodeRef, Map<String, Set<Privilege>>> permissions = getPermissions(events);
             while (!permissions.isEmpty()) {
                 txHelper.doInTransaction(new RetryingTransactionCallback<Void>() {
                     @Override
@@ -174,8 +175,8 @@ public class WorkflowStatusEventListener implements WorkflowMultiEventListener, 
         return null;
     }
 
-    private Map<NodeRef, Map<String, Set<String>>> getPermissions(final List<WorkflowEvent> events) {
-        final Map<NodeRef, Map<String, Set<String>>> permissions = new HashMap<NodeRef, Map<String, Set<String>>>();
+    private Map<NodeRef, Map<String, Set<Privilege>>> getPermissions(final List<WorkflowEvent> events) {
+        final Map<NodeRef, Map<String, Set<Privilege>>> permissions = new HashMap<NodeRef, Map<String, Set<Privilege>>>();
         for (WorkflowEvent event : events) {
             BaseWorkflowObject object = event.getObject();
             if (object instanceof Task) {
@@ -188,16 +189,16 @@ public class WorkflowStatusEventListener implements WorkflowMultiEventListener, 
                 if (StringUtils.isNotBlank(taskOwnerId) && event.getType().equals(WorkflowEventType.STATUS_CHANGED) && task.isStatus(Status.IN_PROGRESS)) {
                     Workflow workflow = task.getParent();
                     NodeRef docRef = workflow.getParent().getParent();
-                    Set<String> requiredPrivileges = PrivilegeUtil.getRequiredPrivsForInprogressTask(task, docRef, fileService, false);
+                    Set<Privilege> requiredPrivileges = PrivilegeUtil.getRequiredPrivsForInprogressTask(task, docRef, fileService, false);
                     if (!requiredPrivileges.isEmpty()) {
-                        Map<String, Set<String>> permissionsByDocRef = permissions.get(docRef);
+                        Map<String, Set<Privilege>> permissionsByDocRef = permissions.get(docRef);
                         if (permissionsByDocRef == null) {
-                            permissionsByDocRef = new HashMap<String, Set<String>>();
+                            permissionsByDocRef = new HashMap<String, Set<Privilege>>();
                             permissions.put(docRef, permissionsByDocRef);
                         }
-                        Set<String> permissionsByTaskOwnerId = permissionsByDocRef.get(taskOwnerId);
+                        Set<Privilege> permissionsByTaskOwnerId = permissionsByDocRef.get(taskOwnerId);
                         if (permissionsByTaskOwnerId == null) {
-                            permissionsByTaskOwnerId = new HashSet<String>();
+                            permissionsByTaskOwnerId = new HashSet<Privilege>();
                             permissionsByDocRef.put(taskOwnerId, permissionsByTaskOwnerId);
                         }
                         permissionsByTaskOwnerId.addAll(requiredPrivileges);
@@ -208,15 +209,15 @@ public class WorkflowStatusEventListener implements WorkflowMultiEventListener, 
         return permissions;
     }
 
-    private void setPermissions(final Map<NodeRef, Map<String, Set<String>>> permissions) {
+    private void setPermissions(final Map<NodeRef, Map<String, Set<Privilege>>> permissions) {
         int count = 0;
-        for (Iterator<Entry<NodeRef, Map<String, Set<String>>>> i = permissions.entrySet().iterator(); i.hasNext();) {
-            Entry<NodeRef, Map<String, Set<String>>> entry = i.next();
+        for (Iterator<Entry<NodeRef, Map<String, Set<Privilege>>>> i = permissions.entrySet().iterator(); i.hasNext();) {
+            Entry<NodeRef, Map<String, Set<Privilege>>> entry = i.next();
             NodeRef docRef = entry.getKey();
-            Map<String, Set<String>> permissionsByDocRef = entry.getValue();
-            for (Iterator<Entry<String, Set<String>>> j = permissionsByDocRef.entrySet().iterator(); j.hasNext();) {
-                Entry<String, Set<String>> entry2 = j.next();
-                Set<String> permissionsByTaskOwnerId = entry2.getValue();
+            Map<String, Set<Privilege>> permissionsByDocRef = entry.getValue();
+            for (Iterator<Entry<String, Set<Privilege>>> j = permissionsByDocRef.entrySet().iterator(); j.hasNext();) {
+                Entry<String, Set<Privilege>> entry2 = j.next();
+                Set<Privilege> permissionsByTaskOwnerId = entry2.getValue();
                 privilegeService.setPermissions(docRef, entry2.getKey(), permissionsByTaskOwnerId);
                 j.remove();
                 count += permissionsByTaskOwnerId.size();

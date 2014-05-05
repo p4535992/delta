@@ -11,6 +11,7 @@ import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.web.BaseDocumentListDialog;
+import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
@@ -78,7 +79,7 @@ public class CompoundWorkflowAssocListDialog extends BaseDocumentListDialog {
                 if (resetNewAssocs && documentsToSignRefId.contains(nodeRefId)) {
                     document.setDocumentToSign(Boolean.TRUE);
                 }
-                if (document.getNode().hasPermission(DocumentCommonModel.Privileges.VIEW_DOCUMENT_META_DATA)) {
+                if (document.getNode().hasPermission(Privilege.VIEW_DOCUMENT_META_DATA)) {
                     document.setShowLink(true);
                 }
             }

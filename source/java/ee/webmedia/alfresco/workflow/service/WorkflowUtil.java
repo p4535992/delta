@@ -35,7 +35,7 @@ import org.alfresco.web.ui.common.Utils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateUtils;
 
-import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.Predicate;
 import ee.webmedia.alfresco.utils.RepoUtil;
@@ -58,7 +58,7 @@ public class WorkflowUtil {
     private static final QName TMP_GUID = RepoUtil.createTransientProp("tmpGuid");
     public static final String TASK_INDEX = "taskIndex";
     private static final Map<CompoundWorkflowType, String> compoundWorkflowTemplateSuffixes;
-    private static final Set<String> independentWorkflowDefaultDocPermissions;
+    private static final Set<Privilege> independentWorkflowDefaultDocPermissions;
 
     private static final String WORKFLOW_PACKAGE = "ee.webmedia.alfresco.workflow.generated";
     private static JAXBContext workflowJaxbContext = initJaxbContext(WORKFLOW_PACKAGE);
@@ -71,9 +71,9 @@ public class WorkflowUtil {
         tmpMap.put(CompoundWorkflowType.INDEPENDENT_WORKFLOW, "independent");
         compoundWorkflowTemplateSuffixes = tmpMap;
 
-        Set<String> privileges = new HashSet<String>();
-        privileges.add(DocumentCommonModel.Privileges.VIEW_DOCUMENT_META_DATA);
-        privileges.add(DocumentCommonModel.Privileges.VIEW_DOCUMENT_FILES);
+        Set<Privilege> privileges = new HashSet<Privilege>();
+        privileges.add(Privilege.VIEW_DOCUMENT_META_DATA);
+        privileges.add(Privilege.VIEW_DOCUMENT_FILES);
         independentWorkflowDefaultDocPermissions = privileges;
 
         // turn on jaxb debug
@@ -164,7 +164,7 @@ public class WorkflowUtil {
 
         /**
          * Allows/consumes objects(increments index for each consecutive object) that have status one of given <code>statuses</code>
-         * 
+         *
          * @param statuses - acceptable statuses
          * @return this for method chaining
          */
@@ -175,7 +175,7 @@ public class WorkflowUtil {
         /**
          * Allows/consumes objects(increments index for each consecutive object) that have status one of given <code>statuses</code> and if <code>types</code> are given, then
          * object type is one of <code>types</code>
-         * 
+         *
          * @param types if not null, then object type must match one of these
          * @param statuses - acceptable statuses
          * @return this for method chaining
@@ -432,8 +432,8 @@ public class WorkflowUtil {
             statusNames.add(status.name());
         }
         return "If compoundWorkflow status is " + cWfStatus.name() + ", then workflows must have the following statuses, in order:" +
-                " 0..* FINISHED, (1 " + cWfStatus.name() + " OR (1..* parallely startable workflows " + TextUtil.joinNonBlankStrings(statusNames, " OR ")
-                + " with at least one " + cWfStatus.name() + ")), 0..* NEW or FINISHED";
+        " 0..* FINISHED, (1 " + cWfStatus.name() + " OR (1..* parallely startable workflows " + TextUtil.joinNonBlankStrings(statusNames, " OR ")
+        + " with at least one " + cWfStatus.name() + ")), 0..* NEW or FINISHED";
     }
 
     private static boolean isValidInProgressOrStopped(List<Workflow> workflows, Status requiredStatus, Status... cWfStatuses) {
@@ -631,7 +631,7 @@ public class WorkflowUtil {
     /**
      * Controls for newly created tasks if there are tasks with same type and ownerId,
      * except tasks with status UNFINISHED
-     * 
+     *
      * @param compoundWorkflow
      * @return
      */
@@ -798,9 +798,9 @@ public class WorkflowUtil {
                 workflowsAndTaskOwners.append("; ");
             }
             workflowsAndTaskOwners.append(MessageUtil.getMessage(entry.getKey().getType().getLocalName()))
-                    .append(" (")
-                    .append(StringUtils.join(entry.getValue(), ", "))
-                    .append(")");
+            .append(" (")
+            .append(StringUtils.join(entry.getValue(), ", "))
+            .append(")");
         }
         return workflowsAndTaskOwners.toString();
     }
@@ -830,7 +830,7 @@ public class WorkflowUtil {
         return compoundWorkflowType != null ? compoundWorkflowTemplateSuffixes.get(compoundWorkflowType) : "";
     }
 
-    public static Set<String> getIndependentWorkflowDefaultDocPermissions() {
+    public static Set<Privilege> getIndependentWorkflowDefaultDocPermissions() {
         return Collections.unmodifiableSet(independentWorkflowDefaultDocPermissions);
     }
 

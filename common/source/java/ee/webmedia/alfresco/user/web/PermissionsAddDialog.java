@@ -21,6 +21,7 @@ import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
+import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.user.model.Authority;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.ActionUtil;
@@ -34,7 +35,7 @@ public class PermissionsAddDialog extends BaseDialogBean {
     private transient DocumentSearchService documentSearchService;
 
     private NodeRef nodeRef;
-    private String permission;
+    private Privilege permission;
     private String dialogTitleId;
     private List<Authority> authorities;
     private transient ListDataModel authoritiesModel;
@@ -43,7 +44,7 @@ public class PermissionsAddDialog extends BaseDialogBean {
         reset();
 
         nodeRef = new NodeRef(ActionUtil.getParam(event, "nodeRef"));
-        permission = ActionUtil.getParam(event, "permission");
+        permission = Privilege.getPrivilegeByName(ActionUtil.getParam(event, "permission"));
         if (ActionUtil.hasParam(event, "dialogTitleId")) {
             String param = ActionUtil.getParam(event, "dialogTitleId");
             if (param != null && !param.equals("null")) {
@@ -75,7 +76,7 @@ public class PermissionsAddDialog extends BaseDialogBean {
             @Override
             public Void doWork() throws Exception {
                 for (Authority authority : authorities) {
-                    getPermissionService().setPermission(nodeRef, authority.getAuthority(), permission, true);
+                    BeanHelper.getPrivilegeService().setPermissions(nodeRef, authority.getAuthority(), permission);
                 }
                 return null;
             }
@@ -132,7 +133,7 @@ public class PermissionsAddDialog extends BaseDialogBean {
 
     /**
      * Returns the properties for current user-roles JSF DataModel
-     * 
+     *
      * @return JSF DataModel representing the current user-roles
      */
     public DataModel getAuthorities() {

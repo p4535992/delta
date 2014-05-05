@@ -140,16 +140,6 @@
          </list>
       </property>
    </bean>     
-
-   <bean id="addressbookPermissionsUpdateBootstrap" class="ee.webmedia.alfresco.addressbook.bootstrap.AddressbookPermissionsUpdateBootstrap" parent="module.baseComponent" >
-      <property name="moduleId" value="common" />
-      <property name="executeOnceOnly" value="true" />
-      <property name="dependsOn">
-         <list>
-            <ref bean="addressbookRootBootstrap" />
-         </list>
-      </property>
-   </bean>
    
    <bean id="removeIdenticalContacts3" class="ee.webmedia.alfresco.addressbook.bootstrap.RemoveIdenticalContacts" parent="module.baseComponent" >
       <property name="addressbookService" ref="AddressbookService" />

@@ -132,7 +132,6 @@ import org.springframework.orm.hibernate3.HibernateCallback;
 import org.springframework.orm.hibernate3.support.HibernateDaoSupport;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
-import ee.webmedia.alfresco.privilege.bootstrap.FixAclInheritanceUpdater;
 
 /**
  * Hibernate-specific implementation of the persistence-independent <b>node</b> DAO interface
@@ -725,12 +724,6 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         Pair<Long, QName> rootAspectQNamePair = qnameDAO.getOrCreateQName(ContentModel.ASPECT_ROOT);
         rootNode.getAspects().add(rootAspectQNamePair.getFirst());
         
-        // Assign permissions to the root node
-        SimpleAccessControlListProperties properties = DMPermissionsDaoComponentImpl.getDefaultProperties();
-        Long id = aclDaoComponent.createAccessControlList(properties);
-        DbAccessControlList acl = aclDaoComponent.getDbAccessControlList(id);
-        rootNode.setAccessControlList(acl);
-        
         // Cache the value
         storeAndNodeIdCache.put(storeRef, store.getId());
         // Done
@@ -803,7 +796,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
                 return query.uniqueResult();
             }
         };
-        Object[] result = (Object[]) getHibernateTemplate().execute(callback);
+        Object result = getHibernateTemplate().execute(callback);
         // Cache the value
         final Node node;
         if (result == null)
@@ -813,7 +806,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         }
         else
         {
-            node = (Node) result[0];
+            node = (Node) result;
             storeAndNodeIdCache.put(nodeRef, node.getId());
         }
         return node;
@@ -1115,7 +1108,6 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
             // Set clean values
             node.setTypeQName(qnameDAO, nodeTypeQName);
             node.setDeleted(false);
-            node.setAccessControlList(null);
             // Record node change
             recordNodeCreate(node);
         }
@@ -1127,7 +1119,6 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
             node.setUuid(uuid);
             node.setTypeQName(qnameDAO, nodeTypeQName);
             node.setDeleted(false);
-            node.setAccessControlList(null);
             // Record node change
             recordNodeCreate(node);
             // Persist it
@@ -1229,20 +1220,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
 
     public void setNodeAccessControlList(Long nodeId, Long aclId)
     {
-        Node node = getNodeNotNull(nodeId);
-        if (aclId == null)
-        {
-            node.setAccessControlList(null);
-        }
-        else
-        {
-            DbAccessControlList acl = (DbAccessControlList) getHibernateTemplate().get(DbAccessControlListImpl.class, aclId);
-            if (acl == null)
-            {
-                throw new IllegalArgumentException("ACL with ID " + aclId + " doesn't exist.");
-            }
-            node.setAccessControlList(acl);
-        }
+        throw new RuntimeException("This method is not used any more!");
     }
 
     public void updateNode(Long nodeId, StoreRef storeRefAfter, String uuidAfter, QName nodeTypeQName)
@@ -1746,35 +1724,11 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         propagateTimestamps(node);
         
         Set<Long> deletedChildAssocIds = new HashSet<Long>(10);
-        node = fixAclAndReloadIfNeeded(node);
+
         deleteNodeInternal(node, false, deletedChildAssocIds);
         
         // Record change ID
         recordNodeDelete(node);
-    }
-
-    private Node fixAclAndReloadIfNeeded(Node node) {
-        DbAccessControlList dbAcl = node.getAccessControlList();
-        Long childAclId = dbAcl.getId();
-        Long childNodeId = node.getId();
-        if (dbAcl != null && dbAcl.getAclType() == ACLType.SHARED && dbAcl.getInheritsFrom() == null) {
-            Pair<Long, ChildAssociationRef> primaryParentAssoc = getPrimaryParentAssoc(childNodeId);
-            Node parent = primaryParentAssoc != null ? getNodeOrNull(getNodePair(primaryParentAssoc.getSecond().getParentRef()).getFirst()) : null;
-            Long primaryParentAclId = parent != null ? parent.getAccessControlList().getId() : null;
-            if (primaryParentAclId != null) {
-                FixAclInheritanceUpdater.fixAclInheritFromNull(childAclId, primaryParentAclId, parent.getNodeRef(), BeanHelper.getAccessControlListDao());
-                node = getNodeNotNull(node.getId());
-                DbAccessControlList fixedAcl = aclDaoComponent.getDbAccessControlList(node.getAccessControlList().getId());
-                logger.info("Fixed invalid acl.inheritFrom on node delete: nodeRef=" + node.getNodeRef() + ", new inheritFrom=" + fixedAcl != null ? fixedAcl.getInheritsFrom() : null);
-                if(fixedAcl.getInheritsFrom() == null){
-                    logger.debug("Fixing not visible from acl or not successful.");
-                }
-                if(node.getAccessControlList().getInheritsFrom() == null){
-                    logger.debug("Fixing not visible from node or not successful.");
-                }
-            }
-        }
-        return node;
     }
 
     /**
@@ -1901,42 +1855,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         node.getProperties().clear();
         node.getAspects().clear();
         
-        // delete ACLs
-        
-        DbAccessControlList dbAcl = node.getAccessControlList();
-        node.setAccessControlList(null);
-        if(dbAcl != null)
-        {
-            if(dbAcl.getAclType() == ACLType.DEFINING)
-            {
-                getHibernateTemplate().delete(dbAcl);
-            }
-            if(dbAcl.getAclType() == ACLType.SHARED)
-            {
-                // check unused
-                Long defining = dbAcl.getInheritsFrom();
-                if(getHibernateTemplate().get(DbAccessControlListImpl.class, defining) == null)
-                {
-                    final Long id = dbAcl.getId();
-                    HibernateCallback check = new HibernateCallback()
-                    {
-                        public Object doInHibernate(Session session)
-                        {
-                            Criteria criteria = getSession().createCriteria(NodeImpl.class, "n");
-                            criteria.add(Restrictions.eq("n.accessControlList.id", id));
-                            criteria.setProjection(Projections.rowCount());
-                            return criteria.list();
-                        }
-                    };
-                    List<Integer> list =  (List<Integer>)getHibernateTemplate().execute(check);
-                    if(list.get(0).intValue() == 0)
-                    {
-                        getHibernateTemplate().delete(dbAcl);
-                    }
-                }
-            }
-        }
-        
+        BeanHelper.getPrivilegeService().removeNodePermissionData(node.getNodeRef());
         // Mark the node as deleted
         node.setDeleted(true);
         
@@ -2065,23 +1984,6 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
                         "   Node:   " + childNodeId +  "\n" +
                         "   Before: " + oldParentAssocIds + "\n" +
                         "   After:  " + newParentAssocIds);
-            }
-        }
-        
-        // If this is a primary association then update the permissions
-        if (isPrimary)
-        {
-            DbAccessControlList inherited = parentNode.getAccessControlList();
-            if (inherited == null)
-            {
-                // not fixde up yet or unset
-            }
-            else
-            {
-                // Get the parent's inherited ACLs
-                DbAccessControlList inheritedAcl = aclDaoComponent.getDbAccessControlList(
-                        aclDaoComponent.getInheritedAccessControlList(inherited.getId()));
-                childNode.setAccessControlList(inheritedAcl);
             }
         }
         
@@ -2261,145 +2163,9 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         {
             recordNodeUpdate(newChildNode);
         }
-        
-        // Update the inherited associations if either the parent or child nodes have changed and
-        // the association is primary
-        if (isPrimary && (
-                !oldParentNode.getId().equals(parentNodeId) ||
-                !oldChildNode.getId().equals(childNodeId))
-                )
-        {
-            if (newChildNode.getAccessControlList() != null)
-            {
-                Long targetAclId = newChildNode.getAccessControlList().getId();
-                AccessControlListProperties aclProperties = aclDaoComponent.getAccessControlListProperties(targetAclId);
-                Boolean targetAclInherits = aclProperties.getInherits();
-                if ((targetAclInherits != null) && (targetAclInherits.booleanValue()))
-                {
-                    if (newParentNode.getAccessControlList() != null)
-                    {
-                        Long parentAclId = newParentNode.getAccessControlList().getId();
-                        Long inheritedAclId = aclDaoComponent.getInheritedAccessControlList(parentAclId);
-                        if (aclProperties.getAclType() == ACLType.DEFINING)
-                        {
-                            aclDaoComponent.enableInheritance(targetAclId, parentAclId);
-                        }
-                        else if (aclProperties.getAclType() == ACLType.SHARED)
-                        {
-                            setFixedAcls(childNodeId, inheritedAclId, true, null);
-                        }
-                    }
-                    else
-                    {
-                        if (aclProperties.getAclType() == ACLType.DEFINING)
-                        {
-                            // there is nothing to inherit from so clear out any inherited aces
-                            aclDaoComponent.deleteInheritedAccessControlEntries(targetAclId);
-                        }
-                        else if (aclProperties.getAclType() == ACLType.SHARED)
-                        {
-                            // there is nothing to inherit
-                            newChildNode.setAccessControlList(null);
-                        }
-
-                        // throw new IllegalStateException("Share bug");
-                    }
-                }
-            }
-            else
-            {
-                if (newChildNode.getAccessControlList() != null)
-                {
-                    Long parentAcl = newParentNode.getAccessControlList().getId();
-                    Long inheritedAcl = aclDaoComponent.getInheritedAccessControlList(parentAcl);
-                    setFixedAcls(childNodeId, inheritedAcl, true, null);
-                } 
-            }
-        }
 
         // Done
         return new Pair<Long, ChildAssociationRef>(childAssocId, childAssoc.getChildAssocRef(qnameDAO));
-    }
-
-    /**
-     * This code is here, and not in another DAO, in order to avoid unnecessary circular callbacks
-     * and cyclical dependencies.  It would be nice if the ACL code could be separated (or combined)
-     * but the node tree walking code is best done right here.
-     * 
-     * @param nodeRef
-     * @param mergeFromAclId
-     * @param set
-     */
-    private void setFixedAcls(
-            final Long nodeId,
-            final Long mergeFromAclId,
-            final boolean set,
-            Set<Long> processedNodes)
-    {
-        // ETHREEOH-3088: Cut/Paste into same hierarchy
-        if (processedNodes == null)
-        {
-            processedNodes = new HashSet<Long>(3);
-        }
-        if (!processedNodes.add(nodeId))
-        {
-            logger.error(
-                    "Cyclic parent-child relationship detected: \n" +
-                    "   current node: " + nodeId);
-            throw new CyclicChildRelationshipException("Node has been pasted into its own tree.", null);
-        }
-        
-        Node mergeFromNode = getNodeNotNull(nodeId);
-        
-        if (set)
-        {
-            DbAccessControlList mergeFromAcl = aclDaoComponent.getDbAccessControlList(mergeFromAclId);
-            mergeFromNode.setAccessControlList(mergeFromAcl);
-        }
-
-        final List<Long> childNodeIds = new ArrayList<Long>(100);
-        NodeDaoService.ChildAssocRefQueryCallback callback = new NodeDaoService.ChildAssocRefQueryCallback()
-        {
-            public boolean handle(
-                    Pair<Long, ChildAssociationRef> childAssocPair,
-                    Pair<Long, NodeRef> parentNodePair,
-                    Pair<Long, NodeRef> childNodePair)
-            {
-                // Ignore non-primary nodes
-                if (!childAssocPair.getSecond().isPrimary())
-                {
-                    return false;
-                }
-                childNodeIds.add(childNodePair.getFirst());
-                return false;
-            }
-        };
-        // Get all child associations with the specific qualified name
-        getChildAssocs(nodeId, callback, false);
-        for (Long childNodeId : childNodeIds)
-        {
-            Node childNode = getNodeNotNull(childNodeId);
-            DbAccessControlList acl = childNode.getAccessControlList();
-
-            if (acl == null)
-            {
-                setFixedAcls(childNodeId, mergeFromAclId, true, processedNodes);
-            }
-            else if (acl.getAclType() == ACLType.LAYERED)
-            {
-                logger.error("LAYERED ACL present on ADM node: " + childNode);
-                continue;
-            }
-            else if (acl.getAclType() == ACLType.DEFINING)
-            {
-                @SuppressWarnings("unused")
-                List<AclChange> newChanges = aclDaoComponent.mergeInheritedAccessControlList(mergeFromAclId, acl.getId());
-            }
-            else
-            {
-                    setFixedAcls(childNodeId, mergeFromAclId, true, processedNodes);
-            }
-        }
     }
 
     @SuppressWarnings("unchecked")

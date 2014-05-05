@@ -34,12 +34,6 @@
         <property name="ruleService">
             <ref bean="RuleService" />
         </property>
-        <property name="permissionService">
-           <ref bean="PermissionService" />
-        </property>
-        <property name="authorityService">
-           <ref bean="AuthorityService" />
-        </property>
         <property name="authenticationContext">
            <ref bean="authenticationContext" />
         </property>
@@ -74,12 +68,6 @@
         </property>
         <property name="ruleService">
             <ref bean="RuleService" />
-        </property>
-        <property name="permissionService">
-           <ref bean="PermissionService" />
-        </property>
-        <property name="authorityService">
-           <ref bean="AuthorityService" />
         </property>
         <property name="authenticationContext">
            <ref bean="authenticationContext" />
