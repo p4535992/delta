@@ -11,10 +11,11 @@ import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.deccontainer.vers21.Org
 import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.dhl.DhlDokumentType;
 import ee.webmedia.xtee.client.dhl.types.ee.sk.digiDoc.v13.DataFileType;
 import org.alfresco.service.namespace.QName;
+import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.codec.binary.Base64OutputStream;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.xml.security.exceptions.Base64DecodingException;
-import org.apache.xml.security.utils.Base64;
 import org.apache.xmlbeans.XmlObject;
 import org.apache.xmlbeans.XmlOptions;
 import org.apache.xmlbeans.XmlTokenSource;
@@ -24,8 +25,10 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.Serializable;
-import java.io.StringReader;
+import java.math.BigInteger;
+import java.nio.charset.Charset;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
@@ -57,28 +60,40 @@ public class DvkUtil {
         if (dataFile instanceof DataFileType) {
             return new ByteArrayInputStream(org.apache.xml.security.utils.Base64.decode(((DataFileType) dataFile).getStringValue()));
         } else if (dataFile instanceof DecContainerDocument.DecContainer.File) {
-            return
-            //new GZIPInputStream( // FIXME Hetkel commitin testimise huvides puuduliku funktsionaalsusega seisu.
-            // Caused by: java.io.IOException: Not in GZIP format
-            // at java.util.zip.GZIPInputStream.readHeader(GZIPInputStream.java:143)
-                    new ByteArrayInputStream(Base64.decode(((DecContainerDocument.DecContainer.File) dataFile).getZipBase64Content())
-            //)
-            );
+            byte[] buf = Base64.decodeBase64(((DecContainerDocument.DecContainer.File) dataFile).getZipBase64Content()); // UTF-8
+            GZIPInputStream gzipInputStream = new GZIPInputStream(new ByteArrayInputStream(buf));
+            return gzipInputStream;
         }
         throw new IllegalArgumentException("Expected ee.webmedia.xtee.client.dhl.types.ee.sk.digiDoc.v13.DataFileType or " +
                 "ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.deccontainer.vers21.DecContainerDocument.DecContainer.File!");
     }
 
+    /**
+     * Updates data file contents and file size. It is the callers responsibility to keep track of other data file properties eg. mimetype.
+     *
+     * @param dataFile file that will have updated contents
+     * @param stringContents raw string, all the neccessary operations will be performed here.
+     * @param <F>
+     * @return modified file instance
+     * @throws IOException
+     */
     public static <F extends XmlObject> F setFileContents(F dataFile, String stringContents) throws IOException {
         if (dataFile instanceof DataFileType) {
             ((DataFileType) dataFile).setStringValue(stringContents);
         } else if (dataFile instanceof DecContainerDocument.DecContainer.File) {
-            ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream();
-            IOUtils.copy(new StringReader(stringContents),
-                    //new GZIPOutputStream( // FIXME Vt üles.
-                    arrayOutputStream //)
-                    );
-            ((DecContainerDocument.DecContainer.File) dataFile).setZipBase64Content(Base64.encode(arrayOutputStream.toByteArray()));
+            final ByteArrayOutputStream output = new ByteArrayOutputStream();
+            final InputStream inputStream = new ByteArrayInputStream(stringContents.getBytes(Charset.forName("UTF-8")));
+            OutputStream zipStream = null;
+            try {
+                zipStream = new GZIPOutputStream(new Base64OutputStream(output));
+                long sizeCopied = IOUtils.copyLarge(inputStream, zipStream);
+                ((DecContainerDocument.DecContainer.File) dataFile).setFileSize(BigInteger.valueOf(sizeCopied));
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to get input to the file to be sent", e);
+            } finally {
+                IOUtils.closeQuietly(zipStream); // Flush the contents to encoder
+            }
+            ((DecContainerDocument.DecContainer.File) dataFile).setZipBase64Content(output.toString("UTF-8"));
         } else {
             throw new IllegalArgumentException("Expected ee.webmedia.xtee.client.dhl.types.ee.sk.digiDoc.v13.DataFileType or " +
                     "ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.deccontainer.vers21.DecContainerDocument.DecContainer.File!");

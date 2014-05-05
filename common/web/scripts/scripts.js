@@ -1667,9 +1667,9 @@ function initWithScreenProtected() {
       var elem = $jQ(this);
       // Calculate sum for current row
       var row = elem.closest("tr");
-      var allowanceDays = parseInt(row.find(".dailyAllowanceDaysField").val());
-      var allowanceRate = parseInt(row.find(".dailyAllowanceRateField").val());
-      var sumField = row.find(".dailyAllowanceSumField");
+      var allowanceDays = parseInt(row.find(".dailyAllowanceDaysField").closest("input").val());
+      var allowanceRate = parseInt(row.find(".dailyAllowanceRateField").closest("select").val());
+      var sumField = row.find(".dailyAllowanceSumField").closest("input");
       var sum = 0;
       if (allowanceDays && allowanceRate) {
          var sum = allowanceDays * (allowanceRate / 100) * sumField.attr("datafld");

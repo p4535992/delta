@@ -5,7 +5,6 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentConfigServic
 import static ee.webmedia.alfresco.common.web.BeanHelper.getParametersService;
 import static ee.webmedia.alfresco.utils.DvkUtil.getFileMimeType;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -54,7 +53,6 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.xml.security.exceptions.Base64DecodingException;
-import org.apache.xml.security.utils.Base64;
 import org.apache.xmlbeans.SchemaType;
 import org.apache.xmlbeans.XmlCursor;
 import org.apache.xmlbeans.XmlException;
@@ -1017,7 +1015,7 @@ public abstract class DvkServiceImpl implements DvkService {
     protected DecSender getSenderAddress() {
         DecSender sender = DecSender.Factory.newInstance();
         sender.setOrganisationCode(propertiesResolver.getProperty("x-tee.institution"));
-        // sender.setAsutuseNimi(senderName); // set in DhlXTeeServiceImpl.constructDokumentDocument() based on regNr
+        sender.setStructuralUnit(parametersService.getStringParameter(Parameters.DVK_ORGANIZATION_NAME)); // May be empty
         return sender;
     }
 
@@ -1144,15 +1142,18 @@ public abstract class DvkServiceImpl implements DvkService {
 
             //
             SignatureItemsAndDataItems signatureItems = null;
-            ByteArrayInputStream signatureInput = null;
+            InputStream signatureInput = null;
             try {
-                signatureInput = new ByteArrayInputStream(Base64.decode(file.getZipBase64Content()));
+                signatureInput = DvkUtil.getFileContents(file);
                 signatureItems = BeanHelper.getSignatureService().getDataItemsAndSignatureItems(signatureInput, false);
             } catch (SignatureException e) {
                 log.error("Failed to retrieve signatures from " + file.getFileName() + " (" + file.getFileGuid() + ")!", e);
                 throw new RuntimeException(e);
             } catch (Base64DecodingException e) {
                 log.error("Failed to decode DigiDoc from " + file.getFileName() + "!", e);
+                throw new RuntimeException(e);
+            } catch (IOException e) {
+                log.error("Failed to read DigiDoc from " + file.getFileName() + "!", e);
                 throw new RuntimeException(e);
             } finally {
                 IOUtils.closeQuietly(signatureInput);

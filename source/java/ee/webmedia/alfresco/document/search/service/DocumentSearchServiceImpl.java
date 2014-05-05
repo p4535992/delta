@@ -1922,8 +1922,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         queryParts.add(generateTypeQuery(DocumentCommonModel.Types.SEND_INFO));
         queryParts.add(SearchUtil.generatePropertyExactQuery(DocumentCommonModel.Props.SEND_INFO_SEND_MODE,
                 Arrays.asList(SendMode.STATE_PORTAL_EESTI_EE.getValueName(), SendMode.DVK.getValueName())));
-        // queryParts.add(generateStringExactQuery(SendStatus.SENT.toString(), DocumentCommonModel.Props.SEND_INFO_SEND_STATUS));
-        queryParts.add(generatePropertyNullQuery(DocumentCommonModel.Props.SEND_INFO_RECEIVED_DATE_TIME));
+        queryParts.add(generateStringExactQuery(SendStatus.SENT.toString(), DocumentCommonModel.Props.SEND_INFO_SEND_STATUS));
         return joinQueryPartsAnd(queryParts, true);
     }
 

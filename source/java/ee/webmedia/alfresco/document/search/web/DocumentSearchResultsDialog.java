@@ -43,7 +43,6 @@ import org.apache.myfaces.application.jsp.JspStateManagerImpl;
 import org.apache.myfaces.shared_impl.taglib.UIComponentTagUtils;
 
 import ee.webmedia.alfresco.classificator.constant.FieldType;
-import ee.webmedia.alfresco.classificator.enums.SendMode;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.docadmin.service.FieldDefinition;
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
@@ -66,7 +65,14 @@ public class DocumentSearchResultsDialog extends BaseDocumentListDialog {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DocumentSearchResultsDialog.class);
     public static final String BEAN_NAME = "DocumentSearchResultsDialog";
 
-    private static final List<String> EP_EXPORT_SEND_MODES = Arrays.asList(SendMode.MAIL.getValueName(), SendMode.REGISTERED_MAIL.getValueName());
+    private static Map<QName/* FieldDefinition prop name */, Pair<String /* property name */, String /* translation key */>> CUSTOM_COLUMNS = new HashMap<QName, Pair<String, String>>();
+    static {
+        CUSTOM_COLUMNS.put(DocumentSearchModel.Props.DOCUMENT_TYPE, new Pair<String, String>("documentTypeName", "document_docType"));
+        CUSTOM_COLUMNS.put(DocumentSearchModel.Props.SEND_MODE, new Pair<String, String>("sendMode", "document_send_mode"));
+        CUSTOM_COLUMNS.put(DocumentSearchModel.Props.SEND_INFO_RECIPIENT, new Pair<String, String>("sendInfoRecipient", "document_search_export_recipient"));
+        CUSTOM_COLUMNS.put(DocumentSearchModel.Props.SEND_INFO_SEND_DATE_TIME, new Pair<String, String>("sendInfoSendDateTime", "document_search_send_info_time"));
+        CUSTOM_COLUMNS.put(DocumentSearchModel.Props.SEND_INFO_RESOLUTION, new Pair<String, String>("sendInfoResolution", "document_search_send_info_resolution"));
+    }
 
     protected Node searchFilter;
     @SuppressWarnings("unused")
@@ -159,18 +165,11 @@ public class DocumentSearchResultsDialog extends BaseDocumentListDialog {
         final Map<String, String> titleLinkParams = new HashMap<String, String>(2);
         titleLinkParams.put("nodeRef", "#{r.node.nodeRef}");
         titleLinkParams.put("caseNodeRef", "#{r.node.nodeRef}");
-        @SuppressWarnings("unchecked")
-        List<Pair<String /* property name */, String /* translation key */>> customColumns = Arrays.asList(
-                new Pair<String, String>("documentTypeName", "document_docType"),
-                new Pair<String, String>("sendMode", "document_send_mode"),
-                new Pair<String, String>("sendInfoRecipient", "document_search_export_recipient"),
-                new Pair<String, String>("sendInfoSendDateTime", "document_search_send_info_time"),
-                new Pair<String, String>("sendInfoResolution", "document_search_send_info_resolution"));
         List<String> outputTextOverrides = Arrays.asList("sendInfoResolution");
 
-        for (Pair<String, String> col : customColumns) {
-            if (Boolean.TRUE.equals(props.get(getLabelBoolean(DocumentSearchModel.Props.SEND_INFO_RESOLUTION).toString()))) {
-                String sortLinkValue = col.getFirst();
+        for (Entry<QName, Pair<String, String>> col : CUSTOM_COLUMNS.entrySet()) {
+            if (Boolean.TRUE.equals(props.get(getLabelBoolean(col.getKey())))) {
+                String sortLinkValue = col.getValue().getFirst();
                 String valueBinding = "#{r." + sortLinkValue + "}";
                 UIComponent valueComponent = null;
                 if (outputTextOverrides.contains(sortLinkValue)) {
@@ -179,7 +178,7 @@ public class DocumentSearchResultsDialog extends BaseDocumentListDialog {
                     valueComponent = createActionLink(context, valueBinding, "#{DocumentDialog.action}", null, "#{DocumentDialog.open}", null, titleLinkParams);
                 }
 
-                createAndAddColumn(context, richList, MessageUtil.getMessage(col.getSecond()), col.getFirst(), false, valueComponent);
+                createAndAddColumn(context, richList, MessageUtil.getMessage(col.getValue().getSecond()), sortLinkValue, false, valueComponent);
             }
         }
         Set<String> keys = props.keySet();
@@ -215,9 +214,13 @@ public class DocumentSearchResultsDialog extends BaseDocumentListDialog {
                 valueBinding = "#{r.volumeLabel}";
                 sortValue = "volumeLabel";
             } else if (primaryQName.equals(DocumentDynamicModel.Props.FIRST_KEYWORD_LEVEL)) {
-                valueBinding = "#{r.hierarchicalKeywords}";
-                fieldTitle = MessageUtil.getMessage("thesaurus_keywords");
-                sortValue = "hierarchicalKeywords";
+                if (Boolean.TRUE.equals(props.get(getLabelBoolean(DocumentDynamicModel.Props.THESAURUS).toString()))) {
+                    valueBinding = "#{r.hierarchicalKeywords}";
+                    fieldTitle = MessageUtil.getMessage("thesaurus_keywords");
+                    sortValue = "hierarchicalKeywords";
+                } else {
+                    continue;
+                }
             } else if (isStructUnit) {
                 valueBinding = "#{r.unitStrucPropsConvertedMap['" + primaryQNamePrefixString + "']}";
                 sortValue = "unitStrucPropsConvertedMap;" + primaryQNamePrefixString;
