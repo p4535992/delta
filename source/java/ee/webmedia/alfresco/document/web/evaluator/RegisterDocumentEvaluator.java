@@ -21,6 +21,7 @@ import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel.Props;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.service.DocumentService;
+import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.workflow.service.HasNoStoppedOrInprogressWorkflowsEvaluator;
 
 /**
@@ -55,7 +56,7 @@ public class RegisterDocumentEvaluator extends BaseActionEvaluator {
         if (!documentService.isSaved(docNode.getNodeRef())) {
             return false;
         }
-        return docNode.hasPermission(DocumentCommonModel.Privileges.EDIT_DOCUMENT);
+        return docNode.hasPermission(Privilege.EDIT_DOCUMENT);
     }
 
     public boolean canRegister(Node docNode) {

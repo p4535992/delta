@@ -1,21 +1,20 @@
 package ee.webmedia.alfresco.privilege.web;
 
-import static ee.webmedia.alfresco.common.web.BeanHelper.getPermissionService;
-
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 
 import javax.faces.event.ValueChangeEvent;
 
-import org.alfresco.service.cmr.security.AccessStatus;
+import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.apache.commons.lang.ObjectUtils;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
-import ee.webmedia.alfresco.document.model.DocumentCommonModel;
-import ee.webmedia.alfresco.document.model.DocumentCommonModel.Privileges;
+import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.privilege.model.UserPrivileges;
 import ee.webmedia.alfresco.privilege.web.ManageInheritablePrivilegesDialog.State;
 import ee.webmedia.alfresco.user.service.UserService;
@@ -29,8 +28,9 @@ import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
  */
 public abstract class PrivilegesHandler implements Serializable {
     private static final long serialVersionUID = 1L;
+    private static Collection<Privilege> DOCUMENT_CASEFILE_MANAGEABLE_PERMISSIONS;
 
-    private final Collection<String> manageablePermissions;
+    private final Collection<Privilege> manageablePermissions;
     private final QName nodeType;
 
     protected Boolean checkboxValue;
@@ -39,7 +39,7 @@ public abstract class PrivilegesHandler implements Serializable {
     protected ManageInheritablePrivilegesDialog dialogBean;
     protected State state;
 
-    protected PrivilegesHandler(QName nodeType, Collection<String> manageablePermissions) {
+    protected PrivilegesHandler(QName nodeType, Collection<Privilege> manageablePermissions) {
         this.nodeType = nodeType;
         this.manageablePermissions = manageablePermissions;
     }
@@ -93,6 +93,22 @@ public abstract class PrivilegesHandler implements Serializable {
         }
     }
 
+    /** Get manageable document permissions and case file permissions if <code>conf.casefile.enabled = true</code> */
+    protected static Collection<Privilege> getDocumentCaseFilePrivs() {
+        if (DOCUMENT_CASEFILE_MANAGEABLE_PERMISSIONS == null) {
+            ArrayList<Privilege> privs = new ArrayList<Privilege>();
+            if (BeanHelper.getVolumeService().isCaseVolumeEnabled()) {
+                privs.add(Privilege.VIEW_CASE_FILE);
+                privs.add(Privilege.EDIT_CASE_FILE);
+            }
+            privs.add(Privilege.VIEW_DOCUMENT_FILES);
+            privs.add(Privilege.VIEW_DOCUMENT_META_DATA);
+            privs.add(Privilege.EDIT_DOCUMENT);
+            DOCUMENT_CASEFILE_MANAGEABLE_PERMISSIONS = Collections.unmodifiableList(privs);
+        }
+        return DOCUMENT_CASEFILE_MANAGEABLE_PERMISSIONS;
+    }
+
     protected abstract boolean initCheckboxValue();
 
     public String getCheckboxLabel() {
@@ -115,8 +131,8 @@ public abstract class PrivilegesHandler implements Serializable {
         return null;
     }
 
-    public String getImplicitPrivilege() {
-        return DocumentCommonModel.Privileges.VIEW_DOCUMENT_META_DATA;
+    public Privilege getImplicitPrivilege() {
+        return Privilege.VIEW_DOCUMENT_META_DATA;
     }
 
     /**
@@ -132,7 +148,7 @@ public abstract class PrivilegesHandler implements Serializable {
                 + MessageUtil.getMessageAndEscapeJS(getNodeType().getLocalName() + "_manage_permissions_confirm_inlineGroupUsers_suffix");
     }
 
-    public Collection<String> getManageablePermissions() {
+    public Collection<Privilege> getManageablePermissions() {
         return manageablePermissions;
     }
 
@@ -142,7 +158,7 @@ public abstract class PrivilegesHandler implements Serializable {
             if (userService.isAdministrator()) {
                 editable = true;
             } else if (userService.isDocumentManager()
-                    && AccessStatus.ALLOWED == getPermissionService().hasPermission(state.getManageableRef(), Privileges.VIEW_DOCUMENT_META_DATA)) {
+                    && BeanHelper.getPrivilegeService().hasPermission(state.getManageableRef(), AuthenticationUtil.getRunAsUser(), Privilege.VIEW_DOCUMENT_META_DATA)) {
                 editable = true;
             } else {
                 editable = false;
@@ -163,7 +179,7 @@ public abstract class PrivilegesHandler implements Serializable {
         return "";
     }
 
-    public boolean isPermissionColumnDisabled(@SuppressWarnings("unused") String privilege) {
+    public boolean isPermissionColumnDisabled(@SuppressWarnings("unused") Privilege privilege) {
         return false;
     }
 

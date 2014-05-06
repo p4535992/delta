@@ -12,14 +12,12 @@
 
    <bean id="userService" class="ee.webmedia.alfresco.user.service.UserServiceImpl">
       <property name="authenticationService" ref="AuthenticationService" />
-      <property name="authorityService" ref="AuthorityService" />
       <property name="generalService" ref="GeneralService" />
       <property name="nodeService" ref="NodeService" />
       <property name="dictionaryService" ref="DictionaryService" />
       <property name="searchService" ref="SearchService" />
       <property name="parametersService" ref="ParametersService" />
       <property name="personService" ref="PersonService" />
-      <property name="permissionService" ref="PermissionService" />
       <property name="organizationStructureService" ref="OrganizationStructureService" />
       <property name="configurableService" ref="ConfigurableService" />
       <property name="namespaceService" ref="NamespaceService" />

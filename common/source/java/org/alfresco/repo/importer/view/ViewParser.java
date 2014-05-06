@@ -221,6 +221,9 @@ public class ViewParser implements Parser
         // Extract qualified name
         QName defName = getName(xpp);
 
+        if (VIEW_ACL.equals(defName) || VIEW_ACE.equals(defName) || VIEW_AUTHORITY.equals(defName) || VIEW_PERMISSION.equals(defName)) {
+            return;
+        }
         // Process the element
         Object element = parserContext.elementStack.peek();
 
@@ -249,12 +252,6 @@ public class ViewParser implements Parser
 
             if (logger.isDebugEnabled())
                 logger.debug(indentLog("Pushed " + nodeItemContext, parserContext.elementStack.size() -1));
-
-            // process ACL specific attributes
-            if (defName.equals(VIEW_ACL))
-            {
-                processACL(xpp, parserContext);
-            }
         }
         else
         {
@@ -540,27 +537,6 @@ public class ViewParser implements Parser
         
         if (logger.isDebugEnabled())
             logger.debug(indentLog("Processed aspect " + aspectDef.getName(), parserContext.elementStack.size()));
-    }
-    
-    /**
-     * Process ACL definition
-     * 
-     * @param xpp
-     * @param contextStack
-     */
-    private void processACL(XmlPullParser xpp, ParserContext parserContext)
-    {
-        NodeContext node = peekNodeContext(parserContext.elementStack);
-        
-        String strInherit = xpp.getAttributeValue(NamespaceService.REPOSITORY_VIEW_1_0_URI, VIEW_INHERIT_PERMISSIONS_ATTR);
-        if (strInherit != null)
-        {
-            Boolean inherit = Boolean.valueOf(strInherit);
-            if (!inherit)
-            {
-                node.setInheritPermissions(false);
-            }
-        }
     }
     
     /**

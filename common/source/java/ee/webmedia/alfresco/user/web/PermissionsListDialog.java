@@ -14,6 +14,7 @@ import org.apache.commons.lang.StringUtils;
 import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.user.model.Authority;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.ActionUtil;
@@ -29,7 +30,7 @@ public class PermissionsListDialog extends BaseDialogBean {
     private transient UserService userService;
 
     private NodeRef nodeRef;
-    private String permission;
+    private Privilege permission;
     private List<Authority> authorities;
     private String alternateConfigId;
     private String alternateDialogTitleId;
@@ -40,7 +41,7 @@ public class PermissionsListDialog extends BaseDialogBean {
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
         // finish button is not used
         return null; // but in case someone clicks finish button twice on the previous dialog,
-                     // then silently ignore it and stay on the same page
+        // then silently ignore it and stay on the same page
     }
 
     @Override
@@ -68,7 +69,7 @@ public class PermissionsListDialog extends BaseDialogBean {
         reset();
 
         nodeRef = new NodeRef(ActionUtil.getParam(event, "nodeRef"));
-        permission = ActionUtil.getParam(event, "permission");
+        permission = Privilege.getPrivilegeByName(ActionUtil.getParam(event, "permission"));
         if (ActionUtil.hasParam(event, "alternateConfigId")) {
             alternateConfigId = ActionUtil.getParam(event, "alternateConfigId");
         }
@@ -90,9 +91,9 @@ public class PermissionsListDialog extends BaseDialogBean {
                     FacesContext context = FacesContext.getCurrentInstance();
                     MethodBinding b = context.getApplication().createMethodBinding("#{" + delegateRemoveAuthorityMB + "}"
                             , new Class[] { NodeRef.class, String.class, String.class });
-                    b.invoke(context, new Object[] { nodeRef, authority.getAuthority(), permission });
+                    b.invoke(context, new Object[] { nodeRef, authority.getAuthority(), permission.getPrivilegeName() });
                 } else {
-                    BeanHelper.getPermissionService().deletePermission(nodeRef, authority.getAuthority(), permission);
+                    BeanHelper.getPrivilegeService().removeAllPermissions(nodeRef, authority.getAuthority());
                     MessageUtil.addInfoMessage("delete_success");
                 }
                 it.remove();
@@ -133,7 +134,7 @@ public class PermissionsListDialog extends BaseDialogBean {
     // START: getters / setters
     public List<Authority> getAuthorities() {
         if (authorities == null) {
-            authorities = getUserService().getAuthorities(nodeRef, permission);
+            authorities = userService.getAuthorities(nodeRef, permission);
         }
         return authorities;
     }
@@ -143,7 +144,7 @@ public class PermissionsListDialog extends BaseDialogBean {
     }
 
     public String getPermission() {
-        return permission;
+        return permission.getPrivilegeName();
     }
 
     public UIRichList getAuthoritiesRichList() {

@@ -3,12 +3,6 @@
    xmlns:view="http://www.alfresco.org/view/repository/1.0" 
    xmlns:adr="http://alfresco.webmedia.ee/model/adr/1.0" 
 >
-   <adr:adrDeletedDocuments view:childName="adr:adrDeletedDocuments">
-      <view:acl view:inherit="true">
-         <view:ace view:access="ALLOWED">
-            <view:authority>GROUP_EVERYONE</view:authority>
-            <view:permission>CreateChildren</view:permission>
-         </view:ace>
-      </view:acl>
-   </adr:adrDeletedDocuments>
+   <adr:adrDeletedDocuments view:childName="adr:adrDeletedDocuments" />
+
 </view:view>

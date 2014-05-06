@@ -71,7 +71,7 @@ public interface GeneralService {
 
     /**
      * Search for NodeRef with an XPath expression.
-     * 
+     *
      * @param nodeRefXPath child association names separated with forward slashes, in the form of <code>/foo:bar/{pingNamespaceUri}pong</code>
      * @return NodeRef, {@code null} if node not found
      * @throws RuntimeException if more than 1 node found
@@ -80,7 +80,7 @@ public interface GeneralService {
 
     /**
      * Search for NodeRef with an XPath expression from given store root.
-     * 
+     *
      * @param nodeRefXPath child association names separated with forward slashes, in the form of <code>/foo:bar/{pingNamespaceUri}pong</code>
      * @param storeRef Reference to store
      * @return NodeRef, {@code null} if node not found
@@ -90,7 +90,7 @@ public interface GeneralService {
 
     /**
      * Search for NodeRef with an XPath expression from given root.
-     * 
+     *
      * @param nodeRefXPath child association names separated with forward slashes, in the form of <code>/foo:bar/{pingNamespaceUri}pong</code>
      * @param root reference to root node, under which is searched
      * @return NodeRef, {@code null} if node not found
@@ -104,7 +104,7 @@ public interface GeneralService {
 
     /**
      * Sets nodeProps to given nodeRef excluding system and contentModel properties
-     * 
+     *
      * @param nodeRef
      * @param nodeProps
      * @see #setPropertiesIgnoringSystem(Map, NodeRef)
@@ -146,7 +146,7 @@ public interface GeneralService {
 
     /**
      * Return default property values defined in model.
-     * 
+     *
      * @param className type or aspect
      * @return
      */
@@ -156,7 +156,7 @@ public interface GeneralService {
 
     /**
      * Construct an anonymous type that combines all definitions of the specified type, aspects and mandatory aspects
-     * 
+     *
      * @param type the type to start with
      * @return the anonymous type definition
      */
@@ -166,7 +166,7 @@ public interface GeneralService {
 
     /**
      * Add and remove aspects in repository according to node aspects.
-     * 
+     *
      * @param node
      * @return if node was modified in repository
      */
@@ -182,7 +182,7 @@ public interface GeneralService {
 
     /**
      * Remove all child association removed in the UI
-     * 
+     *
      * @param node - node that previously had some childAssociations in repository that should be removed
      * @return number of associations that were deleted from repository
      */
@@ -321,5 +321,7 @@ public interface GeneralService {
      * Set node modified time to current time. Use this on document, so changes would be detected on next ADR sync.
      */
     void setModifiedToNow(NodeRef nodeRef);
+
+    void explainAnalyzeQuery(String sqlQuery, Log traceLog, boolean analyze, Object[] args);
 
 }

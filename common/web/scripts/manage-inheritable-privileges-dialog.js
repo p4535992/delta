@@ -37,9 +37,6 @@ $jQ(document).ready(function() {
    // (grupi kasutajaid linnutama ei pea, aga sama rea peal võiksid sõltuvad checkbox'id ka linnutatud saama).
    // pole kriitiline viga, kuna salvestamisel nagunii salvestatakse ka õiguse sõltuvused
 
-   // FIXME PRIV2 optimeerimine - üle vaadata JS - võib-olla annab midagi optimeerida, kuna osa koodi on võetud vanast õiguse halduse ekraanilt,
-   // kus oli vaja rohkem checkbox'e sünkida(kuna iga grupi all kuvati kasutajad ja sama kasutaja võis olla mitmes grupis)
-
 
    function headerCheckBoxChanged() {
       if (updateHeaderCheckboxStateDisabled) {
@@ -138,8 +135,9 @@ $jQ(document).ready(function() {
       }
       var groupRows = group.children();
       var groupHeaderRow = groupRows.eq(0);
+      var groupUserRows = groupRows.slice(1);
       if (firstUpdate) {
-         var groupBodyCBs = groupRows.nextAll(groupHeaderRow).find("td input[type='checkbox']");
+         var groupBodyCBs = groupUserRows.find("td input[type='checkbox']");
          bindOnChangeUpdateHeaderCheckboxState(groupBodyCBs);
       }
       var groupHeaderCheckboxes = groupHeaderRow.find("td input[type='checkbox']");

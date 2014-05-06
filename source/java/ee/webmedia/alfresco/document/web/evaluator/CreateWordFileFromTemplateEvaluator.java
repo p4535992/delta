@@ -13,6 +13,7 @@ import org.alfresco.web.bean.repository.Node;
 import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.utils.Predicate;
 import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
@@ -33,7 +34,7 @@ public class CreateWordFileFromTemplateEvaluator extends BaseActionEvaluator {
         if (!(viewMode
                 && EqualsHelper.nullSafeEquals(DocumentStatus.WORKING.getValueName(), docStatus)
                 && getDocumentTemplateService().hasDocumentsTemplate(node.getNodeRef())
-                && node.hasPermission(DocumentCommonModel.Privileges.EDIT_DOCUMENT))) {
+                && node.hasPermission(Privilege.EDIT_DOCUMENT))) {
             return false;
         }
         Set<Task> allActiveTasks = WorkflowUtil.getTasks(new HashSet<Task>(), BeanHelper.getWorkflowBlockBean().getCompoundWorkflows(), allActiveTasksPredicate);

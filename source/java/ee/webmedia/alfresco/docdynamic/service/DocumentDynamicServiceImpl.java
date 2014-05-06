@@ -112,6 +112,7 @@ import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.document.service.DocumentServiceImpl;
 import ee.webmedia.alfresco.document.service.EventsLoggingHelper;
 import ee.webmedia.alfresco.imap.model.ImapModel;
+import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.privilege.service.PrivilegeService;
 import ee.webmedia.alfresco.template.service.DocumentTemplateService;
 import ee.webmedia.alfresco.utils.FilenameUtil;
@@ -677,7 +678,7 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         if (saveListenerBeanNames != null) {
             validateDocument(saveListenerBeanNames, document, propDefs);
             for (String saveListenerBeanName : saveListenerBeanNames) {
-                SaveListener saveListener = (SaveListener) beanFactory.getBean(saveListenerBeanName, SaveListener.class);
+                SaveListener saveListener = beanFactory.getBean(saveListenerBeanName, SaveListener.class);
                 saveListener.save(document);
             }
         }
@@ -787,9 +788,12 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         }
         // Add case file owner and in progress task owners to document permissions
         String ownerId = (String) caseFile.getProperties().get(DocumentCommonModel.Props.OWNER_ID);
-        privilegeService.setPermissions(docRef, ownerId, DocumentCommonModel.Privileges.EDIT_DOCUMENT);
+        privilegeService.setPermissions(docRef, ownerId, Privilege.EDIT_DOCUMENT);
         for (Task task : workflowService.getTasksInProgress(caseFile.getNodeRef())) {
-            privilegeService.setPermissions(docRef, ownerId, getPrivsWithDependencies(getRequiredPrivsForInprogressTask(task, docRef, fileService, false)));
+            String taskOwnerId = task.getOwnerId();
+            if (StringUtils.isNotBlank(taskOwnerId)) {
+                privilegeService.setPermissions(docRef, taskOwnerId, getPrivsWithDependencies(getRequiredPrivsForInprogressTask(task, docRef, fileService, false)));
+            }
         }
     }
 
@@ -804,7 +808,7 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         validateDocumentForFormulaPattern(document, validationHelper);
         validateDueDateFields(document, validationHelper);
         for (String saveListenerBeanName : saveListenerBeanNames) {
-            SaveListener saveListener = (SaveListener) beanFactory.getBean(saveListenerBeanName, SaveListener.class);
+            SaveListener saveListener = beanFactory.getBean(saveListenerBeanName, SaveListener.class);
             saveListener.validate(document, validationHelper);
         }
         if (!validationHelper.errorMessages.isEmpty()) {

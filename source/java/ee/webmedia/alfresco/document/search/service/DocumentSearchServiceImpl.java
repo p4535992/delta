@@ -114,6 +114,8 @@ import ee.webmedia.alfresco.log.model.LogEntry;
 import ee.webmedia.alfresco.log.model.LogObject;
 import ee.webmedia.alfresco.log.service.LogService;
 import ee.webmedia.alfresco.parameters.model.Parameters;
+import ee.webmedia.alfresco.privilege.model.Privilege;
+import ee.webmedia.alfresco.privilege.service.PrivilegeService;
 import ee.webmedia.alfresco.search.service.AbstractSearchServiceImpl;
 import ee.webmedia.alfresco.series.model.Series;
 import ee.webmedia.alfresco.series.model.SeriesModel;
@@ -1491,7 +1493,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
     public List<Document> searchDocumentsInOutbox() {
         String query = getDvkOutboxQuery();
         log.debug("searchDocumentsInOutbox with query '" + query + "'");
-        return searchDocumentsBySendInfoImpl(query, -1, /* queryName */"documentsInOutbox");
+        return searchDocumentsBySendInfoImpl(query, -1, /* queryName */"documentsInOutbox", true);
     }
 
     @Override
@@ -1504,7 +1506,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         queryParts.add(generateStringExactQuery(dvkId, DocumentCommonModel.Props.SEND_INFO_DVK_ID));
         String query = joinQueryPartsAnd(queryParts, false);
         log.debug("searchDocumentsByDvkId with query '" + query + "'");
-        return searchDocumentsBySendInfoImpl(query, -1, /* queryName */"documentsInOutbox");
+        return searchDocumentsBySendInfoImpl(query, -1, /* queryName */"documentsInOutbox", false);
     }
 
     @Override
@@ -1943,15 +1945,34 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         return refsAndDvkIds;
     }
 
-    private List<Document> searchDocumentsBySendInfoImpl(String query, int limit, String queryName) {
+    private List<Document> searchDocumentsBySendInfoImpl(String query, int limit, String queryName, final boolean checkPermissions) {
         return searchGeneralImpl(query, limit, queryName, new SearchCallback<Document>() {
             private final Set<String> nodeIds = new HashSet<String>();
+            private final Set<NodeRef> forbiddenDocsAndSeries = new HashSet<NodeRef>();
+            private final PrivilegeService privilegeService = BeanHelper.getPrivilegeService();
+            private final String runAsUser = AuthenticationUtil.getRunAsUser();
 
             @Override
             public Document addResult(ResultSetRow row) {
                 NodeRef docRef = row.getChildAssocRef().getParentRef();
-                if (!nodeIds.contains(docRef.getId())) { // duplicate documents should be ignored
-                    nodeIds.add(docRef.getId());
+                if (checkPermissions) {
+                    if (forbiddenDocsAndSeries.contains(docRef)) {
+                        return null;
+                    }
+                    NodeRef seriesRef = (NodeRef) nodeService.getProperty(docRef, DocumentCommonModel.Props.SERIES);
+                    if (forbiddenDocsAndSeries.contains(seriesRef)
+                            || Boolean.FALSE.equals(nodeService.getProperty(seriesRef, SeriesModel.Props.DOCUMENTS_VISIBLE_FOR_USERS_WITHOUT_ACCESS))) {
+                        forbiddenDocsAndSeries.add(seriesRef);
+                        if (!privilegeService.hasPermission(docRef, runAsUser, Privilege.VIEW_DOCUMENT_META_DATA)) {
+                            forbiddenDocsAndSeries.add(docRef);
+                            return null;
+                        }
+                    }
+                }
+                String docRefId = docRef.getId();
+                if (!nodeIds.contains(docRefId)) { // duplicate documents should be ignored
+                    nodeIds.add(docRefId);
+
                     if (nodeService.hasAspect(docRef, DocumentCommonModel.Aspects.SEARCHABLE)) {
                         return documentService.getDocumentByNodeRef(docRef);
                     }
@@ -1964,11 +1985,28 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
     private int searchDocumentsBySendInfoImplCount(String query, int limit, String queryName) {
         final Set<String> nodeIds = new HashSet<String>();
         searchGeneralImpl(query, limit, queryName, new SearchCallback<String>() {
+            private final Set<NodeRef> forbiddenDocsAndSeries = new HashSet<NodeRef>();
+            private final PrivilegeService privilegeService = BeanHelper.getPrivilegeService();
+            private final String runAsUser = AuthenticationUtil.getRunAsUser();
+
             @Override
             public String addResult(ResultSetRow row) {
                 final NodeRef docRef = row.getChildAssocRef().getParentRef();
-                if (!nodeIds.contains(docRef.getId())) { // duplicate documents should be ignored
-                    nodeIds.add(docRef.getId());
+                if (forbiddenDocsAndSeries.contains(docRef)) {
+                    return null;
+                }
+                NodeRef seriesRef = (NodeRef) nodeService.getProperty(docRef, DocumentCommonModel.Props.SERIES);
+                if (forbiddenDocsAndSeries.contains(seriesRef)
+                        || Boolean.FALSE.equals(nodeService.getProperty(seriesRef, SeriesModel.Props.DOCUMENTS_VISIBLE_FOR_USERS_WITHOUT_ACCESS))) {
+                    forbiddenDocsAndSeries.add(seriesRef);
+                    if (!privilegeService.hasPermission(docRef, runAsUser, Privilege.VIEW_DOCUMENT_META_DATA)) {
+                        forbiddenDocsAndSeries.add(docRef);
+                        return null;
+                    }
+                }
+                String docRefId = docRef.getId();
+                if (!nodeIds.contains(docRefId)) { // duplicate documents should be ignored
+                    nodeIds.add(docRefId);
                 }
                 return null;
             }

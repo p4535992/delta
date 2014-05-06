@@ -17,7 +17,7 @@ import org.alfresco.web.bean.dialog.BaseDialogBean;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.file.model.FileModel;
-import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.WebUtil;
@@ -43,7 +43,7 @@ public class CommentFileDialog extends BaseDialogBean {
 
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Exception {
-        validatePermission(docRef, DocumentCommonModel.Privileges.EDIT_DOCUMENT);
+        validatePermission(docRef, Privilege.EDIT_DOCUMENT);
         Map<QName, Serializable> properties = getNodeService().getProperties(fileRef);
         properties.put(FileModel.Props.COMMENT, comment);
         getNodeService().setProperties(fileRef, properties);

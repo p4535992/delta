@@ -40,7 +40,6 @@ import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
-import org.alfresco.service.cmr.security.PermissionService;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.EqualsHelper;
@@ -69,7 +68,6 @@ import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
 import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
-import ee.webmedia.alfresco.document.model.DocumentCommonModel.Privileges;
 import ee.webmedia.alfresco.dvk.service.DvkService;
 import ee.webmedia.alfresco.log.PropDiffHelper;
 import ee.webmedia.alfresco.log.model.LogEntry;
@@ -79,6 +77,7 @@ import ee.webmedia.alfresco.orgstructure.model.OrganizationStructure;
 import ee.webmedia.alfresco.orgstructure.service.OrganizationStructureService;
 import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
+import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.privilege.service.PrivilegeService;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.FilenameUtil;
@@ -301,8 +300,11 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
             NodeRef nodeRef = childAssoc.getChildRef();
             Map<QName, Serializable> props = nodeService.getProperties(nodeRef);
             String typeStr = (String) props.get(WorkflowCommonModel.Props.TYPE);
+            if (StringUtils.isBlank(typeStr)) {
+                typeStr = CompoundWorkflowType.DOCUMENT_WORKFLOW.name();
+            }
             String compWorkflowUserId = (String) props.get(WorkflowCommonModel.Props.USER_ID);
-            if (StringUtils.isNotBlank(typeStr) && workflowType == CompoundWorkflowType.valueOf(typeStr)
+            if (workflowType == CompoundWorkflowType.valueOf(typeStr)
                     && (StringUtils.isBlank(compWorkflowUserId) || StringUtils.equals(userId, compWorkflowUserId))) {
                 compoundWorkflowDefinitions.add(getCompoundWorkflowDefinition(nodeRef, getRoot(), false));
 
@@ -1117,7 +1119,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
             if (!StringUtils.equals(compoundWorkflow.getOwnerId(), previousOwnerId)) {
                 // doesn't matter what status cWF has, just add the privileges
                 NodeRef docRef = nodeService.getPrimaryParent(compoundWorkflow.getNodeRef()).getParentRef();
-                privilegeService.setPermissions(docRef, compoundWorkflow.getOwnerId(), Privileges.VIEW_DOCUMENT_FILES);
+                privilegeService.setPermissions(docRef, compoundWorkflow.getOwnerId(), Privilege.VIEW_DOCUMENT_FILES);
             }
         }
         if (isCompoundWorkflow(compoundWorkflow) && !wasSaved) {
@@ -1538,8 +1540,6 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
             String fileDisplayName = filenames.getSecond();
             NodeRef fileRef = fileService.addFileToTask(filenames.getFirst(), fileDisplayName, workflowNodeRef, file.file, file.contentType);
             newFileRefs.add(fileRef);
-            // Add the privilege so everyone can open the file
-            privilegeService.setPermissions(fileRef, PermissionService.ALL_AUTHORITIES, DocumentCommonModel.Privileges.VIEW_DOCUMENT_FILES);
             existingDisplayNames.add(fileDisplayName);
         }
         workflowDbService.createTaskFileEntriesFromNodeRefs(taskRef, newFileRefs);
@@ -3138,7 +3138,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
 
     /**
      * Common logic when signature task is not signed or review task or confirmation task is not accepted(rejected)
-     * 
+     *
      * @param task - signature task, review task or confirmation task that was rejected
      * @param queue
      */
@@ -3407,17 +3407,17 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
                     // contact found, but dvk not enabled
                     if (task.getParent() != null && task.getParent().getParent() != null) {
                         task.getParent()
-                                .getParent()
-                                .getReviewTaskDvkInfoMessages()
-                                .add(new Pair<String, Object[]>("review_task_organization_contact_dvk_disabled", new Object[] { task.getOwnerName(),
-                                        orgProps.get(Props.ORGANIZATION_NAME), institutionRegCode }));
+                        .getParent()
+                        .getReviewTaskDvkInfoMessages()
+                        .add(new Pair<String, Object[]>("review_task_organization_contact_dvk_disabled", new Object[] { task.getOwnerName(),
+                                orgProps.get(Props.ORGANIZATION_NAME), institutionRegCode }));
                     }
                     return null;
                 }
                 // organization contact not found
                 if (task.getParent() != null && task.getParent().getParent() != null) {
                     task.getParent().getParent().getReviewTaskDvkInfoMessages()
-                            .add(new Pair<String, Object[]>("review_task_organization_missing_contact", new Object[] { task.getOwnerName(), institutionRegCode }));
+                    .add(new Pair<String, Object[]>("review_task_organization_missing_contact", new Object[] { task.getOwnerName(), institutionRegCode }));
                 }
                 return null;
             }

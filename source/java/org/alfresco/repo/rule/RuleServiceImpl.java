@@ -386,8 +386,7 @@ public class RuleServiceImpl implements RuleService, RuntimeRuleService
             // to prevent Access Denied Exception due to the bug:
             // https://issues.alfresco.com/browse/ETWOTWO-438
 
-            if (runtimeNodeService.hasAspect(nodeRef, RuleModel.ASPECT_RULES) == true &&
-                    permissionService.hasPermission(nodeRef, PermissionService.READ) == AccessStatus.ALLOWED)
+            if (runtimeNodeService.hasAspect(nodeRef, RuleModel.ASPECT_RULES))
             {
                 NodeRef ruleFolder = getSavedRuleFolderRef(nodeRef);
                 if (ruleFolder != null)
@@ -622,8 +621,6 @@ public class RuleServiceImpl implements RuleService, RuntimeRuleService
     @Override
     public void saveRule(NodeRef nodeRef, Rule rule)
     {
-        if (permissionService.hasPermission(nodeRef, PermissionService.CHANGE_PERMISSIONS) == AccessStatus.ALLOWED)
-        {
             disableRules();
             try
             {
@@ -666,11 +663,7 @@ public class RuleServiceImpl implements RuleService, RuntimeRuleService
             {
                 enableRules();
             }
-        }
-        else
-        {
-            throw new RuleServiceException("Insufficient permissions to save a rule.");
-        }
+
     }
 
     /**
@@ -724,8 +717,6 @@ public class RuleServiceImpl implements RuleService, RuntimeRuleService
     @Override
     public void removeRule(NodeRef nodeRef, Rule rule)
     {
-        if (permissionService.hasPermission(nodeRef, PermissionService.CHANGE_PERMISSIONS) == AccessStatus.ALLOWED)
-        {
             if (nodeService.exists(nodeRef) == true &&
                     nodeService.hasAspect(nodeRef, RuleModel.ASPECT_RULES) == true)
             {
@@ -742,11 +733,7 @@ public class RuleServiceImpl implements RuleService, RuntimeRuleService
                     enableRules(nodeRef);
                 }
             }
-        }
-        else
-        {
-            throw new RuleServiceException("Insufficient permissions to remove a rule.");
-        }
+
     }
 
     /**
@@ -755,8 +742,6 @@ public class RuleServiceImpl implements RuleService, RuntimeRuleService
     @Override
     public void removeAllRules(NodeRef nodeRef)
     {
-        if (permissionService.hasPermission(nodeRef, PermissionService.CHANGE_PERMISSIONS) == AccessStatus.ALLOWED)
-        {
             if (nodeService.exists(nodeRef) == true &&
                     nodeService.hasAspect(nodeRef, RuleModel.ASPECT_RULES) == true)
             {
@@ -772,11 +757,6 @@ public class RuleServiceImpl implements RuleService, RuntimeRuleService
                     }
                 }
             }
-        }
-        else
-        {
-            throw new RuleServiceException("Insufficient permissions to remove a rule.");
-        }
     }
 
     /**

@@ -20,6 +20,7 @@ import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.SearchUtil;
+import ee.webmedia.alfresco.workflow.model.CompoundWorkflowType;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 
 /**
@@ -44,19 +45,20 @@ public class CompoundWorkflowOwnerPropsUpdater extends AbstractNodeUpdater {
     protected String[] updateNode(NodeRef nodeRef) throws Exception {
         Map<QName, Serializable> compoundWorkflowProps = nodeService.getProperties(nodeRef);
         String ownerId = (String) compoundWorkflowProps.get(WorkflowCommonModel.Props.OWNER_ID);
-        if (StringUtils.isBlank(ownerId)) {
-            return new String[] { "compoundWorkflow.ownerId not set" };
+        Map<QName, Serializable> propsToAdd = new HashMap<QName, Serializable>();
+        if (StringUtils.isBlank((String) compoundWorkflowProps.get(WorkflowCommonModel.Props.TYPE))) {
+            propsToAdd.put(WorkflowCommonModel.Props.TYPE, CompoundWorkflowType.DOCUMENT_WORKFLOW.toString());
         }
         if (!compoundWorkflowProps.containsKey(WorkflowCommonModel.Props.OWNER_JOB_TITLE) ||
                 !compoundWorkflowProps.containsKey(WorkflowCommonModel.Props.OWNER_ORGANIZATION_NAME)) {
             Node user = BeanHelper.getUserService().getUser(ownerId);
-            if (user == null) {
-                return new String[] { "user with username=" + ownerId + " not found" };
+            if (user != null) {
+                Map<String, Object> userProps = user.getProperties();
+                propsToAdd.put(WorkflowCommonModel.Props.OWNER_JOB_TITLE, (Serializable) userProps.get(ContentModel.PROP_JOBTITLE));
+                propsToAdd.put(WorkflowCommonModel.Props.OWNER_ORGANIZATION_NAME, (Serializable) userService.getUserOrgPathOrOrgName(RepoUtil.toQNameProperties(userProps)));
             }
-            Map<QName, Serializable> propsToAdd = new HashMap<QName, Serializable>();
-            Map<String, Object> userProps = user.getProperties();
-            propsToAdd.put(WorkflowCommonModel.Props.OWNER_JOB_TITLE, (Serializable) userProps.get(ContentModel.PROP_JOBTITLE));
-            propsToAdd.put(WorkflowCommonModel.Props.OWNER_ORGANIZATION_NAME, (Serializable) userService.getUserOrgPathOrOrgName(RepoUtil.toQNameProperties(userProps)));
+        }
+        if (!propsToAdd.isEmpty()) {
             nodeService.addProperties(nodeRef, propsToAdd);
             return new String[] { "updated" };
         }

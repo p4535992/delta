@@ -1,4 +1,4 @@
-package ee.webmedia.alfresco.document.permissions;
+package ee.webmedia.alfresco.privilege.service;
 
 import java.util.HashSet;
 import java.util.List;
@@ -6,46 +6,34 @@ import java.util.Set;
 
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
-import org.alfresco.repo.security.permissions.DynamicAuthority;
-import org.alfresco.repo.security.permissions.PermissionReference;
 import org.alfresco.repo.security.permissions.impl.ModelDAO;
-import org.alfresco.repo.security.permissions.impl.PermissionServiceImpl;
 import org.alfresco.service.cmr.dictionary.DictionaryService;
+import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.security.AuthorityService;
 import org.alfresco.service.cmr.security.PermissionService;
 import org.alfresco.service.namespace.NamespaceService;
+import org.alfresco.service.namespace.QName;
 import org.springframework.beans.factory.InitializingBean;
 
+import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.user.service.UserService;
 
-public abstract class BaseDynamicAuthority implements DynamicAuthority, InitializingBean {
-    private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(BaseDynamicAuthority.class);
+public abstract class DynamicAuthority implements InitializingBean {
+    private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DynamicAuthority.class);
 
-    protected PermissionServiceImpl permissionServiceImpl;
+    protected PrivilegeService privilegeService;
     protected NodeService nodeService;
     protected DictionaryService dictionaryService;
     protected NamespaceService namespaceService;
     protected AuthorityService authorityService;
     protected UserService userService;
     protected ModelDAO modelDAO;
-    protected List<String> requiredFor;
-    protected Set<PermissionReference> whenRequired;
+    protected Set<Privilege> grantedPrivileges;
     protected String documentManagersGroup;
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        // buld the permission set
-        if (requiredFor != null) {
-            whenRequired = new HashSet<PermissionReference>();
-            for (String permission : requiredFor) {
-                PermissionReference permissionReference = modelDAO.getPermissionReference(null, permission);
-                whenRequired.addAll(modelDAO.getGranteePermissions(permissionReference));
-                whenRequired.addAll(modelDAO.getGrantingPermissions(permissionReference));
-            }
-        }
-        log.debug("Built requiredFor permission set for " + getAuthority() + ": " + whenRequired);
-
         AuthenticationUtil.runAs(new RunAsWork<Object>() {
             @Override
             public Boolean doWork() throws Exception {
@@ -54,7 +42,7 @@ public abstract class BaseDynamicAuthority implements DynamicAuthority, Initiali
             }
         }, AuthenticationUtil.getSystemUserName());
 
-        permissionServiceImpl.addDynamicAuthority(this);
+        privilegeService.addDynamicAuthority(this);
     }
 
     protected boolean isDocumentManager() {
@@ -62,13 +50,15 @@ public abstract class BaseDynamicAuthority implements DynamicAuthority, Initiali
         return authorities.contains(documentManagersGroup) || authorities.contains(PermissionService.ADMINISTRATOR_AUTHORITY);
     }
 
-    @Override
-    public Set<PermissionReference> requiredFor() {
-        return whenRequired;
+    /** Must return true or false exactly on same conditions as hasAuthority(NodeRef nodeRef, String userName) */
+    public abstract boolean hasAuthority(NodeRef nodeRef, QName type, String userName);
+
+    public Set<Privilege> getGrantedPrivileges() {
+        return grantedPrivileges;
     }
 
-    public void setPermissionServiceImpl(PermissionServiceImpl permissionServiceImpl) {
-        this.permissionServiceImpl = permissionServiceImpl;
+    public void setPrivilegeService(PrivilegeService privilegeService) {
+        this.privilegeService = privilegeService;
     }
 
     public void setNodeService(NodeService nodeService) {
@@ -96,7 +86,12 @@ public abstract class BaseDynamicAuthority implements DynamicAuthority, Initiali
     }
 
     public void setRequiredFor(List<String> requiredFor) {
-        this.requiredFor = requiredFor;
+        grantedPrivileges = new HashSet<Privilege>();
+        if (requiredFor != null) {
+            for (String requiredPrivilege : requiredFor) {
+                grantedPrivileges.add(Privilege.getPrivilegeByName(requiredPrivilege));
+            }
+        }
     }
 
 }

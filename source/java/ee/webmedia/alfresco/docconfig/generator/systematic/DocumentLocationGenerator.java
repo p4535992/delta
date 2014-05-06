@@ -17,6 +17,7 @@ import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.VOLU
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -33,6 +34,7 @@ import javax.faces.event.PhaseId;
 import javax.faces.event.ValueChangeEvent;
 import javax.faces.model.SelectItem;
 
+import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
@@ -64,6 +66,7 @@ import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 import ee.webmedia.alfresco.docadmin.service.CaseFileType;
 import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
 import ee.webmedia.alfresco.docadmin.service.DocumentType;
+import ee.webmedia.alfresco.docadmin.service.DynamicType;
 import ee.webmedia.alfresco.docadmin.service.Field;
 import ee.webmedia.alfresco.docadmin.service.FieldDefinition;
 import ee.webmedia.alfresco.docadmin.service.FieldGroup;
@@ -83,6 +86,7 @@ import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.functions.model.Function;
 import ee.webmedia.alfresco.functions.model.FunctionsModel;
 import ee.webmedia.alfresco.functions.service.FunctionsService;
+import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.privilege.service.PrivilegeService;
 import ee.webmedia.alfresco.series.model.Series;
 import ee.webmedia.alfresco.series.model.SeriesModel;
@@ -619,7 +623,7 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
                 boolean isDocument = DocumentCommonModel.Types.DOCUMENT.equals(docType);
                 for (Volume volume : allVolumes) {
                     NodeRef volRef = volume.getNode().getNodeRef();
-                    if (!isDocument || !volume.isDynamic() || privilegeService.hasPermissions(volRef, DocumentCommonModel.Privileges.VIEW_CASE_FILE)) {
+                    if (!isDocument || !volume.isDynamic() || privilegeService.hasPermission(volRef, AuthenticationUtil.getRunAsUser(), Privilege.VIEW_CASE_FILE)) {
                         volumes.add(new SelectItem(volRef, getVolumeLabel(volume)));
                         if (volumeRef != null && volumeRef.equals(volRef)) {
                             volumeFound = true;
@@ -777,9 +781,23 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
             if (caseFileTypes == null) {
                 List<CaseFileType> userCaseFileTypes = BeanHelper.getDocumentAdminService().getUsedCaseFileTypes(DocumentAdminService.DONT_INCLUDE_CHILDREN);
                 caseFileTypes = new ArrayList<SelectItem>();
+                boolean isDocManager = getUserService().isDocumentManager();
+                String userName = AuthenticationUtil.getRunAsUser();
+                Set<String> userAuthorities = null;
+                Map<String, List<String>> createDocumentPrivileges = null;
+                if (!isDocManager) {
+                    Map<String, NodeRef> docTypeNodeRefs = new HashMap<String, NodeRef>();
+                    for (DynamicType caseFileType : userCaseFileTypes) {
+                        NodeRef nodeRef = caseFileType.getNodeRef();
+                        docTypeNodeRefs.put(nodeRef.getId(), nodeRef);
+                    }
+                    userAuthorities = new HashSet<String>(BeanHelper.getAuthorityService().getContainedAuthorities(null, userName, false));
+                    userAuthorities.add(userName);
+                    createDocumentPrivileges = BeanHelper.getPrivilegeService().getCreateCaseFilePrivileges(docTypeNodeRefs.keySet());
+                }
                 for (CaseFileType userCaseFileType : userCaseFileTypes) {
-                    if (DocumentDynamicTypeMenuItemProcessor
-                            .hasPermission(BeanHelper.getPermissionService(), DocumentCommonModel.Privileges.CREATE_CASE_FILE, userCaseFileType)) {
+                    if (isDocManager || DocumentDynamicTypeMenuItemProcessor
+                            .hasCreatePermission(createDocumentPrivileges, userName, userAuthorities, userCaseFileType.getNodeRef())) {
                         caseFileTypes.add(new SelectItem(userCaseFileType.getId(), userCaseFileType.getName()));
                     }
                 }

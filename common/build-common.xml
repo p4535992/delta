@@ -40,7 +40,7 @@
 	<!-- Provide default value -->
 	<property name="conf.organization.name" value="default" />
 	<property name="appserver" value="glassfish" />
-	<property name="project.build.result.war" location="${project.dir.build}/dhs-${currentVersion}-${conf.organization.name}-${appserver}.war" />
+	<property name="project.build.result.war" location="${project.dir.build}/dhs-${conf.organization.name}-${appserver}.war" />
 	<property name="project.build.result.zip" location="${project.dir.build}/delta-${currentVersion}.zip" />
 
 	<path id="classpath">

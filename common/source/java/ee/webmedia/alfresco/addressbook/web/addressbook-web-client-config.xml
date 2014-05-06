@@ -121,7 +121,7 @@
 
          <!-- Addressbook action-->
          <action id="addressbook_add_org">
-            <evaluator>ee.webmedia.alfresco.addressbook.web.evaluator.AddressbookCreateChildrenEvaluator</evaluator>
+            <evaluator>ee.webmedia.alfresco.document.web.evaluator.IsAdminOrDocManagerEvaluator</evaluator>
             <label-id>addressbook_add_organization</label-id>
             <image>/images/icons/create_user.gif</image>
             <action>dialog:addressbookAddEdit</action>
@@ -132,7 +132,7 @@
          </action>
 
          <action id="addressbook_add_person">
-            <evaluator>ee.webmedia.alfresco.addressbook.web.evaluator.AddressbookCreateChildrenEvaluator</evaluator>
+            <evaluator>ee.webmedia.alfresco.document.web.evaluator.IsAdminOrDocManagerEvaluator</evaluator>
             <label-id>addressbook_add_privPerson</label-id>
             <image>/images/icons/create_user.gif</image>
             <action>dialog:addressbookAddEdit</action>
@@ -143,7 +143,7 @@
          </action>
 
          <action id="addressbook_add_org_person">
-            <evaluator>ee.webmedia.alfresco.addressbook.web.evaluator.AddressbookCreateChildrenEvaluator</evaluator>
+            <evaluator>ee.webmedia.alfresco.document.web.evaluator.IsAdminOrDocManagerEvaluator</evaluator>
             <label-id>addressbook_add_orgPerson</label-id>
             <image>/images/icons/create_user.gif</image>
             <action>dialog:addressbookAddEdit</action>
@@ -155,7 +155,7 @@
          </action>
          
          <action id="addressbook_edit_org">
-            <evaluator>ee.webmedia.alfresco.addressbook.web.evaluator.AddressbookCreateChildrenEvaluator</evaluator>
+            <evaluator>ee.webmedia.alfresco.document.web.evaluator.IsAdminOrDocManagerEvaluator</evaluator>
             <label-id>addressbook_edit_organization</label-id>
             <image>/images/icons/edituser.gif</image>
             <action>dialog:addressbookAddEdit</action>
@@ -166,7 +166,7 @@
          </action>
 
          <action id="addressbook_edit_priv_person">
-            <evaluator>ee.webmedia.alfresco.addressbook.web.evaluator.AddressbookCreateChildrenEvaluator</evaluator>
+            <evaluator>ee.webmedia.alfresco.document.web.evaluator.IsAdminOrDocManagerEvaluator</evaluator>
             <label-id>addressbook_edit_privPerson</label-id>
             <image>/images/icons/edituser.gif</image>
             <action>dialog:addressbookAddEdit</action>
@@ -177,7 +177,7 @@
          </action>
 
          <action id="addressbook_edit_org_person">
-            <evaluator>ee.webmedia.alfresco.addressbook.web.evaluator.AddressbookCreateChildrenEvaluator</evaluator>
+            <evaluator>ee.webmedia.alfresco.document.web.evaluator.IsAdminOrDocManagerEvaluator</evaluator>
             <label-id>addressbook_edit_orgPerson</label-id>
             <image>/images/icons/edituser.gif</image>
             <action>dialog:addressbookAddEdit</action>
@@ -188,7 +188,7 @@
          </action>
 
          <action id="addressbook_contactgroup_add">
-            <evaluator>ee.webmedia.alfresco.addressbook.web.evaluator.AddressbookCreateChildrenEvaluator</evaluator>
+            <evaluator>ee.webmedia.alfresco.document.web.evaluator.IsAdminOrDocManagerEvaluator</evaluator>
             <label-id>new_group</label-id>
             <image>/images/icons/create_group.gif</image>
             <action-listener>#{ContactGroupCreateDialog.createContactGroup}</action-listener>

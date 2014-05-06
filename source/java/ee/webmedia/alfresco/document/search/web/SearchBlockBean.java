@@ -1,7 +1,6 @@
 package ee.webmedia.alfresco.document.search.web;
 
 import static ee.webmedia.alfresco.common.web.BeanHelper.getGeneralService;
-import static org.alfresco.web.bean.dialog.BaseDialogBean.hasPermission;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -14,6 +13,7 @@ import javax.faces.event.ActionEvent;
 import javax.faces.event.ValueChangeEvent;
 import javax.faces.model.SelectItem;
 
+import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.repository.AssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
@@ -38,6 +38,7 @@ import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.search.service.AssocBlockObject;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
+import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
@@ -71,7 +72,6 @@ public class SearchBlockBean extends AbstractSearchBlockBean implements Document
         }
         loadStores();
     }
-
 
     private void loadStores() {
         stores = new ArrayList<SelectItem>();
@@ -130,7 +130,7 @@ public class SearchBlockBean extends AbstractSearchBlockBean implements Document
         QName firstNodeType = node.getType();
         QName secondNodeType = BeanHelper.getNodeService().getType(nodeRef);
 
-        if (secondNodeType.equals(CaseFileModel.Types.CASE_FILE) && !hasPermission(nodeRef, DocumentCommonModel.Privileges.VIEW_CASE_FILE)) {
+        if (secondNodeType.equals(CaseFileModel.Types.CASE_FILE) && !hasPermission(nodeRef, Privilege.VIEW_CASE_FILE)) {
             MessageUtil.addErrorMessage("caseFile_addAssoc_erro_no_permissions");
             return;
         }
@@ -199,6 +199,10 @@ public class SearchBlockBean extends AbstractSearchBlockBean implements Document
         saveAssocNow(sourceRef, targetRef, assocType);
     }
 
+    private boolean hasPermission(NodeRef nodeRef, Privilege viewCaseFile) {
+        return BeanHelper.getPrivilegeService().hasPermission(nodeRef, AuthenticationUtil.getRunAsUser(), viewCaseFile);
+    }
+
     private boolean isBetweenTypes(QName firstNodeType, QName secondNodeType, QName firstType, QName secondType) {
         return (firstNodeType.equals(secondType) && secondNodeType.equals(firstType))
                 || firstNodeType.equals(firstType) && secondNodeType.equals(secondType);
@@ -206,7 +210,7 @@ public class SearchBlockBean extends AbstractSearchBlockBean implements Document
 
     public void addAssocDoc2CaseHandler(ActionEvent event) {
         NodeRef caseRef = new NodeRef(ActionUtil.getParam(event, PARAM_NODEREF));
-        if (!hasPermission(caseRef, DocumentCommonModel.Privileges.VIEW_CASE_FILE)) {
+        if (!hasPermission(caseRef, Privilege.VIEW_CASE_FILE)) {
             MessageUtil.addErrorMessage("caseFile_addAssoc_erro_no_permissions");
             return;
         }

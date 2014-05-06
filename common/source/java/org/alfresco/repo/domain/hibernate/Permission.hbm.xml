@@ -1,0 +1,99 @@
+<?xml version='1.0' encoding='UTF-8'?>
+
+<!DOCTYPE hibernate-mapping PUBLIC
+    '-//Hibernate/Hibernate Mapping DTD 3.0//EN' 
+    'http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd'>
+
+<hibernate-mapping>
+    
+    <class
+        name="org.alfresco.repo.domain.hibernate.DbAuthorityImpl"
+        proxy="org.alfresco.repo.domain.DbAuthority"
+        table="alf_authority"
+        dynamic-insert="false"
+        dynamic-update="false"
+        select-before-update="false"
+        lazy="false"
+        optimistic-lock="version" >
+        
+        <id name="id" column="id" type="long" >
+            <generator class="native" />
+        </id>
+        
+        <version column="version" name="version" type="long" />
+        
+        <property name="authority" column="authority" type="string" length="100" unique-key="uidx_auth_name" index="idx_alf_auth_aut" />
+
+        <property name="crc" column="crc" type="long" unique-key="uidx_auth_name" /> 
+
+    </class>
+    
+    <class name="org.alfresco.repo.domain.hibernate.DbAuthorityAliasImpl"
+        proxy="org.alfresco.repo.domain.DbAuthorityAlias"
+        table="alf_authority_alias" dynamic-insert="false" dynamic-update="false"
+        select-before-update="false" lazy="false" optimistic-lock="version">
+        
+        <id name="id" column="id" type="long">
+            <generator class="native"/>
+        </id>
+        
+        <natural-id mutable="true">
+            <many-to-one name="authority"
+                class="org.alfresco.repo.domain.hibernate.DbAuthorityImpl"
+                column="auth_id"
+                foreign-key="fk_alf_autha_aut"
+                lazy="no-proxy"
+                fetch="select"
+                optimistic-lock="true"
+                not-null="true"/>
+            
+            <many-to-one name="alias"
+                class="org.alfresco.repo.domain.hibernate.DbAuthorityImpl"
+                column="alias_id"
+                foreign-key="fk_alf_autha_ali"
+                lazy="no-proxy"
+                fetch="select"
+                optimistic-lock="true"
+                not-null="true"/>
+        </natural-id>
+        
+        <version column="version" name="version" type="long"/>
+        
+    </class>
+	
+    <!-- Lowercase: ETHREEOH-1431 and ETWOTWO-1012 -->
+    <sql-query name="person.getPersonIgnoreCase">
+        <return alias="n" class="org.alfresco.repo.domain.hibernate.NodeImpl"/>
+        SELECT
+           {n.*}
+        FROM
+           alf_node n
+           JOIN alf_node_properties p ON n.id = p.node_id
+           JOIN alf_child_assoc c on c.child_node_id = n.id
+		   JOIN alf_store s on s.id = n.store_id
+        WHERE
+           c.qname_localname = :userNameLowerCase AND
+           p.qname_id = :qnamePropId AND
+           n.type_qname_id = :qnameTypeId AND
+           n.node_deleted = :False AND
+           s.protocol = :storeProtocol AND
+           s.identifier = :storeIdentifier
+    </sql-query>
+	
+    <sql-query name="person.getAllPeople">
+        <return alias="n" class="org.alfresco.repo.domain.hibernate.NodeImpl"/>
+        SELECT
+           {n.*}
+        FROM
+           alf_node n
+           JOIN alf_node_properties p ON n.id = p.node_id
+		   JOIN alf_store s on s.id = n.store_id
+        WHERE
+           p.qname_id = :qnamePropId AND
+           n.type_qname_id = :qnameTypeId AND
+           n.node_deleted = :False AND
+		   s.protocol = :storeProtocol AND
+		   s.identifier = :storeIdentifier
+    </sql-query>
+
+</hibernate-mapping>

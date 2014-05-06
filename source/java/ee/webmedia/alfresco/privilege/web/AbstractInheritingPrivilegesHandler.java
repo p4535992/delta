@@ -5,6 +5,7 @@ import java.util.Collection;
 import org.alfresco.service.namespace.QName;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.privilege.model.UserPrivileges;
 import ee.webmedia.alfresco.utils.CalendarUtil;
 
@@ -16,13 +17,13 @@ public abstract class AbstractInheritingPrivilegesHandler extends PrivilegesHand
 
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(AbstractInheritingPrivilegesHandler.class);
 
-    protected AbstractInheritingPrivilegesHandler(QName nodeType, Collection<String> manageablePermissions) {
+    protected AbstractInheritingPrivilegesHandler(QName nodeType, Collection<Privilege> manageablePermissions) {
         super(nodeType, manageablePermissions);
     }
 
     @Override
     protected boolean initCheckboxValue() {
-        return BeanHelper.getPermissionService().getInheritParentPermissions(state.getManageableRef());
+        return BeanHelper.getPrivilegeService().getInheritParentPermissions(state.getManageableRef());
     }
 
     @Override
@@ -33,7 +34,7 @@ public abstract class AbstractInheritingPrivilegesHandler extends PrivilegesHand
                 LOG.debug("Setting inherit to " + checkboxValue + " on " + state.getManageableRef());
                 startTime = System.nanoTime();
             }
-            BeanHelper.getPermissionService().setInheritParentPermissions(state.getManageableRef(), checkboxValue);
+            BeanHelper.getPrivilegeService().setInheritParentPermissions(state.getManageableRef(), checkboxValue);
             if (LOG.isDebugEnabled()) {
                 LOG.debug("Set inherit to " + checkboxValue + " on " + state.getManageableRef() + " - took " + CalendarUtil.duration(startTime) + " ms");
             }

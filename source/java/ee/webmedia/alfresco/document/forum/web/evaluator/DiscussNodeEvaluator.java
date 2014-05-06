@@ -6,22 +6,20 @@ import java.util.List;
 
 import org.alfresco.model.ForumModel;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
-import org.alfresco.repo.security.permissions.impl.AccessPermissionImpl;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.StoreRef;
-import org.alfresco.service.cmr.security.AccessStatus;
 import org.alfresco.service.namespace.RegexQNamePattern;
 import org.alfresco.web.action.evaluator.BaseActionEvaluator;
 import org.alfresco.web.bean.repository.Node;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.privilege.model.Privilege;
 
 /**
  * UI Action Evaluator - Discuss a node.
  */
 public class DiscussNodeEvaluator extends BaseActionEvaluator {
-    public static final String PARTICIPATE_AT_FORUM = "participateAtForum";
     private static final long serialVersionUID = 1L;
 
     /**
@@ -50,7 +48,6 @@ public class DiscussNodeEvaluator extends BaseActionEvaluator {
     }
 
     private boolean isUserInvited(NodeRef forumNodeRef) {
-        return BeanHelper.getPermissionService().getAllSetPermissions(forumNodeRef)
-                .contains(new AccessPermissionImpl(PARTICIPATE_AT_FORUM, AccessStatus.ALLOWED, AuthenticationUtil.getRunAsUser(), 0));
+        return BeanHelper.getPrivilegeService().hasPermission(forumNodeRef, AuthenticationUtil.getRunAsUser(), Privilege.PARTICIPATE_AT_FORUM);
     }
 }

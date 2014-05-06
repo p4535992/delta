@@ -660,6 +660,18 @@
       </property>
       <property name="userService" ref="UserService" />
    </bean>
+   
+   <bean id="compoundWorkflowOwnerPropsUpdater6" class="ee.webmedia.alfresco.workflow.bootstrap.CompoundWorkflowOwnerPropsUpdater" parent="abstractNodeUpdater" >
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="archivalsStoresBootstrap" />
+            <ref bean="workflow25To313DynamicDocTypeUpdater" />
+         </list>
+      </property>
+      <property name="userService" ref="UserService" />
+   </bean>   
 
    <bean id="compoundWorkflowCommentTableInsertUpdater" class="ee.webmedia.alfresco.workflow.bootstrap.CompoundWorkflowCommentTableInsertUpdater" parent="abstractNodeUpdater" >
       <property name="moduleId" value="simdhs" />

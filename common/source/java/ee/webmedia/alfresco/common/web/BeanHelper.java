@@ -119,6 +119,7 @@ import ee.webmedia.alfresco.log.service.LogService;
 import ee.webmedia.alfresco.log.web.ApplicationLogListDialog;
 import ee.webmedia.alfresco.menu.service.MenuService;
 import ee.webmedia.alfresco.menu.ui.MenuBean;
+import ee.webmedia.alfresco.menu.web.MenuItemCountBean;
 import ee.webmedia.alfresco.mso.service.MsoService;
 import ee.webmedia.alfresco.notification.service.NotificationService;
 import ee.webmedia.alfresco.orgstructure.amr.service.RSService;
@@ -127,7 +128,6 @@ import ee.webmedia.alfresco.orgstructure.web.RsAccessStatusBean;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
 import ee.webmedia.alfresco.parameters.web.ParametersImportDialog;
 import ee.webmedia.alfresco.person.bootstrap.PersonAndOrgStructPropertiesCacheUpdater;
-import ee.webmedia.alfresco.privilege.service.AccessControlListExtDAO;
 import ee.webmedia.alfresco.privilege.service.PrivilegeService;
 import ee.webmedia.alfresco.privilege.web.ManageInheritablePrivilegesDialog;
 import ee.webmedia.alfresco.register.service.RegisterService;
@@ -196,10 +196,6 @@ public class BeanHelper implements NamespacePrefixResolverProvider {
 
     public static NodeDaoService getNodeDaoService() {
         return getSpringBean(NodeDaoService.class, "nodeDaoService");
-    }
-
-    public static AccessControlListExtDAO getAccessControlListDao() {
-        return getSpringBean(AccessControlListExtDAO.class, "accessControlListDAO");
     }
 
     // START: web beans
@@ -496,6 +492,10 @@ public class BeanHelper implements NamespacePrefixResolverProvider {
 
     public static PersonAndOrgStructPropertiesCacheUpdater getPersonAndOrgStructPropertiesCacheUpdater() {
         return getSpringBean(PersonAndOrgStructPropertiesCacheUpdater.class, PersonAndOrgStructPropertiesCacheUpdater.BEAN_NAME);
+    }
+
+    public static MenuItemCountBean getMenuItemCountBean() {
+        return getJsfBean(MenuItemCountBean.class, MenuItemCountBean.BEAN_NAME);
     }
 
     // END: JSF web beans

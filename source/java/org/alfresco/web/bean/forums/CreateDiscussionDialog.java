@@ -51,6 +51,7 @@ import org.alfresco.web.ui.common.Utils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
@@ -110,14 +111,14 @@ public class CreateDiscussionDialog extends CreateTopicDialog
     * 
     * @param id The id of the node to discuss
     */
-   protected void createTopic(final String id)
+   protected void createTopic(final String nodeRef)
    {
       RetryingTransactionCallback<NodeRef> createTopicCallback = new RetryingTransactionCallback<NodeRef>()
       {
          public NodeRef execute() throws Throwable
          {
             NodeRef forumNodeRef = null;
-            discussingNodeRef = new NodeRef(Repository.getStoreRef(), id);
+            discussingNodeRef = new NodeRef(nodeRef);
             
             if (getNodeService().hasAspect(discussingNodeRef, ForumModel.ASPECT_DISCUSSABLE))
             {
@@ -170,20 +171,6 @@ public class CreateDiscussionDialog extends CreateTopicDialog
             // Set this, so user can perform further actions
             ForumsBean forumsBean = (ForumsBean) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), "ForumsBean");
             forumsBean.setForumNodeRef(finalNodeRef);
-
-            // Set permission so document managers can also delete forums and manage remove users
-            AuthenticationUtil.runAs(new RunAsWork<Void>() {
-                @Override
-                public Void doWork() throws Exception {
-                    PermissionService permissionService = Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getPermissionService();
-                    permissionService.setPermission(finalNodeRef, PermissionService.GROUP_PREFIX + UserService.DOCUMENT_MANAGERS_GROUP, 
-                            PermissionService.DELETE, true);
-
-                    permissionService.setPermission(finalNodeRef, PermissionService.GROUP_PREFIX + UserService.DOCUMENT_MANAGERS_GROUP, 
-                            PermissionService.CHANGE_PERMISSIONS, true);
-                    return null;
-                }
-            }, AuthenticationUtil.getSystemUserName());
 
             return finalNodeRef;
          }

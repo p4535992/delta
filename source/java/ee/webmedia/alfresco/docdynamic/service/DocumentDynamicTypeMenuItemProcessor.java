@@ -1,6 +1,5 @@
 package ee.webmedia.alfresco.docdynamic.service;
 
-import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Privileges.CREATE_DOCUMENT;
 import static org.apache.commons.lang.StringUtils.isBlank;
 import static org.apache.commons.lang.StringUtils.isNotBlank;
 
@@ -9,18 +8,20 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
-import org.alfresco.service.cmr.security.AccessPermission;
-import org.alfresco.service.cmr.security.AccessStatus;
-import org.alfresco.service.cmr.security.PermissionService;
+import org.alfresco.repo.security.authentication.AuthenticationUtil;
+import org.alfresco.service.cmr.repository.NodeRef;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.app.AppConstants;
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
 import ee.webmedia.alfresco.docadmin.service.DocumentType;
 import ee.webmedia.alfresco.docadmin.service.DynamicType;
@@ -28,6 +29,8 @@ import ee.webmedia.alfresco.menu.model.DropdownMenuItem;
 import ee.webmedia.alfresco.menu.model.MenuItem;
 import ee.webmedia.alfresco.menu.service.MenuService;
 import ee.webmedia.alfresco.menu.service.MenuService.MenuItemProcessor;
+import ee.webmedia.alfresco.privilege.model.Privilege;
+import ee.webmedia.alfresco.privilege.service.PrivilegeService;
 
 public class DocumentDynamicTypeMenuItemProcessor implements InitializingBean, MenuItemProcessor {
 
@@ -41,28 +44,42 @@ public class DocumentDynamicTypeMenuItemProcessor implements InitializingBean, M
 
     private MenuService menuService;
     private DocumentAdminService documentAdminService;
-    private PermissionService permissionService;
+    private PrivilegeService privilegeService;
 
     @Override
     public void doWithMenuItem(MenuItem menuItem) {
         List<DocumentType> documentTypes = documentAdminService.getDocumentTypes(DocumentAdminService.DONT_INCLUDE_CHILDREN, true);
-        processDynamicTypeMenuItem(permissionService, CREATE_DOCUMENT, documentTypes, menuItem, "#{DocumentDynamicDialog.createDraft}");
+        processDynamicTypeMenuItem(privilegeService, Privilege.CREATE_DOCUMENT, documentTypes, menuItem, "#{DocumentDynamicDialog.createDraft}");
     }
 
-    public static void processDynamicTypeMenuItem(PermissionService permissionService, String permission, List<? extends DynamicType> types, MenuItem menuItem,
+    public static void processDynamicTypeMenuItem(PrivilegeService privilegeService, Privilege permission, List<? extends DynamicType> types, MenuItem menuItem,
             String actionListener) {
-        Assert.isTrue(StringUtils.isNotBlank(permission), "permission is mandatory");
+        Assert.notNull(permission, "permission is mandatory");
         Assert.isTrue(StringUtils.isNotBlank(actionListener), "action listener is mandatory");
         if (types.isEmpty()) {
             return;
         }
-
-        Map<String, List<DynamicType>> structure = new HashMap<String, List<DynamicType>>();
+        String userName = AuthenticationUtil.getRunAsUser();
+        boolean isDocManager = BeanHelper.getUserService().isDocumentManager();
+        Map<String, List<String>> createDocumentPrivileges = null;
+        Set<String> userAuthorities = null;
+        if (!isDocManager) {
+            Map<String, NodeRef> docTypeNodeRefs = new HashMap<String, NodeRef>();
+            for (DynamicType documentType : types) {
+                NodeRef nodeRef = documentType.getNodeRef();
+                docTypeNodeRefs.put(nodeRef.getId(), nodeRef);
+            }
+            Set<String> nodeIds = docTypeNodeRefs.keySet();
+            createDocumentPrivileges = Privilege.CREATE_DOCUMENT.equals(permission) ? privilegeService.getCreateDocumentPrivileges(nodeIds)
+                    : privilegeService.getCreateCaseFilePrivileges(nodeIds);
+            userAuthorities = new HashSet<String>(BeanHelper.getAuthorityService().getContainedAuthorities(null, userName, false));
+            userAuthorities.add(userName);
+        }
         List<DynamicType> subitems;
-
+        Map<String, List<DynamicType>> structure = new HashMap<String, List<DynamicType>>();
         for (DynamicType documentType : types) {
             // Check if current user can create this type of item
-            if (!hasPermission(permissionService, permission, documentType)) {
+            if (!isDocManager && !hasCreatePermission(createDocumentPrivileges, userName, userAuthorities, documentType.getNodeRef())) {
                 continue;
             }
 
@@ -110,17 +127,17 @@ public class DocumentDynamicTypeMenuItemProcessor implements InitializingBean, M
         }
     }
 
-    public static boolean hasPermission(PermissionService permissionService, String permission, DynamicType documentType) {
-        boolean restricted = false;
-        for (AccessPermission accessPermission : permissionService.getAllSetPermissions(documentType.getNodeRef())) {
-            if (permission.equals(accessPermission.getPermission())) {
-                restricted = true;
-                break;
+    public static boolean hasCreatePermission(Map<String, List<String>> existingPrivileges, String userName, Set<String> userAuthorities, NodeRef docTypeNodeRef) {
+        String docTypeNodeId = docTypeNodeRef.getId();
+        if (existingPrivileges.containsKey(docTypeNodeId)) {
+            for (String authority : existingPrivileges.get(docTypeNodeId)) {
+                if (userAuthorities.contains(authority)) {
+                    return true;
+                }
             }
-        }
-        if (restricted && AccessStatus.DENIED == permissionService.hasPermission(documentType.getNodeRef(), permission)) {
             return false;
         }
+        // if createDocument privilege is not set for any authority, creating documents of that type is allowed for everybody
         return true;
     }
 
@@ -139,8 +156,8 @@ public class DocumentDynamicTypeMenuItemProcessor implements InitializingBean, M
         this.documentAdminService = documentAdminService;
     }
 
-    public void setPermissionService(PermissionService permissionService) {
-        this.permissionService = permissionService;
+    public void setPrivilegeService(PrivilegeService privilegeService) {
+        this.privilegeService = privilegeService;
     }
 
     // END: getters / setters

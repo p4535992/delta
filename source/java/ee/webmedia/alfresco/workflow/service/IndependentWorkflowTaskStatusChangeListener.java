@@ -15,10 +15,10 @@ import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamicService;
 import ee.webmedia.alfresco.document.model.Document;
-import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.log.model.LogEntry;
 import ee.webmedia.alfresco.log.model.LogObject;
 import ee.webmedia.alfresco.parameters.model.Parameters;
+import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.privilege.service.PrivilegeService;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.MessageUtil;
@@ -57,15 +57,15 @@ public class IndependentWorkflowTaskStatusChangeListener implements WorkflowEven
                 if (task.isStatus(Status.IN_PROGRESS)) {
                     NodeRef compoundWorkflowRef = compoundWorkflow.getNodeRef();
                     List<Document> documents = workflowService.getCompoundWorkflowDocuments(compoundWorkflowRef);
-                    Set<String> privileges = WorkflowUtil.getIndependentWorkflowDefaultDocPermissions();
+                    Set<Privilege> privileges = WorkflowUtil.getIndependentWorkflowDefaultDocPermissions();
                     boolean addEditPrivilege = task.isType(WorkflowSpecificModel.Types.ASSIGNMENT_TASK) || WorkflowUtil.isFirstConfirmationTask(task);
                     boolean setOwnerData = WorkflowUtil.isActiveResponsible(task);
                     for (Document document : documents) {
-                        Set<String> documentPrivileges = new HashSet<String>();
+                        Set<Privilege> documentPrivileges = new HashSet<Privilege>();
                         documentPrivileges.addAll(privileges);
                         boolean isWorkingDoc = document.isDocStatus(DocumentStatus.WORKING);
                         if (addEditPrivilege && isWorkingDoc) {
-                            documentPrivileges.add(DocumentCommonModel.Privileges.EDIT_DOCUMENT);
+                            documentPrivileges.add(Privilege.EDIT_DOCUMENT);
                         }
                         NodeRef docRef = document.getNodeRef();
                         privilegeService.setPermissions(docRef, ownerId, documentPrivileges);

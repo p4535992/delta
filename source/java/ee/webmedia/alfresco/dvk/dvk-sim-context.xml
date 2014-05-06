@@ -22,18 +22,6 @@
       <property name="documentAdminService" ref="DocumentAdminService" />
    </bean>
 
-   <bean id="dvkCorruptDocumentPermissionsBootstrap" class="ee.webmedia.alfresco.dvk.bootstrap.DvkCorruptDocumentPermissionsBootstrap" parent="module.baseComponent">
-      <property name="moduleId" value="simdhs" />
-      <property name="executeOnceOnly" value="true" />
-      <property name="dependsOn">
-         <list>
-            <ref bean="dvkSpacesBootstrap" />
-         </list>
-      </property>
-      <property name="generalService" ref="GeneralService" />
-      <property name="dvkCorruptDocumentsPath" value="${dvk.received.parent.folder.xpath}${dvk.corrupt.folder.name}" />
-   </bean>
-
    <!-- START: web beans: -->
    <bean id="DvkCorruptListDialog" class="ee.webmedia.alfresco.dvk.web.DvkCorruptListDialog" scope="session" />
    <!-- END: web beans: -->

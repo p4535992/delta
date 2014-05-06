@@ -77,6 +77,7 @@ import ee.webmedia.alfresco.document.web.OutboxDocumentMenuItemProcessor;
 import ee.webmedia.alfresco.document.web.UnsentDocumentMenuItemProcessor;
 import ee.webmedia.alfresco.menu.ui.MenuBean;
 import ee.webmedia.alfresco.parameters.model.Parameters;
+import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.template.model.DocumentTemplate;
 import ee.webmedia.alfresco.template.model.ProcessedEmailTemplate;
 import ee.webmedia.alfresco.utils.ActionUtil;
@@ -192,7 +193,7 @@ public class DocumentSendOutDialog extends BaseDialogBean {
             // Lock the node
             DocumentLockHelperBean documentLockHelperBean = BeanHelper.getDocumentLockHelperBean();
             documentLockHelperBean.lockOrUnlockIfNeeded(documentLockHelperBean.isLockingAllowed());
-            BaseDialogBean.validatePermission(docNode, DocumentCommonModel.Privileges.EDIT_DOCUMENT);
+            BaseDialogBean.validatePermission(docNode, Privilege.EDIT_DOCUMENT);
         } catch (NodeLockedException e) {
             BeanHelper.getDocumentLockHelperBean().handleLockedNode("document_validation_alreadyLocked_sendOut");
             return null;

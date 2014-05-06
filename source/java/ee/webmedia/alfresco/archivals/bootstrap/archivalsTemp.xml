@@ -1,11 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <view:view xmlns:view="http://www.alfresco.org/view/repository/1.0" xmlns:fn="http://alfresco.webmedia.ee/model/functions/1.0">
-    <fn:functions view:childName="fn:archivalsTemp">
-        <view:acl view:inherit="false">
-            <view:ace view:access="ALLOWED">
-                <view:authority>GROUP_EVERYONE</view:authority>
-                <view:permission>DocumentListBrowse</view:permission>
-            </view:ace>
-        </view:acl>
-    </fn:functions>
+    <fn:functions view:childName="fn:archivalsTemp" />
 </view:view>

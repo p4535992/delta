@@ -26,6 +26,7 @@ import org.apache.cxf.common.util.StringUtils;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.file.model.FileModel;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.FilenameUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
@@ -61,7 +62,7 @@ public class ChangeFileDialog extends BaseDialogBean {
         if (!validate()) {
             return null;
         }
-        validatePermission(docRef, DocumentCommonModel.Privileges.EDIT_DOCUMENT);
+        validatePermission(docRef, Privilege.EDIT_DOCUMENT);
         Pair<String, String> filenames = FilenameUtil.getFilenameFromDisplayname(fileRef, getFileService().getDocumentFileDisplayNames(docRef), newDisplayName,
                 BeanHelper.getGeneralService());
         Map<QName, Serializable> properties = getNodeService().getProperties(fileRef);

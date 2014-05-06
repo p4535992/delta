@@ -170,5 +170,9 @@ public class MenuItemCountBean implements Serializable {
         return maxSearchResultRows;
     }
 
+    public Map<String, MenuItemCountVO> getMap() {
+        return map;
+    }
+
     // END: getters / setters
 }

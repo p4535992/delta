@@ -39,19 +39,6 @@
       <property name="scannedFilesPath" value="${scannedFiles.rootPath}${scannedFiles.folder.name}" />
    </bean>
 
-   <!-- there was scannedDocumentManagersPermissionsBootstrap that gave permission that doesn't exist any more -->
-   <bean id="undoScannedDocumentManagersPermissionsBootstrap" class="ee.webmedia.alfresco.document.scanned.bootstrap.UndoScannedDocumentManagersPermissionsBootstrap" parent="module.baseComponent">
-      <property name="moduleId" value="simdhs" />
-      <property name="executeOnceOnly" value="true" />
-      <property name="dependsOn">
-         <list>
-            <ref bean="scannedSpacesBootstrap" />
-         </list>
-      </property>
-      <property name="generalService" ref="GeneralService" />
-      <property name="scannedFilesPath" value="${scannedFiles.rootPath}${scannedFiles.folder.name}" />
-   </bean>
-
    <bean id="scannedWebClientBootstrap" class="org.alfresco.web.config.WebClientConfigBootstrap" init-method="init" depends-on="commonWebClientConfigBootstrap">
       <property name="configs">
          <list>

@@ -270,6 +270,13 @@ public class SeriesDetailsDialog extends BaseDialogBean {
         return getSeriesService().isClosed(getCurrentNode());
     }
 
+    void updateInMemoryDocsVisibilityProperty(boolean newValue) {
+        Node seriesNode = null;
+        if (series != null && (seriesNode = series.getNode()) != null) {
+            seriesNode.getProperties().put(SeriesModel.Props.DOCUMENTS_VISIBLE_FOR_USERS_WITHOUT_ACCESS.toString(), newValue);
+        }
+    }
+
     public boolean isNew() {
         return newSeries;
     }

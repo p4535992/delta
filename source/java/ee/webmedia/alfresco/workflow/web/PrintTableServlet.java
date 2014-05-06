@@ -2,7 +2,6 @@ package ee.webmedia.alfresco.workflow.web;
 
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentConfigService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getNodeService;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getPermissionService;
 import static ee.webmedia.alfresco.docadmin.service.MetadataItemCompareUtil.cast;
 import static java.util.Arrays.asList;
 
@@ -25,10 +24,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.jsp.JspException;
 
+import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.service.cmr.security.AccessStatus;
-import org.alfresco.service.cmr.security.PermissionService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
@@ -48,7 +46,8 @@ import ee.webmedia.alfresco.docconfig.generator.systematic.DocumentLocationGener
 import ee.webmedia.alfresco.docconfig.service.DynamicPropertyDefinition;
 import ee.webmedia.alfresco.docdynamic.model.DocumentChildModel;
 import ee.webmedia.alfresco.document.model.Document;
-import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.privilege.model.Privilege;
+import ee.webmedia.alfresco.privilege.service.PrivilegeService;
 import ee.webmedia.alfresco.utils.ComparableTransformer;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UserUtil;
@@ -420,18 +419,19 @@ public class PrintTableServlet extends HttpServlet {
     }
 
     private List<Row> getDocumentFieldsData(HttpServletRequest request) {
-        PermissionService permissionService = getPermissionService();
+        PrivilegeService privilegeService = BeanHelper.getPrivilegeService();
         String docRef1Str = request.getParameter("doc1");
         Assert.notNull(docRef1Str, "Document 1 NodeRef must be supplied!");
         NodeRef docRef1 = new NodeRef(docRef1Str);
-        Assert.isTrue(permissionService.hasPermission(docRef1, DocumentCommonModel.Privileges.VIEW_DOCUMENT_META_DATA) == AccessStatus.ALLOWED, "Missing "
-                + DocumentCommonModel.Privileges.VIEW_DOCUMENT_META_DATA + " privilege for " + docRef1 + "!");
+        String userName = AuthenticationUtil.getRunAsUser();
+        Assert.isTrue(privilegeService.hasPermission(docRef1, userName, Privilege.VIEW_DOCUMENT_META_DATA), "Missing "
+                + Privilege.VIEW_DOCUMENT_META_DATA + " privilege for " + docRef1 + "!");
 
         String docRef2Str = request.getParameter("doc2");
         Assert.notNull(docRef2Str, "Document 2 NodeRef must be supplied!");
         NodeRef docRef2 = new NodeRef(docRef2Str);
-        Assert.isTrue(permissionService.hasPermission(docRef2, DocumentCommonModel.Privileges.VIEW_DOCUMENT_META_DATA) == AccessStatus.ALLOWED, "Missing "
-                + DocumentCommonModel.Privileges.VIEW_DOCUMENT_META_DATA + " privilege for " + docRef1 + "!");
+        Assert.isTrue(privilegeService.hasPermission(docRef2, userName, Privilege.VIEW_DOCUMENT_META_DATA), "Missing "
+                + Privilege.VIEW_DOCUMENT_META_DATA + " privilege for " + docRef1 + "!");
 
         List<Row> data = new ArrayList<Row>();
         Map<String, Row> result = new HashMap<String, Row>();

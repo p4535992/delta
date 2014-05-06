@@ -73,6 +73,7 @@ import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.document.web.DocumentDialog;
 import ee.webmedia.alfresco.imap.service.ImapServiceExt;
 import ee.webmedia.alfresco.parameters.model.Parameters;
+import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.signature.exception.SignatureException;
 import ee.webmedia.alfresco.template.service.DocumentTemplateService;
 import ee.webmedia.alfresco.user.service.UserService;
@@ -122,7 +123,7 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
 
     /**
      * Used by scanned and attachment lists
-     * 
+     *
      * @see javax.faces.validator.Validator#validate(javax.faces.context.FacesContext, javax.faces.component.UIComponent, java.lang.Object)
      */
     @Override
@@ -179,7 +180,7 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
         try {
             try {
                 NodeRef documentNodeRef = getDocumentDialogHelperBean().getNodeRef();
-                validatePermission(documentNodeRef, DocumentCommonModel.Privileges.EDIT_DOCUMENT);
+                validatePermission(documentNodeRef, Privilege.EDIT_DOCUMENT);
                 List<String> existingDisplayNames = getFileService().getDocumentFileDisplayNames(documentNodeRef);
                 Map<Integer, EInvoice> attachmentInvoices = new HashMap<Integer, EInvoice>();
                 Map<Integer, EInvoice> fileInvoices = new HashMap<Integer, EInvoice>();

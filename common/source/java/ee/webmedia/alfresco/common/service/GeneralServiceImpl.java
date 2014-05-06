@@ -1029,9 +1029,14 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
 
     @Override
     public void explainQuery(String sqlQuery, Log traceLog, Object... args) {
+        explainAnalyzeQuery(sqlQuery, traceLog, false, args);
+    }
+
+    @Override
+    public void explainAnalyzeQuery(String sqlQuery, Log traceLog, boolean analyze, Object... args) {
         if (traceLog.isTraceEnabled()) {
             jdbcTemplate.getJdbcOperations().execute("SET enable_seqscan TO off");
-            List<String> explanation = jdbcTemplate.query("EXPLAIN " + sqlQuery, new ParameterizedRowMapper<String>() {
+            List<String> explanation = jdbcTemplate.query("EXPLAIN " + (analyze ? "ANALYZE " : "") + sqlQuery, new ParameterizedRowMapper<String>() {
 
                 @Override
                 public String mapRow(ResultSet rs, int rowNum) throws SQLException {

@@ -99,27 +99,20 @@ function updateButtonState()
                            <%-- Actions column --%>
                            <a:column id="ab-org-list-col2" actions="true">
                               <f:facet name="header">
-                                 <r:permissionEvaluator value="#{AddressbookService.addressbookRoot}" allow="WriteProperties,DeleteNode">
-                                    <h:outputText id="ab-org-list-ot1" value="#{msg.actions}" />
-                                 </r:permissionEvaluator>
+                                 <h:outputText id="ab-org-list-ot1" value="#{msg.actions}" rendered="#{AddressbookListDialog.showAction}" />
                               </f:facet>
-                              <r:permissionEvaluator value="#{AddressbookService.addressbookRoot}" allow="WriteProperties">
-                                 <a:actionLink id="ab-org-list-link-mod" value="#{msg.modify}" image="/images/icons/edituser.gif" showLink="false"
-                                    action="dialog:addressbookAddEdit" actionListener="#{AddressbookAddEditDialog.setupEdit}">
-                                    <f:param id="ab-org-list-link-mod-param" name="nodeRef" value="#{r.node.nodeRef}" />
-                                 </a:actionLink>
-                              </r:permissionEvaluator>
+                              <a:actionLink id="ab-org-list-link-mod" value="#{msg.modify}" image="/images/icons/edituser.gif" showLink="false"
+                                 action="dialog:addressbookAddEdit" actionListener="#{AddressbookAddEditDialog.setupEdit}" rendered="#{AddressbookListDialog.showAction}">
+                                 <f:param id="ab-org-list-link-mod-param" name="nodeRef" value="#{r.node.nodeRef}" />
+                              </a:actionLink>
 <!--                               TODO use new deleteDialog here -->
-                              <r:permissionEvaluator id="ab-org-list-deleteEval" value="#{AddressbookService.addressbookRoot}" allow="DeleteNode">
-                                 <a:actionLink value="#{msg.delete}" image="/images/icons/delete_person.gif" showLink="false" action="dialog:deleteDialog"
-                                    actionListener="#{DeleteDialog.setupDeleteDialog}">
-                                    <f:param name="nodeRef" value="#{r.node.nodeRef}" />
-                                    <f:param name="confirmMessagePlaceholder0" value="#{actionContext.name}" />
-                                    <f:param name="showObjectData" value="true" />
-                                    <f:param name="showConfirm" value="false" />
-                                 </a:actionLink>
-                                 
-                              </r:permissionEvaluator>
+                              <a:actionLink value="#{msg.delete}" image="/images/icons/delete_person.gif" showLink="false" action="dialog:deleteDialog"
+                                   actionListener="#{DeleteDialog.setupDeleteDialog}" rendered="#{AddressbookListDialog.showAction}" >
+                                   <f:param name="nodeRef" value="#{r.node.nodeRef}" />
+                                   <f:param name="confirmMessagePlaceholder0" value="#{actionContext.name}" />
+                                   <f:param name="showObjectData" value="true" />
+                                   <f:param name="showConfirm" value="false" />
+                              </a:actionLink>
                            </a:column>
 
                            <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/page-size.jsp" />
@@ -162,26 +155,20 @@ function updateButtonState()
                            <%-- Actions column --%>
                            <a:column id="ab-people-list-col2" actions="true" style="text-align:left">
                               <f:facet name="header">
-                                 <r:permissionEvaluator value="#{AddressbookService.addressbookRoot}" allow="WriteProperties,DeleteNode">
-                                    <h:outputText id="ab-people-list-ot12" value="#{msg.actions}" />
-                                 </r:permissionEvaluator>
+                                 <h:outputText id="ab-people-list-ot12" value="#{msg.actions}" rendered="#{AddressbookListDialog.showAction}" />
                               </f:facet>
-                              <r:permissionEvaluator value="#{AddressbookService.addressbookRoot}" allow="WriteProperties">
-                                 <a:actionLink id="ab-people-list-link-mod" value="#{msg.modify}" image="/images/icons/edituser.gif" showLink="false"
-                                    action="dialog:addressbookAddEdit" actionListener="#{AddressbookAddEditDialog.setupEdit}">
-                                    <f:param id="ab-people-list-link-mod-param" name="nodeRef" value="#{r.node.nodeRef}" />
-                                 </a:actionLink>
-                              </r:permissionEvaluator>
-                              <r:permissionEvaluator id="ab-people-list-deleteEval" value="#{AddressbookService.addressbookRoot}" allow="DeleteNode">
-                                 <a:actionLink value="#{msg.delete}" image="/images/icons/delete_person.gif" showLink="false" action="dialog:deleteDialog"
-                                    actionListener="#{DeleteDialog.setupDeleteDialog}">
-                                    <f:param name="nodeRef" value="#{r.node.nodeRef}" />
-                                    <f:param name="confirmMessagePlaceholder0" value="#{actionContext.name}" />
-                                    <f:param name="showObjectData" value="true" />
-                                    <f:param name="showConfirm" value="false" />
-                                 </a:actionLink>
+                              <a:actionLink id="ab-people-list-link-mod" value="#{msg.modify}" image="/images/icons/edituser.gif" showLink="false"
+                                 action="dialog:addressbookAddEdit" actionListener="#{AddressbookAddEditDialog.setupEdit}" rendered="#{AddressbookListDialog.showAction}">
+                                 <f:param id="ab-people-list-link-mod-param" name="nodeRef" value="#{r.node.nodeRef}" />
+                              </a:actionLink>
+                              <a:actionLink value="#{msg.delete}" image="/images/icons/delete_person.gif" showLink="false" action="dialog:deleteDialog"
+                                 actionListener="#{DeleteDialog.setupDeleteDialog}" rendered="#{AddressbookListDialog.showAction}">
+                                 <f:param name="nodeRef" value="#{r.node.nodeRef}" />
+                                 <f:param name="confirmMessagePlaceholder0" value="#{actionContext.name}" />
+                                 <f:param name="showObjectData" value="true" />
+                                 <f:param name="showConfirm" value="false" />
+                              </a:actionLink>
 
-                              </r:permissionEvaluator>
                            </a:column>
                            <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/page-size.jsp" />
                            <a:dataPager id="ab-people-list-pager" styleClass="pager" />

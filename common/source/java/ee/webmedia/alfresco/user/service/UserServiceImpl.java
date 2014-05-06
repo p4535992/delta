@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.user.service;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getAuthorityService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentSearchService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getOrganizationStructureService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
@@ -28,10 +29,7 @@ import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.search.ResultSet;
 import org.alfresco.service.cmr.search.ResultSetRow;
 import org.alfresco.service.cmr.search.SearchService;
-import org.alfresco.service.cmr.security.AccessPermission;
-import org.alfresco.service.cmr.security.AccessStatus;
 import org.alfresco.service.cmr.security.AuthenticationService;
-import org.alfresco.service.cmr.security.AuthorityService;
 import org.alfresco.service.cmr.security.AuthorityType;
 import org.alfresco.service.cmr.security.NoSuchPersonException;
 import org.alfresco.service.cmr.security.PermissionService;
@@ -53,6 +51,7 @@ import ee.webmedia.alfresco.log.service.LogService;
 import ee.webmedia.alfresco.orgstructure.service.OrganizationStructureService;
 import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
+import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.report.model.ReportModel;
 import ee.webmedia.alfresco.user.model.Authority;
 import ee.webmedia.alfresco.user.model.UserModel;
@@ -63,14 +62,12 @@ import ee.webmedia.alfresco.utils.UserUtil;
 public class UserServiceImpl implements UserService {
 
     private AuthenticationService authenticationService;
-    private AuthorityService authorityService;
     private GeneralService generalService;
     private NodeService nodeService;
     private DictionaryService dictionaryService;
     private SearchService searchService;
     private ParametersService parametersService;
     private PersonService personService;
-    private PermissionService permissionService;
     private OrganizationStructureService organizationStructureService;
     private ConfigurableService configurableService;
     private NamespaceService namespaceService;
@@ -109,9 +106,8 @@ public class UserServiceImpl implements UserService {
             if (createIfMissing) {
                 // tried to create the folder, but failed
                 throw new IllegalStateException("Unable to find associated 'configurations' folder for node: " + person);
-            } else {
-                return null;
             }
+            return null;
         }
 
         String xpath = NamespaceService.APP_MODEL_PREFIX + ":" + "preferences";
@@ -168,18 +164,18 @@ public class UserServiceImpl implements UserService {
     @Override
     public boolean isCurrentStructUnitUser() {
         String taskOwnerStructUnit = parametersService.getStringParameter(Parameters.TASK_OWNER_STRUCT_UNIT);
-        Set<String> authorities = authorityService.getAuthorities();
+        Set<String> authorities = getAuthorityService().getAuthorities();
         return StringUtils.isBlank(taskOwnerStructUnit) || isDocumentManager() || isSupervisor() || authorities.contains(getGroup(taskOwnerStructUnit))
                 || authorities.contains(taskOwnerStructUnit);
     }
 
     @Override
     public boolean isAdministrator() {
-        return AuthenticationUtil.isRunAsUserTheSystemUser() || authorityService.hasAdminAuthority();
+        return AuthenticationUtil.isRunAsUserTheSystemUser() || getAuthorityService().hasAdminAuthority();
     }
 
     private boolean isAdministrator(String userName) {
-        return ((userName != null) && (AuthenticationUtil.SYSTEM_USER_NAME.equals(userName) || authorityService.getAuthoritiesForUser(userName).contains(
+        return ((userName != null) && (AuthenticationUtil.SYSTEM_USER_NAME.equals(userName) || getAuthorityService().getAuthoritiesForUser(userName).contains(
                 PermissionService.ADMINISTRATOR_AUTHORITY)));
     }
 
@@ -189,7 +185,7 @@ public class UserServiceImpl implements UserService {
             return true;
         }
 
-        return authorityService.getAuthorities().contains(getDocumentManagersGroup());
+        return getAuthorityService().getAuthorities().contains(getDocumentManagersGroup());
     }
 
     @Override
@@ -203,12 +199,12 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public boolean isInAccountantGroup() {
-        return authorityService.getAuthorities().contains(getAccountantsGroup());
+        return getAuthorityService().getAuthorities().contains(getAccountantsGroup());
     }
 
     @Override
     public boolean isArchivist() {
-        return isAdministrator() || authorityService.getAuthorities().contains(getArchivistsGroup());
+        return isAdministrator() || getAuthorityService().getAuthorities().contains(getArchivistsGroup());
     }
 
     @Override
@@ -222,7 +218,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public boolean isInSupervisionGroup() {
-        return authorityService.getAuthorities().contains(getSupervisionGroup());
+        return getAuthorityService().getAuthorities().contains(getSupervisionGroup());
     }
 
     @Override
@@ -230,7 +226,7 @@ public class UserServiceImpl implements UserService {
         if (isAdministrator(userName)) {
             return true;
         }
-        return authorityService.getAuthoritiesForUser(userName).contains(getDocumentManagersGroup());
+        return getAuthorityService().getAuthoritiesForUser(userName).contains(getDocumentManagersGroup());
     }
 
     @Override
@@ -264,13 +260,13 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void addUserToGroup(String group, Node user) {
-        authorityService.addAuthority(group, (String) user.getProperties().get(ContentModel.PROP_USERNAME));
+        getAuthorityService().addAuthority(group, (String) user.getProperties().get(ContentModel.PROP_USERNAME));
         logUserGroupAction(group, user, "applog_group_user_add");
     }
 
     private void logUserGroupAction(String group, Node user, String logMessageKey) {
         String userFullInfo = UserUtil.getUserFullNameAndId(RepoUtil.toQNameProperties(user.getProperties()));
-        String groupName = authorityService.getAuthorityDisplayName(group);
+        String groupName = getAuthorityService().getAuthorityDisplayName(group);
         logService.addLogEntry(LogEntry.create(LogObject.USER_GROUP, getUserService(), user.getNodeRef(), logMessageKey, groupName, userFullInfo));
     }
 
@@ -281,12 +277,12 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void removeUserFromGroup(String group, Node user) {
-        authorityService.removeAuthority(group, (String) user.getProperties().get(ContentModel.PROP_USERNAME));
+        getAuthorityService().removeAuthority(group, (String) user.getProperties().get(ContentModel.PROP_USERNAME));
         logUserGroupAction(group, user, "applog_group_user_rem");
     }
 
     private String getGroup(String name) {
-        return authorityService.getName(AuthorityType.GROUP, name);
+        return getAuthorityService().getName(AuthorityType.GROUP, name);
     }
 
     @Override
@@ -360,21 +356,17 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public List<Authority> getAuthorities(final NodeRef nodeRef, final String permission) {
+    public List<Authority> getAuthorities(final NodeRef nodeRef, final Privilege privilege) {
 
         // We need to run this in elevated rights, so regular users could use PermissionListDialog
         return AuthenticationUtil.runAs(new RunAsWork<List<Authority>>() {
             @Override
             public List<Authority> doWork() throws Exception {
                 List<Authority> authorities = new ArrayList<Authority>();
-
-                Set<AccessPermission> permissions = permissionService.getAllSetPermissions(nodeRef);
-                for (AccessPermission accessPermission : permissions) {
-
-                    if (accessPermission.isSetDirectly() && accessPermission.getAccessStatus() == AccessStatus.ALLOWED && accessPermission.getPermission().equals(permission) &&
-                            (accessPermission.getAuthorityType() == AuthorityType.USER || accessPermission.getAuthorityType() == AuthorityType.GROUP)) {
-
-                        authorities.add(getAuthority(accessPermission.getAuthority(), accessPermission.getAuthorityType(), false));
+                List<String> authorityNames = BeanHelper.getPrivilegeService().getAuthoritiesWithDirectPrivilege(nodeRef, privilege);
+                if (authorityNames != null) {
+                    for (String authorityName : authorityNames) {
+                        authorities.add(getAuthority(authorityName, false));
                     }
                 }
                 return authorities;
@@ -630,7 +622,7 @@ public class UserServiceImpl implements UserService {
     public Set<String> getUserNamesInGroup(List<String> groupNames) {
         Set<String> usersInGroup = new HashSet<String>();
         for (String groupName : groupNames) {
-            usersInGroup.addAll(authorityService.getContainedAuthorities(AuthorityType.USER, groupName, true));
+            usersInGroup.addAll(getAuthorityService().getContainedAuthorities(AuthorityType.USER, groupName, true));
         }
         return usersInGroup;
     }
@@ -641,7 +633,7 @@ public class UserServiceImpl implements UserService {
             return new HashSet<String>(0);
         }
 
-        Set<String> authoritiesForUser = authorityService.getAuthoritiesForUser(userName);
+        Set<String> authoritiesForUser = getAuthorityService().getAuthoritiesForUser(userName);
         Set<String> groupNames = new HashSet<String>(authoritiesForUser.size());
         for (String authority : authoritiesForUser) {
             if (authority.startsWith(PermissionService.GROUP_PREFIX)) {
@@ -667,7 +659,7 @@ public class UserServiceImpl implements UserService {
             }
             return new Authority(authority, false, name);
         } else if (authorityType == AuthorityType.GROUP) {
-            String name = authorityService.getAuthorityDisplayName(authority);
+            String name = getAuthorityService().getAuthorityDisplayName(authority);
             return new Authority(authority, true, name);
         } else {
             throw new RuntimeException("Authority type must be USER or GROUP: " + authorityType);
@@ -753,10 +745,6 @@ public class UserServiceImpl implements UserService {
 
     // START: setters/getters
 
-    public void setAuthorityService(AuthorityService authorityService) {
-        this.authorityService = authorityService;
-    }
-
     public void setAuthenticationService(AuthenticationService authenticationService) {
         this.authenticationService = authenticationService;
     }
@@ -775,10 +763,6 @@ public class UserServiceImpl implements UserService {
 
     public void setSearchService(SearchService searchService) {
         this.searchService = searchService;
-    }
-
-    public void setPermissionService(PermissionService permissionService) {
-        this.permissionService = permissionService;
     }
 
     public void setPersonService(PersonService personService) {

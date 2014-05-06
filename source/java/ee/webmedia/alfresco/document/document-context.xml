@@ -390,7 +390,6 @@
             <!-- documentUpdater9 functionality called from convertToDynamicDocumentsUpdater uses fileEncodingUpdater updater's results -->
             <ref bean="fileEncodingUpdater" />
             <ref bean="classificatorRootBootstrap6_2" />
-            <ref bean="fixAclInheritanceUpdater2" />
          </list>
       </property>
       <property name="dictionaryService" ref="DictionaryService" />
@@ -474,28 +473,6 @@
          </list>
       </property>
    </bean>
-
-   <bean id="arrivedDocumentsPermissionsUpdateBootstrap3" class="ee.webmedia.alfresco.document.bootstrap.ArrivedDocumentsPermissionsUpdateBootstrap" parent="module.baseComponent">
-      <property name="moduleId" value="simdhs" />
-      <property name="executeOnceOnly" value="true" />
-      <property name="dependsOn">
-         <list>
-            <ref bean="createDynamicImapSubfoldersBootstrap" />
-            <ref bean="dvkCorruptDocumentPermissionsBootstrap" />
-            <ref bean="moveIncomingEinvoiceFolderBootstrap" />
-         </list>
-      </property>
-   </bean>
-   
-   <bean id="draftsPermissionsUpdater" class="ee.webmedia.alfresco.document.bootstrap.DraftsPermissionsUpdater" parent="module.baseComponent">
-      <property name="moduleId" value="simdhs" />
-      <property name="executeOnceOnly" value="true" />
-      <property name="dependsOn">
-         <list>
-            <ref bean="documentDraftsSpacesBootstrap" />
-         </list>
-      </property>
-   </bean>   
    
    <bean id="favoritesDeletedDocumentsUpdater4" class="ee.webmedia.alfresco.document.bootstrap.FavoritesDeletedDocumentsUpdater" parent="abstractNodeUpdater">
       <property name="moduleId" value="simdhs" />
@@ -524,9 +501,6 @@
       </property>
       <property name="sendOutService" ref="SendOutService" />
    </bean>
-
-   <!-- temp bean - might help to fix problems related to permission inheritance in PPA live environment -->
-   <bean id="ArrivedDocumentsPermissionsModifier" class="ee.webmedia.alfresco.document.bootstrap.ArrivedDocumentsPermissionsModifier" />
 
    <!-- START: web beans: -->
 

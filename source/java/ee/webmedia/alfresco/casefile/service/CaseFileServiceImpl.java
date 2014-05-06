@@ -52,6 +52,7 @@ import ee.webmedia.alfresco.document.service.DocumentServiceImpl;
 import ee.webmedia.alfresco.log.model.LogEntry;
 import ee.webmedia.alfresco.log.model.LogObject;
 import ee.webmedia.alfresco.log.service.LogService;
+import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.privilege.service.PrivilegeService;
 import ee.webmedia.alfresco.register.model.Register;
 import ee.webmedia.alfresco.register.service.RegisterService;
@@ -126,14 +127,14 @@ public class CaseFileServiceImpl implements CaseFileService, BeanFactoryAware {
             saveListenerBeanNames = setListenerDependencies(saveListenerBeanNames);
             ValidationHelperImpl validationHelper = new ValidationHelperImpl(propDefs);
             for (String saveListenerBeanName : saveListenerBeanNames) {
-                SaveListener saveListener = (SaveListener) beanFactory.getBean(saveListenerBeanName, SaveListener.class);
+                SaveListener saveListener = beanFactory.getBean(saveListenerBeanName, SaveListener.class);
                 saveListener.validate(cf, validationHelper);
             }
             if (!validationHelper.getErrorMessages().isEmpty()) {
                 throw new UnableToPerformMultiReasonException(new MessageDataWrapper(validationHelper.getErrorMessages()));
             }
             for (String saveListenerBeanName : saveListenerBeanNames) {
-                SaveListener saveListener = (SaveListener) beanFactory.getBean(saveListenerBeanName, SaveListener.class);
+                SaveListener saveListener = beanFactory.getBean(saveListenerBeanName, SaveListener.class);
                 saveListener.save(cf);
             }
         }
@@ -192,7 +193,7 @@ public class CaseFileServiceImpl implements CaseFileService, BeanFactoryAware {
 
     private void addOwnerDocumentPermissions(NodeRef caseFileRef, String ownerId) {
         for (NodeRef docRef : documentService.getAllDocumentRefsByParentRef(caseFileRef)) {
-            privilegeService.setPermissions(docRef, ownerId, DocumentCommonModel.Privileges.EDIT_DOCUMENT); // With dependencies
+            privilegeService.setPermissions(docRef, ownerId, Privilege.EDIT_DOCUMENT); // With dependencies
         }
     }
 
@@ -211,7 +212,7 @@ public class CaseFileServiceImpl implements CaseFileService, BeanFactoryAware {
                 throw new UnableToPerformException("caseFile_volume_register_missing");
             }
             Register volRegister = registerService.getRegister(series.getVolRegister());
-            
+
             RegNrHolder2 holder = new RegNrHolder2(null, null, null);
             documentService.setRegNrBasedOnPattern(series, caseFileNode.getNodeRef(), null, volRegister, holder, new Date(), series.getVolNumberPattern(), sameRegister);
             props.put(VolumeModel.Props.VOLUME_MARK.toString(), holder.getRegNumber());

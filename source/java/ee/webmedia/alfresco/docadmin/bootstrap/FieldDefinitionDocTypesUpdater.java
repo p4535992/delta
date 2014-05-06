@@ -41,7 +41,7 @@ public class FieldDefinitionDocTypesUpdater extends AbstractModuleComponent {
             }
         }
         LOG.info("Updating " + fieldDefinitionsToUpdate.size() + " field definitions");
-        documentAdminService.saveOrUpdateFieldDefinitions(fieldDefinitionsToUpdate.values());
+        documentAdminService.saveOrUpdateFieldDefinitions(fieldDefinitionsToUpdate.values(), false);
         LOG.info("Done");
     }
 

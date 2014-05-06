@@ -78,7 +78,7 @@
    <bean class="ee.webmedia.alfresco.docdynamic.service.DocumentDynamicTypeMenuItemProcessor">
       <property name="menuService" ref="MenuService" />
       <property name="documentAdminService" ref="DocumentAdminService" />
-      <property name="permissionService" ref="PermissionService" />
+      <property name="privilegeService" ref="PrivilegeService" />
    </bean>
 
    <!-- Fixes encoding on HTML files (CL task 196507) -->
@@ -115,6 +115,7 @@
    when it is quaranteed that documentUpdater9 also runs (it performs the same functionality) -->
    <bean id="documentCompWorkflowSearchPropsUpdater" class="ee.webmedia.alfresco.docdynamic.bootstrap.DocumentCompWorkflowSearchPropsUpdater" parent="abstractNodeUpdater">
       <property name="moduleId" value="simdhs" />
+      <property name="enabled" value="false" />
       <property name="executeOnceOnly" value="true" />
        <property name="dependsOn">
          <list>

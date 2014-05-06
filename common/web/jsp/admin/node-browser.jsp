@@ -205,21 +205,18 @@
               <f:facet name="header">
                   <h:outputText value="inherited?"/>
               </f:facet>
-              <a:booleanEvaluator value="#{permission.position==0}">
+              <a:booleanEvaluator value="#{permission.direct}">
                  <h:outputText value="Directly"/>
               </a:booleanEvaluator>
-              <a:booleanEvaluator value="#{permission.position>0}">
+              <a:booleanEvaluator value="#{!permission.direct}">
                  <h:outputText value="INHERITED"/>
-              </a:booleanEvaluator>
-              <a:booleanEvaluator value="#{permission.position<0}">
-                 <h:outputText value="UNKNOWN"/>
               </a:booleanEvaluator>
           </h:column>
           <h:column>
               <f:facet name="header">
                   <h:outputText value="Assigned Permission"/>
               </f:facet>
-              <h:outputText value="#{permission.permission}"/>
+              <h:outputText value="#{permission.privilege.privilegeName}"/>
           </h:column>
           <h:column>
               <f:facet name="header">
@@ -231,7 +228,7 @@
               <f:facet name="header">
                   <h:outputText value="Access"/>
               </f:facet>
-              <h:outputText value="#{permission.accessStatus}"/>
+              <h:outputText value="ALLOWED"/>
           </h:column>
       </h:dataTable>
       

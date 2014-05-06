@@ -12,8 +12,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
 
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.transaction.AlfrescoTransactionSupport;
@@ -22,7 +20,6 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.cmr.search.ResultSet;
 import org.alfresco.service.cmr.search.SearchService;
-import org.alfresco.service.cmr.security.AccessPermission;
 import org.alfresco.service.namespace.QName;
 import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.StringUtils;
@@ -42,8 +39,7 @@ import ee.webmedia.alfresco.workflow.service.WorkflowService;
  * This updater does multiple things with document:
  * 1) Update properties of type STRUCT_UNIT to multiValued properties (String -> List<String>)
  * 2) Set searchableHasAllFinishedCompoundWorkflows property value
- * 3) Remove old permissions from all documents and replace them with new ones if needed
- * 4) Update searchableFileContents if necessary (because of {@link FileEncodingUpdater})
+ * * 4) Update searchableFileContents if necessary (because of {@link FileEncodingUpdater})
  * 5) Always call addProperties, to trigger re-indexing of document (ADMLuceneIndexerImpl writes special fields VALUES and xxx)
  */
 public class DocumentUpdater extends AbstractNodeUpdater {
@@ -86,7 +82,7 @@ public class DocumentUpdater extends AbstractNodeUpdater {
 
     @Override
     protected String[] getCsvFileHeaders() {
-        return new String[] { "docRef", "searchableHasAllFinishedCompoundWorkflows", "updatedStructUnitProps", "removed authorities by permission", "removePrivilegeMappings" };
+        return new String[] { "docRef", "searchableHasAllFinishedCompoundWorkflows", "updatedStructUnitProps", "removePrivilegeMappings" };
     }
 
     @Override
@@ -138,9 +134,8 @@ public class DocumentUpdater extends AbstractNodeUpdater {
         // Always update document node to trigger an update of document data in Lucene index.
         nodeService.addProperties(docRef, updatedProps);
 
-        String removePermissionLog = updatePermission(docRef);
         String removePrivilegeMappingsLog = removePrivilegeMappings(docRef, origProps);
-        return new String[] { hasAllFinishedCompoundWorkflowsUpdaterLog, structUnitPropertiesToMultivaluedUpdaterLog, removePermissionLog, removePrivilegeMappingsLog,
+        return new String[] { hasAllFinishedCompoundWorkflowsUpdaterLog, structUnitPropertiesToMultivaluedUpdaterLog, removePrivilegeMappingsLog,
                 fileContentsLog, updateMetadataInFilesUpdaterLog };
     }
 
@@ -187,7 +182,7 @@ public class DocumentUpdater extends AbstractNodeUpdater {
 
     /**
      * XXX: This method is not needed when updating from 2.5 to 3.x
-     * 
+     *
      * @param docRef
      * @return
      */
@@ -210,23 +205,8 @@ public class DocumentUpdater extends AbstractNodeUpdater {
         return StringUtils.join(resultLog, ", ");
     }
 
-    public String updatePermission(NodeRef docRef) {
-        Set<AccessPermission> allSetPermissions = serviceRegistry.getPermissionService().getAllSetPermissions(docRef);
-        Map<String, Set<String>> replacePermissions = new HashMap<String, Set<String>>();
-        replacePermissions.put(DELETE_DOCUMENT_META_DATA, null);
-        replacePermissions.put(DELETE_DOCUMENT_FILES, null);
-        replacePermissions.put(EDIT_DOCUMENT_FILES, Collections.singleton(DocumentCommonModel.Privileges.EDIT_DOCUMENT));
-        replacePermissions.put(EDIT_DOCUMENT_META_DATA, Collections.singleton(DocumentCommonModel.Privileges.EDIT_DOCUMENT));
-        Map<String, List<String>> removedAuthorities = removePermission(docRef, replacePermissions, allSetPermissions);
-        List<String> removedPermissionInfo = new ArrayList<String>(removedAuthorities.keySet().size());
-        for (Entry<String, List<String>> entry : removedAuthorities.entrySet()) {
-            removedPermissionInfo.add(entry.getKey() + " [ " + StringUtils.join(entry.getValue(), " ") + " ]");
-        }
-        return StringUtils.join(removedPermissionInfo, ", ");
-    }
-
     public static String updateHasAllFinishedCompoundWorkflows(NodeRef docRef, Map<QName, Serializable> origProps, Map<QName, Serializable> updatedProps,
-            WorkflowService workflowService) {
+            WorkflowService workflowService) {    
         Serializable origValueReal = origProps.get(DocumentCommonModel.Props.SEARCHABLE_HAS_ALL_FINISHED_COMPOUND_WORKFLOWS);
         boolean origValue = Boolean.TRUE.equals(origValueReal);
         boolean newValue = workflowService.hasAllFinishedCompoundWorkflows(docRef);

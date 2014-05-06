@@ -17,7 +17,6 @@ import org.alfresco.service.cmr.dictionary.DictionaryService;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
-import org.alfresco.service.cmr.security.PermissionService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.service.namespace.RegexQNamePattern;
 import org.alfresco.web.bean.repository.Node;
@@ -31,12 +30,12 @@ import org.springframework.beans.factory.BeanFactoryAware;
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
 import ee.webmedia.alfresco.classificator.enums.VolumeType;
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docadmin.web.ListReorderHelper;
 import ee.webmedia.alfresco.docadmin.web.NodeOrderModifier;
 import ee.webmedia.alfresco.docconfig.generator.systematic.AccessRestrictionGenerator;
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
-import ee.webmedia.alfresco.document.model.DocumentCommonModel.Privileges;
 import ee.webmedia.alfresco.eventplan.model.EventPlanModel;
 import ee.webmedia.alfresco.functions.model.FunctionsModel;
 import ee.webmedia.alfresco.functions.service.FunctionsService;
@@ -44,6 +43,8 @@ import ee.webmedia.alfresco.log.PropDiffHelper;
 import ee.webmedia.alfresco.log.model.LogEntry;
 import ee.webmedia.alfresco.log.model.LogObject;
 import ee.webmedia.alfresco.log.service.LogService;
+import ee.webmedia.alfresco.privilege.model.Privilege;
+import ee.webmedia.alfresco.privilege.service.PrivilegeService;
 import ee.webmedia.alfresco.series.model.Series;
 import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.user.service.UserService;
@@ -60,7 +61,7 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
 
     private DictionaryService dictionaryService;
     private NodeService nodeService;
-    private PermissionService permissionService;
+    private PrivilegeService privilegeService;
     private GeneralService generalService;
     private UserService userService;
     private DocumentLogService docLogService;
@@ -161,6 +162,7 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
                     RepoUtil.toQNameProperties(stringQNameProperties, false, true)).getChildRef();
             setSeriesDefaultPermissionsOnCreate(seriesNodeRef);
             series.setNode(generalService.fetchNode(seriesNodeRef));
+            BeanHelper.getPrivilegeService().setInheritParentPermissions(seriesNodeRef, false);
 
             Map<String, Object> props = series.getNode().getProperties();
             appLogService.addLogEntry(LogEntry.create(LogObject.SERIES, userService, seriesNodeRef, "applog_space_add",
@@ -172,23 +174,23 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
             Map<QName, Serializable> repoProps = nodeService.getProperties(seriesRef);
             Map<QName, Serializable> newProps = RepoUtil.toQNameProperties(stringQNameProperties);
             String propDiff = new PropDiffHelper()
-                    .label(SeriesModel.Props.STATUS, "series_status")
-                    .label(SeriesModel.Props.ORDER, "series_order")
-                    .label(SeriesModel.Props.SERIES_IDENTIFIER, "series_seriesIdentifier")
-                    .label(SeriesModel.Props.TITLE, "series_title")
-                    .label(SeriesModel.Props.REGISTER, "series_register")
-                    .label(SeriesModel.Props.INDIVIDUALIZING_NUMBERS, "series_individualizingNumbers")
-                    .label(SeriesModel.Props.STRUCT_UNIT, "series_structUnit")
-                    .label(SeriesModel.Props.TYPE, "series_type")
-                    .label(SeriesModel.Props.DOC_TYPE, "series_docType")
-                    .label(SeriesModel.Props.DOC_NUMBER_PATTERN, "series_docNumberPattern")
-                    .label(SeriesModel.Props.NEW_NUMBER_FOR_EVERY_DOC, "series_newNumberForEveryDoc")
-                    .label(SeriesModel.Props.VALID_FROM_DATE, "series_validFromDate")
-                    .label(SeriesModel.Props.VALID_TO_DATE, "series_validToDate")
-                    .label(SeriesModel.Props.VOL_TYPE, "series_volType")
-                    .label(SeriesModel.Props.VOL_REGISTER, "series_volRegister")
-                    .label(SeriesModel.Props.VOL_NUMBER_PATTERN, "series_volNumberPattern")
-                    .diff(repoProps, newProps);
+            .label(SeriesModel.Props.STATUS, "series_status")
+            .label(SeriesModel.Props.ORDER, "series_order")
+            .label(SeriesModel.Props.SERIES_IDENTIFIER, "series_seriesIdentifier")
+            .label(SeriesModel.Props.TITLE, "series_title")
+            .label(SeriesModel.Props.REGISTER, "series_register")
+            .label(SeriesModel.Props.INDIVIDUALIZING_NUMBERS, "series_individualizingNumbers")
+            .label(SeriesModel.Props.STRUCT_UNIT, "series_structUnit")
+            .label(SeriesModel.Props.TYPE, "series_type")
+            .label(SeriesModel.Props.DOC_TYPE, "series_docType")
+            .label(SeriesModel.Props.DOC_NUMBER_PATTERN, "series_docNumberPattern")
+            .label(SeriesModel.Props.NEW_NUMBER_FOR_EVERY_DOC, "series_newNumberForEveryDoc")
+            .label(SeriesModel.Props.VALID_FROM_DATE, "series_validFromDate")
+            .label(SeriesModel.Props.VALID_TO_DATE, "series_validToDate")
+            .label(SeriesModel.Props.VOL_TYPE, "series_volType")
+            .label(SeriesModel.Props.VOL_REGISTER, "series_volRegister")
+            .label(SeriesModel.Props.VOL_NUMBER_PATTERN, "series_volNumberPattern")
+            .diff(repoProps, newProps);
 
             if (propDiff != null) {
                 appLogService.addLogEntry(LogEntry.create(LogObject.SERIES, userService, seriesRef, "applog_space_edit",
@@ -270,26 +272,24 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
 
     @Override
     public void setSeriesDefaultPermissionsOnCreate(NodeRef seriesRef) {
-        addPermissions(seriesRef, UserService.AUTH_DOCUMENT_MANAGERS_GROUP, Arrays.asList(Privileges.VIEW_DOCUMENT_META_DATA));
+        addPermissions(seriesRef, UserService.AUTH_DOCUMENT_MANAGERS_GROUP, Arrays.asList(Privilege.VIEW_DOCUMENT_META_DATA));
 
-        List<String> archivistsPermissionsToAdd = new ArrayList<String>();
-        archivistsPermissionsToAdd.add(Privileges.VIEW_DOCUMENT_META_DATA);
+        List<Privilege> archivistsPermissionsToAdd = new ArrayList<Privilege>();
+        archivistsPermissionsToAdd.add(Privilege.VIEW_DOCUMENT_META_DATA);
         boolean caseVolumeEnabled = getVolumeService().isCaseVolumeEnabled();
         if (caseVolumeEnabled) {
-            archivistsPermissionsToAdd.add(Privileges.VIEW_CASE_FILE);
+            archivistsPermissionsToAdd.add(Privilege.VIEW_CASE_FILE);
         }
         addPermissions(seriesRef, UserService.AUTH_ARCHIVIST_GROUP, archivistsPermissionsToAdd);
 
-        List<String> supervisionsPermissionsToAdd = new ArrayList<String>();
-        supervisionsPermissionsToAdd.add(Privileges.VIEW_DOCUMENT_META_DATA);
-        supervisionsPermissionsToAdd.add(Privileges.VIEW_DOCUMENT_FILES);
+        List<Privilege> supervisionsPermissionsToAdd = new ArrayList<Privilege>();
+        supervisionsPermissionsToAdd.add(Privilege.VIEW_DOCUMENT_META_DATA);
+        supervisionsPermissionsToAdd.add(Privilege.VIEW_DOCUMENT_FILES);
         addPermissions(seriesRef, UserService.AUTH_SUPERVISION_GROUP, supervisionsPermissionsToAdd);
     }
 
-    private void addPermissions(NodeRef seriesRef, String authority, List<String> permissionsToAdd) {
-        for (String permission : permissionsToAdd) {
-            permissionService.setPermission(seriesRef, authority, permission, true);
-        }
+    private void addPermissions(NodeRef seriesRef, String authority, List<Privilege> permissionsToAdd) {
+        privilegeService.setPermissions(seriesRef, authority, permissionsToAdd.toArray(new Privilege[permissionsToAdd.size()]));
     }
 
     @Override
@@ -412,8 +412,8 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
         this.nodeService = nodeService;
     }
 
-    public void setPermissionService(PermissionService permissionService) {
-        this.permissionService = permissionService;
+    public void setPrivilegeService(PrivilegeService privilegeService) {
+        this.privilegeService = privilegeService;
     }
 
     public void setGeneralService(GeneralService generalService) {
@@ -447,7 +447,7 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
 
     /**
      * To break Circular dependency between VolumeService and SeriesService
-     * 
+     *
      * @return VolumeService
      */
     private VolumeService getVolumeService() {

@@ -11,10 +11,10 @@ import org.quartz.StatefulJob;
 import ee.webmedia.alfresco.common.bootstrap.InvalidNodeFixerBootstrap;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docdynamic.bootstrap.DeleteDraftsBootstrap;
-import ee.webmedia.alfresco.privilege.bootstrap.FixAclInheritanceUpdater;
 
 /**
  * Finds and fixes problems in data. Runs before {@link LuceneIndexBackupJob}, and prevents {@link LuceneIndexBackupJob} frmo starting before this job completes.
+ *
  */
 public class NightlyDataFixJob implements StatefulJob {
 
@@ -30,8 +30,6 @@ public class NightlyDataFixJob implements StatefulJob {
             InvalidNodeFixerBootstrap invalidNodeFixerBootstrap = BeanHelper.getSpringBean(InvalidNodeFixerBootstrap.class, "invalidNodeFixerBootstrap");
             invalidNodeFixerBootstrap.execute();
 
-            FixAclInheritanceUpdater fixAclInheritanceUpdater = BeanHelper.getSpringBean(FixAclInheritanceUpdater.class, "fixAclInheritanceUpdater2");
-            fixAclInheritanceUpdater.fixAllAclsThatInheritFromNonPrimaryParent();
         } finally {
             nightlyMaintenanceJobLock.unlock();
         }

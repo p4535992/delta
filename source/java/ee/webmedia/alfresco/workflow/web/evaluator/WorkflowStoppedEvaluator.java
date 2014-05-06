@@ -4,7 +4,7 @@ import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
-import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.privilege.service.PrivilegeUtil;
 import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
@@ -25,7 +25,7 @@ public class WorkflowStoppedEvaluator extends AbstractFullAccessEvaluator {
                 && (!compoundWorkflow.isIndependentWorkflow() || isOwnerOrDocManager())
                 && (!compoundWorkflow.isCaseFileWorkflow() || StringUtils.equals(compoundWorkflow.getOwnerId(), currentUser)
                         || BeanHelper.getDocumentDynamicService().isOwner(compoundWorkflow.getParent(), currentUser)
-                        || PrivilegeUtil.isAdminOrDocmanagerWithPermission(compoundWorkflow.getParent(), DocumentCommonModel.Privileges.VIEW_CASE_FILE));
+                        || PrivilegeUtil.isAdminOrDocmanagerWithPermission(compoundWorkflow.getParent(), Privilege.VIEW_CASE_FILE));
     }
 
 }

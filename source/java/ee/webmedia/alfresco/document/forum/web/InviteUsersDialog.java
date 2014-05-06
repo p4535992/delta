@@ -15,7 +15,6 @@ import org.alfresco.model.ContentModel;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
-import org.alfresco.service.cmr.security.PermissionService;
 import org.alfresco.service.namespace.QName;
 import org.apache.cxf.common.util.StringUtils;
 import org.springframework.web.jsf.FacesContextUtils;
@@ -26,6 +25,8 @@ import ee.webmedia.alfresco.email.service.EmailException;
 import ee.webmedia.alfresco.email.service.EmailService;
 import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
+import ee.webmedia.alfresco.privilege.model.Privilege;
+import ee.webmedia.alfresco.privilege.service.PrivilegeService;
 import ee.webmedia.alfresco.template.model.ProcessedEmailTemplate;
 import ee.webmedia.alfresco.template.service.DocumentTemplateService;
 import ee.webmedia.alfresco.user.model.Authority;
@@ -89,13 +90,13 @@ public class InviteUsersDialog extends PermissionsAddDialog {
                 forumParticipants = new ArrayList<String>();
                 addAspect = true;
             }
-            PermissionService permissionService = BeanHelper.getPermissionService();
+            PrivilegeService privilegeService = BeanHelper.getPrivilegeService();
             for (String authority : addedAuthorities) {
                 if (!forumParticipants.contains(authority)) {
                     forumParticipants.add(authority);
                 }
-                permissionService.setPermission(docRef, authority, DocumentCommonModel.Privileges.VIEW_DOCUMENT_META_DATA, true);
-                permissionService.setPermission(docRef, authority, DocumentCommonModel.Privileges.VIEW_DOCUMENT_FILES, true);
+                privilegeService.setPermissions(docRef, authority, Privilege.VIEW_DOCUMENT_META_DATA);
+                privilegeService.setPermissions(docRef, authority, Privilege.VIEW_DOCUMENT_FILES);
             }
             if (addAspect) {
                 Map<QName, Serializable> aspectProps = new HashMap<QName, Serializable>();
@@ -121,7 +122,7 @@ public class InviteUsersDialog extends PermissionsAddDialog {
         } else {
             nodeService.setProperty(docRef, DocumentCommonModel.Props.FORUM_PARTICIPANTS, (Serializable) forumParticipants);
         }
-        BeanHelper.getPermissionService().deletePermission(manageableRef, authorityToRemove, permissionToRemove);
+        BeanHelper.getPrivilegeService().removeAllPermissions(manageableRef, authorityToRemove);
         MessageUtil.addInfoMessage("delete_success");
     }
 

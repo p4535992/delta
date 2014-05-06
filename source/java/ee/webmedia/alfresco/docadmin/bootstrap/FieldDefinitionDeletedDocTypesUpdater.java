@@ -44,7 +44,7 @@ public class FieldDefinitionDeletedDocTypesUpdater extends AbstractModuleCompone
             }
         }
         LOG.info("Updating " + fieldDefinitionsToUpdate.size() + " field definitions");
-        documentAdminService.saveOrUpdateFieldDefinitions(fieldDefinitionsToUpdate);
+        documentAdminService.saveOrUpdateFieldDefinitions(fieldDefinitionsToUpdate, false);
         LOG.info("Done");
     }
 

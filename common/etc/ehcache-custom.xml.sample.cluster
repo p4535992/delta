@@ -34,14 +34,8 @@
                                 //otherserver:40001/org.alfresco.repo.domain.hibernate.StoreImpl| 
                                 //otherserver:40001/org.alfresco.repo.domain.hibernate.VersionCountImpl| 
                                 //otherserver:40001/org.alfresco.repo.domain.hibernate.AppliedPatchImpl| 
-                                //otherserver:40001/org.alfresco.repo.domain.hibernate.DbAccessControlEntryContextImpl| 
-                                //otherserver:40001/org.alfresco.repo.domain.hibernate.DbAccessControlEntryImpl| 
-                                //otherserver:40001/org.alfresco.repo.domain.hibernate.DbAccessControlListChangeSetImpl| 
-                                //otherserver:40001/org.alfresco.repo.domain.hibernate.DbAccessControlListImpl| 
-                                //otherserver:40001/org.alfresco.repo.domain.hibernate.DbAccessControlListMemberImpl| 
                                 //otherserver:40001/org.alfresco.repo.domain.hibernate.DbAuthorityAliasImpl| 
                                 //otherserver:40001/org.alfresco.repo.domain.hibernate.DbAuthorityImpl| 
-                                //otherserver:40001/org.alfresco.repo.domain.hibernate.DbPermissionImpl| 
                                 //otherserver:40001/org.alfresco.repo.audit.hibernate.AuditConfigImpl| 
                                 //otherserver:40001/org.alfresco.repo.audit.hibernate.AuditDateImpl| 
                                 //otherserver:40001/org.alfresco.repo.audit.hibernate.AuditSourceImpl| 
@@ -69,14 +63,12 @@
                                 //otherserver:40001/org.alfresco.cache.storeAndNodeIdCache|
                                 //otherserver:40001/org.alfresco.cache.parentAssocsCache|
                                 //otherserver:40001/org.alfresco.cache.userToAuthorityCache| 
-                                //otherserver:40001/org.alfresco.cache.permissionsAccessCache| 
                                 //otherserver:40001/org.alfresco.cache.nodeOwnerCache| 
                                 //otherserver:40001/org.alfresco.cache.personCache|
                                 //otherserver:40001/org.alfresco.cache.personPropertiesCache|
                                 //otherserver:40001/org.alfresco.cache.orgStructPropertiesCache| 
                                 //otherserver:40001/org.alfresco.cache.ticketsCache| 
                                 //otherserver:40001/org.alfresco.cache.sysAdminCache|
-                                //otherserver:40001/org.alfresco.cache.aclCache| 
                                 //otherserver:40001/org.alfresco.cache.globalConfigCache| 
                                 //otherserver:40001/org.alfresco.cache.resourceBundleBaseNamesCache| 
                                 //otherserver:40001/org.alfresco.cache.loadedResourceBundlesCache| 
@@ -310,88 +302,6 @@
                                 replicateAsynchronously = false"/>
     </cache>
 
-    <!-- Permission related caches -->
-    <!-- approx 1MB memory required -->    
-    <cache 
-        name="org.alfresco.repo.domain.hibernate.DbAccessControlEntryContextImpl" 
-        maxElementsInMemory="1000"        
-        eternal="true"
-        overflowToDisk="false">
-
-            <cacheEventListenerFactory
-                    class="net.sf.ehcache.distribution.RMICacheReplicatorFactory"
-                    properties="replicatePuts = false,
-                                replicateUpdates = true,
-                                replicateRemovals = true,
-                                replicateUpdatesViaCopy = false,
-                                replicateAsynchronously = false"/>
-    </cache>
-
-    <!-- approx 5MB memory required -->
-    <cache 
-        name="org.alfresco.repo.domain.hibernate.DbAccessControlEntryImpl" 
-        maxElementsInMemory="5000"        
-        eternal="true"
-        overflowToDisk="false">
-
-            <cacheEventListenerFactory
-                    class="net.sf.ehcache.distribution.RMICacheReplicatorFactory"
-                    properties="replicatePuts = false,
-                                replicateUpdates = true,
-                                replicateRemovals = true,
-                                replicateUpdatesViaCopy = false,
-                                replicateAsynchronously = false"/>
-    </cache>
-
-    <!-- approx 5MB memory required -->
-    <cache 
-        name="org.alfresco.repo.domain.hibernate.DbAccessControlListChangeSetImpl" 
-        maxElementsInMemory="5000"        
-        eternal="true"
-        overflowToDisk="false">
-
-            <cacheEventListenerFactory
-                    class="net.sf.ehcache.distribution.RMICacheReplicatorFactory"
-                    properties="replicatePuts = false,
-                                replicateUpdates = true,
-                                replicateRemovals = true,
-                                replicateUpdatesViaCopy = false,
-                                replicateAsynchronously = false"/>
-    </cache>
-
-    <!-- approx 1MB memory required -->    
-    <cache 
-        name="org.alfresco.repo.domain.hibernate.DbAccessControlListImpl" 
-        maxElementsInMemory="1000"        
-        eternal="true"
-        overflowToDisk="false">
-
-            <cacheEventListenerFactory
-                    class="net.sf.ehcache.distribution.RMICacheReplicatorFactory"
-                    properties="replicatePuts = false,
-                                replicateUpdates = true,
-                                replicateRemovals = true,
-                                replicateUpdatesViaCopy = false,
-                                replicateAsynchronously = false"/>
-    </cache>
-
-    <!-- approx 1MB memory required -->    
-    <!-- Default 1000 is 1.3 MB; 10000 should be 13 MB -->
-     <cache 
-        name="org.alfresco.repo.domain.hibernate.DbAccessControlListMemberImpl" 
-        maxElementsInMemory="10000"        
-        eternal="true"
-        overflowToDisk="false">
-
-            <cacheEventListenerFactory
-                    class="net.sf.ehcache.distribution.RMICacheReplicatorFactory"
-                    properties="replicatePuts = false,
-                                replicateUpdates = true,
-                                replicateRemovals = true,
-                                replicateUpdatesViaCopy = false,
-                                replicateAsynchronously = false"/>
-    </cache>
-
     <!-- approx 1MB memory required -->    
     <cache 
         name="org.alfresco.repo.domain.hibernate.DbAuthorityAliasImpl" 
@@ -412,22 +322,6 @@
     <cache 
         name="org.alfresco.repo.domain.hibernate.DbAuthorityImpl" 
         maxElementsInMemory="10000"        
-        eternal="true"
-        overflowToDisk="false">
-
-            <cacheEventListenerFactory
-                    class="net.sf.ehcache.distribution.RMICacheReplicatorFactory"
-                    properties="replicatePuts = false,
-                                replicateUpdates = true,
-                                replicateRemovals = true,
-                                replicateUpdatesViaCopy = false,
-                                replicateAsynchronously = false"/>
-    </cache>
-
-    <!-- approx 1MB memory required -->
-    <cache 
-        name="org.alfresco.repo.domain.hibernate.DbPermissionImpl" 
-        maxElementsInMemory="500"          
         eternal="true"
         overflowToDisk="false">
 
@@ -855,21 +749,6 @@
     </cache>
 
     <cache 
-        name="org.alfresco.cache.permissionsAccessCache" 
-        maxElementsInMemory="50000"
-        eternal="true"
-        overflowToDisk="false">
-
-            <cacheEventListenerFactory
-                    class="net.sf.ehcache.distribution.RMICacheReplicatorFactory"
-                    properties="replicatePuts = false,
-                                replicateUpdates = true,
-                                replicateRemovals = true,
-                                replicateUpdatesViaCopy = false,
-                                replicateAsynchronously = false"/>
-    </cache>
-
-    <cache 
         name="org.alfresco.cache.nodeOwnerCache" 
         maxElementsInMemory="20000"
         eternal="true"
@@ -1002,21 +881,6 @@
                                 replicateUpdates = true,
                                 replicateRemovals = true,
                                 replicateUpdatesViaCopy = true,
-                                replicateAsynchronously = false"/>
-    </cache>
-
-    <cache 
-        name="org.alfresco.cache.aclCache" 
-        maxElementsInMemory="50000"
-        eternal="true"
-        overflowToDisk="false">
-
-            <cacheEventListenerFactory
-                    class="net.sf.ehcache.distribution.RMICacheReplicatorFactory"
-                    properties="replicatePuts = false,
-                                replicateUpdates = true,
-                                replicateRemovals = true,
-                                replicateUpdatesViaCopy = false,
                                 replicateAsynchronously = false"/>
     </cache>
         

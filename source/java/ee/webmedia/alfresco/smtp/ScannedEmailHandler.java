@@ -1,5 +1,7 @@
 package ee.webmedia.alfresco.smtp;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getGeneralService;
+
 import java.io.InputStream;
 import java.io.Serializable;
 import java.util.HashMap;

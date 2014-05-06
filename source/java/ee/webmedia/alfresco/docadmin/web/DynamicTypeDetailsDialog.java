@@ -91,7 +91,7 @@ public abstract class DynamicTypeDetailsDialog<D extends DynamicType, S extends 
     boolean save() {
         try {
             fieldsListBean.doReorder();
-            Pair<D, MessageData> result = getDocumentAdminService().saveOrUpdateDynamicType(getCurrentSnapshot().getDynType());
+            Pair<D, MessageData> result = getDocumentAdminService().saveOrUpdateDynamicType(getCurrentSnapshot().getDynType(), false);
             D saveOrUpdateDocumentType = result.getFirst();
             getCurrentSnapshot().addNewLatestDocumentTypeVersion = true;
             updateDialogState(saveOrUpdateDocumentType, getCurrentSnapshot(), null);
