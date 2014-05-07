@@ -83,7 +83,7 @@ public interface DocumentAdminService {
      */
     <D extends DynamicType> D getDynamicType(Class<D> dynTypeClass, NodeRef dynTypeRef, DynTypeLoadEffort effort);
 
-    <D extends DynamicType> Pair<D, MessageData> saveOrUpdateDynamicType(D docType);
+    <D extends DynamicType> Pair<D, MessageData> saveOrUpdateDynamicType(D docType, boolean isDocumentTypesImport);
 
     <D extends DynamicType> D createNewUnSavedDynamicType(Class<D> dynamicTypeClass);
 
@@ -100,7 +100,7 @@ public interface DocumentAdminService {
 
     <F extends Field> F saveOrUpdateField(F originalFieldDef);
 
-    List<FieldDefinition> saveOrUpdateFieldDefinitions(Collection<FieldDefinition> fieldDefinitions);
+    List<FieldDefinition> saveOrUpdateFieldDefinitions(Collection<FieldDefinition> fieldDefinitions, boolean isDocumentTypesImport);
 
     List<FieldDefinition> getFieldDefinitions();
 

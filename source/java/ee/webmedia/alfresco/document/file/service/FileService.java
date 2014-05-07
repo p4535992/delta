@@ -52,9 +52,15 @@ public interface FileService {
 
     /**
      * @param nodeRef
-     * @return list of all files(including digidoc container, but witout digidocitems of container)
+     * @return list of all files without dec containers (including digidoc container, but without digidocitems of container)
      */
     List<File> getAllFilesExcludingDigidocSubitems(NodeRef nodeRef);
+
+    /**
+     * @param nodeRef
+     * @return list of all files(including dec containers and digidoc container, but without digidocitems of container)
+     */
+    List<File> getAllFilesExcludingDigidocSubitemsAndIncludingDecContainers(NodeRef nodeRef);
 
     /**
      * @param nodeRef

@@ -43,7 +43,7 @@ public class FieldDefinitionListDialog extends BaseDialogBean {
 
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
-        fieldDefinitions = getDocumentAdminService().saveOrUpdateFieldDefinitions(fieldDefinitions);
+        fieldDefinitions = getDocumentAdminService().saveOrUpdateFieldDefinitions(fieldDefinitions, false);
         MessageUtil.addInfoMessage(context, "save_success");
         return null;
     }

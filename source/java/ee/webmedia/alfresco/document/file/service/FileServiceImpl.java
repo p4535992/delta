@@ -14,8 +14,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import ee.webmedia.alfresco.dvk.model.DvkModel;
-import ee.webmedia.alfresco.dvk.service.DvkService;
 import org.alfresco.i18n.I18NUtil;
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.content.MimetypeMap;
@@ -61,6 +59,7 @@ import ee.webmedia.alfresco.document.file.web.Subfolder;
 import ee.webmedia.alfresco.document.lock.service.DocLockService;
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.dvk.model.DvkModel;
 import ee.webmedia.alfresco.signature.exception.SignatureException;
 import ee.webmedia.alfresco.signature.model.SignatureItemsAndDataItems;
 import ee.webmedia.alfresco.signature.service.SignatureService;
@@ -120,6 +119,12 @@ public class FileServiceImpl implements FileService {
     }
 
     @Override
+    public List<File> getAllFilesExcludingDigidocSubitemsAndIncludingDecContainers(NodeRef nodeRef) {
+        List<FileInfo> fileInfos = fileFolderService.listFiles(nodeRef);
+        return getAllFiles(fileInfos, false, false, false);
+    }
+
+    @Override
     public NodeRef getDecContainer(NodeRef documentNodeRef) {
         return (NodeRef) nodeService.getProperty(documentNodeRef, DvkModel.Props.DEC_CONTAINER);
     }
@@ -156,12 +161,16 @@ public class FileServiceImpl implements FileService {
     }
 
     private List<File> getAllFiles(List<FileInfo> fileInfos, boolean includeDigidocSubitems, boolean onlyActive) {
+        return getAllFiles(fileInfos, includeDigidocSubitems, onlyActive, true);
+    }
+
+    private List<File> getAllFiles(List<FileInfo> fileInfos, boolean includeDigidocSubitems, boolean onlyActive, boolean excludeDecContainers) {
         List<File> files = new ArrayList<File>();
         for (FileInfo fi : fileInfos) {
             final File item = createFile(fi);
 
             // Exclude DEC containers
-            if (item.isDecContainer()) {
+            if (excludeDecContainers && item.isDecContainer()) {
                 continue;
             }
 

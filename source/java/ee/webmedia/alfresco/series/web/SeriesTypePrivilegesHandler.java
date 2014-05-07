@@ -14,7 +14,6 @@ import ee.webmedia.alfresco.series.model.Series;
 import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.series.service.SeriesService;
 import ee.webmedia.alfresco.utils.MessageUtil;
-import ee.webmedia.alfresco.volume.web.VolumeTypePrivilegesHandler;
 
 /**
  * {@link PrivilegesHandler} for nodes of type {@link SeriesModel.Types#SERIES}
@@ -23,7 +22,7 @@ public class SeriesTypePrivilegesHandler extends PrivilegesHandler {
     private static final long serialVersionUID = 1L;
 
     protected SeriesTypePrivilegesHandler() {
-        super(SeriesModel.Types.SERIES, VolumeTypePrivilegesHandler.getSeriesVolumePrivs());
+        super(SeriesModel.Types.SERIES, getDocumentCaseFilePrivs());
     }
 
     @Override

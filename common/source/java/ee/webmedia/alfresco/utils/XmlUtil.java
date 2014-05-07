@@ -99,6 +99,9 @@ public class XmlUtil {
     }
 
     private static org.w3c.dom.Node findChildByName(javax.xml.namespace.QName qName, org.w3c.dom.Node possibleDeltaNode, boolean useQName) {
+        if (possibleDeltaNode == null) {
+            return null;
+        }
         org.w3c.dom.Node externalReviewNode = null;
         NodeList nodeList = possibleDeltaNode.getChildNodes();
         for (int i = 0; i < nodeList.getLength(); i++) {
