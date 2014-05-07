@@ -23,7 +23,7 @@
             <a:sortLink id="col2-sort" label="#{msg.document_regDateTime}" value="regDateTime" styleClass="header" />
          </f:facet>
          <a:actionLink id="col2-text" value="#{r.regDateTimeStr}" action="#{DocumentDialog.action}" tooltip="#{r.regDateTimeStr}" styleClass="no-underline"
-          actionListener="#{DocumentDialog.open}" >
+          actionListener="#{DocumentDialog.open}">
             <f:param name="nodeRef" value="#{r.node.nodeRef}" />
           </a:actionLink>
       </a:column>
@@ -74,7 +74,7 @@
          <f:facet name="header">
             <a:sortLink id="col5-sort" label="#{msg.document_allRecipients}" value="allRecipients" styleClass="header" />
          </f:facet>
-        	<a:actionLink id="col5-text" value="#{r.allRecipients}" action="#{DocumentDialog.action}" tooltip="#{r.allRecipients}"
+        	<a:actionLink id="col5-text" value="#{r.allRecipientsAsNameOrPerson}" action="#{DocumentDialog.action}" tooltip="#{r.allRecipientsAsNameOrPerson}"
           actionListener="#{DocumentDialog.open}" styleClass="tooltip condence20- no-underline" >
             <f:param name="nodeRef" value="#{r.node.nodeRef}" />
            </a:actionLink>

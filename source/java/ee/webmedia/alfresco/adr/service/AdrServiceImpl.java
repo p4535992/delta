@@ -222,7 +222,7 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
         dokument.setViit(getNullIfEmpty(doc.getRegNumber()));
         dokument.setRegistreerimiseAeg(convertToXMLGergorianCalendar(doc.getRegDateTime()));
         if (isIncomingLetter) {
-            dokument.setSaatja(getNullIfEmpty(getInitialsIfNeeded((String) doc.getProp(DocumentSpecificModel.Props.SENDER_DETAILS_NAME), doc.getNodeRef())));
+            dokument.setSaatja(getNullIfEmpty(getInitialsIfNeeded(doc.getNodeRef())));
             dokument.setSaaja(getNullIfEmpty(getClassifiedOrgStructValueIfNeeded(doc.getOwnerName(), doc.getOwnerOrgStructUnit())));
         }
         dokument.setPealkiri(getNullIfEmpty(getDocNameAdr(doc)));
@@ -290,7 +290,7 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
         // Osapooled
         String osapool = "";
         if (SystematicDocumentType.OUTGOING_LETTER.isSameType(documentTypeId)) {
-            osapool = doc.getRecipients();
+            osapool = doc.getRecipientsWInitials();
         } else {
             List<Node> parties = doc.getNode().getAllChildAssociations(DocumentChildModel.Assocs.CONTRACT_PARTY);
             if (parties != null) {
@@ -805,11 +805,28 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
         return addDeletedDocument(document, regNumber, regDateTime);
     }
 
+    /**
+     * Method to implement following requirement (Lisa PPA_DHSi väikearendus tellimus-pakkumuse kokkuleppele nr 2012/1):
+     * a. Kui Saatja nimi on täidetud, siis edastatakse alati saatjana selle välja väärtus (senderName)
+     * b. Kui Saatja nimi on täitmata ja Saatja isiku nimi täidetud, siis edastatakse ADR’i saatja isiku nimest (senderPersonName) initsiaalid
+     * 
+     * @param documentRef - nodeRef of a document with SENDER_NAME and SENDER_PERSON_NAME properties
+     * @return Organization name or initials of a person
+     */
+    private String getInitialsIfNeeded(NodeRef documentRef) {
+        String senderName = (String) nodeService.getProperty(documentRef, DocumentDynamicModel.Props.SENDER_NAME);
+        String senderPersonName = (String) nodeService.getProperty(documentRef, DocumentDynamicModel.Props.SENDER_PERSON_NAME);
+        return StringUtils.isBlank(senderName) ? UserUtil.getInitials(senderPersonName) : senderName;
+    }
+
+	//TODO: UURIDA, MILLAL TEKKIS ANTUD KLASS (getInitialsIfNeeded) JA KAS ÜLEMINE VERSIOON ON VIIMANE VÕI MITTE!!!
+
+	/*
     private String getInitialsIfNeeded(String name, NodeRef documentRef) {
         Boolean initialsToAdr = (Boolean) nodeService.getProperty(documentRef, DocumentDynamicModel.Props.SENDER_INITIALS_TO_ADR);
         return Boolean.TRUE.equals(initialsToAdr) ? UserUtil.getInitials(name) : name;
     }
-
+	*/
     private String getClassifiedOrgStructValueIfNeeded(String ownerName, String ownerOrgStructUnit) {
         if (StringUtils.isBlank(ownerOrgStructUnit)) {
             return ownerName;
