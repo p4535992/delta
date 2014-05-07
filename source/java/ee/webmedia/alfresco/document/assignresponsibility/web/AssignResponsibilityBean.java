@@ -14,6 +14,7 @@ import javax.faces.event.ActionEvent;
 
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
+import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.TransientNode;
@@ -68,6 +69,10 @@ public class AssignResponsibilityBean implements Serializable {
 
     public void revert(@SuppressWarnings("unused") ActionEvent event) {
         String toOwnerId = (String) getUserService().getUserProperties(fromOwnerId).get(UserModel.Props.LIABILITY_GIVEN_TO_PERSON_ID);
+        NodeRef fromOwnerRef = null;
+        if (toOwnerId == null && (fromOwnerRef = getUserService().getPerson(fromOwnerId)) != null) {
+            toOwnerId = (String) BeanHelper.getNodeService().getProperty(fromOwnerRef, UserModel.Props.LIABILITY_GIVEN_TO_PERSON_ID);
+        }
         getAssignResponsibilityService().changeOwnerOfAllDesignatedObjects(fromOwnerId, toOwnerId, false);
         leaving = false;
         unsetOwner();

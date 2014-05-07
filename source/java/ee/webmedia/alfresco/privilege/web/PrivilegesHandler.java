@@ -3,7 +3,9 @@ package ee.webmedia.alfresco.privilege.web;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getPermissionService;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 
 import javax.faces.event.ValueChangeEvent;
@@ -29,6 +31,7 @@ import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
  */
 public abstract class PrivilegesHandler implements Serializable {
     private static final long serialVersionUID = 1L;
+    private static Collection<String> DOCUMENT_CASEFILE_MANAGEABLE_PERMISSIONS;
 
     private final Collection<String> manageablePermissions;
     private final QName nodeType;
@@ -91,6 +94,22 @@ public abstract class PrivilegesHandler implements Serializable {
             checkboxValueBeforeSave = initCheckboxValue();
             checkboxValue = checkboxValueBeforeSave;
         }
+    }
+
+    /** Get manageable document permissions and case file permissions if <code>conf.casefile.enabled = true</code> */
+    protected static Collection<String> getDocumentCaseFilePrivs() {
+        if (DOCUMENT_CASEFILE_MANAGEABLE_PERMISSIONS == null) {
+            ArrayList<String> privs = new ArrayList<String>();
+            if (BeanHelper.getVolumeService().isCaseVolumeEnabled()) {
+                privs.add(Privileges.VIEW_CASE_FILE);
+                privs.add(Privileges.EDIT_CASE_FILE);
+            }
+            privs.add(Privileges.VIEW_DOCUMENT_FILES);
+            privs.add(Privileges.VIEW_DOCUMENT_META_DATA);
+            privs.add(Privileges.EDIT_DOCUMENT);
+            DOCUMENT_CASEFILE_MANAGEABLE_PERMISSIONS = Collections.unmodifiableList(privs);
+        }
+        return DOCUMENT_CASEFILE_MANAGEABLE_PERMISSIONS;
     }
 
     protected abstract boolean initCheckboxValue();

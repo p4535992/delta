@@ -224,11 +224,12 @@ public class BaseServiceImpl implements BaseService {
                 for (BaseObject removedChild : (List<? extends BaseObject>) removedChildListEntry.getValue()) {
                     WmNode removedNode = removedChild.getNode();
                     if (removedNode.isSaved()) {
-                        if (wasSaved) {
-                            nodeService.deleteNode(removedNode.getNodeRef());
+                        NodeRef removedNodeRef = removedNode.getNodeRef();
+                        if (wasSaved && nodeService.exists(removedNodeRef)) {
+                            nodeService.deleteNode(removedNodeRef);
                         } else {
                             if (LOG.isTraceEnabled()) {
-                                LOG.debug("not deleting node, that was previously saved under some other parent node: " + removedNode.getNodeRef());
+                                LOG.debug("not deleting node, that was previously saved under some other parent node: " + removedNodeRef);
                             }
                         }
                         changed = true;

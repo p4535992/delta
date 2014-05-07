@@ -553,7 +553,7 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
                     fieldsToSave.put(fieldDef.getFieldId(), fieldDef);
                 }
             }
-            saveOrUpdateFieldDefinitions(fieldsToSave.values());
+            saveOrUpdateFieldDefinitions(fieldsToSave.values(), false);
         }
         DocumentConfigService documentConfigService = BeanHelper.getDocumentConfigService();
         String typeId = dynType.getId();
@@ -571,17 +571,17 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
 
     @Override
     public Pair<DocumentType, MessageData> saveOrUpdateDocumentType(DocumentType docTypeOriginal) {
-        return saveOrUpdateDynamicType(docTypeOriginal);
+        return saveOrUpdateDynamicType(docTypeOriginal, false);
     }
 
     @Override
-    public <D extends DynamicType> Pair<D, MessageData> saveOrUpdateDynamicType(D dynTypeOriginal) {
+    public <D extends DynamicType> Pair<D, MessageData> saveOrUpdateDynamicType(D dynTypeOriginal, boolean isDocumentTypesImport) {
         @SuppressWarnings("unchecked")
         D dynType = (D) dynTypeOriginal.clone();
         boolean wasUnsaved = dynType.isUnsaved();
 
         // validating duplicated documentTypeId is done in baseService
-        MessageData message = updateChildren(dynType);
+        MessageData message = updateChildren(dynType, isDocumentTypesImport);
         DocumentType docType = dynType instanceof DocumentType ? (DocumentType) dynType : null;
         if (docType != null) {
             checkFieldMappings(docType);
@@ -617,7 +617,7 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
 
     private FieldDefinition reorderFieldDefinitions(FieldDefinition fieldDef) {
         // must reorder fieldDefinitions list
-        List<FieldDefinition> fieldDefinitions = saveOrUpdateFieldDefinitions(getFieldDefinitions());
+        List<FieldDefinition> fieldDefinitions = saveOrUpdateFieldDefinitions(getFieldDefinitions(), false);
         // return fresh copy of originalFieldOrFeildDef
         for (FieldDefinition fd : fieldDefinitions) {
             if (fd.getFieldId().equals(fieldDef.getFieldId())) {
@@ -644,8 +644,8 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
     }
 
     @Override
-    public List<FieldDefinition> saveOrUpdateFieldDefinitions(Collection<FieldDefinition> fieldDefinitions) {
-        FieldDefinitionReorderHelper.reorderDocSearchAndVolSearchProps(fieldDefinitions, true);
+    public List<FieldDefinition> saveOrUpdateFieldDefinitions(Collection<FieldDefinition> fieldDefinitions, boolean isDocumentTypesImport) {
+        FieldDefinitionReorderHelper.reorderDocSearchAndVolSearchProps(fieldDefinitions, !isDocumentTypesImport);
         List<FieldDefinition> saved = new ArrayList<FieldDefinition>();
 
         for (FieldDefinition fieldDefinition : fieldDefinitions) {
@@ -964,7 +964,7 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
                 }
             }
         }
-        saveOrUpdateFieldDefinitions(fieldDefinitionsToUpdate.values());
+        saveOrUpdateFieldDefinitions(fieldDefinitionsToUpdate.values(), false);
     }
 
     @Override
@@ -1041,7 +1041,7 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
         }
     }
 
-    private <D extends DynamicType> MessageData updateChildren(D dynType) {
+    private <D extends DynamicType> MessageData updateChildren(D dynType, boolean isDocumentTypesImport) {
         int versionNr = 1;
         boolean saved = dynType.isSaved();
         if (saved) {
@@ -1150,7 +1150,7 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
                 removedFieldFD.getUsedTypes(dynType.getClass()).remove(documentTypeId);
             }
         }
-        saveOrUpdateFieldDefinitions(fieldsToSave.values());
+        saveOrUpdateFieldDefinitions(fieldsToSave.values(), isDocumentTypesImport);
         if (addFieldsAddedRemovedWarning && dynType instanceof DocumentType) {
             return new MessageDataImpl(MessageSeverity.INFO, "docType_metadataList_changedWarning");
         }
@@ -1458,7 +1458,7 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
                     importableDynType.nextSaveToParent(getDynamicTypesRoot(dynTypeClass));
                     importedDocType = importableDynType;
                 }
-                Pair<D, MessageData> result = saveOrUpdateDynamicType(importedDocType);
+                Pair<D, MessageData> result = saveOrUpdateDynamicType(importedDocType, true);
                 importedDocType = result.getFirst();
                 MessageData messageData = result.getSecond();
                 if (messageData != null) {
