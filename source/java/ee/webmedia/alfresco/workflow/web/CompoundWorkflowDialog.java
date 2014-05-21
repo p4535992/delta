@@ -146,6 +146,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
     private boolean showEmptyWorkflowMessage = true;
     private boolean disableDocumentUpdate;
     private boolean finishImplConfirmed;
+    private boolean confirmationAsked;
 
     private static final List<QName> knownWorkflowTypes = Arrays.asList(//
             WorkflowSpecificModel.Types.SIGNATURE_WORKFLOW
@@ -1076,6 +1077,10 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
 
     @Override
     protected void preprocessWorkflow() {
+        if (confirmationAsked) {
+            // if the user is redirected to confirmation page then these methods have already fired
+            return;
+        }
         super.preprocessWorkflow();
         removeImproperDueDateDays();
         setNewTaskDueDateFromGroup();
@@ -1822,19 +1827,24 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
 
     @Override
     public void afterConfirmationAction(Object action) {
-        switch ((WorkflowServiceImpl.DialogAction) action) {
-        case SAVING:
-            if (saveCompWorkflow()) {
-                resetState();
-                initBlocks();
-                WebUtil.navigateTo(getDefaultFinishOutcome());
+        try {
+            confirmationAsked = true;
+            switch ((WorkflowServiceImpl.DialogAction) action) {
+            case SAVING:
+                if (saveCompWorkflow()) {
+                    resetState();
+                    initBlocks();
+                    WebUtil.navigateTo(getDefaultFinishOutcome());
+                }
+                break;
+            case STARTING:
+                startValidatedWorkflow(null);
+                break;
+            case CONTINUING:
+                continueValidatedWorkflow();
             }
-            break;
-        case STARTING:
-            startValidatedWorkflow(null);
-            break;
-        case CONTINUING:
-            continueValidatedWorkflow();
+        } finally {
+            confirmationAsked = false;
         }
     }
 

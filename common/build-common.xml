@@ -138,6 +138,8 @@
 		<delete file="${common.dir.lib.server}/xercesImpl-2.8.0.jar" />
 		<!-- Newer version (1.3.04) of xml-apis is added from common/lib folder -->
 		<delete file="${common.dir.lib.server}/xml-apis.jar" />
+      <!-- Newer version of bcel is added from common/lib folder -->
+      <delete file="${common.dir.lib.server}/bcel.jar" />
 	</target>
 
 	<target name="setup-project-done">
@@ -337,7 +339,7 @@
 			<zipfileset dir="${project.basedir}/doc" includes="Delta_P*.docx" />
 			<zipfileset file="${conf.basedir}/${conf.name}/classes/alfresco-global.properties" />
 			<zipfileset dir="${common.dir.etc}" includes="index.jsp,jvm-error.sh,krb5.conf,nginx-*.conf.example,soffice-monitor.sh,tomcat-sslvalve-fixed.jar,tomcat.sh,OpenOffice_WebDAV_Protocol.reg" />
-		    <zipfileset file="${project.dir.build}/menetlus-import-sql.zip" />
+		   <zipfileset file="${project.dir.build}/menetlus-import-sql.zip" />
 		</zip>
 	</target>
 
@@ -483,26 +485,25 @@
 
 	<!-- ============= Code analyzer targets ============= -->
 
-	<target name="findbugs" description="Checks codebase with FindBugs tool">
-		<delete dir="${project.dir.test.reports}/findbugs" failonerror="false" />
-		<mkdir dir="${project.dir.test.reports}/findbugs" />
+   <target name="findbugs" description="Checks codebase with FindBugs tool">
+      <delete dir="${project.dir.test.reports}/findbugs" failonerror="false" />
+      <mkdir dir="${project.dir.test.reports}/findbugs" />
 
-		<taskdef resource="edu/umd/cs/findbugs/anttask/tasks.properties" classpathref="classpath" />
-		<!-- TODO use excludeFilter for bugs? -->
-		<findbugs classpathref="classpath"
-                pluginlist="${common.dir.lib.dev}/findbugs.jar"
-                output="xml:withMessages"
-                outputFile="${project.dir.test.reports}/findbugs/findbugs.xml"
+      <taskdef name="findbugs" classname="edu.umd.cs.findbugs.anttask.FindBugsTask" classpathref="classpath" />
+      <findbugs home="${common.dir.lib.dev}/findbugs/"
                 projectName="${project.name}"
+                output="html"
+                stylesheet="fancy-hist.xsl"
+                outputFile="${project.dir.test.reports}/findbugs/findbugs.html"
                 includeFilter="${common.dir.etc}/findbugsIncludePackages.xml"
-                failOnError="true"
-                timeout="900000">
-			<auxClasspath refid="classpath" />
-			<sourcePath path="${common.dir.src}" />
-			<sourcePath path="${project.dir.src}" />
-			<class location="${project.dir.exploded.classes}" />
-		</findbugs>
-	</target>
+                timeout="900000"
+            >
+         <auxClasspath refid="classpath" />
+         <class location="${project.dir.exploded.classes}" />
+         <sourcePath path="${common.dir.src}" />
+         <sourcePath path="${project.dir.src}" />
+      </findbugs>
+   </target>
 
 	<target name="show-findbugs-report" depends="init">
 		<exec executable="${browser}" spawn="true">
