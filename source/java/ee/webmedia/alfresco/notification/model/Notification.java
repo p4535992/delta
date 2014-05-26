@@ -19,6 +19,7 @@ public class Notification implements Serializable {
     private String subject;
     private boolean attachFiles;
     private boolean failOnError;
+    private boolean toPerson;
     private Map<String, String> additionalFormulas;
 
     public void clearRecipients() {
@@ -112,6 +113,14 @@ public class Notification implements Serializable {
 
     public void setAdditionalFormulas(Map<String, String> additionalFormulas) {
         this.additionalFormulas = additionalFormulas;
+    }
+
+    public boolean isToPerson() {
+        return toPerson;
+    }
+
+    public void setToPerson(boolean toPerson) {
+        this.toPerson = toPerson;
     }
 
     @Override
