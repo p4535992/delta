@@ -431,7 +431,7 @@ public class NotificationServiceImpl implements NotificationService {
             Date now = new Date();
             for (Notification notification : notifications) {
                 boolean notificationSent = sendNotification(notification, docRef, setupTemplateData(task), isDocumentWF);
-                if (notificationSent && isDocumentWF && isNewTaskNotification) {
+                if (notificationSent && isDocumentWF && isNewTaskNotification && !notification.isToPerson()) {
                     Map<QName, Serializable> props = new HashMap<QName, Serializable>();
                     props.put(DocumentCommonModel.Props.SEND_INFO_RECIPIENT, task.getOwnerName());
                     props.put(DocumentCommonModel.Props.SEND_INFO_SEND_DATE_TIME, now);
@@ -781,6 +781,7 @@ public class NotificationServiceImpl implements NotificationService {
                 // Send to system user
                 Notification notification = setupNotification(NotificationModel.NotificationType.TASK_NEW_TASK_NOTIFICATION, getTaskWorkflowType(task));
                 notification.addRecipient(task.getOwnerName(), task.getOwnerEmail());
+                notification.setToPerson(true);
                 notifications.add(notification);
             }
         } else if (StringUtils.isEmpty(task.getInstitutionName())) {
