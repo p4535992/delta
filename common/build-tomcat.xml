@@ -44,13 +44,16 @@
 
    <target name="tomcat-deploy" depends="tomcat-stop, war">
       <move file="${project.build.result.war}" tofile="${dir.tomcat}/webapps/dhs.war" />
+   </target>
+
+   <target name="tomcat-clean" description="Removes project related files from Tomcat webapps, work, temp and configuration folder" >
       <delete dir="${dir.tomcat}/webapps/dhs" />
       <delete dir="${dir.tomcat}/work/Catalina/localhost/dhs" />
       <delete dir="${dir.tomcat}/temp/Alfresco" />
       <delete file="${dir.tomcat}/conf/Catalina/localhost/dhs.xml" />
    </target>
 
-   <target name="deploy" depends="tomcat-deploy, tomcat-start" description="Compile sources and start Tomcat server" />
+   <target name="deploy" depends="tomcat-clean, tomcat-deploy, tomcat-start" description="Compile sources and start Tomcat server" />
 
    <target name="redeploy" depends="tomcat-stop, deploy" description="Stop Tomcat, compile sources and start Tomcat" />
 

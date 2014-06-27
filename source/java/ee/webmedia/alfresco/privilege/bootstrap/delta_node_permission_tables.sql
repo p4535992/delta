@@ -12,9 +12,6 @@ CREATE TABLE delta_node_inheritspermissions
 WITH (
   OIDS=FALSE
 );
-
-ALTER TABLE delta_node_inheritspermissions
-  OWNER TO alfresco;
   
 -- Table: delta_node_permission
 
@@ -37,9 +34,6 @@ CREATE TABLE delta_node_permission
 WITH (
   OIDS=FALSE
 );
-
-ALTER TABLE delta_node_permission
-  OWNER TO alfresco;
 
 CREATE INDEX ON delta_node_permission (create_document) WHERE create_document = TRUE;
 CREATE INDEX ON delta_node_permission (view_document_meta_data) WHERE view_document_meta_data = FALSE;
