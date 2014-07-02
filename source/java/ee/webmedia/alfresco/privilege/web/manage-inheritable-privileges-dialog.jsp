@@ -60,7 +60,7 @@
    or in case of series permissions management: 
    documents without view-permission are visible
     --%>
-   <h:outputText value="#{ManageInheritablePrivilegesDialog.typeHandler.checkboxLabel}" />
+   <h:outputText id="inheritsLabel" value="#{ManageInheritablePrivilegesDialog.typeHandler.checkboxLabel}" />
    <h:selectBooleanCheckbox value="#{ManageInheritablePrivilegesDialog.typeHandler.checkboxValue}" styleClass="saveIfNeeded" valueChangeListener="#{ManageInheritablePrivilegesDialog.typeHandler.checkboxChanged}" disabled="#{!ManageInheritablePrivilegesDialog.typeHandler.editable}" />
 
    <a:richList id="permissions-list" binding="#{ManageInheritablePrivilegesDialog.permissionsRichList}" value="#{ManageInheritablePrivilegesDialog.userPrivilegesRows}" var="r" refreshOnBind="true"

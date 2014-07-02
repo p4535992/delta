@@ -203,6 +203,9 @@ public class PrivilegeServiceImpl implements PrivilegeService {
                     }
                     boolean setDirectly = manageableNodeId.equals(nodeId);
                     if (StringUtils.startsWith(authority, AuthorityType.GROUP.getPrefixString())) {
+                        if (!authorityService.authorityExists(authority)) {
+                            continue;
+                        }
                         UserPrivileges authPrivileges = privilegesByGroup.get(authority);
                         if (authPrivileges == null) {
                             authPrivileges = new UserPrivileges(authority, authorityService.getAuthorityDisplayName(authority));
@@ -545,7 +548,7 @@ public class PrivilegeServiceImpl implements PrivilegeService {
 
         Assert.isTrue(
                 privilegesToAdd == null || privilegesToRemove == null
-                || org.apache.commons.collections.CollectionUtils.intersection(privilegesToAddList, privilegesToRemove).size() == 0,
+                        || org.apache.commons.collections.CollectionUtils.intersection(privilegesToAddList, privilegesToRemove).size() == 0,
                 "Cannot add and remove privileges at same time: adding " + privilegesToAddList + ", removing: " + privilegesToRemove);
 
         StringBuffer permissionColumns = new StringBuffer();

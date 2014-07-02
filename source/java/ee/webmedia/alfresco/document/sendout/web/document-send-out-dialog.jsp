@@ -106,7 +106,7 @@
       <h:selectBooleanCheckbox value="#{DocumentSendOutDialog.model.encrypt}" />
       
       <h:panelGroup>
-         <f:verbatim><span></f:verbatim><h:outputText value="#{msg.document_send_subject}" /><f:verbatim></span></f:verbatim>
+         <f:verbatim><span></f:verbatim><h:outputText id="subject" value="#{msg.document_send_subject}" /><f:verbatim></span></f:verbatim>
       </h:panelGroup>
       <h:inputTextarea value="#{DocumentSendOutDialog.model.subject}" styleClass="expand19-200 long"/>
       
@@ -114,7 +114,7 @@
          <f:verbatim><span></f:verbatim><h:outputText value="#{msg.document_send_template}" /><f:verbatim></span></f:verbatim>
       </h:panelGroup>
       <h:panelGroup styleClass="no-icon">
-         <h:selectOneMenu value="#{DocumentSendOutDialog.model.template}">
+         <h:selectOneMenu id="templateSelect" value="#{DocumentSendOutDialog.model.template}">
             <f:selectItems value="#{DocumentSendOutDialog.emailTemplates}" />
          </h:selectOneMenu>
          <h:commandLink id="setTemplateBtn" value="#{msg.document_set_template}" actionListener="#{DocumentSendOutDialog.updateTemplate}" styleClass="disableUnlock" />

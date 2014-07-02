@@ -164,7 +164,7 @@ public class ComponentUtil {
 
     /**
      * Put attribute to given component
-     * 
+     *
      * @param component
      * @param key
      * @param value
@@ -191,7 +191,7 @@ public class ComponentUtil {
     /**
      * Convenience method that doesn't produce compiler warning
      * "Type safety: The expression of type Map needs unchecked conversion to conform to Map<String,Object>"
-     * 
+     *
      * @param component
      * @return <code>component.getAttributes()</code>
      */
@@ -277,7 +277,7 @@ public class ComponentUtil {
 
     /**
      * Add children to the component
-     * 
+     *
      * @param component
      * @param children - children to be added or null - then just children of the component are returned without adding any children
      * @return children of the component
@@ -565,7 +565,7 @@ public class ComponentUtil {
 
     /**
      * Determines whether the given component is disabled or readonly
-     * 
+     *
      * @param component The component to test
      * @return true if the component is either disabled or set to readonly
      */
@@ -589,7 +589,7 @@ public class ComponentUtil {
 
     /**
      * Creates the converter with the given id and adds it to the component. Implementation copied from {@link BaseComponentGenerator}.
-     * 
+     *
      * @param context FacesContext
      * @param converterId The name of the converter to create, ignored if {@code null}
      * @param component The component to add the converter to, ignored if not instance of {@link ValueHolder}
@@ -623,7 +623,7 @@ public class ComponentUtil {
 
     /**
      * Sets the listbox size (if is listbox) so that size is 1 .. 4
-     * 
+     *
      * @param component
      * @param selectItems
      */
@@ -701,7 +701,9 @@ public class ComponentUtil {
         buf.append("']['");
         buf.append(StringEscapeUtils.escapeJavaScript(fieldId));
         buf.append("'].value='");
-        buf.append(StringEscapeUtils.escapeJavaScript(value));
+        String escapeJavaScript = StringEscapeUtils.escapeJavaScript(value);
+        // Take back forward slash modifications for JMeter tests
+        buf.append(escapeJavaScript.replaceAll("\\\\/", "/"));
         buf.append("';");
         return buf.toString();
     }
@@ -816,7 +818,7 @@ public class ComponentUtil {
 
     /**
      * NB! Before calling this, check if given child is rendered!
-     * 
+     *
      * @param child
      * @param search
      * @param out
@@ -878,11 +880,11 @@ public class ComponentUtil {
         String sep = "\", \"";
         StringBuffer sb = new StringBuffer("<script type=\"text/javascript\">");
         sb.append("addSearchSuggest(\"")
-                .append(clientId).append(sep)
-                .append(containerClientId).append(sep)
-                .append(pickerCallback).append(sep)
-                .append(filter).append(sep)
-                .append(submitUri).append("\");");
+        .append(clientId).append(sep)
+        .append(containerClientId).append(sep)
+        .append(pickerCallback).append(sep)
+        .append(filter).append(sep)
+        .append(submitUri).append("\");");
         sb.append("</script>");
         return sb.toString();
     }
@@ -901,7 +903,7 @@ public class ComponentUtil {
      * If <code>componentPropVO.isUseComponentGenerator()</code> then parent component (whose 'children' is provided) needs to be added to component tree before
      * calling this method, because the validations are setup and
      * these need access to the component id, which in turn needs to have a parent to get the correct id.<br>
-     * 
+     *
      * @param context
      * @param componentPropVO
      * @param propertySheet
@@ -970,7 +972,7 @@ public class ComponentUtil {
             final String converterName = customAttributes.get(JSF_CONVERTER);
             if (StringUtils.isNotBlank(converterName)) {
                 try {// XXX: pm võiks külge panna ka property tüübi järgi mingid default
-                     // converterid(a la double tüübi puhul DoubleConverter), et ei peaks käsitsi attribuute lisama
+                    // converterid(a la double tüübi puhul DoubleConverter), et ei peaks käsitsi attribuute lisama
                     @SuppressWarnings("unchecked")
                     final Class<Converter> converterClass = (Class<Converter>) Class.forName(converterName);
                     final Converter converter = converterClass.newInstance();
@@ -990,7 +992,7 @@ public class ComponentUtil {
 
     /**
      * Method that constructs component without using componentGenerators
-     * 
+     *
      * @param context
      * @param vo
      * @param propertySheet
@@ -1304,7 +1306,7 @@ public class ComponentUtil {
 
     /**
      * Creates new {@link FacesEvent} using closure, that is executed once in given phase
-     * 
+     *
      * @param phaseId
      * @param uiComponent
      * @param closure
@@ -1323,7 +1325,7 @@ public class ComponentUtil {
 
     /**
      * Similar method for {@link UISelectItem} objects is {@link GeneralSelectorGenerator#addDefault(FacesContext, List)}
-     * 
+     *
      * @param results
      * @param context
      */
