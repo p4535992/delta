@@ -82,6 +82,7 @@
             <aspect>ab:orgPrivate</aspect>
             <aspect>ab:taskCapable</aspect>
             <aspect>ab:encryptionPersonId</aspect>
+            <aspect>ab:decTaskCapable</aspect>
          </mandatory-aspects>
       </type>
       
@@ -271,6 +272,16 @@
             <property name="ab:sapAccount">
                <type>d:text</type>
             </property>            
+         </properties>
+      </aspect>
+      
+      <aspect name="ab:decTaskCapable">
+         <properties>
+            <property name="ab:decTaskCapable">
+               <type>d:boolean</type>
+               <mandatory enforced="true">false</mandatory>               
+               <default>false</default>
+            </property>
          </properties>
       </aspect>
 

@@ -95,9 +95,10 @@
    <config evaluator="aspect-name" condition="ab:organizationProperties">
       <property-sheet>
          <show-property name="ab:taskCapable" readOnlyIf="#{AddressbookAddEditDialog.getNotAllowedEditTaskCapable}" />
+         <show-property name="ab:decTaskCapable" readOnlyIf="#{AddressbookAddEditDialog.notDecTaskCapable}" />
       </property-sheet>
    </config>
-
+   
    <config evaluator="aspect-name" condition="ab:encryptionPersonId">
       <property-sheet>
          <show-property name="ab:encryptionPersonId" />

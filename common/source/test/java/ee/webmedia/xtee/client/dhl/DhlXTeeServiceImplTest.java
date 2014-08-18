@@ -58,7 +58,7 @@ import ee.webmedia.xtee.client.service.configuration.provider.XTeeProviderProper
 public class DhlXTeeServiceImplTest extends TestCase {
 
     private static Log log = LogFactory.getLog(DhlXTeeServiceImplTest.class);
-    private static DhlXTeeService dhl;
+    protected static DhlXTeeService dhl;
     private static XTeeProviderPropertiesResolver propertiesResolver;
 
     private static String SENDER_REG_NR;
@@ -369,7 +369,7 @@ public class DhlXTeeServiceImplTest extends TestCase {
         }
     }
 
-    private AadressType getRecipient(String regNr) {
+    protected AadressType getRecipient(String regNr) {
         AadressType recipient = AadressType.Factory.newInstance();
         recipient.setRegnr(regNr);
         // recipient.setAsutuseNimi(recipientName); // set in DhlXTeeServiceImpl.constructDokumentDocument() based on regNr
@@ -377,7 +377,7 @@ public class DhlXTeeServiceImplTest extends TestCase {
         return recipient;
     }
 
-    private AadressType getSenderAddress() {
+    protected AadressType getSenderAddress() {
         AadressType sender = AadressType.Factory.newInstance();
         sender.setRegnr(SENDER_REG_NR);
         // sender.setAsutuseNimi(senderName); // set in DhlXTeeServiceImpl.constructDokumentDocument() based on regNr

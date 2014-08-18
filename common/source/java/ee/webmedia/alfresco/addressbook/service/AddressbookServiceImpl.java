@@ -575,7 +575,7 @@ public class AddressbookServiceImpl extends AbstractSearchServiceImpl implements
 
     @Override
     public NodeRef getOrganizationNodeRef(String orgEmail, String orgName) {
-        if (StringUtils.isBlank(orgName) || StringUtils.isBlank(orgName)) {
+        if (StringUtils.isBlank(orgEmail) || StringUtils.isBlank(orgName)) {
             return null;
         }
         return BeanHelper.getDocumentSearchService().searchOrganizationNodeRef(orgEmail, orgName);

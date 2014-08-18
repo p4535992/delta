@@ -71,7 +71,6 @@
 		<fileset dir="${common.dir.lib.dev}" includes="**/*.jar" />
 		<fileset dir="${project.dir.exploded.lib}" includes="**/*.jar" />
 		<fileset dir="${common.basedir}/lib-dev-${appserver}" includes="**/*.jar" />
-		<fileset dir="${project.dir.lib.dev}" includes="**/*.jar" />
 	</path>
 
 
@@ -385,15 +384,15 @@
 		<delete dir="${project.dir.test.classes}" failonerror="false" />
 		<mkdir dir="${project.dir.test.classes}" />
 		<copy todir="${project.dir.test.classes}" preservelastmodified="true" overwrite="true">
-			<fileset dir="${common.dir.src.test}" excludes="**/*.java,**/*_en_US.properties" />
+			<fileset dir="${common.dir.src.test}" excludes="**/*.java,**/*_en_US.properties,**/selenium/**" />
 		</copy>
 		<copy todir="${project.dir.test.classes}" preservelastmodified="true" overwrite="true">
-			<fileset dir="${project.dir.src.test}" excludes="**/*.java,**/*_en_US.properties" />
+			<fileset dir="${project.dir.src.test}" excludes="**/*.java,**/*_en_US.properties,**/selenium/**" />
 		</copy>
 		<copy todir="${project.dir.test.classes}" preservelastmodified="true" overwrite="true" verbose="true">
-			<fileset dir="${conf.basedir}/${conf.name}/classes" excludes="**/*.java,**/*_en_US.properties" />
+			<fileset dir="${conf.basedir}/${conf.name}/classes" excludes="**/*.java,**/*_en_US.properties,**/selenium/**" />
 		</copy>
-		<javac destdir="${project.dir.test.classes}" classpathref="classpath.test.compile" source="1.6" target="1.6" debug="on" encoding="UTF-8">
+		<javac destdir="${project.dir.test.classes}" classpathref="classpath.test.compile" source="1.6" target="1.6" excludes="**/selenium/**" debug="on" encoding="UTF-8">
 			<compilerarg value="-Xlint" />
 			<compilerarg value="-Xlint:-deprecation" />
 			<!-- XXX why do I have "bad path element" warnings, where do these path elements come from? -->

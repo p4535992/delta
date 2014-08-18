@@ -1,5 +1,47 @@
 package ee.webmedia.alfresco.docadmin.web;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getClassificatorService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentAdminService;
+import static ee.webmedia.alfresco.docadmin.model.DocumentAdminModel.Props.CLASSIFICATOR;
+import static ee.webmedia.alfresco.docadmin.model.DocumentAdminModel.Props.CLASSIFICATOR_DEFAULT_VALUE;
+import static ee.webmedia.alfresco.docadmin.model.DocumentAdminModel.Props.DEFAULT_DATE_SYSDATE;
+import static ee.webmedia.alfresco.docadmin.model.DocumentAdminModel.Props.DEFAULT_SELECTED;
+import static ee.webmedia.alfresco.docadmin.model.DocumentAdminModel.Props.DEFAULT_USER_LOGGED_IN;
+import static ee.webmedia.alfresco.docadmin.model.DocumentAdminModel.Props.DEFAULT_VALUE;
+import static ee.webmedia.alfresco.docadmin.model.DocumentAdminModel.Props.RELATED_INCOMING_DEC_ELEMENT;
+import static ee.webmedia.alfresco.docadmin.model.DocumentAdminModel.Props.RELATED_OUTGOING_DEC_ELEMENT;
+import static ee.webmedia.alfresco.docadmin.web.DocAdminUtil.commitToMetadataContainer;
+import static ee.webmedia.alfresco.docadmin.web.DocAdminUtil.getDuplicateFieldIds;
+import static ee.webmedia.alfresco.docadmin.web.DocAdminUtil.isSavedInPreviousDocTypeVersionOrFieldDefinitions;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.StringTokenizer;
+
+import javax.faces.component.UIComponent;
+import javax.faces.component.UIInput;
+import javax.faces.component.html.HtmlSelectOneMenu;
+import javax.faces.context.FacesContext;
+import javax.faces.event.ActionEvent;
+import javax.faces.event.PhaseId;
+import javax.faces.event.ValueChangeEvent;
+import javax.faces.model.SelectItem;
+
+import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
+import org.alfresco.service.namespace.QName;
+import org.alfresco.web.bean.dialog.BaseDialogBean;
+import org.alfresco.web.ui.repo.component.property.PropertySheetItem;
+import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
+import org.apache.commons.collections.Closure;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang.StringUtils;
+import org.springframework.util.Assert;
+
 import ee.webmedia.alfresco.base.BaseObject;
 import ee.webmedia.alfresco.classificator.constant.FieldType;
 import ee.webmedia.alfresco.classificator.model.Classificator;
@@ -19,45 +61,6 @@ import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.TextUtil;
-import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
-import org.alfresco.service.namespace.QName;
-import org.alfresco.web.bean.dialog.BaseDialogBean;
-import org.alfresco.web.ui.repo.component.property.PropertySheetItem;
-import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
-import org.apache.commons.collections.Closure;
-import org.apache.commons.lang.StringUtils;
-import org.springframework.util.Assert;
-
-import javax.faces.component.UIComponent;
-import javax.faces.component.UIInput;
-import javax.faces.component.html.HtmlSelectOneMenu;
-import javax.faces.context.FacesContext;
-import javax.faces.event.ActionEvent;
-import javax.faces.event.PhaseId;
-import javax.faces.event.ValueChangeEvent;
-import javax.faces.model.SelectItem;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.StringTokenizer;
-
-import static ee.webmedia.alfresco.common.web.BeanHelper.getClassificatorService;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentAdminService;
-import static ee.webmedia.alfresco.docadmin.model.DocumentAdminModel.Props.CLASSIFICATOR;
-import static ee.webmedia.alfresco.docadmin.model.DocumentAdminModel.Props.CLASSIFICATOR_DEFAULT_VALUE;
-import static ee.webmedia.alfresco.docadmin.model.DocumentAdminModel.Props.DEFAULT_DATE_SYSDATE;
-import static ee.webmedia.alfresco.docadmin.model.DocumentAdminModel.Props.DEFAULT_SELECTED;
-import static ee.webmedia.alfresco.docadmin.model.DocumentAdminModel.Props.DEFAULT_USER_LOGGED_IN;
-import static ee.webmedia.alfresco.docadmin.model.DocumentAdminModel.Props.DEFAULT_VALUE;
-import static ee.webmedia.alfresco.docadmin.model.DocumentAdminModel.Props.RELATED_INCOMING_DEC_ELEMENT;
-import static ee.webmedia.alfresco.docadmin.model.DocumentAdminModel.Props.RELATED_OUTGOING_DEC_ELEMENT;
-import static ee.webmedia.alfresco.docadmin.web.DocAdminUtil.commitToMetadataContainer;
-import static ee.webmedia.alfresco.docadmin.web.DocAdminUtil.getDuplicateFieldIds;
-import static ee.webmedia.alfresco.docadmin.web.DocAdminUtil.isSavedInPreviousDocTypeVersionOrFieldDefinitions;
 
 /**
  * Details dialog for creating/editing objects of type field or fieldDefinition
@@ -94,6 +97,7 @@ public class FieldDetailsDialog extends BaseDialogBean {
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
         if (validate()) {
             resetHidenProps();
+            removeDecElementsWhitespaceAndUnusedTextFields();
             if (isFieldDefinition()) {
                 field = getDocumentAdminService().saveOrUpdateField(field);
                 MessageUtil.addInfoMessage(context, "save_success");
@@ -174,6 +178,32 @@ public class FieldDetailsDialog extends BaseDialogBean {
         return valid;
     }
 
+    private void removeDecElementsWhitespaceAndUnusedTextFields() {
+        List<String> incomingDecElements = field.getRelatedIncomingDecElement();
+        List<String> strippedIncomingDecElements = strip(incomingDecElements);
+        if (!CollectionUtils.isEqualCollection(incomingDecElements, strippedIncomingDecElements)) {
+            field.setRelatedIncomingDecElement(strippedIncomingDecElements);
+        }
+        List<String> relatedOutgoingDecElements = field.getRelatedOutgoingDecElement();
+        List<String> strippedOutgoingDecElements = strip(relatedOutgoingDecElements);
+        if (!CollectionUtils.isEqualCollection(relatedOutgoingDecElements, strippedOutgoingDecElements)) {
+            field.setRelatedOutgoingDecElement(strippedOutgoingDecElements);
+        }
+    }
+
+    private List<String> strip(List<String> relatedDecElements) {
+        List<String> strippedDecElements = new ArrayList<String>();
+        for (String decElement : relatedDecElements) {
+            String stripped = StringUtils.deleteWhitespace(decElement);
+            if (StringUtils.isEmpty(stripped)) {
+                continue;
+            }
+            strippedDecElements.add(stripped);
+        }
+        return strippedDecElements;
+    }
+
+    
     private boolean validateDecMappings(boolean valid, List<String> incomingDecElements, List<String> outgoingDecElements) {
         List<String> incomingDecMappings = new ArrayList<String>();
         if (incomingDecElements != null) {
@@ -197,21 +227,22 @@ public class FieldDetailsDialog extends BaseDialogBean {
         }
 
         if (!incomingDecMappings.isEmpty()) {
-            valid = validateMappings(incomingDecMappings, MessageUtil.getMessage("docadmin_documentAdminModel.property.docadmin_relatedIncomingDecElement.title"), valid);
+            valid = validateMappings(incomingDecMappings, MessageUtil.getMessage("docadmin_documentAdminModel.property.docadmin_relatedIncomingDecElement.title"), valid, false);
         }
         if ((outgoingDecElements != null && !outgoingDecElements.isEmpty())) {
-            valid = validateMappings(outgoingDecElements, MessageUtil.getMessage("docadmin_documentAdminModel.property.docadmin_relatedOutgoingDecElement.title"), valid);
+            valid = validateMappings(outgoingDecElements, MessageUtil.getMessage("docadmin_documentAdminModel.property.docadmin_relatedOutgoingDecElement.title"), valid, true);
         }
 
         return valid;
     }
 
-    private boolean validateMappings(Iterable<String> decMappings, String fieldName, boolean valid) {
+    private boolean validateMappings(Iterable<String> decMappings, String fieldName, boolean valid, boolean isOutgoing) {
         for (String decElementPath : decMappings) {
             if (StringUtils.isBlank(decElementPath)) {
                 continue;
             }
-            if (!DecContainerHandler.hasUserKey(decElementPath)) {
+            decElementPath = StringUtils.deleteWhitespace(decElementPath);
+            if (!DecContainerHandler.hasUserKey(decElementPath) || (isOutgoing && DecContainerHandler.isDisallowedOutgoingUserElement(decElementPath))) {
                 MessageUtil.addErrorMessage("field_details_error_dvk_missing_element", fieldName, decElementPath);
                 valid = false;
                 continue;
@@ -457,7 +488,7 @@ public class FieldDetailsDialog extends BaseDialogBean {
 
     /**
      * used by property sheet
-     * 
+     *
      * @param context
      * @param selectComponent
      * @return classificator values to be shown

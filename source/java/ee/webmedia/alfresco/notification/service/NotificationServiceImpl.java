@@ -798,7 +798,7 @@ public class NotificationServiceImpl implements NotificationService {
             // if sending over dvk failed then document will be sent via e-mail
             NodeRef orgNodeRef = getAddressbookService().getOrganizationNodeRef(ownerEmail, ownerName);
             if (CompoundWorkflowType.INDEPENDENT_WORKFLOW.equals(type) || CompoundWorkflowType.DOCUMENT_WORKFLOW.equals(type) &&
-                    ((orgNodeRef != null && Boolean.FALSE.equals(nodeService.getProperty(orgNodeRef, AddressbookModel.Props.DVK_CAPABLE))) || !sentOverDvk)) {
+                    ((orgNodeRef != null && Boolean.FALSE.equals(nodeService.getProperty(orgNodeRef, AddressbookModel.Props.DEC_TASK_CAPABLE))) || !sentOverDvk)) {
                 // Send to third party
                 Notification notification = setupNotification(NotificationModel.NotificationType.TASK_NEW_TASK_NOTIFICATION, 1, type);
                 notification.setSenderEmail(parametersService.getStringParameter(Parameters.DOC_SENDER_EMAIL));

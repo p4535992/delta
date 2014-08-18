@@ -13,6 +13,7 @@ import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -27,13 +28,6 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
-import ee.webmedia.alfresco.log.model.LogEntry;
-import ee.webmedia.alfresco.log.model.LogObject;
-import ee.webmedia.alfresco.utils.DvkUtil;
-import ee.webmedia.alfresco.utils.MessageUtil;
-import ee.webmedia.xtee.client.dhl.DhlDocumentVersion;
-import ee.webmedia.xtee.client.dhl.DhlXTeeService;
-import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.deccontainer.vers21.DecContainerDocument;
 import org.alfresco.i18n.I18NUtil;
 import org.alfresco.repo.content.MimetypeMap;
 import org.alfresco.repo.transaction.RetryingTransactionHelper;
@@ -53,7 +47,6 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.Transformer;
 import org.apache.commons.lang.StringUtils;
 import org.apache.xml.security.exceptions.Base64DecodingException;
-import org.apache.xml.security.utils.Base64;
 import org.apache.xmlbeans.XmlException;
 import org.apache.xmlbeans.XmlObject;
 import org.apache.xmlbeans.XmlTokenSource;
@@ -84,13 +77,17 @@ import ee.webmedia.alfresco.dvk.model.DvkModel;
 import ee.webmedia.alfresco.dvk.model.DvkSendReviewTask;
 import ee.webmedia.alfresco.dvk.model.DvkSendWorkflowDocuments;
 import ee.webmedia.alfresco.dvk.service.ReviewTaskException.ExceptionType;
+import ee.webmedia.alfresco.log.model.LogEntry;
+import ee.webmedia.alfresco.log.model.LogObject;
 import ee.webmedia.alfresco.monitoring.MonitoredService;
 import ee.webmedia.alfresco.monitoring.MonitoringUtil;
 import ee.webmedia.alfresco.notification.model.NotificationModel;
 import ee.webmedia.alfresco.notification.service.NotificationService;
 import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.series.model.Series;
+import ee.webmedia.alfresco.utils.DvkUtil;
 import ee.webmedia.alfresco.utils.FilenameUtil;
+import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.volume.service.VolumeService;
@@ -108,12 +105,14 @@ import ee.webmedia.alfresco.workflow.service.Workflow;
 import ee.webmedia.alfresco.workflow.service.WorkflowDbService;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
 import ee.webmedia.alfresco.workflow.service.WorkflowUtil;
+import ee.webmedia.xtee.client.dhl.DhlDocumentVersion;
+import ee.webmedia.xtee.client.dhl.DhlXTeeService;
 import ee.webmedia.xtee.client.dhl.DhlXTeeService.ContentToSend;
 import ee.webmedia.xtee.client.dhl.DhlXTeeService.ReceivedDocumentsWrapper.ReceivedDocument;
 import ee.webmedia.xtee.client.dhl.DhlXTeeService.SendStatus;
-import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.dhl.DhlDokumentType;
+import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.deccontainer.vers21.DecContainerDocument;
+import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.deccontainer.vers21.DecContainerDocument.DecContainer.Transport.DecRecipient;
 import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.dhl.EdastusDocument.Edastus;
-import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.dhl.MetaxmlDocument.Metaxml;
 import ee.webmedia.xtee.client.dhl.types.ee.riik.xtee.dhl.producers.producer.dhl.GetSendStatusResponseTypeUnencoded.Item;
 
 public class DvkServiceSimImpl extends DvkServiceImpl {
@@ -170,7 +169,9 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
             statusesByIds.put(dhlId, statusesForDvkId);
             List<Edastus> forwardings = item.getEdastusList();
             for (Edastus forwarding : forwardings) {
-                Pair<SendStatus, Date> sendStatusAndReceivedTime = new Pair<SendStatus, Date>(SendStatus.get(forwarding.getStaatus()), forwarding.getEdastatud().getTime());
+                Calendar read = forwarding.getLoetud();
+                Date receiveTime = read != null ? read.getTime() : null;
+                Pair<SendStatus, Date> sendStatusAndReceivedTime = new Pair<SendStatus, Date>(SendStatus.get(forwarding.getStaatus()), receiveTime);
                 String regNr = taskDvkIdsAndRegNrs.containsKey(dhlId) ? taskDvkIdsAndRegNrs.get(dhlId) : forwarding.getSaaja().getRegnr();
                 if (AditService.NAME.equalsIgnoreCase(regNr)) {
                     // For documents that were sent to "adit" the recipient regNr value will be "adit". Use id codes instead to distinguish between recipients.
@@ -249,7 +250,8 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
     }
 
     @Override
-    protected NodeRef createDocumentNode(Map<QName, Serializable> documentProperties, NodeRef dvkIncomingFolder, String nvlDocumentTitle, boolean isAditDocument, String messageForRecipient) {
+    protected NodeRef createDocumentNode(Map<QName, Serializable> documentProperties, NodeRef dvkIncomingFolder, String nvlDocumentTitle, boolean isAditDocument,
+            String messageForRecipient) {
         final NodeRef docRef = documentDynamicService.createNewDocument(
                 SystematicDocumentType.INCOMING_LETTER.getId(),
                 dvkIncomingFolder).getFirst().getNodeRef();
@@ -658,7 +660,8 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
             return;
         }
         previouslyFailedDvkIds.add(dhlId);
-        final XmlObject dhlDocument = DhlDocumentVersion.VER_1.equals(receivedDocument.getDocumentVersion()) ? receivedDocument.getDhlDocument() : receivedDocument.getDhlDocumentV2();
+        final XmlObject dhlDocument = DhlDocumentVersion.VER_1.equals(receivedDocument.getDocumentVersion()) ? receivedDocument.getDhlDocument() : receivedDocument
+                .getDhlDocumentV2();
         try {
             String corruptDocName = DvkUtil.getCorruptedDocumentName(receivedDocument, dhlId);
             SimpleDateFormat format = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
@@ -806,20 +809,19 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
         sendReviewTask.setRecipientDocNode(nodeToSend);
 
         try {
-            DecContainerDocument.DecContainer.Transport.DecRecipient recipient = DecContainerDocument.DecContainer.Transport.DecRecipient.Factory.newInstance();
+            DecRecipient recipient = DecRecipient.Factory.newInstance();
             if (!workflowService.isInternalTesting()) {
                 recipient.setOrganisationCode(sendReviewTask.getRecipientsRegNr());
-                recipient.setStructuralUnit(sendReviewTask.getInstitutionName());
             } else {
                 // For internal testing, always send task to current organization itself
                 DecContainerDocument.DecContainer.Transport.DecSender senderAddress = getSenderAddress();
                 recipient.setOrganisationCode(senderAddress.getOrganisationCode());
-                recipient.setStructuralUnit(senderAddress.getStructuralUnit());
             }
 
             if (isDvkCapable(addressbookService.getDvkCapableOrgs(), recipient.getOrganisationCode())) {
                 final Set<String> sendDocuments = dhlXTeeService.sendDocuments(new ArrayList<DhlXTeeService.ContentToSend>(),
-                        new DecContainerDocument.DecContainer.Transport.DecRecipient[] { recipient }, getSenderAddress(), new DhsSendReviewNotificationCallback(sendReviewTask), getSendDocumentRequestCallback());
+                        new DecRecipient[] { recipient }, getSenderAddress(), new DhsSendReviewNotificationCallback(sendReviewTask),
+                        getSendDocumentRequestCallback());
                 Assert.isTrue(1 == sendDocuments.size(), "Surprise! Size of sendDocuments is " + sendDocuments.size());
                 if (!isDeletingNotification) {
                     String dvkId = sendDocuments.iterator().next();
@@ -832,12 +834,12 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
                     BeanHelper.getLogService().addLogEntry(
                             LogEntry.create(LogObject.TASK, BeanHelper.getUserService(), task.getNodeRef(), "applog_task_review_delete_sent_to_dvk", task.getOwnerName(),
                                     task.getInstitutionName(), MessageUtil.getTypeName(task.getType()))
-                    );
+                            );
                 } else {
                     BeanHelper.getLogService().addLogEntry(
                             LogEntry.create(LogObject.TASK, BeanHelper.getUserService(), task.getNodeRef(), "applog_task_review_sent_to_dvk", task.getOwnerName(),
                                     task.getInstitutionName(), MessageUtil.getTypeName(task.getType()))
-                    );
+                            );
                 }
                 MonitoringUtil.logSuccess(MonitoredService.OUT_XTEE_DVK);
                 return true;
@@ -1083,14 +1085,13 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
 
     @Override
     public boolean isDvkCapable(List<Node> dvkCapableOrgs, String recipientOrgCode) {
-        boolean isDvkCapable = false;
         for (Node organization : dvkCapableOrgs) {
             String orgCode = (String) organization.getProperties().get(AddressbookModel.Props.ORGANIZATION_CODE.toString());
             if (recipientOrgCode.equalsIgnoreCase(orgCode)) {
-                isDvkCapable = true;
+                return true;
             }
         }
-        return isDvkCapable;
+        return false;
     }
 
     // TODO: maybe move to ExporterComponent?

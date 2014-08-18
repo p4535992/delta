@@ -1,39 +1,42 @@
 package ee.webmedia.alfresco.dvk.service;
 
 import java.lang.reflect.Method;
-import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableMap;
+import java.util.TreeMap;
 import java.util.regex.Pattern;
 
-import ee.webmedia.alfresco.classificator.constant.FieldType;
-import ee.webmedia.alfresco.utils.MessageUtil;
-import ee.webmedia.alfresco.utils.UnableToPerformException;
 import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
 import org.apache.commons.collections4.map.CaseInsensitiveMap;
 import org.apache.commons.lang.StringUtils;
 import org.apache.xmlbeans.XmlObject;
-
-import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.deccontainer.vers21.DecContainerDocument.DecContainer;
 import org.springframework.util.Assert;
+
+import ee.webmedia.alfresco.classificator.constant.FieldType;
+import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.utils.UnableToPerformException;
+import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.deccontainer.vers21.DecContainerDocument.DecContainer;
 
 public class DecContainerHandler {
 
     private static final String LIST_METHOD_SUFFIX = "List";
     private static final List<List<String>> ALLOWED_KEYS = new ArrayList<List<String>>();
     private static final Map<String, List<String>> USER_ALLOWED_KEYS = new CaseInsensitiveMap<String, List<String>>();
+    private static final List<List<String>> OUTGOING_USER_DISALLOWED_KEYS = new ArrayList<List<String>>();
+    private static final Map<String, List<String>> OUTGOING_FORBIDDEN_KEYS = new CaseInsensitiveMap<String, List<String>>();
     private static final List<FieldType> STRING_COMPATIBLE = new ArrayList<FieldType>();
     private static final List<FieldType> STRING_FIELDS = new ArrayList<FieldType>();
     private static final List<String> BOOLEAN_KEYS = new ArrayList<String>(Arrays.asList("Adit"));
     private static final List<String> INTEGER_KEYS = new ArrayList<String>(Arrays.asList("PostalCode"));
-    private static final List<String> DATE_TIME_KEYS = new ArrayList<String>(Arrays.asList("InitiatorRecordDate", "RecordDateRegistered", "ReplyDueDate", "RestrictionBeginDate", "RestrictionEndDate", "RestrictionInvalidSince", "SignatureVerificationDate"));
+    private static final List<String> DATE_TIME_KEYS = new ArrayList<String>(Arrays.asList("InitiatorRecordDate", "RecordDateRegistered", "ReplyDueDate", "RestrictionBeginDate",
+            "RestrictionEndDate", "RestrictionInvalidSince", "SignatureVerificationDate"));
     private static final String LIST_PREFIX = "#list#";
     private static final String GETTER_PREFIX = "get";
     private static final String SETTER_PREFIX = "set";
     private static final String NEW_OBJECT_PREFIX = "addNew";
-    private static final Pattern PHONE_TYPE_PATTERN = Pattern.compile("([0-9])*|[+]([0-9])*");
     private static final Pattern POSTAL_CODE_TYPE_PATTERN = Pattern.compile("[0-9]{5}");
 
     static {
@@ -72,6 +75,12 @@ public class DecContainerHandler {
         ALLOWED_KEYS.add(Arrays.asList("RecordMetadata", "RecordAbstract"));
         ALLOWED_KEYS.add(Arrays.asList("RecordMetadata", "ReplyDueDate"));
 
+        addDecElementHandlers(Arrays.asList("Transport"), "DecSender");
+        addDecElementHandlers(Arrays.asList("Transport"), "DecRecipient");
+        addHandlers(Arrays.asList("SignatureMetaData"), Arrays.asList("SignatureType", "Signer", "Verified", "SignatureVerificationDate"));
+        addHandlers(Arrays.asList("Access", "AccessRestriction"), Arrays.asList("InformationOwner"));
+        addHandlers(Arrays.asList("DecMetaData"), Arrays.asList("DecId", "DecFolder", "DecReceiptDate"));
+
         STRING_COMPATIBLE.addAll(Arrays.asList(FieldType.TEXT_FIELD, FieldType.COMBOBOX, FieldType.LONG, FieldType.DOUBLE, FieldType.DATE, FieldType.COMBOBOX_EDITABLE, FieldType.USER, FieldType.USERS,
                 FieldType.CONTACT, FieldType.USER_CONTACT, FieldType.CONTACTS, FieldType.USERS_CONTACTS, FieldType.COMBOBOX_AND_TEXT, FieldType.COMBOBOX_AND_TEXT_NOT_EDITABLE, FieldType.LISTBOX, FieldType.STRUCT_UNIT));
         STRING_FIELDS.addAll(Arrays.asList(FieldType.TEXT_FIELD, FieldType.COMBOBOX, FieldType.COMBOBOX_EDITABLE, FieldType.COMBOBOX_AND_TEXT,
@@ -79,6 +88,26 @@ public class DecContainerHandler {
 
         initUserAllowedKeys();
 
+        OUTGOING_USER_DISALLOWED_KEYS.add(Arrays.asList("Recipient", "MessageForRecipient"));
+        OUTGOING_USER_DISALLOWED_KEYS.add(Arrays.asList("RecordCreator", "ContactData", "Email"));
+        OUTGOING_USER_DISALLOWED_KEYS.add(Arrays.asList("RecordCreator", "Organisation", "Name"));
+        OUTGOING_USER_DISALLOWED_KEYS.add(Arrays.asList("RecordSenderToDec", "Organisation", "Name"));
+        addAllSubelementsToDisallowedOutgoingKeyList("SignatureMetaData", "Transport", "Access", "DecMetaData");
+
+        initOutgoingUserForbiddenKeys();
+
+    }
+
+    private static void addAllSubelementsToDisallowedOutgoingKeyList(String... keys) {
+        for (String key : keys) {
+            OUTGOING_USER_DISALLOWED_KEYS.add(Arrays.asList(key));
+        }
+    }
+
+    private static void addDecElementHandlers(List<String> prefixList, String subElement) {
+        List<String> baseList = new ArrayList<String>(prefixList);
+        baseList.add(subElement);
+        addHandlers(prefixList, Arrays.asList("OrganisationCode", "StructuralUnit", "PersonalIdCode"));
     }
 
     private static void addOrganizationHandlers(List<String> prefixList) {
@@ -119,7 +148,21 @@ public class DecContainerHandler {
         for (List<String> key : ALLOWED_KEYS) {
             USER_ALLOWED_KEYS.put(getKeyAsString(listKeyEnd, key), key);
         }
+    }
 
+    private static void initOutgoingUserForbiddenKeys() {
+        NavigableMap<String, List<String>> userAllowed = new TreeMap<String, List<String>>(USER_ALLOWED_KEYS);
+        for (List<String> keyList : OUTGOING_USER_DISALLOWED_KEYS) {
+            if (keyList.size() == 1) {
+                String stringKey = StringUtils.lowerCase(getKeyAsString(0, keyList));
+                Map<String, List<String>> subMap = userAllowed.subMap(stringKey, stringKey + Character.MAX_VALUE);
+                for (List<String> key : subMap.values()) {
+                    OUTGOING_FORBIDDEN_KEYS.put(getKeyAsString(0, key), key);
+                }
+            } else {
+                OUTGOING_FORBIDDEN_KEYS.put(getKeyAsString(0, keyList), keyList);
+            }
+        }
     }
 
     private static String getKeyAsString(int listKeyElementLength, List<String> key) {
@@ -171,15 +214,11 @@ public class DecContainerHandler {
         if ("PostalCode".equals(lastElement) && !POSTAL_CODE_TYPE_PATTERN.matcher((String) value).matches()) {
             throw new UnableToPerformException("dvk_send_error_invalid_postal_code_type", fieldName);
         }
-        if ("Phone".equals(lastElement) && !PHONE_TYPE_PATTERN.matcher((String) value).matches()) {
-            throw new UnableToPerformException("dvk_send_error_invalid_phone_type", fieldName);
-        }
     }
 
     public static Object getValue(String key, DecContainer decContainer) {
         return getValue(key, decContainer, 0);
     }
-
 
     public static Object getValue(String key, XmlObject decContainerOrSubElement, int depthFromRoot) {
         List<String> methodBaseNames = USER_ALLOWED_KEYS.get(key);
@@ -200,6 +239,9 @@ public class DecContainerHandler {
     }
 
     public static Object checkType(Class<?> getterReturnType, Object value) {
+        if (value == null) {
+            return null;
+        }
         Class<?> valueClass = value.getClass();
         if (value != null && !getterReturnType.isAssignableFrom(valueClass)) {
             if (isConvertable(valueClass, getterReturnType)) {
@@ -290,6 +332,10 @@ public class DecContainerHandler {
 
     public static boolean hasUserKey(String key) {
         return USER_ALLOWED_KEYS.containsKey(key);
+    }
+
+    public static boolean isDisallowedOutgoingUserElement(String key) {
+        return OUTGOING_FORBIDDEN_KEYS.containsKey(key);
     }
 
     private static Method getSimpleTypeGetterMethod(XmlObject parent, String simpleTypeMethodBaseName) {
