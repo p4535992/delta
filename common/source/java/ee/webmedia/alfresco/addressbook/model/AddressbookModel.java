@@ -60,6 +60,7 @@ public interface AddressbookModel {
         QName SAP_ACCOUNT = QName.createQName(AddressbookModel.URI, "sapAccount");
         QName ENCRYPTION_PERSON_ID = QName.createQName(AddressbookModel.URI, "encryptionPersonId");
         QName MANAGEABLE_FOR_ADMIN = QName.createQName(AddressbookModel.URI, "manageableForAdmin");
+        QName DEC_TASK_CAPABLE = QName.createQName(AddressbookModel.URI, "decTaskCapable");
     }
 
     interface Aspects {
@@ -68,5 +69,6 @@ public interface AddressbookModel {
         QName TASK_CAPABLE = QName.createQName(AddressbookModel.URI, "taskCapable");
         QName ENCRYPTION_PERSON_ID = QName.createQName(AddressbookModel.URI, "encryptionPersonId");
         QName SKYPE = QName.createQName(AddressbookModel.URI, "skype");
+        QName DEC_TASK_CAPABLE = QName.createQName(AddressbookModel.URI, "decTaskCapable");
     }
 }

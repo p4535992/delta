@@ -188,7 +188,7 @@ BlockBeanProviderProvider {
         DocumentDynamic doc = getDocumentDynamicService().createNewDocumentInDrafts(documentTypeId).getFirst();
         setLocationFromVolume(doc);
         propertySheet = null;
-        open(doc.getNodeRef(), doc, true);
+        open(doc.getNodeRef(), doc, true, true);
     }
 
     /** @param event */
@@ -201,7 +201,7 @@ BlockBeanProviderProvider {
             return;
         }
         setLocationFromVolume(doc);
-        open(doc.getNodeRef(), doc, true);
+        open(doc.getNodeRef(), doc, true, true);
     }
 
     /** When creating draft from caseFile/volume view, set caseFile/volume location as document location */
@@ -320,7 +320,7 @@ BlockBeanProviderProvider {
         }
         Pair<DocumentDynamic, AssociationModel> newDocumentAndAssociatonModel = BeanHelper.getDocumentAssociationsService().createAssociatedDocFromModel(baseDocRef, assocModelRef);
         DocumentDynamic newDocument = newDocumentAndAssociatonModel.getFirst();
-        open(newDocument.getNodeRef(), newDocument, true);
+        open(newDocument.getNodeRef(), newDocument, true, false);
         addWorkflowAssocs(baseDocRef, newDocumentAndAssociatonModel.getSecond().getAssociationType().getAssocBetweenDocs());
         getAssocsBlockBean().sortDocAssocInfos();
     }
@@ -634,11 +634,11 @@ BlockBeanProviderProvider {
 
     // All dialog entry point methods must call this method
     private void open(NodeRef docRef, boolean inEditMode) {
-        open(docRef, null, inEditMode);
+        open(docRef, null, inEditMode, false);
     }
 
-    private void open(NodeRef docRef, DocumentDynamic document, boolean inEditMode) {
-        if (!validateOpen(docRef, inEditMode)) {
+    private void open(NodeRef docRef, DocumentDynamic document, boolean inEditMode, boolean isDraft) {
+        if (!validateOpen(docRef, inEditMode, isDraft)) {
             return;
         }
         createSnapshot(new DocDialogSnapshot());
@@ -1267,8 +1267,12 @@ BlockBeanProviderProvider {
     // Permission checks on open or switch mode
     // =========================================================================
 
-    public static boolean validateOpen(NodeRef docRef, boolean inEditMode) {
-        if (!validateExists(docRef) || !validateViewMetaDataPermission(docRef) || (inEditMode && !validateEditMetaDataPermission(docRef))
+    public static boolean validateOpen(NodeRef docRef, boolean inEditMode, boolean isDraft) {
+        boolean exists = validateExists(docRef);
+        if (exists && isDraft) {
+            return true;
+        }
+        if (!exists || !validateViewMetaDataPermission(docRef) || (inEditMode && !validateEditMetaDataPermission(docRef))
                 || (inEditMode && !getDocumentLockHelperBean().isLockable(docRef))) {
             return false;
         }

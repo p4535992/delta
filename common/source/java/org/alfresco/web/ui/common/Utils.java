@@ -1033,5 +1033,20 @@ public final class Utils extends StringUtils
         Map<String, Object> requestMap = context.getExternalContext().getRequestMap();
         return (Boolean.TRUE == requestMap.get(REQUEST_VALID_CONV_DISABLED));
     }
-
+	
+	public static <T> List<T> removeNulls(List<T> list) {
+        if(list == null) {
+            return null;
+        }
+        int from = 0, to = 0;
+        int size = list.size();
+        while (from < size) {
+            if (list.get(from) != null) {
+                list.set(to++, list.get(from));
+            }
+            ++from;
+        }
+        list.subList(to, size).clear();
+        return list;
+    }
 }

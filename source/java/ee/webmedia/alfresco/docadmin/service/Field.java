@@ -10,6 +10,7 @@ import java.util.List;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.web.ui.common.Utils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.util.Assert;
 
@@ -311,7 +312,8 @@ public class Field extends FieldAndGroupBase {
 
     @SuppressWarnings("unchecked")
     public final List<String> getRelatedIncomingDecElement() {
-        return (List<String>) getNode().getProperties().get(DocumentAdminModel.Props.RELATED_INCOMING_DEC_ELEMENT);
+        List<String> list = (List<String>) getNode().getProperties().get(DocumentAdminModel.Props.RELATED_INCOMING_DEC_ELEMENT);
+        return Utils.removeNulls(list);
     }
 
     public final void setRelatedIncomingDecElement(List<String> relatedIncomingDecElement) {
@@ -320,7 +322,8 @@ public class Field extends FieldAndGroupBase {
 
     @SuppressWarnings("unchecked")
     public final List<String> getRelatedOutgoingDecElement() {
-        return (List<String>) getNode().getProperties().get(DocumentAdminModel.Props.RELATED_OUTGOING_DEC_ELEMENT);
+        List<String> list = (List<String>) getNode().getProperties().get(DocumentAdminModel.Props.RELATED_OUTGOING_DEC_ELEMENT);
+        return Utils.removeNulls(list);
     }
 
     public final void setRelatedOutgoingDecElement(List<String> relatedOutgoingDecElement) {

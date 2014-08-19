@@ -186,6 +186,17 @@ public class AddressbookAddEditDialog extends BaseDialogBean {
         return getAddressbookService().isTaskCapableGroupMember(entry.getNodeRef());
     }
 
+    public boolean isNotDecTaskCapable() {
+        if (entry == null) {
+            return true;
+        }
+        NodeRef nodeRef = entry.getNodeRef();
+        if (nodeRef == null || !nodeExists(nodeRef)) {
+            return true;
+        }
+        return !Boolean.TRUE.equals(getNodeService().getProperty(nodeRef, AddressbookModel.Props.DVK_CAPABLE));
+    }
+
     // ------------------------------------------------------------------------------
     // Bean Getters and Setters
 

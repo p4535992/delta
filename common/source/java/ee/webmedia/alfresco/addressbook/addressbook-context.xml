@@ -102,7 +102,7 @@
             <ref bean="addressbookRootBootstrap"/>
          </list>
       </property>
-   </bean>     
+   </bean>
    
    <bean id="taskCapablePropertyRemoverOnPeople" class="ee.webmedia.alfresco.addressbook.bootstrap.TaskCapablePropertyRemoverOnPeople" parent="abstractNodeUpdater" >
       <property name="moduleId" value="simdhs" />
@@ -151,7 +151,17 @@
             <ref bean="addressbookRootBootstrap" />
          </list>
       </property>
-   </bean>   
+   </bean>
+   
+   <bean id="decTaskCapableUpdater" class="ee.webmedia.alfresco.addressbook.bootstrap.DecTaskCapableUpdater" parent="abstractNodeUpdater" >
+      <property name="moduleId" value="common" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="addressbookRootBootstrap"/>
+         </list>
+      </property>
+   </bean>
 
    <!-- START: web beans: -->
 
