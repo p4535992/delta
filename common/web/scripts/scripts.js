@@ -271,6 +271,8 @@ function appendSelection(source, targetId) {
    }
    var lable = selectItem.text(); // using label not value!
    targetElem.val(lastToItemValue + lable);
+   targetElem.focus(); // expand the text field 
+   source.focus();
 };
 
 /**

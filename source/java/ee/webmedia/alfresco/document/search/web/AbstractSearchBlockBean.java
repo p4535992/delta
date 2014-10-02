@@ -75,10 +75,7 @@ public abstract class AbstractSearchBlockBean implements DialogDataProvider {
     }
 
     public boolean isDocumentVolumeColumnVisible() {
-        if (getDocumentService().isVolumeColumnEnabled() && isShowSearch() && filter != null) {
-            return AssocSearchObjectType.DOCUMENT.name().equals(filter.getProperties().get(DocumentSearchModel.Props.OBJECT_TYPE));
-        }
-        return true;
+        return getDocumentService().isVolumeColumnEnabled();
     }
 
     protected abstract String getBeanName();

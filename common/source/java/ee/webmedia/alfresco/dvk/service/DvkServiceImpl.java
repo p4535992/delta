@@ -1022,7 +1022,6 @@ public abstract class DvkServiceImpl implements DvkService {
     protected DecSender getSenderAddress() {
         DecSender sender = DecSender.Factory.newInstance();
         sender.setOrganisationCode(propertiesResolver.getProperty("x-tee.institution"));
-        sender.setStructuralUnit(parametersService.getStringParameter(Parameters.DVK_ORGANIZATION_NAME)); // May be empty
         return sender;
     }
 
@@ -1367,8 +1366,6 @@ public abstract class DvkServiceImpl implements DvkService {
                 access = decContainer.addNewAccess();
             }
             access.setAccessConditionsCode(AccessConditionType.AVALIK);
-            
-            decContainer.getTransport().getDecSender().unsetStructuralUnit();
 
             DecContainer.RecordTypeSpecificMetadata specificMetadata = null;
             try {

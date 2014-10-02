@@ -40,6 +40,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateUtils;
 import org.joda.time.LocalDate;
 import org.springframework.util.Assert;
+import org.springframework.web.util.HtmlUtils;
 
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.addressbook.service.AddressbookService;
@@ -621,7 +622,7 @@ public class NotificationServiceImpl implements NotificationService {
         ProcessedEmailTemplate template = templateService.getProcessedEmailTemplate(templateDataNodeRefs, notificationTemplate, notification.getAdditionalFormulas());
         // Try to retrieve the subject from repository.
         if (StringUtils.isNotBlank(template.getSubject())) {
-            notification.setSubject(template.getSubject());
+            notification.setSubject(HtmlUtils.htmlUnescape(template.getSubject()));
         }
         if (saveContent) {
             notification.addAdditionalFomula(CONTENT, template.getContent());

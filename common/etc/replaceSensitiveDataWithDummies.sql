@@ -1,5 +1,5 @@
 -- NB! Kui antud skripti kasutatakse hilisema kui 3.6.30 versiooi obfuskeerimiseks, ei pruugi see skript katta kõiki vajalikke andmeid. 
--- Näiteks uue õiguste süsteemi ülekandmist (alates versioon 5.0) see skript ei toeta, samuti võib olla muudatusi tööülesannette andmete osas.
+-- Näiteks uue õiguste süsteemi ülekandmist (alates versioon 5.0) see skript ei toeta, samuti võib olla muudatusi tööülesannete andmete osas.
 
 -- Skripti kasutamine eeldab, et andmebaasis on olemas shcema nimega original, mis sisaldab algseid (obfuskeerimata) andmeid 
 -- ning schema nimega public, mis sisaldab original schemaga sarnast struktuuri, kuid on tühi.
@@ -1490,7 +1490,17 @@ insert into public.alf_transaction (select * from original.alf_transaction);
 
 -- alf_authority
 -- 1) süsteemsed kasutajad ja grupid muutmata kujul.
-insert into public.alf_authority (select * from original.alf_authority where authority is null or authority in ('', 'guest', 'ROLE_OWNER') or authority like 'GROUP_%');
+insert into public.alf_authority (select * from original.alf_authority where authority is null 
+	or authority in ('', 'guest', 'ROLE_OWNER', 'GROUP_ALFRESCO_ADMINISTRATORS', 'GROUP_ARCHIVISTS', 'GROUP_DOCUMENT_MANAGERS', 'GROUP_EVERYONE', 'GROUP_SUPERVISION'));
+	
+insert into public.alf_authority (select id, version,
+	concat('GROUP_', case when position(',' in authority) < 1 then 'obfuskeeritud' 
+		else repeat('obfuskeeri, tud', array_length(regexp_split_to_array(authority, '(,)'), 1)) end, id ),
+	crc32(concat('GROUP_', case when position(',' in authority) < 1 then 'obfuskeeritud' 
+		else repeat('obfuskeeri, tud', array_length(regexp_split_to_array(authority, '(,)'), 1)) end, id ))
+	from original.alf_authority
+	where authority like 'GROUP_%' and authority not in ('GROUP_ALFRESCO_ADMINISTRATORS', 'GROUP_ARCHIVISTS', 'GROUP_DOCUMENT_MANAGERS', 'GROUP_EVERYONE', 'GROUP_SUPERVISION'));
+	
 -- 2) ülejäänud kasutajad asendatakse suvaliste kasutajatega ajutisest tmp_isikud tabelist
 -- See obfuskeerib ühtlasi ka õigused, kuna õiguste kirjed alf_access_control_entry tabelis viitavad sellele tabelile
 insert into public.alf_authority (select id, version, 
@@ -1929,7 +1939,6 @@ insert into public.alf_node (
 		or (local_name = 'volumeSearchFilters' and uri = 'http://alfresco.webmedia.ee/model/volume/search/1.0')
 		or (local_name = 'independentCompoundWorkflows' and uri = 'http://alfresco.webmedia.ee/model/workflow/common/1.0')
 		or (local_name = 'linkedReviewTasks' and uri = 'http://alfresco.webmedia.ee/model/workflow/specific/1.0')
-		or (local_name = 'reportResult' and uri = 'http://alfresco.webmedia.ee/model/report/1.0')
 		or (local_name = 'intParameter' and uri = 'http://alfresco.webmedia.ee/model/parameters/1.0')
 		or (local_name = 'stringParameter' and uri = 'http://alfresco.webmedia.ee/model/parameters/1.0')
 		or (local_name = 'doubleParameter' and uri = 'http://alfresco.webmedia.ee/model/parameters/1.0')
