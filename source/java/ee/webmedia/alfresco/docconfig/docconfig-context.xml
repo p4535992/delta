@@ -852,6 +852,16 @@
          </list>
       </property>
    </bean>
+   
+   <bean id="relatedDecElementDefaultValuesUpdater3" class="ee.webmedia.alfresco.docconfig.bootstrap.RelatedDecElementDefaultValuesUpdater3" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="relatedDecElementDefaultValuesUpdater2" />
+         </list>
+      </property>
+   </bean>
 
   <bean id="recipientIdRemovableFromSystematicFieldGroupUpdater" class="ee.webmedia.alfresco.docconfig.bootstrap.RecipientIdRemovableFromSystematicFieldGroupUpdater" parent="abstractNodeUpdater">
       <property name="moduleId" value="simdhs" />

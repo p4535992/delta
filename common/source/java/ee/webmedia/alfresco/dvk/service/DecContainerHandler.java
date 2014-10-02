@@ -88,11 +88,10 @@ public class DecContainerHandler {
 
         initUserAllowedKeys();
 
-        OUTGOING_USER_DISALLOWED_KEYS.add(Arrays.asList("Recipient", "MessageForRecipient"));
         OUTGOING_USER_DISALLOWED_KEYS.add(Arrays.asList("RecordCreator", "ContactData", "Email"));
         OUTGOING_USER_DISALLOWED_KEYS.add(Arrays.asList("RecordCreator", "Organisation", "Name"));
         OUTGOING_USER_DISALLOWED_KEYS.add(Arrays.asList("RecordSenderToDec", "Organisation", "Name"));
-        addAllSubelementsToDisallowedOutgoingKeyList("SignatureMetaData", "Transport", "Access", "DecMetaData");
+        addAllSubelementsToDisallowedOutgoingKeyList("SignatureMetaData", "Transport", "Access", "DecMetaData", "Recipient");
 
         initOutgoingUserForbiddenKeys();
 
@@ -157,7 +156,7 @@ public class DecContainerHandler {
                 String stringKey = StringUtils.lowerCase(getKeyAsString(0, keyList));
                 Map<String, List<String>> subMap = userAllowed.subMap(stringKey, stringKey + Character.MAX_VALUE);
                 for (List<String> key : subMap.values()) {
-                    OUTGOING_FORBIDDEN_KEYS.put(getKeyAsString(0, key), key);
+                    OUTGOING_FORBIDDEN_KEYS.put(getKeyAsString(LIST_PREFIX.length(), key), key);
                 }
             } else {
                 OUTGOING_FORBIDDEN_KEYS.put(getKeyAsString(0, keyList), keyList);

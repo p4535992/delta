@@ -321,6 +321,10 @@ public class SearchRenderer extends BaseRenderer {
             rowIndex = index;
         }
 
+        if (rowIndex > -1) {
+            picker.setId(SEARCH_MSG + rowIndex);
+        }
+
         out.write("<a class=\"icon-link margin-left-4 search\" onclick=\"");
         out.write(ComponentUtil.generateFieldSetter(context, search, getActionId(context, search), OPEN_DIALOG_ACTION + ACTION_SEPARATOR + rowIndex));
         out.write("return showModal('");
@@ -330,7 +334,6 @@ public class SearchRenderer extends BaseRenderer {
             toolTip = SEARCH_MSG;
         }
         out.write("');\" title=\"" + getMessage(toolTip) + "\">");
-        // out.write(Application.getMessage(context, SEARCH_MSG));
         String searchLinkLabel = search.getSearchLinkLabel();
         if (searchLinkLabel != null) {
             out.write(getMessage(searchLinkLabel));

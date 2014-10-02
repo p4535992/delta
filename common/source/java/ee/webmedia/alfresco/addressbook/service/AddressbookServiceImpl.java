@@ -344,7 +344,7 @@ public class AddressbookServiceImpl extends AbstractSearchServiceImpl implements
         if (emptySearch) {
             result = listContactGroups();
         } else {
-            result = executeSearch(searchCriteria, contactGroupSearchFields, false, false, Collections.<QName> emptySet(), null, limit);
+            result = executeSearch(searchCriteria, contactGroupSearchFields, false, false, Collections.<QName> emptySet(), null, limit, false);
         }
         if (excludeTaskCapable) { // should be done during search
             List<Node> notTaskCapable = new ArrayList<Node>(result.size());
@@ -525,7 +525,7 @@ public class AddressbookServiceImpl extends AbstractSearchServiceImpl implements
     private NodeRef createPerson(NodeRef organization, Map<QName, Serializable> data) {
         return createNode(organization,
                 organization == null ? Assocs.ABPEOPLE : Assocs.ORGPEOPLE,
-                organization == null ? Types.PRIV_PERSON : Types.ORGPERSON, data);
+                        organization == null ? Types.PRIV_PERSON : Types.ORGPERSON, data);
     }
 
     private NodeRef createContactGroup(Map<QName, Serializable> data) {

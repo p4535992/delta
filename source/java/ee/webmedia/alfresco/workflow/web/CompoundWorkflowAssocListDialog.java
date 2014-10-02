@@ -138,7 +138,7 @@ public class CompoundWorkflowAssocListDialog extends BaseDocumentListDialog {
     }
 
     public boolean isDisableDocSelect() {
-        return compoundWorkflow.getNumberOfDocuments() <= 1 || isDisableSignSelect();
+        return (documents != null && documents.size() <= 1) || isDisableSignSelect();
     }
 
     private boolean containsSignatureTaskAssignedToRunAsUser() {

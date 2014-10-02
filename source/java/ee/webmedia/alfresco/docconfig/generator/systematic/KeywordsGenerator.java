@@ -191,6 +191,9 @@ public class KeywordsGenerator extends BaseSystematicFieldGenerator {
         private final String defaultThesaurusName;
         private final Map<String/* thesaurusName */, Map<String/* level1Keywords */, List<String>/* level2Keywords */>> hierarchy = new HashMap<String, Map<String, List<String>>>();
 
+        private String selectedThesaurus = "";
+        private boolean thesaurusChanged = false;
+
         public KeywordsTableState(List<QName> propNames, QName firstKeywordLevelProp, QName secondKeywordLevelProp, String viewModePropName, String defaultThesaurusName) {
             this.propNames = propNames;
             this.firstKeywordLevelProp = firstKeywordLevelProp;
@@ -216,9 +219,14 @@ public class KeywordsGenerator extends BaseSystematicFieldGenerator {
         public List<SelectItem> getFirstKeywordLevelSelectItems(FacesContext context, UIInput selectComponent) {
             String selectedThesaurus = StringUtils.isNotBlank(defaultThesaurusName) ? defaultThesaurusName : getSelectedThesaurus(context, selectComponent);
             if (StringUtils.isBlank(selectedThesaurus)) {
-                ComponentUtil.putAttribute(selectComponent, "disabled", true);
-                return Collections.<SelectItem> emptyList();
+                this.selectedThesaurus = selectedThesaurus;
+                return disable(selectComponent);
             }
+
+            if (!StringUtils.equals(selectedThesaurus, this.selectedThesaurus)) {
+                thesaurusChanged = true;
+            }
+            this.selectedThesaurus = selectedThesaurus;
 
             Map<String, List<String>> thesaurusKeywords = hierarchy.get(selectedThesaurus);
             if (thesaurusKeywords == null) {
@@ -254,7 +262,7 @@ public class KeywordsGenerator extends BaseSystematicFieldGenerator {
                 }
                 ComponentUtil.getAttributes(selectComponent).put("title", MessageUtil.getMessage("thesaurus_empty"));
             } else {
-                if (!componentValueFound && StringUtils.isNotBlank(firstLevelValue)) {
+                if (!componentValueFound && !thesaurusChanged && StringUtils.isNotBlank(firstLevelValue)) {
                     selectItems.add(0, new SelectItem(firstLevelValue, firstLevelValue));
                 }
                 ComponentUtil.addDefault(selectItems, context);
@@ -266,15 +274,18 @@ public class KeywordsGenerator extends BaseSystematicFieldGenerator {
         public List<SelectItem> getSecondKeywordLevelSelectItems(FacesContext context, UIInput selectComponent) {
             String firstLevelKeyword = getFirstLevelKeyword(context, selectComponent);
             if (StringUtils.isBlank(firstLevelKeyword)) {
-                ComponentUtil.putAttribute(selectComponent, "disabled", true);
-                return Collections.<SelectItem> emptyList();
+                return disable(selectComponent);
             }
-
+            if (thesaurusChanged) {
+                thesaurusChanged = false;
+            }
             String selectedThesaurus = StringUtils.isNotBlank(defaultThesaurusName) ? defaultThesaurusName : getSelectedThesaurus(context, selectComponent);
-            List<String> level2List = hierarchy.get(selectedThesaurus).get(firstLevelKeyword);
-            List<SelectItem> selectItems = new ArrayList<SelectItem>(level2List == null ? 1 : level2List.size());
-            String secondLevelValue = (String) getSecondLevelKeywordVb(context, selectComponent).getValue(context);
+            Map<String, List<String>> map = hierarchy.get(selectedThesaurus);
+            List<String> level2List = map == null ? null : map.get(firstLevelKeyword);
+
             if (level2List != null) {
+                List<SelectItem> selectItems = new ArrayList<SelectItem>(level2List == null ? 1 : level2List.size());
+                String secondLevelValue = (String) getSecondLevelKeywordVb(context, selectComponent).getValue(context);
                 boolean componentValueFound = false;
                 for (String keywordLevel2 : level2List) {
                     selectItems.add(new SelectItem(keywordLevel2, keywordLevel2));
@@ -289,10 +300,14 @@ public class KeywordsGenerator extends BaseSystematicFieldGenerator {
                     ComponentUtil.addDefault(selectItems, context);
                 }
                 WebUtil.sort(selectItems);
-            } else {
-                selectItems.add(new SelectItem(secondLevelValue, secondLevelValue));
+                return selectItems;
             }
-            return selectItems;
+            return disable(selectComponent);
+        }
+
+        private List<SelectItem> disable(UIInput selectComponent) {
+            ComponentUtil.putAttribute(selectComponent, "disabled", true);
+            return Collections.<SelectItem> emptyList();
         }
 
         private String getSelectedThesaurus(FacesContext context, UIInput selectComponent) {
