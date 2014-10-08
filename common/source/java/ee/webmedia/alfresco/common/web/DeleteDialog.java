@@ -26,13 +26,6 @@ import ee.webmedia.alfresco.log.model.LogObject;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
-<<<<<<< HEAD
-/**
- * @author Vladimir Drozdik
- * @author Ats Uiboupin - refactored to be more flexible and use dialog title/success message based on node type
- */
-=======
->>>>>>> develop-5.1
 public class DeleteDialog extends BaseDialogBean {
     private static final String DELETE_DIALOG_MSG_PREFIX = "deleteDialog_";
     private static final long serialVersionUID = 1L;
@@ -48,41 +41,6 @@ public class DeleteDialog extends BaseDialogBean {
     private String typeNameTranslated;
     private Boolean showObjectData = Boolean.FALSE;
     private Boolean showConfirm = Boolean.TRUE;
-<<<<<<< HEAD
-
-    @Override
-    protected String finishImpl(FacesContext context, String outcome) throws Throwable {
-        if (StringUtils.isNotBlank(deleteAfterConfirmHandler)) {
-            MethodBinding deleteMB = context.getApplication().createMethodBinding("#{" + deleteAfterConfirmHandler + "}", new Class[] { ActionEvent.class });
-            UIActionLink actionLink = (UIActionLink) context.getApplication().createComponent(UIActions.COMPONENT_ACTIONLINK); // Is UIActionLink always correct?
-            actionLink.restoreState(context, deleteAfterConfirmActionComponentState);
-            actionLink.getParameterMap().putAll(deleteAfterConfirmActionEventParams);
-            outcome = (String) deleteMB.invoke(context, new Object[] { new ActionEvent(actionLink) });
-            resetAndAddSuccessMessage();
-            return outcome;
-        }
-        NodeService nodeService = BeanHelper.getNodeService();
-        boolean isDocument = DocumentCommonModel.Types.DOCUMENT.equals(objectType);
-        LogEntry logEntry = null;
-        if (isDocument) {
-            logEntry = LogEntry.create(LogObject.DOCUMENT, BeanHelper.getUserService(), objectRef, "document_log_status_deleted_from",
-                    nodeService.getProperty(objectRef, DocumentCommonModel.Props.DOC_STATUS), BeanHelper.getDocumentListService().getDisplayPath(objectRef, false));
-        }
-        nodeService.deleteNode(objectRef);
-        if (dialogsToClose != null) {
-            outcome = getCloseOutcome(dialogsToClose);
-        }
-        if (isDocument) {
-            BeanHelper.getLogService().addLogEntry(logEntry);
-        }
-        resetAndAddSuccessMessage();
-        return outcome;
-    }
-
-    private void resetAndAddSuccessMessage() {
-        reset();
-        MessageUtil.addInfoMessage(DELETE_DIALOG_MSG_PREFIX + "objectDeleted", typeNameTranslated);
-=======
     private boolean alreadyDeleted;
     private String alreadyDeletedHandler;
 
@@ -151,7 +109,6 @@ public class DeleteDialog extends BaseDialogBean {
         } else {
             MessageUtil.addInfoMessage("delete_error_already_deleted");
         }
->>>>>>> develop-5.1
     }
 
     private void reset() {
@@ -165,19 +122,12 @@ public class DeleteDialog extends BaseDialogBean {
         containerTitle = null;
         showObjectData = Boolean.FALSE;
         showConfirm = Boolean.TRUE;
-<<<<<<< HEAD
-=======
         alreadyDeleted = false;
         alreadyDeletedHandler = null;
->>>>>>> develop-5.1
     }
 
     @Override
     public String cancel() {
-<<<<<<< HEAD
-        reset();
-        return super.cancel();
-=======
         String outcome = super.cancel();
         if (alreadyDeleted) {
             handleAlreadyDeleted(FacesContext.getCurrentInstance());
@@ -185,7 +135,6 @@ public class DeleteDialog extends BaseDialogBean {
         }
         reset();
         return outcome;
->>>>>>> develop-5.1
     }
 
     public String getConfirmMessage() {
@@ -196,17 +145,12 @@ public class DeleteDialog extends BaseDialogBean {
     @Override
     public String getContainerTitle() {
         if (containerTitle == null) { // cache - this method is called several times within one request
-<<<<<<< HEAD
-            typeNameTranslated = MessageUtil.getTypeName(objectType);
-            containerTitle = MessageUtil.getMessage(DELETE_DIALOG_MSG_PREFIX + "containerTitle", uncapitalize(typeNameTranslated));
-=======
             if (alreadyDeleted) {
                 containerTitle = MessageUtil.getMessage("delete_error_already_deleted");
             } else {
                 typeNameTranslated = MessageUtil.getTypeName(objectType);
                 containerTitle = MessageUtil.getMessage(DELETE_DIALOG_MSG_PREFIX + "containerTitle", uncapitalize(typeNameTranslated));
             }
->>>>>>> develop-5.1
         }
         return containerTitle;
     }
@@ -217,45 +161,16 @@ public class DeleteDialog extends BaseDialogBean {
     }
 
     @Override
-<<<<<<< HEAD
-=======
     public boolean isFinishButtonVisible(boolean dialogConfOKButtonVisible) {
         return !alreadyDeleted;
     }
 
     @Override
->>>>>>> develop-5.1
     public boolean getFinishButtonDisabled() {
         return false;
     }
 
     public void setupDeleteDialog(ActionEvent event) {
-<<<<<<< HEAD
-        deleteAfterConfirmHandler = ActionUtil.getParam(event, "deleteAfterConfirmHandler", "");
-        if (StringUtils.isNotBlank(deleteAfterConfirmHandler)) {
-            deleteAfterConfirmActionComponentState = event.getComponent().saveState(FacesContext.getCurrentInstance());
-            deleteAfterConfirmActionEventParams = ActionUtil.getParams(event);
-        }
-        objectRef = ActionUtil.getParam(event, "nodeRef", NodeRef.class);
-        String placeHolderPrefix = "confirmMessagePlaceholder";
-        int index = 0;
-        List<String> confirmMsgPlaceholders = new ArrayList<String>();
-        while (ActionUtil.hasParam(event, placeHolderPrefix + index)) {
-            confirmMsgPlaceholders.add(ActionUtil.getParam(event, placeHolderPrefix + index++));
-        }
-        confirmMessagePlaceholders = confirmMsgPlaceholders.toArray(new String[confirmMsgPlaceholders.size()]);
-        objectType = getNodeService().getType(objectRef);
-        if (ActionUtil.hasParam(event, "dialogsToClose")) {
-            dialogsToClose = ActionUtil.getParam(event, "dialogsToClose", Integer.class);
-        }
-        if (ActionUtil.hasParam(event, "showObjectData")) {
-            showObjectData = ActionUtil.getParam(event, "showObjectData", Boolean.class);
-        }
-        if (ActionUtil.hasParam(event, "showConfirm")) {
-            showConfirm = ActionUtil.getParam(event, "showConfirm", Boolean.class);
-        }
-    }
-=======
         objectRef = ActionUtil.getParam(event, "nodeRef", NodeRef.class);
         boolean nodeExists = BeanHelper.getNodeService().exists(objectRef);
         if (!nodeExists) {
@@ -289,7 +204,6 @@ public class DeleteDialog extends BaseDialogBean {
         }
     }
 
->>>>>>> develop-5.1
     public Boolean getShowObjectData() {
         return showObjectData;
     }
@@ -305,8 +219,4 @@ public class DeleteDialog extends BaseDialogBean {
         return showConfirm;
     }
 
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> develop-5.1

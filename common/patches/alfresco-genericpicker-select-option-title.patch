@@ -3,7 +3,6 @@ Index: source/java/org/alfresco/web/ui/common/component/UIGenericPicker.java
 --- source/java/org/alfresco/web/ui/common/component/UIGenericPicker.java	(revision 149275)
 +++ source/java/org/alfresco/web/ui/common/component/UIGenericPicker.java	(working copy)
 @@ -370,6 +370,11 @@
-<<<<<<< HEAD
           {
              out.write("<option value=\"");
              out.write(currentResults[i].getValue().toString());
@@ -15,16 +14,3 @@ Index: source/java/org/alfresco/web/ui/common/component/UIGenericPicker.java
              out.write("\">");
              out.write(Utils.encode(currentResults[i].getLabel()));
              out.write("</option>");
-=======
-          {
-             out.write("<option value=\"");
-             out.write(currentResults[i].getValue().toString());
-+            if (currentResults[i].getDescription() != null)
-+            {
-+                out.write("\" title=\"");
-+                out.write(Utils.encode(currentResults[i].getDescription()));
-+            }
-             out.write("\">");
-             out.write(Utils.encode(currentResults[i].getLabel()));
-             out.write("</option>");
->>>>>>> develop-5.1

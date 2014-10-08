@@ -9,12 +9,6 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
  * Entity class for EventPlan record.
-<<<<<<< HEAD
- * 
- * @author Martti Tamm
- * @author Alar Kvell
-=======
->>>>>>> develop-5.1
  */
 public class EventPlan extends EventPlanCommon implements Comparable<EventPlan> {
 

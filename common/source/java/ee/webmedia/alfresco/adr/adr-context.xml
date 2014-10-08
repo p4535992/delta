@@ -83,8 +83,6 @@
       </property>
    </bean>
 
-<<<<<<< HEAD
-=======
    <bean id="adrTestDataUpdater" class="ee.webmedia.alfresco.adr.bootstrap.AdrTestDataUpdater" parent="abstractNodeUpdater">
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
@@ -107,5 +105,4 @@
       </property>
    </bean>
 
->>>>>>> develop-5.1
 </beans>

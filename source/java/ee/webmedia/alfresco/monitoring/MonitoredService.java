@@ -1,21 +1,12 @@
 package ee.webmedia.alfresco.monitoring;
 
-<<<<<<< HEAD
-/**
- * @author Keit Tehvan
- */
-=======
->>>>>>> develop-5.1
 public enum MonitoredService {
     OUT_SK_OCSP,
     OUT_SK_DIGIDOCSERVICE,
     OUT_SK_LDAP,
     OUT_AD_KERBEROS,
     OUT_AD_LDAP,
-<<<<<<< HEAD
-=======
     OUT_XTEE_ADIT,
->>>>>>> develop-5.1
     OUT_XTEE_DVK,
     OUT_SMTP,
     OUT_MSO,

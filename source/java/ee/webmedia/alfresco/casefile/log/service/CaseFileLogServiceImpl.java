@@ -26,12 +26,6 @@ import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
 
-<<<<<<< HEAD
-/**
- * @author Priit Pikk
- */
-=======
->>>>>>> develop-5.1
 public class CaseFileLogServiceImpl implements CaseFileLogService {
 
     private NodeService nodeService;

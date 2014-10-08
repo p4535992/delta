@@ -7,12 +7,6 @@ import ee.webmedia.alfresco.docadmin.service.Field;
 import ee.webmedia.alfresco.docconfig.generator.BaseTypeFieldGenerator;
 import ee.webmedia.alfresco.docconfig.generator.GeneratorResults;
 
-<<<<<<< HEAD
-/**
- * @author Alar Kvell
- */
-=======
->>>>>>> develop-5.1
 public class InformationTextGenerator extends BaseTypeFieldGenerator {
 
     @Override

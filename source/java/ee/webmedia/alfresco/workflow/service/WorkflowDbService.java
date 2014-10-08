@@ -10,22 +10,12 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
-<<<<<<< HEAD
-
-import ee.webmedia.alfresco.document.file.model.File;
-import ee.webmedia.alfresco.workflow.service.type.WorkflowType;
-
-/**
- * @author Riina Tens
- */
-=======
 import org.springframework.jdbc.core.RowMapper;
 
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.workflow.model.Comment;
 import ee.webmedia.alfresco.workflow.service.type.WorkflowType;
 
->>>>>>> develop-5.1
 public interface WorkflowDbService {
 
     String BEAN_NAME = "WorkflowDbService";
@@ -43,20 +33,14 @@ public interface WorkflowDbService {
 
     void updateTaskEntry(Task task, Map<QName, Serializable> changedProps);
 
-<<<<<<< HEAD
-=======
     void updateTaskSingleProperty(Task task, QName key, Serializable value);
 
->>>>>>> develop-5.1
     void updateTaskProperties(NodeRef taskRef, Map<QName, Serializable> props);
 
     void updateTaskEntry(Task task, Map<QName, Serializable> changedProps, NodeRef parentRef);
 
-<<<<<<< HEAD
-=======
     void updateTaskEntryIgnoringParent(Task task, Map<QName, Serializable> changedProps);
 
->>>>>>> develop-5.1
     void createTaskDueDateExtensionAssocEntry(NodeRef initiatingTaskRef, NodeRef nodeRef);
 
     void createTaskDueDateHistoryEntries(NodeRef taskRef, List<DueDateHistoryRecord> historyRecords);
@@ -95,13 +79,10 @@ public interface WorkflowDbService {
 
     Pair<List<Task>, Boolean> searchTasksAllStores(String queryCondition, List<Object> arguments, int limit);
 
-<<<<<<< HEAD
-=======
     <T extends Object> Pair<List<T>, Boolean> searchTasksAllStores(String queryCondition, List<Object> arguments, int limit, RowMapper<T> rowMapper);
 
     Map<QName, Integer> countTasksByType(String queryCondition, List<Object> arguments, QName... taskType);
 
->>>>>>> develop-5.1
     int countTasks(String queryCondition, List<Object> arguments);
 
     /**
@@ -116,18 +97,11 @@ public interface WorkflowDbService {
     Map<NodeRef, List<NodeRef>> getCompoundWorkflowsTaskFiles(List<CompoundWorkflow> compoundWorkflows);
 
     int replaceTaskOutcomes(String oldOutcome, String newOutcome, String taskType);
-<<<<<<< HEAD
-    
-=======
 
->>>>>>> develop-5.1
     void deleteTask(NodeRef removedTaskNodeRef);
 
     void deleteWorkflowTasks(NodeRef removedWorkflowNodeRef);
 
-<<<<<<< HEAD
-    Set<NodeRef> getAllWorflowNodeRefs();    
-=======
     Set<NodeRef> getAllWorflowNodeRefs();
 
     List<NodeRef> getWorkflowTaskNodeRefs(NodeRef workflowRef);
@@ -141,6 +115,5 @@ public interface WorkflowDbService {
     void addCompoundWorkfowComment(Comment comment);
 
     void editCompoundWorkflowComment(Long commentId, String commentText);
->>>>>>> develop-5.1
 
 }

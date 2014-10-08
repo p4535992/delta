@@ -48,8 +48,6 @@
       <property name="userService" ref="UserService" />
    </bean>
 
-<<<<<<< HEAD
-=======
    <bean id="caseFileLatestVersionUpdater" class="ee.webmedia.alfresco.sharepoint.CaseFileLatestVersionUpdater" parent="abstractNodeUpdater">
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
@@ -83,5 +81,4 @@
       </property>
    </bean>
 
->>>>>>> develop-5.1
 </beans>

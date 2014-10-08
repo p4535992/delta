@@ -17,11 +17,7 @@
    </f:facet>
 </h:panelGroup>
 
-<<<<<<< HEAD
-<a:panel id="assocs-block-panel" label="#{msg.document_assocsBlockBean_panelTitle}" styleClass="panel-100 with-pager" progressive="true"
-=======
 <a:panel id="assocs-block-panel" label="#{msg.document_assocsBlockBean_panelTitle} (#{AssocsBlockBean.assocsCount})" styleClass="panel-100 with-pager" progressive="true"
->>>>>>> develop-5.1
    expanded="#{DialogManager.bean.assocsBlockExpanded}" facetsId="dialog:dialog-body:assocs-panel-facets">
 
    <a:richList id="assocsList" viewMode="details" value="#{AssocsBlockBean.docAssocInfos}" var="r" rowStyleClass="recordSetRow"
@@ -49,17 +45,6 @@
          </f:facet>
          <a:actionLink id="col4-text" value="#{r.title}" tooltip="#{msg.document_details_info}" showLink="false"
             actionListener="#{DocumentDynamicDialog.openFromDocumentList}" rendered="#{r.document}">
-<<<<<<< HEAD
-            <f:param name="nodeRef" value="#{r.otherNodeRef}" />
-         </a:actionLink>
-         <a:actionLink id="col4-link2docList" value="#{r.title}" action="dialog:documentListDialog" tooltip="#{r.title}"
-            showLink="false" actionListener="#{DocumentListDialog.setup}" rendered="#{r.case}">
-            <f:param name="caseNodeRef" value="#{r.otherNodeRef}" />
-         </a:actionLink>
-         <a:actionLink id="col2-act" value="#{r.title}" action="dialog:compoundWorkflowDialog" tooltip="#{r.title}" 
-            actionListener="#{CompoundWorkflowDialog.setupWorkflow}" rendered="#{r.workflow}" >
-            <f:param name="nodeRef" value="#{r.otherNodeRef}" />
-=======
             <f:param id="col4-act-param" name="nodeRef" value="#{r.otherNodeRef}" />
          </a:actionLink>
          <a:actionLink id="col4-link2docList" value="#{r.title}" action="dialog:documentListDialog" tooltip="#{r.title}"
@@ -69,7 +54,6 @@
          <a:actionLink id="col2-act" value="#{r.title}" action="dialog:compoundWorkflowDialog" tooltip="#{r.title}" 
             actionListener="#{CompoundWorkflowDialog.setupWorkflow}" rendered="#{r.workflow}" >
             <f:param id="col2-act-param" name="nodeRef" value="#{r.otherNodeRef}" />
->>>>>>> develop-5.1
          </a:actionLink>
          <a:actionLink id="col4-link2volume" value="#{r.title}" action="dialog:caseDocListDialog" tooltip="#{r.title}"
             showLink="false" actionListener="#{CaseDocumentListDialog.showAll}" rendered="#{r.volume && !r.caseFileVolume}">

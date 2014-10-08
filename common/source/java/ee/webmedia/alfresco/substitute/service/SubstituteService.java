@@ -7,12 +7,6 @@ import org.alfresco.service.cmr.repository.NodeRef;
 
 import ee.webmedia.alfresco.substitute.model.Substitute;
 
-<<<<<<< HEAD
-/**
- * @author Romet Aidla
- */
-=======
->>>>>>> develop-5.1
 public interface SubstituteService {
     public static final String BEAN_NAME = "SubstituteService";
 

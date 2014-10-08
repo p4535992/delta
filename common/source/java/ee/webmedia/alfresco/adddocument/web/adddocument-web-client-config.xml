@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 <alfresco-config>
    <config>
       <dialogs>
@@ -7,14 +6,4 @@
                         
       </dialogs>
    </config>
-=======
-<alfresco-config>
-   <config>
-      <dialogs>
-         <dialog name="webServiceDocumentListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/document/web/document-list-dialog.jsp" managed-bean="WebServiceDocumentListDialog"
-            icon="/images/icons/versioned_properties_large.gif" show-ok-button="false" />
-                        
-      </dialogs>
-   </config>
->>>>>>> develop-5.1
 </alfresco-config>

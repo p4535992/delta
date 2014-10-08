@@ -191,13 +191,6 @@ public class ImportSettings implements Cloneable {
         return new File(workFolder, file);
     }
 
-<<<<<<< HEAD
-    public boolean isNotPublishToAdr(Date created) {
-        return publishToAdrStartingFromDate != null && created != null && created.before(publishToAdrStartingFromDate);
-    }
-
-=======
->>>>>>> develop-5.1
     public boolean isVolumeOpen(Date volumeEnded) {
         return docListArchivalsSeparatingDate == null || volumeEnded == null || !volumeEnded.before(docListArchivalsSeparatingDate);
     }

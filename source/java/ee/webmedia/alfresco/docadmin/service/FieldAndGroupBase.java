@@ -11,11 +11,6 @@ import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 
 /**
  * Base class for {@link Field} and {@link FieldGroup}
-<<<<<<< HEAD
- * 
- * @author Ats Uiboupin
-=======
->>>>>>> develop-5.1
  */
 public abstract class FieldAndGroupBase extends MetadataItem {
     private static final long serialVersionUID = 1L;

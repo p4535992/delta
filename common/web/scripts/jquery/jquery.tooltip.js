@@ -1,9 +1,5 @@
 /*
-<<<<<<< HEAD
- * Improvements to jQuery Tooltip plugin version 1.3 by Ats Uiboupin
-=======
  * Improvements to jQuery Tooltip plugin version 1.3 by
->>>>>>> develop-5.1
  * plugin modified:
  * 1) replaced $ with jQuery to avoid conflicts
  * 2) added support to enable html escaping in tooltip to avoid javaScript injection (escapeHtml setting)

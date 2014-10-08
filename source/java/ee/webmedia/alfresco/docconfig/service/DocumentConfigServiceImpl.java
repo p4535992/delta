@@ -13,21 +13,13 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
-<<<<<<< HEAD
-=======
 import java.util.LinkedHashMap;
->>>>>>> develop-5.1
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-<<<<<<< HEAD
-import java.util.concurrent.ConcurrentHashMap;
-
-=======
 
 import org.alfresco.repo.cache.SimpleCache;
->>>>>>> develop-5.1
 import org.alfresco.repo.dictionary.IndexTokenisationMode;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.transaction.AlfrescoTransactionSupport;
@@ -67,13 +59,9 @@ import ee.webmedia.alfresco.common.propertysheet.component.WMUIProperty;
 import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement;
 import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement.ItemConfigVO;
 import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement.ItemConfigVO.ConfigItemType;
-<<<<<<< HEAD
-import ee.webmedia.alfresco.common.web.BeanHelper;
-=======
 import ee.webmedia.alfresco.common.propertysheet.modalLayer.ValidatingModalLayerComponent;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.UserContactGroupSearchBean;
->>>>>>> develop-5.1
 import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
 import ee.webmedia.alfresco.docadmin.service.DocumentType;
 import ee.webmedia.alfresco.docadmin.service.DocumentTypeVersion;
@@ -84,10 +72,7 @@ import ee.webmedia.alfresco.docadmin.service.FieldGroup;
 import ee.webmedia.alfresco.docadmin.service.MetadataItem;
 import ee.webmedia.alfresco.docadmin.service.SeparatorLine;
 import ee.webmedia.alfresco.docadmin.web.DocAdminUtil;
-<<<<<<< HEAD
-=======
 import ee.webmedia.alfresco.docconfig.bootstrap.SystematicFieldGroupNames;
->>>>>>> develop-5.1
 import ee.webmedia.alfresco.docconfig.generator.BaseSystematicFieldGenerator;
 import ee.webmedia.alfresco.docconfig.generator.FieldGenerator;
 import ee.webmedia.alfresco.docconfig.generator.FieldGroupGenerator;
@@ -96,11 +81,8 @@ import ee.webmedia.alfresco.docconfig.generator.GeneratorResults;
 import ee.webmedia.alfresco.docconfig.generator.PropertySheetStateHolder;
 import ee.webmedia.alfresco.docconfig.generator.SaveListener;
 import ee.webmedia.alfresco.docconfig.generator.fieldtype.DateGenerator;
-<<<<<<< HEAD
-=======
 import ee.webmedia.alfresco.docconfig.generator.fieldtype.UserContactGenerator;
 import ee.webmedia.alfresco.docconfig.generator.systematic.AccessRestrictionGenerator;
->>>>>>> develop-5.1
 import ee.webmedia.alfresco.docconfig.generator.systematic.DocumentLocationGenerator;
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.docdynamic.web.DocumentDialogHelperBean;
@@ -110,10 +92,7 @@ import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.search.model.DocumentReportModel;
 import ee.webmedia.alfresco.document.search.model.DocumentSearchModel;
 import ee.webmedia.alfresco.document.search.web.DocumentDynamicSearchDialog;
-<<<<<<< HEAD
-=======
 import ee.webmedia.alfresco.document.search.web.SearchBlockBean;
->>>>>>> develop-5.1
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.TreeNode;
@@ -124,12 +103,6 @@ import ee.webmedia.alfresco.volume.search.model.VolumeSearchModel;
 import ee.webmedia.alfresco.workflow.search.model.CompoundWorkflowSearchModel;
 import ee.webmedia.alfresco.workflow.search.model.TaskSearchModel;
 
-<<<<<<< HEAD
-/**
- * @author Alar Kvell
- */
-=======
->>>>>>> develop-5.1
 public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFactoryAware {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(DocumentConfigServiceImpl.class);
 
@@ -157,12 +130,9 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
         searchLabelIds.put(DocumentSearchModel.Props.INPUT, "document_search_input");
         searchLabelIds.put(DocumentSearchModel.Props.DOCUMENT_TYPE, "document_docType");
         searchLabelIds.put(DocumentSearchModel.Props.SEND_MODE, "document_send_mode");
-<<<<<<< HEAD
-=======
         searchLabelIds.put(DocumentSearchModel.Props.SEND_INFO_RECIPIENT, "document_search_export_recipient");
         searchLabelIds.put(DocumentSearchModel.Props.SEND_INFO_SEND_DATE_TIME, "document_search_send_info_time_period");
         searchLabelIds.put(DocumentSearchModel.Props.SEND_INFO_RESOLUTION, "document_search_send_info_resolution");
->>>>>>> develop-5.1
         searchLabelIds.put(DocumentSearchModel.Props.FUND, "transaction_fund");
         searchLabelIds.put(DocumentSearchModel.Props.FUNDS_CENTER, "transaction_fundsCenter");
         searchLabelIds.put(DocumentSearchModel.Props.EA_COMMITMENT_ITEM, "transaction_eaCommitmentItem");
@@ -209,18 +179,10 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
 
     }
 
-<<<<<<< HEAD
-    // CUSTOM CACHING
-    // XXX NB! some returned objects are unfortunately mutable, thus service callers must not modify them !!!
-    private final Map<PropDefCacheKey, Map<String /* fieldId */, Pair<DynamicPropertyDefinition, Field>>> propertyDefinitionCache = new ConcurrentHashMap<PropDefCacheKey, Map<String, Pair<DynamicPropertyDefinition, Field>>>();
-    private final Map<Pair<String /* documentTypeId */, Integer /* documentTypeVersionNr */>, TreeNode<QName>> childAssocTypeQNameTreeCache = new ConcurrentHashMap<Pair<String, Integer>, TreeNode<QName>>();
-    private final Map<String /* fieldId */, DynamicPropertyDefinition> propertyDefinitionForSearchCache = new ConcurrentHashMap<String, DynamicPropertyDefinition>();
-=======
     // XXX NB! some returned objects are unfortunately mutable, thus service callers must not modify them !!!
     private SimpleCache<PropDefCacheKey, Map<String /* fieldId */, Pair<DynamicPropertyDefinition, Field>>> propertyDefinitionCache;
     private SimpleCache<Pair<String /* documentTypeId */, Integer /* documentTypeVersionNr */>, TreeNode<QName>> childAssocTypeQNameTreeCache;
     private SimpleCache<String /* fieldId */, DynamicPropertyDefinition> propertyDefinitionForSearchCache;
->>>>>>> develop-5.1
 
     @Override
     public void registerFieldGeneratorByType(FieldGenerator fieldGenerator, FieldType... fieldTypes) {
@@ -300,24 +262,17 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
     }
 
     private void addDocLocationConfigFields(DocumentConfig config, boolean forceEditMode, String additionalStateHolderKey) {
-<<<<<<< HEAD
-=======
         addDocLocationConfigFields(config, forceEditMode, additionalStateHolderKey, true);
     }
 
     private void addDocLocationConfigFields(DocumentConfig config, boolean forceEditMode, String additionalStateHolderKey, boolean addCase) {
->>>>>>> develop-5.1
         List<String> defList = new ArrayList<String>();
         defList.add(DocumentCommonModel.Props.FUNCTION.getLocalName());
         defList.add(DocumentCommonModel.Props.SERIES.getLocalName());
         defList.add(DocumentCommonModel.Props.VOLUME.getLocalName());
-<<<<<<< HEAD
-        defList.add(DocumentCommonModel.Props.CASE.getLocalName());
-=======
         if (addCase) {
             defList.add(DocumentCommonModel.Props.CASE.getLocalName());
         }
->>>>>>> develop-5.1
         for (String localName : defList) {
             FieldDefinition fieldDefinition = documentAdminService.getFieldDefinition(localName);
             fieldDefinition.setChangeableIfEnum(FieldChangeableIf.ALWAYS_CHANGEABLE);
@@ -329,8 +284,6 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
     public DocumentConfig getAssocObjectSearchConfig(String additionalStateHolderKey, String renderAssocObjectFieldValueBinding) {
         DocumentConfig config = getEmptyConfig(null, null);
 
-<<<<<<< HEAD
-=======
         // docsearch:store
         if (SearchBlockBean.BEAN_NAME.equals(additionalStateHolderKey)) {
             QName prop = DocumentSearchModel.Props.STORE;
@@ -343,7 +296,6 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
             config.getPropertySheetConfigElement().addItem(itemConfig);
         }
 
->>>>>>> develop-5.1
         {
             // docsearch:objectType
             ItemConfigVO itemConfig = new ItemConfigVO(DocumentSearchModel.Props.OBJECT_TYPE.toPrefixString(namespaceService));
@@ -368,11 +320,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
             config.getPropertySheetConfigElement().addItem(itemConfig);
         }
 
-<<<<<<< HEAD
-        addDocLocationConfigFields(config, true, additionalStateHolderKey);
-=======
         addDocLocationConfigFields(config, true, additionalStateHolderKey, false);
->>>>>>> develop-5.1
 
         addDocumentCreatedConfigItem(config);
 
@@ -409,11 +357,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
             itemConfig.setComponentGenerator("GeneralSelectorGenerator");
             itemConfig.setSelectionItems("#{DialogManager.bean.getStores}");
             itemConfig.setConverter("ee.webmedia.alfresco.common.propertysheet.converter.NodeRefConverter");
-<<<<<<< HEAD
-            itemConfig.setValueChangeListener("#{DialogManager.bean.storeValueChangeListener}");
-=======
             itemConfig.setValueChangeListener("#{DialogManager.bean.storeValueChanged}");
->>>>>>> develop-5.1
             itemConfig.setConfigItemType(ConfigItemType.PROPERTY);
             propertySheetConfigElement.addItem(itemConfig);
         }
@@ -436,11 +380,8 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
             propertySheetConfigElement.addItem(itemConfig);
         }
 
-<<<<<<< HEAD
-=======
         addSendInfoConfigItems(withCheckboxes, propertySheetConfigElement);
 
->>>>>>> develop-5.1
         List<FieldDefinition> fields = documentAdminService.getSearchableDocumentFieldDefinitions();
         for (FieldDefinition fieldDefinition : fields) {
             processFieldForSearchView(fieldDefinition);
@@ -527,8 +468,6 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
         return config;
     }
 
-<<<<<<< HEAD
-=======
     public void addSendInfoConfigItems(boolean withCheckboxes, WMPropertySheetConfigElement propertySheetConfigElement) {
         {
             QName prop = DocumentSearchModel.Props.SEND_INFO_RECIPIENT;
@@ -560,7 +499,6 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
         }
     }
 
->>>>>>> develop-5.1
     private void addDocumentTypeConfigItem(boolean withCheckboxes, DocumentConfig config) {
         /**
          * <show-property name="docsearch:documentType" display-label-id="document_docType" component-generator="GeneralSelectorGenerator"
@@ -648,11 +586,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
             itemConfig.setComponentGenerator("GeneralSelectorGenerator");
             itemConfig.setSelectionItems("#{DialogManager.bean.getStores}");
             itemConfig.setConverter("ee.webmedia.alfresco.common.propertysheet.converter.NodeRefConverter");
-<<<<<<< HEAD
-            itemConfig.setValueChangeListener("#{DialogManager.bean.storeValueChangeListener}");
-=======
             itemConfig.setValueChangeListener("#{DialogManager.bean.storeValueChanged}");
->>>>>>> develop-5.1
             itemConfig.setConfigItemType(ConfigItemType.PROPERTY);
             propertySheetConfigElement.addItem(itemConfig);
         }
@@ -717,10 +651,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
             ItemConfigVO itemConfig = createItemConfigVO(prop);
             itemConfig.setComponentGenerator("EnumSelectorGenerator");
             itemConfig.getCustomAttributes().put("enumClass", TemplateReportOutputType.class.getCanonicalName());
-<<<<<<< HEAD
-=======
             itemConfig.setValueChangeListener("#{DialogManager.bean.reportTypeChanged}");
->>>>>>> develop-5.1
             itemConfig.setConfigItemType(ConfigItemType.PROPERTY);
             config.getPropertySheetConfigElement().addItem(itemConfig);
         }
@@ -1062,25 +993,19 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
                 break;
             case ALWAYS_NOT_CHANGEABLE:
                 item.setReadOnly(true);
-<<<<<<< HEAD
-=======
                 item.setOutputTextPropertyValue(true);
->>>>>>> develop-5.1
                 break;
             case CHANGEABLE_IF_WORKING_DOC:
                 item.setReadOnlyIf("#{" + DocumentDialogHelperBean.BEAN_NAME + ".notWorkingOrNotEditable}");
                 break;
             }
         }
-<<<<<<< HEAD
-=======
 
         if (field.isMandatory()) {
             item.setForcedMandatory(Boolean.TRUE);
             item.getCustomAttributes().put(ValidatingModalLayerComponent.ATTR_MANDATORY, Boolean.TRUE.toString());
         }
 
->>>>>>> develop-5.1
         return item;
     }
 
@@ -1133,11 +1058,8 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
         if (requiredHierarchy == null) {
             requiredHierarchy = new QName[] {};
         }
-<<<<<<< HEAD
-=======
         FieldGroup accessRestrictionGroup = null;
         FieldGroup documentLocationGroup = null;
->>>>>>> develop-5.1
         outer: for (Pair<DynamicPropertyDefinition, Field> fieldAndPropDef : propertyDefinitions.values()) {
             DynamicPropertyDefinition propDef = fieldAndPropDef.getFirst();
             Field field = fieldAndPropDef.getSecond();
@@ -1165,11 +1087,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
                 }
             }
 
-<<<<<<< HEAD
-            // TODO Alar: would be better to refactor this to be more efficient and happen in a more general place (one or two methods above)
-=======
             // TODO would be better to refactor this to be more efficient and happen in a more general place (one or two methods above)
->>>>>>> develop-5.1
             if (field.getParent() instanceof FieldGroup) {
                 FieldGroup group = (FieldGroup) field.getParent();
                 if (group.isSystematic()) {
@@ -1181,15 +1099,12 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
                             field = relatedFields.getFirst();
                         }
                     }
-<<<<<<< HEAD
-=======
                     if (SystematicFieldGroupNames.ACCESS_RESTRICTION.equals(group.getName())) {
                         accessRestrictionGroup = group;
                     }
                     if (SystematicFieldGroupNames.DOCUMENT_LOCATION.equals(group.getName())) {
                         documentLocationGroup = group;
                     }
->>>>>>> develop-5.1
                 }
             }
 
@@ -1198,8 +1113,6 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
                 setDefaultPropertyValue(childNode, propDef, forceOverwrite, reallySetDefaultValues, field, propertyDefinitions, documentType);
             }
         }
-<<<<<<< HEAD
-=======
         if (accessRestrictionGroup != null && reallySetDefaultValues) {
             // cannot calculate this in setSpecialDependentValues (called at the end of setDefaultPropertyValue),
             // because multiple other default values must be set before the calculation
@@ -1208,7 +1121,6 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
                 AccessRestrictionGenerator.setAccessRestrictionFromSeries(documentLocationGroup, accessRestrictionGroup, node.getProperties());
             }
         }
->>>>>>> develop-5.1
     }
 
     private List<Node> collectChildNodes(Node node, QName[] hierarchy, int i) {
@@ -1689,11 +1601,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
     @Override
     public Map<String, Pair<DynamicPropertyDefinition, Field>> getPropertyDefinitions(Node node) {
         QName type = node.getType();
-<<<<<<< HEAD
-        // XXX Alar: checking hasAspect(OBJECT) would be the same
-=======
         // XXX checking hasAspect(OBJECT) would be the same
->>>>>>> develop-5.1
         if (getDynamicTypeClass(node) == null && !dictionaryService.isSubClass(type, DocumentCommonModel.Types.METADATA_CONTAINER)) {
             return null;
         }
@@ -1740,11 +1648,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
     }
 
     private Map<String, Pair<DynamicPropertyDefinition, Field>> createPropertyDefinitions(List<Field> fields) {
-<<<<<<< HEAD
-        Map<String, Pair<DynamicPropertyDefinition, Field>> propertyDefinitions = new HashMap<String, Pair<DynamicPropertyDefinition, Field>>();
-=======
         Map<String, Pair<DynamicPropertyDefinition, Field>> propertyDefinitions = new LinkedHashMap<String, Pair<DynamicPropertyDefinition, Field>>();
->>>>>>> develop-5.1
         // TODO documentTypeVersion, fields and fieldGroups should be immutable; or they should be cloned in get method
         for (Field field : fields) {
             String fieldId = field.getFieldId();
@@ -1942,8 +1846,6 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
         return multiValuedOverride;
     }
 
-<<<<<<< HEAD
-=======
     @Override
     public void removeFrompPopertyDefinitionForSearchCache(String fieldId) {
         propertyDefinitionForSearchCache.remove(fieldId);
@@ -1959,7 +1861,6 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
         propertyDefinitionCache.remove(key);
     }
 
->>>>>>> develop-5.1
     // START: setters
     public void setDocumentAdminService(DocumentAdminService documentAdminService) {
         this.documentAdminService = documentAdminService;
@@ -2006,8 +1907,6 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
         this.regDateFilterInAssociationsSearch = regDateFilterInAssociationsSearch;
     }
 
-<<<<<<< HEAD
-=======
     public void setPropertyDefinitionCache(SimpleCache<PropDefCacheKey, Map<String /* fieldId */, Pair<DynamicPropertyDefinition, Field>>> propertyDefinitionCache) {
         this.propertyDefinitionCache = propertyDefinitionCache;
     }
@@ -2020,6 +1919,5 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
         this.propertyDefinitionForSearchCache = propertyDefinitionForSearchCache;
     }
 
->>>>>>> develop-5.1
     // END: setters
 }

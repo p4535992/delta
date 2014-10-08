@@ -28,11 +28,6 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
  * Form backing bean for Series list
-<<<<<<< HEAD
- * 
- * @author Ats Uiboupin
-=======
->>>>>>> develop-5.1
  */
 public class SeriesListDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;

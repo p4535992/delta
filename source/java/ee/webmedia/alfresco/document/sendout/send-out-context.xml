@@ -40,8 +40,6 @@
       </property>
    </bean>
    
-<<<<<<< HEAD
-=======
    <bean id="docSendOutInfoParameterUpdater" class="ee.webmedia.alfresco.document.sendout.bootstrap.DocSendOutInfoParameterUpdater" parent="module.baseComponent" >
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
@@ -53,19 +51,12 @@
       </property>
    </bean>
    
->>>>>>> develop-5.1
    <bean id="sendOutService" class="ee.webmedia.alfresco.document.sendout.service.SendOutServiceImpl">
       <property name="nodeService" ref="NodeService" />
       <property name="generalService" ref="GeneralService" />
       <property name="emailService" ref="CommonEmailService" />
       <property name="addressbookService" ref="AddressbookService" />
-<<<<<<< HEAD
-      <property name="dvkService" ref="DvkService" />
       <property name="parametersService" ref="ParametersService" />
-      <property name="signatureService" ref="SignatureService" />
-=======
-      <property name="parametersService" ref="ParametersService" />
->>>>>>> develop-5.1
       <property name="skLdapService" ref="SkLdapService" />
    </bean>
 

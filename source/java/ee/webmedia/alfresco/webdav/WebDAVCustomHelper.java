@@ -7,13 +7,9 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
 import java.util.List;
 
 import org.alfresco.model.ContentModel;
-<<<<<<< HEAD
-import org.alfresco.repo.security.permissions.AccessDeniedException;
-=======
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.security.permissions.AccessDeniedException;
 import org.alfresco.repo.version.Version2Model;
->>>>>>> develop-5.1
 import org.alfresco.repo.webdav.WebDAV;
 import org.alfresco.repo.webdav.WebDAVHelper;
 import org.alfresco.repo.webdav.WebDAVServerException;
@@ -24,10 +20,6 @@ import org.alfresco.service.cmr.repository.InvalidNodeRefException;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.repository.StoreRef;
-<<<<<<< HEAD
-import org.alfresco.service.cmr.security.AccessStatus;
-=======
->>>>>>> develop-5.1
 import org.alfresco.service.cmr.security.AuthenticationService;
 import org.alfresco.service.transaction.TransactionService;
 
@@ -35,10 +27,7 @@ import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.service.DocumentService;
-<<<<<<< HEAD
-=======
 import ee.webmedia.alfresco.privilege.model.Privilege;
->>>>>>> develop-5.1
 import ee.webmedia.alfresco.privilege.service.PrivilegeUtil;
 import ee.webmedia.alfresco.versions.service.VersionsService;
 
@@ -61,11 +50,7 @@ public class WebDAVCustomHelper extends WebDAVHelper {
 
     /**
      * Get the file info for the given paths
-<<<<<<< HEAD
-     * 
-=======
      *
->>>>>>> develop-5.1
      * @param rootNodeRef the acting webdav root
      * @param path the path to search for
      * @param servletPath the base servlet path, which may be null or empty
@@ -131,19 +116,11 @@ public class WebDAVCustomHelper extends WebDAVHelper {
         NodeService nodeService = BeanHelper.getNodeService();
         NodeRef docRef = nodeService.getPrimaryParent(fileRef).getParentRef();
         if (!DocumentCommonModel.Types.DOCUMENT.equals(nodeService.getType(docRef))) {
-<<<<<<< HEAD
-            if (!getUserService().isAdministrator() && !hasViewDocFilesPermission(fileRef)) {
-                throw new AccessDeniedException("Not allowing reading - file is not under document and user has no permission to view files. File=" + fileRef);
-            }
-        } else if (!hasViewDocFilesPermission(docRef)) {
-            throw new AccessDeniedException("permission " + DocumentCommonModel.Privileges.VIEW_DOCUMENT_FILES + " denied for file of document " + docRef);
-=======
             if (!Version2Model.STORE_ID.equals(fileRef.getStoreRef().getIdentifier()) && !getUserService().isAdministrator() && !hasViewDocFilesPermission(fileRef)) {
                 throw new AccessDeniedException("Not allowing reading - file is not under document and user has no permission to view files. File=" + fileRef);
             }
         } else if (!hasViewDocFilesPermission(docRef)) {
             throw new AccessDeniedException("permission " + Privilege.VIEW_DOCUMENT_FILES.getPrivilegeName() + " denied for file of document " + docRef);
->>>>>>> develop-5.1
         }
     }
 
@@ -153,11 +130,7 @@ public class WebDAVCustomHelper extends WebDAVHelper {
      * @return
      */
     private static boolean hasViewDocFilesPermission(NodeRef docOrFileRef) {
-<<<<<<< HEAD
-        return AccessStatus.ALLOWED == BeanHelper.getPermissionService().hasPermission(docOrFileRef, DocumentCommonModel.Privileges.VIEW_DOCUMENT_FILES);
-=======
         return BeanHelper.getPrivilegeService().hasPermission(docOrFileRef, AuthenticationUtil.getRunAsUser(), Privilege.VIEW_DOCUMENT_FILES);
->>>>>>> develop-5.1
     }
 
     public static void checkDocumentFileWritePermission(NodeRef fileRef) throws WebDAVServerException {
@@ -185,11 +158,7 @@ public class WebDAVCustomHelper extends WebDAVHelper {
                     "not allowing writing - document is finished or has in-progress workflows or is incoming letter"));
         }
 
-<<<<<<< HEAD
-        if (!getPrivilegeService().hasPermissions(parentRef, DocumentCommonModel.Privileges.EDIT_DOCUMENT)) {
-=======
         if (!getPrivilegeService().hasPermission(parentRef, AuthenticationUtil.getRunAsUser(), Privilege.EDIT_DOCUMENT)) {
->>>>>>> develop-5.1
             throw new WebDAVServerException(WebDAV.WEBDAV_SC_LOCKED, new AccessDeniedException("permission editDocument denied for file under " + parentRef));
         }
     }

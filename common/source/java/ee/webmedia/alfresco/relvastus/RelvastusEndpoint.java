@@ -15,12 +15,6 @@ import ee.webmedia.alfresco.relvastus.generated.OtsiDokumendidVastus;
 import ee.webmedia.alfresco.template.service.DocumentTemplateService;
 import ee.webmedia.alfresco.utils.XmlUtil;
 
-<<<<<<< HEAD
-/**
- * @author Alar Kvell
- */
-=======
->>>>>>> develop-5.1
 @Endpoint
 public class RelvastusEndpoint {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(RelvastusEndpoint.class);

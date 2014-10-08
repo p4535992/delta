@@ -1,14 +1,6 @@
 package ee.webmedia.alfresco.privilege.service;
 
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentAdminService;
-<<<<<<< HEAD
-import static ee.webmedia.alfresco.common.web.BeanHelper.getPrivilegeService;
-import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.isResponsible;
-import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.isStatus;
-
-import java.util.HashSet;
-import java.util.List;
-=======
 import static ee.webmedia.alfresco.common.web.BeanHelper.getNodeService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getPermissionService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getPrivilegeService;
@@ -21,15 +13,11 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
->>>>>>> develop-5.1
 import java.util.Set;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
-<<<<<<< HEAD
-=======
 import org.alfresco.service.cmr.security.AccessPermission;
->>>>>>> develop-5.1
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.StringUtils;
 
@@ -41,35 +29,14 @@ import ee.webmedia.alfresco.docconfig.bootstrap.SystematicDocumentType;
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
-<<<<<<< HEAD
-import ee.webmedia.alfresco.document.model.DocumentCommonModel.Privileges;
-import ee.webmedia.alfresco.document.service.DocumentService;
-=======
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.privilege.model.Privilege;
->>>>>>> develop-5.1
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 import ee.webmedia.alfresco.workflow.service.Task;
 
-<<<<<<< HEAD
-/**
- * @author Ats Uiboupin
- */
-public class PrivilegeUtil {
-
-    public static boolean isAdminOrDocmanagerWithViewDocPermission(Node docNode) {
-        return isAdminOrDocmanagerWithPermission(docNode.getNodeRef(), Privileges.VIEW_DOCUMENT_META_DATA);
-    }
-
-    public static boolean isAdminOrDocmanagerWithPermission(Node docNode, String... permissions) {
-        return isAdminOrDocmanagerWithPermission(docNode.getNodeRef(), permissions);
-    }
-
-    public static boolean isAdminOrDocmanagerWithPermission(NodeRef docNodeRef, String... permissions) {
-=======
 public class PrivilegeUtil {
 
     public static boolean isAdminOrDocmanagerWithViewDocPermission(Node docNode) {
@@ -90,21 +57,10 @@ public class PrivilegeUtil {
     }
 
     private static boolean isAdminOrDocmanagerWithPermission(NodeRef docNodeRef, boolean isPublicAssessRestriction, Privilege... permissions) {
->>>>>>> develop-5.1
         if (permissions == null || permissions.length == 0) {
             throw new IllegalArgumentException("no permissions given for permissions check");
         }
         UserService userService = BeanHelper.getUserService();
-<<<<<<< HEAD
-        return userService.isAdministrator() || (userService.isDocumentManager()
-                && getPrivilegeService().hasPermissionOnAuthority(docNodeRef, UserService.AUTH_DOCUMENT_MANAGERS_GROUP, permissions));
-    }
-
-    public static Set<String> getPrivsWithDependencies(Set<String> permissions) {
-        Set<String> permissionsWithDependencies = new HashSet<String>(permissions);
-        for (String permission : permissions) {
-            Set<String> privilegeDependencies = DocumentCommonModel.Privileges.PRIVILEGE_DEPENDENCIES.get(permission);
-=======
         if (userService.isAdministrator()) {
             return true;
         }
@@ -134,7 +90,6 @@ public class PrivilegeUtil {
         Set<Privilege> permissionsWithDependencies = new HashSet<Privilege>(permissions);
         for (Privilege permission : permissions) {
             Set<Privilege> privilegeDependencies = Privilege.PRIVILEGE_DEPENDENCIES.get(permission);
->>>>>>> develop-5.1
             if (privilegeDependencies != null) {
                 permissionsWithDependencies.addAll(privilegeDependencies);
             }
@@ -142,18 +97,6 @@ public class PrivilegeUtil {
         return permissionsWithDependencies;
     }
 
-<<<<<<< HEAD
-    public static Set<String> getRequiredPrivsForInprogressTask(Task task, NodeRef docRef, FileService fileService, boolean isForCaseFile) {
-        if (isStatus(task, Status.IN_PROGRESS)) {
-            return getRequiredPrivsForTask(task, docRef, fileService, isForCaseFile);
-        }
-        return new HashSet<String>();
-    }
-
-    public static Set<String> getRequiredPrivsForTask(Task task, NodeRef docRef, FileService fileService, boolean isForCaseFile) {
-        String taskOwnerId = task.getOwnerId();
-        Set<String> requiredPrivileges = new HashSet<String>(4);
-=======
     public static Set<Privilege> getRequiredPrivsForInprogressTask(Task task, NodeRef docRef, FileService fileService, boolean isForCaseFile) {
         if (isStatus(task, Status.IN_PROGRESS)) {
             return getRequiredPrivsForTask(task, docRef, fileService, isForCaseFile);
@@ -168,7 +111,6 @@ public class PrivilegeUtil {
     public static Set<Privilege> getRequiredPrivsForTask(Task task, NodeRef docRef, FileService fileService, boolean isForCaseFile, boolean isUnderCaseFile) {
         String taskOwnerId = task.getOwnerId();
         Set<Privilege> requiredPrivileges = new HashSet<Privilege>(4);
->>>>>>> develop-5.1
         if (!StringUtils.isBlank(taskOwnerId)) {
             // give permissions to task owner
             boolean isSignatureTaskWith1Digidoc = false;
@@ -182,21 +124,6 @@ public class PrivilegeUtil {
                 }
             }
             boolean isResponsible = isResponsible(task);
-<<<<<<< HEAD
-            if (task.getParent().getParent().isCaseFileWorkflow()) { // Check if task is under case file workflow
-                if (task.isType(WorkflowSpecificModel.Types.INFORMATION_TASK, WorkflowSpecificModel.Types.CONFIRMATION_TASK, WorkflowSpecificModel.Types.REVIEW_TASK,
-                        WorkflowSpecificModel.Types.DUE_DATE_EXTENSION_TASK)) {
-                    requiredPrivileges.add(Privileges.VIEW_DOCUMENT_FILES); // with dependencies
-                    if (isForCaseFile) {
-                        requiredPrivileges.add(Privileges.VIEW_CASE_FILE);
-                    }
-                } else if (task.isType(WorkflowSpecificModel.Types.ASSIGNMENT_TASK)) {
-                    requiredPrivileges.add(Privileges.EDIT_DOCUMENT); // with dependencies
-                    if (isForCaseFile) {
-                        requiredPrivileges.add(Privileges.EDIT_CASE_FILE); // with dependencies
-                    }
-                }
-=======
             if (isUnderCaseFile) { // Check if task is under case file workflow
                 if (task.isType(WorkflowSpecificModel.Types.INFORMATION_TASK, WorkflowSpecificModel.Types.CONFIRMATION_TASK, WorkflowSpecificModel.Types.REVIEW_TASK,
                         WorkflowSpecificModel.Types.DUE_DATE_EXTENSION_TASK)) {
@@ -215,22 +142,12 @@ public class PrivilegeUtil {
                     || task.isType(WorkflowSpecificModel.Types.REVIEW_TASK, WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK)
                     || (task.isType(WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_TASK) && isResponsible)) {
                 requiredPrivileges.add(Privilege.EDIT_DOCUMENT); // with dependencies
->>>>>>> develop-5.1
             } else if (isSignatureTaskWith1Digidoc // ... or under a document
                     || (task.isType(WorkflowSpecificModel.Types.ASSIGNMENT_TASK) && !isResponsible)
                     || (task.isType(WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_TASK) && !isResponsible)
                     || task.isType(WorkflowSpecificModel.Types.OPINION_TASK, WorkflowSpecificModel.Types.INFORMATION_TASK, WorkflowSpecificModel.Types.CONFIRMATION_TASK,
                             WorkflowSpecificModel.Types.DUE_DATE_EXTENSION_TASK, WorkflowSpecificModel.Types.SIGNATURE_TASK)) {
-<<<<<<< HEAD
-                requiredPrivileges.add(Privileges.VIEW_DOCUMENT_FILES); // with dependencies
-            } else if (isSignatureTaskWithFiles
-                    || (task.isType(WorkflowSpecificModel.Types.ASSIGNMENT_TASK) && isResponsible)
-                    || task.isType(WorkflowSpecificModel.Types.REVIEW_TASK, WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK)
-                    || (task.isType(WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_TASK) && isResponsible)) {
-                requiredPrivileges.add(Privileges.EDIT_DOCUMENT); // with dependencies
-=======
                 requiredPrivileges.add(Privilege.VIEW_DOCUMENT_FILES); // with dependencies
->>>>>>> develop-5.1
             } else {
                 MessageUtil.addWarningMessage("task " + task.getType().getLocalName()
                         + ": failed to determine required permissions for the owner of task that is now in progress. Task ownerId=" + taskOwnerId);
@@ -256,8 +173,6 @@ public class PrivilegeUtil {
         return null;
     }
 
-<<<<<<< HEAD
-=======
     public static Map<String, List<String>> removePermission(NodeRef nodeRef, Map<String, Set<String>> replacements, Set<AccessPermission> allSetPermissions) {
         Map<String, List<String>> hashMap = new HashMap<String, List<String>>();
         for (AccessPermission accessPermission : allSetPermissions) {
@@ -285,5 +200,4 @@ public class PrivilegeUtil {
         return hashMap;
     }
 
->>>>>>> develop-5.1
 }

@@ -9,20 +9,11 @@ import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.menu.model.MenuItem;
 import ee.webmedia.alfresco.menu.web.MenuItemCountBean;
-<<<<<<< HEAD
-=======
 import ee.webmedia.alfresco.menu.web.MenuItemCountBean.MenuItemCountVO;
->>>>>>> develop-5.1
 
 /**
  * Menu item processor that can be used as a base class for menu items which need count after title.
  * Just subclass this class and implement {@link CountAddingMenuItemProcessor#getCount()}.
-<<<<<<< HEAD
- * 
- * @author Romet Aidla
- * @author Alar Kvell
-=======
->>>>>>> develop-5.1
  */
 public abstract class CountAddingMenuItemProcessor implements MenuService.MenuItemProcessor {
 
@@ -53,13 +44,7 @@ public abstract class CountAddingMenuItemProcessor implements MenuService.MenuIt
         }
 
         MenuItemCountBean menuItemCountBean = (MenuItemCountBean) FacesHelper.getManagedBean(facesContext, MenuItemCountBean.BEAN_NAME);
-<<<<<<< HEAD
-        Integer count = menuItemCountBean.getCount(menuItem.getId());
-
-        int countValue = count == null ? 0 : count.intValue();
-=======
         MenuItemCountVO countVO = menuItemCountBean.getCount(menuItem.getId());
->>>>>>> develop-5.1
 
         String title = menuItem.getTitle();
         int firstBrace = -1;
@@ -67,13 +52,8 @@ public abstract class CountAddingMenuItemProcessor implements MenuService.MenuIt
             firstBrace = title.lastIndexOf(COUNT_SUFFIX_START);
         }
         String titleSuffix = "";
-<<<<<<< HEAD
-        if (countValue != 0) {
-            titleSuffix += " " + COUNT_SUFFIX_START + countValue + COUNT_SUFFIX_END;
-=======
         if (countVO.count != null && countVO.count > 0) {
             titleSuffix += " " + COUNT_SUFFIX_START + countVO.count + (countVO.exceedsMaxSearchResultRows ? "+" : "") + COUNT_SUFFIX_END;
->>>>>>> develop-5.1
         }
         if (firstBrace > 0) {
             title = title.substring(0, firstBrace);

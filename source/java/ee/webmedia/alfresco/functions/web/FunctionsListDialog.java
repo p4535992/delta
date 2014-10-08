@@ -1,10 +1,6 @@
 package ee.webmedia.alfresco.functions.web;
 
 import static ee.webmedia.alfresco.app.AppConstants.CHARSET;
-<<<<<<< HEAD
-import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentListService;
-=======
->>>>>>> develop-5.1
 
 import java.io.File;
 import java.io.IOException;
@@ -94,14 +90,11 @@ public class FunctionsListDialog extends BaseDialogBean {
         MessageUtil.addInfoMessage(FacesContext.getCurrentInstance(), "docList_updateDocCounters_success", docCount);
     }
 
-<<<<<<< HEAD
-=======
     public void updateArchivedDocCounters(@SuppressWarnings("unused") ActionEvent event) {
         final long docCount = BeanHelper.getDocumentListService().updateDocCounters(BeanHelper.getArchivalsService().getArchivalRoot());
         MessageUtil.addInfoMessage(FacesContext.getCurrentInstance(), "docList_updateDocCounters_success", docCount);
     }
 
->>>>>>> develop-5.1
     /**
      * NB! this method doesn't delete files associated with cases or documents that will get deleted - hence wasting disk usage. <br>
      * But as at the moment this method is meant to be called only in cases where repository and DB backups will be restored(before final successful import), it
@@ -161,11 +154,7 @@ public class FunctionsListDialog extends BaseDialogBean {
 
     private void deleteAllDocumentsAndStructure(NodeRef functionsRoot, boolean deleteStructure) {
         log.info("Finding nodes to delete...");
-<<<<<<< HEAD
-        Pair<List<NodeRef>, List<NodeRef>> allDocumentAndStructureRefs = getDocumentListService().getAllDocumentAndStructureRefs(functionsRoot);
-=======
         Pair<List<NodeRef>, List<NodeRef>> allDocumentAndStructureRefs = BeanHelper.getDocumentListService().getAllDocumentAndStructureRefs(functionsRoot);
->>>>>>> develop-5.1
         List<NodeRef> docRefs = allDocumentAndStructureRefs.getFirst();
         List<NodeRef> structRefs = allDocumentAndStructureRefs.getSecond();
         log.info("There are " + docRefs.size() + " document nodes" + (deleteStructure ? " and " + structRefs.size() + " structure nodes" : "") + " to delete");
@@ -222,11 +211,7 @@ public class FunctionsListDialog extends BaseDialogBean {
             IOUtils.closeQuietly(outputStream);
             FacesContext.getCurrentInstance().responseComplete();
 
-<<<<<<< HEAD
-            // Erko hack for incorrect view id in the next request
-=======
             // hack for incorrect view id in the next request
->>>>>>> develop-5.1
             JspStateManagerImpl.ignoreCurrentViewSequenceHack();
 
             log.info("docList export completed");
@@ -263,31 +248,15 @@ public class FunctionsListDialog extends BaseDialogBean {
 
     public static void exportConsolidatedList(NodeRef nodeRef) {
         log.info("consolidated docList started");
-<<<<<<< HEAD
-        HttpServletResponse response = (HttpServletResponse) FacesContext.getCurrentInstance().getExternalContext().getResponse();
-        response.setCharacterEncoding(CHARSET);
-        OutputStream outputStream = null;
-        try {
-            outputStream = WMAdminNodeBrowseBean.getExportOutStream(response, "consolidated-list.csv");
-            getDocumentListService().getExportCsv(outputStream, nodeRef);
-            outputStream.flush();
-=======
         try {
             BeanHelper.getReportService().createCsvReportResult(nodeRef);
             MessageUtil.addInfoMessage("docList_consolidatedList_background_job");
->>>>>>> develop-5.1
         } catch (Exception e) {
             final String msg = "Failed to export consolidated docList";
             log.error(msg, e);
             throw new RuntimeException(msg, e);
         } finally {
-<<<<<<< HEAD
-            FacesContext.getCurrentInstance().responseComplete();
-            JspStateManagerImpl.ignoreCurrentViewSequenceHack();
-            log.info("consolidated docList export completed");
-=======
             log.info("consolidated list job started in background");
->>>>>>> develop-5.1
         }
     }
 

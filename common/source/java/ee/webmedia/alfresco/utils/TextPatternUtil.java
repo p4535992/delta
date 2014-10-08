@@ -12,11 +12,6 @@ import org.apache.commons.lang.StringUtils;
  * Operations dealing with patterns. Patterns may contain any text and formulas, formulas are replaced with values.
  * Formulas must be in the form of <code>{formula}</code>.
  * Patterns may also contain cancellation groups, which must be in the form of <code>&#47;*text {formula}*&#47;</code> are also supported.
-<<<<<<< HEAD
- * 
- * @author Alar Kvell
-=======
->>>>>>> develop-5.1
  */
 public class TextPatternUtil {
 

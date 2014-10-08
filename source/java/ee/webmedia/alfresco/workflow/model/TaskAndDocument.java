@@ -15,12 +15,6 @@ import ee.webmedia.alfresco.volume.model.VolumeModel;
 import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
 import ee.webmedia.alfresco.workflow.service.Task;
 
-<<<<<<< HEAD
-/**
- * @author Alar Kvell
- */
-=======
->>>>>>> develop-5.1
 public class TaskAndDocument implements Serializable {
     private static final String MSG_CASE_FILE_TITLE = MessageUtil.getMessage("compoundWorkflow_caseFile_title");
     private static final long serialVersionUID = 1L;
@@ -48,11 +42,7 @@ public class TaskAndDocument implements Serializable {
         final String cssStyleClass;
         if (completedDate == null) {
             final Date now = new Date();
-<<<<<<< HEAD
-            if (dueDate != null && dueDate.before(now) && !DateUtils.isSameDay(dueDate, now)) {
-=======
             if (dueDate != null && dueDate.before(now)) {
->>>>>>> develop-5.1
                 cssStyleClass = STYLECLASS_TASK_OVERDUE;
             } else {
                 cssStyleClass = docStyleClass;
@@ -115,11 +105,7 @@ public class TaskAndDocument implements Serializable {
     }
 
     public String getSender() {
-<<<<<<< HEAD
-        return hasDocument() ? document.getSender() : "";
-=======
         return hasDocument() ? document.getSenderOrOwner() : "";
->>>>>>> develop-5.1
     }
 
     public Date getDocumentDueDate() {

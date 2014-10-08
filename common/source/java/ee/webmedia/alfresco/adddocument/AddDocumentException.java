@@ -1,21 +1,3 @@
-<<<<<<< HEAD
-package ee.webmedia.alfresco.adddocument;
-
-/**
- * Marker class to distinguish known errors that may occur during document import by addDocument web service.
- * 
- * @author Riina Tens
- */
-public class AddDocumentException extends RuntimeException {
-
-    public AddDocumentException(String message) {
-        super(message);
-    }
-
-    private static final long serialVersionUID = 1L;
-
-}
-=======
 package ee.webmedia.alfresco.adddocument;
 
 /**
@@ -30,4 +12,3 @@ public class AddDocumentException extends RuntimeException {
     private static final long serialVersionUID = 1L;
 
 }
->>>>>>> develop-5.1

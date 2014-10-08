@@ -1,11 +1,5 @@
 package ee.webmedia.alfresco.classificator.enums;
 
-<<<<<<< HEAD
-/**
- * @author Taimo Peelo
- */
-=======
->>>>>>> develop-5.1
 public enum SeriesType {
     SERIES("sari"),
     SUBSERIES("allsari");

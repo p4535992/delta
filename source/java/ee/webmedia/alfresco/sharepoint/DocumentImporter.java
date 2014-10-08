@@ -1,9 +1,6 @@
 package ee.webmedia.alfresco.sharepoint;
 
-<<<<<<< HEAD
-=======
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentConfigService;
->>>>>>> develop-5.1
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDynamicService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getFileFolderService;
@@ -69,42 +66,27 @@ import ee.webmedia.alfresco.classificator.enums.AccessRestriction;
 import ee.webmedia.alfresco.classificator.enums.PublishToAdr;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.docadmin.service.DocumentTypeVersion;
-<<<<<<< HEAD
-import ee.webmedia.alfresco.docadmin.web.DocAdminUtil;
-=======
 import ee.webmedia.alfresco.docadmin.service.Field;
 import ee.webmedia.alfresco.docadmin.web.DocAdminUtil;
 import ee.webmedia.alfresco.docconfig.service.DocumentConfigService;
 import ee.webmedia.alfresco.docconfig.service.DynamicPropertyDefinition;
->>>>>>> develop-5.1
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamicService;
 import ee.webmedia.alfresco.document.file.model.FileModel;
-<<<<<<< HEAD
-import ee.webmedia.alfresco.document.model.DocumentCommonModel;
-import ee.webmedia.alfresco.document.service.DocumentService;
-=======
 import ee.webmedia.alfresco.document.log.service.DocumentPropertiesChangeHolder;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.document.service.DocumentServiceImpl;
->>>>>>> develop-5.1
 import ee.webmedia.alfresco.eventplan.model.EventPlanModel;
 import ee.webmedia.alfresco.log.model.LogEntry;
 import ee.webmedia.alfresco.log.model.LogObject;
 import ee.webmedia.alfresco.log.service.LogService;
-<<<<<<< HEAD
-import ee.webmedia.alfresco.sharepoint.mapping.DocumentMetadata;
-import ee.webmedia.alfresco.sharepoint.mapping.ImportFile;
-import ee.webmedia.alfresco.sharepoint.mapping.MappedDocument;
-=======
 import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.sharepoint.mapping.DocumentMetadata;
 import ee.webmedia.alfresco.sharepoint.mapping.ImportFile;
 import ee.webmedia.alfresco.sharepoint.mapping.MappedDocument;
 import ee.webmedia.alfresco.sharepoint.mapping.Mapping;
->>>>>>> develop-5.1
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.FilenameUtil;
 import ee.webmedia.alfresco.utils.ProgressTracker;
@@ -116,11 +98,6 @@ import ee.webmedia.alfresco.volume.model.VolumeModel;
 
 /**
  * Imports documents and files from Sharepoint.
-<<<<<<< HEAD
- * 
- * @author Martti Tamm
-=======
->>>>>>> develop-5.1
  */
 public class DocumentImporter {
 
@@ -170,10 +147,7 @@ public class DocumentImporter {
     private final DocumentDynamicService documentDynamicService = getDocumentDynamicService();
     private final VersionsService versionsService = getVersionsService();
     private final LogService logService = getLogService();
-<<<<<<< HEAD
-=======
     private final DocumentConfigService documentConfigService = getDocumentConfigService();
->>>>>>> develop-5.1
     private final SimpleJdbcTemplate jdbcTemplate;
 
     private final SharepointMapping mapper;
@@ -318,11 +292,7 @@ public class DocumentImporter {
                 try {
                     status.incrCount();
 
-<<<<<<< HEAD
-                    result = handleDocument(docXmlFile, null, null);
-=======
                     result = handleDocument(docXmlFile, null, null, true, null);
->>>>>>> develop-5.1
 
                     if (result.isSuccessful()) {
                         addDocumentLastLog(result);
@@ -374,16 +344,6 @@ public class DocumentImporter {
                 }
             }
 
-<<<<<<< HEAD
-            DocumentImportResult result;
-
-            for (File docXmlFile : docXmlFiles.values()) {
-                result = null;
-                try {
-                    status.incrCount();
-
-                    result = handleDocument(docXmlFile, docResults.isEmpty() ? null : docResults.get(0).getDocumentRef(), meta);
-=======
             DocumentImportResult result = null;
 
             for (Iterator<File> i = docXmlFiles.values().iterator(); i.hasNext();) {
@@ -394,7 +354,6 @@ public class DocumentImporter {
                     MappedDocument previousMappedDoc = result == null ? null : result.getMappedDoc();
                     result = null;
                     result = handleDocument(file, docResults.isEmpty() ? null : docResults.get(0).getDocumentRef(), meta, !i.hasNext(), previousMappedDoc);
->>>>>>> develop-5.1
                     docResults.add(result);
 
                     if (!result.isSuccessful()) {
@@ -419,19 +378,11 @@ public class DocumentImporter {
                 } catch (Exception e) {
                     status.incrFailed();
                     LOG.warn("Caught exception during document import.", e);
-<<<<<<< HEAD
-                    docsError(errorFile, docXmlFile, e);
-                    results = null;
-                    break batchLoop;
-                } finally {
-                    importedDocXmls.put(FilenameUtils.getBaseName(FilenameUtils.getBaseName(docXmlFile.getName())), result != null ? result.getDocumentRef() : null);
-=======
                     docsError(errorFile, file, e);
                     results = null;
                     break batchLoop;
                 } finally {
                     importedDocXmls.put(FilenameUtils.getBaseName(FilenameUtils.getBaseName(file.getName())), result != null ? result.getDocumentRef() : null);
->>>>>>> develop-5.1
                 }
             }
 
@@ -685,11 +636,7 @@ public class DocumentImporter {
      * @param lastMeta Optional meta data from last version (defaults to current document meta data when <code>null</code>).
      * @return Document import result (can be used for logging).
      */
-<<<<<<< HEAD
-    private DocumentImportResult handleDocument(File documentXml, final NodeRef documentRef, DocumentMetadata lastMeta) {
-=======
     private DocumentImportResult handleDocument(File documentXml, final NodeRef documentRef, DocumentMetadata lastMeta, boolean isLast, MappedDocument previousMappedDoc) {
->>>>>>> develop-5.1
         DocumentMetadata currentMeta = null;
         DocumentDynamic doc = null;
 
@@ -713,33 +660,6 @@ public class DocumentImporter {
                 volumeRef = lastMeta.resolveVolumeRef(importedVolumesCases);
             }
 
-<<<<<<< HEAD
-            // 4. Read document properties from document XML according to resolved mappings file (may fail with an exception)
-            MappedDocument mappedDoc = mapper.createMappedDocument(new SAXReader().read(documentXml).getRootElement(), lastMeta);
-
-            if (mappedDoc == null) {
-                throw new ImportValidationException("Could not resolve document type");
-            }
-
-            logService.setThreadLocalOverride(currentMeta.getModified(), currentMeta.getModifier(), getUserName(currentMeta.getModifier()));
-
-            Map<QName, Serializable> props = mappedDoc.getPropertyValues();
-
-            // 5. Apply custom property checks (by the specification)
-            Date restrictionBeginSuggestion = settings.isSharepointOrigin() ? currentMeta.getCreated() : (Date) nodeService.getProperty(volumeRef, VolumeModel.Props.VALID_FROM);
-            postProcessRestrictions(props, restrictionBeginSuggestion, volumeRef);
-            postProcessOther(props, currentMeta, volumeRef);
-
-            if (!settings.isSharepointOrigin() && !currentMeta.getFiles().isEmpty()) {
-                boolean html = FilenameUtils.isExtension(currentMeta.getFiles().get(0).getTitle(), NON_DIGITAL_EXT);
-                props.put(DocumentCommonModel.Props.STORAGE_TYPE, html ? "Paber" : "Digitaalne");
-            }
-
-            // 6. Create document and files
-            if (documentRef == null) {
-                doc = documentDynamicService.createNewDocument(mappedDoc.getDocumentTypeVersion(), volumeRef, false).getFirst();
-                nodeService.addAspect(doc.getNodeRef(), DocumentCommonModel.Aspects.SEARCHABLE, null);
-=======
             Mapping lastMapping = mapper.getDocumentMapping(lastMeta);
             if (lastMapping == null) {
                 throw new ImportValidationException("Could not resolve document type");
@@ -777,7 +697,6 @@ public class DocumentImporter {
             if (isLast) {
 
                 Map<QName, Serializable> props = new HashMap<QName, Serializable>(mappedDoc.getPropertyValues());
->>>>>>> develop-5.1
 
                 // Store parents information on document:
                 Map<QName, NodeRef> parentRefs = parentsCache.get(volumeRef);
@@ -785,8 +704,6 @@ public class DocumentImporter {
                     parentRefs = documentService.getDocumentParents(doc.getNodeRef());
                     parentsCache.put(volumeRef, parentRefs);
                 }
-<<<<<<< HEAD
-=======
                 NodeRef seriesRef = parentRefs.get(DocumentCommonModel.Props.SERIES);
 
                 // 5. Apply custom property checks (by the specification)
@@ -815,52 +732,11 @@ public class DocumentImporter {
 
                 nodeService.addAspect(doc.getNodeRef(), DocumentCommonModel.Aspects.SEARCHABLE, null);
 
->>>>>>> develop-5.1
                 props.putAll(parentRefs);
                 doc.getNode().getProperties().putAll(RepoUtil.toStringProperties(props));
                 doc.getNode().getProperties().put(DocumentService.TransientProps.TEMP_LOGGING_DISABLED_DOCUMENT_METADATA_CHANGED, Boolean.TRUE);
                 doc.getNode().getProperties().put(DocumentCommonModel.Props.DOCUMENT_IS_IMPORTED.toString(), Boolean.TRUE);
 
-<<<<<<< HEAD
-                if (currentMeta.getHistory() != null) {
-                    for (DocumentHistory history : currentMeta.getHistory()) {
-                        addDocumentLog(doc.getNodeRef(), history.getDatetime(), history.getCreator(), history.getEvent());
-                    }
-                    logService.setThreadLocalOverride(currentMeta.getModified(), currentMeta.getModifier(), getUserName(currentMeta.getModifier()));
-                }
-            } else {
-                doc = documentDynamicService.getDocument(documentRef);
-                doc.getNode().getProperties().putAll(RepoUtil.toStringProperties(props));
-            }
-
-            addChildren(mappedDoc, doc.getNode(), mappedDoc.getDocumentTypeVersion());
-
-            documentDynamicService.updateDocument(doc, Arrays.asList(DocumentImportListener.BEAN_NAME), false, true);
-
-            addFile(doc.getNodeRef(), currentMeta);
-            documentService.updateSearchableFiles(doc.getNodeRef());
-
-            updateDocumentLog(doc.getNodeRef(), currentMeta.getModified(), currentMeta.getModifier());
-
-            if (currentMeta.getAssocs() != null && currentMeta.getAssocType() != null) {
-                QName assocType = currentMeta.getAssocType();
-                boolean assocSource = currentMeta.isDocumentAssocSource();
-
-                for (String assoc : currentMeta.getAssocs()) {
-                    NodeRef targetRef = importedDocXmls.get(assoc);
-
-                    if (targetRef == null) {
-                        LOG.warn("Could not resolve document association target for '" + assoc + "'.");
-                    } else if (assocSource) {
-                        nodeService.createAssociation(doc.getNodeRef(), targetRef, assocType);
-                    } else {
-                        nodeService.createAssociation(targetRef, doc.getNodeRef(), assocType);
-                    }
-                }
-            }
-
-            return new DocumentImportResult(currentMeta, documentXml, doc.getNodeRef(), props);
-=======
                 addChildren(mappedDoc, doc.getNode(), mappedDoc.getDocumentTypeVersion());
 
                 documentDynamicService.updateDocument(doc, Arrays.asList(DocumentImportListener.BEAN_NAME), false, true);
@@ -890,7 +766,6 @@ public class DocumentImporter {
                 mappedDoc.getPropertyValues().putAll(props);
             }
             return new DocumentImportResult(currentMeta, documentXml, doc.getNodeRef(), mappedDoc);
->>>>>>> develop-5.1
 
         } catch (ImportValidationException e) {
             if (doc != null && nodeService.exists(doc.getNodeRef())) {
@@ -898,23 +773,14 @@ public class DocumentImporter {
             }
             return new DocumentImportResult(currentMeta, documentXml, e.getMessage(), e.isReportAsSuccess());
         } catch (Exception e) {
-<<<<<<< HEAD
-            if (doc != null && nodeService.exists(doc.getNodeRef())) {
-                nodeService.deleteNode(doc.getNodeRef());
-            }
-            LOG.warn("Caught unexpected exception during document XML import.", e);
-=======
             LOG.warn("Caught unexpected exception during document XML import.", e);
             if (doc != null && nodeService.exists(doc.getNodeRef())) {
                 nodeService.deleteNode(doc.getNodeRef());
             }
->>>>>>> develop-5.1
             return new DocumentImportResult(currentMeta, documentXml, e.toString());
         }
     }
 
-<<<<<<< HEAD
-=======
     private void collectChildrenLog(DocumentPropertiesChangeHolder changes, MappedDocument previousParentNode, MappedDocument currentParentNode, Node realParentNode) {
         for (Entry<String, List<Node>> entry : realParentNode.getAllChildAssociationsByAssocType().entrySet()) {
             if (entry.getValue().isEmpty()) {
@@ -933,7 +799,6 @@ public class DocumentImporter {
         }
     }
 
->>>>>>> develop-5.1
     private DocumentMetadata getDocumentMeta(File documentXml) throws ImportValidationException {
         try {
             Element docRoot = new SAXReader().read(documentXml).getRootElement();
@@ -946,14 +811,6 @@ public class DocumentImporter {
     private void postProcessRestrictions(Map<QName, Serializable> props, Date created, NodeRef volumeRef) {
         String accessRestriction = (String) props.get(DocumentCommonModel.Props.ACCESS_RESTRICTION);
 
-<<<<<<< HEAD
-        if ("Avalik, piiranguga".equalsIgnoreCase(StringUtils.strip(accessRestriction))
-                || "Avalik, väljastatakse teabenõude korras".equalsIgnoreCase(StringUtils.strip(accessRestriction))) {
-            props.put(DocumentDynamicModel.Props.PUBLISH_TO_ADR, PublishToAdr.REQUEST_FOR_INFORMATION.getValueName());
-        }
-
-=======
->>>>>>> develop-5.1
         // a.
         if (accessRestriction != null && accessRestriction.indexOf('§') >= 0) {
             props.put(DocumentCommonModel.Props.ACCESS_RESTRICTION_REASON, accessRestriction);
@@ -971,8 +828,6 @@ public class DocumentImporter {
 
         props.put(DocumentCommonModel.Props.ACCESS_RESTRICTION, accessRestriction);
 
-<<<<<<< HEAD
-=======
         if (AccessRestriction.OPEN.equals(accessRestriction) || AccessRestriction.INTERNAL.equals(accessRestriction)) {
             props.put(DocumentCommonModel.Props.ACCESS_RESTRICTION_REASON, null);
             props.put(DocumentCommonModel.Props.ACCESS_RESTRICTION_BEGIN_DATE, null);
@@ -980,7 +835,6 @@ public class DocumentImporter {
             props.put(DocumentCommonModel.Props.ACCESS_RESTRICTION_END_DESC, null);
         }
 
->>>>>>> develop-5.1
         // Further checks are for restricted properties:
         if (restriction != AccessRestriction.AK) {
             return;
@@ -1026,20 +880,6 @@ public class DocumentImporter {
         }
     }
 
-<<<<<<< HEAD
-    private void postProcessOther(Map<QName, Serializable> props, DocumentMetadata meta, NodeRef volumeRef) {
-        String publishToAdr = (String) props.get(DocumentDynamicModel.Props.PUBLISH_TO_ADR);
-
-        // i.
-        if (settings.isSharepointOrigin()) {
-            if (publishToAdr == null) {
-                Date dispositionDate = (Date) nodeService.getProperty(volumeRef, EventPlanModel.Props.RETAIN_UNTIL_DATE);
-                if (dispositionDate != null && dispositionDate.before(new Date())) {
-                    publishToAdr = PublishToAdr.NOT_TO_ADR.getValueName();
-                }
-            }
-            if (publishToAdr == null && settings.isNotPublishToAdr(meta.getCreated())) {
-=======
     private void postProcessOther(Map<QName, Serializable> props, DocumentMetadata meta, NodeRef seriesRef, NodeRef volumeRef, String accessRestrictionOriginal) {
         String publishToAdr = (String) props.get(DocumentDynamicModel.Props.PUBLISH_TO_ADR);
         final String restriction = (String) props.get(DocumentCommonModel.Props.ACCESS_RESTRICTION);
@@ -1078,15 +918,11 @@ public class DocumentImporter {
             }
             if (publishToAdr == null && settings.getPublishToAdrStartingFromDate() != null && regDateTime != null
                     && regDateTime.before(settings.getPublishToAdrStartingFromDate())) {
->>>>>>> develop-5.1
                 publishToAdr = PublishToAdr.NOT_TO_ADR.getValueName();
             }
             if (publishToAdr == null && meta.getCreated() != null
                     && meta.getCreated().before(settings.getPublishToAdrWithFilesStartingFromDate())) {
 
-<<<<<<< HEAD
-                final String restriction = (String) props.get(DocumentCommonModel.Props.ACCESS_RESTRICTION);
-=======
                 if (AccessRestriction.OPEN.getValueName().equals(restriction)) {
                     publishToAdr = PublishToAdr.REQUEST_FOR_INFORMATION.getValueName();
                 } else if (AccessRestriction.AK.getValueName().equals(restriction)) {
@@ -1096,7 +932,6 @@ public class DocumentImporter {
             if (publishToAdr == null && regDateTime != null
                     && regDateTime.before(settings.getPublishToAdrWithFilesStartingFromDate())) {
 
->>>>>>> develop-5.1
                 if (AccessRestriction.OPEN.getValueName().equals(restriction)) {
                     publishToAdr = PublishToAdr.REQUEST_FOR_INFORMATION.getValueName();
                 } else if (AccessRestriction.AK.getValueName().equals(restriction)) {
@@ -1105,11 +940,6 @@ public class DocumentImporter {
             }
         }
 
-<<<<<<< HEAD
-        // i.(5-6) and j.
-        if (publishToAdr == null && meta.isMakePublic() != null) {
-            publishToAdr = meta.isMakePublic() ? PublishToAdr.TO_ADR.getValueName() : PublishToAdr.NOT_TO_ADR.getValueName();
-=======
         if (publishToAdr == null && meta.isMakePublic() != null && meta.isMakePublic()) {
             publishToAdr = PublishToAdr.TO_ADR.getValueName();
         }
@@ -1130,20 +960,12 @@ public class DocumentImporter {
                     && AccessRestriction.OPEN.getValueName().equals(restriction)) {
                 publishToAdr = PublishToAdr.REQUEST_FOR_INFORMATION.getValueName();
             }
->>>>>>> develop-5.1
         }
 
         props.put(DocumentDynamicModel.Props.PUBLISH_TO_ADR, publishToAdr);
 
         postProcessOwner(props, meta);
 
-<<<<<<< HEAD
-        String regNumber = (String) props.get(DocumentCommonModel.Props.REG_NUMBER);
-        String shortRegNumber = (String) props.get(DocumentCommonModel.Props.SHORT_REG_NUMBER);
-        String individualNumber = (String) props.get(DocumentCommonModel.Props.INDIVIDUAL_NUMBER);
-
-=======
->>>>>>> develop-5.1
         // m., n. & o.
         if (regNumber != null) {
 
@@ -1241,11 +1063,7 @@ public class DocumentImporter {
             // Unlock the node again, since previous method locked it
             versionsService.setVersionLockableAspect(currentFileRef, false);
 
-<<<<<<< HEAD
-            String fileName = StringUtils.defaultIfEmpty(file.getTitle(), file.getFilename());
-=======
             String fileName = file.getTitle();
->>>>>>> develop-5.1
             String repoFileName = generalService.getUniqueFileName(documentRef, FilenameUtil.makeSafeFilename(fileName));
 
             ContentWriter writer = fileFolderService.getWriter(currentFileRef);
@@ -1255,11 +1073,7 @@ public class DocumentImporter {
             nodeService.setProperty(currentFileRef, ContentModel.PROP_NAME, repoFileName); // Also handles childAssocName change
         } else {
             for (ImportFile file : meta.getFiles()) {
-<<<<<<< HEAD
-                String fileName = StringUtils.defaultIfEmpty(file.getTitle(), file.getFilename());
-=======
                 String fileName = file.getTitle();
->>>>>>> develop-5.1
                 String repoFileName = generalService.getUniqueFileName(documentRef, FilenameUtil.makeSafeFilename(fileName));
 
                 final FileInfo fileInfo = fileFolderService.create(documentRef, repoFileName, ContentModel.TYPE_CONTENT);
@@ -1289,10 +1103,6 @@ public class DocumentImporter {
 
         nodeService.setProperty(fileRef, FileModel.Props.DISPLAY_NAME, file.getTitle());
         nodeService.setProperty(fileRef, FileModel.Props.ACTIVE, file.isActive());
-<<<<<<< HEAD
-        nodeService.setProperty(fileRef, ContentModel.PROP_NAME, file.getTitle()); // Should be set to same value as found in original XML
-=======
->>>>>>> develop-5.1
         nodeService.setProperty(fileRef, ContentModel.PROP_CREATED, file.getCreated());
         nodeService.setProperty(fileRef, ContentModel.PROP_MODIFIED, file.getModified());
         nodeService.setProperty(fileRef, ContentModel.PROP_CREATOR, file.getCreator());

@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 <alfresco-config>
 
    <config>
@@ -28,34 +27,3 @@
 
 
 </alfresco-config>
-=======
-<alfresco-config>
-
-   <config>
-       <actions>
-           <action id="volume_search_export_csv">
-               <label-id>volume_export_csv</label-id>
-               <image>/images/icons/versioned_properties.gif</image>
-               <action-listener>#{VolumeSearchResultsDialog.exportAsCsv}</action-listener>
-	             <target>no_wait_workaround</target>
-           </action>
-
-           <action-group id="volume_search_actions">
-               <action idref="volume_search_export_csv"/>
-           </action-group>
-       </actions>
-      <dialogs>
-         <dialog name="volumeDynamicSearchDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/document/search/web/document-dynamic-search-dialog.jsp" managed-bean="VolumeDynamicSearchDialog"
-            icon="/images/icons/versioned_properties_large.gif" title-id="volume_search" />
-         <dialog name="volumeDynamicReportDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/document/search/web/document-dynamic-search-dialog.jsp" managed-bean="VolumeDynamicReportDialog"
-            icon="/images/icons/versioned_properties_large.gif" title-id="volume_report" />
-         
-         <dialog name="volumeSearchResultsDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/volume/search/web/volume-search-results-dialog.jsp" managed-bean="VolumeSearchResultsDialog"
-            icon="/images/icons/versioned_properties_large.gif" title-id="volume_search" actions-config-id="volume_search_actions"/>
-
-      </dialogs>
-   </config>
-
-
-</alfresco-config>
->>>>>>> develop-5.1

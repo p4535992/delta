@@ -116,13 +116,6 @@
        </property>
     </bean>
 
-<<<<<<< HEAD
-    <bean id="removeDuplicateAccessControlEntryRowsBootstrap" class="ee.webmedia.alfresco.common.bootstrap.RemoveDuplicateAccessControlEntryRowsBootstrap">
-      <property name="dataSource" ref="dataSource" />
-    </bean>
-
-=======
->>>>>>> develop-5.1
     <!-- Set up JGroups communication, if necessary -->
     <bean name="jgroupsChannelFactory" class="org.alfresco.repo.jgroups.AlfrescoJGroupsChannelFactory">
         <property name="clusterName">

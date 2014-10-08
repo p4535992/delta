@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 <?xml version="1.0" encoding="UTF-8"?>
 <view:view 
    xmlns:view="http://www.alfresco.org/view/repository/1.0" 
@@ -6,12 +5,3 @@
 >
    <param:parameters view:childName="param:parameters" />
 </view:view>
-=======
-<?xml version="1.0" encoding="UTF-8"?>
-<view:view 
-   xmlns:view="http://www.alfresco.org/view/repository/1.0" 
-   xmlns:param="http://alfresco.webmedia.ee/model/parameters/1.0" 
->
-   <param:parameters view:childName="param:parameters" />
-</view:view>
->>>>>>> develop-5.1

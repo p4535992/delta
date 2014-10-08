@@ -4,12 +4,6 @@ import java.io.File;
 
 import org.springframework.beans.factory.InitializingBean;
 
-<<<<<<< HEAD
-/**
- * @author Alar Kvell
- */
-=======
->>>>>>> develop-5.1
 public class CreateOrMoveRootDirBootstrap implements InitializingBean {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(CreateOrMoveRootDirBootstrap.class);
 

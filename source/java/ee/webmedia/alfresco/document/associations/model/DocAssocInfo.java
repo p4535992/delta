@@ -12,12 +12,6 @@ import ee.webmedia.alfresco.document.assocsdyn.service.DocumentAssociationsServi
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.service.DocumentService.AssocType;
 
-<<<<<<< HEAD
-/**
- * @author Ats Uiboupin
- */
-=======
->>>>>>> develop-5.1
 public class DocAssocInfo implements Serializable, Comparable<DocAssocInfo> {
 
     private static final long serialVersionUID = 1L;
@@ -110,13 +104,10 @@ public class DocAssocInfo implements Serializable, Comparable<DocAssocInfo> {
         return DocumentCommonModel.Assocs.DOCUMENT_2_DOCUMENT.equals(assocTypeQName);
     }
 
-<<<<<<< HEAD
-=======
     public boolean isFollowUpOrReplyAssoc() {
         return DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP.equals(assocTypeQName) || DocumentCommonModel.Assocs.DOCUMENT_REPLY.equals(assocTypeQName);
     }
 
->>>>>>> develop-5.1
     public void setCaseFileVolume(boolean isCaseFileVolume) {
         this.isCaseFileVolume = isCaseFileVolume;
     }

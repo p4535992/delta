@@ -37,14 +37,6 @@
    <bean id="privilegeService" class="ee.webmedia.alfresco.privilege.service.PrivilegeServiceImpl">
       <property name="userService" ref="UserService" />
       <property name="authorityService" ref="AuthorityService" />
-<<<<<<< HEAD
-      <property name="permissionService" ref="PermissionService" />
-      <property name="nodeService" ref="NodeService" />
-      <property name="applicationService" ref="ApplicationService" />
-      <property name="logService" ref="LogService" />
-      <property name="generalService" ref="GeneralService" />
-      <property name="indexerAndSearcher" ref="admLuceneIndexerAndSearcherFactory" />
-=======
       <property name="nodeService" ref="NodeService" />
       <property name="logService" ref="LogService" />
       <property name="generalService" ref="GeneralService" />
@@ -54,7 +46,6 @@
             <constructor-arg ref="dataSource" />
          </bean>
       </property>      
->>>>>>> develop-5.1
    </bean>
 
    <bean id="PrivilegeService" class="org.springframework.aop.framework.ProxyFactoryBean">
@@ -77,38 +68,14 @@
       <property name="dataSource" ref="dataSource" />
    </bean>   
    
-<<<<<<< HEAD
-   <bean id="fixAclInheritanceUpdater2" class="ee.webmedia.alfresco.privilege.bootstrap.FixAclInheritanceUpdater" parent="module.baseComponent">
-      <property name="moduleId" value="simdhs" />
-      <property name="executeOnceOnly" value="true" />
-=======
    <bean id="createDeltaPermissionTablesBootstrap" class="ee.webmedia.alfresco.privilege.bootstrap.CreateDeltaPermissionsTablesBootstrap" parent="executeStatementsBootstrap" >
       <property name="moduleId" value="common" />
       <property name="executeOnceOnly" value="true" />
       <property name="resourceName" value="ee/webmedia/alfresco/privilege/bootstrap/delta_node_permission_tables.sql" />
->>>>>>> develop-5.1
       <property name="jdbcTemplate">
          <bean class="org.springframework.jdbc.core.simple.SimpleJdbcTemplate">
             <constructor-arg ref="dataSource" />
          </bean>
-<<<<<<< HEAD
-      </property>
-      <property name="aclDaoComponent" ref="aclDaoComponent" />
-      <property name="accessControlListDao" ref="accessControlListDAO" />
-   </bean>
-
-   <!-- This updater is here for testing application state after migrating documents from static to dynamic. Remove if not needed. -->   
-   <bean id="fixAclInheritanceUpdater3" class="ee.webmedia.alfresco.privilege.bootstrap.FixAclInheritanceUpdater" parent="module.baseComponent">
-      <property name="moduleId" value="simdhs" />
-      <property name="executeOnceOnly" value="false" />
-      <property name="enabled" value="${updater.version25To313.enabled}" />
-      <property name="dependsOn">
-         <list>
-            <ref bean="deleteNodesAfterConvertToDynamicDocumentUpdater" />
-            <ref bean="removeAspectsAfterConvertToDynamicDocumentUpdater" />
-         </list>
-      </property>
-=======
       </property> 
    </bean>   
   
@@ -133,17 +100,10 @@
       <property name="executeOnceOnly" value="true" />
       <property name="dataSource" ref="dataSource" />
       <property name="resourceName" value="ee/webmedia/alfresco/privilege/bootstrap/drop_alfresco_permission_tables.sql" />
->>>>>>> develop-5.1
       <property name="jdbcTemplate">
          <bean class="org.springframework.jdbc.core.simple.SimpleJdbcTemplate">
             <constructor-arg ref="dataSource" />
          </bean>
-<<<<<<< HEAD
-      </property>
-      <property name="aclDaoComponent" ref="aclDaoComponent" />
-      <property name="accessControlListDao" ref="accessControlListDAO" />
-   </bean>   
-=======
       </property>       
       <property name="dependsOn">
          <list>
@@ -152,7 +112,6 @@
       </property>      
    </bean>
 
->>>>>>> develop-5.1
    <!-- START: web beans: -->
 
    <bean id="ManageInheritablePrivilegesDialog" class="ee.webmedia.alfresco.privilege.web.ManageInheritablePrivilegesDialog" scope="session" />

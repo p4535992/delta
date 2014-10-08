@@ -9,10 +9,6 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getEInvoiceService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getFileService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getLogService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getNodeService;
-<<<<<<< HEAD
-import static ee.webmedia.alfresco.common.web.BeanHelper.getPrivilegeService;
-=======
->>>>>>> develop-5.1
 import static ee.webmedia.alfresco.common.web.BeanHelper.getSignatureService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getWorkflowService;
@@ -20,10 +16,7 @@ import static ee.webmedia.alfresco.privilege.service.PrivilegeUtil.isAdminOrDocm
 import static ee.webmedia.alfresco.utils.ComponentUtil.getAttributes;
 import static ee.webmedia.alfresco.utils.ComponentUtil.getChildren;
 import static ee.webmedia.alfresco.utils.ComponentUtil.putAttribute;
-<<<<<<< HEAD
-=======
 import static ee.webmedia.alfresco.workflow.web.CompoundWorkflowDialog.handleWorkflowChangedException;
->>>>>>> develop-5.1
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -53,10 +46,6 @@ import org.alfresco.model.ContentModel;
 import org.alfresco.repo.content.MimetypeMap;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.lock.NodeLockedException;
-<<<<<<< HEAD
-import org.alfresco.service.cmr.model.FileExistsException;
-=======
->>>>>>> develop-5.1
 import org.alfresco.service.cmr.repository.InvalidNodeRefException;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
@@ -72,10 +61,6 @@ import org.alfresco.web.bean.generator.TextAreaGenerator;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.Repository;
 import org.alfresco.web.config.ActionsConfigElement.ActionDefinition;
-<<<<<<< HEAD
-import org.alfresco.web.ui.common.Utils;
-=======
->>>>>>> develop-5.1
 import org.alfresco.web.ui.common.component.UIActionLink;
 import org.alfresco.web.ui.common.component.UIPanel;
 import org.alfresco.web.ui.common.component.data.UIColumn;
@@ -90,10 +75,6 @@ import org.joda.time.LocalDate;
 
 import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.casefile.model.CaseFileModel;
-<<<<<<< HEAD
-import ee.webmedia.alfresco.casefile.model.CaseFileModel;
-=======
->>>>>>> develop-5.1
 import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.common.propertysheet.component.WMUIPropertySheet;
 import ee.webmedia.alfresco.common.propertysheet.customchildrencontainer.CustomChildrenCreator;
@@ -104,14 +85,10 @@ import ee.webmedia.alfresco.common.propertysheet.modalLayer.ModalLayerComponent.
 import ee.webmedia.alfresco.common.propertysheet.modalLayer.ValidatingModalLayerComponent;
 import ee.webmedia.alfresco.common.propertysheet.renderer.HtmlButtonRenderer;
 import ee.webmedia.alfresco.common.propertysheet.renderkit.PropertySheetGridRenderer;
-<<<<<<< HEAD
-import ee.webmedia.alfresco.common.web.BeanHelper;
-=======
 import ee.webmedia.alfresco.common.propertysheet.search.Search;
 import ee.webmedia.alfresco.common.propertysheet.search.UserSearchGenerator;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.UserContactGroupSearchBean;
->>>>>>> develop-5.1
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 import ee.webmedia.alfresco.docconfig.generator.DialogDataProvider;
 import ee.webmedia.alfresco.docdynamic.web.DocumentDynamicBlock;
@@ -121,32 +98,17 @@ import ee.webmedia.alfresco.document.einvoice.web.TransactionsBlockBean;
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.file.web.FileBlockBean;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
-<<<<<<< HEAD
-import ee.webmedia.alfresco.document.model.DocumentCommonModel.Privileges;
-import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
-import ee.webmedia.alfresco.document.web.evaluator.DocumentNotInDraftsFunctionActionEvaluator;
-import ee.webmedia.alfresco.log.model.LogEntry;
-import ee.webmedia.alfresco.log.model.LogObject;
-import ee.webmedia.alfresco.signature.exception.SignatureException;
-import ee.webmedia.alfresco.signature.exception.SignatureRuntimeException;
-import ee.webmedia.alfresco.signature.model.SignatureChallenge;
-=======
 import ee.webmedia.alfresco.document.web.evaluator.DocumentNotInDraftsFunctionActionEvaluator;
 import ee.webmedia.alfresco.log.model.LogEntry;
 import ee.webmedia.alfresco.log.model.LogObject;
 import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.signature.exception.SignatureException;
->>>>>>> develop-5.1
 import ee.webmedia.alfresco.signature.model.SignatureDigest;
 import ee.webmedia.alfresco.signature.web.SignatureAppletModalComponent;
 import ee.webmedia.alfresco.signature.web.SignatureBlockBean;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.CalendarUtil;
 import ee.webmedia.alfresco.utils.ComponentUtil;
-<<<<<<< HEAD
-import ee.webmedia.alfresco.utils.MessageData;
-=======
->>>>>>> develop-5.1
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.WebUtil;
@@ -169,12 +131,6 @@ import ee.webmedia.alfresco.workflow.service.WorkflowUtil;
 import ee.webmedia.alfresco.workflow.service.type.DueDateExtensionWorkflowType;
 import ee.webmedia.alfresco.workflow.web.PrintTableServlet.TableMode;
 
-<<<<<<< HEAD
-/**
- * @author Dmitri Melnikov
- */
-=======
->>>>>>> develop-5.1
 public class WorkflowBlockBean implements DocumentDynamicBlock {
 
     private static final long serialVersionUID = 1L;
@@ -196,10 +152,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
     /** task index attribute name */
     public static final String ATTRIB_INDEX = "index";
     private static final String MODAL_KEY_REASON = "reason";
-<<<<<<< HEAD
-=======
     private static final String MODAL_KEY_EXTENDER = "extender";
->>>>>>> develop-5.1
     private static final String MODAL_KEY_DUE_DATE = "dueDate";
     private static final String MODAL_KEY_PROPOSED_DUE_DATE = "proposedDueDate";
     private FileBlockBean fileBlockBean;
@@ -209,10 +162,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
 
     private transient HtmlPanelGroup dataTableGroup;
     private transient UIRichList reviewNotesRichList;
-<<<<<<< HEAD
-=======
     private transient HtmlPanelGroup dueDateHistoryModalPanel;
->>>>>>> develop-5.1
 
     private NodeRef containerRef;
     private Node container;
@@ -225,29 +175,12 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
     private List<Task> finishedOpinionTasks;
     private List<Task> finishedOrderAssignmentTasks;
     private List<WorkflowBlockItem> groupedWorkflowBlockItems;
-<<<<<<< HEAD
-    private SignatureTask signatureTask;
-    private List<File> removedFiles;
-    private String phoneNr;
-    private String challengeId;
-    private String signature;
-    private MessageData signatureError;
-    private List<NodeRef> signingQueue;
-    Map<NodeRef, List<File>> signingFiles;
-    /** Has non-null value if current signing is signing multiple (> 1) documents together */
-    private NodeRef mainDocumentRef;
-    private Map<NodeRef, String> originalStatuses;
-
-    private String renderedModal;
-    private transient UIPanel modalContainer;
-=======
     private List<File> removedFiles;
     private SigningFlowContainer signingFlow;
     private String challengeId;
 
     private String dueDateExtenderUsername;
     private String dueDateExtenderUserFullname;
->>>>>>> develop-5.1
 
     @Override
     public void resetOrInit(DialogDataProvider provider) {
@@ -258,10 +191,6 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
             compoundWorkflowDialog = null;
             init(provider.getNode());
         }
-<<<<<<< HEAD
-        resetModals();
-=======
->>>>>>> develop-5.1
     }
 
     public void init(Node container) {
@@ -292,20 +221,10 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         finishedOpinionTasks = null;
         finishedOrderAssignmentTasks = null;
         groupedWorkflowBlockItems = null;
-<<<<<<< HEAD
-        signatureTask = null;
-=======
->>>>>>> develop-5.1
         dataTableGroup = null;
         removedFiles = null;
         delegationBean.reset();
         reviewNotesRichList = null;
-<<<<<<< HEAD
-        signingQueue = null;
-        signingFiles = null;
-        mainDocumentRef = null;
-        originalStatuses = null;
-=======
         signingFlow = null;
         dueDateExtenderUsername = null;
         dueDateExtenderUserFullname = null;
@@ -314,7 +233,6 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
     void refreshCompoundWorkflowAndRestore(CompoundWorkflow compoundWorkflow, String action) {
         this.compoundWorkflow = compoundWorkflow;
         restore(action);
->>>>>>> develop-5.1
     }
 
     public void restore(String action) {
@@ -339,13 +257,6 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
 
         // jsp:include parameters are not taken in account in list construction if list is not nulled
         reviewNotesRichList = null;
-<<<<<<< HEAD
-
-        if (signingQueue == null || signingQueue.isEmpty()) {
-            signatureTask = null;
-        }
-=======
->>>>>>> develop-5.1
         removedFiles = null;
         delegationBean.reset();
         // rebuild the whole task panel
@@ -383,30 +294,6 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         }
     }
 
-<<<<<<< HEAD
-    private void resetModals() {
-        renderedModal = null;
-        List<UIComponent> children = ComponentUtil.getChildren(getModalContainer());
-        children.clear();
-        DueDateHistoryModalComponent linkModal = new DueDateHistoryModalComponent();
-        linkModal.setId("document-link-modal-container");
-        children.add(linkModal);
-    }
-
-    public boolean isModalRendered() {
-        return StringUtils.isNotBlank(renderedModal);
-    }
-
-    public String getFetchAndResetRenderedModal() {
-        try {
-            return renderedModal;
-        } finally {
-            renderedModal = null;
-        }
-    }
-
-=======
->>>>>>> develop-5.1
     public boolean isCompoundWorkflowOwner() {
         return getWorkflowService().isOwner(getCompoundWorkflows());
     }
@@ -471,13 +358,8 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
 
             boolean isWorking = DocumentStatus.WORKING.getValueName().equals(documentStatus);
             boolean isFinished = DocumentStatus.FINISHED.getValueName().equals(documentStatus);
-<<<<<<< HEAD
-            boolean hasPrivEditDoc = getPrivilegeService().hasPermissions(containerRef, Privileges.EDIT_DOCUMENT);
-            boolean hasViewPrivs = getPrivilegeService().hasPermissions(containerRef, Privileges.VIEW_DOCUMENT_META_DATA, Privileges.VIEW_DOCUMENT_FILES);
-=======
             boolean hasPrivEditDoc = container.hasPermission(Privilege.EDIT_DOCUMENT);
             boolean hasViewPrivs = container.hasPermission(Privilege.VIEW_DOCUMENT_META_DATA, Privilege.VIEW_DOCUMENT_FILES);
->>>>>>> develop-5.1
             boolean hasViewPrivsWithoutEdit = !hasPrivEditDoc && hasViewPrivs;
             Boolean adminOrDocmanagerWithPermission = null;
             for (CompoundWorkflowDefinition cWorkflowDef : workflowDefs) {
@@ -499,12 +381,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
                 }
                 if (isFinished) {
                     if (adminOrDocmanagerWithPermission == null) {
-<<<<<<< HEAD
-                        adminOrDocmanagerWithPermission = isAdminOrDocmanagerWithPermission(new Node(containerRef), Privileges.VIEW_DOCUMENT_META_DATA,
-                                Privileges.VIEW_DOCUMENT_FILES);
-=======
                         adminOrDocmanagerWithPermission = isAdminOrDocmanagerWithPermission(container, Privilege.VIEW_DOCUMENT_META_DATA, Privilege.VIEW_DOCUMENT_FILES);
->>>>>>> develop-5.1
                     }
                     if (adminOrDocmanagerWithPermission
                             && !hasOtherWFs(cWorkflowDef, WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW, WorkflowSpecificModel.Types.INFORMATION_WORKFLOW,
@@ -600,25 +477,16 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
             if (containerRef != null && getNodeService().exists(containerRef)) {
                 parentType = getNodeService().getType(containerRef);
             }
-<<<<<<< HEAD
-            if ((isDocumentWorkflow(parentType) && getWorkflowService().isDocumentWorkflowEnabled() && getPrivilegeService().hasPermissions(containerRef,
-                    Privileges.VIEW_DOCUMENT_META_DATA, Privileges.VIEW_DOCUMENT_FILES)
-                    && (containerRef == null || new DocumentNotInDraftsFunctionActionEvaluator().evaluate(new Node(containerRef))))
-=======
             if ((isDocumentWorkflow(parentType) && getWorkflowService().isDocumentWorkflowEnabled()
                     && container.hasPermission(Privilege.VIEW_DOCUMENT_META_DATA, Privilege.VIEW_DOCUMENT_FILES)
                     && (container == null || new DocumentNotInDraftsFunctionActionEvaluator().evaluate(container)))
->>>>>>> develop-5.1
                     || isCaseWorkflow(parentType) && BeanHelper.getWorkflowService().hasNoStoppedOrInprogressCompoundWorkflows(containerRef)) {
                 return WORKFLOW_METHOD_BINDING_NAME;
             }
             return null;
-<<<<<<< HEAD
-=======
         } catch (InvalidNodeRefException ne) {
             log.warn("Node " + containerRef + " in invalid!");
             return null;
->>>>>>> develop-5.1
         } catch (RuntimeException e) {
             // Log error here, because JSF EL evaluator does not log detailed error cause
             log.error("Error getting workflowMethodBindingName", e);
@@ -630,14 +498,6 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         try {
             if (compoundWorkflow == null
                     && getWorkflowService().isIndependentWorkflowEnabled()
-<<<<<<< HEAD
-                    && getPrivilegeService().hasPermissions(containerRef, Privileges.VIEW_DOCUMENT_META_DATA, Privileges.VIEW_DOCUMENT_FILES)
-                    && (containerRef == null || !isDocumentWorkflow(BeanHelper.getNodeService().getType(containerRef))
-                    || new DocumentNotInDraftsFunctionActionEvaluator().evaluate(new Node(containerRef)))) {
-                return INDEPENDENT_WORKFLOW_METHOD_BINDING_NAME;
-            }
-            return null;
-=======
                     && BeanHelper.getPrivilegeService().hasPermission(containerRef, AuthenticationUtil.getRunAsUser(), Privilege.VIEW_DOCUMENT_META_DATA,
                             Privilege.VIEW_DOCUMENT_FILES)
                             && (containerRef == null || !isDocumentWorkflow(BeanHelper.getNodeService().getType(containerRef))
@@ -648,7 +508,6 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         } catch (InvalidNodeRefException ne) {
             log.warn("Node " + containerRef + " in invalid!");
             return null;
->>>>>>> develop-5.1
         } catch (RuntimeException e) {
             // Log error here, because JSF EL evaluator does not log detailed error cause
             log.error("Error getting independentWorkflowMethodBindingName", e);
@@ -689,12 +548,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
             task.getRemovedFiles().clear();
             MessageUtil.addInfoMessage("save_success");
         } catch (WorkflowChangedException e) {
-<<<<<<< HEAD
-            log.debug("Saving task failed", e);
-            MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "workflow_task_save_failed");
-=======
             handleWorkflowChangedException(e, "Saving task failed", "workflow_task_save_failed", log);
->>>>>>> develop-5.1
         }
         notifyDialogsIfNeeded();
     }
@@ -778,12 +632,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
             log.error("Finishing task failed", e);
             BeanHelper.getDocumentLockHelperBean().handleLockedNode("task_finish_error_document_locked", e);
         } catch (WorkflowChangedException e) {
-<<<<<<< HEAD
-            log.error("Finishing task failed", e);
-            MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "workflow_task_save_failed");
-=======
             CompoundWorkflowDialog.handleWorkflowChangedException(e, "Finishing task failed", "workflow_task_save_failed", log);
->>>>>>> develop-5.1
         } catch (WorkflowActiveResponsibleTaskException e) {
             log.debug("Finishing task failed: more than one active responsible task!", e);
             MessageUtil.addErrorMessage("workflow_compound_save_failed_responsible");
@@ -844,84 +693,9 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
     }
 
     private void prepareSigning(Integer outcomeIndex, Task task) {
-<<<<<<< HEAD
-        // signing requires that at least 1 active file exists within this document
-        long step0 = System.currentTimeMillis();
-
-        List<File> activeFiles = new ArrayList<File>();
-        Map<NodeRef, List<File>> signingFiles = new HashMap<NodeRef, List<File>>();
-        collectSigningFiles(activeFiles, signingFiles);
-        if (!checkSigningFiles(activeFiles, false)) {
-            return;
-        }
-
-        if (log.isDebugEnabled()) {
-            log.debug("found " + activeFiles.size() + "active files for signing:\n");
-            for (File activeFile : activeFiles) {
-                log.debug("nodeRef=" + activeFile.getNodeRef() + "; displayName=" + activeFile.getDisplayName() + "\n");
-            }
-        }
-
-        signatureTask = ((SignatureTask) task).clone();
-        try {
-            long step1 = System.currentTimeMillis();
-            mainDocumentRef = null;
-            signingQueue = new ArrayList<NodeRef>();
-            originalStatuses = new HashMap<NodeRef, String>();
-            boolean signSeparately = true;
-            boolean hasExistingDigiDoc = false;
-            List<NodeRef> signingDocumentRefs = null;
-            if (compoundWorkflow == null) {
-                signingQueue.add(containerRef);
-                addDocumentStatus(containerRef);
-            } else {
-                signingDocumentRefs = getWorkflowService().getCompoundWorkflowSigningDocumentRefs(compoundWorkflow.getNodeRef());
-                NodeRef compoundWorkflowRef = compoundWorkflow.getNodeRef();
-                if (signatureTask.getParent().isSignTogether() && signingDocumentRefs.size() > 1) {
-                    mainDocumentRef = compoundWorkflow.getMainDocument();
-                    if (mainDocumentRef == null || !getNodeService().exists(mainDocumentRef)) {
-                        throw new UnableToPerformException("compoundWorkflow_main_document_missing");
-                    }
-                    hasExistingDigiDoc = getDocumentService().checkExistingDdoc(mainDocumentRef, compoundWorkflowRef) != null;
-                    signSeparately = false;
-                    signingQueue.add(mainDocumentRef);
-                    Map<NodeRef, List<File>> tmpFileMap = new HashMap<NodeRef, List<File>>();
-                    List<File> tmpFiles = new ArrayList<File>();
-                    tmpFileMap.put(mainDocumentRef, tmpFiles);
-                    for (Map.Entry<NodeRef, List<File>> entry : signingFiles.entrySet()) {
-                        List<File> documentFiles = entry.getValue();
-                        addDocumentStatus(entry.getKey());
-                        if (documentFiles != null) {
-                            tmpFiles.addAll(documentFiles);
-                        }
-                    }
-                    signingFiles = tmpFileMap;
-
-                } else {
-                    signingQueue.addAll(signingDocumentRefs);
-                    addDocumentStatuses(signingQueue);
-                }
-            }
-            this.signingFiles = signingFiles;
-            getDocumentService().prepareDocumentSigning(signSeparately ? signingQueue : signingDocumentRefs, !hasExistingDigiDoc, signSeparately);
-            long step2 = System.currentTimeMillis();
-            if (compoundWorkflow == null) {
-                fileBlockBean.restore();
-            } else {
-                BeanHelper.getCompoundWorkflowAssocListDialog().restored();
-            }
-            long step3 = System.currentTimeMillis();
-            if (log.isInfoEnabled()) {
-                log.info("prepareDocumentSigning took total time " + (step3 - step0) + " ms\n    load file list - " + (step1 - step0)
-                        + " ms\n    service call - " + (step2 - step1) + " ms\n    reload file list - " + (step3 - step2) + " ms");
-            }
-        } catch (UnableToPerformException e) {
-            MessageUtil.addStatusMessage(e);
-=======
         signingFlow = new SigningFlowContainer(((SignatureTask) task).clone(), null, compoundWorkflow != null ? compoundWorkflow.getNodeRef() : null, containerRef);
         boolean signingPrepared = signingFlow.prepareSigning();
         if (!signingPrepared) {
->>>>>>> develop-5.1
             return;
         }
         if (SignatureTaskOutcome.SIGNED_IDCARD.equals((int) outcomeIndex)) {
@@ -931,78 +705,6 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         }
     }
 
-<<<<<<< HEAD
-    public boolean checkSigningFiles(List<File> activeFiles, boolean checkReference) {
-        if (activeFiles == null || activeFiles.isEmpty()) {
-            MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "task_files_required");
-            return false;
-        }
-        if (checkReference) {
-            boolean hasNotReferenceFile = false;
-            for (File file : activeFiles) {
-                if (file.getGeneratedFileRef() == null) {
-                    hasNotReferenceFile = true;
-                    break;
-                }
-            }
-            if (!hasNotReferenceFile) {
-                MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "task_files_required");
-                return false;
-            }
-        }
-        if (hasZeroByteFile(activeFiles)) {
-            MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "task_files_zero_byte_file");
-            return false;
-        }
-        return true;
-    }
-
-    public void collectSigningFiles(List<File> activeFiles, Map<NodeRef, List<File>> signingFiles) {
-        if (compoundWorkflow == null) {
-            List<File> documentFiles = getFileService().getAllActiveFiles(containerRef);
-            if (documentFiles != null) {
-                activeFiles.addAll(documentFiles);
-            }
-            signingFiles.put(containerRef, activeFiles);
-        } else {
-            signingFiles.putAll(getWorkflowService().getCompoundWorkflowSigningFiles(compoundWorkflow));
-            for (Map.Entry<NodeRef, List<File>> entry : signingFiles.entrySet()) {
-                List<File> documentFiles = entry.getValue();
-                if (documentFiles != null) {
-                    activeFiles.addAll(documentFiles);
-                }
-            }
-        }
-    }
-
-    private void addDocumentStatuses(List<NodeRef> docRefs) {
-        if (docRefs != null) {
-            for (NodeRef docRef : docRefs) {
-                addDocumentStatus(docRef);
-            }
-        }
-    }
-
-    private void addDocumentStatus(NodeRef docRef) {
-        originalStatuses.put(docRef, (String) getNodeService().getProperty(docRef, DocumentCommonModel.Props.DOC_STATUS));
-    }
-
-    private boolean needsSignatureInput(NodeRef nodeRef) {
-        List<File> files = signingFiles.get(nodeRef);
-        return files != null && !files.isEmpty();
-    }
-
-    private boolean hasZeroByteFile(List<File> files) {
-        for (File file : files) {
-            if (file.getSize() == 0) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-=======
->>>>>>> develop-5.1
     private void addRemovedFiles(Task task) {
         for (File taskFile : getFileService().getFiles(BeanHelper.getWorkflowDbService().getTaskFileNodeRefs(task.getNodeRef()))) {
             for (File file : getRemovedFiles()) {
@@ -1054,22 +756,14 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
 
         Task initiatingTask = reloadWorkflow(taskIndex);
 
-<<<<<<< HEAD
-        getWorkflowService().createDueDateExtension(reason, newDate, dueDate, initiatingTask, containerRef);
-=======
         getWorkflowService().createDueDateExtension(reason, newDate, dueDate, initiatingTask, containerRef, dueDateExtenderUsername, dueDateExtenderUserFullname);
->>>>>>> develop-5.1
 
         MessageUtil.addInfoMessage("task_sendDueDateExtensionRequest_success_defaultMsg");
         notifyDialogsIfNeeded();
     }
 
     @SuppressWarnings("unchecked")
-<<<<<<< HEAD
-    private List<Pair<String, String>> validate(Task task, Integer outcomeIndex) {
-=======
     public static List<Pair<String, String>> validate(Task task, Integer outcomeIndex) {
->>>>>>> develop-5.1
         QName taskType = task.getNode().getType();
         if (WorkflowSpecificModel.Types.SIGNATURE_TASK.equals(taskType)) {
             if (SignatureTaskOutcome.NOT_SIGNED.equals((int) outcomeIndex) && StringUtils.isBlank(task.getComment())) {
@@ -1079,16 +773,10 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
             if ((outcomeIndex == 1 || outcomeIndex == 2) && StringUtils.isBlank(task.getComment())) {
                 return Arrays.asList(new Pair<String, String>("task_validation_reviewTask_comment", null));
             }
-<<<<<<< HEAD
-            if (DocumentSubtypeModel.Types.INVOICE.equals(container.getType())) {
-                return checkTransactionCostManagers();
-            }
-=======
             // FIXME: remove if not needed or implement for 4.0 branch
             // if (DocumentSubtypeModel.Types.INVOICE.equals(container.getType())) {
             // return checkTransactionCostManagers();
             // }
->>>>>>> develop-5.1
         } else if (WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK.equals(taskType)) {
             if (outcomeIndex == 1 && StringUtils.isBlank(task.getComment())) {
                 return Arrays.asList(new Pair<String, String>("task_validation_externalReviewTask_comment", null));
@@ -1232,30 +920,16 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         String certId = requestParameterMap.get("certId");
         try {
             long step0 = System.currentTimeMillis();
-<<<<<<< HEAD
-            List<File> activeFiles = new ArrayList<File>();
-            collectSigningFiles(activeFiles, new HashMap<NodeRef, List<File>>());
-            if (!checkSigningFiles(activeFiles, true)) {
-=======
             if (!signingFlow.collectAndCheckSigningFiles()) {
->>>>>>> develop-5.1
                 closeModal();
                 resetSigningData();
                 return;
             }
-<<<<<<< HEAD
-            SignatureDigest signatureDigest = getDocumentService().prepareDocumentDigest(signingQueue.get(0), certHex,
-                    mainDocumentRef != null ? compoundWorkflow.getNodeRef() : null);
-            long step1 = System.currentTimeMillis();
-            showModal(signatureDigest.getDigestHex(), certId);
-            signatureTask.setSignatureDigest(signatureDigest);
-=======
             SignatureDigest signatureDigest = getDocumentService().prepareDocumentDigest(signingFlow.getSigningDocument(0), certHex,
                     signingFlow.getMainDocumentRef() != null ? compoundWorkflow.getNodeRef() : null);
             long step1 = System.currentTimeMillis();
             showModal(signatureDigest.getDigestHex(), certId);
             signingFlow.setSignatureDigest(signatureDigest);
->>>>>>> develop-5.1
             if (log.isInfoEnabled()) {
                 log.info("prepareDocumentDigest took total time " + (step1 - step0) + " ms\n    service call - " + (step1 - step0) + " ms");
             }
@@ -1276,11 +950,6 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         String signatureHex = (String) facesContext.getExternalContext().getRequestParameterMap().get("signatureHex");
 
         try {
-<<<<<<< HEAD
-            signDocumentImpl(signatureHex);
-        } finally {
-            if (signingQueue == null || signingQueue.isEmpty()) {
-=======
             boolean finishTask = signingFlow.isFinishTaskStep();
             boolean finishedSigning = signingFlow.signDocumentImpl(signatureHex);
             if (!finishedSigning) {
@@ -1289,7 +958,6 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
             notifyDialogsIfNeeded(false, finishTask);
         } finally {
             if (signingFlow == null || signingFlow.isSigningQueueEmpty()) {
->>>>>>> develop-5.1
                 closeModal();
                 resetSigningData();
             } else {
@@ -1299,11 +967,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
     }
 
     private void showModalOrSign() {
-<<<<<<< HEAD
-        if (needsSignatureInput(signingQueue.get(0))) {
-=======
         if (signingFlow.needsSignatureInput(signingFlow.getSigningDocument(0))) {
->>>>>>> develop-5.1
             showModal();
         } else {
             signDocument();
@@ -1311,79 +975,23 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
     }
 
     private void showMobileIdModalOrSign() {
-<<<<<<< HEAD
-        if (needsSignatureInput(signingQueue.get(0))) {
-=======
         if (signingFlow.needsSignatureInput(signingFlow.getSigningDocument(0))) {
->>>>>>> develop-5.1
             getMobileIdPhoneNrModal().setRendered(true);
         } else {
             finishMobileIdSigning(null);
         }
     }
 
-<<<<<<< HEAD
-    private void signDocumentImpl(String signatureHex) {
-        try {
-            long step0 = System.currentTimeMillis();
-            List<File> activeFiles = new ArrayList<File>();
-            collectSigningFiles(activeFiles, new HashMap<NodeRef, List<File>>());
-            if (!checkSigningFiles(activeFiles, true)) {
-                signingQueue = null;
-                return;
-            }
-            boolean finishTask = signingQueue.size() == 1;
-            getDocumentService().finishDocumentSigning(signatureTask, signatureHex, signingQueue.get(0), mainDocumentRef == null, finishTask, originalStatuses);
-            signingQueue.remove(0);
-            long step1 = System.currentTimeMillis();
-            notifyDialogsIfNeeded();
-            long step2 = System.currentTimeMillis();
-            if (log.isInfoEnabled()) {
-                log.info("finishDocumentSigning took total time " + (step2 - step0) + " ms\n    service call - " + (step1 - step0) + " ms\n    reload document - "
-                        + (step2 - step1) + " ms");
-            }
-            if (finishTask) {
-                MessageUtil.addInfoMessage("task_finish_success_defaultMsg");
-            }
-            return;
-        } catch (UnableToPerformException e) {
-            MessageUtil.addStatusMessage(e);
-        } catch (WorkflowChangedException e) {
-            log.debug("Finishing signature task failed", e);
-            MessageUtil.addErrorMessage("workflow_task_save_failed");
-        } catch (SignatureRuntimeException e) {
-            SignatureBlockBean.addSignatureError(e);
-        } catch (FileExistsException e) {
-            if (log.isDebugEnabled()) {
-                log.debug("Failed to create ddoc, file with same name already exists, parentRef = " + containerRef, e);
-            }
-            Utils.addErrorMessage(MessageUtil.getMessage("ddoc_file_exists"));
-        }
-        // this code must be reached ONLY in case of error
-        signingQueue = null;
-    }
-
-    public void notifyDialogsIfNeeded() {
-        notifyDialogsIfNeeded(false);
-    }
-
-    public void notifyDialogsIfNeeded(boolean resetExpandedData) {
-=======
     public void notifyDialogsIfNeeded() {
         notifyDialogsIfNeeded(false, true);
     }
 
     public void notifyDialogsIfNeeded(boolean resetExpandedData, boolean initWorkflowBlock) {
->>>>>>> develop-5.1
         if (compoundWorkflow == null || !compoundWorkflow.isIndependentWorkflow()) {
             getDocumentDialogHelperBean().switchMode(false);
         }
         if (compoundWorkflow != null && compoundWorkflowDialog != null) {
-<<<<<<< HEAD
-            compoundWorkflowDialog.reload(compoundWorkflow != null ? compoundWorkflow.getNodeRef() : null, resetExpandedData);
-=======
             compoundWorkflowDialog.reload(compoundWorkflow != null ? compoundWorkflow.getNodeRef() : null, resetExpandedData, initWorkflowBlock);
->>>>>>> develop-5.1
         }
     }
 
@@ -1394,48 +1002,6 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
     }
 
     public void resetSigningData() {
-<<<<<<< HEAD
-        signatureTask = null;
-        signingQueue = null;
-        mainDocumentRef = null;
-        signingFiles = null;
-        originalStatuses = null;
-    }
-
-    public void startMobileIdSigning(@SuppressWarnings("unused") ActionEvent event) {
-        phoneNr = StringUtils.stripToEmpty(phoneNr);
-        if (!phoneNr.startsWith("+")) {
-            phoneNr = "+372" + phoneNr;
-        }
-        try {
-            long step0 = System.currentTimeMillis();
-            List<File> activeFiles = new ArrayList<File>();
-            collectSigningFiles(activeFiles, new HashMap<NodeRef, List<File>>());
-            if (!checkSigningFiles(activeFiles, true)) {
-                resetSigningData();
-                return;
-            }
-            SignatureChallenge signatureChallenge = getDocumentService().prepareDocumentChallenge(signingQueue.get(0), phoneNr,
-                    mainDocumentRef != null ? compoundWorkflow.getNodeRef() : null);
-            long step1 = System.currentTimeMillis();
-            getMobileIdChallengeModal().setRendered(true);
-            challengeId = "<div id=\"mobileIdChallengeMessage\" style=\"text-align: center;\"><p>Sõnumit saadetakse, palun oodake...</p><p>Kontrollkood:</p><p id=\"mobileIdChallengeId\" style=\"padding-top: 10px; font-size: 28px; vertical-align: middle;\">"
-                    + StringEscapeUtils.escapeXml(signatureChallenge.getChallengeId()) + "</p></div><script type=\"text/javascript\">$jQ(document).ready(function(){ "
-                    + "window.setTimeout(getMobileIdSignature, 2000); "
-                    + "});</script>";
-            signatureTask.setSignatureChallenge(signatureChallenge);
-            signature = null;
-            signatureError = null;
-            if (log.isInfoEnabled()) {
-                log.info("startMobileIdSigning took total time " + (step1 - step0) + " ms\n    service call - " + (step1 - step0) + " ms");
-            }
-        } catch (UnableToPerformException e) {
-            MessageUtil.addStatusMessage(e);
-            resetSigningData();
-        } catch (SignatureException e) {
-            SignatureBlockBean.addSignatureError(e);
-            resetSigningData();
-=======
         signingFlow = null;
     }
 
@@ -1451,7 +1017,6 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
             if (!signingStarted) {
                 resetSigningData();
             }
->>>>>>> develop-5.1
         } finally {
             getMobileIdPhoneNrModal().setRendered(false);
         }
@@ -1460,36 +1025,6 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
     @ResponseMimetype(MimetypeMap.MIMETYPE_HTML)
     public void getMobileIdSignature() throws IOException {
         ResponseWriter out = FacesContext.getCurrentInstance().getResponseWriter();
-<<<<<<< HEAD
-        signature = null;
-        try {
-            if (!checkSignatureData()) {
-                out.write("ERROR" + MessageUtil.getMessage("task_finish_error_signature_data_changed"));
-                return;
-            }
-            signature = getSignatureService().getMobileIdSignature(signatureTask.getSignatureChallenge());
-            if (signature == null) {
-                out.write("REPEAT");
-            } else {
-                out.write("FINISH");
-            }
-        } catch (UnableToPerformException e) {
-            out.write("FINISH");
-            signatureError = e;
-        }
-    }
-
-    private boolean checkSignatureData() {
-        if (signatureTask == null || signatureTask.getSignatureChallenge() == null) {
-            return false;
-        }
-        ExternalContext externalContext = FacesContext.getCurrentInstance().getExternalContext();
-        String requestParamChallengeId = (String) externalContext.getRequestParameterMap().get("mobileIdChallengeId");
-        if (StringUtils.isBlank(requestParamChallengeId) || !requestParamChallengeId.equals(signatureTask.getSignatureChallenge().getChallengeId())) {
-            return false;
-        }
-        return true;
-=======
         ExternalContext externalContext = FacesContext.getCurrentInstance().getExternalContext();
         @SuppressWarnings("cast")
         String requestParamChallengeId = (String) externalContext.getRequestParameterMap().get("mobileIdChallengeId");
@@ -1498,22 +1033,10 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         } else {
             out.write(SigningFlowContainer.handleInvalidSigantureState());
         }
->>>>>>> develop-5.1
     }
 
     public void finishMobileIdSigning(@SuppressWarnings("unused") ActionEvent event) {
         try {
-<<<<<<< HEAD
-            if (signatureError == null) {
-                signDocumentImpl(signature);
-            } else {
-                MessageUtil.addStatusMessage(signatureError);
-                signingQueue = null;
-            }
-        } finally {
-            getMobileIdChallengeModal().setRendered(false);
-            if (signingQueue == null || signingQueue.isEmpty()) {
-=======
             boolean finishTask = signingFlow.isFinishTaskStep();
             boolean finishedMobileIdSigning = signingFlow.finishMobileIdSigning();
             if (!finishedMobileIdSigning) {
@@ -1523,7 +1046,6 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         } finally {
             getMobileIdChallengeModal().setRendered(false);
             if (signingFlow == null || signingFlow.isSigningQueueEmpty()) {
->>>>>>> develop-5.1
                 resetSigningData();
             } else {
                 showMobileIdModalOrSign();
@@ -1622,11 +1144,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         ValidatingModalLayerComponent dueDateExtensionLayer = null;
         for (Task task : getMyTasks()) {
             if (task.isType(WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_TASK, WorkflowSpecificModel.Types.ASSIGNMENT_TASK)) {
-<<<<<<< HEAD
-                dueDateExtensionLayer = addDueDateExtensionLayer(panelGroupChildren, context, app);
-=======
                 dueDateExtensionLayer = addDueDateExtensionLayer(panelGroupChildren, context, app, task.getCreatorId(), task.getCreatorName());
->>>>>>> develop-5.1
                 log.debug("Added dueDateExtensionLayer to parent=" + dueDateExtensionLayer.getParent());
                 break;
             }
@@ -1697,13 +1215,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
             // the outcome buttons
             String label = "task_outcome_" + node.getType().getLocalName();
             for (int outcomeIndex = 0; outcomeIndex < myTask.getOutcomes(); outcomeIndex++) {
-<<<<<<< HEAD
-                if (WorkflowSpecificModel.Types.SIGNATURE_TASK.equals(taskType)
-                        && WorkflowSpecificModel.SignatureTaskOutcome.SIGNED_MOBILEID.equals(outcomeIndex)
-                        && !getSignatureService().isMobileIdEnabled()) {
-=======
                 if (isMobileIdOutcomeAndMobileIdDisabled(taskType, outcomeIndex)) {
->>>>>>> develop-5.1
                     continue;
                 }
                 HtmlCommandButton outcomeButton = new HtmlCommandButton();
@@ -1754,9 +1266,6 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         }
     }
 
-<<<<<<< HEAD
-    private ValidatingModalLayerComponent addDueDateExtensionLayer(List<UIComponent> panelGroupChildren, FacesContext context, Application app) {
-=======
     public static boolean isMobileIdOutcomeAndMobileIdDisabled(QName taskType, int outcomeIndex) {
         return isMobileIdOutcome(taskType, outcomeIndex) && !getSignatureService().isMobileIdEnabled();
     }
@@ -1767,7 +1276,6 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
 
     private ValidatingModalLayerComponent addDueDateExtensionLayer(List<UIComponent> panelGroupChildren, FacesContext context, Application app, String defaultUsername,
             String defaultUserFullname) {
->>>>>>> develop-5.1
 
         ValidatingModalLayerComponent dueDateExtensionLayer = (ValidatingModalLayerComponent) app.createComponent(ValidatingModalLayerComponent.class.getCanonicalName());
         dueDateExtensionLayer.setId(TASK_DUE_DATE_EXTENSION_ID);
@@ -1790,8 +1298,6 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         reasonInput.setValue(null);
         layerChildren.add(reasonInput);
 
-<<<<<<< HEAD
-=======
         UserSearchGenerator userGenerator = new UserSearchGenerator();
         Search search = (Search) userGenerator.generate(context, "workflow_dueDateExtension_extender");
         search.setId(MODAL_KEY_EXTENDER);
@@ -1807,7 +1313,6 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         search.setValueBinding("value", context.getApplication().createValueBinding("#{WorkflowBlockBean.dueDateExtenderUserFullname}"));
         layerChildren.add(search);
 
->>>>>>> develop-5.1
         UIInput dueDateInput = addDateInput(context, layerChildren, "workflow_dueDateExtension_dueDate", MODAL_KEY_DUE_DATE);
         dueDateInput.setValue(CalendarUtil.addWorkingDaysToDate(new LocalDate(), 2, getClassificatorService()).toDateTimeAtCurrentTime().toDate());
         ComponentUtil.putAttribute(dueDateInput, ValidatingModalLayerComponent.ATTR_PRESERVE_VALUES, Boolean.TRUE);
@@ -1818,8 +1323,6 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         return dueDateExtensionLayer;
     }
 
-<<<<<<< HEAD
-=======
     public void assignDueDateExtender(String result) {
         if (StringUtils.isBlank(result)) {
             return;
@@ -1829,7 +1332,6 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         dueDateExtenderUserFullname = BeanHelper.getUserService().getUserFullName(dueDateExtenderUsername);
     }
 
->>>>>>> develop-5.1
     public UIInput addDateInput(FacesContext context, List<UIComponent> layerChildren, String labelKey, String inputId) {
         UIInput dateInput = (UIInput) (new DatePickerGenerator()).generate(context, inputId);
         ComponentUtil.createAndSetConverter(context, DatePickerConverter.CONVERTER_ID, dateInput);
@@ -1899,13 +1401,8 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
                     || !hasCurrentInstitutionTask(workflow);
             return localRights && externalReviewRights;
         } else if (isCaseWorkflow(parentType)) {
-<<<<<<< HEAD
-            return isOwner || isAdminOrDocmanagerWithPermission(containerRef, DocumentCommonModel.Privileges.VIEW_CASE_FILE)
-                    || BeanHelper.getPrivilegeService().hasPermissions(containerRef, DocumentCommonModel.Privileges.EDIT_CASE_FILE);
-=======
             return isOwner || isAdminOrDocmanagerWithPermission(containerRef, Privilege.VIEW_CASE_FILE)
                     || container.hasPermission(Privilege.EDIT_CASE_FILE);
->>>>>>> develop-5.1
         }
         return false;
     }
@@ -1977,12 +1474,6 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         }
     }
 
-<<<<<<< HEAD
-    // this method assumes we are in DOCUMENT_WORKFLOW view
-    public List<WorkflowBlockItem> getWorkflowBlockItems() {
-        List<WorkflowBlockItemGroup> workflowBlockItemGroups = new ArrayList<WorkflowBlockItemGroup>();
-        for (CompoundWorkflow cWf : getCompoundWorkflows()) {
-=======
     public List<WorkflowBlockItem> getWorkflowBlockItems() {
         groupedWorkflowBlockItems = new ArrayList<WorkflowBlockItem>();
         Map<NodeRef, Boolean> checkWorkflowRights = new HashMap<NodeRef, Boolean>();
@@ -2002,7 +1493,6 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         List<WorkflowBlockItemGroup> workflowBlockItemGroups = new ArrayList<WorkflowBlockItemGroup>();
         boolean checkWorkflow = checkWorkflowRights != null;
         for (CompoundWorkflow cWf : compoundWorkflows) {
->>>>>>> develop-5.1
             List<WorkflowBlockItem> items = new ArrayList<WorkflowBlockItem>();
             final List<Workflow> wfs = cWf.getWorkflows();
             for (Workflow wf : wfs) {
@@ -2012,12 +1502,8 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
                     // nor workflows that have been temporarily created when assignment task is shown that can potentially be delegated
                     // using those workflows for information,opinion tasks
                 }
-<<<<<<< HEAD
-                boolean raisedRights = checkRights(wf);
-=======
                 NodeRef workflowNodeRef = wf.getNodeRef();
                 boolean raisedRights = checkWorkflow && checkWorkflowRights.containsKey(workflowNodeRef) && checkWorkflowRights.get(workflowNodeRef);
->>>>>>> develop-5.1
                 for (Task task : wf.getTasks()) {
                     if (task.isSaved()) {
                         items.add(new WorkflowBlockItem(task, raisedRights));
@@ -2029,24 +1515,14 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         }
 
         if (workflowBlockItemGroups.isEmpty()) {
-<<<<<<< HEAD
-            return Collections.<WorkflowBlockItem> emptyList();
-=======
             return;
->>>>>>> develop-5.1
         }
 
         // Sort by workflows
         Collections.sort(workflowBlockItemGroups, WorkflowBlockItemGroup.COMPARATOR);
 
         // Flatten the structure.
-<<<<<<< HEAD
-        groupedWorkflowBlockItems = new ArrayList<WorkflowBlockItem>();
         int numberInGroupedBlock = 0;
-        String workflowGroupTasksUrl = getWorkflowGroupTasksUrl() + "&amp;" + PrintTableServlet.GROUP_NR_PARAM + "=";
-=======
-        int numberInGroupedBlock = 0;
->>>>>>> develop-5.1
         for (WorkflowBlockItemGroup workflowBlockItemGroup : workflowBlockItemGroups) {
             List<WorkflowBlockItem> groupedItems = workflowBlockItemGroup.getGroupedItems();
             for (WorkflowBlockItem groupedItem : groupedItems) {
@@ -2059,9 +1535,6 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         }
         groupedWorkflowBlockItems.remove(groupedWorkflowBlockItems.size() - 1); // remove two last ones
         groupedWorkflowBlockItems.remove(groupedWorkflowBlockItems.size() - 1);
-<<<<<<< HEAD
-        return groupedWorkflowBlockItems;
-=======
     }
 
     private void updateDueDateHistoryPanel() {
@@ -2083,7 +1556,6 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
                 }
             }
         }
->>>>>>> develop-5.1
     }
 
     public List<WorkflowBlockItem> getGroupedWorkflowBlockItems() {
@@ -2139,26 +1611,6 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         return fileComponentCreator;
     }
 
-<<<<<<< HEAD
-    public CustomChildrenCreator getDueDateHistoryRecordsGenerator() {
-        CustomChildrenCreator dueDateHistoryGenerator = new CustomChildrenCreator() {
-
-            @SuppressWarnings("unchecked")
-            @Override
-            public List<UIComponent> createChildren(List<Object> params, int rowCounter) {
-                List<UIComponent> components = new ArrayList<UIComponent>();
-                if (params != null && params.size() > 0) {
-                    String modalId = ((DueDateHistoryRecord) params.get(0)).getTaskId();
-                    components.add(new DueDateHistoryModalComponent(FacesContext.getCurrentInstance(), modalId, (List) params));
-                }
-                return components;
-            }
-        };
-        return dueDateHistoryGenerator;
-    }
-
-=======
->>>>>>> develop-5.1
     public List<File> getRemovedFiles() {
         if (removedFiles == null) {
             removedFiles = new ArrayList<File>();
@@ -2171,17 +1623,6 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
     }
 
     public SignatureTask getSignatureTask() {
-<<<<<<< HEAD
-        return signatureTask;
-    }
-
-    public String getPhoneNr() {
-        return phoneNr;
-    }
-
-    public void setPhoneNr(String phoneNr) {
-        this.phoneNr = phoneNr;
-=======
         return signingFlow.getSignatureTask();
     }
 
@@ -2191,7 +1632,6 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
 
     public void setPhoneNr(String phoneNr) {
         signingFlow.setPhoneNumber(phoneNr);
->>>>>>> develop-5.1
     }
 
     public String getChallengeId() {
@@ -2199,20 +1639,6 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
     }
 
     public void setSignature(String signature) {
-<<<<<<< HEAD
-        this.signature = signature;
-    }
-
-    public UIPanel getModalContainer() {
-        if (modalContainer == null) {
-            modalContainer = new UIPanel();
-        }
-        return modalContainer;
-    }
-
-    public void setModalContainer(UIPanel modalContainer) {
-        this.modalContainer = modalContainer;
-=======
         signingFlow.setSignature(signature);
     }
 
@@ -2243,7 +1669,6 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         } else {
             this.dueDateHistoryModalPanel = dueDateHistoryModalPanel;
         }
->>>>>>> develop-5.1
     }
 
     // END: getters / setters

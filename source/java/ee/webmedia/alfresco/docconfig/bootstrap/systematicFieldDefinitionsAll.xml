@@ -274,48 +274,6 @@
       </view:properties>
    </docadmin:fieldDefinition>
 
-<<<<<<< HEAD
-   <docadmin:fieldDefinition view:childName="docdyn:dailyAllowanceCateringCount">
-      <view:properties>
-         <docadmin:fieldId>dailyAllowanceCateringCount</docadmin:fieldId>
-         <docadmin:originalFieldId>dailyAllowanceCateringCount</docadmin:originalFieldId>
-         <docadmin:name>Toitlustuskordi</docadmin:name>
-         <docadmin:systematic>true</docadmin:systematic>
-         <docadmin:fieldType>COMBOBOX</docadmin:fieldType>
-         <docadmin:classificator>dailyAllowanceCateringCount</docadmin:classificator>
-         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
-         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
-      </view:properties>
-   </docadmin:fieldDefinition>
-
-   <docadmin:fieldDefinition view:childName="docdyn:dailyAllowanceFinancingSource">
-      <view:properties>
-         <docadmin:fieldId>dailyAllowanceFinancingSource</docadmin:fieldId>
-         <docadmin:originalFieldId>dailyAllowanceFinancingSource</docadmin:originalFieldId>
-         <docadmin:name>Päevaraha finantseerimisallikas</docadmin:name>
-         <docadmin:systematic>true</docadmin:systematic>
-         <docadmin:fieldType>COMBOBOX_EDITABLE</docadmin:fieldType>
-         <docadmin:classificator>dailyAllowanceFinancingSource</docadmin:classificator>
-         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
-         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
-      </view:properties>
-   </docadmin:fieldDefinition>
-
-   <docadmin:fieldDefinition view:childName="docdyn:expensesFinancingSource">
-      <view:properties>
-         <docadmin:fieldId>expensesFinancingSource</docadmin:fieldId>
-         <docadmin:originalFieldId>expensesFinancingSource</docadmin:originalFieldId>
-         <docadmin:name>Kulu finantseerimisallikas</docadmin:name>
-         <docadmin:systematic>true</docadmin:systematic>
-         <docadmin:fieldType>COMBOBOX_EDITABLE</docadmin:fieldType>
-         <docadmin:classificator>expensesFinancingSource</docadmin:classificator>
-         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
-         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
-      </view:properties>
-   </docadmin:fieldDefinition>
-
-=======
->>>>>>> develop-5.1
    <docadmin:fieldDefinition view:childName="docdyn:purchasingManager">
       <view:properties>
          <docadmin:fieldId>purchasingManager</docadmin:fieldId>

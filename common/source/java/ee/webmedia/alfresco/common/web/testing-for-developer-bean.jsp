@@ -44,8 +44,6 @@
       rendered="#{deleteAllLogNodesFromRepo.updaterRunning}"
       disabled="#{deleteAllLogNodesFromRepo.updaterStopping}" />
 	<f:verbatim><br/></f:verbatim>	
-<<<<<<< HEAD
-=======
 
    <f:verbatim><br/><hr/></f:verbatim>
    <h:outputText value="Dokumentide shortRegNumber korrigeerimine numbriliseks väärtuseks ja regNumber korrigeerimine vastavalt"/>
@@ -67,7 +65,6 @@
       rendered="#{invalidShortRegNumberUpdater.updaterRunning}"
       disabled="#{invalidShortRegNumberUpdater.updaterStopping}" />
    <f:verbatim><br/></f:verbatim>   
->>>>>>> develop-5.1
 	
 <%--   <br/>
    <u>Dokumendi õiguste uuendamise skript (enne 2.5 versiooni)</u>
@@ -128,31 +125,6 @@
 <f:verbatim><hr/></f:verbatim>
 <h:commandButton id="docList_updateDocCounters" value="Uuenda dokumentide loendureid" type="submit" 
       actionListener="#{FunctionsListDialog.updateDocCounters}" />
-<<<<<<< HEAD
-<%--
-<f:verbatim><hr/></f:verbatim>
-<h:outputText value="Dokumentidele õiguste lisamine lähtuvalt tööülesannetest"/>
-<f:verbatim><br/></f:verbatim>
-<h:outputText value="Kasutajate isikukoodid (tühikute või reavahetustega eraldatud): "/>
-<h:inputTextarea id="addTaskPrivilegesToDocumentUpdaterValidUsers" value="#{addTaskPrivilegesToDocumentUpdater.validUsers}" rows="5" cols="30" styleClass="expand19-200" />
-<f:verbatim><br/></f:verbatim>
-<h:outputText value="Mitu tööülesannet ühes transaktsioonis töödelda: "/>
-<h:inputText id="addTaskPrivilegesToDocumentUpdaterBatchSize" value="#{addTaskPrivilegesToDocumentUpdater.batchSize}" converter="javax.faces.Integer" size="4" />
-<f:verbatim><br/></f:verbatim>
-<h:commandButton id="startAddTaskPrivilegesToDocumentUpdater" value="Käivita õiguste lisamine" type="submit"
-   actionListener="#{addTaskPrivilegesToDocumentUpdater.executeUpdaterInBackground}"
-   rendered="#{addTaskPrivilegesToDocumentUpdater.updaterRunning == false}" />
-<h:commandButton id="stopAddTaskPrivilegesToDocumentUpdater" value="Peata õiguste lisamine" type="submit"
-   actionListener="#{addTaskPrivilegesToDocumentUpdater.stopUpdater}"
-   rendered="#{addTaskPrivilegesToDocumentUpdater.updaterRunning == true}"
-   disabled="#{addTaskPrivilegesToDocumentUpdater.updaterStopping == true}" />
-<f:verbatim><br/></f:verbatim>
-<h:outputText value="Paus pärast iga tööülesande töötlemist (ms): "/>
-<h:inputText id="addTaskPrivilegesToDocumentUpdaterSleepTime" value="#{addTaskPrivilegesToDocumentUpdater.sleepTime}" converter="javax.faces.Integer" size="4" />
-<h:commandButton id="updateAddTaskPrivilegesToDocumentUpdaterSleepTime" value="Uuenda" type="submit"
-      actionListener="#{addTaskPrivilegesToDocumentUpdater.updateSleepTime}" />
---%>
-=======
 <h:commandButton id="docList_updateArchivedDocCounters" value="Uuenda arhiveeritud dokumentide loendureid" type="submit"
 	actionListener="#{FunctionsListDialog.updateArchivedDocCounters}" />      
 
@@ -180,7 +152,6 @@
    actionListener="#{archivedSeriesVolTypeAndVolNumberPatternUpdater.stopUpdater}"
    rendered="#{archivedSeriesVolTypeAndVolNumberPatternUpdater.updaterRunning == true}"
    disabled="#{archivedSeriesVolTypeAndVolNumberPatternUpdater.updaterStopping == true}" />
->>>>>>> develop-5.1
 
 <f:verbatim><hr/></f:verbatim>
 <h:outputText value="Versioonide lahtilukustamine"/>
@@ -281,8 +252,6 @@
 
 <f:verbatim><hr/></f:verbatim>
 
-<<<<<<< HEAD
-=======
 <h:outputText value="Dokumendi failide liigutamine taustainfo plokki"/>
 <f:verbatim><br/></f:verbatim>
 <h:outputText value="Faili completed_docs.csv tee: "/>
@@ -388,7 +357,6 @@
 
 <f:verbatim><hr/></f:verbatim>
 
->>>>>>> develop-5.1
 <h:outputText value="Restore data _from_ Delta specified by the following database and contentstore folder"/>
 <f:verbatim><br/><br/></f:verbatim>
 <h:outputText value="db.name="/>
@@ -456,10 +424,7 @@
 <h:commandButton id="updateOrganisationStructureBasedGroups" value="updateOrganisationStructureBasedGroups" type="submit"
    actionListener="#{OrganizationStructureService.updateOrganisationStructureBasedGroups}" />
    <f:verbatim><br/></f:verbatim>
-<<<<<<< HEAD
-=======
 
->>>>>>> develop-5.1
 <h:outputText id="reportGenerationTitle" value="Aruannete genereerimine: " />
 <f:verbatim><br/></f:verbatim>
 <h:outputText id="reportGenerationStatus" value=" Selles klastri õlas aruannete genereerimine ei jookse." rendered="#{!ReportListDialog.reportGenerationEnabled}" />
@@ -719,10 +684,7 @@
 <li>* Struktuuri impordi jaoks loetakse sisse asukohas ...DataFolder olevad failid struktuur.csv ja toimikud.csv. Tekitatakse funktsioonid/sarjad/toimikud arhiivimoodustaja alla, mis on määratud parameetris ...ArchivalsStore. Impordi käigus kirjutatakse asukohta ...WorkFolder fail completed_toimikud.csv.</li>
 <li>* Dokumentide impordil luuakse asukohas ...DataFolder olevad dokumendid ja failid. Mappings.xml faili nimetus on parameetris ...MappingsFileName. Impordi käigus kirjutatakse asukohta ...WorkFolder järgmised failid - completed_docs.csv, completed_files.csv, indexed_files.csv, users_found.csv, users_not_found.csv, postponed_assocs.csv.</li>
 <li>* Impordi progressi, infoteateid ja veateateid saab jälgida rakenduse logist.</li>
-<<<<<<< HEAD
-=======
 <li>* publishToAdrWithFilesStartingFromDates - kuupäev (PP.KK.AAAA). kui parameetri väärtus &gt; imporditava dokumendi reg kuupäev ja dokumendi JP =Avalik, siis määratakse dokumendi publishToAdr ="Avalik, väljastatakse teabenõude korras". muul juhul publishToAdr ="Läheb ADR-i"</li>
->>>>>>> develop-5.1
 </ul>
 <br/>
 </f:verbatim>
@@ -747,8 +709,6 @@
 <h:inputText value="#{postipoissImporter.archivalsStores[0]}" size="40" />
 <f:verbatim><br/></f:verbatim>
 
-<<<<<<< HEAD
-=======
 <h:outputText value="firstSetPublicFilesToBackgroundFiles: "/>
 <h:selectBooleanCheckbox value="#{postipoissImporter.publicFilesToBackgroundFiles[0]}" />
 <f:verbatim><br/></f:verbatim>
@@ -757,7 +717,6 @@
 <h:inputText value="#{postipoissImporter.publishToAdrWithFilesStartingFromDates[0]}" size="12" />
 <f:verbatim><br/></f:verbatim>
 
->>>>>>> develop-5.1
 <h:outputText value="firstOpenUnit: "/>
 <h:selectBooleanCheckbox value="#{postipoissImporter.openUnits[0]}" />
 <f:verbatim><br/><br/></f:verbatim>
@@ -782,8 +741,6 @@
 <h:inputText value="#{postipoissImporter.archivalsStores[1]}" size="40" />
 <f:verbatim><br/></f:verbatim>
 
-<<<<<<< HEAD
-=======
 <h:outputText value="secondSetPublicFilesToBackgroundFiles: "/>
 <h:selectBooleanCheckbox value="#{postipoissImporter.publicFilesToBackgroundFiles[1]}" />
 <f:verbatim><br/></f:verbatim>
@@ -792,7 +749,6 @@
 <h:inputText value="#{postipoissImporter.publishToAdrWithFilesStartingFromDates[1]}" size="12" />
 <f:verbatim><br/></f:verbatim>
 
->>>>>>> develop-5.1
 <h:outputText value="secondOpenUnit: "/>
 <h:selectBooleanCheckbox value="#{postipoissImporter.openUnits[1]}" />
 <f:verbatim><br/><br/></f:verbatim>
@@ -817,8 +773,6 @@
 <h:inputText value="#{postipoissImporter.archivalsStores[2]}" size="40" />
 <f:verbatim><br/></f:verbatim>
 
-<<<<<<< HEAD
-=======
 <h:outputText value="thirdSetPublicFilesToBackgroundFiles: "/>
 <h:selectBooleanCheckbox value="#{postipoissImporter.publicFilesToBackgroundFiles[2]}" />
 <f:verbatim><br/></f:verbatim>
@@ -827,7 +781,6 @@
 <h:inputText value="#{postipoissImporter.publishToAdrWithFilesStartingFromDates[2]}" size="12" />
 <f:verbatim><br/></f:verbatim>
 
->>>>>>> develop-5.1
 <h:outputText value="thirdOpenUnit: "/>
 <h:selectBooleanCheckbox value="#{postipoissImporter.openUnits[2]}" />
 <f:verbatim><br/><br/></f:verbatim>
@@ -852,8 +805,6 @@
 <h:inputText value="#{postipoissImporter.archivalsStores[3]}" size="40" />
 <f:verbatim><br/></f:verbatim>
 
-<<<<<<< HEAD
-=======
 <h:outputText value="fourthSetPublicFilesToBackgroundFiles: "/>
 <h:selectBooleanCheckbox value="#{postipoissImporter.publicFilesToBackgroundFiles[3]}" />
 <f:verbatim><br/></f:verbatim>
@@ -862,7 +813,6 @@
 <h:inputText value="#{postipoissImporter.publishToAdrWithFilesStartingFromDates[3]}" size="12" />
 <f:verbatim><br/></f:verbatim>
 
->>>>>>> develop-5.1
 <h:outputText value="fourthOpenUnit: "/>
 <h:selectBooleanCheckbox value="#{postipoissImporter.openUnits[3]}" />
 <f:verbatim><br/><br/></f:verbatim>
@@ -887,8 +837,6 @@
 <h:inputText value="#{postipoissImporter.archivalsStores[4]}" size="40" />
 <f:verbatim><br/></f:verbatim>
 
-<<<<<<< HEAD
-=======
 <h:outputText value="fifthSetPublicFilesToBackgroundFiles: "/>
 <h:selectBooleanCheckbox value="#{postipoissImporter.publicFilesToBackgroundFiles[4]}" />
 <f:verbatim><br/></f:verbatim>
@@ -897,7 +845,6 @@
 <h:inputText value="#{postipoissImporter.publishToAdrWithFilesStartingFromDates[4]}" size="12" />
 <f:verbatim><br/></f:verbatim>
 
->>>>>>> develop-5.1
 <h:outputText value="fifthOpenUnit: "/>
 <h:selectBooleanCheckbox value="#{postipoissImporter.openUnits[4]}" />
 <f:verbatim><br/><br/></f:verbatim>
@@ -923,42 +870,6 @@
 
 <f:verbatim><br/><br/></f:verbatim>
 <f:verbatim><hr/></f:verbatim>
-<<<<<<< HEAD
-   <h:outputText value="PPA live: Dokumendihaldurite grupil puuduvate õiguste parandamiseks." />
-   
-   <h:inputTextarea id="inheritanceProblems" value="#{ArrivedDocumentsPermissionsModifier.validationResults}" readonly="true" styleClass="expand19-200" />
-
-   <h:outputText value="Kui teksti kastis on esimesel real OK, siis tõenäoliselt probleemi pole." />
-   <f:verbatim><br/></f:verbatim>
-   <h:outputText value="Kui teksti kastis on esimesel real ERRORS, siis võiks katsetada järgnevaid võimalusi. NB! enne iga järgnevat võimaluse proovimist kontrollige, kas jätkamiseks on põhjust(OK või ERRORS)" />
-   <f:verbatim><br/><br/></f:verbatim>
-
-   <h:outputText value="Esimene võimalus - proovida olemasolevad õigused eemaldada ja tagasi panna. Vajuta järgnevat nuppu kui teksti kastis on esimesel real ERRORS" />
-   <f:verbatim><br/></f:verbatim>
-   <h:commandButton id="rerunArrivedDocumentsPermissionsUpdateBootstrap" value="võimalus 1: eemalda õigused ja lisa uuesti" type="submit" actionListener="#{ArrivedDocumentsPermissionsModifier.rerunArrivedDocumentsPermissionsUpdateBootstrap}" />
-
-   <f:verbatim><br/><br/></f:verbatim>
-
-   <h:outputText value="Kui eelneva nupu vajutusest polnud kasu proovige järgmist lahendust" />
-   <f:verbatim><br/></f:verbatim>
-   <h:commandButton id="test2RemoveImapFolderChildrenPermissionsAndAddPermissionsToImapRoot" value="võimalus 2: eemalda õigused imap-root alamkataloogidelt ja lisa imap-root kataloogile" type="submit" actionListener="#{ArrivedDocumentsPermissionsModifier.test2RemoveImapFolderChildrenPermissionsAndAddPermissionsToImapRoot}" />
-   <f:verbatim><br/></f:verbatim>
-   <h:outputText value="Kui sellest tekstist üleval asuva nupu vajutusest polnud kasu, siis vajutage järgnevat nuppu, et eelneva nupu tegevused tühistada" />
-   <h:commandButton id="test2Undo" value="võimalus 2 undo: lisa õigused imap-root alamkataloogidele ja eemalda imap-root kataloogilt" type="submit" actionListener="#{ArrivedDocumentsPermissionsModifier.test2Undo}" />
-
-   <f:verbatim><br/><br/></f:verbatim>
-
-   <h:outputText value="Kui eelnevate nuppude vajutusest polnud kasu proovige järgmist lahendust:" />
-   <f:verbatim><br/></f:verbatim>
-   <h:commandButton id="test3UndoRedoAndGrandChildrenPermissions" value="võimalus 3: lisa õigused imap-root kataloogi otseste alamkataloogide alamkataloogidele" type="submit" actionListener="#{ArrivedDocumentsPermissionsModifier.test3UndoRedoAndGrandChildrenPermissions}" />
-   <f:verbatim><br/></f:verbatim>
-   <h:outputText value="Loodetavasti oli ühest eelnevatest lahendustest kasu. Kui ka sellest tekstist üleval asuva nupu vajutusest ka polnud kasu, siis vajutage järgnevat nuppu, et eelneva nupu tegevused tühistada" />
-   <h:commandButton id="test3Undo" value="võimalus 3 undo: eemalda õigused imap-root kataloogi otseste alamkataloogide alamkataloogidelt" type="submit" actionListener="#{ArrivedDocumentsPermissionsModifier.test3Undo}" />
-
-
-<f:verbatim><hr/></f:verbatim>
-=======
->>>>>>> develop-5.1
 
 <f:verbatim><br/></f:verbatim>
 <h:outputText value="Maintenance tasks for data" style="font-weight: bold;" />
@@ -969,22 +880,6 @@
 <f:verbatim><br/><br/></f:verbatim>
 <h:commandButton id="findAndFixInvalidNodes" value="findAndFixInvalidNodes" type="submit" actionListener="#{invalidNodeFixerBootstrap.execute}"/>  
 
-<<<<<<< HEAD
-<f:verbatim><br/><br/></f:verbatim>
-<h:outputText styleClass="mainTitle" value="Acl vigade parandamine. NB! Kui vigu on palju, võib parandamine võtta kaua aega! Live keskkondades ei ole soovitatav funktsionaalsust käivitada, kui rakendus on aktiivselt kasutusel.
- Enne käivitamist live keskkondades tuleb kindlasti veendud, kui palju parandatavaid vigu keskkonnas tegelikult on."/>
-<f:verbatim><br/></f:verbatim>
-<h:outputText value="Paranda acl p4 vead (inheritWithInheritanceUnset) määratud uuid-ga node'i jaoks (kõik node'id kui uuid on määramata): "/>
-<f:verbatim><br/></f:verbatim>
-<h:inputText value="#{fixAclInheritanceUpdater2.nodeUuidP4}" />
- <h:commandButton id="fixAclP4" value="fixAclP4" type="submit" actionListener="#{fixAclInheritanceUpdater2.fixAclsThatInheritWithInheritanceUnset}"/>
-<f:verbatim><br/></f:verbatim>
-<h:outputText value="Paranda acl p3 vead (inheritFromNonPrimaryParent) määratud uuid-ga node'i jaoks (kõik node'id kui uuid on määramata): "/>
-<f:verbatim><br/></f:verbatim>
-<h:inputText value="#{fixAclInheritanceUpdater2.nodeUuidP3}" />
- <h:commandButton id="fixAclP3" value="fixAclP3" type="submit" actionListener="#{fixAclInheritanceUpdater2.fixAclsThatInheritFromNonPrimaryParent}"/>  
-=======
->>>>>>> develop-5.1
 
 <f:verbatim><br/><br/><u></f:verbatim>
 <h:outputText value="Nightly 02:30 data maintenance job (runs only on primary cluster node, aka where jobs.enabled=true): "/>
@@ -993,11 +888,6 @@
 <f:verbatim><br/></f:verbatim>
 <h:outputText value="2) findAndFixInvalidNodes"/>
 <f:verbatim><br/></f:verbatim>
-<<<<<<< HEAD
-<h:outputText value="3) fixAclP3"/>
-<f:verbatim><br/></f:verbatim>
-=======
->>>>>>> develop-5.1
 <h:commandButton id="runNightly0230DataMaintenanceJobNow" value="runNightly0230DataMaintenanceJobNow" type="submit" actionListener="#{TestingForDeveloperBean.runNightly0230DataMaintenanceJobNow}" />
 
 <f:verbatim><br/><br/></f:verbatim>
@@ -1079,13 +969,10 @@
 
 <f:verbatim><br/></f:verbatim>
 
-<<<<<<< HEAD
-=======
 <a:actionLink value="executeCacheStatistics" actionListener="#{TestingForDeveloperBean.executeCacheStatistics}" />
 
 <f:verbatim><br/></f:verbatim>
 
->>>>>>> develop-5.1
 <a:actionLink value="TestingForDeveloper" actionListener="#{TestingForDeveloperBean.handleTestEvent}" rendered="#{ApplicationService.test}">
      <f:param name="testP" value="11" />
 </a:actionLink>

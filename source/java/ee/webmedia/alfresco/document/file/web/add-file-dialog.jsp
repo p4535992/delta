@@ -129,12 +129,9 @@
             </a:panel>
          </h:panelGrid>
       </a:panel>
-<<<<<<< HEAD
-=======
       <a:panel id="attachment-folder-panel-empty" rendered="#{AddFileDialog.showBlankForAttachmentBlock}">
       	<f:verbatim> <p style='height:22px;'> </p></f:verbatim>
       </a:panel>
->>>>>>> develop-5.1
       <h:outputText id="out_attachment" value="#{msg.file_add_attachment_label}" styleClass="dialogpanel-title block" />
       <h:selectManyMenu id="select_attachment" style="width: 100%; height: 200px;" binding="#{AddFileDialog.attachmentSelect}" validator="#{AddFileDialog.validate}">
          <f:selectItems value="#{AddFileDialog.attachments}" />
@@ -153,12 +150,9 @@
             </a:panel>
          </h:panelGrid>
       </a:panel>    
-<<<<<<< HEAD
-=======
       <a:panel id="scanned-folder-panel-empty" rendered="#{AddFileDialog.showBlankForScannedBlock}">
         <f:verbatim> <p style='height:22px;'> </p></f:verbatim>
       </a:panel>
->>>>>>> develop-5.1
        <h:outputText id="out_scanned_file" value="#{msg.file_add_scanned_label}" styleClass="dialogpanel-title block"/>
        <h:selectManyMenu id="select_scanned_file" style="width: 100%; height: 200px;" binding="#{AddFileDialog.scannedSelect}" validator="#{AddFileDialog.validate}">
            <f:selectItems value="#{AddFileDialog.scannedFiles}"/>

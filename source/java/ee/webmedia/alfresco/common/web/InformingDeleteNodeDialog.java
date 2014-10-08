@@ -15,11 +15,6 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
  * The bean that backs up deleting node
-<<<<<<< HEAD
- * 
- * @author Ats Uiboupin
-=======
->>>>>>> develop-5.1
  */
 public class InformingDeleteNodeDialog extends DeleteContentDialog {
     private static final long serialVersionUID = 1L;

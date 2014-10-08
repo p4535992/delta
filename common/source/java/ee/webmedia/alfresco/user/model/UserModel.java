@@ -2,12 +2,6 @@ package ee.webmedia.alfresco.user.model;
 
 import org.alfresco.service.namespace.QName;
 
-<<<<<<< HEAD
-/**
- * @author Kaarel Jõgeva
- */
-=======
->>>>>>> develop-5.1
 public interface UserModel {
     String URI = "http://alfresco.webmedia.ee/model/user/1.0";
     String NAMESPACE_PREFFIX = "usr:";

@@ -27,10 +27,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
-<<<<<<< HEAD
-import java.util.Collections;
-=======
->>>>>>> develop-5.1
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -72,21 +68,15 @@ import com.csvreader.CsvWriter;
 
 import ee.webmedia.alfresco.classificator.enums.AccessRestriction;
 import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
-<<<<<<< HEAD
-=======
 import ee.webmedia.alfresco.classificator.enums.PublishToAdr;
->>>>>>> develop-5.1
 import ee.webmedia.alfresco.classificator.enums.SendMode;
 import ee.webmedia.alfresco.classificator.enums.StorageType;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.WmNode;
-<<<<<<< HEAD
-=======
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
 import ee.webmedia.alfresco.docadmin.service.DocumentType;
->>>>>>> develop-5.1
 import ee.webmedia.alfresco.docadmin.service.Field;
 import ee.webmedia.alfresco.docadmin.web.DocAdminUtil;
 import ee.webmedia.alfresco.docconfig.service.DynamicPropertyDefinition;
@@ -94,18 +84,11 @@ import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
 import ee.webmedia.alfresco.document.file.model.FileModel;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
-<<<<<<< HEAD
-import ee.webmedia.alfresco.document.model.DocumentCommonModel.Privileges;
-=======
->>>>>>> develop-5.1
 import ee.webmedia.alfresco.document.register.model.RegNrHolder;
 import ee.webmedia.alfresco.document.sendout.service.SendOutService;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.document.service.DocumentService.AssocType;
-<<<<<<< HEAD
-=======
 import ee.webmedia.alfresco.functions.model.FunctionsModel;
->>>>>>> develop-5.1
 import ee.webmedia.alfresco.log.model.LogEntry;
 import ee.webmedia.alfresco.log.model.LogObject;
 import ee.webmedia.alfresco.postipoiss.PostipoissDocumentsMapper.ConvertException;
@@ -114,10 +97,7 @@ import ee.webmedia.alfresco.postipoiss.PostipoissDocumentsMapper.Mapping;
 import ee.webmedia.alfresco.postipoiss.PostipoissDocumentsMapper.Pair;
 import ee.webmedia.alfresco.postipoiss.PostipoissDocumentsMapper.PropMapping;
 import ee.webmedia.alfresco.postipoiss.PostipoissDocumentsMapper.PropertyValue;
-<<<<<<< HEAD
-=======
 import ee.webmedia.alfresco.privilege.model.Privilege;
->>>>>>> develop-5.1
 import ee.webmedia.alfresco.utils.FilenameUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.workflow.model.CompoundWorkflowType;
@@ -130,31 +110,17 @@ import ee.webmedia.alfresco.workflow.service.type.WorkflowType;
 
 /**
  * Imports documents and files from Postipoiss.
-<<<<<<< HEAD
- * 
- * @author Aleksei Lissitsin
- * @author Alar Kvell
-=======
->>>>>>> develop-5.1
  */
 public class PostipoissDocumentsImporter {
 
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(PostipoissDocumentsImporter.class);
 
     private static final String PP_ELEMENT_DOK_NR = "dok_nr";
-<<<<<<< HEAD
-    private static final String PP_ELEMENT_ALUS_DOK_NR = "alus_dok_nr";
-    /**
-     * SIM "toimik_sari", MV "toimik", PPA "volume", now comes from mappings.xml {@code <prop from="..." to="_regNumberWithoutIndividual"/>}.
-     * For example
-     * 
-=======
     private static final String PP_ELEMENT_ALUS_DOK_NR = "alg_dok_nr";
     /**
      * SIM "toimik_sari", MV "toimik", PPA "volume", now comes from mappings.xml {@code <prop from="..." to="_regNumberWithoutIndividual"/>}.
      * For example
      *
->>>>>>> develop-5.1
      * <pre>
      * &lt;volume&gt;10.1-01/11/33070&lt;/volume&gt;
      * &lt;regNumber&gt;33070&lt;/regNumber&gt;
@@ -211,11 +177,8 @@ public class PostipoissDocumentsImporter {
     private NodeRef archivalsRoot;
     private int batchSize;
     private String defaultOwnerId;
-<<<<<<< HEAD
-=======
     private Date publishToAdrWithFilesStartingFromDate;
     private boolean publicFilesToBackgroundFiles;
->>>>>>> develop-5.1
 
     // [SPRING BEANS
     private TransactionService transactionService;
@@ -225,10 +188,7 @@ public class PostipoissDocumentsImporter {
     private SendOutService sendOutService;
     private NodeService nodeService;
     private PersonService personService;
-<<<<<<< HEAD
-=======
     private DocumentAdminService documentAdminService;
->>>>>>> develop-5.1
     private PostipoissDocumentsMapper postipoissDocumentsMapper;
     private BehaviourFilter behaviourFilter;
     private PostipoissImporter postipoissImporter;
@@ -257,10 +217,7 @@ public class PostipoissDocumentsImporter {
         setFileFolderService(BeanHelper.getFileFolderService());
         setNodeService(BeanHelper.getNodeService());
         setPersonService(BeanHelper.getPersonService());
-<<<<<<< HEAD
-=======
         setDocumentAdminService(BeanHelper.getDocumentAdminService());
->>>>>>> develop-5.1
         setSendOutService(BeanHelper.getSendOutService());
         postipoissDocumentsMapper = new PostipoissDocumentsMapper();
         postipoissDocumentsMapper.setNamespaceService(getNamespaceService());
@@ -302,13 +259,10 @@ public class PostipoissDocumentsImporter {
         this.personService = personService;
     }
 
-<<<<<<< HEAD
-=======
     public void setDocumentAdminService(DocumentAdminService documentAdminService) {
         this.documentAdminService = documentAdminService;
     }
 
->>>>>>> develop-5.1
     public void setSendOutService(SendOutService sendOutService) {
         this.sendOutService = sendOutService;
     }
@@ -324,23 +278,16 @@ public class PostipoissDocumentsImporter {
     /**
      * Runs documents import process
      */
-<<<<<<< HEAD
-    public void runImport(File dataFolder, File workFolder, NodeRef archivalsRoot, File mappingsFile, int batchSize, String defaultOwnerId) throws Exception {
-=======
     public void runImport(File dataFolder, File workFolder, NodeRef archivalsRoot, File mappingsFile, int batchSize, String defaultOwnerId,
             Date publishToAdrWithFilesStartingFromDate, boolean publicFilesToBackgroundFiles)
             throws Exception {
->>>>>>> develop-5.1
         this.dataFolder = dataFolder;
         this.workFolder = workFolder;
         this.archivalsRoot = archivalsRoot;
         this.batchSize = batchSize;
         this.defaultOwnerId = defaultOwnerId;
-<<<<<<< HEAD
-=======
         this.publishToAdrWithFilesStartingFromDate = publishToAdrWithFilesStartingFromDate;
         this.publicFilesToBackgroundFiles = publicFilesToBackgroundFiles;
->>>>>>> develop-5.1
         init();
         // Doc import
         try {
@@ -363,19 +310,13 @@ public class PostipoissDocumentsImporter {
 
         // Files import
         try {
-<<<<<<< HEAD
-=======
             documentTypesPublicAdr = new HashMap<String, Boolean>();
->>>>>>> develop-5.1
             loadFiles();
             loadCompletedFiles();
             importFiles();
         } finally {
             filesMap = null;
-<<<<<<< HEAD
-=======
             documentTypesPublicAdr = null;
->>>>>>> develop-5.1
         }
 
         // Files indexing
@@ -396,10 +337,7 @@ public class PostipoissDocumentsImporter {
         indexedFiles = null;
         filesToIndex = null;
         filesToProceed = null;
-<<<<<<< HEAD
-=======
         documentTypesPublicAdr = null;
->>>>>>> develop-5.1
     }
 
     protected NavigableMap<Integer /* documentId */, File> documentsMap;
@@ -426,10 +364,7 @@ public class PostipoissDocumentsImporter {
     protected File usersNotFoundFile;
 
     private Map<String, Mapping> mappings;
-<<<<<<< HEAD
-=======
     private Map<String, Boolean> documentTypesPublicAdr;
->>>>>>> develop-5.1
 
     protected void loadDocuments() {
         documentsMap = new TreeMap<Integer, File>();
@@ -674,11 +609,7 @@ public class PostipoissDocumentsImporter {
             allUsersByOwnerId.put(ownerId, UserUtil.getPersonFullName1(props));
         }
         log.info("Loaded " + allUsersByOwnerId.size() + " users");
-<<<<<<< HEAD
-        */
-=======
          */
->>>>>>> develop-5.1
         // @formatter:on
 
         usersFoundFile = new File(workFolder, "users_found.csv");
@@ -976,8 +907,6 @@ public class PostipoissDocumentsImporter {
                 throw new RuntimeException("accessRestrictionEndDate is null and accessRestrictionEndDesc is blank, but accessRestriction = " + accessRestriction);
             }
         }
-<<<<<<< HEAD
-=======
         if (AccessRestriction.OPEN.equals(accessRestriction) || AccessRestriction.INTERNAL.equals(accessRestriction)) {
             props.put(DocumentCommonModel.Props.ACCESS_RESTRICTION_REASON, null);
             props.put(DocumentCommonModel.Props.ACCESS_RESTRICTION_BEGIN_DATE, null);
@@ -994,7 +923,6 @@ public class PostipoissDocumentsImporter {
             }
         }
 
->>>>>>> develop-5.1
     }
 
     private static String cleanUserFullName(String strippedOwnerName) {
@@ -1369,12 +1297,9 @@ public class PostipoissDocumentsImporter {
                 accessRestriction = (String) props.get(DocumentCommonModel.Props.ACCESS_RESTRICTION);
                 accessRestrictionReason = (String) props.get(DocumentCommonModel.Props.ACCESS_RESTRICTION_REASON);
             }
-<<<<<<< HEAD
-=======
             if ("Akt".equals(dokLiik) || "Leping".equals(dokLiik)) {
                 docName = dokLiik;
             }
->>>>>>> develop-5.1
         }
     }
 
@@ -1471,8 +1396,6 @@ public class PostipoissDocumentsImporter {
     private void addFiles(Integer documentId, NodeRef importDocRef) {
         List<File> fileList = filesMap.get(documentId);
         if (fileList != null) {
-<<<<<<< HEAD
-=======
             boolean active = true;
             if (publicFilesToBackgroundFiles) {
                 String documentTypeId = (String) nodeService.getProperty(importDocRef, DocumentAdminModel.Props.OBJECT_TYPE_ID);
@@ -1484,16 +1407,11 @@ public class PostipoissDocumentsImporter {
                 }
                 active = !publicAdr;
             }
->>>>>>> develop-5.1
             for (File file : fileList) {
                 String fileName = file.getName();
                 int i = fileName.lastIndexOf('.');
                 fileName = fileName.substring(0, i);
-<<<<<<< HEAD
-                addFile(fileName, file, importDocRef, null);
-=======
                 addFile(fileName, file, importDocRef, null, active);
->>>>>>> develop-5.1
             }
         }
     }
@@ -1715,8 +1633,6 @@ public class PostipoissDocumentsImporter {
             parentRefs = documentService.getDocumentParents(documentRef);
             parentRefsByVolumeRef.put(parentRef, parentRefs);
         }
-<<<<<<< HEAD
-=======
         NodeRef functionRef = parentRefs.get(DocumentCommonModel.Props.FUNCTION);
         if (functionRef != null) {
             String functionTitle = (String) nodeService.getProperty(functionRef, FunctionsModel.Props.TITLE);
@@ -1725,7 +1641,6 @@ public class PostipoissDocumentsImporter {
             }
         }
 
->>>>>>> develop-5.1
         propsMap.putAll(parentRefs);
 
         String recipient = getRecipient(type, propsMap); // call before checkProps, because checkProps transforms multi-valued values to Lists-s
@@ -1958,11 +1873,7 @@ public class PostipoissDocumentsImporter {
 
     private void setStorageType(Element root, Map<QName, Serializable> propsMap) {
         String storageType = StringUtils.stripToEmpty((String) propsMap.get(DocumentCommonModel.Props.STORAGE_TYPE));
-<<<<<<< HEAD
-        if ("Digitaaldokument".equalsIgnoreCase(storageType)) {
-=======
         if ("Digitaaldokument".equalsIgnoreCase(storageType) || "DIAT register".equalsIgnoreCase(storageType)) {
->>>>>>> develop-5.1
             propsMap.put(DocumentCommonModel.Props.STORAGE_TYPE, StorageType.DIGITAL.getValueName());
         } else if ("Paberdokument".equalsIgnoreCase(storageType)) {
             propsMap.put(DocumentCommonModel.Props.STORAGE_TYPE, StorageType.PAPER.getValueName());
@@ -2171,15 +2082,9 @@ public class PostipoissDocumentsImporter {
                     task.getNode().getProperties().put(WorkflowSpecificModel.Props.ACTIVE.toString(), Boolean.TRUE);
                     aspects.add(WorkflowSpecificModel.Aspects.RESPONSIBLE);
                     responsibleActiveSet = true;
-<<<<<<< HEAD
-                    getPrivilegeService().setPermissions(docRef, kelleleIkood, Collections.singleton(Privileges.EDIT_DOCUMENT));
-                } else {
-                    getPrivilegeService().setPermissions(docRef, kelleleIkood, Collections.singleton(Privileges.VIEW_DOCUMENT_FILES));
-=======
                     getPrivilegeService().setPermissions(docRef, kelleleIkood, Privilege.EDIT_DOCUMENT);
                 } else {
                     getPrivilegeService().setPermissions(docRef, kelleleIkood, Privilege.VIEW_DOCUMENT_FILES);
->>>>>>> develop-5.1
                 }
                 task.setTaskIndexInWorkflow(taskIndex++);
                 BeanHelper.getWorkflowDbService().createTaskEntry(task, wfRef);
@@ -2190,11 +2095,7 @@ public class PostipoissDocumentsImporter {
         if (!responsibleActiveSet && firstTaskRef != null) {
             Map<QName, Serializable> props = new HashMap<QName, Serializable>();
             props.put(WorkflowSpecificModel.Props.ACTIVE, Boolean.TRUE);
-<<<<<<< HEAD
-            getPrivilegeService().setPermissions(docRef, firstTaskOwnerId, Collections.singleton(Privileges.EDIT_DOCUMENT));
-=======
             getPrivilegeService().setPermissions(docRef, firstTaskOwnerId, Privilege.EDIT_DOCUMENT);
->>>>>>> develop-5.1
             BeanHelper.getWorkflowDbService().updateTaskProperties(firstTaskRef, props);
         }
     }
@@ -2323,12 +2224,9 @@ public class PostipoissDocumentsImporter {
         if (StringUtils.isBlank(origin)) {
             origin = root.elementText(PP_ELEMENT_PARITOLU2);
         }
-<<<<<<< HEAD
-=======
         if (StringUtils.isBlank(origin)) {
             origin = PP_VALUE_PARITOLU_ALGATUSDOKUMENT;
         }
->>>>>>> develop-5.1
         if (initialDocumentId != null && !documentId.equals(initialDocumentId)) {
             AssocType assocType;
             if (PP_VALUE_PARITOLU_VASTUSDOKUMENT.equals(origin)) {
@@ -2480,11 +2378,7 @@ public class PostipoissDocumentsImporter {
     }
 
     // ASSOCS]
-<<<<<<< HEAD
-    public NodeRef addFile(String displayName, File file, NodeRef parentNodeRef, String mimeType) {
-=======
     public NodeRef addFile(String displayName, File file, NodeRef parentNodeRef, String mimeType, boolean active) {
->>>>>>> develop-5.1
         String fileName = FilenameUtil.makeSafeFilename(displayName);
         fileName = generalService.getUniqueFileName(parentNodeRef, fileName);
         final FileInfo fileInfo = fileFolderService.create(parentNodeRef, fileName, ContentModel.TYPE_CONTENT);
@@ -2498,11 +2392,7 @@ public class PostipoissDocumentsImporter {
         props.put(ContentModel.PROP_CREATOR, CREATOR_MODIFIER);
         props.put(ContentModel.PROP_MODIFIER, CREATOR_MODIFIER);
         props.put(FileModel.Props.DISPLAY_NAME, displayName);
-<<<<<<< HEAD
-        props.put(FileModel.Props.ACTIVE, Boolean.TRUE);
-=======
         props.put(FileModel.Props.ACTIVE, Boolean.valueOf(active));
->>>>>>> develop-5.1
         nodeService.addProperties(fileRef, props);
         return fileRef;
     }

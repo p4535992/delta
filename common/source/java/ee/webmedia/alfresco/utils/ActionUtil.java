@@ -12,12 +12,6 @@ import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
 import org.alfresco.web.ui.common.component.UIActionLink;
 import org.apache.commons.lang.StringUtils;
 
-<<<<<<< HEAD
-/**
- * @author Keit Tehvan
- */
-=======
->>>>>>> develop-5.1
 public class ActionUtil {
 
     public static String PARAM_PARENT_NODEREF = "parentNodeRef";

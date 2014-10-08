@@ -92,8 +92,6 @@
          </bean>
       </property>
    </bean>
-<<<<<<< HEAD
-=======
    
     <!-- The person service.  Added property personPropertiesCache  -->
 
@@ -177,6 +175,5 @@
              <ref bean="homeFolderManager" />
         </property>
     </bean>   
->>>>>>> develop-5.1
 
 </beans>

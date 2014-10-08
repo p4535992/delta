@@ -10,12 +10,6 @@ import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.service.BaseWorkflowObject;
 
-<<<<<<< HEAD
-/**
- * @author Alar Kvell
- */
-=======
->>>>>>> develop-5.1
 public class BaseWorkflowEvent implements WorkflowEvent {
 
     private final WorkflowEventType type;

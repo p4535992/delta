@@ -93,11 +93,7 @@ public class NavigationBean implements Serializable
    /** Public JSF Bean name */
    public static final String BEAN_NAME = "NavigationBean";
    
-<<<<<<< HEAD
    private static Log logger = LogFactory.getLog(NavigationBean.class);
-=======
-   private static Log logger = LogFactory.getLog(NavigationBean.class);
->>>>>>> develop-5.1
 
    /**
     * Default constructor
@@ -859,11 +855,7 @@ public class NavigationBean implements Serializable
    }
    
    /**
-<<<<<<< HEAD
     * @return true if the Company home node is accessible to the current user
-=======
-    * @return true if the Company home node is accessible to the current user
->>>>>>> develop-5.1
     */
    public boolean getCompanyHomeVisible()
    {
@@ -890,7 +882,6 @@ public class NavigationBean implements Serializable
    }
    
    /**
-<<<<<<< HEAD
     * @return true if the Guest home node is accessible to the current user
     */
    public boolean getGuestHomeVisible()
@@ -914,31 +905,6 @@ public class NavigationBean implements Serializable
             logger.debug("getGuestHomeVisible failed", e);
          }
          return false;
-=======
-    * @return true if the Guest home node is accessible to the current user
-    */
-   public boolean getGuestHomeVisible()
-   {
-      try
-      {
-         if (this.getAuthService().guestUserAuthenticationAllowed())
-         {
-            Node guestHome = getGuestHomeNode();
-            return guestHome != null && guestHome.hasPermission(PermissionService.READ);
-         }
-         else
-         {
-            return false;
-         }
-      }
-      catch (Throwable e)
-      {
-         if (logger.isDebugEnabled())
-         {
-            logger.debug("getGuestHomeVisible failed", e);
-         }
-         return false;
->>>>>>> develop-5.1
       }
    }
    

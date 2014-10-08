@@ -21,11 +21,6 @@ import ee.webmedia.alfresco.signature.service.SignatureService;
  * file contents.
  * Otherwise, this evaluator checks for <code>CreateChildren</code> permission on the primary parent of selected node, because signing then creates a new
  * DigiDoc container file in the same folder.
-<<<<<<< HEAD
- * 
- * @author Alar Kvell
-=======
->>>>>>> develop-5.1
  */
 public class SignatureActionEvaluator extends BaseActionEvaluator {
     private static final long serialVersionUID = 1L;

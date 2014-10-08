@@ -13,11 +13,6 @@ import ee.webmedia.alfresco.docadmin.service.DocumentTypeVersion;
 
 /**
  * Represents a mapping group from mappings XML file. A mapping group contains property mappings and sub-mappings, which can also contain property mappings.
-<<<<<<< HEAD
- * 
- * @author Martti Tamm
-=======
->>>>>>> develop-5.1
  */
 public class Mapping {
 

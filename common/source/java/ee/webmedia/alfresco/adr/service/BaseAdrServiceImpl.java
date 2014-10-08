@@ -33,12 +33,6 @@ import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.utils.ContentReaderDataSource;
 
-<<<<<<< HEAD
-/**
- * @author Alar Kvell
- */
-=======
->>>>>>> develop-5.1
 public abstract class BaseAdrServiceImpl implements AdrService {
 
     protected FileFolderService fileFolderService;

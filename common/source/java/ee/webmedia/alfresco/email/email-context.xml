@@ -6,10 +6,6 @@
       <property name="mailService" ref="mailService" />
       <property name="fileFolderService" ref="FileFolderService" />      
       <property name="generalService" ref="GeneralService" />
-<<<<<<< HEAD
-      <property name="signatureService" ref="SignatureService" />
-=======
->>>>>>> develop-5.1
       <property name="mimetypeService" ref="MimetypeService" />
       <property name="messageCopyFolder" value="${mail.messageFolder}" />
    </bean>

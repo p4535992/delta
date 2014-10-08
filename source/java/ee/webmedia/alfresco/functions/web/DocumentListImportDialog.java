@@ -19,11 +19,6 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
  * Dialog for importing documents list
-<<<<<<< HEAD
- * 
- * @author Ats Uiboupin
-=======
->>>>>>> develop-5.1
  */
 public class DocumentListImportDialog extends AbstractImportDialog {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DocumentListImportDialog.class);

@@ -14,11 +14,7 @@ public interface UserContactMappingService {
 
     void registerOriginalFieldIdsMapping(Map<String, UserContactMappingCode> mapping);
 
-<<<<<<< HEAD
-    // TODO Alar: could we eliminate mappingDependency, because hiddenFieldDependency covers the same thing?
-=======
     // TODO could we eliminate mappingDependency, because hiddenFieldDependency covers the same thing?
->>>>>>> develop-5.1
     void registerMappingDependency(String fieldIdAndOriginalFieldId, String hiddenFieldId);
 
     /**

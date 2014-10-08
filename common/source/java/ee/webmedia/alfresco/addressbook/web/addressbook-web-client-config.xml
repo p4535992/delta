@@ -95,16 +95,10 @@
    <config evaluator="aspect-name" condition="ab:organizationProperties">
       <property-sheet>
          <show-property name="ab:taskCapable" readOnlyIf="#{AddressbookAddEditDialog.getNotAllowedEditTaskCapable}" />
-<<<<<<< HEAD
-      </property-sheet>
-   </config>
-
-=======
          <show-property name="ab:decTaskCapable" readOnlyIf="#{AddressbookAddEditDialog.notDecTaskCapable}" />
       </property-sheet>
    </config>
    
->>>>>>> develop-5.1
    <config evaluator="aspect-name" condition="ab:encryptionPersonId">
       <property-sheet>
          <show-property name="ab:encryptionPersonId" />
@@ -128,11 +122,7 @@
 
          <!-- Addressbook action-->
          <action id="addressbook_add_org">
-<<<<<<< HEAD
-            <evaluator>ee.webmedia.alfresco.addressbook.web.evaluator.AddressbookCreateChildrenEvaluator</evaluator>
-=======
             <evaluator>ee.webmedia.alfresco.document.web.evaluator.IsAdminOrDocManagerEvaluator</evaluator>
->>>>>>> develop-5.1
             <label-id>addressbook_add_organization</label-id>
             <image>/images/icons/create_user.gif</image>
             <action>dialog:addressbookAddEdit</action>
@@ -143,11 +133,7 @@
          </action>
 
          <action id="addressbook_add_person">
-<<<<<<< HEAD
-            <evaluator>ee.webmedia.alfresco.addressbook.web.evaluator.AddressbookCreateChildrenEvaluator</evaluator>
-=======
             <evaluator>ee.webmedia.alfresco.document.web.evaluator.IsAdminOrDocManagerEvaluator</evaluator>
->>>>>>> develop-5.1
             <label-id>addressbook_add_privPerson</label-id>
             <image>/images/icons/create_user.gif</image>
             <action>dialog:addressbookAddEdit</action>
@@ -158,11 +144,7 @@
          </action>
 
          <action id="addressbook_add_org_person">
-<<<<<<< HEAD
-            <evaluator>ee.webmedia.alfresco.addressbook.web.evaluator.AddressbookCreateChildrenEvaluator</evaluator>
-=======
             <evaluator>ee.webmedia.alfresco.document.web.evaluator.IsAdminOrDocManagerEvaluator</evaluator>
->>>>>>> develop-5.1
             <label-id>addressbook_add_orgPerson</label-id>
             <image>/images/icons/create_user.gif</image>
             <action>dialog:addressbookAddEdit</action>
@@ -174,11 +156,7 @@
          </action>
          
          <action id="addressbook_edit_org">
-<<<<<<< HEAD
-            <evaluator>ee.webmedia.alfresco.addressbook.web.evaluator.AddressbookCreateChildrenEvaluator</evaluator>
-=======
             <evaluator>ee.webmedia.alfresco.document.web.evaluator.IsAdminOrDocManagerEvaluator</evaluator>
->>>>>>> develop-5.1
             <label-id>addressbook_edit_organization</label-id>
             <image>/images/icons/edituser.gif</image>
             <action>dialog:addressbookAddEdit</action>
@@ -189,11 +167,7 @@
          </action>
 
          <action id="addressbook_edit_priv_person">
-<<<<<<< HEAD
-            <evaluator>ee.webmedia.alfresco.addressbook.web.evaluator.AddressbookCreateChildrenEvaluator</evaluator>
-=======
             <evaluator>ee.webmedia.alfresco.document.web.evaluator.IsAdminOrDocManagerEvaluator</evaluator>
->>>>>>> develop-5.1
             <label-id>addressbook_edit_privPerson</label-id>
             <image>/images/icons/edituser.gif</image>
             <action>dialog:addressbookAddEdit</action>
@@ -204,11 +178,7 @@
          </action>
 
          <action id="addressbook_edit_org_person">
-<<<<<<< HEAD
-            <evaluator>ee.webmedia.alfresco.addressbook.web.evaluator.AddressbookCreateChildrenEvaluator</evaluator>
-=======
             <evaluator>ee.webmedia.alfresco.document.web.evaluator.IsAdminOrDocManagerEvaluator</evaluator>
->>>>>>> develop-5.1
             <label-id>addressbook_edit_orgPerson</label-id>
             <image>/images/icons/edituser.gif</image>
             <action>dialog:addressbookAddEdit</action>
@@ -219,11 +189,7 @@
          </action>
 
          <action id="addressbook_contactgroup_add">
-<<<<<<< HEAD
-            <evaluator>ee.webmedia.alfresco.addressbook.web.evaluator.AddressbookCreateChildrenEvaluator</evaluator>
-=======
             <evaluator>ee.webmedia.alfresco.document.web.evaluator.IsAdminOrDocManagerEvaluator</evaluator>
->>>>>>> develop-5.1
             <label-id>new_group</label-id>
             <image>/images/icons/create_group.gif</image>
             <action-listener>#{ContactGroupCreateDialog.createContactGroup}</action-listener>

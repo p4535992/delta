@@ -4,18 +4,13 @@
 
    <imports>
       <import uri="http://www.alfresco.org/model/dictionary/1.0" prefix="d" />
-<<<<<<< HEAD
-=======
       <import uri="http://www.alfresco.org/model/system/1.0" prefix="sys" />
->>>>>>> develop-5.1
    </imports>
 
    <namespaces>
       <namespace uri="http://alfresco.webmedia.ee/model/privilege/1.0" prefix="priv" />
    </namespaces>
 
-<<<<<<< HEAD
-=======
    <constraints>
 
       <constraint name="priv:privilegeActionType" type="ee.webmedia.alfresco.common.constraint.EnumConstraint">
@@ -83,7 +78,6 @@
 
    </types>
 
->>>>>>> develop-5.1
    <aspects>
       <aspect name="priv:userGroupMapping">
          <properties>

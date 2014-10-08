@@ -1,11 +1,5 @@
 package ee.webmedia.alfresco.common.search;
 
-<<<<<<< HEAD
-/**
- * @author Alar Kvell
- */
-=======
->>>>>>> develop-5.1
 public interface SearchQueryBuilder {
 
     void processSingleWordSearch(String text, boolean operatorNOT);

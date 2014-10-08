@@ -174,14 +174,11 @@
                <mandatory enforced="true">false</mandatory>
                <default>false</default>
             </property>
-<<<<<<< HEAD
-=======
             <property name="docadmin:registrationOnDocFormEnabled">
                <type>d:boolean</type>
                <mandatory enforced="true">false</mandatory>
                <default>false</default>
             </property>       
->>>>>>> develop-5.1
          </properties>
          <associations>
             <child-association name="docadmin:followupAssociation">
@@ -353,8 +350,6 @@
                   <constraint ref="docadmin:mappingRestriction" />
                </constraints>
             </property>
-<<<<<<< HEAD
-=======
             <property name="docadmin:relatedIncomingDecElement">
                <type>d:text</type>
                <multiple>true</multiple>
@@ -363,7 +358,6 @@
                <type>d:text</type>
                <multiple>true</multiple>
             </property>            
->>>>>>> develop-5.1
             <!-- if you add new properties, update MetadataItemCompareUtil.getFieldComparator() -->
          </properties>
          <mandatory-aspects>
@@ -441,10 +435,6 @@
             </property>
             <property name="docadmin:associateWithSourceDocumentWorkflow">
                <type>d:boolean</type>
-<<<<<<< HEAD
-               <mandatory>true</mandatory>            
-=======
->>>>>>> develop-5.1
             </property>
          </properties>
          <associations>

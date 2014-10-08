@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 <?xml version="1.0" encoding="UTF-8"?>
 <model name="scan:scannedModel" xmlns="http://www.alfresco.org/model/dictionary/1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
    xsi:schemaLocation="http://www.alfresco.org/model/dictionary/1.0 http://svn.alfresco.com/repos/alfresco-open-mirror/alfresco/HEAD/root/projects/repository/config/alfresco/model/modelSchema.xsd">
@@ -20,26 +19,3 @@
    </types>
 
 </model>
-=======
-<?xml version="1.0" encoding="UTF-8"?>
-<model name="scan:scannedModel" xmlns="http://www.alfresco.org/model/dictionary/1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-   xsi:schemaLocation="http://www.alfresco.org/model/dictionary/1.0 http://svn.alfresco.com/repos/alfresco-open-mirror/alfresco/HEAD/root/projects/repository/config/alfresco/model/modelSchema.xsd">
-
-   <imports>
-      <import uri="http://www.alfresco.org/model/dictionary/1.0" prefix="d" />
-      <import uri="http://www.alfresco.org/model/system/1.0" prefix="sys" />
-      <import uri="http://www.alfresco.org/model/content/1.0" prefix="cm" />
-   </imports>
-
-   <namespaces>
-      <namespace uri="http://alfresco.webmedia.ee/model/scanned/1.0" prefix="scan" />
-   </namespaces>
-
-   <types>
-      <type name="scan:scanned">
-         <parent>cm:folder</parent>
-      </type>
-   </types>
-
-</model>
->>>>>>> develop-5.1

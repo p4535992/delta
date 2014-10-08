@@ -177,8 +177,6 @@
             </props>
          </list>
       </property>
-<<<<<<< HEAD
-=======
    </bean>     
    
    <bean id="workflowParametersBootstrap3" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
@@ -199,7 +197,6 @@
             </props>
          </list>
       </property>
->>>>>>> develop-5.1
    </bean>  
    
    <bean id="taskTableBootstrap3" class="ee.webmedia.alfresco.workflow.bootstrap.TaskTableBootstrap" parent="createTableBootstrap" >
@@ -287,8 +284,6 @@
       </property>
    </bean>
    
-<<<<<<< HEAD
-=======
    <bean id="taskTableAddColumnBootstrap10" parent="executeStatementsBootstrap" >
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
@@ -325,7 +320,6 @@
       </property>
    </bean>
    
->>>>>>> develop-5.1
    <bean id="taskDueDateHistoryTableAddColumnBootstrap" parent="executeStatementsBootstrap" >
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
@@ -333,13 +327,8 @@
       <property name="resourceName" value="ee/webmedia/alfresco/workflow/bootstrap/delta_task_due_date_history_table_add_columns.sql" />
       <property name="dependsOn">
          <list>
-<<<<<<< HEAD
-            <!--<ref bean="taskTableBootstrap3" />-->
-            <!--<ref bean="taskDueDateHistoryTableBootstrap"/>-->
-=======
             <ref bean="taskTableBootstrap3" />
             <ref bean="taskDueDateHistoryTableBootstrap"/>
->>>>>>> develop-5.1
          </list>
       </property>
    </bean>
@@ -396,15 +385,11 @@
             <ref bean="ParallelTasksPropertiesUpdater" />
          </list>
       </property>
-<<<<<<< HEAD
-   </bean>    
-=======
    </bean> 
    
    <bean id="compoundWorkflowCommentTableBootstrap" class="ee.webmedia.alfresco.workflow.bootstrap.CompoundWorkflowCommentTableBootstrap" parent="createTableBootstrap" >
       <property name="executeOnceOnly" value="true" />
    </bean>   
->>>>>>> develop-5.1
 
    <bean id="wmWorkflowService" class="ee.webmedia.alfresco.workflow.service.WorkflowServiceImpl">
       <property name="nodeService" ref="NodeService" />
@@ -499,18 +484,10 @@
       <property name="namespaceService" ref="NamespaceService" />
    </bean>
 
-<<<<<<< HEAD
-   <bean class="ee.webmedia.alfresco.workflow.service.type.InformationWorkflowType" parent="workflowType">
-      <property name="workflowTypeString" value="wfs:informationWorkflow" />
-      <property name="taskTypeString" value="wfs:informationTask" />
-      <property name="taskOutcomes" value="1" />
-      <property name="notificationService" ref="NotificationService" />
-=======
    <bean parent="workflowType">
       <property name="workflowTypeString" value="wfs:informationWorkflow" />
       <property name="taskTypeString" value="wfs:informationTask" />
       <property name="taskOutcomes" value="1" />
->>>>>>> develop-5.1
    </bean>
 
    <bean parent="workflowType">
@@ -684,8 +661,6 @@
       <property name="userService" ref="UserService" />
    </bean>
    
-<<<<<<< HEAD
-=======
    <bean id="compoundWorkflowOwnerPropsUpdater6" class="ee.webmedia.alfresco.workflow.bootstrap.CompoundWorkflowOwnerPropsUpdater" parent="abstractNodeUpdater" >
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
@@ -709,7 +684,6 @@
       <property name="workflowService" ref="WmWorkflowService" />
    </bean>
       
->>>>>>> develop-5.1
    <bean id="taskUpdater" class="ee.webmedia.alfresco.workflow.bootstrap.TaskUpdater" parent="abstractNodeUpdater" >
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
@@ -776,11 +750,7 @@
             <ref bean="taskTableInsertBootstrap3" />
             <ref bean="taskDueDateExtensionAssocTableBootstrap1" />
             <ref bean="taskDueDateHistoryTableBootstrap" />
-<<<<<<< HEAD
-            <!--<ref bean="taskDueDateHistoryTableAddColumnBootstrap"/>-->
-=======
             <ref bean="taskDueDateHistoryTableAddColumnBootstrap"/>
->>>>>>> develop-5.1
             <ref bean="taskFileTableBootstrap" />
             <ref bean="taskTableAddColumnBootstrap7" />
             <ref bean="archivalsStoresBootstrap" />   
@@ -804,11 +774,7 @@
             <ref bean="taskDueDateExtensionAssocTableBootstrap1" />
             <ref bean="taskAssociatedDataTableInsertBootstrap1" /> 
             <ref bean="taskDueDateHistoryTableBootstrap" />
-<<<<<<< HEAD
-            <!--<ref bean="taskDueDateHistoryTableAddColumnBootstrap"/>-->
-=======
             <ref bean="taskDueDateHistoryTableAddColumnBootstrap"/>
->>>>>>> develop-5.1
             <ref bean="taskFileTableBootstrap" />
             <ref bean="taskTableAddColumnBootstrap8" />
             <ref bean="taskTableAddColumnBootstrap9" />
@@ -932,25 +898,6 @@
             <ref bean="taskTableAddColumnBootstrap9" />
          </list>
       </property>
-<<<<<<< HEAD
-   </bean>    
-
-   <bean id="addTaskPrivilegesToDocumentUpdater" class="ee.webmedia.alfresco.workflow.bootstrap.AddTaskPrivilegesToDocumentUpdater" parent="abstractNodeUpdater" >
-      <property name="moduleId" value="simdhs" />
-      <property name="executeOnceOnly" value="true" />
-      <property name="enabled" value="false" /><!-- executed from node-browser manually -->
-      <property name="dependsOn">
-         <list>
-            <ref bean="archivalsStoresBootstrap" />
-         </list>
-      </property>
-      <property name="privilegeService" ref="PrivilegeService"/>
-      <property name="fileService" ref="FileService"/>
-      <property name="workflowService" ref="WmWorkflowService"/>
-      <property name="documentDynamicService" ref="DocumentDynamicService"/>
-   </bean>
-   
-=======
    </bean>
    
    <bean id="deleteEmptyTasksUpdater" class="ee.webmedia.alfresco.workflow.bootstrap.DeleteEmptyTasksUpdater" parent="abstractNodeUpdater" >
@@ -980,7 +927,6 @@
       </property>    
    </bean>    
 
->>>>>>> develop-5.1
    <bean id="workflow25To313DynamicDocTypeUpdater" class="ee.webmedia.alfresco.workflow.bootstrap.Workflow25To313DynamicDocTypeUpdater" parent="abstractNodeUpdater">
       <property name="moduleId" value="simdhs" />
       <property name="enabled" value="${updater.version25To313.enabled}" />
@@ -1007,11 +953,6 @@
       </property>
    </bean>
    
-<<<<<<< HEAD
-   <!-- START: web beans: -->
-      
-   <bean id="DvkWorkflowExporter" class="ee.webmedia.alfresco.workflow.web.DvkWorkflowExporter" scope="session" />
-=======
    <bean id="finishUnfinshedDocumentsInCompWorkflows" class="ee.webmedia.alfresco.workflow.bootstrap.FinishUnfinshedDocumentsInCompWorkflows" parent="abstractNodeUpdater">
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="false" />
@@ -1030,7 +971,6 @@
    </bean>   
    
    <!-- START: web beans: -->
->>>>>>> develop-5.1
 
    <bean id="OwnerSearchBean" class="ee.webmedia.alfresco.workflow.web.OwnerSearchBean" scope="session" />
 
@@ -1046,11 +986,6 @@
    
    <bean id="RelatedUrlDetailsDialog" class="ee.webmedia.alfresco.workflow.web.RelatedUrlDetailsDialog" scope="session" />
    
-<<<<<<< HEAD
-   <!-- END: web beans: -->
-
-</beans>
-=======
    <bean id="CompoundWorkflowSendForInformationDialog" class="ee.webmedia.alfresco.workflow.web.CompoundWorkflowSendForInformationDialog" scope="session" />
    
    <bean id="CommentListBlock" class="ee.webmedia.alfresco.workflow.web.CommentListBlock" scope="session" />
@@ -1058,4 +993,3 @@
    <!-- END: web beans: -->
 
 </beans>
->>>>>>> develop-5.1

@@ -51,12 +51,6 @@ import ee.webmedia.alfresco.utils.WebUtil;
 import ee.webmedia.alfresco.volume.search.model.VolumeSearchModel;
 import ee.webmedia.alfresco.volume.search.service.VolumeSearchFilterService;
 
-<<<<<<< HEAD
-/**
- * @author Keit Tehvan
- */
-=======
->>>>>>> develop-5.1
 public class VolumeDynamicSearchDialog extends AbstractSearchFilterBlockBean<VolumeSearchFilterService> implements DialogDataProvider {
     private static final long serialVersionUID = 1L;
 
@@ -178,11 +172,7 @@ public class VolumeDynamicSearchDialog extends AbstractSearchFilterBlockBean<Vol
         return config.getPropertySheetConfigElement();
     }
 
-<<<<<<< HEAD
-    public void storeValueChangeListener(ValueChangeEvent event) {
-=======
     public void storeValueChanged(ValueChangeEvent event) {
->>>>>>> develop-5.1
         @SuppressWarnings("unchecked")
         List<NodeRef> selectedStores = (List<NodeRef>) event.getNewValue();
         getNode().getProperties().put(SELECTED_STORES.toString(), selectedStores);

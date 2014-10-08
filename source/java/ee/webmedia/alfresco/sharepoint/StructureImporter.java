@@ -7,11 +7,7 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentSearchServic
 import static ee.webmedia.alfresco.common.web.BeanHelper.getFunctionsService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getGeneralService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getNodeService;
-<<<<<<< HEAD
-import static ee.webmedia.alfresco.common.web.BeanHelper.getPermissionService;
-=======
 import static ee.webmedia.alfresco.common.web.BeanHelper.getPrivilegeService;
->>>>>>> develop-5.1
 import static ee.webmedia.alfresco.common.web.BeanHelper.getRegisterService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getSearchService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getSeriesService;
@@ -45,10 +41,6 @@ import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.search.SearchService;
-<<<<<<< HEAD
-import org.alfresco.service.cmr.security.PermissionService;
-=======
->>>>>>> develop-5.1
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.StringUtils;
@@ -58,10 +50,7 @@ import com.csvreader.CsvReader;
 import com.csvreader.CsvWriter;
 
 import ee.webmedia.alfresco.archivals.service.ArchivalsService;
-<<<<<<< HEAD
-=======
 import ee.webmedia.alfresco.casefile.model.CaseFileModel;
->>>>>>> develop-5.1
 import ee.webmedia.alfresco.casefile.service.CaseFile;
 import ee.webmedia.alfresco.casefile.service.CaseFileService;
 import ee.webmedia.alfresco.cases.model.CaseModel;
@@ -73,20 +62,13 @@ import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
 import ee.webmedia.alfresco.docadmin.service.DocumentTypeVersion;
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
-<<<<<<< HEAD
-import ee.webmedia.alfresco.document.model.DocumentCommonModel.Privileges;
-=======
->>>>>>> develop-5.1
 import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
 import ee.webmedia.alfresco.eventplan.model.EventPlanModel;
 import ee.webmedia.alfresco.functions.model.Function;
 import ee.webmedia.alfresco.functions.model.FunctionsModel;
 import ee.webmedia.alfresco.functions.service.FunctionsService;
-<<<<<<< HEAD
-=======
 import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.privilege.service.PrivilegeService;
->>>>>>> develop-5.1
 import ee.webmedia.alfresco.register.model.Register;
 import ee.webmedia.alfresco.register.model.RegisterModel;
 import ee.webmedia.alfresco.register.service.RegisterService;
@@ -100,11 +82,6 @@ import ee.webmedia.alfresco.volume.model.VolumeModel;
 
 /**
  * Imports structure (functions, series, volumes and cases) from JuM Sharepoint.
-<<<<<<< HEAD
- * 
- * @author Martti Tamm
-=======
->>>>>>> develop-5.1
  */
 public class StructureImporter {
 
@@ -131,11 +108,7 @@ public class StructureImporter {
     private final SeriesService seriesService = getSeriesService();
     private final RegisterService registerService = getRegisterService();
     private final DocumentAdminService documentAdminService = getDocumentAdminService();
-<<<<<<< HEAD
-    private final PermissionService permissionService = getPermissionService();
-=======
     private final PrivilegeService privilegeService = getPrivilegeService();
->>>>>>> develop-5.1
     private final CaseFileService caseFileService = getCaseFileService();
     private final SearchService searchService = getSearchService();
     private final ArchivalsService archivalsService = getArchivalsService();
@@ -403,12 +376,7 @@ public class StructureImporter {
             }
 
             if (StringUtils.isNotEmpty(context.getTaskOwnerStructUnitAuthority())) {
-<<<<<<< HEAD
-                permissionService.setPermission(series, context.getTaskOwnerStructUnitAuthority(), Privileges.VIEW_DOCUMENT_META_DATA, true);
-                permissionService.setPermission(series, context.getTaskOwnerStructUnitAuthority(), Privileges.VIEW_DOCUMENT_FILES, true);
-=======
                 privilegeService.setPermissions(series, context.getTaskOwnerStructUnitAuthority(), Privilege.VIEW_DOCUMENT_META_DATA, Privilege.VIEW_DOCUMENT_FILES);
->>>>>>> develop-5.1
             }
         }
 
@@ -450,12 +418,7 @@ public class StructureImporter {
             seriesService.setSeriesDefaultPermissionsOnCreate(series);
 
             if (StringUtils.isNotEmpty(context.getTaskOwnerStructUnitAuthority())) {
-<<<<<<< HEAD
-                permissionService.setPermission(series, context.getTaskOwnerStructUnitAuthority(), Privileges.VIEW_DOCUMENT_META_DATA, true);
-                permissionService.setPermission(series, context.getTaskOwnerStructUnitAuthority(), Privileges.VIEW_DOCUMENT_FILES, true);
-=======
                 privilegeService.setPermissions(series, context.getTaskOwnerStructUnitAuthority(), Privilege.VIEW_DOCUMENT_META_DATA, Privilege.VIEW_DOCUMENT_FILES);
->>>>>>> develop-5.1
             }
 
             context.cacheSeries(seriesId + title, series, function);
@@ -473,14 +436,10 @@ public class StructureImporter {
         Date validFrom = getDate(reader, 19);
         NodeRef volume = null;
 
-<<<<<<< HEAD
-        for (ChildAssociationRef assoc : nodeService.getChildAssocs(series, VolumeModel.Associations.VOLUME, VolumeModel.Associations.VOLUME)) {
-=======
         List<ChildAssociationRef> existingVolumes = new ArrayList<ChildAssociationRef>();
         existingVolumes.addAll(nodeService.getChildAssocs(series, VolumeModel.Associations.VOLUME, VolumeModel.Associations.VOLUME));
         existingVolumes.addAll(nodeService.getChildAssocs(series, CaseFileModel.Assocs.CASE_FILE, CaseFileModel.Assocs.CASE_FILE));
         for (ChildAssociationRef assoc : existingVolumes) {
->>>>>>> develop-5.1
             if (mark.equals(nodeService.getProperty(assoc.getChildRef(), VolumeModel.Props.MARK))
                     && title.equals(nodeService.getProperty(assoc.getChildRef(), VolumeModel.Props.TITLE))
                     && validFrom.equals(nodeService.getProperty(assoc.getChildRef(), VolumeModel.Props.VALID_FROM))) {
@@ -590,15 +549,11 @@ public class StructureImporter {
     }
 
     private void logVolume(CsvWriter writer, NodeRef volume, String url, String functionRef, String seriesRef) throws IOException {
-<<<<<<< HEAD
-        writer.write("volume");
-=======
         if (CaseFileModel.Types.CASE_FILE.equals(nodeService.getType(volume))) {
             writer.write("caseFile");
         } else {
             writer.write("volume");
         }
->>>>>>> develop-5.1
         writer.write(nodeService.getProperty(volume, VolumeModel.Props.VOLUME_MARK).toString());
         writer.write(nodeService.getProperty(volume, VolumeModel.Props.TITLE).toString());
         writer.write(url);

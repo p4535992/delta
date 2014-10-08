@@ -1,9 +1,5 @@
 package ee.webmedia.alfresco.workflow.web;
 
-<<<<<<< HEAD
-import java.io.IOException;
-=======
->>>>>>> develop-5.1
 import java.util.List;
 
 import javax.faces.application.Application;
@@ -12,15 +8,6 @@ import javax.faces.component.UIOutput;
 import javax.faces.component.html.HtmlPanelGrid;
 import javax.faces.context.FacesContext;
 
-<<<<<<< HEAD
-import org.alfresco.web.app.servlet.FacesHelper;
-import org.alfresco.web.ui.common.ComponentConstants;
-import org.alfresco.web.ui.common.component.UIActionLink;
-import org.apache.myfaces.shared_impl.renderkit.RendererUtils;
-
-import ee.webmedia.alfresco.common.propertysheet.modalLayer.ModalLayerComponent;
-import ee.webmedia.alfresco.common.web.BeanHelper;
-=======
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.ui.common.ComponentConstants;
@@ -29,32 +16,16 @@ import org.alfresco.web.ui.common.component.UIActionLink;
 import org.alfresco.web.ui.repo.component.UIActions;
 
 import ee.webmedia.alfresco.common.propertysheet.modalLayer.ModalLayerComponent;
->>>>>>> develop-5.1
 import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.workflow.service.DueDateHistoryRecord;
 import ee.webmedia.alfresco.workflow.service.Task;
-<<<<<<< HEAD
-import ee.webmedia.alfresco.workflow.service.WorkflowUtil;
 
-/**
- * @author Riina Tens
- */
-=======
-
->>>>>>> develop-5.1
 public class DueDateHistoryModalComponent extends ModalLayerComponent {
 
     private static final long serialVersionUID = 1L;
     public static final String DUE_DATE_HISTORY_MODAL_ID_PREFIX = "dueDateHistoryModal";
     public static final String ATTR_TASK_DUE_DATE_HISTORY_RECORDS = "taskDueDateHistoryRecords";
-<<<<<<< HEAD
-    /** If page contains multiple DueDateHistoryModalComponent modal components, this is must be unique for every instance */
-    public static final String ATTR_TASK_DUE_DATE_HISTORY_MODAL_ID = "taskDueDateHistoryModalId";
-
-    public String getTaskExtensionHistoryModalId() {
-        return DUE_DATE_HISTORY_MODAL_ID_PREFIX + "-" + getUniqueId();
-=======
     /** If page contains multiple DueDateHistoryModalComponent modal components, this attribute value must be unique for every instance */
     public static final String ATTR_TASK_DUE_DATE_HISTORY_MODAL_ID = "taskDueDateHistoryModalId";
 
@@ -64,7 +35,6 @@ public class DueDateHistoryModalComponent extends ModalLayerComponent {
 
     public static String getTaskExtensionHistoryModalId(String uniqueId) {
         return DUE_DATE_HISTORY_MODAL_ID_PREFIX + "-" + uniqueId;
->>>>>>> develop-5.1
     }
 
     private String getUniqueId() {
@@ -87,30 +57,8 @@ public class DueDateHistoryModalComponent extends ModalLayerComponent {
     }
 
     @Override
-<<<<<<< HEAD
-    public void decode(FacesContext context) {
-        for (Object child : getChildren()) {
-            decodeRecursive((UIComponent) child, context);
-        }
-    }
-
-    private void decodeRecursive(UIComponent component, FacesContext context) {
-        component.processDecodes(context);
-        for (Object child : component.getChildren()) {
-            decodeRecursive((UIComponent) child, context);
-        }
-    }
-
-    @Override
-    public void encodeBegin(FacesContext context) throws IOException {
-        // modal opening link is generated here to get access to modal client id
-        RendererUtils.renderChild(context, generateModalOpenLink(context));
-        generateModalChildren(context);
-        super.encodeBegin(context);
-=======
     protected String getModalHtmlId(FacesContext context) {
         return getId();
->>>>>>> develop-5.1
     }
 
     @Override
@@ -144,15 +92,6 @@ public class DueDateHistoryModalComponent extends ModalLayerComponent {
             component.setValue(MessageUtil.getMessage("task_due_date_history_modal_info", previousDateStr, historyRecord.getChangeReason()));
             tableChildren.add(component);
 
-<<<<<<< HEAD
-            UIActionLink relatedCompoundWorkflowLink = (UIActionLink) application.createComponent("org.alfresco.faces.ActionLink");
-            FacesHelper.setupComponentId(context, relatedCompoundWorkflowLink, "due-date-history-related-workflow-link-" + modalRowId);
-            relatedCompoundWorkflowLink.setValue(MessageUtil.getMessage("compoundWorkflow_due_date_extension_title"));
-            relatedCompoundWorkflowLink.setHref(BeanHelper.getDocumentTemplateService().getCompoundWorkflowUrl(historyRecord.getExtensionWorkflowNodeRef()));
-            // relatedCompoundWorkflowLink.setActionListener(application.createMethodBinding("#{CompoundWorkflowDialog.setupWorkflow}", UIActions.ACTION_CLASS_ARGS));
-            // addChildren(relatedCompoundWorkflowLink, createUIParam("nodeRef", historyRecord.getExtensionWorkflowNodeRef(), application));
-            tableChildren.add(relatedCompoundWorkflowLink);
-=======
             NodeRef extensionWorkflowNodeRef = historyRecord.getExtensionWorkflowNodeRef();
             if (extensionWorkflowNodeRef != null) {
                 UIActionLink relatedCompoundWorkflowLink = (UIActionLink) application.createComponent("org.alfresco.faces.ActionLink");
@@ -168,22 +107,9 @@ public class DueDateHistoryModalComponent extends ModalLayerComponent {
                 selectDummy.setValue("");
                 tableChildren.add(selectDummy);
             }
->>>>>>> develop-5.1
 
             historyRecordId++;
         }
     }
 
-<<<<<<< HEAD
-    private UIActionLink generateModalOpenLink(FacesContext context) {
-        Application application = FacesContext.getCurrentInstance().getApplication();
-        UIActionLink dueDateHistoryLink = (UIActionLink) application.createComponent("org.alfresco.faces.ActionLink");
-        dueDateHistoryLink.setId("due-date-history-link-" + getUniqueId());
-        dueDateHistoryLink.setValue(MessageUtil.getMessage("task_due_date_history_show_history"));
-        dueDateHistoryLink.setOnclick("showModal(\'" + WorkflowUtil.getDialogId(FacesContext.getCurrentInstance(), this) + "\');return false;");
-        return dueDateHistoryLink;
-    }
-
-=======
->>>>>>> develop-5.1
 }

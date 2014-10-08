@@ -38,12 +38,6 @@ import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.utils.RepoUtil;
 
-<<<<<<< HEAD
-/**
- * @author Alar Kvell
- */
-=======
->>>>>>> develop-5.1
 public class UserContactRelatedGroupGenerator extends BaseSystematicFieldGenerator {
 
     public static final String BEAN_NAME = "userContactRelatedGroupGenerator";
@@ -202,15 +196,9 @@ public class UserContactRelatedGroupGenerator extends BaseSystematicFieldGenerat
 
         ItemConfigVO item = generatorResults.getAndAddPreGeneratedItem();
 
-<<<<<<< HEAD
-        // TODO Alar: investigate with Kaarel, why vertical-align: middle doesn't work in some cases
-        // TODO Alar: investigate with Kaarel, should editable=false fields have width: 241px ? and display: inline-block ?
-        // TODO Alar: add to styleClass value, not overwrite?
-=======
         // TODO investigate with why vertical-align: middle doesn't work in some cases
         // TODO investigate with should editable=false fields have width: 241px ? and display: inline-block ?
         // TODO add to styleClass value, not overwrite?
->>>>>>> develop-5.1
         Field primaryField = primaryFieldAndIndex.getFirst();
         Integer primaryFieldIndex = primaryFieldAndIndex.getSecond();
         if (group.isShowInTwoColumns()) {
@@ -227,15 +215,9 @@ public class UserContactRelatedGroupGenerator extends BaseSystematicFieldGenerat
             }
         }
 
-<<<<<<< HEAD
-        // TODO Alar: forbid adding multiple contractParties groups to document in DocTypeDetailsDialog search!!
-        // OR
-        // TODO Alar: change SubPropsheetItem, so that assocName wouldn't be assocTypeQName, but assocQName - that way multiple different subpropsheetitems can be used
-=======
         // TODO forbid adding multiple contractParties groups to document in DocTypeDetailsDialog search!!
         // OR
         // TODO change SubPropsheetItem, so that assocName wouldn't be assocTypeQName, but assocQName - that way multiple different subpropsheetitems can be used
->>>>>>> develop-5.1
         if (SystematicFieldGroupNames.CONTRACT_PARTIES.equals(group.getName())) {
             item.setBelongsToSubPropertySheetId(primaryField.getFieldId());
             if (field == primaryField) {
@@ -325,11 +307,7 @@ public class UserContactRelatedGroupGenerator extends BaseSystematicFieldGenerat
         }
 
         public void setData(String result, Node node) {
-<<<<<<< HEAD
-            // XXX Alar inconvenient
-=======
             // XXX inconvenient
->>>>>>> develop-5.1
             Map<QName, Serializable> props = new HashMap<QName, Serializable>();
             NodeRef userRef = isNodeRef(result) ? new NodeRef(result) : getUserService().getPerson(result);
             getUserContactMappingService().setMappedValues(props, mapping, userRef, false);

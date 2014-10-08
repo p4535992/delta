@@ -4,12 +4,6 @@ import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.parameters.model.ParametersModel.Repo;
 
-<<<<<<< HEAD
-/**
- * @author Ats Uiboupin
- */
-=======
->>>>>>> develop-5.1
 public enum Parameters {
     /** Maximal number of documents that is fetched with single service call(multiple calls will be created if needed) */
     DVK_MAX_RECEIVE_DOCUMENTS_NR("dvkReceiveDocumentsNumber"),
@@ -22,10 +16,7 @@ public enum Parameters {
     /** period in minutes */
     DVK_RECEIVE_DOC_SEND_STATUSES("dvkReceiveDocSendStatusesInterval"),
     DVK_ORGANIZATION_NAME("dvkOrganizationName"), // kui tühi, kasutatakse xtee confist
-<<<<<<< HEAD
-=======
     ADIT_RECEIVE_DOC_SEND_STATUSES("aditReceiveDocSendStatusesInterval"),
->>>>>>> develop-5.1
     SYNC_USERS_GROUPS_STRUCT_UNITS_TIME("syncUsersGroupsStructUnitsTime"),
     EXTERNAL_REVIEW_AUTOMATIC_FOLDER("externalReviewAutomaticFolder"),
     // Default sender email value when sending out a document
@@ -85,10 +76,7 @@ public enum Parameters {
     MAX_SEARCH_SHOW_ALL_RESULT_ROWS("maxSearchShowAllResultRows"),
     HEADER_TEXT("headerText"),
     FOOTER_TEXT("footerText"),
-<<<<<<< HEAD
-=======
     M_DELTA_FOOTER_TEXT("mDeltaFooterText"),
->>>>>>> develop-5.1
     VOLUME_AUTOMATIC_CLOSING_TIME("volumeAutomaticClosingTime"),
     SIGNER_NAME("signerName"),
     CONTRACT_FIRST_PARTY_NAME("contractFirstPartyName"),
@@ -128,10 +116,7 @@ public enum Parameters {
 
     WORKING_DOCUMENTS_ADDRESS("workingDocumentsAddress"),
     ONE_STEP_ALLOWED_IN_COMPOUND_WORKFLOW_MESSAGE("oneStepAllowedInCompoundWorkflowMessage"),
-<<<<<<< HEAD
-=======
     LARGE_WORKFLOW_WARNING_TASK_COUNT("largeWorkflowWarningTaskCount"),
->>>>>>> develop-5.1
 
     QUICK_SEARCH_WORDS_COUNT("quickSearchWordsCount"),
 
@@ -139,12 +124,8 @@ public enum Parameters {
     DOC_MANAGER_EMAIL("docManagerEmail"),
     DVK_FAILED_SENDS_RESEND_TIME("dvkFailedSendsResendTime"),
     MOVE_TO_ARCHIVE_LIST_DEFAULT_MONTHS("moveToArchiveListDefaultMonths"),
-<<<<<<< HEAD
-    ARCHIVAL_ACTIVITY_DOC_TYPE_ID("archivalActivityDocTypeId");
-=======
     ARCHIVAL_ACTIVITY_DOC_TYPE_ID("archivalActivityDocTypeId"),
     ACCESS_RESTRICTION_END_DATE_NOTIFICATION_MAX_DOCUMENTS("accessRestrictionEndDateNotificationMaxDocuments");
->>>>>>> develop-5.1
 
     private String xPath;
     private String parameterName;
@@ -177,8 +158,4 @@ public enum Parameters {
         return parameterName;
     }
 
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> develop-5.1

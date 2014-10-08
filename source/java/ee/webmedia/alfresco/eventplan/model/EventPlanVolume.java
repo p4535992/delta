@@ -12,13 +12,6 @@ import ee.webmedia.alfresco.utils.CalendarUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
 
-<<<<<<< HEAD
-/**
- * @author Martti Tamm
- * @author Alar Kvell
- */
-=======
->>>>>>> develop-5.1
 public class EventPlanVolume extends EventPlanCommon {
     private static final long serialVersionUID = 1L;
 

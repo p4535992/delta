@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 <alfresco-config>
    <config>
       <actions>
@@ -52,58 +51,3 @@
    </config>
 
 </alfresco-config>
-=======
-<alfresco-config>
-   <config>
-      <actions>
-         <action id="document_type_add">
-            <label-id>document_type_add</label-id>
-            <image>/images/icons/versioned_properties.gif</image>
-            <action-listener>#{DocumentTypeDetailsDialog.addNew}</action-listener>
-            <action>dialog:documentTypeDetailsDialog</action>
-         </action>
-
-         <action-group id="document_type_list_actions">
-            <action idref="document_type_add" />
-         </action-group>
-
-      </actions>
-      <dialogs>
-
-         <dialog name="documentTypeDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/document/type/web/document-type-dialog.jsp" managed-bean="DocumentTypeDialog"
-            icon="/images/icons/versioned_properties_large.gif" title-id="document_types" actions-config-id="document_type_list_actions" show-ok-button="false"/>
-
-         <dialog name="documentTypeDetailsDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/document/type/web/document-type-details-dialog.jsp"
-            managed-bean="DocumentTypeDetailsDialog" icon="/images/icons/versioned_properties_large.gif" title-id="document_type_details" />
-
-      </dialogs>
-   </config>
-   
-   <config evaluator="node-type" condition="doctype:selector" replace="true">
-      <property-sheet>
-         <show-property name="doctype:selected" ajaxDisabled="true" show-in-view-mode="false" display-label-id="document_type_selected" component-generator="GeneralSelectorGenerator" selectionItems="#{DocumentTypeDialog.getUsedDocTypes}" valueChangeListener="#{DocumentDialog.selectedValueChanged}" />
-      </property-sheet>
-   </config>
-
-   <config evaluator="node-type" condition="doctype:documentType">
-      <property-sheet>
-         <show-property name="doctype:name" />
-         <show-property name="{temp}id" forcedMandatory="true" readOnlyIf="#{DocumentTypeDetailsDialog.isSaved}" display-label-id="document_type_id" ignore-if-missing="false" validator="OnlyLettersValidator_PANEL_AND_FIELD_NAME" />
-         <show-property name="doctype:comment" styleClass="expand19-200" component-generator="TextAreaGenerator" />
-         <show-property name="doctype:used" />
-         <show-property name="doctype:systematic" component-generator="BooleanRadioGenerator" read-only="true" nullValue="false" />
-         <show-property name="doctype:publicAdr" />
-         <show-property name="doctype:showUnvalued" />
-         <show-property name="doctype:changeByNewDocumentEnabled" />
-         <show-property name="doctype:menuGroupName" classificatorName="docTypeGroup" component-generator="ClassificatorSelectorGenerator" />
-         <show-property name="doctype:registrationEnabled" />
-         <show-property name="doctype:finishDocByRegistration" labelStyleClass="wrap" />
-         <show-property name="doctype:sendUnregistratedDocEnabled" labelStyleClass="wrap" />
-         <show-property name="doctype:addFollowUpToUnregistratedDocEnabled" labelStyleClass="wrap" />
-         <show-property name="doctype:addReplyToUnregistratedDocEnabled" labelStyleClass="wrap" />
-         <show-property name="doctype:editFilesOfFinishedDocEnabled" labelStyleClass="wrap"/>
-      </property-sheet>
-   </config>
-
-</alfresco-config>
->>>>>>> develop-5.1

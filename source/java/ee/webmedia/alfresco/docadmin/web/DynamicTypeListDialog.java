@@ -36,11 +36,6 @@ import ee.webmedia.alfresco.utils.ActionUtil;
 
 /**
  * Base dialog for list of {@link DynamicType}s
-<<<<<<< HEAD
- * 
- * @author Ats Uiboupin
-=======
->>>>>>> develop-5.1
  */
 public abstract class DynamicTypeListDialog<T extends DynamicType> extends BaseDialogBean {
     private static final long serialVersionUID = 1L;
@@ -158,11 +153,7 @@ public abstract class DynamicTypeListDialog<T extends DynamicType> extends BaseD
         } finally {
             IOUtils.closeQuietly(outputStream);
             context.responseComplete();
-<<<<<<< HEAD
-            // Erko hack for incorrect view id in the next request
-=======
             // hack for incorrect view id in the next request
->>>>>>> develop-5.1
             JspStateManagerImpl.ignoreCurrentViewSequenceHack();
             LOG.info("DocumentTypes export completed " + (success ? "" : "un") + "successfully");
         }
@@ -170,11 +161,8 @@ public abstract class DynamicTypeListDialog<T extends DynamicType> extends BaseD
 
     protected abstract String getExportFileName();
 
-<<<<<<< HEAD
-=======
     public abstract String getListTitle();
 
->>>>>>> develop-5.1
     private ExcludingExporterCrawlerParameters getDynamicTypesExportParameters(NodeRef nodeRef, List<NodeRef> excludedNodeRef) {
         ExcludingExporterCrawlerParameters params = new ExcludingExporterCrawlerParameters();
         params.setExportFrom(new Location(nodeRef));

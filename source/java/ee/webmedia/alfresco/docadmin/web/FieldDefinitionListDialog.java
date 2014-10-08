@@ -6,31 +6,16 @@ import java.util.List;
 import java.util.Map;
 
 import javax.faces.context.FacesContext;
-<<<<<<< HEAD
-import javax.faces.event.ActionEvent;
 
-import org.alfresco.service.cmr.repository.NodeRef;
-=======
-
->>>>>>> develop-5.1
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.ui.common.component.data.UIRichList;
 import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.docadmin.service.FieldDefinition;
-<<<<<<< HEAD
-import ee.webmedia.alfresco.utils.ActionUtil;
-=======
->>>>>>> develop-5.1
 import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
  * Dialog for the list of field definitions
-<<<<<<< HEAD
- * 
- * @author Ats Uiboupin
-=======
->>>>>>> develop-5.1
  */
 public class FieldDefinitionListDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;
@@ -58,11 +43,7 @@ public class FieldDefinitionListDialog extends BaseDialogBean {
 
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
-<<<<<<< HEAD
-        fieldDefinitions = getDocumentAdminService().saveOrUpdateFieldDefinitions(fieldDefinitions);
-=======
         fieldDefinitions = getDocumentAdminService().saveOrUpdateFieldDefinitions(fieldDefinitions, false);
->>>>>>> develop-5.1
         MessageUtil.addInfoMessage(context, "save_success");
         return null;
     }
@@ -91,16 +72,6 @@ public class FieldDefinitionListDialog extends BaseDialogBean {
         return super.cancel();
     }
 
-<<<<<<< HEAD
-    public void deleteField(ActionEvent event) {
-        NodeRef fieldDefRef = new NodeRef(ActionUtil.getParam(event, "nodeRef"));
-        getDocumentAdminService().deleteFieldDefinition(fieldDefRef);
-        MessageUtil.addInfoMessage("fieldDefinitions_list_action_delete_success");
-        initFields();
-    }
-
-=======
->>>>>>> develop-5.1
     private void clearRichList() {
         if (getRichList() != null) {
             getRichList().setValue(null);

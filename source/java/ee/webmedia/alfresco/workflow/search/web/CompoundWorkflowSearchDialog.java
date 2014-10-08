@@ -27,12 +27,6 @@ import ee.webmedia.alfresco.workflow.search.model.CompoundWorkflowSearchModel;
 import ee.webmedia.alfresco.workflow.search.model.TaskSearchModel;
 import ee.webmedia.alfresco.workflow.search.service.CompoundWorkflowSearchFilterService;
 
-<<<<<<< HEAD
-/**
- * @author Keit Tehvan
- */
-=======
->>>>>>> develop-5.1
 public class CompoundWorkflowSearchDialog extends AbstractSearchFilterBlockBean<CompoundWorkflowSearchFilterService> {
 
     private static final long serialVersionUID = 1L;

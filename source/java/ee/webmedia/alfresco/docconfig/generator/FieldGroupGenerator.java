@@ -8,12 +8,6 @@ import org.alfresco.util.Pair;
 import ee.webmedia.alfresco.docadmin.service.Field;
 import ee.webmedia.alfresco.docadmin.service.FieldGroup;
 
-<<<<<<< HEAD
-/**
- * @author Alar Kvell
- */
-=======
->>>>>>> develop-5.1
 public interface FieldGroupGenerator {
 
     void generateFieldGroup(FieldGroup group, FieldGroupGeneratorResults generatorResults);

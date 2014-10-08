@@ -142,13 +142,8 @@
             </props>
          </list>
       </property>
-<<<<<<< HEAD
-   </bean>    
-
-=======
    </bean>
    
->>>>>>> develop-5.1
    <bean class="ee.webmedia.alfresco.common.bootstrap.ModuleComponentDependsOnSetter">
       <property name="source" ref="parameterRescheduledJobsBootstrap" />
       <property name="dependsOn" ref="dvkParametersBootstrap" />

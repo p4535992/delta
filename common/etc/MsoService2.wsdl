@@ -1,18 +1,9 @@
-<<<<<<< HEAD
-<?xml version="1.0" encoding="UTF-8"?>
-<wsdl:definitions name="MsoService" targetNamespace="http://webmedia.ee/mso" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
-   xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
-   xmlns:soap12="http://schemas.xmlsoap.org/wsdl/soap12/" xmlns:tns="http://webmedia.ee/mso" xmlns:wsa="http://schemas.xmlsoap.org/ws/2004/08/addressing" xmlns:wsp="http://schemas.xmlsoap.org/ws/2004/09/policy"
-   xmlns:wsap="http://schemas.xmlsoap.org/ws/2004/08/addressing/policy" xmlns:wsaw="http://www.w3.org/2006/05/addressing/wsdl" xmlns:msc="http://schemas.microsoft.com/ws/2005/12/wsdl/contract"
-   xmlns:wsa10="http://www.w3.org/2005/08/addressing" xmlns:wsx="http://schemas.xmlsoap.org/ws/2004/09/mex" xmlns:wsam="http://www.w3.org/2007/05/addressing/metadata">
-=======
 <?xml version="1.0" encoding="utf-8"?>
 <wsdl:definitions name="MsoService" targetNamespace="http://webmedia.ee/mso" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:wsap="http://schemas.xmlsoap.org/ws/2004/08/addressing/policy"
    xmlns:wsa10="http://www.w3.org/2005/08/addressing" xmlns:tns="http://webmedia.ee/mso" xmlns:msc="http://schemas.microsoft.com/ws/2005/12/wsdl/contract" xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/"
    xmlns:wsx="http://schemas.xmlsoap.org/ws/2004/09/mex" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:wsam="http://www.w3.org/2007/05/addressing/metadata" xmlns:wsa="http://schemas.xmlsoap.org/ws/2004/08/addressing"
    xmlns:wsp="http://schemas.xmlsoap.org/ws/2004/09/policy" xmlns:wsaw="http://www.w3.org/2006/05/addressing/wsdl" xmlns:soap12="http://schemas.xmlsoap.org/wsdl/soap12/"
    xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
->>>>>>> develop-5.1
    <wsp:Policy wsu:Id="MsoPortBinding_policy">
       <wsp:ExactlyOne>
          <wsp:All>
@@ -21,13 +12,6 @@
       </wsp:ExactlyOne>
    </wsp:Policy>
    <wsdl:types>
-<<<<<<< HEAD
-      <xsd:schema targetNamespace="http://webmedia.ee/mso/Imports">
-         <xsd:import schemaLocation="MsoService2-0.xsd" namespace="http://webmedia.ee/mso" />
-         <xsd:import schemaLocation="MsoService2-1.xsd" namespace="http://schemas.microsoft.com/2003/10/Serialization/" />
-         <xsd:import schemaLocation="MsoService2-2.xsd" namespace="http://schemas.datacontract.org/2004/07/MSOService" />
-      </xsd:schema>
-=======
       <xs:schema elementFormDefault="qualified" targetNamespace="http://webmedia.ee/mso" xmlns:xs="http://www.w3.org/2001/XMLSchema">
          <xs:import namespace="http://schemas.datacontract.org/2004/07/MSOService" />
          <xs:element name="msoDocumentInput">
@@ -152,7 +136,6 @@
          </xs:complexType>
          <xs:element name="formula" nillable="true" type="tns:formula" />
       </xs:schema>
->>>>>>> develop-5.1
    </wsdl:types>
    <wsdl:message name="msoDocumentInput">
       <wsdl:part name="parameters" element="tns:msoDocumentInput" />
@@ -176,13 +159,10 @@
    <wsdl:message name="pingOutput">
       <wsdl:part name="parameters" element="tns:pingOutput" />
    </wsdl:message>
-<<<<<<< HEAD
-=======
    <wsdl:message name="MsoPortBinding_getSystemLoad_InputMessage" />
    <wsdl:message name="getSystemLoadOutput">
       <wsdl:part name="parameters" element="tns:getSystemLoadOutput" />
    </wsdl:message>
->>>>>>> develop-5.1
    <wsdl:portType name="MsoPortBinding">
       <wsdl:operation name="convertToPdf">
          <wsdl:input wsaw:Action="http://webmedia.ee/mso/MsoPortBinding/convertToPdf" name="msoDocumentInput" message="tns:msoDocumentInput" />
@@ -204,13 +184,10 @@
          <wsdl:input wsaw:Action="http://webmedia.ee/mso/MsoPortBinding/ping" message="tns:MsoPortBinding_ping_InputMessage" />
          <wsdl:output wsaw:Action="http://webmedia.ee/mso/MsoPortBinding/pingResponse" name="pingOutput" message="tns:pingOutput" />
       </wsdl:operation>
-<<<<<<< HEAD
-=======
       <wsdl:operation name="getSystemLoad">
          <wsdl:input wsaw:Action="http://webmedia.ee/mso/MsoPortBinding/getSystemLoad" message="tns:MsoPortBinding_getSystemLoad_InputMessage" />
          <wsdl:output wsaw:Action="http://webmedia.ee/mso/MsoPortBinding/getSystemLoadResponse" name="getSystemLoadOutput" message="tns:getSystemLoadOutput" />
       </wsdl:operation>
->>>>>>> develop-5.1
    </wsdl:portType>
    <wsdl:binding name="MsoPortBinding" type="tns:MsoPortBinding">
       <wsp:PolicyReference URI="#MsoPortBinding_policy" />
@@ -260,8 +237,6 @@
             <soap:body use="literal" />
          </wsdl:output>
       </wsdl:operation>
-<<<<<<< HEAD
-=======
       <wsdl:operation name="getSystemLoad">
          <soap:operation soapAction="http://webmedia.ee/mso/MsoPortBinding/getSystemLoad" style="document" />
          <wsdl:input>
@@ -271,7 +246,6 @@
             <soap:body use="literal" />
          </wsdl:output>
       </wsdl:operation>
->>>>>>> develop-5.1
    </wsdl:binding>
    <wsdl:service name="MsoService">
       <wsdl:port name="MsoPortBinding" binding="tns:MsoPortBinding">

@@ -13,18 +13,10 @@ import ee.webmedia.alfresco.log.LogHelper;
 import ee.webmedia.alfresco.log.service.LogListItem;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.MessageUtil;
-<<<<<<< HEAD
-
-/**
- * Entity object for storing log table data.
- * 
- * @author Martti Tamm
-=======
 import ee.webmedia.alfresco.utils.WebUtil;
 
 /**
  * Entity object for storing log table data.
->>>>>>> develop-5.1
  */
 public class LogEntry implements Serializable, LogListItem {
 
@@ -132,13 +124,10 @@ public class LogEntry implements Serializable, LogListItem {
         return description;
     }
 
-<<<<<<< HEAD
-=======
     public String getEventDescriptionAndLinks() {
         return WebUtil.escapeHtmlExceptLinks(WebUtil.processLinks(description));
     }
 
->>>>>>> develop-5.1
     public void setEventDescription(String eventDescription) {
         description = eventDescription;
     }

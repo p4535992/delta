@@ -17,12 +17,6 @@ import ee.webmedia.alfresco.monitoring.model.Application;
 import ee.webmedia.alfresco.monitoring.model.ServiceStatus;
 import ee.webmedia.alfresco.monitoring.model.Status;
 
-<<<<<<< HEAD
-/**
- * @author Keit Tehvan
- */
-=======
->>>>>>> develop-5.1
 public class MonitoringServlet extends BaseServlet {
 
     private static final long serialVersionUID = 1L;

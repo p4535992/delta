@@ -26,15 +26,10 @@ import javax.activation.DataHandler;
 import javax.sql.DataSource;
 import javax.xml.datatype.XMLGregorianCalendar;
 
-<<<<<<< HEAD
-import org.alfresco.repo.content.MimetypeMap;
-import org.alfresco.service.cmr.repository.AssociationRef;
-=======
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.content.MimetypeMap;
 import org.alfresco.service.cmr.repository.AssociationRef;
 import org.alfresco.service.cmr.repository.ContentData;
->>>>>>> develop-5.1
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.namespace.NamespaceService;
@@ -92,13 +87,6 @@ import ee.webmedia.alfresco.utils.TextUtil;
 import ee.webmedia.alfresco.utils.UserUtil;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
 
-<<<<<<< HEAD
-/**
- * @author Dmitri Melnikov
- * @author Alar Kvell
- */
-=======
->>>>>>> develop-5.1
 public class AdrServiceImpl extends BaseAdrServiceImpl {
 
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(AdrServiceImpl.class);
@@ -113,10 +101,7 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
     private NamespaceService namespaceService;
     private SimpleJdbcTemplate jdbcTemplate;
     private boolean accessRestrictionChangeReasonEnabled;
-<<<<<<< HEAD
-=======
     private boolean volumeTitleEnabled;
->>>>>>> develop-5.1
 
     // ========================================================================
     // =========================== REAL-TIME QUERYING =========================
@@ -240,16 +225,10 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
         return docName;
     }
 
-<<<<<<< HEAD
-    private DokumentDetailidegaV2 buildDokumentDetailidegaV2(DocumentDynamic doc, boolean includeFileContent, Set<String> documentTypeIds,
-            Map<NodeRef, Map<QName, Serializable>> functionsCache, Map<NodeRef, Map<QName, Serializable>> seriesCache,
-            Map<NodeRef, Map<QName, Serializable>> volumesCache) {
-=======
     @Override
     public DokumentDetailidegaV2 buildDokumentDetailidegaV2(DocumentDynamic doc, boolean includeFileContent, Set<String> documentTypeIds,
             Map<NodeRef, Map<QName, Serializable>> functionsCache, Map<NodeRef, Map<QName, Serializable>> seriesCache,
             Map<NodeRef, Map<QName, Serializable>> volumesCache, boolean testData) {
->>>>>>> develop-5.1
 
         DokumentDetailidegaV2 dokument = new DokumentDetailidegaV2();
         String documentTypeId = doc.getDocumentTypeId();
@@ -291,28 +270,20 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
         // =======================================================
 
         // Associated documents
-<<<<<<< HEAD
-        List<SeotudDokument> assocDocs = getSeotudDokumentList(doc.getNodeRef(), documentTypeIds);
-        dokument.getSeotudDokument().addAll(assocDocs);
-=======
         if (!testData) {
             List<SeotudDokument> assocDocs = getSeotudDokumentList(doc.getNodeRef(), documentTypeIds);
             dokument.getSeotudDokument().addAll(assocDocs);
         }
->>>>>>> develop-5.1
 
         if (isFileAllowedToAdr(doc)) {
             List<File> allActiveFiles = fileService.getAllActiveFiles(doc.getNodeRef());
             for (File file : allActiveFiles) {
                 FailV2 fail = new FailV2();
                 setFailProperties(fail, file, includeFileContent);
-<<<<<<< HEAD
-=======
                 if (testData) {
                     ContentData contentData = (ContentData) nodeService.getProperty(file.getNodeRef(), ContentModel.PROP_CONTENT);
                     fail.setId(contentData != null ? contentData.getContentUrl() : null);
                 }
->>>>>>> develop-5.1
                 dokument.getFail().add(fail);
             }
         }
@@ -372,13 +343,9 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
         // Document type
         DokumendiliikV2 wsDocumentType = new DokumendiliikV2();
         wsDocumentType.setId(documentTypeId);
-<<<<<<< HEAD
-        wsDocumentType.setNimi(getNullIfEmpty(documentAdminService.getDocumentTypeName(documentTypeId)));
-=======
         if (!testData) {
             wsDocumentType.setNimi(getNullIfEmpty(documentAdminService.getDocumentTypeName(documentTypeId)));
         }
->>>>>>> develop-5.1
         dokument.setDokumendiLiik(wsDocumentType);
 
         // Volume
@@ -399,11 +366,7 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
         Toimik wsVolume = new Toimik();
         wsVolume.setId(volumeRef.toString());
         wsVolume.setViit((String) volumeProps.get(VolumeModel.Props.MARK));
-<<<<<<< HEAD
-        wsVolume.setPealkiri((String) volumeProps.get(VolumeModel.Props.TITLE));
-=======
         wsVolume.setPealkiri(volumeTitleEnabled ? (String) volumeProps.get(VolumeModel.Props.TITLE) : "");
->>>>>>> develop-5.1
         wsVolume.setKehtivAlatesKuupaev(convertToXMLGergorianCalendar((Date) volumeProps.get(VolumeModel.Props.VALID_FROM)));
         wsVolume.setKehtivKuniKuupaev(convertToXMLGergorianCalendar((Date) volumeProps.get(VolumeModel.Props.VALID_TO)));
         dokument.setToimik(wsVolume);
@@ -562,11 +525,7 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
             return koikDokumendidLisatudMuudetud(perioodiAlgusKuupaev, perioodiLoppKuupaev, new BuildDocumentCallback<DokumentDetailidegaV2>() {
                 @Override
                 public DokumentDetailidegaV2 buildDocument(DocumentDynamic doc, Set<String> documentTypeIds) {
-<<<<<<< HEAD
-                    return buildDokumentDetailidegaV2(doc, false, documentTypeIds, functionsCache, seriesCache, volumesCache);
-=======
                     return buildDokumentDetailidegaV2(doc, false, documentTypeIds, functionsCache, seriesCache, volumesCache, false);
->>>>>>> develop-5.1
                 }
             }, jataAlgusestVahele, tulemustePiirang, true);
         } finally {
@@ -668,11 +627,7 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
         return list;
     }
 
-<<<<<<< HEAD
-    private boolean isDocumentAllowedToAdr(DocumentDynamic doc, Set<String> publicAdrDocumentTypeIds, boolean logInfo) {
-=======
     public static boolean isDocumentAllowedToAdr(DocumentDynamic doc, Set<String> publicAdrDocumentTypeIds, boolean logInfo) {
->>>>>>> develop-5.1
         if (!publicAdrDocumentTypeIds.contains(doc.getDocumentTypeId())
                 || StringUtils.isBlank(doc.getRegNumber())
                 || doc.getRegDateTime() == null
@@ -689,11 +644,7 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
         return true;
     }
 
-<<<<<<< HEAD
-    private boolean isFileAllowedToAdr(DocumentDynamic doc) {
-=======
     private static boolean isFileAllowedToAdr(DocumentDynamic doc) {
->>>>>>> develop-5.1
         // Only include file list when document accessRestriction = Avalik AND publishToAdr = Läheb ADR-i
         if (!AccessRestriction.OPEN.getValueName().equals(doc.getProp(ACCESS_RESTRICTION))) {
             return false;
@@ -885,11 +836,7 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
         chain.addComparator(new TransformingComparator(new Transformer() {
             @Override
             public Object transform(Object input) {
-<<<<<<< HEAD
-                return ((AdrDocument) input).nodeRef;
-=======
                 return ((AdrDocument) input).nodeRef.toString();
->>>>>>> develop-5.1
             }
         }, new NullComparator()));
         @SuppressWarnings("unchecked")
@@ -908,14 +855,11 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
         return addDeletedDocument(document, regNumber, regDateTime);
     }
 
-<<<<<<< HEAD
-=======
     @Override
     public NodeRef addDeletedDocumentFromArchive(NodeRef document, String regNumber, Date regDateTime) {
         return addDeletedDocument(document, regNumber, regDateTime);
     }
 
->>>>>>> develop-5.1
     private String getInitialsIfNeeded(String name, NodeRef documentRef) {
         Boolean initialsToAdr = (Boolean) nodeService.getProperty(documentRef, DocumentDynamicModel.Props.SENDER_INITIALS_TO_ADR);
         return Boolean.TRUE.equals(initialsToAdr) ? UserUtil.getInitials(name) : name;
@@ -969,13 +913,10 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
     public void setAccessRestrictionChangeReasonEnabled(boolean accessRestrictionChangeReasonEnabled) {
         this.accessRestrictionChangeReasonEnabled = accessRestrictionChangeReasonEnabled;
     }
-<<<<<<< HEAD
-=======
 
     public void setVolumeTitleEnabled(boolean volumeTitleEnabled) {
         this.volumeTitleEnabled = volumeTitleEnabled;
     }
->>>>>>> develop-5.1
     // END: getters / setters
 
 }

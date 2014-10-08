@@ -7,12 +7,6 @@ import java.util.Map;
 import ee.webmedia.alfresco.docconfig.generator.DialogDataProvider;
 import ee.webmedia.alfresco.docconfig.generator.PropertySheetStateHolder;
 
-<<<<<<< HEAD
-/**
- * @author Alar Kvell
- */
-=======
->>>>>>> develop-5.1
 public class PropertySheetStateBean implements Serializable {
     private static final long serialVersionUID = 1L;
 

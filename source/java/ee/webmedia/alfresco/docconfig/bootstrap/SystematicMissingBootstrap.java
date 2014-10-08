@@ -10,11 +10,6 @@ import ee.webmedia.alfresco.common.service.GeneralService;
 
 /**
  * Fix for task 180940 - in already existing deployments, two bootstap component names were used in 3.2 but then deleted, so they did not execute again when reused in 3.3.
-<<<<<<< HEAD
- * 
- * @author Alar Kvell
-=======
->>>>>>> develop-5.1
  */
 public class SystematicMissingBootstrap extends AbstractModuleComponent implements BeanFactoryAware {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(SystematicMissingBootstrap.class);

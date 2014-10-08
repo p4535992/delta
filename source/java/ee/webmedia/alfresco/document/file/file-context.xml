@@ -32,24 +32,12 @@
    </bean>
 
    <bean id="fileService" class="ee.webmedia.alfresco.document.file.service.FileServiceImpl">
-<<<<<<< HEAD
-      <property name="fileFolderService" ref="FileFolderService" />
-      <property name="nodeService" ref="NodeService" />
-      <property name="userService" ref="UserService" />
-      <property name="signatureService" ref="SignatureService" />
-      <property name="authenticationService" ref="AuthenticationService" />
-      <property name="contentService" ref="ContentService" />
-      <property name="generalService" ref="GeneralService"/>
-      <property name="documentLogService" ref="DocumentLogService"/>
-      <property name="versionsService" ref="VersionsService"/>
-=======
       <property name="userService" ref="UserService" />
       <property name="signatureService" ref="SignatureService" />
       <property name="nodeService" ref="NodeService" />
       <property name="authenticationService" ref="AuthenticationService" />
       <property name="contentService" ref="ContentService" />
       <property name="documentLogService" ref="DocumentLogService"/>
->>>>>>> develop-5.1
       <property name="scannedFilesPath" value="${scannedFiles.rootPath}${scannedFiles.folder.name}"/>
       <property name="openOfficeFiles" value="${conf.openoffice-client-extensions}" />
       <property name="jumploaderPath" value="${jumploader.applet.file}" />

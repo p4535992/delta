@@ -28,23 +28,16 @@ import org.apache.commons.lang.StringUtils;
 import org.joda.time.LocalDate;
 import org.springframework.util.Assert;
 
-<<<<<<< HEAD
-=======
 import ee.webmedia.alfresco.classificator.constant.FieldChangeableIf;
->>>>>>> develop-5.1
 import ee.webmedia.alfresco.classificator.constant.FieldType;
 import ee.webmedia.alfresco.classificator.enums.LeaveType;
 import ee.webmedia.alfresco.classificator.model.ClassificatorValue;
 import ee.webmedia.alfresco.classificator.service.ClassificatorService;
 import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement.ItemConfigVO;
-<<<<<<< HEAD
-import ee.webmedia.alfresco.common.web.BeanHelper;
-=======
 import ee.webmedia.alfresco.common.propertysheet.modalLayer.ValidatingModalLayerComponent;
 import ee.webmedia.alfresco.common.propertysheet.search.Search;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.UserContactGroupSearchBean;
->>>>>>> develop-5.1
 import ee.webmedia.alfresco.docadmin.service.Field;
 import ee.webmedia.alfresco.docadmin.service.FieldGroup;
 import ee.webmedia.alfresco.docconfig.bootstrap.SystematicFieldGroupNames;
@@ -54,22 +47,13 @@ import ee.webmedia.alfresco.docconfig.generator.GeneratorResults;
 import ee.webmedia.alfresco.docconfig.service.UserContactMappingCode;
 import ee.webmedia.alfresco.docconfig.service.UserContactMappingService;
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
-<<<<<<< HEAD
-=======
 import ee.webmedia.alfresco.docdynamic.web.DocumentDialogHelperBean;
->>>>>>> develop-5.1
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.utils.CalendarUtil;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
 
-<<<<<<< HEAD
-/**
- * @author Alar Kvell
- */
-=======
->>>>>>> develop-5.1
 public class UserContactTableGenerator extends BaseSystematicFieldGenerator {
 
     public static final String BEAN_NAME = "userContactTableGenerator";
@@ -84,11 +68,7 @@ public class UserContactTableGenerator extends BaseSystematicFieldGenerator {
         Set<Map<String, UserContactMappingCode>> mappings = new HashSet<Map<String, UserContactMappingCode>>();
 
         // We register only the significant field for multiValuedOverride, because some other fields (e.g userJobTitle) are also used in other systematic groups
-<<<<<<< HEAD
-        // TODO Alar: but doesn't originalFieldIds mess that up?
-=======
         // TODO but doesn't originalFieldIds mess that up?
->>>>>>> develop-5.1
 
         Map<String, UserContactMappingCode> recipientsMapping = new HashMap<String, UserContactMappingCode>();
         recipientsMapping.put(DocumentCommonModel.Props.RECIPIENT_NAME.getLocalName(), UserContactMappingCode.NAME);
@@ -96,10 +76,7 @@ public class UserContactTableGenerator extends BaseSystematicFieldGenerator {
         recipientsMapping.put(DocumentDynamicModel.Props.RECIPIENT_PERSON_NAME.getLocalName(), null);
         recipientsMapping.put(DocumentDynamicModel.Props.RECIPIENT_STREET_HOUSE.getLocalName(), UserContactMappingCode.STREET_HOUSE);
         recipientsMapping.put(DocumentDynamicModel.Props.RECIPIENT_POSTAL_CITY.getLocalName(), UserContactMappingCode.POSTAL_CITY);
-<<<<<<< HEAD
-=======
         recipientsMapping.put(DocumentDynamicModel.Props.RECIPIENT_ID.getLocalName(), UserContactMappingCode.CODE);
->>>>>>> develop-5.1
         mappings.add(recipientsMapping);
         userContactMappingService.registerMappingDependency(DocumentCommonModel.Props.RECIPIENT_NAME.getLocalName(), DocumentCommonModel.Props.RECIPIENT_GROUP.getLocalName());
         documentConfigService.registerHiddenFieldDependency(DocumentCommonModel.Props.RECIPIENT_GROUP.getLocalName(), DocumentCommonModel.Props.RECIPIENT_NAME.getLocalName());
@@ -111,10 +88,7 @@ public class UserContactTableGenerator extends BaseSystematicFieldGenerator {
         additionalRecipientsMapping.put(DocumentDynamicModel.Props.ADDITIONAL_RECIPIENT_PERSON_NAME.getLocalName(), null);
         additionalRecipientsMapping.put(DocumentDynamicModel.Props.ADDITIONAL_RECIPIENT_STREET_HOUSE.getLocalName(), UserContactMappingCode.STREET_HOUSE);
         additionalRecipientsMapping.put(DocumentDynamicModel.Props.ADDITIONAL_RECIPIENT_POSTAL_CITY.getLocalName(), UserContactMappingCode.POSTAL_CITY);
-<<<<<<< HEAD
-=======
         additionalRecipientsMapping.put(DocumentDynamicModel.Props.ADDITIONAL_RECIPIENT_ID.getLocalName(), UserContactMappingCode.CODE);
->>>>>>> develop-5.1
         mappings.add(additionalRecipientsMapping);
         userContactMappingService.registerMappingDependency(DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME.getLocalName(),
                 DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_GROUP.getLocalName());
@@ -208,11 +182,7 @@ public class UserContactTableGenerator extends BaseSystematicFieldGenerator {
                 }
             }
         }
-<<<<<<< HEAD
-        // TODO Alar: refactor UserContact functionality to subclass
-=======
         // TODO refactor UserContact functionality to subclass
->>>>>>> develop-5.1
         Assert.isTrue((foundField == null) == (mapping == null));
         if (foundField == null) {
             foundField = group.getFields().get(0);
@@ -234,21 +204,14 @@ public class UserContactTableGenerator extends BaseSystematicFieldGenerator {
         List<String> props = new ArrayList<String>();
         List<QName> propNames = new ArrayList<QName>();
         boolean isUserTableGroup = SystematicFieldGroupNames.USERS_TABLE.equals(group.getName());
-<<<<<<< HEAD
-=======
         Map<String, Field> fieldsByOriginalId = group.getFieldsByOriginalId();
         boolean isLeaveChangedDays = fieldsByOriginalId.containsKey("leaveChangedDays");
         boolean isLeaveCancelledDays = fieldsByOriginalId.containsKey("leaveCancelledDays");
->>>>>>> develop-5.1
         for (Field child : group.getFields()) {
             QName fieldId = child.getQName();
 
             ComponentUtil.addRecipientGrouping(child, item, namespaceService);
-<<<<<<< HEAD
-            // TODO Alar: refactor, so that components would be generated by generators
-=======
             // TODO refactor, so that components would be generated by generators
->>>>>>> develop-5.1
             String componentGeneratorAndProps;
             if (child.getFieldTypeEnum() == FieldType.TEXT_FIELD || usersContactsFieldTypes.contains(child.getFieldTypeEnum())) {
                 componentGeneratorAndProps = "TextAreaGenerator¤styleClass=expand19-200";
@@ -264,23 +227,6 @@ public class UserContactTableGenerator extends BaseSystematicFieldGenerator {
             } else {
                 throw new RuntimeException("FieldType " + child.getFieldTypeEnum() + " is not supported inside a table");
             }
-<<<<<<< HEAD
-            if (child.getOriginalFieldId().equals(
-                    RepoUtil.getLocalNames(DocumentSpecificModel.Props.SUBSTITUTE_NAME, DocumentDynamicModel.Props.USER_NAME, DocumentDynamicModel.Props.USER_JOB_TITLE,
-                            DocumentDynamicModel.Props.USER_ORG_STRUCT_UNIT))
-                    || (isUserTableGroup && !DocumentDynamicModel.Props.USER_NAME.getLocalName().equals(child.getOriginalFieldId()))) {
-                componentGeneratorAndProps += "¤read-only=true";
-            }
-            if ((isUserTableGroup && DocumentDynamicModel.Props.USER_ORG_STRUCT_UNIT.getLocalName().equals(child.getOriginalFieldId()))) {
-                componentGeneratorAndProps += "¤editable=true¤textarea=true¤styleClass=expand19-200 long";
-            }
-            if (DocumentSpecificModel.Props.SUBSTITUTION_BEGIN_DATE.getLocalName().equals(child.getOriginalFieldId())
-                    || DocumentSpecificModel.Props.SUBSTITUTION_END_DATE.getLocalName().equals(child.getOriginalFieldId())) {
-                Field substituteNameField = group.getFieldsByOriginalId().get(DocumentSpecificModel.Props.SUBSTITUTE_NAME.getLocalName());
-                componentGeneratorAndProps += "¤mandatoryIf=" + substituteNameField.getQName().toPrefixString(namespaceService) + "!=null";
-            }
-            if (DocumentSpecificModel.Props.LEAVE_TYPE.getLocalName().equals(child.getOriginalFieldId())) {
-=======
 
             String originalFieldId = child.getOriginalFieldId();
             if (RepoUtil.getLocalNames(DocumentSpecificModel.Props.SUBSTITUTE_NAME, DocumentDynamicModel.Props.USER_NAME, DocumentDynamicModel.Props.USER_JOB_TITLE,
@@ -301,7 +247,6 @@ public class UserContactTableGenerator extends BaseSystematicFieldGenerator {
                 componentGeneratorAndProps += "¤mandatoryIf=" + substituteNameField.getQName().toPrefixString(namespaceService) + "!=null";
             }
             if (DocumentSpecificModel.Props.LEAVE_TYPE.getLocalName().equals(originalFieldId)) {
->>>>>>> develop-5.1
                 componentGeneratorAndProps += leaveValueChanged;
                 leaveTypeProp = fieldId;
                 String leaveTypeClassificator = child.getClassificator();
@@ -314,23 +259,6 @@ public class UserContactTableGenerator extends BaseSystematicFieldGenerator {
                         }
                     }
                 }
-<<<<<<< HEAD
-            } else if (DocumentDynamicModel.Props.LEAVE_BEGIN_DATE.getLocalName().equals(child.getOriginalFieldId())
-                    || DocumentSpecificModel.Props.LEAVE_NEW_BEGIN_DATE.getLocalName().equals(child.getOriginalFieldId())
-                    || DocumentSpecificModel.Props.LEAVE_CANCEL_BEGIN_DATE.getLocalName().equals(child.getOriginalFieldId())) {
-                componentGeneratorAndProps += leaveValueChanged;
-                beginDateProp = fieldId;
-            } else if (DocumentDynamicModel.Props.LEAVE_END_DATE.getLocalName().equals(child.getOriginalFieldId())
-                    || DocumentSpecificModel.Props.LEAVE_NEW_END_DATE.getLocalName().equals(child.getOriginalFieldId())
-                    || DocumentSpecificModel.Props.LEAVE_CANCEL_END_DATE.getLocalName().equals(child.getOriginalFieldId())) {
-                componentGeneratorAndProps += leaveValueChanged;
-                endDateProp = fieldId;
-            } else if (DocumentSpecificModel.Props.LEAVE_DAYS.getLocalName().equals(child.getOriginalFieldId())
-                    || DocumentDynamicModel.Props.LEAVE_CHANGED_DAYS.getLocalName().equals(child.getOriginalFieldId())
-                    || DocumentSpecificModel.Props.LEAVE_CANCELLED_DAYS.getLocalName().equals(child.getOriginalFieldId())) {
-                calculatedDaysProp = fieldId;
-            }
-=======
             } else if (DocumentDynamicModel.Props.LEAVE_BEGIN_DATE.getLocalName().equals(originalFieldId)
                     || (isLeaveChangedDays && DocumentSpecificModel.Props.LEAVE_NEW_BEGIN_DATE.getLocalName().equals(originalFieldId))
                     || (isLeaveCancelledDays && DocumentSpecificModel.Props.LEAVE_CANCEL_BEGIN_DATE.getLocalName().equals(originalFieldId))) {
@@ -350,7 +278,6 @@ public class UserContactTableGenerator extends BaseSystematicFieldGenerator {
             if (child.isMandatory()) {
                 componentGeneratorAndProps += "¤" + ValidatingModalLayerComponent.ATTR_MANDATORY + "=true";
             }
->>>>>>> develop-5.1
             props.add(fieldId.toPrefixString(namespaceService) + "¤" + componentGeneratorAndProps);
             propNames.add(fieldId);
         }
@@ -367,10 +294,6 @@ public class UserContactTableGenerator extends BaseSystematicFieldGenerator {
         }
         if (field.getOriginalFieldId().equals(DocumentCommonModel.Props.RECIPIENT_NAME.getLocalName())) {
             item.setAddLabelId("document_add_recipient");
-<<<<<<< HEAD
-        } else if (field.getOriginalFieldId().equals(DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME.getLocalName())) {
-            item.setAddLabelId("document_add_additional_recipient");
-=======
             if (SystematicFieldGroupNames.RECIPIENTS.equals(group.getName())) {
                 item.getCustomAttributes().put(Search.FILTER_INDEX, Integer.toString(UserContactGroupSearchBean.CONTACTS_FILTER));
             }
@@ -379,7 +302,6 @@ public class UserContactTableGenerator extends BaseSystematicFieldGenerator {
             if (SystematicFieldGroupNames.ADDITIONAL_RECIPIENTS.equals(group.getName())) {
                 item.getCustomAttributes().put(Search.FILTER_INDEX, Integer.toString(UserContactGroupSearchBean.CONTACTS_FILTER));
             }
->>>>>>> develop-5.1
         } else {
             item.setAddLabelId("add");
         }

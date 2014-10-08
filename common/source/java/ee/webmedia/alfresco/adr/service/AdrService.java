@@ -1,14 +1,10 @@
 package ee.webmedia.alfresco.adr.service;
 
-<<<<<<< HEAD
-import java.util.List;
-=======
 import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
->>>>>>> develop-5.1
 
 import javax.xml.datatype.XMLGregorianCalendar;
 
@@ -22,10 +18,7 @@ import ee.webmedia.alfresco.adr.ws.DokumentDetailidegaV2;
 import ee.webmedia.alfresco.adr.ws.DokumentId;
 import ee.webmedia.alfresco.adr.ws.Fail;
 import ee.webmedia.alfresco.adr.ws.FailV2;
-<<<<<<< HEAD
-=======
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
->>>>>>> develop-5.1
 
 public interface AdrService {
 
@@ -107,20 +100,14 @@ public interface AdrService {
 
     NodeRef addDeletedDocument(NodeRef document);
 
-<<<<<<< HEAD
-=======
     NodeRef addDeletedDocumentFromArchive(NodeRef document, String regNumber, Date regDateTime);
 
->>>>>>> develop-5.1
     void deleteDocumentType(QName documentType);
 
     void addDocumentType(QName documentType);
 
-<<<<<<< HEAD
-=======
     DokumentDetailidegaV2 buildDokumentDetailidegaV2(DocumentDynamic doc, boolean includeFileContent, Set<String> documentTypeIds,
             Map<NodeRef, Map<QName, Serializable>> functionsCache, Map<NodeRef, Map<QName, Serializable>> seriesCache, Map<NodeRef, Map<QName, Serializable>> volumesCache,
             boolean includeAssocsAndDocTypeName);
 
->>>>>>> develop-5.1
 }

@@ -32,12 +32,6 @@ import ee.webmedia.alfresco.mso2.ws.MsoPortBinding;
 import ee.webmedia.alfresco.mso2.ws.ObjectFactory;
 import ee.webmedia.alfresco.utils.CalendarUtil;
 
-<<<<<<< HEAD
-/**
- * @author Alar Kvell
- */
-=======
->>>>>>> develop-5.1
 public class MsoService2Impl implements MsoService, InitializingBean {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(MsoService2Impl.class);
 
@@ -59,11 +53,7 @@ public class MsoService2Impl implements MsoService, InitializingBean {
             log.info("Mso service 2 endpoint address not set");
             return;
         }
-<<<<<<< HEAD
-
-=======
         System.setProperty("org.apache.cxf.stax.allowInsecureParser", "true");
->>>>>>> develop-5.1
         log.info("Initializing Mso service 2 port");
         MsoPortBinding port = (new ee.webmedia.alfresco.mso2.ws.MsoService()).getMsoPortBinding();
         BindingProvider bp = (BindingProvider) port;
@@ -72,11 +62,7 @@ public class MsoService2Impl implements MsoService, InitializingBean {
         // Set HTTP request read timeout at CXF layer
         // http://lhein.blogspot.com/2008/09/apache-cxf-and-time-outs.html
         HTTPConduit http = (HTTPConduit) ClientProxy.getClient(port).getConduit();
-<<<<<<< HEAD
-        http.getClient().setReceiveTimeout(httpClientReceiveTimeout * 1000);
-=======
         http.getClient().setReceiveTimeout(httpClientReceiveTimeout * 1000); // Takes milliseconds
->>>>>>> develop-5.1
 
         SOAPBinding binding = (SOAPBinding) bp.getBinding();
         binding.setMTOMEnabled(true);
@@ -197,15 +183,6 @@ public class MsoService2Impl implements MsoService, InitializingBean {
     }
 
     @Override
-<<<<<<< HEAD
-    public void replaceFormulas(Map<String, String> formulas, ContentReader documentReader, ContentWriter documentWriter) throws Exception {
-        try {
-            MsoDocumentAndFormulasInput input = replaceFormulasPrepare(formulas, documentReader);
-            if (input == null) {
-                return;
-            }
-
-=======
     public boolean replaceFormulas(Map<String, String> formulas, ContentReader documentReader, ContentWriter documentWriter, boolean dontSaveIfUnmodified) throws Exception {
         try {
             MsoDocumentAndFormulasInput input = replaceFormulasPrepare(formulas, documentReader);
@@ -213,7 +190,6 @@ public class MsoService2Impl implements MsoService, InitializingBean {
                 return false;
             }
             input.setDontSaveIfUnmodified(dontSaveIfUnmodified);
->>>>>>> develop-5.1
             long duration = -1;
             try {
                 log.info("Sending request to perform Mso2.replaceFormulas, formulas=[" + formulas.size() + "] documentReader=" + documentReader);
@@ -225,13 +201,10 @@ public class MsoService2Impl implements MsoService, InitializingBean {
                 } finally {
                     StatisticsPhaseListener.addTimingNano(StatisticsPhaseListenerLogColumn.SRV_MSO, startTime);
                 }
-<<<<<<< HEAD
-=======
                 if (dontSaveIfUnmodified && output.getDocumentFile().getValue() == null) {
                     log.info("mso service didn't modify file, file is not updated.");
                     return false;
                 }
->>>>>>> develop-5.1
                 duration = CalendarUtil.duration(startTime);
 
                 String inputMimeType = documentReader.getMimetype();
@@ -247,11 +220,7 @@ public class MsoService2Impl implements MsoService, InitializingBean {
                 documentWriter.setEncoding("UTF-8");
                 ByteArrayInputStream bis = new ByteArrayInputStream(output.getDocumentFile().getValue());
                 documentWriter.putContent(bis);
-<<<<<<< HEAD
-
-=======
                 return true;
->>>>>>> develop-5.1
             } finally {
                 log.info("PERFORMANCE: query mso2.replaceFormulas - " + duration + " ms|" + documentReader.getSize() + "|" + documentReader.getMimetype() + "|"
                         + documentReader.getEncoding() + "|" + documentWriter.getSize() + "|" + formulas.size());
@@ -337,10 +306,7 @@ public class MsoService2Impl implements MsoService, InitializingBean {
         documentReader.getContent(bos);
         JAXBElement<byte[]> documentFile = objectFactory.createMsoDocumentAndFormulasInputDocumentFile(bos.toByteArray());
 
-<<<<<<< HEAD
-=======
         JAXBElement<String> fileEncoding = objectFactory.createMsoDocumentAndFormulasInputFileEncoding(documentReader.getEncoding());
->>>>>>> develop-5.1
         JAXBElement<String> fileType = objectFactory.createMsoDocumentAndFormulasInputFileType(documentReader.getMimetype());
 
         ArrayOfformula arrayOfformula = objectFactory.createArrayOfformula();
@@ -354,10 +320,7 @@ public class MsoService2Impl implements MsoService, InitializingBean {
 
         MsoDocumentAndFormulasInput input = objectFactory.createMsoDocumentAndFormulasInput();
         input.setDocumentFile(documentFile);
-<<<<<<< HEAD
-=======
         input.setFileEncoding(fileEncoding);
->>>>>>> develop-5.1
         input.setFileType(fileType);
         input.setFormulas(msoFormulas);
         return input;
@@ -368,18 +331,12 @@ public class MsoService2Impl implements MsoService, InitializingBean {
         documentReader.getContent(bos);
         JAXBElement<byte[]> documentFile = objectFactory.createMsoDocumentInputDocumentFile(bos.toByteArray());
 
-<<<<<<< HEAD
-=======
         JAXBElement<String> fileEncoding = objectFactory.createMsoDocumentInputFileEncoding(documentReader.getEncoding());
->>>>>>> develop-5.1
         JAXBElement<String> fileType = objectFactory.createMsoDocumentInputFileType(documentReader.getMimetype());
 
         final MsoDocumentInput input = objectFactory.createMsoDocumentInput();
         input.setDocumentFile(documentFile);
-<<<<<<< HEAD
-=======
         input.setFileEncoding(fileEncoding);
->>>>>>> develop-5.1
         input.setFileType(fileType);
         return input;
     }

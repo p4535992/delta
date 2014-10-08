@@ -32,10 +32,6 @@ function isEmptyValue(inputValue) {
 /**
  * Try to validate value set by picker. If value of picker is not set, then check if value has been set manually.
  * @return true if value has been set
-<<<<<<< HEAD
- * @author Ats Uiboupin
-=======
->>>>>>> develop-5.1
  */
 function validateSearchMandatory(control, message, showMessage) {
    if (control != null && (control.value == null || control.value.length == 0)) {

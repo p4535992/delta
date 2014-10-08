@@ -3,7 +3,6 @@ Index: source/java/org/alfresco/web/bean/users/UsersDialog.java
 --- source/java/org/alfresco/web/bean/users/UsersDialog.java	(revision 149420)
 +++ source/java/org/alfresco/web/bean/users/UsersDialog.java	(working copy)
 @@ -335,7 +335,7 @@
-<<<<<<< HEAD
                 query.append(term);
                 query.append("*\" @").append(NamespaceService.CONTENT_MODEL_PREFIX).append("\\:userName:");
                 query.append(term);
@@ -12,13 +11,3 @@ Index: source/java/org/alfresco/web/bean/users/UsersDialog.java
              }
              
              if (logger.isDebugEnabled())
-=======
-                query.append(term);
-                query.append("*\" @").append(NamespaceService.CONTENT_MODEL_PREFIX).append("\\:userName:");
-                query.append(term);
--               query.append("*");
-+               query.append("* ");
-             }
-             
-             if (logger.isDebugEnabled())
->>>>>>> develop-5.1

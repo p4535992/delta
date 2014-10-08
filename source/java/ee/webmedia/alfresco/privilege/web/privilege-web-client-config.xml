@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 <alfresco-config>
    <config>
       <dialogs>
@@ -9,15 +8,3 @@
       </dialogs>
    </config>
 </alfresco-config>
-=======
-<alfresco-config>
-   <config>
-      <dialogs>
-
-         <dialog name="manageInheritablePrivilegesDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/privilege/web/manage-inheritable-privileges-dialog.jsp" managed-bean="ManageInheritablePrivilegesDialog"
-            icon="/images/icons/users_large.gif" />
-
-      </dialogs>
-   </config>
-</alfresco-config>
->>>>>>> develop-5.1

@@ -9,10 +9,7 @@ import java.util.Map;
 
 import javax.faces.context.FacesContext;
 
-<<<<<<< HEAD
-=======
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
->>>>>>> develop-5.1
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.StringUtils;
@@ -21,17 +18,9 @@ import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel.Types;
 import ee.webmedia.alfresco.addressbook.service.AddressbookEntry;
 import ee.webmedia.alfresco.addressbook.util.AddressbookUtil;
-<<<<<<< HEAD
-import ee.webmedia.alfresco.utils.MessageUtil;
-
-/**
- * @author Keit Tehvan
- */
-=======
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
->>>>>>> develop-5.1
 public class AddressbookListDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;
     public static final String BEAN_NAME = "AddressbookListDialog";
@@ -73,13 +62,10 @@ public class AddressbookListDialog extends BaseDialogBean {
         return MessageUtil.getMessage(FacesContext.getCurrentInstance(), "back_button");
     }
 
-<<<<<<< HEAD
-=======
     public boolean isShowAction(){
         return BeanHelper.getUserService().isDocumentManager();
     }
     
->>>>>>> develop-5.1
     /**
      * Action handler to show all the entries currently in the system
      * 
@@ -87,11 +73,6 @@ public class AddressbookListDialog extends BaseDialogBean {
      */
     public String showAll() {
         setSearchCriteria("");
-<<<<<<< HEAD
-        setOrgPeople(new ArrayList<AddressbookEntry>());
-        setOrganizations(getAddressbookService().listAddressbookEntries(AddressbookModel.Assocs.ORGANIZATIONS));
-        setPeople(getAddressbookService().listAddressbookEntries(AddressbookModel.Assocs.ABPEOPLE));
-=======
         setOrganizations(getAddressbookService().listAddressbookEntries(AddressbookModel.Assocs.ORGANIZATIONS));
         setPeople(getAddressbookService().listAddressbookEntries(AddressbookModel.Assocs.ABPEOPLE));
 
@@ -105,7 +86,6 @@ public class AddressbookListDialog extends BaseDialogBean {
         }
         setOrgPeople(organizationPeople);
 
->>>>>>> develop-5.1
         return null;
     }
 

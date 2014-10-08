@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 <?xml version="1.0" encoding="UTF-8"?>
 <view:view xmlns:view="http://www.alfresco.org/view/repository/1.0" xmlns:cl="http://alfresco.webmedia.ee/model/classificator/1.0">
 
@@ -13,19 +12,3 @@
             </cl:classificator>         
 
 </view:view>
-=======
-<?xml version="1.0" encoding="UTF-8"?>
-<view:view xmlns:view="http://www.alfresco.org/view/repository/1.0" xmlns:cl="http://alfresco.webmedia.ee/model/classificator/1.0">
-
-            <cl:classificator view:childName="cl:costClassificators">
-               <cl:name>costClassificators</cl:name>
-               <cl:addRemoveValues>true</cl:addRemoveValues>
-            </cl:classificator> 
-            
-            <cl:classificator view:childName="cl:orderTypes">
-               <cl:name>orderTypes</cl:name>
-               <cl:addRemoveValues>true</cl:addRemoveValues>            
-            </cl:classificator>         
-
-</view:view>
->>>>>>> develop-5.1

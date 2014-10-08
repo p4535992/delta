@@ -23,12 +23,6 @@ import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.WebUtil;
 
-<<<<<<< HEAD
-/**
- * @author Keit Tehvan
- */
-=======
->>>>>>> develop-5.1
 public class AddressbookAddEditDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;
 
@@ -192,8 +186,6 @@ public class AddressbookAddEditDialog extends BaseDialogBean {
         return getAddressbookService().isTaskCapableGroupMember(entry.getNodeRef());
     }
 
-<<<<<<< HEAD
-=======
     public boolean isNotDecTaskCapable() {
         if (entry == null) {
             return true;
@@ -205,7 +197,6 @@ public class AddressbookAddEditDialog extends BaseDialogBean {
         return !Boolean.TRUE.equals(getNodeService().getProperty(nodeRef, AddressbookModel.Props.DVK_CAPABLE));
     }
 
->>>>>>> develop-5.1
     // ------------------------------------------------------------------------------
     // Bean Getters and Setters
 

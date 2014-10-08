@@ -102,11 +102,7 @@
             <ref bean="addressbookRootBootstrap"/>
          </list>
       </property>
-<<<<<<< HEAD
-   </bean>     
-=======
    </bean>
->>>>>>> develop-5.1
    
    <bean id="taskCapablePropertyRemoverOnPeople" class="ee.webmedia.alfresco.addressbook.bootstrap.TaskCapablePropertyRemoverOnPeople" parent="abstractNodeUpdater" >
       <property name="moduleId" value="simdhs" />
@@ -144,15 +140,10 @@
          </list>
       </property>
    </bean>     
-<<<<<<< HEAD
-
-   <bean id="addressbookPermissionsUpdateBootstrap" class="ee.webmedia.alfresco.addressbook.bootstrap.AddressbookPermissionsUpdateBootstrap" parent="module.baseComponent" >
-=======
    
    <bean id="removeIdenticalContacts3" class="ee.webmedia.alfresco.addressbook.bootstrap.RemoveIdenticalContacts" parent="module.baseComponent" >
       <property name="addressbookService" ref="AddressbookService" />
       <property name="nodeService" ref="NodeService" />
->>>>>>> develop-5.1
       <property name="moduleId" value="common" />
       <property name="executeOnceOnly" value="true" />
       <property name="dependsOn">
@@ -162,28 +153,15 @@
       </property>
    </bean>
    
-<<<<<<< HEAD
-   <bean id="removeIdenticalContacts3" class="ee.webmedia.alfresco.addressbook.bootstrap.RemoveIdenticalContacts" parent="module.baseComponent" >
-      <property name="addressbookService" ref="AddressbookService" />
-      <property name="nodeService" ref="NodeService" />
-=======
    <bean id="decTaskCapableUpdater" class="ee.webmedia.alfresco.addressbook.bootstrap.DecTaskCapableUpdater" parent="abstractNodeUpdater" >
->>>>>>> develop-5.1
       <property name="moduleId" value="common" />
       <property name="executeOnceOnly" value="true" />
       <property name="dependsOn">
          <list>
-<<<<<<< HEAD
-            <ref bean="addressbookRootBootstrap" />
-         </list>
-      </property>
-   </bean>   
-=======
             <ref bean="addressbookRootBootstrap"/>
          </list>
       </property>
    </bean>
->>>>>>> develop-5.1
 
    <!-- START: web beans: -->
 

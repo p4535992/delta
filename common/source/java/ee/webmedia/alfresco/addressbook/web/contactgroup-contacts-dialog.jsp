@@ -23,19 +23,11 @@
          showLink="false" action="dialog:addressbookOrgDetails" actionListener="#{AddressbookOrgDetailsDialog.setupViewEntry}">
             <f:param name="nodeRef" value="#{r.nodeRef}" />
          </a:actionLink>
-<<<<<<< HEAD
-         <a:actionLink id="con-people-list-link" value="#{r.name}"rendered="#{r.dialogType=='privPerson'}"
-            showLink="false" action="dialog:addressbookPersonDetails" actionListener="#{AddressbookPersonDetailsDialog.setupViewEntry}">
-            <f:param name="nodeRef" value="#{r.nodeRef}" />
-         </a:actionLink>
-         <a:actionLink id="con-org-people-list-link" value="#{r.name}"rendered="#{r.dialogType=='orgPerson'}"
-=======
          <a:actionLink id="con-people-list-link" value="#{r.name}" rendered="#{r.dialogType=='privPerson'}"
             showLink="false" action="dialog:addressbookPersonDetails" actionListener="#{AddressbookPersonDetailsDialog.setupViewEntry}">
             <f:param name="nodeRef" value="#{r.nodeRef}" />
          </a:actionLink>
          <a:actionLink id="con-org-people-list-link" value="#{r.name}" rendered="#{r.dialogType=='orgPerson'}"
->>>>>>> develop-5.1
             showLink="false" action="dialog:addressbookOrgPersonDetails" actionListener="#{AddressbookPersonDetailsDialog.setupViewEntry}">
             <f:param name="nodeRef" value="#{r.nodeRef}" />
          </a:actionLink>
@@ -63,8 +55,4 @@
    </a:richList>
 </a:panel>
 
-<<<<<<< HEAD
 <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/disable-dialog-finish-button.jsp" />
-=======
-<jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/disable-dialog-finish-button.jsp" />
->>>>>>> develop-5.1

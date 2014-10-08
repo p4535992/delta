@@ -1,11 +1,5 @@
 package ee.webmedia.alfresco.eventplan.model;
 
-<<<<<<< HEAD
-/**
- * @author Martti Tamm
- */
-=======
->>>>>>> develop-5.1
 public enum FirstEvent {
 
     REVIEW,

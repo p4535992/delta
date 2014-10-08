@@ -104,11 +104,7 @@
             </child-association>
           
          <!-- Deprecated - document log is not saved under document node any more, but only in application log.
-<<<<<<< HEAD
-          Don't create new associations of this type. Can be deleted when all existing associations have been migrated to application log (Riina). -->
-=======
           Don't create new associations of this type. Can be deleted when all existing associations have been migrated to application log ). -->
->>>>>>> develop-5.1
             <child-association name="doccom:documentLog">
                <source>
                   <mandatory>true</mandatory>
@@ -195,24 +191,17 @@
             <property name="doccom:resolution">
                <type>d:text</type>
             </property>
-<<<<<<< HEAD
-=======
             <property name="doccom:receivedDateTime">
                <type>d:datetime</type>
             </property>
             <property name="doccom:openedDateTime">
                <type>d:datetime</type>
             </property>
->>>>>>> develop-5.1
          </properties>
       </type>
       
       <!-- Deprecated - document log is not saved under document node any more, but only in application log.
-<<<<<<< HEAD
-           Don't create new nodes of this type. Can be deleted when all existing associations have been migrated to application log (Riina). -->
-=======
            Don't create new nodes of this type. Can be deleted when all existing associations have been migrated to application log ). -->
->>>>>>> develop-5.1
       <type name="doccom:documentLog">
          <parent>sys:base</parent>
          <mandatory-aspects>
@@ -338,8 +327,6 @@
                <type>d:text</type>
                <multiple>true</multiple>
             </property>
-<<<<<<< HEAD
-=======
             <property name="doccom:searchableSendInfoRecipient">
                <type>d:text</type>
                <multiple>true</multiple>
@@ -352,7 +339,6 @@
                <type>d:text</type>
                <multiple>true</multiple>
             </property>
->>>>>>> develop-5.1
 <!--
             <property name="doccom:searchableCostManager">
                <type>d:text</type>

@@ -14,11 +14,6 @@ set -eu
 # If OOo was under significant load (for example DHS test data document generator was running with 5 parallel threads), then:
 # * OOo was restarted 3 times in an hour by this script (because it hung)
 # * OOo was started 3 times in an hour by this script (because it crashed and exited)
-<<<<<<< HEAD
-#
-# @author Alar Kvell
-=======
->>>>>>> develop-5.1
 
 # USAGE
 #   soffice-monitor.sh PORT WORKDIR >> soffice-monitor.log &

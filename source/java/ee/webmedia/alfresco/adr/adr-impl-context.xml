@@ -18,10 +18,7 @@
       <property name="dataSource" ref="dataSource" />
       <property name="transactionService" ref="TransactionService" />
       <property name="accessRestrictionChangeReasonEnabled" value="${conf.adr.accessRestrictionChangeReason.enabled}" />
-<<<<<<< HEAD
-=======
       <property name="volumeTitleEnabled" value="${conf.adr.volumeTitle.enabled}" />
->>>>>>> develop-5.1
    </bean>
 
 </beans>

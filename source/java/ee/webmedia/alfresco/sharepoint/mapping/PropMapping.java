@@ -7,17 +7,11 @@ import java.io.Serializable;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-<<<<<<< HEAD
-import java.util.Calendar;
-import java.util.Collections;
-import java.util.Date;
-=======
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
->>>>>>> develop-5.1
 import java.util.Map;
 
 import javax.faces.convert.ConverterException;
@@ -30,10 +24,7 @@ import org.dom4j.Node;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
-<<<<<<< HEAD
-=======
 import ee.webmedia.alfresco.utils.TextUtil;
->>>>>>> develop-5.1
 
 public class PropMapping {
 
@@ -125,8 +116,6 @@ public class PropMapping {
         } else if (expression.equals("xpath")) {
             Node node = root.selectSingleNode(from);
             value = node != null ? StringUtils.trim(node.getText()) : null;
-<<<<<<< HEAD
-=======
         } else if (expression.equals("xpathContractParty")) {
             List<List<String>> values = new ArrayList<List<String>>();
             for (String fromXpath : from.split(",")) {
@@ -155,7 +144,6 @@ public class PropMapping {
                 }
             }
             value = TextUtil.joinNonBlankStrings(rows, "\n");
->>>>>>> develop-5.1
         } else if (expression.equals("const")) {
             value = from;
         } else {
@@ -249,8 +237,5 @@ public class PropMapping {
 
         SPLITTERS = Collections.singletonMap("period", (Splitter) new PeriodSplitter());
     }
-<<<<<<< HEAD
-=======
 
->>>>>>> develop-5.1
 }

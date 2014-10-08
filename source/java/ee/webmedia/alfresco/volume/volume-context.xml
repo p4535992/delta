@@ -95,8 +95,6 @@
       </property>
    </bean>
    
-<<<<<<< HEAD
-=======
    <bean id="executeArchivingTrigger" class="org.alfresco.util.TriggerBean" >
       <property name="enabled" value="${jobs.enabled}" />
       <property name="repeatIntervalMinutes" value="1" />
@@ -109,7 +107,6 @@
       </property>
    </bean>
    
->>>>>>> develop-5.1
    <!-- 
    	  1) Updates volume type from estonian string literals to translatable constants and 
    	  2) changes namespaces of volume properties

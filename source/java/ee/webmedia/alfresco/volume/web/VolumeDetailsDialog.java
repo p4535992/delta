@@ -1,9 +1,5 @@
 package ee.webmedia.alfresco.volume.web;
 
-<<<<<<< HEAD
-import static ee.webmedia.alfresco.common.web.BeanHelper.getArchivalsService;
-=======
->>>>>>> develop-5.1
 import static ee.webmedia.alfresco.common.web.BeanHelper.getCaseService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getVolumeService;
 
@@ -20,20 +16,14 @@ import javax.faces.event.ValueChangeEvent;
 import javax.faces.model.SelectItem;
 
 import org.alfresco.service.cmr.repository.NodeRef;
-<<<<<<< HEAD
-=======
 import org.alfresco.util.Pair;
 import org.alfresco.web.app.AlfrescoNavigationHandler;
->>>>>>> develop-5.1
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.apache.commons.collections.Closure;
-<<<<<<< HEAD
-=======
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
->>>>>>> develop-5.1
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
@@ -57,11 +47,6 @@ import ee.webmedia.alfresco.volume.model.VolumeModel;
 
 /**
  * Form backing bean for Volumes details
-<<<<<<< HEAD
- * 
- * @author Ats Uiboupin
-=======
->>>>>>> develop-5.1
  */
 public class VolumeDetailsDialog extends BaseDialogBean implements BlockBeanProviderProvider {
     private static final long serialVersionUID = 1L;
@@ -74,12 +59,9 @@ public class VolumeDetailsDialog extends BaseDialogBean implements BlockBeanProv
     private List<DeletedDocument> deletedDocuments;
     private boolean newVolume;
     private transient UIPropertySheet propertySheet;
-<<<<<<< HEAD
-=======
     private boolean volumeRefInvalid;
 
     private static final Log LOG = LogFactory.getLog(VolumeDetailsDialog.class);
->>>>>>> develop-5.1
 
     @Override
     public void init(Map<String, String> parameters) {
@@ -103,14 +85,6 @@ public class VolumeDetailsDialog extends BaseDialogBean implements BlockBeanProv
         return super.cancel();
     }
 
-<<<<<<< HEAD
-    // START: jsf actions/accessors
-    public void showDetails(ActionEvent event) {
-        NodeRef volumeNodeRef = ActionUtil.getParam(event, PARAM_VOLUME_NODEREF, NodeRef.class);
-        showDetails(volumeNodeRef);
-    }
-
-=======
     public String action() {
         String dialogPrefix = AlfrescoNavigationHandler.DIALOG_PREFIX;
         boolean tempState = volumeRefInvalid;
@@ -138,7 +112,6 @@ public class VolumeDetailsDialog extends BaseDialogBean implements BlockBeanProv
         }
     }
 
->>>>>>> develop-5.1
     public void showDetails(NodeRef volumeNodeRef) {
         reload(volumeNodeRef);
         deletedDocuments = getVolumeService().getDeletedDocuments(volumeNodeRef);
@@ -168,11 +141,7 @@ public class VolumeDetailsDialog extends BaseDialogBean implements BlockBeanProv
     }
 
     public Node getCurrentNode() {
-<<<<<<< HEAD
-        return currentEntry.getNode();
-=======
         return currentEntry == null ? null : currentEntry.getNode();
->>>>>>> develop-5.1
     }
 
     public Node getNode() {
@@ -206,10 +175,6 @@ public class VolumeDetailsDialog extends BaseDialogBean implements BlockBeanProv
         }
         if (!isClosed()) {
             try {
-<<<<<<< HEAD
-                getVolumeService().closeVolume(currentEntry.getNodeRef());
-                reload(currentEntry.getNode().getNodeRef());
-=======
                 Pair<String, Object[]> error = getVolumeService().closeVolume(currentEntry.getNodeRef());
                 reload(currentEntry.getNode().getNodeRef());
                 if (error != null) {
@@ -217,15 +182,10 @@ public class VolumeDetailsDialog extends BaseDialogBean implements BlockBeanProv
                 } else {
                     MessageUtil.addInfoMessage("volume_close_success");
                 }
->>>>>>> develop-5.1
             } catch (UnableToPerformException e) {
                 MessageUtil.addStatusMessage(e);
                 return;
             }
-<<<<<<< HEAD
-            MessageUtil.addInfoMessage("volume_close_success");
-=======
->>>>>>> develop-5.1
             clearPropSheet();
         }
     }
@@ -237,10 +197,7 @@ public class VolumeDetailsDialog extends BaseDialogBean implements BlockBeanProv
         }
         if (!isOpened()) {
             try {
-<<<<<<< HEAD
-=======
                 removeVolumeFromArchiveList(currentVolumeNode.getNodeRef());
->>>>>>> develop-5.1
                 getVolumeService().openVolume(currentEntry);
                 reload(currentEntry.getNode().getNodeRef());
             } catch (UnableToPerformException e) {
@@ -252,13 +209,10 @@ public class VolumeDetailsDialog extends BaseDialogBean implements BlockBeanProv
         }
     }
 
-<<<<<<< HEAD
-=======
     private void removeVolumeFromArchiveList(NodeRef volumeNodeRef) {
         BeanHelper.getArchivalsService().removeVolumeFromArchivingList(volumeNodeRef);
     }
 
->>>>>>> develop-5.1
     public String delete() {
         WmNode currentVolumeNode = currentEntry.getNode();
         if (currentVolumeNode == null || currentVolumeNode.isUnsaved()) {
@@ -285,16 +239,6 @@ public class VolumeDetailsDialog extends BaseDialogBean implements BlockBeanProv
 
     public void archive(@SuppressWarnings("unused") ActionEvent event) {
         Assert.notNull(currentEntry, "No current volume");
-<<<<<<< HEAD
-        NodeRef archivedVolumeNodeRef = archiveVolume(currentEntry.getNode().getNodeRef());
-        reload(archivedVolumeNodeRef);
-        MessageUtil.addInfoMessage("volume_archive_success");
-        clearPropSheet();
-    }
-
-    public NodeRef archiveVolume(NodeRef volumeRef) {
-        return getArchivalsService().archiveVolumeOrCaseFile(volumeRef);
-=======
         archiveVolume(currentEntry.getNode().getNodeRef());
     }
 
@@ -311,7 +255,6 @@ public class VolumeDetailsDialog extends BaseDialogBean implements BlockBeanProv
             return;
         }
         MessageUtil.addInfoMessage("volume_archive_added_to_queue");
->>>>>>> develop-5.1
     }
 
     /**
@@ -366,11 +309,7 @@ public class VolumeDetailsDialog extends BaseDialogBean implements BlockBeanProv
                 || DocListUnitStatus.DESTROYED.equals(currentEntry.getStatus());
     }
 
-<<<<<<< HEAD
-    // TODO Vladimir: should be with is prefix
-=======
     // TODO should be with is prefix
->>>>>>> develop-5.1
     public Boolean volumeMarkFieldReadOnly() {
         Map<String, Object> properties = currentEntry.getNode().getProperties();
         String status = (String) properties.get(VolumeModel.Props.STATUS);
@@ -417,17 +356,10 @@ public class VolumeDetailsDialog extends BaseDialogBean implements BlockBeanProv
     }
 
     public List<DeletedDocument> getDeletedDocuments() {
-<<<<<<< HEAD
-        return deletedDocuments;
-    }
-
-    // FIXME Ats to Kaarel - milleks see meetod?
-=======
         return deletedDocuments == null ? new ArrayList<DeletedDocument>() : deletedDocuments;
     }
 
     // FIXME to milleks see meetod?
->>>>>>> develop-5.1
     public void setDeletedDocuments(List<DeletedDocument> deletedDocuments) {
         this.deletedDocuments = deletedDocuments;
     }

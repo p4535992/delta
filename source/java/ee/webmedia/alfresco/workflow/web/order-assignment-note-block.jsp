@@ -15,11 +15,7 @@
          <f:facet name="header">
             <a:sortLink id="col1-header" label="#{msg.workflow_task_order_assignment_executor_role}" value="ownerName" styleClass="header" />
          </f:facet>
-<<<<<<< HEAD
-         <h:outputText id="col1-txt" value="#{r.ownerName}" />
-=======
          <h:outputText id="col1-txt" value="#{r.ownerNameWithSubstitute}" />
->>>>>>> develop-5.1
       </a:column>
 
       <a:column id="col2" style="width: 10%;">

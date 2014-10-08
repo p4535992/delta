@@ -41,10 +41,7 @@ import org.springframework.util.CollectionUtils;
 
 import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.common.service.GeneralService;
-<<<<<<< HEAD
-=======
 import ee.webmedia.alfresco.common.web.BeanHelper;
->>>>>>> develop-5.1
 import ee.webmedia.alfresco.email.model.EmailAttachment;
 import ee.webmedia.alfresco.monitoring.MonitoredService;
 import ee.webmedia.alfresco.monitoring.MonitoringUtil;
@@ -52,12 +49,6 @@ import ee.webmedia.alfresco.signature.service.SignatureService;
 import ee.webmedia.alfresco.utils.FilenameUtil;
 import ee.webmedia.alfresco.utils.MimeUtil;
 
-<<<<<<< HEAD
-/**
- * @author Erko Hansar
- */
-=======
->>>>>>> develop-5.1
 public class EmailServiceImpl implements EmailService {
 
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(EmailServiceImpl.class);
@@ -67,11 +58,7 @@ public class EmailServiceImpl implements EmailService {
     private JavaMailSender mailService;
     private FileFolderService fileFolderService;
     private GeneralService generalService;
-<<<<<<< HEAD
-    private SignatureService signatureService;
-=======
     private SignatureService _signatureService;
->>>>>>> develop-5.1
     private MimetypeService mimetypeService;
     private static String messageCopyFolder = null;
 
@@ -224,11 +211,7 @@ public class EmailServiceImpl implements EmailService {
                 try {
                     OutputStream tmpOutput = new BufferedOutputStream(new FileOutputStream(tmpFile));
                     if (encryptionCertificates != null && !encryptionCertificates.isEmpty()) {
-<<<<<<< HEAD
-                        signatureService.writeEncryptedContainer(tmpOutput, fileRefs, encryptionCertificates);
-=======
                         getSignatureService().writeEncryptedContainer(tmpOutput, fileRefs, encryptionCertificates);
->>>>>>> develop-5.1
                     } else {
                         generalService.writeZipFileFromFiles(tmpOutput, fileRefs);
                     }
@@ -238,21 +221,13 @@ public class EmailServiceImpl implements EmailService {
                 InputStreamSource contentSource = new FileSystemResource(tmpFile);
                 String fileName = FilenameUtil.buildFileName(zipAndEncryptFileTitle, containerExtension);
                 String mimeType = mimetypeService.guessMimetype(fileName);
-<<<<<<< HEAD
-                attachments.add(new EmailAttachment(fileName, mimeType, AppConstants.CHARSET, contentSource));
-=======
                 attachments.add(new EmailAttachment(fileName, mimeType, AppConstants.CHARSET, contentSource, fileRefs.get(0)));
->>>>>>> develop-5.1
             } else {
                 for (NodeRef fileRef : fileRefs) {
                     FileInfo fileInfo = fileFolderService.getFileInfo(fileRef);
                     ContentData contentData = fileInfo.getContentData();
                     AlfrescoContentSource contentSource = new AlfrescoContentSource(fileRef);
-<<<<<<< HEAD
-                    attachments.add(new EmailAttachment(fileInfo.getName(), contentData.getMimetype(), contentData.getEncoding(), contentSource));
-=======
                     attachments.add(new EmailAttachment(fileInfo.getName(), contentData.getMimetype(), contentData.getEncoding(), contentSource, fileRef));
->>>>>>> develop-5.1
                 }
             }
         }
@@ -268,11 +243,7 @@ public class EmailServiceImpl implements EmailService {
             if (encrypt) {
                 DeflaterOutputStream zipOutput = new DeflaterOutputStream(tmpOutput);
                 try {
-<<<<<<< HEAD
-                    signatureService.writeContainer(zipOutput, fileRefs);
-=======
                     getSignatureService().writeContainer(zipOutput, fileRefs);
->>>>>>> develop-5.1
                 } finally {
                     IOUtils.closeQuietly(zipOutput);
                 }
@@ -350,13 +321,6 @@ public class EmailServiceImpl implements EmailService {
         this.generalService = generalService;
     }
 
-<<<<<<< HEAD
-    public void setSignatureService(SignatureService signatureService) {
-        this.signatureService = signatureService;
-    }
-
-=======
->>>>>>> develop-5.1
     public void setMimetypeService(MimetypeService mimetypeService) {
         this.mimetypeService = mimetypeService;
     }
@@ -367,8 +331,6 @@ public class EmailServiceImpl implements EmailService {
 
     // /// CLASSES
 
-<<<<<<< HEAD
-=======
     private SignatureService getSignatureService() {
         if (_signatureService == null) {
             _signatureService = BeanHelper.getSignatureService();
@@ -376,7 +338,6 @@ public class EmailServiceImpl implements EmailService {
         return _signatureService;
     }
 
->>>>>>> develop-5.1
     public class AlfrescoContentSource implements InputStreamSource {
 
         protected NodeRef nodeRef;

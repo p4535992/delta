@@ -8,14 +8,9 @@
 <%@ page import="ee.webmedia.alfresco.utils.MessageUtil"%>
 
 <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/document/web/limited-message-panel.jsp" />
-<<<<<<< HEAD
-
-<a:panel id="task-panel" styleClass="panel-100" label="#{msg.task_search_results}" progressive="true" styleClass="with-pager">
-=======
 <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/workflow/web/linked-review-task-redirect-js.jsp" />
 
 <a:panel id="task-panel" styleClass="panel-100 with-pager" label="#{msg.task_search_results}" progressive="true">
->>>>>>> develop-5.1
    <a:panel id="task-panel-search-results" styleClass="overflow-wrapper">   
 
    <a:richList id="taskList" styleClass="duplicate-header" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
@@ -31,11 +26,7 @@
          <a:actionLink id="col1-txt1" value="#{r.regNum}" action="dialog:compoundWorkflowDialog" tooltip="#{r.regNum}" showLink="false" actionListener="#{CompoundWorkflowDialog.setupWorkflowFromList}" styleClass="no-underline" rendered="#{r.compoundWorkflow.independentWorkflow || r.compoundWorkflow.caseFileWorkflow}" >
             <f:param name="nodeRef" value="#{r.compoundWorkflow.nodeRef}" />
          </a:actionLink>         
-<<<<<<< HEAD
-         <a:actionLink id="col1-txt2" value="#{r.regNum}" href="#{r.originalTaskObjectUrl}" tooltip="#{r.regNum}" showLink="false" target="_blank" styleClass="no-underline originalTaskObjectUrl" rendered="#{r.linkedReviewTask}" />
-=======
          <a:actionLink id="col1-txt2" value="#{r.regNum}" onclick="return redirectLinkedReviewTask('#{r.originalTaskObjectUrl}')" tooltip="#{r.regNum}" showLink="false" target="_blank" styleClass="no-underline originalTaskObjectUrl" rendered="#{r.linkedReviewTask}" />
->>>>>>> develop-5.1
       </a:column>
       
       <a:column id="col2" primary="true" styleClass="#{r.cssStyleClass}" rendered="#{WmWorkflowService.documentWorkflowEnabled}" >
@@ -48,11 +39,7 @@
          <a:actionLink id="col2-txt1" value="#{r.regDateStr}" action="dialog:compoundWorkflowDialog" tooltip="#{r.regDateStr}" showLink="false" actionListener="#{CompoundWorkflowDialog.setupWorkflowFromList}" styleClass="no-underline" rendered="#{r.compoundWorkflow.independentWorkflow || r.compoundWorkflow.caseFileWorkflow}" >
             <f:param name="nodeRef" value="#{r.compoundWorkflow.nodeRef}" />
          </a:actionLink>         
-<<<<<<< HEAD
-         <a:actionLink id="col2-txt2" value="#{r.regDateStr}" href="#{r.originalTaskObjectUrl}" tooltip="#{r.regDateStr}" showLink="false" target="_blank" styleClass="no-underline originalTaskObjectUrl" rendered="#{r.linkedReviewTask}" />
-=======
          <a:actionLink id="col2-txt2" value="#{r.regDateStr}" onclick="return redirectLinkedReviewTask('#{r.originalTaskObjectUrl}')" tooltip="#{r.regDateStr}" showLink="false" target="_blank" styleClass="no-underline originalTaskObjectUrl" rendered="#{r.linkedReviewTask}" />
->>>>>>> develop-5.1
       </a:column>
       
       <a:column id="col3" primary="true" styleClass="#{r.cssStyleClass}" rendered="#{WmWorkflowService.documentWorkflowEnabled}" >
@@ -65,11 +52,7 @@
           <a:actionLink id="col3-txt1" value="#{r.docType}" action="dialog:compoundWorkflowDialog" tooltip="#{r.docType}" showLink="false" actionListener="#{CompoundWorkflowDialog.setupWorkflowFromList}" styleClass="no-underline" rendered="#{r.compoundWorkflow.independentWorkflow || r.compoundWorkflow.caseFileWorkflow}" >
             <f:param name="nodeRef" value="#{r.compoundWorkflow.nodeRef}" />
          </a:actionLink>         
-<<<<<<< HEAD
-         <a:actionLink id="col3-txt2" value="#{r.docType}" href="#{r.originalTaskObjectUrl}" tooltip="#{r.docType}" showLink="false" target="_blank" styleClass="no-underline originalTaskObjectUrl" rendered="#{r.linkedReviewTask}" />
-=======
          <a:actionLink id="col3-txt2" value="#{r.docType}" onclick="return redirectLinkedReviewTask('#{r.originalTaskObjectUrl}')" tooltip="#{r.docType}" showLink="false" target="_blank" styleClass="no-underline originalTaskObjectUrl" rendered="#{r.linkedReviewTask}" />
->>>>>>> develop-5.1
       </a:column>
       
       <a:column id="col4" primary="true" styleClass="#{r.cssStyleClass}" >
@@ -82,11 +65,7 @@
          <a:actionLink id="col4-txt1" value="#{r.compoundWorkflow.title}" action="dialog:compoundWorkflowDialog" tooltip="#{r.compoundWorkflow.title}" showLink="false" actionListener="#{CompoundWorkflowDialog.setupWorkflowFromList}" styleClass="tooltip condence20- no-underline" rendered="#{r.compoundWorkflow.independentWorkflow || r.compoundWorkflow.caseFileWorkflow}" >
             <f:param name="nodeRef" value="#{r.compoundWorkflow.nodeRef}" />
          </a:actionLink>         
-<<<<<<< HEAD
-         <a:actionLink id="col4-txt2" value="#{r.docName}" href="#{r.originalTaskObjectUrl}" tooltip="#{r.docName}" showLink="false" target="_blank" styleClass="tooltip condence20- no-underline originalTaskObjectUrl" rendered="#{r.linkedReviewTask}" />
-=======
          <a:actionLink id="col4-txt2" value="#{r.docName}" onclick="return redirectLinkedReviewTask('#{r.originalTaskObjectUrl}')" tooltip="#{r.docName}" showLink="false" target="_blank" styleClass="tooltip condence20- no-underline originalTaskObjectUrl" rendered="#{r.linkedReviewTask}" />
->>>>>>> develop-5.1
       </a:column>
       
       <a:column id="col5" primary="true" styleClass="#{r.cssStyleClass}" >
@@ -99,11 +78,7 @@
          <a:actionLink id="col5-txt1" value="#{r.creatorName}" action="dialog:compoundWorkflowDialog" tooltip="#{r.creatorName}" showLink="false" actionListener="#{CompoundWorkflowDialog.setupWorkflowFromList}" styleClass="no-underline" rendered="#{r.compoundWorkflow.independentWorkflow || r.compoundWorkflow.caseFileWorkflow}" >
             <f:param name="nodeRef" value="#{r.compoundWorkflow.nodeRef}" />
          </a:actionLink>         
-<<<<<<< HEAD
-         <a:actionLink id="col5-txt2" value="#{r.creatorName}" href="#{r.originalTaskObjectUrl}" tooltip="#{r.creatorName}" showLink="false" target="_blank" styleClass="no-underline originalTaskObjectUrl" rendered="#{r.linkedReviewTask}" />
-=======
          <a:actionLink id="col5-txt2" value="#{r.creatorName}" onclick="return redirectLinkedReviewTask('#{r.originalTaskObjectUrl}')" tooltip="#{r.creatorName}" showLink="false" target="_blank" styleClass="no-underline originalTaskObjectUrl" rendered="#{r.linkedReviewTask}" />
->>>>>>> develop-5.1
       </a:column>
       
       <a:column id="col6" primary="true" styleClass="#{r.cssStyleClass}" >
@@ -116,11 +91,7 @@
           <a:actionLink id="col6-txt1" value="#{r.startedDateStr}" action="dialog:compoundWorkflowDialog" tooltip="#{r.startedDateStr}" showLink="false" actionListener="#{CompoundWorkflowDialog.setupWorkflowFromList}" styleClass="no-underline" rendered="#{r.compoundWorkflow.independentWorkflow || r.compoundWorkflow.caseFileWorkflow}" >
             <f:param name="nodeRef" value="#{r.compoundWorkflow.nodeRef}" />
          </a:actionLink>         
-<<<<<<< HEAD
-         <a:actionLink id="col6-txt2" value="#{r.startedDateStr}" href="#{r.originalTaskObjectUrl}" tooltip="#{r.startedDateStr}" showLink="false" target="_blank" styleClass="no-underline originalTaskObjectUrl" rendered="#{r.linkedReviewTask}" />
-=======
          <a:actionLink id="col6-txt2" value="#{r.startedDateStr}" onclick="return redirectLinkedReviewTask('#{r.originalTaskObjectUrl}')" tooltip="#{r.startedDateStr}" showLink="false" target="_blank" styleClass="no-underline originalTaskObjectUrl" rendered="#{r.linkedReviewTask}" />
->>>>>>> develop-5.1
       </a:column>
       
       <a:column id="col7" primary="true" styleClass="#{r.cssStyleClass}" >
@@ -133,11 +104,7 @@
          <a:actionLink id="col7-txt1" value="#{r.ownerName}" action="dialog:compoundWorkflowDialog" tooltip="#{r.ownerName}" showLink="false" actionListener="#{CompoundWorkflowDialog.setupWorkflowFromList}" styleClass="no-underline" rendered="#{r.compoundWorkflow.independentWorkflow || r.compoundWorkflow.caseFileWorkflow}" >
             <f:param name="nodeRef" value="#{r.compoundWorkflow.nodeRef}" />
          </a:actionLink>         
-<<<<<<< HEAD
-         <a:actionLink id="col7-txt2" value="#{r.ownerName}" href="#{r.originalTaskObjectUrl}" tooltip="#{r.ownerName}" showLink="false" target="_blank" styleClass="no-underline originalTaskObjectUrl" rendered="#{r.linkedReviewTask}" />
-=======
          <a:actionLink id="col7-txt2" value="#{r.ownerName}" onclick="return redirectLinkedReviewTask('#{r.originalTaskObjectUrl}')" tooltip="#{r.ownerName}" showLink="false" target="_blank" styleClass="no-underline originalTaskObjectUrl" rendered="#{r.linkedReviewTask}" />
->>>>>>> develop-5.1
       </a:column>
       
       <a:column id="col8" primary="true" styleClass="#{r.cssStyleClass}" >
@@ -150,11 +117,7 @@
           <a:actionLink id="col8-txt1" value="#{r.ownerOrganizationName}" action="dialog:compoundWorkflowDialog" tooltip="#{r.ownerOrganizationName}" showLink="false" actionListener="#{CompoundWorkflowDialog.setupWorkflowFromList}" styleClass="no-underline" rendered="#{r.compoundWorkflow.independentWorkflow || r.compoundWorkflow.caseFileWorkflow}" >
             <f:param name="nodeRef" value="#{r.compoundWorkflow.nodeRef}" />
          </a:actionLink>         
-<<<<<<< HEAD
-         <a:actionLink id="col8-txt2" value="#{r.ownerOrganizationName}" href="#{r.originalTaskObjectUrl}" tooltip="#{r.ownerOrganizationName}" showLink="false" target="_blank" styleClass="no-underline originalTaskObjectUrl" rendered="#{r.linkedReviewTask}" />
-=======
          <a:actionLink id="col8-txt2" value="#{r.ownerOrganizationName}" onclick="return redirectLinkedReviewTask('#{r.originalTaskObjectUrl}')" tooltip="#{r.ownerOrganizationName}" showLink="false" target="_blank" styleClass="no-underline originalTaskObjectUrl" rendered="#{r.linkedReviewTask}" />
->>>>>>> develop-5.1
       </a:column>
       
       <a:column id="col9" primary="true" styleClass="#{r.cssStyleClass}" >
@@ -167,11 +130,7 @@
            <a:actionLink id="col9-txt1" value="#{r.ownerJobTitle}" action="dialog:compoundWorkflowDialog" tooltip="#{r.ownerJobTitle}" showLink="false" actionListener="#{CompoundWorkflowDialog.setupWorkflowFromList}" styleClass="no-underline" rendered="#{r.compoundWorkflow.independentWorkflow || r.compoundWorkflow.caseFileWorkflow}" >
             <f:param name="nodeRef" value="#{r.compoundWorkflow.nodeRef}" />
          </a:actionLink>         
-<<<<<<< HEAD
-         <a:actionLink id="col9-txt2" value="#{r.ownerJobTitle}" href="#{r.originalTaskObjectUrl}" tooltip="#{r.ownerJobTitle}" showLink="false" target="_blank" styleClass="no-underline originalTaskObjectUrl" rendered="#{r.linkedReviewTask}" />
-=======
          <a:actionLink id="col9-txt2" value="#{r.ownerJobTitle}" onclick="return redirectLinkedReviewTask('#{r.originalTaskObjectUrl}')" tooltip="#{r.ownerJobTitle}" showLink="false" target="_blank" styleClass="no-underline originalTaskObjectUrl" rendered="#{r.linkedReviewTask}" />
->>>>>>> develop-5.1
       </a:column>
       
       <a:column id="col10" primary="true" styleClass="#{r.cssStyleClass}" >
@@ -184,11 +143,7 @@
          <a:actionLink id="col10-txt1" value="#{r.taskTypeText}" action="dialog:compoundWorkflowDialog" tooltip="#{r.taskTypeText}" showLink="false" actionListener="#{CompoundWorkflowDialog.setupWorkflowFromList}" styleClass="no-underline" rendered="#{r.compoundWorkflow.independentWorkflow || r.compoundWorkflow.caseFileWorkflow}" >
             <f:param name="nodeRef" value="#{r.compoundWorkflow.nodeRef}" />
          </a:actionLink>         
-<<<<<<< HEAD
-         <a:actionLink id="col10-txt2" value="#{r.taskTypeText}" href="#{r.originalTaskObjectUrl}" tooltip="#{r.taskTypeText}" showLink="false" target="_blank" styleClass="no-underline originalTaskObjectUrl" rendered="#{r.linkedReviewTask}" />
-=======
          <a:actionLink id="col10-txt2" value="#{r.taskTypeText}" onclick="return redirectLinkedReviewTask('#{r.originalTaskObjectUrl}')" tooltip="#{r.taskTypeText}" showLink="false" target="_blank" styleClass="no-underline originalTaskObjectUrl" rendered="#{r.linkedReviewTask}" />
->>>>>>> develop-5.1
       </a:column>
       
       <a:column id="col11" primary="true" styleClass="#{r.cssStyleClass}" >
@@ -201,11 +156,7 @@
           <a:actionLink id="col11-txt1" value="#{r.dueDateStr}" action="dialog:compoundWorkflowDialog" tooltip="#{r.dueDateStr}" showLink="false" actionListener="#{CompoundWorkflowDialog.setupWorkflowFromList}" styleClass="no-underline" rendered="#{r.compoundWorkflow.independentWorkflow || r.compoundWorkflow.caseFileWorkflow}" >
             <f:param name="nodeRef" value="#{r.compoundWorkflow.nodeRef}" />
          </a:actionLink>         
-<<<<<<< HEAD
-         <a:actionLink id="col11-txt2" value="#{r.dueDateStr}" href="#{r.originalTaskObjectUrl}" tooltip="#{r.dueDateStr}" showLink="false" target="_blank" styleClass="no-underline originalTaskObjectUrl" rendered="#{r.linkedReviewTask}" />
-=======
          <a:actionLink id="col11-txt2" value="#{r.dueDateStr}" onclick="return redirectLinkedReviewTask('#{r.originalTaskObjectUrl}')" tooltip="#{r.dueDateStr}" showLink="false" target="_blank" styleClass="no-underline originalTaskObjectUrl" rendered="#{r.linkedReviewTask}" />
->>>>>>> develop-5.1
       </a:column>
       
       <a:column id="col12" primary="true" styleClass="#{r.cssStyleClass}" >
@@ -218,11 +169,7 @@
          <a:actionLink id="col12-txt1" value="#{r.completedDateStr}" action="dialog:compoundWorkflowDialog" tooltip="#{r.completedDateStr}" showLink="false" actionListener="#{CompoundWorkflowDialog.setupWorkflowFromList}" styleClass="no-underline" rendered="#{r.compoundWorkflow.independentWorkflow || r.compoundWorkflow.caseFileWorkflow}" >
             <f:param name="nodeRef" value="#{r.compoundWorkflow.nodeRef}" />
          </a:actionLink>         
-<<<<<<< HEAD
-         <a:actionLink id="col12-txt2" value="#{r.completedDateStr}" href="#{r.originalTaskObjectUrl}" tooltip="#{r.completedDateStr}" showLink="false" target="_blank" styleClass="no-underline originalTaskObjectUrl" rendered="#{r.linkedReviewTask}" />
-=======
          <a:actionLink id="col12-txt2" value="#{r.completedDateStr}" onclick="return redirectLinkedReviewTask('#{r.originalTaskObjectUrl}')" tooltip="#{r.completedDateStr}" showLink="false" target="_blank" styleClass="no-underline originalTaskObjectUrl" rendered="#{r.linkedReviewTask}" />
->>>>>>> develop-5.1
       </a:column>
       
       <a:column id="col13" primary="true" styleClass="#{r.cssStyleClass}" >
@@ -235,11 +182,7 @@
          <a:actionLink id="col13-txt1" value="#{r.comment}" action="dialog:compoundWorkflowDialog" tooltip="#{r.comment}" showLink="false" actionListener="#{CompoundWorkflowDialog.setupWorkflowFromList}" styleClass="no-underline" rendered="#{r.compoundWorkflow.independentWorkflow || r.compoundWorkflow.caseFileWorkflow}" >
             <f:param name="nodeRef" value="#{r.compoundWorkflow.nodeRef}" />
          </a:actionLink>         
-<<<<<<< HEAD
-         <a:actionLink id="col13-txt2" value="#{r.comment}" href="#{r.originalTaskObjectUrl}" tooltip="#{r.comment}" showLink="false" target="_blank" styleClass="no-underline originalTaskObjectUrl" rendered="#{r.linkedReviewTask}" />
-=======
          <a:actionLink id="col13-txt2" value="#{r.comment}" onclick="return redirectLinkedReviewTask('#{r.originalTaskObjectUrl}')" tooltip="#{r.comment}" showLink="false" target="_blank" styleClass="no-underline originalTaskObjectUrl" rendered="#{r.linkedReviewTask}" />
->>>>>>> develop-5.1
       </a:column>
       
       <a:column id="col14" primary="true" styleClass="#{r.cssStyleClass}" >
@@ -252,11 +195,7 @@
          <a:actionLink id="col14-txt1" value="#{r.responsible}" action="dialog:compoundWorkflowDialog" tooltip="#{r.responsible}" showLink="false" actionListener="#{CompoundWorkflowDialog.setupWorkflowFromList}" styleClass="no-underline" rendered="#{r.compoundWorkflow.independentWorkflow || r.compoundWorkflow.caseFileWorkflow}" >
             <f:param name="nodeRef" value="#{r.compoundWorkflow.nodeRef}" />
          </a:actionLink>         
-<<<<<<< HEAD
-         <a:actionLink id="col14-txt2" value="#{r.responsible}" href="#{r.originalTaskObjectUrl}" tooltip="#{r.responsible}" showLink="false" target="_blank" styleClass="no-underline originalTaskObjectUrl" rendered="#{r.linkedReviewTask}" />
-=======
          <a:actionLink id="col14-txt2" value="#{r.responsible}" onclick="return redirectLinkedReviewTask('#{r.originalTaskObjectUrl}')" tooltip="#{r.responsible}" showLink="false" target="_blank" styleClass="no-underline originalTaskObjectUrl" rendered="#{r.linkedReviewTask}" />
->>>>>>> develop-5.1
       </a:column>
       
       <a:column id="col15" primary="true" styleClass="#{r.cssStyleClass}" >
@@ -269,11 +208,7 @@
          <a:actionLink id="col15-txt1" value="#{r.stoppedDateStr}" action="dialog:compoundWorkflowDialog" tooltip="#{r.stoppedDateStr}" showLink="false" actionListener="#{CompoundWorkflowDialog.setupWorkflowFromList}" styleClass="no-underline" rendered="#{r.compoundWorkflow.independentWorkflow || r.compoundWorkflow.caseFileWorkflow}" >
             <f:param name="nodeRef" value="#{r.compoundWorkflow.nodeRef}" />
          </a:actionLink>         
-<<<<<<< HEAD
-         <a:actionLink id="col15-txt2" value="#{r.stoppedDateStr}" href="#{r.originalTaskObjectUrl}" tooltip="#{r.stoppedDateStr}" showLink="false" target="_blank" styleClass="no-underline originalTaskObjectUrl" rendered="#{r.linkedReviewTask}" />
-=======
          <a:actionLink id="col15-txt2" value="#{r.stoppedDateStr}" onclick="return redirectLinkedReviewTask('#{r.originalTaskObjectUrl}')" tooltip="#{r.stoppedDateStr}" showLink="false" target="_blank" styleClass="no-underline originalTaskObjectUrl" rendered="#{r.linkedReviewTask}" />
->>>>>>> develop-5.1
       </a:column>
       
       <a:column id="col16" primary="true" styleClass="#{r.cssStyleClass}" >
@@ -286,11 +221,7 @@
          <a:actionLink id="col16-txt1" value="#{r.resolution}" action="dialog:compoundWorkflowDialog" tooltip="#{r.resolution}" showLink="false" actionListener="#{CompoundWorkflowDialog.setupWorkflowFromList}" styleClass="tooltip condence20- no-underline"  rendered="#{r.compoundWorkflow.independentWorkflow || r.compoundWorkflow.caseFileWorkflow}" >
             <f:param name="nodeRef" value="#{r.compoundWorkflow.nodeRef}" />
          </a:actionLink>         
-<<<<<<< HEAD
-         <a:actionLink id="col16-txt2" value="#{r.resolution}" href="#{r.originalTaskObjectUrl}" tooltip="#{r.resolution}" showLink="false" target="_blank" styleClass="tooltip condence20- no-underline originalTaskObjectUrl" rendered="#{r.linkedReviewTask}" />
-=======
          <a:actionLink id="col16-txt2" value="#{r.resolution}" onclick="return redirectLinkedReviewTask('#{r.originalTaskObjectUrl}')" tooltip="#{r.resolution}" showLink="false" target="_blank" styleClass="tooltip condence20- no-underline originalTaskObjectUrl" rendered="#{r.linkedReviewTask}" />
->>>>>>> develop-5.1
       </a:column>
       
       <a:column id="col17" primary="true" styleClass="#{r.cssStyleClass}" >
@@ -303,11 +234,7 @@
           <a:actionLink id="col17-txt1" value="#{r.overdue}" action="dialog:compoundWorkflowDialog" tooltip="#{r.overdue}" showLink="false" actionListener="#{CompoundWorkflowDialog.setupWorkflowFromList}" styleClass="no-underline" rendered="#{r.compoundWorkflow.independentWorkflow || r.compoundWorkflow.caseFileWorkflow}" >
             <f:param name="nodeRef" value="#{r.compoundWorkflow.nodeRef}" />
          </a:actionLink>         
-<<<<<<< HEAD
-         <a:actionLink id="col17-txt2" value="#{r.overdue}" href="#{r.originalTaskObjectUrl}" tooltip="#{r.overdue}" showLink="false" target="_blank" styleClass="no-underline originalTaskObjectUrl" rendered="#{r.linkedReviewTask}" />
-=======
          <a:actionLink id="col17-txt2" value="#{r.overdue}" onclick="return redirectLinkedReviewTask('#{r.originalTaskObjectUrl}')" tooltip="#{r.overdue}" showLink="false" target="_blank" styleClass="no-underline originalTaskObjectUrl" rendered="#{r.linkedReviewTask}" />
->>>>>>> develop-5.1
       </a:column>
       
       <a:column id="col18" primary="true" styleClass="#{r.cssStyleClass}" >
@@ -320,11 +247,7 @@
           <a:actionLink id="col18-txt1" value="#{r.status}" action="dialog:compoundWorkflowDialog" tooltip="#{r.status}" showLink="false" actionListener="#{CompoundWorkflowDialog.setupWorkflowFromList}" styleClass="no-underline" rendered="#{r.compoundWorkflow.independentWorkflow || r.compoundWorkflow.caseFileWorkflow}" >
             <f:param name="nodeRef" value="#{r.compoundWorkflow.nodeRef}" />
          </a:actionLink>         
-<<<<<<< HEAD
-         <a:actionLink id="col18-txt2" value="#{r.status}" href="#{r.originalTaskObjectUrl}" tooltip="#{r.status}" showLink="false" target="_blank" styleClass="no-underline originalTaskObjectUrl" rendered="#{r.linkedReviewTask}" />
-=======
          <a:actionLink id="col18-txt2" value="#{r.status}" onclick="return redirectLinkedReviewTask('#{r.originalTaskObjectUrl}')" tooltip="#{r.status}" showLink="false" target="_blank" styleClass="no-underline originalTaskObjectUrl" rendered="#{r.linkedReviewTask}" />
->>>>>>> develop-5.1
       </a:column>
       
       <a:column id="col19" primary="true" styleClass="#{r.cssStyleClass}" >
@@ -435,21 +358,6 @@
          </a:actionLink>         
       </a:column>
       
-<<<<<<< HEAD
-      <a:column id="col26_1" primary="true" styleClass="#{r.cssStyleClass}" >
-         <f:facet name="header">
-            <a:sortLink id="col26_1-header" label="#{msg.task_search_result_compound_workflow_comment}" value="compoundWorkflowComment" styleClass="header" />
-         </f:facet>
-          <a:actionLink id="col26_1-txt" value="#{r.compoundWorkflowComment}" action="#{DocumentDialog.action}" tooltip="#{r.compoundWorkflowComment}" showLink="false" actionListener="#{DocumentDialog.open}" styleClass="no-underline" rendered="#{!r.linkedReviewTask && r.compoundWorkflow.documentWorkflow}" >
-            <f:param name="nodeRef" value="#{r.document.nodeRef}" />
-         </a:actionLink>
-          <a:actionLink id="col26_1-txt1" value="#{r.compoundWorkflowComment}" action="dialog:compoundWorkflowDialog" tooltip="#{r.compoundWorkflowComment}" showLink="false" actionListener="#{CompoundWorkflowDialog.setupWorkflowFromList}" styleClass="no-underline" rendered="#{r.compoundWorkflow.independentWorkflow || r.compoundWorkflow.caseFileWorkflow}" >
-            <f:param name="nodeRef" value="#{r.compoundWorkflow.nodeRef}" />
-         </a:actionLink>         
-      </a:column>      
-      
-=======
->>>>>>> develop-5.1
       <a:column id="col27" primary="true" styleClass="#{r.cssStyleClass}" >
          <f:facet name="header">
             <a:sortLink id="col27-header" label="#{msg.task_search_result_compound_workflow_status}" value="compoundWorkflowStatus" styleClass="header" />
@@ -482,12 +390,3 @@
 </a:panel>
 
 <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/disable-dialog-finish-button.jsp" />
-<<<<<<< HEAD
-
-<script>
-   prependOnclick($jQ(".originalTaskObjectUrl"), function(){
-         return confirm('<%= MessageUtil.getMessageAndEscapeJS("task_original_object_open_confirm")%>');
-   });
-</script>
-=======
->>>>>>> develop-5.1

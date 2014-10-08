@@ -13,11 +13,6 @@ import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 
 /**
  * Dynamic document type
-<<<<<<< HEAD
- * 
- * @author Ats Uiboupin
-=======
->>>>>>> develop-5.1
  */
 public class DocumentType extends DynamicType {
     private static final long serialVersionUID = 1L;
@@ -93,13 +88,10 @@ public class DocumentType extends DynamicType {
         setProp(DocumentAdminModel.Props.REGISTRATION_ENABLED, registrationEnabled);
     }
 
-<<<<<<< HEAD
-=======
     public boolean isRegistrationOnDocFormEnabled() {
         return getPropBoolean(DocumentAdminModel.Props.REGISTRATION_ON_DOC_FORM_ENABLED);
     }
 
->>>>>>> develop-5.1
     public boolean isFinishDocByRegistration() {
         return getPropBoolean(DocumentAdminModel.Props.FINISH_DOC_BY_REGISTRATION);
     }

@@ -19,10 +19,7 @@ import java.util.Set;
 import javax.faces.event.ActionEvent;
 
 import org.alfresco.model.ContentModel;
-<<<<<<< HEAD
-=======
 import org.alfresco.repo.cache.SimpleCache;
->>>>>>> develop-5.1
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
 import org.alfresco.repo.security.sync.NodeDescription;
@@ -60,14 +57,10 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
     private AuthorityService authorityService;
     // START: properties that would cause dependency cycle when trying to inject them
     private UserService _userService;
-<<<<<<< HEAD
-    // START: properties that would cause dependency cycle when trying to inject them
-=======
     // END: properties that would cause dependency cycle when trying to inject them
 
     /** a transactionally-safe cache to be injected */
     private SimpleCache<String, OrganizationStructure> orgStructPropertiesCache;
->>>>>>> develop-5.1
 
     private NodeRef orgStructsRoot;
 
@@ -85,10 +78,7 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
             orgStructuresCount++;
         }
         for (ChildAssociationRef oldOrganization : oldOrganizations) { // remove all old organizations
-<<<<<<< HEAD
-=======
             orgStructPropertiesCache.remove((String) nodeService.getProperty(oldOrganization.getChildRef(), OrganizationStructureModel.Props.UNIT_ID));
->>>>>>> develop-5.1
             nodeService.deleteNode(oldOrganization.getChildRef());
         }
         return orgStructuresCount;
@@ -195,10 +185,7 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
         // Remove missing organization structures
         for (String missingGeneratedGroup : generatedGroups) {
             authorityService.deleteAuthority(missingGeneratedGroup);
-<<<<<<< HEAD
-=======
 
->>>>>>> develop-5.1
         }
 
         return 0;
@@ -220,29 +207,11 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
         Map<QName, Serializable> properties = organizationStructureBeanPropertyMapper.toProperties(org);
         nodeService.createNode(getOrgStructsRoot(), OrganizationStructureModel.Assocs.ORGSTRUCT, //
                 QName.createQName(OrganizationStructureModel.URI, org.getUnitId()), OrganizationStructureModel.Types.ORGSTRUCT, properties);
-<<<<<<< HEAD
-=======
         orgStructPropertiesCache.put(org.getUnitId(), org);
->>>>>>> develop-5.1
     }
 
     @Override
     public OrganizationStructure getOrganizationStructure(String unitId) {
-<<<<<<< HEAD
-        if (StringUtils.isBlank(unitId)) {
-            return null;
-        }
-        List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(getOrgStructsRoot(),
-                OrganizationStructureModel.Assocs.ORGSTRUCT, //
-                QName.createQName(OrganizationStructureModel.URI, unitId));
-        for (ChildAssociationRef childAssociationRef : childAssocs) {
-            OrganizationStructure orgStruct = getOrganizationStructure(childAssociationRef.getChildRef());
-            if (StringUtils.equals(unitId, orgStruct.getUnitId())) {
-                return orgStruct;
-            }
-        }
-        return null;
-=======
         OrganizationStructure os = orgStructPropertiesCache.get(unitId);
         if (os == null && StringUtils.isNotBlank(unitId)) {
             List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(getOrgStructsRoot(),
@@ -257,7 +226,6 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
             }
         }
         return os;
->>>>>>> develop-5.1
     }
 
     @Override
@@ -303,8 +271,6 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
     }
 
     @Override
-<<<<<<< HEAD
-=======
     public List<NodeRef> getAllOrganizationStructureRefs() {
         NodeRef root = generalService.getNodeRef(OrganizationStructureModel.Repo.SPACE);
         List<ChildAssociationRef> childRefs = nodeService.getChildAssocs(root);
@@ -316,7 +282,6 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
     }
 
     @Override
->>>>>>> develop-5.1
     public List<OrganizationStructure> searchOrganizationStructures(String input, int limit) {
         Set<QName> props = new HashSet<QName>(1);
         props.add(OrganizationStructureModel.Props.NAME);
@@ -366,12 +331,8 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
         return structs;
     }
 
-<<<<<<< HEAD
-    private OrganizationStructure getOrganizationStructure(NodeRef nodeRef) {
-=======
     @Override
     public OrganizationStructure getOrganizationStructure(NodeRef nodeRef) {
->>>>>>> develop-5.1
         OrganizationStructure os = organizationStructureBeanPropertyMapper.toObject(nodeService.getProperties(nodeRef));
         os.setNodeRef(nodeRef);
         return os;
@@ -411,12 +372,9 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
         this.authorityService = authorityService;
     }
 
-<<<<<<< HEAD
-=======
     public void setOrgStructPropertiesCache(SimpleCache<String, OrganizationStructure> orgStructPropertiesCache) {
         this.orgStructPropertiesCache = orgStructPropertiesCache;
     }
 
->>>>>>> develop-5.1
     // END: getters / setters
 }

@@ -28,11 +28,6 @@ import ee.webmedia.alfresco.utils.ComponentUtil;
 /**
  * Render {@link Search} component. Child component of type {@link HtmlPanelGroup} is rendered as HTML table. Child component of type {@link UIGenericPicker} is
  * rendered as modal popup dialog.
-<<<<<<< HEAD
- * 
- * @author Alar Kvell
-=======
->>>>>>> develop-5.1
  */
 public class SearchRenderer extends BaseRenderer {
 
@@ -91,13 +86,10 @@ public class SearchRenderer extends BaseRenderer {
 
     @Override
     public void encodeBegin(FacesContext context, UIComponent component) throws IOException {
-<<<<<<< HEAD
-=======
         if (Boolean.TRUE.equals(component.getAttributes().get(Search.RENDER_PLAIN))) {
             return;
         }
 
->>>>>>> develop-5.1
         ResponseWriter out = context.getResponseWriter();
         out.write("<div class=\"inline\" id=\"");
         out.write(((Search) component).getAjaxClientId(context));
@@ -156,14 +148,10 @@ public class SearchRenderer extends BaseRenderer {
         if (!search.isEmpty()) {
             out.write("notEmpty");
         }
-<<<<<<< HEAD
-        out.write("\"/></div>");
-=======
         out.write("\"/>");
         if (!search.isRenderPlain()) {
             out.write("</div>");
         }
->>>>>>> develop-5.1
     }
 
     private void renderMultiValued(FacesContext context, ResponseWriter out, Search search, HtmlPanelGroup list, UIGenericPicker picker) throws IOException {
@@ -216,14 +204,10 @@ public class SearchRenderer extends BaseRenderer {
     }
 
     private void renderSingleValued(FacesContext context, ResponseWriter out, Search search, HtmlPanelGroup list, UIGenericPicker picker) throws IOException {
-<<<<<<< HEAD
-        out.write("<table class=\"recipient inline\" cellpadding=\"0\" cellspacing=\"0\"><tbody><tr>");
-=======
         boolean renderPlain = search.isRenderPlain();
         if (!renderPlain) {
             out.write("<table class=\"recipient inline\" cellpadding=\"0\" cellspacing=\"0\"><tbody><tr>");
         }
->>>>>>> develop-5.1
 
         List<UIComponent> children = list.getChildren();
         for (int i = 0; i < children.size(); i++) {
@@ -232,33 +216,15 @@ public class SearchRenderer extends BaseRenderer {
                 continue;
             }
 
-<<<<<<< HEAD
-            out.write("<td>");
-=======
             if (!renderPlain) {
                 out.write("<td>");
             }
->>>>>>> develop-5.1
             setInputStyleClass(child, search);
             Utils.encodeRecursive(context, child);
             if (hasSearchSuggest(search)) {
                 out.write(ComponentUtil.generateSuggestScript(context, child, (String) search.getAttributes().get(Search.PICKER_CALLBACK_KEY)));
             }
             renderExtraInfo(search, out);
-<<<<<<< HEAD
-            out.write("</td>");
-            UIOutput ch = (UIOutput) child;
-            Object val = ch.getValue();
-            if (isRemoveLinkRendered(search) && val != null) {
-                out.write("<td>");
-                renderRemoveLink(context, out, search, i);
-                out.write("</td>");
-            }
-        }
-        out.write("<td>");
-        renderPicker(context, out, search, picker, -1);
-        out.write("</td></tr></tbody></table>");
-=======
             if (!renderPlain) {
                 out.write("</td>");
             }
@@ -281,7 +247,6 @@ public class SearchRenderer extends BaseRenderer {
         if (!renderPlain) {
             out.write("</td></tr></tbody></table>");
         }
->>>>>>> develop-5.1
     }
 
     private boolean hasSearchSuggest(Search search) {
@@ -356,13 +321,10 @@ public class SearchRenderer extends BaseRenderer {
             rowIndex = index;
         }
 
-<<<<<<< HEAD
-=======
         if (rowIndex > -1) {
             picker.setId(SEARCH_MSG + rowIndex);
         }
 
->>>>>>> develop-5.1
         out.write("<a class=\"icon-link margin-left-4 search\" onclick=\"");
         out.write(ComponentUtil.generateFieldSetter(context, search, getActionId(context, search), OPEN_DIALOG_ACTION + ACTION_SEPARATOR + rowIndex));
         out.write("return showModal('");
@@ -372,10 +334,6 @@ public class SearchRenderer extends BaseRenderer {
             toolTip = SEARCH_MSG;
         }
         out.write("');\" title=\"" + getMessage(toolTip) + "\">");
-<<<<<<< HEAD
-        // out.write(Application.getMessage(context, SEARCH_MSG));
-=======
->>>>>>> develop-5.1
         String searchLinkLabel = search.getSearchLinkLabel();
         if (searchLinkLabel != null) {
             out.write(getMessage(searchLinkLabel));

@@ -1,39 +1,17 @@
 package ee.webmedia.alfresco.docadmin.web;
 
-<<<<<<< HEAD
-import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentAdminService;
-
-import javax.faces.context.FacesContext;
-import javax.faces.event.ActionEvent;
-
-import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.util.Pair;
-import org.alfresco.web.bean.repository.Node;
-
-=======
->>>>>>> develop-5.1
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
 import ee.webmedia.alfresco.docadmin.service.DocumentTypeVersion;
 import ee.webmedia.alfresco.docadmin.service.DynamicType;
-<<<<<<< HEAD
-=======
 import ee.webmedia.alfresco.docadmin.service.Field;
 import ee.webmedia.alfresco.docadmin.service.FieldGroup;
 import ee.webmedia.alfresco.docadmin.service.MetadataItem;
->>>>>>> develop-5.1
 import ee.webmedia.alfresco.docadmin.web.DynamicTypeDetailsDialog.DynTypeDialogSnapshot;
 import ee.webmedia.alfresco.docdynamic.web.BaseSnapshotCapableDialog;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageData;
 import ee.webmedia.alfresco.utils.MessageUtil;
-<<<<<<< HEAD
-
-/**
- * Base dialog for editing {@link DynamicType} details
- * 
- * @author Ats Uiboupin
-=======
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
@@ -50,7 +28,6 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentAdminService
 
 /**
  * Base dialog for editing {@link DynamicType} details
->>>>>>> develop-5.1
  */
 public abstract class DynamicTypeDetailsDialog<D extends DynamicType, S extends DynTypeDialogSnapshot<D>> extends BaseSnapshotCapableDialog<S, D> {
     private static final long serialVersionUID = 1L;
@@ -66,11 +43,6 @@ public abstract class DynamicTypeDetailsDialog<D extends DynamicType, S extends 
 
     /**
      * Contains fields that contain state to be used when restoring dialog
-<<<<<<< HEAD
-     * 
-     * @author Ats Uiboupin
-=======
->>>>>>> develop-5.1
      */
     public abstract static class DynTypeDialogSnapshot<D extends DynamicType> implements BaseSnapshotCapableDialog.Snapshot {
         private static final long serialVersionUID = 1L;
@@ -119,11 +91,7 @@ public abstract class DynamicTypeDetailsDialog<D extends DynamicType, S extends 
     boolean save() {
         try {
             fieldsListBean.doReorder();
-<<<<<<< HEAD
-            Pair<D, MessageData> result = getDocumentAdminService().saveOrUpdateDynamicType(getCurrentSnapshot().getDynType());
-=======
             Pair<D, MessageData> result = getDocumentAdminService().saveOrUpdateDynamicType(getCurrentSnapshot().getDynType(), false);
->>>>>>> develop-5.1
             D saveOrUpdateDocumentType = result.getFirst();
             getCurrentSnapshot().addNewLatestDocumentTypeVersion = true;
             updateDialogState(saveOrUpdateDocumentType, getCurrentSnapshot(), null);
@@ -139,13 +107,6 @@ public abstract class DynamicTypeDetailsDialog<D extends DynamicType, S extends 
     }
 
     boolean validate() {
-<<<<<<< HEAD
-        boolean valid = true;
-        // constraints known right now are validated by converters / validators before calling this method
-        return valid;
-    }
-
-=======
         // Other constraints known right now are validated by converters / validators before calling this method
         return validateRelatedOutgoingDecElements();
     }
@@ -200,7 +161,6 @@ public abstract class DynamicTypeDetailsDialog<D extends DynamicType, S extends 
         }
     }
 
->>>>>>> develop-5.1
     protected void resetFields() {
         S currentSnapshot = getCurrentSnapshot();
         if (currentSnapshot != null) {
@@ -230,16 +190,9 @@ public abstract class DynamicTypeDetailsDialog<D extends DynamicType, S extends 
     }
 
     /** used by delete action to do actual deleting (after user has confirmed deleting in DeleteDialog) */
-<<<<<<< HEAD
-    public String deleteType(ActionEvent event) {
-        NodeRef dynTypeRef = new NodeRef(ActionUtil.getParam(event, "nodeRef"));
-        BeanHelper.getDocumentAdminService().deleteDynamicType(dynTypeRef);
-        return getCloseOutcome(2);
-=======
     public void deleteType(ActionEvent event) {
         NodeRef dynTypeRef = new NodeRef(ActionUtil.getParam(event, "nodeRef"));
         BeanHelper.getDocumentAdminService().deleteDynamicType(dynTypeRef);
->>>>>>> develop-5.1
     }
 
     /** replace dynType in memory with fresh copy from repo */
@@ -362,11 +315,7 @@ public abstract class DynamicTypeDetailsDialog<D extends DynamicType, S extends 
             // Workaround to NullpointerException
             // FIXME current dialog is DocTypeDetailsDialog and user clicks some menu item (for example to open DocTypeListDialog)
             //
-<<<<<<< HEAD
-            // FIXME CL_TASK 177667 Ats -> Kaarel: when leaving dialog clearState() method (that clears snapshots) is called in
-=======
             // FIXME CL_TASK 177667 -> when leaving dialog clearState() method (that clears snapshots) is called in
->>>>>>> develop-5.1
             // ApplyRequestValues phase by calling MenuBean.clearViewStack(menuBean.getActiveItemId(), clientId);
             //
             // Better JSF components method bindings are evaluated in the same phase

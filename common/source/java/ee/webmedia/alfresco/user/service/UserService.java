@@ -11,10 +11,7 @@ import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
 
 import ee.webmedia.alfresco.orgstructure.service.OrganizationStructureService;
-<<<<<<< HEAD
-=======
 import ee.webmedia.alfresco.privilege.model.Privilege;
->>>>>>> develop-5.1
 import ee.webmedia.alfresco.user.model.Authority;
 
 public interface UserService {
@@ -42,11 +39,7 @@ public interface UserService {
     /**
      * Fetches the node reference, where user preferences are kept,
      * create user preferences node, if not present
-<<<<<<< HEAD
-     * 
-=======
      *
->>>>>>> develop-5.1
      * @param userName if null, defaults to AuthenticationUtil.getRunAsUser()
      * @return
      */
@@ -59,11 +52,7 @@ public interface UserService {
 
     /**
      * Checks if user has administrative privileges
-<<<<<<< HEAD
-     * 
-=======
      *
->>>>>>> develop-5.1
      * @return true if has
      */
     boolean isAdministrator();
@@ -77,11 +66,7 @@ public interface UserService {
 
     /**
      * Checks if user belongs to document managers group or is an administrator, because administrators have document managers privileges.
-<<<<<<< HEAD
-     * 
-=======
      *
->>>>>>> develop-5.1
      * @return true if belongs
      */
 
@@ -91,22 +76,14 @@ public interface UserService {
 
     /**
      * Return group name for document administrators group
-<<<<<<< HEAD
-     * 
-=======
      *
->>>>>>> develop-5.1
      * @return group name with group type prefix
      */
     String getDocumentManagersGroup();
 
     /**
      * Return group name for Alfresco administrators group
-<<<<<<< HEAD
-     * 
-=======
      *
->>>>>>> develop-5.1
      * @return group name with group type prefix
      */
     String getAdministratorsGroup();
@@ -115,33 +92,21 @@ public interface UserService {
      * Searches for users by first name and last name. If {@code input} is empty, all users are returned if {@code returnAllUsers} is {@code true}, otherwise an
      * empty list is returned. The results from this method should be processed by {@link OrganizationStructureService#setUsersUnit(List)} if correct unit name
      * is desired.
-<<<<<<< HEAD
-     * 
-=======
      *
->>>>>>> develop-5.1
      * @param limit
      */
     List<Node> searchUsers(String input, boolean returnAllUsers, int limit);
 
     /**
      * Searches for users from a specified group.
-<<<<<<< HEAD
-     * 
-=======
      *
->>>>>>> develop-5.1
      * @see #searchUsers(String, boolean)
      */
     List<Node> searchUsers(String input, boolean returnAllUsers, String group, int limit);
 
     /**
      * Fetches the users node
-<<<<<<< HEAD
-     * 
-=======
      *
->>>>>>> develop-5.1
      * @param userName
      * @return node representing the user or {@code null} if user does not exist
      */
@@ -151,11 +116,7 @@ public interface UserService {
 
     Authority getAuthorityOrNull(String authority);
 
-<<<<<<< HEAD
-    List<Authority> getAuthorities(NodeRef nodeRef, String permission);
-=======
     List<Authority> getAuthorities(NodeRef nodeRef, Privilege privilege);
->>>>>>> develop-5.1
 
     /**
      * Returns full name of the authenticated user
@@ -164,11 +125,7 @@ public interface UserService {
 
     /**
      * Returns full name of the specified user. If user doesn't have full name, returns username.
-<<<<<<< HEAD
-     * 
-=======
      *
->>>>>>> develop-5.1
      * @param userName
      * @return full name of user or {@code null} if user does not exist
      */
@@ -182,11 +139,7 @@ public interface UserService {
 
     /**
      * Returns a map with the user's properties.
-<<<<<<< HEAD
-     * 
-=======
      *
->>>>>>> develop-5.1
      * @param userName
      * @return
      */
@@ -196,11 +149,7 @@ public interface UserService {
 
     /**
      * Returns username of the authenticated user.
-<<<<<<< HEAD
-     * 
-=======
      *
->>>>>>> develop-5.1
      * @return
      */
     String getCurrentUserName();
@@ -247,11 +196,7 @@ public interface UserService {
 
     /**
      * Adds leaving aspect to leavingUserId.
-<<<<<<< HEAD
-     * 
-=======
      *
->>>>>>> develop-5.1
      * @param leavingUserId resigning user
      * @param replacementUserId user to whom liability is given to
      * @return true if successful, false otherwise
@@ -288,9 +233,6 @@ public interface UserService {
 
     Set<String> getUserNamesInGroup(List<String> groupNames);
 
-<<<<<<< HEAD
-}
-=======
     Set<String> getAllUsersUsernames();
 
     void removeUserFromGroup(String group, String username);
@@ -304,4 +246,3 @@ public interface UserService {
     String getUserMobilePhone(String userName);
 
 }
->>>>>>> develop-5.1

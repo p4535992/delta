@@ -1,15 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <view:view xmlns:view="http://www.alfresco.org/view/repository/1.0" xmlns:ab="http://alfresco.webmedia.ee/model/addressbook/1.0">
-<<<<<<< HEAD
-   <ab:addressbook view:childName="ab:addressbook">
-      <view:acl view:inherit="true">
-         <view:ace view:access="ALLOWED">
-            <view:authority>GROUP_DOCUMENT_MANAGERS</view:authority>
-            <view:permission>AddressbookManage</view:permission>
-         </view:ace>
-      </view:acl>
-   </ab:addressbook>
-=======
    <ab:addressbook view:childName="ab:addressbook" />
->>>>>>> develop-5.1
 </view:view>

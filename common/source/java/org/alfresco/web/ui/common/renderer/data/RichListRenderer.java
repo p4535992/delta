@@ -60,18 +60,11 @@ public class RichListRenderer extends BaseRenderer
       {
          ResponseWriter out = context.getResponseWriter();
          Map attrs = component.getAttributes();
-<<<<<<< HEAD
-         out.write("<table cellspacing=0 cellpadding=0");
-         outputAttribute(out, attrs.get("styleClass"), "class");
-         outputAttribute(out, attrs.get("style"), "style");
-         outputAttribute(out, attrs.get("width"), "width");
-=======
          out.write("<table cellspacing=\"0\" cellpadding=\"0\"");
          outputAttribute(out, attrs.get("styleClass"), "class");
          outputAttribute(out, attrs.get("style"), "style");
          outputAttribute(out, attrs.get("width"), "width");
          outputAttribute(out, attrs.get("id"), "id");
->>>>>>> develop-5.1
          out.write(">");
       }
    }

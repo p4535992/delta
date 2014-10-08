@@ -27,12 +27,6 @@ import ee.webmedia.alfresco.sharepoint.mapping.TypeInfoContext;
 
 /**
  * Mapping class handles information from the mappings XML file and applies the read mapping when reading document XML files.
-<<<<<<< HEAD
- * 
- * @author Aleksei Lissitsin
- * @author Martti Tamm
-=======
->>>>>>> develop-5.1
  */
 public class SharepointMapping {
 
@@ -185,11 +179,7 @@ public class SharepointMapping {
         return mapping != null ? new MappedDocument(docRoot, mapping) : null;
     }
 
-<<<<<<< HEAD
-    private Mapping getDocumentMapping(DocumentMetadata meta) {
-=======
     public Mapping getDocumentMapping(DocumentMetadata meta) {
->>>>>>> develop-5.1
         Mapping propMapping = null;
 
         if (StringUtils.isNotBlank(meta.getDirection())) {

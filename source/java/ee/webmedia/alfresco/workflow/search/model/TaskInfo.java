@@ -22,15 +22,8 @@ import ee.webmedia.alfresco.workflow.model.TaskAndDocument;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
-<<<<<<< HEAD
-
-/**
- * @author Erko Hansar
- */
-=======
 import ee.webmedia.alfresco.workflow.service.Task;
 
->>>>>>> develop-5.1
 public class TaskInfo implements Serializable, Comparable<TaskInfo>, CssStylable, CreatedAndRegistered {
 
     private static final long serialVersionUID = 1L;
@@ -95,10 +88,7 @@ public class TaskInfo implements Serializable, Comparable<TaskInfo>, CssStylable
 
     /**
      * NB! This method is used for JSP sorting and returns values from different objects.
-<<<<<<< HEAD
-=======
      * 
->>>>>>> develop-5.1
      * @return document title or compound workflow title or empty string
      */
     public String getDocName() {
@@ -205,15 +195,6 @@ public class TaskInfo implements Serializable, Comparable<TaskInfo>, CssStylable
     }
 
     public String getResolution() {
-<<<<<<< HEAD
-        if (WorkflowSpecificModel.Types.ASSIGNMENT_TASK.equals(task.getType())) {
-            return (String) task.getProperties().get(WorkflowSpecificModel.Props.RESOLUTION);
-        } else if (isLinkedReviewTask()) {
-            return (String) task.getProperties().get(WorkflowSpecificModel.Props.WORKFLOW_RESOLUTION);
-        }
-        
-        return (String) workflow.getProperties().get(WorkflowSpecificModel.Props.RESOLUTION);
-=======
         String workflowResolution = workflow != null ? (String) workflow.getProperties().get(WorkflowSpecificModel.Props.RESOLUTION) : "";
         if (WorkflowSpecificModel.Types.DUE_DATE_EXTENSION_TASK.equals(task.getType())) {
             Date proposedDueDate = (Date) task.getProperties().get(WorkflowSpecificModel.Props.PROPOSED_DUE_DATE);
@@ -225,7 +206,6 @@ public class TaskInfo implements Serializable, Comparable<TaskInfo>, CssStylable
             return taskResolution;
         }
         return workflowResolution;
->>>>>>> develop-5.1
     }
 
     public String getOverdue() {
@@ -308,14 +288,6 @@ public class TaskInfo implements Serializable, Comparable<TaskInfo>, CssStylable
         return hasCompoundWorkflow() ? compoundWorkflow.getEndedDateStr() : "";
     }
 
-<<<<<<< HEAD
-    public String getCompoundWorkflowComment() {
-        String linkedReviewTaskComment = isLinkedReviewTask() ? (String) task.getProperties().get(WorkflowSpecificModel.Props.COMPOUND_WORKFLOW_COMMENT) : "";
-        return hasCompoundWorkflow() ? compoundWorkflow.getComment() : StringUtils.defaultString(linkedReviewTaskComment, "");
-    }
-
-=======
->>>>>>> develop-5.1
     public String getCompoundWorkflowStatus() {
         return hasCompoundWorkflow() ? compoundWorkflow.getStatus() : "";
     }

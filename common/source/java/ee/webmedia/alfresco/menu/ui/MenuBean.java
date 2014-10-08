@@ -66,12 +66,6 @@ import ee.webmedia.alfresco.utils.WebUtil;
 import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
 
-<<<<<<< HEAD
-/**
- * @author Kaarel Jõgeva
- */
-=======
->>>>>>> develop-5.1
 public class MenuBean implements Serializable {
 
     public static final String SHORTCUT_MENU_ITEM_PREFIX = "shortcut-";
@@ -124,11 +118,8 @@ public class MenuBean implements Serializable {
             , "myDocuments"
             );
 
-<<<<<<< HEAD
-=======
     public static final List<String> HIDDEN_FROM_SUBSTITUTOR = Arrays.asList("documentDynamicTypes");
 
->>>>>>> develop-5.1
     private transient HtmlPanelGroup shortcutsPanelGroup;
     private transient HtmlPanelGroup breadcrumb;
 
@@ -496,17 +487,11 @@ public class MenuBean implements Serializable {
             reloadMenu(); // XXX - Somehow this makes it work... Although menu structure in service isn't modified.
             menu = getMenuService().getMenu();
             getMenuService().process(menu, false, true);
-<<<<<<< HEAD
-            updateCount = newUpdateCount;
-            if (lastLinkId != null && linkNodeRef != null) {
-                updateTree();
-=======
             menuService.logMenu(menu, "After MenuBean.getMenu.process: ");
             updateCount = newUpdateCount;
             if (lastLinkId != null && linkNodeRef != null) {
                 updateTree();
                 menuService.logMenu(menu, "After MenuBean.getMenu.updateTree: ");
->>>>>>> develop-5.1
             }
         }
         return menu;
@@ -980,9 +965,6 @@ public class MenuBean implements Serializable {
 
         if (HIDDEN_WHEN_EMPTY.contains(menuItemId)) {
             Boolean showEmpty = (Boolean) getUserService().getUserProperties(AuthenticationUtil.getRunAsUser()).get(ContentModel.SHOW_EMPTY_TASK_MENU);
-<<<<<<< HEAD
-            return showEmpty == null || !showEmpty;
-=======
             boolean result = showEmpty == null || !showEmpty;
             if (result && MenuItem.MY_TASK_MENU_ITEMS.contains(menuItemId)) {
                 log.debug("Setting menu_my_tasks subitem " + menuItemId + " hidden");
@@ -992,7 +974,6 @@ public class MenuBean implements Serializable {
 
         if (HIDDEN_FROM_SUBSTITUTOR.contains(menuItemId)) {
             return BeanHelper.getSubstitutionBean().getSubstitutionInfo().isSubstituting();
->>>>>>> develop-5.1
         }
 
         if (HIDDEN_TO_OTHER_STRUCT_UNIT_PEOPLE.contains(menuItemId)) {

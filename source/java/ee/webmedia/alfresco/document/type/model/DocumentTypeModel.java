@@ -4,12 +4,6 @@ import org.alfresco.service.namespace.QName;
 
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 
-<<<<<<< HEAD
-/**
- * @author Alar Kvell
- */
-=======
->>>>>>> develop-5.1
 public interface DocumentTypeModel {
     String URI = DocumentAdminModel.URI;
     String PREFIX = "doctype:";

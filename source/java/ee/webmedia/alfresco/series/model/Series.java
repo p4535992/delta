@@ -24,10 +24,6 @@ public class Series implements Serializable, Comparable<Series> {
     private String title;
     private String description;
     private String status;
-<<<<<<< HEAD
-    private Integer retentionPeriod; // can be empty
-=======
->>>>>>> develop-5.1
     private List<String> docType;
     private List<String> volType;
     private int containingDocsCount;
@@ -113,17 +109,6 @@ public class Series implements Serializable, Comparable<Series> {
         node.getProperties().put(SeriesModel.Props.ORDER.toString(), order);
     }
 
-<<<<<<< HEAD
-    public Integer getRetentionPeriod() {
-        return retentionPeriod;
-    }
-
-    public void setRetentionPeriod(Integer retentionPeriod) {
-        this.retentionPeriod = retentionPeriod;
-    }
-
-=======
->>>>>>> develop-5.1
     public List<String> getDocType() {
         return docType;
     }

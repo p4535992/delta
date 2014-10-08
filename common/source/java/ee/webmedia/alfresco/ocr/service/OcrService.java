@@ -15,11 +15,6 @@ import org.alfresco.service.cmr.repository.NodeRef;
  * <li>file contents in repository are replaced with the returned file contents, file extension is changed to .pdf, {@code ocr:ocrCompleted} aspect is added.</li>
  * </ol>
  * </p>
-<<<<<<< HEAD
- * 
- * @author Alar Kvell
-=======
->>>>>>> develop-5.1
  */
 public interface OcrService {
 

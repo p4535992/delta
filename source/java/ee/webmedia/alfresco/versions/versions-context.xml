@@ -30,11 +30,7 @@
     <bean id="versionService" class="ee.webmedia.alfresco.versions.service.VersionServiceExtImpl" init-method="initialise">
         <property name="nodeService">
             <ref bean="NodeService" />
-<<<<<<< HEAD
-        </property>
-=======
         </property>    
->>>>>>> develop-5.1
         <property name="dbNodeService">
             <ref bean="mtAwareNodeService" />
         </property>
@@ -80,10 +76,6 @@
 
    <bean id="versionsService" class="ee.webmedia.alfresco.versions.service.VersionsServiceImpl">
       <property name="versionServiceExt" ref="VersionService" />
-<<<<<<< HEAD
-      <property name="nodeService" ref="NodeService" />
-=======
->>>>>>> develop-5.1
       <property name="userService" ref="UserService" />
       <property name="documentLogService" ref="DocumentLogService" />
       <property name="dictionaryService" ref="DictionaryService" />

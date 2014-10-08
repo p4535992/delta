@@ -58,11 +58,7 @@
       </property>
    </bean>
 
-<<<<<<< HEAD
-   <bean id="documentService" class="ee.webmedia.alfresco.document.service.DocumentServiceImpl">
-=======
    <bean id="documentService" class="ee.webmedia.alfresco.document.service.DocumentServiceImpl" init-method="init">
->>>>>>> develop-5.1
       <property name="dictionaryService" ref="DictionaryService" />
       <property name="namespaceService" ref="NamespaceService" />
       <property name="nodeService" ref="NodeService" />
@@ -73,12 +69,6 @@
       <property name="volumeService" ref="VolumeService" />
       <property name="fileFolderService" ref="FileFolderService" />
       <property name="contentService" ref="ContentService" />
-<<<<<<< HEAD
-      <property name="fileService" ref="FileService" />
-      <property name="signatureService" ref="SignatureService" />
-      <property name="workflowService" ref="WmWorkflowService" />
-=======
->>>>>>> develop-5.1
       <property name="menuService" ref="MenuService" />
       <property name="documentLogService" ref="DocumentLogService" />
       <property name="userService" ref="UserService" />
@@ -371,10 +361,7 @@
             <ref bean="caseFileStatusFieldFixBootstrap" />
             <ref bean="contactSystematicGroupAddFieldsUpdater" />
             <ref bean="documentRegNrFieldUpdater" />
-<<<<<<< HEAD
-=======
             <ref bean="documentRegDateFieldUpdater" />
->>>>>>> develop-5.1
             <ref bean="documentSenderRegNrFieldGroupUpdater" />
             <ref bean="leaveCancelEndDateNameFixBootstrap2" />
             <ref bean="leaveTypeFieldTypeUpdater" />
@@ -403,10 +390,6 @@
             <!-- documentUpdater9 functionality called from convertToDynamicDocumentsUpdater uses fileEncodingUpdater updater's results -->
             <ref bean="fileEncodingUpdater" />
             <ref bean="classificatorRootBootstrap6_2" />
-<<<<<<< HEAD
-            <ref bean="fixAclInheritanceUpdater2" />
-=======
->>>>>>> develop-5.1
          </list>
       </property>
       <property name="dictionaryService" ref="DictionaryService" />
@@ -430,11 +413,8 @@
       <property name="logAndDeleteNotExistingWorkflowTasks" ref="logAndDeleteNotExistingWorkflowTasks2" />
       <property name="documentCompWorkflowSearchPropsUpdater" ref="documentCompWorkflowSearchPropsUpdater" />
       <property name="documentAccessRestrictionUpdater" ref="documentAccessRestrictionUpdater2" />
-<<<<<<< HEAD
-=======
       <property name="documentPartyPropsUpdater" ref="documentPartyPropsUpdater" />
       <property name="smitUpdater" value="${updater.version25To313.smitUpdater}" />
->>>>>>> develop-5.1
    </bean>
    
    <bean id="deleteNodesAfterConvertToDynamicDocumentUpdater" class="ee.webmedia.alfresco.document.bootstrap.DeleteNodesAfterConvertToDynamicDocumentUpdater" parent="abstractNodeUpdater" >
@@ -465,8 +445,6 @@
       <!-- batchSize should always be 1 for this updater, to minimize possible failures -->
       <property name="batchSize" value="1" />
    </bean>   
-<<<<<<< HEAD
-=======
    
    <!-- This updater should run only in SIM 3.13 environment to import missing delivererName that was erroneously not imported during 2.5 -> 3.13 migration. See cl task 215711 for details. -->
    <bean id="importDelivererName" class="ee.webmedia.alfresco.document.bootstrap.ImportDelivererName" parent="abstractNodeUpdater">
@@ -475,7 +453,6 @@
       <property name="enabled" value="${updater.version25To313.fixDelivererNameAfterUpdate.enabled}" /> 
       <property name="csvFileName" value="${updater.version25To313.fixDelivererNameAfterUpdate.csvFileName}" />
    </bean>   
->>>>>>> develop-5.1
 
    <bean id="registrationNumberReinventedUpdater" class="ee.webmedia.alfresco.document.bootstrap.RegistrationNumberReinventedUpdater" parent="abstractNodeUpdater">
       <property name="moduleId" value="simdhs" />
@@ -496,25 +473,6 @@
          </list>
       </property>
    </bean>
-<<<<<<< HEAD
-
-   <bean id="arrivedDocumentsPermissionsUpdateBootstrap3" class="ee.webmedia.alfresco.document.bootstrap.ArrivedDocumentsPermissionsUpdateBootstrap" parent="module.baseComponent">
-      <property name="moduleId" value="simdhs" />
-      <property name="executeOnceOnly" value="true" />
-      <property name="dependsOn">
-         <list>
-            <ref bean="createDynamicImapSubfoldersBootstrap" />
-            <ref bean="dvkCorruptDocumentPermissionsBootstrap" />
-            <ref bean="moveIncomingEinvoiceFolderBootstrap" />
-         </list>
-      </property>
-   </bean>
-
-   <bean id="fileMimetypeUpdater2" class="ee.webmedia.alfresco.document.bootstrap.FileMimetypeUpdater" parent="abstractNodeUpdater">
-      <property name="moduleId" value="simdhs" />
-      <property name="executeOnceOnly" value="true" />
-      <property name="enabled" value="false" /><!-- Executed only from node-browser -->
-=======
    
    <bean id="favoritesDeletedDocumentsUpdater4" class="ee.webmedia.alfresco.document.bootstrap.FavoritesDeletedDocumentsUpdater" parent="abstractNodeUpdater">
       <property name="moduleId" value="simdhs" />
@@ -536,24 +494,14 @@
    <bean id="searchableSendInfoUpdater" class="ee.webmedia.alfresco.document.bootstrap.SearchableSendInfoUpdater" parent="abstractNodeUpdater">
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
->>>>>>> develop-5.1
       <property name="dependsOn">
          <list>
             <ref bean="convertToDynamicDocumentsUpdater" />
          </list>
       </property>
-<<<<<<< HEAD
-      <property name="mimetypeService" ref="MimetypeService" />
-   </bean>
-
-   <!-- temp bean - might help to fix problems related to permission inheritance in PPA live environment -->
-   <bean id="ArrivedDocumentsPermissionsModifier" class="ee.webmedia.alfresco.document.bootstrap.ArrivedDocumentsPermissionsModifier" />
-
-=======
       <property name="sendOutService" ref="SendOutService" />
    </bean>
 
->>>>>>> develop-5.1
    <!-- START: web beans: -->
 
    <bean id="AssocsBlockBean" class="ee.webmedia.alfresco.document.associations.web.AssocsBlockBean" scope="session" />

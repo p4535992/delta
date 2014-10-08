@@ -19,11 +19,6 @@ import ee.webmedia.alfresco.document.web.evaluator.ViewStateActionEvaluator;
 
 /**
  * Base evaluator that decides if add association button should be visible for given {@link DocTypeAssocType}
-<<<<<<< HEAD
- * 
- * @author Ats Uiboupin
-=======
->>>>>>> develop-5.1
  */
 public abstract class BaseAddAssocEvaluator extends BaseActionEvaluator {
     private static final long serialVersionUID = 1L;

@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 <?xml version="1.0" encoding="UTF-8"?>
 <view:view 
    xmlns:view="http://www.alfresco.org/view/repository/1.0" 
@@ -11,17 +10,3 @@
    </param:stringParameter>
    
    </view:view>
-=======
-<?xml version="1.0" encoding="UTF-8"?>
-<view:view 
-   xmlns:view="http://www.alfresco.org/view/repository/1.0" 
-   xmlns:param="http://alfresco.webmedia.ee/model/parameters/1.0" 
->
-   <param:stringParameter view:childName="param:dvkFailedSendsResendTime">
-      <view:properties>
-         <param:value>00:30</param:value>
-      </view:properties>
-   </param:stringParameter>
-   
-   </view:view>
->>>>>>> develop-5.1

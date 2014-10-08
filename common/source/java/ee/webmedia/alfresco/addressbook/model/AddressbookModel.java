@@ -2,12 +2,6 @@ package ee.webmedia.alfresco.addressbook.model;
 
 import org.alfresco.service.namespace.QName;
 
-<<<<<<< HEAD
-/**
- * @author Keit Tehvan
- */
-=======
->>>>>>> develop-5.1
 public interface AddressbookModel {
     String URI = "http://alfresco.webmedia.ee/model/addressbook/1.0";
     String PREFIX = "ab:";
@@ -66,10 +60,7 @@ public interface AddressbookModel {
         QName SAP_ACCOUNT = QName.createQName(AddressbookModel.URI, "sapAccount");
         QName ENCRYPTION_PERSON_ID = QName.createQName(AddressbookModel.URI, "encryptionPersonId");
         QName MANAGEABLE_FOR_ADMIN = QName.createQName(AddressbookModel.URI, "manageableForAdmin");
-<<<<<<< HEAD
-=======
         QName DEC_TASK_CAPABLE = QName.createQName(AddressbookModel.URI, "decTaskCapable");
->>>>>>> develop-5.1
     }
 
     interface Aspects {
@@ -78,9 +69,6 @@ public interface AddressbookModel {
         QName TASK_CAPABLE = QName.createQName(AddressbookModel.URI, "taskCapable");
         QName ENCRYPTION_PERSON_ID = QName.createQName(AddressbookModel.URI, "encryptionPersonId");
         QName SKYPE = QName.createQName(AddressbookModel.URI, "skype");
-<<<<<<< HEAD
-=======
         QName DEC_TASK_CAPABLE = QName.createQName(AddressbookModel.URI, "decTaskCapable");
->>>>>>> develop-5.1
     }
 }

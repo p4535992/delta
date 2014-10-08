@@ -132,8 +132,6 @@
          </list>
       </property>
    </bean>
-<<<<<<< HEAD
-=======
    
    <bean id="registrationOnDocFormEnabledUpdater" class="ee.webmedia.alfresco.docadmin.bootstrap.RegistrationOnDocFormEnabledUpdater" parent="abstractNodeUpdater">
       <property name="moduleId" value="simdhs" />
@@ -143,7 +141,6 @@
          </list>
       </property>
    </bean>
->>>>>>> develop-5.1
 
    <bean id="thesauriFieldsUpdater" class="ee.webmedia.alfresco.docadmin.bootstrap.ThesauriFieldsUpdater" parent="abstractNodeUpdater" >
       <property name="moduleId" value="simdhs" />

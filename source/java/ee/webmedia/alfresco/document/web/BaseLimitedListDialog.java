@@ -13,12 +13,6 @@ import org.alfresco.web.bean.dialog.BaseDialogBean;
 import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
-<<<<<<< HEAD
-/**
- * @author Alar Kvell
- */
-=======
->>>>>>> develop-5.1
 public abstract class BaseLimitedListDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;
 

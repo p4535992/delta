@@ -463,8 +463,6 @@
       </property>
    </bean>
    
-<<<<<<< HEAD
-=======
    <bean id="sendModeClassificatorValueBootstrap2" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
       <property name="moduleId" value="common" />
       <property name="executeOnceOnly" value="true" />
@@ -508,7 +506,6 @@
       </property>
    </bean>
    
->>>>>>> develop-5.1
    <bean id="invoiceTypesClassificatorValueBootstrap1" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
       <property name="moduleId" value="common" />
       <property name="executeOnceOnly" value="true" />
@@ -601,10 +598,7 @@
       <property name="dependsOn">
          <list>
             <ref bean="classificatorRootBootstrap" />
-<<<<<<< HEAD
-=======
             <ref bean="insertDeltaPermissionsBootstrap" />
->>>>>>> develop-5.1
          </list>
       </property>
    </bean>

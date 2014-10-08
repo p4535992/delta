@@ -24,11 +24,6 @@ import ee.webmedia.alfresco.workflow.service.WorkflowUtil;
 /**
  * This custom renderer must be set to an HtmlPanelGroup that wraps a UIGenericPicker as the only child.
  * It writes the HTML to open the picker component in a modal dialog which is hidden by default.
-<<<<<<< HEAD
- * 
- * @author Erko Hansar
-=======
->>>>>>> develop-5.1
  */
 public class TaskListPickerRenderer extends BaseRenderer {
 

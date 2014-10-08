@@ -44,12 +44,6 @@ import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.utils.TreeNode;
 
-<<<<<<< HEAD
-/**
- * @author Aleksei Lissitsin
- */
-=======
->>>>>>> develop-5.1
 public class PostipoissDocumentsMapper {
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(PostipoissDocumentsMapper.class);
 

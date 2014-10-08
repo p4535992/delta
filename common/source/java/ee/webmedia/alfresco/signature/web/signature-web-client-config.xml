@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 <alfresco-config>
    <config>
       <actions>
@@ -59,65 +58,3 @@
       </dialogs>
    </config>
 </alfresco-config>
-=======
-<alfresco-config>
-   <config>
-      <actions>
-
-         <action id="sign_doc">
-            <permissions>
-               <permission allow="true">ReadProperties</permission>
-               <permission allow="true">ReadContent</permission>
-            </permissions>
-            <evaluator>ee.webmedia.alfresco.signature.web.SignatureActionEvaluator</evaluator>
-            <label-id>ddoc_signature_sign</label-id>
-            <image>/images/icons/ddoc_sign_small.gif</image>
-            <action>dialog:signatureDialog</action>
-            <action-listener> #{BrowseBean.setupContentAction}</action-listener>
-            <params>
-               <param name="id">#{actionContext.id}</param>
-            </params>
-         </action>
-
-         <action id="sign_space">
-            <permissions>
-               <permission allow="true">ReadProperties</permission>
-               <permission allow="true">ReadChildren</permission>
-               <permission allow="true">CreateChildren</permission>
-            </permissions>
-            <label-id>ddoc_signature_sign</label-id>
-            <image>/images/icons/ddoc_sign_small.gif</image>
-            <action>dialog:signatureDialog</action>
-            <action-listener> #{BrowseBean.setupContentAction}</action-listener>
-            <params>
-               <param name="id">#{actionContext.id}</param>
-            </params>
-         </action>
-
-         <action-group id="doc_details_actions">
-            <action idref="sign_doc" />
-         </action-group>
-
-         <action-group id="document_browse_menu">
-            <action idref="sign_doc" />
-         </action-group>
-
-         <action-group id="space_details_actions">
-            <action idref="sign_space" />
-         </action-group>
-
-         <action-group id="space_browse_menu">
-            <action idref="sign_space" />
-         </action-group>
-
-      </actions>
-      <dialogs>
-
-         <dialog name="signatureDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/signature/web/signature-dialog.jsp" managed-bean="SignatureDialog"
-            icon="/images/icons/ddoc_sign_large.gif" title-id="ddoc_signature_signing" description-id="ddoc_signature_description" show-ok-button="false">
-         </dialog>
-
-      </dialogs>
-   </config>
-</alfresco-config>
->>>>>>> develop-5.1

@@ -3,7 +3,6 @@ Index: source/java/org/alfresco/web/ui/common/component/UIGenericPicker.java
 --- source/java/org/alfresco/web/ui/common/component/UIGenericPicker.java	(revision 149091)
 +++ source/java/org/alfresco/web/ui/common/component/UIGenericPicker.java	(working copy)
 @@ -338,20 +338,6 @@
-<<<<<<< HEAD
        if (this.currentResults != null && getShowContains() == true)
        {
           out.write("<tr><td colspan=3>");
@@ -24,25 +23,3 @@ Index: source/java/org/alfresco/web/ui/common/component/UIGenericPicker.java
           out.write("<a href='#' onclick=\"");
           out.write(generateFormSubmit(context, ACTION_CLEAR));
           out.write("\">");
-=======
-       if (this.currentResults != null && getShowContains() == true)
-       {
-          out.write("<tr><td colspan=3>");
--         String resultsMsg;
--         if (getShowFilter() == false)
--         {
--            resultsMsg = MessageFormat.format(bundle.getString(MSG_RESULTS1),
--                  new Object[] {Utils.encode(this.contains)});
--         }
--         else
--         {
--            String filterMsg = this.filters[this.filterIndex].getLabel();
--            resultsMsg = MessageFormat.format(bundle.getString(MSG_RESULTS2),
--                  new Object[] {Utils.encode(this.contains), filterMsg});
--         }
--         out.write(resultsMsg);
--         out.write("&nbsp;");
-          out.write("<a href='#' onclick=\"");
-          out.write(generateFormSubmit(context, ACTION_CLEAR));
-          out.write("\">");
->>>>>>> develop-5.1

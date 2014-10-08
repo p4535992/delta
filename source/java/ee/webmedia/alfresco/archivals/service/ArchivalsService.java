@@ -3,29 +3,17 @@ package ee.webmedia.alfresco.archivals.service;
 import java.util.Date;
 import java.util.List;
 
-<<<<<<< HEAD
-=======
 import javax.faces.event.ActionEvent;
 
->>>>>>> develop-5.1
 import org.alfresco.service.cmr.repository.NodeRef;
 
 import ee.webmedia.alfresco.archivals.model.ActivityStatus;
 import ee.webmedia.alfresco.archivals.model.ActivityType;
-<<<<<<< HEAD
-=======
 import ee.webmedia.alfresco.archivals.model.ArchiveJobStatus;
->>>>>>> develop-5.1
 import ee.webmedia.alfresco.archivals.web.ArchivalActivity;
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.functions.model.Function;
 
-<<<<<<< HEAD
-/**
- * @author Romet Aidla
- */
-=======
->>>>>>> develop-5.1
 public interface ArchivalsService {
     String BEAN_NAME = "ArchivalsService";
 
@@ -39,13 +27,7 @@ public interface ArchivalsService {
 
     NodeRef addArchivalActivity(ActivityType activityType, ActivityStatus activityStatus, List<NodeRef> volumeRefs, NodeRef templateRef);
 
-<<<<<<< HEAD
-    void archiveVolumesOrCaseFiles(List<NodeRef> volumesToArchive);
-
-    NodeRef archiveVolumeOrCaseFile(NodeRef volumeNodeRef);
-=======
     void archiveVolumeOrCaseFile(NodeRef volumeNodeRef);
->>>>>>> develop-5.1
 
     void setNewReviewDate(List<NodeRef> volumes, Date reviewDate, NodeRef activityRef);
 
@@ -65,8 +47,6 @@ public interface ArchivalsService {
 
     List<File> getArchivalActivityFiles(NodeRef archivalActivityRef);
 
-<<<<<<< HEAD
-=======
     NodeRef getArchivalRoot();
 
     List<NodeRef> getAllInQueueJobs();
@@ -93,5 +73,4 @@ public interface ArchivalsService {
 
     void continueArchiving(ActionEvent event);
 
->>>>>>> develop-5.1
 }

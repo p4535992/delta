@@ -7,11 +7,6 @@ import org.alfresco.web.bean.repository.Node;
 
 /**
  * Evaluator, that evaluates to true if user is admin or archivist
-<<<<<<< HEAD
- * 
- * @author Alar Kvell
-=======
->>>>>>> develop-5.1
  */
 public class ArchivistEvaluator extends BaseActionEvaluator {
     private static final long serialVersionUID = 1L;

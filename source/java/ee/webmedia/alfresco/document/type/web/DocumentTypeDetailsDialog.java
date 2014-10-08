@@ -14,11 +14,6 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
  * Form backing bean for DocumentType details view
-<<<<<<< HEAD
- * 
- * @author Ats Uiboupin
-=======
->>>>>>> develop-5.1
  */
 public class DocumentTypeDetailsDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;

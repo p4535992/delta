@@ -147,10 +147,7 @@
                <view:value>recipientEmail</view:value>
                <view:value>recipientStreetHouse</view:value>
                <view:value>recipientPostalCity</view:value>
-<<<<<<< HEAD
-=======
                <view:value>recipientId</view:value>
->>>>>>> develop-5.1
             </view:values>
          </docadmin:fieldDefinitionIds>
       </view:properties>
@@ -171,10 +168,7 @@
                <view:value>additionalRecipientEmail</view:value>
                <view:value>additionalRecipientStreetHouse</view:value>
                <view:value>additionalRecipientPostalCity</view:value>
-<<<<<<< HEAD
-=======
                <view:value>additionalRecipientId</view:value>
->>>>>>> develop-5.1
             </view:values>
          </docadmin:fieldDefinitionIds>
       </view:properties>

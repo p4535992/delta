@@ -39,13 +39,6 @@ import ee.webmedia.alfresco.volume.model.VolumeModel;
 import ee.webmedia.alfresco.volume.search.model.VolumeSearchModel;
 import ee.webmedia.alfresco.volume.search.web.VolumeDynamicSearchDialog;
 
-<<<<<<< HEAD
-/**
- * @author Martti Tamm
- * @author Alar Kvell
- */
-=======
->>>>>>> develop-5.1
 public class EventPlanDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;
 

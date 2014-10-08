@@ -78,11 +78,7 @@
    <bean class="ee.webmedia.alfresco.docdynamic.service.DocumentDynamicTypeMenuItemProcessor">
       <property name="menuService" ref="MenuService" />
       <property name="documentAdminService" ref="DocumentAdminService" />
-<<<<<<< HEAD
-      <property name="permissionService" ref="PermissionService" />
-=======
       <property name="privilegeService" ref="PrivilegeService" />
->>>>>>> develop-5.1
    </bean>
 
    <!-- Fixes encoding on HTML files (CL task 196507) -->
@@ -119,10 +115,7 @@
    when it is quaranteed that documentUpdater9 also runs (it performs the same functionality) -->
    <bean id="documentCompWorkflowSearchPropsUpdater" class="ee.webmedia.alfresco.docdynamic.bootstrap.DocumentCompWorkflowSearchPropsUpdater" parent="abstractNodeUpdater">
       <property name="moduleId" value="simdhs" />
-<<<<<<< HEAD
-=======
       <property name="enabled" value="false" />
->>>>>>> develop-5.1
       <property name="executeOnceOnly" value="true" />
        <property name="dependsOn">
          <list>
@@ -185,9 +178,6 @@
          </list>
       </property>
       <property name="delete" value="true" /> <!-- Should be set true only in 3.11 branch -->
-<<<<<<< HEAD
-   </bean>   
-=======
    </bean>
    
    <bean id="documentPartyPropsUpdater" class="ee.webmedia.alfresco.docdynamic.bootstrap.DocumentPartyPropsUpdater" parent="abstractNodeUpdater">
@@ -200,7 +190,6 @@
          </list>
       </property>
    </bean>
->>>>>>> develop-5.1
 
    <bean id="deleteDraftsBootstrap" class="ee.webmedia.alfresco.docdynamic.bootstrap.DeleteDraftsBootstrap" parent="module.baseComponent">
       <property name="moduleId" value="simdhs" />
@@ -215,15 +204,12 @@
       <property name="transactionService" ref="TransactionService" />
    </bean>
 
-<<<<<<< HEAD
-=======
    <bean id="invalidShortRegNumberUpdater" class="ee.webmedia.alfresco.docdynamic.bootstrap.InvalidShortRegNumberUpdater" parent="abstractNodeUpdater">
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
       <property name="enabled" value="false" /><!-- Executed manually from node-browser -->
    </bean>   
 
->>>>>>> develop-5.1
    <!-- START: web beans: -->
 
    <bean id="DocumentDynamicDialog" class="ee.webmedia.alfresco.docdynamic.web.DocumentDynamicDialog" scope="session" />

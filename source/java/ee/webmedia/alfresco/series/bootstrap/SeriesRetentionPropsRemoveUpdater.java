@@ -19,11 +19,6 @@ import ee.webmedia.alfresco.utils.SearchUtil;
 
 /**
  * CL 204311
-<<<<<<< HEAD
- * 
- * @author Alar Kvell
-=======
->>>>>>> develop-5.1
  */
 public class SeriesRetentionPropsRemoveUpdater extends AbstractNodeUpdater {
 

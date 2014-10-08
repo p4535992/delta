@@ -10,12 +10,6 @@ import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.Transformer;
 import ee.webmedia.alfresco.utils.UserUtil;
 
-<<<<<<< HEAD
-/**
- * @author Keit Tehvan
- */
-=======
->>>>>>> develop-5.1
 class SubstituteInfoTransformer extends Transformer<UIComponent, String> implements Serializable {
 
     private static final long serialVersionUID = 1L;

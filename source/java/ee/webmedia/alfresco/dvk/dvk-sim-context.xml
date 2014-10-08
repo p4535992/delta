@@ -18,24 +18,8 @@
       <property name="fileService" ref="FileService" />
       <property name="workflowService" ref="WmWorkflowService" />
       <property name="notificationService" ref="NotificationService" />
-<<<<<<< HEAD
-      <property name="einvoiceService" ref="EInvoiceService" />       
-   </bean>
-
-   <bean id="dvkCorruptDocumentPermissionsBootstrap" class="ee.webmedia.alfresco.dvk.bootstrap.DvkCorruptDocumentPermissionsBootstrap" parent="module.baseComponent">
-      <property name="moduleId" value="simdhs" />
-      <property name="executeOnceOnly" value="true" />
-      <property name="dependsOn">
-         <list>
-            <ref bean="dvkSpacesBootstrap" />
-         </list>
-      </property>
-      <property name="generalService" ref="GeneralService" />
-      <property name="dvkCorruptDocumentsPath" value="${dvk.received.parent.folder.xpath}${dvk.corrupt.folder.name}" />
-=======
       <property name="einvoiceService" ref="EInvoiceService" />
       <property name="documentAdminService" ref="DocumentAdminService" />
->>>>>>> develop-5.1
    </bean>
 
    <!-- START: web beans: -->

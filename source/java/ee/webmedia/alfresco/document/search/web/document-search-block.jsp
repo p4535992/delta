@@ -17,11 +17,7 @@
       
 <a:panel label="#{DialogManager.bean.search.searchBlockTitle}" id="docsearch-panel" styleClass="panel-100" progressive="true"
       facetsId="dialog:dialog-body:docsearch-panel-facets">
-<<<<<<< HEAD
-   <h:panelGrid width="100%" id="docsearch-panelGrid" >
-=======
    <h:panelGrid width="100%" id="docsearch-panelGrid" columns="1">
->>>>>>> develop-5.1
       <a:panel id="docsearch-button">
          <f:verbatim>
             <script type="text/javascript">

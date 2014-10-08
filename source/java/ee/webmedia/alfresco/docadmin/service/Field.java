@@ -1,23 +1,16 @@
 package ee.webmedia.alfresco.docadmin.service;
 
-<<<<<<< HEAD
-import java.util.ArrayList;
-=======
 import static ee.webmedia.alfresco.utils.TextUtil.joinNonBlankStringsWithComma;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
->>>>>>> develop-5.1
 import java.util.Collection;
 import java.util.List;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
-<<<<<<< HEAD
-=======
 import org.alfresco.web.ui.common.Utils;
->>>>>>> develop-5.1
 import org.apache.commons.lang.StringUtils;
 import org.springframework.util.Assert;
 
@@ -37,11 +30,6 @@ import ee.webmedia.alfresco.utils.RepoUtil;
 
 /**
  * Field that is stored under {@link DocumentTypeVersion} or {@link FieldGroup}, but not under /fieldDefinitions folder
-<<<<<<< HEAD
- * 
- * @author Ats Uiboupin
-=======
->>>>>>> develop-5.1
  */
 public class Field extends FieldAndGroupBase {
     private static final long serialVersionUID = 1L;
@@ -99,14 +87,6 @@ public class Field extends FieldAndGroupBase {
         if (additionalInfoDefaultValue == null) {
             additionalInfoDefaultValue = "";
         }
-<<<<<<< HEAD
-        MessageData msgData = new MessageDataImpl("docType_metadataList_additInfo_field"
-                , MessageUtil.getMessage(getFieldTypeEnum()) // type
-                , additionalInfoDefaultValue // defaultValue
-                , new MessageDataImpl("docType_metadataList_additInfo_field_systematic_" + isSystematic())
-                , new MessageDataImpl("docType_metadataList_additInfo_field_mandatory_" + isMandatory())
-                );
-=======
         List<Object> messageValueHolders = new ArrayList<Object>(Arrays.asList(MessageUtil.getMessage(getFieldTypeEnum()) // type
                 , additionalInfoDefaultValue // defaultValue
                 , new MessageDataImpl("docType_metadataList_additInfo_field_systematic_" + isSystematic())
@@ -134,7 +114,6 @@ public class Field extends FieldAndGroupBase {
             messageValueHolders.add("");
         }
         MessageData msgData = new MessageDataImpl("docType_metadataList_additInfo_field", messageValueHolders);
->>>>>>> develop-5.1
         return MessageUtil.getMessage(msgData);
     }
 
@@ -331,8 +310,6 @@ public class Field extends FieldAndGroupBase {
         setProp(DocumentAdminModel.Props.ORIGINAL_FIELD_ID, originalFieldId);
     }
 
-<<<<<<< HEAD
-=======
     @SuppressWarnings("unchecked")
     public final List<String> getRelatedIncomingDecElement() {
         List<String> list = (List<String>) getNode().getProperties().get(DocumentAdminModel.Props.RELATED_INCOMING_DEC_ELEMENT);
@@ -353,7 +330,6 @@ public class Field extends FieldAndGroupBase {
         setProp(DocumentAdminModel.Props.RELATED_OUTGOING_DEC_ELEMENT, (Serializable) relatedOutgoingDecElement);
     }
 
->>>>>>> develop-5.1
     public MappingRestriction getMappingRestrictionEnum() {
         return getEnumFromValue(MappingRestriction.class, getMappingRestriction());
     }

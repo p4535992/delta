@@ -15,11 +15,6 @@ import ee.webmedia.alfresco.utils.MessageCreatorHelper.ErrorMsgFormat;
 
 /**
  * Generates a input that is converted to QName. QName namespace is given with namespace attribute
-<<<<<<< HEAD
- * 
- * @author Ats Uiboupin
-=======
->>>>>>> develop-5.1
  */
 public class QNameLocalNameGenerator extends TextFieldGenerator implements HandlesViewMode {
     private static final String ATTR_NAMESPACE = "namespace";

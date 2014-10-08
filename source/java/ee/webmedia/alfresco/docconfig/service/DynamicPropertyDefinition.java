@@ -8,11 +8,6 @@ import ee.webmedia.alfresco.docadmin.service.DocumentTypeVersion;
 
 /**
  * Property definition that isn't globally the same, but some of it's behavior depends on the {@link DocumentTypeVersion}.
-<<<<<<< HEAD
- * 
- * @author Alar Kvell
-=======
->>>>>>> develop-5.1
  */
 public interface DynamicPropertyDefinition extends PropertyDefinition {
 

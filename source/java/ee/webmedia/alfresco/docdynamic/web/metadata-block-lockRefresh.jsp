@@ -7,21 +7,13 @@
 
 <f:verbatim>
 <script type="text/javascript" id="metaLockRefreshScript" >
-<<<<<<< HEAD
-=======
 var finishButtonClicked = false;
 var excludedElementsIds = new Array("dialog:finish-button","dialog:finish-button-2","dialog:cancel-button","dialog:cancel-button-2","dialog:documentRegisterButton","dialog:documentRegisterButton-2");
->>>>>>> develop-5.1
 $jQ(document).ready(function(){
    var lockingAllowed = <%= BeanHelper.getDocumentLockHelperBean().isLockingAllowed() %>;
    if(lockingAllowed){
       var clientLockRefreshFrequency = <%= BeanHelper.getDocumentLockHelperBean().getLockExpiryPeriod() %>;
       setTimeout(requestForLockRefresh, clientLockRefreshFrequency/3); // We need to lock sooner for the first time (add file dialog etc.)
-<<<<<<< HEAD
-   }
-});
-
-=======
       disableUnlockOnExcludedElements();
       disableUnlockOnExtraButtons();
    }
@@ -56,7 +48,6 @@ function disableUnlockOnElement(element) {
       });
    }
 }
->>>>>>> develop-5.1
 function requestForLockRefresh() {
    var uri = getContextPath() + '/ajax/invoke/DocumentLockHelperBean.refreshLockClientHandler';
    $jQ.ajax({
@@ -84,8 +75,6 @@ function requestForLockRefreshSuccess(xml) {
 function requestForLockRefreshFailure() {
    $jQ.log("Refreshing lock in server side failed");
 }
-<<<<<<< HEAD
-=======
 $jQ(window).on('beforeunload', function(){
    if(finishButtonClicked) {
 	  return;
@@ -97,6 +86,5 @@ $jQ(window).on('beforeunload', function(){
       async: false
    });
 });
->>>>>>> develop-5.1
 </script>
 </f:verbatim>

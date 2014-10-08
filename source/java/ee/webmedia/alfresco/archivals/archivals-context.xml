@@ -112,9 +112,6 @@
             </props>
          </list>
       </property>
-<<<<<<< HEAD
-   </bean>   
-=======
    </bean> 
    
    <bean id="archivalsSpacesBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
@@ -131,7 +128,6 @@
          </list>
       </property>
    </bean>
->>>>>>> develop-5.1
    
     <bean id="archivalsWebClientConfigBootstrap" class="org.alfresco.web.config.WebClientConfigBootstrap" init-method="init" depends-on="commonWebClientConfigBootstrap">
       <property name="configs">

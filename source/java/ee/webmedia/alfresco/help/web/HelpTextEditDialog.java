@@ -37,11 +37,6 @@ import ee.webmedia.alfresco.utils.WebUtil;
  * Dialog for adding and editing an help text. There are three types of help texts: for dialogs, document types and fields.
  * <p>
  * Specification: <i>Kontekstitundlik abiinfo</i>.
-<<<<<<< HEAD
- * 
- * @author Martti Tamm
-=======
->>>>>>> develop-5.1
  */
 public class HelpTextEditDialog extends BaseDialogBean implements BeanNameAware {
 

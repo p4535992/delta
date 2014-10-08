@@ -17,10 +17,7 @@ import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.ui.common.converter.MultiValueConverter;
-<<<<<<< HEAD
-=======
 import org.apache.commons.collections4.CollectionUtils;
->>>>>>> develop-5.1
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.FastDateFormat;
 
@@ -35,12 +32,9 @@ public class TextUtil {
     private static final FastDateFormat DATE_FORMAT = FastDateFormat.getInstance("dd.MM.yyyy");
 
     public static String joinNonBlankStringsWithComma(Collection<String> values) {
-<<<<<<< HEAD
-=======
         if (CollectionUtils.isEmpty(values)) {
             return "";
         }
->>>>>>> develop-5.1
         return joinNonBlankStrings(values, ", ");
     }
 
@@ -282,11 +276,7 @@ public class TextUtil {
         } else if (value instanceof Date) {
             result = DATE_FORMAT.format((Date) value);
         } else {
-<<<<<<< HEAD
-            result = value.toString(); // TODO Alar: do Long and Double need specific formatting?
-=======
             result = value.toString(); // TODO do Long and Double need specific formatting?
->>>>>>> develop-5.1
         }
         return result;
     }

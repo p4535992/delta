@@ -70,8 +70,6 @@
          <parent>doccom:metadataContainer</parent>
       </type>
 
-<<<<<<< HEAD
-=======
       <type name="docchild:applicantErrand">
          <parent>doccom:metadataContainer</parent>
          <associations>
@@ -93,7 +91,6 @@
          <parent>doccom:metadataContainer</parent>
       </type>
 
->>>>>>> develop-5.1
    </types>
    <aspects>
 
@@ -161,8 +158,6 @@
          </associations>
       </aspect>
 
-<<<<<<< HEAD
-=======
       <aspect name="docchild:applicantErrandContainer">
          <associations>
             <child-association name="docchild:applicantErrand">
@@ -179,7 +174,6 @@
          </associations>
       </aspect>
 
->>>>>>> develop-5.1
    </aspects>
 
 </model>

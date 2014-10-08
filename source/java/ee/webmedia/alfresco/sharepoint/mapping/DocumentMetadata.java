@@ -4,10 +4,7 @@ import static org.apache.commons.lang.StringUtils.trimToNull;
 
 import java.io.File;
 import java.util.ArrayList;
-<<<<<<< HEAD
-=======
 import java.util.Arrays;
->>>>>>> develop-5.1
 import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedHashSet;
@@ -20,10 +17,7 @@ import org.alfresco.service.namespace.QName;
 import org.apache.commons.lang.StringUtils;
 import org.dom4j.Element;
 
-<<<<<<< HEAD
-=======
 import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
->>>>>>> develop-5.1
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.sharepoint.DocumentImporter.DocumentHistory;
 import ee.webmedia.alfresco.sharepoint.DocumentImporter.VolumeCase;
@@ -57,13 +51,10 @@ public abstract class DocumentMetadata {
 
     protected Date modified;
 
-<<<<<<< HEAD
-=======
     protected String additionalRegDateTime;
 
     protected String overwriteDocStatus;
 
->>>>>>> develop-5.1
     protected List<ImportFile> files = new ArrayList<ImportFile>(1);
 
     protected List<String> assocs;
@@ -126,8 +117,6 @@ public abstract class DocumentMetadata {
         return modifier;
     }
 
-<<<<<<< HEAD
-=======
     public String getAdditionalRegDateTime() {
         return additionalRegDateTime;
     }
@@ -136,7 +125,6 @@ public abstract class DocumentMetadata {
         return overwriteDocStatus;
     }
 
->>>>>>> develop-5.1
     public List<ImportFile> getFiles() {
         return files;
     }
@@ -225,8 +213,6 @@ public abstract class DocumentMetadata {
             created = ImportUtil.getDateTime(form.elementTextTrim("Create_Time"));
             modified = ImportUtil.getDateTime(form.elementTextTrim("Edit_Time"));
 
-<<<<<<< HEAD
-=======
             List<String> additionalRegDateTimeMappingsFrom = Arrays.asList("Doc_date", "Document_date", "Create_Time", "Arrive_date");
             for (String fromElement : additionalRegDateTimeMappingsFrom) {
                 additionalRegDateTime = trimToNull(form.elementTextTrim(fromElement));
@@ -243,7 +229,6 @@ public abstract class DocumentMetadata {
                 overwriteDocStatus = DocumentStatus.WORKING.getValueName();
             }
 
->>>>>>> develop-5.1
             List<DocumentHistory> tmpHistory = new ArrayList<DocumentHistory>();
 
             if (form.element("HistoryList") != null) {
@@ -274,23 +259,6 @@ public abstract class DocumentMetadata {
             modifier = !tmpHistory.isEmpty() ? tmpHistory.get(tmpHistory.size() - 1).getCreator() : null;
             history = tmpHistory;
 
-<<<<<<< HEAD
-            Element fileElem = form.element("Original_file");
-            if (fileElem == null) {
-                fileElem = form.element("File");
-            }
-
-            if (fileElem != null) {
-                File file = new File(dirFiles, fileElem.attributeValue("guid_name"));
-                if (!file.exists()) {
-                    file = new File(dirFiles, fileElem.attributeValue("guid_name").toLowerCase());
-                    if (!file.exists()) {
-                        file = new File(dirFiles, fileElem.attributeValue("guid_name").toUpperCase());
-                    }
-                }
-                files.add(new ImportFile(fileElem.attributeValue("filename"), file, created, creator, modified, modifier));
-            }
-=======
             for (String elementName : Arrays.asList("Original_file", "File", "Answer_file", "Related_file1", "Related_file2")) {
                 for (Element fileElem : (List<Element>) form.elements(elementName)) {
                     String filename = fileElem.attributeValue("guid_name");
@@ -322,7 +290,6 @@ public abstract class DocumentMetadata {
                 }
             }
             files.add(new ImportFile(title, file, created, creator, modified, modifier));
->>>>>>> develop-5.1
         }
 
         @Override

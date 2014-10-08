@@ -4,12 +4,6 @@ import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.signature.model.SignatureChallenge;
 import ee.webmedia.alfresco.signature.model.SignatureDigest;
 
-<<<<<<< HEAD
-/**
- * @author Dmitri Melnikov
- */
-=======
->>>>>>> develop-5.1
 public class SignatureTask extends Task {
     private static final long serialVersionUID = 1L;
 

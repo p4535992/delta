@@ -141,11 +141,7 @@ public class UploadFileServlet extends BaseServlet
          if (bean == null) {
              bean = new FileUploadBean();
          } else {
-<<<<<<< HEAD
-             // FXIME: Kaarel, miks multiple=true määratakse? ma tegin hetkel häki, et kui problematicFile, siis ei tehtaks seda
-=======
              // FXIME: miks multiple=true määratakse? ma tegin hetkel häki, et kui problematicFile, siis ei tehtaks seda
->>>>>>> develop-5.1
              if(!bean.isProblematicFile()) {
                  bean.setMultiple(true);
              }

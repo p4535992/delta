@@ -16,12 +16,6 @@ import ee.webmedia.alfresco.base.BaseService.Effort;
 import ee.webmedia.alfresco.docadmin.service.DocumentAdminServiceImpl.ImportHelper;
 import ee.webmedia.alfresco.utils.MessageData;
 
-<<<<<<< HEAD
-/**
- * @author Ats Uiboupin
- */
-=======
->>>>>>> develop-5.1
 public interface DocumentAdminService {
 
     String BEAN_NAME = "DocumentAdminService";
@@ -89,11 +83,7 @@ public interface DocumentAdminService {
      */
     <D extends DynamicType> D getDynamicType(Class<D> dynTypeClass, NodeRef dynTypeRef, DynTypeLoadEffort effort);
 
-<<<<<<< HEAD
-    <D extends DynamicType> Pair<D, MessageData> saveOrUpdateDynamicType(D docType);
-=======
     <D extends DynamicType> Pair<D, MessageData> saveOrUpdateDynamicType(D docType, boolean isDocumentTypesImport);
->>>>>>> develop-5.1
 
     <D extends DynamicType> D createNewUnSavedDynamicType(Class<D> dynamicTypeClass);
 
@@ -110,11 +100,7 @@ public interface DocumentAdminService {
 
     <F extends Field> F saveOrUpdateField(F originalFieldDef);
 
-<<<<<<< HEAD
-    List<FieldDefinition> saveOrUpdateFieldDefinitions(Collection<FieldDefinition> fieldDefinitions);
-=======
     List<FieldDefinition> saveOrUpdateFieldDefinitions(Collection<FieldDefinition> fieldDefinitions, boolean isDocumentTypesImport);
->>>>>>> develop-5.1
 
     List<FieldDefinition> getFieldDefinitions();
 
@@ -134,11 +120,7 @@ public interface DocumentAdminService {
 
     Field getField(NodeRef fieldDefRef);
 
-<<<<<<< HEAD
-    void deleteFieldDefinition(NodeRef fieldDefRef);
-=======
     void deleteFieldDefinition(Field field);
->>>>>>> develop-5.1
 
     void addSystematicMetadataItems(DocumentTypeVersion docVer);
 
@@ -279,9 +261,6 @@ public interface DocumentAdminService {
 
     Map<String, DocumentTypeVersion> getLatestDocTypeVersions();
 
-<<<<<<< HEAD
-=======
     void registerDocumentTypeValidator(String validatorKey, DocumentTypeValidator documentTypeValidator);
 
->>>>>>> develop-5.1
 }

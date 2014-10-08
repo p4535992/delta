@@ -10,14 +10,9 @@
 <%@ page import="ee.webmedia.alfresco.document.file.web.AddFileDialog"%>
 <%@ page import="org.alfresco.web.app.Application" %>
 
-<<<<<<< HEAD
-<%
-   String webdavOpenMode = "webdav-" + (Application.getDialogManager().getBean() instanceof AddFileDialog? "readOnly": "open") + " condence50- strictTrim tooltip";
-=======
 
 <%
    boolean readOnly = Application.getDialogManager().getBean() instanceof AddFileDialog;
->>>>>>> develop-5.1
 %>
 
 <h:panelGroup id="files-panel-facets">
@@ -38,10 +33,6 @@
 
 <a:panel label="#{msg.file_title} (#{FileBlockBean.activeFilesCount})" id="files-panel" facetsId="dialog:dialog-body:files-panel-facets" styleClass="panel-100" progressive="true"
    expanded="<%=new Boolean(!(Application.getDialogManager().getBean() instanceof AddFileDialog)).toString() %>">
-<<<<<<< HEAD
-
-=======
->>>>>>> develop-5.1
    <a:richList id="filelistList" viewMode="details" value="#{FileBlockBean.files}" var="r" rowStyleClass="recordSetRow"
       altRowStyleClass="recordSetRowAlt" width="100%" refreshOnBind="true">
 
@@ -53,16 +44,11 @@
          <f:facet name="small-icon">
             <h:panelGroup>
                <wm:docPermissionEvaluator id="col1-act1-eval-allow" value="#{r.node}" allow="viewDocumentFiles">
-<<<<<<< HEAD
-                  <a:actionLink id="col1-act1" value="#{r.displayName}" href="#{r.downloadUrl}" target="_blank" image="#{r.fileType16}" showLink="false"
-                     styleClass='<%="inlineAction " + webdavOpenMode %>' />
-=======
                   <a:actionLink id="col1-act1-1" value="#{r.displayName}" href="#{r.readOnlyUrl}" target="_blank" image="#{r.fileType16}" showLink="false"
                      styleClass="inlineAction condence50- strictTrim tooltip" rendered="<%=Boolean.toString(readOnly) %>" />
                   <%-- Don't specify an explicit ID to this link so it can have a generated clientId --%>
                   <a:actionLink value="#{r.displayName}" href="#{r.downloadUrl}" target="_blank" image="#{r.fileType16}" showLink="false"
                      styleClass="inlineAction condence50- strictTrim tooltip webdav-open" rendered="<%=Boolean.toString(!readOnly) %>" />
->>>>>>> develop-5.1
                </wm:docPermissionEvaluator>
                <wm:docPermissionEvaluator id="col1-act1-eval-deny" value="#{r.node}" deny="viewDocumentFiles">
                   <h:graphicImage id="col1-act1-deny" value="#{r.fileType16}" />
@@ -70,12 +56,8 @@
             </h:panelGroup>
          </f:facet>
          <wm:docPermissionEvaluator id="col1-act2-eval-allow" value="#{r.node}" allow="viewDocumentFiles">
-<<<<<<< HEAD
-            <a:actionLink id="col1-act2" value="#{r.displayName}" href="#{r.downloadUrl}" target="_blank" styleClass="<%=webdavOpenMode %>" />
-=======
             <a:actionLink id="col1-act2-1" value="#{r.displayName}" href="#{r.readOnlyUrl}" target="_blank" styleClass="condence50- strictTrim tooltip" rendered="<%=Boolean.toString(readOnly) %>" />
             <a:actionLink id="col1-act2-2" value="#{r.displayName}" href="#{r.downloadUrl}" target="_blank" styleClass="condence50- strictTrim tooltip webdav-open" rendered="<%=Boolean.toString(!readOnly) %>" />
->>>>>>> develop-5.1
          </wm:docPermissionEvaluator>
          <wm:docPermissionEvaluator id="col1-act2a-eval-deny" value="#{r.node}" deny="viewDocumentFiles">
             <h:outputText id="col1-act2a-eval-deny-txt" value="#{r.displayName}" />
@@ -139,13 +121,10 @@
 
       <%-- Remove and Version column --%>
       <a:column id="col7" rendered="#{FileBlockBean.inWorkspace and r.activeAndNotDigiDoc and DialogManager.bean != AddFileDialog}">
-<<<<<<< HEAD
-=======
          <a:actionLink id="col7-act36" value="#{r.activeLockOwner}" actionListener="#{FileBlockBean.unlock}" showLink="false"
             image="/images/icons/lock-unlock.png" tooltip="#{msg.file_unlock}" rendered="#{AuthenticationService.currentUserName == r.activeLockOwner}">
             <f:param name="nodeRef" value="#{r.nodeRef}" />
          </a:actionLink>
->>>>>>> develop-5.1
          <a:actionLink id="col7-act33" value="#{r.name}" actionListener="#{FileBlockBean.toggleActive}" showLink="false"
             image="/images/icons/document-convert.png" tooltip="#{msg.file_toggle_deactive} " rendered="#{FileBlockBean.toggleActive}">
             <f:param name="nodeRef" value="#{r.nodeRef}" />
@@ -177,19 +156,11 @@
             </a:actionLink>
          </wm:docPermissionEvaluator>
          <wm:docPermissionEvaluator id="col7-act5-eval" value="#{r.node}" allow="viewDocumentFiles">
-<<<<<<< HEAD
-            <a:actionLink id="col7-act5-iframe" value="#{r.name}" actionListener="#{FileBlockBean.viewPdf}" showLink="false"
-               image="/images/icons/file-small-gray.png" tooltip="#{msg.file_view_pdf}" rendered="#{r.pdf}">
-               <f:param name="nodeRef" value="#{r.nodeRef}" />
-            </a:actionLink>
-            <a:actionLink id="col7-act5-download" value="#{r.name}" href="#{r.downloadUrl}" target="_blank" styleClass="<%=webdavOpenMode %>" showLink="false"
-=======
             <a:actionLink id="col7-act5-iframe" value="#{r.name}" actionListener="#{FileBlockBean.viewPdf}" showLink="false" styleClass="pdf-file-open-block"
                image="/images/icons/file-small-gray.png" tooltip="#{msg.file_open_pdf_block}" rendered="#{r.pdf}">
                <f:param name="nodeRef" value="#{r.nodeRef}" />
             </a:actionLink>
             <a:actionLink id="col7-act5-download" value="#{r.name}" href="#{r.downloadUrl}" target="_blank" styleClass="srictTrim tooltip pdf-file-download" showLink="false"
->>>>>>> develop-5.1
                image="/images/icons/file-small-gray.png" tooltip="#{msg.file_view_pdf}" rendered="#{r.pdf}"/>            
          </wm:docPermissionEvaluator>         
       </a:column>
@@ -268,16 +239,11 @@
          <f:facet name="small-icon">
             <h:panelGroup>
                <wm:docPermissionEvaluator id="col21-act1-eval-allow" value="#{r.node}" allow="viewDocumentFiles">
-<<<<<<< HEAD
-                  <a:actionLink id="col21-act1" value="#{r.displayName}" href="#{r.downloadUrl}" target="_blank" image="#{r.fileType16}" showLink="false"
-                     styleClass='<%="inlineAction " + webdavOpenMode %>' />
-=======
                   <a:actionLink id="col21-act1-1" value="#{r.displayName}" href="#{r.readOnlyUrl}" target="_blank" image="#{r.fileType16}" showLink="false"
                      styleClass="inlineAction" rendered="<%=Boolean.toString(readOnly) %>" />
                   <%-- Don't specify an explicit ID to this link so it can have a generated clientId --%>
                   <a:actionLink value="#{r.displayName}" href="#{r.downloadUrl}" target="_blank" image="#{r.fileType16}" showLink="false"
                      styleClass="inlineAction webdav-open" rendered="<%=Boolean.toString(!readOnly) %>" />
->>>>>>> develop-5.1
                </wm:docPermissionEvaluator>
                <wm:docPermissionEvaluator id="col21-act1-eval-deny" value="#{r.node}" deny="viewDocumentFiles">
                   <h:graphicImage id="col21-act1-deny" value="#{r.fileType16}" />
@@ -285,12 +251,8 @@
             </h:panelGroup>
          </f:facet>
          <wm:docPermissionEvaluator id="col21-act2-eval-allow" value="#{r.node}" allow="viewDocumentFiles">
-<<<<<<< HEAD
-            <a:actionLink id="col21-act2" value="#{r.displayName}" href="#{r.downloadUrl}" target="_blank" styleClass="<%=webdavOpenMode %>" />
-=======
             <a:actionLink id="col21-act2-1" value="#{r.displayName}" href="#{r.readOnlyUrl}" target="_blank" styleClass="condence50- strictTrim tooltip" rendered="<%=Boolean.toString(readOnly) %>" />
             <a:actionLink id="col21-act2-2" value="#{r.displayName}" href="#{r.downloadUrl}" target="_blank" styleClass="condence50- strictTrim tooltip webdav-open" rendered="<%=Boolean.toString(!readOnly) %>" />
->>>>>>> develop-5.1
          </wm:docPermissionEvaluator>
          <wm:docPermissionEvaluator id="col21-act2-eval-deny" value="#{r.node}" deny="viewDocumentFiles">
             <h:outputText id="col21-act2-eval-deny-txt" value="#{r.displayName}" />
@@ -345,13 +307,10 @@
 
       <%-- Remove and Version column --%>
       <a:column id="col27" rendered="#{FileBlockBean.inWorkspace and r.notActiveAndNotDigiDoc and DialogManager.bean != AddFileDialog}">
-<<<<<<< HEAD
-=======
          <a:actionLink id="col27-act36" value="#{r.activeLockOwner}" actionListener="#{FileBlockBean.unlock}" showLink="false"
             image="/images/icons/lock-unlock.png" tooltip="#{msg.file_unlock}" rendered="#{AuthenticationService.currentUserName == r.activeLockOwner}">
             <f:param name="nodeRef" value="#{r.nodeRef}" />
          </a:actionLink>
->>>>>>> develop-5.1
          <a:actionLink id="col27-act3" value="#{r.name}" actionListener="#{FileBlockBean.toggleActive}" showLink="false"
             image="/images/icons/document-convert.png" tooltip="#{msg.file_toggle_active}" rendered="#{FileBlockBean.toggleInActive}">
             <f:param name="nodeRef" value="#{r.nodeRef}" />
@@ -378,17 +337,10 @@
          </a:actionLink>
          <wm:docPermissionEvaluator id="col27-act5-eval-allow" value="#{r.node}" allow="viewDocumentFiles">
             <a:actionLink id="col27-act5-iframe" value="#{r.name}" actionListener="#{FileBlockBean.viewPdf}" showLink="false"
-<<<<<<< HEAD
-               image="/images/icons/file-small-gray.png" tooltip="#{msg.file_view_pdf}" rendered="#{r.pdf}">
-               <f:param name="nodeRef" value="#{r.nodeRef}" />
-            </a:actionLink>
-            <a:actionLink id="col27-act5-download" value="#{r.name}" href="#{r.downloadUrl}" target="_blank" styleClass="<%=webdavOpenMode %>" showLink="false"
-=======
                image="/images/icons/file-small-gray.png" tooltip="#{msg.file_open_pdf_block}" rendered="#{r.pdf}" styleClass="pdf-file-open-block">
                <f:param name="nodeRef" value="#{r.nodeRef}" />
             </a:actionLink>
             <a:actionLink id="col27-act5-download" value="#{r.name}" href='<%=(readOnly ? "#{r.readOnlyUrl}" : "#{r.downloadUrl}")%>' target="_blank" styleClass="condence50- strictTrim tooltip pdf-file-download" showLink="false"
->>>>>>> develop-5.1
                image="/images/icons/file-small-gray.png" tooltip="#{msg.file_view_pdf}" rendered="#{r.pdf}"/> 
          </wm:docPermissionEvaluator>         
       </a:column>
@@ -459,71 +411,6 @@
 </a:panel>
 
 <script type="text/javascript">
-<<<<<<< HEAD
-<!-- source http://stackoverflow.com/questions/5645581/how-to-check-adobe-reader-installed-or-not-without-active-x-checking-in-javascri -->
-   
-   var acrobat = new Object();
-   acrobat.installed = false;
-   acrobat.version = '0.0';
-
-   if (navigator.plugins && navigator.plugins.length) {
-      for ( var x = 0, l = navigator.plugins.length; x < l; ++x) {
-         if (navigator.plugins[x].description.indexOf('Adobe Acrobat') != -1 || navigator.plugins[x].description.indexOf('PDF') != -1) {
-            acrobat.version = (navigator.plugins[x].description.indexOf('PDF') != -1) ? '7+' : parseFloat(navigator.plugins[x].description.split('Version ')[1]);
-            if (acrobat.version.toString().length == 1)
-               acrobat.version += '.0';
-            acrobat.installed = true;
-            break;
-         }
-      }
-   } else if (window.ActiveXObject) {
-      for (x = 2; x < 10; x++) {
-         try {
-            oAcro = eval("new ActiveXObject('PDF.PdfCtrl." + x + "');");
-            if (oAcro) {
-               acrobat.installed = true;
-               acrobat.version = x + '.0';
-            }
-         } catch (e) {
-         }
-      }
-      try {
-         oAcro4 = new ActiveXObject('PDF.PdfCtrl.1');
-         if (oAcro4) {
-            acrobat.installed = true;
-            acrobat.version = '4.0';
-         }
-      } catch (e) {
-      }
-      try {
-         oAcro7 = new ActiveXObject('AcroPDF.PDF.1');
-         if (oAcro7) {
-            acrobat.installed = true;
-            acrobat.version = '7+';
-         }
-      } catch (e) {
-      }
-      try {
-         oAcro7 = new ActiveXObject('AcroPDF.PDF');
-         if (oAcro7) {
-            acrobat.installed = true;
-            acrobat.version = '7+';
-         }
-      } catch (e) {
-      }
-   }
-   
-   if (acrobat.installed) {
-      $jQ('#col7-act5-iframe').show();
-      $jQ('#col27-act5-iframe').show();
-      $jQ('#col7-act5-download').hide();
-      $jQ('#col27-act5-download').hide();      
-   } else {
-      $jQ('#col7-act5-iframe').hide();
-      $jQ('#col27-act5-iframe').hide();
-      $jQ('#col7-act5-download').show();
-      $jQ('#col27-act5-download').show();      
-=======
 
    //TODO: The question of Firefox (ver 19+) built in PDF viewer remains, since there is no good and reliable method for checking it at the momnent
    //
@@ -616,7 +503,6 @@
       $jQ('.pdf-file-open-block').hide();
       $jQ('.pdf-file-download').show();
       $jQ('.pdf-file-download').show();      
->>>>>>> develop-5.1
    }
    
 </script>

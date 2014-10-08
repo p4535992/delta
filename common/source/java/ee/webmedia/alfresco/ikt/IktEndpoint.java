@@ -27,12 +27,6 @@ import ee.webmedia.alfresco.utils.MimeUtil;
 import ee.webmedia.alfresco.utils.XmlUtil;
 import ee.webmedia.xtee.jaxb.ByteArrayDataSource;
 
-<<<<<<< HEAD
-/**
- * @author Alar Kvell
- */
-=======
->>>>>>> develop-5.1
 @Endpoint
 public class IktEndpoint {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(IktEndpoint.class);

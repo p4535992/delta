@@ -6,12 +6,6 @@ import java.io.IOException;
 import org.alfresco.repo.transaction.TransactionListenerAdapter;
 import org.springframework.util.Assert;
 
-<<<<<<< HEAD
-/**
- * @author Alar Kvell
- */
-=======
->>>>>>> develop-5.1
 public class ClosingTransactionListener extends TransactionListenerAdapter {
 
     private final Closeable closeable;

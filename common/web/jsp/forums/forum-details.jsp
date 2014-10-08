@@ -53,18 +53,7 @@
       <f:verbatim><div style="padding: 4px"></div></f:verbatim>
 
       <%-- wrapper comment used by the panel to add additional component facets --%> 
-<<<<<<< HEAD
-      <h:panelGroup id="props-panel-facets">
-         <f:facet name="title">
-            <r:permissionEvaluator value="#{DialogManager.bean.space}" allow="Write">
-               <a:actionLink id="titleLink1" value="#{msg.modify}" showLink="false" image="/images/icons/Change_details.gif" action="dialog:editForum" />
-            </r:permissionEvaluator>
-         </f:facet>
-      </h:panelGroup> 
-      <a:panel label="#{msg.properties}" id="properties-panel" facetsId="dialog:dialog-body:props-panel-facets" border="white" bgcolor="white" titleBorder="lbgrey" expandedTitleBorder="dotted" titleBgcolor="white" progressive="true">
-=======
       <a:panel label="#{msg.properties}" id="properties-panel" border="white" bgcolor="white" titleBorder="lbgrey" expandedTitleBorder="dotted" titleBgcolor="white" progressive="true">
->>>>>>> develop-5.1
       <f:verbatim>
          <table cellspacing="0" cellpadding="0" border="0" width="100%">
             <tr>

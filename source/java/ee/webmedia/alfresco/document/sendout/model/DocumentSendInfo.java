@@ -9,14 +9,7 @@ import org.springframework.util.Assert;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.utils.WebUtil;
 
-<<<<<<< HEAD
-/**
- * @author Erko Hansar
- */
-public class DocumentSendInfo implements Serializable, SendInfo {
-=======
 public class DocumentSendInfo extends SendInfo implements Serializable {
->>>>>>> develop-5.1
 
     private static final long serialVersionUID = 1L;
 
@@ -53,24 +46,18 @@ public class DocumentSendInfo extends SendInfo implements Serializable {
     }
 
     @Override
-<<<<<<< HEAD
-=======
     public String getReceivedDateTime() {
         return getFormattedDate(DocumentCommonModel.Props.SEND_INFO_RECEIVED_DATE_TIME);
     }
 
     @Override
->>>>>>> develop-5.1
     public String getResolution() {
         return WebUtil.removeHtmlComments((String) node.getProperties().get(DocumentCommonModel.Props.SEND_INFO_RESOLUTION));
     }
 
-<<<<<<< HEAD
-=======
     @Override
     public String getOpenedDateTime() {
         return getFormattedDate(DocumentCommonModel.Props.SEND_INFO_OPENED_DATE_TIME);
     }
 
->>>>>>> develop-5.1
 }

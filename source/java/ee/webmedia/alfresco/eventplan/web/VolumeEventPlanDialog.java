@@ -33,13 +33,6 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.WebUtil;
 
-<<<<<<< HEAD
-/**
- * @author Martti Tamm
- * @author Alar Kvell
- */
-=======
->>>>>>> develop-5.1
 public class VolumeEventPlanDialog extends BaseDialogBean {
 
     private static final long serialVersionUID = 1L;

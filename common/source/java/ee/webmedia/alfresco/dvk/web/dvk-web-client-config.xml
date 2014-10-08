@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 <alfresco-config>
    <config>
       <actions>
@@ -31,37 +30,3 @@
 
    </config>
 </alfresco-config>
-=======
-<alfresco-config>
-   <config>
-      <actions>
-
-         <action id="dvk_receive">
-            <label-id>dvk_receive</label-id>
-            <image>/images/icons/project-icon-emailarchive-16.gif</image>
-            <evaluator>ee.webmedia.alfresco.dvk.web.DvkReceivedSpaceEvaluator</evaluator>
-            <action-listener>#{DvkBean.receiveDocuments}</action-listener>
-         </action>
-
-         <action-group id="space_details_actions">
-            <action idref="dvk_receive" />
-         </action-group>
-
-         <action-group id="browse_actions_menu">
-            <action idref="dvk_receive" />
-         </action-group>
-
-         <action-group id="space_browse_menu">
-            <action idref="dvk_receive" />
-         </action-group>
-
-      </actions>
-
-      <dialogs>
-         <dialog name="dvkCorruptListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/dvk/web/dvk-corrupt-list-dialog.jsp" managed-bean="DvkCorruptListDialog"
-            show-ok-button="false" icon="/images/icons/details_large.gif" title-id="dvkCorrupt_title" />
-      </dialogs>
-
-   </config>
-</alfresco-config>
->>>>>>> develop-5.1

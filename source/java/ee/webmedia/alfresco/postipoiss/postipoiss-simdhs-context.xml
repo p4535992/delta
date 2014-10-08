@@ -7,8 +7,6 @@
       <property name="functionsService" ref="FunctionsService" />
    </bean>
 
-<<<<<<< HEAD
-=======
    <bean id="fileActiveUpdater" class="ee.webmedia.alfresco.postipoiss.FileActiveUpdater" parent="abstractNodeUpdater">
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
@@ -33,5 +31,4 @@
       <property name="fileService" ref="FileService" />
    </bean>
 
->>>>>>> develop-5.1
 </beans>

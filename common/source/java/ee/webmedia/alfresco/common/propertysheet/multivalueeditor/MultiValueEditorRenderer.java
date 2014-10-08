@@ -2,10 +2,6 @@ package ee.webmedia.alfresco.common.propertysheet.multivalueeditor;
 
 import static ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.CombinedPropReader.AttributeNames.PROP_GENERATOR_DESCRIPTORS;
 import static ee.webmedia.alfresco.common.propertysheet.multivalueeditor.MultiValueEditor.NO_ADD_LINK_LABEL;
-<<<<<<< HEAD
-import static org.alfresco.web.bean.generator.BaseComponentGenerator.CustomAttributeNames.STYLE_CLASS;
-=======
->>>>>>> develop-5.1
 
 import java.io.IOException;
 import java.util.List;
@@ -29,10 +25,7 @@ import org.apache.commons.lang.StringUtils;
 import ee.webmedia.alfresco.classificator.model.ClassificatorValue;
 import ee.webmedia.alfresco.classificator.service.ClassificatorService;
 import ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.ComponentPropVO;
-<<<<<<< HEAD
-=======
 import ee.webmedia.alfresco.common.propertysheet.modalLayer.ValidatingModalLayerComponent;
->>>>>>> develop-5.1
 import ee.webmedia.alfresco.common.propertysheet.search.Search;
 import ee.webmedia.alfresco.common.propertysheet.search.SearchRenderer;
 import ee.webmedia.alfresco.common.web.BeanHelper;
@@ -42,19 +35,11 @@ import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.help.web.HelpTextUtil;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
-<<<<<<< HEAD
-
-/**
- * Render {@link MultiValueEditor} as HTML table. Direct children of {@link MultiValueEditor} must be {@link HtmlPanelGroup} components.
- * 
- * @author Alar Kvell
-=======
 import ee.webmedia.alfresco.workflow.search.model.CompoundWorkflowSearchModel;
 import ee.webmedia.alfresco.workflow.search.model.TaskSearchModel;
 
 /**
  * Render {@link MultiValueEditor} as HTML table. Direct children of {@link MultiValueEditor} must be {@link HtmlPanelGroup} components.
->>>>>>> develop-5.1
  */
 // Extends BaseMultiValueRenderer, because only decode method implementation is needed from there.
 public class MultiValueEditorRenderer extends BaseRenderer {
@@ -126,13 +111,6 @@ public class MultiValueEditorRenderer extends BaseRenderer {
     public void encodeBegin(FacesContext context, UIComponent component) throws IOException {
         final List<ComponentPropVO> propVOs = getPropVOs(component);
         ResponseWriter out = context.getResponseWriter();
-<<<<<<< HEAD
-        // class "recipient" should not be hard-coded, i guess
-        out.write("<div id=\"");
-        out.write(((MultiValueEditor) component).getAjaxClientId(context));
-        out.write("\"><table class=\"recipient multiE cells" + propVOs.size() + "\" cellpadding=\"0\" cellspacing=\"0\">");
-
-=======
         String styleClass = StringUtils.trimToEmpty((String) ((MultiValueEditor) component).getAttributes().get(MultiValueEditor.STYLE_CLASS));
         // class "recipient" should not be hard-coded, i guess
         out.write("<div id=\"");
@@ -142,16 +120,10 @@ public class MultiValueEditorRenderer extends BaseRenderer {
             out.write(" " + styleClass);
         }
         out.write("\" cellpadding=\"0\" cellspacing=\"0\">");
->>>>>>> develop-5.1
         @SuppressWarnings("unchecked")
         final Map<String, Object> attributes = component.getAttributes();
         String showHeaders = (String) attributes.get(MultiValueEditor.SHOW_HEADERS);
         if (StringUtils.isBlank(showHeaders) || Boolean.parseBoolean(showHeaders)) {
-<<<<<<< HEAD
-            out.write("<thead><tr>");
-            for (ComponentPropVO propVO : propVOs) {
-                out.write("<th>");
-=======
             boolean disabledOrReadOnly = ComponentUtil.isComponentDisabledOrReadOnly(component);
             out.write("<thead><tr>");
             for (ComponentPropVO propVO : propVOs) {
@@ -163,18 +135,12 @@ public class MultiValueEditorRenderer extends BaseRenderer {
                     Utils.encodeRecursive(context, ComponentUtil.createMandatoryMarker(context));
                 }
 
->>>>>>> develop-5.1
                 out.writeText(propVO.getPropertyLabel(), null);
 
                 // Field help:
                 String property = StringUtils.substringAfter(propVO.getPropertyName(), ":");
                 if (HelpTextUtil.hasHelpText(context, HelpTextUtil.TYPE_FIELD, property)) {
-<<<<<<< HEAD
-                    out.write("&nbsp;");
-                    HelpTextUtil.writeHelpTextLink(out, context, HelpTextUtil.TYPE_FIELD, property);
-=======
                     Utils.encodeRecursive(context, HelpTextUtil.createHelpTextLink(context, HelpTextUtil.TYPE_FIELD, property));
->>>>>>> develop-5.1
                 }
                 out.write("</th>");
             }
@@ -264,9 +230,6 @@ public class MultiValueEditorRenderer extends BaseRenderer {
                     if (!column.isRendered()) {
                         continue;
                     }
-<<<<<<< HEAD
-                    out.write("<td>");
-=======
                     String styleClass = (String) column.getAttributes().get("styleClass");
 
                     out.write("<td");
@@ -274,7 +237,6 @@ public class MultiValueEditorRenderer extends BaseRenderer {
                         out.write(" class=\"" + styleClass + "\"");
                     }
                     out.write(">");
->>>>>>> develop-5.1
                     if ((rowIndex == renderedRowCount - 1) && (columnCount == renderedColumnCount - 1) && ((MultiValueEditor) multiValueEditor).isAutomaticallyAddRows()) {
                         String addLinkId = getAddLinkId(context, multiValueEditor);
                         // component has to implement actual link clicking
@@ -330,11 +292,7 @@ public class MultiValueEditorRenderer extends BaseRenderer {
             ClassificatorService classificatorService = BeanHelper.getClassificatorService();
             List<ClassificatorValue> activeClassificatorValues = classificatorService.getActiveClassificatorValues(classificatorService.getClassificatorByName("sendMode"));
 
-<<<<<<< HEAD
-            StringBuilder s = new StringBuilder("<select class=\"changeSendOutMode width120\">");
-=======
             StringBuilder s = new StringBuilder("<select class=\"changeSendOutMode resetSendOutGroupSendMode width120\">");
->>>>>>> develop-5.1
             s.append("<option value=\"\">").append(MessageUtil.getMessage("select_default_label")).append("</option>");
             for (ClassificatorValue classificatorValue : activeClassificatorValues) {
                 s.append("<option value=\"").append(classificatorValue.getValueName()).append("\">").append(classificatorValue.getValueName()).append("</option>");
@@ -357,16 +315,10 @@ public class MultiValueEditorRenderer extends BaseRenderer {
         }
 
         out.write("<tr><td");
-<<<<<<< HEAD
-        if (columnCount > 0) {
-            out.write(" colspan=\"");
-            out.write(Integer.toString(columnCount));
-=======
         out.write(" class=\"sendOutGroup\"");
         if (columnCount > 0) {
             out.write(" colspan=\"");
             out.write(Integer.toString(columnCount - 1));
->>>>>>> develop-5.1
             out.write("\"");
         }
         out.write("><a href=\"#\" onclick=\"return false;\" class=\"icon-link toggle-tbody plus\"></a>");
@@ -401,13 +353,9 @@ public class MultiValueEditorRenderer extends BaseRenderer {
                         FacesHelper.makeLegalId(DocumentCommonModel.PREFIX + DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME.getLocalName()))
                 || StringUtils.startsWith(id,
                         FacesHelper.makeLegalId(DocumentSpecificModel.PREFIX + DocumentSpecificModel.Props.PROCUREMENT_APPLICANT_NAME.getLocalName()))
-<<<<<<< HEAD
-                || StringUtils.startsWith(id, FacesHelper.makeLegalId(DocumentDynamicModel.PREFIX + DocumentDynamicModel.Props.USER_NAME.getLocalName()));
-=======
                 || StringUtils.startsWith(id, FacesHelper.makeLegalId(DocumentDynamicModel.PREFIX + DocumentDynamicModel.Props.USER_NAME.getLocalName()))
                 || StringUtils.startsWith(id, FacesHelper.makeLegalId(TaskSearchModel.PREFIX + DocumentDynamicModel.Props.OWNER_NAME.getLocalName()))
                 || StringUtils.startsWith(id, FacesHelper.makeLegalId(CompoundWorkflowSearchModel.PREFIX + DocumentDynamicModel.Props.OWNER_NAME.getLocalName()));
->>>>>>> develop-5.1
     }
 
     private void renderAddLink(FacesContext context, UIComponent component, ResponseWriter out) throws IOException {
@@ -420,13 +368,8 @@ public class MultiValueEditorRenderer extends BaseRenderer {
         }
 
         if (!ComponentUtil.isComponentDisabledOrReadOnly(component)) { // don't render adding link when disabled
-<<<<<<< HEAD
-            String styleClass = (String) attributes.get(STYLE_CLASS);
-            if (StringUtils.isBlank(styleClass)) {
-=======
             String styleClass = (String) attributes.get(org.alfresco.web.bean.generator.BaseComponentGenerator.CustomAttributeNames.STYLE_CLASS);
             if (StringUtils.isBlank(styleClass) || "hiddenIdCode".equals(styleClass)) {
->>>>>>> develop-5.1
                 styleClass = "add-person";
             }
             String addLabel = Application.getMessage(context, addLabelId);

@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 <?xml version="1.0" encoding="UTF-8"?>
 <view:view 
    xmlns:view="http://www.alfresco.org/view/repository/1.0" 
@@ -11,18 +10,4 @@
       </view:properties>
    </param:stringParameter>
 
-=======
-<?xml version="1.0" encoding="UTF-8"?>
-<view:view 
-   xmlns:view="http://www.alfresco.org/view/repository/1.0" 
-   xmlns:param="http://alfresco.webmedia.ee/model/parameters/1.0" 
->
-   <param:stringParameter view:childName="param:oneStepAllowedInCompoundWorkflowMessage">
-      <view:properties>
-         <param:value>Käesolevasse terviktöövoogu saab lisada täpselt ühe töövoo, kuna dokumendiga on juba seotud üks teostamisel või peatatud mitmesammuline terviktöövoog.</param:value>
-         <param:description>Infoteade, mis kuvatakse dokumendi terviktöövoo seadistamise ekraanivormil, kui terviktöövoogu on lubatud lisada täpselt üks töövoog.</param:description>
-      </view:properties>
-   </param:stringParameter>
-
->>>>>>> develop-5.1
 </view:view>

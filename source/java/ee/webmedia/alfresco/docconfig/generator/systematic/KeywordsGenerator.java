@@ -46,11 +46,6 @@ import ee.webmedia.alfresco.utils.WebUtil;
 
 /**
  * Generates components for Systematic group Keywords
-<<<<<<< HEAD
- * 
- * @author Ats Uiboupin
-=======
->>>>>>> develop-5.1
  */
 public class KeywordsGenerator extends BaseSystematicFieldGenerator {
 
@@ -196,12 +191,9 @@ public class KeywordsGenerator extends BaseSystematicFieldGenerator {
         private final String defaultThesaurusName;
         private final Map<String/* thesaurusName */, Map<String/* level1Keywords */, List<String>/* level2Keywords */>> hierarchy = new HashMap<String, Map<String, List<String>>>();
 
-<<<<<<< HEAD
-=======
         private String selectedThesaurus = "";
         private boolean thesaurusChanged = false;
 
->>>>>>> develop-5.1
         public KeywordsTableState(List<QName> propNames, QName firstKeywordLevelProp, QName secondKeywordLevelProp, String viewModePropName, String defaultThesaurusName) {
             this.propNames = propNames;
             this.firstKeywordLevelProp = firstKeywordLevelProp;
@@ -227,11 +219,6 @@ public class KeywordsGenerator extends BaseSystematicFieldGenerator {
         public List<SelectItem> getFirstKeywordLevelSelectItems(FacesContext context, UIInput selectComponent) {
             String selectedThesaurus = StringUtils.isNotBlank(defaultThesaurusName) ? defaultThesaurusName : getSelectedThesaurus(context, selectComponent);
             if (StringUtils.isBlank(selectedThesaurus)) {
-<<<<<<< HEAD
-                ComponentUtil.putAttribute(selectComponent, "disabled", true);
-                return Collections.<SelectItem> emptyList();
-            }
-=======
                 this.selectedThesaurus = selectedThesaurus;
                 return disable(selectComponent);
             }
@@ -240,7 +227,6 @@ public class KeywordsGenerator extends BaseSystematicFieldGenerator {
                 thesaurusChanged = true;
             }
             this.selectedThesaurus = selectedThesaurus;
->>>>>>> develop-5.1
 
             Map<String, List<String>> thesaurusKeywords = hierarchy.get(selectedThesaurus);
             if (thesaurusKeywords == null) {
@@ -262,14 +248,6 @@ public class KeywordsGenerator extends BaseSystematicFieldGenerator {
                 hierarchy.put(thesaurusName, thesaurusKeywords);
             }
             List<SelectItem> selectItems = new ArrayList<SelectItem>(thesaurusKeywords.size());
-<<<<<<< HEAD
-            for (String keywordLevel1 : thesaurusKeywords.keySet()) {
-                selectItems.add(new SelectItem(keywordLevel1, keywordLevel1));
-            }
-            if (selectItems.isEmpty()) {
-                ComponentUtil.getAttributes(selectComponent).put("title", MessageUtil.getMessage("thesaurus_empty"));
-            } else {
-=======
             boolean componentValueFound = false;
             String firstLevelValue = (String) getFirstLevelKeywordVb(context, selectComponent).getValue(context);
             for (String keywordLevel1 : thesaurusKeywords.keySet()) {
@@ -287,7 +265,6 @@ public class KeywordsGenerator extends BaseSystematicFieldGenerator {
                 if (!componentValueFound && !thesaurusChanged && StringUtils.isNotBlank(firstLevelValue)) {
                     selectItems.add(0, new SelectItem(firstLevelValue, firstLevelValue));
                 }
->>>>>>> develop-5.1
                 ComponentUtil.addDefault(selectItems, context);
             }
             WebUtil.sort(selectItems);
@@ -297,18 +274,6 @@ public class KeywordsGenerator extends BaseSystematicFieldGenerator {
         public List<SelectItem> getSecondKeywordLevelSelectItems(FacesContext context, UIInput selectComponent) {
             String firstLevelKeyword = getFirstLevelKeyword(context, selectComponent);
             if (StringUtils.isBlank(firstLevelKeyword)) {
-<<<<<<< HEAD
-                ComponentUtil.putAttribute(selectComponent, "disabled", true);
-                return Collections.<SelectItem> emptyList();
-            }
-
-            String selectedThesaurus = StringUtils.isNotBlank(defaultThesaurusName) ? defaultThesaurusName : getSelectedThesaurus(context, selectComponent);
-            List<String> level2List = hierarchy.get(selectedThesaurus).get(firstLevelKeyword);
-            List<SelectItem> selectItems = new ArrayList<SelectItem>(level2List == null ? 1 : level2List.size());
-            if (level2List != null) {
-                for (String keywordLevel2 : level2List) {
-                    selectItems.add(new SelectItem(keywordLevel2, keywordLevel2));
-=======
                 return disable(selectComponent);
             }
             if (thesaurusChanged) {
@@ -330,19 +295,11 @@ public class KeywordsGenerator extends BaseSystematicFieldGenerator {
                 }
                 if (!componentValueFound && StringUtils.isNotBlank(secondLevelValue)) {
                     selectItems.add(0, new SelectItem(secondLevelValue, secondLevelValue));
->>>>>>> develop-5.1
                 }
                 if (!selectItems.isEmpty()) {
                     ComponentUtil.addDefault(selectItems, context);
                 }
                 WebUtil.sort(selectItems);
-<<<<<<< HEAD
-            } else {
-                String value = (String) getSecondLevelKeywordVb(context, selectComponent).getValue(context);
-                selectItems.add(new SelectItem(value, value));
-            }
-            return selectItems;
-=======
                 return selectItems;
             }
             return disable(selectComponent);
@@ -351,7 +308,6 @@ public class KeywordsGenerator extends BaseSystematicFieldGenerator {
         private List<SelectItem> disable(UIInput selectComponent) {
             ComponentUtil.putAttribute(selectComponent, "disabled", true);
             return Collections.<SelectItem> emptyList();
->>>>>>> develop-5.1
         }
 
         private String getSelectedThesaurus(FacesContext context, UIInput selectComponent) {

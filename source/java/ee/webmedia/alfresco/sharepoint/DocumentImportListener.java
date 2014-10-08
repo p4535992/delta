@@ -6,11 +6,6 @@ import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
 
 /**
  * This is a callback listener for document saving event. This class is needed to customize how imported documents are saved
-<<<<<<< HEAD
- * 
- * @author Martti Tamm
-=======
->>>>>>> develop-5.1
  */
 public class DocumentImportListener implements SaveListener {
 

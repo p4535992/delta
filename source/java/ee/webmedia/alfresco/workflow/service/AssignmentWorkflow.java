@@ -2,17 +2,8 @@ package ee.webmedia.alfresco.workflow.service;
 
 import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.isActiveResponsible;
 import ee.webmedia.alfresco.common.web.WmNode;
-<<<<<<< HEAD
-import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 
-/**
- * @author Erko Hansar
- */
-=======
-import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
-
->>>>>>> develop-5.1
 public class AssignmentWorkflow extends Workflow {
 
     private static final long serialVersionUID = 1L;
@@ -27,15 +18,6 @@ public class AssignmentWorkflow extends Workflow {
         return copyImpl(new AssignmentWorkflow(getNode().clone(), parent, newTaskTemplate, newTaskClass, newTaskOutcomes));
     }
 
-<<<<<<< HEAD
-    @Override
-    protected void preSave() {
-        super.preSave();
-        WorkflowUtil.setWorkflowResolution(getTasks(), getProp(WorkflowSpecificModel.Props.RESOLUTION), Status.NEW, Status.IN_PROGRESS);
-    }
-
-=======
->>>>>>> develop-5.1
     public Task addResponsibleTask() {
         // Passivate all current active responsible tasks
         for (Task task : getTasks()) {

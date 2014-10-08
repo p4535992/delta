@@ -38,15 +38,11 @@
 
    <h:panelGroup binding="#{CompoundWorkflowDialog.commonDataGroup}" />
 
-<<<<<<< HEAD
-   <h:panelGroup rendered="#{CompoundWorkflowDialog.workflow.independentWorkflow}">   
-=======
    <h:panelGroup rendered="#{CompoundWorkflowDialog.workflow.independentWorkflow or CompoundWorkflowDialog.workflow.caseFileWorkflow}">
    	  <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/workflow/web/comment-list-block.jsp" />
    </h:panelGroup>
 
    <h:panelGroup rendered="#{CompoundWorkflowDialog.workflow.independentWorkflow}">
->>>>>>> develop-5.1
       <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/workflow/web/compound-workflow-assoc-list-block.jsp" />
       <h:panelGroup rendered="#{CompoundWorkflowAssocSearchBlock.expanded}">
          <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/document/search/web/document-search-block.jsp" />

@@ -613,16 +613,6 @@ FOR v_rec IN
 			
 			--volume_mark
 			BEGIN
-<<<<<<< HEAD
-			SELECT string_vaartus INTO STRICT v_volume_mark FROM temp_lisavaljavaartus WHERE valjanimi = 'Asjanumber';
-			EXCEPTION
-				WHEN no_data_found THEN 
-					v_error_code := 'ERROR_18';
-					RAISE EXCEPTION '';
-				WHEN too_many_rows THEN 
-					v_error_code := 'ERROR_18';
-					RAISE EXCEPTION '';
-=======
 			SELECT string_vaartus INTO STRICT v_volume_mark FROM temp_lisavaljavaartus WHERE valjanimi = 'Asja number';
 			EXCEPTION
 				WHEN no_data_found THEN NULL;
@@ -631,7 +621,6 @@ FOR v_rec IN
 				WHEN too_many_rows THEN NULL;
 					--v_error_code := 'ERROR_18';
 					--RAISE EXCEPTION '';
->>>>>>> develop-5.1
 			END;
 
 			--ülejäänud väljad
@@ -658,10 +647,7 @@ FOR v_rec IN
 					WHEN valjanimi = 'II tasand KOV' THEN 'ERROR_37'
 					WHEN valjanimi = 'II tasand RIIK' THEN 'ERROR_38'
 					WHEN valjanimi = 'Võrdne kohtlemine' THEN 'ERROR_43'
-<<<<<<< HEAD
-=======
 					WHEN valjanimi = 'Märksõnad' THEN 'ERROR_46'
->>>>>>> develop-5.1
 				END INTO v_error_code
 			FROM (
 			SELECT COUNT(*), valjanimi
@@ -682,11 +668,7 @@ FOR v_rec IN
 				application_language, case_result, supervision_visit, opcat, 
 				comment, keyword_level1, keyword_level2, legislation, general_right_to_equality, 
 				discrimination, good_administration, child_rights, child_applicant, 
-<<<<<<< HEAD
-				to_survey, procedure_status, equality_of_treatment)
-=======
 				to_survey, procedure_status, equality_of_treatment, workflow_due_date, keywords_string)
->>>>>>> develop-5.1
 			SELECT
 				v_rec.id AS procedure_id, 
 				v_volume_mark AS volume_mark, 
@@ -717,13 +699,9 @@ FOR v_rec IN
 				(SELECT is_selected FROM temp_lisavaljavaartus WHERE valjanimi = 'Lapse pöördumine') AS child_applicant, 
 				(SELECT is_selected FROM temp_lisavaljavaartus WHERE valjanimi = 'Ülevaatesse') AS to_survey, 
 				(SELECT combo_vaartus FROM temp_lisavaljavaartus WHERE valjanimi = 'Menetluse staatus') AS procedure_status,
-<<<<<<< HEAD
-				(SELECT is_selected FROM temp_lisavaljavaartus WHERE valjanimi = 'Võrdne kohtlemine') AS equality_of_treatment
-=======
 				(SELECT is_selected FROM temp_lisavaljavaartus WHERE valjanimi = 'Võrdne kohtlemine') AS equality_of_treatment,
 				v_rec.tahtaegkp AS workflow_due_date,
 				(SELECT string_vaartus FROM temp_lisavaljavaartus WHERE valjanimi = 'Märksõnad') AS keywords_string
->>>>>>> develop-5.1
 				;
 		END IF;	
 
@@ -767,9 +745,4 @@ FOR v_rec IN
 END;
 $BODY$
   LANGUAGE plpgsql VOLATILE
-<<<<<<< HEAD
   COST 100;
-
-=======
-  COST 100;
->>>>>>> develop-5.1

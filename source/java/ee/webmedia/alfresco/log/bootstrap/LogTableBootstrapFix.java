@@ -9,11 +9,6 @@ import org.alfresco.repo.module.AbstractModuleComponent;
 
 /**
  * Log tables bootstrap: fixes computer_ip: "NOT NULL" to "NULLABLE".
-<<<<<<< HEAD
- * 
- * @author Martti Tamm
-=======
->>>>>>> develop-5.1
  */
 public class LogTableBootstrapFix extends AbstractModuleComponent {
 

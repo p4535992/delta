@@ -4,19 +4,11 @@ import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
 import java.util.HashSet;
-<<<<<<< HEAD
-=======
 import java.util.List;
->>>>>>> develop-5.1
 import java.util.Set;
 
 /**
  * DTO used for gathering system log filtering data.
-<<<<<<< HEAD
- * 
- * @author Martti Tamm
-=======
->>>>>>> develop-5.1
  */
 public class LogFilter implements Serializable {
 

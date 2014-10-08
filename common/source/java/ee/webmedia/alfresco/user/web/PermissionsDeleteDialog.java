@@ -34,11 +34,7 @@ public class PermissionsDeleteDialog extends BaseDialogBean {
 
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
-<<<<<<< HEAD
-        getPermissionService().deletePermission(nodeRef, authority.getAuthority(), permission);
-=======
         BeanHelper.getPrivilegeService().removeAllPermissions(nodeRef, authority.getAuthority());
->>>>>>> develop-5.1
         // Execute callback
         String callbackMethodBinding = BeanHelper.getPermissionsListDialog().getCallbackMethodBinding();
         if (StringUtils.isNotBlank(callbackMethodBinding)) {

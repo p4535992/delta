@@ -46,12 +46,6 @@ import com.csvreader.CsvWriter;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.utils.ProgressTracker;
 
-<<<<<<< HEAD
-/**
- * @author Alar Kvell
- */
-=======
->>>>>>> develop-5.1
 public abstract class AbstractNodeUpdater extends AbstractModuleComponent implements InitializingBean {
     protected final Log log = LogFactory.getLog(getClass());
 
@@ -317,8 +311,6 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
         }
     }
 
-<<<<<<< HEAD
-=======
     public static void writeRecordsToCsvFile(File file, Collection<String> records) {
         try {
             CsvWriter writer = new CsvWriter(new FileOutputStream(file), CSV_SEPARATOR, CSV_CHARSET);
@@ -334,7 +326,6 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
         }
     }
 
->>>>>>> develop-5.1
     protected Set<NodeRef> loadNodesFromRepo() throws Exception {
         log.info("Searching nodes from repository");
         List<ResultSet> resultSets = getNodeLoadingResultSet();
@@ -460,13 +451,10 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
         return false;
     }
 
-<<<<<<< HEAD
-=======
     public boolean isTransactionReadOnly() {
         return false;
     }
 
->>>>>>> develop-5.1
     public boolean isContinueWithNextBatchAfterError() {
         return false;
     }
@@ -505,11 +493,7 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
                         executeBatch();
                         return null;
                     }
-<<<<<<< HEAD
-                }, false, true);
-=======
                 }, isTransactionReadOnly(), true);
->>>>>>> develop-5.1
             } catch (RuntimeException e) {
                 if (isContinueWithNextBatchAfterError()) {
                     log.error("Error updating node; continuing updating next batch.", e);
@@ -570,11 +554,7 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
         String[] getHeaders();
     }
 
-<<<<<<< HEAD
-    private void bindCsvWriteAfterCommit(final File completedFile, final File rollbackFile, final CsvWriterClosure closure) {
-=======
     protected void bindCsvWriteAfterCommit(final File completedFile, final File rollbackFile, final CsvWriterClosure closure) {
->>>>>>> develop-5.1
         AlfrescoTransactionSupport.bindListener(new TransactionListenerAdapter() {
             @Override
             public void afterCommit() {
@@ -583,12 +563,9 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
 
             @Override
             public void afterRollback() {
-<<<<<<< HEAD
-=======
                 if (rollbackFile == null) {
                     return;
                 }
->>>>>>> develop-5.1
                 try {
                     // Write created documents
                     if (rollbackFile.exists()) {

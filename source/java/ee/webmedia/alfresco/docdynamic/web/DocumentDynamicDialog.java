@@ -5,10 +5,7 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDialogHelper
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDynamicService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentLockHelperBean;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentService;
-<<<<<<< HEAD
-=======
 import static ee.webmedia.alfresco.common.web.BeanHelper.getFileService;
->>>>>>> develop-5.1
 import static ee.webmedia.alfresco.common.web.BeanHelper.getLogService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getPropertySheetStateBean;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
@@ -100,13 +97,9 @@ import ee.webmedia.alfresco.log.model.LogEntry;
 import ee.webmedia.alfresco.log.model.LogObject;
 import ee.webmedia.alfresco.menu.ui.MenuBean;
 import ee.webmedia.alfresco.parameters.model.Parameters;
-<<<<<<< HEAD
-import ee.webmedia.alfresco.series.model.Series;
-=======
 import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.series.model.Series;
 import ee.webmedia.alfresco.series.model.SeriesModel;
->>>>>>> develop-5.1
 import ee.webmedia.alfresco.simdhs.servlet.ExternalAccessServlet;
 import ee.webmedia.alfresco.user.model.UserModel;
 import ee.webmedia.alfresco.utils.ActionUtil;
@@ -133,17 +126,9 @@ import ee.webmedia.alfresco.workflow.web.WorkflowBlockBean;
  * <p>
  * For example, to open this dialog manually, (for example {@link ExternalAccessServlet} does this), you should call {@code documentDynamicDialog.open...(nodeRef)}
  * </p>
-<<<<<<< HEAD
- * 
- * @author Alar Kvell
- */
-public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<DocDialogSnapshot, DocumentDynamicBlock, DialogDataProvider> implements DialogDataProvider,
-        BlockBeanProviderProvider {
-=======
  */
 public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<DocDialogSnapshot, DocumentDynamicBlock, DialogDataProvider> implements DialogDataProvider,
 BlockBeanProviderProvider {
->>>>>>> develop-5.1
     private static final long serialVersionUID = 1L;
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(DocumentDynamicDialog.class);
 
@@ -202,12 +187,8 @@ BlockBeanProviderProvider {
         String documentTypeId = ActionUtil.getParam(event, "typeId");
         DocumentDynamic doc = getDocumentDynamicService().createNewDocumentInDrafts(documentTypeId).getFirst();
         setLocationFromVolume(doc);
-<<<<<<< HEAD
-        open(doc.getNodeRef(), doc, true);
-=======
         propertySheet = null;
         open(doc.getNodeRef(), doc, true, true);
->>>>>>> develop-5.1
     }
 
     /** @param event */
@@ -220,11 +201,7 @@ BlockBeanProviderProvider {
             return;
         }
         setLocationFromVolume(doc);
-<<<<<<< HEAD
-        open(doc.getNodeRef(), doc, true);
-=======
         open(doc.getNodeRef(), doc, true, true);
->>>>>>> develop-5.1
     }
 
     /** When creating draft from caseFile/volume view, set caseFile/volume location as document location */
@@ -343,11 +320,7 @@ BlockBeanProviderProvider {
         }
         Pair<DocumentDynamic, AssociationModel> newDocumentAndAssociatonModel = BeanHelper.getDocumentAssociationsService().createAssociatedDocFromModel(baseDocRef, assocModelRef);
         DocumentDynamic newDocument = newDocumentAndAssociatonModel.getFirst();
-<<<<<<< HEAD
-        open(newDocument.getNodeRef(), newDocument, true);
-=======
         open(newDocument.getNodeRef(), newDocument, true, false);
->>>>>>> develop-5.1
         addWorkflowAssocs(baseDocRef, newDocumentAndAssociatonModel.getSecond().getAssociationType().getAssocBetweenDocs());
         getAssocsBlockBean().sortDocAssocInfos();
     }
@@ -399,15 +372,9 @@ BlockBeanProviderProvider {
 
     public void addFollowUpHandlerSimilarDocuments(ActionEvent event) {
         NodeRef nodeRef = new NodeRef(ActionUtil.getParam(event, PARAM_NODEREF));
-<<<<<<< HEAD
-        boolean isFoundSimilar = getSearchBlock().isFoundSimilar();
-        addTargetAssocAndReopen(nodeRef, DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP);
-        getSearchBlock().setFoundSimilar(isFoundSimilar);
-=======
         addTargetAssocAndReopen(nodeRef, DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP);
         getSearchBlock().setShowSimilarDocumentsBlock(false);
         setShowSaveAndRegisterButton(true);
->>>>>>> develop-5.1
     }
 
     public void addReplyHandler(ActionEvent event) {
@@ -434,17 +401,11 @@ BlockBeanProviderProvider {
             WmNode document = getNode();
             for (NodeRef workflowRef : documentAssociationsService.getDocumentIndependentWorkflowAssocs(targetRef)) {
                 addTargetAssoc(workflowRef, DocumentCommonModel.Assocs.WORKFLOW_DOCUMENT, true, false);
-<<<<<<< HEAD
-                getDocumentDynamicService().setOwnerFromActiveResponsibleTask(
-                        workflowService.getCompoundWorkflowOfType(workflowRef, Collections.singletonList(WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW)),
-                        document.getNodeRef(), document.getProperties());
-=======
                 Map<QName, Serializable> docProps = RepoUtil.toQNameProperties(document.getProperties());
                 getDocumentDynamicService().setOwnerFromActiveResponsibleTask(
                         workflowService.getCompoundWorkflowOfType(workflowRef, Collections.singletonList(WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW)),
                         document.getNodeRef(), docProps);
                 document.getProperties().putAll(RepoUtil.toStringProperties(docProps));
->>>>>>> develop-5.1
             }
         }
     }
@@ -452,11 +413,7 @@ BlockBeanProviderProvider {
     private void addTargetAssoc(NodeRef targetRef, QName targetType, boolean isSourceAssoc, boolean skipNotSearchable) {
         AssocsBlockBean assocsBlockBean = getAssocsBlockBean();
         AssociationRef assocRef = RepoUtil.addAssoc(getNode(), targetRef, targetType, true);
-<<<<<<< HEAD
-        // TODO: Riina: clarify this logic (would be better if retrieving associations could be done on common basis,
-=======
         // TODO: clarify this logic (would be better if retrieving associations could be done on common basis,
->>>>>>> develop-5.1
         // but as compoundWorkflow associations are retrieved differently, this is workaround to retrieve workflow associations here)
         boolean getAsSourceAssoc = DocumentCommonModel.Assocs.WORKFLOW_DOCUMENT.equals(targetType) ? !isSourceAssoc : isSourceAssoc;
         final DocAssocInfo docAssocInfo = getDocumentAssociationsService().getDocListUnitAssocInfo(assocRef, getAsSourceAssoc, skipNotSearchable);
@@ -471,11 +428,7 @@ BlockBeanProviderProvider {
     /**
      * Called when a new (not yet saved) document is set to be a reply or a follow up to some base document
      * and is filled with some properties of the base document.
-<<<<<<< HEAD
-     * 
-=======
      *
->>>>>>> develop-5.1
      * @param nodeRef to the base document
      */
     private void updateFollowUpOrReplyProperties(NodeRef nodeRef) {
@@ -527,11 +480,7 @@ BlockBeanProviderProvider {
     /**
      * Move all the files to the selected nodeRef, delete the current doc
      * and show the nodeRef doc.
-<<<<<<< HEAD
-     * 
-=======
      *
->>>>>>> develop-5.1
      * @param event
      */
     public void addFilesHandler(ActionEvent event) {
@@ -586,13 +535,6 @@ BlockBeanProviderProvider {
         DocumentDynamic document = snapshot.document;
         WmNode node = document.getNode();
 
-<<<<<<< HEAD
-        List<DialogButtonConfig> buttons = new ArrayList<DialogButtonConfig>(1);
-        if (snapshot.inEditMode && SystematicDocumentType.INCOMING_LETTER.isSameType(document.getDocumentTypeId()) && ((DocumentType)
-                config.getDocType()).isRegistrationEnabled()
-                && RegisterDocumentEvaluator.isNotRegistered(node)) {
-            if (getSearchBlock().isFoundSimilar()) {
-=======
         if (config == null && node != null) {
             snapshot.config = BeanHelper.getDocumentConfigService().getConfig(node);
             config = snapshot.config;
@@ -604,7 +546,6 @@ BlockBeanProviderProvider {
                 && docType.isRegistrationEnabled() && docType.isRegistrationOnDocFormEnabled()
                 && RegisterDocumentEvaluator.isNotRegistered(node)) {
             if (getSearchBlock().isShowSimilarDocumentsBlock() || getShowSaveAndRegisterButton()) {
->>>>>>> develop-5.1
                 buttons.add(new DialogButtonConfig("documentRegisterButton", null, "document_registerDoc_continue",
                         "#{DocumentDynamicDialog.saveAndRegisterContinue}", "false", null));
             } else {
@@ -662,10 +603,7 @@ BlockBeanProviderProvider {
         private boolean showDocsAndCasesAssocs;
         private boolean saveAndRegister;
         private boolean saveAndRegisterContinue;
-<<<<<<< HEAD
-=======
         private boolean showSaveAndRegisterContinueButton;
->>>>>>> develop-5.1
         private boolean confirmMoveAssociatedDocuments;
         private boolean moveAssociatedDocumentsConfirmed;
         private DocumentConfig config;
@@ -696,19 +634,11 @@ BlockBeanProviderProvider {
 
     // All dialog entry point methods must call this method
     private void open(NodeRef docRef, boolean inEditMode) {
-<<<<<<< HEAD
-        open(docRef, null, inEditMode);
-    }
-
-    private void open(NodeRef docRef, DocumentDynamic document, boolean inEditMode) {
-        if (!validateOpen(docRef, inEditMode)) {
-=======
         open(docRef, null, inEditMode, false);
     }
 
     private void open(NodeRef docRef, DocumentDynamic document, boolean inEditMode, boolean isDraft) {
         if (!validateOpen(docRef, inEditMode, isDraft)) {
->>>>>>> develop-5.1
             return;
         }
         createSnapshot(new DocDialogSnapshot());
@@ -727,13 +657,8 @@ BlockBeanProviderProvider {
     private void openOrSwitchModeCommon(NodeRef docRef, boolean inEditMode) {
         DocumentDynamic document = inEditMode
                 ? getDocumentDynamicService().getDocumentWithInMemoryChangesForEditing(docRef)
-<<<<<<< HEAD
-                : getDocumentDynamicService().getDocument(docRef);
-        openOrSwitchModeCommon(document, inEditMode);
-=======
                         : getDocumentDynamicService().getDocument(docRef);
                 openOrSwitchModeCommon(document, inEditMode);
->>>>>>> develop-5.1
     }
 
     private void openOrSwitchModeCommon(DocumentDynamic document, boolean inEditMode) {
@@ -822,31 +747,6 @@ BlockBeanProviderProvider {
     }
 
     public void sendAccessRestrictionChangedEmails(ActionEvent event) {
-<<<<<<< HEAD
-        String paramName = "missingEmailsConfirmed";
-        boolean ignoreMissingEmails = ActionUtil.hasParam(event, paramName);
-        DocumentDynamic document = getDocument();
-        Pair<List<String>, List<SendInfo>> existingAndMissingEmails = BeanHelper.getNotificationService().getExistingAndMissingEmails(BeanHelper.getSendOutService().getDocumentSendInfos(document.getNodeRef()));
-        List<SendInfo> missingEmails = existingAndMissingEmails.getSecond();
-        if (!ignoreMissingEmails && !missingEmails.isEmpty()) {
-            List<String> names = new ArrayList<String>(missingEmails.size());
-            for (SendInfo sendInfo : missingEmails) {
-                names.add(sendInfo.getRecipient());
-            }
-            Map<String, String> params = new HashMap<String, String>(1);
-            params.put(paramName, "true");
-            BeanHelper.getUserConfirmHelper().setup(new MessageDataImpl("docdyn_accessRestriction_missingEmailsConfirm", StringUtils.join(names, ", ")), null,
-                    "#{DocumentDynamicDialog.sendAccessRestrictionChangedEmails}", params, null, "#{DocumentDynamicDialog.dontSendAccessRestrictionChangedEmails}", null);
-            showConfirmationPopup = false; // we don't need this pop-up anymore
-            return;
-        }
-        
-        if (isCreateNewCaseFile()) {
-            getCurrentSnapshot().needSendNotificationAfterCreateCaseFile = true;
-            navigateCreateNewCaseFile();
-        } else {
-            notifyAccessRestrictionChanged(document, existingAndMissingEmails.getFirst());
-=======
         if (isCreateNewCaseFile()) {
             getCurrentSnapshot().needSendNotificationAfterCreateCaseFile = true;
             navigateCreateNewCaseFile(false);
@@ -854,15 +754,10 @@ BlockBeanProviderProvider {
             DocumentDynamic document = getDocument();
             notifyAccessRestrictionChanged(document,
                     BeanHelper.getNotificationService().getExistingAndMissingEmails(BeanHelper.getSendOutService().getDocumentSendInfos(document.getNodeRef())));
->>>>>>> develop-5.1
             cancel();
         }
     }
 
-<<<<<<< HEAD
-    public void notifyAccessRestrictionChanged(DocumentDynamic document, List<String> emails) {
-        BeanHelper.getNotificationService().processAccessRestrictionChangedNotification(document, emails);
-=======
     public void notifyAccessRestrictionChanged(DocumentDynamic document, Pair<List<String>, List<SendInfo>> existingAndMissingEmails) {
         BeanHelper.getNotificationService().processAccessRestrictionChangedNotification(document, existingAndMissingEmails.getFirst());
 
@@ -873,7 +768,6 @@ BlockBeanProviderProvider {
             }
             MessageUtil.addInfoMessage("docdyn_accessRestriction_missingEmails", StringUtils.join(names, ", "));
         }
->>>>>>> develop-5.1
     }
 
     public void dontSendAccessRestrictionChangedEmails(@SuppressWarnings("unused") ActionEvent event) {
@@ -895,9 +789,6 @@ BlockBeanProviderProvider {
             LOG.warn(e.getMessage(), e);
             return cancel(false);
         }
-<<<<<<< HEAD
-        if (!isInEditMode() || !getCurrentSnapshot().viewModeWasOpenedInThePast || !canRestore()) {
-=======
         boolean isInEditMode = isInEditMode();
         if (isInEditMode) {
             try {
@@ -908,7 +799,6 @@ BlockBeanProviderProvider {
             }
         }
         if (!isInEditMode || !getCurrentSnapshot().viewModeWasOpenedInThePast || !canRestore()) {
->>>>>>> develop-5.1
             getDocumentDynamicService().deleteDocumentIfDraft(getDocument().getNodeRef());
             return super.cancel(); // closeDialogSnapshot
         }
@@ -917,12 +807,6 @@ BlockBeanProviderProvider {
         return null;
     }
 
-<<<<<<< HEAD
-    @Override
-    /** Transaction created by BaseDialogBean.finish method is not needed by us here, and it would be clearer to turn it off - 
-     * but we haven't turned it off and thus it is still created and therefore it is the super transaction.
-     * Actions in finishImpl method are performed in two separate child transactions for the following reason: 
-=======
     private boolean isIncorrectSeries() {
         DocumentDynamic doc = getDocument();
         String docType = doc.getDocumentTypeId();
@@ -939,33 +823,25 @@ BlockBeanProviderProvider {
     /** Transaction created by BaseDialogBean.finish method is not needed by us here, and it would be clearer to turn it off -
      * but we haven't turned it off and thus it is still created and therefore it is the super transaction.
      * Actions in finishImpl method are performed in two separate child transactions for the following reason:
->>>>>>> develop-5.1
      * integrity checker runs at the end of the transaction and we want integrity checker to run before switchMode is run.
      */
     protected String finishImpl(final FacesContext context, String outcome) throws Throwable {
         if (!isInEditMode()) {
             throw new RuntimeException("Document metadata block is not in edit mode");
         }
-<<<<<<< HEAD
-
-=======
         if (!isNodeRefValid()) {
             MessageUtil.addErrorMessage("docdyn_deleted");
             return null;
         }
->>>>>>> develop-5.1
         if (BeanHelper.getDocumentLockHelperBean().isLockReleased(getDocument().getNodeRef())) {
             MessageUtil.addErrorMessage("lock_document_administrator_released");
             WebUtil.navigateTo("dialog:close");
             return null;
         }
-<<<<<<< HEAD
-=======
         if (isIncorrectSeries()) {
             MessageUtil.addErrorMessage(context, "document_save_error_invalid_series");
             return null;
         }
->>>>>>> develop-5.1
 
         if (isSaveAndRegister()) {
             // select followup document before saving
@@ -975,12 +851,8 @@ BlockBeanProviderProvider {
                 return null;
             }
         }
-<<<<<<< HEAD
-        if (!getCurrentSnapshot().moveAssociatedDocumentsConfirmed && isRelocatingAssociations()) {
-=======
         final boolean relocateAssociations = isRelocatingAssociations();
         if (!getCurrentSnapshot().moveAssociatedDocumentsConfirmed && relocateAssociations) {
->>>>>>> develop-5.1
             BeanHelper.getUserConfirmHelper().setup(new MessageDataImpl("document_move_associated_documents_confirmation"), null,
                     "#{DocumentDynamicDialog.changeDocLocationConfirmed}", null, null, null, null);
             getCurrentSnapshot().confirmMoveAssociatedDocuments = true;
@@ -992,11 +864,7 @@ BlockBeanProviderProvider {
         final boolean createNewCaseFile = isCreateNewCaseFile();
         try {
             if (!createNewCaseFile) {
-<<<<<<< HEAD
-                savedDocument = save(getDocument(), getConfig().getSaveListenerBeanNames(), getCurrentSnapshot().confirmMoveAssociatedDocuments, true);
-=======
                 savedDocument = save(getDocument(), getConfig().getSaveListenerBeanNames(), getCurrentSnapshot().confirmMoveAssociatedDocuments, true).getFirst();
->>>>>>> develop-5.1
             }
             // when new case file is created, actual saving (and registering, if required) is postponed to after saving case file
             else {
@@ -1041,12 +909,6 @@ BlockBeanProviderProvider {
                     return null;
                 }
                 if (!createNewCaseFile) {
-<<<<<<< HEAD
-                    // Switch from edit mode back to view mode
-                    switchMode(false);
-                } else {
-                    navigateCreateNewCaseFile();
-=======
                     NodeRef newRef = savedDocument.getNodeRef();
                     NodeRef oldRef = null;
                     DocDialogSnapshot snap = getCurrentSnapshot();
@@ -1061,7 +923,6 @@ BlockBeanProviderProvider {
                     }
                 } else {
                     navigateCreateNewCaseFile(relocateAssociations);
->>>>>>> develop-5.1
                 }
                 return null;
             }
@@ -1069,13 +930,8 @@ BlockBeanProviderProvider {
         }, false, true);
     }
 
-<<<<<<< HEAD
-    public DocumentDynamic save(final DocumentDynamic document, final List<String> saveListenerBeanNames, final boolean relocateAssocDocs, boolean newTransaction) {
-        final DocumentDynamic savedDocument;
-=======
     public Pair<DocumentDynamic, List<Pair<NodeRef, NodeRef>>> save(final DocumentDynamic document, final List<String> saveListenerBeanNames, final boolean relocateAssocDocs,
             boolean newTransaction) {
->>>>>>> develop-5.1
         Pair<DocumentDynamic, List<Pair<NodeRef, NodeRef>>> result;
         // Do in new transaction, because we want to catch integrity checker exceptions now, not at the end of this method when mode is already switched
         RetryingTransactionCallback<Pair<DocumentDynamic, List<Pair<NodeRef, NodeRef>>>> callback = new RetryingTransactionCallback<Pair<DocumentDynamic, List<Pair<NodeRef, NodeRef>>>>() {
@@ -1083,15 +939,11 @@ BlockBeanProviderProvider {
             public Pair<DocumentDynamic, List<Pair<NodeRef, NodeRef>>> execute() throws Throwable {
                 // May throw UnableToPerformException or UnableToPerformMultiReasonException
                 ((FileBlockBean) getBlocks().get(FileBlockBean.class)).updateFilesProperties();
-<<<<<<< HEAD
-                return getDocumentDynamicService().updateDocumentGetDocAndNodeRefs(document, saveListenerBeanNames, relocateAssocDocs, true);
-=======
                 Pair<DocumentDynamic, List<Pair<NodeRef, NodeRef>>> saveResult = getDocumentDynamicService().updateDocumentGetDocAndNodeRefs(document, saveListenerBeanNames, relocateAssocDocs, true);
                 // Delete DecContainer after document saving. Just in case.
                 getFileService().removeDecContainer(saveResult.getFirst().getNodeRef());
 
                 return saveResult;
->>>>>>> develop-5.1
             }
         };
         if (newTransaction) {
@@ -1103,10 +955,6 @@ BlockBeanProviderProvider {
                 throw new RuntimeException(e);
             }
         }
-<<<<<<< HEAD
-        savedDocument = result.getFirst();
-=======
->>>>>>> develop-5.1
         for (Pair<NodeRef, NodeRef> pair : result.getSecond()) {
             if (pair.getFirst().equals(pair.getSecond())) {
                 continue;
@@ -1118,15 +966,6 @@ BlockBeanProviderProvider {
                 snapshot.document.getNode().updateNodeRef(pair.getSecond());
             }
         }
-<<<<<<< HEAD
-        return savedDocument;
-    }
-
-    private void navigateCreateNewCaseFile() {
-        String caseFileType = getDocument().getProp(DocumentLocationGenerator.CASE_FILE_TYPE_PROP);
-        BeanHelper.getCaseFileDialog().createCaseFile(caseFileType, getDocument(), getCurrentSnapshot().needRegisteringAfterCreateCaseFile,
-                getCurrentSnapshot().needSendNotificationAfterCreateCaseFile, getConfig().getSaveListenerBeanNames());
-=======
         return result;
     }
 
@@ -1134,7 +973,6 @@ BlockBeanProviderProvider {
         String caseFileType = getDocument().getProp(DocumentLocationGenerator.CASE_FILE_TYPE_PROP);
         BeanHelper.getCaseFileDialog().createCaseFile(caseFileType, getDocument(), getCurrentSnapshot().needRegisteringAfterCreateCaseFile,
                 getCurrentSnapshot().needSendNotificationAfterCreateCaseFile, getConfig().getSaveListenerBeanNames(), isRelocatingAssociations);
->>>>>>> develop-5.1
     }
 
     private boolean isCreateNewCaseFile() {
@@ -1146,29 +984,16 @@ BlockBeanProviderProvider {
     private boolean isRelocatingAssociations() {
         DocumentDynamic document = getDocument();
 
-<<<<<<< HEAD
-=======
         List<DocAssocInfo> docAssocs = getAssocsBlockBean().getDocAssocInfos();
         if (isCreateNewCaseFile() && docAssocs != null && !docAssocs.isEmpty()) {
             return true;
         }
->>>>>>> develop-5.1
         if (!RepoUtil.isSaved(document.getVolume())) {
             return false;
         }
 
         NodeRef newParentRef = getParent(document.getVolume(), StringUtils.trimToNull((String) document.getProp(DocumentLocationGenerator.CASE_LABEL_EDITABLE)));
         // For documents not under volume or case, check location change against associated document
-<<<<<<< HEAD
-        // TODO : Riina: in 3.10 branch, add document.isFromWebService() check here
-        if (document.isDraftOrImapOrDvk() || document.isIncomingInvoice()) {
-            List<DocAssocInfo> docAssocs = getAssocsBlockBean().getDocAssocInfos();
-            if (docAssocs == null || docAssocs.isEmpty()) {
-                return false;
-            }
-            NodeRef associatedDocParentRef = getNodeService().getPrimaryParent(docAssocs.get(0).getOtherNodeRef()).getParentRef();
-            return !associatedDocParentRef.equals(newParentRef);
-=======
         // TODO : in 3.10 branch, add document.isFromWebService() check here
         if (document.isDraftOrImapOrDvk() || document.isIncomingInvoice()) {
             if (docAssocs == null || docAssocs.isEmpty()) {
@@ -1182,7 +1007,6 @@ BlockBeanProviderProvider {
                 }
             }
             return associatedDocParentRef != null && !associatedDocParentRef.equals(newParentRef);
->>>>>>> develop-5.1
         }
         NodeRef currentParentRef = getNodeService().getPrimaryParent(document.getNodeRef()).getParentRef();
         if (currentParentRef.equals(newParentRef)) {
@@ -1217,12 +1041,9 @@ BlockBeanProviderProvider {
 
     private void setSaveAndRegisterContinue(boolean saveAndRegisterContinue) {
         getCurrentSnapshot().saveAndRegisterContinue = saveAndRegisterContinue;
-<<<<<<< HEAD
-=======
         if (saveAndRegisterContinue) {
             setShowSaveAndRegisterButton(true);
         }
->>>>>>> develop-5.1
     }
 
     private boolean isSaveAndRegisterContinue() {
@@ -1233,8 +1054,6 @@ BlockBeanProviderProvider {
         return getCurrentSnapshot().saveAndRegister;
     }
 
-<<<<<<< HEAD
-=======
     private boolean setShowSaveAndRegisterButton(boolean showSaveAndRegisterContinueButton) {
         return getCurrentSnapshot().showSaveAndRegisterContinueButton = showSaveAndRegisterContinueButton;
     }
@@ -1243,7 +1062,6 @@ BlockBeanProviderProvider {
         return getCurrentSnapshot().showSaveAndRegisterContinueButton;
     }
 
->>>>>>> develop-5.1
     private boolean checkSimilarDocuments() {
         SearchBlockBean searchBlock = getSearchBlock();
         // search for similar documents if it's an incoming letter
@@ -1251,11 +1069,7 @@ BlockBeanProviderProvider {
             String senderRegNum = getDocument().getProp(DocumentSpecificModel.Props.SENDER_REG_NUMBER);
             searchBlock.findSimilarDocuments(senderRegNum);
         }
-<<<<<<< HEAD
-        if (searchBlock.isFoundSimilar()) {
-=======
         if (searchBlock.isShowSimilarDocumentsBlock()) {
->>>>>>> develop-5.1
             return true;
         }
         return false;
@@ -1267,11 +1081,7 @@ BlockBeanProviderProvider {
             setSaveAndRegister(false);
             setSaveAndRegisterContinue(true);
             super.finish();
-<<<<<<< HEAD
-            getSearchBlock().setFoundSimilar(false);
-=======
             getSearchBlock().setShowSimilarDocumentsBlock(false);
->>>>>>> develop-5.1
         }
     }
 
@@ -1384,11 +1194,7 @@ BlockBeanProviderProvider {
         if ((searchBlockBean.isExpanded() && !getCurrentSnapshot().inEditMode)) {
             return true;
         }
-<<<<<<< HEAD
-        return getCurrentSnapshot().inEditMode && searchBlockBean.isShow() && !searchBlockBean.isFoundSimilar()
-=======
         return getCurrentSnapshot().inEditMode && searchBlockBean.isShow() && !searchBlockBean.isShowSimilarDocumentsBlock()
->>>>>>> develop-5.1
                 && (getDocument().isImapOrDvk() && !getDocument().isNotEditable());
     }
 
@@ -1405,11 +1211,7 @@ BlockBeanProviderProvider {
 
     public boolean isShowFoundSimilar() {
         SearchBlockBean searchBlockBean = (SearchBlockBean) getBlocks().get(SearchBlockBean.class);
-<<<<<<< HEAD
-        return getCurrentSnapshot().inEditMode && searchBlockBean.isFoundSimilar();
-=======
         return getCurrentSnapshot().inEditMode && searchBlockBean.isShowSimilarDocumentsBlock();
->>>>>>> develop-5.1
     }
 
     // =========================================================================
@@ -1465,17 +1267,12 @@ BlockBeanProviderProvider {
     // Permission checks on open or switch mode
     // =========================================================================
 
-<<<<<<< HEAD
-    public static boolean validateOpen(NodeRef docRef, boolean inEditMode) {
-        if (!validateExists(docRef) || !validateViewMetaDataPermission(docRef) || (inEditMode && !validateEditMetaDataPermission(docRef))
-=======
     public static boolean validateOpen(NodeRef docRef, boolean inEditMode, boolean isDraft) {
         boolean exists = validateExists(docRef);
         if (exists && isDraft) {
             return true;
         }
         if (!exists || !validateViewMetaDataPermission(docRef) || (inEditMode && !validateEditMetaDataPermission(docRef))
->>>>>>> develop-5.1
                 || (inEditMode && !getDocumentLockHelperBean().isLockable(docRef))) {
             return false;
         }
@@ -1492,16 +1289,6 @@ BlockBeanProviderProvider {
     }
 
     private static boolean validateViewMetaDataPermission(NodeRef docRef) {
-<<<<<<< HEAD
-        return validatePermissionWithErrorMessage(docRef, DocumentCommonModel.Privileges.VIEW_DOCUMENT_META_DATA);
-    }
-
-    private static boolean validateEditMetaDataPermission(NodeRef docRef) {
-        return validatePermissionWithErrorMessage(docRef, DocumentCommonModel.Privileges.EDIT_DOCUMENT);
-    }
-
-    public static boolean validatePermissionWithErrorMessage(NodeRef docRef, String permission) {
-=======
         return validatePermissionWithErrorMessage(docRef, Privilege.VIEW_DOCUMENT_META_DATA);
     }
 
@@ -1510,7 +1297,6 @@ BlockBeanProviderProvider {
     }
 
     public static boolean validatePermissionWithErrorMessage(NodeRef docRef, Privilege permission) {
->>>>>>> develop-5.1
         try {
             validatePermission(docRef, permission);
         } catch (UnableToPerformException e) {
@@ -1662,10 +1448,7 @@ BlockBeanProviderProvider {
         getPropertySheetStateBean().reset(getStateHolders(), provider);
         getDocumentDialogHelperBean().reset(provider);
         resetModals();
-<<<<<<< HEAD
-=======
         setShowSaveAndRegisterButton(false);
->>>>>>> develop-5.1
         super.resetOrInit(provider); // reset blocks
     }
 
