@@ -961,7 +961,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         workflowDbService.removeTaskFiles(taskRef, removedFiles);
         removedFiles.clear();
         List<String> existingDisplayNames = new ArrayList<String>();
-        List<NodeRef> newFileRefs = new ArrayList<NodeRef>();
+        List<Pair<NodeRef, NodeRef>> newFileRefs = new ArrayList<Pair<NodeRef, NodeRef>>();
         for (Object fileObj : task.getFiles()) {
             if (!(fileObj instanceof FileWithContentType)) {
                 // existing file, no update needed
@@ -975,10 +975,10 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
                     workflowDbService);
             String fileDisplayName = filenames.getSecond();
             NodeRef fileRef = fileService.addFile(filenames.getFirst(), fileDisplayName, workflowNodeRef, file.file, file.contentType);
-            newFileRefs.add(fileRef);
+            newFileRefs.add(new Pair<NodeRef, NodeRef>(taskRef, fileRef));
             existingDisplayNames.add(fileDisplayName);
         }
-        workflowDbService.createTaskFileEntriesFromNodeRefs(taskRef, newFileRefs);
+        workflowDbService.createTaskFileEntriesFromNodeRefs(newFileRefs);
         return changed;
     }
 
@@ -1037,7 +1037,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         return task.isType(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK)
                 && ((isInternalTesting() && !Boolean.TRUE.equals(nodeService.getProperty(task.getParent().getParent().getParent(),
                         DocumentSpecificModel.Props.NOT_EDITABLE)))
-                || (!isInternalTesting() && !isResponsibleCurrenInstitution(task)));
+                        || (!isInternalTesting() && !isResponsibleCurrenInstitution(task)));
     }
 
     private boolean isResponsibleCurrenInstitution(Task task) {
@@ -1470,7 +1470,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
     @Override
     public int getActiveResponsibleTasks(NodeRef document, QName workflowType, boolean allowFinished, NodeRef compoundWorkflowToSkip) {
         Status[] allowedStatuses = allowFinished ? new Status[] { Status.NEW, Status.IN_PROGRESS, Status.STOPPED, Status.FINISHED } :
-                new Status[] { Status.NEW, Status.IN_PROGRESS, Status.STOPPED };
+            new Status[] { Status.NEW, Status.IN_PROGRESS, Status.STOPPED };
         int counter = 0;
         for (CompoundWorkflow compoundWorkflow : getCompoundWorkflowsOfType(document, Collections.singletonList(workflowType))) {
             if (!compoundWorkflow.isStatus(allowedStatuses) || compoundWorkflow.getNodeRef().equals(compoundWorkflowToSkip)) {
@@ -2211,7 +2211,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
 
     /**
      * Common logic when signature task is not signed or review task or confirmation task is not accepted(rejected)
-     * 
+     *
      * @param task - signature task, review task or confirmation task that was rejected
      * @param queue
      */
@@ -2417,7 +2417,9 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         extensionTask.setDueDate(dueDate);
         extensionCompoundWorkflow = saveCompoundWorkflow(extensionCompoundWorkflow);
         NodeRef dueDateExtensionTask = extensionCompoundWorkflow.getWorkflows().get(0).getTasks().get(0).getNodeRef();
-        workflowDbService.createTaskDueDateExtensionAssocEntry(initiatingTask.getNodeRef(), dueDateExtensionTask);
+        List<Pair<NodeRef, NodeRef>> dueDateExtensionAssocs = new ArrayList<Pair<NodeRef, NodeRef>>();
+        dueDateExtensionAssocs.add(new Pair(initiatingTask.getNodeRef(), dueDateExtensionTask));
+        workflowDbService.createTaskDueDateExtensionAssocEntries(dueDateExtensionAssocs);
 
         BeanHelper.getDocumentLogService().addDocumentLog(extensionCompoundWorkflow.getParent(), MessageUtil.getMessage("document_log_status_workflow"));
         extensionCompoundWorkflow = startCompoundWorkflow(extensionCompoundWorkflow);
@@ -2441,7 +2443,8 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         String comment = task.getComment();
         Date previousDueDate = initiatingTask.getDueDate();
         String changeReason = StringUtils.isNotBlank(comment) ? comment : task.getResolution();
-        workflowDbService.createTaskDueDateHistoryEntries(initiatingTask.getNodeRef(), Arrays.asList(new Pair<String, Date>(changeReason, previousDueDate)));
+        workflowDbService.createTaskDueDateHistoryEntries(Arrays.asList(new Pair<NodeRef, Pair<String, Date>>(initiatingTask.getNodeRef(), new Pair<String, Date>(changeReason,
+                previousDueDate))));
         NodeRef initatingTaskRef = initiatingTask.getNodeRef();
         String previousDueDateStr = previousDueDate != null ? Task.dateFormat.format(previousDueDate) : null;
         String confirmedDueDateStr = task.getConfirmedDueDate() != null ? Task.dateFormat.format(task.getConfirmedDueDate()) : null;

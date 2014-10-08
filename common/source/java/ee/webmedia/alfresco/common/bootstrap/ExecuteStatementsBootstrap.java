@@ -17,9 +17,15 @@ public class ExecuteStatementsBootstrap extends AbstractModuleComponent {
 
     private DataSource dataSource;
     private String resourceName;
+    private boolean disabled;
 
     @Override
     protected void executeInternal() throws Exception {
+
+        if (disabled) {
+            LOG.info("Updater is disabled, not executing statements from file " + FilenameUtils.getName(resourceName));
+            return;
+        }
         Connection con = null;
         Statement stmt = null;
 
@@ -52,6 +58,10 @@ public class ExecuteStatementsBootstrap extends AbstractModuleComponent {
 
     public void setResourceName(String resourceName) {
         this.resourceName = resourceName;
+    }
+
+    public void setDisabled(boolean disabled) {
+        this.disabled = disabled;
     }
 
 }

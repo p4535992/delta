@@ -15,11 +15,11 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
- * As a special exception to the terms and conditions of version 2.0 of 
- * the GPL, you may redistribute this Program in connection with Free/Libre 
- * and Open Source Software ("FLOSS") applications as described in Alfresco's 
- * FLOSS exception.  You should have recieved a copy of the text describing 
- * the FLOSS exception, and it is also available here: 
+ * As a special exception to the terms and conditions of version 2.0 of
+ * the GPL, you may redistribute this Program in connection with Free/Libre
+ * and Open Source Software ("FLOSS") applications as described in Alfresco's
+ * FLOSS exception.  You should have recieved a copy of the text describing
+ * the FLOSS exception, and it is also available here:
  * http://www.alfresco.com/legal/licensing"
  */
 package org.alfresco.repo.node.db.hibernate;
@@ -134,7 +134,7 @@ import ee.webmedia.alfresco.privilege.bootstrap.FixAclInheritanceUpdater;
 
 /**
  * Hibernate-specific implementation of the persistence-independent <b>node</b> DAO interface
- * 
+ *
  * @author Derek Hulley
  */
 public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements NodeDaoService, TransactionalDao
@@ -153,9 +153,9 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
     private static final String QUERY_GET_CHILD_ASSOC_REFS_BY_CHILD_TYPEQNAME = "node.GetChildAssocRefsByChildTypeQName";
     private static final String QUERY_GET_PRIMARY_CHILD_ASSOCS = "node.GetPrimaryChildAssocs";
     private static final String QUERY_GET_PRIMARY_CHILD_ASSOCS_NOT_IN_SAME_STORE = "node.GetPrimaryChildAssocsNotInSameStore";
-    private static final String QUERY_GET_NODES_WITH_CHILDREN_IN_DIFFERENT_STORE ="node.GetNodesWithChildrenInDifferentStore";
-    private static final String QUERY_GET_NODES_WITH_ASPECT ="node.GetNodesWithAspect";
-    private static final String QUERY_GET_CHILD_ASSOCS_WITHOUT_PARENT_ASSOCS_OF_TYPE ="node.GetChildAssocsWithoutParentAssocsOfType";
+    private static final String QUERY_GET_NODES_WITH_CHILDREN_IN_DIFFERENT_STORE = "node.GetNodesWithChildrenInDifferentStore";
+    private static final String QUERY_GET_NODES_WITH_ASPECT = "node.GetNodesWithAspect";
+    private static final String QUERY_GET_CHILD_ASSOCS_WITHOUT_PARENT_ASSOCS_OF_TYPE = "node.GetChildAssocsWithoutParentAssocsOfType";
     private static final String QUERY_GET_PARENT_ASSOCS = "node.GetParentAssocs";
     private static final String QUERY_GET_NODE_ASSOC = "node.GetNodeAssoc";
     private static final String QUERY_GET_NODE_ASSOCS_TO_AND_FROM = "node.GetNodeAssocsToAndFrom";
@@ -169,13 +169,13 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
     private static final String QUERY_GET_NODES_WITH_PROPERTY_VALUES_BY_ACTUAL_TYPE = "node.GetNodesWithPropertyValuesByActualType";
     private static final String QUERY_GET_DELETED_NODES_BY_MAX_TXNID = "node.GetDeletedNodesByMaxTxnId";
     private static final String QUERY_GET_SERVER_BY_IPADDRESS = "server.getServerByIpAddress";
-    
+
     private static final Long NULL_CACHE_VALUE = new Long(-1);
 
     private static Log logger = LogFactory.getLog(HibernateNodeDaoServiceImpl.class);
     /** Log to trace parent association caching: <b>classname + .ParentAssocsCache</b> */
     private static Log loggerParentAssocsCache = LogFactory.getLog(HibernateNodeDaoServiceImpl.class.getName() + ".ParentAssocsCache");
-    
+
     /**
      * Exceptions that indicate duplicate child names violations.
      */
@@ -185,7 +185,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
     {
         DUPLICATE_CHILD_NAME_EXCEPTIONS = new Class[] {
                 ConstraintViolationException.class
-                };
+        };
     }
 
     private QNameDAO qnameDAO;
@@ -201,33 +201,32 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
     private SimpleCache<EntityRef, Long> storeAndNodeIdCache;
     /** A cache for more performant lookups of the parent associations */
     private SimpleCache<Long, Set<Long>> parentAssocsCache;
-    private boolean isDebugEnabled = logger.isDebugEnabled();
-    private boolean isDebugParentAssocCacheEnabled = loggerParentAssocsCache.isDebugEnabled();
-    
+    private final boolean isDebugEnabled = logger.isDebugEnabled();
+    private final boolean isDebugParentAssocCacheEnabled = loggerParentAssocsCache.isDebugEnabled();
+
     /** a uuid identifying this unique instance */
     private final String uuid;
-    
+
     private static TransactionAwareSingleton<Long> serverIdSingleton = new TransactionAwareSingleton<Long>();
     private final String ipAddress;
 
     /** used for debugging */
-    private Set<String> changeTxnIdSet;
+    private final Set<String> changeTxnIdSet;
 
     /**
-     * 
+     *
      */
     public HibernateNodeDaoServiceImpl()
     {
-        this.uuid = GUID.generate();
+        uuid = GUID.generate();
         try
         {
             ipAddress = InetAddress.getLocalHost().getHostAddress();
-        }
-        catch (UnknownHostException e)
+        } catch (UnknownHostException e)
         {
             throw new AlfrescoRuntimeException("Failed to get server IP address", e);
         }
-        
+
         changeTxnIdSet = new HashSet<String>(0);
         enableTimestampPropagation = true;
     }
@@ -235,6 +234,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
     /**
      * Checks equality by type and uuid
      */
+    @Override
     public boolean equals(Object obj)
     {
         if (obj == null)
@@ -246,12 +246,13 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
             return false;
         }
         HibernateNodeDaoServiceImpl that = (HibernateNodeDaoServiceImpl) obj;
-        return this.uuid.equals(that.uuid);
+        return uuid.equals(that.uuid);
     }
-    
+
     /**
      * @see #uuid
      */
+    @Override
     public int hashCode()
     {
         return uuid.hashCode();
@@ -277,7 +278,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
     {
         this.usageDeltaDAO = usageDeltaDAO;
     }
-    
+
     public void setAclDaoComponent(AclDaoComponent aclDaoComponent)
     {
         this.aclDaoComponent = aclDaoComponent;
@@ -318,7 +319,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
     }
 
     /**
-     * Set the component to determine the correct aspect behaviours.  This applies
+     * Set the component to determine the correct aspect behaviours. This applies
      * particularly to the <b>cm:auditable</b> case, where the setting of values
      * is done automatically except when the behaviour is disabled.
      */
@@ -329,8 +330,8 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
 
     /**
      * Ste the transaction-aware cache to store Store and Root Node IDs by Store Reference
-     * 
-     * @param storeAndNodeIdCache          the cache
+     *
+     * @param storeAndNodeIdCache the cache
      */
     public void setStoreAndNodeIdCache(SimpleCache<EntityRef, Long> storeAndNodeIdCache)
     {
@@ -339,8 +340,8 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
 
     /**
      * Set the transaction-aware cache to store parent associations by child node id
-     * 
-     * @param parentAssocsCache     the cache
+     *
+     * @param parentAssocsCache the cache
      */
     public void setParentAssocsCache(SimpleCache<Long, Set<Long>> parentAssocsCache)
     {
@@ -348,7 +349,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
     }
 
     /**
-     * @return          Returns the ID of this instance's <b>server</b> instance or <tt>null</tt>
+     * @return Returns the ID of this instance's <b>server</b> instance or <tt>null</tt>
      */
     private Long getServerIdOrNull()
     {
@@ -361,6 +362,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         // The server already exists, so get it
         HibernateCallback callback = new HibernateCallback()
         {
+            @Override
             public Object doInHibernate(Session session)
             {
                 Query query = session
@@ -380,7 +382,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
             return null;
         }
     }
-    
+
     /**
      * Gets/creates the <b>server</b> instance to use for the life of this instance
      */
@@ -400,6 +402,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         {
             HibernateCallback callback = new HibernateCallback()
             {
+                @Override
                 public Object doInHibernate(Session session)
                 {
                     Query query = session
@@ -418,8 +421,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
                 try
                 {
                     getSession().save(server);
-                }
-                catch (DataIntegrityViolationException e)
+                } catch (DataIntegrityViolationException e)
                 {
                     // get it again
                     server = (Server) getHibernateTemplate().execute(callback);
@@ -431,16 +433,16 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
             }
             // push the value into the singleton
             serverIdSingleton.put(server.getId());
-            
+
             return server;
-        }
-        catch (Exception e)
+        } catch (Exception e)
         {
             throw new AlfrescoRuntimeException("Failed to create server instance", e);
         }
     }
-    
+
     private static final String RESOURCE_KEY_TRANSACTION_ID = "hibernate.transaction.id";
+
     private Transaction getCurrentTransaction()
     {
         Transaction transaction = null;
@@ -455,7 +457,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
             txnId = getHibernateTemplate().save(transaction);
             // bind the id
             AlfrescoTransactionSupport.bindResource(RESOURCE_KEY_TRANSACTION_ID, txnId);
-            
+
             if (isDebugEnabled)
             {
                 if (!changeTxnIdSet.add(changeTxnId))
@@ -476,10 +478,11 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         }
         return transaction;
     }
-    
+
     /**
      * Ensure that any transaction that might be present is updated to reflect the current time.
      */
+    @Override
     public void beforeCommit()
     {
         Serializable txnId = (Serializable) AlfrescoTransactionSupport.getResource(RESOURCE_KEY_TRANSACTION_ID);
@@ -494,33 +497,36 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
     /**
      * Does this <tt>Session</tt> contain any changes which must be
      * synchronized with the store?
-     * 
+     *
      * @return true => changes are pending
      */
+    @Override
     public boolean isDirty()
     {
         // create a callback for the task
         HibernateCallback callback = new HibernateCallback()
         {
+            @Override
             public Object doInHibernate(Session session)
             {
                 return session.isDirty();
             }
         };
         // execute the callback
-        return ((Boolean)getHibernateTemplate().execute(callback)).booleanValue();
+        return ((Boolean) getHibernateTemplate().execute(callback)).booleanValue();
     }
 
     /**
      * Just flushes the session
      */
+    @Override
     public void flush()
     {
         getSession().flush();
     }
 
     /**
-     * @return              Returns the <tt>Store</tt> entity or <tt>null</tt>
+     * @return Returns the <tt>Store</tt> entity or <tt>null</tt>
      */
     private Store getStore(final StoreRef storeRef)
     {
@@ -553,12 +559,13 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         // Query for it
         HibernateCallback callback = new HibernateCallback()
         {
+            @Override
             public Object doInHibernate(Session session)
             {
                 Query query = session
-                    .getNamedQuery(HibernateNodeDaoServiceImpl.QUERY_GET_STORE_BY_ALL)
-                    .setString("protocol", storeRef.getProtocol())
-                    .setString("identifier", storeRef.getIdentifier());
+                        .getNamedQuery(HibernateNodeDaoServiceImpl.QUERY_GET_STORE_BY_ALL)
+                        .setString("protocol", storeRef.getProtocol())
+                        .setString("identifier", storeRef.getIdentifier());
                 return query.uniqueResult();
             }
         };
@@ -588,12 +595,12 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
     }
 
     /**
-     * Fetch the node.  If the ID is invalid, we assume that the state of the current session
+     * Fetch the node. If the ID is invalid, we assume that the state of the current session
      * is invalid i.e. the data is stale
-     * 
-     * @param nodeId        the node's ID
-     * @return              the node
-     * @throws              ObjectNotFoundException if the ID doesn't refer to a node.
+     *
+     * @param nodeId the node's ID
+     * @return the node
+     * @throws ObjectNotFoundException if the ID doesn't refer to a node.
      */
     private Node getNodeNotNull(Long nodeId)
     {
@@ -604,27 +611,27 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         }
         return node;
     }
-    
+
     /**
-     * Fetch the node.  If the ID is invalid, <tt>null</tt> is returned.
-     * 
-     * @param nodeId        the node's ID
-     * @return              the node
-     * @throws              ObjectNotFoundException if the ID doesn't refer to a node.
+     * Fetch the node. If the ID is invalid, <tt>null</tt> is returned.
+     *
+     * @param nodeId the node's ID
+     * @return the node
+     * @throws ObjectNotFoundException if the ID doesn't refer to a node.
      */
     private Node getNodeOrNull(Long nodeId)
     {
         Node node = (Node) getHibernateTemplate().get(NodeImpl.class, nodeId);
         return node;
     }
-    
+
     /**
-     * Fetch the child assoc.  If the ID is invalid, we assume that the state of the current session
+     * Fetch the child assoc. If the ID is invalid, we assume that the state of the current session
      * is invalid i.e. the data is stale
-     * 
-     * @param childAssocId  the assoc's ID
-     * @return              the assoc
-     * @throws              AlfrescoRuntimeException if the ID doesn't refer to an assoc.
+     *
+     * @param childAssocId the assoc's ID
+     * @return the assoc
+     * @throws AlfrescoRuntimeException if the ID doesn't refer to an assoc.
      */
     private ChildAssoc getChildAssocNotNull(Long childAssocId)
     {
@@ -635,33 +642,35 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         }
         return assoc;
     }
-    
-//    /**
-//     * Fetch the child assoc.  If the ID is invalid, we assume that the state of the current session
-//     * is invalid i.e. the data is stale
-//     * 
-//     * @param nodeAssocId   the assoc's ID
-//     * @return              the assoc
-//     * @throws              AlfrescoRuntimeException if the ID doesn't refer to an assoc.
-//     */
-//    private NodeAssoc getNodeAssocNotNull(Long nodeAssocId)
-//    {
-//        NodeAssoc assoc = (NodeAssoc) getHibernateTemplate().get(NodeAssocImpl.class, nodeAssocId);
-//        if (assoc == null)
-//        {
-//            throw new AlfrescoRuntimeException("NodeAssoc ID " + nodeAssocId + " is invalid");
-//        }
-//        return assoc;
-//    }
-//    
+
+    // /**
+    // * Fetch the child assoc. If the ID is invalid, we assume that the state of the current session
+    // * is invalid i.e. the data is stale
+    // *
+    // * @param nodeAssocId the assoc's ID
+    // * @return the assoc
+    // * @throws AlfrescoRuntimeException if the ID doesn't refer to an assoc.
+    // */
+    // private NodeAssoc getNodeAssocNotNull(Long nodeAssocId)
+    // {
+    // NodeAssoc assoc = (NodeAssoc) getHibernateTemplate().get(NodeAssocImpl.class, nodeAssocId);
+    // if (assoc == null)
+    // {
+    // throw new AlfrescoRuntimeException("NodeAssoc ID " + nodeAssocId + " is invalid");
+    // }
+    // return assoc;
+    // }
+    //
     /**
      * @see #QUERY_GET_ALL_STORES
      */
+    @Override
     @SuppressWarnings("unchecked")
     public List<Pair<Long, StoreRef>> getStores()
     {
         HibernateCallback callback = new HibernateCallback()
         {
+            @Override
             public Object doInHibernate(Session session)
             {
                 Query query = session.getNamedQuery(HibernateNodeDaoServiceImpl.QUERY_GET_ALL_STORES);
@@ -679,7 +688,8 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         // done
         return storeRefs;
     }
-    
+
+    @Override
     public Pair<Long, NodeRef> getRootNode(StoreRef storeRef)
     {
         Store store = getStore(storeRef);
@@ -699,6 +709,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
     /**
      * Ensures that the store protocol/identifier combination is unique
      */
+    @Override
     public Pair<Long, NodeRef> createStore(StoreRef storeRef)
     {
         Store store = getStore(storeRef);
@@ -706,7 +717,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         {
             throw new StoreExistsException(storeRef);
         }
-        
+
         store = new StoreImpl();
         // set key values
         store.setProtocol(storeRef.getProtocol());
@@ -722,19 +733,20 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         // Add the root aspect
         Pair<Long, QName> rootAspectQNamePair = qnameDAO.getOrCreateQName(ContentModel.ASPECT_ROOT);
         rootNode.getAspects().add(rootAspectQNamePair.getFirst());
-        
+
         // Assign permissions to the root node
         SimpleAccessControlListProperties properties = DMPermissionsDaoComponentImpl.getDefaultProperties();
         Long id = aclDaoComponent.createAccessControlList(properties);
         DbAccessControlList acl = aclDaoComponent.getDbAccessControlList(id);
         rootNode.setAccessControlList(acl);
-        
+
         // Cache the value
         storeAndNodeIdCache.put(storeRef, store.getId());
         // Done
         return new Pair<Long, NodeRef>(rootNode.getId(), rootNode.getNodeRef());
     }
 
+    @Override
     public NodeRef.Status getNodeRefStatus(NodeRef nodeRef)
     {
         // Get the store
@@ -746,7 +758,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
             return null;
         }
         Node node = getNodeOrNull(store, nodeRef.getId());
-        if (node == null)     // node never existed
+        if (node == null) // node never existed
         {
             return null;
         }
@@ -758,7 +770,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
                     node.getDeleted());
         }
     }
-    
+
     private Node getNodeOrNull(final Store store, final String uuid)
     {
         NodeRef nodeRef = new NodeRef(store.getStoreRef(), uuid);
@@ -791,12 +803,13 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         // Query for it
         HibernateCallback callback = new HibernateCallback()
         {
+            @Override
             public Object doInHibernate(Session session)
             {
                 Query query = session
-                    .getNamedQuery(HibernateNodeDaoServiceImpl.QUERY_GET_NODE_BY_STORE_ID_AND_UUID)
-                    .setLong("storeId", store.getId())
-                    .setString("uuid", uuid);
+                        .getNamedQuery(HibernateNodeDaoServiceImpl.QUERY_GET_NODE_BY_STORE_ID_AND_UUID)
+                        .setLong("storeId", store.getId())
+                        .setString("uuid", uuid);
                 DirtySessionMethodInterceptor.setQueryFlushMode(session, query);
                 return query.uniqueResult();
             }
@@ -816,7 +829,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         }
         return node;
     }
-    
+
     private void updateNodeStatus(Node node, boolean deleted)
     {
         Transaction currentTxn = getCurrentTransaction();
@@ -833,14 +846,15 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
             node.setDeleted(deleted);
         }
     }
-    
+
     private static final String UNKNOWN_USER = "unknown";
+
     private String getCurrentUser()
     {
         String user = AuthenticationUtil.getFullyAuthenticatedUser();
         return (user == null) ? UNKNOWN_USER : user;
     }
-    
+
     private void recordNodeCreate(Node node)
     {
         updateNodeStatus(node, false);
@@ -857,25 +871,23 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
 
     /**
      * Record the node update, setting the node's <b>cm:auditable</b> properties.
-     * The <b>cm:auditable</b> properties set implicity if the automatic behaviour
-     * {@link BehaviourFilter#isEnabled(NodeRef, QName) behaviour} is enabled.
-     * 
+     * The <b>cm:auditable</b> properties set implicity if the automatic behaviour {@link BehaviourFilter#isEnabled(NodeRef, QName) behaviour} is enabled.
+     *
      * @see #recordNodeUpdate(Node, Map)
      */
     private void recordNodeUpdate(Node node)
     {
         recordNodeUpdate(node, null);
     }
-    
+
     /**
      * Record the node update, setting the node's <b>cm:auditable</b> properties.
-     * The <b>cm:auditable</b> properties set implicity if the automatic behaviour
-     * {@link BehaviourFilter#isEnabled(NodeRef, QName) behaviour} is enabled,
+     * The <b>cm:auditable</b> properties set implicity if the automatic behaviour {@link BehaviourFilter#isEnabled(NodeRef, QName) behaviour} is enabled,
      * otherwise the properties are extracted from the properties passed in.
-     * 
-     * @param node          the node to operate on
-     * @param properties    the node properties from which <b>cm:auditable</b> properties
-     *                      may be extracted
+     *
+     * @param node the node to operate on
+     * @param properties the node properties from which <b>cm:auditable</b> properties
+     *            may be extracted
      */
     private void recordNodeUpdate(Node node, Map<QName, Serializable> properties)
     {
@@ -888,7 +900,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
             if (auditableProperties == null)
             {
                 auditableProperties = new AuditableProperties();
-                node.setAuditableProperties(auditableProperties);                
+                node.setAuditableProperties(auditableProperties);
             }
             String currentUser = getCurrentUser();
             Date currentDate = new Date();
@@ -904,7 +916,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
                 node.getAuditableProperties().setAuditValues(currentUser, currentDate, properties);
             }
             // else
-            //      there are no properties, so there is nothing to set
+            // there are no properties, so there is nothing to set
         }
         // Propagate timestamps
         propagateTimestamps(node);
@@ -922,12 +934,12 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
             if (auditableProperties == null)
             {
                 auditableProperties = new AuditableProperties();
-                node.setAuditableProperties(auditableProperties);                
+                node.setAuditableProperties(auditableProperties);
             }
             auditableProperties.setAuditValues(currentUser, currentDate, false);
         }
     }
-    
+
     /**
      * Ensures that timestamps are propagated for the <b>cm:auditable</b> aspect as required
      * and defined by the model.
@@ -946,31 +958,30 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
             propagateTimestamps(parentAssoc);
         }
     }
-    
+
     /**
      * Sets the timestamps for nodes set during the transaction.
      * <p>
-     * The implementation attempts to propagate the timestamps in the same transaction, but during periods of high
-     * concurrent modification to children of a particular parent node, the contention-resolution at the database
-     * can lead to delays in the processes.  When this occurs, the process is pushed to after the transaction for an
-     * arbitrary period of time, after which the server will again attempt to do the work in the transaction.
-     * 
+     * The implementation attempts to propagate the timestamps in the same transaction, but during periods of high concurrent modification to children of a particular parent node,
+     * the contention-resolution at the database can lead to delays in the processes. When this occurs, the process is pushed to after the transaction for an arbitrary period of
+     * time, after which the server will again attempt to do the work in the transaction.
+     *
      * @author Derek Hulley
      */
     private class TimestampPropagator extends TransactionListenerAdapter implements RetryingTransactionCallback<Integer>
     {
         private final Set<Long> nodeIds;
-        
+
         private TimestampPropagator()
         {
-            this.nodeIds = new HashSet<Long>(23);
+            nodeIds = new HashSet<Long>(23);
         }
-        
+
         public void addNode(Long nodeId)
         {
             nodeIds.add(nodeId);
         }
-        
+
         @Override
         public void afterCommit()
         {
@@ -982,20 +993,21 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
             try
             {
                 auditableTransactionHelper.doInTransaction(this, false, true);
-            }
-            catch (Throwable e)
+            } catch (Throwable e)
             {
                 logger.info("Failed to update auditable properties for nodes: " + nodeIds);
             }
         }
 
         public static final String QUERY_UPDATE_AUDITABLE_MODIFIED = "node.UpdateAuditableModified";
+
+        @Override
         public Integer execute() throws Throwable
         {
             long now = System.currentTimeMillis();
             return executeImpl(now, true);
         }
-        
+
         private Integer executeImpl(long now, boolean isPostTransaction) throws Throwable
         {
             if (logger.isDebugEnabled())
@@ -1027,7 +1039,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
                     continue;
                 }
                 // Lock it
-                session.lock(node, LockMode.UPGRADE_NOWAIT);            // Might fail immediately, but that is better than waiting
+                session.lock(node, LockMode.UPGRADE_NOWAIT); // Might fail immediately, but that is better than waiting
                 auditableProperties.setAuditValues(modifier, modifiedDate, false);
                 count++;
                 if (count % 1000 == 0)
@@ -1039,8 +1051,9 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
             return new Integer(count);
         }
     }
-    
+
     private static final String RESOURCE_KEY_TIMESTAMP_PROPAGATOR = "hibernate.timestamp.propagator";
+
     /**
      * Ensures that the timestamps are propogated to the parent node of the association, but only
      * if the association requires it.
@@ -1072,7 +1085,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         }
         // We have to update the parent
         TimestampPropagator propagator =
-            (TimestampPropagator) AlfrescoTransactionSupport.getResource(RESOURCE_KEY_TIMESTAMP_PROPAGATOR);
+                (TimestampPropagator) AlfrescoTransactionSupport.getResource(RESOURCE_KEY_TIMESTAMP_PROPAGATOR);
         if (propagator == null)
         {
             propagator = new TimestampPropagator();
@@ -1081,22 +1094,23 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         propagator.addNode(parentAssoc.getParent().getId());
     }
 
+    @Override
     public Pair<Long, NodeRef> newNode(StoreRef storeRef, String uuid, QName nodeTypeQName) throws InvalidTypeException
     {
-        Store store = (Store) getStoreNotNull(storeRef);
+        Store store = getStoreNotNull(storeRef);
         Node newNode = newNode(store, uuid, nodeTypeQName);
         Long nodeId = newNode.getId();
         NodeRef nodeRef = newNode.getNodeRef();
         return new Pair<Long, NodeRef>(nodeId, nodeRef);
     }
-    
+
     private Node newNode(Store store, String uuid, QName nodeTypeQName) throws InvalidTypeException
     {
         Node node = null;
         if (uuid != null)
         {
-        // Get any existing Node.  A node with this UUID may have existed before, but must be marked
-        // deleted; otherwise it will be considered live and valid
+            // Get any existing Node. A node with this UUID may have existed before, but must be marked
+            // deleted; otherwise it will be considered live and valid
             node = getNodeOrNull(store, uuid);
         }
         else
@@ -1130,30 +1144,32 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
             recordNodeCreate(node);
             // Persist it
             getHibernateTemplate().save(node);
-            
+
             // Update the cache
             storeAndNodeIdCache.put(node.getNodeRef(), node.getId());
         }
-        
+
         // Done
         return node;
     }
 
     /**
-     * This moves the entire node, ensuring that a trail is left behind.  It is more
+     * This moves the entire node, ensuring that a trail is left behind. It is more
      * efficient to move the node and recreate a deleted node in it's wake because of
      * the other properties and aspects that need to go with the node.
      */
+    @Override
     public Pair<Long, NodeRef> moveNodeToStore(Long nodeId, StoreRef storeRef)
     {
         Node node = getNodeNotNull(nodeId);
         // Update the node
         updateNode(nodeId, storeRef, null, null);
         NodeRef nodeRef = node.getNodeRef();
-        
+
         return new Pair<Long, NodeRef>(node.getId(), nodeRef);
     }
 
+    @Override
     public Pair<Long, NodeRef> getNodePair(NodeRef nodeRef)
     {
         Store store = getStore(nodeRef.getStoreRef());
@@ -1176,10 +1192,11 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         else
         {
             // The node is live
-            return  new Pair<Long, NodeRef>(node.getId(), nodeRef);
+            return new Pair<Long, NodeRef>(node.getId(), nodeRef);
         }
     }
-    
+
+    @Override
     public Pair<Long, NodeRef> getNodePair(Long nodeId)
     {
         Node node = (Node) getHibernateTemplate().get(NodeImpl.class, nodeId);
@@ -1198,6 +1215,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         }
     }
 
+    @Override
     public QName getNodeType(Long nodeId)
     {
         Node node = getNodeNotNull(nodeId);
@@ -1205,12 +1223,14 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         return nodeTypeQName;
     }
 
+    @Override
     public void setNodeStatus(Long nodeId)
     {
         Node node = getNodeNotNull(nodeId);
         recordNodeUpdate(node);
     }
 
+    @Override
     public Long getNodeAccessControlList(Long nodeId)
     {
         Node node = getNodeNotNull(nodeId);
@@ -1225,6 +1245,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         }
     }
 
+    @Override
     public void setNodeAccessControlList(Long nodeId, Long aclId)
     {
         Node node = getNodeNotNull(nodeId);
@@ -1243,13 +1264,14 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         }
     }
 
+    @Override
     public void updateNode(Long nodeId, StoreRef storeRefAfter, String uuidAfter, QName nodeTypeQName)
     {
         Node node = getNodeNotNull(nodeId);
         Store storeBefore = node.getStore();
         String uuidBefore = node.getUuid();
         NodeRef nodeRefBefore = node.getNodeRef();
-        
+
         final Store storeAfter;
         if (storeRefAfter == null)
         {
@@ -1264,7 +1286,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         {
             uuidAfter = uuidBefore;
         }
-        
+
         NodeRef nodeRefAfter = new NodeRef(storeRefAfter, uuidAfter);
         if (!nodeRefAfter.equals(nodeRefBefore))
         {
@@ -1281,7 +1303,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
                 DirtySessionMethodInterceptor.flushSession(getSession(), true);
                 // The cache entry will be overwritten so we don't need to do it here
             }
-            
+
             // Change the store
             node.setStore(storeAfter);
             node.setUuid(uuidAfter);
@@ -1289,7 +1311,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
             recordNodeUpdate(node);
             // Flush immediately to ensure that the record changes
             DirtySessionMethodInterceptor.flushSession(getSession(), true);
-            
+
             // We need to create a dummy reference for the node that was just moved away
             Node oldNodeDummy = new NodeImpl();
             oldNodeDummy.setStore(storeBefore);
@@ -1298,26 +1320,27 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
             recordNodeDelete(oldNodeDummy);
             // Persist
             getHibernateTemplate().save(oldNodeDummy);
-            
+
             // Update cache entries
             NodeRef nodeRef = node.getNodeRef();
             storeAndNodeIdCache.put(nodeRef, node.getId());
             storeAndNodeIdCache.put(nodeRefBefore, oldNodeDummy.getId());
         }
-        
+
         // Only update the node type if it is changing
         if (nodeTypeQName != null)
         {
             Long nodeTypeQNameId = qnameDAO.getOrCreateQName(nodeTypeQName).getFirst();
             if (!nodeTypeQNameId.equals(node.getTypeQNameId()))
             {
-                    node.setTypeQNameId(nodeTypeQNameId);
+                node.setTypeQNameId(nodeTypeQNameId);
                 // We will need to record the change
                 recordNodeUpdate(node);
             }
         }
     }
-    
+
+    @Override
     public Map<PropertyMapKey, NodePropertyValue> getNodePropertiesRaw(Long nodeId)
     {
         Node node = getNodeNotNull(nodeId);
@@ -1337,7 +1360,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
                 {
                     continue;
                 }
-                
+
                 QName auditablePropertyQName = entry.getKey();
                 Pair<Long, QName> auditablePropertyQNamePair = qnameDAO.getQName(auditablePropertyQName);
                 if (auditablePropertyQNamePair == null)
@@ -1358,6 +1381,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         return props;
     }
 
+    @Override
     public Serializable getNodeProperty(Long nodeId, QName propertyQName)
     {
         Node node = getNodeNotNull(nodeId);
@@ -1376,13 +1400,13 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
                 return null;
             }
         }
-        
+
         Pair<Long, QName> propertyQNamePair = qnameDAO.getQName(propertyQName);
         if (propertyQNamePair == null)
         {
             return null;
         }
-        
+
         Map<PropertyMapKey, NodePropertyValue> nodeProperties = node.getProperties();
         Serializable propertyValue = HibernateNodeDaoServiceImpl.getPublicProperty(
                 nodeProperties,
@@ -1391,11 +1415,12 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         return propertyValue;
     }
 
+    @Override
     public Map<QName, Serializable> getNodeProperties(Long nodeId)
     {
         Node node = getNodeNotNull(nodeId);
         Map<PropertyMapKey, NodePropertyValue> nodeProperties = node.getProperties();
-        
+
         // Convert the QName IDs
         Map<QName, Serializable> converted = HibernateNodeDaoServiceImpl.convertToPublicProperties(
                 nodeProperties,
@@ -1403,7 +1428,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
                 localeDAO,
                 contentDataDAO,
                 dictionaryService);
-        
+
         // Handle cm:auditable
         if (hasNodeAspect(node, ContentModel.ASPECT_AUDITABLE))
         {
@@ -1414,7 +1439,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
             }
             converted.putAll(auditableProperties.getAuditableProperties());
         }
-        
+
         // Done
         return converted;
     }
@@ -1427,14 +1452,14 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
             // This is never set manually
             return;
         }
-        
+
         PropertyDefinition propertyDef = dictionaryService.getProperty(qname);
         Long qnameId = qnameDAO.getOrCreateQName(qname).getFirst();
-        
+
         /*
          * TODO: Put into interceptor
-         * This method will replaces a content property.  We therefore remove the existing content data.
-         * New ContentData entities will be created.  Re-using content data will mean comparing old
+         * This method will replaces a content property. We therefore remove the existing content data.
+         * New ContentData entities will be created. Re-using content data will mean comparing old
          * with new - it is faster to just create a new row.
          */
         if (propertyDef != null && propertyDef.getDataType().getName().equals(DataTypeDefinition.CONTENT))
@@ -1446,19 +1471,19 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         }
 
         Map<PropertyMapKey, NodePropertyValue> persistableProperties = new HashMap<PropertyMapKey, NodePropertyValue>(3);
-        
+
         HibernateNodeDaoServiceImpl.addValueToPersistedProperties(
                 persistableProperties,
                 propertyDef,
-                (short)-1,
+                (short) -1,
                 qnameId,
                 localeId,
                 value,
                 localeDAO,
                 contentDataDAO);
-        
+
         Map<PropertyMapKey, NodePropertyValue> nodeProperties = node.getProperties();
-        
+
         Iterator<PropertyMapKey> oldPropertyKeysIterator = nodeProperties.keySet().iterator();
         while (oldPropertyKeysIterator.hasNext())
         {
@@ -1477,28 +1502,30 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
             // Remove the entry from the node's properties
             oldPropertyKeysIterator.remove();
         }
-        
-        // Now add all the new properties.  The will overwrite and/or add values.
+
+        // Now add all the new properties. The will overwrite and/or add values.
         nodeProperties.putAll(persistableProperties);
     }
 
+    @Override
     public void addNodeProperty(Long nodeId, QName qname, Serializable propertyValue)
-    {        
+    {
         Node node = getNodeNotNull(nodeId);
         Long localeId = localeDAO.getOrCreateDefaultLocalePair().getFirst();
         addNodePropertyImpl(node, qname, propertyValue, localeId);
-        
+
         // Record change ID
         recordNodeUpdate(
                 node,
                 Collections.singletonMap(qname, propertyValue));
     }
-    
+
+    @Override
     @SuppressWarnings("unchecked")
     public void addNodeProperties(Long nodeId, Map<QName, Serializable> properties)
     {
         Node node = getNodeNotNull(nodeId);
-        
+
         Long localeId = localeDAO.getOrCreateDefaultLocalePair().getFirst();
         for (Map.Entry<QName, Serializable> entry : properties.entrySet())
         {
@@ -1510,17 +1537,18 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
             Serializable value = entry.getValue();
             addNodePropertyImpl(node, qname, value, localeId);
         }
-        
+
         // Record change ID
         recordNodeUpdate(node, properties);
     }
 
+    @Override
     public void setNodeProperties(Long nodeId, Map<QName, Serializable> propertiesIncl)
     {
         /*
          * TODO: Put into interceptor
-         * This method will replace all properties.  We therefore remove all existing content data.
-         * New ContentData entities will be created.  Re-using content data will mean comparing old
+         * This method will replace all properties. We therefore remove all existing content data.
+         * New ContentData entities will be created. Re-using content data will mean comparing old
          * with new - it is faster to just create a new row.
          */
         Set<QName> contentQNames = new HashSet<QName>(dictionaryService.getAllProperties(DataTypeDefinition.CONTENT));
@@ -1528,8 +1556,8 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         contentDataDAO.deleteContentDataForNode(nodeId, contentQNameIds);
 
         Node node = getNodeNotNull(nodeId);
-        
-        // Handle cm:auditable.  These need to be removed from the properties.
+
+        // Handle cm:auditable. These need to be removed from the properties.
         Map<QName, Serializable> properties = new HashMap<QName, Serializable>(propertiesIncl.size());
         for (Map.Entry<QName, Serializable> entry : propertiesIncl.entrySet())
         {
@@ -1542,7 +1570,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
             // The value was NOT an auditable value
             properties.put(propertyQName, value);
         }
-        
+
         // Convert
         Map<PropertyMapKey, NodePropertyValue> persistableProperties = HibernateNodeDaoServiceImpl.convertToPersistentProperties(
                 properties,
@@ -1553,11 +1581,11 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
 
         // Get the persistent map attached to the node
         Map<PropertyMapKey, NodePropertyValue> nodeProperties = node.getProperties();
-        
+
         // In order to make as few changes as possible, we need to update existing properties wherever possible.
         // This means keeping track of map keys that weren't updated
         Set<PropertyMapKey> toRemove = new HashSet<PropertyMapKey>(nodeProperties.keySet());
-        
+
         // Loop over the converted values and update the persisted node properties map
         for (Map.Entry<PropertyMapKey, NodePropertyValue> entry : persistableProperties.entrySet())
         {
@@ -1566,23 +1594,24 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
             // Add the value to the node's map
             nodeProperties.put(key, entry.getValue());
         }
-        
+
         // Now remove all untouched keys
         for (PropertyMapKey key : toRemove)
         {
             nodeProperties.remove(key);
         }
-        
+
         // Record change ID
         recordNodeUpdate(node, propertiesIncl);
     }
 
+    @Override
     public void removeNodeProperties(Long nodeId, Set<QName> propertyQNamesIncl)
     {
         /*
          * TODO: Put into interceptor
-         * This method will replace all properties.  We therefore remove all existing content data.
-         * New ContentData entities will be created.  Re-using content data will mean comparing old
+         * This method will replace all properties. We therefore remove all existing content data.
+         * New ContentData entities will be created. Re-using content data will mean comparing old
          * with new - it is faster to just create a new row.
          */
         Set<QName> contentQNames = new HashSet<QName>(dictionaryService.getAllProperties(DataTypeDefinition.CONTENT));
@@ -1598,8 +1627,8 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         contentDataDAO.deleteContentDataForNode(nodeId, contentQNamesToRemoveIds);
 
         Node node = getNodeNotNull(nodeId);
-        
-        // Handle cm:auditable.  These need to be removed from the list.
+
+        // Handle cm:auditable. These need to be removed from the list.
         Set<QName> propertyQNames = new HashSet<QName>(propertyQNamesIncl.size());
         for (QName propertyQName : propertyQNamesIncl)
         {
@@ -1609,11 +1638,11 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
             }
             propertyQNames.add(propertyQName);
         }
-        
+
         Map<PropertyMapKey, NodePropertyValue> nodeProperties = node.getProperties();
 
         Set<Long> propertyQNameIds = qnameDAO.convertQNamesToIds(propertyQNames, true);
-        
+
         // Loop over the current properties and remove any that have the same qname.
         // Make a copy as we will modify the original map.
         Set<PropertyMapKey> entrySet = new HashSet<PropertyMapKey>(nodeProperties.keySet());
@@ -1625,26 +1654,28 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
                 nodeProperties.remove(propertyMapKey);
             }
         }
-        
+
         // Record change ID
         recordNodeUpdate(node);
     }
 
+    @Override
     public Set<QName> getNodeAspects(Long nodeId)
     {
         Node node = getNodeNotNull(nodeId);
         Set<Long> nodeAspects = node.getAspects();
-        
+
         // Convert
         Set<QName> nodeAspectQNames = qnameDAO.convertIdsToQNames(nodeAspects);
-        
+
         // Add sys:referenceable
         nodeAspectQNames.add(ContentModel.ASPECT_REFERENCEABLE);
-        
+
         // Make immutable
         return nodeAspectQNames;
     }
 
+    @Override
     public void addNodeAspects(Long nodeId, Set<QName> aspectQNames)
     {
         Node node = getNodeNotNull(nodeId);
@@ -1663,7 +1694,8 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         // Record change ID
         recordNodeUpdate(node);
     }
-    
+
+    @Override
     public void removeNodeAspects(Long nodeId, Set<QName> aspectQNames)
     {
         Node node = getNodeNotNull(nodeId);
@@ -1676,7 +1708,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
 
         // Convert
         Set<Long> aspectQNameIds = qnameDAO.convertQNamesToIds(aspectQNames, false);
-        
+
         // Remove them
         Set<Long> nodeAspects = node.getAspects();
         nodeAspects.removeAll(aspectQNameIds);
@@ -1685,6 +1717,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         recordNodeUpdate(node);
     }
 
+    @Override
     public boolean hasNodeAspect(Long nodeId, QName aspectQName)
     {
         // Shortcut sys:referenceable
@@ -1703,7 +1736,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         {
             return false;
         }
-        
+
         Set<Long> nodeAspects = node.getAspects();
         return nodeAspects.contains(aspectQNamePair.getFirst());
     }
@@ -1711,25 +1744,26 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
     /**
      * Manually ensures that all cascading of associations is taken care of
      */
+    @Override
     public void deleteNode(Long nodeId)
     {
         /*
          * TODO: Put into interceptor
-         * This method will remove all properties.  We therefore remove all existing content data.
+         * This method will remove all properties. We therefore remove all existing content data.
          */
         Set<QName> contentQNames = new HashSet<QName>(dictionaryService.getAllProperties(DataTypeDefinition.CONTENT));
         Set<Long> contentQNamesToRemoveIds = qnameDAO.convertQNamesToIds(contentQNames, false);
         contentDataDAO.deleteContentDataForNode(nodeId, contentQNamesToRemoveIds);
 
         Node node = getNodeNotNull(nodeId);
-        
+
         // Propagate timestamps
         propagateTimestamps(node);
-        
+
         Set<Long> deletedChildAssocIds = new HashSet<Long>(10);
         node = fixAclAndReloadIfNeeded(node);
         deleteNodeInternal(node, false, deletedChildAssocIds);
-        
+
         // Record change ID
         recordNodeDelete(node);
     }
@@ -1746,11 +1780,12 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
                 FixAclInheritanceUpdater.fixAclInheritFromNull(childAclId, primaryParentAclId, parent.getNodeRef(), BeanHelper.getAccessControlListDao());
                 node = getNodeNotNull(node.getId());
                 DbAccessControlList fixedAcl = aclDaoComponent.getDbAccessControlList(node.getAccessControlList().getId());
-                logger.info("Fixed invalid acl.inheritFrom on node delete: nodeRef=" + node.getNodeRef() + ", new inheritFrom=" + fixedAcl != null ? fixedAcl.getInheritsFrom() : null);
-                if(fixedAcl.getInheritsFrom() == null){
+                logger.info("Fixed invalid acl.inheritFrom on node delete: nodeRef=" + node.getNodeRef() + ", new inheritFrom=" + fixedAcl != null ? fixedAcl.getInheritsFrom()
+                        : null);
+                if (fixedAcl.getInheritsFrom() == null) {
                     logger.debug("Fixing not visible from acl or not successful.");
                 }
-                if(node.getAccessControlList().getInheritsFrom() == null){
+                if (node.getAccessControlList().getInheritsFrom() == null) {
                     logger.debug("Fixing not visible from node or not successful.");
                 }
             }
@@ -1759,8 +1794,9 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
     }
 
     /**
-     * Final purge of the node entry.  No transaction recording is done for this.
+     * Final purge of the node entry. No transaction recording is done for this.
      */
+    @Override
     public void purgeNode(Long nodeId)
     {
         Node node = (Node) getSession().get(NodeImpl.class, nodeId);
@@ -1773,15 +1809,15 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
     private static final String QUERY_DELETE_PARENT_ASSOCS = "node.DeleteParentAssocs";
     private static final String QUERY_DELETE_CHILD_ASSOCS = "node.DeleteChildAssocs";
     private static final String QUERY_DELETE_NODE_ASSOCS = "node.DeleteNodeAssocs";
-    
+
     /**
-     * Does a full cleanup of the node if the <tt>deleted</tt> flag is off.  If
+     * Does a full cleanup of the node if the <tt>deleted</tt> flag is off. If
      * the node is marked as <tt>deleted</tt> then the cleanup is assumed to be
      * unnecessary and the node entry itself is cleaned up.
-     * 
-     * @param node                  the node to delete
-     * @param cascade               true to cascade delete
-     * @param deletedChildAssocIds  previously deleted child associations
+     *
+     * @param node the node to delete
+     * @param cascade true to cascade delete
+     * @param deletedChildAssocIds previously deleted child associations
      */
     @SuppressWarnings("unchecked")
     private void deleteNodeInternal(Node node, boolean cascade, Set<Long> deletedChildAssocIds)
@@ -1795,11 +1831,12 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         }
         HibernateCallback getChildNodeIdsCallback = new HibernateCallback()
         {
+            @Override
             public Object doInHibernate(Session session)
             {
                 Query query = session
-                    .getNamedQuery(HibernateNodeDaoServiceImpl.QUERY_GET_CHILD_NODE_IDS)
-                    .setLong("parentId", nodeId);
+                        .getNamedQuery(HibernateNodeDaoServiceImpl.QUERY_GET_CHILD_NODE_IDS)
+                        .setLong("parentId", nodeId);
                 DirtySessionMethodInterceptor.setQueryFlushMode(session, query);
                 return query.scroll(ScrollMode.FORWARD_ONLY);
             }
@@ -1808,7 +1845,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         try
         {
             childNodeIds = (ScrollableResults) getHibernateTemplate().execute(getChildNodeIdsCallback);
-        
+
             while (childNodeIds.next())
             {
                 Long childNodeId = childNodeIds.getLong(0);
@@ -1818,27 +1855,27 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
                     loggerParentAssocsCache.debug("\n" + "Parent associations cache - Removing entry: \n" + "   Node:   " + childNodeId);
                 }
             }
-        }
-        finally
+        } finally
         {
-            if(childNodeIds != null)
+            if (childNodeIds != null)
             {
                 childNodeIds.close();
             }
         }
         HibernateCallback deleteParentAssocsCallback = new HibernateCallback()
         {
+            @Override
             public Object doInHibernate(Session session)
             {
                 Query query = session
-                    .getNamedQuery(HibernateNodeDaoServiceImpl.QUERY_DELETE_CHILD_ASSOCS)
-                    .setLong("parentId", nodeId);
+                        .getNamedQuery(HibernateNodeDaoServiceImpl.QUERY_DELETE_CHILD_ASSOCS)
+                        .setLong("parentId", nodeId);
                 DirtySessionMethodInterceptor.setQueryFlushMode(session, query);
                 return query.executeUpdate();
             }
         };
         getHibernateTemplate().execute(deleteParentAssocsCallback);
-        
+
         // delete all child assocs
         if (isDebugEnabled)
         {
@@ -1846,17 +1883,18 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         }
         HibernateCallback deleteChildAssocsCallback = new HibernateCallback()
         {
+            @Override
             public Object doInHibernate(Session session)
             {
                 Query query = session
-                    .getNamedQuery(HibernateNodeDaoServiceImpl.QUERY_DELETE_PARENT_ASSOCS)
-                    .setLong("childId", nodeId);
+                        .getNamedQuery(HibernateNodeDaoServiceImpl.QUERY_DELETE_PARENT_ASSOCS)
+                        .setLong("childId", nodeId);
                 DirtySessionMethodInterceptor.setQueryFlushMode(session, query);
                 return query.executeUpdate();
             }
         };
         getHibernateTemplate().execute(deleteChildAssocsCallback);
-        
+
         // delete all node associations to and from
         if (isDebugEnabled)
         {
@@ -1864,43 +1902,45 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         }
         HibernateCallback deleteNodeAssocsCallback = new HibernateCallback()
         {
+            @Override
             public Object doInHibernate(Session session)
             {
                 Query query = session
-                    .getNamedQuery(HibernateNodeDaoServiceImpl.QUERY_DELETE_NODE_ASSOCS)
-                    .setLong("nodeId", nodeId);
+                        .getNamedQuery(HibernateNodeDaoServiceImpl.QUERY_DELETE_NODE_ASSOCS)
+                        .setLong("nodeId", nodeId);
                 DirtySessionMethodInterceptor.setQueryFlushMode(session, query);
                 return query.executeUpdate();
             }
         };
         getHibernateTemplate().execute(deleteNodeAssocsCallback);
-        
+
         // Delete deltas
         usageDeltaDAO.deleteDeltas(nodeId);
-        
+
         // Wipe out properties and aspects
         node.getProperties().clear();
         node.getAspects().clear();
-        
+
         // delete ACLs
-        
+
         DbAccessControlList dbAcl = node.getAccessControlList();
         node.setAccessControlList(null);
-        if(dbAcl != null)
+        if (dbAcl != null)
         {
-            if(dbAcl.getAclType() == ACLType.DEFINING)
+            if (dbAcl.getAclType() == ACLType.DEFINING)
             {
                 getHibernateTemplate().delete(dbAcl);
             }
-            if(dbAcl.getAclType() == ACLType.SHARED)
+            if (dbAcl.getAclType() == ACLType.SHARED)
             {
                 // check unused
                 Long defining = dbAcl.getInheritsFrom();
-                if(getHibernateTemplate().get(DbAccessControlListImpl.class, defining) == null)
+                if (getHibernateTemplate().get(DbAccessControlListImpl.class, defining) == null)
                 {
                     final Long id = dbAcl.getId();
                     HibernateCallback check = new HibernateCallback()
                     {
+                        @Override
                         public Object doInHibernate(Session session)
                         {
                             Criteria criteria = getSession().createCriteria(NodeImpl.class, "n");
@@ -1909,18 +1949,18 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
                             return criteria.list();
                         }
                     };
-                    List<Integer> list =  (List<Integer>)getHibernateTemplate().execute(check);
-                    if(list.get(0).intValue() == 0)
+                    List<Integer> list = (List<Integer>) getHibernateTemplate().execute(check);
+                    if (list.get(0).intValue() == 0)
                     {
                         getHibernateTemplate().delete(dbAcl);
                     }
                 }
             }
         }
-        
+
         // Mark the node as deleted
         node.setDeleted(true);
-        
+
         // Remove node from cache
         parentAssocsCache.remove(nodeId);
         if (isDebugParentAssocCacheEnabled)
@@ -1931,22 +1971,22 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         }
         // done
     }
-    
+
     private long getCrc(String str)
     {
         CRC32 crc = new CRC32();
         try
         {
-            crc.update(str.getBytes("UTF-8"));              // https://issues.alfresco.com/jira/browse/ALFCOM-1335
-        }
-        catch (UnsupportedEncodingException e)
+            crc.update(str.getBytes("UTF-8")); // https://issues.alfresco.com/jira/browse/ALFCOM-1335
+        } catch (UnsupportedEncodingException e)
         {
             throw new RuntimeException("UTF-8 encoding is not supported");
         }
         return crc.getValue();
     }
-    
+
     private static final String TRUNCATED_NAME_INDICATOR = "~~~";
+
     private String getShortName(String str)
     {
         int length = str.length();
@@ -1961,7 +2001,8 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
             return ret.toString();
         }
     }
-    
+
+    @Override
     public Pair<Long, ChildAssociationRef> newChildAssoc(
             Long parentNodeId,
             Long childNodeId,
@@ -1969,12 +2010,12 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
             final QName assocTypeQName,
             QName assocQName,
             String newName)
-    {
+            {
         final Node parentNode = (Node) getSession().get(NodeImpl.class, parentNodeId);
         Node childNode = (Node) getSession().get(NodeImpl.class, childNodeId);
-        
+
         final Pair<String, Long> childNameUnique = getChildNameUnique(assocTypeQName, newName);
-        
+
         final ChildAssoc assoc = new ChildAssocImpl();
         assoc.setTypeQName(qnameDAO, assocTypeQName);
         assoc.setChildNodeName(childNameUnique.getFirst());
@@ -1989,6 +2030,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         DirtySessionMethodInterceptor.flushSession(getSession(false));
         Long assocId = (Long) getHibernateTemplate().execute(new HibernateCallback()
         {
+            @Override
             @SuppressWarnings("unchecked")
             public Object doInHibernate(Session session)
             {
@@ -2031,7 +2073,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
                 }
             }
         });
-        
+
         // Add it to the cache
         Set<Long> oldParentAssocIds = parentAssocsCache.get(childNode.getId());
         if (oldParentAssocIds != null)
@@ -2043,12 +2085,12 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
             {
                 loggerParentAssocsCache.debug("\n" +
                         "Parent associations cache - Updating entry: \n" +
-                        "   Node:   " + childNodeId +  "\n" +
+                        "   Node:   " + childNodeId + "\n" +
                         "   Before: " + oldParentAssocIds + "\n" +
                         "   After:  " + newParentAssocIds);
             }
         }
-        
+
         // If this is a primary association then update the permissions
         if (isPrimary)
         {
@@ -2065,28 +2107,30 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
                 childNode.setAccessControlList(inheritedAcl);
             }
         }
-        
+
         // Record change ID
         recordNodeUpdate(childNode);
 
         // done
         return new Pair<Long, ChildAssociationRef>(assocId, assoc.getChildAssocRef(qnameDAO));
-    }
-    
+            }
+
+    @Override
     public void setChildNameUnique(final Long childAssocId, final String childName)
     {
         /*
          * Work out if there has been any change in the name
          */
-        
+
         final ChildAssoc childAssoc = getChildAssocNotNull(childAssocId);
         final Node parentNode = childAssoc.getParent();
-        
+
         QName childAssocTypeQName = childAssoc.getTypeQName(qnameDAO);
         final Pair<String, Long> childNameUnique = getChildNameUnique(childAssocTypeQName, childName);
 
         HibernateCallback callback = new HibernateCallback()
         {
+            @Override
             public Object doInHibernate(Session session)
             {
                 childAssoc.setChildNodeName(childNameUnique.getFirst());
@@ -2112,33 +2156,33 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
                 }
             }
         };
-        
+
         // Make sure that all changes to the session are persisted so that we know if any
         // failures are from the constraint or not
         DirtySessionMethodInterceptor.flushSession(getSession(false));
         getHibernateTemplate().execute(callback);
-        
+
         // Done
         if (isDebugEnabled)
         {
             logger.debug(
                     "Updated child association: \n" +
-                    "   Parent:      " + parentNode + "\n" +
-                    "   Child Assoc: " + childAssoc);
+                            "   Parent:      " + parentNode + "\n" +
+                            "   Child Assoc: " + childAssoc);
         }
     }
-    
+
     /**
-     * Apply the <b>cm:name</b> to the child association.  If the child name is <tt>null</tt> then
+     * Apply the <b>cm:name</b> to the child association. If the child name is <tt>null</tt> then
      * a GUID is generated as a substitute.
-     * 
-     * @param childName             the <b>cm:name</b> applying to the association.
+     *
+     * @param childName the <b>cm:name</b> applying to the association.
      */
     private Pair<String, Long> getChildNameUnique(QName assocTypeQName, String childName)
     {
-        String childNameNewShort;                   // 
-        long childNameNewCrc = -1L;                 // By default, they don't compete
-        
+        String childNameNewShort; //
+        long childNameNewCrc = -1L; // By default, they don't compete
+
         if (childName == null)
         {
             childNameNewShort = GUID.generate();
@@ -2170,7 +2214,8 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         }
         return new Pair<String, Long>(childNameNewShort, childNameNewCrc);
     }
-    
+
+    @Override
     public Pair<Long, ChildAssociationRef> updateChildAssoc(
             Long childAssocId,
             Long parentNodeId,
@@ -2179,7 +2224,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
             QName assocQName,
             int index,
             String childName)
-    {
+            {
         final ChildAssoc childAssoc = getChildAssocNotNull(childAssocId);
         final boolean isPrimary = childAssoc.getIsPrimary();
         final Node oldParentNode = childAssoc.getParent();
@@ -2188,12 +2233,13 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         final Node newParentNode = getNodeNotNull(parentNodeId);
         final Node newChildNode = getNodeNotNull(childNodeId);
         final NodeRef newChildNodeRef = newChildNode.getNodeRef();
-        
-        // Reset the cm:name duplicate handling.  This has to be redone, if required.
+
+        // Reset the cm:name duplicate handling. This has to be redone, if required.
         final Pair<String, Long> childNameUnique = getChildNameUnique(assocTypeQName, childName);
-        
+
         HibernateCallback callback = new HibernateCallback()
         {
+            @Override
             public Object doInHibernate(Session session)
             {
                 childAssoc.setChildNodeName(childNameUnique.getFirst());
@@ -2221,12 +2267,12 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
                 }
             }
         };
-        
+
         // Make sure that all changes to the session are persisted so that we know if any
         // failures are from the constraint or not
         DirtySessionMethodInterceptor.flushSession(getSession(false));
         getHibernateTemplate().execute(callback);
-        
+
         childAssoc.setQName(qnameDAO, assocQName);
         if (index >= 0)
         {
@@ -2242,13 +2288,12 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         {
             recordNodeUpdate(newChildNode);
         }
-        
+
         // Update the inherited associations if either the parent or child nodes have changed and
         // the association is primary
         if (isPrimary && (
                 !oldParentNode.getId().equals(parentNodeId) ||
-                !oldChildNode.getId().equals(childNodeId))
-                )
+                !oldChildNode.getId().equals(childNodeId)))
         {
             if (newChildNode.getAccessControlList() != null)
             {
@@ -2294,19 +2339,19 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
                     Long parentAcl = newParentNode.getAccessControlList().getId();
                     Long inheritedAcl = aclDaoComponent.getInheritedAccessControlList(parentAcl);
                     setFixedAcls(childNodeId, inheritedAcl, true, null);
-                } 
+                }
             }
         }
 
         // Done
         return new Pair<Long, ChildAssociationRef>(childAssocId, childAssoc.getChildAssocRef(qnameDAO));
-    }
+            }
 
     /**
      * This code is here, and not in another DAO, in order to avoid unnecessary circular callbacks
-     * and cyclical dependencies.  It would be nice if the ACL code could be separated (or combined)
+     * and cyclical dependencies. It would be nice if the ACL code could be separated (or combined)
      * but the node tree walking code is best done right here.
-     * 
+     *
      * @param nodeRef
      * @param mergeFromAclId
      * @param set
@@ -2326,12 +2371,12 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         {
             logger.error(
                     "Cyclic parent-child relationship detected: \n" +
-                    "   current node: " + nodeId);
+                            "   current node: " + nodeId);
             throw new CyclicChildRelationshipException("Node has been pasted into its own tree.", null);
         }
-        
+
         Node mergeFromNode = getNodeNotNull(nodeId);
-        
+
         if (set)
         {
             DbAccessControlList mergeFromAcl = aclDaoComponent.getDbAccessControlList(mergeFromAclId);
@@ -2341,6 +2386,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         final List<Long> childNodeIds = new ArrayList<Long>(100);
         NodeDaoService.ChildAssocRefQueryCallback callback = new NodeDaoService.ChildAssocRefQueryCallback()
         {
+            @Override
             public boolean handle(
                     Pair<Long, ChildAssociationRef> childAssocPair,
                     Pair<Long, NodeRef> parentNodePair,
@@ -2378,25 +2424,27 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
             }
             else
             {
-                    setFixedAcls(childNodeId, mergeFromAclId, true, processedNodes);
+                setFixedAcls(childNodeId, mergeFromAclId, true, processedNodes);
             }
         }
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public void getChildAssocs(final Long parentNodeId, final ChildAssocRefQueryCallback resultsCallback, final boolean recurse)
     {
         Node parentNode = getNodeNotNull(parentNodeId);
-        
+
         ChildAssocRefQueryCallback queryCallback = resultsCallback;
         final List<Long> childNodeIds = new ArrayList<Long>(100);
         if (recurse)
         {
             // In order to recurse, without loading the DB with nested scrollable queries, we have to
-            // record the IDs of the children coming from the query.  This is done by adding our own
+            // record the IDs of the children coming from the query. This is done by adding our own
             // callback to the results iterator and passing values to the client's callback from there.
             queryCallback = new ChildAssocRefQueryCallback()
             {
+                @Override
                 public boolean handle(
                         Pair<Long, ChildAssociationRef> childAssocPair,
                         Pair<Long, NodeRef> parentNodePair,
@@ -2412,14 +2460,15 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
                 }
             };
         }
-        
+
         HibernateCallback callback = new HibernateCallback()
         {
+            @Override
             public Object doInHibernate(Session session)
             {
                 Query query = session
-                    .getNamedQuery(HibernateNodeDaoServiceImpl.QUERY_GET_CHILD_ASSOC_REFS)
-                    .setLong("parentId", parentNodeId);
+                        .getNamedQuery(HibernateNodeDaoServiceImpl.QUERY_GET_CHILD_ASSOC_REFS)
+                        .setLong("parentId", parentNodeId);
                 DirtySessionMethodInterceptor.setQueryFlushMode(session, query);
                 return query.scroll(ScrollMode.FORWARD_ONLY);
             }
@@ -2439,8 +2488,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
                 }
             }
             // Done
-        }
-        finally
+        } finally
         {
             if (queryResults != null)
             {
@@ -2449,7 +2497,8 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         }
         // Done
     }
-    
+
+    @Override
     @SuppressWarnings("unchecked")
     public void getChildAssocs(final Long parentNodeId, final QName assocQName, ChildAssocRefQueryCallback resultsCallback)
     {
@@ -2463,14 +2512,15 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         Node parentNode = getNodeNotNull(parentNodeId);
         HibernateCallback callback = new HibernateCallback()
         {
+            @Override
             public Object doInHibernate(Session session)
             {
-                
+
                 Query query = session
-                    .getNamedQuery(HibernateNodeDaoServiceImpl.QUERY_GET_CHILD_ASSOC_REFS_BY_QNAME)
-                    .setLong("parentId", parentNodeId)
-                    .setLong("qnameNamespaceId", assocQNameNamespacePair.getFirst())
-                    .setString("qnameLocalName", assocQNameLocalName);
+                        .getNamedQuery(HibernateNodeDaoServiceImpl.QUERY_GET_CHILD_ASSOC_REFS_BY_QNAME)
+                        .setLong("parentId", parentNodeId)
+                        .setLong("qnameNamespaceId", assocQNameNamespacePair.getFirst())
+                        .setString("qnameLocalName", assocQNameLocalName);
                 DirtySessionMethodInterceptor.setQueryFlushMode(session, query);
                 return query.scroll(ScrollMode.FORWARD_ONLY);
             }
@@ -2480,8 +2530,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         {
             queryResults = (ScrollableResults) getHibernateTemplate().execute(callback);
             convertToChildAssocRefs(parentNode, queryResults, resultsCallback);
-        }
-        finally
+        } finally
         {
             if (queryResults != null)
             {
@@ -2491,6 +2540,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         // Done
     }
 
+    @Override
     public void getChildAssocs(final Long parentNodeId, QName assocTypeQName, Collection<String> childNames, final ChildAssocRefQueryCallback resultsCallback)
     {
         /*
@@ -2498,7 +2548,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
          * In order to guarantee uniqueness, the CRC for each matching, stardard-form name is checked for a match before
          * the result is passed to the client's callback handler.
          */
-        
+
         // Shortcut
         if (childNames.size() == 0)
         {
@@ -2513,7 +2563,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         {
             return;
         }
-        
+
         // Convert the child names and compile the CRC values
         final Set<Long> crcValues = new HashSet<Long>(childNames.size() * 2);
         final Set<String> nameValues = new HashSet<String>(childNames.size() * 2);
@@ -2525,25 +2575,27 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
             crcValues.add(childNameLowerCrc);
             nameValues.add(childNameShort);
         }
-        
+
         Node parentNode = getNodeNotNull(parentNodeId);
         HibernateCallback callback = new HibernateCallback()
         {
+            @Override
             public Object doInHibernate(Session session)
             {
                 Query query = session
-                    .getNamedQuery(HibernateNodeDaoServiceImpl.QUERY_GET_CHILD_ASSOC_REFS_BY_TYPE_AND_NAME_LIST)
-                    .setLong("parentId", parentNodeId)
-                    .setLong("typeQNameId", assocTypeQNamePair.getFirst())
-                    .setParameterList("childNodeNames", nameValues);
+                        .getNamedQuery(HibernateNodeDaoServiceImpl.QUERY_GET_CHILD_ASSOC_REFS_BY_TYPE_AND_NAME_LIST)
+                        .setLong("parentId", parentNodeId)
+                        .setLong("typeQNameId", assocTypeQNamePair.getFirst())
+                        .setParameterList("childNodeNames", nameValues);
                 DirtySessionMethodInterceptor.setQueryFlushMode(session, query);
                 return query.scroll(ScrollMode.FORWARD_ONLY);
             }
         };
-        
+
         // Create an extended callback to filter out the crc values
         ChildAssocRefQueryCallbackFilter filterCallback = new ChildAssocRefQueryCallbackFilter()
         {
+            @Override
             public boolean isDesiredRow(
                     Pair<Long, ChildAssociationRef> childAssocPair,
                     Pair<Long, NodeRef> parentNodePair,
@@ -2553,22 +2605,23 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
                 // The CRC value must be in the list
                 return crcValues.contains(assocChildNodeNameCrc);
             }
+
             /**
              * Defers to the client's handler
              */
+            @Override
             public boolean handle(Pair<Long, ChildAssociationRef> childAssocPair, Pair<Long, NodeRef> parentNodePair, Pair<Long, NodeRef> childNodePair)
             {
                 return resultsCallback.handle(childAssocPair, parentNodePair, childNodePair);
             }
         };
-        
+
         ScrollableResults queryResults = null;
         try
         {
             queryResults = (ScrollableResults) getHibernateTemplate().execute(callback);
             convertToChildAssocRefs(parentNode, queryResults, filterCallback);
-        }
-        finally
+        } finally
         {
             if (queryResults != null)
             {
@@ -2577,13 +2630,14 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         }
     }
 
+    @Override
     public void getChildAssocsByTypeQNames(
             final Long parentNodeId,
             final List<QName> assocTypeQNames,
             ChildAssocRefQueryCallback resultsCallback)
     {
         // Convert the type QNames to entities
-        
+
         final Set<QName> assocTypeQNameSet = new HashSet<QName>(assocTypeQNames);
         final Set<Long> assocTypeQNameIds = qnameDAO.convertQNamesToIds(assocTypeQNameSet, false);
         // Shortcut if there are no assoc types
@@ -2591,16 +2645,17 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         {
             return;
         }
-        
+
         Node parentNode = getNodeNotNull(parentNodeId);
         HibernateCallback callback = new HibernateCallback()
         {
+            @Override
             public Object doInHibernate(Session session)
             {
                 Query query = session
-                    .getNamedQuery(HibernateNodeDaoServiceImpl.QUERY_GET_CHILD_ASSOC_REFS_BY_TYPEQNAMES)
-                    .setLong("parentId", parentNodeId)
-                    .setParameterList("childAssocTypeQNameIds", assocTypeQNameIds);
+                        .getNamedQuery(HibernateNodeDaoServiceImpl.QUERY_GET_CHILD_ASSOC_REFS_BY_TYPEQNAMES)
+                        .setLong("parentId", parentNodeId)
+                        .setParameterList("childAssocTypeQNameIds", assocTypeQNameIds);
                 DirtySessionMethodInterceptor.setQueryFlushMode(session, query);
                 return query.scroll(ScrollMode.FORWARD_ONLY);
             }
@@ -2610,8 +2665,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         {
             queryResults = (ScrollableResults) getHibernateTemplate().execute(callback);
             convertToChildAssocRefs(parentNode, queryResults, resultsCallback);
-        }
-        finally
+        } finally
         {
             if (queryResults != null)
             {
@@ -2621,6 +2675,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         // Done
     }
 
+    @Override
     public void getChildAssocsByTypeQNameAndQName(
             final Long parentNodeId,
             final QName assocTypeQName,
@@ -2637,17 +2692,18 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         {
             return;
         }
-        
+
         HibernateCallback callback = new HibernateCallback()
         {
+            @Override
             public Object doInHibernate(Session session)
             {
                 Query query = session
-                    .getNamedQuery(HibernateNodeDaoServiceImpl.QUERY_GET_CHILD_ASSOC_REFS_BY_TYPEQNAME_AND_QNAME)
-                    .setLong("parentId", parentNodeId)
-                    .setLong("typeQNameId", assocTypeQNamePair.getFirst())
-                    .setLong("qnameNamespaceId", assocQNameNamespacePair.getFirst())
-                    .setString("qnameLocalName", assocQNameLocalName);
+                        .getNamedQuery(HibernateNodeDaoServiceImpl.QUERY_GET_CHILD_ASSOC_REFS_BY_TYPEQNAME_AND_QNAME)
+                        .setLong("parentId", parentNodeId)
+                        .setLong("typeQNameId", assocTypeQNamePair.getFirst())
+                        .setLong("qnameNamespaceId", assocQNameNamespacePair.getFirst())
+                        .setString("qnameLocalName", assocQNameLocalName);
                 DirtySessionMethodInterceptor.setQueryFlushMode(session, query);
                 return query.scroll(ScrollMode.FORWARD_ONLY);
             }
@@ -2657,8 +2713,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         {
             queryResults = (ScrollableResults) getHibernateTemplate().execute(callback);
             convertToChildAssocRefs(parentNode, queryResults, resultsCallback);
-        }
-        finally
+        } finally
         {
             if (queryResults != null)
             {
@@ -2668,6 +2723,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         // Done
     }
 
+    @Override
     public void getChildAssocsByChildTypes(
             final Long parentNodeId,
             Set<QName> childNodeTypeQNames,
@@ -2682,15 +2738,16 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         {
             return;
         }
-        
+
         HibernateCallback callback = new HibernateCallback()
         {
+            @Override
             public Object doInHibernate(Session session)
             {
                 Query query = session
-                    .getNamedQuery(HibernateNodeDaoServiceImpl.QUERY_GET_CHILD_ASSOC_REFS_BY_CHILD_TYPEQNAME)
-                    .setLong("parentId", parentNodeId)
-                    .setParameterList("childTypeQNameIds", childNodeTypeQNameIds);
+                        .getNamedQuery(HibernateNodeDaoServiceImpl.QUERY_GET_CHILD_ASSOC_REFS_BY_CHILD_TYPEQNAME)
+                        .setLong("parentId", parentNodeId)
+                        .setParameterList("childTypeQNameIds", childNodeTypeQNameIds);
                 DirtySessionMethodInterceptor.setQueryFlushMode(session, query);
                 return query.scroll(ScrollMode.FORWARD_ONLY);
             }
@@ -2700,8 +2757,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         {
             queryResults = (ScrollableResults) getHibernateTemplate().execute(callback);
             convertToChildAssocRefs(parentNode, queryResults, resultsCallback);
-        }
-        finally
+        } finally
         {
             if (queryResults != null)
             {
@@ -2711,16 +2767,18 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         // Done
     }
 
+    @Override
     public void getPrimaryChildAssocs(final Long parentNodeId, ChildAssocRefQueryCallback resultsCallback)
     {
         Node parentNode = getNodeNotNull(parentNodeId);
         HibernateCallback callback = new HibernateCallback()
         {
+            @Override
             public Object doInHibernate(Session session)
             {
                 Query query = session
-                    .getNamedQuery(HibernateNodeDaoServiceImpl.QUERY_GET_PRIMARY_CHILD_ASSOCS)
-                    .setLong("parentId", parentNodeId);
+                        .getNamedQuery(HibernateNodeDaoServiceImpl.QUERY_GET_PRIMARY_CHILD_ASSOCS)
+                        .setLong("parentId", parentNodeId);
                 DirtySessionMethodInterceptor.setQueryFlushMode(session, query);
                 return query.scroll(ScrollMode.FORWARD_ONLY);
             }
@@ -2730,8 +2788,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         {
             queryResults = (ScrollableResults) getHibernateTemplate().execute(callback);
             convertToChildAssocRefs(parentNode, queryResults, resultsCallback);
-        }
-        finally
+        } finally
         {
             if (queryResults != null)
             {
@@ -2741,16 +2798,18 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         // Done
     }
 
+    @Override
     public void getPrimaryChildAssocsNotInSameStore(final Long parentNodeId, ChildAssocRefQueryCallback resultsCallback)
     {
         Node parentNode = getNodeNotNull(parentNodeId);
         HibernateCallback callback = new HibernateCallback()
         {
+            @Override
             public Object doInHibernate(Session session)
             {
                 Query query = session
-                    .getNamedQuery(HibernateNodeDaoServiceImpl.QUERY_GET_PRIMARY_CHILD_ASSOCS_NOT_IN_SAME_STORE)
-                    .setLong("parentId", parentNodeId);
+                        .getNamedQuery(HibernateNodeDaoServiceImpl.QUERY_GET_PRIMARY_CHILD_ASSOCS_NOT_IN_SAME_STORE)
+                        .setLong("parentId", parentNodeId);
                 DirtySessionMethodInterceptor.setQueryFlushMode(session, query);
                 return query.scroll(ScrollMode.FORWARD_ONLY);
             }
@@ -2760,8 +2819,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         {
             queryResults = (ScrollableResults) getHibernateTemplate().execute(callback);
             convertToChildAssocRefs(parentNode, queryResults, resultsCallback);
-        }
-        finally
+        } finally
         {
             if (queryResults != null)
             {
@@ -2771,6 +2829,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         // Done
     }
 
+    @Override
     public Pair<Long, ChildAssociationRef> getChildAssoc(final Long parentNodeId, final QName assocTypeQName, final String childName)
     {
         final Pair<Long, QName> assocTypeQNamePair = qnameDAO.getQName(assocTypeQName);
@@ -2779,20 +2838,21 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         {
             return null;
         }
-        
+
         HibernateCallback callback = new HibernateCallback()
         {
+            @Override
             public Object doInHibernate(Session session)
             {
                 String childNameLower = childName.toLowerCase();
                 String childNameShort = getShortName(childNameLower);
                 long childNameLowerCrc = getCrc(childNameLower);
                 Query query = session
-                    .getNamedQuery(HibernateNodeDaoServiceImpl.QUERY_GET_CHILD_ASSOC_BY_TYPE_AND_NAME)
-                    .setLong("parentId", parentNodeId)
-                    .setLong("typeQNameId", assocTypeQNamePair.getFirst())
-                    .setLong("childNodeNameCrc", childNameLowerCrc)
-                    .setString("childNodeName", childNameShort);
+                        .getNamedQuery(HibernateNodeDaoServiceImpl.QUERY_GET_CHILD_ASSOC_BY_TYPE_AND_NAME)
+                        .setLong("parentId", parentNodeId)
+                        .setLong("typeQNameId", assocTypeQNamePair.getFirst())
+                        .setLong("childNodeNameCrc", childNameLowerCrc)
+                        .setString("childNodeName", childNameShort);
                 DirtySessionMethodInterceptor.setQueryFlushMode(session, query);
                 return query.uniqueResult();
             }
@@ -2808,12 +2868,13 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         }
     }
 
+    @Override
     public Pair<Long, ChildAssociationRef> getChildAssoc(
             final Long parentNodeId,
             final Long childNodeId,
             final QName assocTypeQName,
             final QName assocQName)
-    {
+            {
 
         final Pair<Long, QName> assocTypeQNamePair = qnameDAO.getQName(assocTypeQName);
         final Pair<Long, String> assocQNameNamespacePair = qnameDAO.getNamespace(assocQName.getNamespaceURI());
@@ -2823,18 +2884,19 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         {
             return null;
         }
-        
+
         HibernateCallback callback = new HibernateCallback()
         {
+            @Override
             public Object doInHibernate(Session session)
             {
                 Query query = session
-                    .getNamedQuery(HibernateNodeDaoServiceImpl.QUERY_GET_CHILD_ASSOCS_BY_ALL)
-                    .setLong("parentId", parentNodeId)
-                    .setLong("childId", childNodeId)
-                    .setLong("typeQNameId", assocTypeQNamePair.getFirst())
-                    .setParameter("qnameNamespaceId", assocQNameNamespacePair.getFirst())
-                    .setParameter("qnameLocalName", assocQNameLocalName);
+                        .getNamedQuery(HibernateNodeDaoServiceImpl.QUERY_GET_CHILD_ASSOCS_BY_ALL)
+                        .setLong("parentId", parentNodeId)
+                        .setLong("childId", childNodeId)
+                        .setLong("typeQNameId", assocTypeQNamePair.getFirst())
+                        .setParameter("qnameNamespaceId", assocQNameNamespacePair.getFirst())
+                        .setParameter("qnameLocalName", assocQNameLocalName);
                 DirtySessionMethodInterceptor.setQueryFlushMode(session, query);
                 return query.uniqueResult();
             }
@@ -2848,22 +2910,23 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         {
             return new Pair<Long, ChildAssociationRef>(childAssoc.getId(), childAssoc.getChildAssocRef(qnameDAO));
         }
-    }
-    
+            }
+
     /**
      * Columns returned are:
+     * 
      * <pre>
-         0 assoc.id,
-         1 assoc.typeQName,
-         2 assoc.qnameNamespace,
-         3 assoc.qnameLocalName,
-         4 assoc.isPrimary,
-         5 assoc.index,
-         6 child.id,
-         7 child.store.key.protocol,
-         8 child.store.key.identifier,
-         9 child.uuid
-     * </pre> 
+     *          0 assoc.id,
+     *          1 assoc.typeQName,
+     *          2 assoc.qnameNamespace,
+     *          3 assoc.qnameLocalName,
+     *          4 assoc.isPrimary,
+     *          5 assoc.index,
+     *          6 child.id,
+     *          7 child.store.key.protocol,
+     *          8 child.store.key.identifier,
+     *          9 child.uuid
+     * </pre>
      */
     private void convertToChildAssocRefs(Node parentNode, ScrollableResults results, ChildAssocRefQueryCallback resultsCallback)
     {
@@ -2916,7 +2979,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
             resultsCallback.handle(assocPair, parentNodePair, childNodePair);
         }
     }
-    
+
     private Collection<Pair<Long, AssociationRef>> convertToAssocRefs(List<NodeAssoc> queryResults)
     {
         Collection<Pair<Long, AssociationRef>> refs = new ArrayList<Pair<Long, AssociationRef>>(queryResults.size());
@@ -2928,7 +2991,8 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         }
         return refs;
     }
-    
+
+    @Override
     public void getNodesWithAspect(
             final QName aspectQName,
             final Long minNodeId,
@@ -2941,16 +3005,17 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         {
             return;
         }
-        
+
         HibernateCallback callback = new HibernateCallback()
         {
+            @Override
             public Object doInHibernate(Session session)
             {
                 Query query = session
-                    .getNamedQuery(HibernateNodeDaoServiceImpl.QUERY_GET_NODES_WITH_ASPECT)
-                    .setLong("aspectQNameId", aspectQNamePair.getFirst())
-                    .setLong("minNodeId", minNodeId)
-                    .setMaxResults(count);
+                        .getNamedQuery(HibernateNodeDaoServiceImpl.QUERY_GET_NODES_WITH_ASPECT)
+                        .setLong("aspectQNameId", aspectQNamePair.getFirst())
+                        .setLong("minNodeId", minNodeId)
+                        .setMaxResults(count);
                 DirtySessionMethodInterceptor.setQueryFlushMode(session, query);
                 return query.scroll(ScrollMode.FORWARD_ONLY);
             }
@@ -2960,8 +3025,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         {
             queryResults = (ScrollableResults) getHibernateTemplate().execute(callback);
             processNodeResults(queryResults, resultsCallback);
-        }
-        finally
+        } finally
         {
             if (queryResults != null)
             {
@@ -2972,6 +3036,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         // Done
     }
 
+    @Override
     public void getNodesWithChildrenInDifferentStore(
             final Long storeId,
             final Long minNodeId,
@@ -2980,13 +3045,14 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
     {
         HibernateCallback callback = new HibernateCallback()
         {
+            @Override
             public Object doInHibernate(Session session)
             {
                 Query query = session
-                    .getNamedQuery(HibernateNodeDaoServiceImpl.QUERY_GET_NODES_WITH_CHILDREN_IN_DIFFERENT_STORE)
-                    .setLong("parentStoreId", storeId)
-                    .setLong("minNodeId", minNodeId)
-                    .setMaxResults(count);
+                        .getNamedQuery(HibernateNodeDaoServiceImpl.QUERY_GET_NODES_WITH_CHILDREN_IN_DIFFERENT_STORE)
+                        .setLong("parentStoreId", storeId)
+                        .setLong("minNodeId", minNodeId)
+                        .setMaxResults(count);
                 DirtySessionMethodInterceptor.setQueryFlushMode(session, query);
                 return query.scroll(ScrollMode.FORWARD_ONLY);
             }
@@ -2996,8 +3062,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         {
             queryResults = (ScrollableResults) getHibernateTemplate().execute(callback);
             processNodeResults(queryResults, resultsCallback);
-        }
-        finally
+        } finally
         {
             if (queryResults != null)
             {
@@ -3008,19 +3073,21 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         // Done
     }
 
+    @Override
     public void getChildAssocsWithoutParentAssocsOfType(final Long parentNodeId, final QName assocTypeQName,
             ChildAssocRefQueryCallback resultsCallback)
     {
         Node parentNode = getNodeNotNull(parentNodeId);
         HibernateCallback callback = new HibernateCallback()
         {
+            @Override
             public Object doInHibernate(Session session)
             {
 
                 Query query = session.getNamedQuery(
                         HibernateNodeDaoServiceImpl.QUERY_GET_CHILD_ASSOCS_WITHOUT_PARENT_ASSOCS_OF_TYPE).setLong(
-                        "parentId", parentNodeId).setLong("assocTypeQNameID",
-                        qnameDAO.getOrCreateQName(assocTypeQName).getFirst());
+                                "parentId", parentNodeId).setLong("assocTypeQNameID",
+                                        qnameDAO.getOrCreateQName(assocTypeQName).getFirst());
                 DirtySessionMethodInterceptor.setQueryFlushMode(session, query);
                 return query.scroll(ScrollMode.FORWARD_ONLY);
             }
@@ -3030,8 +3097,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         {
             queryResults = (ScrollableResults) getHibernateTemplate().execute(callback);
             convertToChildAssocRefs(parentNode, queryResults, resultsCallback);
-        }
-        finally
+        } finally
         {
             if (queryResults != null)
             {
@@ -3040,13 +3106,13 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         }
         // Done
     }
-    
+
     /**
      * <pre>
-            Node ID = (Long) row[0];
-            Node Protocol = (String) row[1];
-            Node Identifier = (String) row[2];
-            Node Uuid = (String) row[3];
+     * Node ID = (Long) row[0];
+     * Node Protocol = (String) row[1];
+     * Node Identifier = (String) row[2];
+     * Node Uuid = (String) row[3];
      * </pre>
      */
     private void processNodeResults(ScrollableResults queryResults, NodeRefQueryCallback resultsCallback)
@@ -3069,6 +3135,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         }
     }
 
+    @Override
     public void deleteChildAssoc(Long assocId)
     {
         Set<Long> deletedChildAssocIds = new HashSet<Long>(10);
@@ -3076,6 +3143,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         deleteChildAssocInternal(assoc, false, deletedChildAssocIds);
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public boolean deleteChildAssoc(
             final Long parentNodeId,
@@ -3086,7 +3154,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         final Pair<Long, QName> assocTypeQNamePair = qnameDAO.getQName(assocTypeQName);
         final Pair<Long, String> assocQNameNamespacePair = qnameDAO.getNamespace(assocQName.getNamespaceURI());
         final String assocQNameLocalName = assocQName.getLocalName();
-        
+
         // Shortcut
         if (assocTypeQNamePair == null || assocQNameNamespacePair == null)
         {
@@ -3095,15 +3163,16 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
 
         HibernateCallback callback = new HibernateCallback()
         {
+            @Override
             public Object doInHibernate(Session session)
             {
                 Query query = session
-                    .getNamedQuery(HibernateNodeDaoServiceImpl.QUERY_GET_CHILD_ASSOCS_BY_ALL)
-                    .setLong("parentId", parentNodeId)
-                    .setLong("childId", childNodeId)
-                    .setLong("typeQNameId", assocTypeQNamePair.getFirst())
-                    .setParameter("qnameNamespaceId", assocQNameNamespacePair.getFirst())
-                    .setParameter("qnameLocalName", assocQNameLocalName);
+                        .getNamedQuery(HibernateNodeDaoServiceImpl.QUERY_GET_CHILD_ASSOCS_BY_ALL)
+                        .setLong("parentId", parentNodeId)
+                        .setLong("childId", childNodeId)
+                        .setLong("typeQNameId", assocTypeQNamePair.getFirst())
+                        .setParameter("qnameNamespaceId", assocQNameNamespacePair.getFirst())
+                        .setParameter("qnameLocalName", assocQNameLocalName);
                 DirtySessionMethodInterceptor.setQueryFlushMode(session, query);
                 return query.list();
             }
@@ -3119,7 +3188,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
 
     /**
      * Cascade deletion of child associations, recording the IDs of deleted assocs.
-     * 
+     *
      * @param assoc the association to delete
      * @param cascade true to cascade to the child node of the association
      * @param deletedChildAssocIds already-deleted associations
@@ -3127,7 +3196,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
     private void deleteChildAssocInternal(final ChildAssoc assoc, boolean cascade, Set<Long> deletedChildAssocIds)
     {
         Long childAssocId = assoc.getId();
-        
+
         if (deletedChildAssocIds.contains(childAssocId))
         {
             if (isDebugEnabled)
@@ -3136,18 +3205,18 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
             }
             return;
         }
-        
+
         if (isDebugEnabled)
         {
             logger.debug(
                     "Deleting parent-child association " + assoc.getId() +
-                    (cascade ? " with" : " without") + " cascade:" +
-                    assoc.getParent().getId() + " -> " + assoc.getChild().getId());
+                            (cascade ? " with" : " without") + " cascade:" +
+                            assoc.getParent().getId() + " -> " + assoc.getChild().getId());
         }
 
         Node childNode = assoc.getChild();
         Long childNodeId = childNode.getId();
-        
+
         // Add remove the child association from the cache
         Set<Long> oldParentAssocIds = parentAssocsCache.get(childNodeId);
         if (oldParentAssocIds != null)
@@ -3157,33 +3226,33 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
             parentAssocsCache.put(childNodeId, newParentAssocIds);
             loggerParentAssocsCache.debug("\n" +
                     "Parent associations cache - Updating entry: \n" +
-                    "   Node:   " + childNodeId +  "\n" +
+                    "   Node:   " + childNodeId + "\n" +
                     "   Before: " + oldParentAssocIds + "\n" +
                     "   After:  " + newParentAssocIds);
         }
-        
+
         // maintain inverse association sets
         assoc.removeAssociation();
         // remove instance
         getHibernateTemplate().delete(assoc);
-//        // ensure that we don't attempt to delete it twice
-//        deletedChildAssocIds.add(childAssocId);
-//        
-//        if (cascade && assoc.getIsPrimary())   // the assoc is primary
-//        {
-//            // delete the child node
-//            deleteNodeInternal(childNode, cascade, deletedChildAssocIds);
-//            /*
-//             * The child node deletion will cascade delete all assocs to
-//             * and from it, but we have safely removed this one, so no
-//             * duplicate call will be received to do this
-//             */
-//        }
+        // // ensure that we don't attempt to delete it twice
+        // deletedChildAssocIds.add(childAssocId);
+        //
+        // if (cascade && assoc.getIsPrimary()) // the assoc is primary
+        // {
+        // // delete the child node
+        // deleteNodeInternal(childNode, cascade, deletedChildAssocIds);
+        // /*
+        // * The child node deletion will cascade delete all assocs to
+        // * and from it, but we have safely removed this one, so no
+        // * duplicate call will be received to do this
+        // */
+        // }
     }
 
     /**
-     * @param childNode         the child node
-     * @return                  Returns the parent associations without any interpretation
+     * @param childNode the child node
+     * @return Returns the parent associations without any interpretation
      */
     @SuppressWarnings("unchecked")
     private Collection<ChildAssoc> getParentAssocsInternal(final Long childNodeId)
@@ -3228,11 +3297,12 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
             }
             HibernateCallback callback = new HibernateCallback()
             {
+                @Override
                 public Object doInHibernate(Session session)
                 {
                     Query query = session
-                        .getNamedQuery(HibernateNodeDaoServiceImpl.QUERY_GET_PARENT_ASSOCS)
-                        .setLong("childId", childNodeId);
+                            .getNamedQuery(HibernateNodeDaoServiceImpl.QUERY_GET_PARENT_ASSOCS)
+                            .setLong("childId", childNodeId);
                     DirtySessionMethodInterceptor.setQueryFlushMode(session, query);
                     return query.list();
                 }
@@ -3260,17 +3330,16 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         // Done
         return parentAssocs;
     }
-    
+
     /**
-     * {@inheritDoc}
-     * 
-     * This includes a check to ensuret that only root nodes don't have primary parents
+     * {@inheritDoc} This includes a check to ensuret that only root nodes don't have primary parents
      */
+    @Override
     public Collection<Pair<Long, ChildAssociationRef>> getParentAssocs(final Long childNodeId)
     {
         Collection<ChildAssoc> parentAssocs = getParentAssocsInternal(childNodeId);
         Collection<Pair<Long, ChildAssociationRef>> ret = new ArrayList<Pair<Long, ChildAssociationRef>>(parentAssocs.size());
-        
+
         for (ChildAssoc childAssoc : parentAssocs)
         {
             Long childAssocId = childAssoc.getId();
@@ -3282,15 +3351,15 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         return ret;
     }
 
-    private Set<Long> warnedDuplicateParents = new HashSet<Long>(3);
+    private final Set<Long> warnedDuplicateParents = new HashSet<Long>(3);
+
     /**
-     * {@inheritDoc}
-     * 
-     * This method includes a check for multiple primary parent associations.
+     * {@inheritDoc} This method includes a check for multiple primary parent associations.
      * The check doesn't fail but will warn (once per instance) of the occurence of
-     * the error.  It is up to the administrator to fix the issue at the moment, but
+     * the error. It is up to the administrator to fix the issue at the moment, but
      * the server will not stop working.
      */
+    @Override
     public Pair<Long, ChildAssociationRef> getPrimaryParentAssoc(Long childNodeId)
     {
         // get the assocs pointing to the node
@@ -3306,16 +3375,16 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
             else if (primaryAssoc != null)
             {
                 // We have found one already.
-                synchronized(warnedDuplicateParents)
+                synchronized (warnedDuplicateParents)
                 {
                     boolean added = warnedDuplicateParents.add(childNodeId);
                     if (added)
                     {
                         logger.warn(
                                 "Multiple primary associations: \n" +
-                                "   first primary assoc: " + primaryAssoc + "\n" +
-                                "   second primary assoc: " + assoc + "\n" +
-                                "When running in a cluster, check that the caches are properly shared.");
+                                        "   first primary assoc: " + primaryAssoc + "\n" +
+                                        "   second primary assoc: " + assoc + "\n" +
+                                        "When running in a cluster, check that the caches are properly shared.");
                     }
                 }
             }
@@ -3333,13 +3402,15 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         }
     }
 
+    @Override
     public Pair<Long, AssociationRef> newNodeAssoc(Long sourceNodeId, Long targetNodeId, final QName assocTypeQName)
     {
         final Node sourceNode = getNodeNotNull(sourceNodeId);
         final Node targetNode = getNodeNotNull(targetNodeId);
-        
+
         HibernateCallback callback = new HibernateCallback()
         {
+            @Override
             public Object doInHibernate(Session session)
             {
                 // Force a flush here to ensure that the session is not dirty
@@ -3349,22 +3420,21 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
                 assoc.setTypeQName(qnameDAO, assocTypeQName);
                 assoc.buildAssociation(sourceNode, targetNode);
                 session.save(assoc);
-                
+
                 // Flush to catch integrity violations
                 DirtySessionMethodInterceptor.flushSession(session, true);
-                
+
                 return assoc;
             }
         };
-        
+
         // persist
         try
         {
             NodeAssoc assoc = (NodeAssoc) getHibernateTemplate().execute(callback);
             // done
             return new Pair<Long, AssociationRef>(assoc.getId(), assoc.getNodeAssocRef(qnameDAO));
-        }
-        catch (DataIntegrityViolationException e)
+        } catch (DataIntegrityViolationException e)
         {
             throw new AssociationExistsException(
                     sourceNode.getNodeRef(),
@@ -3374,11 +3444,13 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         }
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public Collection<Pair<Long, AssociationRef>> getNodeAssocsToAndFrom(final Long nodeId)
     {
         HibernateCallback callback = new HibernateCallback()
         {
+            @Override
             public Object doInHibernate(Session session)
             {
                 Query query = session
@@ -3393,20 +3465,22 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         return ret;
     }
 
+    @Override
     public Pair<Long, AssociationRef> getNodeAssoc(
             final Long sourceNodeId,
             final Long targetNodeId,
             final QName assocTypeQName)
-    {
+            {
         final Pair<Long, QName> assocTypeQNamePair = qnameDAO.getQName(assocTypeQName);
         // Shortcut
         if (assocTypeQNamePair == null)
         {
             return null;
         }
-        
+
         HibernateCallback callback = new HibernateCallback()
         {
+            @Override
             public Object doInHibernate(Session session)
             {
                 Query query = session
@@ -3421,18 +3495,20 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         NodeAssoc result = (NodeAssoc) getHibernateTemplate().execute(callback);
         Pair<Long, AssociationRef> ret = new Pair<Long, AssociationRef>(result.getId(), result.getNodeAssocRef(qnameDAO));
         return ret;
-    }
+            }
 
+    @Override
     @SuppressWarnings("unchecked")
     public Collection<Pair<Long, AssociationRef>> getTargetNodeAssocs(final Long sourceNodeId)
     {
         HibernateCallback callback = new HibernateCallback()
         {
+            @Override
             public Object doInHibernate(Session session)
             {
                 Query query = session
-                    .getNamedQuery(HibernateNodeDaoServiceImpl.QUERY_GET_TARGET_ASSOCS)
-                    .setLong("sourceId", sourceNodeId);
+                        .getNamedQuery(HibernateNodeDaoServiceImpl.QUERY_GET_TARGET_ASSOCS)
+                        .setLong("sourceId", sourceNodeId);
                 DirtySessionMethodInterceptor.setQueryFlushMode(session, query);
                 return query.list();
             }
@@ -3442,16 +3518,18 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         return ret;
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public Collection<Pair<Long, AssociationRef>> getSourceNodeAssocs(final Long targetNodeId)
     {
         HibernateCallback callback = new HibernateCallback()
         {
+            @Override
             public Object doInHibernate(Session session)
             {
                 Query query = session
-                    .getNamedQuery(HibernateNodeDaoServiceImpl.QUERY_GET_SOURCE_ASSOCS)
-                    .setLong("targetId", targetNodeId);
+                        .getNamedQuery(HibernateNodeDaoServiceImpl.QUERY_GET_SOURCE_ASSOCS)
+                        .setLong("targetId", targetNodeId);
                 DirtySessionMethodInterceptor.setQueryFlushMode(session, query);
                 return query.list();
             }
@@ -3461,6 +3539,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         return ret;
     }
 
+    @Override
     public void deleteNodeAssoc(Long assocId)
     {
         NodeAssoc assoc = (NodeAssoc) getHibernateTemplate().get(NodeAssocImpl.class, assocId);
@@ -3470,13 +3549,14 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         }
     }
 
+    @Override
     public void getPropertyValuesByPropertyAndValue(
             final StoreRef storeRef,
             final QName propertyQName,
             final String value,
             final NodePropertyHandler handler)
     {
-	    Pair<Long, QName> propQNamePair = qnameDAO.getQName(propertyQName);
+        Pair<Long, QName> propQNamePair = qnameDAO.getQName(propertyQName);
         // Shortcut
         if (propQNamePair == null)
         {
@@ -3486,15 +3566,16 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         // Run the query
         HibernateCallback callback = new HibernateCallback()
         {
+            @Override
             public Object doInHibernate(Session session)
             {
                 Query query = session
-                  .getNamedQuery(HibernateNodeDaoServiceImpl.QUERY_GET_NODES_WITH_PROPERTY_VALUES_BY_STRING_AND_STORE)
-                  .setString("storeProtocol", storeRef.getProtocol())
-                  .setString("storeIdentifier", storeRef.getIdentifier())
-                  .setParameter("propQNameID", propQNameEntityId)
-                  .setString("propStringValue", value)
-                  ;
+                        .getNamedQuery(HibernateNodeDaoServiceImpl.QUERY_GET_NODES_WITH_PROPERTY_VALUES_BY_STRING_AND_STORE)
+                        .setString("storeProtocol", storeRef.getProtocol())
+                        .setString("storeIdentifier", storeRef.getIdentifier())
+                        .setParameter("propQNameID", propQNameEntityId)
+                        .setString("propStringValue", value)
+                ;
                 DirtySessionMethodInterceptor.setQueryFlushMode(session, query);
                 return query.scroll(ScrollMode.FORWARD_ONLY);
             }
@@ -3510,13 +3591,12 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
                 Node node = (Node) results.get(0);
                 NodeRef nodeRef = node.getNodeRef();
                 Long nodeTypeQNameId = node.getTypeQNameId();
-				QName nodeTypeQName = qnameDAO.getQName(nodeTypeQNameId).getSecond();
+                QName nodeTypeQName = qnameDAO.getQName(nodeTypeQNameId).getSecond();
                 handler.handle(nodeRef, nodeTypeQName, propertyQName, value);
                 // Flush if required
                 DirtySessionMethodInterceptor.flushSession(session);
             }
-        }
-        finally
+        } finally
         {
             if (results != null)
             {
@@ -3525,6 +3605,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         }
     }
 
+    @Override
     public void getContentUrlsForStore(
             final StoreRef storeRef,
             final ObjectArrayQueryCallback resultsCallback)
@@ -3536,16 +3617,17 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         // Query for the 'old' style content properties stored in 'string_value'
         HibernateCallback callbackOld = new HibernateCallback()
         {
+            @Override
             public Object doInHibernate(Session session)
             {
                 Query query = session
-                    .getNamedQuery(HibernateNodeDaoServiceImpl.QUERY_GET_CONTENT_URLS_FOR_STORE_OLD)
-                    .setString("storeProtocol", storeRef.getProtocol())
-                    .setString("storeIdentifier", storeRef.getIdentifier())
-                    .setParameter("ownerPropQNameID", ownerPropQNameEntityId) // cm:owner
-                    .setParameter("contentPropQNameID", contentPropQNameEntityId) // cm:content
-                    .setParameter("contentTypeQNameID", contentTypeQNameEntityId) // cm:content
-                    ;
+                        .getNamedQuery(HibernateNodeDaoServiceImpl.QUERY_GET_CONTENT_URLS_FOR_STORE_OLD)
+                        .setString("storeProtocol", storeRef.getProtocol())
+                        .setString("storeIdentifier", storeRef.getIdentifier())
+                        .setParameter("ownerPropQNameID", ownerPropQNameEntityId) // cm:owner
+                        .setParameter("contentPropQNameID", contentPropQNameEntityId) // cm:content
+                        .setParameter("contentTypeQNameID", contentTypeQNameEntityId) // cm:content
+                ;
                 DirtySessionMethodInterceptor.setQueryFlushMode(session, query);
                 return query.scroll(ScrollMode.FORWARD_ONLY);
             }
@@ -3558,13 +3640,12 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
             while (results.next())
             {
                 Object[] arr = new Object[3];
-                arr[0] = (String)results.get(0); // owner (can be null)
-                arr[1] = (String)results.get(1); // creator
-                arr[2] = (String)results.get(2); // contentdata
+                arr[0] = results.get(0); // owner (can be null)
+                arr[1] = results.get(1); // creator
+                arr[2] = results.get(2); // contentdata
                 resultsCallback.handle(arr);
             }
-        }
-        finally
+        } finally
         {
             if (results != null)
             {
@@ -3575,16 +3656,17 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         // Query for the 'new' style content properties stored in the 'content_url' table
         HibernateCallback callbackNew = new HibernateCallback()
         {
+            @Override
             public Object doInHibernate(Session session)
             {
                 Query query = session
-                    .getNamedQuery(HibernateNodeDaoServiceImpl.QUERY_GET_CONTENT_URLS_FOR_STORE_NEW)
-                    .setString("storeProtocol", storeRef.getProtocol())
-                    .setString("storeIdentifier", storeRef.getIdentifier())
-                    .setParameter("ownerPropQNameID", ownerPropQNameEntityId) // cm:owner
-                    .setParameter("contentPropQNameID", contentPropQNameEntityId) // cm:content
-                    .setParameter("contentTypeQNameID", contentTypeQNameEntityId) // cm:content
-                    ;
+                        .getNamedQuery(HibernateNodeDaoServiceImpl.QUERY_GET_CONTENT_URLS_FOR_STORE_NEW)
+                        .setString("storeProtocol", storeRef.getProtocol())
+                        .setString("storeIdentifier", storeRef.getIdentifier())
+                        .setParameter("ownerPropQNameID", ownerPropQNameEntityId) // cm:owner
+                        .setParameter("contentPropQNameID", contentPropQNameEntityId) // cm:content
+                        .setParameter("contentTypeQNameID", contentTypeQNameEntityId) // cm:content
+                ;
                 DirtySessionMethodInterceptor.setQueryFlushMode(session, query);
                 return query.scroll(ScrollMode.FORWARD_ONLY);
             }
@@ -3595,24 +3677,23 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
             results = (ScrollableResults) getHibernateTemplate().execute(callbackNew);
             // Callback with the results
             /*
-              <return-scalar column="owner" type="string"/>
-              <return-scalar column="creator" type="string"/>
-              <return-scalar column="contentDataId" type="long"/>
+             * <return-scalar column="owner" type="string"/>
+             * <return-scalar column="creator" type="string"/>
+             * <return-scalar column="contentDataId" type="long"/>
              */
             while (results.next())
             {
-                Long contentDataId = (Long)results.get(2);
+                Long contentDataId = (Long) results.get(2);
                 // Convert to ContentData
                 ContentData contentData = contentDataDAO.getContentData(contentDataId).getSecond();
                 // Pass down results
                 Object[] arr = new Object[3];
-                arr[0] = (String)results.get(0); // owner (can be null)
-                arr[1] = (String)results.get(1); // creator
+                arr[0] = results.get(0); // owner (can be null)
+                arr[1] = results.get(1); // creator
                 arr[2] = contentData.toString();
                 resultsCallback.handle(arr);
             }
-        }
-        finally
+        } finally
         {
             if (results != null)
             {
@@ -3622,7 +3703,8 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
 
         // Done
     }
-    
+
+    @Override
     public void getUsersWithoutUsage(
             final StoreRef storeRef,
             final ObjectArrayQueryCallback resultsCallback)
@@ -3630,25 +3712,26 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         final Pair<Long, QName> usernamePropQNamePair = qnameDAO.getQName(ContentModel.PROP_USERNAME);
         final Pair<Long, QName> sizeCurrentPropQNamePair = qnameDAO.getQName(ContentModel.PROP_SIZE_CURRENT);
         final Pair<Long, QName> personTypeQNamePair = qnameDAO.getQName(ContentModel.TYPE_PERSON);
-        
+
         // Shortcut the query if the QNames don't exist
         if (usernamePropQNamePair == null || sizeCurrentPropQNamePair == null || personTypeQNamePair == null)
         {
             return;
         }
-        
+
         HibernateCallback callback = new HibernateCallback()
         {
+            @Override
             public Object doInHibernate(Session session)
             {
                 Query query = session
-                    .getNamedQuery(HibernateNodeDaoServiceImpl.QUERY_GET_USERS_WITHOUT_USAGE)
-                  .setString("storeProtocol", storeRef.getProtocol())
-                  .setString("storeIdentifier", storeRef.getIdentifier())
-                    .setParameter("usernamePropQNameID", usernamePropQNamePair.getFirst()) // cm:username
-                    .setParameter("sizeCurrentPropQNameID", sizeCurrentPropQNamePair.getFirst()) // cm:sizeCurrent
-                    .setParameter("personTypeQNameID", personTypeQNamePair.getFirst()) // cm:person
-                  ;
+                        .getNamedQuery(HibernateNodeDaoServiceImpl.QUERY_GET_USERS_WITHOUT_USAGE)
+                        .setString("storeProtocol", storeRef.getProtocol())
+                        .setString("storeIdentifier", storeRef.getIdentifier())
+                        .setParameter("usernamePropQNameID", usernamePropQNamePair.getFirst()) // cm:username
+                        .setParameter("sizeCurrentPropQNameID", sizeCurrentPropQNamePair.getFirst()) // cm:sizeCurrent
+                        .setParameter("personTypeQNameID", personTypeQNamePair.getFirst()) // cm:person
+                ;
                 DirtySessionMethodInterceptor.setQueryFlushMode(session, query);
                 return query.scroll(ScrollMode.FORWARD_ONLY);
             }
@@ -3662,14 +3745,13 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
             while (results.next())
             {
                 Object[] arr = new Object[2];
-                arr[0] = (String)results.get(0); // username
-                arr[1] = (String)results.get(1); // node uuid
+                arr[0] = results.get(0); // username
+                arr[1] = results.get(1); // node uuid
                 resultsCallback.handle(arr);
                 // Flush if required
                 DirtySessionMethodInterceptor.flushSession(session);
             }
-        }
-        finally
+        } finally
         {
             if (results != null)
             {
@@ -3680,6 +3762,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         // Done
     }
 
+    @Override
     public void getUsersWithUsage(
             final StoreRef storeRef,
             final ObjectArrayQueryCallback resultsCallback)
@@ -3687,19 +3770,20 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         final Long personTypeQNameEntityId = qnameDAO.getOrCreateQName(ContentModel.TYPE_PERSON).getFirst();
         final Long usernamePropQNameEntityId = qnameDAO.getOrCreateQName(ContentModel.PROP_USERNAME).getFirst();
         final Long sizeCurrentPropQNameEntityId = qnameDAO.getOrCreateQName(ContentModel.PROP_SIZE_CURRENT).getFirst();
-        
+
         HibernateCallback callback = new HibernateCallback()
         {
+            @Override
             public Object doInHibernate(Session session)
             {
                 Query query = session
-                    .getNamedQuery(HibernateNodeDaoServiceImpl.QUERY_GET_USERS_WITH_USAGE)
-                    .setString("storeProtocol", storeRef.getProtocol())
-                    .setString("storeIdentifier", storeRef.getIdentifier())
-                    .setParameter("usernamePropQNameID", usernamePropQNameEntityId) // cm:username
-                    .setParameter("sizeCurrentPropQNameID", sizeCurrentPropQNameEntityId) // cm:sizeCurrent
-                    .setParameter("personTypeQNameID", personTypeQNameEntityId) // cm:person
-                    ;
+                        .getNamedQuery(HibernateNodeDaoServiceImpl.QUERY_GET_USERS_WITH_USAGE)
+                        .setString("storeProtocol", storeRef.getProtocol())
+                        .setString("storeIdentifier", storeRef.getIdentifier())
+                        .setParameter("usernamePropQNameID", usernamePropQNameEntityId) // cm:username
+                        .setParameter("sizeCurrentPropQNameID", sizeCurrentPropQNameEntityId) // cm:sizeCurrent
+                        .setParameter("personTypeQNameID", personTypeQNameEntityId) // cm:person
+                ;
                 DirtySessionMethodInterceptor.setQueryFlushMode(session, query);
                 return query.scroll(ScrollMode.FORWARD_ONLY);
             }
@@ -3713,14 +3797,13 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
             while (results.next())
             {
                 Object[] arr = new Object[2];
-                arr[0] = (String)results.get(0); // username
-                arr[1] = (String)results.get(1); // node uuid
+                arr[0] = results.get(0); // username
+                arr[1] = results.get(1); // node uuid
                 resultsCallback.handle(arr);
                 // Flush if required
                 DirtySessionMethodInterceptor.flushSession(session);
             }
-        }
-        finally
+        } finally
         {
             if (results != null)
             {
@@ -3730,7 +3813,8 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
 
         // Done
     }
-    
+
+    @Override
     public void getPropertyValuesByActualType(DataTypeDefinition actualDataTypeDefinition, NodePropertyHandler handler)
     {
         // get the in-database string representation of the actual type
@@ -3738,11 +3822,12 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         final int actualTypeOrdinal = PropertyValue.convertToTypeOrdinal(typeQName);
         HibernateCallback callback = new HibernateCallback()
         {
+            @Override
             public Object doInHibernate(Session session)
             {
                 Query query = session
-                  .getNamedQuery(HibernateNodeDaoServiceImpl.QUERY_GET_NODES_WITH_PROPERTY_VALUES_BY_ACTUAL_TYPE)
-                  .setInteger("actualType", actualTypeOrdinal);
+                        .getNamedQuery(HibernateNodeDaoServiceImpl.QUERY_GET_NODES_WITH_PROPERTY_VALUES_BY_ACTUAL_TYPE)
+                        .setInteger("actualType", actualTypeOrdinal);
                 DirtySessionMethodInterceptor.setQueryFlushMode(session, query);
                 return query.scroll(ScrollMode.FORWARD_ONLY);
             }
@@ -3765,7 +3850,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
                 for (Map.Entry<PropertyMapKey, NodePropertyValue> entry : properties.entrySet())
                 {
                     PropertyMapKey propertyKey = entry.getKey();
-					Long propertyQNameId = propertyKey.getQnameId();
+                    Long propertyQNameId = propertyKey.getQnameId();
                     QName propertyQName = qnameDAO.getQName(propertyQNameId).getSecond();
                     NodePropertyValue propertyValue = entry.getValue();
                     // ignore nulls
@@ -3787,8 +3872,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
                         try
                         {
                             convertedValue = (Serializable) converter.convert(actualDataTypeDefinition, value);
-                        }
-                        catch (Throwable e)
+                        } catch (Throwable e)
                         {
                             // The value can't be converted - forget it
                         }
@@ -3807,8 +3891,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
                     unflushedCount = 0;
                 }
             }
-        }
-        finally
+        } finally
         {
             if (results != null)
             {
@@ -3816,7 +3899,8 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
             }
         }
     }
-    
+
+    @Override
     @SuppressWarnings("unchecked")
     public void getNodesDeletedInOldTxns(
             final Long minNodeId,
@@ -3826,15 +3910,16 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
     {
         // Get the max transaction ID
         final Long maxTxnId = getMaxTxnIdByCommitTime(maxCommitTime);
-        
+
         // Shortcut
         if (maxTxnId == null)
         {
             return;
         }
-        
+
         HibernateCallback callback = new HibernateCallback()
         {
+            @Override
             public Object doInHibernate(Session session)
             {
                 Query query = session.getNamedQuery(QUERY_GET_DELETED_NODES_BY_MAX_TXNID);
@@ -3850,8 +3935,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         {
             queryResults = (ScrollableResults) getHibernateTemplate().execute(callback);
             processNodeResults(queryResults, resultsCallback);
-        }
-        finally
+        } finally
         {
             if (queryResults != null)
             {
@@ -3860,7 +3944,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         }
         // Done
     }
-    
+
     /*
      * Queries for transactions
      */
@@ -3877,16 +3961,18 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
     private static final String QUERY_GET_TXN_CHANGES_FOR_STORE = "txn.GetTxnChangesForStore";
     private static final String QUERY_GET_TXN_CHANGES = "txn.GetTxnChanges";
     private static final String QUERY_GET_TXNS_UNUSED = "txn.GetTxnsUnused";
-    
+
+    @Override
     public Transaction getTxnById(final long txnId)
     {
         HibernateCallback callback = new HibernateCallback()
         {
+            @Override
             public Object doInHibernate(Session session)
             {
                 Query query = session.getNamedQuery(QUERY_GET_TXN_BY_ID);
                 query.setLong("txnId", txnId)
-                     .setReadOnly(true);
+                        .setReadOnly(true);
                 DirtySessionMethodInterceptor.setQueryFlushMode(session, query);
                 return query.uniqueResult();
             }
@@ -3895,11 +3981,13 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         // done
         return txn;
     }
-    
+
+    @Override
     public Long getMinTxnCommitTime()
     {
         HibernateCallback callback = new HibernateCallback()
         {
+            @Override
             public Object doInHibernate(Session session)
             {
                 Query query = session.getNamedQuery(QUERY_GET_MIN_COMMIT_TIME);
@@ -3911,11 +3999,13 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         // done
         return (commitTime == null) ? 0L : commitTime;
     }
-    
+
+    @Override
     public Long getMaxTxnCommitTime()
     {
         HibernateCallback callback = new HibernateCallback()
         {
+            @Override
             public Object doInHibernate(Session session)
             {
                 Query query = session.getNamedQuery(QUERY_GET_MAX_COMMIT_TIME);
@@ -3927,11 +4017,13 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         // done
         return (commitTime == null) ? 0L : commitTime;
     }
-    
+
+    @Override
     public Long getMaxTxnIdByCommitTime(final long maxCommitTime)
     {
         HibernateCallback callback = new HibernateCallback()
         {
+            @Override
             public Object doInHibernate(Session session)
             {
                 Query query = session.getNamedQuery(QUERY_GET_MAX_ID_BY_COMMIT_TIME);
@@ -3944,7 +4036,8 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         // done
         return txnId;
     }
-    
+
+    @Override
     @SuppressWarnings("unchecked")
     public List<Transaction> getTxnsByMinCommitTime(final List<Long> includeTxnIds)
     {
@@ -3954,11 +4047,12 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         }
         HibernateCallback callback = new HibernateCallback()
         {
+            @Override
             public Object doInHibernate(Session session)
             {
                 Query query = session.getNamedQuery(QUERY_GET_SELECTED_TXNS_BY_COMMIT_TIME_ASC);
                 query.setParameterList("includeTxnIds", includeTxnIds)
-                     .setReadOnly(true);
+                        .setReadOnly(true);
                 DirtySessionMethodInterceptor.setQueryFlushMode(session, query);
                 return query.list();
             }
@@ -3968,16 +4062,18 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         return txns;
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public int getTxnUpdateCount(final long txnId)
     {
         HibernateCallback callback = new HibernateCallback()
         {
+            @Override
             public Object doInHibernate(Session session)
             {
                 Query query = session.getNamedQuery(QUERY_GET_TXN_UPDATE_COUNT_FOR_STORE);
                 query.setLong("txnId", txnId)
-                     .setReadOnly(true);
+                        .setReadOnly(true);
                 DirtySessionMethodInterceptor.setQueryFlushMode(session, query);
                 return query.uniqueResult();
             }
@@ -3986,17 +4082,19 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         // done
         return count.intValue();
     }
-    
+
+    @Override
     @SuppressWarnings("unchecked")
     public int getTxnDeleteCount(final long txnId)
     {
         HibernateCallback callback = new HibernateCallback()
         {
+            @Override
             public Object doInHibernate(Session session)
             {
                 Query query = session.getNamedQuery(QUERY_GET_TXN_DELETE_COUNT_FOR_STORE);
                 query.setLong("txnId", txnId)
-                     .setReadOnly(true);
+                        .setReadOnly(true);
                 DirtySessionMethodInterceptor.setQueryFlushMode(session, query);
                 return query.uniqueResult();
             }
@@ -4005,17 +4103,19 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         // done
         return count.intValue();
     }
-    
+
+    @Override
     @SuppressWarnings("unchecked")
     public int getTransactionCount()
     {
         HibernateCallback callback = new HibernateCallback()
         {
+            @Override
             public Object doInHibernate(Session session)
             {
                 Query query = session.getNamedQuery(QUERY_COUNT_TRANSACTIONS);
                 query.setMaxResults(1)
-                     .setReadOnly(true);
+                        .setReadOnly(true);
                 DirtySessionMethodInterceptor.setQueryFlushMode(session, query);
                 return query.uniqueResult();
             }
@@ -4024,11 +4124,12 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         // done
         return count.intValue();
     }
-    
+
     private static final Long TXN_ID_DUD = Long.valueOf(-1L);
     private static final Long SERVER_ID_DUD = Long.valueOf(-1L);
-    private static final long MIN_TIME_QUERY_RANGE = 10L * 60L * 1000L;     // 10 minutes
-    
+    private static final long MIN_TIME_QUERY_RANGE = 10L * 60L * 1000L; // 10 minutes
+
+    @Override
     @SuppressWarnings("unchecked")
     public List<Transaction> getTxnsByCommitTimeAscending(
             long fromTimeInclusive,
@@ -4036,7 +4137,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
             int count,
             List<Long> excludeTxnIds,
             boolean remoteOnly)
-    {
+            {
         // Start with some sane defaults
         if (fromTimeInclusive < 0L)
         {
@@ -4044,7 +4145,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         }
         if (toTimeExclusive < 0L || toTimeExclusive == Long.MAX_VALUE)
         {
-            toTimeExclusive = ((long)getMaxTxnCommitTime())+1L;
+            toTimeExclusive = (getMaxTxnCommitTime()) + 1L;
         }
         // Get the time difference required
         long diffTime = toTimeExclusive - fromTimeInclusive;
@@ -4053,7 +4154,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
             // There can be no results
             return Collections.emptyList();
         }
-        
+
         // Make sure that we have at least one entry in the exclude list
         final List<Long> excludeTxnIdsInner = new ArrayList<Long>(excludeTxnIds == null ? 1 : excludeTxnIds.size());
         if (excludeTxnIds == null || excludeTxnIds.isEmpty())
@@ -4067,7 +4168,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         final List<Long> excludeServerIds = new ArrayList<Long>(1);
         if (remoteOnly)
         {
-            // Get the current server ID.  This can be null if no transactions have been written by
+            // Get the current server ID. This can be null if no transactions have been written by
             // a server with this IP address.
             Long serverId = getServerIdOrNull();
             if (serverId == null)
@@ -4083,7 +4184,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         {
             excludeServerIds.add(SERVER_ID_DUD);
         }
-        
+
         List<Transaction> results = new ArrayList<Transaction>(count);
         // Each query must be constrained in the time range,
         // so query larger and larger sets until enough results are retrieved.
@@ -4097,21 +4198,22 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
             queryFromTimeInclusive = queryToTimeExclusive;
             queryToTimeExclusive += (iteration * MIN_TIME_QUERY_RANGE);
             queryCount = count - results.size();
-        
+
             final long innerQueryFromTimeInclusive = queryFromTimeInclusive;
             final long innerQueryToTimeExclusive = queryToTimeExclusive;
             final int innerQueryCount = queryCount;
             HibernateCallback callback = new HibernateCallback()
             {
+                @Override
                 public Object doInHibernate(Session session)
                 {
                     Query query = session.getNamedQuery(QUERY_GET_TXNS_BY_COMMIT_TIME_ASC);
                     query.setLong("fromTimeInclusive", innerQueryFromTimeInclusive)
-                         .setLong("toTimeExclusive", innerQueryToTimeExclusive)
-                         .setParameterList("excludeTxnIds", excludeTxnIdsInner)
-                         .setParameterList("excludeServerIds", excludeServerIds)
-                         .setMaxResults(innerQueryCount)
-                         .setReadOnly(true);
+                            .setLong("toTimeExclusive", innerQueryToTimeExclusive)
+                            .setParameterList("excludeTxnIds", excludeTxnIdsInner)
+                            .setParameterList("excludeServerIds", excludeServerIds)
+                            .setMaxResults(innerQueryCount)
+                            .setReadOnly(true);
                     return query.list();
                 }
             };
@@ -4121,8 +4223,9 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         }
         // done
         return results;
-    }
-    
+            }
+
+    @Override
     @SuppressWarnings("unchecked")
     public List<Transaction> getTxnsByCommitTimeDescending(
             long fromTimeInclusive,
@@ -4130,7 +4233,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
             int count,
             List<Long> excludeTxnIds,
             boolean remoteOnly)
-    {
+            {
         // Start with some sane defaults
         if (fromTimeInclusive < 0L)
         {
@@ -4138,7 +4241,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         }
         if (toTimeExclusive < 0L || toTimeExclusive == Long.MAX_VALUE)
         {
-            toTimeExclusive = ((long)getMaxTxnCommitTime())+1L;
+            toTimeExclusive = (getMaxTxnCommitTime()) + 1L;
         }
         // Get the time difference required
         long diffTime = toTimeExclusive - fromTimeInclusive;
@@ -4147,7 +4250,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
             // There can be no results
             return Collections.emptyList();
         }
-        
+
         // Make sure that we have at least one entry in the exclude list
         final List<Long> excludeTxnIdsInner = new ArrayList<Long>(excludeTxnIds == null ? 1 : excludeTxnIds.size());
         if (excludeTxnIds == null || excludeTxnIds.isEmpty())
@@ -4161,7 +4264,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         final List<Long> excludeServerIds = new ArrayList<Long>(1);
         if (remoteOnly)
         {
-            // Get the current server ID.  This can be null if no transactions have been written by
+            // Get the current server ID. This can be null if no transactions have been written by
             // a server with this IP address.
             Long serverId = getServerIdOrNull();
             if (serverId == null)
@@ -4177,8 +4280,6 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         {
             excludeServerIds.add(SERVER_ID_DUD);
         }
-        
-        
 
         List<Transaction> results = new ArrayList<Transaction>(count);
         // Each query must be constrained in the time range,
@@ -4193,21 +4294,22 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
             queryToTimeExclusive = queryFromTimeInclusive;
             queryFromTimeInclusive -= (iteration * MIN_TIME_QUERY_RANGE);
             queryCount = count - results.size();
-        
+
             final long innerQueryFromTimeInclusive = queryFromTimeInclusive;
             final long innerQueryToTimeExclusive = queryToTimeExclusive;
             final int innerQueryCount = queryCount;
             HibernateCallback callback = new HibernateCallback()
             {
+                @Override
                 public Object doInHibernate(Session session)
                 {
                     Query query = session.getNamedQuery(QUERY_GET_TXNS_BY_COMMIT_TIME_DESC);
                     query.setLong("fromTimeInclusive", innerQueryFromTimeInclusive)
-                         .setLong("toTimeExclusive", innerQueryToTimeExclusive)
-                         .setParameterList("excludeTxnIds", excludeTxnIdsInner)
-                         .setParameterList("excludeServerIds", excludeServerIds)
-                         .setMaxResults(innerQueryCount)
-                         .setReadOnly(true);
+                            .setLong("toTimeExclusive", innerQueryToTimeExclusive)
+                            .setParameterList("excludeTxnIds", excludeTxnIdsInner)
+                            .setParameterList("excludeServerIds", excludeServerIds)
+                            .setMaxResults(innerQueryCount)
+                            .setReadOnly(true);
                     return query.list();
                 }
             };
@@ -4217,20 +4319,22 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         }
         // done
         return results;
-    }
-    
+            }
+
+    @Override
     @SuppressWarnings("unchecked")
     public List<NodeRef> getTxnChangesForStore(final StoreRef storeRef, final long txnId)
     {
         HibernateCallback callback = new HibernateCallback()
         {
+            @Override
             public Object doInHibernate(Session session)
             {
                 Query query = session.getNamedQuery(QUERY_GET_TXN_CHANGES_FOR_STORE);
                 query.setLong("txnId", txnId)
-                     .setString("protocol", storeRef.getProtocol())
-                     .setString("identifier", storeRef.getIdentifier())
-                     .setReadOnly(true);
+                        .setString("protocol", storeRef.getProtocol())
+                        .setString("identifier", storeRef.getIdentifier())
+                        .setReadOnly(true);
                 DirtySessionMethodInterceptor.setQueryFlushMode(session, query);
                 return query.list();
             }
@@ -4246,17 +4350,19 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         // done
         return nodeRefs;
     }
-    
+
+    @Override
     @SuppressWarnings("unchecked")
     public List<NodeRef> getTxnChanges(final long txnId)
     {
         HibernateCallback callback = new HibernateCallback()
         {
+            @Override
             public Object doInHibernate(Session session)
             {
                 Query query = session.getNamedQuery(QUERY_GET_TXN_CHANGES);
                 query.setLong("txnId", txnId)
-                     .setReadOnly(true);
+                        .setReadOnly(true);
                 DirtySessionMethodInterceptor.setQueryFlushMode(session, query);
                 return query.list();
             }
@@ -4272,19 +4378,21 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         // done
         return nodeRefs;
     }
-    
+
+    @Override
     @SuppressWarnings("unchecked")
     public List<Long> getTxnsUnused(final Long minTxnId, final long maxCommitTime, final int count)
     {
         HibernateCallback callback = new HibernateCallback()
         {
+            @Override
             public Object doInHibernate(Session session)
             {
                 Query query = session.getNamedQuery(QUERY_GET_TXNS_UNUSED);
                 query.setReadOnly(true)
-                     .setMaxResults(count)
-                     .setLong("minTxnId", minTxnId)
-                     .setLong("maxCommitTime", maxCommitTime);
+                        .setMaxResults(count)
+                        .setLong("minTxnId", minTxnId)
+                        .setLong("maxCommitTime", maxCommitTime);
                 DirtySessionMethodInterceptor.setQueryFlushMode(session, query);
                 return query.list();
             }
@@ -4294,6 +4402,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         return results;
     }
 
+    @Override
     public void purgeTxn(Long txnId)
     {
         Transaction txn = (Transaction) getSession().get(TransactionImpl.class, txnId);
@@ -4303,15 +4412,15 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         }
     }
 
-    //============ PROPERTY HELPER METHODS =================//
-    
+    // ============ PROPERTY HELPER METHODS =================//
+
     public static Map<PropertyMapKey, NodePropertyValue> convertToPersistentProperties(
             Map<QName, Serializable> in,
             QNameDAO qnameDAO,
             LocaleDAO localeDAO,
             ContentDataDAO contentDataDAO,
             DictionaryService dictionaryService)
-    {
+            {
         Map<PropertyMapKey, NodePropertyValue> propertyMap = new HashMap<PropertyMapKey, NodePropertyValue>(in.size() + 5);
         for (Map.Entry<QName, Serializable> entry : in.entrySet())
         {
@@ -4336,20 +4445,20 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         }
         // Done
         return propertyMap;
-    }
+            }
 
     /**
      * The collection index used to indicate that the value is not part of a collection.
      * All values from zero up are used for real collection indexes.
      */
     private static final int IDX_NO_COLLECTION = -1;
-    
+
     /**
-     * A method that adds properties to the given map.  It copes with collections.
+     * A method that adds properties to the given map. It copes with collections.
      *
-     * @param propertyDef           the property definition (<tt>null</tt> is allowed)
-     * @param collectionIndex       the index of the property in the collection or <tt>-1</tt> if
-     *                              we are not yet processing a collection 
+     * @param propertyDef the property definition (<tt>null</tt> is allowed)
+     * @param collectionIndex the index of the property in the collection or <tt>-1</tt> if
+     *            we are not yet processing a collection
      */
     private static void addValueToPersistedProperties(
             Map<PropertyMapKey, NodePropertyValue> propertyMap,
@@ -4363,7 +4472,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
     {
         if (value == null)
         {
-            // The property is null.  Null is null and cannot be massaged any other way.
+            // The property is null. Null is null and cannot be massaged any other way.
             NodePropertyValue npValue = HibernateNodeDaoServiceImpl.makeNodePropertyValue(propertyDef, null);
             PropertyMapKey npKey = new PropertyMapKey();
             npKey.setListIndex(collectionIndex);
@@ -4374,10 +4483,10 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
             // Done
             return;
         }
-        
+
         // Get or spoof the property datatype
         QName propertyTypeQName;
-        if (propertyDef == null)                // property not recognised
+        if (propertyDef == null) // property not recognised
         {
             // allow it for now - persisting excess properties can be useful sometimes
             propertyTypeQName = DataTypeDefinition.ANY;
@@ -4388,7 +4497,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         }
 
         // A property may appear to be multi-valued if the model definition is loose and
-        // an unexploded collection is passed in.  Otherwise, use the model-defined behaviour
+        // an unexploded collection is passed in. Otherwise, use the model-defined behaviour
         // strictly.
         boolean isMultiValued;
         if (propertyTypeQName.equals(DataTypeDefinition.ANY))
@@ -4400,7 +4509,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         {
             isMultiValued = propertyDef.isMultiValued();
         }
-        
+
         // Handle different scenarios.
         // - Do we need to explode a collection?
         // - Does the property allow collections?
@@ -4425,14 +4534,14 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
             {
                 throw new DictionaryException(
                         "A single-valued property of this type may not be a collection: \n" +
-                        "   Property: " + propertyDef + "\n" +
-                        "   Type: " + propertyTypeQName + "\n" +
-                        "   Value: " + value);
+                                "   Property: " + propertyDef + "\n" +
+                                "   Type: " + propertyTypeQName + "\n" +
+                                "   Value: " + value);
             }
             // We have an allowable collection.
             @SuppressWarnings("unchecked")
             Collection<Object> collectionValues = (Collection<Object>) value;
-            // Persist empty collections directly.  This is handled by the NodePropertyValue.
+            // Persist empty collections directly. This is handled by the NodePropertyValue.
             if (collectionValues.size() == 0)
             {
                 NodePropertyValue npValue = HibernateNodeDaoServiceImpl.makeNodePropertyValue(
@@ -4454,10 +4563,10 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
                 {
                     throw new IllegalArgumentException(
                             "Node properties must be fully serializable, " +
-                            "including values contained in collections. \n" +
-                            "   Property: " + propertyDef + "\n" +
-                            "   Index:    " + collectionIndex + "\n" +
-                            "   Value:    " + collectionValueObj);
+                                    "including values contained in collections. \n" +
+                                    "   Property: " + propertyDef + "\n" +
+                                    "   Index:    " + collectionIndex + "\n" +
+                                    "   Value:    " + collectionValueObj);
                 }
                 Serializable collectionValue = (Serializable) collectionValueObj;
                 try
@@ -4471,15 +4580,14 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
                             collectionValue,
                             localeDAO,
                             contentDataDAO);
-                }
-                catch (Throwable e)
+                } catch (Throwable e)
                 {
                     throw new AlfrescoRuntimeException(
                             "Failed to persist collection entry: \n" +
-                            "   Property: " + propertyDef + "\n" +
-                            "   Index:    " + collectionIndex + "\n" +
-                            "   Value:    " + collectionValue,
-                            e);
+                                    "   Property: " + propertyDef + "\n" +
+                                    "   Index:    " + collectionIndex + "\n" +
+                                    "   Value:    " + collectionValue,
+                                    e);
                 }
             }
         }
@@ -4491,9 +4599,9 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
             {
                 throw new DictionaryException(
                         "Collections of collections (Serializable) are only supported by type 'd:any': \n" +
-                        "   Property: " + propertyDef + "\n" +
-                        "   Type: " + propertyTypeQName + "\n" +
-                        "   Value: " + value);
+                                "   Property: " + propertyDef + "\n" +
+                                "   Type: " + propertyTypeQName + "\n" +
+                                "   Value: " + value);
             }
             // Handle ContentData
             if (value instanceof ContentData && propertyTypeQName.equals(DataTypeDefinition.CONTENT))
@@ -4539,21 +4647,19 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
     /**
      * Helper method to convert the <code>Serializable</code> value into a full, persistable {@link NodePropertyValue}.
      * <p>
-     * Where the property definition is null, the value will take on the
-     * {@link DataTypeDefinition#ANY generic ANY} value.
+     * Where the property definition is null, the value will take on the {@link DataTypeDefinition#ANY generic ANY} value.
      * <p>
-     * Collections are NOT supported.  These must be split up by the calling code before
-     * calling this method.  Map instances are supported as plain serializable instances.
-     * 
-     * @param propertyDef       the property dictionary definition, may be null
-     * @param value             the value, which will be converted according to the definition - may be null
-     * @return                  Returns the persistable property value
+     * Collections are NOT supported. These must be split up by the calling code before calling this method. Map instances are supported as plain serializable instances.
+     *
+     * @param propertyDef the property dictionary definition, may be null
+     * @param value the value, which will be converted according to the definition - may be null
+     * @return Returns the persistable property value
      */
     private static NodePropertyValue makeNodePropertyValue(PropertyDefinition propertyDef, Serializable value)
     {
         // get property attributes
         final QName propertyTypeQName;
-        if (propertyDef == null)                // property not recognised
+        if (propertyDef == null) // property not recognised
         {
             // allow it for now - persisting excess properties can be useful sometimes
             propertyTypeQName = DataTypeDefinition.ANY;
@@ -4567,18 +4673,17 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
             NodePropertyValue propertyValue = new NodePropertyValue(propertyTypeQName, value);
             // done
             return propertyValue;
-        }
-        catch (TypeConversionException e)
+        } catch (TypeConversionException e)
         {
             throw new TypeConversionException(
                     "The property value is not compatible with the type defined for the property: \n" +
-                    "   property: " + (propertyDef == null ? "unknown" : propertyDef) + "\n" +
-                    "   value: " + value + "\n" +
-                    "   value type: " + value.getClass(),
-                    e);
+                            "   property: " + (propertyDef == null ? "unknown" : propertyDef) + "\n" +
+                            "   value: " + value + "\n" +
+                            "   value type: " + value.getClass(),
+                            e);
         }
     }
-    
+
     public static Serializable getPublicProperty(
             Map<PropertyMapKey, NodePropertyValue> propertyValues,
             QName propertyQName,
@@ -4628,7 +4733,19 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
             LocaleDAO localeDAO,
             ContentDataDAO contentDataDAO,
             DictionaryService dictionaryService)
-    {
+            {
+        return convertToPublicProperties(propertyValues, qnameDAO, localeDAO, contentDataDAO, dictionaryService, null, null);
+            }
+
+    public static Map<QName, Serializable> convertToPublicProperties(
+            Map<PropertyMapKey, NodePropertyValue> propertyValues,
+            QNameDAO qnameDAO,
+            LocaleDAO localeDAO,
+            ContentDataDAO contentDataDAO,
+            DictionaryService dictionaryService,
+            Set<QName> propsToload,
+            Map<Long, QName> propertyTypes)
+            {
         Map<QName, Serializable> propertyMap = new HashMap<QName, Serializable>(propertyValues.size(), 1.0F);
         // Shortcut
         if (propertyValues.size() == 0)
@@ -4637,11 +4754,14 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         }
         // We need to process the properties in order
         SortedMap<PropertyMapKey, NodePropertyValue> sortedPropertyValues = new TreeMap<PropertyMapKey, NodePropertyValue>(propertyValues);
-        // A working map.  Ordering is important.
+        // A working map. Ordering is important.
         SortedMap<PropertyMapKey, NodePropertyValue> scratch = new TreeMap<PropertyMapKey, NodePropertyValue>();
         // Iterate (sorted) over the map entries and extract values with the same qname
         Long currentQNameId = Long.MIN_VALUE;
         Iterator<Map.Entry<PropertyMapKey, NodePropertyValue>> iterator = sortedPropertyValues.entrySet().iterator();
+        if (propertyTypes == null) {
+            propertyTypes = new HashMap<Long, QName>();
+        }
         while (true)
         {
             Long nextQNameId = null;
@@ -4655,58 +4775,60 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
                 nextPropertyValue = entry.getValue();
                 nextQNameId = nextPropertyKey.getQnameId();
             }
-            // If the QName is going to change, and we have some entries to process, then process them.
-            if (scratch.size() > 0 && (nextQNameId == null || !nextQNameId.equals(currentQNameId)))
-            {
-                QName currentQName = qnameDAO.getQName(currentQNameId).getSecond();
-                PropertyDefinition currentPropertyDef = dictionaryService.getProperty(currentQName);
-                // We have added something to the scratch properties but the qname has just changed
-                Serializable collapsedValue = null;
-                // We can shortcut if there is only one value
-                if (scratch.size() == 1)
+            QName currentQName = currentQNameId > Long.MIN_VALUE ? getQName(currentQNameId, propertyTypes, qnameDAO) : null;
+            if (currentQName == null || propsToload == null || propsToload.contains(currentQName)) {
+                // If the QName is going to change, and we have some entries to process, then process them.
+                if (scratch.size() > 0 && (nextQNameId == null || !nextQNameId.equals(currentQNameId)))
                 {
-                    // There is no need to collapse list indexes
-                    collapsedValue = HibernateNodeDaoServiceImpl.collapsePropertiesWithSameQNameAndListIndex(
-                            currentPropertyDef,
-                            scratch,
-                            localeDAO,
-                            contentDataDAO);
-                    // Make sure that multi-valued properties are returned as a collection
-                    if (!(collapsedValue instanceof Collection) && scratch.size() == 1 && scratch.keySet().iterator().next().getListIndex() == 0)
+                    PropertyDefinition currentPropertyDef = dictionaryService.getProperty(currentQName);
+                    // We have added something to the scratch properties but the qname has just changed
+                    Serializable collapsedValue = null;
+                    // We can shortcut if there is only one value
+                    if (scratch.size() == 1)
                     {
-                        // Can't use Collections.singletonList: ETHREEOH-1172
-                        ArrayList<Serializable> collection = new ArrayList<Serializable>(1);
-                        collection.add(collapsedValue);
-                        collapsedValue = collection;
+                        // There is no need to collapse list indexes
+                        collapsedValue = HibernateNodeDaoServiceImpl.collapsePropertiesWithSameQNameAndListIndex(
+                                currentPropertyDef,
+                                scratch,
+                                localeDAO,
+                                contentDataDAO);
+                        // Make sure that multi-valued properties are returned as a collection
+                        if (!(collapsedValue instanceof Collection) && scratch.size() == 1 && scratch.keySet().iterator().next().getListIndex() == 0)
+                        {
+                            // Can't use Collections.singletonList: ETHREEOH-1172
+                            ArrayList<Serializable> collection = new ArrayList<Serializable>(1);
+                            collection.add(collapsedValue);
+                            collapsedValue = collection;
+                        }
                     }
-                }
-                else
-                {
-                    // There is more than one value so the list indexes need to be collapsed
-                    collapsedValue = HibernateNodeDaoServiceImpl.collapsePropertiesWithSameQName(
-                            currentPropertyDef,
-                            scratch,
-                            localeDAO,
-                            contentDataDAO);
-                }
-                // If the property is multi-valued then the output property must be a collection
-                if (currentPropertyDef != null && currentPropertyDef.isMultiValued())
-                {
-                    // If value is not already collection, create list and add value into it.
-                    // There is custom change to Alfresco default implementation, so that a list with one null value ([null])
-                    // is handled correctly. Default implementation returns null, not [null] as it suppose to.
-                    if (collapsedValue == null  || !(collapsedValue instanceof Collection))
+                    else
                     {
-                        // Can't use Collections.singletonList: ETHREEOH-1172
-                        ArrayList<Serializable> collection = new ArrayList<Serializable>(1);
-                        collection.add(collapsedValue);
-                        collapsedValue = collection;
+                        // There is more than one value so the list indexes need to be collapsed
+                        collapsedValue = HibernateNodeDaoServiceImpl.collapsePropertiesWithSameQName(
+                                currentPropertyDef,
+                                scratch,
+                                localeDAO,
+                                contentDataDAO);
                     }
+                    // If the property is multi-valued then the output property must be a collection
+                    if (currentPropertyDef != null && currentPropertyDef.isMultiValued())
+                    {
+                        // If value is not already collection, create list and add value into it.
+                        // There is custom change to Alfresco default implementation, so that a list with one null value ([null])
+                        // is handled correctly. Default implementation returns null, not [null] as it suppose to.
+                        if (collapsedValue == null || !(collapsedValue instanceof Collection))
+                        {
+                            // Can't use Collections.singletonList: ETHREEOH-1172
+                            ArrayList<Serializable> collection = new ArrayList<Serializable>(1);
+                            collection.add(collapsedValue);
+                            collapsedValue = collection;
+                        }
+                    }
+                    // Store the value
+                    propertyMap.put(currentQName, collapsedValue);
+                    // Reset
+                    scratch.clear();
                 }
-                // Store the value
-                propertyMap.put(currentQName, collapsedValue);
-                // Reset
-                scratch.clear();
             }
             if (nextQNameId != null)
             {
@@ -4722,8 +4844,20 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         }
         // Done
         return propertyMap;
+            }
+
+    private static QName getQName(Long currentQNameId, Map<Long, QName> propertyTypes, QNameDAO qnameDAO) {
+        boolean hasPropertyTypes = propertyTypes != null;
+        QName currentQName = hasPropertyTypes ? propertyTypes.get(currentQNameId) : null;
+        if (currentQName == null) {
+            currentQName = qnameDAO.getQName(currentQNameId).getSecond();
+            if (hasPropertyTypes) {
+                propertyTypes.put(currentQNameId, currentQName);
+            }
+        }
+        return currentQName;
     }
-    
+
     private static Serializable collapsePropertiesWithSameQName(
             PropertyDefinition propertyDef,
             SortedMap<PropertyMapKey, NodePropertyValue> sortedPropertyValues,
@@ -4732,7 +4866,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
     {
         Serializable result = null;
         Collection<Serializable> collectionResult = null;
-        // A working map.  Ordering is not important for this map.
+        // A working map. Ordering is not important for this map.
         Map<PropertyMapKey, NodePropertyValue> scratch = new HashMap<PropertyMapKey, NodePropertyValue>(3);
         // Iterate (sorted) over the map entries and extract values with the same list index
         Integer currentListIndex = Integer.MIN_VALUE;
@@ -4761,14 +4895,14 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
                         localeDAO,
                         contentDataDAO);
 
-                // Store.  If there is a value already, then we must build a collection.
+                // Store. If there is a value already, then we must build a collection.
                 // Alfresco default implementation doesn't add null value to the collection if it is the first item.
                 // So when the value is [null, val], then [val] is returned. hasNullBeenSet property is
                 // used to fix this problem, so that null value will be added to the start of collection.
                 if (result == null && !hasNullBeenSet)
                 {
-                  result = collapsedValue;
-                  hasNullBeenSet = true;
+                    result = collapsedValue;
+                    hasNullBeenSet = true;
                 }
                 else if (collectionResult != null)
                 {
@@ -4777,12 +4911,12 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
                 }
                 else
                 {
-                    // We already had a result, and now have another.  A collection has not been
-                    // started.  We start a collection and explicitly keep track of it so that
+                    // We already had a result, and now have another. A collection has not been
+                    // started. We start a collection and explicitly keep track of it so that
                     // we don't get mixed up with collections of collections (ETHREEOH-2064).
                     collectionResult = new ArrayList<Serializable>(20);
-                    collectionResult.add(result);                   // Add the first result
-                    collectionResult.add(collapsedValue);           // Add the new value
+                    collectionResult.add(result); // Add the first result
+                    collectionResult.add(collapsedValue); // Add the new value
                     result = (Serializable) collectionResult;
                 }
                 // Reset
@@ -4811,14 +4945,13 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         // Done
         return result;
     }
-    
+
     /**
-     * At this level, the properties have the same qname and list index.  They can only be separated
-     * by locale.  Typically, MLText will fall into this category as only.
+     * At this level, the properties have the same qname and list index. They can only be separated
+     * by locale. Typically, MLText will fall into this category as only.
      * <p>
-     * If there are multiple values then they can only be separated by locale.  If they are separated
-     * by locale, then they have to be text-based.  This means that the only way to store them is via
-     * MLText.  Any other multi-locale properties cannot be deserialized.
+     * If there are multiple values then they can only be separated by locale. If they are separated by locale, then they have to be text-based. This means that the only way to
+     * store them is via MLText. Any other multi-locale properties cannot be deserialized.
      */
     private static Serializable collapsePropertiesWithSameQNameAndListIndex(
             PropertyDefinition propertyDef,
@@ -4836,7 +4969,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         {
             PropertyMapKey propertyKey = entry.getKey();
             NodePropertyValue propertyValue = entry.getValue();
-            
+
             if (propertyValuesSize == 1 &&
                     (propertyDef == null || !propertyDef.getDataType().getName().equals(DataTypeDefinition.MLTEXT)))
             {
@@ -4855,8 +4988,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
                     Locale locale = localeDAO.getLocalePair(localeId).getSecond();
                     // Add to the MLText object
                     mltext.addValue(locale, mlString);
-                }
-                catch (TypeConversionException e)
+                } catch (TypeConversionException e)
                 {
                     // Ignore
                     logger.warn("Unable to add property value to MLText instance: " + propertyValue);
@@ -4867,15 +4999,15 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         // Done
         return value;
     }
-    
+
     /**
      * Extracts the externally-visible property from the persistable value.
-     * 
-     * @param propertyDef       the model property definition - may be <tt>null</tt>
-     * @param propertyValue     the persisted property
-     * @param contentDataDAO    component that handles <code>ContentData</code> persistence
-     * @return                  Returns the value of the property in the format dictated by the property
-     *                          definition, or null if the property value is null 
+     *
+     * @param propertyDef the model property definition - may be <tt>null</tt>
+     * @param propertyValue the persisted property
+     * @param contentDataDAO component that handles <code>ContentData</code> persistence
+     * @return Returns the value of the property in the format dictated by the property
+     *         definition, or null if the property value is null
      */
     private static Serializable makeSerializableValue(
             PropertyDefinition propertyDef,
@@ -4903,7 +5035,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
             // Handle conversions to and from ContentData
             if (propertyTypeQName.equals(DataTypeDefinition.CONTENT) && (value instanceof Long))
             {
-                Pair<Long, ContentData> contentDataPair = contentDataDAO.getContentData((Long)value);
+                Pair<Long, ContentData> contentDataPair = contentDataDAO.getContentData((Long) value);
                 if (contentDataPair == null)
                 {
                     // It is invalid
@@ -4916,15 +5048,14 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
             }
             // done
             return value;
-        }
-        catch (TypeConversionException e)
+        } catch (TypeConversionException e)
         {
             throw new TypeConversionException(
                     "The property value is not compatible with the type defined for the property: \n" +
-                    "   property: " + (propertyDef == null ? "unknown" : propertyDef) + "\n" +
-                    "   property value: " + propertyValue,
-                    e);
+                            "   property: " + (propertyDef == null ? "unknown" : propertyDef) + "\n" +
+                            "   property value: " + propertyValue,
+                            e);
         }
     }
-    
+
 }

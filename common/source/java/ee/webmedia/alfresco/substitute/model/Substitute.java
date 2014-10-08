@@ -142,6 +142,9 @@ public class Substitute implements Serializable {
     }
 
     public void setSubstitutionEndDate(Date substitutionEndDate) {
+        if (substitutionEndDate == null) {
+            return;
+        }
         Calendar cal = new GregorianCalendar();
         cal.setTime(substitutionEndDate);
         cal.set(Calendar.HOUR_OF_DAY, 23);

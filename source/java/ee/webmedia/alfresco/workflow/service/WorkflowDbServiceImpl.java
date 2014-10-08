@@ -33,6 +33,7 @@ import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
+import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
@@ -140,6 +141,44 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
         getPropFieldNamesAndArguments(fieldNames, arguments, props);
         arguments.add(taskRef.getId());
         updateTaskEntry(fieldNames, arguments, taskRef);
+    }
+
+    @Override
+    public void updateTaskOwnerOrgNameAndStoreRef(final List<Node> tasks) {
+        Connection connection = null;
+        try {
+            connection = dataSource.getConnection();
+            final Connection finalConnection = connection;
+            jdbcTemplate.getJdbcOperations().batchUpdate("UPDATE delta_task set wfc_owner_organization_name = ?, store_id = ? WHERE task_id = ?",
+                    new BatchPreparedStatementSetter() {
+
+                        @Override
+                        public void setValues(PreparedStatement ps, int i) throws SQLException {
+                            Node task = tasks.get(i);
+                            List ownerOrgNameValue = (List) task.getProperties().get(WorkflowCommonModel.Props.OWNER_ORGANIZATION_NAME);
+                            ps.setArray(1, finalConnection.createArrayOf("text", (((List<String>) ownerOrgNameValue).toArray())));
+                            ps.setString(2, task.getNodeRef().getStoreRef().toString());
+                            ps.setString(3, task.getNodeRef().getId());
+                        }
+
+                        @Override
+                        public int getBatchSize() {
+                            return tasks.size();
+                        }
+                    });
+        } catch (SQLException e) {
+            LOG.error("Error creating owner organization name input", e);
+            throw new RuntimeException(e);
+        } finally {
+            if (connection != null) {
+                try {
+                    connection.close();
+                } catch (SQLException e) {
+                    LOG.error("Error closing connection", e);
+                    throw new RuntimeException(e);
+                }
+            }
+        }
     }
 
     @Override
@@ -468,30 +507,86 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
     }
 
     @Override
-    public void createTaskDueDateExtensionAssocEntry(NodeRef initiatingTaskRef, NodeRef nodeRef) {
-        int rowsInserted = jdbcTemplate.update(
-                "INSERT INTO delta_task_due_date_extension_assoc (task_id, extension_task_id) VALUES (?, ?)",
-                new Object[] { initiatingTaskRef.getId(), nodeRef.getId() });
-        if (rowsInserted != 1) {
-            throw new RuntimeException("Insert failed: inserted " + rowsInserted + " rows for initiatingNodeRef=" + initiatingTaskRef + ", targetNodeRef=" + nodeRef);
-        }
-    }
-
-    @Override
-    public void createTaskDueDateHistoryEntries(NodeRef taskRef, final List<Pair<String, Date>> historyRecords) {
-        Assert.notNull(taskRef);
-        if (historyRecords == null || historyRecords.isEmpty()) {
-            LOG.info("No history record input provided, skipping insert");
-            return;
-        }
-        final String taskRefId = taskRef.getId();
-        jdbcTemplate.getJdbcOperations().batchUpdate("INSERT INTO delta_task_due_date_history (task_id, previous_date, change_reason) VALUES (?, ?, ?)",
+    public void createTaskDueDateExtensionAssocEntries(final List<Pair<NodeRef, NodeRef>> initiatingTasksWithTasks) {
+        jdbcTemplate.getJdbcOperations().batchUpdate("INSERT INTO delta_task_due_date_extension_assoc (task_id, extension_task_id) VALUES (?, ?) ",
                 new BatchPreparedStatementSetter() {
 
                     @Override
                     public void setValues(PreparedStatement ps, int i) throws SQLException {
+                        Pair<NodeRef, NodeRef> initiatingTaskWithTask = initiatingTasksWithTasks.get(i);
+                        ps.setString(1, initiatingTaskWithTask.getFirst().getId());
+                        ps.setString(2, initiatingTaskWithTask.getSecond().getId());
+                    }
+
+                    @Override
+                    public int getBatchSize() {
+                        return initiatingTasksWithTasks.size();
+                    }
+                });
+    }
+
+    @Override
+    public void updateTaskOwnerProps(final List<Pair<NodeRef, Map<QName, Serializable>>> tasksOwnerProps) {
+        Connection connection = null;
+        try {
+            connection = dataSource.getConnection();
+            final Connection finalConnection = connection;
+            jdbcTemplate.getJdbcOperations().batchUpdate(
+                    "UPDATE delta_task set wfc_owner_email = ?, wfc_owner_job_title = ?, wfc_owner_organization_name = ?  wfc_ where task_id = ? ",
+                    new BatchPreparedStatementSetter() {
+
+                        @Override
+                        public void setValues(PreparedStatement ps, int i) throws SQLException {
+                            Pair<NodeRef, Map<QName, Serializable>> taskAndProps = tasksOwnerProps.get(i);
+                            NodeRef taskRef = taskAndProps.getFirst();
+                            Map<QName, Serializable> taskProps = taskAndProps.getSecond();
+                            ps.setString(1, (String) taskProps.get(WorkflowCommonModel.Props.OWNER_EMAIL));
+                            ps.setString(2, (String) taskProps.get(WorkflowCommonModel.Props.OWNER_JOB_TITLE));
+
+                            @SuppressWarnings("unchecked")
+                            List<String> ownerOrgNameValue = (List<String>) taskProps.get(WorkflowCommonModel.Props.OWNER_ORGANIZATION_NAME);
+                            if (ownerOrgNameValue != null) {
+                                ps.setArray(3, finalConnection.createArrayOf("text", (ownerOrgNameValue.toArray())));
+                            } else {
+                                ps.setArray(3, null);
+                            }
+                            ps.setString(4, taskRef.getId());
+                        }
+
+                        @Override
+                        public int getBatchSize() {
+                            return tasksOwnerProps.size();
+                        }
+                    });
+        } catch (SQLException e) {
+            LOG.error("Error creating owner organization name input", e);
+            throw new RuntimeException(e);
+        } finally {
+            if (connection != null) {
+                try {
+                    connection.close();
+                } catch (SQLException e) {
+                    LOG.error("Error closing connection", e);
+                    throw new RuntimeException(e);
+                }
+            }
+        }
+    }
+
+    @Override
+    public void createTaskDueDateHistoryEntries(final List<Pair<NodeRef, Pair<String, Date>>> historyRecords) {
+
+        if (historyRecords == null || historyRecords.isEmpty()) {
+            return;
+        }
+        jdbcTemplate.getJdbcOperations().batchUpdate("INSERT INTO delta_task_due_date_history (task_id, previous_date, change_reason) VALUES (?, ?, ?) ",
+                new BatchPreparedStatementSetter() {
+
+                    @Override
+                    public void setValues(PreparedStatement ps, int i) throws SQLException {
+                        String taskRefId = historyRecords.get(i).getFirst().getId();
                         ps.setString(1, taskRefId);
-                        Pair<String, Date> values = historyRecords.get(i);
+                        Pair<String, Date> values = historyRecords.get(i).getSecond();
                         Date previousDate = values.getSecond();
                         ps.setTimestamp(2, previousDate != null ? new Timestamp(previousDate.getTime()) : null);
                         ps.setString(3, values.getFirst());
@@ -523,34 +618,32 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
         if (isEmptyInsert(files)) {
             return;
         }
-        final List<NodeRef> fileNodeRefs = new ArrayList<NodeRef>();
+        final List<Pair<NodeRef, NodeRef>> taskAndFiles = new ArrayList<Pair<NodeRef, NodeRef>>();
         for (File file : files) {
             Assert.isTrue(file != null && file.getNodeRef() != null);
-            fileNodeRefs.add(file.getNodeRef());
+            taskAndFiles.add(new Pair<NodeRef, NodeRef>(taskRef, file.getNodeRef()));
         }
-        createTaskFileEntriesFromNodeRefs(taskRef, fileNodeRefs);
+        createTaskFileEntriesFromNodeRefs(taskAndFiles);
     }
 
     @Override
-    public void createTaskFileEntriesFromNodeRefs(NodeRef taskRef, final List<NodeRef> fileNodeRefs) {
-        Assert.notNull(taskRef);
-        if (isEmptyInsert(fileNodeRefs)) {
+    public void createTaskFileEntriesFromNodeRefs(final List<Pair<NodeRef, NodeRef>> tasksAndFiles) {
+        if (isEmptyInsert(tasksAndFiles)) {
             return;
         }
-        Assert.isTrue(!fileNodeRefs.contains(null));
-        final String taskRefId = taskRef.getId();
         jdbcTemplate.getJdbcOperations().batchUpdate("INSERT INTO delta_task_file (task_id, file_id) VALUES (?, ?)",
                 new BatchPreparedStatementSetter() {
 
                     @Override
                     public void setValues(PreparedStatement ps, int i) throws SQLException {
-                        ps.setString(1, taskRefId);
-                        ps.setString(2, fileNodeRefs.get(i).getId());
+                        Pair<NodeRef, NodeRef> taskAndFile = tasksAndFiles.get(i);
+                        ps.setString(1, taskAndFile.getFirst().getId());
+                        ps.setString(2, taskAndFile.getSecond().getId());
                     }
 
                     @Override
                     public int getBatchSize() {
-                        return fileNodeRefs.size();
+                        return tasksAndFiles.size();
                     }
                 });
     }

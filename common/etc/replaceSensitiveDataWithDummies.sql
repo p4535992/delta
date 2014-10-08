@@ -1939,7 +1939,6 @@ insert into public.alf_node (
 		or (local_name = 'volumeSearchFilters' and uri = 'http://alfresco.webmedia.ee/model/volume/search/1.0')
 		or (local_name = 'independentCompoundWorkflows' and uri = 'http://alfresco.webmedia.ee/model/workflow/common/1.0')
 		or (local_name = 'linkedReviewTasks' and uri = 'http://alfresco.webmedia.ee/model/workflow/specific/1.0')
-		or (local_name = 'reportResult' and uri = 'http://alfresco.webmedia.ee/model/report/1.0')
 		or (local_name = 'intParameter' and uri = 'http://alfresco.webmedia.ee/model/parameters/1.0')
 		or (local_name = 'stringParameter' and uri = 'http://alfresco.webmedia.ee/model/parameters/1.0')
 		or (local_name = 'doubleParameter' and uri = 'http://alfresco.webmedia.ee/model/parameters/1.0')

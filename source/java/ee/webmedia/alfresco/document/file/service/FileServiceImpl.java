@@ -201,7 +201,7 @@ public class FileServiceImpl implements FileService {
     }
 
     private boolean isPdfFile(ContentData contentData) {
-        return MimetypeMap.MIMETYPE_PDF.equals(contentData.getMimetype());
+        return contentData != null && MimetypeMap.MIMETYPE_PDF.equals(contentData.getMimetype());
     }
 
     @Override

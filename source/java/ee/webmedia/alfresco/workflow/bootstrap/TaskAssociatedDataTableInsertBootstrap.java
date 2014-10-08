@@ -69,7 +69,11 @@ public class TaskAssociatedDataTableInsertBootstrap extends AbstractNodeUpdater 
                                 (String) nodeService.getProperty(historyRef, WorkflowCommonModel.Props.CHANGE_REASON),
                                 (Date) nodeService.getProperty(historyRef, WorkflowCommonModel.Props.PREVIOUS_DUE_DATE)));
             }
-            workflowDbService.createTaskDueDateHistoryEntries(nodeRef, historyRecords);
+            List<Pair<NodeRef, Pair<String, Date>>> historyRecordsList = new ArrayList<Pair<NodeRef, Pair<String, Date>>>();
+            for (Pair<String, Date> record : historyRecords) {
+                historyRecordsList.add(new Pair(nodeRef, record));
+            }
+            workflowDbService.createTaskDueDateHistoryEntries(historyRecordsList);
             results.add(historyRecords.toString());
         }
         if (WorkflowSpecificModel.Types.DUE_DATE_EXTENSION_TASK.equals(nodeService.getType(nodeRef))) {
@@ -78,7 +82,9 @@ public class TaskAssociatedDataTableInsertBootstrap extends AbstractNodeUpdater 
                 results.add("orphan task, due date assoc data not present");
             } else {
                 NodeRef initiatingTaskRef = assocs.get(0).getSourceRef();
-                workflowDbService.createTaskDueDateExtensionAssocEntry(initiatingTaskRef, nodeRef);
+                List<Pair<NodeRef, NodeRef>> taskPair = new ArrayList<Pair<NodeRef, NodeRef>>();
+                taskPair.add(new Pair(initiatingTaskRef, nodeRef));
+                workflowDbService.createTaskDueDateExtensionAssocEntries(taskPair);
                 StringBuilder sb = new StringBuilder("Added assoc for nodeRef=" + initiatingTaskRef);
                 if (assocs.size() > 1) {
                     int assocCounter = 0;

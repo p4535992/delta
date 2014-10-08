@@ -65,6 +65,33 @@
       <property name="dataSource" ref="dataSource" />
    </bean>   
    
+   <bean id="createDeltaPermissionTablesBootstrap" class="ee.webmedia.alfresco.privilege.bootstrap.CreateDeltaPermissionsTablesBootstrap" parent="executeStatementsBootstrap" >
+      <property name="moduleId" value="common" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="resourceName" value="ee/webmedia/alfresco/privilege/bootstrap/delta_node_permission_tables.sql" />
+      <property name="jdbcTemplate">
+         <bean class="org.springframework.jdbc.core.simple.SimpleJdbcTemplate">
+            <constructor-arg ref="dataSource" />
+         </bean>
+      </property> 
+   </bean>   
+  
+   <bean id="insertDeltaPermissionsBootstrap" class="ee.webmedia.alfresco.privilege.bootstrap.InsertDeltaPermissionsBootstrap" parent="executeStatementsBootstrap" >
+      <property name="moduleId" value="common" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="resourceName" value="ee/webmedia/alfresco/privilege/bootstrap/delta_node_permission_insert.sql" />
+      <property name="jdbcTemplate">
+         <bean class="org.springframework.jdbc.core.simple.SimpleJdbcTemplate">
+            <constructor-arg ref="dataSource" />
+         </bean>
+      </property> 
+      <property name="dependsOn">
+         <list>
+            <ref bean="createDeltaPermissionTablesBootstrap" />
+         </list>
+      </property> 
+   </bean>   
+   
    <bean id="fixAclInheritanceUpdater2" class="ee.webmedia.alfresco.privilege.bootstrap.FixAclInheritanceUpdater" parent="module.baseComponent">
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
