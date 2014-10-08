@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 package ee.webmedia.alfresco.common.propertysheet.component;
 
 import ee.webmedia.alfresco.common.propertysheet.renderkit.PropertySheetGridRenderer;
@@ -15,3 +16,20 @@ public class SimUIPropertySheet extends WMUIPropertySheet {
     }
 
 }
+=======
+package ee.webmedia.alfresco.common.propertysheet.component;
+
+import ee.webmedia.alfresco.common.propertysheet.renderkit.PropertySheetGridRenderer;
+
+/**
+ * Subclass to overwrite renderer type.
+ */
+public class SimUIPropertySheet extends WMUIPropertySheet {
+
+    @Override
+    public String getRendererType() {
+        return PropertySheetGridRenderer.class.getCanonicalName();
+    }
+
+}
+>>>>>>> develop-5.1

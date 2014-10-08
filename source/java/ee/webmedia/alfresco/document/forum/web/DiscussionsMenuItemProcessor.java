@@ -10,8 +10,11 @@ import ee.webmedia.alfresco.menu.service.MenuService;
 
 /**
  * CountHandler for discussions menu item
+<<<<<<< HEAD
  * 
  * @author Kaarel Jõgeva
+=======
+>>>>>>> develop-5.1
  */
 public class DiscussionsMenuItemProcessor extends CountAddingMenuItemProcessor implements MenuItemCountHandler, InitializingBean {
     private MenuService menuService;

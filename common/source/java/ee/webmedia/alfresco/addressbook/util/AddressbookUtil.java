@@ -53,6 +53,10 @@ public class AddressbookUtil {
         String name = getContactFullName(props, type);
 
         list.add(name);
+<<<<<<< HEAD
+=======
+        list.add((String) props.get(AddressbookModel.Props.PERSON_ID));
+>>>>>>> develop-5.1
         list.add((String) props.get(AddressbookModel.Props.EMAIL));
         return list;
     }
@@ -144,6 +148,18 @@ public class AddressbookUtil {
         return results;
     }
 
+<<<<<<< HEAD
+=======
+    public static NodePropertyResolver resolverParentOrgName = new NodePropertyResolver() {
+        private static final long serialVersionUID = 1L;
+
+        @Override
+        public Object get(Node node) {
+            return getNodeService().getProperty(getAddressbookService().getOrgOfPerson(node.getNodeRef()), AddressbookModel.Props.ORGANIZATION_NAME);
+        }
+    };
+
+>>>>>>> develop-5.1
     public static NodePropertyResolver resolverParentOrgRef = new NodePropertyResolver() {
         private static final long serialVersionUID = 1L;
 

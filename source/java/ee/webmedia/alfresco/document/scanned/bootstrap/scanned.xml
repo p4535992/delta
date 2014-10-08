@@ -3,6 +3,7 @@
            xmlns:doccom="http://alfresco.webmedia.ee/model/document/common/1.0"
            xmlns:scan="http://alfresco.webmedia.ee/model/scanned/1.0">
     
+<<<<<<< HEAD
    <scan:scanned view:childName="${scannedFiles.folder.name}">
       <view:acl view:inherit="false">
          <view:ace view:access="ALLOWED">
@@ -12,4 +13,8 @@
          </view:ace>
       </view:acl>
    </scan:scanned>
+=======
+   <scan:scanned view:childName="${scannedFiles.folder.name}" />
+
+>>>>>>> develop-5.1
 </view:view>

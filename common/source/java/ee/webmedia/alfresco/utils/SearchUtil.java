@@ -29,9 +29,12 @@ import org.springframework.util.Assert;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.series.model.SeriesModel;
 
+<<<<<<< HEAD
 /**
  * @author Alar Kvell
  */
+=======
+>>>>>>> develop-5.1
 public class SearchUtil {
 
     public static FastDateFormat luceneDateFormat = FastDateFormat.getInstance("yyyy-MM-dd'T'00:00:00.000");
@@ -96,10 +99,21 @@ public class SearchUtil {
     }
 
     public static String generatePropertyExactQuery(QName propName, String value) {
+<<<<<<< HEAD
         if (StringUtils.isBlank(value)) {
             return null;
         }
         return "@" + Repository.escapeQName(propName) + ":\"" + QueryParser.escape(stripCustom(value)) + "\"";
+=======
+        return generatePropertyExactQuery(propName, value, true);
+    }
+
+    public static String generatePropertyExactQuery(QName propName, String value, boolean stripCustom) {
+        if (StringUtils.isBlank(value)) {
+            return null;
+        }
+        return "@" + Repository.escapeQName(propName) + ":\"" + (stripCustom ? QueryParser.escape(stripCustom(value)) : QueryParser.escape(value)) + "\"";
+>>>>>>> develop-5.1
     }
 
     public static String generatePropertyExactNotQuery(QName documentPropName, String value) {
@@ -289,13 +303,24 @@ public class SearchUtil {
     }
 
     public static String generateMultiStringExactQuery(List<String> values, QName... documentPropNames) {
+<<<<<<< HEAD
+=======
+        return generateMultiStringExactQuery(values, true, documentPropNames);
+    }
+
+    public static String generateMultiStringExactQuery(List<String> values, boolean stripCustom, QName... documentPropNames) {
+>>>>>>> develop-5.1
         if (values == null || values.isEmpty()) {
             return null;
         }
         List<String> queryParts = new ArrayList<String>(documentPropNames.length * values.size());
         for (String value : values) {
             for (QName documentPropName : documentPropNames) {
+<<<<<<< HEAD
                 queryParts.add(generatePropertyExactQuery(documentPropName, value));
+=======
+                queryParts.add(generatePropertyExactQuery(documentPropName, value, stripCustom));
+>>>>>>> develop-5.1
             }
         }
         return joinQueryPartsOr(queryParts, false);

@@ -21,6 +21,10 @@ import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
+<<<<<<< HEAD
+=======
+import ee.webmedia.alfresco.privilege.model.Privilege;
+>>>>>>> develop-5.1
 import ee.webmedia.alfresco.user.model.Authority;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.ActionUtil;
@@ -34,7 +38,11 @@ public class PermissionsAddDialog extends BaseDialogBean {
     private transient DocumentSearchService documentSearchService;
 
     private NodeRef nodeRef;
+<<<<<<< HEAD
     private String permission;
+=======
+    private Privilege permission;
+>>>>>>> develop-5.1
     private String dialogTitleId;
     private List<Authority> authorities;
     private transient ListDataModel authoritiesModel;
@@ -43,7 +51,11 @@ public class PermissionsAddDialog extends BaseDialogBean {
         reset();
 
         nodeRef = new NodeRef(ActionUtil.getParam(event, "nodeRef"));
+<<<<<<< HEAD
         permission = ActionUtil.getParam(event, "permission");
+=======
+        permission = Privilege.getPrivilegeByName(ActionUtil.getParam(event, "permission"));
+>>>>>>> develop-5.1
         if (ActionUtil.hasParam(event, "dialogTitleId")) {
             String param = ActionUtil.getParam(event, "dialogTitleId");
             if (param != null && !param.equals("null")) {
@@ -75,7 +87,11 @@ public class PermissionsAddDialog extends BaseDialogBean {
             @Override
             public Void doWork() throws Exception {
                 for (Authority authority : authorities) {
+<<<<<<< HEAD
                     getPermissionService().setPermission(nodeRef, authority.getAuthority(), permission, true);
+=======
+                    BeanHelper.getPrivilegeService().setPermissions(nodeRef, authority.getAuthority(), permission);
+>>>>>>> develop-5.1
                 }
                 return null;
             }
@@ -132,7 +148,11 @@ public class PermissionsAddDialog extends BaseDialogBean {
 
     /**
      * Returns the properties for current user-roles JSF DataModel
+<<<<<<< HEAD
      * 
+=======
+     *
+>>>>>>> develop-5.1
      * @return JSF DataModel representing the current user-roles
      */
     public DataModel getAuthorities() {

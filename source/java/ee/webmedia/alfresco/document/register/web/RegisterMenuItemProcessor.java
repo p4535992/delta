@@ -10,8 +10,11 @@ import ee.webmedia.alfresco.menu.service.MenuService;
 
 /**
  * TODO: add comment
+<<<<<<< HEAD
  * 
  * @author Romet Aidla
+=======
+>>>>>>> develop-5.1
  */
 public class RegisterMenuItemProcessor extends CountAddingMenuItemProcessor implements MenuItemCountHandler, InitializingBean {
     private MenuService menuService;

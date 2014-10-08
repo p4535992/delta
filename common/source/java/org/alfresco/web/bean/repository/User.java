@@ -202,6 +202,7 @@ public final class User implements SessionUser
    /**
     * @return The Preferences for the User
     */
+<<<<<<< HEAD
    Preferences getPreferences(FacesContext fc)
    {
       if (this.preferences == null)
@@ -221,6 +222,33 @@ public final class User implements SessionUser
       {
          this.preferences = new Preferences(getUserPreferencesRef(
                WebApplicationContextUtils.getRequiredWebApplicationContext(sc)));
+=======
+   Preferences getPreferences(FacesContext fc)
+   {
+      if (this.preferences == null)
+      {
+         this.preferences = new Preferences(getUserPreferencesRef(
+               FacesContextUtils.getRequiredWebApplicationContext(fc)));
+>>>>>>> develop-5.1
+      }
+      return this.preferences;
+   }
+   
+   /**
+<<<<<<< HEAD
+    * Get or create the node used to store user preferences.
+    * Utilises the 'configurable' aspect on the Person linked to this user.
+    */
+   synchronized NodeRef getUserPreferencesRef(WebApplicationContext context)
+=======
+    * @return The Preferences for the User
+    */
+   Preferences getPreferences(ServletContext sc)
+   {
+      if (this.preferences == null)
+      {
+         this.preferences = new Preferences(getUserPreferencesRef(
+               WebApplicationContextUtils.getRequiredWebApplicationContext(sc)));
       }
       return this.preferences;
    }
@@ -230,6 +258,7 @@ public final class User implements SessionUser
     * Utilises the 'configurable' aspect on the Person linked to this user.
     */
    synchronized NodeRef getUserPreferencesRef(WebApplicationContext context)
+>>>>>>> develop-5.1
     {
         final ServiceRegistry registry = (ServiceRegistry) context.getBean("ServiceRegistry");
         final NodeService nodeService = registry.getNodeService();
@@ -246,11 +275,19 @@ public final class User implements SessionUser
                 NodeRef person = getPerson();
                 if (nodeService.hasAspect(person, ApplicationModel.ASPECT_CONFIGURABLE) == false)
                 {
+<<<<<<< HEAD
                     // create the configuration folder for this Person node
                     configurableService.makeConfigurable(person);
                 }
 
                 // target of the assoc is the configurations folder ref
+=======
+                    // create the configuration folder for this Person node
+                    configurableService.makeConfigurable(person);
+                }
+
+                // target of the assoc is the configurations folder ref
+>>>>>>> develop-5.1
                 NodeRef configRef = configurableService.getConfigurationFolder(person);
                 if (configRef == null)
                 {
@@ -267,7 +304,11 @@ public final class User implements SessionUser
                 }
                 else
                 {
+<<<<<<< HEAD
                     // create the preferences Node for this user
+=======
+                    // create the preferences Node for this user
+>>>>>>> develop-5.1
                     ChildAssociationRef childRef = nodeService
                             .createNode(configRef, ContentModel.ASSOC_CONTAINS, QName.createQName(
                                     NamespaceService.APP_MODEL_1_0_URI, "preferences"), ContentModel.TYPE_CMOBJECT);
@@ -296,6 +337,7 @@ public final class User implements SessionUser
       
       return fullName;
    }
+<<<<<<< HEAD
    
    /**
     * Returns the full name of the user plus their userid in the form [id]
@@ -322,4 +364,32 @@ public final class User implements SessionUser
       
       return nameAndId.toString();
    }
+=======
+   
+   /**
+    * Returns the full name of the user plus their userid in the form [id]
+    * 
+    * @param nodeService The node service instance
+    * @param user The user to get the full name for
+    * @return The full name and userid
+    */
+   public static String getFullNameAndUserId(NodeService nodeService, NodeRef user)
+   {
+      String fullName = getFullName(nodeService, user);
+      String userId = (String)nodeService.getProperties(user).get(ContentModel.PROP_USERNAME);
+
+      StringBuilder nameAndId = new StringBuilder();
+      if (fullName != null && fullName.length() > 0 && fullName.equals("null") == false)
+      {
+         nameAndId.append(fullName);
+         nameAndId.append(" ");
+      }
+      
+      nameAndId.append("[");
+      nameAndId.append(userId);
+      nameAndId.append("]");
+      
+      return nameAndId.toString();
+   }
+>>>>>>> develop-5.1
 }

@@ -5,9 +5,12 @@ import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.volume.model.Volume;
 
+<<<<<<< HEAD
 /**
  * @author Alar Kvell
  */
+=======
+>>>>>>> develop-5.1
 public class VolumeEventPlanEvaluator extends BaseActionEvaluator {
     private static final long serialVersionUID = 0L;
 

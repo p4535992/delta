@@ -43,6 +43,11 @@ public class CaseFile {
     private boolean toSurvey;
     private String procedureStatus;
     private boolean equalityOfTreatment;
+<<<<<<< HEAD
+=======
+    private Date workflowDueDate;
+    private String keywordsString;
+>>>>>>> develop-5.1
 
     public void updateProps(ee.webmedia.alfresco.casefile.service.CaseFile cf) {
         if (updateProp(cf, DocumentDynamicModel.Props.OWNER_NAME, ownerName)) {
@@ -78,6 +83,11 @@ public class CaseFile {
         updateProp(cf, DocumentDynamicModel.Props.TO_SURVEY, toSurvey);
         updateProp(cf, DocumentDynamicModel.Props.PROCEDURE_STATUS, procedureStatus);
         updateProp(cf, DocumentDynamicModel.Props.EQUALITY_OF_TREATMENT, equalityOfTreatment);
+<<<<<<< HEAD
+=======
+        updateProp(cf, DocumentDynamicModel.Props.WORKFLOW_DUE_DATE, workflowDueDate);
+        updateProp(cf, QName.createQName(DocumentDynamicModel.URI, "keywordsString"), keywordsString);
+>>>>>>> develop-5.1
     }
 
     private boolean updateProp(ee.webmedia.alfresco.casefile.service.CaseFile cf, QName prop, Serializable value) {
@@ -211,4 +221,15 @@ public class CaseFile {
     public void setEqualityOfTreatment(boolean equalityOfTreatment) {
         this.equalityOfTreatment = equalityOfTreatment;
     }
+<<<<<<< HEAD
+=======
+
+    public void setWorkflowDueDate(Date workflowDueDate) {
+        this.workflowDueDate = workflowDueDate;
+    }
+
+    public void setKeywordsString(String keywordsString) {
+        this.keywordsString = keywordsString;
+    }
+>>>>>>> develop-5.1
 }

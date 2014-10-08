@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -78,3 +79,85 @@
       </ul></li>
 </body>
 </html>
+=======
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<style type="text/css">
+<!--
+.style2 {
+	color: #990099
+}
+
+.style3 {
+	color: #990066
+}
+-->
+</style>
+</head>
+
+<body>
+   <h2>
+      <span class="style2">Erinevad valemid</span>
+   </h2>
+   <li><span class="style2"><strong>Terviktöövoo andmetega seotud valemid</strong>.</span> Kui süsteemne meiliteavitus on terviktöövoo,
+      töövoo või tööülesande kohta, siis saab kasutada järgmisi valemeid:</li>
+   <ul>
+      <li>{compoundWorkflow.ownerId} &ndash; Terviktöövoo vastutaja isikukood</li>
+      <li>{compoundWorkflow.ownerName} &ndash; Terviktöövoo vastutaja ees- ja perenimi</li>
+      <li>{compoundWorkflow.status} &ndash; Terviktöövoo staatus</li>
+      <li>{compoundWorkflow.title} &ndash; Terviktöövoo pealkiri</li>
+      <li>{compoundWorkflow.comment} &ndash; Terviktöövoo kommentaar</li>
+      <li>{compoundWorkflow.url} &ndash; Iseseisva terviktöövoo URL</li>
+      <li>{caseFile.url} -asjatoimiku url</li>
+   </ul>
+   <li><span class="style3"><strong>Töövoo andmetega seotud valemid</strong>.</span> Kui süsteemne meiliteavitus on töövoo või
+      tööülesande kohta, siis saab kasutada järgmisi valemeid:</li>
+   <ul>
+      <li>{workflow.type} &ndash; töövoo tüübi nimetus (allkirjastamiseks, arvamuse andmiseks, kooskõlastamiseks, teadmiseks, täitmiseks)</li>
+      <li>{workflow.description} &ndash; Töövoo kirjeldus</li>
+      <li>{workflow.resolution} &ndash; Resolutsioon</li>
+      <li>{workflow.status} &ndash; Töövoo staatus</li>
+      <li>{workflow.startedDateTime} &ndash; Töövoo algatamise kuupäev</li>
+      <li>{workflow.creatorName} &ndash; Töövoo algataja</li>
+   </ul>
+   <li><span class="style2"><strong>Tööülesandega seotud valemid</strong>. </span>Kui süsteemne meiliteavitus on terviktöövoo, töövoo
+      või tööülesande kohta, siis saab kasutada järgmisi valemeid:
+      <ul>
+         <li>{task.creatorName} &ndash; Tööülesande algataja</li>
+      </ul>
+   </li>
+   <ul>
+      <li>{task.startedDateTime} &ndash; Tööülesande algatuskuupäev</li>
+      <li>{task.ownerId} &ndash; Tööülesande algataja ID</li>
+      <li>{task.ownerName} &ndash; Tööülesande omanik</li>
+      <li>{task.resolution} &ndash; Tööülesande resolutsioon</li>
+      <li>On peatäitja &ndash; {task.activeResponsible} = true, kui tööülesandel on responsible aspekt, mille active = true</li>
+      <li>On kaastäitja &ndash; {task.coResponsible} = true, kui tööülesandel puudub responsible aspekt</li>
+      <li>{task.unactiveResponsible} &ndash; = true, kui tööülesandel on responsible aspekt, mille active = false</li>
+      <li>{task.dueDate} -Tööülesande tähtaeg</li>
+      <li>{task.status} &ndash; Tööüleande staatus</li>
+      <li>{task.outcome} &ndash; Tööülesande tulemus</li>
+      <li>{task.comment} &ndash; Tööüleande kommentaar</li>
+      <li>{task.completedDateTime} &ndash; Tööülesande täitmise aeg</li>
+      <li>{task.proposedDueDate} &ndash; Tööülesande soovitud uus tähtaeg</li>
+   </ul>
+   <li class="style3">Asendamisega seotud andmed</li>
+   <ul>
+      <li>{personSubstituted} &ndash; asendatava töötaja eesnimi ja perenimi</li>
+      <li>{substitutionBeginDate} &ndash; asendatava töötaja asendamise perioodi alguskuupäev</li>
+      <li>{substitutionEndDate} &ndash; asendatava töötaja asendamise perioodi lõppkuupäev</li>
+   </ul>
+   <li><span class="style3">Arhiveerimistegevuste mallides on kasutatavad järgmised ühekordsed asendused: </span>
+      <ul>
+         <li>{activityUserName} &ndash; arhiveerimistegevuse teostanud kasutaja eesnimi ja perenimi</li>
+         <li>{activityUserId} &ndash; arhiveerimistegevuse teostanud kasutaja isikukood</li>
+         <li>{activityDate} &ndash; arhiveerimistegevuse teostamise kuupäev</li>
+         <li>{activityDateTime} &ndash; arhiveerimistegevuse teostamise kuupäev ja kellaaeg</li>
+         <li>{volumesList} &ndash; valitud toimikute andmed eraldi ridadena (asenduse sisu on kirjeldatud dokumendi Arhiveerimistegevused.docx peatükis 11)</li>
+      </ul></li>
+</body>
+</html>
+>>>>>>> develop-5.1

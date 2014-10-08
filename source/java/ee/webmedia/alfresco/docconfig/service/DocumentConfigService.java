@@ -20,11 +20,17 @@ import ee.webmedia.alfresco.docadmin.service.Field;
 import ee.webmedia.alfresco.docadmin.service.FieldGroup;
 import ee.webmedia.alfresco.docconfig.generator.FieldGenerator;
 import ee.webmedia.alfresco.docconfig.generator.FieldGroupGenerator;
+<<<<<<< HEAD
 import ee.webmedia.alfresco.utils.TreeNode;
 
 /**
  * @author Alar Kvell
  */
+=======
+import ee.webmedia.alfresco.docconfig.service.PropDefCacheKey;
+import ee.webmedia.alfresco.utils.TreeNode;
+
+>>>>>>> develop-5.1
 public interface DocumentConfigService {
 
     String BEAN_NAME = "DocumentConfigService";
@@ -120,4 +126,13 @@ public interface DocumentConfigService {
 
     ItemConfigVO generateFieldGroupReadonlyItem(FieldGroup fieldGroup);
 
+<<<<<<< HEAD
+=======
+    void removeFrompPopertyDefinitionForSearchCache(String fieldId);
+
+    void removeFromChildAssocTypeQNameTreeCache(Pair<String, Integer> typeAndVersion);
+
+    void removeFromPropertyDefinitionCache(PropDefCacheKey key);
+
+>>>>>>> develop-5.1
 }

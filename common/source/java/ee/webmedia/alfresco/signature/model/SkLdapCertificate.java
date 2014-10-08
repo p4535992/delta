@@ -4,9 +4,12 @@ import java.io.Serializable;
 
 import org.springframework.util.Assert;
 
+<<<<<<< HEAD
 /**
  * @author Alar Kvell
  */
+=======
+>>>>>>> develop-5.1
 public class SkLdapCertificate implements Serializable {
     private static final long serialVersionUID = 1L;
 

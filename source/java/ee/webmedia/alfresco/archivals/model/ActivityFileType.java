@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 package ee.webmedia.alfresco.archivals.model;
 
 /**
@@ -9,3 +10,13 @@ public enum ActivityFileType {
     UAM_XML
 
 }
+=======
+package ee.webmedia.alfresco.archivals.model;
+
+public enum ActivityFileType {
+
+    GENERATED_DOCX,
+    UAM_XML
+
+}
+>>>>>>> develop-5.1

@@ -22,9 +22,12 @@ import ee.webmedia.alfresco.common.bootstrap.AbstractNodeUpdater;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 
+<<<<<<< HEAD
 /**
  * @author Priit Pikk
  */
+=======
+>>>>>>> develop-5.1
 public class CaseFileStatusFieldFixBootstrap extends AbstractNodeUpdater {
 
     @Override

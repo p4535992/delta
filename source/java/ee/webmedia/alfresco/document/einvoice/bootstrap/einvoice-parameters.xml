@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <?xml version="1.0" encoding="UTF-8"?>
 <view:view 
    xmlns:view="http://www.alfresco.org/view/repository/1.0" 
@@ -89,3 +90,96 @@
    </param:stringParameter>
    
 </view:view>
+=======
+<?xml version="1.0" encoding="UTF-8"?>
+<view:view 
+   xmlns:view="http://www.alfresco.org/view/repository/1.0" 
+   xmlns:param="http://alfresco.webmedia.ee/model/parameters/1.0" 
+>
+
+    <param:stringParameter view:childName="param:dimensionCodeInvoiceFundsCenters">
+      <view:properties>
+         <param:value></param:value>
+      </view:properties>
+   </param:stringParameter>
+   
+    <param:stringParameter view:childName="param:dimensionCodeInvoiceCostCenters">
+      <view:properties>
+         <param:value></param:value>
+      </view:properties>
+   </param:stringParameter>
+   
+    <param:stringParameter view:childName="param:dimensionCodeInvoiceFunds">
+      <view:properties>
+         <param:value></param:value>
+      </view:properties>
+   </param:stringParameter>
+   
+    <param:stringParameter view:childName="param:dimensionCodeInvoiceCommitmentItem">
+      <view:properties>
+         <param:value></param:value>
+      </view:properties>
+   </param:stringParameter>
+   
+    <param:stringParameter view:childName="param:dimensionCodeInvoiceInternalOrders">
+      <view:properties>
+         <param:value></param:value>
+      </view:properties>
+   </param:stringParameter>
+   
+    <param:stringParameter view:childName="param:dimensionCodeInvoiceAssetInventoryNumbers">
+      <view:properties>
+         <param:value></param:value>
+      </view:properties>
+   </param:stringParameter>
+   
+    <param:stringParameter view:childName="param:dimensionCodeInvoicePostingKey">
+      <view:properties>
+         <param:value></param:value>
+      </view:properties>
+   </param:stringParameter>
+   
+    <param:stringParameter view:childName="param:dimensionCodeInvoiceTradingPartnerCodes">
+      <view:properties>
+         <param:value></param:value>
+      </view:properties>
+   </param:stringParameter>
+   
+    <param:stringParameter view:childName="param:dimensionCodeInvoiceFunctionalAreaCode">
+      <view:properties>
+         <param:value></param:value>
+      </view:properties>
+   </param:stringParameter>
+   
+    <param:stringParameter view:childName="param:dimensionCodeInvoiceCashFlowCodes">
+      <view:properties>
+         <param:value></param:value>
+      </view:properties>
+   </param:stringParameter>
+   
+    <param:stringParameter view:childName="param:dimensionCodeInvoiceSourceCodes">
+      <view:properties>
+         <param:value></param:value>
+      </view:properties>
+   </param:stringParameter>
+   
+    <param:stringParameter view:childName="param:dimensionCodeInvoicePaymentMethodCodes">
+      <view:properties>
+         <param:value></param:value>
+      </view:properties>
+   </param:stringParameter>
+   
+    <param:stringParameter view:childName="param:dimensionCodeInvoiceHouseBankCodes">
+      <view:properties>
+         <param:value></param:value>
+      </view:properties>
+   </param:stringParameter>
+   
+   <param:stringParameter view:childName="param:sapContactUpdateTime">
+      <view:properties>
+         <param:value>17:00</param:value>
+      </view:properties>
+   </param:stringParameter>
+   
+</view:view>
+>>>>>>> develop-5.1

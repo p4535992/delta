@@ -132,7 +132,11 @@ public class UserContactMappingServiceImpl implements UserContactMappingService 
         }
     }
 
+<<<<<<< HEAD
     // TODO Alar: could eliminate this method, because it is not used
+=======
+    // TODO could eliminate this method, because it is not used
+>>>>>>> develop-5.1
     private List<Serializable> getMappedValues(List<UserContactMappingCode> mappingCodes, NodeRef userOrContactRef) {
         if (userOrContactRef == null || !nodeService.exists(userOrContactRef)) {
             return null;
@@ -166,6 +170,11 @@ public class UserContactMappingServiceImpl implements UserContactMappingService 
         }
         boolean isPerson = ContentModel.TYPE_PERSON.equals(type);
         boolean isOrganization = AddressbookModel.Types.ORGANIZATION.equals(type);
+<<<<<<< HEAD
+=======
+        boolean isOrgPerson = AddressbookModel.Types.ORGPERSON.equals(type);
+        boolean isPrivPerson = AddressbookModel.Types.PRIV_PERSON.equals(type);
+>>>>>>> develop-5.1
         switch (mappingCode) {
         case NAME:
             if (isPerson) {
@@ -182,6 +191,11 @@ public class UserContactMappingServiceImpl implements UserContactMappingService 
                 return getProp(props, ContentModel.PROP_USERNAME);
             } else if (isOrganization) {
                 return getProp(props, AddressbookModel.Props.ORGANIZATION_CODE);
+<<<<<<< HEAD
+=======
+            } else if (isOrgPerson || isPrivPerson) {
+                return getProp(props, AddressbookModel.Props.PERSON_ID);
+>>>>>>> develop-5.1
             } else {
                 return null;
             }
@@ -209,7 +223,10 @@ public class UserContactMappingServiceImpl implements UserContactMappingService 
                         ContentModel.PROP_POSTAL_CODE,
                         ContentModel.PROP_COUNTY);
             }
+<<<<<<< HEAD
             boolean isPrivPerson = AddressbookModel.Types.PRIV_PERSON.equals(type);
+=======
+>>>>>>> develop-5.1
             if (isOrganization || isPrivPerson) {
                 return getPropsJoinedWithComma(props,
                         AddressbookModel.Props.ADDRESS1,

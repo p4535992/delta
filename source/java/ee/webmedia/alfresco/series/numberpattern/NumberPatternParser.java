@@ -9,6 +9,7 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.lang.StringUtils;
 
+<<<<<<< HEAD
 /**
  * @author Keit Tehvan
  */
@@ -17,6 +18,10 @@ public class NumberPatternParser {
     /**
      * @author Kaarel Jõgeva
      */
+=======
+public class NumberPatternParser {
+
+>>>>>>> develop-5.1
     public enum RegisterNumberPatternParams {
         S, T, TA, TN(true), DA, DN(true);
 

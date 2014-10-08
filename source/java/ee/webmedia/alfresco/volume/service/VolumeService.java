@@ -4,6 +4,10 @@ import java.util.List;
 
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
+<<<<<<< HEAD
+=======
+import org.alfresco.util.Pair;
+>>>>>>> develop-5.1
 import org.alfresco.web.bean.repository.Node;
 
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
@@ -13,8 +17,11 @@ import ee.webmedia.alfresco.volume.model.Volume;
 
 /**
  * Service class for volumes
+<<<<<<< HEAD
  * 
  * @author Ats Uiboupin
+=======
+>>>>>>> develop-5.1
  */
 public interface VolumeService {
     String BEAN_NAME = "VolumeService";
@@ -64,8 +71,14 @@ public interface VolumeService {
      * Close given volume and all cases under given volume.
      * 
      * @param volume
+<<<<<<< HEAD
      */
     void closeVolume(NodeRef volumeRef);
+=======
+     * @return
+     */
+    Pair<String, Object[]> closeVolume(NodeRef volumeRef);
+>>>>>>> develop-5.1
 
     boolean isClosed(Node volumeNode);
 
@@ -84,4 +97,10 @@ public interface VolumeService {
     List<DeletedDocument> getDeletedDocuments(NodeRef volumeNodeRef);
 
     DeletedDocument getDeletedDocument(NodeRef deletedDocumentNodeRef);
+<<<<<<< HEAD
+=======
+
+    NodeRef getArchivedVolumeByOriginalNodeRef(NodeRef archivedSeriesRef, NodeRef volumeNodeRef);
+
+>>>>>>> develop-5.1
 }

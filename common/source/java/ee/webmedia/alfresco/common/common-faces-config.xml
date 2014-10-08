@@ -115,8 +115,13 @@
          <value>#{NamespaceService}</value>
       </managed-property>
       <managed-property>
+<<<<<<< HEAD
          <property-name>permissionService</property-name>
          <value>#{PermissionService}</value>
+=======
+         <property-name>privilegeService</property-name>
+         <value>#{PrivilegenService}</value>
+>>>>>>> develop-5.1
       </managed-property>
    </managed-bean>
    

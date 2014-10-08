@@ -48,4 +48,40 @@
       <property name="userService" ref="UserService" />
    </bean>
 
+<<<<<<< HEAD
+=======
+   <bean id="caseFileLatestVersionUpdater" class="ee.webmedia.alfresco.sharepoint.CaseFileLatestVersionUpdater" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="enabled" value="false" /><!-- Executed from node-browser -->
+      <property name="dependsOn">
+         <list>
+            <ref bean="archivalsStoresBootstrap" />
+         </list>
+      </property>
+   </bean>
+
+   <bean id="caseFileKeywordsStringUpdater" class="ee.webmedia.alfresco.sharepoint.CaseFileKeywordsStringUpdater" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="enabled" value="false" /><!-- Executed from node-browser -->
+      <property name="dependsOn">
+         <list>
+            <ref bean="archivalsStoresBootstrap" />
+         </list>
+      </property>
+   </bean>
+
+   <bean id="documentContentPropertyHtmlUpdater" class="ee.webmedia.alfresco.sharepoint.DocumentContentPropertyHtmlUpdater" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="enabled" value="false" /><!-- Executed from node-browser -->
+      <property name="dependsOn">
+         <list>
+            <ref bean="archivalsStoresBootstrap" />
+         </list>
+      </property>
+   </bean>
+
+>>>>>>> develop-5.1
 </beans>

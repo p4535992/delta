@@ -39,7 +39,18 @@
          <f:facet name="header">
             <a:sortLink id="col4-header" label="#{msg.document_send_status}" value="sendStatus" styleClass="header" />
          </f:facet>
+<<<<<<< HEAD
          <h:outputText id="col4-txt" value="#{r.sendStatus}" />
+=======
+         <h:outputText id="col4-txt" value="#{r.sendStatusWithReceivedDateTime}" />
+      </a:column>
+      
+      <a:column id="col4-1">
+         <f:facet name="header">
+            <a:sortLink id="col4-1-header" label="#{msg.document_send_opened}" value="openedDateTime" styleClass="header" />
+         </f:facet>
+         <h:outputText id="col4-1-txt" value="#{r.openedDateTime}" />
+>>>>>>> develop-5.1
       </a:column>
 
       <a:column id="col5">
@@ -48,7 +59,11 @@
          </f:facet>
          <h:outputText id="col5-txt" value="#{r.resolution}" escape="false" />
       </a:column>
+<<<<<<< HEAD
       
+=======
+
+>>>>>>> develop-5.1
    </a:richList>
 
 </a:panel>

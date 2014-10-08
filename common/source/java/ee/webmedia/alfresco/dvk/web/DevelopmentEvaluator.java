@@ -10,8 +10,11 @@ import ee.webmedia.alfresco.common.service.ApplicationService;
 
 /**
  * Evaluator that returns true if project.test = true (meaning development or WM internal testing)
+<<<<<<< HEAD
  * 
  * @author Ats Uiboupin
+=======
+>>>>>>> develop-5.1
  */
 public class DevelopmentEvaluator extends BaseActionEvaluator {
     private static final long serialVersionUID = 1L;

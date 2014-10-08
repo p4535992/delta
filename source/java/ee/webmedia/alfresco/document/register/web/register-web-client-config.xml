@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <alfresco-config>
    <config>
        <dialogs>
@@ -6,4 +7,14 @@
             icon="/images/icons/versioned_properties_large.gif" title-id="document_for_registering" />
       </dialogs>
    </config>
+=======
+<alfresco-config>
+   <config>
+       <dialogs>
+          <dialog name="forRegisteringListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/document/web/document-list-dialog.jsp"
+                  managed-bean="ForRegisteringListDialog" show-ok-button="false"
+            icon="/images/icons/versioned_properties_large.gif" title-id="document_for_registering" />
+      </dialogs>
+   </config>
+>>>>>>> develop-5.1
 </alfresco-config>

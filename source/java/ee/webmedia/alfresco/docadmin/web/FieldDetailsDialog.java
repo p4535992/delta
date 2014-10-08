@@ -8,6 +8,11 @@ import static ee.webmedia.alfresco.docadmin.model.DocumentAdminModel.Props.DEFAU
 import static ee.webmedia.alfresco.docadmin.model.DocumentAdminModel.Props.DEFAULT_SELECTED;
 import static ee.webmedia.alfresco.docadmin.model.DocumentAdminModel.Props.DEFAULT_USER_LOGGED_IN;
 import static ee.webmedia.alfresco.docadmin.model.DocumentAdminModel.Props.DEFAULT_VALUE;
+<<<<<<< HEAD
+=======
+import static ee.webmedia.alfresco.docadmin.model.DocumentAdminModel.Props.RELATED_INCOMING_DEC_ELEMENT;
+import static ee.webmedia.alfresco.docadmin.model.DocumentAdminModel.Props.RELATED_OUTGOING_DEC_ELEMENT;
+>>>>>>> develop-5.1
 import static ee.webmedia.alfresco.docadmin.web.DocAdminUtil.commitToMetadataContainer;
 import static ee.webmedia.alfresco.docadmin.web.DocAdminUtil.getDuplicateFieldIds;
 import static ee.webmedia.alfresco.docadmin.web.DocAdminUtil.isSavedInPreviousDocTypeVersionOrFieldDefinitions;
@@ -18,6 +23,10 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+<<<<<<< HEAD
+=======
+import java.util.StringTokenizer;
+>>>>>>> develop-5.1
 
 import javax.faces.component.UIComponent;
 import javax.faces.component.UIInput;
@@ -35,6 +44,10 @@ import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.ui.repo.component.property.PropertySheetItem;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.apache.commons.collections.Closure;
+<<<<<<< HEAD
+=======
+import org.apache.commons.collections4.CollectionUtils;
+>>>>>>> develop-5.1
 import org.apache.commons.lang.StringUtils;
 import org.springframework.util.Assert;
 
@@ -43,6 +56,10 @@ import ee.webmedia.alfresco.classificator.constant.FieldType;
 import ee.webmedia.alfresco.classificator.model.Classificator;
 import ee.webmedia.alfresco.classificator.model.ClassificatorValue;
 import ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter_ET_EN;
+<<<<<<< HEAD
+=======
+import ee.webmedia.alfresco.common.propertysheet.multivalueeditor.MultiValueEditor;
+>>>>>>> develop-5.1
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docadmin.service.DocumentTypeVersion;
 import ee.webmedia.alfresco.docadmin.service.DynamicType;
@@ -50,6 +67,11 @@ import ee.webmedia.alfresco.docadmin.service.Field;
 import ee.webmedia.alfresco.docadmin.service.FieldDefinition;
 import ee.webmedia.alfresco.docadmin.service.FieldGroup;
 import ee.webmedia.alfresco.docadmin.service.MetadataContainer;
+<<<<<<< HEAD
+=======
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.dvk.service.DecContainerHandler;
+>>>>>>> develop-5.1
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
@@ -57,8 +79,11 @@ import ee.webmedia.alfresco.utils.TextUtil;
 
 /**
  * Details dialog for creating/editing objects of type field or fieldDefinition
+<<<<<<< HEAD
  * 
  * @author Ats Uiboupin
+=======
+>>>>>>> develop-5.1
  */
 public class FieldDetailsDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;
@@ -66,7 +91,18 @@ public class FieldDetailsDialog extends BaseDialogBean {
 
     /** All properties of field type that are conditionally shown based on selected {@link FieldType} */
     private static final Set<QName> ALL_FIELD_TYPE_CUSTOM_PROPS = Collections.<QName> unmodifiableSet(new HashSet<QName>(
+<<<<<<< HEAD
             Arrays.asList(DEFAULT_VALUE, CLASSIFICATOR, CLASSIFICATOR_DEFAULT_VALUE, DEFAULT_DATE_SYSDATE, DEFAULT_USER_LOGGED_IN, DEFAULT_SELECTED)));
+=======
+            Arrays.asList(DEFAULT_VALUE, CLASSIFICATOR, CLASSIFICATOR_DEFAULT_VALUE, DEFAULT_DATE_SYSDATE, DEFAULT_USER_LOGGED_IN, DEFAULT_SELECTED, RELATED_INCOMING_DEC_ELEMENT,
+                    RELATED_OUTGOING_DEC_ELEMENT)));
+    private static final Set<String> DVK_INFO_NOT_RENDERED_FIELDS = Collections.unmodifiableSet(new HashSet<String>(
+            Arrays.asList(DocumentCommonModel.Props.ACCESS_RESTRICTION.getLocalName(), DocumentCommonModel.Props.ACCESS_RESTRICTION_REASON.getLocalName(),
+                    DocumentCommonModel.Props.ACCESS_RESTRICTION_BEGIN_DATE.getLocalName(), DocumentCommonModel.Props.ACCESS_RESTRICTION_END_DATE.getLocalName(),
+                    DocumentCommonModel.Props.ACCESS_RESTRICTION_END_DESC.getLocalName())));
+    private static final Set<FieldType> DVK_INFO_NOT_RENDERED_FIELDTYPES = Collections.unmodifiableSet(new HashSet<FieldType>(
+            Arrays.asList(FieldType.INFORMATION_TEXT, FieldType.STRUCT_UNIT, FieldType.USER, FieldType.USERS, FieldType.DOUBLE)));
+>>>>>>> develop-5.1
 
     private transient UIPropertySheet propertySheet;
 
@@ -85,6 +121,10 @@ public class FieldDetailsDialog extends BaseDialogBean {
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
         if (validate()) {
             resetHidenProps();
+<<<<<<< HEAD
+=======
+            removeDecElementsWhitespaceAndUnusedTextFields();
+>>>>>>> develop-5.1
             if (isFieldDefinition()) {
                 field = getDocumentAdminService().saveOrUpdateField(field);
                 MessageUtil.addInfoMessage(context, "save_success");
@@ -159,9 +199,105 @@ public class FieldDetailsDialog extends BaseDialogBean {
                 }
             }
         }
+<<<<<<< HEAD
         return valid;
     }
 
+=======
+
+        valid = validateDecMappings(valid, field.getRelatedIncomingDecElement(), field.getRelatedOutgoingDecElement());
+
+        return valid;
+    }
+
+    private void removeDecElementsWhitespaceAndUnusedTextFields() {
+        List<String> incomingDecElements = field.getRelatedIncomingDecElement();
+        List<String> strippedIncomingDecElements = strip(incomingDecElements);
+        if (!CollectionUtils.isEqualCollection(incomingDecElements, strippedIncomingDecElements)) {
+            field.setRelatedIncomingDecElement(strippedIncomingDecElements);
+        }
+        List<String> relatedOutgoingDecElements = field.getRelatedOutgoingDecElement();
+        List<String> strippedOutgoingDecElements = strip(relatedOutgoingDecElements);
+        if (!CollectionUtils.isEqualCollection(relatedOutgoingDecElements, strippedOutgoingDecElements)) {
+            field.setRelatedOutgoingDecElement(strippedOutgoingDecElements);
+        }
+    }
+
+    private List<String> strip(List<String> relatedDecElements) {
+        List<String> strippedDecElements = new ArrayList<String>();
+        for (String decElement : relatedDecElements) {
+            String stripped = StringUtils.deleteWhitespace(decElement);
+            if (StringUtils.isEmpty(stripped)) {
+                continue;
+            }
+            strippedDecElements.add(stripped);
+        }
+        return strippedDecElements;
+    }
+
+    
+    private boolean validateDecMappings(boolean valid, List<String> incomingDecElements, List<String> outgoingDecElements) {
+        List<String> incomingDecMappings = new ArrayList<String>();
+        if (incomingDecElements != null) {
+            for (String element : incomingDecElements) {
+                // One incoming element can contain multiple mappings (seperated by a comma) that will be concatenated when filling document properties from DVK capsule
+                if (element.contains(",")) {
+                    // Also check if current field is String value compatible
+                    if (valid && !DecContainerHandler.isOfStringType(field.getFieldTypeEnum())) {
+                        MessageUtil.addErrorMessage("field_details_error_dvk_only_one_element_allowed");
+                        valid = false;
+                    }
+
+                    StringTokenizer tokenizer = new StringTokenizer(element, ",");
+                    while (tokenizer.hasMoreTokens()) {
+                        incomingDecMappings.add(StringUtils.trim(tokenizer.nextToken()));
+                    }
+                } else {
+                    incomingDecMappings.add(element);
+                }
+            }
+        }
+
+        if (!incomingDecMappings.isEmpty()) {
+            valid = validateMappings(incomingDecMappings, MessageUtil.getMessage("docadmin_documentAdminModel.property.docadmin_relatedIncomingDecElement.title"), valid, false);
+        }
+        if ((outgoingDecElements != null && !outgoingDecElements.isEmpty())) {
+            valid = validateMappings(outgoingDecElements, MessageUtil.getMessage("docadmin_documentAdminModel.property.docadmin_relatedOutgoingDecElement.title"), valid, true);
+        }
+
+        return valid;
+    }
+
+    private boolean validateMappings(Iterable<String> decMappings, String fieldName, boolean valid, boolean isOutgoing) {
+        for (String decElementPath : decMappings) {
+            if (StringUtils.isBlank(decElementPath)) {
+                continue;
+            }
+            decElementPath = StringUtils.deleteWhitespace(decElementPath);
+            if (!DecContainerHandler.hasUserKey(decElementPath) || (isOutgoing && DecContainerHandler.isDisallowedOutgoingUserElement(decElementPath))) {
+                MessageUtil.addErrorMessage("field_details_error_dvk_missing_element", fieldName, decElementPath);
+                valid = false;
+                continue;
+            }
+
+            if (!DecContainerHandler.isValidFieldType(decElementPath, field.getFieldTypeEnum())) {
+                MessageUtil.addErrorMessage("field_details_error_dvk_element_wrong_type", fieldName, decElementPath);
+                valid = false;
+            }
+        }
+        return valid;
+    }
+
+    public void deleteField(ActionEvent event) {
+        getDocumentAdminService().deleteFieldDefinition(field);
+    }
+
+    @Override
+    public Object getActionsContext() {
+        return field;
+    }
+
+>>>>>>> develop-5.1
     private String getDynTypeName() {
         final DocumentTypeVersion dynTypeVer;
         if (fieldParent instanceof FieldGroup) {
@@ -222,6 +358,25 @@ public class FieldDetailsDialog extends BaseDialogBean {
         if (propertySheet != null) {
             propertySheet.setMode(getPropertySheetMode());
         }
+<<<<<<< HEAD
+=======
+        List<String> incomingDvkElement = field.getRelatedIncomingDecElement();
+        if (incomingDvkElement == null) {
+            incomingDvkElement = new ArrayList<String>();
+            field.setRelatedIncomingDecElement(incomingDvkElement);
+        }
+        if (incomingDvkElement.isEmpty()) {
+            incomingDvkElement.add("");
+        }
+        List<String> outgoingDvkElement = field.getRelatedOutgoingDecElement();
+        if (outgoingDvkElement == null) {
+            outgoingDvkElement = new ArrayList<String>();
+            field.setRelatedOutgoingDecElement(outgoingDvkElement);
+        }
+        if (outgoingDvkElement.isEmpty()) {
+            outgoingDvkElement.add("");
+        }
+>>>>>>> develop-5.1
     }
 
     public String getPropertySheetMode() {
@@ -279,6 +434,17 @@ public class FieldDetailsDialog extends BaseDialogBean {
         return isFieldDefinition() && BeanHelper.getVolumeService().isCaseVolumeEnabled();
     }
 
+<<<<<<< HEAD
+=======
+    public boolean isIncomingDvkInfoRendered() {
+        return !DVK_INFO_NOT_RENDERED_FIELDS.contains(field.getFieldId()) && !DVK_INFO_NOT_RENDERED_FIELDTYPES.contains(field.getFieldTypeEnum());
+    }
+
+    public boolean isOutgoingDvkInfoRendered() {
+        return !DVK_INFO_NOT_RENDERED_FIELDS.contains(field.getFieldId()) && !FieldType.INFORMATION_TEXT.name().equals(field.getFieldType());
+    }
+
+>>>>>>> develop-5.1
     public DynamicTypeDetailsDialog getDynamicTypeDetailsDialog() {
         BaseObject ancestor = field.getParent();
         DocumentTypeVersion dynTypeVer;
@@ -324,6 +490,13 @@ public class FieldDetailsDialog extends BaseDialogBean {
     public void fieldTypeChanged(ValueChangeEvent e) {
         FieldType newFieldType = DefaultTypeConverter.INSTANCE.convert(FieldType.class, e.getNewValue());
         field.setFieldTypeEnum(newFieldType); // property is needs to be manually updated to be used in #updateDefaultValueVisibility(boolean)
+<<<<<<< HEAD
+=======
+        // Reset related DEC container incoming fields when new value doesn't allow it
+        if (!isIncomingDvkInfoRendered()) {
+            field.getRelatedIncomingDecElement().clear();
+        }
+>>>>>>> develop-5.1
         // might need to show/hide separators or update values of CLASSIFICATOR_DEFAULT_VALUE
         ComponentUtil.executeLater(PhaseId.INVOKE_APPLICATION, getPropertySheet(), new Closure() {
             @Override
@@ -357,7 +530,11 @@ public class FieldDetailsDialog extends BaseDialogBean {
 
     /**
      * used by property sheet
+<<<<<<< HEAD
      * 
+=======
+     *
+>>>>>>> develop-5.1
      * @param context
      * @param selectComponent
      * @return classificator values to be shown
@@ -421,6 +598,10 @@ public class FieldDetailsDialog extends BaseDialogBean {
                 if (uiProperty instanceof PropertySheetItem) {
                     PropertySheetItem psItem = (PropertySheetItem) uiProperty;
                     boolean isClassificatorDefaultValueUiProp = uiProperty.getId().endsWith("_classificatorDefaultValue");
+<<<<<<< HEAD
+=======
+                    boolean relatedIncomingDecElement = psItem.getName().endsWith("relatedIncomingDecElement");
+>>>>>>> develop-5.1
                     if (isClassificatorDefaultValueUiProp
                             || uiProperty.getId().endsWith("_classificator")
                             || uiProperty.getId().endsWith("_defaultValue")
@@ -434,6 +615,17 @@ public class FieldDetailsDialog extends BaseDialogBean {
                             ComponentUtil.setSelectItems(FacesContext.getCurrentInstance(), clDefaultValues, clValueItems);
                         }
                     }
+<<<<<<< HEAD
+=======
+
+                    if (relatedIncomingDecElement && !isIncomingDvkInfoRendered()) {
+                        List<UIComponent> relatedIncomingChildren = psItem.getChildren();
+                        if (relatedIncomingChildren.size() > 1) { // If we have multivalue editor as second element
+                            MultiValueEditor multiValue = (MultiValueEditor) relatedIncomingChildren.get(1);
+                            multiValue.clearChildren();
+                        }
+                    }
+>>>>>>> develop-5.1
                 }
             }
         }

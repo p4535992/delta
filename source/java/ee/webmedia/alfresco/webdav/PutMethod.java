@@ -35,6 +35,10 @@ import java.util.Enumeration;
 import javax.servlet.http.HttpServletResponse;
 
 import org.alfresco.repo.content.encoding.ContentCharsetFinder;
+<<<<<<< HEAD
+=======
+import org.alfresco.repo.security.authentication.AuthenticationUtil;
+>>>>>>> develop-5.1
 import org.alfresco.repo.webdav.WebDAV;
 import org.alfresco.repo.webdav.WebDAVMethod;
 import org.alfresco.repo.webdav.WebDAVServerException;
@@ -47,6 +51,11 @@ import org.alfresco.service.cmr.repository.ContentWriter;
 import org.alfresco.service.cmr.repository.NodeRef;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
+<<<<<<< HEAD
+=======
+import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.utils.UnableToPerformException;
+>>>>>>> develop-5.1
 
 /**
  * Implements the WebDAV PUT method
@@ -112,7 +121,11 @@ public class PutMethod extends WebDAVMethod {
         // Require the file to be locked for current user
         LockStatus lockStatus = getDocLockService().getLockStatus(fileRef);
         if (!LockStatus.LOCK_OWNER.equals(lockStatus)) {
+<<<<<<< HEAD
             log.info("Not saving " + fileRef + ". LockStatus is " + lockStatus.name() + ", lock owner " + getDocLockService().getLockOwnerIfLocked(fileRef));
+=======
+            log.info("Not saving " + fileRef + ". LockStatus is " + lockStatus.name() + ", lock owner " + getDocLockService().getLockOwnerIfLockedByOther(fileRef));
+>>>>>>> develop-5.1
             throw new WebDAVServerException(WebDAV.WEBDAV_SC_LOCKED);
         }
 
@@ -191,8 +204,28 @@ public class PutMethod extends WebDAVMethod {
         NodeRef document = getNodeService().getPrimaryParent(fileRef).getParentRef();
         ((WebDAVCustomHelper) getDAVHelper()).getDocumentService().updateSearchableFiles(document);
 
+<<<<<<< HEAD
         // Update Document meta data and generated files
         BeanHelper.getDocumentDynamicService().updateDocumentAndGeneratedFiles(fileRef, document, true);
+=======
+        // Throw exception when user tries to save mandatory fields as blank
+        try {
+            // Update Document meta data and generated files
+            BeanHelper.getDocumentDynamicService().updateDocumentAndGeneratedFiles(fileRef, document, true);
+        } catch (UnableToPerformException e) {
+            if ("notification_document_saving_failed_due_to_blank_mandatory_fields".equals(e.getMessageKey())) {
+                String userId = AuthenticationUtil.getRunAsUser();
+                Object[] obj = e.getMessageValuesForHolders();
+                Object regNr = obj[0];
+                Object docName = obj[1];
+                Object fileName = obj[2];
+                Object emptyFileds = obj[3];
+                BeanHelper.getNotificationService().addUserSpecificNotification(userId,
+                        MessageUtil.getMessage("notification_document_saving_failed_due_to_blank_mandatory_fields", regNr, docName, fileName, emptyFileds));
+            }
+            throw new WebDAVServerException(HttpServletResponse.SC_FORBIDDEN);
+        }
+>>>>>>> develop-5.1
 
         // Set the response status, depending if the node existed or not
         m_response.setStatus(created ? HttpServletResponse.SC_CREATED : HttpServletResponse.SC_NO_CONTENT);

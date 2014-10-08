@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <?xml version="1.0" encoding="UTF-8"?>
 <view:view 
    xmlns:view="http://www.alfresco.org/view/repository/1.0" 
@@ -11,3 +12,18 @@
    </param:stringParameter>   
 
 </view:view>
+=======
+<?xml version="1.0" encoding="UTF-8"?>
+<view:view 
+   xmlns:view="http://www.alfresco.org/view/repository/1.0" 
+   xmlns:param="http://alfresco.webmedia.ee/model/parameters/1.0" 
+>
+
+   <param:stringParameter view:childName="param:docSendoutInfo" >
+      <view:properties>
+         <param:value>Kui sisestada meiliteate sisu, peab olema saatmisviis e-post</param:value>
+      </view:properties>
+   </param:stringParameter>   
+
+</view:view>
+>>>>>>> develop-5.1

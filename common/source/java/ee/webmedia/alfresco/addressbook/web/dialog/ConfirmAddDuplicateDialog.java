@@ -9,8 +9,11 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
  * Dialog that shows confirmation message before adding duplicate
+<<<<<<< HEAD
  * 
  * @author Ats Uiboupin
+=======
+>>>>>>> develop-5.1
  */
 public class ConfirmAddDuplicateDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;

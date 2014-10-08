@@ -16,8 +16,11 @@ import static ee.webmedia.alfresco.document.model.DocumentSubtypeModel.Types.TRA
 
 /**
  * Evaluator that is ment for evaluating createFollowUp button(simple button, not dropdown)
+<<<<<<< HEAD
  * 
  * @author Ats Uiboupin
+=======
+>>>>>>> develop-5.1
  */
 public class FollowUpNodeTypeEvaluator extends AbstractFollowUpNodeTypeEvaluator {
 

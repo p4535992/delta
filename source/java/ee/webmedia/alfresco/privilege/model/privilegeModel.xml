@@ -4,12 +4,86 @@
 
    <imports>
       <import uri="http://www.alfresco.org/model/dictionary/1.0" prefix="d" />
+<<<<<<< HEAD
+=======
+      <import uri="http://www.alfresco.org/model/system/1.0" prefix="sys" />
+>>>>>>> develop-5.1
    </imports>
 
    <namespaces>
       <namespace uri="http://alfresco.webmedia.ee/model/privilege/1.0" prefix="priv" />
    </namespaces>
 
+<<<<<<< HEAD
+=======
+   <constraints>
+
+      <constraint name="priv:privilegeActionType" type="ee.webmedia.alfresco.common.constraint.EnumConstraint">
+         <parameter name="enumClass"><value>ee.webmedia.alfresco.privilege.model.PrivilegeActionType</value></parameter>
+      </constraint>      
+
+   </constraints>   
+
+   <types>
+
+      <type name="priv:privilegeActionsQueue">
+         <parent>sys:base</parent>
+         <associations>
+            <child-association name="priv:privilegeAction">
+               <source>
+                  <mandatory>true</mandatory>
+                  <many>false</many>
+               </source>
+               <target>
+                  <class>priv:privilegeAction</class>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </target>
+            </child-association>
+         </associations>
+         <mandatory-aspects>
+            <aspect>sys:aspect_root</aspect>
+         </mandatory-aspects>
+      </type>
+
+      <type name="priv:privilegeAction">
+         <parent>sys:base</parent>
+         <properties>
+            <property name="priv:privilegeActionType">
+               <type>d:text</type>
+               <mandatory enforced="true">true</mandatory>
+               <constraints>
+                  <constraint ref="priv:privilegeActionType" />
+               </constraints>
+            </property>
+            <property name="priv:authority">
+               <type>d:text</type>
+               <mandatory enforced="true">true</mandatory>
+            </property>
+            <property name="priv:permissions">
+               <type>d:text</type>
+               <mandatory enforced="true">true</mandatory>
+               <multiple>true</multiple>
+            </property>
+         </properties>
+         <associations>
+            <association name="priv:privilegeAction2Node">
+               <source>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </source>
+               <target>
+                  <class>sys:base</class>
+                  <mandatory>true</mandatory>
+                  <many>false</many>
+               </target>
+            </association>
+         </associations>
+      </type>
+
+   </types>
+
+>>>>>>> develop-5.1
    <aspects>
       <aspect name="priv:userGroupMapping">
          <properties>

@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 REGEDIT4
 
 [HKEY_CLASSES_ROOT\vnd.sun.star.webdav]
@@ -8,3 +9,15 @@ REGEDIT4
 [HKEY_CLASSES_ROOT\vnd.sun.star.webdav\shell\open]
 [HKEY_CLASSES_ROOT\vnd.sun.star.webdav\shell\open\command]
 @="\"C:\\Program Files (x86)\\OpenOffice.org 3\\program\\soffice.exe\" \"%1\"" 
+=======
+REGEDIT4
+
+[HKEY_CLASSES_ROOT\vnd.sun.star.webdav]
+@="URL:OpenOffice WebDAV Protocol"
+"URL Protocol"=""
+
+[HKEY_CLASSES_ROOT\vnd.sun.star.webdav\shell]
+[HKEY_CLASSES_ROOT\vnd.sun.star.webdav\shell\open]
+[HKEY_CLASSES_ROOT\vnd.sun.star.webdav\shell\open\command]
+@="\"C:\\Program Files (x86)\\LibreOffice 4.0\\program\\soffice.exe\" \"%1\"" 
+>>>>>>> develop-5.1

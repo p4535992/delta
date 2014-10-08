@@ -13,8 +13,11 @@ import org.apache.myfaces.application.jsp.JspStateManagerImpl;
 
 /**
  * If browser refresh button is detected, invokes refresh event on current dialog, just after restore view phase has been completed.
+<<<<<<< HEAD
  * 
  * @author Alar Kvell
+=======
+>>>>>>> develop-5.1
  */
 public class RefreshInvokerPhaseListener implements PhaseListener {
     private static final long serialVersionUID = 1L;

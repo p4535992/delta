@@ -1,5 +1,10 @@
 package ee.webmedia.alfresco.workflow.search.web;
 
+<<<<<<< HEAD
+=======
+import static ee.webmedia.alfresco.common.web.BeanHelper.getWorkflowService;
+
+>>>>>>> develop-5.1
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -31,6 +36,7 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UserUtil;
 import ee.webmedia.alfresco.utils.WebUtil;
 import ee.webmedia.alfresco.workflow.model.Status;
+<<<<<<< HEAD
 import ee.webmedia.alfresco.workflow.search.model.TaskSearchModel;
 import ee.webmedia.alfresco.workflow.search.service.TaskSearchFilterService;
 import ee.webmedia.alfresco.workflow.service.type.WorkflowType;
@@ -38,6 +44,14 @@ import ee.webmedia.alfresco.workflow.service.type.WorkflowType;
 /**
  * @author Erko Hansar
  */
+=======
+import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
+import ee.webmedia.alfresco.workflow.search.model.TaskSearchModel;
+import ee.webmedia.alfresco.workflow.search.service.TaskSearchFilterService;
+import ee.webmedia.alfresco.workflow.service.WorkflowService;
+import ee.webmedia.alfresco.workflow.service.type.WorkflowType;
+
+>>>>>>> develop-5.1
 public class TaskSearchDialog extends AbstractSearchFilterBlockBean<TaskSearchFilterService> {
 
     private static final long serialVersionUID = 1L;
@@ -57,7 +71,11 @@ public class TaskSearchDialog extends AbstractSearchFilterBlockBean<TaskSearchFi
             taskTypes = new ArrayList<SelectItem>(workflowTypes.size());
             for (WorkflowType workflowType : workflowTypes.values()) {
                 QName taskType = workflowType.getTaskType();
+<<<<<<< HEAD
                 if (taskType != null) {
+=======
+                if (taskType != null && taskTypeEnabled(taskType)) {
+>>>>>>> develop-5.1
                     QName type = workflowType.getWorkflowType();
                     taskTypes.add(new SelectItem(taskType, MessageUtil.getMessage(type == null ? taskType.getLocalName() : type.getLocalName())));
                 }
@@ -76,8 +94,13 @@ public class TaskSearchDialog extends AbstractSearchFilterBlockBean<TaskSearchFi
         }
 
         if (ownerSearchFilters == null) {
+<<<<<<< HEAD
             ownerSearchFilters = new SelectItem[] { new SelectItem(0, MessageUtil.getMessage("task_owner_users")),
                     new SelectItem(1, MessageUtil.getMessage("task_owner_contacts")), };
+=======
+            ownerSearchFilters = new SelectItem[] { new SelectItem(UserContactGroupSearchBean.USERS_FILTER, MessageUtil.getMessage("task_owner_users")),
+                    new SelectItem(UserContactGroupSearchBean.CONTACTS_FILTER, MessageUtil.getMessage("task_owner_contacts")), };
+>>>>>>> develop-5.1
         }
         loadAllFilters();
     }
@@ -227,6 +250,24 @@ public class TaskSearchDialog extends AbstractSearchFilterBlockBean<TaskSearchFi
         return taskStatuses;
     }
 
+<<<<<<< HEAD
+=======
+    private boolean taskTypeEnabled(QName taskType) {
+        if (WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_TASK.equals(taskType)) {
+            return getWorkflowService().isOrderAssignmentWorkflowEnabled();
+        } else if (WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK.equals(taskType)) {
+            return getWorkflowService().externalReviewWorkflowEnabled();
+        } else if (WorkflowSpecificModel.Types.CONFIRMATION_TASK.equals(taskType)) {
+            return getWorkflowService().isOrderAssignmentWorkflowEnabled();
+        } else if (WorkflowSpecificModel.Types.GROUP_ASSIGNMENT_TASK.equals(taskType)) {
+            return getWorkflowService().isGroupAssignmentWorkflowEnabled();
+        } else if (WorkflowSpecificModel.Types.LINKED_REVIEW_TASK.equals(taskType)) {
+            return getWorkflowService().isReviewToOtherOrgEnabled();
+        }
+        return true;
+    }
+
+>>>>>>> develop-5.1
     // START: getters / setters
 
     @Override

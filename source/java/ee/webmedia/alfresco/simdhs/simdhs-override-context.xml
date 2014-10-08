@@ -92,5 +92,91 @@
          </bean>
       </property>
    </bean>
+<<<<<<< HEAD
+=======
+   
+    <!-- The person service.  Added property personPropertiesCache  -->
+
+    <bean id="personService" class="org.alfresco.repo.security.person.PersonServiceImpl" init-method="init">
+        <property name="transactionService">
+            <ref bean="transactionService" />
+        </property>
+        <property name="nodeService">
+            <ref bean="nodeService" />
+        </property>
+        <property name="tenantService">
+            <ref bean="tenantService"/>
+        </property>
+        <property name="searchService">
+            <ref bean="admSearchService" />
+        </property>
+        <property name="permissionServiceSPI">
+            <ref bean="permissionServiceImpl" />
+        </property>
+        <property name="authorityService">
+           <ref bean="authorityService" />
+        </property>
+        <property name="dictionaryService">
+           <ref bean="dictionaryService" />
+        </property>
+        <property name="namespacePrefixResolver">
+            <ref bean="namespaceService" />
+        </property>
+        <property name="policyComponent">
+            <ref bean="policyComponent"/>
+        </property>
+        <property name="personCache">
+            <ref bean="personCache" />
+        </property>
+        <property name="personPropertiesCache" ref="personPropertiesCache" />        
+        <property name="personDao">
+            <ref bean="personDaoImpl" />
+        </property>
+        <property name="permissionsManager">
+            <ref bean="personServicePermissionsManager" />
+        </property>
+        <!-- Configurable properties.                                 -->
+        <!--                                                          -->
+        <!-- TODO:                                                    -->
+        <!-- Add support for creating real home spaces adn setting    -->
+        <!-- permissions on the hame space and people created.        -->
+        <!--                                                          -->
+        <!-- The store in which people are persisted.                 -->
+        <property name="storeUrl">
+           <value>${spaces.store}</value>
+        </property>
+        <!-- Some authentication mechanisms may need to create people -->
+        <!-- in the repository on demand. This enables that feature.  -->
+        <!-- If dsiabled an error will be generated for missing       -->
+        <!-- people. If enabled then a person will be created and     -->
+        <!-- persisted.                                               -->
+        <!-- Valid values are                                         -->
+        <!--     ${server.transaction.allow-writes}                   -->
+        <!--     false                                                -->
+        <property name="createMissingPeople">
+           <value>false</value>
+        </property>
+        <property name="userNameMatcher">
+           <ref bean="userNameMatcher" />
+        </property>
+        <!-- New properties after 1.4.0 to deal with duplicate user ids when found -->
+        <property name="processDuplicates">
+            <value>true</value>
+        </property>
+        <!-- one of:  LEAVE, SPLIT, DELETE -->
+        <property name="duplicateMode">
+            <value>SPLIT</value>
+        </property>
+        <property name="lastIsBest">
+            <value>true</value>
+        </property>
+        <property name="includeAutoCreated">
+            <value>false</value>
+        </property>
+        <property name="homeFolderManager">
+             <ref bean="homeFolderManager" />
+        </property>
+    </bean>   
+>>>>>>> develop-5.1
 
 </beans>

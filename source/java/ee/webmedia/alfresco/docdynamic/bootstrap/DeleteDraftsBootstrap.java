@@ -21,8 +21,11 @@ import ee.webmedia.alfresco.utils.ProgressTracker;
 
 /**
  * Delete all nodes under drafts, except if running not on startup, then exclude nodes that have a lock which is not expired.
+<<<<<<< HEAD
  * 
  * @author Alar Kvell
+=======
+>>>>>>> develop-5.1
  */
 public class DeleteDraftsBootstrap extends AbstractModuleComponent {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(DeleteDraftsBootstrap.class);

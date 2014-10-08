@@ -2,8 +2,11 @@ package ee.webmedia.alfresco.classificator.enums;
 
 /**
  * Enum for "sendMode" classificator values
+<<<<<<< HEAD
  * 
  * @author Erko Hansar
+=======
+>>>>>>> develop-5.1
  */
 public enum SendMode {
 
@@ -12,7 +15,12 @@ public enum SendMode {
     EMAIL("e-post"),
     EMAIL_BCC("e-post (bcc)"),
     MAIL("post"),
+<<<<<<< HEAD
     REGISTERED_MAIL("tähitud post");
+=======
+    REGISTERED_MAIL("tähitud post"),
+    STATE_PORTAL_EESTI_EE("Riigiportaal eesti.ee");
+>>>>>>> develop-5.1
 
     private String valueName;
 

@@ -1,0 +1,1 @@
+ALTER TABLE delta_task ADD COLUMN wfs_received_date_time timestamp;

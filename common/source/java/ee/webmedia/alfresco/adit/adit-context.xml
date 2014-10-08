@@ -1,0 +1,68 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
+
+  <import resource="classpath:ee/webmedia/alfresco/adit/ametlikud-dokumendid-service-impl-context.xml" />
+
+  <bean id="aditService" class="ee.webmedia.alfresco.adit.service.AditServiceImpl" >
+    <property name="nodeService" ref="NodeService" />
+    <property name="ametlikudDokumendidXTeeService" ref="ametlikudDokumendidXTeeService" />
+    <property name="documentSearchService" ref="DocumentSearchService" />
+  </bean>
+
+  <bean id="AditService" class="org.springframework.aop.framework.ProxyFactoryBean">
+    <property name="proxyInterfaces">
+      <list>
+        <value>ee.webmedia.alfresco.adit.service.AditService</value>
+      </list>
+    </property>
+    <property name="target" ref="aditService" />
+    <property name="interceptorNames">
+      <list>
+        <idref bean="commonTransactionInterceptor" />
+      </list>
+    </property>
+  </bean>
+
+  <bean id="aditDocViewedStatusUpdaterJobDetails" class="org.springframework.scheduling.quartz.JobDetailBean">
+    <property name="jobClass" value="ee.webmedia.alfresco.adit.job.AditDocViewedStatusUpdaterJob" />
+    <property name="jobDataAsMap">
+      <map>
+        <entry key="AditService" value-ref="AditService" />
+      </map>
+    </property>
+  </bean>
+
+  <bean id="aditDocViewedStatusUpdaterTrigger" class="ee.webmedia.alfresco.parameters.job.ParameterRescheduledTriggerBean" parent="parameterRescheduledTriggerParent">
+    <property name="enabled" value="${jobs.enabled}" />
+    <property name="parameterName" value="aditReceiveDocSendStatusesInterval" />
+    <property name="parameterFormat" value="m" />
+    <property name="jobDetail" ref="aditDocViewedStatusUpdaterJobDetails" />
+  </bean>
+  
+  <bean id="dvkParametersBootstrap5" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
+    <property name="moduleId" value="common" />
+    <property name="executeOnceOnly" value="true" />
+    <property name="dependsOn">
+      <list>
+        <ref bean="parametersSpacesBootstrap" />
+      </list>
+    </property>
+    <property name="importer" ref="spacesBootstrap" />
+    <property name="bootstrapViews">
+      <list>
+        <props>
+          <prop key="path">/param:parameters</prop>
+          <prop key="location">ee/webmedia/alfresco/adit/bootstrap/dvk-parameters5.xml</prop>
+          <prop key="encoding">UTF-8</prop>
+        </props>
+      </list>
+    </property>
+  </bean>
+
+  <bean class="ee.webmedia.alfresco.common.bootstrap.ModuleComponentDependsOnSetter">
+    <property name="source" ref="parameterRescheduledJobsBootstrap" />
+    <property name="dependsOn" ref="dvkParametersBootstrap5" />
+  </bean>
+
+</beans>

@@ -45,6 +45,10 @@ public class ApplicationServiceImpl implements ApplicationService, InitializingB
     // (Although they always hit Hibernate cache, 8 calls to ParametersService add a total of 50 ms to each page render)
     private String headerText;
     private String footerText;
+<<<<<<< HEAD
+=======
+    private String mDeltaFooterText;
+>>>>>>> develop-5.1
 
     public void setModuleService(ModuleService moduleService) {
         this.moduleService = moduleService;
@@ -92,6 +96,15 @@ public class ApplicationServiceImpl implements ApplicationService, InitializingB
                 footerText = (String) value;
             }
         });
+<<<<<<< HEAD
+=======
+        parametersService.addParameterChangeListener(Parameters.M_DELTA_FOOTER_TEXT.getParameterName(), new ParameterChangedCallback() {
+            @Override
+            public void doWithParameter(Serializable value) {
+                mDeltaFooterText = (String) value;
+            }
+        });
+>>>>>>> develop-5.1
     }
 
     @Override
@@ -171,6 +184,23 @@ public class ApplicationServiceImpl implements ApplicationService, InitializingB
     }
 
     @Override
+<<<<<<< HEAD
+=======
+    public String getMDeltaFooterText() {
+        if (mDeltaFooterText == null) {
+            AuthenticationUtil.runAs(new RunAsWork<Object>() {
+                @Override
+                public Object doWork() throws Exception {
+                    mDeltaFooterText = parametersService.getStringParameter(Parameters.M_DELTA_FOOTER_TEXT);
+                    return null;
+                }
+            }, AuthenticationUtil.getSystemUserName());
+        }
+        return mDeltaFooterText;
+    }
+
+    @Override
+>>>>>>> develop-5.1
     public String getJumploaderUrl() {
         if (jumploaderFile == null) {
             return "/applet/jumploader_z.jar";

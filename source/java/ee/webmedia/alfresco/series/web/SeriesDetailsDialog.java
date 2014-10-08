@@ -34,8 +34,11 @@ import ee.webmedia.alfresco.utils.WebUtil;
 
 /**
  * Form backing bean for Series details
+<<<<<<< HEAD
  * 
  * @author Ats Uiboupin
+=======
+>>>>>>> develop-5.1
  */
 public class SeriesDetailsDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;
@@ -272,6 +275,16 @@ public class SeriesDetailsDialog extends BaseDialogBean {
         return getSeriesService().isClosed(getCurrentNode());
     }
 
+<<<<<<< HEAD
+=======
+    void updateInMemoryDocsVisibilityProperty(boolean newValue) {
+        Node seriesNode = null;
+        if (series != null && (seriesNode = series.getNode()) != null) {
+            seriesNode.getProperties().put(SeriesModel.Props.DOCUMENTS_VISIBLE_FOR_USERS_WITHOUT_ACCESS.toString(), newValue);
+        }
+    }
+
+>>>>>>> develop-5.1
     public boolean isNew() {
         return newSeries;
     }

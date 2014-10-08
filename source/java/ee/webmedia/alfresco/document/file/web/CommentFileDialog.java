@@ -17,14 +17,21 @@ import org.alfresco.web.bean.dialog.BaseDialogBean;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.file.model.FileModel;
+<<<<<<< HEAD
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+=======
+import ee.webmedia.alfresco.privilege.model.Privilege;
+>>>>>>> develop-5.1
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.WebUtil;
 
+<<<<<<< HEAD
 /**
  * @author Priit Pikk
  */
+=======
+>>>>>>> develop-5.1
 public class CommentFileDialog extends BaseDialogBean {
     public static final String BEAN_NAME = "CommentFileDialog";
     private static final long serialVersionUID = 1L;
@@ -46,7 +53,11 @@ public class CommentFileDialog extends BaseDialogBean {
 
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Exception {
+<<<<<<< HEAD
         validatePermission(docRef, DocumentCommonModel.Privileges.EDIT_DOCUMENT);
+=======
+        validatePermission(docRef, Privilege.EDIT_DOCUMENT);
+>>>>>>> develop-5.1
         Map<QName, Serializable> properties = getNodeService().getProperties(fileRef);
         properties.put(FileModel.Props.COMMENT, comment);
         getNodeService().setProperties(fileRef, properties);
@@ -78,11 +89,18 @@ public class CommentFileDialog extends BaseDialogBean {
             if (getDocLockService().setLockIfFree(fileRef) == LockStatus.LOCKED) {
                 throw new NodeLockedException(fileRef);
             }
+<<<<<<< HEAD
             getDocLockService().lockGeneratedFileDocument(fileRef);
             return true;
         }
         getDocLockService().unlockIfOwner(fileRef);
         getDocLockService().releaseGeneratedFileDocument(fileRef);
+=======
+            getDocLockService().lockFile(fileRef);
+            return true;
+        }
+        getDocLockService().unlockFile(fileRef);
+>>>>>>> develop-5.1
         return false;
     }
 

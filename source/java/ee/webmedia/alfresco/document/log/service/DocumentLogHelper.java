@@ -1,5 +1,9 @@
 package ee.webmedia.alfresco.document.log.service;
 
+<<<<<<< HEAD
+=======
+import java.io.Serializable;
+>>>>>>> develop-5.1
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -18,9 +22,17 @@ import ee.webmedia.alfresco.classificator.constant.FieldType;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.docadmin.service.DocumentTypeVersion;
+<<<<<<< HEAD
 import ee.webmedia.alfresco.docadmin.service.Field;
 import ee.webmedia.alfresco.docadmin.web.DocAdminUtil;
 import ee.webmedia.alfresco.docconfig.service.DynamicPropertyDefinition;
+=======
+import ee.webmedia.alfresco.docadmin.service.DocumentType;
+import ee.webmedia.alfresco.docadmin.service.Field;
+import ee.webmedia.alfresco.docadmin.web.DocAdminUtil;
+import ee.webmedia.alfresco.docconfig.service.DynamicPropertyDefinition;
+import ee.webmedia.alfresco.docconfig.service.PropDefCacheKey;
+>>>>>>> develop-5.1
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.functions.model.FunctionsModel;
 import ee.webmedia.alfresco.series.model.SeriesModel;
@@ -32,7 +44,10 @@ import ee.webmedia.alfresco.volume.model.VolumeModel;
  * Helper class for composing Document property change log messages.
  * 
  * @see DocumentPropertiesChangeHolder
+<<<<<<< HEAD
  * @author Martti Tamm
+=======
+>>>>>>> develop-5.1
  */
 public class DocumentLogHelper {
 
@@ -132,6 +147,7 @@ public class DocumentLogHelper {
         if (docRef == null || !BeanHelper.getNodeService().exists(docRef) || !BeanHelper.getNodeService().getType(docRef).equals(DocumentCommonModel.Types.DOCUMENT)) {
             return Collections.emptyMap();
         }
+<<<<<<< HEAD
         WmNode docNode = BeanHelper.getDocumentDynamicService().getDocument(docRef).getNode();
         Pair<String, Integer> typeAndVersion = DocAdminUtil.getDocTypeIdAndVersionNr(docNode);
         DocumentTypeVersion docTypeVersion = BeanHelper.getDocumentAdminService().getDocumentTypeAndVersion(typeAndVersion.getFirst(), typeAndVersion.getSecond()).getSecond();
@@ -140,6 +156,17 @@ public class DocumentLogHelper {
         Map<QName, Field> docTypeProps = new LinkedHashMap<QName, Field>(fields.size(), 1);
         for (Field field : fields) {
             docTypeProps.put(field.getQName(), field);
+=======
+        Map<QName, Serializable> props = BeanHelper.getNodeService().getProperties(docRef);
+        PropDefCacheKey propDefCacheKey = DocAdminUtil.getPropDefCacheKey(DocumentType.class, props);
+        Map<String, Pair<DynamicPropertyDefinition, Field>> propDefs = BeanHelper.getDocumentConfigService().getPropertyDefinitions(propDefCacheKey);
+        Map<QName, Field> docTypeProps = new LinkedHashMap<QName, Field>(propDefs.size(), 1);
+        for (Pair<DynamicPropertyDefinition, Field> propDefAndField : propDefs.values()) {
+            Field field = propDefAndField.getSecond();
+            if (field != null) {
+                docTypeProps.put(field.getQName(), field);
+            }
+>>>>>>> develop-5.1
         }
         return docTypeProps;
     }

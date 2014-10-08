@@ -11,8 +11,11 @@ import ee.webmedia.alfresco.help.model.HelpText;
  * Service contract for working with HelpText nodes.
  * <p>
  * Specification: <i>Kontekstitundlik abiinfo</i>.
+<<<<<<< HEAD
  * 
  * @author Martti Tamm
+=======
+>>>>>>> develop-5.1
  */
 public interface HelpTextService {
 

@@ -32,9 +32,12 @@ import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
 
+<<<<<<< HEAD
 /**
  * @author Alar Kvell
  */
+=======
+>>>>>>> develop-5.1
 public class BaseServiceImpl implements BaseService {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(BaseServiceImpl.class);
 
@@ -227,11 +230,20 @@ public class BaseServiceImpl implements BaseService {
                 for (BaseObject removedChild : (List<? extends BaseObject>) removedChildListEntry.getValue()) {
                     WmNode removedNode = removedChild.getNode();
                     if (removedNode.isSaved()) {
+<<<<<<< HEAD
                         if (wasSaved) {
                             nodeService.deleteNode(removedNode.getNodeRef());
                         } else {
                             if (LOG.isTraceEnabled()) {
                                 LOG.debug("not deleting node, that was previously saved under some other parent node: " + removedNode.getNodeRef());
+=======
+                        NodeRef removedNodeRef = removedNode.getNodeRef();
+                        if (wasSaved && nodeService.exists(removedNodeRef)) {
+                            nodeService.deleteNode(removedNodeRef);
+                        } else {
+                            if (LOG.isTraceEnabled()) {
+                                LOG.debug("not deleting node, that was previously saved under some other parent node: " + removedNodeRef);
+>>>>>>> develop-5.1
                             }
                         }
                         changed = true;

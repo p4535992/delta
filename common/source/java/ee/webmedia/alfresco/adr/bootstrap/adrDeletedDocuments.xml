@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <?xml version="1.0" encoding="UTF-8"?>
 <view:view 
    xmlns:view="http://www.alfresco.org/view/repository/1.0" 
@@ -12,3 +13,13 @@
       </view:acl>
    </adr:adrDeletedDocuments>
 </view:view>
+=======
+<?xml version="1.0" encoding="UTF-8"?>
+<view:view 
+   xmlns:view="http://www.alfresco.org/view/repository/1.0" 
+   xmlns:adr="http://alfresco.webmedia.ee/model/adr/1.0" 
+>
+   <adr:adrDeletedDocuments view:childName="adr:adrDeletedDocuments" />
+
+</view:view>
+>>>>>>> develop-5.1

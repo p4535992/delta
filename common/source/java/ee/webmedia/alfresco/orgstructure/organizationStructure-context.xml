@@ -95,6 +95,10 @@
       <property name="nodeService" ref="NodeService" />
       <property name="userRegistry" ref="userRegistry" />
       <property name="authorityService" ref="AuthorityService" />
+<<<<<<< HEAD
+=======
+      <property name="orgStructPropertiesCache" ref="orgStructPropertiesCache" />  
+>>>>>>> develop-5.1
    </bean>
 
    <bean id="OrganizationStructureService" class="org.springframework.aop.framework.ProxyFactoryBean">

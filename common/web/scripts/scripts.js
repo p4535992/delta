@@ -258,7 +258,10 @@ function disableAndRemoveButton(buttonId) {
 }
 /**
  * append selection of source element to the element with id ending with "toItemIdSuffix" and beginning with the same id prefix as selectBox
+<<<<<<< HEAD
  * @author Ats Uiboupin
+=======
+>>>>>>> develop-5.1
  */
 function appendSelection(source, targetId) {
    var selectItem = $jQ('#' + escapeId4JQ(source.attr("id")) + ' :selected');
@@ -272,13 +275,21 @@ function appendSelection(source, targetId) {
    }
    var lable = selectItem.text(); // using label not value!
    targetElem.val(lastToItemValue + lable);
+<<<<<<< HEAD
+=======
+   targetElem.focus(); // expand the text field 
+   source.focus();
+>>>>>>> develop-5.1
 };
 
 /**
  * Add autoComplete functionality to input using given values to for suggestion(allows to enter also values not given with <code>valuesArray</code>)
  * @param inputId - id of the input component that should have autoComplete functionality based on values from <code>valuesArray</code>
  * @param valuesArray - values to be suggested int the input
+<<<<<<< HEAD
  * @author Ats Uiboupin
+=======
+>>>>>>> develop-5.1
  */
 var autocompleters = new Array();
 function addAutocompleter(inputId, valuesArray){
@@ -456,7 +467,11 @@ function addSearchSuggest(clientId, containerClientId, pickerCallback, pickerCal
       suggest.bind("autoComplete", function handleAutocomplete(event, data) {
          handleEnterKeySkip = true;
          setScreenProtected(true, "FIXME: palun oodake, ühendus serveriga");
+<<<<<<< HEAD
          // Get other field values from updateable container and append AC data 
+=======
+         // Get other field values from updateable container and append AC data
+>>>>>>> develop-5.1
          var postData = getContainerFields(containerClientId, clientId, []);
          postData += "&" + $jQ.param({'data' : data.newVal});
          $jQ.ajax({
@@ -509,7 +524,11 @@ function showDuplicatedTableHeader(context) {
    if (table.length > 0) {
       if($jQ(window).height() < table.offset().top + table.outerHeight()) {
          table.append("<tfoot></tfoot>");
+<<<<<<< HEAD
          
+=======
+
+>>>>>>> develop-5.1
          var footer = table.children("tfoot");
          var row = table.children("thead").children("tr");
          row.clone().appendTo(footer);
@@ -522,6 +541,7 @@ function setPageScrollY() {
    $jQ('#wrapper form').append('<input type="hidden" name="scrollToY" value="'+ scrollTop +'" />');
 }
 
+<<<<<<< HEAD
 function getSharePointObject() {
    var agent = navigator.userAgent.toLowerCase();
    if (agent.indexOf('msie') != -1) {
@@ -544,10 +564,120 @@ function webdavOpen(url, sharePointObject) {
    return false;
 }
 
+=======
+function getOffice13Link(url) {
+   var programs = {
+         "word" : ["doc", "dot", "docx", "docm", "dotx", "dotm"],
+         "excel" : ["xls", "xlt", "xlm", "xlsx", "xlsm", "xltx", "xltm"],
+         "powerpoint" : ["ppt", "pps", "pptx", "pptm", "potx", "potm", "ppam", "ppsx", "ppsm", "sldx", "sldm"]
+   }
+
+   var link = null;
+   var extension = url.substring(url.lastIndexOf(".") + 1, url.length);
+   for (var program in programs) {
+      if (jQuery.inArray(extension, programs[program]) > -1) {
+         link = "ms-" + program + ":ofe|u|" + url;
+         break;
+      }
+   }
+
+   return link;
+}
+
+function webdavOpen(url) {
+   var showDoc = true;
+   // Try to open using MSOffice and WebDAV capabilities
+   if (window.ActiveXObject !== undefined) {
+      try {
+         // If we are able to instantiate this component, we have Office 2013 installed
+         var isOffice2013Installed = new ActiveXObject("SharePoint.OpenDocuments.5");
+         var link = getOffice13Link(url);
+         if (link) {
+            window.open(link, '_blank');
+            showDoc = false;
+         }
+      } catch (e) {
+         try {
+            showDoc = !(new ActiveXObject("SharePoint.OpenDocuments").EditDocument(url));
+         } catch (e2) {
+            // Continue and try to open the document
+         }
+      }
+   }
+   if (showDoc == true) { // If we weren't able to open with ActiveX, check for OpenOffice WebDAV protocol and try to lock/open manually
+      var openDocumentCallback = function(url, readOnly, refresh) {
+         if (readOnly) {
+            webdavOpenReadOnly(url, false);
+         } else {
+            window.open(url, '_blank');
+            if (!refresh) {
+               return;
+            }
+
+            var selector = "a.webdav-open.icon-link[href='"+url+"']";
+            var link = $jQ(selector);
+            var tableId = link.closest("table").attr("id");
+            if (tableId) {
+               var linkId = link.attr("id");
+               // Request new HTML for the surrounding table to show unlock action
+               var ajaxUri = getContextPath() + "/ajax/invoke/AjaxBean.submit";
+               ajaxSubmit(linkId, tableId, [], ajaxUri, {"viewName": "/jsp/dialog/container.jsp", "componentClientId": linkId, "containerClientId": tableId});
+            }
+         }
+      };
+
+      var protocol = "vnd.sun.star.webdav";
+      if (url.substring(0, protocol.length) === protocol) { // Check if we are dealing with OpenOffice webdav
+         if (!confirm("Kas soovid faili avada muutmiseks ja lukustada selle enda nimele 12 tunniks? NB! Pärast faili sulgemist vajuta Deltas nupule \"Vabasta lukk\"!")) {
+            webdavOpenReadOnly(url, false);
+            return false;
+         }
+
+         // Attempt to lock the file and open document for OO if possible
+         lockFileManually(url, openDocumentCallback);
+      } else {
+         openDocumentCallback(url, false, false); // Open in a new window to maintain compatibility with other configurations
+      }
+   }
+   userMessageChecker.init();
+   window.name += "checkMessages";
+   return false;
+}
+function requestNewMessages(xml){
+   if(!xml){
+      return;
+   }
+   xml = xml.documentElement;
+   if(xml.getAttribute('success') == 'true'){
+      alert(xml.getAttribute('message'));
+   }
+}
+var numberOfInstances = 0;
+var userMessageChecker = {
+   init : function(){
+      if(numberOfInstances != 0){
+         return; // allow only one instance
+      }
+      numberOfInstances++;
+      $jQ(window).focus(this.requestMessages);
+   },
+   requestMessages : function(){
+      var uri = getContextPath() + '/ajax/invoke/NotificationBean.getCurrentUserNotifications';
+      $jQ.ajax({
+         type: 'POST',
+         url: uri,
+         mode: 'queue',
+         success: requestNewMessages,
+         dataType: 'xml'
+      });
+   }
+};
+>>>>>>> develop-5.1
 /**
  * Open file in read-only mode (TODO: with webdav, if file is office document)
  * @return false
  */
+<<<<<<< HEAD
 function webdavOpenReadOnly(url) {
    // TODO: at the moment it just always provides a download link even for office documents
 //   // if the link represents an Office document and we are in IE try and
@@ -575,6 +705,9 @@ function webdavOpenReadOnly(url) {
 //      alert("To open using webdaw you must have IE compatible browser(for example firefox with IEtab or Internet Explorer)");
 //   }
 //   alert("regular file download");
+=======
+function webdavOpenReadOnly(url, omitConfirmation) {
+>>>>>>> develop-5.1
    var uri = getContextPath() + '/ajax/invoke/AjaxBean.getDownloadUrl?path=' + url;
 
    $jQ.ajax({
@@ -583,7 +716,11 @@ function webdavOpenReadOnly(url) {
       data: 'url=' + url, // path is already escaped, so disable jquery escaping by giving it a string directly
       mode: 'queue',
       success: function openForDownload(responseText) {
+<<<<<<< HEAD
         if (confirm(getTranslation("webdav_noPermissionsDownloadConfirm"))) {
+=======
+        if (omitConfirmation || confirm(getTranslation("webdav_noPermissionsDownloadConfirm"))) {
+>>>>>>> develop-5.1
            window.open(responseText, '_blank');// regular file saveAs/open by downloading it to HD
         }
       },
@@ -637,28 +774,62 @@ function showModal(target, height){
    openModalContent = target;
 
    $jQ("#overlay").css("display","block");
+<<<<<<< HEAD
    $jQ("#" + target).css("display","block");
    if (height != null) {
       $jQ("#" + target).css("height",height);
    }
    $jQ("#" + target).show();
    $jQ("#" + target).find(".genericpicker-input").focus();
+=======
+   var modal = $jQ("#" + target);
+   modal.css("display","block");
+   var parentModal = modal.parent().closest(".modalwrap");
+
+   if (parentModal) {
+      parentModal.show(); // regulates display property
+      height = parentModal.height();
+   }
+
+   if (height != null) {
+      modal.css("min-height", height);
+   }
+   modal.show();
+   modal.find(".genericpicker-input").focus();
+>>>>>>> develop-5.1
    return false;
 }
 
 function hideModal(){
+<<<<<<< HEAD
    if (openModalContent != null){
      if(isIE(7) && titlebarIndex != null) {
         $jQ("#titlebar").css("zIndex", titlebarIndex);
      }
      $jQ("#" + openModalContent).hide();
       $jQ("#overlay").remove();
+=======
+   if (openModalContent != null) {
+      if(isIE(7) && titlebarIndex != null) {
+         $jQ("#titlebar").css("zIndex", titlebarIndex);
+      }
+      var modal = $jQ("#" + openModalContent);
+      modal.hide();
+      var parentModal = modal.parent().closest(".modalwrap");
+      if (parentModal.length < 1) {
+         $jQ("#overlay").remove();
+      }
+>>>>>>> develop-5.1
    }
    return false;
 }
 
 function selectGroupForModalSearch(selectId, hiddenId, filterId){
+<<<<<<< HEAD
    var selectedValue =$jQ("#" + escapeId4JQ(selectId)).val(); 
+=======
+   var selectedValue =$jQ("#" + escapeId4JQ(selectId)).val();
+>>>>>>> develop-5.1
    var hidden = $jQ("#" + escapeId4JQ(hiddenId));
    var filter = $jQ("#" + escapeId4JQ(filterId));
    hidden.val(selectedValue);
@@ -799,7 +970,11 @@ function propSheetValidateOnDocumentReady() {
          if (validateSecondaryNextId != null){
             validateSecondaryNextId.onclick = function() { propSheetNextBtnPressed = true; };
          }
+<<<<<<< HEAD
       }      
+=======
+      }
+>>>>>>> develop-5.1
       processButtonState();
    }
 }
@@ -846,12 +1021,17 @@ function setScreenProtected(isProtected, reason) {
 }
 
 function updateState(divId, panelId, viewName) {
+<<<<<<< HEAD
+=======
+   setScreenProtected(true, "FIXME: palun oodake, ühendus serveriga");
+>>>>>>> develop-5.1
     var uri = getContextPath() + '/ajax/invoke/PanelStateBean.updatePanelState?panelId=' + panelId +
               '&panelState=' + $jQ(divId).is(":visible") + '&viewName=' + viewName;
 
     $jQ.ajax({
        type: 'POST',
        url: uri,
+<<<<<<< HEAD
        mode: 'queue',
        success: requestUpdatePanelStateSuccess,
        error: requestUpdatePanelStateFailure,
@@ -869,6 +1049,39 @@ function requestUpdatePanelStateSuccess(xml) {
 
 function requestUpdatePanelStateFailure() {
     $jQ.log("Updating panel status in server side failed");
+=======
+       data: addViewStateElement(null).serialize(),
+       mode: 'queue',
+       success: requestUpdatePanelStateSuccess,
+       error: requestUpdatePanelStateFailure,
+       dataType: 'html'
+    });
+}
+
+function requestUpdatePanelStateSuccess(responseText) {
+   try {
+      if (!responseText) { // check that response is not empty
+         return;
+      }
+      if (isAjaxViewStateError(responseText)) {
+         handleAjaxViewStateError(responseText);
+         return;
+      }
+      // Set new value to view state, so when form is submitted next time, correct state is restored.
+      var viewState = responseText.substr('VIEWSTATE:'.length);
+      document.getElementById("javax.faces.ViewState").value = viewState;
+   } finally {
+      setScreenProtected(false);
+   }
+}
+
+function requestUpdatePanelStateFailure() {
+   try {
+      $jQ.log("Updating panel status in server side failed");
+   } finally {
+      setScreenProtected(false);
+   }
+>>>>>>> develop-5.1
 }
 
 function ajaxError(request, textStatus, errorThrown) {
@@ -919,13 +1132,49 @@ function getContainerFields(componentContainerId, componentClientId, submittable
       return componentClientId == this.name.substring(0, componentClientId.length) || $jQ.inArray(this.name, submittableParams) >= 0;
    });
 
+<<<<<<< HEAD
    return componentChildFormElements.add(hiddenFormElements).serialize();
+=======
+   componentChildFormElements = componentChildFormElements.add(hiddenFormElements);
+   componentChildFormElements = addViewStateElement(componentChildFormElements);
+   return componentChildFormElements.serialize();
+}
+
+function addViewStateElement(elements){
+   var viewState = $jQ('#javax\\.faces\\.ViewState');
+   if(elements != null){
+      elements = elements.add(viewState);
+   } else {
+      elements = viewState;
+   }
+   return elements;
+>>>>>>> develop-5.1
 }
 
 function ajaxSuccess(responseText, componentClientId, componentContainerId) {
    if (responseText) { // check that response is not empty
+<<<<<<< HEAD
       // Split response
       var i = responseText.lastIndexOf('VIEWSTATE:');
+=======
+      if (isAjaxViewStateError(responseText)) {
+         try {
+            return handleAjaxViewStateError(responseText);
+         } finally {
+            setScreenProtected(false);
+         }
+      }
+      // Split response
+      var i = responseText.lastIndexOf('VIEWSTATE:');
+      if (i < 0){
+         try {
+            window.location.href = window.location.protocol + "://" + window.location.hostname + "/" + window.location.pathname;
+            return false;
+         } finally {
+            setScreenProtected(false);
+         }
+      }
+>>>>>>> develop-5.1
       var html = responseText.substr(0, i);
       var hiddenInputsIndex = responseText.lastIndexOf("HIDDEN_INPUT_NAMES_JSON:");
       var viewState = responseText.substr(i + 'VIEWSTATE:'.length, hiddenInputsIndex);
@@ -970,7 +1219,25 @@ function ajaxSuccess(responseText, componentClientId, componentContainerId) {
    }
 }
 
+<<<<<<< HEAD
 //-----------------------------------------------------------------------------
+=======
+function isAjaxViewStateError(responseText){
+   try {
+      return responseText.lastIndexOf('ERROR_VIEW_STATE_CHANGED') > -1;
+   } catch (e){
+      return false;
+   }
+}
+
+function handleAjaxViewStateError(responseText) {
+   var redirectUrl = $jQ.parseJSON(responseText.substr("ERROR_VIEW_STATE_CHANGED:".length));
+   window.location.href = redirectUrl;
+   return false;
+}
+
+// -----------------------------------------------------------------------------
+>>>>>>> develop-5.1
 //MENU ITEM COUNT UPDATE
 //-----------------------------------------------------------------------------
 
@@ -1118,7 +1385,11 @@ function allowMultiplePageSizeChangers(){ // otherwise the last pageSizeChanger 
 }
 
 /**
+<<<<<<< HEAD
  * Returns true if event was handled. 
+=======
+ * Returns true if event was handled.
+>>>>>>> develop-5.1
  */
 var handleEnterKeySkip = false;
 function handleEnterKey(event) {
@@ -1128,24 +1399,40 @@ function handleEnterKey(event) {
 
    var target = $jQ(event.target);
    var targetTag = event.target.tagName.toLowerCase();
+<<<<<<< HEAD
    
+=======
+
+>>>>>>> develop-5.1
    // Allow normal behaviour for textareas
    if ("textarea" == targetTag) {
       return false;
    }
+<<<<<<< HEAD
    
+=======
+
+>>>>>>> develop-5.1
    // Submit search for (constrained)quickSearch by clicking the next button
    var targetId = target.attr('id');
    if (targetId && endsWith(targetId.toLowerCase(), "quicksearch")) {
       target.next().click();
       return true;
    }
+<<<<<<< HEAD
    
+=======
+
+>>>>>>> develop-5.1
    // if enter is pressed in association search block, it has higher priority than specificAction and defaultAction
    if(target.hasClass("searchAssocOnEnter") && _searchAssocs(event)){
       return true;
    }
+<<<<<<< HEAD
    
+=======
+
+>>>>>>> develop-5.1
    // Are there any specific actions (modal search, dialog search)?
    var specificActions = $jQ('.specificAction').filter(":visible");
    if (specificActions.length == 1) { // Do nothing if multiple actions match
@@ -1157,18 +1444,30 @@ function handleEnterKey(event) {
             return true;
          }
       }
+<<<<<<< HEAD
       
       specificActions.click();
       return true;
    }
    
+=======
+
+      specificActions.click();
+      return true;
+   }
+
+>>>>>>> develop-5.1
    // Default actions are usually dialog finishImpl buttons
    var defaultActions = $jQ('.defaultAction').filter(":visible");
    if (defaultActions.length == 1) { // Do nothing if multiple actions match
       defaultActions.click();
       return true;
    }
+<<<<<<< HEAD
    
+=======
+
+>>>>>>> develop-5.1
    return false;
 }
 
@@ -1180,6 +1479,12 @@ function handleEnterKey(event) {
 $jQ(document).ready(function() {
    try {
       initWithScreenProtected();
+<<<<<<< HEAD
+=======
+      if(window.name.indexOf("checkMessages") != -1){
+         userMessageChecker.init();
+      }
+>>>>>>> develop-5.1
    } catch (e) {
       alert("Failed to initialize page! "+e);
    } finally {
@@ -1224,7 +1529,24 @@ function initWithScreenProtected() {
          var index = responseText.indexOf("|");
          select.attr("size", responseText.substring(0, index));
          select.append(responseText.substring(index + 1, responseText.length));
+<<<<<<< HEAD
          tbody.find('.hidden').toggleClass('hidden');
+=======
+         var resultCount = select.children().length;
+
+         if (select.attr("data-initialresults") == undefined) { // After the first fresh search, record the initial result count
+            select.attr("data-initialresults", resultCount);
+         }
+
+         // Check if resultset is limited and show/hide message accordingly
+         if (resultCount == select.attr("data-rowlimit")) {
+            tbody.find('.modalResultsLimited').show();
+         } else {
+            tbody.find('.modalResultsLimited').hide();
+         }
+
+         tbody.find('tr.hidden').toggleClass('hidden');
+>>>>>>> develop-5.1
       };
 
       // Workaround for IE/WebKit, since it cannot hide option elements...
@@ -1269,11 +1591,28 @@ function initWithScreenProtected() {
          filterByStructUnit = split[1];
       }
 
+<<<<<<< HEAD
       var backspace = event.keyCode == 8;
       var tbody = $jQ(callbackContext);
       var select = tbody.find('.genericpicker-results');
       var opts = select.children('option');
       if (value.length > 2 && reSearch && !backspace) {
+=======
+      var tbody = $jQ(callbackContext);
+      var select = tbody.find('.genericpicker-results');
+      var opts = select.children('option');
+
+      // Determine if we are dealing with limited resultset
+      var limited = false;
+      if (value.length < 3) {
+         select.removeAttr("data-initialresults"); // Reset the initial result count
+      } else {
+         limited = select.attr("data-initialresults") == select.attr("data-rowlimit");
+      }
+
+      var backspace = event.keyCode == 8;
+      if (value.length > 2 && reSearch && !backspace || limited) {
+>>>>>>> develop-5.1
          $jQ.ajax({
             type: 'POST',
             url: getContextPath() + "/ajax/invoke/AjaxSearchBean.searchPickerResults",
@@ -1296,7 +1635,11 @@ function initWithScreenProtected() {
       } else if (value.length > 2 || backspace) {
          backSpaceCallback(value, callbackContext);
       }
+<<<<<<< HEAD
       
+=======
+
+>>>>>>> develop-5.1
       if (value.length < 3) {
          reSearch = true;
       }
@@ -1333,7 +1676,11 @@ function initWithScreenProtected() {
          elem.closest(".panel-border").find(".reportDueDate").datepicker('setDate',  reportDue);
       }
    });
+<<<<<<< HEAD
    
+=======
+
+>>>>>>> develop-5.1
    $jQ(".driveCompensationRate").live('change', function(event) {
       $jQ(".driveKm").change(); // Trigger updates
    });
@@ -1345,7 +1692,11 @@ function initWithScreenProtected() {
       if (!elem || !other) {
          return;
       }
+<<<<<<< HEAD
       
+=======
+
+>>>>>>> develop-5.1
       var driveKm = elem.closest("tr").find(".driveKm");
       var val1 = elem.val();
       var val2 = other.val();
@@ -1356,11 +1707,16 @@ function initWithScreenProtected() {
       }
       driveKm.change();
    });
+<<<<<<< HEAD
    
+=======
+
+>>>>>>> develop-5.1
    $jQ(".driveKm").live('change', function (event) {
       var kmElem = $jQ(this);
       var propSheet = kmElem.closest("table").parent().closest("table");
       var rateElem = propSheet.find(".driveCompensationRate");
+<<<<<<< HEAD
       
       if (kmElem == null || rateElem == null) {
          return;
@@ -1368,6 +1724,15 @@ function initWithScreenProtected() {
       
       var compCalc = $jQ(kmElem.parent().next().children()[0]);
       
+=======
+
+      if (kmElem == null || rateElem == null) {
+         return;
+      }
+
+      var compCalc = $jQ(kmElem.parent().next().children()[0]);
+
+>>>>>>> develop-5.1
       var kmVal = kmElem.val();
       var rateVal = rateElem.val();
       if (!isNumeric(kmVal, true) || !isNumeric(rateVal)) {
@@ -1376,7 +1741,11 @@ function initWithScreenProtected() {
          compCalc.val(round((kmVal * rateVal), 2));
       }
       compCalc.change();
+<<<<<<< HEAD
       
+=======
+
+>>>>>>> develop-5.1
       // Update sum
       var totalKmElem = $jQ(propSheet.find(".driveTotalKm")[0]);
       if (!totalKmElem) {
@@ -1392,6 +1761,7 @@ function initWithScreenProtected() {
       totalKmElem.val(totalKm);
       totalKmElem.change();
    });
+<<<<<<< HEAD
    
    $jQ(".driveTotalKm").live('change', function (event) {
       var kmElem = $jQ(this);
@@ -1410,6 +1780,25 @@ function initWithScreenProtected() {
          compElem.val(round((kmVal * rateVal), 2));
       }
       compElem.change();
+=======
+
+   $jQ(".driveTotalKm").live('change', function (event) {
+      var kmElem = $jQ(this);
+      var propSheet = kmElem.closest("table");
+      var rateElem = propSheet.find(".driveCompensationRate").first();
+      var compElem = propSheet.find(".driveTotalCompensation").first();
+      if (!rateElem || !compElem) {
+         return;
+      }
+
+      var kmVal = kmElem.val();
+      var rateVal = rateElem.val();
+      if (!isNumeric(kmVal, true) || !isNumeric(rateVal)) {
+         compElem.text("");
+      } else {
+         compElem.text(round((kmVal * rateVal), 2));
+      }
+>>>>>>> develop-5.1
    });
 
    $jQ(".beginTotalCount,.endTotalCount").live('change', function (event) {
@@ -1467,7 +1856,11 @@ function initWithScreenProtected() {
       } else if (elem.hasClass("eventEndDate")) {
          dateField = row.next().find(".errandEndDate");
       }
+<<<<<<< HEAD
       if (dateField != null) {
+=======
+      if (dateField != null && !dateField.val()) { // Only update if a value isn't specified
+>>>>>>> develop-5.1
          dateField.datepicker('setDate', elem.datepicker('getDate'));
          dateField.change();
       }
@@ -1514,6 +1907,7 @@ function initWithScreenProtected() {
    window.dhtmlHistory.add(randomHistoryHash(), null);
 
 
+<<<<<<< HEAD
    jQuery(".dailyAllowanceDaysField, .dailyAllowanceRateField").live('change', function(event) {
       var elem = $jQ(this);
       // Calculate sum for current row
@@ -1521,6 +1915,15 @@ function initWithScreenProtected() {
       var allowanceDays = parseInt(row.find(".dailyAllowanceDaysField").val());
       var allowanceRate = parseInt(row.find(".dailyAllowanceRateField").val());
       var sumField = row.find(".dailyAllowanceSumField");
+=======
+   jQuery(".dailyAllowanceDaysField:input, .dailyAllowanceRateField:input").live('change', function(event) {
+      var elem = $jQ(this);
+      // Calculate sum for current row
+      var row = elem.closest("tr");
+      var allowanceDays = parseInt(row.find(".dailyAllowanceDaysField").closest("input").val());
+      var allowanceRate = parseInt(row.find(".dailyAllowanceRateField").closest("select").val());
+      var sumField = row.find(".dailyAllowanceSumField").closest("input");
+>>>>>>> develop-5.1
       var sum = 0;
       if (allowanceDays && allowanceRate) {
          var sum = allowanceDays * (allowanceRate / 100) * sumField.attr("datafld");
@@ -1541,10 +1944,17 @@ function initWithScreenProtected() {
          }
       });
 
+<<<<<<< HEAD
       row.closest("div").closest("tr").next().find(".dailyAllowanceTotalSumField").val(totalSum);
    });
 
    jQuery(".expectedExpenseSumField").live('keyup', function(event) {
+=======
+      row.closest("div").closest("tr").next().find(".dailyAllowanceTotalSumField").first().text(totalSum);
+   });
+
+   jQuery(".expectedExpenseSumField:input").live('keyup', function(event) {
+>>>>>>> develop-5.1
       var elem = $jQ(this);
       var totalSum = 0;
       var sum = 0;
@@ -1558,8 +1968,13 @@ function initWithScreenProtected() {
          }
       });
 
+<<<<<<< HEAD
       var totalField = elem.closest("div").closest("tr").next().find(".expensesTotalSumField");
       totalField.val(totalSum);
+=======
+      var totalField = elem.closest("div").closest("tr").next().find(".expensesTotalSumField").first();
+      totalField.text(totalSum);
+>>>>>>> develop-5.1
    });
 
    jQuery(".invoiceTotalSum, .invoiceVat").live('change', function(event) {
@@ -1575,13 +1990,22 @@ function initWithScreenProtected() {
       transFooterTotalSumElem = jQuery("#footer-sum-2:first");
       setTransTotalSumColor(transFooterTotalSumElem, invoiceTotalSum, getFloatOrNull(transFooterTotalSumElem.text()));
    });
+<<<<<<< HEAD
    
    jQuery(".errandReportSumField").live('change', function(event) {      
+=======
+
+   jQuery(".errandReportSumField").live('change', function(event) {
+>>>>>>> develop-5.1
       var elem = $jQ(this);
       var totalSum = 0;
       var sum = 0;
       var sumString;
+<<<<<<< HEAD
       elem.closest("table").find(".errandReportSumField").each(function () {         
+=======
+      elem.closest("table").find(".errandReportSumField").each(function () {
+>>>>>>> develop-5.1
          sumString = $jQ(this).val();
          sum = getFloatOrNull(sumString);
          if(sum) {
@@ -1592,13 +2016,22 @@ function initWithScreenProtected() {
       var totalField = elem.closest("div").closest("tr").next().find(".errandReportTotalSumField");
       totalField.val(round(totalSum, 2));
    });
+<<<<<<< HEAD
    
    jQuery(".errandSummaryDebitField").live('change', function(event) {      
+=======
+
+   jQuery(".errandSummaryDebitField").live('change', function(event) {
+>>>>>>> develop-5.1
       var elem = $jQ(this);
       var totalSum = 0;
       var sum = 0;
       var sumString;
+<<<<<<< HEAD
       elem.closest("table").find(".errandSummaryDebitField").each(function () {         
+=======
+      elem.closest("table").find(".errandSummaryDebitField").each(function () {
+>>>>>>> develop-5.1
          sumString = $jQ(this).val();
          sum = getFloatOrNull(sumString);
          if(sum) {
@@ -1609,13 +2042,22 @@ function initWithScreenProtected() {
       var totalField = elem.closest("div").closest("table").find(".errandSummaryDebitTotalField");
       totalField.val(round(totalSum, 2));
    });
+<<<<<<< HEAD
    
    jQuery(".errandSummaryCreditField").live('change', function(event) {      
+=======
+
+   jQuery(".errandSummaryCreditField").live('change', function(event) {
+>>>>>>> develop-5.1
       var elem = $jQ(this);
       var totalSum = 0;
       var sum = 0;
       var sumString;
+<<<<<<< HEAD
       elem.closest("table").find(".errandSummaryCreditField").each(function () {         
+=======
+      elem.closest("table").find(".errandSummaryCreditField").each(function () {
+>>>>>>> develop-5.1
          sumString = $jQ(this).val();
          sum = getFloatOrNull(sumString);
          if(sum) {
@@ -1626,14 +2068,24 @@ function initWithScreenProtected() {
       var totalField = elem.closest("div").closest("table").find(".errandSummaryCreditTotalField");
       totalField.val(round(totalSum, 2));
    });
+<<<<<<< HEAD
    
    jQuery(".driveTotalKmField, .driveCompensationRateField").live('change', function(event) {
+=======
+
+   jQuery(".driveTotalKmField:input, .driveCompensationRateField:input").live('change', function(event) {
+>>>>>>> develop-5.1
       var driveTotalCompensation = $jQ(".driveTotalCompensationField");
       var driveTotalKmField = getFloatOrNull($jQ(".driveTotalKmField").val());
       var driveCompensationRate = getFloatOrNull($jQ(".driveCompensationRateField").val());
       if(driveTotalKmField && driveCompensationRate) {
+<<<<<<< HEAD
          driveTotalCompensation.val(round((driveTotalKmField * driveCompensationRate), 2));
       }      
+=======
+         driveTotalCompensation.text(round((driveTotalKmField * driveCompensationRate), 2));
+      }
+>>>>>>> develop-5.1
    });
 
    jQuery(".trans-row-sum-input").live('change', recalculateInvoiceSums);
@@ -1831,7 +2283,14 @@ function isNumeric(numberStr, integer){
    return true;
 }
 function processTaskDueDateDate(){
+<<<<<<< HEAD
    var dueDateInput = $jQ(this);
+=======
+   processTaskDueDateDateInput($jQ(this));
+}
+
+function processTaskDueDateDateInput(dueDateInput){
+>>>>>>> develop-5.1
    var taskRow = dueDateInput.closest("tr");
    var taskDueDateTime = taskRow.find(".task-due-date-time");
    var taskDueDateDays = taskRow.find(".task-due-date-days");
@@ -1853,13 +2312,21 @@ function clearGroupRowDate(){
       if(taskRow.length == 0) {
          return;
       }
+<<<<<<< HEAD
       
+=======
+
+>>>>>>> develop-5.1
       var groupDateInputs = taskRow.find(".groupRowDate");
       if (groupDateInputs.length > 0) {
          groupDateInputs.each(function () {
             $jQ(this).val("");
          });
+<<<<<<< HEAD
          
+=======
+
+>>>>>>> develop-5.1
          return;
       }
    }
@@ -1870,13 +2337,21 @@ function groupRowDateChange() {
    var row = input.closest("tr");
    var dateVal = row.find(".date")[0].value;
    var timeVal = row.find(".time")[0].value;
+<<<<<<< HEAD
    
+=======
+
+>>>>>>> develop-5.1
    while (true) {
       row = row.next();
       if(row.length == 0) {
          return;
       }
+<<<<<<< HEAD
       
+=======
+
+>>>>>>> develop-5.1
       var dateInput = row.find(".clearGroupRowDate.date");
       var timeInput = row.find(".clearGroupRowDate.time");
       if (dateInput.length < 1 || timeInput.length < 1) {
@@ -1892,7 +2367,11 @@ function changeSendOutMode() {
    if (value == "") {
       return;
    }
+<<<<<<< HEAD
    
+=======
+
+>>>>>>> develop-5.1
    $jQ(this).closest("tbody").next().find("select").each(function () {
       this.value = value;
    });
@@ -1903,6 +2382,10 @@ function resetSendOutGroupSendMode() {
    select.closest("tbody").prev().find(".changeSendOutMode").each(function () {
       this.value = "";
    });
+<<<<<<< HEAD
+=======
+    toggleSendOutIdCodeVisibility();
+>>>>>>> develop-5.1
 }
 
 function setReadonly(element, readonly){
@@ -1944,7 +2427,11 @@ function extendCondencePlugin() {
       if(!(p && p[2] == "-")){
          moreTxt = getTranslation('jQuery.condence.moreText');
       }
+<<<<<<< HEAD
       var isStrictTrim = jQuery(this).hasClass("strictTrim"); 
+=======
+      var isStrictTrim = jQuery(this).hasClass("strictTrim");
+>>>>>>> develop-5.1
       jQuery(this).condense({
          moreSpeed: 0,
          lessSpeed: 0,
@@ -1971,7 +2458,11 @@ function setMinEndDate(owner, dateElem, triggerEndDateChange){
    var endDatePicker = endDate.data("datepicker");
    if (endDatePicker == null) return;
    var date = jQuery.datepicker.parseDate(endDatePicker.settings.dateFormat, beginDate, endDatePicker.settings);
+<<<<<<< HEAD
    if (date == null) return;         
+=======
+   if (date == null) return;
+>>>>>>> develop-5.1
    endDate.datepicker("option", "minDate", date);
    if (triggerEndDateChange) {
       endDate.change();
@@ -1979,7 +2470,11 @@ function setMinEndDate(owner, dateElem, triggerEndDateChange){
 }
 
 function initExpanders(context){
+<<<<<<< HEAD
    
+=======
+
+>>>>>>> develop-5.1
    //initialize all expanding textareas
    var expanders = jQuery("textarea[class*=expand]", context);
    expanders.TextAreaExpander();
@@ -1988,14 +2483,39 @@ function initExpanders(context){
       expanders.keyup();
       jQuery.fn.TextAreaExpander.ieInitialized = true;
    }
+<<<<<<< HEAD
    
+=======
+
+}
+
+function toggleSendOutIdCodeVisibility() {
+    var idCodeFieldVisible = false;
+    $jQ(".resetSendOutGroupSendMode").each(function() {
+        var value = $jQ(this).val();
+        if (value == "Riigiportaal eesti.ee") {
+            $jQ(".hiddenIdCode").removeClass("hiddenIdCode").addClass("visibleIdCode");
+            $jQ(".sendOutGroup").attr("colspan", "3");
+            idCodeFieldVisible = true;
+            return false; // break out of the loop
+        }
+    });
+    if (!idCodeFieldVisible) {
+        $jQ(".visibleIdCode").removeClass("visibleIdCode").addClass("hiddenIdCode");
+        $jQ(".sendOutGroup").attr("colspan", "2");
+    }
+>>>>>>> develop-5.1
 }
 
 // These things need to be performed
 // 1) once after full page load
 // *) each time an area is replaced inside the page
 function handleHtmlLoaded(context, setFocus, selects) {
+<<<<<<< HEAD
    
+=======
+
+>>>>>>> develop-5.1
    showDuplicatedTableHeader(context);
 
    $jQ(".tooltip", context).tooltip({
@@ -2006,7 +2526,11 @@ function handleHtmlLoaded(context, setFocus, selects) {
 
    var ieVer = isIE();
    initExpanders(context);
+<<<<<<< HEAD
    
+=======
+
+>>>>>>> develop-5.1
    if(ieVer) { // Darn IE bugs...
       zIndexWorkaround(context);
 
@@ -2033,7 +2557,11 @@ function handleHtmlLoaded(context, setFocus, selects) {
          fixIEDropdownMinWidth("footer-titlebar .extra-actions .dropdown-menu", "#footer-titlebar .extra-actions .dropdown-menu li", context);
          fixIEDropdownMinWidth(".title-component .dropdown-menu.in-title", ".title-component .dropdown-menu.in-title li", context);
       }
+<<<<<<< HEAD
    }     
+=======
+   }
+>>>>>>> develop-5.1
 
    /**
     * Open Office documents directly from server
@@ -2042,6 +2570,7 @@ function handleHtmlLoaded(context, setFocus, selects) {
       // 1) this.href = 'https://dhs.example.com/dhs/webdav/xxx/yyy/zzz/abc.doc'
       // 2) $jQ(this).attr('href') = '/dhs/webdav/xxx/yyy/zzz/abc.doc'
       var path = this.href; // SharePoint ActiveXObject methods need to get full URL
+<<<<<<< HEAD
 
       var sharePointObject = getSharePointObject();
       if (sharePointObject) {
@@ -2078,11 +2607,31 @@ function handleHtmlLoaded(context, setFocus, selects) {
       } else {
          webdavOpen(path, sharePointObject);
       }
+=======
+      checkFileLock(path, function webdavOpenCallback(filePath, status) {
+         if (status.code < 1) {
+            if (status.code == 0 || confirm(getTranslation("webdav_openReadOnly").replace("#", status.data))) {
+               webdavOpenReadOnly(filePath, status.code != 0);
+            }
+         } else if (status.code == 1) {
+            webdavOpen(filePath);
+         } else if (status.code == 2) {
+            alert("Faili ei saa avada, dokument on kustutatud");
+         } else if (status.code == 3) {
+            alert("Faili ei saa avada, fail on kustutatud");
+         }
+      });
+
+>>>>>>> develop-5.1
       return false;
    });
 
    $jQ('a.webdav-readOnly', context).click(function () {
+<<<<<<< HEAD
       webdavOpenReadOnly(this.href);
+=======
+      webdavOpenReadOnly(this.href, true);
+>>>>>>> develop-5.1
       return false;
    });
 
@@ -2109,7 +2658,11 @@ function handleHtmlLoaded(context, setFocus, selects) {
       $jQ("input:text,textarea", container).filter(':visible:enabled[readonly!="readonly"].focus').first().focus();
    }
    applyAutocompleters();
+<<<<<<< HEAD
 
+=======
+   toggleSendOutIdCodeVisibility();
+>>>>>>> develop-5.1
 
    // datepicker
    var activeDatePickers = jQuery("input.date", context).not("input[readonly]");
@@ -2142,13 +2695,20 @@ function handleHtmlLoaded(context, setFocus, selects) {
          dateElem.trigger("change");
          var onchange = '' + dateElem.attr("onchange");
          if (onchange.indexOf('ajaxSubmit(') == -1) {
+<<<<<<< HEAD
             var date_all = jQuery.datepicker.parseDate(dateElem.data("datepicker").settings.dateFormat,selectedDate,dateElem.data("datepicker").settings);
             dp_dates.datepicker("option","defaultDate",date_all);
+=======
+>>>>>>> develop-5.1
             setMinEndDate(this, dateElem, true);
          }
       }
    });
+<<<<<<< HEAD
    
+=======
+
+>>>>>>> develop-5.1
    activeDatePickers.each(function()
          {
             var dateElem = jQuery(this);
@@ -2177,7 +2737,10 @@ function handleHtmlLoaded(context, setFocus, selects) {
    /**
     * Binder for alfresco properties that are generated with ClassificatorSelectorAndTextGenerator.class
     * Binds all elements that have class="selectBoundWithText" with corresponding textAreas/inputs(assumed to have same id prefix and suffix specified with TARGET_SUFFIX)
+<<<<<<< HEAD
     * @author Ats Uiboupin
+=======
+>>>>>>> develop-5.1
     */
    $jQ(".selectBoundWithText", context).each(function (intIndex)
    {
@@ -2198,13 +2761,20 @@ function handleHtmlLoaded(context, setFocus, selects) {
 
    /**
     * Add onChange functionality to jQuery change event (we can't use onChange attribute because of jQuery bug in IE)
+<<<<<<< HEAD
     * @author Riina Tens
+=======
+>>>>>>> develop-5.1
     */
    $jQ("[class*=selectWithOnchangeEvent]", context).each(function (intIndex, selectElement)
    {
       var classString = selectElement.className;
       var currElId = selectElement.id;
+<<<<<<< HEAD
       var onChangeJavascript = classString.substring(classString.lastIndexOf('¤¤¤¤') + 4);
+=======
+      var onChangeJavascript = classString.substring(classString.lastIndexOf('¤¤¤¤') + 4, classString.lastIndexOf(';') + 1);
+>>>>>>> develop-5.1
       if(onChangeJavascript != ""){
             $jQ(this).change(function(){
                //assume onChangeJavascript contains valid function body
@@ -2217,7 +2787,12 @@ function handleHtmlLoaded(context, setFocus, selects) {
    propSheetValidateRegisterOnDocumentReady();
 
    // this method should be called after critical activities have been done in handleHtmlLoaded as it displays alerts and possibly submits page
+<<<<<<< HEAD
    confirmWorkflow();
+=======
+   confirmWorkflow('workflow-confirmation-messages', 'workflow-after-confirmation-link');
+   confirmWorkflow("workflow-delegation-confirmation-messages", "workflow-after-delegation-confirmation-link");
+>>>>>>> develop-5.1
 
    // trigger keyup event (for validation & textarea resize) on paste. Can't use live() because of IE
    $jQ("textarea, input[type='text']", context).bind("paste", function(){
@@ -2248,7 +2823,68 @@ function handleHtmlLoaded(context, setFocus, selects) {
       });
    }
 
+<<<<<<< HEAD
    $jQ(".readonly", context).attr('readonly', 'readonly');   
+=======
+   $jQ(".readonly", context).attr('readonly', 'readonly');
+}
+
+function checkFileLock(filePath, callback) {
+   // When page is submitted, user sees an hourglass cursor
+   $jQ(".submit-protection-layer").show().focus();
+
+   var uri = getContextPath() + '/ajax/invoke/AjaxBean.isFileLocked';
+   $jQ.ajax({
+     type: 'POST',
+     url: uri,
+     data: 'path=' + filePath, // path is already escaped, so disable jquery escaping by giving it a string directly
+     mode: 'queue',
+     success: function (responseText) {
+       $jQ(".submit-protection-layer").hide();
+       var status = { code: -1, data: "" };
+       if (responseText.length == 0) { // If we get an empty response, then open read-only (other conditions prevent from editing - incoming letter, finished, some running workflow)
+          status.code = 0;
+       } else if (responseText.indexOf("NOT_LOCKED") > -1) {
+          status.code = 1;
+       } else if (responseText.indexOf("DOCUMENT_DELETED") > -1) {
+          status.code = 2;
+       } else if (responseText.indexOf("FILE_DELETED") > -1) {
+          status.code = 3;
+       } else {
+          status.data = responseText;
+       }
+
+       if (callback && typeof(callback) === "function") {
+          callback(filePath, status);
+       }
+     },
+     error: ajaxError,
+     datatype: 'html'
+   });
+}
+
+function lockFileManually(filePath, callback) {
+   var uri = getContextPath() + '/ajax/invoke/AjaxBean.lockFileManually';
+   $jQ.ajax({
+     type: 'POST',
+     url: uri,
+     data: 'path=' + filePath, // path is already escaped, so disable jquery escaping by giving it a string directly
+     mode: 'queue',
+     success: function (responseText) {
+       $jQ(".submit-protection-layer").hide();
+       var edit = false;
+       if (responseText.indexOf("LOCKING_SUCCESSFUL") > -1) {
+          edit = true;
+       }
+
+       if (callback && typeof(callback) === "function") {
+          callback(filePath, !edit, edit);
+       }
+     },
+     error: ajaxError,
+     datatype: 'html'
+   });
+>>>>>>> develop-5.1
 }
 
 //-----------------------------------------------------------------------------
@@ -2326,7 +2962,11 @@ function getMobileIdSignature() {
          } else if (responseText == 'REPEAT') {
             window.setTimeout(getMobileIdSignature, 2000);
          } else if (responseText.indexOf('ERROR') == 0){
+<<<<<<< HEAD
             $jQ('#mobileIdChallengeMessage').html('<p>' + responseText.substring(5) + '</p>');            
+=======
+            $jQ('#mobileIdChallengeMessage').html('<p>' + responseText.substring(5) + '</p>');
+>>>>>>> develop-5.1
          }
       }
    });
@@ -2336,8 +2976,13 @@ function sendToSapManually(){
    return showModal('entrySapNumber_popup');
 }
 
+<<<<<<< HEAD
 function confirmWorkflow(){
    var confirmationMessagesSelect = $jQ("[class='workflow-confirmation-messages']").get(0);
+=======
+function confirmWorkflow(selectClass, confirmationLinkClass){
+   var confirmationMessagesSelect = $jQ("[class='" + selectClass + "']").get(0);
+>>>>>>> develop-5.1
    if(confirmationMessagesSelect == undefined){
       return false;
    }
@@ -2346,7 +2991,11 @@ function confirmWorkflow(){
          return false;
       }
    }
+<<<<<<< HEAD
    $jQ("[class='workflow-after-confirmation-link']").eq(0).click();
+=======
+   $jQ("[class='" + confirmationLinkClass + "']").eq(0).click();
+>>>>>>> develop-5.1
 }
 
 function clearFormHiddenParams(currFormName, newTargetVal) {
@@ -2445,7 +3094,11 @@ function help(url) {
    return false;
 }
 
+<<<<<<< HEAD
 // http://remysharp.com/2010/07/21/throttling-function-calls/
+=======
+//http://remysharp.com/2010/07/21/throttling-function-calls/
+>>>>>>> develop-5.1
 function throttle(fn, delay) {
    var timer = null;
    return function() {

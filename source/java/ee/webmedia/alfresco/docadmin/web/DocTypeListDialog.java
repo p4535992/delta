@@ -14,10 +14,15 @@ import org.alfresco.web.ui.common.component.PickerSearchParams;
 import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
 import ee.webmedia.alfresco.docadmin.service.DocumentType;
 import ee.webmedia.alfresco.docadmin.service.DynamicType;
+<<<<<<< HEAD
 
 /**
  * @author Ats Uiboupin
  */
+=======
+import ee.webmedia.alfresco.utils.MessageUtil;
+
+>>>>>>> develop-5.1
 public class DocTypeListDialog extends DynamicTypeListDialog<DocumentType> {
     private static final long serialVersionUID = 1L;
 
@@ -53,4 +58,13 @@ public class DocTypeListDialog extends DynamicTypeListDialog<DocumentType> {
     protected String getExportFileName() {
         return "documentTypes.xml";
     }
+<<<<<<< HEAD
+=======
+
+    @Override
+    public String getListTitle() {
+        return MessageUtil.getMessage("doc_types_list");
+    }
+
+>>>>>>> develop-5.1
 }

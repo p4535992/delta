@@ -18,6 +18,10 @@ import org.alfresco.service.cmr.security.PermissionService;
 import org.alfresco.service.cmr.security.PersonService;
 import org.alfresco.service.cmr.view.ExporterService;
 import org.alfresco.service.cmr.view.ImporterService;
+<<<<<<< HEAD
+=======
+import org.alfresco.service.descriptor.DescriptorService;
+>>>>>>> develop-5.1
 import org.alfresco.service.namespace.NamespacePrefixResolver;
 import org.alfresco.service.namespace.NamespacePrefixResolverProvider;
 import org.alfresco.service.namespace.NamespaceService;
@@ -32,6 +36,10 @@ import ee.webmedia.alfresco.addressbook.service.AddressbookService;
 import ee.webmedia.alfresco.addressbook.web.bean.AddressbookGroupsManagerBean;
 import ee.webmedia.alfresco.addressbook.web.bean.AddressbookSearchBean;
 import ee.webmedia.alfresco.addressbook.web.dialog.AddressbookAddEditDialog;
+<<<<<<< HEAD
+=======
+import ee.webmedia.alfresco.adit.service.AditService;
+>>>>>>> develop-5.1
 import ee.webmedia.alfresco.adr.service.AdrService;
 import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.archivals.service.ArchivalsService;
@@ -117,6 +125,10 @@ import ee.webmedia.alfresco.log.service.LogService;
 import ee.webmedia.alfresco.log.web.ApplicationLogListDialog;
 import ee.webmedia.alfresco.menu.service.MenuService;
 import ee.webmedia.alfresco.menu.ui.MenuBean;
+<<<<<<< HEAD
+=======
+import ee.webmedia.alfresco.menu.web.MenuItemCountBean;
+>>>>>>> develop-5.1
 import ee.webmedia.alfresco.mso.service.MsoService;
 import ee.webmedia.alfresco.notification.service.NotificationService;
 import ee.webmedia.alfresco.orgstructure.amr.service.RSService;
@@ -124,7 +136,11 @@ import ee.webmedia.alfresco.orgstructure.service.OrganizationStructureService;
 import ee.webmedia.alfresco.orgstructure.web.RsAccessStatusBean;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
 import ee.webmedia.alfresco.parameters.web.ParametersImportDialog;
+<<<<<<< HEAD
 import ee.webmedia.alfresco.privilege.service.AccessControlListExtDAO;
+=======
+import ee.webmedia.alfresco.person.bootstrap.PersonAndOrgStructPropertiesCacheUpdater;
+>>>>>>> develop-5.1
 import ee.webmedia.alfresco.privilege.service.PrivilegeService;
 import ee.webmedia.alfresco.privilege.web.ManageInheritablePrivilegesDialog;
 import ee.webmedia.alfresco.register.service.RegisterService;
@@ -156,18 +172,29 @@ import ee.webmedia.alfresco.workflow.search.web.TaskSearchResultsDialog;
 import ee.webmedia.alfresco.workflow.service.CompoundWorkflowFavoritesService;
 import ee.webmedia.alfresco.workflow.service.WorkflowDbService;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
+<<<<<<< HEAD
+=======
+import ee.webmedia.alfresco.workflow.web.CommentListBlock;
+>>>>>>> develop-5.1
 import ee.webmedia.alfresco.workflow.web.CompoundWorkflowAssocListDialog;
 import ee.webmedia.alfresco.workflow.web.CompoundWorkflowAssocSearchBlock;
 import ee.webmedia.alfresco.workflow.web.CompoundWorkflowDialog;
 import ee.webmedia.alfresco.workflow.web.CompoundWorkflowLogBlockBean;
+<<<<<<< HEAD
+=======
+import ee.webmedia.alfresco.workflow.web.DelegationBean;
+>>>>>>> develop-5.1
 import ee.webmedia.alfresco.workflow.web.RelatedUrlListBlock;
 import ee.webmedia.alfresco.workflow.web.WorkflowBlockBean;
 import ee.webmedia.xtee.client.dhl.DhlXTeeServiceImplFSStub;
 
 /**
  * Helper class for web environment for accessing beans simply through getter. If getter for your bean is missing then just add it
+<<<<<<< HEAD
  * 
  * @author Ats Uiboupin
+=======
+>>>>>>> develop-5.1
  */
 public class BeanHelper implements NamespacePrefixResolverProvider {
     private static final long serialVersionUID = 1L;
@@ -195,10 +222,13 @@ public class BeanHelper implements NamespacePrefixResolverProvider {
         return getSpringBean(NodeDaoService.class, "nodeDaoService");
     }
 
+<<<<<<< HEAD
     public static AccessControlListExtDAO getAccessControlListDao() {
         return getSpringBean(AccessControlListExtDAO.class, "accessControlListDAO");
     }
 
+=======
+>>>>>>> develop-5.1
     // START: web beans
 
     public static DialogManager getDialogManager() {
@@ -305,10 +335,17 @@ public class BeanHelper implements NamespacePrefixResolverProvider {
     public static <D extends DynamicType, S extends DynTypeDialogSnapshot<D>> DynamicTypeDetailsDialog<D, S> getDynamicTypeDetailsDialog(Class<D> dynTypeClass) {
         if (DocumentType.class.equals(dynTypeClass)) {
             // not using getDocTypeDetailsDialog() as unlike smarter eclipse compiler javac can't handle complicated generics
+<<<<<<< HEAD
             DynamicTypeDetailsDialog tmp = (DynamicTypeDetailsDialog) getJsfBean(DocTypeDetailsDialog.class, DocTypeDetailsDialog.BEAN_NAME);
             return tmp;
         } else if (CaseFileType.class.equals(dynTypeClass)) {
             DynamicTypeDetailsDialog tmp = (DynamicTypeDetailsDialog) getJsfBean(CaseFileTypeDetailsDialog.class, CaseFileTypeDetailsDialog.BEAN_NAME);
+=======
+            DynamicTypeDetailsDialog tmp = getJsfBean(DocTypeDetailsDialog.class, DocTypeDetailsDialog.BEAN_NAME);
+            return tmp;
+        } else if (CaseFileType.class.equals(dynTypeClass)) {
+            DynamicTypeDetailsDialog tmp = getJsfBean(CaseFileTypeDetailsDialog.class, CaseFileTypeDetailsDialog.BEAN_NAME);
+>>>>>>> develop-5.1
             return tmp;
         } else {
             throw new RuntimeException("Returning details dialog for " + dynTypeClass.getSimpleName() + " is unimplemented");
@@ -407,6 +444,13 @@ public class BeanHelper implements NamespacePrefixResolverProvider {
         return getJsfBean(WorkflowBlockBean.class, WorkflowBlockBean.BEAN_NAME);
     }
 
+<<<<<<< HEAD
+=======
+    public static DelegationBean getDelegationBean() {
+        return getJsfBean(DelegationBean.class, DelegationBean.BEAN_NAME);
+    }
+
+>>>>>>> develop-5.1
     public static SendOutBlockBean getSendOutBlockBean() {
         return getJsfBean(SendOutBlockBean.class, SendOutBlockBean.BEAN_NAME);
     }
@@ -467,6 +511,13 @@ public class BeanHelper implements NamespacePrefixResolverProvider {
         return getJsfBean(RelatedUrlListBlock.class, RelatedUrlListBlock.BEAN_NAME);
     }
 
+<<<<<<< HEAD
+=======
+    public static CommentListBlock getCommentListBlock() {
+        return getJsfBean(CommentListBlock.class, CommentListBlock.BEAN_NAME);
+    }
+
+>>>>>>> develop-5.1
     public static CaseFileLogBlockBean getCaseFileLogBlockBean() {
         return getJsfBean(CaseFileLogBlockBean.class, CaseFileLogBlockBean.BEAN_NAME);
     }
@@ -483,6 +534,17 @@ public class BeanHelper implements NamespacePrefixResolverProvider {
         return getSpringBean(UserContactTableGenerator.class, UserContactTableGenerator.BEAN_NAME);
     }
 
+<<<<<<< HEAD
+=======
+    public static PersonAndOrgStructPropertiesCacheUpdater getPersonAndOrgStructPropertiesCacheUpdater() {
+        return getSpringBean(PersonAndOrgStructPropertiesCacheUpdater.class, PersonAndOrgStructPropertiesCacheUpdater.BEAN_NAME);
+    }
+
+    public static MenuItemCountBean getMenuItemCountBean() {
+        return getJsfBean(MenuItemCountBean.class, MenuItemCountBean.BEAN_NAME);
+    }
+
+>>>>>>> develop-5.1
     // END: JSF web beans
 
     // START: Spring web beans
@@ -551,6 +613,13 @@ public class BeanHelper implements NamespacePrefixResolverProvider {
         return getAlfrescoService(ContentService.class, ServiceRegistry.CONTENT_SERVICE);
     }
 
+<<<<<<< HEAD
+=======
+    public static DescriptorService getDescriptorService() {
+        return getAlfrescoService(DescriptorService.class, ServiceRegistry.DESCRIPTOR_SERVICE);
+    }
+
+>>>>>>> develop-5.1
     public static BehaviourFilter getPolicyBehaviourFilter() {
         return getSpringBean(BehaviourFilter.class, "policyBehaviourFilter");
     }
@@ -643,6 +712,13 @@ public class BeanHelper implements NamespacePrefixResolverProvider {
         return getService(DvkService.class, DvkService.BEAN_NAME);
     }
 
+<<<<<<< HEAD
+=======
+    public static AditService getAditService() {
+        return getService(AditService.class, AditService.BEAN_NAME);
+    }
+
+>>>>>>> develop-5.1
     public static DvkService getStubDvkService() {
         return getService(DvkService.class, "StubDvkService"); // same class, but with stub xteeService implementation
     }

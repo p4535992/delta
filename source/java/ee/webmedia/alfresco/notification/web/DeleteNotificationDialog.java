@@ -8,8 +8,11 @@ import ee.webmedia.alfresco.common.web.InformingDeleteNodeDialog;
 
 /**
  * The bean that backs up the Delete notification
+<<<<<<< HEAD
  * 
  * @author Ats Uiboupin
+=======
+>>>>>>> develop-5.1
  */
 public class DeleteNotificationDialog extends InformingDeleteNodeDialog {
     private static final long serialVersionUID = 1L;

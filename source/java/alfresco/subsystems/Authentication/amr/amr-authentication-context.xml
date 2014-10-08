@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <?xml version='1.0' encoding='UTF-8'?>
 <beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
    xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
@@ -43,4 +44,51 @@
       <property name="testEmail" value="${mail.from.default}" />
    </bean>
 
+=======
+<?xml version='1.0' encoding='UTF-8'?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
+
+   <!-- Use CAS authentication in combination with AMR Service (both must authenticate, not just one) -->
+
+   <!-- Import CAS authentication related files -->
+   <import resource="../external/external-authentication-context.xml" />
+   <import resource="../external/external-filter-context.xml" />
+
+   <bean id="externalAuthConfigurer" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+      <property name="ignoreUnresolvablePlaceholders" value="true" />
+      <property name="locations">
+         <list>
+            <value>classpath:alfresco/subsystems/Authentication/external/external-authentication.properties</value>
+            <value>classpath:alfresco/subsystems/Authentication/external/external-filter.properties</value>
+         </list>
+      </property>
+   </bean>
+
+   <!-- Define AMR authentication implementation, that extends&overrides CAS implementation -->
+   <!-- @Override ../external/external-authentication-context.xml -->
+   <bean id="authenticationComponent" class="ee.webmedia.alfresco.orgstructure.amr.AMRSimpleAuthenticationImpl" parent="authenticationComponentBase">
+      <property name="amrService" ref="AmrService" />
+      <property name="rsService" ref="RsService" />
+      <property name="nodeService" ref="nodeService" />
+      <property name="personService" ref="personService" />
+      <property name="namespacePrefixResolver" ref="namespaceService" />
+      <property name="authorityService" ref="authorityService" />
+      <property name="transactionService" ref="transactionService" />
+      <property name="defaultAdministratorUserNameList" value="${external.authentication.defaultAdministratorUserNames}" />
+      <property name="allowGuestLogin" value="false" />
+      <property name="userRegistry" ref="userRegistry" />
+   </bean>
+   
+   <!-- @Override classpath:alfresco/subsystems/Authentication/common-ldap-context.xml -->
+   <bean id="userRegistry" class="ee.webmedia.alfresco.orgstructure.amr.AMRUserRegistry">
+      <property name="active" value="true" />
+      <property name="userService" ref="UserService" />
+      <property name="amrService" ref="AmrService" />
+      <property name="rsService" ref="RsService" />
+      <property name="applicationService" ref="ApplicationService" />
+      <property name="testEmail" value="${mail.from.default}" />
+   </bean>
+
+>>>>>>> develop-5.1
 </beans>

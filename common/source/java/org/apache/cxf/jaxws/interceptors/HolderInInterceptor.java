@@ -60,7 +60,11 @@ public class HolderInInterceptor extends AbstractPhaseInterceptor<Message> {
                 .getOutMessage().get(CLIENT_HOLDERS));
             for (MessagePartInfo part : parts) {
                 if (part.getIndex() != 0 && part.getTypeClass() != null
+<<<<<<< HEAD
                         && part.getIndex() < inObjects.size()) { // ALAR: Workaround when response is missing last part(s)
+=======
+                        && part.getIndex() < inObjects.size()) { // Workaround when response is missing last part(s)
+>>>>>>> develop-5.1
                                                                  // Don't know if it's generally correct (for any missing part)
                     Holder holder = (Holder)outHolders.get(part.getIndex() - 1);
                     holder.value = inObjects.get(part);

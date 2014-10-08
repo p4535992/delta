@@ -16,8 +16,11 @@ import com.thoughtworks.xstream.annotations.XStreamOmitField;
 
 /**
  * Subclass of Classificator for exporting and importing classificator values
+<<<<<<< HEAD
  * 
  * @author Ats Uiboupin
+=======
+>>>>>>> develop-5.1
  */
 @XStreamAlias("classificator")
 public class ClassificatorExportVO extends Classificator {

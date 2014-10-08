@@ -11,8 +11,11 @@ import ee.webmedia.alfresco.functions.model.Function;
 
 /**
  * Service for searching and listing functions.
+<<<<<<< HEAD
  * 
  * @author Dmitri Melnikov
+=======
+>>>>>>> develop-5.1
  */
 public interface FunctionsService {
 

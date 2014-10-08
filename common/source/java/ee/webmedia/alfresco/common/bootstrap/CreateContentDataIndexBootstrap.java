@@ -9,8 +9,11 @@ import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
 
 /**
  * Create index on alf_content_data (content_url_id), otherwise database queries perform full scan on table.
+<<<<<<< HEAD
  * 
  * @author Alar Kvell
+=======
+>>>>>>> develop-5.1
  */
 public class CreateContentDataIndexBootstrap extends AbstractModuleComponent {
     protected final Log LOG = LogFactory.getLog(getClass());

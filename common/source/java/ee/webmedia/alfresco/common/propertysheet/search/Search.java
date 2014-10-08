@@ -36,8 +36,11 @@ import ee.webmedia.alfresco.utils.ComponentUtil;
 /**
  * Edit a multi-valued property. Supports removing any element. Supports appending elements at the end by using a search component which returns selected
  * results.
+<<<<<<< HEAD
  * 
  * @author Alar Kvell
+=======
+>>>>>>> develop-5.1
  */
 public class Search extends UIComponentBase implements AjaxUpdateable, NamingContainer {
 
@@ -73,6 +76,10 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
     public static final String FILTER_INDEX = "filterIndex";
     public static final String TEXTAREA = "textarea";
     public static final String SEARCH_SUGGEST_DISABLED = "searchSuggestDisabled";
+<<<<<<< HEAD
+=======
+    public static final String RENDER_PLAIN = "renderPlain";
+>>>>>>> develop-5.1
 
     @Override
     public String getFamily() {
@@ -447,6 +454,13 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
         return (String) ComponentUtil.getAttribute(this, SEARCH_LINK_TOOLTIP);
     }
 
+<<<<<<< HEAD
+=======
+    protected boolean isRenderPlain() {
+        return isAttributeTrue(RENDER_PLAIN);
+    }
+
+>>>>>>> develop-5.1
     protected boolean isMandatory() {
         return isAttributeTrue("dataMandatory");
     }

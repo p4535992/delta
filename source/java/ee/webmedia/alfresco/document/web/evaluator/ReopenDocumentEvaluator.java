@@ -11,8 +11,11 @@ import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 
 /**
  * UI action evaluator for validating whether reopen current document.
+<<<<<<< HEAD
  * 
  * @author Romet Aidla
+=======
+>>>>>>> develop-5.1
  */
 public class ReopenDocumentEvaluator extends BaseActionEvaluator {
     private static final long serialVersionUID = 0L;
@@ -23,12 +26,20 @@ public class ReopenDocumentEvaluator extends BaseActionEvaluator {
             return false;
         }
         boolean isFinished = DocumentStatus.FINISHED.getValueName().equals(node.getProperties().get(DocumentCommonModel.Props.DOC_STATUS.toString()));
+<<<<<<< HEAD
         return isFinished && hasUserRights(node);
     }
 
     public static boolean hasUserRights(Node docNode) {
         return new ViewStateActionEvaluator().evaluate(docNode)
                 && (new IsOwnerEvaluator().evaluate(docNode) || isAdminOrDocmanagerWithViewDocPermission(docNode));
+=======
+        return isFinished && new ViewStateActionEvaluator().evaluate(node) && hasUserRights(node);
+    }
+
+    public static boolean hasUserRights(Node docNode) {
+        return (new IsOwnerEvaluator().evaluate(docNode) || isAdminOrDocmanagerWithViewDocPermission(docNode));
+>>>>>>> develop-5.1
     }
 
 }

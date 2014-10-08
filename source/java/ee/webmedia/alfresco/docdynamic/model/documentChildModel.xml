@@ -70,6 +70,30 @@
          <parent>doccom:metadataContainer</parent>
       </type>
 
+<<<<<<< HEAD
+=======
+      <type name="docchild:applicantErrand">
+         <parent>doccom:metadataContainer</parent>
+         <associations>
+            <child-association name="docchild:errand">
+               <source>
+                  <mandatory>true</mandatory>
+                  <many>false</many>
+               </source>
+               <target>
+                  <class>docchild:errand</class>
+                  <mandatory>true</mandatory><!-- At least one errand is required -->
+                  <many>true</many>
+               </target>
+            </child-association>
+         </associations>
+      </type>
+
+      <type name="docchild:errand">
+         <parent>doccom:metadataContainer</parent>
+      </type>
+
+>>>>>>> develop-5.1
    </types>
    <aspects>
 
@@ -137,6 +161,25 @@
          </associations>
       </aspect>
 
+<<<<<<< HEAD
+=======
+      <aspect name="docchild:applicantErrandContainer">
+         <associations>
+            <child-association name="docchild:applicantErrand">
+               <source>
+                  <mandatory>true</mandatory>
+                  <many>false</many>
+               </source>
+               <target>
+                  <class>docchild:applicantErrand</class>
+                  <mandatory>true</mandatory><!--  At least one applicantTraining is required -->
+                  <many>true</many>
+               </target>
+            </child-association>
+         </associations>
+      </aspect>
+
+>>>>>>> develop-5.1
    </aspects>
 
 </model>

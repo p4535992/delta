@@ -3,9 +3,12 @@ package ee.webmedia.alfresco.workflow.service.event;
 import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
 import ee.webmedia.alfresco.workflow.service.Task;
 
+<<<<<<< HEAD
 /**
  * @author Alar Kvell
  */
+=======
+>>>>>>> develop-5.1
 public interface WorkflowModifications {
 
     /**

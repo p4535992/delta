@@ -1,7 +1,14 @@
 package ee.webmedia.alfresco.user.service;
 
+<<<<<<< HEAD
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentSearchService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getOrganizationStructureService;
+=======
+import static ee.webmedia.alfresco.common.web.BeanHelper.getAuthorityService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentSearchService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getOrganizationStructureService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
+>>>>>>> develop-5.1
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -27,10 +34,14 @@ import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.search.ResultSet;
 import org.alfresco.service.cmr.search.ResultSetRow;
 import org.alfresco.service.cmr.search.SearchService;
+<<<<<<< HEAD
 import org.alfresco.service.cmr.security.AccessPermission;
 import org.alfresco.service.cmr.security.AccessStatus;
 import org.alfresco.service.cmr.security.AuthenticationService;
 import org.alfresco.service.cmr.security.AuthorityService;
+=======
+import org.alfresco.service.cmr.security.AuthenticationService;
+>>>>>>> develop-5.1
 import org.alfresco.service.cmr.security.AuthorityType;
 import org.alfresco.service.cmr.security.NoSuchPersonException;
 import org.alfresco.service.cmr.security.PermissionService;
@@ -52,6 +63,10 @@ import ee.webmedia.alfresco.log.service.LogService;
 import ee.webmedia.alfresco.orgstructure.service.OrganizationStructureService;
 import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
+<<<<<<< HEAD
+=======
+import ee.webmedia.alfresco.privilege.model.Privilege;
+>>>>>>> develop-5.1
 import ee.webmedia.alfresco.report.model.ReportModel;
 import ee.webmedia.alfresco.user.model.Authority;
 import ee.webmedia.alfresco.user.model.UserModel;
@@ -62,14 +77,20 @@ import ee.webmedia.alfresco.utils.UserUtil;
 public class UserServiceImpl implements UserService {
 
     private AuthenticationService authenticationService;
+<<<<<<< HEAD
     private AuthorityService authorityService;
+=======
+>>>>>>> develop-5.1
     private GeneralService generalService;
     private NodeService nodeService;
     private DictionaryService dictionaryService;
     private SearchService searchService;
     private ParametersService parametersService;
     private PersonService personService;
+<<<<<<< HEAD
     private PermissionService permissionService;
+=======
+>>>>>>> develop-5.1
     private OrganizationStructureService organizationStructureService;
     private ConfigurableService configurableService;
     private NamespaceService namespaceService;
@@ -108,9 +129,14 @@ public class UserServiceImpl implements UserService {
             if (createIfMissing) {
                 // tried to create the folder, but failed
                 throw new IllegalStateException("Unable to find associated 'configurations' folder for node: " + person);
+<<<<<<< HEAD
             } else {
                 return null;
             }
+=======
+            }
+            return null;
+>>>>>>> develop-5.1
         }
 
         String xpath = NamespaceService.APP_MODEL_PREFIX + ":" + "preferences";
@@ -167,18 +193,30 @@ public class UserServiceImpl implements UserService {
     @Override
     public boolean isCurrentStructUnitUser() {
         String taskOwnerStructUnit = parametersService.getStringParameter(Parameters.TASK_OWNER_STRUCT_UNIT);
+<<<<<<< HEAD
         Set<String> authorities = authorityService.getAuthorities();
+=======
+        Set<String> authorities = getAuthorityService().getAuthorities();
+>>>>>>> develop-5.1
         return StringUtils.isBlank(taskOwnerStructUnit) || isDocumentManager() || isSupervisor() || authorities.contains(getGroup(taskOwnerStructUnit))
                 || authorities.contains(taskOwnerStructUnit);
     }
 
     @Override
     public boolean isAdministrator() {
+<<<<<<< HEAD
         return AuthenticationUtil.isRunAsUserTheSystemUser() || authorityService.hasAdminAuthority();
     }
 
     private boolean isAdministrator(String userName) {
         return ((userName != null) && (AuthenticationUtil.SYSTEM_USER_NAME.equals(userName) || authorityService.getAuthoritiesForUser(userName).contains(
+=======
+        return AuthenticationUtil.isRunAsUserTheSystemUser() || getAuthorityService().hasAdminAuthority();
+    }
+
+    private boolean isAdministrator(String userName) {
+        return ((userName != null) && (AuthenticationUtil.SYSTEM_USER_NAME.equals(userName) || getAuthorityService().getAuthoritiesForUser(userName).contains(
+>>>>>>> develop-5.1
                 PermissionService.ADMINISTRATOR_AUTHORITY)));
     }
 
@@ -188,7 +226,11 @@ public class UserServiceImpl implements UserService {
             return true;
         }
 
+<<<<<<< HEAD
         return authorityService.getAuthorities().contains(getDocumentManagersGroup());
+=======
+        return getAuthorityService().getAuthorities().contains(getDocumentManagersGroup());
+>>>>>>> develop-5.1
     }
 
     @Override
@@ -202,12 +244,20 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public boolean isInAccountantGroup() {
+<<<<<<< HEAD
         return authorityService.getAuthorities().contains(getAccountantsGroup());
+=======
+        return getAuthorityService().getAuthorities().contains(getAccountantsGroup());
+>>>>>>> develop-5.1
     }
 
     @Override
     public boolean isArchivist() {
+<<<<<<< HEAD
         return isAdministrator() || authorityService.getAuthorities().contains(getArchivistsGroup());
+=======
+        return isAdministrator() || getAuthorityService().getAuthorities().contains(getArchivistsGroup());
+>>>>>>> develop-5.1
     }
 
     @Override
@@ -221,7 +271,11 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public boolean isInSupervisionGroup() {
+<<<<<<< HEAD
         return authorityService.getAuthorities().contains(getSupervisionGroup());
+=======
+        return getAuthorityService().getAuthorities().contains(getSupervisionGroup());
+>>>>>>> develop-5.1
     }
 
     @Override
@@ -229,7 +283,11 @@ public class UserServiceImpl implements UserService {
         if (isAdministrator(userName)) {
             return true;
         }
+<<<<<<< HEAD
         return authorityService.getAuthoritiesForUser(userName).contains(getDocumentManagersGroup());
+=======
+        return getAuthorityService().getAuthoritiesForUser(userName).contains(getDocumentManagersGroup());
+>>>>>>> develop-5.1
     }
 
     @Override
@@ -256,8 +314,41 @@ public class UserServiceImpl implements UserService {
         return getGroup(ADMINISTRATORS_GROUP);
     }
 
+<<<<<<< HEAD
     private String getGroup(String name) {
         return authorityService.getName(AuthorityType.GROUP, name);
+=======
+    @Override
+    public void addUserToGroup(String group, String username) {
+        addUserToGroup(group, getUser(username));
+    }
+
+    @Override
+    public void addUserToGroup(String group, Node user) {
+        getAuthorityService().addAuthority(group, (String) user.getProperties().get(ContentModel.PROP_USERNAME));
+        logUserGroupAction(group, user, "applog_group_user_add");
+    }
+
+    private void logUserGroupAction(String group, Node user, String logMessageKey) {
+        String userFullInfo = UserUtil.getUserFullNameAndId(RepoUtil.toQNameProperties(user.getProperties()));
+        String groupName = getAuthorityService().getAuthorityDisplayName(group);
+        logService.addLogEntry(LogEntry.create(LogObject.USER_GROUP, getUserService(), user.getNodeRef(), logMessageKey, groupName, userFullInfo));
+    }
+
+    @Override
+    public void removeUserFromGroup(String group, String username) {
+        removeUserFromGroup(group, getUser(username));
+    }
+
+    @Override
+    public void removeUserFromGroup(String group, Node user) {
+        getAuthorityService().removeAuthority(group, (String) user.getProperties().get(ContentModel.PROP_USERNAME));
+        logUserGroupAction(group, user, "applog_group_user_rem");
+    }
+
+    private String getGroup(String name) {
+        return getAuthorityService().getName(AuthorityType.GROUP, name);
+>>>>>>> develop-5.1
     }
 
     @Override
@@ -331,13 +422,18 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+<<<<<<< HEAD
     public List<Authority> getAuthorities(final NodeRef nodeRef, final String permission) {
+=======
+    public List<Authority> getAuthorities(final NodeRef nodeRef, final Privilege privilege) {
+>>>>>>> develop-5.1
 
         // We need to run this in elevated rights, so regular users could use PermissionListDialog
         return AuthenticationUtil.runAs(new RunAsWork<List<Authority>>() {
             @Override
             public List<Authority> doWork() throws Exception {
                 List<Authority> authorities = new ArrayList<Authority>();
+<<<<<<< HEAD
 
                 Set<AccessPermission> permissions = permissionService.getAllSetPermissions(nodeRef);
                 for (AccessPermission accessPermission : permissions) {
@@ -346,6 +442,12 @@ public class UserServiceImpl implements UserService {
                             (accessPermission.getAuthorityType() == AuthorityType.USER || accessPermission.getAuthorityType() == AuthorityType.GROUP)) {
 
                         authorities.add(getAuthority(accessPermission.getAuthority(), accessPermission.getAuthorityType(), false));
+=======
+                List<String> authorityNames = BeanHelper.getPrivilegeService().getAuthoritiesWithDirectPrivilege(nodeRef, privilege);
+                if (authorityNames != null) {
+                    for (String authorityName : authorityNames) {
+                        authorities.add(getAuthority(authorityName, false));
+>>>>>>> develop-5.1
                     }
                 }
                 return authorities;
@@ -365,11 +467,15 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Map<QName, Serializable> getUserProperties(String userName) {
+<<<<<<< HEAD
         NodeRef personRef = getPerson(userName);
         if (personRef == null) {
             return null;
         }
         return nodeService.getProperties(personRef);
+=======
+        return personService.getPersonProperties(userName);
+>>>>>>> develop-5.1
     }
 
     @Override
@@ -402,6 +508,32 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+<<<<<<< HEAD
+=======
+    public String getUserMobilePhone(String userName) {
+        Map<QName, Serializable> personProps = getPersonProperties(userName);
+        if (personProps == null) {
+            return null;
+        }
+        return (String) personProps.get(ContentModel.MOBILE_PHONE);
+    }
+
+    public Map<QName, Serializable> getPersonProperties(String userName) {
+        if (StringUtils.isBlank(userName)) {
+            return null;
+        }
+        try {
+            if (personService.personExists(userName)) {
+                return personService.getPersonProperties(userName);
+            }
+            return null;
+        } catch (NoSuchPersonException e) {
+            return null;
+        }
+    }
+
+    @Override
+>>>>>>> develop-5.1
     public String getCurrentUsersStructUnitId() {
         Map<QName, Serializable> userProperties = getUserProperties(AuthenticationUtil.getRunAsUser());
         String orgId = (String) userProperties.get(ContentModel.PROP_ORGID);
@@ -442,6 +574,10 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public String getUserFullName(String userName) {
+<<<<<<< HEAD
+=======
+        userName = StringUtils.substringBefore(userName, "_");
+>>>>>>> develop-5.1
         Map<QName, Serializable> props = getUserProperties(userName);
         if (props == null) {
             return userName;
@@ -478,6 +614,12 @@ public class UserServiceImpl implements UserService {
             return orgPaths;
         }
         String orgId = (String) props.get(ContentModel.PROP_ORGID);
+<<<<<<< HEAD
+=======
+        if (StringUtils.isBlank(orgId)) {
+            return new ArrayList<String>();
+        }
+>>>>>>> develop-5.1
         List<String> orgPath = getOrganizationStructureService().getOrganizationStructurePaths(orgId);
         if (orgPath == null || orgPath.isEmpty()) {
             orgPath = Collections.singletonList(getOrganizationStructureService().getOrganizationStructureName(orgId));
@@ -566,7 +708,11 @@ public class UserServiceImpl implements UserService {
         }
 
         // Update user node
+<<<<<<< HEAD
         nodeService.addProperties(user.getNodeRef(), props);
+=======
+        personService.setPersonProperties((String) props.get(ContentModel.PROP_USERNAME), props);
+>>>>>>> develop-5.1
     }
 
     @Override
@@ -578,7 +724,11 @@ public class UserServiceImpl implements UserService {
     public Set<String> getUserNamesInGroup(List<String> groupNames) {
         Set<String> usersInGroup = new HashSet<String>();
         for (String groupName : groupNames) {
+<<<<<<< HEAD
             usersInGroup.addAll(authorityService.getContainedAuthorities(AuthorityType.USER, groupName, true));
+=======
+            usersInGroup.addAll(getAuthorityService().getContainedAuthorities(AuthorityType.USER, groupName, true));
+>>>>>>> develop-5.1
         }
         return usersInGroup;
     }
@@ -589,7 +739,11 @@ public class UserServiceImpl implements UserService {
             return new HashSet<String>(0);
         }
 
+<<<<<<< HEAD
         Set<String> authoritiesForUser = authorityService.getAuthoritiesForUser(userName);
+=======
+        Set<String> authoritiesForUser = getAuthorityService().getAuthoritiesForUser(userName);
+>>>>>>> develop-5.1
         Set<String> groupNames = new HashSet<String>(authoritiesForUser.size());
         for (String authority : authoritiesForUser) {
             if (authority.startsWith(PermissionService.GROUP_PREFIX)) {
@@ -615,7 +769,11 @@ public class UserServiceImpl implements UserService {
             }
             return new Authority(authority, false, name);
         } else if (authorityType == AuthorityType.GROUP) {
+<<<<<<< HEAD
             String name = authorityService.getAuthorityDisplayName(authority);
+=======
+            String name = getAuthorityService().getAuthorityDisplayName(authority);
+>>>>>>> develop-5.1
             return new Authority(authority, true, name);
         } else {
             throw new RuntimeException("Authority type must be USER or GROUP: " + authorityType);
@@ -685,12 +843,31 @@ public class UserServiceImpl implements UserService {
         return result;
     }
 
+<<<<<<< HEAD
     // START: setters/getters
 
     public void setAuthorityService(AuthorityService authorityService) {
         this.authorityService = authorityService;
     }
 
+=======
+    @Override
+    public Set<String> getAllUsersUsernames() {
+        Set<String> usernames = null;
+        List<ChildAssociationRef> childRefs = nodeService.getChildAssocs(personService.getPeopleContainer());
+        usernames = new HashSet<String>(childRefs.size());
+        for (ChildAssociationRef ref : childRefs) {
+            NodeRef nodeRef = ref.getChildRef();
+            if (nodeService.getType(nodeRef).equals(ContentModel.TYPE_PERSON)) {
+                usernames.add((String) nodeService.getProperty(nodeRef, ContentModel.PROP_USERNAME));
+            }
+        }
+        return usernames;
+    }
+
+    // START: setters/getters
+
+>>>>>>> develop-5.1
     public void setAuthenticationService(AuthenticationService authenticationService) {
         this.authenticationService = authenticationService;
     }
@@ -711,10 +888,13 @@ public class UserServiceImpl implements UserService {
         this.searchService = searchService;
     }
 
+<<<<<<< HEAD
     public void setPermissionService(PermissionService permissionService) {
         this.permissionService = permissionService;
     }
 
+=======
+>>>>>>> develop-5.1
     public void setPersonService(PersonService personService) {
         this.personService = personService;
     }
@@ -745,4 +925,8 @@ public class UserServiceImpl implements UserService {
 
     // END: setters/getters
 
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> develop-5.1

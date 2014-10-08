@@ -1,5 +1,9 @@
 package ee.webmedia.alfresco.log.service;
 
+<<<<<<< HEAD
+=======
+import static ee.webmedia.alfresco.common.web.BeanHelper.getGeneralService;
+>>>>>>> develop-5.1
 import static org.springframework.util.StringUtils.hasLength;
 
 import java.sql.PreparedStatement;
@@ -30,7 +34,10 @@ import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.common.search.DbSearchUtil;
+<<<<<<< HEAD
 import ee.webmedia.alfresco.common.service.GeneralService;
+=======
+>>>>>>> develop-5.1
 import ee.webmedia.alfresco.filter.model.FilterVO;
 import ee.webmedia.alfresco.log.LogHelper;
 import ee.webmedia.alfresco.log.model.LogEntry;
@@ -40,8 +47,11 @@ import ee.webmedia.alfresco.log.model.LogSetup;
 
 /**
  * Main implementation of {@link LogService}. This class does not rely on Alfresco, and exchanges data with the database using JDBC(Template) directly.
+<<<<<<< HEAD
  * 
  * @author Martti Tamm
+=======
+>>>>>>> develop-5.1
  */
 public class LogServiceImpl implements LogService, InitializingBean {
 
@@ -51,7 +61,10 @@ public class LogServiceImpl implements LogService, InitializingBean {
     private SimpleJdbcTemplate jdbcTemplate;
 
     private boolean useClientIpFromXForwardedForHttpHeader;
+<<<<<<< HEAD
     private GeneralService generalService;
+=======
+>>>>>>> develop-5.1
 
     @Override
     public void afterPropertiesSet() throws Exception {
@@ -179,7 +192,11 @@ public class LogServiceImpl implements LogService, InitializingBean {
     }
 
     @Override
+<<<<<<< HEAD
     public long getLogSequenceNextval() {
+=======
+    public long retrieveLogSequenceNextval() {
+>>>>>>> develop-5.1
         return jdbcTemplate.queryForLong("SELECT nextval('delta_log_seq')");
     }
 
@@ -256,7 +273,11 @@ public class LogServiceImpl implements LogService, InitializingBean {
             }
             if (hasLength(filter.getCreatorName())) {
                 queryParts.add(DbSearchUtil.generateStringWordsWildcardQuery("creator_name"));
+<<<<<<< HEAD
                 parameters.add(generalService.getTsquery(filter.getCreatorName()));
+=======
+                parameters.add(getGeneralService().getTsquery(filter.getCreatorName()));
+>>>>>>> develop-5.1
             }
             if (hasLength(filter.getComputerId())) {
                 // creating indexes for these fields is future development (can be done used trigram index); currently these fields are not indexed
@@ -267,7 +288,11 @@ public class LogServiceImpl implements LogService, InitializingBean {
             }
             if (hasLength(filter.getDescription())) {
                 queryParts.add(DbSearchUtil.generateStringWordsWildcardQuery("description"));
+<<<<<<< HEAD
                 parameters.add(generalService.getTsquery(filter.getDescription()));
+=======
+                parameters.add(getGeneralService().getTsquery(filter.getDescription()));
+>>>>>>> develop-5.1
             }
             if (hasLength(filter.getObjectName())) {
                 // creating index for this field is future development (can be done used trigram index); currently the field is not indexed
@@ -334,13 +359,23 @@ public class LogServiceImpl implements LogService, InitializingBean {
 
         q.append(" ORDER BY created_date_time ASC");
         String query = q.toString();
+<<<<<<< HEAD
         List<LogEntry> results = jdbcTemplate.query(query, new LogRowMapper(), values);
+=======
+        Long logQueryStart = System.currentTimeMillis();
+        List<LogEntry> results = jdbcTemplate.query(query, new LogRowMapper(), values);
+        LOG.info("Log entry query duration: " + (System.currentTimeMillis() - logQueryStart));
+>>>>>>> develop-5.1
         explainQuery(query, values);
         return results;
     }
 
     private void explainQuery(String sqlQuery, Object... args) {
+<<<<<<< HEAD
         generalService.explainQuery(sqlQuery, LOG, args);
+=======
+        getGeneralService().explainQuery(sqlQuery, LOG, args);
+>>>>>>> develop-5.1
     }
 
     @Override
@@ -447,8 +482,11 @@ public class LogServiceImpl implements LogService, InitializingBean {
         this.useClientIpFromXForwardedForHttpHeader = useClientIpFromXForwardedForHttpHeader;
     }
 
+<<<<<<< HEAD
     public void setGeneralService(GeneralService generalService) {
         this.generalService = generalService;
     }
 
+=======
+>>>>>>> develop-5.1
 }

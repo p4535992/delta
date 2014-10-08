@@ -23,8 +23,11 @@ import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 
 /**
  * Fix for CL 166411
+<<<<<<< HEAD
  * 
  * @author Alar Kvell
+=======
+>>>>>>> develop-5.1
  */
 public class ReadonlyFieldsFixBootstrap extends AbstractNodeUpdater {
 

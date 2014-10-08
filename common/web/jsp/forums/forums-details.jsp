@@ -51,6 +51,7 @@
 
       <f:verbatim><div style="padding: 4px"></div></f:verbatim>
 
+<<<<<<< HEAD
       <%-- wrapper comment used by the panel to add additional component facets --%> 
       <h:panelGroup id="props-panel-facets">
          <f:facet name="title">
@@ -60,6 +61,9 @@
          </f:facet>
       </h:panelGroup> 
       <a:panel label="#{msg.properties}" id="properties-panel" facetsId="dialog:dialog-body:props-panel-facets" border="white" bgcolor="white" titleBorder="lbgrey" expandedTitleBorder="dotted" titleBgcolor="white" progressive="true">
+=======
+      <a:panel label="#{msg.properties}" id="properties-panel" border="white" bgcolor="white" titleBorder="lbgrey" expandedTitleBorder="dotted" titleBgcolor="white" progressive="true">
+>>>>>>> develop-5.1
       <f:verbatim>
          <table cellspacing="0" cellpadding="0" border="0" width="100%">
             <tr>

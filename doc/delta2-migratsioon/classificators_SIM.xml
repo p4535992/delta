@@ -1,0 +1,115 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<list>
+  <classificator>
+    <name>managementsOrderDocName</name>
+    <description>Juhtkonna korralduse vaikimisi pealkiri</description>
+    <classificatorValues>
+      <classificatorValue>
+        <valueName>Juhtkonna korraldus</valueName>
+        <classificatorDescription></classificatorDescription>
+        <order>1</order>
+        <byDefault>false</byDefault>
+        <readOnly>false</readOnly>
+        <active>true</active>
+      </classificatorValue>
+    </classificatorValues>
+  </classificator>
+  <classificator>
+    <name>licenceDocName</name>
+    <description>Dokumendi liigi Luba vaikimisi pealkiri</description>
+    <classificatorValues>
+      <classificatorValue>
+        <valueName>Luba</valueName>
+        <classificatorDescription></classificatorDescription>
+        <order>1</order>
+        <byDefault>false</byDefault>
+        <readOnly>false</readOnly>
+        <active>true</active>
+      </classificatorValue>
+    </classificatorValues>
+  </classificator>
+  <classificator>
+    <name>trainingApplicationDocName</name>
+    <description>Koolitustaotluse vaikimisi pealkiri</description>
+    <classificatorValues>
+      <classificatorValue>
+        <valueName>Koolitustaotlus</valueName>
+        <classificatorDescription></classificatorDescription>
+        <order>1</order>
+        <byDefault>false</byDefault>
+        <readOnly>false</readOnly>
+        <active>true</active>
+      </classificatorValue>
+    </classificatorValues>
+  </classificator>
+  <classificator>
+    <name>leavingLetterDocName</name>
+    <description>Lahkumislehe vaikimisi pealkiri</description>
+    <classificatorValues>
+      <classificatorValue>
+        <valueName>Lahkumisleht</valueName>
+        <classificatorDescription></classificatorDescription>
+        <order>1</order>
+        <byDefault>false</byDefault>
+        <readOnly>false</readOnly>
+        <active>true</active>
+      </classificatorValue>
+    </classificatorValues>
+  </classificator>
+  <classificator>
+    <name>tenderingApplicationDocName</name>
+    <description>Riigihanke läbiviimise taotluse vaikimisi pealkiri</description>
+    <classificatorValues>
+      <classificatorValue>
+        <valueName>Riigihanke läbiviimise taotlus</valueName>
+        <classificatorDescription></classificatorDescription>
+        <order>1</order>
+        <byDefault>false</byDefault>
+        <readOnly>false</readOnly>
+        <active>true</active>
+      </classificatorValue>
+    </classificatorValues>
+  </classificator>
+  <classificator>
+    <name>errandApplicationDomesticDocName</name>
+    <description>Siselähetuse taotluse vaikimisi pealkiri</description>
+    <classificatorValues>
+      <classificatorValue>
+        <valueName>Siselähetuse taotlus</valueName>
+        <classificatorDescription></classificatorDescription>
+        <order>1</order>
+        <byDefault>false</byDefault>
+        <readOnly>false</readOnly>
+        <active>true</active>
+      </classificatorValue>
+    </classificatorValues>
+  </classificator>
+  <classificator>
+    <name>errandOrderAbroadDocName</name>
+    <description>Välislähetuse korralduse vaikimisi pealkiri</description>
+    <classificatorValues>
+      <classificatorValue>
+        <valueName>Välislähetuse korraldus</valueName>
+        <classificatorDescription></classificatorDescription>
+        <order>1</order>
+        <byDefault>false</byDefault>
+        <readOnly>false</readOnly>
+        <active>true</active>
+      </classificatorValue>
+    </classificatorValues>
+  </classificator>
+  <classificator>
+    <name>vacationApplicationDocName</name>
+    <description>Puhkuse andmise korralduse vaikimisi pealkiri</description>
+    <classificatorValues>
+      <classificatorValue>
+        <valueName>Puhkuse avaldus</valueName>
+        <classificatorDescription></classificatorDescription>
+        <order>1</order>
+        <byDefault>false</byDefault>
+        <readOnly>false</readOnly>
+        <active>true</active>
+      </classificatorValue>
+    </classificatorValues>
+  </classificator>
+</list>

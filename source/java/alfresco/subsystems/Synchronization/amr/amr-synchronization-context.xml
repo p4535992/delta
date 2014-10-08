@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <?xml version='1.0' encoding='UTF-8'?>
 <beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
    xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
@@ -30,3 +31,37 @@
    </bean>
 
 </beans>
+=======
+<?xml version='1.0' encoding='UTF-8'?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
+
+   <!-- The chaining user registry synchronizer -->
+   <bean id="userRegistrySynchronizer" class="org.alfresco.repo.security.sync.ChainingUserRegistrySynchronizer">
+      <property name="syncWhenMissingPeopleLogIn">
+         <value>${synchronization.syncWhenMissingPeopleLogIn}</value>
+      </property>
+      <property name="autoCreatePeopleOnLogin">
+         <value>${synchronization.autoCreatePeopleOnLogin}</value>
+      </property>
+      <property name="authorityService">
+         <ref bean="authorityService" />
+      </property>
+      <property name="personService">
+         <ref bean="personService" />
+      </property>
+      <property name="attributeService">
+         <ref bean="attributeService" />
+      </property>
+      <property name="applicationContextManager">
+         <ref bean="Authentication" />
+      </property>
+      <property name="sourceBeanName">
+         <value>userRegistry</value>
+      </property>
+      <property name="applicationService" ref="ApplicationService" />
+      <property name="testEmail" value="${mail.from.default}" />
+   </bean>
+
+</beans>
+>>>>>>> develop-5.1

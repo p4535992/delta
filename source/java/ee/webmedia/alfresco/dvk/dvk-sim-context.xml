@@ -18,6 +18,7 @@
       <property name="fileService" ref="FileService" />
       <property name="workflowService" ref="WmWorkflowService" />
       <property name="notificationService" ref="NotificationService" />
+<<<<<<< HEAD
       <property name="einvoiceService" ref="EInvoiceService" />       
    </bean>
 
@@ -31,6 +32,10 @@
       </property>
       <property name="generalService" ref="GeneralService" />
       <property name="dvkCorruptDocumentsPath" value="${dvk.received.parent.folder.xpath}${dvk.corrupt.folder.name}" />
+=======
+      <property name="einvoiceService" ref="EInvoiceService" />
+      <property name="documentAdminService" ref="DocumentAdminService" />
+>>>>>>> develop-5.1
    </bean>
 
    <!-- START: web beans: -->

@@ -6,9 +6,12 @@ import org.alfresco.web.bean.repository.Node;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
 
+<<<<<<< HEAD
 /**
  * @author Alar Kvell
  */
+=======
+>>>>>>> develop-5.1
 public class AddFavoritesDocumentEvaluator extends BaseActionEvaluator {
     private static final long serialVersionUID = 1L;
 

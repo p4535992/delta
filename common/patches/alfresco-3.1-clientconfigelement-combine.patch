@@ -5,6 +5,7 @@ diff -urN web-client-src-3.1/java/org/alfresco/web/config/ClientConfigElement.ja
 --- web-client-src-3.1/java/org/alfresco/web/config/ClientConfigElement.java	2009-02-18 12:51:30.000000000 +0200
 +++ web-client-src-3.1-fixed/java/org/alfresco/web/config/ClientConfigElement.java	2009-04-21 20:46:41.000000000 +0300
 @@ -55,7 +55,7 @@
+<<<<<<< HEAD
     
     private static final String DEFAULT_FROM_ADDRESS = "alfresco@alfresco.org";
     
@@ -41,3 +42,41 @@ diff -urN web-client-src-3.1/java/org/alfresco/web/config/ClientConfigElement.ja
        {
      	   combinedElement.setCifsURLSuffix(newElement.getCifsURLSuffix());
        }
+=======
+    
+    private static final String DEFAULT_FROM_ADDRESS = "alfresco@alfresco.org";
+    
+-   private String fromEmailAddress = DEFAULT_FROM_ADDRESS;   
++   private String fromEmailAddress;
+    private String errorPage = null;
+    private String loginPage = null;
+    private int recentSpacesItems = 6;
+@@ -212,8 +212,11 @@
+          combinedElement.setPasteAllAndClearEnabled(newElement.isPasteAllAndClearEnabled());
+       }
+       
+-      if (newElement.getFromEmailAddress() != null && 
+-          (newElement.getFromEmailAddress().equals(combinedElement.getFromEmailAddress()) == false))
++      if (newElement.getFromEmailAddress() == null)
++      {
++         combinedElement.setFromEmailAddress(fromEmailAddress);
++      }
++      else
+       {
+          combinedElement.setFromEmailAddress(newElement.getFromEmailAddress());
+       }
+@@ -250,8 +253,11 @@
+          combinedElement.setMinPasswordLength(newElement.getMinPasswordLength());
+       }
+       
+-      if ( newElement.getCifsURLSuffix() != null &&
+-    	   newElement.getCifsURLSuffix().equals(combinedElement.getCifsURLSuffix()) == false)
++      if (newElement.getCifsURLSuffix() == null)
++      {
++         combinedElement.setCifsURLSuffix(cifsURLSuffix);
++      }
++      else
+       {
+     	   combinedElement.setCifsURLSuffix(newElement.getCifsURLSuffix());
+       }
+>>>>>>> develop-5.1

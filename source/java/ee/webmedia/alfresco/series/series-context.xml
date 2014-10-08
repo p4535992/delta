@@ -45,11 +45,16 @@
             <ref bean="SeriesDocNumberPatternAddRegisterSufPrefUpdater" />
             <ref bean="series25To313DynamicDocTypeUpdater" />
             <ref bean="alterAltAuthorityTable" />
+<<<<<<< HEAD
             <ref bean="createAccessControlEntryUniqueIndexBootstrap" />
             <ref bean="webServiceDocumentsPermissionsUpdateBootstrap" />
             <ref bean="volumeTypeAndNamespaceUpdater" />
             <ref bean="volumeCaseFileEventPlanUpdater" />
             <ref bean="fixAclInheritanceUpdater2" />
+=======
+            <ref bean="volumeTypeAndNamespaceUpdater" />
+            <ref bean="volumeCaseFileEventPlanUpdater" />
+>>>>>>> develop-5.1
          </list>
       </property>
       <property name="batchSize" value="1" />
@@ -63,7 +68,11 @@
       <property name="docLogService" ref="DocumentLogService" />
       <property name="appLogService" ref="LogService" />
       <property name="userService" ref="UserService" />
+<<<<<<< HEAD
       <property name="permissionService" ref="PermissionService" />
+=======
+      <property name="privilegeService" ref="PrivilegeService" />
+>>>>>>> develop-5.1
       <!--  XXX: property:volumeService - retrieved from applicationContext to avoid circular dependency between VolumeService and SeriesService      -->
    </bean>
 
@@ -125,7 +134,22 @@
             <ref bean="import25To313DynamicDocumentTypes" />            
          </list>
       </property>
+<<<<<<< HEAD
    </bean>   
+=======
+   </bean>
+   
+   <bean id="archivedSeriesVolTypeAndVolNumberPatternUpdater" class="ee.webmedia.alfresco.series.bootstrap.ArchivedSeriesVolTypeAndVolNumberPatternUpdater" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="enabled" value="false" /><!-- Executed from node-browser -->
+      <property name="dependsOn">
+         <list>
+            <ref bean="archivalsStoresBootstrap" />
+            <ref bean="volumeTypeAndNamespaceUpdater" />
+         </list>
+      </property>
+   </bean>
+>>>>>>> develop-5.1
 
    <!-- START: web beans: -->
 

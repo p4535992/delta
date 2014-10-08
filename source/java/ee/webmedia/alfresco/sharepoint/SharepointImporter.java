@@ -20,8 +20,11 @@ import ee.webmedia.alfresco.log.LogHelper;
 
 /**
  * Entry point for starting and stopping whole import. Manages input parameters and coordinates structure and document import.
+<<<<<<< HEAD
  * 
  * @author Martti Tamm
+=======
+>>>>>>> develop-5.1
  */
 public class SharepointImporter {
 
@@ -115,8 +118,11 @@ public class SharepointImporter {
 
     /**
      * A Runnable implementation which runs given work in transaction.
+<<<<<<< HEAD
      * 
      * @author Martti Tamm
+=======
+>>>>>>> develop-5.1
      */
     private class ImportJob implements Runnable {
 
@@ -181,8 +187,11 @@ public class SharepointImporter {
 
     /**
      * A class with a callback for importing structure (functions, series, volumes, cases).
+<<<<<<< HEAD
      * 
      * @author Martti Tamm
+=======
+>>>>>>> develop-5.1
      */
     private class StructureImportWork extends BaseImportWork {
 
@@ -216,8 +225,11 @@ public class SharepointImporter {
 
     /**
      * A class with a callback for importing documents and their files.
+<<<<<<< HEAD
      * 
      * @author Martti Tamm
+=======
+>>>>>>> develop-5.1
      */
     private class DocumentImportWork extends BaseImportWork {
 
@@ -261,8 +273,11 @@ public class SharepointImporter {
 
     /**
      * A class with a callback for importing work-flows.
+<<<<<<< HEAD
      * 
      * @author Martti Tamm
+=======
+>>>>>>> develop-5.1
      */
     private class WorkflowImportWork extends BaseImportWork {
 

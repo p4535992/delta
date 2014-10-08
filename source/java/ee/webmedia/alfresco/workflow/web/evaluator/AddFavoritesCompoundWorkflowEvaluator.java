@@ -7,9 +7,12 @@ import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
 
+<<<<<<< HEAD
 /**
  * @author Riina Tens
  */
+=======
+>>>>>>> develop-5.1
 public class AddFavoritesCompoundWorkflowEvaluator extends BaseActionEvaluator {
     private static final long serialVersionUID = 1L;
 

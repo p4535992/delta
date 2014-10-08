@@ -43,8 +43,11 @@ import ee.webmedia.alfresco.workflow.service.WorkflowUtil;
 /**
  * Depending on "taskType" attribute it generates taskList for delegating assignment task as
  * new ASSIGNMENT_RESPONSIBLE, ASSIGNMENT_NOT_RESPONSIBLE, INFORMATION or OPINION task
+<<<<<<< HEAD
  * 
  * @author Ats Uiboupin
+=======
+>>>>>>> develop-5.1
  */
 public class DelegationTaskListGenerator extends TaskListGenerator {
     /**
@@ -325,11 +328,19 @@ public class DelegationTaskListGenerator extends TaskListGenerator {
         String selectedSearchProcessingB; // processes selected results
         if (DelegatableTaskType.ASSIGNMENT_RESPONSIBLE.equals(dTaskType)) {
             getOwnerSearchFiltersB = "#{OwnerSearchBean.responsibleOwnerSearchFilters}";
+<<<<<<< HEAD
             executeSearchCallbackB = "#{CompoundWorkflowDefinitionDialog.executeResponsibleOwnerSearch}";
             selectedSearchProcessingB = "#{DelegationBean.processResponsibleOwnerSearchResults}";
         } else {
             getOwnerSearchFiltersB = "#{OwnerSearchBean.ownerSearchFilters}";
             executeSearchCallbackB = "#{CompoundWorkflowDefinitionDialog.executeTaskOwnerSearch}";
+=======
+            executeSearchCallbackB = "#{CompoundWorkflowDialog.executeResponsibleOwnerSearch}";
+            selectedSearchProcessingB = "#{DelegationBean.processResponsibleOwnerSearchResults}";
+        } else {
+            getOwnerSearchFiltersB = "#{OwnerSearchBean.ownerSearchFilters}";
+            executeSearchCallbackB = "#{CompoundWorkflowDialog.executeTaskOwnerSearch}";
+>>>>>>> develop-5.1
             selectedSearchProcessingB = "#{DelegationBean.processOwnerSearchResults}";
         }
         picker.setValueBinding("filters", application.createValueBinding(getOwnerSearchFiltersB));

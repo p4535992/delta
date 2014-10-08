@@ -67,6 +67,11 @@ import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel.Props;
 import ee.webmedia.alfresco.docadmin.web.BaseObjectOrderModifier;
 import ee.webmedia.alfresco.docadmin.web.DocAdminUtil;
+<<<<<<< HEAD
+=======
+import ee.webmedia.alfresco.docconfig.service.DocumentConfigService;
+import ee.webmedia.alfresco.docconfig.service.PropDefCacheKey;
+>>>>>>> develop-5.1
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
 import ee.webmedia.alfresco.menu.service.MenuService;
@@ -83,9 +88,12 @@ import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
 import ee.webmedia.alfresco.utils.UnableToPerformMultiReasonException;
 
+<<<<<<< HEAD
 /**
  * @author Ats Uiboupin
  */
+=======
+>>>>>>> develop-5.1
 public class DocumentAdminServiceImpl implements DocumentAdminService, InitializingBean {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(DocumentAdminServiceImpl.class);
 
@@ -106,12 +114,19 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
     private final Set<String> forbiddenFieldIds = new HashSet<String>();
     private final Set<String> groupShowShowInTwoColumnsOriginalFieldIds = new HashSet<String>();
     private final Set<String> groupNamesLimitSingle = new HashSet<String>();
+<<<<<<< HEAD
+=======
+    private final Map<String, DocumentTypeValidator> documentTypeValidators = new HashMap<String, DocumentTypeValidator>();
+>>>>>>> develop-5.1
 
     /**
      * Get nodeRef lazily.
      * Workaround to NPE when trying to get nodeRef from afterProperties set
+<<<<<<< HEAD
      * 
      * @author Ats Uiboupin
+=======
+>>>>>>> develop-5.1
      */
     class NodeRefInitializer {
         private final String xPath;
@@ -182,6 +197,16 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
     }
 
     @Override
+<<<<<<< HEAD
+=======
+    public void registerDocumentTypeValidator(String validatorKey, DocumentTypeValidator documentTypeValidator) {
+        Assert.notNull(documentTypeValidator);
+        Assert.isTrue(!documentTypeValidators.containsKey(validatorKey));
+        documentTypeValidators.put(validatorKey, documentTypeValidator);
+    }
+
+    @Override
+>>>>>>> develop-5.1
     public Set<String> getForbiddenFieldIds() {
         return Collections.unmodifiableSet(forbiddenFieldIds);
     }
@@ -548,7 +573,19 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
                     fieldsToSave.put(fieldDef.getFieldId(), fieldDef);
                 }
             }
+<<<<<<< HEAD
             saveOrUpdateFieldDefinitions(fieldsToSave.values());
+=======
+            saveOrUpdateFieldDefinitions(fieldsToSave.values(), false);
+        }
+        DocumentConfigService documentConfigService = BeanHelper.getDocumentConfigService();
+        String typeId = dynType.getId();
+        for (DocumentTypeVersion docTypeVersion : dynType.getDocumentTypeVersions()) {
+            Pair<String, Integer> typeAndVersion = Pair.newInstance(typeId, docTypeVersion.getVersionNr());
+            documentConfigService.removeFromChildAssocTypeQNameTreeCache(typeAndVersion);
+            PropDefCacheKey cacheKey = new PropDefCacheKey(dynType.getClass(), typeId, docTypeVersion.getVersionNr());
+            documentConfigService.removeFromPropertyDefinitionCache(cacheKey);
+>>>>>>> develop-5.1
         }
         nodeService.deleteNode(docTypeRef);
         if (dynType.isUsed()) {
@@ -558,17 +595,29 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
 
     @Override
     public Pair<DocumentType, MessageData> saveOrUpdateDocumentType(DocumentType docTypeOriginal) {
+<<<<<<< HEAD
         return saveOrUpdateDynamicType(docTypeOriginal);
     }
 
     @Override
     public <D extends DynamicType> Pair<D, MessageData> saveOrUpdateDynamicType(D dynTypeOriginal) {
+=======
+        return saveOrUpdateDynamicType(docTypeOriginal, false);
+    }
+
+    @Override
+    public <D extends DynamicType> Pair<D, MessageData> saveOrUpdateDynamicType(D dynTypeOriginal, boolean isDocumentTypesImport) {
+>>>>>>> develop-5.1
         @SuppressWarnings("unchecked")
         D dynType = (D) dynTypeOriginal.clone();
         boolean wasUnsaved = dynType.isUnsaved();
 
         // validating duplicated documentTypeId is done in baseService
+<<<<<<< HEAD
         MessageData message = updateChildren(dynType);
+=======
+        MessageData message = updateChildren(dynType, isDocumentTypesImport);
+>>>>>>> develop-5.1
         DocumentType docType = dynType instanceof DocumentType ? (DocumentType) dynType : null;
         if (docType != null) {
             checkFieldMappings(docType);
@@ -580,6 +629,12 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
         if (wasUnsaved || dynTypeOriginal.isPropertyChanged(DocumentAdminModel.Props.USED, DocumentAdminModel.Props.NAME, DocumentAdminModel.Props.MENU_GROUP_NAME)) {
             menuService.menuUpdated();
         }
+<<<<<<< HEAD
+=======
+        if (wasUnsaved) {
+            BeanHelper.getPrivilegeService().setInheritParentPermissions(dynType.getNodeRef(), false);
+        }
+>>>>>>> develop-5.1
         return Pair.newInstance(dynType, message);
     }
 
@@ -604,7 +659,11 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
 
     private FieldDefinition reorderFieldDefinitions(FieldDefinition fieldDef) {
         // must reorder fieldDefinitions list
+<<<<<<< HEAD
         List<FieldDefinition> fieldDefinitions = saveOrUpdateFieldDefinitions(getFieldDefinitions());
+=======
+        List<FieldDefinition> fieldDefinitions = saveOrUpdateFieldDefinitions(getFieldDefinitions(), false);
+>>>>>>> develop-5.1
         // return fresh copy of originalFieldOrFeildDef
         for (FieldDefinition fd : fieldDefinitions) {
             if (fd.getFieldId().equals(fieldDef.getFieldId())) {
@@ -631,8 +690,13 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
     }
 
     @Override
+<<<<<<< HEAD
     public List<FieldDefinition> saveOrUpdateFieldDefinitions(Collection<FieldDefinition> fieldDefinitions) {
         FieldDefinitionReorderHelper.reorderDocSearchAndVolSearchProps(fieldDefinitions, true);
+=======
+    public List<FieldDefinition> saveOrUpdateFieldDefinitions(Collection<FieldDefinition> fieldDefinitions, boolean isDocumentTypesImport) {
+        FieldDefinitionReorderHelper.reorderDocSearchAndVolSearchProps(fieldDefinitions, !isDocumentTypesImport);
+>>>>>>> develop-5.1
         List<FieldDefinition> saved = new ArrayList<FieldDefinition>();
 
         for (FieldDefinition fieldDefinition : fieldDefinitions) {
@@ -660,8 +724,11 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
 
     /**
      * Helps to initialize order or reorder only some items - so that other items will not receive automatically order
+<<<<<<< HEAD
      * 
      * @author Ats Uiboupin
+=======
+>>>>>>> develop-5.1
      */
     private static class FieldDefinitionReorderHelper {
 
@@ -816,8 +883,11 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
      * {@link QNamePattern} that considers {@link QName#getLocalName()} when matching. <br>
      * XXX: created for {@link DocumentAdminServiceImpl#isFieldDefinitionExisting(String)} and {@link DocumentAdminServiceImpl#getFieldDefinition(String)} because at the time there
      * were several diferent namespaces for previous built-in fields and for user defined fields. It must change in future!
+<<<<<<< HEAD
      * 
      * @author Ats Uiboupin
+=======
+>>>>>>> develop-5.1
      */
     private class QNameLocalnameMatcher implements QNamePattern {
         private final String localName;
@@ -862,8 +932,14 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
     }
 
     @Override
+<<<<<<< HEAD
     public void deleteFieldDefinition(NodeRef fieldDefRef) {
         nodeService.deleteNode(fieldDefRef);
+=======
+    public void deleteFieldDefinition(Field field) {
+        nodeService.deleteNode(field.getNodeRef());
+        BeanHelper.getDocumentConfigService().removeFrompPopertyDefinitionForSearchCache(field.getFieldId());
+>>>>>>> develop-5.1
     }
 
     @Override
@@ -954,7 +1030,11 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
                 }
             }
         }
+<<<<<<< HEAD
         saveOrUpdateFieldDefinitions(fieldDefinitionsToUpdate.values());
+=======
+        saveOrUpdateFieldDefinitions(fieldDefinitionsToUpdate.values(), false);
+>>>>>>> develop-5.1
     }
 
     @Override
@@ -1031,7 +1111,11 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
         }
     }
 
+<<<<<<< HEAD
     private <D extends DynamicType> MessageData updateChildren(D dynType) {
+=======
+    private <D extends DynamicType> MessageData updateChildren(D dynType, boolean isDocumentTypesImport) {
+>>>>>>> develop-5.1
         int versionNr = 1;
         boolean saved = dynType.isSaved();
         if (saved) {
@@ -1072,6 +1156,20 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
         }
         String userId = AuthenticationUtil.getFullyAuthenticatedUser();
         DocumentTypeVersion docVer = dynType.getLatestDocumentTypeVersion();
+<<<<<<< HEAD
+=======
+        Map<String, String> errorMessages = new HashMap<String, String>();
+        for (DocumentTypeValidator documentTypeValidator : documentTypeValidators.values()) {
+            documentTypeValidator.validate(docVer, errorMessages);
+        }
+        if (!errorMessages.isEmpty()) {
+            Collection<MessageData> messageData = new ArrayList<MessageData>();
+            for (Entry<String, String> errorMessage : errorMessages.entrySet()) {
+                messageData.add(new MessageDataImpl(errorMessage.getKey(), errorMessage.getValue()));
+            }
+            throw new UnableToPerformMultiReasonException(new MessageDataWrapper(messageData));
+        }
+>>>>>>> develop-5.1
         docVer.setCreatorId(userId);
         docVer.setCreatorName(userService.getUserFullName(userId));
         docVer.setVersionNr(versionNr);
@@ -1129,7 +1227,11 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
                 removedFieldFD.getUsedTypes(dynType.getClass()).remove(documentTypeId);
             }
         }
+<<<<<<< HEAD
         saveOrUpdateFieldDefinitions(fieldsToSave.values());
+=======
+        saveOrUpdateFieldDefinitions(fieldsToSave.values(), isDocumentTypesImport);
+>>>>>>> develop-5.1
         if (addFieldsAddedRemovedWarning && dynType instanceof DocumentType) {
             return new MessageDataImpl(MessageSeverity.INFO, "docType_metadataList_changedWarning");
         }
@@ -1301,14 +1403,21 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
      * for each {@link DocumentTypeVersion}: <br>
      * 1) Add {@link AssociationModel}s or merge {@link FieldMapping}s under existing {@link AssociationModel}s <br>
      * 2) save {@link DocumentTypeVersion}: <br>
+<<<<<<< HEAD
      * 
      * @author Ats Uiboupin
+=======
+>>>>>>> develop-5.1
      */
     public class ImportHelper {
 
         /**
          * Import dynamic types. NB! This method creates transactions itself, so do NOT use surrounding transactions!
+<<<<<<< HEAD
          * 
+=======
+         *
+>>>>>>> develop-5.1
          * @param <D>
          * @param xmlFile
          * @param dynTypeClass
@@ -1439,7 +1548,11 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
                     importableDynType.nextSaveToParent(getDynamicTypesRoot(dynTypeClass));
                     importedDocType = importableDynType;
                 }
+<<<<<<< HEAD
                 Pair<D, MessageData> result = saveOrUpdateDynamicType(importedDocType);
+=======
+                Pair<D, MessageData> result = saveOrUpdateDynamicType(importedDocType, true);
+>>>>>>> develop-5.1
                 importedDocType = result.getFirst();
                 MessageData messageData = result.getSecond();
                 if (messageData != null) {
@@ -1471,7 +1584,11 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
         }
 
         private <D> void processDocTypeAssocs(Map<String, DocumentType> docTypesCache, Map<String, Pair<List<FollowupAssociation>
+<<<<<<< HEAD
                 , List<ReplyAssociation>>> imporableDocTypesById, int totalDocTypes) {
+=======
+        , List<ReplyAssociation>>> imporableDocTypesById, int totalDocTypes) {
+>>>>>>> develop-5.1
             Map<String /* docTypeId */, Set<String> /* docTypeFields */> docTypeFieldsCache = new HashMap<String, Set<String>>();
             int i = 0;
             LOG.info("Starting to import associations of " + totalDocTypes + " document types");

@@ -8,7 +8,11 @@
          <docadmin:name>Asendaja</docadmin:name>
          <docadmin:systematic>true</docadmin:systematic>
          <docadmin:fieldType>USER</docadmin:fieldType>
+<<<<<<< HEAD
          <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+=======
+         <docadmin:removableFromSystematicFieldGroup>true</docadmin:removableFromSystematicFieldGroup>
+>>>>>>> develop-5.1
          <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
          <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
       </view:properties>
@@ -33,7 +37,11 @@
          <docadmin:name>Asendus alates</docadmin:name>
          <docadmin:systematic>true</docadmin:systematic>
          <docadmin:fieldType>DATE</docadmin:fieldType>
+<<<<<<< HEAD
          <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+=======
+         <docadmin:removableFromSystematicFieldGroup>true</docadmin:removableFromSystematicFieldGroup>
+>>>>>>> develop-5.1
          <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
          <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
       </view:properties>
@@ -46,7 +54,11 @@
          <docadmin:name>Asendus kuni</docadmin:name>
          <docadmin:systematic>true</docadmin:systematic>
          <docadmin:fieldType>DATE</docadmin:fieldType>
+<<<<<<< HEAD
          <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+=======
+         <docadmin:removableFromSystematicFieldGroup>true</docadmin:removableFromSystematicFieldGroup>
+>>>>>>> develop-5.1
          <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
          <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
       </view:properties>

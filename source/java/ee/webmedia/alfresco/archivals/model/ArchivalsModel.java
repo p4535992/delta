@@ -13,17 +13,31 @@ public interface ArchivalsModel {
         String ARCHIVALS_TEMP_ROOT = "archivalsTemp";
         String ARCHIVALS_TEMP_SPACE = ARCHIVALS_TEMP_PARENT + FunctionsModel.NAMESPACE_PREFFIX + ARCHIVALS_TEMP_ROOT;
         String ARCHIVAL_ACTIVITIES_SPACE = ARCHIVALS_TEMP_PARENT + PREFIX + "archivalActivities";
+<<<<<<< HEAD
+=======
+        String ARCHIVALS_SPACE = ARCHIVALS_TEMP_PARENT + PREFIX + "archivalsQueue";
+>>>>>>> develop-5.1
     }
 
     public interface Types {
         QName ARCHIVAL_ACTIVITIES = QName.createQName(URI, "archivalActivities");
         QName ARCHIVAL_ACTIVITY = QName.createQName(URI, "archivalActivity");
         QName ARCHIVAL_ACTIVITY_SEARCH_FILTER = QName.createQName(URI, "archivalActivitySearchFilter");
+<<<<<<< HEAD
+=======
+        QName ARCHIVALS_QUEUE_ROOT = QName.createQName(URI, "archivalsQueue");
+        QName ARCHIVING_JOB = QName.createQName(URI, "archivingJob");
+>>>>>>> develop-5.1
     }
 
     public interface Assocs {
         QName ARCHIVAL_ACTIVITY = QName.createQName(URI, "archivalActivity");
         QName ARCHIVAL_ACTIVITY_DOCUMENT = QName.createQName(URI, "archivalActivityDocument");
+<<<<<<< HEAD
+=======
+        QName ARCHIVALS_QUEUE = QName.createQName(URI, "archivalsQueue");
+        QName ARCHIVING_JOB = QName.createQName(URI, "archivingJob");
+>>>>>>> develop-5.1
     }
 
     public interface Aspects {
@@ -40,6 +54,17 @@ public interface ArchivalsModel {
         QName FILTER_CREATED = QName.createQName(URI, "filterCreated");
         QName FILTER_CREATED_END_DATE = QName.createQName(URI, "filterCreated_EndDate");
         QName FILTER_ACTIVITY_TYPE = QName.createQName(URI, "filterActivityType");
+<<<<<<< HEAD
+=======
+
+        QName USERNAME = QName.createQName(URI, "userName");
+        QName ARCHIVING_START_TIME = QName.createQName(URI, "archivingStartTime");
+        QName ARCHIVING_END_TIME = QName.createQName(URI, "archivingEndTime");
+        QName VOLUME_REF = QName.createQName(URI, "volumeRef");
+        QName ARCHIVING_JOB_STATUS = QName.createQName(URI, "archivingJobStatus");
+        QName ARCHIVE_NOTE = QName.createQName(URI, "archiveNote");
+        QName ERROR_MESSAGE = QName.createQName(URI, "errorMessage");
+>>>>>>> develop-5.1
     }
 
 }

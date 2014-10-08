@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <model name="imap-ext:imapmodel" xmlns="http://www.alfresco.org/model/dictionary/1.0">
    <imports>
       <import uri="http://www.alfresco.org/model/content/1.0" prefix="cm" />
@@ -67,4 +68,75 @@
             
    </aspects>
 
+=======
+<model name="imap-ext:imapmodel" xmlns="http://www.alfresco.org/model/dictionary/1.0">
+   <imports>
+      <import uri="http://www.alfresco.org/model/content/1.0" prefix="cm" />
+      <import uri="http://www.alfresco.org/model/dictionary/1.0" prefix="d" />
+   </imports>
+
+   <namespaces>
+      <namespace uri="http://alfresco.webmedia.ee/model/imap/1.0" prefix="imap-ext" />
+   </namespaces>
+
+    <constraints>
+        <constraint name="imap-ext:appendBehaviourList" type="LIST">
+            <parameter name="allowedValues">
+                <list>
+                    <value>permissionDeniedBehaviour</value>
+                    <value>incomingBehaviour</value>
+                    <value>incomingInvoiceBehaviour</value>
+                    <value>attachmentBehaviour</value>
+                    <value>sentBehaviour</value>
+                    <value>sendFailureBehaviour</value>
+                </list>
+            </parameter>
+            
+        </constraint>
+    </constraints>
+
+   <types>
+       <type name="imap-ext:imapFolder">
+           <title>kaust</title>
+           <parent>cm:folder</parent>
+           <mandatory-aspects>
+            <aspect>imap-ext:behaviours</aspect>
+           </mandatory-aspects>
+       </type>
+   </types>
+
+    <aspects>
+        <aspect name="imap-ext:behaviours">
+         <properties>
+            <property name="imap-ext:appendBehaviour">
+               <type>d:text</type>
+                <multiple>false</multiple>
+                <default>permissionDeniedBehaviour</default>
+                <constraints>
+                    <constraint ref="imap-ext:appendBehaviourList"/>
+                </constraints>
+            </property>
+         </properties>
+      </aspect>
+      
+      <!-- DEPRECATED this aspect is not used, remove after RemoveImapSubfolderContainerAspect has been executed in all environments -->
+      <aspect name="imap-ext:imapSubfolderContainer">
+         <associations>
+            <child-association name="imap-ext:imapSubfolder">
+               <source>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </source>
+               <target>
+                  <class>imap-ext:imapFolder</class>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </target>
+            </child-association>
+         </associations>
+      </aspect> 
+            
+   </aspects>
+
+>>>>>>> develop-5.1
 </model>

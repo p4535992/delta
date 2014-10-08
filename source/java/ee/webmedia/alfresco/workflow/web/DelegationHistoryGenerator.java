@@ -43,8 +43,11 @@ import ee.webmedia.alfresco.workflow.service.WorkflowService;
 
 /**
  * Generates component that shows the history of delegation
+<<<<<<< HEAD
  * 
  * @author Ats Uiboupin
+=======
+>>>>>>> develop-5.1
  */
 public class DelegationHistoryGenerator extends BaseComponentGenerator {
     private static final QName TMP_MAIN_OWNER = RepoUtil.createTransientProp("mainOwner");

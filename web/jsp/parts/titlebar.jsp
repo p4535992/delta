@@ -44,6 +44,7 @@
          <f:verbatim>
          <span>
          </f:verbatim>
+<<<<<<< HEAD
 <%--
             <a:actionLink id="alf_toggle_shelf"
             value="#{msg.toggle_shelf}"
@@ -51,6 +52,19 @@
             showLink="false"
             actionListener="#{NavigationBean.toggleShelf}" />
 --%>
+=======
+            <%--<a:actionLink id="alf_toggle_shelf"--%>
+            <%--value="DeveloperBean.doStuff()"--%>
+            <%--image="/images/icons/shelf.png"--%>
+            <%--showLink="false"--%>
+            <%--actionListener="#{TestingForDeveloperBean.doStuff}" />--%>
+
+<%--             <a:actionLink id="override_device" --%>
+<%--             value="#{msg.override_device}" --%>
+<%--             image="/images/icons/deploy_server.gif" --%>
+<%--             showLink="false" --%>
+<%--             href="/?deviceDetectionOverride" /> --%>
+>>>>>>> develop-5.1
 <%--
             <r:actions context="#{BrowseBean.document}" value="navigator_actions" showLink="false" />
 --%>
@@ -86,4 +100,8 @@
       <wm:menu primary="true" />
    </a:panel>
 </a:panel>
+<<<<<<< HEAD
 <!-- End Header -->
+=======
+<!-- End Header -->
+>>>>>>> develop-5.1

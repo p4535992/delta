@@ -23,15 +23,22 @@ import org.springframework.util.Assert;
 import ee.webmedia.alfresco.common.web.CssStylable;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.document.file.model.File;
+<<<<<<< HEAD
+=======
+import ee.webmedia.alfresco.utils.MessageUtil;
+>>>>>>> develop-5.1
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.UserUtil;
 import ee.webmedia.alfresco.utils.WebUtil;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 
+<<<<<<< HEAD
 /**
  * @author Alar Kvell
  */
+=======
+>>>>>>> develop-5.1
 public class Task extends BaseWorkflowObject implements Comparable<Task>, CssStylable {
     private static final long serialVersionUID = 1L;
 
@@ -51,8 +58,11 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
     private static final QName PROP_WORKFLOW_CATEGORY = RepoUtil.createTransientProp("category");
     private static final QName PROP_TEMP_FILES = RepoUtil.createTransientProp("files");
     private static final QName PROP_DUE_DATE_TIME_STR = RepoUtil.createTransientProp("dueDateTimeStr");
+<<<<<<< HEAD
     private static final QName PROP_COMPOUNDWORKFLOW_NODEREF = RepoUtil.createTransientProp("compountWorkflowNodeRef");
 
+=======
+>>>>>>> develop-5.1
     private final Workflow parent;
     private final int outcomes;
     private int outcomeIndex = -1;
@@ -60,9 +70,12 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
     private List<DueDateHistoryRecord> dueDateHistoryRecords;
     private List<NodeRef> removedFiles;
     private boolean filesLoaded;
+<<<<<<< HEAD
     /** If null, indicates that due date history data existence has not been checked and should not be updated in delta_task table */
     private Boolean hasDueDateHistory;
     private Boolean originalHasDueDateHistory;
+=======
+>>>>>>> develop-5.1
     private Boolean originalHasFiles;
     private String groupDueDateVbString;
     private String workflowNodeRefId;
@@ -101,7 +114,10 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
     protected Task copy(Workflow copyParent) {
         Task copy = copyImpl(new Task(getNode().clone(), copyParent, outcomes));
         copy.setDueDateHistoryRecords(getDueDateHistoryRecords());
+<<<<<<< HEAD
         copy.hasDueDateHistory = !getDueDateHistoryRecords().isEmpty();
+=======
+>>>>>>> develop-5.1
         return copy;
     }
 
@@ -140,10 +156,25 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
         return outcomes;
     }
 
+<<<<<<< HEAD
+=======
+    public Boolean getViewedByOwner() {
+        return getProp(WorkflowCommonModel.Props.VIEWED_BY_OWNER);
+    }
+
+>>>>>>> develop-5.1
     public String getOwnerName() {
         return getProp(WorkflowCommonModel.Props.OWNER_NAME);
     }
 
+<<<<<<< HEAD
+=======
+    public String getOwnerNameWithSubstitute() {
+        String substitute = getOwnerSubstituteName();
+        return getOwnerName() + (StringUtils.isNotBlank(substitute) ? " " + MessageUtil.getMessage("task_substitute", substitute) : "");
+    }
+
+>>>>>>> develop-5.1
     public void setOwnerName(String ownerName) {
         setProp(WorkflowCommonModel.Props.OWNER_NAME, ownerName);
     }
@@ -198,6 +229,17 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
         setProp(WorkflowCommonModel.Props.COMPLETED_DATE_TIME, completedDateTime);
     }
 
+<<<<<<< HEAD
+=======
+    public String getOwnerSubstituteName() {
+        return getProp(WorkflowCommonModel.Props.OWNER_SUBSTITUTE_NAME);
+    }
+
+    protected void setOwnerSubstituteName(String ownerSubstituteName) {
+        setProp(WorkflowCommonModel.Props.OWNER_SUBSTITUTE_NAME, ownerSubstituteName);
+    }
+
+>>>>>>> develop-5.1
     public String getOutcome() {
         return getProp(WorkflowCommonModel.Props.OUTCOME);
     }
@@ -344,6 +386,13 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
         return getDueDate() != null ? dateFormat.format(getDueDate()) : "";
     }
 
+<<<<<<< HEAD
+=======
+    public String getDueDateTimeStr() {
+        return getDueDate() != null ? dateTimeFormat.format(getDueDate()) : "";
+    }
+
+>>>>>>> develop-5.1
     public Date getProposedDueDate() {
         return getProp(WorkflowSpecificModel.Props.PROPOSED_DUE_DATE);
     }
@@ -436,8 +485,14 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
 
         @Override
         public Object get(Node node) {
+<<<<<<< HEAD
             if (node.hasAspect(WorkflowSpecificModel.Props.RESOLUTION)) {
                 return node.getProperties().get(WorkflowSpecificModel.Props.RESOLUTION);
+=======
+            String taskResolution = (String) node.getProperties().get(WorkflowSpecificModel.Props.RESOLUTION);
+            if (StringUtils.isNotBlank(taskResolution)) {
+                return taskResolution;
+>>>>>>> develop-5.1
             }
             if (getParent() == null) {
                 // if it occurs that task workflowResolution property is not valid value here (although it should be),
@@ -575,6 +630,7 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
         return filesLoaded;
     }
 
+<<<<<<< HEAD
     public void setHasDueDateHistory(boolean hasDueDateHistory) {
         this.hasDueDateHistory = hasDueDateHistory;
     }
@@ -591,6 +647,8 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
         this.originalHasDueDateHistory = originalHasDueDateHistory;
     }
 
+=======
+>>>>>>> develop-5.1
     public Boolean getOriginalHasFiles() {
         return originalHasFiles;
     }
@@ -615,6 +673,7 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
         return getProp(WorkflowSpecificModel.Props.COMPOUND_WORKFLOW_TITLE);
     }
 
+<<<<<<< HEAD
     public void setCompoundWorkflowComment(String compoundWorkflowComment) {
         setProp(WorkflowSpecificModel.Props.COMPOUND_WORKFLOW_COMMENT, compoundWorkflowComment);
     }
@@ -623,6 +682,8 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
         return getProp(WorkflowSpecificModel.Props.COMPOUND_WORKFLOW_COMMENT);
     }
 
+=======
+>>>>>>> develop-5.1
     public void setOriginalNoderefId(String originalNoderefId) {
         setProp(WorkflowSpecificModel.Props.ORIGINAL_NODEREF_ID, originalNoderefId);
     }

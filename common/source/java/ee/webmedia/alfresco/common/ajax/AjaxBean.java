@@ -1,5 +1,10 @@
 package ee.webmedia.alfresco.common.ajax;
 
+<<<<<<< HEAD
+=======
+import static org.apache.myfaces.shared_impl.renderkit.ViewSequenceUtils.getCurrentSequence;
+
+>>>>>>> develop-5.1
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.Collections;
@@ -23,11 +28,19 @@ import javax.faces.event.PhaseId;
 
 import org.alfresco.repo.content.MimetypeMap;
 import org.alfresco.repo.webdav.WebDAVHelper;
+<<<<<<< HEAD
+=======
+import org.alfresco.service.cmr.lock.UnableToAquireLockException;
+>>>>>>> develop-5.1
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.app.servlet.DownloadContentServlet;
 import org.alfresco.web.app.servlet.ajax.InvokeCommand.ResponseMimetype;
 import org.alfresco.web.ui.common.Utils;
 import org.alfresco.web.ui.common.component.data.UIRichList;
+<<<<<<< HEAD
+=======
+import org.apache.commons.lang.StringUtils;
+>>>>>>> develop-5.1
 import org.apache.myfaces.shared_impl.renderkit.html.HtmlFormRendererBase;
 import org.apache.myfaces.shared_impl.util.RestoreStateUtils;
 import org.apache.myfaces.shared_impl.util.StateUtils;
@@ -39,21 +52,34 @@ import ee.webmedia.alfresco.privilege.service.PrivilegeUtil;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 import flexjson.JSONSerializer;
 
+<<<<<<< HEAD
 /**
  * @author Alar Kvell
  * @author Romet Aidla
  */
 public class AjaxBean implements Serializable {
     private static final long serialVersionUID = 1L;
+=======
+public class AjaxBean implements Serializable {
+    public static final String AJAX_REQUEST_PARAM = "ajaxRequest";
+
+    private static final long serialVersionUID = 1L;
+    private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(AjaxBean.class);
+>>>>>>> develop-5.1
 
     public static final String COMPONENT_CLIENT_ID_PARAM = "componentClientId";
     protected static final String VIEW_NAME_PARAM = "viewName";
     private static final Pattern DATA_CONTAINER_ROW_PATTERN = Pattern.compile(NamingContainer.SEPARATOR_CHAR + "\\d+" + NamingContainer.SEPARATOR_CHAR);
+<<<<<<< HEAD
+=======
+    private static final Pattern DATA_CONTAINER_ROW_DELIMITER_PATTERN = Pattern.compile(NamingContainer.SEPARATOR_CHAR + "(\\d+|" + UIViewRoot.UNIQUE_ID_PREFIX + ")");
+>>>>>>> develop-5.1
 
     // ------------------------------------------------------------------------------
     // AJAX handler methods
 
     @ResponseMimetype(MimetypeMap.MIMETYPE_HTML)
+<<<<<<< HEAD
     public void isFileLocked() throws IOException {
         FacesContext context = FacesContext.getCurrentInstance();
 
@@ -89,6 +115,41 @@ public class AjaxBean implements Serializable {
 
         if (lockOwner != null) {
             out.write(BeanHelper.getUserService().getUserFullName(lockOwner));
+=======
+    public void lockFileManually() throws IOException {
+        FacesContext context = FacesContext.getCurrentInstance();
+        ResponseWriter out = context.getResponseWriter();
+        DocLockService docLockService = BeanHelper.getDocLockService();
+
+        NodeRef fileRef = checkFileLock(context, out, docLockService);
+        if (fileRef == null) {
+            return;
+        }
+
+        try {
+            docLockService.lockFile(fileRef, 3600 * 12, true);
+            BeanHelper.getVersionsService().addVersionLockableAspect(fileRef);
+            BeanHelper.getVersionsService().setVersionLockableAspect(fileRef, false);
+        } catch (UnableToAquireLockException e) {
+            LOG.info("Failed to lock file during AJAX request", e);
+            out.write("LOCKING_FAILED");
+            return;
+        }
+
+        // Update file block state
+        BeanHelper.getFileBlockBean().refresh();
+        // Report success!
+        out.write("LOCKING_SUCCESSFUL");
+    }
+
+    @ResponseMimetype(MimetypeMap.MIMETYPE_HTML)
+    public void isFileLocked() throws IOException {
+        FacesContext context = FacesContext.getCurrentInstance();
+        ResponseWriter out = context.getResponseWriter();
+        DocLockService docLockService = BeanHelper.getDocLockService();
+
+        if (checkFileLock(context, out, docLockService) == null) {
+>>>>>>> develop-5.1
             return;
         }
 
@@ -103,7 +164,16 @@ public class AjaxBean implements Serializable {
         @SuppressWarnings("unchecked")
         Map<String, String> params = context.getExternalContext().getRequestParameterMap();
         String path = params.get("url");
+<<<<<<< HEAD
         Assert.hasLength(path, "url was not found in request");
+=======
+
+        if (StringUtils.isBlank(path)) {
+            // FIXME: this may happen, when session has expired, but why? 
+            return;
+        }
+
+>>>>>>> develop-5.1
         ResponseWriter out = context.getResponseWriter();
         if (!path.contains("/webdav/")) {
             out.write(path);
@@ -134,11 +204,23 @@ public class AjaxBean implements Serializable {
         String viewName = getParam(params, VIEW_NAME_PARAM);
 
         Utils.setRequestValidationDisabled(context);
+<<<<<<< HEAD
 
         // Phase 1: Restore view
         UIViewRoot viewRoot = restoreViewRoot(context, viewName);
 
         setupDataContainer(context, viewRoot, componentClientId);
+=======
+        ResponseWriter out = context.getResponseWriter();
+
+        // Phase 1: Restore view
+        UIViewRoot viewRoot = restoreViewRoot(context, viewName);
+        if (viewRoot == null) {
+            return;
+        }
+
+        UIComponent dataContainer = setupDataContainer(context, viewRoot, componentClientId);
+>>>>>>> develop-5.1
         UIComponent component = ComponentUtil.findChildComponentById(context, viewRoot, componentClientId, true);
         Assert.notNull(component, String.format("Component with clientId=%s was not found", componentClientId));
         UIForm form = Utils.getParentForm(context, component);
@@ -154,7 +236,11 @@ public class AjaxBean implements Serializable {
         RestoreStateUtils.recursivelyHandleComponentReferencesAndSetValid(context, component);
 
         // If we wish to re-render a container and not the element itself, then we need to execute phases on the container
+<<<<<<< HEAD
         UIComponent renderedContainer = getRenderedContainer(context, viewRoot);
+=======
+        UIComponent renderedContainer = getRenderedContainer(context, viewRoot, dataContainer);
+>>>>>>> develop-5.1
         if (renderedContainer == null) {
             renderedContainer = component; // If this is null, just render the component itself.
         }
@@ -217,8 +303,12 @@ public class AjaxBean implements Serializable {
         Utils.encodeRecursive(context, renderedContainer);
 
         String viewState = saveView(context, viewRoot);
+<<<<<<< HEAD
         ResponseWriter out = context.getResponseWriter();
         out.write("VIEWSTATE:" + viewState);
+=======
+        writeViewState(out, viewState);
+>>>>>>> develop-5.1
 
         @SuppressWarnings("unchecked")
         Set<String> formHiddenInputs = (Set<String>) context.getExternalContext().getRequestMap().get(
@@ -230,6 +320,7 @@ public class AjaxBean implements Serializable {
         out.write("HIDDEN_INPUT_NAMES_JSON:" + jsonHiddenInputNames);
     }
 
+<<<<<<< HEAD
     private void setupDataContainer(FacesContext context, UIViewRoot viewRoot, String componentClientId) {
         Matcher matcher = DATA_CONTAINER_ROW_PATTERN.matcher(componentClientId);
         if (!matcher.find()) {
@@ -243,6 +334,38 @@ public class AjaxBean implements Serializable {
             int index = Integer.parseInt(indexString);
             ((UIRichList) dataContainer).setRowIndex(index);
         }
+=======
+    public static void writeViewState(ResponseWriter out, String viewState) throws IOException {
+        out.write("VIEWSTATE:" + viewState);
+    }
+
+    private UIComponent setupDataContainer(FacesContext context, UIViewRoot viewRoot, String componentClientId) {
+        UIComponent dataContainer = null;
+        Matcher rowMatcher = DATA_CONTAINER_ROW_PATTERN.matcher(componentClientId);
+        Matcher delimiterMatcher = DATA_CONTAINER_ROW_DELIMITER_PATTERN.matcher(componentClientId);
+        boolean rowFound = rowMatcher.find();
+        boolean delimiterFound = delimiterMatcher.find();
+
+        if (!rowFound && !delimiterFound) {
+            return dataContainer;
+        }
+
+        String dataContainerClientId = componentClientId.substring(0, rowFound ? rowMatcher.start() : delimiterMatcher.start());
+        dataContainer = ComponentUtil.findChildComponentById(context, viewRoot, dataContainerClientId, false);
+        if (dataContainer instanceof UIRichList && rowFound) {
+            String indexString = componentClientId.substring(rowMatcher.start() + 1, rowMatcher.end() - 1);
+            int index = Integer.parseInt(indexString);
+            ((UIRichList) dataContainer).setRowIndex(index);
+        }
+
+        return dataContainer;
+    }
+
+    protected boolean hasParam(FacesContext context, String paramKey) {
+        @SuppressWarnings("unchecked")
+        Map<String, String> params = context.getExternalContext().getRequestParameterMap();
+        return params.containsKey(paramKey);
+>>>>>>> develop-5.1
     }
 
     protected String getParam(FacesContext context, String paramKey) {
@@ -265,7 +388,69 @@ public class AjaxBean implements Serializable {
     }
 
     protected UIComponent getRenderedContainer(FacesContext context, UIViewRoot viewRoot) {
+<<<<<<< HEAD
         return null;
+=======
+        return getRenderedContainer(context, viewRoot, null);
+    }
+
+    protected UIComponent getRenderedContainer(FacesContext context, @SuppressWarnings("unused") UIViewRoot viewRoot, UIComponent dataContainer) {
+        UIComponent renderedContainer = null;
+        if (dataContainer != null && hasParam(context, AjaxSearchBean.CONTAINER_CLIENT_ID)) {
+            // Check if client requests that the entire data container to be rendered. NB! clientId is not usually available in JS.
+            String containerId = getParam(context, AjaxSearchBean.CONTAINER_CLIENT_ID);
+            String dataContainerClientId = dataContainer.getClientId(context);
+
+            // Remove information about data container rows
+            Matcher matcher = DATA_CONTAINER_ROW_DELIMITER_PATTERN.matcher(dataContainerClientId);
+            if (matcher.find()) {
+                dataContainerClientId = dataContainerClientId.substring(0, matcher.start());
+            }
+
+            if (StringUtils.endsWith(dataContainerClientId, containerId)) {
+                renderedContainer = dataContainer;
+            }
+        }
+
+        return renderedContainer;
+    }
+
+    protected NodeRef checkFileLock(FacesContext context, ResponseWriter out, DocLockService docLockService) throws IOException {
+        @SuppressWarnings("unchecked")
+        Map<String, String> params = context.getExternalContext().getRequestParameterMap();
+        String path = params.get("path");
+        Assert.hasLength(path, "path was not found in request");
+
+        String[] parts = path.split(WebDAVHelper.PathSeperator);
+        String id = parts[parts.length - 2];
+        String filename = parts[parts.length - 1];
+        NodeRef docRef = BeanHelper.getGeneralService().getExistingNodeRefAllStores(id);
+        if (docRef == null) {
+            out.write("DOCUMENT_DELETED");
+            return null;
+        }
+        NodeRef fileRef = BeanHelper.getFileFolderService().searchSimple(docRef, filename);
+        if (fileRef == null) {
+            out.write("FILE_DELETED");
+            return null;
+        }
+
+        // If user cannot edit the document, then output nothing
+        if (Boolean.FALSE.equals(PrivilegeUtil.additionalDocumentFileWritePermission(docRef, BeanHelper.getNodeService()))) {
+            return null;
+        }
+
+        String lockOwner = null;
+        boolean generated = BeanHelper.getFileService().isFileGenerated(fileRef);
+        lockOwner = docLockService.getLockOwnerIfLockedByOther(generated ? docRef : fileRef);
+
+        if (lockOwner != null) {
+            out.write(BeanHelper.getUserService().getUserFullName(lockOwner));
+            return null;
+        }
+
+        return fileRef;
+>>>>>>> develop-5.1
     }
 
     private boolean execute(FacesContext context, UIViewRoot viewRoot, UIComponent component, PhaseExecutor executor) {
@@ -297,12 +482,17 @@ public class AjaxBean implements Serializable {
         boolean execute(FacesContext context, UIViewRoot viewRoot, UIComponent component);
     }
 
+<<<<<<< HEAD
     protected String saveView(FacesContext fc, UIViewRoot viewRoot) {
+=======
+    public static String saveView(FacesContext fc, UIViewRoot viewRoot) {
+>>>>>>> develop-5.1
         StateManager stateManager = fc.getApplication().getStateManager();
         stateManager.saveSerializedView(fc);
         return createViewState(fc, viewRoot);
     }
 
+<<<<<<< HEAD
     protected UIViewRoot restoreViewRoot(FacesContext fc, String viewName) {
         Application application = fc.getApplication();
         ViewHandler viewHandler = application.getViewHandler();
@@ -319,6 +509,39 @@ public class AjaxBean implements Serializable {
         // (not the view state that was used to generate the form).
         // It creates dependency to implementation of HtmlResponseStateManager, but no better solution was found.
         Object[] savedState = new Object[3];
+=======
+    public static UIViewRoot restoreViewRoot(FacesContext fc, String viewName) throws IOException {
+        UIViewRoot viewRoot = null;
+        fc.getExternalContext().getRequestMap().put(AJAX_REQUEST_PARAM, Boolean.TRUE);
+        try {
+            Application application = fc.getApplication();
+            ViewHandler viewHandler = application.getViewHandler();
+            viewRoot = viewHandler.restoreView(fc, viewName);
+            if (viewRoot != null) {
+                fc.setViewRoot(viewRoot);
+            } else {
+                writeViewStateError(fc, null);
+            }
+        } catch (AjaxIllegalViewStateException e) {
+            writeViewStateError(fc, e);
+        }
+        return viewRoot;
+    }
+
+    private static void writeViewStateError(FacesContext fc, AjaxIllegalViewStateException e) throws IOException {
+        ResponseWriter out = fc.getResponseWriter();
+        String currentViewId = e.getCurrentViewId();
+        String currentUrl = BeanHelper.getDocumentTemplateService().getServerUrl() + "/faces" + (currentViewId != null ? currentViewId : "");
+        fc.getResponseWriter().write("ERROR_VIEW_STATE_CHANGED:" + new JSONSerializer().serialize(currentUrl));
+    }
+
+    private static String createViewState(FacesContext fc, UIViewRoot viewRoot) {
+        // See HtmlResponseStateManager#writeState for meaning of different objects in saved state array.
+        // It creates dependency to implementation of HtmlResponseStateManager, but no better solution was found.
+        Object[] savedState = new Object[3];
+        Integer currentSequence = getCurrentSequence(fc);
+        savedState[0] = currentSequence != null ? currentSequence.toString() : null;
+>>>>>>> develop-5.1
         savedState[2] = viewRoot.getViewId();
         return StateUtils.construct(savedState, fc.getExternalContext());
     }

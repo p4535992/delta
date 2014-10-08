@@ -7,8 +7,15 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+<<<<<<< HEAD
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.config.ActionsConfigElement.ActionDefinition;
+=======
+import org.alfresco.service.cmr.repository.InvalidNodeRefException;
+import org.alfresco.web.bean.repository.Node;
+import org.alfresco.web.config.ActionsConfigElement.ActionDefinition;
+import org.apache.commons.lang.StringUtils;
+>>>>>>> develop-5.1
 
 import ee.webmedia.alfresco.classificator.constant.DocTypeAssocType;
 import ee.webmedia.alfresco.common.web.BeanHelper;
@@ -28,8 +35,11 @@ import ee.webmedia.alfresco.workflow.web.WorkflowBlockBean;
 
 /**
  * Block that shows associations of given document/volume/caseFile/case with other documents/volumes/caseFiles/cases
+<<<<<<< HEAD
  * 
  * @author Ats Uiboupin
+=======
+>>>>>>> develop-5.1
  */
 public class AssocsBlockBean implements DocumentDynamicBlock {
     private static final long serialVersionUID = 1L;
@@ -40,6 +50,10 @@ public class AssocsBlockBean implements DocumentDynamicBlock {
     private static final String FOLLOWUPS_METHOD_BINDING_NAME = "#{" + BEAN_NAME + ".createAddFollowupsMenu}";
     private static final String REPLIES_METHOD_BINDING_NAME = "#{" + BEAN_NAME + ".createAddRepliesMenu}";
     private static final String DROPDOWN_MENU_ITEM_ICON = "/images/icons/versioned_properties.gif";
+<<<<<<< HEAD
+=======
+    private static final String DROPDOWN_MENU_SINGLE_ITEM_ICON = "/images/icons/arrow-right.png";
+>>>>>>> develop-5.1
     public static final String PARAM_ASSOC_MODEL_REF = "assocModelRef";
 
     private Node document;
@@ -80,13 +94,30 @@ public class AssocsBlockBean implements DocumentDynamicBlock {
         }
     }
 
+<<<<<<< HEAD
     public String getFollowupAssocsBindingName() {
         try {
             WmNode document = getDocumentFromDialog();// FIXME document should be provided by bean
+=======
+    public int getAssocsCount() {
+        return docAssocInfos.size();
+    }
+
+    public String getFollowupAssocsBindingName() {
+        WmNode document = null;
+        try {
+            document = getDocumentFromDialog();// FIXME document should be provided by bean
+>>>>>>> develop-5.1
             if (new AddFollowUpAssocEvaluator().evaluate(document)) {
                 return FOLLOWUPS_METHOD_BINDING_NAME;
             }
             return null;
+<<<<<<< HEAD
+=======
+        } catch (InvalidNodeRefException ne) {
+            LOG.warn("Node " + document + " in invalid!");
+            return null;
+>>>>>>> develop-5.1
         } catch (RuntimeException e) {
             // Log error here, because JSF EL evaluator does not log detailed error cause
             LOG.error("Error getting followupAssocsBindingName", e);
@@ -109,12 +140,24 @@ public class AssocsBlockBean implements DocumentDynamicBlock {
     }
 
     public String getRepliesAssocsBindingName() {
+<<<<<<< HEAD
         try {
             WmNode document = getDocumentFromDialog();
+=======
+        WmNode document = null;
+        try {
+            document = getDocumentFromDialog();
+>>>>>>> develop-5.1
             if (new AddReplyAssocEvaluator().evaluate(document)) {
                 return REPLIES_METHOD_BINDING_NAME;
             }
             return null;
+<<<<<<< HEAD
+=======
+        } catch (InvalidNodeRefException ne) {
+            LOG.warn("Node " + document + " in invalid!");
+            return null;
+>>>>>>> develop-5.1
         } catch (RuntimeException e) {
             // Log error here, because JSF EL evaluator does not log detailed error cause
             LOG.error("Error getting repliesAssocsBindingName", e);
@@ -123,6 +166,7 @@ public class AssocsBlockBean implements DocumentDynamicBlock {
     }
 
     public List<ActionDefinition> createAddFollowupsMenu(@SuppressWarnings("unused") String nodeTypeId) {
+<<<<<<< HEAD
         return initCreateAddAssocMenu(DocTypeAssocType.FOLLOWUP);
     }
 
@@ -131,6 +175,43 @@ public class AssocsBlockBean implements DocumentDynamicBlock {
     }
 
     private List<ActionDefinition> initCreateAddAssocMenu(DocTypeAssocType docTypeAssocType) {
+=======
+        return initCreateAddAssocMenu(DocTypeAssocType.FOLLOWUP, "document_addFollowUp");
+    }
+
+    public List<ActionDefinition> createAddRepliesMenu(@SuppressWarnings("unused") String nodeTypeId) {
+        return initCreateAddAssocMenu(DocTypeAssocType.REPLY, "document_addReply");
+    }
+
+    public int getAddFollowupsMenuSize() {
+        return getCreateAddAssocMenuSize(DocTypeAssocType.FOLLOWUP);
+    }
+
+    public int getAddRepliesMenuSize() {
+        return getCreateAddAssocMenuSize(DocTypeAssocType.REPLY);
+    }
+
+    private int getCreateAddAssocMenuSize(DocTypeAssocType docTypeAssocType) {
+        int size = 0;
+        DocumentType documentType = BeanHelper.getDocumentDynamicDialog().getDocumentType();
+        if (documentType == null) {
+            return size;
+        }
+        List<? extends AssociationModel> assocs = documentType.getAssociationModels(docTypeAssocType);
+        for (AssociationModel assocModel : assocs) {
+            String docTypeId = assocModel.getDocType();
+            if (docTypeAssocType == DocTypeAssocType.FOLLOWUP
+                    && (SystematicDocumentType.REPORT.isSameType(docTypeId) || SystematicDocumentType.ERRAND_ORDER_ABROAD.isSameType(docTypeId))) {
+                continue;
+            }
+            size++;
+        }
+
+        return size;
+    }
+
+    private List<ActionDefinition> initCreateAddAssocMenu(DocTypeAssocType docTypeAssocType, String defaultLabelMsg) {
+>>>>>>> develop-5.1
         DocumentType documentType = BeanHelper.getDocumentDynamicDialog().getDocumentType();
         if (documentType == null) {
             return Collections.emptyList();
@@ -152,6 +233,17 @@ public class AssocsBlockBean implements DocumentDynamicBlock {
 
             actionDefinitions.add(actionDefinition);
         }
+<<<<<<< HEAD
+=======
+
+        if (actionDefinitions.size() == 1 && StringUtils.isNotBlank(defaultLabelMsg)) {
+            ActionDefinition actionDefinition = actionDefinitions.get(0);
+            actionDefinition.Label = null;
+            actionDefinition.LabelMsg = defaultLabelMsg;
+            actionDefinition.Image = DROPDOWN_MENU_SINGLE_ITEM_ICON;
+        }
+
+>>>>>>> develop-5.1
         return actionDefinitions;
     }
 

@@ -54,6 +54,10 @@ import ee.webmedia.alfresco.classificator.enums.TemplateReportOutputType;
 import ee.webmedia.alfresco.classificator.enums.TemplateReportType;
 import ee.webmedia.alfresco.classificator.enums.VolumeType;
 import ee.webmedia.alfresco.common.service.GeneralService;
+<<<<<<< HEAD
+=======
+import ee.webmedia.alfresco.common.web.BeanHelper;
+>>>>>>> develop-5.1
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
@@ -88,9 +92,12 @@ import ee.webmedia.alfresco.workflow.service.Task;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
 import ee.webmedia.alfresco.workflow.service.type.WorkflowType;
 
+<<<<<<< HEAD
 /**
  * @author Riina Tens
  */
+=======
+>>>>>>> develop-5.1
 public class ReportServiceImpl implements ReportService {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(ReportServiceImpl.class);
     private static final int EXCEL_SHEET_MAX_ROWS = 1048576;
@@ -155,11 +162,37 @@ public class ReportServiceImpl implements ReportService {
     }
 
     @Override
+<<<<<<< HEAD
+=======
+    public NodeRef createCsvReportResult(NodeRef nodeRef) {
+        Map<QName, Serializable> reportResultProps = new HashMap<QName, Serializable>();
+        String reportName = MessageUtil.getMessage("report_consolidated_list_default_title");
+        reportResultProps.put(ReportModel.Props.USERNAME, userService.getCurrentUserName());
+        reportResultProps.put(ReportModel.Props.REPORT_NAME, reportName);
+        reportResultProps.put(ReportModel.Props.REPORT_TYPE, TemplateReportType.CONSOLIDATED_LIST.toString());
+        reportResultProps.put(ReportModel.Props.USER_START_DATE_TIME, new Date());
+        reportResultProps.put(ReportModel.Props.STATUS, ReportStatus.IN_QUEUE.toString());
+        reportResultProps.put(ReportModel.Props.CSV_FUNCTION_STORE_NODE_REF, nodeRef);
+
+        NodeRef reportResultRef = nodeService.createNode(getReportsSpaceRef(), ReportModel.Assocs.REPORT_RESULT,
+                ReportModel.Assocs.REPORT_RESULT, ReportModel.Types.REPORT_RESULT, reportResultProps).getChildRef();
+        return reportResultRef;
+    }
+
+    @Override
+>>>>>>> develop-5.1
     public ReportDataCollector getReportFileInMemory(ReportDataCollector reportDataCollector) {
         NodeRef reportResultRef = reportDataCollector.getReportResultNodeRef();
         Map<QName, Serializable> reportResultProps = reportDataCollector.getReportResultProps();
         String reportTypeStr = (String) reportResultProps.get(ReportModel.Props.REPORT_TYPE);
         TemplateReportType reportType = TemplateReportType.valueOf(reportTypeStr);
+<<<<<<< HEAD
+=======
+        if (TemplateReportType.CONSOLIDATED_LIST == reportType) {
+            NodeRef functionsRoot = (NodeRef) reportResultProps.get(ReportModel.Props.CSV_FUNCTION_STORE_NODE_REF);
+            return createCsvFileInMemory(reportDataCollector, functionsRoot);
+        }
+>>>>>>> develop-5.1
         List<ChildAssociationRef> filters = nodeService.getChildAssocs(reportResultRef, Collections.singleton(ReportHelper.getFilterAssoc(reportType)));
         Assert.isTrue(filters != null && filters.size() == 1, "reportResult must have exactly one taskReportFilter child node!");
         Node filter = new Node(filters.get(0).getChildRef());
@@ -222,6 +255,17 @@ public class ReportServiceImpl implements ReportService {
         }
     }
 
+<<<<<<< HEAD
+=======
+    private ReportDataCollector createCsvFileInMemory(ReportDataCollector reportDataCollector, NodeRef rootRef) {
+        Map<QName, Serializable> resultProps = BeanHelper.getDocumentListService().exportCsv(rootRef, reportDataCollector.getReportResultNodeRef());
+        reportDataCollector.addReportResultProps(resultProps);
+        reportDataCollector.setEncoding("UTF-8");
+        reportDataCollector.setResultStatus(ReportStatus.FINISHED);
+        return reportDataCollector;
+    }
+
+>>>>>>> develop-5.1
     @Override
     public void doPauseReportGeneration() {
         while (reportGenerationPaused) {
@@ -370,6 +414,12 @@ public class ReportServiceImpl implements ReportService {
             }
             reportResultProps.put(ReportModel.Props.RUN_FINISH_START_TIME, completeDate);
         }
+<<<<<<< HEAD
+=======
+        else if (TemplateReportType.CONSOLIDATED_LIST.name().equals(reportDataProvider.getReportResultProps().get(ReportModel.Props.REPORT_TYPE))) {
+            reportResultProps.put(ReportModel.Props.RUN_FINISH_START_TIME, completeDate);
+        }
+>>>>>>> develop-5.1
         reportResultProps.put(ReportModel.Props.STATUS, resultStatus.toString());
         if (ReportStatus.CANCELLED.equals(resultStatus)) {
             reportResultProps.put(ReportModel.Props.CANCEL_DATE_TIME, completeDate);
@@ -453,9 +503,17 @@ public class ReportServiceImpl implements ReportService {
         NodeRef reportResultRef = reportNode.getNodeRef();
         String reportTypeStr = (String) reportProps.get(ReportModel.Props.REPORT_TYPE);
         TemplateReportType reportType = TemplateReportType.valueOf(reportTypeStr);
+<<<<<<< HEAD
         List<ChildAssociationRef> filters = nodeService.getChildAssocs(reportResultRef, Collections.singleton(ReportHelper.getFilterType(reportType)));
         if (filters != null && !filters.isEmpty()) {
             reportResult.setTemplateName((String) nodeService.getProperty(filters.get(0).getChildRef(), ReportHelper.getTemplateNameProp(reportType)));
+=======
+        if (!TemplateReportType.CONSOLIDATED_LIST.name().equals(reportTypeStr)) {
+            List<ChildAssociationRef> filters = nodeService.getChildAssocs(reportResultRef, Collections.singleton(ReportHelper.getFilterType(reportType)));
+            if (filters != null && !filters.isEmpty()) {
+                reportResult.setTemplateName((String) nodeService.getProperty(filters.get(0).getChildRef(), ReportHelper.getTemplateNameProp(reportType)));
+            }
+>>>>>>> develop-5.1
         }
         NodeRef reportResultFileRef = getReportResultFile(reportResultRef);
         if (reportResultFileRef != null) {
@@ -565,7 +623,11 @@ public class ReportServiceImpl implements ReportService {
         for (Object listElement : value) {
             if (listElement != null && isAllBlank) {
                 isAllBlank = false;
+<<<<<<< HEAD
             }            
+=======
+            }
+>>>>>>> develop-5.1
             if (listElement instanceof String) {
                 isString = true;
                 break;
@@ -716,7 +778,17 @@ public class ReportServiceImpl implements ReportService {
             }
             setCellValueTruncateIfNeeded(row.createCell(cellIndex++), formatBoolean(task.isResponsible()), LOG);
             setCellValueTruncateIfNeeded(row.createCell(cellIndex++), formatDateOrEmpty(DATE_FORMAT, task.getStoppedDateTime()), LOG);
+<<<<<<< HEAD
             setCellValueTruncateIfNeeded(row.createCell(cellIndex++), task.getResolution(), LOG);
+=======
+            String taskResolution;
+            if (task.isType(WorkflowSpecificModel.Types.DUE_DATE_EXTENSION_TASK)) {
+                taskResolution = MessageUtil.getMessage("task_search_due_date_extension_task_resolution", task.getProposedDueDateStr(), task.getWorkflowResolution());
+            } else {
+                taskResolution = task.getResolution();
+            }
+            setCellValueTruncateIfNeeded(row.createCell(cellIndex++), taskResolution, LOG);
+>>>>>>> develop-5.1
             setCellValueTruncateIfNeeded(row.createCell(cellIndex++), isAfterDate(task.getCompletedDateTime(), task.getDueDate()) ? "jah" : "ei", LOG);
             setCellValueTruncateIfNeeded(row.createCell(cellIndex++), task.getStatus(), LOG);
             setCellValueTruncateIfNeeded(row.createCell(cellIndex++), document != null ? document.getFunctionLabel() : "", LOG);
@@ -733,7 +805,10 @@ public class ReportServiceImpl implements ReportService {
             setCellValueTruncateIfNeeded(row.createCell(cellIndex++), compoundWorkflow != null ? compoundWorkflow.getStartedDateStr() : "", LOG);
             setCellValueTruncateIfNeeded(row.createCell(cellIndex++), compoundWorkflow != null ? compoundWorkflow.getStoppedDateStr() : "", LOG);
             setCellValueTruncateIfNeeded(row.createCell(cellIndex++), compoundWorkflow != null ? compoundWorkflow.getEndedDateStr() : "", LOG);
+<<<<<<< HEAD
             setCellValueTruncateIfNeeded(row.createCell(cellIndex++), compoundWorkflow != null ? compoundWorkflow.getComment() : "", LOG);
+=======
+>>>>>>> develop-5.1
             setCellValueTruncateIfNeeded(row.createCell(cellIndex++), compoundWorkflow != null ? compoundWorkflow.getStatus() : "", LOG);
             setCellValueTruncateIfNeeded(row.createCell(cellIndex++), compoundWorkflow != null ? compoundWorkflow.getNumberOfDocumentsStr() : "", LOG);
         }
@@ -1104,8 +1179,13 @@ public class ReportServiceImpl implements ReportService {
             }
         }
 
+<<<<<<< HEAD
         private boolean isNotEmptyList(List<String> costManagers) {
             return costManagers != null && !document.getCostManagers().isEmpty();
+=======
+        private boolean isNotEmptyList(List<String> list) {
+            return list != null && !list.isEmpty();
+>>>>>>> develop-5.1
         }
 
         @Override

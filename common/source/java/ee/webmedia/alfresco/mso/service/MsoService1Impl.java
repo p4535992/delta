@@ -33,9 +33,12 @@ import ee.webmedia.alfresco.utils.CalendarUtil;
 import ee.webmedia.alfresco.utils.ContentReaderDataSource;
 import ee.webmedia.alfresco.utils.MimeUtil;
 
+<<<<<<< HEAD
 /**
  * @author Alar Kvell
  */
+=======
+>>>>>>> develop-5.1
 public class MsoService1Impl implements MsoService, InitializingBean {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(MsoService1Impl.class);
 
@@ -56,7 +59,11 @@ public class MsoService1Impl implements MsoService, InitializingBean {
             log.info("Mso service endpoint address not set");
             return;
         }
+<<<<<<< HEAD
 
+=======
+        System.setProperty("org.apache.cxf.stax.allowInsecureParser", "true");
+>>>>>>> develop-5.1
         log.info("Initializing Mso service port");
         Mso port = (new ee.webmedia.alfresco.mso.ws.MsoService()).getMsoPort();
         BindingProvider bp = (BindingProvider) port;
@@ -189,11 +196,19 @@ public class MsoService1Impl implements MsoService, InitializingBean {
     }
 
     @Override
+<<<<<<< HEAD
     public void replaceFormulas(Map<String, String> formulas, ContentReader documentReader, ContentWriter documentWriter) throws Exception {
         try {
             MsoDocumentAndFormulasInput input = replaceFormulasPrepare(formulas, documentReader);
             if (input == null) {
                 return;
+=======
+    public boolean replaceFormulas(Map<String, String> formulas, ContentReader documentReader, ContentWriter documentWriter, boolean dontSaveIfUnmodified) throws Exception {
+        try {
+            MsoDocumentAndFormulasInput input = replaceFormulasPrepare(formulas, documentReader);
+            if (input == null) {
+                return false;
+>>>>>>> develop-5.1
             }
 
             long duration = -1;
@@ -215,7 +230,11 @@ public class MsoService1Impl implements MsoService, InitializingBean {
                 documentWriter.setMimetype(outputMimeType);
                 documentWriter.setEncoding(pair.getSecond());
                 documentWriter.putContent(output.getDocumentFile().getInputStream());
+<<<<<<< HEAD
 
+=======
+                return true;
+>>>>>>> develop-5.1
             } finally {
                 log.info("PERFORMANCE: query mso1.replaceFormulas - " + duration + " ms|" + documentReader.getSize() + "|" + documentReader.getMimetype() + "|"
                         + documentReader.getEncoding() + "|" + documentWriter.getSize() + "|" + formulas.size());

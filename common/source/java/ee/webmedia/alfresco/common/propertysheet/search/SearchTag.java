@@ -12,8 +12,11 @@ import org.apache.commons.lang.StringUtils;
 
 /**
  * JSF tag for Search.
+<<<<<<< HEAD
  * 
  * @author Romet Aidla
+=======
+>>>>>>> develop-5.1
  */
 public class SearchTag extends UIComponentTag {
     private String value;
@@ -31,6 +34,10 @@ public class SearchTag extends UIComponentTag {
     private String searchLinkLabel;
     private String searchLinkTooltip;
     private String converter;
+<<<<<<< HEAD
+=======
+    private Boolean renderPlain;
+>>>>>>> develop-5.1
 
     @Override
     public String getComponentType() {
@@ -95,6 +102,12 @@ public class SearchTag extends UIComponentTag {
         if (filters != null) {
             attributes.put(Search.FILTERS_KEY, filters);
         }
+<<<<<<< HEAD
+=======
+        if (renderPlain != null) {
+            attributes.put(Search.RENDER_PLAIN, renderPlain);
+        }
+>>>>>>> develop-5.1
     }
 
     @Override
@@ -110,6 +123,10 @@ public class SearchTag extends UIComponentTag {
         readonly = null;
         ajaxParentLevel = null;
         converter = null;
+<<<<<<< HEAD
+=======
+        renderPlain = null;
+>>>>>>> develop-5.1
     }
 
     public void setValue(String value) {
@@ -191,4 +208,16 @@ public class SearchTag extends UIComponentTag {
     public void setTextarea(Boolean textarea) {
         this.textarea = textarea;
     }
+<<<<<<< HEAD
+=======
+
+    public Boolean getRenderPlain() {
+        return renderPlain;
+    }
+
+    public void setRenderPlain(Boolean renderPlain) {
+        this.renderPlain = renderPlain;
+    }
+
+>>>>>>> develop-5.1
 }

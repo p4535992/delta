@@ -8,7 +8,10 @@ import ee.webmedia.alfresco.common.web.BeanHelper;
  * Evaluator for whether EventPlan Delete button is visible.
  * 
  * @see EventPlanDialog
+<<<<<<< HEAD
  * @author Martti Tamm
+=======
+>>>>>>> develop-5.1
  */
 public class EventPlanDeleteEvaluator extends BaseActionEvaluator {
 

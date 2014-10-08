@@ -12,9 +12,12 @@ import javax.faces.context.ResponseWriter;
 import org.alfresco.web.ui.common.renderer.BaseRenderer;
 import org.apache.commons.lang.StringUtils;
 
+<<<<<<< HEAD
 /**
  * @author Keit Tehvan
  */
+=======
+>>>>>>> develop-5.1
 public class UserSearchViewModeRenderer extends BaseRenderer {
     public static final String RENDERER_TYPE = UserSearchViewModeRenderer.class.getCanonicalName();
 

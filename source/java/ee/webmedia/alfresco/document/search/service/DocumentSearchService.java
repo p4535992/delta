@@ -11,6 +11,10 @@ import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
+<<<<<<< HEAD
+=======
+import org.springframework.jdbc.core.RowMapper;
+>>>>>>> develop-5.1
 
 import ee.webmedia.alfresco.archivals.web.ArchivalActivity;
 import ee.webmedia.alfresco.casefile.service.CaseFile;
@@ -25,8 +29,13 @@ import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
 import ee.webmedia.alfresco.workflow.service.Task;
 
 /**
+<<<<<<< HEAD
  * @author Alar Kvell
  * @author Erko Hansar
+=======
+ * Note: Use method names that start with "query" for methods that require a read-write transaction.
+ * Methods names that start with "search" are by default made in read-only transaction unless specifically declared otherwise.
+>>>>>>> develop-5.1
  */
 public interface DocumentSearchService {
 
@@ -51,7 +60,11 @@ public interface DocumentSearchService {
      * @param limited
      * @return list of matching documents (max 100 entries)
      */
+<<<<<<< HEAD
     Pair<List<Document>, Boolean> searchDocumentsQuick(String searchString, NodeRef containerNodeRef, int limit);
+=======
+    Pair<List<Document>, Boolean> quickSearchDocuments(String searchString, NodeRef containerNodeRef, int limit);
+>>>>>>> develop-5.1
 
     public List<AssocBlockObject> searchAssocObjects(Node objectFilter);
 
@@ -64,9 +77,15 @@ public interface DocumentSearchService {
      * @param filter
      * @return list of matching documents (max 100 entries)
      */
+<<<<<<< HEAD
     Pair<List<Document>, Boolean> searchDocuments(Node filter, int limit);
 
     Pair<List<VolumeOrCaseFile>, Boolean> searchVolumes(Node filter, int limit);
+=======
+    Pair<List<Document>, Boolean> queryDocuments(Node filter, int limit);
+
+    Pair<List<VolumeOrCaseFile>, Boolean> queryVolumes(Node filter, int limit);
+>>>>>>> develop-5.1
 
     /**
      * Searches for documents using a search filter.
@@ -92,6 +111,14 @@ public interface DocumentSearchService {
     Map<NodeRef, Pair<String, String>> searchOutboxDvkIds();
 
     /**
+<<<<<<< HEAD
+=======
+     * @return {@code Map<sendInfoNodeRef, Pair<dvkId, recipientRegNr>> }
+     */
+    Map<NodeRef, Pair<String, String>> searchUnopenedAditDocs();
+
+    /**
+>>>>>>> develop-5.1
      * Fetches list of documents where ownerId = logged in userId and (
      * (docType = incomingLetter* && dokumendi regNumber = null)
      * OR
@@ -152,7 +179,13 @@ public interface DocumentSearchService {
      * 
      * @param taskType
      */
+<<<<<<< HEAD
     List<Task> searchCurrentUsersTasksInProgress(QName taskType);
+=======
+    List<Task> searchCurrentUsersTasksInProgress(QName... taskType);
+
+    <T extends Object> List<T> searchCurrentUsersTasksInProgress(RowMapper<T> rowMapper, QName... taskType);
+>>>>>>> develop-5.1
 
     List<Task> searchCurrentUsersTaskInProgressWithoutParents(QName taskType, boolean allStoresSearch);
 
@@ -165,12 +198,35 @@ public interface DocumentSearchService {
     int getCurrentUsersTaskCount(QName taskType);
 
     /**
+<<<<<<< HEAD
+=======
+     * Returns number of unseen tasks assigned to currently logged in user
+     * 
+     * @param taskTypes task types to count
+     * @return count
+     */
+    int getCurrentUsersUnseenTasksCount(QName[] taskTypes);
+
+    /**
+     * Counts number of in progress tasks for current user by task type.
+     * 
+     * @param taskType task types that should be counted
+     * @return A map where task type is key and number of tasks is value.
+     */
+    Map<QName, Integer> getCurrentUserTaskCountByType(QName... taskType);
+
+    /**
+>>>>>>> develop-5.1
      * Searches for tasks using a search filter.
      * 
      * @param filter
      * @return list of matching tasks
      */
+<<<<<<< HEAD
     Pair<List<TaskInfo>, Boolean> searchTasks(Node filter, int limit);
+=======
+    Pair<List<TaskInfo>, Boolean> queryTasks(Node filter, int limit);
+>>>>>>> develop-5.1
 
     /**
      * Searches for compoundWorkflows using a search filter.
@@ -178,7 +234,11 @@ public interface DocumentSearchService {
      * @param filter
      * @return list of matching compound workflows
      */
+<<<<<<< HEAD
     Pair<List<CompoundWorkflow>, Boolean> searchCompoundWorkflows(Node filter, int limit);
+=======
+    Pair<List<CompoundWorkflow>, Boolean> queryCompoundWorkflows(Node filter, int limit);
+>>>>>>> develop-5.1
 
     /**
      * Searches for tasks using a search filter.
@@ -292,6 +352,11 @@ public interface DocumentSearchService {
 
     int getDiscussionDocumentsCount();
 
+<<<<<<< HEAD
+=======
+    NodeRef searchOrganizationNodeRef(String orgEmail, String orgName);
+
+>>>>>>> develop-5.1
     List<Document> searchDueContracts();
 
     List<StoreRef> getStoresFromDocumentReportFilter(Map<String, Object> properties);
@@ -318,6 +383,11 @@ public interface DocumentSearchService {
 
     List<NodeRef> searchAdrDeletedDocument(NodeRef originalDocumentRef);
 
+<<<<<<< HEAD
+=======
+    String generateAdrDocumentSearchQuery(List<String> queryParts, Set<String> documentTypeIds);
+
+>>>>>>> develop-5.1
     Pair<List<NodeRef>, Boolean> searchAllDocumentsByParentRef(NodeRef parentRef, int limit);
 
     NodeRef searchLinkedReviewTaskByOriginalNoderefId(String noderefId);
@@ -344,4 +414,9 @@ public interface DocumentSearchService {
 
     List<NodeRef> searchNodesByTypeAndProps(String input, QName type, Set<QName> props, int limit, String queryAndAddition);
 
+<<<<<<< HEAD
+=======
+    boolean isFieldByOriginalIdExists(String fieldId);
+
+>>>>>>> develop-5.1
 }

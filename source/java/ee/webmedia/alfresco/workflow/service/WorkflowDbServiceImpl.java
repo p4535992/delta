@@ -2,6 +2,10 @@ package ee.webmedia.alfresco.workflow.service;
 
 import static ee.webmedia.alfresco.common.search.DbSearchUtil.TASK_TYPE_FIELD;
 import static ee.webmedia.alfresco.common.search.DbSearchUtil.getDbFieldNameFromPropQName;
+<<<<<<< HEAD
+=======
+import static ee.webmedia.alfresco.common.search.DbSearchUtil.getQuestionMarks;
+>>>>>>> develop-5.1
 import static ee.webmedia.alfresco.utils.RepoUtil.isSaved;
 import static ee.webmedia.alfresco.workflow.service.Task.INITIATING_COMPOUND_WORKFLOW_REF;
 import static ee.webmedia.alfresco.workflow.service.Task.INITIATING_COMPOUND_WORKFLOW_TITLE;
@@ -35,9 +39,15 @@ import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
+<<<<<<< HEAD
 import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
+=======
+import org.apache.commons.lang.StringUtils;
+import org.springframework.jdbc.core.BatchPreparedStatementSetter;
+import org.springframework.jdbc.core.RowMapper;
+>>>>>>> develop-5.1
 import org.springframework.jdbc.core.simple.ParameterizedRowMapper;
 import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
 import org.springframework.util.Assert;
@@ -57,23 +67,37 @@ import ee.webmedia.alfresco.utils.SearchUtil;
 import ee.webmedia.alfresco.utils.TextUtil;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
 import ee.webmedia.alfresco.workflow.bootstrap.MoveTaskFileToChildAssoc;
+<<<<<<< HEAD
+=======
+import ee.webmedia.alfresco.workflow.model.Comment;
+>>>>>>> develop-5.1
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 import ee.webmedia.alfresco.workflow.service.type.WorkflowType;
 
 /**
  * Main implementation of {@link WorkflowDbService}. This class does not rely on Alfresco, and exchanges data with the database using JDBC(Template) directly.
+<<<<<<< HEAD
  * 
  * @author Riina Tens
+=======
+>>>>>>> develop-5.1
  */
 public class WorkflowDbServiceImpl implements WorkflowDbService {
 
     private static final String IS_SEARCHABLE_FIELD = "is_searchable";
     private static final String INDEX_IN_WORKFLOW_FIELD = "index_in_workflow";
     private static final String TASK_ID_FIELD = "task_id";
+<<<<<<< HEAD
     private static final String DUE_DATE_HISTORY_FIELD = "has_due_date_history";
     private static final String WORKFLOW_ID_KEY = "workflow_id";
     private static final String STORE_ID_FIELD = "store_id";
+=======
+    private static final String WORKFLOW_ID_KEY = "workflow_id";
+    private static final String STORE_ID_FIELD = "store_id";
+    private static final String INITIATING_COMPOUND_WORKFLOW_ID_KEY = "initiating_compound_workflow_id";
+    private static final String INITIATING_COMPOUND_WORKFLOW_STORE_ID_KEY = "initiating_compound_workflow_store_id";
+>>>>>>> develop-5.1
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(WorkflowDbServiceImpl.class);
     private static final List<QName> NOT_SENT_TO_REPO_PROPS = Arrays.asList(QName.createQName(WorkflowCommonModel.URI, "creatorId"),
             QName.createQName(WorkflowCommonModel.URI, "creatorEmail"), MoveTaskFileToChildAssoc.TASK_FILE_PROP_QNAME);
@@ -87,9 +111,15 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
     private GeneralService generalService;
 
     static {
+<<<<<<< HEAD
         TRANSIENT_PROPS.put("initiating_compound_workflow_id", INITIATING_COMPOUND_WORKFLOW_REF);
         TRANSIENT_PROPS.put("initiating_compound_workflow_title", INITIATING_COMPOUND_WORKFLOW_TITLE);
         TRANSIENT_PROPS.put("initiating_compound_workflow_store_id", null);
+=======
+        TRANSIENT_PROPS.put(INITIATING_COMPOUND_WORKFLOW_ID_KEY, INITIATING_COMPOUND_WORKFLOW_REF);
+        TRANSIENT_PROPS.put("initiating_compound_workflow_title", INITIATING_COMPOUND_WORKFLOW_TITLE);
+        TRANSIENT_PROPS.put(INITIATING_COMPOUND_WORKFLOW_STORE_ID_KEY, null);
+>>>>>>> develop-5.1
     }
 
     @Override
@@ -116,7 +146,32 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
         }
         arguments.add(task.getNodeRef().getId());
         updateTaskEntry(fieldNamesAndArguments.getFirst(), arguments, task.getNodeRef());
+<<<<<<< HEAD
         task.setOriginalHasDueDateHistory(task.getHasDueDateHistory());
+=======
+    }
+
+	@Override
+    public void updateTaskEntryIgnoringParent(Task task, Map<QName, Serializable> changedProps) {
+        Pair<List<String>, List<Object>> fieldNamesAndArguments = getFieldNamesAndArguments(task, null, changedProps);
+        List<String> fieldNames = fieldNamesAndArguments.getFirst();
+        List<Object> arguments = fieldNamesAndArguments.getSecond();
+        arguments.add(task.getNodeRef().getId());
+        int workflowIdIndex = fieldNames.indexOf(WORKFLOW_ID_KEY);
+
+        if (workflowIdIndex > -1) {
+            arguments.remove(workflowIdIndex);
+            fieldNames.remove(workflowIdIndex);
+        }
+        updateTaskEntry(fieldNames, arguments, task.getNodeRef());
+    }
+
+    @Override
+    public void updateTaskSingleProperty(Task task, QName key, Serializable value) {
+        Map<QName, Serializable> changedProps = new HashMap<QName, Serializable>();
+        changedProps.put(key, value);
+        updateTaskEntry(task, changedProps);
+>>>>>>> develop-5.1
     }
 
     @Override
@@ -294,12 +349,15 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
         return getQuestionMarks(fieldNames.size());
     }
 
+<<<<<<< HEAD
     private String getQuestionMarks(int size) {
         String questionMarks = StringUtils.repeat("?, ", size);
         questionMarks = questionMarks.substring(0, questionMarks.length() - 2);
         return questionMarks;
     }
 
+=======
+>>>>>>> develop-5.1
     private void verifyTask(Task task, NodeRef workflowRef) {
         Assert.notNull(task);
         Workflow workflow = task.getParent();
@@ -324,10 +382,13 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
             fieldNames.add(INDEX_IN_WORKFLOW_FIELD);
             arguments.add(taskIndexInWorkflow);
         }
+<<<<<<< HEAD
         if (!ObjectUtils.equals(task.getHasDueDateHistory(), task.getOriginalHasDueDateHistory())) {
             fieldNames.add(DUE_DATE_HISTORY_FIELD);
             arguments.add(task.getHasDueDateHistory());
         }
+=======
+>>>>>>> develop-5.1
         getPropFieldNamesAndArguments(fieldNames, arguments, changedProps);
         return new Pair<List<String>, List<Object>>(fieldNames, arguments);
     }
@@ -340,7 +401,11 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
             @SuppressWarnings("unchecked")
             Map.Entry<QName, Serializable> entry = (Map.Entry<QName, Serializable>) entryObj;
             @SuppressWarnings({ "cast" })
+<<<<<<< HEAD
             QName propName = (QName) entry.getKey();
+=======
+            QName propName = entry.getKey();
+>>>>>>> develop-5.1
             if (!WorkflowCommonModel.URI.equals(propName.getNamespaceURI()) && !WorkflowSpecificModel.URI.equals(propName.getNamespaceURI())) {
                 continue;
             }
@@ -393,18 +458,52 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
     }
 
     @Override
+<<<<<<< HEAD
     public Pair<List<Task>, Boolean> searchTasksMainStore(String queryCondition, List<Object> arguments, int limit) {
         return searchTasks(queryCondition, arguments, limit, BeanHelper.getGeneralService().getStore());
+=======
+    public List<NodeRef> getWorkflowTaskNodeRefs(NodeRef workflowRef) {
+        String sqlQuery = "SELECT task_id, store_id FROM delta_task where workflow_id=? ORDER BY index_in_workflow";
+        String parentId = workflowRef.getId();
+        List<NodeRef> taskRefs = jdbcTemplate.query(sqlQuery, new ParameterizedRowMapper<NodeRef>() {
+
+            @Override
+            public NodeRef mapRow(ResultSet rs, int rowNum) throws SQLException {
+                return nodeRefFromRs(rs, TASK_ID_FIELD);
+            }
+        }, parentId);
+        explainQuery(sqlQuery, parentId);
+        return taskRefs;
+    }
+
+    @Override
+    public Pair<List<Task>, Boolean> searchTasksMainStore(String queryCondition, List<Object> arguments, int limit) {
+        return searchTasks(queryCondition, arguments, limit, BeanHelper.getGeneralService().getStore(), null);
+>>>>>>> develop-5.1
     }
 
     @Override
     public Pair<List<Task>, Boolean> searchTasksAllStores(String queryCondition, List<Object> arguments, int limit) {
+<<<<<<< HEAD
         return searchTasks(queryCondition, arguments, limit, null);
     }
 
     private Pair<List<Task>, Boolean> searchTasks(String queryCondition, List<Object> arguments, int limit, StoreRef storeRef) {
         if (StringUtils.isBlank(queryCondition)) {
             return new Pair<List<Task>, Boolean>(new ArrayList<Task>(), Boolean.FALSE);
+=======
+        return searchTasks(queryCondition, arguments, limit, null, null);
+    }
+
+    @Override
+    public <T extends Object> Pair<List<T>, Boolean> searchTasksAllStores(String queryCondition, List<Object> arguments, int limit, RowMapper<T> rowMapper) {
+        return searchTasks(queryCondition, arguments, limit, null, rowMapper);
+    }
+
+    private <T extends Object> Pair<List<T>, Boolean> searchTasks(String queryCondition, List<Object> arguments, int limit, StoreRef storeRef, RowMapper<T> rowMapper) {
+        if (StringUtils.isBlank(queryCondition)) {
+            return new Pair<List<T>, Boolean>(new ArrayList<T>(), Boolean.FALSE);
+>>>>>>> develop-5.1
         }
         arguments.add(0, Boolean.TRUE);
         boolean hasStoreRef = storeRef != null;
@@ -419,17 +518,39 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
         }
         boolean limited = limit > -1;
         if (limited) {
+<<<<<<< HEAD
             arguments.add(limit + 1);
         }
         TaskRowMapper taskRowMapper = new TaskRowMapper(null, null, null, BeanHelper.getWorkflowService().getTaskPrefixedQNames(), null, null, false, limited);
+=======
+            arguments.add(limit);
+        }
+        RowMapper<T> taskRowMapper;
+        if (rowMapper != null) {
+            taskRowMapper = rowMapper;
+        } else {
+            taskRowMapper = new TaskRowMapper(null, null, null, BeanHelper.getWorkflowService().getTaskPrefixedQNames(), null, null, false, limited);
+        }
+>>>>>>> develop-5.1
         String sqlQuery = "SELECT delta_task.* "
                 + (limited ? ", count(*) OVER() AS full_count " : "") + " FROM delta_task WHERE "
                 + SearchUtil.joinQueryPartsAnd(" is_searchable=? ", "store_id IN (" + getQuestionMarks(storeRefs.size()) + ")", queryCondition)
                 + (limited ? " LIMIT ? " : "");
         Object[] argumentsArray = arguments.toArray();
+<<<<<<< HEAD
         List<Task> tasks = jdbcTemplate.query(sqlQuery, taskRowMapper, argumentsArray);
         explainQuery(sqlQuery, argumentsArray);
         return new Pair<List<Task>, Boolean>(tasks, !limited || taskRowMapper.getTaskCountBeforeLimit() > tasks.size());
+=======
+        List<T> tasks = jdbcTemplate.query(sqlQuery, taskRowMapper, argumentsArray);
+        explainQuery(sqlQuery, argumentsArray);
+        boolean limitedResult = limit > 0 && limit <= tasks.size();
+        if (taskRowMapper instanceof TaskRowMapper) {
+            limitedResult = !limited || ((TaskRowMapper<Task>) taskRowMapper).getTaskCountBeforeLimit() > tasks.size();
+        }
+
+        return new Pair<List<T>, Boolean>(tasks, limitedResult);
+>>>>>>> develop-5.1
     }
 
     @Override
@@ -443,6 +564,68 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
     }
 
     @Override
+<<<<<<< HEAD
+=======
+    @SuppressWarnings("deprecation")
+    public Map<QName, Integer> countTasksByType(String queryCondition, List<Object> arguments, final QName... taskType) {
+        final Map<QName, Integer> counts = new HashMap<QName, Integer>();
+        if (taskType == null || taskType.length == 0) {
+            return counts;
+        }
+
+        arguments.add(0, Boolean.TRUE);
+        Set<StoreRef> storeRefs = BeanHelper.getGeneralService().getAllWithArchivalsStoreRefs();
+        for (StoreRef store : storeRefs) {
+            arguments.add(1, store.toString());
+        }
+
+        // Duplicate arguments for count queries. TODO Could we substitute the '?' only once?
+        List<Object> arg = new ArrayList<Object>();
+        for (int i = 0; i <= taskType.length; i++) {
+            arg.addAll(arguments);
+        }
+        Object[] argumentsArray = arg.toArray();
+
+        String restriction = SearchUtil.joinQueryPartsAnd(" is_searchable=? ", "store_id IN (" + getQuestionMarks(storeRefs.size()) + ")", queryCondition);
+
+        StringBuilder sql = new StringBuilder("SELECT");
+        boolean first = true;
+        for (QName type : taskType) {
+            if (!first) {
+                sql.append(", ");
+            }
+            first = false;
+
+            sql.append(" (SELECT COUNT(*) FROM delta_task WHERE task_type = '").append(type.getLocalName()).append("' AND ")
+            .append(restriction)
+            .append(") AS ").append(type.getLocalName());
+        }
+        sql.append(" FROM delta_task WHERE")
+        .append(restriction)
+        .append(" LIMIT 1;");
+        String sqlQuery = sql.toString();
+
+        // NB! There will be only one row!
+        jdbcTemplate.query(sqlQuery, new RowMapper<Void>() {
+
+            @Override
+            public Void mapRow(ResultSet rs, int rowNum) throws SQLException {
+                // Populate results map
+                for (QName type : taskType) {
+                    counts.put(type, rs.getInt(type.getLocalName().toLowerCase()));
+                }
+
+                return null;
+            }
+
+        }, argumentsArray);
+        explainQuery(sqlQuery, argumentsArray);
+
+        return counts;
+    }
+
+    @Override
+>>>>>>> develop-5.1
     public int countTasks(String queryCondition, List<Object> arguments) {
         arguments.add(0, Boolean.TRUE);
         Set<StoreRef> storeRefs = BeanHelper.getGeneralService().getAllWithArchivalsStoreRefs();
@@ -560,7 +743,11 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
     public Collection<DueDateHistoryRecord> getDueDateHistoryRecords(NodeRef taskRef) {
         String sqlQuery = "SELECT history.previous_date, history.change_reason, history.task_id, history.extension_task_id, task.wfs_compound_workflow_id, task.store_id " +
                 " FROM delta_task_due_date_history history " +
+<<<<<<< HEAD
                 " join delta_task task on task.task_id = history.extension_task_id " +
+=======
+                " left join delta_task task on task.task_id = history.extension_task_id " +
+>>>>>>> develop-5.1
                 " WHERE history.task_id=? ORDER BY history.task_due_date_history_id";
         String taskRefId = taskRef.getId();
         List<DueDateHistoryRecord> dueDateHistoryRecords = jdbcTemplate.query(sqlQuery, new TaskDueDateHistoryMapper(), taskRefId);
@@ -763,6 +950,7 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
     @Override
     public Set<NodeRef> getAllWorflowNodeRefs() {
         String sqlQuery = "SELECT workflow_id, store_id FROM delta_task WHERE workflow_id IS NOT NULL AND store_id IS NOT NULL GROUP BY workflow_id, store_id";
+<<<<<<< HEAD
         List<NodeRef> workflows = jdbcTemplate.query(sqlQuery,
                 new ParameterizedRowMapper<NodeRef>() {
 
@@ -772,6 +960,9 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
                     }
 
                 });
+=======
+        List<NodeRef> workflows = queryWorkflowNodeRefs(sqlQuery);
+>>>>>>> develop-5.1
         explainQuery(sqlQuery);
         return new HashSet<NodeRef>(workflows);
     }
@@ -783,7 +974,11 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
             List<String> valueList = new ArrayList<String>();
             ResultSet resultSet = array.getResultSet();
             while (resultSet.next()) {
+<<<<<<< HEAD
                 valueList.add(resultSet.getString(1));
+=======
+                valueList.add(resultSet.getString(2));
+>>>>>>> develop-5.1
             }
             return (Serializable) valueList;
         }
@@ -823,9 +1018,13 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
         }
     }
 
+<<<<<<< HEAD
     private class TaskRowMapper implements ParameterizedRowMapper<Task> {
         private static final String INITIATING_COMPOUND_WORKFLOW_ID_KEY = "initiating_compound_workflow_id";
         private static final String INITIATING_COMPOUND_WORKFLOW_STORE_ID_KEY = "initiating_compound_workflow_store_id";
+=======
+    private class TaskRowMapper<T> implements ParameterizedRowMapper<Task> {
+>>>>>>> develop-5.1
         private final Collection<QName> taskDataTypeDefaultAspects;
         private final List<QName> taskDataTypeDefaultProps;
         private final List<QName> taskDataTypeSearchableProps;
@@ -859,9 +1058,12 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
             WmNode taskNode = getNode(rs);
             WorkflowType workflowType = this.workflowType != null ? this.workflowType : BeanHelper.getWorkflowService().getWorkflowTypesByTask().get(taskNode.getType());
             Task task = Task.create(workflowType.getTaskClass(), taskNode, workflow, workflowType.getTaskOutcomes());
+<<<<<<< HEAD
             boolean originalHasDueDateHistory = rs.getBoolean(DUE_DATE_HISTORY_FIELD);
             task.setHasDueDateHistory(originalHasDueDateHistory);
             task.setOriginalHasDueDateHistory(originalHasDueDateHistory);
+=======
+>>>>>>> develop-5.1
             // use rs.getObject instead of rs.getInt to get null values also
             task.setTaskIndexInWorkflow((Integer) rs.getObject(INDEX_IN_WORKFLOW_FIELD));
             task.setWorkflowNodeRefId(rs.getString(WORKFLOW_ID_KEY));
@@ -977,7 +1179,11 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
             deleteTask(nodeRef);
         } else if (isWorkflow(nodeTypeQName)) {
             deleteWorkflowTasks(nodeRef);
+<<<<<<< HEAD
         } else if (WorkflowCommonModel.Types.COMPOUND_WORKFLOW.equals(nodeTypeQName)) {
+=======
+        } else if (WorkflowCommonModel.Types.COMPOUND_WORKFLOW.equals(nodeTypeQName) || WorkflowCommonModel.Types.COMPOUND_WORKFLOW_DEFINITION.equals(nodeTypeQName)) {
+>>>>>>> develop-5.1
             deleteCompoundWorkflowTasks(nodeRef);
         } else if (DocumentCommonModel.Types.DOCUMENT.equals(nodeTypeQName)) {
             deleteDocumentTasks(nodeRef);
@@ -1036,6 +1242,77 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
         }
     }
 
+<<<<<<< HEAD
+=======
+    @Override
+    public Set<NodeRef> getAllWorkflowsWithEmptyTasks() {
+        String sqlQuery = "SELECT task_id, workflow_id, store_id FROM delta_task " +
+                "WHERE workflow_id IS NOT NULL AND store_id IS NOT NULL AND wfc_owner_name IS NULL AND wfs_due_date IS NULL";
+        List<NodeRef> workflows = queryWorkflowNodeRefs(sqlQuery);
+        explainQuery(sqlQuery);
+        return new HashSet<NodeRef>(workflows);
+    }
+
+    @Override
+    public Set<NodeRef> getWorkflowsWithWrongTaskOrder() {
+        String sqlQuery = "select workflow_id, store_id from (" +
+                " select workflow_id, sum(max_index - min_index + 1) as task_ranged_count, sum(task_count) as task_count, max(task_type)  as task_type, " +
+                "max(store_id) as store_id from" +
+                " (select workflow_id, grouped_status, max(index_in_workflow) as max_index, min(index_in_workflow) as min_index, max(task_type) as task_type, " +
+                " max(store_id) as store_id, count(*) as task_count from " +
+                " (select *, case when wfc_status in ('teostamata', 'lõpetatud') then 'lõpetatud_grupp' else wfc_status end as grouped_status from delta_task) as tmp0" +
+                " where task_type NOT IN ('opinionTask', 'informationTask', 'assignmentTask', 'orderAssignmentTask') group by workflow_id, grouped_status" +
+                " order by workflow_id, max_index) as tmp group by workflow_id) as tmp1" +
+                " where task_ranged_count <> task_count";
+        List<NodeRef> workflows = queryWorkflowNodeRefs(sqlQuery);
+        explainQuery(sqlQuery);
+        return new HashSet<NodeRef>(workflows);
+    }
+
+    @Override
+    public List<Comment> getCompoundWorkflowComments(String compoundWorkflowId) {
+        String sqlQuery = "SELECT * FROM delta_compound_workflow_comment where compound_workflow_id=? order by created DESC";
+        List<Comment> comments = jdbcTemplate.query(sqlQuery, new ParameterizedRowMapper<Comment>() {
+
+            @Override
+            public Comment mapRow(ResultSet rs, int rowNum) throws SQLException {
+                String compWorkflowId = (String) rs.getObject("compound_workflow_id");
+                Date created = (Date) rs.getObject("created");
+                String creatorId = (String) rs.getObject("creator_id");
+                String creatorName = (String) rs.getObject("creator_name");
+                String commentText = (String) rs.getObject("comment_text");
+                Comment comment = new Comment(compWorkflowId, created, creatorId, creatorName, commentText);
+                comment.setCommentId((Long) rs.getObject("comment_id"));
+                return comment;
+            }
+        }, compoundWorkflowId);
+        explainQuery(sqlQuery, compoundWorkflowId);
+        return comments;
+    }
+
+    @Override
+    public void addCompoundWorkfowComment(Comment comment) {
+        int rowsInserted = jdbcTemplate.update(
+                "INSERT INTO delta_compound_workflow_comment (compound_workflow_id, created, creator_id, creator_name, comment_text) VALUES (?, ?, ?, ?, ?)",
+                new Object[] { comment.getCompoundWorkflowId(), comment.getCreated(), comment.getCreatorId(), comment.getCreatorName(), comment.getCommentText() });
+        if (rowsInserted != 1) {
+            throw new RuntimeException("Insert failed: inserted " + rowsInserted + " rows for compoundWorkflowId=" + comment.getCompoundWorkflowId());
+        }
+    }
+
+    @Override
+    public void editCompoundWorkflowComment(Long commentId, String commentText) {
+        String sqlQuery = "UPDATE delta_compound_workflow_comment SET comment_text=? WHERE comment_id=?";
+        Object[] args = new Object[] { commentText, commentId };
+        jdbcTemplate.update(sqlQuery, args);
+        explainQuery(sqlQuery, args);
+    }
+
+    private List<NodeRef> queryWorkflowNodeRefs(String sqlQuery, Object... args) {
+        return jdbcTemplate.query(sqlQuery, new TaskParentNodeRefMapper(), args);
+    }
+
+>>>>>>> develop-5.1
     private boolean isWorkflow(QName type) {
         return dictionaryService.isSubClass(type, WorkflowCommonModel.Types.WORKFLOW);
     }

@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <?xml version="1.0" encoding="UTF-8"?>
 <view:view xmlns:view="http://www.alfresco.org/view/repository/1.0" xmlns:docadmin="http://alfresco.webmedia.ee/model/document/admin/1.0" xmlns:docdyn="http://alfresco.webmedia.ee/model/document/dynamic/1.0">
 
@@ -73,4 +74,81 @@
       </view:properties>
    </docadmin:fieldDefinition>    
    
+=======
+<?xml version="1.0" encoding="UTF-8"?>
+<view:view xmlns:view="http://www.alfresco.org/view/repository/1.0" xmlns:docadmin="http://alfresco.webmedia.ee/model/document/admin/1.0" xmlns:docdyn="http://alfresco.webmedia.ee/model/document/dynamic/1.0">
+
+   <docadmin:fieldDefinition view:childName="docdyn:contactStreetHouse">
+      <view:properties>
+         <docadmin:fieldId>contactStreetHouse</docadmin:fieldId>
+         <docadmin:originalFieldId>contactStreetHouse</docadmin:originalFieldId>
+         <docadmin:name>Kontakti aadress (tänav, maja)</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+      </view:properties>
+   </docadmin:fieldDefinition>
+   
+   <docadmin:fieldDefinition view:childName="docdyn:contactPostalCity">
+      <view:properties>
+         <docadmin:fieldId>contactPostalCity</docadmin:fieldId>
+         <docadmin:originalFieldId>contactPostalCity</docadmin:originalFieldId>
+         <docadmin:name>Kontakti aadress (indeks, linn)</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+      </view:properties>
+   </docadmin:fieldDefinition>
+   
+   <docadmin:fieldDefinition view:childName="docdyn:contactFirstAdditionalEmail">
+      <view:properties>
+         <docadmin:fieldId>contactFirstAdditionalEmail</docadmin:fieldId>
+         <docadmin:originalFieldId>contactFirstAdditionalEmail</docadmin:originalFieldId>
+         <docadmin:name>Kontakti täiendav e-post 1</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+      </view:properties>
+   </docadmin:fieldDefinition>
+   
+   <docadmin:fieldDefinition view:childName="docdyn:contactSecondAdditionalEmail">
+      <view:properties>
+         <docadmin:fieldId>contactSecondAdditionalEmail</docadmin:fieldId>
+         <docadmin:originalFieldId>contactSecondAdditionalEmail</docadmin:originalFieldId>
+         <docadmin:name>Kontakti täiendav e-post 2</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+      </view:properties>
+   </docadmin:fieldDefinition> 
+   
+   <docadmin:fieldDefinition view:childName="docdyn:contactFirstAdditionalPhone">
+      <view:properties>
+         <docadmin:fieldId>contactFirstAdditionalPhone</docadmin:fieldId>
+         <docadmin:originalFieldId>contactFirstAdditionalPhone</docadmin:originalFieldId>
+         <docadmin:name>Kontakti täiendav telefon 1</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+      </view:properties>
+   </docadmin:fieldDefinition>
+   
+   <docadmin:fieldDefinition view:childName="docdyn:contactSecondAdditionalPhone">
+      <view:properties>
+         <docadmin:fieldId>contactSecondAdditionalPhone</docadmin:fieldId>
+         <docadmin:originalFieldId>contactSecondAdditionalPhone</docadmin:originalFieldId>
+         <docadmin:name>Kontakti täiendav telefon 2</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+      </view:properties>
+   </docadmin:fieldDefinition>    
+   
+>>>>>>> develop-5.1
 </view:view>

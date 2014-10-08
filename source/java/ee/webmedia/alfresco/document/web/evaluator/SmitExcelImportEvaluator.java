@@ -16,9 +16,12 @@ import ee.webmedia.alfresco.functions.service.FunctionsService;
 import ee.webmedia.alfresco.importer.excel.service.DocumentImportServiceImpl;
 import ee.webmedia.alfresco.user.service.UserService;
 
+<<<<<<< HEAD
 /**
  * @author Ats Uiboupin
  */
+=======
+>>>>>>> develop-5.1
 public class SmitExcelImportEvaluator extends BaseActionEvaluator {
     private static final long serialVersionUID = 0L;
 

@@ -15,12 +15,20 @@ import org.alfresco.web.bean.repository.Node;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.model.Document;
+<<<<<<< HEAD
 import ee.webmedia.alfresco.utils.MessageDataWrapper;
 import ee.webmedia.alfresco.utils.Predicate;
 import ee.webmedia.alfresco.utils.UnableToPerformMultiReasonException;
 import ee.webmedia.alfresco.workflow.exception.WorkflowChangedException;
 import ee.webmedia.alfresco.workflow.generated.DeleteLinkedReviewTaskType;
 import ee.webmedia.alfresco.workflow.generated.LinkedReviewTaskType;
+=======
+import ee.webmedia.alfresco.utils.Predicate;
+import ee.webmedia.alfresco.workflow.exception.WorkflowChangedException;
+import ee.webmedia.alfresco.workflow.generated.DeleteLinkedReviewTaskType;
+import ee.webmedia.alfresco.workflow.generated.LinkedReviewTaskType;
+import ee.webmedia.alfresco.workflow.model.Comment;
+>>>>>>> develop-5.1
 import ee.webmedia.alfresco.workflow.model.CompoundWorkflowType;
 import ee.webmedia.alfresco.workflow.model.CompoundWorkflowWithObject;
 import ee.webmedia.alfresco.workflow.model.RelatedUrl;
@@ -30,9 +38,12 @@ import ee.webmedia.alfresco.workflow.service.event.WorkflowEventListenerWithModi
 import ee.webmedia.alfresco.workflow.service.event.WorkflowMultiEventListener;
 import ee.webmedia.alfresco.workflow.service.type.WorkflowType;
 
+<<<<<<< HEAD
 /**
  * @author Alar Kvell
  */
+=======
+>>>>>>> develop-5.1
 public interface WorkflowService {
     String BEAN_NAME = "WmWorkflowService";
 
@@ -72,12 +83,18 @@ public interface WorkflowService {
     // get existing object from repository
     List<CompoundWorkflow> getCompoundWorkflows(NodeRef parent);
 
+<<<<<<< HEAD
+=======
+    List<CompoundWorkflow> getCompoundWorkflows(NodeRef parent, NodeRef nodeRefToSkip);
+
+>>>>>>> develop-5.1
     CompoundWorkflow getCompoundWorkflow(NodeRef compoundWorkflow);
 
     CompoundWorkflow getCompoundWorkflow(NodeRef nodeRef, boolean loadTasks, boolean loadWorkflows);
 
     CompoundWorkflow saveCompoundWorkflow(CompoundWorkflow compoundWorkflow);
 
+<<<<<<< HEAD
     /**
      * @param originalAssignmentTask - task that will be delegated(originalAssignmentTask.parent contains information about new tasks and
      *            originalAssignmentTask.parent.parent contains information about new workflows)
@@ -85,6 +102,9 @@ public interface WorkflowService {
      * @throws UnableToPerformMultiReasonException - when at least one error-message should be shown to the user
      */
     MessageDataWrapper delegate(Task originalAssignmentTask) throws UnableToPerformMultiReasonException;
+=======
+    CompoundWorkflow delegate(Task assignmentTaskOriginal);
+>>>>>>> develop-5.1
 
     void deleteCompoundWorkflow(NodeRef compoundWorkflow, boolean validateStatuses);
 
@@ -106,6 +126,13 @@ public interface WorkflowService {
      */
     int getConnectedActiveResponsibleTasksCount(CompoundWorkflow compoundWorkflow, QName workflowType);
 
+<<<<<<< HEAD
+=======
+    int getConnectedActiveResponsibleTasksCount(CompoundWorkflow compoundWorkflow, QName workflowType, boolean allowFinished, NodeRef compoundWorkflowToSkip);
+
+    int getConnectedActiveResponsibleTasksCount(List<CompoundWorkflow> compoundWorkflows, boolean allowFinished, NodeRef compoundWorkflowToSkip);
+
+>>>>>>> develop-5.1
     /**
      * @param compoundWorkflow
      * @param workflowTypeQName
@@ -144,6 +171,11 @@ public interface WorkflowService {
 
     void setTaskOwner(NodeRef task, String ownerId, boolean retainPreviousOwnerId);
 
+<<<<<<< HEAD
+=======
+    boolean containsDocumentsWithLimitedActivities(NodeRef compoundWorkflowRef);
+
+>>>>>>> develop-5.1
     void setCompoundWorkflowOwner(NodeRef task, String ownerId, boolean retainPreviousOwnerId);
 
     // Filtering
@@ -209,7 +241,14 @@ public interface WorkflowService {
 
     CompoundWorkflow getNewCompoundWorkflow(Node compoundWorkflowDefinition, NodeRef parent);
 
+<<<<<<< HEAD
     void createDueDateExtension(String reason, Date newDate, Date dueDate, Task initiatingTask, NodeRef containerRef);
+=======
+    List<String> checkAndAddMissingOwnerEmails(CompoundWorkflow compoundWorkflow);
+
+    void createDueDateExtension(String reason, Date newDate, Date dueDate, Task initiatingTask, NodeRef containerRef, String dueDateExtenderUsername,
+            String dueDateExtenderUserFullname);
+>>>>>>> develop-5.1
 
     void registerMultiEventListener(WorkflowMultiEventListener listener);
 
@@ -255,7 +294,11 @@ public interface WorkflowService {
 
     CompoundWorkflowType getWorkflowCompoundWorkflowType(NodeRef workflowRef);
 
+<<<<<<< HEAD
     Map<NodeRef, List<File>> getCompoundWorkflowSigningFiles(CompoundWorkflow compoundWorkflow);
+=======
+    Map<NodeRef, List<File>> getCompoundWorkflowSigningFiles(NodeRef compoundWorkflowRef);
+>>>>>>> develop-5.1
 
     String getIndependentCompoundWorkflowProcedureId(NodeRef compoundWorkflowRef);
 
@@ -330,4 +373,21 @@ public interface WorkflowService {
     /** Load compound workflow with only workflows of given types. For these workflows tasks are also loaded. */
     CompoundWorkflow getCompoundWorkflowOfType(NodeRef nodeRef, List<QName> types);
 
+<<<<<<< HEAD
+=======
+    List<CompoundWorkflow> getOtherCompoundWorkflows(CompoundWorkflow compoundWorkflow);
+
+    List<NodeRef> getCompoundWorkflowAndTaskNodeRefs(NodeRef parentRef);
+
+    List<Comment> getComments(NodeRef compoundWorkflowRef);
+
+    void addCompoundWorkflowComment(Comment comment);
+
+    void editCompoundWorkflowComment(Long commentId, String commentText);
+
+    NodeRef getCompoundWorkflowMainDocumentRef(NodeRef compoundWorkflowRef);
+
+    Task getTaskWithParents(NodeRef nodeRef);
+
+>>>>>>> develop-5.1
 }

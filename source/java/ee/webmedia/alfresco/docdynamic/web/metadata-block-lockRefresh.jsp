@@ -7,14 +7,56 @@
 
 <f:verbatim>
 <script type="text/javascript" id="metaLockRefreshScript" >
+<<<<<<< HEAD
+=======
+var finishButtonClicked = false;
+var excludedElementsIds = new Array("dialog:finish-button","dialog:finish-button-2","dialog:cancel-button","dialog:cancel-button-2","dialog:documentRegisterButton","dialog:documentRegisterButton-2");
+>>>>>>> develop-5.1
 $jQ(document).ready(function(){
    var lockingAllowed = <%= BeanHelper.getDocumentLockHelperBean().isLockingAllowed() %>;
    if(lockingAllowed){
       var clientLockRefreshFrequency = <%= BeanHelper.getDocumentLockHelperBean().getLockExpiryPeriod() %>;
       setTimeout(requestForLockRefresh, clientLockRefreshFrequency/3); // We need to lock sooner for the first time (add file dialog etc.)
+<<<<<<< HEAD
    }
 });
 
+=======
+      disableUnlockOnExcludedElements();
+      disableUnlockOnExtraButtons();
+   }
+});
+function disableUnlockOnExcludedElements() {
+   if(typeof excludedElementsSpecific != 'undefined') { // excludedElementsSpecific is defined in metadata-unlocking-helper.jsp.
+	  excludedElementsIds = $jQ.merge(excludedElementsIds, excludedElementsSpecific);
+   }
+   for(var i = 0; i < excludedElementsIds.length; i++) {
+      var element = document.getElementById(excludedElementsIds[i]);
+      disableUnlockOnElement(element);
+   }
+}
+function disableUnlockOnExtraButtons() {
+   var buttonClasses = $jQ(".actions-menu");
+   for(var i = 0; buttonClasses != null && i < buttonClasses.length; i++) {
+      var anchors = buttonClasses[i].getElementsByTagName("a");
+      if(anchors != null){
+         disableUnlockOnElements(anchors);
+      }
+   }
+}
+function disableUnlockOnElements(collection){
+   for(var i = 0; i < collection.length; i++) {
+      disableUnlockOnElement(collection[i]);
+   }
+}
+function disableUnlockOnElement(element) {
+   if(element != null){
+      $jQ(element).on('mouseup', function() {
+         finishButtonClicked = true;
+      });
+   }
+}
+>>>>>>> develop-5.1
 function requestForLockRefresh() {
    var uri = getContextPath() + '/ajax/invoke/DocumentLockHelperBean.refreshLockClientHandler';
    $jQ.ajax({
@@ -42,5 +84,19 @@ function requestForLockRefreshSuccess(xml) {
 function requestForLockRefreshFailure() {
    $jQ.log("Refreshing lock in server side failed");
 }
+<<<<<<< HEAD
+=======
+$jQ(window).on('beforeunload', function(){
+   if(finishButtonClicked) {
+	  return;
+   }
+   var uri = getContextPath() + '/ajax/invoke/DocumentLockHelperBean.unlockNode';
+   $jQ.ajax({
+      type: 'POST',
+      url: uri,
+      async: false
+   });
+});
+>>>>>>> develop-5.1
 </script>
 </f:verbatim>

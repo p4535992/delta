@@ -3,6 +3,11 @@ package ee.webmedia.alfresco.sharepoint.mapping;
 import java.io.File;
 import java.util.Date;
 
+<<<<<<< HEAD
+=======
+import org.apache.commons.lang.StringUtils;
+
+>>>>>>> develop-5.1
 import ee.webmedia.alfresco.sharepoint.ImportValidationException;
 
 public class ImportFile {
@@ -34,7 +39,11 @@ public class ImportFile {
     }
 
     public String getTitle() {
+<<<<<<< HEAD
         return title;
+=======
+        return StringUtils.defaultIfEmpty(title, getFilename());
+>>>>>>> develop-5.1
     }
 
     public String getFilename() {

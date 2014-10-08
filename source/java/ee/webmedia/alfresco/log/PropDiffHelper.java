@@ -29,8 +29,11 @@ import ee.webmedia.alfresco.utils.MessageUtil;
  *         // ... other properties to watch with labels
  *         .diff(mapOfCurrentProperties, mapOfNewProperties);
  * </pre>
+<<<<<<< HEAD
  * 
  * @author Martti Tamm
+=======
+>>>>>>> develop-5.1
  */
 public class PropDiffHelper {
 
@@ -96,12 +99,21 @@ public class PropDiffHelper {
             boolean changed = false;
 
             if (collection) {
+<<<<<<< HEAD
                 if (oldValue == null || newValue == null) {
                     changed = true;
                 } else {
                     Collection oldColl = (Collection) oldValue;
                     Collection newColl = (Collection) newValue;
                     changed = oldColl.size() != newColl.size() || !newColl.containsAll(oldColl) || !oldColl.containsAll(newColl);
+=======
+                if (oldValue != null && newValue != null) {
+                    Collection oldColl = (Collection) oldValue;
+                    Collection newColl = (Collection) newValue;
+                    changed = oldColl.size() != newColl.size() || !newColl.containsAll(oldColl) || !oldColl.containsAll(newColl);
+                } else {
+                    changed = nullOrEmptyCollectionsDiff(oldValue, newValue) || nullOrEmptyCollectionsDiff(newValue, oldValue);
+>>>>>>> develop-5.1
                 }
             } else if (newValue != null) {
                 changed = oldValue == null || !newValue.equals(oldValue);
@@ -123,6 +135,23 @@ public class PropDiffHelper {
     }
 
     @SuppressWarnings("rawtypes")
+<<<<<<< HEAD
+=======
+    private boolean nullOrEmptyCollectionsDiff(Serializable first, Serializable second) {
+        // Consider null values and empty collections as equal
+        int size = second instanceof Collection ? ((Collection) second).size() : 0;
+        boolean different = first == null && size > 0;
+
+        // Also check if collection contains only one empty String
+        if (different && size == 1 && ((Collection) second).contains("")) {
+            different = false;
+        }
+
+        return different;
+    }
+
+    @SuppressWarnings("rawtypes")
+>>>>>>> develop-5.1
     public String toString(Map<QName, Serializable> props) {
         StringBuilder sb = new StringBuilder();
 

@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <?xml version="1.0" encoding="UTF-8"?>
 <alfresco-config>
    <config>
@@ -104,4 +105,132 @@
       </dialogs>
    </config>
 
+=======
+<?xml version="1.0" encoding="UTF-8"?>
+<alfresco-config>
+   <config>
+      <actions>
+
+         <action id="case_file_favorites_add">
+            <evaluator>ee.webmedia.alfresco.casefile.web.evaluator.AddFavoritesCaseFileEvaluator</evaluator>
+            <label-id>document_favorites_add</label-id>
+            <image>/images/icons/versioned_properties.gif</image>
+            <action-listener>#{CaseFileDialog.addToFavorites}</action-listener>
+         </action>
+
+         <action id="case_file_favorites_remove">
+            <evaluator>ee.webmedia.alfresco.casefile.web.evaluator.RemoveFavoritesCaseFileEvaluator</evaluator>
+            <label-id>document_favorites_remove</label-id>
+            <image>/images/icons/versioned_properties.gif</image>
+            <action-listener>#{CaseFileDialog.removeFavorite}</action-listener>
+         </action>
+         
+         <action id="case_file_permissions">
+            <evaluator>ee.webmedia.alfresco.docdynamic.web.ManageDocumentPrivilegesEvaluator</evaluator>
+            <label-id>manage_invited_users</label-id>
+            <image>/images/icons/users.gif</image>
+            <action>dialog:manageInheritablePrivilegesDialog</action>
+            <action-listener>#{ManageInheritablePrivilegesDialog.init}</action-listener>
+            <params>
+               <param name="manageableRef">#{CaseFileDialog.node.nodeRef}</param>
+            </params>
+         </action>
+
+         <action id="case_file_close">
+              <evaluator>ee.webmedia.alfresco.casefile.web.evaluator.CaseFileIsOpenedEvaluator</evaluator>
+              <label-id>casefile_close</label-id>
+              <image>/images/icons/versioned_properties.gif</image>
+              <action-listener>#{CaseFileDialog.closeCaseFile}</action-listener>
+          </action>
+          
+          <action id="case_file_open">
+              <evaluator>ee.webmedia.alfresco.casefile.web.evaluator.CaseFileIsClosedEvaluator</evaluator>
+              <label-id>casefile_open</label-id>
+              <image>/images/icons/versioned_properties.gif</image>
+              <action-listener>#{CaseFileDialog.openCaseFile}</action-listener>
+          </action>
+
+          <action id="case_file_delete">
+            <evaluator>ee.webmedia.alfresco.casefile.web.evaluator.DeleteCaseFileEvaluator</evaluator>
+            <label-id>caseFile_delete</label-id>
+            <image>/images/icons/versioned_properties.gif</image>
+            <action-listener>#{CaseFileDialog.deleteCaseFile}</action-listener>
+         </action>
+         
+         <action id="case_show_link">
+            <evaluator>ee.webmedia.alfresco.document.web.evaluator.ViewStateActionEvaluator</evaluator>
+            <label-id>caseFile_show_url</label-id>
+            <image>/images/icons/versioned_properties.gif</image>
+            <action-listener>#{CaseFileDialog.showCaseFileLink}</action-listener>
+         </action>
+
+         <action id="case_file_eventplan">
+            <evaluator>ee.webmedia.alfresco.casefile.web.evaluator.CaseFileEventPlanEvaluator</evaluator>
+            <label-id>volume_eventplan_btn</label-id>
+            <image>/images/icons/versioned_properties.gif</image>
+            <action>dialog:volumeEventPlanDialog</action>
+            <action-listener>#{VolumeEventPlanDialog.view}</action-listener>
+            <params>
+               <param name="nodeRef">#{CaseFileDialog.node.nodeRef}</param>
+            </params>
+         </action>
+
+          <action id="case_file_archive">
+            <evaluator>ee.webmedia.alfresco.casefile.web.evaluator.ArchiveCaseFileEvaluator</evaluator>
+            <label-id>caseFile_archive</label-id>
+            <image>/images/icons/versioned_properties.gif</image>
+            <action-listener>#{CaseFileDialog.archiveCaseFile}</action-listener>
+         </action>
+         
+         <action id="case_file_send_for_information">
+            <evaluator>ee.webmedia.alfresco.casefile.web.evaluator.CaseFileSendForInformationEvaluator</evaluator>
+            <label-id>caseFile_send_for_information_button</label-id>
+            <image>/images/icons/versioned_properties.gif</image>
+            <action>#{CaseFileSendForInformationDialog.init}</action>
+            <action-listener>#{CaseFileSendForInformationDialog.loadDocument}</action-listener>
+            <params><param name="caseFileNodeRef">#{CaseFileDialog.node.nodeRef}</param></params>
+         </action>
+         
+         <action id="case_file_add_notification">
+            <evaluator>ee.webmedia.alfresco.casefile.web.evaluator.CaseFileAddNotificationEvaluator</evaluator>
+            <label-id>caseFile_add_notification</label-id>
+            <image>/images/icons/versioned_properties.gif</image>
+            <action>#{CaseFileDialog.addNotification}</action>
+         </action>
+         
+         <action id="case_file_remove_notification">
+            <evaluator>ee.webmedia.alfresco.casefile.web.evaluator.CaseFileRemoveNotificationEvaluator</evaluator>
+            <label-id>caseFile_remove_notification</label-id>
+            <image>/images/icons/versioned_properties.gif</image>
+            <action>#{CaseFileDialog.removeNotification}</action>
+         </action>          
+
+         <action-group id="case_file_actions">
+            <action idref="case_file_favorites_add" />
+         	<action idref="case_file_favorites_remove" />
+         	<action idref="case_file_permissions" />
+            <action idref="case_file_close" />
+            <action idref="case_file_open" />
+            <action idref="case_file_delete" />
+            <action idref="case_show_link" />
+            <action idref="case_file_eventplan" />              
+            <action idref="case_file_archive" />
+            <action idref="case_file_send_for_information" />
+            <action idref="case_file_add_notification" />
+            <action idref="case_file_remove_notification" />              
+         </action-group>
+
+      </actions>
+      <dialogs>
+         <dialog name="caseFileDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/casefile/web/case-file-dialog.jsp" managed-bean="CaseFileDialog"
+            icon="/images/icons/versioned_properties_large.gif" title-id="caseFile" actions-config-id="case_file_actions">
+         </dialog>
+         <dialog name="caseFileListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/casefile/web/case-file-list-dialog.jsp"
+            managed-bean="CaseFileListDialog" icon="/images/icons/workflow_large.gif" title-id="casefile_list_dialog_title" show-ok-button="false" />
+         <dialog name="caseFileSendForInformationDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/document/sendout/web/document-send-for-information-dialog.jsp"
+            managed-bean="CaseFileSendForInformationDialog" icon="/images/icons/details_large.gif" title-id="caseFile_send_for_information_dialog" />
+      </dialogs>
+   </config>
+
+>>>>>>> develop-5.1
 </alfresco-config>

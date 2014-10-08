@@ -5,8 +5,11 @@ import ee.webmedia.alfresco.common.web.WmNode;
 
 /**
  * Wrapper object for HelpText node.
+<<<<<<< HEAD
  * 
  * @author Martti Tamm
+=======
+>>>>>>> develop-5.1
  */
 public class HelpText extends NodeBaseVO {
 

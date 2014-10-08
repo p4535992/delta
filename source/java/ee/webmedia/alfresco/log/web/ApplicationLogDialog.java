@@ -27,8 +27,11 @@ import ee.webmedia.alfresco.utils.WebUtil;
 
 /**
  * Dialog for editing logging settings and for performing log entries search.
+<<<<<<< HEAD
  * 
  * @author Martti Tamm
+=======
+>>>>>>> develop-5.1
  */
 public class ApplicationLogDialog extends AbstractSearchFilterBlockBean<LogService> {
 
@@ -106,7 +109,11 @@ public class ApplicationLogDialog extends AbstractSearchFilterBlockBean<LogServi
         result.setComputerId((String) props.get(LogSearchModel.Props.COMPUTER_ID));
         result.setDescription((String) props.get(LogSearchModel.Props.DESCRIPTION));
         result.setObjectName((String) props.get(LogSearchModel.Props.OBJECT_NAME));
+<<<<<<< HEAD
         result.setObjectId(Collections.singletonList(((String) props.get(LogSearchModel.Props.OBJECT_ID))));
+=======
+        result.setObjectId(Collections.singletonList((String) props.get(LogSearchModel.Props.OBJECT_ID)));
+>>>>>>> develop-5.1
         return result;
     }
 

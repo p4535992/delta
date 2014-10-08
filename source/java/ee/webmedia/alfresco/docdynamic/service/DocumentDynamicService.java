@@ -21,9 +21,12 @@ import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UnableToPerformMultiReasonException;
 import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
 
+<<<<<<< HEAD
 /**
  * @author Alar Kvell
  */
+=======
+>>>>>>> develop-5.1
 public interface DocumentDynamicService {
 
     String BEAN_NAME = "DocumentDynamicService";
@@ -88,7 +91,11 @@ public interface DocumentDynamicService {
 
     void setOwner(Map<QName, Serializable> props, String ownerId, boolean retainPreviousOwnerId);
 
+<<<<<<< HEAD
     void setOwnerFromActiveResponsibleTask(CompoundWorkflow compoundWorkflow, NodeRef documentRef, Map<String, Object> documentProps);
+=======
+    void setOwnerFromActiveResponsibleTask(CompoundWorkflow compoundWorkflow, NodeRef documentRef, Map<QName, Serializable> documentProps);
+>>>>>>> develop-5.1
 
     boolean isOwner(NodeRef docRef, String ownerId);
 
@@ -118,8 +125,14 @@ public interface DocumentDynamicService {
      * @param fileRef file should be a MS Word or OpenOffice writer file
      * @param document document to update
      * @param updateGeneratedFiles if true, then other generated files are also updated
+<<<<<<< HEAD
      */
     void updateDocumentAndGeneratedFiles(NodeRef fileRef, NodeRef document, boolean updateGeneratedFiles);
+=======
+     * @return TODO
+     */
+    boolean updateDocumentAndGeneratedFiles(NodeRef fileRef, NodeRef document, boolean updateGeneratedFiles);
+>>>>>>> develop-5.1
 
     void validateDocument(List<String> saveListenerBeanNames, DocumentDynamic document);
 

@@ -11,6 +11,10 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getWorkflowDbService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getWorkflowService;
 import static ee.webmedia.alfresco.sharepoint.DocumentImporter.CSV_NAME_COMPLETED_DOCS;
 import static ee.webmedia.alfresco.sharepoint.ImportUtil.docsError;
+<<<<<<< HEAD
+=======
+import static ee.webmedia.alfresco.sharepoint.ImportUtil.getString;
+>>>>>>> develop-5.1
 import static org.apache.commons.lang.StringUtils.isBlank;
 import static org.apache.commons.lang.StringUtils.isNotBlank;
 
@@ -97,8 +101,11 @@ import ee.webmedia.alfresco.workflow.service.type.WorkflowType;
  * Class contains CompundWorkflow and related data import logic in general. More exact input data processing is done in database. The scripts for creating database tables and
  * functions and for dropping them later must be placed in <em>dataFolder</em>/sql/ folder: these files are looked for explicitly imp_create_imp_tables.sql and
  * imp_drop_objects.sql, other SQL files are processed in order found.
+<<<<<<< HEAD
  * 
  * @author Martti Tamm
+=======
+>>>>>>> develop-5.1
  */
 public class WorkflowImporter {
 
@@ -124,6 +131,10 @@ public class WorkflowImporter {
     private final String baseCompoundWorkflowUrl;
     private final NodeRef compoundWorkflowsParentRef;
     private final LogEntry logEntry = new LogEntry();
+<<<<<<< HEAD
+=======
+    private final Map<String, NodeRef> importedCaseFiles;
+>>>>>>> develop-5.1
     private ProgressTracker progressTracker;
 
     private final SimpleJdbcTemplate jdbcTemplate;
@@ -172,6 +183,10 @@ public class WorkflowImporter {
             docsError(errorFile, e);
             throw new RuntimeException(e);
         }
+<<<<<<< HEAD
+=======
+        importedCaseFiles = loadCompletedCaseFiles(volumeLogFile);
+>>>>>>> develop-5.1
 
         baseCompoundWorkflowUrl = BeanHelper.getDocumentTemplateService().getServerUrl() + "/n/" + ExternalAccessPhaseListener.OUTCOME_COMPOUND_WORKFLOW_PROCEDURE_ID + "/";
         compoundWorkflowsParentRef = generalService.getNodeRef(WorkflowCommonModel.Repo.INDEPENDENT_WORKFLOWS_SPACE);
@@ -275,6 +290,7 @@ public class WorkflowImporter {
 
                     String searchCaseFileVolumeMark = StringUtils.stripToEmpty(caseFile.getVolumeMark());
                     if (StringUtils.isNotBlank(searchCaseFileVolumeMark)) {
+<<<<<<< HEAD
                         List<String> query = new ArrayList<String>(2);
                         query.add(SearchUtil.generateTypeQuery(CaseFileModel.Types.CASE_FILE));
                         query.add(SearchUtil.generateAspectQuery(DocumentCommonModel.Aspects.SEARCHABLE));
@@ -301,6 +317,11 @@ public class WorkflowImporter {
                                 }
                             }
                             result.close();
+=======
+                        parentRef = importedCaseFiles.get(searchCaseFileVolumeMark);
+                        if (parentRef == null) {
+                            parentRef = importedCaseFiles.get("0" + searchCaseFileVolumeMark);
+>>>>>>> develop-5.1
                         }
                     }
 
@@ -332,17 +353,28 @@ public class WorkflowImporter {
                             result.close();
 
                             if (series == null) {
+<<<<<<< HEAD
                                 markCompletedProcedureFailed(procId, 45,
+=======
+                                markCompletedProcedureFailed(procId, 48,
+>>>>>>> develop-5.1
                                         "Asjatoimiku loomiseks ei leita sisendparameetri seriesIdentifierForProcessToCaseFile poolt määratud sarja");
                                 continue;
                             }
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> develop-5.1
                             if (isBlank(caseFile.getVolumeMark())) {
                                 caseFile.setVolumeMark(procId.toString());
                             }
                             if (isBlank(caseFile.getTitle()) || isBlank(caseFile.getVolumeMark()) || isBlank(caseFile.getStatus()) || caseFile.getValidFrom() == null) {
+<<<<<<< HEAD
                                 markCompletedProcedureFailed(procId, 46, "Asjatoimiku loomiseks vajalikud kohustuslikud andmed on puudulikud");
+=======
+                                markCompletedProcedureFailed(procId, 49, "Asjatoimiku loomiseks vajalikud kohustuslikud andmed on puudulikud");
+>>>>>>> develop-5.1
                                 continue;
                             }
                             cf = caseFileService.createNewCaseFile(settings.getCaseFileTypeVersionForProcessToCaseFile(), series, false).getFirst();
@@ -365,7 +397,11 @@ public class WorkflowImporter {
                             cf.setProp(DocumentDynamicModel.Props.OWNER_WORK_ADDRESS, userProps.get(ContentModel.PROP_STREET_HOUSE));
 
                         } else {
+<<<<<<< HEAD
                             markCompletedProcedureFailed(procId, 44, "Asjatoimik ei ole leitav");
+=======
+                            markCompletedProcedureFailed(procId, 47, "Asjatoimik ei ole leitav");
+>>>>>>> develop-5.1
                             continue;
                         }
 
@@ -444,7 +480,11 @@ public class WorkflowImporter {
                         LOG.warn("Failed to validate compoundWorkflow statuses for procedure_id " + procId, e);
                         // Only one compoundWorkflow can be created from one procedure_id
                         nodeService.deleteNode(compoundFlowRef);
+<<<<<<< HEAD
                         markCompletedProcedureFailed(procId, 47, "Terviktöövoo, töövoogude ja tööülesannete staatused ei ole omavahel kooskõlas");
+=======
+                        markCompletedProcedureFailed(procId, 50, "Terviktöövoo, töövoogude ja tööülesannete staatused ei ole omavahel kooskõlas");
+>>>>>>> develop-5.1
                         continue outer;
                     }
 
@@ -456,7 +496,11 @@ public class WorkflowImporter {
                                 final NodeRef fromNode = new NodeRef(assoc.getFromNode());
                                 if (!nodeService.exists(fromNode)) {
                                     nodeService.deleteNode(compoundFlowRef);
+<<<<<<< HEAD
                                     markCompletedProcedureFailed(procId, 48, "Seotud dokument ei eksisteeri: " + fromNode);
+=======
+                                    markCompletedProcedureFailed(procId, 51, "Seotud dokument ei eksisteeri: " + fromNode);
+>>>>>>> develop-5.1
                                     continue outer;
                                 }
                                 nodeService.createAssociation(fromNode, compoundFlowRef, DocumentCommonModel.Assocs.WORKFLOW_DOCUMENT);
@@ -580,6 +624,35 @@ public class WorkflowImporter {
                                 copyDocAssocs(compoundFlowRef, nodeRef);
                             }
                         }
+<<<<<<< HEAD
+=======
+                    } else {
+                        for (Association assoc : associations) {
+                            if (assoc.isDocument() && assoc.getFromNode() != null) {
+                                final NodeRef fromNode = new NodeRef(assoc.getFromNode());
+                                if (!nodeService.exists(fromNode)) {
+                                    nodeService.deleteNode(compoundFlowRef);
+                                    markCompletedProcedureFailed(procId, 51, "Seotud dokument ei eksisteeri: " + fromNode);
+                                    continue outer;
+                                }
+
+                                // If document (fromNode) is not a child of our caseFile (parentRef), only then create association
+                                if (!nodeService.getPrimaryParent(fromNode).getParentRef().equals(parentRef)) {
+                                    boolean assocExists = false;
+                                    List<AssociationRef> existingAssocs = nodeService.getSourceAssocs(fromNode, CaseFileModel.Assocs.CASE_FILE_DOCUMENT);
+                                    for (AssociationRef existingAssoc : existingAssocs) {
+                                        if (existingAssoc.getSourceRef().equals(parentRef)) {
+                                            assocExists = true;
+                                            break;
+                                        }
+                                    }
+                                    if (!assocExists) {
+                                        nodeService.createAssociation(parentRef, fromNode, CaseFileModel.Assocs.CASE_FILE_DOCUMENT);
+                                    }
+                                }
+                            }
+                        }
+>>>>>>> develop-5.1
                     }
 
                     logEntry.setObjectId(compoundFlowRef.toString());
@@ -694,6 +767,44 @@ public class WorkflowImporter {
         });
     }
 
+<<<<<<< HEAD
+=======
+    private static Map<String, NodeRef> loadCompletedCaseFiles(File completed) {
+        LOG.info("Loading previously completed caseFiles from file " + completed);
+
+        Map<String, NodeRef> caseFiles = new HashMap<String, NodeRef>();
+        CsvReader reader = null;
+
+        try {
+            reader = ImportUtil.createLogReader(completed);
+
+            if (reader.readHeaders()) {
+                while (reader.readRecord()) {
+                    String type = getString(reader, 1);
+                    if (!"caseFile".equals(type)) {
+                        continue;
+                    }
+                    String volumeMark = getString(reader, 2);
+                    if (caseFiles.containsKey(volumeMark)) {
+                        continue;
+                    }
+                    caseFiles.put(volumeMark, new NodeRef(getString(reader, 5)));
+                }
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        } finally {
+            if (reader != null) {
+                reader.close();
+            }
+        }
+
+        LOG.info("Loaded " + caseFiles.size() + " previously imported caseFiles (by non-duplicate volumeMark).");
+
+        return caseFiles;
+    }
+
+>>>>>>> develop-5.1
     private Set<Integer> getCompletedProcedureIds() {
         File completedFile = settings.getWorkFolderFile(CSV_NAME_COMPLETED_PROCS);
         if (!completedFile.exists()) {

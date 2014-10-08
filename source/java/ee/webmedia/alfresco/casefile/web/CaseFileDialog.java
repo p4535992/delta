@@ -7,7 +7,10 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDialogHelper
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDynamicService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentLockHelperBean;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getNotificationService;
+<<<<<<< HEAD
 import static ee.webmedia.alfresco.common.web.BeanHelper.getPrivilegeService;
+=======
+>>>>>>> develop-5.1
 import static ee.webmedia.alfresco.common.web.BeanHelper.getPropertySheetStateBean;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getSendOutService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
@@ -75,6 +78,10 @@ import ee.webmedia.alfresco.document.web.DocumentListDialog;
 import ee.webmedia.alfresco.document.web.FavoritesModalComponent;
 import ee.webmedia.alfresco.document.web.FavoritesModalComponent.AddToFavoritesEvent;
 import ee.webmedia.alfresco.document.web.evaluator.IsOwnerEvaluator;
+<<<<<<< HEAD
+=======
+import ee.webmedia.alfresco.privilege.model.Privilege;
+>>>>>>> develop-5.1
 import ee.webmedia.alfresco.privilege.service.PrivilegeUtil;
 import ee.webmedia.alfresco.user.model.UserModel;
 import ee.webmedia.alfresco.utils.ActionUtil;
@@ -89,11 +96,16 @@ import ee.webmedia.alfresco.workflow.service.Task;
 import ee.webmedia.alfresco.workflow.service.WorkflowUtil;
 import ee.webmedia.alfresco.workflow.web.WorkflowBlockBean;
 
+<<<<<<< HEAD
 /**
  * @author Kaarel Jõgeva
  */
 public class CaseFileDialog extends BaseSnapshotCapableWithBlocksDialog<CaseFileDialogSnapshot, DocumentDynamicBlock, DialogDataProvider> implements DialogDataProvider,
 BlockBeanProviderProvider {
+=======
+public class CaseFileDialog extends BaseSnapshotCapableWithBlocksDialog<CaseFileDialogSnapshot, DocumentDynamicBlock, DialogDataProvider> implements DialogDataProvider,
+        BlockBeanProviderProvider {
+>>>>>>> develop-5.1
     private static final long serialVersionUID = 1L;
     public static final String BEAN_NAME = "CaseFileDialog";
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(CaseFileDialog.class);
@@ -105,10 +117,18 @@ BlockBeanProviderProvider {
     /** @param event */
     public void createDraft(ActionEvent event) {
         String typeId = ActionUtil.getParam(event, "typeId");
+<<<<<<< HEAD
         createCaseFile(typeId, null, false, false, null);
     }
 
     public void createCaseFile(String typeId, DocumentDynamic documentToAdd, boolean registerDoc, boolean sendDocNotifications, List<String> docSaveListeners) {
+=======
+        createCaseFile(typeId, null, false, false, null, false);
+    }
+
+    public void createCaseFile(String typeId, DocumentDynamic documentToAdd, boolean registerDoc, boolean sendDocNotifications, List<String> docSaveListeners,
+            boolean isRelocatingAssociations) {
+>>>>>>> develop-5.1
         CaseFile caseFile = createCaseFile(typeId);
         if (documentToAdd != null) {
             caseFile.setFunction(documentToAdd.getFunction());
@@ -121,6 +141,10 @@ BlockBeanProviderProvider {
             currentSnapshot.registerDoc = registerDoc;
             currentSnapshot.sendDocNotifications = sendDocNotifications;
             currentSnapshot.docSaveListeners = docSaveListeners;
+<<<<<<< HEAD
+=======
+            currentSnapshot.isRelocatingAssociationsNeeded = isRelocatingAssociations;
+>>>>>>> develop-5.1
         }
     }
 
@@ -224,6 +248,7 @@ BlockBeanProviderProvider {
         MessageUtil.addInfoMessage("caseFile_delete_success");
     }
 
+<<<<<<< HEAD
     public void archiveCaseFile(@SuppressWarnings("unused") ActionEvent event) {
         NodeRef archivedNodeRef = archiveCaseFile(getDocumentDialogHelperBean().getNode().getNodeRef());
         openOrSwitchModeCommon(archivedNodeRef, isInEditMode());
@@ -232,6 +257,19 @@ BlockBeanProviderProvider {
 
     public NodeRef archiveCaseFile(NodeRef caseFileRef) {
         return getArchivalsService().archiveVolumeOrCaseFile(caseFileRef);
+=======
+    public void showCaseFileLink(@SuppressWarnings("unused") ActionEvent event) {
+        renderedModal = CaseFileLinkGeneratorModalComponent.CASE_FILE_LINK_MODAL_ID;
+    }
+
+    public void archiveCaseFile(@SuppressWarnings("unused") ActionEvent event) {
+        archiveCaseFile(getDocumentDialogHelperBean().getNode().getNodeRef());
+        MessageUtil.addInfoMessage("caseFile_archive_success");
+    }
+
+    public void archiveCaseFile(NodeRef caseFileRef) {
+        getArchivalsService().addVolumeOrCaseToArchivingList(caseFileRef);
+>>>>>>> develop-5.1
     }
 
     // =========================================================================
@@ -262,7 +300,11 @@ BlockBeanProviderProvider {
             return cancel(false);
         }
 
+<<<<<<< HEAD
         if (!isInEditMode() || !getCurrentSnapshot().viewModeWasOpenedInThePast  || !canRestore()) {
+=======
+        if (!isInEditMode() || !getCurrentSnapshot().viewModeWasOpenedInThePast || !canRestore()) {
+>>>>>>> develop-5.1
             getDocumentDynamicService().deleteDocumentIfDraft(getCaseFile().getNodeRef());
             return super.cancel(); // closeDialogSnapshot
         }
@@ -396,6 +438,10 @@ BlockBeanProviderProvider {
         private List<String> docSaveListeners;
         private List<NodeRef> massChangeLocationSelectedDocs;
         private Node massChangeLocationNode;
+<<<<<<< HEAD
+=======
+        private boolean isRelocatingAssociationsNeeded;
+>>>>>>> develop-5.1
 
         @Override
         public String getOpenDialogNavigationOutcome() {
@@ -496,9 +542,16 @@ BlockBeanProviderProvider {
     }
 
     public boolean isWorkflowCreatable() {
+<<<<<<< HEAD
         return getCaseFile().isStatus(DocListUnitStatus.OPEN)
                 && (isAdminOrDocmanagerWithPermission(getNode(), DocumentCommonModel.Privileges.VIEW_CASE_FILE) || new IsOwnerEvaluator().evaluate(getNode()) || getPrivilegeService()
                         .hasPermissions(getNode().getNodeRef(), DocumentCommonModel.Privileges.EDIT_CASE_FILE));
+=======
+        WmNode caseFileNode = getNode();
+        return getCaseFile().isStatus(DocListUnitStatus.OPEN)
+                && (isAdminOrDocmanagerWithPermission(caseFileNode, Privilege.VIEW_CASE_FILE) || new IsOwnerEvaluator().evaluate(caseFileNode)
+                || caseFileNode.hasPermission(Privilege.EDIT_CASE_FILE));
+>>>>>>> develop-5.1
     }
 
     @Override
@@ -506,16 +559,26 @@ BlockBeanProviderProvider {
         openOrSwitchModeCommon(getCaseFile().getNodeRef(), inEditMode);
     }
 
+<<<<<<< HEAD
     private void switchMode(boolean inEditMode, NodeRef documentToCheck) {
         NodeRef caseFileRef = getCaseFile().getNodeRef();
         openOrSwitchModeCommon(caseFileRef, getCaseFileService().getCaseFile(caseFileRef), inEditMode, documentToCheck);
+=======
+    private void switchMode(boolean inEditMode, List<NodeRef> documentsToCheck) {
+        NodeRef caseFileRef = getCaseFile().getNodeRef();
+        openOrSwitchModeCommon(caseFileRef, getCaseFileService().getCaseFile(caseFileRef), inEditMode, documentsToCheck);
+>>>>>>> develop-5.1
     }
 
     public void openOrSwitchModeCommon(NodeRef caseFileRef, boolean inEditMode) {
         openOrSwitchModeCommon(caseFileRef, getCaseFileService().getCaseFile(caseFileRef), inEditMode, null);
     }
 
+<<<<<<< HEAD
     private void openOrSwitchModeCommon(NodeRef caseFileRef, CaseFile caseFile, boolean inEditMode, NodeRef documentToCheck) {
+=======
+    private void openOrSwitchModeCommon(NodeRef caseFileRef, CaseFile caseFile, boolean inEditMode, List<NodeRef> documentsToCheck) {
+>>>>>>> develop-5.1
         CaseFileDialogSnapshot currentSnapshot = getCurrentSnapshot();
         try {
             currentSnapshot.caseFile = caseFile;
@@ -534,7 +597,11 @@ BlockBeanProviderProvider {
                 getCurrentSnapshot().showDocsAndCasesAssocs = false;
             }
             resetOrInit(getDataProvider());
+<<<<<<< HEAD
             addLastSavedDocument(documentToCheck);
+=======
+            addLastSavedDocumentAndItsAssocs(documentsToCheck);
+>>>>>>> develop-5.1
             if (LOG.isDebugEnabled()) {
                 LOG.debug("CaseFile before rendering: " + getCaseFile());
             }
@@ -551,9 +618,18 @@ BlockBeanProviderProvider {
     }
 
     // if document is saved in CaseFileDialog.finishImpl, it may not be indexed yet,
+<<<<<<< HEAD
     // in that case retrieve the last saved doc by nodeRef from repo
     private void addLastSavedDocument(NodeRef documentToCheck) {
         if (documentToCheck != null) {
+=======
+    // in that case retrieve the last saved doc (and its associations) by nodeRef from repo
+    private void addLastSavedDocumentAndItsAssocs(List<NodeRef> documentsToCheck) {
+        if (documentsToCheck == null) {
+            return;
+        }
+        for (NodeRef documentToCheck : documentsToCheck) {
+>>>>>>> develop-5.1
             boolean documentFound = false;
             for (Document document : documents) {
                 if (document.getNodeRef().equals(documentToCheck)) {
@@ -587,6 +663,10 @@ BlockBeanProviderProvider {
         final DocumentDynamic documentToAdd = currentSnapshot.documentToAdd;
         final boolean isAddDocument = documentToAdd != null;
         NodeRef savedDocumentRef = null;
+<<<<<<< HEAD
+=======
+        final List<NodeRef> savedDocAndItsAssocsRefs = new ArrayList<NodeRef>();
+>>>>>>> develop-5.1
 
         try {
             // Do in new transaction, because we want to catch integrity checker exceptions now, not at the end of this method when mode is already switched
@@ -604,7 +684,18 @@ BlockBeanProviderProvider {
                                 documentToAdd.setFunction(result.getFunction());
                                 final boolean isDraft = documentToAdd.isDraft();
                                 DocumentDynamicDialog documentDynamicDialog = BeanHelper.getDocumentDynamicDialog();
+<<<<<<< HEAD
                                 savedDocumentRef = documentDynamicDialog.save(documentToAdd, currentSnapshot.docSaveListeners, false, false).getNodeRef();
+=======
+                                Pair<DocumentDynamic, List<Pair<NodeRef, NodeRef>>> docAndAssocs = documentDynamicDialog.save(documentToAdd, currentSnapshot.docSaveListeners,
+                                        currentSnapshot.isRelocatingAssociationsNeeded, false);
+                                savedDocumentRef = docAndAssocs.getFirst().getNodeRef();
+                                for (Pair<NodeRef, NodeRef> p : docAndAssocs.getSecond()) {
+                                    if (p.getSecond() != null) {
+                                        savedDocAndItsAssocsRefs.add(p.getSecond());
+                                    }
+                                }
+>>>>>>> develop-5.1
                                 if (currentSnapshot.registerDoc) {
                                     WmNode node = documentToAdd.getNode();
                                     documentDynamicDialog.register(isDraft, documentToAdd, node, node);
@@ -612,7 +703,11 @@ BlockBeanProviderProvider {
                                 if (currentSnapshot.sendDocNotifications) { // Confirmation about missing e-mails was asked after DocumentDynamicDialog finish button
                                     Pair<List<String>, List<SendInfo>> existingAndMissingEmails = getNotificationService().getExistingAndMissingEmails(
                                             getSendOutService().getDocumentSendInfos(savedDocumentRef));
+<<<<<<< HEAD
                                     documentDynamicDialog.notifyAccessRestrictionChanged(documentToAdd, existingAndMissingEmails.getFirst());
+=======
+                                    documentDynamicDialog.notifyAccessRestrictionChanged(documentToAdd, existingAndMissingEmails);
+>>>>>>> develop-5.1
                                 }
                                 resetDocumentToAdd(currentSnapshot);
                                 documentDynamicDialog.switchMode(true);
@@ -626,7 +721,11 @@ BlockBeanProviderProvider {
                                 DocumentListDialog documentListDialog = BeanHelper.getDocumentListDialog();
                                 documentListDialog.setLocationNode(currentSnapshot.massChangeLocationNode);
                                 documentListDialog.setSelectedDocs(currentSnapshot.massChangeLocationSelectedDocs);
+<<<<<<< HEAD
                                 BeanHelper.getDocumentListDialog().massChangeDocLocationSave();
+=======
+                                BeanHelper.getDocumentListDialog().massChangeDocLocationSave(true);
+>>>>>>> develop-5.1
                                 resetMassChangeSelectedDocs(currentSnapshot);
                             }
                             return savedDocumentRef;
@@ -637,7 +736,13 @@ BlockBeanProviderProvider {
             throw e;
         }
 
+<<<<<<< HEAD
         final NodeRef finalSavedDocumentRef = savedDocumentRef;
+=======
+        if (savedDocumentRef != null) {
+            savedDocAndItsAssocsRefs.add(savedDocumentRef);
+        }
+>>>>>>> develop-5.1
         // Do in new transaction, because otherwise saved data from the previous transaction from above is not visible
         return getTransactionService().getRetryingTransactionHelper().doInTransaction(new RetryingTransactionCallback<String>() {
             @Override
@@ -646,7 +751,11 @@ BlockBeanProviderProvider {
                     BeanHelper.getDocumentDynamicDialog().switchMode(true);
                 }
                 // Switch from edit mode back to view mode
+<<<<<<< HEAD
                 switchMode(false, finalSavedDocumentRef);
+=======
+                switchMode(false, savedDocAndItsAssocsRefs);
+>>>>>>> develop-5.1
                 return null;
             }
         }, false, true);
@@ -769,7 +878,11 @@ BlockBeanProviderProvider {
         NodeRef nodeRef = node.getNodeRef();
         final String currentUser = AuthenticationUtil.getRunAsUser();
         return currentUser.equals(node.getProperties().get(DocumentCommonModel.Props.OWNER_ID))
+<<<<<<< HEAD
                 || PrivilegeUtil.isAdminOrDocmanagerWithPermission(nodeRef, DocumentCommonModel.Privileges.VIEW_CASE_FILE)
+=======
+                || PrivilegeUtil.isAdminOrDocmanagerWithPermission(nodeRef, Privilege.VIEW_CASE_FILE)
+>>>>>>> develop-5.1
                 || CollectionUtils.exists(BeanHelper.getWorkflowService().getTasksInProgress(nodeRef), new Predicate() {
 
                     @Override
@@ -794,10 +907,20 @@ BlockBeanProviderProvider {
         deleteReasonModal.setFinishButtonLabelId("delete");
         deleteReasonModal.setId("caseFile-delete-reason-popup-" + context.getViewRoot().createUniqueId());
 
+<<<<<<< HEAD
+=======
+        CaseFileLinkGeneratorModalComponent linkModal = new CaseFileLinkGeneratorModalComponent();
+        linkModal.setId("caseFile-link-modal-" + context.getViewRoot().createUniqueId());
+
+>>>>>>> develop-5.1
         List<UIComponent> children = ComponentUtil.getChildren(getModalContainer());
         children.clear();
         children.add(favoritesModal);
         children.add(deleteReasonModal);
+<<<<<<< HEAD
+=======
+        children.add(linkModal);
+>>>>>>> develop-5.1
     }
 
     public boolean isVolumeMarkValidationDisabled() {
@@ -805,12 +928,25 @@ BlockBeanProviderProvider {
     }
 
     private boolean validateOpen(CaseFile caseFile, boolean inEditMode) {
+<<<<<<< HEAD
         return !inEditMode
                 && validatePermissionWithErrorMessage(caseFile.getNodeRef(), DocumentCommonModel.Privileges.VIEW_CASE_FILE)
                 || inEditMode
                 && getDocumentLockHelperBean().isLockable(caseFile.getNodeRef())
                 && (caseFile.isStatus(DocListUnitStatus.OPEN) && validatePermissionWithErrorMessage(caseFile.getNodeRef(), DocumentCommonModel.Privileges.EDIT_CASE_FILE) || caseFile
                         .isStatus(DocListUnitStatus.CLOSED)
+=======
+        boolean isOpen = caseFile.isStatus(DocListUnitStatus.OPEN);
+        boolean isClosed = caseFile.isStatus(DocListUnitStatus.CLOSED);
+        if (!isOpen && !isClosed) {
+            MessageUtil.addErrorMessage("caseFile_open_error_wrong_status", DocListUnitStatus.OPEN.getValueName(), DocListUnitStatus.CLOSED.getValueName());
+        }
+        return !inEditMode
+                && validatePermissionWithErrorMessage(caseFile.getNodeRef(), Privilege.VIEW_CASE_FILE)
+                || inEditMode
+                && getDocumentLockHelperBean().isLockable(caseFile.getNodeRef())
+                && (isOpen && validatePermissionWithErrorMessage(caseFile.getNodeRef(), Privilege.EDIT_CASE_FILE) || isClosed
+>>>>>>> develop-5.1
                         && getUserService().isAdministrator());
     }
 }

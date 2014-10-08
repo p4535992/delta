@@ -10,8 +10,11 @@ import ee.webmedia.alfresco.eventplan.model.EventPlanModel.Props;
 
 /**
  * Entity class for EventPlan record.
+<<<<<<< HEAD
  * 
  * @author Martti Tamm
+=======
+>>>>>>> develop-5.1
  */
 public class EventPlanCommon extends NodeBaseVO {
     private static final long serialVersionUID = 1L;

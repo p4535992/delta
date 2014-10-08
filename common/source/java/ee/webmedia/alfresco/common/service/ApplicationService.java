@@ -5,8 +5,11 @@ import org.springframework.context.ApplicationContext;
 
 /**
  * Information about specific project and common project.
+<<<<<<< HEAD
  * 
  * @author Alar Kvell
+=======
+>>>>>>> develop-5.1
  */
 public interface ApplicationService {
 
@@ -51,6 +54,11 @@ public interface ApplicationService {
      */
     String getFooterText();
 
+<<<<<<< HEAD
+=======
+    String getMDeltaFooterText();
+
+>>>>>>> develop-5.1
     ApplicationContext getApplicationContext();
 
     /**

@@ -234,6 +234,29 @@
          </list>
       </property>
    </bean>
+<<<<<<< HEAD
+=======
+   
+   <bean id="applicationParametersBootstrap2" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
+      <property name="moduleId" value="common" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="parametersSpacesBootstrap" />
+         </list>
+      </property>
+      <property name="importer" ref="spacesBootstrap" />
+      <property name="bootstrapViews">
+         <list>
+            <props>
+               <prop key="encoding">UTF-8</prop>
+               <prop key="path">/param:parameters</prop>
+               <prop key="location">ee/webmedia/alfresco/common/bootstrap/application-parameters2.xml</prop>
+            </props>
+         </list>
+      </property>
+   </bean>
+>>>>>>> develop-5.1
 
    <bean id="modalSearchParametersBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
       <property name="moduleId" value="common" />
@@ -290,12 +313,15 @@
       <property name="executeOnceOnly" value="true" />
       <property name="dataSource" ref="dataSource" />
    </bean>
+<<<<<<< HEAD
 
    <bean id="createAccessControlEntryUniqueIndexBootstrap" class="ee.webmedia.alfresco.common.bootstrap.CreateAccessControlEntryUniqueIndexBootstrap" parent="module.baseComponent">
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
       <property name="dataSource" ref="dataSource" />
    </bean>
+=======
+>>>>>>> develop-5.1
    
    <bean id="executeStatementsBootstrap" class="ee.webmedia.alfresco.common.bootstrap.ExecuteStatementsBootstrap" parent="module.baseComponent" abstract="true">
       <property name="moduleId" value="common" />
@@ -346,6 +372,20 @@
       <property name="enabled" value="${jobs.enabled}" />
    </bean>
 
+<<<<<<< HEAD
+=======
+<!--
+   XXX In 3.6.21->3.6.30 upgrade the procedure is to perform full index rebuild at the beginning of upgrade, so this bootstrap is not needed.
+       It is left active for for 3.13 upgrades.
+-->
+   <bean id="invalidNodeFixerAndIndexIntegrityCheckerBootstrap" class="ee.webmedia.alfresco.common.bootstrap.InvalidNodeFixerAndIndexIntegrityCheckerBootstrap" parent="module.baseComponent">
+      <property name="moduleId" value="common" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="invalidNodeFixerBootstrap" ref="invalidNodeFixerBootstrap" />
+      <property name="indexIntegrityCheckerBootstrap" ref="indexIntegrityCheckerBootstrap" />
+   </bean>   
+
+>>>>>>> develop-5.1
    <!-- START: web beans: -->
 
    <bean id="TestingForDeveloperBean" class="ee.webmedia.alfresco.common.web.TestingForDeveloperBean" scope="session" />

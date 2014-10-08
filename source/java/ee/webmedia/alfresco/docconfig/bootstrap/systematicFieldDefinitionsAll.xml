@@ -274,6 +274,7 @@
       </view:properties>
    </docadmin:fieldDefinition>
 
+<<<<<<< HEAD
    <docadmin:fieldDefinition view:childName="docdyn:dailyAllowanceCateringCount">
       <view:properties>
          <docadmin:fieldId>dailyAllowanceCateringCount</docadmin:fieldId>
@@ -313,6 +314,8 @@
       </view:properties>
    </docadmin:fieldDefinition>
 
+=======
+>>>>>>> develop-5.1
    <docadmin:fieldDefinition view:childName="docdyn:purchasingManager">
       <view:properties>
          <docadmin:fieldId>purchasingManager</docadmin:fieldId>

@@ -21,8 +21,11 @@ import ee.webmedia.alfresco.volume.model.VolumeModel;
 
 /**
  * CL 204311
+<<<<<<< HEAD
  * 
  * @author Martti Tamm
+=======
+>>>>>>> develop-5.1
  */
 public class VolumeCaseFileEventPlanUpdater extends AbstractNodeUpdater {
 

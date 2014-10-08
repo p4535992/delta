@@ -463,6 +463,52 @@
       </property>
    </bean>
    
+<<<<<<< HEAD
+=======
+   <bean id="sendModeClassificatorValueBootstrap2" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
+      <property name="moduleId" value="common" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="importer" ref="spacesBootstrap" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="classificatorRootBootstrap" />
+            <ref bean="sendModeClassificatorValueBootstrap" />
+         </list>
+      </property>      
+      <property name="bootstrapViews">
+         <list>
+            <props>
+               <prop key="encoding">UTF-8</prop>
+               <prop key="path">${classificators.parent.folder.xpath}${classificators.folder.name}/cl:sendMode</prop>
+               <prop key="location">ee/webmedia/alfresco/classificator/bootstrap/sendModeClassificatorValues2.xml</prop>
+               <prop key="messages">ee/webmedia/alfresco/classificator/bootstrap/classificators-bootstrap</prop>
+            </props>
+         </list>
+      </property>
+   </bean>
+   
+   <bean id="transmittalModeClassificatorValueBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
+      <property name="moduleId" value="common" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="importer" ref="spacesBootstrap" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="classificatorRootBootstrap" />
+         </list>
+      </property>      
+      <property name="bootstrapViews">
+         <list>
+            <props>
+               <prop key="encoding">UTF-8</prop>
+               <prop key="path">${classificators.parent.folder.xpath}${classificators.folder.name}/cl:transmittalMode</prop>
+               <prop key="location">ee/webmedia/alfresco/classificator/bootstrap/transmittalModeClassificatorValues.xml</prop>
+               <prop key="messages">ee/webmedia/alfresco/classificator/bootstrap/classificators-bootstrap</prop>
+            </props>
+         </list>
+      </property>
+   </bean>
+   
+>>>>>>> develop-5.1
    <bean id="invoiceTypesClassificatorValueBootstrap1" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
       <property name="moduleId" value="common" />
       <property name="executeOnceOnly" value="true" />
@@ -555,6 +601,10 @@
       <property name="dependsOn">
          <list>
             <ref bean="classificatorRootBootstrap" />
+<<<<<<< HEAD
+=======
+            <ref bean="insertDeltaPermissionsBootstrap" />
+>>>>>>> develop-5.1
          </list>
       </property>
    </bean>

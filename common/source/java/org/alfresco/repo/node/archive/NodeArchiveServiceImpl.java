@@ -24,6 +24,11 @@
  */
 package org.alfresco.repo.node.archive;
 
+<<<<<<< HEAD
+=======
+import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.REG_NUMBER;
+
+>>>>>>> develop-5.1
 import java.util.ArrayList;
 import java.util.List;
 
@@ -49,6 +54,10 @@ import org.apache.commons.logging.LogFactory;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+<<<<<<< HEAD
+=======
+import ee.webmedia.alfresco.document.service.DocumentService;
+>>>>>>> develop-5.1
 
 /**
  * Implementation of the node archive abstraction.
@@ -137,7 +146,19 @@ public class NodeArchiveServiceImpl implements NodeArchiveService
             {
                 public NodeRef execute() throws Exception
                 {
+<<<<<<< HEAD
                     return nodeService.restoreNode(archivedNodeRef, destinationNodeRef, assocTypeQName, assocQName);
+=======
+                    NodeRef restoredNodeRef = nodeService.restoreNode(archivedNodeRef, destinationNodeRef, assocTypeQName, assocQName);
+                    BeanHelper.getDocumentLogService().addDeletedObjectLog(restoredNodeRef, "applog_delete_restore");
+                    if (DocumentCommonModel.Types.DOCUMENT.equals(nodeService.getType(restoredNodeRef))) {
+                        DocumentService documentService = BeanHelper.getDocumentService();
+                        documentService.updateParentNodesContainingDocsCount(restoredNodeRef, true);
+                        String regNumber = (String) nodeService.getProperty(restoredNodeRef, REG_NUMBER);
+                        documentService.updateParentDocumentRegNumbers(restoredNodeRef, null, regNumber);
+                    }                    
+                    return restoredNodeRef;
+>>>>>>> develop-5.1
                 }
             };
             NodeRef newNodeRef = txnHelper.doInTransaction(restoreCallback, false, true);
@@ -297,6 +318,7 @@ public class NodeArchiveServiceImpl implements NodeArchiveService
      * This is the primary purge methd that all purge methods fall back on.  It isolates the delete
      * work in a new transaction.
      */
+<<<<<<< HEAD
     public void purgeArchivedNode(final NodeRef archivedNodeRef)
     {
         RetryingTransactionHelper txnHelper = transactionService.getRetryingTransactionHelper();
@@ -316,11 +338,40 @@ public class NodeArchiveServiceImpl implements NodeArchiveService
             }
         };
         txnHelper.doInTransaction(deleteCallback, false, true);
+=======
+    public boolean purgeArchivedNode(final NodeRef archivedNodeRef)
+    {
+        RetryingTransactionHelper txnHelper = transactionService.getRetryingTransactionHelper();
+        RetryingTransactionCallback<Boolean> deleteCallback = new RetryingTransactionCallback<Boolean>()
+        {
+            public Boolean execute() throws Exception
+            {
+                try
+                {
+                    BeanHelper.getDocumentLogService().addDeletedObjectLog(archivedNodeRef, "applog_delete_done");
+                    nodeService.deleteNode(archivedNodeRef);
+                    return true;
+                }
+                catch (InvalidNodeRefException nodeRefEx)
+                {
+                    // not error, node has already been deleted
+                    return true;
+                }
+                catch (Exception e)
+                {
+                    logger.error("Deleting node from trashcan failed: ", e);
+                    return false;
+                }
+            }
+        };
+        return txnHelper.doInTransaction(deleteCallback, false, true);
+>>>>>>> develop-5.1
     }
 
     /**
      * @see #purgeArchivedNode(NodeRef)
      */
+<<<<<<< HEAD
     public void purgeArchivedNodes(List<NodeRef> archivedNodes)
     {
         for (NodeRef archivedNodeRef : archivedNodes)
@@ -328,6 +379,17 @@ public class NodeArchiveServiceImpl implements NodeArchiveService
             purgeArchivedNode(archivedNodeRef);
         }
         // done
+=======
+    public int purgeArchivedNodes(List<NodeRef> archivedNodes)
+    {
+        int succeeded = 0;
+        for (NodeRef archivedNodeRef : archivedNodes)
+        {
+            boolean success = purgeArchivedNode(archivedNodeRef);
+            succeeded += success ? 1 : 0;
+        }
+        return succeeded;
+>>>>>>> develop-5.1
     }
 
     public void purgeAllArchivedNodes(StoreRef originalStoreRef)
@@ -358,4 +420,8 @@ public class NodeArchiveServiceImpl implements NodeArchiveService
         }
     }
 
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> develop-5.1

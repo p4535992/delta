@@ -20,8 +20,11 @@
    </bean>
    
    <bean id="documentLogService" class="ee.webmedia.alfresco.document.log.service.DocumentLogServiceImpl">
+<<<<<<< HEAD
       <property name="nodeService" ref="NodeService" />
       <property name="generalService" ref="GeneralService" />
+=======
+>>>>>>> develop-5.1
       <property name="userService" ref="UserService" />
       <property name="logService" ref="LogService" />
    </bean>

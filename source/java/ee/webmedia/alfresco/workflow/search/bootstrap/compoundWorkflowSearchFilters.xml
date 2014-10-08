@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <?xml version="1.0" encoding="UTF-8"?>
 <view:view 
    xmlns:view="http://www.alfresco.org/view/repository/1.0" 
@@ -5,3 +6,12 @@
 >
    <cwsearch:cwSearchFilters view:childName="cwsearch:cwSearchFilters" />
 </view:view>
+=======
+<?xml version="1.0" encoding="UTF-8"?>
+<view:view 
+   xmlns:view="http://www.alfresco.org/view/repository/1.0" 
+   xmlns:cwsearch="http://alfresco.webmedia.ee/model/cw/search/1.0" 
+>
+   <cwsearch:cwSearchFilters view:childName="cwsearch:cwSearchFilters" />
+</view:view>
+>>>>>>> develop-5.1

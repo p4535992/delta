@@ -13,9 +13,12 @@ import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.file.model.GeneratedFileType;
 import ee.webmedia.alfresco.document.file.web.Subfolder;
 
+<<<<<<< HEAD
 /**
  * @author Dmitri Melnikov
  */
+=======
+>>>>>>> develop-5.1
 public interface FileService {
 
     String BEAN_NAME = "FileService";
@@ -29,6 +32,27 @@ public interface FileService {
     boolean toggleActive(NodeRef nodeRef);
 
     /**
+<<<<<<< HEAD
+=======
+     * Returns the Dec container from document files. If not available, null is returned.
+     *
+     * @param documentNodeRef document that contains the container file
+     * @return container node ref or null
+     *
+     * @see {@link ee.webmedia.alfresco.dvk.service.DvkService#DEC_CONTAINER_FILE_NAME}
+     */
+    NodeRef getDecContainer(NodeRef documentNodeRef);
+
+    /**
+     * Removes the Dec container from document files if possible.
+     *
+     * @param documentNodeRef document that contains the container file
+     * @return true if removed, false oterwise
+     */
+    boolean removeDecContainer(NodeRef documentNodeRef);
+
+    /**
+>>>>>>> develop-5.1
      * Returns all children of this nodeRef as file items.
      * 
      * @return
@@ -37,12 +61,25 @@ public interface FileService {
 
     /**
      * @param nodeRef
+<<<<<<< HEAD
      * @return list of all files(including digidoc container, but witout digidocitems of container)
+=======
+     * @return list of all files without dec containers (including digidoc container, but without digidocitems of container)
+>>>>>>> develop-5.1
      */
     List<File> getAllFilesExcludingDigidocSubitems(NodeRef nodeRef);
 
     /**
      * @param nodeRef
+<<<<<<< HEAD
+=======
+     * @return list of all files(including dec containers and digidoc container, but without digidocitems of container)
+     */
+    List<File> getAllFilesExcludingDigidocSubitemsAndIncludingDecContainers(NodeRef nodeRef);
+
+    /**
+     * @param nodeRef
+>>>>>>> develop-5.1
      * @return
      */
     File getFile(NodeRef nodeRef);
@@ -64,6 +101,7 @@ public interface FileService {
      */
     void moveAllFiles(NodeRef fromRef, NodeRef toRef) throws FileNotFoundException;
 
+<<<<<<< HEAD
     /**
      * Adds file to given document.
      * 
@@ -83,6 +121,13 @@ public interface FileService {
     NodeRef addFile(String name, String displayName, NodeRef taskNodeRef, java.io.File file, String mimeType);
 
     NodeRef addFile(String name, String displayName, NodeRef taskNodeRef, java.io.File file, String mimeType, boolean active, boolean associatedWithMetaData);
+=======
+    boolean addExistingFileToDocument(String name, String displayName, NodeRef documentNodeRef, NodeRef fileNodeRef, boolean active, boolean associatedWithMetaData);
+
+    boolean addUploadedFileToDocument(String name, String displayName, NodeRef documentNodeRef, java.io.File file, String mimeType, boolean active, boolean associatedWithMetaData);
+
+    NodeRef addFileToTask(String name, String displayName, NodeRef taskNodeRef, java.io.File file, String mimeType);
+>>>>>>> develop-5.1
 
     NodeRef addFile(String name, String displayName, NodeRef taskNodeRef, ContentReader reader);
 
@@ -125,6 +170,13 @@ public interface FileService {
      */
     List<File> getAllActiveFiles(NodeRef nodeRef);
 
+<<<<<<< HEAD
+=======
+    List<NodeRef> getAllFileRefs(NodeRef nodeRef, boolean activeFilesOnly);
+
+    List<File> getAllActiveAndInactiveFiles(NodeRef nodeRef);
+
+>>>>>>> develop-5.1
     /** Get all active files, excluding the ones that are sources for generated pdfs */
     List<NodeRef> getAllActiveFilesForDdoc(NodeRef nodeRef);
 
@@ -162,6 +214,11 @@ public interface FileService {
 
     InputStream getFileContentInputStream(NodeRef fileRef);
 
+<<<<<<< HEAD
+=======
+    void removePreviousParentReference(NodeRef docRef, boolean moveToPreviousParent);
+
+>>>>>>> develop-5.1
     String getJumploaderPath();
 
 }

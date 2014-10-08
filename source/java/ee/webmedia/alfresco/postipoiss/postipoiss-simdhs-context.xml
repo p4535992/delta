@@ -7,4 +7,31 @@
       <property name="functionsService" ref="FunctionsService" />
    </bean>
 
+<<<<<<< HEAD
+=======
+   <bean id="fileActiveUpdater" class="ee.webmedia.alfresco.postipoiss.FileActiveUpdater" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="enabled" value="false" /><!-- Executed from node-browser -->
+      <property name="dependsOn">
+         <list>
+            <ref bean="archivalsStoresBootstrap" />
+         </list>
+      </property>
+      <property name="fileService" ref="FileService" />
+   </bean>
+
+   <bean id="storageTypeUpdater" class="ee.webmedia.alfresco.postipoiss.StorageTypeUpdater" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="enabled" value="false" /><!-- Executed from node-browser -->
+      <property name="dependsOn">
+         <list>
+            <ref bean="archivalsStoresBootstrap" />
+         </list>
+      </property>
+      <property name="fileService" ref="FileService" />
+   </bean>
+
+>>>>>>> develop-5.1
 </beans>

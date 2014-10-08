@@ -1,5 +1,8 @@
 #!/bin/bash
+<<<<<<< HEAD
 # Author: Alar Kvell
+=======
+>>>>>>> develop-5.1
 # Usage ./delta-requests.sh alfresco.log [alfresco2.log [...]]
 # Outputs CSV with the following columns (separated by semicolon), suitable for importing into Excel or a database:
 #  1) kasutaja HTTP päringu aeg kokku (ms)

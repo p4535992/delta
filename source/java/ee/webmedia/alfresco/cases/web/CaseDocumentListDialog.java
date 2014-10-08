@@ -26,11 +26,18 @@ import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.WebUtil;
 import ee.webmedia.alfresco.volume.model.Volume;
+<<<<<<< HEAD
 
 /**
  * Form backing component for cases list page
  * 
  * @author Ats Uiboupin
+=======
+import ee.webmedia.alfresco.volume.web.VolumeListDialog;
+
+/**
+ * Form backing component for cases list page
+>>>>>>> develop-5.1
  */
 public class CaseDocumentListDialog extends DocumentListDialog {
     private static final long serialVersionUID = 1L;
@@ -40,6 +47,10 @@ public class CaseDocumentListDialog extends DocumentListDialog {
 
     private Volume parent;
     private List<Case> cases;
+<<<<<<< HEAD
+=======
+    private boolean volumeRefInvalid;
+>>>>>>> develop-5.1
 
     @Override
     public void init(NodeRef volumeRef) {
@@ -48,6 +59,16 @@ public class CaseDocumentListDialog extends DocumentListDialog {
         WebUtil.navigateTo(AlfrescoNavigationHandler.DIALOG_PREFIX + "caseDocListDialog");
     }
 
+<<<<<<< HEAD
+=======
+    public String action() {
+        String dialogPrefix = AlfrescoNavigationHandler.DIALOG_PREFIX;
+        boolean tempState = volumeRefInvalid;
+        volumeRefInvalid = false;
+        return dialogPrefix + (tempState ? VolumeListDialog.DIALOG_NAME : "caseDetailsDialog");
+    }
+
+>>>>>>> develop-5.1
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
         resetFields();
@@ -77,6 +98,14 @@ public class CaseDocumentListDialog extends DocumentListDialog {
     // START: jsf actions/accessors
     public void showAll(ActionEvent event) {
         NodeRef volumeRef = new NodeRef(ActionUtil.getParam(event, "volumeNodeRef"));
+<<<<<<< HEAD
+=======
+        if (!nodeExists(volumeRef)) {
+            volumeRefInvalid = true;
+            MessageUtil.addInfoMessage("volume_noderef_not_found");
+            return;
+        }
+>>>>>>> develop-5.1
         super.setup(event, false);
         showAll(volumeRef);
     }

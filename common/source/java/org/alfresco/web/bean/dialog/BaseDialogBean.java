@@ -34,6 +34,10 @@ import java.util.Map;
 import javax.faces.context.FacesContext;
 
 import org.alfresco.error.AlfrescoRuntimeException;
+<<<<<<< HEAD
+=======
+import org.alfresco.repo.security.authentication.AuthenticationUtil;
+>>>>>>> develop-5.1
 import org.alfresco.repo.transaction.RetryingTransactionHelper;
 import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
 import org.alfresco.service.cmr.dictionary.DictionaryService;
@@ -57,6 +61,10 @@ import org.alfresco.web.ui.common.Utils;
 import org.alfresco.web.ui.common.component.data.UIRichList;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
+<<<<<<< HEAD
+=======
+import ee.webmedia.alfresco.privilege.model.Privilege;
+>>>>>>> develop-5.1
 import ee.webmedia.alfresco.utils.MessageData;
 import ee.webmedia.alfresco.utils.MessageDataImpl;
 import ee.webmedia.alfresco.utils.MessageUtil;
@@ -203,7 +211,15 @@ public abstract class BaseDialogBean implements IDialogBean, Serializable
    public boolean isRequiresNewTransaction() {
        return true;
    }
+<<<<<<< HEAD
 
+=======
+   
+   protected boolean nodeExists(NodeRef nodeRef) {
+       return BeanHelper.getNodeService().exists(nodeRef);
+   }
+   
+>>>>>>> develop-5.1
    public String handleException(Throwable e) {
         String outcome;
         // reset the flag so we can re-attempt the operation
@@ -506,6 +522,7 @@ public abstract class BaseDialogBean implements IDialogBean, Serializable
             exception.getMessage());
    }
 
+<<<<<<< HEAD
    public static void validatePermission(Node documentNode, String permission) {
        validatePermission(documentNode, null, permission);
    }
@@ -523,12 +540,33 @@ public abstract class BaseDialogBean implements IDialogBean, Serializable
        if (!hasPermission(documentNodeRef, permission)) {
            UnableToPerformException e = new UnableToPerformException("action_failed_missingPermission_" + permission, new MessageDataImpl("permission_" + permission));
            e.setFallbackMessage(new MessageDataImpl("action_failed_missingPermission", new MessageDataImpl("permission_" + permission)));
+=======
+   public static void validatePermission(Node documentNode, Privilege permission) {
+       if (!documentNode.hasPermission(permission)) {
+           throw new UnableToPerformException("action_failed_missingPermission", new MessageDataImpl("permission_" + permission.getPrivilegeName()));
+       }
+   }
+
+   public static void validatePermission(NodeRef documentNodeRef, Privilege... permission) {
+       if (!BeanHelper.getPrivilegeService().hasPermission(documentNodeRef, AuthenticationUtil.getRunAsUser(), permission)) {
+           Object[] messageDataHolders = new Object[permission.length];
+           int i = 0;
+           for (Privilege privilege : permission) {
+               messageDataHolders[i++] = new MessageDataImpl("permission_" + privilege.getPrivilegeName());
+           }
+           String privilegeName = permission.length == 1 ? permission[0].getPrivilegeName() : "";
+           UnableToPerformException e = new UnableToPerformException("action_failed_missingPermission_" + privilegeName, messageDataHolders);
+           e.setFallbackMessage(new MessageDataImpl("action_failed_missingPermission", messageDataHolders));
+>>>>>>> develop-5.1
            throw e;
        }
    }
 
+<<<<<<< HEAD
    public static boolean hasPermission(NodeRef nodeRef, String permission) {
        return AccessStatus.ALLOWED == BeanHelper.getPermissionService().hasPermission(nodeRef, permission);
    }
 
+=======
+>>>>>>> develop-5.1
 }

@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <?xml version="1.0" encoding="UTF-8"?>
 <model name="file:fileModel" xmlns="http://www.alfresco.org/model/dictionary/1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
    xsi:schemaLocation="http://www.alfresco.org/model/dictionary/1.0 http://svn.alfresco.com/repos/alfresco-open-mirror/alfresco/HEAD/root/projects/repository/config/alfresco/model/modelSchema.xsd">
@@ -7,3 +8,14 @@
    </namespaces>
 
 </model>
+=======
+<?xml version="1.0" encoding="UTF-8"?>
+<model name="file:fileModel" xmlns="http://www.alfresco.org/model/dictionary/1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.alfresco.org/model/dictionary/1.0 http://svn.alfresco.com/repos/alfresco-open-mirror/alfresco/HEAD/root/projects/repository/config/alfresco/model/modelSchema.xsd">
+   <!-- EMPTY model - namespace prefix registration is needed for resolving QName.toPrefixString() -->
+   <namespaces>
+      <namespace uri="http://alfresco.webmedia.ee/model/file/1.0" prefix="file" />
+   </namespaces>
+
+</model>
+>>>>>>> develop-5.1

@@ -86,6 +86,7 @@
                <xs:documentation>Terviktöövoo pealkiri.</xs:documentation>
             </xs:annotation>
          </xs:element>
+<<<<<<< HEAD
          <xs:element name="compoundWorkflowComment" type="xs:string" minOccurs="0">
             <xs:annotation>
                <xs:documentation>Terviktöövoo kommentaar.</xs:documentation>
@@ -94,6 +95,11 @@
          <xs:element name="workflowResolution" type="xs:string" minOccurs="0">
             <xs:annotation>
                <xs:documentation>Töövoo resolutsioon.</xs:documentation>
+=======
+         <xs:element name="taskResolution" type="xs:string" minOccurs="0">
+            <xs:annotation>
+               <xs:documentation>Tööülesande resolutsioon.</xs:documentation>
+>>>>>>> develop-5.1
             </xs:annotation>
          </xs:element>
          <xs:element name="creatorInstitutionName" type="xs:string">

@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <?xml version="1.0" encoding="UTF-8"?>
 <model name="taskreport:taskReportModel" xmlns="http://www.alfresco.org/model/dictionary/1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
    xsi:schemaLocation="http://www.alfresco.org/model/dictionary/1.0 http://svn.alfresco.com/repos/alfresco-open-mirror/alfresco/HEAD/root/projects/repository/config/alfresco/model/modelSchema.xsd">
@@ -70,4 +71,78 @@
           
    </aspects>
       
+=======
+<?xml version="1.0" encoding="UTF-8"?>
+<model name="taskreport:taskReportModel" xmlns="http://www.alfresco.org/model/dictionary/1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.alfresco.org/model/dictionary/1.0 http://svn.alfresco.com/repos/alfresco-open-mirror/alfresco/HEAD/root/projects/repository/config/alfresco/model/modelSchema.xsd">
+
+   <imports>
+      <import uri="http://www.alfresco.org/model/dictionary/1.0" prefix="d" />
+      <import uri="http://www.alfresco.org/model/system/1.0" prefix="sys" />
+      <import uri="http://alfresco.webmedia.ee/model/task/search/1.0" prefix="tasksearch" />
+   </imports>
+
+   <namespaces>
+      <namespace uri="http://alfresco.webmedia.ee/model/task/report/1.0" prefix="taskreport" />
+   </namespaces>
+
+   <types>
+
+      <type name="taskreport:taskReportFilters">
+         <parent>sys:base</parent>
+         <mandatory-aspects>
+            <aspect>taskreport:taskReportFiltersContainer</aspect>
+            <aspect>sys:aspect_root</aspect>
+         </mandatory-aspects>
+      </type>
+
+      <type name="taskreport:filter">
+         <parent>tasksearch:filter</parent>
+         <properties>
+            <property name="taskreport:reportTemplate">
+               <type>d:text</type>
+               <mandatory>true</mandatory>
+            </property>            
+         </properties>
+      </type>
+
+   </types>
+   
+   <aspects>
+   
+      <aspect name="taskreport:taskReportFiltersContainer">
+         <associations>
+            <child-association name="taskreport:filters">
+               <source>
+                  <mandatory>true</mandatory>
+                  <many>false</many>
+               </source>
+               <target>
+                  <class>taskreport:filter</class>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </target>
+            </child-association>
+         </associations>
+      </aspect>
+      
+      <aspect name="taskreport:taskReportFilterContainer">
+         <associations>
+            <child-association name="taskreport:filter">
+               <source>
+                  <mandatory>true</mandatory>
+                  <many>false</many>
+               </source>
+               <target>
+                  <class>taskreport:filter</class>
+                  <mandatory>false</mandatory>
+                  <many>false</many>
+               </target>
+            </child-association>
+         </associations>
+      </aspect>
+          
+   </aspects>
+      
+>>>>>>> develop-5.1
 </model>

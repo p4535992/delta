@@ -53,6 +53,7 @@
       </property>
    </bean>
    
+<<<<<<< HEAD
    <bean id="webServiceDocumentsPermissionsUpdateBootstrap" class="ee.webmedia.alfresco.adddocument.bootstrap.WebServiceDocumentsPermissionsUpdateBootstrap" parent="module.baseComponent">
       <property name="moduleId" value="common" />
       <property name="executeOnceOnly" value="true" />
@@ -63,6 +64,8 @@
       </property>
    </bean>
    
+=======
+>>>>>>> develop-5.1
    <bean class="ee.webmedia.alfresco.adddocument.web.WebServiceDocumentsMenuItemProcessor" />
    
    <bean id="WebServiceDocumentListDialog" class="ee.webmedia.alfresco.adddocument.web.WebServiceDocumentListDialog" scope="session" />

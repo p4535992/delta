@@ -22,8 +22,11 @@ import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 
 /**
  * Fix for CL 185808
+<<<<<<< HEAD
  * 
  * @author Alar Kvell
+=======
+>>>>>>> develop-5.1
  */
 public class LeaveCancelEndDateNameFixBootstrap extends AbstractNodeUpdater {
 

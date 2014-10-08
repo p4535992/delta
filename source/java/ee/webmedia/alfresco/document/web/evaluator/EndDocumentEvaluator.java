@@ -11,8 +11,11 @@ import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 
 /**
  * UI action evaluator for validating whether user can end current document.
+<<<<<<< HEAD
  * 
  * @author Romet Aidla
+=======
+>>>>>>> develop-5.1
  */
 public class EndDocumentEvaluator extends BaseActionEvaluator {
     private static final long serialVersionUID = 0L;
@@ -27,6 +30,11 @@ public class EndDocumentEvaluator extends BaseActionEvaluator {
             return false;
         }
         boolean isWorking = DocumentStatus.WORKING.getValueName().equals(node.getProperties().get(DocumentCommonModel.Props.DOC_STATUS.toString()));
+<<<<<<< HEAD
         return isWorking && ReopenDocumentEvaluator.hasUserRights(node);
+=======
+        return isWorking && new ViewStateActionEvaluator().evaluate(node)
+                && (ReopenDocumentEvaluator.hasUserRights(node) || BeanHelper.getWorkflowService().isOwnerOfInProgressActiveResponsibleAssignmentTask(node.getNodeRef()));
+>>>>>>> develop-5.1
     }
 }

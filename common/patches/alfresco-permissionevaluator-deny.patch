@@ -3,6 +3,7 @@ Index: source/java/org/alfresco/web/ui/repo/component/evaluator/PermissionEvalua
 --- source/java/org/alfresco/web/ui/repo/component/evaluator/PermissionEvaluator.java	(revision 156944)
 +++ source/java/org/alfresco/web/ui/repo/component/evaluator/PermissionEvaluator.java	(working copy)
 @@ -55,7 +55,7 @@
+<<<<<<< HEAD
      */
     public boolean evaluate()
     {
@@ -103,3 +104,105 @@ Index: source/java/org/alfresco/web/ui/repo/component/evaluator/PermissionEvalua
      * Get the allow permissions to match value against
      * 
      * @return the allow permissions to match value against
+=======
+     */
+    public boolean evaluate()
+    {
+-      boolean result = false;
++      boolean result = true;
+       
+       // TODO: implement Deny permissions checking (as required...)
+       
+@@ -70,12 +70,19 @@
+             String[] allow = getAllowPermissions();
+             if (allow.length != 0)
+             {
+-               result = true;
+                for (int i=0; i<allow.length; i++)
+                {
+                   result = result & ((Node)obj).hasPermission(allow[i]);
+                }
+             }
++            String[] deny = getDenyPermissions();
++            if (deny.length != 0)
++            {
++               for (int i=0; i<deny.length; i++)
++               {
++                  result = result & (!((Node)obj).hasPermission(deny[i]));
++               }
++            }
+          }
+          else if (obj instanceof NodeRef)
+          {
+@@ -84,18 +91,26 @@
+             String[] allow = getAllowPermissions();
+             if (allow.length != 0)
+             {
+-               result = true;
+                for (int i=0; i<allow.length; i++)
+                {
+                   result = result & (AccessStatus.ALLOWED == service.hasPermission(((NodeRef)obj), allow[i]));
+                }
+             }
++            String[] deny = getDenyPermissions();
++            if (deny.length != 0)
++            {
++               for (int i=0; i<deny.length; i++)
++               {
++                  result = result & (AccessStatus.DENIED == service.hasPermission(((NodeRef)obj), deny[i]));
++               }
++            }
+          }
+       }
+       catch (Exception err)
+       {
+          // return default value on error
+-         s_logger.debug("Error during PermissionEvaluator evaluation: " + err.getMessage());
++         s_logger.warn("Error during PermissionEvaluator evaluation: " + err.getMessage(), err);
++         return false;
+       }
+       
+       return result;
+@@ -162,6 +177,41 @@
+    }
+    
+    /**
++    * @return the array of Allow permissions
++    */
++   private String[] getDenyPermissions()
++   {
++      String[] denyPermissions;
++      
++      String deny = getDeny();
++      if (deny!= null)
++      {
++         if (deny.indexOf(',') == -1)
++         {
++            // simple case - one permission
++            denyPermissions = new String[1];
++            denyPermissions[0] = deny;
++         }
++         else
++         {  
++            // complex case - multiple permissions
++            StringTokenizer t = new StringTokenizer(deny, ",");
++            denyPermissions = new String[t.countTokens()];
++            for (int i=0; i<denyPermissions.length; i++)
++            {
++               denyPermissions[i] = t.nextToken();
++            }
++         }
++      }
++      else
++      {
++         denyPermissions = new String[0];
++      }
++      
++      return denyPermissions;
++   }
++   
++   /**
+     * Get the allow permissions to match value against
+     * 
+     * @return the allow permissions to match value against
+>>>>>>> develop-5.1

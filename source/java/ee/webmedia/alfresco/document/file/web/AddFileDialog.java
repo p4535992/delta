@@ -73,6 +73,10 @@ import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.document.web.DocumentDialog;
 import ee.webmedia.alfresco.imap.service.ImapServiceExt;
 import ee.webmedia.alfresco.parameters.model.Parameters;
+<<<<<<< HEAD
+=======
+import ee.webmedia.alfresco.privilege.model.Privilege;
+>>>>>>> develop-5.1
 import ee.webmedia.alfresco.signature.exception.SignatureException;
 import ee.webmedia.alfresco.template.service.DocumentTemplateService;
 import ee.webmedia.alfresco.user.service.UserService;
@@ -82,10 +86,13 @@ import ee.webmedia.alfresco.utils.FilenameUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 
+<<<<<<< HEAD
 /**
  * @author Dmitri Melnikov
  * @author Kaarel Jõgeva
  */
+=======
+>>>>>>> develop-5.1
 public class AddFileDialog extends BaseDialogBean implements Validator {
     private static final long serialVersionUID = 1L;
     public static final String BEAN_NAME = "AddFileDialog";
@@ -116,7 +123,11 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
     private NodeRef scannedParentRef;
     private boolean inactiveFileDialog;
 
+<<<<<<< HEAD
     private static final List<String> BOUND_METADATA_EXTENSIONS = Arrays.asList("doc", "docx");
+=======
+    private static final List<String> BOUND_METADATA_EXTENSIONS = Arrays.asList("doc", "docx", "odt");
+>>>>>>> develop-5.1
 
     @Override
     public String cancel() {
@@ -126,7 +137,11 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
 
     /**
      * Used by scanned and attachment lists
+<<<<<<< HEAD
      * 
+=======
+     *
+>>>>>>> develop-5.1
      * @see javax.faces.validator.Validator#validate(javax.faces.context.FacesContext, javax.faces.component.UIComponent, java.lang.Object)
      */
     @Override
@@ -183,7 +198,11 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
         try {
             try {
                 NodeRef documentNodeRef = getDocumentDialogHelperBean().getNodeRef();
+<<<<<<< HEAD
                 validatePermission(documentNodeRef, DocumentCommonModel.Privileges.EDIT_DOCUMENT);
+=======
+                validatePermission(documentNodeRef, Privilege.EDIT_DOCUMENT);
+>>>>>>> develop-5.1
                 List<String> existingDisplayNames = getFileService().getDocumentFileDisplayNames(documentNodeRef);
                 Map<Integer, EInvoice> attachmentInvoices = new HashMap<Integer, EInvoice>();
                 Map<Integer, EInvoice> fileInvoices = new HashMap<Integer, EInvoice>();
@@ -201,21 +220,38 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
                         Pair<String, String> filenames = getAttachmentFilenames(documentNodeRef, existingDisplayNames, i);
                         NodeRef fileRef = selectedFileNodeRef.get(i);
                         boolean associatedWithMetaData = BooleanUtils.toBoolean(selectedAssociatedWithMetaData.get(i));
+<<<<<<< HEAD
                         updateGeneratedFiles |= associatedWithMetaData;
+=======
+>>>>>>> develop-5.1
                         if (isParseInvoice) {
                             EInvoice einvoice = EInvoiceUtil.unmarshalEInvoice(getFileFolderService().getReader(fileRef).getContentInputStream());
                             if (einvoice != null) {
                                 if (!invoiceAdded) {
                                     getEInvoiceService().setDocPropsFromInvoice(einvoice.getInvoice().get(0), documentNodeRef, null, false);
+<<<<<<< HEAD
                                     addFileAndFilename(filenames.getFirst(), filenames.getSecond(), documentNodeRef, fileRef, existingDisplayNames, associatedWithMetaData);
+=======
+                                    updateGeneratedFiles |= addFileAndFilename(filenames.getFirst(), filenames.getSecond(), documentNodeRef, fileRef, existingDisplayNames,
+                                            associatedWithMetaData);
+>>>>>>> develop-5.1
                                     invoiceAdded = true;
                                 }
                                 attachmentInvoices.put(i, einvoice);
                             } else {
+<<<<<<< HEAD
                                 addFileAndFilename(filenames.getFirst(), filenames.getSecond(), documentNodeRef, fileRef, existingDisplayNames, associatedWithMetaData);
                             }
                         } else {
                             addFileAndFilename(filenames.getFirst(), filenames.getSecond(), documentNodeRef, fileRef, existingDisplayNames, associatedWithMetaData);
+=======
+                                updateGeneratedFiles |= addFileAndFilename(filenames.getFirst(), filenames.getSecond(), documentNodeRef, fileRef, existingDisplayNames,
+                                        associatedWithMetaData);
+                            }
+                        } else {
+                            updateGeneratedFiles |= addFileAndFilename(filenames.getFirst(), filenames.getSecond(), documentNodeRef, fileRef, existingDisplayNames,
+                                    associatedWithMetaData);
+>>>>>>> develop-5.1
                         }
                     }
                 }
@@ -233,21 +269,38 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
                         java.io.File file = files.get(i);
                         String mimeType = getFileUploadBean().getContentTypes().get(i);
                         boolean associatedWithMetaData = BooleanUtils.toBoolean(getFileUploadBean().getAssociatedWithMetaData().get(i));
+<<<<<<< HEAD
                         updateGeneratedFiles |= associatedWithMetaData;
+=======
+>>>>>>> develop-5.1
                         if (isParseInvoice) {
                             EInvoice einvoice = EInvoiceUtil.unmarshalEInvoice(file);
                             if (einvoice != null) {
                                 if (!invoiceAdded) {
                                     getEInvoiceService().setDocPropsFromInvoice(einvoice.getInvoice().get(0), documentNodeRef, null, false);
+<<<<<<< HEAD
                                     addFileAndFilename(filenames.getFirst(), filenames.getSecond(), documentNodeRef, existingDisplayNames, file, mimeType, associatedWithMetaData);
+=======
+                                    updateGeneratedFiles |= addFileAndFilename(filenames.getFirst(), filenames.getSecond(), documentNodeRef, existingDisplayNames, file, mimeType,
+                                            associatedWithMetaData);
+>>>>>>> develop-5.1
                                     invoiceAdded = true;
                                 }
                                 fileInvoices.put(i, einvoice);
                             } else {
+<<<<<<< HEAD
                                 addFileAndFilename(filenames.getFirst(), filenames.getSecond(), documentNodeRef, existingDisplayNames, file, mimeType, associatedWithMetaData);
                             }
                         } else {
                             addFileAndFilename(filenames.getFirst(), filenames.getSecond(), documentNodeRef, existingDisplayNames, file, mimeType, associatedWithMetaData);
+=======
+                                updateGeneratedFiles |= addFileAndFilename(filenames.getFirst(), filenames.getSecond(), documentNodeRef, existingDisplayNames, file, mimeType,
+                                        associatedWithMetaData);
+                            }
+                        } else {
+                            updateGeneratedFiles |= addFileAndFilename(filenames.getFirst(), filenames.getSecond(), documentNodeRef, existingDisplayNames, file, mimeType,
+                                    associatedWithMetaData);
+>>>>>>> develop-5.1
                         }
                     }
                 }
@@ -331,6 +384,7 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
         return getFilenameFromDisplayname(documentNodeRef, existingDisplayNames, displayName, BeanHelper.getGeneralService());
     }
 
+<<<<<<< HEAD
     public void addFileAndFilename(String name, String displayName, NodeRef documentNodeRef, NodeRef fileRef, List<String> existingFilenames, boolean associatedWithMetaData) {
         getFileService().addFileToDocument(name, displayName, documentNodeRef, fileRef, isActiveFileDialog(), associatedWithMetaData);
         existingFilenames.add(name);
@@ -340,6 +394,19 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
             boolean associatedWithMetaData) {
         getFileService().addFileToDocument(name, displayName, documentNodeRef, file, mimeType, isActiveFileDialog(), associatedWithMetaData);
         existingFilenames.add(name);
+=======
+    public boolean addFileAndFilename(String name, String displayName, NodeRef documentNodeRef, NodeRef fileRef, List<String> existingFilenames, boolean associatedWithMetaData) {
+        boolean hasDeltaFormulae = getFileService().addExistingFileToDocument(name, displayName, documentNodeRef, fileRef, isActiveFileDialog(), associatedWithMetaData);
+        existingFilenames.add(name);
+        return hasDeltaFormulae;
+    }
+
+    public boolean addFileAndFilename(String name, String displayName, NodeRef documentNodeRef, List<String> existingFilenames, java.io.File file, String mimeType,
+            boolean associatedWithMetaData) {
+        boolean hasDeltaFormulae = getFileService().addUploadedFileToDocument(name, displayName, documentNodeRef, file, mimeType, isActiveFileDialog(), associatedWithMetaData);
+        existingFilenames.add(name);
+        return hasDeltaFormulae;
+>>>>>>> develop-5.1
     }
 
     public void createAdditionalInvoices(Map<Integer, EInvoice> attachmentInvoices, NodeRef originalDocument, boolean save) {
@@ -440,6 +507,17 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
         return getScannedFolders().size() > 1;
     }
 
+<<<<<<< HEAD
+=======
+    public boolean isShowBlankForAttachmentBlock() {
+        return !isShowAttachmentFolderSelect() && isShowScannedFolderSelect();
+    }
+
+    public boolean isShowBlankForScannedBlock() {
+        return isShowAttachmentFolderSelect() && !isShowScannedFolderSelect();
+    }
+
+>>>>>>> develop-5.1
     @Override
     public void restored() {
         refreshUploadedFilesPanelGroup();
@@ -621,6 +699,10 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
         metaInput.setValueBinding("value", app.createValueBinding(nameValueBinding));
         metaInput.setId("uploaded-file-checkbox-" + rowCount);
         metaInput.setRequired(true);
+<<<<<<< HEAD
+=======
+        metaInput.setValue(true);
+>>>>>>> develop-5.1
         return metaInput;
     }
 

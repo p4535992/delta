@@ -112,7 +112,26 @@
             </props>
          </list>
       </property>
+<<<<<<< HEAD
    </bean>   
+=======
+   </bean> 
+   
+   <bean id="archivalsSpacesBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
+      <property name="moduleId" value="common" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="importer" ref="spacesBootstrap" />
+      <property name="bootstrapViews">
+         <list>
+            <props>
+               <prop key="encoding">UTF-8</prop>
+               <prop key="path">/</prop>
+               <prop key="location">ee/webmedia/alfresco/archivals/bootstrap/archivalsQueue.xml</prop>
+            </props>
+         </list>
+      </property>
+   </bean>
+>>>>>>> develop-5.1
    
     <bean id="archivalsWebClientConfigBootstrap" class="org.alfresco.web.config.WebClientConfigBootstrap" init-method="init" depends-on="commonWebClientConfigBootstrap">
       <property name="configs">

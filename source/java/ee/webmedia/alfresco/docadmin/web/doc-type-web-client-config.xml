@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <alfresco-config>
    <config>
       <actions>
@@ -275,3 +276,314 @@
    </config>
 
 </alfresco-config>
+=======
+<alfresco-config>
+   <config>
+      <actions>
+         <action id="doc_type_add">
+            <label-id>doc_type_add</label-id>
+            <image>/images/icons/versioned_properties.gif</image>
+            <action-listener>#{DocTypeDetailsDialog.addNew}</action-listener>
+         </action>
+
+         <action id="doc_type_list_export">
+            <label-id>doc_types_list_export</label-id>
+            <action-listener>#{DocTypeListDialog.export}</action-listener>
+            <target>no_wait_workaround</target>
+         </action>
+
+         <action id="doc_type_list_import">
+            <label-id>import_xml</label-id>
+            <image>/images/icons/add_item.gif</image>
+            <action>dialog:documentTypesImportDialog</action>
+         </action>
+
+         <action id="caseFileType_list_import">
+            <label-id>import_xml</label-id>
+            <image>/images/icons/add_item.gif</image>
+            <action>dialog:caseFileTypesImportDialog</action>
+         </action>
+
+         <action id="doc_type_delete">
+            <evaluator>ee.webmedia.alfresco.docadmin.web.DeleteDocumentTypeEvaluator</evaluator>
+            <label-id>delete</label-id>
+            <tooltip-id>docType_list_action_delete</tooltip-id>
+            <image>/images/icons/delete.gif</image>
+            <action>dialog:deleteDialog</action>
+            <action-listener>#{DeleteDialog.setupDeleteDialog}</action-listener>
+            <params>
+               <param name="nodeRef">#{actionContext.nodeRef}</param>
+               <param name="confirmMessagePlaceholder0">#{actionContext.nameAndId}</param>
+               <param name="deleteAfterConfirmHandler">DocTypeDetailsDialog.deleteType</param>
+               <param name="dialogsToClose">2</param>
+            </params>
+         </action>
+
+         <action id="caseFileType_add">
+            <label-id>caseFileType_add</label-id>
+            <image>/images/icons/versioned_properties.gif</image>
+            <action-listener>#{CaseFileTypeDetailsDialog.addNew}</action-listener>
+         </action>
+
+         <action id="caseFileType_list_export">
+            <label-id>caseFileType_list_export</label-id>
+            <action-listener>#{CaseFileTypeListDialog.export}</action-listener>
+            <target>no_wait_workaround</target>
+         </action>
+
+         <action id="caseFileType_delete">
+            <evaluator>ee.webmedia.alfresco.docadmin.web.DeleteCaseFileTypeEvaluator</evaluator>
+            <label-id>delete</label-id>
+            <tooltip-id>caseFileType_list_action_delete</tooltip-id>
+            <image>/images/icons/delete.gif</image>
+            <action>dialog:deleteDialog</action>
+            <action-listener>#{DeleteDialog.setupDeleteDialog}</action-listener>
+            <params>
+               <param name="nodeRef">#{actionContext.nodeRef}</param>
+               <param name="confirmMessagePlaceholder0">#{actionContext.nameAndId}</param>
+               <param name="deleteAfterConfirmHandler">CaseFileTypeDetailsDialog.deleteType</param>
+               <param name="dialogsToClose">2</param>
+            </params>
+         </action>
+
+         <action id="doc_type_manage_permissions">
+            <evaluator>ee.webmedia.alfresco.docadmin.web.DocTypeManagePrivilegesEvaluator</evaluator>
+            <label-id>manage_user_permissions</label-id>
+            <image>/images/icons/invite.gif</image>
+            <action>dialog:permissionsListDialog</action>
+            <action-listener>#{PermissionsListDialog.setup}</action-listener>
+            <params>
+               <param name="nodeRef">#{DocTypeDetailsDialog.docType.nodeRef}</param>
+               <param name="permission">createDocument</param>
+               <param name="callbackMethodBinding">MenuService.menuUpdated</param>
+            </params>
+         </action>
+
+         <action id="caseFileType_manage_permissions">
+            <evaluator>ee.webmedia.alfresco.docadmin.web.DocTypeManagePrivilegesEvaluator</evaluator>
+            <label-id>manage_user_permissions</label-id>
+            <image>/images/icons/invite.gif</image>
+            <action>dialog:permissionsListDialog</action>
+            <action-listener>#{PermissionsListDialog.setup}</action-listener>
+            <params>
+               <param name="nodeRef">#{CaseFileTypeDetailsDialog.docType.nodeRef}</param>
+               <param name="permission">createCaseFile</param>
+               <param name="callbackMethodBinding">MenuService.menuUpdated</param>
+            </params>
+         </action>
+         
+         <action id="field_delete">
+            <evaluator>ee.webmedia.alfresco.docadmin.web.DeleteFieldEvaluator</evaluator>
+            <label-id>delete</label-id>
+            <image>/images/icons/delete.gif</image>
+            <action>dialog:deleteDialog</action>
+            <action-listener>#{DeleteDialog.setupDeleteDialog}</action-listener>
+            <params>
+               <param name="nodeRef">#{actionContext.nodeRef}</param>
+               <param name="confirmMessagePlaceholder0">#{actionContext.name}</param>
+               <param name="deleteAfterConfirmHandler">FieldDetailsDialog.deleteField</param>
+               <param name="dialogsToClose">2</param>
+            </params>
+         </action>         
+
+         <action-group id="doc_type_list_actions">
+            <action idref="doc_type_add" />
+            <action idref="doc_type_list_export" />
+            <action idref="doc_type_list_import" />
+         </action-group>
+
+         <action-group id="caseFileType_list_actions">
+            <action idref="caseFileType_add" />
+            <action idref="caseFileType_list_export" />
+            <action idref="caseFileType_list_import" />
+         </action-group>
+
+         <action-group id="doc_type_details_actions">
+            <action idref="doc_type_manage_permissions" />
+            <action idref="doc_type_delete" />
+         </action-group>
+
+         <action-group id="caseFileType_details_actions">
+            <action idref="caseFileType_manage_permissions" />
+            <action idref="caseFileType_delete" />
+         </action-group>
+         
+         <action-group id="field_details_actions">
+            <action idref="field_delete" />
+         </action-group>         
+
+      </actions>
+      <dialogs>
+
+         <dialog name="docTypeListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/docadmin/web/doc-type-list-dialog.jsp" managed-bean="DocTypeListDialog"
+            icon="/images/icons/versioned_properties_large.gif" title-id="doc_types" actions-config-id="doc_type_list_actions" show-ok-button="false"/>
+
+         <dialog name="caseFileTypeListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/docadmin/web/doc-type-list-dialog.jsp" managed-bean="CaseFileTypeListDialog"
+            icon="/images/icons/versioned_properties_large.gif" title-id="caseFileTypes" actions-config-id="caseFileType_list_actions" show-ok-button="false"/>
+
+         <dialog name="docTypeDetailsDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/docadmin/web/doc-type-details-dialog.jsp"
+            managed-bean="DocTypeDetailsDialog" icon="/images/icons/versioned_properties_large.gif" title-id="doc_type_details" actions-config-id="doc_type_details_actions" />
+
+         <dialog name="caseFileTypeDetailsDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/docadmin/web/dyn-type-details-dialog.jsp"
+            managed-bean="CaseFileTypeDetailsDialog" icon="/images/icons/versioned_properties_large.gif" title-id="caseFileType_details" actions-config-id="caseFileType_details_actions" />
+
+         <dialog name="fieldDefinitionListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/docadmin/web/field-definition-list-dialog.jsp" managed-bean="FieldDefinitionListDialog"
+            icon="/images/icons/versioned_properties_large.gif" title-id="fieldDefinitions_list" show-ok-button="true" />
+
+         <dialog name="fieldDetailsDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/docadmin/web/field-details-dialog.jsp"
+            managed-bean="FieldDetailsDialog" icon="/images/icons/versioned_properties_large.gif" title-id="field_details" actions-config-id="field_details_actions"/>
+
+         <dialog name="fieldGroupDetailsDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/docadmin/web/field-group-details-dialog.jsp"
+            managed-bean="FieldGroupDetailsDialog" icon="/images/icons/versioned_properties_large.gif" title-id="fieldGroup_details" />
+
+         <dialog name="associationModelDetailsDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/docadmin/web/associationModel-details-dialog.jsp"
+            managed-bean="AssociationModelDetailsDialog" icon="/images/icons/versioned_properties_large.gif" />
+
+         <dialog name="documentTypesImportDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/docadmin/web/doc-type-import-dialog.jsp" 
+            managed-bean="DocumentTypesImportDialog" icon="/images/icons/add_content_large.gif" title-id="import_xml" />
+
+         <dialog name="caseFileTypesImportDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/docadmin/web/caseFile-type-import-dialog.jsp" 
+            managed-bean="CaseFileTypesImportDialog" icon="/images/icons/add_content_large.gif" title-id="import_xml" />
+
+      </dialogs>
+   </config>
+
+   <config evaluator="aspect-name" condition="docadmin:name">
+      <property-sheet>
+         <show-property name="docadmin:name" styleClass="focus" />
+      </property-sheet>
+   </config>
+
+   <config evaluator="node-type" condition="docadmin:fieldGroup">
+      <property-sheet>
+         <show-property name="docadmin:name" readOnlyIf="#{FieldGroupDetailsDialog.fieldGroup.systematic}" styleClass="focus"/>
+         <show-property name="docadmin:comment" component-generator="TextAreaGenerator" styleClass="expand19-200" />
+         <show-property name="docadmin:systematic" component-generator="BooleanRadioGenerator" read-only="true" nullValue="false" />
+         <show-property name="docadmin:mandatoryForDoc" component-generator="BooleanRadioGenerator" read-only="true" nullValue="false" />
+         <show-property name="docadmin:mandatoryForVol" component-generator="BooleanRadioGenerator" read-only="true" nullValue="false" show="#{VolumeService.caseVolumeEnabled}" />
+         <!-- fieldGropu specific props -->
+         <show-property name="docadmin:thesaurus" component-generator="GeneralSelectorGenerator" selectionItems="#{ThesaurusListDialog.getThesauriSelectItems}" show="#{FieldGroupDetailsDialog.thesaurusVisible}" />
+         <separator name="docTypeReadOnlyInfo-sep" component-generator="DocTypeFieldGroupInfoGenerator" show="#{FieldGroupDetailsDialog.docTypeReadOnlyInfoVisible}" />
+         <separator name="caseVolReadOnlyInfo-sep" component-generator="CaseFileTypeFieldGroupInfoGenerator" show="#{FieldGroupDetailsDialog.caseFileTypeReadOnlyInfoVisible}" />
+         
+         <show-property name="docadmin:readonlyFieldsName" display-label-id="fieldGroup_details_inlineProperty_readonlyFields_readonlyFieldsRule_title" textId="fieldGroup_details_inlineProperty_readonlyFields_readonlyFieldsRule_templateText"
+         component-generator="InlinePropertyGroupGenerator" optionsSeparator="¤" props="
+             docadmin:readonlyFieldsName¤¤styleClass=medium¤readOnlyIf=#{!FieldGroupDetailsDialog.fieldGroup.readonlyFieldsNameChangeable}
+            ,docadmin:readonlyFieldsRule¤TextAreaGenerator¤styleClass=expand19-200 medium¤readOnlyIf=#{!FieldGroupDetailsDialog.fieldGroup.readonlyFieldsRuleChangeable}
+            "
+         />
+         <show-property name="docadmin:showInTwoColumns" show="#{FieldGroupDetailsDialog.showShowInTwoColumns}" readOnlyIf="#{!FieldGroupDetailsDialog.fieldGroup.showInTwoColumnsChangeable}" />
+      </property-sheet>
+   </config>
+
+   <config evaluator="node-type" condition="docadmin:documentType,docadmin:caseFileType">
+      <property-sheet>
+         <!-- 
+         DialogManager.bean is used to refer to subclass of DynamicTypeDetailsDialog - 
+         either DocTypeDetailsDialog or CaseFileTypeDetailsDialog
+          -->
+         <show-property name="docadmin:id" forcedMandatory="true" readOnlyIf="#{DialogManager.bean.isSaved}" validator="OnlyLettersValidator_PANEL_AND_FIELD_NAME" />
+         <show-property name="docadmin:comment" component-generator="TextAreaGenerator" styleClass="expand19-200" />
+      </property-sheet>
+   </config>
+
+   <config evaluator="node-type" condition="docadmin:documentType">
+      <property-sheet>
+         <show-property name="docadmin:menuGroupName" classificatorName="docTypeGroup" component-generator="ClassificatorSelectorGenerator" display-label-id="docType_menuGroupName"/>
+      </property-sheet>
+   </config>
+
+   <config evaluator="node-type" condition="docadmin:caseFileType">
+      <property-sheet>
+         <show-property name="docadmin:menuGroupName" classificatorName="caseFileTypeGroup" component-generator="ClassificatorSelectorGenerator" display-label-id="caseFileType_menuGroupName"/>
+      </property-sheet>
+   </config>
+
+   <config evaluator="node-type" condition="docadmin:documentType,docadmin:caseFileType">
+      <property-sheet>
+         <show-property name="docadmin:used" />
+         <show-property name="docadmin:systematic" component-generator="BooleanRadioGenerator" read-only="true" nullValue="false" />
+         <show-property name="docadmin:publicAdr" />
+         <show-property name="docadmin:showUnvalued" />
+      </property-sheet>
+   </config>
+
+   <config evaluator="node-type" condition="docadmin:documentType">
+      <property-sheet>
+         <show-property name="docadmin:changeByNewDocumentEnabled" />
+         <show-property name="docadmin:registrationEnabled" />
+         <show-property name="docadmin:finishDocByRegistration" labelStyleClass="wrap" />
+         <show-property name="docadmin:sendUnregistratedDocEnabled" labelStyleClass="wrap" />
+         <show-property name="docadmin:addFollowUpToUnregistratedDocEnabled" labelStyleClass="wrap" />
+         <show-property name="docadmin:addReplyToUnregistratedDocEnabled" labelStyleClass="wrap" />
+         <show-property name="docadmin:editFilesOfFinishedDocEnabled" labelStyleClass="wrap"/>
+         <show-property name="docadmin:registrationOnDocFormEnabled" labelStyleClass="wrap"/>
+      </property-sheet>
+   </config>
+
+<!--    <config evaluator="node-type" condition="docadmin:field"> -->
+   <config evaluator="node-type" condition="docadmin:field,docadmin:fieldDefinition">
+      <property-sheet>
+         <!-- All user created fields must have docdyn: namespace in fieldId -->
+         <show-property name="docadmin:fieldId" readOnlyIf="#{FieldDetailsDialog.fieldIdReadOnly}" validator="OnlyLettersValidator_FIELD_NAME_ONLY" />
+         <show-property name="docadmin:comment" styleClass="expand19-200" component-generator="TextAreaGenerator" />
+         <show-property name="docadmin:systematic" component-generator="BooleanRadioGenerator" read-only="true" nullValue="false" />
+         <show-property name="docadmin:mandatoryForDoc" component-generator="BooleanRadioGenerator" read-only="true" nullValue="false" />
+         <show-property name="docadmin:fieldType" component-generator="EnumSelectorGenerator" enumClass="ee.webmedia.alfresco.classificator.constant.FieldType" readOnlyIf="#{FieldDetailsDialog.fieldTypeReadOnly}" valueChangeListener="#{FieldDetailsDialog.fieldTypeChanged}" />
+         <show-property name="docadmin:mandatory" readOnlyIf="#{FieldDetailsDialog.mandatoryReadOnly}" />
+         <show-property name="docadmin:changeableIf" component-generator="EnumSelectorGenerator" enumClass="ee.webmedia.alfresco.classificator.constant.FieldChangeableIf" forcedMandatory="#{!FieldDetailsDialog.fieldDefinition}" readOnlyIf="#{FieldDetailsDialog.changeableIfReadOnly}" />
+
+         <!-- START: properties conditionally shown based on value of fieldType -->
+         <separator name="sep-conditionalProps-before" show="#{FieldDetailsDialog.showAdditionalFieldsSeparator}" />
+         <show-property name="docadmin:classificator" component-generator="SearchGenerator" pickerCallback="#{ClassificatorListDialog.searchClassificators}" setterCallback="#{FieldDetailsDialog.setClassificator}"
+            dialogTitleId="classificators_search_title" tooltip="#{FieldDetailsDialog.getClassificatorDescription}" ajaxParentLevel="100"
+            editable="false" allowClearSingleValued="true" dontRenderIfDisabled="true" disabled="#{FieldDetailsDialog.isPropertyHidden}" forcedMandatory="#{!FieldDetailsDialog.fieldDefinition}" />
+         <show-property name="docadmin:classificatorDefaultValue" component-generator="GeneralSelectorGenerator" selectionItems="#{FieldDetailsDialog.getClassificatorSelectItems}"
+            show="#{FieldDetailsDialog.isShowProperty}" readOnlyIf="#{FieldDetailsDialog.classificatorDefaultValueReadOnly}" dontRenderIfDisabled="true" disabled="#{FieldDetailsDialog.isPropertyHidden}" />
+         <show-property name="docadmin:defaultValue" dontRenderIfDisabled="true" disabled="#{FieldDetailsDialog.isPropertyHidden}" mandatoryIf="#{FieldDetailsDialog.defaultValueMandatory}" />
+         <show-property name="docadmin:defaultDateSysdate" dontRenderIfDisabled="true" disabled="#{FieldDetailsDialog.isPropertyHidden}" />
+         <show-property name="docadmin:defaultUserLoggedIn" dontRenderIfDisabled="true" disabled="#{FieldDetailsDialog.isPropertyHidden}" />
+         <show-property name="docadmin:defaultSelected" dontRenderIfDisabled="true" disabled="#{FieldDetailsDialog.isPropertyHidden}" />
+         <separator name="sep-conditionalProps-after" show="#{FieldDetailsDialog.showAdditionalFieldsSeparator}" />
+         <!-- END: properties conditionally shown based on value of fieldType -->
+
+         <show-property name="docadmin:onlyInGroup" component-generator="BooleanRadioGenerator" read-only="true" nullValue="false" />
+      </property-sheet>
+   </config>
+
+   <config evaluator="node-type" condition="docadmin:fieldDefinition">
+      <property-sheet>
+         <show-property name="docadmin:isParameterInDocSearch" readOnlyIf="#{FieldDetailsDialog.field.fixedParameterInDocSearch}" />
+         <show-property name="docadmin:parameterOrderInDocSearch" />
+         <show-property name="docadmin:isParameterInVolSearch" readOnlyIf="#{FieldDetailsDialog.field.fixedParameterInVolSearch}" />
+         <show-property name="docadmin:parameterOrderInVolSearch" />
+         <show-property name="docadmin:mandatoryForVol" component-generator="BooleanRadioGenerator" read-only="true" nullValue="false" show="#{VolumeService.caseVolumeEnabled}" />
+         <show-property name="docadmin:inapplicableForDoc" component-generator="BooleanRadioGenerator" read-only="true" nullValue="false" show="#{FieldDetailsDialog.fieldDefinition}" ignore-if-missing="false" />
+         <show-property name="docadmin:inapplicableForVol" component-generator="BooleanRadioGenerator" read-only="true" nullValue="false" show="#{FieldDetailsDialog.showInapplicableForVol}" ignore-if-missing="false" />
+         <!-- FIXME DLSeadist debugimiseks
+         <show-property name="docadmin:docTypes" component-generator="SearchGenerator" read-only="true" />
+         <show-property name="docadmin:volTypes" component-generator="SearchGenerator" read-only="true" show="#{VolumeService.caseVolumeEnabled}" />
+          -->
+      </property-sheet>
+   </config>
+ 
+   <config evaluator="node-type" condition="docadmin:field,docadmin:fieldDefinition">
+      <property-sheet>
+         <show-property name="docadmin:relatedIncomingDecElement" ignore-if-missing="false" component-generator="MultiValueEditorGenerator"
+         optionsSeparator="¤" propsGeneration="docadmin:relatedIncomingDecElement¤TextAreaGenerator¤styleClass=expand19-200"
+         showHeaders="false" noAddLinkLabel="true" addLabelId="add_row" isAutomaticallyAddRows="true" rendered="#{FieldDetailsDialog.isIncomingDvkInfoRendered}" />
+         <show-property name="docadmin:relatedOutgoingDecElement" ignore-if-missing="false" component-generator="MultiValueEditorGenerator"
+         optionsSeparator="¤" propsGeneration="docadmin:relatedOutgoingDecElement¤TextAreaGenerator¤styleClass=expand19-200" 
+         showHeaders="false" noAddLinkLabel="true" addLabelId="add_row" isAutomaticallyAddRows="true" rendered="#{FieldDetailsDialog.isOutgoingDvkInfoRendered}" />
+      </property-sheet>
+   </config>
+
+   <config evaluator="node-type" condition="docadmin:followupAssociation,docadmin:replyAssociation">
+      <property-sheet>
+         <show-property name="docadmin:docType" component-generator="GeneralSelectorGenerator" selectionItems="#{AssociationModelDetailsDialog.getDocTypes}" outputText="#{AssociationModelDetailsDialog.associationModel.isSaved}" valueChangeListener="#{AssociationModelDetailsDialog.docTypeChanged}" ajaxDisabled="true" />
+         <show-property name="docadmin:associateWithSourceDocumentWorkflow" ignore-if-missing="false" />
+      </property-sheet>
+   </config>
+
+</alfresco-config>
+>>>>>>> develop-5.1

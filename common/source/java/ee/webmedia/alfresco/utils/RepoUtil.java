@@ -36,12 +36,19 @@ import org.apache.commons.lang.StringUtils;
 import ee.webmedia.alfresco.common.service.IClonable;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.WmNode;
+<<<<<<< HEAD
+=======
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+>>>>>>> develop-5.1
 import ee.webmedia.alfresco.document.service.DocumentPropertySets;
 
 /**
  * Utility class related to Alfresco repository
+<<<<<<< HEAD
  * 
  * @author Ats Uiboupin
+=======
+>>>>>>> develop-5.1
  */
 public class RepoUtil {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(RepoUtil.class);
@@ -442,4 +449,18 @@ public class RepoUtil {
             return value;
         }
     }
+<<<<<<< HEAD
+=======
+
+    public static String getArchivedObjectName(QName type, Map<QName, Serializable> properties) {
+        if (type == null) {
+            return null;
+        }
+        if (DocumentCommonModel.Types.DOCUMENT.equals(type)) {
+            return (String) properties.get(DocumentCommonModel.Props.DOC_NAME);
+        }
+        return (String) properties.get(ContentModel.PROP_NAME);
+    }
+
+>>>>>>> develop-5.1
 }

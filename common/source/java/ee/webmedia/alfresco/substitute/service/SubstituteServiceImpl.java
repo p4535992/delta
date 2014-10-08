@@ -41,9 +41,12 @@ import ee.webmedia.alfresco.substitute.model.SubstituteModel;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.beanmapper.BeanPropertyMapper;
 
+<<<<<<< HEAD
 /**
  * @author Romet Aidla
  */
+=======
+>>>>>>> develop-5.1
 public class SubstituteServiceImpl implements SubstituteService, BeanFactoryAware {
     private static final Log log = LogFactory.getLog(SubstituteServiceImpl.class);
 
@@ -128,7 +131,11 @@ public class SubstituteServiceImpl implements SubstituteService, BeanFactoryAwar
                 .label(SubstituteModel.Props.SUBSTITUTE_NAME, "substitute_name")
                 .label(SubstituteModel.Props.SUBSTITUTION_START_DATE, "substitute_startdate")
                 .label(SubstituteModel.Props.SUBSTITUTION_END_DATE, "substitute_enddate")
+<<<<<<< HEAD
                 .diff(oldProps, oldProps);
+=======
+                .diff(oldProps, newProps);
+>>>>>>> develop-5.1
 
         nodeService.setProperties(substitute.getNodeRef(), newProps);
         if (log.isDebugEnabled()) {

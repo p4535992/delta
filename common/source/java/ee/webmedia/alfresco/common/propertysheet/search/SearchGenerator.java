@@ -30,8 +30,11 @@ import ee.webmedia.alfresco.utils.ComponentUtil;
  * to picker should component value be editable by typing arbitary value(editable = true) <br>
  * NB! note that for multivalued component you must also implement {@link Converter#getAsObject(FacesContext, UIComponent, String)}</li>
  * </ul>
+<<<<<<< HEAD
  * 
  * @author Alar Kvell
+=======
+>>>>>>> develop-5.1
  */
 public class SearchGenerator extends BaseComponentGenerator {
 

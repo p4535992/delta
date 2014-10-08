@@ -2,7 +2,10 @@ package ee.webmedia.alfresco.document.search.web;
 
 import static ee.webmedia.alfresco.common.propertysheet.component.WMUIProperty.getLabelBoolean;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentAdminService;
+<<<<<<< HEAD
 import static ee.webmedia.alfresco.common.web.BeanHelper.getSendOutService;
+=======
+>>>>>>> develop-5.1
 import static ee.webmedia.alfresco.common.web.BeanHelper.getVisitedDocumentsBean;
 
 import java.io.Serializable;
@@ -18,6 +21,10 @@ import java.util.Set;
 
 import javax.faces.application.Application;
 import javax.faces.component.UIComponent;
+<<<<<<< HEAD
+=======
+import javax.faces.component.UIOutput;
+>>>>>>> develop-5.1
 import javax.faces.component.UIParameter;
 import javax.faces.component.html.HtmlGraphicImage;
 import javax.faces.component.html.HtmlOutputText;
@@ -25,6 +32,10 @@ import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
 import org.alfresco.service.namespace.QName;
+<<<<<<< HEAD
+=======
+import org.alfresco.util.Pair;
+>>>>>>> develop-5.1
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.Repository;
 import org.alfresco.web.ui.common.component.UIActionLink;
@@ -42,7 +53,10 @@ import org.apache.myfaces.application.jsp.JspStateManagerImpl;
 import org.apache.myfaces.shared_impl.taglib.UIComponentTagUtils;
 
 import ee.webmedia.alfresco.classificator.constant.FieldType;
+<<<<<<< HEAD
 import ee.webmedia.alfresco.classificator.enums.SendMode;
+=======
+>>>>>>> develop-5.1
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.docadmin.service.FieldDefinition;
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
@@ -50,7 +64,10 @@ import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.search.model.DocumentSearchModel;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
+<<<<<<< HEAD
 import ee.webmedia.alfresco.document.sendout.model.SendInfo;
+=======
+>>>>>>> develop-5.1
 import ee.webmedia.alfresco.document.web.BaseDocumentListDialog;
 import ee.webmedia.alfresco.privilege.web.DocPermissionEvaluator;
 import ee.webmedia.alfresco.simdhs.CSVExporter;
@@ -61,15 +78,29 @@ import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
 
+<<<<<<< HEAD
 /**
  * @author Alar Kvell
  */
+=======
+>>>>>>> develop-5.1
 public class DocumentSearchResultsDialog extends BaseDocumentListDialog {
     private static final long serialVersionUID = 1L;
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DocumentSearchResultsDialog.class);
     public static final String BEAN_NAME = "DocumentSearchResultsDialog";
 
+<<<<<<< HEAD
     private static final List<String> EP_EXPORT_SEND_MODES = Arrays.asList(SendMode.MAIL.getValueName(), SendMode.REGISTERED_MAIL.getValueName());
+=======
+    private static Map<QName/* FieldDefinition prop name */, Pair<String /* property name */, String /* translation key */>> CUSTOM_COLUMNS = new HashMap<QName, Pair<String, String>>();
+    static {
+        CUSTOM_COLUMNS.put(DocumentSearchModel.Props.DOCUMENT_TYPE, new Pair<String, String>("documentTypeName", "document_docType"));
+        CUSTOM_COLUMNS.put(DocumentSearchModel.Props.SEND_MODE, new Pair<String, String>("sendMode", "document_send_mode"));
+        CUSTOM_COLUMNS.put(DocumentSearchModel.Props.SEND_INFO_RECIPIENT, new Pair<String, String>("sendInfoRecipient", "document_search_export_recipient"));
+        CUSTOM_COLUMNS.put(DocumentSearchModel.Props.SEND_INFO_SEND_DATE_TIME, new Pair<String, String>("sendInfoSendDateTime", "document_search_send_info_time"));
+        CUSTOM_COLUMNS.put(DocumentSearchModel.Props.SEND_INFO_RESOLUTION, new Pair<String, String>("sendInfoResolution", "document_search_send_info_resolution"));
+    }
+>>>>>>> develop-5.1
 
     protected Node searchFilter;
     @SuppressWarnings("unused")
@@ -98,7 +129,14 @@ public class DocumentSearchResultsDialog extends BaseDocumentListDialog {
     protected void doInitialSearch() {
         try {
             DocumentSearchService documentSearchService = getDocumentSearchService();
+<<<<<<< HEAD
             documents = setLimited(documentSearchService.searchDocuments(searchFilter, getLimit()));
+=======
+            documents = setLimited(documentSearchService.queryDocuments(searchFilter, getLimit()));
+            if (log.isDebugEnabled()) {
+                log.debug("Found " + documents.size() + " document(s) during initial search. Limit: " + getLimit());
+            }
+>>>>>>> develop-5.1
             Collections.sort(documents, new TransformingComparator(new ComparableTransformer<Document>() {
                 @Override
                 public Comparable<Date> tr(Document document) {
@@ -139,6 +177,7 @@ public class DocumentSearchResultsDialog extends BaseDocumentListDialog {
         CSVExporter exporter = new CSVExporter(dataReader);
         exporter.export("documentList");
 
+<<<<<<< HEAD
         // Erko hack for incorrect view id in the next request
         JspStateManagerImpl.ignoreCurrentViewSequenceHack();
     }
@@ -177,6 +216,12 @@ public class DocumentSearchResultsDialog extends BaseDocumentListDialog {
         }
     }
 
+=======
+        // hack for incorrect view id in the next request
+        JspStateManagerImpl.ignoreCurrentViewSequenceHack();
+    }
+
+>>>>>>> develop-5.1
     // TODO we need the richList instance
     /**
      * @param richList - partially preconfigured RichList from jsp
@@ -190,6 +235,7 @@ public class DocumentSearchResultsDialog extends BaseDocumentListDialog {
         FacesContext context = FacesContext.getCurrentInstance();
         Map<String, Object> props = searchFilter.getProperties();
         List<FieldDefinition> searchableFields = getDocumentAdminService().getSearchableDocumentFieldDefinitions();
+<<<<<<< HEAD
         QName dokLiikBoolean = getLabelBoolean(DocumentSearchModel.Props.DOCUMENT_TYPE);
         QName sendModeBoolean = getLabelBoolean(DocumentSearchModel.Props.SEND_MODE);
         final Map<String, String> titleLinkParams = new HashMap<String, String>(2);
@@ -204,6 +250,26 @@ public class DocumentSearchResultsDialog extends BaseDocumentListDialog {
             UIComponent valueComponent = createActionLink(context, "#{r.sendMode}", "#{DocumentDialog.action}", null, "#{DocumentDialog.open}", null,
                     titleLinkParams);
             createAndAddColumn(context, richList, MessageUtil.getMessage("document_send_mode"), "sendMode", false, valueComponent);
+=======
+        final Map<String, String> titleLinkParams = new HashMap<String, String>(2);
+        titleLinkParams.put("nodeRef", "#{r.node.nodeRef}");
+        titleLinkParams.put("caseNodeRef", "#{r.node.nodeRef}");
+        List<String> outputTextOverrides = Arrays.asList("sendInfoResolution");
+
+        for (Entry<QName, Pair<String, String>> col : CUSTOM_COLUMNS.entrySet()) {
+            if (Boolean.TRUE.equals(props.get(getLabelBoolean(col.getKey())))) {
+                String sortLinkValue = col.getValue().getFirst();
+                String valueBinding = "#{r." + sortLinkValue + "}";
+                UIComponent valueComponent = null;
+                if (outputTextOverrides.contains(sortLinkValue)) {
+                    valueComponent = createOutput(context, sortLinkValue, valueBinding);
+                } else {
+                    valueComponent = createActionLink(context, valueBinding, "#{DocumentDialog.action}", null, "#{DocumentDialog.open}", null, titleLinkParams);
+                }
+
+                createAndAddColumn(context, richList, MessageUtil.getMessage(col.getValue().getSecond()), sortLinkValue, false, valueComponent);
+            }
+>>>>>>> develop-5.1
         }
         Set<String> keys = props.keySet();
         for (FieldDefinition fieldDefinition : searchableFields) {
@@ -238,9 +304,19 @@ public class DocumentSearchResultsDialog extends BaseDocumentListDialog {
                 valueBinding = "#{r.volumeLabel}";
                 sortValue = "volumeLabel";
             } else if (primaryQName.equals(DocumentDynamicModel.Props.FIRST_KEYWORD_LEVEL)) {
+<<<<<<< HEAD
                 valueBinding = "#{r.hierarchicalKeywords}";
                 fieldTitle = MessageUtil.getMessage("thesaurus_keywords");
                 sortValue = "hierarchicalKeywords";
+=======
+                if (Boolean.TRUE.equals(props.get(getLabelBoolean(DocumentDynamicModel.Props.THESAURUS).toString()))) {
+                    valueBinding = "#{r.hierarchicalKeywords}";
+                    fieldTitle = MessageUtil.getMessage("thesaurus_keywords");
+                    sortValue = "hierarchicalKeywords";
+                } else {
+                    continue;
+                }
+>>>>>>> develop-5.1
             } else if (isStructUnit) {
                 valueBinding = "#{r.unitStrucPropsConvertedMap['" + primaryQNamePrefixString + "']}";
                 sortValue = "unitStrucPropsConvertedMap;" + primaryQNamePrefixString;
@@ -306,6 +382,17 @@ public class DocumentSearchResultsDialog extends BaseDocumentListDialog {
         return column;
     }
 
+<<<<<<< HEAD
+=======
+    private static UIOutput createOutput(FacesContext context, String id, String valueBinding) {
+        UIOutput output = ComponentUtil.createUnescapedOutputText(context, "sendInfoResolution");
+        UIComponentTagUtils.setValueProperty(context, output, valueBinding);
+        UIComponentTagUtils.setStringProperty(context, output, "styleClass", "tooltip condence20-");
+
+        return output;
+    }
+
+>>>>>>> develop-5.1
     private static UIComponent createActionLink(FacesContext context, String valueBinding, String actionBinding, String action, String actionListenerBinding,
             String renderedBinding, Map<String, String> params) {
         return createActionLink(context, valueBinding, actionBinding, action, actionListenerBinding, renderedBinding, params, true);
@@ -369,4 +456,8 @@ public class DocumentSearchResultsDialog extends BaseDocumentListDialog {
         }
         return list.toArray(new UIComponent[list.size()]);
     }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> develop-5.1

@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <?xml version="1.0" encoding="UTF-8"?>
 <view:view 
    xmlns:view="http://www.alfresco.org/view/repository/1.0" 
@@ -16,4 +17,24 @@
       </view:properties>
    </param:stringParameter>      
 
+=======
+<?xml version="1.0" encoding="UTF-8"?>
+<view:view 
+   xmlns:view="http://www.alfresco.org/view/repository/1.0" 
+   xmlns:param="http://alfresco.webmedia.ee/model/parameters/1.0" 
+>
+
+   <param:stringParameter view:childName="param:signerName">
+      <view:properties>
+         <param:value></param:value>
+      </view:properties>
+   </param:stringParameter>   
+   
+   <param:stringParameter view:childName="param:contractFirstPartyName">
+      <view:properties>
+         <param:value></param:value>
+      </view:properties>
+   </param:stringParameter>      
+
+>>>>>>> develop-5.1
 </view:view>

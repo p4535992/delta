@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <?xml version="1.0" encoding="UTF-8"?>
 <model name="vs:versionsModel" xmlns="http://www.alfresco.org/model/dictionary/1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
    xsi:schemaLocation="http://www.alfresco.org/model/dictionary/1.0 http://svn.alfresco.com/repos/alfresco-open-mirror/alfresco/HEAD/root/projects/repository/config/alfresco/model/modelSchema.xsd">
@@ -38,3 +39,45 @@
    </aspects>
 
 </model>
+=======
+<?xml version="1.0" encoding="UTF-8"?>
+<model name="vs:versionsModel" xmlns="http://www.alfresco.org/model/dictionary/1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.alfresco.org/model/dictionary/1.0 http://svn.alfresco.com/repos/alfresco-open-mirror/alfresco/HEAD/root/projects/repository/config/alfresco/model/modelSchema.xsd">
+
+   <imports>
+      <import uri="http://www.alfresco.org/model/dictionary/1.0" prefix="d" />
+      <import uri="http://www.alfresco.org/model/system/1.0" prefix="sys" />
+      <import uri="http://www.alfresco.org/model/content/1.0" prefix="cm" />
+   </imports>
+
+   <namespaces>
+      <namespace uri="http://alfresco.webmedia.ee/model/versions/1.0" prefix="vs" />
+   </namespaces>
+
+   <aspects>
+      <aspect name="vs:versionLockable">
+         <properties>
+            <property name="vs:locked">
+               <type>d:boolean</type>
+               <default>false</default>
+            </property>
+         </properties>
+      </aspect>
+
+      <aspect name="vs:versionModified">
+         <properties>
+            <property name="vs:modifiedTime">
+               <type>d:datetime</type>
+            </property>
+            <property name="vs:firstName">
+               <type>d:text</type>
+            </property>
+            <property name="vs:lastName">
+               <type>d:text</type>
+            </property>
+         </properties>
+      </aspect>
+   </aspects>
+
+</model>
+>>>>>>> develop-5.1

@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <?xml version="1.0" encoding="UTF-8"?>
 
 <model name="reg:registerModel" xmlns="http://www.alfresco.org/model/dictionary/1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -55,3 +56,62 @@
       </type>
    </types>
 </model>
+=======
+<?xml version="1.0" encoding="UTF-8"?>
+
+<model name="reg:registerModel" xmlns="http://www.alfresco.org/model/dictionary/1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.alfresco.org/model/dictionary/1.0 http://svn.alfresco.com/repos/alfresco-open-mirror/alfresco/HEAD/root/projects/repository/config/alfresco/model/modelSchema.xsd">
+
+   <imports>
+      <import uri="http://www.alfresco.org/model/dictionary/1.0" prefix="d" />
+      <import uri="http://www.alfresco.org/model/system/1.0" prefix="sys" />
+   </imports>
+
+   <namespaces>
+      <namespace uri="http://alfresco.webmedia.ee/model/register/1.0" prefix="reg" />
+   </namespaces>
+   <types>
+      <type name="reg:registers">
+         <parent>sys:base</parent>
+         <associations>
+            <child-association name="reg:register">
+               <source>
+                  <mandatory>true</mandatory>
+                  <many>false</many>
+               </source>
+               <target>
+                  <class>reg:register</class>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </target>
+            </child-association>
+         </associations>
+         <mandatory-aspects>
+            <aspect>sys:aspect_root</aspect>
+         </mandatory-aspects>
+      </type>
+
+      <type name="reg:register">
+         <parent>sys:base</parent>
+         <properties>
+            <property name="reg:id">
+               <type>d:int</type>
+            </property>
+            <property name="reg:name">
+               <type>d:text</type>
+               <mandatory>true</mandatory>
+            </property>
+            <property name="reg:comment">
+               <type>d:text</type>
+            </property>
+            <property name="reg:active">
+               <type>d:boolean</type>
+            </property>
+            <property name="reg:autoReset">
+               <type>d:boolean</type>
+            </property>
+         </properties>
+      </type>
+   </types>
+</model>
+>>>>>>> develop-5.1

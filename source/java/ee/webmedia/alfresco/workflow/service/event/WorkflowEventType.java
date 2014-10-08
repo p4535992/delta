@@ -1,8 +1,11 @@
 package ee.webmedia.alfresco.workflow.service.event;
 
+<<<<<<< HEAD
 /**
  * @author Alar Kvell
  */
+=======
+>>>>>>> develop-5.1
 public enum WorkflowEventType {
     STATUS_CHANGED, // Create and delete events are not supported
     WORKFLOW_STARTED_AUTOMATICALLY,

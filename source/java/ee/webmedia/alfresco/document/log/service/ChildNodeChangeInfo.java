@@ -13,7 +13,10 @@ import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
  * Information holding object for composing history log message about a child node being added or removed. This class is used internally by {@link DocumentPropertiesChangeHolder}.
  * 
  * @see DocumentPropertiesChangeHolder
+<<<<<<< HEAD
  * @author Martti Tamm
+=======
+>>>>>>> develop-5.1
  */
 public class ChildNodeChangeInfo {
 
@@ -77,8 +80,15 @@ public class ChildNodeChangeInfo {
         childrenMap.put(DocumentChildModel.Assocs.APPLICANT_ABROAD, ChildNodeChangeInfo.APPLICANT);
         childrenMap.put(DocumentChildModel.Assocs.APPLICANT_DOMESTIC, ChildNodeChangeInfo.APPLICANT);
         childrenMap.put(DocumentChildModel.Assocs.APPLICANT_TRAINING, ChildNodeChangeInfo.APPLICANT);
+<<<<<<< HEAD
         childrenMap.put(DocumentChildModel.Assocs.ERRAND_ABROAD, ChildNodeChangeInfo.ERRAND);
         childrenMap.put(DocumentChildModel.Assocs.ERRAND_DOMESTIC, ChildNodeChangeInfo.ERRAND);
+=======
+        childrenMap.put(DocumentChildModel.Assocs.APPLICANT_ERRAND, ChildNodeChangeInfo.APPLICANT);
+        childrenMap.put(DocumentChildModel.Assocs.ERRAND_ABROAD, ChildNodeChangeInfo.ERRAND);
+        childrenMap.put(DocumentChildModel.Assocs.ERRAND_DOMESTIC, ChildNodeChangeInfo.ERRAND);
+        childrenMap.put(DocumentChildModel.Assocs.ERRAND, ChildNodeChangeInfo.ERRAND);
+>>>>>>> develop-5.1
         childrenMap.put(DocumentChildModel.Assocs.CONTRACT_PARTY, ChildNodeChangeInfo.PARTY);
         CHILD_NODE_CHANGE_INFO = Collections.unmodifiableMap(childrenMap);
     }

@@ -2,9 +2,12 @@ package ee.webmedia.alfresco.docconfig.generator;
 
 import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement.ItemConfigVO;
 
+<<<<<<< HEAD
 /**
  * @author Alar Kvell
  */
+=======
+>>>>>>> develop-5.1
 public interface GeneratorResults {
 
     ItemConfigVO getAndAddPreGeneratedItem();

@@ -34,9 +34,12 @@ import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
 import ee.webmedia.alfresco.utils.RepoUtil;
 
+<<<<<<< HEAD
 /**
  * @author Priit Pikk
  */
+=======
+>>>>>>> develop-5.1
 public class ExpensesTableGenerator extends BaseSystematicFieldGenerator {
 
     private NamespaceService namespaceService;

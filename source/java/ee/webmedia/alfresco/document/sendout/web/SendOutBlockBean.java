@@ -14,9 +14,12 @@ import ee.webmedia.alfresco.docdynamic.web.DocumentDynamicBlock;
 import ee.webmedia.alfresco.document.sendout.model.SendInfo;
 import ee.webmedia.alfresco.document.sendout.service.SendOutService;
 
+<<<<<<< HEAD
 /**
  * @author Erko Hansar
  */
+=======
+>>>>>>> develop-5.1
 public class SendOutBlockBean implements DocumentDynamicBlock {
     private static final long serialVersionUID = 1L;
 

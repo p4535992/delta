@@ -6,9 +6,12 @@ import org.alfresco.service.namespace.QName;
 import ee.webmedia.alfresco.filter.service.AbstractFilterServiceImpl;
 import ee.webmedia.alfresco.volume.search.model.VolumeSearchModel;
 
+<<<<<<< HEAD
 /**
  * @author Keit Tehvan
  */
+=======
+>>>>>>> develop-5.1
 public class VolumeSearchFilterServiceImpl extends AbstractFilterServiceImpl implements VolumeSearchFilterService {
 
     @Override

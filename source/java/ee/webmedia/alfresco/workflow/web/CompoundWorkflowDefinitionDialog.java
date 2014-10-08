@@ -79,6 +79,10 @@ import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
 import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.utils.ActionUtil;
+<<<<<<< HEAD
+=======
+import ee.webmedia.alfresco.utils.CalendarUtil;
+>>>>>>> develop-5.1
 import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
@@ -99,8 +103,11 @@ import ee.webmedia.alfresco.workflow.service.type.WorkflowType;
 
 /**
  * Dialog bean for working with one compound workflow definition.
+<<<<<<< HEAD
  * 
  * @author Erko Hansar
+=======
+>>>>>>> develop-5.1
  */
 public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
 
@@ -131,7 +138,10 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
 
     protected boolean fullAccess;
     protected boolean isUnsavedWorkFlow;
+<<<<<<< HEAD
     private Boolean activeResponsibleAssignedInRepo;
+=======
+>>>>>>> develop-5.1
     protected List<Boolean> workflowBlockExpandedStatuses;
 
     @Override
@@ -220,6 +230,10 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
         resetState();
         NodeRef nodeRef = new NodeRef(ActionUtil.getParam(event, "nodeRef"));
         compoundWorkflow = getWorkflowService().getCompoundWorkflowDefinition(nodeRef);
+<<<<<<< HEAD
+=======
+        addLargeWorkflowWarning();
+>>>>>>> develop-5.1
         updateFullAccess();
         initExpandedStatuses();
     }
@@ -614,13 +628,29 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
         log.debug("processOwnerSearchResults: " + picker.getId() + ", " + wfIndex + ", " //
                 + taskIndex + ", " + filterIndex + " = " + StringUtils.join(results, ","));
 
+<<<<<<< HEAD
         for (int i = 0; i < results.length; i++) {
             if (i > 0) {
                 taskIndex = addTask(taskIndex, addOrderAssignmentResponsibleTask, block, originalTaskDueDate);
+=======
+        long addTasksStart = System.nanoTime();
+        long addingTaskTotal = 0;
+        long getUserNamesInGroupTotal = 0;
+        long retrieveUserPropsTotal = 0;
+        long retrieveOrgPropsTotal = 0;
+        long userPropsSet = 0;
+        boolean isUserGroupFilter = filterIndex == UserContactGroupSearchBean.USER_GROUPS_FILTER;
+        for (int i = 0; i < results.length; i++) {
+            if (i > 0 && !isUserGroupFilter) {
+                long addingTaskStart = System.nanoTime();
+                taskIndex = addTask(taskIndex, addOrderAssignmentResponsibleTask, block, originalTaskDueDate);
+                addingTaskTotal += System.nanoTime() - addingTaskStart;
+>>>>>>> develop-5.1
             }
 
             // users
             if (filterIndex == UserContactGroupSearchBean.USERS_FILTER) {
+<<<<<<< HEAD
                 setPersonPropsToTask(block, taskIndex, results[i], null);
             }
             // user groups
@@ -633,6 +663,31 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
                         taskIndex = addTask(taskIndex, addOrderAssignmentResponsibleTask, block, originalTaskDueDate);
                     }
                     setPersonPropsToTask(block, taskIndex, userName, groupName);
+=======
+                Pair<Long, Long> userAndOrgRetrieveTime = setPersonPropsToTask(block, taskIndex, results[i], null);
+                retrieveUserPropsTotal += userAndOrgRetrieveTime.getFirst();
+                retrieveOrgPropsTotal += userAndOrgRetrieveTime.getSecond();
+                userPropsSet++;
+            }
+            // user groups
+            else if (isUserGroupFilter) {
+                long getUserNamesInGroupStart = System.nanoTime();
+                Set<String> children = UserUtil.getUsersInGroup(results[i], getNodeService(), getUserService(), getParametersService(), getDocumentSearchService());
+                getUserNamesInGroupTotal += System.nanoTime() - getUserNamesInGroupStart;
+
+                String groupName = BeanHelper.getAuthorityService().getAuthorityDisplayName(results[i]);
+                int j = 0;
+                for (String userName : children) {
+                    if (i > 0 || j++ > 0) {
+                        long addingTaskStart = System.nanoTime();
+                        taskIndex = addTask(taskIndex, addOrderAssignmentResponsibleTask, block, originalTaskDueDate);
+                        addingTaskTotal += System.nanoTime() - addingTaskStart;
+                    }
+                    Pair<Long, Long> userAndOrgRetrieveTime = setPersonPropsToTask(block, taskIndex, userName, groupName);
+                    retrieveUserPropsTotal += userAndOrgRetrieveTime.getFirst();
+                    retrieveOrgPropsTotal += userAndOrgRetrieveTime.getSecond();
+                    userPropsSet++;
+>>>>>>> develop-5.1
                 }
             }
             // contacts
@@ -650,7 +705,27 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
                 throw new RuntimeException("Unknown filter index value: " + filterIndex);
             }
         }
+<<<<<<< HEAD
 
+=======
+        long totalDuration = CalendarUtil.duration(addTasksStart);
+        if (log.isTraceEnabled() || totalDuration > 2000) {
+            boolean isUserFilter = filterIndex == UserContactGroupSearchBean.USERS_FILTER;
+            StringBuffer sb = new StringBuffer("Adding tasks statistics:\n");
+            sb.append("Processed " + results.length + " search results"
+                    + (isUserFilter || isUserGroupFilter ? ", used filter " + (isUserFilter ? " Kasutajad " : "Kasutajagrupid") : "") + "\n");
+            sb.append("Processing tasks total time: " + totalDuration).append(" ms\n");
+            sb.append("Set user properties on " + userPropsSet + " tasks");
+            if (isUserFilter || isUserGroupFilter) {
+                sb.append(" of that\n");
+                sb.append("   adding tasks: " + (addingTaskTotal / 1000000L) + " ms\n");
+                sb.append("   retrieving usernames in group: " + (getUserNamesInGroupTotal / 1000000L) + " ms\n");
+                sb.append("   retrieving user props: " + (retrieveUserPropsTotal / 1000000L) + " ms\n");
+                sb.append("   retrieving org props: " + (retrieveOrgPropsTotal / 1000000L) + " ms\n");
+            }
+            log.trace(sb.toString());
+        }
+>>>>>>> develop-5.1
         updatePanelGroupWithoutWorkflowBlockUpdate();
     }
 
@@ -795,6 +870,7 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
     // /// PROTECTED & PRIVATE METHODS /////
 
     protected void resetState() {
+<<<<<<< HEAD
         compoundWorkflow = null;
         commonDataGroup = null;
         panelGroup = null;
@@ -802,6 +878,20 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
         sortedTypes = null;
         isUnsavedWorkFlow = false;
         activeResponsibleAssignedInRepo = null;
+=======
+        resetState(true);
+    }
+
+    protected void resetState(boolean resetPanelGroup) {
+        compoundWorkflow = null;
+        if (resetPanelGroup) {
+            commonDataGroup = null;
+            panelGroup = null;
+            saveAsGroup = null;
+        }
+        sortedTypes = null;
+        isUnsavedWorkFlow = false;
+>>>>>>> develop-5.1
         taskGroups = null;
         workflowBlockExpandedStatuses = null;
     }
@@ -819,8 +909,12 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
                 if (tmpType.equals(WorkflowSpecificModel.Types.DUE_DATE_EXTENSION_WORKFLOW)) {
                     continue;
                 }
+<<<<<<< HEAD
                 if (tmpType.equals(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_WORKFLOW)
                         && !(getWorkflowService().externalReviewWorkflowEnabled() || getWorkflowService().isReviewToOtherOrgEnabled())) {
+=======
+                if (tmpType.equals(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_WORKFLOW) && !getWorkflowService().externalReviewWorkflowEnabled()) {
+>>>>>>> develop-5.1
                     continue;
                 }
                 if (isNotAllowedConfirmationWorkflow(tmpType)) {
@@ -888,6 +982,10 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
         if (updateAllGroups) {
             updateCommonDataGroup(application, dontShowAddActions, document);
             addInfoMessageIfNeeded();
+<<<<<<< HEAD
+=======
+            addLargeWorkflowWarning();
+>>>>>>> develop-5.1
         }
 
         // render every workflow block
@@ -1047,8 +1145,13 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
     private boolean dontShowAddActions() {
         boolean dontShowAddActions = getSortedTypes().isEmpty();
         if (!dontShowAddActions && this instanceof CompoundWorkflowDialog && !compoundWorkflow.getWorkflows().isEmpty()) {
+<<<<<<< HEAD
             getWorkflowService().addOtherCompundWorkflows(compoundWorkflow);
             for (CompoundWorkflow cwf : compoundWorkflow.getOtherCompoundWorkflows()) {
+=======
+            List<CompoundWorkflow> otherCompoundWorkflows = getWorkflowService().getOtherCompoundWorkflows(compoundWorkflow);
+            for (CompoundWorkflow cwf : otherCompoundWorkflows) {
+>>>>>>> develop-5.1
                 if (cwf.isStatus(Status.IN_PROGRESS, Status.STOPPED) && cwf.getWorkflows().size() > 1 && !cwf.getWorkflows().isEmpty()) {
                     return true;
                 }
@@ -1100,6 +1203,24 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
         addChildren(commonDataGroup, commonDataPanel);
     }
 
+<<<<<<< HEAD
+=======
+    protected void addLargeWorkflowWarning() {
+        if (compoundWorkflow == null) {
+            return;
+        }
+        Long largeWorkflowTaskLimit = BeanHelper.getParametersService().getLongParameter(Parameters.LARGE_WORKFLOW_WARNING_TASK_COUNT);
+        int taskCount = 0;
+        for (Workflow workflow : compoundWorkflow.getWorkflows()) {
+            taskCount += workflow.getTasks().size();
+            if (taskCount > largeWorkflowTaskLimit) {
+                MessageUtil.addInfoMessage("large_workflow_warning", largeWorkflowTaskLimit);
+                break;
+            }
+        }
+    }
+
+>>>>>>> develop-5.1
     private void updateSaveAsGroup() {
         if (compoundWorkflow == null) {
             return;
@@ -1247,6 +1368,7 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
         return result;
     }
 
+<<<<<<< HEAD
     private void setPersonPropsToTask(Workflow block, int taskIndex, String userName, String groupName) {
         Map<QName, Serializable> resultProps = getUserService().getUserProperties(userName);
         String name = UserUtil.getPersonFullName1(resultProps);
@@ -1255,6 +1377,21 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
         Serializable orgName = (Serializable) getOrganizationStructureService().getOrganizationStructurePaths((String) resultProps.get(ContentModel.PROP_ORGID));
         Serializable jobTitle = resultProps.get(ContentModel.PROP_JOBTITLE);
         setPropsToTask(block, taskIndex, name, id, email, orgName, jobTitle, groupName);
+=======
+    private Pair<Long, Long> setPersonPropsToTask(Workflow block, int taskIndex, String userName, String groupName) {
+        long retrieveUserPropsStart = System.nanoTime();
+        Map<QName, Serializable> resultProps = getUserService().getUserProperties(userName);
+        long retrieveUserTime = System.nanoTime() - retrieveUserPropsStart;
+        String name = UserUtil.getPersonFullName1(resultProps);
+        Serializable id = resultProps.get(ContentModel.PROP_USERNAME);
+        Serializable email = resultProps.get(ContentModel.PROP_EMAIL);
+        long retrieveOrgPropsStart = System.nanoTime();
+        Serializable orgName = (Serializable) getOrganizationStructureService().getOrganizationStructurePaths((String) resultProps.get(ContentModel.PROP_ORGID));
+        long retrieveOrgTime = System.nanoTime() - retrieveOrgPropsStart;
+        Serializable jobTitle = resultProps.get(ContentModel.PROP_JOBTITLE);
+        setPropsToTask(block, taskIndex, name, id, email, orgName, jobTitle, groupName);
+        return Pair.newInstance(retrieveUserTime, retrieveOrgTime);
+>>>>>>> develop-5.1
     }
 
     private void setPersonPropsToTask(Task task, Map<QName, Serializable> personProps) {
@@ -1371,6 +1508,7 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
         }
     }
 
+<<<<<<< HEAD
     protected boolean isActiveResponsibleAssignedForDocument(QName workflowType, boolean useCache) {
         if (activeResponsibleAssignedInRepo == null || !useCache) {
             try {
@@ -1382,6 +1520,17 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
             }
         }
         return activeResponsibleAssignedInRepo;
+=======
+    protected boolean isActiveResponsibleAssignedForDocument(QName workflowType, boolean allowFinished) {
+        try {
+            return 0 < getWorkflowService().getConnectedActiveResponsibleTasksCount(compoundWorkflow, workflowType, allowFinished,
+                    allowFinished ? compoundWorkflow.getNodeRef() : null);
+        } catch (InvalidNodeRefException e) {
+            final FacesContext context = FacesContext.getCurrentInstance();
+            MessageUtil.addErrorMessage(context, "workflow_compound_add_block_error_docDeleted");
+            throw e;
+        }
+>>>>>>> develop-5.1
     }
 
     /** Actions performed on both compoundWorkflow and compundWorkflowDefinition object */

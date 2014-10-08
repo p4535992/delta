@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!-- item link menüüs olev link, mis wrapitakse li sisse -->
@@ -369,3 +370,376 @@
    </dropdown>
 
 </menu>
+=======
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- item link menüüs olev link, mis wrapitakse li sisse -->
+<!-- dropdown paneeli id viitab div'i id'le -->
+<menu>
+
+   <!-- NB! If you change menu item order, also update constants in MenuBean.java ! -->
+
+   <!-- MINU TÖÖÜLESANDED JA DOKUMENDID -->
+   <item title-id="menu_my_tasks_and_documents">
+      <outcome>myalfresco</outcome>
+      <subitems>
+         <dropdown id="menu_my_tasks" title-id="menu_my_tasks" expanded="true">
+            <submenu-id>my-tasks-submenu</submenu-id>
+            <subitems>
+               <item id="assignmentTasks" title-id="menu_for_assignment">
+                  <outcome>dialog:taskListDialog</outcome>
+                  <action-listener>#{MyTasksBean.setupAssignmentTasks}</action-listener>
+                  <processor>{http://alfresco.webmedia.ee/model/workflow/specific/1.0}assignmentTask</processor>
+                  <hidden>#{MenuBean.isMenuItemHidden}</hidden>
+               </item>
+               <item id="informationTasks" title-id="menu_for_information">
+                  <outcome>dialog:taskListDialog</outcome>
+                  <action-listener>#{MyTasksBean.setupInformationTasks}</action-listener>
+                  <processor>{http://alfresco.webmedia.ee/model/workflow/specific/1.0}informationTask</processor>
+                  <hidden>#{MenuBean.isMenuItemHidden}</hidden>
+               </item>
+               <item id="orderAssignmentTasks" title-id="menu_for_order_assignment">
+                  <outcome>dialog:taskListDialog</outcome>
+                  <action-listener>#{MyTasksBean.setupOrderAssignmentTasks}</action-listener>
+                  <processor>{http://alfresco.webmedia.ee/model/workflow/specific/1.0}orderAssignmentTask</processor>
+                  <hidden>#{MenuBean.isMenuItemHidden}</hidden>
+               </item>
+               <item id="opinionTasks" title-id="menu_for_opinion">
+                  <outcome>dialog:taskListDialog</outcome>
+                  <action-listener>#{MyTasksBean.setupOpinionTasks}</action-listener>
+                  <processor>{http://alfresco.webmedia.ee/model/workflow/specific/1.0}opinionTask</processor>
+                  <hidden>#{MenuBean.isMenuItemHidden}</hidden>
+               </item>
+               <item id="discussions" title-id="menu_for_discussion">
+                  <outcome>dialog:discussionDocumentListDialog</outcome>
+                  <action-listener>#{DiscussionDocumentListDialog.setup}</action-listener>
+                  <hidden>#{MenuBean.isMenuItemHidden}</hidden>
+               </item>
+               <item id="reviewTasks" title-id="menu_for_review">
+                  <outcome>dialog:taskListDialog</outcome>
+                  <action-listener>#{MyTasksBean.setupReviewTasks}</action-listener>
+                  <processor>{http://alfresco.webmedia.ee/model/workflow/specific/1.0}reviewTask</processor>
+                  <hidden>#{MenuBean.isMenuItemHidden}</hidden>
+               </item>
+               <item id="externalReviewTasks" title-id="menu_for_external_review">
+                  <outcome>dialog:taskListDialog</outcome>
+                  <action-listener>#{MyTasksBean.setupExternalReviewTasks}</action-listener>
+                  <processor>{http://alfresco.webmedia.ee/model/workflow/specific/1.0}externalReviewTask</processor>
+                  <hidden>#{MenuBean.isMenuItemHidden}</hidden>
+               </item>
+               <item id="confirmationTasks" title-id="menu_for_confirmation">
+                  <outcome>dialog:taskListDialog</outcome>
+                  <action-listener>#{MyTasksBean.setupConfirmationTasks}</action-listener>
+                  <processor>{http://alfresco.webmedia.ee/model/workflow/specific/1.0}confirmationTask</processor>
+                  <hidden>#{MenuBean.isMenuItemHidden}</hidden>
+               </item>
+               <item id="signatureTasks" title-id="menu_for_signature">
+                  <outcome>dialog:taskListDialog</outcome>
+                  <action-listener>#{MyTasksBean.setupSignatureTasks}</action-listener>
+                  <processor>{http://alfresco.webmedia.ee/model/workflow/specific/1.0}signatureTask</processor>
+                  <hidden>#{MenuBean.isMenuItemHidden}</hidden>
+               </item>
+               <item id="forRegisteringList" title-id="menu_for_registering" document-manager="true">
+                  <outcome>dialog:forRegisteringListDialog</outcome>
+                  <action-listener>#{ForRegisteringListDialog.setup}</action-listener>
+                  <hidden>#{MenuBean.isMenuItemHidden}</hidden>
+               </item>
+            </subitems>
+         </dropdown>
+         <dropdown id="menu_my_responsibility" title-id="menu_my_responsibility" expanded="true">
+            <submenu-id>my-responsibility-submenu</submenu-id>
+            <hidden>#{MenuBean.isMenuItemHidden}</hidden>
+            <subitems>
+               <item id="userWorkingDocuments" title-id="menu_working_documents">
+                  <outcome>dialog:userWorkingDocumentsSearchResultsDialog</outcome>
+                  <action-listener>#{UserWorkingDocumentsSearchResultsDialog.setup}</action-listener>
+                  <hidden>#{MenuBean.isMenuItemHidden}</hidden>
+               </item>
+               <item id="userCompoundWorkflows" title-id="menu_compound_workflows">
+                  <outcome>dialog:compoundWorkflowListDialog</outcome>
+                  <hidden>#{MenuBean.isMenuItemHidden}</hidden>
+               </item>
+               <item id="userCaseFiles" title-id="menu_case_files">
+                  <outcome>dialog:caseFileListDialog</outcome>
+                  <hidden>#{MenuBean.isMenuItemHidden}</hidden>
+               </item>
+            </subitems>
+         </dropdown>
+         <dropdown title-id="menu_received_sent_documents" expanded="true">
+            <submenu-id>received-documents-submenu</submenu-id>
+            <subitems>
+               <item id="incomingEmails" title-id="menu_incoming_emails" document-manager="true">
+                  <outcome>dialog:incomingEmailListDialog</outcome>
+                  <action-listener>#{IncomingEmailListDialog.setup}</action-listener>
+               </item>
+               <item id="emailAttachments" title-id="menu_email_attachments" document-manager="true">
+                  <outcome>dialog:attachmentListDialog</outcome>
+                  <action-listener>#{AttachmentListDialog.init}</action-listener>
+               </item>
+               <item id="sentEmails" title-id="menu_sent_emails" document-manager="true">
+                  <outcome>dialog:sentEmailListDialog</outcome>
+                  <action-listener>#{SentEmailListDialog.setup}</action-listener>
+               </item>
+               <item id="dvkCorrupt" title-id="menu_dvk_error_messages" document-manager="true">
+                  <outcome>dialog:dvkCorruptListDialog</outcome>
+                  <action-listener>#{DvkCorruptListDialog.init}</action-listener>
+               </item>
+               <item id="scannedDocuments" title-id="menu_scanned_documents" document-manager="true">
+                  <outcome>dialog:scannedDocsListDialog</outcome>
+                  <action-listener>#{ScannedDocsListDialog.init}</action-listener>
+               </item>
+               <item id="webServiceDocuments" title="#{MenuBean.webServiceDocumentsMenuItemTitle}" document-manager="true">
+                  <outcome>dialog:webServiceDocumentListDialog</outcome>
+                  <action-listener>#{WebServiceDocumentListDialog.setup}</action-listener>
+               </item>               
+               <item id="sendFailureNotification" title-id="menu_send_failure_notifications" document-manager="true">
+                  <outcome>dialog:sendFailureNotificationsListDialog</outcome>
+                  <action-listener>#{SendFailureNotificationsListDialog.init}</action-listener>
+               </item>
+               <item id="dvkDocuments" title-id="menu_dvk_documents" document-manager="true">
+                  <outcome>dialog:dvkDocumentListDialog</outcome>
+                  <action-listener>#{DvkDocumentListDialog.setup}</action-listener>
+               </item>
+               <item id="incomingEInvoice" title-id="menu_received_invoices">
+                  <outcome>dialog:incomingEInvoiceListDialog</outcome>
+                  <action-listener>#{IncomingEInvoiceListDialog.setup}</action-listener>
+               </item>
+               <item id="unsentDocument" title-id="menu_unsent_documents" document-manager="true">
+                  <outcome>dialog:unsentDocumentListDialog</outcome>
+                  <action-listener>#{UnsentDocumentListDialog.setup}</action-listener>
+               </item>
+               <item id="outboxDocument" title-id="menu_outbox_documents" document-manager="true">
+                  <outcome>dialog:outboxDocumentListDialog</outcome>
+                  <action-listener>#{OutboxDocumentListDialog.setup}</action-listener>
+               </item>
+            </subitems>
+         </dropdown>
+         <item id="departmentDocuments" title-id="menu_department_documents">
+            <href>#{MenuBean.workingDocumentsAddress}</href>
+            <hidden>#{MenuBean.isMenuItemHidden}</hidden>
+            <target>_blank</target>
+         </item>
+         <dropdown id="myDocuments" title-id="menu_my_documents" browse="true">
+            <xpath>/{http://alfresco.webmedia.ee/model/functions/1.0}documentList</xpath>
+            <hidden>#{MenuBean.isMenuItemHidden}</hidden>
+            <submenu-id>my-documents</submenu-id>
+            <outcome>dialog:myDocsFunctionsListDialog</outcome>
+            <action-listener>#{MenuBean.updateTree}</action-listener>
+            <child-filter>myDocuments</child-filter>
+         </dropdown>
+      </subitems>
+   </item>
+
+   <!-- DOKUMENDIREGISTER -->
+   <item id="documentRegister" title-id="menu_document_register">
+      <outcome>dialog:todayRegisteredDocumentsSearchResultsDialog</outcome>
+      <hidden>#{MenuBean.isMenuItemHidden}</hidden>
+      <action-listener>#{TodayRegisteredDocumentsSearchResultsDialog.setup}</action-listener>
+      <subitems>
+         <dropdown title-id="menu_document_list" browse="true">
+            <xpath>/{http://alfresco.webmedia.ee/model/functions/1.0}documentList</xpath>
+            <submenu-id>document-register</submenu-id>
+            <outcome>dialog:functionsListDialog</outcome>
+            <action-listener>#{MenuBean.updateTree}</action-listener>
+         </dropdown>
+      </subitems>
+   </item>
+
+   <!-- KONTAKT -->
+   <item id="contact" title-id="menu_contact">
+      <outcome>dialog:addressbookList</outcome>
+      <hidden>#{MenuBean.isMenuItemHidden}</hidden>
+      <subitems>
+         <item id="contactList" title-id="menu_contact_management">
+            <outcome>dialog:addressbookList</outcome>
+         </item>
+         <item id="contactGroupManagement" title-id="menu_contact_group_management">
+            <outcome>dialog:addressbookManageContactGroups</outcome>
+         </item>
+      </subitems>
+   </item>
+
+   <!-- MINA -->
+   <item id="me" title-id="menu_me">
+      <outcome>dialog:userConsole</outcome>
+      <hidden>#{MenuBean.isMenuItemHidden}</hidden>
+      <action-listener>#{UserDetailsDialog.setupCurrentUser}</action-listener>
+      <subitems>
+         <item id="myProfile" title-id="menu_my_profile">
+            <outcome>dialog:userConsole</outcome>
+            <action-listener>#{UserDetailsDialog.setupCurrentUser}</action-listener>
+         </item>
+         <!-- NB! if change id from Favo***u***rites to favorites, then repo updater is neccessary -->
+         <dropdown id="myFavourites" title-id="menu_my_favorites" browse="true">
+            <submenu-id>myFavorites-submenu</submenu-id>
+            <outcome>dialog:favoritesDocumentListDialog</outcome>
+            <action-listener>#{MenuBean.toggle}</action-listener>
+         </dropdown>
+         <dropdown title-id="menu_settings" expanded="true">
+            <submenu-id>settings-submenu</submenu-id>
+            <subitems>
+               <item id="notificationSettings" title-id="menu_notifications_to_email">
+                  <outcome>dialog:notificationDialog</outcome>
+               </item>
+               <item id="substitutionSettings" title-id="menu_leave_configuration">
+                  <outcome>dialog:substituteListDialog</outcome>
+               </item>
+            </subitems>
+         </dropdown>
+      </subitems>
+   </item>
+
+   <!-- OTSING -->
+   <item id="search" title-id="menu_search">
+      <outcome>dialog:documentDynamicSearchDialog</outcome>
+      <hidden>#{MenuBean.isMenuItemHidden}</hidden>
+      <subitems>
+         <dropdown title-id="menu_searches" expanded="true">
+            <submenu-id>searches-submenu</submenu-id>
+            <subitems>
+               <item id="documentSearch" title-id="menu_documents">
+                  <outcome>dialog:documentDynamicSearchDialog</outcome>
+               </item>
+               <item id="taskSearch" title-id="menu_tasks">
+                  <outcome>dialog:taskSearchDialog</outcome>
+               </item>
+               <item id="volSearch" title-id="menu_caseFile_search">
+                  <outcome>dialog:volumeDynamicSearchDialog</outcome>
+                  <hidden>#{MenuBean.isMenuItemHidden}</hidden>
+               </item>
+               <item id="compoundWorkflowSearch" title-id="menu_compoundworkflow_search">
+                  <outcome>dialog:compoundWorkflowSearchDialog</outcome>
+               </item>
+            </subitems>
+         </dropdown>
+         <dropdown title-id="menu_reports" expanded="true">
+            <submenu-id>reports-submenu</submenu-id>
+            <subitems>
+               <item id="documentReports" title-id="menu_document_reports">
+                  <outcome>dialog:documentDynamicReportDialog</outcome>
+               </item>            
+               <item id="taskReports" title-id="menu_task_reports">
+                  <outcome>dialog:taskReportDialog</outcome>
+               </item>
+               <item id="volumeReports" title-id="menu_volume_reports">
+                  <outcome>dialog:volumeDynamicReportDialog</outcome>
+               </item>            
+            </subitems>
+         </dropdown>
+         <item id="executedReports" title-id="menu_executed_reports">
+            <outcome>dialog:reportListDialog</outcome>
+         </item>
+      </subitems>
+   </item>
+
+   <!-- ADMINISTRATOR -->
+   <item id="administrator" title-id="menu_administrator" accountant="true" document-manager="true" supervisor="true" archivist="true">
+      <outcome>dialog:userListDialog</outcome>
+      <subitems>
+         <item id="userManagement" title-id="menu_user_management" document-manager="true">
+            <outcome>dialog:userListDialog</outcome>
+         </item>
+         <item id="userGroupManagement" title-id="groups_management" document-manager="true">
+            <outcome>dialog:manageGroups</outcome>
+            <action-listener>#{GroupsDialog.reset}</action-listener>
+         </item>
+         <item id="classificators" title-id="menu_classificators" admin="true">
+            <outcome>dialog:classificatorListDialog</outcome>
+         </item>
+         <item id="parameters" title-id="menu_parameters" admin="true">
+            <outcome>dialog:parametersListDialog</outcome>
+         </item>
+         <item id="registers" title-id="menu_registers" admin="true">
+            <outcome>dialog:registerListDialog</outcome>
+         </item>
+         <item id="compoundWorkflows" title-id="menu_compoundworkflows" admin="true">
+            <outcome>dialog:compoundWorkflowDefinitionListDialog</outcome>
+         </item>
+         <item id="templates" title-id="menu_templates" admin="true">
+            <outcome>dialog:documentTemplateListDialog</outcome>
+         </item>
+         <item id="helpText" title-id="menu_help_texts" admin="true">
+            <outcome>dialog:helpTextListDialog</outcome>
+         </item>
+         <item id="documentTypeManagement" title-id="menu_document_types" admin="true">
+            <outcome>dialog:docTypeListDialog</outcome>
+         </item>
+         <item id="caseFileTypeManagement" title-id="menu_caseFile_types" admin="true">
+            <outcome>dialog:caseFileTypeListDialog</outcome>
+         </item>
+         <item id="documentTypeFields" title-id="menu_document_type_fields" admin="true">
+            <outcome>dialog:fieldDefinitionListDialog</outcome>
+         </item>
+         <item id="organizationStructure" title-id="menu_organization_structure" admin="true">
+            <outcome>dialog:orgstructureListDialog</outcome>
+         </item>
+         <item id="importantNotifications" title-id="menu_important_notifications" admin="true">
+            <outcome>dialog:notificationListDialog</outcome>
+         </item>
+         <item id="applicationLog" title-id="menu_application_log" admin="true" supervisor="true">
+            <outcome>dialog:applicationLogDialog</outcome>
+         </item>
+         <item id="manageDeletedItems" title-id="menu_manage_deleted_items" admin="true" supervisor="true">
+            <outcome>dialog:manageDeletedItems</outcome>
+         </item>
+         <item id="manageLocks" title-id="menu_manage_locks" admin="true">
+            <outcome>dialog:manageLocksDialog</outcome>
+         </item>
+         <item id="eventplan" title-id="menu_eventplan" admin="true" document-manager="true" archivist="true">
+            <outcome>dialog:eventPlanListDialog</outcome>
+         </item>
+         <item id="archivationActions" title-id="menu_archivation_actions" admin="true" archivist="true">
+             <outcome>dialog:archivationActions</outcome>
+         </item> 
+         <item id="thesauri" title-id="menu_thesauri" admin="true">
+            <outcome>dialog:thesaurusListDialog</outcome>
+         </item>
+         <item id="transactionTemplates" title-id="menu_transactionTemplate" accountant="true">
+            <outcome>dialog:transactionTemplateListDialog</outcome>
+         </item>
+         <item id="transactionDescParameters" title-id="menu_transactionDescParameters" accountant="true">
+            <outcome>dialog:transactionDescParameterListDialog</outcome>
+         </item>
+         <item id="dimensions" title-id="menu_dimensions" accountant="true">
+            <outcome>dialog:dimensionListDialog</outcome>
+         </item>
+         <item id="systemInformation" title-id="menu_system_information" admin="true">
+            <outcome>dialog:showSystemInfo</outcome>
+         </item>
+         <item title-id="menu_node_browser" admin="true">
+            <outcome>dialog:showNodeBrowser</outcome>
+         </item>
+      </subitems>
+   </item>
+   <item id="restrictedDelta" title="#{MenuBean.restrictedDeltaName}">
+      <href>#{MenuBean.restrictedDeltaUrl}</href>
+      <hidden>#{MenuBean.isMenuItemHidden}</hidden>
+   </item>
+   <item id="regularDelta" title="#{MenuBean.deltaName}">
+      <href>#{MenuBean.deltaUrl}</href>
+      <hidden>#{MenuBean.isMenuItemHidden}</hidden>
+   </item>
+
+   <!-- "Alusta uut dokumenti" and "Alusta uut..." have css set float: left, so in browser they appear in reverse order than defined here -->
+   <!-- ALUSTA UUT DOKUMENTI -->
+   <dropdown id="documentDynamicTypes" title-id="menu_start_new_document" skinnable="true" temporary="true">
+      <submenu-id>new-document-dynamic-submenu</submenu-id>
+      <hidden>#{MenuBean.isMenuItemHidden}</hidden>
+   </dropdown>
+
+   <!-- ALUSTA UUT... (uus asjatoimik/terviktöövoog) -->
+   <dropdown id="newCaseFileOrWorkflow" title-id="menu_start_new_caseFile_workflow" skinnable="true" temporary="true">
+      <submenu-id>new-caseFile-workflow-submenu</submenu-id>
+      <hidden>#{MenuBean.isMenuItemHidden}</hidden>
+      <subitems>
+         <dropdown title-id="menu_caseFiles" expanded="false">
+            <submenu-id>caseFile-submenu</submenu-id>
+         </dropdown>
+         <dropdown title-id="menu_workflow" expanded="false">         
+            <submenu-id>workflow-submenu</submenu-id>
+         </dropdown>
+      </subitems>
+   </dropdown>
+
+</menu>
+>>>>>>> develop-5.1

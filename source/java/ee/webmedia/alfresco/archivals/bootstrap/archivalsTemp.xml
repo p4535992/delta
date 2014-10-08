@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <view:view xmlns:view="http://www.alfresco.org/view/repository/1.0" xmlns:fn="http://alfresco.webmedia.ee/model/functions/1.0">
+<<<<<<< HEAD
     <fn:functions view:childName="fn:archivalsTemp">
         <view:acl view:inherit="false">
             <view:ace view:access="ALLOWED">
@@ -8,4 +9,7 @@
             </view:ace>
         </view:acl>
     </fn:functions>
+=======
+    <fn:functions view:childName="fn:archivalsTemp" />
+>>>>>>> develop-5.1
 </view:view>

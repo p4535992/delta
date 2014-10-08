@@ -6,9 +6,12 @@ import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import ee.webmedia.alfresco.casefile.service.CaseFile;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
 
+<<<<<<< HEAD
 /**
  * @author Alar Kvell
  */
+=======
+>>>>>>> develop-5.1
 public interface DialogDataProvider {
 
     UIPropertySheet getPropertySheet();

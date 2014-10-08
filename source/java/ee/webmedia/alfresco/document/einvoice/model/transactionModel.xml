@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <?xml version="1.0" encoding="UTF-8"?>
 <model name="trn:transactionModel" xmlns="http://www.alfresco.org/model/dictionary/1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
    xsi:schemaLocation="http://www.alfresco.org/model/dictionary/1.0 http://svn.alfresco.com/repos/alfresco-open-mirror/alfresco/HEAD/root/projects/repository/config/alfresco/model/modelSchema.xsd">
@@ -166,3 +167,173 @@
 
 </model>
       
+=======
+<?xml version="1.0" encoding="UTF-8"?>
+<model name="trn:transactionModel" xmlns="http://www.alfresco.org/model/dictionary/1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.alfresco.org/model/dictionary/1.0 http://svn.alfresco.com/repos/alfresco-open-mirror/alfresco/HEAD/root/projects/repository/config/alfresco/model/modelSchema.xsd">
+
+   <imports>
+      <import uri="http://www.alfresco.org/model/dictionary/1.0" prefix="d" />
+      <import uri="http://www.alfresco.org/model/system/1.0" prefix="sys" />
+   </imports>
+
+   <namespaces>
+      <namespace uri="http://alfresco.webmedia.ee/model/transaction/1.0" prefix="trn" />
+   </namespaces>
+
+   <types>
+   
+      <type name="trn:transactionTemplates">
+         <parent>sys:base</parent>
+         <associations>
+            <child-association name="trn:transactionTemplate">
+               <source>
+                  <mandatory>true</mandatory>
+                  <many>false</many>
+               </source>
+               <target>
+                  <class>trn:transactionTemplate</class>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </target>
+            </child-association>
+         </associations>
+         <mandatory-aspects>
+            <aspect>sys:aspect_root</aspect>
+         </mandatory-aspects>
+      </type>   
+
+      <type name="trn:transactionTemplate">
+         <parent>sys:base</parent>
+         <mandatory-aspects>
+            <aspect>trn:transactionContainer</aspect>
+            <aspect>trn:transactionTemplateDetails</aspect>
+         </mandatory-aspects>
+      </type>
+
+      <type name="trn:transaction">
+         <parent>sys:base</parent>
+         <mandatory-aspects>
+            <aspect>trn:transactionDetails</aspect>
+         </mandatory-aspects>
+      </type>
+
+   </types>
+
+   <aspects>
+
+      <aspect name="trn:transactionContainer">
+         <associations>
+            <child-association name="trn:transaction">
+               <source>
+                  <mandatory>true</mandatory>
+                  <many>false</many>
+               </source>
+               <target>
+                  <class>trn:transaction</class>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </target>
+            </child-association>
+         </associations>
+      </aspect>
+      
+      <aspect name="trn:transactionTemplateDetails">
+         <properties>
+            <property name="trn:name">
+               <type>d:text</type>
+               <mandatory enforced="true">false</mandatory>
+            </property>
+            <property name="trn:active">
+               <type>d:boolean</type>
+               <mandatory enforced="true">false</mandatory>
+            </property>            
+         </properties>
+      </aspect>      
+
+      <aspect name="trn:transactionDetails">
+         <properties>
+            <property name="trn:fundsCenter">
+               <type>d:text</type>
+               <mandatory enforced="true">false</mandatory>
+            </property>
+            <property name="trn:costCenter">
+               <type>d:text</type>
+               <mandatory enforced="true">false</mandatory>
+            </property>
+            <property name="trn:fund">
+               <type>d:text</type>
+               <mandatory enforced="true">false</mandatory>
+            </property>
+            <property name="trn:eaCommitmentItem">
+               <type>d:text</type>
+               <mandatory enforced="true">false</mandatory>
+            </property>
+            <property name="trn:commitmentItem">
+               <type>d:text</type>
+               <mandatory enforced="true">false</mandatory>
+            </property>
+            <property name="trn:orderNumber">
+               <type>d:text</type>
+               <mandatory enforced="true">false</mandatory>
+            </property>
+            <property name="trn:assetInventoryNumber">
+               <type>d:text</type>
+               <mandatory enforced="true">false</mandatory>
+            </property>
+            <property name="trn:sumWithoutVat">
+               <type>d:double</type>
+               <mandatory enforced="true">false</mandatory>
+            </property>
+            <property name="trn:postingKey">
+               <type>d:text</type>
+               <mandatory enforced="true">false</mandatory>
+            </property>
+            <property name="trn:account">
+               <type>d:text</type>
+               <mandatory enforced="true">false</mandatory>
+            </property>
+            <property name="trn:invoiceTaxCode">
+               <type>d:text</type>
+               <mandatory enforced="true">false</mandatory>
+            </property>
+            <property name="trn:invoiceTaxPercent">
+               <type>d:int</type>
+               <mandatory enforced="true">false</mandatory>
+            </property>            
+            <property name="trn:tradingPartnerCode">
+               <type>d:text</type>
+               <mandatory enforced="true">false</mandatory>
+            </property>
+            <property name="trn:functionalAreaCode">
+               <type>d:text</type>
+               <mandatory enforced="true">false</mandatory>
+            </property>
+            <property name="trn:cashFlowCode">
+               <type>d:text</type>
+               <mandatory enforced="true">false</mandatory>
+            </property>
+            <property name="trn:source">
+               <type>d:text</type>
+               <mandatory enforced="true">false</mandatory>
+            </property>
+            <property name="trn:paymentMethod">
+               <type>d:text</type>
+               <mandatory enforced="true">false</mandatory>
+            </property>
+            <property name="trn:houseBank">
+               <type>d:text</type>
+               <mandatory enforced="true">false</mandatory>
+            </property>
+            <property name="trn:entryContent">
+               <type>d:text</type>
+               <mandatory enforced="true">false</mandatory>
+            </property>
+         </properties>
+      </aspect>
+
+   </aspects>
+
+</model>
+      
+>>>>>>> develop-5.1

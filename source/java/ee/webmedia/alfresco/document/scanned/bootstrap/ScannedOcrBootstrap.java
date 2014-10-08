@@ -11,8 +11,11 @@ import ee.webmedia.alfresco.ocr.service.OcrService;
 
 /**
  * Iterate over all files in scanned folder and queue them to Ocr service.
+<<<<<<< HEAD
  * 
  * @author Alar Kvell
+=======
+>>>>>>> develop-5.1
  */
 public class ScannedOcrBootstrap extends AbstractModuleComponent {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(ScannedOcrBootstrap.class);

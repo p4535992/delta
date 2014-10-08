@@ -22,9 +22,12 @@ import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
 
+<<<<<<< HEAD
 /**
  * @author Alar Kvell
  */
+=======
+>>>>>>> develop-5.1
 public class RegNumberGenerator extends BaseSystematicFieldGenerator {
 
     private UserService userService;
@@ -40,6 +43,10 @@ public class RegNumberGenerator extends BaseSystematicFieldGenerator {
         getDocumentAdminService().registerForbiddenFieldId(VolumeModel.Props.CASES_CREATABLE_BY_USER.getLocalName());
         getDocumentAdminService().registerForbiddenFieldId(VolumeModel.Props.VOLUME_TYPE.getLocalName());
         getDocumentAdminService().registerForbiddenFieldId(VolumeModel.Props.CONTAINING_DOCS_COUNT.getLocalName());
+<<<<<<< HEAD
+=======
+        getDocumentAdminService().registerForbiddenFieldId(VolumeModel.Props.ORIGINAL_VOLUME.getLocalName());
+>>>>>>> develop-5.1
         getDocumentAdminService().registerForbiddenFieldId(VolumeModel.Props.LOCATION.getLocalName());
 
         super.afterPropertiesSet();

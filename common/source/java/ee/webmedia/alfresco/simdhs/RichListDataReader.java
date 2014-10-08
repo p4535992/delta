@@ -9,12 +9,21 @@ import javax.faces.component.UIParameter;
 import javax.faces.component.ValueHolder;
 import javax.faces.context.FacesContext;
 
+<<<<<<< HEAD
+=======
+import org.alfresco.service.cmr.repository.NodeRef;
+>>>>>>> develop-5.1
 import org.alfresco.web.ui.common.component.data.UIColumn;
 import org.alfresco.web.ui.common.component.data.UIRichList;
 import org.alfresco.web.ui.common.component.data.UISortLink;
 import org.apache.log4j.Logger;
 import org.springframework.util.Assert;
 
+<<<<<<< HEAD
+=======
+import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.document.model.Document;
+>>>>>>> develop-5.1
 import ee.webmedia.alfresco.utils.ComponentUtil;
 
 /**
@@ -25,19 +34,30 @@ import ee.webmedia.alfresco.utils.ComponentUtil;
  *  <a:param value="false"/>
  * </f:facet>
  * }
+<<<<<<< HEAD
  * 
  * @author Romet Aidla
+=======
+>>>>>>> develop-5.1
  */
 public class RichListDataReader implements DataReader {
     private static Logger log = Logger.getLogger(RichListDataReader.class);
 
     private static final String CSV_EXPORT_FACET_LABEL = "csvExport";
     private static final String HEADER_FACET_LABEL = "header";
+<<<<<<< HEAD
+=======
+    private static final String URL_HEADER = "Link";
+>>>>>>> develop-5.1
 
     @Override
     public List<String> getHeaderRow(UIRichList list, FacesContext fc) {
         List<UIColumn> columnsToExport = getColumnsToExport(list);
+<<<<<<< HEAD
         return getHeaderRow(columnsToExport);
+=======
+        return getHeaderRow(columnsToExport, isDocumentSearch(list));
+>>>>>>> develop-5.1
     }
 
     @Override
@@ -45,14 +65,40 @@ public class RichListDataReader implements DataReader {
         List<List<String>> data = new ArrayList<List<String>>();
         list.setRowIndex(-1);
         final List<UIColumn> columnsToExport = getColumnsToExport(list);
+<<<<<<< HEAD
         while (list.isAbsoluteDataAvailable()) {
             list.increment();
             data.add(getDataRow(fc, columnsToExport));
+=======
+        boolean isDocumentSearch = isDocumentSearch(list);
+        while (list.isAbsoluteDataAvailable()) {
+            list.increment();
+            NodeRef docRef = getDocumentNodeRef(list, isDocumentSearch);
+            data.add(getDataRow(fc, columnsToExport, docRef));
+>>>>>>> develop-5.1
         }
         return data;
     }
 
     @SuppressWarnings("unchecked")
+<<<<<<< HEAD
+=======
+    private NodeRef getDocumentNodeRef(UIRichList list, boolean isDocumentSearch) {
+        if (isDocumentSearch) {
+            List<Document> docs = (List<Document>) list.getValue();
+            return docs.get(list.getRowIndex()).getNodeRef();
+        }
+        return null;
+    }
+
+    private boolean isDocumentSearch(UIRichList list) {
+        @SuppressWarnings("rawtypes")
+        List values = (List) list.getValue();
+        return (!values.isEmpty() && values.get(0) instanceof Document);
+    }
+
+    @SuppressWarnings("unchecked")
+>>>>>>> develop-5.1
     private List<UIColumn> getColumnsToExport(UIRichList list) {
         List<UIColumn> columnsToExport = new ArrayList<UIColumn>();
         List<UIComponent> components = list.getChildren();
@@ -75,7 +121,11 @@ public class RichListDataReader implements DataReader {
         return parameter != null && parameter.getValue().toString().equals("false");
     }
 
+<<<<<<< HEAD
     private List<String> getHeaderRow(List<UIColumn> columns) {
+=======
+    private List<String> getHeaderRow(List<UIColumn> columns, boolean isDocSearch) {
+>>>>>>> develop-5.1
         List<String> row = new ArrayList<String>();
         for (UIColumn column : columns) {
             UIComponent component = (UIComponent) column.getFacets().get(HEADER_FACET_LABEL);
@@ -83,6 +133,12 @@ public class RichListDataReader implements DataReader {
 
             row.add(getHeaderValue(component));
         }
+<<<<<<< HEAD
+=======
+        if (!row.isEmpty() && isDocSearch) {
+            row.add(URL_HEADER);
+        }
+>>>>>>> develop-5.1
         return row;
     }
 
@@ -99,7 +155,11 @@ public class RichListDataReader implements DataReader {
         }
     }
 
+<<<<<<< HEAD
     private List<String> getDataRow(FacesContext facesContext, List<UIColumn> columns) {
+=======
+    private List<String> getDataRow(FacesContext facesContext, List<UIColumn> columns, NodeRef docRef) {
+>>>>>>> develop-5.1
         List<String> row = new ArrayList<String>();
         for (UIColumn column : columns) {
             List<UIComponent> children = ComponentUtil.getChildren(column);
@@ -110,6 +170,13 @@ public class RichListDataReader implements DataReader {
                 row.add("");
             }
         }
+<<<<<<< HEAD
+=======
+        if (!row.isEmpty() && docRef != null) {
+            String docUrl = BeanHelper.getDocumentTemplateService().getDocumentUrl(docRef);
+            row.add(docUrl);
+        }
+>>>>>>> develop-5.1
         return row;
     }
 

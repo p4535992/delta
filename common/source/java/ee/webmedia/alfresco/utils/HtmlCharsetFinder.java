@@ -7,9 +7,12 @@ import java.util.regex.Pattern;
 
 import org.alfresco.encoding.AbstractCharactersetFinder;
 
+<<<<<<< HEAD
 /**
  * @author Alar Kvell
  */
+=======
+>>>>>>> develop-5.1
 public class HtmlCharsetFinder extends AbstractCharactersetFinder {
 
     // http://www.lemoda.net/regex/meta-charset/index.html

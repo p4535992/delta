@@ -345,7 +345,11 @@ public class TextFieldGenerator extends BaseComponentGenerator
          {
             ListOfValuesConstraint constraint = getListOfValuesConstraint(context, 
                      propertySheet, property);
+<<<<<<< HEAD
               // Ats: don't understand why this if was initially added by alfresco developers.
+=======
+              // don't understand why this if was initially added by alfresco developers.
+>>>>>>> develop-5.1
               // uncommented it, to automatically add appropriate converter so that node.properties wouldn't contain string instead of number
 //            if (constraint != null)
 //            {

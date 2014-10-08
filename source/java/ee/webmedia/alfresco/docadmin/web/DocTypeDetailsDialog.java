@@ -10,8 +10,11 @@ import ee.webmedia.alfresco.docadmin.service.DocumentType;
  * Details of document type.
  * To open this dialog just call actionListener. You must not set action attribute on actionLink that opens this dialog nor any other way perform navigation, as actionListener
  * handles navigation
+<<<<<<< HEAD
  * 
  * @author Ats Uiboupin
+=======
+>>>>>>> develop-5.1
  */
 public class DocTypeDetailsDialog extends DynamicTypeDetailsDialog<DocumentType, DocTypeDetailsDialog.DocTypeDialogSnapshot> {
     private static final long serialVersionUID = 1L;
@@ -28,8 +31,11 @@ public class DocTypeDetailsDialog extends DynamicTypeDetailsDialog<DocumentType,
 
     /**
      * Contains fields that contain state to be used when restoring dialog
+<<<<<<< HEAD
      * 
      * @author Ats Uiboupin
+=======
+>>>>>>> develop-5.1
      */
     static class DocTypeDialogSnapshot extends DynamicTypeDetailsDialog.DynTypeDialogSnapshot<DocumentType> {
         private static final long serialVersionUID = 1L;

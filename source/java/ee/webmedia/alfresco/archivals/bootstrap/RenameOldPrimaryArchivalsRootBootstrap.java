@@ -11,9 +11,12 @@ import org.alfresco.service.namespace.QName;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.functions.model.FunctionsModel;
 
+<<<<<<< HEAD
 /**
  * @author Alar Kvell
  */
+=======
+>>>>>>> develop-5.1
 public class RenameOldPrimaryArchivalsRootBootstrap extends AbstractModuleComponent {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(RenameOldPrimaryArchivalsRootBootstrap.class);
 

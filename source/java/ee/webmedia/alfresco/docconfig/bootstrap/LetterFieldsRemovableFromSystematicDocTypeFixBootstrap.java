@@ -19,8 +19,11 @@ import ee.webmedia.alfresco.utils.SearchUtil;
 
 /**
  * Fix 2 for task 182456 in already existing deployments
+<<<<<<< HEAD
  * 
  * @author Alar Kvell
+=======
+>>>>>>> develop-5.1
  */
 public class LetterFieldsRemovableFromSystematicDocTypeFixBootstrap extends AbstractNodeUpdater {
 

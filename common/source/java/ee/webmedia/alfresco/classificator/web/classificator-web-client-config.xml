@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <alfresco-config>
    <config>
       <actions>
@@ -81,3 +82,89 @@
    </config>
 
 </alfresco-config>
+=======
+<alfresco-config>
+   <config>
+      <actions>
+
+         <action id="classificator_add_value">
+            <evaluator>ee.webmedia.alfresco.classificator.web.ClassificatorAddRemoveEvaluator</evaluator>
+            <label-id>classificator_add_value</label-id>
+            <image>/images/icons/versioned_properties.gif</image>
+            <action-listener>#{ClassificatorDetailsDialog.addNewValue}</action-listener>
+         </action>
+         
+         <action id="classificator_delete">
+            <evaluator>ee.webmedia.alfresco.classificator.web.ClassificatorDeleteEnabledEvaluator</evaluator>
+            <label-id>classificator_delete</label-id>
+            <image>/images/icons/delete.gif</image>
+            <action-listener>#{DeleteDialog.setupDeleteDialog}</action-listener>
+            <params>
+               <param name="nodeRef">#{actionContext.nodeRef}</param>
+               <param name="confirmMessagePlaceholder0">#{actionContext.name}</param>
+               <param name="deleteAfterConfirmHandler">ClassificatorDetailsDialog.deleteClassificator</param>
+               <param name="dialogsToClose">2</param>
+            </params>
+            <action>dialog:deleteDialog</action>
+         </action>
+
+         <action id="classificator_export">
+            <label-id>classificators_export</label-id>
+            <image>/images/icons/versioned_properties.gif</image>
+            <action-listener>#{ClassificatorListDialog.export}</action-listener>
+            <target>no_wait_workaround</target>
+         </action>
+
+         <action id="classificator_import">
+            <label-id>import_xml</label-id>
+            <image>/images/icons/add_item.gif</image>
+            <action>dialog:classificatorsImport</action>
+         </action>
+         
+         <action id="classificator_create">
+            <label-id>classificators_create</label-id>
+            <image>/images/icons/add_item.gif</image>
+            <action-listener>#{ClassificatorDetailsDialog.select}</action-listener>
+            <action>dialog:classificatorDetailsDialog</action>
+         </action>
+
+         <action-group id="browse_add_delete_classificator_values">
+            <action idref="classificator_add_value" />
+            <action idref="classificator_delete" />
+         </action-group>
+
+         <action-group id="classificators_actions">
+            <action idref="classificator_export" />
+            <action idref="classificator_import" />
+            <action idref="classificator_create" />
+         </action-group>
+
+      </actions>
+
+
+      <dialogs>
+
+         <dialog name="classificatorListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/classificator/web/classificator-list-dialog.jsp"
+            managed-bean="ClassificatorListDialog" icon="/images/icons/versioned_properties_large.gif" title-id="classificators_title" show-ok-button="false"
+            actions-config-id="classificators_actions" />
+            
+         <dialog name="classificatorDetailsDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/classificator/web/classificator-details-dialog.jsp"
+            managed-bean="ClassificatorDetailsDialog" icon="/images/icons/versioned_properties_large.gif" title-id="classificators_title" show-ok-button="true" actions-config-id="browse_add_delete_classificator_values"/>
+         <!-- TODO DLSeadist tuleb teha et, nupp "kustuta" kuvatakse ka kui deleteEnabled = false ja klassifikaator ei ole seotud ühegi andmeväljaga -->
+
+         <dialog name="classificatorsImport" page="/WEB-INF/classes/ee/webmedia/alfresco/classificator/web/classificators-import-dialog.jsp" managed-bean="ClassificatorsImportDialog"
+            icon="/images/icons/add_content_large.gif" title-id="import_xml" description-id="import_classificators_desc" />
+            
+      </dialogs>
+   </config>
+
+   <config evaluator="node-type" condition="cl:classificator" >
+      <property-sheet>
+         <show-property name="cl:name" rendered="#{ClassificatorDetailsDialog.isUnsavedClassificator}" styleClass="focus" />
+         <show-property name="cl:description" styleClass="expand19-200" component-generator="TextAreaGenerator" />
+         <show-property name="cl:alfabeticOrder" component-generator="BooleanRadioGenerator" labelTrue="classificator_order_alfabetic" labelFalse="classificator_order_sequental" nullValue="false" rendered="#{ClassificatorDetailsDialog.isSavedClassificator}" />
+      </property-sheet>
+   </config>
+
+</alfresco-config>
+>>>>>>> develop-5.1

@@ -22,8 +22,11 @@ import ee.webmedia.alfresco.utils.WebUtil;
 
 /**
  * Dialog bean for archived functions
+<<<<<<< HEAD
  * 
  * @author Romet Aidla
+=======
+>>>>>>> develop-5.1
  */
 public class ArchivedFunctionsListDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;

@@ -22,9 +22,12 @@ import ee.webmedia.alfresco.docconfig.generator.systematic.UserContactRelatedGro
 import ee.webmedia.alfresco.docconfig.service.UserContactMappingCode;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 
+<<<<<<< HEAD
 /**
  * @author Alar Kvell
  */
+=======
+>>>>>>> develop-5.1
 public class UserContactGenerator extends BaseTypeFieldGenerator {
 
     @Override
@@ -37,11 +40,15 @@ public class UserContactGenerator extends BaseTypeFieldGenerator {
     @Override
     public void generateField(Field field, GeneratorResults generatorResults) {
         final ItemConfigVO item = generatorResults.getAndAddPreGeneratedItem();
+<<<<<<< HEAD
         item.setComponentGenerator("SearchGenerator");
         item.setStyleClass("expand19-200 medium");
         item.setEditable(true);
         item.setPickerCallback("#{UserContactGroupSearchBean.searchAllWithAdminsAndDocManagers}");
         item.setPreprocessCallback("#{UserContactGroupSearchBean.preprocessResultsToNames}");
+=======
+        setupDefaultUserSearch(item);
+>>>>>>> develop-5.1
         String stateHolderKey = field.getFieldId();
         boolean handledById = field.getOriginalFieldId() != null && (
                 getUserContactRelatedGroupGenerator().handlesOriginalFieldId(field.getOriginalFieldId())
@@ -99,4 +106,15 @@ public class UserContactGenerator extends BaseTypeFieldGenerator {
             throw new RuntimeException("Unsupported field: " + field);
         }
     }
+<<<<<<< HEAD
+=======
+
+    public static void setupDefaultUserSearch(final ItemConfigVO item) {
+        item.setComponentGenerator("SearchGenerator");
+        item.setStyleClass("expand19-200 medium");
+        item.setEditable(true);
+        item.setPickerCallback("#{UserContactGroupSearchBean.searchAllWithAdminsAndDocManagers}");
+        item.setPreprocessCallback("#{UserContactGroupSearchBean.preprocessResultsToNames}");
+    }
+>>>>>>> develop-5.1
 }

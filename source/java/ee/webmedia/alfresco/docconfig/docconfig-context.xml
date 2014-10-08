@@ -10,6 +10,12 @@
       <property name="userService" ref="UserService" />
       <property name="classificatorService" ref="ClassificatorService" />
       <property name="regDateFilterInAssociationsSearch" value="${conf.regDateFilterInAssociationsSearch.enabled}" />
+<<<<<<< HEAD
+=======
+      <property name="propertyDefinitionCache" ref="propertyDefinitionCache" />
+      <property name="childAssocTypeQNameTreeCache" ref="childAssocTypeQNameTreeCache" />
+      <property name="propertyDefinitionForSearchCache" ref="propertyDefinitionForSearchCache" />
+>>>>>>> develop-5.1
    </bean>
 
    <bean id="DocumentConfigService" class="org.springframework.aop.framework.ProxyFactoryBean">
@@ -355,6 +361,49 @@
       </property>
    </bean>
 
+<<<<<<< HEAD
+=======
+   <bean id="systematicFieldDefinitionsBootstrap15" class="ee.webmedia.alfresco.common.bootstrap.ImporterModuleComponent" parent="module.baseComponent">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="importer" ref="spacesBootstrap" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="systematicFieldDefinitionsBootstrap14" />
+         </list>
+      </property>
+      <property name="bootstrapViews">
+         <list>
+            <props>
+               <prop key="encoding">UTF-8</prop>
+               <prop key="path">/docadmin:fieldDefinitions</prop>
+               <prop key="location">ee/webmedia/alfresco/docconfig/bootstrap/systematicFieldDefinitions15.xml</prop>
+            </props>
+         </list>
+      </property>
+   </bean>
+
+   <bean id="systematicFieldDefinitionsBootstrap16" class="ee.webmedia.alfresco.common.bootstrap.ImporterModuleComponent" parent="module.baseComponent">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="importer" ref="spacesBootstrap" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="systematicFieldDefinitionsBootstrap15" />
+         </list>
+      </property>
+      <property name="bootstrapViews">
+         <list>
+            <props>
+               <prop key="encoding">UTF-8</prop>
+               <prop key="path">/docadmin:fieldDefinitions</prop>
+               <prop key="location">ee/webmedia/alfresco/docconfig/bootstrap/systematicFieldDefinitions16.xml</prop>
+            </props>
+         </list>
+      </property>
+   </bean>
+
+>>>>>>> develop-5.1
    <bean id="systematicFieldGroupDefinitionsBootstrap1" class="ee.webmedia.alfresco.common.bootstrap.ImporterModuleComponent" parent="module.baseComponent">
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
@@ -598,6 +647,29 @@
             </props>
          </list>
       </property>
+<<<<<<< HEAD
+=======
+   </bean>
+
+   <bean id="systematicFieldGroupDefinitionsBootstrap13" class="ee.webmedia.alfresco.common.bootstrap.ImporterModuleComponent" parent="module.baseComponent">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="importer" ref="spacesBootstrap" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="systematicFieldGroupDefinitionsBootstrap12" />
+         </list>
+      </property>
+      <property name="bootstrapViews">
+         <list>
+            <props>
+               <prop key="encoding">UTF-8</prop>
+               <prop key="path">/docadmin:fieldGroupDefinitions</prop>
+               <prop key="location">ee/webmedia/alfresco/docconfig/bootstrap/systematicFieldGroupDefinitions13.xml</prop>
+            </props>
+         </list>
+      </property>
+>>>>>>> develop-5.1
    </bean>  
 
    <bean id="systematicDocumentTypesBootstrap" class="ee.webmedia.alfresco.docconfig.bootstrap.SystematicDocumentTypesBootstrap" parent="module.baseComponent">
@@ -621,6 +693,11 @@
             <ref bean="systematicFieldDefinitionsBootstrap12" />
             <ref bean="systematicFieldDefinitionsBootstrap13" />
             <ref bean="systematicFieldDefinitionsBootstrap14" />
+<<<<<<< HEAD
+=======
+            <ref bean="systematicFieldDefinitionsBootstrap15" />
+            <ref bean="systematicFieldDefinitionsBootstrap16" />
+>>>>>>> develop-5.1
             <ref bean="systematicFieldGroupDefinitionsBootstrap1" />
             <ref bean="systematicFieldGroupDefinitionsBootstrap2" />
             <ref bean="systematicFieldGroupDefinitionsBootstrap3" />
@@ -633,6 +710,10 @@
             <ref bean="systematicFieldGroupDefinitionsBootstrap10" />
             <ref bean="systematicFieldGroupDefinitionsBootstrap11" />
             <ref bean="systematicFieldGroupDefinitionsBootstrap12" />
+<<<<<<< HEAD
+=======
+            <ref bean="systematicFieldGroupDefinitionsBootstrap13" />
+>>>>>>> develop-5.1
          </list>
       </property>
       <property name="generalService" ref="GeneralService" />
@@ -711,7 +792,24 @@
       </property>
       <property name="generalService" ref="GeneralService" />
       <property name="nodeService" ref="NodeService" />
+<<<<<<< HEAD
    </bean>     
+=======
+   </bean>
+
+   <bean id="recipientIdAddFieldsUpdater" class="ee.webmedia.alfresco.docconfig.bootstrap.RecipientIdAddFieldsUpdater" parent="module.baseComponent">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="systematicFieldDefinitionsBootstrap16" />
+            <ref bean="systematicFieldGroupDefinitionsBootstrap1" />
+         </list>
+      </property>
+      <property name="generalService" ref="GeneralService" />
+      <property name="nodeService" ref="NodeService" />
+   </bean>
+>>>>>>> develop-5.1
 
    <bean id="readonlyFieldsFixBootstrap2" class="ee.webmedia.alfresco.docconfig.bootstrap.ReadonlyFieldsFixBootstrap" parent="abstractNodeUpdater">
       <property name="moduleId" value="simdhs" />
@@ -731,6 +829,19 @@
             <ref bean="readonlyFieldsFixBootstrap2" />
          </list>
       </property>
+<<<<<<< HEAD
+=======
+   </bean>
+
+   <bean id="leaveChangedCancelledDaysUpdater" class="ee.webmedia.alfresco.docconfig.bootstrap.LeaveChangedCancelledDaysUpdater" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="systematicDocumentTypesBootstrap" />
+         </list>
+      </property>
+>>>>>>> develop-5.1
    </bean>     
 
    <bean id="caseFileStatusFieldFixBootstrap" class="ee.webmedia.alfresco.docconfig.bootstrap.CaseFileStatusFieldFixBootstrap" parent="abstractNodeUpdater">
@@ -744,6 +855,49 @@
       <property name="nodeService" ref="NodeService" />
    </bean>
 
+<<<<<<< HEAD
+=======
+   <bean id="relatedDecElementDefaultValuesUpdater" class="ee.webmedia.alfresco.docconfig.bootstrap.RelatedDecElementDefaultValuesUpdater" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="fieldDefinitionsBootstrap" />
+         </list>
+      </property>
+   </bean>
+   
+   <bean id="relatedDecElementDefaultValuesUpdater2" class="ee.webmedia.alfresco.docconfig.bootstrap.RelatedDecElementDefaultValuesUpdater2" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="relatedDecElementDefaultValuesUpdater" />
+         </list>
+      </property>
+   </bean>
+   
+   <bean id="relatedDecElementDefaultValuesUpdater3" class="ee.webmedia.alfresco.docconfig.bootstrap.RelatedDecElementDefaultValuesUpdater3" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="relatedDecElementDefaultValuesUpdater2" />
+         </list>
+      </property>
+   </bean>
+
+  <bean id="recipientIdRemovableFromSystematicFieldGroupUpdater" class="ee.webmedia.alfresco.docconfig.bootstrap.RecipientIdRemovableFromSystematicFieldGroupUpdater" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="fieldDefinitionsBootstrap" />
+         </list>
+      </property>
+   </bean>
+
+>>>>>>> develop-5.1
    <bean id="leaveTypeFieldTypeUpdater" class="ee.webmedia.alfresco.docconfig.bootstrap.LeaveTypeFieldTypeUpdater" parent="abstractNodeUpdater">
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
@@ -759,10 +913,45 @@
       <property name="executeOnceOnly" value="true" />
    </bean>
    
+<<<<<<< HEAD
+=======
+   <bean id="documentRegDateFieldUpdater" class="ee.webmedia.alfresco.docconfig.bootstrap.DocumentRegDateFieldUpdater" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+   </bean>
+   
+>>>>>>> develop-5.1
    <bean id="documentSenderRegNrFieldGroupUpdater" class="ee.webmedia.alfresco.docconfig.bootstrap.DocumentSenderRegNrFieldGroupUpdater" parent="abstractNodeUpdater">
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
    </bean>
+<<<<<<< HEAD
+=======
+   
+   <bean id="substituteFieldDefinitionsUpdater" class="ee.webmedia.alfresco.docconfig.bootstrap.SubstituteFieldDefinitionsUpdater" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />   
+   </bean>
+   
+   <!-- This updater should run only in SIM 3.13 environment to fix erroneous classificator assignment during 2.5 -> 3.13 migration. See cl task 215710 for details. -->
+   <bean id="replaceManagementsOrderDocNameUpdater" class="ee.webmedia.alfresco.docconfig.bootstrap.ReplaceManagementsOrderDocNameUpdater" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />  
+      <property name="enabled" value="${updater.version25To313.fixManagersOrderDocDypeAfterUpdate.enabled}" /> 
+   </bean>
+   
+   <bean id="updateInstrumentOfDeliveryAndReceiptVersion" class="ee.webmedia.alfresco.docconfig.bootstrap.UpdateInstrumentOfDeliveryAndReceiptVersion" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />  
+      <property name="enabled" value="${updater.version25To313.fixDelivererNameAfterUpdate.enabled}" /> 
+      <property name="dependsOn">
+         <list>
+            <ref bean="archivalsStoresBootstrap" />
+            <ref bean="importDelivererName" />
+         </list>
+      </property>
+   </bean>
+>>>>>>> develop-5.1
 
    <!-- fieldtype generators -->
 
@@ -882,6 +1071,10 @@
    <bean id="driveCompensationGenerator" class="ee.webmedia.alfresco.docconfig.generator.systematic.DriveCompensationGenerator">
       <property name="documentConfigService" ref="DocumentConfigService" />
    </bean>
+<<<<<<< HEAD
+=======
+
+>>>>>>> develop-5.1
    <!-- START: web beans: -->
 
    <bean id="PropertySheetStateBean" class="ee.webmedia.alfresco.docconfig.web.PropertySheetStateBean" scope="session" />

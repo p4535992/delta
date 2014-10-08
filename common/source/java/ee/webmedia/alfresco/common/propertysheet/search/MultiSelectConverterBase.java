@@ -13,8 +13,11 @@ import org.apache.commons.lang.StringUtils;
 
 /**
  * Base converter for {@link SearchGenerator} that delegates only conversion of single selection values to subclasses
+<<<<<<< HEAD
  * 
  * @author Ats Uiboupin
+=======
+>>>>>>> develop-5.1
  */
 public abstract class MultiSelectConverterBase implements Converter {
 

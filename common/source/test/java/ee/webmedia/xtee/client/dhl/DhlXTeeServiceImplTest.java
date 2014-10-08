@@ -55,6 +55,7 @@ import ee.webmedia.xtee.client.dhl.types.ee.sk.digiDoc.v13.DataFileType;
 import ee.webmedia.xtee.client.dhl.types.ee.sk.digiDoc.v13.SignedDocType;
 import ee.webmedia.xtee.client.service.configuration.provider.XTeeProviderPropertiesResolver;
 
+<<<<<<< HEAD
 /**
  * @author ats.uiboupin
  */
@@ -62,6 +63,12 @@ public class DhlXTeeServiceImplTest extends TestCase {
 
     private static Log log = LogFactory.getLog(DhlXTeeServiceImplTest.class);
     private static DhlXTeeService dhl;
+=======
+public class DhlXTeeServiceImplTest extends TestCase {
+
+    private static Log log = LogFactory.getLog(DhlXTeeServiceImplTest.class);
+    protected static DhlXTeeService dhl;
+>>>>>>> develop-5.1
     private static XTeeProviderPropertiesResolver propertiesResolver;
 
     private static String SENDER_REG_NR;
@@ -372,7 +379,11 @@ public class DhlXTeeServiceImplTest extends TestCase {
         }
     }
 
+<<<<<<< HEAD
     private AadressType getRecipient(String regNr) {
+=======
+    protected AadressType getRecipient(String regNr) {
+>>>>>>> develop-5.1
         AadressType recipient = AadressType.Factory.newInstance();
         recipient.setRegnr(regNr);
         // recipient.setAsutuseNimi(recipientName); // set in DhlXTeeServiceImpl.constructDokumentDocument() based on regNr
@@ -380,7 +391,11 @@ public class DhlXTeeServiceImplTest extends TestCase {
         return recipient;
     }
 
+<<<<<<< HEAD
     private AadressType getSenderAddress() {
+=======
+    protected AadressType getSenderAddress() {
+>>>>>>> develop-5.1
         AadressType sender = AadressType.Factory.newInstance();
         sender.setRegnr(SENDER_REG_NR);
         // sender.setAsutuseNimi(senderName); // set in DhlXTeeServiceImpl.constructDokumentDocument() based on regNr

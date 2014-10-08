@@ -8,6 +8,10 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
+<<<<<<< HEAD
+=======
+import ee.webmedia.alfresco.dvk.model.DvkModel;
+>>>>>>> develop-5.1
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.web.scripts.FileTypeImageUtils;
 import org.alfresco.service.cmr.model.FileInfo;
@@ -21,9 +25,12 @@ import ee.webmedia.alfresco.signature.model.DataItem;
 import ee.webmedia.alfresco.signature.model.SignatureItem;
 import ee.webmedia.alfresco.signature.model.SignatureItemsAndDataItems;
 
+<<<<<<< HEAD
 /**
  * @author Dmitri Melnikov
  */
+=======
+>>>>>>> develop-5.1
 public class File implements Serializable, IClonable<File> {
 
     private static final long serialVersionUID = 1L;
@@ -31,6 +38,10 @@ public class File implements Serializable, IClonable<File> {
     private String name;
     private String displayName;
     private String downloadUrl;
+<<<<<<< HEAD
+=======
+    private String readOnlyUrl;
+>>>>>>> develop-5.1
     private String creator;
     private String modifier;
     private String encoding;
@@ -51,6 +62,11 @@ public class File implements Serializable, IClonable<File> {
     private boolean convertToPdfIfSigned; //
     private long nrOfChildren; // used to show childCount if the file represents folder
     private boolean isPdf;
+<<<<<<< HEAD
+=======
+    private String activeLockOwner;
+    private boolean decContainer;
+>>>>>>> develop-5.1
     public static FastDateFormat dateFormat = FastDateFormat.getInstance("dd.MM.yyyy HH:mm");
 
     public File() {
@@ -77,6 +93,10 @@ public class File implements Serializable, IClonable<File> {
         generated = fileProps.get(FileModel.Props.GENERATED_FROM_TEMPLATE) != null || fileProps.get(FileModel.Props.GENERATION_TYPE) != null;
         active = (fileProps.get(ACTIVE) == null) ? true : Boolean.parseBoolean(fileProps.get(ACTIVE).toString());
         convertToPdfIfSigned = Boolean.TRUE.equals(fileProps.get(FileModel.Props.CONVERT_TO_PDF_IF_SIGNED));
+<<<<<<< HEAD
+=======
+        decContainer = fileProps.containsKey(DvkModel.Props.DVK_ID);
+>>>>>>> develop-5.1
     }
 
     public String getName() {
@@ -103,6 +123,17 @@ public class File implements Serializable, IClonable<File> {
         downloadUrl = url;
     }
 
+<<<<<<< HEAD
+=======
+    public String getReadOnlyUrl() {
+        return readOnlyUrl;
+    }
+
+    public void setReadOnlyUrl(String readOnlyUrl) {
+        this.readOnlyUrl = readOnlyUrl;
+    }
+
+>>>>>>> develop-5.1
     public String getCreator() {
         return creator;
     }
@@ -311,6 +342,21 @@ public class File implements Serializable, IClonable<File> {
         return isPdf;
     }
 
+<<<<<<< HEAD
+=======
+    public boolean isDecContainer() {
+        return decContainer;
+    }
+
+    public String getActiveLockOwner() {
+        return activeLockOwner;
+    }
+
+    public void setActiveLockOwner(String activeLockOwner) {
+        this.activeLockOwner = activeLockOwner;
+    }
+
+>>>>>>> develop-5.1
     @Override
     public File clone() {
         File file;

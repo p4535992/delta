@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <?xml version="1.0" encoding="UTF-8"?>
 <model name="usr:userModel" xmlns="http://www.alfresco.org/model/dictionary/1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
    xsi:schemaLocation="http://www.alfresco.org/model/dictionary/1.0 http://svn.alfresco.com/repos/alfresco-open-mirror/alfresco/HEAD/root/projects/repository/config/alfresco/model/modelSchema.xsd">
@@ -94,4 +95,102 @@
       
    </aspects>
    
+=======
+<?xml version="1.0" encoding="UTF-8"?>
+<model name="usr:userModel" xmlns="http://www.alfresco.org/model/dictionary/1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.alfresco.org/model/dictionary/1.0 http://svn.alfresco.com/repos/alfresco-open-mirror/alfresco/HEAD/root/projects/repository/config/alfresco/model/modelSchema.xsd">
+
+   <imports>
+      <import uri="http://www.alfresco.org/model/dictionary/1.0" prefix="d" />
+      <import uri="http://alfresco.webmedia.ee/model/workflow/common/1.0" prefix="wfc" />
+      <import uri="http://alfresco.webmedia.ee/model/casefile/1.0" prefix="cf" />
+      <import uri="http://alfresco.webmedia.ee/model/document/common/1.0" prefix="doccom" />
+   </imports>
+
+   <namespaces>
+      <namespace uri="http://alfresco.webmedia.ee/model/user/1.0" prefix="usr" />
+   </namespaces>
+
+   <aspects>
+      
+      <aspect name="usr:leaving">
+         <properties>
+            <property name="usr:leavingDateTime">
+               <type>d:datetime</type>
+               <mandatory enforced="true">true</mandatory>
+            </property>
+            <property name="usr:liabilityGivenToPersonId">
+               <type>d:text</type>
+               <mandatory enforced="true">true</mandatory>
+            </property>
+         </properties>
+      </aspect>
+      
+      <aspect name="usr:independentWorkflowNotifications">
+         <associations>
+            <association name="usr:independentWorkflowNotification">
+               <source>
+                  <mandatory>false</mandatory>
+                  <many>true</many>                  
+               </source>
+               <target>
+                  <class>wfc:compoundWorkflow</class>
+                  <mandatory>false</mandatory>
+                  <many>true</many>               
+               </target>
+            </association>
+         </associations>
+      </aspect>
+      
+      <aspect name="usr:caseFileWorkflowNotifications">
+         <associations>
+            <association name="usr:caseFileWorkflowNotification">
+               <source>
+                  <mandatory>false</mandatory>
+                  <many>true</many>                  
+               </source>
+               <target>
+                  <class>wfc:compoundWorkflow</class>
+                  <mandatory>false</mandatory>
+                  <many>true</many>               
+               </target>
+            </association>
+         </associations>
+      </aspect>
+      
+      <aspect name="usr:documentNotifications">
+         <associations>
+            <association name="usr:documentNotification">
+               <source>
+                  <mandatory>false</mandatory>
+                  <many>true</many>                  
+               </source>
+               <target>
+                  <class>doccom:document</class>
+                  <mandatory>false</mandatory>
+                  <many>true</many>               
+               </target>
+            </association>
+         </associations>
+      </aspect>
+      
+      <aspect name="usr:caseFileNotifications">
+         <associations>
+            <association name="usr:caseFileNotification">
+               <source>
+                  <mandatory>false</mandatory>
+                  <many>true</many>                  
+               </source>
+               <target>
+                  <class>cf:caseFile</class>
+                  <mandatory>false</mandatory>
+                  <many>true</many>               
+               </target>
+            </association>
+         </associations>
+      </aspect>       
+      
+   </aspects>
+   
+>>>>>>> develop-5.1
 </model>

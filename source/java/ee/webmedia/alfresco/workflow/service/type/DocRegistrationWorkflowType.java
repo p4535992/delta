@@ -17,9 +17,12 @@ import ee.webmedia.alfresco.workflow.service.event.WorkflowEventListener;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowEventQueue;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowEventType;
 
+<<<<<<< HEAD
 /**
  * @author Alar Kvell
  */
+=======
+>>>>>>> develop-5.1
 public class DocRegistrationWorkflowType extends BaseWorkflowType implements WorkflowEventListener {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DocRegistrationWorkflowType.class);
 

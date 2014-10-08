@@ -2,6 +2,10 @@ package ee.webmedia.alfresco.docdynamic.service;
 
 import static ee.webmedia.alfresco.common.web.BeanHelper.getAdrService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentConfigService;
+<<<<<<< HEAD
+=======
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDvkService;
+>>>>>>> develop-5.1
 import static ee.webmedia.alfresco.common.web.BeanHelper.getMsoService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getOpenOfficeService;
 import static ee.webmedia.alfresco.docadmin.web.DocAdminUtil.getDocTypeIdAndVersionNr;
@@ -24,6 +28,10 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+<<<<<<< HEAD
+=======
+import java.util.Date;
+>>>>>>> develop-5.1
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -32,6 +40,10 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import org.alfresco.model.ContentModel;
+<<<<<<< HEAD
+=======
+import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
+>>>>>>> develop-5.1
 import org.alfresco.service.cmr.dictionary.AspectDefinition;
 import org.alfresco.service.cmr.dictionary.AssociationDefinition;
 import org.alfresco.service.cmr.dictionary.ChildAssociationDefinition;
@@ -109,6 +121,10 @@ import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.document.service.DocumentServiceImpl;
 import ee.webmedia.alfresco.document.service.EventsLoggingHelper;
 import ee.webmedia.alfresco.imap.model.ImapModel;
+<<<<<<< HEAD
+=======
+import ee.webmedia.alfresco.privilege.model.Privilege;
+>>>>>>> develop-5.1
 import ee.webmedia.alfresco.privilege.service.PrivilegeService;
 import ee.webmedia.alfresco.template.service.DocumentTemplateService;
 import ee.webmedia.alfresco.utils.FilenameUtil;
@@ -128,9 +144,12 @@ import ee.webmedia.alfresco.workflow.service.Workflow;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
 import ee.webmedia.alfresco.workflow.service.WorkflowUtil;
 
+<<<<<<< HEAD
 /**
  * @author Alar Kvell
  */
+=======
+>>>>>>> develop-5.1
 public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanFactoryAware {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(DocumentDynamicServiceImpl.class);
 
@@ -195,13 +214,21 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
     }
 
     @Override
+<<<<<<< HEAD
     public void setOwnerFromActiveResponsibleTask(CompoundWorkflow compoundWorkflow, NodeRef documentRef, Map<String, Object> documentProps) {
+=======
+    public void setOwnerFromActiveResponsibleTask(CompoundWorkflow compoundWorkflow, NodeRef documentRef, Map<QName, Serializable> documentProps) {
+>>>>>>> develop-5.1
         if (!DocumentStatus.WORKING.equals((String) nodeService.getProperty(documentRef, DocumentCommonModel.Props.DOC_STATUS))) {
             return;
         }
         String docNewOwnerUsername = null;
         workflow_for: for (Workflow workflow : compoundWorkflow.getWorkflows()) {
+<<<<<<< HEAD
             if (WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW.equals(workflow.getType())) {
+=======
+            if (workflow.isType(WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW)) {
+>>>>>>> develop-5.1
                 for (Task task : workflow.getTasks()) {
                     if (WorkflowUtil.isActiveResponsible(task)) {
                         docNewOwnerUsername = task.getOwnerId();
@@ -214,9 +241,13 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         }
 
         if (StringUtils.isNotBlank(docNewOwnerUsername)) {
+<<<<<<< HEAD
             Map<QName, Serializable> properties = nodeService.getProperties(documentRef);
             setOwner(properties, docNewOwnerUsername, false, DocumentType.class);
             documentProps.putAll(RepoUtil.toStringProperties(properties));
+=======
+            setOwner(documentProps, docNewOwnerUsername, false, DocumentType.class);
+>>>>>>> develop-5.1
         }
     }
 
@@ -529,6 +560,19 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
 
         // set default values in memory - does not overwrite existing values
         documentConfigService.setDefaultPropertyValues(document.getNode(), null, false, true, docVer);
+<<<<<<< HEAD
+=======
+
+        // Apply mappings from DEC container (overwriting default values) if a container is available
+        if (document.isImapOrDvk()) {
+            NodeRef decContainerNodeRef = fileService.getDecContainer(document.getNodeRef());
+            if (decContainerNodeRef != null) {
+                Map<QName, Serializable> decContainerPropMappings = getDvkService().mapRelatedIncomingElements(newTypeId, decContainerNodeRef);
+                docNode.getProperties().putAll(RepoUtil.toStringProperties(decContainerPropMappings));
+            }
+        }
+
+>>>>>>> develop-5.1
         ((AccessRestrictionGenerator) beanFactory.getBean(AccessRestrictionGenerator.BEAN_NAME, SaveListener.class)).clearHiddenValues(document.getNode());
     }
 
@@ -669,7 +713,11 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         if (saveListenerBeanNames != null) {
             validateDocument(saveListenerBeanNames, document, propDefs);
             for (String saveListenerBeanName : saveListenerBeanNames) {
+<<<<<<< HEAD
                 SaveListener saveListener = (SaveListener) beanFactory.getBean(saveListenerBeanName, SaveListener.class);
+=======
+                SaveListener saveListener = beanFactory.getBean(saveListenerBeanName, SaveListener.class);
+>>>>>>> develop-5.1
                 saveListener.save(document);
             }
         }
@@ -684,7 +732,11 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
             docNode.getAspects().add(DocumentCommonModel.Aspects.SEARCHABLE);
             docProps.put(FILE_NAMES.toString(), documentService.getSearchableFileNames(docRef));
             docProps.put(FILE_CONTENTS.toString(), documentService.getSearchableFileContents(docRef));
+<<<<<<< HEAD
             docProps.put(DocumentCommonModel.Props.SEARCHABLE_SEND_MODE.toString(), sendOutService.buildSearchableSendMode(docRef));
+=======
+            docProps.putAll(RepoUtil.toStringProperties(sendOutService.buildSearchableSendInfo(docRef)));
+>>>>>>> develop-5.1
         }
 
         if (isDraft && !document.isDraft()) { // Check if document is saved under a case file for the first time
@@ -718,6 +770,13 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         Assert.isNull(childAssocTypeQNamesRoot.getData());
 
         updateSearchableChildNodeProps(docNode, null, childAssocTypeQNamesRoot.getChildren(), propDefs);
+<<<<<<< HEAD
+=======
+        if (isDraft) {
+            // Remove references on first save
+            fileService.removePreviousParentReference(docRef, false);
+        }
+>>>>>>> develop-5.1
 
         { // update properties and log changes made in properties
             String oldRegNumber = (String) nodeService.getProperty(docRef, REG_NUMBER);
@@ -775,9 +834,18 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         }
         // Add case file owner and in progress task owners to document permissions
         String ownerId = (String) caseFile.getProperties().get(DocumentCommonModel.Props.OWNER_ID);
+<<<<<<< HEAD
         privilegeService.setPermissions(docRef, ownerId, DocumentCommonModel.Privileges.EDIT_DOCUMENT);
         for (Task task : workflowService.getTasksInProgress(caseFile.getNodeRef())) {
             privilegeService.setPermissions(docRef, ownerId, getPrivsWithDependencies(getRequiredPrivsForInprogressTask(task, docRef, fileService, false)));
+=======
+        privilegeService.setPermissions(docRef, ownerId, Privilege.EDIT_DOCUMENT);
+        for (Task task : workflowService.getTasksInProgress(caseFile.getNodeRef())) {
+            String taskOwnerId = task.getOwnerId();
+            if (StringUtils.isNotBlank(taskOwnerId)) {
+                privilegeService.setPermissions(docRef, taskOwnerId, getPrivsWithDependencies(getRequiredPrivsForInprogressTask(task, docRef, fileService, false)));
+            }
+>>>>>>> develop-5.1
         }
     }
 
@@ -789,6 +857,7 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
 
     private void validateDocument(List<String> saveListenerBeanNames, DocumentDynamic document, Map<String, Pair<DynamicPropertyDefinition, Field>> propDefs) {
         ValidationHelperImpl validationHelper = new ValidationHelperImpl(propDefs);
+<<<<<<< HEAD
         for (String saveListenerBeanName : saveListenerBeanNames) {
             SaveListener saveListener = (SaveListener) beanFactory.getBean(saveListenerBeanName, SaveListener.class);
             saveListener.validate(document, validationHelper);
@@ -796,6 +865,74 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         if (!validationHelper.errorMessages.isEmpty()) {
             throw new UnableToPerformMultiReasonException(new MessageDataWrapper(validationHelper.errorMessages));
         }
+=======
+        validateDocumentForFormulaPattern(document, validationHelper);
+        validateDueDateFields(document, validationHelper);
+        for (String saveListenerBeanName : saveListenerBeanNames) {
+            SaveListener saveListener = beanFactory.getBean(saveListenerBeanName, SaveListener.class);
+            saveListener.validate(document, validationHelper);
+        }
+        if (!validationHelper.errorMessages.isEmpty()) {
+            throw new UnableToPerformMultiReasonException(new MessageDataWrapper(validationHelper.errorMessages), document);
+        }
+    }
+
+    private void validateDueDateFields(DocumentDynamic document, ValidationHelperImpl validationHelper) {
+        Field dueDateField = null;
+        Field dueDateDescField = null;
+        for (Pair<DynamicPropertyDefinition, Field> propDefPair : validationHelper.getPropDefs().values()) {
+            Field field = propDefPair.getSecond();
+            if (field == null) {
+                continue; // Hidden fields can be ignored
+            }
+            if ("dueDate".equals(field.getFieldId())) {
+                dueDateField = field;
+            } else if ("dueDateDesc".equals(field.getFieldId())) {
+                dueDateDescField = field;
+            }
+            if (dueDateField != null && dueDateDescField != null) {
+                break;
+            }
+        }
+        if (dueDateField != null && dueDateDescField != null) {
+            if (isEmptyValue(document.getProp(dueDateField.getQName())) && isEmptyValue(document.getProp(dueDateDescField.getQName()))) {
+                validationHelper.addErrorMessage("docdyn_save_error_dueDateAndDueDateDescEmpty", dueDateField.getName(), dueDateDescField.getName());
+            }
+        }
+    }
+
+    public boolean isEmptyValue(Object endDateValue) {
+        return endDateValue == null || (endDateValue instanceof String && StringUtils.isBlank((String) endDateValue))
+                || (endDateValue instanceof Collection && ((Collection) endDateValue).isEmpty());
+    }
+
+    private void validateDocumentForFormulaPattern(DocumentDynamic document, ValidationHelperImpl validationHelper) {
+        for (Pair<DynamicPropertyDefinition, Field> propDefPair : validationHelper.getPropDefs().values()) {
+            Field field = propDefPair.getSecond();
+            if (field == null) {
+                continue; // Hidden fields can be ignored
+            }
+            Serializable value = document.getProp(field.getQName());
+            if (validateValueForFormulaPattern(value, field, validationHelper)) {
+                // it was a string value
+            } else if (value instanceof Collection<?>) {
+                for (Object item : (Collection<?>) ((Collection<?>) value)) {
+                    validateValueForFormulaPattern(item, field, validationHelper);
+                }
+            }
+        }
+    }
+
+    private boolean validateValueForFormulaPattern(Object item, Field field, ValidationHelperImpl validationHelper) {
+        if (item instanceof String) {
+            String stringValue = (String) item;
+            if (StringUtils.startsWith(stringValue, "{") && StringUtils.endsWith(stringValue, "}")) {
+                validationHelper.addErrorMessage("docdyn_save_error_valueContainsFormulaPattern", field.getName());
+            }
+            return true;
+        }
+        return false;
+>>>>>>> develop-5.1
     }
 
     @Override
@@ -1115,13 +1252,21 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         return docPropsChangeHolder;
     }
 
+<<<<<<< HEAD
     @Override
     public void updateDocumentAndGeneratedFiles(NodeRef fileRef, NodeRef document, boolean updateGeneratedFiles) {
+=======
+    private Map<String, String> getFormulasFromFile(NodeRef fileRef) {
+>>>>>>> develop-5.1
         String generationType = (String) nodeService.getProperty(fileRef, FileModel.Props.GENERATION_TYPE);
         Boolean updateMetadataInFiles = (Boolean) nodeService.getProperty(fileRef, FileModel.Props.UPDATE_METADATA_IN_FILES);
         if (!GeneratedFileType.WORD_TEMPLATE.name().equals(generationType) && !GeneratedFileType.OPENOFFICE_TEMPLATE.name().equals(generationType)
                 && Boolean.FALSE.equals(updateMetadataInFiles)) {
+<<<<<<< HEAD
             return;
+=======
+            return null;
+>>>>>>> develop-5.1
         }
 
         Map<String, String> formulas = null;
@@ -1129,7 +1274,11 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         if (GeneratedFileType.WORD_TEMPLATE.name().equals(generationType)) {
             if (!getMsoService().isAvailable()) {
                 LOG.debug("MsoService is not available, skipping updating document");
+<<<<<<< HEAD
                 return;
+=======
+                return null;
+>>>>>>> develop-5.1
             }
             try {
                 formulas = getMsoService().modifiedFormulas(contentReader);
@@ -1140,18 +1289,37 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
 
         if (GeneratedFileType.OPENOFFICE_TEMPLATE.name().equals(generationType)) {
             if (!getOpenOfficeService().isAvailable()) {
+<<<<<<< HEAD
                 LOG.debug("OpenOffice connection is not available, skipping updating document");
                 return;
             }
             try {
                 formulas = getOpenOfficeService().modifiedFormulas(contentReader, document, fileRef);
+=======
+                throw new RuntimeException("OpenOffice connection is not available"); // TODO better error message
+            }
+            try {
+                formulas = getOpenOfficeService().modifiedFormulas(contentReader);
+>>>>>>> develop-5.1
             } catch (Exception e) {
                 throw new RuntimeException("Error getting formulas from OpenOffice Writer file " + fileRef + " : " + e.getMessage(), e);
             }
         }
+<<<<<<< HEAD
 
         if (formulas == null || formulas.isEmpty()) {
             return;
+=======
+        return formulas;
+    }
+
+    @Override
+    public boolean updateDocumentAndGeneratedFiles(NodeRef fileRef, NodeRef document, boolean updateGeneratedFiles) {
+        Map<String, String> formulas = getFormulasFromFile(fileRef);
+
+        if (formulas == null || formulas.isEmpty()) {
+            return false;
+>>>>>>> develop-5.1
         }
 
         DocumentDynamicService documentDynamicService = BeanHelper.getDocumentDynamicService();
@@ -1170,6 +1338,11 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         List<ContractPartyField> partyFields = new ArrayList<ContractPartyField>();
         ClassificatorService classificatorService = BeanHelper.getClassificatorService();
 
+<<<<<<< HEAD
+=======
+        List<String> blankMandatoryFields = new ArrayList<String>();
+
+>>>>>>> develop-5.1
         for (Entry<String, String> entry : formulas.entrySet()) {
             String formulaKey = entry.getKey();
             String formulaValue = entry.getValue();
@@ -1240,6 +1413,7 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
             Serializable value;
             // Handle dates separately
             if ("date".equals(dataType.getName().getLocalName())) {
+<<<<<<< HEAD
                 if (StringUtils.isBlank(formulaValue)) {
                     value = null;
                 } else {
@@ -1252,14 +1426,38 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
             } else {
                 value = (Serializable) DefaultTypeConverter.INSTANCE.convert(dataType, formulaValue);
             }
+=======
+                value = getDateValue(formulaKey, formulaValue);
+            } else {
+                value = (Serializable) DefaultTypeConverter.INSTANCE.convert(dataType, formulaValue);
+            }
+            if (field.isMandatory() && StringUtils.isBlank(value.toString())) {
+                blankMandatoryFields.add(field.getName());
+                continue;
+            }
+>>>>>>> develop-5.1
             if (propDef.isMultiValued()) {
                 value = (Serializable) Collections.singletonList(value); // is this correct?
             }
             doc.setPropIgnoringEmpty(field.getQName(), value);
         }
+<<<<<<< HEAD
 
         // Update sub-nodes
         // TODO from Alar: implement generic child-node support using propertyDefinition.getChildAssocTypeQNameHierarchy()
+=======
+        if (!blankMandatoryFields.isEmpty()) {
+            String s = StringUtils.join(blankMandatoryFields, ", ");
+            String fileName = fileService.getFile(fileRef).getName();
+            String docName = doc.getDocName();
+            LOG.warn("File \"" + fileName + "\" in document \"" + docName + "\" was not saved. User tried to save mandatory field(s) \"" + s + "\" as blank!");
+            setSaveFailedLogMessage(document, fileName, s);
+            throw new UnableToPerformException("notification_document_saving_failed_due_to_blank_mandatory_fields", doc.getRegNumber(), docName, fileName, s);
+        }
+
+        // Update sub-nodes
+        // TODO from implement generic child-node support using propertyDefinition.getChildAssocTypeQNameHierarchy()
+>>>>>>> develop-5.1
         if (!partyFields.isEmpty()) {
             List<ChildAssociationRef> contractPartyChildAssocs = nodeService.getChildAssocs(document, DocumentChildModel.Assocs.CONTRACT_PARTY, RegexQNamePattern.MATCH_ALL);
             for (ContractPartyField field : partyFields) {
@@ -1275,8 +1473,38 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
                 }
             }
         }
+<<<<<<< HEAD
 
         updateDocument(doc, null, false, updateGeneratedFiles); // This also updates generated files
+=======
+        updateDocument(doc, null, false, updateGeneratedFiles); // This also updates generated files
+        return true;
+    }
+
+    private void setSaveFailedLogMessage(final NodeRef document, final String fileName, final String blankFields) {
+        try {
+            BeanHelper.getTransactionService().getRetryingTransactionHelper().doInTransaction(new RetryingTransactionCallback<String>() {
+                @Override
+                public String execute() throws Throwable {
+                    documentLogService.addDocumentLog(document, MessageUtil.getMessage("file_save_failed_blank_fields", fileName, blankFields));
+                    return null;
+                }
+            }, false, true);
+        } catch (Exception err) {
+            LOG.error("Unable to add log entry for file " + fileName + ", nodeRef: " + document, err);
+        }
+    }
+
+    private Date getDateValue(String formulaKey, String formulaValue) {
+        if (StringUtils.isBlank(formulaValue)) {
+            return null;
+        }
+        try {
+            return new SimpleDateFormat("dd.MM.yyyy").parse(formulaValue);
+        } catch (ParseException e) {
+            throw new RuntimeException("Unable to parse date value from field '" + formulaKey + "': " + e.getMessage(), e);
+        }
+>>>>>>> develop-5.1
     }
 
     private boolean isFieldUnchangeable(DocumentDynamic doc, List<String> updateDisabled, List<FieldType> readOnlyFields, Field field, ClassificatorService classificatorService,

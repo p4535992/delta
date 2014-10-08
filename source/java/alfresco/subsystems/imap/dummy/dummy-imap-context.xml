@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <?xml version='1.0' encoding='UTF-8'?>
 <beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
    xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
@@ -19,3 +20,26 @@
     </bean>
 
 </beans>
+=======
+<?xml version='1.0' encoding='UTF-8'?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
+
+    <import resource="../common-imap-context.xml" />
+
+    <import resource="../../Authentication/kerberos/kerberos-authentication-context.xml" />
+
+    <!-- @Override kerberos-authentication-context.xml -->
+    <bean id="cifsAuthenticator" class="java.lang.Object" />
+
+    <!-- @Override kerberos-authentication-context.xml -->
+    <!-- Also, on successful authentication, userRegistrySynchronizer.createOrUpdatePersonByIdCode() is called -->
+    <bean id="authenticationComponent" class="ee.webmedia.alfresco.user.service.SimpleUpdatingAuthenticationComponentImpl" parent="authenticationComponentBase">
+        <property name="nodeService" ref="nodeService" />
+        <property name="personService" ref="personService" />
+        <property name="transactionService" ref="transactionService" />
+        <property name="defaultAdministratorUserNameList" value="${external.authentication.defaultAdministratorUserNames}" />
+    </bean>
+
+</beans>
+>>>>>>> develop-5.1

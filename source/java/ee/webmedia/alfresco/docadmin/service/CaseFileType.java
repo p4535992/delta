@@ -12,8 +12,11 @@ import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 
 /**
  * Dynamic caseFile type
+<<<<<<< HEAD
  * 
  * @author Ats Uiboupin
+=======
+>>>>>>> develop-5.1
  */
 public class CaseFileType extends DynamicType {
     private static final long serialVersionUID = 1L;

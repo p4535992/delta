@@ -21,8 +21,11 @@ import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 
 /**
  * Utility methods for creating db queries.
+<<<<<<< HEAD
  * 
  * @author Riina Tens
+=======
+>>>>>>> develop-5.1
  */
 public class DbSearchUtil {
 
@@ -143,8 +146,21 @@ public class DbSearchUtil {
                 ? getPrefix(WorkflowSpecificModel.PREFIX) : "");
         Assert.isTrue(StringUtils.isNotBlank(prefix));
         String localName = propName.getLocalName();
+<<<<<<< HEAD
         Assert.isTrue(StringUtils.isNotBlank(localName));
         StringBuilder sb = new StringBuilder(prefix + SEPARATOR);
+=======
+        return getDbFieldNameFromCamelCase(prefix, localName);
+    }
+
+    public static String getDbFieldNameFromCamelCase(String localName) {
+        return getDbFieldNameFromCamelCase(null, localName);
+    }
+
+    private static String getDbFieldNameFromCamelCase(String prefix, String localName) {
+        Assert.isTrue(StringUtils.isNotBlank(localName));
+        StringBuilder sb = new StringBuilder(StringUtils.isNotBlank(prefix) ? (prefix + SEPARATOR) : "");
+>>>>>>> develop-5.1
         for (int i = 0; i < localName.length(); i++) {
             char c = localName.charAt(i);
             if (Character.isUpperCase(c)) {
@@ -215,6 +231,15 @@ public class DbSearchUtil {
         return getDbFieldNameFromPropQName(propName) + "=? ";
     }
 
+<<<<<<< HEAD
+=======
+    public static String getQuestionMarks(int size) {
+        String questionMarks = StringUtils.repeat("?, ", size);
+        questionMarks = questionMarks.substring(0, questionMarks.length() - 2);
+        return questionMarks;
+    }
+
+>>>>>>> develop-5.1
     public static String generateTaskPropertyNotQuery(QName propName) {
         return getDbFieldNameFromPropQName(propName) + "!=? ";
     }

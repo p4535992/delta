@@ -1,6 +1,10 @@
 package ee.webmedia.alfresco.common.listener;
 
+<<<<<<< HEAD
 import static ee.webmedia.alfresco.common.web.BeanHelper.getGeneralService;
+=======
+import static ee.webmedia.alfresco.utils.WebUtil.getNodeRefFromNodeId;
+>>>>>>> develop-5.1
 
 import java.util.Arrays;
 
@@ -12,18 +16,27 @@ import javax.faces.event.PhaseListener;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.util.Pair;
 import org.alfresco.web.app.AlfrescoNavigationHandler;
+<<<<<<< HEAD
 import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamicServiceImpl;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+=======
+
+import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.docdynamic.service.DocumentDynamicServiceImpl;
+>>>>>>> develop-5.1
 import ee.webmedia.alfresco.menu.ui.MenuBean;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.WebUtil;
 
+<<<<<<< HEAD
 /**
  * @author Alar Kvell
  */
+=======
+>>>>>>> develop-5.1
 public class ExternalAccessPhaseListener implements PhaseListener {
     private static final long serialVersionUID = 1L;
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(DocumentDynamicServiceImpl.class);
@@ -62,7 +75,11 @@ public class ExternalAccessPhaseListener implements PhaseListener {
 
     private void processExternalAcessAction(FacesContext context, Pair<String, String[]> outcomeAndArgs) {
 
+<<<<<<< HEAD
         // TODO Alar -> Riina - is this needed any more?
+=======
+        // TODO -> is this needed any more?
+>>>>>>> develop-5.1
         // always allow missing bindings from ExternalAccessServlet:
         // when redirecting from ExternalAccessServlet, jsp binding attribute value may be queried from wrong bean
         // CL task 143975
@@ -77,12 +94,16 @@ public class ExternalAccessPhaseListener implements PhaseListener {
                     // select correct menu
                     MenuBean.clearViewStack(String.valueOf(MenuBean.DOCUMENT_REGISTER_ID), null);
                     // open document dialog
+<<<<<<< HEAD
                     if (DocumentCommonModel.Types.DOCUMENT.equals(BeanHelper.getNodeService().getType(nodeRef))) {
                         BeanHelper.getDocumentDynamicDialog().openFromUrl(nodeRef);
                     } else {
                         BeanHelper.getDocumentDialog().open(nodeRef);
                         WebUtil.navigateTo(AlfrescoNavigationHandler.DIALOG_PREFIX + "document", context);
                     }
+=======
+                    BeanHelper.getDocumentDynamicDialog().openFromUrl(nodeRef);
+>>>>>>> develop-5.1
                 } else {
                     MessageUtil.addErrorMessage("document_restore_error_docDeleted");
                 }
@@ -138,8 +159,11 @@ public class ExternalAccessPhaseListener implements PhaseListener {
         MessageUtil.addErrorMessage(errorMsgKey);
     }
 
+<<<<<<< HEAD
     private NodeRef getNodeRefFromNodeId(String currentNodeId) {
         return StringUtils.isNotBlank(currentNodeId) ? getGeneralService().getExistingNodeRefAllStores(currentNodeId) : null;
     }
 
+=======
+>>>>>>> develop-5.1
 }

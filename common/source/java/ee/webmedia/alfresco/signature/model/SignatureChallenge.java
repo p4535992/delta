@@ -7,8 +7,11 @@ import java.util.List;
 
 /**
  * Holds intermediate data for Mobile-ID signing.
+<<<<<<< HEAD
  * 
  * @author Alar Kvell
+=======
+>>>>>>> develop-5.1
  */
 public class SignatureChallenge implements Serializable {
     private static final long serialVersionUID = 1L;

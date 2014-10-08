@@ -18,8 +18,11 @@ import ee.webmedia.alfresco.utils.SearchUtil;
 
 /**
  * Fix for task 182461 in already existing deployments
+<<<<<<< HEAD
  * 
  * @author Alar Kvell
+=======
+>>>>>>> develop-5.1
  */
 public class SenderEmailRemovableFromSystematicGroupFixBootstrap extends AbstractNodeUpdater {
 

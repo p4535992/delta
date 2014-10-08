@@ -12,8 +12,11 @@ import ee.webmedia.alfresco.log.model.LogSetup;
 
 /**
  * Delta business logic specific logging service.
+<<<<<<< HEAD
  * 
  * @author Martti Tamm
+=======
+>>>>>>> develop-5.1
  */
 public interface LogService extends FilterService {
 
@@ -75,6 +78,10 @@ public interface LogService extends FilterService {
      */
     void clearPastIdSuffixCache();
 
+<<<<<<< HEAD
     long getLogSequenceNextval();
+=======
+    long retrieveLogSequenceNextval();
+>>>>>>> develop-5.1
 
 }

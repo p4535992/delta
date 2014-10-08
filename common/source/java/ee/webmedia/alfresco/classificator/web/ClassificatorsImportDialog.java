@@ -35,8 +35,11 @@ import ee.webmedia.alfresco.utils.WebUtil;
 
 /**
  * Dialog for importing classificators
+<<<<<<< HEAD
  * 
  * @author Ats Uiboupin
+=======
+>>>>>>> develop-5.1
  */
 public class ClassificatorsImportDialog extends AbstractImportDialog {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(ClassificatorsImportDialog.class);

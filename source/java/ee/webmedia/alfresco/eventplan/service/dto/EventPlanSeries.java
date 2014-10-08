@@ -11,10 +11,13 @@ import org.apache.commons.collections.comparators.TransformingComparator;
 
 import ee.webmedia.alfresco.app.AppConstants;
 
+<<<<<<< HEAD
 /**
  * @author Martti Tamm
  * @author Alar Kvell
  */
+=======
+>>>>>>> develop-5.1
 public class EventPlanSeries implements Serializable, Comparable<EventPlanSeries> {
     private static final long serialVersionUID = 1L;
 

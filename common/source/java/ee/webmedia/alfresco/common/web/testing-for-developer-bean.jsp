@@ -44,6 +44,30 @@
       rendered="#{deleteAllLogNodesFromRepo.updaterRunning}"
       disabled="#{deleteAllLogNodesFromRepo.updaterStopping}" />
 	<f:verbatim><br/></f:verbatim>	
+<<<<<<< HEAD
+=======
+
+   <f:verbatim><br/><hr/></f:verbatim>
+   <h:outputText value="Dokumentide shortRegNumber korrigeerimine numbriliseks väärtuseks ja regNumber korrigeerimine vastavalt"/>
+   <f:verbatim><br/></f:verbatim>
+   <h:outputText value="Päriselt muuda andmeid: "/>
+   <h:selectBooleanCheckbox value="#{invalidShortRegNumberUpdater.writeValues}" />
+   <f:verbatim><br/></f:verbatim>
+   <h:outputText value="numberOfDocumentsInSingleTransaction: "/>
+    <h:inputText id="invalidShortRegNumberUpdaterBatchSize" value="#{invalidShortRegNumberUpdater.batchSize}" size="4" />
+    <f:verbatim><br/></f:verbatim>    
+    <h:outputText value="Paus pärast iga dokumendi töötlemist (ms): "/>
+    <h:inputText id="invalidShortRegNumberUpdaterSleepTime" value="#{invalidShortRegNumberUpdater.sleepTime}" size="4" />
+    <f:verbatim><br/></f:verbatim>
+    <h:commandButton id="startinvalidShortRegNumberUpdaterUpdater" value="Käivita shortRegNumber korrigeerimise skript" type="submit"
+      actionListener="#{invalidShortRegNumberUpdater.executeUpdaterInBackground}"
+      rendered="#{!invalidShortRegNumberUpdater.updaterRunning}" />
+    <h:commandButton id="stopinvalidShortRegNumberUpdaterUpdater" value="Peata shortRegNumber korrigeerimise skript" type="submit"
+      actionListener="#{invalidShortRegNumberUpdater.stopUpdater}"
+      rendered="#{invalidShortRegNumberUpdater.updaterRunning}"
+      disabled="#{invalidShortRegNumberUpdater.updaterStopping}" />
+   <f:verbatim><br/></f:verbatim>   
+>>>>>>> develop-5.1
 	
 <%--   <br/>
    <u>Dokumendi õiguste uuendamise skript (enne 2.5 versiooni)</u>
@@ -104,6 +128,7 @@
 <f:verbatim><hr/></f:verbatim>
 <h:commandButton id="docList_updateDocCounters" value="Uuenda dokumentide loendureid" type="submit" 
       actionListener="#{FunctionsListDialog.updateDocCounters}" />
+<<<<<<< HEAD
 <%--
 <f:verbatim><hr/></f:verbatim>
 <h:outputText value="Dokumentidele õiguste lisamine lähtuvalt tööülesannetest"/>
@@ -127,6 +152,35 @@
 <h:commandButton id="updateAddTaskPrivilegesToDocumentUpdaterSleepTime" value="Uuenda" type="submit"
       actionListener="#{addTaskPrivilegesToDocumentUpdater.updateSleepTime}" />
 --%>
+=======
+<h:commandButton id="docList_updateArchivedDocCounters" value="Uuenda arhiveeritud dokumentide loendureid" type="submit"
+	actionListener="#{FunctionsListDialog.updateArchivedDocCounters}" />      
+
+<f:verbatim><hr/></f:verbatim>
+
+<h:commandButton id="volume_archive_pause_all" value="Peata kõik arhiveerimistööd" type="submit" 
+   actionListener="#{ArchivalsService.pauseArchiving}" />
+<f:verbatim><br/></f:verbatim>
+<h:commandButton id="volume_archive_continue_all" value="Jätka kõiki arhiveerimistöid" type="submit" 
+   actionListener="#{ArchivalsService.continueArchiving}" />
+<f:verbatim><br/></f:verbatim>
+<h:commandButton id="volume_archive_cancel_all" value="Tühjenda arhiveerimistööde nimekiri" type="submit" 
+   actionListener="#{ArchivalsService.cancelAllArchivingJobs}" />
+
+<f:verbatim><hr/></f:verbatim>
+
+<h:outputText value="Muuda arhiveeritud sarjade property 'volNumberPattern' (väli 'Asjatoimiku viida muster') tühjaks kui 'volType' (väli 'Sisaldab toimikuid') ei sisalda väärtust CASE_FILE (Asjatoimik)"/>
+<f:verbatim><br/></f:verbatim>
+<h:outputText value="Kui väljal 'Sisaldab toimikuid' ei ole ühtegi väärtust valitud, lisatakse uuendamise käigus kõik väärtused peale väärtuse 'Asjatoimik'"/>
+<f:verbatim><br/></f:verbatim>
+<h:commandButton id="archivedSeries_update" value="Uuenda arhiveeritud toimikuid" type="submit" 
+   actionListener="#{archivedSeriesVolTypeAndVolNumberPatternUpdater.executeUpdaterInBackground}" 
+   rendered="#{archivedSeriesVolTypeAndVolNumberPatternUpdater.updaterRunning == false}" />
+<h:commandButton id="archivedSeries_update_stop" value="Peata uuendamine" type="submit"
+   actionListener="#{archivedSeriesVolTypeAndVolNumberPatternUpdater.stopUpdater}"
+   rendered="#{archivedSeriesVolTypeAndVolNumberPatternUpdater.updaterRunning == true}"
+   disabled="#{archivedSeriesVolTypeAndVolNumberPatternUpdater.updaterStopping == true}" />
+>>>>>>> develop-5.1
 
 <f:verbatim><hr/></f:verbatim>
 <h:outputText value="Versioonide lahtilukustamine"/>
@@ -227,6 +281,114 @@
 
 <f:verbatim><hr/></f:verbatim>
 
+<<<<<<< HEAD
+=======
+<h:outputText value="Dokumendi failide liigutamine taustainfo plokki"/>
+<f:verbatim><br/></f:verbatim>
+<h:outputText value="Faili completed_docs.csv tee: "/>
+<h:inputText id="fileActiveUpdaterCompletedDocsCsvPath" value="#{fileActiveUpdater.completedDocsCsvPath}" />
+<f:verbatim><br/></f:verbatim>
+<h:outputText value="Faili files.csv tee: "/>
+<h:inputText id="fileActiveUpdaterFilesCsvPath" value="#{fileActiveUpdater.filesCsvPath}" />
+<f:verbatim><br/></f:verbatim>
+<h:outputText value="Mitme dokumendi failid ühes transaktsioonis töödelda: "/>
+<h:inputText id="fileActiveUpdaterBatchSize" value="#{fileActiveUpdater.batchSize}" converter="javax.faces.Integer" size="4" />
+<f:verbatim><br/></f:verbatim>
+<h:commandButton id="startFileActiveUpdater" value="Käivita" type="submit"
+   actionListener="#{fileActiveUpdater.executeUpdaterInBackground}"
+   rendered="#{fileActiveUpdater.updaterRunning == false}" />
+<h:commandButton id="stopFileActiveUpdater" value="Peata" type="submit"
+   actionListener="#{fileActiveUpdater.stopUpdater}"
+   rendered="#{fileActiveUpdater.updaterRunning == true}"
+   disabled="#{fileActiveUpdater.updaterStopping == true}" />
+<f:verbatim><br/></f:verbatim>
+
+<f:verbatim><hr/></f:verbatim>
+
+<h:outputText value="'generalCaseFile' tüüpi asjatoimikute objectTypeVersionNr uuendamine uusima väärtuse peale"/>
+<f:verbatim><br/></f:verbatim>
+<h:outputText value="Mitu objekti ühes transaktsioonis töödelda: "/>
+<h:inputText id="caseFileLatestVersionUpdaterBatchSize" value="#{caseFileLatestVersionUpdater.batchSize}" converter="javax.faces.Integer" size="4" />
+<f:verbatim><br/></f:verbatim>
+<h:commandButton id="startCaseFileLatestVersionUpdater" value="Käivita" type="submit"
+   actionListener="#{caseFileLatestVersionUpdater.executeUpdaterInBackground}"
+   rendered="#{caseFileLatestVersionUpdater.updaterRunning == false}" />
+<h:commandButton id="stopCaseFileLatestVersionUpdater" value="Peata" type="submit"
+   actionListener="#{caseFileLatestVersionUpdater.stopUpdater}"
+   rendered="#{caseFileLatestVersionUpdater.updaterRunning == true}"
+   disabled="#{caseFileLatestVersionUpdater.updaterStopping == true}" />
+<f:verbatim><br/></f:verbatim>
+
+<f:verbatim><hr/></f:verbatim>
+
+<h:outputText value="d_lisavaljaVaartus.csv järgi asjatoimikute keywordsString väärtustamine"/>
+<f:verbatim><br/></f:verbatim>
+<h:outputText value="Faili d_lisavaljaVaartus.csv tee: "/>
+<h:inputText id="caseFileKeywordsStringUpdaterLisavaljaVaartusCsvPath" value="#{caseFileKeywordsStringUpdater.lisavaljaVaartusCsvPath}" />
+<f:verbatim><br/></f:verbatim>
+<h:outputText value="Mitu objekti ühes transaktsioonis töödelda: "/>
+<h:inputText id="caseFileKeywordsStringUpdaterBatchSize" value="#{caseFileKeywordsStringUpdater.batchSize}" converter="javax.faces.Integer" size="4" />
+<f:verbatim><br/></f:verbatim>
+<h:commandButton id="startCaseFileKeywordsStringUpdater" value="Käivita" type="submit"
+   actionListener="#{caseFileKeywordsStringUpdater.executeUpdaterInBackground}"
+   rendered="#{caseFileKeywordsStringUpdater.updaterRunning == false}" />
+<h:commandButton id="stopCaseFileKeywordsStringUpdater" value="Peata" type="submit"
+   actionListener="#{caseFileKeywordsStringUpdater.stopUpdater}"
+   rendered="#{caseFileKeywordsStringUpdater.updaterRunning == true}"
+   disabled="#{caseFileKeywordsStringUpdater.updaterStopping == true}" />
+<f:verbatim><br/></f:verbatim>
+
+<f:verbatim><hr/></f:verbatim>
+
+<h:outputText value="Dokumendi storageType väärtustamine"/>
+<f:verbatim><br/></f:verbatim>
+<h:outputText value="Mitu dokumenti ühes transaktsioonis töödelda: "/>
+<h:inputText id="storageTypeUpdaterBatchSize" value="#{storageTypeUpdater.batchSize}" converter="javax.faces.Integer" size="4" />
+<f:verbatim><br/></f:verbatim>
+<h:commandButton id="startStorageTypeUpdater" value="Käivita" type="submit"
+   actionListener="#{storageTypeUpdater.executeUpdaterInBackground}"
+   rendered="#{storageTypeUpdater.updaterRunning == false}" />
+<h:commandButton id="stopStorageTypeUpdater" value="Peata" type="submit"
+   actionListener="#{storageTypeUpdater.stopUpdater}"
+   rendered="#{storageTypeUpdater.updaterRunning == true}"
+   disabled="#{storageTypeUpdater.updaterStopping == true}" />
+<f:verbatim><br/></f:verbatim>
+
+<f:verbatim><hr/></f:verbatim>
+
+<h:outputText value="Dokumentide content väljalt HTML spetsiifiliste sümbolite eemaldamine"/>
+<f:verbatim><br/></f:verbatim>
+<h:outputText value="Mitu dokumenti ühes transaktsioonis töödelda: "/>
+<h:inputText id="documentContentPropertyHtmlUpdaterBatchSize" value="#{documentContentPropertyHtmlUpdater.batchSize}" converter="javax.faces.Integer" size="4" />
+<f:verbatim><br/></f:verbatim>
+<h:commandButton id="startDocumentContentPropertyHtmlUpdater" value="Käivita" type="submit"
+   actionListener="#{documentContentPropertyHtmlUpdater.executeUpdaterInBackground}"
+   rendered="#{documentContentPropertyHtmlUpdater.updaterRunning == false}" />
+<h:commandButton id="stopDocumentContentPropertyHtmlUpdater" value="Peata" type="submit"
+   actionListener="#{documentContentPropertyHtmlUpdater.stopUpdater}"
+   rendered="#{documentContentPropertyHtmlUpdater.updaterRunning == true}"
+   disabled="#{documentContentPropertyHtmlUpdater.updaterStopping == true}" />
+<f:verbatim><br/></f:verbatim>
+
+<f:verbatim><hr/></f:verbatim>
+
+<h:outputText value="Testandmete kaevandamine - andmed mis lähevad ADR'i, kirjutataks csv failidesse testandmete generaatori jaoks" />
+<f:verbatim><br/></f:verbatim>
+<h:outputText value="Mitu objekti ühes transaktsioonis töödelda: "/>
+<h:inputText id="adrTestDataUpdaterBatchSize" value="#{adrTestDataUpdater.batchSize}" converter="javax.faces.Integer" size="4" />
+<f:verbatim><br/></f:verbatim>
+<h:commandButton id="startadrTestDataUpdater" value="Käivita" type="submit"
+   actionListener="#{adrTestDataUpdater.executeUpdaterInBackground}"
+   rendered="#{adrTestDataUpdater.updaterRunning == false}" />
+<h:commandButton id="stopadrTestDataUpdater" value="Peata" type="submit"
+   actionListener="#{adrTestDataUpdater.stopUpdater}"
+   rendered="#{adrTestDataUpdater.updaterRunning == true}"
+   disabled="#{adrTestDataUpdater.updaterStopping == true}" />
+<f:verbatim><br/></f:verbatim>
+
+<f:verbatim><hr/></f:verbatim>
+
+>>>>>>> develop-5.1
 <h:outputText value="Restore data _from_ Delta specified by the following database and contentstore folder"/>
 <f:verbatim><br/><br/></f:verbatim>
 <h:outputText value="db.name="/>
@@ -294,6 +456,10 @@
 <h:commandButton id="updateOrganisationStructureBasedGroups" value="updateOrganisationStructureBasedGroups" type="submit"
    actionListener="#{OrganizationStructureService.updateOrganisationStructureBasedGroups}" />
    <f:verbatim><br/></f:verbatim>
+<<<<<<< HEAD
+=======
+
+>>>>>>> develop-5.1
 <h:outputText id="reportGenerationTitle" value="Aruannete genereerimine: " />
 <f:verbatim><br/></f:verbatim>
 <h:outputText id="reportGenerationStatus" value=" Selles klastri õlas aruannete genereerimine ei jookse." rendered="#{!ReportListDialog.reportGenerationEnabled}" />
@@ -553,6 +719,10 @@
 <li>* Struktuuri impordi jaoks loetakse sisse asukohas ...DataFolder olevad failid struktuur.csv ja toimikud.csv. Tekitatakse funktsioonid/sarjad/toimikud arhiivimoodustaja alla, mis on määratud parameetris ...ArchivalsStore. Impordi käigus kirjutatakse asukohta ...WorkFolder fail completed_toimikud.csv.</li>
 <li>* Dokumentide impordil luuakse asukohas ...DataFolder olevad dokumendid ja failid. Mappings.xml faili nimetus on parameetris ...MappingsFileName. Impordi käigus kirjutatakse asukohta ...WorkFolder järgmised failid - completed_docs.csv, completed_files.csv, indexed_files.csv, users_found.csv, users_not_found.csv, postponed_assocs.csv.</li>
 <li>* Impordi progressi, infoteateid ja veateateid saab jälgida rakenduse logist.</li>
+<<<<<<< HEAD
+=======
+<li>* publishToAdrWithFilesStartingFromDates - kuupäev (PP.KK.AAAA). kui parameetri väärtus &gt; imporditava dokumendi reg kuupäev ja dokumendi JP =Avalik, siis määratakse dokumendi publishToAdr ="Avalik, väljastatakse teabenõude korras". muul juhul publishToAdr ="Läheb ADR-i"</li>
+>>>>>>> develop-5.1
 </ul>
 <br/>
 </f:verbatim>
@@ -577,6 +747,17 @@
 <h:inputText value="#{postipoissImporter.archivalsStores[0]}" size="40" />
 <f:verbatim><br/></f:verbatim>
 
+<<<<<<< HEAD
+=======
+<h:outputText value="firstSetPublicFilesToBackgroundFiles: "/>
+<h:selectBooleanCheckbox value="#{postipoissImporter.publicFilesToBackgroundFiles[0]}" />
+<f:verbatim><br/></f:verbatim>
+
+<h:outputText value="firstPublishToAdrWithFilesStartingFromDates: "/>
+<h:inputText value="#{postipoissImporter.publishToAdrWithFilesStartingFromDates[0]}" size="12" />
+<f:verbatim><br/></f:verbatim>
+
+>>>>>>> develop-5.1
 <h:outputText value="firstOpenUnit: "/>
 <h:selectBooleanCheckbox value="#{postipoissImporter.openUnits[0]}" />
 <f:verbatim><br/><br/></f:verbatim>
@@ -601,6 +782,17 @@
 <h:inputText value="#{postipoissImporter.archivalsStores[1]}" size="40" />
 <f:verbatim><br/></f:verbatim>
 
+<<<<<<< HEAD
+=======
+<h:outputText value="secondSetPublicFilesToBackgroundFiles: "/>
+<h:selectBooleanCheckbox value="#{postipoissImporter.publicFilesToBackgroundFiles[1]}" />
+<f:verbatim><br/></f:verbatim>
+
+<h:outputText value="secondPublishToAdrWithFilesStartingFromDates: "/>
+<h:inputText value="#{postipoissImporter.publishToAdrWithFilesStartingFromDates[1]}" size="12" />
+<f:verbatim><br/></f:verbatim>
+
+>>>>>>> develop-5.1
 <h:outputText value="secondOpenUnit: "/>
 <h:selectBooleanCheckbox value="#{postipoissImporter.openUnits[1]}" />
 <f:verbatim><br/><br/></f:verbatim>
@@ -625,6 +817,17 @@
 <h:inputText value="#{postipoissImporter.archivalsStores[2]}" size="40" />
 <f:verbatim><br/></f:verbatim>
 
+<<<<<<< HEAD
+=======
+<h:outputText value="thirdSetPublicFilesToBackgroundFiles: "/>
+<h:selectBooleanCheckbox value="#{postipoissImporter.publicFilesToBackgroundFiles[2]}" />
+<f:verbatim><br/></f:verbatim>
+
+<h:outputText value="thirdPublishToAdrWithFilesStartingFromDates: "/>
+<h:inputText value="#{postipoissImporter.publishToAdrWithFilesStartingFromDates[2]}" size="12" />
+<f:verbatim><br/></f:verbatim>
+
+>>>>>>> develop-5.1
 <h:outputText value="thirdOpenUnit: "/>
 <h:selectBooleanCheckbox value="#{postipoissImporter.openUnits[2]}" />
 <f:verbatim><br/><br/></f:verbatim>
@@ -649,6 +852,17 @@
 <h:inputText value="#{postipoissImporter.archivalsStores[3]}" size="40" />
 <f:verbatim><br/></f:verbatim>
 
+<<<<<<< HEAD
+=======
+<h:outputText value="fourthSetPublicFilesToBackgroundFiles: "/>
+<h:selectBooleanCheckbox value="#{postipoissImporter.publicFilesToBackgroundFiles[3]}" />
+<f:verbatim><br/></f:verbatim>
+
+<h:outputText value="fourthPublishToAdrWithFilesStartingFromDates: "/>
+<h:inputText value="#{postipoissImporter.publishToAdrWithFilesStartingFromDates[3]}" size="12" />
+<f:verbatim><br/></f:verbatim>
+
+>>>>>>> develop-5.1
 <h:outputText value="fourthOpenUnit: "/>
 <h:selectBooleanCheckbox value="#{postipoissImporter.openUnits[3]}" />
 <f:verbatim><br/><br/></f:verbatim>
@@ -673,6 +887,17 @@
 <h:inputText value="#{postipoissImporter.archivalsStores[4]}" size="40" />
 <f:verbatim><br/></f:verbatim>
 
+<<<<<<< HEAD
+=======
+<h:outputText value="fifthSetPublicFilesToBackgroundFiles: "/>
+<h:selectBooleanCheckbox value="#{postipoissImporter.publicFilesToBackgroundFiles[4]}" />
+<f:verbatim><br/></f:verbatim>
+
+<h:outputText value="fifthPublishToAdrWithFilesStartingFromDates: "/>
+<h:inputText value="#{postipoissImporter.publishToAdrWithFilesStartingFromDates[4]}" size="12" />
+<f:verbatim><br/></f:verbatim>
+
+>>>>>>> develop-5.1
 <h:outputText value="fifthOpenUnit: "/>
 <h:selectBooleanCheckbox value="#{postipoissImporter.openUnits[4]}" />
 <f:verbatim><br/><br/></f:verbatim>
@@ -698,6 +923,7 @@
 
 <f:verbatim><br/><br/></f:verbatim>
 <f:verbatim><hr/></f:verbatim>
+<<<<<<< HEAD
    <h:outputText value="PPA live: Dokumendihaldurite grupil puuduvate õiguste parandamiseks." />
    
    <h:inputTextarea id="inheritanceProblems" value="#{ArrivedDocumentsPermissionsModifier.validationResults}" readonly="true" styleClass="expand19-200" />
@@ -731,6 +957,8 @@
 
 
 <f:verbatim><hr/></f:verbatim>
+=======
+>>>>>>> develop-5.1
 
 <f:verbatim><br/></f:verbatim>
 <h:outputText value="Maintenance tasks for data" style="font-weight: bold;" />
@@ -741,6 +969,7 @@
 <f:verbatim><br/><br/></f:verbatim>
 <h:commandButton id="findAndFixInvalidNodes" value="findAndFixInvalidNodes" type="submit" actionListener="#{invalidNodeFixerBootstrap.execute}"/>  
 
+<<<<<<< HEAD
 <f:verbatim><br/><br/></f:verbatim>
 <h:outputText styleClass="mainTitle" value="Acl vigade parandamine. NB! Kui vigu on palju, võib parandamine võtta kaua aega! Live keskkondades ei ole soovitatav funktsionaalsust käivitada, kui rakendus on aktiivselt kasutusel.
  Enne käivitamist live keskkondades tuleb kindlasti veendud, kui palju parandatavaid vigu keskkonnas tegelikult on."/>
@@ -754,6 +983,8 @@
 <f:verbatim><br/></f:verbatim>
 <h:inputText value="#{fixAclInheritanceUpdater2.nodeUuidP3}" />
  <h:commandButton id="fixAclP3" value="fixAclP3" type="submit" actionListener="#{fixAclInheritanceUpdater2.fixAclsThatInheritFromNonPrimaryParent}"/>  
+=======
+>>>>>>> develop-5.1
 
 <f:verbatim><br/><br/><u></f:verbatim>
 <h:outputText value="Nightly 02:30 data maintenance job (runs only on primary cluster node, aka where jobs.enabled=true): "/>
@@ -762,8 +993,11 @@
 <f:verbatim><br/></f:verbatim>
 <h:outputText value="2) findAndFixInvalidNodes"/>
 <f:verbatim><br/></f:verbatim>
+<<<<<<< HEAD
 <h:outputText value="3) fixAclP3"/>
 <f:verbatim><br/></f:verbatim>
+=======
+>>>>>>> develop-5.1
 <h:commandButton id="runNightly0230DataMaintenanceJobNow" value="runNightly0230DataMaintenanceJobNow" type="submit" actionListener="#{TestingForDeveloperBean.runNightly0230DataMaintenanceJobNow}" />
 
 <f:verbatim><br/><br/></f:verbatim>
@@ -845,6 +1079,13 @@
 
 <f:verbatim><br/></f:verbatim>
 
+<<<<<<< HEAD
+=======
+<a:actionLink value="executeCacheStatistics" actionListener="#{TestingForDeveloperBean.executeCacheStatistics}" />
+
+<f:verbatim><br/></f:verbatim>
+
+>>>>>>> develop-5.1
 <a:actionLink value="TestingForDeveloper" actionListener="#{TestingForDeveloperBean.handleTestEvent}" rendered="#{ApplicationService.test}">
      <f:param name="testP" value="11" />
 </a:actionLink>

@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.docadmin.web;
 
+<<<<<<< HEAD
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentAdminService;
 
 import javax.faces.context.FacesContext;
@@ -9,20 +10,47 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 
+=======
+>>>>>>> develop-5.1
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
 import ee.webmedia.alfresco.docadmin.service.DocumentTypeVersion;
 import ee.webmedia.alfresco.docadmin.service.DynamicType;
+<<<<<<< HEAD
+=======
+import ee.webmedia.alfresco.docadmin.service.Field;
+import ee.webmedia.alfresco.docadmin.service.FieldGroup;
+import ee.webmedia.alfresco.docadmin.service.MetadataItem;
+>>>>>>> develop-5.1
 import ee.webmedia.alfresco.docadmin.web.DynamicTypeDetailsDialog.DynTypeDialogSnapshot;
 import ee.webmedia.alfresco.docdynamic.web.BaseSnapshotCapableDialog;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageData;
 import ee.webmedia.alfresco.utils.MessageUtil;
+<<<<<<< HEAD
 
 /**
  * Base dialog for editing {@link DynamicType} details
  * 
  * @author Ats Uiboupin
+=======
+import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.util.Pair;
+import org.alfresco.web.bean.repository.Node;
+import org.apache.commons.collections4.map.CaseInsensitiveMap;
+import org.apache.commons.lang.StringUtils;
+
+import javax.faces.context.FacesContext;
+import javax.faces.event.ActionEvent;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentAdminService;
+
+/**
+ * Base dialog for editing {@link DynamicType} details
+>>>>>>> develop-5.1
  */
 public abstract class DynamicTypeDetailsDialog<D extends DynamicType, S extends DynTypeDialogSnapshot<D>> extends BaseSnapshotCapableDialog<S, D> {
     private static final long serialVersionUID = 1L;
@@ -38,8 +66,11 @@ public abstract class DynamicTypeDetailsDialog<D extends DynamicType, S extends 
 
     /**
      * Contains fields that contain state to be used when restoring dialog
+<<<<<<< HEAD
      * 
      * @author Ats Uiboupin
+=======
+>>>>>>> develop-5.1
      */
     public abstract static class DynTypeDialogSnapshot<D extends DynamicType> implements BaseSnapshotCapableDialog.Snapshot {
         private static final long serialVersionUID = 1L;
@@ -88,7 +119,11 @@ public abstract class DynamicTypeDetailsDialog<D extends DynamicType, S extends 
     boolean save() {
         try {
             fieldsListBean.doReorder();
+<<<<<<< HEAD
             Pair<D, MessageData> result = getDocumentAdminService().saveOrUpdateDynamicType(getCurrentSnapshot().getDynType());
+=======
+            Pair<D, MessageData> result = getDocumentAdminService().saveOrUpdateDynamicType(getCurrentSnapshot().getDynType(), false);
+>>>>>>> develop-5.1
             D saveOrUpdateDocumentType = result.getFirst();
             getCurrentSnapshot().addNewLatestDocumentTypeVersion = true;
             updateDialogState(saveOrUpdateDocumentType, getCurrentSnapshot(), null);
@@ -104,11 +139,68 @@ public abstract class DynamicTypeDetailsDialog<D extends DynamicType, S extends 
     }
 
     boolean validate() {
+<<<<<<< HEAD
         boolean valid = true;
         // constraints known right now are validated by converters / validators before calling this method
         return valid;
     }
 
+=======
+        // Other constraints known right now are validated by converters / validators before calling this method
+        return validateRelatedOutgoingDecElements();
+    }
+
+    private boolean validateRelatedOutgoingDecElements() {
+        boolean valid = true;
+        Map<String, List<String>> usedDecElements = new CaseInsensitiveMap<String, List<String>>();
+
+        List<? extends MetadataItem> metaFieldsList = fieldsListBean.getMetaFieldsList();
+        for (MetadataItem item : metaFieldsList) {
+            if (item instanceof FieldGroup) {
+                List<? extends Field> list = ((FieldGroup) item).getFields().getList();
+                collectRelatedOutgoingDecElements(usedDecElements, list.toArray(new Field[list.size()]));
+            }
+            if (item instanceof Field) {
+                collectRelatedOutgoingDecElements(usedDecElements, (Field) item);
+            }
+        }
+
+        for (Map.Entry<String, List<String>> entry : usedDecElements.entrySet()) {
+            if (entry.getValue().size() > 1) {
+                MessageUtil.addErrorMessage("docType_save_error_overlapping_related_outgoing_dec_elements", StringUtils.join(entry.getValue(), ", "));
+                valid = false;
+            }
+        }
+
+        return valid;
+    }
+
+    private void collectRelatedOutgoingDecElements(Map<String, List<String>> usedDecElements, Field... fields) {
+        if (fields == null) {
+            return;
+        }
+
+        for (Field field : fields) {
+            List<String> outgoingDecElements = field.getRelatedOutgoingDecElement();
+            if (outgoingDecElements == null) {
+                continue;
+            }
+
+            for (String element : outgoingDecElements) {
+                if (StringUtils.isBlank(element)) {
+                    continue;
+                }
+                List<String> fieldList = usedDecElements.get(element);
+                if (fieldList == null) {
+                    fieldList = new ArrayList<String>();
+                    usedDecElements.put(element, fieldList);
+                }
+                fieldList.add(field.getName());
+            }
+        }
+    }
+
+>>>>>>> develop-5.1
     protected void resetFields() {
         S currentSnapshot = getCurrentSnapshot();
         if (currentSnapshot != null) {
@@ -138,10 +230,16 @@ public abstract class DynamicTypeDetailsDialog<D extends DynamicType, S extends 
     }
 
     /** used by delete action to do actual deleting (after user has confirmed deleting in DeleteDialog) */
+<<<<<<< HEAD
     public String deleteType(ActionEvent event) {
         NodeRef dynTypeRef = new NodeRef(ActionUtil.getParam(event, "nodeRef"));
         BeanHelper.getDocumentAdminService().deleteDynamicType(dynTypeRef);
         return getCloseOutcome(2);
+=======
+    public void deleteType(ActionEvent event) {
+        NodeRef dynTypeRef = new NodeRef(ActionUtil.getParam(event, "nodeRef"));
+        BeanHelper.getDocumentAdminService().deleteDynamicType(dynTypeRef);
+>>>>>>> develop-5.1
     }
 
     /** replace dynType in memory with fresh copy from repo */
@@ -264,7 +362,11 @@ public abstract class DynamicTypeDetailsDialog<D extends DynamicType, S extends 
             // Workaround to NullpointerException
             // FIXME current dialog is DocTypeDetailsDialog and user clicks some menu item (for example to open DocTypeListDialog)
             //
+<<<<<<< HEAD
             // FIXME CL_TASK 177667 Ats -> Kaarel: when leaving dialog clearState() method (that clears snapshots) is called in
+=======
+            // FIXME CL_TASK 177667 -> when leaving dialog clearState() method (that clears snapshots) is called in
+>>>>>>> develop-5.1
             // ApplyRequestValues phase by calling MenuBean.clearViewStack(menuBean.getActiveItemId(), clientId);
             //
             // Better JSF components method bindings are evaluated in the same phase

@@ -5,9 +5,12 @@ import org.alfresco.service.namespace.QName;
 import ee.webmedia.alfresco.workflow.service.Task;
 import ee.webmedia.alfresco.workflow.service.Workflow;
 
+<<<<<<< HEAD
 /**
  * @author Alar Kvell
  */
+=======
+>>>>>>> develop-5.1
 public interface WorkflowType {
 
     QName getWorkflowType();

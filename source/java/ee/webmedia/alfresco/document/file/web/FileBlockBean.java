@@ -28,6 +28,10 @@ import org.alfresco.web.bean.NavigationBean;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.Repository;
+<<<<<<< HEAD
+=======
+import org.apache.commons.lang.StringUtils;
+>>>>>>> develop-5.1
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.common.listener.RefreshEventListener;
@@ -37,18 +41,26 @@ import ee.webmedia.alfresco.docdynamic.web.DocumentDialogHelperBean;
 import ee.webmedia.alfresco.docdynamic.web.DocumentDynamicBlock;
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.file.model.FileModel;
+<<<<<<< HEAD
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel.Privileges;
 import ee.webmedia.alfresco.document.web.evaluator.IsOwnerEvaluator;
+=======
+import ee.webmedia.alfresco.document.web.evaluator.IsOwnerEvaluator;
+import ee.webmedia.alfresco.privilege.model.Privilege;
+>>>>>>> develop-5.1
 import ee.webmedia.alfresco.privilege.service.PrivilegeUtil;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageDataImpl;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 
+<<<<<<< HEAD
 /**
  * @author Dmitri Melnikov
  */
+=======
+>>>>>>> develop-5.1
 public class FileBlockBean implements DocumentDynamicBlock, RefreshEventListener {
     private static final long serialVersionUID = 1L;
 
@@ -63,10 +75,25 @@ public class FileBlockBean implements DocumentDynamicBlock, RefreshEventListener
     private NodeRef docRef;
     private String pdfUrl;
 
+<<<<<<< HEAD
     public void toggleActive(ActionEvent event) {
         NodeRef fileNodeRef = new NodeRef(ActionUtil.getParam(event, "nodeRef"));
         try {
             BaseDialogBean.validatePermission(docRef, DocumentCommonModel.Privileges.EDIT_DOCUMENT);
+=======
+    public void unlock(ActionEvent event) {
+        String filenodeRefStr = ActionUtil.getParam(event, "nodeRef");
+        if (StringUtils.isNotBlank(filenodeRefStr)) {
+            BeanHelper.getDocLockService().unlockFile(new NodeRef(filenodeRefStr));
+            refresh();
+        }
+    }
+
+    public void toggleActive(ActionEvent event) {
+        NodeRef fileNodeRef = new NodeRef(ActionUtil.getParam(event, "nodeRef"));
+        try {
+            BaseDialogBean.validatePermission(docRef, Privilege.EDIT_DOCUMENT);
+>>>>>>> develop-5.1
             final boolean active = getFileService().toggleActive(fileNodeRef);
             if (LOG.isDebugEnabled()) {
                 LOG.debug("changed file active status, nodeRef=" + fileNodeRef + ", new status=" + active);
@@ -89,10 +116,22 @@ public class FileBlockBean implements DocumentDynamicBlock, RefreshEventListener
             public Void doWork() throws Exception {
                 NodeService nodeService = BeanHelper.getNodeService();
                 for (File file : files) {
+<<<<<<< HEAD
                     if (file != null && file.getNodeRef() != null) {
                         nodeService.setProperty(file.getNodeRef(), FileModel.Props.CONVERT_TO_PDF_IF_SIGNED, file.isConvertToPdfIfSigned());
                         if (LOG.isDebugEnabled()) {
                             LOG.debug("changed file" + ", nodeRef=" + file.getNodeRef() + ", convertToPdfIfSigned=" + file.isConvertToPdfIfSigned());
+=======
+                    NodeRef fileRef = file.getNodeRef();
+                    if (file != null && fileRef != null) {
+                        Boolean convertToPdfRepoValue = (Boolean) nodeService.getProperty(fileRef, FileModel.Props.CONVERT_TO_PDF_IF_SIGNED);
+                        boolean convertToPdfNewValue = file.isConvertToPdfIfSigned();
+                        if (convertToPdfRepoValue == null || convertToPdfRepoValue != convertToPdfNewValue) {
+                            nodeService.setProperty(fileRef, FileModel.Props.CONVERT_TO_PDF_IF_SIGNED, convertToPdfNewValue);
+                            if (LOG.isDebugEnabled()) {
+                                LOG.debug("changed file" + ", nodeRef=" + fileRef + ", convertToPdfIfSigned=" + convertToPdfNewValue);
+                            }
+>>>>>>> develop-5.1
                         }
                     }
                 }
@@ -237,7 +276,11 @@ public class FileBlockBean implements DocumentDynamicBlock, RefreshEventListener
 
     /**
      * Used in JSP page.
+<<<<<<< HEAD
      * 
+=======
+     *
+>>>>>>> develop-5.1
      * @return
      */
     public List<File> getFiles() {
@@ -264,7 +307,11 @@ public class FileBlockBean implements DocumentDynamicBlock, RefreshEventListener
         DocumentDialogHelperBean documentDialogHelperBean = BeanHelper.getDocumentDialogHelperBean();
         Node docNode = documentDialogHelperBean.getNode();
         return (!fileIsActive || !documentDialogHelperBean.isNotEditable())
+<<<<<<< HEAD
                 && (new IsOwnerEvaluator().evaluate(docNode) || PrivilegeUtil.isAdminOrDocmanagerWithPermission(docNode, Privileges.VIEW_DOCUMENT_META_DATA));
+=======
+                && (new IsOwnerEvaluator().evaluate(docNode) || PrivilegeUtil.isAdminOrDocmanagerWithViewDocPermission(docNode));
+>>>>>>> develop-5.1
     }
 
     public boolean isDeleteFileAllowed() {

@@ -3,6 +3,7 @@ Index: source/java/org/alfresco/service/cmr/model/FileFolderService.java
 --- source/java/org/alfresco/service/cmr/model/FileFolderService.java	(revision 141886)
 +++ source/java/org/alfresco/service/cmr/model/FileFolderService.java	(revision 141887)
 @@ -44,6 +44,11 @@
+<<<<<<< HEAD
  @PublicService
  public interface FileFolderService
  {
@@ -34,11 +35,45 @@ Index: source/java/org/alfresco/service/cmr/model/FileFolderService.java
       * Lists all immediate child files of the given context node
       * 
       * @param folderNodeRef the folder to start searching in
+=======
+ @PublicService
+ public interface FileFolderService
+ {
++    interface ResultSizeCallback
++    {
++        void setResultSize(int resultSize);
++    }
++
+     /**
+      * Lists immediate child files and folders of the given context node
+      * 
+@@ -54,6 +59,19 @@
+     public List<FileInfo> list(NodeRef contextNodeRef);
+     
+     /**
++     * Lists immediate child files and folders of the given context node.
++     * Maximum of <code>limit</code> results are returned, their order is undetermined.
++     * 
++     * @param contextNodeRef the node to start searching in
++     * @param limit maximum number of results to pass
++     * @param callback callback for getting total number of results, before filtering by
++     *      <code>limit</code>
++     * @return Returns a list of matching files and folders
++     */
++    @Auditable(key = Auditable.Key.ARG_0, parameters = {"contextNodeRef"})
++    public List<FileInfo> list(NodeRef contextNodeRef, int limit, ResultSizeCallback callback);
++
++    /**
+      * Lists all immediate child files of the given context node
+      * 
+      * @param folderNodeRef the folder to start searching in
+>>>>>>> develop-5.1
 Index: source/java/org/alfresco/repo/model/filefolder/FileFolderServiceImpl.java
 ===================================================================
 --- source/java/org/alfresco/repo/model/filefolder/FileFolderServiceImpl.java	(revision 141886)
 +++ source/java/org/alfresco/repo/model/filefolder/FileFolderServiceImpl.java	(revision 141887)
 @@ -290,8 +290,13 @@
+<<<<<<< HEAD
      
      public List<FileInfo> list(NodeRef contextNodeRef)
      {
@@ -85,3 +120,51 @@ Index: source/java/org/alfresco/repo/model/filefolder/FileFolderServiceImpl.java
          }
          // Done
          return result;
+=======
+     
+     public List<FileInfo> list(NodeRef contextNodeRef)
+     {
++        return list(contextNodeRef, 0, null);
++    }
++
++    public List<FileInfo> list(NodeRef contextNodeRef, int limit, ResultSizeCallback callback)
++    {
+         // execute the query
+-        List<NodeRef> nodeRefs = listSimple(contextNodeRef, true, true);
++        List<NodeRef> nodeRefs = listSimple(contextNodeRef, true, true, limit, callback);
+         // convert the noderefs
+         List<FileInfo> results = toFileInfo(nodeRefs);
+         // done
+@@ -478,6 +483,11 @@
+     
+     private List<NodeRef> listSimple(NodeRef contextNodeRef, boolean folders, boolean files)
+     {
++        return listSimple(contextNodeRef, folders, files, 0, null);
++    }
++    
++    private List<NodeRef> listSimple(NodeRef contextNodeRef, boolean folders, boolean files, int limit, ResultSizeCallback callback)
++    {
+         Set<QName> searchTypeQNames = new HashSet<QName>(10);
+         // Build a list of file and folder types
+         if (folders)
+@@ -506,10 +516,18 @@
+         }
+         // Do the query
+         List<ChildAssociationRef> childAssocRefs = nodeService.getChildAssocs(contextNodeRef, searchTypeQNames);
+-        List<NodeRef> result = new ArrayList<NodeRef>(childAssocRefs.size());
++        if (callback != null) {
++            callback.setResultSize(childAssocRefs.size());
++        }
++        int size = limit > 0 && childAssocRefs.size() > limit ? limit : childAssocRefs.size();
++        List<NodeRef> result = new ArrayList<NodeRef>(size);
+         for (ChildAssociationRef assocRef : childAssocRefs)
+         {
+             result.add(assocRef.getChildRef());
++            if (result.size() >= size)
++            {
++                break;
++            }
+         }
+         // Done
+         return result;
+>>>>>>> develop-5.1

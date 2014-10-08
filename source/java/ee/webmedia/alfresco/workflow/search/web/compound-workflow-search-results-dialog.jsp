@@ -8,7 +8,11 @@
 
 <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/document/web/limited-message-panel.jsp" />
 
+<<<<<<< HEAD
 <a:panel id="cw-panel" styleClass="panel-100" label="#{msg.cw_search_results}" progressive="true" styleClass="with-pager">
+=======
+<a:panel id="cw-panel" styleClass="panel-100 with-pager" label="#{msg.cw_search_results}" progressive="true">
+>>>>>>> develop-5.1
    <a:panel id="cw-panel-search-results" styleClass="overflow-wrapper">   
 
    <a:richList id="workflowList" styleClass="duplicate-header" width="100%" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
@@ -95,6 +99,7 @@
          </a:actionLink>         
       </a:column>
       
+<<<<<<< HEAD
       <a:column id="col10" primary="true" >
          <f:facet name="header">
             <a:sortLink id="col10-header" label="#{msg.cw_search_comment}" value="comment" styleClass="header" />
@@ -104,6 +109,8 @@
          </a:actionLink>         
       </a:column>
       
+=======
+>>>>>>> develop-5.1
       <a:column id="col11" primary="true" >
          <f:facet name="header">
             <a:sortLink id="col11-header" label="#{msg.cw_search_status}" value="status" styleClass="header" />

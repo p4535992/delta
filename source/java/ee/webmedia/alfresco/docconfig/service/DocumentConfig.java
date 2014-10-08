@@ -12,9 +12,12 @@ import ee.webmedia.alfresco.docadmin.service.DocumentTypeVersion;
 import ee.webmedia.alfresco.docadmin.service.DynamicType;
 import ee.webmedia.alfresco.docconfig.generator.PropertySheetStateHolder;
 
+<<<<<<< HEAD
 /**
  * @author Alar Kvell
  */
+=======
+>>>>>>> develop-5.1
 public class DocumentConfig implements Serializable {
     private static final long serialVersionUID = 1L;
 

@@ -20,6 +20,11 @@ import java.util.Set;
 import javax.faces.component.UIInput;
 import javax.faces.component.html.HtmlSelectManyListbox;
 import javax.faces.context.FacesContext;
+<<<<<<< HEAD
+=======
+import javax.faces.event.ActionEvent;
+import javax.faces.event.PhaseId;
+>>>>>>> develop-5.1
 import javax.faces.event.ValueChangeEvent;
 import javax.faces.model.SelectItem;
 
@@ -31,6 +36,11 @@ import org.alfresco.web.app.AlfrescoNavigationHandler;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.TransientNode;
 import org.alfresco.web.config.PropertySheetConfigElement;
+<<<<<<< HEAD
+=======
+import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
+import org.apache.commons.collections.Closure;
+>>>>>>> develop-5.1
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -47,6 +57,7 @@ import ee.webmedia.alfresco.docconfig.service.DocumentConfig;
 import ee.webmedia.alfresco.docconfig.service.DynamicPropertyDefinition;
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
+<<<<<<< HEAD
 import ee.webmedia.alfresco.document.search.model.DocumentSearchModel;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchFilterService;
 import ee.webmedia.alfresco.filter.web.AbstractSearchFilterBlockBean;
@@ -56,6 +67,16 @@ import ee.webmedia.alfresco.utils.RepoUtil;
 /**
  * @author Keit Tehvan
  */
+=======
+import ee.webmedia.alfresco.document.search.model.DocumentReportModel;
+import ee.webmedia.alfresco.document.search.model.DocumentSearchModel;
+import ee.webmedia.alfresco.document.search.service.DocumentSearchFilterService;
+import ee.webmedia.alfresco.filter.web.AbstractSearchFilterBlockBean;
+import ee.webmedia.alfresco.utils.ComponentUtil;
+import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.utils.RepoUtil;
+
+>>>>>>> develop-5.1
 public class DocumentDynamicSearchDialog extends AbstractSearchFilterBlockBean<DocumentSearchFilterService> implements DialogDataProvider {
     private static final long serialVersionUID = 1L;
 
@@ -71,6 +92,10 @@ public class DocumentDynamicSearchDialog extends AbstractSearchFilterBlockBean<D
             "thesaurus",
             "firstKeywordLevel");
     public static final QName SELECTED_STORES = RepoUtil.createTransientProp("selectedStores");
+<<<<<<< HEAD
+=======
+    public static final QName SELECTED_REPORT_TYPE = RepoUtil.createTransientProp("selectedReportOutputType");
+>>>>>>> develop-5.1
 
     protected List<SelectItem> stores;
     protected DocumentConfig config;
@@ -139,6 +164,10 @@ public class DocumentDynamicSearchDialog extends AbstractSearchFilterBlockBean<D
             searchableDocumentFieldDefinitions.add(createThesaurusField());
             setFilterDefaultValues(filter, searchableDocumentFieldDefinitions, defaultCheckedFields);
         }
+<<<<<<< HEAD
+=======
+        setFilterCaseProps();
+>>>>>>> develop-5.1
         getPropertySheetStateBean().reset(config.getStateHolders(), this);
     }
 
@@ -196,11 +225,47 @@ public class DocumentDynamicSearchDialog extends AbstractSearchFilterBlockBean<D
         return config.getPropertySheetConfigElement();
     }
 
+<<<<<<< HEAD
     public void storeValueChangeListener(ValueChangeEvent event) {
         @SuppressWarnings("unchecked")
         List<NodeRef> selectedStores = (List<NodeRef>) event.getNewValue();
         getNode().getProperties().put(SELECTED_STORES.toString(), selectedStores);
 
+=======
+    public void storeValueChanged(ValueChangeEvent event) {
+        @SuppressWarnings("unchecked")
+        List<NodeRef> selectedStores = (List<NodeRef>) event.getNewValue();
+        getNode().getProperties().put(SELECTED_STORES.toString(), selectedStores);
+    }
+
+    public void reportTypeChanged(ValueChangeEvent event) {
+        final String selectedType = (String) event.getNewValue();
+
+        ComponentUtil.executeLater(PhaseId.INVOKE_APPLICATION, getPropertySheet(), new Closure() {
+
+            @Override
+            public void execute(Object arg0) {
+                final Map<String, Object> props = getNode().getProperties();
+                QName type = DocumentReportModel.Props.REPORT_OUTPUT_TYPE;
+                props.put(type.toString(), selectedType);
+                props.put(type.getLocalName(), selectedType);
+
+                clearPropertySheet();
+            }
+        });
+
+    }
+
+    private void clearPropertySheet() {
+        UIPropertySheet propertySheet = getPropertySheet();
+        if (propertySheet != null) {
+            propertySheet.getChildren().clear();
+            propertySheet.getClientValidations().clear();
+        }
+    }
+
+    protected void resetDocumentLocationState() {
+>>>>>>> develop-5.1
         for (PropertySheetStateHolder stateHolder : config.getStateHolders().values()) { // State holder key varies
             if (stateHolder instanceof DocumentLocationState) {
                 ((DocumentLocationState) stateHolder).reset(isInEditMode());
@@ -210,6 +275,15 @@ public class DocumentDynamicSearchDialog extends AbstractSearchFilterBlockBean<D
     }
 
     @Override
+<<<<<<< HEAD
+=======
+    public void saveFilter(ActionEvent event) {
+        super.saveFilter(event);
+        resetDocumentLocationState();
+    }
+
+    @Override
+>>>>>>> develop-5.1
     protected Node getNewFilter() {
         long start = System.currentTimeMillis();
         try {

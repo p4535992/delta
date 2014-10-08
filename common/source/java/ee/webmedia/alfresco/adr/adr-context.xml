@@ -83,4 +83,29 @@
       </property>
    </bean>
 
+<<<<<<< HEAD
+=======
+   <bean id="adrTestDataUpdater" class="ee.webmedia.alfresco.adr.bootstrap.AdrTestDataUpdater" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="enabled" value="false" /><!-- Executed manually from node-browser -->
+      <property name="documentAdminService" ref="documentAdminService" />
+      <property name="documentSearchService" ref="documentSearchService" />
+      <property name="documentDynamicService" ref="documentDynamicService" />
+      <property name="adrService" ref="adrService" />
+      <property name="dataFolder" value="${dir.root.shared}" />
+   </bean>
+       
+   <bean id="addAdrDeletedDocForNotExistingDoc" class="ee.webmedia.alfresco.adr.bootstrap.AddAdrDeletedDocForNotExistingDoc" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />  
+      <property name="dependsOn">
+         <list>
+            <ref bean="archivalsStoresBootstrap" />
+            <ref bean="adrDeletedDocumentsBootstrap" />
+         </list>
+      </property>
+   </bean>
+
+>>>>>>> develop-5.1
 </beans>

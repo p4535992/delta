@@ -150,26 +150,44 @@
                <f:subview id="more-actions-panel-replies" rendered="#{DialogManager.currentDialog.name eq 'documentDynamicDialog' and DocumentDialogHelperBean.inWorkspace and AssocsBlockBean.repliesAssocsBindingName != null and DocumentDialogHelperBean.inEditMode == false}">
                   <f:verbatim><li></f:verbatim>
                      <a:menu id="replies_menu" style="white-space:nowrap" menuStyleClass="dropdown-menu right"
+<<<<<<< HEAD
                         label="#{AssocsBlockBean.addRepliesLabel}" image="/images/icons/arrow-down.png" >
+=======
+                        label="#{AssocsBlockBean.addRepliesLabel}" image="/images/icons/arrow-down.png" rendered="#{AssocsBlockBean.addRepliesMenuSize gt 1}">
+>>>>>>> develop-5.1
                         <%-- Here the method call of the value parameter is actually returning a string in the form "#{method binding}"
                              UIActions class has been modified to interpret such strings as method bindings that take 1 parameter and
                              return a list of ActionDefinition objects. See UIActions and WorkflowBlockBean classes for details.
                               --%>
                         <r:actions id="reply_menu_items" value="#{AssocsBlockBean.repliesAssocsBindingName}" context="#{DialogManager.actionsContext}" />
                      </a:menu>
+<<<<<<< HEAD
+=======
+
+                     <r:actions id="reply_menu_items_single" value="#{AssocsBlockBean.repliesAssocsBindingName}" context="#{DialogManager.actionsContext}" showLink="true" rendered="#{AssocsBlockBean.addRepliesMenuSize eq 1}" />
+>>>>>>> develop-5.1
                <f:verbatim></li></f:verbatim>
                </f:subview>
 
                <f:subview id="more-actions-panel-followups" rendered="#{DialogManager.currentDialog.name eq 'documentDynamicDialog' and DocumentDialogHelperBean.inWorkspace and AssocsBlockBean.followupAssocsBindingName != null and DocumentDialogHelperBean.inEditMode == false}">
                   <f:verbatim><li></f:verbatim>
                      <a:menu id="followups_menu" style="white-space:nowrap" menuStyleClass="dropdown-menu right"
+<<<<<<< HEAD
                         label="#{AssocsBlockBean.addFollowUpsLabel}"  image="/images/icons/arrow-down.png" >
+=======
+                        label="#{AssocsBlockBean.addFollowUpsLabel}"  image="/images/icons/arrow-down.png" rendered="#{AssocsBlockBean.addFollowupsMenuSize gt 1}" >
+>>>>>>> develop-5.1
                         <%-- Here the method call of the value parameter is actually returning a string in the form "#{method binding}"
                              UIActions class has been modified to interpret such strings as method bindings that take 1 parameter and
                              return a list of ActionDefinition objects. See UIActions and WorkflowBlockBean classes for details.
                               --%>
                         <r:actions id="followup_menu_items" value="#{AssocsBlockBean.followupAssocsBindingName}" context="#{DialogManager.actionsContext}" />
                      </a:menu>
+<<<<<<< HEAD
+=======
+
+                     <r:actions id="reply_menu_items_single" value="#{AssocsBlockBean.followupAssocsBindingName}" context="#{DialogManager.actionsContext}" showLink="true" rendered="#{AssocsBlockBean.addFollowupsMenuSize eq 1}" />
+>>>>>>> develop-5.1
                <f:verbatim></li></f:verbatim>
                </f:subview>
 

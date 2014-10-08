@@ -3,9 +3,12 @@ package ee.webmedia.alfresco.common.bootstrap;
 import org.alfresco.repo.module.ModuleComponent;
 import org.springframework.beans.factory.InitializingBean;
 
+<<<<<<< HEAD
 /**
  * @author Alar Kvell
  */
+=======
+>>>>>>> develop-5.1
 public class ModuleComponentDependsOnSetter implements InitializingBean {
 
     private ModuleComponent source;

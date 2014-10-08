@@ -6,8 +6,11 @@ import org.alfresco.service.namespace.QName;
 
 /**
  * Object for storing a (node) property value change.
+<<<<<<< HEAD
  * 
  * @author Martti Tamm
+=======
+>>>>>>> develop-5.1
  */
 public class PropertyChange {
 

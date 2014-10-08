@@ -72,6 +72,10 @@
             <property name="tasksearch:completedDateTimeBegin_EndDate">
                <type>d:date</type>
             </property>
+<<<<<<< HEAD
+=======
+            <!-- Not used in search any more (compound workflow comments were moved to delta_compound_workflow_comment table) -->
+>>>>>>> develop-5.1
             <property name="tasksearch:comment">
                <type>d:text</type>
             </property>

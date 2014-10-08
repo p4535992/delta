@@ -25,13 +25,17 @@
 package org.alfresco.repo.security.permissions.impl;
 
 import java.io.Serializable;
+<<<<<<< HEAD
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
+=======
+>>>>>>> develop-5.1
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+<<<<<<< HEAD
 import net.sf.acegisecurity.Authentication;
 import net.sf.acegisecurity.GrantedAuthority;
 import net.sf.acegisecurity.providers.dao.User;
@@ -48,11 +52,14 @@ import org.alfresco.repo.security.permissions.ACLType;
 import org.alfresco.repo.security.permissions.AccessControlEntry;
 import org.alfresco.repo.security.permissions.AccessControlList;
 import org.alfresco.repo.security.permissions.AccessControlListProperties;
+=======
+>>>>>>> develop-5.1
 import org.alfresco.repo.security.permissions.DynamicAuthority;
 import org.alfresco.repo.security.permissions.NodePermissionEntry;
 import org.alfresco.repo.security.permissions.PermissionEntry;
 import org.alfresco.repo.security.permissions.PermissionReference;
 import org.alfresco.repo.security.permissions.PermissionServiceSPI;
+<<<<<<< HEAD
 import org.alfresco.repo.tenant.TenantService;
 import org.alfresco.repo.version.VersionModel;
 import org.alfresco.repo.version.common.VersionUtil;
@@ -77,6 +84,24 @@ import org.springframework.beans.factory.InitializingBean;
  * The Alfresco implementation of a permissions service against our APIs for the permissions model and permissions
  * persistence.
  * 
+=======
+import org.alfresco.service.cmr.repository.ChildAssociationRef;
+import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.cmr.repository.StoreRef;
+import org.alfresco.service.cmr.security.AccessPermission;
+import org.alfresco.service.cmr.security.AccessStatus;
+import org.alfresco.service.cmr.security.PermissionContext;
+import org.alfresco.service.cmr.security.PermissionService;
+import org.alfresco.service.namespace.QName;
+import org.springframework.beans.factory.InitializingBean;
+
+import ee.webmedia.alfresco.privilege.service.NotSupportedPermissionSystemException;
+
+/**
+ * The Alfresco implementation of a permissions service against our APIs for the permissions model and permissions
+ * persistence.
+ *
+>>>>>>> develop-5.1
  * @author andyh
  */
 public class PermissionServiceImpl implements PermissionServiceSPI, InitializingBean
@@ -85,6 +110,7 @@ public class PermissionServiceImpl implements PermissionServiceSPI, Initializing
     static SimplePermissionReference OLD_ALL_PERMISSIONS_REFERENCE = new SimplePermissionReference(QName.createQName("", PermissionService.ALL_PERMISSIONS),
             PermissionService.ALL_PERMISSIONS);
 
+<<<<<<< HEAD
     private static Log log = LogFactory.getLog(PermissionServiceImpl.class);
 
     /** a transactionally-safe cache to be injected */
@@ -131,11 +157,14 @@ public class PermissionServiceImpl implements PermissionServiceSPI, Initializing
     
     private PermissionReference allPermissionReference;
 
+=======
+>>>>>>> develop-5.1
     /**
      * Standard spring construction.
      */
     public PermissionServiceImpl()
     {
+<<<<<<< HEAD
         super();
     }
 
@@ -204,20 +233,38 @@ public class PermissionServiceImpl implements PermissionServiceSPI, Initializing
     /**
      * Set the dynamic authorities
      * 
-     * @param dynamicAuthorities
-     */
-    public void setDynamicAuthorities(List<DynamicAuthority> dynamicAuthorities)
-    {
-        this.dynamicAuthorities = dynamicAuthorities;
+=======
+        // allow construction to avoid redefining Spring beans
+        super();
     }
 
     /**
      * Set the dynamic authorities
+     *
+>>>>>>> develop-5.1
+     * @param dynamicAuthorities
+     */
+    public void setDynamicAuthorities(List<DynamicAuthority> dynamicAuthorities)
+    {
+<<<<<<< HEAD
+        this.dynamicAuthorities = dynamicAuthorities;
+=======
+        // do nothing; don't throw exception to avoid redefining Spring beans
+>>>>>>> develop-5.1
+    }
+
+    /**
+     * Set the dynamic authorities
+<<<<<<< HEAD
      * 
+=======
+     *
+>>>>>>> develop-5.1
      * @param dynamicAuthorities
      */
     public void addDynamicAuthority(DynamicAuthority dynamicAuthority)
     {
+<<<<<<< HEAD
         if (dynamicAuthorities == null) {
             dynamicAuthorities = new ArrayList<DynamicAuthority>();
         }
@@ -253,16 +300,24 @@ public class PermissionServiceImpl implements PermissionServiceSPI, Initializing
     public void setPolicyComponent(PolicyComponent policyComponent)
     {
         this.policyComponent = policyComponent;
+=======
+        throw new NotSupportedPermissionSystemException();
+>>>>>>> develop-5.1
     }
 
     /**
      * Cache clear on move node
+<<<<<<< HEAD
      * 
+=======
+     *
+>>>>>>> develop-5.1
      * @param oldChildAssocRef
      * @param newChildAssocRef
      */
     public void onMoveNode(ChildAssociationRef oldChildAssocRef, ChildAssociationRef newChildAssocRef)
     {
+<<<<<<< HEAD
         accessCache.clear();
     }
 
@@ -308,6 +363,21 @@ public class PermissionServiceImpl implements PermissionServiceSPI, Initializing
     public void init()
     {
         policyComponent.bindClassBehaviour(QName.createQName(NamespaceService.ALFRESCO_URI, "onMoveNode"), ContentModel.TYPE_BASE, new JavaBehaviour(this, "onMoveNode"));
+=======
+        throw new NotSupportedPermissionSystemException();
+    }
+
+    @Override
+    public void afterPropertiesSet() throws Exception
+    {
+        // do nothing; don't throw exception to avoid redefining Spring beans
+
+    }
+
+    public void init()
+    {
+        // do nothing; don't throw exception to avoid redefining Spring beans
+>>>>>>> develop-5.1
 
     }
 
@@ -315,6 +385,7 @@ public class PermissionServiceImpl implements PermissionServiceSPI, Initializing
     // Permissions Service
     //
 
+<<<<<<< HEAD
     public String getOwnerAuthority()
     {
         return OWNER_AUTHORITY;
@@ -569,10 +640,78 @@ public class PermissionServiceImpl implements PermissionServiceSPI, Initializing
         boolean result = AVMRepository.GetInstance().can(nodeRef.getStoreRef().getIdentifier(), version, path, permission.getName());
         AccessStatus status = result ? AccessStatus.ALLOWED : AccessStatus.DENIED;
         return status;
+=======
+    @Override
+    public String getOwnerAuthority()
+    {
+        throw new NotSupportedPermissionSystemException();
+    }
+
+    @Override
+    public String getAllAuthorities()
+    {
+        throw new NotSupportedPermissionSystemException();
+    }
+
+    @Override
+    public String getAllPermission()
+    {
+        throw new NotSupportedPermissionSystemException();
+    }
+
+    @Override
+    public Set<AccessPermission> getPermissions(NodeRef nodeRef)
+    {
+        throw new NotSupportedPermissionSystemException();
+    }
+
+    @Override
+    public Set<AccessPermission> getAllSetPermissions(NodeRef nodeRef)
+    {
+        throw new NotSupportedPermissionSystemException();
+    }
+
+    @Override
+    public Set<AccessPermission> getAllSetPermissions(StoreRef storeRef)
+    {
+        throw new NotSupportedPermissionSystemException();
+    }
+
+    @Override
+    public Set<String> getSettablePermissions(NodeRef nodeRef)
+    {
+        throw new NotSupportedPermissionSystemException();
+    }
+
+    @Override
+    public Set<String> getSettablePermissions(QName type)
+    {
+        throw new NotSupportedPermissionSystemException();
+    }
+
+    @Override
+    public NodePermissionEntry getSetPermissions(NodeRef nodeRef)
+    {
+        throw new NotSupportedPermissionSystemException();
+    }
+
+    @Override
+    public NodePermissionEntry getSetPermissions(StoreRef storeRef)
+    {
+        throw new NotSupportedPermissionSystemException();
+    }
+
+    @Override
+    public AccessStatus hasPermission(NodeRef passedNodeRef, final PermissionReference permIn)
+    {
+        throw new NotSupportedPermissionSystemException();
+
+>>>>>>> develop-5.1
     }
 
     /*
      * (non-Javadoc)
+<<<<<<< HEAD
      * 
      * @see org.alfresco.service.cmr.security.PermissionService#hasPermission(java.lang.Long, java.lang.String,
      *      java.lang.String)
@@ -694,17 +833,41 @@ public class PermissionServiceImpl implements PermissionServiceSPI, Initializing
      * 
      * @author andyh
      *
+=======
+     * @see org.alfresco.service.cmr.security.PermissionService#hasPermission(java.lang.Long, java.lang.String,
+     * java.lang.String)
+     */
+    @Override
+    public AccessStatus hasPermission(Long aclID, PermissionContext context, String permission)
+    {
+        throw new NotSupportedPermissionSystemException();
+    }
+
+    /**
+     * Control permissions cache - only used when we do old style permission evaluations
+     * - which should only be in DM stores where no permissions have been set
+     *
+     * @author andyh
+>>>>>>> develop-5.1
      */
     enum CacheType
     {
         /**
          * cache full check
          */
+<<<<<<< HEAD
         HAS_PERMISSION, 
         /**
          * Cache single permission check
          */
         SINGLE_PERMISSION, 
+=======
+        HAS_PERMISSION,
+        /**
+         * Cache single permission check
+         */
+        SINGLE_PERMISSION,
+>>>>>>> develop-5.1
         /**
          * Cache single permission check for global permission checks
          */
@@ -717,6 +880,7 @@ public class PermissionServiceImpl implements PermissionServiceSPI, Initializing
      */
     static Serializable generateKey(Set<String> auths, NodeRef nodeRef, PermissionReference perm, CacheType type)
     {
+<<<<<<< HEAD
         LinkedHashSet<Serializable> key = new LinkedHashSet<Serializable>();
         key.add(perm.toString());
         key.addAll(auths);
@@ -882,11 +1046,59 @@ public class PermissionServiceImpl implements PermissionServiceSPI, Initializing
     {
         permissionsDaoComponent.deletePermissions(tenantService.getName(nodePermissionEntry.getNodeRef()));
         accessCache.clear();
+=======
+        throw new NotSupportedPermissionSystemException();
+    }
+
+    @Override
+    public NodePermissionEntry explainPermission(NodeRef nodeRef, PermissionReference perm)
+    {
+        throw new NotSupportedPermissionSystemException();
+    }
+
+    @Override
+    public void clearPermission(StoreRef storeRef, String authority)
+    {
+        throw new NotSupportedPermissionSystemException();
+
+    }
+
+    @Override
+    public void deletePermission(StoreRef storeRef, String authority, String perm)
+    {
+        throw new NotSupportedPermissionSystemException();
+    }
+
+    @Override
+    public void deletePermissions(StoreRef storeRef)
+    {
+        throw new NotSupportedPermissionSystemException();
+
+    }
+
+    @Override
+    public void setPermission(StoreRef storeRef, String authority, String perm, boolean allow)
+    {
+        throw new NotSupportedPermissionSystemException();
+    }
+
+    @Override
+    public void deletePermissions(NodeRef nodeRef)
+    {
+        throw new NotSupportedPermissionSystemException();
+    }
+
+    @Override
+    public void deletePermissions(NodePermissionEntry nodePermissionEntry)
+    {
+        throw new NotSupportedPermissionSystemException();
+>>>>>>> develop-5.1
     }
 
     /**
      * @see #deletePermission(NodeRef, String, PermissionReference)
      */
+<<<<<<< HEAD
     public void deletePermission(PermissionEntry permissionEntry)
     {
         NodeRef nodeRef = permissionEntry.getNodeRef();
@@ -931,11 +1143,42 @@ public class PermissionServiceImpl implements PermissionServiceSPI, Initializing
     {
         permissionsDaoComponent.setInheritParentPermissions(tenantService.getName(nodeRef), inheritParentPermissions);
         accessCache.clear();
+=======
+    @Override
+    public void deletePermission(PermissionEntry permissionEntry)
+    {
+        throw new NotSupportedPermissionSystemException();
+    }
+
+    @Override
+    public void clearPermission(NodeRef nodeRef, String authority)
+    {
+        throw new NotSupportedPermissionSystemException();
+    }
+
+    @Override
+    public void setPermission(PermissionEntry permissionEntry)
+    {
+        throw new NotSupportedPermissionSystemException();
+    }
+
+    @Override
+    public void setPermission(NodePermissionEntry nodePermissionEntry)
+    {
+        throw new NotSupportedPermissionSystemException();
+    }
+
+    @Override
+    public void setInheritParentPermissions(NodeRef nodeRef, boolean inheritParentPermissions)
+    {
+        throw new NotSupportedPermissionSystemException();
+>>>>>>> develop-5.1
     }
 
     /**
      * @see org.alfresco.service.cmr.security.PermissionService#getInheritParentPermissions(org.alfresco.service.cmr.repository.NodeRef)
      */
+<<<<<<< HEAD
     public boolean getInheritParentPermissions(NodeRef nodeRef)
     {
         return permissionsDaoComponent.getInheritParentPermissions(tenantService.getName(nodeRef));
@@ -1951,5 +2194,95 @@ public class PermissionServiceImpl implements PermissionServiceSPI, Initializing
        return new NodeRef((String) properties.get(ContentModel.PROP_STORE_PROTOCOL),
                           (String) properties.get(ContentModel.PROP_STORE_IDENTIFIER),
                           (String) properties.get(ContentModel.PROP_NODE_UUID));
+=======
+    @Override
+    public boolean getInheritParentPermissions(NodeRef nodeRef)
+    {
+        throw new NotSupportedPermissionSystemException();
+    }
+
+    @Override
+    public PermissionReference getPermissionReference(QName qname, String permissionName)
+    {
+        throw new NotSupportedPermissionSystemException();
+    }
+
+    @Override
+    public PermissionReference getAllPermissionReference()
+    {
+        throw new NotSupportedPermissionSystemException();
+    }
+
+    @Override
+    public String getPermission(PermissionReference permissionReference)
+    {
+        throw new NotSupportedPermissionSystemException();
+    }
+
+    @Override
+    public PermissionReference getPermissionReference(String permissionName)
+    {
+        throw new NotSupportedPermissionSystemException();
+    }
+
+    @Override
+    public Set<PermissionReference> getSettablePermissionReferences(QName type)
+    {
+        throw new NotSupportedPermissionSystemException();
+    }
+
+    @Override
+    public Set<PermissionReference> getSettablePermissionReferences(NodeRef nodeRef)
+    {
+        throw new NotSupportedPermissionSystemException();
+    }
+
+    @Override
+    public void deletePermission(NodeRef nodeRef, String authority, String perm)
+    {
+        throw new NotSupportedPermissionSystemException();
+    }
+
+    @Override
+    public AccessStatus hasPermission(NodeRef nodeRef, String perm)
+    {
+        throw new NotSupportedPermissionSystemException();
+    }
+
+    @Override
+    public void setPermission(NodeRef nodeRef, String authority, String perm, boolean allow)
+    {
+        throw new NotSupportedPermissionSystemException();
+    }
+
+    @Override
+    public void deletePermissions(String recipient)
+    {
+        throw new NotSupportedPermissionSystemException();
+    }
+
+    @Override
+    public Map<NodeRef, Set<AccessPermission>> getAllSetPermissionsForCurrentUser()
+    {
+        throw new NotSupportedPermissionSystemException();
+    }
+
+    @Override
+    public Map<NodeRef, Set<AccessPermission>> getAllSetPermissionsForAuthority(String authority)
+    {
+        throw new NotSupportedPermissionSystemException();
+    }
+
+    @Override
+    public Set<NodeRef> findNodesByAssignedPermissionForCurrentUser(String permission, boolean allow, boolean includeContainingAuthorities, boolean exactPermissionMatch)
+    {
+        throw new NotSupportedPermissionSystemException();
+    }
+
+    @Override
+    public Set<NodeRef> findNodesByAssignedPermission(String authority, String permission, boolean allow, boolean includeContainingAuthorities, boolean includeContainingPermissions)
+    {
+        throw new NotSupportedPermissionSystemException();
+>>>>>>> develop-5.1
     }
 }

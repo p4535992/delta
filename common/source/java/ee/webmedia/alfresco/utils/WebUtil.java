@@ -1,5 +1,10 @@
 package ee.webmedia.alfresco.utils;
 
+<<<<<<< HEAD
+=======
+import static ee.webmedia.alfresco.common.web.BeanHelper.getGeneralService;
+
+>>>>>>> develop-5.1
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -11,6 +16,10 @@ import java.util.regex.Pattern;
 import javax.faces.context.FacesContext;
 import javax.faces.model.SelectItem;
 
+<<<<<<< HEAD
+=======
+import org.alfresco.service.cmr.repository.NodeRef;
+>>>>>>> develop-5.1
 import org.alfresco.web.data.IDataContainer;
 import org.alfresco.web.data.QuickSort;
 import org.apache.commons.lang.StringEscapeUtils;
@@ -19,6 +28,10 @@ import org.springframework.web.util.HtmlUtils;
 
 import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.common.web.BeanHelper;
+<<<<<<< HEAD
+=======
+import ee.webmedia.alfresco.workflow.model.RelatedUrl;
+>>>>>>> develop-5.1
 
 public class WebUtil {
     /**
@@ -46,7 +59,11 @@ public class WebUtil {
     /**
      * Replaces textual URLs with HTML hyperlinks
      * Regex from: http://daringfireball.net/2010/07/improved_regex_for_matching_urls
+<<<<<<< HEAD
      * 
+=======
+     *
+>>>>>>> develop-5.1
      * @param text
      * @return
      */
@@ -75,7 +92,11 @@ public class WebUtil {
     /**
      * Escapes all HTML except <a/> links
      * Regex from: http://www.mkyong.com/regular-expressions/how-to-extract-html-links-with-regular-expression/
+<<<<<<< HEAD
      * 
+=======
+     *
+>>>>>>> develop-5.1
      * @param text
      * @return
      */
@@ -129,6 +150,13 @@ public class WebUtil {
         return StringUtils.defaultString(input).replaceAll("(?s)<!--.*?-->", "");
     }
 
+<<<<<<< HEAD
+=======
+    public static String removeHtmlTags(String input) {
+        return StringUtils.defaultString(input).replaceAll("\\<.*?>", "");
+    }
+
+>>>>>>> develop-5.1
     public static void navigateTo(String navigationOutcome) {
         navigateTo(navigationOutcome, null);
     }
@@ -144,4 +172,22 @@ public class WebUtil {
         context.getApplication().getNavigationHandler().handleNavigation(context, null, navigationOutcome);
     }
 
+<<<<<<< HEAD
+=======
+    public static NodeRef getNodeRefFromNodeId(String currentNodeId) {
+        return StringUtils.isNotBlank(currentNodeId) ? getGeneralService().getExistingNodeRefAllStores(currentNodeId) : null;
+    }
+
+    public static void toggleSystemUrlTarget(String currentDeltaUrlPrefix, Collection<RelatedUrl> urls) {
+        if (StringUtils.isNotBlank(currentDeltaUrlPrefix)) {
+            for (RelatedUrl relatedUrl : urls) {
+                String url = relatedUrl.getUrl();
+                if (StringUtils.isNotBlank(url) && url.startsWith(currentDeltaUrlPrefix)) {
+                    relatedUrl.setTarget(RelatedUrl.TARGET_SELF);
+                }
+            }
+        }
+    }
+
+>>>>>>> develop-5.1
 }

@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 package ee.webmedia.alfresco.document.web.evaluator;
 
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentAdminService;
@@ -36,3 +37,40 @@ public class ChangeByNewDocumentEvaluator extends BaseActionEvaluator {
         throw new RuntimeException("method evaluate(obj) is unimplemented");
     }
 }
+=======
+package ee.webmedia.alfresco.document.web.evaluator;
+
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentAdminService;
+
+import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.cmr.repository.StoreRef;
+import org.alfresco.web.action.evaluator.BaseActionEvaluator;
+import org.alfresco.web.bean.repository.Node;
+
+import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
+import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel.Props;
+
+public class ChangeByNewDocumentEvaluator extends BaseActionEvaluator {
+
+    private static final long serialVersionUID = 1L;
+
+    @Override
+    public boolean evaluate(Node node) {
+        return node.getNodeRef().getStoreRef().getProtocol().equals(StoreRef.PROTOCOL_WORKSPACE)
+                && new ViewStateActionEvaluator().evaluate(node)
+                && new DocumentNotInDraftsFunctionActionEvaluator().evaluate(node)
+                && new IsAdminOrDocManagerEvaluator().evaluate(node) && isChangeByNewDocumentEnabled(node);
+    }
+
+    private boolean isChangeByNewDocumentEnabled(Node node) {
+        String docTypeId = (String) node.getProperties().get(Props.OBJECT_TYPE_ID);
+        NodeRef docTypeRef = getDocumentAdminService().getDocumentTypeRef(docTypeId);
+        return docTypeRef != null && getDocumentAdminService().getDocumentTypeProperty(docTypeId, DocumentAdminModel.Props.CHANGE_BY_NEW_DOCUMENT_ENABLED, Boolean.class);
+    }
+
+    @Override
+    public boolean evaluate(Object obj) {
+        throw new RuntimeException("method evaluate(obj) is unimplemented");
+    }
+}
+>>>>>>> develop-5.1

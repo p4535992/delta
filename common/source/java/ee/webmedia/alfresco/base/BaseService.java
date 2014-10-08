@@ -9,9 +9,12 @@ import org.alfresco.service.namespace.QNamePattern;
 import ee.webmedia.alfresco.utils.Predicate;
 import ee.webmedia.alfresco.utils.RepoUtil;
 
+<<<<<<< HEAD
 /**
  * @author Alar Kvell
  */
+=======
+>>>>>>> develop-5.1
 public interface BaseService {
 
     String BEAN_NAME = "BaseService";

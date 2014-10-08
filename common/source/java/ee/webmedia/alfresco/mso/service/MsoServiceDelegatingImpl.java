@@ -10,9 +10,12 @@ import org.springframework.beans.factory.InitializingBean;
 import ee.webmedia.alfresco.monitoring.MonitoredService;
 import ee.webmedia.alfresco.monitoring.MonitoringUtil;
 
+<<<<<<< HEAD
 /**
  * @author Alar Kvell
  */
+=======
+>>>>>>> develop-5.1
 public class MsoServiceDelegatingImpl implements MsoService, InitializingBean {
 
     private MsoService delegate;
@@ -86,10 +89,18 @@ public class MsoServiceDelegatingImpl implements MsoService, InitializingBean {
     }
 
     @Override
+<<<<<<< HEAD
     public void replaceFormulas(Map<String, String> formulas, ContentReader documentReader, ContentWriter documentWriter) throws Exception {
         try {
             delegate.replaceFormulas(formulas, documentReader, documentWriter);
             MonitoringUtil.logSuccess(MonitoredService.OUT_MSO);
+=======
+    public boolean replaceFormulas(Map<String, String> formulas, ContentReader documentReader, ContentWriter documentWriter, boolean dontSaveIfUnmodified) throws Exception {
+        try {
+            boolean fileActuallyChanged = delegate.replaceFormulas(formulas, documentReader, documentWriter, dontSaveIfUnmodified);
+            MonitoringUtil.logSuccess(MonitoredService.OUT_MSO);
+            return fileActuallyChanged;
+>>>>>>> develop-5.1
         } catch (Exception e) {
             MonitoringUtil.logError(MonitoredService.OUT_MSO, e);
             throw e;

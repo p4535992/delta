@@ -26,8 +26,11 @@ import ee.webmedia.alfresco.utils.SearchUtil;
 
 /**
  * Fixes encoding on HTML files (CL task 196507)
+<<<<<<< HEAD
  * 
  * @author Alar Kvell
+=======
+>>>>>>> develop-5.1
  */
 public class FileEncodingUpdater extends AbstractNodeUpdater {
 
