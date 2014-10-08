@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 import org.alfresco.repo.content.MimetypeMap;
+import org.alfresco.service.cmr.model.FileInfo;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.util.Pair;
 import org.apache.commons.io.FilenameUtils;
@@ -18,8 +19,6 @@ import org.apache.commons.lang.StringUtils;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.workflow.service.Task;
 import ee.webmedia.alfresco.workflow.service.WorkflowDbService;
-import ee.webmedia.xtee.client.dhl.types.ee.sk.digiDoc.v13.DataFileType;
-import org.apache.xmlbeans.XmlObject;
 
 /**
  * Helps to strip illegal characters from filenames
@@ -27,6 +26,8 @@ import org.apache.xmlbeans.XmlObject;
 public class FilenameUtil {
 
     public static final String ERR_INVALID_FILE_NAME = "add_file_invalid_file_name";
+    public static final String DDOC_EXTENSION = ".ddoc";
+    public static final String BDOC_EXTENSION = ".bdoc";
 
     private static final int FILE_MAX_LENGTH = 50;
     private static final int FILE_EXTENSION_MAX_LENGTH = FILE_MAX_LENGTH - 7;
@@ -104,7 +105,7 @@ public class FilenameUtil {
 
     /**
      * Shortens the given filename by taking first part that fits in limit and inserts the marker between base name and extension
-     * 
+     *
      * @param filename name to shorten
      * @return shortened filename or <code>null</code> if given name is <code>null</code>
      */
@@ -129,11 +130,11 @@ public class FilenameUtil {
     private static String makeSafeFilename(String name, List<String> existingFileNames) {
         String safeName = limitFileNameLength(
                 replaceNonAsciiCharacters(
-                removeAccents(
-                replaceAmpersand(
-                trimDotsAndSpaces(
-                stripForbiddenWindowsCharacters(
-                name))))));
+                        removeAccents(
+                                replaceAmpersand(
+                                        trimDotsAndSpaces(
+                                                stripForbiddenWindowsCharacters(
+                                                        name))))));
 
         if (existingFileNames != null && !existingFileNames.isEmpty()) {
             safeName = generateUniqueFileDisplayName(safeName, existingFileNames);
@@ -152,8 +153,8 @@ public class FilenameUtil {
             GeneralService generalService, WorkflowDbService workflowDbService) {
         displayName = generateUniqueFileDisplayName(displayName, existingDisplayNames);
         String name = generalService.getUniqueFileName(makeSafeFilename(displayName),
-                workflowDbService.getTaskFileNodeRefs(task.getNodeRef()), task.getParent().getNodeRef());
-        return new Pair<String, String>(name, displayName);
+                workflowDbService.getTaskFileNodeRefs(task.getNodeRef()), task.getWorkflowNodeRef());
+        return new Pair<>(name, displayName);
     }
 
     public static String getDiplayNameFromName(String originalFileName) {
@@ -188,8 +189,17 @@ public class FilenameUtil {
         return fileName.toLowerCase().endsWith(".cdoc");
     }
 
+    public static boolean isBdocFile(String fileName) {
+        return fileName.toLowerCase().endsWith(BDOC_EXTENSION);
+    }
+
     public static boolean isDigiDocFile(String fileName) {
-        return fileName.toLowerCase().endsWith(".ddoc");
+        String lowerCase = fileName.toLowerCase();
+        return lowerCase.endsWith(DDOC_EXTENSION) || lowerCase.endsWith(BDOC_EXTENSION);
+    }
+
+    public static boolean isDigiDocContainerFile(FileInfo fileInfo) {
+        return FilenameUtil.isDigiDocFile(fileInfo.getName()) && !fileInfo.isFolder();
     }
 
 }

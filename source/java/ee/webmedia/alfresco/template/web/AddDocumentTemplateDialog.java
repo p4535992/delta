@@ -139,7 +139,7 @@ public class AddDocumentTemplateDialog extends AddContentDialog {
         checkPlusInFileName(newName);
         try {
             setFileName(newName);
-            navigator.setCurrentNodeId(BeanHelper.getDocumentTemplateService().getRoot().getId());
+            navigator.setCurrentNodeId(BeanHelper.getConstantNodeRefsBean().getTemplateRoot().getId());
             saveContent(file, null);
         } catch (FileExistsException e) {
             isFinished = false;

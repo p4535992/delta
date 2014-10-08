@@ -19,7 +19,7 @@
       <property name="interceptorNames" ref="commonInterceptorsList" />
    </bean>
 
-   <bean class="org.alfresco.web.app.ResourceBundleBootstrap">
+   <bean id="baseResourceBundles" class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
       <property name="resourceBundles">
          <list>
             <value>ee/webmedia/alfresco/base/web/base-webclient</value>

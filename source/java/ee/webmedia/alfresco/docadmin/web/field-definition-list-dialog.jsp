@@ -63,7 +63,7 @@
          </h:inputText>
       </a:column>
 
-      <a:column id="volTypesCol" rendered="#{VolumeService.caseVolumeEnabled}">
+      <a:column id="volTypesCol" rendered="#{applicationConstantsBean.caseVolumeEnabled}">
          <f:facet name="header">
             <a:outputText value="#{msg.fieldDefinitions_list_volTypes}" />
          </f:facet>

@@ -93,7 +93,7 @@
       </property>
    </bean>
    
-    <!-- The person service.  Added property personPropertiesCache  -->
+    <!-- The person service.  Added property personNodesCache  -->
 
     <bean id="personService" class="org.alfresco.repo.security.person.PersonServiceImpl" init-method="init">
         <property name="transactionService">
@@ -126,12 +126,10 @@
         <property name="personCache">
             <ref bean="personCache" />
         </property>
-        <property name="personPropertiesCache" ref="personPropertiesCache" />        
+        <property name="personNodesCache" ref="personNodesCache" />        
+        <property name="bulkLoadNodeService" ref="BulkLoadNodeService" />
         <property name="personDao">
             <ref bean="personDaoImpl" />
-        </property>
-        <property name="permissionsManager">
-            <ref bean="personServicePermissionsManager" />
         </property>
         <!-- Configurable properties.                                 -->
         <!--                                                          -->
@@ -175,5 +173,28 @@
              <ref bean="homeFolderManager" />
         </property>
     </bean>   
+    
+   <bean id="nodeRefPropertyInterceptor" class="org.alfresco.repo.node.NodeRefPropertyMethodInterceptor" init-method="init">
+      <property name="nodeService">
+         <ref bean="mlAwareNodeService" />
+      </property>
+      <property name="dictionaryService">
+         <ref bean="dictionaryService" />
+      </property>
+      <property name="filterOnGet" value="false" />
+   </bean>   
+   
+    <bean id="dataSource" class="org.springframework.jdbc.datasource.LazyConnectionDataSourceProxy">
+        <constructor-arg ref="eagerDataSource"/>
+    </bean>
+
+    <bean id="eagerDataSource" class="org.alfresco.config.JndiObjectFactoryBean">
+        <property name="jndiName">
+            <value>java:comp/env/jdbc/dataSource</value>
+        </property>
+        <property name="defaultObject">
+            <ref bean="defaultDataSource" />
+        </property>
+    </bean>    
 
 </beans>

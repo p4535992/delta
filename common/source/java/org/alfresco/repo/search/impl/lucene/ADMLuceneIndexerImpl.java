@@ -664,6 +664,7 @@ public class ADMLuceneIndexerImpl extends AbstractLuceneIndexerImpl<NodeRef> imp
         List<Document> docs = new ArrayList<Document>();
         ChildAssociationRef qNameRef = null;
         Map<QName, Serializable> properties = nodeService.getProperties(nodeRef);
+        boolean indexContent = !Boolean.TRUE.equals(properties.get(ContentModel.PROP_CONTENT_NOT_INDEXED));
         QName typeQName = nodeService.getType(nodeRef);
 
         List<String> values = new ArrayList<String>(properties.size());
@@ -694,11 +695,11 @@ public class ADMLuceneIndexerImpl extends AbstractLuceneIndexerImpl<NodeRef> imp
             
             if (indexAllProperties)
             {
-                indexProperty(nodeRef, propertyName, value, xdoc, false);
+                indexProperty(nodeRef, propertyName, value, xdoc, false, indexContent);
             }
             else
             {
-                isAtomic &= indexProperty(nodeRef, propertyName, value, xdoc, true);
+                isAtomic &= indexProperty(nodeRef, propertyName, value, xdoc, true, indexContent);
             }
         }
 
@@ -928,7 +929,7 @@ public class ADMLuceneIndexerImpl extends AbstractLuceneIndexerImpl<NodeRef> imp
      *            true to ignore all properties that must be indexed non-atomically
      * @return Returns true if the property was indexed atomically, or false if it should be done asynchronously
      */
-    protected boolean indexProperty(NodeRef nodeRef, QName propertyName, Serializable value, Document doc, boolean indexAtomicPropertiesOnly)
+    protected boolean indexProperty(NodeRef nodeRef, QName propertyName, Serializable value, Document doc, boolean indexAtomicPropertiesOnly, boolean indexContent)
     {
         String attributeName = "@" + QName.createQName(propertyName.getNamespaceURI(), ISO9075.encode(propertyName.getLocalName()));
 
@@ -996,6 +997,9 @@ public class ADMLuceneIndexerImpl extends AbstractLuceneIndexerImpl<NodeRef> imp
 
             if (isContent)
             {
+                if (!indexContent){
+                    continue;
+                }
                 // Content is always tokenised
 
                 ContentData contentData = DefaultTypeConverter.INSTANCE.convert(ContentData.class, serializableValue);

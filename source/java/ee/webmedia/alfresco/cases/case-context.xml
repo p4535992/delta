@@ -10,7 +10,7 @@
       </property>
    </bean>
    
-   <bean id="caseBundleBootstrap" class="org.alfresco.web.app.ResourceBundleBootstrap">
+   <bean id="caseBundleBootstrap" class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
       <property name="resourceBundles">
          <list>
             <value>ee.webmedia.alfresco.cases.web.case-webclient</value>
@@ -32,6 +32,7 @@
       <property name="generalService" ref="GeneralService" />
       <property name="logService" ref="LogService" />
       <property name="userService" ref="UserService" />
+      <property name="caseCache" ref="caseCache" />
    </bean>
 
    <bean id="CaseService" class="org.springframework.aop.framework.ProxyFactoryBean">

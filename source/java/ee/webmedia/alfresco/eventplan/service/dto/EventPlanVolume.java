@@ -31,7 +31,7 @@ public class EventPlanVolume implements Serializable, Comparable<EventPlanVolume
     private final boolean dynamic;
 
     public EventPlanVolume(NodeRef nodeRef, NodeRef seriesRef, NodeRef functionRef, String volumeMark, String title, Date validFrom,
-                           Date validTo, String status, String volumeType, String ownerName, String location, String series, String function, boolean dynamic) {
+            Date validTo, String status, String volumeType, String ownerName, String location, String series, String function, boolean dynamic) {
         this.nodeRef = nodeRef;
         this.seriesRef = seriesRef;
         this.functionRef = functionRef;
@@ -125,13 +125,13 @@ public class EventPlanVolume implements Serializable, Comparable<EventPlanVolume
             public Object transform(Object input) {
                 return ((EventPlanVolume) input).getVolumeMark();
             }
-        }, new NullComparator(AppConstants.DEFAULT_COLLATOR)));
+        }, new NullComparator(AppConstants.getNewCollatorInstance())));
         chain.addComparator(new TransformingComparator(new Transformer() {
             @Override
             public Object transform(Object input) {
                 return ((EventPlanVolume) input).getTitle();
             }
-        }, new NullComparator(AppConstants.DEFAULT_COLLATOR)));
+        }, new NullComparator(AppConstants.getNewCollatorInstance())));
         COMPARATOR = chain;
     }
 

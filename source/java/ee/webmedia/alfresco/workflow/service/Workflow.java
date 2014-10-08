@@ -16,6 +16,7 @@ import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 
 public class Workflow extends BaseWorkflowObject implements Serializable {
     private static final long serialVersionUID = 1L;
+    private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(BaseWorkflowObject.class);
 
     private final CompoundWorkflow parent;
     private final List<Task> tasks = new ArrayList<Task>();
@@ -205,7 +206,7 @@ public class Workflow extends BaseWorkflowObject implements Serializable {
 
     public boolean isSignTogether() {
         String signingTypeStr = getSigningTypeStr();
-        return StringUtils.isBlank(signingTypeStr) ? false : SigningType.SIGN_TOGETHER == SigningType.valueOf(signingTypeStr);
+        return WorkflowUtil.isSignTogetherType(signingTypeStr);
     }
 
     public SigningType getSigningType() {
@@ -219,8 +220,11 @@ public class Workflow extends BaseWorkflowObject implements Serializable {
 
     @Override
     protected String additionalToString() {
-        return "\n  parent=" + WmNode.toString(getParent()) + "\n  tasks=" + WmNode.toString(getTasks()) + "\n  removedTasks="
-                + WmNode.toString(getRemovedTasks());
+        if (LOG.isTraceEnabled()) {
+            return "\n  parent=" + WmNode.toString(getParent()) + "\n  tasks=" + WmNode.toString(getTasks()) + "\n  removedTasks="
+                    + WmNode.toString(getRemovedTasks());
+        }
+        return "";
     }
 
     @Override

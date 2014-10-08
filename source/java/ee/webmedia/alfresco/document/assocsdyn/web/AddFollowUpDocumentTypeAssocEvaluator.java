@@ -7,7 +7,6 @@ import org.alfresco.web.bean.repository.Node;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docadmin.service.AssociationModel;
 import ee.webmedia.alfresco.docadmin.service.DocumentType;
-import ee.webmedia.alfresco.document.web.evaluator.DocumentNotInDraftsFunctionActionEvaluator;
 
 public abstract class AddFollowUpDocumentTypeAssocEvaluator extends AddFollowUpAssocEvaluator {
     private static final long serialVersionUID = 1L;
@@ -24,14 +23,26 @@ public abstract class AddFollowUpDocumentTypeAssocEvaluator extends AddFollowUpA
         if (!result) {
             return false;
         }
-        if (!new DocumentNotInDraftsFunctionActionEvaluator().evaluate(docNode)) {
-            return false;
-        }
         DocumentType documentType = BeanHelper.getDocumentDynamicDialog().getDocumentType();
         List<? extends AssociationModel> associationModels = documentType.getAssociationModels(assocType);
         for (AssociationModel associationModel : associationModels) {
             if (documentTypeId.equals(associationModel.getDocType())) {
                 return true;
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public boolean evaluate() {
+        if (super.evaluate()) {
+            DocumentType documentType = BeanHelper.getDocumentDynamicDialog().getDocumentType();
+            List<? extends AssociationModel> associationModels = documentType.getAssociationModels(assocType);
+            for (AssociationModel associationModel : associationModels) {
+                String docType = associationModel.getDocType();
+                if (documentTypeId.equals(docType)) {
+                    return true;
+                }
             }
         }
         return false;

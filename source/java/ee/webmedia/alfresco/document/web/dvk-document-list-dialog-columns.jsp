@@ -2,6 +2,7 @@
 <%@ taglib uri="http://java.sun.com/jsf/core" prefix="f"%>
 <%@ taglib uri="/WEB-INF/alfresco.tld" prefix="a"%>
 <%@ taglib uri="/WEB-INF/repo.tld" prefix="r"%>
+<%@ taglib uri="/WEB-INF/wm.tld" prefix="wm"%>
 
 <%@ page buffer="32kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
@@ -9,7 +10,7 @@
       <%-- Received DateTime --%>
       <a:column id="col1" primary="true" styleClass="#{r.cssStyleClass}" >
          <f:facet name="header">
-            <a:sortLink id="col1-sort" label="#{msg.document_receivedDateTime}" value="created" styleClass="header" />
+            <a:sortLink id="col1-sort" label="#{msg.document_receivedDateTime}" value="properties;cm:created" styleClass="header" />
          </f:facet>
          <a:actionLink id="col1-text" value="#{r.createdDateTimeStr}" action="#{DocumentDialog.action}" tooltip="#{r.createdDateTimeStr}" styleClass="no-underline"
           actionListener="#{DocumentDialog.open}" >
@@ -90,46 +91,7 @@
           <f:facet name="csvExport">
               <a:param value="false"/>
           </f:facet>
-         <r:permissionEvaluator value="#{r.files[0].node}" allow="viewDocumentFiles">
-            <a:actionLink id="col10-act1" value="#{r.files[0].name}" href="#{r.files[0].readOnlyUrl}" target="_blank" showLink="false"
-               image="/images/icons/#{r.files[0].digiDocContainer ? 'ddoc_sign_small.gif' : 'attachment.gif'}" styleClass="inlineAction" />
-         </r:permissionEvaluator>
-         <r:permissionEvaluator value="#{r.files[0].node}" deny="viewDocumentFiles">
-            <h:graphicImage value="/images/icons/#{r.files[0].digiDocContainer ? 'ddoc_sign_small.gif' : 'attachment.gif'}" alt="#{r.files[0].name}"
-               title="#{r.files[0].name}" rendered="#{r.files[0] != null}" />
-         </r:permissionEvaluator>
-         <r:permissionEvaluator value="#{r.files[1].node}" allow="viewDocumentFiles">
-            <a:actionLink id="col10-act2" value="#{r.files[1].name}" href="#{r.files[1].readOnlyUrl}" target="_blank" showLink="false"
-               image="/images/icons/#{r.files[1].digiDocContainer ? 'ddoc_sign_small.gif' : 'attachment.gif'}" styleClass="inlineAction" />
-         </r:permissionEvaluator>
-         <r:permissionEvaluator value="#{r.files[1].node}" deny="viewDocumentFiles">
-            <h:graphicImage value="/images/icons/#{r.files[1].digiDocContainer ? 'ddoc_sign_small.gif' : 'attachment.gif'}" alt="#{r.files[1].name}"
-               title="#{r.files[1].name}" rendered="#{r.files[1] != null}" />
-         </r:permissionEvaluator>
-         <r:permissionEvaluator value="#{r.files[2].node}" allow="viewDocumentFiles">
-            <a:actionLink id="col10-act3" value="#{r.files[2].name}" href="#{r.files[2].readOnlyUrl}" target="_blank" showLink="false"
-               image="/images/icons/#{r.files[2].digiDocContainer ? 'ddoc_sign_small.gif' : 'attachment.gif'}" styleClass="inlineAction" />
-         </r:permissionEvaluator>
-         <r:permissionEvaluator value="#{r.files[2].node}" deny="viewDocumentFiles">
-            <h:graphicImage value="/images/icons/#{r.files[2].digiDocContainer ? 'ddoc_sign_small.gif' : 'attachment.gif'}" alt="#{r.files[2].name}"
-               title="#{r.files[2].name}" rendered="#{r.files[2] != null}" />
-         </r:permissionEvaluator>
-         <r:permissionEvaluator value="#{r.files[3].node}" allow="viewDocumentFiles">
-            <a:actionLink id="col10-act4" value="#{r.files[3].name}" href="#{r.files[3].readOnlyUrl}" target="_blank" showLink="false"
-               image="/images/icons/#{r.files[3].digiDocContainer ? 'ddoc_sign_small.gif' : 'attachment.gif'}" styleClass="inlineAction" />
-         </r:permissionEvaluator>
-         <r:permissionEvaluator value="#{r.files[3].node}" deny="viewDocumentFiles">
-            <h:graphicImage value="/images/icons/#{r.files[3].digiDocContainer ? 'ddoc_sign_small.gif' : 'attachment.gif'}" alt="#{r.files[3].name}"
-               title="#{r.files[3].name}" rendered="#{r.files[3] != null}" />
-         </r:permissionEvaluator>
-         <r:permissionEvaluator value="#{r.files[4].node}" allow="viewDocumentFiles">
-            <a:actionLink id="col10-act5" value="#{r.files[4].name}" href="#{r.files[4].readOnlyUrl}" target="_blank" showLink="false"
-               image="/images/icons/#{r.files[4].digiDocContainer ? 'ddoc_sign_small.gif' : 'attachment.gif'}" styleClass="inlineAction" />
-         </r:permissionEvaluator>
-         <r:permissionEvaluator value="#{r.files[4].node}" deny="viewDocumentFiles">
-            <h:graphicImage value="/images/icons/#{r.files[4].digiDocContainer ? 'ddoc_sign_small.gif' : 'attachment.gif'}" alt="#{r.files[4].name}"
-               title="#{r.files[4].name}" rendered="#{r.files[4] != null}" />
-         </r:permissionEvaluator>
+		  <wm:customChildrenContainer id="document-imap-list-files" childGenerator="#{DocumentListDialog.documentRowFileGenerator}" parameterList="#{r}"/>
       </a:column>
       
       <%-- Actions column --%>

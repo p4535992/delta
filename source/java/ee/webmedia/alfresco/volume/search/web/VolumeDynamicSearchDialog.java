@@ -38,7 +38,7 @@ import ee.webmedia.alfresco.common.propertysheet.component.WMUIProperty;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docadmin.service.CaseFileType;
 import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
-import ee.webmedia.alfresco.docadmin.service.FieldDefinition;
+import ee.webmedia.alfresco.docadmin.service.UnmodifiableFieldDefinition;
 import ee.webmedia.alfresco.docconfig.generator.DialogDataProvider;
 import ee.webmedia.alfresco.docconfig.generator.PropertySheetStateHolder;
 import ee.webmedia.alfresco.docconfig.generator.systematic.DocumentLocationGenerator.DocumentLocationState;
@@ -53,6 +53,8 @@ import ee.webmedia.alfresco.volume.search.service.VolumeSearchFilterService;
 
 public class VolumeDynamicSearchDialog extends AbstractSearchFilterBlockBean<VolumeSearchFilterService> implements DialogDataProvider {
     private static final long serialVersionUID = 1L;
+
+    public static final String BEAN_NAME = "VolumeDynamicSearchDialog";
 
     private static final Log LOG = LogFactory.getLog(VolumeDynamicSearchDialog.class);
     private static final List<String> defaultCheckedFields = Arrays.asList(
@@ -102,6 +104,14 @@ public class VolumeDynamicSearchDialog extends AbstractSearchFilterBlockBean<Vol
     }
 
     @Override
+    public void clean() {
+        stores = null;
+        caseFileTypes = null;
+        config = null;
+        super.clean();
+    }
+
+    @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
         // don't call reset, because we don't close this dialog
         isFinished = false;
@@ -137,7 +147,7 @@ public class VolumeDynamicSearchDialog extends AbstractSearchFilterBlockBean<Vol
             for (QName removedProp : removedProps) {
                 filter.getProperties().remove(removedProp.toString() + WMUIProperty.AFTER_LABEL_BOOLEAN);
             }
-            List<FieldDefinition> searchableVolumeFieldDefinitions = BeanHelper.getDocumentAdminService().getSearchableVolumeFieldDefinitions();
+            List<UnmodifiableFieldDefinition> searchableVolumeFieldDefinitions = BeanHelper.getDocumentAdminService().getSearchableVolumeFieldDefinitions();
             searchableVolumeFieldDefinitions.add(createThesaurusField());
             setFilterDefaultValues(filter, searchableVolumeFieldDefinitions, defaultCheckedFields);
         }
@@ -192,7 +202,7 @@ public class VolumeDynamicSearchDialog extends AbstractSearchFilterBlockBean<Vol
             Map<QName, Serializable> data = getMandatoryProps();
             TransientNode transientNode = new TransientNode(getFilterType(), null, data);
             transientNode.getProperties().put(VolumeSearchModel.Props.CASE_FILE_TYPE.toString() + WMUIProperty.AFTER_LABEL_BOOLEAN, Boolean.TRUE);
-            List<FieldDefinition> searchableVolumeFieldDefinitions = BeanHelper.getDocumentAdminService().getSearchableVolumeFieldDefinitions();
+            List<UnmodifiableFieldDefinition> searchableVolumeFieldDefinitions = BeanHelper.getDocumentAdminService().getSearchableVolumeFieldDefinitions();
             searchableVolumeFieldDefinitions.add(createThesaurusField());
             setFilterDefaultValues(transientNode, searchableVolumeFieldDefinitions, defaultCheckedFields);
             return transientNode;

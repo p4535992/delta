@@ -1,14 +1,20 @@
 package ee.webmedia.alfresco.volume.job;
 
 import java.io.Serializable;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.namespace.QName;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeConstants;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 import org.quartz.StatefulJob;
@@ -17,21 +23,26 @@ import ee.webmedia.alfresco.archivals.model.ArchivalsModel;
 import ee.webmedia.alfresco.archivals.model.ArchiveJobStatus;
 import ee.webmedia.alfresco.archivals.service.ArchivalsService;
 import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.parameters.model.Parameters;
+import ee.webmedia.alfresco.parameters.service.ParametersService;
 
 public class ExecuteArchiveJob implements StatefulJob {
 
     private static final Log LOG = LogFactory.getLog(ExecuteArchiveJob.class);
-    ArchivalsService archivalsService;
-    NodeService nodeService;
+    private final SimpleDateFormat ARCHIVING_TIME_FORMAT = new SimpleDateFormat("hh:mm");
+    private ArchivalsService archivalsService;
+    private NodeService nodeService;
+    private ParametersService parametersService;
 
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
         LOG.debug("Starting ExecuteArchiveJob");
-        setServices(context);
+        setServices();
 
-        while (!archivalsService.isArchivingPaused()) {
+        while (!archivalsService.isArchivingPaused() && isArchivingAllowed()) {
             List<NodeRef> jobList = archivalsService.getAllInQueueJobs();
             if (jobList.isEmpty()) {
+                archivalsService.resetManualActions();
                 break;
             }
             NodeRef archivingJobRef = jobList.get(0);
@@ -70,9 +81,64 @@ public class ExecuteArchiveJob implements StatefulJob {
         }
     }
 
-    private void setServices(JobExecutionContext context) {
+    private boolean isArchivingAllowed() {
+        boolean allowedNow = isArchivingAllowedAtThisTime();
+
+        if (allowedNow) {
+            archivalsService.resetManualActions();
+            return true;
+        }
+
+        if (!allowedNow && archivalsService.isArchivingContinuedManually()) {
+            return true;
+        }
+
+        return allowedNow;
+    }
+
+    private boolean isArchivingAllowedAtThisTime() {
+        DateTime now = new DateTime();
+        if (Boolean.valueOf(parametersService.getStringParameter(Parameters.CONTINUE_ARCIVING_OVER_WEEKEND))) {
+            int weekDay = now.getDayOfWeek();
+            if (DateTimeConstants.SATURDAY == weekDay || DateTimeConstants.SUNDAY == weekDay) {
+                return true;
+            }
+        }
+        String beginTimeStr = StringUtils.deleteWhitespace(parametersService.getStringParameter(Parameters.ARCHIVING_BEGIN_TIME));
+        String endTimeStr = StringUtils.deleteWhitespace(parametersService.getStringParameter(Parameters.ARCHIVING_END_TIME));
+        if (StringUtils.isBlank(beginTimeStr) || StringUtils.isBlank(endTimeStr)) {
+            return true;
+        }
+        DateTime beginTime;
+        DateTime endTime;
+        try {
+            beginTime = getDateTime(now, beginTimeStr);
+            endTime = getDateTime(now, endTimeStr);
+            if (beginTime.isAfter(endTime)) {
+                endTime = endTime.plusDays(1);
+            }
+        } catch (ParseException e) {
+            LOG.warn("Unable to parse " + Parameters.ARCHIVING_BEGIN_TIME.getParameterName() + " (value=" + beginTimeStr + ") or "
+                    + Parameters.ARCHIVING_END_TIME.getParameterName() + " (value=" + endTimeStr + "), continuing archiving. " +
+                    "Required format is " + ARCHIVING_TIME_FORMAT.toPattern());
+            return true;
+        }
+        if (beginTime.isBefore(now) && endTime.isAfter(now)) {
+            return true;
+        }
+        return false;
+    }
+
+    private DateTime getDateTime(DateTime now, String timeString) throws ParseException {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(ARCHIVING_TIME_FORMAT.parse(timeString));
+        return new DateTime(now.getYear(), now.getMonthOfYear(), now.getDayOfMonth(), calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE), 0, 0);
+    }
+
+    private void setServices() {
         archivalsService = BeanHelper.getArchivalsService();
         nodeService = BeanHelper.getNodeService();
+        parametersService = BeanHelper.getParametersService();
     }
 
 }

@@ -699,9 +699,6 @@ public class JspStateManagerImpl
             while (_keys.size() > views) {
                 key = _keys.remove(0);
                 Object oldView = _serializedViews.remove(key);
-                if (oldView != null) {
-                    getOldSerializedViewsMap().put(key, oldView);
-                }
             }
         }
 

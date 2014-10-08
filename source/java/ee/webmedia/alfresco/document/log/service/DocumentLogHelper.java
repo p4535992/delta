@@ -153,7 +153,8 @@ public class DocumentLogHelper {
         }
         WmNode docNode = BeanHelper.getCaseFileService().getCaseFile(docRef).getNode();
         Pair<String, Integer> typeAndVersion = DocAdminUtil.getDocTypeIdAndVersionNr(docNode);
-        DocumentTypeVersion docTypeVersion = BeanHelper.getDocumentAdminService().getCaseFileTypeAndVersion(typeAndVersion.getFirst(), typeAndVersion.getSecond()).getSecond();
+        DocumentTypeVersion docTypeVersion = BeanHelper.getDocumentAdminService()
+                .getCaseFileTypeAndVersion(typeAndVersion.getFirst(), typeAndVersion.getSecond(), false).getSecond();
         List<Field> fields = docTypeVersion.getFieldsDeeply();
 
         Map<QName, Field> docTypeProps = new LinkedHashMap<QName, Field>(fields.size(), 1);

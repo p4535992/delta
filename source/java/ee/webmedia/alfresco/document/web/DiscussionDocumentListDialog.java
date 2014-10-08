@@ -3,6 +3,7 @@ package ee.webmedia.alfresco.document.web;
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
+import ee.webmedia.alfresco.document.search.web.DocumentListDataProvider;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
@@ -11,6 +12,8 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 public class DiscussionDocumentListDialog extends BaseDocumentListDialog {
     private static final long serialVersionUID = 1L;
 
+    public static final String BEAN_NAME = "DiscussionDocumentListDialog";
+
     /** @param event */
     public void setup(ActionEvent event) {
         restored();
@@ -18,7 +21,7 @@ public class DiscussionDocumentListDialog extends BaseDocumentListDialog {
 
     @Override
     public void restored() {
-        documents = getDocumentSearchService().searchDiscussionDocuments();
+        documentProvider = new DocumentListDataProvider(getDocumentSearchService().searchDiscussionDocuments(), true, DOC_PROPS_TO_LOAD);
     }
 
     @Override

@@ -12,12 +12,12 @@ import javax.faces.event.ActionEvent;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.app.AlfrescoNavigationHandler;
 
-import ee.webmedia.alfresco.cases.model.Case;
+import ee.webmedia.alfresco.cases.service.UnmodifiableCase;
 import ee.webmedia.alfresco.classificator.enums.VolumeType;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docdynamic.web.DocumentDynamicDialog;
 import ee.webmedia.alfresco.document.associations.web.AssocsBlockBean;
-import ee.webmedia.alfresco.document.model.Document;
+import ee.webmedia.alfresco.document.search.web.DocumentListDataProvider;
 import ee.webmedia.alfresco.document.web.DocumentListDialog;
 import ee.webmedia.alfresco.log.model.LogEntry;
 import ee.webmedia.alfresco.log.model.LogObject;
@@ -34,11 +34,11 @@ import ee.webmedia.alfresco.volume.web.VolumeListDialog;
 public class CaseDocumentListDialog extends DocumentListDialog {
     private static final long serialVersionUID = 1L;
 
-    @SuppressWarnings("hiding")
     public static final String BEAN_NAME = "CaseDocumentListDialog";
+    public static final String DIALOG_NAME = "CaseDocListDialog";
 
     private Volume parent;
-    private List<Case> cases;
+    private List<UnmodifiableCase> cases;
     private boolean volumeRefInvalid;
 
     @Override
@@ -48,6 +48,7 @@ public class CaseDocumentListDialog extends DocumentListDialog {
         WebUtil.navigateTo(AlfrescoNavigationHandler.DIALOG_PREFIX + "caseDocListDialog");
     }
 
+    @Override
     public String action() {
         String dialogPrefix = AlfrescoNavigationHandler.DIALOG_PREFIX;
         boolean tempState = volumeRefInvalid;
@@ -115,7 +116,7 @@ public class CaseDocumentListDialog extends DocumentListDialog {
     }
 
     private void showAll(NodeRef volumeRef) {
-        parent = getVolumeService().getVolumeByNodeRef(volumeRef);
+        parent = getVolumeService().getVolumeByNodeRef(volumeRef, null);
         getLogService().addLogEntry(LogEntry.create(LogObject.VOLUME, getUserService(), volumeRef, "applog_space_open", parent.getVolumeMark(), parent.getTitle()));
         if (parent != null) {
             AssocsBlockBean assocsBlockBean = BeanHelper.getAssocsBlockBean();
@@ -124,22 +125,34 @@ public class CaseDocumentListDialog extends DocumentListDialog {
         }
     }
 
-    public List<Case> getCases() {
-        // Reload every time
-        if (parent != null) {
-            cases = getCaseService().getAllCasesByVolume(parent.getNode().getNodeRef());
-        } else {
-            cases = new ArrayList<Case>();
+    public List<UnmodifiableCase> getCases() {
+        if (cases == null) {
+            if (parent != null) {
+                cases = getCaseService().getAllCasesByVolume(parent.getNode().getNodeRef());
+            } else {
+                cases = new ArrayList<UnmodifiableCase>();
+            }
         }
         return cases;
     }
 
     @Override
-    public List<Document> getDocuments() {
-        if (documents == null) {
-            documents = new ArrayList<Document>();
+    public DocumentListDataProvider getDocuments() {
+        if (documentProvider == null) {
+            documentProvider = new DocumentListDataProvider(new ArrayList<NodeRef>());
         }
-        return documents;
+        return documentProvider;
+    }
+
+    @Override
+    public void clean() {
+        super.clean();
+        parent = null;
+        cases = null;
+    }
+
+    public void resetCases() {
+        cases = null;
     }
 
     public Volume getParent() {

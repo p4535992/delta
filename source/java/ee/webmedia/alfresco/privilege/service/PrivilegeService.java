@@ -17,6 +17,7 @@ import ee.webmedia.alfresco.privilege.model.UserPrivileges;
  */
 public interface PrivilegeService {
     String BEAN_NAME = "PrivilegeService";
+    String NON_TX_BEAN_NAME = "privilegeService";
 
     boolean hasPermission(final NodeRef targetRef, String userName, final Privilege... permission);
 
@@ -67,7 +68,7 @@ public interface PrivilegeService {
 
     void removeAllPermissions(NodeRef manageableRef, String... authorities);
 
-    Set<Privilege> getAllCurrentUserPermissions(NodeRef nodeRef, QName type);
+    Set<Privilege> getAllCurrentUserPermissions(NodeRef nodeRef, QName type, Map<String, Object> properties);
 
     List<String> getAuthoritiesWithPrivilege(NodeRef nodeRef, Privilege... privilege);
 
@@ -87,5 +88,7 @@ public interface PrivilegeService {
     List<String> getAuthoritiesWithDirectPrivilege(NodeRef nodeRef, Privilege... privileges);
 
     Map<String, List<String>> getCreateCaseFilePrivileges(Set<String> nodeRefIds);
+
+    Set<NodeRef> getNodeRefWithSetViewPrivilege(List<NodeRef> nodeRefsToCheck, List<String> authorities);
 
 }

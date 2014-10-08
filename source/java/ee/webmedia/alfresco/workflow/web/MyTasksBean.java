@@ -1,16 +1,19 @@
 package ee.webmedia.alfresco.workflow.web;
 
 import static ee.webmedia.alfresco.common.web.BeanHelper.getSubstitutionBean;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getWorkflowService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getWorkflowConstantsBean;
 
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
+import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.apache.commons.lang.time.DateUtils;
 import org.springframework.web.jsf.FacesContextUtils;
@@ -42,6 +45,7 @@ public class MyTasksBean extends BaseDialogBean {
     public static final String LIST_EXTERNAL_REVIEW = "externalReview";
     public static final String LIST_LINKED_REVIEW = "linkedReview";
     public static final String LIST_CONFIRMATION = "confirmation";
+    public static final String TASK_LIST_DIALOG = "dialog:taskListDialog";
 
     private String dialogTitle;
     private String listTitle;
@@ -102,6 +106,11 @@ public class MyTasksBean extends BaseDialogBean {
             getSubstitutionBean().setForceSubstituteTaskReload(false);
         }
         return null;
+    }
+
+    @Override
+    public void clean() {
+        reset();
     }
 
     public void setupAssignmentTasks(@SuppressWarnings("unused") ActionEvent event) {
@@ -167,13 +176,13 @@ public class MyTasksBean extends BaseDialogBean {
         dialogTitle = MessageUtil.getMessage("externalReviewWorkflow");
         listTitle = MessageUtil.getMessage("task_list_external_review_title");
         lessColumns = true;
-        if (getWorkflowService().externalReviewWorkflowEnabled()) {
+        if (getWorkflowConstantsBean().isExternalReviewWorkflowEnabled()) {
             specificList = LIST_EXTERNAL_REVIEW;
             loadTasks();
         } else {
             hidePrimaryList = true;
         }
-        if (getWorkflowService().isReviewToOtherOrgEnabled()) {
+        if (getWorkflowConstantsBean().isReviewToOtherOrgEnabled()) {
             specificList = LIST_LINKED_REVIEW;
             loadTasks();
         }
@@ -320,15 +329,15 @@ public class MyTasksBean extends BaseDialogBean {
     }
 
     public boolean isCaseFileOrDocumentWorkflowEnabled() {
-        return BeanHelper.getVolumeService().isCaseVolumeEnabled() || isDocumentWorkflowEnabled();
+        return BeanHelper.getApplicationConstantsBean().isCaseVolumeEnabled() || isDocumentWorkflowEnabled();
     }
 
     public boolean isDocumentWorkflowEnabled() {
-        return BeanHelper.getWorkflowService().isDocumentWorkflowEnabled();
+        return getWorkflowConstantsBean().isDocumentWorkflowEnabled();
     }
 
     public boolean isLinkedReviewTaskEnabled() {
-        return linkedReviewTasks != null && getWorkflowService().isReviewToOtherOrgEnabled();
+        return linkedReviewTasks != null && getWorkflowConstantsBean().isReviewToOtherOrgEnabled();
     }
 
     public boolean isHidePrimaryList() {
@@ -417,85 +426,81 @@ public class MyTasksBean extends BaseDialogBean {
     private void loadTasks() {
         long startA = System.currentTimeMillis();
         log.debug("loadTasks - START");
+        List<QName> tasksToLoad = new ArrayList<>();
         if (specificList == null || LIST_ASSIGNMENT.equals(specificList)) {
-            long startB = System.currentTimeMillis();
-            List<Task> tmpTasks = getDocumentSearchService().searchCurrentUsersTasksInProgress(WorkflowSpecificModel.Types.ASSIGNMENT_TASK);
-            long startC = System.currentTimeMillis();
-            assignmentTasks = getDocumentService().getTasksWithDocuments(tmpTasks);
-            log.debug("loadTasks - assignmentTasks: " + (startC - startB) + "ms + " + (System.currentTimeMillis() - startC) + "ms");
+            tasksToLoad.add(WorkflowSpecificModel.Types.ASSIGNMENT_TASK);
         }
-        if (specificList == null || LIST_ORDER_ASSIGNMENT.equals(specificList)) {
-            if (BeanHelper.getWorkflowService().isOrderAssignmentWorkflowEnabled()) {
-                long startB = System.currentTimeMillis();
-                List<Task> tmpTasks = getDocumentSearchService().searchCurrentUsersTasksInProgress(WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_TASK);
-                long startC = System.currentTimeMillis();
-                orderAssignmentTasks = getDocumentService().getTasksWithDocuments(tmpTasks);
-                log.debug("loadTasks - orderAssignmentTasks: " + (startC - startB) + "ms + " + (System.currentTimeMillis() - startC) + "ms");
-            }
+        if ((specificList == null || LIST_ORDER_ASSIGNMENT.equals(specificList)) && getWorkflowConstantsBean().isOrderAssignmentWorkflowEnabled()) {
+            tasksToLoad.add(WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_TASK);
         }
         if (specificList == null || LIST_GROUP_ASSIGNMENT.equals(specificList)) {
-            long startB = System.currentTimeMillis();
-            List<Task> tmpTasks = getDocumentSearchService().searchCurrentUsersTasksInProgress(WorkflowSpecificModel.Types.GROUP_ASSIGNMENT_TASK);
-            long startC = System.currentTimeMillis();
-            groupAssignmentTasks = getDocumentService().getTasksWithDocuments(tmpTasks);
-            log.debug("loadTasks - groupAssignmentTasks: " + (startC - startB) + "ms + " + (System.currentTimeMillis() - startC) + "ms");
+            tasksToLoad.add(WorkflowSpecificModel.Types.GROUP_ASSIGNMENT_TASK);
         }
         if (specificList == null || LIST_INFORMATION.equals(specificList)) {
-            long startB = System.currentTimeMillis();
-            List<Task> tmpTasks = getDocumentSearchService().searchCurrentUsersTasksInProgress(WorkflowSpecificModel.Types.INFORMATION_TASK);
-            long startC = System.currentTimeMillis();
-            informationTasks = getDocumentService().getTasksWithDocuments(tmpTasks);
-            log.debug("loadTasks - informationTasks: " + (startC - startB) + "ms + " + (System.currentTimeMillis() - startC) + "ms");
+            tasksToLoad.add(WorkflowSpecificModel.Types.INFORMATION_TASK);
         }
         if (specificList == null || LIST_OPINION.equals(specificList)) {
-            long startB = System.currentTimeMillis();
-            List<Task> tmpTasks = getDocumentSearchService().searchCurrentUsersTasksInProgress(WorkflowSpecificModel.Types.OPINION_TASK);
-            long startC = System.currentTimeMillis();
-            opinionTasks = getDocumentService().getTasksWithDocuments(tmpTasks);
-            log.debug("loadTasks - opinionTasks: " + (startC - startB) + "ms + " + (System.currentTimeMillis() - startC) + "ms");
+            tasksToLoad.add(WorkflowSpecificModel.Types.OPINION_TASK);
         }
         if (specificList == null || LIST_REVIEW.equals(specificList)) {
-            long startB = System.currentTimeMillis();
-            List<Task> tmpTasks = getDocumentSearchService().searchCurrentUsersTasksInProgress(WorkflowSpecificModel.Types.REVIEW_TASK);
-            long startC = System.currentTimeMillis();
-            reviewTasks = getDocumentService().getTasksWithDocuments(tmpTasks);
-            log.debug("loadTasks - reviewTasks: " + (startC - startB) + "ms + " + (System.currentTimeMillis() - startC) + "ms");
+            tasksToLoad.add(WorkflowSpecificModel.Types.REVIEW_TASK);
         }
         if (specificList == null || LIST_SIGNATURE.equals(specificList)) {
-            long startB = System.currentTimeMillis();
-            List<Task> tmpTasks = getDocumentSearchService().searchCurrentUsersTasksInProgress(WorkflowSpecificModel.Types.SIGNATURE_TASK);
-            long startC = System.currentTimeMillis();
-            signatureTasks = getDocumentService().getTasksWithDocuments(tmpTasks);
-            log.debug("loadTasks - signatureTasks: " + (startC - startB) + "ms + " + (System.currentTimeMillis() - startC) + "ms");
+            tasksToLoad.add(WorkflowSpecificModel.Types.SIGNATURE_TASK);
         }
         if (specificList == null || LIST_EXTERNAL_REVIEW.equals(specificList)) {
-            long startB = System.currentTimeMillis();
-            List<Task> tmpTasks = getDocumentSearchService().searchCurrentUsersTasksInProgress(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK);
-            long startC = System.currentTimeMillis();
-            externalReviewTasks = getDocumentService().getTasksWithDocuments(tmpTasks);
-            log.debug("loadTasks - externalReviewTasks: " + (startC - startB) + "ms + " + (System.currentTimeMillis() - startC) + "ms");
+            tasksToLoad.add(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK);
         }
         if (specificList == null || LIST_LINKED_REVIEW.equals(specificList)) {
-            long startB = System.currentTimeMillis();
             linkedReviewTasks = getDocumentSearchService().searchCurrentUsersTaskInProgressWithoutParents(WorkflowSpecificModel.Types.LINKED_REVIEW_TASK, false);
-            long startC = System.currentTimeMillis();
-            log.debug("loadTasks - linkedReviewTasks: " + (startC - startB) + "ms + " + (System.currentTimeMillis() - startC) + "ms");
         }
         if (specificList == null || LIST_CONFIRMATION.equals(specificList)) {
-            long startB = System.currentTimeMillis();
-            List<Task> tmpTasks = getDocumentSearchService().searchCurrentUsersTasksInProgress(WorkflowSpecificModel.Types.CONFIRMATION_TASK);
-            long startC = System.currentTimeMillis();
-            confirmationTasks = getDocumentService().getTasksWithDocuments(tmpTasks);
-            log.debug("loadTasks - confirmationTasks: " + (startC - startB) + "ms + " + (System.currentTimeMillis() - startC) + "ms");
-            startB = System.currentTimeMillis();
-            tmpTasks = getDocumentSearchService().searchCurrentUsersTasksInProgress(WorkflowSpecificModel.Types.DUE_DATE_EXTENSION_TASK);
-            startC = System.currentTimeMillis();
-            confirmationTasks.addAll(getDocumentService().getTasksWithDocuments(tmpTasks));
-            log.debug("loadTasks - dueDateExtensionTasks: " + (startC - startB) + "ms + " + (System.currentTimeMillis() - startC) + "ms");
+            tasksToLoad.add(WorkflowSpecificModel.Types.CONFIRMATION_TASK);
+            tasksToLoad.add(WorkflowSpecificModel.Types.DUE_DATE_EXTENSION_TASK);
+        }
+
+        List<Task> tasks = getDocumentSearchService().searchCurrentUsersTasksInProgress(tasksToLoad.toArray(new QName[tasksToLoad.size()]));
+        List<TaskAndDocument> tasksWithDocument = getDocumentService().getTasksWithDocuments(tasks, null);
+        Map<QName, List<TaskAndDocument>> taskLists = new HashMap<>();
+        for (QName taskType : tasksToLoad) {
+            taskLists.put(taskType, new ArrayList<TaskAndDocument>());
+        }
+        for (TaskAndDocument taskAndDocument : tasksWithDocument) {
+            QName taskType = taskAndDocument.getTask().getType();
+            taskLists.get(taskType).add(taskAndDocument);
+        }
+        if (tasksToLoad.contains(WorkflowSpecificModel.Types.ASSIGNMENT_TASK)) {
+            assignmentTasks = taskLists.get(WorkflowSpecificModel.Types.ASSIGNMENT_TASK);
+        }
+        if (tasksToLoad.contains(WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_TASK)) {
+            orderAssignmentTasks = taskLists.get(WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_TASK);
+        }
+        if (tasksToLoad.contains(WorkflowSpecificModel.Types.GROUP_ASSIGNMENT_TASK)) {
+            groupAssignmentTasks = taskLists.get(WorkflowSpecificModel.Types.GROUP_ASSIGNMENT_TASK);
+        }
+        if (tasksToLoad.contains(WorkflowSpecificModel.Types.INFORMATION_TASK)) {
+            informationTasks = taskLists.get(WorkflowSpecificModel.Types.INFORMATION_TASK);
+        }
+        if (tasksToLoad.contains(WorkflowSpecificModel.Types.OPINION_TASK)) {
+            opinionTasks = taskLists.get(WorkflowSpecificModel.Types.OPINION_TASK);
+        }
+        if (tasksToLoad.contains(WorkflowSpecificModel.Types.REVIEW_TASK)) {
+            reviewTasks = taskLists.get(WorkflowSpecificModel.Types.REVIEW_TASK);
+        }
+        if (tasksToLoad.contains(WorkflowSpecificModel.Types.SIGNATURE_TASK)) {
+            signatureTasks = taskLists.get(WorkflowSpecificModel.Types.SIGNATURE_TASK);
+        }
+        if (tasksToLoad.contains(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK)) {
+            externalReviewTasks = taskLists.get(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK);
+        }
+        if (tasksToLoad.contains(WorkflowSpecificModel.Types.CONFIRMATION_TASK)) {
+            confirmationTasks = taskLists.get(WorkflowSpecificModel.Types.CONFIRMATION_TASK);
+        }
+        if (confirmationTasks != null) {
+            confirmationTasks.addAll(taskLists.get(WorkflowSpecificModel.Types.DUE_DATE_EXTENSION_TASK));
         }
         log.debug("loadTasks - END: " + (System.currentTimeMillis() - startA) + "ms");
     }
-
     // END: PRIVATE METHODS
 
 }

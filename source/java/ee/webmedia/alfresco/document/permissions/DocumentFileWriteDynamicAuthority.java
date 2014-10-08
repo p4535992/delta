@@ -2,6 +2,8 @@ package ee.webmedia.alfresco.document.permissions;
 
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentAdminService;
 
+import java.util.Map;
+
 import org.alfresco.model.ContentModel;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
@@ -26,7 +28,7 @@ public class DocumentFileWriteDynamicAuthority extends DynamicAuthority {
     protected WorkflowService workflowService;
 
     @Override
-    public boolean hasAuthority(final NodeRef nodeRef, QName type, final String userName) {
+    public boolean hasAuthority(final NodeRef nodeRef, QName type, final String userName, Map<String, Object> properties) {
         if (!dictionaryService.isSubClass(type, ContentModel.TYPE_CONTENT)) {
             // log.trace("Node is not of type 'cm:content', type=" + type + ", refusing authority " + getAuthority());
             return false;

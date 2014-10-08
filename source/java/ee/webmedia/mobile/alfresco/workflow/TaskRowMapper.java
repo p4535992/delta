@@ -8,7 +8,6 @@ import java.util.Map;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.repository.StoreRef;
-import org.alfresco.service.namespace.QName;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.context.MessageSource;
 import org.springframework.jdbc.core.simple.ParameterizedRowMapper;
@@ -24,12 +23,14 @@ import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.workflow.model.CompoundWorkflowType;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
+import ee.webmedia.alfresco.workflow.service.WorkflowDbServiceImpl;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
 import ee.webmedia.mobile.alfresco.util.Util;
 import ee.webmedia.mobile.alfresco.workflow.model.Task;
 
 /**
  * Maps result sets to {@link ee.webmedia.mobile.alfresco.workflow.model.Task} objects used in lists.
+ *
  * @param <T> For WorkflowDbService compatibility, use {@link ee.webmedia.mobile.alfresco.workflow.model.Task}
  */
 public class TaskRowMapper<T> implements ParameterizedRowMapper<Task> {
@@ -58,7 +59,7 @@ public class TaskRowMapper<T> implements ParameterizedRowMapper<Task> {
         task.setResolution(rs.getString("wfs_resolution"));
         task.setCreatorName(rs.getString("wfc_creator_name"));
         task.setDueDate(rs.getTimestamp("wfs_due_date"));
-        task.setType(QName.createQName(WorkflowSpecificModel.URI, rs.getString("task_type")));
+        task.setType(WorkflowDbServiceImpl.getTaskTypeFromRs(rs));
         task.setViewedByOwner(rs.getBoolean("wfc_viewed_by_owner"));
 
         // Map specific properties

@@ -1,10 +1,10 @@
 package ee.webmedia.alfresco.eventplan.web;
 
-import static ee.webmedia.alfresco.common.model.NodeBaseVO.convertNullToFalse;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getEventPlanService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getGeneralService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getUserConfirmHelper;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
+import static ee.webmedia.alfresco.utils.RepoUtil.convertNullToFalse;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,6 +35,8 @@ import ee.webmedia.alfresco.utils.WebUtil;
 
 public class VolumeEventPlanDialog extends BaseDialogBean {
 
+    public static final String BEAN_NAME = "VolumeEventPlanDialog";
+
     private static final long serialVersionUID = 1L;
 
     private EventPlanVolume plan;
@@ -50,6 +52,12 @@ public class VolumeEventPlanDialog extends BaseDialogBean {
 
     public EventPlan getPredefinedPlan() {
         return predefinedPlan;
+    }
+
+    @Override
+    public void clean() {
+        plan = null;
+        predefinedPlan = null;
     }
 
     public boolean isInEditMode() {

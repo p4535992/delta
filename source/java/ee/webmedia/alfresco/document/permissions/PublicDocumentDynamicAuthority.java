@@ -1,7 +1,10 @@
 package ee.webmedia.alfresco.document.permissions;
 
+import java.util.Map;
+
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
+import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.classificator.enums.AccessRestriction;
@@ -15,12 +18,13 @@ public class PublicDocumentDynamicAuthority extends DynamicAuthority {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(PublicDocumentDynamicAuthority.class);
 
     @Override
-    public boolean hasAuthority(final NodeRef docRef, QName type, final String userName) {
+    public boolean hasAuthority(final NodeRef docRef, QName type, final String userName, Map<String, Object> properties) {
         if (!dictionaryService.isSubClass(type, DocumentCommonModel.Types.DOCUMENT)) {
             log.trace("Node is not of type 'doccom:document': type=" + type + ", refusing permissions " + getGrantedPrivileges());
             return false;
         }
-        String accessRestriction = (String) nodeService.getProperty(docRef, DocumentCommonModel.Props.ACCESS_RESTRICTION);
+        String accessRestriction = MapUtils.isNotEmpty(properties) ? (String) properties.get(DocumentCommonModel.Props.ACCESS_RESTRICTION.toString())
+                : (String) nodeService.getProperty(docRef, DocumentCommonModel.Props.ACCESS_RESTRICTION);
         if (isPublicAccessRestriction(accessRestriction)) {
             log.debug("Document " + docRef + " is public, granting permissions " + getGrantedPrivileges());
             return true;

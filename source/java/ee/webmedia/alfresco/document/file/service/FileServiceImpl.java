@@ -45,14 +45,16 @@ import org.alfresco.service.namespace.RegexQNamePattern;
 import org.alfresco.util.Pair;
 import org.alfresco.util.URLEncoder;
 import org.alfresco.web.app.servlet.DownloadContentServlet;
-import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.util.Assert;
 
+import ee.webmedia.alfresco.common.service.BulkLoadNodeService;
+import ee.webmedia.alfresco.common.service.CreateObjectCallback;
 import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamicService;
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.file.model.FileModel;
@@ -84,10 +86,9 @@ public class FileServiceImpl implements FileService {
     private DocumentDynamicService _documentDynamicService;
     private DocumentTemplateService _documentTemplateService;
     private DocLockService _docLockService;
+    private BulkLoadNodeService bulkLoadNodeService;
     private Set<String> openOfficeFiles;
     private String jumploaderPath;
-
-    private String scannedFilesPath;
 
     @Override
     public InputStream getFileContentInputStream(NodeRef fileRef) {
@@ -172,8 +173,10 @@ public class FileServiceImpl implements FileService {
                 continue;
             }
 
-            boolean isDdoc = signatureService.isDigiDocContainer(item.getNodeRef());
+            boolean isDdoc = FilenameUtil.isDigiDocContainerFile(fi);
+            final boolean isBdoc = FilenameUtil.isBdocFile(fi.getName());
             item.setDigiDocContainer(isDdoc);
+            item.setBdoc(isBdoc);
             ContentData contentData = fi.getContentData();
             item.setTransformableToPdf(contentData != null && isTransformableToPdf(contentData.getMimetype()));
             item.setPdf(contentData != null && isPdf(contentData.getMimetype()));
@@ -188,7 +191,7 @@ public class FileServiceImpl implements FileService {
                     SignatureItemsAndDataItems ddocItems = AuthenticationUtil.runAs(new RunAsWork<SignatureItemsAndDataItems>() {
                         @Override
                         public SignatureItemsAndDataItems doWork() throws Exception {
-                            return signatureService.getDataItemsAndSignatureItems(item.getNodeRef(), false);
+                            return signatureService.getDataItemsAndSignatureItems(item.getNodeRef(), false, isBdoc);
                         }
                     }, AuthenticationUtil.getSystemUserName());
                     item2.setNode(item.getNode()); // Digidoc item uses node of its container for permission evaluations
@@ -563,7 +566,7 @@ public class FileServiceImpl implements FileService {
         if (log.isDebugEnabled()) {
             log.debug("Getting scanned files");
         }
-        NodeRef scannedNodeRef = getGeneralService().getNodeRef(scannedFilesPath);
+        NodeRef scannedNodeRef = BeanHelper.getConstantNodeRefsBean().getScannedFilesRoot();
         Assert.notNull(scannedNodeRef, "Scanned files node reference not found");
         List<FileInfo> fileInfos = getFileFolderService().listFolders(scannedNodeRef);
         List<File> files = new ArrayList<File>(fileInfos.size());
@@ -636,7 +639,7 @@ public class FileServiceImpl implements FileService {
         }
         path.append("/").append(URLEncoder.encode(ticket));
 
-        path.append("/").append(URLEncoder.encode(AuthenticationUtil.getRunAsUser())); // maybe substituting
+        path.append("/").append(URLEncoder.encode(runAsUser)); // maybe substituting
 
         NodeRef parent = primaryParentRef;
         path.append("/").append(URLEncoder.encode(parent.getId()));
@@ -686,14 +689,32 @@ public class FileServiceImpl implements FileService {
     }
 
     @Override
-    public List<Subfolder> getSubfolders(NodeRef parentRef, QName childNodeType, QName countableChildNodeType) {
-        List<Subfolder> subfolders = new ArrayList<Subfolder>();
-        List<ChildAssociationRef> childAssocs = getNodeService().getChildAssocs(parentRef, Collections.singleton(childNodeType));
-        for (ChildAssociationRef childAssocRef : childAssocs) {
-            NodeRef childRef = childAssocRef.getChildRef();
-            Node folder = new Node(childRef);
-            List<ChildAssociationRef> documents = getNodeService().getChildAssocs(childRef, Collections.singleton(countableChildNodeType));
-            subfolders.add(new Subfolder(folder, documents == null ? 0 : documents.size()));
+    public List<Subfolder> getSubfolders(NodeRef parentRef, final QName childNodeType, QName countableChildNodeType, boolean countChildren) {
+        Map<Long, QName> propertyTypes = new HashMap<Long, QName>();
+        Map<NodeRef, List<WmNode>> allSubfolders = bulkLoadNodeService.loadChildNodes(Collections.singletonList(parentRef), null, childNodeType, propertyTypes,
+                new CreateObjectCallback<WmNode>() {
+
+                    @Override
+                    public WmNode create(NodeRef nodeRef, Map<QName, Serializable> properties) {
+                        return new WmNode(nodeRef, childNodeType, null, properties);
+                    }
+                });
+        if (allSubfolders == null || allSubfolders.isEmpty()) {
+            return new ArrayList<>();
+        }
+        List<WmNode> subfolderNodes = allSubfolders.get(parentRef);
+        List<NodeRef> subfolderRefs = new ArrayList<>();
+        for (WmNode subfolder : subfolderNodes) {
+            subfolderRefs.add(subfolder.getNodeRef());
+        }
+        Map<NodeRef, Integer> childCounts = new HashMap<>();
+        if (countChildren) {
+            childCounts = bulkLoadNodeService.countChildNodes(subfolderRefs, countableChildNodeType);
+        }
+        List<Subfolder> subfolders = new ArrayList<>();
+        for (WmNode subfolderNode : subfolderNodes) {
+            Integer count = childCounts.get(subfolderNode.getNodeRef());
+            subfolders.add(new Subfolder(subfolderNode, count != null ? count.intValue() : 0));
         }
         return subfolders;
     }
@@ -775,10 +796,6 @@ public class FileServiceImpl implements FileService {
         this.documentLogService = documentLogService;
     }
 
-    public void setScannedFilesPath(String scannedDocumentsPath) {
-        scannedFilesPath = scannedDocumentsPath;
-    }
-
     public DocLockService getDocLockService() {
         if (_docLockService == null) {
             _docLockService = BeanHelper.getDocLockService();
@@ -823,6 +840,10 @@ public class FileServiceImpl implements FileService {
 
     public void setNodeService(NodeService nodeService) {
         this.nodeService = nodeService;
+    }
+
+    public void setBulkLoadNodeService(BulkLoadNodeService bulkLoadNodeService) {
+        this.bulkLoadNodeService = bulkLoadNodeService;
     }
 
     // END: getters / setters

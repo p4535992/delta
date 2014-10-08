@@ -71,6 +71,7 @@ import ee.webmedia.alfresco.docadmin.service.FieldDefinition;
 import ee.webmedia.alfresco.docadmin.service.FieldGroup;
 import ee.webmedia.alfresco.docadmin.service.MetadataItem;
 import ee.webmedia.alfresco.docadmin.service.SeparatorLine;
+import ee.webmedia.alfresco.docadmin.service.UnmodifiableFieldDefinition;
 import ee.webmedia.alfresco.docadmin.web.DocAdminUtil;
 import ee.webmedia.alfresco.docconfig.bootstrap.SystematicFieldGroupNames;
 import ee.webmedia.alfresco.docconfig.generator.BaseSystematicFieldGenerator;
@@ -244,11 +245,11 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
     public DocumentConfig getConfig(Node documentDynamicNode) {
         QName type = documentDynamicNode.getType();
         if (DocumentCommonModel.Types.DOCUMENT.equals(type)) {
-            Pair<DocumentType, DocumentTypeVersion> documentTypeAndVersion = getDocumentTypeAndVersion(documentDynamicNode);
+            Pair<DocumentType, DocumentTypeVersion> documentTypeAndVersion = getDocumentTypeAndVersion(documentDynamicNode, false);
             return getConfig(documentTypeAndVersion.getSecond(), documentTypeAndVersion.getFirst().isShowUnvalued());
         } else if (CaseFileModel.Types.CASE_FILE.equals(type)) {
             PropDefCacheKey key = DocAdminUtil.getPropDefCacheKey(documentDynamicNode);
-            return getConfig(documentAdminService.getCaseFileTypeAndVersion(key.getDynamicTypeId(), key.getVersion()).getSecond(), Boolean.TRUE);
+            return getConfig(documentAdminService.getCaseFileTypeAndVersion(key.getDynamicTypeId(), key.getVersion(), false).getSecond(), Boolean.TRUE);
         }
 
         throw new RuntimeException("Config isn't supported for " + type);
@@ -274,7 +275,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
             defList.add(DocumentCommonModel.Props.CASE.getLocalName());
         }
         for (String localName : defList) {
-            FieldDefinition fieldDefinition = documentAdminService.getFieldDefinition(localName);
+            FieldDefinition fieldDefinition = documentAdminService.getFieldDefinition(localName).getCopyOfFieldDefinition();
             fieldDefinition.setChangeableIfEnum(FieldChangeableIf.ALWAYS_CHANGEABLE);
             processField(config, fieldDefinition, false, forceEditMode, additionalStateHolderKey);
         }
@@ -382,8 +383,9 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
 
         addSendInfoConfigItems(withCheckboxes, propertySheetConfigElement);
 
-        List<FieldDefinition> fields = documentAdminService.getSearchableDocumentFieldDefinitions();
-        for (FieldDefinition fieldDefinition : fields) {
+        List<UnmodifiableFieldDefinition> fields = documentAdminService.getSearchableDocumentFieldDefinitions();
+        for (UnmodifiableFieldDefinition unmodifiableFieldDefinition : fields) {
+            FieldDefinition fieldDefinition = unmodifiableFieldDefinition.getCopyOfFieldDefinition();
             processFieldForSearchView(fieldDefinition);
             processField(config, fieldDefinition, withCheckboxes, false);
             if (fieldDefinition.getFieldId().equals("regNumber")) {
@@ -397,7 +399,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
             }
         }
 
-        if (getEInvoiceServiceService().isEinvoiceEnabled()) {
+        if (BeanHelper.getApplicationConstantsBean().isEinvoiceEnabled()) {
 
             /**
              * <show-property name="docsearch:fund" display-label-id="transaction_fund" component-generator="MultiValueEditorGenerator"
@@ -616,8 +618,9 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
             propertySheetConfigElement.addItem(itemConfig);
         }
 
-        List<FieldDefinition> fields = documentAdminService.getSearchableVolumeFieldDefinitions();
-        for (FieldDefinition fieldDefinition : fields) {
+        List<UnmodifiableFieldDefinition> fields = documentAdminService.getSearchableVolumeFieldDefinitions();
+        for (UnmodifiableFieldDefinition unmodifiableFieldDefinition : fields) {
+            FieldDefinition fieldDefinition = unmodifiableFieldDefinition.getCopyOfFieldDefinition();
             processFieldForSearchView(fieldDefinition);
             processField(config, fieldDefinition, withCheckboxes, false);
         }
@@ -670,16 +673,16 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
     }
 
     @Override
-    public Pair<DocumentType, DocumentTypeVersion> getDocumentTypeAndVersion(Node documentDynamicNode) {
+    public Pair<DocumentType, DocumentTypeVersion> getDocumentTypeAndVersion(Node documentDynamicNode, boolean cloneResult) {
         Pair<String, Integer> docTypeIdAndVersionNr = getDocTypeIdAndVersionNr(documentDynamicNode);
-        return getDocumentTypeAndVersion(docTypeIdAndVersionNr);
+        return getDocumentTypeAndVersion(docTypeIdAndVersionNr, cloneResult);
     }
 
-    private Pair<DocumentType, DocumentTypeVersion> getDocumentTypeAndVersion(Pair<String, Integer> docTypeIdAndVersionNr) {
+    private Pair<DocumentType, DocumentTypeVersion> getDocumentTypeAndVersion(Pair<String, Integer> docTypeIdAndVersionNr, boolean cloneResult) {
         if (StringUtils.isBlank(docTypeIdAndVersionNr.getFirst()) || docTypeIdAndVersionNr.getSecond() == null) {
             return null;
         }
-        return documentAdminService.getDocumentTypeAndVersion(docTypeIdAndVersionNr.getFirst(), docTypeIdAndVersionNr.getSecond());
+        return documentAdminService.getDocumentTypeAndVersion(docTypeIdAndVersionNr.getFirst(), docTypeIdAndVersionNr.getSecond(), cloneResult);
     }
 
     private DocumentConfig getConfig(DocumentTypeVersion docVersion, Boolean showUnvalued) {
@@ -1033,7 +1036,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
 
     @Override
     public void setDefaultPropertyValues(Node node, QName[] childAssocTypeQNameHierarchy, boolean forceOverwrite, boolean reallySetDefaultValues, DocumentTypeVersion docVer) {
-        Pair<DocumentType, DocumentTypeVersion> documentTypeAndVersion = getDocumentTypeAndVersion(node);
+        Pair<DocumentType, DocumentTypeVersion> documentTypeAndVersion = getDocumentTypeAndVersion(node, false);
         if (docVer == null) {
             docVer = documentTypeAndVersion.getSecond();
         } else {
@@ -1049,7 +1052,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
     @Override
     public void setDefaultPropertyValues(Node node, QName[] requiredHierarchy, boolean forceOverwrite, boolean reallySetDefaultValues, List<Field> fields) {
         Map<String, Pair<DynamicPropertyDefinition, Field>> propertyDefinitions = createPropertyDefinitions(fields);
-        DocumentType documentType = getDocumentTypeAndVersion(node).getFirst();
+        DocumentType documentType = getDocumentTypeAndVersion(node, false).getFirst();
         setDefaultPropertyValues(node, requiredHierarchy, forceOverwrite, reallySetDefaultValues, propertyDefinitions, documentType);
     }
 
@@ -1354,7 +1357,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
         // XXX a little hack for the docdyn:status property on volumes
         // the volume type is not dynamic but the status property has to be
         if (documentDynamicNode.getType().equals(VolumeModel.Types.VOLUME) && property.equals(VolumeModel.Props.STATUS)) {
-            FieldDefinition field = documentAdminService.getFieldDefinition(property.getLocalName());
+            UnmodifiableFieldDefinition field = documentAdminService.getFieldDefinition(property.getLocalName());
             return new DynamicPropertyDefinitionImpl(field, false, null);
         }
         if (isFilterType(documentDynamicNode.getType())) {
@@ -1384,10 +1387,11 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
     }
 
     private DynamicPropertyDefinition getPropDefForSearch(String fieldId, boolean processForSearch) {
-        FieldDefinition field;
+        FieldDefinition field = null;
         if (fieldId.contains("_")) {
-            field = documentAdminService.getFieldDefinition(fieldId.substring(0, fieldId.indexOf("_")));
-            if (field != null) {
+            UnmodifiableFieldDefinition unmodifiableFieldDefinition = documentAdminService.getFieldDefinition(fieldId.substring(0, fieldId.indexOf("_")));
+            if (unmodifiableFieldDefinition != null) {
+                field = unmodifiableFieldDefinition.getCopyOfFieldDefinition();
                 field.setFieldId(fieldId);
                 if (fieldId.endsWith(WMUIProperty.AFTER_LABEL_BOOLEAN)) {
                     field.setOriginalFieldId(fieldId);
@@ -1400,7 +1404,10 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
                 }
             }
         } else {
-            field = documentAdminService.getFieldDefinition(fieldId);
+            UnmodifiableFieldDefinition fieldDefinition = documentAdminService.getFieldDefinition(fieldId);
+            if (fieldDefinition != null) {
+                field = fieldDefinition.getCopyOfFieldDefinition();
+            }
         }
         if (field == null) {
             return null;
@@ -1620,9 +1627,9 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
                 return null;
             }
             if (cacheKey.isDocumentType()) {
-                documentTypeAndVersion = documentAdminService.getDocumentTypeAndVersion(dynamicTypeId, version);
+                documentTypeAndVersion = documentAdminService.getDocumentTypeAndVersion(dynamicTypeId, version, true);
             } else if (cacheKey.isCaseFileType()) {
-                documentTypeAndVersion = documentAdminService.getCaseFileTypeAndVersion(dynamicTypeId, version);
+                documentTypeAndVersion = documentAdminService.getCaseFileTypeAndVersion(dynamicTypeId, version, true);
             }
             if (documentTypeAndVersion == null) {
                 return null;
@@ -1671,8 +1678,19 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
 
     @Override
     public DynamicPropertyDefinition createPropertyDefinition(Field field) {
-        Boolean multiValuedOverride = getMultiValuedOverride(field);
-        QName[] childAssocTypeQNameHierarchy = getChildAssocTypeQNameHierarchy(field);
+        BaseObject parent = field.getParent();
+        String originalFieldId = field.getOriginalFieldId();
+        Boolean multiValuedOverride = getMultiValuedOverride(parent, originalFieldId);
+        QName[] childAssocTypeQNameHierarchy = getChildAssocTypeQNameHierarchy(parent, originalFieldId);
+        return new DynamicPropertyDefinitionImpl(field, multiValuedOverride, childAssocTypeQNameHierarchy);
+    }
+
+    @Override
+    public DynamicPropertyDefinition createPropertyDefinition(UnmodifiableFieldDefinition field) {
+        BaseObject parent = field.getParent();
+        String originalFieldId = field.getOriginalFieldId();
+        Boolean multiValuedOverride = getMultiValuedOverride(parent, originalFieldId);
+        QName[] childAssocTypeQNameHierarchy = getChildAssocTypeQNameHierarchy(parent, originalFieldId);
         return new DynamicPropertyDefinitionImpl(field, multiValuedOverride, childAssocTypeQNameHierarchy);
     }
 
@@ -1715,15 +1733,15 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
         documentAdminService.registerGroupLimitSingle(systematicGroupName);
     }
 
-    private QName[] getChildAssocTypeQNameHierarchy(Field field) {
-        if (field.getParent() instanceof FieldGroup) {
-            FieldGroup group = (FieldGroup) field.getParent();
+    private QName[] getChildAssocTypeQNameHierarchy(BaseObject parent, String originalFieldId) {
+        if (parent instanceof FieldGroup) {
+            FieldGroup group = (FieldGroup) parent;
             if (!group.isSystematic()) {
                 return null;
             }
-            Assert.notNull(field.getOriginalFieldId());
+            Assert.notNull(originalFieldId);
             // Find by groupName + specific originalFieldId
-            QName[] hierarchies = childAssocTypeQNameHierarchies.get(Pair.newInstance(group.getName(), field.getOriginalFieldId()));
+            QName[] hierarchies = childAssocTypeQNameHierarchies.get(Pair.newInstance(group.getName(), originalFieldId));
             if (hierarchies != null) {
                 return hierarchies;
             }
@@ -1798,7 +1816,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
         Pair<String, Integer> cacheKey = getDocTypeIdAndVersionNr(documentDynamicNode);
         TreeNode<QName> childAssocTypeQNames = childAssocTypeQNameTreeCache.get(cacheKey);
         if (childAssocTypeQNames == null) {
-            Pair<DocumentType, DocumentTypeVersion> docTypeAndVer = getDocumentTypeAndVersion(cacheKey);
+            Pair<DocumentType, DocumentTypeVersion> docTypeAndVer = getDocumentTypeAndVersion(cacheKey, false);
             childAssocTypeQNames = getChildAssocTypeQNameTree(docTypeAndVer.getSecond());
         }
         return childAssocTypeQNames;
@@ -1820,9 +1838,8 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
         multiValuedOverrideBySystematicGroup.put(systematicGroupName, new HashSet<String>(originalFieldIds));
     }
 
-    private Boolean getMultiValuedOverride(Field field) {
+    private Boolean getMultiValuedOverride(BaseObject parent, String originalFieldId) {
         Boolean multiValuedOverride = null;
-        BaseObject parent = field.getParent();
         boolean inGroup;
         if (parent instanceof FieldGroup) {
             inGroup = true;
@@ -1832,7 +1849,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
         if (inGroup && ((FieldGroup) parent).isSystematic()) {
             Set<String> set = multiValuedOverrideBySystematicGroup.get(((FieldGroup) parent).getName());
             if (set != null) {
-                if (set.contains(field.getOriginalFieldId())) {
+                if (set.contains(originalFieldId)) {
                     multiValuedOverride = Boolean.TRUE;
                 }
             } else {

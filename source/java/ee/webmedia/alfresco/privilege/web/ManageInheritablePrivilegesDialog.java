@@ -448,7 +448,7 @@ public class ManageInheritablePrivilegesDialog extends BaseDialogBean {
                 public Comparable<?> tr(UserPrivileges input) {
                     return input.getUserDisplayName();
                 }
-            }, new NullComparator(AppConstants.DEFAULT_COLLATOR));
+            }, new NullComparator(AppConstants.getNewCollatorInstance()));
         }
         return tableRowComparator;
     }
@@ -475,7 +475,7 @@ public class ManageInheritablePrivilegesDialog extends BaseDialogBean {
             userPrivileges.add(ownerRow);
         } else {
             for (Privilege permission : manageablePermissions) {
-                if (!ownerRow.getPrivileges().containsKey(permission)) {
+                if (!ownerRow.getPrivileges().containsKey(permission.getPrivilegeName())) {
                     ownerRow.addPrivilegeDynamic(permission, extraPrivilegeReason);
                 }
             }

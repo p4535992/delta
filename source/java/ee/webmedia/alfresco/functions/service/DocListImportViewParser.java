@@ -18,6 +18,7 @@ import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
 import ee.webmedia.alfresco.cases.model.CaseModel;
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.functions.model.FunctionsModel;
 import ee.webmedia.alfresco.series.model.SeriesModel;
@@ -105,6 +106,7 @@ public class DocListImportViewParser extends ViewParser {
         } else if (nodeQName.equals(CaseModel.Types.CASE)) {
             docsCountOverCases += docsCount;
             setDocsCount(node, docsCount, CaseModel.Props.CONTAINING_DOCS_COUNT);
+            BeanHelper.getCaseService().removeFromCache(node.getNodeRef());
             docsCount = 0;
         } else if (nodeQName.equals(VolumeModel.Types.VOLUME)) {
             Assert.isTrue(docsCount == 0 || docsCountOverCases == 0, "It seems that the volume directly contains both documents(" + docsCount
@@ -112,11 +114,13 @@ public class DocListImportViewParser extends ViewParser {
             final long currentVolDocCount = docsCount + docsCountOverCases;
             docsCountOverVolumes += currentVolDocCount;
             setDocsCount(node, currentVolDocCount, VolumeModel.Props.CONTAINING_DOCS_COUNT);
+            BeanHelper.getVolumeService().removeFromCache(node.getNodeRef());
             docsCountOverCases = 0;
             docsCount = 0;
         } else if (nodeQName.equals(SeriesModel.Types.SERIES)) {
             docsCountOverFunctions += docsCountOverVolumes;
             setDocsCount(node, docsCountOverVolumes, SeriesModel.Props.CONTAINING_DOCS_COUNT);
+            BeanHelper.getSeriesService().removeFromCache(node.getNodeRef());
             docsCountOverVolumes = 0;
         } else if (nodeQName.equals(FunctionsModel.Types.FUNCTION)) {
             if (logger.isDebugEnabled()) {

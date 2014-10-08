@@ -8,6 +8,8 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 
 public class IncomingEmailListDialog extends AbstractEmailListDialog {
 
+    public static final String BEAN_NAME = "IncomingEmailListDialog";
+
     private static final long serialVersionUID = 1L;
 
     @Override

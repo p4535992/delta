@@ -125,7 +125,7 @@ public class PostipoissDocumentsImporter {
      * &lt;volume&gt;10.1-01/11/33070&lt;/volume&gt;
      * &lt;regNumber&gt;33070&lt;/regNumber&gt;
      * &lt;jrknr&gt;2&lt;/jrknr&gt;
-     * 
+     *
      * docdyn:regNumber = 10.1-01/11/33070-2
      * docdyn:shortRegNumber = 33070
      * docdyn:individualNumber = 2
@@ -280,7 +280,7 @@ public class PostipoissDocumentsImporter {
      */
     public void runImport(File dataFolder, File workFolder, NodeRef archivalsRoot, File mappingsFile, int batchSize, String defaultOwnerId,
             Date publishToAdrWithFilesStartingFromDate, boolean publicFilesToBackgroundFiles)
-            throws Exception {
+                    throws Exception {
         this.dataFolder = dataFolder;
         this.workFolder = workFolder;
         this.archivalsRoot = archivalsRoot;
@@ -1280,7 +1280,7 @@ public class PostipoissDocumentsImporter {
         String documentTypeId;
 
         public ImportedDocument(Integer documentId, NodeRef nodeRef, String toimik, String registreerimisNr, String dokLiik, String suund, String documentTypeId,
-                                Map<QName, Serializable> props) {
+                Map<QName, Serializable> props) {
             this.documentId = documentId;
             this.nodeRef = nodeRef;
             this.toimik = toimik;
@@ -1370,18 +1370,18 @@ public class PostipoissDocumentsImporter {
                     writer.writeRecord(new String[] {
                             doc.documentId.toString(),
                             doc.nodeRef == null ? "" : doc.nodeRef.toString(),
-                            doc.toimik == null ? "" : doc.toimik,
-                            doc.registreerimisNr == null ? "" : doc.registreerimisNr,
-                            doc.regNumber == null ? "" : doc.regNumber,
-                            doc.regDateTime == null ? "" : doc.regDateTime,
-                            doc.docName == null ? "" : doc.docName,
-                            doc.ownerId == null ? "" : doc.ownerId,
-                            doc.ownerName == null ? "" : doc.ownerName,
-                            doc.accessRestriction == null ? "" : doc.accessRestriction,
-                            doc.accessRestrictionReason == null ? "" : doc.accessRestrictionReason,
-                            doc.dokLiik == null ? "" : doc.dokLiik,
-                            doc.suund == null ? "" : doc.suund,
-                            doc.documentTypeId == null ? "" : doc.documentTypeId
+                                    doc.toimik == null ? "" : doc.toimik,
+                                            doc.registreerimisNr == null ? "" : doc.registreerimisNr,
+                                                    doc.regNumber == null ? "" : doc.regNumber,
+                                                            doc.regDateTime == null ? "" : doc.regDateTime,
+                                                                    doc.docName == null ? "" : doc.docName,
+                                                                            doc.ownerId == null ? "" : doc.ownerId,
+                                                                                    doc.ownerName == null ? "" : doc.ownerName,
+                                                                                            doc.accessRestriction == null ? "" : doc.accessRestriction,
+                                                                                                    doc.accessRestrictionReason == null ? "" : doc.accessRestrictionReason,
+                                                                                                            doc.dokLiik == null ? "" : doc.dokLiik,
+                                                                                                                    doc.suund == null ? "" : doc.suund,
+                                                                                                                            doc.documentTypeId == null ? "" : doc.documentTypeId
                     });
                 }
             }
@@ -1561,7 +1561,7 @@ public class PostipoissDocumentsImporter {
     // @formatter:on
 
     private ImportedDocument importDoc(File xml, Map<String, Mapping> mappings, Integer documentId) throws DocumentException,
-            ParseException {
+    ParseException {
 
         Element root = xmlReader.read(xml).getRootElement();
 
@@ -1982,7 +1982,7 @@ public class PostipoissDocumentsImporter {
             Map<QName, Serializable> props = new HashMap<QName, Serializable>();
             Map<QName, Serializable> taskSearchableProps = null;
 
-            WorkflowType workflowType = BeanHelper.getWorkflowService().getWorkflowTypes().get(WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW);
+            WorkflowType workflowType = BeanHelper.getWorkflowConstantsBean().getWorkflowTypes().get(WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW);
             for (Element kellele : (List<Element>) tegevus.elements("kellele")) {
                 String kelleleEnimi = kellele.elementText("enimi");
                 String kellelePnimi = kellele.elementText("pnimi");

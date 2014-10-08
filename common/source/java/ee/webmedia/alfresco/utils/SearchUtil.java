@@ -131,12 +131,20 @@ public class SearchUtil {
      * Generates "VALUE:xxx" query where VALUE is a custom indexed Field with document property values. So this clause can only be used in document search.
      * <p>
      * Only String and date (in format: dd.MM.yyyy) values are indexed there. File contents are not indexed there.
-     * 
+     *
      * @param value The document property value to search for.
      * @return The generated clause as string.
      */
     public static String generateValuesWildcardQuery(String value) {
         return "VALUES:\"" + QueryParser.escape(stripCustom(value)) + "*\"";
+    }
+
+    public static String generateIdExactQuery(List<NodeRef> documentsForPermissionCheck) {
+        List<String> queryParts = new ArrayList<>();
+        for (NodeRef nodeRef : documentsForPermissionCheck) {
+            queryParts.add("ID:\"" + QueryParser.escape(stripCustom(nodeRef.toString())) + "\"");
+        }
+        return joinQueryPartsOr(queryParts);
     }
 
     public static String generatePropertyWildcardQuery(QName documentPropName, String value, boolean leftWildcard, boolean rightWildcard) {
@@ -456,9 +464,36 @@ public class SearchUtil {
     }
 
     /**
+     * @param userId - if null, use current user
+     */
+    public static String generateSearchableDocListAccess(List<NodeRef> docRef, String userId) {
+        if (docRef.isEmpty() || getUserService().isAdministrator()) {
+            return null;
+        }
+
+        if (userId == null) {
+            userId = AuthenticationUtil.getRunAsUser();
+        }
+
+        Set<String> userGroups = new HashSet<String>();
+        userGroups.add(userId);
+        userGroups.addAll(getUserService().getUsersGroups(userId));
+
+        List<String> query = new ArrayList<String>(userGroups.size() + 2);
+        query.add(generateStringExactQuery(userId, DocumentCommonModel.Props.OWNER_ID));
+        for (String group : userGroups) {
+            if (StringUtils.isNotBlank(group)) {
+                query.add("DOC_VISIBLE_TO:\"" + QueryParser.escape(group) + "\"");
+            }
+        }
+
+        return joinQueryPartsAnd(joinQueryPartsOr(query), generateAspectQuery(DocumentCommonModel.Aspects.SEARCHABLE));
+    }
+
+    /**
      * Extracts dates (as 'dd.MM.yyyy' from given text) and stores them in given list in format 'ddMMyyyy'.
      * Duplicate formatted date values won't be added to the list.
-     * 
+     *
      * @param text A not null String value.
      * @param list A not null list where found dates will be stored.
      */

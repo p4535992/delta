@@ -1,11 +1,14 @@
 package ee.webmedia.mobile.alfresco.workflow.model;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 
-public class InProgressTasksForm {
+public class InProgressTasksForm implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     private Map<String, Task> inProgressTasks;
     private NodeRef compoundWorkflowRef;

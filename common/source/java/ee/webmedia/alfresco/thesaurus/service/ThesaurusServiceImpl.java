@@ -27,6 +27,7 @@ import org.apache.commons.lang.StringUtils;
 import com.thoughtworks.xstream.XStream;
 
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
 import ee.webmedia.alfresco.thesaurus.model.HierarchicalKeyword;
@@ -53,10 +54,11 @@ public class ThesaurusServiceImpl implements ThesaurusService {
         boolean used = documentSearchService.isMatch(
                 joinQueryPartsAnd(
                         joinQueryPartsOr(
-                                generateTypeQuery(DocumentAdminModel.Types.FIELD)
-                                , generateTypeQuery(DocumentAdminModel.Types.FIELD_DEFINITION)
-                        )
-                        , generateStringExactQuery(thesaurusName, DocumentAdminModel.Props.THESAURUS))
+                                generateTypeQuery(DocumentAdminModel.Types.FIELD),
+                                generateTypeQuery(DocumentAdminModel.Types.FIELD_DEFINITION),
+                                generateTypeQuery(DocumentAdminModel.Types.FIELD_GROUP)
+                        ),
+                        generateStringExactQuery(thesaurusName, DocumentAdminModel.Props.THESAURUS))
                 );
         return used;
     }
@@ -67,7 +69,6 @@ public class ThesaurusServiceImpl implements ThesaurusService {
             throw new UnableToPerformException("common_propertysheet_validator_mandatory", MessageUtil.getMessage("thesaurus_name"));
         }
 
-        // If thesaurus is new, create the node first
         NodeRef thesaurusRef = thesaurus.getNodeRef();
         if (RepoUtil.isUnsaved(thesaurusRef)) {
             thesaurusRef = createThesaurus(thesaurus);
@@ -75,13 +76,11 @@ public class ThesaurusServiceImpl implements ThesaurusService {
             nodeService.setProperty(thesaurusRef, ThesaurusModel.Prop.DESCRIPTION, StringUtils.trim(thesaurus.getDescription()));
         }
 
-        // Update keywords
         updateKeywords(thesaurusRef, thesaurus.getKeywords());
         for (HierarchicalKeyword keyword : thesaurus.getRemovedKeywords()) {
             nodeService.deleteNode(keyword.getNodeRef());
         }
 
-        // Update the thesaurus VO itself
         thesaurus.setNodeRef(thesaurusRef);
         thesaurus.setRemovedKeywords(new ArrayList<HierarchicalKeyword>());
         thesaurus.setKeywords(getThesaurusKeywords(thesaurusRef));
@@ -124,7 +123,8 @@ public class ThesaurusServiceImpl implements ThesaurusService {
         props.put(ContentModel.PROP_NAME, name);
         props.put(ThesaurusModel.Prop.DESCRIPTION, StringUtils.trim(thesaurus.getDescription()));
         try {
-            thesaurus.setNodeRef(nodeService.createNode(getThesauriRoot(), ThesaurusModel.Assoc.THESAURUS, QName.createQName(ThesaurusModel.URI, name),
+            thesaurus.setNodeRef(nodeService.createNode(BeanHelper.getConstantNodeRefsBean().getThesauriRoot(), ThesaurusModel.Assoc.THESAURUS,
+                    QName.createQName(ThesaurusModel.URI, name),
                     ThesaurusModel.Types.THESAURUS, props).getChildRef());
         } catch (DuplicateChildNodeNameException e) {
             throw new UnableToPerformException("thesaurus_name_duplicate");
@@ -135,18 +135,18 @@ public class ThesaurusServiceImpl implements ThesaurusService {
 
     @Override
     public Thesaurus getThesaurus(String name, boolean fetchKeywords) {
-        NodeRef thesaurusRef = nodeService.getChildByName(getThesauriRoot(), ThesaurusModel.Assoc.THESAURUS, name);
+        NodeRef thesaurusRef = nodeService.getChildByName(BeanHelper.getConstantNodeRefsBean().getThesauriRoot(), ThesaurusModel.Assoc.THESAURUS, name);
         return thesaurusRef == null ? null : getThesaurus(thesaurusRef, fetchKeywords);
     }
 
     @Override
     public int getThesauriCount() {
-        return nodeService.getChildAssocs(getThesauriRoot()).size();
+        return nodeService.getChildAssocs(BeanHelper.getConstantNodeRefsBean().getThesauriRoot()).size();
     }
 
     @Override
     public List<Thesaurus> getThesauri(boolean fetchKeywords) {
-        List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(getThesauriRoot());
+        List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(BeanHelper.getConstantNodeRefsBean().getThesauriRoot());
         List<Thesaurus> thesauri = new ArrayList<Thesaurus>(childAssocs.size());
         for (ChildAssociationRef childAssociationRef : childAssocs) {
             thesauri.add(getThesaurus(childAssociationRef.getChildRef(), fetchKeywords));
@@ -224,10 +224,6 @@ public class ThesaurusServiceImpl implements ThesaurusService {
         }
 
         return changed;
-    }
-
-    private NodeRef getThesauriRoot() {
-        return generalService.getNodeRef(ThesaurusModel.Repo.THESAURI_SPACE);
     }
 
     // START: getters / setters

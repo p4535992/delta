@@ -9,16 +9,18 @@ import javax.faces.context.FacesContext;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
-import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.app.servlet.FacesHelper;
 import org.apache.commons.lang.StringUtils;
 
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.functions.model.FunctionsModel;
+import ee.webmedia.alfresco.functions.model.UnmodifiableFunction;
 import ee.webmedia.alfresco.menu.model.DropdownMenuItem;
 import ee.webmedia.alfresco.menu.service.MenuService.MenuItemFilter;
 import ee.webmedia.alfresco.menu.service.MenuService.TreeItemProcessor;
 import ee.webmedia.alfresco.series.model.SeriesModel;
+import ee.webmedia.alfresco.series.model.UnmodifiableSeries;
 import ee.webmedia.alfresco.series.web.SeriesListDialog;
 import ee.webmedia.alfresco.volume.web.VolumeListDialog;
 
@@ -72,37 +74,28 @@ public class DocumentListTreeItemProcessor implements TreeItemProcessor {
     }
 
     @Override
-    public void setupTreeItem(DropdownMenuItem dd, NodeRef nodeRef) {
+    public void setupTreeItem(DropdownMenuItem dd, NodeRef nodeRef, Map<Long, QName> propertyTypes) {
         QName type = nodeService.getType(nodeRef);
         String title = "";
         String orderString = "";
         if (type.equals(FunctionsModel.Types.FUNCTION)) {
-            title = nodeService.getProperty(nodeRef, FunctionsModel.Props.MARK) + " " + nodeService.getProperty(nodeRef, FunctionsModel.Props.TITLE);
+            UnmodifiableFunction unmodifiableFunction = BeanHelper.getFunctionsService().getUnmodifiableFunction(nodeRef, propertyTypes);
+            title = unmodifiableFunction.getFunctionLabel();
             dd.setOutcome("dialog:seriesListDialog");
 
-            Integer order = (Integer) nodeService.getProperty(nodeRef, FunctionsModel.Props.ORDER);
+            Integer order = unmodifiableFunction.getOrder();
             if (order == null) {
                 order = 0;
             }
             orderString = StringUtils.leftPad(String.valueOf(Math.abs(order)), ((order.intValue() < 0) ? 6 : 5), '0');
-            orderString += " " + nodeService.getProperty(nodeRef, FunctionsModel.Props.MARK);
-            orderString += " " + nodeService.getProperty(nodeRef, FunctionsModel.Props.TITLE);
+            orderString += " " + unmodifiableFunction.getFunctionLabel();
         } else if (type.equals(SeriesModel.Types.SERIES)) {
-            String containingDocsCount = DefaultTypeConverter.INSTANCE.convert(String.class, nodeService.getProperty(nodeRef, SeriesModel.Props.CONTAINING_DOCS_COUNT));
-            if (containingDocsCount == null) {
-                containingDocsCount = "?";
-            }
-            title = nodeService.getProperty(nodeRef, SeriesModel.Props.SERIES_IDENTIFIER) + " " + nodeService.getProperty(nodeRef, SeriesModel.Props.TITLE)
-                    + " (" + containingDocsCount + ")";
+            UnmodifiableSeries unmodifiableSeries = BeanHelper.getSeriesService().getUnmodifiableSeries(nodeRef, propertyTypes);
+            title = unmodifiableSeries.getSeriesLabel() + " (" + unmodifiableSeries.getContainingDocsCount() + ")";
             dd.setOutcome("dialog:volumeListDialog");
-
-            Integer order = (Integer) nodeService.getProperty(nodeRef, SeriesModel.Props.ORDER);
-            if (order == null) {
-                order = 0;
-            }
-            orderString = StringUtils.leftPad(String.valueOf(Math.abs(order)), ((order.intValue() < 0) ? 6 : 5), '0');
-            orderString += " " + nodeService.getProperty(nodeRef, SeriesModel.Props.SERIES_IDENTIFIER);
-            orderString += " " + nodeService.getProperty(nodeRef, SeriesModel.Props.TITLE);
+            int order = unmodifiableSeries.getOrder();
+            orderString = StringUtils.leftPad(String.valueOf(Math.abs(order)), ((order < 0) ? 6 : 5), '0');
+            orderString += " " + unmodifiableSeries.getSeriesLabel();
         }
         dd.setActionListener("#{MenuBean.updateTree}");
         dd.setNodeRef(nodeRef);

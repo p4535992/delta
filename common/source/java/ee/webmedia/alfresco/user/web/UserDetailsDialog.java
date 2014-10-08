@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.user.web;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getApplicationConstantsBean;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getAuthorityService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getOrganizationStructureService;
 import static ee.webmedia.alfresco.utils.UserUtil.getUserDisplayUnit;
@@ -141,11 +142,11 @@ public class UserDetailsDialog extends BaseDialogBean {
     }
 
     public boolean isRelatedFundsCenterNotEditable() {
-        return !BeanHelper.getUserService().isAdministrator() && BeanHelper.getEInvoiceService().isEinvoiceEnabled();
+        return !BeanHelper.getUserService().isAdministrator() && BeanHelper.getApplicationConstantsBean().isEinvoiceEnabled();
     }
 
     public boolean isRelatedFundsCenterEditable() {
-        return BeanHelper.getUserService().isAdministrator() && BeanHelper.getEInvoiceService().isEinvoiceEnabled();
+        return BeanHelper.getUserService().isAdministrator() && BeanHelper.getApplicationConstantsBean().isEinvoiceEnabled();
     }
 
     public boolean isServiceRankRendered() {
@@ -214,7 +215,7 @@ public class UserDetailsDialog extends BaseDialogBean {
             user.getProperties().put(ContentModel.SHOW_EMPTY_TASK_MENU.toString(), false);
             showEmpty = false;
         }
-        String emptyTaskMenuString = MessageUtil.getMessage(showEmpty ? "yes" : "no");
+        String emptyTaskMenuString = showEmpty ? getApplicationConstantsBean().getMessageYes() : getApplicationConstantsBean().getMessageNo();
         user.getProperties().put("{temp}" + ContentModel.SHOW_EMPTY_TASK_MENU.getLocalName(), emptyTaskMenuString);
     }
 
@@ -251,7 +252,7 @@ public class UserDetailsDialog extends BaseDialogBean {
 
     /**
      * Used in JSP to set up person context
-     * 
+     *
      * @param userName
      */
     public void setupUser(String userName) {
@@ -269,6 +270,14 @@ public class UserDetailsDialog extends BaseDialogBean {
         if (StringUtils.isNotBlank(username)) {
             setupUser(username);
         }
+    }
+
+    @Override
+    public void clean() {
+        user = null;
+        substituteListDialog.cancel();
+        groups = null;
+        groupToAdd = null;
     }
 
     public UsersBeanProperties getProperties() {

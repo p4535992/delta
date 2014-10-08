@@ -21,7 +21,6 @@ import com.thoughtworks.xstream.annotations.XStreamAlias;
 import com.thoughtworks.xstream.annotations.XStreamAsAttribute;
 import com.thoughtworks.xstream.annotations.XStreamOmitField;
 
-import ee.webmedia.alfresco.document.einvoice.service.EInvoiceService;
 import ee.webmedia.alfresco.menu.ui.MenuBean;
 import ee.webmedia.alfresco.menu.ui.component.MenuItemWrapper;
 import ee.webmedia.alfresco.menu.ui.component.MenuRenderer;
@@ -29,7 +28,7 @@ import ee.webmedia.alfresco.menu.ui.component.UIMenuComponent;
 import ee.webmedia.alfresco.menu.ui.component.UIMenuComponent.ClearViewStackActionListener;
 import ee.webmedia.alfresco.orgstructure.amr.service.RSService;
 import ee.webmedia.alfresco.user.service.UserService;
-import ee.webmedia.alfresco.workflow.service.WorkflowService;
+import ee.webmedia.alfresco.workflow.service.WorkflowConstantsBean;
 
 @XStreamAlias("dropdown")
 public class DropdownMenuItem extends MenuItem {
@@ -67,15 +66,13 @@ public class DropdownMenuItem extends MenuItem {
     }
 
     @Override
-    public UIComponent createComponent(FacesContext context, String id, UserService userService, WorkflowService workflowService, EInvoiceService einvoiceService,
-            RSService rsService) {
-        return createComponent(context, id, userService, workflowService, einvoiceService, rsService, true);
+    public UIComponent createComponent(FacesContext context, String id, UserService userService, WorkflowConstantsBean workflowConstantsBean, RSService rsService) {
+        return createComponent(context, id, userService, workflowConstantsBean, rsService, true);
     }
 
     @Override
-    public UIComponent createComponent(FacesContext context, String id, UserService userService, WorkflowService workflowService, EInvoiceService einvoiceService,
-            RSService rsService,
-            boolean createChildren) {
+    public UIComponent createComponent(FacesContext context, String id, UserService userService, WorkflowConstantsBean workflowConstantsBean,
+            RSService rsService, boolean createChildren) {
         boolean isMyTasksMenu = isMyTasksMenu();
         if (isRestricted() && !hasPermissions(userService)) {
             if (isMyTasksMenu) {
@@ -152,7 +149,7 @@ public class DropdownMenuItem extends MenuItem {
         List<UIComponent> children = wrapper.getChildren();
         children.add(link);
         if (createChildren) {
-            MenuItemWrapper childrenWrapper = (MenuItemWrapper) createChildrenComponents(context, id, userService, workflowService, einvoiceService, rsService);
+            MenuItemWrapper childrenWrapper = (MenuItemWrapper) createChildrenComponents(context, id, userService, workflowConstantsBean, rsService);
             if (childrenWrapper != null) {
                 childrenWrapper.setDropdownWrapper(false);
                 childrenWrapper.setSkinnable(isSkinnable());
@@ -170,8 +167,7 @@ public class DropdownMenuItem extends MenuItem {
         return wrapper;
     }
 
-    public UIComponent createChildrenComponents(FacesContext context, String parentId, UserService userService, WorkflowService workflowService, EInvoiceService einvoiceService,
-            RSService rsService) {
+    public UIComponent createChildrenComponents(FacesContext context, String parentId, UserService userService, WorkflowConstantsBean workflowConstantsBean, RSService rsService) {
         MenuItemWrapper wrapper = (MenuItemWrapper) context.getApplication().createComponent(MenuItemWrapper.class.getCanonicalName());
         FacesHelper.setupComponentId(context, wrapper, null);
         wrapper.setDropdownWrapper(true);
@@ -189,7 +185,7 @@ public class DropdownMenuItem extends MenuItem {
                     continue;
                 }
 
-                UIComponent childItem = item.createComponent(context, id + i, userService, workflowService, einvoiceService, rsService);
+                UIComponent childItem = item.createComponent(context, id + i, userService, workflowConstantsBean, rsService);
 
                 if (childItem != null) {
                     children.add(childItem);

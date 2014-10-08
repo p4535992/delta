@@ -10,7 +10,7 @@
 <a:panel id="compound-workflow-list-panel" styleClass="panel-100 with-pager" label="#{msg.workflow_compound_list}" progressive="true">
 
    <a:richList id="compoundWorkflowsList" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow"
-      altRowStyleClass="recordSetRowAlt" width="100%" value="#{CompoundWorkflowListDialog.compoundWorkflows}" var="r" initialSortColumn="createdDateTime" initialSortDescending="true">
+      altRowStyleClass="recordSetRowAlt" width="100%" value="#{CompoundWorkflowListDialog.compoundWorkflows}" var="r" initialSortColumn="createdDateTime" initialSortDescending="true" refreshOnBind="true">
 
       <%-- Title column --%>
       <a:column id="col1" primary="true" rendered="#{CompoundWorkflowListDialog.showTitle}">
@@ -45,7 +45,7 @@
       <%-- State column --%>
       <a:column id="col2_1">
          <f:facet name="header">
-            <a:sortLink id="col2_1-lbl" label="#{msg.workflow_compound_state}" value="status" styleClass="header" />
+            <a:sortLink id="col2_1-lbl" label="#{msg.workflow_compound_state}" value="workflowStatus" styleClass="header" />
          </f:facet>
          <a:actionLink id="col2_1-act" value="#{r.workflowStatus}" action="dialog:compoundWorkflowDialog" actionListener="#{CompoundWorkflowDialog.setupWorkflowFromList}">
             <f:param name="nodeRef" value="#{r.compoundWorkflow.nodeRef}" />
@@ -58,10 +58,10 @@
             <a:sortLink id="col3-lbl" label="#{msg.workflow_compound_object}" value="objectTitle" styleClass="header" />
          </f:facet>
          <a:actionLink id="col3-text-doc" value="#{r.objectTitle}" action="#{DocumentDialog.action}" actionListener="#{DocumentDialog.open}" rendered="#{r.compoundWorkflow.documentWorkflow}">
-            <f:param name="nodeRef" value="#{r.compoundWorkflow.parent}" />
+            <f:param name="nodeRef" value="#{r.parent}" />
          </a:actionLink>
          <a:actionLink id="col3-text-case-file" value="#{r.objectTitle}" actionListener="#{CaseFileDialog.openFromDocumentList}" rendered="#{r.compoundWorkflow.caseFileWorkflow}">
-            <f:param name="nodeRef" value="#{r.compoundWorkflow.parent}" />
+            <f:param name="nodeRef" value="#{r.parent}" />
          </a:actionLink>
          <h:outputText id="col3-text-independent" value="#{r.objectTitle}" rendered="#{r.compoundWorkflow.independentWorkflow}"/>
       </a:column>     

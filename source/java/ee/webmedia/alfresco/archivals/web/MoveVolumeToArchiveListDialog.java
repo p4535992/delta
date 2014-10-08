@@ -8,7 +8,6 @@ import java.util.List;
 import javax.faces.event.ActionEvent;
 
 import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.service.namespace.QName;
 import org.alfresco.web.config.DialogsConfigElement.DialogButtonConfig;
 
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
@@ -43,12 +42,12 @@ public class MoveVolumeToArchiveListDialog extends VolumeArchiveBaseDialog {
     }
 
     @Override
-    protected List<QName> getRenderedFilterFields() {
+    protected List<String> getRenderedFilterFields() {
         if (renderedFilterFields == null) {
-            renderedFilterFields = new ArrayList<QName>(Arrays.asList(
-                    VolumeSearchModel.Props.VALID_TO,
-                    VolumeSearchModel.Props.VALID_TO_END_DATE,
-                    VolumeSearchModel.Props.EVENT_PLAN));
+            renderedFilterFields = new ArrayList<String>(Arrays.asList(
+                    VolumeSearchModel.Props.VALID_TO.toPrefixString(),
+                    VolumeSearchModel.Props.VALID_TO_END_DATE.toPrefixString(),
+                    VolumeSearchModel.Props.EVENT_PLAN.toPrefixString()));
         }
         return renderedFilterFields;
     }

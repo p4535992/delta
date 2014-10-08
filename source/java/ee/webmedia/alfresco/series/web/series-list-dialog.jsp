@@ -13,13 +13,6 @@
    <a:richList id="seriesList" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
       width="100%" value="#{SeriesListDialog.series}" var="r">
       
-      <a:column id="functionColumn" rendered="#{SeriesListDialog.disableActions}">
-         <f:facet name="header">
-            <a:sortLink id="functionColumn-sort" label="#{msg.series_function}" value="order" styleClass="header" />
-         </f:facet>
-         <h:outputText id="functionColumn-text" value="#{SeriesListDialog.function.mark} #{SeriesListDialog.function.title}" />
-      </a:column>
-      
       <%-- seriesIdentifier --%>
       <a:column id="col0">
          <f:facet name="header">
@@ -43,7 +36,7 @@
          </f:facet>
          <a:actionLink id="col2-text" value="#{r.title} (#{r.containingDocsCount})" action="dialog:volumeListDialog" tooltip="#{msg.volume_list_info}"
             showLink="false" actionListener="#{VolumeListDialog.showAll}" >
-            <f:param name="seriesNodeRef" value="#{r.node.nodeRef}" />
+            <f:param name="seriesNodeRef" value="#{r.nodeRef}" />
          </a:actionLink>
       </a:column>
 
@@ -64,13 +57,13 @@
       </a:column>
 
       <%-- show details --%>
-      <a:column id="col5" actions="true" styleClass="actions-column" rendered="#{not SeriesListDialog.disableActions and (UserService.documentManager or UserService.archivist)}" >
+      <a:column id="col5" actions="true" styleClass="actions-column" rendered="#{(UserService.documentManager or UserService.archivist)}" >
          <f:facet name="header">
             <h:outputText value="&nbsp;" escape="false" />
          </f:facet>
          <a:actionLink id="col5-act1" value="#{r.title}" image="/images/icons/edit_properties.gif" action="dialog:seriesDetailsDialog" showLink="false"
             actionListener="#{SeriesDetailsDialog.showDetails}" tooltip="#{msg.series_details_info}">
-            <f:param name="seriesNodeRef" value="#{r.node.nodeRef}" />
+            <f:param name="seriesNodeRef" value="#{r.nodeRef}" />
          </a:actionLink>
       </a:column>
 

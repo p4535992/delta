@@ -38,6 +38,7 @@ import ee.webmedia.alfresco.utils.UserUtil;
 public class InviteUsersDialog extends PermissionsAddDialog {
     private static final long serialVersionUID = 1L;
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(InviteUsersDialog.class);
+    public static final String BEAN_NAME = "InviteUsersDialog";
 
     private transient EmailService emailService;
     private transient DocumentTemplateService templateService;
@@ -173,12 +174,12 @@ public class InviteUsersDialog extends PermissionsAddDialog {
     }
 
     private void addToEmails(String user, List<String> toEmails, List<String> toNames) {
-        final Map<String, Object> props = getUserService().getUser(user).getProperties();
+        final Map<QName, Serializable> props = getUserService().getUserProperties(user);
         if (props.get(ContentModel.PROP_EMAIL) != null) {
             String email = props.get(ContentModel.PROP_EMAIL).toString();
             if (!toEmails.contains(email)) {
                 toEmails.add(email);
-                toNames.add(UserUtil.getPersonFullName2(props, false));
+                toNames.add(UserUtil.getPersonFullName1(props));
             }
         }
     }

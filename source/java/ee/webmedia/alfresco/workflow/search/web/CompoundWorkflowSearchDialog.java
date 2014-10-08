@@ -163,6 +163,12 @@ public class CompoundWorkflowSearchDialog extends AbstractSearchFilterBlockBean<
         filter.getProperties().put(TaskSearchModel.Props.CREATOR_NAME.toString(), UserUtil.getPersonFullName1(personProps));
     }
 
+    @Override
+    public void clean() {
+        super.clean();
+        ownerSearchFilters = null;
+    }
+
     // START: getters / setters
 
     @Override

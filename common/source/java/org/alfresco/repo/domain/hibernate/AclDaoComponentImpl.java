@@ -33,19 +33,15 @@ import org.alfresco.repo.domain.DbAccessControlList;
 import org.alfresco.repo.domain.DbAccessControlListChangeSet;
 import org.alfresco.repo.domain.DbAuthority;
 import org.alfresco.repo.domain.DbPermission;
-import org.alfresco.repo.domain.QNameDAO;
 import org.alfresco.repo.security.permissions.ACLCopyMode;
 import org.alfresco.repo.security.permissions.ACLType;
 import org.alfresco.repo.security.permissions.AccessControlEntry;
 import org.alfresco.repo.security.permissions.AccessControlList;
 import org.alfresco.repo.security.permissions.AccessControlListProperties;
-import org.alfresco.repo.security.permissions.PermissionReference;
 import org.alfresco.repo.security.permissions.impl.AclChange;
 import org.alfresco.repo.security.permissions.impl.AclDaoComponent;
 import org.alfresco.repo.transaction.AlfrescoTransactionSupport;
 import org.alfresco.service.cmr.security.AccessStatus;
-import org.alfresco.service.namespace.QName;
-import org.alfresco.util.Pair;
 import org.hibernate.Query;
 import org.hibernate.Session;
 import org.springframework.orm.hibernate3.HibernateCallback;
@@ -60,8 +56,6 @@ import ee.webmedia.alfresco.privilege.service.NotSupportedPermissionSystemExcept
  */
 public class AclDaoComponentImpl extends HibernateDaoSupport implements AclDaoComponent
 {
-
-    static String QUERY_GET_PERMISSION = "permission.GetPermission";
 
     static String QUERY_GET_AUTHORITY = "permission.GetAuthority";
 
@@ -91,12 +85,6 @@ public class AclDaoComponentImpl extends HibernateDaoSupport implements AclDaoCo
 
     static String QUERY_GET_NEW_IN_STORE = "permission.GetNewInStore";
 
-    /** Access to QName entities */
-    private QNameDAO qnameDAO;
-
-    /**
-     *
-     */
     public AclDaoComponentImpl()
     {
         super();
@@ -265,7 +253,7 @@ public class AclDaoComponentImpl extends HibernateDaoSupport implements AclDaoCo
             changeSet = new DbAccessControlListChangeSetImpl();
             changeSetId = getHibernateTemplate().save(changeSet);
             DirtySessionMethodInterceptor.flushSession(getSession(), true);
-            changeSet = (DbAccessControlListChangeSetImpl) getHibernateTemplate().get(DbAccessControlListChangeSetImpl.class, changeSetId);
+            changeSet = getHibernateTemplate().get(DbAccessControlListChangeSetImpl.class, changeSetId);
             // bind the id
             AlfrescoTransactionSupport.bindResource(RESOURCE_KEY_ACL_CHANGE_SET_ID, changeSetId);
             if (logger.isDebugEnabled())
@@ -275,7 +263,7 @@ public class AclDaoComponentImpl extends HibernateDaoSupport implements AclDaoCo
         }
         else
         {
-            changeSet = (DbAccessControlListChangeSet) getHibernateTemplate().get(DbAccessControlListChangeSetImpl.class, changeSetId);
+            changeSet = getHibernateTemplate().get(DbAccessControlListChangeSetImpl.class, changeSetId);
             if (logger.isDebugEnabled())
             {
                 logger.debug("Existing change set = " + changeSetId);
@@ -583,39 +571,6 @@ public class AclDaoComponentImpl extends HibernateDaoSupport implements AclDaoCo
             dbAuthority = createDbAuthority(authority);
         }
         return dbAuthority;
-    }
-
-    private DbPermission getPermission(final PermissionReference permissionReference, boolean create)
-    {
-        // Find permission
-
-        final QName permissionQName = permissionReference.getQName();
-        final String permissionName = permissionReference.getName();
-        final Pair<Long, QName> permissionQNamePair = qnameDAO.getOrCreateQName(permissionQName);
-
-        HibernateCallback callback = new HibernateCallback()
-        {
-            @Override
-            public Object doInHibernate(Session session)
-            {
-                Query query = session.getNamedQuery(QUERY_GET_PERMISSION);
-                query.setParameter("permissionTypeQNameId", permissionQNamePair.getFirst());
-                query.setParameter("permissionName", permissionName);
-                DirtySessionMethodInterceptor.setQueryFlushMode(session, query);
-                return query.uniqueResult();
-            }
-        };
-        DbPermission dbPermission = (DbPermission) getHibernateTemplate().execute(callback);
-        if (create && (dbPermission == null))
-        {
-            DbPermissionImpl newPermission = new DbPermissionImpl();
-            newPermission.setTypeQNameId(permissionQNamePair.getFirst());
-            newPermission.setName(permissionName);
-            dbPermission = newPermission;
-            getHibernateTemplate().save(newPermission);
-            DirtySessionMethodInterceptor.flushSession(getSession(), true);
-        }
-        return dbPermission;
     }
 
     private DbAccessControlEntry getAccessControlEntry(final DbPermission permission, final DbAuthority authority, final AccessControlEntry ace, boolean create)

@@ -57,8 +57,8 @@ import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel.Types;
 import ee.webmedia.alfresco.addressbook.service.AddressbookService;
 import ee.webmedia.alfresco.addressbook.util.AddressbookUtil;
-import ee.webmedia.alfresco.cases.model.Case;
 import ee.webmedia.alfresco.cases.service.CaseService;
+import ee.webmedia.alfresco.cases.service.UnmodifiableCase;
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
 import ee.webmedia.alfresco.classificator.model.ClassificatorValue;
 import ee.webmedia.alfresco.classificator.service.ClassificatorService;
@@ -71,12 +71,12 @@ import ee.webmedia.alfresco.common.web.UserContactGroupSearchBean;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 import ee.webmedia.alfresco.document.einvoice.model.Transaction;
 import ee.webmedia.alfresco.document.einvoice.service.EInvoiceUtil;
+import ee.webmedia.alfresco.document.lock.service.DocLockService;
 import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentParentNodesVO;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
-import ee.webmedia.alfresco.document.lock.service.DocLockService;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.document.service.DocumentService.TransientProps;
 import ee.webmedia.alfresco.document.service.InMemoryChildNodeHelper;
@@ -86,7 +86,6 @@ import ee.webmedia.alfresco.document.web.DocumentDialog;
 import ee.webmedia.alfresco.dvk.service.DvkService;
 import ee.webmedia.alfresco.dvk.service.ReviewTaskException;
 import ee.webmedia.alfresco.functions.service.FunctionsService;
-import ee.webmedia.alfresco.menu.ui.MenuBean;
 import ee.webmedia.alfresco.orgstructure.service.OrganizationStructureService;
 import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
@@ -104,6 +103,7 @@ import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UserUtil;
 import ee.webmedia.alfresco.utils.WebUtil;
+import ee.webmedia.alfresco.volume.model.UnmodifiableVolume;
 import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.volume.service.VolumeService;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
@@ -526,7 +526,7 @@ public class MetadataBlockBean implements ClearStateListener {
 
                 String ownerDetails = StringUtils.join(ownerProps.iterator(), ", ");
                 String ownerId = (String) props.get(DocumentCommonModel.Props.OWNER_ID);
-                String substitutionInfo = UserUtil.getSubstitute(ownerId);
+                String substitutionInfo = BeanHelper.getSubstituteService().getSubstituteLabel(ownerId);
                 String finalOwnerDetails = joinStringAndStringWithParentheses(owner, ownerDetails);
                 if (!StringUtils.isBlank(substitutionInfo)) {
                     finalOwnerDetails = joinStringAndStringWithSpace(finalOwnerDetails, "<span class=\"fieldExtraInfo\">" + substitutionInfo + "</span>");
@@ -929,10 +929,11 @@ public class MetadataBlockBean implements ClearStateListener {
         String regNumber = (String) document.getProperties().get(DocumentSpecificModel.Props.SELLER_PARTY_REG_NUMBER);
         String invoiceNumber = (String) document.getProperties().get(DocumentSpecificModel.Props.INVOICE_NUMBER);
         Date invoiceDate = (Date) document.getProperties().get(DocumentSpecificModel.Props.INVOICE_DATE);
-        List<Document> similarDocuments = BeanHelper.getDocumentSearchService().searchSimilarInvoiceDocuments(regNumber, invoiceNumber, invoiceDate);
+        List<NodeRef> similarDocuments = BeanHelper.getDocumentSearchService().searchSimilarInvoiceDocuments(regNumber, invoiceNumber, invoiceDate);
         if (similarDocuments != null) {
-            for (Document document : similarDocuments) {
-                if (!document.getNodeRef().equals(nodeRef)) {
+            for (NodeRef docRef : similarDocuments) {
+                if (!docRef.equals(nodeRef)) {
+                    Document document = new Document(docRef);
                     String documentRegNr = (String) document.getProperties().get(DocumentCommonModel.Props.REG_NUMBER);
                     if (documentRegNr == null) {
                         documentRegNr = MessageUtil.getMessage("document_invoice_reg_nr_missing");
@@ -1132,10 +1133,10 @@ public class MetadataBlockBean implements ClearStateListener {
             NodeRef functionRef = (NodeRef) document.getProperties().get(DocumentService.TransientProps.FUNCTION_NODEREF);
             NodeRef seriesRef = (NodeRef) document.getProperties().get(DocumentService.TransientProps.SERIES_NODEREF);
             if (functionRef != null && seriesRef != null) {
-                List<Volume> allVolumes = getVolumeService().getAllValidVolumesBySeries(seriesRef, DocListUnitStatus.OPEN);
-                for (Volume volume : allVolumes) {
+                List<UnmodifiableVolume> allVolumes = getVolumeService().getAllValidVolumesBySeries(seriesRef, DocListUnitStatus.OPEN);
+                for (UnmodifiableVolume volume : allVolumes) {
                     if (mark.equals(volume.getVolumeMark())) {
-                        updateFnSerVol(functionRef, seriesRef, volume.getNode().getNodeRef(), null, false);
+                        updateFnSerVol(functionRef, seriesRef, volume.getNodeRef(), null, false);
                         break;
                     }
                 }
@@ -1517,7 +1518,7 @@ public class MetadataBlockBean implements ClearStateListener {
         }
 
         final List<String> messages = new ArrayList<String>(4);
-        Volume volume = getVolumeService().getVolumeByNodeRef(volumeRef);
+        Volume volume = getVolumeService().getVolumeByNodeRef(volumeRef, null);
 
         String caseLabel = StringUtils.trimToNull((String) props.get(TransientProps.CASE_LABEL_EDITABLE));
         if (volume.isContainsCases() && StringUtils.isBlank(caseLabel)) {
@@ -1529,13 +1530,13 @@ public class MetadataBlockBean implements ClearStateListener {
         } else if (!volume.isContainsCases() && StringUtils.isNotBlank(caseLabel)) {
             caseLabel = null;
         }
-        Case docCase = null;
+        UnmodifiableCase docCase = null;
         if (volume.isContainsCases() && StringUtils.isNotBlank(caseLabel)) {
-            List<Case> allCases = getCaseService().getAllCasesByVolume(volumeRef);
+            List<UnmodifiableCase> allCases = getCaseService().getAllCasesByVolume(volumeRef);
             NodeRef caseRef = null;
-            for (Case tmpCase : allCases) {
+            for (UnmodifiableCase tmpCase : allCases) {
                 if (StringUtils.equalsIgnoreCase(caseLabel, tmpCase.getTitle())) {
-                    caseRef = tmpCase.getNode().getNodeRef();
+                    caseRef = tmpCase.getNodeRef();
                     docCase = tmpCase;
                     break;
                 }
@@ -1545,7 +1546,7 @@ public class MetadataBlockBean implements ClearStateListener {
 
         boolean isClosedUnitCheckNeeded = isClosedUnitCheckNeeded(getDocumentService().getAncestorNodesByDocument(nodeRef), volumeRef, docCase);
 
-        if (isClosedUnitCheckNeeded && DocListUnitStatus.CLOSED.equals(getFunctionsService().getFunctionByNodeRef(functionRef).getStatus())) {
+        if (isClosedUnitCheckNeeded && DocListUnitStatus.CLOSED.equals(getFunctionsService().getUnmodifiableFunction(functionRef, null).getStatus())) {
             messages.add("document_validationMsg_closed_function");
         }
         if (isClosedUnitCheckNeeded && DocListUnitStatus.CLOSED.equals(getSeriesService().getSeriesByNodeRef(seriesRef).getStatus())) {
@@ -1612,15 +1613,12 @@ public class MetadataBlockBean implements ClearStateListener {
         return true;
     }
 
-    public boolean isClosedUnitCheckNeeded(DocumentParentNodesVO parents, NodeRef volumeRef, Case docCase) {
+    public boolean isClosedUnitCheckNeeded(DocumentParentNodesVO parents, NodeRef volumeRef, UnmodifiableCase docCase) {
         return isDraft
                 || !(volumeRef.equals(parents.getVolumeNode().getNodeRef())
-                        && (parents.getCaseNode() == null ? docCase == null
-                        : (docCase == null ? false
-                                : parents.getCaseNode().getNodeRef().equals(docCase.getNode().getNodeRef())
-                                )
-                                )
-                        );
+                && (parents.getCaseNode() == null ? docCase == null
+                        : (docCase == null ? false : parents.getCaseNode().getNodeRef().equals(docCase.getNodeRef())))
+                );
     }
 
     private void validateExpensesV2TotalSum(List<String> messages) {
@@ -1769,6 +1767,9 @@ public class MetadataBlockBean implements ClearStateListener {
             final List<Node> applicantNodes = document.getAllChildAssociations(applicantAssoc);
             for (Node applicant : applicantNodes) {
                 final List<Node> errandNodes = errandAssocType == null ? null : applicant.getAllChildAssociations(errandAssocType);
+                if (errandNodes == null) {
+                    continue;
+                }
                 for (Node errand : errandNodes) {
                     @SuppressWarnings("unchecked")
                     List<String> cateringCounts = (List<String>) errand.getProperties().get(DocumentSpecificModel.Props.DAILY_ALLOWANCE_CATERING_COUNT);
@@ -1835,10 +1836,10 @@ public class MetadataBlockBean implements ClearStateListener {
             Node document = getDocumentDialogHelperBean().getNode();
             DocumentParentNodesVO parentNodes = getDocumentService().getAncestorNodesByDocument(document.getNodeRef());
             getDocumentService().setTransientProperties(document, parentNodes);
-            document = getDocumentService().registerDocument(document);
+            NodeRef docRef = getDocumentService().registerDocument(document);
             // Update generated files
-            BeanHelper.getDocumentTemplateService().updateGeneratedFiles(document.getNodeRef(), true);
-            ((MenuBean) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), MenuBean.BEAN_NAME)).processTaskItems();
+            BeanHelper.getDocumentTemplateService().updateGeneratedFiles(docRef, true);
+            BeanHelper.getMenuBean().processTaskItems();
             MessageUtil.addInfoMessage("document_registerDoc_success");
 
         } catch (UnableToPerformException e) {

@@ -17,6 +17,7 @@ import static ee.webmedia.alfresco.utils.RepoUtil.isSaved;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -55,7 +56,7 @@ import org.apache.commons.lang.StringUtils;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.casefile.service.CaseFile;
-import ee.webmedia.alfresco.cases.model.Case;
+import ee.webmedia.alfresco.cases.service.UnmodifiableCase;
 import ee.webmedia.alfresco.classificator.constant.DocTypeAssocType;
 import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.common.propertysheet.component.SubPropertySheetItem;
@@ -112,6 +113,7 @@ import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UnableToPerformMultiReasonException;
 import ee.webmedia.alfresco.utils.WebUtil;
+import ee.webmedia.alfresco.volume.model.UnmodifiableVolume;
 import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
@@ -128,7 +130,7 @@ import ee.webmedia.alfresco.workflow.web.WorkflowBlockBean;
  * </p>
  */
 public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<DocDialogSnapshot, DocumentDynamicBlock, DialogDataProvider> implements DialogDataProvider,
-BlockBeanProviderProvider {
+        BlockBeanProviderProvider {
     private static final long serialVersionUID = 1L;
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(DocumentDynamicDialog.class);
 
@@ -657,8 +659,8 @@ BlockBeanProviderProvider {
     private void openOrSwitchModeCommon(NodeRef docRef, boolean inEditMode) {
         DocumentDynamic document = inEditMode
                 ? getDocumentDynamicService().getDocumentWithInMemoryChangesForEditing(docRef)
-                        : getDocumentDynamicService().getDocument(docRef);
-                openOrSwitchModeCommon(document, inEditMode);
+                : getDocumentDynamicService().getDocument(docRef);
+        openOrSwitchModeCommon(document, inEditMode);
     }
 
     private void openOrSwitchModeCommon(DocumentDynamic document, boolean inEditMode) {
@@ -939,7 +941,8 @@ BlockBeanProviderProvider {
             public Pair<DocumentDynamic, List<Pair<NodeRef, NodeRef>>> execute() throws Throwable {
                 // May throw UnableToPerformException or UnableToPerformMultiReasonException
                 ((FileBlockBean) getBlocks().get(FileBlockBean.class)).updateFilesProperties();
-                Pair<DocumentDynamic, List<Pair<NodeRef, NodeRef>>> saveResult = getDocumentDynamicService().updateDocumentGetDocAndNodeRefs(document, saveListenerBeanNames, relocateAssocDocs, true);
+                Pair<DocumentDynamic, List<Pair<NodeRef, NodeRef>>> saveResult = getDocumentDynamicService().updateDocumentGetDocAndNodeRefs(document, saveListenerBeanNames,
+                        relocateAssocDocs, true);
                 // Delete DecContainer after document saving. Just in case.
                 getFileService().removeDecContainer(saveResult.getFirst().getNodeRef());
 
@@ -1016,11 +1019,11 @@ BlockBeanProviderProvider {
     }
 
     public static NodeRef getParent(NodeRef volumeRef, String caseLabel) {
-        Volume volume = BeanHelper.getVolumeService().getVolumeByNodeRef(volumeRef);
+        UnmodifiableVolume volume = BeanHelper.getVolumeService().getUnmodifiableVolume(volumeRef, null);
         NodeRef parentRef = null;
         if (volume.isContainsCases() && caseLabel != null) {
-            Case existingCase = BeanHelper.getCaseService().getCaseByTitle(caseLabel, volumeRef, null);
-            parentRef = existingCase != null ? existingCase.getNode().getNodeRef() : null;
+            UnmodifiableCase existingCase = BeanHelper.getCaseService().getCaseByTitle(caseLabel, volumeRef, null);
+            parentRef = existingCase != null ? existingCase.getNodeRef() : null;
         } else {
             parentRef = volumeRef;
         }
@@ -1128,9 +1131,9 @@ BlockBeanProviderProvider {
         try {
             DocumentParentNodesVO parentNodes = getDocumentService().getAncestorNodesByDocument(document.getNodeRef());
             getDocumentService().setTransientProperties(document, parentNodes);
-            document = getDocumentService().registerDocument(document);
+            NodeRef docRef = getDocumentService().registerDocument(document);
             // Update generated files
-            BeanHelper.getDocumentTemplateService().updateGeneratedFiles(document.getNodeRef(), true);
+            BeanHelper.getDocumentTemplateService().updateGeneratedFiles(docRef, true);
             ((MenuBean) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), MenuBean.BEAN_NAME)).processTaskItems();
             MessageUtil.addInfoMessage("document_registerDoc_success");
         } catch (UnableToPerformException e) {
@@ -1304,6 +1307,14 @@ BlockBeanProviderProvider {
             return false;
         }
         return true;
+    }
+
+    @Override
+    public void clean() {
+        clearState();
+        for (DocumentDynamicBlock documentDynamicBlock : getBlocks().values()) {
+            documentDynamicBlock.clean();
+        }
     }
 
     // =========================================================================

@@ -4,17 +4,24 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentConfigServic
 import static ee.webmedia.alfresco.document.search.web.DocumentDynamicSearchDialog.setFilterDefaultValues;
 
 import java.io.Serializable;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import javax.faces.component.UIInput;
 import javax.faces.context.FacesContext;
 import javax.faces.model.SelectItem;
 
+import org.alfresco.repo.transaction.RetryingTransactionHelper;
+import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.TransientNode;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -22,12 +29,16 @@ import org.apache.commons.logging.LogFactory;
 import ee.webmedia.alfresco.classificator.enums.TemplateReportOutputType;
 import ee.webmedia.alfresco.classificator.enums.TemplateReportType;
 import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.report.job.ExecuteReportsJob;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.volume.search.model.VolumeReportModel;
+import ee.webmedia.alfresco.volume.search.model.VolumeSearchModel;
 import ee.webmedia.alfresco.volume.search.service.VolumeSearchFilterService;
 
 public class VolumeDynamicReportDialog extends VolumeDynamicSearchDialog {
+
+    public static final String BEAN_NAME = "VolumeDynamicReportDialog";
 
     private static final long serialVersionUID = 1L;
     private static final Log LOG = LogFactory.getLog(VolumeDynamicReportDialog.class);
@@ -58,15 +69,32 @@ public class VolumeDynamicReportDialog extends VolumeDynamicSearchDialog {
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
         if (isValidFilter()) {
             try {
-                BeanHelper.getReportService().createReportResult(filter, TemplateReportType.VOLUMES_REPORT, VolumeReportModel.Assocs.FILTER);
+                ExecuteReportsJob.REORDER_LOCK.lock();
+                RetryingTransactionHelper helper = BeanHelper.getTransactionService().getRetryingTransactionHelper();
+                RetryingTransactionCallback<Void> cb = new RetryingTransactionCallback<Void>() {
+                    @Override
+                    public Void execute() throws Throwable {
+                        BeanHelper.getReportService().createReportResult(filter, TemplateReportType.VOLUMES_REPORT, VolumeReportModel.Assocs.FILTER);
+                        return null;
+                    }
+                };
+                helper.doInTransaction(cb, false, true, true);
                 MessageUtil.addInfoMessage("report_created_success");
             } catch (UnableToPerformException e) {
                 MessageUtil.addErrorMessage(e.getMessageKey());
+            } finally {
+                ExecuteReportsJob.REORDER_LOCK.unlock();
             }
         }
         isFinished = false;
         return null;
     }
+
+    private final Set<String> SKIPPED_VALUES = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
+            VolumeReportModel.Props.REPORT_TEMPLATE.toString(),
+            VolumeReportModel.Props.REPORT_OUTPUT_TYPE.toString(),
+            VolumeDynamicSearchDialog.SELECTED_STORES.toString(),
+            VolumeSearchModel.Props.STORE.toString())));
 
     private boolean isValidFilter() {
         Map<String, Object> filterProps = filter.getProperties();
@@ -77,12 +105,15 @@ public class VolumeDynamicReportDialog extends VolumeDynamicSearchDialog {
         }
         boolean areSomeFieldsFilled = false;
         for (Entry<String, Object> entry : filterProps.entrySet()) {
-            if (entry.getKey().equals(VolumeReportModel.Props.REPORT_TEMPLATE)) {
+            if (SKIPPED_VALUES.contains(entry.getKey())) {
                 continue;
             }
             Object value = entry.getValue();
             if (value != null) {
                 if (value instanceof String && StringUtils.isBlank((String) value)) {
+                    continue;
+                }
+                if (value instanceof List && (CollectionUtils.isEmpty((List<?>) value) || containsOnlyBlankValues((List<?>) value))) {
                     continue;
                 }
                 areSomeFieldsFilled = true;
@@ -94,6 +125,16 @@ public class VolumeDynamicReportDialog extends VolumeDynamicSearchDialog {
             result = false;
         }
         return result;
+    }
+
+    private boolean containsOnlyBlankValues(List<?> list) {
+        for (Object o : list) {
+            if (o == null || (o instanceof String && StringUtils.isBlank((String) o))) {
+                continue;
+            }
+            return false;
+        }
+        return true;
     }
 
     public List<SelectItem> getReportTemplates(FacesContext context, UIInput selectComponent) {
@@ -113,6 +154,12 @@ public class VolumeDynamicReportDialog extends VolumeDynamicSearchDialog {
         } finally {
             LOG.info("New report filter generation: " + (System.currentTimeMillis() - start) + "ms");
         }
+    }
+
+    @Override
+    public void clean() {
+        reportTemplates = null;
+        super.clean();
     }
 
     @Override

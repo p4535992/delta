@@ -197,11 +197,22 @@ public class ParametersImportDialog extends AbstractImportDialog {
     @Override
     public String reset() {
         super.reset();
+        clean();
+        return getDefaultFinishOutcome();
+    }
+
+    @Override
+    public String cancel() {
+        return super.cancel();
+    }
+
+    @Override
+    public void clean() {
+        super.clean();
         changedParams = null;
         paramsToImport = null;
         paramsOverview = null;
         containsUnknownParameters = false;
-        return getDefaultFinishOutcome();
     }
 
     @Override

@@ -26,6 +26,10 @@
       <managed-bean-name>MenuItemCountBean</managed-bean-name>
       <managed-bean-class>ee.webmedia.alfresco.menu.web.MenuItemCountBean</managed-bean-class>
       <managed-bean-scope>session</managed-bean-scope>
+      <managed-property>
+         <property-name>constantNodeRefsBean</property-name>
+         <value>#{constantNodeRefsBean}</value>
+      </managed-property>
    </managed-bean>
 
    <!-- ==================== [ COMPONENTS] =================================== -->

@@ -82,6 +82,8 @@ public interface FileFolderService
     
     public List<NodeRef> listFileRefs(NodeRef contextNodeRef);
     
+    public List<NodeRef> listFileRefs(NodeRef contextNodeRef, int limit);
+    
     /**
      * Lists all immediate child folders of the given context node
      * 

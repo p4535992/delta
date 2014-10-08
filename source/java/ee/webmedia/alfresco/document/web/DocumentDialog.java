@@ -683,12 +683,11 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
     @Override
     public List<DialogButtonConfig> getAdditionalButtons() {
         List<DialogButtonConfig> buttons = new ArrayList<DialogButtonConfig>(1);
-        RegisterDocumentEvaluator registrationEval = new RegisterDocumentEvaluator();
         if (metadataBlockBean.isInEditMode() &&
                 (metadataBlockBean.getDocumentType().getId().equals(DocumentSubtypeModel.Types.LICENCE)
                         || metadataBlockBean.getDocumentType().getId().equals(DocumentSubtypeModel.Types.INCOMING_LETTER)
                         || metadataBlockBean.getDocumentType().getId().equals(DocumentSubtypeModel.Types.INCOMING_LETTER_MV))
-                && registrationEval.evaluateAdditionalButton(metadataBlockBean.getDocument())) {
+                        && RegisterDocumentEvaluator.evaluateAdditionalButton(metadataBlockBean.getDocument())) {
             if (searchBlockBean.isShowSimilarDocumentsBlock()) {
                 buttons.add(new DialogButtonConfig("documentRegisterButton", null, "document_registerDoc_continue",
                         "#{DocumentDialog.saveAndRegisterContinue}", "false", null));

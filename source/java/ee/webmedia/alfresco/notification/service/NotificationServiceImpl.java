@@ -1,6 +1,7 @@
 package ee.webmedia.alfresco.notification.service;
 
 import static ee.webmedia.alfresco.common.web.BeanHelper.getAddressbookService;
+import static ee.webmedia.alfresco.utils.RepoUtil.sliceList;
 import static org.apache.commons.lang.StringUtils.isNotEmpty;
 
 import java.io.Serializable;
@@ -39,13 +40,14 @@ import org.alfresco.web.bean.repository.TransientNode;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateUtils;
 import org.joda.time.LocalDate;
-import org.springframework.util.Assert;
 import org.springframework.web.util.HtmlUtils;
 
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.addressbook.service.AddressbookService;
 import ee.webmedia.alfresco.classificator.enums.SendMode;
 import ee.webmedia.alfresco.classificator.service.ClassificatorService;
+import ee.webmedia.alfresco.common.service.ApplicationConstantsBean;
+import ee.webmedia.alfresco.common.service.BulkLoadNodeService;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.WmNode;
@@ -70,6 +72,7 @@ import ee.webmedia.alfresco.notification.model.NotificationModel;
 import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
 import ee.webmedia.alfresco.substitute.model.Substitute;
+import ee.webmedia.alfresco.substitute.model.UnmodifiableSubstitute;
 import ee.webmedia.alfresco.substitute.service.SubstituteService;
 import ee.webmedia.alfresco.template.model.ProcessedEmailTemplate;
 import ee.webmedia.alfresco.template.service.DocumentTemplateService;
@@ -121,7 +124,8 @@ public class NotificationServiceImpl implements NotificationService {
     private LogService logService;
     private int updateCount = 0;
     private String dispositionNotificationUsergroup;
-    private boolean substitutionTaskEndDateRestricted;
+    private BulkLoadNodeService bulkLoadNodeService;
+    private ApplicationConstantsBean applicationConstantsBean;
 
     private static BeanPropertyMapper<GeneralNotification> generalNotificationBeanPropertyMapper;
     private static Map<String, List<String>> userSpecificNotifications;
@@ -816,6 +820,7 @@ public class NotificationServiceImpl implements NotificationService {
         if (StringUtils.isEmpty(task.getOwnerId())) {
             return null;
         }
+        boolean substitutionTaskEndDateRestricted = applicationConstantsBean.isSubstitutionTaskEndDateRestricted();
         if (task.getDueDate() == null) {
             boolean nullEndDateAllowed = false;
             if (WorkflowSpecificModel.Types.INFORMATION_TASK.equals(task.getNode().getType())) {
@@ -839,51 +844,52 @@ public class NotificationServiceImpl implements NotificationService {
             }
             return null;
         }
-        notification.addAdditionalFomula("personSubstituted", UserUtil.getPersonFullName2(taskOwnerUser.getProperties(), false));
-        List<Substitute> substitutes = substituteService.getSubstitutes(taskOwnerUser.getNodeRef());
+        notification.addAdditionalFomula("personSubstituted", UserUtil.getPersonFullName2(taskOwnerUser.getProperties()));
+        List<UnmodifiableSubstitute> substitutes = substituteService.getUnmodifiableSubstitutes(taskOwnerUser.getNodeRef());
         if (log.isDebugEnabled()) {
             log.debug("Found " + substitutes.size() + " substitutes for new task notification:\n  task=" + task + "\n  substitutes=" + substitutes);
         }
         if (substitutes.isEmpty()) {
             return null;
         }
-        int daysForSubstitutionTasksCalc = substitutionTaskEndDateRestricted ? parametersService.getLongParameter(Parameters.DAYS_FOR_SUBSTITUTION_TASKS_CALC).intValue() : 0;
-        Calendar calendar = Calendar.getInstance();
-        Date now = new Date();
-        for (Substitute sub : substitutes) {
-            if (substitutionTaskEndDateRestricted) {
-                calendar.setTime(sub.getSubstitutionEndDate());
-                if (daysForSubstitutionTasksCalc > 0) {
-                    calendar.add(Calendar.DATE, daysForSubstitutionTasksCalc);
+        int daysForSubstitutionTasksCalc = substitutionTaskEndDateRestricted ? parametersService.getLongParameter(
+                Parameters.DAYS_FOR_SUBSTITUTION_TASKS_CALC).intValue() : 0;
+                Calendar calendar = Calendar.getInstance();
+                Date now = new Date();
+                for (UnmodifiableSubstitute sub : substitutes) {
+                    if (substitutionTaskEndDateRestricted) {
+                        calendar.setTime(sub.getSubstitutionEndDate());
+                        if (daysForSubstitutionTasksCalc > 0) {
+                            calendar.add(Calendar.DATE, daysForSubstitutionTasksCalc);
+                        }
+                    }
+                    Date substitutionStartDate = sub.getSubstitutionStartDate();
+                    Date substitutionEndDate = sub.getSubstitutionEndDate();
+                    boolean result = false;
+                    if (isSubstituting(substitutionStartDate, substitutionEndDate, now)
+                            && (!substitutionTaskEndDateRestricted || substitutionStartDate.before(task.getDueDate()))
+                            && (!substitutionTaskEndDateRestricted || calendar.getTime().after(task.getDueDate()))) {
+                        notification.addRecipient(sub.getSubstituteName(), userService.getUserEmail(sub.getSubstituteId()));
+                        notification.addAdditionalFomula(DocumentSpecificModel.Props.SUBSTITUTION_BEGIN_DATE.getLocalName(), Task.dateFormat.format(substitutionStartDate));
+                        notification.addAdditionalFomula(DocumentSpecificModel.Props.SUBSTITUTION_END_DATE.getLocalName(), Task.dateFormat.format(substitutionEndDate));
+                        result = true;
+                    }
+                    if (log.isDebugEnabled()) {
+                        log.debug("Substitute=" + sub + ", daysForSubstitutionTasksCalc=" + daysForSubstitutionTasksCalc + ", calculated time = " + calendar.getTime() + ", result = "
+                                + (result ? "" : "NOT ") + "added substitute to notification recipients");
+                    }
                 }
-            }
-            Date substitutionStartDate = sub.getSubstitutionStartDate();
-            Date substitutionEndDate = sub.getSubstitutionEndDate();
-            boolean result = false;
-            if (isSubstituting(substitutionStartDate, substitutionEndDate, now)
-                    && (!substitutionTaskEndDateRestricted || substitutionStartDate.before(task.getDueDate()))
-                    && (!substitutionTaskEndDateRestricted || calendar.getTime().after(task.getDueDate()))) {
-                notification.addRecipient(sub.getSubstituteName(), userService.getUserEmail(sub.getSubstituteId()));
-                notification.addAdditionalFomula(DocumentSpecificModel.Props.SUBSTITUTION_BEGIN_DATE.getLocalName(), Task.dateFormat.format(substitutionStartDate));
-                notification.addAdditionalFomula(DocumentSpecificModel.Props.SUBSTITUTION_END_DATE.getLocalName(), Task.dateFormat.format(substitutionEndDate));
-                result = true;
-            }
-            if (log.isDebugEnabled()) {
-                log.debug("Substitute=" + sub + ", daysForSubstitutionTasksCalc=" + daysForSubstitutionTasksCalc + ", calculated time = " + calendar.getTime() + ", result = "
-                        + (result ? "" : "NOT ") + "added substitute to notification recipients");
-            }
-        }
-        if (notification.getToNames() != null && notification.getToNames().size() > 0) {
-            notification = setupNotification(notification, NotificationModel.NotificationType.TASK_NEW_TASK_NOTIFICATION, 2, getTaskWorkflowType(task));
-            if (log.isDebugEnabled()) {
-                log.debug("Successfully prepared new task notification to substitutes: " + notification);
-            }
-            return notification;
-        }
-        if (log.isDebugEnabled()) {
-            log.debug("Not sending new task notification to substitutes, because no suitable substitutes found");
-        }
-        return null;
+                if (notification.getToNames() != null && notification.getToNames().size() > 0) {
+                    notification = setupNotification(notification, NotificationModel.NotificationType.TASK_NEW_TASK_NOTIFICATION, 2, getTaskWorkflowType(task));
+                    if (log.isDebugEnabled()) {
+                        log.debug("Successfully prepared new task notification to substitutes: " + notification);
+                    }
+                    return notification;
+                }
+                if (log.isDebugEnabled()) {
+                    log.debug("Not sending new task notification to substitutes, because no suitable substitutes found");
+                }
+                return null;
     }
 
     private boolean isSubstituting(Date substitutionStartDate, Date substitutionEndDate, Date now) {
@@ -1474,8 +1480,11 @@ public class NotificationServiceImpl implements NotificationService {
         cal.add(Calendar.DATE, accessRestrictionEndDateNotificationDays);
         Date restrictionEndDate = cal.getTime();
 
-        List<Document> documents = documentSearchService.searchAccessRestictionEndsAfterDate(restrictionEndDate);
-        if (documents == null || documents.isEmpty()) {
+        List<NodeRef> docRefs = documentSearchService.searchAccessRestictionEndsAfterDate(restrictionEndDate);
+        Map<NodeRef, Document> documentsMap = bulkLoadNodeService.loadDocuments(docRefs, null);
+        List<Document> documents = new ArrayList<>(documentsMap.values());
+        Collections.sort(documents);
+        if (documents.isEmpty()) {
             return 0;
         }
         Map<String, List<Document>> documentsByUser = new HashMap<String, List<Document>>();
@@ -1595,36 +1604,12 @@ public class NotificationServiceImpl implements NotificationService {
         return sentNotificationCount;
     }
 
-    @SuppressWarnings("null")
-    private <T> List<List<T>> sliceList(List<T> list, int sliceSize) {
-        Assert.isTrue(sliceSize > 0);
-        if (list == null || list.isEmpty()) {
-            return new ArrayList<List<T>>();
-        }
-        List<List<T>> slicedList = new ArrayList<List<T>>();
-        int sliceElem = 0;
-        List<T> slice = null;
-        for (T obj : list) {
-            if (sliceElem == 0) {
-                slice = new ArrayList<T>();
-                slicedList.add(slice);
-            }
-            slice.add(obj);
-            if (slice.size() >= sliceSize) {
-                sliceElem = 0;
-            } else {
-                sliceElem++;
-            }
-        }
-        return slicedList;
-    }
-
     @Override
     public Pair<List<String>, List<SendInfo>> getExistingAndMissingEmails(List<SendInfo> sendInfos) {
         List<String> recipientEmails = new ArrayList<String>();
         List<SendInfo> missingEmails = new ArrayList<SendInfo>();
         for (SendInfo sendInfo : sendInfos) {
-            Map<String, Object> properties = sendInfo.getNode().getProperties();
+            Map<QName, Serializable> properties = sendInfo.getProperties();
             String recipientRegNr = (String) properties.get(DocumentCommonModel.Props.SEND_INFO_RECIPIENT_REG_NR);
             String recipientEmail = null;
             if (StringUtils.isNotBlank(recipientRegNr)) {
@@ -1686,18 +1671,22 @@ public class NotificationServiceImpl implements NotificationService {
             return sentNotificationCount;
         }
 
-        List<Document> contracts = documentSearchService.searchDueContracts();
-        for (Document contract : contracts) {
-            notification.addRecipient(contract.getOwnerName(), userService.getUserEmail(contract.getOwnerId()));
-            LinkedHashMap<String, NodeRef> data = new LinkedHashMap<String, NodeRef>(1);
-            data.put(null, contract.getNodeRef());
-            try {
-                sendNotification(notification, contract.getNodeRef(), data);
-                sentNotificationCount++;
-            } catch (EmailException e) {
-                log.error("Failed to send email notification " + notification, e);
+        List<NodeRef> contractRefs = documentSearchService.searchDueContracts();
+        List<List<NodeRef>> slicedContractRefs = sliceList(contractRefs, 100);
+        for (List<NodeRef> contractSlice : slicedContractRefs) {
+            Map<NodeRef, Document> contracts = bulkLoadNodeService.loadDocuments(contractSlice, null);
+            for (Document contract : contracts.values()) {
+                notification.addRecipient(contract.getOwnerName(), userService.getUserEmail(contract.getOwnerId()));
+                LinkedHashMap<String, NodeRef> data = new LinkedHashMap<String, NodeRef>(1);
+                data.put(null, contract.getNodeRef());
+                try {
+                    sendNotification(notification, contract.getNodeRef(), data);
+                    sentNotificationCount++;
+                } catch (EmailException e) {
+                    log.error("Failed to send email notification " + notification, e);
+                }
+                notification.clearRecipients();
             }
-            notification.clearRecipients();
         }
 
         return sentNotificationCount;
@@ -2027,13 +2016,8 @@ public class NotificationServiceImpl implements NotificationService {
         userSpecificNotifications.remove(userKey);
     }
 
-    @Override
-    public boolean isSubstitutionTaskEndDateRestricted() {
-        return substitutionTaskEndDateRestricted;
-    }
-
-    public void setSubstitutionTaskEndDateRestricted(boolean substitutionTaskEndDateRestricted) {
-        this.substitutionTaskEndDateRestricted = substitutionTaskEndDateRestricted;
+    public void setApplicationConstantsBean(ApplicationConstantsBean applicationConstantsBean) {
+        this.applicationConstantsBean = applicationConstantsBean;
     }
 
 }

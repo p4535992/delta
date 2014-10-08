@@ -52,10 +52,10 @@
          <%-- Actions column --%>
          <a:column actions="true" style="text-align:left">
             <f:facet name="header">
-               <h:outputText value="#{msg.actions}" rendered="#{UserService.groupsEditingAllowed}" />
+               <h:outputText value="#{msg.actions}" rendered="#{applicationConstantsBean.groupsEditingAllowed}" />
             </f:facet>
             <r:actions id="add-user-group" value="base_group_inline_actions" context="#{r}" showLink="false" styleClass="inlineAction"
-               rendered="#{UserService.groupsEditingAllowed && r.structUnitBased == 'false'}" />
+               rendered="#{applicationConstantsBean.groupsEditingAllowed && r.structUnitBased == 'false'}" />
             <r:actions id="inline-group-actions" value="group_inline_actions_no_subgroup" context="#{r}" showLink="false" styleClass="inlineAction"
                rendered="#{GroupsDialog.deleteEnabledByGroup[r.group] and r.structUnitBased == 'false'}" />
          </a:column>

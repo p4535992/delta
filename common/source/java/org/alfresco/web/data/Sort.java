@@ -88,7 +88,7 @@ public abstract class Sort
          }
          else
          {
-             collator = AppConstants.DEFAULT_COLLATOR;
+             collator = AppConstants.getNewCollatorInstance();
          }
          
          this.keys = buildCollationKeys(collator);

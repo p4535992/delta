@@ -15,7 +15,7 @@ import org.alfresco.web.app.AlfrescoNavigationHandler;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 
 import ee.webmedia.alfresco.archivals.model.ArchivalsStoreVO;
-import ee.webmedia.alfresco.functions.model.Function;
+import ee.webmedia.alfresco.functions.model.UnmodifiableFunction;
 import ee.webmedia.alfresco.functions.web.FunctionsListDialog;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.WebUtil;
@@ -24,12 +24,13 @@ import ee.webmedia.alfresco.utils.WebUtil;
  * Dialog bean for archived functions
  */
 public class ArchivedFunctionsListDialog extends BaseDialogBean {
+    public static final String BEAN_NAME = "ArchivedFunctionsListDialog";
     private static final long serialVersionUID = 1L;
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(ArchivedFunctionsListDialog.class);
 
     protected NodeRef nodeRef;
     protected String title;
-    protected List<Function> functions;
+    protected List<UnmodifiableFunction> functions;
 
     public void setup(ActionEvent event) {
         nodeRef = ActionUtil.getParam(event, "nodeRef", NodeRef.class);
@@ -62,8 +63,13 @@ public class ArchivedFunctionsListDialog extends BaseDialogBean {
 
     @Override
     public String cancel() {
-        functions = null;
+        clean();
         return super.cancel();
+    }
+
+    @Override
+    public void clean() {
+        functions = null;
     }
 
     @Override
@@ -71,7 +77,7 @@ public class ArchivedFunctionsListDialog extends BaseDialogBean {
         return null;
     }
 
-    public List<Function> getFunctions() {
+    public List<UnmodifiableFunction> getFunctions() {
         return functions;
     }
 

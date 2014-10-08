@@ -327,7 +327,12 @@ public class FileFolderServiceImpl implements FileFolderService
     
     public List<NodeRef> listFileRefs(NodeRef contextNodeRef)
     {
-        List<NodeRef> nodeRefs = listSimple(contextNodeRef, false, true);
+        return listFileRefs(contextNodeRef, 0);
+    }
+    
+    public List<NodeRef> listFileRefs(NodeRef contextNodeRef, int limit)
+    {
+        List<NodeRef> nodeRefs = listSimple(contextNodeRef, false, true, limit, null);
         if (logger.isDebugEnabled())
         {
             logger.debug("Shallow search for fileRefs: \n" +

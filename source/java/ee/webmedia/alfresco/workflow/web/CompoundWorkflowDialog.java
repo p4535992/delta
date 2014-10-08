@@ -5,6 +5,7 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentAdminService
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDynamicService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getWorkflowBlockBean;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getWorkflowConstantsBean;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getWorkflowService;
 import static ee.webmedia.alfresco.parameters.model.Parameters.MAX_ATTACHED_FILE_SIZE;
 import static ee.webmedia.alfresco.privilege.service.PrivilegeUtil.isAdminOrDocmanagerWithPermission;
@@ -45,7 +46,6 @@ import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
 import org.alfresco.web.app.AlfrescoNavigationHandler;
 import org.alfresco.web.bean.dialog.DialogState;
-import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.config.DialogsConfigElement.DialogButtonConfig;
 import org.alfresco.web.ui.common.Utils;
 import org.alfresco.web.ui.repo.component.UIActions;
@@ -120,7 +120,7 @@ import ee.webmedia.alfresco.workflow.service.Workflow;
 import ee.webmedia.alfresco.workflow.service.WorkflowServiceImpl;
 import ee.webmedia.alfresco.workflow.service.WorkflowServiceImpl.DialogAction;
 import ee.webmedia.alfresco.workflow.service.WorkflowUtil;
-import ee.webmedia.alfresco.workflow.web.evaluator.WorkflowNewEvaluator;
+import ee.webmedia.alfresco.workflow.web.evaluator.AbstractFullAccessEvaluator;
 
 /**
  * Dialog bean for working with one compound workflow instance which is tied to a document.
@@ -134,6 +134,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
     private static final String DELETE = "deleteWorkflow";
     private static final long serialVersionUID = 1L;
     public static final String BEAN_NAME = "CompoundWorkflowDialog";
+    public static final String DIALOG_NAME = AlfrescoNavigationHandler.DIALOG_PREFIX + "compoundWorkflowDialog";
 
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(CompoundWorkflowDialog.class);
 
@@ -146,6 +147,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
     private boolean disableDocumentUpdate;
     private boolean finishImplConfirmed;
     private boolean confirmationAsked;
+    private Document parentDocument;
 
     private static final List<QName> knownWorkflowTypes = Arrays.asList(//
             WorkflowSpecificModel.Types.SIGNATURE_WORKFLOW
@@ -311,6 +313,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
         newUserCompoundWorkflowDefinition = null;
         showEmptyWorkflowMessage = true;
         disableDocumentUpdate = false;
+        parentDocument = null;
         resetModals();
     }
 
@@ -496,7 +499,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
     @Override
     public void setupNewWorkflow(ActionEvent event) {
         resetState();
-        NodeRef compoundWorkflowDefinition = new NodeRef(ActionUtil.getParam(event, "compoundWorkflowDefinitionNodeRef"));
+        NodeRef compoundWorkflowDefinition = new NodeRef(ActionUtil.getParam(event, WorkflowBlockBean.PARAM_COMPOUND_WORKFLOF_DEFINITION_NODEREF));
         NodeRef parentRef = new NodeRef(ActionUtil.getParam(event, "parentNodeRef"));
         try {
             compoundWorkflow = getWorkflowService().getNewCompoundWorkflow(compoundWorkflowDefinition, parentRef);
@@ -521,12 +524,12 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
     public void setupNewIndependentWorkflowFromDocument(ActionEvent event) {
         setupNewWorkflow(event);
         if (compoundWorkflow != null) {
-            NodeRef documentRef = new NodeRef(ActionUtil.getParam(event, "docAssocNodeRef"));
+            NodeRef documentRef = new NodeRef(ActionUtil.getParam(event, WorkflowBlockBean.PARAM_ASSOC_NODEREF));
             compoundWorkflow.setTitle((String) BeanHelper.getNodeService().getProperty(documentRef, DocumentCommonModel.Props.DOC_NAME));
             BeanHelper.getCompoundWorkflowAssocListDialog().restored();
             BeanHelper.getCompoundWorkflowAssocListDialog().setResetNewAssocs(false);
             BeanHelper.getCompoundWorkflowAssocSearchBlock().addAssocDocHandler(documentRef);
-            List<Document> documents = BeanHelper.getCompoundWorkflowAssocListDialog().getDocuments();
+            List<Document> documents = BeanHelper.getCompoundWorkflowAssocListDialog().getDocumentList();
             if (documents != null && !documents.isEmpty()) {
                 documents.get(0).setMainDocument(Boolean.TRUE);
             }
@@ -644,7 +647,8 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
                     notInvoiceDueDate = (Date) nodeService.getProperty(docRef, DocumentSpecificModel.Props.DUE_DATE);
                 }
             } else if (independentWorkflow) {
-                independentCompWorkflowDocs = BeanHelper.getCompoundWorkflowAssocListDialog().getDocuments();
+                // FIXME repair
+                independentCompWorkflowDocs = BeanHelper.getCompoundWorkflowAssocListDialog().getDocumentList();
             }
         }
         boolean addedDueDateInPastMsg = false;
@@ -866,13 +870,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
      * Callback method for workflow owner Search component.
      */
     public void setWorkfowOwner(String username) {
-        compoundWorkflow.setOwnerId(username);
-        compoundWorkflow.setOwnerName(getUserService().getUserFullName(username));
-        Node user = getUserService().getUser(username);
-        Map<String, Object> userProps = user.getProperties();
-        compoundWorkflow.setProp(WorkflowCommonModel.Props.OWNER_ORGANIZATION_NAME,
-                (Serializable) BeanHelper.getUserService().getUserOrgPathOrOrgName(RepoUtil.toQNameProperties(userProps)));
-        compoundWorkflow.setProp(WorkflowCommonModel.Props.OWNER_JOB_TITLE, (Serializable) userProps.get(ContentModel.PROP_JOBTITLE));
+        WorkflowUtil.setCompoundWorkflowOwnerProperties(BeanHelper.getUserService(), username, compoundWorkflow);
     }
 
     @Override
@@ -1117,7 +1115,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
         List<NodeRef> documentsToSign = compoundWorkflow.getDocumentsToSign();
         documentsToSign.clear();
         compoundWorkflow.setMainDocument(null);
-        for (Document document : BeanHelper.getCompoundWorkflowAssocListDialog().getDocuments()) {
+        for (Document document : BeanHelper.getCompoundWorkflowAssocListDialog().getDocumentList()) {
             NodeRef docRef = document.getNodeRef();
             if (document.getMainDocument()) {
                 compoundWorkflow.setMainDocument(docRef);
@@ -1134,7 +1132,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
                 if (task.isStatus(Status.NEW) && task.getDueDate() != null && task.getDueDateDays() != null) {
                     if (!DateUtils.isSameDay(task.getDueDate(),
                             DatePickerWithDueDateGenerator.calculateDueDate(task.getPropBoolean(WorkflowSpecificModel.Props.IS_DUE_DATE_WORKING_DAYS), task.getDueDateDays())
-                            .toDateMidnight().toDate())) {
+                                    .toDateMidnight().toDate())) {
                         task.setProp(WorkflowSpecificModel.Props.DUE_DATE_DAYS, null);
                         task.setProp(WorkflowSpecificModel.Props.IS_DUE_DATE_WORKING_DAYS, Boolean.FALSE); // reset to default value
                     }
@@ -1156,7 +1154,8 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
     }
 
     public void addDateForAllTasks(ActionEvent event) {
-        Workflow block = compoundWorkflow.getWorkflows().get(ActionUtil.getParam(event, WF_INDEX, Integer.class));
+        Integer workflow = ActionUtil.getParam(event, WF_INDEX, Integer.class);
+        Workflow block = compoundWorkflow.getWorkflows().get(workflow);
         if (block.isStatus(Status.NEW)) {
             Task selectedTask = block.getTasks().get(ActionUtil.getParam(event, TASK_INDEX, Integer.class));
             Date originDate = selectedTask.getDueDate();
@@ -1164,6 +1163,9 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
                 if (task != selectedTask) {
                     task.setDueDate(originDate);
                 }
+            }
+            for (TaskGroup workflowTaskGroup : getTaskGroups().getWorkflowTaskGroups(workflow)) {
+                workflowTaskGroup.setDueDate(originDate);
             }
         }
     }
@@ -1212,7 +1214,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
 
     @Override
     public List<DialogButtonConfig> getAdditionalButtons() {
-        if (new WorkflowNewEvaluator().evaluate(compoundWorkflow)
+        if (WorkflowUtil.isStatus(compoundWorkflow, Status.NEW) && AbstractFullAccessEvaluator.hasFullAccess()
                 && !compoundWorkflow.getWorkflows().isEmpty()
                 && (!compoundWorkflow.isIndependentWorkflow()
                         || isOwnerOrDocManager())) {
@@ -1494,7 +1496,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
         boolean missingOwnerAssignment = false;
         Set<String> missingOwnerMessageKeys = null;
         boolean hasForbiddenFlowsForFinished = false;
-        boolean isCategoryEnabled = BeanHelper.getWorkflowService().getOrderAssignmentCategoryEnabled();
+        boolean isCategoryEnabled = BeanHelper.getWorkflowConstantsBean().getOrderAssignmentCategoryEnabled();
         boolean isDocumentWorkflow = compoundWorkflow.isDocumentWorkflow();
         checkFinished = checkFinished && isDocumentWorkflow;
         boolean registeringNotAllowed = false;
@@ -1607,7 +1609,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
             valid = false;
             MessageUtil.addErrorMessage(context, "workflow_save_error_unallowed_regitering_workflows");
         }
-        if (getWorkflowService().isWorkflowTitleEnabled() && StringUtils.isBlank(compoundWorkflow.getTitle()) && !isTitleReadonly()) {
+        if (getWorkflowConstantsBean().isWorkflowTitleEnabled() && StringUtils.isBlank(compoundWorkflow.getTitle()) && !isTitleReadonly()) {
             valid = false;
             MessageUtil.addErrorMessage(context, "workflow_save_error_title_required");
         }
@@ -1658,7 +1660,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
     }
 
     public boolean isShowTitle() {
-        return BeanHelper.getWorkflowService().isWorkflowTitleEnabled();
+        return getWorkflowConstantsBean().isWorkflowTitleEnabled();
     }
 
     public boolean isTitleReadonly() {
@@ -1848,7 +1850,11 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
 
     @Override
     protected Document getParentDocument() {
-        return compoundWorkflow != null && compoundWorkflow.isDocumentWorkflow() ? new Document(compoundWorkflow.getParent()) : null;
+        if (parentDocument == null && compoundWorkflow != null && compoundWorkflow.isDocumentWorkflow()) {
+            parentDocument = new Document(compoundWorkflow.getParent());
+        }
+
+        return parentDocument;
     }
 
     @Override

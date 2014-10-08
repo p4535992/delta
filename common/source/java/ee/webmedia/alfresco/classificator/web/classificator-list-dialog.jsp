@@ -23,18 +23,18 @@
          <f:facet name="small-icon">
             <a:actionLink id="col1-act1" value="#{classificator.name}" image="/images/icons/space-icon-default-16.gif"
                action="dialog:classificatorDetailsDialog" showLink="false" actionListener="#{ClassificatorDetailsDialog.select}">
-               <f:param name="nodeRef" value="#{classificator.nodeRef}" />
+               <f:param name="name" value="#{classificator.name}" />
             </a:actionLink>
          </f:facet>
          <a:actionLink id="col1-act2" value="#{classificator.name}" action="dialog:classificatorDetailsDialog" actionListener="#{ClassificatorDetailsDialog.select}">
-            <f:param name="nodeRef" value="#{classificator.nodeRef}" />
+            <f:param name="name" value="#{classificator.name}" />
          </a:actionLink>
       </a:column>
       
       <%-- Column for the description --%>
       <a:column id="col4" style="text-align:right">
          <f:facet name="header">
-            <h:outputText id="col2-txt" value="#{msg.classificator_description}" />
+            <h:outputText id="col4-txt" value="#{msg.classificator_description}" />
          </f:facet>
          <h:outputText value="#{classificator.description}" />
       </a:column>
@@ -54,7 +54,7 @@
          </f:facet>
          <a:actionLink id="col3-act1" value="#{classificator.name}" image="/images/icons/edit_properties.gif" tooltip="#{msg.classificator_actions}" action="dialog:classificatorDetailsDialog"
             showLink="false" actionListener="#{ClassificatorDetailsDialog.select}">
-            <f:param name="nodeRef" value="#{classificator.nodeRef}" />
+            <f:param name="name" value="#{classificator.name}" />
          </a:actionLink>
       </a:column>
 

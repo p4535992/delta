@@ -32,9 +32,12 @@ import ee.webmedia.alfresco.signature.model.SignatureDigest;
 import ee.webmedia.alfresco.signature.model.SignatureItem;
 import ee.webmedia.alfresco.signature.model.SignatureItemsAndDataItems;
 import ee.webmedia.alfresco.signature.service.SignatureService;
+import ee.webmedia.alfresco.utils.FilenameUtil;
 
 public class SignatureDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;
+
+    public static final String BEAN_NAME = "SignatureDialog";
 
     private static Logger log = Logger.getLogger(SignatureDialog.class);
 
@@ -200,7 +203,7 @@ public class SignatureDialog extends BaseDialogBean {
         // a suggested name for the new DigiDoc
         filename = getFileFolderService().getFileInfo(nodeRef).getName();
         if (!isDigiDoc()) {
-            filename = FilenameUtils.removeExtension(filename) + ".ddoc";
+            filename = FilenameUtils.removeExtension(filename) + FilenameUtil.BDOC_EXTENSION;
             // load the selected files and set singleFile and editMode flags
             getSelectedItems();
         } else {
@@ -350,7 +353,7 @@ public class SignatureDialog extends BaseDialogBean {
         if (isDigiDoc()) {
             // get the data from the container
             try {
-                SignatureItemsAndDataItems values = getSignatureService().getDataItemsAndSignatureItems(nodeRef, false);
+                SignatureItemsAndDataItems values = getSignatureService().getDataItemsAndSignatureItems(nodeRef, false, true);
                 signatures = values.getSignatureItems();
                 dataItems = values.getDataItems();
             } catch (SignatureException e) {

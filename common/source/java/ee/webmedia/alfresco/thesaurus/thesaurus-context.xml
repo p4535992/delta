@@ -15,7 +15,7 @@
       </property>
    </bean>
    
-   <bean id="thesaurusBundleBootstrap" class="org.alfresco.web.app.ResourceBundleBootstrap">
+   <bean id="thesaurusResourceBundles" class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
       <property name="resourceBundles">
          <list>
             <value>ee.webmedia.alfresco.thesaurus.web.thesaurus-webclient</value>

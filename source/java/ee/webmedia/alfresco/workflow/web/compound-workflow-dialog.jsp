@@ -16,7 +16,7 @@
    <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/disable-dialog-finish-button.jsp" />
 </a:booleanEvaluator>
 
-<h:panelGroup rendered="#{not empty CompoundWorkflowDialog.workflow}">
+<h:panelGroup id="compound-workflow-dialog" rendered="#{not empty CompoundWorkflowDialog.workflow}">
 
    <h:panelGroup id="dialog-modal-container" binding="#{CompoundWorkflowDialog.modalContainer}" />
    <h:panelGroup rendered="#{CompoundWorkflowDialog.modalRendered}">

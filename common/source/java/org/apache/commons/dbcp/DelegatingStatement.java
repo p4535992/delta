@@ -388,4 +388,14 @@ public class DelegatingStatement extends AbandonedTrace implements Statement {
         }
     }
 /* JDBC_4_ANT_KEY_END */
+
+    @Override
+    public void closeOnCompletion() throws SQLException {
+        
+    }
+
+    @Override
+    public boolean isCloseOnCompletion() throws SQLException {
+        return false;
+    }
 }

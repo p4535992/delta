@@ -3,7 +3,6 @@ package ee.webmedia.alfresco.workflow.web;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentSearchService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getParametersService;
 import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.TASK_INDEX;
-import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.isGeneratedByDelegation;
 import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.markAsGeneratedByDelegation;
 
 import java.io.Serializable;
@@ -159,7 +158,7 @@ public class DelegationBean implements Serializable {
         for (Task t : delegatableTasks) {
             if (delegatableTaskRef.equals(t.getNodeRef())) {
                 // don't add new delegatable task if this is yet another clone of existing task or this method was called after update.
-                return new Pair<Integer, Task>(delegatableTaskIndex, t);
+                return new Pair<>(delegatableTaskIndex, t);
             }
             delegatableTaskIndex++;
         }
@@ -185,7 +184,7 @@ public class DelegationBean implements Serializable {
             getOrCreateWorkflow(workflow, DelegatableTaskType.OPINION);
         }
         getOrCreateWorkflow(workflow, DelegatableTaskType.INFORMATION);
-        return new Pair<Integer, Task>(delegatableTaskIndex, assignmentTask);
+        return new Pair<>(delegatableTaskIndex, assignmentTask);
     }
 
     public void reset() {
@@ -220,7 +219,7 @@ public class DelegationBean implements Serializable {
         int lastInprogressWfIndex = 0;
         int i = 0;
         for (Workflow otherWorkflow : compoundWorkflow.getWorkflows()) {
-            boolean isGeneratedByDelegation = isGeneratedByDelegation(otherWorkflow);
+            boolean isGeneratedByDelegation = WorkflowUtil.isGeneratedByDelegation(otherWorkflow);
             if (isGeneratedByDelegation) {
                 if (workflowTypeQName.equals(otherWorkflow.getType())) {
                     return otherWorkflow;
@@ -342,7 +341,7 @@ public class DelegationBean implements Serializable {
         List<String> messages = new ArrayList<String>();
         for (Workflow workflow : assignmentTaskOriginal.getParent().getParent().getWorkflows()) {
             for (Task task : workflow.getTasks()) {
-                if (!WorkflowUtil.isEmptyTask(task) && isGeneratedByDelegation(task)) {
+                if (!WorkflowUtil.isEmptyTask(task) && WorkflowUtil.isGeneratedByDelegation(task)) {
                     Date taskDueDate = task.getDueDate();
                     if (taskDueDate != null) {
                         WorkflowUtil.getDocmentDueDateMessage((Date) documentDueDate, messages, workflow, taskDueDate);
@@ -374,7 +373,7 @@ public class DelegationBean implements Serializable {
         boolean hasAtLeastOneDelegationTask = false;
         for (Workflow workflow : compoundWorkflow.getWorkflows()) {
             for (Task task : workflow.getTasks()) {
-                if (!WorkflowUtil.isEmptyTask(task) && isGeneratedByDelegation(task)) {
+                if (!WorkflowUtil.isEmptyTask(task) && WorkflowUtil.isGeneratedByDelegation(task)) {
                     hasAtLeastOneDelegationTask = true;
                     delegationTaskMandatoryFieldsFilled(task, feedback);
                     Date dueDate = task.getDueDate();
@@ -450,7 +449,7 @@ public class DelegationBean implements Serializable {
             NodeRef taskRef = task.getNodeRef();
             Status status = Status.of(task.getStatus());
             for (Task workflowTask : task.getParent().getTasks()) {
-                if (isGeneratedByDelegation(workflowTask)) {
+                if (WorkflowUtil.isGeneratedByDelegation(workflowTask)) {
                     assignmentTasksCreatedByDelegation.add(workflowTask);
                 }
             }
@@ -459,7 +458,7 @@ public class DelegationBean implements Serializable {
                 if (workflow.isStatus(Status.IN_PROGRESS)) {
                     lastInProgressWorkflow = workflow.getNodeRef();
                 }
-                else if (isGeneratedByDelegation(workflow)) {
+                else if (WorkflowUtil.isGeneratedByDelegation(workflow)) {
                     workflowsCreatedByDelegation.add(workflow);
                 }
             }
@@ -574,7 +573,7 @@ public class DelegationBean implements Serializable {
             List<Workflow> workflows = getWorkflow().getParent().getWorkflows();
             HashMap<String, Workflow> results = new HashMap<String, Workflow>();
             for (Workflow otherWorkflow : workflows) {
-                if (isGeneratedByDelegation(otherWorkflow)) {
+                if (WorkflowUtil.isGeneratedByDelegation(otherWorkflow)) {
                     if (DelegatableTaskType.INFORMATION.getWorkflowTypeQName().equals(otherWorkflow.getType())) {
                         results.put(DelegatableTaskType.INFORMATION.name(), otherWorkflow);
                     } else if (DelegatableTaskType.OPINION.getWorkflowTypeQName().equals(otherWorkflow.getType())) {
@@ -595,7 +594,7 @@ public class DelegationBean implements Serializable {
 
     private List<Task> getNonAssignmentTasks(DelegatableTaskType dTaskType, List<Workflow> workflows) {
         for (Workflow otherWorkflow : workflows) {
-            if (isGeneratedByDelegation(otherWorkflow) && dTaskType.getWorkflowTypeQName().equals(otherWorkflow.getType())) {
+            if (WorkflowUtil.isGeneratedByDelegation(otherWorkflow) && dTaskType.getWorkflowTypeQName().equals(otherWorkflow.getType())) {
                 return otherWorkflow.getTasks();
             }
         }

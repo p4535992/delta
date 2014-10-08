@@ -35,8 +35,8 @@ import com.thoughtworks.xstream.annotations.XStreamAsAttribute;
 import com.thoughtworks.xstream.annotations.XStreamImplicit;
 import com.thoughtworks.xstream.annotations.XStreamOmitField;
 
+import ee.webmedia.alfresco.common.service.ApplicationConstantsBean;
 import ee.webmedia.alfresco.common.web.BeanHelper;
-import ee.webmedia.alfresco.document.einvoice.service.EInvoiceService;
 import ee.webmedia.alfresco.menu.service.CountAddingMenuItemProcessor;
 import ee.webmedia.alfresco.menu.ui.MenuBean;
 import ee.webmedia.alfresco.menu.ui.component.MenuItemWrapper;
@@ -45,8 +45,7 @@ import ee.webmedia.alfresco.menu.ui.component.UIMenuComponent.ClearViewStackActi
 import ee.webmedia.alfresco.orgstructure.amr.service.RSService;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.MessageUtil;
-import ee.webmedia.alfresco.volume.service.VolumeService;
-import ee.webmedia.alfresco.workflow.service.WorkflowService;
+import ee.webmedia.alfresco.workflow.service.WorkflowConstantsBean;
 
 /**
  * Base class for menu items.
@@ -54,10 +53,35 @@ import ee.webmedia.alfresco.workflow.service.WorkflowService;
 @XStreamAlias("item")
 public class MenuItem implements Serializable {
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(MenuItem.class);
+
     final static public String HIDDEN_MENU_ITEM = "hiddenMenuItem";
-    public static final List<String> MY_TASK_MENU_ITEMS = Arrays.asList("assignmentTasks", "informationTasks", "orderAssignmentTasks", "opinionTasks", "discussions",
-            "reviewTasks",
-            "externalReviewTasks", "confirmationTasks", "signatureTasks", "forRegisteringList");
+    public static final String ASSIGNMENT_TASKS = "assignmentTasks";
+    public static final String CONFIRMATION_TASKS = "confirmationTasks";
+    public static final String DVK_CORRUPT = "dvkCorrupt";
+    public static final String DVK_DOCUMENTS = "dvkDocuments";
+    public static final String DISCUSSIONS = "discussions";
+    public static final String EMAIL_ATTACHMENTS = "emailAttachments";
+    public static final String EXTERNAL_REVIEW_TASKS = "externalReviewTasks";
+    public static final String FOR_REGISTERING_LIST = "forRegisteringList";
+    public static final String INCOMING_EINVOICE = "incomingEInvoice";
+    public static final String INCOMING_EMAILS = "incomingEmails";
+    public static final String INFORMATION_TASKS = "informationTasks";
+    public static final String OPINION_TASKS = "opinionTasks";
+    public static final String ORDER_ASSIGNMENT_TASKS = "orderAssignmentTasks";
+    public static final String OUTBOX_DOCUMENT = "outboxDocument";
+    public static final String REVIEW_TASKS = "reviewTasks";
+    public static final String SCANNED_DOCUMENTS = "scannedDocuments";
+    public static final String SENT_EMAILS = "sentEmails";
+    public static final String SEND_FAILURE_NOTIFICATION = "sendFailureNotification";
+    public static final String SIGNATURE_TASKS = "signatureTasks";
+    public static final String UNSENT_DOCUMENT = "unsentDocument";
+    public static final String USER_CASE_FILES = "userCaseFiles";
+    public static final String USER_COMPOUND_WORKFLOWS = "userCompoundWorkflows";
+    public static final String USER_WORKING_DOCUMENTS = "userWorkingDocuments";
+    public static final String WEB_SERVICE_DOCUMENTS = "webServiceDocuments";
+
+    public static final List<String> MY_TASK_MENU_ITEMS = Arrays.asList(ASSIGNMENT_TASKS, INFORMATION_TASKS, ORDER_ASSIGNMENT_TASKS, OPINION_TASKS, DISCUSSIONS,
+            REVIEW_TASKS, EXTERNAL_REVIEW_TASKS, CONFIRMATION_TASKS, SIGNATURE_TASKS, FOR_REGISTERING_LIST);
 
     @XStreamOmitField
     private static final long serialVersionUID = 0L;
@@ -107,36 +131,26 @@ public class MenuItem implements Serializable {
     public MenuItem() {
     }
 
-    public UIComponent createComponent(FacesContext context, String id, UserService userService, WorkflowService workflowService, EInvoiceService einvoiceService,
-            RSService rsService) {
-        return createComponent(context, id, false, userService, workflowService, einvoiceService, rsService, false);
+    public UIComponent createComponent(FacesContext context, String id, UserService userService, WorkflowConstantsBean workflowConstantsBean, RSService rsService) {
+        return createComponent(context, id, false, userService, workflowConstantsBean, rsService, false);
     }
 
-    public UIComponent createComponent(FacesContext context, String id, UserService userService, WorkflowService workflowService, EInvoiceService einvoiceService,
-            RSService rsService,
-            boolean createChildren) {
-        return createComponent(context, id, false, userService, workflowService, einvoiceService, rsService, false);
-    }
-
-    public UIComponent createComponent(FacesContext context, String id, UserService userService, WorkflowService workflowService, EInvoiceService einvoiceService,
-            RSService rsService,
-            boolean createChildren, boolean plainLink) {
-        return createComponent(context, id, false, userService, workflowService, einvoiceService, rsService, true);
+    public UIComponent createComponent(FacesContext context, String id, UserService userService, WorkflowConstantsBean workflowConstantsBean,
+            RSService rsService, boolean createChildren) {
+        return createComponent(context, id, false, userService, workflowConstantsBean, rsService, false);
     }
 
     /**
      * Return ActionLink, based on xml configuration. Returns null, if user doesn't have permissions.
-     * 
+     *
      * @param context
      * @param application Faces Application
      * @return
      */
-    @SuppressWarnings("deprecation")
-    public UIComponent createComponent(FacesContext context, String id, boolean active, UserService userService, WorkflowService workflowService, EInvoiceService einvoiceService,
-            RSService rsService,
-            boolean plainLink) {
+    public UIComponent createComponent(FacesContext context, String id, boolean active, UserService userService, WorkflowConstantsBean workflowConstantsBean,
+            RSService rsService, boolean plainLink) {
 
-        if (!isRendered(userService, workflowService, einvoiceService, rsService)) {
+        if (!isRendered(userService, workflowConstantsBean, rsService)) {
             return null;
         }
 
@@ -202,16 +216,16 @@ public class MenuItem implements Serializable {
         if (StringUtils.isNotBlank(getHidden())) {
             boolean hideIt = hidden.startsWith("#{")
                     ? (Boolean) application.createMethodBinding(getHidden(), new Class[] { String.class }).invoke(context, new Object[] { getId() }) //
-                    : Boolean.valueOf(hidden);
+                            : Boolean.valueOf(hidden);
 
-            if (hideIt && !getStyleClass().contains(HIDDEN_MENU_ITEM)) {
-                getStyleClass().add(HIDDEN_MENU_ITEM);
-            } else if (!hideIt) {
-                getStyleClass().remove(HIDDEN_MENU_ITEM);
-            }
-            if (MY_TASK_MENU_ITEMS.contains(id) && hideIt) {
-                log.debug("setting menu_my_tasks subitem " + getId() + " hidden");
-            }
+                    if (hideIt && !getStyleClass().contains(HIDDEN_MENU_ITEM)) {
+                        getStyleClass().add(HIDDEN_MENU_ITEM);
+                    } else if (!hideIt) {
+                        getStyleClass().remove(HIDDEN_MENU_ITEM);
+                    }
+                    if (MY_TASK_MENU_ITEMS.contains(id) && hideIt) {
+                        log.debug("setting menu_my_tasks subitem " + getId() + " hidden");
+                    }
         }
 
         Config config = Application.getConfigService(context).getGlobalConfig();
@@ -292,57 +306,59 @@ public class MenuItem implements Serializable {
         return wrap;
     }
 
-    protected boolean isRendered(UserService userService, WorkflowService workflowService, EInvoiceService einvoiceService, RSService rsService) {
+    protected boolean isRendered(UserService userService, WorkflowConstantsBean workflowConstantsBean, RSService rsService) {
         int reason = -1;
         boolean result = true;
-        VolumeService volumeService = BeanHelper.getVolumeService();
+        ApplicationConstantsBean appConstantsBean = BeanHelper.getApplicationConstantsBean();
         if (isRenderingDisabled() || isRestricted() && !hasPermissions(userService)) {
             result = false;
             reason = 1;
-        } else if (isExternalReview() && !(isExternalReviewEnabled(workflowService) || workflowService.isReviewToOtherOrgEnabled())) {
+        } else if (isExternalReview() && !(isExternalReviewEnabled(workflowConstantsBean) || workflowConstantsBean.isReviewToOtherOrgEnabled())) {
             result = false;
             reason = 2;
-        } else if (isOrderAssignment() && !isOrderAssignmentEnabled(workflowService)) {
+        } else if (isOrderAssignment() && !isOrderAssignmentEnabled(workflowConstantsBean)) {
             result = false;
             reason = 3;
-        } else if (isEinvoiceFunctionality() && !isEinvoiceFunctionalityEnabled(einvoiceService)) {
+        } else if (isEinvoiceFunctionality() && !appConstantsBean.isEinvoiceEnabled()) {
             result = false;
             reason = 4;
-        } else if ("userCompoundWorkflows".equals(id) && !workflowService.isIndependentWorkflowEnabled() && !volumeService.isCaseVolumeEnabled()) {
+        } else if (USER_COMPOUND_WORKFLOWS.equals(id) && !workflowConstantsBean.isIndependentWorkflowEnabled() && !appConstantsBean.isCaseVolumeEnabled()) {
             result = false;
             reason = 5;
-        } else if ("userCaseFiles".equals(id) && !volumeService.isCaseVolumeEnabled()) {
+        } else if (USER_CASE_FILES.equals(id) && !appConstantsBean.isCaseVolumeEnabled()) {
             result = false;
             reason = 6;
         } else if ("compoundWorkflowSearch".equals(id)) {
-            result = BeanHelper.getVolumeService().isCaseVolumeEnabled() || workflowService.isIndependentWorkflowEnabled();
+            result = appConstantsBean.isCaseVolumeEnabled() || workflowConstantsBean.isIndependentWorkflowEnabled();
             reason = 7;
         } else if (Arrays.asList("executedReports", "taskReports", "documentReports", "volumeReports").contains(id)) {
             result = BeanHelper.getReportService().isUsableByAdminDocManagerOnly() ? userService.isDocumentManager() : true;
             reason = 8;
         } else if (Arrays
-                .asList("compoundWorkflows", "assignmentTasks", "informationTasks", "reviewTasks", "externalReviewTasks", "confirmationTasks", "taskSearch", "taskReports")
+                .asList("compoundWorkflows", ASSIGNMENT_TASKS, INFORMATION_TASKS, REVIEW_TASKS, EXTERNAL_REVIEW_TASKS, CONFIRMATION_TASKS, "taskSearch", "taskReports")
                 .contains(id)) {
-            result = workflowService.isWorkflowEnabled();
+            result = workflowConstantsBean.isWorkflowEnabled();
             reason = 9;
-        } else if (Arrays.asList("orderAssignmentTasks", "opinionTasks", "signatureTasks").contains(id)) {
-            result = workflowService.isDocumentWorkflowEnabled() || workflowService.isIndependentWorkflowEnabled();
+        } else if (Arrays.asList(ORDER_ASSIGNMENT_TASKS, OPINION_TASKS, SIGNATURE_TASKS).contains(id)) {
+            result = workflowConstantsBean.isDocumentWorkflowEnabled() || workflowConstantsBean.isIndependentWorkflowEnabled();
             reason = 10;
-        } else if ("externalReviewTasks".equals(id)) {
-            result = workflowService.isReviewToOtherOrgEnabled() || workflowService.externalReviewWorkflowEnabled();
+        } else if (EXTERNAL_REVIEW_TASKS.equals(id)) {
+            result = workflowConstantsBean.isReviewToOtherOrgEnabled() || workflowConstantsBean.isExternalReviewWorkflowEnabled();
             reason = 11;
-        } else if ("webServiceDocuments".equals(id) && StringUtils.isBlank(BeanHelper.getAddDocumentService().getWebServiceDocumentsMenuItemTitle())) {
-            result = false;
-            reason = 12;
         } else {
-            boolean isRestrictedDelta = rsService.isRestrictedDelta();
-            if ("regularDelta".equals(id) && (!isRestrictedDelta || StringUtils.isBlank(rsService.getDeltaUrl()))) {
+            if (WEB_SERVICE_DOCUMENTS.equals(id) && StringUtils.isBlank(BeanHelper.getAddDocumentService().getWebServiceDocumentsMenuItemTitle())) {
                 result = false;
-                reason = 13;
-            } else if ("restrictedDelta".equals(id)
-                    && (isRestrictedDelta || StringUtils.isBlank(rsService.getRestrictedDeltaUrl()) || !BeanHelper.getRsAccessStatusBean().isCanUserAccessRestrictedDelta())) {
-                result = false;
-                reason = 14;
+                reason = 12;
+            } else {
+                boolean isRestrictedDelta = rsService.isRestrictedDelta();
+                if ("regularDelta".equals(id) && (!isRestrictedDelta || StringUtils.isBlank(rsService.getDeltaUrl()))) {
+                    result = false;
+                    reason = 13;
+                } else if ("restrictedDelta".equals(id)
+                        && (isRestrictedDelta || StringUtils.isBlank(rsService.getRestrictedDeltaUrl()) || !BeanHelper.getRsAccessStatusBean().isCanUserAccessRestrictedDelta())) {
+                    result = false;
+                    reason = 14;
+                }
             }
         }
         if (!result && MY_TASK_MENU_ITEMS.contains(getId())) {
@@ -351,20 +367,16 @@ public class MenuItem implements Serializable {
         return result;
     }
 
-    protected boolean isEinvoiceFunctionalityEnabled(EInvoiceService einvoiceService) {
-        return einvoiceService.isEinvoiceEnabled();
-    }
-
     protected boolean isOrderAssignment() {
-        return "orderAssignmentTasks".equals(id);
+        return ORDER_ASSIGNMENT_TASKS.equals(id);
     }
 
-    protected boolean isOrderAssignmentEnabled(WorkflowService workflowService) {
-        return workflowService.isOrderAssignmentWorkflowEnabled();
+    protected boolean isOrderAssignmentEnabled(WorkflowConstantsBean workflowConstantsBean) {
+        return workflowConstantsBean.isOrderAssignmentWorkflowEnabled();
     }
 
     protected boolean isEinvoiceFunctionality() {
-        return "dimensions".equals(id) || "incomingEInvoice".equals(id);
+        return "dimensions".equals(id) || INCOMING_EINVOICE.equals(id);
     }
 
     protected void addParameter(FacesContext context, UIActionLink link, String name, String value) {
@@ -406,7 +418,7 @@ public class MenuItem implements Serializable {
     }
 
     public boolean isExternalReview() {
-        return "externalReviewTasks".equals(id);
+        return EXTERNAL_REVIEW_TASKS.equals(id);
     }
 
     public boolean isLinkedReview() {
@@ -414,11 +426,11 @@ public class MenuItem implements Serializable {
     }
 
     public boolean isIncomingEinvoice() {
-        return "incomingEInvoice".equals(id);
+        return INCOMING_EINVOICE.equals(id);
     }
 
-    public boolean isExternalReviewEnabled(WorkflowService workflowService) {
-        return workflowService.externalReviewWorkflowEnabled();
+    public boolean isExternalReviewEnabled(WorkflowConstantsBean workflowConstantsBean) {
+        return workflowConstantsBean.isExternalReviewWorkflowEnabled();
     }
 
     public String getActionListener() {

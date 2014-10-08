@@ -2,6 +2,7 @@ package ee.webmedia.alfresco.workflow.web.evaluator;
 
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 
+import ee.webmedia.alfresco.common.evaluator.CompoundWorkflowActionGroupSharedResource;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
 import ee.webmedia.alfresco.workflow.service.WorkflowUtil;
@@ -20,6 +21,19 @@ public class CompoundWorkflowSendForInformationEvaluator extends AbstractFullAcc
             return false;
         }
         return isOwnerOrDocManager() || WorkflowUtil.isOwnerOfInProgressTask(workflow, AuthenticationUtil.getRunAsUser());
+    }
+
+    @Override
+    public boolean evaluate() {
+        CompoundWorkflowActionGroupSharedResource resource = (CompoundWorkflowActionGroupSharedResource) sharedResource;
+        CompoundWorkflow compundWorkflow = resource.getObject();
+        if (compundWorkflow == null || !resource.isSaved() || !resource.isIndependentWorkflow()) {
+            return false;
+        }
+        if (BeanHelper.getWorkflowService().containsDocumentsWithLimitedActivities(compundWorkflow.getNodeRef())) {
+            return false;
+        }
+        return isOwnerOrDocManager(resource) || WorkflowUtil.isOwnerOfInProgressTask(compundWorkflow, resource.getCurrentUser());
     }
 
 }

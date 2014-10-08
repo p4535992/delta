@@ -54,6 +54,7 @@ public class ActionLinkRenderer extends BaseRenderer
    // ------------------------------------------------------------------------------
    // Renderer implementation 
    
+    public static final String AJAX_NOT_ALLOWED = "ajaxNotAllowed";
     public static final String AJAX_ENABLED = "ajaxEnabled";
     public static final String AJAX_PARENT_LEVEL = "ajaxParentLevel";
 

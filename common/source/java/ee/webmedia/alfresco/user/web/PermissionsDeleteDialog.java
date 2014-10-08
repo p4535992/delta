@@ -17,6 +17,7 @@ import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
 public class PermissionsDeleteDialog extends BaseDialogBean {
+    public static final String BEAN_NAME = "PermissionsDeleteDialog";
     private static final long serialVersionUID = 1L;
 
     private transient UserService userService;
@@ -63,6 +64,11 @@ public class PermissionsDeleteDialog extends BaseDialogBean {
         nodeRef = null;
         permission = null;
         authority = null;
+    }
+
+    @Override
+    public void clean() {
+        reset();
     }
 
     // START: getters / setters

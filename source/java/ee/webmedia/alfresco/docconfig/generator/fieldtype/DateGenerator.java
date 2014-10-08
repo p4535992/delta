@@ -6,6 +6,7 @@ import static ee.webmedia.alfresco.utils.TextUtil.replaceLast;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.ui.repo.RepoConstants;
+import org.bouncycastle.asn1.eac.BidirectionalMap;
 
 import ee.webmedia.alfresco.classificator.constant.FieldType;
 import ee.webmedia.alfresco.classificator.enums.DatePeriods;
@@ -20,6 +21,8 @@ public class DateGenerator extends BaseTypeFieldGenerator {
 
     public static final String END_PREFIX = "_EndDate";
     public static final String PICKER_PREFIX = "_DateRangePicker";
+    private static final BidirectionalMap ORIGINAL_TO_END_DATE_QNAME = new BidirectionalMap();
+    private static final BidirectionalMap ORIGINAL_TO_PICKER_QNAME = new BidirectionalMap();
 
     @Override
     protected FieldType[] getFieldTypes() {
@@ -63,21 +66,42 @@ public class DateGenerator extends BaseTypeFieldGenerator {
     }
 
     public static QName getEndDateQName(QName propQname) {
-        return QName.createQName(propQname.getNamespaceURI(), propQname.getLocalName() + END_PREFIX);
+        QName endDateQName = (QName) ORIGINAL_TO_END_DATE_QNAME.get(propQname);
+        if (endDateQName == null) {
+            endDateQName = QName.createQName(propQname.getNamespaceURI(), propQname.getLocalName() + END_PREFIX);
+            ORIGINAL_TO_END_DATE_QNAME.put(propQname, endDateQName);
+        }
+        return endDateQName;
     }
 
     public static QName getDatePickerQName(QName propQname) {
-        return QName.createQName(propQname.getNamespaceURI(), propQname.getLocalName() + PICKER_PREFIX);
+        QName pickerQName = (QName) ORIGINAL_TO_PICKER_QNAME.get(propQname);
+        if (pickerQName == null) {
+            pickerQName = QName.createQName(propQname.getNamespaceURI(), propQname.getLocalName() + PICKER_PREFIX);
+            ORIGINAL_TO_PICKER_QNAME.put(propQname, pickerQName);
+        }
+        return pickerQName;
     }
 
     public static QName getOriginalQName(QName propQname) {
         String localName = propQname.getLocalName();
         if (localName.endsWith(END_PREFIX)) {
-            localName = replaceLast(localName, END_PREFIX, "");
+            return getOriginalQName(propQname, localName, END_PREFIX, ORIGINAL_TO_END_DATE_QNAME);
         } else if (localName.endsWith(PICKER_PREFIX)) {
-            localName = replaceLast(localName, PICKER_PREFIX, "");
+            return getOriginalQName(propQname, localName, PICKER_PREFIX, ORIGINAL_TO_PICKER_QNAME);
+        } else {
+            return propQname;
         }
-        return QName.createQName(propQname.getNamespaceURI(), localName);
+    }
+
+    private static QName getOriginalQName(QName propQname, String localName, String prefix, BidirectionalMap qnameMap) {
+        QName originalQName = (QName) qnameMap.getReverse(propQname);
+        if (originalQName == null) {
+            localName = replaceLast(localName, prefix, "");
+            originalQName = QName.createQName(propQname.getNamespaceURI(), localName);
+            qnameMap.put(originalQName, propQname);
+        }
+        return originalQName;
     }
 
 }

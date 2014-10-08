@@ -19,7 +19,7 @@ public class DocumentType extends NodeBaseVO implements Comparable<DocumentType>
 
     /**
      * Constructs new unsaved DocumentType
-     * 
+     *
      * @param node
      */
     public DocumentType(WmNode node) {
@@ -95,7 +95,7 @@ public class DocumentType extends NodeBaseVO implements Comparable<DocumentType>
         } else if (other.getName() == null) {
             return 1;
         }
-        return AppConstants.DEFAULT_COLLATOR.compare(getName(), other.getName());
+        return AppConstants.getNewCollatorInstance().compare(getName(), other.getName());
     }
 
 }

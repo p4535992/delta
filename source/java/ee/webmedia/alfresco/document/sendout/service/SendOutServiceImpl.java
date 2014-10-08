@@ -6,6 +6,7 @@ import java.security.cert.X509Certificate;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -19,12 +20,14 @@ import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.service.namespace.RegexQNamePattern;
 import org.alfresco.web.bean.repository.Node;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.addressbook.service.AddressbookService;
 import ee.webmedia.alfresco.classificator.enums.SendMode;
+import ee.webmedia.alfresco.common.service.CreateObjectCallback;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamicService;
@@ -47,11 +50,6 @@ import ee.webmedia.alfresco.user.model.Authority;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.WebUtil;
-import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
-import ee.webmedia.alfresco.workflow.sendout.TaskSendInfo;
-import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
-import ee.webmedia.alfresco.workflow.service.Task;
-import ee.webmedia.alfresco.workflow.service.Workflow;
 import ee.webmedia.xtee.client.dhl.DhlXTeeService.ContentToSend;
 import ee.webmedia.xtee.client.dhl.DhlXTeeService.SendStatus;
 
@@ -72,35 +70,39 @@ public class SendOutServiceImpl implements SendOutService {
 
     @Override
     public List<SendInfo> getDocumentSendInfos(NodeRef document) {
-        List<ChildAssociationRef> assocs = nodeService.getChildAssocs(document, RegexQNamePattern.MATCH_ALL, DocumentCommonModel.Assocs.SEND_INFO);
-        List<SendInfo> result = new ArrayList<SendInfo>(assocs.size());
-        for (ChildAssociationRef assoc : assocs) {
-            result.add(new DocumentSendInfo(generalService.fetchNode(assoc.getChildRef())));
+        Map<NodeRef, List<SendInfo>> sendInfos = BeanHelper.getBulkLoadNodeService().loadChildNodes(Collections.singletonList(document), null, DocumentCommonModel.Types.SEND_INFO,
+                null, new CreateObjectCallback<SendInfo>() {
+
+                    @Override
+                    public SendInfo create(NodeRef nodeRef, Map<QName, Serializable> properties) {
+                        return new DocumentSendInfo(properties);
+                    }
+                });
+        return sendInfos.isEmpty() ? new ArrayList<SendInfo>() : sendInfos.get(document);
+    }
+
+    @Override
+    public Date getEarliestSendInfoDate(NodeRef docRef) {
+        Map<NodeRef, List<Date>> result = BeanHelper.getBulkLoadNodeService().loadChildNodes(Arrays.asList(docRef),
+                Collections.singleton(DocumentCommonModel.Props.SEND_INFO_SEND_DATE_TIME),
+                DocumentCommonModel.Types.SEND_INFO, null, new CreateObjectCallback<Date>() {
+
+            @Override
+            public Date create(NodeRef nodeRef, Map<QName, Serializable> properties) {
+                return (Date) properties.get(DocumentCommonModel.Props.SEND_INFO_SEND_DATE_TIME);
+            }
+        });
+        List<Date> sendInfoDates = result.get(docRef);
+        if (CollectionUtils.isNotEmpty(sendInfoDates)) {
+            return Collections.min(sendInfoDates);
         }
-        return result;
+        return null;
     }
 
     @Override
     public boolean hasDocumentSendInfos(NodeRef document) {
         List<ChildAssociationRef> assocs = nodeService.getChildAssocs(document, RegexQNamePattern.MATCH_ALL, DocumentCommonModel.Assocs.SEND_INFO);
         return !assocs.isEmpty();
-    }
-
-    @Override
-    public List<SendInfo> getDocumentAndTaskSendInfos(NodeRef document, List<CompoundWorkflow> compoundWorkflows) {
-        List<SendInfo> result = getDocumentSendInfos(document);
-        for (CompoundWorkflow compoundWorkflow : compoundWorkflows) {
-            for (Workflow workflow : compoundWorkflow.getWorkflows()) {
-                if (workflow.isType(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_WORKFLOW)) {
-                    for (Task task : workflow.getTasks()) {
-                        if (task.getProp(WorkflowSpecificModel.Props.SEND_STATUS) != null) {
-                            result.add(new TaskSendInfo(task.getNode()));
-                        }
-                    }
-                }
-            }
-        }
-        return result;
     }
 
     @Override

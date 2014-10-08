@@ -34,6 +34,8 @@ import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.cases.model.Case;
+import ee.webmedia.alfresco.cases.service.CaseService;
+import ee.webmedia.alfresco.cases.service.UnmodifiableCase;
 import ee.webmedia.alfresco.classificator.constant.DocTypeAssocType;
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
 import ee.webmedia.alfresco.classificator.enums.TransmittalMode;
@@ -48,8 +50,8 @@ import ee.webmedia.alfresco.document.model.DocumentParentNodesVO;
 import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
 import ee.webmedia.alfresco.document.model.LetterDocument;
 import ee.webmedia.alfresco.document.service.DocumentServiceImpl;
-import ee.webmedia.alfresco.functions.model.Function;
 import ee.webmedia.alfresco.functions.model.FunctionsModel;
+import ee.webmedia.alfresco.functions.model.UnmodifiableFunction;
 import ee.webmedia.alfresco.functions.service.FunctionsService;
 import ee.webmedia.alfresco.importer.excel.mapper.AbstractSmitExcelMapper;
 import ee.webmedia.alfresco.importer.excel.vo.CaseImportVO;
@@ -58,7 +60,9 @@ import ee.webmedia.alfresco.importer.excel.vo.ImportDocument;
 import ee.webmedia.alfresco.importer.excel.vo.IncomingLetter;
 import ee.webmedia.alfresco.importer.excel.vo.SendInfo;
 import ee.webmedia.alfresco.series.model.Series;
+import ee.webmedia.alfresco.series.model.UnmodifiableSeries;
 import ee.webmedia.alfresco.utils.beanmapper.BeanPropertyMapper;
+import ee.webmedia.alfresco.volume.model.UnmodifiableVolume;
 import ee.webmedia.alfresco.volume.model.Volume;
 
 /**
@@ -177,7 +181,7 @@ public class DocumentImportServiceImpl extends DocumentServiceImpl implements Do
                                     // make sure that fields of casesByVolumeHolder don't get corrupted by transaction rollBack
                                     casesByVolumeHolder = casesByVolumeHolder.clone();
                                 } else {
-                                    final List<Case> allCasesByVolume = getCaseService().getAllCasesByVolume(volumeRef, DocListUnitStatus.OPEN);
+                                    final List<UnmodifiableCase> allCasesByVolume = getCaseService().getAllCasesByVolume(volumeRef, DocListUnitStatus.OPEN);
                                     casesByVolumeHolder = new CasesByVolumeHolder(allCasesByVolume);
                                 }
                                 newCasesCache.put(volumeRef, casesByVolumeHolder);
@@ -394,7 +398,7 @@ public class DocumentImportServiceImpl extends DocumentServiceImpl implements Do
             }
             if (log.isInfoEnabled() && assocs.size() > 0) {
                 log.info("Created assocs from " + assocs.size() + " documents in total to " + totalNrOfFollowUps + " followups and " + totalNrOfReplies
-                            + " replies");
+                        + " replies");
             }
             final NodeRef functionsRoot = getFunctionsService().getFunctionsRoot();
             nodeService.setProperty(functionsRoot, smitDocListImported, Boolean.TRUE);
@@ -530,9 +534,9 @@ public class DocumentImportServiceImpl extends DocumentServiceImpl implements Do
 
         private NodeRef getFunctionRef(ImportDocument doc, boolean forceRefresh) {
             if (functionsCache == null || forceRefresh) {
-                List<Function> allOpenedFunctions = getFunctionsService().getAllFunctions(DocListUnitStatus.OPEN);
+                List<UnmodifiableFunction> allOpenedFunctions = getFunctionsService().getAllFunctions(DocListUnitStatus.OPEN);
                 functionsCache = new HashMap<String, NodeRef>(allOpenedFunctions.size());
-                for (Function function : allOpenedFunctions) {
+                for (UnmodifiableFunction function : allOpenedFunctions) {
                     functionsCache.put(function.getMark(), function.getNodeRef());
                 }
             }
@@ -550,10 +554,10 @@ public class DocumentImportServiceImpl extends DocumentServiceImpl implements Do
         private Series getSeries(ImportDocument doc, final NodeRef functionRef, boolean forceRefresh) {
             Map<String, Series> seriesMap = seriesCache.get(functionRef);
             if (seriesMap == null || forceRefresh) {
-                final List<Series> allOpenedSeries = seriesService.getAllSeriesByFunction(functionRef, DocListUnitStatus.OPEN, null);
+                final List<UnmodifiableSeries> allOpenedSeries = seriesService.getAllSeriesByFunction(functionRef, DocListUnitStatus.OPEN, null);
                 seriesMap = new HashMap<String, Series>(allOpenedSeries.size());
-                for (Series series : allOpenedSeries) {
-                    seriesMap.put(StringUtils.trim(series.getSeriesIdentifier()), series);
+                for (UnmodifiableSeries series : allOpenedSeries) {
+                    seriesMap.put(StringUtils.trim(series.getSeriesIdentifier()), seriesService.getSeriesByNodeRef(series.getSeriesRef()));
                 }
                 seriesCache.put(functionRef, seriesMap);
             }
@@ -574,12 +578,13 @@ public class DocumentImportServiceImpl extends DocumentServiceImpl implements Do
 
         private Volume getVolume(ImportDocument doc, final NodeRef seriesRef, boolean forceRefresh) {
             Map<String, Volume> volumesMap = volumesCache.get(seriesRef);
+            Map<Long, QName> propertyTypes = new HashMap<Long, QName>();
             if (volumesMap == null || forceRefresh) {
-                final List<Volume> allVolumesBySeries = volumeService.getAllVolumesBySeries(seriesRef);
+                final List<UnmodifiableVolume> allVolumesBySeries = volumeService.getAllVolumesBySeries(seriesRef);
                 volumesMap = new HashMap<String, Volume>(allVolumesBySeries.size());
-                for (Volume volume : allVolumesBySeries) {
+                for (UnmodifiableVolume volume : allVolumesBySeries) {
                     if (DocListUnitStatus.OPEN.getValueName().equals(volume.getStatus())) {
-                        volumesMap.put(volume.getVolumeMark(), volume);
+                        volumesMap.put(volume.getVolumeMark(), volumeService.getVolumeByNodeRef(volume.getNodeRef(), propertyTypes));
                     }
                 }
                 volumesCache.put(seriesRef, volumesMap);
@@ -671,10 +676,11 @@ public class DocumentImportServiceImpl extends DocumentServiceImpl implements Do
         /** Cases corresponding to registered documents regNumber without individualizing part of the regNumber */
         private Map<String /* docRegNrWoIndividualizingNr */, CaseImportVO> casesByRegNumber;
 
-        public CasesByVolumeHolder(List<Case> allCasesByVolume) {
+        public CasesByVolumeHolder(List<UnmodifiableCase> allCasesByVolume) {
             casesByTitle = new HashMap<String, Case>(allCasesByVolume.size());
-            for (Case theCase : allCasesByVolume) {
-                casesByTitle.put(theCase.getTitle(), theCase);
+            CaseService caseService = getCaseService();
+            for (UnmodifiableCase theCase : allCasesByVolume) {
+                casesByTitle.put(theCase.getTitle(), caseService.getCaseByNoderef(theCase.getNodeRef()));
             }
         }
 
@@ -736,10 +742,11 @@ public class DocumentImportServiceImpl extends DocumentServiceImpl implements Do
                 }
                 final String caseTitle = doc.getDocName();
                 CaseImportVO importCase = new CaseImportVO(); // create new case, that is probably used by many documents
-                final Case existingCaseWithSameTitle = getCaseService().getCaseByTitle(caseTitle, volumeRef, null);
+                final UnmodifiableCase existingCaseWithSameTitle = getCaseService().getCaseByTitle(caseTitle, volumeRef, null);
                 if (existingCaseWithSameTitle != null) {
-                    importCase.setNode(existingCaseWithSameTitle.getNode());
-                    importCase.setContainingDocsCount(existingCaseWithSameTitle.getContainingDocsCount());
+                    Case existingCase = getCaseService().getCaseByNoderef(existingCaseWithSameTitle.getNodeRef());
+                    importCase.setNode(existingCase.getNode());
+                    importCase.setContainingDocsCount(existingCase.getContainingDocsCount());
                 } else {
                     importCase.setTitle(caseTitle);
                 }
@@ -866,7 +873,7 @@ public class DocumentImportServiceImpl extends DocumentServiceImpl implements Do
             final String transmittalModeClassificatorName = TransmittalMode.getClassificatorName();
             if (transmittalModes == null) {
                 transmittalModeClassificator = classificatorService.getClassificatorByName(transmittalModeClassificatorName);
-                final List<ClassificatorValue> transmittalModeValues = classificatorService.getAllClassificatorValues(transmittalModeClassificator);
+                final List<ClassificatorValue> transmittalModeValues = transmittalModeClassificator.getValues();
                 transmittalModes = new HashMap<String, ClassificatorValue>(transmittalModeValues.size());
                 for (ClassificatorValue classificatorValue : transmittalModeValues) {
                     transmittalModes.put(classificatorValue.getValueName().trim().toLowerCase(), classificatorValue);

@@ -20,6 +20,8 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 public class FieldDefinitionListDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;
 
+    public static final String BEAN_NAME = "FieldDefinitionListDialog";
+
     private List<FieldDefinition> fieldDefinitions;
     private String searchCriteria;
     private UIRichList richList;
@@ -67,9 +69,14 @@ public class FieldDefinitionListDialog extends BaseDialogBean {
 
     @Override
     public String cancel() {
+        clean();
+        return super.cancel();
+    }
+
+    @Override
+    public void clean() {
         fieldDefinitions = null;
         searchCriteria = null;
-        return super.cancel();
     }
 
     private void clearRichList() {

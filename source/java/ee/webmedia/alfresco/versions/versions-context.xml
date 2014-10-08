@@ -18,7 +18,7 @@
       </property>
    </bean>
 
-   <bean id="versionsBundleBootstrap" class="org.alfresco.web.app.ResourceBundleBootstrap">
+   <bean id="versionsResourceBundles" class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
       <property name="resourceBundles">
          <list>
             <value>ee.webmedia.alfresco.versions.web.versions-webclient</value>

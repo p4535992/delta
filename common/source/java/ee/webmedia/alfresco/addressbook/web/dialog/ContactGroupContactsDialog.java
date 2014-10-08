@@ -28,6 +28,7 @@ public class ContactGroupContactsDialog extends ContactGroupBaseDialog implement
 
     private static final long serialVersionUID = 1L;
 
+    public static final String BEAN_NAME = "ContactGroupContactsDialog";
     public static final String PARAM_GROUP_NODEREF = "groupNodeRef";
     public static final String PARAM_CONTACT_NODEREF = "contactNodeRef";
 
@@ -45,6 +46,15 @@ public class ContactGroupContactsDialog extends ContactGroupBaseDialog implement
         super.init(parameters);
         personLabel = Application.getMessage(FacesContext.getCurrentInstance(), "addressbook_private_person").toLowerCase();
         organizationLabel = Application.getMessage(FacesContext.getCurrentInstance(), "addressbook_org").toLowerCase();
+    }
+
+    @Override
+    public void clean() {
+        personLabel = null;
+        organizationLabel = null;
+        if (usersRichList != null) {
+            usersRichList.setValue(null);
+        }
     }
 
     public List<Map<String, String>> getGroupContacts() {

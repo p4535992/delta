@@ -1,6 +1,5 @@
 package ee.webmedia.alfresco.workflow.web;
 
-import java.util.List;
 import java.util.Map;
 
 import javax.faces.context.FacesContext;
@@ -8,16 +7,16 @@ import javax.faces.context.FacesContext;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
-import ee.webmedia.alfresco.workflow.model.CompoundWorkflowWithObject;
 
 public class CompoundWorkflowListDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;
+    public static final String BEAN_NAME = "CompoundWorkflowListDialog";
 
-    private List<CompoundWorkflowWithObject> compoundWorkflows;
+    private CompoundWorkflowWithObjectDataProvider compoundWorkflows;
 
     @Override
     public void restored() {
-        compoundWorkflows = BeanHelper.getDocumentSearchService().searchCurrentUserCompoundWorkflows();
+        compoundWorkflows = new CompoundWorkflowWithObjectDataProvider(BeanHelper.getDocumentSearchService().searchCurrentUserCompoundWorkflowRefs());
     }
 
     @Override
@@ -28,8 +27,13 @@ public class CompoundWorkflowListDialog extends BaseDialogBean {
 
     @Override
     public String cancel() {
-        compoundWorkflows = null;
+        clean();
         return super.cancel();
+    }
+
+    @Override
+    public void clean() {
+        compoundWorkflows = null;
     }
 
     @Override
@@ -40,12 +44,12 @@ public class CompoundWorkflowListDialog extends BaseDialogBean {
     /**
      * Getter for JSP.
      */
-    public List<CompoundWorkflowWithObject> getCompoundWorkflows() {
+    public CompoundWorkflowWithObjectDataProvider getCompoundWorkflows() {
         return compoundWorkflows;
     }
 
     public boolean isShowTitle() {
-        return BeanHelper.getWorkflowService().isWorkflowTitleEnabled();
+        return BeanHelper.getWorkflowConstantsBean().isWorkflowTitleEnabled();
     }
 
 }

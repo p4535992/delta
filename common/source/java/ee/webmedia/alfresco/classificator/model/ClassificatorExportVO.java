@@ -135,6 +135,18 @@ public class ClassificatorExportVO extends Classificator {
         return valueChanged;
     }
 
+    public Classificator toClassificator() {
+        Classificator c = new Classificator();
+        c.setName(getName());
+        c.setAddRemoveValues(isAddRemoveValues());
+        c.setDeleteEnabled(c.isDeleteEnabled());
+        c.setNodeRef(getNodeRef());
+        c.setDescription(getDescription());
+        c.setAlfabeticOrder(c.getAlfabeticOrder());
+        c.addClassificatorValues(classificatorValues);
+        return c;
+    }
+
     private ClassificatorValueComparator getClassificatorValueComparator() {
         if (classificatorValueComparator == null) {
             classificatorValueComparator = new ClassificatorValueComparator();

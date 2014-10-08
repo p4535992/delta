@@ -9,11 +9,11 @@ public class CompoundWorkflowDefinitionTypeFilter implements EnumSelectorItemFil
     @Override
     public boolean showItem(CompoundWorkflowType enumItem) {
         if (enumItem == CompoundWorkflowType.CASE_FILE_WORKFLOW) {
-            return BeanHelper.getVolumeService().isCaseVolumeEnabled();
+            return BeanHelper.getApplicationConstantsBean().isCaseVolumeEnabled();
         } else if (enumItem == CompoundWorkflowType.INDEPENDENT_WORKFLOW) {
-            return BeanHelper.getWorkflowService().isIndependentWorkflowEnabled();
+            return BeanHelper.getWorkflowConstantsBean().isIndependentWorkflowEnabled();
         } else if (enumItem == CompoundWorkflowType.DOCUMENT_WORKFLOW) {
-            return BeanHelper.getWorkflowService().isDocumentWorkflowEnabled();
+            return BeanHelper.getWorkflowConstantsBean().isDocumentWorkflowEnabled();
         }
         return true;
     }

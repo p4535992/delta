@@ -123,9 +123,17 @@ public class Node implements Serializable, NamespacePrefixResolverProvider
      */
     public Map<String, Object> getProperties()
     {
+        return getProperties(null, null);
+    }
+
+    /**
+     * @return All the properties known about this node.
+     */
+    public Map<String, Object> getProperties(Map<Long, QName> propertyTypes, Set<QName> propsToLoad)
+    {
         if (propsRetrieved == false)
         {
-            Map<QName, Serializable> props = getServiceRegistry().getNodeService().getProperties(nodeRef);
+            Map<QName, Serializable> props = getServiceRegistry().getNodeService().getProperties(nodeRef, propsToLoad, propertyTypes);
 
             for (QName qname : props.keySet())
             {
@@ -407,7 +415,7 @@ public class Node implements Serializable, NamespacePrefixResolverProvider
     private Set<Privilege> getCachedPermissions() {
         String currentUser = AuthenticationUtil.getRunAsUser();
         if (permissions == null || !currentUser.equals(permissionsUsername)) {
-            permissions = BeanHelper.getPrivilegeService().getAllCurrentUserPermissions(nodeRef, type);
+            permissions = BeanHelper.getPrivilegeService().getAllCurrentUserPermissions(nodeRef, type, properties);
             permissionsUsername = currentUser;
         }
         return permissions;

@@ -8,7 +8,6 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.bean.repository.Node;
 import org.springframework.web.jsf.FacesContextUtils;
 
-import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docconfig.generator.DialogDataProvider;
 import ee.webmedia.alfresco.docdynamic.web.DocumentDynamicBlock;
 import ee.webmedia.alfresco.document.sendout.model.SendInfo;
@@ -47,6 +46,11 @@ public class SendOutBlockBean implements DocumentDynamicBlock {
         sendInfos = null;
     }
 
+    @Override
+    public void clean() {
+        reset();
+    }
+
     public boolean isRendered() {
         return getSendInfos() != null && getSendInfos().size() > 0;
     }
@@ -55,7 +59,7 @@ public class SendOutBlockBean implements DocumentDynamicBlock {
 
     public List<SendInfo> getSendInfos() {
         if (sendInfos == null && document != null) {
-            sendInfos = getSendOutService().getDocumentAndTaskSendInfos(document, BeanHelper.getWorkflowBlockBean().getCompoundWorkflows());
+            sendInfos = getSendOutService().getDocumentSendInfos(document);
         }
         return sendInfos;
     }

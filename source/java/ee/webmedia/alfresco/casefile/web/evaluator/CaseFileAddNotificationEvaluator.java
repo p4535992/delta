@@ -1,14 +1,14 @@
 package ee.webmedia.alfresco.casefile.web.evaluator;
 
 import org.alfresco.service.cmr.repository.StoreRef;
-import org.alfresco.web.action.evaluator.BaseActionEvaluator;
 import org.alfresco.web.bean.repository.Node;
 
+import ee.webmedia.alfresco.common.evaluator.CaseFileActionsGroupResource;
+import ee.webmedia.alfresco.common.evaluator.SharedResourceEvaluator;
 import ee.webmedia.alfresco.common.web.BeanHelper;
-import ee.webmedia.alfresco.document.web.evaluator.ViewStateActionEvaluator;
 import ee.webmedia.alfresco.user.model.UserModel;
 
-public class CaseFileAddNotificationEvaluator extends BaseActionEvaluator {
+public class CaseFileAddNotificationEvaluator extends SharedResourceEvaluator {
     private static final long serialVersionUID = 1L;
 
     @Override
@@ -16,8 +16,7 @@ public class CaseFileAddNotificationEvaluator extends BaseActionEvaluator {
         if (!docNode.getNodeRef().getStoreRef().getProtocol().equals(StoreRef.PROTOCOL_WORKSPACE)) {
             return false;
         }
-        ViewStateActionEvaluator viewStateEval = new ViewStateActionEvaluator();
-        if (!viewStateEval.evaluate(docNode)) {
+        if (BeanHelper.getDocumentDialogHelperBean().isInEditMode()) {
             return false;
         }
         return evaluateAssocs(docNode);
@@ -26,6 +25,12 @@ public class CaseFileAddNotificationEvaluator extends BaseActionEvaluator {
     protected boolean evaluateAssocs(Node docNode) {
         return !BeanHelper.getNotificationService().isNotificationAssocExists(BeanHelper.getUserService().getCurrentUser(), docNode.getNodeRef(),
                 UserModel.Assocs.CASE_FILE_NOTIFICATION);
+    }
+
+    @Override
+    public boolean evaluate() {
+        CaseFileActionsGroupResource resource = (CaseFileActionsGroupResource) sharedResource;
+        return resource.isWorkspaceNode() && !resource.isInEditMode() && !resource.isNotificationAssocExists();
     }
 
 }

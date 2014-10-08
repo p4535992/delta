@@ -20,6 +20,8 @@ import ee.webmedia.alfresco.signature.service.SignatureService;
 public class SignatureDocumentDetailsDialog extends DocumentDetailsDialog {
     private static final long serialVersionUID = 1L;
 
+    public static final String BEAN_NAME = "SignatureDocumentDetailsDialog";
+
     private static Logger log = Logger.getLogger(SignatureDocumentDetailsDialog.class);
 
     private transient SignatureService signatureService;
@@ -58,7 +60,7 @@ public class SignatureDocumentDetailsDialog extends DocumentDetailsDialog {
         if (browseBean.getDocument() == null) {
             return;
         }
-        if (!getSignatureService().isDigiDocContainer(browseBean.getDocument().getNodeRef())) {
+        if (!getSignatureService().isBDocContainer(browseBean.getDocument().getNodeRef())) {
             return;
         }
 
@@ -117,7 +119,7 @@ public class SignatureDocumentDetailsDialog extends DocumentDetailsDialog {
     }
 
     private void getDataFilesAndSignatures() throws SignatureException {
-        SignatureItemsAndDataItems values = getSignatureService().getDataItemsAndSignatureItems(browseBean.getDocument().getNodeRef(), false);
+        SignatureItemsAndDataItems values = getSignatureService().getDataItemsAndSignatureItems(browseBean.getDocument().getNodeRef(), false, true);
         signatures = values.getSignatureItems();
         dataItems = values.getDataItems();
     }

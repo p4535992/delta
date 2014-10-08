@@ -12,6 +12,8 @@ import javax.faces.component.UIInput;
 import javax.faces.context.FacesContext;
 import javax.faces.model.SelectItem;
 
+import org.alfresco.repo.transaction.RetryingTransactionHelper;
+import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
@@ -27,12 +29,15 @@ import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.search.model.DocumentReportModel;
 import ee.webmedia.alfresco.document.search.model.DocumentSearchModel;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchFilterService;
+import ee.webmedia.alfresco.report.job.ExecuteReportsJob;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 
 public class DocumentDynamicReportDialog extends DocumentDynamicSearchDialog {
 
     private static final long serialVersionUID = 1L;
+
+    public static final String BEAN_NAME = "DocumentDynamicReportDialog";
     private static final Log LOG = LogFactory.getLog(DocumentDynamicReportDialog.class);
 
     private final List<SelectItem> reportTemplates = new ArrayList<SelectItem>();
@@ -61,10 +66,21 @@ public class DocumentDynamicReportDialog extends DocumentDynamicSearchDialog {
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
         if (isValidFilter()) {
             try {
-                BeanHelper.getReportService().createReportResult(filter, TemplateReportType.DOCUMENTS_REPORT, DocumentReportModel.Assocs.FILTER);
+                ExecuteReportsJob.REORDER_LOCK.lock();
+                RetryingTransactionHelper helper = BeanHelper.getTransactionService().getRetryingTransactionHelper();
+                RetryingTransactionCallback<Void> cb = new RetryingTransactionCallback<Void>() {
+                    @Override
+                    public Void execute() throws Throwable {
+                        BeanHelper.getReportService().createReportResult(filter, TemplateReportType.DOCUMENTS_REPORT, DocumentReportModel.Assocs.FILTER);
+                        return null;
+                    }
+                };
+                helper.doInTransaction(cb, false, true, true);
                 MessageUtil.addInfoMessage("report_created_success");
             } catch (UnableToPerformException e) {
                 MessageUtil.addErrorMessage(e.getMessageKey());
+            } finally {
+                ExecuteReportsJob.REORDER_LOCK.unlock();
             }
         }
         isFinished = false;
@@ -102,6 +118,18 @@ public class DocumentDynamicReportDialog extends DocumentDynamicSearchDialog {
             }
         }
         return reportTemplates.isEmpty() ? null : reportTemplates;
+    }
+
+    @Override
+    public String cancel() {
+        clean();
+        return super.cancel();
+    }
+
+    @Override
+    public void clean() {
+        reportTemplates.clear();
+        reportTemplatesWithOutputTypes = null;
     }
 
     @Override

@@ -12,7 +12,7 @@
       </property>
    </bean>
    
-   <bean id="caseFileBundleBootstrap" class="org.alfresco.web.app.ResourceBundleBootstrap">
+   <bean id="caseFileBundleBootstrap" class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
       <property name="resourceBundles">
          <list>
             <value>ee.webmedia.alfresco.casefile.web.case-file-webclient</value>
@@ -34,6 +34,7 @@
       <property name="documentConfigService" ref="DocumentConfigService" />
       <property name="documentDynamicService" ref="DocumentDynamicService" />
       <property name="documentService" ref="DocumentService" />
+      <property name="documentSearchService" ref="DocumentSearchService" />
       <property name="generalService" ref="GeneralService" />
       <property name="workflowService" ref="WmWorkflowService" />
       <property name="seriesService" ref="SeriesService" />
@@ -42,6 +43,7 @@
       <property name="caseFileLogService" ref="CaseFileLogService" />
       <property name="docLockService" ref="DocLockService" />
       <property name="logService" ref="LogService" />
+      <property name="volumeService" ref="VolumeService" />
    </bean>
 
    <bean id="CaseFileService" class="org.springframework.aop.framework.ProxyFactoryBean">
@@ -91,11 +93,6 @@
    <bean id="caseFileFavoriteAspectUpdater" class="ee.webmedia.alfresco.casefile.bootstrap.CaseFileFavoriteAspectUpdater" parent="abstractNodeUpdater">
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
-   </bean>
-   
-   <bean class="ee.webmedia.alfresco.casefile.web.CaseFileListMenuItemProcessor">
-      <property name="menuService" ref="MenuService" />
-      <property name="documentSearchService" ref="DocumentSearchService" />
    </bean>
    
    <bean id="caseFileCompoundWorkflowContainerAspectUpdater" class="ee.webmedia.alfresco.casefile.bootstrap.CaseFileCompoundWorkflowContainerAspectUpdater" parent="abstractNodeUpdater">

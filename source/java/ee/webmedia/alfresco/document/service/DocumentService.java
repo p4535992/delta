@@ -5,11 +5,9 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
-import org.alfresco.service.cmr.repository.AssociationRef;
 import org.alfresco.service.cmr.repository.ContentData;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
-import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 import org.springframework.beans.factory.InitializingBean;
 
@@ -57,11 +55,9 @@ public interface DocumentService {
     String BEAN_NAME = "DocumentService";
     String VOLUME_MARK_SEPARATOR = "/";
 
-    NodeRef getDrafts();
-
     /**
      * Get the document from repository.
-     * 
+     *
      * @param nodeRef document
      * @return document
      */
@@ -69,14 +65,14 @@ public interface DocumentService {
 
     /**
      * Create a new blank document in drafts folder.
-     * 
+     *
      * @return created document
      */
     Node createDocument(QName documentTypeId);
 
     /**
      * Create a new blank document into <code>parentFolderRef</code>.
-     * 
+     *
      * @param documentTypeId
      * @param parentFolderRef
      * @param props
@@ -93,7 +89,7 @@ public interface DocumentService {
     /**
      * Make a copy of document as a draft.
      * To make it permanent, it must be saved explicitly.
-     * 
+     *
      * @param nodeRef Reference to document that is copied
      * @return copied document as draft
      */
@@ -102,7 +98,7 @@ public interface DocumentService {
     /**
      * Create a node of the specified type from the properties
      * of the original node as a reply.
-     * 
+     *
      * @param docType
      * @param nodeRef
      * @return
@@ -112,7 +108,7 @@ public interface DocumentService {
     /**
      * Create a node of the specified type from the properties
      * of the original node as a follow up.
-     * 
+     *
      * @param docType
      * @param nodeRef
      * @return
@@ -120,27 +116,13 @@ public interface DocumentService {
     @Deprecated
     Node createFollowUp(QName docType, NodeRef nodeRef);
 
-    List<Document> getAllDocumentFromDvk();
+    List<NodeRef> getAllDocumentFromDvk();
 
     int getAllDocumentFromDvkCount();
 
-    /**
-     * Get list of incoming email.
-     * 
-     * @return list of documents
-     */
-    List<Document> getIncomingEmails();
+    int getIncomingEmailsCount(int limit);
 
-    int getIncomingEmailsCount();
-
-    /**
-     * Get list of sent email.
-     * 
-     * @return list of documents
-     */
-    List<Document> getSentEmails();
-
-    int getSentEmailsCount();
+    int getSentEmailsCount(int limit);
 
     void deleteDocument(NodeRef nodeRef);
 
@@ -151,7 +133,7 @@ public interface DocumentService {
      * aspect(or the document has aspect that is one parent types of given aspect).<br>
      * Note that when more than one callback should be applied to document being created, then callback, that was registered before will be called first. <br>
      * Thus allowing callbacks that were registered later to change/override properties set by callbacks that were registered before.
-     * 
+     *
      * @param aspectName
      * @param propertiesModifierCallback
      */
@@ -159,7 +141,7 @@ public interface DocumentService {
 
     /**
      * You can change properties of creatable document by registering implementation of this callback interface.<br>
-     * 
+     *
      * @see {@link DocumentService#addPropertiesModifierCallback(QName, PropertiesModifierCallback)}
      */
     public static abstract class PropertiesModifierCallback implements InitializingBean {
@@ -200,7 +182,7 @@ public interface DocumentService {
 
     /**
      * Executes the callback registered for docAspect to modify the properties.
-     * 
+     *
      * @param docAspect
      * @param properties
      */
@@ -236,7 +218,7 @@ public interface DocumentService {
      * @return the same instance with updated values(regNumber, regDate)
      * @throws UnableToPerformException - Document can't be registered because of initial document is not registered.
      */
-    Node registerDocument(Node documentNode) throws UnableToPerformException;
+    NodeRef registerDocument(Node documentNode) throws UnableToPerformException;
 
     /**
      * @param nodeRef
@@ -292,7 +274,7 @@ public interface DocumentService {
 
     /**
      * Changes the type of the repository node to the type of this node.
-     * 
+     *
      * @param node
      * @return
      */
@@ -301,7 +283,7 @@ public interface DocumentService {
     /**
      * Change the type of the node without writing to the repository,
      * add new aspects and fill some required default properties.
-     * 
+     *
      * @param node
      * @param newType
      */
@@ -309,22 +291,23 @@ public interface DocumentService {
 
     /**
      * Fetches document objects for tasks
-     * 
+     *
      * @param tasks
+     * @param propertyTypes
      * @return
      */
-    List<TaskAndDocument> getTasksWithDocuments(List<Task> tasks);
+    List<TaskAndDocument> getTasksWithDocuments(List<Task> tasks, Map<Long, QName> propertyTypes);
 
     /**
      * Ends document.
-     * 
+     *
      * @param documentRef Reference to document to be ended
      */
     void endDocument(NodeRef documentRef);
 
     /**
      * Reopens document.
-     * 
+     *
      * @param documentRef Reference to document to be reopened
      */
     void reopenDocument(NodeRef documentRef);
@@ -366,9 +349,7 @@ public interface DocumentService {
 
     void setPropertyAsSystemUser(final QName propName, final Serializable value, final NodeRef docRef);
 
-    List<Document> getIncomingEInvoices();
-
-    String getReceivedInvoicePath();
+    List<NodeRef> getIncomingEInvoices();
 
     int getAllDocumentFromIncomingInvoiceCount();
 
@@ -378,14 +359,12 @@ public interface DocumentService {
 
     int getUserDocumentFromIncomingInvoiceCount(String userFullName);
 
-    boolean isReplyOrFollowupDoc(final NodeRef docRef, List<AssociationRef> replyAssocs);
-
     // FIXME DLSeadist - selle meetodi peaks eemaldama igalt poolt pärast DLSeadist valmimist kui staatilised dokumendid on konverditud dünaamilisteks
     void throwIfNotDynamicDoc(Node docNode);
 
-    List<Document> getIncomingDocuments(NodeRef incomingNodeRef);
+    List<NodeRef> getIncomingDocuments(NodeRef incomingNodeRef);
 
-    NodeRef checkExistingDdoc(NodeRef document, NodeRef compoundWorkflowRef);
+    NodeRef checkExistingBdoc(NodeRef document, NodeRef compoundWorkflowRef);
 
     boolean isDraft(NodeRef document);
 
@@ -394,30 +373,12 @@ public interface DocumentService {
 
     int getAllDocumentsFromFolderCount(NodeRef folder);
 
-    Pair<List<Document>, Boolean> searchAllDocumentsByParentNodeRef(NodeRef parentRef, int limit);
-
-    /**
-     * Method name provided for compatibility - actually a search is performed, see {@link #searchAllDocumentsByParentNodeRef(NodeRef, int)}.
-     * NB! It will soon be renamed to searchAllDocumentRefsByParentRef
-     */
-    List<NodeRef> getAllDocumentRefsByParentRef(NodeRef parentRef);
-
-    /**
-     * Method name provided for compatibility - actually a search is performed, see {@link #searchAllDocumentsByParentNodeRef(NodeRef, int)}.
-     * NB! It will soon be renamed to searchAllDocumentsByParentNodeRef
-     */
-    List<Document> getAllDocumentsByParentNodeRef(NodeRef parentRef);
-
     List<NodeRef> getAllDocumentRefsByParentRefWithoutRestrictedAccess(NodeRef parentRef);
-
-    List<Document> getAllDocumentsByParentNodeRefWithoutRestrictedAccess(NodeRef parentRef);
-
-    boolean isVolumeColumnEnabled();
 
     void deleteDocument(NodeRef nodeRef, String comment, DeletionType deletionType);
 
     void deleteDocument(NodeRef nodeRef, String docDeletingComment, DeletionType disposition, String executingUser);
 
-    public boolean isFinishUnregisteredDocumentEnabled();
+    int countFilesInFolder(NodeRef parentRef, boolean countFilesInSubfolders, int limit);
 
 }

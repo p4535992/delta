@@ -35,7 +35,7 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
       </property>
    </bean>
 
-   <bean id="parametersResourceBundleBootstrap" class="org.alfresco.web.app.ResourceBundleBootstrap">
+   <bean id="parametersResourceBundleBootstrap" class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
       <property name="resourceBundles">
          <list>
             <value>ee.webmedia.alfresco.parameters.web.parameters-webclient</value>
@@ -47,6 +47,8 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
       <property name="generalService" ref="GeneralService" />
       <property name="nodeService" ref="NodeService" />
       <property name="jobsEnabled" value="${jobs.enabled}" />
+      <property name="bulkLoadNodeService" ref="BulkLoadNodeService" />
+      <property name="parametersCache" ref="parametersCache" />
    </bean>
 
    <bean id="ParametersService" class="org.springframework.aop.framework.ProxyFactoryBean">
@@ -59,6 +61,18 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
       <property name="interceptorNames">
          <list>
             <idref bean="commonTransactionInterceptor" />
+         </list>
+      </property>
+   </bean>
+
+   <bean id="addNamePropertyToParametersBootstrap" class="ee.webmedia.alfresco.parameters.bootstrap.AddNamePropertyToParametersBootstrap" parent="module.baseComponent">
+      <property name="moduleId" value="common" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="generalService" ref="GeneralService" />
+      <property name="nodeService" ref="NodeService" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="parametersSpacesBootstrap" />
          </list>
       </property>
    </bean>
@@ -86,9 +100,7 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 
    <!-- START: web beans: -->
 
-   <bean id="ParametersListDialog" class="ee.webmedia.alfresco.parameters.web.ParametersListDialog" scope="session" >
-      <property name="parametersService" ref="ParametersService" />
-   </bean>
+   <bean id="ParametersListDialog" class="ee.webmedia.alfresco.parameters.web.ParametersListDialog" scope="session" />
 
    <bean id="ParametersImportDialog" class="ee.webmedia.alfresco.parameters.web.ParametersImportDialog" scope="session" />
 

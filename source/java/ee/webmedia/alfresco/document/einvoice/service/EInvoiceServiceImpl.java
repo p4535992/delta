@@ -35,7 +35,6 @@ import javax.xml.datatype.XMLGregorianCalendar;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
-import ee.webmedia.alfresco.utils.DvkUtil;
 import org.alfresco.i18n.I18NUtil;
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.content.MimetypeMap;
@@ -59,7 +58,6 @@ import org.apache.commons.collections.Transformer;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateUtils;
 import org.apache.xml.security.exceptions.Base64DecodingException;
-import org.apache.xml.security.utils.Base64;
 import org.apache.xmlbeans.XmlObject;
 import org.springframework.util.Assert;
 
@@ -68,8 +66,8 @@ import ee.webmedia.alfresco.addressbook.service.AddressbookService;
 import ee.webmedia.alfresco.classificator.enums.StorageType;
 import ee.webmedia.alfresco.classificator.enums.TransmittalMode;
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.WmNode;
-import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamicService;
 import ee.webmedia.alfresco.document.einvoice.account.generated.Arve;
@@ -109,7 +107,6 @@ import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.file.model.FileModel;
 import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
-import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
@@ -119,13 +116,11 @@ import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
 import ee.webmedia.alfresco.template.service.DocumentTemplateService;
 import ee.webmedia.alfresco.user.service.UserService;
+import ee.webmedia.alfresco.utils.DvkUtil;
 import ee.webmedia.alfresco.utils.FilenameUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
-import ee.webmedia.alfresco.utils.UserUtil;
 import ee.webmedia.alfresco.utils.XmlUtil;
 import ee.webmedia.xtee.client.dhl.DhlXTeeService.ContentToSend;
-import ee.webmedia.xtee.client.dhl.types.ee.sk.digiDoc.v13.DataFileType;
-
 
 public class EInvoiceServiceImpl implements EInvoiceService {
 
@@ -256,45 +251,7 @@ public class EInvoiceServiceImpl implements EInvoiceService {
     }
 
     private void findAndSetInvoiceOwner(Invoice invoice, Map<QName, Serializable> props) {
-        ContactDataRecord buyerContactData = invoice.getInvoiceParties().getBuyerParty().getContactData();
-        if (buyerContactData != null) {
-            String contactName = buyerContactData.getContactName();
-            String contactCode = buyerContactData.getContactPersonCode();
-            Pair<String, String> firstNameLastName = UserUtil.splitFirstNameLastName(contactName);
-            Map<QName, Serializable> userProps = null;
-            if (StringUtils.isNotBlank(contactCode)) {
-                userProps = userService.getUserProperties(contactCode);
-                if (UserUtil.hasSameName(firstNameLastName, userProps)) {
-                    documentDynamicService.setOwner(props, contactCode, false);
-                }
-            } else {
-                if (firstNameLastName != null && firstNameLastName.getFirst() != null && firstNameLastName.getSecond() != null) {
-                    List<NodeRef> users = documentSearchService.searchUsersByFirstNameLastName(firstNameLastName.getFirst(), firstNameLastName.getSecond());
-                    if (users.size() == 1) {
-                        userProps = nodeService.getProperties(users.get(0));
-                        String userName = (String) userProps.get(ContentModel.PROP_USERNAME);
-                        documentDynamicService.setOwner(props, userName, false);
-                    }
-                }
-            }
-            String contractRegNumber = invoice.getInvoiceInformation().getContractNumber();
-            boolean ownerSet = userProps != null;
-            if (userProps == null && StringUtils.isNotBlank(contractRegNumber)) {
-                List<Document> contracts = documentSearchService.searchContractsByRegNumber(contractRegNumber);
-                if (contracts.size() == 1) {
-                    Document document = contracts.get(0);
-                    String ownerId = document.getOwnerId();
-                    Node user = userService.getUser(ownerId);
-                    if (user != null) {
-                        documentDynamicService.setOwner(props, ownerId, false);
-                        ownerSet = true;
-                    }
-                }
-            }
-            if (!ownerSet && StringUtils.isNotBlank(contactName)) {
-                props.put(DocumentCommonModel.Props.COMMENT, contactName);
-            }
-        }
+        throw new RuntimeException("E-invoice functionality is not supported!");
     }
 
     @Override
@@ -741,7 +698,7 @@ public class EInvoiceServiceImpl implements EInvoiceService {
                     addressbookService.createOrganization(contactProps);
                 }
             }
-            result.add(addressbookService.getAddressbookRoot());
+            result.add(BeanHelper.getConstantNodeRefsBean().getAddressbookRoot());
         }
         return result;
     }
@@ -848,23 +805,7 @@ public class EInvoiceServiceImpl implements EInvoiceService {
 
     @Override
     public Integer updateDocumentsSapAccount() {
-        int documentsUpdated = 0;
-        List<Document> invoices = documentSearchService.searchInvoicesWithEmptySapAccount();
-        List<Node> contacts = addressbookService.getContactsWithSapAccount();
-        for (Document invoice : invoices) {
-            String documentRegNumber = (String) invoice.getProperties().get(DocumentSpecificModel.Props.SELLER_PARTY_REG_NUMBER);
-            for (Node contact : contacts) {
-                String contactRegNumber = (String) contact.getProperties().get(AddressbookModel.Props.ORGANIZATION_CODE);
-                String contactSapAccount = (String) contact.getProperties().get(AddressbookModel.Props.SAP_ACCOUNT);
-                if (StringUtils.isNotBlank(documentRegNumber) && StringUtils.isNotBlank(contactRegNumber) && StringUtils.isNotBlank(contactSapAccount)
-                        && documentRegNumber.equalsIgnoreCase(contactRegNumber)) {
-                    nodeService.setProperty(invoice.getNodeRef(), DocumentSpecificModel.Props.SELLER_PARTY_SAP_ACCOUNT,
-                            contactSapAccount);
-                    documentsUpdated++;
-                }
-            }
-        }
-        return documentsUpdated;
+        throw new RuntimeException("E-invoice functionality is not supported!");
     }
 
     @Override
@@ -903,13 +844,6 @@ public class EInvoiceServiceImpl implements EInvoiceService {
             emptyDimensionValueChache();
         }
         return deletedNodeCount;
-    }
-
-    @Override
-    public boolean isEinvoiceEnabled() {
-        // FIXME DLSeadist - Kui kõik süsteemsed dok.liigid on defineeritud, siis võib null kontrolli eemdaldada
-        NodeRef docTypeRef = documentAdminService.getDocumentTypeRef("invoice");
-        return docTypeRef != null && documentAdminService.getTypeProperty(docTypeRef, DocumentAdminModel.Props.USED, Boolean.class);
     }
 
     @Override
@@ -1401,25 +1335,7 @@ public class EInvoiceServiceImpl implements EInvoiceService {
 
     @Override
     public NodeRef updateDocumentEntrySapNumber(String dvkId, String erpDocNumber) {
-        NodeRef nodeRef = null;
-        try {
-            List<Document> documents = documentSearchService.searchDocumentsByDvkId(dvkId);
-            if (documents == null || documents.size() != 1) {
-                return null;
-            }
-            nodeRef = documents.get(0).getNodeRef();
-            if (nodeRef == null || !DocumentSubtypeModel.Types.INVOICE.equals(nodeService.getType(nodeRef))) {
-                return null;
-            }
-            if (StringUtils.isNotEmpty((String) nodeService.getProperty(nodeRef, DocumentSpecificModel.Props.ENTRY_SAP_NUMBER))) {
-                LOG.error("Document with nodeRef=" + nodeRef + " has already entry sap number, not overwriting.");
-                return null;
-            }
-            nodeService.setProperty(nodeRef, DocumentSpecificModel.Props.ENTRY_SAP_NUMBER, erpDocNumber);
-        } catch (IllegalArgumentException e) {
-            LOG.error("Document uri could not be parsed to valid uri tokens");
-        }
-        return nodeRef;
+        throw new RuntimeException("Not implemented!");
     }
 
     @Override

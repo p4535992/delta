@@ -36,10 +36,14 @@ public interface ReportModel {
         QName CANCEL_DATE_TIME = QName.createQName(URI, "cancelDateTime");
         QName FIRST_DOWNLOAD_DATE_TIME = QName.createQName(URI, "firstDownloadDateTime");
         QName CSV_FUNCTION_STORE_NODE_REF = QName.createQName(URI, "nodeRef");
+        QName REPORT_TEMPLATE = QName.createQName(URI, "reportTemplate");
+        QName REPORT_RESULT_FILE_NAME = QName.createQName(URI, "resultFileName");
+        QName REPORT_RESULT_FILE_REF = QName.createQName(URI, "resultFileRef");
         /**
          * All values for this property are defined in Enum {@link ReportStatus}
          */
         QName STATUS = QName.createQName(URI, "status");
+        QName ORDER_IN_QUEUE = QName.createQName(URI, "orderInQueue");
     }
 
 }

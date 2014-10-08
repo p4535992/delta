@@ -6,9 +6,9 @@ import javax.faces.component.UIComponent;
 
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.Transformer;
-import ee.webmedia.alfresco.utils.UserUtil;
 
 class SubstituteInfoTransformer extends Transformer<UIComponent, String> implements Serializable {
 
@@ -20,10 +20,9 @@ class SubstituteInfoTransformer extends Transformer<UIComponent, String> impleme
     }
 
     @Override
-
     public String tr(UIComponent component) {
         UIPropertySheet ancestorComponent = ComponentUtil.getAncestorComponent(component, UIPropertySheet.class, true);
         String username = (String) ancestorComponent.getNode().getProperties().get(propName);
-        return UserUtil.getSubstitute(username);
+        return BeanHelper.getSubstituteService().getSubstituteLabel(username);
     }
 }

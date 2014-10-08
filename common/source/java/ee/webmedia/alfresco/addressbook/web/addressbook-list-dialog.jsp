@@ -66,13 +66,13 @@ function updateButtonState()
                               <f:facet name="header">
                                  <a:sortLink id="ab-org-list-sort" label="#{msg.name}" value="name" mode="case-insensitive" />
                               </f:facet>
-                              <a:booleanEvaluator id="ab-org-list-eval1" value="#{r.node['ab:activeStatus']}">
+                              <a:booleanEvaluator id="ab-org-list-eval1" value="#{r.activeStatus}">
                                  <h:graphicImage id="ab-org-list-eval1-img" url="/images/icons/person.gif" />
                               </a:booleanEvaluator>
-                              <a:booleanEvaluator id="ab-org-list-eval2" value="#{!r.node['ab:activeStatus']}">
+                              <a:booleanEvaluator id="ab-org-list-eval2" value="#{!r.activeStatus}">
                                  <h:graphicImage id="ab-org-list-eval2-img" url="/images/icons/error.gif" />
                               </a:booleanEvaluator>
-                              <a:actionLink id="ab-org-list-link1" value="#{r.node['ab:orgName']} (#{r.node['ab:orgAcronym']})" showLink="false"
+                              <a:actionLink id="ab-org-list-link1" value="#{r.orgName} (#{r.orgAcronym})" showLink="false"
                                  action="dialog:addressbookOrgDetails" actionListener="#{AddressbookOrgDetailsDialog.setupViewEntry}">
                                  <f:param id="ab-org-list-param1" name="nodeRef" value="#{r.node.nodeRef}" />
                               </a:actionLink>
@@ -83,7 +83,7 @@ function updateButtonState()
                               <f:facet name="header">
                                  <h:outputText value="#{msg.document_email}" />
                               </f:facet>
-                              <h:outputText id="ab-org-list-email" value="#{r.node['ab:email']}" />
+                              <h:outputText id="ab-org-list-email" value="#{r.email}" />
                            </a:column>
                            
                            <%-- DVK --%>
@@ -91,7 +91,7 @@ function updateButtonState()
                               <f:facet name="header">
                                  <h:outputText value="#{msg.addressbook_dvk_capable}" />
                               </f:facet>
-                              <h:outputText id="ab-org-list-dvk" value="#{r.node['ab:dvkCapable']}">
+                              <h:outputText id="ab-org-list-dvk" value="#{r.dvkCapable}">
                                  <a:convertBoolean />
                               </h:outputText>
                            </a:column>
@@ -132,13 +132,13 @@ function updateButtonState()
                               <f:facet name="header">
                                  <a:sortLink id="ab-people-list-sort" label="#{msg.name}" value="name" mode="case-insensitive" styleClass="header" />
                               </f:facet>
-                              <a:booleanEvaluator id="ab-people-list-eval1" value="#{r.node['ab:activeStatus']}">
+                              <a:booleanEvaluator id="ab-people-list-eval1" value="#{r.activeStatus}">
                                  <h:graphicImage id="ab-people-list-eval1-img" url="/images/icons/person.gif" />
                               </a:booleanEvaluator>
-                              <a:booleanEvaluator id="ab-people-list-eval2" value="#{!r.node['ab:activeStatus']}">
+                              <a:booleanEvaluator id="ab-people-list-eval2" value="#{!r.activeStatus}">
                                  <h:graphicImage id="ab-people-list-eval2-img" url="/images/icons/error.gif" />
                               </a:booleanEvaluator>
-                              <a:actionLink id="ab-people-list-link1" value="#{r.node['ab:personTitle']} #{r.node['ab:personFirstName']} #{r.node['ab:personLastName']}"
+                              <a:actionLink id="ab-people-list-link1" value="#{r.personTitle} #{r.personFirstName} #{r.personLastName}"
                                  showLink="false" action="dialog:addressbookPersonDetails" actionListener="#{AddressbookPersonDetailsDialog.setupViewEntry}">
                                  <f:param id="ab-people-list-link1-param" name="nodeRef" value="#{r.node.nodeRef}" />
                               </a:actionLink>
@@ -149,7 +149,7 @@ function updateButtonState()
                               <f:facet name="header">
                                  <h:outputText value="#{msg.document_email}" />
                               </f:facet>
-                              <h:outputText id="ab-people-list-email" value="#{r.node['ab:email']}" />
+                              <h:outputText id="ab-people-list-email" value="#{r.email}" />
                            </a:column>
 
                            <%-- Actions column --%>
@@ -187,13 +187,13 @@ function updateButtonState()
                                  <f:facet name="header">
                                     <a:sortLink id="ab-people-list2-sort" label="#{msg.name}" value="name" mode="case-insensitive" styleClass="header" />
                                  </f:facet>
-                                 <a:booleanEvaluator id="ab-people-list2-eval1" value="#{r.node['ab:activeStatus']}">
+                                 <a:booleanEvaluator id="ab-people-list2-eval1" value="#{r.activeStatus}">
                                     <h:graphicImage id="ab-people-list2-eval1-img" url="/images/icons/person.gif" />
                                  </a:booleanEvaluator>
-                                 <a:booleanEvaluator id="ab-people-list2-eval2" value="#{!r.node['ab:activeStatus']}">
+                                 <a:booleanEvaluator id="ab-people-list2-eval2" value="#{!r.activeStatus}">
                                     <h:graphicImage id="ab-people-list2-eval2-img" url="/images/icons/error.gif" />
                                  </a:booleanEvaluator>
-                                 <a:actionLink id="ab-org-people-list-link1" value="#{r.node['ab:personTitle']} #{r.node['ab:personFirstName']} #{r.node['ab:personLastName']}"
+                                 <a:actionLink id="ab-org-people-list-link1" value="#{r.personTitle} #{r.personFirstName} #{r.personLastName}"
                                     showLink="false" action="dialog:addressbookOrgPersonDetails" actionListener="#{AddressbookPersonDetailsDialog.setupViewEntry}">
                                     <f:param id="ab-people-list-link1-param" name="nodeRef" value="#{r.node.nodeRef}" />
                                  </a:actionLink>
@@ -204,16 +204,16 @@ function updateButtonState()
                                  <f:facet name="header">
                                     <h:outputText id="ab-people-list2-ot6" value="#{msg.document_email}" />
                                  </f:facet>
-                                 <h:outputText id="ab-people-list2-ot7" value="#{r.node['ab:email']}" />
+                                 <h:outputText id="ab-people-list2-ot7" value="#{r.email}" />
                               </a:column>
 
                               <a:column id="ab-people-list2-col5">
                                  <f:facet name="header">
                                     <a:sortLink id="ab-people-list2-ot8-sort" label="#{msg.addressbook_org}" value="privatePersonOrgName" mode="case-insensitive" styleClass="header" />
                                  </f:facet>
-                                 <a:actionLink id="ab-people-list2-link-org" value="#{r.node['ab:privatePersonOrgName']}"
+                                 <a:actionLink id="ab-people-list2-link-org" value="#{r.privatePersonOrgName}"
                                     showLink="false" action="dialog:addressbookOrgDetails" actionListener="#{AddressbookOrgDetailsDialog.setupViewEntry}">
-                                    <f:param name="nodeRef" value="#{r.node.parentOrgRef}" />
+                                    <f:param name="nodeRef" value="#{r.parentOrgRef}" />
                                  </a:actionLink>
                                  
                               </a:column>

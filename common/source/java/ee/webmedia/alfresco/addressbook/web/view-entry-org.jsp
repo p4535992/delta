@@ -17,14 +17,14 @@
                      <f:facet name="header">
                         <a:sortLink label="#{msg.name}" value="name" mode="case-insensitive" styleClass="header" />
                      </f:facet>
-                     <a:booleanEvaluator value="#{r['ab:activeStatus']}">
+                     <a:booleanEvaluator value="#{r.activeStatus}">
                         <h:graphicImage url="/images/icons/person.gif" />
                      </a:booleanEvaluator>
-                     <a:booleanEvaluator value="#{!r['ab:activeStatus']}">
+                     <a:booleanEvaluator value="#{!r.activeStatus}">
                         <h:graphicImage url="/images/icons/error.gif" />
                         <h:outputText value=" " />
                      </a:booleanEvaluator>
-                     <a:actionLink id="ab-org-people-list-link1" value="#{r['ab:personFirstName']} #{r['ab:personLastName']} (#{r['ab:personId']})"
+                     <a:actionLink id="ab-org-people-list-link1" value="#{r.personFirstName} #{r.personLastName} (#{r.personId})"
                         showLink="false" action="dialog:addressbookOrgPersonDetails" actionListener="#{AddressbookPersonDetailsDialog.setupViewEntry}">
                         <f:param id="ab-people-list-link1-param" name="nodeRef" value="#{r.nodeRef}" />
                      </a:actionLink>
@@ -37,7 +37,7 @@
                      <f:facet name="header">
                         <h:outputText value="#{msg.document_email}" />
                      </f:facet>
-                     <h:outputText value="#{r['ab:email']}" />
+                     <h:outputText value="#{r.email}" />
                   </a:column>
 
                   <%-- Actions column --%>

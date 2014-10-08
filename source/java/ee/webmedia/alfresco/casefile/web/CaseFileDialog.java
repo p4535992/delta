@@ -64,16 +64,15 @@ import ee.webmedia.alfresco.docdynamic.web.DocumentDynamicDialog;
 import ee.webmedia.alfresco.docdynamic.web.DocumentLockHelperBean;
 import ee.webmedia.alfresco.document.associations.model.DocAssocInfo;
 import ee.webmedia.alfresco.document.associations.web.AssocsBlockBean;
-import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.search.web.AbstractSearchBlockBean;
 import ee.webmedia.alfresco.document.search.web.BlockBeanProviderProvider;
+import ee.webmedia.alfresco.document.search.web.DocumentListDataProvider;
 import ee.webmedia.alfresco.document.search.web.SearchBlockBean;
 import ee.webmedia.alfresco.document.sendout.model.SendInfo;
 import ee.webmedia.alfresco.document.web.DocumentListDialog;
 import ee.webmedia.alfresco.document.web.FavoritesModalComponent;
 import ee.webmedia.alfresco.document.web.FavoritesModalComponent.AddToFavoritesEvent;
-import ee.webmedia.alfresco.document.web.evaluator.IsOwnerEvaluator;
 import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.privilege.service.PrivilegeUtil;
 import ee.webmedia.alfresco.user.model.UserModel;
@@ -84,24 +83,23 @@ import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UnableToPerformMultiReasonException;
 import ee.webmedia.alfresco.utils.WebUtil;
-import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
 import ee.webmedia.alfresco.workflow.service.Task;
-import ee.webmedia.alfresco.workflow.service.WorkflowUtil;
 import ee.webmedia.alfresco.workflow.web.WorkflowBlockBean;
 
 public class CaseFileDialog extends BaseSnapshotCapableWithBlocksDialog<CaseFileDialogSnapshot, DocumentDynamicBlock, DialogDataProvider> implements DialogDataProvider,
-        BlockBeanProviderProvider {
+BlockBeanProviderProvider {
     private static final long serialVersionUID = 1L;
     public static final String BEAN_NAME = "CaseFileDialog";
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(CaseFileDialog.class);
 
-    private List<Document> documents = new ArrayList<Document>();
-    private List<DocumentToCompoundWorkflow> documentWorkflows = new ArrayList<DocumentToCompoundWorkflow>();
+    private DocumentListDataProvider documents;
+    private List<DocumentToCompoundWorkflow> documentWorkflows;
     private String renderedModal;
 
     /** @param event */
     public void createDraft(ActionEvent event) {
         String typeId = ActionUtil.getParam(event, "typeId");
+        documentWorkflows = null;
         createCaseFile(typeId, null, false, false, null, false);
     }
 
@@ -324,17 +322,22 @@ public class CaseFileDialog extends BaseSnapshotCapableWithBlocksDialog<CaseFile
     }
 
     public boolean isShowAddAssocsLink() {
-        return BeanHelper.getDocumentDialogHelperBean().isInWorkspace() && !isInEditMode() && (userHasdeleteRights(getDataProvider()) || hasInProgressTask());
+        return BeanHelper.getDocumentDialogHelperBean().isInWorkspace() && !isInEditMode() && (userHasDeleteRights(getDataProvider()) || hasInProgressTask());
     }
 
     private boolean hasInProgressTask() {
-        String currentUser = AuthenticationUtil.getRunAsUser();
-        for (CompoundWorkflow compoundWorkflow : BeanHelper.getWorkflowBlockBean().getCompoundWorkflows()) {
-            if (WorkflowUtil.isOwnerOfInProgressTask(compoundWorkflow, currentUser)) {
-                return true;
-            }
+        return BeanHelper.getWorkflowDbService().hasInProgressTasks(BeanHelper.getWorkflowBlockBean().getCompoundWorkflows(), AuthenticationUtil.getRunAsUser());
+    }
+
+    @Override
+    public void clean() {
+        clearState();
+        documents = null;
+        documentWorkflows = null;
+        renderedModal = null;
+        for (DocumentDynamicBlock block : getBlocks().values()) {
+            block.clean();
         }
-        return false;
     }
 
     // =========================================================================
@@ -426,11 +429,20 @@ public class CaseFileDialog extends BaseSnapshotCapableWithBlocksDialog<CaseFile
         return config.getStateHolders();
     }
 
-    public List<Document> getDocuments() {
+    public DocumentListDataProvider getDocuments() {
         return documents;
     }
 
     public List<DocumentToCompoundWorkflow> getDocumentWorkflows() {
+        if (documentWorkflows == null) { // should only happen when user creates a new casefile but just in case try to load workflows
+            CaseFile caseFile = getCaseFile();
+            if (caseFile != null && caseFile.getNodeRef() != null) {
+                documentWorkflows = BeanHelper.getCaseFileService().getCaseFileDocumentWorkflows(caseFile.getNodeRef());
+                Collections.sort(documentWorkflows);
+            } else {
+                documentWorkflows = new ArrayList<>();
+            }
+        }
         return documentWorkflows;
     }
 
@@ -501,8 +513,9 @@ public class CaseFileDialog extends BaseSnapshotCapableWithBlocksDialog<CaseFile
     public boolean isWorkflowCreatable() {
         WmNode caseFileNode = getNode();
         return getCaseFile().isStatus(DocListUnitStatus.OPEN)
-                && (isAdminOrDocmanagerWithPermission(caseFileNode, Privilege.VIEW_CASE_FILE) || new IsOwnerEvaluator().evaluate(caseFileNode)
-                || caseFileNode.hasPermission(Privilege.EDIT_CASE_FILE));
+                && (isAdminOrDocmanagerWithPermission(caseFileNode, Privilege.VIEW_CASE_FILE)
+                        || AuthenticationUtil.getRunAsUser().equals(caseFileNode.getProperties().get(DocumentCommonModel.Props.OWNER_ID.toString()))
+                        || caseFileNode.hasPermission(Privilege.EDIT_CASE_FILE));
     }
 
     @Override
@@ -562,14 +575,14 @@ public class CaseFileDialog extends BaseSnapshotCapableWithBlocksDialog<CaseFile
         }
         for (NodeRef documentToCheck : documentsToCheck) {
             boolean documentFound = false;
-            for (Document document : documents) {
-                if (document.getNodeRef().equals(documentToCheck)) {
+            for (NodeRef docRef : documents.getObjectKeys()) {
+                if (docRef.equals(documentToCheck)) {
                     documentFound = true;
                     break;
                 }
             }
             if (!documentFound) {
-                documents.add(BeanHelper.getDocumentService().getDocumentByNodeRef(documentToCheck));
+                documents.getObjectKeys().add(documentToCheck);
             }
         }
     }
@@ -753,7 +766,7 @@ public class CaseFileDialog extends BaseSnapshotCapableWithBlocksDialog<CaseFile
         }
         if (!provider.isInEditMode()) {
             NodeRef caseFileRef = getCaseFile().getNodeRef();
-            documents = BeanHelper.getDocumentService().getAllDocumentsByParentNodeRef(caseFileRef);
+            documents = new DocumentListDataProvider(BeanHelper.getDocumentSearchService().searchAllDocumentRefsByParentRef(caseFileRef), true);
             documentWorkflows = BeanHelper.getCaseFileService().getCaseFileDocumentWorkflows(caseFileRef);
             Collections.sort(documentWorkflows);
         }
@@ -772,13 +785,13 @@ public class CaseFileDialog extends BaseSnapshotCapableWithBlocksDialog<CaseFile
         getLog().init(getCaseFile());
         resetModals();
         super.resetOrInit(provider); // reset blocks
-        boolean userHasDeleteRights = userHasdeleteRights(provider);
+        boolean userHasDeleteRights = userHasDeleteRights(provider);
         for (DocAssocInfo assocInfo : ((AssocsBlockBean) getBlocks().get(AssocsBlockBean.class)).getDocAssocInfos()) {
             assocInfo.setAllowDelete(assocInfo.isAllowDelete() && userHasDeleteRights);
         }
     }
 
-    private boolean userHasdeleteRights(DialogDataProvider provider) {
+    private boolean userHasDeleteRights(DialogDataProvider provider) {
         Node node;
         if (provider == null || (node = provider.getNode()) == null) {
             return false;

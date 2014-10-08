@@ -50,16 +50,14 @@ public class DocRegistrationWorkflowType extends BaseWorkflowType implements Wor
             BeanHelper.getMenuBean().processTaskItems();
         } else if (compoundWorkflow.isIndependentWorkflow()) {
             for (NodeRef docRef : workflowService.getCompoundWorkflowDocumentRefs(compoundWorkflow.getNodeRef())) {
-                RegisterDocumentEvaluator registerEvaluator = new RegisterDocumentEvaluator();
-                if (registerEvaluator.canRegister(new Node(docRef), false)) {
+                if (RegisterDocumentEvaluator.canRegister(new Node(docRef), false)) {
                     registerDocument(docRef);
                 }
                 foundDocuments = true;
             }
         } else if (compoundWorkflow.isCaseFileWorkflow()) {
-            for (NodeRef docRef : documentService.getAllDocumentRefsByParentRef(compoundWorkflow.getParent())) {
-                RegisterDocumentEvaluator registerEvaluator = new RegisterDocumentEvaluator();
-                if (registerEvaluator.canRegister(new Node(docRef))) {
+            for (NodeRef docRef : documentService.getAllDocumentRefsByParentRefWithoutRestrictedAccess(compoundWorkflow.getParent())) {
+                if (RegisterDocumentEvaluator.canRegister(new Node(docRef))) {
                     registerDocument(docRef);
                 }
                 foundDocuments = true;

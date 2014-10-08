@@ -150,7 +150,12 @@ public class DocLockServiceImpl extends LockServiceImpl implements DocLockServic
     public void unlockIfOwner(NodeRef nodeRef) {
         if (nodeService.exists(nodeRef)) {
             String msg = "after unlocking";
-            if (isLockByOther(nodeRef)) {
+            String lockOwner = (String) nodeService.getProperty(nodeRef, ContentModel.PROP_LOCK_OWNER);
+            boolean isLocked = StringUtils.isNotBlank(lockOwner);
+            if (!isLocked) {
+                return;
+            }
+            if (isLockByOther(nodeRef, getUserName(), lockOwner)) {
                 msg = "Unable to unlock - Not lock owner";
             } else {
                 unlock(nodeRef);
@@ -254,12 +259,12 @@ public class DocLockServiceImpl extends LockServiceImpl implements DocLockServic
 
     @Override
     public boolean isLockByOther(NodeRef nodeRef) {
-        return isLockByOther(nodeRef, getUserName());
+        return isLockByOther(nodeRef, getUserName(), null);
     }
 
-    private boolean isLockByOther(NodeRef nodeRef, String userName) {
+    private boolean isLockByOther(NodeRef nodeRef, String userName, String lockOwner) {
         boolean isLockOwnedByOther = true;
-        String currentLockOwner = (String) nodeService.getProperty(nodeRef, ContentModel.PROP_LOCK_OWNER);
+        String currentLockOwner = lockOwner != null ? lockOwner : (String) nodeService.getProperty(nodeRef, ContentModel.PROP_LOCK_OWNER);
         if (StringUtils.isNotBlank(currentLockOwner)) {
             Date expiryDate = (Date) nodeService.getProperty(nodeRef, ContentModel.PROP_EXPIRY_DATE);
             if (expiryDate != null && expiryDate.before(new Date())) {

@@ -5,7 +5,6 @@ import java.io.OutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -48,7 +47,6 @@ import ee.webmedia.alfresco.docconfig.service.DynamicPropertyDefinition;
 import ee.webmedia.alfresco.docconfig.service.PropDefCacheKey;
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
-import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.service.DocumentServiceImpl;
@@ -125,7 +123,7 @@ public class AddDocumentServiceImpl implements AddDocumentService {
         validateDocumentFields(documentTypeId, documentTypeVersion, propDefinitions, fields);
 
         DocumentDynamic importedDocument = BeanHelper.getDocumentDynamicService()
-                .createNewDocument(documentTypeVersion, BeanHelper.getAddDocumentService().getWebServiceDocumentsRoot(), false).getFirst();
+                .createNewDocument(documentTypeVersion, BeanHelper.getConstantNodeRefsBean().getWebServiceDocumentsRoot(), false).getFirst();
 
         Map<QName, Serializable> docProps = collectPropertyValues(propDefinitions, fields);
         if (StringUtils.isBlank((String) docProps.get(DocumentCommonModel.Props.DOC_STATUS))) {
@@ -418,20 +416,8 @@ public class AddDocumentServiceImpl implements AddDocumentService {
     }
 
     @Override
-    public List<Document> getAllDocumentFromWebService() {
-        List<Document> documents = BeanHelper.getDocumentService().getIncomingDocuments(getWebServiceDocumentsRoot());
-        Collections.sort(documents);
-        return documents;
-    }
-
-    @Override
-    public int getAllDocumentFromWebServiceCount() {
-        return BeanHelper.getDocumentService().getAllDocumentsFromFolderCount(getWebServiceDocumentsRoot());
-    }
-
-    @Override
-    public NodeRef getWebServiceDocumentsRoot() {
-        return BeanHelper.getGeneralService().getNodeRef(DocumentCommonModel.Repo.WEB_SERVICE_SPACE);
+    public List<NodeRef> getAllDocumentFromWebService() {
+        return BeanHelper.getDocumentService().getIncomingDocuments(BeanHelper.getConstantNodeRefsBean().getWebServiceDocumentsRoot());
     }
 
     @Override

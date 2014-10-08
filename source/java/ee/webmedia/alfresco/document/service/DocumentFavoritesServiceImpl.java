@@ -1,16 +1,20 @@
 package ee.webmedia.alfresco.document.service;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.namespace.QName;
 
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 
 /**
- *         Refactored from DocumentServiceImpl.
+ * Refactored from DocumentServiceImpl.
  */
 public class DocumentFavoritesServiceImpl extends AbstractFavoritesServiceImpl implements DocumentFavoritesService {
 
@@ -30,18 +34,26 @@ public class DocumentFavoritesServiceImpl extends AbstractFavoritesServiceImpl i
     @Override
     public List<Document> getDocumentFavorites(NodeRef containerNodeRef) {
         List<NodeRef> favouriteRefs = getFavorites(containerNodeRef);
-        List<Document> favorites = new ArrayList<Document>(favouriteRefs.size());
-        for (NodeRef docRef : favouriteRefs) {
-            if (!DocumentCommonModel.Types.DOCUMENT.equals(nodeService.getType(docRef))) { // XXX DLSeadist filter out old document types
-                continue;
+        Map<NodeRef, Document> favorites = BeanHelper.getBulkLoadNodeService().loadDocuments(favouriteRefs, null);
+        List<NodeRef> deletedDocuments = new ArrayList<>();
+        Map<StoreRef, Boolean> archiveMappings = new HashMap<>();
+        for (Document document : favorites.values()) {
+            NodeRef nodeRef = document.getNodeRef();
+            StoreRef storeRef = nodeRef.getStoreRef();
+            Boolean hasArchive = archiveMappings.get(storeRef);
+            if (hasArchive == null) {
+                hasArchive = nodeService.hasStoreArchiveMapping(storeRef);
+                archiveMappings.put(storeRef, hasArchive);
             }
-            if (nodeService.getStoreArchiveNode(docRef.getStoreRef()) == null) {
-                // this is trashcan document
-                continue;
+            if (!hasArchive) {
+                // trashcan documents are not displayed in favorites view
+                deletedDocuments.add(nodeRef);
             }
-            favorites.add(documentService.getDocumentByNodeRef(docRef));
         }
-        return favorites;
+        for (NodeRef deletedDocRef : deletedDocuments) {
+            favorites.remove(deletedDocRef);
+        }
+        return new ArrayList<>(favorites.values());
     }
 
     public void setDocumentService(DocumentService documentService) {

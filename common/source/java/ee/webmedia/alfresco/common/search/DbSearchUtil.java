@@ -6,10 +6,13 @@ import static ee.webmedia.alfresco.utils.SearchUtil.joinQueryPartsOr;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.StringTokenizer;
 
+import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
 import org.apache.commons.lang.StringUtils;
@@ -26,7 +29,7 @@ public class DbSearchUtil {
 
     public static final String ACTIVE_FIELD = "wfs_active";
     public static final String TASK_TYPE_FIELD = "task_type";
-    private static final String SEPARATOR = "_";
+    public static final String SEPARATOR = "_";
 
     public static Pair<String, List<Object>> generateTaskMultiStringExactQuery(List<String> values, QName... propNames) {
         if (values == null || values.isEmpty()) {
@@ -162,29 +165,7 @@ public class DbSearchUtil {
         return sb.toString();
     }
 
-    public static QName getPropQNameFromDbFieldName(String fieldName) {
-        String namespaceUri = null;
-        String prefix = null;
-        if (fieldName.startsWith(prefix = getPrefix(WorkflowCommonModel.PREFIX) + SEPARATOR)) {
-            namespaceUri = WorkflowCommonModel.URI;
-        } else if (fieldName.startsWith(prefix = getPrefix(WorkflowSpecificModel.PREFIX) + SEPARATOR)) {
-            namespaceUri = WorkflowSpecificModel.URI;
-        } else {
-            return null;
-        }
-        StringTokenizer st = new StringTokenizer(fieldName.substring(prefix.length()), SEPARATOR);
-        StringBuilder sb = new StringBuilder();
-        boolean firstToken = true;
-        while (st.hasMoreTokens()) {
-            String token = st.nextToken();
-            char firstChar = firstToken ? token.charAt(0) : Character.toUpperCase(token.charAt(0));
-            sb.append(firstChar + token.substring(1));
-            firstToken = false;
-        }
-        return QName.createQName(namespaceUri, sb.toString());
-    }
-
-    private static String getPrefix(String prefix) {
+    public static String getPrefix(String prefix) {
         return (new StringTokenizer(prefix, ":")).nextToken();
     }
 
@@ -222,6 +203,7 @@ public class DbSearchUtil {
     }
 
     public static String getQuestionMarks(int size) {
+        Assert.isTrue(size > 0, "At least one question mark should be returned.");
         String questionMarks = StringUtils.repeat("?, ", size);
         questionMarks = questionMarks.substring(0, questionMarks.length() - 2);
         return questionMarks;
@@ -244,6 +226,52 @@ public class DbSearchUtil {
 
     public static String generateTaskPropertiesNotEqualQuery(QName propName1, QName propName2) {
         return getDbFieldNameFromPropQName(propName1) + "!= " + getDbFieldNameFromPropQName(propName2);
+    }
+
+    /**
+     * Returns all NodeRef uuids from the given collection of NodeRefs.
+     *
+     * @param nodeRefs
+     * @return Array of workflow uuids or null
+     */
+    public static List<Object> appendNodeRefIdQueryArguments(Collection<NodeRef> nodeRefs, Object... firstArguments) {
+        int headLength = 0;
+        if (firstArguments != null) {
+            headLength = firstArguments.length;
+        }
+
+        int tailLength = 0;
+        if (nodeRefs != null) {
+            tailLength = nodeRefs.size();
+        }
+
+        List<Object> result = new ArrayList<>((headLength + tailLength));
+        if (headLength > 0) {
+            for (Object argument : firstArguments) {
+                result.add(argument);
+            }
+        }
+        if (tailLength > 0) {
+            for (NodeRef nodeRef : nodeRefs) {
+                result.add(nodeRef.getId());
+            }
+        }
+
+        return result;
+    }
+
+    public static String createCommaSeparatedUpdateString(Collection<String> dbColumnNames) {
+        StringBuffer sb = new StringBuffer();
+        boolean isNotFirst = false;
+        for (String fieldName : dbColumnNames) {
+            if (isNotFirst) {
+                sb.append(", ");
+            }
+            isNotFirst = true;
+            sb.append(fieldName + "=?");
+        }
+
+        return sb.toString();
     }
 
 }

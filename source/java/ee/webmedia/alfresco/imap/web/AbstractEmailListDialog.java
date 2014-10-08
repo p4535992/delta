@@ -11,6 +11,7 @@ import ee.webmedia.alfresco.common.propertysheet.customchildrencontainer.CustomC
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.file.web.Subfolder;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.document.search.web.DocumentListDataProvider;
 import ee.webmedia.alfresco.document.web.BaseDocumentListDialog;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.ComponentUtil;
@@ -36,8 +37,15 @@ public abstract class AbstractEmailListDialog extends BaseDocumentListDialog imp
 
     @Override
     public void restored() {
-        documents = getDocumentService().getIncomingDocuments(parentRef);
-        folders = BeanHelper.getImapServiceExt().getImapSubfolders(parentRef, DocumentCommonModel.Types.DOCUMENT);
+        documentProvider = new DocumentListDataProvider(getDocumentService().getIncomingDocuments(parentRef), false, DOC_PROPS_TO_LOAD);
+        folders = BeanHelper.getImapServiceExt().getImapSubfoldersWithChildCount(parentRef, DocumentCommonModel.Types.DOCUMENT);
+    }
+
+    @Override
+    public void clean() {
+        documentProvider = null;
+        folders = null;
+        super.clean();
     }
 
     protected abstract NodeRef getMainFolderRef();
@@ -65,7 +73,7 @@ public abstract class AbstractEmailListDialog extends BaseDocumentListDialog imp
     }
 
     public boolean isShowFileList() {
-        return (documents != null && !documents.isEmpty()) || !isShowFolderList();
+        return (documentProvider != null && documentProvider.getListSize() > 0) || !isShowFolderList();
     }
 
     public CustomChildrenCreator getDocumentRowFileGenerator() {

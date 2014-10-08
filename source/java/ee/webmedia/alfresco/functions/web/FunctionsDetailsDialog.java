@@ -6,6 +6,7 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getMenuService;
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
+import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.TransientNode;
@@ -55,7 +56,7 @@ public class FunctionsDetailsDialog extends BaseDialogBean {
      * Called before displaying function value.
      */
     public void select(ActionEvent event) {
-        function = getFunctionsService().getFunctionByNodeRef(ActionUtil.getParam(event, PARAM_FUNCTION_NODEREF));
+        function = getFunctionsService().getFunction(new NodeRef(ActionUtil.getParam(event, PARAM_FUNCTION_NODEREF)), null);
     }
 
     public void addNewFunction(@SuppressWarnings("unused") ActionEvent event) {
@@ -67,7 +68,7 @@ public class FunctionsDetailsDialog extends BaseDialogBean {
 
     /**
      * JSP event handler for the close button.
-     * 
+     *
      * @param event
      */
     public String close() {

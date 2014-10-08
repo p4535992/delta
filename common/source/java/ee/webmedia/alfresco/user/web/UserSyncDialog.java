@@ -1,7 +1,5 @@
 package ee.webmedia.alfresco.user.web;
 
-import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
-
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
@@ -38,7 +36,7 @@ public class UserSyncDialog extends BaseDialogBean {
 
     @Override
     public String getContainerTitle() {
-        String messageKey = getUserService().isGroupsEditingAllowed() ? "user_sync_title_amr" : "user_sync_title_ad";
+        String messageKey = BeanHelper.getApplicationConstantsBean().isGroupsEditingAllowed() ? "user_sync_title_amr" : "user_sync_title_ad";
         return MessageUtil.getMessage(messageKey);
     }
 

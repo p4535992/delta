@@ -20,7 +20,7 @@ public class EventPlan extends EventPlanCommon implements Comparable<EventPlan> 
 
     @Override
     public int compareTo(EventPlan o) {
-        return AppConstants.DEFAULT_COLLATOR.compare(getName(), o.getName());
+        return AppConstants.getNewCollatorInstance().compare(getName(), o.getName());
     }
 
     public String getName() {

@@ -36,6 +36,7 @@ public class IndependentWorkflowTaskStatusChangeListener implements WorkflowEven
     private WorkflowService workflowService;
     private PrivilegeService privilegeService;
     private DocumentDynamicService documentDynamicService;
+    private WorkflowConstantsBean workflowConstantsBean;
 
     @Override
     public void afterPropertiesSet() throws Exception {
@@ -74,7 +75,7 @@ public class IndependentWorkflowTaskStatusChangeListener implements WorkflowEven
                         }
                     }
                 }
-                if (task.isType(WorkflowSpecificModel.Types.REVIEW_TASK) && !task.isStatus(Status.NEW) && workflowService.isReviewToOtherOrgEnabled()
+                if (task.isType(WorkflowSpecificModel.Types.REVIEW_TASK) && !task.isStatus(Status.NEW) && workflowConstantsBean.isReviewToOtherOrgEnabled()
                         && StringUtils.isNotBlank(BeanHelper.getParametersService().getStringParameter(Parameters.TASK_OWNER_STRUCT_UNIT))) {
                     String institutionCode = task.getInstitutionCode();
                     String creatorInstitutionCode = task.getCreatorInstitutionCode();
@@ -144,6 +145,10 @@ public class IndependentWorkflowTaskStatusChangeListener implements WorkflowEven
 
     public void setDocumentDynamicService(DocumentDynamicService documentDynamicService) {
         this.documentDynamicService = documentDynamicService;
+    }
+
+    public void setWorkflowConstantsBean(WorkflowConstantsBean workflowConstantsBean) {
+        this.workflowConstantsBean = workflowConstantsBean;
     }
 
     // END: getters/setters

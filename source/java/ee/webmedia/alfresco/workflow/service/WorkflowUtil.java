@@ -16,6 +16,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.NavigableMap;
 import java.util.Set;
 
 import javax.faces.component.UIComponent;
@@ -27,6 +28,7 @@ import javax.xml.bind.Marshaller;
 import javax.xml.bind.helpers.DefaultValidationEventHandler;
 import javax.xml.validation.Schema;
 
+import org.alfresco.model.ContentModel;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.GUID;
@@ -34,27 +36,27 @@ import org.alfresco.util.Pair;
 import org.alfresco.web.ui.common.Utils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateUtils;
+import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.privilege.model.Privilege;
+import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.Predicate;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.TextUtil;
+import ee.webmedia.alfresco.utils.UserUtil;
 import ee.webmedia.alfresco.workflow.exception.WorkflowChangedException;
 import ee.webmedia.alfresco.workflow.generated.DeltaKKRootType;
 import ee.webmedia.alfresco.workflow.model.CompoundWorkflowType;
+import ee.webmedia.alfresco.workflow.model.SigningType;
 import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 import ee.webmedia.alfresco.workflow.web.TaskGroup;
+import ee.webmedia.alfresco.workflow.web.TaskGroupHolder;
 
 public class WorkflowUtil {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(WorkflowUtil.class);
-    /**
-     * denotes that BaseWorkflowObject (task or information/opinion workflow) temporarily having this property is not saved,
-     * but generated for delegating original assignment task to other people
-     */
-    private static final QName TMP_ADDED_BY_DELEGATION = RepoUtil.createTransientProp("addedByDelegation");
     private static final QName TMP_GUID = RepoUtil.createTransientProp("tmpGuid");
     public static final String TASK_INDEX = "taskIndex";
     private static final Map<CompoundWorkflowType, String> compoundWorkflowTemplateSuffixes;
@@ -132,6 +134,9 @@ public class WorkflowUtil {
     }
 
     public static boolean isStatusAndType(BaseWorkflowObject object, QName[] types, Status... statuses) {
+        if (object == null) {
+            return false;
+        }
         String realStatus = object.getStatus();
         for (Status status : statuses) {
             if (status.equals(realStatus) && (types == null || object.isType(types))) {
@@ -143,6 +148,20 @@ public class WorkflowUtil {
 
     public static StatusOrderChecker isStatusOrder(List<? extends BaseWorkflowObject> objects) {
         return new StatusOrderChecker(objects);
+    }
+
+    public static Task findTask(CompoundWorkflow compoundWorkflow, NodeRef taskNodeRef) {
+        Assert.notNull(compoundWorkflow);
+        Assert.notNull(taskNodeRef);
+
+        for (Workflow workflow : compoundWorkflow.getWorkflows()) {
+            for (Task task : workflow.getTasks()) {
+                if (taskNodeRef.equals(task.getNodeRef())) {
+                    return task;
+                }
+            }
+        }
+        return null;
     }
 
     public static class StatusOrderChecker {
@@ -492,22 +511,6 @@ public class WorkflowUtil {
         return finishedTasks;
     }
 
-    public static List<Task> getMyTasksInProgress(List<CompoundWorkflow> compoundWorkflows, String userName) {
-        List<Task> myTasks = new ArrayList<Task>();
-        for (CompoundWorkflow compoundWorkflow : compoundWorkflows) {
-            List<Workflow> workflows = compoundWorkflow.getWorkflows();
-            for (Workflow workflow : workflows) {
-                List<Task> tasks = workflow.getTasks();
-                for (Task task : tasks) {
-                    if (isOwnerOfInProgressTask(task, userName)) {
-                        myTasks.add(task);
-                    }
-                }
-            }
-        }
-        return myTasks;
-    }
-
     private static boolean isOwnerOfInProgressTask(Task task, String userName) {
         return userName.equals(task.getOwnerId()) && isStatus(task, Status.IN_PROGRESS);
     }
@@ -533,19 +536,6 @@ public class WorkflowUtil {
             }
         }
         return false;
-    }
-
-    public static boolean isOwner(List<CompoundWorkflow> compoundWorkflows, String userName) {
-        for (CompoundWorkflow compoundWorkflow : compoundWorkflows) {
-            if (isOwner(compoundWorkflow, userName)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public static boolean isOwner(CompoundWorkflow compoundWorkflow, String userName) {
-        return userName.equals(compoundWorkflow.getOwnerId());
     }
 
     public static boolean isOwner(Task task, String userName) {
@@ -575,6 +565,10 @@ public class WorkflowUtil {
             }
         }
         return excludedNodeRefs;
+    }
+
+    public static boolean isResponsibleAssignmentTask(Task task) {
+        return task.isType(WorkflowSpecificModel.Types.ASSIGNMENT_TASK) && isResponsible(task);
     }
 
     public static boolean isActiveResponsible(Task task) {
@@ -621,11 +615,11 @@ public class WorkflowUtil {
     }
 
     public static boolean isGeneratedByDelegation(BaseWorkflowObject workflowObject) {
-        return Boolean.TRUE.equals(workflowObject.getNode().getProperties().get(TMP_ADDED_BY_DELEGATION.toString()));
+        return Boolean.TRUE.equals(workflowObject.getNode().getProperties().get(BaseWorkflowObject.TMP_ADDED_BY_DELEGATION.toString()));
     }
 
     public static void markAsGeneratedByDelegation(BaseWorkflowObject workflowObject) {
-        workflowObject.getNode().getProperties().put(TMP_ADDED_BY_DELEGATION.toString(), Boolean.TRUE);
+        workflowObject.getNode().getProperties().put(BaseWorkflowObject.TMP_ADDED_BY_DELEGATION.toString(), Boolean.TRUE);
     }
 
     /**
@@ -745,68 +739,25 @@ public class WorkflowUtil {
                 && (!responsible || Boolean.TRUE.equals(task.getNode().getProperties().get(WorkflowSpecificModel.Props.ACTIVE)));
     }
 
-    public static void setGroupTasksDueDates(CompoundWorkflow compound, List<Map<String, List<TaskGroup>>> taskGroups) {
-        int workflowId = 0;
+    public static void setGroupTasksDueDates(CompoundWorkflow compound, TaskGroupHolder taskGroupHolder) {
         List<Workflow> workflows = compound.getWorkflows();
-
-        for (Map<String, List<TaskGroup>> group : taskGroups) {
-            if (workflows.size() == workflowId) {
-                break;
-            }
-            Workflow workflow = workflows.get(workflowId);
-            List<Task> wfTasks = workflow.getTasks();
-            for (List<TaskGroup> groupList : group.values()) {
-                for (TaskGroup taskGroup : groupList) {
-                    for (Integer taskId : taskGroup.getTaskIds()) {
-                        if (wfTasks.size() <= taskId) {
-                            continue;
-                        }
-                        Task task = wfTasks.get(taskId);
-                        if (task.getDueDate() == null) {
-                            task.setDueDate(taskGroup.getDueDate());
-                        }
-                    }
-                }
-            }
-            workflowId++;
-        }
-    }
-
-    public static Map<Workflow, List<String>> getWorkflowsAndTaskOwners(CompoundWorkflow compoundWorkflow) {
-        Map<Workflow, List<String>> workflowsAndTaskOwners = new HashMap<Workflow, List<String>>();
-        for (Workflow wf : compoundWorkflow.getWorkflows()) {
-            if (!wf.isStatus(Status.IN_PROGRESS)) {
+        for (int i = 0; i < workflows.size(); i++) {
+            if (!taskGroupHolder.hasTaskGroups(i)) {
                 continue;
             }
-            List<String> taskOwners = new ArrayList<String>();
-            for (Task task : wf.getTasks()) {
-                if (task.isStatus(Status.IN_PROGRESS)) {
-                    taskOwners.add(task.getOwnerName());
+            List<Task> tasks = workflows.get(i).getTasks();
+            NavigableMap<Integer, TaskGroup> dueDates = taskGroupHolder.getWorkflowTaskGroupDueDates(i);
+            for (int j = 0; j < tasks.size(); j++) {
+                Integer taskGroupKeyForTask = dueDates.floorKey(j);
+                if (taskGroupKeyForTask == null) {
+                    continue;
+                }
+                TaskGroup group = dueDates.get(taskGroupKeyForTask);
+                if (group != null && group.hasTask(j)) { // Tasks that are between two groups floor to previous group
+                    tasks.get(j).setDueDate(group.getDueDate());
                 }
             }
-            if (!taskOwners.isEmpty()) {
-                workflowsAndTaskOwners.put(wf, taskOwners);
-            }
         }
-        return workflowsAndTaskOwners;
-    }
-
-    public static String formatWorkflowsAndTaskOwners(Map<Workflow, List<String>> workflows) {
-        StringBuilder workflowsAndTaskOwners = new StringBuilder();
-        for (Entry<Workflow, List<String>> entry : workflows.entrySet()) {
-            if (workflowsAndTaskOwners.length() > 0) {
-                workflowsAndTaskOwners.append("; ");
-            }
-            workflowsAndTaskOwners.append(MessageUtil.getMessage(entry.getKey().getType().getLocalName()))
-            .append(" (")
-            .append(StringUtils.join(entry.getValue(), ", "))
-            .append(")");
-        }
-        return workflowsAndTaskOwners.toString();
-    }
-
-    public static String getFormattedWorkflowsAndTaskOwners(CompoundWorkflow compoundWorkflow) {
-        return formatWorkflowsAndTaskOwners(getWorkflowsAndTaskOwners(compoundWorkflow));
     }
 
     public static void setGroupTasksDueDates(TaskGroup taskGroup, List<Task> tasks) {
@@ -998,7 +949,6 @@ public class WorkflowUtil {
         return message;
     }
 
-
     public static String getTaskSendInfoResolution(Task task) {
         Workflow workflow = task.getParent();
         String typeName = MessageUtil.getMessage(workflow.getType().getLocalName());
@@ -1009,6 +959,19 @@ public class WorkflowUtil {
 
         String resolution = MessageUtil.getMessage("notification_send_info_resolution", typeName, compoundWorkflowOwnerName, taskResolution, workflowResolution, dueDateStr);
         return resolution;
+    }
+
+    public static boolean isSignTogetherType(String signingTypeStr) {
+        return StringUtils.isBlank(signingTypeStr) ? false : SigningType.SIGN_TOGETHER == SigningType.valueOf(signingTypeStr);
+    }
+
+    public static void setCompoundWorkflowOwnerProperties(UserService userService, String userName, CompoundWorkflow compoundWorkflow) {
+        Map<QName, Serializable> userProps = userService.getUserProperties(userName);
+
+        compoundWorkflow.setOwnerId(userName);
+        compoundWorkflow.setOwnerName(UserUtil.getPersonFullName1(userProps));
+        compoundWorkflow.setProp(WorkflowCommonModel.Props.OWNER_JOB_TITLE, userProps.get(ContentModel.PROP_JOBTITLE));
+        compoundWorkflow.setProp(WorkflowCommonModel.Props.OWNER_ORGANIZATION_NAME, (Serializable) userService.getUserOrgPathOrOrgName(userProps));
     }
 
 }

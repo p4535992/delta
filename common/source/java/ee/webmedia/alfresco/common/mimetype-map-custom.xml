@@ -2,7 +2,7 @@
    <config condition="Mimetype Map" evaluator="string-compare">
       <mimetypes>
          <mimetype display="DigiDoc" mimetype="application/digidoc">
-            <extension>ddoc</extension>
+            <extension>bdoc</extension>
          </mimetype>
          <mimetype mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.template" display="Microsoft Excel 2007 template">
             <extension>xltx</extension>

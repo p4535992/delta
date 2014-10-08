@@ -160,4 +160,9 @@ public interface IDialogBean extends Serializable
    
    public boolean canRestore();
    
+   /**
+    * Clean bean resources
+    */
+   public void clean();
+   
 }

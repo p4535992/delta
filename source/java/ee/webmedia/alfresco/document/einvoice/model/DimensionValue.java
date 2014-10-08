@@ -108,7 +108,7 @@ public class DimensionValue implements Comparable<DimensionValue>, Classificator
         if (getValueName() == null) {
             return -1;
         }
-        return AppConstants.DEFAULT_COLLATOR.compare(getValueName(), o.getValueName());
+        return AppConstants.getNewCollatorInstance().compare(getValueName(), o.getValueName());
     }
 
     @Override

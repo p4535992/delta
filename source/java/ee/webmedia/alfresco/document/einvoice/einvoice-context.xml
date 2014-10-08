@@ -49,11 +49,6 @@
             <idref bean="commonTransactionInterceptor" />
          </list>
       </property>
-   </bean>   
-   
-   <bean class="ee.webmedia.alfresco.document.einvoice.web.ReceivedInvoiceMenuItemProcessor">
-      <property name="menuService" ref="MenuService" />
-      <property name="documentService" ref="DocumentService" />
    </bean>
    
    <bean id="dimensionRootBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
@@ -315,16 +310,7 @@
       </property>
    </bean>
    
-   <bean id="einvoiceResourceBundleBootstrap" class="org.alfresco.web.app.ResourceBundleBootstrap">
-      <property name="resourceBundles">
-         <list>
-            <value>ee.webmedia.alfresco.document.einvoice.web.einvoice-webclient</value>
-         </list>
-      </property>
-   </bean>
-   
-      <!-- Same translation properties file to be used by I18NUtil by *Service classes -->
-   <bean class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
+   <bean id="eInvoiceResourceBundles" class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
       <property name="resourceBundles">
          <list>
             <value>ee.webmedia.alfresco.document.einvoice.web.einvoice-webclient</value>

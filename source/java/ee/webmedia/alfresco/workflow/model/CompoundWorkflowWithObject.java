@@ -3,6 +3,7 @@ package ee.webmedia.alfresco.workflow.model;
 import java.io.Serializable;
 import java.util.Date;
 
+import org.alfresco.service.cmr.repository.NodeRef;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.utils.MessageUtil;
@@ -18,6 +19,7 @@ public class CompoundWorkflowWithObject implements Serializable {
     private final CompoundWorkflow compoundWorkflow;
     private String objectTitle;
     private String workflowStatus;
+    private NodeRef parent;
 
     public CompoundWorkflowWithObject(CompoundWorkflow compoundWorkflow) {
         Assert.notNull(compoundWorkflow);
@@ -65,6 +67,14 @@ public class CompoundWorkflowWithObject implements Serializable {
 
     public void setWorkflowStatus(String workflowStatus) {
         this.workflowStatus = workflowStatus;
+    }
+
+    public NodeRef getParent() {
+        return parent;
+    }
+
+    public void setParent(NodeRef parent) {
+        this.parent = parent;
     }
 
 }

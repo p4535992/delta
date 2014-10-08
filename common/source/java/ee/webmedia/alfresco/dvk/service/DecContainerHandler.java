@@ -238,17 +238,15 @@ public class DecContainerHandler {
     }
 
     public static Object checkType(Class<?> getterReturnType, Object value) {
-        if (value == null) {
-            return null;
-        }
-        Class<?> valueClass = value.getClass();
-        if (value != null && !getterReturnType.isAssignableFrom(valueClass)) {
-            if (isConvertable(valueClass, getterReturnType)) {
-                return convertObjectType(value, getterReturnType);
+        if (value != null) {
+            Class<?> valueClass = value.getClass();
+            if (value != null && !getterReturnType.isAssignableFrom(valueClass)) {
+                if (isConvertable(valueClass, getterReturnType)) {
+                    return convertObjectType(value, getterReturnType);
+                }
+                throw new RuntimeException("Cannot convert " + valueClass + " to " + getterReturnType);
             }
-            throw new RuntimeException("Cannot convert " + valueClass + " to " + getterReturnType);
         }
-
         return value;
     }
 

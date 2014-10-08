@@ -2,12 +2,25 @@ package ee.webmedia.alfresco.adddocument.web;
 
 import static ee.webmedia.alfresco.common.web.BeanHelper.getAddDocumentService;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import javax.faces.event.ActionEvent;
 
+import org.alfresco.model.ContentModel;
+import org.alfresco.service.namespace.QName;
+
+import ee.webmedia.alfresco.document.search.web.DocumentListDataProvider;
 import ee.webmedia.alfresco.document.web.BaseDocumentListDialog;
 
 public class WebServiceDocumentListDialog extends BaseDocumentListDialog {
     private static final long serialVersionUID = 1L;
+
+    private static final Set<QName> WEB_SERVICE_DOC_PROPS_TO_LOAD = new HashSet<>();
+    static {
+        WEB_SERVICE_DOC_PROPS_TO_LOAD.add(ContentModel.PROP_CREATED);
+        WEB_SERVICE_DOC_PROPS_TO_LOAD.addAll(DOC_PROPS_TO_LOAD);
+    }
 
     /** @param event */
     public void setup(ActionEvent event) {
@@ -16,7 +29,7 @@ public class WebServiceDocumentListDialog extends BaseDocumentListDialog {
 
     @Override
     public void restored() {
-        documents = getAddDocumentService().getAllDocumentFromWebService();
+        documentProvider = new DocumentListDataProvider(getAddDocumentService().getAllDocumentFromWebService(), false, WEB_SERVICE_DOC_PROPS_TO_LOAD);
     }
 
     @Override
@@ -32,11 +45,6 @@ public class WebServiceDocumentListDialog extends BaseDocumentListDialog {
     @Override
     public boolean isShowComplienceDateColumn() {
         return false;
-    }
-
-    @Override
-    public String getInitialSortColumn() {
-        return "created";
     }
 
     @Override

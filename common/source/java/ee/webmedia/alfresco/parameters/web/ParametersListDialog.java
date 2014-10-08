@@ -1,7 +1,9 @@
 package ee.webmedia.alfresco.parameters.web;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getParametersService;
+
 import java.io.Serializable;
-import java.util.Collection;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -14,7 +16,6 @@ import org.alfresco.web.app.Application;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.ui.common.Utils;
 import org.apache.myfaces.application.jsp.JspStateManagerImpl;
-import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.einvoice.service.EInvoiceUtil;
@@ -31,9 +32,25 @@ import ee.webmedia.alfresco.utils.UnableToPerformException;
 public class ParametersListDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;
 
-    private transient ParametersService parametersService;
+    public static final String BEAN_NAME = "ParametersListDialog";
 
-    private List<Parameter<?>> parameters;
+    private List<Parameter<? extends Serializable>> parameters;
+    private static final Set<Parameters> IGNORED_PARAMETERS;
+
+    static {
+        IGNORED_PARAMETERS = new HashSet<>(Arrays.asList(
+                Parameters.DIMENSION_DELETION_PERIOD,
+                Parameters.DIMENSION_DELETION_TIME,
+                Parameters.DVK_RECEIVE_DOCUMENTS_INVOICE_FOLDER,
+                Parameters.INVOICE_ENTRY_DATE_ONLY_IN_CURRENT_YEAR,
+                Parameters.REVIEW_WORKFLOW_COST_MANAGER_WORKFLOW_NUMBER,
+                Parameters.SAP_CONTACT_UPDATE_TIME,
+                Parameters.SAP_DVK_CODE,
+                Parameters.SAP_FINANCIAL_DIMENSIONS_FOLDER_IN_DVK,
+                Parameters.SEND_INVOICE_TO_DVK_FOLDER,
+                Parameters.SEND_PURCHASE_ORDER_INVOICE_TO_DVK_FOLDER,
+                Parameters.SEND_XXL_INVOICE_TO_DVK_FOLDER));
+    }
 
     @Override
     public void init(Map<String, String> params) {
@@ -43,34 +60,22 @@ public class ParametersListDialog extends BaseDialogBean {
 
     @Override
     public void restored() {
-        parameters = getParametersService().getAllParameters();
+        ParametersService parametersService = getParametersService();
+        parameters = parametersService.getAllParameters();
         filterEinvoiceParameters();
-        if (!getParametersService().isJobsEnabled()) {
+        if (!parametersService.isJobsEnabled()) {
             MessageUtil.addErrorMessage("parameters_jobs_not_rescheduled");
         }
     }
 
     private void filterEinvoiceParameters() {
-        if (parameters == null || BeanHelper.getEInvoiceService().isEinvoiceEnabled()) {
+        if (parameters == null || BeanHelper.getApplicationConstantsBean().isEinvoiceEnabled()) {
             return;
         }
-        Set<Parameter> parametersToRemove = new HashSet<Parameter>();
-        for (@SuppressWarnings("rawtypes")
-        Parameter param : parameters) {
+        Set<Parameter<?>> parametersToRemove = new HashSet<>();
+        for (Parameter<?> param : parameters) {
             Parameters parameter = Parameters.get(param);
-            if (EInvoiceUtil.DIMENSION_PARAMETERS.containsKey(parameter)
-                    || Parameters.DIMENSION_DELETION_PERIOD.equals(parameter)
-                    || Parameters.DIMENSION_DELETION_TIME.equals(parameter)
-                    || Parameters.INVOICE_ENTRY_DATE_ONLY_IN_CURRENT_YEAR.equals(parameter)
-                    || Parameters.SAP_CONTACT_UPDATE_TIME.equals(parameter)
-                    || Parameters.SAP_DVK_CODE.equals(parameter)
-                    || Parameters.SAP_FINANCIAL_DIMENSIONS_FOLDER_IN_DVK.equals(parameter)
-                    || Parameters.SEND_INVOICE_TO_DVK_FOLDER.equals(parameter)
-                    || Parameters.SEND_PURCHASE_ORDER_INVOICE_TO_DVK_FOLDER.equals(parameter)
-                    || Parameters.SEND_XXL_INVOICE_TO_DVK_FOLDER.equals(parameter)
-                    || Parameters.REVIEW_WORKFLOW_COST_MANAGER_WORKFLOW_NUMBER.equals(parameter)
-                    || Parameters.DVK_RECEIVE_DOCUMENTS_INVOICE_FOLDER.equals(parameter))
-            {
+            if (EInvoiceUtil.DIMENSION_PARAMETERS.containsKey(parameter) || IGNORED_PARAMETERS.contains(parameter)) {
                 parametersToRemove.add(param);
             }
         }
@@ -96,7 +101,7 @@ public class ParametersListDialog extends BaseDialogBean {
             }
         } else {
             try {
-                getParametersService().updateParameters((Collection<Parameter<? extends Serializable>>) parameters);
+                getParametersService().updateParameters(parameters);
                 MessageUtil.addInfoMessage("save_success");
             } catch (UnableToPerformException e) {
                 MessageUtil.addStatusMessage(context, e);
@@ -110,8 +115,13 @@ public class ParametersListDialog extends BaseDialogBean {
 
     @Override
     public String cancel() {
-        parameters = null;
+        clean();
         return super.cancel();
+    }
+
+    @Override
+    public void clean() {
+        parameters = null;
     }
 
     @Override
@@ -133,25 +143,11 @@ public class ParametersListDialog extends BaseDialogBean {
         return null;
     }
 
-    // START: getters / setters
     /**
      * Used in JSP page to create table rows
      */
     public List<Parameter<?>> getParameters() {
         return parameters;
     }
-
-    public void setParametersService(ParametersService parametersService) {
-        this.parametersService = parametersService;
-    }
-
-    public ParametersService getParametersService() {
-        if (parametersService == null) {
-            parametersService = (ParametersService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())//
-                    .getBean(ParametersService.BEAN_NAME);
-        }
-        return parametersService;
-    }
-    // END: getters / setters
 
 }

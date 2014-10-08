@@ -20,7 +20,7 @@
         </property>
     </bean>
 
-    <bean id="substituteResourceBundleBootstrap" class="org.alfresco.web.app.ResourceBundleBootstrap">
+    <bean id="substituteResourceBundles" class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
         <property name="resourceBundles">
             <list>
                 <value>ee.webmedia.alfresco.substitute.web.substitute-webclient</value>
@@ -49,8 +49,8 @@
 
     <bean id="substituteService" class="ee.webmedia.alfresco.substitute.service.SubstituteServiceImpl">
         <property name="nodeService" ref="NodeService"/>
-        <property name="generalService" ref="GeneralService" />
-        <property name="searchService" ref="SearchService" />
+        <property name="substituteCache" ref="substituteCache"/>
+        <property name="userToSubstitutesCache" ref="userToSubstitutesCache"/>
     </bean>
 
     <bean id="SubstituteService" class="org.springframework.aop.framework.ProxyFactoryBean">
@@ -65,6 +65,25 @@
                 <idref bean="commonTransactionInterceptor"/>
             </list>
         </property>
+    </bean>
+   
+    <bean id="clearSubstituteCacheJobDetail" class="org.springframework.scheduling.quartz.JobDetailBean">
+        <property name="jobClass">
+            <value>ee.webmedia.alfresco.substitute.bootstrap.ClearSubstituteCahceJob</value>
+        </property>
+    </bean>
+
+    <bean id="clearSubstituteCacheTrigger" class="org.alfresco.util.CronTriggerBean">
+        <property name="jobDetail">
+            <ref bean="clearSubstituteCacheJobDetail" />
+        </property>
+        <property name="scheduler">
+            <ref bean="schedulerFactory" />
+        </property>
+        <property name="cronExpression">
+            <value>0 0 0 * * ?</value> <!-- run every midnight -->
+        </property>
+        <property name="enabled" value="${jobs.enabled}" />
     </bean>
     
     <bean id="SubstituteListDialog" class="ee.webmedia.alfresco.substitute.web.SubstituteListDialog" scope="session" />

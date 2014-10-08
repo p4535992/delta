@@ -26,16 +26,15 @@ public class SendEInvoiceToSapManuallyEvaluator extends BaseActionEvaluator {
         if (!docNode.getNodeRef().getStoreRef().getProtocol().equals(StoreRef.PROTOCOL_WORKSPACE)) {
             return false;
         }
-        boolean isInViewState = new ViewStateActionEvaluator().evaluate(docNode);
-        return isInViewState
+        return BeanHelper.getApplicationConstantsBean().isEinvoiceEnabled()
+                && !BeanHelper.getDocumentDialogHelperBean().isInEditMode()
                 && DocumentSubtypeModel.Types.INVOICE.equals(docNode.getType())
                 && BeanHelper.getUserService().isInAccountantGroup()
                 && (StringUtils.isNotBlank((String) docNode.getProperties().get(DocumentSpecificModel.Props.PURCHASE_ORDER_SAP_NUMBER)) || Boolean.TRUE.equals(docNode
                         .getProperties().get(DocumentSpecificModel.Props.XXL_INVOICE)) || mandatoryTransactionFieldsFilled(docNode))
-                && StringUtils.isNotBlank((String) docNode.getProperties().get(DocumentSpecificModel.Props.SELLER_PARTY_SAP_ACCOUNT))
-                && (!hasSendInfo(docNode) && StringUtils.isEmpty((String) docNode.getProperties().get(DocumentSpecificModel.Props.ENTRY_SAP_NUMBER)))
-                && !BeanHelper.getWorkflowService().hasUnfinishedReviewTasks(docNode.getNodeRef())
-                && BeanHelper.getEInvoiceService().isEinvoiceEnabled();
+                        && StringUtils.isNotBlank((String) docNode.getProperties().get(DocumentSpecificModel.Props.SELLER_PARTY_SAP_ACCOUNT))
+                        && (!hasSendInfo(docNode) && StringUtils.isEmpty((String) docNode.getProperties().get(DocumentSpecificModel.Props.ENTRY_SAP_NUMBER)))
+                        && !BeanHelper.getWorkflowService().hasUnfinishedReviewTasks(docNode.getNodeRef());
 
     }
 
@@ -47,7 +46,7 @@ public class SendEInvoiceToSapManuallyEvaluator extends BaseActionEvaluator {
         }
         for (SendInfo sendInfo : sendInfos) {
             if (!SendStatus.CANCELLED.toString().equalsIgnoreCase(sendInfo.getSendStatus())
-                    && dvkCode.equalsIgnoreCase((String) sendInfo.getNode().getProperties().get(DocumentCommonModel.Props.SEND_INFO_RECIPIENT_REG_NR))) {
+                    && dvkCode.equalsIgnoreCase((String) sendInfo.getProperties().get(DocumentCommonModel.Props.SEND_INFO_RECIPIENT_REG_NR))) {
                 return true;
             }
         }

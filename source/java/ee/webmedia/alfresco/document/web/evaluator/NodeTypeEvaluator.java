@@ -7,6 +7,8 @@ import org.alfresco.service.namespace.QName;
 import org.alfresco.web.action.evaluator.BaseActionEvaluator;
 import org.alfresco.web.bean.repository.Node;
 
+import ee.webmedia.alfresco.common.web.BeanHelper;
+
 public class NodeTypeEvaluator extends BaseActionEvaluator {
 
     private static final long serialVersionUID = 1L;
@@ -14,11 +16,11 @@ public class NodeTypeEvaluator extends BaseActionEvaluator {
 
     @Override
     public boolean evaluate(Node docNode) {
-        return evaluateViewSatate(docNode) && evaluateType(docNode);
+        return evaluateViewSatate() && evaluateType(docNode);
     }
 
-    protected boolean evaluateViewSatate(Node docNode) {
-        return new ViewStateActionEvaluator().evaluate(docNode);
+    protected boolean evaluateViewSatate() {
+        return !BeanHelper.getDocumentDialogHelperBean().isInEditMode();
     }
 
     protected boolean evaluateType(Node docNode) {

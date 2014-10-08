@@ -72,7 +72,7 @@ public class DelegationHistoryGenerator extends BaseComponentGenerator {
             public Comparable<?> tr(Task input) {
                 return input.getOwnerName();
             }
-        }, new NullComparator(AppConstants.DEFAULT_COLLATOR)));
+        }, new NullComparator(AppConstants.getNewCollatorInstance())));
         @SuppressWarnings("unchecked")
         Comparator<Task> tmp = chain;
         return tmp;
@@ -102,7 +102,7 @@ public class DelegationHistoryGenerator extends BaseComponentGenerator {
                 , createColumn(TMP_CO_OWNER, context)
                 , createColumn(WorkflowSpecificModel.Props.RESOLUTION, context)
                 , createColumn(WorkflowSpecificModel.Props.DUE_DATE, context, MessageUtil.getMessage("date_time_pattern")) //
-        );
+                );
         return richList;
     }
 

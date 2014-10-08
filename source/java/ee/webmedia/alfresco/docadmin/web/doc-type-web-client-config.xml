@@ -181,7 +181,7 @@
          <show-property name="docadmin:comment" component-generator="TextAreaGenerator" styleClass="expand19-200" />
          <show-property name="docadmin:systematic" component-generator="BooleanRadioGenerator" read-only="true" nullValue="false" />
          <show-property name="docadmin:mandatoryForDoc" component-generator="BooleanRadioGenerator" read-only="true" nullValue="false" />
-         <show-property name="docadmin:mandatoryForVol" component-generator="BooleanRadioGenerator" read-only="true" nullValue="false" show="#{VolumeService.caseVolumeEnabled}" />
+         <show-property name="docadmin:mandatoryForVol" component-generator="BooleanRadioGenerator" read-only="true" nullValue="false" show="#{ApplicationConstantsBean.caseVolumeEnabled}" />
          <!-- fieldGropu specific props -->
          <show-property name="docadmin:thesaurus" component-generator="GeneralSelectorGenerator" selectionItems="#{ThesaurusListDialog.getThesauriSelectItems}" show="#{FieldGroupDetailsDialog.thesaurusVisible}" />
          <separator name="docTypeReadOnlyInfo-sep" component-generator="DocTypeFieldGroupInfoGenerator" show="#{FieldGroupDetailsDialog.docTypeReadOnlyInfoVisible}" />
@@ -278,12 +278,12 @@
          <show-property name="docadmin:parameterOrderInDocSearch" />
          <show-property name="docadmin:isParameterInVolSearch" readOnlyIf="#{FieldDetailsDialog.field.fixedParameterInVolSearch}" />
          <show-property name="docadmin:parameterOrderInVolSearch" />
-         <show-property name="docadmin:mandatoryForVol" component-generator="BooleanRadioGenerator" read-only="true" nullValue="false" show="#{VolumeService.caseVolumeEnabled}" />
+         <show-property name="docadmin:mandatoryForVol" component-generator="BooleanRadioGenerator" read-only="true" nullValue="false" show="#{ApplicationConstantsBean.caseVolumeEnabled}" />
          <show-property name="docadmin:inapplicableForDoc" component-generator="BooleanRadioGenerator" read-only="true" nullValue="false" show="#{FieldDetailsDialog.fieldDefinition}" ignore-if-missing="false" />
          <show-property name="docadmin:inapplicableForVol" component-generator="BooleanRadioGenerator" read-only="true" nullValue="false" show="#{FieldDetailsDialog.showInapplicableForVol}" ignore-if-missing="false" />
          <!-- FIXME DLSeadist debugimiseks
          <show-property name="docadmin:docTypes" component-generator="SearchGenerator" read-only="true" />
-         <show-property name="docadmin:volTypes" component-generator="SearchGenerator" read-only="true" show="#{VolumeService.caseVolumeEnabled}" />
+         <show-property name="docadmin:volTypes" component-generator="SearchGenerator" read-only="true" show="#{ApplicationConstantsBean.caseVolumeEnabled}" />
           -->
       </property-sheet>
    </config>

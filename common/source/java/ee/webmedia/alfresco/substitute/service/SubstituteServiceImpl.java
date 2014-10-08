@@ -11,16 +11,17 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
 import org.alfresco.model.ContentModel;
+import org.alfresco.repo.cache.SimpleCache;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
-import org.alfresco.service.cmr.search.SearchService;
 import org.alfresco.service.namespace.QName;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateUtils;
@@ -30,7 +31,6 @@ import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.util.Assert;
 
-import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.log.PropDiffHelper;
 import ee.webmedia.alfresco.log.model.LogEntry;
@@ -38,6 +38,7 @@ import ee.webmedia.alfresco.log.model.LogObject;
 import ee.webmedia.alfresco.log.service.LogService;
 import ee.webmedia.alfresco.substitute.model.Substitute;
 import ee.webmedia.alfresco.substitute.model.SubstituteModel;
+import ee.webmedia.alfresco.substitute.model.UnmodifiableSubstitute;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.beanmapper.BeanPropertyMapper;
 
@@ -45,9 +46,11 @@ public class SubstituteServiceImpl implements SubstituteService, BeanFactoryAwar
     private static final Log log = LogFactory.getLog(SubstituteServiceImpl.class);
 
     private NodeService nodeService;
-    private GeneralService generalService;
-    private SearchService searchService;
     private BeanFactory beanFactory;
+    /** User to list of people who are substituting this person */
+    private SimpleCache<String, List<Substitute>> substituteCache;
+    /** User to list of people who he/she is substituting */
+    private SimpleCache<NodeRef, List<UnmodifiableSubstitute>> userToSubstitutesCache;
 
     private static BeanPropertyMapper<Substitute> substituteBeanPropertyMapper;
 
@@ -56,18 +59,65 @@ public class SubstituteServiceImpl implements SubstituteService, BeanFactoryAwar
     }
 
     @Override
-    public List<Substitute> getSubstitutes(NodeRef userNodeRef) {
-        NodeRef substitutesNodeRef = getSubstitutesNode(userNodeRef, false);
+    public List<UnmodifiableSubstitute> getUnmodifiableSubstitutes(NodeRef userNodeRef) {
+        if (userToSubstitutesCache.contains(userNodeRef)) {
+            return userToSubstitutesCache.get(userNodeRef);
+        }
+        NodeRef substitutesNodeRef = getSubstitutesNodeRef(userNodeRef, false);
         if (substitutesNodeRef == null) {
-            return new ArrayList<Substitute>();
+            return new ArrayList<>();
         }
         List<ChildAssociationRef> substitutesRefs = nodeService.getChildAssocs(substitutesNodeRef);
-        List<Substitute> substitutes = new ArrayList<Substitute>(substitutesRefs.size());
+        List<UnmodifiableSubstitute> substitutes = new ArrayList<>(substitutesRefs.size());
         for (ChildAssociationRef substituteRef : substitutesRefs) {
-            substitutes.add(getSubstitute(substituteRef.getChildRef()));
+            substitutes.add(new UnmodifiableSubstitute(getSubstitute(substituteRef.getChildRef())));
         }
-
+        userToSubstitutesCache.put(userNodeRef, substitutes);
         return substitutes;
+    }
+
+    @Override
+    public List<Substitute> getSubstitutes(NodeRef userNodeRef) {
+        boolean userInCache = userToSubstitutesCache.contains(userNodeRef);
+        NodeRef substitutesNodeRef = getSubstitutesNodeRef(userNodeRef, userInCache);
+        if (substitutesNodeRef == null) {
+            return new ArrayList<>();
+        }
+        List<ChildAssociationRef> substitutesRefs = nodeService.getChildAssocs(substitutesNodeRef);
+        List<Substitute> substitutes = new ArrayList<>(substitutesRefs.size());
+        List<UnmodifiableSubstitute> unmodifiableSubstitutes = new ArrayList<>(substitutesRefs.size());
+        for (ChildAssociationRef substituteRef : substitutesRefs) {
+            Substitute substitute = getSubstitute(substituteRef.getChildRef());
+            substitutes.add(substitute);
+            if (!userInCache) {
+                unmodifiableSubstitutes.add(new UnmodifiableSubstitute(substitute));
+            }
+        }
+        if (!userInCache) {
+            userToSubstitutesCache.put(userNodeRef, unmodifiableSubstitutes);
+        }
+        return substitutes;
+    }
+
+    private NodeRef getSubstitutesNodeRef(NodeRef userNodeRef, boolean userInCache) {
+        NodeRef substitutesNodeRef = getSubstitutesNode(userNodeRef, false);
+        if (substitutesNodeRef == null && !userInCache) {
+            userToSubstitutesCache.put(userNodeRef, new ArrayList<UnmodifiableSubstitute>());
+        }
+        return substitutesNodeRef;
+    }
+
+    @Override
+    public String getSubstituteLabel(String userName) {
+        NodeRef userRef = BeanHelper.getUserService().getPerson(userName);
+        if (userRef != null) {
+            for (UnmodifiableSubstitute substitute : getUnmodifiableSubstitutes(userRef)) {
+                if (substitute.isActive()) {
+                    return substitute.getLabel();
+                }
+            }
+        }
+        return "";
     }
 
     @Override
@@ -109,6 +159,8 @@ public class SubstituteServiceImpl implements SubstituteService, BeanFactoryAwar
         addLogEntry(userNodeRef, substitute, "applog_user_substitute_set");
 
         substitute.setNodeRef(assoc.getChildRef());
+        substituteCache.remove(substitute.getSubstituteId());
+        userToSubstitutesCache.remove(userNodeRef);
         return substitute.getNodeRef();
     }
 
@@ -120,6 +172,11 @@ public class SubstituteServiceImpl implements SubstituteService, BeanFactoryAwar
 
         Map<QName, Serializable> oldProps = nodeService.getProperties(substitute.getNodeRef());
         Map<QName, Serializable> newProps = substituteBeanPropertyMapper.toProperties(substitute);
+
+        String oldSubstituteId = (String) oldProps.get(SubstituteModel.Props.SUBSTITUTE_ID);
+        String newSubstituteId = substitute.getSubstituteId();
+        substituteCache.remove(oldSubstituteId);
+        substituteCache.remove(newSubstituteId);
 
         String diff = new PropDiffHelper()
                 .label(SubstituteModel.Props.SUBSTITUTE_NAME, "substitute_name")
@@ -134,6 +191,7 @@ public class SubstituteServiceImpl implements SubstituteService, BeanFactoryAwar
 
         if (diff != null) {
             NodeRef userRef = nodeService.getPrimaryParent(nodeService.getPrimaryParent(substitute.getNodeRef()).getParentRef()).getParentRef();
+            userToSubstitutesCache.remove(userRef);
             addLogEntry(userRef, null, diff);
         }
     }
@@ -143,7 +201,10 @@ public class SubstituteServiceImpl implements SubstituteService, BeanFactoryAwar
         Assert.notNull(substituteNodeRef, "Substitute reference not provided");
 
         NodeRef userRef = nodeService.getPrimaryParent(nodeService.getPrimaryParent(substituteNodeRef).getParentRef()).getParentRef();
-        addLogEntry(userRef, getSubstitute(substituteNodeRef), "applog_user_substitute_rem");
+        Substitute substitute = getSubstitute(substituteNodeRef);
+        substituteCache.remove(substitute.getSubstituteId());
+        userToSubstitutesCache.remove(userRef);
+        addLogEntry(userRef, substitute, "applog_user_substitute_rem");
 
         if (log.isDebugEnabled()) {
             log.debug("Starting to delete substitute:" + substituteNodeRef);
@@ -155,7 +216,13 @@ public class SubstituteServiceImpl implements SubstituteService, BeanFactoryAwar
     }
 
     @Override
-    public List<Substitute> findActiveSubstitutionDuties(String userName) {
+    public List<Substitute> searchActiveSubstitutionDuties(String userName) {
+        List<Substitute> substitutes = substituteCache.get(userName);
+        if (substitutes != null) {
+            return substitutes;
+        }
+        substitutes = new ArrayList<>();
+
         List<String> queryParts = new ArrayList<String>();
         queryParts.add(generateTypeQuery(SubstituteModel.Types.SUBSTITUTE));
         queryParts.add(generateStringExactQuery(userName, SubstituteModel.Props.SUBSTITUTE_ID));
@@ -163,19 +230,19 @@ public class SubstituteServiceImpl implements SubstituteService, BeanFactoryAwar
         queryParts.add(generateDatePropertyRangeQuery(null, today, SubstituteModel.Props.SUBSTITUTION_START_DATE));
         queryParts.add(generateDatePropertyRangeQuery(today, null, SubstituteModel.Props.SUBSTITUTION_END_DATE));
         String query = joinQueryPartsAnd(queryParts);
-        List<Substitute> substitutes = new ArrayList<Substitute>();
 
         List<NodeRef> nodeRefs = getDocumentSearchService().searchNodes(query, -1, "activeSubstitutionDuties");
         for (NodeRef nodeRef : nodeRefs) {
             substitutes.add(getSubstitute(nodeRef));
         }
+        substituteCache.put(userName, Collections.unmodifiableList(substitutes));
         return substitutes;
     }
 
     @Override
     public boolean canBeSubstituting(String otherUserName) {
         String fullyAuthenticatedUser = AuthenticationUtil.getFullyAuthenticatedUser();
-        for (Substitute substitute : findActiveSubstitutionDuties(fullyAuthenticatedUser)) {
+        for (Substitute substitute : searchActiveSubstitutionDuties(fullyAuthenticatedUser)) {
             if (StringUtils.equals(substitute.getReplacedPersonUserName(), otherUserName)) {
                 return true;
             }
@@ -214,6 +281,15 @@ public class SubstituteServiceImpl implements SubstituteService, BeanFactoryAwar
         return substitutes;
     }
 
+    @Override
+    public String clearCache() {
+        int subsCacheSize = substituteCache.getKeys().size();
+        int userToSubsCacheSize = userToSubstitutesCache.getKeys().size();
+        substituteCache.clear();
+        userToSubstitutesCache.clear();
+        return String.format("Removed %d elements from substituteCache and %d elements from userToSubstitutesCache", subsCacheSize, userToSubsCacheSize);
+    }
+
     private NodeRef getSubstitutesNode(NodeRef userNodeRef, boolean createIfNotExist) {
         List<ChildAssociationRef> subs = nodeService.getChildAssocs(userNodeRef, SubstituteModel.Associations.SUBSTITUTES, SubstituteModel.Types.SUBSTITUTES);
 
@@ -244,17 +320,17 @@ public class SubstituteServiceImpl implements SubstituteService, BeanFactoryAwar
         this.nodeService = nodeService;
     }
 
-    public void setGeneralService(GeneralService generalService) {
-        this.generalService = generalService;
-    }
-
-    public void setSearchService(SearchService searchService) {
-        this.searchService = searchService;
-    }
-
     @Override
     public void setBeanFactory(BeanFactory beanFactory) {
         this.beanFactory = beanFactory;
+    }
+
+    public void setSubstituteCache(SimpleCache<String, List<Substitute>> substituteCache) {
+        this.substituteCache = substituteCache;
+    }
+
+    public void setUserToSubstitutesCache(SimpleCache<NodeRef, List<UnmodifiableSubstitute>> userToSubstitutesCache) {
+        this.userToSubstitutesCache = userToSubstitutesCache;
     }
 
     private void addLogEntry(NodeRef userRef, Substitute substitute, String msgCode) {

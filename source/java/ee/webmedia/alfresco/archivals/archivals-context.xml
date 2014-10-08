@@ -112,7 +112,26 @@
             </props>
          </list>
       </property>
-   </bean> 
+   </bean>
+   
+   <bean id="archivalsParametersBootstrap3" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="parametersSpacesBootstrap" />
+         </list>
+      </property>
+      <property name="importer" ref="spacesBootstrap" />
+      <property name="bootstrapViews">
+         <list>
+            <props>
+               <prop key="path">/param:parameters</prop>
+               <prop key="location">ee/webmedia/alfresco/archivals/bootstrap/archivals-parameters3.xml</prop>
+            </props>
+         </list>
+      </property>
+   </bean>
    
    <bean id="archivalsSpacesBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
       <property name="moduleId" value="common" />
@@ -144,7 +163,7 @@
       <property name="seriesService" ref="SeriesService" />
       <property name="volumeService" ref="VolumeService" />
       <property name="functionsService" ref="FunctionsService" />
-      <property name="searchService" ref="SearchService" />
+      <property name="documentSearchService" ref="DocumentSearchService" />
       <property name="dictionaryService" ref="DictionaryService" />
       <property name="adrService" ref="AdrService" />
       <property name="documentService" ref="DocumentService" />
@@ -177,7 +196,7 @@
       </property>
    </bean>
    
-   <bean class="org.alfresco.web.app.ResourceBundleBootstrap">
+   <bean id="archivalsResourceBundle" class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
       <property name="resourceBundles">
          <list>
             <value>ee/webmedia/alfresco/archivals/web/archivals-webclient</value>

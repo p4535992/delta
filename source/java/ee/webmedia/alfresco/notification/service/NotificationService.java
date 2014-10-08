@@ -104,6 +104,4 @@ public interface NotificationService {
 
     public void deleteUserSpecificNotification(String userKey);
 
-    boolean isSubstitutionTaskEndDateRestricted();
-
 }

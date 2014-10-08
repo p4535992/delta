@@ -292,6 +292,9 @@
             </property>
             <property name="wfs:compoundWorkflowId">
                <type>d:text</type>
+            </property>
+            <property name="wfs:compoundWorkflowStoreId">
+               <type>d:text</type>
             </property>  
          </properties>
          <mandatory-aspects>

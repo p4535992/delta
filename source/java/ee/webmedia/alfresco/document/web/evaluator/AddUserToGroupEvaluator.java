@@ -1,12 +1,9 @@
 package ee.webmedia.alfresco.document.web.evaluator;
 
-import javax.faces.context.FacesContext;
-
 import org.alfresco.web.action.evaluator.BaseActionEvaluator;
-import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.repository.Node;
 
-import ee.webmedia.alfresco.user.service.UserService;
+import ee.webmedia.alfresco.common.web.BeanHelper;
 
 /**
  * Check if current user can add users to groups in this installation.
@@ -22,8 +19,7 @@ public class AddUserToGroupEvaluator extends BaseActionEvaluator {
 
     @Override
     public boolean evaluate(Object obj) {
-        UserService userService = (UserService) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), UserService.BEAN_NAME);
-        return userService.isDocumentManager() && userService.isGroupsEditingAllowed(); // admins are doc managers
+        return BeanHelper.getUserService().isDocumentManager() && BeanHelper.getApplicationConstantsBean().isGroupsEditingAllowed(); // admins are doc managers
     }
 
 }

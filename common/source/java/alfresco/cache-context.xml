@@ -394,14 +394,14 @@
 
    <!-- The cross-transaction shared cache for Person properties -->
    
-   <bean name="personPropertiesSharedCache" class="org.alfresco.repo.cache.EhCacheAdapter">
+   <bean name="personNodesSharedCache" class="org.alfresco.repo.cache.EhCacheAdapter">
       <property name="cache">
          <bean class="org.springframework.cache.ehcache.EhCacheFactoryBean" >
             <property name="cacheManager">
                <ref bean="internalEHCacheManager" />
             </property>
             <property name="cacheName">
-               <value>org.alfresco.cache.personPropertiesCache</value>
+               <value>org.alfresco.cache.personNodesCache</value>
             </property>
          </bean>
       </property>
@@ -409,9 +409,9 @@
    
    <!-- The transactional cache for Person -->
    
-   <bean name="personPropertiesCache" class="org.alfresco.repo.cache.TransactionalCache">
+   <bean name="personNodesCache" class="org.alfresco.repo.cache.TransactionalCache">
       <property name="sharedCache">
-         <ref bean="personPropertiesSharedCache" />
+         <ref bean="personNodesSharedCache" />
       </property>
       <property name="cacheManager" >
          <ref bean="transactionalEHCacheManager" />
@@ -425,6 +425,468 @@
       </property>
    </bean>  
    
+   <!-- ============================================= -->
+   <!-- Classificators nodeRef to Classificator cache -->
+   <!-- ============================================= -->
+   
+   <bean name="classificatorsSharedCache" class="org.alfresco.repo.cache.EhCacheAdapter">
+      <property name="cache">
+         <bean class="org.springframework.cache.ehcache.EhCacheFactoryBean" >
+            <property name="cacheManager">
+               <ref bean="internalEHCacheManager" />
+            </property>
+            <property name="cacheName">
+               <value>org.alfresco.cache.classificatorsCache</value>
+            </property>
+         </bean>
+      </property>
+   </bean>
+   
+   <bean name="classificatorsCache" class="org.alfresco.repo.cache.TransactionalCache">
+      <property name="sharedCache">
+         <ref bean="classificatorsSharedCache" />
+      </property>
+      <property name="cacheManager" >
+         <ref bean="transactionalEHCacheManager" />
+      </property>
+      <!-- Eh cache area -->
+      <property name="name">
+         <value>org.alfresco.classificatorsCacheTransactionalCache</value>
+      </property>
+      <property name="maxCacheSize">
+         <value>10000</value>
+      </property>
+   </bean>
+   
+   <!-- ============================================= -->
+   <!-- Parameter name to Parameter cache -->
+   <!-- ============================================= -->
+   
+   <bean name="parametersSharedCache" class="org.alfresco.repo.cache.EhCacheAdapter">
+      <property name="cache">
+         <bean class="org.springframework.cache.ehcache.EhCacheFactoryBean" >
+            <property name="cacheManager">
+               <ref bean="internalEHCacheManager" />
+            </property>
+            <property name="cacheName">
+               <value>org.alfresco.cache.parametersCache</value>
+            </property>
+         </bean>
+      </property>
+   </bean>
+   
+   <bean name="parametersCache" class="org.alfresco.repo.cache.TransactionalCache">
+      <property name="sharedCache">
+         <ref bean="parametersSharedCache" />
+      </property>
+      <property name="cacheManager" >
+         <ref bean="transactionalEHCacheManager" />
+      </property>
+      <!-- Eh cache area -->
+      <property name="name">
+         <value>org.alfresco.parametersCacheTransactionalCache</value>
+      </property>
+      <property name="maxCacheSize">
+         <value>10000</value>
+      </property>
+   </bean>
+   
+   <!-- ============================================= -->
+   <!-- Function nodeRef to UnmodifiableFunction cache -->
+   <!-- ============================================= -->
+   
+   <bean name="functionSharedCache" class="org.alfresco.repo.cache.EhCacheAdapter">
+      <property name="cache">
+         <bean class="org.springframework.cache.ehcache.EhCacheFactoryBean" >
+            <property name="cacheManager">
+               <ref bean="internalEHCacheManager" />
+            </property>
+            <property name="cacheName">
+               <value>org.alfresco.cache.functionCache</value>
+            </property>
+         </bean>
+      </property>
+   </bean>
+   
+   <bean name="functionCache" class="org.alfresco.repo.cache.TransactionalCache">
+      <property name="sharedCache">
+         <ref bean="functionSharedCache" />
+      </property>
+      <property name="cacheManager" >
+         <ref bean="transactionalEHCacheManager" />
+      </property>
+      <!-- Eh cache area -->
+      <property name="name">
+         <value>org.alfresco.functionCacheTransactionalCache</value>
+      </property>
+      <property name="maxCacheSize">
+         <value>10000</value>
+      </property>
+   </bean>
+   
+   <!-- ============================================= -->
+   <!-- Series nodeRef to UnmodifiableSeries cache -->
+   <!-- ============================================= -->
+   
+   <bean name="seriesSharedCache" class="org.alfresco.repo.cache.EhCacheAdapter">
+      <property name="cache">
+         <bean class="org.springframework.cache.ehcache.EhCacheFactoryBean" >
+            <property name="cacheManager">
+               <ref bean="internalEHCacheManager" />
+            </property>
+            <property name="cacheName">
+               <value>org.alfresco.cache.seriesCache</value>
+            </property>
+         </bean>
+      </property>
+   </bean>
+   
+   <bean name="seriesCache" class="org.alfresco.repo.cache.TransactionalCache">
+      <property name="sharedCache">
+         <ref bean="seriesSharedCache" />
+      </property>
+      <property name="cacheManager" >
+         <ref bean="transactionalEHCacheManager" />
+      </property>
+      <!-- Eh cache area -->
+      <property name="name">
+         <value>org.alfresco.seriesCacheTransactionalCache</value>
+      </property>
+      <property name="maxCacheSize">
+         <value>10000</value>
+      </property>
+   </bean>  
+   
+   <!-- ============================================= -->
+   <!-- Volume nodeRef to UnmodifiableVolume cache -->
+   <!-- ============================================= -->
+   
+   <bean name="volumeSharedCache" class="org.alfresco.repo.cache.EhCacheAdapter">
+      <property name="cache">
+         <bean class="org.springframework.cache.ehcache.EhCacheFactoryBean" >
+            <property name="cacheManager">
+               <ref bean="internalEHCacheManager" />
+            </property>
+            <property name="cacheName">
+               <value>org.alfresco.cache.volumeCache</value>
+            </property>
+         </bean>
+      </property>
+   </bean>
+   
+   <bean name="volumeCache" class="org.alfresco.repo.cache.TransactionalCache">
+      <property name="sharedCache">
+         <ref bean="volumeSharedCache" />
+      </property>
+      <property name="cacheManager" >
+         <ref bean="transactionalEHCacheManager" />
+      </property>
+      <!-- Eh cache area -->
+      <property name="name">
+         <value>org.alfresco.volumeCacheTransactionalCache</value>
+      </property>
+      <property name="maxCacheSize">
+         <value>10000</value>
+      </property>
+   </bean>    
+   
+   <!-- ============================================= -->
+   <!-- Case nodeRef to UnmodifiableCase cache -->
+   <!-- ============================================= -->
+   
+   <bean name="caseSharedCache" class="org.alfresco.repo.cache.EhCacheAdapter">
+      <property name="cache">
+         <bean class="org.springframework.cache.ehcache.EhCacheFactoryBean" >
+            <property name="cacheManager">
+               <ref bean="internalEHCacheManager" />
+            </property>
+            <property name="cacheName">
+               <value>org.alfresco.cache.caseCache</value>
+            </property>
+         </bean>
+      </property>
+   </bean>
+   
+   <bean name="caseCache" class="org.alfresco.repo.cache.TransactionalCache">
+      <property name="sharedCache">
+         <ref bean="caseSharedCache" />
+      </property>
+      <property name="cacheManager" >
+         <ref bean="transactionalEHCacheManager" />
+      </property>
+      <!-- Eh cache area -->
+      <property name="name">
+         <value>org.alfresco.caseCacheTransactionalCache</value>
+      </property>
+      <property name="maxCacheSize">
+         <value>10000</value>
+      </property>
+   </bean>   
+    
+   <!-- ============================================= -->
+   <!-- CaseFileType nodeRef to UnmodifiableDynamicType cache -->
+   <!-- ============================================= -->
+   
+   <bean name="caseFileTypeSharedCache" class="org.alfresco.repo.cache.EhCacheAdapter">
+      <property name="cache">
+         <bean class="org.springframework.cache.ehcache.EhCacheFactoryBean" >
+            <property name="cacheManager">
+               <ref bean="internalEHCacheManager" />
+            </property>
+            <property name="cacheName">
+               <value>org.alfresco.cache.caseFileTypeCache</value>
+            </property>
+         </bean>
+      </property>
+   </bean>
+   
+   <bean name="caseFileTypeCache" class="org.alfresco.repo.cache.TransactionalCache">
+      <property name="sharedCache">
+         <ref bean="caseFileTypeSharedCache" />
+      </property>
+      <property name="cacheManager" >
+         <ref bean="transactionalEHCacheManager" />
+      </property>
+      <!-- Eh cache area -->
+      <property name="name">
+         <value>org.alfresco.caseFileTypeTransactionalCache</value>
+      </property>
+      <property name="maxCacheSize">
+         <value>10000</value>
+      </property>
+   </bean> 
+   
+   <!-- ============================================= -->
+   <!-- DocumentType nodeRef to UnmodifiableDynamicType cache -->
+   <!-- ============================================= -->
+   
+   <bean name="documentTypeSharedCache" class="org.alfresco.repo.cache.EhCacheAdapter">
+      <property name="cache">
+         <bean class="org.springframework.cache.ehcache.EhCacheFactoryBean" >
+            <property name="cacheManager">
+               <ref bean="internalEHCacheManager" />
+            </property>
+            <property name="cacheName">
+               <value>org.alfresco.cache.documentTypeCache</value>
+            </property>
+         </bean>
+      </property>
+   </bean>
+   
+   <bean name="documentTypeCache" class="org.alfresco.repo.cache.TransactionalCache">
+      <property name="sharedCache">
+         <ref bean="documentTypeSharedCache" />
+      </property>
+      <property name="cacheManager" >
+         <ref bean="transactionalEHCacheManager" />
+      </property>
+      <!-- Eh cache area -->
+      <property name="name">
+         <value>org.alfresco.documentTypeTransactionalCache</value>
+      </property>
+      <property name="maxCacheSize">
+         <value>10000</value>
+      </property>
+   </bean>         
+   
+   <!-- ============================================= -->
+   <!-- DocumentType nodeRef to UnmodifiableDynamicType cache -->
+   <!-- ============================================= -->
+   
+   <bean name="dynamicTypeAndVersionSharedCache" class="org.alfresco.repo.cache.EhCacheAdapter">
+      <property name="cache">
+         <bean class="org.springframework.cache.ehcache.EhCacheFactoryBean" >
+            <property name="cacheManager">
+               <ref bean="internalEHCacheManager" />
+            </property>
+            <property name="cacheName">
+               <value>org.alfresco.cache.dynamicTypeAndVersionCache</value>
+            </property>
+         </bean>
+      </property>
+   </bean>
+   
+   <bean name="dynamicTypeAndVersionCache" class="org.alfresco.repo.cache.TransactionalCache">
+      <property name="sharedCache">
+         <ref bean="dynamicTypeAndVersionSharedCache" />
+      </property>
+      <property name="cacheManager" >
+         <ref bean="transactionalEHCacheManager" />
+      </property>
+      <!-- Eh cache area -->
+      <property name="name">
+         <value>org.alfresco.dynamicTypeAndVersionTransactionalCache</value>
+      </property>
+      <property name="maxCacheSize">
+         <value>500</value>
+      </property>
+   </bean>
+   
+   <!-- ============================================= -->
+   <!-- Authority name to Authority cache -->
+   <!-- ============================================= -->
+   
+   <bean name="authoritySharedCache" class="org.alfresco.repo.cache.EhCacheAdapter">
+      <property name="cache">
+         <bean class="org.springframework.cache.ehcache.EhCacheFactoryBean" >
+            <property name="cacheManager">
+               <ref bean="internalEHCacheManager" />
+            </property>
+            <property name="cacheName">
+               <value>org.alfresco.cache.authorityCache</value>
+            </property>
+         </bean>
+      </property>
+   </bean>
+   
+   <bean name="authorityCache" class="org.alfresco.repo.cache.TransactionalCache">
+      <property name="sharedCache">
+         <ref bean="authoritySharedCache" />
+      </property>
+      <property name="cacheManager" >
+         <ref bean="transactionalEHCacheManager" />
+      </property>
+      <!-- Eh cache area -->
+      <property name="name">
+         <value>org.alfresco.authorityCacheTransactionalCache</value>
+      </property>
+      <property name="maxCacheSize">
+         <value>10000</value>
+      </property>
+   </bean>
+   
+   <!-- ============================================= -->
+   <!-- FieldDefinition id to FieldDefinition cache -->
+   <!-- ============================================= -->
+   
+   <bean name="fieldDefinitionSharedCache" class="org.alfresco.repo.cache.EhCacheAdapter">
+      <property name="cache">
+         <bean class="org.springframework.cache.ehcache.EhCacheFactoryBean" >
+            <property name="cacheManager">
+               <ref bean="internalEHCacheManager" />
+            </property>
+            <property name="cacheName">
+               <value>org.alfresco.cache.fieldDefinitionCache</value>
+            </property>
+         </bean>
+      </property>
+   </bean>
+   
+   <bean name="fieldDefinitionCache" class="org.alfresco.repo.cache.TransactionalCache">
+      <property name="sharedCache">
+         <ref bean="fieldDefinitionSharedCache" />
+      </property>
+      <property name="cacheManager" >
+         <ref bean="transactionalEHCacheManager" />
+      </property>
+      <!-- Eh cache area -->
+      <property name="name">
+         <value>org.alfresco.fieldDefinitionTransactionalCache</value>
+      </property>
+      <property name="maxCacheSize">
+         <value>10000</value>
+      </property>
+   </bean>   
+
+   <!-- ============================================= -->
+   <!-- Authority name to Authority cache -->
+   <!-- ============================================= -->
+   
+   <bean name="compoundWorkflowDefinitionsSharedCache" class="org.alfresco.repo.cache.EhCacheAdapter">
+      <property name="cache">
+         <bean class="org.springframework.cache.ehcache.EhCacheFactoryBean" >
+            <property name="cacheManager">
+               <ref bean="internalEHCacheManager" />
+            </property>
+            <property name="cacheName">
+               <value>org.alfresco.cache.compoundWorkflowDefinitionsCache</value>
+            </property>
+         </bean>
+      </property>
+   </bean>
+   
+   <bean name="compoundWorkflowDefinitionsCache" class="org.alfresco.repo.cache.TransactionalCache">
+      <property name="sharedCache">
+         <ref bean="compoundWorkflowDefinitionsSharedCache" />
+      </property>
+      <property name="cacheManager" >
+         <ref bean="transactionalEHCacheManager" />
+      </property>
+      <!-- Eh cache area -->
+      <property name="name">
+         <value>org.alfresco.cache.compoundWorkflowDefinitionsTransactionalCache</value>
+      </property>
+      <property name="maxCacheSize">
+         <value>10000</value>
+      </property>
+   </bean>
+   
+   <!-- ============================================= -->
+   <!-- Substitute userName to List<Substitute> cache (User to list of people who are substituting this person) -->
+   <!-- ============================================= -->
+   
+   <bean name="substituteSharedCache" class="org.alfresco.repo.cache.EhCacheAdapter">
+      <property name="cache">
+         <bean class="org.springframework.cache.ehcache.EhCacheFactoryBean" >
+            <property name="cacheManager">
+               <ref bean="internalEHCacheManager" />
+            </property>
+            <property name="cacheName">
+               <value>org.alfresco.cache.substituteCache</value>
+            </property>
+         </bean>
+      </property>
+   </bean>
+   
+   <bean name="substituteCache" class="org.alfresco.repo.cache.TransactionalCache">
+      <property name="sharedCache">
+         <ref bean="substituteSharedCache" />
+      </property>
+      <property name="cacheManager" >
+         <ref bean="transactionalEHCacheManager" />
+      </property>
+      <!-- Eh cache area -->
+      <property name="name">
+         <value>org.alfresco.substituteTransactionalCache</value>
+      </property>
+      <property name="maxCacheSize">
+         <value>2000</value>
+      </property>
+   </bean>
+   
+   <!-- ============================================= -->
+   <!-- User nodeRef to List<Substitute> (User to list of people who he/she is substituting) -->
+   <!-- ============================================= -->
+   
+   <bean name="userToSubstitutesSharedCache" class="org.alfresco.repo.cache.EhCacheAdapter">
+      <property name="cache">
+         <bean class="org.springframework.cache.ehcache.EhCacheFactoryBean" >
+            <property name="cacheManager">
+               <ref bean="internalEHCacheManager" />
+            </property>
+            <property name="cacheName">
+               <value>org.alfresco.cache.userToSubstitutesCache</value>
+            </property>
+         </bean>
+      </property>
+   </bean>
+   
+   <bean name="userToSubstitutesCache" class="org.alfresco.repo.cache.TransactionalCache">
+      <property name="sharedCache">
+         <ref bean="userToSubstitutesSharedCache" />
+      </property>
+      <property name="cacheManager" >
+         <ref bean="transactionalEHCacheManager" />
+      </property>
+      <!-- Eh cache area -->
+      <property name="name">
+         <value>org.alfresco.userToSubstitutesTransactionalCache</value>
+      </property>
+      <property name="maxCacheSize">
+         <value>2000</value>
+      </property>
+   </bean>
+
    <!-- ===================================== -->
    <!-- Organization structure nodeRef to properties (Map<QName, Serializable) cache      -->
    <!-- ===================================== -->

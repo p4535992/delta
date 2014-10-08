@@ -137,28 +137,6 @@ public class TaskSearchUtil {
         return sb.toString();
     }
 
-    public static QName getPropQNameFromDbFieldName(String fieldName) {
-        String namespaceUri = null;
-        String prefix = null;
-        if (fieldName.startsWith(prefix = getPrefix(WorkflowCommonModel.PREFIX) + SEPARATOR)) {
-            namespaceUri = WorkflowCommonModel.URI;
-        } else if (fieldName.startsWith(prefix = getPrefix(WorkflowSpecificModel.PREFIX) + SEPARATOR)) {
-            namespaceUri = WorkflowSpecificModel.URI;
-        } else {
-            return null;
-        }
-        StringTokenizer st = new StringTokenizer(fieldName.substring(prefix.length()), SEPARATOR);
-        StringBuilder sb = new StringBuilder();
-        boolean firstToken = true;
-        while (st.hasMoreTokens()) {
-            String token = st.nextToken();
-            char firstChar = firstToken ? token.charAt(0) : Character.toUpperCase(token.charAt(0));
-            sb.append(firstChar + token.substring(1));
-            firstToken = false;
-        }
-        return QName.createQName(namespaceUri, sb.toString());
-    }
-
     private static String getPrefix(String prefix) {
         return (new StringTokenizer(prefix, ":")).nextToken();
     }

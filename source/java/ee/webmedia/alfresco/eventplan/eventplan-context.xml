@@ -24,19 +24,11 @@
       </property>
    </bean>
 
-   <bean class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
+   <bean id="eventPlanResourceBundles" class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
       <property name="resourceBundles">
          <list>
             <value>ee/webmedia/alfresco/eventplan/web/eventplan-webclient</value>
-         </list>
-      </property>
-   </bean>
-
-   <bean class="org.alfresco.web.app.ResourceBundleBootstrap">
-      <property name="resourceBundles">
-         <list>
             <value>ee/webmedia/alfresco/eventplan/model/eventplan-model</value>
-            <value>ee/webmedia/alfresco/eventplan/web/eventplan-webclient</value>
          </list>
       </property>
    </bean>

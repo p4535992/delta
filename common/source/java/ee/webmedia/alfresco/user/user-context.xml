@@ -22,21 +22,15 @@
       <property name="configurableService" ref="ConfigurableService" />
       <property name="namespaceService" ref="NamespaceService" />
       <property name="logService" ref="LogService" />
-      <property name="groupsEditingAllowed" value="${groups.editingAllowed}" />
-   </bean>
-
-   <bean id="userResourceBundleBootstrap" class="org.alfresco.web.app.ResourceBundleBootstrap">
-      <property name="resourceBundles">
-         <list>
-            <value>ee.webmedia.alfresco.user.web.user-webclient</value>
-         </list>
-      </property>
+      <property name="applicationConstantsBean" ref="applicationConstantsBean" />
+      <property name="authorityCache" ref="authorityCache" />
    </bean>
 
    <bean id="userSystemResourceBundles" class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
       <property name="resourceBundles">
          <list>
             <value>ee.webmedia.alfresco.user.system-messages</value>
+            <value>ee.webmedia.alfresco.user.web.user-webclient</value>
          </list>
       </property>
    </bean>
@@ -50,6 +44,7 @@
       <property name="target" ref="userService" />
       <property name="interceptorNames">
          <list>
+            <idref bean="repeatingServiceCallInterceptor" />
             <idref bean="commonTransactionInterceptor" />
          </list>
       </property>

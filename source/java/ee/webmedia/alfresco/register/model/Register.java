@@ -22,6 +22,14 @@ public class Register implements Serializable {
     @AlfrescoModelProperty(isMappable = false)
     private NodeRef nodeRef;
 
+    public Register() {
+    }
+
+    public Register(int id, int counter) {
+        this.id = id;
+        this.counter = counter;
+    }
+
     @Override
     public String toString() {
         return new StringBuilder()

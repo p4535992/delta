@@ -8,6 +8,7 @@ import static ee.webmedia.alfresco.parameters.model.Parameter.ImportStatus.PARAM
 import java.io.Serializable;
 import java.util.Date;
 
+import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
 import org.alfresco.service.namespace.QName;
 import org.apache.commons.lang.StringUtils;
@@ -30,6 +31,7 @@ public abstract class Parameter<T extends Serializable> implements Serializable 
     private String previousParamDescription;
     private String validationFailedMsgId;
     private ImportStatus statusOfValueChange;
+    private NodeRef nodeRef;
 
     private Date nextFireTime;
 
@@ -70,8 +72,12 @@ public abstract class Parameter<T extends Serializable> implements Serializable 
     }
 
     public void setParamValue(T paramValue) {
+        setPreviousParamValue();
         this.paramValue = paramValue;
-        this.statusOfValueChange = null;
+    }
+
+    private void setParamValueWithoutChangingPreviousValue(T paramValue) {
+        this.paramValue = paramValue;
     }
 
     public String getParamDescription() {
@@ -79,6 +85,7 @@ public abstract class Parameter<T extends Serializable> implements Serializable 
     }
 
     public void setParamDescription(String paramDescription) {
+        setPreviousParamDescription();
         this.paramDescription = paramDescription;
     }
 
@@ -146,7 +153,7 @@ public abstract class Parameter<T extends Serializable> implements Serializable 
         Object paramValueObject = paramValue;
         if (paramValueObject instanceof String) {
             String paramValueString = (String) paramValueObject;
-            setParamValue(convertFromString(paramValueString.trim()));
+            setParamValueWithoutChangingPreviousValue(convertFromString(paramValueString.trim()));
         }
     }
 
@@ -166,7 +173,11 @@ public abstract class Parameter<T extends Serializable> implements Serializable 
     }
 
     public void setPreviousParamValue() {
-        this.previousParamValue = paramValue;
+        if (paramValue instanceof String) {
+            this.previousParamValue = convertFromString((String) paramValue);
+        } else {
+            this.previousParamValue = (paramValue);
+        }
         statusOfValueChange = null;
     }
 
@@ -177,6 +188,10 @@ public abstract class Parameter<T extends Serializable> implements Serializable 
 
     public T getPreviousParamValue() {
         return previousParamValue;
+    }
+
+    public String getPreviousParamDescription() {
+        return previousParamDescription;
     }
 
     public ImportStatus getStatus() {
@@ -202,6 +217,14 @@ public abstract class Parameter<T extends Serializable> implements Serializable 
 
     private String getNvlStringVal(final T val) {
         return val == null ? "" : val.toString().trim();
+    }
+
+    public NodeRef getNodeRef() {
+        return nodeRef;
+    }
+
+    public void setNodeRef(NodeRef nodeRef) {
+        this.nodeRef = nodeRef;
     }
     // END: getters / setters
 

@@ -48,6 +48,7 @@ import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
 import ee.webmedia.alfresco.workflow.service.SignatureTask;
+import ee.webmedia.alfresco.workflow.service.WorkflowConstantsBean;
 import ee.webmedia.alfresco.workflow.service.WorkflowDbService;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
 import ee.webmedia.alfresco.workflow.service.WorkflowUtil;
@@ -86,6 +87,8 @@ public class CompundWorkflowDetailsController extends AbstractBaseController {
     private WorkflowDbService workflowDbService;
     @Resource
     private DocumentTemplateService documentTemplateService;
+    @Resource
+    private WorkflowConstantsBean workflowConstantsBean;
 
     @RequestMapping(value = COMPOUND_WORKFLOW_DETAILS_MAPPING + "/{compoundWorkflowNodeId}", method = RequestMethod.GET)
     public String setupCompoundWorkflow(@PathVariable String compoundWorkflowNodeId, Model model, HttpServletRequest request, RedirectAttributes redirectAttributes) {
@@ -107,10 +110,9 @@ public class CompundWorkflowDetailsController extends AbstractBaseController {
             addRedirectErrorMsg(redirectAttributes, "redirect.unavailable." + ExternalAccessPhaseListener.OUTCOME_COMPOUND_WORKFLOW_NODEREF);
             return "redirect:/m/tasks";
         }
-        List<CompoundWorkflow> compoundWorkflows = Arrays.asList(compoundWorkflow);
-        List<ee.webmedia.alfresco.workflow.service.Task> myTasks = workflowService.getMyTasksInProgress(compoundWorkflows);
-        Map<String, Task> myTasksMap = new HashMap<String, Task>();
-        Map<NodeRef, List<Pair<String, String>>> taskOutcomeButtons = new HashMap<NodeRef, List<Pair<String, String>>>();
+        List<ee.webmedia.alfresco.workflow.service.Task> myTasks = workflowService.getMyTasksInProgress(Arrays.asList(compoundWorkflow.getNodeRef()));
+        Map<String, Task> myTasksMap = new HashMap<>();
+        Map<NodeRef, List<Pair<String, String>>> taskOutcomeButtons = new HashMap<>();
         SigningFlowContainer signingFlow = null;
         SignatureTask signatureTask = null;
         if (signingFlowId != null) {
@@ -120,11 +122,12 @@ public class CompundWorkflowDetailsController extends AbstractBaseController {
         String buttonLabelPrefix = "workflow.task.type.";
         for (ee.webmedia.alfresco.workflow.service.Task task : myTasks) {
             ee.webmedia.mobile.alfresco.workflow.model.Task formTask = new ee.webmedia.mobile.alfresco.workflow.model.Task(task);
+            formTask.setSignTogether(isSignTogether(task));
             if (!task.isType(WorkflowSpecificModel.Types.SIGNATURE_TASK, WorkflowSpecificModel.Types.REVIEW_TASK)) {
                 continue;
             }
             if (!Boolean.TRUE.equals(task.getViewedByOwner())) {
-                BeanHelper.getWorkflowDbService().updateTaskSingleProperty(task, WorkflowCommonModel.Props.VIEWED_BY_OWNER, Boolean.TRUE);
+                BeanHelper.getWorkflowDbService().updateTaskSingleProperty(task, WorkflowCommonModel.Props.VIEWED_BY_OWNER, Boolean.TRUE, task.getWorkflowNodeRef());
             }
             myTasksMap.put(task.getNodeRef().toString(), formTask);
             if (signatureTask != null && task.getNodeRef().equals(signatureTask.getNodeRef())) {
@@ -164,7 +167,7 @@ public class CompundWorkflowDetailsController extends AbstractBaseController {
         model.addAttribute("taskOutcomeButtons", taskOutcomeButtons);
         model.addAttribute("compoundWorkflow", compoundWorkflow);
         model.addAttribute("reviewTaskOutcomes", getReviewTaskOutcomes());
-        if (BeanHelper.getWorkflowService().isWorkflowTitleEnabled()) {
+        if (BeanHelper.getWorkflowConstantsBean().isWorkflowTitleEnabled()) {
             model.addAttribute("compoundWorkflowTitle", compoundWorkflow.getTitle());
         }
 
@@ -176,8 +179,7 @@ public class CompundWorkflowDetailsController extends AbstractBaseController {
     }
 
     private void setupWorkflowBlock(Model model, CompoundWorkflow compoundWorkflow) {
-        List<WorkflowBlockItem> groupedWorkflowBlockItems = new ArrayList<WorkflowBlockItem>();
-        WorkflowBlockBean.collectWorkflowBlockItems(Arrays.asList(compoundWorkflow), groupedWorkflowBlockItems, null, null);
+        List<WorkflowBlockItem> groupedWorkflowBlockItems = BeanHelper.getWorkflowDbService().getWorkflowBlockItems(Arrays.asList(compoundWorkflow.getNodeRef()), null, null);
         setMessageSource(groupedWorkflowBlockItems);
         model.addAttribute(WORKFLOW_BLOCK_ITEMS_ATTR, groupedWorkflowBlockItems);
         model.addAttribute(TASK_COUNT_ATTR, WorkflowUtil.getTaskCount(compoundWorkflow));
@@ -186,16 +188,13 @@ public class CompundWorkflowDetailsController extends AbstractBaseController {
     private void setMessageSource(List<WorkflowBlockItem> groupedWorkflowBlockItems) {
         for (WorkflowBlockItem workflowBlockItem : groupedWorkflowBlockItems) {
             workflowBlockItem.setMessageSource(messageSource);
-            if (workflowBlockItem.isGroupBlockItem()) {
-                setMessageSource(workflowBlockItem.getGroupItems());
-            }
         }
     }
 
     private Map<Integer, String> getReviewTaskOutcomes() {
         if (reviewTaskOutcomes == null) {
             reviewTaskOutcomes = new HashMap<Integer, String>();
-            int outcomes = workflowService.getWorkflowTypes().get(WorkflowSpecificModel.Types.REVIEW_WORKFLOW).getTaskOutcomes();
+            int outcomes = workflowConstantsBean.getWorkflowTypes().get(WorkflowSpecificModel.Types.REVIEW_WORKFLOW).getTaskOutcomes();
             for (int i = 0; i < outcomes; i++) {
                 reviewTaskOutcomes.put(i, translate("workflow.task.type.reviewTask.outcome." + i + TITLE_SUFFIX));
             }
@@ -253,26 +252,24 @@ public class CompundWorkflowDetailsController extends AbstractBaseController {
             addErrorMessage("workflow_compound_edit_error_docDeleted");
             return "home";
         }
-        // TODO: optimize loading compound workflow if possible (all data may not be needed in mobile version)
-        CompoundWorkflow compoundWorkflow = workflowService.getCompoundWorkflow(compoundWorkflowNodeRef);
 
-        List<WorkflowBlockItem> groupedWorkflowBlockItems = new ArrayList<WorkflowBlockItem>();
+        List<WorkflowBlockItem> groupedWorkflowBlockItems = BeanHelper.getWorkflowDbService().getWorkflowBlockItems(Arrays.asList(compoundWorkflowNodeRef), null, null);
         List<WorkflowBlockItem> groupedWorkflowBlockItem = new ArrayList<WorkflowBlockItem>();
-        WorkflowBlockBean.collectWorkflowBlockItems(Arrays.asList(compoundWorkflow), groupedWorkflowBlockItems, null, null);
         WorkflowBlockItem currentItem = null;
         OUTER: for (WorkflowBlockItem workflowBlockItem : groupedWorkflowBlockItems) {
             if (!workflowBlockItem.isGroupBlockItem()) {
-                String workflowTaskId = workflowBlockItem.getTask().getNodeRef().getId();
+                String workflowTaskId = workflowBlockItem.getTaskNodeRef().getId();
                 if (workflowTaskId.equals(taskId)) {
                     return redirectToCompoundWorkflow(compoundWorkflowId);
                 }
             }
             else {
-                for (WorkflowBlockItem taskItem : workflowBlockItem.getGroupItems()) {
-                    String workflowTaskId = taskItem.getTask().getNodeRef().getId();
+                final List<WorkflowBlockItem> groupItems = BeanHelper.getWorkflowDbService().getWorkflowBlockItemGroup(workflowBlockItem);
+                for (WorkflowBlockItem taskItem : groupItems) {
+                    String workflowTaskId = taskItem.getTaskNodeRef().getId();
                     if (workflowTaskId.equals(taskId)) {
                         currentItem = workflowBlockItem;
-                        groupedWorkflowBlockItem.addAll(workflowBlockItem.getGroupItems());
+                        groupedWorkflowBlockItem.addAll(groupItems);
                         break OUTER;
                     }
                 }
@@ -355,14 +352,19 @@ public class CompundWorkflowDetailsController extends AbstractBaseController {
             return;
         }
         task.setComment(taskToFinish.getComment());
-        MobileSigningFlowContainer signingFlow = new MobileSigningFlowContainer((SignatureTask) task, inProgressTasksForm, inProgressTasksForm.getCompoundWorkflowRef(),
-                inProgressTasksForm.getContainerRef());
+        MobileSigningFlowContainer signingFlow = new MobileSigningFlowContainer((SignatureTask) task, isSignTogether(task), inProgressTasksForm,
+                inProgressTasksForm.getCompoundWorkflowRef(), inProgressTasksForm.getContainerRef());
         boolean signingPrepared = signingFlow.prepareSigning(this, redirectAttributes);
         if (!signingPrepared) {
             return;
         }
         long signingFlowId = signingFlowHolder.addSigningFlow(signingFlow, session);
         redirectAttributes.addFlashAttribute(SIGNING_FLOW_ID_ATTR, signingFlowId);
+    }
+
+    private boolean isSignTogether(ee.webmedia.alfresco.workflow.service.Task task) {
+        NodeRef worklowRef = task.getWorkflowNodeRef();
+        return WorkflowUtil.isSignTogetherType((String) BeanHelper.getNodeService().getProperty(worklowRef, WorkflowSpecificModel.Props.SIGNING_TYPE));
     }
 
     public boolean continueCurrentSigning(InProgressTasksForm inProgressTasksForm, RedirectAttributes redirectAttributes, Map<String, String> formActions, HttpSession session) {

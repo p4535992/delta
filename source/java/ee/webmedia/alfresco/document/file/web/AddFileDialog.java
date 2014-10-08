@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.document.file.web;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getApplicationConstantsBean;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDialogHelperBean;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getParametersService;
 import static ee.webmedia.alfresco.docadmin.web.DocAdminUtil.getDocTypeIdAndVersionNr;
@@ -184,7 +185,7 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
                 List<String> existingDisplayNames = getFileService().getDocumentFileDisplayNames(documentNodeRef);
                 Map<Integer, EInvoice> attachmentInvoices = new HashMap<Integer, EInvoice>();
                 Map<Integer, EInvoice> fileInvoices = new HashMap<Integer, EInvoice>();
-                boolean isParseInvoice = getEInvoiceService().isEinvoiceEnabled()
+                boolean isParseInvoice = getApplicationConstantsBean().isEinvoiceEnabled()
                         && DocumentSubtypeModel.Types.INVOICE.equals(getNodeService().getType(documentNodeRef));
                 boolean invoiceAdded = false;
                 boolean updateGeneratedFiles = false;
@@ -287,23 +288,27 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
     private void checkDigiDoc(NodeRef fileNodeRef, String fileName) {
         try {
             if (FilenameUtil.isDigiDocFile(fileName)) {
-                BeanHelper.getSignatureService().getDataItemsAndSignatureItems(fileNodeRef, false);
+                BeanHelper.getSignatureService().getDataItemsAndSignatureItems(fileNodeRef, false, FilenameUtil.isBdocFile(fileName));
             }
         } catch (SignatureException e) {
-            throw new UnableToPerformException("file_ddoc_not_valid", fileName);
+            throw new UnableToPerformException("file_digidoc_not_valid", fileName, getDigiDocFormat(fileName));
         }
     }
 
     private void checkDigiDoc(java.io.File file, String fileName) {
         try {
             if (FilenameUtil.isDigiDocFile(fileName)) {
-                BeanHelper.getSignatureService().getDataItemsAndSignatureItems(new FileInputStream(file), false);
+                BeanHelper.getSignatureService().getDataItemsAndSignatureItems(new FileInputStream(file), false, FilenameUtil.isBdocFile(fileName));
             }
         } catch (SignatureException e) {
-            throw new UnableToPerformException("file_ddoc_not_valid", fileName);
+            throw new UnableToPerformException("file_digidoc_not_valid", fileName, getDigiDocFormat(fileName));
         } catch (FileNotFoundException e) {
             throw new UnableToPerformException("file_not_found", fileName);
         }
+    }
+
+    private static String getDigiDocFormat(String fileName) {
+        return FilenameUtil.isBdocFile(fileName) ? "bdoc" : "ddoc";
     }
 
     private void checkFileSize(java.io.File file, String fileName) {
@@ -397,7 +402,7 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
 
     // TODO: optimize, store unmarshalled invoices for later use?
     public boolean isNeedMultipleInvoiceConfirmation() {
-        if (!getEInvoiceService().isEinvoiceEnabled()) {
+        if (!getApplicationConstantsBean().isEinvoiceEnabled()) {
             return false;
         }
         if (SystematicDocumentType.INVOICE.getId().equals(getDocTypeIdAndVersionNr(getDocumentDialogHelperBean().getNode()).getFirst())) {
@@ -865,22 +870,22 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
 
     public NodeRef getAttachmentParenNodeRef() {
         if (attachmentParentRef == null) {
-            attachmentParentRef = BeanHelper.getImapServiceExt().getAttachmentRoot();
+            attachmentParentRef = BeanHelper.getConstantNodeRefsBean().getAttachmentRoot();
         }
         return attachmentParentRef;
     }
 
     public List<SelectItem> getAttachmentFolders() {
         List<SelectItem> attachmentFolders = new ArrayList<SelectItem>();
-        NodeRef attachmentRootFolderRef = BeanHelper.getImapServiceExt().getAttachmentRoot();
+        NodeRef attachmentRootFolderRef = BeanHelper.getConstantNodeRefsBean().getAttachmentRoot();
         attachmentFolders.add(new SelectItem(attachmentRootFolderRef.toString(), MessageUtil.getMessage("menu_email_attachments")));
-        addFolderSelectItems(attachmentFolders, BeanHelper.getImapServiceExt().getImapSubfolders(attachmentRootFolderRef, ContentModel.TYPE_CONTENT), " ");
+        addFolderSelectItems(attachmentFolders, BeanHelper.getImapServiceExt().getImapSubfolders(attachmentRootFolderRef), " ");
         return attachmentFolders;
     }
 
     public NodeRef getScannedParenNodeRef() {
         if (scannedParentRef == null) {
-            scannedParentRef = BeanHelper.getGeneralService().getNodeRef(ScannedModel.Repo.SCANNED_SPACE);
+            scannedParentRef = BeanHelper.getConstantNodeRefsBean().getScannedFilesRoot();
         }
         return scannedParentRef;
     }
@@ -889,7 +894,7 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
         List<SelectItem> attachmentFolders = new ArrayList<SelectItem>();
         NodeRef scannedRootFolderRef = BeanHelper.getGeneralService().getNodeRef(ScannedModel.Repo.SCANNED_SPACE);
         attachmentFolders.add(new SelectItem(scannedRootFolderRef.toString(), MessageUtil.getMessage("menu_scanned_documents")));
-        addFolderSelectItems(attachmentFolders, BeanHelper.getFileService().getSubfolders(scannedRootFolderRef, ContentModel.TYPE_FOLDER, ContentModel.TYPE_CONTENT), " ");
+        addFolderSelectItems(attachmentFolders, BeanHelper.getFileService().getSubfolders(scannedRootFolderRef, ContentModel.TYPE_FOLDER, ContentModel.TYPE_CONTENT, false), " ");
         return attachmentFolders;
     }
 
@@ -897,7 +902,7 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
         for (Subfolder subfolder : subfolders) {
             String itemLabel = prefix + subfolder.getName();
             attachmentFolders.add(new SelectItem(subfolder.getNodeRef().toString(), itemLabel));
-            addFolderSelectItems(attachmentFolders, BeanHelper.getImapServiceExt().getImapSubfolders(subfolder.getNodeRef(), ContentModel.TYPE_CONTENT), prefix + prefix);
+            addFolderSelectItems(attachmentFolders, BeanHelper.getImapServiceExt().getImapSubfolders(subfolder.getNodeRef()), prefix + prefix);
         }
     }
 

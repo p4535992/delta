@@ -42,15 +42,7 @@
       </property>
    </bean>
 
-   <bean class="org.alfresco.web.app.ResourceBundleBootstrap">
-      <property name="resourceBundles">
-         <list>
-            <value>ee/webmedia/alfresco/document/web/document-webclient</value>
-         </list>
-      </property>
-   </bean>
-
-   <bean class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
+   <bean id="documentResourceBundles" class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
       <property name="resourceBundles">
          <list>
             <value>ee/webmedia/alfresco/document/web/document-webclient</value>
@@ -77,15 +69,11 @@
       <property name="permissionService" ref="PermissionService" />
       <property name="logService" ref="LogService" />
       <property name="caseFileLogService" ref="CaseFileLogService" />
-      <property name="fromDvkXPath" value="${dvk.received.parent.folder.xpath}${dvk.received.folder.name}" />
-      <property name="incomingEmailPath" value="${imap.config.home.rootPath}/imap-ext:incoming" />
-      <property name="receivedInvoicePath" value="/imap-ext:imap-root/imap-ext:receivedInvoices" />
-      <property name="sentEmailPath" value="${imap.config.home.rootPath}/imap-ext:sent" />
-      <property name="generateNewRegNumberInReregistration" value="${conf.document-regnumber.generate-new-in-reregistration.enabled}" />
-      <property name="finishUnregisteredDocumentEnabled" value="${conf.document.finish-unregistered-document.enabled}" />
       <property name="docLockService" ref="DocLockService" />
       <property name="searchService" ref="SearchService" />
-      <property name="volumeColumnEnabled" value="${conf.documents-list.volume-column.enabled}" />
+      <property name="bulkLoadNodeService" ref="BulkLoadNodeService" />
+      <property name="applicationConstantsBean" ref="applicationConstantsBean" />
+      <property name="constantNodeRefsBean" ref="constantNodeRefsBean" />
    </bean>
 
    <bean id="DocumentService" class="org.springframework.aop.framework.ProxyFactoryBean">
@@ -100,74 +88,6 @@
             <idref bean="commonTransactionInterceptor" />
          </list>
       </property>
-   </bean>
-
-   <bean id="propertiesModifierCallback" abstract="true">
-      <property name="documentService" ref="DocumentService" />
-   </bean>
-
-   <bean class="ee.webmedia.alfresco.document.propmodifiers.OwnerPropertiesModifierCallback" parent="propertiesModifierCallback">
-      <property name="organizationStructureService" ref="OrganizationStructureService" />
-   </bean>
-
-   <bean class="ee.webmedia.alfresco.document.propmodifiers.LicencePropertiesModifierCallback" parent="propertiesModifierCallback">
-      <property name="parametersService" ref="ParametersService" />
-   </bean>
-
-   <bean class="ee.webmedia.alfresco.document.propmodifiers.TenderingApplicationPropertiesModifierCallback" parent="propertiesModifierCallback">
-      <property name="parametersService" ref="ParametersService" />
-   </bean>
-
-   <bean class="ee.webmedia.alfresco.document.propmodifiers.ManagementsOrderPropertiesModifierCallback" parent="propertiesModifierCallback">
-      <property name="parametersService" ref="ParametersService" />
-   </bean>
-
-   <bean class="ee.webmedia.alfresco.document.propmodifiers.SupervisionReportPropertiesModifierCallback" parent="propertiesModifierCallback">
-      <property name="parametersService" ref="ParametersService" />
-   </bean>
-
-   <bean class="ee.webmedia.alfresco.document.propmodifiers.VacationOrderPropertiesModifierCallback" parent="propertiesModifierCallback">
-      <property name="parametersService" ref="ParametersService" />
-   </bean>
-
-   <bean class="ee.webmedia.alfresco.document.propmodifiers.ChancellorsOrderPropertiesModifierCallback" parent="propertiesModifierCallback">
-      <property name="parametersService" ref="ParametersService" />
-   </bean>
-
-   <bean id="abstractDocChildCreator" abstract="true" parent="propertiesModifierCallback">
-      <property name="nodeService" ref="NodeService" />
-      <property name="inMemoryChildNodeHelper" ref="inMemoryChildNodeHelper" />
-   </bean>
-
-   <bean class="ee.webmedia.alfresco.document.propmodifiers.ErrandApplicantAbroadPropertiesModifierCallback" parent="abstractDocChildCreator">
-      <property name="parametersService" ref="ParametersService" />
-   </bean>
-
-   <bean class="ee.webmedia.alfresco.document.propmodifiers.ErrandAbroadMvApplicantPropertiesModifierCallback" parent="abstractDocChildCreator">
-   </bean>
-
-   <bean class="ee.webmedia.alfresco.document.propmodifiers.ErrandDocDomesticPropertiesModifierCallback" parent="abstractDocChildCreator">
-      <property name="parametersService" ref="ParametersService" />
-   </bean>
-
-   <bean class="ee.webmedia.alfresco.document.propmodifiers.TrainingDocChildCreator" parent="abstractDocChildCreator" />
-
-   <bean class="ee.webmedia.alfresco.document.propmodifiers.ContractMvPropertiesModifierCallback" parent="propertiesModifierCallback">
-      <property name="parametersService" ref="ParametersService" />
-   </bean>
-
-   <bean class="ee.webmedia.alfresco.document.propmodifiers.ErrandAbroadMvApplicantPropertiesModifierCallback" parent="abstractDocChildCreator" />
-
-   <bean id="contractDocChildCreator" class="ee.webmedia.alfresco.document.propmodifiers.ContractDocChildCreator" parent="abstractDocChildCreator" />
-   <bean class="ee.webmedia.alfresco.document.propmodifiers.ContractMvDocChildCreator" parent="contractDocChildCreator" />
-   <bean id="contractV1CopyPropertiesModifierCallback" class="ee.webmedia.alfresco.document.propmodifiers.ContractV1CopyPropertiesModifierCallback" parent="abstractDocChildCreator" />
-
-   <bean class="ee.webmedia.alfresco.document.propmodifiers.OrderMvPropertiesModifierCallback" parent="propertiesModifierCallback">
-      <property name="parametersService" ref="ParametersService" />
-   </bean>
-
-   <bean class="ee.webmedia.alfresco.document.propmodifiers.OutgoingLetterMvPropertiesModifierCallback" parent="propertiesModifierCallback">
-      <property name="parametersService" ref="ParametersService" />
    </bean>
 
    <bean id="documentDraftsSpacesBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
@@ -324,16 +244,6 @@
             <idref bean="commonTransactionInterceptor" />
          </list>
       </property>
-   </bean>
-
-   <bean class="ee.webmedia.alfresco.document.web.UnsentDocumentMenuItemProcessor">
-      <property name="menuService" ref="MenuService" />
-      <property name="documentSearchService" ref="DocumentSearchService" />
-   </bean>
-
-   <bean class="ee.webmedia.alfresco.document.web.OutboxDocumentMenuItemProcessor">
-      <property name="menuService" ref="MenuService" />
-      <property name="documentSearchService" ref="DocumentSearchService" />
    </bean>
 
    <bean id="inMemoryChildNodeHelper" class="ee.webmedia.alfresco.document.service.InMemoryChildNodeHelper">

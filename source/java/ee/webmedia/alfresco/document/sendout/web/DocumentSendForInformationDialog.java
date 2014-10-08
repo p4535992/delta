@@ -159,6 +159,11 @@ public class DocumentSendForInformationDialog extends BaseDialogBean {
         content = null;
     }
 
+    @Override
+    public void clean() {
+        reset();
+    }
+
     public void updateTemplate(@SuppressWarnings("unused") ActionEvent event) {
         NodeRef selectedTemplate = getSelectedTemplateNodeRef();
         if (StringUtils.isNotBlank(selectedEmailTemplate) && selectedTemplate != null) {

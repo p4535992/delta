@@ -29,7 +29,7 @@ public class SignatureActionEvaluator extends BaseActionEvaluator {
     public boolean evaluate(Node node) {
         SignatureService signatureService = (SignatureService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance()).getBean(
                 SignatureService.BEAN_NAME);
-        if (signatureService.isDigiDocContainer(node.getNodeRef())) {
+        if (signatureService.isBDocContainer(node.getNodeRef())) {
             return node.hasPermission(PermissionService.WRITE);
         } else {
             ServiceRegistry serviceRegistry = Repository.getServiceRegistry(FacesContext.getCurrentInstance());

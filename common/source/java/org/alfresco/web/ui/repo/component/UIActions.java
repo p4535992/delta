@@ -25,6 +25,7 @@
 package org.alfresco.web.ui.repo.component;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -59,6 +60,8 @@ import org.alfresco.web.ui.repo.component.evaluator.PermissionEvaluator;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.myfaces.shared_impl.taglib.UIComponentTagUtils;
+
+import ee.webmedia.alfresco.common.evaluator.EvaluatorSharedResource;
 
 /**
  * @author kevinr
@@ -313,6 +316,16 @@ public class UIActions extends SelfRenderingComponent
       this.getChildren().add(wrapper);
       this.groups.add(contextId);
       
+      EvaluatorSharedResource<Serializable> evaluatorSharedResources = null;
+      if (actionGroup.isSharedResources()) {
+          try {
+              evaluatorSharedResources = actionGroup.getSharedResources().newInstance();
+
+          } catch (Throwable e) {
+              logger.error("Unable to create shared resources class instance", e);
+          }
+      }
+      
       // process each ActionDefinition in the order they were defined
       for (String actionId : actionGroup)
       {
@@ -380,6 +393,7 @@ public class UIActions extends SelfRenderingComponent
             evaluator.setId(createUniqueId());
             evaluator.setEvaluator(actionDef.Evaluator);
             evaluator.setValueBinding(ATTR_VALUE, facesApp.createValueBinding("#{" + ACTION_CONTEXT + "}"));
+            evaluator.setSharedResource(evaluatorSharedResources);
             
             // add the action evaluator component and walk down the hiearchy
             if (logger.isDebugEnabled())

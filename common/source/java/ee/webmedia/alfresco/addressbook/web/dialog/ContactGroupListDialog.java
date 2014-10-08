@@ -3,6 +3,7 @@ package ee.webmedia.alfresco.addressbook.web.dialog;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getAddressbookService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,6 +23,7 @@ import ee.webmedia.alfresco.utils.UserUtil;
 
 public class ContactGroupListDialog extends ContactGroupBaseDialog {
 
+    public static final String BEAN_NAME = "ContactGroupListDialog";
     private static final long serialVersionUID = 1L;
 
     private List<Node> contactGroups;
@@ -40,14 +42,16 @@ public class ContactGroupListDialog extends ContactGroupBaseDialog {
 
     private void initContactGroups() {
         contactGroups = getAddressbookService().listContactGroups();
-        for (Node contactGroup : contactGroups) {
+        for (Node contactGroup : getContactGroups()) {
             originalTaskCapableValues.put(contactGroup.getNodeRef(), Boolean.TRUE.equals(contactGroup.getProperties().get(AddressbookModel.Props.TASK_CAPABLE)));
         }
     }
 
-    public NodeRef getAddressbookNode() {
-        final NodeRef addressbookNodeRef = getAddressbookService().getAddressbookRoot();
-        return addressbookNodeRef;
+    @Override
+    public void clean() {
+        super.clean();
+        contactGroups = null;
+        originalTaskCapableValues.clear();
     }
 
     @Override
@@ -55,7 +59,7 @@ public class ContactGroupListDialog extends ContactGroupBaseDialog {
 
         // collect contacts for groups where taskCapable property has changed
         Map<NodeRef, Pair<Pair<String, Boolean>, List<Node>>> contactGroupContacts = new HashMap<NodeRef, Pair<Pair<String, Boolean>, List<Node>>>();
-        for (Node contactGroup : contactGroups) {
+        for (Node contactGroup : getContactGroups()) {
             Map<String, Object> contactGroupProperties = contactGroup.getProperties();
             Boolean taskCapableValue = Boolean.TRUE.equals(contactGroupProperties.get(AddressbookModel.Props.TASK_CAPABLE));
             Boolean originalTaskCapableValue = originalTaskCapableValues.get(contactGroup.getNodeRef());
@@ -114,6 +118,9 @@ public class ContactGroupListDialog extends ContactGroupBaseDialog {
     }
 
     public List<Node> getContactGroups() {
+        if (contactGroups == null) {
+            contactGroups = new ArrayList<>();
+        }
         return contactGroups;
     }
 

@@ -50,7 +50,7 @@ public class DownloadDigiDocContentServlet extends DownloadContentServlet {
 
     /**
      * Helper to generate a URL to a content node for downloading content from the server.
-     * 
+     *
      * @param pattern
      *            The pattern to use for the URL
      * @param ref
@@ -73,7 +73,7 @@ public class DownloadDigiDocContentServlet extends DownloadContentServlet {
     /**
      * Processes the download request using the current context i.e. no authentication checks are
      * made, it is presumed they have already been done.
-     * 
+     *
      * @param req
      *            The HTTP request
      * @param res
@@ -218,7 +218,7 @@ public class DownloadDigiDocContentServlet extends DownloadContentServlet {
         try {
             WebApplicationContext webAppContext = WebApplicationContextUtils.getWebApplicationContext(getServletContext());
             SignatureService signatureService = (SignatureService) webAppContext.getBean(SignatureService.BEAN_NAME);
-            SignatureItemsAndDataItems items = signatureService.getDataItemsAndSignatureItems(dDocRef, true);
+            SignatureItemsAndDataItems items = signatureService.getDataItemsAndSignatureItems(dDocRef, true, true);
             DataItem item = items.getDataItems().get(dataFileId);
 
             long size = item.getSize();

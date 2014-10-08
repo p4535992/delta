@@ -423,7 +423,7 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
 
     @Override
     public Pair<DocumentDynamic, DocumentTypeVersion> createNewDocumentInDrafts(String documentTypeId) {
-        NodeRef drafts = documentService.getDrafts();
+        NodeRef drafts = BeanHelper.getConstantNodeRefsBean().getDraftsRoot();
         return createNewDocument(documentTypeId, drafts);
     }
 
@@ -460,7 +460,7 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
     public DocumentDynamic getDocumentWithInMemoryChangesForEditing(NodeRef docRef) {
         DocumentDynamic document = getDocument(docRef);
         if (document.isImapOrDvk() && !document.isFromWebService()) {
-            Pair<DocumentType, DocumentTypeVersion> documentTypeAndVersion = documentConfigService.getDocumentTypeAndVersion(document.getNode());
+            Pair<DocumentType, DocumentTypeVersion> documentTypeAndVersion = documentConfigService.getDocumentTypeAndVersion(document.getNode(), true);
             Collection<Field> ownerNameFields = documentTypeAndVersion.getSecond().getFieldsById(Collections.singleton(DocumentCommonModel.Props.OWNER_NAME.getLocalName()));
             if (ownerNameFields.size() == 1) {
                 Field ownerNameField = ownerNameFields.iterator().next();
@@ -900,41 +900,8 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
 
         Set<NodeRef> associatedDocs = new HashSet<NodeRef>();
         associatedDocs.add(docRef);
-        getAssociatedDocRefs(docRef, associatedDocs, new HashSet<NodeRef>(), currentAssociatedDocs);
+        BeanHelper.getBulkLoadNodeService().getAssociatedDocRefs(docRef, associatedDocs, new HashSet<NodeRef>(), currentAssociatedDocs, new HashSet<Integer>());
         return associatedDocs;
-    }
-
-    private void getAssociatedDocRefs(NodeRef docRef, Set<NodeRef> associatedDocs, Set<NodeRef> checkedDocs, Set<NodeRef> currentAssociatedDocs) {
-        if (checkedDocs.contains(docRef)) {
-            return;
-        }
-        checkedDocs.add(docRef);
-
-        if (currentAssociatedDocs == null) {
-            currentAssociatedDocs = new HashSet<NodeRef>();
-        }
-        if (docRef != null) {
-            List<AssociationRef> targetAssocs = nodeService.getTargetAssocs(docRef, DocumentCommonModel.Assocs.DOCUMENT_REPLY);
-            targetAssocs.addAll(nodeService.getTargetAssocs(docRef, DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP));
-            for (AssociationRef assoc : targetAssocs) {
-                NodeRef targetRef = assoc.getTargetRef();
-                if (!associatedDocs.contains(targetRef) && isSearchable(targetRef)) {
-                    currentAssociatedDocs.add(targetRef);
-                }
-            }
-            List<AssociationRef> sourceAssocs = nodeService.getSourceAssocs(docRef, DocumentCommonModel.Assocs.DOCUMENT_REPLY);
-            sourceAssocs.addAll(nodeService.getSourceAssocs(docRef, DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP));
-            for (AssociationRef assoc : sourceAssocs) {
-                NodeRef sourceRef = assoc.getSourceRef();
-                if (!associatedDocs.contains(sourceRef) && isSearchable(sourceRef)) {
-                    currentAssociatedDocs.add(sourceRef);
-                }
-            }
-        }
-        associatedDocs.addAll(currentAssociatedDocs);
-        for (NodeRef associatedDoc : currentAssociatedDocs) {
-            getAssociatedDocRefs(associatedDoc, associatedDocs, checkedDocs, null);
-        }
     }
 
     private boolean isSearchable(NodeRef sourceRef) {
@@ -977,7 +944,7 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
 
     private boolean isFromWebService(NodeRef docRef) {
         ChildAssociationRef parentAssoc = nodeService.getPrimaryParent(docRef);
-        return BeanHelper.getAddDocumentService().getWebServiceDocumentsRoot().equals(parentAssoc.getParentRef());
+        return BeanHelper.getConstantNodeRefsBean().getWebServiceDocumentsRoot().equals(parentAssoc.getParentRef());
     }
 
     @Override
@@ -993,10 +960,9 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
 
     @Override
     public boolean isImapOrDvk(NodeRef docRef) {
-        ChildAssociationRef parentAssoc = nodeService.getPrimaryParent(docRef);
-        QName parentType = nodeService.getType(parentAssoc.getParentRef());
-        ChildAssociationRef grandParentAssoc = nodeService.getPrimaryParent(parentAssoc.getParentRef());
-        return isDraftOrImapOrDvk(parentType) && !isDraft(grandParentAssoc, parentType);
+        NodeRef parentAssocRef = nodeService.getPrimaryParent(docRef).getParentRef();
+        QName parentType = nodeService.getType(parentAssocRef);
+        return isDraftOrImapOrDvk(parentType) && !isDraft(nodeService.getPrimaryParent(parentAssocRef), parentType);
     }
 
     @Override

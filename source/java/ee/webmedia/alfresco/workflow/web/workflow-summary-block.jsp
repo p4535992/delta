@@ -12,11 +12,12 @@
 
 <% String historyLinkLabel = MessageUtil.getMessage("task_due_date_history_show_history"); %>
 
-<a:panel id="workflowSummaryBlock" label="#{msg.tasks}" progressive="true" expanded="<%=new Boolean(BeanHelper.getWorkflowBlockBean().isWorkflowSummaryBlockExpanded()).toString() %>">
-   <a:richList viewMode="details" refreshOnBind="true" id="workflowList" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt" width="100%" value="#{WorkflowBlockBean.workflowBlockItems}" var="r" >
+<a:panel id="workflowSummaryBlock" styleClass="with-pager" label="#{msg.tasks}" progressive="true" expanded="<%=new Boolean(BeanHelper.getWorkflowBlockBean().isWorkflowSummaryBlockExpanded()).toString() %>">
+   <a:richList id="workflowList" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt" width="100%"
+               value="#{WorkflowBlockBean.workflowBlockItemDataProvider}" var="r" refreshOnBind="true" >
       
       <%-- startedDateTime --%>
-      <a:column id="col1" primary="true" rendered="#{r.task}">
+      <a:column id="col1" primary="true" styleClass="#{r.separatorClass}" >
          <f:facet name="header">
             <h:outputText id="col1-sort" value="#{msg.workflow_started}" styleClass="header" />
          </f:facet>
@@ -26,7 +27,7 @@
       </a:column>
       
       <%-- dueDate --%>
-      <a:column id="col2" rendered="#{r.task}">
+      <a:column id="col2" styleClass="#{r.separatorClass}">
          <f:facet name="header">
             <h:outputText id="col2-sort" value="#{msg.task_property_due_date}" styleClass="header" />
          </f:facet>
@@ -38,7 +39,7 @@
       </a:column>
 
       <%-- taskCreatorName --%>
-      <a:column id="col3" rendered="#{r.task}">
+      <a:column id="col3" styleClass="#{r.separatorClass}">
          <f:facet name="header">
             <h:outputText id="col3-sort" value="#{msg.workflow_creator}" styleClass="header" />
          </f:facet>
@@ -46,7 +47,7 @@
       </a:column>
       
       <%-- workflow --%>
-      <a:column id="col4" rendered="#{r.task}">
+      <a:column id="col4" styleClass="#{r.separatorClass}">
          <f:facet name="header">
             <h:outputText id="col4-sort" value="#{msg.workflow}" styleClass="header" />
          </f:facet>
@@ -59,7 +60,7 @@
       </a:column>
       
       <%-- taskOwnerName --%>
-      <a:column id="col5" rendered="#{r.task}">
+      <a:column id="col5" styleClass="#{r.separatorClass}">
          <f:facet name="header">
             <h:outputText id="col5-sort" value="#{msg.task_property_owner}" styleClass="header" />
          </f:facet>
@@ -68,7 +69,7 @@
       </a:column>
       
       <%-- taskResolution --%>
-      <a:column id="col6" rendered="#{r.task}">
+      <a:column id="col6" styleClass="#{r.separatorClass}">
          <f:facet name="header">
             <h:outputText id="col6-sort" value="#{msg.task_property_resolution}" styleClass="header" />
          </f:facet>
@@ -76,7 +77,7 @@
       </a:column>
       
       <%-- outcome --%>
-      <a:column id="col7" rendered="#{r.task}">
+      <a:column id="col7" styleClass="#{r.separatorClass}">
          <f:facet name="header">
             <h:outputText id="col7-header" value="#{msg.task_property_comment_assignmentTask}" styleClass="header" />
          </f:facet>
@@ -84,19 +85,15 @@
       </a:column>
       
       <%-- taskStatus --%>
-      <a:column id="col8" rendered="#{r.task}">
+      <a:column id="col8" styleClass="#{r.separatorClass}">
          <f:facet name="header">
             <h:outputText id="col8-sort" value="#{msg.workflow_status}" styleClass="header" />
          </f:facet>
          <h:outputText id="col8-text" value="#{r.taskStatus}" />
       </a:column>
-      
-      <%-- separator --%>
-      <a:column id="sep" rendered="#{r.separator}" colspan="8" styleClass="workflow-separator" >
-         <f:verbatim><hr /></f:verbatim>
-      </a:column>
-      <a:column id="sep-zebra" rendered="#{r.zebra}" colspan="8" styleClass="workflow-separator-zebra" />
-   
+
+       <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/page-size.jsp" />
+       <a:dataPager id="workflowSummaryPager" styleClass="pager" />
    </a:richList>
    
    <h:panelGroup id="task-due-date-history-modals" binding="#{WorkflowBlockBean.dueDateHistoryModalPanel}"/>

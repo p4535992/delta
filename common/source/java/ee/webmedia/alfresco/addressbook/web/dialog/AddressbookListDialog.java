@@ -2,19 +2,24 @@ package ee.webmedia.alfresco.addressbook.web.dialog;
 
 import static ee.webmedia.alfresco.common.web.BeanHelper.getAddressbookService;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
 import javax.faces.context.FacesContext;
 
-import org.alfresco.repo.security.authentication.AuthenticationUtil;
+import ee.webmedia.alfresco.common.service.CreateObjectCallback;
+import ee.webmedia.alfresco.common.web.WmNode;
+import org.alfresco.repo.transaction.RetryingTransactionHelper;
+import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.StringUtils;
 
-import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel.Types;
 import ee.webmedia.alfresco.addressbook.service.AddressbookEntry;
 import ee.webmedia.alfresco.addressbook.util.AddressbookUtil;
@@ -24,9 +29,9 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 public class AddressbookListDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;
     public static final String BEAN_NAME = "AddressbookListDialog";
-    private List<AddressbookEntry> organizations = Collections.emptyList();
-    private List<AddressbookEntry> orgPeople = Collections.emptyList();
-    private List<AddressbookEntry> people = Collections.emptyList();
+    private List<AddressbookEntry> organizations;
+    private List<AddressbookEntry> people;
+    private List<AddressbookEntry> orgPeople;
     private String searchCriteria = "";
 
     @Override
@@ -62,29 +67,50 @@ public class AddressbookListDialog extends BaseDialogBean {
         return MessageUtil.getMessage(FacesContext.getCurrentInstance(), "back_button");
     }
 
-    public boolean isShowAction(){
+    public boolean isShowAction() {
         return BeanHelper.getUserService().isDocumentManager();
     }
-    
+
     /**
      * Action handler to show all the entries currently in the system
-     * 
+     *
      * @return The outcome
      */
     public String showAll() {
         setSearchCriteria("");
-        setOrganizations(getAddressbookService().listAddressbookEntries(AddressbookModel.Assocs.ORGANIZATIONS));
-        setPeople(getAddressbookService().listAddressbookEntries(AddressbookModel.Assocs.ABPEOPLE));
+        BeanHelper.getTransactionService().getRetryingTransactionHelper().doInTransaction(new RetryingTransactionHelper.RetryingTransactionCallback<Void>() {
 
-        List<AddressbookEntry> organizationPeople = new ArrayList<AddressbookEntry>();
-        for (AddressbookEntry orgEntry : getOrganizations()) {
-            for (Node node : getAddressbookService().listPerson(orgEntry.getNode().getNodeRef())) {
-                node.addPropertyResolver("parentOrgName", AddressbookUtil.resolverParentOrgName);
-                node.addPropertyResolver("parentOrgRef", AddressbookUtil.resolverParentOrgRef);
-                organizationPeople.add(new AddressbookEntry(node));
+            @Override
+            public Void execute() throws Throwable {
+
+                setOrganizations(getAddressbookService().listAddressbookEntries(Types.ORGANIZATION));
+                setPeople(getAddressbookService().listAddressbookEntries(Types.PRIV_PERSON));
+
+                if (!getOrganizations().isEmpty()) {
+                    List<NodeRef> orgs = new ArrayList<>();
+                    for (AddressbookEntry organization : getOrganizations()) {
+                        orgs.add(organization.getNodeRef());
+                    }
+                    Map<NodeRef, List<Node>> personsByOrg = BeanHelper.getBulkLoadNodeService().loadChildNodes(orgs, new HashSet<QName>(), Types.ORGPERSON, null,
+                            new CreateObjectCallback<Node>() {
+                                @Override
+                                public Node create(NodeRef nodeRef, Map<QName, Serializable> properties) {
+                                    return new WmNode(nodeRef, Types.ORGPERSON, null, properties);
+                                }
+                            });
+
+                    List<AddressbookEntry> organizationPeople = new ArrayList<>();
+                    for (Map.Entry<NodeRef, List<Node>> addressbookEntries : personsByOrg.entrySet()) {
+                        NodeRef organizationRef = addressbookEntries.getKey();
+                        for (Node node : addressbookEntries.getValue()) {
+                            organizationPeople.add(new AddressbookEntry(node, organizationRef));
+                        }
+                    }
+                    setOrgPeople(organizationPeople);
+                }
+                return null;
             }
-        }
-        setOrgPeople(organizationPeople);
+        });
 
         return null;
     }
@@ -107,6 +133,12 @@ public class AddressbookListDialog extends BaseDialogBean {
         return null;
     }
 
+    @Override
+    public void clean() {
+        super.clean();
+        reset();
+    }
+
     protected void reset() {
         orgPeople = Collections.emptyList();
         organizations = Collections.emptyList();
@@ -120,6 +152,9 @@ public class AddressbookListDialog extends BaseDialogBean {
     }
 
     public List<AddressbookEntry> getOrgPeople() {
+        if (orgPeople == null) {
+            orgPeople = new ArrayList<>();
+        }
         return orgPeople;
     }
 
@@ -136,6 +171,9 @@ public class AddressbookListDialog extends BaseDialogBean {
     }
 
     public List<AddressbookEntry> getOrganizations() {
+        if (organizations == null) {
+            organizations = new ArrayList<>();
+        }
         return organizations;
     }
 
@@ -144,6 +182,9 @@ public class AddressbookListDialog extends BaseDialogBean {
     }
 
     public List<AddressbookEntry> getPeople() {
+        if (people == null) {
+            people = new ArrayList<>();
+        }
         return people;
     }
 

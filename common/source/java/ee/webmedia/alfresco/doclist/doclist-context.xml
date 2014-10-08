@@ -28,7 +28,7 @@
       </property>
    </bean>
    
-   <bean class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
+   <bean id="documentListResourceBundles" class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
       <property name="resourceBundles">
          <list>
             <value>ee/webmedia/alfresco/doclist/web/doclist-webclient</value>
@@ -36,15 +36,7 @@
       </property>
    </bean>
    
-   <bean class="org.alfresco.web.app.ResourceBundleBootstrap">
-      <property name="resourceBundles">
-         <list>
-            <value>ee/webmedia/alfresco/doclist/web/doclist-webclient</value>
-         </list>
-      </property>
-   </bean>
-   
-   <bean id="updateDocumentListCountersBootstrap" class="ee.webmedia.alfresco.doclist.bootstrap.UpdateDocumentListCountersBootstrap" parent="module.baseComponent" >  
+   <bean id="updateDocumentListCountersBootstrap" class="ee.webmedia.alfresco.doclist.bootstrap.UpdateDocumentListCountersBootstrap" parent="module.baseComponent" >
        <property name="moduleId" value="simdhs" />  
        <property name="executeOnceOnly" value="true" />   
        <property name="dependsOn">   
@@ -97,6 +89,18 @@
       </property>
       <property name="enabled" value="${updater.version25To313.enabled}" />
       <property name="seriesUpdater" ref="seriesUpdater2" />
+   </bean>
+
+   <bean id="createDocListMaterializedViewsBootstrap" parent="executeStatementsBootstrap" >
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dataSource" ref="dataSource" />
+      <property name="resourceName" value="ee/webmedia/alfresco/doclist/bootstrap/create_doclist_materialized_views.sql" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="logTableBootstrap2" />
+         </list>
+      </property>
    </bean>
 
 </beans>

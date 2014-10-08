@@ -169,6 +169,6 @@ public class DocumentDynamic extends DynamicBase implements Cloneable, Comparabl
         } else if (other.getRegNumber() == null) {
             return 1;
         }
-        return AppConstants.DEFAULT_COLLATOR.compare(getRegNumber(), other.getRegNumber());
+        return AppConstants.getNewCollatorInstance().compare(getRegNumber(), other.getRegNumber());
     }
 }

@@ -230,7 +230,6 @@ public abstract class BaseComponentGenerator implements IComponentGenerator, Cus
         if (isNotBlank(styleClass)) {
             final String existingStyleClass = (String) attributes.get(STYLE_CLASS);
             if (isNotBlank(existingStyleClass)) {
-                logger.warn("component already has existing styleclass set from code ("+existingStyleClass+"), adding styleclass also from property-sheet: "+styleClass);
                 attributes.put(STYLE_CLASS, existingStyleClass+" "+styleClass);
             } else {
                 attributes.put(STYLE_CLASS, styleClass);

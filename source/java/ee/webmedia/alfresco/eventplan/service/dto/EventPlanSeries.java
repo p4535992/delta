@@ -1,6 +1,7 @@
 package ee.webmedia.alfresco.eventplan.service.dto;
 
 import java.io.Serializable;
+import java.text.Collator;
 import java.util.Comparator;
 
 import org.alfresco.service.cmr.repository.NodeRef;
@@ -26,7 +27,7 @@ public class EventPlanSeries implements Serializable, Comparable<EventPlanSeries
     private final String location;
 
     public EventPlanSeries(NodeRef nodeRef, NodeRef functionRef, Integer order, String identifier, String title, String status, String functionMarkAndTitle, Integer functionOrder,
-                           String functionMark, String location) {
+            String functionMark, String location) {
         this.nodeRef = nodeRef;
         this.functionRef = functionRef;
         this.order = order == null ? 0 : order;
@@ -95,12 +96,13 @@ public class EventPlanSeries implements Serializable, Comparable<EventPlanSeries
                 return ((EventPlanSeries) input).getFunctionOrder();
             }
         }, new NullComparator()));
+        Collator collatorInstance = AppConstants.getNewCollatorInstance();
         chain.addComparator(new TransformingComparator(new Transformer() {
             @Override
             public Object transform(Object input) {
                 return ((EventPlanSeries) input).getFunctionMark();
             }
-        }, new NullComparator(AppConstants.DEFAULT_COLLATOR)));
+        }, new NullComparator(collatorInstance)));
         chain.addComparator(new TransformingComparator(new Transformer() {
             @Override
             public Object transform(Object input) {
@@ -112,7 +114,7 @@ public class EventPlanSeries implements Serializable, Comparable<EventPlanSeries
             public Object transform(Object input) {
                 return ((EventPlanSeries) input).getIdentifier();
             }
-        }, new NullComparator(AppConstants.DEFAULT_COLLATOR)));
+        }, new NullComparator(collatorInstance)));
         COMPARATOR = chain;
     }
 

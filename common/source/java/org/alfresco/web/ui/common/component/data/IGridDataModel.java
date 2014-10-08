@@ -26,6 +26,8 @@ package org.alfresco.web.ui.common.component.data;
 
 import java.io.Serializable;
 
+import org.alfresco.util.Pair;
+
 /**
  * @author kevinr
  */
@@ -56,5 +58,8 @@ public interface IGridDataModel extends Serializable
     */
    public void sort(String column, boolean descending, String mode);
    
-   public Object remove(int index);
+   public void loadSlice(int rowIndex, int maxRowIndex);
+
+   public Pair<Integer, Integer> getCurrentSlice();
+
 }

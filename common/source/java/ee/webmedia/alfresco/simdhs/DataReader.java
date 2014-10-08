@@ -11,9 +11,11 @@ import org.alfresco.web.ui.common.component.data.UIRichList;
  */
 public interface DataReader {
 
+    int UNLIMITED_SLICE = -1;
+
     /**
      * Gets header row for CSV export.
-     * 
+     *
      * @param list List that will be exported
      * @param fc Faces context
      * @return header row
@@ -22,10 +24,11 @@ public interface DataReader {
 
     /**
      * Gets data rows for CSV export.
-     * 
+     *
      * @param list List that will be exported
      * @param fc Faces context
+     * @param sliceSize
      * @return list where every item is one data row in CSV export.
      */
-    List<List<String>> getDataRows(UIRichList list, FacesContext fc);
+    List<List<String>> getDataRows(UIRichList list, FacesContext fc, int sliceSize);
 }

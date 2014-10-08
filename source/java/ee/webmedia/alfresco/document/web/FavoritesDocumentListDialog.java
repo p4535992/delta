@@ -1,6 +1,5 @@
 package ee.webmedia.alfresco.document.web;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -12,17 +11,21 @@ import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.casefile.service.CaseFile;
 import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
-import ee.webmedia.alfresco.workflow.model.CompoundWorkflowWithObject;
+import ee.webmedia.alfresco.workflow.web.CompoundWorkflowWithObjectDataProvider;
 
 public class FavoritesDocumentListDialog extends BaseDocumentListDialog {
+    public static final String BEAN_NAME = "FavoritesDocumentListDialog";
+
     private static final long serialVersionUID = 1L;
     private NodeRef containerNodeRef;
     private String dirName;
-    private List<CompoundWorkflowWithObject> workflows;
+    private CompoundWorkflowWithObjectDataProvider workflows;
     private List<CaseFile> caseFiles;
     private boolean hadSetup = false;
+    private List<Document> favoriteDocuments;
 
     @Override
     public void init(Map<String, String> params) {
@@ -44,15 +47,18 @@ public class FavoritesDocumentListDialog extends BaseDocumentListDialog {
             containerNodeRef = null;
             dirName = null;
         }
-        documents = BeanHelper.getDocumentFavoritesService().getDocumentFavorites(containerNodeRef);
-        workflows = BeanHelper.getCompoundWorkflowFavoritesService().getCompoundWorkflowFavorites(containerNodeRef);
+        favoriteDocuments = BeanHelper.getDocumentFavoritesService().getDocumentFavorites(containerNodeRef);
+        workflows = new CompoundWorkflowWithObjectDataProvider(BeanHelper.getCompoundWorkflowFavoritesService().getCompoundWorkflowFavorites(containerNodeRef));
         caseFiles = BeanHelper.getCaseFileFavoritesService().getCaseFileFavorites(containerNodeRef);
-        Collections.sort(documents);
     }
 
     @Override
-    public String cancel() {
-        return super.cancel();
+    public void clean() {
+        containerNodeRef = null;
+        dirName = null;
+        workflows = null;
+        caseFiles = null;
+        super.clean();
     }
 
     public void setup(ActionEvent event) {
@@ -75,14 +81,22 @@ public class FavoritesDocumentListDialog extends BaseDocumentListDialog {
     @Override
     public String getListTitle() {
         return MessageUtil.getMessage("documents");
+    }
 
+    @Override
+    public String getDocumentListValueBinding() {
+        return "#{FavoritesDocumentListDialog.favoriteDocuments}";
+    }
+
+    public List<Document> getFavoriteDocuments() {
+        return favoriteDocuments;
     }
 
     public NodeRef getUserNodeRef() {
         return BeanHelper.getUserService().getUser(AuthenticationUtil.getRunAsUser()).getNodeRef();
     }
 
-    public List<CompoundWorkflowWithObject> getWorkflows() {
+    public CompoundWorkflowWithObjectDataProvider getWorkflows() {
         return workflows;
     }
 
@@ -91,7 +105,7 @@ public class FavoritesDocumentListDialog extends BaseDocumentListDialog {
     }
 
     public boolean getHasWorkflows() {
-        return !workflows.isEmpty();
+        return workflows != null && !workflows.getObjectKeys().isEmpty();
     }
 
     public boolean getHasCaseFiles() {

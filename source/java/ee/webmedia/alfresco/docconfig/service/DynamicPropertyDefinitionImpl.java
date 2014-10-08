@@ -18,6 +18,7 @@ import org.springframework.util.Assert;
 import ee.webmedia.alfresco.classificator.constant.FieldType;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.docadmin.service.Field;
+import ee.webmedia.alfresco.docadmin.service.UnmodifiableFieldDefinition;
 import ee.webmedia.alfresco.docconfig.generator.systematic.DocumentLocationGenerator;
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
@@ -31,6 +32,17 @@ public class DynamicPropertyDefinitionImpl implements DynamicPropertyDefinition 
     private final boolean mandatory;
     private final Boolean multiValuedOverride;
     private final QName[] childAssocTypeQNameHierarchy;
+
+    DynamicPropertyDefinitionImpl(UnmodifiableFieldDefinition field, Boolean multiValuedOverride, QName[] childAssocTypeQNameHierarchy) {
+        Assert.notNull(field, "field");
+        name = field.getQName();
+        originalFieldId = field.getOriginalFieldId();
+        title = field.getName();
+        fieldType = field.getFieldTypeEnum();
+        mandatory = field.isMandatory();
+        this.multiValuedOverride = multiValuedOverride;
+        this.childAssocTypeQNameHierarchy = childAssocTypeQNameHierarchy;
+    }
 
     DynamicPropertyDefinitionImpl(Field field, Boolean multiValuedOverride, QName[] childAssocTypeQNameHierarchy) {
         Assert.notNull(field, "field");

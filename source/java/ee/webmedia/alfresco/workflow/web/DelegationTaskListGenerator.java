@@ -206,7 +206,7 @@ public class DelegationTaskListGenerator extends TaskListGenerator {
                     taskGridChildren.add(columnActions);
 
                     final List<UIComponent> actionChildren = addChildren(columnActions);
-                    UIActionLink taskSearchLink = createOwnerSearchLink(context, application, listId, picker, counter, pickerActionId, pickerModalOnclickJsCall);
+                    UIActionLink taskSearchLink = createOwnerSearchLink(context, listId, picker, counter, pickerActionId, pickerModalOnclickJsCall);
                     actionChildren.add(taskSearchLink);
                     { // taskDeleteLink // taskResetLink
                         final UIActionLink taskDeleteLink = (UIActionLink) application.createComponent("org.alfresco.faces.ActionLink");

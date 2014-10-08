@@ -139,6 +139,8 @@
 		<delete file="${common.dir.lib.server}/xml-apis.jar" />
       <!-- Newer version of bcel is added from common/lib folder -->
       <delete file="${common.dir.lib.server}/bcel.jar" />
+	   	<!-- Newer version (1.6.2) of echache is added from common/lib folder -->
+	    <delete file="${common.dir.lib.server}/ehcache-1.4.1-patched.jar" />
 	</target>
 
 	<target name="setup-project-done">
@@ -292,12 +294,12 @@
             overwrite="true" />
 
 		<!-- Compile alfresco classes separately from ee.webmedia, because alfresco classes should not contain references to ee.webmedia -->
-		<javac destdir="${project.dir.exploded.classes}" classpathref="classpath" source="1.6" target="1.6" debug="on" fork="yes" encoding="UTF-8">
+		<javac destdir="${project.dir.exploded.classes}" classpathref="classpath" source="1.7" target="1.7" debug="on" fork="yes" encoding="UTF-8">
 			<src path="${common.dir.src}" />
 			<src path="${project.dir.src}" />
 			<exclude name="ee/webmedia/**" />
 		</javac>
-		<javac destdir="${project.dir.exploded.classes}" classpathref="classpath" source="1.6" target="1.6" debug="on" fork="yes" encoding="UTF-8">
+		<javac destdir="${project.dir.exploded.classes}" classpathref="classpath" source="1.7" target="1.7" debug="on" fork="yes" encoding="UTF-8">
 			<compilerarg value="-Xlint" />
 			<compilerarg value="-Xlint:-deprecation" />
 			<!-- XXX why do I have "bad path element" warnings, where do these path elements come from? -->
@@ -392,7 +394,7 @@
 		<copy todir="${project.dir.test.classes}" preservelastmodified="true" overwrite="true" verbose="true">
 			<fileset dir="${conf.basedir}/${conf.name}/classes" excludes="**/*.java,**/*_en_US.properties,**/selenium/**" />
 		</copy>
-		<javac destdir="${project.dir.test.classes}" classpathref="classpath.test.compile" source="1.6" target="1.6" excludes="**/selenium/**" debug="on" encoding="UTF-8">
+		<javac destdir="${project.dir.test.classes}" classpathref="classpath.test.compile" source="1.7" target="1.7" excludes="**/selenium/**" debug="on" encoding="UTF-8">
 			<compilerarg value="-Xlint" />
 			<compilerarg value="-Xlint:-deprecation" />
 			<!-- XXX why do I have "bad path element" warnings, where do these path elements come from? -->
@@ -697,8 +699,8 @@
 		<echo>Generating ${name}-ws.jar from ${wsdl}</echo>
 		<delete dir="${project.dir.build}/${name}" failonerror="false" />
 		<taskdef name="xmlbean" classname="org.apache.xmlbeans.impl.tool.XMLBean" classpathref="classpath-generate" />
-		<xmlbean classpathref="classpath-generate" schema="${common.dir.etc}/${wsdl}" javasource="1.6" srconly="true" srcgendir="${project.dir.build}/${name}" classgendir="${project.dir.build}/${name}" noupa="true" fork="true" />
-		<javac destdir="${project.dir.build}/${name}" classpathref="classpath-generate" source="1.6" target="1.6" debug="on" fork="yes" encoding="UTF-8">
+		<xmlbean classpathref="classpath-generate" schema="${common.dir.etc}/${wsdl}" javasource="1.7" srconly="true" srcgendir="${project.dir.build}/${name}" classgendir="${project.dir.build}/${name}" noupa="true" fork="true" />
+		<javac destdir="${project.dir.build}/${name}" classpathref="classpath-generate" source="1.7" target="1.7" debug="on" fork="yes" encoding="UTF-8">
 			<src path="${project.dir.build}/${name}" />
 		</javac>
 		<delete file="${common.dir.lib.server}/${name}-ws.jar" failonerror="false" />
@@ -735,7 +737,7 @@
 		<replaceregexp match="\.getResource\(&quot;\.&quot;\)" replace=".getResource(&quot;&quot;)" flags="g">
 			<fileset dir="${project.dir.build}/${name}" includes="**/*.java"/>
 		</replaceregexp>
-		<javac destdir="${project.dir.build}/${name}" classpathref="classpath-generate" source="1.6" target="1.6" debug="on" fork="yes" encoding="UTF-8">
+		<javac destdir="${project.dir.build}/${name}" classpathref="classpath-generate" source="1.7" target="1.7" debug="on" fork="yes" encoding="UTF-8">
 			<src path="${project.dir.build}/${name}" />
 		</javac>
 		<copy todir="${project.dir.build}/${name}/ee/webmedia/alfresco/${name}/ws" preservelastmodified="true" file="${common.dir.etc}/${wsdl}" />
@@ -777,7 +779,7 @@
 		</antcall>
 		<!-- encoding="UTF-8" attribute is removed because otherwise character reference 
 			(like <xs:pattern value="[&#x0020;-&#x00FF;]*"/>) causes compilation error) -->
-		<javac destdir="${project.dir.build}/${name}" classpathref="classpath-generate" source="1.6" target="1.6" debug="on" fork="yes" >
+		<javac destdir="${project.dir.build}/${name}" classpathref="classpath-generate" source="1.7" target="1.7" debug="on" fork="yes" >
 			<src path="${project.dir.build}/${name}" />
 		</javac>
 		<copy todir="${project.dir.build}/${name}/${folder}" preservelastmodified="true" file="${common.dir.etc}/${xsd}" />
@@ -827,7 +829,7 @@
 			<arg value="${common.dir.etc}/${wsdl}"/>
 		    <sysproperty key="org.apache.cxf.stax.allowInsecureParser" value="true" />
 		</java>
-		<javac destdir="${project.dir.build}/${name}" classpathref="classpath-generate" source="1.6" target="1.6" debug="on" fork="yes" >
+		<javac destdir="${project.dir.build}/${name}" classpathref="classpath-generate" source="1.7" target="1.7" debug="on" fork="yes" >
 			<src path="${project.dir.build}/${name}" />
 		</javac>
 		<copy todir="${project.dir.build}/${name}/${folder}" preservelastmodified="true" file="${common.dir.etc}/${wsdl}" />

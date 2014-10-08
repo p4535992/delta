@@ -53,9 +53,14 @@ public abstract class AbstractImportDialog extends BaseDialogBean {
     }
 
     public String reset() {
+        clean();
+        return getDefaultFinishOutcome();
+    }
+
+    @Override
+    public void clean() {
         fileName = null;
         clearUpload();
-        return getDefaultFinishOutcome();
     }
 
     private void clearUpload() {

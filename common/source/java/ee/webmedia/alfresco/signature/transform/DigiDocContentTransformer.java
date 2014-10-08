@@ -52,7 +52,7 @@ public class DigiDocContentTransformer extends AbstractContentTransformer2 {
         Writer out = null;
         try {
             InputStream is = reader.getContentInputStream();
-            SignatureItemsAndDataItems items = signatureService.getDataItemsAndSignatureItems(is, true);
+            SignatureItemsAndDataItems items = signatureService.getDataItemsAndSignatureItems(is, true, true);
             out = new OutputStreamWriter(writer.getContentOutputStream(), writer.getEncoding());
             for (SignatureItem signatureItem : items.getSignatureItems()) {
                 transformSignatureItem(out, signatureItem);
