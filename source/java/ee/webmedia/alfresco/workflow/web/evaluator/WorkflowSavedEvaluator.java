@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.workflow.web.evaluator;
 
+import ee.webmedia.alfresco.common.evaluator.CompoundWorkflowActionGroupSharedResource;
 import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
 
 /**
@@ -13,6 +14,13 @@ public class WorkflowSavedEvaluator extends AbstractFullAccessEvaluator {
     public boolean evaluate(Object obj) {
         CompoundWorkflow compoundWorkflow = (CompoundWorkflow) obj;
         return compoundWorkflow != null && compoundWorkflow.isSaved() && hasFullAccess();
+    }
+
+    @Override
+    public boolean evaluate() {
+        CompoundWorkflowActionGroupSharedResource resource = (CompoundWorkflowActionGroupSharedResource) sharedResource;
+        CompoundWorkflow compoundWorkflow = resource.getObject();
+        return compoundWorkflow != null && resource.isSaved() && hasFullAccess(resource);
     }
 
 }

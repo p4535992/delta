@@ -9,6 +9,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -64,7 +65,7 @@ import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.WebUtil;
 import ee.webmedia.alfresco.volume.model.Volume;
-import ee.webmedia.alfresco.workflow.service.WorkflowService;
+import ee.webmedia.alfresco.workflow.service.WorkflowConstantsBean;
 
 public class MenuBean implements Serializable {
 
@@ -91,19 +92,20 @@ public class MenuBean implements Serializable {
     private static final String ACTION_KEY_MENU_ITEM_NODE_REF = "menuItemNodeRef";
 
     public static final List<String> HIDDEN_WHEN_EMPTY = Arrays.asList(
-            "assignmentTasks"
-            , "informationTasks"
-            , "orderAssignmentTasks"
-            , "opinionTasks"
-            , "discussions"
-            , "reviewTasks"
-            , "externalReviewTasks"
-            , "confirmationTasks"
-            , "signatureTasks"
-            , "forRegisteringList"
-            , "userWorkingDocuments"
-            , "userCaseFiles"
+            MenuItem.ASSIGNMENT_TASKS,
+            MenuItem.INFORMATION_TASKS,
+            MenuItem.ORDER_ASSIGNMENT_TASKS,
+            MenuItem.OPINION_TASKS,
+            MenuItem.DISCUSSIONS,
+            MenuItem.REVIEW_TASKS,
+            MenuItem.EXTERNAL_REVIEW_TASKS,
+            MenuItem.CONFIRMATION_TASKS,
+            MenuItem.SIGNATURE_TASKS,
+            MenuItem.FOR_REGISTERING_LIST,
+            MenuItem.USER_WORKING_DOCUMENTS,
+            MenuItem.USER_CASE_FILES
             );
+
     public static final List<String> HIDDEN_TO_OTHER_STRUCT_UNIT_PEOPLE = Arrays.asList(
             "documentRegister"
             , "contact"
@@ -126,7 +128,7 @@ public class MenuBean implements Serializable {
     private transient MenuService menuService;
     private transient GeneralService generalService;
     private transient UserService userService;
-    private transient WorkflowService workflowService;
+    private transient WorkflowConstantsBean workflowConstantsBean;
     private transient EInvoiceService einvoiceService;
 
     private Menu menu;
@@ -140,10 +142,12 @@ public class MenuBean implements Serializable {
     private String scrollToAnchor;
     private String scrollToY;
 
+    private List<String> leftMenuTitles;
+
     /**
      * Watch out for a gotcha moment! If event comes from ActionLink or CommandButton,
      * handleNavigation is called for a second time and it resets this setting!
-     * 
+     *
      * @param anchor ID of the HTML element in the form of "#my-panel"
      */
     public void scrollToAnchor(String anchor) {
@@ -152,6 +156,7 @@ public class MenuBean implements Serializable {
 
     public void resetBreadcrumb() {
         stateList.clear();
+        BeanHelper.getBeanCleanupHelper().cleanAll();
     }
 
     public void addBreadcrumbItem(DialogConfig config) {
@@ -194,25 +199,33 @@ public class MenuBean implements Serializable {
         addBreadcrumbItem(title);
     }
 
-    @SuppressWarnings("unchecked")
     public void addBreadcrumbItem(String title) {
-        int i = 0;
-        List<String> leftMenuTitles = new ArrayList<String>();
-        leftMenuTitles.add(MessageUtil.getMessage("volume_list"));
-        leftMenuTitles.add(MessageUtil.getMessage("series_list"));
-        leftMenuTitles.add(MessageUtil.getMessage("document_list"));
-        for (String listTitle : stateList) {
-            if (leftMenuTitles.contains(title) && listTitle.equals(title)) { // left side menu provides functionality for backwards navigation.
-                stateList.setSize(i);
-                Stack viewStack = (Stack) FacesContext.getCurrentInstance().getExternalContext().getSessionMap().get(UIMenuComponent.VIEW_STACK);
-                if (viewStack != null) {
-                    viewStack.setSize(i + 1);
+        if (getLeftMenuTitles().contains(title)) {
+            int i = 0;
+            for (String listTitle : stateList) {
+                if (listTitle.equals(title)) { // left side menu provides functionality for backwards navigation.
+                    stateList.setSize(i);
+                    @SuppressWarnings("rawtypes")
+                    Stack viewStack = (Stack) FacesContext.getCurrentInstance().getExternalContext().getSessionMap().get(UIMenuComponent.VIEW_STACK);
+                    if (viewStack != null) {
+                        viewStack.setSize(i + 1);
+                    }
+                    break;
                 }
-                break;
+                i++;
             }
-            i++;
         }
         stateList.push(title);
+    }
+
+    private List<String> getLeftMenuTitles() {
+        if (leftMenuTitles == null) {
+            leftMenuTitles = Collections.unmodifiableList(Arrays.asList(
+                    MessageUtil.getMessage("volume_list"),
+                    MessageUtil.getMessage("series_list"),
+                    MessageUtil.getMessage("document_list")));
+        }
+        return leftMenuTitles;
     }
 
     public void removeBreadcrumbItem() {
@@ -383,6 +396,7 @@ public class MenuBean implements Serializable {
         }
 
         // Let's go to the clicked link
+        Map<Long, QName> propertyTypes = new HashMap<Long, QName>();
         for (String step : path) {
             if (item.getSubItems() != null) {
                 if (item instanceof DropdownMenuItem) {
@@ -409,7 +423,7 @@ public class MenuBean implements Serializable {
                 for (NodeRef childItemRef : getMenuService().openTreeItem(dropdownItem, nodeRef)) {
                     DropdownMenuItem childItem = new DropdownMenuItem();
                     childItem.setChildFilter(dropdownItem.getChildFilter()); // By default pass on parent's filter. Can be overridden in setupTreeItem
-                    getMenuService().setupTreeItem(childItem, childItemRef);
+                    getMenuService().setupTreeItem(childItem, childItemRef, propertyTypes);
                     item.getSubItems().add(childItem);
                 }
                 Collections.sort(item.getSubItems(), new DropdownMenuComparator());
@@ -450,7 +464,7 @@ public class MenuBean implements Serializable {
                     ddChild.setBrowse(true);
                     ddChild.setSubmenuId(lastLinkId);
                     ddChild.setChildFilter(dd.getChildFilter());
-                    getMenuService().setupTreeItem(ddChild, child);
+                    getMenuService().setupTreeItem(ddChild, child, propertyTypes);
                     dd.getSubItems().add(ddChild);
                 }
                 Collections.sort(dd.getSubItems(), new DropdownMenuComparator());
@@ -461,7 +475,7 @@ public class MenuBean implements Serializable {
 
     /**
      * Collapses other items, so user can understand where the heck he/she is...
-     * 
+     *
      * @param item
      */
     public void collapseMenuItems(MenuItem item) {
@@ -678,7 +692,7 @@ public class MenuBean implements Serializable {
             item = menuItemAndPath.getFirst();
         }
         MenuItemWrapper wrapper = (MenuItemWrapper) item.createComponent(context, idPrefix + shortcutsPanelGroup.getChildCount()
-                , getUserService(), getWorkflowService(), getEinvoiceService(), BeanHelper.getRSService(), false);
+                , getUserService(), getWorkflowConstantsBean(), BeanHelper.getRSService(), false);
         if (wrapper == null) {
             return false; // no permissions or for some other reason wrapper is not created
         }
@@ -981,7 +995,7 @@ public class MenuBean implements Serializable {
         }
 
         if ("volSearch".equals(menuItemId)) {
-            return !BeanHelper.getVolumeService().isCaseVolumeEnabled();
+            return !BeanHelper.getApplicationConstantsBean().isCaseVolumeEnabled();
         }
         return false;
     }
@@ -1130,12 +1144,11 @@ public class MenuBean implements Serializable {
         return userService;
     }
 
-    protected WorkflowService getWorkflowService() {
-        if (workflowService == null) {
-            workflowService = (WorkflowService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
-                    .getBean(WorkflowService.BEAN_NAME);
+    protected WorkflowConstantsBean getWorkflowConstantsBean() {
+        if (workflowConstantsBean == null) {
+            workflowConstantsBean = BeanHelper.getWorkflowConstantsBean();
         }
-        return workflowService;
+        return workflowConstantsBean;
     }
 
     public EInvoiceService getEinvoiceService() {
@@ -1172,7 +1185,7 @@ public class MenuBean implements Serializable {
         @Override
         public int compare(MenuItem o1, MenuItem o2) {
             if (o1 != null && o2 != null && o1 instanceof DropdownMenuItem && o2 instanceof DropdownMenuItem) {
-                return AppConstants.DEFAULT_COLLATOR.compare(((DropdownMenuItem) o1).getTransientOrderString(), ((DropdownMenuItem) o2).getTransientOrderString());
+                return AppConstants.getNewCollatorInstance().compare(((DropdownMenuItem) o1).getTransientOrderString(), ((DropdownMenuItem) o2).getTransientOrderString());
             }
             return 0;
         }

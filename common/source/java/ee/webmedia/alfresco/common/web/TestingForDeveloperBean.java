@@ -9,14 +9,12 @@ import static ee.webmedia.alfresco.utils.SearchUtil.joinQueryPartsAnd;
 import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
-import ee.webmedia.xtee.client.dhl.DhlXTeeServiceImpl;
 import org.alfresco.repo.cache.EhCacheTracerJob;
 import org.alfresco.repo.search.Indexer;
 import org.alfresco.repo.search.impl.lucene.ADMLuceneTest;
@@ -163,7 +161,7 @@ public class TestingForDeveloperBean implements Serializable {
 
     public void deleteTestTemplatesBootstrapAndTemplates(@SuppressWarnings("unused") ActionEvent event) {
         deleteBootstrap("simdhs", "testWorkflowTemplatesBootstrap");
-        List<FileInfo> templateFiles = BeanHelper.getFileFolderService().listFiles(BeanHelper.getDocumentTemplateService().getRoot());
+        List<FileInfo> templateFiles = BeanHelper.getFileFolderService().listFiles(BeanHelper.getConstantNodeRefsBean().getTemplateRoot());
         LOG.info("Found total " + templateFiles.size() + " templates");
         for (FileInfo fi : templateFiles) {
             if (getNodeService().hasAspect(fi.getNodeRef(), DocumentTemplateModel.Aspects.TEMPLATE_NOTIFICATION)

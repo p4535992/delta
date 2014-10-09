@@ -22,6 +22,8 @@ import ee.webmedia.alfresco.utils.UserUtil;
 
 public class OrganizationStructureListDialog extends BaseDialogBean {
 
+    public static final String BEAN_NAME = "OrganizationStructureListDialog";
+
     private static final long serialVersionUID = 1L;
 
     private List<OrganizationStructure> orgstructs;
@@ -40,15 +42,20 @@ public class OrganizationStructureListDialog extends BaseDialogBean {
 
     @Override
     public String cancel() {
-        orgstructs = null;
+        clean();
         return super.cancel();
+    }
+
+    @Override
+    public void clean() {
+        orgstructs = null;
     }
 
     /**
      * Query callback method executed by the Generic Picker component.
      * This method is part of the contract to the Generic Picker, it is up to the backing bean
      * to execute whatever query is appropriate and return the results.
-     * 
+     *
      * @param params Search parameters
      * @return An array of SelectItem objects containing the results to display in the picker.
      */
@@ -68,7 +75,7 @@ public class OrganizationStructureListDialog extends BaseDialogBean {
 
             @Override
             public int compare(SelectItem s1, SelectItem s2) {
-                return AppConstants.DEFAULT_COLLATOR.compare(s1.getLabel(), s1.getLabel());
+                return AppConstants.getNewCollatorInstance().compare(s1.getLabel(), s1.getLabel());
             }
         });
         return resultList.toArray(new SelectItem[resultList.size()]);

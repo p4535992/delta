@@ -106,7 +106,7 @@ public class OrganizationStructure implements Serializable {
 
         @Override
         public int compare(OrganizationStructure o1, OrganizationStructure o2) {
-            return AppConstants.DEFAULT_COLLATOR.compare(o1.getName(), o2.getName());
+            return AppConstants.getNewCollatorInstance().compare(o1.getName(), o2.getName());
         }
 
     }

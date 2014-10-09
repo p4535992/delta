@@ -1,18 +1,23 @@
 package ee.webmedia.alfresco.template.service;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getConstantNodeRefsBean;
 import static org.apache.commons.io.FilenameUtils.getExtension;
 import static org.apache.commons.lang.StringUtils.equalsIgnoreCase;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -52,6 +57,7 @@ import ee.webmedia.alfresco.cases.model.CaseModel;
 import ee.webmedia.alfresco.classificator.constant.FieldType;
 import ee.webmedia.alfresco.classificator.enums.TemplateReportType;
 import ee.webmedia.alfresco.common.listener.ExternalAccessPhaseListener;
+import ee.webmedia.alfresco.common.service.ApplicationConstantsBean;
 import ee.webmedia.alfresco.common.service.ApplicationService;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.service.OpenOfficeService;
@@ -108,6 +114,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
     private static final String SEPARATOR = ".";
     private static final Pattern TEMPLATE_FORMULA_GROUP_PATTERN = Pattern.compile(OpenOfficeService.REGEXP_GROUP_PATTERN);
     private static final Pattern TEMPLATE_FORMULA_PATTERN = Pattern.compile(OpenOfficeService.REGEXP_PATTERN);
+    private static final Set<QName> TYPE_ID_AND_NAME_PROPS = new HashSet<>(Arrays.asList(DocumentTemplateModel.Prop.DOCTYPE_ID, DocumentTemplateModel.Prop.NAME));
     public static final QName TEMP_PROP_FILE_NAME_BASE = RepoUtil.createTransientProp("fileNameBase");
     public static final QName TEMP_PROP_FILE_NAME_EXTENSION = RepoUtil.createTransientProp("fileNameExtension");
 
@@ -127,6 +134,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
     private VersionsService versionsService;
     private DocumentLogService documentLogService;
     private WorkflowService workflowService;
+    private ApplicationConstantsBean applicationConstantsBean;
 
     private static BeanPropertyMapper<DocumentTemplate> templateBeanPropertyMapper;
     static {
@@ -187,7 +195,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
         FileInfo word2003OrOOTemplate = null;
         boolean msoAvailable = msoService.isAvailable();
         boolean ooAvailable = openOfficeService.isAvailable();
-        for (FileInfo fi : fileFolderService.listFiles(getRoot())) {
+        for (FileInfo fi : fileFolderService.listFiles(getConstantNodeRefsBean().getTemplateRoot())) {
             if (!nodeService.hasAspect(fi.getNodeRef(), DocumentTemplateModel.Aspects.TEMPLATE_DOCUMENT)) {
                 continue;
             }
@@ -215,25 +223,26 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
     }
 
     @Override
-    public boolean hasDocumentsTemplate(NodeRef document) {
-        String documentTypeId = (String) nodeService.getProperty(document, DocumentAdminModel.Props.OBJECT_TYPE_ID);
-        for (FileInfo fi : fileFolderService.listFiles(getRoot())) {
-            if (!nodeService.hasAspect(fi.getNodeRef(), DocumentTemplateModel.Aspects.TEMPLATE_DOCUMENT)) {
-                continue;
+    public boolean hasDocumentsTemplate(String documentTypeId) {
+        Collection<Map<NodeRef, Map<QName, Serializable>>> outerNodes = BeanHelper.getBulkLoadNodeService()
+                .loadChildNodes(Arrays.asList(getConstantNodeRefsBean().getTemplateRoot()), TYPE_ID_AND_NAME_PROPS).values();
+        for (Map<NodeRef, Map<QName, Serializable>> nodes : outerNodes) {
+            for (Map.Entry<NodeRef, Map<QName, Serializable>> entry : nodes.entrySet()) {
+                Map<QName, Serializable> properties = entry.getValue();
+                if (documentTypeId.equals(properties.get(DocumentTemplateModel.Prop.DOCTYPE_ID))
+                        && nodeService.hasAspect(entry.getKey(), DocumentTemplateModel.Aspects.TEMPLATE_DOCUMENT)) {
+                    String fileNameExtension = FilenameUtils.getExtension((String) properties.get(DocumentTemplateModel.Prop.NAME));
+                    Assert.isTrue(StringUtils.equals("dotx", fileNameExtension) || StringUtils.equals("dot", fileNameExtension) || StringUtils.equals("ott", fileNameExtension));
+                    return true;
+                }
             }
-            if (!documentTypeId.equals(fi.getProperties().get(DocumentTemplateModel.Prop.DOCTYPE_ID))) {
-                continue;
-            }
-            String fileNameExtension = FilenameUtils.getExtension((String) fi.getProperties().get(DocumentTemplateModel.Prop.NAME));
-            Assert.isTrue(StringUtils.equals("dotx", fileNameExtension) || StringUtils.equals("dot", fileNameExtension) || StringUtils.equals("ott", fileNameExtension));
-            return true;
         }
         return false;
     }
 
     /**
      * Sets the properties, adds download URL and NodeRef
-     * 
+     *
      * @param fileInfo
      * @return
      */
@@ -522,7 +531,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
                 .append("</td><td>")
                 .append(doc.getRegDateTime() == null ? "" : dateTimeFormat.format(doc.getRegDateTime()))
                 .append("</td><td>")
-                .append(documentAdminService.getDocumentTypeName((String) doc.getProperties().get(DocumentAdminModel.Props.OBJECT_TYPE_ID)))
+                .append(doc.getDocumentTypeName())
                 .append("</td><td>")
                 .append("<a href=\"").append(getDocumentUrl(doc.getNodeRef())).append("\">").append(doc.getDocName()).append("</a>")
                 .append("</td><td>")
@@ -766,8 +775,8 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
                 formulas.put(fieldId, StringUtils.join(listPropValue, "; "));
                 continue;
             } else if (FieldType.CHECKBOX == fieldType && propValue instanceof Boolean) {
-                String msgKey = (Boolean) propValue ? "yes" : "no";
-                formulas.put(fieldId, MessageUtil.getMessage(msgKey));
+                String msg = (Boolean) propValue ? applicationConstantsBean.getMessageYes() : applicationConstantsBean.getMessageNo();
+                formulas.put(fieldId, msg);
                 continue;
             } else if (FieldType.STRUCT_UNIT == fieldType && isList) {
                 formulas.put(fieldId, UserUtil.getDisplayUnitText(propValue));
@@ -823,8 +832,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
         WorkflowDbService workflowDbService = BeanHelper.getWorkflowDbService();
         boolean isTask = workflowDbService.taskExists(objectRef);
         if (isTask) {
-            props = RepoUtil
-                    .toQNameProperties(workflowDbService.getTask(objectRef, BeanHelper.getWorkflowService().getTaskPrefixedQNames(), null, false).getNode().getProperties());
+            props = RepoUtil.toQNameProperties(workflowDbService.getTask(objectRef, null, false).getNode().getProperties());
         } else {
             props = nodeService.getProperties(objectRef);
         }
@@ -1081,7 +1089,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
 
     @Override
     public DocumentTemplate getTemplateByName(String name) throws FileNotFoundException {
-        NodeRef nodeRef = fileFolderService.searchSimple(getRoot(), name);
+        NodeRef nodeRef = fileFolderService.searchSimple(getConstantNodeRefsBean().getTemplateRoot(), name);
         if (nodeRef == null) {
             throw new FileNotFoundException(name);
         }
@@ -1090,7 +1098,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
 
     @Override
     public List<DocumentTemplate> getTemplates() {
-        List<FileInfo> templateFiles = fileFolderService.listFiles(getRoot());
+        List<FileInfo> templateFiles = fileFolderService.listFiles(getConstantNodeRefsBean().getTemplateRoot());
         List<DocumentTemplate> templates = new ArrayList<DocumentTemplate>(templateFiles.size());
         for (FileInfo fi : templateFiles) {
             DocumentTemplate dt = setupDocumentTemplate(fi);
@@ -1107,11 +1115,6 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
             templates.add(dt);
         }
         return templates;
-    }
-
-    @Override
-    public NodeRef getRoot() {
-        return generalService.getNodeRef(DocumentTemplateModel.Repo.TEMPLATES_SPACE);
     }
 
     @Override
@@ -1200,7 +1203,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
 
     private NodeRef getTemplateByName(String templateName, QName templateAspect) {
         if (StringUtils.isNotEmpty(templateName)) {
-            NodeRef template = fileFolderService.searchSimple(getRoot(), templateName);
+            NodeRef template = fileFolderService.searchSimple(getConstantNodeRefsBean().getTemplateRoot(), templateName);
             if (template != null && nodeService.hasAspect(template, templateAspect)) {
                 return template;
             }
@@ -1219,7 +1222,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
         if (StringUtils.isBlank(templateName)) {
             return null;
         }
-        NodeRef template = fileFolderService.searchSimple(getRoot(), templateName);
+        NodeRef template = fileFolderService.searchSimple(getConstantNodeRefsBean().getTemplateRoot(), templateName);
         if (template != null && nodeService.hasAspect(template, DocumentTemplateModel.Aspects.TEMPLATE_REPORT)
                 && reportType.toString().equals(nodeService.getProperty(template, DocumentTemplateModel.Prop.REPORT_TYPE))) {
             return template;
@@ -1299,6 +1302,10 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
             _fileService = BeanHelper.getFileService();
         }
         return _fileService;
+    }
+
+    public void setApplicationConstantsBean(ApplicationConstantsBean applicationConstantsBean) {
+        this.applicationConstantsBean = applicationConstantsBean;
     }
 
     // END: getters / setters

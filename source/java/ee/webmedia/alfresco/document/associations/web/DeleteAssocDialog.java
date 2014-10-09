@@ -12,6 +12,7 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.app.AlfrescoNavigationHandler;
 import org.alfresco.web.bean.content.DeleteContentDialog;
+import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.service.DocumentService;
@@ -97,7 +98,7 @@ public class DeleteAssocDialog extends DeleteContentDialog {
         }
 
         String targetNodeRefString = ActionUtil.getParam(event, "targetNodeRef");
-        if (!(targetNodeRefString == null || targetNodeRefString.equals("null"))) {
+        if (!(StringUtils.isBlank(targetNodeRefString) || targetNodeRefString.equals("null"))) {
             targetNodeRef = new NodeRef(targetNodeRefString);
         }
 

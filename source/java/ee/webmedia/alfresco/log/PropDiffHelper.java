@@ -1,5 +1,7 @@
 package ee.webmedia.alfresco.log;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getApplicationConstantsBean;
+
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Date;
@@ -22,7 +24,7 @@ import ee.webmedia.alfresco.utils.MessageUtil;
  * i.e. explicitly defined through {@link #label(QName, String)}.
  * <p>
  * Sample usage:
- * 
+ *
  * <pre>
  * String diff = new PropDiffHelper()
  *         .label(prop, &quot;label_to_localize&quot;)
@@ -189,7 +191,7 @@ public class PropDiffHelper {
             return DATE_FORMAT.format((Date) value);
         }
         if (value instanceof Boolean) {
-            return MessageUtil.getMessage(((Boolean) value) ? "yes" : "no");
+            return (Boolean) value ? getApplicationConstantsBean().getMessageYes() : getApplicationConstantsBean().getMessageNo();
         }
         if (value instanceof String) {
             if (StringUtils.isBlank((String) value)) {

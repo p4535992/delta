@@ -6,12 +6,10 @@ import java.util.List;
 import java.util.Set;
 
 import ee.webmedia.alfresco.casefile.service.CaseFile;
-import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.log.web.LogBlockBean;
-import ee.webmedia.alfresco.log.model.LogEntry;
 import ee.webmedia.alfresco.log.model.LogFilter;
+import ee.webmedia.alfresco.log.web.LogEntryDataProvider;
 import ee.webmedia.alfresco.utils.MessageUtil;
-
 
 public class CaseFileLogBlockBean extends LogBlockBean {
     private static final long serialVersionUID = 1L;
@@ -33,10 +31,16 @@ public class CaseFileLogBlockBean extends LogBlockBean {
     @Override
     public void restore() {
         if (caseFile.isSaved()) {
-            logs = (List) BeanHelper.getLogService().getLogEntries(getCaseFileLogFilter());
+            logs = new LogEntryDataProvider(getCaseFileLogFilter());
         } else {
-            logs = new ArrayList<LogEntry>();
+            logs = new LogEntryDataProvider();
         }
+    }
+
+    @Override
+    public void clean() {
+        super.clean();
+        caseFile = null;
     }
 
     private LogFilter getCaseFileLogFilter() {

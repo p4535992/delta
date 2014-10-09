@@ -729,4 +729,14 @@ public class StatisticsCollectingStatement implements PreparedStatement {
         preparedStatement.setNClob(parameterIndex, reader);
     }
 
+    @Override
+    public void closeOnCompletion() throws SQLException {
+        
+    }
+
+    @Override
+    public boolean isCloseOnCompletion() throws SQLException {
+        return false;
+    }
+
 }

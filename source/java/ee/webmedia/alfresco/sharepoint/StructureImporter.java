@@ -66,6 +66,7 @@ import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
 import ee.webmedia.alfresco.eventplan.model.EventPlanModel;
 import ee.webmedia.alfresco.functions.model.Function;
 import ee.webmedia.alfresco.functions.model.FunctionsModel;
+import ee.webmedia.alfresco.functions.model.UnmodifiableFunction;
 import ee.webmedia.alfresco.functions.service.FunctionsService;
 import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.privilege.service.PrivilegeService;
@@ -95,7 +96,7 @@ public class StructureImporter {
     private static final String[] VOLUME_TYPES = { "aastane toimik", "asjatoimik", "objektitoimik" };
     private static final String[] VOLUME_TYPE_CODES = { VolumeType.ANNUAL_FILE.name(), VolumeType.CASE_FILE.name(), VolumeType.SUBJECT_FILE.name() };
     private static final String[] RESTRICTIONS = { "", AccessRestriction.AK.getValueName(), AccessRestriction.OPEN.getValueName(), AccessRestriction.INTERNAL.getValueName(),
-            AccessRestriction.LIMITED.getValueName() };
+        AccessRestriction.LIMITED.getValueName() };
 
     static {
         // These arrays are used for binary search; they must be sorted to be useful.
@@ -130,10 +131,10 @@ public class StructureImporter {
         queryParts.add(SearchUtil.generateTypeQuery(SeriesModel.Types.SERIES));
         queryParts.add(SearchUtil.generatePropertyNullQuery(SeriesModel.Props.ORDER));
 
-        List<Function> functions = functionsService.getAllFunctions();
+        List<UnmodifiableFunction> functions = functionsService.getAllFunctions();
         functions.addAll(archivalsService.getArchivedFunctions());
 
-        for (Function f : functions) {
+        for (UnmodifiableFunction f : functions) {
             queryParts.add(SearchUtil.generatePrimaryParentQuery(f.getNodeRef()));
             String q = SearchUtil.joinQueryPartsAnd(queryParts);
             queryParts.remove(2);
@@ -221,6 +222,7 @@ public class StructureImporter {
         CsvWriter logWriter = initLogWriter(logFile);
 
         try {
+            Map<Long, QName> propertyTypes = new HashMap<Long, QName>();
             while (canContinue) {
                 if (reader.getCurrentRecord() % 500 == 0) {
                     LOG.info("Structure import reached row " + reader.getCurrentRecord());
@@ -230,7 +232,7 @@ public class StructureImporter {
 
                 validateStructureLine(reader, data);
 
-                NodeRef function = doFunction(reader, context);
+                NodeRef function = doFunction(reader, context, propertyTypes);
                 NodeRef series = doSeries(reader, function, context);
                 NodeRef volume = doVolume(reader, series, context);
                 NodeRef caseRef = doCase(reader, volume);
@@ -281,7 +283,7 @@ public class StructureImporter {
         checkAnyOf(reader, RESTRICTIONS, 22);
     }
 
-    private NodeRef doFunction(CsvReader reader, ImportContext context) throws IOException {
+    private NodeRef doFunction(CsvReader reader, ImportContext context, Map<Long, QName> propertyTypes) throws IOException {
         Date volumeEndDate = getDate(reader, 20);
         String mark = getString(reader, 9);
         String title = getString(reader, 10);
@@ -295,7 +297,7 @@ public class StructureImporter {
                         && title.equals(nodeService.getProperty(assoc.getChildRef(), FunctionsModel.Props.TITLE))) {
                     function = assoc.getChildRef();
 
-                    Function f = functionsService.getFunctionByNodeRef(function);
+                    Function f = functionsService.getFunction(function, propertyTypes);
                     if ("suletud".equals(f.getStatus())) {
                         functionsService.reopenFunction(f);
 

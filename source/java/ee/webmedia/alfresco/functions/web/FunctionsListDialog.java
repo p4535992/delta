@@ -34,8 +34,8 @@ import org.springframework.web.jsf.FacesContextUtils;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.WMAdminNodeBrowseBean;
-import ee.webmedia.alfresco.functions.model.Function;
 import ee.webmedia.alfresco.functions.model.FunctionsModel;
+import ee.webmedia.alfresco.functions.model.UnmodifiableFunction;
 import ee.webmedia.alfresco.functions.service.FunctionsService;
 import ee.webmedia.alfresco.importer.excel.bootstrap.SmitExcelImporter;
 import ee.webmedia.alfresco.series.model.SeriesModel;
@@ -54,7 +54,7 @@ public class FunctionsListDialog extends BaseDialogBean {
     private transient ExporterService exporterService;
     private transient UserService userService;
     private transient GeneralService generalService;
-    protected List<Function> functions;
+    protected List<UnmodifiableFunction> functions;
     private int deleteBatchSize = 30;
 
     @Override
@@ -85,6 +85,11 @@ public class FunctionsListDialog extends BaseDialogBean {
         return super.cancel();
     }
 
+    @Override
+    public void clean() {
+        reset();
+    }
+
     public void updateDocCounters(@SuppressWarnings("unused") ActionEvent event) {
         final long docCount = BeanHelper.getDocumentListService().updateDocCounters();
         MessageUtil.addInfoMessage(FacesContext.getCurrentInstance(), "docList_updateDocCounters_success", docCount);
@@ -99,7 +104,7 @@ public class FunctionsListDialog extends BaseDialogBean {
      * NB! this method doesn't delete files associated with cases or documents that will get deleted - hence wasting disk usage. <br>
      * But as at the moment this method is meant to be called only in cases where repository and DB backups will be restored(before final successful import), it
      * is not an issue.
-     * 
+     *
      * @param event
      */
     public void deleteAllDocuments(@SuppressWarnings("unused") ActionEvent event) {
@@ -284,15 +289,15 @@ public class FunctionsListDialog extends BaseDialogBean {
     /**
      * Used in JSP pages.
      */
-    public List<Function> getFunctions() {
+    public List<UnmodifiableFunction> getFunctions() {
         return functions;
     }
 
-    public List<Function> getMySeriesFunctions() {
-        List<Function> seriesFunctions = new ArrayList<Function>(functions.size());
+    public List<UnmodifiableFunction> getMySeriesFunctions() {
+        List<UnmodifiableFunction> seriesFunctions = new ArrayList<UnmodifiableFunction>(functions.size());
         String currentUsersStructUnitId = getUserService().getCurrentUsersStructUnitId();
         if (StringUtils.isNotBlank(currentUsersStructUnitId)) {
-            for (Function function : getFunctions()) {
+            for (UnmodifiableFunction function : getFunctions()) {
                 List<ChildAssociationRef> childAssocs = getNodeService().getChildAssocs(function.getNodeRef());
                 for (ChildAssociationRef caRef : childAssocs) {
                     @SuppressWarnings("unchecked")

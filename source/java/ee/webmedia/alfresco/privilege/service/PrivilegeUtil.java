@@ -32,6 +32,7 @@ import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.user.service.UserService;
+import ee.webmedia.alfresco.utils.FilenameUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
@@ -104,7 +105,7 @@ public class PrivilegeUtil {
         return new HashSet<Privilege>();
     }
 
-    public static Set<Privilege> getRequiredPrivsForTask(Task task, NodeRef docRef, FileService fileService, boolean isForCaseFile) {
+    private static Set<Privilege> getRequiredPrivsForTask(Task task, NodeRef docRef, FileService fileService, boolean isForCaseFile) {
         return getRequiredPrivsForTask(task, docRef, fileService, isForCaseFile, task.getParent().getParent().isCaseFileWorkflow());
     }
 
@@ -117,9 +118,9 @@ public class PrivilegeUtil {
             boolean isSignatureTaskWithFiles = false;
             if (task.isType(WorkflowSpecificModel.Types.SIGNATURE_TASK)) {
                 List<File> allFiles = fileService.getAllActiveFiles(docRef);
-                if (allFiles.size() == 1 && allFiles.get(0).getName().toLowerCase().endsWith(".ddoc")) {
+                if (allFiles.size() == 1 && FilenameUtil.isDigiDocFile(allFiles.get(0).getName())) {
                     isSignatureTaskWith1Digidoc = true;
-                } else if (!allFiles.isEmpty()) {
+                } else if (!allFiles.isEmpty() || allFiles.size() == 1 && !FilenameUtil.isDigiDocFile(allFiles.get(0).getName())) {
                     isSignatureTaskWithFiles = true;
                 }
             }

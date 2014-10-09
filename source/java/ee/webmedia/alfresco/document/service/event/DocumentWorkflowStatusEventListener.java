@@ -74,7 +74,7 @@ public class DocumentWorkflowStatusEventListener implements WorkflowEventListene
                     if (caseFileProps.get(DocumentDynamicModel.Props.WORKFLOW_END_DATE) == null) {
                         Pair<CaseFileType, DocumentTypeVersion> typeAndVersion = BeanHelper.getDocumentAdminService().getCaseFileTypeAndVersion(
                                 (String) caseFileProps.get(DocumentAdminModel.Props.OBJECT_TYPE_ID),
-                                (Integer) caseFileProps.get(DocumentAdminModel.Props.OBJECT_TYPE_VERSION_NR));
+                                (Integer) caseFileProps.get(DocumentAdminModel.Props.OBJECT_TYPE_VERSION_NR), false);
                         Collection<Field> fields = typeAndVersion.getSecond().getFieldsById(Collections.singleton(DocumentDynamicModel.Props.WORKFLOW_END_DATE.getLocalName()));
                         if (!fields.isEmpty()) {
                             nodeService.setProperty(caseFileRef, DocumentDynamicModel.Props.WORKFLOW_END_DATE, new Date());
@@ -85,7 +85,7 @@ public class DocumentWorkflowStatusEventListener implements WorkflowEventListene
                     if (documentRefs.isEmpty()) {
                         return;
                     }
-                    boolean allowFinishUnregisteredDocs = documentService.isFinishUnregisteredDocumentEnabled();
+                    boolean allowFinishUnregisteredDocs = BeanHelper.getApplicationConstantsBean().isFinishUnregisteredDocumentEnabled();
                     for (final NodeRef documentRef : documentRefs) {
                         endDocument(documentRef, allowFinishUnregisteredDocs);
                     }

@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.utils;
 
+import static ee.webmedia.alfresco.common.service.ApplicationConstantsBean.SORT_ALLOWED_LIMIT;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getGeneralService;
 
 import java.util.ArrayList;
@@ -18,6 +19,7 @@ import org.alfresco.web.data.IDataContainer;
 import org.alfresco.web.data.QuickSort;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.logging.Log;
 import org.springframework.web.util.HtmlUtils;
 
 import ee.webmedia.alfresco.app.AppConstants;
@@ -34,7 +36,7 @@ public class WebUtil {
     public static Comparator<SelectItem> selectItemLabelComparator = new Comparator<SelectItem>() {
         @Override
         public int compare(SelectItem a, SelectItem b) {
-            return AppConstants.DEFAULT_COLLATOR.compare(a.getLabel(), b.getLabel());
+            return AppConstants.getNewCollatorInstance().compare(a.getLabel(), b.getLabel());
         }
     };
 
@@ -165,6 +167,17 @@ public class WebUtil {
                 }
             }
         }
+    }
+
+    public static boolean exceedsLimit(List<NodeRef> nodeRefs, Log log) {
+        int size = nodeRefs != null ? nodeRefs.size() : 0;
+        if (size > SORT_ALLOWED_LIMIT) {
+            if (log != null) {
+                log.warn("List size " + size + " exceeds " + SORT_ALLOWED_LIMIT + ", sorting is not performed!");
+            }
+            return true;
+        }
+        return false;
     }
 
 }

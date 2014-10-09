@@ -62,6 +62,10 @@ public abstract class BaseWizardBean extends BaseDialogBean implements IWizardBe
       return null;
    }
    
+   public void clean() {
+       // do nothing
+   }
+   
    public boolean getNextButtonDisabled()
    {
       return false;

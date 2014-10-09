@@ -25,8 +25,8 @@
 package org.alfresco.web.ui.repo.component.evaluator;
 
 import java.io.PrintWriter;
+import java.io.Serializable;
 import java.io.StringWriter;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -38,6 +38,10 @@ import org.alfresco.web.action.ActionEvaluator;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.ui.common.component.evaluator.BaseEvaluator;
 
+import ee.webmedia.alfresco.common.evaluator.EvaluatorSharedResource;
+import ee.webmedia.alfresco.common.evaluator.SharedResourceEvaluator;
+import ee.webmedia.alfresco.common.model.NodeBaseVO;
+
 /**
  * Evaluator for executing an ActionEvaluator instance.
  * 
@@ -46,6 +50,12 @@ import org.alfresco.web.ui.common.component.evaluator.BaseEvaluator;
 public class ActionInstanceEvaluator extends BaseEvaluator
 {
    private static final String EVALUATOR_CACHE = "_alf_evaluator_cache";
+   
+   private EvaluatorSharedResource<Serializable> evaluatorSharedResource;
+
+   public void setSharedResource(EvaluatorSharedResource<Serializable> evaluatorSharedResource) {
+       this.evaluatorSharedResource = evaluatorSharedResource;
+   }
    
    /**
     * Evaluate by executing the specified action instance evaluator.
@@ -58,15 +68,23 @@ public class ActionInstanceEvaluator extends BaseEvaluator
       
       try
       {
-         final Object obj = this.getValue();
-         if (obj instanceof Node)
-         {
-            result = evaluateCachedResult((Node)obj);
-         }
-         else
-         {
-            result = this.getEvaluator().evaluate(obj);
-         }
+          // TODO: always try to cache evaluator result because evaluators are always called twice.
+          // Once for upper titlebar and second time for footer-titlebar where all the buttons
+          // are dubbed. Evaluators are called regardless if the footer-titlebar is visible or not.
+          final Object obj = getValue();
+          if (obj instanceof Node)
+          {
+              String cacheKeyPrefix = ((Node) obj).getNodeRef().toString();
+              result = evaluateCachedResult((Node) obj, cacheKeyPrefix);
+          }
+          else if (obj instanceof NodeBaseVO && ((NodeBaseVO) obj).getNodeRef() != null) {
+              String cacheKeyPrefix = ((NodeBaseVO) obj).getNodeRef().toString();
+              result = evaluateCachedResult((NodeBaseVO) obj, cacheKeyPrefix);
+          }
+          else
+          {
+              result = getEvaluator().evaluate(obj);
+          }
       }
       catch (Exception err)
       {
@@ -117,22 +135,30 @@ public class ActionInstanceEvaluator extends BaseEvaluator
     * 
     * @return evaluator result
     */
-   private boolean evaluateCachedResult(Node node)
-   {
-      Boolean result;
-      
-      ActionEvaluator evaluator = getEvaluator();
-      String cacheKey = node.getNodeRef().toString() + '_' + evaluator.getClass().getName();
-      Map<String, Boolean> cache = getEvaluatorResultCache();
-      result = cache.get(cacheKey);
-      if (result == null)
-      {
-         result = evaluator.evaluate(node);
-         cache.put(cacheKey, result);
-      }
-      
-      return result;
-   }
+    private boolean evaluateCachedResult(Serializable obj, String cacheKeyPrefix)
+    {
+        Boolean result;
+
+        ActionEvaluator evaluator = getEvaluator();
+        String cacheKey = cacheKeyPrefix + '_' + evaluator.getClass().getName();
+        Map<String, Boolean> cache = getEvaluatorResultCache();
+        result = cache.get(cacheKey);
+        if (result == null)
+        {
+            if (evaluator instanceof SharedResourceEvaluator && evaluatorSharedResource != null) {
+                SharedResourceEvaluator sharedEvaluator = (SharedResourceEvaluator) evaluator;
+                evaluatorSharedResource.setObject(obj);
+                sharedEvaluator.setSharedResource(evaluatorSharedResource);
+                result = sharedEvaluator.evaluate();
+            } else if (obj instanceof Node) {
+                result = evaluator.evaluate((Node) obj);
+            } else {
+                result = evaluator.evaluate(obj);
+            }
+            cache.put(cacheKey, result);
+        }
+        return result;
+    }
 
    /**
     * @return the evaluator result cache - tied to the current request

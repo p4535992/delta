@@ -5,7 +5,6 @@ import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.getCompoundWork
 import java.io.Serializable;
 import java.util.Date;
 
-import org.apache.commons.lang.time.DateUtils;
 import org.apache.commons.lang.time.FastDateFormat;
 
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
@@ -28,6 +27,7 @@ public class TaskAndDocument implements Serializable {
     private Date workflowDueDate;
     private String workflowDueDateStr;
     private String volumeMark;
+    private String typeName;
 
     public TaskAndDocument(Task task, Document document, CompoundWorkflow compoundWorkflow) {
         this.task = task;
@@ -142,17 +142,18 @@ public class TaskAndDocument implements Serializable {
     }
 
     public String getDocumentTypeName() {
-        String typeName;
-        if (hasDocument()) {
-            if (compoundWorkflow.isCaseFileWorkflow()) {
-                typeName = MessageUtil.getMessage("casefile_workflow_type_name");
+        if (typeName == null) {
+            if (hasDocument()) {
+                if (compoundWorkflow != null && compoundWorkflow.isCaseFileWorkflow()) {
+                    typeName = MessageUtil.getMessage("casefile_workflow_type_name");
+                } else {
+                    typeName = document.getDocumentTypeName();
+                }
+            } else if (compoundWorkflow != null && compoundWorkflow.isIndependentWorkflow()) {
+                typeName = getCompoundWorkflowDocMsg(compoundWorkflow.getNumberOfDocuments(), MessageUtil.getMessage("compound_workflow_independent_no_documents"));
             } else {
-                typeName = document.getDocumentTypeName();
+                typeName = MSG_CASE_FILE_TITLE;
             }
-        } else if (compoundWorkflow != null && compoundWorkflow.isIndependentWorkflow()) {
-            typeName = getCompoundWorkflowDocMsg(compoundWorkflow.getNumberOfDocuments(), MessageUtil.getMessage("compound_workflow_independent_no_documents"));
-        } else {
-            typeName = MSG_CASE_FILE_TITLE;
         }
         return typeName;
     }

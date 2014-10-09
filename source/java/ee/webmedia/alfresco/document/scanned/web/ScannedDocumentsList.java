@@ -65,7 +65,7 @@ public class ScannedDocumentsList extends BaseDialogBean implements FolderListDi
                 return f2.getCreated().compareTo(f1.getCreated());
             }
         });
-        folders = BeanHelper.getFileService().getSubfolders(folderRef, ContentModel.TYPE_FOLDER, ContentModel.TYPE_CONTENT);
+        folders = BeanHelper.getFileService().getSubfolders(folderRef, ContentModel.TYPE_FOLDER, ContentModel.TYPE_CONTENT, true);
     }
 
     public List<File> getFiles() {
@@ -100,5 +100,12 @@ public class ScannedDocumentsList extends BaseDialogBean implements FolderListDi
     @Override
     public String getFolderListTitle() {
         return MessageUtil.getMessage("document_incoming_emails_folders");
+    }
+
+    @Override
+    public void clean() {
+        files = null;
+        folderRef = null;
+        folders = null;
     }
 }

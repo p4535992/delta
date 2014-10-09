@@ -9,7 +9,6 @@ import java.util.List;
 import javax.faces.event.ActionEvent;
 
 import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.service.namespace.QName;
 import org.alfresco.web.app.AlfrescoNavigationHandler;
 import org.alfresco.web.config.DialogsConfigElement.DialogButtonConfig;
 import org.apache.commons.collections.comparators.ComparatorChain;
@@ -89,17 +88,17 @@ public class TransferringToUamVolumeListDialog extends VolumeArchiveBaseDialog {
     }
 
     @Override
-    protected List<QName> getRenderedFilterFields() {
+    protected List<String> getRenderedFilterFields() {
         if (renderedFilterFields == null) {
-            renderedFilterFields = new ArrayList<QName>(Arrays.asList(
-                    VolumeSearchModel.Props.EXPORTED_FOR_UAM_DATE_TIME,
-                    VolumeSearchModel.Props.EXPORTED_FOR_UAM_DATE_TIME_END_DATE,
-                    VolumeSearchModel.Props.EVENT_PLAN));
+            renderedFilterFields = new ArrayList<String>(Arrays.asList(
+                    VolumeSearchModel.Props.EXPORTED_FOR_UAM_DATE_TIME.toPrefixString(),
+                    VolumeSearchModel.Props.EXPORTED_FOR_UAM_DATE_TIME_END_DATE.toPrefixString(),
+                    VolumeSearchModel.Props.EVENT_PLAN.toPrefixString()));
             if (showStoreFilterField()) {
-                renderedFilterFields.add(VolumeSearchModel.Props.STORE);
+                renderedFilterFields.add(VolumeSearchModel.Props.STORE.toPrefixString());
             }
             if (showNextEventFilterField()) {
-                renderedFilterFields.add(VolumeSearchModel.Props.NEXT_EVENT);
+                renderedFilterFields.add(VolumeSearchModel.Props.NEXT_EVENT.toPrefixString());
             }
         }
         return renderedFilterFields;

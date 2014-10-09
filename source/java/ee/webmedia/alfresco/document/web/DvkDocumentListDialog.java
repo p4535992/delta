@@ -3,10 +3,13 @@ package ee.webmedia.alfresco.document.web;
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
+import ee.webmedia.alfresco.document.search.web.DocumentListDataProvider;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
 public class DvkDocumentListDialog extends BaseDocumentListDialog {
     private static final long serialVersionUID = 1L;
+
+    public static final String BEAN_NAME = "DvkDocumentListDialog";
 
     /** @param event */
     public void setup(ActionEvent event) {
@@ -15,7 +18,7 @@ public class DvkDocumentListDialog extends BaseDocumentListDialog {
 
     @Override
     public void restored() {
-        documents = getDocumentService().getAllDocumentFromDvk();
+        documentProvider = new DocumentListDataProvider(getDocumentService().getAllDocumentFromDvk(), false);
     }
 
     @Override

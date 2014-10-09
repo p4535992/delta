@@ -18,4 +18,9 @@ public class AddReplyAssocEvaluator extends BaseAddAssocEvaluator {
         return documentType.isAddReplyToUnregistratedDocEnabled();
     }
 
+    @Override
+    public boolean evaluate() {
+        return false;
+    }
+
 }

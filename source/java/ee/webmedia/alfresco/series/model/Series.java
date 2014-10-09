@@ -223,7 +223,7 @@ public class Series implements Serializable, Comparable<Series> {
     @Override
     public int compareTo(Series other) {
         if (getOrder() == other.getOrder()) {
-            return AppConstants.DEFAULT_COLLATOR.compare(getSeriesIdentifier(), other.getSeriesIdentifier());
+            return AppConstants.getNewCollatorInstance().compare(getSeriesIdentifier(), other.getSeriesIdentifier());
         }
         return getOrder() - other.getOrder();
     }

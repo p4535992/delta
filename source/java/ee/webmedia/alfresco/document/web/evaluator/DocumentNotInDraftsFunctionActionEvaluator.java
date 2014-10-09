@@ -22,4 +22,5 @@ public class DocumentNotInDraftsFunctionActionEvaluator extends BaseActionEvalua
 
         return !BeanHelper.getFunctionsService().isDraftsFunction(functionRef);
     }
+
 }

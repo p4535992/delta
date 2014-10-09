@@ -106,7 +106,7 @@
             <action idref="compound_workflow_add_new" />
          </action-group>
 
-         <action-group id="compound_workflow_actions">
+         <action-group id="compound_workflow_actions" shared-resource="ee.webmedia.alfresco.common.evaluator.CompoundWorkflowActionGroupSharedResource">
             <action idref="compound_workflow_stop" />
             <action idref="compound_workflow_continue" />
             <action idref="compound_workflow_finish" />

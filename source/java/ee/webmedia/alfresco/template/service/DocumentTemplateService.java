@@ -45,13 +45,6 @@ public interface DocumentTemplateService {
     List<DocumentTemplate> getEmailTemplates();
 
     /**
-     * Returns root folder for templates
-     * 
-     * @return
-     */
-    NodeRef getRoot();
-
-    /**
      * Fills documents template file with metadata
      * 
      * @param documentNodeRef
@@ -94,7 +87,7 @@ public interface DocumentTemplateService {
      */
     DocumentTemplate getDocumentsTemplate(NodeRef document);
 
-    boolean hasDocumentsTemplate(NodeRef document);
+    boolean hasDocumentsTemplate(String documentTypeId);
 
     /**
      * Scans generated Word documents and replaces patterns which are relevant to registration of the document

@@ -58,7 +58,7 @@
             props="tasksearch:stoppedDateTimeBegin||styleClass=date,tasksearch:stoppedDateTimeBegin_EndDate||styleClass=date,tasksearch:stoppedDateTimeBegin_DateRangePicker|EnumSelectorGenerator|disableSorting=true|styleClass=quickDateRangePicker|enumClass=ee.webmedia.alfresco.classificator.enums.DatePeriods" 
             textId="task_search_from_to_with_picker" />
          <show-property name="tasksearch:docType" display-label-id="document_docType" component-generator="GeneralSelectorGenerator"
-            selectionItems="#{DocumentSearchBean.getDocumentTypes}" show="#{WmWorkflowService.documentWorkflowEnabled}" />
+            selectionItems="#{DocumentSearchBean.getDocumentTypes}" show="#{DocumentSearchBean.documentWorkflowEnabled}" />
          
          <show-property 
             name="cwsearch:type" 

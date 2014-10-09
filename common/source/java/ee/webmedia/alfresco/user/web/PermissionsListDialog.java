@@ -55,13 +55,18 @@ public class PermissionsListDialog extends BaseDialogBean {
         return super.cancel();
     }
 
-    private void reset() {
+    @Override
+    public void clean() {
         // Don't call these from restored() since this dialog uses nested dialogs for actual rights management!
         nodeRef = null;
         permission = null;
         alternateConfigId = null;
         callbackMethodBinding = null;
         alternateDialogTitleId = null;
+    }
+
+    private void reset() {
+        clean();
         restored();
     }
 

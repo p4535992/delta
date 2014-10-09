@@ -66,6 +66,7 @@ import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.classificator.enums.PublishToAdr;
 import ee.webmedia.alfresco.classificator.model.ClassificatorValue;
 import ee.webmedia.alfresco.classificator.service.ClassificatorService;
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
 import ee.webmedia.alfresco.docconfig.bootstrap.SystematicDocumentType;
@@ -258,10 +259,15 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
         } else if (SystematicDocumentType.OUTGOING_LETTER.isSameType(documentTypeId)) {
             dokument.setVastamiseKuupaev(convertToXMLGergorianCalendar((Date) doc.getProp(DocumentSpecificModel.Props.REPLY_DATE)));
         }
-        dokument.setTahtaeg(convertToXMLGergorianCalendar((Date) doc.getProp(DocumentSpecificModel.Props.DUE_DATE)));
         if (!isIncomingLetter) {
-            dokument.setKoostaja(getNullIfEmpty(getClassifiedOrgStructValueIfNeeded(doc.getOwnerName(), doc.getOwnerOrgStructUnit())));
+            Date earliestSendInfoDate = BeanHelper.getSendOutService().getEarliestSendInfoDate(doc.getNodeRef());
+            if (earliestSendInfoDate != null) {
+                XMLGregorianCalendar convertToXMLGergorianCalendar = convertToXMLGergorianCalendar(earliestSendInfoDate);
+                dokument.setSaatmiseKuupaev(convertToXMLGergorianCalendar);
+            }
         }
+        dokument.setTahtaeg(convertToXMLGergorianCalendar((Date) doc.getProp(DocumentSpecificModel.Props.DUE_DATE)));
+        dokument.setKoostaja(getNullIfEmpty(getClassifiedOrgStructValueIfNeeded(doc.getOwnerName(), doc.getOwnerOrgStructUnit())));
         @SuppressWarnings("unchecked")
         List<String> signerStructUnit = (List<String>) doc.getProp(DocumentCommonModel.Props.SIGNER_ORG_STRUCT_UNIT);
         dokument.setAllkirjastaja(getNullIfEmpty(getClassifiedOrgStructValueIfNeeded((String) doc.getProp(DocumentCommonModel.Props.SIGNER_NAME)
@@ -354,9 +360,7 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
         Map<QName, Serializable> volumeProps = volumesCache.get(volumeRef);
         if (volumeProps == null) {
             if (volumeRef == null || !nodeService.exists(volumeRef)) {
-                log.warn("Document property volume=null\n  nodeRef=" + doc.getNodeRef().toString() + "\n  props="
-                        + WmNode.toString(RepoUtil.toQNameProperties(doc.getNode().getProperties()), namespaceService) + "\n  aspects="
-                        + WmNode.toString(doc.getNode().getAspects(), namespaceService));
+                log.warn("Document property volume=null\n  nodeRef=" + doc.getNodeRef().toString());
                 docParents = documentService.getDocumentParents(doc.getNodeRef());
                 volumeRef = docParents.get(DocumentCommonModel.Props.VOLUME);
             }
@@ -376,9 +380,7 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
         Map<QName, Serializable> seriesProps = seriesCache.get(seriesRef);
         if (seriesProps == null) {
             if (seriesRef == null || !nodeService.exists(seriesRef)) {
-                log.warn("Document property series=null\n  nodeRef=" + doc.getNodeRef().toString() + "\n  props="
-                        + WmNode.toString(RepoUtil.toQNameProperties(doc.getNode().getProperties()), namespaceService) + "\n  aspects="
-                        + WmNode.toString(doc.getNode().getAspects(), namespaceService));
+                log.warn("Document property series=null\n  nodeRef=" + doc.getNodeRef().toString());
                 if (docParents == null) {
                     docParents = documentService.getDocumentParents(doc.getNodeRef());
                 }
@@ -399,9 +401,7 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
         Map<QName, Serializable> functionProps = functionsCache.get(functionRef);
         if (functionProps == null) {
             if (functionRef == null || !nodeService.exists(functionRef)) {
-                log.warn("Document property function=null\n  nodeRef=" + doc.getNodeRef().toString() + "\n  props="
-                        + WmNode.toString(RepoUtil.toQNameProperties(doc.getNode().getProperties()), namespaceService) + "\n  aspects="
-                        + WmNode.toString(doc.getNode().getAspects(), namespaceService));
+                log.warn("Document property function=null\n  nodeRef=" + doc.getNodeRef().toString());
                 if (docParents == null) {
                     docParents = documentService.getDocumentParents(doc.getNodeRef());
                 }

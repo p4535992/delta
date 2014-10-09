@@ -1,15 +1,13 @@
 package ee.webmedia.alfresco.eventplan.web;
 
-import java.util.ArrayList;
 import java.util.Collections;
 
 import org.alfresco.web.bean.repository.Node;
 
-import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.log.web.LogBlockBean;
 import ee.webmedia.alfresco.eventplan.model.EventPlan;
-import ee.webmedia.alfresco.log.model.LogEntry;
 import ee.webmedia.alfresco.log.model.LogFilter;
+import ee.webmedia.alfresco.log.web.LogEntryDataProvider;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
 
@@ -32,10 +30,16 @@ public class EventPlanLogBlockBean extends LogBlockBean {
     @Override
     public void restore() {
         if (RepoUtil.isSaved(eventPlan)) {
-            logs = BeanHelper.getLogService().getLogEntries(getEventPlanLogFilter());
+            logs = new LogEntryDataProvider(getEventPlanLogFilter());
         } else {
-            logs = new ArrayList<LogEntry>();
+            logs = new LogEntryDataProvider();
         }
+    }
+
+    @Override
+    public void clean() {
+        super.clean();
+        eventPlan = null;
     }
 
     private LogFilter getEventPlanLogFilter() {

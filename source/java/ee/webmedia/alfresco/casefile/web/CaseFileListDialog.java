@@ -13,6 +13,7 @@ import ee.webmedia.alfresco.common.web.BeanHelper;
 public class CaseFileListDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;
 
+    public static final String BEAN_NAME = "CaseFileListDialog";
     private List<CaseFile> caseFiles;
 
     @Override
@@ -28,8 +29,13 @@ public class CaseFileListDialog extends BaseDialogBean {
 
     @Override
     public String cancel() {
-        caseFiles = null;
+        clean();
         return super.cancel();
+    }
+
+    @Override
+    public void clean() {
+        caseFiles = null;
     }
 
     @Override

@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.springframework.beans.factory.InitializingBean;
 
+import ee.webmedia.alfresco.common.service.ApplicationConstantsBean;
 import ee.webmedia.alfresco.document.einvoice.service.EInvoiceService;
 import ee.webmedia.alfresco.menu.model.MenuItem;
 import ee.webmedia.alfresco.menu.service.MenuService.MenuItemProcessor;
@@ -16,6 +17,7 @@ public class AdministratorMenuItemProcessor implements MenuItemProcessor, Initia
     private MenuService menuService;
     private UserService userService;
     private EInvoiceService einvoiceService;
+    private ApplicationConstantsBean applicationConstantsBean;
     private final List<String> invoiceRelated = Arrays.asList("dimensions", "transactionTemplates", "transactionDescParameters");
 
     @Override
@@ -23,7 +25,7 @@ public class AdministratorMenuItemProcessor implements MenuItemProcessor, Initia
         List<MenuItem> subItems = menuItem.getSubItems();
 
         // Remove invoice related menu items
-        if (!einvoiceService.isEinvoiceEnabled()) {
+        if (!applicationConstantsBean.isEinvoiceEnabled()) {
             for (Iterator<MenuItem> iterator = subItems.iterator(); iterator.hasNext();) {
                 MenuItem item = iterator.next();
                 if (invoiceRelated.contains(item.getId())) {
@@ -89,6 +91,10 @@ public class AdministratorMenuItemProcessor implements MenuItemProcessor, Initia
 
     public void setEinvoiceService(EInvoiceService einvoiceService) {
         this.einvoiceService = einvoiceService;
+    }
+
+    public void setApplicationConstantsBean(ApplicationConstantsBean applicationConstantsBean) {
+        this.applicationConstantsBean = applicationConstantsBean;
     }
 
 }

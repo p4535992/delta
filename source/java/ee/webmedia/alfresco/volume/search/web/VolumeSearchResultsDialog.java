@@ -36,7 +36,7 @@ import ee.webmedia.alfresco.classificator.constant.FieldType;
 import ee.webmedia.alfresco.common.propertysheet.component.WMUIProperty;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.WmNode;
-import ee.webmedia.alfresco.docadmin.service.FieldDefinition;
+import ee.webmedia.alfresco.docadmin.service.UnmodifiableFieldDefinition;
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
@@ -128,7 +128,7 @@ public class VolumeSearchResultsDialog extends BaseLimitedListDialog {
 
         FacesContext context = FacesContext.getCurrentInstance();
         Map<String, Object> props = searchFilter.getProperties();
-        List<FieldDefinition> searchableFields = getDocumentAdminService().getSearchableVolumeFieldDefinitions();
+        List<UnmodifiableFieldDefinition> searchableFields = getDocumentAdminService().getSearchableVolumeFieldDefinitions();
         searchableFields.add(DocumentDynamicSearchDialog.createThesaurusField());
         final Map<String, String> titleLinkParams = new HashMap<String, String>(2);
         titleLinkParams.put("nodeRef", "#{r.node.nodeRef}");
@@ -145,7 +145,7 @@ public class VolumeSearchResultsDialog extends BaseLimitedListDialog {
         }
 
         Set<String> keys = props.keySet();
-        for (FieldDefinition fieldDefinition : searchableFields) {
+        for (UnmodifiableFieldDefinition fieldDefinition : searchableFields) {
             QName primaryQName = fieldDefinition.getQName();
             QName tamperedQName = RepoUtil.createTransientProp(primaryQName.getLocalName() + "LabelEditable");
             if (!(keys.contains(getLabelBoolean(primaryQName).toString()) || keys.contains(tamperedQName.toString()))) {
@@ -275,6 +275,14 @@ public class VolumeSearchResultsDialog extends BaseLimitedListDialog {
 
     public String getInitialSortColumn() {
         return null;
+    }
+
+    @Override
+    public void clean() {
+        searchFilter = null;
+        richList = null;
+        panel = null;
+        volumes = null;
     }
 
     // START: getters / setters

@@ -50,7 +50,7 @@ public class DeleteDraftsBootstrap extends AbstractModuleComponent {
     }
 
     public void executeInternal(final boolean deleteAll) {
-        final NodeRef drafts = documentService.getDrafts();
+        final NodeRef drafts = BeanHelper.getConstantNodeRefsBean().getDraftsRoot();
         List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(drafts);
         LOG.info("Found " + childAssocs.size() + " nodes under drafts" + (childAssocs.isEmpty() ? "" : ", deleting"));
         if (childAssocs.isEmpty()) {

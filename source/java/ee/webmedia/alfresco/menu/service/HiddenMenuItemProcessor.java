@@ -3,11 +3,11 @@ package ee.webmedia.alfresco.menu.service;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.InitializingBean;
 
+import ee.webmedia.alfresco.common.service.ApplicationConstantsBean;
 import ee.webmedia.alfresco.menu.model.MenuItem;
 import ee.webmedia.alfresco.menu.service.MenuService.MenuItemProcessor;
 import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
-import ee.webmedia.alfresco.volume.service.VolumeService;
 
 /**
  * Disables rendering for menu items
@@ -17,7 +17,7 @@ public class HiddenMenuItemProcessor implements MenuItemProcessor, InitializingB
     private static final String CASE_FILE_TYPE_MANAGEMENT = "caseFileTypeManagement";
     private static final String DEPARTMENT_DOCUMENTS = "departmentDocuments";
     private MenuService menuService;
-    private VolumeService volumeService;
+    private ApplicationConstantsBean applicationConstantsBean;
     private ParametersService parametersService;
 
     @Override
@@ -32,7 +32,7 @@ public class HiddenMenuItemProcessor implements MenuItemProcessor, InitializingB
         if (DEPARTMENT_DOCUMENTS.equals(menuItem.getId())) {
             rendered = StringUtils.isNotBlank(parametersService.getStringParameter(Parameters.WORKING_DOCUMENTS_ADDRESS));
         } else if (CASE_FILE_TYPE_MANAGEMENT.equals(menuItem.getId())) {
-            rendered = volumeService.isCaseVolumeEnabled();
+            rendered = applicationConstantsBean.isCaseVolumeEnabled();
         }
 
         menuItem.setRenderingDisabled(!rendered);
@@ -42,8 +42,8 @@ public class HiddenMenuItemProcessor implements MenuItemProcessor, InitializingB
         this.menuService = menuService;
     }
 
-    public void setVolumeService(VolumeService volumeService) {
-        this.volumeService = volumeService;
+    public void setApplicationConstantsBean(ApplicationConstantsBean applicationConstantsBean) {
+        this.applicationConstantsBean = applicationConstantsBean;
     }
 
     public void setParametersService(ParametersService parametersService) {

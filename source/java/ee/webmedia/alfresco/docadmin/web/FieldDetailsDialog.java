@@ -203,7 +203,6 @@ public class FieldDetailsDialog extends BaseDialogBean {
         return strippedDecElements;
     }
 
-    
     private boolean validateDecMappings(boolean valid, List<String> incomingDecElements, List<String> outgoingDecElements) {
         List<String> incomingDecMappings = new ArrayList<String>();
         if (incomingDecElements != null) {
@@ -395,7 +394,7 @@ public class FieldDetailsDialog extends BaseDialogBean {
     }
 
     public boolean isShowInapplicableForVol() {
-        return isFieldDefinition() && BeanHelper.getVolumeService().isCaseVolumeEnabled();
+        return isFieldDefinition() && BeanHelper.getApplicationConstantsBean().isCaseVolumeEnabled();
     }
 
     public boolean isIncomingDvkInfoRendered() {
@@ -495,7 +494,7 @@ public class FieldDetailsDialog extends BaseDialogBean {
      */
     public List<SelectItem> getClassificatorSelectItems(FacesContext context, UIInput selectComponent) {
         if (StringUtils.isBlank(field.getClassificator())) {
-            return Collections.<SelectItem> emptyList();
+            return null;
         }
         List<ClassificatorValue> classificatorValues //
         = getClassificatorService().getActiveClassificatorValues(getClassificatorService().getClassificatorByName(field.getClassificator()));
@@ -563,7 +562,11 @@ public class FieldDetailsDialog extends BaseDialogBean {
                         if (isClassificatorDefaultValueUiProp) {
                             HtmlSelectOneMenu clDefaultValues = (HtmlSelectOneMenu) uiProperty.getChildren().get(1);
                             List<SelectItem> clValueItems = getClassificatorSelectItems(FacesContext.getCurrentInstance(), clDefaultValues);
-                            ComponentUtil.setSelectItems(FacesContext.getCurrentInstance(), clDefaultValues, clValueItems);
+                            if (CollectionUtils.isNotEmpty(clValueItems)) {
+                                ComponentUtil.setSelectItems(FacesContext.getCurrentInstance(), clDefaultValues, clValueItems);
+                            } else {
+                                ComponentUtil.setReadonlyAttributeRecursively(clDefaultValues, true);
+                            }
                         }
                     }
 

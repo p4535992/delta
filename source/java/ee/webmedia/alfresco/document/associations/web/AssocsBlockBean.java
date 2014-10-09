@@ -81,6 +81,12 @@ public class AssocsBlockBean implements DocumentDynamicBlock {
         }
     }
 
+    @Override
+    public void clean() {
+        document = null;
+        docAssocInfos = null;
+    }
+
     public int getAssocsCount() {
         return docAssocInfos.size();
     }

@@ -26,15 +26,7 @@
       </property>
    </bean>
 
-   <bean class="org.alfresco.web.app.ResourceBundleBootstrap">
-      <property name="resourceBundles">
-         <list>
-            <value>ee/webmedia/alfresco/docdynamic/web/document-dynamic-webclient</value>
-         </list>
-      </property>
-   </bean>
-
-   <bean class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
+   <bean id="documentDynamicResourceBundles" class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
       <property name="resourceBundles">
          <list>
             <value>ee/webmedia/alfresco/docdynamic/web/document-dynamic-webclient</value>

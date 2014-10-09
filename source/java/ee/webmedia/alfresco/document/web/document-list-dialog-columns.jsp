@@ -56,17 +56,17 @@
       </a:column>
       
       <%-- Volume --%>
-      <a:column id="col3_2" primary="true" styleClass="#{r.cssStyleClass}" rendered="#{!(DialogManager.bean == CaseDocumentListDialog || DialogManager.bean == CaseFileDialog) && SearchBlockBean.documentVolumeColumnVisible}">
+      <a:column id="col3_2" primary="true" styleClass="#{r.cssStyleClass}" rendered="#{!(DialogManager.bean == CaseDocumentListDialog || DialogManager.bean == CaseFileDialog) && applicationConstantsBean.volumeColumnEnabled}">
          <f:facet name="header">
             <a:sortLink id="col3_2-sort" label="#{msg.volume}" value="volume" styleClass="header"/>
          </f:facet>
-         <a:actionLink id="col3_2-link2cases" value="#{r.documentVolume.volumeMarkAndTitle}" action="dialog:caseDocListDialog" tooltip="#{r.documentVolume.volumeMarkAndTitle}"
+         <a:actionLink id="col3_2-link2cases" value="#{r.documentVolume.volumeLabel}" action="dialog:caseDocListDialog" tooltip="#{r.documentVolume.volumeLabel}"
             showLink="false" actionListener="#{CaseDocumentListDialog.showAll}" rendered="#{r.documentVolume != null && !r.documentVolume.dynamic}" styleClass="tooltip condence20- no-underline" >
-            <f:param name="volumeNodeRef" value="#{r.documentVolume.node.nodeRef}" />
+            <f:param name="volumeNodeRef" value="#{r.documentVolume.nodeRef}" />
          </a:actionLink>
-         <a:actionLink id="col3_2-caseFile" value="#{r.documentVolume.volumeMarkAndTitle}" tooltip="#{r.documentVolume.volumeMarkAndTitle}"
+         <a:actionLink id="col3_2-caseFile" value="#{r.documentVolume.volumeLabel}" tooltip="#{r.documentVolume.volumeLabel}"
             showLink="false" actionListener="#{CaseFileDialog.openFromDocumentList}" rendered="#{r.documentVolume != null && r.documentVolume.dynamic}" styleClass="tooltip condence20- no-underline" >
-            <f:param name="nodeRef" value="#{r.documentVolume.node.nodeRef}" />
+            <f:param name="nodeRef" value="#{r.documentVolume.nodeRef}" />
          </a:actionLink>          
       </a:column>
 
@@ -152,5 +152,5 @@
           <f:facet name="csvExport">
               <a:param value="false"/>
           </f:facet>
-          <wm:customChildrenContainer id="document-list-files" childGenerator="#{DocumentListDialog.documentRowFileGenerator}" parameterList="#{r.files}"/>
+          <wm:customChildrenContainer id="document-list-files" childGenerator="#{DocumentListDialog.documentRowFileGenerator}" parameterList="#{r}"/>
       </a:column>

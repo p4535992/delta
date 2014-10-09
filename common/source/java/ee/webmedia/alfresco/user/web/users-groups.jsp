@@ -29,7 +29,7 @@
          </a:column>
          
         <%-- Actions column --%>
-         <a:column actions="true" rendered="#{UserService.groupsEditingAllowed and UserService.documentManager}">
+         <a:column actions="true" rendered="#{applicationConstantsBean.groupsEditingAllowed and UserService.documentManager}">
             <f:facet name="header">
                <h:outputText value="#{msg.actions}" />
             </f:facet>

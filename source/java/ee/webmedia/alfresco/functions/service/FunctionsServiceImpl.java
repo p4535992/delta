@@ -9,6 +9,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import org.alfresco.repo.cache.SimpleCache;
 import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
 import org.alfresco.service.cmr.dictionary.DictionaryService;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
@@ -18,19 +19,22 @@ import org.alfresco.service.cmr.view.Location;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.service.namespace.RegexQNamePattern;
 import org.alfresco.util.EqualsHelper;
+import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.TransientNode;
 
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.common.service.NodeBasedObjectCallback;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.functions.model.Function;
 import ee.webmedia.alfresco.functions.model.FunctionsModel;
+import ee.webmedia.alfresco.functions.model.UnmodifiableFunction;
 import ee.webmedia.alfresco.log.PropDiffHelper;
 import ee.webmedia.alfresco.log.model.LogEntry;
 import ee.webmedia.alfresco.log.model.LogObject;
 import ee.webmedia.alfresco.log.service.LogService;
-import ee.webmedia.alfresco.series.model.Series;
+import ee.webmedia.alfresco.series.model.UnmodifiableSeries;
 import ee.webmedia.alfresco.series.service.SeriesService;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.RepoUtil;
@@ -53,21 +57,81 @@ public class FunctionsServiceImpl implements FunctionsService {
     private UserService userService;
     private LogService logService;
     private DocumentService documentService;
+    private SimpleCache<NodeRef, UnmodifiableFunction> functionCache;
 
     @Override
-    public List<Function> getAllFunctions() {
+    public List<UnmodifiableFunction> getAllFunctions() {
         return getFunctions(getFunctionsRoot());
     }
 
     @Override
-    public List<Function> getFunctions(NodeRef functionsRoot) {
+    public List<UnmodifiableFunction> getFunctions(NodeRef functionsRoot) {
+        List<ChildAssociationRef> childRefs = getFunctionAssocs(functionsRoot);
+        List<UnmodifiableFunction> functions = new ArrayList<UnmodifiableFunction>(childRefs.size());
+        Map<Long, QName> propertyTypes = new HashMap<Long, QName>();
+        for (ChildAssociationRef childRef : childRefs) {
+            NodeRef functionRef = childRef.getChildRef();
+            UnmodifiableFunction function = getUnmodifiableFunction(functionRef, propertyTypes);
+            functions.add(function);
+        }
+        Collections.sort(functions);
+        return functions;
+    }
+
+    @Override
+    public List<UnmodifiableFunction> getAllFunctions(DocListUnitStatus status) {
+        List<UnmodifiableFunction> functions = getAllFunctions();
+        for (Iterator<UnmodifiableFunction> i = functions.iterator(); i.hasNext();) {
+            UnmodifiableFunction function = i.next();
+            if (!status.getValueName().equals(function.getStatus())) {
+                i.remove();
+            }
+        }
+        return functions;
+    }
+
+    @Override
+    public String getFunctionLabel(NodeRef functionRef) {
+        UnmodifiableFunction function = getUnmodifiableFunction(functionRef, null);
+        return function != null ? function.getFunctionLabel() : "";
+    }
+
+    @Override
+    public UnmodifiableFunction getUnmodifiableFunction(NodeRef functionRef, Map<Long, QName> propertyTypes) {
+        UnmodifiableFunction function = functionCache.get(functionRef);
+        if (function == null) {
+            // functionsBeanPropertyMapper is not used here because this method is very heavily used and direct method call should be faster than using reflection
+            function = generalService.fetchObject(functionRef, null, new NodeBasedObjectCallback<UnmodifiableFunction>() {
+
+                @Override
+                public UnmodifiableFunction create(Node node) {
+                    return new UnmodifiableFunction(node);
+                }
+            }, propertyTypes);
+            functionCache.put(functionRef, function);
+        }
+        return function;
+    }
+
+    @Override
+    public Function getFunction(NodeRef functionRef, Map<Long, QName> propertyTypes) {
+        Node functionNode = generalService.fetchNode(functionRef, propertyTypes);
+        Function function = functionsBeanPropertyMapper.toObject(RepoUtil.toQNameProperties(functionNode.getProperties()));
+        function.setNode(functionNode);
+        if (log.isDebugEnabled()) {
+            log.debug("Found Function: " + function);
+        }
+        return function;
+    }
+
+    private List<Function> getModifiableFunctions(NodeRef functionsRoot) {
         List<ChildAssociationRef> childRefs = getFunctionAssocs(functionsRoot);
         List<Function> functions = new ArrayList<Function>(childRefs.size());
+        Map<Long, QName> propertyTypes = new HashMap<Long, QName>();
         for (ChildAssociationRef childRef : childRefs) {
-            functions.add(getFunctionByNodeRef(childRef.getChildRef()));
-        }
-        if (log.isDebugEnabled()) {
-            log.debug("Functions found: " + functions);
+            NodeRef functionRef = childRef.getChildRef();
+            Function function = getFunction(functionRef, propertyTypes);
+            functions.add(function);
         }
         Collections.sort(functions);
         return functions;
@@ -79,21 +143,9 @@ public class FunctionsServiceImpl implements FunctionsService {
     }
 
     @Override
-    public List<Function> getAllFunctions(DocListUnitStatus status) {
-        List<Function> functions = getAllFunctions();
-        for (Iterator<Function> i = functions.iterator(); i.hasNext();) {
-            Function function = i.next();
-            if (!status.getValueName().equals(function.getStatus())) {
-                i.remove();
-            }
-        }
-        return functions;
-    }
-
-    @Override
     public List<NodeRef> getAllLimitedActivityFunctions() {
         List<NodeRef> functionRefs = new ArrayList<NodeRef>();
-        for (Function function : getAllFunctions()) {
+        for (UnmodifiableFunction function : getAllFunctions()) {
             if (function.isDocumentActivitiesAreLimited()) {
                 functionRefs.add(function.getNodeRef());
             }
@@ -102,44 +154,26 @@ public class FunctionsServiceImpl implements FunctionsService {
     }
 
     @Override
-    public Function getFunctionByNodeRef(String ref) {
-        return getFunctionByNodeRef(new NodeRef(ref));
-    }
-
-    @Override
-    public Function getFunctionByNodeRef(NodeRef nodeRef) {
-        Function function = functionsBeanPropertyMapper.toObject(nodeService.getProperties(nodeRef));
-        function.setNode(generalService.fetchNode(nodeRef)); // FIXME: FacesContext can't be null
-        if (log.isDebugEnabled()) {
-            log.debug("Found Function: " + function);
-        }
-        return function;
-    }
-
-    @Override
     public void saveOrUpdate(Function function) {
         saveOrUpdate(function, getFunctionsRoot());
     }
 
     @Override
-    public void saveOrUpdate(final Function function, NodeRef functionsRoot) {
+    public Function saveOrUpdate(final Function function, NodeRef functionsRoot) {
         boolean activitiesLimitedChanged = true;
-        Map<String, Object> stringQNameProperties = function.getNode().getProperties();
-        Boolean documentActivitiesAreLimited = (Boolean) stringQNameProperties.get(FunctionsModel.Props.DOCUMENT_ACTIVITIES_ARE_LIMITED.toString());
+        Map<QName, Serializable> properties = RepoUtil.toQNameProperties(function.getNode().getProperties());
+        Boolean documentActivitiesAreLimited = function.isDocumentActivitiesAreLimited();
+        NodeRef functionRef = function.getNodeRef();
         if (function.getNode() instanceof TransientNode) {
-            TransientNode transientNode = (TransientNode) function.getNode();
-            NodeRef functionNodeRef = nodeService.createNode(functionsRoot,
+            functionRef = nodeService.createNode(functionsRoot,
                     FunctionsModel.Associations.FUNCTION,
                     FunctionsModel.Associations.FUNCTION,
                     FunctionsModel.Types.FUNCTION,
-                    RepoUtil.toQNameProperties(transientNode.getProperties())).getChildRef();
-            function.setNode(generalService.fetchNode(functionNodeRef));
-
-            Map<String, Object> props = function.getNode().getProperties();
-            logService.addLogEntry(LogEntry.create(LogObject.FUNCTION, userService, functionNodeRef, "applog_space_add",
-                    props.get(FunctionsModel.Props.MARK.toString()), props.get(FunctionsModel.Props.TITLE.toString())));
+                    properties).getChildRef();
+            logService.addLogEntry(LogEntry.create(LogObject.FUNCTION, userService, functionRef, "applog_space_add",
+                    function.getMark(), function.getTitle()));
         } else {
-            Map<QName, Serializable> originalProperties = nodeService.getProperties(function.getNodeRef());
+            Map<QName, Serializable> originalProperties = nodeService.getProperties(functionRef);
             String propDiff = new PropDiffHelper()
                     .label(FunctionsModel.Props.STATUS, "function_status")
                     .label(FunctionsModel.Props.ORDER, "function_status")
@@ -148,37 +182,46 @@ public class FunctionsServiceImpl implements FunctionsService {
                     .label(FunctionsModel.Props.DESCRIPTION, "function_description")
                     .label(FunctionsModel.Props.TYPE, "function_type")
                     .label(FunctionsModel.Props.DOCUMENT_ACTIVITIES_ARE_LIMITED, "function_documentActivitiesAreLimited")
-                    .diff(originalProperties, RepoUtil.toQNameProperties(stringQNameProperties));
+                    .diff(originalProperties, properties);
 
             if (propDiff != null) {
-                logService.addLogEntry(LogEntry.create(LogObject.FUNCTION, userService, function.getNodeRef(), "applog_space_edit",
+                logService.addLogEntry(LogEntry.create(LogObject.FUNCTION, userService, functionRef, "applog_space_edit",
                         function.getMark(), function.getTitle(), propDiff));
             }
             activitiesLimitedChanged = !EqualsHelper.nullSafeEquals(documentActivitiesAreLimited,
-                    originalProperties.get(FunctionsModel.Props.DOCUMENT_ACTIVITIES_ARE_LIMITED.toString()));
-            generalService.setPropertiesIgnoringSystem(function.getNode().getNodeRef(), stringQNameProperties);
+                    originalProperties.get(FunctionsModel.Props.DOCUMENT_ACTIVITIES_ARE_LIMITED));
+            generalService.setPropertiesIgnoringSystem(properties, functionRef);
         }
         if (log.isDebugEnabled()) {
             log.debug("Function updated: \n" + function);
         }
 
+        removeFromCache(functionRef);
         reorderFunctions(function, functionsRoot);
 
+        final NodeRef finalFunRef = functionRef;
         if (activitiesLimitedChanged && functionsRoot.equals(getFunctionsRoot()) && documentActivitiesAreLimited) {
             generalService.runOnBackground(new RunAsWork<Void>() {
                 @Override
                 public Void doWork() throws Exception {
-                    BeanHelper.getMenuService().addFunctionVolumeShortcuts(function.getNodeRef());
+                    BeanHelper.getMenuService().addFunctionVolumeShortcuts(finalFunRef);
                     return null;
                 }
             }, "addFunctionVolumeShortcuts", true);
         }
 
+        return getFunction(functionRef, null);
+
+    }
+
+    @Override
+    public void removeFromCache(NodeRef functionRef) {
+        functionCache.remove(functionRef);
     }
 
     private void reorderFunctions(Function function, NodeRef functionsRoot) {
         final int order = getFunctionOrder(function);
-        final List<Function> allFunctions = getFunctions(functionsRoot);
+        final List<Function> allFunctions = getModifiableFunctions(functionsRoot);
         Collections.sort(allFunctions, new Comparator<Function>() {
 
             @Override
@@ -194,7 +237,7 @@ public class FunctionsServiceImpl implements FunctionsService {
         });
 
         for (Function otherFunction : allFunctions) {
-            if (function.getNode().getNodeRef().equals(otherFunction.getNode().getNodeRef())) {
+            if (function.getNodeRef().equals(otherFunction.getNodeRef())) {
                 continue;
             }
             final int order2 = getFunctionOrder(otherFunction);
@@ -228,8 +271,8 @@ public class FunctionsServiceImpl implements FunctionsService {
 
     @Override
     public boolean closeFunction(Function function) {
-        List<Series> allSeries = seriesService.getAllSeriesByFunction(function.getNodeRef());
-        for (Series series : allSeries) {
+        List<UnmodifiableSeries> allSeries = seriesService.getAllSeriesByFunction(function.getNodeRef());
+        for (UnmodifiableSeries series : allSeries) {
             if (!DocListUnitStatus.CLOSED.equals(series.getStatus())) {
                 return false;
             }
@@ -248,16 +291,16 @@ public class FunctionsServiceImpl implements FunctionsService {
 
     @Override
     public void delete(Function function) {
-        List<Series> allSeries = seriesService.getAllSeriesByFunction(function.getNodeRef());
-        if (!allSeries.isEmpty()) {
+        if (seriesService.hasSeries(function.getNodeRef())) {
             throw new UnableToPerformException("function_delete_not_empty");
         }
+        functionCache.remove(function.getNodeRef());
         nodeService.deleteNode(function.getNodeRef());
     }
 
     private int getNextFunctionOrderNrByFunction() {
         int maxOrder = 0;
-        for (Function fn : getAllFunctions()) {
+        for (UnmodifiableFunction fn : getAllFunctions()) {
             if (maxOrder < fn.getOrder()) {
                 maxOrder = fn.getOrder();
             }
@@ -282,7 +325,8 @@ public class FunctionsServiceImpl implements FunctionsService {
         if (functionRef == null) {
             return false;
         }
-        return functionRef.equals(documentService.getDrafts()) || Boolean.TRUE.equals(nodeService.getProperty(functionRef, FunctionsModel.Props.DOCUMENT_ACTIVITIES_ARE_LIMITED));
+        return functionRef.equals(BeanHelper.getConstantNodeRefsBean().getDraftsRoot())
+                || Boolean.TRUE.equals(nodeService.getProperty(functionRef, FunctionsModel.Props.DOCUMENT_ACTIVITIES_ARE_LIMITED));
     }
 
     // START: getters / setters
@@ -312,6 +356,14 @@ public class FunctionsServiceImpl implements FunctionsService {
 
     public void setDocumentService(DocumentService documentService) {
         this.documentService = documentService;
+    }
+
+    public SimpleCache<NodeRef, UnmodifiableFunction> getFunctionCache() {
+        return functionCache;
+    }
+
+    public void setFunctionCache(SimpleCache<NodeRef, UnmodifiableFunction> functionLabels) {
+        functionCache = functionLabels;
     }
 
     // END: getters / setters

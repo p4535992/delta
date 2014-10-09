@@ -139,6 +139,10 @@ public abstract class BaseDialogBean implements IDialogBean, Serializable
       return getDefaultCancelOutcome();
    }
    
+    public void clean() {
+        // do nothing
+    }
+   
    public String finish()
    {
       final FacesContext context = FacesContext.getCurrentInstance();

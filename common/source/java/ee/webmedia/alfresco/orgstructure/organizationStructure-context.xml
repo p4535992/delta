@@ -82,7 +82,7 @@
       <property name="dependsOn" ref="orgstructureParametersBootstrap2" />
    </bean>
 
-   <bean class="org.alfresco.web.app.ResourceBundleBootstrap">
+   <bean id="orgStructureResourceBundle" class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
       <property name="resourceBundles">
          <list>
             <value>ee.webmedia.alfresco.orgstructure.web.organizationStructure-webclient</value>
@@ -95,7 +95,8 @@
       <property name="nodeService" ref="NodeService" />
       <property name="userRegistry" ref="userRegistry" />
       <property name="authorityService" ref="AuthorityService" />
-      <property name="orgStructPropertiesCache" ref="orgStructPropertiesCache" />  
+      <property name="orgStructPropertiesCache" ref="orgStructPropertiesCache" /> 
+      <property name="applicationConstantsBean" ref="applicationConstantsBean" /> 
    </bean>
 
    <bean id="OrganizationStructureService" class="org.springframework.aop.framework.ProxyFactoryBean">

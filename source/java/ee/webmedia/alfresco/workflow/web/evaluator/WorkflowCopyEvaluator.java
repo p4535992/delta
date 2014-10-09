@@ -1,8 +1,9 @@
 package ee.webmedia.alfresco.workflow.web.evaluator;
 
+import ee.webmedia.alfresco.common.evaluator.CompoundWorkflowActionGroupSharedResource;
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
-import ee.webmedia.alfresco.workflow.service.Workflow;
 
 /**
  * Evaluates to true if the workflow has been saved to the repository and doesn't contain any {@link WorkflowSpecificModel.Types.DUE_DATE_EXTENSION_TASK} tasks
@@ -19,12 +20,15 @@ public class WorkflowCopyEvaluator extends WorkflowSavedEvaluator {
 
         // Check for due date extension tasks
         CompoundWorkflow compoundWorkflow = (CompoundWorkflow) obj;
-        for (Workflow workflow : compoundWorkflow.getWorkflows()) {
-            if (WorkflowSpecificModel.Types.DUE_DATE_EXTENSION_WORKFLOW.equals(workflow.getType())) {
-                return false;
-            }
-        }
+        return !BeanHelper.getBulkLoadNodeService().hasChildNodeOfType(compoundWorkflow.getNodeRef(), WorkflowSpecificModel.Types.DUE_DATE_EXTENSION_WORKFLOW);
+    }
 
-        return true;
+    @Override
+    public boolean evaluate() {
+        if (!super.evaluate()) {
+            return false;
+        }
+        CompoundWorkflowActionGroupSharedResource resource = (CompoundWorkflowActionGroupSharedResource) sharedResource;
+        return !BeanHelper.getBulkLoadNodeService().hasChildNodeOfType(resource.getObject().getNodeRef(), WorkflowSpecificModel.Types.DUE_DATE_EXTENSION_WORKFLOW);
     }
 }

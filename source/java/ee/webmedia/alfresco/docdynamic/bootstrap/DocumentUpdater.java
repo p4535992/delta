@@ -2,12 +2,9 @@ package ee.webmedia.alfresco.docdynamic.bootstrap;
 
 import static ee.webmedia.alfresco.classificator.enums.DocumentStatus.FINISHED;
 import static ee.webmedia.alfresco.classificator.enums.DocumentStatus.WORKING;
-import static ee.webmedia.alfresco.privilege.service.PrivilegeUtil.removePermission;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -31,7 +28,6 @@ import ee.webmedia.alfresco.document.bootstrap.FileEncodingUpdater;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.privilege.model.PrivilegeModel;
-import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.SearchUtil;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
 
@@ -43,13 +39,6 @@ import ee.webmedia.alfresco.workflow.service.WorkflowService;
  * 5) Always call addProperties, to trigger re-indexing of document (ADMLuceneIndexerImpl writes special fields VALUES and xxx)
  */
 public class DocumentUpdater extends AbstractNodeUpdater {
-
-    // START: old permissions
-    private static final String EDIT_DOCUMENT_META_DATA = "editDocumentMetaData";
-    private static final String EDIT_DOCUMENT_FILES = "editDocumentFiles";
-    private static final String DELETE_DOCUMENT_META_DATA = "deleteDocumentMetaData";
-    private static final String DELETE_DOCUMENT_FILES = "deleteDocumentFiles";
-    // END: old permissions
 
     // START: old aspects
     public static final QName EMAIL_DATE_TIME = QName.createQName(DocumentCommonModel.DOCCOM_URI, "emailDateTime");
@@ -89,23 +78,15 @@ public class DocumentUpdater extends AbstractNodeUpdater {
     protected String[] updateNode(NodeRef docRef) throws Exception {
         QName type = nodeService.getType(docRef);
         if (!DocumentCommonModel.Types.DOCUMENT.equals(type)) {
-            return new String[] { "isNotDocument",
-                    type.toPrefixString(serviceRegistry.getNamespaceService()) };
+            return new String[] { "isNotDocument", type.toString() };
         }
         if (nodeService.hasAspect(docRef, EMAIL_DATE_TIME)) {
-            ChildAssociationRef assoc = nodeService.getPrimaryParent(docRef);
-            return new String[] { "hasEmailDateTimeAspectAndIgnored",
-                    assoc.getTypeQName().toPrefixString(serviceRegistry.getNamespaceService()),
-                    assoc.getQName().toPrefixString(serviceRegistry.getNamespaceService()),
-                    type.toPrefixString(serviceRegistry.getNamespaceService()) };
+            return new String[] { "hasEmailDateTimeAspectAndIgnored" };
         }
         ChildAssociationRef primaryParentAssoc = nodeService.getPrimaryParent(docRef);
         if (DocumentCommonModel.Types.DRAFTS.equals(primaryParentAssoc.getQName())) {
             nodeService.deleteNode(docRef);
-            return new String[] { "isDraftAndDeleted",
-                    primaryParentAssoc.getTypeQName().toPrefixString(serviceRegistry.getNamespaceService()),
-                    primaryParentAssoc.getQName().toPrefixString(serviceRegistry.getNamespaceService()),
-                    type.toPrefixString(serviceRegistry.getNamespaceService()) };
+            return new String[] { "isDraftAndDeleted" };
         }
 
         Map<QName, Serializable> origProps = nodeService.getProperties(docRef);
@@ -131,10 +112,10 @@ public class DocumentUpdater extends AbstractNodeUpdater {
             fileContentsLog = "searchableFileContentsSkipped";
         }
 
+        String removePrivilegeMappingsLog = removePrivilegeMappings(docRef, origProps, updatedProps);
         // Always update document node to trigger an update of document data in Lucene index.
         nodeService.addProperties(docRef, updatedProps);
 
-        String removePrivilegeMappingsLog = removePrivilegeMappings(docRef, origProps);
         return new String[] { hasAllFinishedCompoundWorkflowsUpdaterLog, structUnitPropertiesToMultivaluedUpdaterLog, removePrivilegeMappingsLog,
                 fileContentsLog, updateMetadataInFilesUpdaterLog };
     }
@@ -165,15 +146,10 @@ public class DocumentUpdater extends AbstractNodeUpdater {
         return status + "->" + updateMetadataInFiles.toString();
     }
 
-    private String removePrivilegeMappings(NodeRef docRef, Map<QName, Serializable> props) {
-        @SuppressWarnings("unchecked")
-        Collection<String> privUsers = (Collection<String>) props.get(PrivilegeModel.Props.USER);
-        @SuppressWarnings("unchecked")
-        Collection<String> privGroups = (Collection<String>) props.get(PrivilegeModel.Props.GROUP);
-        RepoUtil.validateSameSize(privUsers, privGroups, "users", "groups");
-        if (privUsers != null) {
-            nodeService.removeProperty(docRef, PrivilegeModel.Props.USER);
-            nodeService.removeProperty(docRef, PrivilegeModel.Props.GROUP);
+    private String removePrivilegeMappings(NodeRef docRef, Map<QName, Serializable> props, Map<QName, Serializable> updatedProps) {
+        if (props.get(PrivilegeModel.Props.USER) != null) {
+            updatedProps.put(PrivilegeModel.Props.USER, null);
+            updatedProps.put(PrivilegeModel.Props.GROUP, null);
             nodeService.removeAspect(docRef, PrivilegeModel.Aspects.USER_GROUP_MAPPING);
             return "removedUserGroupMappingAspectAndProps";
         }
@@ -206,10 +182,10 @@ public class DocumentUpdater extends AbstractNodeUpdater {
     }
 
     public static String updateHasAllFinishedCompoundWorkflows(NodeRef docRef, Map<QName, Serializable> origProps, Map<QName, Serializable> updatedProps,
-            WorkflowService workflowService) {    
+            WorkflowService workflowService) {
         Serializable origValueReal = origProps.get(DocumentCommonModel.Props.SEARCHABLE_HAS_ALL_FINISHED_COMPOUND_WORKFLOWS);
         boolean origValue = Boolean.TRUE.equals(origValueReal);
-        boolean newValue = workflowService.hasAllFinishedCompoundWorkflows(docRef);
+        boolean newValue = workflowService.hasAllFinishedCompoundWorkflows(docRef, null);
         if (origValue != newValue) {
             updatedProps.put(DocumentCommonModel.Props.SEARCHABLE_HAS_ALL_FINISHED_COMPOUND_WORKFLOWS, newValue);
             return ObjectUtils.toString(origValueReal, "null") + ", " + newValue;

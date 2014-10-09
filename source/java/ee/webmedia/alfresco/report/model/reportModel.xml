@@ -84,6 +84,22 @@
                   <constraint ref="report:reportStatus" />
                </constraints>               
             </property>
+            <property name="report:orderInQueue">
+               <type>d:int</type>
+               <mandatory>false</mandatory>        
+            </property>
+            <property name="report:reportTemplate">
+               <type>d:text</type>
+               <mandatory>false</mandatory>        
+            </property>
+            <property name="report:resultFileName">
+               <type>d:text</type>
+               <mandatory>false</mandatory>        
+            </property>
+            <property name="report:resultFileRef">
+               <type>d:noderef</type>
+               <mandatory>false</mandatory>        
+            </property>
             <property name="report:nodeRef">
                <type>d:noderef</type>
                <mandatory>true</mandatory>

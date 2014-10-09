@@ -5,10 +5,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import org.alfresco.repo.cache.SimpleCache;
 import org.alfresco.service.cmr.dictionary.DictionaryService;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
@@ -23,6 +23,7 @@ import ee.webmedia.alfresco.cases.model.Case;
 import ee.webmedia.alfresco.cases.model.CaseModel;
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.common.service.NodeBasedObjectCallback;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.service.DocumentService;
@@ -48,47 +49,65 @@ public class CaseServiceImpl implements CaseService {
     private UserService userService;
     private LogService logService;
     private DocumentService _documentService; // can not be set on bean creation!!
+    private SimpleCache<NodeRef, UnmodifiableCase> caseCache;
 
     @Override
-    public List<Case> getAllCasesByVolume(NodeRef volumeRef) {
-        List<NodeRef> caseAssocs = getCaseRefsByVolume(volumeRef);
-        List<Case> caseOfVolume = new ArrayList<Case>(caseAssocs.size());
-        for (NodeRef caseNodeRef : caseAssocs) {
-            caseOfVolume.add(getCaseByNoderef(caseNodeRef, volumeRef));
+    public List<UnmodifiableCase> getAllCasesByVolume(NodeRef volumeRef, DocListUnitStatus status) {
+        List<UnmodifiableCase> allCases = getAllCasesByVolume(volumeRef);
+        List<UnmodifiableCase> cases = new ArrayList<UnmodifiableCase>();
+        for (UnmodifiableCase unmodifiableCase : allCases) {
+            if (status.getValueName().equals(unmodifiableCase.getStatus())) {
+                cases.add(unmodifiableCase);
+            }
+        }
+        return cases;
+    }
+
+    @Override
+    public List<UnmodifiableCase> getAllCasesByVolume(NodeRef volumeRef) {
+        List<ChildAssociationRef> caseAssocs = getCaseChildAssocsByVolume(volumeRef);
+        List<UnmodifiableCase> caseOfVolume = new ArrayList<UnmodifiableCase>(caseAssocs.size());
+        Map<Long, QName> propertyTypes = new HashMap<Long, QName>();
+        for (ChildAssociationRef caseAssocRef : caseAssocs) {
+            UnmodifiableCase unmodifiableCase = getUnmodifiableCase(caseAssocRef.getChildRef(), propertyTypes);
+            caseOfVolume.add(unmodifiableCase);
         }
         Collections.sort(caseOfVolume);
         return caseOfVolume;
     }
 
+    private UnmodifiableCase getUnmodifiableCase(NodeRef caseRef, Map<Long, QName> propertyTypes) {
+        UnmodifiableCase caseOfVolume = caseCache.get(caseRef);
+        if (caseOfVolume == null) {
+            // beanPropertyMapper is not used here because this method is very heavily used and direct method call should be faster than using reflection
+            caseOfVolume = generalService.fetchObject(caseRef, null, new NodeBasedObjectCallback<UnmodifiableCase>() {
+
+                @Override
+                public UnmodifiableCase create(Node node) {
+                    return new UnmodifiableCase(node);
+                }
+            }, propertyTypes);
+            caseCache.put(caseRef, caseOfVolume);
+        }
+        return caseOfVolume;
+    }
+
     @Override
     public int getCasesCountByVolume(NodeRef volumeRef) {
-        // TODO: getCaseRefsByVolume never returns null
-        List<NodeRef> caseAssocs = getCaseRefsByVolume(volumeRef);
-        if (caseAssocs != null) {
-            return caseAssocs.size();
-        }
-        return 0;
+        return getCaseChildAssocsByVolume(volumeRef).size();
     }
 
     @Override
     public List<NodeRef> getCaseRefsByVolume(NodeRef volumeRef) {
         List<NodeRef> caseRefs = new ArrayList<NodeRef>();
-        for (ChildAssociationRef childAssocRef : nodeService.getChildAssocs(volumeRef, RegexQNamePattern.MATCH_ALL, CaseModel.Associations.CASE)) {
+        for (ChildAssociationRef childAssocRef : getCaseChildAssocsByVolume(volumeRef)) {
             caseRefs.add(childAssocRef.getChildRef());
         }
         return caseRefs;
     }
 
-    @Override
-    public List<Case> getAllCasesByVolume(NodeRef volumeRef, DocListUnitStatus status) {
-        List<Case> cases = getAllCasesByVolume(volumeRef);
-        for (Iterator<Case> i = cases.iterator(); i.hasNext();) {
-            Case tmpCase = i.next();
-            if (!status.getValueName().equals(tmpCase.getStatus())) {
-                i.remove();
-            }
-        }
-        return cases;
+    private List<ChildAssociationRef> getCaseChildAssocsByVolume(NodeRef volumeRef) {
+        return nodeService.getChildAssocs(volumeRef, RegexQNamePattern.MATCH_ALL, CaseModel.Associations.CASE);
     }
 
     @Override
@@ -102,15 +121,21 @@ public class CaseServiceImpl implements CaseService {
     }
 
     @Override
+    public String getCaseLabel(NodeRef caseRef) {
+        UnmodifiableCase theCase = getUnmodifiableCase(caseRef, null);
+        return theCase != null ? theCase.getCaseLabel() : "";
+    }
+
+    @Override
     public boolean isClosed(Node node) {
         return RepoUtil.isExistingPropertyValueEqualTo(node, CaseModel.Props.STATUS, DocListUnitStatus.CLOSED.getValueName());
     }
 
     @Override
-    public void closeCase(Case theCase) {
-        Map<String, Object> props = theCase.getNode().getProperties();
+    public void closeCase(Case aCase) {
+        Map<String, Object> props = aCase.getNode().getProperties();
         props.put(CaseModel.Props.STATUS.toString(), DocListUnitStatus.CLOSED.getValueName());
-        saveOrUpdate(theCase);
+        saveOrUpdate(aCase);
     }
 
     @Override
@@ -122,18 +147,20 @@ public class CaseServiceImpl implements CaseService {
 
     @Override
     public void delete(Case theCase) {
-        List<NodeRef> documents = getDocumentService().getAllDocumentRefsByParentRef(theCase.getNode().getNodeRef());
+        NodeRef caseRef = theCase.getNode().getNodeRef();
+        List<NodeRef> documents = getDocumentService().getAllDocumentRefsByParentRefWithoutRestrictedAccess(caseRef);
         if (!documents.isEmpty()) {
             throw new UnableToPerformException("case_delete_not_empty");
         }
-        nodeService.deleteNode(theCase.getNode().getNodeRef());
+        nodeService.deleteNode(caseRef);
+        removeFromCache(caseRef);
     }
 
     @Override
     public void closeAllCasesByVolume(NodeRef volumeRef) {
-        final List<Case> allCasesByVolume = getAllCasesByVolume(volumeRef);
-        for (Case aCase : allCasesByVolume) {
-            closeCase(aCase);
+        final List<NodeRef> allCasesByVolume = getCaseRefsByVolume(volumeRef);
+        for (NodeRef caseRef : allCasesByVolume) {
+            closeCase(getCaseByNoderef(caseRef));
         }
     }
 
@@ -173,10 +200,11 @@ public class CaseServiceImpl implements CaseService {
             props.put(DocumentCommonModel.Props.SERIES, seriesRef);
             props.put(DocumentCommonModel.Props.FUNCTION, generalService.getPrimaryParent(seriesRef).getNodeRef());
         }
+        NodeRef caseRef;
         if (isNew) { // save
             props.put(CaseModel.Props.TITLE, title);
             props.put(CaseModel.Props.CREATED, new Date());
-            NodeRef caseRef = nodeService.createNode(newParentRef,
+            caseRef = nodeService.createNode(newParentRef,
                     CaseModel.Associations.CASE, CaseModel.Associations.CASE, CaseModel.Types.CASE, props).getChildRef();
             theCase.setNode(generalService.fetchNode(caseRef));
             logService.addLogEntry(LogEntry.create(LogObject.CASE, userService, caseRef, "applog_space_add", "", title));
@@ -184,8 +212,15 @@ public class CaseServiceImpl implements CaseService {
             @SuppressWarnings("null")
             Map<String, Object> stringQNameProperties = node.getProperties();
             stringQNameProperties.put(CaseModel.Props.TITLE.toString(), title);
-            generalService.setPropertiesIgnoringSystem(node.getNodeRef(), stringQNameProperties);
+            caseRef = node.getNodeRef();
+            generalService.setPropertiesIgnoringSystem(caseRef, stringQNameProperties);
         }
+        removeFromCache(caseRef);
+    }
+
+    @Override
+    public void removeFromCache(NodeRef caseRef) {
+        caseCache.remove(caseRef);
     }
 
     @Override
@@ -216,10 +251,10 @@ public class CaseServiceImpl implements CaseService {
     }
 
     @Override
-    public Case getCaseByTitle(final String newCaseTitle, NodeRef volumeRef, NodeRef caseRef) {
-        final List<Case> cases = getAllCasesByVolume(volumeRef);
-        for (Case theCase : cases) {
-            if (StringUtils.equals(theCase.getTitle(), newCaseTitle) && (caseRef == null || !caseRef.equals(theCase.getNode().getNodeRef()))) {
+    public UnmodifiableCase getCaseByTitle(final String newCaseTitle, NodeRef volumeRef, NodeRef caseRef) {
+        final List<UnmodifiableCase> cases = getAllCasesByVolume(volumeRef);
+        for (UnmodifiableCase theCase : cases) {
+            if (StringUtils.equals(theCase.getTitle(), newCaseTitle) && (caseRef == null || !caseRef.equals(theCase.getNodeRef()))) {
                 if (log.isDebugEnabled()) {
                     log.debug("found case that has the same name as name being checked for availability:\n" + theCase);
                 }
@@ -287,6 +322,15 @@ public class CaseServiceImpl implements CaseService {
         }
         return _documentService;
     }
+
     // END: getters / setters
+
+    public SimpleCache<NodeRef, UnmodifiableCase> getCaseCache() {
+        return caseCache;
+    }
+
+    public void setCaseCache(SimpleCache<NodeRef, UnmodifiableCase> caseCache) {
+        this.caseCache = caseCache;
+    }
 
 }

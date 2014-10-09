@@ -921,6 +921,21 @@
          </list>
       </property>
    </bean>
+   
+   <bean id="propertyDefinitionCacheUpdater" class="ee.webmedia.alfresco.docconfig.bootstrap.PropertyDefinitionCacheUpdater" parent="module.baseComponent">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="false" />
+      <property name="generalService" ref="GeneralService" />
+      <property name="nodeService" ref="NodeService" />
+      <property name="searchService" ref="SearchService" />
+      <property name="bulkLoadNodeService" ref="BulkLoadNodeService" />
+      <property name="documentConfigService" ref="DocumentConfigService" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="systematicClearBootstrap" />
+         </list>
+      </property>
+   </bean>
 
    <!-- fieldtype generators -->
 
@@ -979,7 +994,6 @@
       <property name="seriesService" ref="SeriesService" />
       <property name="volumeService" ref="VolumeService" />
       <property name="caseService" ref="CaseService" />
-      <property name="documentLogService" ref="DocumentLogService" />
       <property name="caseFileService" ref="CaseFileService" />
    </bean>
 

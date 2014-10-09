@@ -20,6 +20,7 @@ import org.apache.commons.lang.time.DateUtils;
 import org.apache.commons.lang.time.FastDateFormat;
 import org.springframework.util.Assert;
 
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.CssStylable;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.document.file.model.File;
@@ -32,6 +33,7 @@ import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 
 public class Task extends BaseWorkflowObject implements Comparable<Task>, CssStylable {
     private static final long serialVersionUID = 1L;
+    private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(BaseWorkflowObject.class);
 
     public static FastDateFormat dateFormat = FastDateFormat.getInstance("dd.MM.yyyy");
     public static FastDateFormat dateTimeFormat = FastDateFormat.getInstance("dd.MM.yyyy HH:mm");
@@ -60,6 +62,8 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
     private String groupDueDateVbString;
     private String workflowNodeRefId;
     private String storeRef;
+    private String substituteName;
+    private NodeRef compoundWorkflowNodeRef;
 
     /**
      * Task's index in workflow during last save
@@ -106,9 +110,8 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
         Task task = (Task) super.copyImpl(copy);
         task.outcomeIndex = outcomeIndex;
         task.action = action;
-        boolean hasNoParentNodeRef = parent == null || parent.getNodeRef() == null;
-        task.workflowNodeRefId = hasNoParentNodeRef ? null : parent.getNodeRef().getId();
-        task.storeRef = hasNoParentNodeRef ? null : parent.getNodeRef().getStoreRef().toString();
+        task.workflowNodeRefId = workflowNodeRefId;
+        task.storeRef = storeRef;
         task.taskIndexInWorkflow = taskIndexInWorkflow;
         @SuppressWarnings("unchecked")
         T result = (T) task;
@@ -141,8 +144,11 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
     }
 
     public String getOwnerNameWithSubstitute() {
-        String substitute = getOwnerSubstituteName();
-        return getOwnerName() + (StringUtils.isNotBlank(substitute) ? " " + MessageUtil.getMessage("task_substitute", substitute) : "");
+        if (substituteName == null) {
+            String substitute = getOwnerSubstituteName();
+            substituteName = getOwnerName() + (StringUtils.isNotBlank(substitute) ? " " + MessageUtil.getMessage("task_substitute", substitute) : "");
+        }
+        return substituteName;
     }
 
     public void setOwnerName(String ownerName) {
@@ -388,7 +394,7 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
 
     /**
      * Unlike {@link #getResolution()} method it doesn't search resolution from workflow if task doesn't have resolution.
-     * 
+     *
      * @return value of task property WorkflowSpecificModel.Props.RESOLUTION
      */
     public String getResolutionOfTask() {
@@ -428,7 +434,10 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
 
     @Override
     protected String additionalToString() {
-        return "\n  parent=" + WmNode.toString(getParent()) + "\n  outcomes=" + outcomes;
+        if (LOG.isTraceEnabled()) {
+            return "\n  parent=" + WmNode.toString(getParent()) + "\n  outcomes=" + outcomes;
+        }
+        return "";
     }
 
     @Override
@@ -476,7 +485,7 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
 
     };
 
-    private final NodePropertyResolver dueDateTimeStrPropertyResolver = new NodePropertyResolver() {
+    private final static NodePropertyResolver dueDateTimeStrPropertyResolver = new NodePropertyResolver() {
         private static final long serialVersionUID = 1L;
 
         @Override
@@ -506,7 +515,9 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
             CompoundWorkflow compoundWorkflow = parent.getParent();
             node.getProperties().putAll(
                     toStringProperties(getTaskSearchableProps(toQNameProperties(compoundWorkflow.getNode().getProperties()))));
-            setCompoundWorkflowId(compoundWorkflow.getNodeRef().getId());
+            NodeRef compoundWorkflowRef = compoundWorkflow.getNodeRef();
+            setCompoundWorkflowId(compoundWorkflowRef.getId());
+            setProp(WorkflowSpecificModel.Props.COMPOUND_WORKFLOW_STORE_ID, BeanHelper.getBulkLoadNodeService().getStoreRefDbId(compoundWorkflowRef.getStoreRef()));
             setCompoundWorkflowTitle(compoundWorkflow.getTitle());
         }
 
@@ -580,7 +591,7 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
 
     public List<NodeRef> getRemovedFiles() {
         if (removedFiles == null) {
-            removedFiles = new ArrayList<NodeRef>();
+            removedFiles = new ArrayList<>();
         }
         return removedFiles;
     }
@@ -678,6 +689,14 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
 
     public String getCompoundWorkflowId() {
         return getProp(WorkflowSpecificModel.Props.COMPOUND_WORKFLOW_ID);
+    }
+
+    public NodeRef getCompoundWorkflowNodeRef() {
+        return compoundWorkflowNodeRef;
+    }
+
+    public void setCompoundWorkflowNodeRef(NodeRef compoundWorkflowNodeRef) {
+        this.compoundWorkflowNodeRef = compoundWorkflowNodeRef;
     }
 
 }

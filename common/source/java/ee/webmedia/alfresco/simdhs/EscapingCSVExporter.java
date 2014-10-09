@@ -21,7 +21,7 @@ import ee.webmedia.alfresco.utils.ComponentUtil;
 
 /**
  * CVS exporter, that uses CSVExporter to export JSF lists to CSV files, but this class uses more complex escaping.
- * 
+ *
  * @see CSVExporter
  */
 public class EscapingCSVExporter extends CSVExporter {
@@ -47,7 +47,6 @@ public class EscapingCSVExporter extends CSVExporter {
                 throw new RuntimeException("Wrong component type for export.");
             }
             UIRichList richList = (UIRichList) table;
-            richList.bind();
 
             // set message bundle (needed for header labels)
             ResourceBundle bundle = Application.getBundle(facesContext);
@@ -75,14 +74,8 @@ public class EscapingCSVExporter extends CSVExporter {
                 writer.write(header, true);
             }
             writer.endRecord();
-            final List<List<String>> dataRows = dataReader.getDataRows(richList, facesContext);
-            if (doOrdering) {
-                orderRows(dataRows);
-            }
-            for (List<String> dataRow : dataRows) {
-                writeRow(writer, dataRow);
-                writer.endRecord();
-            }
+
+            writeRows(richList, writer, facesContext);
 
             writer.flush();
             writer.close();
@@ -94,6 +87,15 @@ public class EscapingCSVExporter extends CSVExporter {
         }
         if (log.isDebugEnabled()) {
             log.debug("CSV export successfully completed");
+        }
+    }
+
+    @Override
+    protected void writeRows(Object writerObj, List<List<String>> dataRows) throws IOException {
+        CsvWriter writer = (CsvWriter) writerObj;
+        for (List<String> row : dataRows) {
+            writeRow(writer, row);
+            writer.endRecord();
         }
     }
 

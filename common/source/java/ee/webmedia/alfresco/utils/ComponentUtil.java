@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -31,6 +32,7 @@ import javax.faces.component.html.HtmlSelectManyListbox;
 import javax.faces.context.FacesContext;
 import javax.faces.context.ResponseWriter;
 import javax.faces.convert.Converter;
+import javax.faces.el.MethodBinding;
 import javax.faces.el.ValueBinding;
 import javax.faces.event.ActionEvent;
 import javax.faces.event.FacesEvent;
@@ -95,8 +97,11 @@ import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.UserContactGroupSearchBean;
 import ee.webmedia.alfresco.docadmin.service.Field;
 import ee.webmedia.alfresco.document.file.model.File;
+import ee.webmedia.alfresco.document.file.model.SimpleFile;
+import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
-import ee.webmedia.alfresco.privilege.web.DocPermissionEvaluator;
+import ee.webmedia.alfresco.document.search.service.AssocBlockObject;
+import ee.webmedia.alfresco.privilege.model.Privilege;
 
 /**
  * Util methods for JSF components/component trees
@@ -122,6 +127,13 @@ public class ComponentUtil {
             }
         }, new NullComparator());
         BY_LABEL_COMPARATOR = byLabelComparator;
+    }
+
+    public static void setActionLinkTooltipAndActionListener(UIActionLink actionLink, String tooltip, MethodBinding methodBinding) {
+        actionLink.setTooltip(tooltip);
+        if (methodBinding != null) {
+            actionLink.setActionListener(methodBinding);
+        }
     }
 
     public static void sortByLabel(List<UIComponent> selectOptions) {
@@ -880,11 +892,11 @@ public class ComponentUtil {
         String sep = "\", \"";
         StringBuffer sb = new StringBuffer("<script type=\"text/javascript\">");
         sb.append("addSearchSuggest(\"")
-        .append(clientId).append(sep)
-        .append(containerClientId).append(sep)
-        .append(pickerCallback).append(sep)
-        .append(filter).append(sep)
-        .append(submitUri).append("\");");
+                .append(clientId).append(sep)
+                .append(containerClientId).append(sep)
+                .append(pickerCallback).append(sep)
+                .append(filter).append(sep)
+                .append(submitUri).append("\");");
         sb.append("</script>");
         return sb.toString();
     }
@@ -972,7 +984,7 @@ public class ComponentUtil {
             final String converterName = customAttributes.get(JSF_CONVERTER);
             if (StringUtils.isNotBlank(converterName)) {
                 try {// XXX: pm võiks külge panna ka property tüübi järgi mingid default
-                    // converterid(a la double tüübi puhul DoubleConverter), et ei peaks käsitsi attribuute lisama
+                     // converterid(a la double tüübi puhul DoubleConverter), et ei peaks käsitsi attribuute lisama
                     @SuppressWarnings("unchecked")
                     final Class<Converter> converterClass = (Class<Converter>) Class.forName(converterName);
                     final Converter converter = converterClass.newInstance();
@@ -1154,37 +1166,42 @@ public class ComponentUtil {
         return null;
     }
 
-    public static <T> List<T> findChildComponentsByClass(FacesContext context, UIComponent component, Class<? extends T> clazz) {
-        List<T> results = null;
+    public static <T> T findChildComponentOrFacetByClass(FacesContext context, UIComponent component, Class<? extends T> clazz) {
         if (component == null) {
             return null;
         }
-        for (UIComponent child : getChildren(component)) {
-            List<T> results2 = findChildComponentsByClass(context, child, clazz);
-            if (results2 != null) {
-                if (results == null) {
-                    results = results2;
-                } else {
-                    results.addAll(results2);
-                }
+        Iterator facetsAndChildren = component.getFacetsAndChildren();
+        while (facetsAndChildren.hasNext()) {
+            UIComponent child = (UIComponent) facetsAndChildren.next();
+            T result2 = findChildComponentOrFacetByClass(context, child, clazz);
+            if (result2 != null) {
+                return result2;
             }
         }
+
+
         if (clazz.isAssignableFrom(component.getClass())) {
             @SuppressWarnings("unchecked")
             T resultComponent = (T) component;
-            if (results == null) {
-                results = new ArrayList<T>();
-                results.add(resultComponent);
-            } else {
-                results.add(resultComponent);
-            }
+            return resultComponent;
+
         }
-        return results;
+        return null;
     }
 
     public static UIComponent findParentComponentById(FacesContext context, UIComponent component, String id, String clientId) {
         while (component != null) {
             if (id.equals(component.getId()) && clientId.equals(component.getClientId(context))) {
+                return component;
+            }
+            component = component.getParent();
+        }
+        return null;
+    }
+
+    public static UIComponent findParentComponentById(FacesContext context, UIComponent component, String id) {
+        while (component != null) {
+            if (id.equals(component.getId())) {
                 return component;
             }
             component = component.getParent();
@@ -1425,50 +1442,51 @@ public class ComponentUtil {
     }
 
     public static CustomChildrenCreator getDocumentRowFileGenerator(final Application application) {
+        return getDocumentRowFileGenerator(application, -1);
+    }
+
+    public static CustomChildrenCreator getDocumentRowFileGenerator(final Application application, final int limit) {
+        final Map<Long, QName> propertyTypes = new HashMap<>();
+        final boolean limited = limit >= 0;
         return new CustomChildrenCreator() {
 
             @Override
-            public List<UIComponent> createChildren(List<Object> params, int rowCounter) {
+            public List<UIComponent> createChildren(Object params, int rowCounter) {
                 List<UIComponent> components = new ArrayList<UIComponent>();
                 if (params != null) {
                     int fileCounter = 0;
-                    for (Object obj : params) {
-                        File file = (File) obj;
-                        final DocPermissionEvaluator evaluatorAllow = createEvaluator(application, fileCounter, "evalAllow-" + rowCounter + "-");
-                        evaluatorAllow.setAllow("viewDocumentFiles");
-
+                    Document document = null;
+                    if (params instanceof Document) {
+                        document = (Document) params;
+                    } else if (params instanceof AssocBlockObject) {
+                        document = ((AssocBlockObject) params).getDocument();
+                    }
+                    if (document == null) {
+                        return null;
+                    }
+                    boolean canViewFiles = document.hasPermission(Privilege.VIEW_DOCUMENT_FILES);
+                    for (SimpleFile file : document.getFiles(propertyTypes)) {
                         String fileName = file.getDisplayName();
-                        String imageText = getFileImage(file);
-
-                        final UIActionLink fileAllowLink = generateFileReadOnlyLink(application, rowCounter, fileCounter, file, fileName, imageText);
-                        ComponentUtil.addChildren(evaluatorAllow, fileAllowLink);
-                        components.add(evaluatorAllow);
-
-                        final DocPermissionEvaluator evaluatorDeny = createEvaluator(application, fileCounter, "evalDeny-" + rowCounter + "-");
-                        evaluatorDeny.setDeny("viewDocumentFiles");
-
-                        final HtmlGraphicImage image = (HtmlGraphicImage) application.createComponent(HtmlGraphicImage.COMPONENT_TYPE);
-                        image.setValue(imageText);
-                        image.setId("doc-file-img-" + rowCounter + "-" + fileCounter);
-                        image.setTitle(fileName);
-                        image.setRendered(file != null);
-                        image.setAlt(fileName);
-
-                        ComponentUtil.addChildren(evaluatorDeny, image);
-                        components.add(evaluatorDeny);
+                        String imageText = file.getImagePath();
+                        if (canViewFiles) {
+                            UIActionLink fileAllowLink = generateFileReadOnlyLink(application, rowCounter, fileCounter, file.getReadOnlyUrl(), fileName, imageText);
+                            components.add(fileAllowLink);
+                        } else {
+                            HtmlGraphicImage image = (HtmlGraphicImage) application.createComponent(HtmlGraphicImage.COMPONENT_TYPE);
+                            image.setValue(imageText);
+                            image.setId("doc-file-img-" + rowCounter + "-" + fileCounter);
+                            image.setTitle(fileName);
+                            image.setAlt(fileName);
+                            components.add(image);
+                        }
                         fileCounter++;
+                        if (limited && fileCounter == limit) {
+                            break;
+                        }
                     }
                     rowCounter++;
                 }
                 return components;
-            }
-
-            private DocPermissionEvaluator createEvaluator(Application application, int fileCounter, String evalNamePrefix) {
-                final DocPermissionEvaluator evaluatorAllow = (DocPermissionEvaluator) application
-                        .createComponent("ee.webmedia.alfresco.privilege.web.DocPermissionEvaluator");
-                evaluatorAllow.setId(evalNamePrefix + fileCounter);
-                evaluatorAllow.setValueBinding("value", application.createValueBinding("#{r.files[" + fileCounter + "].node}"));
-                return evaluatorAllow;
             }
         };
     }
@@ -1478,13 +1496,15 @@ public class ComponentUtil {
         return new CustomChildrenCreator() {
 
             @Override
-            public List<UIComponent> createChildren(List<Object> params, int rowCounter) {
+            public List<UIComponent> createChildren(Object params, int rowCounter) {
                 List<UIComponent> components = new ArrayList<UIComponent>();
                 if (params != null) {
                     int fileCounter = 0;
-                    for (Object obj : params) {
+                    List<Object> paramObjects = (List<Object>) params;
+                    for (Object obj : paramObjects) {
                         File file = (File) obj;
-                        components.add(generateFileReadOnlyLink(application, rowCounter, fileCounter, file, file.getDisplayName(), getFileImage(file)));
+                        components.add(generateFileReadOnlyLink(application, rowCounter, fileCounter, file.getReadOnlyUrl(), file.getDisplayName(),
+                                SimpleFile.NON_DIGIDOC_IMAGE_PATH));
                         fileCounter++;
                     }
                     rowCounter++;
@@ -1495,25 +1515,22 @@ public class ComponentUtil {
         };
     }
 
-    private static UIActionLink generateFileReadOnlyLink(final Application application, int rowCounter, int fileCounter, File file, String fileName, String imageText) {
+    private static UIActionLink generateFileReadOnlyLink(final Application application, int rowCounter, int fileCounter, String fileUrl, String fileName, String imageText) {
         final UIActionLink fileAllowLink = (UIActionLink) application.createComponent("org.alfresco.faces.ActionLink");
         fileAllowLink.setId("doc-file-link-" + rowCounter + "-" + fileCounter);
         fileAllowLink.setValue("");
         fileAllowLink.setTooltip(fileName);
         fileAllowLink.setShowLink(false);
-        fileAllowLink.setHref(file.getReadOnlyUrl());
+        fileAllowLink.setHref(fileUrl);
         fileAllowLink.setImage(imageText);
         fileAllowLink.setTarget("_blank");
         ComponentUtil.getAttributes(fileAllowLink).put("styleClass", "inlineAction");
         return fileAllowLink;
     }
 
-    private static String getFileImage(File file) {
-        return file.isDigiDocContainer() ? "/images/icons/ddoc_sign_small.gif" : "/images/icons/attachment.gif";
-    }
-
     public static void setAjaxEnabledOnActionLinksRecursive(UIComponent component, int ajaxParentLevel) {
-        if (component instanceof UIActionLink) {
+        boolean ajaxAllowed = !Boolean.TRUE.equals(component.getAttributes().get(ActionLinkRenderer.AJAX_NOT_ALLOWED));
+        if (component instanceof UIActionLink && ajaxAllowed) {
             component.getAttributes().put(ActionLinkRenderer.AJAX_ENABLED, Boolean.TRUE);
             component.getAttributes().put(ActionLinkRenderer.AJAX_PARENT_LEVEL, ajaxParentLevel);
         }
@@ -1554,6 +1571,12 @@ public class ComponentUtil {
         FacesHelper.setupComponentId(context, outputText, id);
         outputText.setEscape(false);
         return outputText;
+    }
+
+    public static UIOutput createSpacer(Application application) {
+        UIOutput spacer = (UIOutput) application.createComponent(UIOutput.COMPONENT_TYPE);
+        spacer.setValue("");
+        return spacer;
     }
 
 }

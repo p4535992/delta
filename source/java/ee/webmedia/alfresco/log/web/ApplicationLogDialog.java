@@ -59,20 +59,20 @@ public class ApplicationLogDialog extends AbstractSearchFilterBlockBean<LogServi
     }
 
     public void search(@SuppressWarnings("unused") ActionEvent event) {
-        getAppLogListDialog().search(getLogService().getLogEntries(getLogFilter()));
+        getAppLogListDialog().search(getLogFilter());
         WebUtil.navigateTo("dialog:applicationLogListDialog");
     }
 
     public void searchWorkflowEntries(ActionEvent event) {
         LogFilter filter = new LogFilter();
         filter.setObjectId(Collections.singletonList(ActionUtil.getParam(event, COMPOUND_WORKFLOW_PARAM)));
-        getAppLogListDialog().search(getLogService().getLogEntries(filter));
+        getAppLogListDialog().search(filter);
     }
 
     public void searchSeriesEntries(ActionEvent event) {
         LogFilter filter = new LogFilter();
         filter.setObjectId(Collections.singletonList(ActionUtil.getParam(event, SERIES_PARAM)));
-        getAppLogListDialog().search(getLogService().getLogEntries(filter));
+        getAppLogListDialog().search(filter);
     }
 
     @Override
@@ -126,6 +126,11 @@ public class ApplicationLogDialog extends AbstractSearchFilterBlockBean<LogServi
     @Override
     protected String getNewFilterSelectItemMessageKey() {
         return null;
+    }
+
+    @Override
+    public void clean() {
+        logSetup = null;
     }
 
 }

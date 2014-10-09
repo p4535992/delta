@@ -21,6 +21,7 @@ import org.alfresco.service.namespace.NamespaceException;
 import org.alfresco.service.namespace.NamespacePrefixResolver;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.util.GUID;
 import org.alfresco.web.bean.repository.QNameNodeMap;
 import org.alfresco.web.bean.repository.TransientNode;
 import org.apache.commons.lang.StringUtils;
@@ -31,7 +32,7 @@ import ee.webmedia.alfresco.cases.model.CaseModel;
 import ee.webmedia.alfresco.classificator.enums.VolumeType;
 import ee.webmedia.alfresco.common.propertysheet.component.WMUIProperty;
 import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
-import ee.webmedia.alfresco.docadmin.service.FieldDefinition;
+import ee.webmedia.alfresco.docadmin.service.UnmodifiableFieldDefinition;
 import ee.webmedia.alfresco.docconfig.generator.fieldtype.DateGenerator;
 import ee.webmedia.alfresco.docconfig.service.DocumentConfigServiceImpl;
 import ee.webmedia.alfresco.document.search.web.DocumentDynamicSearchDialog;
@@ -54,6 +55,9 @@ import ee.webmedia.alfresco.workflow.search.model.CompoundWorkflowSearchModel;
 public class WmNode extends TransientNode {
     private static final long serialVersionUID = 1L;
     private static PropDiffHelper propDiffHelper;
+    /** The sole purpose of this NodeRef is not to generate new NodeRef in superclass every time a new WMNode is created because the NodeRef is replaced anyway */
+    private static final NodeRef TEMP_REF = new NodeRef(RepoUtil.NOT_SAVED_STORE, GUID.generate());
+    private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(WmNode.class);
 
     /**
      * Special NodeRef that can be used for detection that a {@link Node} object is not backed by repository node (not saved yet).
@@ -108,11 +112,12 @@ public class WmNode extends TransientNode {
     }
 
     private WmNode(NodeRef nodeRef, QName type, Set<QName> aspects) {
-        super(type, null, null);
+        super(nodeRef != null ? nodeRef : TEMP_REF, type, null, null);
+        if (nodeRef == null) {
+            this.nodeRef = null; // super constructor initializes nodeRef if one is not given (must reset)
+            id = null;
+        }
         Assert.notNull(type);
-
-        this.nodeRef = nodeRef;// super constructor initializes nodeRef if one is not given(must reset)
-        id = nodeRef == null ? null : nodeRef.getId();
 
         associations = new QNameNodeMap<String, List<AssociationRef>>(this, this);
         childAssociations = new QNameNodeMap<String, List<ChildAssociationRef>>(this, this);
@@ -196,8 +201,12 @@ public class WmNode extends TransientNode {
 
     @Override
     public String toString() {
-        return toString(this) + "[\n  nodeRef=" + getNodeRef() + "\n  type=" + getType().toPrefixString(getNamespacePrefixResolver()) + "\n  aspects="
-                + toString(getAspects(), getNamespacePrefixResolver()) + "\n  props=" + toString(RepoUtil.toQNameProperties(getProperties()), getNamespacePrefixResolver()) + "\n]";
+        if (LOG.isTraceEnabled()) {
+            return toString(this) + "[\n  nodeRef=" + getNodeRef() + "\n  type=" + getType().toPrefixString(getNamespacePrefixResolver()) + "\n  aspects="
+                    + toString(getAspects(), getNamespacePrefixResolver()) + "\n  props="
+                    + toString(RepoUtil.toQNameProperties(getProperties()), getNamespacePrefixResolver()) + "\n]";
+        }
+        return toString(this) + "[\n  nodeRef=" + getNodeRef() + "\n  type=" + getType().toPrefixString(getNamespacePrefixResolver()) + "\n]";
     }
 
     public static String toString(Collection<?> collection) {
@@ -299,7 +308,7 @@ public class WmNode extends TransientNode {
             return MessageUtil.getMessage(DocumentConfigServiceImpl.searchLabelIds.get(key));
         }
         if (documentAdminService != null) {
-            FieldDefinition fieldDef = documentAdminService.getFieldDefinition(key.getLocalName());
+            UnmodifiableFieldDefinition fieldDef = documentAdminService.getFieldDefinition(key.getLocalName());
             if (fieldDef != null) {
                 return fieldDef.getName();
             }
@@ -308,10 +317,6 @@ public class WmNode extends TransientNode {
     }
 
     public static String toString(Map<QName, Serializable> collection, NamespacePrefixResolver namespacePrefixResolver) {
-        return toString(collection, namespacePrefixResolver, true);
-    }
-
-    public static String toString(Map<QName, Serializable> collection, NamespacePrefixResolver namespacePrefixResolver, boolean printValueClass) {
         if (collection == null) {
             return null;
         }
@@ -390,13 +395,13 @@ public class WmNode extends TransientNode {
                         }
                     }
                 } else if (theType.equals(FunctionsModel.Types.FUNCTION)) {
-                    value = BeanHelper.getFunctionsService().getFunctionByNodeRef((NodeRef) value).getTitle();
+                    value = BeanHelper.getFunctionsService().getUnmodifiableFunction((NodeRef) value, null).getTitle();
                 } else if (theType.equals(VolumeModel.Types.VOLUME)) {
-                    value = BeanHelper.getVolumeService().getVolumeByNodeRef((NodeRef) value).getTitle();
+                    value = BeanHelper.getVolumeService().getUnmodifiableVolume((NodeRef) value, null).getTitle();
                 } else if (theType.equals(CaseModel.Types.CASE)) {
                     value = BeanHelper.getCaseService().getCaseByNoderef((NodeRef) value).getTitle();
                 } else if (theType.equals(SeriesModel.Types.SERIES)) {
-                    value = BeanHelper.getSeriesService().getSeriesByNodeRef((NodeRef) value).getTitle();
+                    value = BeanHelper.getSeriesService().getUnmodifiableSeries((NodeRef) value, null).getTitle();
                 }
             }
         }

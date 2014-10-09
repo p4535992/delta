@@ -15,6 +15,7 @@
       <property name="documentLogService" ref="DocumentLogService" />
       <property name="privilegeService" ref="PrivilegeService" />
       <property name="caseFileLogService" ref="CaseFileLogService" />
+      <property name="workflowConstantsBean" ref="workflowConstantsBean" />
    </bean>
 
    <bean id="DocumentAssociationsService" class="org.springframework.aop.framework.ProxyFactoryBean">

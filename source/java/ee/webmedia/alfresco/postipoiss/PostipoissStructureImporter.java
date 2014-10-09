@@ -29,6 +29,7 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.service.transaction.TransactionService;
+import org.alfresco.util.EqualsHelper;
 import org.alfresco.util.GUID;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.io.FileUtils;
@@ -43,24 +44,24 @@ import com.csvreader.CsvWriter;
 import de.schlichtherle.io.FileInputStream;
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel.Assocs;
-import ee.webmedia.alfresco.addressbook.service.AddressbookService;
 import ee.webmedia.alfresco.cases.service.CaseService;
 import ee.webmedia.alfresco.classificator.enums.AccessRestriction;
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
 import ee.webmedia.alfresco.classificator.enums.SeriesType;
 import ee.webmedia.alfresco.classificator.enums.VolumeType;
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.common.service.ConstantNodeRefsBean;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docconfig.bootstrap.SystematicDocumentType;
 import ee.webmedia.alfresco.document.type.service.DocumentTypeService;
 import ee.webmedia.alfresco.functions.model.Function;
-import ee.webmedia.alfresco.functions.model.FunctionsModel;
 import ee.webmedia.alfresco.functions.service.FunctionsService;
 import ee.webmedia.alfresco.register.model.Register;
 import ee.webmedia.alfresco.register.model.RegisterModel;
 import ee.webmedia.alfresco.register.service.RegisterService;
 import ee.webmedia.alfresco.series.model.Series;
 import ee.webmedia.alfresco.series.model.SeriesModel;
+import ee.webmedia.alfresco.series.model.UnmodifiableSeries;
 import ee.webmedia.alfresco.series.service.SeriesService;
 import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.volume.service.VolumeService;
@@ -112,7 +113,7 @@ public class PostipoissStructureImporter {
         // <property name="behaviourFilter" ref="policyBehaviourFilter" />
         // </bean>
         setGeneralService(BeanHelper.getGeneralService());
-        setAddressbookService(BeanHelper.getAddressbookService());
+        setConstantNodeRefsBean(BeanHelper.getConstantNodeRefsBean());
         setFunctionsService(BeanHelper.getFunctionsService());
         setSeriesService(BeanHelper.getSeriesService());
         setVolumeService(BeanHelper.getVolumeService());
@@ -138,7 +139,7 @@ public class PostipoissStructureImporter {
     private NodeRef archivalsRoot;
     private boolean openUnit;
 
-    private AddressbookService addressbookService;
+    private ConstantNodeRefsBean constantNodeRefsBean;
     private FunctionsService functionsService;
     private SeriesService seriesService;
     private VolumeService volumeService;
@@ -341,7 +342,7 @@ public class PostipoissStructureImporter {
                 contactsinGroupsReader.close();
             }
         }
-        */
+         */
         //@formatter:on
         return true;
     }
@@ -373,7 +374,7 @@ public class PostipoissStructureImporter {
     }
 
     private NodeRef createContactGroupNode(String groupName) {
-        NodeRef abRoot = addressbookService.getAddressbookRoot();
+        NodeRef abRoot = constantNodeRefsBean.getAddressbookRoot();
 
         QName randomqname = QName.createQName(AddressbookModel.URI, GUID.generate());
         NodeRef result = nodeService.createNode(abRoot, AddressbookModel.Assocs.CONTACT_GROUPS, randomqname, AddressbookModel.Types.CONTACT_GROUP)
@@ -424,7 +425,7 @@ public class PostipoissStructureImporter {
 
         QName randomqname = QName.createQName(AddressbookModel.URI, GUID.generate());
         NodeRef contactRef = nodeService.createNode(
-                addressbookService.getAddressbookRoot(),
+                constantNodeRefsBean.getAddressbookRoot(),
                 AddressbookModel.Assocs.ORGANIZATIONS,
                 randomqname,
                 AddressbookModel.Types.ORGANIZATION,
@@ -574,14 +575,17 @@ public class PostipoissStructureImporter {
 
         String functionType = ppMark.contains(".") ? "allfunktsioon" : "funktsioon";
         Function function = functionsService.createFunction();
-        Map<String, Object> props = function.getNode().getProperties();
-        props.put(FunctionsModel.Props.MARK.toString(), ppMark);
-        props.put(FunctionsModel.Props.TITLE.toString(), trimmedTitle);
-        props.put(FunctionsModel.Props.TYPE.toString(), functionType);
-        props.put(FunctionsModel.Props.ORDER.toString(), funk.order);
-        props.put(FunctionsModel.Props.STATUS.toString(), openUnit ? DocListUnitStatus.OPEN.getValueName() : DocListUnitStatus.CLOSED.getValueName());
-        props.put(FunctionsModel.Props.DOCUMENT_ACTIVITIES_ARE_LIMITED.toString(), Boolean.FALSE);
-        functionsService.saveOrUpdate(function, archivalsRoot);
+        function.setMark(ppMark);
+        function.setTitle(trimmedTitle);
+        function.setType(functionType);
+        try {
+            function.setOrder(Integer.valueOf(funk.order));
+        } catch (NumberFormatException e) {
+
+        }
+        function.setStatus(openUnit ? DocListUnitStatus.OPEN.getValueName() : DocListUnitStatus.CLOSED.getValueName());
+        function.setDocumentActivitiesAreLimited(Boolean.FALSE);
+        function = functionsService.saveOrUpdate(function, archivalsRoot);
 
         log.info(function.getNodeRef());
 
@@ -745,7 +749,7 @@ public class PostipoissStructureImporter {
         private int compare(Integer[] longArray, Integer[] shortArray) {
             int length = shortArray.length;
             for (int i = 0; i < length; i++) {
-                if (longArray[i] != shortArray[i]) {
+                if (!EqualsHelper.nullSafeEquals(longArray[i], shortArray[i])) {
                     return longArray[i] > shortArray[i] ? 1 : -1;
                 }
             }
@@ -872,7 +876,7 @@ public class PostipoissStructureImporter {
     // }
 
     private boolean sameOrderExists(int order, NodeRef fRef) {
-        for (Series s : seriesService.getAllSeriesByFunction(fRef)) {
+        for (UnmodifiableSeries s : seriesService.getAllSeriesByFunction(fRef)) {
             if (order == s.getOrder()) {
                 return true;
             }
@@ -1009,14 +1013,14 @@ public class PostipoissStructureImporter {
      * <p>
      * For example:
      * </p>
-     * 
+     *
      * <pre>
      * 12.2-3-9/13, 12.2-3-9/12, 7.2-13, 12.2-3-9/14, 9.1-4-4
      * </pre>
      * <p>
      * should be arranged as
      * </p>
-     * 
+     *
      * <pre>
      * 7.2-13, 9.1-4-4, 12.2-3-9/12, 12.2-3-9/13, 12.2-3-9/14
      * </pre>
@@ -1116,8 +1120,8 @@ public class PostipoissStructureImporter {
     }
 
     // INJECTORS
-    public void setAddressbookService(AddressbookService addressbookService) {
-        this.addressbookService = addressbookService;
+    public void setConstantNodeRefsBean(ConstantNodeRefsBean constantNodeRefsBean) {
+        this.constantNodeRefsBean = constantNodeRefsBean;
     }
 
     public void setFunctionsService(FunctionsService functionsService) {

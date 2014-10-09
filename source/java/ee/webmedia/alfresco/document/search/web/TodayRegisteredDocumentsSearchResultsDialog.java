@@ -12,6 +12,8 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 
 public class TodayRegisteredDocumentsSearchResultsDialog extends BaseDocumentListDialog {
     private static final long serialVersionUID = 1L;
+
+    public static final String BEAN_NAME = "TodayRegisteredDocumentsSearchResultsDialog";
     private transient UIPanel panel;
     private String searchValue;
     private boolean quickSearch;
@@ -47,11 +49,19 @@ public class TodayRegisteredDocumentsSearchResultsDialog extends BaseDocumentLis
 
     @Override
     public void restored() {
-        BeanHelper.getVisitedDocumentsBean().resetVisitedDocuments(documents);
+        BeanHelper.getVisitedDocumentsBean().resetVisitedDocuments(documentProvider);
+    }
+
+    @Override
+    public void clean() {
+        super.clean();
+        panel = null;
+        searchValue = null;
     }
 
     private void doInitialSearch() {
-        documents = setLimited(getDocumentSearchService().searchTodayRegisteredDocuments(quickSearch ? searchValue : null, getLimit()));
+        documentProvider = new DocumentListDataProvider(setLimited(getDocumentSearchService().searchTodayRegisteredDocuments(quickSearch ? searchValue : null, getLimit())), true,
+                DOC_PROPS_TO_LOAD);
     }
 
     @Override

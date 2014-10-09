@@ -104,18 +104,11 @@
       <property name="fileService" ref="FileService" />
    </bean>
 
-   <bean class="org.alfresco.web.app.ResourceBundleBootstrap">
-      <property name="resourceBundles">
-         <list>
-            <value>ee/webmedia/alfresco/imap/web/imap-webclient</value>
-         </list>
-      </property>
-   </bean>
-
-   <bean class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
+   <bean id="imapResourceBundles" class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
       <property name="resourceBundles">
          <list>
             <value>ee/webmedia/alfresco/imap/service/imap-messages</value>
+            <value>ee/webmedia/alfresco/imap/web/imap-webclient</value>
          </list>
       </property>
    </bean>
@@ -132,6 +125,8 @@
       <property name="documentDynamicService" ref="DocumentDynamicService" />
       <property name="einvoiceService" ref="EInvoiceService" />
       <property name="userService" ref="UserService" />
+      <property name="bulkLoadNodeService" ref="BulkLoadNodeService" />
+      <property name="applicationConstantsBean" ref="applicationConstantsBean" />
       <property name="messageCopyFolder" value="${imap.messageFolder}" />
       <property name="saveOriginalToRepo" value="${conf.imap.save-original.enabled}" />
       <property name="incomingLettersSubfolderType" value="${imap-folders.incomingLetters.subfolderType}" />
@@ -152,26 +147,6 @@
             <idref bean="commonTransactionInterceptor" />
          </list>
       </property>
-   </bean>
-
-   <bean class="ee.webmedia.alfresco.imap.web.IncomingEmailMenuItemProcessor">
-      <property name="menuService" ref="MenuService" />
-      <property name="documentService" ref="DocumentService" />
-   </bean>
-
-   <bean class="ee.webmedia.alfresco.imap.web.AttachmentListMenuItemProcessor">
-      <property name="menuService" ref="MenuService" />
-      <property name="imapServiceExt" ref="ImapServiceExt" />
-   </bean>
-   
-   <bean class="ee.webmedia.alfresco.imap.web.SentEmailMenuItemProcessor">
-      <property name="menuService" ref="MenuService" />
-      <property name="documentService" ref="DocumentService" />
-   </bean>
-   
-   <bean class="ee.webmedia.alfresco.imap.web.SendFailureNotificationListMenuItemProcessor">
-      <property name="menuService" ref="MenuService" />
-      <property name="imapServiceExt" ref="ImapServiceExt" />
    </bean>
    
    <bean id="SendFailureNotificationsListDialog" class="ee.webmedia.alfresco.imap.web.SendFailureNotificationsListDialog" scope="session" />

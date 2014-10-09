@@ -1,19 +1,25 @@
 package ee.webmedia.alfresco.document.web;
 
 import java.util.HashMap;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import javax.faces.component.UIPanel;
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
+import org.alfresco.model.ContentModel;
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.namespace.QName;
 import org.alfresco.web.ui.common.component.data.UIRichList;
 import org.springframework.web.jsf.FacesContextUtils;
 
-import ee.webmedia.alfresco.document.model.Document;
+import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
+import ee.webmedia.alfresco.document.search.web.DocumentListDataProvider;
 import ee.webmedia.alfresco.document.service.DocumentService;
 
 public abstract class BaseDocumentListDialog extends BaseLimitedListDialog {
@@ -25,8 +31,36 @@ public abstract class BaseDocumentListDialog extends BaseLimitedListDialog {
     private transient UIRichList richList;
     private transient UIPanel panel;
 
-    protected List<Document> documents;
+    protected DocumentListDataProvider documentProvider;
     private Map<NodeRef, Boolean> listCheckboxes = new HashMap<NodeRef, Boolean>();
+    protected static final Set<QName> SENDER_PROPS = new HashSet<QName>();
+    protected static final Set<QName> DOC_PROPS_TO_LOAD = new HashSet<>();
+
+    static {
+        SENDER_PROPS.add(DocumentSpecificModel.Props.SENDER_DETAILS_NAME);
+        SENDER_PROPS.add(DocumentSpecificModel.Props.SELLER_PARTY_NAME);
+        SENDER_PROPS.add(DocumentSpecificModel.Props.SECOND_PARTY_NAME);
+        SENDER_PROPS.add(DocumentSpecificModel.Props.THIRD_PARTY_NAME);
+        SENDER_PROPS.add(DocumentSpecificModel.Props.PARTY_NAME);
+        SENDER_PROPS.add(DocumentCommonModel.Props.RECIPIENT_NAME);
+        SENDER_PROPS.add(DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME);
+
+        DOC_PROPS_TO_LOAD.add(DocumentCommonModel.Props.REG_NUMBER);
+        DOC_PROPS_TO_LOAD.add(DocumentCommonModel.Props.REG_DATE_TIME);
+        DOC_PROPS_TO_LOAD.add(DocumentCommonModel.Props.DOC_NAME);
+        DOC_PROPS_TO_LOAD.add(DocumentCommonModel.Props.REG_DATE_TIME);
+        DOC_PROPS_TO_LOAD.add(DocumentAdminModel.Props.OBJECT_TYPE_ID);
+        DOC_PROPS_TO_LOAD.add(DocumentCommonModel.Props.VOLUME);
+        DOC_PROPS_TO_LOAD.add(DocumentCommonModel.Props.CASE);
+        DOC_PROPS_TO_LOAD.addAll(SENDER_PROPS);
+        DOC_PROPS_TO_LOAD.add(DocumentCommonModel.Props.OWNER_ID);
+        DOC_PROPS_TO_LOAD.add(DocumentCommonModel.Props.OWNER_NAME);
+        DOC_PROPS_TO_LOAD.add(DocumentSpecificModel.Props.DUE_DATE);
+        DOC_PROPS_TO_LOAD.add(DocumentSpecificModel.Props.COMPLIENCE_DATE);
+        DOC_PROPS_TO_LOAD.add(DocumentCommonModel.Props.ACCESS_RESTRICTION);
+        DOC_PROPS_TO_LOAD.add(ContentModel.PROP_CREATED);
+        DOC_PROPS_TO_LOAD.add(DocumentCommonModel.Props.EMAIL_DATE_TIME);
+    }
 
     @Override
     public void init(Map<String, String> params) {
@@ -38,15 +72,20 @@ public abstract class BaseDocumentListDialog extends BaseLimitedListDialog {
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
         // finish button is not used
         return null; // but in case someone clicks finish button twice on the previous dialog,
-                     // then silently ignore it and stay on the same page
+        // then silently ignore it and stay on the same page
     }
 
     @Override
     public String cancel() {
-        documents = null;
+        clean();
+        return super.cancel();
+    }
+
+    @Override
+    public void clean() {
         clearRichList();
         listCheckboxes = new HashMap<NodeRef, Boolean>();
-        return super.cancel();
+        documentProvider = null;
     }
 
     public boolean isShowCheckboxes() {
@@ -83,21 +122,21 @@ public abstract class BaseDocumentListDialog extends BaseLimitedListDialog {
     /**
      * Returns the file name to import as document list columns
      * Subclasses can override if necessary.
-     * 
+     *
      * @return String path to JSP file
      */
     public String getColumnsFile() {
         return "/WEB-INF/classes/ee/webmedia/alfresco/document/web/document-list-dialog-columns.jsp";
     }
 
-    public String getInitialSortColumn() {
-        return null;
+    public String getDocumentListValueBinding() {
+        return "#{DialogManager.bean.documents}";
     }
 
     // START: getters / setters
 
-    public List<Document> getDocuments() {
-        return documents;
+    public DocumentListDataProvider getDocuments() {
+        return documentProvider;
     }
 
     protected DocumentService getDocumentService() {

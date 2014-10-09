@@ -17,14 +17,12 @@ import org.alfresco.service.cmr.search.ResultSet;
 import org.alfresco.service.cmr.search.SearchService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
-import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.common.bootstrap.AbstractNodeUpdater;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
 import ee.webmedia.alfresco.user.service.UserService;
-import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.SearchUtil;
 import ee.webmedia.alfresco.workflow.model.CompoundWorkflowType;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
@@ -91,12 +89,11 @@ public class Workflow25To313DynamicDocTypeUpdater extends AbstractNodeUpdater {
         String ownerId = (String) compoundWorkflowProps.get(WorkflowCommonModel.Props.OWNER_ID);
         if (StringUtils.isNotBlank(ownerId) && (!compoundWorkflowProps.containsKey(WorkflowCommonModel.Props.OWNER_JOB_TITLE) ||
                 !compoundWorkflowProps.containsKey(WorkflowCommonModel.Props.OWNER_ORGANIZATION_NAME))) {
-            Node user = BeanHelper.getUserService().getUser(ownerId);
-            if (user != null) {
-                Map<String, Object> userProps = user.getProperties();
-                propsToAdd.put(WorkflowCommonModel.Props.OWNER_JOB_TITLE, (Serializable) userProps.get(ContentModel.PROP_JOBTITLE));
+            Map<QName, Serializable> userProps = BeanHelper.getUserService().getUserProperties(ownerId);
+            if (userProps != null) {
+                propsToAdd.put(WorkflowCommonModel.Props.OWNER_JOB_TITLE, userProps.get(ContentModel.PROP_JOBTITLE));
                 if (!userOrgPaths.containsKey(ownerId)) {
-                    userOrgPaths.put(ownerId, userService.getUserOrgPathOrOrgName(RepoUtil.toQNameProperties(userProps)));
+                    userOrgPaths.put(ownerId, userService.getUserOrgPathOrOrgName(userProps));
                 }
                 propsToAdd.put(WorkflowCommonModel.Props.OWNER_ORGANIZATION_NAME, (Serializable) userOrgPaths.get(ownerId));
             }

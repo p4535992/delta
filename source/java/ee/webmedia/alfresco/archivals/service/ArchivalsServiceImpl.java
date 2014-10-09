@@ -41,7 +41,6 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
-import org.alfresco.service.cmr.search.SearchService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.service.namespace.RegexQNamePattern;
 import org.alfresco.service.transaction.TransactionService;
@@ -87,11 +86,12 @@ import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.file.model.FileModel;
 import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.eventplan.model.EventPlanModel;
 import ee.webmedia.alfresco.eventplan.model.FirstEvent;
-import ee.webmedia.alfresco.functions.model.Function;
 import ee.webmedia.alfresco.functions.model.FunctionsModel;
+import ee.webmedia.alfresco.functions.model.UnmodifiableFunction;
 import ee.webmedia.alfresco.functions.service.FunctionsService;
 import ee.webmedia.alfresco.log.model.LogEntry;
 import ee.webmedia.alfresco.log.model.LogFilter;
@@ -121,7 +121,7 @@ public class ArchivalsServiceImpl implements ArchivalsService {
     private VolumeService volumeService;
     private SeriesService seriesService;
     private FunctionsService functionsService;
-    private SearchService searchService;
+    private DocumentSearchService documentSearchService;
     private DictionaryService dictionaryService;
     private AdrService adrService;
     private DocumentService documentService;
@@ -139,6 +139,7 @@ public class ArchivalsServiceImpl implements ArchivalsService {
 
     private StoreRef archivalsStore;
     private boolean archivingPaused;
+    private boolean archivingContinuedManually;
     private boolean simpleDestructionEnabled;
 
     private static final FastDateFormat DATE_FORMAT = FastDateFormat.getInstance("yyyy-MM-dd");
@@ -186,6 +187,7 @@ public class ArchivalsServiceImpl implements ArchivalsService {
                         Map<QName, Serializable> fileProps = new HashMap<QName, Serializable>(2);
                         fileProps.put(FileModel.Props.ACTIVITY_FILE_TYPE, ActivityFileType.UAM_XML.name());
                         fileProps.put(ContentModel.PROP_CONTENT, writer.getContentData());
+                        fileProps.put(ContentModel.PROP_CONTENT_NOT_INDEXED, true);
                         nodeService.addProperties(fileRef, fileProps);
                         nodeService.setProperty(activityRef, ArchivalsModel.Props.STATUS, ActivityStatus.FINISHED.getValue());
 
@@ -231,7 +233,7 @@ public class ArchivalsServiceImpl implements ArchivalsService {
             out = new OutputStreamWriter(writer.getContentOutputStream(), "UTF-8");
             WAX x = new WAX(out, Version.V1_0);
             x.start("UAM_import").defaultNamespace("http://www.ra.ee/schemas/EDHS/import_v0.1").namespace("dul", "http://www.nortal.com/schemas/delta/delta_uam_lisaandmed")
-                    .start("Arhiivikirjeldus");
+            .start("Arhiivikirjeldus");
 
             writeVolumes(x, volumeRefs, ignoredFields, ignoredGroups);
 
@@ -239,7 +241,7 @@ public class ArchivalsServiceImpl implements ArchivalsService {
 
             for (NodeRef volumeRef : volumeRefs) {
                 // Export volume documents
-                List<NodeRef> documents = documentService.getAllDocumentRefsByParentRef(volumeRef);
+                List<NodeRef> documents = documentSearchService.searchAllDocumentRefsByParentRef(volumeRef);
                 writeDocuments(x, documents, ignoredFields, ignoredGroups);
             }
             x.close(); // UAM_import
@@ -264,28 +266,28 @@ public class ArchivalsServiceImpl implements ArchivalsService {
             Serializable volValidFrom = vol.get(VolumeModel.Props.VALID_FROM);
             Serializable volValidTo = vol.get(VolumeModel.Props.VALID_TO);
             x.start("Kirjeldusyksus")
-                    .child("KyTasand", "toimik")
-                    .start("KyIdentiteediala")
-                    .child("KyViit", (String) vol.get(VolumeModel.Props.VOLUME_MARK))
-                    .child("KyIdEDHS", volumeRef.getId())
-                    .child("KyVanemViit", (String) ser.get(SeriesModel.Props.SERIES_IDENTIFIER))
-                    .child("KyVanemIdEDHS", seriesRef.getId())
-                    .child("KyPealkiri", (String) vol.get(VolumeModel.Props.TITLE))
-                    .start("KyAeg")
-                    .start("Algus")
-                    .child("Tyyp", "kuupäev")
-                    .child("Tapsus", "true")
-                    .child("Vaartus", (volValidFrom == null ? "" : DATE_FORMAT.format(volValidFrom)))
-                    .end() // Algus
-                    .start("Lopp")
-                    .child("Tyyp", "kuupäev")
-                    .child("Tapsus", "true")
-                    .child("Vaartus", (volValidTo == null ? "" : DATE_FORMAT.format(volValidTo)))
-                    .end() // Lopp
-                    .end() // KyAeg
-                    .end() // KyIdentiteediala
+            .child("KyTasand", "toimik")
+            .start("KyIdentiteediala")
+            .child("KyViit", (String) vol.get(VolumeModel.Props.VOLUME_MARK))
+            .child("KyIdEDHS", volumeRef.getId())
+            .child("KyVanemViit", (String) ser.get(SeriesModel.Props.SERIES_IDENTIFIER))
+            .child("KyVanemIdEDHS", seriesRef.getId())
+            .child("KyPealkiri", (String) vol.get(VolumeModel.Props.TITLE))
+            .start("KyAeg")
+            .start("Algus")
+            .child("Tyyp", "kuupäev")
+            .child("Tapsus", "true")
+            .child("Vaartus", (volValidFrom == null ? "" : DATE_FORMAT.format(volValidFrom)))
+            .end() // Algus
+            .start("Lopp")
+            .child("Tyyp", "kuupäev")
+            .child("Tapsus", "true")
+            .child("Vaartus", (volValidTo == null ? "" : DATE_FORMAT.format(volValidTo)))
+            .end() // Lopp
+            .end() // KyAeg
+            .end() // KyIdentiteediala
 
-                    .start("KySisuStruktAla");
+            .start("KySisuStruktAla");
             if (isCaseFile) {
                 writeKeywords(x, vol);
                 writeAdditionalProperties(x, new Node(volumeRef), vol, ignoredFields, ignoredGroups);
@@ -342,31 +344,31 @@ public class ArchivalsServiceImpl implements ArchivalsService {
 
             Serializable serValidFrom = ser.get(SeriesModel.Props.VALID_FROM_DATE);
             x.start("Kirjeldusyksus").child("KyTasand", (String) ser.get(SeriesModel.Props.TYPE))
-                    .start("KyIdentiteediala")
-                    .child("KyViit", (String) ser.get(SeriesModel.Props.SERIES_IDENTIFIER))
-                    .child("KyIdEDHS", seriesRef.getId())
-                    .child("KyVanemViit", (String) fun.get(FunctionsModel.Props.MARK))
-                    .child("KyVanemIdEDHS", functionRef.getId())
-                    .child("KyPealkiri", (String) ser.get(SeriesModel.Props.TITLE))
-                    .start("KyAeg")
-                    .start("Algus")
-                    .child("Tyyp", "kuupäev")
-                    .child("Tapsus", "true")
-                    .child("Vaartus", (serValidFrom == null ? "" : DATE_FORMAT.format(serValidFrom)))
-                    .end(); // Algus
+            .start("KyIdentiteediala")
+            .child("KyViit", (String) ser.get(SeriesModel.Props.SERIES_IDENTIFIER))
+            .child("KyIdEDHS", seriesRef.getId())
+            .child("KyVanemViit", (String) fun.get(FunctionsModel.Props.MARK))
+            .child("KyVanemIdEDHS", functionRef.getId())
+            .child("KyPealkiri", (String) ser.get(SeriesModel.Props.TITLE))
+            .start("KyAeg")
+            .start("Algus")
+            .child("Tyyp", "kuupäev")
+            .child("Tapsus", "true")
+            .child("Vaartus", (serValidFrom == null ? "" : DATE_FORMAT.format(serValidFrom)))
+            .end(); // Algus
             Date end = (Date) ser.get(SeriesModel.Props.VALID_TO_DATE);
             if (end != null) {
                 x.start("Lopp")
-                        .child("Tyyp", "kuupäev")
-                        .child("Tapsus", "true")
-                        .child("Vaartus", DATE_FORMAT.format(end))
-                        .end(); // Lopp
+                .child("Tyyp", "kuupäev")
+                .child("Tapsus", "true")
+                .child("Vaartus", DATE_FORMAT.format(end))
+                .end(); // Lopp
             }
             x.end() // KyAeg
-                    .end() // KyIdentiteediAla
-                    .start("KySisuStruktAla")
-                    .child("KyTaienemine", (DocListUnitStatus.OPEN.getValueName().equals(ser.get(SeriesModel.Props.STATUS)) ? "true" : "false"))
-                    .end(); // KySisuStruktAla
+            .end() // KyIdentiteediAla
+            .start("KySisuStruktAla")
+            .child("KyTaienemine", (DocListUnitStatus.OPEN.getValueName().equals(ser.get(SeriesModel.Props.STATUS)) ? "true" : "false"))
+            .end(); // KySisuStruktAla
 
             LogFilter filter = new LogFilter();
             filter.setObjectId(Arrays.asList(seriesRef.toString()));
@@ -401,8 +403,8 @@ public class ArchivalsServiceImpl implements ArchivalsService {
     private void writeLogEntry(WAX x, LogEntry entry) {
         x.start("KyTegevus");
         x.child("TegevusNimetus", entry.getEventDescription())
-                .child("TeostajaNimi", entry.getCreatorName())
-                .child("TegevusAeg", DATE_TIME_FORMAT.format(entry.getCreatedDateTime()));
+        .child("TeostajaNimi", entry.getCreatorName())
+        .child("TegevusAeg", DATE_TIME_FORMAT.format(entry.getCreatedDateTime()));
         x.end(); // KyTegevus
     }
 
@@ -410,12 +412,12 @@ public class ArchivalsServiceImpl implements ArchivalsService {
         for (NodeRef nodeRef : functionRefs) {
             Map<QName, Serializable> fun = nodeService.getProperties(nodeRef);
             x.start("Funktsioon")
-                    .child("FunktsioonNimi", (String) fun.get(FunctionsModel.Props.TITLE))
-                    .child("FunktsioonViit", (String) fun.get(FunctionsModel.Props.MARK))
-                    .child("FunktsioonIdEDHS", nodeRef.getId())
-                    .child("Kirjeldus", (String) fun.get(FunctionsModel.Props.DESCRIPTION))
-                    .child("Volitus")
-                    .end(); // Funktsioon
+            .child("FunktsioonNimi", (String) fun.get(FunctionsModel.Props.TITLE))
+            .child("FunktsioonViit", (String) fun.get(FunctionsModel.Props.MARK))
+            .child("FunktsioonIdEDHS", nodeRef.getId())
+            .child("Kirjeldus", (String) fun.get(FunctionsModel.Props.DESCRIPTION))
+            .child("Volitus")
+            .end(); // Funktsioon
         }
     }
 
@@ -426,27 +428,27 @@ public class ArchivalsServiceImpl implements ArchivalsService {
             NodeRef volumeRef = generalService.getAncestorNodeRefWithType(doc.getNodeRef(), SeriesModel.Types.SERIES);
 
             x.start("Arhivaal")
-                    .start("KyMeta")
+            .start("KyMeta")
 
-                    .start("KyIdentiteediala")
-                    .child("KyViit", doc.getRegNumber())
-                    .child("KyIdEDHS", doc.getNodeRef().getId())
-                    .child("KyVanemViit", (String) nodeService.getProperty(volumeRef, VolumeModel.Props.VOLUME_MARK))
-                    .child("KyVanemIdEDHS", volumeRef.getId())
-                    .child("KyPealkiri", doc.getDocName())
+            .start("KyIdentiteediala")
+            .child("KyViit", doc.getRegNumber())
+            .child("KyIdEDHS", doc.getNodeRef().getId())
+            .child("KyVanemViit", (String) nodeService.getProperty(volumeRef, VolumeModel.Props.VOLUME_MARK))
+            .child("KyVanemIdEDHS", volumeRef.getId())
+            .child("KyPealkiri", doc.getDocName())
 
-                    .start("KyAeg")
-                    .child("Tyyp", "kuupäev")
-                    .child("Tapsus", "true")
-                    .child("Vaartus", DATE_TIME_FORMAT.format((doc.getRegDateTime() != null ? doc.getRegDateTime() : doc.getProp(ContentModel.PROP_CREATED))))
-                    .end() // KyAeg
+            .start("KyAeg")
+            .child("Tyyp", "kuupäev")
+            .child("Tapsus", "true")
+            .child("Vaartus", DATE_TIME_FORMAT.format((doc.getRegDateTime() != null ? doc.getRegDateTime() : doc.getProp(ContentModel.PROP_CREATED))))
+            .end() // KyAeg
 
-                    .child("KyMuutmiseAeg", DATE_TIME_FORMAT.format(doc.getNode().getProperties().get(ContentModel.PROP_MODIFIED)))
+            .child("KyMuutmiseAeg", DATE_TIME_FORMAT.format(doc.getNode().getProperties().get(ContentModel.PROP_MODIFIED)))
 
-                    .end() // KyIdentiteediala
+            .end() // KyIdentiteediala
 
-                    .start("KySisuStruktAla")
-                    .child("KyLiik", documentDynamicService.getDocumentTypeName(doc.getNodeRef()));
+            .start("KySisuStruktAla")
+            .child("KyLiik", documentDynamicService.getDocumentTypeName(doc.getNodeRef()));
             writeKeywords(x, docProps);
             x.end(); // KySisuStruktAla
 
@@ -500,10 +502,10 @@ public class ArchivalsServiceImpl implements ArchivalsService {
             try {
                 MessageDigest md5 = MessageDigest.getInstance("MD5");
                 x.start("Fail")
-                        .child("FailIdent", file.getNodeRef().getId())
-                        .child("FailNimi", file.getDisplayName())
-                        .child("FailSuurus", Long.toString(file.getSize()))
-                        .start("FailBase64");
+                .child("FailIdent", file.getNodeRef().getId())
+                .child("FailNimi", file.getDisplayName())
+                .child("FailSuurus", Long.toString(file.getSize()))
+                .start("FailBase64");
                 is = new DigestInputStream(fileService.getFileContentInputStream(file.getNodeRef()), md5);
                 x.unescapedText("<![CDATA[");
                 reader = new InputStreamReader(new org.apache.commons.codec.binary.Base64InputStream(is, true, 0, null), "UTF-8");
@@ -515,16 +517,16 @@ public class ArchivalsServiceImpl implements ArchivalsService {
                 }
                 x.unescapedText("]]>");
                 x.end() // FailBase64
-                        .child("FailViide")
-                        .child("FailLoplik", "true")
-                        .child("FailOriginaal", "true")
-                        .child("FailArhiivivormingus", (file.isPdf() ? "true" : "false"))
-                        .child("FailKasutuskoopia", "false")
-                        .start("Rasi")
-                        .child("RasiVaartus", Hex.encodeHexString(md5.digest()))
-                        .child("RasiAlgoritm", md5.getAlgorithm())
-                        .child("RasiAeg", DATE_TIME_FORMAT.format(new Date()))
-                        .end().end(); // Rasi and Fail
+                .child("FailViide")
+                .child("FailLoplik", "true")
+                .child("FailOriginaal", "true")
+                .child("FailArhiivivormingus", (file.isPdf() ? "true" : "false"))
+                .child("FailKasutuskoopia", "false")
+                .start("Rasi")
+                .child("RasiVaartus", Hex.encodeHexString(md5.digest()))
+                .child("RasiAlgoritm", md5.getAlgorithm())
+                .child("RasiAeg", DATE_TIME_FORMAT.format(new Date()))
+                .end().end(); // Rasi and Fail
             } catch (Exception e) {
                 LOG.error("Error occurred when exporting file " + file.getNodeRef(), e);
                 throw e;
@@ -616,7 +618,7 @@ public class ArchivalsServiceImpl implements ArchivalsService {
         List<DocAssocInfo> assocInfos = documentAssociationsService.getAssocInfos(node);
         for (DocAssocInfo assocInfo : assocInfos) {
             wax.child("SeotudOsaIdent", assocInfo.getOtherNodeRef().getId())
-                    .child("SeotudOsaSelgitus", assocInfo.getAssocType().getValueName());
+            .child("SeotudOsaSelgitus", assocInfo.getAssocType().getValueName());
         }
         wax.end(); // KySeonduvAines
     }
@@ -627,25 +629,25 @@ public class ArchivalsServiceImpl implements ArchivalsService {
         if (access != null && !AccessRestriction.OPEN.getValueName().equals(access)) {
             Serializable restrictionBeginDate = properties.get(DocumentCommonModel.Props.ACCESS_RESTRICTION_BEGIN_DATE);
             wax.start("JuurdepaasPiirang")
-                    .child("Piirang", (AccessRestriction.AK.getValueName().equals(access) ? "AK" : "UleandjaPiirang"))
-                    .start("PiirangAeg")
-                    .start("Algus")
-                    .child("Tyyp", "kuupäev")
-                    .child("Tapsus", "true")
-                    .child("Vaartus", (restrictionBeginDate != null ? DATE_FORMAT.format(restrictionBeginDate) : null))
-                    .end(); // Algus
+            .child("Piirang", (AccessRestriction.AK.getValueName().equals(access) ? "AK" : "UleandjaPiirang"))
+            .start("PiirangAeg")
+            .start("Algus")
+            .child("Tyyp", "kuupäev")
+            .child("Tapsus", "true")
+            .child("Vaartus", (restrictionBeginDate != null ? DATE_FORMAT.format(restrictionBeginDate) : null))
+            .end(); // Algus
             Date end = (Date) properties.get(DocumentCommonModel.Props.ACCESS_RESTRICTION_END_DATE);
             if (end != null) {
                 wax.start("Lopp")
-                        .child("Tyyp", "kuupäev")
-                        .child("Tapsus", "true")
-                        .child("Vaartus", DATE_FORMAT.format(end))
-                        .end(); // Lopp
+                .child("Tyyp", "kuupäev")
+                .child("Tapsus", "true")
+                .child("Vaartus", DATE_FORMAT.format(end))
+                .end(); // Lopp
             }
             wax.end() // PiirangAeg
-                    .child("PiirangKestus", (String) properties.get(DocumentCommonModel.Props.ACCESS_RESTRICTION_END_DESC))
-                    .child("PiirangAlus", (String) properties.get(DocumentCommonModel.Props.ACCESS_RESTRICTION_REASON))
-                    .end(); // JuurdepaasPiirang
+            .child("PiirangKestus", (String) properties.get(DocumentCommonModel.Props.ACCESS_RESTRICTION_END_DESC))
+            .child("PiirangAlus", (String) properties.get(DocumentCommonModel.Props.ACCESS_RESTRICTION_REASON))
+            .end(); // JuurdepaasPiirang
         }
         wax.end(); // KyJuurdepaasuala
     }
@@ -713,7 +715,7 @@ public class ArchivalsServiceImpl implements ArchivalsService {
     }
 
     private void setArchivingProperty(NodeRef volumeRef, Boolean value) {
-        Volume volume = getVolumeService().getVolumeByNodeRef(volumeRef);
+        Volume volume = getVolumeService().getVolumeByNodeRef(volumeRef, null);
         volume.setProperty(VolumeModel.Props.MARKED_FOR_ARCHIVING.toString(), value);
         getVolumeService().saveOrUpdate(volume);
     }
@@ -755,7 +757,7 @@ public class ArchivalsServiceImpl implements ArchivalsService {
 
         final RetryingTransactionHelper transactionHelper = BeanHelper.getTransactionService().getRetryingTransactionHelper();
 
-        final Volume volume = volumeService.getVolumeByNodeRef(volumeNodeRef);
+        final Volume volume = volumeService.getVolumeByNodeRef(volumeNodeRef, null);
         final Series series = seriesService.getSeriesByNodeRef(volume.getSeriesNodeRef());
         final NodeRef originalSeriesRef = series.getNode().getNodeRef();
         final Map<NodeRef, NodeRef> originalToArchivedCaseNodeRef = new HashMap<NodeRef, NodeRef>();
@@ -961,15 +963,21 @@ public class ArchivalsServiceImpl implements ArchivalsService {
             final NodeRef archivedSeriesRef, final Map<NodeRef, NodeRef> originalToArchivedCaseNodeRef, final int archivedDocumentsCount,
             final Map<NodeRef, Integer> caseDocsUpdated, final RetryingTransactionHelper transactionHelper) {
         updateCounter(archivedVolumeRef, VolumeModel.Props.CONTAINING_DOCS_COUNT, true, archivedDocumentsCount, transactionHelper, false);
+        volumeService.removeFromCache(archivedVolumeRef);
         updateCounter(originalVolumeRef, VolumeModel.Props.CONTAINING_DOCS_COUNT, false, archivedDocumentsCount, transactionHelper, true);
+        volumeService.removeFromCache(originalVolumeRef);
         updateCounter(archivedSeriesRef, SeriesModel.Props.CONTAINING_DOCS_COUNT, true, archivedDocumentsCount, transactionHelper, false);
+        seriesService.removeFromCache(archivedSeriesRef);
         updateCounter(originalSeriesRef, SeriesModel.Props.CONTAINING_DOCS_COUNT, false, archivedDocumentsCount, transactionHelper, true);
+        seriesService.removeFromCache(originalSeriesRef);
         for (Map.Entry<NodeRef, Integer> entry : caseDocsUpdated.entrySet()) {
             NodeRef originalCaseRef = entry.getKey();
             NodeRef archivedCaseRef = originalToArchivedCaseNodeRef.get(originalCaseRef);
             int archivedDocCount = entry.getValue();
             updateCounter(archivedCaseRef, CaseModel.Props.CONTAINING_DOCS_COUNT, true, archivedDocCount, transactionHelper, false);
+            caseService.removeFromCache(archivedCaseRef);
             updateCounter(originalCaseRef, CaseModel.Props.CONTAINING_DOCS_COUNT, false, archivedDocCount, transactionHelper, true);
+            caseService.removeFromCache(originalCaseRef);
         }
 
     }
@@ -1242,6 +1250,7 @@ public class ArchivalsServiceImpl implements ArchivalsService {
 
     private void disposeVolumes(List<NodeRef> volumesToDestroy, final Date disposalDate, final String docDeletingComment, final String logMessage, String executingUser) {
         RetryingTransactionHelper retryingTransactionHelper = BeanHelper.getTransactionService().getRetryingTransactionHelper();
+        final Map<Long, QName> propertyTypes = new HashMap<Long, QName>();
         for (final NodeRef volumeNodeRef : volumesToDestroy) {
             // remove all childs
             deleteDocuments(docDeletingComment, retryingTransactionHelper, volumeNodeRef, executingUser);
@@ -1254,7 +1263,7 @@ public class ArchivalsServiceImpl implements ArchivalsService {
 
                 @Override
                 public Void execute() throws Throwable {
-                    seriesService.updateContainingDocsCountByVolume(volumeService.getVolumeByNodeRef(volumeNodeRef).getSeriesNodeRef(), volumeNodeRef, false);
+                    seriesService.updateContainingDocsCountByVolume(volumeService.getVolumeByNodeRef(volumeNodeRef, propertyTypes).getSeriesNodeRef(), volumeNodeRef, false);
                     HashMap<QName, Serializable> props = new HashMap<QName, Serializable>();
                     props.put(VolumeModel.Props.STATUS, DocListUnitStatus.DESTROYED.getValueName());
                     props.put(EventPlanModel.Props.DISPOSAL_DATE_TIME, disposalDate);
@@ -1263,6 +1272,7 @@ public class ArchivalsServiceImpl implements ArchivalsService {
                         props.put(DocumentCommonModel.Props.DOCUMENT_REG_NUMBERS, null);
                     }
                     nodeService.addProperties(volumeNodeRef, props);
+                    volumeService.removeFromCache(volumeNodeRef);
                     logService.addLogEntry(LogEntry.create(isCaseFile(volumeNodeRef) ? LogObject.CASE_FILE : LogObject.VOLUME, userService, volumeNodeRef, logMessage));
                     return null;
                 }
@@ -1295,7 +1305,7 @@ public class ArchivalsServiceImpl implements ArchivalsService {
     }
 
     @Override
-    public List<Function> getArchivedFunctions() {
+    public List<UnmodifiableFunction> getArchivedFunctions() {
         return functionsService.getFunctions(getArchivalRoot());
     }
 
@@ -1422,8 +1432,8 @@ public class ArchivalsServiceImpl implements ArchivalsService {
         this.seriesService = seriesService;
     }
 
-    public void setSearchService(SearchService searchService) {
-        this.searchService = searchService;
+    public void setDocumentSearchService(DocumentSearchService documentSearchService) {
+        this.documentSearchService = documentSearchService;
     }
 
     public void setDictionaryService(DictionaryService dictionaryService) {
@@ -1535,18 +1545,30 @@ public class ArchivalsServiceImpl implements ArchivalsService {
     @Override
     public void pauseArchiving(ActionEvent event) {
         archivingPaused = true;
+        archivingContinuedManually = false;
         LOG.info("Volume archiving was paused");
     }
 
     @Override
     public void continueArchiving(ActionEvent event) {
         archivingPaused = false;
+        archivingContinuedManually = true;
         LOG.info("Volume archiving was resumed");
     }
 
     @Override
     public boolean isArchivingPaused() {
         return archivingPaused;
+    }
+
+    @Override
+    public boolean isArchivingContinuedManually() {
+        return archivingContinuedManually;
+    }
+
+    @Override
+    public void resetManualActions() {
+        archivingContinuedManually = false;
     }
 
     @Override

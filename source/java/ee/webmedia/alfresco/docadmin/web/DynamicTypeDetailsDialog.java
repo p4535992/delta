@@ -1,5 +1,20 @@
 package ee.webmedia.alfresco.docadmin.web;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentAdminService;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import javax.faces.context.FacesContext;
+import javax.faces.event.ActionEvent;
+
+import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.util.Pair;
+import org.alfresco.web.bean.repository.Node;
+import org.apache.commons.collections4.map.CaseInsensitiveMap;
+import org.apache.commons.lang.StringUtils;
+
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
 import ee.webmedia.alfresco.docadmin.service.DocumentTypeVersion;
@@ -12,19 +27,6 @@ import ee.webmedia.alfresco.docdynamic.web.BaseSnapshotCapableDialog;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageData;
 import ee.webmedia.alfresco.utils.MessageUtil;
-import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.util.Pair;
-import org.alfresco.web.bean.repository.Node;
-import org.apache.commons.collections4.map.CaseInsensitiveMap;
-import org.apache.commons.lang.StringUtils;
-
-import javax.faces.context.FacesContext;
-import javax.faces.event.ActionEvent;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
-import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentAdminService;
 
 /**
  * Base dialog for editing {@link DynamicType} details
@@ -47,10 +49,10 @@ public abstract class DynamicTypeDetailsDialog<D extends DynamicType, S extends 
     public abstract static class DynTypeDialogSnapshot<D extends DynamicType> implements BaseSnapshotCapableDialog.Snapshot {
         private static final long serialVersionUID = 1L;
 
-        private D dynType;
-        private boolean addNewLatestDocumentTypeVersion = true;
+        public D dynType;
+        public boolean addNewLatestDocumentTypeVersion = true;
         /** only initialized when not showing latest version */
-        private Integer docTypeVersion;
+        public Integer docTypeVersion;
         /** only initialized when not showing latest version */
         public NodeRef docTypeVersionRef;
 

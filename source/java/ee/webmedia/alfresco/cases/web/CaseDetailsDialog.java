@@ -19,6 +19,7 @@ import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.cases.model.Case;
 import ee.webmedia.alfresco.cases.model.CaseModel;
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
@@ -42,6 +43,7 @@ public class CaseDetailsDialog extends BaseDialogBean {
     @Override
     public void init(Map<String, String> params) {
         super.init(params);
+        BeanHelper.getCaseDocumentListDialog().resetCases();
     }
 
     @Override
@@ -161,6 +163,11 @@ public class CaseDetailsDialog extends BaseDialogBean {
     private void resetFields() {
         currentEntry = null;
         newCase = false;
+    }
+
+    @Override
+    public void clean() {
+        resetFields();
     }
 
     public void setPropertySheet(UIPropertySheet propertySheet) {

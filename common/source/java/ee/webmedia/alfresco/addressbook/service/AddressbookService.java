@@ -36,6 +36,8 @@ public interface AddressbookService {
 
     List<AddressbookEntry> listAddressbookEntries(QName type);
 
+    List<AddressbookEntry> listOrganizationPeople(NodeRef organizationRef);
+
     /**
      * @return list of nodes of type ab:contactGroups
      */
@@ -168,13 +170,6 @@ public interface AddressbookService {
      * @return
      */
     List<Node> getContacts(NodeRef nodeRef);
-
-    /**
-     * Returns the NodeRef of the addressbook
-     * 
-     * @return
-     */
-    NodeRef getAddressbookRoot();
 
     List<Node> searchTaskCapableContacts(String searchCriteria, boolean orgOnly, boolean dvkCapableOnly, String institutionToRemove, int limit);
 

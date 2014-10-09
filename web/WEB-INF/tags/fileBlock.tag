@@ -7,8 +7,8 @@
 
 <%@ attribute name="title" required="false" rtexprvalue="true" type="java.lang.String" description="Title for the file block."%>
 <%@ attribute name="titleId" required="false" rtexprvalue="true" type="java.lang.String" description="Translation key for file block title."%>
-<%@ attribute name="files" required="true" rtexprvalue="true" type="java.util.Collection" description="List of files (ee.webmedia.alfresco.document.file.model.File) to display."%>
-<%@ attribute name="signable" required="false" rtexprvalue="true" type="java.lang.Boolean" description="Are displayed files added to DDOC ehen document is signed?"%>
+<%@ attribute name="files" required="true" rtexprvalue="true" type="java.util.Collection" description="List of files (ee.webmedia.alfresco.document.file.model.SimpleFile) to display."%>
+<%@ attribute name="signable" required="false" rtexprvalue="true" type="java.lang.Boolean" description="Are displayed files added to BDOC when document is signed?"%>
 
 <c:if test="${empty title and not empty titleId}">
    <fmt:message key="${titleId}" var="title" />
@@ -28,8 +28,9 @@
       <c:forEach items="${files}" var="file">
          <li>
          	<c:set value="${file.displayName} (${mDelta:fileSize(file.size)})" var="fileTitle" />
+            <c:set var="parentRef" value="${file['class'].name == 'ee.webmedia.alfresco.document.file.model.MDeltaFile' ? file.parentRef : file.node.nodeRef}" />
          	<c:choose>
-	         	<c:when test="${mDelta:documentAllowPermission(file.node.nodeRef, 'viewDocumentFiles')}">
+	         	<c:when test="${mDelta:documentAllowPermission(parentRef, 'viewDocumentFiles')}">
 	               <a href="<c:url value="${file.readOnlyUrl}" />" title="${fileTitle}"><c:out value="${fileTitle}" /></a>
 	            </c:when>
 	            <c:otherwise>

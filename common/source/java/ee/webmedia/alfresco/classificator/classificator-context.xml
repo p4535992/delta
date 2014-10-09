@@ -29,7 +29,7 @@
       </property>
    </bean>
    
-   <bean class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
+   <bean id="classificatorResourceBundles" class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
       <property name="resourceBundles">
          <list>
             <value>ee/webmedia/alfresco/classificator/web/classificator-webclient</value>
@@ -572,7 +572,7 @@
       </property>
    </bean>
 
-   <bean id="classificatorResourceBundleBootstrap" class="org.alfresco.web.app.ResourceBundleBootstrap">
+   <bean id="classificatorResourceBundleBootstrap" class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
       <property name="resourceBundles">
          <list>
             <value>ee.webmedia.alfresco.classificator.web.classificator-webclient</value>
@@ -607,7 +607,8 @@
       <property name="generalService" ref="GeneralService" />
       <property name="nodeService" ref="NodeService" />
       <property name="documentSearchService" ref="DocumentSearchService" />
-      <property name="classificatorsPath" value="${classificators.parent.folder.xpath}${classificators.folder.name}" />
+      <property name="bulkLoadNodeService" ref="BulkLoadNodeService"/>
+      <property name="classificatorsCache" ref="classificatorsCache" />
    </bean>
 
    <bean id="ClassificatorService" class="org.springframework.aop.framework.ProxyFactoryBean">
@@ -620,6 +621,20 @@
       <property name="interceptorNames">
          <list>
             <idref bean="commonTransactionInterceptor" />
+         </list>
+      </property>
+   </bean>
+   
+   <bean id="classificatorsCacheUpdater" class="ee.webmedia.alfresco.classificator.bootstrap.ClassificatorsCacheUpdater" parent="module.baseComponent" >
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="false" />
+      <property name="generalService" ref="GeneralService" />
+      <property name="nodeService" ref="NodeService" />
+      <property name="classificatorService" ref="ClassificatorService" />
+      <property name="classificatorsPath" value="${classificators.parent.folder.xpath}${classificators.folder.name}" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="classificatorRootBootstrap" />
          </list>
       </property>
    </bean>

@@ -27,6 +27,7 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getSubstituteService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getTransactionService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getVolumeService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getWorkflowConstantsBean;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getWorkflowService;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.FILE_CONTENTS;
 import static ee.webmedia.alfresco.privilege.service.PrivilegeUtil.getPrivsWithDependencies;
@@ -105,6 +106,7 @@ import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.casefile.service.CaseFile;
 import ee.webmedia.alfresco.cases.model.Case;
 import ee.webmedia.alfresco.cases.model.CaseModel;
+import ee.webmedia.alfresco.cases.service.UnmodifiableCase;
 import ee.webmedia.alfresco.classificator.constant.FieldType;
 import ee.webmedia.alfresco.classificator.enums.AccessRestriction;
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
@@ -133,6 +135,7 @@ import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.functions.model.Function;
 import ee.webmedia.alfresco.functions.model.FunctionsModel;
+import ee.webmedia.alfresco.functions.model.UnmodifiableFunction;
 import ee.webmedia.alfresco.orgstructure.model.OrganizationStructure;
 import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.privilege.service.PrivilegeService;
@@ -140,10 +143,13 @@ import ee.webmedia.alfresco.register.model.Register;
 import ee.webmedia.alfresco.register.model.RegisterModel;
 import ee.webmedia.alfresco.series.model.Series;
 import ee.webmedia.alfresco.series.model.SeriesModel;
+import ee.webmedia.alfresco.series.service.SeriesService;
 import ee.webmedia.alfresco.substitute.model.Substitute;
+import ee.webmedia.alfresco.substitute.model.UnmodifiableSubstitute;
 import ee.webmedia.alfresco.utils.FilenameUtil;
 import ee.webmedia.alfresco.utils.UserUtil;
 import ee.webmedia.alfresco.versions.model.VersionsModel;
+import ee.webmedia.alfresco.volume.model.UnmodifiableVolume;
 import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
 import ee.webmedia.alfresco.workflow.model.CompoundWorkflowType;
@@ -823,8 +829,8 @@ public class TestDataService implements SaveListener {
         Set<String> workingUsers = new HashSet<String>();
         Set<String> restingUsers = new HashSet<String>();
         for (String userName : userNames) {
-            List<Substitute> subs = getSubstituteService().getSubstitutes(getUserData(userName).getFirst());
-            for (Substitute sub : subs) {
+            List<UnmodifiableSubstitute> subs = getSubstituteService().getUnmodifiableSubstitutes(getUserData(userName).getFirst());
+            for (UnmodifiableSubstitute sub : subs) {
                 if (sub.isActive()) {
                     restingUsers.add(userName);
                     workingUsers.remove(userName);
@@ -954,11 +960,11 @@ public class TestDataService implements SaveListener {
         // 2. ARHIIVIMOODUSTAJA
         // NodeRef rootRef = archivalsStoreVOs.get(2).getNodeRef();
 
-        List<Function> allFunctions = getFunctionsService().getFunctions(rootRef);
+        List<UnmodifiableFunction> allFunctions = getFunctionsService().getFunctions(rootRef);
         List<Pair<String, String>> copy = new ArrayList<Pair<String, String>>(functionMarksAndTitles);
         int order = 1;
         functions = new HashSet<NodeRef>();
-        for (Function function : allFunctions) {
+        for (UnmodifiableFunction function : allFunctions) {
             for (Iterator<Pair<String, String>> i = copy.iterator(); i.hasNext();) {
                 Pair<String, String> pair = i.next();
                 if (pair.getFirst().equals(stripAndTrim(function.getMark())) && pair.getSecond().equals(stripAndTrim(function.getTitle()))) {
@@ -1033,17 +1039,19 @@ public class TestDataService implements SaveListener {
         seriesWithCaseFiles = new HashSet<TestDataService.SerieVO>();
         seriesWithAnnualOrSubjectVolTypeList = new ArrayList<SerieVO>();
         seriesMaxOrder = new HashMap<NodeRef, Integer>();
+        SeriesService seriesService = getSeriesService();
         for (NodeRef functionRef : functions) {
             checkStop();
-            List<Series> allSeries = getSeriesService().getAllSeriesByFunction(functionRef);
-            for (Series serie : allSeries) {
+            List<NodeRef> allSeries = seriesService.getAllSeriesRefsByFunction(functionRef);
+            for (NodeRef seriesRef : allSeries) {
+                Series serie = seriesService.getSeriesByNodeRef(seriesRef);
                 for (Iterator<Pair<String, String>> i = copy.iterator(); i.hasNext();) {
                     Pair<String, String> pair = i.next();
                     if (pair.getFirst().equals(stripAndTrim(serie.getSeriesIdentifier())) && pair.getSecond().equals(stripAndTrim(serie.getTitle()))) {
                         i.remove();
                     }
                 }
-                Integer order = seriesMaxOrder.get(serie.getFunctionNodeRef());
+                Integer order = seriesMaxOrder.get(functionRef);
                 if (order == null) {
                     order = 1;
                 } else {
@@ -1170,7 +1178,7 @@ public class TestDataService implements SaveListener {
         getSeriesService().saveOrUpdateWithoutReorder(serie);
         seriesMaxOrder.put(functionRef, order);
 
-        SerieVO newSerie = new SerieVO(serie.getNode(), serie.getFunctionNodeRef());
+        SerieVO newSerie = new SerieVO(serie.getNode(), functionRef);
         series.add(newSerie);
         if (volType.contains(VolumeType.CASE_FILE.name())) {
             seriesWithCaseFiles.add(newSerie);
@@ -1260,8 +1268,8 @@ public class TestDataService implements SaveListener {
         docLocations = new ArrayList<DocumentLocationVO>();
         for (SerieVO serie : series) {
             checkStop();
-            List<Volume> allVolumes = getVolumeService().getAllVolumesBySeries(serie.getSeriesRef());
-            for (Volume volume : allVolumes) {
+            List<UnmodifiableVolume> allVolumes = getVolumeService().getAllVolumesBySeries(serie.getSeriesRef());
+            for (UnmodifiableVolume volume : allVolumes) {
                 if (volume.isDynamic()) {
                     // case files are handeled in createCaseFiles
                     continue;
@@ -1272,7 +1280,7 @@ public class TestDataService implements SaveListener {
                         i.remove();
                     }
                 }
-                NodeRef volumeRef = volume.getNode().getNodeRef();
+                NodeRef volumeRef = volume.getNodeRef();
                 volumes.add(volumeRef);
                 if (volume.isContainsCases()) {
                     volumesWithCases.add(volumeRef);
@@ -1307,8 +1315,8 @@ public class TestDataService implements SaveListener {
         // seriesByCaseFileRef = new HashMap<NodeRef, SerieVO>();
         for (SerieVO serie : series) {
             checkStop();
-            List<Volume> allVolumes = getVolumeService().getAllVolumesBySeries(serie.getSeriesRef());
-            for (Volume volume : allVolumes) {
+            List<UnmodifiableVolume> allVolumes = getVolumeService().getAllVolumesBySeries(serie.getSeriesRef());
+            for (UnmodifiableVolume volume : allVolumes) {
                 if (!volume.isDynamic()) {
                     // volumes (i.e. not case files) are handeled in createVolume
                     continue;
@@ -1319,7 +1327,7 @@ public class TestDataService implements SaveListener {
                         i.remove();
                     }
                 }
-                NodeRef caseFileRef = volume.getNode().getNodeRef();
+                NodeRef caseFileRef = volume.getNodeRef();
                 caseFiles.add(caseFileRef);
                 // seriesByCaseFileRef.put(caseFileRef, serie);
             }
@@ -1350,13 +1358,13 @@ public class TestDataService implements SaveListener {
         Map<String, Object> props = volume.getNode().getProperties();
         List<String> volumeTypes = new ArrayList<String>(serie.getVolType());
         volumeTypes.remove(VolumeType.CASE_FILE.name());
-        String volumeType = getRandom(volumeTypes);
+        VolumeType volumeType = VolumeType.valueOf(getRandom(volumeTypes));
         if (VolumeType.SUBJECT_FILE.equals(volumeType)) {
             mark = serie.getMark();
         }
         props.put(VolumeModel.Props.VOLUME_MARK.toString(), mark);
         props.put(VolumeModel.Props.TITLE.toString(), title);
-        props.put(VolumeModel.Props.VOLUME_TYPE.toString(), volumeType);
+        props.put(VolumeModel.Props.VOLUME_TYPE.toString(), volumeType.name());
         boolean isContainsCases = Math.random() < 0.5;
         props.put(VolumeModel.Props.CONTAINS_CASES.toString(), Boolean.valueOf(isContainsCases));
         Calendar cal = Calendar.getInstance();
@@ -1489,19 +1497,18 @@ public class TestDataService implements SaveListener {
         Random volumesRandom = new Random();
 
         cases = new HashSet<NodeRef>();
-        for (NodeRef volume : volumesWithCases) {
+        for (NodeRef volumeRef : volumesWithCases) {
             checkStop();
-            List<Case> allCases = getCaseService().getAllCasesByVolume(volume);
-            for (Case case1 : allCases) {
+            List<UnmodifiableCase> allCases = getCaseService().getAllCasesByVolume(volumeRef);
+            for (UnmodifiableCase case1 : allCases) {
                 for (Iterator<String> i = copy.iterator(); i.hasNext();) {
                     String title = i.next();
                     if (title.equals(stripAndTrim(case1.getTitle()))) {
                         i.remove();
                     }
                 }
-                NodeRef caseRef = case1.getNode().getNodeRef();
+                NodeRef caseRef = case1.getNodeRef();
                 cases.add(caseRef);
-                NodeRef volumeRef = case1.getVolumeNodeRef();
                 docLocations.add(new DocumentLocationVO(seriesByVolumeRef.get(volumeRef), volumeRef, caseRef));
             }
         }
@@ -1589,7 +1596,7 @@ public class TestDataService implements SaveListener {
         }
         QName randomqname = QName.createQName(URI, GUID.generate());
         NodeRef contactRef = getNodeService().createNode(
-                getAddressbookService().getAddressbookRoot(),
+                BeanHelper.getConstantNodeRefsBean().getAddressbookRoot(),
                 assocType,
                 randomqname,
                 type,
@@ -2088,7 +2095,7 @@ public class TestDataService implements SaveListener {
         }
         // Not used: REGISTRATION_WORKFLOW, EXTERNAL_REVIEW_WORKFLOW, DUE_DATE_EXTENSION_WORKFLOW -- too special
         // FUTURE: orderAssignmentWorkflow -- could be used, but don't remember exact rules right now (must have category...?)?
-        Map<QName, WorkflowType> wfTypesByWf = getWorkflowService().getWorkflowTypes();
+        Map<QName, WorkflowType> wfTypesByWf = getWorkflowConstantsBean().getWorkflowTypes();
 
         Map<String, Set<Privilege>> permissionsByTaskOwnerId = new HashMap<String, Set<Privilege>>();
         FileService fileService = BeanHelper.getFileService();
@@ -2140,7 +2147,7 @@ public class TestDataService implements SaveListener {
             } else {
                 taskCount = ((int) (Math.random() * 90)) + 11; // 11 - 100
             }
-            WorkflowType workflowType = BeanHelper.getWorkflowService().getWorkflowTypes().get(wfType);
+            WorkflowType workflowType = getWorkflowConstantsBean().getWorkflowTypes().get(wfType);
             for (int j = 0; j < taskCount; j++) {
                 if (userNamesListCopy.isEmpty()) {
                     break;
@@ -2283,7 +2290,7 @@ public class TestDataService implements SaveListener {
             }
         } else if (isCaseFileWorkflow) {
             // and to documents under this case file
-            for (NodeRef documentRef : BeanHelper.getDocumentService().getAllDocumentRefsByParentRef(docRef)) {
+            for (NodeRef documentRef : BeanHelper.getDocumentService().getAllDocumentRefsByParentRefWithoutRestrictedAccess(docRef)) {
                 for (Map.Entry<String, Set<Privilege>> entry : permissionsByTaskOwnerId.entrySet()) {
                     privilegeService.setPermissions(documentRef, entry.getKey(), entry.getValue());
                 }

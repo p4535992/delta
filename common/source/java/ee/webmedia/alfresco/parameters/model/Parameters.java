@@ -1,5 +1,8 @@
 package ee.webmedia.alfresco.parameters.model;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.parameters.model.ParametersModel.Repo;
@@ -125,10 +128,14 @@ public enum Parameters {
     DVK_FAILED_SENDS_RESEND_TIME("dvkFailedSendsResendTime"),
     MOVE_TO_ARCHIVE_LIST_DEFAULT_MONTHS("moveToArchiveListDefaultMonths"),
     ARCHIVAL_ACTIVITY_DOC_TYPE_ID("archivalActivityDocTypeId"),
-    ACCESS_RESTRICTION_END_DATE_NOTIFICATION_MAX_DOCUMENTS("accessRestrictionEndDateNotificationMaxDocuments");
+    ACCESS_RESTRICTION_END_DATE_NOTIFICATION_MAX_DOCUMENTS("accessRestrictionEndDateNotificationMaxDocuments"),
+    ARCHIVING_BEGIN_TIME("archivingBeginTime"),
+    ARCHIVING_END_TIME("archivingEndTime"),
+    CONTINUE_ARCIVING_OVER_WEEKEND("continueArchivingOverWeekend");
 
     private String xPath;
     private String parameterName;
+    private static final Map<String, Parameters> params = new HashMap<>();
 
     Parameters(String parameterName) {
         xPath = Repo.PARAMETERS_SPACE + "/" + ParametersModel.PREFIX + parameterName;
@@ -136,13 +143,17 @@ public enum Parameters {
     }
 
     public static Parameters get(String parameterName) {
+        if (params.containsKey(parameterName)) {
+            return params.get(parameterName);
+        }
         final Parameters[] values = Parameters.values();
         for (Parameters parameter : values) {
             if (parameter.parameterName.equals(parameterName)) {
+                params.put(parameterName, parameter);
                 return parameter;
             }
         }
-        throw new IllegalArgumentException("Unknown parameterName: " + parameterName + ". Known values: " + StringUtils.join(values, ", "));
+        throw new IllegalArgumentException("Unknown parameterName: " + parameterName + ". Known values: " + StringUtils.join(Parameters.values(), ", "));
     }
 
     public static Parameters get(Parameter<?> parameter) {

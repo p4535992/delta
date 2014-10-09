@@ -4,7 +4,6 @@ import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -15,6 +14,8 @@ public class LogFilter implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private String logEntryId;
+
+    private List<String> specificLogEntries;
 
     private Date dateCreatedStart;
 
@@ -39,6 +40,14 @@ public class LogFilter implements Serializable {
 
     public void setLogEntryId(String logEntryId) {
         this.logEntryId = logEntryId;
+    }
+
+    public List<String> getSpecificLogEntries() {
+        return specificLogEntries;
+    }
+
+    public void setSpecificLogEntries(List<String> specificLogEntries) {
+        this.specificLogEntries = specificLogEntries;
     }
 
     public Date getDateCreatedStart() {

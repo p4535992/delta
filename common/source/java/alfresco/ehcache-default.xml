@@ -328,6 +328,20 @@
         eternal="true"
         overflowToDisk="false">
     </cache>
+    
+    <cache
+        name="org.alfresco.cache.substituteCache"
+        maxElementsInMemory="2000"
+        eternal="true"
+        overflowToDisk="false">
+    </cache>
+    
+    <cache
+        name="org.alfresco.cache.userToSubstitutesCache"
+        maxElementsInMemory="2000"
+        eternal="true"
+        overflowToDisk="false">
+    </cache>
 
     <cache 
         name="org.alfresco.cache.nodeOwnerCache" 
@@ -344,11 +358,95 @@
     </cache>
     
     <cache 
-        name="org.alfresco.cache.personPropertiesCache" 
+        name="org.alfresco.cache.personNodesCache" 
         maxElementsInMemory="10000"
         eternal="true"
         overflowToDisk="false">
     </cache> 
+    
+    <cache 
+        name="org.alfresco.cache.fieldDefinitionCache" 
+        maxElementsInMemory="10000"
+        eternal="true"
+        overflowToDisk="false">
+    </cache>     
+    
+    <cache
+        name="org.alfresco.cache.classificatorsCache"
+        maxElementsInMemory="10000"
+        eternal="true"
+        overflowToDisk="false">
+    </cache>
+    
+    <cache
+        name="org.alfresco.cache.parametersCache"
+        maxElementsInMemory="10000"
+        eternal="true"
+        overflowToDisk="false">
+    </cache>
+    
+    <cache
+        name="org.alfresco.cache.functionCache"
+        maxElementsInMemory="10000"
+        eternal="true"
+        overflowToDisk="false">
+    </cache>  
+    
+    <cache
+        name="org.alfresco.cache.seriesCache"
+        maxElementsInMemory="10000"
+        eternal="true"
+        overflowToDisk="false">
+    </cache>
+    
+    <cache
+        name="org.alfresco.cache.volumeCache"
+        maxElementsInMemory="10000"
+        eternal="true"
+        overflowToDisk="false">
+    </cache> 
+    
+    <cache
+        name="org.alfresco.cache.caseCache"
+        maxElementsInMemory="10000"
+        eternal="true"
+        overflowToDisk="false">
+    </cache>     
+    
+    <cache
+        name="org.alfresco.cache.documentTypeCache"
+        maxElementsInMemory="10000"
+        eternal="true"
+        overflowToDisk="false">
+    </cache>  
+    
+    <cache
+        name="org.alfresco.cache.caseFileTypeCache"
+        maxElementsInMemory="10000"
+        eternal="true"
+        overflowToDisk="false">
+    </cache> 
+    
+    <cache
+        name="org.alfresco.cache.dynamicTypeAndVersionCache"
+        maxElementsInMemory="1000"
+        eternal="true"
+        overflowToDisk="false">
+    </cache> 
+    
+    <cache
+        name="org.alfresco.cache.authorityCache"
+        maxElementsInMemory="10000"
+        eternal="true"
+        overflowToDisk="false">
+    </cache>
+    
+    <cache
+        name="org.alfresco.cache.compoundWorkflowDefinitionsCache"
+        maxElementsInMemory="10000"
+        eternal="true"
+        overflowToDisk="false">
+    </cache>
     
     <cache 
         name="org.alfresco.cache.orgStructPropertiesCache" 

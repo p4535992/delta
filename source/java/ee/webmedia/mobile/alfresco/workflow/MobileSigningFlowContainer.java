@@ -23,8 +23,8 @@ public class MobileSigningFlowContainer extends SigningFlowContainer {
     private CompundWorkflowDetailsController controller;
     private RedirectAttributes redirectAttributes;
 
-    public MobileSigningFlowContainer(SignatureTask signatureTask, InProgressTasksForm inProgressTasksForm, NodeRef compoundWorkflowRef, NodeRef containerRef) {
-        super(signatureTask, inProgressTasksForm, compoundWorkflowRef, containerRef);
+    public MobileSigningFlowContainer(SignatureTask signatureTask, boolean isSignTogether, InProgressTasksForm inProgressTasksForm, NodeRef compoundWorkflowRef, NodeRef containerRef) {
+        super(signatureTask, isSignTogether, inProgressTasksForm, compoundWorkflowRef, containerRef);
         setPhoneNumber(getUserPhoneNumber());
     }
 

@@ -7,8 +7,8 @@ import java.util.Set;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.log.web.LogBlockBean;
-import ee.webmedia.alfresco.log.model.LogEntry;
 import ee.webmedia.alfresco.log.model.LogFilter;
+import ee.webmedia.alfresco.log.web.LogEntryDataProvider;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
 import ee.webmedia.alfresco.workflow.service.Task;
@@ -34,11 +34,16 @@ public class CompoundWorkflowLogBlockBean extends LogBlockBean {
     @Override
     public void restore() {
         if (compoundWorkflow.isSaved()) {
-            List tmpLogs = BeanHelper.getLogService().getLogEntries(getCompoundWorkflowLogFilter());
-            logs = tmpLogs;
+            logs = new LogEntryDataProvider(getCompoundWorkflowLogFilter());
         } else {
-            logs = new ArrayList<LogEntry>();
+            logs = new LogEntryDataProvider();
         }
+    }
+
+    @Override
+    public void clean() {
+        super.clean();
+        compoundWorkflow = null;
     }
 
     private LogFilter getCompoundWorkflowLogFilter() {

@@ -26,8 +26,8 @@ public class CaseFileSendForInformationEvaluator extends BaseActionEvaluator {
         }
         NodeRef functionNodeRef = (NodeRef) caseFileNode.getProperties().get(DocumentCommonModel.Props.FUNCTION);
         Boolean docActivitiesAreLimited = functionNodeRef == null ? Boolean.TRUE :
-            (Boolean) BeanHelper.getNodeService().getProperty(functionNodeRef, FunctionsModel.Props.DOCUMENT_ACTIVITIES_ARE_LIMITED);
-        return (docActivitiesAreLimited == null || !(docActivitiesAreLimited)) && !isDraft;
+                (Boolean) BeanHelper.getNodeService().getProperty(functionNodeRef, FunctionsModel.Props.DOCUMENT_ACTIVITIES_ARE_LIMITED);
+        return docActivitiesAreLimited == null || !docActivitiesAreLimited;
     }
 
 }

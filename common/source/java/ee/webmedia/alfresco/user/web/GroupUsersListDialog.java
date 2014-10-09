@@ -91,6 +91,11 @@ public class GroupUsersListDialog extends BaseDialogBean {
         return "dialog:close";
     }
 
+    @Override
+    public void clean() {
+        users = null;
+    }
+
     public void setDisableActions(boolean disableActions) {
         this.disableActions = disableActions;
     }
@@ -188,7 +193,7 @@ public class GroupUsersListDialog extends BaseDialogBean {
      * Set the current Group Authority.
      * <p>
      * Setting this value causes the UI to update and display the specified node as current.
-     * 
+     *
      * @param group The current group authority.
      */
     protected void setCurrentGroup(String group, String groupName) {

@@ -21,6 +21,11 @@ public class ContactGroupBaseDialog extends BaseDialogBean {
         currentNode = null;
     }
 
+    @Override
+    public void clean() {
+        currentNode = null;
+    }
+
     // START: setters/getters
     public Node getCurrentNode() {
         return currentNode;

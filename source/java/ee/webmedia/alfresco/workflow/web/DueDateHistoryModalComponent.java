@@ -97,7 +97,7 @@ public class DueDateHistoryModalComponent extends ModalLayerComponent {
                 UIActionLink relatedCompoundWorkflowLink = (UIActionLink) application.createComponent("org.alfresco.faces.ActionLink");
                 FacesHelper.setupComponentId(context, relatedCompoundWorkflowLink, "due-date-history-related-workflow-link-" + modalRowId);
                 relatedCompoundWorkflowLink.setValue(MessageUtil.getMessage("compoundWorkflow_due_date_extension_title"));
-                relatedCompoundWorkflowLink.setAction(new ConstantMethodBinding("dialog:compoundWorkflowDialog"));
+                relatedCompoundWorkflowLink.setAction(new ConstantMethodBinding(CompoundWorkflowDialog.DIALOG_NAME));
                 relatedCompoundWorkflowLink.setActionListener(application.createMethodBinding("#{CompoundWorkflowDialog.setupWorkflow}", UIActions.ACTION_CLASS_ARGS));
                 ComponentUtil.addChildren(relatedCompoundWorkflowLink, ComponentUtil.createUIParam("nodeRef", extensionWorkflowNodeRef, application));
                 tableChildren.add(relatedCompoundWorkflowLink);

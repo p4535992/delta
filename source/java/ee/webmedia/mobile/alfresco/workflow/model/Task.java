@@ -44,7 +44,6 @@ public class Task implements Comparable<Task>, Serializable {
         type = task.getType();
         actions = new HashMap<String, String>();
         nodeRef = task.getNodeRef();
-        isSignTogether = task.getParent().isSignTogether();
     }
 
     public boolean isOverDue() {

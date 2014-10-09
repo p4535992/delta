@@ -13,11 +13,12 @@ import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.cases.model.Case;
 import ee.webmedia.alfresco.common.web.BeanHelper;
-import ee.webmedia.alfresco.document.file.model.File;
+import ee.webmedia.alfresco.document.file.model.SimpleFile;
 import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.DocumentListRowLink;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.volume.model.UnmodifiableVolume;
 import ee.webmedia.alfresco.volume.model.Volume;
 
 /**
@@ -112,12 +113,12 @@ public class AssocBlockObject implements Serializable, DocumentListRowLink {
         return isDocument() ? document.getOwnerName() : (isVolume() ? volume.getOwnerName() : "");
     }
 
-    public Volume getDocumentVolume() {
+    public UnmodifiableVolume getDocumentVolume() {
         return isDocument() ? document.getDocumentVolume() : null;
     }
 
-    public List<File> getFiles() {
-        return isDocument() ? document.getFiles() : new ArrayList<File>();
+    public List<SimpleFile> getFiles() {
+        return isDocument() ? document.getFiles(null) : new ArrayList<SimpleFile>();
     }
 
     public String getCssStyleClass() {
@@ -127,6 +128,10 @@ public class AssocBlockObject implements Serializable, DocumentListRowLink {
     @Override
     public String getAction() {
         return isDocument() ? document.getAction() : (isCase() ? "dialog:documentListDialog" : (volume.isDynamic() ? "dialog:caseFileDialog" : "dialog:caseDocListDialog"));
+    }
+
+    public Document getDocument() {
+        return document;
     }
 
     @Override

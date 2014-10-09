@@ -38,7 +38,7 @@ public class DocumentDynamicTypeMenuItemProcessor implements InitializingBean, M
 
         @Override
         public int compare(MenuItem o1, MenuItem o2) {
-            return AppConstants.DEFAULT_COLLATOR.compare(o1.getTitle(), o2.getTitle());
+            return AppConstants.getNewCollatorInstance().compare(o1.getTitle(), o2.getTitle());
         }
     };
 

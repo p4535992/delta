@@ -1,29 +1,33 @@
 package ee.webmedia.alfresco.casefile.web.evaluator;
 
-import static ee.webmedia.alfresco.common.web.BeanHelper.getCaseFileService;
-
 import org.alfresco.service.cmr.repository.StoreRef;
-import org.alfresco.web.action.evaluator.BaseActionEvaluator;
 import org.alfresco.web.bean.repository.Node;
-import org.springframework.util.Assert;
 
-import ee.webmedia.alfresco.casefile.service.CaseFile;
+import ee.webmedia.alfresco.casefile.model.CaseFileModel;
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
+import ee.webmedia.alfresco.common.evaluator.CaseFileActionsGroupResource;
+import ee.webmedia.alfresco.common.evaluator.SharedResourceEvaluator;
 import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 
-public class ArchiveCaseFileEvaluator extends BaseActionEvaluator {
+public class ArchiveCaseFileEvaluator extends SharedResourceEvaluator {
     private static final long serialVersionUID = 0L;
 
     @Override
-    public boolean evaluate(Object obj) {
-        Assert.isInstanceOf(CaseFile.class, obj, "This evaluator expects CaseFile to be passed as argument");
-        CaseFile caseFile = (CaseFile) obj;
-        return DocListUnitStatus.CLOSED.getValueName().equals(caseFile.getStatus())
-                && caseFile.getNode().getNodeRef().getStoreRef().equals(StoreRef.STORE_REF_WORKSPACE_SPACESSTORE) && BeanHelper.getUserService().isArchivist();
+    public boolean evaluate(Node node) {
+        return node.getNodeRef().getStoreRef().equals(StoreRef.STORE_REF_WORKSPACE_SPACESSTORE)
+                && CaseFileModel.Types.CASE_FILE.equals(node.getType())
+                && DocListUnitStatus.CLOSED.getValueName().equals(node.getProperties().get(DocumentDynamicModel.Props.STATUS))
+                && BeanHelper.getUserService().isArchivist();
     }
 
     @Override
-    public boolean evaluate(Node node) {
-        return evaluate(getCaseFileService().getCaseFile(node.getNodeRef()));
+    public boolean evaluate() {
+        CaseFileActionsGroupResource resource = (CaseFileActionsGroupResource) sharedResource;
+        Node node = resource.getObject();
+        return node.getNodeRef().getStoreRef().equals(StoreRef.STORE_REF_WORKSPACE_SPACESSTORE)
+                && CaseFileModel.Types.CASE_FILE.equals(node.getType())
+                && DocListUnitStatus.CLOSED.getValueName().equals(resource.getStatus())
+                && resource.isArchivist();
     }
 }

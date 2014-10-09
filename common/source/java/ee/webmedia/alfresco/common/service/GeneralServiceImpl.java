@@ -14,9 +14,11 @@ import java.nio.charset.Charset;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -88,11 +90,14 @@ import org.springframework.util.Assert;
 import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.archivals.model.ArchivalsStoreVO;
 import ee.webmedia.alfresco.casefile.model.CaseFileModel;
+import ee.webmedia.alfresco.cases.model.CaseModel;
 import ee.webmedia.alfresco.common.propertysheet.component.WMUIProperty;
 import ee.webmedia.alfresco.common.propertysheet.upload.UploadFileInput.FileWithContentType;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.document.log.service.DocumentPropertiesChangeHolder;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.functions.model.FunctionsModel;
+import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.utils.AdjustableSemaphore;
 import ee.webmedia.alfresco.utils.CalendarUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
@@ -100,6 +105,8 @@ import ee.webmedia.alfresco.utils.TextUtil;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
 
 public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
+    private static final String REFRESH_MATERIALIZED_VIEWS = "refreshMaterializedViews";
+
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(GeneralServiceImpl.class);
 
     private StoreRef store;
@@ -369,20 +376,78 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
 
     /**
      * Create node from nodRef and populate it with properties and aspects
-     * 
+     *
      * @param nodeRef
      * @return
      */
     @Override
     public Node fetchNode(NodeRef nodeRef) {
+        return fetchNode(nodeRef, null);
+    }
+
+    @Override
+    public Node fetchNode(NodeRef nodeRef, Map<Long, QName> propertyTypes) {
         final Node node = new Node(nodeRef);
         node.getAspects();
-        node.getProperties();
+        node.getProperties(propertyTypes, null);
+        return node;
+    }
+
+    /**
+     * Create nodes from nodRefs and populate it with properties and aspects
+     *
+     * @param nodeRef
+     * @return
+     */
+    @Override
+    public <T> List<T> fetchObjects(Collection<NodeRef> nodeRefs, Set<QName> propsToLoad, NodeBasedObjectCallback<T> callback) {
+        List<T> result = new ArrayList<T>();
+        Map<Long, QName> propertyTypes = new HashMap<Long, QName>();
+        for (NodeRef nodeRef : nodeRefs) {
+            result.add(fetchObject(nodeRef, propsToLoad, callback, propertyTypes));
+        }
+        return result;
+    }
+
+    @Override
+    public <T> T fetchObject(NodeRef nodeRef, Set<QName> propsToLoad, NodeBasedObjectCallback<T> callback, Map<Long, QName> propertyTypes) {
+        final Node node = loadPropertiesAndAspects(nodeRef, propsToLoad, propertyTypes);
+        T resultObject = callback.create(node);
+        return resultObject;
+    }
+
+    /**
+     * Create nodes from nodRefs and populate it with properties and aspects
+     *
+     * @param nodeRef
+     * @return
+     */
+    @Override
+    public <T> List<T> fetchObjectsForChildAssocs(Collection<ChildAssociationRef> childAssocs, Set<QName> propsToLoad,
+            NodeBasedObjectCallback<T> callback) {
+        List<T> result = new ArrayList<T>();
+        Map<Long, QName> propertyTypes = new HashMap<Long, QName>();
+        for (ChildAssociationRef childAssoc : childAssocs) {
+            final Node node = loadPropertiesAndAspects(childAssoc.getChildRef(), propsToLoad, propertyTypes);
+            result.add(callback.create(node));
+        }
+        return result;
+    }
+
+    private Node loadPropertiesAndAspects(NodeRef nodeRef, Set<QName> propsToLoad, Map<Long, QName> propertyTypes) {
+        final Node node = new Node(nodeRef);
+        node.getAspects();
+        node.getProperties(propertyTypes, propsToLoad);
         return node;
     }
 
     @Override
     public WmNode fetchObjectNode(NodeRef objectRef, QName objectType) {
+        return fetchObjectNode(objectRef, objectType, null);
+    }
+
+    @Override
+    public WmNode fetchObjectNode(NodeRef objectRef, QName objectType, Map<Long, QName> propertyTypes) {
         QName type = nodeService.getType(objectRef);
         // XXX quickfix, a caseFile object can sometimes be used as a volume
         // FIXME we should actually find all calls with type volume to this method and rewrite them properly
@@ -390,7 +455,7 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
             Assert.isTrue(objectType.equals(type), objectRef + " is typed as " + type + " but was requested as " + objectType);
         }
         Set<QName> aspects = RepoUtil.getAspectsIgnoringSystem(nodeService.getAspects(objectRef));
-        Map<QName, Serializable> props = RepoUtil.getPropertiesIgnoringSystem(nodeService.getProperties(objectRef), dictionaryService);
+        Map<QName, Serializable> props = RepoUtil.getPropertiesIgnoringSystem(nodeService.getProperties(objectRef, null, propertyTypes), dictionaryService);
 
         return new WmNode(objectRef, type, aspects, props);
     }
@@ -981,6 +1046,49 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
     }
 
     @Override
+    public void refreshMaterializedViews(QName... nodeTypeQName) {
+        if (AlfrescoTransactionSupport.getResource(REFRESH_MATERIALIZED_VIEWS) == null) {
+            final Set<QName> refreshMaterializedViews = new HashSet<QName>();
+            refreshMaterializedViews.addAll(Arrays.asList(nodeTypeQName));
+            AlfrescoTransactionSupport.bindResource(REFRESH_MATERIALIZED_VIEWS, refreshMaterializedViews);
+            runOnBackground(new RunAsWork<Void>() {
+
+                @Override
+                public Void doWork() throws Exception {
+                    for (QName viewToUpdate : refreshMaterializedViews) {
+                        if (FunctionsModel.Types.FUNCTION.equals(viewToUpdate)) {
+                            updateMaterializedView("delta_function");
+                        } else if (SeriesModel.Types.SERIES.equals(viewToUpdate)) {
+                            updateMaterializedView("delta_series");
+                        } else if (VolumeModel.Types.VOLUME.equals(viewToUpdate) || CaseFileModel.Types.CASE_FILE.equals(viewToUpdate)) {
+                            updateMaterializedView("delta_volume_casefile");
+                        } else if (CaseModel.Types.CASE.equals(viewToUpdate)) {
+                            updateMaterializedView("delta_case");
+                        }
+                    }
+                    return null;
+                }
+
+            }, "refreshMaterializedViews", true, new RunAsWork<Void>() {
+
+                @Override
+                public Void doWork() throws Exception {
+                    AlfrescoTransactionSupport.unbindResource(REFRESH_MATERIALIZED_VIEWS);
+                    return null;
+                }
+            });
+        } else {
+            Set<QName> refreshMaterializedViews = AlfrescoTransactionSupport.getResource(REFRESH_MATERIALIZED_VIEWS);
+            refreshMaterializedViews.addAll(Arrays.asList(nodeTypeQName));
+        }
+    }
+
+    @SuppressWarnings("deprecation")
+    private void updateMaterializedView(String viewName) {
+        jdbcTemplate.update("REFRESH MATERIALIZED VIEW " + viewName);
+    }
+
+    @Override
     public NodeRef getExistingNodeRefAllStores(String id) {
         if (id == null) {
             return null;
@@ -1050,7 +1158,7 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
                     sb.append(argsCounter++ + ") ").append(arg != null ? arg.toString() : arg).append("\n");
                 }
             } else {
-                sb.append(args).append("\n");
+                sb.append("[]").append("\n");
             }
             sb.append(TextUtil.joinNonBlankStrings(explanation, "\n"));
             traceLog.trace(sb.toString());

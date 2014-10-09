@@ -109,7 +109,7 @@ public class ClassificatorsImportDialog extends AbstractImportDialog {
             final boolean newClassifDeleteEnabled = classifObjects.get(classifName).isDeleteEnabled();
             final ClassificatorExportVO classificatorExportVO = new ClassificatorExportVO(classificator, importableClassificatorValues);
             classificatorExportVO.setNodeRef(classificator.getNodeRef());
-            final List<ClassificatorValue> existingClassifValues = getClassificatorService().getAllClassificatorValues(classificatorExportVO);
+            final List<ClassificatorValue> existingClassifValues = classificator.getValues();
             classificatorExportVO.setPreviousDeleteEnabled(classificator.isDeleteEnabled());
             classificatorExportVO.setDeleteEnabled(newClassifDeleteEnabled);
             classificatorExportVO.setPreviousDescription(classificator.getDescription());

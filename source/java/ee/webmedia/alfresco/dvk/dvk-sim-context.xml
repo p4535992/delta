@@ -20,25 +20,11 @@
       <property name="notificationService" ref="NotificationService" />
       <property name="einvoiceService" ref="EInvoiceService" />
       <property name="documentAdminService" ref="DocumentAdminService" />
+      <property name="applicationConstantsBean" ref="applicationConstantsBean" />
    </bean>
 
    <!-- START: web beans: -->
    <bean id="DvkCorruptListDialog" class="ee.webmedia.alfresco.dvk.web.DvkCorruptListDialog" scope="session" />
-   <!-- END: web beans: -->
-   
-   <bean class="ee.webmedia.alfresco.dvk.web.DvkCorruptMenuItemProcessor">
-      <property name="menuService" ref="MenuService" />
-      <property name="generalService" ref="GeneralService" />
-      <property name="dvkService" ref="DvkService" />
-      <property name="fileFolderService" ref="FileFolderService" />
-   </bean>
-   
-   <bean class="ee.webmedia.alfresco.dvk.web.DvkDocumentsMenuItemProcessor">
-      <property name="menuService" ref="MenuService" />
-      <property name="documentService" ref="DocumentService" />
-   </bean>
-
-   <!-- START: web beans: -->
 
    <bean id="DvkBean" class="ee.webmedia.alfresco.dvk.web.DvkBean" scope="session" />
 

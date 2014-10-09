@@ -107,7 +107,7 @@ public class AjaxBean implements Serializable {
         String path = params.get("url");
 
         if (StringUtils.isBlank(path)) {
-            // FIXME: this may happen, when session has expired, but why? 
+            // FIXME: this may happen, when session has expired, but why?
             return;
         }
 
@@ -408,7 +408,10 @@ public class AjaxBean implements Serializable {
 
     private static void writeViewStateError(FacesContext fc, AjaxIllegalViewStateException e) throws IOException {
         ResponseWriter out = fc.getResponseWriter();
-        String currentViewId = e.getCurrentViewId();
+        String currentViewId = null;
+        if (e != null) {
+            currentViewId = e.getCurrentViewId();
+        }
         String currentUrl = BeanHelper.getDocumentTemplateService().getServerUrl() + "/faces" + (currentViewId != null ? currentViewId : "");
         fc.getResponseWriter().write("ERROR_VIEW_STATE_CHANGED:" + new JSONSerializer().serialize(currentUrl));
     }

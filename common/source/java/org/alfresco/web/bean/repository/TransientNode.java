@@ -78,14 +78,29 @@ public class TransientNode extends Node
     */
    public TransientNode(QName type, String name, Map<QName, Serializable> data)
    {
+      this(null, type, name, data);
+   }
+   
+   public TransientNode(NodeRef nodeRef, QName type, String name, Map<QName, Serializable> data)   {
       // create a dummy NodeRef to pass to the constructor
-      super(new NodeRef(Repository.getStoreRef(), GUID.generate()));
+      super(nodeRef != null ? nodeRef : new NodeRef(Repository.getStoreRef(), GUID.generate()));
       
       this.type = type;
       this.name = name;
       
       // initialise the node
       initNode(data);
+   }   
+   
+   public TransientNode(QName type, String name, Map<QName, Serializable> data, NodeRef nodeRef) 
+   {
+       super((nodeRef == null ? new NodeRef(Repository.getStoreRef(), GUID.generate()) : nodeRef));
+       
+       this.type = type;
+       this.name = name;
+       
+       // initialise the node
+       initNode(data);
    }
 
    /**

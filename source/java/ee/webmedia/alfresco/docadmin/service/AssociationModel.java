@@ -1,5 +1,8 @@
 package ee.webmedia.alfresco.docadmin.service;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
 
@@ -8,12 +11,15 @@ import ee.webmedia.alfresco.base.BaseServiceImpl;
 import ee.webmedia.alfresco.classificator.constant.DocTypeAssocType;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
+import ee.webmedia.alfresco.utils.RepoUtil;
 
 /**
  * Object that models allowed association between two (document) nodes
  */
 public abstract class AssociationModel extends BaseObject {
     private static final long serialVersionUID = 1L;
+
+    private static final Map<String, QName> DOC_TYPE_TO_ASSOC_QNAME = new HashMap<>();
 
     /** Used by {@link BaseServiceImpl#getObject(NodeRef, Class)} through reflection (when loading ancestor object) */
     public AssociationModel(BaseObject parent, WmNode node) {
@@ -41,7 +47,7 @@ public abstract class AssociationModel extends BaseObject {
 
     @Override
     protected QName getAssocName() {
-        return QName.createQName(DocumentAdminModel.URI, getDocType());
+        return RepoUtil.getFromQNamePool(getDocType(), DocumentAdminModel.URI, DOC_TYPE_TO_ASSOC_QNAME);
     }
 
     public void nextSaveToParent(DocumentType documentType) {

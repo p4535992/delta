@@ -17,6 +17,8 @@ import ee.webmedia.alfresco.workflow.service.WorkflowService;
  */
 public class CompoundWorkflowDefinitionListDialog extends BaseDialogBean {
 
+    public static final String BEAN_NAME = "CompoundWorkflowDefinitionListDialog";
+
     private static final long serialVersionUID = 1L;
 
     private transient WorkflowService workflowService;
@@ -40,8 +42,13 @@ public class CompoundWorkflowDefinitionListDialog extends BaseDialogBean {
 
     @Override
     public String cancel() {
-        workflows = null;
+        clean();
         return super.cancel();
+    }
+
+    @Override
+    public void clean() {
+        workflows = null;
     }
 
     @Override
@@ -57,11 +64,11 @@ public class CompoundWorkflowDefinitionListDialog extends BaseDialogBean {
     }
 
     public boolean isShowCaseFileColumn() {
-        return BeanHelper.getVolumeService().isCaseVolumeEnabled();
+        return BeanHelper.getApplicationConstantsBean().isCaseVolumeEnabled();
     }
 
     public boolean isShowDocumentColumn() {
-        return BeanHelper.getWorkflowService().isDocumentWorkflowEnabled();
+        return BeanHelper.getWorkflowConstantsBean().isDocumentWorkflowEnabled();
     }
 
     protected WorkflowService getWorkflowService() {
@@ -70,6 +77,10 @@ public class CompoundWorkflowDefinitionListDialog extends BaseDialogBean {
                     WorkflowService.BEAN_NAME);
         }
         return workflowService;
+    }
+
+    public void updateCache() {
+        getWorkflowService().removeDeletedCompoundWorkflowDefinitionFromCache();
     }
 
 }

@@ -47,7 +47,7 @@
 
    <!-- WEB/JSF -->
 
-   <bean class="org.alfresco.web.app.ResourceBundleBootstrap">
+   <bean id="helpTextResourceBundle" class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
       <property name="resourceBundles">
          <list>
             <value>ee.webmedia.alfresco.help.web.help-text-webclient</value>

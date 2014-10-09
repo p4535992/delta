@@ -18,18 +18,11 @@
       </property>
    </bean>
    
-   <bean id="notificationResourceBundleBootstrap" class="org.alfresco.web.app.ResourceBundleBootstrap">
-      <property name="resourceBundles">
-         <list>
-            <value>ee.webmedia.alfresco.notification.web.notification-webclient</value>
-         </list>
-      </property>
-   </bean>
-   
    <bean id="notificationSystemResourceBundles" class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
       <property name="resourceBundles">
          <list>
             <value>ee.webmedia.alfresco.notification.model.notification-messages</value>
+            <value>ee.webmedia.alfresco.notification.web.notification-webclient</value>
          </list>
       </property>
    </bean>
@@ -49,7 +42,7 @@
       <property name="workflowService" ref="wmWorkflowService" />
       <property name="logService" ref="LogService" />
       <property name="dispositionNotificationUsergroup" value="${conf.disposition-notification.usergroup}" />
-      <property name="substitutionTaskEndDateRestricted" value="${conf.notifications.substitutionTaskEndDateRestricted}"></property>
+      <property name="applicationConstantsBean" ref="applicationConstantsBean"/>
    </bean>
 
    <bean id="NotificationService" class="org.springframework.aop.framework.ProxyFactoryBean">

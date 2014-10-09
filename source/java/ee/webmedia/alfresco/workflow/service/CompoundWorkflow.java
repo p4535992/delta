@@ -17,16 +17,17 @@ import org.springframework.util.Assert;
 import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.WmNode;
-import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.UserUtil;
 import ee.webmedia.alfresco.workflow.model.Comment;
 import ee.webmedia.alfresco.workflow.model.CompoundWorkflowType;
 import ee.webmedia.alfresco.workflow.model.RelatedUrl;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
+import ee.webmedia.alfresco.workflow.web.CompoundWorkflowDialog;
 
 public class CompoundWorkflow extends BaseWorkflowObject implements Serializable, Comparable<CompoundWorkflow> {
     private static final long serialVersionUID = 1L;
+    private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(BaseWorkflowObject.class);
 
     private final NodeRef parent;
     private final List<Workflow> workflows = new ArrayList<Workflow>();
@@ -36,13 +37,24 @@ public class CompoundWorkflow extends BaseWorkflowObject implements Serializable
     private final List<NodeRef> newAssocs = new ArrayList<NodeRef>();
     private final List<RelatedUrl> newRelatedUrls = new ArrayList<RelatedUrl>();
     private final List<Comment> newComments = new ArrayList<Comment>();
+    private CompoundWorkflowType type;
 
     private List<Pair<String, Object[]>> reviewTaskDvkInfoMessages;
+    private String workflowTypeStr;
+    private String ownerStructUnit;
+    private String createdDateStr;
+    private String startedDateStr;
+    private String stoppedDateStr;
+    private String endedDateStr;
 
     public CompoundWorkflow(WmNode node, NodeRef parent) {
         super(node);
-        Assert.notNull(parent);
         this.parent = parent;
+    }
+
+    public CompoundWorkflow(WmNode node) {
+        super(node);
+        parent = null;
     }
 
     public CompoundWorkflow copy() {
@@ -84,7 +96,7 @@ public class CompoundWorkflow extends BaseWorkflowObject implements Serializable
      * NB! At moment it is not quaranteed that this property contains updated info from repo,
      * it is used only to pass (possibly changed) compound workflows to and from AssignmentWorkflowType.
      * Returned list doesn't (and MUST NOT) contain this compound workflow.
-     * 
+     *
      * @return
      */
     public List<CompoundWorkflow> getOtherCompoundWorkflows() {
@@ -132,7 +144,13 @@ public class CompoundWorkflow extends BaseWorkflowObject implements Serializable
 
     @SuppressWarnings("unchecked")
     public String getOwnerStructUnit() {
-        return UserUtil.getDisplayUnit((List<String>) getNode().getProperties().get(WorkflowCommonModel.Props.OWNER_ORGANIZATION_NAME));
+        if (ownerStructUnit == null) {
+            ownerStructUnit = UserUtil.getDisplayUnit((List<String>) getNode().getProperties().get(WorkflowCommonModel.Props.OWNER_ORGANIZATION_NAME));
+            if (ownerStructUnit == null) {
+                ownerStructUnit = "";
+            }
+        }
+        return ownerStructUnit;
     }
 
     @SuppressWarnings("unchecked")
@@ -153,8 +171,11 @@ public class CompoundWorkflow extends BaseWorkflowObject implements Serializable
     }
 
     public CompoundWorkflowType getTypeEnum() {
-        String typeStr = getProp(WorkflowCommonModel.Props.TYPE);
-        return StringUtils.isBlank(typeStr) ? null : CompoundWorkflowType.valueOf(typeStr);
+        if (type == null) {
+            String typeStr = getProp(WorkflowCommonModel.Props.TYPE);
+            type = StringUtils.isBlank(typeStr) ? null : CompoundWorkflowType.valueOf(typeStr);
+        }
+        return type;
     }
 
     public void setTypeEnum(CompoundWorkflowType type) {
@@ -162,8 +183,11 @@ public class CompoundWorkflow extends BaseWorkflowObject implements Serializable
     }
 
     public String getCreatedDateStr() {
-        Date created = getCreatedDateTime();
-        return created != null ? Task.dateTimeFormat.format(created) : "";
+        if (createdDateStr == null) {
+            Date created = getCreatedDateTime();
+            createdDateStr = created != null ? Task.dateTimeFormat.format(created) : "";
+        }
+        return createdDateStr;
     }
 
     public Date getCreatedDateTime() {
@@ -171,18 +195,27 @@ public class CompoundWorkflow extends BaseWorkflowObject implements Serializable
     }
 
     public String getStartedDateStr() {
-        Date started = getStartedDateTime();
-        return started != null ? Task.dateFormat.format(started) : "";
+        if (startedDateStr == null) {
+            Date started = getStartedDateTime();
+            startedDateStr = started != null ? Task.dateFormat.format(started) : "";
+        }
+        return startedDateStr;
     }
 
     public String getStoppedDateStr() {
-        Date stopped = getStoppedDateTime();
-        return stopped != null ? Task.dateFormat.format(stopped) : "";
+        if (stoppedDateStr == null) {
+            Date stopped = getStoppedDateTime();
+            stoppedDateStr = stopped != null ? Task.dateFormat.format(stopped) : "";
+        }
+        return stoppedDateStr;
     }
 
     public String getEndedDateStr() {
-        Date ended = getEndedDateTime();
-        return ended != null ? Task.dateFormat.format(ended) : "";
+        if (endedDateStr == null) {
+            Date ended = getEndedDateTime();
+            endedDateStr = ended != null ? Task.dateFormat.format(ended) : "";
+        }
+        return endedDateStr;
     }
 
     public Date getEndedDateTime() {
@@ -190,7 +223,10 @@ public class CompoundWorkflow extends BaseWorkflowObject implements Serializable
     }
 
     public String getWorkflowTypeString() {
-        return MessageUtil.getMessage(getTypeEnum());
+        if (workflowTypeStr == null) {
+            workflowTypeStr = BeanHelper.getWorkflowConstantsBean().getCompoundWorkflowTypeMessage(getTypeEnum());
+        }
+        return workflowTypeStr;
     }
 
     public String getTitle() {
@@ -203,8 +239,11 @@ public class CompoundWorkflow extends BaseWorkflowObject implements Serializable
 
     @Override
     protected String additionalToString() {
-        return "\n  parent=" + getParent() + "\n  workflows=" + WmNode.toString(getWorkflows()) + "\n  removedWorkflows="
-                + WmNode.toString(getRemovedWorkflows());
+        if (LOG.isTraceEnabled()) {
+            return "\n  parent=" + getParent() + "\n  workflows=" + WmNode.toString(getWorkflows()) + "\n  removedWorkflows="
+                    + WmNode.toString(getRemovedWorkflows());
+        }
+        return "";
     }
 
     public boolean isDocumentWorkflow() {
@@ -221,7 +260,7 @@ public class CompoundWorkflow extends BaseWorkflowObject implements Serializable
 
     public String action() {
         if (isIndependentWorkflow()) {
-            return "dialog:compoundWorkflowDialog";
+            return CompoundWorkflowDialog.DIALOG_NAME;
         }
 
         // DocumentDynamicDialog and CaseFileDialog handle the navigation with actionListeners
@@ -305,7 +344,7 @@ public class CompoundWorkflow extends BaseWorkflowObject implements Serializable
             if (StringUtils.isBlank(wf.getOwnerName())) {
                 return -1;
             }
-            return AppConstants.DEFAULT_COLLATOR.compare(ownerName, wf.getOwnerName());
+            return AppConstants.getNewCollatorInstance().compare(ownerName, wf.getOwnerName());
         }
         return 0;
     }

@@ -27,6 +27,7 @@ package org.alfresco.web.ui.common.component.data;
 import java.util.Arrays;
 import java.util.List;
 
+import org.alfresco.util.Pair;
 import org.apache.commons.lang.ArrayUtils;
 
 /**
@@ -78,11 +79,15 @@ public class GridArrayDataModel implements IGridDataModel
    }
    
    private Object[] data = null;
+    
+   @Override
+   public void loadSlice(int rowIndex, int maxRowIndex) {
+       // nothing to do; all data is loaded
+   }
 
-@Override
-public Object remove(int index) {
-    Object returnable = this.data[index];
-    this.data = ArrayUtils.remove(this.data, index);
-    return returnable;
-}
+   @Override
+   public Pair<Integer, Integer> getCurrentSlice() {
+      return null;
+   }
+    
 }

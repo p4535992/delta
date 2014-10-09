@@ -58,7 +58,14 @@
             <a:sortLink id="col6-sort" label="#{msg.report_status}" value="status" />
          </f:facet>
          <h:outputText id="col6-txt" value="#{r.status}" />
-      </a:column>      
+      </a:column>
+      
+      <a:column id="col7">
+         <f:facet name="header">
+            <a:sortLink id="col7-sort" label="#{msg.report_order_in_queue}" value="orderInQueue" />
+         </f:facet>
+         <h:outputText id="col7-txt" value="#{r.orderInQueue}" />
+      </a:column>
       
       <%-- Actions column --%>
       <a:column id="act-col" actions="true" style="text-align:right" styleClass="actions-column">

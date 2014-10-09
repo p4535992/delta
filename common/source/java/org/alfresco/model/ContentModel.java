@@ -119,6 +119,7 @@ public interface ContentModel
     // content type and aspect constants
     static final QName TYPE_CONTENT = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "content");
     static final QName PROP_CONTENT = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "content");
+    static final QName PROP_CONTENT_NOT_INDEXED = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "contentNotIndexed");
 
     // title aspect
     static final QName ASPECT_TITLED = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "titled");

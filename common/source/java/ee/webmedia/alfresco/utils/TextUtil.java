@@ -22,9 +22,11 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.FastDateFormat;
 
 import ee.webmedia.alfresco.classificator.constant.FieldType;
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docadmin.service.Field;
 import ee.webmedia.alfresco.docconfig.service.DynamicPropertyDefinition;
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
+import ee.webmedia.alfresco.docdynamic.service.DocumentDynamicService;
 
 public class TextUtil {
 
@@ -132,7 +134,7 @@ public class TextUtil {
 
     /**
      * true if both parameters are blank or equal ignoring case
-     * 
+     *
      * @param text1
      * @param text2
      * @return
@@ -271,8 +273,7 @@ public class TextUtil {
         if (value == null || value instanceof String && StringUtils.isBlank((String) value)) {
             result = emptyValue;
         } else if (value instanceof Boolean) {
-            String msgKey = (Boolean) value ? "yes" : "no";
-            result = MessageUtil.getMessage(msgKey);
+            result = (Boolean) value ? BeanHelper.getApplicationConstantsBean().getMessageYes() : BeanHelper.getApplicationConstantsBean().getMessageNo();
         } else if (value instanceof Date) {
             result = DATE_FORMAT.format((Date) value);
         } else {
@@ -290,7 +291,7 @@ public class TextUtil {
             }
             String formulaValue = "";
             if (StringUtils.isNotBlank(formula)) {
-                QName propName = QName.createQName(DocumentDynamicModel.URI, formula);
+                QName propName = RepoUtil.getFromQNamePool(formula, DocumentDynamicModel.URI, DocumentDynamicService.DOC_DYNAMIC_URI_PROPS_POOL);
                 Serializable propValue = (Serializable) node.getProperties().get(propName);
                 formulaValue = TextUtil.formatDocumentPropertyValue(propValue, new TextUtil.ValueGetter<FieldType>() {
                     @Override

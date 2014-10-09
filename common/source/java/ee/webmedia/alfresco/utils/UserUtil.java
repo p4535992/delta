@@ -1,7 +1,6 @@
 package ee.webmedia.alfresco.utils;
 
 import static ee.webmedia.alfresco.utils.TextUtil.joinStringAndStringWithComma;
-import static ee.webmedia.alfresco.utils.TextUtil.joinStringAndStringWithSpace;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -28,12 +27,10 @@ import org.springframework.util.CollectionUtils;
 
 import com.ibm.icu.util.StringTokenizer;
 
-import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
 import ee.webmedia.alfresco.orgstructure.service.OrganizationStructureService;
 import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
-import ee.webmedia.alfresco.substitute.model.Substitute;
 import ee.webmedia.alfresco.user.service.UserService;
 
 public class UserUtil {
@@ -56,14 +53,14 @@ public class UserUtil {
         String userName = (String) props.get(ContentModel.PROP_USERNAME);
         String firstName = (String) props.get(ContentModel.PROP_FIRSTNAME);
         String lastName = (String) props.get(ContentModel.PROP_LASTNAME);
-        return getPersonFullName(userName, firstName, lastName, false);
+        return getPersonFullName(userName, firstName, lastName);
     }
 
-    public static String getPersonFullName2(Map<String, Object> props, boolean showSubstituteInfo) {
+    public static String getPersonFullName2(Map<String, Object> props) {
         String userName = (String) props.get(ContentModel.PROP_USERNAME);
         String firstName = (String) props.get(ContentModel.PROP_FIRSTNAME);
         String lastName = (String) props.get(ContentModel.PROP_LASTNAME);
-        return getPersonFullName(userName, firstName, lastName, showSubstituteInfo);
+        return getPersonFullName(userName, firstName, lastName);
     }
 
     public static String getPersonFullName(String firstName, String lastName) {
@@ -75,13 +72,10 @@ public class UserUtil {
         return StringUtils.strip(firstName) + " " + StringUtils.strip(lastName);
     }
 
-    public static String getPersonFullName(String userName, String firstName, String lastName, boolean showSubstituteInfo) {
+    public static String getPersonFullName(String userName, String firstName, String lastName) {
         String fullName = getPersonFullName(firstName, lastName);
         if (StringUtils.isBlank(fullName)) {
             fullName = userName;
-        }
-        if (showSubstituteInfo) {
-            fullName = joinStringAndStringWithSpace(fullName, getSubstitute(userName));
         }
         return fullName;
     }
@@ -94,8 +88,8 @@ public class UserUtil {
         return fullName;
     }
 
-    public static String getPersonFullNameWithUnitNameAndJobTitle(Map<String, Object> props, boolean showSubstitutionInfo) {
-        String fullName = getPersonFullName2(props, false);
+    public static String getPersonFullNameWithUnitNameAndJobTitle(Map<String, Object> props) {
+        String fullName = getPersonFullName2(props);
         String bracketContent = joinStringAndStringWithComma(
                 StringUtils.strip((String) props.get(ContentModel.PROP_JOBTITLE)),
                 getUserDisplayUnit(props)
@@ -103,35 +97,12 @@ public class UserUtil {
         if (StringUtils.isNotBlank(bracketContent)) {
             fullName += " (" + bracketContent + ")";
         }
-        if (showSubstitutionInfo) {
-            return joinStringAndStringWithSpace(fullName, getSubstitute((String) props.get(ContentModel.PROP_USERNAME)));
-        }
         return fullName;
     }
 
     public static String getUserFullNameAndId(Map<QName, Serializable> props) {
         String userName = (String) props.get(ContentModel.PROP_USERNAME);
         return getPersonFullName1(props) + " (" + userName + ")";
-    }
-
-    // TODO refactor - util should not use service
-    public static String getSubstitute(String username) {
-        return getSubstitute(BeanHelper.getUserService().getPerson(username));
-    }
-
-    // TODO refactor - util should not use service
-    private static String getSubstitute(NodeRef nodeRef) {
-        if (nodeRef == null) {
-            return null;
-        }
-        List<Substitute> substitutes = BeanHelper.getSubstituteService().getSubstitutes(nodeRef);
-        for (Substitute substitute : substitutes) {
-            if (substitute.isActive()) {
-                return MessageUtil.getMessage("user_away_has_substitute", substitute.getSubstitutionStartDateFormatted(), substitute.getSubstitutionEndDateFormatted(),
-                        substitute.getSubstituteName());
-            }
-        }
-        return null;
     }
 
     /**
@@ -315,6 +286,10 @@ public class UserUtil {
         return children;
     }
 
+    /**
+     * Used only for generating test data. If ever used somewhere else then move to service class and optimize performance.
+     */
+    @Deprecated
     public static List<Map<QName, Serializable>> getFilteredTaskOwnerStructUnitUsersProps(Set<String> usernames, NodeService nodeService, ParametersService parametersService,
             DocumentSearchService documentSearchService, UserService userService) {
         List<Map<QName, Serializable>> userProps = new ArrayList<Map<QName, Serializable>>();
@@ -326,33 +301,33 @@ public class UserUtil {
             }
         } else {
             for (String username : usernames) {
-                userProps.add(RepoUtil.toQNameProperties(userService.getUser(username).getProperties()));
+                userProps.add(userService.getUserProperties(username));
             }
         }
         return userProps;
     }
 
-   public static String getUsernameAndSession(String userName, FacesContext context) {
-       if (userName == null || userName.indexOf('_') > -1) {
-           return userName;
-       }
+    public static String getUsernameAndSession(String userName, FacesContext context) {
+        if (userName == null || userName.indexOf('_') > -1) {
+            return userName;
+        }
 
-       if (context == null) {
-           return userName;
-       }
+        if (context == null) {
+            return userName;
+        }
 
-       String sessionIdentifier = "";
+        String sessionIdentifier = "";
 
-       String ticket = (String) ((ServletRequest) context.getExternalContext().getRequest()).getAttribute(WebDAVMethod.PARAM_TICKET);
-       if (ticket != null) {
-           sessionIdentifier = ticket;
-       } else {
-           final HttpSession httpSession = (HttpSession) context.getExternalContext().getSession(false);
-           sessionIdentifier = (httpSession == null ? "" : httpSession.getId());
-       }
+        String ticket = (String) ((ServletRequest) context.getExternalContext().getRequest()).getAttribute(WebDAVMethod.PARAM_TICKET);
+        if (ticket != null) {
+            sessionIdentifier = ticket;
+        } else {
+            final HttpSession httpSession = (HttpSession) context.getExternalContext().getSession(false);
+            sessionIdentifier = (httpSession == null ? "" : httpSession.getId());
+        }
 
-       String userNameWithSessionId = userName + "_" + sessionIdentifier;
-       return userNameWithSessionId;
-   }
+        String userNameWithSessionId = userName + "_" + sessionIdentifier;
+        return userNameWithSessionId;
+    }
 
 }

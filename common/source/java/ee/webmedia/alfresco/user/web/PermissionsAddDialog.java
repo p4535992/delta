@@ -30,6 +30,8 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 public class PermissionsAddDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;
 
+    public static final String BEAN_NAME = "PermissionsAddDialog";
+
     private transient UserService userService;
     private transient PermissionService permissionService;
     private transient DocumentSearchService documentSearchService;
@@ -97,6 +99,11 @@ public class PermissionsAddDialog extends BaseDialogBean {
     public String cancel() {
         reset();
         return super.cancel();
+    }
+
+    @Override
+    public void clean() {
+        reset();
     }
 
     @Override

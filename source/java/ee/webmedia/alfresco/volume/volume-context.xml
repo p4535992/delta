@@ -12,7 +12,7 @@
       </property>
    </bean>
 
-   <bean id="volumeBundleBootstrap" class="org.alfresco.web.app.ResourceBundleBootstrap">
+   <bean id="volumeResourceBundle" class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
       <property name="resourceBundles">
          <list>
             <value>ee.webmedia.alfresco.volume.web.volume-webclient</value>
@@ -37,8 +37,7 @@
       <property name="logService" ref="LogService" />
       <property name="userService" ref="UserService" />
       <property name="eventPlanService" ref="EventPlanService" />
-      <property name="caseVolumeEnabled" value="${conf.casefile.enabled}" />
-      <property name="defaultVolumeSortingField" value="${conf.volumesList.orderedBy}" />
+      <property name="volumeCache" ref="volumeCache" />
    </bean>
 
    <bean id="VolumeService" class="org.springframework.aop.framework.ProxyFactoryBean">

@@ -11,20 +11,21 @@ import javax.faces.event.ActionEvent;
 
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
+import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.springframework.web.jsf.FacesContextUtils;
 
-import ee.webmedia.alfresco.functions.model.Function;
+import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.functions.model.UnmodifiableFunction;
 import ee.webmedia.alfresco.functions.service.FunctionsService;
 import ee.webmedia.alfresco.log.model.LogEntry;
 import ee.webmedia.alfresco.log.model.LogObject;
-import ee.webmedia.alfresco.series.model.Series;
+import ee.webmedia.alfresco.series.model.UnmodifiableSeries;
 import ee.webmedia.alfresco.series.service.SeriesService;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.ActionUtil;
-import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
  * Form backing bean for Series list
@@ -34,9 +35,8 @@ public class SeriesListDialog extends BaseDialogBean {
     private transient SeriesService seriesService;
     private transient FunctionsService functionsService;
     private transient UserService userService;
-    private Function function;
-    private List<Series> series;
-    private boolean disableActions = false;
+    private UnmodifiableFunction function;
+    private List<UnmodifiableSeries> series;
     private String activeStructUnit;
 
     public static final String BEAN_NAME = "SeriesListDialog";
@@ -59,15 +59,7 @@ public class SeriesListDialog extends BaseDialogBean {
     }
 
     @Override
-    public Object getActionsContext() {
-        return function.getNode();
-    }
-
-    @Override
     public String getActionsConfigId() {
-        if (disableActions) {
-            return "";
-        }
         return super.getActionsConfigId();
     }
 
@@ -76,18 +68,13 @@ public class SeriesListDialog extends BaseDialogBean {
     }
 
     public void showAll(NodeRef nodeRef) {
-        function = getFunctionsService().getFunctionByNodeRef(nodeRef);
+        function = getFunctionsService().getUnmodifiableFunction(nodeRef, null);
         loadSeries();
         getLogService().addLogEntry(LogEntry.create(LogObject.FUNCTION, getUserService(), nodeRef, "applog_space_open", function.getMark(), function.getTitle()));
-        disableActions = false;
     }
 
     private void loadSeries() {
-        if (disableActions) {
-            series = getSeriesService().getAllSeriesByFunctionForStructUnit(function.getNodeRef(), activeStructUnit);
-        } else {
-            series = getSeriesService().getAllSeriesByFunction(function.getNodeRef());
-        }
+        series = getSeriesService().getAllSeriesByFunction(getFunction().getNodeRef());
     }
 
     public void showMyStructUnit(ActionEvent event) {
@@ -96,27 +83,35 @@ public class SeriesListDialog extends BaseDialogBean {
         showAllForStructUnit(new NodeRef(ActionUtil.getParam(event, "functionNodeRef")), userStructUnit);
     }
 
-    public void showAllForStructUnit(NodeRef nodeRef, String structUnitId) {
-        function = getFunctionsService().getFunctionByNodeRef(nodeRef);
-        series = getSeriesService().getAllSeriesByFunctionForStructUnit(nodeRef, structUnitId);
+    public void showAllForStructUnit(NodeRef functionRef, String structUnitId) {
+        function = getFunctionsService().getUnmodifiableFunction(functionRef, null);
+        series = getSeriesService().getAllSeriesByFunctionForStructUnit(functionRef, structUnitId);
         activeStructUnit = structUnitId;
-        disableActions = true;
     }
 
-    public List<Series> getSeries() {
+    public List<UnmodifiableSeries> getSeries() {
+        if (series == null) { // can happen when user navigates to series list via "my documents" menu item
+            showAllForStructUnit(getFunctionRef(), getUserService().getCurrentUsersStructUnitId());
+        }
         return series;
     }
 
-    public Function getFunction() {
+    public NodeRef getFunctionRef() {
+        return getFunction().getNodeRef();
+    }
+
+    private UnmodifiableFunction getFunction() {
+        if (function == null) {
+            NodeRef nodeRef = BeanHelper.getMenuBean().getLinkNodeRef();
+            ChildAssociationRef caRef = BeanHelper.getNodeService().getPrimaryParent(nodeRef);
+            NodeRef functionRef = caRef.getChildRef();
+            function = getFunctionsService().getUnmodifiableFunction(functionRef, null);
+        }
         return function;
     }
 
     public String getListTitle() {
-        if (disableActions) {
-            return MessageUtil.getMessage("series_my_documents_list");
-        }
-
-        return getFunction().getMark() + " " + getFunction().getTitle();
+        return getFunction().getFunctionLabel();
     }
 
     // END: jsf actions/accessors
@@ -124,16 +119,12 @@ public class SeriesListDialog extends BaseDialogBean {
     private void resetFields() {
         function = null;
         series = null;
-        disableActions = false;
         activeStructUnit = null;
     }
 
-    public boolean getDisableActions() {
-        return disableActions;
-    }
-
-    public void setDisableActions(boolean disableActions) {
-        this.disableActions = disableActions;
+    @Override
+    public void clean() {
+        resetFields();
     }
 
     public String getActiveStructUnit() {
@@ -181,4 +172,5 @@ public class SeriesListDialog extends BaseDialogBean {
         this.userService = userService;
     }
     // END: getters / setters
+
 }

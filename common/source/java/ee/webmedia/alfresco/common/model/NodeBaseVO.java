@@ -1,5 +1,7 @@
 package ee.webmedia.alfresco.common.model;
 
+import static ee.webmedia.alfresco.utils.RepoUtil.convertNullToFalse;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -32,10 +34,6 @@ public class NodeBaseVO implements Serializable {
     public boolean getPropBoolean(QName propName) {
         Boolean prop = getProp(propName);
         return convertNullToFalse(prop);
-    }
-
-    public static boolean convertNullToFalse(Boolean prop) {
-        return prop == null ? false : prop;
     }
 
     @SuppressWarnings("unchecked")

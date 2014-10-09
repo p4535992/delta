@@ -70,7 +70,7 @@
       </property>
    </bean>
 
-   <bean id="addressbookResourceBundleBootstrap" class="org.alfresco.web.app.ResourceBundleBootstrap">
+   <bean id="addressbookResourceBundleBootstrap" class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
       <property name="resourceBundles">
          <list>
             <value>ee.webmedia.alfresco.addressbook.web.addressbook-webclient</value>

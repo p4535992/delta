@@ -11,7 +11,7 @@
       <%-- Received DateTime --%>
       <a:column id="col0_5" primary="true" styleClass="#{r.cssStyleClass}" >
          <f:facet name="header">
-            <a:sortLink id="col0_5-sort" label="#{msg.document_receivedDateTime}" value="created" styleClass="header" />
+            <a:sortLink id="col0_5-sort" label="#{msg.document_receivedDateTime}" value="properties;cm:created" styleClass="header" />
          </f:facet>
          <a:actionLink id="col0_5-text" value="#{r.createdDateTimeStr}" action="#{DocumentDialog.action}" tooltip="#{r.createdDateTimeStr}" styleClass="no-underline"
           actionListener="#{DocumentDialog.open}" >

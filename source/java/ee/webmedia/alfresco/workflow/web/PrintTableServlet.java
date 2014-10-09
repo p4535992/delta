@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.workflow.web;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getApplicationConstantsBean;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentConfigService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getNodeService;
 import static ee.webmedia.alfresco.docadmin.service.MetadataItemCompareUtil.cast;
@@ -63,7 +64,9 @@ import ee.webmedia.alfresco.workflow.service.Task;
  */
 @SuppressWarnings("deprecation")
 public class PrintTableServlet extends HttpServlet {
-    public static final String GROUP_NR_PARAM = "groupNr";
+    public static final String WORKFLOW_ID = "workflow-id";
+    public static final String TASK_INDEX = "task-index";
+    public static final String TASK_LIMIT = "task-limit";
     private static final long serialVersionUID = 1L;
     public static final String TABLE_MODE = "tableMode";
     private static FastDateFormat dateTimeFormatSec = FastDateFormat.getInstance("dd.MM.yyyy HH:mm:ss");
@@ -134,9 +137,9 @@ public class PrintTableServlet extends HttpServlet {
                 } else if (TableMode.WORKFLOW_GROUP_TASKS == mode) {
                     rows = getWorkflowGroupData(request);
                 }
-
-                renderRows(out, rows);
-
+                if (rows != null) {
+                    renderRows(out, rows);
+                }
                 renderTableEnd(out);
             }
             pageTag.doEndTag(out);
@@ -193,10 +196,10 @@ public class PrintTableServlet extends HttpServlet {
                 public String tr(WorkflowBlockItem item) {
                     return item.getTaskOwnerName();
                 }
-            }, AppConstants.DEFAULT_COLLATOR);
+            }, AppConstants.getNewCollatorInstance());
             for (WorkflowBlockItem groupedWorkflowBlockItem : groupedWorkflowBlockItems) {
                 if (groupedWorkflowBlockItem.isGroupBlockItem()) {
-                    List<WorkflowBlockItem> ungroupedItems = groupedWorkflowBlockItem.getGroupItems();
+                    List<WorkflowBlockItem> ungroupedItems = BeanHelper.getWorkflowDbService().getWorkflowBlockItemGroup(groupedWorkflowBlockItem);
                     Collections.sort(ungroupedItems, byOwnerComparator);
                     workflowBlockItems.addAll(ungroupedItems);
                 } else {
@@ -217,7 +220,7 @@ public class PrintTableServlet extends HttpServlet {
             renderRows(out, taskRows);
             renderTableEnd(out);
 
-            List<Document> documents = BeanHelper.getCompoundWorkflowAssocListDialog().getDocuments();
+            List<Document> documents = BeanHelper.getCompoundWorkflowAssocListDialog().getDocumentList();
             List<Row> documentRows = new ArrayList<Row>();
             for (Document document : documents) {
                 String regNumber = document.getRegNumber();
@@ -363,14 +366,15 @@ public class PrintTableServlet extends HttpServlet {
     }
 
     private List<Row> getReviewNotesData() {
-        List<Row> data = new ArrayList<Row>();
-        List<Task> finishedReviewTasks = BeanHelper.getWorkflowBlockBean().getFinishedReviewTasks();
+        List<Row> data = new ArrayList<>();
+        TaskDataProvider finishedReviewTasks = BeanHelper.getWorkflowBlockBean().getFinishedReviewTasks();
 
         if (finishedReviewTasks == null) {
             return data;
         }
 
-        for (Task task : finishedReviewTasks) {
+        for (int i = 0; i < finishedReviewTasks.getListSize(); i++) {
+            Task task = (Task) finishedReviewTasks.getRow(i);
             Date completedDateTime = task.getCompletedDateTime();
             String completedDTStr = completedDateTime != null ? Task.dateFormat.format(completedDateTime) : "";
             data.add(new Row(asList(task.getOwnerNameWithSubstitute(), completedDTStr, task.getOutcome() + ": " + task.getComment())));
@@ -380,41 +384,35 @@ public class PrintTableServlet extends HttpServlet {
     }
 
     private List<Row> getWorkflowGroupData(HttpServletRequest request) {
-        String groupNrStr = request.getParameter(GROUP_NR_PARAM);
-        int groupNumber = -1;
+        String workflowId = request.getParameter(WORKFLOW_ID);
+        String offsetParam = request.getParameter(TASK_INDEX);
+        String limitParam = request.getParameter(TASK_LIMIT);
+
+        Assert.hasLength(workflowId);
+        Integer offset;
         try {
-            groupNumber = Integer.parseInt(groupNrStr);
+            offset = Integer.parseInt(offsetParam);
         } catch (NumberFormatException e) {
-            throw new RuntimeException("Unable to parse group number from request parameter value=" + groupNrStr);
+            throw new RuntimeException("Unable to parse task index in workflow from request parameter value=" + offsetParam);
         }
-        List<Row> data = new ArrayList<Row>();
-        if (groupNumber >= 0) {
-            List<WorkflowBlockItem> groupedWorkflowBlockItems = BeanHelper.getWorkflowBlockBean().getSameGroupWorkflowBlockItems(groupNumber);
-            List<WorkflowBlockItem> workflowBlockItems = new ArrayList<WorkflowBlockItem>();
-            for (WorkflowBlockItem groupedWorkflowBlockItem : groupedWorkflowBlockItems) {
-                if (groupedWorkflowBlockItem.isGroupBlockItem()) {
-                    workflowBlockItems.addAll(groupedWorkflowBlockItem.getGroupItems());
-                } else {
-                    workflowBlockItems.add(groupedWorkflowBlockItem);
-                }
-            }
-            @SuppressWarnings("unchecked")
-            Comparator<WorkflowBlockItem> byOwnerComparator = new TransformingComparator(new ComparableTransformer<WorkflowBlockItem>() {
-                @Override
-                public String tr(WorkflowBlockItem item) {
-                    return item.getTaskOwnerName();
-                }
-            }, AppConstants.DEFAULT_COLLATOR);
-            Collections.sort(workflowBlockItems, byOwnerComparator);
-            for (WorkflowBlockItem item : workflowBlockItems) {
-                Date startedDateTime = item.getStartedDateTime();
-                Date dueDate = item.getDueDate();
-                data.add(new Row(asList(startedDateTime != null ? Task.dateTimeFormat.format(startedDateTime) : "",
-                        (dueDate != null ? Task.dateFormat.format(dueDate) : "")
-                                + (StringUtils.isNotBlank(item.getDueDateHistoryAlert()) ? "<br/>" + item.getDueDateHistoryAlert() : ""),
-                        item.getTaskCreatorName(), item.getWorkflowType(), item.getTaskOwnerName(), item.getTaskResolution(), item.getTaskOutcome(), item.getTaskStatus())));
-            }
+
+        Integer limit = null;
+        boolean isLimitSpecified = StringUtils.isNotBlank(limitParam);
+        if (isLimitSpecified) {
+            limit = Integer.parseInt(limitParam);
         }
+
+        List<Row> data = new ArrayList<>();
+        final List<WorkflowBlockItem> workflowBlockItems = BeanHelper.getWorkflowDbService().getWorkflowBlockItemGroup(workflowId, offset, limit);
+        for (WorkflowBlockItem item : workflowBlockItems) {
+            Date startedDateTime = item.getStartedDateTime();
+            Date dueDate = item.getDueDate();
+            data.add(new Row(asList(startedDateTime != null ? Task.dateTimeFormat.format(startedDateTime) : "",
+                    (dueDate != null ? Task.dateFormat.format(dueDate) : "")
+                            + (StringUtils.isNotBlank(item.getDueDateHistoryAlert()) ? "<br/>" + item.getDueDateHistoryAlert() : ""),
+                    item.getTaskCreatorName(), item.getWorkflowType(), item.getTaskOwnerName(), item.getTaskResolution(), item.getTaskOutcome(), item.getTaskStatus())));
+        }
+
         return data;
     }
 
@@ -602,7 +600,7 @@ public class PrintTableServlet extends HttpServlet {
         }
         switch (field.getFieldTypeEnum()) {
         case CHECKBOX:
-            return MessageUtil.getMessage(Boolean.TRUE.equals(prop) ? "yes" : "no");
+            return Boolean.TRUE.equals(prop) ? getApplicationConstantsBean().getMessageYes() : getApplicationConstantsBean().getMessageNo();
         case STRUCT_UNIT:
             return UserUtil.getDisplayUnitText(prop);
         case DATE:

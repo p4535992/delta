@@ -8,7 +8,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
-import ee.webmedia.alfresco.dvk.model.DvkModel;
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.web.scripts.FileTypeImageUtils;
 import org.alfresco.service.cmr.model.FileInfo;
@@ -18,6 +17,7 @@ import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.time.FastDateFormat;
 
 import ee.webmedia.alfresco.common.service.IClonable;
+import ee.webmedia.alfresco.dvk.model.DvkModel;
 import ee.webmedia.alfresco.signature.model.DataItem;
 import ee.webmedia.alfresco.signature.model.SignatureItem;
 import ee.webmedia.alfresco.signature.model.SignatureItemsAndDataItems;
@@ -42,6 +42,7 @@ public class File implements Serializable, IClonable<File> {
     private Node node;
     private boolean digiDocItem;
     private boolean digiDocContainer;
+    private boolean bdoc;
     private boolean versionable;
     private SignatureItemsAndDataItems ddocItems;
     private boolean generated;
@@ -358,5 +359,13 @@ public class File implements Serializable, IClonable<File> {
     public boolean getConvertToPdfIfSignedFromProps() {
         Boolean convertToPdf = node != null ? Boolean.TRUE.equals(node.getProperties().get(FileModel.Props.CONVERT_TO_PDF_IF_SIGNED)) : false;
         return convertToPdf != null ? convertToPdf : false;
+    }
+
+    public boolean isBdoc() {
+        return bdoc;
+    }
+
+    public void setBdoc(boolean isBdoc) {
+        bdoc = isBdoc;
     }
 }

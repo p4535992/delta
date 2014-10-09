@@ -56,6 +56,10 @@ public interface LogService extends FilterService {
 
     Date getFirstLogEntryDate();
 
+    List<String> getLogEntryOrder(LogFilter filter, String orderByColumn, boolean descending, int limit, int offset);
+
+    List<LogEntry> getLogEntries(LogFilter filter, String sortByColumn, boolean descending, int limit, int offset);
+
     List<NodeRef> getDocumentsWithImapImportLog();
 
     /**

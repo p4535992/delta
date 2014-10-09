@@ -37,6 +37,7 @@ import org.springframework.util.Assert;
 import ee.webmedia.alfresco.casefile.model.CaseFileModel;
 import ee.webmedia.alfresco.cases.model.CaseModel;
 import ee.webmedia.alfresco.common.search.DbSearchUtil;
+import ee.webmedia.alfresco.common.service.BulkLoadNodeService;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
@@ -73,6 +74,7 @@ public class PrivilegeServiceImpl implements PrivilegeService {
     private Set<String> defaultAdmins;
 
     private static final String HIERARCHY_QUERY_NAME = "node_inherit_hierarchy";
+    // TODO: unify with getNodeRefWithSetViewPrivilege hierarchyQuery
     private static final String HIERARCHY_QUERY = "WITH RECURSIVE " + HIERARCHY_QUERY_NAME + " (id, store_id, uuid, child_inherits) AS ( " +
             "    (SELECT id, node.store_id, uuid, CASE WHEN node_permission.inherits IS NULL OR node_permission.inherits = TRUE THEN TRUE ELSE FALSE END " +
             "    FROM alf_node node " +
@@ -92,7 +94,7 @@ public class PrivilegeServiceImpl implements PrivilegeService {
 
     @Override
     public boolean hasPermission(final NodeRef targetRef, String userName, final Privilege... permissions) {
-        if (AuthenticationUtil.isRunAsUserTheSystemUser() || userService.isAdministrator()) {
+        if (userService.isAdministrator()) {
             return true;
         }
         return hasPermission(targetRef, userName, true, permissions);
@@ -121,7 +123,7 @@ public class PrivilegeServiceImpl implements PrivilegeService {
         for (DynamicAuthority dynamicAuthority : dynamicAuthorities) {
             Set<Privilege> requiredFor = dynamicAuthority.getGrantedPrivileges();
             if (org.apache.commons.collections.CollectionUtils.containsAny(requiredFor, permissionList)
-                    && dynamicAuthority.hasAuthority(targetRef, nodeType, userName)) {
+                    && dynamicAuthority.hasAuthority(targetRef, nodeType, userName, null)) {
                 dynamicallyGranted.addAll(requiredFor);
                 if (dynamicallyGranted.containsAll(permissionList)) {
                     return true;
@@ -284,10 +286,11 @@ public class PrivilegeServiceImpl implements PrivilegeService {
     }
 
     @Override
-    public Set<Privilege> getAllCurrentUserPermissions(NodeRef nodeRef, QName type) {
+    public Set<Privilege> getAllCurrentUserPermissions(NodeRef nodeRef, QName type, Map<String, Object> properties) {
         final Set<Privilege> userPrivileges = new HashSet<Privilege>();
         if (userService.isAdministrator()) {
             userPrivileges.addAll(Arrays.asList(Privilege.values()));
+            return userPrivileges;
         }
         List<Object> params = new ArrayList<Object>();
         List<String> privilegeAggregateClause = new ArrayList<String>(Privilege.values().length);
@@ -319,7 +322,7 @@ public class PrivilegeServiceImpl implements PrivilegeService {
         if (userPrivileges.size() < allPrivilegesCount) {
             QName nodeType = nodeService.getType(nodeRef);
             for (DynamicAuthority dynamicAuthority : dynamicAuthorities) {
-                if (dynamicAuthority.hasAuthority(nodeRef, nodeType, userName)) {
+                if (dynamicAuthority.hasAuthority(nodeRef, nodeType, userName, properties)) {
                     userPrivileges.addAll(dynamicAuthority.getGrantedPrivileges());
                     if (userPrivileges.size() >= allPrivilegesCount) {
                         break;
@@ -666,6 +669,47 @@ public class PrivilegeServiceImpl implements PrivilegeService {
             dynamicAuthorities = new ArrayList<DynamicAuthority>();
         }
         dynamicAuthorities.add(dynamicAuthority);
+    }
+
+    @SuppressWarnings("deprecation")
+    @Override
+    public Set<NodeRef> getNodeRefWithSetViewPrivilege(List<NodeRef> nodeRefsToCheck, List<String> authorities) {
+        int nodeRefsSize = nodeRefsToCheck.size();
+        List<Object> arguments = new ArrayList<>();
+        String hierarchyQuery = "WITH RECURSIVE " + HIERARCHY_QUERY_NAME + " (id, store_id, uuid, base_uuid, base_store_id, child_inherits) AS ( " +
+                "    (SELECT id, node.store_id, uuid, node.uuid as base_uuid, node.store_id as base_store_id, "
+                + "         CASE WHEN node_permission.inherits IS NULL OR node_permission.inherits = TRUE THEN TRUE ELSE FALSE END " +
+                "    FROM " + BeanHelper.getBulkLoadNodeService().getNodeTableConditionalJoin(nodeRefsToCheck, arguments) +
+                "    LEFT JOIN delta_node_inheritspermissions node_permission on (node_permission.node_uuid = node.uuid) " +
+                "    LIMIT " + nodeRefsSize + ") " +
+                "     UNION ALL " +
+                "    (SELECT parent.id, parent.store_id, parent.uuid, node_inherit_hierarchy.base_uuid as base_uuid, "
+                + "         node_inherit_hierarchy.base_store_id as base_store_id, CASE WHEN node_permission.inherits IS NULL OR node_permission.inherits = TRUE THEN TRUE ELSE FALSE END  " +
+                "    FROM node_inherit_hierarchy " +
+                "    JOIN alf_child_assoc child_assoc ON (child_assoc.child_node_id = node_inherit_hierarchy.id) " +
+                "    JOIN alf_node parent ON (parent.id = child_assoc.parent_node_id) " +
+                "    LEFT JOIN delta_node_inheritspermissions node_permission on (node_permission.node_uuid = parent.uuid) " +
+                "    WHERE child_inherits = TRUE " +
+                "    LIMIT " + nodeRefsSize + " ) " +
+                ") ";
+        arguments.addAll(authorities);
+        String sql = hierarchyQuery
+                + " SELECT * FROM " + HIERARCHY_QUERY_NAME + " inheritance "
+                + " join delta_node_permission permission on permission.node_uuid = inheritance.uuid "
+                + " WHERE permission.node_uuid IN (SELECT uuid FROM " + HIERARCHY_QUERY_NAME + ") "
+                + " AND authority IN (" + getQuestionMarks(authorities.size()) + ") "
+                + " AND " + getPrivilegeCondition(Privilege.VIEW_DOCUMENT_META_DATA);
+        final Set<NodeRef> allowedNodeRefs = new HashSet<>();
+        final BulkLoadNodeService bulkLoadNodeService = BeanHelper.getBulkLoadNodeService();
+        jdbcTemplate.query(sql, new ParameterizedRowMapper<Void>() {
+
+            @Override
+            public Void mapRow(ResultSet rs, int rowNum) throws SQLException {
+                allowedNodeRefs.add(new NodeRef(bulkLoadNodeService.getStoreRefByDbId(rs.getLong("base_store_id")), rs.getString("base_uuid")));
+                return null;
+            }
+        }, arguments.toArray());
+                return allowedNodeRefs;
     }
 
     @Override

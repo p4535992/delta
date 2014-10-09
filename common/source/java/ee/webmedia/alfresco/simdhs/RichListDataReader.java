@@ -17,7 +17,7 @@ import org.apache.log4j.Logger;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
-import ee.webmedia.alfresco.document.model.Document;
+import ee.webmedia.alfresco.document.search.web.DocumentListDataProvider;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 
 /**
@@ -43,32 +43,34 @@ public class RichListDataReader implements DataReader {
     }
 
     @Override
-    public List<List<String>> getDataRows(UIRichList list, FacesContext fc) {
-        List<List<String>> data = new ArrayList<List<String>>();
-        list.setRowIndex(-1);
+    public List<List<String>> getDataRows(UIRichList list, FacesContext fc, int sliceSize) {
+        List<List<String>> data = new ArrayList<>();
+        boolean unlimited = sliceSize < 0;
         final List<UIColumn> columnsToExport = getColumnsToExport(list);
         boolean isDocumentSearch = isDocumentSearch(list);
-        while (list.isAbsoluteDataAvailable()) {
+        int i = 0;
+        while (list.isAbsoluteDataAvailable() && (unlimited || i < sliceSize)) {
             list.increment();
             NodeRef docRef = getDocumentNodeRef(list, isDocumentSearch);
             data.add(getDataRow(fc, columnsToExport, docRef));
+            i++;
         }
         return data;
     }
 
-    @SuppressWarnings("unchecked")
     private NodeRef getDocumentNodeRef(UIRichList list, boolean isDocumentSearch) {
         if (isDocumentSearch) {
-            List<Document> docs = (List<Document>) list.getValue();
-            return docs.get(list.getRowIndex()).getNodeRef();
+            DocumentListDataProvider dataProvider = (DocumentListDataProvider) list.getValue();
+            return dataProvider.getObjectKeys().get(list.getRowIndex());
         }
         return null;
     }
 
     private boolean isDocumentSearch(UIRichList list) {
-        @SuppressWarnings("rawtypes")
-        List values = (List) list.getValue();
-        return (!values.isEmpty() && values.get(0) instanceof Document);
+        if (list.getValue() instanceof DocumentListDataProvider) {
+            return true;
+        }
+        return false;
     }
 
     @SuppressWarnings("unchecked")

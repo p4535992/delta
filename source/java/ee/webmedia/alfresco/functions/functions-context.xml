@@ -36,15 +36,7 @@
       </property>
    </bean>
 
-   <bean id="functionsBundleBootstrap" class="org.alfresco.web.app.ResourceBundleBootstrap">
-      <property name="resourceBundles">
-         <list>
-            <value>ee/webmedia/alfresco/functions/web/functions-webclient</value>
-         </list>
-      </property>
-   </bean>
-   
-   <bean class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
+   <bean id="functionsResourceBundles" class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
       <property name="resourceBundles">
          <list>
             <value>ee/webmedia/alfresco/functions/web/functions-webclient</value>
@@ -60,6 +52,7 @@
       <property name="logService" ref="LogService" />
       <property name="userService" ref="UserService" />
       <property name="documentService" ref="DocumentService" />
+      <property name="functionCache" ref="functionCache" />
    </bean>
 
    <bean id="FunctionsService" class="org.springframework.aop.framework.ProxyFactoryBean">

@@ -1,58 +1,50 @@
 package ee.webmedia.alfresco.functions.service;
 
 import java.util.List;
+import java.util.Map;
 
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.view.Location;
+import org.alfresco.service.namespace.QName;
 
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
 import ee.webmedia.alfresco.functions.model.Function;
+import ee.webmedia.alfresco.functions.model.UnmodifiableFunction;
 
 /**
  * Service for searching and listing functions.
  */
 public interface FunctionsService {
 
-    public static final String BEAN_NAME = "FunctionsService";
+    String BEAN_NAME = "FunctionsService";
+    String NON_TX_BEAN_NAME = "functionsService";
 
     /**
      * Returns a list of all found functions.
-     * 
+     *
      * @return
      */
-    List<Function> getAllFunctions();
+    List<UnmodifiableFunction> getAllFunctions();
 
-    List<Function> getFunctions(NodeRef functionsRoot);
+    List<UnmodifiableFunction> getFunctions(NodeRef functionsRoot);
 
-    List<Function> getAllFunctions(DocListUnitStatus status);
+    List<UnmodifiableFunction> getAllFunctions(DocListUnitStatus status);
 
-    /**
-     * Returns a function by its string nodeRef;
-     * 
-     * @return
-     */
-    Function getFunctionByNodeRef(String nodeRef);
-
-    /**
-     * Returns a function by its nodeRef;
-     * 
-     * @return
-     */
-    Function getFunctionByNodeRef(NodeRef nodeRef);
+    Function getFunction(NodeRef functionRef, Map<Long, QName> propertyTypes);
 
     /**
      * Updates or saves the function.
-     * 
+     *
      * @param fn
      */
     void saveOrUpdate(Function fn);
 
-    void saveOrUpdate(Function function, NodeRef functionsRoot);
+    Function saveOrUpdate(Function function, NodeRef functionsRoot);
 
     /**
      * Created a new function.
-     * 
+     *
      * @return
      */
     Function createFunction();
@@ -60,7 +52,7 @@ public interface FunctionsService {
     /**
      * Closes the function.
      * False if there are unclosed series under the function, true otherwise.
-     * 
+     *
      * @param function
      * @return
      */
@@ -70,7 +62,7 @@ public interface FunctionsService {
 
     /**
      * Reopen the function by setting DocListUnitStatus.OPEN status
-     * 
+     *
      * @param function
      */
     void reopenFunction(Function function);
@@ -84,5 +76,11 @@ public interface FunctionsService {
     boolean isDraftsFunction(NodeRef functionRef);
 
     List<NodeRef> getAllLimitedActivityFunctions();
+
+    String getFunctionLabel(NodeRef functionRef);
+
+    UnmodifiableFunction getUnmodifiableFunction(NodeRef functionRef, Map<Long, QName> propertyTypes);
+
+    void removeFromCache(NodeRef functionRef);
 
 }

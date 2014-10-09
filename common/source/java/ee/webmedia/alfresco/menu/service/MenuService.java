@@ -30,17 +30,13 @@ public interface MenuService {
     /**
      * Add a processor that gets executed after (re-)loading the menu. Processors are executed in registration order. More than one processor can be registered
      * with the same {@code menuItemId}.
-     * 
+     *
      * @param menuItemId the id of menuitem that gets passed to processor callback, or {@code null} if all root menuitems are passed to processor callback
      * @param processor
      */
     void addProcessor(String menuItemId, MenuItemProcessor processor, boolean runOnce);
 
     void addProcessor(String menuItemId, MenuItemProcessor processor, boolean runOnce, boolean sessionScope);
-
-    void setCountHandler(String menuItemId, MenuItemCountHandler countHandler);
-
-    MenuItemCountHandler getCountHandler(String menuItemId);
 
     public interface MenuItemProcessor {
 
@@ -54,7 +50,7 @@ public interface MenuService {
 
         List<NodeRef> openTreeItem(DropdownMenuItem dd, NodeRef nodeRef);
 
-        void setupTreeItem(DropdownMenuItem dd, NodeRef nodeRef);
+        void setupTreeItem(DropdownMenuItem dd, NodeRef nodeRef, Map<Long, QName> propertyTypes);
 
     }
 
@@ -64,7 +60,7 @@ public interface MenuService {
 
         /**
          * Provides ability to execute third party actions when opening a MenuItem. For example call some dialog's method
-         * 
+         *
          * @param nodeRef NodeRef this item represents
          * @param dd DropdownMenuItem that is being opened
          * @param type QName on item that is being opened
@@ -75,11 +71,11 @@ public interface MenuService {
 
     List<NodeRef> openTreeItem(DropdownMenuItem menuItem, NodeRef nodeRef);
 
-    void setupTreeItem(DropdownMenuItem dd, NodeRef nodeRef);
+    void setupTreeItem(DropdownMenuItem dd, NodeRef nodeRef, Map<Long, QName> propertyTypes);
 
     /**
      * Measure to check if bean has the latest menu configuration
-     * 
+     *
      * @return number of updates since last deploy
      */
     int getUpdateCount();

@@ -47,6 +47,7 @@ import ee.webmedia.alfresco.docadmin.service.Field;
 import ee.webmedia.alfresco.docadmin.service.FieldGroup;
 import ee.webmedia.alfresco.docconfig.generator.BasePropertySheetStateHolder;
 import ee.webmedia.alfresco.docconfig.generator.BaseSystematicFieldGenerator;
+import ee.webmedia.alfresco.docconfig.generator.DialogDataProvider;
 import ee.webmedia.alfresco.docconfig.generator.GeneratorResults;
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
@@ -68,11 +69,11 @@ public class AccessRestrictionGenerator extends BaseSystematicFieldGenerator {
     public static final String ACCESS_RESTRICTION_CHANGE_REASON_ERROR = "access_restriction_change_reason_error";
 
     public static final QName[] ACCESS_RESTRICTION_PROPS = {
-            ACCESS_RESTRICTION,
-            ACCESS_RESTRICTION_REASON,
-            ACCESS_RESTRICTION_BEGIN_DATE,
-            ACCESS_RESTRICTION_END_DATE,
-            ACCESS_RESTRICTION_END_DESC };
+        ACCESS_RESTRICTION,
+        ACCESS_RESTRICTION_REASON,
+        ACCESS_RESTRICTION_BEGIN_DATE,
+        ACCESS_RESTRICTION_END_DATE,
+        ACCESS_RESTRICTION_END_DESC };
 
     private NamespaceService namespaceService;
 
@@ -180,7 +181,7 @@ public class AccessRestrictionGenerator extends BaseSystematicFieldGenerator {
         private final String accessRestrictionReasonClassificatorName;
 
         public AccessRestrictionState(QName accessRestrictionProp, QName accessRestrictionReasonProp, QName accessRestrictionBeginDateProp, QName accessRestrictionEndDateProp,
-                QName accessRestrictionEndDescProp, QName accessRestrictionReasonSelectorProp, String accessRestrictionReasonClassificatorName) {
+                                      QName accessRestrictionEndDescProp, QName accessRestrictionReasonSelectorProp, String accessRestrictionReasonClassificatorName) {
             this.accessRestrictionProp = accessRestrictionProp;
             this.accessRestrictionReasonProp = accessRestrictionReasonProp;
             this.accessRestrictionBeginDateProp = accessRestrictionBeginDateProp;
@@ -202,11 +203,19 @@ public class AccessRestrictionGenerator extends BaseSystematicFieldGenerator {
         /**
          * Called after selection has been made from series dropdown.<br>
          * If accessRestriction is not filled, then values related to accessRestriction are set according to selected series.
-         * 
+         *
          * @param submittedValue
          */
-        public void updateAccessRestrictionProperties(NodeRef seriesRef) {
-            final Map<String, Object> docProps = dialogDataProvider.getNode().getProperties();
+        public void updateAccessRestrictionProperties(NodeRef seriesRef, DialogDataProvider otherDialogDataProvider) {
+            Node node = dialogDataProvider.getNode();
+            if (node == null) { // In some cases (if this state is called via BeanHelper.getPropertySheetStateBean())
+                // it can happen that this dialogDataProvider is pointing to wrong object and returns null;
+                node = otherDialogDataProvider.getNode();
+                if (node == null) {
+                    return;
+                }
+            }
+            final Map<String, Object> docProps = node.getProperties();
             setAccessRestrictionFromSeries(seriesRef, docProps, accessRestrictionProp, accessRestrictionReasonProp,
                     accessRestrictionBeginDateProp, accessRestrictionEndDateProp, accessRestrictionEndDescProp, accessRestrictionReasonClassificatorName);
             if (StringUtils.isBlank((String) docProps.get(accessRestrictionProp.toString()))) {

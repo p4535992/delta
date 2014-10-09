@@ -58,7 +58,7 @@ public class AttachmentListDialog extends BaseDialogBean implements FolderListDi
         for (int i = temp.size(); i > 0; i--) {
             files.add(temp.get(i - 1));
         }
-        folders = BeanHelper.getImapServiceExt().getImapSubfolders(parentRef, ContentModel.TYPE_CONTENT);
+        folders = BeanHelper.getImapServiceExt().getImapSubfoldersWithChildCount(parentRef, ContentModel.TYPE_CONTENT);
     }
 
     public List<File> getFiles() {
@@ -92,6 +92,13 @@ public class AttachmentListDialog extends BaseDialogBean implements FolderListDi
 
     public boolean isShowFileList() {
         return (files != null && !files.isEmpty()) || !isShowFolderList();
+    }
+
+    @Override
+    public void clean() {
+        files = null;
+        folders = null;
+        parentRef = null;
     }
 
 }

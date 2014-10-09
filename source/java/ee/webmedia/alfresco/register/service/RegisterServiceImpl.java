@@ -98,6 +98,12 @@ public class RegisterServiceImpl implements RegisterService {
     }
 
     @Override
+    public Register getSimpleRegister(Integer registerId) {
+        int registerCount = getRegisterCounter(registerId);
+        return new Register(registerId, registerCount);
+    }
+
+    @Override
     public NodeRef getRoot() {
         return generalService.getNodeRef(RegisterModel.Repo.REGISTERS_SPACE);
     }
@@ -153,12 +159,12 @@ public class RegisterServiceImpl implements RegisterService {
             setRegisterCounterValue((Integer) prop.get(RegisterModel.Prop.ID), counter);
 
             String diff = new PropDiffHelper()
-                    .label(RegisterModel.Prop.NAME, "register_name")
-                    .label(RegisterModel.Prop.COUNTER, "register_counter")
-                    .label(RegisterModel.Prop.ACTIVE, "register_active")
-                    .label(RegisterModel.Prop.AUTO_RESET, "register_autoReset")
-                    .label(RegisterModel.Prop.COMMENT, "register_comment")
-                    .diff(oldProps, newProps);
+            .label(RegisterModel.Prop.NAME, "register_name")
+            .label(RegisterModel.Prop.COUNTER, "register_counter")
+            .label(RegisterModel.Prop.ACTIVE, "register_active")
+            .label(RegisterModel.Prop.AUTO_RESET, "register_autoReset")
+            .label(RegisterModel.Prop.COMMENT, "register_comment")
+            .diff(oldProps, newProps);
             logService.addLogEntry(LogEntry.create(LogObject.REGISTER, userService, "applog_register_edit", prop.get(RegisterModel.Prop.NAME.toString()), diff));
         }
     }

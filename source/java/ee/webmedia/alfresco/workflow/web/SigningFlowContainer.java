@@ -59,14 +59,20 @@ public class SigningFlowContainer implements Serializable {
     protected MessageData signatureError;
     private SigningFlowView signingFlowView;
     protected InProgressTasksForm inProgressTasksForm;
+    private boolean signTogether;
 
-    public SigningFlowContainer(SignatureTask signatureTask, InProgressTasksForm inProgressTasksForm, NodeRef compoundWorkflowRef, NodeRef containerRef) {
-        Assert.isTrue(signatureTask.getParent() != null || inProgressTasksForm != null);
-        signingQueue = new ArrayList<NodeRef>();
+    public SigningFlowContainer(SignatureTask signatureTask, boolean signTogether, InProgressTasksForm inProgressTasksForm, NodeRef compoundWorkflowRef, NodeRef containerRef) {
+        this(signatureTask, signTogether, compoundWorkflowRef, containerRef);
+        Assert.isTrue(inProgressTasksForm != null);
+        this.inProgressTasksForm = inProgressTasksForm;
+    }
+
+    public SigningFlowContainer(SignatureTask signatureTask, boolean signTogether, NodeRef compoundWorkflowRef, NodeRef containerRef) {
+        signingQueue = new ArrayList<>();
         this.signatureTask = signatureTask;
         this.compoundWorkflowRef = compoundWorkflowRef;
         this.containerRef = containerRef;
-        this.inProgressTasksForm = inProgressTasksForm;
+        this.signTogether = signTogether;
     }
 
     public boolean prepareSigning() {
@@ -90,7 +96,7 @@ public class SigningFlowContainer implements Serializable {
             mainDocumentRef = null;
             originalStatuses = new HashMap<NodeRef, String>();
             boolean signSeparately = true;
-            boolean existingDigiDoc = false;
+            boolean existingBdoc = false;
             List<NodeRef> signingDocumentRefs = null;
             if (compoundWorkflowRef == null) {
                 addSigningDocument(containerRef);
@@ -103,7 +109,7 @@ public class SigningFlowContainer implements Serializable {
                     if (mainDocumentRef == null || !getNodeService().exists(mainDocumentRef)) {
                         throw new UnableToPerformException("compoundWorkflow_main_document_missing");
                     }
-                    existingDigiDoc = getDocumentService().checkExistingDdoc(mainDocumentRef, compoundWorkflowRef) != null;
+                    existingBdoc = getDocumentService().checkExistingBdoc(mainDocumentRef, compoundWorkflowRef) != null;
                     signSeparately = false;
                     addSigningDocument(mainDocumentRef);
                     Map<NodeRef, List<File>> tmpFileMap = new HashMap<NodeRef, List<File>>();
@@ -125,7 +131,7 @@ public class SigningFlowContainer implements Serializable {
             }
             signingFiles = signingFilesMap;
 
-            getDocumentService().prepareDocumentSigning(signSeparately ? signingQueue : signingDocumentRefs, !existingDigiDoc, signSeparately);
+            getDocumentService().prepareDocumentSigning(signSeparately ? signingQueue : signingDocumentRefs, !existingBdoc, signSeparately);
             long step2 = System.currentTimeMillis();
             doAfterPrepareSigning();
             long step3 = System.currentTimeMillis();
@@ -315,7 +321,7 @@ public class SigningFlowContainer implements Serializable {
     }
 
     protected boolean isSignTogether() {
-        return signatureTask.getParent().isSignTogether();
+        return signTogether;
     }
 
     private void addDocumentStatuses(List<NodeRef> docRefs) {

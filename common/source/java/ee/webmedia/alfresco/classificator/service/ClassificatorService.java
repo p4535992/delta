@@ -27,14 +27,6 @@ public interface ClassificatorService {
     List<Classificator> getAllClassificators();
 
     /**
-     * Returns the classificator referenced by nodeRef.
-     * 
-     * @param nodeRef
-     * @return
-     */
-    Classificator getClassificatorByNodeRef(NodeRef nodeRef);
-
-    /**
      * Returns the classificator referenced by its name.
      * 
      * @param name
@@ -42,13 +34,9 @@ public interface ClassificatorService {
      */
     Classificator getClassificatorByName(String name);
 
-    /**
-     * @param classificator
-     * @return list of all values for the given classificator
-     */
-    List<ClassificatorValue> getAllClassificatorValues(Classificator classificator);
-
     List<ClassificatorValue> getAllClassificatorValues(String classificator);
+
+    List<ClassificatorValue> loadAllClassificatorValuesFromDB(NodeRef classificatorRef);
 
     /**
      * Removes the selected classificator value from the classificator.
@@ -99,17 +87,20 @@ public interface ClassificatorService {
 
     Node getNewUnsavedClassificator();
 
-    NodeRef saveClassificatorNode(Node classificatorNode);
+    String saveClassificatorNode(Node classificatorNode);
 
     void addNewClassificators(List<ClassificatorExportVO> classificatorsToAdd);
 
     List<Classificator> search(String searchCriteria);
 
-    List<ClassificatorValue> searchValues(String searchCriteria, NodeRef classifNodeRef);
-
-    List<Classificator> getClassificatorsByNodeRefs(List<NodeRef> classifRefs);
+    List<ClassificatorValue> searchValues(String searchCriteria, String classifName);
 
     String getClassificatorValuesValueData(String classificatorName, String classificatorValueName);
 
     boolean hasClassificatorValueName(String classificatorName, String classificatorValueName);
+
+    /**
+     * This method is only meant to use in <code>ClassificatorsCacheUpdater</code> class
+     */
+    void addToClassificatorsCache(Classificator cl);
 }

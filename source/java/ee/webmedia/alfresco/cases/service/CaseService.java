@@ -13,10 +13,11 @@ import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
  */
 public interface CaseService {
     String BEAN_NAME = "CaseService";
+    String NON_TX_BEAN_NAME = "caseService";
 
     /**
      * Save case using properties not from <code>theCase</code> fields, but from node properties
-     * 
+     *
      * @param theCase
      */
     void saveOrUpdate(Case theCase);
@@ -29,9 +30,9 @@ public interface CaseService {
 
     void saveAddedAssocs(Node caseNode);
 
-    List<Case> getAllCasesByVolume(NodeRef volumeRef);
+    List<UnmodifiableCase> getAllCasesByVolume(NodeRef volumeRef);
 
-    List<Case> getAllCasesByVolume(NodeRef volumeRef, DocListUnitStatus status);
+    List<UnmodifiableCase> getAllCasesByVolume(NodeRef volumeRef, DocListUnitStatus status);
 
     Case getCaseByNoderef(NodeRef caseNodeRef);
 
@@ -47,7 +48,7 @@ public interface CaseService {
 
     /**
      * close given case
-     * 
+     *
      * @param currentCase
      */
     void closeCase(Case currentCase);
@@ -56,7 +57,7 @@ public interface CaseService {
 
     /**
      * Close all clases that this volume has
-     * 
+     *
      * @param volumeRef
      */
     void closeAllCasesByVolume(NodeRef volumeRef);
@@ -65,12 +66,16 @@ public interface CaseService {
 
     boolean isCaseNameUsed(final String newCaseTitle, NodeRef volumeRef);
 
-    Case getCaseByTitle(final String newCaseTitle, NodeRef volumeRef, NodeRef caseRef);
+    UnmodifiableCase getCaseByTitle(final String newCaseTitle, NodeRef volumeRef, NodeRef caseRef);
 
     List<NodeRef> getCaseRefsByVolume(NodeRef volumeRef);
 
     int getCasesCountByVolume(NodeRef volumeRef);
 
     void delete(Case caseObject);
+
+    String getCaseLabel(NodeRef caseRef);
+
+    void removeFromCache(NodeRef caseRef);
 
 }

@@ -1,6 +1,7 @@
 package ee.webmedia.alfresco.document.associations.model;
 
 import java.io.Serializable;
+import java.text.Collator;
 import java.util.Date;
 
 import org.alfresco.service.cmr.repository.NodeRef;
@@ -31,6 +32,7 @@ public class DocAssocInfo implements Serializable, Comparable<DocAssocInfo> {
     private NodeRef volumeNodeRef;
     private boolean isCaseFileVolume;
     private boolean allowDelete;
+    private final static Collator collator = AppConstants.getNewCollatorInstance();
 
     public String getType() {
         return type;
@@ -161,7 +163,7 @@ public class DocAssocInfo implements Serializable, Comparable<DocAssocInfo> {
         }
         QName otherAssocTypeQName = otherDocAssocInfo.getAssocTypeQName();
         if (otherAssocTypeQName.equals(assocTypeQName)) {
-            return AppConstants.DEFAULT_COLLATOR.compare(StringUtils.defaultString(getTitle()), StringUtils.defaultString(otherDocAssocInfo.getTitle()));
+            return collator.compare(StringUtils.defaultString(getTitle()), StringUtils.defaultString(otherDocAssocInfo.getTitle()));
         } else if (assocType == AssocType.WORKFLOW) {
             return -1;
         } else if (otherDocAssocInfo.getAssocType() == AssocType.WORKFLOW) {

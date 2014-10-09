@@ -40,7 +40,7 @@
       <property name="signatureService" ref="SignatureService" />
    </bean>
 
-   <bean id="signatureResourceBundleBootstrap" class="org.alfresco.web.app.ResourceBundleBootstrap">
+   <bean id="signatureResourceBundles" class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
       <property name="resourceBundles">
          <list>
             <value>ee.webmedia.alfresco.signature.web.webclient-signature</value>

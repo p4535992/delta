@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -132,7 +133,7 @@ public class WorkflowStatusEventListener implements WorkflowMultiEventListener, 
                         new RetryingTransactionCallback<Map<NodeRef, List<Map<QName, Serializable>>>>() {
                             @Override
                             public Map<NodeRef, List<Map<QName, Serializable>>> execute() throws Throwable {
-                                return handleNotifications(events, initiatingTask, groupAssignmentTasksFinishedAutomatically);
+                                return processEventQueue(events, initiatingTask, groupAssignmentTasksFinishedAutomatically);
                             }
                         }, false, true);
                 if (!docSendInfos.isEmpty()) {
@@ -232,29 +233,39 @@ public class WorkflowStatusEventListener implements WorkflowMultiEventListener, 
         return;
     }
 
-    private Map<NodeRef, List<Map<QName, Serializable>>> handleNotifications(final List<WorkflowEvent> events, final Task initiatingTask,
+    private Map<NodeRef, List<Map<QName, Serializable>>> processEventQueue(final List<WorkflowEvent> events, final Task initiatingTask,
             List<NodeRef> groupAssignmentTasksFinishedAutomatically) {
         Map<NodeRef, List<Map<QName, Serializable>>> docSendInfos = new HashMap<NodeRef, List<Map<QName, Serializable>>>();
-        for (WorkflowEvent event : events) {
-            BaseWorkflowObject object = event.getObject();
-            if (object instanceof CompoundWorkflow) {
-                handleCompoundWorkflowNotifications(event);
-            } else if (object instanceof Workflow) {
-                handleWorkflowNotifications(event);
-            } else if (object instanceof Task) {
-                Pair<NodeRef, List<Map<QName, Serializable>>> docRefAndSendInfoProps = handleTaskNotifications(event, groupAssignmentTasksFinishedAutomatically, initiatingTask);
-                if (docRefAndSendInfoProps != null) {
-                    NodeRef nodeRef = docRefAndSendInfoProps.getFirst();
-                    List<Map<QName, Serializable>> props = docRefAndSendInfoProps.getSecond();
-                    if (docSendInfos.containsKey(nodeRef)) {
-                        docSendInfos.get(nodeRef).addAll(props);
-                    } else {
-                        docSendInfos.put(nodeRef, props);
-                    }
+        ListIterator<WorkflowEvent> iterator = events.listIterator(events.size());
+        while (iterator.hasPrevious()) {
+            WorkflowEvent event = iterator.previous();
+            processEvent(event, initiatingTask, groupAssignmentTasksFinishedAutomatically, docSendInfos);
+            iterator.remove();
+        }
+
+        return docSendInfos;
+    }
+
+    private void processEvent(WorkflowEvent event, Task initiatingTask, List<NodeRef> groupAssignmentTasksFinishedAutomatically,
+            Map<NodeRef, List<Map<QName, Serializable>>> docSendInfos) {
+        BaseWorkflowObject object = event.getObject();
+        if (object instanceof CompoundWorkflow) {
+            handleCompoundWorkflowNotifications(event);
+        } else if (object instanceof Workflow) {
+            handleWorkflowNotifications(event);
+        } else if (object instanceof Task) {
+            Pair<NodeRef, List<Map<QName, Serializable>>> docRefAndSendInfoProps =
+                    handleTaskNotifications(event, groupAssignmentTasksFinishedAutomatically, initiatingTask);
+            if (docRefAndSendInfoProps != null) {
+                NodeRef nodeRef = docRefAndSendInfoProps.getFirst();
+                List<Map<QName, Serializable>> props = docRefAndSendInfoProps.getSecond();
+                if (docSendInfos.containsKey(nodeRef)) {
+                    docSendInfos.get(nodeRef).addAll(props);
+                } else {
+                    docSendInfos.put(nodeRef, props);
                 }
             }
         }
-        return docSendInfos;
     }
 
     private void refreshMenuTaskCount() {

@@ -1,5 +1,7 @@
 package ee.webmedia.alfresco.common.propertysheet.generator;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getApplicationConstantsBean;
+
 import javax.faces.component.UIComponent;
 import javax.faces.component.UISelectItem;
 import javax.faces.component.html.HtmlOutputText;
@@ -50,8 +52,8 @@ public class BooleanRadioGenerator extends BaseComponentGenerator {
                 value = Boolean.valueOf(nullValueStr);
             }
         }
-        String trueLabel = getLabel(ATTR_LABEL_TRUE, "yes");
-        String falseLabel = getLabel(ATTR_LABEL_FALSE, "no");
+        String trueLabel = getBooleanLabel(ATTR_LABEL_TRUE, true);
+        String falseLabel = getBooleanLabel(ATTR_LABEL_FALSE, false);
         if (item.isReadOnly()) {
             UIComponent component = createReadOnlyComponent(context, value, trueLabel, falseLabel);
             FacesHelper.setupComponentId(context, component, getDefaultId(item));
@@ -93,10 +95,10 @@ public class BooleanRadioGenerator extends BaseComponentGenerator {
         return outputText;
     }
 
-    private String getLabel(String attributeName, String defaultMsgKey) {
+    private String getBooleanLabel(String attributeName, boolean trueValue) {
         String trueLabelMsg = getCustomAttributes().get(attributeName);
         if (StringUtils.isBlank(trueLabelMsg)) {
-            trueLabelMsg = defaultMsgKey;
+            return trueValue ? getApplicationConstantsBean().getMessageYes() : getApplicationConstantsBean().getMessageNo();
         }
         return MessageUtil.getMessage(trueLabelMsg);
     }

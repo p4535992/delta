@@ -12,6 +12,7 @@ import org.alfresco.web.bean.repository.Node;
 import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.dvk.service.DvkService;
@@ -45,8 +46,7 @@ public class DvkCorruptListDialog extends BaseDialogBean {
     }
 
     private void readFiles() {
-        String corruptDvkDocumentsPath = getDvkService().getCorruptDvkDocumentsPath();
-        NodeRef corruptFolder = getGeneralService().getNodeRef(corruptDvkDocumentsPath);
+        NodeRef corruptFolder = BeanHelper.getConstantNodeRefsBean().getDvkCorruptRoot();
         files = getFileService().getAllFilesExcludingDigidocSubitemsAndIncludingDecContainers(corruptFolder);
     }
 
@@ -94,6 +94,11 @@ public class DvkCorruptListDialog extends BaseDialogBean {
                     FacesContext.getCurrentInstance()).getBean(DvkService.BEAN_NAME);
         }
         return dvkService;
+    }
+
+    @Override
+    public void clean() {
+        files = null;
     }
 
 }

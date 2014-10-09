@@ -34,24 +34,24 @@
       </a:column>
       
       <%-- Volume --%>
-      <a:column id="col3_2" primary="true" styleClass="#{r.cssStyleClass}" rendered="#{SearchBlockBean.documentVolumeColumnVisible}">
+      <a:column id="col3_2" primary="true" styleClass="#{r.cssStyleClass}" rendered="#{applicationConstantsBean.volumeColumnEnabled}">
          <f:facet name="header">
-            <a:sortLink id="col3_2-sort" label="#{msg.volume}" value="volume" styleClass="header" />
+            <a:sortLink id="col3_2-sort" label="#{msg.volume}" value="volumeLabel" styleClass="header" />
          </f:facet>
-         <a:actionLink id="col3_2-link2cases" value="#{r.documentVolume.volumeMarkAndTitle}" action="dialog:caseDocListDialog" tooltip="#{r.documentVolume.volumeMarkAndTitle}"
+         <a:actionLink id="col3_2-link2cases" value="#{r.documentVolume.volumeLabel}" action="dialog:caseDocListDialog" tooltip="#{r.documentVolume.volumeLabel}"
             showLink="false" actionListener="#{CaseDocumentListDialog.showAll}" rendered="#{r.documentVolume != null && !r.documentVolume.dynamic}" styleClass="tooltip condence20- no-underline" >
-            <f:param name="volumeNodeRef" value="#{r.documentVolume.node.nodeRef}" />
+            <f:param name="volumeNodeRef" value="#{r.documentVolume.nodeRef}" />
          </a:actionLink>
-         <a:actionLink id="col3_2-caseFile" value="#{r.documentVolume.volumeMarkAndTitle}" tooltip="#{r.documentVolume.volumeMarkAndTitle}"
+         <a:actionLink id="col3_2-caseFile" value="#{r.documentVolume.volumeLabel}" tooltip="#{r.documentVolume.volumeLabel}"
             showLink="false" actionListener="#{CaseFileDialog.openFromDocumentList}" rendered="#{r.documentVolume != null && r.documentVolume.dynamic}" styleClass="tooltip condence20- no-underline" >
-            <f:param name="nodeRef" value="#{r.documentVolume.node.nodeRef}" />
+            <f:param name="nodeRef" value="#{r.documentVolume.nodeRef}" />
          </a:actionLink>
       </a:column>
       
       <%-- Sender/Recipient --%>
       <a:column id="col5" styleClass="#{r.cssStyleClass}" >
          <f:facet name="header">
-            <a:sortLink id="col5-sort" label="#{msg.document_sender_recipient}" value="senderOrRecipients" styleClass="header" />
+            <a:sortLink id="col5-sort" label="#{msg.document_sender_recipient}" value="sender" styleClass="header" />
          </f:facet>
          <a:actionLink id="col5-text-1" value="#{r.sender}" action="#{DocumentDialog.action}" tooltip="#{r.sender}"
             actionListener="#{DocumentDialog.open}" styleClass="condence20- tooltip no-underline" >
@@ -60,7 +60,7 @@
       </a:column>
       
       <%-- Workflow status --%>
-      <a:column id="col7" styleClass="#{r.cssStyleClass}" rendered="#{WmWorkflowService.documentWorkflowEnabled}">
+      <a:column id="col7" styleClass="#{r.cssStyleClass}" rendered="#{workflowConstantsBean.documentWorkflowEnabled}">
          <f:facet name="header">
             <a:sortLink id="col7-sort" label="#{msg.document_workflow_status}" value="workflowStatus" styleClass="header" />
          </f:facet>
@@ -80,44 +80,6 @@
               <a:param value="false"/>
           </f:facet>
 
-         <wm:docPermissionEvaluator value="#{r.files[0].node}" allow="viewDocumentFiles">
-            <a:actionLink id="col10-act1" value="#{r.files[0].name}" href="#{r.files[0].readOnlyUrl}" target="_blank" showLink="false"
-               image="/images/icons/#{r.files[0].digiDocContainer ? 'ddoc_sign_small.gif' : 'attachment.gif'}" styleClass="inlineAction" />
-         </wm:docPermissionEvaluator>
-         <wm:docPermissionEvaluator value="#{r.files[0].node}" deny="viewDocumentFiles">
-            <h:graphicImage value="/images/icons/#{r.files[0].digiDocContainer ? 'ddoc_sign_small.gif' : 'attachment.gif'}" alt="#{r.files[0].name}"
-               title="#{r.files[0].name}" rendered="#{r.files[0] != null}" />
-         </wm:docPermissionEvaluator>
-         <wm:docPermissionEvaluator value="#{r.files[1].node}" allow="viewDocumentFiles">
-            <a:actionLink id="col10-act2" value="#{r.files[1].name}" href="#{r.files[1].readOnlyUrl}" target="_blank" showLink="false"
-               image="/images/icons/#{r.files[1].digiDocContainer ? 'ddoc_sign_small.gif' : 'attachment.gif'}" styleClass="inlineAction" />
-         </wm:docPermissionEvaluator>
-         <wm:docPermissionEvaluator value="#{r.files[1].node}" deny="viewDocumentFiles">
-            <h:graphicImage value="/images/icons/#{r.files[1].digiDocContainer ? 'ddoc_sign_small.gif' : 'attachment.gif'}" alt="#{r.files[1].name}"
-               title="#{r.files[1].name}" rendered="#{r.files[1] != null}" />
-         </wm:docPermissionEvaluator>
-         <wm:docPermissionEvaluator value="#{r.files[2].node}" allow="viewDocumentFiles">
-            <a:actionLink id="col10-act3" value="#{r.files[2].name}" href="#{r.files[2].readOnlyUrl}" target="_blank" showLink="false"
-               image="/images/icons/#{r.files[2].digiDocContainer ? 'ddoc_sign_small.gif' : 'attachment.gif'}" styleClass="inlineAction" />
-         </wm:docPermissionEvaluator>
-         <wm:docPermissionEvaluator value="#{r.files[2].node}" deny="viewDocumentFiles">
-            <h:graphicImage value="/images/icons/#{r.files[2].digiDocContainer ? 'ddoc_sign_small.gif' : 'attachment.gif'}" alt="#{r.files[2].name}"
-               title="#{r.files[2].name}" rendered="#{r.files[2] != null}" />
-         </wm:docPermissionEvaluator>
-         <wm:docPermissionEvaluator value="#{r.files[3].node}" allow="viewDocumentFiles">
-            <a:actionLink id="col10-act4" value="#{r.files[3].name}" href="#{r.files[3].readOnlyUrl}" target="_blank" showLink="false"
-               image="/images/icons/#{r.files[3].digiDocContainer ? 'ddoc_sign_small.gif' : 'attachment.gif'}" styleClass="inlineAction" />
-         </wm:docPermissionEvaluator>
-         <wm:docPermissionEvaluator value="#{r.files[3].node}" deny="viewDocumentFiles">
-            <h:graphicImage value="/images/icons/#{r.files[3].digiDocContainer ? 'ddoc_sign_small.gif' : 'attachment.gif'}" alt="#{r.files[3].name}"
-               title="#{r.files[3].name}" rendered="#{r.files[3] != null}" />
-         </wm:docPermissionEvaluator>
-         <wm:docPermissionEvaluator value="#{r.files[4].node}" allow="viewDocumentFiles">
-            <a:actionLink id="col10-act5" value="#{r.files[4].name}" href="#{r.files[4].readOnlyUrl}" target="_blank" showLink="false"
-               image="/images/icons/#{r.files[4].digiDocContainer ? 'ddoc_sign_small.gif' : 'attachment.gif'}" styleClass="inlineAction" />
-         </wm:docPermissionEvaluator>
-         <wm:docPermissionEvaluator value="#{r.files[4].node}" deny="viewDocumentFiles">
-            <h:graphicImage value="/images/icons/#{r.files[4].digiDocContainer ? 'ddoc_sign_small.gif' : 'attachment.gif'}" alt="#{r.files[4].name}"
-               title="#{r.files[4].name}" rendered="#{r.files[4] != null}" />
-         </wm:docPermissionEvaluator>
+		<wm:customChildrenContainer id="document-list-files" childGenerator="#{DocumentListDialog.documentRowFileGenerator}" parameterList="#{r}"/>
+        
       </a:column>

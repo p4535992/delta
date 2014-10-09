@@ -7,13 +7,21 @@ import javax.faces.event.ActionEvent;
 
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.Node;
+import org.alfresco.web.bean.repository.TransientNode;
+import org.alfresco.web.config.DialogsConfigElement;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 
 import ee.webmedia.alfresco.register.model.RegisterModel;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
 public class RegisterDetailsDialog extends BaseDialogBean {
+
+    public static final String BEAN_NAME = "RegisterDetailsDialog";
 
     private static final long serialVersionUID = 1L;
     private Node register;
@@ -21,7 +29,7 @@ public class RegisterDetailsDialog extends BaseDialogBean {
 
     /**
      * Action listener for JSP pages
-     * 
+     *
      * @param event ActionLink
      */
     public void setupRegister(ActionEvent event) {
@@ -43,7 +51,7 @@ public class RegisterDetailsDialog extends BaseDialogBean {
 
     /**
      * Action listener for JSP pages
-     * 
+     *
      * @param id id of the register that should be loaded
      */
     public void setupRegister(int id) {
@@ -56,9 +64,14 @@ public class RegisterDetailsDialog extends BaseDialogBean {
 
     @Override
     public String cancel() {
+        clean();
+        return super.cancel();
+    }
+
+    @Override
+    public void clean() {
         register = null;
         propertySheet = null;
-        return super.cancel();
     }
 
     @Override
@@ -69,6 +82,16 @@ public class RegisterDetailsDialog extends BaseDialogBean {
         propertySheet = null;
         MessageUtil.addInfoMessage("save_success");
         return outcome;
+    }
+
+    @Override
+    public List<DialogsConfigElement.DialogButtonConfig> getAdditionalButtons() {
+        boolean isUnsavedRegister = register instanceof TransientNode;
+        if (isUnsavedRegister) {
+            return Collections.emptyList();
+        }
+
+        return Arrays.asList(new DialogsConfigElement.DialogButtonConfig("reset-counter", null, "reset_counter","#{RegisterDetailsDialog.resetCounter}", null, null));
     }
 
     public Node getRegister() {

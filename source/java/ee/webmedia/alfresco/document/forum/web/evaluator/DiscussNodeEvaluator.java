@@ -27,7 +27,7 @@ public class DiscussNodeEvaluator extends BaseActionEvaluator {
      */
     @Override
     public boolean evaluate(Node node) {
-        if (!node.getNodeRef().getStoreRef().getProtocol().equals(StoreRef.PROTOCOL_WORKSPACE)) {
+        if (!node.getNodeRef().getStoreRef().getProtocol().equals(StoreRef.PROTOCOL_WORKSPACE) || getDocumentDialogHelperBean().isInEditMode()) {
             return false;
         }
         boolean result = false;
@@ -44,7 +44,7 @@ public class DiscussNodeEvaluator extends BaseActionEvaluator {
             }
         }
 
-        return result && !getDocumentDialogHelperBean().isInEditMode() && (new ManageDiscussionEvaluator().evaluate(node) || isUserInvited(forumNodeRef));
+        return result && (new ManageDiscussionEvaluator().evaluate(node) || isUserInvited(forumNodeRef));
     }
 
     private boolean isUserInvited(NodeRef forumNodeRef) {

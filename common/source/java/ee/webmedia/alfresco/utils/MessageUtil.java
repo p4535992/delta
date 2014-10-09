@@ -1,12 +1,9 @@
 package ee.webmedia.alfresco.utils;
 
-import static org.alfresco.web.app.Application.MESSAGE_BUNDLE;
-
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.ResourceBundle;
 
 import javax.faces.application.FacesMessage;
 import javax.faces.context.FacesContext;
@@ -17,9 +14,8 @@ import org.alfresco.service.cmr.dictionary.TypeDefinition;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
-import org.alfresco.web.app.Application;
-import org.alfresco.web.app.ResourceBundleWrapper;
 import org.alfresco.web.ui.common.Utils;
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
@@ -35,15 +31,6 @@ import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
 public class MessageUtil {
     private static final Log LOG = org.apache.commons.logging.LogFactory.getLog(MessageUtil.class);
 
-    private static ResourceBundle resourceBundle;
-
-    private static ResourceBundle getResourceBundle() {
-        if (resourceBundle == null) {
-            resourceBundle = ResourceBundleWrapper.getResourceBundle(MESSAGE_BUNDLE, AppConstants.getDefaultLocale());
-        }
-        return resourceBundle;
-    }
-
     /**
      * @param context
      * @param messageId - message id to be used
@@ -51,34 +38,16 @@ public class MessageUtil {
      *            or collection of elements - that each element is recursively translated if needed and and joined using space)
      * @return message that has given <code>messageId</code> with placeHolders replaced with given <code>messageValuesForHolders</code>
      */
-    public static String getMessage(FacesContext context, String messageId, Object... messageValuesForHolders) {
+    public static String getMessage(@SuppressWarnings("UnusedParameters") FacesContext context, String messageId, Object... messageValuesForHolders) {
         Assert.notNull(messageId, "no messageId given for translation");
-        String message = messageId;
-        if (context != null) {
-            message = Application.getMessage(context, messageId);
-        } else {
-            message = getResourceBundle().getString(messageId);
-        }
-        final Object[] translatedValuesForHolders = getTranslatedMessageValueHolders(context, messageValuesForHolders);
-        if (isMessageTranslated(messageId, message)) {
-            if (translatedValuesForHolders != null) {
-                message = format(message, translatedValuesForHolders);
-            }
-        } else {
-            String i18nUtilMsg = getI18nUtilMessage(new MessageDataImpl(messageId, translatedValuesForHolders));
-            if (isMessageTranslatedByI18nUtil(i18nUtilMsg)) {
-                return i18nUtilMsg;
-            }
-        }
-        return message;
-    }
 
-    public static boolean hasI18nTranslation(String messageId) {
-        String i18nUtilMsg = getI18nUtilMessage(new MessageDataImpl(messageId));
-        if (isMessageTranslatedByI18nUtil(i18nUtilMsg)) {
-            return true;
+        final Object[] translatedValuesForHolders = getTranslatedMessageValueHolders(messageValuesForHolders);
+        String message = I18NUtil.getMessage(messageId, AppConstants.DEFAULT_LOCALE, translatedValuesForHolders);
+        if (isMessageTranslatedByI18nUtil(message)) {
+            return message;
         }
-        return false;
+
+        return "$$" + messageId + "$$";
     }
 
     private static String format(String message, final Object[] translatedValuesForHolders) {
@@ -90,56 +59,57 @@ public class MessageUtil {
         }
     }
 
-    private static Object[] getTranslatedMessageValueHolders(FacesContext context, Object... messageValuesForHolders) {
-        final Object[] msgValuesForHolders;
-        if (messageValuesForHolders != null && messageValuesForHolders.length > 0) {
-            msgValuesForHolders = new Object[messageValuesForHolders.length];
-            for (int i = 0; i < messageValuesForHolders.length; i++) {
-                Object messageValueForHolder = messageValuesForHolders[i];
-                if (messageValueForHolder instanceof MessageData) {
-                    MessageData messageData = (MessageData) messageValueForHolder;
-                    msgValuesForHolders[i] = localizeMessage(context, messageData);
-                } else if (messageValueForHolder instanceof Collection) {
-                    @SuppressWarnings("rawtypes")
-                    Collection msgParameterArray = (Collection) messageValueForHolder;
-                    if (!msgParameterArray.isEmpty() && msgParameterArray.iterator().next() instanceof MessageData) {
-                        final StringBuilder sb = new StringBuilder();
-                        @SuppressWarnings("unchecked")
-                        Collection<MessageData> messageDataArray = (Collection<MessageData>) messageValueForHolder;
-                        for (MessageData messageDataItem : messageDataArray) {
-                            sb.append(localizeMessage(context, messageDataItem)).append(" ");
-                        }
-                        msgValuesForHolders[i] = sb.toString();
-                    }
-                } else {
-                    msgValuesForHolders[i] = messageValueForHolder;
-                }
-            }
-        } else {
-            msgValuesForHolders = messageValuesForHolders;
+    private static Object[] getTranslatedMessageValueHolders(Object... messageValuesForHolders) {
+        if (ArrayUtils.isEmpty(messageValuesForHolders)) {
+            // If messageValuesForHolders = null then we should also return null because otherwise we can't use {...} in text.
+            // For example, see key fieldGroup_details_separator_infoText_documentType
+            return messageValuesForHolders;
         }
+
+        final Object[] msgValuesForHolders = new Object[messageValuesForHolders.length];
+        for (int i = 0; i < messageValuesForHolders.length; i++) {
+            Object messageValueForHolder = messageValuesForHolders[i];
+            if (messageValueForHolder instanceof MessageData) {
+                MessageData messageData = (MessageData) messageValueForHolder;
+                msgValuesForHolders[i] = localizeMessage(messageData);
+            } else if (messageValueForHolder instanceof Collection) {
+                @SuppressWarnings("rawtypes")
+                Collection msgParameterArray = (Collection) messageValueForHolder;
+                if (!msgParameterArray.isEmpty() && msgParameterArray.iterator().next() instanceof MessageData) {
+                    final StringBuilder sb = new StringBuilder();
+                    @SuppressWarnings("unchecked")
+                    Collection<MessageData> messageDataArray = (Collection<MessageData>) messageValueForHolder;
+                    for (MessageData messageDataItem : messageDataArray) {
+                        sb.append(localizeMessage(messageDataItem)).append(" ");
+                    }
+                    msgValuesForHolders[i] = sb.toString();
+                }
+            } else {
+                msgValuesForHolders[i] = messageValueForHolder;
+            }
+        }
+
         return msgValuesForHolders;
     }
 
-    private static String localizeMessage(FacesContext context, MessageData messageData) {
-        final String translationWithPlaceholders = Application.getMessage(context, messageData.getMessageKey());
-        return format(translationWithPlaceholders, getTranslatedMessageParameters(context, messageData));
+    private static String localizeMessage(MessageData messageData) {
+        final String translationWithPlaceholders = getMessage(messageData.getMessageKey());
+        return format(translationWithPlaceholders, getTranslatedMessageParameters(messageData));
     }
 
     /**
      * Deeply localizes message parameters that might contain MessageData objects, that need to be localized as well
      * 
-     * @param context
      * @param messageData
      * @return
      */
-    private static Object[] getTranslatedMessageParameters(FacesContext context, MessageData messageData) {
+    private static Object[] getTranslatedMessageParameters(MessageData messageData) {
         final Object[] messageParameters = messageData.getMessageValuesForHolders();
         for (int i = 0; i < messageParameters.length; i++) {
             Object msgParameter = messageParameters[i];
             if (msgParameter instanceof MessageData) {
                 MessageData msgData = (MessageData) msgParameter;
-                final String localizedMessageParameter = localizeMessage(context, msgData);
+                final String localizedMessageParameter = localizeMessage(msgData);
                 messageParameters[i] = localizedMessageParameter;
             } else if (msgParameter instanceof Collection) {
                 @SuppressWarnings("rawtypes")
@@ -149,7 +119,7 @@ public class MessageUtil {
                     @SuppressWarnings("unchecked")
                     Collection<MessageData> messageDataArray = (Collection<MessageData>) msgParameter;
                     for (MessageData messageDataItem : messageDataArray) {
-                        sb.append(localizeMessage(context, messageDataItem)).append(" ");
+                        sb.append(localizeMessage(messageDataItem)).append(" ");
                     }
                     messageParameters[i] = sb.toString();
                 }
@@ -165,7 +135,7 @@ public class MessageUtil {
      * @return message
      */
     public static String getMessage(String messageId, Object... messageValuesForHolders) {
-        return getMessage(FacesContext.getCurrentInstance(), messageId, messageValuesForHolders);
+        return getMessage(null, messageId, messageValuesForHolders);
     }
 
     /**
@@ -193,11 +163,6 @@ public class MessageUtil {
         return message != null;// i18nUtil returns null when message is not found
     }
 
-    private static String getI18nUtilMessage(MessageData messageData) {
-        Object[] translatedValuesForHolders = getTranslatedMessageValueHolders(FacesContext.getCurrentInstance(), messageData.getMessageValuesForHolders());
-        return I18NUtil.getMessage(messageData.getMessageKey(), translatedValuesForHolders);
-    }
-
     /**
      * Translates <code>messageId</code> using {@link MessageUtil#getMessage(FacesContext, String, Object...)} <br>
      * and adds it to Alfreco using {@link Utils#addErrorMessage(String)}
@@ -207,18 +172,12 @@ public class MessageUtil {
      * @param messageValuesForHolders
      */
     public static void addErrorMessage(FacesContext context, String messageId, Object... messageValuesForHolders) {
-        addErrorMessage(new MessageDataImpl(messageId, messageValuesForHolders));
-    }
-
-    private static void addErrorMessage(MessageData messageData) {
-        Utils.addErrorMessage(getMessage(messageData));
+        Utils.addErrorMessage(getMessage(context, messageId, messageValuesForHolders));
     }
 
     /**
      * @param context
-     * @param messageId
-     * @param severity
-     * @param messageValuesForHolders
+     * @param messageData
      */
     private static void addStatusMessageInternal(FacesContext context, MessageData messageData) {
         MessageSeverity severity = messageData.getSeverity();
@@ -230,7 +189,7 @@ public class MessageUtil {
             }
         }
         if (severity == MessageSeverity.ERROR) {
-            addErrorMessage(messageData);
+            addErrorMessage(context, messageData.getMessageKey(), messageData.getMessageValuesForHolders());
             return;
         }
         context.addMessage(null, getFacesMessage(messageData));
@@ -302,7 +261,6 @@ public class MessageUtil {
      * Add statusMessage to the faces context(to be shown to the user). Message text is retrieved from message bundle based on key <code>messageData.getMessageKey()</code> and
      * possible values could be set using <code>messageData.getMessageValuesForHolders()</code>. Severity of message is determined by <code>messageData.getSeverity()</code>
      * 
-     * @param facesContext
      * @param messageData - messageData object used to create message
      * @return true if added message with error or fatal severity
      */
@@ -330,7 +288,7 @@ public class MessageUtil {
      * Add error message by concatenating messages retrieved from the messageKeys
      * 
      * @param currentInstance
-     * @param messageKeys
+     * @param messageKeysWithValueObjects
      */
     public static void addErrorMessage(FacesContext currentInstance, Pair<String, Object[]>[] messageKeysWithValueObjects) {
         final StringBuilder sb = new StringBuilder();
@@ -368,6 +326,9 @@ public class MessageUtil {
     public static String getTypeName(QName objectTypeQName) {
         TypeDefinition typeDef = BeanHelper.getDictionaryService().getType(objectTypeQName);
         String translatedTypeName = typeDef.getTitle();
+        if (StringUtils.isBlank(translatedTypeName)) {
+            translatedTypeName = getMessage(getTranslationKeyForType(objectTypeQName, typeDef));
+        }
         if (StringUtils.isBlank(translatedTypeName)) {
             throw new IllegalStateException("there should be translation for type " + typeDef
                     + " in model properties file with key '" + getTranslationKeyForType(objectTypeQName, typeDef) + "'");

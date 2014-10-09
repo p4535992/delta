@@ -2,6 +2,8 @@ package ee.webmedia.alfresco.workflow.web;
 
 import static ee.webmedia.alfresco.addressbook.util.AddressbookUtil.transformAddressbookNodesToSelectItems;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getAddressbookService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getApplicationConstantsBean;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getBrowseBean;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentSearchService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDvkService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getEInvoiceService;
@@ -10,6 +12,7 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getParametersService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getUserContactGroupSearchBean;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getUserListDialog;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getWorkflowConstantsBean;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getWorkflowService;
 import static ee.webmedia.alfresco.utils.ComponentUtil.addChildren;
 import static ee.webmedia.alfresco.utils.ComponentUtil.addFacet;
@@ -48,6 +51,7 @@ import javax.faces.event.PhaseId;
 import javax.faces.event.ValueChangeEvent;
 import javax.faces.model.SelectItem;
 
+import ee.webmedia.alfresco.common.propertysheet.workflow.TaskListContainer;
 import org.alfresco.model.ContentModel;
 import org.alfresco.service.cmr.repository.InvalidNodeRefException;
 import org.alfresco.service.cmr.repository.NodeRef;
@@ -60,9 +64,11 @@ import org.alfresco.web.ui.common.component.UIActionLink;
 import org.alfresco.web.ui.common.component.UIGenericPicker;
 import org.alfresco.web.ui.common.component.UIMenu;
 import org.alfresco.web.ui.common.component.UIPanel;
+import org.alfresco.web.ui.common.renderer.ActionLinkRenderer;
 import org.alfresco.web.ui.repo.component.UIActions;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.apache.commons.collections.Closure;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.myfaces.shared_impl.renderkit.RendererUtils;
@@ -103,6 +109,8 @@ import ee.webmedia.alfresco.workflow.service.type.WorkflowType;
  */
 public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
 
+    public static final String BEAN_NAME = "CompoundWorkflowDefinitionDialog";
+
     public static final String WORKFLOW_AFTER_CONFIRMATION_LINK = "workflow-after-confirmation-link";
     public static final String WORKFLOW_CONFIRMATION_MESSAGES = "workflow-confirmation-messages";
     private static final String WORKFLOW_PANEL_ID_PREFIX = "workflow-panel-";
@@ -110,6 +118,7 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
     private static final String COMPOUND_WORKFLOW_PANEL_GROUP_ID = "compound-workflow-panel-group";
 
     private static final long serialVersionUID = 1L;
+    public static final String COMPOUND_WORKFLOW_GROUP = "compound-workflow-group";
 
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(CompoundWorkflowDefinitionDialog.class);
 
@@ -126,7 +135,7 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
     private SelectItem[] externalReviewSearchFilters;
 
     protected CompoundWorkflow compoundWorkflow;
-    protected List<Map<String, List<TaskGroup>>> taskGroups = new ArrayList<Map<String, List<TaskGroup>>>();
+    protected TaskGroupHolder taskGroups;
 
     protected boolean fullAccess;
     protected boolean isUnsavedWorkFlow;
@@ -158,6 +167,11 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
     public String cancel() {
         resetState();
         return super.cancel();
+    }
+
+    @Override
+    public void clean() {
+        resetState();
     }
 
     @Override
@@ -199,7 +213,7 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
             QName workflowType = workflow.getType();
             if (isNotAllowedConfirmationWorkflow(workflowType) || isNotAllowedGroupAssignmentWorkflow(workflowType) || isNotAllowedOrderAssignmentWorkflow(workflowType)) {
                 MessageUtil.addErrorMessage("compoundWorkflow_workflow_not_allowed",
-                        MessageUtil.getTypeName(getWorkflowService().getWorkflowTypes().get(workflowType).getTaskType()));
+                        MessageUtil.getTypeName(getWorkflowConstantsBean().getWorkflowTypes().get(workflowType).getTaskType()));
                 return false;
             }
         }
@@ -261,13 +275,9 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
         int wfIndex = ActionUtil.getParam(event, WF_INDEX, Integer.class);
         log.debug("addWorkflowBlock: " + wfIndex + ", " + workflowType.getLocalName());
         Workflow workflow = getWorkflowService().addNewWorkflow(compoundWorkflow, workflowType, wfIndex, true);
-        List<Map<String, List<TaskGroup>>> groups = getTaskGroups();
-        HashMap<String, List<TaskGroup>> emptyGroup = new HashMap<String, List<TaskGroup>>();
-        if (groups.size() > wfIndex) { // If workflow was added in the middle
-            groups.add(wfIndex, emptyGroup);
-        } else {
-            groups.add(emptyGroup);
-        }
+        getTaskGroups().addNewWorkflowTaskGroupList(wfIndex);
+        TaskListContainer.addWorkflowTaskListPageInfo(event.getComponent(), wfIndex);
+
         if (!(compoundWorkflow instanceof CompoundWorkflowDefinition) && isCostManagerWorkflow(wfIndex)) {
             addCostManagerTasks(workflow);
         }
@@ -335,7 +345,8 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
     public void removeWorkflowBlock(ActionEvent event) {
         int wfIndex = ActionUtil.getParam(event, WF_INDEX, Integer.class);
         log.debug("removeWorkflow: " + wfIndex);
-        getTaskGroups().remove(wfIndex);
+        getTaskGroups().removeWorkflowTaskGroupList(wfIndex);
+        TaskListContainer.removeWorkflowTaskListPageInfo(event.getComponent(), wfIndex);
         compoundWorkflow.removeWorkflow(wfIndex);
         workflowBlockExpandedStatuses.remove(wfIndex);
         updatePanelGroupWithoutWorkflowBlockUpdate();
@@ -411,6 +422,23 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
         });
     }
 
+    /**
+     * Action listener for JSP.
+     */
+    public void updateTaskListPageSize(ValueChangeEvent event)
+    {
+        String newPageSize = (String) event.getNewValue();
+        if (StringUtils.isBlank(newPageSize) || !StringUtils.isNumeric(newPageSize)) {
+            return;
+        }
+
+        int size = Integer.parseInt(newPageSize);
+        if (size >= 0) {
+            getBrowseBean().setPageSizeContent(size);
+            updatePanelGroupWithoutWorkflowBlockUpdate();
+        }
+    }
+
     public boolean isShowDocumentTypes() {
         return isType(CompoundWorkflowType.DOCUMENT_WORKFLOW);
     }
@@ -420,7 +448,7 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
     }
 
     public boolean isShowCompoundWorkflowDefinitionType() {
-        return BeanHelper.getWorkflowService().isIndependentWorkflowEnabled() || BeanHelper.getVolumeService().isCaseVolumeEnabled();
+        return getWorkflowConstantsBean().isIndependentWorkflowEnabled() || getApplicationConstantsBean().isCaseVolumeEnabled();
     }
 
     public boolean isShowSigningType() {
@@ -436,27 +464,7 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
     }
 
     private void updateTaskGroupsAfterTaskRemoval(Integer wfIndex, Integer taskIndex) {
-        if (taskGroups == null || taskGroups.size() <= wfIndex) {
-            return;
-        }
-
-        Map<String, List<TaskGroup>> wfTaskGroup = taskGroups.get(wfIndex);
-        if (wfTaskGroup == null) {
-            return;
-        }
-
-        for (List<TaskGroup> taskGroupList : wfTaskGroup.values()) {
-            for (TaskGroup taskGroup : taskGroupList) {
-                List<Integer> taskIds = taskGroup.getTaskIds();
-                taskIds.remove(taskIndex);
-                for (int i = 0; i < taskIds.size(); i++) {
-                    Integer taskId = taskIds.get(i);
-                    if (taskId > taskIndex) {
-                        taskIds.set(i, taskId - 1);
-                    }
-                }
-            }
-        }
+        getTaskGroups().removeTaskFromGroup(wfIndex, taskIndex);
     }
 
     public TaskGroup findTaskGroup(ActionEvent event) {
@@ -464,14 +472,7 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
         String groupId = ActionUtil.getParam(event, "groupId");
         Integer wfIndex = ActionUtil.getParam(event, WF_INDEX, Integer.class);
 
-        for (TaskGroup group : getTaskGroups().get(wfIndex).get(groupName)) {
-            if (!group.getGroupId().equals(groupId)) {
-                continue;
-            }
-            return group;
-        }
-
-        return null;
+        return getTaskGroups().getTaskGroup(wfIndex, groupName, groupId);
     }
 
     // merge this into UserContactGroupSearchBean#searchAll
@@ -545,7 +546,7 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
         } else {
             params.setFilterIndex(UserContactGroupSearchBean.CONTACT_GROUPS_FILTER);
         }
-        if (getWorkflowService().isInternalTesting()) {
+        if (getApplicationConstantsBean().isInternalTesting()) {
             return executeOwnerSearch(params, true, true, true, null);
         }
         return executeOwnerSearch(params, true, true, true, getDvkService().getInstitutionCode());
@@ -854,12 +855,12 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
     protected Map<String, QName> getSortedTypes() {
         if (sortedTypes == null) {
             sortedTypes = new TreeMap<String, QName>();
-            Map<QName, WorkflowType> workflowTypes = getWorkflowService().getWorkflowTypes();
+            Map<QName, WorkflowType> workflowTypes = getWorkflowConstantsBean().getWorkflowTypes();
             for (QName tmpType : workflowTypes.keySet()) {
                 if (tmpType.equals(WorkflowSpecificModel.Types.DUE_DATE_EXTENSION_WORKFLOW)) {
                     continue;
                 }
-                if (tmpType.equals(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_WORKFLOW) && !getWorkflowService().externalReviewWorkflowEnabled()) {
+                if (tmpType.equals(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_WORKFLOW) && !getWorkflowConstantsBean().isExternalReviewWorkflowEnabled()) {
                     continue;
                 }
                 if (isNotAllowedConfirmationWorkflow(tmpType)) {
@@ -879,15 +880,15 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
     }
 
     protected boolean isNotAllowedConfirmationWorkflow(QName tmpType) {
-        return tmpType.equals(WorkflowSpecificModel.Types.CONFIRMATION_WORKFLOW) && !getWorkflowService().isConfirmationWorkflowEnabled();
+        return tmpType.equals(WorkflowSpecificModel.Types.CONFIRMATION_WORKFLOW) && !getWorkflowConstantsBean().isConfirmationWorkflowEnabled();
     }
 
     protected boolean isNotAllowedOrderAssignmentWorkflow(QName tmpType) {
-        return tmpType.equals(WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_WORKFLOW) && !getWorkflowService().isOrderAssignmentWorkflowEnabled();
+        return tmpType.equals(WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_WORKFLOW) && !getWorkflowConstantsBean().isOrderAssignmentWorkflowEnabled();
     }
 
     protected boolean isNotAllowedGroupAssignmentWorkflow(QName tmpType) {
-        return tmpType.equals(WorkflowSpecificModel.Types.GROUP_ASSIGNMENT_WORKFLOW) && !getWorkflowService().isGroupAssignmentWorkflowEnabled();
+        return tmpType.equals(WorkflowSpecificModel.Types.GROUP_ASSIGNMENT_WORKFLOW) && !getWorkflowConstantsBean().isGroupAssignmentWorkflowEnabled();
     }
 
     protected String getConfigArea() {
@@ -902,7 +903,7 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
         updatePanelGroup(null, null, true, true, null, true);
     }
 
-    protected void updatePanelGroupWithoutWorkflowBlockUpdate() {
+    public void updatePanelGroupWithoutWorkflowBlockUpdate() {
         updatePanelGroup(null, null, true, true, null, false);
     }
 
@@ -931,9 +932,17 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
         }
 
         // render every workflow block
-        int wfCounter = 1;
         boolean firstLoading = taskGroups == null; // Check if we are loading pre-saved definition, where document registration WFs are not processed by TaskListGenerator
-        for (Workflow block : compoundWorkflow.getWorkflows()) {
+        int wfCounter = 1;
+        if (firstLoading) {
+            getTaskGroups().addNewWorkflowTaskGroupList(0);
+        }
+        List<Workflow> workflows = compoundWorkflow.getWorkflows();
+        int workflowCount = workflows.size();
+        if (workflowCount != CollectionUtils.size(workflowBlockExpandedStatuses)) {
+            initExpandedStatuses();
+        }
+        for (Workflow block : workflows) {
             // block actions
             if (WorkflowUtil.isGeneratedByDelegation(block)) {
                 wfCounter++;
@@ -942,7 +951,7 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
             HtmlPanelGroup facetGroup = (HtmlPanelGroup) application.createComponent(HtmlPanelGroup.COMPONENT_TYPE);
             facetGroup.setId("action-group-" + wfCounter);
             if (firstLoading) {
-                getTaskGroups().add(new HashMap<String, List<TaskGroup>>());
+                getTaskGroups().addNewWorkflowTaskGroupList(wfCounter);
             }
             if (!dontShowAddActions && fullAccess && showAddActions(wfCounter)) {
                 // block add workflow actions
@@ -965,6 +974,9 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
                 deleteLink.setValue(MessageUtil.getMessage("workflow_compound_remove_block"));
                 deleteLink.setActionListener(application.createMethodBinding("#{DialogManager.bean.removeWorkflowBlock}", UIActions.ACTION_CLASS_ARGS));
                 deleteLink.setShowLink(false);
+                if (workflowCount <= 1) {
+                    putAttribute(deleteLink, ActionLinkRenderer.AJAX_NOT_ALLOWED, Boolean.TRUE);
+                }
                 addChildren(deleteActions, deleteLink);
 
                 addChildren(deleteLink, createUIParam(WF_INDEX, wfCounter - 1, application));
@@ -1203,9 +1215,7 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
         compoundWorkflowDefinitionInput.setValueBinding("value", application.createValueBinding("#{CompoundWorkflowDialog.newUserCompoundWorkflowDefinition}"));
         addChildren(saveasGrid, compoundWorkflowDefinitionInput);
 
-        UIOutput dummy = (UIOutput) application.createComponent(UIOutput.COMPONENT_TYPE);
-        dummy.setValue("");
-        addChildren(saveasGrid, dummy);
+        addChildren(saveasGrid, ComponentUtil.createSpacer(application));
 
         final HtmlPanelGrid saveasButtonGrid = (HtmlPanelGrid) application.createComponent(HtmlPanelGrid.COMPONENT_TYPE);
         saveasButtonGrid.setId("compound-workflow-saveas-button-grid");
@@ -1465,15 +1475,14 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
         }
     }
 
-    public List<Map<String, List<TaskGroup>>> getTaskGroups() {
+    public TaskGroupHolder getTaskGroups() {
         if (taskGroups == null) {
-            taskGroups = new ArrayList<Map<String, List<TaskGroup>>>();
+            taskGroups = new TaskGroupHolder();
         }
         return taskGroups;
     }
 
-    public void setTaskGroups(List<Map<String, List<TaskGroup>>> taskGroups) {
+    public void setTaskGroups(TaskGroupHolder taskGroups) {
         this.taskGroups = taskGroups;
     }
-
 }

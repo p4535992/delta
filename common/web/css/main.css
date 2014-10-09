@@ -933,7 +933,8 @@ td.actions-column * {
 	   top: -2px;
 	   margin-right: 20px;
 	}
-	
+
+        .task-list-pager img,
 		.pager img {
 		   vertical-align: -4px;
 		}
@@ -1340,4 +1341,13 @@ input[type="checkbox"] {
 
 table.generic-picker td {
 	padding: 4px 0;
+}
+
+.static {
+    position: static !important;
+}
+
+.task-list-pager-wrapper {
+    float: right;
+    margin: 2px 20px 0 0;
 }

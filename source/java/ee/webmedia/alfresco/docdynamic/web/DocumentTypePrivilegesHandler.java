@@ -13,6 +13,7 @@ import java.util.Set;
 
 import javax.faces.context.FacesContext;
 
+import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
 import org.apache.commons.lang.StringUtils;
@@ -22,7 +23,6 @@ import ee.webmedia.alfresco.classificator.enums.AccessRestriction;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
-import ee.webmedia.alfresco.document.web.evaluator.IsOwnerEvaluator;
 import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.privilege.model.UserPrivileges;
 import ee.webmedia.alfresco.privilege.service.PrivilegeUtil;
@@ -39,7 +39,6 @@ import ee.webmedia.alfresco.workflow.service.WorkflowService;
  */
 public class DocumentTypePrivilegesHandler extends AbstractInheritingPrivilegesHandler {
     private static final long serialVersionUID = 1L;
-    private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(DocumentTypePrivilegesHandler.class);
 
     protected DocumentTypePrivilegesHandler() {
         this(DocumentCommonModel.Types.DOCUMENT, Arrays.asList(Privilege.VIEW_DOCUMENT_META_DATA, Privilege.VIEW_DOCUMENT_FILES, Privilege.EDIT_DOCUMENT));
@@ -56,7 +55,7 @@ public class DocumentTypePrivilegesHandler extends AbstractInheritingPrivilegesH
 
     @Override
     public boolean isEditable() {
-        return super.isEditable() || new IsOwnerEvaluator().evaluate(state.getManageableRef());
+        return super.isEditable() || AuthenticationUtil.getRunAsUser().equals(getNodeService().getProperty(state.getManageableRef(), DocumentCommonModel.Props.OWNER_ID));
     }
 
     @Override

@@ -10,7 +10,7 @@
             <action-listener>#{VolumeDetailsDialog.addNewVolume}</action-listener>
             <action>dialog:volumeDetailsDialog</action>
             <params>
-               <param name="seriesNodeRef">#{VolumeListDialog.parent.node.nodeRef}</param>
+               <param name="seriesNodeRef">#{VolumeListDialog.parent.nodeRef}</param>
             </params>
          </action>
 

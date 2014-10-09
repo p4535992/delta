@@ -19,6 +19,7 @@ import ee.webmedia.alfresco.utils.MessageData;
 public interface DocumentAdminService {
 
     String BEAN_NAME = "DocumentAdminService";
+    String NON_TX_BEAN_NAME = "documentAdminService";
 
     void registerForbiddenFieldId(String forbiddenFieldId);
 
@@ -43,9 +44,11 @@ public interface DocumentAdminService {
 
     DocumentType getDocumentType(String id, DynTypeLoadEffort effort);
 
-    Pair<DocumentType, DocumentTypeVersion> getDocumentTypeAndVersion(String docTypeId, Integer docTypeVersionNr);
+    /** If you intend to modify the returned object in any whay, then cloneResult must be set to true */
+    Pair<DocumentType, DocumentTypeVersion> getDocumentTypeAndVersion(String docTypeId, Integer docTypeVersionNr, boolean cloneResult);
 
-    Pair<CaseFileType, DocumentTypeVersion> getCaseFileTypeAndVersion(String caseFileTypeId, Integer docTypeVersionNr);
+    /** If you intend to modify the returned object in any whay, then cloneResult must be set to true */
+    Pair<CaseFileType, DocumentTypeVersion> getCaseFileTypeAndVersion(String caseFileTypeId, Integer docTypeVersionNr, boolean cloneResult);
 
     <T> T getTypeProperty(NodeRef docTypeRef, QName property, Class<T> returnClass);
 
@@ -64,7 +67,7 @@ public interface DocumentAdminService {
 
     /**
      * Update properties or save new document type.
-     * 
+     *
      * @param documentType - document type to be saved or updated to the repository
      * @return saved instance that was first created by cloning given object <br>
      *         and message if needed
@@ -73,7 +76,7 @@ public interface DocumentAdminService {
 
     /**
      * Returns {@link DynamicType} with given NodeRef.
-     * 
+     *
      * @param <D> subclass of {@link DynamicType}
      * @param dynTypeClass - subclass of DynamicType that this returnable object is expected to be
      * @param dynTypeRef - object reference
@@ -108,7 +111,7 @@ public interface DocumentAdminService {
 
     List<FieldDefinition> getFieldDefinitions(List<String> fieldDefinitionIds);
 
-    FieldDefinition getFieldDefinition(String fieldId);
+    UnmodifiableFieldDefinition getFieldDefinition(String fieldId);
 
     boolean isFieldDefinitionExisting(String fieldIdLocalname);
 
@@ -147,7 +150,7 @@ public interface DocumentAdminService {
      * Create systematic document types. Document types with specified id-s must not exist before. <br/>
      * <strong>NB!</strong> This method may only be called when no other threads are using this service (e.g. from bootstrap), because it temporarily modifies service-wide
      * locations for fieldGroupDefinitions and fieldDefinitions.
-     * 
+     *
      * @param systematicDocumentTypes
      * @param fieldGroupDefinitionsTmp alternate location for fieldGroupDefinitions
      * @param fieldDefinitionsTmp alternate location for fieldDefinitions
@@ -156,9 +159,9 @@ public interface DocumentAdminService {
             Map<String /* documentTypeId */, Pair<String /* documentTypeName */, Pair<Set<String> /* fieldGroupNames */, Set<QName> /* fieldGroupNames */>>> systematicDocumentTypes,
             NodeRef fieldGroupDefinitionsTmp, NodeRef fieldDefinitionsTmp);
 
-    List<FieldDefinition> getSearchableDocumentFieldDefinitions();
+    List<UnmodifiableFieldDefinition> getSearchableDocumentFieldDefinitions();
 
-    List<FieldDefinition> getSearchableVolumeFieldDefinitions();
+    List<UnmodifiableFieldDefinition> getSearchableVolumeFieldDefinitions();
 
     void registerGroupShowShowInTwoColumns(Set<String> originalFieldIds);
 
@@ -247,7 +250,7 @@ public interface DocumentAdminService {
 
     CaseFileType getCaseFileType(String id, DynTypeLoadEffort effort);
 
-    String getCaseFileTypeName(Node caseFile);
+    String getCaseFileTypeName(String caseFileTypeId);
 
     List<FieldDefinition> getVolumeFieldDefinitions();
 

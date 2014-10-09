@@ -13,15 +13,19 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
+import org.alfresco.repo.cache.SimpleCache;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.namespace.QName;
-import org.alfresco.service.namespace.RegexQNamePattern;
 import org.alfresco.util.ISO9075;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.collections.comparators.TransformingComparator;
@@ -38,8 +42,8 @@ import ee.webmedia.alfresco.classificator.model.ClassificatorExportVO;
 import ee.webmedia.alfresco.classificator.model.ClassificatorExportVO.ClassificatorValueState;
 import ee.webmedia.alfresco.classificator.model.ClassificatorModel;
 import ee.webmedia.alfresco.classificator.model.ClassificatorValue;
+import ee.webmedia.alfresco.common.service.BulkLoadNodeService;
 import ee.webmedia.alfresco.common.service.GeneralService;
-import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
 import ee.webmedia.alfresco.utils.ComparableTransformer;
@@ -54,12 +58,14 @@ public class ClassificatorServiceImpl implements ClassificatorService {
     public static BeanPropertyMapper<Classificator> classificatorBeanPropertyMapper;
     private static BeanPropertyMapper<ClassificatorValue> classificatorValueBeanPropertyMapper;
     private static final Comparator<ClassificatorValue> CLASSIFICATOR_VALUES_ALFABETIC_ORDER_COMPARATOR;
+    private static final Set<QName> CLASSIFICATOR_VALUE_TYPE_QNAME = new HashSet<>();
     private DocumentSearchService documentSearchService;
+    private BulkLoadNodeService bulkLoadNodeService;
     static {
         classificatorBeanPropertyMapper = BeanPropertyMapper.newInstance(Classificator.class);
         classificatorValueBeanPropertyMapper = BeanPropertyMapper.newInstance(ClassificatorValue.class);
 
-        RuleBasedCollator et_EECollator = (RuleBasedCollator) AppConstants.DEFAULT_COLLATOR;
+        RuleBasedCollator et_EECollator = (RuleBasedCollator) AppConstants.getNewCollatorInstance();
         @SuppressWarnings("unchecked")
         Comparator<ClassificatorValue> tmp = new TransformingComparator(new ComparableTransformer<ClassificatorValue>() {
             @Override
@@ -68,34 +74,34 @@ public class ClassificatorServiceImpl implements ClassificatorService {
             }
         }, et_EECollator);
         CLASSIFICATOR_VALUES_ALFABETIC_ORDER_COMPARATOR = tmp;
+        CLASSIFICATOR_VALUE_TYPE_QNAME.add(ClassificatorModel.Types.CLASSIFICATOR_VALUE);
     }
 
     private GeneralService generalService;
     private NodeService nodeService;
-    private String classificatorsPath;
+    private SimpleCache<String, Classificator> classificatorsCache;
+    private static NodeRef classificatorRoot;
 
     @Override
     public List<Classificator> getAllClassificators() {
-        NodeRef root = generalService.getNodeRef(classificatorsPath);
-        List<ChildAssociationRef> childRefs = nodeService.getChildAssocs(root);
-        List<Classificator> classificators = new ArrayList<Classificator>(childRefs.size());
-        for (ChildAssociationRef childRef : childRefs) {
-            Classificator cl = new Classificator();
-            cl.setNodeRef(childRef.getChildRef());
-            classificatorBeanPropertyMapper.toObject(nodeService.getProperties(childRef.getChildRef()), cl);
-            classificators.add(cl);
+
+        Map<String, NodeRef> namesAndNodeRefs = bulkLoadNodeService.loadChildElementsNodeRefs(getClassificatorRoot(), ClassificatorModel.Props.CLASSIFICATOR_NAME,
+                ClassificatorModel.Types.CLASSIFICATOR);
+        List<Classificator> allClassificators = new ArrayList<>();
+        for (Entry<String, NodeRef> classif : namesAndNodeRefs.entrySet()) {
+            allClassificators.add(getClassificator(classif.getKey(), classif.getValue()));
         }
         if (log.isDebugEnabled()) {
-            log.debug("Classificators found: " + classificators);
+            log.debug("Classificators found: " + allClassificators);
         }
-        return classificators;
+        return allClassificators;
     }
 
     private List<ClassificatorExportVO> getAllClassificatorsToExport() {
         final List<Classificator> allClassificators = getAllClassificators();
-        final List<ClassificatorExportVO> exportClassificators = new ArrayList<ClassificatorExportVO>(allClassificators.size());
+        final List<ClassificatorExportVO> exportClassificators = new ArrayList<>(allClassificators.size());
         for (Classificator classificator : allClassificators) {
-            final List<ClassificatorValue> allClassificatorValues = getAllClassificatorValues(classificator);
+            final List<ClassificatorValue> allClassificatorValues = classificator.getValues();
             final ClassificatorExportVO clExport = new ClassificatorExportVO(classificator, allClassificatorValues);
             exportClassificators.add(clExport);
         }
@@ -105,10 +111,8 @@ public class ClassificatorServiceImpl implements ClassificatorService {
     @Override
     public void exportClassificators(Writer writer) {
         final List<ClassificatorExportVO> allClassificatorsToExport = getAllClassificatorsToExport();
-        // final List<Classificator> allClassificatorsToExport = getAllClassificatorsToExport();
         XStream xstream = new XStream();
         xstream.processAnnotations(ClassificatorExportVO.class);
-        // xstream.processAnnotations(Classificator.class);
         xstream.processAnnotations(ClassificatorValue.class);
         xstream.toXML(allClassificatorsToExport, writer);
     }
@@ -157,36 +161,44 @@ public class ClassificatorServiceImpl implements ClassificatorService {
     }
 
     @Override
-    public List<Classificator> getClassificatorsByNodeRefs(List<NodeRef> classifRefs) {
-        List<Classificator> classificators = new ArrayList<Classificator>(classifRefs.size());
-        for (NodeRef classifRef : classifRefs) {
-            classificators.add(getClassificatorByNodeRef(classifRef));
-        }
-        return classificators;
-    }
-
-    @Override
-    public Classificator getClassificatorByNodeRef(NodeRef nodeRef) {
-        Classificator cl = new Classificator();
-        cl.setNodeRef(nodeRef);
-        classificatorBeanPropertyMapper.toObject(nodeService.getProperties(nodeRef), cl);
-        return cl;
-    }
-
-    @Override
     public Classificator getClassificatorByName(String name) {
-        return getClassificatorByNodeRef(getClassificatorRefByName(name));
+        return getClassificator(name);
     }
 
-    private NodeRef getClassificatorRefByName(String name) {
-        String xpath = getClassificatorPathByName(name);
-        NodeRef classifNodeRef = generalService.getNodeRef(xpath);
-        Assert.notNull(classifNodeRef, "Unknown classificator '" + name + "'");
-        return classifNodeRef;
+    @Override
+    public List<ClassificatorValue> getAllClassificatorValues(String classificator) {
+        return getClassificator(classificator).getValues();
     }
 
-    private String getClassificatorPathByName(String classificatorName) {
-        return classificatorsPath + "/" + getAssocName(classificatorName);
+    private Classificator getClassificator(String name) {
+        return getClassificator(name, null);
+    }
+
+    private Classificator getClassificator(String name, NodeRef nodeRef) {
+        Classificator classif = classificatorsCache.get(name);
+        if (classif == null) {
+            if (nodeRef != null) {
+                classif = createClassificator(nodeRef);
+            } else {
+                List<ChildAssociationRef> children = nodeService.getChildAssocs(getClassificatorRoot(), ClassificatorModel.Associations.CLASSIFICATOR, getAssocName(name));
+                if (children != null && children.size() == 1) {
+                    nodeRef = children.get(0).getChildRef();
+                    classif = createClassificator(nodeRef);
+                } else {
+                    throw new RuntimeException("Unknown classificator: " + name);
+                }
+            }
+        }
+        return classif;
+    }
+
+    public Classificator createClassificator(NodeRef nodeRef) {
+        Classificator classif = new Classificator();
+        classif.setNodeRef(nodeRef);
+        classificatorBeanPropertyMapper.toObject(nodeService.getProperties(nodeRef), classif);
+        classif.addClassificatorValues(loadAllClassificatorValuesFromDB(nodeRef));
+        addToCache(classif);
+        return classif;
     }
 
     private QName getAssocName(String classificatorName) {
@@ -194,44 +206,9 @@ public class ClassificatorServiceImpl implements ClassificatorService {
     }
 
     @Override
-    public List<ClassificatorValue> getAllClassificatorValues(Classificator classificator) {
-        return getAllClassificatorValues(classificator.getNodeRef());
-    }
-
-    @Override
-    public List<ClassificatorValue> getAllClassificatorValues(String classificator) {
-        return getAllClassificatorValues(getClassificatorRefByName(classificator));
-    }
-
-    @Override
-    public String getClassificatorValuesValueData(String classificatorName, String classificatorValueName) {
-        if (StringUtils.isBlank(classificatorValueName) || StringUtils.isBlank(classificatorName)) {
-            return null;
-        }
-        List<ClassificatorValue> classificatorValues = getAllClassificatorValues(getClassificatorRefByName(classificatorName));
-        for (ClassificatorValue classificatorValue : classificatorValues) {
-            if (classificatorValueName.equals(classificatorValue.getValueName())) {
-                return classificatorValue.getValueData();
-            }
-        }
-        return null;
-    }
-
-    private List<ClassificatorValue> getClassificatorValuesByNodeRefs(List<NodeRef> clValueNodeRefs) {
-        List<ClassificatorValue> classificatorValues = new ArrayList<ClassificatorValue>(clValueNodeRefs.size());
-        for (NodeRef valueRef : clValueNodeRefs) {
-            ClassificatorValue clv = new ClassificatorValue();
-            clv.setNodeRef(valueRef);
-            classificatorValueBeanPropertyMapper.toObject(nodeService.getProperties(valueRef), clv);
-            classificatorValues.add(clv);
-        }
-        return classificatorValues;
-    }
-
-    private List<ClassificatorValue> getAllClassificatorValues(final NodeRef classificatorRef) {
-        List<ChildAssociationRef> childRefs = nodeService.getChildAssocs(classificatorRef, ClassificatorModel.Associations.CLASSIFICATOR_VALUE,
-                RegexQNamePattern.MATCH_ALL);
-        List<ClassificatorValue> classificatorValues = new ArrayList<ClassificatorValue>(childRefs.size());
+    public List<ClassificatorValue> loadAllClassificatorValuesFromDB(final NodeRef classificatorRef) {
+        List<ChildAssociationRef> childRefs = nodeService.getChildAssocs(classificatorRef, CLASSIFICATOR_VALUE_TYPE_QNAME);
+        List<ClassificatorValue> classificatorValues = new ArrayList<>(childRefs.size());
         for (ChildAssociationRef childRef : childRefs) {
             ClassificatorValue clv = new ClassificatorValue();
             clv.setNodeRef(childRef.getChildRef());
@@ -245,9 +222,24 @@ public class ClassificatorServiceImpl implements ClassificatorService {
     }
 
     @Override
+    public String getClassificatorValuesValueData(String classificatorName, String classificatorValueName) {
+        if (StringUtils.isBlank(classificatorValueName) || StringUtils.isBlank(classificatorName)) {
+            return null;
+        }
+        Classificator c = getClassificator(classificatorName);
+        List<ClassificatorValue> values = c.getValues();
+        for (ClassificatorValue classificatorValue : values) {
+            if (classificatorValueName.equals(classificatorValue.getValueName())) {
+                return classificatorValue.getValueData();
+            }
+        }
+        return null;
+    }
+
+    @Override
     public List<ClassificatorValue> getActiveClassificatorValues(Classificator classificator) {
-        List<ClassificatorValue> allClassificatorValues = getAllClassificatorValues(classificator);
-        List<ClassificatorValue> activeClassificatorValues = new ArrayList<ClassificatorValue>(allClassificatorValues.size());
+        List<ClassificatorValue> allClassificatorValues = classificator.getValues();
+        List<ClassificatorValue> activeClassificatorValues = new ArrayList<>(allClassificatorValues.size());
         for (ClassificatorValue classificatorValue : allClassificatorValues) {
             if (classificatorValue.isActive()) {
                 activeClassificatorValues.add(classificatorValue);
@@ -257,10 +249,23 @@ public class ClassificatorServiceImpl implements ClassificatorService {
     }
 
     @Override
+    public final void addToClassificatorsCache(Classificator cl) {
+        addToCache(cl);
+    }
+
+    private void addToCache(Classificator cl) {
+        classificatorsCache.remove(cl.getName());
+        classificatorsCache.put(cl.getName(), cl);
+    }
+
+    @Override
     public void removeClassificatorValue(Classificator classificator, ClassificatorValue classificatorValue) {
-        nodeService.removeChild(classificator.getNodeRef(), classificatorValue.getNodeRef());
+        NodeRef classifRef = classificator.getNodeRef();
+        NodeRef valueNodeRef = classificatorValue.getNodeRef();
+        nodeService.removeChild(classifRef, valueNodeRef);
+        removeClassificatorValueFromCache(classificator, valueNodeRef);
         if (log.isDebugEnabled()) {
-            log.debug("Node (" + classificatorValue.getNodeRef() + ") removed: " + classificatorValue);
+            log.debug("Node (" + valueNodeRef + ") removed: " + classificatorValue);
         }
     }
 
@@ -273,9 +278,15 @@ public class ClassificatorServiceImpl implements ClassificatorService {
     @Override
     public void removeClassificatorValueByNodeRef(Classificator classificator, NodeRef nodeRef) {
         nodeService.removeChild(classificator.getNodeRef(), nodeRef);
+        removeClassificatorValueFromCache(classificator, nodeRef);
         if (log.isDebugEnabled()) {
             log.debug("Node (" + nodeRef + ") removed.");
         }
+    }
+
+    private void removeClassificatorValueFromCache(Classificator classificator, NodeRef nodeRef) {
+        classificator.removeClassificatorValue(nodeRef);
+        addToCache(classificator);
     }
 
     @Override
@@ -295,18 +306,24 @@ public class ClassificatorServiceImpl implements ClassificatorService {
 
     @Override
     public void deleteClassificator(Classificator classificator) {
-        Assert.isTrue(!isClassificatorUsed(classificator.getName()), "Can't delete - classificator is used: " + classificator);
+        String name = classificator.getName();
+        Assert.isTrue(!isClassificatorUsed(name), "Can't delete - classificator is used: " + classificator);
         nodeService.deleteNode(classificator.getNodeRef());
+        classificatorsCache.remove(name);
     }
 
     @Override
     public void addClassificatorValue(Classificator classificator, ClassificatorValue classificatorValue) {
-        ChildAssociationRef assoc = nodeService.createNode(classificator.getNodeRef(), ClassificatorModel.Associations.CLASSIFICATOR_VALUE,
+        NodeRef classificatorRef = classificator.getNodeRef();
+        NodeRef valueRef = nodeService.createNode(classificatorRef, ClassificatorModel.Associations.CLASSIFICATOR_VALUE,
                 ClassificatorModel.Associations.CLASSIFICATOR_VALUE,
                 ClassificatorModel.Types.CLASSIFICATOR_VALUE,
-                classificatorValueBeanPropertyMapper.toProperties(classificatorValue));
+                classificatorValueBeanPropertyMapper.toProperties(classificatorValue)).getChildRef();
+        classificatorValue.setNodeRef(valueRef);
+        classificator.addClassificatorValue(classificatorValue);
+        addToCache(classificator);
         if (log.isDebugEnabled()) {
-            log.debug("Node (" + assoc.getChildRef() + ") added: " + classificatorValue);
+            log.debug("Node (" + valueRef + ") added: " + classificatorValue);
         }
     }
 
@@ -321,6 +338,7 @@ public class ClassificatorServiceImpl implements ClassificatorService {
 
             List<ClassificatorValue> classificatorValues = newClassificator.getClassificatorValues();
             newClassificator.setNodeRef(classificatorRef);
+            addToCache(newClassificator.toClassificator());
             for (ClassificatorValue classificatorValue : classificatorValues) {
                 addClassificatorValue(newClassificator, classificatorValue);
             }
@@ -329,7 +347,7 @@ public class ClassificatorServiceImpl implements ClassificatorService {
 
     @Override
     public void updateClassificatorValues(Classificator classificator, Node classifNode, Map<String, ClassificatorValue> originalValues
-            , List<ClassificatorValue> classificatorValues, List<ClassificatorValue> addedClassificators) {
+            , List<ClassificatorValue> classificatorValues, List<ClassificatorValue> addedClassificatorValues) {
         Map<String, Object> properties = classifNode.getProperties();
         classificatorBeanPropertyMapper.toObject(RepoUtil.toQNameProperties(properties), classificator);
         NodeRef classificatorRef = classificator.getNodeRef();
@@ -350,8 +368,8 @@ public class ClassificatorServiceImpl implements ClassificatorService {
             }
         }
         // save the added new value
-        if (addedClassificators != null && !addedClassificators.isEmpty()) {
-            for (ClassificatorValue add : addedClassificators) {
+        if (addedClassificatorValues != null && !addedClassificatorValues.isEmpty()) {
+            for (ClassificatorValue add : addedClassificatorValues) {
                 addClassificatorValue(classificator, add);
                 if (log.isDebugEnabled()) {
                     log.debug("New classificator value (" + add.getValueName() + ") saved.");
@@ -365,7 +383,7 @@ public class ClassificatorServiceImpl implements ClassificatorService {
         if (StringUtils.isBlank(classificatorValueName) || StringUtils.isBlank(classificatorName)) {
             return false;
         }
-        List<ClassificatorValue> classificatorValues = getAllClassificatorValues(getClassificatorRefByName(classificatorName));
+        List<ClassificatorValue> classificatorValues = getClassificator(classificatorName).getValues();
         for (ClassificatorValue classificatorValue : classificatorValues) {
             if (classificatorValueName.equals(classificatorValue.getValueName())) {
                 return true;
@@ -405,25 +423,38 @@ public class ClassificatorServiceImpl implements ClassificatorService {
         this.documentSearchService = documentSearchService;
     }
 
-    public void setClassificatorsPath(String classificatorsPath) {
-        this.classificatorsPath = classificatorsPath;
+    public void setClassificatorsCache(SimpleCache<String, Classificator> classificatorsCache) {
+        this.classificatorsCache = classificatorsCache;
+    }
+
+    public void setBulkLoadNodeService(BulkLoadNodeService bulkLoadNodeService) {
+        this.bulkLoadNodeService = bulkLoadNodeService;
+    }
+
+    private NodeRef getClassificatorRoot() {
+        if (classificatorRoot == null) {
+            classificatorRoot = generalService.getNodeRef(ClassificatorModel.Repo.CLASSIFICATORS_SPACE);
+        }
+        return classificatorRoot;
     }
 
     // END: getters / setters
-    private NodeRef getClassificatorRoot() {
-        return generalService.getNodeRef(ClassificatorModel.Repo.CLASSIFICATORS_SPACE);
-    }
 
     @Override
-    public NodeRef saveClassificatorNode(Node classificatorNode) {
+    public String saveClassificatorNode(Node classificatorNode) {
         Map<QName, Serializable> propsMap = RepoUtil.toQNameProperties(classificatorNode.getProperties());
         String newName = (String) propsMap.get(ClassificatorModel.Props.CLASSIFICATOR_NAME);
         validateNewClassifName(newName);
-        return nodeService.createNode(getClassificatorRoot(),
+        NodeRef newClassifRef = nodeService.createNode(getClassificatorRoot(),
                 ClassificatorModel.Associations.CLASSIFICATOR,
                 getAssocName(newName),
                 ClassificatorModel.Types.CLASSIFICATOR,
                 propsMap).getChildRef();
+        Classificator cl = new Classificator();
+        cl.setNodeRef(newClassifRef);
+        classificatorBeanPropertyMapper.toObject(nodeService.getProperties(newClassifRef), cl);
+        addToCache(cl);
+        return cl.getName();
     }
 
     private void validateNewClassifName(String newName) {
@@ -433,23 +464,38 @@ public class ClassificatorServiceImpl implements ClassificatorService {
         if (!newName.matches("[A-Za-z]*")) {
             throw new UnableToPerformException("classificators_classificator_name_wrong");
         }
-        List<Classificator> classificators = getAllClassificators();
-        for (Classificator classificator : classificators) {
-            if (StringUtils.equalsIgnoreCase(newName, classificator.getName())) {
-                throw new UnableToPerformException("classificators_classificator_name_exists");
-            }
+        if (classificatorsCache.contains(newName)) {
+            throw new UnableToPerformException("classificators_classificator_name_exists");
         }
     }
 
     @Override
     public List<Classificator> search(String searchCriteria) {
-        return getClassificatorsByNodeRefs(BeanHelper.getDocumentSearchService().simpleSearch(searchCriteria, null, ClassificatorModel.Types.CLASSIFICATOR,
-                ClassificatorModel.Props.CLASSIFICATOR_NAME, ClassificatorModel.Props.DESCRIPTION));
+        List<Classificator> filteredValues = new ArrayList<>();
+        Pattern pattern = Pattern.compile(searchCriteria, Pattern.CASE_INSENSITIVE);
+        Matcher matcher = pattern.matcher("");
+        for (Classificator classif : getAllClassificators()) {
+            String name = classif.getName();
+            String description = classif.getDescription();
+            if (matcher.reset(name).find() || description != null && matcher.reset(description).find()) {
+                filteredValues.add(classif);
+            }
+        }
+        return filteredValues;
     }
 
     @Override
-    public List<ClassificatorValue> searchValues(String searchCriteria, NodeRef classifNodeRef) {
-        return getClassificatorValuesByNodeRefs(BeanHelper.getDocumentSearchService().simpleSearch(searchCriteria, classifNodeRef, ClassificatorModel.Types.CLASSIFICATOR_VALUE,
-                ClassificatorModel.Props.CL_VALUE_NAME));
+    public List<ClassificatorValue> searchValues(String searchCriteria, String classifName) {
+        List<ClassificatorValue> filteredValues = new ArrayList<>();
+        List<ClassificatorValue> allValues = getClassificator(classifName).getValues();
+        Pattern pattern = Pattern.compile(searchCriteria, Pattern.CASE_INSENSITIVE);
+        Matcher matcher = pattern.matcher("");
+        for (ClassificatorValue value : allValues) {
+            String valueName = value.getValueName();
+            if (valueName != null && matcher.reset(valueName).find()) {
+                filteredValues.add(value);
+            }
+        }
+        return filteredValues;
     }
 }

@@ -564,7 +564,7 @@ function webdavOpen(url) {
    if (showDoc == true) { // If we weren't able to open with ActiveX, check for OpenOffice WebDAV protocol and try to lock/open manually
       var openDocumentCallback = function(url, readOnly, refresh) {
          if (readOnly) {
-            webdavOpenReadOnly(url, false);
+            webdavOpenReadOnly(url);
          } else {
             window.open(url, '_blank');
             if (!refresh) {
@@ -586,7 +586,7 @@ function webdavOpen(url) {
       var protocol = "vnd.sun.star.webdav";
       if (url.substring(0, protocol.length) === protocol) { // Check if we are dealing with OpenOffice webdav
          if (!confirm("Kas soovid faili avada muutmiseks ja lukustada selle enda nimele 12 tunniks? NB! Pärast faili sulgemist vajuta Deltas nupule \"Vabasta lukk\"!")) {
-            webdavOpenReadOnly(url, false);
+            webdavOpenReadOnly(url);
             return false;
          }
 
@@ -633,7 +633,7 @@ var userMessageChecker = {
  * Open file in read-only mode (TODO: with webdav, if file is office document)
  * @return false
  */
-function webdavOpenReadOnly(url, omitConfirmation) {
+function webdavOpenReadOnly(url) {
    var uri = getContextPath() + '/ajax/invoke/AjaxBean.getDownloadUrl?path=' + url;
 
    $jQ.ajax({
@@ -642,9 +642,7 @@ function webdavOpenReadOnly(url, omitConfirmation) {
       data: 'url=' + url, // path is already escaped, so disable jquery escaping by giving it a string directly
       mode: 'queue',
       success: function openForDownload(responseText) {
-        if (omitConfirmation || confirm(getTranslation("webdav_noPermissionsDownloadConfirm"))) {
-           window.open(responseText, '_blank');// regular file saveAs/open by downloading it to HD
-        }
+         window.open(responseText, '_blank');// regular file saveAs/open by downloading it to HD
       },
       error: ajaxError,
       datatype: 'html'
@@ -1104,35 +1102,22 @@ function handleAjaxViewStateError(responseText) {
 // There is no concurrency in JS. One thread per page. Event handling is based on a queue.
 // http://stackoverflow.com/questions/2078235/ajax-concurrency
 
-function queueUpdateMenuItemCount(menuItemId, timeout) {
-   if ($jQ('.menuItemCount[menuitemid=' + menuItemId + ']').length == 0) {
-      return;
-   }
-   window.setTimeout(function () {
-         updateMenuItemCount(menuItemId);
-   }, timeout);
-}
-
-function updateMenuItemCount(menuItemId) {
-   var uri = getContextPath() + '/ajax/invoke/MenuItemCountBean.updateCount?menuItemId=' + menuItemId;
+function updateMenuItemsCount() {
+   var uri = getContextPath() + '/ajax/invoke/MenuItemCountBean.updateMenuItemsCount';
    $jQ.ajax({
       type: 'POST',
       url: uri,
       mode: 'queue',
-      success: function (responseText) {
-         if ($jQ('.menuItemCount[menuitemid=' + menuItemId + ']').length == 0) {
+      success: function (json) {
+         if(!json || json.length > 30) {
             return;
          }
-         if (responseText) { // check that response is not empty
-            // if response is empty, then
-            // * either user clicked on a link to navigate to another page and browser cancelled all in-progress AJAX requests but still fired this callback
-            // * or the request was dropped by RequestControlFilter. normally should not happen
-
-            if (responseText.length > 7) {
-               // Response is too big, something is wrong. Probably session expired and response is CAS login page
-               return;
+         $jQ.each(json, function(idx, obj) {
+            var menuItemId = obj.menuItem;
+            if($jQ('.menuItemCount[menuitemid=' + menuItemId + ']').length == 0) {
+               return true;
             }
-
+            var responseText = obj.count;
             var count = responseText == '0' ? '' : ' (' + responseText + ')';
 
             // Construct element text
@@ -1159,16 +1144,13 @@ function updateMenuItemCount(menuItemId) {
             if (count.length > 2) {
                menuItem.parent().removeClass("hiddenMenuItem");
             }
-         }
-
-         //Continuous update disabled - if you stay on the same page, the counts are updated only once.
-         //queueUpdateMenuItemCount(menuItemId, menuItemUpdateTimeout);
+         });
       },
       error: function(request, textStatus, errorThrown) {
          // Don't destroy ajax queue, let other request proceed
          ajaxErrorHidden(request, textStatus, errorThrown); // log messsage to FireBug
       },
-      dataType: 'text'
+      dataType: 'json'
    });
 }
 
@@ -2217,7 +2199,7 @@ function handleHtmlLoaded(context, setFocus, selects) {
       checkFileLock(path, function webdavOpenCallback(filePath, status) {
          if (status.code < 1) {
             if (status.code == 0 || confirm(getTranslation("webdav_openReadOnly").replace("#", status.data))) {
-               webdavOpenReadOnly(filePath, status.code != 0);
+               webdavOpenReadOnly(filePath);
             }
          } else if (status.code == 1) {
             webdavOpen(filePath);
@@ -2232,7 +2214,7 @@ function handleHtmlLoaded(context, setFocus, selects) {
    });
 
    $jQ('a.webdav-readOnly', context).click(function () {
-      webdavOpenReadOnly(this.href, true);
+      webdavOpenReadOnly(this.href);
       return false;
    });
 

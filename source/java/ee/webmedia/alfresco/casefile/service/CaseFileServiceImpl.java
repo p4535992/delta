@@ -17,6 +17,7 @@ import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.util.EqualsHelper;
 import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.StringUtils;
@@ -47,6 +48,7 @@ import ee.webmedia.alfresco.document.log.service.PropertyChange;
 import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.register.model.RegNrHolder2;
+import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.document.service.DocumentServiceImpl;
 import ee.webmedia.alfresco.log.model.LogEntry;
@@ -65,6 +67,7 @@ import ee.webmedia.alfresco.utils.TreeNode;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UnableToPerformMultiReasonException;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
+import ee.webmedia.alfresco.volume.service.VolumeService;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
@@ -76,6 +79,7 @@ public class CaseFileServiceImpl implements CaseFileService, BeanFactoryAware {
     private DocumentAdminService documentAdminService;
     private DocumentConfigService documentConfigService;
     private DocumentService documentService;
+    private DocumentSearchService documentSearchService;
     private DocumentDynamicService documentDynamicService;
     private WorkflowService workflowService;
     private GeneralService generalService;
@@ -86,6 +90,7 @@ public class CaseFileServiceImpl implements CaseFileService, BeanFactoryAware {
     private CaseFileLogService caseFileLogService;
     private DocLockService docLockService;
     private LogService logService;
+    private VolumeService volumeService;
 
     @Override
     public Pair<CaseFile, DocumentTypeVersion> createNewCaseFile(String typeId, NodeRef parent) {
@@ -106,7 +111,7 @@ public class CaseFileServiceImpl implements CaseFileService, BeanFactoryAware {
 
     @Override
     public Pair<CaseFile, DocumentTypeVersion> createNewCaseFileInDrafts(String typeId) {
-        NodeRef drafts = documentService.getDrafts();
+        NodeRef drafts = BeanHelper.getConstantNodeRefsBean().getDraftsRoot();
         return createNewCaseFile(typeId, drafts);
     }
 
@@ -175,7 +180,7 @@ public class CaseFileServiceImpl implements CaseFileService, BeanFactoryAware {
                 }
             }
         }
-
+        volumeService.removeFromCache(cf.getNodeRef());
         return cf;
     }
 
@@ -192,7 +197,7 @@ public class CaseFileServiceImpl implements CaseFileService, BeanFactoryAware {
     }
 
     private void addOwnerDocumentPermissions(NodeRef caseFileRef, String ownerId) {
-        for (NodeRef docRef : documentService.getAllDocumentRefsByParentRef(caseFileRef)) {
+        for (NodeRef docRef : documentSearchService.searchAllDocumentRefsByParentRef(caseFileRef)) {
             privilegeService.setPermissions(docRef, ownerId, Privilege.EDIT_DOCUMENT); // With dependencies
         }
     }
@@ -204,8 +209,12 @@ public class CaseFileServiceImpl implements CaseFileService, BeanFactoryAware {
         boolean initialSave = previousSeries == null && relocating == false;
         if (relocatingWithUnmodifiedVolMark || initialSave) {
             NodeRef newSeriesRef = (NodeRef) caseFileNode.getProperties().get(DocumentCommonModel.Props.SERIES);
-            boolean sameRegister = newSeriesRef != null && previousSeries != null
-                    && seriesService.getSeriesByNodeRef(newSeriesRef).getVolRegister() == seriesService.getSeriesByNodeRef(previousSeries.getNodeRef()).getVolRegister();
+            boolean sameRegister = false;
+            if (newSeriesRef != null && previousSeries != null) {
+                Integer newSeriesVolumeRegister = seriesService.getSeriesByNodeRef(newSeriesRef).getVolRegister();
+                Integer existingSeriesVolumeRegister = seriesService.getSeriesByNodeRef(previousSeries.getNodeRef()).getVolRegister();
+                sameRegister = EqualsHelper.nullSafeEquals(newSeriesVolumeRegister, existingSeriesVolumeRegister);
+            }
             Map<String, Object> props = caseFileNode.getProperties();
             Series series = seriesService.getSeriesByNodeRef((NodeRef) props.get(DocumentCommonModel.Props.SERIES));
             if (series.getVolRegister() == null) {
@@ -233,8 +242,9 @@ public class CaseFileServiceImpl implements CaseFileService, BeanFactoryAware {
 
             @Override
             public Void doWork() throws Exception {
-                List<Document> caseFileDocs = documentService.getAllDocumentsByParentNodeRef(caseFileNode.getNodeRef());
-                for (Document doc : caseFileDocs) {
+                List<NodeRef> caseFileDocs = documentService.getAllDocumentRefsByParentRefWithoutRestrictedAccess(caseFileNode.getNodeRef());
+                for (NodeRef docRef : caseFileDocs) {
+                    Document doc = documentService.getDocumentByNodeRef(docRef);
                     if (doc.getRegDateTime() == null) {
                         continue;
                     }
@@ -274,7 +284,7 @@ public class CaseFileServiceImpl implements CaseFileService, BeanFactoryAware {
 
     @Override
     public List<DocumentToCompoundWorkflow> getCaseFileDocumentWorkflows(NodeRef caseFileRef) {
-        List<NodeRef> docRefs = documentService.getAllDocumentRefsByParentRef(caseFileRef);
+        List<NodeRef> docRefs = documentSearchService.searchAllDocumentRefsByParentRef(caseFileRef);
         final ArrayList<DocumentToCompoundWorkflow> documentToCompoundWorkflows = new ArrayList<DocumentToCompoundWorkflow>();
         for (NodeRef docRef : docRefs) {
             Document document = new Document(docRef);
@@ -341,6 +351,7 @@ public class CaseFileServiceImpl implements CaseFileService, BeanFactoryAware {
 
         final Map<QName, Serializable> props = nodeService.getProperties(nodeRef);
         nodeService.deleteNode(nodeRef);
+        volumeService.removeFromCache(nodeRef);
         logService.addLogEntry(LogEntry.create(LogObject.CASE_FILE, BeanHelper.getUserService(), nodeRef, "caseFile_log_deleted", props.get(VolumeModel.Props.VOLUME_MARK),
                 props.get(VolumeModel.Props.TITLE), props.get(VolumeModel.Props.STATUS), reason));
     }
@@ -401,6 +412,14 @@ public class CaseFileServiceImpl implements CaseFileService, BeanFactoryAware {
 
     public void setLogService(LogService logService) {
         this.logService = logService;
+    }
+
+    public void setVolumeService(VolumeService volumeService) {
+        this.volumeService = volumeService;
+    }
+
+    public void setDocumentSearchService(DocumentSearchService documentSearchService) {
+        this.documentSearchService = documentSearchService;
     }
 
     // END: setters/getters

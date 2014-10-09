@@ -33,6 +33,11 @@ public interface RegisterService {
     Register getRegister(Integer registerId);
 
     /**
+     * @return instance of register containing only register {@code id} and {@code counter} values
+     */
+    Register getSimpleRegister(Integer registerId);
+
+    /**
      * Returns the registers root space NodeRef
      * 
      * @return Root NodeRef

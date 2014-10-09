@@ -55,6 +55,7 @@
             <f:param name="confirmMsgKey" value="delete_compound_workflow_confirm" />
             <f:param name="deletableObjectNameProp" value="wfc:name" />
             <f:param name="successMsgKey" value="workflow_compound_delete_compound_success" />
+            <f:param name="callback" value="CompoundWorkflowDefinitionListDialog.updateCache" />
          </a:actionLink>
       </a:column>
 

@@ -6,7 +6,9 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
@@ -32,11 +34,12 @@ import ee.webmedia.alfresco.utils.RepoUtil;
  * Field that is stored under {@link DocumentTypeVersion} or {@link FieldGroup}, but not under /fieldDefinitions folder
  */
 public class Field extends FieldAndGroupBase {
-    private static final long serialVersionUID = 1L;
+    private static long serialVersionUID = 1L;
     /** this temp. property is added to Field that is created based on fieldDefinition */
     private static final QName COPY_OF_FIELD_DEF_NODE_REF = RepoUtil.createTransientProp("copyOfFieldDefNodeRef");
     private static final QName FOR_SEARCH = RepoUtil.createTransientProp("forSearch");
     private static final QName DATAFIELD_PARAM_NAME = RepoUtil.createTransientProp("datafieldParamName");
+    private static final Map<String, QName> FIELD_ID_TO_ASSOC_QNAME = new HashMap<>();
 
     /** used only by subclass */
     protected Field(BaseObject parent, QName type) {
@@ -64,7 +67,7 @@ public class Field extends FieldAndGroupBase {
 
     @Override
     protected QName getAssocName() {
-        return QName.createQName(DocumentDynamicModel.URI, getFieldId());
+        return RepoUtil.getFromQNamePool(getFieldId(), DocumentDynamicModel.URI, FIELD_ID_TO_ASSOC_QNAME);
     }
 
     protected void nextSaveToParent(FieldGroup newParentFieldGroup) {
@@ -161,28 +164,28 @@ public class Field extends FieldAndGroupBase {
     }
 
     public static final QName getQName(String fieldId) {
-        return QName.createQName(DocumentDynamicModel.URI, fieldId);
+        return RepoUtil.getFromQNamePool(fieldId, DocumentDynamicModel.URI, FIELD_ID_TO_ASSOC_QNAME);
     }
 
     // Properties
 
-    public final void setFieldId(String fieldId) {
+    public void setFieldId(String fieldId) {
         setProp(DocumentAdminModel.Props.FIELD_ID, fieldId);
     }
 
-    public final boolean isMandatory() {
+    public boolean isMandatory() {
         return getPropBoolean(DocumentAdminModel.Props.MANDATORY);
     }
 
-    public final void setMandatory(boolean mandatory) {
+    public void setMandatory(boolean mandatory) {
         setProp(DocumentAdminModel.Props.MANDATORY, mandatory);
     }
 
-    public final String getChangeableIf() {
+    public String getChangeableIf() {
         return getProp(DocumentAdminModel.Props.CHANGEABLE_IF);
     }
 
-    public final void setChangeableIf(String changeableIf) {
+    public void setChangeableIf(String changeableIf) {
         setProp(DocumentAdminModel.Props.CHANGEABLE_IF, changeableIf);
     }
 
@@ -194,59 +197,59 @@ public class Field extends FieldAndGroupBase {
         setChangeableIf(getValueFromEnum(changeableIf));
     }
 
-    public final String getClassificator() {
+    public String getClassificator() {
         return getProp(DocumentAdminModel.Props.CLASSIFICATOR);
     }
 
-    public final void setClassificator(String classificator) {
+    public void setClassificator(String classificator) {
         setProp(DocumentAdminModel.Props.CLASSIFICATOR, classificator);
     }
 
-    public final String getDefaultValue() {
+    public String getDefaultValue() {
         return getProp(DocumentAdminModel.Props.DEFAULT_VALUE);
     }
 
-    public final void setDefaultValue(String defaultValue) {
+    public void setDefaultValue(String defaultValue) {
         setProp(DocumentAdminModel.Props.DEFAULT_VALUE, defaultValue);
     }
 
-    public final String getClassificatorDefaultValue() {
+    public String getClassificatorDefaultValue() {
         return getProp(DocumentAdminModel.Props.CLASSIFICATOR_DEFAULT_VALUE);
     }
 
-    public final void setClassificatorDefaultValue(String classificatorDefaultValue) {
+    public void setClassificatorDefaultValue(String classificatorDefaultValue) {
         setProp(DocumentAdminModel.Props.CLASSIFICATOR_DEFAULT_VALUE, classificatorDefaultValue);
     }
 
-    public final boolean isDefaultDateSysdate() {
+    public boolean isDefaultDateSysdate() {
         return getPropBoolean(DocumentAdminModel.Props.DEFAULT_DATE_SYSDATE);
     }
 
-    public final void setDefaultDateSysdate(boolean defaultDateSysdate) {
+    public void setDefaultDateSysdate(boolean defaultDateSysdate) {
         setProp(DocumentAdminModel.Props.DEFAULT_DATE_SYSDATE, defaultDateSysdate);
     }
 
-    public final boolean isDefaultUserLoggedIn() {
+    public boolean isDefaultUserLoggedIn() {
         return getPropBoolean(DocumentAdminModel.Props.DEFAULT_USER_LOGGED_IN);
     }
 
-    public final void setDefaultUserLoggedIn(boolean defaultUserLoggedIn) {
+    public void setDefaultUserLoggedIn(boolean defaultUserLoggedIn) {
         setProp(DocumentAdminModel.Props.DEFAULT_USER_LOGGED_IN, defaultUserLoggedIn);
     }
 
-    public final boolean isDefaultSelected() {
+    public boolean isDefaultSelected() {
         return getPropBoolean(DocumentAdminModel.Props.DEFAULT_SELECTED);
     }
 
-    public final void setDefaultSelected(boolean defaultSelected) {
+    public void setDefaultSelected(boolean defaultSelected) {
         setProp(DocumentAdminModel.Props.DEFAULT_SELECTED, defaultSelected);
     }
 
-    public final String getFieldType() {
+    public String getFieldType() {
         return getProp(DocumentAdminModel.Props.FIELD_TYPE);
     }
 
-    public final void setFieldType(String fieldType) {
+    public void setFieldType(String fieldType) {
         setProp(DocumentAdminModel.Props.FIELD_TYPE, fieldType);
     }
 
@@ -258,75 +261,75 @@ public class Field extends FieldAndGroupBase {
         setFieldType(getValueFromEnum(fieldType));
     }
 
-    public final boolean isOnlyInGroup() {
+    public boolean isOnlyInGroup() {
         return getPropBoolean(DocumentAdminModel.Props.ONLY_IN_GROUP);
     }
 
-    public final void setOnlyInGroup(boolean onlyInGroup) {
+    public void setOnlyInGroup(boolean onlyInGroup) {
         setProp(DocumentAdminModel.Props.ONLY_IN_GROUP, onlyInGroup);
     }
 
-    public final boolean isMandatoryChangeable() {
+    public boolean isMandatoryChangeable() {
         return getPropBoolean(DocumentAdminModel.Props.MANDATORY_CHANGEABLE);
     }
 
-    public final void setMandatoryChangeable(boolean mandatoryChangeable) {
+    public void setMandatoryChangeable(boolean mandatoryChangeable) {
         setProp(DocumentAdminModel.Props.MANDATORY_CHANGEABLE, mandatoryChangeable);
     }
 
-    public final boolean isChangeableIfChangeable() {
+    public boolean isChangeableIfChangeable() {
         return getPropBoolean(DocumentAdminModel.Props.CHANGEABLE_IF_CHANGEABLE);
     }
 
-    public final void setChangeableIfChangeable(boolean changeableIfChangeable) {
+    public void setChangeableIfChangeable(boolean changeableIfChangeable) {
         setProp(DocumentAdminModel.Props.CHANGEABLE_IF_CHANGEABLE, changeableIfChangeable);
     }
 
-    public final boolean isComboboxNotRelatedToClassificator() {
+    public boolean isComboboxNotRelatedToClassificator() {
         return getPropBoolean(DocumentAdminModel.Props.COMBOBOX_NOT_RELATED_TO_CLASSIFICATOR);
     }
 
-    public final boolean isRemovableFromSystematicFieldGroup() {
+    public boolean isRemovableFromSystematicFieldGroup() {
         return getPropBoolean(DocumentAdminModel.Props.REMOVABLE_FROM_SYSTEMATIC_FIELD_GROUP);
     }
 
-    public final void setRemovableFromSystematicFieldGroup(boolean removableFromSystematicFieldGroup) {
+    public void setRemovableFromSystematicFieldGroup(boolean removableFromSystematicFieldGroup) {
         setProp(DocumentAdminModel.Props.REMOVABLE_FROM_SYSTEMATIC_FIELD_GROUP, removableFromSystematicFieldGroup);
     }
 
-    public final String getMappingRestriction() {
+    public String getMappingRestriction() {
         return getProp(DocumentAdminModel.Props.MAPPING_RESTRICTION);
     }
 
-    public final void setMappingRestriction(String mappingRestriction) {
+    public void setMappingRestriction(String mappingRestriction) {
         setProp(DocumentAdminModel.Props.MAPPING_RESTRICTION, mappingRestriction);
     }
 
-    public final String getOriginalFieldId() {
+    public String getOriginalFieldId() {
         return getProp(DocumentAdminModel.Props.ORIGINAL_FIELD_ID);
     }
 
-    public final void setOriginalFieldId(String originalFieldId) {
+    public void setOriginalFieldId(String originalFieldId) {
         setProp(DocumentAdminModel.Props.ORIGINAL_FIELD_ID, originalFieldId);
     }
 
     @SuppressWarnings("unchecked")
-    public final List<String> getRelatedIncomingDecElement() {
+    public List<String> getRelatedIncomingDecElement() {
         List<String> list = (List<String>) getNode().getProperties().get(DocumentAdminModel.Props.RELATED_INCOMING_DEC_ELEMENT);
         return Utils.removeNulls(list);
     }
 
-    public final void setRelatedIncomingDecElement(List<String> relatedIncomingDecElement) {
+    public void setRelatedIncomingDecElement(List<String> relatedIncomingDecElement) {
         setProp(DocumentAdminModel.Props.RELATED_INCOMING_DEC_ELEMENT, (Serializable) relatedIncomingDecElement);
     }
 
     @SuppressWarnings("unchecked")
-    public final List<String> getRelatedOutgoingDecElement() {
+    public List<String> getRelatedOutgoingDecElement() {
         List<String> list = (List<String>) getNode().getProperties().get(DocumentAdminModel.Props.RELATED_OUTGOING_DEC_ELEMENT);
         return Utils.removeNulls(list);
     }
 
-    public final void setRelatedOutgoingDecElement(List<String> relatedOutgoingDecElement) {
+    public void setRelatedOutgoingDecElement(List<String> relatedOutgoingDecElement) {
         setProp(DocumentAdminModel.Props.RELATED_OUTGOING_DEC_ELEMENT, (Serializable) relatedOutgoingDecElement);
     }
 

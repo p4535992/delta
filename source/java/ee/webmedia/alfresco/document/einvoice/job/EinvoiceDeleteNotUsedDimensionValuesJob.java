@@ -10,6 +10,7 @@ import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 import org.quartz.StatefulJob;
 
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.einvoice.service.EInvoiceService;
 
 /**
@@ -28,7 +29,7 @@ public class EinvoiceDeleteNotUsedDimensionValuesJob implements StatefulJob {
         }
         final EInvoiceService worker = (EInvoiceService) workerObj;
 
-        if (!worker.isEinvoiceEnabled()) {
+        if (!BeanHelper.getApplicationConstantsBean().isEinvoiceEnabled()) {
             if (LOG.isDebugEnabled()) {
                 LOG.debug("Einvoice functionality is disabled, skipping deleting dimension values.");
             }

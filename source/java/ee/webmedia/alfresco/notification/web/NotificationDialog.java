@@ -48,15 +48,20 @@ public class NotificationDialog extends BaseDialogBean {
     }
 
     public boolean isShowConfirmationTaskData() {
-        return BeanHelper.getWorkflowService().isConfirmationWorkflowEnabled();
+        return BeanHelper.getWorkflowConstantsBean().isConfirmationWorkflowEnabled();
     }
 
     public boolean isShowOrderAssignmentTaskData() {
-        return BeanHelper.getWorkflowService().isOrderAssignmentWorkflowEnabled();
+        return BeanHelper.getWorkflowConstantsBean().isOrderAssignmentWorkflowEnabled();
     }
 
     public boolean isShowGroupAssignmentTaskData() {
-        return BeanHelper.getWorkflowService().isGroupAssignmentWorkflowEnabled();
+        return BeanHelper.getWorkflowConstantsBean().isGroupAssignmentWorkflowEnabled();
+    }
+
+    @Override
+    public void clean() {
+        userPrefsNode = null;
     }
 
     // START: setters/getters

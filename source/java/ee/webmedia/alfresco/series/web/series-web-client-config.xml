@@ -10,7 +10,7 @@
             <action-listener>#{SeriesDetailsDialog.addNewSeries}</action-listener>
             <action>dialog:seriesDetailsDialog</action>
             <params>
-               <param name="functionNodeRef">#{SeriesListDialog.function.nodeRef}</param>
+               <param name="functionNodeRef">#{SeriesListDialog.functionRef}</param>
             </params>
          </action>
 
@@ -93,9 +93,9 @@
          <show-property name="ser:individualizingNumbers" display-label-id="series_individualizingNumbers" readOnlyIf="ser:status=suletud" component-generator="CheckboxGenerator" />
          <show-property name="ser:volType" display-label-id="series_volType" component-generator="EnumSelectorGenerator" 
             enumClass="ee.webmedia.alfresco.classificator.enums.VolumeType" readOnlyIf="ser:status=suletud" filter="ee.webmedia.alfresco.classificator.enums.VolumeTypeFilter" /> 
-         <show-property name="ser:volRegister" display-label-id="series_volRegister" readOnlyIf="ser:status=suletud" show="#{VolumeService.caseVolumeEnabled}" 
+         <show-property name="ser:volRegister" display-label-id="series_volRegister" readOnlyIf="ser:status=suletud" show="#{ApplicationConstantsBean.caseVolumeEnabled}" 
             component-generator="GeneralSelectorGenerator" converter="javax.faces.Integer" selectionItems="#{RegisterListDialog.findActiveRegisters}"/>
-         <show-property name="ser:volNumberPattern" display-label-id="series_volNumberPattern"  readOnlyIf="ser:status=suletud" show="#{VolumeService.caseVolumeEnabled}" />
+         <show-property name="ser:volNumberPattern" display-label-id="series_volNumberPattern"  readOnlyIf="ser:status=suletud" show="#{ApplicationConstantsBean.caseVolumeEnabled}" />
          <show-property name="doccom:accessRestriction" component-generator="ClassificatorSelectorGenerator" classificatorName="accessRestriction"
             readOnlyIf="ser:status=suletud" />
          <show-property name="doccom:accessRestrictionReason" mandatoryIf="accessRestriction" component-generator="ClassificatorSelectorAndTextGenerator"

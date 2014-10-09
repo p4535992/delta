@@ -815,6 +815,10 @@
    <listener>
       <listener-class>ee.webmedia.alfresco.help.web.HelpTextInitListener</listener-class>
    </listener>
+   
+   <listener>
+      <listener-class>org.springframework.web.context.request.RequestContextListener</listener-class>
+   </listener>
 
    <!-- ========== Servlets ========== -->
 
@@ -974,7 +978,7 @@
    <!-- ========== Other ========== -->
 
    <session-config>
-      <session-timeout>180</session-timeout>
+      <session-timeout>30</session-timeout>
    </session-config>
 
    <welcome-file-list>

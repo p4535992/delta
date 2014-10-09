@@ -12,7 +12,7 @@
    <a:panel id="cw-panel-search-results" styleClass="overflow-wrapper">   
 
    <a:richList id="workflowList" styleClass="duplicate-header" width="100%" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
-      value="#{CompoundWorkflowSearchResultsDialog.workflows}" binding="#{CompoundWorkflowSearchResultsDialog.richList}" var="r" >
+      value="#{CompoundWorkflowSearchResultsDialog.workflows}" binding="#{CompoundWorkflowSearchResultsDialog.richList}" var="r" refreshOnBind="true">
 
       <a:column id="col1" primary="true" >
          <f:facet name="header">

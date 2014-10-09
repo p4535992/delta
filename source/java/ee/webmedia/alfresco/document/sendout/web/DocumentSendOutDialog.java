@@ -73,8 +73,7 @@ import ee.webmedia.alfresco.docdynamic.web.DocumentLockHelperBean;
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
-import ee.webmedia.alfresco.document.web.OutboxDocumentMenuItemProcessor;
-import ee.webmedia.alfresco.document.web.UnsentDocumentMenuItemProcessor;
+import ee.webmedia.alfresco.menu.model.MenuItem;
 import ee.webmedia.alfresco.menu.ui.MenuBean;
 import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.privilege.model.Privilege;
@@ -163,6 +162,11 @@ public class DocumentSendOutDialog extends BaseDialogBean {
     }
 
     @Override
+    public void clean() {
+        resetState();
+    }
+
+    @Override
     public String getContainerTitle() {
         return MessageUtil.getMessage(FacesContext.getCurrentInstance(), "document_send_out_title");
     }
@@ -217,7 +221,7 @@ public class DocumentSendOutDialog extends BaseDialogBean {
         }
         model = new SendOutModel();
         model.setNodeRef(node.getNodeRef());
-        boolean ddocExists = false;
+        boolean bdocExists = false;
         List<String> selectedFiles = new ArrayList<String>();
         SortedMap<String, String> files = new TreeMap<String, String>();
         final List<File> allFiles = getFileService().getAllActiveFiles(node.getNodeRef());
@@ -229,16 +233,16 @@ public class DocumentSendOutDialog extends BaseDialogBean {
             fileName += " (" + converter.getAsString(context, null, file.getSize()) + ")";
 
             files.put(fileName, fileRef);
-            boolean isDdoc = file.isDigiDocContainer();
-            if (isDdoc) {
-                if (!ddocExists) {
+            boolean isBdoc = file.isBdoc();
+            if (isBdoc) {
+                if (!bdocExists) {
                     selectedFiles = new ArrayList<String>();
                 }
                 selectedFiles.add(fileRef);
-            } else if (!ddocExists) {
+            } else if (!bdocExists) {
                 selectedFiles.add(fileRef);
             }
-            ddocExists |= isDdoc;
+            bdocExists |= isBdoc;
         }
         model.setFiles(files);
         model.setSelectedFiles(selectedFiles);
@@ -629,9 +633,9 @@ public class DocumentSendOutDialog extends BaseDialogBean {
         } catch (Exception e) {
             log.error(
                     "Sending out document failed\n  nodeRef=" + model.getNodeRef() + "\n  names=" + names + "\n  emails=" + emails + "\n  modes=" + modes
-                            + "\n  encryptionIdCodes=" + encryptionIdCodes + "\n  senderEmail=" + model.getSenderEmail() + "\n  subject=" + model.getSubject() + "\n  content="
-                            + (model.getContent() == null ? "null" : "String[" + model.getContent().length() + "]") + "\n  fileRefs=" + fileRefs + "\n  zip=" + model.isZip()
-                            + "\n  encrypt=" + isEncrypt, e);
+                    + "\n  encryptionIdCodes=" + encryptionIdCodes + "\n  senderEmail=" + model.getSenderEmail() + "\n  subject=" + model.getSubject() + "\n  content="
+                    + (model.getContent() == null ? "null" : "String[" + model.getContent().length() + "]") + "\n  fileRefs=" + fileRefs + "\n  zip=" + model.isZip()
+                    + "\n  encrypt=" + isEncrypt, e);
             result = false;
         }
         if (!result) {
@@ -641,8 +645,8 @@ public class DocumentSendOutDialog extends BaseDialogBean {
             getDocumentLogService().addDocumentLog(model.getNodeRef(),
                     MessageUtil.getMessage(isEncrypt ? "document_log_status_encrypted_sent" : "document_log_status_sent"));
             ((MenuBean) FacesHelper.getManagedBean(context, MenuBean.BEAN_NAME)).processTaskItem(
-                    OutboxDocumentMenuItemProcessor.OUTBOX_DOCUMENT,
-                    UnsentDocumentMenuItemProcessor.UNSENT_DOCUMENT);
+                    MenuItem.OUTBOX_DOCUMENT,
+                    MenuItem.UNSENT_DOCUMENT);
         }
         return result;
     }

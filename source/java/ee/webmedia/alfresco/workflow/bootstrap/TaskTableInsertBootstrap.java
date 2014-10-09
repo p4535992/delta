@@ -32,6 +32,7 @@ import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
 import ee.webmedia.alfresco.workflow.service.Task;
 import ee.webmedia.alfresco.workflow.service.Workflow;
+import ee.webmedia.alfresco.workflow.service.WorkflowConstantsBean;
 import ee.webmedia.alfresco.workflow.service.WorkflowDbService;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
 import ee.webmedia.alfresco.workflow.service.WorkflowUtil;
@@ -44,6 +45,7 @@ import ee.webmedia.alfresco.workflow.service.type.WorkflowType;
 public class TaskTableInsertBootstrap extends AbstractNodeUpdater {
 
     private WorkflowService workflowService;
+    private WorkflowConstantsBean workflowConstantsBean;
     private WorkflowDbService workflowDbService;
     private FileService fileService;
     private NamespaceService namespaceService;
@@ -136,7 +138,7 @@ public class TaskTableInsertBootstrap extends AbstractNodeUpdater {
     }
 
     private void getAndAddWorkflows(NodeRef parent, CompoundWorkflow compoundWorkflow, boolean copy, boolean addTasks) {
-        List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(parent, workflowService.getWorkflowTypes().keySet());
+        List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(parent, workflowConstantsBean.getWorkflowTypes().keySet());
         int workflowIndex = 0;
         for (ChildAssociationRef childAssoc : childAssocs) {
             workflowIndex = addWorkflow(compoundWorkflow, copy, workflowIndex, childAssoc, addTasks);
@@ -170,7 +172,7 @@ public class TaskTableInsertBootstrap extends AbstractNodeUpdater {
     private Task getTask(NodeRef nodeRef, Workflow workflow, boolean copy) {
         WmNode taskNode = getNode(nodeRef, WorkflowCommonModel.Types.TASK, true, copy);
 
-        WorkflowType workflowType = workflowService.getWorkflowTypesByTask().get(taskNode.getType());
+        WorkflowType workflowType = workflowConstantsBean.getWorkflowTypesByTask().get(taskNode.getType());
         if (workflowType == null) {
             throw new RuntimeException("Task type '" + taskNode.getType() + "' not registered in service, but existing node has it: " + nodeRef);
         }
@@ -186,7 +188,7 @@ public class TaskTableInsertBootstrap extends AbstractNodeUpdater {
     }
 
     private Workflow getWorkflow(CompoundWorkflow compoundWorkflow, WmNode workflowNode) {
-        WorkflowType workflowType = workflowService.getWorkflowTypes().get(workflowNode.getType());
+        WorkflowType workflowType = workflowConstantsBean.getWorkflowTypes().get(workflowNode.getType());
         if (workflowType == null) {
             throw new RuntimeException("Workflow type '" + workflowNode.getType() + "' not registered in service");
         }
@@ -225,6 +227,10 @@ public class TaskTableInsertBootstrap extends AbstractNodeUpdater {
 
     public void setDictionaryService(DictionaryService dictionaryService) {
         this.dictionaryService = dictionaryService;
+    }
+
+    public void setWorkflowConstantsBean(WorkflowConstantsBean workflowConstantsBean) {
+        this.workflowConstantsBean = workflowConstantsBean;
     }
 
 }

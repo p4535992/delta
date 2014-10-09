@@ -1,11 +1,7 @@
 package ee.webmedia.alfresco.document.log.web;
 
-import static ee.webmedia.alfresco.common.web.BeanHelper.getLogService;
-
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import javax.faces.context.FacesContext;
@@ -15,15 +11,13 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.Repository;
-import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docconfig.generator.DialogDataProvider;
 import ee.webmedia.alfresco.docdynamic.web.DocumentDynamicBlock;
-import ee.webmedia.alfresco.document.log.service.DocumentLogService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
-import ee.webmedia.alfresco.log.model.LogEntry;
 import ee.webmedia.alfresco.log.model.LogFilter;
+import ee.webmedia.alfresco.log.web.LogEntryDataProvider;
 import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
@@ -32,11 +26,10 @@ public class LogBlockBean implements DocumentDynamicBlock {
 
     public static final String BEAN_NAME = "LogBlockBean";
 
-    private transient DocumentLogService documentLogService;
     private transient DictionaryService dictionaryService;
 
     private NodeRef parentRef;
-    protected List<LogEntry> logs;
+    protected LogEntryDataProvider logs;
 
     protected QName parentNodeType;
 
@@ -58,21 +51,20 @@ public class LogBlockBean implements DocumentDynamicBlock {
 
     @SuppressWarnings("unchecked")
     public void restore() {
-        @SuppressWarnings("rawtypes")
-        List tmpLog;
+        LogFilter filter;
         if (SeriesModel.Types.SERIES.equals(parentNodeType)) {
-            tmpLog = getLogService().getLogEntries(getSeriesLogFilter());
+            filter = getSeriesLogFilter();
         } else if (getDictionaryService().isSubClass(parentNodeType, DocumentCommonModel.Types.DOCUMENT)) {
-            tmpLog = getLogService().getLogEntries(getDocumentLogFilter());
+            filter = getDocumentLogFilter();
         } else {
-            throw new IllegalArgumentException("Unexpected type of parent node for loging block. type='" + parentNodeType + "'");
+            throw new IllegalArgumentException("Unexpected type of parent node for logging block. type='" + parentNodeType + "'");
         }
-        logs = tmpLog;
+        logs = new LogEntryDataProvider(filter);
     }
 
     private LogFilter getDocumentLogFilter() {
         LogFilter logFilter = new LogFilter();
-        Set<String> excludedDescriptions = new HashSet<String>(2);
+        Set<String> excludedDescriptions = new HashSet<>(2);
         excludedDescriptions.add(MessageUtil.getMessage("document_log_status_opened_not_inEditMode"));
         excludedDescriptions.add(MessageUtil.getMessage("file_opened", "%"));
         excludedDescriptions.add(MessageUtil.getMessage("applog_compoundWorkflow_view"));
@@ -84,18 +76,9 @@ public class LogBlockBean implements DocumentDynamicBlock {
         return logFilter;
     }
 
-    private List<String> getCompoundWorkflowAndTaskNodeRefs() {
-        List<NodeRef> compoundWorkflowAndTaskNodeRefs = BeanHelper.getWorkflowService().getCompoundWorkflowAndTaskNodeRefs(parentRef);
-        List<String> compoundWorkflowAndTaskNodeRefStr = new ArrayList<String>();
-        for (NodeRef nodeRef : compoundWorkflowAndTaskNodeRefs) {
-            compoundWorkflowAndTaskNodeRefStr.add(nodeRef.toString());
-        }
-        return compoundWorkflowAndTaskNodeRefStr;
-    }
-
     private LogFilter getSeriesLogFilter() {
         LogFilter logFilter = new LogFilter();
-        Set<String> excludedDescriptions = new HashSet<String>(1);
+        Set<String> excludedDescriptions = new HashSet<>(1);
         excludedDescriptions.add(MessageUtil.getMessage("applog_space_open", "%", "%"));
         logFilter.setExcludedDescriptions(excludedDescriptions);
         logFilter.setObjectId(Collections.singletonList(parentRef.toString()));
@@ -109,12 +92,17 @@ public class LogBlockBean implements DocumentDynamicBlock {
         parentNodeType = null;
     }
 
+    @Override
+    public void clean() {
+        reset();
+    }
+
     public NodeRef getParentRef() {
         return parentRef;
     }
 
     public boolean isRendered() {
-        return logs != null && logs.size() > 0;
+        return logs != null && logs.getListSize() > 0;
     }
 
     public String getListTitle() {
@@ -135,16 +123,8 @@ public class LogBlockBean implements DocumentDynamicBlock {
 
     // START: getters / setters
 
-    public List<LogEntry> getLogs() {
+    public LogEntryDataProvider getLogs() {
         return logs;
-    }
-
-    public DocumentLogService getDocumentLogService() {
-        if (documentLogService == null) {
-            documentLogService = (DocumentLogService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())//
-                    .getBean(DocumentLogService.BEAN_NAME);
-        }
-        return documentLogService;
     }
 
     protected DictionaryService getDictionaryService() {

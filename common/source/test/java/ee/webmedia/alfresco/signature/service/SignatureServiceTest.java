@@ -85,7 +85,7 @@ public class SignatureServiceTest extends BaseAlfrescoSpringTest {
     }
 
     public void testGetDataItemsAndSignatureItems() throws Exception {
-        SignatureItemsAndDataItems items = signatureService.getDataItemsAndSignatureItems(nodeRef, true);
+        SignatureItemsAndDataItems items = signatureService.getDataItemsAndSignatureItems(nodeRef, true, true);
         assertTrue(items.getDataItems().size() >= 1);
         assertTrue(items.getSignatureItems().size() >= 0);
         assertNotNull(items.getDataItems().get(0).getData());
@@ -93,7 +93,7 @@ public class SignatureServiceTest extends BaseAlfrescoSpringTest {
 
     public void testGetDataItemsAndSignatureItemsFromStream() throws Exception {
         InputStream fileInputStream = new ClassPathResource(TEST_RESOURCE_PATH + "/" + TEST_DIGIDOC).getInputStream();
-        SignatureItemsAndDataItems items = signatureService.getDataItemsAndSignatureItems(fileInputStream, true);
+        SignatureItemsAndDataItems items = signatureService.getDataItemsAndSignatureItems(fileInputStream, true, true);
         assertTrue(items.getDataItems().size() >= 1);
         assertTrue(items.getSignatureItems().size() >= 0);
         assertNotNull(items.getDataItems().get(0).getData());
