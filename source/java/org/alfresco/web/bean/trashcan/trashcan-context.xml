@@ -22,6 +22,7 @@
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
       <property name="batchSize" value="1" />
+      <property name="disabled" value="${updater.ppa.3_6_21_to_3_6_30.enabled}" />
    </bean>
       
 </beans>

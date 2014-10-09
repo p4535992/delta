@@ -11,9 +11,17 @@ import ee.webmedia.alfresco.document.model.DocumentCommonModel.Privileges;
  */
 public class DraftsPermissionsUpdater extends AbstractModuleComponent {
 
+    private boolean disabled;
+
     @Override
     protected void executeInternal() throws Throwable {
-        BeanHelper.getPrivilegeService().setPermissions(BeanHelper.getDocumentService().getDrafts(), PermissionService.ALL_AUTHORITIES, Privileges.EDIT_DOCUMENT);
+        if (!disabled) {
+            BeanHelper.getPrivilegeService().setPermissions(BeanHelper.getDocumentService().getDrafts(), PermissionService.ALL_AUTHORITIES, Privileges.EDIT_DOCUMENT);
+        }
+    }
+
+    public void setDisabled(boolean disabled) {
+        this.disabled = disabled;
     }
 
 }

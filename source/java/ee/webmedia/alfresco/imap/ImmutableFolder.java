@@ -188,8 +188,7 @@ public class ImmutableFolder implements MailFolder {
     public List getNonDeletedMessages() {
         return Collections.EMPTY_LIST;
     }
-    
-    @Override
+
     public boolean isMarked() {
         return false;
     }

@@ -88,23 +88,16 @@ public class DocumentUpdater extends AbstractNodeUpdater {
     protected String[] updateNode(NodeRef docRef) throws Exception {
         QName type = nodeService.getType(docRef);
         if (!DocumentCommonModel.Types.DOCUMENT.equals(type)) {
-            return new String[] { "isNotDocument",
-                    type.toPrefixString(serviceRegistry.getNamespaceService()) };
+            return new String[] { "isNotDocument", type.toString() };
         }
         if (nodeService.hasAspect(docRef, EMAIL_DATE_TIME)) {
             ChildAssociationRef assoc = nodeService.getPrimaryParent(docRef);
-            return new String[] { "hasEmailDateTimeAspectAndIgnored",
-                    assoc.getTypeQName().toPrefixString(serviceRegistry.getNamespaceService()),
-                    assoc.getQName().toPrefixString(serviceRegistry.getNamespaceService()),
-                    type.toPrefixString(serviceRegistry.getNamespaceService()) };
+            return new String[] { "hasEmailDateTimeAspectAndIgnored" };
         }
         ChildAssociationRef primaryParentAssoc = nodeService.getPrimaryParent(docRef);
         if (DocumentCommonModel.Types.DRAFTS.equals(primaryParentAssoc.getQName())) {
             nodeService.deleteNode(docRef);
-            return new String[] { "isDraftAndDeleted",
-                    primaryParentAssoc.getTypeQName().toPrefixString(serviceRegistry.getNamespaceService()),
-                    primaryParentAssoc.getQName().toPrefixString(serviceRegistry.getNamespaceService()),
-                    type.toPrefixString(serviceRegistry.getNamespaceService()) };
+            return new String[] { "isDraftAndDeleted" };
         }
 
         Map<QName, Serializable> origProps = nodeService.getProperties(docRef);
@@ -163,7 +156,7 @@ public class DocumentUpdater extends AbstractNodeUpdater {
 
     /**
      * XXX: This method is not needed when updating from 2.5 to 3.x
-     * 
+     *
      * @param docRef
      * @return
      */

@@ -35,7 +35,7 @@ public abstract class BaseWorkflowObject extends NodeBaseVO {
     }
 
     protected <T extends BaseWorkflowObject> T copyImpl(T copy) {
-        copy.originalProperties = RepoUtil.copyProperties(originalProperties);
+        copy.setOriginalProperties(RepoUtil.copyProperties(originalProperties));
         return copy;
     }
 
@@ -156,6 +156,10 @@ public abstract class BaseWorkflowObject extends NodeBaseVO {
 
     protected Map<QName, Serializable> getOriginalProperties() {
         return Collections.unmodifiableMap(originalProperties);
+    }
+
+    protected void setOriginalProperties(Map<QName, Serializable> originalProperties) {
+        this.originalProperties = originalProperties;
     }
 
 }

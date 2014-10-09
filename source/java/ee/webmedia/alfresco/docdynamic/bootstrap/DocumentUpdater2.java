@@ -194,7 +194,7 @@ public class DocumentUpdater2 extends AbstractNodeUpdater {
     @Override
     protected String[] getCsvFileHeaders() {
         return new String[] { "nodeRef", "action", "documentChangedTypePropertiesUpdater result", "documentAccessRestrictionUpdater result",
-                "logAndDeleteObjectsWithMissingType result" };
+        "logAndDeleteObjectsWithMissingType result" };
     }
 
     public void setDocumentChangedTypePropertiesUpdater(DocumentChangedTypePropertiesUpdater documentChangedTypePropertiesUpdater) {

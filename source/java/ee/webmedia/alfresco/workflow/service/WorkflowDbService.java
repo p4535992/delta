@@ -11,6 +11,7 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
+import org.alfresco.web.bean.repository.Node;
 
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.workflow.service.type.WorkflowType;
@@ -32,9 +33,9 @@ public interface WorkflowDbService {
 
     void updateTaskProperties(NodeRef taskRef, Map<QName, Serializable> props);
 
-    void createTaskDueDateExtensionAssocEntry(NodeRef initiatingTaskRef, NodeRef nodeRef);
+    void createTaskDueDateExtensionAssocEntries(List<Pair<NodeRef, NodeRef>> initiatingTasksWithTasks);
 
-    void createTaskDueDateHistoryEntries(NodeRef taskRef, List<Pair<String, Date>> historyRecords);
+    void createTaskDueDateHistoryEntries(List<Pair<NodeRef, Pair<String, Date>>> historyRecords);
 
     void createTaskFileEntries(NodeRef nodeRef, List<File> files);
 
@@ -50,7 +51,7 @@ public interface WorkflowDbService {
 
     List<NodeRef> getTaskFileNodeRefs(NodeRef taskNodeRef);
 
-    void createTaskFileEntriesFromNodeRefs(NodeRef taskRef, List<NodeRef> fileNodeRefs);
+    void createTaskFileEntriesFromNodeRefs(List<Pair<NodeRef, NodeRef>> tasksAndFiles);
 
     Collection<Pair<String, Date>> getDueDateHistoryRecords(NodeRef taskRef);
 
@@ -72,7 +73,7 @@ public interface WorkflowDbService {
 
     int countTasks(String queryCondition, List<Object> arguments);
 
-    void updateTaskPropertiesAndStorRef(NodeRef taskRef, Map<QName, Serializable> props);
+    void updateTaskOwnerOrgNameAndStoreRef(final List<Node> tasks);
 
     List<List<String>> deleteNotExistingTasks();
 
@@ -89,5 +90,9 @@ public interface WorkflowDbService {
     Set<NodeRef> getAllWorkflowsWithEmptyTasks();
 
     Set<NodeRef> getWorkflowsWithWrongTaskOrder();
+
+    void updateTaskPropertiesAndStorRef(NodeRef taskRef, Map<QName, Serializable> props);
+
+    void updateTaskOwnerProps(List<Pair<NodeRef, Map<QName, Serializable>>> tasksOwnerProps);
 
 }

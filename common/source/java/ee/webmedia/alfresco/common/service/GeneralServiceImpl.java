@@ -345,8 +345,8 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
     }
 
     /**
-     * Create node from nodRef and populate it with properties and aspects
-     * 
+     * Create node from nodeRef and populate it with properties and aspects
+     *
      * @param nodeRef
      * @return
      */

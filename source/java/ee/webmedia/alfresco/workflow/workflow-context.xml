@@ -430,6 +430,7 @@
    <bean id="dueDateExtensionTaskUpdater" class="ee.webmedia.alfresco.workflow.bootstrap.DueDateExtensionTaskUpdater" parent="abstractNodeUpdater">
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
+      <property name="disabled" value="${updater.ppa.3_6_21_to_3_6_30.enabled}" />
       <property name="dependsOn">
          <list>
             <ref bean="addDocTypeToTaskNodeUpdater" />
@@ -440,6 +441,27 @@
       <property name="workflowDbService" ref="WorkflowDbService"/>
       <property name="workflowService" ref="WmWorkflowService"/>       
    </bean>
+   
+   <bean id="dueDateExtensionTaskSqlUpdater" class="ee.webmedia.alfresco.workflow.bootstrap.DueDateExtensionTaskSqlUpdater" parent="module.baseComponent">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="enabled" value="${updater.ppa.3_6_21_to_3_6_30.enabled}" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="addDocTypeToTaskNodeUpdater" />
+            <ref bean="archivalsStoresBootstrap" />
+            <ref bean="taskTableInsertMissingTasksBootstrap" />
+            <ref bean="taskAssociatedDataTableInsertSqlBootstrap" />
+         </list>
+      </property>
+      <property name="workflowDbService" ref="WorkflowDbService"/>
+      <property name="workflowService" ref="WmWorkflowService"/>  
+      <property name="jdbcTemplate">
+         <bean class="org.springframework.jdbc.core.simple.SimpleJdbcTemplate">
+            <constructor-arg ref="dataSource" />
+         </bean>
+      </property>
+   </bean>   
 
    <bean id="moveTaskFileToChildAssoc1" class="ee.webmedia.alfresco.workflow.bootstrap.MoveTaskFileToChildAssoc" parent="abstractNodeUpdater" >
       <property name="moduleId" value="simdhs" />
@@ -489,6 +511,7 @@
    <bean id="taskTableInsertMissingTasksBootstrap" class="ee.webmedia.alfresco.workflow.bootstrap.TaskTableInsertMissingTasksBootstrap" parent="abstractNodeUpdater" >
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
+      <property name="disabled" value="${updater.ppa.3_6_21_to_3_6_30.enabled}" />
       <property name="dependsOn">
          <list>
             <ref bean="workflowRootBootstrap" />
@@ -511,6 +534,7 @@
    <bean id="taskAssociatedDataTableInsertBootstrap1" class="ee.webmedia.alfresco.workflow.bootstrap.TaskAssociatedDataTableInsertBootstrap" parent="abstractNodeUpdater" >
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
+      <property name="disabled" value="${updater.ppa.3_6_21_to_3_6_30.enabled}" />
       <property name="dependsOn">
          <list>
             <ref bean="taskTableInsertBootstrap3" />
@@ -527,6 +551,31 @@
       <property name="workflowService" ref="WmWorkflowService"/>  
       <property name="transactionHelperMinRetryWaits" value="6000" />     
    </bean>
+   
+   <bean id="taskAssociatedDataTableInsertSqlBootstrap" class="ee.webmedia.alfresco.workflow.bootstrap.TaskAssociatedDataTableInsertSqlBootstrap" parent="module.baseComponent" >
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="enabled" value="${updater.ppa.3_6_21_to_3_6_30.enabled}" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="taskTableInsertBootstrap3" />
+            <ref bean="taskTableInsertMissingTasksBootstrap" />
+            <ref bean="taskDueDateExtensionAssocTableBootstrap1" />
+            <ref bean="taskDueDateHistoryTableBootstrap" />
+            <ref bean="taskFileTableBootstrap" />
+            <ref bean="taskTableAddColumnBootstrap7" />
+            <ref bean="archivalsStoresBootstrap" />  
+            <ref bean="logAndDeleteNotExistingWorkflowTasks" /> 
+         </list>
+      </property>
+      <property name="workflowDbService" ref="WorkflowDbService"/>
+      <property name="workflowService" ref="WmWorkflowService"/>  
+      <property name="jdbcTemplate">
+         <bean class="org.springframework.jdbc.core.simple.SimpleJdbcTemplate">
+            <constructor-arg ref="dataSource" />
+         </bean>
+      </property>      
+   </bean>   
    
    <bean id="deleteAllTasksFromRepo" class="ee.webmedia.alfresco.workflow.bootstrap.DeleteAllTasksFromRepo" parent="abstractNodeUpdater" >
       <property name="moduleId" value="simdhs" />
@@ -585,6 +634,7 @@
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
       <property name="dataSource" ref="dataSource" />
+      <property name="disabled" value="${updater.ppa.3_6_21_to_3_6_30.enabled}" />
       <property name="resourceName" value="ee/webmedia/alfresco/workflow/bootstrap/delta_task_table_search_indexes.sql" />
       <property name="dependsOn">
          <list>

@@ -1,0 +1,23 @@
+
+syntax: regexp
+^build$
+syntax: regexp
+^common/lib-server$
+syntax: regexp
+^WEB-INF$
+syntax: regexp
+^conf-name\.properties$
+syntax: regexp
+^\.project$
+syntax: regexp
+^hgdk-personal\.properties$
+syntax: regexp
+^merge$
+syntax: regexp
+^project\.properties$
+syntax: regexp
+^version\.properties$
+syntax: regexp
+^\.settings$
+syntax: regexp
+^\.classpath$
