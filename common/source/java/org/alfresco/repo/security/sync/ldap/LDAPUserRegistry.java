@@ -484,6 +484,8 @@ public class LDAPUserRegistry implements UserRegistry, InitializingBean, Activat
      */
     public Iterator<NodeDescription> getGroups(Date modifiedSince)
     {
+    	logger.debug("Groups sync process type: LDAP.");
+    	
         Map<String, NodeDescription> lookup = new TreeMap<String, NodeDescription>();
         SearchControls userSearchCtls = new SearchControls();
         userSearchCtls.setSearchScope(SearchControls.SUBTREE_SCOPE);

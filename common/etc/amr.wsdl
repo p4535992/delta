@@ -1,133 +1,288 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?><wsdl:definitions xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:sch="http://ametnik.smit/services" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:tns="http://ametnik.smit/services/definitions" targetNamespace="http://ametnik.smit/services/definitions">
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<wsdl:definitions xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:sch0="http://ametnik.smit/services" xmlns:sch1="http://ametnik.smit/services" xmlns:sch2="http://ametnik.smit/services" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:tns="http://ametnik.smit/services/definitions" targetNamespace="http://ametnik.smit/services/definitions">
   <wsdl:types>
-    <xs:schema xmlns:s1="http://ametnik.smit/services" xmlns:xs="http://www.w3.org/2001/XMLSchema" attributeFormDefault="unqualified" elementFormDefault="qualified" targetNamespace="http://ametnik.smit/services"><xs:element name="AmetnikSimple" type="s1:AmetnikSimple"/><xs:complexType name="AmetnikSimple"><xs:sequence><xs:element name="eesnimi" type="xs:string"/><xs:element name="perekonnanimi" type="xs:string"/><xs:element name="isikukood" type="xs:string"/></xs:sequence></xs:complexType><xs:element name="Ametnik" type="s1:Ametnik"/><xs:complexType name="Ametnik"><xs:sequence><xs:element name="eesnimi" type="xs:string"/><xs:element name="perekonnanimi" type="xs:string"/><xs:element name="isikukood" type="xs:string"/><xs:element default="-1" minOccurs="0" name="yksusId" type="xs:integer"/><xs:element name="asutusId" type="xs:integer"/><xs:element name="ametikoht" type="xs:string"/><xs:element name="kontakttelefon" type="xs:string"/><xs:element name="email" type="xs:string"/></xs:sequence></xs:complexType><xs:element name="AmetnikExt" type="s1:AmetnikExt"/><xs:complexType name="AmetnikExt"><xs:sequence><xs:element name="eesnimi" type="xs:string"/><xs:element name="perekonnanimi" type="xs:string"/><xs:element name="isikukood" type="xs:string"/><xs:element name="asutusId" type="xs:integer"/><xs:element minOccurs="0" name="yksusId" type="xs:integer"/><xs:element minOccurs="0" name="ametikoht" type="xs:string"/><xs:element minOccurs="0" name="kontakttelefon" type="xs:string"/><xs:element minOccurs="0" name="email" type="xs:string"/><xs:element minOccurs="0" name="yksusRada" type="xs:string"/><xs:element minOccurs="0" name="lahkumiseKuupaev" type="xs:date"/><xs:element minOccurs="0" name="kasYksusJuht" type="xs:boolean"/><xs:element minOccurs="0" name="aadress" type="s1:Aadress"/><xs:element minOccurs="0" name="teenistusaste" type="xs:string"/><xs:any maxOccurs="unbounded" minOccurs="0" namespace="##any" processContents="lax"/></xs:sequence></xs:complexType><xs:element name="Aadress" type="s1:Aadress"/><xs:complexType name="Aadress"><xs:sequence><xs:element name="maakond" type="xs:string"/><xs:element name="omavalitsus" type="xs:string"/><xs:element minOccurs="0" name="asustusYksus" type="xs:string"/><xs:element minOccurs="0" name="kohanimi" type="xs:string"/><xs:element minOccurs="0" name="sihtkood" type="xs:string"/><xs:any maxOccurs="unbounded" minOccurs="0" namespace="##any" processContents="lax"/></xs:sequence></xs:complexType><xs:element name="Asutus" type="s1:Asutus"/><xs:complexType name="Asutus"><xs:sequence><xs:element name="id" type="xs:integer"/><xs:element name="nimetus" type="xs:string"/><xs:element minOccurs="0" name="registrikood" type="xs:string"/></xs:sequence></xs:complexType><xs:element name="Yksus" type="s1:Yksus"/><xs:complexType name="Yksus"><xs:sequence><xs:element name="id" type="xs:integer"/><xs:element name="nimetus" type="xs:string"/><xs:element name="asutusId" type="xs:integer"/><xs:element minOccurs="0" name="ylemYksusId" type="xs:integer"/></xs:sequence></xs:complexType><xs:element name="YksusTree" type="s1:YksusTree"/><xs:complexType name="YksusTree"><xs:sequence><xs:element name="id" type="xs:integer"/><xs:element name="nimetus" type="xs:string"/><xs:element name="asutusId" type="xs:integer"/><xs:element minOccurs="0" name="ylemYksusId" type="xs:integer"/><xs:element name="alamYksuseid" type="xs:boolean"/></xs:sequence></xs:complexType><xs:element name="YksusExt" type="s1:YksusExt"/><xs:complexType name="YksusExt"><xs:sequence><xs:element name="id" type="xs:integer"/><xs:element name="nimetus" type="xs:string"/><xs:element name="asutusId" type="xs:integer"/><xs:element minOccurs="0" name="ylemYksusId" type="xs:integer"/><xs:element minOccurs="0" name="yksusRada" type="xs:string"/><xs:element minOccurs="0" name="lopetamiseKuupaev" type="xs:date"/><xs:element minOccurs="0" name="juhtIsikukood" type="xs:string"/><xs:any maxOccurs="unbounded" minOccurs="0" namespace="##any" processContents="lax"/></xs:sequence></xs:complexType><xs:element name="Ametikoht" type="s1:Ametikoht"/><xs:complexType name="Ametikoht"><xs:sequence><xs:element default="-1" minOccurs="0" name="yksusId" type="xs:integer"/><xs:element name="asutusId" type="xs:integer"/><xs:element name="ametikoht" type="xs:string"/><xs:element name="kontakttelefon" type="xs:string"/><xs:element name="email" type="xs:string"/><xs:element minOccurs="0" name="yksusRada" type="xs:string"/></xs:sequence></xs:complexType><xs:element name="AmetnikByAsutusIdRequest"><xs:complexType><xs:sequence><xs:element name="asutusId" type="xs:integer"/><xs:element name="yksusetaAmetnikudOnly" type="xs:boolean"/></xs:sequence></xs:complexType></xs:element><xs:element name="AmetnikByAsutusIdResponse"><xs:complexType><xs:sequence><xs:element maxOccurs="unbounded" minOccurs="0" name="Ametnik" type="s1:Ametnik"/></xs:sequence></xs:complexType></xs:element><xs:element name="AmetnikByAsutusId2Request"><xs:complexType><xs:sequence><xs:element name="asutusId" type="xs:integer"/><xs:element name="yksusetaAmetnikudOnly" type="xs:boolean"/></xs:sequence></xs:complexType></xs:element><xs:element name="AmetnikByAsutusId2Response"><xs:complexType><xs:sequence><xs:element maxOccurs="unbounded" minOccurs="0" name="Ametnik" type="s1:AmetnikExt"/></xs:sequence></xs:complexType></xs:element><xs:element name="AmetnikByIsikukoodRequest"><xs:complexType><xs:sequence><xs:element name="isikukood" type="xs:string"/><xs:element name="asutusId" type="xs:integer"/></xs:sequence></xs:complexType></xs:element><xs:element name="AmetnikByIsikukoodResponse"><xs:complexType><xs:sequence><xs:element name="Ametnik" type="s1:Ametnik"/></xs:sequence></xs:complexType></xs:element><xs:element name="AmetnikByIsikukood2Request"><xs:complexType><xs:sequence><xs:element name="isikukood" type="xs:string"/><xs:element name="asutusId" type="xs:integer"/></xs:sequence></xs:complexType></xs:element><xs:element name="AmetnikByIsikukood2Response"><xs:complexType><xs:sequence><xs:element name="Ametnik" type="s1:AmetnikExt"/></xs:sequence></xs:complexType></xs:element><xs:element name="AmetnikByYksusIdRequest"><xs:complexType><xs:sequence><xs:element name="yksusId" type="xs:integer"/></xs:sequence></xs:complexType></xs:element><xs:element name="AmetnikByYksusIdResponse"><xs:complexType><xs:sequence><xs:element maxOccurs="unbounded" minOccurs="0" name="Ametnik" type="s1:Ametnik"/></xs:sequence></xs:complexType></xs:element><xs:element name="IsikukoodByDateCreatedRequest"><xs:complexType><xs:sequence><xs:element name="dateCeated" type="xs:date"/><xs:element name="asutusId" type="xs:integer"/></xs:sequence></xs:complexType></xs:element><xs:element name="IsikukoodByDateCreatedResponse"><xs:complexType><xs:sequence><xs:element maxOccurs="unbounded" minOccurs="0" name="isikukood" type="xs:string"/></xs:sequence></xs:complexType></xs:element><xs:element name="AmetnikBySearchRequest"><xs:complexType><xs:sequence><xs:element minOccurs="0" name="isikukood" type="xs:string"/><xs:element minOccurs="0" name="yksusId" type="xs:integer"/><xs:element minOccurs="0" name="alamYksustest" type="xs:integer"/><xs:element name="asutusId" type="xs:integer"/><xs:element minOccurs="0" name="nimi" type="xs:string"/><xs:element name="aktiivsedOnly" type="xs:boolean"/><xs:element minOccurs="0" name="offset" type="xs:integer"/><xs:element minOccurs="0" name="sort"><xs:simpleType><xs:restriction base="xs:string"><xs:enumeration value="yksus"/><xs:enumeration value="eesnimi"/><xs:enumeration value="perekonnanimi"/><xs:enumeration value="ametikoht"/><xs:enumeration value="SCORE"/></xs:restriction></xs:simpleType></xs:element><xs:element minOccurs="0" name="order"><xs:simpleType><xs:restriction base="xs:string"><xs:enumeration value="asc"/><xs:enumeration value="desc"/></xs:restriction></xs:simpleType></xs:element><xs:any maxOccurs="unbounded" minOccurs="0" namespace="##any" processContents="lax"/></xs:sequence></xs:complexType></xs:element><xs:element name="AmetnikBySearchResponse"><xs:complexType><xs:sequence><xs:element name="ametnikCount" type="xs:integer"/><xs:element maxOccurs="30" minOccurs="0" name="Ametnik" type="s1:AmetnikExt"/><xs:any maxOccurs="unbounded" minOccurs="0" namespace="##any" processContents="lax"/></xs:sequence></xs:complexType></xs:element><xs:element name="AmetnikAmetikohadByIsikukoodRequest"><xs:complexType><xs:sequence><xs:element name="isikukood" type="xs:string"/></xs:sequence></xs:complexType></xs:element><xs:element name="AmetnikAmetikohadByIsikukoodResponse"><xs:complexType><xs:sequence><xs:element name="Ametnik" type="s1:AmetnikSimple"/><xs:element maxOccurs="unbounded" name="Ametikoht" type="s1:Ametikoht"/></xs:sequence></xs:complexType></xs:element><xs:element name="AsutusByIdRequest"><xs:complexType><xs:sequence><xs:element name="asutusId" type="xs:integer"/></xs:sequence></xs:complexType></xs:element><xs:element name="AsutusByIdResponse"><xs:complexType><xs:sequence><xs:element minOccurs="0" name="Asutus" type="s1:Asutus"/></xs:sequence></xs:complexType></xs:element><xs:element name="AsutusListRequest" type="xs:string"/><xs:element name="AsutusListResponse"><xs:complexType><xs:sequence><xs:element maxOccurs="unbounded" minOccurs="0" name="Asutus" type="s1:Asutus"/></xs:sequence></xs:complexType></xs:element><xs:element name="YksusByAsutusIdRequest"><xs:complexType><xs:sequence><xs:element name="asutusId" type="xs:integer"/></xs:sequence></xs:complexType></xs:element><xs:element name="YksusByAsutusIdResponse"><xs:complexType><xs:sequence><xs:element maxOccurs="unbounded" minOccurs="0" name="Yksus" type="s1:Yksus"/></xs:sequence></xs:complexType></xs:element><xs:element name="YksusByAsutusId2Request"><xs:complexType><xs:sequence><xs:element name="asutusId" type="xs:integer"/></xs:sequence></xs:complexType></xs:element><xs:element name="YksusByAsutusId2Response"><xs:complexType><xs:sequence><xs:element maxOccurs="unbounded" minOccurs="0" name="Yksus" type="s1:YksusExt"/></xs:sequence></xs:complexType></xs:element><xs:element name="YksusByAsutusIdAndYlemYksusIdRequest"><xs:complexType><xs:sequence><xs:element name="asutusId" type="xs:integer"/><xs:element minOccurs="0" name="ylemYksusId" type="xs:integer"/></xs:sequence></xs:complexType></xs:element><xs:element name="YksusByAsutusIdAndYlemYksusIdResponse"><xs:complexType><xs:sequence><xs:element maxOccurs="unbounded" minOccurs="0" name="Yksus" type="s1:YksusTree"/></xs:sequence></xs:complexType></xs:element><xs:element name="YksusByIdRequest"><xs:complexType><xs:sequence><xs:element name="yksusId" type="xs:integer"/></xs:sequence></xs:complexType></xs:element><xs:element name="YksusByIdResponse"><xs:complexType><xs:sequence><xs:element minOccurs="0" name="Yksus" type="s1:Yksus"/></xs:sequence></xs:complexType></xs:element><xs:element name="YksusById2Request"><xs:complexType><xs:sequence><xs:element name="yksusId" type="xs:integer"/></xs:sequence></xs:complexType></xs:element><xs:element name="YksusById2Response"><xs:complexType><xs:sequence><xs:element minOccurs="0" name="Yksus" type="s1:YksusExt"/></xs:sequence></xs:complexType></xs:element><xs:element name="YksusBySearchRequest"><xs:complexType><xs:sequence><xs:element minOccurs="0" name="nimi" type="xs:string"/><xs:element name="aktiivsedOnly" type="xs:boolean"/><xs:element minOccurs="0" name="offset" type="xs:integer"/><xs:element minOccurs="0" name="sort"><xs:simpleType><xs:restriction base="xs:string"><xs:enumeration value="taisNimetusPikk"/><xs:enumeration value="SCORE"/></xs:restriction></xs:simpleType></xs:element><xs:element minOccurs="0" name="order"><xs:simpleType><xs:restriction base="xs:string"><xs:enumeration value="asc"/><xs:enumeration value="desc"/></xs:restriction></xs:simpleType></xs:element><xs:any maxOccurs="unbounded" minOccurs="0" namespace="##any" processContents="lax"/></xs:sequence></xs:complexType></xs:element><xs:element name="YksusBySearchResponse"><xs:complexType><xs:sequence><xs:element name="yksusCount" type="xs:integer"/><xs:element maxOccurs="30" name="Yksus" type="s1:YksusExt"/></xs:sequence></xs:complexType></xs:element></xs:schema>
+    <xs:schema xmlns:s1="http://ametnik.smit/services" xmlns:xs="http://www.w3.org/2001/XMLSchema" attributeFormDefault="unqualified" elementFormDefault="qualified" targetNamespace="http://ametnik.smit/services"><xs:element name="AmetnikByAsutusIdRequest"><xs:complexType><xs:sequence><xs:element name="asutusId" type="xs:integer"/><xs:element name="yksusetaAmetnikudOnly" type="xs:boolean"/></xs:sequence></xs:complexType></xs:element><xs:element name="AmetnikByAsutusIdResponse"><xs:complexType><xs:sequence><xs:element maxOccurs="unbounded" minOccurs="0" name="Ametnik" type="s1:Ametnik"/></xs:sequence></xs:complexType></xs:element><xs:element name="AmetnikByAsutusId2Request"><xs:complexType><xs:sequence><xs:element name="asutusId" type="xs:integer"/><xs:element name="yksusetaAmetnikudOnly" type="xs:boolean"/></xs:sequence></xs:complexType></xs:element><xs:element name="AmetnikByAsutusId2Response"><xs:complexType><xs:sequence><xs:element maxOccurs="unbounded" minOccurs="0" name="Ametnik" type="s1:AmetnikExt"/></xs:sequence></xs:complexType></xs:element><xs:element name="AmetnikByIsikukoodRequest"><xs:complexType><xs:sequence><xs:element name="isikukood" type="xs:string"/><xs:element name="asutusId" type="xs:integer"/></xs:sequence></xs:complexType></xs:element><xs:element name="AmetnikByIsikukoodResponse"><xs:complexType><xs:sequence><xs:element name="Ametnik" type="s1:Ametnik"/></xs:sequence></xs:complexType></xs:element><xs:element name="AmetnikByIsikukood2Request"><xs:complexType><xs:sequence><xs:element name="isikukood" type="xs:string"/><xs:element name="asutusId" type="xs:integer"/></xs:sequence></xs:complexType></xs:element><xs:element name="AmetnikByIsikukood2Response"><xs:complexType><xs:sequence><xs:element name="Ametnik" type="s1:AmetnikExt"/></xs:sequence></xs:complexType></xs:element><xs:element name="AmetnikByYksusIdRequest"><xs:complexType><xs:sequence><xs:element name="yksusId" type="xs:integer"/></xs:sequence></xs:complexType></xs:element><xs:element name="AmetnikByYksusIdResponse"><xs:complexType><xs:sequence><xs:element maxOccurs="unbounded" minOccurs="0" name="Ametnik" type="s1:Ametnik"/></xs:sequence></xs:complexType></xs:element><xs:element name="IsikukoodByDateCreatedRequest"><xs:complexType><xs:sequence><xs:element name="dateCeated" type="xs:date"/><xs:element name="asutusId" type="xs:integer"/></xs:sequence></xs:complexType></xs:element><xs:element name="IsikukoodByDateCreatedResponse"><xs:complexType><xs:sequence><xs:element maxOccurs="unbounded" minOccurs="0" name="isikukood" type="xs:string"/></xs:sequence></xs:complexType></xs:element><xs:element name="AmetnikBySearchRequest"><xs:complexType><xs:sequence><xs:element minOccurs="0" name="isikukood" type="xs:string"/><xs:element minOccurs="0" name="yksusId" type="xs:integer"/><xs:element minOccurs="0" name="alamYksustest" type="xs:boolean"><xs:annotation><xs:documentation>
+							Mõjub koos yksusId-ga, kui true siis annab
+							ametnikud
+							kes kuuluvad ka yksusId alamYksustesse
+						</xs:documentation></xs:annotation></xs:element><xs:element name="asutusId" type="xs:integer"/><xs:element minOccurs="0" name="nimi" type="xs:string"/><xs:element name="aktiivsedOnly" type="xs:boolean"/><xs:element minOccurs="0" name="offset" type="xs:integer"/><xs:element minOccurs="0" name="sort"><xs:simpleType><xs:restriction base="xs:string"><xs:enumeration value="yksus"/><xs:enumeration value="eesnimi"/><xs:enumeration value="perekonnanimi"/><xs:enumeration value="ametikoht"/><xs:enumeration value="SCORE"/></xs:restriction></xs:simpleType></xs:element><xs:element minOccurs="0" name="order"><xs:simpleType><xs:restriction base="xs:string"><xs:enumeration value="asc"/><xs:enumeration value="desc"/></xs:restriction></xs:simpleType></xs:element><xs:element minOccurs="0" name="pseudoYksustest" type="xs:boolean"/><xs:element minOccurs="0" name="pageSize" type="xs:integer"><xs:annotation><xs:documentation>
+							Korraga tagastatavate ametnike arv. Default on 30
+						</xs:documentation></xs:annotation></xs:element><xs:any maxOccurs="unbounded" minOccurs="0" namespace="##other" processContents="lax"/></xs:sequence></xs:complexType></xs:element><xs:element name="AmetnikBySearchResponse"><xs:complexType><xs:sequence><xs:element name="ametnikCount" type="xs:integer"/><xs:element maxOccurs="unbounded" minOccurs="0" name="Ametnik" type="s1:AmetnikExt"/><xs:any maxOccurs="unbounded" minOccurs="0" namespace="##other" processContents="lax"/></xs:sequence></xs:complexType></xs:element><xs:element name="AmetnikFullBySearchRequest"><xs:complexType><xs:sequence><xs:element minOccurs="0" name="yksusIdRada" type="xs:integer"><xs:annotation><xs:documentation>
+							Saab otsida üksuseid üksusraja järgi.
+							1/* annab kõik asutuses olevad ametikohad
+							1/6/ annab vastusesse kindla üksuse ametikohad
+							1/6/* annab vastusesse lisaks ka alamüksused
+						</xs:documentation></xs:annotation></xs:element><xs:element minOccurs="0" name="nimi" type="xs:string"><xs:annotation><xs:documentation>
+							Otsing nime või isikukoodi algusosade järgi
+							Nt kui otsida Jaan Juurikas:  Jaa Juur
+							Otsida saab ka isikukoodi järgi: 388
+						</xs:documentation></xs:annotation></xs:element><xs:element name="aktiivsedAmetikohadOnly" type="xs:boolean"><xs:annotation><xs:documentation>
+							Kui true, siis antakse vastusesse ainult aktiivsed ametikohad. Kui muid ametikohaga seotud otsingukriteeriumeid ei ole, siis antakse vastusesse ka ilma ametikohtateta ametnikud.
+							Kui false, siis ametnikul kuvatakse kõik ametikohad(nii tulevikus, kui ka minevikus kehtivad ametikohad)
+						</xs:documentation></xs:annotation></xs:element><xs:element name="ametikohtadegaOnly" type="xs:boolean"><xs:annotation><xs:documentation>
+							Kui true, siis antakse vastusesse ainult ametikohtadega ametikohad.
+							Kui false, siis kuvatakse ka ilma ametikohtadeta(ei vastanud muudele otsingu parameetritele) ametnikud vastusesse.
+						</xs:documentation></xs:annotation></xs:element><xs:element minOccurs="0" name="pseudoYksustest" type="xs:boolean"><xs:annotation><xs:documentation>
+								Kui true, siis pole vahet millises üksuses on ametnik(pseudoükuses või tavalises).
+								Kui false, siis ametnikul kuvatakse kõik ametikohad mis on tavalised üksused(ametikoht ei ole pseudoüksuses)
+							</xs:documentation></xs:annotation></xs:element><xs:element minOccurs="0" name="yksusPiirkondKL" type="xs:string"><xs:annotation><xs:documentation>
+							Tagastada ametnikud kellel on ametikoha üksus antud piirkonnas.
+							nt: PIIRKOND_POHJA
+						</xs:documentation></xs:annotation></xs:element><xs:element minOccurs="0" name="offset" type="xs:integer"/><xs:element minOccurs="0" name="sort"><xs:simpleType><xs:restriction base="xs:string"><xs:enumeration value="eesnimi"/><xs:enumeration value="perekonnanimi"/></xs:restriction></xs:simpleType></xs:element><xs:element minOccurs="0" name="order"><xs:simpleType><xs:restriction base="xs:string"><xs:enumeration value="asc"/><xs:enumeration value="desc"/></xs:restriction></xs:simpleType></xs:element><xs:element minOccurs="0" name="returnElements" type="xs:string"><xs:annotation><xs:documentation>
+							Elementide nimed mida tagastada, kui tühi tagastab kõik võimalikud. Komadega eraldatult. nt:isikukood,yksusId,asutusId.
+							Seda välja on mõistlik täita, kui rakendusel on vaja mingit osa	ametnike andmetest ja kui tagastatavaid ametnike objekte on	palju.
+							By default ei tule väljad: Kvalifikatsioonid, ryhm
+							nt: eesnimi, perekonnanimi, isikukood,Kvalifikatsioonid, ametikoht, asutusId, yksusId, yksusRada, yksusIdRada, nimetus, kehtivAlates, 
+							kehtivKuni, aktiivne, kasYksusJuht, aadress, esterId, email, kontakttelefon, kontakttelefon2, mobiiltelefon, mobiiltelefon2, teenistusaste, ryhm
+						</xs:documentation></xs:annotation></xs:element><xs:element minOccurs="0" name="asutusId" type="xs:integer"/><xs:element minOccurs="0" name="yksusId" type="xs:integer"/><xs:element minOccurs="0" name="alamYksustest" type="xs:boolean"><xs:annotation><xs:documentation>
+							Mõjub koos yksusId-ga, kui true siis annab
+							ametnikud
+							kes kuuluvad ka yksusId alamYksustesse
+						</xs:documentation></xs:annotation></xs:element><xs:element minOccurs="0" name="pageSize" type="xs:integer"><xs:annotation><xs:documentation>
+							Korraga tagastatavate ametnike arv. Default on 30
+						</xs:documentation></xs:annotation></xs:element><xs:any maxOccurs="unbounded" minOccurs="0" namespace="##other" processContents="lax"/></xs:sequence></xs:complexType></xs:element><xs:element name="AmetnikFullBySearchResponse"><xs:complexType><xs:sequence><xs:element name="ametnikCount" type="xs:integer"/><xs:element maxOccurs="unbounded" minOccurs="0" name="Ametnik" type="s1:AmetnikFullExt"/><xs:any maxOccurs="unbounded" minOccurs="0" namespace="##other" processContents="lax"/></xs:sequence></xs:complexType></xs:element><xs:element name="AmetnikAmetikohadByIsikukoodRequest"><xs:complexType><xs:sequence><xs:element name="isikukood" type="xs:string"/></xs:sequence></xs:complexType></xs:element><xs:element name="AmetnikAmetikohadByIsikukoodResponse"><xs:complexType><xs:sequence><xs:element name="Ametnik" type="s1:AmetnikSimple"/><xs:element maxOccurs="unbounded" name="Ametikoht" type="s1:Ametikoht"/></xs:sequence></xs:complexType></xs:element><xs:element name="AsutusByIdRequest"><xs:complexType><xs:sequence><xs:element name="asutusId" type="xs:integer"/></xs:sequence></xs:complexType></xs:element><xs:element name="AsutusByIdResponse"><xs:complexType><xs:sequence><xs:element minOccurs="0" name="Asutus" type="s1:Asutus"/></xs:sequence></xs:complexType></xs:element><xs:element name="AsutusListRequest" type="xs:string"/><xs:element name="AsutusListResponse"><xs:complexType><xs:sequence><xs:element maxOccurs="unbounded" minOccurs="0" name="Asutus" type="s1:Asutus"/></xs:sequence></xs:complexType></xs:element><xs:element name="YksusByAsutusIdRequest"><xs:complexType><xs:sequence><xs:element name="asutusId" type="xs:integer"/></xs:sequence></xs:complexType></xs:element><xs:element name="YksusByAsutusIdResponse"><xs:complexType><xs:sequence><xs:element maxOccurs="unbounded" minOccurs="0" name="Yksus" type="s1:Yksus"/></xs:sequence></xs:complexType></xs:element><xs:element name="YksusByAsutusIdWithPseudoRequest"><xs:complexType><xs:sequence><xs:element name="asutusId" type="xs:integer"/></xs:sequence></xs:complexType></xs:element><xs:element name="YksusByAsutusIdWithPseudoResponse"><xs:complexType><xs:sequence><xs:element maxOccurs="unbounded" minOccurs="0" name="Yksus" type="s1:Yksus"/></xs:sequence></xs:complexType></xs:element><xs:element name="YksusByAsutusId2Request"><xs:complexType><xs:sequence><xs:element name="asutusId" type="xs:integer"/></xs:sequence></xs:complexType></xs:element><xs:element name="YksusByAsutusId2Response"><xs:complexType><xs:sequence><xs:element maxOccurs="unbounded" minOccurs="0" name="Yksus" type="s1:YksusExt"/></xs:sequence></xs:complexType></xs:element><xs:element name="YksusByAsutusIdAndYlemYksusIdRequest"><xs:complexType><xs:sequence><xs:element name="asutusId" type="xs:integer"/><xs:element minOccurs="0" name="ylemYksusId" type="xs:integer"/></xs:sequence></xs:complexType></xs:element><xs:element name="YksusByAsutusIdAndYlemYksusIdResponse"><xs:complexType><xs:sequence><xs:element maxOccurs="unbounded" minOccurs="0" name="Yksus" type="s1:YksusTree"/></xs:sequence></xs:complexType></xs:element><xs:element name="YksusByIdRequest"><xs:complexType><xs:sequence><xs:element name="yksusId" type="xs:integer"/></xs:sequence></xs:complexType></xs:element><xs:element name="YksusByIdResponse"><xs:complexType><xs:sequence><xs:element minOccurs="0" name="Yksus" type="s1:Yksus"/></xs:sequence></xs:complexType></xs:element><xs:element name="YksusById2Request"><xs:complexType><xs:sequence><xs:element name="yksusId" type="xs:integer"/></xs:sequence></xs:complexType></xs:element><xs:element name="YksusById2Response"><xs:complexType><xs:sequence><xs:element minOccurs="0" name="Yksus" type="s1:YksusExt"/></xs:sequence></xs:complexType></xs:element><xs:element name="YksusBySearchRequest"><xs:complexType><xs:sequence><xs:element minOccurs="0" name="nimi" type="xs:string"/><xs:element name="aktiivsedOnly" type="xs:boolean"/><xs:element minOccurs="0" name="offset" type="xs:integer"/><xs:element minOccurs="0" name="sort"><xs:simpleType><xs:restriction base="xs:string"><xs:enumeration value="taisNimetusPikk"/><xs:enumeration value="SCORE"/></xs:restriction></xs:simpleType></xs:element><xs:element minOccurs="0" name="order"><xs:simpleType><xs:restriction base="xs:string"><xs:enumeration value="asc"/><xs:enumeration value="desc"/></xs:restriction></xs:simpleType></xs:element><xs:element minOccurs="0" name="pseudoYksustest" type="xs:boolean"/><xs:element minOccurs="0" name="asutusId" type="xs:integer"/><xs:any maxOccurs="unbounded" minOccurs="0" namespace="##other" processContents="lax"/></xs:sequence></xs:complexType></xs:element><xs:element name="YksusBySearchResponse"><xs:complexType><xs:sequence><xs:element name="yksusCount" type="xs:integer"/><xs:element maxOccurs="30" name="Yksus" type="s1:YksusExt"/></xs:sequence></xs:complexType></xs:element><xs:element name="AmetnikListRequest"><xs:complexType><xs:sequence><xs:element minOccurs="0" name="isikukood" type="xs:string"><xs:annotation><xs:documentation>
+							Ametniku isikukoodi järgi otsimine. Saab ka otsida mitut isikukoodi, ";" eraldatult.
+							nt: 38603250284;36907200328
+						</xs:documentation></xs:annotation></xs:element><xs:element minOccurs="0" name="yksusId" type="xs:integer"/><xs:element minOccurs="0" name="asutusId" type="xs:integer"/><xs:element minOccurs="0" name="nimi" type="xs:string"/><xs:element default="false" minOccurs="0" name="aktiivneTulevikus" type="xs:boolean"><xs:annotation><xs:documentation>
+							Kas vastusesse tulevad tulevikus kehtima
+							hakkavad puudumised
+						</xs:documentation></xs:annotation></xs:element><xs:element default="true" minOccurs="0" name="aktiivnePraegu" type="xs:boolean"><xs:annotation><xs:documentation>
+							Kas vastusesse tulevad hetkel kehtivad
+							puudumised
+						</xs:documentation></xs:annotation></xs:element><xs:element default="false" minOccurs="0" name="aktiivneMinevikus" type="xs:boolean"><xs:annotation><xs:documentation>
+							Kas vastusesse tulevad vanad puudumised
+							puudumised
+						</xs:documentation></xs:annotation></xs:element><xs:element minOccurs="0" name="muudetudAlates" type="xs:dateTime"><xs:annotation><xs:documentation>
+							Kuupäev millest alates on ametnik või temaga
+							seonduvad andmed muudetud.
+						</xs:documentation></xs:annotation></xs:element><xs:element minOccurs="0" name="muudetudKuni" type="xs:dateTime"><xs:annotation><xs:documentation>
+							Kuupäev kuni milleni on ametnik või temaga
+							seonduvad andmed muudetud.
+						</xs:documentation></xs:annotation></xs:element><xs:element minOccurs="0" name="pseudoYksustest" type="xs:boolean"><xs:annotation><xs:documentation>
+							Kas pärida ametnike kelle ametikoht on nn
+							pseudoüksuses. nt: Abipolitseinukud
+						</xs:documentation></xs:annotation></xs:element><xs:element minOccurs="0" name="returnElements" type="xs:string"><xs:annotation><xs:documentation>
+							Elementide nimed mida tagastada, kui tühi
+							tagastab kõik võimalikud.
+							Komadega eraldatult.
+							nt:isikukood,yksusId,asutusId.
+							Seda välja on mõistlik täita kui
+							rakendusel on vaja mingit osa
+							ametnike andmetest ja kui
+							tagastatavaid ametnike objekte on
+							palju.
+						</xs:documentation></xs:annotation></xs:element><xs:any maxOccurs="unbounded" minOccurs="0" namespace="##other" processContents="lax"/></xs:sequence></xs:complexType></xs:element><xs:element name="AmetnikListResponse"><xs:complexType><xs:sequence><xs:element maxOccurs="unbounded" minOccurs="0" name="Ametnik" type="s1:AmetnikAllExt"/></xs:sequence></xs:complexType></xs:element><xs:element name="YksusListRequest"><xs:complexType><xs:sequence><xs:element minOccurs="0" name="asutusId" type="xs:integer"/><xs:element minOccurs="0" name="yksusId" type="xs:integer"/><xs:element minOccurs="0" name="nimi" type="xs:string"/><xs:element default="false" minOccurs="0" name="aktiivneTulevikus" type="xs:boolean"><xs:annotation><xs:documentation>
+							Kas vastusesse tulevad tulevikus kehtima
+							hakkavad puudumised
+						</xs:documentation></xs:annotation></xs:element><xs:element default="true" minOccurs="0" name="aktiivnePraegu" type="xs:boolean"><xs:annotation><xs:documentation>
+							Kas vastusesse tulevad hetkel kehtivad
+							puudumised
+						</xs:documentation></xs:annotation></xs:element><xs:element default="false" minOccurs="0" name="aktiivneMinevikus" type="xs:boolean"><xs:annotation><xs:documentation>
+							Kas vastusesse tulevad vanad puudumised
+							puudumised
+						</xs:documentation></xs:annotation></xs:element><xs:element minOccurs="0" name="muudetudAlates" type="xs:dateTime"><xs:annotation><xs:documentation>
+							Kuupäev millest alates on ametnik või temaga
+							seonduvad andmed muudetud.
+						</xs:documentation></xs:annotation></xs:element><xs:element minOccurs="0" name="muudetudKuni" type="xs:dateTime"><xs:annotation><xs:documentation>
+							Kuupäev kuni milleni on ametnik või temaga
+							seonduvad andmed muudetud.
+						</xs:documentation></xs:annotation></xs:element><xs:element minOccurs="0" name="pseudoYksustest" type="xs:boolean"><xs:annotation><xs:documentation>
+							Kas pärida ametnike kelle ametikoht on nn
+							pseudoüksuses. nt: Abipolitseinukud
+						</xs:documentation></xs:annotation></xs:element><xs:element minOccurs="0" name="returnElements" type="xs:string"><xs:annotation><xs:documentation>
+							Elementide nimed mida tagastada, kui tühi
+							tagastab kõik võimalikud.
+							Komadega eraldatult.
+							nt:isikukood,yksusId,asutusId.
+							Seda välja on mõistlik täita kui
+							rakendusel on vaja mingit osa
+							ametnike andmetest ja kui
+							tagastatavaid ametnike objekte on
+							palju.
+						</xs:documentation></xs:annotation></xs:element><xs:any maxOccurs="unbounded" minOccurs="0" namespace="##other" processContents="lax"/></xs:sequence></xs:complexType></xs:element><xs:element name="YksusListResponse"><xs:complexType><xs:sequence><xs:element maxOccurs="unbounded" minOccurs="0" name="Yksus" type="s1:YksusAllExt"/></xs:sequence></xs:complexType></xs:element><xs:element name="FailByIsikukoodRequest"><xs:complexType><xs:sequence><xs:element name="isikukood" type="xs:string"/><xs:element minOccurs="0" name="tyyp" type="xs:integer"><xs:annotation><xs:documentation>
+							Tagastatava faili tüüp. 1:PILT, 2:AMETIJUHEND
+						</xs:documentation></xs:annotation></xs:element></xs:sequence></xs:complexType></xs:element><xs:element name="FailByIsikukoodResponse"><xs:complexType><xs:sequence><xs:element maxOccurs="unbounded" minOccurs="0" name="Fail" type="s1:Fail"/></xs:sequence></xs:complexType></xs:element><xs:element name="SapProfiilByIsikukoodRequest"><xs:complexType><xs:sequence><xs:element name="isikukood" type="xs:string"/><xs:element minOccurs="0" name="aktiivsedOnly" type="xs:boolean"/><xs:element minOccurs="0" name="pseudoYksustest" type="xs:boolean"/></xs:sequence></xs:complexType></xs:element><xs:element name="SapProfiilByIsikukoodResponse"><xs:complexType><xs:sequence><xs:element name="Ametnik" type="s1:AmetnikSimple"/><xs:element minOccurs="0" name="SapProfiilid" type="s1:SapProfiilid"/></xs:sequence></xs:complexType></xs:element></xs:schema>
+    <xs:schema xmlns:s1="http://ametnik.smit/services" xmlns:xs="http://www.w3.org/2001/XMLSchema" attributeFormDefault="unqualified" elementFormDefault="qualified" targetNamespace="http://ametnik.smit/services"><xs:element name="AmetnikSimple" type="s1:AmetnikSimple"/><xs:complexType name="AmetnikSimple"><xs:sequence><xs:element name="eesnimi" type="xs:string"/><xs:element name="perekonnanimi" type="xs:string"/><xs:element name="isikukood" type="xs:string"/></xs:sequence></xs:complexType><xs:element name="Ametnik" type="s1:Ametnik"/><xs:complexType name="Ametnik"><xs:sequence><xs:element name="eesnimi" type="xs:string"/><xs:element name="perekonnanimi" type="xs:string"/><xs:element name="isikukood" type="xs:string"/><xs:element default="-1" minOccurs="0" name="yksusId" type="xs:integer"/><xs:element name="asutusId" type="xs:integer"/><xs:element name="ametikoht" type="xs:string"/><xs:element name="kontakttelefon" type="xs:string"/><xs:element name="email" type="xs:string"/></xs:sequence></xs:complexType><xs:element name="AmetnikExt" type="s1:AmetnikExt"/><xs:complexType name="AmetnikExt"><xs:sequence><xs:element name="eesnimi" type="xs:string"/><xs:element name="perekonnanimi" type="xs:string"/><xs:element name="isikukood" type="xs:string"/><xs:element name="asutusId" type="xs:integer"/><xs:element minOccurs="0" name="yksusId" type="xs:integer"/><xs:element minOccurs="0" name="ametikoht" type="xs:string"/><xs:element minOccurs="0" name="kontakttelefon" type="xs:string"/><xs:element minOccurs="0" name="email" type="xs:string"/><xs:element minOccurs="0" name="yksusRada" type="xs:string"/><xs:element minOccurs="0" name="lahkumiseKuupaev" type="xs:date"/><xs:element minOccurs="0" name="kasYksusJuht" type="xs:boolean"/><xs:element minOccurs="0" name="aadress" type="s1:Aadress"/><xs:element minOccurs="0" name="teenistusaste" type="xs:string"/><xs:element minOccurs="0" name="esterId" type="xs:string"/><xs:element minOccurs="0" name="kontakttelefon2" type="xs:string"/><xs:element minOccurs="0" name="mobiiltelefon" type="xs:string"/><xs:element minOccurs="0" name="mobiiltelefon2" type="xs:string"/><xs:any maxOccurs="unbounded" minOccurs="0" namespace="##other" processContents="lax"/></xs:sequence></xs:complexType><xs:complexType name="AmetnikAllExt"><xs:sequence><xs:element minOccurs="0" name="eesnimi" type="xs:string"/><xs:element minOccurs="0" name="perekonnanimi" type="xs:string"/><xs:element minOccurs="0" name="isikukood" type="xs:string"/><xs:element minOccurs="0" name="asutusId" type="xs:integer"/><xs:element minOccurs="0" name="yksusId" type="xs:integer"/><xs:element minOccurs="0" name="ametikoht" type="xs:string"/><xs:element minOccurs="0" name="kontakttelefon" type="xs:string"/><xs:element minOccurs="0" name="email" type="xs:string"/><xs:element minOccurs="0" name="yksusRada" type="xs:string"><xs:annotation><xs:documentation>
+						Struktuuriüksuse täisrada asutusest alates
+					</xs:documentation></xs:annotation></xs:element><xs:element minOccurs="0" name="kehtivAlates" type="xs:date"/><xs:element minOccurs="0" name="kehtivKuni" type="xs:date"/><xs:element minOccurs="0" name="aktiivne" type="xs:boolean"/><xs:element minOccurs="0" name="kasYksusJuht" type="xs:boolean"/><xs:element minOccurs="0" name="aadress" type="s1:Aadress"/><xs:element minOccurs="0" name="teenistusaste" type="xs:string"/><xs:element minOccurs="0" name="esterId" type="xs:string"/><xs:element minOccurs="0" name="kontakttelefon2" type="xs:string"/><xs:element minOccurs="0" name="mobiiltelefon" type="xs:string"/><xs:element minOccurs="0" name="mobiiltelefon2" type="xs:string"/><xs:element minOccurs="0" name="hariduseleVastavEriala" type="xs:string"/><xs:element minOccurs="0" name="haridustase" type="xs:string"/><xs:element minOccurs="0" name="akadeemilineKraad" type="xs:string"/><xs:element minOccurs="0" name="kuvaSiseveebi" type="xs:boolean"/><xs:element minOccurs="0" name="kuvaValisveebi" type="xs:boolean"/><xs:element minOccurs="0" name="fotoSiseveebi" type="xs:boolean"/><xs:element minOccurs="0" name="fotoValisveebi" type="xs:boolean"/><xs:element minOccurs="0" name="yksusIdRada" type="xs:string"/><xs:element minOccurs="0" name="tyyp" type="xs:string"/><xs:element minOccurs="0" name="muudetud" type="xs:dateTime"/><xs:any maxOccurs="unbounded" minOccurs="0" namespace="##other" processContents="lax"/></xs:sequence></xs:complexType><xs:complexType name="AmetnikFullExt"><xs:complexContent><xs:extension base="s1:AmetnikSimple"><xs:sequence><xs:element minOccurs="0" name="Kvalifikatsioonid" type="s1:Kvalifikatsioonid"/><xs:element name="Ametikohad" type="s1:Ametikohad"/></xs:sequence></xs:extension></xs:complexContent></xs:complexType><xs:complexType name="Ametikohad"><xs:sequence><xs:element maxOccurs="unbounded" minOccurs="0" name="Ametikoht" type="s1:AmetikohtExt"/></xs:sequence></xs:complexType><xs:complexType name="AmetikohtExt"><xs:sequence><xs:element minOccurs="0" name="asutusId" type="xs:integer"/><xs:element minOccurs="0" name="yksusId" type="xs:integer"/><xs:element minOccurs="0" name="yksusRada" type="xs:string"><xs:annotation><xs:documentation>
+						Struktuuriüksuse täisrada asutusest alates
+					</xs:documentation></xs:annotation></xs:element><xs:element minOccurs="0" name="yksusIdRada" type="xs:string"/><xs:element minOccurs="0" name="yksusPiirkondKL" type="xs:string"/><xs:element minOccurs="0" name="nimetus" type="xs:string"/><xs:element minOccurs="0" name="kehtivAlates" type="xs:date"/><xs:element minOccurs="0" name="kehtivKuni" type="xs:date"/><xs:element minOccurs="0" name="aktiivne" type="xs:boolean"/><xs:element minOccurs="0" name="kasYksusJuht" type="xs:boolean"/><xs:element minOccurs="0" name="aadress" type="s1:Aadress"/><xs:element minOccurs="0" name="esterId" type="xs:string"/><xs:element minOccurs="0" name="email" type="xs:string"/><xs:element minOccurs="0" name="kontakttelefon" type="xs:string"/><xs:element minOccurs="0" name="kontakttelefon2" type="xs:string"/><xs:element minOccurs="0" name="mobiiltelefon" type="xs:string"/><xs:element minOccurs="0" name="mobiiltelefon2" type="xs:string"/><xs:element minOccurs="0" name="teenistusaste" type="xs:string"/><xs:element minOccurs="0" name="ryhm" type="xs:string"/><xs:any maxOccurs="unbounded" minOccurs="0" namespace="##other" processContents="lax"/></xs:sequence></xs:complexType><xs:complexType name="YksusAllExt"><xs:sequence><xs:element name="id" type="xs:integer"/><xs:element name="nimetus" type="xs:string"/><xs:element minOccurs="0" name="nimetusEng" type="xs:string"/><xs:element name="asutusId" type="xs:integer"/><xs:element minOccurs="0" name="ylemYksusId" type="xs:integer"/><xs:element minOccurs="0" name="yksusRada" type="xs:string"/><xs:element minOccurs="0" name="lopetamiseKuupaev" type="xs:date"/><xs:element minOccurs="0" name="juhtIsikukood" type="xs:string"/><xs:element minOccurs="0" name="email" type="xs:string"/><xs:element minOccurs="0" name="telefon" type="xs:string"/><xs:element minOccurs="0" name="faks" type="xs:string"/><xs:element minOccurs="0" name="aadress" type="s1:Aadress"/><xs:element minOccurs="0" name="kehtivAlates" type="xs:date"/><xs:element minOccurs="0" name="kehtivKuni" type="xs:date"/><xs:element minOccurs="0" name="aktiivne" type="xs:boolean"/><xs:element minOccurs="0" name="muudetud" type="xs:dateTime"/><xs:any maxOccurs="unbounded" minOccurs="0" namespace="##other" processContents="lax"/></xs:sequence></xs:complexType><xs:element name="Aadress" type="s1:Aadress"/><xs:complexType name="Aadress"><xs:sequence><xs:element name="maakond" type="xs:string"/><xs:element name="omavalitsus" type="xs:string"/><xs:element minOccurs="0" name="asustusYksus" type="xs:string"/><xs:element minOccurs="0" name="kohanimi" type="xs:string"/><xs:element minOccurs="0" name="sihtkood" type="xs:string"/><xs:element minOccurs="0" name="kabinet" type="xs:string"/><xs:any maxOccurs="unbounded" minOccurs="0" namespace="##other" processContents="lax"/></xs:sequence></xs:complexType><xs:element name="Asutus" type="s1:Asutus"/><xs:complexType name="Asutus"><xs:sequence><xs:element name="id" type="xs:integer"/><xs:element name="nimetus" type="xs:string"/><xs:element minOccurs="0" name="registrikood" type="xs:string"/></xs:sequence></xs:complexType><xs:element name="Yksus" type="s1:Yksus"/><xs:complexType name="Yksus"><xs:sequence><xs:element name="id" type="xs:integer"/><xs:element name="nimetus" type="xs:string"/><xs:element name="asutusId" type="xs:integer"/><xs:element minOccurs="0" name="ylemYksusId" type="xs:integer"/></xs:sequence></xs:complexType><xs:element name="YksusExt" type="s1:YksusExt"/><xs:complexType name="YksusExt"><xs:sequence><xs:element name="id" type="xs:integer"/><xs:element name="nimetus" type="xs:string"/><xs:element name="asutusId" type="xs:integer"/><xs:element minOccurs="0" name="ylemYksusId" type="xs:integer"/><xs:element minOccurs="0" name="yksusRada" type="xs:string"/><xs:element minOccurs="0" name="lopetamiseKuupaev" type="xs:date"/><xs:element minOccurs="0" name="juhtIsikukood" type="xs:string"/><xs:element minOccurs="0" name="email" type="xs:string"/><xs:any maxOccurs="unbounded" minOccurs="0" namespace="##other" processContents="lax"/></xs:sequence></xs:complexType><xs:element name="Ametikoht" type="s1:Ametikoht"/><xs:complexType name="Ametikoht"><xs:sequence><xs:element default="-1" minOccurs="0" name="yksusId" type="xs:integer"/><xs:element name="asutusId" type="xs:integer"/><xs:element name="ametikoht" type="xs:string"/><xs:element name="kontakttelefon" type="xs:string"/><xs:element name="email" type="xs:string"/><xs:element minOccurs="0" name="yksusRada" type="xs:string"/></xs:sequence></xs:complexType></xs:schema>
+    <xs:schema xmlns:s1="http://ametnik.smit/services" xmlns:xs="http://www.w3.org/2001/XMLSchema" attributeFormDefault="unqualified" elementFormDefault="qualified" targetNamespace="http://ametnik.smit/services"><xs:element name="YksusTree" type="s1:YksusTree"/><xs:complexType name="YksusTree"><xs:sequence><xs:element name="id" type="xs:integer"/><xs:element name="nimetus" type="xs:string"/><xs:element name="asutusId" type="xs:integer"/><xs:element minOccurs="0" name="ylemYksusId" type="xs:integer"/><xs:element name="alamYksuseid" type="xs:boolean"/></xs:sequence></xs:complexType><xs:element name="SapProfiil" type="s1:SapProfiil"/><xs:complexType name="SapProfiil"><xs:sequence><xs:element name="asutusId" type="xs:integer"/><xs:element default="-1" minOccurs="0" name="yksusId" type="xs:integer"/><xs:element name="ametinimetus" type="xs:string"/><xs:element name="kontakttelefon" type="xs:string"/><xs:element name="email" type="xs:string"/><xs:element minOccurs="0" name="yksusRada" type="xs:string"/><xs:element name="ametnikSapKood" type="xs:string"/><xs:element name="ametikohtSapKood" type="xs:string"/><xs:element name="ametikohaTunnus" type="xs:string"/><xs:element name="ametikohaTunnusTekst" type="xs:string"/><xs:element name="valdkond" type="xs:string"/><xs:element name="tooLiin" type="xs:string"/><xs:any maxOccurs="unbounded" minOccurs="0" namespace="##other" processContents="lax"/></xs:sequence></xs:complexType><xs:element name="SapProfiilid" type="s1:SapProfiilid"/><xs:complexType name="SapProfiilid"><xs:sequence><xs:element maxOccurs="unbounded" name="SapProfiil" type="s1:SapProfiil"/></xs:sequence></xs:complexType><xs:complexType name="Fail"><xs:sequence><xs:element name="fail" type="xs:base64Binary"/><xs:element name="nimetus" type="xs:string"/><xs:element name="laiend" type="xs:string"/><xs:element minOccurs="0" name="id" type="xs:integer"/><xs:element minOccurs="0" name="muutmisKp" type="xs:dateTime"/><xs:element minOccurs="0" name="suurus" type="xs:string"/></xs:sequence></xs:complexType><xs:element name="Asendus" type="s1:Asendus"/><xs:complexType name="Asendus"><xs:sequence><xs:element name="isikukood" type="xs:string"/><xs:element name="kehtivAlates" type="xs:date"/><xs:element name="kehtivKuni" type="xs:date"/></xs:sequence></xs:complexType><xs:element name="Asendused" type="s1:Asendused"/><xs:complexType name="Asendused"><xs:sequence><xs:element maxOccurs="unbounded" name="Asendus" type="s1:Asendus"/></xs:sequence></xs:complexType><xs:element name="AmetnikExtAndRyhm" type="s1:AmetnikExtAndRyhm"/><xs:complexType name="AmetnikExtAndRyhm"><xs:complexContent><xs:extension base="s1:AmetnikExt"><xs:sequence><xs:element name="ryhm" type="xs:string"/></xs:sequence></xs:extension></xs:complexContent></xs:complexType><xs:element name="Kvalifikatsioon" type="s1:Kvalifikatsioon"/><xs:complexType name="Kvalifikatsioon"><xs:sequence><xs:element name="kood" type="xs:string"/><xs:element name="nimetus" type="xs:string"/></xs:sequence></xs:complexType><xs:complexType name="Kvalifikatsioonid"><xs:sequence><xs:element maxOccurs="unbounded" minOccurs="0" name="Kvalifikatsioon" type="s1:Kvalifikatsioon"/></xs:sequence></xs:complexType><xs:element name="Kvalifikatsioonid" type="s1:Kvalifikatsioonid"/></xs:schema>
   </wsdl:types>
   <wsdl:message name="AmetnikByAsutusIdResponse">
-    <wsdl:part element="sch:AmetnikByAsutusIdResponse" name="AmetnikByAsutusIdResponse">
+    <wsdl:part element="sch2:AmetnikByAsutusIdResponse" name="AmetnikByAsutusIdResponse">
     </wsdl:part>
   </wsdl:message>
   <wsdl:message name="YksusById2Request">
-    <wsdl:part element="sch:YksusById2Request" name="YksusById2Request">
+    <wsdl:part element="sch2:YksusById2Request" name="YksusById2Request">
     </wsdl:part>
   </wsdl:message>
   <wsdl:message name="AmetnikByYksusIdRequest">
-    <wsdl:part element="sch:AmetnikByYksusIdRequest" name="AmetnikByYksusIdRequest">
+    <wsdl:part element="sch2:AmetnikByYksusIdRequest" name="AmetnikByYksusIdRequest">
     </wsdl:part>
   </wsdl:message>
   <wsdl:message name="AmetnikAmetikohadByIsikukoodResponse">
-    <wsdl:part element="sch:AmetnikAmetikohadByIsikukoodResponse" name="AmetnikAmetikohadByIsikukoodResponse">
+    <wsdl:part element="sch2:AmetnikAmetikohadByIsikukoodResponse" name="AmetnikAmetikohadByIsikukoodResponse">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="SapProfiilByIsikukoodRequest">
+    <wsdl:part element="sch2:SapProfiilByIsikukoodRequest" name="SapProfiilByIsikukoodRequest">
     </wsdl:part>
   </wsdl:message>
   <wsdl:message name="YksusByAsutusId2Response">
-    <wsdl:part element="sch:YksusByAsutusId2Response" name="YksusByAsutusId2Response">
+    <wsdl:part element="sch2:YksusByAsutusId2Response" name="YksusByAsutusId2Response">
     </wsdl:part>
   </wsdl:message>
   <wsdl:message name="IsikukoodByDateCreatedRequest">
-    <wsdl:part element="sch:IsikukoodByDateCreatedRequest" name="IsikukoodByDateCreatedRequest">
+    <wsdl:part element="sch2:IsikukoodByDateCreatedRequest" name="IsikukoodByDateCreatedRequest">
     </wsdl:part>
   </wsdl:message>
   <wsdl:message name="YksusByAsutusIdResponse">
-    <wsdl:part element="sch:YksusByAsutusIdResponse" name="YksusByAsutusIdResponse">
+    <wsdl:part element="sch2:YksusByAsutusIdResponse" name="YksusByAsutusIdResponse">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="FailByIsikukoodRequest">
+    <wsdl:part element="sch2:FailByIsikukoodRequest" name="FailByIsikukoodRequest">
     </wsdl:part>
   </wsdl:message>
   <wsdl:message name="YksusByAsutusId2Request">
-    <wsdl:part element="sch:YksusByAsutusId2Request" name="YksusByAsutusId2Request">
+    <wsdl:part element="sch2:YksusByAsutusId2Request" name="YksusByAsutusId2Request">
     </wsdl:part>
   </wsdl:message>
   <wsdl:message name="YksusById2Response">
-    <wsdl:part element="sch:YksusById2Response" name="YksusById2Response">
+    <wsdl:part element="sch2:YksusById2Response" name="YksusById2Response">
     </wsdl:part>
   </wsdl:message>
   <wsdl:message name="AmetnikByIsikukoodResponse">
-    <wsdl:part element="sch:AmetnikByIsikukoodResponse" name="AmetnikByIsikukoodResponse">
+    <wsdl:part element="sch2:AmetnikByIsikukoodResponse" name="AmetnikByIsikukoodResponse">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="AmetnikListResponse">
+    <wsdl:part element="sch2:AmetnikListResponse" name="AmetnikListResponse">
     </wsdl:part>
   </wsdl:message>
   <wsdl:message name="AmetnikBySearchRequest">
-    <wsdl:part element="sch:AmetnikBySearchRequest" name="AmetnikBySearchRequest">
+    <wsdl:part element="sch2:AmetnikBySearchRequest" name="AmetnikBySearchRequest">
     </wsdl:part>
   </wsdl:message>
   <wsdl:message name="AmetnikBySearchResponse">
-    <wsdl:part element="sch:AmetnikBySearchResponse" name="AmetnikBySearchResponse">
+    <wsdl:part element="sch2:AmetnikBySearchResponse" name="AmetnikBySearchResponse">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="AmetnikListRequest">
+    <wsdl:part element="sch2:AmetnikListRequest" name="AmetnikListRequest">
     </wsdl:part>
   </wsdl:message>
   <wsdl:message name="IsikukoodByDateCreatedResponse">
-    <wsdl:part element="sch:IsikukoodByDateCreatedResponse" name="IsikukoodByDateCreatedResponse">
+    <wsdl:part element="sch2:IsikukoodByDateCreatedResponse" name="IsikukoodByDateCreatedResponse">
     </wsdl:part>
   </wsdl:message>
   <wsdl:message name="AmetnikAmetikohadByIsikukoodRequest">
-    <wsdl:part element="sch:AmetnikAmetikohadByIsikukoodRequest" name="AmetnikAmetikohadByIsikukoodRequest">
+    <wsdl:part element="sch2:AmetnikAmetikohadByIsikukoodRequest" name="AmetnikAmetikohadByIsikukoodRequest">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="YksusListRequest">
+    <wsdl:part element="sch2:YksusListRequest" name="YksusListRequest">
     </wsdl:part>
   </wsdl:message>
   <wsdl:message name="YksusByIdResponse">
-    <wsdl:part element="sch:YksusByIdResponse" name="YksusByIdResponse">
+    <wsdl:part element="sch2:YksusByIdResponse" name="YksusByIdResponse">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="AmetnikFullBySearchResponse">
+    <wsdl:part element="sch2:AmetnikFullBySearchResponse" name="AmetnikFullBySearchResponse">
     </wsdl:part>
   </wsdl:message>
   <wsdl:message name="AsutusByIdResponse">
-    <wsdl:part element="sch:AsutusByIdResponse" name="AsutusByIdResponse">
+    <wsdl:part element="sch2:AsutusByIdResponse" name="AsutusByIdResponse">
     </wsdl:part>
   </wsdl:message>
   <wsdl:message name="AsutusListRequest">
-    <wsdl:part element="sch:AsutusListRequest" name="AsutusListRequest">
+    <wsdl:part element="sch2:AsutusListRequest" name="AsutusListRequest">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="AmetnikFullBySearchRequest">
+    <wsdl:part element="sch2:AmetnikFullBySearchRequest" name="AmetnikFullBySearchRequest">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="FailByIsikukoodResponse">
+    <wsdl:part element="sch2:FailByIsikukoodResponse" name="FailByIsikukoodResponse">
     </wsdl:part>
   </wsdl:message>
   <wsdl:message name="YksusBySearchResponse">
-    <wsdl:part element="sch:YksusBySearchResponse" name="YksusBySearchResponse">
+    <wsdl:part element="sch2:YksusBySearchResponse" name="YksusBySearchResponse">
     </wsdl:part>
   </wsdl:message>
   <wsdl:message name="AmetnikByYksusIdResponse">
-    <wsdl:part element="sch:AmetnikByYksusIdResponse" name="AmetnikByYksusIdResponse">
+    <wsdl:part element="sch2:AmetnikByYksusIdResponse" name="AmetnikByYksusIdResponse">
     </wsdl:part>
   </wsdl:message>
   <wsdl:message name="YksusByAsutusIdAndYlemYksusIdResponse">
-    <wsdl:part element="sch:YksusByAsutusIdAndYlemYksusIdResponse" name="YksusByAsutusIdAndYlemYksusIdResponse">
+    <wsdl:part element="sch2:YksusByAsutusIdAndYlemYksusIdResponse" name="YksusByAsutusIdAndYlemYksusIdResponse">
     </wsdl:part>
   </wsdl:message>
   <wsdl:message name="AmetnikByIsikukood2Response">
-    <wsdl:part element="sch:AmetnikByIsikukood2Response" name="AmetnikByIsikukood2Response">
+    <wsdl:part element="sch2:AmetnikByIsikukood2Response" name="AmetnikByIsikukood2Response">
     </wsdl:part>
   </wsdl:message>
   <wsdl:message name="AmetnikByIsikukood2Request">
-    <wsdl:part element="sch:AmetnikByIsikukood2Request" name="AmetnikByIsikukood2Request">
+    <wsdl:part element="sch2:AmetnikByIsikukood2Request" name="AmetnikByIsikukood2Request">
     </wsdl:part>
   </wsdl:message>
   <wsdl:message name="YksusBySearchRequest">
-    <wsdl:part element="sch:YksusBySearchRequest" name="YksusBySearchRequest">
+    <wsdl:part element="sch2:YksusBySearchRequest" name="YksusBySearchRequest">
     </wsdl:part>
   </wsdl:message>
   <wsdl:message name="YksusByIdRequest">
-    <wsdl:part element="sch:YksusByIdRequest" name="YksusByIdRequest">
+    <wsdl:part element="sch2:YksusByIdRequest" name="YksusByIdRequest">
     </wsdl:part>
   </wsdl:message>
   <wsdl:message name="YksusByAsutusIdRequest">
-    <wsdl:part element="sch:YksusByAsutusIdRequest" name="YksusByAsutusIdRequest">
+    <wsdl:part element="sch2:YksusByAsutusIdRequest" name="YksusByAsutusIdRequest">
     </wsdl:part>
   </wsdl:message>
   <wsdl:message name="AmetnikByIsikukoodRequest">
-    <wsdl:part element="sch:AmetnikByIsikukoodRequest" name="AmetnikByIsikukoodRequest">
+    <wsdl:part element="sch2:AmetnikByIsikukoodRequest" name="AmetnikByIsikukoodRequest">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="SapProfiilByIsikukoodResponse">
+    <wsdl:part element="sch2:SapProfiilByIsikukoodResponse" name="SapProfiilByIsikukoodResponse">
     </wsdl:part>
   </wsdl:message>
   <wsdl:message name="AmetnikByAsutusId2Response">
-    <wsdl:part element="sch:AmetnikByAsutusId2Response" name="AmetnikByAsutusId2Response">
+    <wsdl:part element="sch2:AmetnikByAsutusId2Response" name="AmetnikByAsutusId2Response">
     </wsdl:part>
   </wsdl:message>
   <wsdl:message name="YksusByAsutusIdAndYlemYksusIdRequest">
-    <wsdl:part element="sch:YksusByAsutusIdAndYlemYksusIdRequest" name="YksusByAsutusIdAndYlemYksusIdRequest">
+    <wsdl:part element="sch2:YksusByAsutusIdAndYlemYksusIdRequest" name="YksusByAsutusIdAndYlemYksusIdRequest">
     </wsdl:part>
   </wsdl:message>
   <wsdl:message name="AsutusByIdRequest">
-    <wsdl:part element="sch:AsutusByIdRequest" name="AsutusByIdRequest">
+    <wsdl:part element="sch2:AsutusByIdRequest" name="AsutusByIdRequest">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="YksusByAsutusIdWithPseudoResponse">
+    <wsdl:part element="sch2:YksusByAsutusIdWithPseudoResponse" name="YksusByAsutusIdWithPseudoResponse">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="YksusByAsutusIdWithPseudoRequest">
+    <wsdl:part element="sch2:YksusByAsutusIdWithPseudoRequest" name="YksusByAsutusIdWithPseudoRequest">
     </wsdl:part>
   </wsdl:message>
   <wsdl:message name="AmetnikByAsutusId2Request">
-    <wsdl:part element="sch:AmetnikByAsutusId2Request" name="AmetnikByAsutusId2Request">
+    <wsdl:part element="sch2:AmetnikByAsutusId2Request" name="AmetnikByAsutusId2Request">
     </wsdl:part>
   </wsdl:message>
   <wsdl:message name="AmetnikByAsutusIdRequest">
-    <wsdl:part element="sch:AmetnikByAsutusIdRequest" name="AmetnikByAsutusIdRequest">
+    <wsdl:part element="sch2:AmetnikByAsutusIdRequest" name="AmetnikByAsutusIdRequest">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="YksusListResponse">
+    <wsdl:part element="sch2:YksusListResponse" name="YksusListResponse">
     </wsdl:part>
   </wsdl:message>
   <wsdl:message name="AsutusListResponse">
-    <wsdl:part element="sch:AsutusListResponse" name="AsutusListResponse">
+    <wsdl:part element="sch2:AsutusListResponse" name="AsutusListResponse">
     </wsdl:part>
   </wsdl:message>
   <wsdl:portType name="amrPort">
@@ -147,6 +302,18 @@
       <wsdl:input message="tns:AmetnikByAsutusIdRequest" name="AmetnikByAsutusIdRequest">
     </wsdl:input>
       <wsdl:output message="tns:AmetnikByAsutusIdResponse" name="AmetnikByAsutusIdResponse">
+    </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="YksusByAsutusIdWithPseudo">
+      <wsdl:input message="tns:YksusByAsutusIdWithPseudoRequest" name="YksusByAsutusIdWithPseudoRequest">
+    </wsdl:input>
+      <wsdl:output message="tns:YksusByAsutusIdWithPseudoResponse" name="YksusByAsutusIdWithPseudoResponse">
+    </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="AmetnikList">
+      <wsdl:input message="tns:AmetnikListRequest" name="AmetnikListRequest">
+    </wsdl:input>
+      <wsdl:output message="tns:AmetnikListResponse" name="AmetnikListResponse">
     </wsdl:output>
     </wsdl:operation>
     <wsdl:operation name="AsutusById">
@@ -173,6 +340,18 @@
       <wsdl:output message="tns:AmetnikByYksusIdResponse" name="AmetnikByYksusIdResponse">
     </wsdl:output>
     </wsdl:operation>
+    <wsdl:operation name="SapProfiilByIsikukood">
+      <wsdl:input message="tns:SapProfiilByIsikukoodRequest" name="SapProfiilByIsikukoodRequest">
+    </wsdl:input>
+      <wsdl:output message="tns:SapProfiilByIsikukoodResponse" name="SapProfiilByIsikukoodResponse">
+    </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="AmetnikFullBySearch">
+      <wsdl:input message="tns:AmetnikFullBySearchRequest" name="AmetnikFullBySearchRequest">
+    </wsdl:input>
+      <wsdl:output message="tns:AmetnikFullBySearchResponse" name="AmetnikFullBySearchResponse">
+    </wsdl:output>
+    </wsdl:operation>
     <wsdl:operation name="AmetnikByIsikukood">
       <wsdl:input message="tns:AmetnikByIsikukoodRequest" name="AmetnikByIsikukoodRequest">
     </wsdl:input>
@@ -185,10 +364,22 @@
       <wsdl:output message="tns:YksusByAsutusIdAndYlemYksusIdResponse" name="YksusByAsutusIdAndYlemYksusIdResponse">
     </wsdl:output>
     </wsdl:operation>
+    <wsdl:operation name="FailByIsikukood">
+      <wsdl:input message="tns:FailByIsikukoodRequest" name="FailByIsikukoodRequest">
+    </wsdl:input>
+      <wsdl:output message="tns:FailByIsikukoodResponse" name="FailByIsikukoodResponse">
+    </wsdl:output>
+    </wsdl:operation>
     <wsdl:operation name="YksusBySearch">
       <wsdl:input message="tns:YksusBySearchRequest" name="YksusBySearchRequest">
     </wsdl:input>
       <wsdl:output message="tns:YksusBySearchResponse" name="YksusBySearchResponse">
+    </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="YksusList">
+      <wsdl:input message="tns:YksusListRequest" name="YksusListRequest">
+    </wsdl:input>
+      <wsdl:output message="tns:YksusListResponse" name="YksusListResponse">
     </wsdl:output>
     </wsdl:operation>
     <wsdl:operation name="AsutusList">
@@ -257,6 +448,24 @@
         <soap:body use="literal"/>
       </wsdl:output>
     </wsdl:operation>
+    <wsdl:operation name="YksusByAsutusIdWithPseudo">
+      <soap:operation soapAction=""/>
+      <wsdl:input name="YksusByAsutusIdWithPseudoRequest">
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="YksusByAsutusIdWithPseudoResponse">
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="AmetnikList">
+      <soap:operation soapAction=""/>
+      <wsdl:input name="AmetnikListRequest">
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="AmetnikListResponse">
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
     <wsdl:operation name="AsutusById">
       <soap:operation soapAction=""/>
       <wsdl:input name="AsutusByIdRequest">
@@ -293,6 +502,24 @@
         <soap:body use="literal"/>
       </wsdl:output>
     </wsdl:operation>
+    <wsdl:operation name="SapProfiilByIsikukood">
+      <soap:operation soapAction=""/>
+      <wsdl:input name="SapProfiilByIsikukoodRequest">
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="SapProfiilByIsikukoodResponse">
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="AmetnikFullBySearch">
+      <soap:operation soapAction=""/>
+      <wsdl:input name="AmetnikFullBySearchRequest">
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="AmetnikFullBySearchResponse">
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
     <wsdl:operation name="AmetnikByIsikukood">
       <soap:operation soapAction=""/>
       <wsdl:input name="AmetnikByIsikukoodRequest">
@@ -311,12 +538,30 @@
         <soap:body use="literal"/>
       </wsdl:output>
     </wsdl:operation>
+    <wsdl:operation name="FailByIsikukood">
+      <soap:operation soapAction=""/>
+      <wsdl:input name="FailByIsikukoodRequest">
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="FailByIsikukoodResponse">
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
     <wsdl:operation name="YksusBySearch">
       <soap:operation soapAction=""/>
       <wsdl:input name="YksusBySearchRequest">
         <soap:body use="literal"/>
       </wsdl:input>
       <wsdl:output name="YksusBySearchResponse">
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="YksusList">
+      <soap:operation soapAction=""/>
+      <wsdl:input name="YksusListRequest">
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="YksusListResponse">
         <soap:body use="literal"/>
       </wsdl:output>
     </wsdl:operation>
@@ -377,7 +622,7 @@
   </wsdl:binding>
   <wsdl:service name="amrService">
     <wsdl:port binding="tns:amrPortSoap11" name="amrPortSoap11">
-      <soap:address location="http://gfna1-dto.dwl.smit:38082/amr-services-dwl/services/AmrRequest"/>
+      <soap:address location="http://tc-amrservices.smit:8080/services/AmrRequest"/>
     </wsdl:port>
   </wsdl:service>
 </wsdl:definitions>

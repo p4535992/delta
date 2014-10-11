@@ -41,6 +41,8 @@ import org.alfresco.service.namespace.RegexQNamePattern;
 import org.alfresco.web.bean.repository.MapNode;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.common.service.GeneralService;
@@ -58,6 +60,8 @@ import ee.webmedia.alfresco.utils.UserUtil;
 
 public class UserServiceImpl implements UserService {
 
+	private static Log log = LogFactory.getLog(UserUtil.class);
+	
     private AuthenticationService authenticationService;
     private AuthorityService authorityService;
     private GeneralService generalService;
@@ -236,6 +240,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void addUserToGroup(String group, Node user) {
+    	log.debug("Adding user [" + user.toString() + "] to group: " + group);
         authorityService.addAuthority(group, (String) user.getProperties().get(ContentModel.PROP_USERNAME));
         logUserGroupAction(group, user, "applog_group_user_add");
     }

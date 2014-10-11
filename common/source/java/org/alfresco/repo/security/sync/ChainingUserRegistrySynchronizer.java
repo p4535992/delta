@@ -419,9 +419,13 @@ public class ChainingUserRegistrySynchronizer implements UserRegistrySynchronize
             if (personsToDelete.remove(personName))
             {
                 // The person already existed in this zone: update the person
-                ChainingUserRegistrySynchronizer.logger.info("Updating user '" + personName + "'");
+                ChainingUserRegistrySynchronizer.logger.info("[" + processedCount + "] Updating user '" + personName + "'");
 
                 NodeRef personRef = personService.getPerson(personName); // creates home folder if necessary
+                
+                // Siin üritame lisada igale kasutajale ka grupid
+               	ChainingUserRegistrySynchronizer.logger.info("[" + personName + "] YksuseRada: " +personProperties.get(ContentModel.PROP_ORGANIZATION_PATH));
+                
                 Map<QName, Serializable> personOldProperties = BeanHelper.getNodeService().getProperties(personRef);
 
                 String diff = new PropDiffHelper()
@@ -449,7 +453,7 @@ public class ChainingUserRegistrySynchronizer implements UserRegistrySynchronize
                     }
                     // The person existed, but in a zone with lower precedence
                     ChainingUserRegistrySynchronizer.logger
-                            .warn("Recreating occluded user '"
+                            .warn("[" + processedCount + "] Recreating occluded user '"
                                     + personName
                                     + "'. This user was previously created manually or through synchronization with a lower priority user registry.");
                     personService.deletePerson(personName);
@@ -457,11 +461,12 @@ public class ChainingUserRegistrySynchronizer implements UserRegistrySynchronize
                 else
                 {
                     // The person did not exist at all
-                    ChainingUserRegistrySynchronizer.logger.info("Creating user '" + personName + "'");
+                    ChainingUserRegistrySynchronizer.logger.info("[" + processedCount + "] Creating user '" + personName + "'");
                 }
                 PersonServiceImpl.validCreatePersonCall.set(Boolean.TRUE);
                 try {
                     personService.createPerson(personProperties, getZones(zoneId));
+                    ChainingUserRegistrySynchronizer.logger.info("[" + personName + "] YksuseRada: " +personProperties.get(ContentModel.PROP_ORGANIZATION_PATH));
                 } finally {
                     PersonServiceImpl.validCreatePersonCall.set(null);
                 }
@@ -483,7 +488,7 @@ public class ChainingUserRegistrySynchronizer implements UserRegistrySynchronize
         {
             for (String personName : personsToDelete)
             {
-                ChainingUserRegistrySynchronizer.logger.warn("Deleting user '" + personName + "'");
+                ChainingUserRegistrySynchronizer.logger.warn("[" + processedCount + "] Deleting user '" + personName + "'");
                 personService.deletePerson(personName);
                 processedCount++;
             }
@@ -531,8 +536,9 @@ public class ChainingUserRegistrySynchronizer implements UserRegistrySynchronize
             ChainingUserRegistrySynchronizer.logger.info("Retrieving groups changed since "
                     + DateFormat.getDateTimeInstance().format(lastModified) + " from user registry '" + zoneId + "'");
         }
-
+        
         Iterator<NodeDescription> groups = userRegistry.getGroups(lastModified);
+        
         Map<String, Set<String>> groupAssocsToCreate = new TreeMap<String, Set<String>>();
         Set<String> groupsToDelete = authorityService.getAllAuthoritiesInZone(zoneId, AuthorityType.GROUP);
         while (groups.hasNext())

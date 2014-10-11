@@ -11,21 +11,27 @@ import java.util.Map;
 import java.util.Set;
 
 import org.alfresco.model.ContentModel;
+import org.alfresco.repo.security.person.PersonServiceImpl;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.security.AuthorityService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 
 import com.ibm.icu.util.StringTokenizer;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.orgstructure.amr.AMRUserRegistry;
 import ee.webmedia.alfresco.orgstructure.service.OrganizationStructureService;
 import ee.webmedia.alfresco.substitute.model.Substitute;
 
 public class UserUtil {
+	
+	private static Log log = LogFactory.getLog(UserUtil.class);
 
     public static String getInitials(String fullName) {
         if (StringUtils.isBlank(fullName)) {
@@ -241,6 +247,7 @@ public class UserUtil {
             organizationPath = organizationPath.substring(firstIndexOfSep + (firstIndexOfSep == organizationPath.length() - 1 ? 0 : 1));
         }
         List<String> organizationPaths = getPathHierarchy(organizationPath, separator);
+        log.debug("YksusRada to organization paths list: " + organizationPaths.toString());
         return organizationPaths;
     }
 
