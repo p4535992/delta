@@ -2,3 +2,5 @@
 /delta/.hg
 /delta/.hgignore
 /delta/.hgtags
+/build
+rub.sh
