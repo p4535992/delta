@@ -6,7 +6,6 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 
-import ee.webmedia.alfresco.common.web.BeanHelper;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
@@ -16,6 +15,7 @@ import org.springframework.context.MessageSource;
 import org.springframework.web.util.HtmlUtils;
 
 import ee.webmedia.alfresco.app.AppConstants;
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.WebUtil;
 import ee.webmedia.alfresco.workflow.service.DueDateHistoryRecord;
@@ -46,6 +46,7 @@ public class WorkflowBlockItem implements Serializable {
     private boolean isResponsible;
     private Date proposedDueDate;
     private String taskResolution;
+    private String workflowResolution;
     private String taskOutcome;
     private String ownerSubstituteName;
     private String taskComment;
@@ -113,7 +114,7 @@ public class WorkflowBlockItem implements Serializable {
                 emptyTaskValueMessage = BeanHelper.getWorkflowConstantsBean().getEmptyTaskValueMessage();
             }
             String taskDue = proposedDueDate != null ? DATE_FORMAT.format(proposedDueDate) : emptyTaskValueMessage;
-            return MessageUtil.getMessage("task_due_date_extension_resolution", taskDue, taskResolution);
+            return MessageUtil.getMessage("task_due_date_extension_resolution", taskDue, workflowResolution);
         }
         return taskResolution;
     }
@@ -383,5 +384,13 @@ public class WorkflowBlockItem implements Serializable {
 
     public void setRowNumber(Integer rowNumber) {
         this.rowNumber = rowNumber;
+    }
+
+    public String getWorkflowResolution() {
+        return workflowResolution;
+    }
+
+    public void setWorkflowResolution(String workflowResolution) {
+        this.workflowResolution = workflowResolution;
     }
 }

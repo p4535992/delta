@@ -430,14 +430,12 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
         for (Entry<QName, Task> entry : notifications.entrySet()) {
             QName notificationType = entry.getKey();
             Task task = entry.getValue();
-            if (NotificationModel.NotificationType.TASK_NEW_TASK_NOTIFICATION.equals(notificationType)) {
+            if (NotificationModel.NotificationType.TASK_NEW_TASK_NOTIFICATION.equals(notificationType)
+                    || NotificationModel.NotificationType.TASK_CANCELLED_TASK_NOTIFICATION.equals(notificationType)) {
                 notificationService.notifyTaskEvent(task);
-            } else if (NotificationModel.NotificationType.TASK_CANCELLED_TASK_NOTIFICATION.equals(notificationType)) {
-                notificationService.notifyTaskEvent(task);
-            } else if (NotificationModel.NotificationType.EXTERNAL_REVIEW_WORKFLOW_RECIEVING_ERROR.equals(notificationType)) {
-                notifyExternalReviewReceivingFailure(task);
-            } else if (NotificationModel.NotificationType.EXTERNAL_REVIEW_WORKFLOW_SERIES_ERROR.equals(notificationType)) {
-                notifyExternalReviewSeriesFailure(task);
+            } else if (NotificationModel.NotificationType.EXTERNAL_REVIEW_WORKFLOW_RECIEVING_ERROR.equals(notificationType)
+                    || NotificationModel.NotificationType.EXTERNAL_REVIEW_WORKFLOW_SERIES_ERROR.equals(notificationType)) {
+                notificationService.notifyExternalReviewError(task);
             }
         }
         if (statusErrorNotificationContent != null) {
@@ -677,10 +675,6 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
     }
 
     private void notifyExternalReviewReceivingFailure(Task task) {
-        notificationService.notifyExternalReviewError(task);
-    }
-
-    private void notifyExternalReviewSeriesFailure(Task task) {
         notificationService.notifyExternalReviewError(task);
     }
 

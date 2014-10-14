@@ -109,8 +109,8 @@ import ee.webmedia.alfresco.classificator.enums.LeaveType;
 import ee.webmedia.alfresco.classificator.enums.PublishToAdr;
 import ee.webmedia.alfresco.common.service.ApplicationConstantsBean;
 import ee.webmedia.alfresco.common.service.BulkLoadNodeService;
-import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.service.ConstantNodeRefsBean;
+import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
@@ -2183,10 +2183,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, N
                         substituteService.addSubstitute(ownerRef, substitute);
                         addedSubstitutes.add(substitute);
                     }
-                    NotificationService notificationService = getNotificationService();
-                    for (Substitute substitute : addedSubstitutes) {
-                        notificationService.notifySubstitutionEvent(substitute);
-                    }
+                    getNotificationService().notifySubstitutionEvent(addedSubstitutes);
                     return null;
                 }
 

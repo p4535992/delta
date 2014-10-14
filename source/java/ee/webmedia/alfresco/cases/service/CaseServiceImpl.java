@@ -127,6 +127,12 @@ public class CaseServiceImpl implements CaseService {
     }
 
     @Override
+    public String getCaseTitle(NodeRef caseRef) {
+        UnmodifiableCase theCase = getUnmodifiableCase(caseRef, null);
+        return theCase != null ? theCase.getTitle() : "";
+    }
+
+    @Override
     public boolean isClosed(Node node) {
         return RepoUtil.isExistingPropertyValueEqualTo(node, CaseModel.Props.STATUS, DocListUnitStatus.CLOSED.getValueName());
     }

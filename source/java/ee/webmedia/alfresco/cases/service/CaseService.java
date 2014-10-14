@@ -78,4 +78,5 @@ public interface CaseService {
 
     void removeFromCache(NodeRef caseRef);
 
+    String getCaseTitle(NodeRef caseRef);
 }

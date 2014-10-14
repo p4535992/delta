@@ -13,10 +13,13 @@ import org.alfresco.web.bean.repository.Node;
 
 import ee.webmedia.alfresco.classificator.enums.TemplateReportType;
 import ee.webmedia.alfresco.document.model.Document;
+import ee.webmedia.alfresco.notification.model.NotificationCache;
+import ee.webmedia.alfresco.notification.model.NotificationCache.Template;
 import ee.webmedia.alfresco.template.exception.ExistingFileFromTemplateException;
 import ee.webmedia.alfresco.template.model.DocumentTemplate;
 import ee.webmedia.alfresco.template.model.ProcessedEmailTemplate;
 import ee.webmedia.alfresco.volume.model.Volume;
+import ee.webmedia.alfresco.workflow.service.Task;
 
 public interface DocumentTemplateService {
 
@@ -77,7 +80,8 @@ public interface DocumentTemplateService {
      * @param additionalFormulas additional formulas that can be used. Can be null.
      * @return processed content and subject (if available), where formulas are replaced with their values (if formula has a non-empty value)
      */
-    ProcessedEmailTemplate getProcessedEmailTemplate(Map<String, NodeRef> dataNodeRefs, NodeRef template, Map<String, String> additionalFormulas);
+    ProcessedEmailTemplate getProcessedEmailTemplate(Map<String, NodeRef> dataNodeRefs, Template template, Map<String, String> additionalFormulas,
+            NotificationCache notificationCache, Task task);
 
     /**
      * Check if supplied document has a template that can be used

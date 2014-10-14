@@ -80,9 +80,9 @@ public class TaskInfo implements Serializable, Comparable<TaskInfo>, CssStylable
         if (document != null) {
             setDocType(document);
             Map<String, Object> docProps = document.getProperties();
-            setDocName(document, task, (independentWorkflow || caseFileWorkflow), documentWorkflow, linkedReviewTask);
             documentCreated = (Date) docProps.get(ContentModel.PROP_CREATED);
         }
+        setDocName(document, task, (independentWorkflow || caseFileWorkflow), documentWorkflow, linkedReviewTask);
         setCssStyleClass(document);
     }
 

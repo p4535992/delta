@@ -18,7 +18,7 @@ public class RemoveFavoritesCompoundWorkflowEvaluator extends SharedResourceEval
 
     @Override
     public boolean evaluate(Object obj) {
-        return evaluate(((CompoundWorkflow) obj).getNode());
+        return obj != null && evaluate(((CompoundWorkflow) obj).getNode());
     }
 
     @Override
