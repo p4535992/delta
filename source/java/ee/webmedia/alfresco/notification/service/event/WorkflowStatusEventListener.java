@@ -22,6 +22,7 @@ import org.alfresco.service.namespace.QName;
 import org.alfresco.service.transaction.TransactionService;
 import org.alfresco.util.Pair;
 import org.alfresco.web.app.servlet.FacesHelper;
+import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.InitializingBean;
 
@@ -33,6 +34,7 @@ import ee.webmedia.alfresco.log.model.LogEntry;
 import ee.webmedia.alfresco.log.model.LogObject;
 import ee.webmedia.alfresco.log.service.LogService;
 import ee.webmedia.alfresco.menu.ui.MenuBean;
+import ee.webmedia.alfresco.notification.model.NotificationCache;
 import ee.webmedia.alfresco.notification.service.NotificationService;
 import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.privilege.service.PrivilegeService;
@@ -236,26 +238,37 @@ public class WorkflowStatusEventListener implements WorkflowMultiEventListener, 
     private Map<NodeRef, List<Map<QName, Serializable>>> processEventQueue(final List<WorkflowEvent> events, final Task initiatingTask,
             List<NodeRef> groupAssignmentTasksFinishedAutomatically) {
         Map<NodeRef, List<Map<QName, Serializable>>> docSendInfos = new HashMap<NodeRef, List<Map<QName, Serializable>>>();
+        NotificationCache notificationCache = new NotificationCache();
+        ListIterator<WorkflowEvent> iterator1 = events.listIterator(events.size());
+        Set<NodeRef> nonTasksRefs = new HashSet<>();
+        while (iterator1.hasPrevious()) {
+            BaseWorkflowObject object = iterator1.previous().getObject();
+            if (!(object instanceof Task)) {
+                nonTasksRefs.add(object.getNodeRef());
+            }
+        }
+
+        Map<NodeRef, Node> props = BeanHelper.getBulkLoadNodeService().loadNodes(new ArrayList<>(nonTasksRefs), null);
+        notificationCache.getCachedProps().putAll(props);
         ListIterator<WorkflowEvent> iterator = events.listIterator(events.size());
         while (iterator.hasPrevious()) {
             WorkflowEvent event = iterator.previous();
-            processEvent(event, initiatingTask, groupAssignmentTasksFinishedAutomatically, docSendInfos);
+            processEvent(event, initiatingTask, groupAssignmentTasksFinishedAutomatically, docSendInfos, notificationCache);
             iterator.remove();
         }
-
         return docSendInfos;
     }
 
     private void processEvent(WorkflowEvent event, Task initiatingTask, List<NodeRef> groupAssignmentTasksFinishedAutomatically,
-            Map<NodeRef, List<Map<QName, Serializable>>> docSendInfos) {
+            Map<NodeRef, List<Map<QName, Serializable>>> docSendInfos, NotificationCache notificationCache) {
         BaseWorkflowObject object = event.getObject();
         if (object instanceof CompoundWorkflow) {
-            handleCompoundWorkflowNotifications(event);
+            handleCompoundWorkflowNotifications(event, notificationCache);
         } else if (object instanceof Workflow) {
-            handleWorkflowNotifications(event);
+            handleWorkflowNotifications(event, notificationCache);
         } else if (object instanceof Task) {
             Pair<NodeRef, List<Map<QName, Serializable>>> docRefAndSendInfoProps =
-                    handleTaskNotifications(event, groupAssignmentTasksFinishedAutomatically, initiatingTask);
+                    handleTaskNotifications(event, groupAssignmentTasksFinishedAutomatically, initiatingTask, notificationCache);
             if (docRefAndSendInfoProps != null) {
                 NodeRef nodeRef = docRefAndSendInfoProps.getFirst();
                 List<Map<QName, Serializable>> props = docRefAndSendInfoProps.getSecond();
@@ -279,18 +292,18 @@ public class WorkflowStatusEventListener implements WorkflowMultiEventListener, 
     }
 
     private Pair<NodeRef, List<Map<QName, Serializable>>> handleTaskNotifications(WorkflowEvent event, List<NodeRef> groupAssignmentTasksFinishedAutomatically,
-            Task orderAssignmentFinishTriggeringTask) {
+            Task orderAssignmentFinishTriggeringTask, NotificationCache notificationCache) {
         final Task task = (Task) event.getObject();
         Pair<NodeRef, List<Map<QName, Serializable>>> docRefAndSendInfoProps = null;
         if (event.getType().equals(WorkflowEventType.STATUS_CHANGED)) {
             if (!task.isStatus(Status.UNFINISHED)) {
-                docRefAndSendInfoProps = BeanHelper.getDvkService().sendTaskNotificationDocument(task);
+                docRefAndSendInfoProps = BeanHelper.getDvkService().sendTaskNotificationDocument(task, notificationCache);
                 boolean sentOverDvk = docRefAndSendInfoProps != null;
                 if (!sentOverDvk) {
                     boolean isGroupAssignmentTaskFinishedAutomatically = groupAssignmentTasksFinishedAutomatically != null
                             && groupAssignmentTasksFinishedAutomatically.contains(task.getNodeRef());
                     docRefAndSendInfoProps = notificationService
-                            .notifyTaskEvent(task, isGroupAssignmentTaskFinishedAutomatically, orderAssignmentFinishTriggeringTask, sentOverDvk);
+                            .notifyTaskEvent(task, isGroupAssignmentTaskFinishedAutomatically, orderAssignmentFinishTriggeringTask, sentOverDvk, notificationCache);
                 }
                 if (docRefAndSendInfoProps != null && task.isType(WorkflowSpecificModel.Types.INFORMATION_TASK) && task.isStatus(Status.IN_PROGRESS)
                         && task.getOwnerId() == null) {
@@ -298,30 +311,30 @@ public class WorkflowStatusEventListener implements WorkflowMultiEventListener, 
                 }
             } else {
                 boolean cancelledManually = event.getExtras() != null && event.getExtras().contains(WorkflowQueueParameter.WORKFLOW_CANCELLED_MANUALLY);
-                notificationService.notifyTaskUnfinishedEvent(task, cancelledManually);
+                notificationService.notifyTaskUnfinishedEvent(task, cancelledManually, notificationCache);
             }
         }
         return docRefAndSendInfoProps;
     }
 
-    private void handleWorkflowNotifications(WorkflowEvent event) {
+    private void handleWorkflowNotifications(WorkflowEvent event, NotificationCache notificationCache) {
         Workflow workflow = (Workflow) event.getObject();
         if (event.getType().equals(WorkflowEventType.STATUS_CHANGED)) {
-            notificationService.notifyWorkflowEvent(workflow, event.getType());
+            notificationService.notifyWorkflowEvent(workflow, event.getType(), notificationCache);
         } else if (event.getType().equals(WorkflowEventType.WORKFLOW_STARTED_AUTOMATICALLY)) {
-            notificationService.notifyWorkflowEvent(workflow, event.getType());
+            notificationService.notifyWorkflowEvent(workflow, event.getType(), notificationCache);
         } else if (event.getType().equals(WorkflowEventType.WORKFLOW_STOPPED_AUTOMATICALLY)) {
-            notificationService.notifyCompoundWorkflowStoppedAutomatically(workflow);
+            notificationService.notifyCompoundWorkflowStoppedAutomatically(workflow, notificationCache);
         }
 
     }
 
-    private void handleCompoundWorkflowNotifications(WorkflowEvent event) {
+    private void handleCompoundWorkflowNotifications(WorkflowEvent event, NotificationCache notificationCache) {
         CompoundWorkflow compoundWorkflow = (CompoundWorkflow) event.getObject();
         if (!WorkflowEventType.STATUS_CHANGED.equals(event.getType()) || compoundWorkflow.isDocumentWorkflow()) {
             return;
         }
-        notificationService.notifyCompoundWorkflowEvent(event);
+        notificationService.notifyCompoundWorkflowEvent(event, notificationCache);
     }
 
     // START: getters/setters

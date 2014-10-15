@@ -82,7 +82,7 @@ public class TaskUpdateInfo {
     }
 
     public boolean isUpdateNeeded() {
-        return fieldNames.isEmpty();
+        return !fieldNames.isEmpty();
     }
 
     public Object[] getArgumentArray() {

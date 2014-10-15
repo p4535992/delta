@@ -14,6 +14,7 @@ import org.alfresco.web.bean.repository.Node;
 import ee.webmedia.alfresco.document.einvoice.model.Transaction;
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.dvk.model.DvkSendDocuments;
+import ee.webmedia.alfresco.notification.model.NotificationCache;
 import ee.webmedia.alfresco.workflow.service.Task;
 import ee.webmedia.xtee.client.dhl.DhlXTeeService.ContentToSend;
 
@@ -33,7 +34,7 @@ public interface DvkService {
 
     Map<QName, Serializable> mapRelatedIncomingElements(String documentTypeId, NodeRef storedDecContainer);
 
-    Pair<NodeRef, List<Map<QName, Serializable>>> sendTaskNotificationDocument(Task task);
+    Pair<NodeRef, List<Map<QName, Serializable>>> sendTaskNotificationDocument(Task task, NotificationCache notificationCache);
 
     /**
      * Receive all documents from DVK server(using multiple service calls, if server has more documents than can be fetched at a time)

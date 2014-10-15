@@ -223,9 +223,7 @@ public class SubstituteListDialog extends BaseDialogBean {
     }
 
     private void sendNotificationEmails(List<Substitute> savedSubstitutes) {
-        for (Substitute savedSubstitute : savedSubstitutes) {
-            BeanHelper.getNotificationService().notifySubstitutionEvent(savedSubstitute);
-        }
+        BeanHelper.getNotificationService().notifySubstitutionEvent(savedSubstitutes);
     }
 
     public void deleteSubstitute(ActionEvent event) {

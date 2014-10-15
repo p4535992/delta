@@ -15,6 +15,7 @@ import org.alfresco.web.bean.repository.Node;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
 import ee.webmedia.alfresco.document.sendout.model.SendInfo;
 import ee.webmedia.alfresco.notification.model.GeneralNotification;
+import ee.webmedia.alfresco.notification.model.NotificationCache;
 import ee.webmedia.alfresco.substitute.model.Substitute;
 import ee.webmedia.alfresco.user.model.Authority;
 import ee.webmedia.alfresco.workflow.service.Task;
@@ -32,19 +33,17 @@ public interface NotificationService {
      * @return docNodeRef and list of sendInfo props. Will return null if no sendInfos are created.
      */
     public Pair<NodeRef, List<Map<QName, Serializable>>> notifyTaskEvent(Task task, boolean isGroupAssignmentTaskFinishedAutomatically, Task orderAssignmentFinishTriggeringTask,
-            boolean sentOverDvk);
+            boolean sentOverDvk, NotificationCache notificationCache);
 
-    public void notifyWorkflowEvent(Workflow workflow, WorkflowEventType eventType);
+    public void notifyWorkflowEvent(Workflow workflow, WorkflowEventType eventType, NotificationCache notificationCache);
 
-    public void notifyCompoundWorkflowEvent(WorkflowEvent compoundWorkflowEvent);
+    public void notifyCompoundWorkflowEvent(WorkflowEvent compoundWorkflowEvent, NotificationCache notificationCache);
 
-    public void notifySubstitutionEvent(Substitute substitute);
+    public void notifySubstitutionEvent(List<Substitute> substitutes);
 
     public void addMissingConfigurations(Node userPreferencesNode);
 
     public void saveConfigurationChanges(Node userPreferencesNode);
-
-    public boolean processOutgoingInformationTask(Task task);
 
     public int processTaskDueDateNotificationsIfWorkingDay(Date firingDate);
 
@@ -74,7 +73,7 @@ public interface NotificationService {
 
     public int getUpdateCount();
 
-    public void notifyTaskUnfinishedEvent(Task task, boolean manuallyCancelled);
+    public void notifyTaskUnfinishedEvent(Task task, boolean manuallyCancelled, NotificationCache notificationCache);
 
     String generateTemplateContent(QName notificationType, Task task);
 
@@ -86,7 +85,7 @@ public interface NotificationService {
 
     List<QName> getAllNotificationProps();
 
-    void notifyCompoundWorkflowStoppedAutomatically(Workflow workflow);
+    void notifyCompoundWorkflowStoppedAutomatically(Workflow workflow, NotificationCache notificationCache);
 
     void sendForInformationNotification(List<Authority> authorities, Node docNode, String emailTemplate, String subject, String content);
 

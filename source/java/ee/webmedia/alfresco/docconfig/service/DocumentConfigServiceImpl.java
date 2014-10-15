@@ -62,6 +62,7 @@ import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigEle
 import ee.webmedia.alfresco.common.propertysheet.modalLayer.ValidatingModalLayerComponent;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.UserContactGroupSearchBean;
+import ee.webmedia.alfresco.docadmin.service.CaseFileType;
 import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
 import ee.webmedia.alfresco.docadmin.service.DocumentType;
 import ee.webmedia.alfresco.docadmin.service.DocumentTypeVersion;
@@ -248,7 +249,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
             Pair<DocumentType, DocumentTypeVersion> documentTypeAndVersion = getDocumentTypeAndVersion(documentDynamicNode, false);
             return getConfig(documentTypeAndVersion.getSecond(), documentTypeAndVersion.getFirst().isShowUnvalued());
         } else if (CaseFileModel.Types.CASE_FILE.equals(type)) {
-            PropDefCacheKey key = DocAdminUtil.getPropDefCacheKey(documentDynamicNode);
+            PropDefCacheKey key = DocAdminUtil.getPropDefCacheKey(documentDynamicNode.getProperties(), CaseFileType.class);
             return getConfig(documentAdminService.getCaseFileTypeAndVersion(key.getDynamicTypeId(), key.getVersion(), false).getSecond(), Boolean.TRUE);
         }
 
@@ -1608,11 +1609,11 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
     @Override
     public Map<String, Pair<DynamicPropertyDefinition, Field>> getPropertyDefinitions(Node node) {
         QName type = node.getType();
-        // XXX checking hasAspect(OBJECT) would be the same
-        if (getDynamicTypeClass(node) == null && !dictionaryService.isSubClass(type, DocumentCommonModel.Types.METADATA_CONTAINER)) {
+        Class<? extends DynamicType> dynamicTypeClass = getDynamicTypeClass(node);
+        if (dynamicTypeClass == null && !dictionaryService.isSubClass(type, DocumentCommonModel.Types.METADATA_CONTAINER)) {
             return null;
         }
-        PropDefCacheKey propDefCacheKey = getPropDefCacheKey(node);
+        PropDefCacheKey propDefCacheKey = getPropDefCacheKey(node.getProperties(), dynamicTypeClass);
         return getPropertyDefinitions(propDefCacheKey);
     }
 

@@ -149,7 +149,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
     private boolean confirmationAsked;
     private Document parentDocument;
 
-    private static final List<QName> knownWorkflowTypes = Arrays.asList(//
+    private static final Set<QName> KNOWN_WORKFLOW_TYPES = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
             WorkflowSpecificModel.Types.SIGNATURE_WORKFLOW
             , WorkflowSpecificModel.Types.OPINION_WORKFLOW
             , WorkflowSpecificModel.Types.REVIEW_WORKFLOW
@@ -157,7 +157,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
             , WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW
             , WorkflowSpecificModel.Types.CONFIRMATION_WORKFLOW
             , WorkflowSpecificModel.Types.GROUP_ASSIGNMENT_WORKFLOW
-            );
+            )));
     public static final String MODAL_KEY_ENTRY_COMMENT = "popup_comment";
     private String renderedModal;
     private transient UIPanel modalContainer;
@@ -410,6 +410,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
         }
         CompoundWorkflow tmpCompoundWorkflow = getWorkflowService().getCompoundWorkflow(nodeRef);
         if (!checkPermissions(tmpCompoundWorkflow)) {
+            showEmptyWorkflowMessage = false;
             navigateCancel();
             return;
         }
@@ -1819,7 +1820,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
 
     private String getMissingOwnerMessageKey(QName blockType) {
         String missingOwnerMsgKey = null;
-        if (knownWorkflowTypes.contains(blockType)) {
+        if (KNOWN_WORKFLOW_TYPES.contains(blockType)) {
             missingOwnerMsgKey = "workflow_save_error_missingOwner_" + blockType.getLocalName();
         }
         return missingOwnerMsgKey;

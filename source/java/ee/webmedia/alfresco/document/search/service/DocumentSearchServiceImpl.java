@@ -2187,6 +2187,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
             ResultSet result = null;
             try {
                 result = doSearch(SearchUtil.QUERY_RESTRICTED_SERIES, -1, "restrictedSeries", generalService.getStore());
+                seriesRefs.addAll(result.getNodeRefs());
             } finally {
                 if (result != null) {
                     result.close();

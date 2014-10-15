@@ -65,7 +65,9 @@ public class SubstituteServiceImpl implements SubstituteService, BeanFactoryAwar
         }
         NodeRef substitutesNodeRef = getSubstitutesNodeRef(userNodeRef, false);
         if (substitutesNodeRef == null) {
-            return new ArrayList<>();
+            List<UnmodifiableSubstitute> substitutes = new ArrayList<>();
+            userToSubstitutesCache.put(userNodeRef, substitutes);
+            return substitutes;
         }
         List<ChildAssociationRef> substitutesRefs = nodeService.getChildAssocs(substitutesNodeRef);
         List<UnmodifiableSubstitute> substitutes = new ArrayList<>(substitutesRefs.size());
@@ -179,10 +181,10 @@ public class SubstituteServiceImpl implements SubstituteService, BeanFactoryAwar
         substituteCache.remove(newSubstituteId);
 
         String diff = new PropDiffHelper()
-                .label(SubstituteModel.Props.SUBSTITUTE_NAME, "substitute_name")
-                .label(SubstituteModel.Props.SUBSTITUTION_START_DATE, "substitute_startdate")
-                .label(SubstituteModel.Props.SUBSTITUTION_END_DATE, "substitute_enddate")
-                .diff(oldProps, newProps);
+        .label(SubstituteModel.Props.SUBSTITUTE_NAME, "substitute_name")
+        .label(SubstituteModel.Props.SUBSTITUTION_START_DATE, "substitute_startdate")
+        .label(SubstituteModel.Props.SUBSTITUTION_END_DATE, "substitute_enddate")
+        .diff(oldProps, newProps);
 
         nodeService.setProperties(substitute.getNodeRef(), newProps);
         if (log.isDebugEnabled()) {
@@ -266,10 +268,10 @@ public class SubstituteServiceImpl implements SubstituteService, BeanFactoryAwar
                                 generateDatePropertyRangeQuery(startDate, endDate, SubstituteModel.Props.SUBSTITUTION_START_DATE),
                                 generateDatePropertyRangeQuery(startDate, endDate, SubstituteModel.Props.SUBSTITUTION_END_DATE)
                                 )),
-                        joinQueryPartsAnd(Arrays.asList(
-                                generateDatePropertyRangeQuery(null, startDate, SubstituteModel.Props.SUBSTITUTION_START_DATE),
-                                generateDatePropertyRangeQuery(endDate, null, SubstituteModel.Props.SUBSTITUTION_END_DATE)
-                                ))
+                                joinQueryPartsAnd(Arrays.asList(
+                                        generateDatePropertyRangeQuery(null, startDate, SubstituteModel.Props.SUBSTITUTION_START_DATE),
+                                        generateDatePropertyRangeQuery(endDate, null, SubstituteModel.Props.SUBSTITUTION_END_DATE)
+                                        ))
 
                         ))
                 ));

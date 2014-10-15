@@ -461,7 +461,7 @@
    
    <bean id="workflowDbService" class="ee.webmedia.alfresco.workflow.service.WorkflowDbServiceImpl">
       <property name="jdbcTemplate">
-         <bean class="org.springframework.jdbc.core.simple.SimpleJdbcTemplate">
+         <bean class="org.springframework.jdbc.core.JdbcTemplate">
             <constructor-arg ref="dataSource" />
          </bean>
       </property>

@@ -80,6 +80,7 @@ import ee.webmedia.alfresco.log.model.LogEntry;
 import ee.webmedia.alfresco.log.model.LogObject;
 import ee.webmedia.alfresco.monitoring.MonitoredService;
 import ee.webmedia.alfresco.monitoring.MonitoringUtil;
+import ee.webmedia.alfresco.notification.model.NotificationCache;
 import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
 import ee.webmedia.alfresco.signature.exception.SignatureException;
@@ -853,7 +854,7 @@ public abstract class DvkServiceImpl implements DvkService {
     }
 
     @Override
-    public Pair<NodeRef, List<Map<QName, Serializable>>> sendTaskNotificationDocument(Task task) {
+    public Pair<NodeRef, List<Map<QName, Serializable>>> sendTaskNotificationDocument(Task task, NotificationCache notificationCache) {
         if (task.isStatus(Status.IN_PROGRESS) && StringUtils.isBlank(task.getOwnerId()) && StringUtils.isBlank(task.getInstitutionName())
                 && !task.isType(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK) && task.getParent().getParent().isDocumentWorkflow()) {
 
@@ -879,13 +880,14 @@ public abstract class DvkServiceImpl implements DvkService {
                     sd.setTextContent(WorkflowUtil.getTaskMessageForRecipient(task));
                     String dvkId;
 
-                    List<NodeRef> docFileRefs = BeanHelper.getFileService().getAllFileRefs(docNodeRef, true);
-                    if (CollectionUtils.isNotEmpty(docFileRefs)) {
-                        List<ContentToSend> contentsToSend = BeanHelper.getSendOutService().prepareContents(docNodeRef, docFileRefs, false);
-                        dvkId = sendDocuments(contentsToSend, sd, true);
-                    } else {
-                        dvkId = sendDocuments(Collections.<ContentToSend> emptyList(), sd, false);
+                    List<ContentToSend> contentsToSend = notificationCache.getContentsToSend().get(docNodeRef);
+                    if (contentsToSend == null) {
+                        List<NodeRef> docFileRefs = BeanHelper.getFileService().getAllFileRefs(docNodeRef, true);
+                        contentsToSend = CollectionUtils.isNotEmpty(docFileRefs) ? BeanHelper.getSendOutService().prepareContents(docNodeRef, docFileRefs, false) :
+                            Collections.<ContentToSend> emptyList();
+                        notificationCache.getContentsToSend().put(docNodeRef, contentsToSend);
                     }
+                    dvkId = sendDocuments(contentsToSend, sd, false);
 
                     Map<QName, Serializable> props = new HashMap<QName, Serializable>();
                     props.put(DocumentCommonModel.Props.SEND_INFO_RECIPIENT, taskOwnerName);

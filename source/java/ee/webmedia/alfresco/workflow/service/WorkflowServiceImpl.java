@@ -48,7 +48,7 @@ import org.alfresco.util.EqualsHelper;
 import org.alfresco.util.GUID;
 import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
-import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
@@ -236,7 +236,6 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
     public void removeDeletedCompoundWorkflowDefinitionFromCache() {
         Set<NodeRef> allDefinitionRefs = bulkLoadNodeService.loadChildRefs(getRoot(), WorkflowCommonModel.Props.TYPE, null,
                 WorkflowCommonModel.Types.COMPOUND_WORKFLOW_DEFINITION);
-        @SuppressWarnings("unchecked")
         Collection<NodeRef> removed = CollectionUtils.subtract(compoundWorkflowDefinitionsCache.getKeys(), allDefinitionRefs);
         for (NodeRef ref : removed) {
             compoundWorkflowDefinitionsCache.remove(ref);
@@ -896,6 +895,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
     @Override
     public CompoundWorkflowDefinition saveCompoundWorkflowDefinition(CompoundWorkflowDefinition compoundWorkflowDefinitionOriginal) {
         CompoundWorkflowDefinition compoundWorkflowDefinition = compoundWorkflowDefinitionOriginal.copy();
+        compoundWorkflowDefinitionsCache.remove(compoundWorkflowDefinition.getNodeRef());
         checkCompoundWorkflow(compoundWorkflowDefinition, true, Status.NEW); // XXX check at the beginning...
         requireStatusUnchanged(compoundWorkflowDefinition);
 
@@ -1171,7 +1171,6 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         }
 
         // Eat the leftovers
-        // TODO: shouldn't these be made in a single transaction?
         processUpdateTaskBatch(parentRef, taskToUpdate, updateTaskUsedFieldNames);
         processCreateTaskBatch(parentRef, tasksToCreate, createTaskUsedFieldNames);
     }
@@ -2501,13 +2500,16 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
             }
         });
         List<Node> docCompoundWorkflows = docCompoundWorkflowsMap.get(docRef);
-        for (Node compoundWorkflow : docCompoundWorkflows) {
-            if (!Status.FINISHED.equals((String) compoundWorkflow.getProperties().get(WorkflowCommonModel.Props.STATUS))) {
-                return false;
+        boolean docCWFnotEmpty = CollectionUtils.isNotEmpty(docCompoundWorkflows);
+        if (docCWFnotEmpty) {
+            for (Node compoundWorkflow : docCompoundWorkflows) {
+                if (!Status.FINISHED.equals((String) compoundWorkflow.getProperties().get(WorkflowCommonModel.Props.STATUS))) {
+                    return false;
+                }
             }
         }
         List<AssociationRef> independentCompWorkflowAssocs = nodeService.getTargetAssocs(docRef, DocumentCommonModel.Assocs.WORKFLOW_DOCUMENT);
-        if (docCompoundWorkflows.isEmpty() && independentCompWorkflowAssocs.isEmpty()) {
+        if (docCWFnotEmpty && independentCompWorkflowAssocs.isEmpty()) {
             return false;
         }
         List<NodeRef> independentCompWorkflows = new ArrayList<NodeRef>(independentCompWorkflowAssocs.size());

@@ -8,6 +8,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -53,7 +54,6 @@ import org.springframework.web.context.ServletContextAware;
 import ee.webmedia.alfresco.archivals.model.ActivityFileType;
 import ee.webmedia.alfresco.base.BaseObject;
 import ee.webmedia.alfresco.casefile.model.CaseFileModel;
-import ee.webmedia.alfresco.cases.model.CaseModel;
 import ee.webmedia.alfresco.classificator.constant.FieldType;
 import ee.webmedia.alfresco.classificator.enums.TemplateReportType;
 import ee.webmedia.alfresco.common.listener.ExternalAccessPhaseListener;
@@ -79,9 +79,11 @@ import ee.webmedia.alfresco.document.log.service.DocumentLogService;
 import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
-import ee.webmedia.alfresco.functions.model.FunctionsModel;
+import ee.webmedia.alfresco.functions.model.UnmodifiableFunction;
 import ee.webmedia.alfresco.mso.service.MsoService;
-import ee.webmedia.alfresco.series.model.SeriesModel;
+import ee.webmedia.alfresco.notification.model.NotificationCache;
+import ee.webmedia.alfresco.notification.model.NotificationCache.Template;
+import ee.webmedia.alfresco.series.model.UnmodifiableSeries;
 import ee.webmedia.alfresco.template.exception.ExistingFileFromTemplateException;
 import ee.webmedia.alfresco.template.model.DocumentTemplate;
 import ee.webmedia.alfresco.template.model.DocumentTemplateModel;
@@ -98,11 +100,12 @@ import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
 import ee.webmedia.alfresco.utils.UserUtil;
 import ee.webmedia.alfresco.utils.beanmapper.BeanPropertyMapper;
 import ee.webmedia.alfresco.versions.service.VersionsService;
+import ee.webmedia.alfresco.volume.model.UnmodifiableVolume;
 import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
-import ee.webmedia.alfresco.workflow.service.WorkflowDbService;
+import ee.webmedia.alfresco.workflow.service.Task;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
 
 public class DocumentTemplateServiceImpl implements DocumentTemplateService, ServletContextAware {
@@ -136,9 +139,29 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
     private WorkflowService workflowService;
     private ApplicationConstantsBean applicationConstantsBean;
 
+    private static final Set<String> IGNORED_FIELD_GROUPS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
+            SystematicFieldGroupNames.DOCUMENT_LOCATION,
+            SystematicFieldGroupNames.USERS_TABLE,
+            SystematicFieldGroupNames.LEAVE_REQUEST,
+            SystematicFieldGroupNames.LEAVE_CHANGE,
+            SystematicFieldGroupNames.LEAVE_CANCEL,
+            SystematicFieldGroupNames.TRAINING_APPLICANT,
+            SystematicFieldGroupNames.ERRAND_DOMESTIC_APPLICANT,
+            SystematicFieldGroupNames.ERRAND_ABROAD_APPLICANT,
+            SystematicFieldGroupNames.ERRAND_EXPENSES,
+            SystematicFieldGroupNames.ERRAND_EXPENSES_REPORT,
+            SystematicFieldGroupNames.ERRAND_EXPENSES_REPORT_SUMMARY,
+            SystematicFieldGroupNames.DRIVE_COMPENSATION)));
+
+    private static final Set<String> RECIPIENT_PROPS;
+
     private static BeanPropertyMapper<DocumentTemplate> templateBeanPropertyMapper;
     static {
         templateBeanPropertyMapper = BeanPropertyMapper.newInstance(DocumentTemplate.class);
+        RECIPIENT_PROPS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
+                DocumentCommonModel.Props.RECIPIENT_NAME.getLocalName(),
+                DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME.getLocalName(),
+                DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_EMAIL.getLocalName())));
     }
 
     @Override
@@ -546,41 +569,84 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
 
     @Override
     public ProcessedEmailTemplate getProcessedEmailTemplate(Map<String, NodeRef> dataNodeRefs, NodeRef template) {
-        return getProcessedEmailTemplate(dataNodeRefs, template, null);
+        return getProcessedEmailTemplate(dataNodeRefs, template, null, null);
     }
 
-    @Override
-    public ProcessedEmailTemplate getProcessedEmailTemplate(Map<String, NodeRef> dataNodeRefs, NodeRef template, Map<String, String> additionalFormulas) {
-        ContentReader templateReader = fileFolderService.getReader(template);
-        String templateTxt = templateReader.getContentString();
-        String subject = (String) nodeService.getProperty(template, DocumentTemplateModel.Prop.NOTIFICATION_SUBJECT);
+    private ProcessedEmailTemplate getProcessedTemplate(Map<String, NodeRef> dataNodeRefs, Map<String, String> additionalFormulas, NotificationCache notificationCache,
+            String templateTxt, String subject, Task task) {
         if (dataNodeRefs.size() == 0) {
             return new ProcessedEmailTemplate(subject, templateTxt);
         }
-
-        // Use existing values as baseline if possible
         Map<String, String> allFormulas = (additionalFormulas == null) ? new LinkedHashMap<String, String>() : additionalFormulas;
+        NodeRef taskRef = task != null ? task.getNodeRef() : null;
+
         for (Entry<String, NodeRef> entry : dataNodeRefs.entrySet()) {
-            Map<String, String> formulas = getEmailFormulas(entry.getValue());
-            String keyPrefix = entry.getKey();
-            if (StringUtils.isEmpty(keyPrefix)) {
-                // Put these formulas without key prefix
+            NodeRef objectRef = entry.getValue();
+            Map<String, String> formulas = notificationCache != null ? notificationCache.getFormulas().get(objectRef) : null;
+            if (formulas != null) {
                 allFormulas.putAll(formulas);
+                continue;
+            }
+            Map<String, Object> props = null;
+            boolean isTask = false;
+            if (objectRef.equals(taskRef)) {
+                props = task.getNode().getProperties();
+                isTask = true;
             } else {
-                // Put formulas with key prefix
-                for (Entry<String, String> entry2 : formulas.entrySet()) {
-                    allFormulas.put(keyPrefix + SEPARATOR + entry2.getKey(), entry2.getValue());
+                if (notificationCache != null) {
+                    Node node = notificationCache.getCachedProps().get(objectRef);
+                    props = node != null ? node.getProperties() : null;
+                }
+                if (props == null) {
+                    props = RepoUtil.toStringProperties(nodeService.getProperties(objectRef));
                 }
             }
+            formulas = getEmailFormulas(objectRef, props, isTask);
+
+            String keyPrefix = entry.getKey();
+            Map<String, String> prefixedFormulas = createPrefixedFormulas(keyPrefix, formulas);
+            if (!isTask) {
+                notificationCache.getFormulas().put(objectRef, prefixedFormulas);
+            }
+            allFormulas.putAll(prefixedFormulas);
         }
         if (log.isDebugEnabled()) {
             log.debug("Produced formulas " + WmNode.toString(allFormulas.entrySet()));
         }
-        if (subject != null) {
+        if (StringUtils.isNotBlank(subject)) {
             subject = processEmailTemplate(subject, allFormulas);
         }
         String content = processEmailTemplate(templateTxt, allFormulas);
         return new ProcessedEmailTemplate(subject, content);
+    }
+
+    @Override
+    public ProcessedEmailTemplate getProcessedEmailTemplate(Map<String, NodeRef> dataNodeRefs, Template template, Map<String, String> additionalFormulas,
+            NotificationCache notificationCache, Task task) {
+
+        String templateTxt = template.getContent();
+        String subject = template.getSubject();
+        return getProcessedTemplate(dataNodeRefs, additionalFormulas, notificationCache, templateTxt, subject, task);
+    }
+
+    private ProcessedEmailTemplate getProcessedEmailTemplate(Map<String, NodeRef> dataNodeRefs, NodeRef template, Map<String, String> additionalFormulas,
+            NotificationCache notificationCache) {
+
+        ContentReader templateReader = fileFolderService.getReader(template);
+        String templateTxt = templateReader.getContentString();
+        String subject = (String) nodeService.getProperty(template, DocumentTemplateModel.Prop.NOTIFICATION_SUBJECT);
+        return getProcessedTemplate(dataNodeRefs, additionalFormulas, notificationCache, templateTxt, subject, null);
+    }
+
+    private Map<String, String> createPrefixedFormulas(String keyPrefix, Map<String, String> formulas) {
+        if (StringUtils.isBlank(keyPrefix)) {
+            return formulas;
+        }
+        Map<String, String> result = new HashMap<>();
+        for (Entry<String, String> entry : formulas.entrySet()) {
+            result.put(keyPrefix + SEPARATOR + entry.getKey(), entry.getValue());
+        }
+        return result;
     }
 
     private String processEmailTemplate(String templateTxt, Map<String, String> formulas) {
@@ -606,16 +672,18 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
     private String replaceCurlyBracesFormulas(String templateText, Map<String, String> formulas, boolean removeUnmatchedFormulas) {
         StringBuffer result = new StringBuffer();
         Matcher matcher = TEMPLATE_FORMULA_PATTERN.matcher(templateText);
+        int beginningBracetLength = "{".length();
+        int endingBracetLength = "}".length();
         while (matcher.find()) {
-            String formulaKey = matcher.group().substring("{".length(), matcher.group().length() - "}".length());
+            String formulaKey = matcher.group().substring(beginningBracetLength, matcher.group().length() - endingBracetLength);
             String formulaValue = formulas.get(formulaKey);
             /**
              * Spetsifikatsioon "Mallide loomine.docx"
              * 2.1.4. Kui valemi väärtus jääb täitmata, eemaldatakse valem malli tekstist; erandiks on valemid {regNumber} ja {regDateTime};
              * dokumendimallide korral toimub eemaldamine dokumendi registreerimisel.
              */
-            if (formulaValue == null && (DocumentCommonModel.Props.REG_NUMBER.getLocalName().equals(formulaKey)
-                    || DocumentCommonModel.Props.REG_DATE_TIME.getLocalName().equals(formulaKey) || !removeUnmatchedFormulas)) {
+            if (formulaValue == null && (!removeUnmatchedFormulas || DocumentCommonModel.Props.REG_NUMBER.getLocalName().equals(formulaKey)
+                    || DocumentCommonModel.Props.REG_DATE_TIME.getLocalName().equals(formulaKey))) {
                 formulaValue = matcher.group();
             } else if (formulaValue == null && removeUnmatchedFormulas) {
                 formulaValue = "";
@@ -698,7 +766,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
                 String name = group.getName();
 
                 if (group.isSystematic()) {
-                    if (isIgnoredFieldGroup(name)) {
+                    if (IGNORED_FIELD_GROUPS.contains(name)) {
                         continue;
                     }
 
@@ -809,47 +877,20 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
         }
     }
 
-    private boolean isIgnoredFieldGroup(String fieldGroupName) {
-        return SystematicFieldGroupNames.DOCUMENT_LOCATION.equals(fieldGroupName)
-                || SystematicFieldGroupNames.USERS_TABLE.equals(fieldGroupName)
-                || SystematicFieldGroupNames.LEAVE_REQUEST.equals(fieldGroupName)
-                || SystematicFieldGroupNames.LEAVE_CHANGE.equals(fieldGroupName)
-                || SystematicFieldGroupNames.LEAVE_CANCEL.equals(fieldGroupName)
-                || SystematicFieldGroupNames.TRAINING_APPLICANT.equals(fieldGroupName)
-                || SystematicFieldGroupNames.ERRAND_DOMESTIC_APPLICANT.equals(fieldGroupName)
-                || SystematicFieldGroupNames.ERRAND_ABROAD_APPLICANT.equals(fieldGroupName)
-                || SystematicFieldGroupNames.ERRAND_EXPENSES.equals(fieldGroupName)
-                || SystematicFieldGroupNames.ERRAND_EXPENSES_REPORT.equals(fieldGroupName)
-                || SystematicFieldGroupNames.ERRAND_EXPENSES_REPORT_SUMMARY.equals(fieldGroupName)
-                || SystematicFieldGroupNames.DRIVE_COMPENSATION.equals(fieldGroupName);
-    }
-
-    private Map<String, String> getEmailFormulas(NodeRef objectRef) {
+    @SuppressWarnings("unchecked")
+    private Map<String, String> getEmailFormulas(NodeRef objectRef, Map<String, Object> props, boolean isTask) {
         Map<String, String> formulas = new LinkedHashMap<String, String>();
 
         // All properties
-        Map<QName, Serializable> props;
-        WorkflowDbService workflowDbService = BeanHelper.getWorkflowDbService();
-        boolean isTask = workflowDbService.taskExists(objectRef);
-        if (isTask) {
-            props = RepoUtil.toQNameProperties(workflowDbService.getTask(objectRef, null, false).getNode().getProperties());
-        } else {
-            props = nodeService.getProperties(objectRef);
-        }
-        for (Entry<QName, Serializable> entry : props.entrySet()) {
-            String propName = entry.getKey().getLocalName();
-            Serializable propValue = entry.getValue();
+        for (Entry<String, Object> entry : props.entrySet()) {
+            Object propValue = entry.getValue();
             if (propValue == null) {
                 continue;
             }
+            String propName = StringUtils.substringAfterLast(entry.getKey(), "}");
             if (propValue instanceof List<?>) {
                 List<?> list = (List<?>) propValue;
-                String separator = ", ";
-                if (propName.equals(DocumentCommonModel.Props.RECIPIENT_NAME.getLocalName())
-                        || propName.equals(DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME.getLocalName())
-                        || propName.equals(DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_EMAIL.getLocalName())) {
-                    separator = "\n";
-                }
+                String separator = RECIPIENT_PROPS.contains(propName) ? "\n" : ", ";
 
                 List<String> items = new ArrayList<String>(list.size());
                 for (Object object : list) {
@@ -859,37 +900,31 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
                     }
                 }
                 formulas.put(propName, StringUtils.join(items.iterator(), separator));
-            } else {
-                boolean alternate = false;
-                if (WorkflowCommonModel.Props.STARTED_DATE_TIME.getLocalName().equals(propName) && isTask) {
-                    alternate = true;
-                }
-
-                formulas.put(propName, getTypeSpecificReplacement(propValue, alternate));
             }
+        }
+
+        if (isTask && props.containsKey(WorkflowCommonModel.Props.STARTED_DATE_TIME.toString())) {
+            Object propValue = props.get(WorkflowCommonModel.Props.STARTED_DATE_TIME.toString());
+            formulas.put(WorkflowCommonModel.Props.STARTED_DATE_TIME.getLocalName(), getTypeSpecificReplacement(propValue, true));
         }
 
         // Specific formulas
         QName objectType = getDocumentListStructureFormulae(objectRef, formulas);
 
         {
-            @SuppressWarnings("unchecked")
-            List<String> names = (List<String>) props.get(DocumentCommonModel.Props.RECIPIENT_NAME);
-            @SuppressWarnings("unchecked")
-            List<String> emails = (List<String>) props.get(DocumentCommonModel.Props.RECIPIENT_EMAIL);
+            List<String> names = (List<String>) props.get(DocumentCommonModel.Props.RECIPIENT_NAME.toString());
+            List<String> emails = (List<String>) props.get(DocumentCommonModel.Props.RECIPIENT_EMAIL.toString());
             formulas.put("recipientNameEmail", generateNameAndEmail(names, emails));
         }
 
         {
-            @SuppressWarnings("unchecked")
-            List<String> names = (List<String>) props.get(DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME);
-            @SuppressWarnings("unchecked")
-            List<String> emails = (List<String>) props.get(DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_EMAIL);
+            List<String> names = (List<String>) props.get(DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME.toString());
+            List<String> emails = (List<String>) props.get(DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_EMAIL.toString());
             formulas.put("additionalRecipientNameEmail", generateNameAndEmail(names, emails));
         }
 
         if (dictionaryService.isSubClass(objectType, WorkflowCommonModel.Types.TASK)) {
-            Serializable activeProp = workflowDbService.getTaskProperty(objectRef, WorkflowSpecificModel.Props.ACTIVE);
+            Object activeProp = props.get(WorkflowSpecificModel.Props.ACTIVE);
             if (activeProp != null) {
                 Boolean isActive = (Boolean) activeProp;
                 if (isActive) {
@@ -936,21 +971,36 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
         return formulas;
     }
 
+    private static final Set<QName> LOCATION_PROPS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(DocumentCommonModel.Props.FUNCTION, DocumentCommonModel.Props.SERIES,
+            DocumentCommonModel.Props.VOLUME, DocumentCommonModel.Props.CASE)));
+
     private QName getDocumentListStructureFormulae(NodeRef objectRef, Map<String, String> formulas) {
         QName objectType = BeanHelper.getWorkflowService().getNodeRefType(objectRef);
         if (dictionaryService.isSubClass(objectType, DocumentCommonModel.Types.DOCUMENT)) {
-            formulas.put("$functionTitle", getAncestorProperty(objectRef, FunctionsModel.Types.FUNCTION, FunctionsModel.Props.TITLE));
-            formulas.put("$functionMark", getAncestorProperty(objectRef, FunctionsModel.Types.FUNCTION, FunctionsModel.Props.MARK));
-            formulas.put("$seriesTitle", getAncestorProperty(objectRef, SeriesModel.Types.SERIES, SeriesModel.Props.TITLE));
-            formulas.put("$seriesIdentifier", getAncestorProperty(objectRef, SeriesModel.Types.SERIES, SeriesModel.Props.SERIES_IDENTIFIER));
-            formulas.put("$caseTitle", getAncestorProperty(objectRef, CaseModel.Types.CASE, CaseModel.Props.TITLE));
+
+            Node doc = BeanHelper.getBulkLoadNodeService().loadNodes(Arrays.asList(objectRef), LOCATION_PROPS).get(objectRef);
+            Map<String, Object> props = doc.getProperties();
+
+            NodeRef functionRef = (NodeRef) props.get(DocumentCommonModel.Props.FUNCTION);
+            NodeRef seriesRef = (NodeRef) props.get(DocumentCommonModel.Props.SERIES);
+            NodeRef volumeRef = (NodeRef) props.get(DocumentCommonModel.Props.VOLUME);
+            NodeRef caseRef = (NodeRef) props.get(DocumentCommonModel.Props.CASE);
+
+            UnmodifiableFunction function = BeanHelper.getFunctionsService().getUnmodifiableFunction(functionRef, null);
+            UnmodifiableSeries series = BeanHelper.getSeriesService().getUnmodifiableSeries(seriesRef, null);
+            UnmodifiableVolume volume = BeanHelper.getVolumeService().getUnmodifiableVolume(volumeRef, null);
+
+            formulas.put("$functionTitle", function.getTitle());
+            formulas.put("$functionMark", function.getMark());
+
+            formulas.put("$seriesTitle", series.getTitle());
+            formulas.put("$seriesIdentifier", series.getSeriesIdentifier());
+
+            formulas.put("$volumeTitle", volume.getTitle());
+            formulas.put("$volumeMark", volume.getVolumeMark());
+
+            formulas.put("$caseTitle", caseRef != null ? BeanHelper.getCaseService().getCaseTitle(caseRef) : "");
             formulas.put("$docUrl", getDocumentUrl(objectRef));
-
-            String volTitle = getAncestorProperty(objectRef, VolumeModel.Types.VOLUME, VolumeModel.Props.TITLE);
-            formulas.put("$volumeTitle", StringUtils.isNotBlank(volTitle) ? volTitle : getAncestorProperty(objectRef, CaseFileModel.Types.CASE_FILE, VolumeModel.Props.TITLE));
-
-            String volMark = getAncestorProperty(objectRef, VolumeModel.Types.VOLUME, VolumeModel.Props.MARK);
-            formulas.put("$volumeMark", StringUtils.isNotBlank(volMark) ? volMark : getAncestorProperty(objectRef, CaseFileModel.Types.CASE_FILE, VolumeModel.Props.MARK));
         }
 
         return objectType;
@@ -1190,7 +1240,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
     }
 
     @Override
-    public NodeRef getEmailTemplateByName(String templateName) {
+    public NodeRef getEmailTemplateByName(String templateName) { // Not used. Is it meant to be like that?
         QName templateAspect = DocumentTemplateModel.Aspects.TEMPLATE_EMAIL;
         return getTemplateByName(templateName, templateAspect);
     }
