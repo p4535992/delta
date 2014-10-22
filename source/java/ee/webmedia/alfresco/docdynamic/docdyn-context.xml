@@ -182,6 +182,7 @@
    <bean id="deleteDraftsBootstrap" class="ee.webmedia.alfresco.docdynamic.bootstrap.DeleteDraftsBootstrap" parent="module.baseComponent">
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
+      <property name="disabled" value="${updater.ppa.3_6_21_to_3_6_30.enabled}" />
       <property name="dependsOn">
          <list>
             <ref bean="documentDraftsSpacesBootstrap" />

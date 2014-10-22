@@ -9,8 +9,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.sql.DataSource;
-
 import org.alfresco.model.ContentModel;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.search.ResultSet;
@@ -25,37 +23,6 @@ import ee.webmedia.alfresco.utils.SearchUtil;
  * Updates the NodeRef type property to Text
  */
 public class AdrDeletedDocumentNodeRefToTextUpdater extends AbstractNodeUpdater {
-
-    private boolean executeSql;
-    private DataSource dataSource;
-
-    @Override
-    public void executeInternal() throws Throwable {
-        // if (executeSql) {
-        // Connection con = null;
-        // Statement stmt = null;
-        // try {
-        // String sql = "update alf_node_properties set actual_type_n = 6 "
-        // +
-        // " where qname_id in (select qname.id from alf_qname qname join alf_namespace ns on ns.id = qname.ns_id where local_name = 'nodeRef' and uri = 'http://alfresco.webmedia.ee/model/adr/1.0') "
-        // + " and actual_type_n = 12";
-        // log.info("Executing AdrDeletedDocumentNodeRefToTextUpdater sql");
-        // con = dataSource.getConnection();
-        // stmt = con.createStatement();
-        // stmt.executeUpdate(sql);
-        // } finally {
-        // if (con != null) {
-        // try {
-        // con.close();
-        // } catch (SQLException e1) {
-        // log.error(e1);
-        // }
-        // }
-        // }
-        // } else {
-        super.executeInternal();
-        // }
-    }
 
     @Override
     protected void doAfterTransactionBegin() {
@@ -90,14 +57,6 @@ public class AdrDeletedDocumentNodeRefToTextUpdater extends AbstractNodeUpdater 
         newProps.put(ContentModel.PROP_MODIFIED, origProps.get(ContentModel.PROP_MODIFIED));
         nodeService.addProperties(nodeRef, newProps);
         return new String[] { "AdrDeletedDocumentNodeRefToTextUpdater", stringValue };
-    }
-
-    public void setExecuteSql(boolean executeSql) {
-        this.executeSql = executeSql;
-    }
-
-    public void setDataSource(DataSource dataSource) {
-        this.dataSource = dataSource;
     }
 
 }

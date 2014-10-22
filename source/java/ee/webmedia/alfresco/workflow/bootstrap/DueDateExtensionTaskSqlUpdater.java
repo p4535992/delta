@@ -21,6 +21,7 @@ import org.springframework.jdbc.core.simple.ParameterizedRowMapper;
 import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
 
 import ee.webmedia.alfresco.common.service.BulkLoadNodeServiceImpl;
+import ee.webmedia.alfresco.utils.ProgressTracker;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.service.WorkflowDbService;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
@@ -40,6 +41,7 @@ public class DueDateExtensionTaskSqlUpdater extends AbstractModuleComponent {
             LOG.info("DueDateExtensionTaskSqlUpdater is disabled, skipping.");
             return;
         }
+        LOG.info("Executing DueDateExtensionTaskSqlUpdater.");
         String sqlQuery = "SELECT initiating_task.wfs_creator_id as initiating_task_creator_id,"
                 + " extension_task.task_id as extension_task_id, extension_task.store_id as store_id "
                 + " FROM delta_task extension_task"
@@ -52,10 +54,18 @@ public class DueDateExtensionTaskSqlUpdater extends AbstractModuleComponent {
                 String nodeUuid = rs.getString("extension_task_id");
                 String storeId = rs.getString("store_id");
                 String creator = rs.getString("initiating_task_creator_id");
-                return new Pair(new NodeRef(new StoreRef(storeId), nodeUuid), creator);
+                return new Pair<NodeRef, String>(new NodeRef(new StoreRef(storeId), nodeUuid), creator);
             }
         });
 
+        if (taskRefsToRequiredOwner == null || taskRefsToRequiredOwner.isEmpty()) {
+            LOG.info("No tasks to process, finishing DueDateExtensionTaskSqlUpdater");
+            return;
+        }
+
+        int taskCount = taskRefsToRequiredOwner.size();
+        LOG.info("Processing " + taskCount + " tasks.");
+        ProgressTracker progress = new ProgressTracker(taskCount, 0);
         int batchSize = 100;
         List<List<Pair<NodeRef, String>>> slicedTasks = BulkLoadNodeServiceImpl.sliceList(taskRefsToRequiredOwner, batchSize);
         for (List<Pair<NodeRef, String>> taskSlice : slicedTasks) {
@@ -80,8 +90,12 @@ public class DueDateExtensionTaskSqlUpdater extends AbstractModuleComponent {
                 }
             }
             workflowDbService.updateTaskOwnerProps(tasksNewProps);
+            String info = progress.step(taskSlice.size());
+            if (info != null) {
+                LOG.info("Tasks updating: " + info);
+            }
         }
-
+        allUserProps.clear();
     }
 
     public void setWorkflowDbService(WorkflowDbService workflowDbService) {

@@ -14,7 +14,6 @@ import java.util.Set;
 
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.module.AbstractModuleComponent;
-import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.namespace.NamespaceService;
@@ -30,6 +29,7 @@ import ee.webmedia.alfresco.common.service.BulkLoadNodeServiceImpl;
 import ee.webmedia.alfresco.common.service.CreateObjectCallback;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.WmNode;
+import ee.webmedia.alfresco.utils.ProgressTracker;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 import ee.webmedia.alfresco.workflow.service.WorkflowDbService;
@@ -58,100 +58,101 @@ public class TaskAssociatedDataTableInsertSqlBootstrap extends AbstractModuleCom
     @Override
     protected void executeInternal() throws Throwable {
         if (!enabled) {
-            LOG.info("TaskAssociatedDataTableInsertSqlBootstrap is idsabled, skipping");
+            LOG.info("TaskAssociatedDataTableInsertSqlBootstrap is disabled, skipping");
             return;
         }
-        BeanHelper.getTransactionService().getRetryingTransactionHelper().doInTransaction(new RetryingTransactionCallback<Void>() {
+        LOG.info("Executing TaskAssociatedDataTableInsertSqlBootstrap.");
+
+        BulkLoadNodeService bulkLoadNodeService = BeanHelper.getSpringBean(BulkLoadNodeService.class, BulkLoadNodeService.BEAN_NAME);
+        NodeService nodeService = BeanHelper.getNodeService();
+        String sqlQuery = "SELECT task_id, store_id, task_type FROM delta_task ";
+        List<String> taskRefs = jdbcTemplate.query(sqlQuery, new ParameterizedRowMapper<String>() {
 
             @Override
-            public Void execute() throws Throwable {
-
-                BulkLoadNodeService bulkLoadNodeService = BeanHelper.getSpringBean(BulkLoadNodeService.class, BulkLoadNodeService.BEAN_NAME);
-                NodeService nodeService = BeanHelper.getNodeService();
-                String sqlQuery = "SELECT task_id, store_id, task_type FROM delta_task ";
-                List<String> taskRefs = jdbcTemplate.query(sqlQuery, new ParameterizedRowMapper<String>() {
-
-                    @Override
-                    public String mapRow(ResultSet rs, int rowNum) throws SQLException {
-                        return rs.getString("task_id");
-                    }
-
-                });
-                int batchSize = 100;
-                List<List<String>> slicedTasks = BulkLoadNodeServiceImpl.sliceList(taskRefs, batchSize);
-                List<Pair<NodeRef, Pair<String, Date>>> dueDateHistories = new ArrayList<Pair<NodeRef, Pair<String, Date>>>();
-                List<Pair<NodeRef, NodeRef>> dueDateExtensionTasks = new ArrayList<Pair<NodeRef, NodeRef>>();
-                Map<NodeRef, List<Pair<NodeRef, String>>> taskFiles = new HashMap<NodeRef, List<Pair<NodeRef, String>>>();
-                Map<Long, QName> propertyTypes = new HashMap<Long, QName>();
-                for (List<String> taskUuidSlice : slicedTasks) {
-                    List<NodeRef> taskRefSlice = bulkLoadNodeService.loadNodeRefByUuid(taskUuidSlice);
-                    Map<NodeRef, List<Pair<String, Date>>> dueDateHistoriesSlice = bulkLoadNodeService.loadChildNodes(taskRefSlice, null,
-                            WorkflowCommonModel.Types.DUE_DATE_HISTORY,
-                            propertyTypes,
-                            new CreateObjectCallback<Pair<String, Date>>() {
-
-                                @Override
-                                public Pair<String, Date> create(NodeRef nodeRef, Map<QName, Serializable> properties) {
-                                    return new Pair<String, Date>((String) properties.get(WorkflowCommonModel.Props.CHANGE_REASON), (Date) properties
-                                            .get(WorkflowCommonModel.Props.PREVIOUS_DUE_DATE));
-                                }
-                            });
-                    for (Entry<NodeRef, List<Pair<String, Date>>> entry : dueDateHistoriesSlice.entrySet()) {
-                        List<Pair<String, Date>> value = entry.getValue();
-                        if (value != null && !value.isEmpty()) {
-                            for (Pair<String, Date> historyRecord : value) {
-                                dueDateHistories.add(new Pair(entry.getKey(), historyRecord));
-                            }
-                        }
-                    }
-                    if (dueDateHistories.size() > batchSize) {
-                        workflowDbService.createTaskDueDateHistoryEntries(dueDateHistories);
-                        dueDateHistories.clear();
-                    }
-                    Map<NodeRef, List<NodeRef>> dueDateExtensionTaskSlice = bulkLoadNodeService.getSourceAssocs(taskRefSlice, WorkflowSpecificModel.Assocs.TASK_DUE_DATE_EXTENSION);
-                    for (Map.Entry<NodeRef, List<NodeRef>> entry : dueDateExtensionTaskSlice.entrySet()) {
-                        List<NodeRef> value = entry.getValue();
-                        if (value != null && !value.isEmpty()) {
-                            for (NodeRef otherTaskRef : value) {
-                                dueDateExtensionTasks.add(Pair.newInstance(otherTaskRef, entry.getKey()));
-                                // if there are accidentally more than one related task, only the first one is taken in account
-                                break;
-                            }
-                        }
-                    }
-                    if (dueDateExtensionTasks.size() > batchSize) {
-                        workflowDbService.createTaskDueDateExtensionAssocEntries(dueDateExtensionTasks);
-                        dueDateExtensionTasks.clear();
-                    }
-                    Map<NodeRef, List<Pair<NodeRef, String>>> taskFilesSlice = bulkLoadNodeService.loadChildNodes(taskRefSlice, FILE_PROPS_TO_LOAD, ContentModel.TYPE_CONTENT,
-                            propertyTypes, new CreateObjectCallback<Pair<NodeRef, String>>() {
-
-                                @Override
-                                public Pair<NodeRef, String> create(NodeRef nodeRef, Map<QName, Serializable> properties) {
-                                    return new Pair(nodeRef, properties.get(ContentModel.PROP_NAME));
-                                }
-                            });
-                    taskFiles.putAll(taskFilesSlice);
-                    if (taskFiles.size() > batchSize) {
-                        processTaskFiles(taskFiles, bulkLoadNodeService, nodeService);
-                    }
-                    Map<NodeRef, Node> tasks = bulkLoadNodeService.loadNodes(taskRefSlice, OWNER_ORGANIZATION_NAME_PROP);
-                    workflowDbService.updateTaskOwnerOrgNameAndStoreRef(new ArrayList<Node>(tasks.values()));
-                }
-                if (!dueDateHistories.isEmpty()) {
-                    workflowDbService.createTaskDueDateHistoryEntries(dueDateHistories);
-                }
-                if (!dueDateExtensionTasks.isEmpty()) {
-                    workflowDbService.createTaskDueDateExtensionAssocEntries(dueDateExtensionTasks);
-                }
-                if (!taskFiles.isEmpty()) {
-                    processTaskFiles(taskFiles, bulkLoadNodeService, nodeService);
-                }
-
-                return null;
+            public String mapRow(ResultSet rs, int rowNum) throws SQLException {
+                return rs.getString("task_id");
             }
 
         });
+        int taskCount = taskRefs.size();
+        LOG.info("Processing " + taskCount + " tasks.");
+        ProgressTracker progress = new ProgressTracker(taskCount, 0);
+        int batchSize = 100;
+        List<List<String>> slicedTasks = BulkLoadNodeServiceImpl.sliceList(taskRefs, batchSize);
+        List<Pair<NodeRef, Pair<String, Date>>> dueDateHistories = new ArrayList<Pair<NodeRef, Pair<String, Date>>>();
+        List<Pair<NodeRef, NodeRef>> dueDateExtensionTasks = new ArrayList<Pair<NodeRef, NodeRef>>();
+        Map<NodeRef, List<Pair<NodeRef, String>>> taskFiles = new HashMap<NodeRef, List<Pair<NodeRef, String>>>();
+        Map<Long, QName> propertyTypes = new HashMap<Long, QName>();
+        for (List<String> taskUuidSlice : slicedTasks) {
+            List<NodeRef> taskRefSlice = bulkLoadNodeService.loadNodeRefByUuid(taskUuidSlice);
+            Map<NodeRef, List<Pair<String, Date>>> dueDateHistoriesSlice = bulkLoadNodeService.loadChildNodes(taskRefSlice, null,
+                    WorkflowCommonModel.Types.DUE_DATE_HISTORY,
+                    propertyTypes,
+                    new CreateObjectCallback<Pair<String, Date>>() {
+
+                        @Override
+                        public Pair<String, Date> create(NodeRef nodeRef, Map<QName, Serializable> properties) {
+                            return new Pair<String, Date>((String) properties.get(WorkflowCommonModel.Props.CHANGE_REASON), (Date) properties
+                                    .get(WorkflowCommonModel.Props.PREVIOUS_DUE_DATE));
+                        }
+                    });
+            for (Entry<NodeRef, List<Pair<String, Date>>> entry : dueDateHistoriesSlice.entrySet()) {
+                List<Pair<String, Date>> value = entry.getValue();
+                if (value != null && !value.isEmpty()) {
+                    for (Pair<String, Date> historyRecord : value) {
+                        dueDateHistories.add(new Pair(entry.getKey(), historyRecord));
+                    }
+                }
+            }
+            if (dueDateHistories.size() > batchSize) {
+                workflowDbService.createTaskDueDateHistoryEntries(dueDateHistories);
+                dueDateHistories.clear();
+            }
+            Map<NodeRef, List<NodeRef>> dueDateExtensionTaskSlice = bulkLoadNodeService.getSourceAssocs(taskRefSlice, WorkflowSpecificModel.Assocs.TASK_DUE_DATE_EXTENSION);
+            for (Map.Entry<NodeRef, List<NodeRef>> entry : dueDateExtensionTaskSlice.entrySet()) {
+                List<NodeRef> value = entry.getValue();
+                if (value != null && !value.isEmpty()) {
+                    for (NodeRef otherTaskRef : value) {
+                        dueDateExtensionTasks.add(Pair.newInstance(otherTaskRef, entry.getKey()));
+                        // if there are accidentally more than one related task, only the first one is taken in account
+                        break;
+                    }
+                }
+            }
+            if (dueDateExtensionTasks.size() > batchSize) {
+                workflowDbService.createTaskDueDateExtensionAssocEntries(dueDateExtensionTasks);
+                dueDateExtensionTasks.clear();
+            }
+            Map<NodeRef, List<Pair<NodeRef, String>>> taskFilesSlice = bulkLoadNodeService.loadChildNodes(taskRefSlice, FILE_PROPS_TO_LOAD, ContentModel.TYPE_CONTENT,
+                    propertyTypes, new CreateObjectCallback<Pair<NodeRef, String>>() {
+
+                        @Override
+                        public Pair<NodeRef, String> create(NodeRef nodeRef, Map<QName, Serializable> properties) {
+                            return new Pair(nodeRef, properties.get(ContentModel.PROP_NAME));
+                        }
+                    });
+            taskFiles.putAll(taskFilesSlice);
+            if (taskFiles.size() > batchSize) {
+                processTaskFiles(taskFiles, bulkLoadNodeService, nodeService);
+                taskFiles.clear();
+            }
+            Map<NodeRef, Node> tasks = bulkLoadNodeService.loadNodes(taskRefSlice, OWNER_ORGANIZATION_NAME_PROP);
+            workflowDbService.updateTaskOwnerOrgNameAndStoreRef(new ArrayList<Node>(tasks.values()));
+            String info = progress.step(taskUuidSlice.size());
+            if (info != null) {
+                LOG.info("Tasks updating: " + info);
+            }
+        }
+        if (!dueDateHistories.isEmpty()) {
+            workflowDbService.createTaskDueDateHistoryEntries(dueDateHistories);
+        }
+        if (!dueDateExtensionTasks.isEmpty()) {
+            workflowDbService.createTaskDueDateExtensionAssocEntries(dueDateExtensionTasks);
+        }
+        if (!taskFiles.isEmpty()) {
+            processTaskFiles(taskFiles, bulkLoadNodeService, nodeService);
+        }
+
     }
 
     private void processTaskFiles(Map<NodeRef, List<Pair<NodeRef, String>>> taskFiles, BulkLoadNodeService bulkLoadNodeService, NodeService nodeService) {
