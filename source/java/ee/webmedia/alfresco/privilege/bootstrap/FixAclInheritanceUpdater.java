@@ -231,14 +231,14 @@ public class FixAclInheritanceUpdater extends AbstractModuleComponent {
         log.info("Querying for acls...");
         List<Map<String, Object>> rows = retryingTransactionHelper
                 .doInTransaction(new RetryingTransactionCallback<List<Map<String, Object>>>()
-                {
+                        {
 
                     @Override
                     public List<Map<String, Object>> execute() throws Throwable
                     {
                         return jdbcTemplate.queryForList(allAclsThatInheritFromNonPrimaryParentSql);
                     }
-                }, false, true);
+                        }, false, true);
         return rows;
     }
 
@@ -404,6 +404,10 @@ public class FixAclInheritanceUpdater extends AbstractModuleComponent {
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+    }
+
+    public void setDisabled(boolean disabled) {
+        enabled = !disabled;
     }
 
 }

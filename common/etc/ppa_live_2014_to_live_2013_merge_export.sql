@@ -15,7 +15,7 @@ CREATE TABLE tmp_constants (
 	constant_value bigint not null
 );
 
-COPY tmp_constants FROM '/tmp/constants.csv';
+COPY tmp_constants FROM '/delta-pgsql/data/constants.csv';
 
 CREATE SEQUENCE export_sequence
   INCREMENT 1
@@ -41,7 +41,7 @@ CREATE TABLE tmp_existing_not_to_export_nodes
   id bigint NOT NULL unique
 );
 
-COPY tmp_existing_not_to_export_nodes FROM '/tmp/existingNotToOverwriteNodes.tsv';
+COPY tmp_existing_not_to_export_nodes FROM '/delta-pgsql/data/existingNotToOverwriteNodes.tsv';
 
 CREATE TABLE tmp_existing_users
 (
@@ -49,7 +49,7 @@ CREATE TABLE tmp_existing_users
   username text not null
 );
 
-COPY tmp_existing_users FROM '/tmp/existingUsers.tsv';
+COPY tmp_existing_users FROM '/delta-pgsql/data/existingUsers.tsv';
 
 create table tmp_existing_authorities (
 	id bigint,
@@ -345,88 +345,90 @@ COPY (
 	node_deleted, type_qname_id, null, audit_creator, audit_created, audit_modifier, audit_modified, audit_accessed 
 	FROM alf_node node
 	join tmp_export_nodes exports on exports.id = node.id 
-) TO '/tmp/alf_node.tsv';
+) TO '/delta-pgsql/data/alf_node.tsv';
 
 -- alf_namespace kõik read.
  COPY (
 	SELECT * FROM alf_namespace
-) TO '/tmp/alf_namespace.tsv';
+) TO '/delta-pgsql/data/alf_namespace.tsv';
 
 -- alf_qname kõik read. 
  COPY (
 	SELECT * FROM alf_qname
-) TO '/tmp/alf_qname.tsv';
+) TO '/delta-pgsql/data/alf_qname.tsv';
 
 -- delta_task ja seotud delta_task_xxx tabelid täies mahus.
 COPY (
 	SELECT * FROM delta_task
-) TO '/tmp/delta_task.tsv';
+) TO '/delta-pgsql/data/delta_task.tsv';
 
 -- id-de ei ekspordi, seda kusagil ei refereerita
 COPY (
 	SELECT task_id, extension_task_id FROM delta_task_due_date_extension_assoc
-) TO '/tmp/delta_task_due_date_extension_assoc.tsv';
+) TO '/delta-pgsql/data/delta_task_due_date_extension_assoc.tsv';
 
 COPY (
 	SELECT task_id, previous_date, change_reason FROM delta_task_due_date_history
-) TO '/tmp/delta_task_due_date_history.tsv';
+) TO '/delta-pgsql/data/delta_task_due_date_history.tsv';
 
 COPY (
 	SELECT task_id, file_id FROM delta_task_file
-) TO '/tmp/delta_task_file.tsv';
+) TO '/delta-pgsql/data/delta_task_file.tsv';
 
 -- delta_log täies mahus
 
 COPY (
 	SELECT concat(log_entry_id, '_2'), created_date_time, level, creator_id, creator_name, computer_ip, computer_name, object_id, object_name, description FROM delta_log
-) TO '/tmp/delta_log.tsv';
+) TO '/delta-pgsql/data/delta_log.tsv';
 
 -- delta_register täies mahus.
 
 COPY (
 	SELECT * FROM delta_register
-) TO '/tmp/delta_register.tsv';
+) TO '/delta-pgsql/data/delta_register.tsv';
 
 -- õigused kõigile objektidele, mis üle kantakse. 
 COPY (
 	SELECT * FROM delta_node_permission where node_uuid in (select uuid from tmp_export_nodes)
-) TO '/tmp/delta_node_permission.tsv';
+) TO '/delta-pgsql/data/delta_node_permission.tsv';
 
 COPY (
 	SELECT * FROM delta_node_inheritspermissions where node_uuid in (select uuid from tmp_export_nodes)
-) TO '/tmp/delta_node_permission_list.tsv';
+) TO '/delta-pgsql/data/delta_node_permission_list.tsv';
 
 -- alf_child_assoc kõik seosed, kus vähemalt ühes otsas on tmp_export_nodes sisalduv id.
 -- Sealjuures mitte üle kanda tööülesannete ja logide assoceid.
 COPY (
-
---	select assoc.id, assoc.version,
---	case when parent_export.id is not null
---		then parent_export.new_id
---		else parent_node_id end,
---	type_qname_id, child_node_name_crc, child_node_name, 
---	child_node_id, 
---	qname_ns_id, qname_localname, is_primary, assoc_index
---	from FROM alf_child_assoc assoc
---	left join tmp_export_nodes parent_export on parent_export.id = alf_child_assoc.parent_node_id
-
-	SELECT nextval('export_sequence'), version, 
-	case when parent_node_id in (select id from tmp_export_nodes)
-		then (select new_id from tmp_export_nodes where id = parent_node_id)
-		else parent_node_id end, 
+	select  nextval('export_sequence'), version,
+	case when parent_export.id is not null
+		then parent_export.new_id
+		else parent_node_id end,
 	type_qname_id, child_node_name_crc, child_node_name, 
-	case when child_node_id in (select id from tmp_export_nodes)
-		then (select new_id from tmp_export_nodes where id = child_node_id)
+	case when child_export.id is not null
+		then child_export.new_id
 		else child_node_id end, 
-	qname_ns_id, qname_localname, is_primary, assoc_index FROM alf_child_assoc 
+	qname_ns_id, qname_localname, is_primary, assoc_index
+	FROM alf_child_assoc 
 --	left join tmp_export_nodes parent_export on parent_export.id = alf_child_assoc.parent_node_id
---	left join tmp_export_nodes child_export on child_export.id = alf_child_assoc.child_node_id
+
+--	SELECT nextval('export_sequence'), version, 
+--	case when parent_node_id in (select id from tmp_export_nodes)
+--		then (select new_id from tmp_export_nodes where id = parent_node_id)
+--		else parent_node_id end, 
+--	type_qname_id, child_node_name_crc, child_node_name, 
+--	case when child_node_id in (select id from tmp_export_nodes)
+--		then (select new_id from tmp_export_nodes where id = child_node_id)
+--		else child_node_id end, 
+--	qname_ns_id, qname_localname, is_primary, assoc_index FROM alf_child_assoc 
+	left join tmp_export_nodes parent_export on parent_export.id = alf_child_assoc.parent_node_id
+	left join tmp_export_nodes child_export on child_export.id = alf_child_assoc.child_node_id
 	where alf_child_assoc.type_qname_id not in (select qname.id from alf_qname qname join alf_namespace ns on ns.id = qname.ns_id 
 		where (local_name = 'task' and uri = 'http://alfresco.webmedia.ee/model/workflow/common/1.0')
 		or (local_name = 'documentLog' and uri = 'http://alfresco.webmedia.ee/model/document/common/1.0')
 		or (local_name = 'seriesLog' and uri = 'http://alfresco.webmedia.ee/model/series/1.0'))
-	and (parent_node_id in (select id from tmp_export_nodes) or child_node_id in (select id from tmp_export_nodes))
-) TO '/tmp/alf_child_assoc.tsv';
+	-- and (parent_node_id in (select id from tmp_export_nodes) or child_node_id in (select id from tmp_export_nodes))
+	and (parent_export.id is not null or child_export.id is not null)
+) TO '/delta-pgsql/data/alf_child_assoc.tsv';
 
 
 -- alf_node_assoc, sama mis eelmine.
@@ -445,7 +447,7 @@ COPY (
 	left join tmp_export_nodes target_export on target_export.id = alf_node_assoc.target_node_id
 	left join tmp_export_nodes source_export on source_export.id = alf_node_assoc.source_node_id
 	where (target_export.id is not null or source_export.id is not null)
-) TO '/tmp/alf_node_assoc.tsv';
+) TO '/delta-pgsql/data/alf_node_assoc.tsv';
 
 
 -- alf_node_aspects kõigi tmp_export_nodes jaoks 
@@ -453,7 +455,7 @@ COPY (
 	SELECT export.new_id, 
 	qname_id FROM alf_node_aspects aspects 
 	join tmp_export_nodes export on export.id = aspects.node_id
-) TO '/tmp/alf_node_aspects.tsv';
+) TO '/delta-pgsql/data/alf_node_aspects.tsv';
 
 create table tmp_content_data (
    id bigint,
@@ -479,7 +481,7 @@ COPY (
 	float_value, double_value, string_value, serializable_value, qname_id, list_index, locale_id FROM alf_node_properties props 
 	join tmp_export_nodes export on export.id = props.node_id
 	left join tmp_content_data on long_value = tmp_content_data.id
-) TO '/tmp/alf_node_properties.tsv';
+) TO '/delta-pgsql/data/alf_node_properties.tsv';
 
 -- alf_content_data kõik andmed
 COPY (
@@ -493,21 +495,25 @@ COPY (
 		content_mimetype_id, content_encoding_id, content_locale_id from alf_content_data
 	join tmp_content_data on alf_content_data.id = tmp_content_data.id
 	join tmp_content_url on alf_content_data.content_url_id = tmp_content_url.id
-)  TO '/tmp/alf_content_data.tsv';
+)  TO '/delta-pgsql/data/alf_content_data.tsv';
 
 -- alf_content_url kõik andmed
 COPY (
 	SELECT tmp_content_url.new_id, version, content_url, content_url_short, content_url_crc, content_size from alf_content_url
 	join tmp_content_url on tmp_content_url.id = alf_content_url.id
-)  TO '/tmp/alf_content_url.tsv';
+)  TO '/delta-pgsql/data/alf_content_url.tsv';
 
 -- alf_transaction. Iga 10 ülekantava node'i jaoks üks uus transaktsioon
 COPY (
 	with const_server as (select min(id) as id from alf_server)
 	select tmp_export_nodes.transaction_id, 1, (select id from const_server), (row_number() over ())::bigint::text, EXTRACT(EPOCH from now())::bigint
 	from tmp_export_nodes
-)  TO '/tmp/alf_transaction.tsv';
+)  TO '/delta-pgsql/data/alf_transaction.tsv';
 
 COPY (
 	select * from alf_locale
-) to '/tmp/alf_locale.tsv';
+) to '/delta-pgsql/data/alf_locale.tsv';
+
+COPY (
+	select * from alf_mimetype
+) to '/delta-pgsql/data/alf_mimetype.tsv';
