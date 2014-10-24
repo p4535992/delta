@@ -160,12 +160,12 @@ public class BulkLoadNodeServiceImpl implements BulkLoadNodeService {
         Map<NodeRef, List<Map<QName, Serializable>>> fileNodesProps = loadChildNodes(parentNodeRefs, propsToLoad, ContentModel.TYPE_CONTENT,
                 propertyTypes, new CreateObjectCallback<Map<QName, Serializable>>() {
 
-                    @Override
-                    public Map<QName, Serializable> create(NodeRef fileRef, Map<QName, Serializable> properties) {
-                        properties.put(ContentModel.PROP_NODE_REF, fileRef);
-                        return properties;
-                    }
-                });
+            @Override
+            public Map<QName, Serializable> create(NodeRef fileRef, Map<QName, Serializable> properties) {
+                properties.put(ContentModel.PROP_NODE_REF, fileRef);
+                return properties;
+            }
+        });
         Map<NodeRef, List<SimpleFile>> allDocumentsFiles = new HashMap<NodeRef, List<SimpleFile>>();
         for (NodeRef parentRef : parentNodeRefs) {
             List<SimpleFile> files = new ArrayList<>();
@@ -370,6 +370,9 @@ public class BulkLoadNodeServiceImpl implements BulkLoadNodeService {
                 Map<NodeRef, Map<PropertyMapKey, NodePropertyValue>> allChildProps = getPropsMap(getNodeRef(rs, "parent_uuid"), allPropsMap);
                 Map<PropertyMapKey, NodePropertyValue> childProps = getPropsMap(getNodeRef(rs, "child_uuid"), allChildProps);
                 PropertyMapKey propMapKey = getPropMapKey(rs);
+                if (propMapKey.getQnameId() <= 0) {
+                    return null;
+                }
                 NodePropertyValue nodePropValue = getPropertyValue(rs);
                 childProps.put(propMapKey, nodePropValue);
                 return null;
@@ -443,36 +446,36 @@ public class BulkLoadNodeServiceImpl implements BulkLoadNodeService {
         jdbcTemplate.query(query,
                 new ParameterizedRowMapper<String>() {
 
-                    @Override
-                    public String mapRow(ResultSet rs, int rowNum) throws SQLException {
-                        setDefaultFetchSize(rs);
-                        NodeRef nodeRef = getNodeRef(rs);
-                        Map<PropertyMapKey, NodePropertyValue> docProps = allDocProps.get(nodeRef);
-                        if (docProps == null) {
-                            docProps = new HashMap<PropertyMapKey, NodePropertyValue>();
-                            allDocProps.put(nodeRef, docProps);
-                        }
-                        Map<String, Object> docIntrinsicProps = allDocIntrinsicProps.get(nodeRef);
-                        if (docIntrinsicProps == null) {
-                            docIntrinsicProps = new HashMap<String, Object>();
-                            docIntrinsicProps.put(ContentModel.PROP_CREATOR.toPrefixString(), rs.getString("creator"));
-                            docIntrinsicProps.put(ContentModel.PROP_CREATED.toPrefixString(), DefaultTypeConverter.INSTANCE.convert(Date.class, rs.getString("created")));
-                            docIntrinsicProps.put(ContentModel.PROP_MODIFIER.toPrefixString(), rs.getString("modifier"));
-                            docIntrinsicProps.put(ContentModel.PROP_MODIFIED.toPrefixString(), DefaultTypeConverter.INSTANCE.convert(Date.class, rs.getString("modified")));
-                            allDocIntrinsicProps.put(nodeRef, docIntrinsicProps);
-                        }
-                        PropertyMapKey propMapKey = getPropMapKey(rs);
-                        if (propMapKey.getQnameId() > 0) {
-                            NodePropertyValue nodePropValue = getPropertyValue(rs);
-                            docProps.put(propMapKey, nodePropValue);
-                        }
-                        if (loadType && !nodeTypes.containsKey(nodeRef)) {
-                            nodeTypes.put(nodeRef, getTypeFromRs(rs));
-                        }
-                        return null;
-                    }
+            @Override
+            public String mapRow(ResultSet rs, int rowNum) throws SQLException {
+                setDefaultFetchSize(rs);
+                NodeRef nodeRef = getNodeRef(rs);
+                Map<PropertyMapKey, NodePropertyValue> docProps = allDocProps.get(nodeRef);
+                if (docProps == null) {
+                    docProps = new HashMap<PropertyMapKey, NodePropertyValue>();
+                    allDocProps.put(nodeRef, docProps);
+                }
+                Map<String, Object> docIntrinsicProps = allDocIntrinsicProps.get(nodeRef);
+                if (docIntrinsicProps == null) {
+                    docIntrinsicProps = new HashMap<String, Object>();
+                    docIntrinsicProps.put(ContentModel.PROP_CREATOR.toPrefixString(), rs.getString("creator"));
+                    docIntrinsicProps.put(ContentModel.PROP_CREATED.toPrefixString(), DefaultTypeConverter.INSTANCE.convert(Date.class, rs.getString("created")));
+                    docIntrinsicProps.put(ContentModel.PROP_MODIFIER.toPrefixString(), rs.getString("modifier"));
+                    docIntrinsicProps.put(ContentModel.PROP_MODIFIED.toPrefixString(), DefaultTypeConverter.INSTANCE.convert(Date.class, rs.getString("modified")));
+                    allDocIntrinsicProps.put(nodeRef, docIntrinsicProps);
+                }
+                PropertyMapKey propMapKey = getPropMapKey(rs);
+                if (propMapKey.getQnameId() > 0) {
+                    NodePropertyValue nodePropValue = getPropertyValue(rs);
+                    docProps.put(propMapKey, nodePropValue);
+                }
+                if (loadType && !nodeTypes.containsKey(nodeRef)) {
+                    nodeTypes.put(nodeRef, getTypeFromRs(rs));
+                }
+                return null;
+            }
 
-                }, paramArray);
+        }, paramArray);
         explainQuery(query, paramArray);
         if (propertyTypes == null) {
             propertyTypes = new HashMap<Long, QName>();
@@ -605,9 +608,9 @@ public class BulkLoadNodeServiceImpl implements BulkLoadNodeService {
                 + "SELECT parent_props.*, node.store_id as store_id, node.uuid AS child_uuid, parent.uuid AS parent_uuid "
                 + (includeIntrinsicProps
                         ? ", parent.audit_creator AS creator, parent.audit_created AS created, parent.audit_modifier AS modifier, parent.audit_modified AS modified " : "")
-                + " FROM " + getNodeTableConditionalJoin(childNodes, arguments)
-                + " JOIN alf_child_assoc parent_assoc on parent_assoc.child_node_id = node.id "
-                + " JOIN alf_node parent on parent_assoc.parent_node_id = parent.id ";
+                        + " FROM " + getNodeTableConditionalJoin(childNodes, arguments)
+                        + " JOIN alf_child_assoc parent_assoc on parent_assoc.child_node_id = node.id "
+                        + " JOIN alf_node parent on parent_assoc.parent_node_id = parent.id ";
         sql += " LEFT JOIN alf_node_properties parent_props on parent_props.node_id = parent.id ";
 
         sql += " WHERE parent_assoc.is_primary = true ";
@@ -1012,11 +1015,14 @@ public class BulkLoadNodeServiceImpl implements BulkLoadNodeService {
                 if (skipNodesWithMissingProp && allZeroesOrNulls(propertyKey)) {
                     return null;
                 }
-                NodePropertyValue propertyValue = getPropertyValue(rs);
-                Map<PropertyMapKey, NodePropertyValue> rawPropValues = new HashMap<PropertyMapKey, NodePropertyValue>();
-                rawPropValues.put(propertyKey, propertyValue);
-                Map<QName, Serializable> props = HibernateNodeDaoServiceImpl.convertToPublicProperties(rawPropValues, qnameDAO, localeDAO, contentDataDAO,
-                        dictionaryService, null, propertyTypes);
+                Map<QName, Serializable> props = new HashMap<>();
+                if (propertyKey.getQnameId() > 0) {
+                    NodePropertyValue propertyValue = getPropertyValue(rs);
+                    Map<PropertyMapKey, NodePropertyValue> rawPropValues = new HashMap<PropertyMapKey, NodePropertyValue>();
+                    rawPropValues.put(propertyKey, propertyValue);
+                    props = HibernateNodeDaoServiceImpl.convertToPublicProperties(rawPropValues, qnameDAO, localeDAO, contentDataDAO,
+                            dictionaryService, null, propertyTypes);
+                }
                 @SuppressWarnings("unchecked")
                 T value = (T) props.get(propName);
                 if (values.containsKey(value)) {
@@ -1096,6 +1102,9 @@ public class BulkLoadNodeServiceImpl implements BulkLoadNodeService {
             public String mapRow(ResultSet rs, int rowNum) throws SQLException {
                 setDefaultFetchSize(rs);
                 PropertyMapKey propertyKey = getPropMapKey(rs);
+                if (propertyKey.getQnameId() <= 0) {
+                    return null;
+                }
                 NodePropertyValue propertyValue = getPropertyValue(rs);
                 Map<PropertyMapKey, NodePropertyValue> rawPropValues = new HashMap<PropertyMapKey, NodePropertyValue>();
                 rawPropValues.put(propertyKey, propertyValue);

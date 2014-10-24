@@ -976,6 +976,19 @@
 <a:actionLink value="TestingForDeveloper" actionListener="#{TestingForDeveloperBean.handleTestEvent}" rendered="#{ApplicationService.test}">
      <f:param name="testP" value="11" />
 </a:actionLink>
+
+<f:verbatim><br/></f:verbatim>
+<a:actionLink value="executeDocumentUpdater" actionListener="#{TestingForDeveloperBean.executeDocumentUpdater}" rendered="#{ApplicationService.test}" />
+
+<f:verbatim><br/></f:verbatim>
+<a:actionLink value="executeSearchableSendInfoUpdater" actionListener="#{TestingForDeveloperBean.executeSearchableSendInfoUpdater}" rendered="#{ApplicationService.test}" />
+
+<f:verbatim><br/></f:verbatim>
+<a:actionLink value="executeCompoundWorkflowOwnerPropsUpdater" actionListener="#{TestingForDeveloperBean.executeCompoundWorkflowOwnerPropsUpdater}" rendered="#{ApplicationService.test}" />
+
+<f:verbatim><br/></f:verbatim>
+<a:actionLink value="executeTaskUpdater" actionListener="#{TestingForDeveloperBean.executeTaskUpdater}" rendered="#{ApplicationService.test}" />
+
 <f:verbatim><br/></f:verbatim>
 
 <a:actionLink value="deleteTestSystemTemplatesBootstrapAndSystemTemplates" actionListener="#{TestingForDeveloperBean.deleteTestTemplatesBootstrapAndTemplates}" rendered="#{ApplicationService.test}" />

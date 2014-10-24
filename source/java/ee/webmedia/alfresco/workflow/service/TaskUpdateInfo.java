@@ -1,23 +1,22 @@
 package ee.webmedia.alfresco.workflow.service;
 
-import ee.webmedia.alfresco.common.search.DbSearchUtil;
-import ee.webmedia.alfresco.utils.TextUtil;
+import static ee.webmedia.alfresco.common.search.DbSearchUtil.getQuestionMarks;
+
+import java.io.Serializable;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.util.Assert;
 
-import java.io.Serializable;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-
-import static ee.webmedia.alfresco.common.search.DbSearchUtil.getQuestionMarks;
+import ee.webmedia.alfresco.common.search.DbSearchUtil;
+import ee.webmedia.alfresco.utils.TextUtil;
 
 public class TaskUpdateInfo {
     private Task task;
@@ -28,7 +27,7 @@ public class TaskUpdateInfo {
 
     public TaskUpdateInfo(Task task) {
         this.task = task;
-        this.taskNodeRef = task.getNodeRef();
+        taskNodeRef = task.getNodeRef();
     }
 
     public TaskUpdateInfo(NodeRef taskNodeRef) {
@@ -73,7 +72,7 @@ public class TaskUpdateInfo {
      */
     public Object[] getArgumentArrayWithTaskId() {
         Object[] objects = arguments.toArray(new Object[arguments.size() + 1]);
-        objects[objects.length-1] = taskNodeRef.getId();
+        objects[objects.length - 1] = taskNodeRef.getId();
         return objects;
     }
 
@@ -107,16 +106,7 @@ public class TaskUpdateInfo {
 
     public void setValue(PreparedStatement statement, int fieldIndex, String fieldName, Map<String, QName> fieldNameToTaskProp) throws SQLException {
         Object value = getFieldValue(fieldName, fieldNameToTaskProp);
-        if (value instanceof Date) {
-            Timestamp timestamp = new Timestamp(((Date) value).getTime());
-            statement.setTimestamp(fieldIndex, timestamp);
-        } else if (value instanceof Boolean) {
-            statement.setBoolean(fieldIndex, (Boolean) value);
-        } else if (value instanceof Integer) {
-            statement.setInt(fieldIndex, (Integer) value);
-        } else {
-            statement.setObject(fieldIndex, value);
-        }
+        DbSearchUtil.setParameterValue(statement, fieldIndex, value);
     }
 
     private Object getFieldValue(String fieldName, Map<String, QName> usedFieldNameMappings) {

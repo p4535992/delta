@@ -1968,7 +1968,6 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, N
                 propertyChangesMonitorHelper.addIgnoredProps(props, DOC_STATUS);
                 props.put(UPDATE_METADATA_IN_FILES.toString(), Boolean.FALSE);
                 propertyChangesMonitorHelper.addIgnoredProps(props, UPDATE_METADATA_IN_FILES);
-                documentLogService.addDocumentLog(docRef, I18NUtil.getMessage("document_log_status_registered"));
                 String docStatus = (String) nodeService.getProperty(docRef, DOC_STATUS);
                 if (!DocumentStatus.FINISHED.getValueName().equals(docStatus)) {
                     addDocProceedingFinishedLog(docRef);
@@ -2449,6 +2448,8 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, N
         Map<NodeRef, Node> compoundWorkflows = bulkLoadNodeService.loadNodes(compoundWorkflowRefs, null, propertyTypes);
         Map<NodeRef, Map<QName, Serializable>> documents = bulkLoadNodeService.loadPrimaryParentsProperties(compoundWorkflowRefs,
                 Collections.singleton(DocumentCommonModel.Types.DOCUMENT), null, propertyTypes);
+        Map<NodeRef, Map<QName, Serializable>> caseFiles = bulkLoadNodeService.loadPrimaryParentsProperties(new ArrayList<>(compoundWorkflows.keySet()),
+                Collections.singleton(CaseFileModel.Types.CASE_FILE), null, propertyTypes);
         List<NodeRef> indpendentCompoundWorkflows = new ArrayList<NodeRef>();
         for (Map.Entry<NodeRef, Node> entry : compoundWorkflows.entrySet()) {
             Map<String, Object> compoundWorkflowProps = entry.getValue().getProperties();
@@ -2463,26 +2464,24 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, N
         }
 
         for (Task task : tasks) {
-
-            NodeRef taskRef = task.getNodeRef();
             String compoundWorkflowId = task.getCompoundWorkflowId();
             NodeRef compoundWorkflowNodeRef = compoundWorkflowId != null ? new NodeRef(task.getNodeRef().getStoreRef(), compoundWorkflowId) : null;
+            Map<QName, Serializable> caseFileProps = caseFiles.get(compoundWorkflowNodeRef);
+            NodeRef caseFileNodeRef = caseFileProps != null ? (NodeRef) caseFileProps.get(ContentModel.PROP_NODE_REF) : null;
             CompoundWorkflow compoundWorkflow = compoundWorkflows.containsKey(compoundWorkflowNodeRef)
-                    ? new CompoundWorkflow((WmNode) compoundWorkflows.get(compoundWorkflowNodeRef)) : null;
+                    ? new CompoundWorkflow((WmNode) compoundWorkflows.get(compoundWorkflowNodeRef), caseFileNodeRef) : null;
                     Map<QName, Serializable> documentProps = compoundWorkflowNodeRef != null && documents != null
                             ? documents.get(compoundWorkflowNodeRef) : null;
 
-                            WmNode document = documentProps != null ? new WmNode((NodeRef) documentProps.get(ContentModel.PROP_NODE_REF), DocumentCommonModel.Types.DOCUMENT, null,
-                                    documentProps) : null;
                             Integer compoundWorkflowDocumentsCount = docCounts.containsKey(compoundWorkflowNodeRef) ? docCounts.get(compoundWorkflowNodeRef) : 0;
                             if (compoundWorkflow != null) {
                                 compoundWorkflow.setNumberOfDocuments(compoundWorkflowDocumentsCount);
                             }
 
-                            Document taskDocument = documentProps != null
-                                    ? new Document((NodeRef) documentProps.get(ContentModel.PROP_NODE_REF), RepoUtil.toStringProperties(documentProps)) : null;
+            NodeRef documentNodeRef = documentProps != null ? (NodeRef) documentProps.get(ContentModel.PROP_NODE_REF) : null;
+            Document taskDocument = documentNodeRef != null
+                                    ? new Document(documentNodeRef, RepoUtil.toStringProperties(documentProps)) : null;
                                     results.add(new TaskAndDocument(task, taskDocument, compoundWorkflow));
-
         }
 
         return results;

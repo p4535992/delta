@@ -195,21 +195,33 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
         }
 
         boolean rowsLimited = rowsToLoad != null && !rowsToLoad.isEmpty();
-        String sql = "select *, lead(num, 1) over results as next_num from ("
-                + "with tasks as ("
-                + "select "
-                + "row_number() over (order by wfs_searchable_compound_workflow_started_date_time, workflow_id, wfc_started_date_time, index_in_workflow, (case when (task_type = 'assignmentTask' and (wfs_active is null or wfs_active = false)) then 1 else 0 end)) as num"
-                + ", store_id, task_id, wfs_compound_workflow_id, workflow_id, wfc_owner_name, wfc_started_date_time, wfc_completed_date_time, wfs_due_date, wfc_creator_name, task_type, wfs_active, wfs_proposed_due_date, wfs_resolution, wfs_workflow_resolution, "
-                + "wfc_outcome, wfs_comment, wfc_owner_substitute_name, wfc_owner_group, wfc_status, lag(wfc_owner_group, 1) over w as prev_group, lead(wfc_owner_group, 1) over w as next_group, index_in_workflow "
-                + "from delta_task WHERE wfs_compound_workflow_id IN (" + DbSearchUtil.getQuestionMarks(savedCompoundWorkflows.size()) + ") "
-                + "window w as (partition by workflow_id order by workflow_id, index_in_workflow) "
-                + "order by num "
-                + ") "
-                + "select *, true as is_group from tasks where " + getItemCondition(rowsLimited, rowsToLoad)
-                + "union all "
-                + "select *, false as is_group from tasks where " + getGroupCondition(rowsLimited, rowsToLoad)
-                + "order by wfs_compound_workflow_id, workflow_id, index_in_workflow) as q "
-                + "window results as (partition by workflow_id order by num)";
+
+        String taskQuery = "SELECT *, lag(wfc_owner_group, 1) over w AS prev_group, lead(wfc_owner_group, 1) over w AS next_group"
+                + " FROM "
+                + " (SELECT row_number() over ("
+                + "                             ORDER BY wfs_searchable_compound_workflow_started_date_time, wfc_started_date_time, alf_child_assoc.assoc_index, alf_child_assoc.id, "
+                + "                             (CASE WHEN (task_type = 'assignmentTask'"
+                + "                                     AND (wfs_active IS NULL"
+                + "                                             OR wfs_active = FALSE)) THEN 1 ELSE 0 END), index_in_workflow) AS num,"
+                + "             alf_node.id AS workflow_node_id, delta_task.store_id, task_id, wfs_compound_workflow_id, workflow_id, wfc_owner_name, wfc_started_date_time, "
+                + "             wfc_completed_date_time, wfs_due_date, wfc_creator_name, task_type, wfs_active, wfs_proposed_due_date, wfs_resolution, wfs_workflow_resolution,"
+                + "             wfc_outcome, wfs_comment, wfc_owner_substitute_name, wfc_owner_group, wfc_status, index_in_workflow"
+                + "             FROM delta_task"
+                + "             LEFT JOIN alf_node ON (delta_task.workflow_id = alf_node.uuid"
+                + "                     AND delta_task.wfs_compound_workflow_store_id = alf_node.store_id)"
+                + "             LEFT JOIN alf_child_assoc ON (alf_node.id = alf_child_assoc.child_node_id)"
+                + "             WHERE wfs_compound_workflow_id IN (" + DbSearchUtil.getQuestionMarks(savedCompoundWorkflows.size()) + ")"
+                + "             ORDER BY num ) AS task_order window w AS (partition BY workflow_id"
+                + "     ORDER BY num)"
+                + " ORDER BY num";
+
+        String sql = "SELECT *, lead(num, 1) over results AS next_num"
+                + " FROM (WITH tasks AS ( " + taskQuery + " )"
+                + " SELECT *, TRUE AS is_group FROM tasks WHERE " + getGroupCondition(rowsLimited, rowsToLoad)
+                + " UNION ALL"
+                + " SELECT *, FALSE AS is_group FROM tasks WHERE " + getItemCondition(rowsLimited, rowsToLoad)
+                + " ) AS q window results AS (partition BY workflow_id ORDER BY num)"
+                + " ORDER BY num";
 
         List<Object> arguments = DbSearchUtil.appendNodeRefIdQueryArguments(savedCompoundWorkflows);
         if (rowsLimited) {
@@ -219,20 +231,27 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
         return jdbcTemplate.query(sql, rowMapper, arguments.toArray());
     }
 
-    private String getGroupCondition(boolean rowsLimited, List<Integer> rowsToLoad) {
-        return "(wfc_owner_group is null or " +
-                "((next_group is null or wfc_owner_group <> next_group) and (prev_group is null or prev_group is not null and wfc_owner_group <> prev_group))) "
+    private String getItemCondition(boolean rowsLimited, List<Integer> rowsToLoad) {
+        return "(wfc_owner_group IS NULL"
+                + " OR ((next_group IS NULL"
+                + "      OR wfc_owner_group <> next_group)"
+                + "     AND (prev_group IS NULL"
+                + "          OR prev_group IS NOT NULL"
+                + "          AND wfc_owner_group <> prev_group))) "
                 + getLimitedRowsCondition(rowsLimited, rowsToLoad);
     }
 
-    private String getItemCondition(boolean rowsLimited, List<Integer> rowsToLoad) {
-        return "(wfc_owner_group = prev_group or wfc_owner_group = next_group) and " +
-                "(wfc_owner_group <> prev_group or wfc_owner_group is not null and prev_group is null) "
+    private String getGroupCondition(boolean rowsLimited, List<Integer> rowsToLoad) {
+        return "(wfc_owner_group = prev_group"
+                + " OR wfc_owner_group = next_group)"
+                + "AND (wfc_owner_group <> prev_group"
+                + "     OR wfc_owner_group IS NOT NULL"
+                + "     AND prev_group IS NULL) "
                 + getLimitedRowsCondition(rowsLimited, rowsToLoad);
     }
 
     private String getLimitedRowsCondition(boolean rowsLimited, List<Integer> rowsToLoad) {
-        return rowsLimited ? "and num in (" + DbSearchUtil.getQuestionMarks(rowsToLoad.size()) + ") " : "";
+        return rowsLimited ? "AND num IN (" + DbSearchUtil.getQuestionMarks(rowsToLoad.size()) + ") " : "";
     }
 
     private void addLimitedRowArguments(List<Integer> rowsToLoad, List<Object> arguments) {
@@ -379,6 +398,36 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
         TaskUpdateInfo updateInfo = new TaskUpdateInfo(taskRef);
         populateTaskUpdateInfo(updateInfo, props);
         updateTaskEntry(updateInfo);
+    }
+
+    @Override
+    public int[] updateCompoundWorkflowTaskSearchableProperties(final List<Pair<String, Map<QName, Serializable>>> compoundWorkflowtaskSearchableProps,
+            final List<QName> compoundWorkflowTaskSearchableProperties, String compoundWorkflowTaskUpdateString) {
+
+        String sql = "UPDATE delta_task SET " + compoundWorkflowTaskUpdateString + " WHERE wfs_compound_workflow_id=?";
+        return jdbcTemplate.batchUpdate(sql, new BatchPreparedStatementSetter() {
+
+            @Override
+            public void setValues(PreparedStatement ps, int i) throws SQLException {
+                Pair<String, Map<QName, Serializable>> pair = compoundWorkflowtaskSearchableProps.get(i);
+                int fieldCounter = 1;
+                Map<QName, Serializable> props = pair.getSecond();
+                for (QName prop : compoundWorkflowTaskSearchableProperties) {
+                    Object value = props.get(prop);
+                    if ((WorkflowCommonModel.Props.OWNER_ORGANIZATION_NAME.equals(prop)
+                            || WorkflowSpecificModel.Props.SEARCHABLE_COMPOUND_WORKFLOW_OWNER_ORGANIZATION_NAME.equals(prop)) && value != null) {
+                        value = getArrayValueForDb(value);
+                    }
+                    DbSearchUtil.setParameterValue(ps, fieldCounter++, value);
+                }
+                ps.setObject(fieldCounter, pair.getFirst());
+            }
+
+            @Override
+            public int getBatchSize() {
+                return compoundWorkflowtaskSearchableProps.size();
+            }
+        });
     }
 
     @Override
@@ -587,20 +636,25 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
             Object value = entry.getValue();
             if ((WorkflowCommonModel.Props.OWNER_ORGANIZATION_NAME.equals(propName)
                     || WorkflowSpecificModel.Props.SEARCHABLE_COMPOUND_WORKFLOW_OWNER_ORGANIZATION_NAME.equals(propName)) && value != null) {
-                Connection connection = null;
-                try {
-                    // TODO: get "text" constant value from connection? It is database-specific
-                    connection = dataSource.getConnection();
-                    value = connection.createArrayOf("text", (((List<String>) value).toArray()));
-                } catch (SQLException e) {
-                    LOG.error("Error creating owner organization name input", e);
-                    throw new RuntimeException(e);
-                } finally {
-                    closeConnection(connection);
-                }
+                value = getArrayValueForDb(value);
             }
             updateInfo.add(getDbFieldName(propName), value);
         }
+    }
+
+    private Object getArrayValueForDb(Object value) {
+        Connection connection = null;
+        try {
+            // TODO: get "text" constant value from connection? It is database-specific
+            connection = dataSource.getConnection();
+            value = connection.createArrayOf("text", (((List<String>) value).toArray()));
+        } catch (SQLException e) {
+            LOG.error("Error creating owner organization name input", e);
+            throw new RuntimeException(e);
+        } finally {
+            closeConnection(connection);
+        }
+        return value;
     }
 
     private void closeConnection(Connection connection) {

@@ -68,9 +68,9 @@
          <bean class="org.springframework.jdbc.core.simple.SimpleJdbcTemplate">
             <constructor-arg ref="dataSource" />
          </bean>
-      </property> 
-   </bean>   
-  
+      </property>
+   </bean>
+
    <bean id="insertDeltaPermissionsBootstrap" class="ee.webmedia.alfresco.privilege.bootstrap.InsertDeltaPermissionsBootstrap" parent="executeStatementsBootstrap" >
       <property name="moduleId" value="common" />
       <property name="executeOnceOnly" value="true" />

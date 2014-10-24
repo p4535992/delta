@@ -212,6 +212,13 @@ public class SearchUtil {
         return joinQueryPartsOr(queryParts, false);
     }
 
+    public static String generateAspectMissingQuery(QName aspect) {
+        if (aspect == null) {
+            return null;
+        }
+        return "-ASPECT:" + Repository.escapeQName(aspect);
+    }
+
     public static String generateStringWordsWildcardQuery(List<String> words, boolean leftWildcard, boolean rightWildcard, QName... documentPropNames) {
         if (words.isEmpty()) {
             return null;

@@ -18,7 +18,7 @@
             <f:param name="nodeRef" value="#{r.compoundWorkflow.nodeRef}" />
          </a:actionLink>             
          <a:actionLink id="dueDate-text2" value="#{r.task.dueDateTimeStr}" tooltip="#{r.task.dueDateTimeStr}" actionListener="#{CaseFileDialog.openFromDocumentList}" styleClass="no-underline" rendered="#{r.compoundWorkflow.caseFileWorkflow}">
-            <f:param name="nodeRef" value="#{r.document.nodeRef}" />
+            <f:param name="nodeRef" value="#{r.compoundWorkflow.parent}" />
          </a:actionLink>         
       </a:column>
       
@@ -34,7 +34,7 @@
             <f:param name="nodeRef" value="#{r.compoundWorkflow.nodeRef}" />
          </a:actionLink> 
          <a:actionLink id="resolution-text2" value="#{r.task.node.properties['{temp}resolution']}" tooltip="#{r.task.node.properties['{temp}resolution']}" actionListener="#{CaseFileDialog.openFromDocumentList}" styleClass="tooltip condence20- no-underline" rendered="#{r.compoundWorkflow.caseFileWorkflow}">
-            <f:param name="nodeRef" value="#{r.document.nodeRef}" />
+            <f:param name="nodeRef" value="#{r.compoundWorkflow.parent}" />
          </a:actionLink>         
       </a:column>
       
@@ -50,7 +50,7 @@
             <f:param name="nodeRef" value="#{r.compoundWorkflow.nodeRef}" />
          </a:actionLink>         
          <a:actionLink id="creatorName-text2" value="#{r.task.creatorName}" tooltip="#{r.task.creatorName}" actionListener="#{CaseFileDialog.openFromDocumentList}" styleClass="no-underline" rendered="#{r.compoundWorkflow.caseFileWorkflow}" >
-            <f:param name="nodeRef" value="#{r.document.nodeRef}" />
+            <f:param name="nodeRef" value="#{r.compoundWorkflow.parent}" />
          </a:actionLink>
       </a:column>
       
@@ -63,7 +63,7 @@
             <f:param name="nodeRef" value="#{r.document.nodeRef}" />
          </a:actionLink>
          <a:actionLink id="col1-text2" value="#{r.volumeMark}" tooltip="#{r.volumeMark}" actionListener="#{CaseFileDialog.openFromDocumentList}" styleClass="no-underline" rendered="#{r.compoundWorkflow.caseFileWorkflow}" >
-            <f:param name="nodeRef" value="#{r.document.nodeRef}" />
+            <f:param name="nodeRef" value="#{r.compoundWorkflow.parent}" />
          </a:actionLink>         
       </a:column>
       
@@ -102,7 +102,7 @@
          </a:actionLink>
          <a:actionLink id="col6-text2" value="#{r.title}" tooltip="#{r.title}" 
             showLink="false" actionListener="#{CaseFileDialog.openFromDocumentList}" styleClass="condence20- tooltip}" rendered="#{r.compoundWorkflow.caseFileWorkflow}" >
-            <f:param name="nodeRef" value="#{r.document.nodeRef}" />
+            <f:param name="nodeRef" value="#{r.compoundWorkflow.parent}" />
          </a:actionLink>         
       </a:column>
 
@@ -118,7 +118,7 @@
             <f:param name="nodeRef" value="#{r.compoundWorkflow.nodeRef}" />
          </a:actionLink>
          <a:actionLink id="col7-text2" value="#{r.workflowDueDateStr}" tooltip="#{r.workflowDueDateStr}" actionListener="#{CaseFileDialog.openFromDocumentList}" styleClass="no-underline" rendered="#{r.compoundWorkflow.caseFileWorkflow}" >
-            <f:param name="nodeRef" value="#{r.document.nodeRef}" />
+            <f:param name="nodeRef" value="#{r.compoundWorkflow.parent}" />
          </a:actionLink>         
       </a:column>
 
@@ -134,6 +134,6 @@
             <f:param name="nodeRef" value="#{r.compoundWorkflow.nodeRef}" />
          </a:actionLink>
          <a:actionLink id="col3-text2" value="#{r.documentTypeName}" tooltip="#{r.documentTypeName}" actionListener="#{CaseFileDialog.openFromDocumentList}" styleClass="no-underline" rendered="#{r.compoundWorkflow.caseFileWorkflow}" >
-            <f:param name="nodeRef" value="#{r.document.nodeRef}" />
+            <f:param name="nodeRef" value="#{r.compoundWorkflow.parent}" />
          </a:actionLink>         
      </a:column>

@@ -22,6 +22,8 @@ import ee.webmedia.alfresco.common.bootstrap.AbstractNodeUpdater;
 import ee.webmedia.alfresco.utils.TextUtil;
 
 /**
+ * {@link Deprecated} Cost of this updater is significant compared to the possibility of error it is repairing, so currently it is disabled.
+ * Can be executed on background if needed, but it would be preferred to find more efficient solution.
  * Fix bug that for documents that were moved between different stores and having been sent to
  * adr from initial location, after relocating adr syncronisation didn't delete the document referring to old location.
  * So adr has two (or more) copies of the same document, the older ones not having corresponding
@@ -34,6 +36,7 @@ import ee.webmedia.alfresco.utils.TextUtil;
  * done upon synchronization, so documents that actually exist are not deleted during synchronization.
  * See CL task 215716 for details.
  */
+@Deprecated
 public class AddAdrDeletedDocForNotExistingDoc extends AbstractNodeUpdater {
 
     NodeRef adrDeletedDocumentsRoot;

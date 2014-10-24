@@ -98,7 +98,7 @@ public class WorkflowBlockItem implements Serializable {
     }
 
     private boolean isCoResponsibleTask() {
-        return WorkflowSpecificModel.Types.ASSIGNMENT_TASK.equals(taskType) && isResponsible;
+        return WorkflowSpecificModel.Types.ASSIGNMENT_TASK.getLocalName().equals(taskType) && !isResponsible;
     }
 
     public String getTaskOwnerName() {

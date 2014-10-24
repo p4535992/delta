@@ -76,6 +76,7 @@ import ee.webmedia.alfresco.dvk.model.DvkReceivedLetterDocument;
 import ee.webmedia.alfresco.dvk.model.DvkSendDocuments;
 import ee.webmedia.alfresco.dvk.model.DvkSendReviewTask;
 import ee.webmedia.alfresco.dvk.model.DvkSendWorkflowDocuments;
+import ee.webmedia.alfresco.email.model.EmailAttachment;
 import ee.webmedia.alfresco.log.model.LogEntry;
 import ee.webmedia.alfresco.log.model.LogObject;
 import ee.webmedia.alfresco.monitoring.MonitoredService;
@@ -880,13 +881,14 @@ public abstract class DvkServiceImpl implements DvkService {
                     sd.setTextContent(WorkflowUtil.getTaskMessageForRecipient(task));
                     String dvkId;
 
-                    List<ContentToSend> contentsToSend = notificationCache.getContentsToSend().get(docNodeRef);
-                    if (contentsToSend == null) {
+                    List<EmailAttachment> attachments = notificationCache.getAttachments().get(docNodeRef);
+                    if (attachments == null) {
                         List<NodeRef> docFileRefs = BeanHelper.getFileService().getAllFileRefs(docNodeRef, true);
-                        contentsToSend = CollectionUtils.isNotEmpty(docFileRefs) ? BeanHelper.getSendOutService().prepareContents(docNodeRef, docFileRefs, false) :
-                            Collections.<ContentToSend> emptyList();
-                        notificationCache.getContentsToSend().put(docNodeRef, contentsToSend);
+                        attachments = BeanHelper.getEmailService().getAttachments(docFileRefs, false, null, null);
+                        notificationCache.getAttachments().put(docNodeRef, attachments);
                     }
+                    List<ContentToSend> contentsToSend = CollectionUtils.isNotEmpty(attachments) ? BeanHelper.getSendOutService().prepareContents(attachments)
+                            : Collections.<ContentToSend> emptyList();
                     dvkId = sendDocuments(contentsToSend, sd, false);
 
                     Map<QName, Serializable> props = new HashMap<QName, Serializable>();

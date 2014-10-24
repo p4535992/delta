@@ -36,6 +36,7 @@ import ee.webmedia.alfresco.archivals.web.ArchivedFunctionsListDialog;
 import ee.webmedia.alfresco.archivals.web.ConfirmVolumeArchiveActionDialog;
 import ee.webmedia.alfresco.casefile.web.CaseFileDialog;
 import ee.webmedia.alfresco.casefile.web.CaseFileListDialog;
+import ee.webmedia.alfresco.cases.web.CaseDetailsDialog;
 import ee.webmedia.alfresco.cases.web.CaseDocumentListDialog;
 import ee.webmedia.alfresco.classificator.web.ClassificatorDetailsDialog;
 import ee.webmedia.alfresco.classificator.web.ClassificatorListDialog;
@@ -47,6 +48,7 @@ import ee.webmedia.alfresco.document.search.web.DocumentDynamicSearchDialog;
 import ee.webmedia.alfresco.document.search.web.DocumentQuickSearchResultsDialog;
 import ee.webmedia.alfresco.document.search.web.DocumentSearchResultsDialog;
 import ee.webmedia.alfresco.document.web.DiscussionDocumentListDialog;
+import ee.webmedia.alfresco.document.web.DocumentListDialog;
 import ee.webmedia.alfresco.document.web.DvkDocumentListDialog;
 import ee.webmedia.alfresco.document.web.FavoritesDocumentListDialog;
 import ee.webmedia.alfresco.document.web.OutboxDocumentListDialog;
@@ -159,6 +161,7 @@ public class BeanCleanupHelper implements Serializable {
         DIALOGS_TO_CLEAN.put(FieldDefinitionListDialog.BEAN_NAME, Arrays.asList(FieldDetailsDialog.BEAN_NAME));
         DIALOGS_TO_CLEAN.put(FieldDetailsDialog.BEAN_NAME, null);
         DIALOGS_TO_CLEAN.put(GroupsDialog.BEAN_NAME, null);
+        DIALOGS_TO_CLEAN.put(CaseDocumentListDialog.BEAN_NAME, Arrays.asList(DocumentListDialog.BEAN_NAME, CaseDetailsDialog.BEAN_NAME));
     }
 
     public void clean(FacesContext context, String outcome, boolean canResetMyTasks) {

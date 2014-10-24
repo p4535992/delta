@@ -3,11 +3,16 @@ package ee.webmedia.alfresco.common.search;
 import static ee.webmedia.alfresco.utils.SearchUtil.joinQueryPartsAnd;
 import static ee.webmedia.alfresco.utils.SearchUtil.joinQueryPartsOr;
 
+import java.io.Serializable;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
@@ -19,6 +24,8 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateUtils;
 import org.springframework.util.Assert;
 
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.document.sendout.model.SendInfo;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 
@@ -272,6 +279,41 @@ public class DbSearchUtil {
         }
 
         return sb.toString();
+    }
+
+    public static Map<QName, Serializable> buildSearchableSendInfos(List<SendInfo> sendInfos) {
+        int size = sendInfos.size();
+        ArrayList<String> sendModes = new ArrayList<>(size);
+        ArrayList<String> sendRecipients = new ArrayList<>(size);
+        ArrayList<Date> sendTimes = new ArrayList<>(size);
+        ArrayList<String> sendResolutions = new ArrayList<>(size);
+        for (SendInfo sendInfo : sendInfos) {
+            sendModes.add(sendInfo.getSendMode());
+            sendRecipients.add(sendInfo.getRecipient());
+            sendTimes.add(sendInfo.getSendDateTime());
+            sendResolutions.add(sendInfo.getResolution());
+        }
+
+        Map<QName, Serializable> props = new HashMap<>();
+        props.put(DocumentCommonModel.Props.SEARCHABLE_SEND_MODE, sendModes);
+        props.put(DocumentCommonModel.Props.SEARCHABLE_SEND_INFO_RECIPIENT, sendRecipients);
+        props.put(DocumentCommonModel.Props.SEARCHABLE_SEND_INFO_SEND_DATE_TIME, sendTimes);
+        props.put(DocumentCommonModel.Props.SEARCHABLE_SEND_INFO_RESOLUTION, sendResolutions);
+
+        return props;
+    }
+
+    public static void setParameterValue(PreparedStatement statement, int fieldIndex, Object value) throws SQLException {
+        if (value instanceof Date) {
+            Timestamp timestamp = new Timestamp(((Date) value).getTime());
+            statement.setTimestamp(fieldIndex, timestamp);
+        } else if (value instanceof Boolean) {
+            statement.setBoolean(fieldIndex, (Boolean) value);
+        } else if (value instanceof Integer) {
+            statement.setInt(fieldIndex, (Integer) value);
+        } else {
+            statement.setObject(fieldIndex, value);
+        }
     }
 
 }

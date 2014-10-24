@@ -2,7 +2,7 @@
 -- constants for calculating new node ids for imported nodes
 COPY (
 	select 'ALF_HIBERNATE_SEQUENCE_NEXTVAL', nextval('hibernate_sequence')
-) TO '/tmp/constants.csv';
+) TO '/delta-pgsql/data/constants.csv';
 
 -- existing users (must be imported with same node id if users exist in this database)
 COPY (
@@ -14,7 +14,7 @@ COPY (
 	
 	and node_deleted = false
 	and props.string_value is not null
-) TO '/tmp/existingUsers.tsv';
+) TO '/delta-pgsql/data/existingUsers.tsv';
 
 -- export existing user favorites, shortcuts, substitutions, saved filters and also general notifications, as existing data must not be overwritten
 COPY (
@@ -28,4 +28,4 @@ COPY (
 			or (local_name = 'logFilter' and uri = 'http://alfresco.webmedia.ee/model/log/1.0')
 			or (local_name = 'filter' and uri = 'http://alfresco.webmedia.ee/model/task/search/1.0'))
 	and node_deleted = false
-) TO '/tmp/existingNotToOverwriteNodes.tsv';
+) TO '/delta-pgsql/data/existingNotToOverwriteNodes.tsv';

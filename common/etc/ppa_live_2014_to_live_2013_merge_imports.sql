@@ -13,6 +13,8 @@ drop table if exists tmp_import_alf_node_assoc;
 drop table if exists tmp_import_alf_node_properties;
 drop table if exists tmp_import_alf_node_aspects;
 drop table if exists tmp_delta_task;
+drop table if exists tmp_mimetype;
+drop table if exists tmp_locale;
 
 -- Õigused - viia olemasolevad õigused üle uue õiguste süsteemi tabelitele, kuna versioon 5.1 kasutab juba neid tabeleid
 -- ja indekseerimine loeb õiguseid enne, kui õiguste süsteemi üleviimine käivitub.
@@ -245,16 +247,17 @@ INSERT INTO delta_node_permission (node_uuid, authority,
 
 DROP TABLE tmp_permission_node;	
 
---drop table alf_acl_member;
---drop table alf_access_control_entry;
 alter table alf_node drop constraint if exists fk_alf_node_acl;
 alter table alf_attributes drop constraint if exists fk_alf_attr_acl;
 alter table avm_nodes drop constraint if exists fk_avm_n_acl;
 alter table avm_stores drop constraint if exists fk_avm_s_acl;
---drop table alf_access_control_list;
---drop table alf_ace_context;
---drop table alf_acl_change_set;
---drop table alf_permission;
+
+alter table alf_acl_member rename to orig_alf_acl_member;
+alter table alf_access_control_entry rename to orig_alf_access_control_entry;
+alter table alf_access_control_list rename to orig_alf_access_control_list;
+alter table alf_ace_context rename to orig_alf_ace_context;
+alter table alf_acl_change_set rename to orig_alf_acl_change_set;
+alter table alf_permission rename to orig_alf_permission;
 
 create table tmp_nodes_deleted_on_merge (
 	id bigint not null
@@ -429,7 +432,7 @@ CREATE TABLE tmp_alf_namespace(
   local_id bigint
 );
 
-copy tmp_alf_namespace (imported_id, version, uri) from '/tmp/alf_namespace.tsv';
+copy tmp_alf_namespace (imported_id, version, uri) from '/delta-pgsql/data/alf_namespace.tsv';
 
 update tmp_alf_namespace tmp_ns set local_id = ns.id
 from alf_namespace ns
@@ -453,7 +456,7 @@ CREATE TABLE tmp_alf_qname (
   local_id bigint
 );
 
-copy tmp_alf_qname (imported_id, version, ns_id, local_name) from '/tmp/alf_qname.tsv';
+copy tmp_alf_qname (imported_id, version, ns_id, local_name) from '/delta-pgsql/data/alf_qname.tsv';
 
 update tmp_alf_qname tmp_qname set local_id = qname.id
 from alf_qname qname, tmp_alf_namespace tmp_ns
@@ -477,9 +480,9 @@ create table tmp_locale (
   locale_str character varying(20) NOT NULL
 );
 
-copy tmp_locale from '/tmp/alf_locale.tsv';
+copy tmp_locale from '/delta-pgsql/data/alf_locale.tsv';
 
-COPY alf_transaction from '/tmp/alf_transaction.tsv';
+COPY alf_transaction from '/delta-pgsql/data/alf_transaction.tsv';
 	
 -- alf_node import esialgu ajutisse tabelisse, et saaks teha lisakontrolle vastu alf_node tabelit
 create table tmp_import_alf_node (
@@ -502,7 +505,7 @@ create table tmp_import_alf_node_errors (
 	id bigint
 );
 
-COPY tmp_import_alf_node from '/tmp/alf_node.tsv';
+COPY tmp_import_alf_node from '/delta-pgsql/data/alf_node.tsv';
 
 create table tmp_import_overwritten_by_import (
 	id bigint,
@@ -518,6 +521,9 @@ delete from delta_node_inheritspermissions where node_uuid in (select uuid from 
 
 alter table alf_child_assoc drop constraint fk_alf_cass_cnode;
 alter table alf_child_assoc drop constraint fk_alf_cass_pnode;
+
+alter table alf_node_assoc drop constraint fk_alf_nass_snode;
+alter table alf_node_assoc drop constraint fk_alf_nass_tnode;
 
 delete from alf_node where id in (select id from  tmp_import_overwritten_by_import);
 
@@ -536,14 +542,29 @@ with import_errors as (
 )
 insert into tmp_import_alf_node_errors (select * from import_errors);
 
-delete from alf_node_properties where node_id in (select id from alf_node where exists (select uuid from tmp_import_alf_node import where import.uuid = alf_node.uuid));
+delete from alf_node_properties using tmp_import_alf_node import, alf_node where node_id = alf_node.id and import.uuid = alf_node.uuid;
+delete from alf_node_aspects using tmp_import_alf_node import, alf_node where node_id = alf_node.id and import.uuid = alf_node.uuid;
+
 delete from alf_node_aspects where node_id in (select id from alf_node where exists (select uuid from tmp_import_alf_node import where import.uuid = alf_node.uuid));
-delete from alf_node_assoc where target_node_id in (select id from alf_node where exists (select uuid from tmp_import_alf_node import where import.uuid = alf_node.uuid))
-	or source_node_id in (select id from alf_node where exists (select uuid from tmp_import_alf_node import where import.uuid = alf_node.uuid));
-delete from alf_child_assoc where child_node_id in (select id from alf_node where exists (select uuid from tmp_import_alf_node import where import.uuid = alf_node.uuid))
-	or parent_node_id in (select id from alf_node where exists (select uuid from tmp_import_alf_node import where import.uuid = alf_node.uuid));	
-delete from delta_node_permission where node_uuid in (select uuid from tmp_import_alf_node where uuid in (select uuid from alf_node) or id in (select id from alf_node));
-delete from delta_node_inheritspermissions where node_uuid in (select uuid from tmp_import_alf_node where uuid in (select uuid from alf_node) or id in (select id from alf_node));
+
+-- delete assocs where both nodes are imported
+--delete from alf_node_assoc using tmp_import_alf_node target_import, tmp_import_alf_node source_import, alf_node source, alf_node target 
+--	where target_node_id = target.id and target.uuid = target_import.uuid and source_node_id = source.id and source.uuid = source_import.uuid;
+
+--delete from alf_child_assoc using tmp_import_alf_node child_import, alf_node child, tmp_import_alf_node parent_import, alf_node parent 
+--	where child_node_id = child.id and child.uuid = child_import.uuid and parent_node_id = parent.id and parent.uuid = parent_import.uuid;
+
+delete from delta_node_permission using tmp_import_alf_node, alf_node
+where node_uuid = tmp_import_alf_node.uuid and alf_node.uuid = tmp_import_alf_node.uuid;
+
+delete from delta_node_permission using tmp_import_alf_node, alf_node
+where node_uuid = tmp_import_alf_node.uuid and alf_node.id = tmp_import_alf_node.id;
+
+delete from delta_node_inheritspermissions using tmp_import_alf_node, alf_node
+where node_uuid = tmp_import_alf_node.uuid and alf_node.uuid = tmp_import_alf_node.uuid;
+
+delete from delta_node_inheritspermissions using tmp_import_alf_node, alf_node
+where node_uuid = tmp_import_alf_node.uuid and alf_node.id = tmp_import_alf_node.id;
 
 update alf_node set id = import.id, version = import.version, store_id = import.store_id, uuid = import.uuid, 
 	transaction_id = import.transaction_id, node_deleted = import.node_deleted,
@@ -554,16 +575,51 @@ update alf_node set id = import.id, version = import.version, store_id = import.
 
 -- SIIT!
 
-insert into alf_node (select id, version, store_id, uuid, transaction_id, node_deleted,
-	(select local_id from tmp_alf_qname where imported_id = tmp_import_alf_node.type_qname_id),
-	acl_id, audit_creator, audit_created, audit_modifier, audit_modified from tmp_import_alf_node
-	where tmp_import_alf_node.uuid not in (select uuid from alf_node) and tmp_import_alf_node.id not in (select id from alf_node));
+insert into alf_node (select import.id, import.version, import.store_id, import.uuid, import.transaction_id, import.node_deleted,
+	tmp_alf_qname.local_id,
+	import.acl_id, import.audit_creator, import.audit_created, import.audit_modifier, import.audit_modified from tmp_import_alf_node import
+	left join alf_node node on node.uuid = import.uuid
+	left join tmp_alf_qname on import.type_qname_id = tmp_alf_qname.imported_id
+	where node.id is null);
+
+-- remove assocs that refer to not existing nodes
+with not_existing_parent as (
+	select parent_node_id from alf_child_assoc assoc
+	left join alf_node node on node.id = assoc.parent_node_id and node_deleted = false
+	where node.id is null
+),
+not_existing_child as (
+	select child_node_id from alf_child_assoc assoc
+	left join alf_node node on node.id = assoc.child_node_id and node_deleted = false
+	where node.id is null
+)
+delete from alf_child_assoc where child_node_id in (select * from not_existing_child) or parent_node_id in (select * from not_existing_parent);
+
+with not_existing_source as (
+	select source_node_id from alf_node_assoc assoc
+	left join alf_node node on node.id = assoc.source_node_id and node_deleted = false
+	where node.id is null
+),
+not_existing_target as (
+	select target_node_id from alf_node_assoc assoc
+	left join alf_node node on node.id = assoc.target_node_id and node_deleted = false
+	where node.id is null
+)
+delete from alf_node_assoc where target_node_id in (select * from not_existing_target) or source_node_id in (select * from not_existing_source);
 
 alter table alf_child_assoc add CONSTRAINT fk_alf_cass_cnode FOREIGN KEY (child_node_id)
       REFERENCES alf_node (id) MATCH SIMPLE
       ON UPDATE NO ACTION ON DELETE NO ACTION;
 
 alter table alf_child_assoc add CONSTRAINT fk_alf_cass_pnode FOREIGN KEY (parent_node_id)
+      REFERENCES alf_node (id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION;
+      
+alter table alf_node_assoc add CONSTRAINT fk_alf_nass_snode FOREIGN KEY (source_node_id)
+      REFERENCES alf_node (id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION;
+      
+alter table alf_node_assoc add CONSTRAINT fk_alf_nass_tnode FOREIGN KEY (target_node_id)
       REFERENCES alf_node (id) MATCH SIMPLE
       ON UPDATE NO ACTION ON DELETE NO ACTION;
 
@@ -582,21 +638,38 @@ CREATE TABLE tmp_import_alf_child_assoc (
   assoc_index integer
 );
 
-copy tmp_import_alf_child_assoc from '/tmp/alf_child_assoc.tsv';
+copy tmp_import_alf_child_assoc from '/delta-pgsql/data/alf_child_assoc.tsv';
 
 delete from tmp_import_alf_child_assoc tmp_assoc
 where exists (select 1 from alf_child_assoc assoc where tmp_assoc.parent_node_id = assoc.parent_node_id 
 	and tmp_assoc.type_qname_id = assoc.type_qname_id and tmp_assoc.child_node_name_crc = assoc.child_node_name_crc and tmp_assoc.child_node_name = assoc.child_node_name);
 
-delete from tmp_import_alf_child_assoc tmp_assoc where
-not exists (select 1 from alf_node where alf_node.id = tmp_assoc.parent_node_id)
-or not exists (select 1 from alf_node where alf_node.id = tmp_assoc.child_node_id);
+delete from tmp_import_alf_child_assoc tmp_assoc
+where exists (select 1 from alf_child_assoc assoc where tmp_assoc.parent_node_id = assoc.parent_node_id 
+	and tmp_assoc.type_qname_id = assoc.type_qname_id and tmp_assoc.child_node_id = assoc.child_node_id and tmp_assoc.child_node_name = assoc.child_node_name);
+
+with not_existing_parent as (
+	select parent_node_id from tmp_import_alf_child_assoc assoc
+	left join alf_node node on node.id = assoc.parent_node_id and node_deleted = false
+	where node.id is null
+),
+not_existing_child as (
+	select child_node_id from tmp_import_alf_child_assoc assoc
+	left join alf_node node on node.id = assoc.child_node_id and node_deleted = false
+	where node.id is null
+)
+delete from tmp_import_alf_child_assoc where child_node_id in (select * from not_existing_child) or parent_node_id in (select * from not_existing_parent);
 
 insert into alf_child_assoc (
-	select id, version, parent_node_id, 
-	(select local_id from tmp_alf_qname where imported_id = type_qname_id),
-	child_node_name_crc, child_node_name, child_node_id, qname_ns_id, qname_localname, is_primary, assoc_index
-	from tmp_import_alf_child_assoc where parent_node_id in (select id from tmp_import_alf_node) or child_node_id in (select id from tmp_import_alf_node)
+	select tmp_import_alf_child_assoc.id, tmp_import_alf_child_assoc.version, tmp_import_alf_child_assoc.parent_node_id, 
+	tmp_alf_qname.local_id,
+	tmp_import_alf_child_assoc.child_node_name_crc, tmp_import_alf_child_assoc.child_node_name, tmp_import_alf_child_assoc.child_node_id, tmp_import_alf_child_assoc.qname_ns_id, 
+	tmp_import_alf_child_assoc.qname_localname, tmp_import_alf_child_assoc.is_primary, tmp_import_alf_child_assoc.assoc_index
+	from tmp_import_alf_child_assoc 
+	left join tmp_alf_qname on tmp_alf_qname.imported_id = tmp_import_alf_child_assoc.type_qname_id
+	left join tmp_import_alf_node parent_import on parent_import.id = tmp_import_alf_child_assoc.parent_node_id
+	left join tmp_import_alf_node child_import on child_import.id = tmp_import_alf_child_assoc.child_node_id
+	where parent_import.id is not null or child_import.id is not null
 );
 
 -- alf_node_assoc import
@@ -608,12 +681,28 @@ create table tmp_import_alf_node_assoc (
   type_qname_id bigint
 );
 
-copy tmp_import_alf_node_assoc from '/tmp/alf_node_assoc.tsv';
+copy tmp_import_alf_node_assoc from '/delta-pgsql/data/alf_node_assoc.tsv';
+
+with not_existing_source as (
+	select source_node_id from tmp_import_alf_node_assoc assoc
+	left join alf_node node on node.id = assoc.source_node_id and node_deleted = false
+	where node.id is null
+),
+not_existing_target as (
+	select target_node_id from tmp_import_alf_node_assoc assoc
+	left join alf_node node on node.id = assoc.target_node_id and node_deleted = false
+	where node.id is null
+)
+delete from tmp_import_alf_node_assoc where target_node_id in (select * from not_existing_target) or source_node_id in (select * from not_existing_source);
 
 insert into alf_node_assoc (
-	select id, version, source_node_id, target_node_id,
-	(select local_id from tmp_alf_qname where imported_id = type_qname_id)
-	from tmp_import_alf_node_assoc where source_node_id in (select id from tmp_import_alf_node) or target_node_id in (select id from tmp_import_alf_node)
+	select tmp_import_alf_node_assoc.id, tmp_import_alf_node_assoc.version, source_node_id, target_node_id,
+	tmp_alf_qname.local_id
+	from tmp_import_alf_node_assoc
+	left join tmp_alf_qname on tmp_alf_qname.imported_id = tmp_import_alf_node_assoc.type_qname_id
+	left join tmp_import_alf_node source_import on source_import.id = tmp_import_alf_node_assoc.source_node_id
+	left join tmp_import_alf_node target_import on target_import.id = tmp_import_alf_node_assoc.target_node_id
+	where source_import.id is not null or target_import.id is not null
 );
 
 -- alf_node_properties import
@@ -632,14 +721,17 @@ CREATE TABLE tmp_import_alf_node_properties (
   locale_id bigint
 );
 
-copy tmp_import_alf_node_properties from '/tmp/alf_node_properties.tsv';
+copy tmp_import_alf_node_properties from '/delta-pgsql/data/alf_node_properties.tsv';
 
 insert into alf_node_properties (
-	select node_id, actual_type_n, persisted_type_n, boolean_value, long_value, float_value,
+	select tmp_import_alf_node_properties.node_id, actual_type_n, persisted_type_n, boolean_value, long_value, float_value,
 	double_value, string_value, serializable_value, 
-	(select local_id from tmp_alf_qname where imported_id = tmp_import_alf_node_properties.qname_id),
-	list_index,locale_id from tmp_import_alf_node_properties where node_id in (select id from tmp_import_alf_node)
-	and exists (select 1 from alf_node where tmp_import_alf_node_properties.node_id = alf_node.id)
+	tmp_alf_qname.local_id,
+	list_index,locale_id from tmp_import_alf_node_properties 
+	left join tmp_alf_qname on tmp_alf_qname.imported_id = tmp_import_alf_node_properties.qname_id
+	left join tmp_import_alf_node on tmp_import_alf_node_properties.node_id = tmp_import_alf_node.id
+	left join alf_node on tmp_import_alf_node_properties.node_id = alf_node.id
+	where tmp_import_alf_node.id is not null and alf_node.id is not null
 );
 
 -- alf_node_aspects import
@@ -648,10 +740,13 @@ create table tmp_import_alf_node_aspects (
   qname_id bigint
 );
 
-copy tmp_import_alf_node_aspects from '/tmp/alf_node_aspects.tsv';
+copy tmp_import_alf_node_aspects from '/delta-pgsql/data/alf_node_aspects.tsv';
 
 insert into alf_node_aspects (
-	select node_id, (select local_id from tmp_alf_qname where imported_id = qname_id) from tmp_import_alf_node_aspects where node_id in (select id from tmp_import_alf_node)
+	select node_id, tmp_alf_qname.local_id from tmp_import_alf_node_aspects
+	left join tmp_alf_qname on tmp_alf_qname.imported_id = tmp_import_alf_node_aspects.qname_id
+	left join tmp_import_alf_node on tmp_import_alf_node.id = tmp_import_alf_node_aspects.node_id
+	where tmp_import_alf_node.id is not null
 );
 
 -- ülejäänud tabelid ilma lisakontrollideta importida otse
@@ -704,35 +799,38 @@ CREATE TABLE tmp_delta_task
   wfc_owner_organization_name text[],
   store_id text NOT NULL
 );
-COPY tmp_delta_task from '/tmp/delta_task.tsv';
+COPY tmp_delta_task from '/delta-pgsql/data/delta_task.tsv';
 
 delete from delta_task where task_id in (select task_id from tmp_delta_task);
 insert into delta_task (select * from tmp_delta_task);
 
 -- id-d ei ekspordi, seda kusagil ei refereerita
-COPY delta_task_due_date_extension_assoc (task_id, extension_task_id) from '/tmp/delta_task_due_date_extension_assoc.tsv';
+COPY delta_task_due_date_extension_assoc (task_id, extension_task_id) from '/delta-pgsql/data/delta_task_due_date_extension_assoc.tsv';
 
-COPY delta_task_due_date_history (task_id, previous_date, change_reason) FROM '/tmp/delta_task_due_date_history.tsv';
+COPY delta_task_due_date_history (task_id, previous_date, change_reason) FROM '/delta-pgsql/data/delta_task_due_date_history.tsv';
 
-COPY delta_task_file (task_id, file_id) FROM '/tmp/delta_task_file.tsv';
+COPY delta_task_file (task_id, file_id) FROM '/delta-pgsql/data/delta_task_file.tsv';
 
-COPY delta_log from '/tmp/delta_log.tsv';
+COPY delta_log from '/delta-pgsql/data/delta_log.tsv';
 
 delete from delta_register;
-COPY delta_register from '/tmp/delta_register.tsv';
+COPY delta_register from '/delta-pgsql/data/delta_register.tsv';
 
 delete from delta_node_permission where node_uuid in (select uuid from tmp_import_alf_node);
-COPY tmp_delta_node_permission from '/tmp/delta_node_permission.tsv';
+COPY tmp_delta_node_permission from '/delta-pgsql/data/delta_node_permission.tsv';
 delete from tmp_delta_node_permission where node_uuid not in (select uuid from tmp_import_alf_node);
 insert into delta_node_permission (select * from tmp_delta_node_permission);
 
 delete from delta_node_inheritspermissions where node_uuid in (select uuid from tmp_import_alf_node);
-COPY tmp_delta_node_inheritspermissions from '/tmp/delta_node_permission_list.tsv';
-delete from tmp_delta_node_inheritspermissions where node_uuid not in (select uuid from tmp_import_alf_node);
+COPY tmp_delta_node_inheritspermissions from '/delta-pgsql/data/delta_node_permission_list.tsv';
+delete from tmp_delta_node_permission 
+	using (select tmp_delta_node_permission.node_uuid as uuid, tmp_import_alf_node.uuid as import_uuid from tmp_delta_node_permission
+ 	left join tmp_import_alf_node on tmp_import_alf_node.uuid = tmp_delta_node_permission.node_uuid) as tmp_node
+	where tmp_delta_node_permission.node_uuid = tmp_node.uuid and tmp_node.import_uuid is null;
 insert into delta_node_inheritspermissions (select * from tmp_delta_node_inheritspermissions);
 
 -- content
-COPY alf_content_url from '/tmp/alf_content_url.tsv';
+COPY alf_content_url from '/delta-pgsql/data/alf_content_url.tsv';
 
 create table tmp_content_data (
   id bigint NOT NULL,
@@ -743,7 +841,19 @@ create table tmp_content_data (
   content_locale_id bigint
 );
 
-COPY tmp_content_data from '/tmp/alf_content_data.tsv';
+COPY tmp_content_data from '/delta-pgsql/data/alf_content_data.tsv';
+
+CREATE TABLE tmp_mimetype (
+  id bigint NOT NULL,
+  version bigint NOT NULL,
+  mimetype_str character varying(100) NOT NULL
+);
+
+copy tmp_mimetype from '/delta-pgsql/data/alf_mimetype.tsv';
+
+insert into alf_mimetype (select ((select max(id) as max_id from alf_mimetype) + (row_number() over())), tmp_mimetype.version, tmp_mimetype.mimetype_str from tmp_mimetype
+	left join alf_mimetype on alf_mimetype.mimetype_str = tmp_mimetype.mimetype_str
+	where alf_mimetype.id is null);
 
 insert into alf_content_data (
 	select tmp_content_data.id, tmp_content_data.version, tmp_content_data.content_url_id, tmp_content_data.content_mimetype_id, tmp_content_data.content_encoding_id, 
@@ -751,6 +861,8 @@ insert into alf_content_data (
 	from tmp_content_data
 	join tmp_locale on tmp_locale.id = tmp_content_data.content_locale_id
 	join alf_locale on alf_locale.locale_str = tmp_locale.locale_str
+	join tmp_mimetype on tmp_mimetype.id = tmp_content_data.content_mimetype_id
+	join alf_mimetype on alf_mimetype.mimetype_str = tmp_mimetype.mimetype_str
 );
 
 -- kustutada kõiki alf_node_properties, alf_node_aspects, alf_child_assoc ja alf_node_assoc read, kus viidatakse kustutatud node'idele, mis on toodud tabelis tmp_nodes_deleted_on_merge
@@ -769,6 +881,3 @@ select setval('delta_task_due_date_history_task_due_date_history_id_seq', (selec
 select setval('alf_content_data_seq', (select max(id) from alf_content_data));
 select setval('alf_content_url_seq', (select max(id) from alf_content_url));
 SELECT setval('hibernate_sequence', greatest((select max(id) + 1 from public.alf_node), (select max(id) + 1 from public.alf_transaction), (select max(id) + 1 from public.alf_child_assoc), (select max(id) + 1 from public.alf_node_assoc), (select max(id) + 1 from public.alf_content_data), (select max(id) + 1 from public.alf_content_url)));
-
---select * from alf_namespace
---select * from alf_locale

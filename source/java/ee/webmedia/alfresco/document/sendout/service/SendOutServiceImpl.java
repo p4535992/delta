@@ -27,6 +27,7 @@ import org.apache.commons.lang.StringUtils;
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.addressbook.service.AddressbookService;
 import ee.webmedia.alfresco.classificator.enums.SendMode;
+import ee.webmedia.alfresco.common.search.DbSearchUtil;
 import ee.webmedia.alfresco.common.service.CreateObjectCallback;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.BeanHelper;
@@ -73,11 +74,11 @@ public class SendOutServiceImpl implements SendOutService {
         Map<NodeRef, List<SendInfo>> sendInfos = BeanHelper.getBulkLoadNodeService().loadChildNodes(Collections.singletonList(document), null, DocumentCommonModel.Types.SEND_INFO,
                 null, new CreateObjectCallback<SendInfo>() {
 
-                    @Override
-                    public SendInfo create(NodeRef nodeRef, Map<QName, Serializable> properties) {
-                        return new DocumentSendInfo(properties);
-                    }
-                });
+            @Override
+            public SendInfo create(NodeRef nodeRef, Map<QName, Serializable> properties) {
+                return new DocumentSendInfo(properties);
+            }
+        });
         return sendInfos.isEmpty() ? new ArrayList<SendInfo>() : sendInfos.get(document);
     }
 
@@ -87,11 +88,11 @@ public class SendOutServiceImpl implements SendOutService {
                 Collections.singleton(DocumentCommonModel.Props.SEND_INFO_SEND_DATE_TIME),
                 DocumentCommonModel.Types.SEND_INFO, null, new CreateObjectCallback<Date>() {
 
-            @Override
-            public Date create(NodeRef nodeRef, Map<QName, Serializable> properties) {
-                return (Date) properties.get(DocumentCommonModel.Props.SEND_INFO_SEND_DATE_TIME);
-            }
-        });
+                    @Override
+                    public Date create(NodeRef nodeRef, Map<QName, Serializable> properties) {
+                        return (Date) properties.get(DocumentCommonModel.Props.SEND_INFO_SEND_DATE_TIME);
+                    }
+                });
         List<Date> sendInfoDates = result.get(docRef);
         if (CollectionUtils.isNotEmpty(sendInfoDates)) {
             return Collections.min(sendInfoDates);
@@ -321,25 +322,7 @@ public class SendOutServiceImpl implements SendOutService {
     @Override
     public Map<QName, Serializable> buildSearchableSendInfo(NodeRef document) {
         List<SendInfo> sendInfos = getDocumentSendInfos(document);
-        int size = sendInfos.size();
-        ArrayList<String> sendModes = new ArrayList<String>(size);
-        ArrayList<String> sendRecipients = new ArrayList<String>(size);
-        ArrayList<Date> sendTimes = new ArrayList<Date>(size);
-        ArrayList<String> sendResolutions = new ArrayList<String>(size);
-        for (SendInfo sendInfo : sendInfos) {
-            sendModes.add(sendInfo.getSendMode());
-            sendRecipients.add(sendInfo.getRecipient());
-            sendTimes.add(sendInfo.getSendDateTime());
-            sendResolutions.add(sendInfo.getResolution());
-        }
-
-        Map<QName, Serializable> props = new HashMap<QName, Serializable>();
-        props.put(DocumentCommonModel.Props.SEARCHABLE_SEND_MODE, sendModes);
-        props.put(DocumentCommonModel.Props.SEARCHABLE_SEND_INFO_RECIPIENT, sendRecipients);
-        props.put(DocumentCommonModel.Props.SEARCHABLE_SEND_INFO_SEND_DATE_TIME, sendTimes);
-        props.put(DocumentCommonModel.Props.SEARCHABLE_SEND_INFO_RESOLUTION, sendResolutions);
-
-        return props;
+        return DbSearchUtil.buildSearchableSendInfos(sendInfos);
     }
 
     @Override
@@ -353,7 +336,8 @@ public class SendOutServiceImpl implements SendOutService {
         return prepareContents(attachments);
     }
 
-    private List<ContentToSend> prepareContents(List<EmailAttachment> attachments) {
+    @Override
+    public List<ContentToSend> prepareContents(List<EmailAttachment> attachments) {
         List<ContentToSend> result = new ArrayList<ContentToSend>();
         for (EmailAttachment attachment : attachments) {
             ContentToSend content = new ContentToSend();

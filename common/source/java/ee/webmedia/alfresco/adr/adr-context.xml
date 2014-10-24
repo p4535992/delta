@@ -76,6 +76,7 @@
    <bean id="adrDeletedDocumentNodeRefToTextUpdater" class="ee.webmedia.alfresco.adr.bootstrap.AdrDeletedDocumentNodeRefToTextUpdater" parent="abstractNodeUpdater">
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
+      <property name="batchSize" value="100" />
       <property name="dependsOn">
          <list>
             <ref bean="adrDeletedDocumentsBootstrap" />
@@ -96,7 +97,8 @@
        
    <bean id="addAdrDeletedDocForNotExistingDoc" class="ee.webmedia.alfresco.adr.bootstrap.AddAdrDeletedDocForNotExistingDoc" parent="abstractNodeUpdater">
       <property name="moduleId" value="simdhs" />
-      <property name="executeOnceOnly" value="true" />  
+      <property name="executeOnceOnly" value="true" />
+      <property name="enabled" value="false" /> <!-- Disabled, because cost of this updater is significant compared to possibility of error it is repairing. Can be executed on background if needed. -->  
       <property name="dependsOn">
          <list>
             <ref bean="archivalsStoresBootstrap" />

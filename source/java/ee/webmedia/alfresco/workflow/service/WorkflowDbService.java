@@ -163,7 +163,7 @@ public interface WorkflowDbService {
     Map<NodeRef, Task> loadTasksWithFiles(List<NodeRef> taskNodeRefs, Set<QName> propsToLoad);
 
     Map<NodeRef, Task> getTasks(List<NodeRef> taskRefs);
-    
+
     Map<NodeRef, Task> getTasksWithCompoundWorkflowRef(List<NodeRef> taskRefs);
 
     Map<NodeRef, Task> getTasks(List<NodeRef> taskRefs, Workflow workflow, boolean copy, Set<QName> propsToLoad);
@@ -174,4 +174,7 @@ public interface WorkflowDbService {
     Pair<List<NodeRef>, Boolean> searchTaskNodeRefsCheckLimitedSeries(String queryCondition, String userId, List<Object> arguments, int limit);
 
     Map<NodeRef, String> getInProgressTaskOwners(Collection<NodeRef> compoundWorkflows);
+
+    int[] updateCompoundWorkflowTaskSearchableProperties(List<Pair<String, Map<QName, Serializable>>> compoundWorkflowtaskSearchableProps,
+            List<QName> compoundWorkflowTaskSearchableProperties, String compoundWorkflowTaskUpdateString);
 }
