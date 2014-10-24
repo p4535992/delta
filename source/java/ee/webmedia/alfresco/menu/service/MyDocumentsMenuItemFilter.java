@@ -50,7 +50,7 @@ public class MyDocumentsMenuItemFilter implements MenuItemFilter {
 
     /**
      * Decides whether currently logged in users department is mentioned in series meta-data.
-     * 
+     *
      * @param nodeRef
      * @return
      */
@@ -66,6 +66,7 @@ public class MyDocumentsMenuItemFilter implements MenuItemFilter {
         if (type.equals(FunctionsModel.Types.FUNCTION)) {
             SeriesListDialog seriesListDialog = (SeriesListDialog) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), SeriesListDialog.BEAN_NAME);
             seriesListDialog.showAllForStructUnit(nodeRef, getCurrentUsersStructUnitId());
+            seriesListDialog.setDisableActions(true);
         } else if (type.equals(SeriesModel.Types.SERIES)) {
             ((VolumeListDialog) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), VolumeListDialog.BEAN_NAME)).showAll(nodeRef);
             return null;

@@ -10,6 +10,7 @@ import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
 
 import ee.webmedia.alfresco.document.sendout.model.SendInfo;
+import ee.webmedia.alfresco.email.model.EmailAttachment;
 import ee.webmedia.xtee.client.dhl.DhlXTeeService.ContentToSend;
 
 /**
@@ -70,6 +71,8 @@ public interface SendOutService {
     NodeRef addSendinfo(NodeRef document, Map<QName, Serializable> props, boolean updateSearchableSendInfo);
 
     List<ContentToSend> prepareContents(NodeRef document, List<NodeRef> fileRefs, boolean zipIt);
+    
+    List<ContentToSend> prepareContents(List<EmailAttachment> attachments);
 
     void addSapSendInfo(Node document, String dvkId);
 

@@ -605,7 +605,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
 
             String keyPrefix = entry.getKey();
             Map<String, String> prefixedFormulas = createPrefixedFormulas(keyPrefix, formulas);
-            if (!isTask) {
+            if (!isTask && notificationCache != null) {
                 notificationCache.getFormulas().put(objectRef, prefixedFormulas);
             }
             allFormulas.putAll(prefixedFormulas);

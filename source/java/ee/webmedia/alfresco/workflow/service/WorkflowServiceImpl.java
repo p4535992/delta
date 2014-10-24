@@ -1150,9 +1150,6 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
                 createTaskUsedFieldNames.addAll(info.getUnmodifiableFieldNames());
 
                 if (tasksToCreate.size() >= batchSize) {
-                    if (!taskToUpdate.isEmpty()) {
-                        processUpdateTaskBatch(parentRef, taskToUpdate, updateTaskUsedFieldNames);
-                    }
                     processCreateTaskBatch(parentRef, tasksToCreate, createTaskUsedFieldNames);
                 }
             } else {
@@ -1624,7 +1621,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         return task.isType(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK)
                 && ((internalTesting && !Boolean.TRUE.equals(nodeService.getProperty(task.getParent().getParent().getParent(),
                         DocumentCommonModel.Props.NOT_EDITABLE)))
-                || (!internalTesting && !isResponsibleCurrenInstitution(task)));
+                        || (!internalTesting && !isResponsibleCurrenInstitution(task)));
     }
 
     private boolean isResponsibleCurrenInstitution(Task task) {
@@ -2182,7 +2179,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
     @Override
     public int getConnectedActiveResponsibleTasksCount(List<CompoundWorkflow> compoundWorkflows, boolean allowFinished, NodeRef compoundWorkflowToSkip) {
         Status[] allowedStatuses = allowFinished ? new Status[] { Status.NEW, Status.IN_PROGRESS, Status.STOPPED, Status.FINISHED } :
-                new Status[] { Status.NEW, Status.IN_PROGRESS, Status.STOPPED };
+            new Status[] { Status.NEW, Status.IN_PROGRESS, Status.STOPPED };
         int counter = 0;
         for (CompoundWorkflow compoundWorkflow : compoundWorkflows) {
             if (!compoundWorkflow.isStatus(allowedStatuses) || compoundWorkflow.getNodeRef().equals(compoundWorkflowToSkip)) {
@@ -2494,11 +2491,11 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
                 propertyTypes,
                 new CreateObjectCallback<Node>() {
 
-            @Override
-            public Node create(NodeRef nodeRef, Map<QName, Serializable> properties) {
-                return new WmNode(nodeRef, WorkflowCommonModel.Types.COMPOUND_WORKFLOW, null, properties);
-            }
-        });
+                    @Override
+                    public Node create(NodeRef nodeRef, Map<QName, Serializable> properties) {
+                        return new WmNode(nodeRef, WorkflowCommonModel.Types.COMPOUND_WORKFLOW, null, properties);
+                    }
+                });
         List<Node> docCompoundWorkflows = docCompoundWorkflowsMap.get(docRef);
         boolean docCWFnotEmpty = CollectionUtils.isNotEmpty(docCompoundWorkflows);
         if (docCWFnotEmpty) {
@@ -2507,6 +2504,9 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
                     return false;
                 }
             }
+        }
+        if (!BeanHelper.getWorkflowConstantsBean().isIndependentWorkflowEnabled()) {
+            return true;
         }
         List<AssociationRef> independentCompWorkflowAssocs = nodeService.getTargetAssocs(docRef, DocumentCommonModel.Assocs.WORKFLOW_DOCUMENT);
         if (docCWFnotEmpty && independentCompWorkflowAssocs.isEmpty()) {
@@ -3412,17 +3412,17 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
                     // contact found, but dvk not enabled
                     if (task.getParent() != null && task.getParent().getParent() != null) {
                         task.getParent()
-                        .getParent()
-                        .getReviewTaskDvkInfoMessages()
-                        .add(new Pair<String, Object[]>("review_task_organization_contact_dvk_disabled", new Object[] { task.getOwnerName(),
-                                orgProps.get(Props.ORGANIZATION_NAME), institutionRegCode }));
+                                .getParent()
+                                .getReviewTaskDvkInfoMessages()
+                                .add(new Pair<String, Object[]>("review_task_organization_contact_dvk_disabled", new Object[] { task.getOwnerName(),
+                                        orgProps.get(Props.ORGANIZATION_NAME), institutionRegCode }));
                     }
                     return null;
                 }
                 // organization contact not found
                 if (task.getParent() != null && task.getParent().getParent() != null) {
                     task.getParent().getParent().getReviewTaskDvkInfoMessages()
-                    .add(new Pair<String, Object[]>("review_task_organization_missing_contact", new Object[] { task.getOwnerName(), institutionRegCode }));
+                            .add(new Pair<String, Object[]>("review_task_organization_missing_contact", new Object[] { task.getOwnerName(), institutionRegCode }));
                 }
                 return null;
             }

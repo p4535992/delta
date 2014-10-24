@@ -13,6 +13,13 @@
    <a:richList id="seriesList" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
       width="100%" value="#{SeriesListDialog.series}" var="r">
       
+      <a:column id="functionColumn" rendered="#{SeriesListDialog.disableActions}">
+         <f:facet name="header">
+            <a:sortLink id="functionColumn-sort" label="#{msg.series_function}" value="order" styleClass="header" />
+         </f:facet>
+         <h:outputText id="functionColumn-text" value="#{SeriesListDialog.function.functionLabel}" />
+      </a:column>
+      
       <%-- seriesIdentifier --%>
       <a:column id="col0">
          <f:facet name="header">

@@ -7,22 +7,31 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.transaction.AlfrescoTransactionSupport;
-import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.cmr.search.ResultSet;
 import org.alfresco.service.cmr.search.SearchService;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.util.Pair;
 import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.StringUtils;
 
+import ee.webmedia.alfresco.classificator.enums.AccessRestriction;
 import ee.webmedia.alfresco.common.bootstrap.AbstractNodeUpdater;
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docadmin.bootstrap.StructUnitFieldTypeUpdater;
+import ee.webmedia.alfresco.docadmin.service.DocumentType;
+import ee.webmedia.alfresco.docadmin.service.Field;
+import ee.webmedia.alfresco.docadmin.web.DocAdminUtil;
+import ee.webmedia.alfresco.docconfig.service.DynamicPropertyDefinition;
+import ee.webmedia.alfresco.docconfig.service.PropDefCacheKey;
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.document.bootstrap.FileEncodingUpdater;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
@@ -47,7 +56,28 @@ public class DocumentUpdater extends AbstractNodeUpdater {
     private WorkflowService workflowService;
     private DocumentService documentService;
     private FileEncodingUpdater fileEncodingUpdater;
-    private final Map<NodeRef /* documentParentRef */, List<String /* regNumber */>> documentRegNumbers = new HashMap<NodeRef, List<String>>();
+
+    private boolean regNumberCollectingNeeded;
+    private final Map<NodeRef /* documentParentRef */, List<String /* regNumber */>> documentRegNumbers = new HashMap<>();
+    private Set<NodeRef> drafts;
+    private Set<NodeRef> documentsImportedFromImap;
+    Map<PropDefCacheKey, Map<String, Pair<DynamicPropertyDefinition, Field>>> docTypePropertyDefintions = new HashMap<>();
+
+    @Override
+    protected void executeUpdater() throws Exception {
+        NodeRef draftsRoot = BeanHelper.getConstantNodeRefsBean().getDraftsRoot();
+        drafts = BeanHelper.getBulkLoadNodeService().loadChildRefs(draftsRoot, null, null, DocumentCommonModel.Types.DOCUMENT);
+        // FIXME add parameter or get correct xpath value
+        regNumberCollectingNeeded = false; // BeanHelper.getGeneralService().getNodeRef(
+        // "/sys:system-registry/module:modules/module:simdhs/module:components/module:documentRegNumbersUpdater2") == null;
+        //
+        log.info("regNumberCollectingNeeded = " + regNumberCollectingNeeded);
+        documentsImportedFromImap = new HashSet<>(BeanHelper.getLogService().getDocumentsWithImapImportLog());
+        super.executeUpdater();
+        drafts.clear();
+        documentsImportedFromImap.clear();
+        docTypePropertyDefintions.clear();
+    }
 
     @Override
     protected boolean usePreviousState() {
@@ -76,6 +106,10 @@ public class DocumentUpdater extends AbstractNodeUpdater {
 
     @Override
     protected String[] updateNode(NodeRef docRef) throws Exception {
+        if (drafts.contains(docRef)) {
+            nodeService.deleteNode(docRef);
+            return new String[] { "isDraftAndDeleted" };
+        }
         QName type = nodeService.getType(docRef);
         if (!DocumentCommonModel.Types.DOCUMENT.equals(type)) {
             return new String[] { "isNotDocument", type.toString() };
@@ -83,16 +117,21 @@ public class DocumentUpdater extends AbstractNodeUpdater {
         if (nodeService.hasAspect(docRef, EMAIL_DATE_TIME)) {
             return new String[] { "hasEmailDateTimeAspectAndIgnored" };
         }
-        ChildAssociationRef primaryParentAssoc = nodeService.getPrimaryParent(docRef);
-        if (DocumentCommonModel.Types.DRAFTS.equals(primaryParentAssoc.getQName())) {
-            nodeService.deleteNode(docRef);
-            return new String[] { "isDraftAndDeleted" };
-        }
 
         Map<QName, Serializable> origProps = nodeService.getProperties(docRef);
-        Map<QName, Serializable> updatedProps = new HashMap<QName, Serializable>();
+        Map<QName, Serializable> updatedProps = new HashMap<>();
 
-        addParentRegNumber(docRef, (String) origProps.get(DocumentCommonModel.Props.REG_NUMBER));
+        if (regNumberCollectingNeeded) {
+            addParentRegNumber(docRef, (String) origProps.get(DocumentCommonModel.Props.REG_NUMBER));
+        }
+
+        String accessRestriction = (String) origProps.get(DocumentCommonModel.Props.ACCESS_RESTRICTION);
+        if (AccessRestriction.OPEN.equals(accessRestriction) || AccessRestriction.INTERNAL.equals(accessRestriction)) {
+            updatedProps.put(DocumentCommonModel.Props.ACCESS_RESTRICTION_REASON, null);
+            updatedProps.put(DocumentCommonModel.Props.ACCESS_RESTRICTION_BEGIN_DATE, null);
+            updatedProps.put(DocumentCommonModel.Props.ACCESS_RESTRICTION_END_DATE, null);
+            updatedProps.put(DocumentCommonModel.Props.ACCESS_RESTRICTION_END_DESC, null);
+        }
 
         String hasAllFinishedCompoundWorkflowsUpdaterLog = updateHasAllFinishedCompoundWorkflows(docRef, origProps, updatedProps, workflowService);
 
@@ -116,8 +155,43 @@ public class DocumentUpdater extends AbstractNodeUpdater {
         // Always update document node to trigger an update of document data in Lucene index.
         nodeService.addProperties(docRef, updatedProps);
 
+        String updateImapDocProps = "";
+        if (documentsImportedFromImap.contains(docRef)) {
+            PropDefCacheKey propDefCacheKey = DocAdminUtil.getPropDefCacheKey(DocumentType.class, origProps);
+
+            Map<String, Pair<DynamicPropertyDefinition, Field>> propertyDefinitions = docTypePropertyDefintions.get(propDefCacheKey);
+            if (propertyDefinitions == null && !docTypePropertyDefintions.containsKey(propDefCacheKey)) {
+                propertyDefinitions = BeanHelper.getDocumentConfigService().getPropertyDefinitions(propDefCacheKey);
+                docTypePropertyDefintions.put(propDefCacheKey, propertyDefinitions);
+            }
+            if (propertyDefinitions != null) {
+                Set<String> typeVersionFields = propertyDefinitions.keySet();
+                List<QName> propsToNull = new ArrayList<>();
+                for (Map.Entry<QName, Serializable> entry : origProps.entrySet()) {
+                    QName propQName = entry.getKey();
+                    String localName = propQName.getLocalName();
+                    if (DocumentDynamicModel.URI.equals(propQName.getNamespaceURI())
+                            && (!typeVersionFields.contains(localName) || isChildNodeProperty(propertyDefinitions, localName))
+                            && entry.getValue() != null) {
+                        nodeService.removeProperty(docRef, propQName);
+                        propsToNull.add(propQName);
+                    }
+                }
+                updateImapDocProps = "Removed properties: " + StringUtils.join(propsToNull, ", ");
+            }
+        }
+
         return new String[] { hasAllFinishedCompoundWorkflowsUpdaterLog, structUnitPropertiesToMultivaluedUpdaterLog, removePrivilegeMappingsLog,
-                fileContentsLog, updateMetadataInFilesUpdaterLog };
+                fileContentsLog, updateMetadataInFilesUpdaterLog, updateImapDocProps };
+    }
+
+    private boolean isChildNodeProperty(Map<String, Pair<DynamicPropertyDefinition, Field>> propertyDefinitions, String localName) {
+        Pair<DynamicPropertyDefinition, Field> propDefAndField = propertyDefinitions.get(localName);
+        if (propDefAndField == null) {
+            return false;
+        }
+        QName[] childAssocTypeQNAmeHierarchy = propDefAndField.getFirst().getChildAssocTypeQNameHierarchy();
+        return childAssocTypeQNAmeHierarchy != null && childAssocTypeQNAmeHierarchy.length > 0;
     }
 
     public void updateFileContentsProp(NodeRef docRef, Map<QName, Serializable> updatedProps) {
@@ -169,12 +243,12 @@ public class DocumentUpdater extends AbstractNodeUpdater {
             if (DocumentDynamicModel.URI.equals(propQName.getNamespaceURI()) && propQName.getLocalName().contains(StructUnitFieldTypeUpdater.ORG_STRUCT_UNIT)) {
                 Serializable currentValue = entry.getValue();
                 if (!(currentValue instanceof List)) {
-                    List<String> newValue = new ArrayList<String>();
+                    List<String> newValue = new ArrayList<>();
                     if (StringUtils.isNotBlank((String) currentValue)) {
                         newValue.add((String) currentValue);
                     }
                     updatedProps.put(propQName, (Serializable) newValue);
-                    resultLog.add(propQName.toPrefixString(serviceRegistry.getNamespaceService()));
+                    resultLog.add(propQName.toString());
                 }
             }
         }

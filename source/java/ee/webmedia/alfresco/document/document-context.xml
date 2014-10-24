@@ -404,12 +404,13 @@
    <bean id="searchableSendInfoUpdater" class="ee.webmedia.alfresco.document.bootstrap.SearchableSendInfoUpdater" parent="abstractNodeUpdater">
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
+      <property name="batchSize" value="100" />
       <property name="dependsOn">
          <list>
             <ref bean="convertToDynamicDocumentsUpdater" />
          </list>
       </property>
-      <property name="sendOutService" ref="SendOutService" />
+      <property name="bulkLoadNodeService" ref="BulkLoadNodeService" />
    </bean>
 
    <!-- START: web beans: -->

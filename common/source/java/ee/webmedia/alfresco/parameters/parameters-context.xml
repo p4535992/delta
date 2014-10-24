@@ -65,7 +65,7 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
       </property>
    </bean>
 
-   <bean id="addNamePropertyToParametersBootstrap" class="ee.webmedia.alfresco.parameters.bootstrap.AddNamePropertyToParametersBootstrap" parent="module.baseComponent">
+   <bean id="addNamePropertyToParametersBootstrap1" class="ee.webmedia.alfresco.parameters.bootstrap.AddNamePropertyToParametersBootstrap" parent="module.baseComponent">
       <property name="moduleId" value="common" />
       <property name="executeOnceOnly" value="true" />
       <property name="generalService" ref="GeneralService" />

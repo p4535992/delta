@@ -126,14 +126,18 @@ public class CaseDocumentListDialog extends DocumentListDialog {
     }
 
     public List<UnmodifiableCase> getCases() {
-        if (cases == null) {
-            if (parent != null) {
-                cases = getCaseService().getAllCasesByVolume(parent.getNode().getNodeRef());
-            } else {
-                cases = new ArrayList<UnmodifiableCase>();
-            }
+        if (parent != null) {
+            cases = getCaseService().getAllCasesByVolume(parent.getNode().getNodeRef());
+        } else {
+            cases = new ArrayList<UnmodifiableCase>();
         }
         return cases;
+    }
+
+    @Override
+    public void restored() {
+        super.restored();
+        doInitialSearch();
     }
 
     @Override

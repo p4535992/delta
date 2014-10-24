@@ -43,11 +43,15 @@ import ee.webmedia.alfresco.classificator.enums.TemplateType;
 import ee.webmedia.alfresco.common.job.NightlyDataFixJob;
 import ee.webmedia.alfresco.common.service.CustomReindexComponent;
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.docdynamic.bootstrap.DocumentUpdater;
+import ee.webmedia.alfresco.document.bootstrap.SearchableSendInfoUpdater;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.dvk.service.DvkService;
 import ee.webmedia.alfresco.template.model.DocumentTemplateModel;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.SearchUtil;
+import ee.webmedia.alfresco.workflow.bootstrap.CompoundWorkflowOwnerPropsUpdater;
+import ee.webmedia.alfresco.workflow.bootstrap.TaskUpdater;
 import ee.webmedia.xtee.client.dhl.DhlXTeeServiceImplFSStub;
 
 /**
@@ -119,8 +123,8 @@ public class TestingForDeveloperBean implements Serializable {
     }
 
     public void doStuff(ActionEvent event) {
-//        DhlXTeeServiceImpl dhlXTeeService = BeanHelper.getSpringBean(DhlXTeeServiceImpl.class, "dhlXTeeService");
-//        dhlXTeeService.markDocumentsReceived(Arrays.asList("10113"));
+        // DhlXTeeServiceImpl dhlXTeeService = BeanHelper.getSpringBean(DhlXTeeServiceImpl.class, "dhlXTeeService");
+        // dhlXTeeService.markDocumentsReceived(Arrays.asList("10113"));
 
         Collection<String> receiveDocuments = BeanHelper.getDvkService().receiveDocuments();
         LOG.info("Received following documents:" + receiveDocuments);
@@ -249,6 +253,27 @@ public class TestingForDeveloperBean implements Serializable {
         Field indexInfoField = AbstractLuceneBase.class.getDeclaredField("indexInfo");
         indexInfoField.setAccessible(true);
         return (IndexInfo) indexInfoField.get(indexer);
+    }
+
+    public void executeDocumentUpdater(ActionEvent event) throws Throwable {
+        final DocumentUpdater documentUpdater = BeanHelper.getSpringBean(DocumentUpdater.class, "documentUpdater9");
+        documentUpdater.executeUpdaterInBackground();
+    }
+
+    public void executeSearchableSendInfoUpdater(ActionEvent event) throws Throwable {
+        final SearchableSendInfoUpdater searchableSendInfoUpdater = BeanHelper.getSpringBean(SearchableSendInfoUpdater.class, "searchableSendInfoUpdater");
+        searchableSendInfoUpdater.executeUpdaterInBackground();
+    }
+
+    public void executeCompoundWorkflowOwnerPropsUpdater(ActionEvent event) throws Throwable {
+        final CompoundWorkflowOwnerPropsUpdater compoundWorkflowOwnerPropsUpdater = BeanHelper.getSpringBean(CompoundWorkflowOwnerPropsUpdater.class,
+                "compoundWorkflowOwnerPropsUpdater6");
+        compoundWorkflowOwnerPropsUpdater.executeUpdaterInBackground();
+    }
+
+    public void executeTaskUpdater(ActionEvent event) throws Throwable {
+        final TaskUpdater taskUpdater = BeanHelper.getSpringBean(TaskUpdater.class, "taskUpdater");
+        taskUpdater.executeUpdaterInBackground();
     }
 
     public void printIndexInfo(ActionEvent event) {

@@ -367,7 +367,7 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
         BeanHelper.getVisitedDocumentsBean().resetVisitedDocuments(documentProvider);
     }
 
-    private void doInitialSearch() {
+    protected void doInitialSearch() {
         NodeRef parentRef = null;
         locationNode = null;
         selectedDocs = null;

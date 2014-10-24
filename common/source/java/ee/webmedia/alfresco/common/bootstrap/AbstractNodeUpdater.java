@@ -12,6 +12,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -376,47 +377,7 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
     }
 
     private void updateNodesBatch(final List<NodeRef> batchList) throws Exception {
-        final List<String[]> batchInfos = new ArrayList<String[]>(batchList.size());
-        for (NodeRef nodeRef : batchList) {
-            if (processOnlyExistingNodeRefs() && !nodeService.exists(nodeRef)) {
-                batchInfos.add(new String[] { nodeRef.toString(), "nodeDoesNotExist" });
-                continue;
-            }
-            try {
-                String[] info = updateNode(nodeRef);
-                String[] batchInfo = (String[]) ArrayUtils.add(info, 0, nodeRef.toString());
-                batchInfos.add(batchInfo);
-            } catch (Exception e) {
-                try {
-                    boolean exists = failedNodesFile.exists();
-                    if (!exists) {
-                        OutputStream outputStream = new FileOutputStream(failedNodesFile);
-                        try {
-                            // the Unicode value for UTF-8 BOM, is needed so that Excel would recognise the file in correct encoding
-                            outputStream.write("\ufeff".getBytes("UTF-8"));
-                        } finally {
-                            outputStream.close();
-                        }
-                    }
-                    CsvWriter writer = new CsvWriter(new FileWriter(failedNodesFile, true), CSV_SEPARATOR);
-                    try {
-                        if (!exists) {
-                            writer.writeRecord(new String[] { "nodeRef", "error" });
-                        }
-                        writer.writeRecord(new String[] { nodeRef.toString(), e.toString() });
-                    } finally {
-                        writer.close();
-                    }
-                } catch (IOException e1) {
-                    log.error("Error writing file '" + failedNodesFile + "': " + e.getMessage(), e);
-                }
-                throw new Exception("Error updating node " + nodeRef + ": " + e.getMessage(), e);
-            }
-            int sleepTime2 = getSleepTime();
-            if (sleepTime2 > 0) {
-                Thread.sleep(sleepTime2);
-            }
-        }
+        final List<String[]> batchInfos = processNodes(batchList);
         File rollbackNodesFile = new File(inputFolder, getRollbackNodesCsvFileName());
         bindCsvWriteAfterCommit(completedNodesFile, rollbackNodesFile, new CsvWriterClosure() {
 
@@ -432,6 +393,57 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
                 return AbstractNodeUpdater.this.getCsvFileHeaders();
             }
         });
+    }
+
+    protected List<String[]> processNodes(final List<NodeRef> batchList) throws Exception, InterruptedException {
+        final List<String[]> batchInfos = new ArrayList<String[]>(batchList.size());
+        for (NodeRef nodeRef : batchList) {
+            if (processOnlyExistingNodeRefs() && !nodeService.exists(nodeRef)) {
+                batchInfos.add(new String[] { nodeRef.toString(), "nodeDoesNotExist" });
+                continue;
+            }
+            try {
+                String[] info = updateNode(nodeRef);
+                String[] batchInfo = (String[]) ArrayUtils.add(info, 0, nodeRef.toString());
+                batchInfos.add(batchInfo);
+            } catch (Exception e) {
+                handleNodeProcessingError(Collections.singletonList(nodeRef), e);
+            }
+            int sleepTime2 = getSleepTime();
+            if (sleepTime2 > 0) {
+                Thread.sleep(sleepTime2);
+            }
+        }
+        return batchInfos;
+    }
+
+    protected void handleNodeProcessingError(List<NodeRef> nodeRefs, Exception e) throws Exception {
+        try {
+            boolean exists = failedNodesFile.exists();
+            if (!exists) {
+                OutputStream outputStream = new FileOutputStream(failedNodesFile);
+                try {
+                    // the Unicode value for UTF-8 BOM, is needed so that Excel would recognise the file in correct encoding
+                    outputStream.write("\ufeff".getBytes("UTF-8"));
+                } finally {
+                    outputStream.close();
+                }
+            }
+            CsvWriter writer = new CsvWriter(new FileWriter(failedNodesFile, true), CSV_SEPARATOR);
+            try {
+                if (!exists) {
+                    writer.writeRecord(new String[] { "nodeRef", "error" });
+                }
+                for (NodeRef nodeRef : nodeRefs) {
+                    writer.writeRecord(new String[] { nodeRef.toString(), e.toString() });
+                }
+            } finally {
+                writer.close();
+            }
+        } catch (IOException e1) {
+            log.error("Error writing file '" + failedNodesFile + "': " + e.getMessage(), e);
+        }
+        throw new Exception("Error updating nodes " + (nodeRefs.size() == 1 ? nodeRefs.get(0) : nodeRefs) + ": " + e.getMessage(), e);
     }
 
     /**

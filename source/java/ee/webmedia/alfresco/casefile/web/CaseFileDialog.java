@@ -326,7 +326,8 @@ BlockBeanProviderProvider {
     }
 
     private boolean hasInProgressTask() {
-        return BeanHelper.getWorkflowDbService().hasInProgressTasks(BeanHelper.getWorkflowBlockBean().getCompoundWorkflows(), AuthenticationUtil.getRunAsUser());
+        List<NodeRef> compoundWorkflows = BeanHelper.getWorkflowBlockBean().getCompoundWorkflows();
+        return !compoundWorkflows.isEmpty() && BeanHelper.getWorkflowDbService().hasInProgressTasks(compoundWorkflows, AuthenticationUtil.getRunAsUser());
     }
 
     @Override

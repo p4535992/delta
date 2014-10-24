@@ -206,7 +206,7 @@ public class WmNode extends TransientNode {
                     + toString(getAspects(), getNamespacePrefixResolver()) + "\n  props="
                     + toString(RepoUtil.toQNameProperties(getProperties()), getNamespacePrefixResolver()) + "\n]";
         }
-        return toString(this) + "[\n  nodeRef=" + getNodeRef() + "\n  type=" + getType().toPrefixString(getNamespacePrefixResolver()) + "\n]";
+        return toString(this) + "[\n  nodeRef=" + getNodeRef() + "\n  type=" + getType().toString() + "\n]";
     }
 
     public static String toString(Collection<?> collection) {

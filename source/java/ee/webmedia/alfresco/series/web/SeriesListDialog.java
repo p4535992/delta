@@ -26,6 +26,7 @@ import ee.webmedia.alfresco.series.model.UnmodifiableSeries;
 import ee.webmedia.alfresco.series.service.SeriesService;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.ActionUtil;
+import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
  * Form backing bean for Series list
@@ -37,6 +38,7 @@ public class SeriesListDialog extends BaseDialogBean {
     private transient UserService userService;
     private UnmodifiableFunction function;
     private List<UnmodifiableSeries> series;
+    private boolean disableActions = false;
     private String activeStructUnit;
 
     public static final String BEAN_NAME = "SeriesListDialog";
@@ -60,6 +62,9 @@ public class SeriesListDialog extends BaseDialogBean {
 
     @Override
     public String getActionsConfigId() {
+        if (disableActions) {
+            return "";
+        }
         return super.getActionsConfigId();
     }
 
@@ -71,10 +76,15 @@ public class SeriesListDialog extends BaseDialogBean {
         function = getFunctionsService().getUnmodifiableFunction(nodeRef, null);
         loadSeries();
         getLogService().addLogEntry(LogEntry.create(LogObject.FUNCTION, getUserService(), nodeRef, "applog_space_open", function.getMark(), function.getTitle()));
+        disableActions = false;
     }
 
     private void loadSeries() {
-        series = getSeriesService().getAllSeriesByFunction(getFunction().getNodeRef());
+        if (disableActions) {
+            series = getSeriesService().getAllSeriesByFunctionForStructUnit(getFunctionRef(), activeStructUnit);
+        } else {
+            series = getSeriesService().getAllSeriesByFunction(getFunction().getNodeRef());
+        }
     }
 
     public void showMyStructUnit(ActionEvent event) {
@@ -87,6 +97,7 @@ public class SeriesListDialog extends BaseDialogBean {
         function = getFunctionsService().getUnmodifiableFunction(functionRef, null);
         series = getSeriesService().getAllSeriesByFunctionForStructUnit(functionRef, structUnitId);
         activeStructUnit = structUnitId;
+        disableActions = true;
     }
 
     public List<UnmodifiableSeries> getSeries() {
@@ -100,7 +111,7 @@ public class SeriesListDialog extends BaseDialogBean {
         return getFunction().getNodeRef();
     }
 
-    private UnmodifiableFunction getFunction() {
+    public UnmodifiableFunction getFunction() {
         if (function == null) {
             NodeRef nodeRef = BeanHelper.getMenuBean().getLinkNodeRef();
             ChildAssociationRef caRef = BeanHelper.getNodeService().getPrimaryParent(nodeRef);
@@ -111,6 +122,9 @@ public class SeriesListDialog extends BaseDialogBean {
     }
 
     public String getListTitle() {
+        if (disableActions) {
+            return MessageUtil.getMessage("series_my_documents_list");
+        }
         return getFunction().getFunctionLabel();
     }
 
@@ -119,12 +133,21 @@ public class SeriesListDialog extends BaseDialogBean {
     private void resetFields() {
         function = null;
         series = null;
+        disableActions = false;
         activeStructUnit = null;
     }
 
     @Override
     public void clean() {
         resetFields();
+    }
+
+    public boolean getDisableActions() {
+        return disableActions;
+    }
+
+    public void setDisableActions(boolean disableActions) {
+        this.disableActions = disableActions;
     }
 
     public String getActiveStructUnit() {

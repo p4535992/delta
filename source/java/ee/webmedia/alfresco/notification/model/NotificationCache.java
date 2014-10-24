@@ -12,7 +12,6 @@ import org.alfresco.web.bean.repository.Node;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.email.model.EmailAttachment;
 import ee.webmedia.alfresco.template.model.DocumentTemplateModel;
-import ee.webmedia.xtee.client.dhl.DhlXTeeService.ContentToSend;
 
 public class NotificationCache {
 
@@ -22,7 +21,6 @@ public class NotificationCache {
     private final Map<String, Template> cachedTemplates = new HashMap<>();
     private final Map<NodeRef, Node> cachedProps = new HashMap<>();
     private final Map<NodeRef, List<EmailAttachment>> attachments = new HashMap<>();
-    private final Map<NodeRef, List<ContentToSend>> contentsToSend = new HashMap<>();
 
     public Map<NodeRef, Map<String, String>> getFormulas() {
         return cachedFormulas;
@@ -46,10 +44,6 @@ public class NotificationCache {
 
     public Map<NodeRef, List<EmailAttachment>> getAttachments() {
         return attachments;
-    }
-
-    public Map<NodeRef, List<ContentToSend>> getContentsToSend() {
-        return contentsToSend;
     }
 
     public Template getTemplate(String templateName) {
