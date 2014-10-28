@@ -1,6 +1,7 @@
 package ee.webmedia.alfresco.orgstructure.service;
 
 import java.util.List;
+import java.util.Set;
 
 import javax.faces.event.ActionEvent;
 
@@ -48,6 +49,8 @@ public interface OrganizationStructureService {
      * @return number of organisations updated
      */
     int updateOrganisationStructures();
+    
+    void updateOrganisationStructures(ActionEvent event);
 
     /**
      * Find organization structures by name. If input is empty, all organization structures are returned.
@@ -67,8 +70,16 @@ public interface OrganizationStructureService {
     void createOrganisationStructure(OrganizationStructure org);
 
     int updateOrganisationStructureBasedGroups();
-
+    
     void updateOrganisationStructureBasedGroups(ActionEvent event);
+
+    int removeUsersFromOldOrganisationStructureBasedGroups();
+    
+    void removeUsersFromOldOrganisationStructureBasedGroups(ActionEvent event);
+
+    int removeOrganisationStructureBasedGroups();
+    
+    void removeOrganisationStructureBasedGroups(ActionEvent event);
 
     List<String> getOrganizationStructurePaths(String value);
 

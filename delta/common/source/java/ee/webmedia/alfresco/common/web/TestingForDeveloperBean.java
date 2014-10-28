@@ -1,5 +1,7 @@
 package ee.webmedia.alfresco.common.web;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getSpringBean;
+
 import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -9,6 +11,7 @@ import java.util.List;
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
+import org.alfresco.repo.cache.EhCacheTracerJob;
 import org.alfresco.repo.search.Indexer;
 import org.alfresco.repo.search.impl.lucene.ADMLuceneTest;
 import org.alfresco.repo.search.impl.lucene.AbstractLuceneBase;
@@ -16,6 +19,7 @@ import org.alfresco.repo.search.impl.lucene.AbstractLuceneIndexerAndSearcherFact
 import org.alfresco.repo.search.impl.lucene.AbstractLuceneIndexerAndSearcherFactory.LuceneIndexBackupJob;
 import org.alfresco.repo.search.impl.lucene.LuceneIndexerAndSearcher;
 import org.alfresco.repo.search.impl.lucene.index.IndexInfo;
+import org.alfresco.repo.security.sync.UserRegistrySynchronizer;
 import org.alfresco.repo.transaction.RetryingTransactionHelper;
 import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
@@ -214,9 +218,20 @@ public class TestingForDeveloperBean implements Serializable {
         LOG.info(indexInfoTextWithoutDate);
     }
 
+    public void updateUsersAndGroups(ActionEvent event) {
+        LOG.debug("Starting to update users and usergroups");
+        UserRegistrySynchronizer userRegistrySynchronizer = getSpringBean(UserRegistrySynchronizer.class, "UserRegistrySynchronizer");
+        userRegistrySynchronizer.synchronize(true);
+        LOG.debug("Finished updating users and usergroups");
+    }
+
     public void searchHolesAndIndex(ActionEvent event) {
         CustomReindexComponent customReindexComponent = BeanHelper.getSpringBean(CustomReindexComponent.class, "customReindexComponent");
         customReindexComponent.reindex();
+    }
+
+    public void executeCacheStatistics(ActionEvent event) throws JobExecutionException {
+        (new EhCacheTracerJob()).execute(null);
     }
 
     protected RetryingTransactionHelper getTransactionHelper() {

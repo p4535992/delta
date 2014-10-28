@@ -28,61 +28,31 @@
       disabled="#{deleteAllLogNodesFromRepo.updaterStopping}" />
 	<f:verbatim><br/></f:verbatim>	
 	
-<%--   <br/>
-   <u>Dokumendi õiguste uuendamise skript (enne 2.5 versiooni)</u>
-   <br/>
-   <br/>
-   <h:commandButton id="startDocumentPrivilegesUpdater" value="Käivita dokumendi õiguste skript" type="submit"
-      actionListener="#{documentPrivilegesUpdater.executeUpdaterInBackground}"
-      rendered="#{documentPrivilegesUpdater.updaterRunning == false}" />
-   <h:commandButton id="stopDocumentPrivilegesUpdater" value="Peata dokumendi õiguste skript" type="submit"
-      actionListener="#{documentPrivilegesUpdater.stopUpdater}"
-      rendered="#{documentPrivilegesUpdater.updaterRunning == true}"
-      disabled="#{documentPrivilegesUpdater.updaterStopping == true}" />
-   <br/>
-   <h:outputText value="Paus pärast iga dokumendi töötlemist (ms): "/>
-   <h:inputText id="documentPrivilegesUpdaterSleepTime" value="#{documentPrivilegesUpdater.sleepTime}" size="4" />
-   <h:commandButton id="updateDocumentPrivilegesUpdaterSleepTime" value="Uuenda" type="submit"
-      actionListener="#{documentPrivilegesUpdater.updateSleepTime}" />
-
-   <br/>
-   <br/>
-   <br/>
-   <u>Dokumendi õiguste optimeerimise skript (alates 2.5 versioonist)</u>
-   <br/>
-   <br/>
-   <h:commandButton id="startDocumentInheritPermissionsUpdater" value="Käivita dokumendi õiguste optimeerimise skript" type="submit"
-      actionListener="#{documentInheritPermissionsUpdater.executeUpdaterInBackground}"
-      rendered="#{documentInheritPermissionsUpdater.updaterRunning == false}" />
-   <h:commandButton id="stopDocumentInheritPermissionsUpdater" value="Peata dokumendi õiguste optimeerimise skript" type="submit"
-      actionListener="#{documentInheritPermissionsUpdater.stopUpdater}"
-      rendered="#{documentInheritPermissionsUpdater.updaterRunning == true}"
-      disabled="#{documentInheritPermissionsUpdater.updaterStopping == true}" />
-   <br/>
-   <h:outputText value="Paus pärast iga dokumendi töötlemist (ms): "/>
-   <h:inputText id="documentInheritPermissionsUpdaterSleepTime" value="#{documentInheritPermissionsUpdater.sleepTime}" size="4" />
-   <h:commandButton id="updateDocumentInheritPermissionsUpdaterSleepTime" value="Uuenda" type="submit"
-      actionListener="#{documentInheritPermissionsUpdater.updateSleepTime}" />
-
-   <br/>
-   <br/>
-   <br/>
-   <u>Lepingute väljasaatmise kirjete tekitamise skript (ContractSendInfoUpdater)</u>
-   <br/>
-   <br/>
-   <h:commandButton id="startContractSendInfoUpdater" value="Käivita dokumendi õiguste optimeerimise skript" type="submit"
-      actionListener="#{contractSendInfoUpdater.executeUpdaterInBackground}"
-      rendered="#{contractSendInfoUpdater.updaterRunning == false}" />
-   <h:commandButton id="stopContractSendInfoUpdater" value="Peata dokumendi õiguste optimeerimise skript" type="submit"
-      actionListener="#{contractSendInfoUpdater.stopUpdater}"
-      rendered="#{contractSendInfoUpdater.updaterRunning == true}"
-      disabled="#{contractSendInfoUpdater.updaterStopping == true}" />
-   <br/>
-   <h:outputText value="Paus pärast iga dokumendi töötlemist (ms): "/>
-   <h:inputText id="contractSendInfoUpdaterSleepTime" value="#{contractSendInfoUpdater.sleepTime}" size="4" />
-   <h:commandButton id="updateContractSendInfoUpdaterSleepTime" value="Uuenda" type="submit"
-      actionListener="#{contractSendInfoUpdater.updateSleepTime}" />
---%>
+	
+<f:verbatim><hr/></f:verbatim>
+<f:verbatim><br/></f:verbatim>
+<f:verbatim><br/></f:verbatim>
+<h:outputText value="Kasutajate ja gruppide andmete uuendamise protsess koosneb mitmest osast. Vajutada nuppe järgemööda."/>
+<f:verbatim><br/></f:verbatim>
+<h:commandButton id="updateOrganisationStructures" value="Step 1 - Uuendame AMR-ist asutuse struktuuri" type="submit"
+   actionListener="#{OrganizationStructureService.updateOrganisationStructures}" />
+<f:verbatim><br/></f:verbatim>
+<h:commandButton id="updateUsersAndGroups" value="Step 2 - Uuendame AMR-ist asutuse töötajaid" type="submit"
+   actionListener="#{TestingForDeveloperBean.updateUsersAndGroups}" />
+<f:verbatim><br/></f:verbatim>
+<h:commandButton id="updateOrganisationStructureBasedGroups" value="Step 3 - Uuendame asutuse struktuuri alusel gruppe (andmed punkti 1 ja 2 tulemitest)" type="submit"
+   actionListener="#{OrganizationStructureService.updateOrganisationStructureBasedGroups}" />
+<f:verbatim><br/></f:verbatim>
+<f:verbatim><br/></f:verbatim>
+<h:outputText value="Kui soovite kasutajaid eemaldada vanadest gruppidest, siis vajutage nupule 4. Kui soovite vanad grupid kustutada, siis vajutage nupule 5"/>
+<f:verbatim><br/></f:verbatim>
+<h:commandButton id="removeUsersFromOldOrganisationStructureBasedGroups" value="Step 4 - Eemaldame töötajad asutuse vanal struktuuril põhinevad grupidest" type="submit"
+   actionListener="#{OrganizationStructureService.removeUsersFromOldOrganisationStructureBasedGroups}" />
+<f:verbatim><br/></f:verbatim>
+<h:commandButton id="removeOrganisationStructureBasedGroups" value="Step 5 - Kustutame asutuse vanal struktuuril põhinevad grupid" type="submit"
+   actionListener="#{OrganizationStructureService.removeOrganisationStructureBasedGroups}" />
+   <f:verbatim><br/></f:verbatim>
+<f:verbatim><hr/></f:verbatim>
 
 <f:verbatim><hr/></f:verbatim>
 <h:commandButton id="docList_updateDocCounters" value="Uuenda dokumentide loendureid" type="submit" 
@@ -168,9 +138,8 @@
 <f:verbatim><br/></f:verbatim>
 <h:commandButton id="destroyArchivedVolumes" value="destroyArchivedVolumes" type="submit"
    actionListener="#{ArchivalsService.destroyArchivedVolumes}" rendered="#{ApplicationService.test}" />
-<f:verbatim><br/></f:verbatim>
-<h:commandButton id="updateOrganisationStructureBasedGroups" value="updateOrganisationStructureBasedGroups" type="submit"
-   actionListener="#{OrganizationStructureService.updateOrganisationStructureBasedGroups}" rendered="#{ApplicationService.test}" />
+
+
    <f:verbatim><br/></f:verbatim>
 <h:outputText id="reportGenerationTitle" value="Aruannete genereerimine: " />
 <f:verbatim><br/></f:verbatim>

@@ -1,7 +1,9 @@
 package ee.webmedia.alfresco.common.web;
 
 import javax.faces.context.FacesContext;
+import javax.sql.DataSource;
 
+import org.alfresco.repo.node.db.NodeDaoService;
 import org.alfresco.repo.policy.BehaviourFilter;
 import org.alfresco.service.ServiceRegistry;
 import org.alfresco.service.cmr.dictionary.DictionaryService;
@@ -53,6 +55,8 @@ import ee.webmedia.alfresco.docadmin.web.DynamicTypeDetailsDialog;
 import ee.webmedia.alfresco.docadmin.web.DynamicTypeDetailsDialog.DynTypeDialogSnapshot;
 import ee.webmedia.alfresco.docadmin.web.FieldDetailsDialog;
 import ee.webmedia.alfresco.docadmin.web.FieldGroupDetailsDialog;
+//import ee.webmedia.alfresco.docconfig.generator.systematic.UserContactRelatedGroupGenerator;
+//import ee.webmedia.alfresco.docconfig.generator.systematic.UserContactTableGenerator;
 import ee.webmedia.alfresco.docconfig.service.DocumentConfigService;
 import ee.webmedia.alfresco.docconfig.service.UserContactMappingService;
 import ee.webmedia.alfresco.docconfig.web.PropertySheetStateBean;
@@ -131,6 +135,7 @@ import ee.webmedia.alfresco.workflow.search.service.TaskReportFilterService;
 import ee.webmedia.alfresco.workflow.search.service.TaskSearchFilterService;
 import ee.webmedia.alfresco.workflow.service.WorkflowDbService;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
+import ee.webmedia.alfresco.workflow.web.DelegationBean;
 import ee.webmedia.alfresco.workflow.web.WorkflowBlockBean;
 import ee.webmedia.xtee.client.dhl.DhlXTeeServiceImplFSStub;
 
@@ -155,6 +160,14 @@ public class BeanHelper implements NamespacePrefixResolverProvider {
     @Override
     public NamespacePrefixResolver getNamespacePrefixResolver() {
         return getNamespaceService();
+    }
+
+    public static DataSource getDataSource() {
+        return getSpringBean(DataSource.class, "dataSource");
+    }
+
+    public static NodeDaoService getNodeDaoService() {
+        return getSpringBean(NodeDaoService.class, "nodeDaoService");
     }
 
     public static AccessControlListExtDAO getAccessControlListDao() {
@@ -345,6 +358,10 @@ public class BeanHelper implements NamespacePrefixResolverProvider {
         return getJsfBean(WorkflowBlockBean.class, WorkflowBlockBean.BEAN_NAME);
     }
 
+    public static DelegationBean getDelegationBean() {
+        return getJsfBean(DelegationBean.class, DelegationBean.BEAN_NAME);
+    }
+
     public static SendOutBlockBean getSendOutBlockBean() {
         return getJsfBean(SendOutBlockBean.class, SendOutBlockBean.BEAN_NAME);
     }
@@ -369,6 +386,7 @@ public class BeanHelper implements NamespacePrefixResolverProvider {
         return getJsfBean(GroupsDialog.class, GroupsDialog.BEAN_NAME);
     }
 
+
     public static DocumentListDialog getDocumentListDialog() {
         return getJsfBean(DocumentListDialog.class, DocumentListDialog.BEAN_NAME);
     }
@@ -380,6 +398,15 @@ public class BeanHelper implements NamespacePrefixResolverProvider {
     public static RsAccessStatusBean getRsAccessStatusBean() {
         return getSpringBean(RsAccessStatusBean.class, RsAccessStatusBean.BEAN_NAME);
     }
+
+
+//    public static UserContactRelatedGroupGenerator getUserContactRelatedGroupGenerator() {
+//        return getSpringBean(UserContactRelatedGroupGenerator.class, UserContactRelatedGroupGenerator.BEAN_NAME);
+//    }
+
+//    public static UserContactTableGenerator getUserContactTableGenerator() {
+//        return getSpringBean(UserContactTableGenerator.class, UserContactTableGenerator.BEAN_NAME);
+//    }
 
     // END: JSF web beans
 
