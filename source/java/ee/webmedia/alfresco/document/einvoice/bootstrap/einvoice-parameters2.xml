@@ -7,6 +7,7 @@
    <param:stringParameter view:childName="param:dimensionCodeInvoicePostingKey">
       <view:properties>
          <param:value></param:value>
+         <param:name>dimensionCodeInvoicePostingKey</param:name>
       </view:properties>
    </param:stringParameter>
    

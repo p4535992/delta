@@ -224,18 +224,12 @@ public class SubstituteServiceImpl implements SubstituteService, BeanFactoryAwar
             return substitutes;
         }
         substitutes = new ArrayList<>();
-
-        List<String> queryParts = new ArrayList<String>();
-        queryParts.add(generateTypeQuery(SubstituteModel.Types.SUBSTITUTE));
-        queryParts.add(generateStringExactQuery(userName, SubstituteModel.Props.SUBSTITUTE_ID));
         Date today = DateUtils.truncate(new Date(), Calendar.DATE);
-        queryParts.add(generateDatePropertyRangeQuery(null, today, SubstituteModel.Props.SUBSTITUTION_START_DATE));
-        queryParts.add(generateDatePropertyRangeQuery(today, null, SubstituteModel.Props.SUBSTITUTION_END_DATE));
-        String query = joinQueryPartsAnd(queryParts);
-
-        List<NodeRef> nodeRefs = getDocumentSearchService().searchNodes(query, -1, "activeSubstitutionDuties");
-        for (NodeRef nodeRef : nodeRefs) {
-            substitutes.add(getSubstitute(nodeRef));
+        for (Substitute s : BeanHelper.getBulkLoadNodeService().loadUserSubstitutionDuties(userName, BeanHelper.getPersonService().getPeopleContainer())) {
+            Date startDate = s.getSubstitutionStartDate();
+            if ((today.after(startDate) || today.equals(startDate)) && today.before(s.getSubstitutionEndDate())) {
+                substitutes.add(s);
+            }
         }
         substituteCache.put(userName, Collections.unmodifiableList(substitutes));
         return substitutes;

@@ -53,6 +53,8 @@ import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.search.model.FakeDocument;
 import ee.webmedia.alfresco.dvk.model.DvkModel;
+import ee.webmedia.alfresco.substitute.model.Substitute;
+import ee.webmedia.alfresco.substitute.model.SubstituteModel;
 import ee.webmedia.alfresco.utils.CalendarUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.TextUtil;
@@ -280,6 +282,78 @@ public class BulkLoadNodeServiceImpl implements BulkLoadNodeService {
     }
 
     @Override
+    @SuppressWarnings("deprecation")
+    public List<Substitute> loadUserSubstitutionDuties(String personName, NodeRef peopleContainer) {
+        String sql =
+                "WITH all_substitutes AS ("
+                        + "SELECT people.qname_localname AS replaced_person_name, props.*, alf_node.store_id, alf_node.uuid AS node_ref_uuid "
+                        + " FROM alf_child_assoc people "
+                        + " JOIN alf_child_assoc substitutes_container ON substitutes_container.parent_node_id = people.child_node_id"
+                        + " JOIN alf_child_assoc substitutes ON substitutes.parent_node_id = substitutes_container.child_node_id"
+                        + " JOIN alf_node_properties props ON props.node_id = substitutes.child_node_id"
+                        + " JOIN alf_node ON substitutes.child_node_id = alf_node.id"
+                        + " WHERE people.parent_node_id = "
+                        + "  (SELECT id FROM alf_node"
+                        + "  WHERE store_id = " + getStoreRefDbId(peopleContainer.getStoreRef()) + " AND uuid = '" + peopleContainer.getId() + "')"
+                        + " AND substitutes_container.qname_localname = 'substitutes'"
+                        + " AND substitutes.qname_localname = 'substitute'"
+                        + " )"
+                        + " SELECT * FROM all_substitutes "
+                        + " WHERE node_ref_uuid IN ( "
+                        + "  SELECT node_ref_uuid FROM all_substitutes WHERE string_value = ? "
+                        + " )";
+
+        final Map<NodeRef, Map<PropertyMapKey, NodePropertyValue>> allProps = new HashMap<NodeRef, Map<PropertyMapKey, NodePropertyValue>>();
+        final Map<NodeRef, String> replacedPersonNames = new HashMap<>();
+        jdbcTemplate.query(sql, new ParameterizedRowMapper<String>() {
+
+            @Override
+            public String mapRow(ResultSet rs, int rowNum) throws SQLException {
+                NodeRef ref = getNodeRef(rs, "node_ref_uuid");
+                Map<PropertyMapKey, NodePropertyValue> props = allProps.get(ref);
+                if (props == null) {
+                    String replacedPerson = rs.getString("replaced_person_name");
+                    replacedPersonNames.put(ref, replacedPerson);
+                    props = new HashMap<>();
+                    allProps.put(ref, props);
+                }
+
+                PropertyMapKey key = getPropMapKey(rs);
+                NodePropertyValue value = getPropertyValue(rs);
+                props.put(key, value);
+
+                return null;
+            }
+
+        }, personName);
+
+        List<Substitute> result = new ArrayList<>();
+        explainQuery(sql, personName);
+
+        CreateObjectCallback<Substitute> createSubstituteCallback = new CreateObjectCallback<Substitute>() {
+
+            @Override
+            public Substitute create(NodeRef nodeRef, Map<QName, Serializable> properties) {
+                Substitute s = new Substitute();
+                s.setSubstitutionStartDate((Date) properties.get(SubstituteModel.Props.SUBSTITUTION_START_DATE));
+                s.setSubstitutionEndDate((Date) properties.get(SubstituteModel.Props.SUBSTITUTION_END_DATE));
+                s.setSubstituteId((String) properties.get(SubstituteModel.Props.SUBSTITUTE_ID));
+                s.setSubstituteName((String) properties.get(SubstituteModel.Props.SUBSTITUTE_NAME));
+                s.setNodeRef(nodeRef);
+                s.setReplacedPersonUserName(replacedPersonNames.get(nodeRef));
+                return s;
+            }
+        };
+
+        for (Map.Entry<NodeRef, Map<PropertyMapKey, NodePropertyValue>> entry : allProps.entrySet()) {
+            NodeRef nodeRef = entry.getKey();
+            Map<QName, Serializable> properties = HibernateNodeDaoServiceImpl.convertToPublicProperties(entry.getValue(), qnameDAO, localeDAO, contentDataDAO, dictionaryService);
+            result.add(createSubstituteCallback.create(nodeRef, properties));
+        }
+        return result;
+    }
+
+    @Override
     public Map<NodeRef, Node> loadNodes(List<NodeRef> nodesToLoad, final Set<QName> propsToLoad, Map<Long, QName> propertyTypes) {
         CreateNodeCallback<Node> createNodeCallback = new CreateNodeCallback<Node>() {
             @Override
@@ -327,7 +401,6 @@ public class BulkLoadNodeServiceImpl implements BulkLoadNodeService {
     }
 
     @Override
-    @SuppressWarnings("deprecation")
     public <T> Map<NodeRef, List<T>> loadChildNodes(List<NodeRef> parentNodes, Set<QName> propsToLoad, QName childNodeType, Map<Long, QName> propertyTypes,
             CreateObjectCallback<T> createObjectCallback) {
         long startTime = System.nanoTime();

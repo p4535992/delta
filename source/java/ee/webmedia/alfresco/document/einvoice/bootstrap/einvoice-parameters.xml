@@ -7,84 +7,98 @@
     <param:stringParameter view:childName="param:dimensionCodeInvoiceFundsCenters">
       <view:properties>
          <param:value></param:value>
+         <param:name>dimensionCodeInvoiceFundsCenters</param:name>
       </view:properties>
    </param:stringParameter>
    
     <param:stringParameter view:childName="param:dimensionCodeInvoiceCostCenters">
       <view:properties>
          <param:value></param:value>
+         <param:name>dimensionCodeInvoiceCostCenters</param:name>
       </view:properties>
    </param:stringParameter>
    
     <param:stringParameter view:childName="param:dimensionCodeInvoiceFunds">
       <view:properties>
          <param:value></param:value>
+         <param:name>dimensionCodeInvoiceFunds</param:name>
       </view:properties>
    </param:stringParameter>
    
     <param:stringParameter view:childName="param:dimensionCodeInvoiceCommitmentItem">
       <view:properties>
          <param:value></param:value>
+         <param:name>dimensionCodeInvoiceCommitmentItem</param:name>
       </view:properties>
    </param:stringParameter>
    
     <param:stringParameter view:childName="param:dimensionCodeInvoiceInternalOrders">
       <view:properties>
          <param:value></param:value>
+         <param:name>dimensionCodeInvoiceInternalOrders</param:name>
       </view:properties>
    </param:stringParameter>
    
     <param:stringParameter view:childName="param:dimensionCodeInvoiceAssetInventoryNumbers">
       <view:properties>
          <param:value></param:value>
+         <param:name>dimensionCodeInvoiceAssetInventoryNumbers</param:name>
       </view:properties>
    </param:stringParameter>
    
     <param:stringParameter view:childName="param:dimensionCodeInvoicePostingKey">
       <view:properties>
          <param:value></param:value>
+         <param:name>dimensionCodeInvoicePostingKey</param:name>
       </view:properties>
    </param:stringParameter>
    
     <param:stringParameter view:childName="param:dimensionCodeInvoiceTradingPartnerCodes">
       <view:properties>
          <param:value></param:value>
+         <param:name>dimensionCodeInvoiceTradingPartnerCodes</param:name>
       </view:properties>
    </param:stringParameter>
    
     <param:stringParameter view:childName="param:dimensionCodeInvoiceFunctionalAreaCode">
       <view:properties>
          <param:value></param:value>
+         <param:name>dimensionCodeInvoiceFunctionalAreaCode</param:name>
       </view:properties>
    </param:stringParameter>
    
     <param:stringParameter view:childName="param:dimensionCodeInvoiceCashFlowCodes">
       <view:properties>
          <param:value></param:value>
+         <param:name>dimensionCodeInvoiceCashFlowCodes</param:name>
       </view:properties>
    </param:stringParameter>
    
     <param:stringParameter view:childName="param:dimensionCodeInvoiceSourceCodes">
       <view:properties>
          <param:value></param:value>
+         <param:name>dimensionCodeInvoiceSourceCodes</param:name>
       </view:properties>
    </param:stringParameter>
    
     <param:stringParameter view:childName="param:dimensionCodeInvoicePaymentMethodCodes">
       <view:properties>
          <param:value></param:value>
+         <param:name>dimensionCodeInvoicePaymentMethodCodes</param:name>
       </view:properties>
    </param:stringParameter>
    
     <param:stringParameter view:childName="param:dimensionCodeInvoiceHouseBankCodes">
       <view:properties>
          <param:value></param:value>
+         <param:name>dimensionCodeInvoiceHouseBankCodes</param:name>
       </view:properties>
    </param:stringParameter>
    
    <param:stringParameter view:childName="param:sapContactUpdateTime">
       <view:properties>
          <param:value>17:00</param:value>
+         <param:name>sapContactUpdateTime</param:name>
       </view:properties>
    </param:stringParameter>
    

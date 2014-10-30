@@ -7,12 +7,14 @@
    <param:stringParameter view:childName="param:headerText">
       <view:properties>
          <param:value>Siseministeerium DELTA</param:value>
+         <param:name>headerText</param:name>
       </view:properties>
    </param:stringParameter>
 
    <param:stringParameter view:childName="param:footerText">
       <view:properties>
          <param:value>Kontaktinfo: E - N 8:00 - 16:45, R 8:00 - 15:30, aadress: Pikk 61, 15065 Tallinn, telefon: 612 5008, epost: &lt;a href="mailto:info@siseministeerium.ee"&gt;info@siseministeerium.ee&lt;/a&gt;</param:value>
+         <param:name>footerText</param:name>
       </view:properties>
    </param:stringParameter>
 

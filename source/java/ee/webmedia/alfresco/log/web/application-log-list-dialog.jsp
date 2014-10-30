@@ -51,16 +51,16 @@
 
       <a:column id="col6">
          <f:facet name="header">
-            <a:sortLink id="col5-sort" label="#{msg.applog_item_object}" value="objectName" styleClass="header" />
+            <a:sortLink id="col6-sort" label="#{msg.applog_item_object}" value="objectName" styleClass="header" />
          </f:facet>
-         <h:outputText id="col5-text" value="#{r.objectName}" />
+         <h:outputText id="col6-text" value="#{r.objectName}" />
       </a:column>
 
       <a:column id="col7">
          <f:facet name="header">
-            <a:sortLink id="col5-sort" label="#{msg.applog_item_object_id}" value="objectId" styleClass="header" />
+            <a:sortLink id="col7-sort" label="#{msg.applog_item_object_id}" value="objectId" styleClass="header" />
          </f:facet>
-         <h:outputText id="col5-text" value="#{r.objectId}" />
+         <h:outputText id="col7-text" value="#{r.objectId}" />
       </a:column>
 
       <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/page-size.jsp" />

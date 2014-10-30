@@ -13,6 +13,7 @@ import org.alfresco.web.bean.repository.Node;
 
 import ee.webmedia.alfresco.document.file.model.SimpleFile;
 import ee.webmedia.alfresco.document.model.Document;
+import ee.webmedia.alfresco.substitute.model.Substitute;
 
 public interface BulkLoadNodeService {
 
@@ -99,5 +100,8 @@ public interface BulkLoadNodeService {
     StoreRef getStoreRefByDbId(Long dbId);
 
     Map<NodeRef, Integer> getSearchableTargetAssocsCount(List<NodeRef> sourceRefs, QName assocType);
+
+    /** AVOID using this method unless the results are stored in cache */
+    List<Substitute> loadUserSubstitutionDuties(String personName, NodeRef peopleContainer);
 
 }

@@ -339,7 +339,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
     public List<ActionDefinition> getCompoundWorkflowDefinitionsByType(CompoundWorkflowType compoundWorkflowType) {
         WorkflowService wfService = getWorkflowService();
         String userId = AuthenticationUtil.getRunAsUser();
-        List<CompoundWorkflowDefinition> workflowDefs = wfService.getCompoundWorkflowDefinitionsByType(userId, compoundWorkflowType);
+        List<CompoundWorkflowDefinition> workflowDefs = wfService.getCompoundWorkflowDefinitionsByType(userId, compoundWorkflowType, true);
 
         if (!BeanHelper.getWorkflowConstantsBean().isExternalReviewWorkflowEnabled()) {
             for (Iterator<CompoundWorkflowDefinition> it = workflowDefs.iterator(); it.hasNext();) {

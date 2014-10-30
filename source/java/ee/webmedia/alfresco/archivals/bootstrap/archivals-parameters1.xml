@@ -6,6 +6,7 @@
    <param:intParameter view:childName="param:moveToArchiveListDefaultMonths">
       <view:properties>
          <param:value>30</param:value>
+         <param:name>moveToArchiveListDefaultMonths</param:name>
       </view:properties>
    </param:intParameter>
 

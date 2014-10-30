@@ -6,6 +6,7 @@
    <param:intParameter view:childName="param:reviewWorkflowCostManagerWorkflowNumber">
       <view:properties>
          <param:value>1</param:value>
+         <param:name>reviewWorkflowCostManagerWorkflowNumber</param:name>
       </view:properties>
    </param:intParameter>
 

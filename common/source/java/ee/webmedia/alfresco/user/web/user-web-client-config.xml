@@ -52,7 +52,7 @@
               <evaluator>ee.webmedia.alfresco.document.web.evaluator.AddUserToGroupEvaluator</evaluator>
               <label-id>add_to_group</label-id>
               <image>/images/icons/add_user.gif</image>
-              <onclick>showModal('dialog:dialog-body:userGroupSearch_popup'); return false;</onclick>
+              <onclick>showModal('dialog:dialog-body:userGroupSearch_-1_popup'); return false;</onclick>
           </action>
 
           <action id="user_sync">

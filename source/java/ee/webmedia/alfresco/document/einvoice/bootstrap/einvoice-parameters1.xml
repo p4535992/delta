@@ -7,24 +7,28 @@
     <param:stringParameter view:childName="param:sapDvkCode">
       <view:properties>
          <param:value></param:value>
+         <param:name>sapDvkCode</param:name>
       </view:properties>
    </param:stringParameter>
    
     <param:stringParameter view:childName="param:sendInvoiceToDvkFolder">
       <view:properties>
          <param:value></param:value>
+         <param:name>sendInvoiceToDvkFolder</param:name>
       </view:properties>
    </param:stringParameter> 
    
    <param:stringParameter view:childName="param:sendXxlInvoiceToDvkFolder">
       <view:properties>
          <param:value></param:value>
+         <param:name>sendXxlInvoiceToDvkFolder</param:name>
       </view:properties>
    </param:stringParameter>  
    
    <param:stringParameter view:childName="param:sendPurchaseOrderInvoiceToDvkFolder">
       <view:properties>
          <param:value></param:value>
+         <param:name>sendPurchaseOrderInvoiceToDvkFolder</param:name>
       </view:properties>
    </param:stringParameter>   
    
