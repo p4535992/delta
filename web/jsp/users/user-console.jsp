@@ -83,3 +83,5 @@
 <f:verbatim></div></f:verbatim>
 
 <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/user/web/users-groups.jsp" />
+
+<jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/disable-dialog-cancel-button.jsp" />

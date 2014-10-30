@@ -6,6 +6,7 @@
    <param:stringParameter view:childName="param:dvkReceiveDocumentsInvoiceFolder">
       <view:properties>
          <param:value>FINANTS</param:value>
+         <param:name>dvkReceiveDocumentsInvoiceFolder</param:name>
       </view:properties>
    </param:stringParameter>
    

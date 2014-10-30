@@ -7,6 +7,7 @@
    <param:stringParameter view:childName="param:taskOwnerStructUnit">
       <view:properties>
          <param:value></param:value>
+         <param:name>taskOwnerStructUnit</param:name>
          <param:description>Kui parameeter on väärtustatud, siis on võimalik tööülesande saajaks määrata ainult selliseid kasutajaid, kelle struktuuriüksuse raja algus kattub parameetri väärtusega.</param:description>
       </view:properties>
    </param:stringParameter>

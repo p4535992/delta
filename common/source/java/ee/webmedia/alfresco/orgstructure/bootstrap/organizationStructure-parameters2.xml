@@ -6,6 +6,7 @@
    <param:stringParameter view:childName="param:syncUsersGroupsStructUnitsTime">
       <view:properties>
          <param:value>02:00</param:value>
+         <param:name>syncUsersGroupsStructUnitsTime</param:name>
       </view:properties>
    </param:stringParameter>
 

@@ -7,6 +7,7 @@
    <param:stringParameter view:childName="param:docSendoutInfo" >
       <view:properties>
          <param:value>Kui sisestada meiliteate sisu, peab olema saatmisviis e-post</param:value>
+         <param:name>docSendoutInfo</param:name>
       </view:properties>
    </param:stringParameter>   
 

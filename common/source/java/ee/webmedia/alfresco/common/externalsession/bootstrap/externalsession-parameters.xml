@@ -4,6 +4,7 @@
    <param:intParameter view:childName="param:externalSessionExpirationTime">
       <view:properties>
          <param:value>60</param:value>
+         <param:name>externalSessionExpirationTime</param:name>
       </view:properties>
    </param:intParameter>
 

@@ -6,12 +6,14 @@
    <param:stringParameter view:childName="param:emailForSubstituteSubject">
       <view:properties>
          <param:value></param:value>
+         <param:name>emailForSubstituteSubject</param:name>
       </view:properties>
    </param:stringParameter>
 
    <param:intParameter view:childName="param:daysForSubstitutionTasksCalc">
       <view:properties>
          <param:value>3</param:value>
+         <param:name>daysForSubstitutionTasksCalc</param:name>
       </view:properties>
    </param:intParameter>
 

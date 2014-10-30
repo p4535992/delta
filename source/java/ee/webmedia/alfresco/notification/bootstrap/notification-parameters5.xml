@@ -5,6 +5,7 @@ xmlns:param="http://alfresco.webmedia.ee/model/parameters/1.0">
    <param:stringParameter view:childName="param:docManagerEmail">
       <view:properties>
          <param:value></param:value>
+         <param:name>docManagerEmail</param:name>
       </view:properties>
    </param:stringParameter>
    

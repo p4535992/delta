@@ -6,72 +6,84 @@
    <param:stringParameter view:childName="param:leavingLetterContent">
       <view:properties>
          <param:value></param:value>
+         <param:name>leavingLetterContent</param:name>
       </view:properties>
    </param:stringParameter>
 
    <param:stringParameter view:childName="param:trainingAdviser">
       <view:properties>
          <param:value></param:value>
+         <param:name>trainingAdviser</param:name>
       </view:properties>
    </param:stringParameter>
 
    <param:stringParameter view:childName="param:financialDepartmentHeadOnAccounting">
       <view:properties>
          <param:value></param:value>
+         <param:name>financialDepartmentHeadOnAccounting</param:name>
       </view:properties>
    </param:stringParameter>
 
    <param:stringParameter view:childName="param:adviserGeneralDepartmentOnArchives">
       <view:properties>
          <param:value></param:value>
+         <param:name>adviserGeneralDepartmentOnArchives</param:name>
       </view:properties>
    </param:stringParameter>
 
    <param:stringParameter view:childName="param:adviserGeneralDepartmentOnClassifiedRecords">
       <view:properties>
          <param:value></param:value>
+         <param:name>adviserGeneralDepartmentOnClassifiedRecords</param:name>
       </view:properties>
    </param:stringParameter>
 
    <param:stringParameter view:childName="param:deputyHeadOfTheGeneralDepartment">
       <view:properties>
          <param:value></param:value>
+         <param:name>deputyHeadOfTheGeneralDepartment</param:name>
       </view:properties>
    </param:stringParameter>
 
    <param:stringParameter view:childName="param:documentaryProceduresRecipient">
       <view:properties>
          <param:value></param:value>
+         <param:name>documentaryProceduresRecipient</param:name>
       </view:properties>
    </param:stringParameter>
 
    <param:stringParameter view:childName="param:adviserOnICT">
       <view:properties>
          <param:value></param:value>
+         <param:name>adviserOnICT</param:name>
       </view:properties>
    </param:stringParameter>
 
    <param:stringParameter view:childName="param:deputyHeadOfTheAdmDeptOnMaintenance">
       <view:properties>
          <param:value></param:value>
+         <param:name>deputyHeadOfTheAdmDeptOnMaintenance</param:name>
       </view:properties>
    </param:stringParameter>
 
    <param:stringParameter view:childName="param:officialsDirectManager">
       <view:properties>
          <param:value></param:value>
+         <param:name>officialsDirectManager</param:name>
       </view:properties>
    </param:stringParameter>
 
    <param:stringParameter view:childName="param:officialOnPersonnelDepartment">
       <view:properties>
          <param:value></param:value>
+         <param:name>officialOnPersonnelDepartment</param:name>
       </view:properties>
    </param:stringParameter>
 
    <param:stringParameter view:childName="param:vacationOrderLegalBasis">
       <view:properties>
          <param:value></param:value>
+         <param:name>vacationOrderLegalBasis</param:name>
       </view:properties>
    </param:stringParameter>
 
@@ -79,104 +91,122 @@
    <param:stringParameter view:childName="param:procurementLegalBasis">
       <view:properties>
          <param:value></param:value>
+         <param:name>procurementLegalBasis</param:name>
       </view:properties>
    </param:stringParameter>
    <param:stringParameter view:childName="param:procurementObjectClassCode">
       <view:properties>
          <param:value></param:value>
+         <param:name>procurementObjectClassCode</param:name>
       </view:properties>
    </param:stringParameter>
    <param:stringParameter view:childName="param:procurementTenderData">
       <view:properties>
          <param:value></param:value>
+         <param:name>procurementTenderData</param:name>
       </view:properties>
    </param:stringParameter>
    <param:stringParameter view:childName="param:procurementEvaluationCriteria">
       <view:properties>
          <param:value></param:value>
+         <param:name>procurementEvaluationCriteria</param:name>
       </view:properties>
    </param:stringParameter>
    <param:stringParameter view:childName="param:procurementQualificationTermsForTenders">
       <view:properties>
          <param:value></param:value>
+         <param:name>procurementQualificationTermsForTenders</param:name>
       </view:properties>
    </param:stringParameter>
    
    <param:stringParameter view:childName="param:welcomeText">
       <view:properties>
          <param:value>Tere tulemast!</param:value>
+         <param:name>welcomeText</param:name>
       </view:properties>
    </param:stringParameter>
    
    <param:stringParameter view:childName="param:taskSenderEmail">
       <view:properties>
          <param:value></param:value>
+         <param:name>taskSenderEmail</param:name>
       </view:properties>
    </param:stringParameter>
 
    <param:stringParameter view:childName="param:errandOrderLegalBasisForOfficials">
       <view:properties>
          <param:value></param:value>
+         <param:name>errandOrderLegalBasisForOfficials</param:name>
       </view:properties>
    </param:stringParameter>
 
    <param:stringParameter view:childName="param:errandOrderLegalBasisForSupportStaff">
       <view:properties>
          <param:value></param:value>
+         <param:name>errandOrderLegalBasisForSupportStaff</param:name>
       </view:properties>
    </param:stringParameter>
 
    <param:stringParameter view:childName="param:assignResponsibilityInstruction">
       <view:properties>
          <param:value></param:value>
+         <param:name>assignResponsibilityInstruction</param:name>
       </view:properties>
    </param:stringParameter>
    
    <param:stringParameter view:childName="param:docPropLicenceDocName">
       <view:properties>
          <param:value>Luba</param:value>
+         <param:name>docPropLicenceDocName</param:name>
       </view:properties>
    </param:stringParameter>
    
    <param:stringParameter view:childName="param:docPropTenderingApplicationDocName">
       <view:properties>
          <param:value></param:value>
+         <param:name>docPropTenderingApplicationDocName</param:name>
       </view:properties>
    </param:stringParameter>
 
    <param:stringParameter view:childName="param:docPropErrandApplicationDomesticDocName">
       <view:properties>
          <param:value></param:value>
+         <param:name>docPropErrandApplicationDomesticDocName</param:name>
       </view:properties>
    </param:stringParameter>
    
    <param:stringParameter view:childName="param:docPropErrandOrderAbroadDocName">
       <view:properties>
          <param:value></param:value>
+         <param:name>docPropErrandOrderAbroadDocName</param:name>
       </view:properties>
    </param:stringParameter>
    
    <param:stringParameter view:childName="param:docPropManagementsOrderDocName">
       <view:properties>
          <param:value>Juhtkonna korraldus</param:value>
+         <param:name>docPropManagementsOrderDocName</param:name>
       </view:properties>
    </param:stringParameter>
    
    <param:stringParameter view:childName="param:docPropVacationOrderDocName">
       <view:properties>
          <param:value>Puhkuse avaldus</param:value>
+         <param:name>docPropVacationOrderDocName</param:name>
       </view:properties>
    </param:stringParameter>
    
    <param:stringParameter view:childName="param:docPropVacationOrderLegalBasisName">
       <view:properties>
          <param:value>Avaliku teenistuse seaduse § 45 lõigete 1 ja 2, § 65 ja § 108 punkti 2  alusel</param:value>
+         <param:name>docPropVacationOrderLegalBasisName</param:name>
       </view:properties>
    </param:stringParameter>
    
    <param:stringParameter view:childName="param:docPropChancellorsOrderSignerName">
       <view:properties>
          <param:value>Märt Kraft</param:value>
+         <param:name>docPropChancellorsOrderSignerName</param:name>
       </view:properties>
    </param:stringParameter>
 

@@ -218,7 +218,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
 
     @Override
     public List<CompoundWorkflowDefinition> getIndependentCompoundWorkflowDefinitions(String userId) {
-        return getCompoundWorkflowDefinitionsByType(userId, CompoundWorkflowType.INDEPENDENT_WORKFLOW);
+        return getCompoundWorkflowDefinitionsByType(userId, CompoundWorkflowType.INDEPENDENT_WORKFLOW, true);
     }
 
     @Override
@@ -243,7 +243,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
     }
 
     @Override
-    public List<CompoundWorkflowDefinition> getCompoundWorkflowDefinitionsByType(String userId, CompoundWorkflowType workflowType) {
+    public List<CompoundWorkflowDefinition> getCompoundWorkflowDefinitionsByType(String userId, CompoundWorkflowType workflowType, boolean compoundWorkflowsWithoutOwner) {
         NodeRef root = getRoot();
         Set<NodeRef> definitionRefs = bulkLoadNodeService.loadChildRefs(root, WorkflowCommonModel.Props.TYPE, workflowType.name(),
                 WorkflowCommonModel.Types.COMPOUND_WORKFLOW_DEFINITION);
@@ -255,7 +255,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
                 continue;
             }
             String compWorkflowUserId = (String) compoundWorkflowDefinition.getProp(WorkflowCommonModel.Props.USER_ID);
-            if (StringUtils.isBlank(compWorkflowUserId) || StringUtils.equals(userId, compWorkflowUserId)) {
+            if ((compoundWorkflowsWithoutOwner && StringUtils.isBlank(compWorkflowUserId)) || StringUtils.equals(userId, compWorkflowUserId)) {
                 compoundWorkflowDefinitions.add(compoundWorkflowDefinition);
             }
         }
@@ -298,11 +298,15 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
     @Override
     public List<CompoundWorkflowDefinition> getUserCompoundWorkflowDefinitions(String userId) {
         Assert.isTrue(StringUtils.isNotBlank(userId));
-        List<CompoundWorkflowDefinition> compoundWorkflowDefinitions = new ArrayList<CompoundWorkflowDefinition>();
-        for (CompoundWorkflowDefinition compWorkflowDefinition : getActiveCompoundWorkflowDefinitions(false)) {
-            if (StringUtils.equals(userId, compWorkflowDefinition.getUserId())) {
-                compoundWorkflowDefinitions.add(compWorkflowDefinition);
-            }
+        List<CompoundWorkflowDefinition> compoundWorkflowDefinitions = new ArrayList<>();
+        if (applicationConstantsBean.isCaseVolumeEnabled()) {
+            compoundWorkflowDefinitions.addAll(getCompoundWorkflowDefinitionsByType(userId, CompoundWorkflowType.CASE_FILE_WORKFLOW, false));
+        }
+        if (workflowConstantsBean.isDocumentWorkflowEnabled()) {
+            compoundWorkflowDefinitions.addAll(getCompoundWorkflowDefinitionsByType(userId, CompoundWorkflowType.DOCUMENT_WORKFLOW, false));
+        }
+        if (workflowConstantsBean.isIndependentWorkflowEnabled()) {
+            compoundWorkflowDefinitions.addAll(getCompoundWorkflowDefinitionsByType(userId, CompoundWorkflowType.INDEPENDENT_WORKFLOW, false));
         }
         return compoundWorkflowDefinitions;
     }
@@ -1621,7 +1625,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         return task.isType(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK)
                 && ((internalTesting && !Boolean.TRUE.equals(nodeService.getProperty(task.getParent().getParent().getParent(),
                         DocumentCommonModel.Props.NOT_EDITABLE)))
-                        || (!internalTesting && !isResponsibleCurrenInstitution(task)));
+                || (!internalTesting && !isResponsibleCurrenInstitution(task)));
     }
 
     private boolean isResponsibleCurrenInstitution(Task task) {
@@ -2179,7 +2183,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
     @Override
     public int getConnectedActiveResponsibleTasksCount(List<CompoundWorkflow> compoundWorkflows, boolean allowFinished, NodeRef compoundWorkflowToSkip) {
         Status[] allowedStatuses = allowFinished ? new Status[] { Status.NEW, Status.IN_PROGRESS, Status.STOPPED, Status.FINISHED } :
-            new Status[] { Status.NEW, Status.IN_PROGRESS, Status.STOPPED };
+                new Status[] { Status.NEW, Status.IN_PROGRESS, Status.STOPPED };
         int counter = 0;
         for (CompoundWorkflow compoundWorkflow : compoundWorkflows) {
             if (!compoundWorkflow.isStatus(allowedStatuses) || compoundWorkflow.getNodeRef().equals(compoundWorkflowToSkip)) {
@@ -2491,11 +2495,11 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
                 propertyTypes,
                 new CreateObjectCallback<Node>() {
 
-                    @Override
-                    public Node create(NodeRef nodeRef, Map<QName, Serializable> properties) {
-                        return new WmNode(nodeRef, WorkflowCommonModel.Types.COMPOUND_WORKFLOW, null, properties);
-                    }
-                });
+            @Override
+            public Node create(NodeRef nodeRef, Map<QName, Serializable> properties) {
+                return new WmNode(nodeRef, WorkflowCommonModel.Types.COMPOUND_WORKFLOW, null, properties);
+            }
+        });
         List<Node> docCompoundWorkflows = docCompoundWorkflowsMap.get(docRef);
         boolean docCWFnotEmpty = CollectionUtils.isNotEmpty(docCompoundWorkflows);
         if (docCWFnotEmpty) {
@@ -3412,17 +3416,17 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
                     // contact found, but dvk not enabled
                     if (task.getParent() != null && task.getParent().getParent() != null) {
                         task.getParent()
-                                .getParent()
-                                .getReviewTaskDvkInfoMessages()
-                                .add(new Pair<String, Object[]>("review_task_organization_contact_dvk_disabled", new Object[] { task.getOwnerName(),
-                                        orgProps.get(Props.ORGANIZATION_NAME), institutionRegCode }));
+                        .getParent()
+                        .getReviewTaskDvkInfoMessages()
+                        .add(new Pair<String, Object[]>("review_task_organization_contact_dvk_disabled", new Object[] { task.getOwnerName(),
+                                orgProps.get(Props.ORGANIZATION_NAME), institutionRegCode }));
                     }
                     return null;
                 }
                 // organization contact not found
                 if (task.getParent() != null && task.getParent().getParent() != null) {
                     task.getParent().getParent().getReviewTaskDvkInfoMessages()
-                            .add(new Pair<String, Object[]>("review_task_organization_missing_contact", new Object[] { task.getOwnerName(), institutionRegCode }));
+                    .add(new Pair<String, Object[]>("review_task_organization_missing_contact", new Object[] { task.getOwnerName(), institutionRegCode }));
                 }
                 return null;
             }

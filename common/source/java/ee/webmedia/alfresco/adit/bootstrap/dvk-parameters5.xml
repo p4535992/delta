@@ -4,6 +4,7 @@
   <param:intParameter view:childName="param:aditReceiveDocSendStatusesInterval">
     <view:properties>
       <param:value>10</param:value>
+      <param:name>aditReceiveDocSendStatusesInterval</param:name>
     </view:properties>
   </param:intParameter>
 

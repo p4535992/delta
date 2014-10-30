@@ -7,6 +7,7 @@
    <param:stringParameter view:childName="param:invoiceEntryDateOnlyInCurrentYear">
       <view:properties>
          <param:value>true</param:value>
+         <param:name>invoiceEntryDateOnlyInCurrentYear</param:name>
       </view:properties>
    </param:stringParameter>
    

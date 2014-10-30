@@ -226,7 +226,7 @@ public interface WorkflowService {
 
     CompoundWorkflow reopenCompoundWorkflow(CompoundWorkflow compoundWorkflow);
 
-    List<CompoundWorkflowDefinition> getCompoundWorkflowDefinitionsByType(String userId, CompoundWorkflowType workflowType);
+    List<CompoundWorkflowDefinition> getCompoundWorkflowDefinitionsByType(String userId, CompoundWorkflowType workflowType, boolean compoundWorkflowsWithoutOwner);
 
     List<RelatedUrl> getRelatedUrls(NodeRef compoundWorkflowRef);
 

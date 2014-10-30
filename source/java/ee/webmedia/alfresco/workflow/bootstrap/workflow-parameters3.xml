@@ -6,6 +6,7 @@
    <param:intParameter view:childName="param:largeWorkflowWarningTaskCount">
       <view:properties>
          <param:value>500</param:value>
+         <param:name>largeWorkflowWarningTaskCount</param:name>
       </view:properties>
    </param:intParameter>
 

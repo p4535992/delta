@@ -6,6 +6,7 @@
    <param:stringParameter view:childName="param:volumeAutomaticClosingTime">
       <view:properties>
          <param:value>00:00</param:value>
+         <param:name>volumeAutomaticClosingTime</param:name>
       </view:properties>
    </param:stringParameter>
 

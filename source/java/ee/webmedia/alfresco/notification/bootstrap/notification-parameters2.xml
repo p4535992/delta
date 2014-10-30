@@ -5,6 +5,7 @@ xmlns:param="http://alfresco.webmedia.ee/model/parameters/1.0">
    <param:intParameter view:childName="param:contractDueDateNotificationDays">
       <view:properties>
          <param:value>30</param:value>
+         <param:name>contractDueDateNotificationDays</param:name>
       </view:properties>
    </param:intParameter>
    
