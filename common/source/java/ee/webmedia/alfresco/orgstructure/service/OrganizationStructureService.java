@@ -70,8 +70,20 @@ public interface OrganizationStructureService {
     void createOrganisationStructure(OrganizationStructure org);
 
     int updateOrganisationStructureBasedGroups();
-
+    
     void updateOrganisationStructureBasedGroups(ActionEvent event);
+
+    int removeUsersFromOldOrganisationStructureBasedGroups();
+    
+    void removeUsersFromOldOrganisationStructureBasedGroups(ActionEvent event);
+
+    int removeOrganisationStructureBasedGroups();
+    
+    void removeOrganisationStructureBasedGroups(ActionEvent event);
+
+    int removeOrganisationStructureBasedGroupsSim();
+    
+    void removeOrganisationStructureBasedGroupsSim(ActionEvent event);
 
     List<String> getOrganizationStructurePaths(String value);
 

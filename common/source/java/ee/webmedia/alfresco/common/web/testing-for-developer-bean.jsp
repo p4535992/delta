@@ -11,6 +11,38 @@
 <hr/>
 <f:verbatim>
 <b><br/><br/><h:outputText styleClass="mainTitle" value="Skriptid"/></b><br/></f:verbatim>
+
+<f:verbatim><hr/></f:verbatim>
+<f:verbatim><br/></f:verbatim>
+<f:verbatim><br/></f:verbatim>
+<h:outputText value="Kasutajate ja gruppide andmete uuendamise protsess koosneb mitmest osast. Vajutada nuppe järgemööda."/>
+<f:verbatim><br/></f:verbatim>
+<h:commandButton id="updateOrganisationStructures" value="Step 1 - Uuendame AMR-ist asutuse struktuuri" type="submit"
+   actionListener="#{OrganizationStructureService.updateOrganisationStructures}" />
+<f:verbatim><br/></f:verbatim>
+<h:commandButton id="updateUsersAndGroups" value="Step 2 - Uuendame AMR-ist asutuse töötajaid" type="submit"
+   actionListener="#{TestingForDeveloperBean.updateUsersAndGroups}" />
+<f:verbatim><br/></f:verbatim>
+<h:commandButton id="updateOrganisationStructureBasedGroups" value="Step 3 - Uuendame asutuse struktuuri alusel gruppe (andmed punkti 1 ja 2 tulemitest)" type="submit"
+   actionListener="#{OrganizationStructureService.updateOrganisationStructureBasedGroups}" />
+<f:verbatim><br/></f:verbatim>
+<f:verbatim><br/></f:verbatim>
+<h:outputText value="Kui soovite kasutajaid eemaldada vanadest gruppidest, siis vajutage nupule 4. Kui soovite vanad grupid kustutada, siis vajutage nupule 5"/>
+<f:verbatim><br/></f:verbatim>
+<h:commandButton id="removeUsersFromOldOrganisationStructureBasedGroups" value="Step 4 - Eemaldame töötajad asutuse vanal struktuuril põhinevad grupidest" type="submit"
+   actionListener="#{OrganizationStructureService.removeUsersFromOldOrganisationStructureBasedGroups}" />
+<f:verbatim><br/></f:verbatim>
+<h:commandButton id="removeOrganisationStructureBasedGroups" value="Step 5 - Kustutame asutuse vanal struktuuril põhinevad grupid" type="submit"
+   actionListener="#{OrganizationStructureService.removeOrganisationStructureBasedGroups}" />
+   <f:verbatim><br/></f:verbatim>
+   <f:verbatim><br/></f:verbatim>
+<h:outputText value="Soovide saada logisse vanade gruppide loendit, mis kustutatakse, siis käivitada simulaator. Eeldusel, et ee.webmedia.alfresco.orgstructure.job.UpdateUsersGroupsOrganizationsListJob klass on trace tasemega logimises."/>
+<f:verbatim><br/></f:verbatim>
+<h:commandButton id="removeOrganisationStructureBasedGroupsSim" value="Simulaator - käivitame vanal struktuuril põhinevate gruppide kustutamise" type="submit"
+   actionListener="#{OrganizationStructureService.removeOrganisationStructureBasedGroupsSim}" />
+   <f:verbatim><br/></f:verbatim>
+<f:verbatim><hr/></f:verbatim>
+ 
 	<h:outputText value="Tööülesannete kustutamine repost. NB!!! Enne kasutamist veendu, et kõik updaterid, mis tööülesannete andmeid repost andmebaasi tabelitesse kirjutavad, on edukalt lõpuni jooksnud!!!! Vastasel korral ei saa tööülesannete andmeid enam taastada!!!"/>
 	<f:verbatim><br/></f:verbatim>
 	<h:outputText value="numberOfTasksInSingleTransaction: "/>
@@ -216,16 +248,7 @@
 <f:verbatim><br/></f:verbatim>
 <h:commandButton id="destroyArchivedVolumes" value="destroyArchivedVolumes" type="submit"
    actionListener="#{ArchivalsService.destroyArchivedVolumes}" rendered="#{ApplicationService.test}" />
-<f:verbatim><br/></f:verbatim>
-<h:commandButton id="updateOrganisationStructures" value="updateOrganisationStructures" type="submit"
-   actionListener="#{OrganizationStructureService.updateOrganisationStructures}" />
-<f:verbatim><br/></f:verbatim>
-<h:commandButton id="updateUsersAndGroups" value="updateUsersAndGroups" type="submit"
-   actionListener="#{TestingForDeveloperBean.updateUsersAndGroups}" />
-<f:verbatim><br/></f:verbatim>
-<h:commandButton id="updateOrganisationStructureBasedGroups" value="updateOrganisationStructureBasedGroups" type="submit"
-   actionListener="#{OrganizationStructureService.updateOrganisationStructureBasedGroups}" rendered="#{ApplicationService.test}" />
-   <f:verbatim><br/></f:verbatim>
+ <f:verbatim><br/></f:verbatim>
 
 <h:outputText id="reportGenerationTitle" value="Aruannete genereerimine: " />
 <f:verbatim><br/></f:verbatim>

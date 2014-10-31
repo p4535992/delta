@@ -99,34 +99,7 @@ public class AMRUserRegistry implements UserRegistry, ActivateableBean {
     @Override
     public Iterator<NodeDescription> getGroups(Date modifiedSince) {
     	log.info("Groups sync process type: AMR :: groups syncronizing not implemented by group sync process. Returning empty list!");
-    	YksusExt[] yksusArray = amrService.getYksusByAsutusId();
-        //List<OrganizationStructure> orgStructures = new ArrayList<OrganizationStructure>(yksusArray.length);
-        Map<String, NodeDescription> lookup = new TreeMap<String, NodeDescription>();
-        for (YksusExt yksus : yksusArray) {
-            //orgStructures.add(yksusToOrganizationStructure(yksus));
-        	List<String> yksusRada = UserUtil.formatYksusRadaToOrganizationPath(yksus.getYksusRada());
-
-        	for (String yksusObj: yksusRada){
-        		String gid = "GROUP_" + yksusObj;
-        		
-        		NodeDescription group = lookup.get(gid);
-                if (group == null){
-                	log.debug("Adding GROUP name: " + gid);
-                    group = new NodeDescription();
-                    group.getProperties().put(ContentModel.PROP_AUTHORITY_NAME, gid);
-                    lookup.put(gid, group);
-                    
-                    //TODO: Child associations part in this section is no clear
-                    //Set<String> childAssocs = group.getChildAssociations();
-                    
-                } else {
-                	log.debug("Found duplicate group name (" + gid + "). Skip...");
-                }
-        	}
-        }
-        
-        return lookup.values().iterator();
-        //return Collections.<NodeDescription> emptyList().iterator();
+        return Collections.<NodeDescription> emptyList().iterator();
     }
 
     /**
