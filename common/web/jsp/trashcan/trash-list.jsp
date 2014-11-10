@@ -92,7 +92,7 @@
       <h:inputText id="search-text" value="#{TrashcanDialogProperty.searchText}" size="35" maxlength="1024" onkeyup="updateButtonState();"
          onchange="updateButtonState();" />
       <f:verbatim>&nbsp;</f:verbatim>      
-      <h:commandButton id="search-btn" value="#{msg.search}" styleClass="specificAction" actionListener="#{DialogManager.bean.searchObjects}" disabled="true" />      
+      <h:commandButton id="search-btn" value="#{msg.search}" styleClass="defaultAction" actionListener="#{DialogManager.bean.searchObjects}" disabled="true" />      
    </a:panel>
 
    <%-- Filter controls --%>

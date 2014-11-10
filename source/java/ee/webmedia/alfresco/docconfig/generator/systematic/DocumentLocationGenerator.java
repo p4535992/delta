@@ -34,6 +34,7 @@ import javax.faces.event.PhaseId;
 import javax.faces.event.ValueChangeEvent;
 import javax.faces.model.SelectItem;
 
+import ee.webmedia.alfresco.common.propertysheet.component.WMUIProperty;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
 import org.alfresco.service.cmr.repository.NodeRef;
@@ -269,7 +270,8 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
             caseLabelEditableItem.setDisplayLabel(item.getDisplayLabel());
             caseLabelEditableItem.setReadOnly(item.isReadOnly());
             String readOnlyIf = item.getCustomAttributes().get(BaseComponentGenerator.READONLY_IF);
-            if (forSearch) {
+            String renderCheckboxAfterLabel = item.getCustomAttributes().get(WMUIProperty.RENDER_CHECKBOX_AFTER_LABEL);
+            if (forSearch && (StringUtils.isBlank(renderCheckboxAfterLabel) || Boolean.valueOf(renderCheckboxAfterLabel))) {
                 caseLabelEditableItem.setRenderCheckboxAfterLabel(true);
             }
             if (readOnlyIf != null) {

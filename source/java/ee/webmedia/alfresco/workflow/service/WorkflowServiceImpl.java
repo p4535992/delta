@@ -3052,8 +3052,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
             stopIfNeeded(task, queue);
         }
         CompoundWorkflow compoundWorkflow = task.getParent().getParent();
-        if (!compoundWorkflow.isCaseFileWorkflow() && task.isType(WorkflowSpecificModel.Types.REVIEW_TASK)
-                && (outcomeIndex == REVIEW_TASK_OUTCOME_ACCEPTED || outcomeIndex == REVIEW_TASK_OUTCOME_ACCEPTED_WITH_COMMENT)) {
+        if (!compoundWorkflow.isCaseFileWorkflow() && task.isType(WorkflowSpecificModel.Types.REVIEW_TASK)) {
             List<File> files = new ArrayList<File>();
             if (compoundWorkflow.isDocumentWorkflow()) {
                 files.addAll(fileService.getAllFilesExcludingDigidocSubitems(compoundWorkflow.getParent()));

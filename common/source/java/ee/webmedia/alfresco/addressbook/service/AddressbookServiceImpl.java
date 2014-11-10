@@ -223,7 +223,7 @@ public class AddressbookServiceImpl extends AbstractSearchServiceImpl implements
     }
 
     @Override
-    public MessageDataWrapper addToGroup(NodeRef groupNodeRef, List<UserDetails> usersForGroup) {
+    public MessageDataWrapper addToGroup(NodeRef groupNodeRef, List<UserDetails> usersForGroup, boolean createAddedToGroupInfo) {
         List<AssociationRef> assocRefs = nodeService.getTargetAssocs(groupNodeRef, RegexQNamePattern.MATCH_ALL);
         final HashSet<String> existingRefs = new HashSet<String>();
         for (AssociationRef assocRef : assocRefs) {
@@ -241,7 +241,9 @@ public class AddressbookServiceImpl extends AbstractSearchServiceImpl implements
                     feedBack.addFeedbackItem(new MessageDataImpl(MessageSeverity.ERROR, "addressbook_contactgroup_task_capable_org_missing_email"));
                 } else {
                     addToGroup(groupNodeRef, contactNodeRef);
-                    feedBack.addFeedbackItem(new MessageDataImpl(MessageSeverity.INFO, "addressbook_added_to_contactgroup"));
+                    if (createAddedToGroupInfo) {
+                        feedBack.addFeedbackItem(new MessageDataImpl(MessageSeverity.INFO, "addressbook_added_to_contactgroup"));
+                    }
                 }
             }
         }

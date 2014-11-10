@@ -1472,7 +1472,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, N
 
         NodeRef archivedRef = new NodeRef(StoreRef.STORE_REF_ARCHIVE_SPACESSTORE, nodeRef.getId());
         String location = nodeService.exists(archivedRef) ? (String) nodeService.getProperty(archivedRef, ContentModel.PROP_ARCHIVED_ORIGINAL_LOCATION_STRING) : "";
-        logService.addLogEntry(LogEntry.create(LogObject.DOCUMENT, userService, nodeRef, "document_log_status_deleted", status, location));
+        logService.addLogEntry(LogEntry.create(LogObject.DOCUMENT, userService, nodeRef, "document_log_status_deleted_from", status, location));
 
         if (updateMenu) {
             menuService.process(BeanHelper.getMenuBean().getMenu(), false, true);

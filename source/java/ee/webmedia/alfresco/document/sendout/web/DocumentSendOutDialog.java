@@ -304,6 +304,7 @@ public class DocumentSendOutDialog extends BaseDialogBean {
         }
 
         addAdditionalRecipients(props, names, idCodes, emails, groups);
+        removeEmptyValuesLeavingOneEmptyLineIfNeeded(names, emails, groups);
         List<String> recSendModes = new ArrayList<String>(names.size());
         for (int i = 0; i < names.size(); i++) {
             if (StringUtils.isNotBlank(names.get(i)) || StringUtils.isNotBlank(emails.get(i))) {
@@ -322,34 +323,15 @@ public class DocumentSendOutDialog extends BaseDialogBean {
         model.setProperties(properties);
     }
 
+    @SuppressWarnings("unchecked")
     private void addAdditionalRecipients(Map<String, Object> props, List<String> names, List<String> idCodes, List<String> emails, List<String> groups) {
-        @SuppressWarnings("unchecked")
         List<String> namesAdd = newListIfNull((List<String>) props.get(DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME), false);
-        @SuppressWarnings("unchecked")
         List<String> idCodesAdd = newListIfNull((List<String>) props.get(DocumentDynamicModel.Props.ADDITIONAL_RECIPIENT_ID), false);
-        @SuppressWarnings("unchecked")
         List<String> emailsAdd = newListIfNull((List<String>) props.get(DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_EMAIL), false);
-        @SuppressWarnings("unchecked")
         List<String> groupsAdd = newListIfNull((List<String>) props.get(DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_GROUP), false);
         RepoUtil.validateSameSize(namesAdd, emailsAdd, "additionalNames", "additionalEmails");
         while (groupsAdd.size() < namesAdd.size()) {
             groupsAdd.add("");
-        }
-
-        List<Integer> removeIndexes = new ArrayList<Integer>();
-        int j = 0;
-        for (Iterator<String> it = emailsAdd.iterator(); it.hasNext();) {
-            String email = it.next();
-            if (StringUtils.isBlank(email) && StringUtils.isBlank(namesAdd.get(j))) {
-                it.remove();
-                removeIndexes.add(j);
-            }
-            j++;
-        }
-        Collections.reverse(removeIndexes);
-        for (Integer index : removeIndexes) {
-            namesAdd.remove((int) index);
-            groupsAdd.remove((int) index);
         }
 
         names.addAll(namesAdd);
@@ -367,6 +349,29 @@ public class DocumentSendOutDialog extends BaseDialogBean {
             emails.add("");
         }
         if (groups.isEmpty()) {
+            groups.add("");
+        }
+    }
+
+    private void removeEmptyValuesLeavingOneEmptyLineIfNeeded(List<String> names, List<String> emails, List<String> groups) {
+        List<Integer> removeIndexes = new ArrayList<Integer>();
+        int j = 0;
+        for (Iterator<String> it = names.iterator(); it.hasNext();) {
+            String name = it.next();
+            if (StringUtils.isBlank(name) && StringUtils.isBlank(emails.get(j))) {
+                it.remove();
+                removeIndexes.add(j);
+            }
+            j++;
+        }
+        Collections.reverse(removeIndexes);
+        for (Integer index : removeIndexes) {
+            emails.remove((int) index);
+            groups.remove((int) index);
+        }
+        if (names.size() == 0) {
+            names.add("");
+            emails.add("");
             groups.add("");
         }
     }

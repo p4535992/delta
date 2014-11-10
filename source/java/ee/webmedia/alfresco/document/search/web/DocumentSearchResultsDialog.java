@@ -71,17 +71,19 @@ public class DocumentSearchResultsDialog extends BaseDocumentListDialog {
     public static final String WORKFLOW_STATE_COL = "workflowStatus";
     public static final String SENDER_COL = "sender";
     public static final String DOC_NAME_COL = "docName";
+    public static final String DOC_CREATED_DATE_COL = "createdDateStr";
     private static final long serialVersionUID = 1L;
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DocumentSearchResultsDialog.class);
     public static final String BEAN_NAME = "DocumentSearchResultsDialog";
 
-    private static Map<QName/* FieldDefinition prop name */, Pair<String /* property name */, String /* translation key */>> CUSTOM_COLUMNS = new HashMap<QName, Pair<String, String>>();
+    private static Map<QName/* FieldDefinition prop name */, Pair<String /* property name */, String /* translation key */>> CUSTOM_COLUMNS = new HashMap<>();
     static {
-        CUSTOM_COLUMNS.put(DocumentSearchModel.Props.DOCUMENT_TYPE, new Pair<String, String>(DOCUMENT_TYPE_NAME_COL, "document_docType"));
-        CUSTOM_COLUMNS.put(DocumentSearchModel.Props.SEND_MODE, new Pair<String, String>(SEND_MODE_COL, "document_send_mode"));
-        CUSTOM_COLUMNS.put(DocumentSearchModel.Props.SEND_INFO_RECIPIENT, new Pair<String, String>(SEND_INFO_RECIPIENT_COL, "document_search_export_recipient"));
-        CUSTOM_COLUMNS.put(DocumentSearchModel.Props.SEND_INFO_SEND_DATE_TIME, new Pair<String, String>(SEND_INFO_SEND_DATE_TIME_COL, "document_search_send_info_time"));
-        CUSTOM_COLUMNS.put(DocumentSearchModel.Props.SEND_INFO_RESOLUTION, new Pair<String, String>(SEND_INFO_RESOLUTION_COL, "document_search_send_info_resolution"));
+        CUSTOM_COLUMNS.put(DocumentSearchModel.Props.DOCUMENT_TYPE, new Pair<>(DOCUMENT_TYPE_NAME_COL, "document_docType"));
+        CUSTOM_COLUMNS.put(DocumentSearchModel.Props.SEND_MODE, new Pair<>(SEND_MODE_COL, "document_send_mode"));
+        CUSTOM_COLUMNS.put(DocumentSearchModel.Props.SEND_INFO_RECIPIENT, new Pair<>(SEND_INFO_RECIPIENT_COL, "document_search_export_recipient"));
+        CUSTOM_COLUMNS.put(DocumentSearchModel.Props.SEND_INFO_SEND_DATE_TIME, new Pair<>(SEND_INFO_SEND_DATE_TIME_COL, "document_search_send_info_time"));
+        CUSTOM_COLUMNS.put(DocumentSearchModel.Props.SEND_INFO_RESOLUTION, new Pair<>(SEND_INFO_RESOLUTION_COL, "document_search_send_info_resolution"));
+        CUSTOM_COLUMNS.put(DocumentSearchModel.Props.DOCUMENT_CREATED, new Pair<>(DOC_CREATED_DATE_COL, "document_search_document_created"));
     }
 
     protected Node searchFilter;

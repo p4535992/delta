@@ -179,8 +179,18 @@ public class FieldMappingsListBean implements Serializable {
     }
 
     private static final Set<FieldType> TO_TEXT_FIELD_COMPATIBLE_TYPES = new HashSet<FieldType>(
-            Arrays.asList(FieldType.COMBOBOX, FieldType.COMBOBOX_EDITABLE, FieldType.USER, FieldType.CONTACT, FieldType.USERS
-                    , FieldType.CONTACTS, FieldType.USERS_CONTACTS, FieldType.COMBOBOX_AND_TEXT, FieldType.COMBOBOX_AND_TEXT_NOT_EDITABLE, FieldType.STRUCT_UNIT));
+            Arrays.asList(
+                    FieldType.COMBOBOX,
+                    FieldType.COMBOBOX_EDITABLE,
+                    FieldType.USER,
+                    FieldType.CONTACT,
+                    FieldType.USER_CONTACT,
+                    FieldType.USERS,
+                    FieldType.CONTACTS,
+                    FieldType.USERS_CONTACTS,
+                    FieldType.COMBOBOX_AND_TEXT,
+                    FieldType.COMBOBOX_AND_TEXT_NOT_EDITABLE
+                    ));
     private static final Set<FieldType> FROM_USER_CONTACT_COMPATIBLE_TYPES = new HashSet<FieldType>(
             Arrays.asList(FieldType.USERS, FieldType.USER_CONTACT, FieldType.USERS_CONTACTS));
 
@@ -277,19 +287,19 @@ public class FieldMappingsListBean implements Serializable {
             return f.getNameAndFieldId();
         }
 
-        private boolean isFieldTypeCompatible(Field otherField) {
-            FieldType otherFieldType = otherField.getFieldTypeEnum();
-            FieldType fieldTypeEnum = field.getFieldTypeEnum();
-            boolean fieldTypesCompatible = fieldTypeEnum.equals(otherFieldType);
+        private boolean isFieldTypeCompatible(Field relatedDocField) {
+            FieldType relatedDocFieldType = relatedDocField.getFieldTypeEnum();
+            FieldType docFieldType = field.getFieldTypeEnum();
+            boolean fieldTypesCompatible = docFieldType.equals(relatedDocFieldType);
             if (!fieldTypesCompatible) {
-                if (otherFieldType.equals(FieldType.TEXT_FIELD) && TO_TEXT_FIELD_COMPATIBLE_TYPES.contains(fieldTypeEnum)) {
+                if (relatedDocFieldType.equals(FieldType.TEXT_FIELD) && TO_TEXT_FIELD_COMPATIBLE_TYPES.contains(docFieldType)) {
                     fieldTypesCompatible = true;
-                } else if ((FieldType.USER.equals(fieldTypeEnum) || FieldType.CONTACT.equals(fieldTypeEnum)) && FROM_USER_CONTACT_COMPATIBLE_TYPES.contains(otherFieldType)) {
+                } else if ((FieldType.USER.equals(docFieldType) || FieldType.CONTACT.equals(docFieldType)) && FROM_USER_CONTACT_COMPATIBLE_TYPES.contains(relatedDocFieldType)) {
                     // allow mapping from (user or contact) to (users, contacts, users/contacts)
                     fieldTypesCompatible = true;
-                } else if (FieldType.USERS.equals(fieldTypeEnum) && FieldType.USER.equals(otherFieldType)) {
+                } else if (FieldType.USERS.equals(docFieldType) && FieldType.USER.equals(relatedDocFieldType)) {
                     fieldTypesCompatible = true;
-                } else if (FieldType.CONTACTS.equals(fieldTypeEnum) && FieldType.CONTACT.equals(otherFieldType)) {
+                } else if (FieldType.CONTACTS.equals(docFieldType) && FieldType.CONTACT.equals(relatedDocFieldType)) {
                     fieldTypesCompatible = true;
                 }
             }

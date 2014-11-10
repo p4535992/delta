@@ -900,6 +900,8 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
                     }
                 }
                 formulas.put(propName, StringUtils.join(items.iterator(), separator));
+            } else {
+                formulas.put(propName, getTypeSpecificReplacement(propValue, false));
             }
         }
 

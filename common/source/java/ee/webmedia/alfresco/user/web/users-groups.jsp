@@ -14,7 +14,7 @@
          <%-- Primary column for details view mode --%>
          <a:column primary="true" style="padding:2px;text-align:left">
             <f:facet name="small-icon">
-               <a:actionLink value="#{r.name}" image="/images/icons/group.gif" actionListener="#{GroupsDialog.clickGroup}" showLink="false">
+               <a:actionLink value="#{r.name}" image="/images/icons/group.gif" actionListener="#{GroupUsersListDialog.clickGroup}" showLink="false">
                   <f:param id="ugParam1" name="id" value="#{r.id}" />
                </a:actionLink>
             </f:facet>
@@ -22,7 +22,7 @@
                <a:sortLink label="#{msg.addressbook_group_name}" value="id" mode="case-insensitive" styleClass="header"/>
             </f:facet>
             
-            <a:actionLink value="#{r.displayName}" action="dialog:groupUsersListDialog" actionListener="#{GroupsDialog.clickGroup}" rendered="#{UserService.documentManager}">
+            <a:actionLink value="#{r.displayName}" action="dialog:groupUsersListDialog" actionListener="#{GroupUsersListDialog.clickGroup}" rendered="#{UserService.documentManager}">
                <f:param id="ugParam2" name="id" value="#{r.id}" />
             </a:actionLink>
             <h:outputText value="#{r.displayName}" rendered="#{!UserService.documentManager}" />

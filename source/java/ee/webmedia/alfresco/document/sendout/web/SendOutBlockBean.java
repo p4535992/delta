@@ -2,12 +2,10 @@ package ee.webmedia.alfresco.document.sendout.web;
 
 import java.util.List;
 
-import javax.faces.context.FacesContext;
-
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.bean.repository.Node;
-import org.springframework.web.jsf.FacesContextUtils;
 
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docconfig.generator.DialogDataProvider;
 import ee.webmedia.alfresco.docdynamic.web.DocumentDynamicBlock;
 import ee.webmedia.alfresco.document.sendout.model.SendInfo;
@@ -66,8 +64,7 @@ public class SendOutBlockBean implements DocumentDynamicBlock {
 
     public SendOutService getSendOutService() {
         if (sendOutService == null) {
-            sendOutService = (SendOutService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())//
-                    .getBean(SendOutService.BEAN_NAME);
+            sendOutService = BeanHelper.getSendOutService();
         }
         return sendOutService;
     }

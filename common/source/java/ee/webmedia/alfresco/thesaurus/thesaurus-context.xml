@@ -48,7 +48,6 @@
    
    <bean id="thesaurusService" class="ee.webmedia.alfresco.thesaurus.service.ThesaurusServiceImpl">
       <property name="nodeService" ref="NodeService" />
-      <property name="generalService" ref="GeneralService" />
       <property name="documentSearchService" ref="DocumentSearchService" />
    </bean>
 

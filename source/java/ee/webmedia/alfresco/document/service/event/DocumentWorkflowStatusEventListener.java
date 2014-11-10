@@ -24,6 +24,7 @@ import ee.webmedia.alfresco.docadmin.service.CaseFileType;
 import ee.webmedia.alfresco.docadmin.service.DocumentTypeVersion;
 import ee.webmedia.alfresco.docadmin.service.Field;
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
+import ee.webmedia.alfresco.docdynamic.web.DocumentLockHelperBean;
 import ee.webmedia.alfresco.document.lock.service.DocLockService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.service.DocumentService;
@@ -100,7 +101,7 @@ public class DocumentWorkflowStatusEventListener implements WorkflowEventListene
             if (!allowFinishUnregisteredDocs && isNotRegistered(document)) {
                 logService.addLogEntry(LogEntry.create(LogObject.DOCUMENT, userService, documentRef, "applog_compoundWorkflow_finish_document_error_not_registered"));
             } else if (docLockService.isLockByOther(documentRef)) {
-                Pair<String, Object[]> errorMessageKeyAndValueHolders = BeanHelper.getDocumentLockHelperBean().getErrorMessageKeyAndValueHolders("document_end_error_docLocked",
+                Pair<String, Object[]> errorMessageKeyAndValueHolders = DocumentLockHelperBean.getErrorMessageKeyAndValueHolders("document_end_error_docLocked",
                         documentRef, new Object[0]);
                 logService.addLogEntry(LogEntry.create(LogObject.DOCUMENT, userService, documentRef, errorMessageKeyAndValueHolders.getFirst(),
                         errorMessageKeyAndValueHolders.getSecond()));

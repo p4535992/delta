@@ -199,7 +199,7 @@
          <action id="addressbook_add_to_group">
             <label-id>addressbook_add_to_contactgroup</label-id>
             <image>/images/icons/add_group.gif</image>
-            <onclick>showModal('dialog:dialog-body:addressbook_add_to_group_popup'); return false;</onclick>
+            <onclick>showModal('dialog:dialog-body:addressbook_add_to_group_-1_popup'); return false;</onclick>
          </action>
 
          <!-- Action menu for Addressbook-->

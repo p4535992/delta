@@ -324,7 +324,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
 
         addDocLocationConfigFields(config, true, additionalStateHolderKey, false);
 
-        addDocumentCreatedConfigItem(config);
+        addDocumentCreatedConfigItem(false, config);
 
         if (regDateFilterInAssociationsSearch) {
             // docsearch:documentRegistered
@@ -466,7 +466,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
             }
         }
 
-        addDocumentCreatedConfigItem(config);
+        addDocumentCreatedConfigItem(withCheckboxes, config);
 
         return config;
     }
@@ -519,11 +519,12 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
         }
     }
 
-    private void addDocumentCreatedConfigItem(DocumentConfig config) {
+    private void addDocumentCreatedConfigItem(boolean withCheckboxes, DocumentConfig config) {
         {
             // docsearch:documentCreated
             QName prop = DocumentSearchModel.Props.DOCUMENT_CREATED;
             ItemConfigVO itemConfig = createItemConfigVO(prop);
+            itemConfig.setRenderCheckboxAfterLabel(withCheckboxes);
             itemConfig.setConfigItemType(ConfigItemType.PROPERTY);
             DateGenerator.setupDateFilterItemConfig(itemConfig, prop);
             config.getPropertySheetConfigElement().addItem(itemConfig);

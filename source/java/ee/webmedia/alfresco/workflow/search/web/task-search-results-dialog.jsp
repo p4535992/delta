@@ -72,7 +72,7 @@
          <f:facet name="header">
             <a:sortLink id="col5-header" label="#{msg.task_search_result_creatorName}" value="creatorName" styleClass="header" />
          </f:facet>
-         <a:actionLink id="col5-txt" value="#{r.creatorName}" action="#{DocumentDialog.action}" tooltip="#{r.docName}" showLink="false" actionListener="#{DocumentDialog.open}" styleClass="no-underline" rendered="#{!r.linkedReviewTask && r.documentWorkflow}" >
+         <a:actionLink id="col5-txt" value="#{r.creatorName}" action="#{DocumentDialog.action}" tooltip="#{r.creatorName}" showLink="false" actionListener="#{DocumentDialog.open}" styleClass="no-underline" rendered="#{!r.linkedReviewTask && r.documentWorkflow}" >
             <f:param name="nodeRef" value="#{r.documentNodeRef}" />
          </a:actionLink>
          <a:actionLink id="col5-txt1" value="#{r.creatorName}" action="dialog:compoundWorkflowDialog" tooltip="#{r.creatorName}" showLink="false" actionListener="#{CompoundWorkflowDialog.setupWorkflowFromList}" styleClass="no-underline" rendered="#{r.independentWorkflow || r.caseFileWorkflow}" >

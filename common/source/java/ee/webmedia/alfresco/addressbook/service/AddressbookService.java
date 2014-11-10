@@ -92,7 +92,7 @@ public interface AddressbookService {
      * @param usersForGroup
      * @return feedback about items that already existed in the group
      */
-    MessageDataWrapper addToGroup(NodeRef groupNodeRef, List<UserDetails> usersForGroup);
+    MessageDataWrapper addToGroup(NodeRef groupNodeRef, List<UserDetails> usersForGroup, boolean createAddedToGroupInfo);
 
     /**
      * Remove a member from the group by deleting the association from groupNodeRef to memberNodeRef.
