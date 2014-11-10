@@ -217,7 +217,6 @@ public class GroupUsersListDialog extends BaseDialogBean {
     public void clickGroup(ActionEvent event) {
         UIActionLink link = (UIActionLink) event.getComponent();
         Map<String, String> params = link.getParameterMap();
-        @SuppressWarnings("hiding")
         String group = params.get("id");
         if (StringUtils.isNotBlank(group)) {
             // refresh UI based on node selection
@@ -250,8 +249,7 @@ public class GroupUsersListDialog extends BaseDialogBean {
     /**
      * Update the breadcrumb with the clicked Group location
      */
-    protected void updateUILocation(@SuppressWarnings("hiding") String group) {
-        @SuppressWarnings("hiding")
+    protected void updateUILocation(String group) {
         String groupName = getAuthorityService().getShortName(group);
         setCurrentGroup(group, groupName);
     }

@@ -1684,6 +1684,7 @@ function initWithScreenProtected() {
       var sumString;
       elem.closest("table").find(".expectedExpenseSumField").each(function () {
          sumString = $jQ(this).val();
+         sumString = sumString.replace(/ /g,'');
          sumString = sumString.replace(",", ".");
          sum = parseFloat(sumString);
          if(sum) {

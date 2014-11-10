@@ -7,6 +7,7 @@ import java.util.List;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
 
+import ee.webmedia.alfresco.classificator.constant.FieldChangeableIf;
 import ee.webmedia.alfresco.classificator.constant.FieldType;
 import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement.ItemConfigVO;
 import ee.webmedia.alfresco.docadmin.service.Field;
@@ -35,6 +36,9 @@ public class StructUnitGenerator extends BaseTypeFieldGenerator {
         editModeItem.setEditable(false);
         editModeItem.setDialogTitleId("series_structUnit_popUpInfo");
         editModeItem.setPickerCallback("#{OrganizationStructureListDialog.searchOrgstructs}");
+        if (FieldChangeableIf.ALWAYS_NOT_CHANGEABLE.equals(field.getChangeableIfEnum())) {
+            editModeItem.setOutputTextPropertyValue(false); // if set to true then value is displayed as concatenated string of all path elements
+        }
 
         if (!field.isForSearch()) {
             editModeItem.setComponentGenerator("StructUnitSearchGenerator");

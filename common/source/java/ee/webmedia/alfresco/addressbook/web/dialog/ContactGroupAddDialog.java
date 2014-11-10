@@ -61,7 +61,7 @@ public class ContactGroupAddDialog extends ContactGroupBaseDialog {
                     getNodeService().setProperty(new NodeRef(userDetails.getNodeRef()), AddressbookModel.Props.TASK_CAPABLE, Boolean.TRUE);
                 }
             }
-            final MessageDataWrapper feedback = getAddressbookService().addToGroup(getCurrentNode().getNodeRef(), usersForGroup);
+            final MessageDataWrapper feedback = getAddressbookService().addToGroup(getCurrentNode().getNodeRef(), usersForGroup, false);
             final boolean isErrorAdded = MessageUtil.addStatusMessages(context, feedback);
             if (!isErrorAdded) {
                 MessageUtil.addInfoMessage("save_success");
@@ -76,6 +76,7 @@ public class ContactGroupAddDialog extends ContactGroupBaseDialog {
 
     public boolean validateGroupMembers() {
         boolean validUsers = true;
+        boolean cannotAddPeople = false;
         if (Boolean.TRUE.equals(getCurrentNode().getProperties().get(AddressbookModel.Props.TASK_CAPABLE)) && usersForGroup != null) {
             for (UserDetails userDetails : usersForGroup) {
                 Node contact = getAddressbookService().getNode(new NodeRef(userDetails.getNodeRef()));
@@ -84,9 +85,10 @@ public class ContactGroupAddDialog extends ContactGroupBaseDialog {
                         MessageUtil.addInfoMessage("addressbook_contactgroup_add_contact_empty_email_error", userDetails.getName());
                         validUsers = false;
                     }
-                    if (contact.getType().equals(AddressbookModel.Types.ORGPERSON) || contact.getType().equals(AddressbookModel.Types.PRIV_PERSON)) {
+                    if (!cannotAddPeople && (contact.getType().equals(AddressbookModel.Types.ORGPERSON) || contact.getType().equals(AddressbookModel.Types.PRIV_PERSON))) {
                         MessageUtil.addInfoMessage("addressbook_contactgroup_edit_contains_people_error2");
                         validUsers = false;
+                        cannotAddPeople = true;
                     }
                 }
             }

@@ -26,7 +26,6 @@ import org.apache.commons.lang.StringUtils;
 
 import com.thoughtworks.xstream.XStream;
 
-import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
@@ -43,7 +42,6 @@ import ee.webmedia.alfresco.utils.UnableToPerformException;
  */
 public class ThesaurusServiceImpl implements ThesaurusService {
 
-    private GeneralService generalService;
     private NodeService nodeService;
     private DocumentSearchService documentSearchService;
 
@@ -227,10 +225,6 @@ public class ThesaurusServiceImpl implements ThesaurusService {
     }
 
     // START: getters / setters
-    public void setGeneralService(GeneralService generalService) {
-        this.generalService = generalService;
-    }
-
     public void setNodeService(NodeService nodeService) {
         this.nodeService = nodeService;
     }

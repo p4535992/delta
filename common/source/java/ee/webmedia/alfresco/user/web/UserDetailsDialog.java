@@ -19,6 +19,7 @@ import javax.faces.event.ValueChangeEvent;
 
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
+import org.alfresco.service.cmr.repository.DuplicateChildNodeNameException;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
 import org.alfresco.service.cmr.security.PermissionService;
@@ -233,7 +234,12 @@ public class UserDetailsDialog extends BaseDialogBean {
         if (StringUtils.isBlank(group)) {
             return;
         }
-        BeanHelper.getUserService().addUserToGroup(group, user);
+        try {
+            BeanHelper.getUserService().addUserToGroup(group, user);
+        } catch (DuplicateChildNodeNameException e) {
+            MessageUtil.addWarningMessage("user_already_added_to_group", getAuthorityService().getAuthorityDisplayName(group));
+            return;
+        }
         setupGroups();
         MessageUtil.addInfoMessage("user_added_to_group");
     }

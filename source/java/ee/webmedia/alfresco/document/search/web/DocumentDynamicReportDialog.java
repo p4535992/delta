@@ -22,6 +22,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import ee.webmedia.alfresco.classificator.enums.TemplateReportOutputType;
 import ee.webmedia.alfresco.classificator.enums.TemplateReportType;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docconfig.generator.fieldtype.DateGenerator;
@@ -103,7 +104,7 @@ public class DocumentDynamicReportDialog extends DocumentDynamicSearchDialog {
     }
 
     public List<SelectItem> getReportTemplates(FacesContext context, UIInput selectComponent) {
-        String selectedTemplateType = (String) filter.getProperties().get(DocumentReportModel.Props.REPORT_OUTPUT_TYPE.getLocalName());
+        String selectedTemplateType = (String) filter.getProperties().get(DocumentReportModel.Props.REPORT_OUTPUT_TYPE);
         if (!reportTemplates.isEmpty()) {
             reportTemplates.clear();
         }
@@ -128,6 +129,7 @@ public class DocumentDynamicReportDialog extends DocumentDynamicSearchDialog {
 
     @Override
     public void clean() {
+        setPropertySheet(null);
         reportTemplates.clear();
         reportTemplatesWithOutputTypes = null;
     }
@@ -137,6 +139,7 @@ public class DocumentDynamicReportDialog extends DocumentDynamicSearchDialog {
         long start = System.currentTimeMillis();
         try {
             Map<QName, Serializable> data = getMandatoryProps();
+            data.put(DocumentReportModel.Props.REPORT_OUTPUT_TYPE, TemplateReportOutputType.DOCS_ONLY.name());
             TransientNode transientNode = new TransientNode(getFilterType(), null, data);
             setFilterDefaultValues(transientNode, getDocumentAdminService().getSearchableDocumentFieldDefinitions(), null);
             return transientNode;

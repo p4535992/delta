@@ -113,6 +113,7 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
             " WHERE wfc_owner_id= ?" +
             " AND wfc_status='" + Status.IN_PROGRESS.getName() + "'" +
             " AND is_searchable=true" +
+            " AND store_id<>'" + StoreRef.STORE_REF_ARCHIVE_SPACESSTORE.toString() + "'" +
             " GROUP BY task_type;";
 
     static {
@@ -756,9 +757,8 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
     public Pair<List<NodeRef>, Boolean> searchTaskNodeRefs(String queryCondition, List<Object> arguments, int limit) {
         boolean useLimit = limit > -1;
         String sqlQuery = "SELECT task_id, store_id FROM delta_task WHERE "
-                + SearchUtil.joinQueryPartsAnd(" is_searchable = true ", queryCondition) + (useLimit ? " LIMIT " + (limit + 1) : "");
+                + SearchUtil.joinQueryPartsAnd(getSearchableAndNotInArchiveSpacesstoreCondition(), queryCondition) + (useLimit ? " LIMIT " + (limit + 1) : "");
         Object[] argumentsArray = arguments.toArray();
-        @SuppressWarnings("deprecation")
         List<NodeRef> taskRefs = jdbcTemplate.query(sqlQuery, new TaskNodeRefRowMapper(), argumentsArray);
         explainQuery(sqlQuery, argumentsArray);
         boolean limitedResult = false;
@@ -798,7 +798,7 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
                 + " left join alf_node_properties owner_prop on document.id = owner_prop.node_id and owner_prop.qname_id = "
                 + bulkLoadNodeService.getQNameDbId(DocumentCommonModel.Props.OWNER_ID);
 
-        sqlQuery += " WHERE " + SearchUtil.joinQueryPartsAnd(" is_searchable = true ", queryCondition);
+        sqlQuery += " WHERE " + SearchUtil.joinQueryPartsAnd(getSearchableAndNotInArchiveSpacesstoreCondition(), queryCondition);
 
         Object[] argumentsArray = arguments.toArray();
         final boolean useLimit = limit > -1;
@@ -866,6 +866,18 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
             limited = true;
         }
         return Pair.newInstance(userAvailableTasks, limited);
+    }
+
+    private String getSearchableAndNotInArchiveSpacesstoreCondition() {
+        Set<StoreRef> stores = generalService.getAllWithArchivalsStoreRefs();
+        List<StoreRef> storeList = new ArrayList<>(stores);
+        String storesCondition = "( ";
+        int lastIndex = storeList.size() - 1;
+        for (int i = 0; i < lastIndex; i++) {
+            storesCondition += "'" + storeList.get(i) + "', ";
+        }
+        storesCondition += "'" + storeList.get(lastIndex) + "' )";
+        return "is_searchable = true AND store_id in " + storesCondition;
     }
 
     @Override
