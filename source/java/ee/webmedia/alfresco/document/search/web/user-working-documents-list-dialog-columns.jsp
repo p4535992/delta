@@ -51,9 +51,9 @@
       <%-- Sender/Recipient --%>
       <a:column id="col5" styleClass="#{r.cssStyleClass}" >
          <f:facet name="header">
-            <a:sortLink id="col5-sort" label="#{msg.document_sender_recipient}" value="sender" styleClass="header" />
+            <a:sortLink id="col5-sort" label="#{msg.document_sender_recipient}" value="senderOrRecipientsAsNameOrPerson" styleClass="header" />
          </f:facet>
-         <a:actionLink id="col5-text-1" value="#{r.sender}" action="#{DocumentDialog.action}" tooltip="#{r.sender}"
+         <a:actionLink id="col5-text-1" value="#{r.senderOrRecipientsAsNameOrPerson}" action="#{DocumentDialog.action}" tooltip="#{r.docName}"
             actionListener="#{DocumentDialog.open}" styleClass="condence20- tooltip no-underline" >
             <f:param name="nodeRef" value="#{r.node.nodeRef}" />
          </a:actionLink>

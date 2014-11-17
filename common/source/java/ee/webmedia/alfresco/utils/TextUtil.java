@@ -188,7 +188,98 @@ public class TextUtil {
         }
         return result.toString();
     }
+    
+    
+    
+    /**
+     * Merge two resultsets - name and personName into one, favouring name. Person name is replaced with initials of it.s
+     * 
+     * @param result - result object to apply to
+     * @param name - string or list of names
+     * @param personName - string or list of person names
+     * @return
+     */
+    public static StringBuilder joinCompanyOrInitials(StringBuilder result, Object name, Object personName) {
+    	return joinCompanyOrPerson(result, name, personName, true);
+    }
+    
+    /**
+     * Merge two resultsets - name and personName into one, favouring name
+     * 
+     * @param result - result object to apply to
+     * @param name - string or list of names
+     * @param personName - string or list of person names
+     * @return
+     */
+    public static StringBuilder joinCompanyOrPerson(StringBuilder result, Object name, Object personName) {
+    	return joinCompanyOrPerson(result, name, personName, false);
+    }
+    
 
+    /**
+     * Private method to be used by public joinCompanyOrInitials or joinCompanyOrPerson methods
+     *  
+     * @param result - result object to apply to
+     * @param name - string or list of names
+     * @param personName - string or list of person names
+     * @param withInitials - whether to show full person name or just initials 
+     * @return result object with results applied
+     */
+    private static StringBuilder joinCompanyOrPerson(StringBuilder result, Object name, Object personName, boolean withInitials) {
+    	
+        if (name instanceof Collection<?>) {
+        	
+        	@SuppressWarnings("unchecked")                
+            Object[] nameArray = ((Collection<String>) name).toArray();
+            @SuppressWarnings("unchecked")                
+            Object[] personNameArray = ((Collection<String>) personName).toArray();
+            
+            for (int i = 0; i < nameArray.length; i++) {
+                String nameS = (String) nameArray[i];
+                // 
+                // TODO: fix this mess
+                // an ugly hack to overcome an issue no # (Jaanika will send)
+                // basically names and personal names must come in same numbers
+                // if not, there's a problem with data an it must be investigated!
+                // 
+                String personNameS = personNameArray.length > i ? (String) personNameArray[i] : "";
+                
+                if (StringUtils.isNotBlank(nameS) || StringUtils.isNotBlank(personNameS)) {
+                    if (result.length() > 0) {
+                        result.append(TextUtil.LIST_SEPARATOR);
+                    }
+                    result.append( StringUtils.isNotBlank(nameS)?nameS:withInitials?UserUtil.getInitials(personNameS):personNameS);
+                }
+            }
+        } else {
+            String nameS = (String) name;
+            String personNameS = (String) personName;
+            if (StringUtils.isNotBlank(nameS) || StringUtils.isNotBlank(personNameS)) {
+                if (result.length() > 0) {
+                    result.append(TextUtil.LIST_SEPARATOR);
+                }
+                result.append( StringUtils.isNotBlank(nameS)?nameS:withInitials?UserUtil.getInitials(personNameS):personNameS);
+            }
+        }
+    	return result;
+    }    
+    
+    /**
+     * Method assumes same size of two lists - names and personNames. Method conflates two lists into one, preferring the value of the first.
+     * @param names
+     * @param personNames
+     * @return
+     * @author Allar Allas
+     */
+    public static List<String> conflateNames(List<String>names, List<String>personNames) {
+    	List<String> resultList = new ArrayList<String>();
+    	
+    	for (int i = 0; i < names.size(); i++)
+    		resultList.add(i, StringUtils.isNotBlank(names.get(i))?names.get(i):personNames.get(i));
+    	
+    	return resultList;
+    }
+    
     public static String formatDateOrEmpty(FastDateFormat dateFormat, Date date) {
         if (date == null) {
             return "";
