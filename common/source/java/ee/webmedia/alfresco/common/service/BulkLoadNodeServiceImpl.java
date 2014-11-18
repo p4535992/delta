@@ -160,6 +160,22 @@ public class BulkLoadNodeServiceImpl implements BulkLoadNodeService {
     }
 
     @Override
+    public List<NodeRef> loadTaskRefByUuid(List<String> taskUuidSlice) {
+        String sql = " select task.task_id as uuid, node.store_id from delta_task task "
+                + " join temp_delta_task_to_store_id tmp_task on tmp_task.uuid = task.task_id"
+                + " join alf_node node on node.store_id = tmp_task.store_id and node.uuid = tmp_task.uuid"
+                + " where task.task_id in (" + getQuestionMarks(taskUuidSlice.size()) + ")";
+        List<NodeRef> nodeRefs = jdbcTemplate.query(sql, new ParameterizedRowMapper<NodeRef>() {
+
+            @Override
+            public NodeRef mapRow(ResultSet rs, int rowNum) throws SQLException {
+                return getNodeRef(rs);
+            }
+        }, taskUuidSlice.toArray());
+        return nodeRefs;
+    }
+
+    @Override
     @SuppressWarnings("deprecation")
     public Map<NodeRef, List<NodeRef>> getSourceAssocs(List<NodeRef> targetNodeRefs, QName assocType) {
         if (targetNodeRefs == null || targetNodeRefs.isEmpty()) {
@@ -377,36 +393,36 @@ public class BulkLoadNodeServiceImpl implements BulkLoadNodeService {
         jdbcTemplate.query(query,
                 new ParameterizedRowMapper<String>() {
 
-                    @Override
-                    public String mapRow(ResultSet rs, int rowNum) throws SQLException {
-                        setDefaultFetchSize(rs);
-                        NodeRef nodeRef = getNodeRef(rs);
-                        Map<PropertyMapKey, NodePropertyValue> docProps = allDocProps.get(nodeRef);
-                        if (docProps == null) {
-                            docProps = new HashMap<PropertyMapKey, NodePropertyValue>();
-                            allDocProps.put(nodeRef, docProps);
-                        }
-                        Map<String, Object> docIntrinsicProps = allDocIntrinsicProps.get(nodeRef);
-                        if (docIntrinsicProps == null) {
-                            docIntrinsicProps = new HashMap<String, Object>();
-                            docIntrinsicProps.put(ContentModel.PROP_CREATOR.toPrefixString(), rs.getString("creator"));
-                            docIntrinsicProps.put(ContentModel.PROP_CREATED.toPrefixString(), DefaultTypeConverter.INSTANCE.convert(Date.class, rs.getString("created")));
-                            docIntrinsicProps.put(ContentModel.PROP_MODIFIER.toPrefixString(), rs.getString("modifier"));
-                            docIntrinsicProps.put(ContentModel.PROP_MODIFIED.toPrefixString(), DefaultTypeConverter.INSTANCE.convert(Date.class, rs.getString("modified")));
-                            allDocIntrinsicProps.put(nodeRef, docIntrinsicProps);
-                        }
-                        PropertyMapKey propMapKey = getPropMapKey(rs);
-                        if (propMapKey.getQnameId() > 0) {
-                            NodePropertyValue nodePropValue = getPropertyValue(rs);
-                            docProps.put(propMapKey, nodePropValue);
-                        }
-                        if (loadType && !nodeTypes.containsKey(nodeRef)) {
-                            nodeTypes.put(nodeRef, getTypeFromRs(rs));
-                        }
-                        return null;
-                    }
+            @Override
+            public String mapRow(ResultSet rs, int rowNum) throws SQLException {
+                setDefaultFetchSize(rs);
+                NodeRef nodeRef = getNodeRef(rs);
+                Map<PropertyMapKey, NodePropertyValue> docProps = allDocProps.get(nodeRef);
+                if (docProps == null) {
+                    docProps = new HashMap<PropertyMapKey, NodePropertyValue>();
+                    allDocProps.put(nodeRef, docProps);
+                }
+                Map<String, Object> docIntrinsicProps = allDocIntrinsicProps.get(nodeRef);
+                if (docIntrinsicProps == null) {
+                    docIntrinsicProps = new HashMap<String, Object>();
+                    docIntrinsicProps.put(ContentModel.PROP_CREATOR.toPrefixString(), rs.getString("creator"));
+                    docIntrinsicProps.put(ContentModel.PROP_CREATED.toPrefixString(), DefaultTypeConverter.INSTANCE.convert(Date.class, rs.getString("created")));
+                    docIntrinsicProps.put(ContentModel.PROP_MODIFIER.toPrefixString(), rs.getString("modifier"));
+                    docIntrinsicProps.put(ContentModel.PROP_MODIFIED.toPrefixString(), DefaultTypeConverter.INSTANCE.convert(Date.class, rs.getString("modified")));
+                    allDocIntrinsicProps.put(nodeRef, docIntrinsicProps);
+                }
+                PropertyMapKey propMapKey = getPropMapKey(rs);
+                if (propMapKey.getQnameId() > 0) {
+                    NodePropertyValue nodePropValue = getPropertyValue(rs);
+                    docProps.put(propMapKey, nodePropValue);
+                }
+                if (loadType && !nodeTypes.containsKey(nodeRef)) {
+                    nodeTypes.put(nodeRef, getTypeFromRs(rs));
+                }
+                return null;
+            }
 
-                }, paramArray);
+        }, paramArray);
         explainQuery(query, paramArray);
         if (propertyTypes == null) {
             propertyTypes = new HashMap<Long, QName>();
@@ -996,19 +1012,6 @@ public class BulkLoadNodeServiceImpl implements BulkLoadNodeService {
             }
         }, paramArray);
         return values;
-    }
-
-    @Override
-    public List<NodeRef> loadNodeRefByUuid(List<String> taskUuidSlice) {
-        String sql = " select uuid, store_id from alf_node node where uuid in (" + getQuestionMarks(taskUuidSlice.size()) + ")";
-        List<NodeRef> nodeRefs = jdbcTemplate.query(sql, new ParameterizedRowMapper<NodeRef>() {
-
-            @Override
-            public NodeRef mapRow(ResultSet rs, int rowNum) throws SQLException {
-                return getNodeRef(rs);
-            }
-        }, taskUuidSlice.toArray());
-        return nodeRefs;
     }
 
     private boolean allZeroesOrNulls(PropertyMapKey key) {
