@@ -91,8 +91,6 @@ public interface BulkLoadNodeService {
 
     Map<NodeRef, NodeRef> getPrimaryParentRefs(Collection<NodeRef> childRefs, Set<QName> parentNodeTypes);
 
-    @Deprecated
-    /** This is really slow, use only if store info is not available (currently used only to update delta_task table with store info) */
-    List<NodeRef> loadNodeRefByUuid(List<String> taskUuidSlice);
+    List<NodeRef> loadTaskRefByUuid(List<String> taskUuidSlice);
 
 }
