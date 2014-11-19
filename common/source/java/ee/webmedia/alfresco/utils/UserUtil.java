@@ -4,6 +4,7 @@ import static ee.webmedia.alfresco.utils.TextUtil.joinStringAndStringWithComma;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -46,7 +47,11 @@ public class UserUtil {
             }
         }
 
-        return StringUtils.join(initials, " ");
+        String result = StringUtils.join(initials, ". ");
+        if (StringUtils.isNotBlank(result)) {
+            result += ".";
+        }
+        return result;
     }
 
     public static String getPersonFullName1(Map<QName, Serializable> props) {
@@ -137,28 +142,46 @@ public class UserUtil {
         return firstNameLastName;
     }
 
-    public static List<Map<String, String>> getGroupsFromAuthorities(AuthorityService authorityService, Set<String> authorities) {
+    public static List<Map<String, String>> getGroupsFromAuthorities(AuthorityService authorityService, UserService userService, Collection<String> authorities) {
         Assert.notNull(authorityService, "AuhtorityService cannot be null!");
         if (CollectionUtils.isEmpty(authorities)) {
             return Collections.emptyList();
         }
 
-        List<Map<String, String>> groups = new ArrayList<Map<String, String>>(authorities.size());
+        List<Map<String, String>> groups = new ArrayList<>(authorities.size());
         for (String authority : authorities) {
-            Map<String, String> authMap = new HashMap<String, String>(5, 1.0f);
-
-            String name = authorityService.getShortName(authority);
-            authMap.put("name", name);
-            authMap.put("id", authority);
-            authMap.put("group", authority);
-            authMap.put("groupName", name);
-            authMap.put("displayName", authorityService.getAuthorityDisplayName(authority));
-            authMap.put("structUnitBased", authorityService.getAuthorityZones(authority).contains(OrganizationStructureService.STRUCT_UNIT_BASED) ? "true" : "false");
-
-            groups.add(authMap);
+            groups.add(getGroupProperties(authorityService, userService, authority));
         }
 
         return groups;
+    }
+
+    public static Map<String, Map<String, String>> getGroupsAsMapFromAuthorities(AuthorityService authorityService, UserService userService, Collection<String> authorities) {
+        Assert.notNull(authorityService, "AuhtorityService cannot be null!");
+        if (CollectionUtils.isEmpty(authorities)) {
+            return Collections.emptyMap();
+        }
+
+        Map<String, Map<String, String>> groupsByAuthority = new HashMap<>();
+        for (String authority : authorities) {
+            groupsByAuthority.put(authority, getGroupProperties(authorityService, userService, authority));
+        }
+
+        return groupsByAuthority;
+    }
+
+    private static Map<String, String> getGroupProperties(AuthorityService authorityService, UserService userService, String authority) {
+        Map<String, String> authMap = new HashMap<>(7, 1.0f);
+
+        String name = authorityService.getShortName(authority);
+        authMap.put("name", name);
+        authMap.put("id", authority);
+        authMap.put("group", authority);
+        authMap.put("groupName", name);
+        authMap.put("displayName", authorityService.getAuthorityDisplayName(authority));
+        authMap.put("structUnitBased", authorityService.getAuthorityZones(authority).contains(OrganizationStructureService.STRUCT_UNIT_BASED) ? "true" : "false");
+        authMap.put("deleteEnabled",  Boolean.toString(userService.isGroupDeleteAllowed(authority)));
+        return authMap;
     }
 
     public static boolean hasSameName(Pair<String, String> firstNameLastName, Map<QName, Serializable> userProps) {

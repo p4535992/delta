@@ -329,6 +329,11 @@ public abstract class BaseObject extends NodeBaseVO implements Cloneable {
             return add(getModifiableList().size());
         }
 
+        @Override
+        public void add(int index, T child) {
+            getModifiableList().add(index, child);
+        }
+
         public <S extends T> S add(Class<S> subClazz) {
             return add(getModifiableList().size(), subClazz);
         }
@@ -554,7 +559,7 @@ public abstract class BaseObject extends NodeBaseVO implements Cloneable {
             return WmNode.toString(this) + " [\n  node=" + StringUtils.replace(getNode().toString(), "\n", "\n  ") + "\n  parent=" + WmNode.toString(parent) + "\n  parentNodeRef="
                     + parentNodeRef + "\n  children=" + WmNode.toString(children) + "\n  removedChildren=" + WmNode.toString(removedChildren) + additionalToString() + "\n]";
         }
-        return WmNode.toString(this) + "[\n nodeRef="+getNodeRef()+" \n parentNodeRef=" + parentNodeRef + "]";
+        return WmNode.toString(this) + "[\n nodeRef=" + getNodeRef() + " \n parentNodeRef=" + parentNodeRef + "]";
     }
 
     @Override

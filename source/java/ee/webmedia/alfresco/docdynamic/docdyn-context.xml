@@ -201,6 +201,19 @@
       <property name="executeOnceOnly" value="true" />
       <property name="enabled" value="false" /><!-- Executed manually from node-browser -->
    </bean>   
+   
+   <bean id="documentSenderPersonNameUpdater" class="ee.webmedia.alfresco.docdynamic.bootstrap.DocumentSenderPersonNameUpdater" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="false" />
+      <property name="enabled" value="${updater.documentSenderPersonNameUpdater.enabled}" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="documentUpdater9" />
+         </list>
+      </property>
+      <property name="baseService" ref="BaseService" />
+      <property name="documentAdminService" ref="DocumentAdminService" />
+   </bean>
 
    <!-- START: web beans: -->
 

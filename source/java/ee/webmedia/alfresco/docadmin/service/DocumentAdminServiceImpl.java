@@ -708,6 +708,11 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
         }
     }
 
+    @Override
+    public void clearDynamicTypesCache() {
+        dynamicTypeAndVersionCache.clear();
+    }
+
     private List<AssociationModel> getAssocsToDocType(List<NodeRef> assocRefs) {
         return baseService.getObjects(assocRefs, AssociationModel.class);
     }

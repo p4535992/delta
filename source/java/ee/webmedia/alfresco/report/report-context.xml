@@ -51,10 +51,7 @@
       <property name="workflowService" ref="WmWorkflowService" />
       <property name="documentAdminService" ref="DocumentAdminService" />
       <property name="mimetypeService" ref="MimetypeService" />
-      <property name="fileService" ref="FileService" />
       <property name="transactionService" ref="TransactionService" />
-      <property name="sendOutService" ref="SendOutService" />
-      <property name="caseFileService" ref="CaseFileService" />
       <property name="functionsService" ref="FunctionsService" />
       <property name="seriesService" ref="SeriesService" />
       <property name="reportGenerationEnabled" value="${jobs.enabled}" />

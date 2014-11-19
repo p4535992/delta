@@ -8,6 +8,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -31,6 +32,7 @@ import ee.webmedia.alfresco.docdynamic.service.DocumentDynamicService;
 public class TextUtil {
 
     public static final String LIST_SEPARATOR = ", ";
+    public static final String SEMICOLON_SEPARATOR = "; ";
     private static final FastDateFormat DATE_FORMAT = FastDateFormat.getInstance("dd.MM.yyyy");
 
     public static String joinNonBlankStringsWithComma(Collection<String> values) {
@@ -164,29 +166,75 @@ public class TextUtil {
     public static String join(Map<String, Object> propertiesMap, QName... props) {
         StringBuilder result = new StringBuilder();
         for (QName prop : props) {
-            Object item = propertiesMap.get(prop);
-            if (item instanceof Collection<?>) {
-                @SuppressWarnings("unchecked")
-                Collection<String> list = (Collection<String>) item;
-                for (String textItem : list) {
-                    if (StringUtils.isNotBlank(textItem)) {
-                        if (result.length() > 0) {
-                            result.append(LIST_SEPARATOR);
-                        }
-                        result.append(textItem);
-                    }
-                }
-            } else {
-                String textItem = (String) item;
-                if (StringUtils.isNotBlank(textItem)) {
-                    if (result.length() > 0) {
-                        result.append(LIST_SEPARATOR);
-                    }
-                    result.append(textItem);
-                }
-            }
+            buildAndAppend(propertiesMap, prop, null, result);
         }
         return result.toString();
+    }
+
+    public static String join(Map<String, Object> propertiesMap, Map<QName, QName> propsWithAlternatives) {
+        StringBuilder result = new StringBuilder();
+        for (Map.Entry<QName, QName> entry : propsWithAlternatives.entrySet()) {
+            buildAndAppend(propertiesMap, entry.getKey(), entry.getValue(), result);
+        }
+        return result.toString();
+    }
+
+    public static String join(Map<String, Object> propertiesMap, Map<QName, QName> propsWithAlternatives, String separator) {
+        StringBuilder result = new StringBuilder();
+        for (Map.Entry<QName, QName> entry : propsWithAlternatives.entrySet()) {
+            buildAndAppend(propertiesMap, entry.getKey(), entry.getValue(), result, separator);
+        }
+        return result.toString();
+    }
+
+    public static String joinUsingInitialsForAlternativeValue(Map<String, Object> propertiesMap, Map<QName, QName> propsWithAlternatives) {
+        StringBuilder result = new StringBuilder();
+        for (Map.Entry<QName, QName> entry : propsWithAlternatives.entrySet()) {
+            buildAndAppend(propertiesMap, entry.getKey(), entry.getValue(), result, true, LIST_SEPARATOR);
+        }
+        return result.toString();
+    }
+
+    private static void buildAndAppend(Map<String, Object> propertiesMap, QName property, QName altProperty, StringBuilder result) {
+        buildAndAppend(propertiesMap, property, altProperty, result, false, LIST_SEPARATOR);
+    }
+
+    private static void buildAndAppend(Map<String, Object> propertiesMap, QName property, QName altProperty, StringBuilder result, String separator) {
+        buildAndAppend(propertiesMap, property, altProperty, result, false, separator);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static void buildAndAppend(Map<String, Object> propertiesMap, QName property, QName altProperty, StringBuilder result, boolean useInitials, String separator) {
+        Object item = propertiesMap.get(property);
+        Object altItem = altProperty != null ? propertiesMap.get(altProperty) : null;
+        if (item instanceof Collection<?>) {
+            Collection<String> list = (Collection<String>) item;
+            Collection<String> altList = (altItem instanceof Collection<?>) ? (Collection<String>) altItem : null;
+            Iterator<String> altIterator = altList != null ? altList.iterator() : null;
+            for (String textItem : list) {
+                String altTextItem = altIterator != null ? altIterator.next() : null;
+                if (!appendIfNotBlank(result, textItem, separator)) {
+                    appendIfNotBlank(result, useInitials ? UserUtil.getInitials(altTextItem) : altTextItem, separator);
+                }
+            }
+        } else {
+            String textItem = (String) item;
+            if (!appendIfNotBlank(result, textItem, separator) && altItem instanceof String) {
+                appendIfNotBlank(result, useInitials ? UserUtil.getInitials((String) altItem) : (String) altItem, separator);
+            }
+        }
+    }
+
+    private static boolean appendIfNotBlank(StringBuilder result, String stringToAppend, String separator) {
+        boolean valueAdded = false;
+        if (StringUtils.isNotBlank(stringToAppend)) {
+            if (result.length() > 0) {
+                result.append(separator);
+            }
+            result.append(stringToAppend);
+            valueAdded = true;
+        }
+        return valueAdded;
     }
     
     

@@ -48,11 +48,11 @@ public interface BulkLoadNodeService {
 
     List<NodeRef> orderByDocumentWorkflowStates(List<NodeRef> docRefs, boolean descending);
 
-    Map<NodeRef, Node> loadNodes(List<NodeRef> nodesToLoad, Set<QName> propsToLoad);
+    Map<NodeRef, Node> loadNodes(Collection<NodeRef> nodesToLoad, Set<QName> propsToLoad);
 
     Set<NodeRef> loadChildRefs(NodeRef parentRef, final QName propName, String value, QName type);
 
-    <T> Map<NodeRef, List<T>> loadChildNodes(List<NodeRef> parentNodes, Set<QName> propsToLoad, QName childNodeType, Map<Long, QName> propertyTypes,
+    <T> Map<NodeRef, List<T>> loadChildNodes(Collection<NodeRef> parentNodes, Set<QName> propsToLoad, QName childNodeType, Map<Long, QName> propertyTypes,
             CreateObjectCallback<T> createObjectCallback);
 
     List<SimpleFile> loadActiveFiles(NodeRef nodeRef, Map<Long, QName> propertyTypes);
@@ -61,7 +61,7 @@ public interface BulkLoadNodeService {
 
     Map<NodeRef, List<SimpleFile>> loadActiveFiles(List<NodeRef> parentNodeRefs, Map<Long, QName> propertyTypes);
 
-    Map<NodeRef, Map<NodeRef, Map<QName, Serializable>>> loadChildNodes(List<NodeRef> parentNodes, Set<QName> propsToLoad);
+    Map<NodeRef, Map<NodeRef, Map<QName, Serializable>>> loadChildNodes(Collection<NodeRef> parentNodes, Set<QName> propsToLoad);
 
     void getAssociatedDocRefs(NodeRef docRef, final Set<NodeRef> associatedDocs, Set<NodeRef> checkedDocs, final Set<NodeRef> currentAssociatedDocs, Set<Integer> checkedNodes);
 
@@ -72,7 +72,7 @@ public interface BulkLoadNodeService {
 
     Map<NodeRef, Integer> getSearchableChildDocCounts(List<NodeRef> indpendentCompoundWorkflows);
 
-    Map<NodeRef, Node> loadNodes(List<NodeRef> workflowRefs, Set<QName> singleton, Map<Long, QName> propertyTypes);
+    Map<NodeRef, Node> loadNodes(Collection<NodeRef> workflowRefs, Set<QName> singleton, Map<Long, QName> propertyTypes);
 
     /** Loads all given nodeRefs (can be used for checking if nodeRef returned from lucene search is present in database) */
     List<NodeRef> loadNodeRefs(List<NodeRef> nodeRefs);

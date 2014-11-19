@@ -13,6 +13,7 @@ import java.util.Set;
 
 import javax.faces.context.FacesContext;
 
+import ee.webmedia.alfresco.workflow.service.WorkflowConstantsBean;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
 import org.alfresco.repo.transaction.RetryingTransactionHelper;
@@ -99,17 +100,35 @@ public class WorkflowStatusEventListener implements WorkflowMultiEventListener, 
             }
 
         }, "workflowPermissionsAndNotifications", false);
-        LogService logService = BeanHelper.getLogService();
+
         UserService userService = BeanHelper.getUserService();
-        for (WorkflowEvent event : queue.getEvents()) {
+        final String userId = userService.getCurrentUserName();
+        final String userName = userService.getUserFullName();
+        final List<WorkflowEvent> eventsToLog = new ArrayList<>(queue.getEvents());
+        generalService.runOnBackground(new RunAsWork<Void>() {
+            @Override
+            public Void doWork() throws Exception {
+                return WorkflowStatusEventListener.this.logWorkflowEvents(eventsToLog, userId, userName);
+            }
+        }, "workflowLogEntries", true);
+    }
+
+    private Void logWorkflowEvents(List<WorkflowEvent> eventsToLog, String userId, String userName) {
+        LogService logService = BeanHelper.getLogService();
+        WorkflowConstantsBean workflowConstantsBean = BeanHelper.getWorkflowConstantsBean();
+        for (WorkflowEvent event : eventsToLog) {
             BaseWorkflowObject object = event.getObject();
-            if (object instanceof Task && WorkflowEventType.STATUS_CHANGED.equals(event.getType())
-                    && Status.NEW.equals(event.getOriginalStatus()) && ((Task) object).isStatus(Status.IN_PROGRESS)) {
+            if (!(object instanceof Task)) {
+                continue;
+            }
+            Task task = (Task) object;
+            if (WorkflowEventType.STATUS_CHANGED.equals(event.getType()) && Status.NEW.equals(event.getOriginalStatus()) && task.isStatus(Status.IN_PROGRESS)) {
                 NodeRef taskRef = object.getNodeRef();
-                logService.addLogEntry(LogEntry.create(LogObject.TASK, userService, taskRef, "applog_task_assigned",
-                        ((Task) object).getOwnerName(), MessageUtil.getTypeName(workflowService.getNodeRefType(taskRef))));
+                logService.addLogEntry(LogEntry.create(LogObject.TASK, userId, userName, taskRef, "applog_task_assigned",
+                        task.getOwnerName(), workflowConstantsBean.getTaskTypeName(task.getType())));
             }
         }
+        return null;
     }
 
     private Void doWork(final List<WorkflowEvent> events, final Task initiatingTask, final boolean sendNotifications, final List<NodeRef> groupAssignmentTasksFinishedAutomatically) {

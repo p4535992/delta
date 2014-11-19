@@ -27,8 +27,10 @@ package org.alfresco.web.bean.groups;
 import java.io.Serializable;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -37,17 +39,20 @@ import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 import javax.transaction.UserTransaction;
 
+import ee.webmedia.alfresco.common.richlist.LazyListDataProvider;
 import org.alfresco.model.ContentModel;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.security.AuthorityService;
 import org.alfresco.service.cmr.security.AuthorityType;
 import org.alfresco.service.cmr.security.PersonService;
+import org.alfresco.service.namespace.QName;
 import org.alfresco.web.app.Application;
 import org.alfresco.web.app.context.IContextListener;
 import org.alfresco.web.app.context.UIContextService;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.dialog.ChangeViewSupport;
 import org.alfresco.web.bean.dialog.FilterViewSupport;
+import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.Repository;
 import org.alfresco.web.ui.common.Utils;
 import org.alfresco.web.ui.common.component.IBreadcrumbHandler;
@@ -61,7 +66,6 @@ import org.apache.commons.logging.LogFactory;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.orgstructure.service.OrganizationStructureService;
-import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UserUtil;
 
@@ -95,8 +99,8 @@ public class GroupsDialog extends BaseDialogBean
     /** Currently visible Group Authority */
     protected String group = null;
     protected String groupName = null;
-    private List<Map<String, String>> groups = null;
-    private List<Map> users = null;
+    private GroupDataProvider groupDataProvider;
+    private UserDataProvider userDataProvider;
 
     /** RichList view mode */
     protected String viewMode = VIEW_ICONS;
@@ -183,8 +187,8 @@ public class GroupsDialog extends BaseDialogBean
     public void clean() {
         group = null;
         groupName = null;
-        groups = null;
-        users = null;
+        groupDataProvider = null;
+        userDataProvider = null;
     }
 
     public void setDisableActions(boolean disableActions) {
@@ -193,24 +197,6 @@ public class GroupsDialog extends BaseDialogBean
 
     public boolean isDisableActions() {
         return disableActions;
-    }
-
-    /** class that helps to decide for jsp whether to render deleting group button or not */
-    public class DeleteEnambledDeciderMap extends HashMap<String, Boolean> {
-        private static final long serialVersionUID = 1L;
-
-        @Override
-        public Boolean get(Object gr) {
-            String group = (String) gr;
-            UserService userService = BeanHelper.getUserService();
-            return userService.isGroupDeleteAllowed(group);
-        }
-    }
-
-    private final DeleteEnambledDeciderMap deleteEnabledDeciderMap = new DeleteEnambledDeciderMap();
-
-    public Map<String, Boolean> getDeleteEnabledByGroup() {
-        return deleteEnabledDeciderMap;
     }
 
     public void reset(ActionEvent event) {
@@ -341,7 +327,7 @@ public class GroupsDialog extends BaseDialogBean
     {
         if (authService == null)
         {
-            authService = Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getAuthorityService();
+            authService = BeanHelper.getAuthorityService();
         }
         return authService;
     }
@@ -355,7 +341,7 @@ public class GroupsDialog extends BaseDialogBean
     {
         if (personService == null)
         {
-            personService = Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getPersonService();
+            personService = BeanHelper.getPersonService();
         }
         return personService;
     }
@@ -388,8 +374,7 @@ public class GroupsDialog extends BaseDialogBean
         if (location == null)
         {
             List<IBreadcrumbHandler> loc = new ArrayList<IBreadcrumbHandler>(8);
-            loc.add(new GroupBreadcrumbHandler(null,
-                    Application.getMessage(FacesContext.getCurrentInstance(), MSG_ROOT_GROUPS)));
+            loc.add(new GroupBreadcrumbHandler(null, Application.getMessage(FacesContext.getCurrentInstance(), MSG_ROOT_GROUPS)));
 
             location = loc;
         }
@@ -401,9 +386,9 @@ public class GroupsDialog extends BaseDialogBean
      * @return The list of group objects to display. Returns the list of root groups or the
      *         list of sub-groups for the current group if set.
      */
-    public List<Map<String, String>> getGroups()
+    public LazyListDataProvider<String, Map<String, String>> getGroups()
     {
-        if (groups == null) {
+        if (groupDataProvider == null) {
             UserTransaction tx = null;
             try
             {
@@ -433,14 +418,14 @@ public class GroupsDialog extends BaseDialogBean
                 if (!BeanHelper.getApplicationConstantsBean().isEinvoiceEnabled()) {
                     authorities.remove(BeanHelper.getUserService().getAccountantsGroup());
                 }
-                groups = UserUtil.getGroupsFromAuthorities(getAuthorityService(), authorities);
+                groupDataProvider = new GroupDataProvider(authorities);
                 // commit the transaction
                 tx.commit();
             } catch (Throwable err)
             {
                 Utils.addErrorMessage(MessageFormat.format(Application.getMessage(
                         FacesContext.getCurrentInstance(), Repository.ERROR_GENERIC), err.getMessage()), err);
-                groups = Collections.<Map<String, String>> emptyList();
+                groupDataProvider = new GroupDataProvider();
                 try {
                     if (tx != null) {
                         tx.rollback();
@@ -449,15 +434,15 @@ public class GroupsDialog extends BaseDialogBean
                 }
             }
         }
-        return groups;
+        return groupDataProvider;
     }
 
     /**
      * @return The list of user objects to display. Returns the list of user for the current group.
      */
-    public List<Map> getUsers()
+    public UserDataProvider getUsers()
     {
-        if (users == null) {
+        if (userDataProvider == null) {
             UserTransaction tx = null;
             try
             {
@@ -478,38 +463,14 @@ public class GroupsDialog extends BaseDialogBean
                     authorities = getAuthorityService().getContainedAuthorities(AuthorityType.USER, group, immediate);
                     structUnitBased = getAuthorityService().getAuthorityZones(group).contains(OrganizationStructureService.STRUCT_UNIT_BASED);
                 }
-                users = new ArrayList<Map>(authorities.size());
-                for (String authority : authorities)
-                {
-                    Map<String, String> authMap = new HashMap<String, String>(4, 1.0f);
-
-                    String userName = getAuthorityService().getShortName(authority);
-                    authMap.put("userName", userName);
-                    authMap.put("id", authority);
-                    authMap.put("structUnitBased", (structUnitBased) ? "true" : "false");
-
-                    // get Person details for this Authority
-                    NodeRef ref = getPersonService().getPerson(authority);
-                    String firstName = (String) getNodeService().getProperty(ref, ContentModel.PROP_FIRSTNAME);
-                    String lastName = (String) getNodeService().getProperty(ref, ContentModel.PROP_LASTNAME);
-
-                    // build a sensible label for display
-                    StringBuilder label = new StringBuilder(48);
-                    label.append(firstName)
-                            .append(' ')
-                            .append(lastName);
-                    authMap.put("name", label.toString());
-
-                    users.add(authMap);
-                }
-
+                userDataProvider = new UserDataProvider(authorities, structUnitBased);
                 // commit the transaction
                 tx.commit();
             } catch (Throwable err)
             {
                 Utils.addErrorMessage(MessageFormat.format(Application.getMessage(
                         FacesContext.getCurrentInstance(), Repository.ERROR_GENERIC), err.getMessage()), err);
-                users = Collections.<Map> emptyList();
+                userDataProvider = new UserDataProvider();
                 try {
                     if (tx != null) {
                         tx.rollback();
@@ -518,7 +479,7 @@ public class GroupsDialog extends BaseDialogBean
                 }
             }
         }
-        return users;
+        return userDataProvider;
     }
 
     /**
@@ -537,8 +498,8 @@ public class GroupsDialog extends BaseDialogBean
         // set the current Group Authority for our UI context operations
         this.group = group;
         this.groupName = groupName;
-        groups = null;
-        users = null;
+        groupDataProvider = null;
+        userDataProvider = null;
 
         // inform that the UI needs updating after this change
         contextUpdated();
@@ -571,7 +532,7 @@ public class GroupsDialog extends BaseDialogBean
         UIActionLink link = (UIActionLink) event.getComponent();
         Map<String, String> params = link.getParameterMap();
         String authority = params.get("id");
-        users = null;
+        userDataProvider = null;
         if (authority != null && authority.length() != 0)
         {
             UserTransaction tx = null;
@@ -754,5 +715,94 @@ public class GroupsDialog extends BaseDialogBean
 
         private final String name;
         private final String authority;
+    }
+
+    private class GroupDataProvider extends LazyListDataProvider<String, Map<String, String>> {
+
+        public GroupDataProvider() {
+            objectKeys = Collections.emptyList();
+        }
+
+        public GroupDataProvider(Set<String> authorities) {
+            objectKeys = new ArrayList<>(authorities);
+        }
+
+        @Override
+        protected boolean loadOrderFromDb(String column, boolean descending) {
+            return true;
+        }
+
+        @Override
+        protected void resetObjectKeyOrder(List<Map<String, String>> orderedRows) {
+
+        }
+
+        @Override
+        protected Map<String, Map<String, String>> loadData(List<String> rowsToLoad) {
+            return UserUtil.getGroupsAsMapFromAuthorities(getAuthorityService(), BeanHelper.getUserService(), rowsToLoad);
+        }
+
+        @Override
+        protected String getKeyFromValue(Map<String, String> groupProperties) {
+            return groupProperties.get("id");
+        }
+    }
+
+    private class UserDataProvider extends LazyListDataProvider<String, Map<String, String>> {
+
+        private final boolean structUnitBased;
+
+        public UserDataProvider() {
+            structUnitBased = false;
+        }
+
+        public UserDataProvider(Collection<String> authorities, boolean structUnitBased) {
+            this.structUnitBased = structUnitBased;
+            objectKeys = new ArrayList<>(authorities);
+        }
+
+
+        @Override
+        protected boolean loadOrderFromDb(String column, boolean descending) {
+            return true;
+        }
+
+        @Override
+        protected void resetObjectKeyOrder(List<Map<String, String>> orderedRows) {
+
+        }
+
+        @Override
+        protected Map<String, Map<String, String>> loadData(List<String> rowsToLoad) {
+            Map<String, Map<String, String>> data = new HashMap<>();
+
+            Map<String, NodeRef> authorityUserRefs = new HashMap<>();
+            for (String authority : rowsToLoad) {
+                authorityUserRefs.put(authority, getPersonService().getPerson(authority));
+            }
+
+            Set<QName> personProperties = new HashSet<>();
+            personProperties.add(ContentModel.PROP_USERNAME);
+            personProperties.add(ContentModel.PROP_FIRSTNAME);
+            personProperties.add(ContentModel.PROP_LASTNAME);
+            Map<NodeRef, Node> personNodes = BeanHelper.getBulkLoadNodeService().loadNodes(authorityUserRefs.values(), personProperties);
+
+            for (String authority : rowsToLoad) {
+                String userName = getAuthorityService().getShortName(authority);
+                Map<String, String> authMap = new HashMap<>(4, 1.0f);
+                authMap.put("userName", userName);
+                authMap.put("id", authority);
+                authMap.put("structUnitBased", (structUnitBased) ? "true" : "false");
+                authMap.put("name", UserUtil.getPersonFullName2(personNodes.get(authority).getProperties()));
+
+                data.put(authority, authMap);
+            }
+            return data;
+        }
+
+        @Override
+        protected String getKeyFromValue(Map<String, String> userProperties) {
+            return userProperties.get("id");
+        }
     }
 }

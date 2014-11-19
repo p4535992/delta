@@ -506,7 +506,8 @@ COPY (
 -- alf_transaction. Iga 10 ülekantava node'i jaoks üks uus transaktsioon
 COPY (
 	with const_server as (select min(id) as id from alf_server)
-	select tmp_export_nodes.transaction_id, 1, (select id from const_server), (row_number() over ())::bigint::text, EXTRACT(EPOCH from now())::bigint
+	select tmp_export_nodes.transaction_id, 1, (select id from const_server), (row_number() over ())::bigint::text, 
+	(EXTRACT(EPOCH from now())::bigint * 1000) + (row_number() over ())
 	from tmp_export_nodes
 )  TO '/delta-pgsql/data/alf_transaction.tsv';
 

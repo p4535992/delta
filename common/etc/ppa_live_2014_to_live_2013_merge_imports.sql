@@ -33,6 +33,9 @@ WITH (
   OIDS=FALSE
 );
 
+ALTER TABLE delta_node_inheritspermissions
+  OWNER TO alfresco;
+
 CREATE TABLE tmp_delta_node_inheritspermissions
 (
   node_uuid character varying(36) NOT NULL,
@@ -60,6 +63,9 @@ CREATE TABLE if not exists delta_node_permission
 WITH (
   OIDS=FALSE
 );
+
+ALTER TABLE delta_node_permission
+  OWNER TO alfresco;
 
 CREATE TABLE tmp_delta_node_permission
 (
@@ -802,6 +808,7 @@ CREATE TABLE tmp_delta_task
 COPY tmp_delta_task from '/delta-pgsql/data/delta_task.tsv';
 
 delete from delta_task where task_id in (select task_id from tmp_delta_task);
+delete from delta_task where workflow_id in (select workflow_id from tmp_delta_task);
 insert into delta_task (select * from tmp_delta_task);
 
 -- id-d ei ekspordi, seda kusagil ei refereerita
@@ -818,7 +825,12 @@ COPY delta_register from '/delta-pgsql/data/delta_register.tsv';
 
 delete from delta_node_permission where node_uuid in (select uuid from tmp_import_alf_node);
 COPY tmp_delta_node_permission from '/delta-pgsql/data/delta_node_permission.tsv';
-delete from tmp_delta_node_permission where node_uuid not in (select uuid from tmp_import_alf_node);
+
+delete from tmp_delta_node_permission 
+using (select tmp_delta_node_permission.node_uuid as uuid, tmp_import_alf_node.uuid as import_uuid from tmp_delta_node_permission
+ left join tmp_import_alf_node on tmp_import_alf_node.uuid = tmp_delta_node_permission.node_uuid) as tmp_node
+where tmp_delta_node_permission.node_uuid = tmp_node.uuid and tmp_node.import_uuid is null;
+
 insert into delta_node_permission (select * from tmp_delta_node_permission);
 
 delete from delta_node_inheritspermissions where node_uuid in (select uuid from tmp_import_alf_node);
