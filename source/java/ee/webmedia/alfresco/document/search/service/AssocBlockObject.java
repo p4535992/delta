@@ -93,6 +93,10 @@ public class AssocBlockObject implements Serializable, DocumentListRowLink {
         return isDocument() ? document.getSender() : "";
     }
 
+    public String getSenderOrRecipient() {
+        return isDocument() ? document.getSenderOrRecipient() : "";
+    }
+
     public Date getDueDate() {
         return isDocument() ? document.getDueDate() : (isVolume() ? volume.getWorkflowDueDate() : null);
     }

@@ -16,6 +16,7 @@ import org.alfresco.web.ui.common.component.data.UIRichList;
 import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
+import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
@@ -38,12 +39,15 @@ public abstract class BaseDocumentListDialog extends BaseLimitedListDialog {
 
     static {
         SENDER_PROPS.add(DocumentSpecificModel.Props.SENDER_DETAILS_NAME);
+        SENDER_PROPS.add(DocumentDynamicModel.Props.SENDER_PERSON_NAME);
         SENDER_PROPS.add(DocumentSpecificModel.Props.SELLER_PARTY_NAME);
         SENDER_PROPS.add(DocumentSpecificModel.Props.SECOND_PARTY_NAME);
         SENDER_PROPS.add(DocumentSpecificModel.Props.THIRD_PARTY_NAME);
         SENDER_PROPS.add(DocumentSpecificModel.Props.PARTY_NAME);
         SENDER_PROPS.add(DocumentCommonModel.Props.RECIPIENT_NAME);
         SENDER_PROPS.add(DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME);
+        SENDER_PROPS.add(DocumentDynamicModel.Props.RECIPIENT_PERSON_NAME);
+        SENDER_PROPS.add(DocumentDynamicModel.Props.ADDITIONAL_RECIPIENT_PERSON_NAME);
 
         DOC_PROPS_TO_LOAD.add(DocumentCommonModel.Props.REG_NUMBER);
         DOC_PROPS_TO_LOAD.add(DocumentCommonModel.Props.REG_DATE_TIME);

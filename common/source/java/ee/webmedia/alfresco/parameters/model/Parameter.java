@@ -41,19 +41,19 @@ public abstract class Parameter<T extends Serializable> implements Serializable 
         this.typeMsg = typeMsg;
     }
 
-    public static Parameter<? extends Serializable> newInstance(String paramName, Serializable property, QName nodeType) {
-        return newInstance(paramName, property, nodeType, null);
+    public static Parameter<? extends Serializable> newInstance(NodeRef nodeRef, String paramName, Serializable property, QName nodeType) {
+        return newInstance(nodeRef, paramName, property, nodeType, null);
     }
 
-    public static Parameter<? extends Serializable> newInstance(String paramName, Serializable property, QName nodeType, String paramDescription) {
+    public static Parameter<? extends Serializable> newInstance(NodeRef nodeRef, String paramName, Serializable property, QName nodeType, String paramDescription) {
         if (nodeType.equals(ParametersModel.Types.PARAMETER_STRING)) {
-            return newInstance(paramName, DefaultTypeConverter.INSTANCE.convert(String.class, property), paramDescription);
+            return newInstance(nodeRef, paramName, DefaultTypeConverter.INSTANCE.convert(String.class, property), paramDescription);
         }
         if (property instanceof String && StringUtils.isBlank((String) property)) {
             return null;
         }
         final Class<? extends Serializable> paramClass = getParamClass(nodeType);
-        return newInstance(paramName, DefaultTypeConverter.INSTANCE.convert(paramClass, property), paramDescription);
+        return newInstance(nodeRef, paramName, DefaultTypeConverter.INSTANCE.convert(paramClass, property), paramDescription);
     }
 
     public static Class<? extends Serializable> getParamClass(QName nodeType) {
@@ -133,7 +133,7 @@ public abstract class Parameter<T extends Serializable> implements Serializable 
 
     @SuppressWarnings("unchecked")
     // can't put SuppressWarnings annotation to each place with reasonable amount of code
-    private static <G extends Serializable> Parameter<G> newInstance(String paramName, G paramValue, String paramDescription) {
+    private static <G extends Serializable> Parameter<G> newInstance(NodeRef nodeRef, String paramName, G paramValue, String paramDescription) {
         Parameter<G> parameter;
         if (paramValue instanceof String) {
             parameter = (Parameter<G>) new StringParameter(paramName);
@@ -146,6 +146,7 @@ public abstract class Parameter<T extends Serializable> implements Serializable 
         }
         parameter.setParamDescription(paramDescription);
         parameter.setParamValue(paramValue);
+        parameter.setNodeRef(nodeRef);
         return parameter;
     }
 

@@ -933,6 +933,7 @@
       <property name="dependsOn">
          <list>
             <ref bean="systematicClearBootstrap" />
+            <ref bean="documentSenderPersonNameUpdater" />
          </list>
       </property>
    </bean>

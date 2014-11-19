@@ -32,7 +32,7 @@
    <a:panel id="groups-panel" label="#{msg.groups}" styleClass="with-pager" rendered="#{not empty DialogManager.bean.groups}">
 
       <a:richList id="groups-list" binding="#{DialogManager.bean.groupsRichList}" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow"
-         altRowStyleClass="odd" width="100%" value="#{DialogManager.bean.groups}" var="r" initialSortColumn="id">
+         altRowStyleClass="odd" width="100%" value="#{DialogManager.bean.groups}" var="r" initialSortColumn="id" refreshOnBind="true">
          
          <%-- Primary column for details view mode --%>
          <a:column primary="true" style="padding:2px;text-align:left">
@@ -57,7 +57,7 @@
             <r:actions id="add-user-group" value="base_group_inline_actions" context="#{r}" showLink="false" styleClass="inlineAction"
                rendered="#{applicationConstantsBean.groupsEditingAllowed && r.structUnitBased == 'false'}" />
             <r:actions id="inline-group-actions" value="group_inline_actions_no_subgroup" context="#{r}" showLink="false" styleClass="inlineAction"
-               rendered="#{GroupsDialog.deleteEnabledByGroup[r.group] and r.structUnitBased == 'false'}" />
+               rendered="#{r.deleteEnabled == 'true' and r.structUnitBased == 'false'}" />
          </a:column>
          
          <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/page-size.jsp" />

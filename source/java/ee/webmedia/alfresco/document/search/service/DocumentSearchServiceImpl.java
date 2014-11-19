@@ -108,7 +108,6 @@ import ee.webmedia.alfresco.log.model.LogEntry;
 import ee.webmedia.alfresco.log.model.LogObject;
 import ee.webmedia.alfresco.log.service.LogService;
 import ee.webmedia.alfresco.parameters.model.Parameters;
-import ee.webmedia.alfresco.privilege.service.PrivilegeService;
 import ee.webmedia.alfresco.search.service.AbstractSearchServiceImpl;
 import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.series.model.UnmodifiableSeries;
@@ -153,13 +152,36 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
     private UserService userService;
     private LogService logService;
     private BulkLoadNodeService bulkLoadNodeService;
-    private PrivilegeService privilegeService;
     private ApplicationConstantsBean applicationConstantsBean;
     private boolean finishedIncomingLettersAreNotShown;
 
     static {
         DOCUMENT_SERIES_PROP_QNAME_SET.add(DocumentCommonModel.Props.SERIES);
         SERIES_DOCUMENTS_VISIBLE_FOR_USERS_WITHOUT_ACCESS_QNAME_SET.add(SeriesModel.Props.DOCUMENTS_VISIBLE_FOR_USERS_WITHOUT_ACCESS);
+    }
+
+    private static final List<String> PRELOADED_RECIPIENT_FINISHED_QUERY_PARTS;
+
+    static {
+        List<String> queryParts = new ArrayList<String>();
+        queryParts.add(generateStringExactQuery(DocumentStatus.FINISHED.getValueName(), DocumentCommonModel.Props.DOC_STATUS));
+        queryParts.add(generateStringNullQuery(DocumentCommonModel.Props.SEARCHABLE_SEND_MODE));
+        queryParts.add(joinQueryPartsOr(
+                generatePropertyBooleanQuery(DocumentCommonModel.Props.DOCUMENT_IS_IMPORTED, false)
+                , generatePropertyNullQuery(DocumentCommonModel.Props.DOCUMENT_IS_IMPORTED)));
+        queryParts.add(generateStringNotEmptyQuery(
+                DocumentCommonModel.Props.RECIPIENT_NAME,
+                DocumentDynamicModel.Props.RECIPIENT_PERSON_NAME,
+                DocumentCommonModel.Props.RECIPIENT_EMAIL,
+                DocumentDynamicModel.Props.RECIPIENT_POSTAL_CITY,
+                DocumentDynamicModel.Props.RECIPIENT_STREET_HOUSE,
+                DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME,
+                DocumentDynamicModel.Props.ADDITIONAL_RECIPIENT_PERSON_NAME,
+                DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_EMAIL,
+                DocumentDynamicModel.Props.ADDITIONAL_RECIPIENT_POSTAL_CITY,
+                DocumentDynamicModel.Props.ADDITIONAL_RECIPIENT_STREET_HOUSE,
+                DocumentSpecificModel.Props.PARTY_NAME));
+        PRELOADED_RECIPIENT_FINISHED_QUERY_PARTS = Collections.unmodifiableList(queryParts);
     }
 
     private List<StoreRef> allStores = null;
@@ -490,16 +512,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
     }
 
     private String generateRecipientFinichedQuery() {
-        List<String> queryParts = new ArrayList<String>();
-        queryParts.add(generateStringExactQuery(DocumentStatus.FINISHED.getValueName(), DocumentCommonModel.Props.DOC_STATUS));
-        queryParts.add(generateStringNullQuery(DocumentCommonModel.Props.SEARCHABLE_SEND_MODE));
-        queryParts.add(joinQueryPartsOr(
-                generatePropertyBooleanQuery(DocumentCommonModel.Props.DOCUMENT_IS_IMPORTED, false)
-                , generatePropertyNullQuery(DocumentCommonModel.Props.DOCUMENT_IS_IMPORTED)));
-        queryParts.add(generateStringNotEmptyQuery(DocumentCommonModel.Props.RECIPIENT_NAME, DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME,
-                DocumentSpecificModel.Props.PARTY_NAME /* on document node, duplicates partyName property values from all contractParty child-nodes */
-                ));
-        return generateDocumentSearchQuery(queryParts, null);
+        return generateDocumentSearchQuery(new ArrayList<>(PRELOADED_RECIPIENT_FINISHED_QUERY_PARTS), null);
     }
 
     @Override
@@ -2659,10 +2672,6 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
 
     public void setBulkLoadNodeService(BulkLoadNodeService bulkLoadNodeService) {
         this.bulkLoadNodeService = bulkLoadNodeService;
-    }
-
-    public void setPrivilegeService(PrivilegeService privilegeService) {
-        this.privilegeService = privilegeService;
     }
 
     public void setApplicationConstantsBean(ApplicationConstantsBean applicationConstantsBean) {

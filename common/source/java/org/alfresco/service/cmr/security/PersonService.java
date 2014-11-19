@@ -224,5 +224,7 @@ public interface PersonService
     void updateCache(String userName);
 
     Object getPersonProperty(String userName, QName property);
+    
+    NodeRef getPersonFromRepo(String userName);
 
 }

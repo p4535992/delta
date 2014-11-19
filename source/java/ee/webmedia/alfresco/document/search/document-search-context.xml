@@ -78,7 +78,6 @@
       <property name="authorityService" ref="AuthorityService" />
       <property name="luceneConfig" ref="admLuceneIndexerAndSearcherFactory" />
       <property name="bulkLoadNodeService" ref="BulkLoadNodeService" />
-      <property name="privilegeService" ref="PrivilegeService" />
       <property name="applicationConstantsBean" ref="applicationConstantsBean" />
       <property name="finishedIncomingLettersAreNotShown" value="${conf.myDocumentsMenu.finishedIncomingLettersAreNotShown}" />
    </bean>

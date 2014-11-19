@@ -67,6 +67,8 @@ import ee.webmedia.alfresco.classificator.model.Classificator;
 import ee.webmedia.alfresco.classificator.model.ClassificatorValue;
 import ee.webmedia.alfresco.common.propertysheet.modalLayer.ModalLayerComponent;
 import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
+import ee.webmedia.alfresco.docconfig.bootstrap.SystematicDocumentType;
 import ee.webmedia.alfresco.docdynamic.model.DocumentChildModel;
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.docdynamic.web.DocumentLockHelperBean;
@@ -273,38 +275,57 @@ public class DocumentSendOutDialog extends BaseDialogBean {
         model.setDefaultSendMode(defaultSendMode);
         model.setSendModeByContentType(sendModeByStorageType);
 
-        List<String> names = newListIfNull((List<String>) props.get(DocumentCommonModel.Props.RECIPIENT_NAME), false);
-        List<String> idCodes = newListIfNull((List<String>) props.get(DocumentDynamicModel.Props.RECIPIENT_ID), false);
-        List<String> emails = newListIfNull((List<String>) props.get(DocumentCommonModel.Props.RECIPIENT_EMAIL), false);
-        List<String> groups = newListIfNull((List<String>) props.get(DocumentCommonModel.Props.RECIPIENT_GROUP), false);
-        while (groups.size() < names.size()) {
-            groups.add("");
-        }
-        List<Node> childNodes = node.getAllChildAssociations(DocumentChildModel.Assocs.CONTRACT_PARTY);
-        if (childNodes != null) {
-            for (Node childNode : childNodes) {
-                String name = (String) childNode.getProperties().get(DocumentSpecificModel.Props.PARTY_NAME);
-                String email = (String) childNode.getProperties().get(DocumentSpecificModel.Props.PARTY_EMAIL);
-                if (StringUtils.isBlank(name) && StringUtils.isBlank(email)) {
-                    continue;
-                }
+        List<String> names;
+        List<String> idCodes;
+        List<String> emails;
+        List<String> groups;
 
-                names.add(name);
-                idCodes.add("");
-                emails.add(email);
+        boolean isContract = SystematicDocumentType.CONTRACT.getId().equals(props.get(DocumentAdminModel.Props.OBJECT_TYPE_ID));
+        if (isContract) {
+            String partyName = (String) props.get(DocumentSpecificModel.Props.PARTY_NAME);
+            names = new ArrayList<>();
+            if (StringUtils.isNotBlank(partyName)) {
+                names.add(partyName);
+            }
+            idCodes = new ArrayList<>();
+            emails = new ArrayList<>();
+            groups = new ArrayList<>();
+        } else {
+            names = getNames(props, DocumentCommonModel.Props.RECIPIENT_NAME, DocumentDynamicModel.Props.RECIPIENT_PERSON_NAME);
+            idCodes = newListIfNull((List<String>) props.get(DocumentDynamicModel.Props.RECIPIENT_ID), false);
+            emails = newListIfNull((List<String>) props.get(DocumentCommonModel.Props.RECIPIENT_EMAIL), false);
+            groups = newListIfNull((List<String>) props.get(DocumentCommonModel.Props.RECIPIENT_GROUP), false);
+
+            while (groups.size() < names.size()) {
                 groups.add("");
             }
-        }
+            List<Node> childNodes = node.getAllChildAssociations(DocumentChildModel.Assocs.CONTRACT_PARTY);
+            if (childNodes != null) {
+                for (Node childNode : childNodes) {
+                    String name = (String) childNode.getProperties().get(DocumentSpecificModel.Props.PARTY_NAME);
+                    String email = (String) childNode.getProperties().get(DocumentSpecificModel.Props.PARTY_EMAIL);
+                    if (StringUtils.isBlank(name) && StringUtils.isBlank(email)) {
+                        continue;
+                    }
 
-        if (names.size() == 1 && emails.size() == 1 && StringUtils.isBlank(names.get(0)) && StringUtils.isBlank(emails.get(0))) {
-            names = new ArrayList<String>();
-            idCodes = new ArrayList<String>();
-            emails = new ArrayList<String>();
-            groups = new ArrayList<String>();
-        }
+                    names.add(name);
+                    idCodes.add("");
+                    emails.add(email);
+                    groups.add("");
+                }
+            }
 
-        addAdditionalRecipients(props, names, idCodes, emails, groups);
+            if (names.size() == 1 && emails.size() == 1 && StringUtils.isBlank(names.get(0)) && StringUtils.isBlank(emails.get(0))) {
+                names = new ArrayList<String>();
+                idCodes = new ArrayList<String>();
+                emails = new ArrayList<String>();
+                groups = new ArrayList<String>();
+            }
+
+            addAdditionalRecipients(props, names, idCodes, emails, groups);
+        }
         removeEmptyValuesLeavingOneEmptyLineIfNeeded(names, emails, groups);
+
         List<String> recSendModes = new ArrayList<String>(names.size());
         for (int i = 0; i < names.size(); i++) {
             if (StringUtils.isNotBlank(names.get(i)) || StringUtils.isNotBlank(emails.get(i))) {
@@ -325,7 +346,7 @@ public class DocumentSendOutDialog extends BaseDialogBean {
 
     @SuppressWarnings("unchecked")
     private void addAdditionalRecipients(Map<String, Object> props, List<String> names, List<String> idCodes, List<String> emails, List<String> groups) {
-        List<String> namesAdd = newListIfNull((List<String>) props.get(DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME), false);
+        List<String> namesAdd = getNames(props, DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME, DocumentDynamicModel.Props.ADDITIONAL_RECIPIENT_PERSON_NAME);
         List<String> idCodesAdd = newListIfNull((List<String>) props.get(DocumentDynamicModel.Props.ADDITIONAL_RECIPIENT_ID), false);
         List<String> emailsAdd = newListIfNull((List<String>) props.get(DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_EMAIL), false);
         List<String> groupsAdd = newListIfNull((List<String>) props.get(DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_GROUP), false);
@@ -374,6 +395,20 @@ public class DocumentSendOutDialog extends BaseDialogBean {
             emails.add("");
             groups.add("");
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<String> getNames(Map<String, Object> props, QName prop, QName alternativeProp) {
+        List<String> mainValues = newListIfNull((List<String>) props.get(prop), false);
+        Object alternative = props.get(alternativeProp);
+        List<String> alternativeValues = (alternative instanceof List<?>) ? newListIfNull((List<String>) alternative, false) : null;
+        List<String> result = new ArrayList<>(mainValues);
+        for (int i = 0; i < mainValues.size(); i++) {
+            if (StringUtils.isBlank(mainValues.get(i)) && (alternativeValues != null && StringUtils.isNotBlank(alternativeValues.get(i)))) {
+                result.set(i, alternativeValues.get(i));
+            }
+        }
+        return result;
     }
 
     public String getPanelTitle() {

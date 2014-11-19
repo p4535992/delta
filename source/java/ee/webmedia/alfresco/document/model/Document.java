@@ -3,8 +3,10 @@ package ee.webmedia.alfresco.document.model;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -80,6 +82,17 @@ public class Document extends Node implements Comparable<Document>, CssStylable,
 
     /** To be only accessed using {@link #getDocumentType()} */
     private transient DocumentTypeService documentTypeService;
+    private static final Map<QName, QName> PROPS_WITH_ALTERNATIVES;
+
+    static {
+        Map<QName, QName> props = new LinkedHashMap<>();
+        props.put(DocumentSpecificModel.Props.SECOND_PARTY_NAME, null);
+        props.put(DocumentSpecificModel.Props.THIRD_PARTY_NAME, null);
+        props.put(DocumentSpecificModel.Props.PARTY_NAME, null);
+        props.put(DocumentCommonModel.Props.RECIPIENT_NAME, DocumentDynamicModel.Props.RECIPIENT_PERSON_NAME);
+        props.put(DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME, DocumentDynamicModel.Props.ADDITIONAL_RECIPIENT_PERSON_NAME);
+        PROPS_WITH_ALTERNATIVES = Collections.unmodifiableMap(props);
+    }
 
     /**
      * Copy constructory
@@ -169,20 +182,7 @@ public class Document extends Node implements Comparable<Document>, CssStylable,
     }
 
     public String getSender() {
-        String docDynType = getObjectTypeId();
-        if (SystematicDocumentType.INCOMING_LETTER.isSameType(docDynType)) {
-            return (String) getProperties().get(DocumentSpecificModel.Props.SENDER_DETAILS_NAME);
-        } else if (SystematicDocumentType.INVOICE.isSameType(docDynType)) {
-            return (String) getProperties().get(DocumentSpecificModel.Props.SELLER_PARTY_NAME);
-        }
-        return TextUtil.join(
-                getProperties()
-                , DocumentSpecificModel.Props.SECOND_PARTY_NAME
-                , DocumentSpecificModel.Props.THIRD_PARTY_NAME
-                , DocumentSpecificModel.Props.PARTY_NAME
-                , DocumentCommonModel.Props.RECIPIENT_NAME
-                , DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME
-                );
+        return getPropOrAlternativeIfPropIsBlank(getProperties(), DocumentSpecificModel.Props.SENDER_DETAILS_NAME, DocumentDynamicModel.Props.SENDER_PERSON_NAME);
     }
 
     public String getSenderOrOwner() {
@@ -209,26 +209,23 @@ public class Document extends Node implements Comparable<Document>, CssStylable,
     public String getSenderOrRecipient() {
         String docDynType = getObjectTypeId();
         if (SystematicDocumentType.INCOMING_LETTER.isSameType(docDynType)) {
-            return (String) getProperties().get(DocumentSpecificModel.Props.SENDER_DETAILS_NAME);
+            return getPropOrAlternativeIfPropIsBlank(getProperties(), DocumentSpecificModel.Props.SENDER_DETAILS_NAME, DocumentDynamicModel.Props.SENDER_PERSON_NAME);
         } else if (SystematicDocumentType.INVOICE.isSameType(docDynType)) {
             return (String) getProperties().get(DocumentSpecificModel.Props.SELLER_PARTY_NAME);
         }
-        return getAllRecipients();
+        return TextUtil.join(getProperties(), PROPS_WITH_ALTERNATIVES);
+    }
+
+    private String getPropOrAlternativeIfPropIsBlank(Map<String, Object> props, QName primaryChoice, QName alternative) {
+        String result = (String) props.get(primaryChoice);
+        if (StringUtils.isBlank(result)) {
+            result = (String) props.get(alternative);
+        }
+        return result;
     }
 
     public String getAllRecipients() {
-        return TextUtil.join(getProperties(), DocumentCommonModel.Props.RECIPIENT_NAME, DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME,
-                DocumentSpecificModel.Props.SECOND_PARTY_NAME, DocumentSpecificModel.Props.THIRD_PARTY_NAME, DocumentSpecificModel.Props.PARTY_NAME);
-    }
-
-    public String getSenderOrRecipients() {
-        String docDynType = getObjectTypeId();
-        if (SystematicDocumentType.INCOMING_LETTER.isSameType(docDynType)) {
-            return (String) getProperties().get(DocumentSpecificModel.Props.SENDER_DETAILS_NAME);
-        } else if (SystematicDocumentType.INVOICE.isSameType(docDynType)) {
-            return (String) getProperties().get(DocumentSpecificModel.Props.SELLER_PARTY_NAME);
-        }
-        return getAllRecipients();
+        return TextUtil.join(getProperties(), PROPS_WITH_ALTERNATIVES, TextUtil.SEMICOLON_SEPARATOR);
     }
 
     // BEGIN properties collected from child nodes
@@ -673,12 +670,12 @@ public class Document extends Node implements Comparable<Document>, CssStylable,
             try {
                 inactiveFiles = (List<File>) CollectionUtils.select(fileService.getAllActiveAndInactiveFiles(nodeRef), new Predicate<File>() { // TODO - Can be optimized.
 
-                            @Override
-                            public boolean evaluate(File file) {
-                                return !file.isActive();
-                            }
+                    @Override
+                    public boolean evaluate(File file) {
+                        return !file.isActive();
+                    }
 
-                        });
+                });
             } catch (InvalidNodeRefException e) {
                 // Document has been deleted between initial transaction (that constructed document list)
                 // and this transaction (JSF rendering phase, value-binding from JSP is being resolved).
@@ -712,9 +709,9 @@ public class Document extends Node implements Comparable<Document>, CssStylable,
     @Override
     public String toString() {
         return new StringBuilder("Document:")//
-                .append("\n\tregNumber = " + getRegNumber())
-                .append("\n\tdocName = " + getDocName())
-                .toString();
+        .append("\n\tregNumber = " + getRegNumber())
+        .append("\n\tdocName = " + getDocName())
+        .toString();
     }
 
     protected DocumentTypeService getDocumentTypeService() {

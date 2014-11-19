@@ -3,6 +3,7 @@ package ee.webmedia.alfresco.user.web;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getApplicationConstantsBean;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getAuthorityService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getOrganizationStructureService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
 import static ee.webmedia.alfresco.utils.UserUtil.getUserDisplayUnit;
 
 import java.util.ArrayList;
@@ -73,7 +74,7 @@ public class UserDetailsDialog extends BaseDialogBean {
                 iterator.remove();
             }
         }
-        groups = UserUtil.getGroupsFromAuthorities(getAuthorityService(), authorities);
+        groups = UserUtil.getGroupsFromAuthorities(getAuthorityService(), getUserService(), authorities);
     }
 
     @Override

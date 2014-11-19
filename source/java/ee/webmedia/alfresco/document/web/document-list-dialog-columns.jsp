@@ -75,7 +75,7 @@
          <f:facet name="header">
             <a:sortLink id="col4-sort" label="#{msg.document_sender_recipient}" value="sender" styleClass="header" />
          </f:facet>
-         <a:actionLink id="col4-text" value="#{r.sender}" action="#{r.getAction}" tooltip="#{r.sender}"
+         <a:actionLink id="col4-text" value="#{r.senderOrRecipient}" action="#{r.getAction}" tooltip="#{r.senderOrRecipient}"
           actionListener="#{r.open}" styleClass="tooltip condence20- no-underline" >
             <f:param name="nodeRef" value="#{r.node.nodeRef}" />
           </a:actionLink>
