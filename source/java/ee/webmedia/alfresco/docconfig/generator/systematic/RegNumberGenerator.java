@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.docconfig.generator.systematic;
 
+<<<<<<< HEAD
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentAdminService;
 
 import java.util.Map;
@@ -13,6 +14,15 @@ import ee.webmedia.alfresco.casefile.service.CaseFile;
 import ee.webmedia.alfresco.common.model.DynamicBase;
 import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement.ItemConfigVO;
 import ee.webmedia.alfresco.common.web.BeanHelper;
+=======
+import java.util.Map;
+
+import org.alfresco.service.namespace.QName;
+import org.alfresco.web.bean.repository.Node;
+import org.apache.commons.lang.StringUtils;
+
+import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement.ItemConfigVO;
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import ee.webmedia.alfresco.docadmin.service.Field;
 import ee.webmedia.alfresco.docadmin.service.FieldGroup;
 import ee.webmedia.alfresco.docconfig.generator.BasePropertySheetStateHolder;
@@ -20,11 +30,15 @@ import ee.webmedia.alfresco.docconfig.generator.BaseSystematicFieldGenerator;
 import ee.webmedia.alfresco.docconfig.generator.GeneratorResults;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.user.service.UserService;
+<<<<<<< HEAD
 import ee.webmedia.alfresco.volume.model.VolumeModel;
 
 /**
  * @author Alar Kvell
  */
+=======
+
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 public class RegNumberGenerator extends BaseSystematicFieldGenerator {
 
     private UserService userService;
@@ -34,6 +48,7 @@ public class RegNumberGenerator extends BaseSystematicFieldGenerator {
     public void afterPropertiesSet() {
         documentConfigService.registerHiddenFieldDependency(DocumentCommonModel.Props.SHORT_REG_NUMBER.getLocalName(), DocumentCommonModel.Props.REG_NUMBER.getLocalName());
         documentConfigService.registerHiddenFieldDependency(DocumentCommonModel.Props.INDIVIDUAL_NUMBER.getLocalName(), DocumentCommonModel.Props.REG_NUMBER.getLocalName());
+<<<<<<< HEAD
         documentConfigService.registerHiddenFieldDependency(VolumeModel.Props.VOL_SHORT_REG_NUMBER.getLocalName(), VolumeModel.Props.VOLUME_MARK.getLocalName());
 
         getDocumentAdminService().registerForbiddenFieldId(VolumeModel.Props.CONTAINS_CASES.getLocalName());
@@ -41,6 +56,8 @@ public class RegNumberGenerator extends BaseSystematicFieldGenerator {
         getDocumentAdminService().registerForbiddenFieldId(VolumeModel.Props.VOLUME_TYPE.getLocalName());
         getDocumentAdminService().registerForbiddenFieldId(VolumeModel.Props.CONTAINING_DOCS_COUNT.getLocalName());
         getDocumentAdminService().registerForbiddenFieldId(VolumeModel.Props.LOCATION.getLocalName());
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
         super.afterPropertiesSet();
     }
@@ -49,19 +66,28 @@ public class RegNumberGenerator extends BaseSystematicFieldGenerator {
     protected String[] getOriginalFieldIds() {
         return new String[] {
                 DocumentCommonModel.Props.REG_NUMBER.getLocalName(),
+<<<<<<< HEAD
                 DocumentCommonModel.Props.REG_DATE_TIME.getLocalName(),
                 VolumeModel.Props.VOLUME_MARK.getLocalName() };
+=======
+                DocumentCommonModel.Props.REG_DATE_TIME.getLocalName() };
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     @Override
     public void generateField(Field field, GeneratorResults generatorResults) {
         // Can be used outside systematic field group - then additional functionality is not present
+<<<<<<< HEAD
         if (!VolumeModel.Props.VOLUME_MARK.getLocalName().equals(field.getOriginalFieldId())
                 && (!(field.getParent() instanceof FieldGroup) || !((FieldGroup) field.getParent()).isSystematic())) {
+=======
+        if (!(field.getParent() instanceof FieldGroup) || !((FieldGroup) field.getParent()).isSystematic()) {
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             generatorResults.getAndAddPreGeneratedItem();
             return;
         }
 
+<<<<<<< HEAD
         ItemConfigVO item = generatorResults.getAndAddPreGeneratedItem();
         if (field.getOriginalFieldId().equals(VolumeModel.Props.VOLUME_MARK.getLocalName())) {
             item.getCustomAttributes().put(BaseComponentGenerator.CustomAttributeNames.VALDIATION_DISABLED, "#{CaseFileDialog.isVolumeMarkValidationDisabled}");
@@ -74,13 +100,26 @@ public class RegNumberGenerator extends BaseSystematicFieldGenerator {
         String regNrStateHolderKey = regNumberField.getFieldId();
 
         item.setShow(getBindingName("showFields", regNrStateHolderKey));
+=======
+        Map<String, Field> fieldsByOriginalId = ((FieldGroup) field.getParent()).getFieldsByOriginalId();
+        Field regNumberField = fieldsByOriginalId.get(DocumentCommonModel.Props.REG_NUMBER.getLocalName());
+        Field regDateTimeField = fieldsByOriginalId.get(DocumentCommonModel.Props.REG_DATE_TIME.getLocalName());
+        String stateHolderKey = regNumberField.getFieldId();
+
+        ItemConfigVO item = generatorResults.getAndAddPreGeneratedItem();
+        item.setShow(getBindingName("showFields", stateHolderKey));
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         if (field.getOriginalFieldId().equals(DocumentCommonModel.Props.REG_NUMBER.getLocalName())) {
             if (!(regNumberEditable && userService.isDocumentManager())) {
                 item.setReadOnly(true);
             } else {
                 item.setForcedMandatory(true);
             }
+<<<<<<< HEAD
             generatorResults.addStateHolder(regNrStateHolderKey, new RegNumberState(regNumberField.getQName(), regDateTimeField.getQName()));
+=======
+            generatorResults.addStateHolder(stateHolderKey, new RegNumberState(regNumberField.getQName(), regDateTimeField.getQName()));
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             return;
         } else if (field.getOriginalFieldId().equals(DocumentCommonModel.Props.REG_DATE_TIME.getLocalName())) {
             return;
@@ -88,6 +127,7 @@ public class RegNumberGenerator extends BaseSystematicFieldGenerator {
         throw new RuntimeException("Unsupported field: " + field);
     }
 
+<<<<<<< HEAD
     @Override
     public void save(DynamicBase dynamicObject) {
         if (!(dynamicObject instanceof CaseFile)) {
@@ -101,6 +141,8 @@ public class RegNumberGenerator extends BaseSystematicFieldGenerator {
         }
     }
 
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     // XXX if user manually changes regNumber of document, then we should update shortRegNumber and individualNumber also
     // but how? this is very difficult. it was decided that these are left as is
 

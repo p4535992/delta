@@ -13,8 +13,11 @@ import ee.webmedia.alfresco.document.file.service.FileService;
 
 /**
  * Dialog showing list of folders that contain scanned documents
+<<<<<<< HEAD
  * 
  * @author Ats Uiboupin
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
  */
 public class ScannedFoldersListDialog extends BaseDialogBean {
     private static final long serialVersionUID = 0L;

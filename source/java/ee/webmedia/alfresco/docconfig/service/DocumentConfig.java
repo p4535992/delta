@@ -9,19 +9,28 @@ import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigEle
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.docadmin.service.DocumentType;
 import ee.webmedia.alfresco.docadmin.service.DocumentTypeVersion;
+<<<<<<< HEAD
 import ee.webmedia.alfresco.docadmin.service.DynamicType;
 import ee.webmedia.alfresco.docconfig.generator.PropertySheetStateHolder;
 
 /**
  * @author Alar Kvell
  */
+=======
+import ee.webmedia.alfresco.docconfig.generator.PropertySheetStateHolder;
+
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 public class DocumentConfig implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private final WMPropertySheetConfigElement propertySheetConfigElement;
     private final Map<String, PropertySheetStateHolder> stateHolders;
     private final List<String> saveListenerBeanNames;
+<<<<<<< HEAD
     private final DynamicType dynamicType;
+=======
+    private final DocumentType docType;
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     private final DocumentTypeVersion docVersion;
 
     public DocumentConfig(WMPropertySheetConfigElement propertySheetConfigElement, Map<String, PropertySheetStateHolder> stateHolders
@@ -29,7 +38,11 @@ public class DocumentConfig implements Serializable {
         this.propertySheetConfigElement = propertySheetConfigElement;
         this.stateHolders = stateHolders;
         this.saveListenerBeanNames = saveListenerBeanNames;
+<<<<<<< HEAD
         dynamicType = docVersion == null ? null : (DynamicType) docVersion.getParent();
+=======
+        docType = docVersion == null ? null : (DocumentType) docVersion.getParent();
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         this.docVersion = docVersion;
     }
 
@@ -46,6 +59,7 @@ public class DocumentConfig implements Serializable {
     }
 
     public String getDocumentTypeName() {
+<<<<<<< HEAD
         return dynamicType != null ? dynamicType.getName() : null;
     }
 
@@ -55,6 +69,17 @@ public class DocumentConfig implements Serializable {
 
     public DynamicType getDocType() {
         return dynamicType;
+=======
+        return docType != null ? docType.getName() : null;
+    }
+
+    public boolean isDocumentTypeRegistrationEnabled() {
+        return docType != null ? docType.isRegistrationEnabled() : null;
+    }
+
+    public DocumentType getDocType() {
+        return docType;
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     public DocumentTypeVersion getDocVersion() {

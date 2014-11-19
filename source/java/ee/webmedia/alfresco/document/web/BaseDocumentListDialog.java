@@ -16,9 +16,12 @@ import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
 import ee.webmedia.alfresco.document.service.DocumentService;
 
+<<<<<<< HEAD
 /**
  * @author Alar Kvell
  */
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 public abstract class BaseDocumentListDialog extends BaseLimitedListDialog {
     private static final long serialVersionUID = 1L;
 
@@ -79,10 +82,13 @@ public abstract class BaseDocumentListDialog extends BaseLimitedListDialog {
         return false;
     }
 
+<<<<<<< HEAD
     public boolean isShowComplienceDateColumn() {
         return true;
     }
 
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     /**
      * Returns the file name to import as document list columns
      * Subclasses can override if necessary.
@@ -152,10 +158,13 @@ public abstract class BaseDocumentListDialog extends BaseLimitedListDialog {
         return panel;
     }
 
+<<<<<<< HEAD
     public boolean isContainsCases() {
         return false;
     }
 
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     // END: getters / setters
 
 }

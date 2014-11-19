@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <?xml version="1.0" encoding="UTF-8"?>
 <view:view xmlns:view="http://www.alfresco.org/view/repository/1.0" xmlns:cl="http://alfresco.webmedia.ee/model/classificator/1.0">
 
@@ -10,3 +11,17 @@
    </cl:classificator>
 
 </view:view>
+=======
+<?xml version="1.0" encoding="UTF-8"?>
+<view:view xmlns:view="http://www.alfresco.org/view/repository/1.0" xmlns:cl="http://alfresco.webmedia.ee/model/classificator/1.0">
+
+   <cl:classificator view:childName="cl:caseFileTypeGroup">
+      <cl:name>caseFileTypeGroup</cl:name>
+      <cl:addRemoveValues>true</cl:addRemoveValues>
+      <cl:deleteEnabled>false</cl:deleteEnabled>
+      <cl:description>Klassifikaator on seotud asjatoimiku liigi metaandme väljaga "Asjatoimiku liigi grupp".
+         Välja "Asjatoimiku liigi grupp" väärtus määrab asjatoimiku liigi asukoha põhimenüü punkti "Alusta uut .." all avanevas valikmenüüs.</cl:description>
+   </cl:classificator>
+
+</view:view>
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5

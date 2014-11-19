@@ -47,8 +47,11 @@ import ee.webmedia.alfresco.utils.ComponentUtil;
  * </ul>
  * </li>
  * </ul>
+<<<<<<< HEAD
  * 
  * @author Alar Kvell
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
  */
 public class MultiValueEditorGenerator extends BaseComponentGenerator implements HandlesViewMode {
 
@@ -86,13 +89,20 @@ public class MultiValueEditorGenerator extends BaseComponentGenerator implements
         addValueFromCustomAttributes(Search.AJAX_PARENT_LEVEL_KEY, attributes, Integer.class);
         addValueFromCustomAttributes(MultiValueEditor.INITIAL_ROWS, attributes, Integer.class);
         addValueFromCustomAttributes(MultiValueEditor.FILTERS, attributes);
+<<<<<<< HEAD
         addValueFromCustomAttributes(MultiValueEditor.FILTER_INDEX, attributes, Integer.class);
+=======
+        addValueFromCustomAttributes(Search.FILTER_INDEX, attributes, Integer.class);
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         addValueFromCustomAttributes(MultiValueEditor.PREPROCESS_CALLBACK, attributes);
         addValueFromCustomAttributes(MultiValueEditor.NO_ADD_LINK_LABEL, attributes);
         addValueFromCustomAttributes(MultiValueEditor.IS_AUTOMATICALLY_ADD_ROWS, attributes, Boolean.class);
         addValueFromCustomAttributes(ComponentUtil.IS_ALWAYS_EDIT, attributes, Boolean.class);
         addValueFromCustomAttributes(Search.SEARCH_SUGGEST_DISABLED, attributes, Boolean.class, false);
+<<<<<<< HEAD
         addValueFromCustomAttributes(Search.FILTERS_ALLOW_GROUP_SELECT_KEY, attributes, Boolean.class, false);
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         addValueFromCustomAttributes(MultiValueEditor.HIDDEN_PROP_NAMES, attributes);
         addValueFromCustomAttributes(MultiValueEditor.SETTER_CALLBACK_RETURNS_MAP, attributes, Boolean.class, false);
         addValueFromCustomAttributes(MultiValueEditor.GROUP_BY_COLUMN_NAME, attributes);

@@ -55,9 +55,12 @@ import ee.webmedia.xtee.client.dhl.types.ee.sk.digiDoc.v13.DataFileType;
 import ee.webmedia.xtee.client.dhl.types.ee.sk.digiDoc.v13.SignedDocType;
 import ee.webmedia.xtee.client.service.configuration.provider.XTeeProviderPropertiesResolver;
 
+<<<<<<< HEAD
 /**
  * @author ats.uiboupin
  */
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 public class DhlXTeeServiceImplTest extends TestCase {
 
     private static Log log = LogFactory.getLog(DhlXTeeServiceImplTest.class);

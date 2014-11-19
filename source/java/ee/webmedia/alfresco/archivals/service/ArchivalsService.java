@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.archivals.service;
 
+<<<<<<< HEAD
 import java.util.Date;
 import java.util.List;
 
@@ -49,4 +50,49 @@ public interface ArchivalsService {
 
     List<File> getArchivalActivityFiles(NodeRef archivalActivityRef);
 
+=======
+import java.util.List;
+
+import javax.faces.event.ActionEvent;
+
+import org.alfresco.service.cmr.repository.NodeRef;
+
+import ee.webmedia.alfresco.archivals.model.ArchiveJobStatus;
+import ee.webmedia.alfresco.functions.model.Function;
+
+public interface ArchivalsService {
+    String BEAN_NAME = "ArchivalsService";
+
+    void archiveVolume(NodeRef archivingJobRef);
+
+    int destroyArchivedVolumes();
+
+    void destroyArchivedVolumes(ActionEvent event);
+
+    List<Function> getArchivedFunctions();
+
+    NodeRef getArchivalRoot();
+
+    List<NodeRef> getAllInQueueJobs();
+
+    ArchiveJobStatus getArchivingStatus(NodeRef archivingJobNodeRef);
+
+    void removeVolumeFromArchivingList(NodeRef volumeRef);
+
+    void markArchivingJobAsRunning(NodeRef archivingJobNodeRef);
+
+    void addVolumeToArchivingList(NodeRef volumeRef);
+
+    void removeJobNodeFromArchivingList(NodeRef archivingJobRef);
+
+    boolean isArchivingPaused();
+
+    void doPauseArchiving();
+
+    void cancelAllArchivingJobs(ActionEvent event);
+
+    void pauseArchiving(ActionEvent event);
+
+    void continueArchiving(ActionEvent event);
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 }

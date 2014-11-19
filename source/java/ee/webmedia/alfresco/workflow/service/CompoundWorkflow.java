@@ -3,6 +3,7 @@ package ee.webmedia.alfresco.workflow.service;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
+<<<<<<< HEAD
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
@@ -28,17 +29,31 @@ import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
  * @author Alar Kvell
  */
 public class CompoundWorkflow extends BaseWorkflowObject implements Serializable, Comparable<CompoundWorkflow> {
+=======
+import java.util.List;
+
+import org.alfresco.service.cmr.repository.NodeRef;
+import org.springframework.util.Assert;
+
+import ee.webmedia.alfresco.common.web.WmNode;
+import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
+
+public class CompoundWorkflow extends BaseWorkflowObject implements Serializable {
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     private static final long serialVersionUID = 1L;
 
     private final NodeRef parent;
     private final List<Workflow> workflows = new ArrayList<Workflow>();
     private List<CompoundWorkflow> otherCompoundWorkflows = new ArrayList<CompoundWorkflow>();
     private final List<Workflow> removedWorkflows = new ArrayList<Workflow>();
+<<<<<<< HEAD
     private Integer numberOfDocuments;
     private final List<NodeRef> newAssocs = new ArrayList<NodeRef>();
     private final List<RelatedUrl> newRelatedUrls = new ArrayList<RelatedUrl>();
 
     private List<Pair<String, Object[]>> reviewTaskDvkInfoMessages;
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
     public CompoundWorkflow(WmNode node, NodeRef parent) {
         super(node);
@@ -46,7 +61,11 @@ public class CompoundWorkflow extends BaseWorkflowObject implements Serializable
         this.parent = parent;
     }
 
+<<<<<<< HEAD
     protected CompoundWorkflow copy() {
+=======
+    public CompoundWorkflow copy() {
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         return copyImpl(new CompoundWorkflow(getNode().clone(), parent));
     }
 
@@ -59,12 +78,15 @@ public class CompoundWorkflow extends BaseWorkflowObject implements Serializable
         for (Workflow removedWorkflow : removedWorkflows) {
             compoundWorkflow.removedWorkflows.add(removedWorkflow.copy(compoundWorkflow));
         }
+<<<<<<< HEAD
         for (NodeRef docRef : newAssocs) {
             compoundWorkflow.newAssocs.add(docRef);
         }
         for (RelatedUrl relatedUrl : newRelatedUrls) {
             compoundWorkflow.newRelatedUrls.add(relatedUrl);
         }
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         @SuppressWarnings("unchecked")
         T result = (T) compoundWorkflow;
         return result;
@@ -128,6 +150,7 @@ public class CompoundWorkflow extends BaseWorkflowObject implements Serializable
         setProp(WorkflowCommonModel.Props.OWNER_NAME, ownerName);
     }
 
+<<<<<<< HEAD
     @SuppressWarnings("unchecked")
     public String getOwnerStructUnit() {
         return UserUtil.getDisplayUnit((List<String>) getNode().getProperties().get(WorkflowCommonModel.Props.OWNER_ORGANIZATION_NAME));
@@ -203,12 +226,15 @@ public class CompoundWorkflow extends BaseWorkflowObject implements Serializable
         setProp(WorkflowCommonModel.Props.TITLE, title);
     }
 
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     @Override
     protected String additionalToString() {
         return "\n  parent=" + getParent() + "\n  workflows=" + WmNode.toString(getWorkflows()) + "\n  removedWorkflows="
                 + WmNode.toString(getRemovedWorkflows());
     }
 
+<<<<<<< HEAD
     public boolean isDocumentWorkflow() {
         return getTypeEnum() == null || isType(CompoundWorkflowType.DOCUMENT_WORKFLOW);
     }
@@ -327,4 +353,6 @@ public class CompoundWorkflow extends BaseWorkflowObject implements Serializable
         this.reviewTaskDvkInfoMessages = reviewTaskDvkInfoMessages;
     }
 
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 }

@@ -27,7 +27,11 @@
       rendered="#{deleteAllTasksFromRepo.updaterRunning}"
       disabled="#{deleteAllTasksFromRepo.updaterStopping}" />
 	<f:verbatim><br/></f:verbatim>
+<<<<<<< HEAD
 	
+=======
+
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 	<h:outputText value="Logikirjete kustutamine repost. NB!!! Enne kasutamist veendu, et kõik updaterid, mis logikirjete andmeid repost andmebaasi tabelitesse kirjutavad, on edukalt lõpuni jooksnud!!!! Vastasel korral ei saa logide andmeid enam taastada!!!"/>
 	<f:verbatim><br/></f:verbatim>
 	<h:outputText value="numberOfLogNodesInSingleTransaction: "/>
@@ -44,6 +48,48 @@
       rendered="#{deleteAllLogNodesFromRepo.updaterRunning}"
       disabled="#{deleteAllLogNodesFromRepo.updaterStopping}" />
 	<f:verbatim><br/></f:verbatim>	
+<<<<<<< HEAD
+=======
+
+   <f:verbatim><br/><hr/></f:verbatim>
+   <h:outputText value="Dokumentide shortRegNumber korrigeerimine numbriliseks väärtuseks ja regNumber korrigeerimine vastavalt"/>
+   <f:verbatim><br/></f:verbatim>
+   <h:outputText value="Päriselt muuda andmeid: "/>
+   <h:selectBooleanCheckbox value="#{invalidShortRegNumberUpdater.writeValues}" />
+   <f:verbatim><br/></f:verbatim>
+   <h:outputText value="numberOfDocumentsInSingleTransaction: "/>
+    <h:inputText id="invalidShortRegNumberUpdaterBatchSize" value="#{invalidShortRegNumberUpdater.batchSize}" size="4" />
+    <f:verbatim><br/></f:verbatim>    
+    <h:outputText value="Paus pärast iga dokumendi töötlemist (ms): "/>
+    <h:inputText id="invalidShortRegNumberUpdaterSleepTime" value="#{invalidShortRegNumberUpdater.sleepTime}" size="4" />
+    <f:verbatim><br/></f:verbatim>
+    <h:commandButton id="startinvalidShortRegNumberUpdaterUpdater" value="Käivita shortRegNumber korrigeerimise skript" type="submit"
+      actionListener="#{invalidShortRegNumberUpdater.executeUpdaterInBackground}"
+      rendered="#{!invalidShortRegNumberUpdater.updaterRunning}" />
+    <h:commandButton id="stopinvalidShortRegNumberUpdaterUpdater" value="Peata shortRegNumber korrigeerimise skript" type="submit"
+      actionListener="#{invalidShortRegNumberUpdater.stopUpdater}"
+      rendered="#{invalidShortRegNumberUpdater.updaterRunning}"
+      disabled="#{invalidShortRegNumberUpdater.updaterStopping}" />
+   <f:verbatim><br/></f:verbatim>   
+	
+   <f:verbatim><br/><hr/></f:verbatim>
+	<h:outputText value="Dokumendi andmete uuendamine pärast 3.6.21 -> 3.6.30 üleminekut"/>
+	<f:verbatim><br/></f:verbatim>
+	<h:outputText value="numberOfDocumentsSingleTransaction: "/>
+    <h:inputText id="documentUpdater_2BatchSize" value="#{documentUpdater_2.batchSize}" size="4" />
+    <f:verbatim><br/></f:verbatim>    
+    <h:outputText value="Paus pärast iga dokumendi töötlemist (ms): "/>
+    <h:inputText id="documentUpdater_2SleepTime" value="#{documentUpdater_2.sleepTime}" size="4" />
+    <f:verbatim><br/></f:verbatim>
+    <h:commandButton id="startDocumentUpdater_2" value="Käivita dokumentide uuendamise skript" type="submit"
+      actionListener="#{documentUpdater_2.executeUpdaterInBackground}"
+      rendered="#{!documentUpdater_2.updaterRunning}" />
+    <h:commandButton id="stopdocumentUpdater_2" value="Peata dokumentide uuendamise skript" type="submit"
+      actionListener="#{documentUpdater_2.stopUpdater}"
+      rendered="#{documentUpdater_2.updaterRunning}"
+      disabled="#{documentUpdater_2.updaterStopping}" />
+	<f:verbatim><br/></f:verbatim>	
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 	
 <%--   <br/>
    <u>Dokumendi õiguste uuendamise skript (enne 2.5 versiooni)</u>
@@ -104,6 +150,7 @@
 <f:verbatim><hr/></f:verbatim>
 <h:commandButton id="docList_updateDocCounters" value="Uuenda dokumentide loendureid" type="submit" 
       actionListener="#{FunctionsListDialog.updateDocCounters}" />
+<<<<<<< HEAD
 <%--
 <f:verbatim><hr/></f:verbatim>
 <h:outputText value="Dokumentidele õiguste lisamine lähtuvalt tööülesannetest"/>
@@ -224,6 +271,21 @@
    rendered="#{emptyDocumentRegNrUpdater.updaterRunning == true}"
    disabled="#{emptyDocumentRegNrUpdater.updaterStopping == true}" />
 <f:verbatim><br/></f:verbatim>
+=======
+<h:commandButton id="docList_updateArchivedDocCounters" value="Uuenda arhiveeritud dokumentide loendureid" type="submit" 
+      actionListener="#{FunctionsListDialog.updateArchivedDocCounters}" />      
+
+<f:verbatim><hr/></f:verbatim>
+
+<h:commandButton id="volume_archive_pause_all" value="Peata kõik arhiveerimistööd" type="submit" 
+   actionListener="#{ArchivalsService.pauseArchiving}" />
+<f:verbatim><br/></f:verbatim>
+<h:commandButton id="volume_archive_continue_all" value="Jätka kõiki arhiveerimistöid" type="submit" 
+   actionListener="#{ArchivalsService.continueArchiving}" />
+<f:verbatim><br/></f:verbatim>
+<h:commandButton id="volume_archive_cancel_all" value="Tühjenda arhiveerimistööde nimekiri" type="submit" 
+   actionListener="#{ArchivalsService.cancelAllArchivingJobs}" />
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
 <f:verbatim><hr/></f:verbatim>
 
@@ -267,6 +329,7 @@
 <h:outputText value="E-maili teavituste saatmine: "/>
 <f:verbatim><br/></f:verbatim>
 <h:commandButton id="processAccessRestrictionEndDateNotifications" value="processAccessRestrictionEndDateNotifications" type="submit"
+<<<<<<< HEAD
    actionListener="#{NotificationService.processAccessRestrictionEndDateNotifications}" />
 <f:verbatim><br/></f:verbatim>
 <h:commandButton id="processTaskDueDateNotifications" value="processTaskDueDateNotifications" type="submit"
@@ -277,13 +340,29 @@
 <f:verbatim><br/></f:verbatim>
 <h:commandButton id="processContractDueDateNotifications" value="processContractDueDateNotifications" type="submit"
    actionListener="#{NotificationService.processContractDueDateNotifications}" />
+=======
+   actionListener="#{NotificationService.processAccessRestrictionEndDateNotifications}" rendered="#{ApplicationService.test}" />
+<f:verbatim><br/></f:verbatim>
+<h:commandButton id="processTaskDueDateNotifications" value="processTaskDueDateNotifications" type="submit"
+   actionListener="#{NotificationService.processTaskDueDateNotifications}" rendered="#{ApplicationService.test}" />
+<f:verbatim><br/></f:verbatim>
+<h:commandButton id="processVolumeDispositionDateNotifications" value="processVolumeDispositionDateNotifications" type="submit"
+   actionListener="#{NotificationService.processVolumeDispositionDateNotifications}" rendered="#{ApplicationService.test}" />
+<f:verbatim><br/></f:verbatim>
+<h:commandButton id="processContractDueDateNotifications" value="processContractDueDateNotifications" type="submit"
+   actionListener="#{NotificationService.processContractDueDateNotifications}" rendered="#{ApplicationService.test}" />
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
 <f:verbatim><hr/></f:verbatim>
 
 <h:outputText value="Taustatööd: "/>
 <f:verbatim><br/></f:verbatim>
 <h:commandButton id="destroyArchivedVolumes" value="destroyArchivedVolumes" type="submit"
+<<<<<<< HEAD
    actionListener="#{ArchivalsService.destroyArchivedVolumes}" />
+=======
+   actionListener="#{ArchivalsService.destroyArchivedVolumes}" rendered="#{ApplicationService.test}" />
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 <f:verbatim><br/></f:verbatim>
 <h:commandButton id="updateOrganisationStructures" value="updateOrganisationStructures" type="submit"
    actionListener="#{OrganizationStructureService.updateOrganisationStructures}" />
@@ -292,8 +371,14 @@
    actionListener="#{TestingForDeveloperBean.updateUsersAndGroups}" />
 <f:verbatim><br/></f:verbatim>
 <h:commandButton id="updateOrganisationStructureBasedGroups" value="updateOrganisationStructureBasedGroups" type="submit"
+<<<<<<< HEAD
    actionListener="#{OrganizationStructureService.updateOrganisationStructureBasedGroups}" />
    <f:verbatim><br/></f:verbatim>
+=======
+   actionListener="#{OrganizationStructureService.updateOrganisationStructureBasedGroups}" rendered="#{ApplicationService.test}" />
+   <f:verbatim><br/></f:verbatim>
+
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 <h:outputText id="reportGenerationTitle" value="Aruannete genereerimine: " />
 <f:verbatim><br/></f:verbatim>
 <h:outputText id="reportGenerationStatus" value=" Selles klastri õlas aruannete genereerimine ei jookse." rendered="#{!ReportListDialog.reportGenerationEnabled}" />
@@ -303,6 +388,7 @@
    actionListener="#{ReportListDialog.continueReportGeneration}" rendered="#{ReportListDialog.showContinueReportGeneration}" />
 <f:verbatim><br/></f:verbatim>
 
+<<<<<<< HEAD
 <f:verbatim><hr/></f:verbatim>
 <f:verbatim><br/></f:verbatim>
 
@@ -320,6 +406,15 @@
 <f:verbatim><br/></f:verbatim>
 <h:commandButton id="deleteAllIndependentCompoundWorkflows" value="deleteAllIndependentCompoundWorkflows (delete permanently, skip trashcan)" type="submit"
    actionListener="#{FunctionsListDialog.deleteAllIndependentCompoundWorkflows}" />
+=======
+<h:outputText id="privilegeActionsTitle" value="Õiguste lisamine ja eemaldamine: " />
+<f:verbatim><br/></f:verbatim>
+<h:outputText id="privilegeActionsStatus" value=" Selles klastri õlas õiguste lisamine ja eemaldamine ei jookse." rendered="#{!ManageInheritablePrivilegesDialog.privilegeActionsEnabled}" />
+<h:commandButton id="pausePrivilegeActions" value="Peata õiguste lisamine ja eemaldamine" type="submit"
+   actionListener="#{ManageInheritablePrivilegesDialog.pausePrivilegeActions}" rendered="#{ManageInheritablePrivilegesDialog.showPausePrivilegeActions}" />
+<h:commandButton id="continuePrivilegeActions" value="Jätka õiguste lisamist ja eemaldamist" type="submit"
+   actionListener="#{ManageInheritablePrivilegesDialog.continuePrivilegeActions}" rendered="#{ManageInheritablePrivilegesDialog.showContinuePrivilegeActions}" />
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 <f:verbatim><br/></f:verbatim>
 
 <f:verbatim><hr/></f:verbatim>
@@ -327,6 +422,7 @@
 <h:outputText value="Testandmete genereerimine: "/>
 <f:verbatim>
 <br/>
+<<<<<<< HEAD
 <ul>
 <li>* Kopeerida SVN'ist delta/common/etc/testdata/*.csv failid \${dir.root} kausta</li>
 <li>* Kopeerida ADR failide kaust asukohta \${dir.root}/contentstore/testfiles . Seega peaksid ADR failid asuma \${dir.root}/contentstore/testfiles/1/1234 jne.</li>
@@ -338,6 +434,18 @@
 <li>* Vajutada Käivita testandmete genereerimine. Progressi saab jälgida logist.</li>
 <li>* (TODO struktuuriüksuste sünkimine lülitada välja, et loodud struktuuriüksusi sünkimisel ei kustutataks.)</li>
 <li>* Kasutajate loomise lõpus kirjutatakse kõik eksisteerivad kasutajanimed faili \${dir.root}/users.csv ja kasutajate ees- ja perenimed faili \${dir.root}/usersfirstlastnames.csv. Neid faile läheb vaja koormustestide sisendina.</li>
+=======
+<ol>
+<li>* Kopeerida SVN'ist delta/common/etc/testdata/*.csv failid \${dir.root} kausta</li>
+<li>* Kopeerida ADR failide kaust asukohta \${dir.root}/contentstore/testfiles . Seega peaksid ADR failid asuma \${dir.root}/contentstore/testfiles/1/1234 jne.</li>
+<li>* Importida dok.liigid SVN'ist failist delta/common/etc/jmeter/documentTypes.xml</li>
+<li>* Importida klassifikaatorid SVN'ist delta/common/etc/jmeter/classificators.xml</li>
+<li>* Kui kasutajaid ja/või struktuuriüksusi genereeritakse (genereeritakse siis kui lahtrites kasutajate arv / struktuuriüksuste on suuremad arvud kui praegu eksisteerivaid objekte), siis peab arvestama sellega, et järgmisel sünkimisel kustutatakse genereeritud objektid! Ainus võimalus sünkimise ära hoidmiseks on konf.failis \${amr.service.url} muuta mittetöötava/mitteeksisteeriva URL'i peale.
+<li>* Lucene indekseerimine lülitada välja parema kiiruse saavutamiseks, ja pärast teha ühekorraga järgi (nii nagu SIM 1.10 -> 2.5 juhendis kirjeldatud juuni 2011).</li>
+<li>* Vajutada Käivita testandmete genereerimine. Progressi saab jälgida logist.</li>
+<li>* (TODO struktuuriüksuste sünkimine lülitada välja, et loodud struktuuriüksusi sünkimisel ei kustutataks.)</li>
+<li>* Kasutajate loomise lõpus kirjutatakse kõik eksisteerivad kasutajanimed faili \${dir.root}/users.csv . Seda faili läheb vaja koormustestide sisendina.</li>
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 </ul>
 <br/>
 </f:verbatim>
@@ -350,7 +458,11 @@
 <h:inputText value="#{TestDataService.orgUnitsCount}" converter="javax.faces.Integer" size="4" />
 <f:verbatim><br/></f:verbatim>
 
+<<<<<<< HEAD
 <h:outputText value="Kasutajate arv (kui 0, siis asenduste genereerimist ei toimu): "/>
+=======
+<h:outputText value="Kasutajate arv: "/>
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 <h:inputText value="#{TestDataService.usersCount}" converter="javax.faces.Integer" size="4" />
 <f:verbatim><br/></f:verbatim>
 
@@ -374,6 +486,7 @@
 <h:inputText value="#{TestDataService.volumesCount}" converter="javax.faces.Integer" size="4" />
 <f:verbatim><br/></f:verbatim>
 
+<<<<<<< HEAD
 <h:outputText value="Asjatoimikute arv: "/>
 <h:inputText value="#{TestDataService.caseFilesCount}" converter="javax.faces.Integer" size="4" />
 <f:verbatim><br/></f:verbatim>
@@ -386,6 +499,8 @@
 <h:inputText value="#{TestDataService.closedCaseFilesCount}" converter="javax.faces.Integer" size="4" />
 <f:verbatim><br/></f:verbatim>
 
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 <h:outputText value="Asjade arv: "/>
 <h:inputText value="#{TestDataService.casesCount}" converter="javax.faces.Integer" size="4" />
 <f:verbatim><br/></f:verbatim>
@@ -394,6 +509,7 @@
 <h:inputText value="#{TestDataService.documentsCount}" converter="javax.faces.Integer" size="7" />
 <f:verbatim><br/></f:verbatim>
 
+<<<<<<< HEAD
 <h:outputText value="Genereeri dokumendi terviktöövood: "/>
 <h:selectBooleanCheckbox value="#{TestDataService.documentWorkflowsEnabled}" />
 <f:verbatim><br/></f:verbatim>
@@ -410,24 +526,36 @@
 <h:inputText value="#{TestDataService.maxDocumentsInIndependentWorkflow}" converter="javax.faces.Integer" size="4" />
 <f:verbatim><br/></f:verbatim>
 
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 <h:outputText value="Failid: "/>
 <h:selectBooleanCheckbox value="#{TestDataService.filesEnabled}" />
 <f:verbatim><br/></f:verbatim>
 
+<<<<<<< HEAD
 <h:outputText value="Dokumentide ja iseseisvate terviktöövoogude genereerimiseks paralleelsete lõimede arv: "/>
 <h:inputText value="#{TestDataService.documentAndWorkflowGeneratorThreads}" converter="javax.faces.Integer" size="4" />
+=======
+<h:outputText value="Dokumentide genereerimiseks paralleelsete lõimede arv: "/>
+<h:inputText value="#{TestDataService.documentGeneratorThreads}" converter="javax.faces.Integer" size="4" />
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 <f:verbatim><br/><br/></f:verbatim>
 
    <h:commandButton id="startTestDataGenerator" value="Käivita andmete genereerimine" type="submit"
       actionListener="#{TestDataService.executeUpdaterInBackground}"
       rendered="#{TestDataService.updaterRunning == false}" />
    <h:commandButton id="stopTestDataGenerator" value="Peata andmete genereerimine" type="submit"
+<<<<<<< HEAD
       actionListener="#{TestDataService.stopUpdater}" 
+=======
+      actionListener="#{TestDataService.stopUpdater}"
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
       rendered="#{TestDataService.updaterRunning == true}"
       disabled="#{TestDataService.updaterStopping == true}" />
 
 <f:verbatim><hr/></f:verbatim>
 
+<<<<<<< HEAD
 <h:outputText value="Sharepoint andmete importimine: " style="font-weight: bold;" />
 <f:verbatim>
 <br/>
@@ -546,6 +674,14 @@
 <ul>
 <li>* Enne dokumentide importi peavad kõik kasutajad olema rakendusse tõmmatud.</li>
 <li>* Lucene indekseerimine lülitada välja parema kiiruse saavutamiseks (nii nagu SIM 1.10 -> 2.5 juhendis kirjeldatud juuni 2011), ja pärast teha ühekorraga järgi. Koos indekseerimise välja lülitamisega lülitada välja ka öises taustatöös indeksi andmetes aukude otsimine (findHolesAndIndex.enabled=false).</li>
+=======
+<h:outputText value="Postipoiss andmete importimine: " style="font-weight: bold;" />
+<f:verbatim>
+<br/>
+<ol>
+<li>* Enne dokumentide importi peavad kõik kasutajad olema rakendusse tõmmatud.</li>
+<li>* Parema kiiruse saavutamiseks lülitada Lucene indekseerimine importimise ajaks välja, ja pärast importimise lõppu teha ühekorraga järgi (nii nagu SIM 1.10 -> 2.5 juhendis kirjeldatud juuni 2011).</li>
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 <li>* Käivitamise nupp võimalusel jätkab pooleli jäänud kohast (kui workFolder-ites on csv faile kus eelnev progress on kirjas).</li>
 <li>* Peatamise nupp peatab esimesel võimalusel (konktaktide impordi keskel, struktuuri impordi keskel, iga 50 dokumendi importimise või faili importimise või faili indekseerimise vahel)</li>
 <li>* Kui ükskõik milline parameeter grupis (...DataFolder, ...WorkFolder, ...ArchivalsStore, ...MappingsFileName) on tühi, siis liigutakse järgmise parameetrite grupi juurde.</li>
@@ -845,14 +981,24 @@
 
 <f:verbatim><br/></f:verbatim>
 
+<<<<<<< HEAD
+=======
+<a:actionLink value="executeCacheStatistics" actionListener="#{TestingForDeveloperBean.executeCacheStatistics}" />
+
+<f:verbatim><br/></f:verbatim>
+
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 <a:actionLink value="TestingForDeveloper" actionListener="#{TestingForDeveloperBean.handleTestEvent}" rendered="#{ApplicationService.test}">
      <f:param name="testP" value="11" />
 </a:actionLink>
 <f:verbatim><br/></f:verbatim>
 
+<<<<<<< HEAD
 <a:actionLink value="deleteTestSystemTemplatesBootstrapAndSystemTemplates" actionListener="#{TestingForDeveloperBean.deleteTestTemplatesBootstrapAndTemplates}" rendered="#{ApplicationService.test}" />
 <f:verbatim><br/></f:verbatim>
 
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 <a:actionLink id="runADMLuceneTestTestMaskDeletes" value="ADMLuceneTest.testMaskDeletes" actionListener="#{TestingForDeveloperBean.runADMLuceneTestTestMaskDeletes}" />
 
 <%-- <f:verbatim><br/></f:verbatim> --%>

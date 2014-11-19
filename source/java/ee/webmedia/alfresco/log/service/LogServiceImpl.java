@@ -14,7 +14,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+<<<<<<< HEAD
 import java.util.concurrent.ConcurrentHashMap;
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
 import org.alfresco.error.AlfrescoRuntimeException;
 import org.alfresco.service.cmr.repository.NodeRef;
@@ -22,7 +25,10 @@ import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
+<<<<<<< HEAD
 import org.apache.commons.lang.time.FastDateFormat;
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.simple.ParameterizedRowMapper;
@@ -40,13 +46,19 @@ import ee.webmedia.alfresco.log.model.LogSetup;
 
 /**
  * Main implementation of {@link LogService}. This class does not rely on Alfresco, and exchanges data with the database using JDBC(Template) directly.
+<<<<<<< HEAD
  * 
  * @author Martti Tamm
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
  */
 public class LogServiceImpl implements LogService, InitializingBean {
 
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(LogServiceImpl.class);
+<<<<<<< HEAD
     private static final FastDateFormat LOG_DATE_FORMAT = FastDateFormat.getInstance("yyyyMMdd");
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
     private SimpleJdbcTemplate jdbcTemplate;
 
@@ -75,6 +87,7 @@ public class LogServiceImpl implements LogService, InitializingBean {
         return LogSetup.fromLogLevels(levels);
     }
 
+<<<<<<< HEAD
     private static final ThreadLocal<Date> overrideCreatedDateTime = new ThreadLocal<Date>();
     private static final ThreadLocal<String> overridecreatorId = new ThreadLocal<String>();
     private static final ThreadLocal<String> overridecreatorName = new ThreadLocal<String>();
@@ -97,6 +110,8 @@ public class LogServiceImpl implements LogService, InitializingBean {
         return jdbcTemplate.queryForInt("SELECT COALESCE(MAX(CAST(substr(log_entry_id, 9) AS int8)), 0) FROM delta_log WHERE log_entry_id LIKE ?", idPrefix + "%");
     }
 
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     @Override
     public void addLogEntry(LogEntry log) {
         addImportedLogEntry(log, null);
@@ -104,6 +119,7 @@ public class LogServiceImpl implements LogService, InitializingBean {
 
     @Override
     public void addImportedLogEntry(LogEntry log, Date dateCreated) {
+<<<<<<< HEAD
         checkDescriptionNotNull(log);
 
         if (!logEnabled(log)) {
@@ -140,6 +156,20 @@ public class LogServiceImpl implements LogService, InitializingBean {
             now = (Timestamp) result.get("now");
 
             // Check if current date has changed - if so, log sequence needs to be reset to 1.
+=======
+        if (!checkDescriptionNotNull(log)) {
+            return;
+        }
+
+        if (logEnabled(log)) {
+
+            Map<String, Object> result = jdbcTemplate
+                    .queryForMap("SELECT delta_log_date.idprefix, to_char(CURRENT_DATE,'YYYYMMDD') AS idprefix_now, nextval('delta_log_seq') AS idsuffix, current_timestamp AS now FROM delta_log_date LIMIT 1");
+            String idPrefix = (String) result.get("idprefix");
+            String idPrefixNow = (String) result.get("idprefix_now");
+            Long idSuffix = (Long) result.get("idsuffix");
+            Timestamp now = (Timestamp) result.get("now");
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             if (!idPrefixNow.equals(idPrefix)) {
                 jdbcTemplate.update("LOCK TABLE delta_log_date");
                 Map<String, Object> result2 = jdbcTemplate.queryForMap("SELECT delta_log_date.idprefix FROM delta_log_date LIMIT 1");
@@ -148,8 +178,13 @@ public class LogServiceImpl implements LogService, InitializingBean {
                     jdbcTemplate.update("UPDATE delta_log_date SET idprefix = ?", idPrefixNow);
                     jdbcTemplate.queryForMap("SELECT setval('delta_log_seq', 1, false)");
 
+<<<<<<< HEAD
                     Map<String, Object> result3 = jdbcTemplate.queryForMap("SELECT delta_log_date.idprefix, to_char(CURRENT_DATE,'YYYYMMDD') AS idprefix_now, " +
                             "nextval('delta_log_seq') AS idsuffix, current_timestamp AS now FROM delta_log_date LIMIT 1");
+=======
+                    Map<String, Object> result3 = jdbcTemplate
+                            .queryForMap("SELECT delta_log_date.idprefix, to_char(CURRENT_DATE,'YYYYMMDD') AS idprefix_now, nextval('delta_log_seq') AS idsuffix, current_timestamp AS now FROM delta_log_date LIMIT 1");
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
                     idPrefix = (String) result3.get("idprefix");
                     idPrefixNow = (String) result3.get("idprefix_now");
                     idSuffix = (Long) result3.get("idsuffix");
@@ -158,6 +193,7 @@ public class LogServiceImpl implements LogService, InitializingBean {
                 }
             }
 
+<<<<<<< HEAD
             // Defensive approach: check if the entry ID is not already used. Update sequence and ID, when ID is used.
 
             int i = idSuffix.intValue();
@@ -176,6 +212,10 @@ public class LogServiceImpl implements LogService, InitializingBean {
         }
 
         addLogEntry(log, entryId, dateCreated == null ? now : new Timestamp(dateCreated.getTime()));
+=======
+            addLogEntry(log, idPrefix, idSuffix, dateCreated == null ? now : new Timestamp(dateCreated.getTime()));
+        }
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     @Override
@@ -185,16 +225,28 @@ public class LogServiceImpl implements LogService, InitializingBean {
 
     @Override
     public void addImportedLogEntry(LogEntry log, Date dateCreated, String idPrefix, long idSuffix) {
+<<<<<<< HEAD
         checkDescriptionNotNull(log);
         Assert.isTrue(dateCreated != null && StringUtils.isNotBlank(idPrefix));
         addLogEntry(log, idPrefix + idSuffix, new Timestamp(dateCreated.getTime()));
     }
 
     private void checkDescriptionNotNull(LogEntry log) {
+=======
+        if (!checkDescriptionNotNull(log)) {
+            return;
+        }
+        Assert.isTrue(dateCreated != null && StringUtils.isNotBlank(idPrefix));
+        addLogEntry(log, idPrefix, idSuffix, new Timestamp(dateCreated.getTime()));
+    }
+
+    private boolean checkDescriptionNotNull(LogEntry log) {
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         // This check provided just-in-case to catch empty event descriptions.
         // Exception should not be thrown as not logging is non-critical
         // compared to breaking serviced wanting to just log an action.
         if (log.getEventDescription() == null) {
+<<<<<<< HEAD
             String err = "No event description was provided for event caused by " + log.getObjectName() + " with level " + log.getLevel();
             LOG.error(err);
             throw new RuntimeException(err);
@@ -214,6 +266,19 @@ public class LogServiceImpl implements LogService, InitializingBean {
                 "INSERT INTO delta_log (log_entry_id,created_date_time,level,creator_id,creator_name,computer_ip,computer_name,object_id,object_name,description) "
                         + "VALUES (?,?,?,?,?,?,?,?,?,?)",
                 new Object[] { entryId, now, log.getLevel(), creatorId, creatorName, log.getComputerIp(), log.getComputerName(),
+=======
+            LOG.error("No event description was provided for event caused by " + log.getObjectName() + " with level " + log.getLevel());
+            return false;
+        }
+        return true;
+    }
+
+    private void addLogEntry(LogEntry log, String idPrefix, Long idSuffix, Timestamp now) {
+        jdbcTemplate.update(
+                "INSERT INTO delta_log (log_entry_id,created_date_time,level,creator_id,creator_name,computer_ip,computer_name,object_id,object_name,description) "
+                        + "VALUES (?,?,?,?,?,?,?,?,?,?)",
+                new Object[] { idPrefix + idSuffix.toString(), now, log.getLevel(), log.getCreatorId(), log.getCreatorName(), log.getComputerIp(), log.getComputerName(),
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
                         log.getObjectId(), log.getObjectName(), log.getEventDescription() });
     }
 
@@ -334,7 +399,13 @@ public class LogServiceImpl implements LogService, InitializingBean {
 
         q.append(" ORDER BY created_date_time ASC");
         String query = q.toString();
+<<<<<<< HEAD
         List<LogEntry> results = jdbcTemplate.query(query, new LogRowMapper(), values);
+=======
+        Long logQueryStart = System.currentTimeMillis();
+        List<LogEntry> results = jdbcTemplate.query(query, new LogRowMapper(), values);
+        LOG.info("Log entry query duration: " + (System.currentTimeMillis() - logQueryStart));
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         explainQuery(query, values);
         return results;
     }

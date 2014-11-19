@@ -31,7 +31,11 @@
          <f:facet name="header">
             <a:sortLink id="col3-header" label="#{msg.workflow_file}" value="file" styleClass="header" />
          </f:facet>
+<<<<<<< HEAD
          <wm:customChildrenContainer id="order-assignment-files" childGenerator="#{WorkflowBlockBean.noteBlockRowFileGenerator}" parameterList="#{r.files}"/>
+=======
+         <wm:customChildrenContainer childGenerator="#{WorkflowBlockBean.noteBlockRowFileGenerator}" parameterList="#{r.files}"/>
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
       </a:column>
 
       <a:column id="col4" style="width: 60%;">

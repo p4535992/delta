@@ -1,9 +1,12 @@
 package ee.webmedia.alfresco.docdynamic.service;
 
+<<<<<<< HEAD
 import static ee.webmedia.alfresco.common.web.BeanHelper.getAdrService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentConfigService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getMsoService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getOpenOfficeService;
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import static ee.webmedia.alfresco.docadmin.web.DocAdminUtil.getDocTypeIdAndVersionNr;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.FILE_CONTENTS;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.FILE_NAMES;
@@ -11,6 +14,7 @@ import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.OWNE
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.OWNER_NAME;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.PREVIOUS_OWNER_ID;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.REG_NUMBER;
+<<<<<<< HEAD
 import static ee.webmedia.alfresco.privilege.service.PrivilegeUtil.getPrivsWithDependencies;
 import static ee.webmedia.alfresco.privilege.service.PrivilegeUtil.getRequiredPrivsForInprogressTask;
 import static ee.webmedia.alfresco.utils.CalendarUtil.duration;
@@ -19,6 +23,11 @@ import static ee.webmedia.alfresco.utils.DynamicTypeUtil.setTypeProps;
 import java.io.Serializable;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+=======
+import static ee.webmedia.alfresco.utils.CalendarUtil.duration;
+
+import java.io.Serializable;
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -31,11 +40,15 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+<<<<<<< HEAD
 import org.alfresco.model.ContentModel;
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import org.alfresco.service.cmr.dictionary.AspectDefinition;
 import org.alfresco.service.cmr.dictionary.AssociationDefinition;
 import org.alfresco.service.cmr.dictionary.ChildAssociationDefinition;
 import org.alfresco.service.cmr.dictionary.ClassDefinition;
+<<<<<<< HEAD
 import org.alfresco.service.cmr.dictionary.DataTypeDefinition;
 import org.alfresco.service.cmr.dictionary.DictionaryService;
 import org.alfresco.service.cmr.dictionary.PropertyDefinition;
@@ -51,6 +64,16 @@ import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.service.namespace.RegexQNamePattern;
+=======
+import org.alfresco.service.cmr.dictionary.DictionaryService;
+import org.alfresco.service.cmr.dictionary.TypeDefinition;
+import org.alfresco.service.cmr.repository.AssociationRef;
+import org.alfresco.service.cmr.repository.ChildAssociationRef;
+import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.cmr.repository.NodeService;
+import org.alfresco.service.namespace.NamespaceService;
+import org.alfresco.service.namespace.QName;
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.collections.Transformer;
@@ -63,6 +86,7 @@ import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.util.Assert;
 
+<<<<<<< HEAD
 import ee.webmedia.alfresco.archivals.model.ActivityFileType;
 import ee.webmedia.alfresco.base.BaseObject;
 import ee.webmedia.alfresco.casefile.log.service.CaseFileLogService;
@@ -99,17 +123,44 @@ import ee.webmedia.alfresco.document.assocsdyn.service.DocumentAssociationsServi
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.file.model.FileModel;
 import ee.webmedia.alfresco.document.file.model.GeneratedFileType;
+=======
+import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
+import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.common.web.WmNode;
+import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
+import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel.Props;
+import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
+import ee.webmedia.alfresco.docadmin.service.DocumentType;
+import ee.webmedia.alfresco.docadmin.service.DocumentTypeVersion;
+import ee.webmedia.alfresco.docadmin.service.Field;
+import ee.webmedia.alfresco.docadmin.service.FieldGroup;
+import ee.webmedia.alfresco.docconfig.bootstrap.SystematicDocumentType;
+import ee.webmedia.alfresco.docconfig.generator.SaveListener;
+import ee.webmedia.alfresco.docconfig.generator.systematic.DocumentLocationGenerator;
+import ee.webmedia.alfresco.docconfig.service.DocumentConfig;
+import ee.webmedia.alfresco.docconfig.service.DocumentConfigService;
+import ee.webmedia.alfresco.docconfig.service.DynamicPropertyDefinition;
+import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
+import ee.webmedia.alfresco.docdynamic.web.DocumentDynamicDialog;
+import ee.webmedia.alfresco.document.file.model.File;
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
 import ee.webmedia.alfresco.document.log.service.DocumentPropertiesChangeHolder;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+<<<<<<< HEAD
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import ee.webmedia.alfresco.document.sendout.service.SendOutService;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.document.service.DocumentServiceImpl;
 import ee.webmedia.alfresco.document.service.EventsLoggingHelper;
 import ee.webmedia.alfresco.imap.model.ImapModel;
+<<<<<<< HEAD
 import ee.webmedia.alfresco.privilege.service.PrivilegeService;
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import ee.webmedia.alfresco.template.service.DocumentTemplateService;
 import ee.webmedia.alfresco.utils.FilenameUtil;
 import ee.webmedia.alfresco.utils.MessageData;
@@ -120,6 +171,7 @@ import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.TreeNode;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UnableToPerformMultiReasonException;
+<<<<<<< HEAD
 import ee.webmedia.alfresco.volume.model.VolumeModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
@@ -131,6 +183,9 @@ import ee.webmedia.alfresco.workflow.service.WorkflowUtil;
 /**
  * @author Alar Kvell
  */
+=======
+
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanFactoryAware {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(DocumentDynamicServiceImpl.class);
 
@@ -147,10 +202,13 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
     private DocumentLogService documentLogService;
     private DocumentTemplateService documentTemplateService;
     private FileService fileService;
+<<<<<<< HEAD
     private ContentService contentService;
     private PrivilegeService privilegeService;
     private WorkflowService workflowService;
     private CaseFileLogService caseFileLogService;
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     private boolean showMessageIfUnregistered;
 
     private BeanFactory beanFactory;
@@ -158,8 +216,12 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
     @Override
     public void setOwner(NodeRef docRef, String ownerId, boolean retainPreviousOwnerId) {
         Map<QName, Serializable> props = nodeService.getProperties(docRef);
+<<<<<<< HEAD
         QName objectType = nodeService.getType(docRef);
         setOwner(props, ownerId, retainPreviousOwnerId, CaseFileModel.Types.CASE_FILE.equals(objectType) ? CaseFileType.class : DocumentType.class);
+=======
+        setOwner(props, ownerId, retainPreviousOwnerId);
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         generalService.setPropertiesIgnoringSystem(props, docRef);
     }
 
@@ -179,12 +241,17 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
 
     @Override
     public void setOwner(Map<QName, Serializable> props, String ownerId, boolean retainPreviousOwnerId) {
+<<<<<<< HEAD
         setOwner(props, ownerId, retainPreviousOwnerId, DocumentType.class);
     }
 
     private void setOwner(Map<QName, Serializable> props, String ownerId, boolean retainPreviousOwnerId, Class<? extends DynamicType> typeClass) {
         String previousOwnerId = (String) props.get(OWNER_ID);
         documentConfigService.setUserContactProps(props, ownerId, OWNER_NAME.getLocalName(), typeClass);
+=======
+        String previousOwnerId = (String) props.get(OWNER_ID);
+        documentConfigService.setUserContactProps(props, ownerId, OWNER_NAME.getLocalName());
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
         if (!StringUtils.equals(previousOwnerId, ownerId)) {
             if (!retainPreviousOwnerId) {
@@ -195,6 +262,7 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
     }
 
     @Override
+<<<<<<< HEAD
     public void setOwnerFromActiveResponsibleTask(CompoundWorkflow compoundWorkflow, NodeRef documentRef, Map<String, Object> documentProps) {
         if (!DocumentStatus.WORKING.equals((String) nodeService.getProperty(documentRef, DocumentCommonModel.Props.DOC_STATUS))) {
             return;
@@ -221,6 +289,8 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
     }
 
     @Override
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     public boolean isOwner(NodeRef docRef, String ownerId) {
         return StringUtils.equals(getOwner(docRef), ownerId);
     }
@@ -237,8 +307,14 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
 
     @Override
     public Pair<DocumentDynamic, DocumentTypeVersion> createNewDocument(DocumentTypeVersion docVer, NodeRef parent, boolean reallySetDefaultValues) {
+<<<<<<< HEAD
         Map<QName, Serializable> props = new HashMap<QName, Serializable>();
         setTypeProps(docVer, props);
+=======
+
+        Map<QName, Serializable> props = new HashMap<QName, Serializable>();
+        setTypeProps(getDocTypeIdAndVersionNr(docVer), props);
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
         return createNewDocument(docVer, parent, props, reallySetDefaultValues);
     }
@@ -269,6 +345,7 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
     }
 
     @Override
+<<<<<<< HEAD
     public DocumentDynamic createNewDocumentForArchivalActivity(NodeRef archivalActivityNodeRef, String documentTypeId) {
         if (StringUtils.isNotBlank(documentTypeId)) {
             DocumentType documentType = documentAdminService.getUsedDocumentType(documentTypeId);
@@ -290,6 +367,8 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
     }
 
     @Override
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     public void createChildNodesHierarchyAndSetDefaultPropertyValues(Node parentNode, QName[] hierarchy, DocumentTypeVersion docVer) {
         TreeNode<QName> root = documentConfigService.getChildAssocTypeQNameTree(parentNode);
         Assert.isNull(root.getData());
@@ -321,8 +400,12 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         return current;
     }
 
+<<<<<<< HEAD
     @Override
     public List<Pair<QName, WmNode>> createChildNodesHierarchy(Node parentNode, List<TreeNode<QName>> childAssocTypeQNames, Node firstChild) {
+=======
+    private List<Pair<QName, WmNode>> createChildNodesHierarchy(Node parentNode, List<TreeNode<QName>> childAssocTypeQNames, Node firstChild) {
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         List<Pair<QName, WmNode>> childNodes = new ArrayList<Pair<QName, WmNode>>();
         for (TreeNode<QName> childAssocTypeQName : childAssocTypeQNames) {
             QName assocTypeQName = childAssocTypeQName.getData();
@@ -422,6 +505,14 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         return childNodes;
     }
 
+<<<<<<< HEAD
+=======
+    private void setTypeProps(Pair<String, Integer> docTypeIdAndVersionNr, Map<QName, Serializable> props) {
+        props.put(Props.OBJECT_TYPE_ID, docTypeIdAndVersionNr.getFirst());
+        props.put(Props.OBJECT_TYPE_VERSION_NR, docTypeIdAndVersionNr.getSecond());
+    }
+
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     @Override
     public Pair<DocumentDynamic, DocumentTypeVersion> createNewDocumentInDrafts(String documentTypeId) {
         NodeRef drafts = documentService.getDrafts();
@@ -460,7 +551,11 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
     @Override
     public DocumentDynamic getDocumentWithInMemoryChangesForEditing(NodeRef docRef) {
         DocumentDynamic document = getDocument(docRef);
+<<<<<<< HEAD
         if (document.isImapOrDvk() && !document.isFromWebService()) {
+=======
+        if (document.isImapOrDvk()) {
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             Pair<DocumentType, DocumentTypeVersion> documentTypeAndVersion = documentConfigService.getDocumentTypeAndVersion(document.getNode());
             Collection<Field> ownerNameFields = documentTypeAndVersion.getSecond().getFieldsById(Collections.singleton(DocumentCommonModel.Props.OWNER_NAME.getLocalName()));
             if (ownerNameFields.size() == 1) {
@@ -475,10 +570,13 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
 
     @Override
     public void changeTypeInMemory(DocumentDynamic document, String newTypeId) {
+<<<<<<< HEAD
         String docOldTypeId = document.getDocumentTypeId();
         WmNode docNode = document.getNode();
         WmNode oldNode = new WmNode(docNode.getNodeRef(), docNode.getType(), docNode.getAspects(), RepoUtil.toQNameProperties(docNode.getProperties(), true),
                 docNode.getAddedAssociations());
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         DocumentTypeVersion docVer = documentAdminService.getLatestDocTypeVer(newTypeId);
         Map<QName, Serializable> typeProps = new HashMap<QName, Serializable>();
         setTypeProps(getDocTypeIdAndVersionNr(docVer), typeProps);
@@ -486,6 +584,16 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         Map<String, Object> oldProps = document.getNode().getProperties();
         Map<String, Object> newProps = new HashMap<String, Object>();
         newProps.putAll(RepoUtil.toStringProperties(typeProps));
+<<<<<<< HEAD
+=======
+        newProps.put(DocumentCommonModel.Props.DOC_NAME.toString(), oldProps.get(DocumentCommonModel.Props.DOC_NAME));
+        newProps.put(DocumentCommonModel.Props.ACCESS_RESTRICTION.toString(), oldProps.get(DocumentCommonModel.Props.ACCESS_RESTRICTION));
+        newProps.put(DocumentCommonModel.Props.ACCESS_RESTRICTION_BEGIN_DATE.toString(), oldProps.get(DocumentCommonModel.Props.ACCESS_RESTRICTION_BEGIN_DATE));
+        newProps.put(DocumentCommonModel.Props.ACCESS_RESTRICTION_END_DATE.toString(), oldProps.get(DocumentCommonModel.Props.ACCESS_RESTRICTION_END_DATE));
+        newProps.put(DocumentCommonModel.Props.ACCESS_RESTRICTION_REASON.toString(), oldProps.get(DocumentCommonModel.Props.ACCESS_RESTRICTION_REASON));
+        newProps.put(DocumentCommonModel.Props.DOC_STATUS.toString(), oldProps.get(DocumentCommonModel.Props.DOC_STATUS));
+        newProps.put(DocumentCommonModel.Props.STORAGE_TYPE.toString(), oldProps.get(DocumentCommonModel.Props.STORAGE_TYPE));
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
         // remove all existing subnodes in memory
         TreeNode<QName> oldChildAssocTypeQNamesRoot = documentConfigService.getChildAssocTypeQNameTree(document.getNode());
@@ -502,16 +610,20 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         oldProps.clear();
         oldProps.putAll(newProps);
         setParentFolderProps(document);
+<<<<<<< HEAD
         String tempDocType = (String) oldNode.getProperties().get(DocumentService.TransientProps.TEMP_DOCUMENT_OLD_TYPE_ID);
         if (StringUtils.isBlank(tempDocType)) {
             document.setDocOldTypeId(docOldTypeId);
         } else {
             document.setDocOldTypeId(tempDocType);
         }
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
         TreeNode<QName> childAssocTypeQNamesRoot = documentConfigService.getChildAssocTypeQNameTree(docVer);
         Assert.isNull(childAssocTypeQNamesRoot.getData());
 
+<<<<<<< HEAD
         Set<QName> ignoredProps = new HashSet<QName>();
         ignoredProps.add(DocumentAdminModel.Props.OBJECT_TYPE_ID);
         ignoredProps.add(DocumentAdminModel.Props.OBJECT_TYPE_VERSION_NR);
@@ -524,12 +636,17 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
                 new HashMap<QName, Serializable>(),
                 ignoredProps, null);
 
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         // create new subnodes in memory
         createChildNodesHierarchy(document.getNode(), childAssocTypeQNamesRoot.getChildren(), null);
 
         // set default values in memory - does not overwrite existing values
         documentConfigService.setDefaultPropertyValues(document.getNode(), null, false, true, docVer);
+<<<<<<< HEAD
         ((AccessRestrictionGenerator) beanFactory.getBean(AccessRestrictionGenerator.BEAN_NAME, SaveListener.class)).clearHiddenValues(document.getNode());
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     private void removeChildNodes(DocumentDynamic document, TreeNode<QName> childAssocTypeQNamesRoot) {
@@ -561,7 +678,11 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         }
     }
 
+<<<<<<< HEAD
     public static class ValidationHelperImpl implements SaveListener.ValidationHelper {
+=======
+    private static class ValidationHelperImpl implements SaveListener.ValidationHelper {
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
         private final List<MessageData> errorMessages = new ArrayList<MessageData>();
         private final Map<String, Pair<DynamicPropertyDefinition, Field>> propDefs;
@@ -575,10 +696,13 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
             errorMessages.add(new MessageDataImpl(msgKey, messageValuesForHolders));
         }
 
+<<<<<<< HEAD
         public List<MessageData> getErrorMessages() {
             return errorMessages;
         }
 
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         @Override
         public Map<String, Pair<DynamicPropertyDefinition, Field>> getPropDefs() {
             return propDefs;
@@ -587,8 +711,13 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
     }
 
     @Override
+<<<<<<< HEAD
     public DocumentDynamic updateDocument(DocumentDynamic documentOriginal, List<String> saveListenerBeanNames, boolean relocateAssocDocs, boolean updateGeneratedFiles) {
         return updateDocumentGetDocAndNodeRefs(documentOriginal, saveListenerBeanNames, relocateAssocDocs, updateGeneratedFiles).getFirst();
+=======
+    public DocumentDynamic updateDocument(DocumentDynamic documentOriginal, List<String> saveListenerBeanNames, boolean relocateAssocDocs) {
+        return updateDocumentGetDocAndNodeRefs(documentOriginal, saveListenerBeanNames, relocateAssocDocs).getFirst();
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     private static final Comparator<DocumentDynamic> DOCUMENT_BY_REG_DATE_TIME_COMPARATOR;
@@ -605,7 +734,11 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
 
     @Override
     public Pair<DocumentDynamic, List<Pair<NodeRef, NodeRef>>> updateDocumentGetDocAndNodeRefs(DocumentDynamic documentOriginal, List<String> saveListenerBeanNames,
+<<<<<<< HEAD
             boolean relocateAssocDocs, boolean updateGeneratedFiles) {
+=======
+            boolean relocateAssocDocs) {
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         NodeRef originalDocumentNodeRef = documentOriginal.getNodeRef();
         Set<NodeRef> associatedDocRefs = Collections.singleton(originalDocumentNodeRef);
         List<DocumentDynamic> associatedDocs = new ArrayList<DocumentDynamic>();
@@ -620,14 +753,23 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         String caseLabel = StringUtils.trimToNull((String) documentOriginal.getProp(DocumentLocationGenerator.CASE_LABEL_EDITABLE));
         // collect associated documents that have different location than original document's _new_ location
         if (relocateAssocDocs) {
+<<<<<<< HEAD
             associatedDocRefs = getAssociatedDocRefs(documentOriginal.getNode());
+=======
+            associatedDocRefs = getAssociatedDocRefs(documentOriginal);
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             if (associatedDocRefs.size() > 1) {
                 NodeRef parentRef = DocumentDynamicDialog.getParent(volumeRef, caseLabel);
                 for (NodeRef associatedDocRef : associatedDocRefs) {
                     NodeRef associatedDocParentRef = nodeService.getPrimaryParent(associatedDocRef).getParentRef();
+<<<<<<< HEAD
                     // parentRef is null or references volume if new case is going to be created during saving document
                     if ((parentRef == null || VolumeModel.Types.VOLUME.equals(nodeService.getType(parentRef)) || !parentRef.equals(associatedDocParentRef))
                             && !associatedDocRef.equals(originalDocumentNodeRef)) {
+=======
+                    // parentRef is null if new case is going to be created during saving document
+                    if ((parentRef == null || !parentRef.equals(associatedDocParentRef)) && !associatedDocRef.equals(originalDocumentNodeRef)) {
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
                         associatedDocs.add(getDocument(associatedDocRef));
                     }
                 }
@@ -646,10 +788,17 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
                 associatedDocument.setVolume(volumeRef);
                 associatedDocument.setProp(DocumentLocationGenerator.CASE_LABEL_EDITABLE, caseLabel);
                 NodeRef oldNodeRef = associatedDocument.getNodeRef();
+<<<<<<< HEAD
                 NodeRef newNodeRef = update(associatedDocument, cfg.getSaveListenerBeanNames(), updateGeneratedFiles).getNodeRef();
                 originalNodeRefs.add(Pair.newInstance(oldNodeRef, newNodeRef));
             } else {
                 originalDocumentUpdated = update(associatedDocument, saveListenerBeanNames, updateGeneratedFiles);
+=======
+                NodeRef newNodeRef = update(associatedDocument, cfg.getSaveListenerBeanNames()).getNodeRef();
+                originalNodeRefs.add(Pair.newInstance(oldNodeRef, newNodeRef));
+            } else {
+                originalDocumentUpdated = update(associatedDocument, saveListenerBeanNames);
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             }
         }
         long saveStopTime = System.nanoTime();
@@ -660,14 +809,30 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
     }
 
     // NB! This method may change document nodeRef when moving from archive to active store (see DocumentLocationGenerator save method)
+<<<<<<< HEAD
     private DocumentDynamic update(DocumentDynamic documentOriginal, List<String> saveListenerBeanNames, boolean updateGeneratedFiles) {
         NodeRef archivalActivityRef = documentOriginal.getProp(DocumentDynamicDialog.TEMP_ARCHIVAL_ACTIVITY_NODE_REF);
+=======
+    private DocumentDynamic update(DocumentDynamic documentOriginal, List<String> saveListenerBeanNames) {
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         DocumentDynamic document = documentOriginal.clone();
         boolean isDraft = document.isDraft();
         boolean isImapOrDvk = document.isImapOrDvk();
         Map<String, Pair<DynamicPropertyDefinition, Field>> propDefs = documentConfigService.getPropertyDefinitions(document.getNode());
         if (saveListenerBeanNames != null) {
+<<<<<<< HEAD
             validateDocument(saveListenerBeanNames, document, propDefs);
+=======
+            ValidationHelperImpl validationHelper = new ValidationHelperImpl(propDefs);
+            validateDocumentForFormulaPattern(document, validationHelper);
+            for (String saveListenerBeanName : saveListenerBeanNames) {
+                SaveListener saveListener = (SaveListener) beanFactory.getBean(saveListenerBeanName, SaveListener.class);
+                saveListener.validate(document, validationHelper);
+            }
+            if (!validationHelper.errorMessages.isEmpty()) {
+                throw new UnableToPerformMultiReasonException(new MessageDataWrapper(validationHelper.errorMessages), documentOriginal);
+            }
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             for (String saveListenerBeanName : saveListenerBeanNames) {
                 SaveListener saveListener = (SaveListener) beanFactory.getBean(saveListenerBeanName, SaveListener.class);
                 saveListener.save(document);
@@ -687,10 +852,13 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
             docProps.put(DocumentCommonModel.Props.SEARCHABLE_SEND_MODE.toString(), sendOutService.buildSearchableSendMode(docRef));
         }
 
+<<<<<<< HEAD
         if (isDraft && !document.isDraft()) { // Check if document is saved under a case file for the first time
             setPrivilegesFromCaseFileIfApplicable(docRef);
         }
 
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         if (isImapOrDvk) {
             List<File> files = fileService.getAllFilesExcludingDigidocSubitems(docRef);
             for (File file : files) {
@@ -700,6 +868,7 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
             }
         }
 
+<<<<<<< HEAD
         String docOldTypeId = document.getDocOldTypeId();
         if (StringUtils.isNotEmpty(docOldTypeId) && !documentOriginal.getDocumentTypeId().equals(docOldTypeId)) {
             String docNewTypeId = document.getDocumentTypeId();
@@ -710,6 +879,8 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
             workflowService.changeTasksDocType(document.getNodeRef(), docNewTypeId);
         }
 
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         if (LOG.isDebugEnabled()) {
             LOG.debug("updateDocument after validation and save listeners, before real saving: " + document);
         }
@@ -718,6 +889,13 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         Assert.isNull(childAssocTypeQNamesRoot.getData());
 
         updateSearchableChildNodeProps(docNode, null, childAssocTypeQNamesRoot.getChildren(), propDefs);
+<<<<<<< HEAD
+=======
+        if (isDraft) {
+            // Remove references on first save
+            fileService.removePreviousParentReference(docRef, false);
+        }
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
         { // update properties and log changes made in properties
             String oldRegNumber = (String) nodeService.getProperty(docRef, REG_NUMBER);
@@ -730,6 +908,7 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
             if (!EventsLoggingHelper.isLoggingDisabled(docNode, DocumentService.TransientProps.TEMP_LOGGING_DISABLED_DOCUMENT_METADATA_CHANGED)) {
                 if (isDraft) {
                     documentLogService.addDocumentLog(docRef, MessageUtil.getMessage("document_log_status_created"));
+<<<<<<< HEAD
                     NodeRef volume = document.getVolume();
                     if (volume != null && CaseFileModel.Types.CASE_FILE.equals(nodeService.getType(volume))) {
                         caseFileLogService.addCaseFileLog(volume, document, "casefile_log_document");
@@ -739,11 +918,15 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
                     if (volume != null && CaseFileModel.Types.CASE_FILE.equals(nodeService.getType(volume))) {
                         caseFileLogService.addCaseFileDocLocChangeLog(changedPropsNewValues.getPropertyChange(docRef, DocumentCommonModel.Props.VOLUME), document);
                     }
+=======
+                } else {
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
                     for (Serializable msg : changedPropsNewValues.generateLogMessages(propDefs, docRef)) {
                         documentLogService.addDocumentLog(docRef, (String) msg);
                     }
                 }
             }
+<<<<<<< HEAD
             if (updateGeneratedFiles) {
                 documentTemplateService.updateGeneratedFiles(docRef, false);
             }
@@ -809,6 +992,52 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
             newAssocs.addAll(addedAssocs.values());
         }
         addedAssocs = documentDynamicNode.getAddedAssociations().get(DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP.toString());
+=======
+            documentTemplateService.updateGeneratedFiles(docRef, false);
+        }
+        generalService.saveAddedAssocs(docNode);
+        return document;
+    }
+
+    private void validateDocumentForFormulaPattern(DocumentDynamic document, ValidationHelperImpl validationHelper) {
+        for (Pair<DynamicPropertyDefinition, Field> propDefPair : validationHelper.getPropDefs().values()) {
+            Field field = propDefPair.getSecond();
+            if (field == null) {
+                continue; // Hidden fields can be ignored
+            }
+            Serializable value = document.getProp(field.getQName());
+            if (validateValueForFormulaPattern(value, field, validationHelper)) {
+                // it was a string value
+            } else if (value instanceof Collection<?>) {
+                for (Object item : (Collection<?>) ((Collection<?>) value)) {
+                    validateValueForFormulaPattern(item, field, validationHelper);
+                }
+            }
+        }
+    }
+
+    private boolean validateValueForFormulaPattern(Object item, Field field, ValidationHelperImpl validationHelper) {
+        if (item instanceof String) {
+            String stringValue = (String) item;
+            if (StringUtils.startsWith(stringValue, "{") && StringUtils.endsWith(stringValue, "}")) {
+                validationHelper.addErrorMessage("docdyn_save_error_valueContainsFormulaPattern", field.getName());
+            }
+            return true;
+        }
+        return false;
+    }
+
+    private Set<NodeRef> getAssociatedDocRefs(DocumentDynamic document) {
+        NodeRef docRef = document.getNodeRef();
+
+        Set<NodeRef> currentAssociatedDocs = new HashSet<NodeRef>();
+        List<AssociationRef> newAssocs = new ArrayList<AssociationRef>();
+        Map<String, AssociationRef> addedAssocs = document.getNode().getAddedAssociations().get(DocumentCommonModel.Assocs.DOCUMENT_REPLY.toString());
+        if (addedAssocs != null) {
+            newAssocs.addAll(addedAssocs.values());
+        }
+        addedAssocs = document.getNode().getAddedAssociations().get(DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP.toString());
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         if (addedAssocs != null) {
             newAssocs.addAll(addedAssocs.values());
         }
@@ -869,7 +1098,10 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
     private void setParentFolderProps(DocumentDynamic document) {
         NodeRef docRef = document.getNodeRef();
         document.setDraft(isDraft(docRef));
+<<<<<<< HEAD
         document.setFromWebService(isFromWebService(docRef));
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         document.setDraftOrImapOrDvk(isDraftOrImapOrDvk(docRef));
         document.setIncomingInvoice(documentService.isIncomingInvoice(docRef));
     }
@@ -900,11 +1132,14 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         return DocumentCommonModel.Types.DRAFTS.equals(parentType) && DocumentCommonModel.Types.DRAFTS.equals(grandParentAssoc.getQName());
     }
 
+<<<<<<< HEAD
     private boolean isFromWebService(NodeRef docRef) {
         ChildAssociationRef parentAssoc = nodeService.getPrimaryParent(docRef);
         return BeanHelper.getAddDocumentService().getWebServiceDocumentsRoot().equals(parentAssoc.getParentRef());
     }
 
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     @Override
     public boolean isDraftOrImapOrDvk(NodeRef docRef) {
         NodeRef parentRef = nodeService.getPrimaryParent(docRef).getParentRef();
@@ -950,8 +1185,12 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
      * *
      * NB! We don't support multi-valued properties on child/grand-child for _reports_ (document search works).
      */
+<<<<<<< HEAD
     @Override
     public void updateSearchableChildNodeProps(Node node, QName[] currentHierarchy, List<TreeNode<QName>> childAssocTypeQNames,
+=======
+    private void updateSearchableChildNodeProps(Node node, QName[] currentHierarchy, List<TreeNode<QName>> childAssocTypeQNames,
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             Map<String, Pair<DynamicPropertyDefinition, Field>> propDefs) {
         if (currentHierarchy == null) {
             currentHierarchy = new QName[] {};
@@ -1064,8 +1303,12 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         }
     }
 
+<<<<<<< HEAD
     @Override
     public DocumentPropertiesChangeHolder saveThisNodeAndChildNodes(NodeRef parentRef, Node node, List<TreeNode<QName>> childAssocTypeQNames,
+=======
+    private DocumentPropertiesChangeHolder saveThisNodeAndChildNodes(NodeRef parentRef, Node node, List<TreeNode<QName>> childAssocTypeQNames,
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             QName[] currentHierarchy, DocumentServiceImpl.PropertyChangesMonitorHelper propertyChangesMonitorHelper, Map<String, Pair<DynamicPropertyDefinition, Field>> propDefs) {
         NodeRef nodeRef;
         if (currentHierarchy == null) {
@@ -1115,6 +1358,7 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         return docPropsChangeHolder;
     }
 
+<<<<<<< HEAD
     @Override
     public void updateDocumentAndGeneratedFiles(NodeRef fileRef, NodeRef document, boolean updateGeneratedFiles) {
         String generationType = (String) nodeService.getProperty(fileRef, FileModel.Props.GENERATION_TYPE);
@@ -1292,6 +1536,8 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
                 || FieldType.COMBOBOX == field.getFieldTypeEnum() && !classificatorService.hasClassificatorValueName(field.getClassificator(), formulaValue);
     }
 
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     // START: setters
     public void setDictionaryService(DictionaryService dictionaryService) {
         this.dictionaryService = dictionaryService;
@@ -1342,6 +1588,7 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         this.fileService = fileService;
     }
 
+<<<<<<< HEAD
     public void setContentService(ContentService contentService) {
         this.contentService = contentService;
     }
@@ -1354,14 +1601,19 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         this.workflowService = workflowService;
     }
 
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     public void setShowMessageIfUnregistered(boolean showMessageIfUnregistered) {
         this.showMessageIfUnregistered = showMessageIfUnregistered;
     }
 
+<<<<<<< HEAD
     public void setCaseFileLogService(CaseFileLogService caseFileLogService) {
         this.caseFileLogService = caseFileLogService;
     }
 
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     @Override
     public boolean isShowMessageIfUnregistered() {
         return showMessageIfUnregistered;

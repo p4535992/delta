@@ -3,13 +3,17 @@ package ee.webmedia.alfresco.docdynamic.service;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
+<<<<<<< HEAD
 import java.util.Set;
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 
+<<<<<<< HEAD
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.docadmin.service.DocumentTypeVersion;
 import ee.webmedia.alfresco.docadmin.service.Field;
@@ -24,6 +28,15 @@ import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
 /**
  * @author Alar Kvell
  */
+=======
+import ee.webmedia.alfresco.docadmin.service.DocumentTypeVersion;
+import ee.webmedia.alfresco.docadmin.service.Field;
+import ee.webmedia.alfresco.docconfig.service.DynamicPropertyDefinition;
+import ee.webmedia.alfresco.utils.TreeNode;
+import ee.webmedia.alfresco.utils.UnableToPerformException;
+import ee.webmedia.alfresco.utils.UnableToPerformMultiReasonException;
+
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 public interface DocumentDynamicService {
 
     String BEAN_NAME = "DocumentDynamicService";
@@ -70,7 +83,11 @@ public interface DocumentDynamicService {
      * @throws UnableToPerformException one error message if validation or save was unsuccessful.
      * @throws UnableToPerformMultiReasonException multiple error messages if validation or save was unsuccessful.
      */
+<<<<<<< HEAD
     DocumentDynamic updateDocument(DocumentDynamic document, List<String> saveListenerBeanNames, boolean relocateAssocDocs, boolean updateGeneratedFiles);
+=======
+    DocumentDynamic updateDocument(DocumentDynamic document, List<String> saveListenerBeanNames, boolean relocateAssocDocs);
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
     boolean isDraft(NodeRef docRef);
 
@@ -88,8 +105,11 @@ public interface DocumentDynamicService {
 
     void setOwner(Map<QName, Serializable> props, String ownerId, boolean retainPreviousOwnerId);
 
+<<<<<<< HEAD
     void setOwnerFromActiveResponsibleTask(CompoundWorkflow compoundWorkflow, NodeRef documentRef, Map<String, Object> documentProps);
 
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     boolean isOwner(NodeRef docRef, String ownerId);
 
     public void changeTypeInMemory(DocumentDynamic document, String newTypeId);
@@ -100,6 +120,7 @@ public interface DocumentDynamicService {
 
     /** Same as updateDocument; return list of original nodeRefs that were updated by the method */
     Pair<DocumentDynamic, List<Pair<NodeRef, NodeRef>>> updateDocumentGetDocAndNodeRefs(DocumentDynamic documentOriginal, List<String> saveListenerBeanNames,
+<<<<<<< HEAD
             boolean relocateAssocDocs, boolean updateGeneratedFiles);
 
     String getDocumentType(NodeRef documentRef);
@@ -127,6 +148,12 @@ public interface DocumentDynamicService {
 
     DocumentDynamic createNewDocumentForArchivalActivity(NodeRef archivalActivityNodeRef, String documentTypeId);
 
+=======
+            boolean relocateAssocDocs);
+
+    String getDocumentType(NodeRef documentRef);
+
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     TreeNode<QName> getChildNodeQNameHierarchy(QName[] hierarchy, TreeNode<QName> root);
 
 }

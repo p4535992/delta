@@ -7,12 +7,15 @@ import org.alfresco.service.cmr.repository.ContentReader;
 import org.alfresco.service.cmr.repository.ContentWriter;
 import org.springframework.beans.factory.InitializingBean;
 
+<<<<<<< HEAD
 import ee.webmedia.alfresco.monitoring.MonitoredService;
 import ee.webmedia.alfresco.monitoring.MonitoringUtil;
 
 /**
  * @author Alar Kvell
  */
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 public class MsoServiceDelegatingImpl implements MsoService, InitializingBean {
 
     private MsoService delegate;
@@ -76,6 +79,7 @@ public class MsoServiceDelegatingImpl implements MsoService, InitializingBean {
 
     @Override
     public void transformToPdf(ContentReader documentReader, ContentWriter pdfWriter) throws Exception {
+<<<<<<< HEAD
         try {
             delegate.transformToPdf(documentReader, pdfWriter);
             MonitoringUtil.logSuccess(MonitoredService.OUT_MSO);
@@ -83,10 +87,14 @@ public class MsoServiceDelegatingImpl implements MsoService, InitializingBean {
             MonitoringUtil.logError(MonitoredService.OUT_MSO, e);
             throw e;
         }
+=======
+        delegate.transformToPdf(documentReader, pdfWriter);
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     @Override
     public void replaceFormulas(Map<String, String> formulas, ContentReader documentReader, ContentWriter documentWriter) throws Exception {
+<<<<<<< HEAD
         try {
             delegate.replaceFormulas(formulas, documentReader, documentWriter);
             MonitoringUtil.logSuccess(MonitoredService.OUT_MSO);
@@ -94,11 +102,15 @@ public class MsoServiceDelegatingImpl implements MsoService, InitializingBean {
             MonitoringUtil.logError(MonitoredService.OUT_MSO, e);
             throw e;
         }
+=======
+        delegate.replaceFormulas(formulas, documentReader, documentWriter);
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     @Override
     public void replaceFormulasAndTransformToPdf(Map<String, String> formulas, ContentReader documentReader, ContentWriter documentWriter, ContentWriter pdfWriter)
             throws Exception {
+<<<<<<< HEAD
         try {
             delegate.replaceFormulasAndTransformToPdf(formulas, documentReader, documentWriter, pdfWriter);
             MonitoringUtil.logSuccess(MonitoredService.OUT_MSO);
@@ -106,10 +118,14 @@ public class MsoServiceDelegatingImpl implements MsoService, InitializingBean {
             MonitoringUtil.logError(MonitoredService.OUT_MSO, e);
             throw e;
         }
+=======
+        delegate.replaceFormulasAndTransformToPdf(formulas, documentReader, documentWriter, pdfWriter);
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     @Override
     public Map<String, String> modifiedFormulas(ContentReader documentReader) throws Exception {
+<<<<<<< HEAD
         try {
             Map<String, String> modifiedFormulas = delegate.modifiedFormulas(documentReader);
             MonitoringUtil.logSuccess(MonitoredService.OUT_MSO);
@@ -118,6 +134,9 @@ public class MsoServiceDelegatingImpl implements MsoService, InitializingBean {
             MonitoringUtil.logError(MonitoredService.OUT_MSO, e);
             throw e;
         }
+=======
+        return delegate.modifiedFormulas(documentReader);
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
 }

@@ -9,6 +9,7 @@ import javax.faces.event.PhaseEvent;
 import javax.faces.event.PhaseId;
 import javax.faces.event.PhaseListener;
 
+<<<<<<< HEAD
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.util.Pair;
 import org.alfresco.web.app.AlfrescoNavigationHandler;
@@ -24,16 +25,31 @@ import ee.webmedia.alfresco.utils.WebUtil;
 /**
  * @author Alar Kvell
  */
+=======
+import org.alfresco.service.cmr.repository.InvalidNodeRefException;
+import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.util.Pair;
+import org.springframework.util.Assert;
+
+import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.docdynamic.service.DocumentDynamicServiceImpl;
+import ee.webmedia.alfresco.menu.ui.MenuBean;
+import ee.webmedia.alfresco.utils.MessageUtil;
+
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 public class ExternalAccessPhaseListener implements PhaseListener {
     private static final long serialVersionUID = 1L;
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(DocumentDynamicServiceImpl.class);
 
     public static final String OUTCOME_AND_ARGS_ATTR = ExternalAccessPhaseListener.class.getName() + ".OUTCOME_AND_ARGS";
     public static final String OUTCOME_DOCUMENT = "document";
+<<<<<<< HEAD
     public static final String OUTCOME_COMPOUND_WORKFLOW_PROCEDURE_ID = "compoundWorkflowProcedureId";
     public static final String OUTCOME_COMPOUND_WORKFLOW_NODEREF = "compoundWorkflowNodeRef";
     public static final String OUTCOME_CASE_FILE = "caseFile";
     public static final String OUTCOME_VOLUME = "volume";
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
     @Override
     public PhaseId getPhaseId() {
@@ -62,12 +78,17 @@ public class ExternalAccessPhaseListener implements PhaseListener {
 
     private void processExternalAcessAction(FacesContext context, Pair<String, String[]> outcomeAndArgs) {
 
+<<<<<<< HEAD
         // TODO Alar -> Riina - is this needed any more?
+=======
+        // TODO -> is this needed any more?
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         // always allow missing bindings from ExternalAccessServlet:
         // when redirecting from ExternalAccessServlet, jsp binding attribute value may be queried from wrong bean
         // CL task 143975
         // req.setAttribute("allow_missing_bindings", Boolean.TRUE);
 
+<<<<<<< HEAD
         if (outcomeAndArgs.getSecond().length >= 1) {
             String outcome = outcomeAndArgs.getFirst();
             String nodeIdentificator = outcomeAndArgs.getSecond()[0];
@@ -140,6 +161,31 @@ public class ExternalAccessPhaseListener implements PhaseListener {
 
     private NodeRef getNodeRefFromNodeId(String currentNodeId) {
         return StringUtils.isNotBlank(currentNodeId) ? getGeneralService().getExistingNodeRefAllStores(currentNodeId) : null;
+=======
+        if (OUTCOME_DOCUMENT.equals(outcomeAndArgs.getFirst()) && outcomeAndArgs.getSecond().length >= 1) {
+
+            try {
+                NodeRef nodeRef = getNodeRefFromNodeId(outcomeAndArgs.getSecond()[0]);
+
+                // select correct menu
+                MenuBean.clearViewStack(String.valueOf(MenuBean.DOCUMENT_REGISTER_ID), null);
+
+                // open document dialog
+                BeanHelper.getDocumentDynamicDialog().openFromUrl(nodeRef);
+            } catch (InvalidNodeRefException e) {
+                MessageUtil.addErrorMessage("document_restore_error_docDeleted");
+            }
+        }
+    }
+
+    private NodeRef getNodeRefFromNodeId(String currentNodeId) {
+        Assert.notNull(currentNodeId);
+        NodeRef nodeRef = getGeneralService().getExistingNodeRefAllStores(currentNodeId);
+        if (nodeRef == null) {
+            throw new InvalidNodeRefException("Invalid URI provided (" + currentNodeId + ")", nodeRef);
+        }
+        return nodeRef;
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
 }

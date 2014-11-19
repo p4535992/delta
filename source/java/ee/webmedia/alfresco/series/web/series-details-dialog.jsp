@@ -14,7 +14,11 @@
 <%@page import="org.apache.commons.lang.StringEscapeUtils"%>
 
 <%@page import="org.alfresco.web.app.Application"%><a:panel id="metadata-panel" label="#{msg.document_metadata}" styleClass="panel-100" progressive="true">
+<<<<<<< HEAD
    <r:propertySheetGrid id="ser-metatada" value="#{SeriesDetailsDialog.currentNode}" columns="1" mode="edit" externalConfig="true" labelStyleClass="propertiesLabel" binding="#{SeriesDetailsDialog.propertySheet}" />
+=======
+   <r:propertySheetGrid id="ser-metatada" value="#{SeriesDetailsDialog.currentNode}" columns="1" mode="edit" externalConfig="true" labelStyleClass="propertiesLabel" />
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 </a:panel>
 
 <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/series/web/series-log-block.jsp" />

@@ -5,7 +5,10 @@ import java.io.Serializable;
 import java.security.cert.X509Certificate;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+<<<<<<< HEAD
 import java.util.Arrays;
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -38,12 +41,18 @@ import ee.webmedia.alfresco.email.service.EmailException;
 import ee.webmedia.alfresco.email.service.EmailService;
 import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
+<<<<<<< HEAD
 import ee.webmedia.alfresco.privilege.service.PrivilegeService;
 import ee.webmedia.alfresco.signature.model.SkLdapCertificate;
 import ee.webmedia.alfresco.signature.service.SignatureService;
 import ee.webmedia.alfresco.signature.service.SkLdapService;
 import ee.webmedia.alfresco.user.model.Authority;
 import ee.webmedia.alfresco.user.service.UserService;
+=======
+import ee.webmedia.alfresco.signature.model.SkLdapCertificate;
+import ee.webmedia.alfresco.signature.service.SignatureService;
+import ee.webmedia.alfresco.signature.service.SkLdapService;
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 import ee.webmedia.alfresco.workflow.sendout.TaskSendInfo;
@@ -53,9 +62,12 @@ import ee.webmedia.alfresco.workflow.service.Workflow;
 import ee.webmedia.xtee.client.dhl.DhlXTeeService.ContentToSend;
 import ee.webmedia.xtee.client.dhl.DhlXTeeService.SendStatus;
 
+<<<<<<< HEAD
 /**
  * @author Erko Hansar
  */
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 public class SendOutServiceImpl implements SendOutService {
 
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(SendOutServiceImpl.class);
@@ -288,6 +300,7 @@ public class SendOutServiceImpl implements SendOutService {
     }
 
     @Override
+<<<<<<< HEAD
     public void sendDocumentForInformation(List<String> authorityIds, Node docNode, String emailTemplate) {
         List<Authority> authorities = new ArrayList<Authority>();
         PrivilegeService privilegeService = BeanHelper.getPrivilegeService();
@@ -311,6 +324,8 @@ public class SendOutServiceImpl implements SendOutService {
     }
 
     @Override
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     public NodeRef addSendinfo(NodeRef document, Map<QName, Serializable> props) {
         final NodeRef sendInfoRef = nodeService.createNode(document, //
                 DocumentCommonModel.Assocs.SEND_INFO, DocumentCommonModel.Assocs.SEND_INFO, DocumentCommonModel.Types.SEND_INFO, props).getChildRef();

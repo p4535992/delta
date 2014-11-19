@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <?xml version="1.0" encoding="UTF-8"?>
 
 <model name="docTempl:documentTemplateModel" xmlns="http://www.alfresco.org/model/dictionary/1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -83,3 +84,84 @@
       </aspect>
    </aspects>
 </model>
+=======
+<?xml version="1.0" encoding="UTF-8"?>
+
+<model name="docTempl:documentTemplateModel" xmlns="http://www.alfresco.org/model/dictionary/1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.alfresco.org/model/dictionary/1.0 http://svn.alfresco.com/repos/alfresco-open-mirror/alfresco/HEAD/root/projects/repository/config/alfresco/model/modelSchema.xsd">
+
+   <imports>
+      <import uri="http://www.alfresco.org/model/dictionary/1.0" prefix="d" />
+      <import uri="http://www.alfresco.org/model/system/1.0" prefix="sys" />
+   </imports>
+
+   <namespaces>
+      <namespace uri="http://alfresco.webmedia.ee/model/document-template/1.0" prefix="docTempl" />
+   </namespaces>
+
+   <aspects>
+      <aspect name="docTempl:template">
+         <properties>
+            <property name="docTempl:name">
+               <type>d:text</type>
+               <mandatory enforced="true">true</mandatory>
+            </property>
+            <property name="docTempl:comment">
+               <type>d:text</type>
+            </property>
+            <property name="docTempl:templateType">
+               <type>d:text</type>
+            </property>
+         </properties>
+      </aspect>
+      
+      <aspect name="docTempl:emailTemplate">
+         <mandatory-aspects>
+            <aspect>docTempl:template</aspect>
+         </mandatory-aspects>
+      </aspect>
+
+      <aspect name="docTempl:notificationTemplate">
+         <mandatory-aspects>
+            <aspect>docTempl:template</aspect>
+         </mandatory-aspects>
+      </aspect>
+      
+      <!-- XXX Deprecated: This aspect is not used in new templates any more -->
+      <aspect name="docTempl:systemTemplate">
+         <mandatory-aspects>
+            <aspect>docTempl:template</aspect>
+         </mandatory-aspects>
+      </aspect>
+      
+      <aspect name="docTempl:reportTemplate">
+         <properties>
+            <property name="docTempl:reportType">
+               <type>d:text</type>
+               <mandatory enforced="true">true</mandatory>
+            </property>
+            <property name="docTempl:reportOutputType">
+               <type>d:text</type>
+               <mandatory>false</mandatory>
+            </property>
+         </properties>
+         <mandatory-aspects>
+            <aspect>docTempl:template</aspect>
+         </mandatory-aspects>
+      </aspect>
+      
+      <aspect name="docTempl:documentTemplate">
+         <properties>
+            <property name="docTempl:docTypeId">
+               <type>d:text</type>
+               <!--if 'mandatory' not commented updater cant remove this aspect. document-template-web-client-config.xml added forcedMandatory="true" -->
+               <!--<mandatory enforced="false">true</mandatory> -->
+            </property>
+         </properties>
+         <mandatory-aspects>
+            <aspect>docTempl:template</aspect>
+         </mandatory-aspects>
+      </aspect>
+   </aspects>
+</model>
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5

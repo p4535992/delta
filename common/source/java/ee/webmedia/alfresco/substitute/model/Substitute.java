@@ -5,6 +5,10 @@ import static ee.webmedia.alfresco.document.model.Document.dateFormat;
 import java.io.Serializable;
 import java.util.Calendar;
 import java.util.Date;
+<<<<<<< HEAD
+=======
+import java.util.GregorianCalendar;
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.apache.commons.lang.time.DateUtils;
@@ -13,9 +17,12 @@ import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.beanmapper.AlfrescoModelProperty;
 import ee.webmedia.alfresco.utils.beanmapper.AlfrescoModelType;
 
+<<<<<<< HEAD
 /**
  * @author Romet Aidla
  */
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 @AlfrescoModelType(uri = SubstituteModel.URI)
 public class Substitute implements Serializable {
     private static final long serialVersionUID = 0L;
@@ -144,7 +151,19 @@ public class Substitute implements Serializable {
     }
 
     public void setSubstitutionEndDate(Date substitutionEndDate) {
+<<<<<<< HEAD
         this.substitutionEndDate = substitutionEndDate;
+=======
+        if (substitutionEndDate == null) {
+            return;
+        }
+        Calendar cal = new GregorianCalendar();
+        cal.setTime(substitutionEndDate);
+        cal.set(Calendar.HOUR_OF_DAY, 23);
+        cal.set(Calendar.MINUTE, 59);
+        cal.set(Calendar.SECOND, 59);
+        this.substitutionEndDate = cal.getTime();
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     public boolean isActive() {

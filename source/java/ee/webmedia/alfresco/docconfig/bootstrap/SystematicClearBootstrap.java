@@ -17,9 +17,12 @@ import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.utils.SearchUtil;
 
+<<<<<<< HEAD
 /**
  * @author Alar Kvell
  */
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 public class SystematicClearBootstrap extends AbstractModuleComponent implements BeanFactoryAware {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(SystematicClearBootstrap.class);
 

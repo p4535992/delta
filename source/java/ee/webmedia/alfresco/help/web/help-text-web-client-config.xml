@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <?xml version="1.0" encoding="UTF-8"?>
 <alfresco-config>
 
@@ -62,3 +63,69 @@
       </property-sheet>
    </config>
 </alfresco-config>
+=======
+<?xml version="1.0" encoding="UTF-8"?>
+<alfresco-config>
+
+   <config>
+      <actions>
+         <action id="help_dialog_add">
+            <label-id>help_text_add_dialog_help</label-id>
+            <image>/images/icons/versioned_properties.gif</image>
+            <action>dialog:dialogHelpTextEditDialog</action>
+            <action-listener>#{DialogHelpTextEditDialog.init}</action-listener>
+         </action>
+         <action id="help_field_add">
+            <label-id>help_text_add_field_help</label-id>
+            <image>/images/icons/versioned_properties.gif</image>
+            <action>dialog:fieldHelpTextEditDialog</action>
+            <action-listener>#{FieldHelpTextEditDialog.init}</action-listener>
+         </action>
+         <action id="help_doctype_add">
+            <label-id>help_text_add_doctype_help</label-id>
+            <image>/images/icons/versioned_properties.gif</image>
+            <action>dialog:documentTypeHelpTextEditDialog</action>
+            <action-listener>#{DocumentTypeHelpTextEditDialog.init}</action-listener>
+         </action>
+
+         <action-group id="help_text_list_actions">
+            <action idref="help_dialog_add" />
+            <action idref="help_field_add" />
+            <action idref="help_doctype_add" />
+         </action-group>
+      </actions>
+
+      <dialogs>
+
+         <dialog name="helpTextListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/help/web/help-text-list-dialog.jsp" managed-bean="HelpTextListDialog"
+            icon="/images/icons/versioned_properties_large.gif" title-id="help_text_title" show-ok-button="false" actions-config-id="help_text_list_actions" />
+         <dialog name="fieldHelpTextEditDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/help/web/help-text-edit-dialog.jsp" managed-bean="FieldHelpTextEditDialog"
+            icon="/images/icons/versioned_properties_large.gif" title-id="help_text_mgmt_title" show-ok-button="true" />
+         <dialog name="dialogHelpTextEditDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/help/web/help-text-edit-dialog.jsp" managed-bean="DialogHelpTextEditDialog"
+            icon="/images/icons/versioned_properties_large.gif" title-id="help_text_mgmt_title" show-ok-button="true" />
+         <dialog name="documentTypeHelpTextEditDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/help/web/help-text-edit-dialog.jsp" managed-bean="DocumentTypeHelpTextEditDialog"
+            icon="/images/icons/versioned_properties_large.gif" title-id="help_text_mgmt_title" show-ok-button="true" />
+
+      </dialogs>
+   </config>
+
+   <config evaluator="node-type" condition="hlt:helpText">
+      <property-sheet>
+         <show-property name="hlt:codeDialog" display-label-id="help_text_name_dialog" component-generator="GeneralSelectorGenerator" selectionItems="#{DialogManager.bean.getCodes}"
+            show="#{DialogManager.bean.type=='dialog'}" forcedMandatory="true" />
+
+         <show-property name="hlt:codeDocumentType" display-label-id="help_text_name_documentType" component-generator="SearchGenerator" pickerCallback="#{DocTypeListDialog.searchUsedDocTypes}"
+            allowDuplicates="false" dialogTitleId="series_docType_popUpInfo" show="#{DialogManager.bean.type=='documentType'}" setterCallback="#{DialogManager.bean.processDocumentTypeSearchResults}"
+            forcedMandatory="true" editable="false" ajaxParentLevel="100" />
+
+         <show-property name="hlt:codeField" display-label-id="help_text_name_field" component-generator="SearchGenerator" pickerCallback="#{DocTypeFieldsListBean.searchFieldDefinitions}"
+            allowDuplicates="false" dialogTitleId="docType_metadataList_add_existingField_pickerTitle" show="#{DialogManager.bean.type=='field'}"
+            setterCallback="#{DialogManager.bean.processFieldSearchResults}" forcedMandatory="true" editable="false" ajaxParentLevel="100" />
+
+         <show-property name="hlt:code" display-label-id="help_text_code" component-generator="TextFieldGenerator" editable="false" readOnlyIf="#{DialogManager.bean.type!='dialog'}" show="#{DialogManager.bean.type!='dialog'}" />
+
+         <show-property name="hlt:content" display-label-id="help_text_content" styleClass="expand19-200 focus" component-generator="TextAreaGenerator" />
+      </property-sheet>
+   </config>
+</alfresco-config>
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5

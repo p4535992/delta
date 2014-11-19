@@ -4,9 +4,12 @@ import java.io.Serializable;
 import java.util.Date;
 
 import org.alfresco.repo.web.scripts.FileTypeImageUtils;
+<<<<<<< HEAD
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.StringUtils;
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
 public class Version implements Serializable {
 
@@ -16,14 +19,24 @@ public class Version implements Serializable {
     private String author;
     private Date modified;
     private String downloadUrl;
+<<<<<<< HEAD
     private String comment;
     private NodeRef nodeRef;
     private Node node;
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
     public String getVersion() {
         return version;
     }
 
+<<<<<<< HEAD
+=======
+    public Float getVersionAsFloat() {
+        return version == null ? null : Float.valueOf(version);
+    }
+
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     public void setVersion(String version) {
         this.version = version;
     }
@@ -52,6 +65,7 @@ public class Version implements Serializable {
         this.downloadUrl = downloadUrl;
     }
 
+<<<<<<< HEAD
     public void setComment(String comment) {
         this.comment = comment;
     }
@@ -76,6 +90,8 @@ public class Version implements Serializable {
         return node;
     }
 
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     /**
      * Used to specify icon.
      */
@@ -92,6 +108,7 @@ public class Version implements Serializable {
         return sb.toString();
     }
 
+<<<<<<< HEAD
     public VersionNr getVersionNr() {
         return new Version.VersionNr(version);
     }
@@ -130,4 +147,6 @@ public class Version implements Serializable {
             return numbers.length > compNumbers.length ? -1 : 1;
         }
     }
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 }

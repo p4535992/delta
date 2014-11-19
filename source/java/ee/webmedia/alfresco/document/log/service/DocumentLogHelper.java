@@ -1,8 +1,14 @@
 package ee.webmedia.alfresco.document.log.service;
 
+<<<<<<< HEAD
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
+=======
+import java.io.Serializable;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import java.util.Map;
 
 import org.alfresco.service.cmr.repository.NodeRef;
@@ -12,12 +18,18 @@ import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.ArrayUtils;
 
+<<<<<<< HEAD
 import ee.webmedia.alfresco.casefile.model.CaseFileModel;
 import ee.webmedia.alfresco.cases.model.CaseModel;
 import ee.webmedia.alfresco.classificator.constant.FieldType;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.docadmin.service.DocumentTypeVersion;
+=======
+import ee.webmedia.alfresco.cases.model.CaseModel;
+import ee.webmedia.alfresco.classificator.constant.FieldType;
+import ee.webmedia.alfresco.common.web.BeanHelper;
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import ee.webmedia.alfresco.docadmin.service.Field;
 import ee.webmedia.alfresco.docadmin.web.DocAdminUtil;
 import ee.webmedia.alfresco.docconfig.service.DynamicPropertyDefinition;
@@ -32,7 +44,10 @@ import ee.webmedia.alfresco.volume.model.VolumeModel;
  * Helper class for composing Document property change log messages.
  * 
  * @see DocumentPropertiesChangeHolder
+<<<<<<< HEAD
  * @author Martti Tamm
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
  */
 public class DocumentLogHelper {
 
@@ -132,6 +147,7 @@ public class DocumentLogHelper {
         if (docRef == null || !BeanHelper.getNodeService().exists(docRef) || !BeanHelper.getNodeService().getType(docRef).equals(DocumentCommonModel.Types.DOCUMENT)) {
             return Collections.emptyMap();
         }
+<<<<<<< HEAD
         WmNode docNode = BeanHelper.getDocumentDynamicService().getDocument(docRef).getNode();
         Pair<String, Integer> typeAndVersion = DocAdminUtil.getDocTypeIdAndVersionNr(docNode);
         DocumentTypeVersion docTypeVersion = BeanHelper.getDocumentAdminService().getDocumentTypeAndVersion(typeAndVersion.getFirst(), typeAndVersion.getSecond()).getSecond();
@@ -140,10 +156,22 @@ public class DocumentLogHelper {
         Map<QName, Field> docTypeProps = new LinkedHashMap<QName, Field>(fields.size(), 1);
         for (Field field : fields) {
             docTypeProps.put(field.getQName(), field);
+=======
+        Map<QName, Serializable> props = BeanHelper.getNodeService().getProperties(docRef);
+        Pair<String, Integer> typeAndVersion = DocAdminUtil.getDocTypeIdAndVersionNr(props);
+        Map<String, Pair<DynamicPropertyDefinition, Field>> propDefs = BeanHelper.getDocumentConfigService().getPropertyDefinitions(typeAndVersion);
+        Map<QName, Field> docTypeProps = new LinkedHashMap<QName, Field>(propDefs.size(), 1);
+        for (Pair<DynamicPropertyDefinition, Field> propDefAndField : propDefs.values()) {
+            Field field = propDefAndField.getSecond();
+            if (field != null) {
+                docTypeProps.put(field.getQName(), field);
+            }
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         }
         return docTypeProps;
     }
 
+<<<<<<< HEAD
     public static Map<QName, Field> getCaseFileTypeProps(NodeRef docRef) {
         if (docRef == null || !BeanHelper.getNodeService().exists(docRef) || !CaseFileModel.Types.CASE_FILE.equals(BeanHelper.getNodeService().getType(docRef))) {
             return Collections.emptyMap();
@@ -171,6 +199,8 @@ public class DocumentLogHelper {
 
     }
 
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     /**
      * Formats the values that were changed. When a value is empty, the string <code>emptyValue</code> will be used instead.
      * 

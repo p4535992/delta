@@ -2,8 +2,11 @@
 <beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
    xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
 
+<<<<<<< HEAD
    <import resource="classpath:ee/webmedia/alfresco/volume/search/volume-search-context.xml" />
 
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
    <bean id="volumeModelBootstrap" parent="dictionaryModelBootstrap" depends-on="documentDynamicModelBootstrap,caseModelBootstrap" >
       <property name="models">
          <list>
@@ -29,6 +32,10 @@
    </bean>
 
    <bean id="volumeService" class="ee.webmedia.alfresco.volume.service.VolumeServiceImpl">
+<<<<<<< HEAD
+=======
+      <property name="dictionaryService" ref="DictionaryService" />
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
       <property name="nodeService" ref="NodeService" />
       <property name="generalService" ref="GeneralService" />
       <property name="seriesService" ref="SeriesService" />
@@ -36,9 +43,13 @@
       <property name="documentService" ref="documentService" />
       <property name="logService" ref="LogService" />
       <property name="userService" ref="UserService" />
+<<<<<<< HEAD
       <property name="eventPlanService" ref="EventPlanService" />
       <property name="caseVolumeEnabled" value="${conf.casefile.enabled}" />
       <property name="defaultVolumeSortingField" value="${conf.volumesList.orderedBy}" />
+=======
+      <property name="caseVolumeEnabled" value="${conf.casefile.enabled}" />
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
    </bean>
 
    <bean id="VolumeService" class="org.springframework.aop.framework.ProxyFactoryBean">
@@ -95,12 +106,28 @@
       </property>
    </bean>
    
+<<<<<<< HEAD
+=======
+   <bean id="executeArchivingTrigger" class="org.alfresco.util.TriggerBean" >
+      <property name="enabled" value="${jobs.enabled}" />
+      <property name="repeatIntervalMinutes" value="1" />
+      <property name="startDelayMinutes" value="3" />
+      <property name="scheduler" ref="schedulerFactory" />
+      <property name="jobDetail">
+         <bean id="executeArchiveJobDetails" class="org.springframework.scheduling.quartz.JobDetailBean">
+            <property name="jobClass" value="ee.webmedia.alfresco.volume.job.ExecuteArchiveJob" />
+         </bean>
+      </property>
+   </bean>
+   
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
    <!-- 
    	  1) Updates volume type from estonian string literals to translatable constants and 
    	  2) changes namespaces of volume properties
    -->
    <bean id="volumeTypeAndNamespaceUpdater" class="ee.webmedia.alfresco.volume.bootstrap.VolumeTypeUpdater" parent="abstractNodeUpdater" >
       <property name="moduleId" value="simdhs" />
+<<<<<<< HEAD
       <property name="dependsOn">
          <list>
             <ref bean="archivalsStoresBootstrap" />
@@ -118,6 +145,8 @@
             <ref bean="archivalsStoresBootstrap" />
          </list>
       </property>
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
    </bean>
 
    <!-- START: web beans: -->

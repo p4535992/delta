@@ -10,6 +10,7 @@ Index: com/icegreen/greenmail/imap/commands/AppendCommand.java
 --- com/icegreen/greenmail/imap/commands/AppendCommand.java
 +++ com/icegreen/greenmail/imap/commands/AppendCommand.java
 @@ -16,6 +16,8 @@
+<<<<<<< HEAD
  
  import javax.mail.Flags;
  import javax.mail.internet.MimeMessage;
@@ -31,11 +32,35 @@ Index: com/icegreen/greenmail/imap/commands/AppendCommand.java
              } catch (Exception e) {
                  throw new ProtocolException("UnexpectedException: " + e.getMessage());
              }
+=======
+ 
+ import javax.mail.Flags;
+ import javax.mail.internet.MimeMessage;
++
++import java.io.ByteArrayInputStream;
+ import java.io.FilterInputStream;
+ import java.io.IOException;
+ import java.io.InputStream;
+@@ -121,10 +123,10 @@
+         public MimeMessage mimeMessage(ImapRequestLineReader request)
+                 throws ProtocolException {
+             request.nextWordChar();
+-            String mailString = consumeLiteral(request);
++            byte[] mail = consumeLiteralAsBytes(request);
+ 
+             try {
+-                return GreenMailUtil.newMimeMessage(mailString);
++                return GreenMailUtil.newMimeMessage(new ByteArrayInputStream(mail));
+             } catch (Exception e) {
+                 throw new ProtocolException("UnexpectedException: " + e.getMessage());
+             }
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 Index: com/icegreen/greenmail/imap/commands/CommandParser.java
 ===================================================================
 --- com/icegreen/greenmail/imap/commands/CommandParser.java
 +++ com/icegreen/greenmail/imap/commands/CommandParser.java
 @@ -199,6 +199,12 @@
+<<<<<<< HEAD
       */
      protected String consumeLiteral(ImapRequestLineReader request)
              throws ProtocolException {
@@ -57,3 +82,26 @@ Index: com/icegreen/greenmail/imap/commands/CommandParser.java
      }
  
      /**
+=======
+      */
+     protected String consumeLiteral(ImapRequestLineReader request)
+             throws ProtocolException {
++
++        return new String(consumeLiteralAsBytes(request));
++    }
++
++    protected byte[] consumeLiteralAsBytes(ImapRequestLineReader request)
++            throws ProtocolException {
+         // The 1st character must be '{'
+         consumeChar(request, '{');
+ 
+@@ -231,7 +237,7 @@
+         byte[] buffer = new byte[size];
+         request.read(buffer);
+ 
+-        return new String(buffer);
++        return buffer;
+     }
+ 
+     /**
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5

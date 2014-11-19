@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <?xml version="1.0" encoding="UTF-8"?>
 <view:view 
    xmlns:view="http://www.alfresco.org/view/repository/1.0" 
@@ -40,3 +41,47 @@
    </param:stringParameter>
 
 </view:view>
+=======
+<?xml version="1.0" encoding="UTF-8"?>
+<view:view 
+   xmlns:view="http://www.alfresco.org/view/repository/1.0" 
+   xmlns:param="http://alfresco.webmedia.ee/model/parameters/1.0" 
+>
+   <param:intParameter view:childName="param:dvkReceiveDocumentsNumber">
+      <view:properties>
+         <param:value>1</param:value>
+      </view:properties>
+   </param:intParameter>
+
+   <param:intParameter view:childName="param:dvkRetainPeriod">
+      <view:properties>
+         <param:value>365</param:value>
+      </view:properties>
+   </param:intParameter>
+
+   <param:intParameter view:childName="param:dvkReceiveDocumentsInterval">
+      <view:properties>
+         <param:value>7200</param:value>
+      </view:properties>
+   </param:intParameter>
+
+   <param:intParameter view:childName="param:dvkReceiveDocSendStatusesInterval">
+      <view:properties>
+         <param:value>10</param:value>
+      </view:properties>
+   </param:intParameter>
+
+   <param:stringParameter view:childName="param:dvkReceiveOrganizations">
+      <view:properties>
+         <param:value>17:00</param:value>
+      </view:properties>
+   </param:stringParameter>
+
+   <param:stringParameter view:childName="param:dvkOrganizationName">
+      <view:properties>
+         <param:value></param:value>
+      </view:properties>
+   </param:stringParameter>
+
+</view:view>
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5

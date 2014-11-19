@@ -1,25 +1,40 @@
 package ee.webmedia.alfresco.log.model;
 
+<<<<<<< HEAD
 import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
 
 import java.io.Serializable;
 import java.util.Date;
 
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
+=======
+import java.io.Serializable;
+import java.util.Date;
+
+import org.alfresco.i18n.I18NUtil;
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.log.LogHelper;
+<<<<<<< HEAD
 import ee.webmedia.alfresco.log.service.LogListItem;
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
  * Entity object for storing log table data.
+<<<<<<< HEAD
  * 
  * @author Martti Tamm
  */
 public class LogEntry implements Serializable, LogListItem {
+=======
+ */
+public class LogEntry implements Serializable {
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
     private static final long serialVersionUID = 1L;
 
@@ -62,7 +77,10 @@ public class LogEntry implements Serializable, LogListItem {
         this.level = level;
     }
 
+<<<<<<< HEAD
     @Override
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     public Date getCreatedDateTime() {
         return createdDateTime;
     }
@@ -71,7 +89,10 @@ public class LogEntry implements Serializable, LogListItem {
         this.createdDateTime = createdDateTime;
     }
 
+<<<<<<< HEAD
     @Override
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     public String getCreatorName() {
         return creatorName;
     }
@@ -120,7 +141,10 @@ public class LogEntry implements Serializable, LogListItem {
         this.objectName = objectName;
     }
 
+<<<<<<< HEAD
     @Override
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     public String getEventDescription() {
         return description;
     }
@@ -183,7 +207,11 @@ public class LogEntry implements Serializable, LogListItem {
      * @return A new log entry based on given data.
      */
     public static LogEntry create(LogObject object, String userId, String userName, NodeRef nodeRef, String msgCode, Object... params) {
+<<<<<<< HEAD
         String desc = MessageUtil.getMessage(msgCode, params);
+=======
+        String desc = I18NUtil.getMessage(msgCode, params);
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         return createLoc(object, userId, userName, nodeRef, desc);
     }
 
@@ -209,6 +237,7 @@ public class LogEntry implements Serializable, LogListItem {
         result.level = object.getLevel();
         result.objectName = object.getObjectName();
         result.objectId = nodeRef != null ? nodeRef.toString() : null;
+<<<<<<< HEAD
         result.description = desc + result.getSubstitutionLog();
         LogHelper.update(result);
         return result;
@@ -223,4 +252,10 @@ public class LogEntry implements Serializable, LogListItem {
         }
         return " " + MessageUtil.getMessage("applog_log_subtitution", getUserService().getUserFullName(runAsUser), runAsUser);
     }
+=======
+        result.description = desc;
+        LogHelper.update(result);
+        return result;
+    }
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 }

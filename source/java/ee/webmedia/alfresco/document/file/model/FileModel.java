@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 package ee.webmedia.alfresco.document.file.model;
 
 import org.alfresco.service.namespace.QName;
@@ -31,4 +32,30 @@ public interface FileModel {
         QName LOCKED_FILE_NODEREF = QName.createQName(URI, "lockedFileNodeRef");
         QName ACTIVITY_FILE_TYPE = QName.createQName(URI, "activityFileType");
     }
+=======
+package ee.webmedia.alfresco.document.file.model;
+
+import org.alfresco.service.namespace.QName;
+
+public interface FileModel {
+    String URI = "http://alfresco.webmedia.ee/model/file/1.0";
+
+    /**
+     * Properties described in alfresco model
+     */
+    public interface Props {
+        QName GENERATED_FROM_TEMPLATE = QName.createQName(URI, "generatedFromTemplate");
+        /**
+         * property for distinguishing pdf files generated during signing from other generated files that at the moment use {@link #GENERATED} property <br>
+         * known values are defined with: {@link GeneratedFileType}
+         */
+        QName GENERATION_TYPE = QName.createQName(URI, "generationType");
+        QName ACTIVE = QName.createQName(URI, "active");
+        QName DISPLAY_NAME = QName.createQName(URI, "displayName");
+        QName NEW_VERSION_ON_NEXT_SAVE = QName.createQName(URI, "newVersionOnNextSave");
+        QName UPDATE_METADATA_IN_FILES = QName.createQName(URI, "updateMetadataInFiles");
+        QName PREVIOUS_FILE_PARENT = QName.createQName(URI, "previousFileParent");
+
+    }
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 }

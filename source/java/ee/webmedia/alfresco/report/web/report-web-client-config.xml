@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <alfresco-config>
 
    <config>
@@ -8,4 +9,16 @@
       </dialogs>
    </config>
    
+=======
+<alfresco-config>
+
+   <config>
+
+      <dialogs>
+         <dialog name="reportListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/report/web/report-list-dialog.jsp" managed-bean="ReportListDialog"
+            icon="/images/icons/versioned_properties_large.gif" title-id="report_executed_reports" />
+      </dialogs>
+   </config>
+   
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 </alfresco-config>

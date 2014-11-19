@@ -12,8 +12,11 @@ import ee.webmedia.alfresco.log.model.LogSetup;
 
 /**
  * Delta business logic specific logging service.
+<<<<<<< HEAD
  * 
  * @author Martti Tamm
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
  */
 public interface LogService extends FilterService {
 
@@ -60,6 +63,7 @@ public interface LogService extends FilterService {
 
     List<NodeRef> getDocumentsWithImapImportLog();
 
+<<<<<<< HEAD
     /**
      * Sets predefined values for log entries that will be added by current thread. NB! Take care to call this method with {@code null} arguments from {@code finally} block to
      * restore normal behavior.
@@ -75,6 +79,8 @@ public interface LogService extends FilterService {
      */
     void clearPastIdSuffixCache();
 
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     long getLogSequenceNextval();
 
 }

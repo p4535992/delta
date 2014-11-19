@@ -2,9 +2,12 @@ package ee.webmedia.alfresco.substitute.model;
 
 import org.alfresco.service.namespace.QName;
 
+<<<<<<< HEAD
 /**
  * @author Romet Aidla
  */
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 public interface SubstituteModel {
     String URI = "http://alfresco.webmedia.ee/model/substitute/1.0";
     String NAMESPACE_PREFFIX = "sub:";

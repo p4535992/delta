@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <?xml version="1.0" encoding="UTF-8"?>
 <view:view xmlns:view="http://www.alfresco.org/view/repository/1.0" 
 xmlns:param="http://alfresco.webmedia.ee/model/parameters/1.0">
@@ -10,3 +11,17 @@ xmlns:param="http://alfresco.webmedia.ee/model/parameters/1.0">
    </param:intParameter>
 
 </view:view>
+=======
+<?xml version="1.0" encoding="UTF-8"?>
+<view:view xmlns:view="http://www.alfresco.org/view/repository/1.0" 
+xmlns:param="http://alfresco.webmedia.ee/model/parameters/1.0">
+
+   <param:intParameter view:childName="param:maxSearchResultRows">
+      <view:properties>
+         <param:value>100</param:value>
+         <param:description>Maksimaalne vaikimisi ridade arv dokumentide nimekirjades</param:description>
+      </view:properties>
+   </param:intParameter>
+
+</view:view>
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5

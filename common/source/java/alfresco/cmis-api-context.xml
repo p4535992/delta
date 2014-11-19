@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <?xml version='1.0' encoding='UTF-8'?>
 <!DOCTYPE beans PUBLIC '-//SPRING//DTD BEAN//EN' 'http://www.springframework.org/dtd/spring-beans.dtd'>
 
@@ -102,4 +103,110 @@
         </property>
     </bean>
    
+=======
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE beans PUBLIC '-//SPRING//DTD BEAN//EN' 'http://www.springframework.org/dtd/spring-beans.dtd'>
+
+<beans>
+
+	 <bean id="lucene.sql.cmis.strict" class="org.alfresco.repo.search.impl.lucene.LuceneCmisStrictSqlQueryLanguage" >
+        <property name="cmisQueryService">
+            <ref bean="CMISQueryService" />
+        </property>
+	    <property name="factories">
+			<list>
+			    <ref bean="admLuceneIndexerAndSearcherFactory" />	
+				<ref bean="admLuceneUnIndexedIndexerAndSearcherFactory" />	
+				<ref bean="avmLuceneIndexerAndSearcherFactory" />	
+			</list>
+        </property>
+    </bean>
+	
+	<bean id="lucene.sql.alfresco" class="org.alfresco.repo.search.impl.lucene.LuceneAlfrescoSqlQueryLanguage" >
+        <property name="cmisQueryService">
+            <ref bean="CMISQueryService" />
+        </property>
+	    <property name="factories">
+			<list>
+			    <ref bean="admLuceneIndexerAndSearcherFactory" />	
+				<ref bean="admLuceneUnIndexedIndexerAndSearcherFactory" />	
+				<ref bean="avmLuceneIndexerAndSearcherFactory" />	
+			</list>
+        </property>
+    </bean>
+	
+    <bean id="CMISMapping" class="org.alfresco.cmis.mapping.CMISMapping" >
+        <property name="serviceRegistry">
+            <ref bean="ServiceRegistry" />
+        </property>
+    </bean>
+
+    <bean id="CMISService" class="org.alfresco.cmis.mapping.CMISServicesImpl">
+        <property name="CMISSpecVersion"><value>0.61</value></property>
+        <property name="defaultRootPath"><value>workspace/SpacesStore/Company Home</value></property>
+        <property name="dictionaryService" ref="dictionaryService" />
+        <property name="CMISDictionaryService" ref="CMISDictionaryService" />
+        <property name="searchService" ref="SearchService" />
+        <property name="transactionHelper" ref="retryingTransactionHelper" />
+        <property name="tenantAdminService" ref="tenantAdminService" />
+        <property name="nodeService" ref="NodeService" />
+        <property name="repository" ref="repositoryHelper" />
+    </bean>
+    
+    <bean id="CMISDictionaryService" class="org.alfresco.cmis.dictionary.CMISStrictDictionaryService" >
+        <property name="dictionaryService">
+            <ref bean="dictionaryService" />
+        </property>
+        <property name="dictionaryDAO">
+            <ref bean="dictionaryDAO" />
+        </property>
+        <property name="CMISMapping">
+            <ref bean="CMISMapping" />
+        </property>
+        <property name="tenantService">
+            <ref bean="tenantService" />
+        </property>
+    </bean>
+    
+    <bean id="CMIS.DictionaryBootstrap" parent="dictionaryModelBootstrap" depends-on="dictionaryBootstrap">
+        <property name="models">
+            <list>
+                <value>alfresco/model/cmisModel.xml</value>
+            </list>
+        </property>
+    </bean>
+   
+    <bean id="CMISQueryService" class="org.alfresco.cmis.search.CMISQueryServiceImpl" >
+        <property name="CMISDictionaryService">
+            <ref bean="CMISDictionaryService" />
+        </property>
+        <property name="CMISService">
+            <ref bean="CMISService" />
+        </property>
+        <property name="queryEngine">
+            <ref bean="adm.luceneQueryEngine" />
+        </property>
+        <property name="nodeService">
+            <ref bean="nodeService" />
+        </property>
+		<property name="alfrescoDictionaryService">
+            <ref bean="dictionaryService" />
+        </property>
+    </bean>
+   
+   
+    <bean id="adm.luceneQueryEngine" class="org.springframework.aop.framework.ProxyFactoryBean">
+        <property name="proxyInterfaces">
+            <value>org.alfresco.repo.search.impl.querymodel.QueryEngine</value>
+        </property>
+        <property name="target">
+            <ref bean="adm.luceneQueryEngineImpl"/>
+        </property>
+        <property name="interceptorNames">
+            <list>
+            </list>
+        </property>
+    </bean>
+   
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 </beans>

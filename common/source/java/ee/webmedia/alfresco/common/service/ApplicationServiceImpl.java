@@ -1,6 +1,9 @@
 package ee.webmedia.alfresco.common.service;
 
+<<<<<<< HEAD
 import java.io.File;
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
@@ -9,10 +12,13 @@ import java.util.Properties;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
 import org.alfresco.service.cmr.module.ModuleService;
+<<<<<<< HEAD
 import org.alfresco.service.cmr.repository.MimetypeService;
 import org.alfresco.util.Pair;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
@@ -23,13 +29,19 @@ import ee.webmedia.alfresco.parameters.service.ParametersService;
 import ee.webmedia.alfresco.parameters.service.ParametersService.ParameterChangedCallback;
 
 public class ApplicationServiceImpl implements ApplicationService, InitializingBean, ApplicationContextAware {
+<<<<<<< HEAD
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(ApplicationServiceImpl.class);
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
     public static final String versionPropertyKey = "currentVersion";
 
     private ModuleService moduleService;
     private ParametersService parametersService;
+<<<<<<< HEAD
     private MimetypeService mimetypeService;
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
     private String commonVersion;
     private String projectVersion;
@@ -37,9 +49,12 @@ public class ApplicationServiceImpl implements ApplicationService, InitializingB
     private boolean test;
     private String logoutRedirectUrl;
     private String serverUrl;
+<<<<<<< HEAD
     private File logoFile;
     private File jumploaderFile;
     private String logoMimeType;
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
     // Cache parameter values here, because these are accessed very frequently
     // (Although they always hit Hibernate cache, 8 calls to ParametersService add a total of 50 ms to each page render)
@@ -54,10 +69,13 @@ public class ApplicationServiceImpl implements ApplicationService, InitializingB
         this.parametersService = parametersService;
     }
 
+<<<<<<< HEAD
     public void setMimetypeService(MimetypeService mimetypeService) {
         this.mimetypeService = mimetypeService;
     }
 
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     public void setCommonVersionLocation(Resource resource) {
         commonVersion = getVersionProperty(loadProperties(resource));
     }
@@ -133,6 +151,7 @@ public class ApplicationServiceImpl implements ApplicationService, InitializingB
         return serverUrl;
     }
 
+<<<<<<< HEAD
     public void setLogoFile(String logoFile) {
         this.logoFile = StringUtils.isBlank(logoFile) ? null : new File(logoFile);
     }
@@ -141,6 +160,8 @@ public class ApplicationServiceImpl implements ApplicationService, InitializingB
         this.jumploaderFile = StringUtils.isBlank(jumploaderFile) ? null : new File(jumploaderFile);
     }
 
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     @Override
     public String getHeaderText() {
         if (headerText == null) {
@@ -170,6 +191,7 @@ public class ApplicationServiceImpl implements ApplicationService, InitializingB
         return footerText;
     }
 
+<<<<<<< HEAD
     @Override
     public String getJumploaderUrl() {
         if (jumploaderFile == null) {
@@ -217,6 +239,8 @@ public class ApplicationServiceImpl implements ApplicationService, InitializingB
         }
     }
 
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     private static Properties loadProperties(Resource resource) {
         try {
             InputStream is = null;

@@ -16,8 +16,12 @@
    <import resource="classpath:ee/webmedia/alfresco/document/einvoice/einvoice-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/document/assignresponsibility/assignresponsibility-context.xml" />
 
+<<<<<<< HEAD
    <bean id="documentModelBootstrap" parent="dictionaryModelBootstrap"
       depends-on="dictionaryBootstrap,workflowModelBootstrap,privilegeModelBootstrap,transactionModelBootstrap,documentAdminModelBootstrap,documentDynamicModelBootstrap">
+=======
+   <bean id="documentModelBootstrap" parent="dictionaryModelBootstrap" depends-on="dictionaryBootstrap,workflowModelBootstrap,privilegeModelBootstrap,transactionModelBootstrap,documentAdminModelBootstrap,documentDynamicModelBootstrap">
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
       <property name="models">
          <list>
             <value>ee/webmedia/alfresco/document/model/documentCommonModel.xml</value>
@@ -37,7 +41,11 @@
       <property name="configs">
          <list>
             <value>classpath:ee/webmedia/alfresco/document/web/document-web-client-config.xml</value>
+<<<<<<< HEAD
             <!-- <value>classpath:ee/webmedia/alfresco/document/web/document-properties-web-client-config.xml</value> -->
+=======
+<!--             <value>classpath:ee/webmedia/alfresco/document/web/document-properties-web-client-config.xml</value> -->
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
          </list>
       </property>
    </bean>
@@ -58,7 +66,11 @@
       </property>
    </bean>
 
+<<<<<<< HEAD
    <bean id="documentService" class="ee.webmedia.alfresco.document.service.DocumentServiceImpl">
+=======
+   <bean id="documentService" class="ee.webmedia.alfresco.document.service.DocumentServiceImpl" init-method="init">
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
       <property name="dictionaryService" ref="DictionaryService" />
       <property name="namespaceService" ref="NamespaceService" />
       <property name="nodeService" ref="NodeService" />
@@ -79,6 +91,7 @@
       <property name="sendOutService" ref="SendOutService" />
       <property name="permissionService" ref="PermissionService" />
       <property name="logService" ref="LogService" />
+<<<<<<< HEAD
       <property name="caseFileLogService" ref="CaseFileLogService" />
       <property name="fromDvkXPath" value="${dvk.received.parent.folder.xpath}${dvk.received.folder.name}" />
       <property name="incomingEmailPath" value="${imap.config.home.rootPath}/imap-ext:incoming" />
@@ -89,6 +102,13 @@
       <property name="docLockService" ref="DocLockService" />
       <property name="searchService" ref="SearchService" />
       <property name="volumeColumnEnabled" value="${conf.documents-list.volume-column.enabled}" />
+=======
+      <property name="fromDvkXPath" value="${dvk.received.parent.folder.xpath}${dvk.received.folder.name}" />
+      <property name="incomingEmailPath" value="${imap.config.home.rootPath}/imap-ext:incoming"/>
+      <property name="receivedInvoicePath" value="/imap-ext:imap-root/imap-ext:receivedInvoices" />
+      <property name="sentEmailPath" value="${imap.config.home.rootPath}/imap-ext:sent"/>
+      <property name="generateNewRegNumberInReregistration" value="${conf.document-regnumber.generate-new-in-reregistration.enabled}"/>
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
    </bean>
 
    <bean id="DocumentService" class="org.springframework.aop.framework.ProxyFactoryBean">
@@ -112,6 +132,7 @@
    <bean class="ee.webmedia.alfresco.document.propmodifiers.OwnerPropertiesModifierCallback" parent="propertiesModifierCallback">
       <property name="organizationStructureService" ref="OrganizationStructureService" />
    </bean>
+<<<<<<< HEAD
 
    <bean class="ee.webmedia.alfresco.document.propmodifiers.LicencePropertiesModifierCallback" parent="propertiesModifierCallback">
       <property name="parametersService" ref="ParametersService" />
@@ -133,6 +154,29 @@
       <property name="parametersService" ref="ParametersService" />
    </bean>
 
+=======
+   
+   <bean class="ee.webmedia.alfresco.document.propmodifiers.LicencePropertiesModifierCallback" parent="propertiesModifierCallback">
+      <property name="parametersService" ref="ParametersService" />
+   </bean>
+   
+   <bean class="ee.webmedia.alfresco.document.propmodifiers.TenderingApplicationPropertiesModifierCallback" parent="propertiesModifierCallback">
+      <property name="parametersService" ref="ParametersService" />
+   </bean>
+   
+   <bean class="ee.webmedia.alfresco.document.propmodifiers.ManagementsOrderPropertiesModifierCallback" parent="propertiesModifierCallback">
+      <property name="parametersService" ref="ParametersService" />
+   </bean>
+   
+   <bean class="ee.webmedia.alfresco.document.propmodifiers.SupervisionReportPropertiesModifierCallback" parent="propertiesModifierCallback">
+      <property name="parametersService" ref="ParametersService" />
+   </bean>   
+   
+   <bean class="ee.webmedia.alfresco.document.propmodifiers.VacationOrderPropertiesModifierCallback" parent="propertiesModifierCallback">
+      <property name="parametersService" ref="ParametersService" />
+   </bean>
+   
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
    <bean class="ee.webmedia.alfresco.document.propmodifiers.ChancellorsOrderPropertiesModifierCallback" parent="propertiesModifierCallback">
       <property name="parametersService" ref="ParametersService" />
    </bean>
@@ -145,13 +189,20 @@
    <bean class="ee.webmedia.alfresco.document.propmodifiers.ErrandApplicantAbroadPropertiesModifierCallback" parent="abstractDocChildCreator">
       <property name="parametersService" ref="ParametersService" />
    </bean>
+<<<<<<< HEAD
 
    <bean class="ee.webmedia.alfresco.document.propmodifiers.ErrandAbroadMvApplicantPropertiesModifierCallback" parent="abstractDocChildCreator">
    </bean>
+=======
+   
+   <bean class="ee.webmedia.alfresco.document.propmodifiers.ErrandAbroadMvApplicantPropertiesModifierCallback" parent="abstractDocChildCreator">
+   </bean>   
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
    <bean class="ee.webmedia.alfresco.document.propmodifiers.ErrandDocDomesticPropertiesModifierCallback" parent="abstractDocChildCreator">
       <property name="parametersService" ref="ParametersService" />
    </bean>
+<<<<<<< HEAD
 
    <bean class="ee.webmedia.alfresco.document.propmodifiers.TrainingDocChildCreator" parent="abstractDocChildCreator" />
 
@@ -172,6 +223,28 @@
    <bean class="ee.webmedia.alfresco.document.propmodifiers.OutgoingLetterMvPropertiesModifierCallback" parent="propertiesModifierCallback">
       <property name="parametersService" ref="ParametersService" />
    </bean>
+=======
+   
+   <bean class="ee.webmedia.alfresco.document.propmodifiers.TrainingDocChildCreator" parent="abstractDocChildCreator" />
+   
+   <bean class="ee.webmedia.alfresco.document.propmodifiers.ContractMvPropertiesModifierCallback" parent="propertiesModifierCallback">
+      <property name="parametersService" ref="ParametersService" />
+   </bean>
+   
+   <bean class="ee.webmedia.alfresco.document.propmodifiers.ErrandAbroadMvApplicantPropertiesModifierCallback" parent="abstractDocChildCreator" />
+   
+   <bean id="contractDocChildCreator" class="ee.webmedia.alfresco.document.propmodifiers.ContractDocChildCreator" parent="abstractDocChildCreator" />
+   <bean class="ee.webmedia.alfresco.document.propmodifiers.ContractMvDocChildCreator" parent="contractDocChildCreator" />
+   <bean id="contractV1CopyPropertiesModifierCallback" class="ee.webmedia.alfresco.document.propmodifiers.ContractV1CopyPropertiesModifierCallback" parent="abstractDocChildCreator" />
+   
+   <bean class="ee.webmedia.alfresco.document.propmodifiers.OrderMvPropertiesModifierCallback" parent="propertiesModifierCallback">
+      <property name="parametersService" ref="ParametersService" />
+   </bean> 
+   
+   <bean class="ee.webmedia.alfresco.document.propmodifiers.OutgoingLetterMvPropertiesModifierCallback" parent="propertiesModifierCallback">
+      <property name="parametersService" ref="ParametersService" />
+   </bean>    
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
    <bean id="documentDraftsSpacesBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
       <property name="moduleId" value="simdhs" />
@@ -189,6 +262,7 @@
       </property>
    </bean>
 
+<<<<<<< HEAD
    <bean id="tempFilesSpacesBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
@@ -205,6 +279,8 @@
       </property>
    </bean>
 
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
    <bean id="documentParametersBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
       <property name="moduleId" value="common" />
       <property name="executeOnceOnly" value="true" />
@@ -224,7 +300,11 @@
          </list>
       </property>
    </bean>
+<<<<<<< HEAD
 
+=======
+   
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
    <bean id="documentParametersBootstrap2" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
       <property name="moduleId" value="common" />
       <property name="executeOnceOnly" value="true" />
@@ -243,8 +323,13 @@
             </props>
          </list>
       </property>
+<<<<<<< HEAD
    </bean>
 
+=======
+   </bean>   
+   
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
    <bean id="documentParametersBootstrap3" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
       <property name="moduleId" value="common" />
       <property name="executeOnceOnly" value="true" />
@@ -263,8 +348,13 @@
             </props>
          </list>
       </property>
+<<<<<<< HEAD
    </bean>
 
+=======
+   </bean>   
+   
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
    <bean id="documentParametersBootstrap4" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
       <property name="moduleId" value="common" />
       <property name="executeOnceOnly" value="true" />
@@ -284,7 +374,11 @@
          </list>
       </property>
    </bean>
+<<<<<<< HEAD
 
+=======
+   
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
    <bean id="documentParametersBootstrap5" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
       <property name="moduleId" value="common" />
       <property name="executeOnceOnly" value="true" />
@@ -305,6 +399,7 @@
       </property>
    </bean>
 
+<<<<<<< HEAD
    <bean id="abstractFavoritesService" class="ee.webmedia.alfresco.document.service.AbstractFavoritesServiceImpl" abstract="true">
       <property name="nodeService" ref="NodeService" />
       <property name="userService" ref="UserService" />
@@ -329,11 +424,38 @@
       </property>
    </bean>
 
+=======
+   <bean id="docLockService" class="ee.webmedia.alfresco.document.service.DocLockServiceImpl" parent="lockService" init-method="init">
+      <property name="fileService" ref="FileService" />
+   </bean>
+
+   <bean id="DocLockService" class="org.springframework.aop.framework.ProxyFactoryBean">
+      <property name="proxyInterfaces">
+         <list>
+            <value>ee.webmedia.alfresco.document.service.DocLockService</value>
+            <value>org.alfresco.service.cmr.lock.LockService</value>
+         </list>
+      </property>
+      <property name="target" ref="docLockService" />
+      <property name="interceptorNames">
+         <list>
+            <idref bean="LockService_transaction" />
+            <idref bean="AuditMethodInterceptor" />
+            <idref bean="exceptionTranslator" />
+         </list>
+      </property>
+   </bean>
+    
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
    <bean class="ee.webmedia.alfresco.document.web.UnsentDocumentMenuItemProcessor">
       <property name="menuService" ref="MenuService" />
       <property name="documentSearchService" ref="DocumentSearchService" />
    </bean>
+<<<<<<< HEAD
 
+=======
+   
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
    <bean class="ee.webmedia.alfresco.document.web.OutboxDocumentMenuItemProcessor">
       <property name="menuService" ref="MenuService" />
       <property name="documentSearchService" ref="DocumentSearchService" />
@@ -342,6 +464,7 @@
    <bean id="inMemoryChildNodeHelper" class="ee.webmedia.alfresco.document.service.InMemoryChildNodeHelper">
       <property name="generalService" ref="generalService" />
    </bean>
+<<<<<<< HEAD
 
    <bean id="documentWorkflowStatusEventListener" class="ee.webmedia.alfresco.document.service.event.DocumentWorkflowStatusEventListener">
       <property name="workflowService" ref="WmWorkflowService" />
@@ -379,11 +502,29 @@
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="false" />
       <property name="enabled" value="${updater.version25To313.enabled}" />
+=======
+   
+   <bean id="documentWorkflowStatusEventListener" class="ee.webmedia.alfresco.document.service.event.DocumentWorkflowStatusEventListener">
+      <property name="workflowService" ref="WmWorkflowService" />
+      <property name="nodeService" ref="NodeService" />
+   </bean>
+   
+   <bean id="documentWorkflowStatusImmediateEventListener" class="ee.webmedia.alfresco.document.service.event.DocumentWorkflowStatusImmediateEventListener">
+      <property name="workflowService" ref="WmWorkflowService" />
+      <property name="nodeService" ref="NodeService" />
+   </bean>
+
+   <!-- NB! In the future replace this with 2.5 -> 3.x migration script -->
+   <bean id="deleteSubtypedDocuments" class="ee.webmedia.alfresco.document.bootstrap.DeleteSubtypedDocuments" parent="abstractNodeUpdater" >
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
       <property name="dependsOn">
          <list>
             <ref bean="functionsRootBootstrap" />
             <ref bean="archivalsStoresBootstrap" />
             <ref bean="volumeTypeAndNamespaceUpdater" />
+<<<<<<< HEAD
             <ref bean="systematicDocumentTypesBootstrap" />
             <ref bean="import25To313DynamicDocumentTypes" />
             <ref bean="series25To313DynamicDocTypeUpdater" />
@@ -445,21 +586,38 @@
       <property name="convertToDynamicDocumentsUpdater" ref="convertToDynamicDocumentsUpdater" />
       <!-- batchSize should always be 1 for this updater, to minimize possible failures -->
       <property name="batchSize" value="1" />
+=======
+         </list>
+      </property>
+      <property name="dictionaryService" ref="DictionaryService" />
+      <property name="transactionService" ref="TransactionService" />
+      <property name="documentListService" ref="DocumentListService" />
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
    </bean>   
 
    <bean id="registrationNumberReinventedUpdater" class="ee.webmedia.alfresco.document.bootstrap.RegistrationNumberReinventedUpdater" parent="abstractNodeUpdater">
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
+<<<<<<< HEAD
       <property name="dependsOn">
          <list>
             <ref bean="convertToDynamicDocumentsUpdater" />
          </list>
       </property>
    </bean>
+=======
+       <property name="dependsOn">
+         <list>
+            <ref bean="deleteSubtypedDocuments" />
+         </list>
+      </property>      
+   </bean>   
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
    <bean id="contractPartyAssocUpdater" class="ee.webmedia.alfresco.document.bootstrap.ContractPartyAssocUpdater" parent="abstractNodeUpdater">
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
+<<<<<<< HEAD
       <property name="dependsOn">
          <list>
             <ref bean="convertToDynamicDocumentsUpdater" />
@@ -468,6 +626,16 @@
    </bean>
 
    <bean id="arrivedDocumentsPermissionsUpdateBootstrap3" class="ee.webmedia.alfresco.document.bootstrap.ArrivedDocumentsPermissionsUpdateBootstrap" parent="module.baseComponent">
+=======
+       <property name="dependsOn">
+         <list>
+            <ref bean="deleteSubtypedDocuments" />
+         </list>
+      </property>      
+   </bean> 
+
+   <bean id="arrivedDocumentsPermissionsUpdateBootstrap3" class="ee.webmedia.alfresco.document.bootstrap.ArrivedDocumentsPermissionsUpdateBootstrap" parent="module.baseComponent" >
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
       <property name="dependsOn">
@@ -478,6 +646,7 @@
          </list>
       </property>
    </bean>
+<<<<<<< HEAD
 
    <bean id="fileMimetypeUpdater2" class="ee.webmedia.alfresco.document.bootstrap.FileMimetypeUpdater" parent="abstractNodeUpdater">
       <property name="moduleId" value="simdhs" />
@@ -490,6 +659,24 @@
       </property>
       <property name="mimetypeService" ref="MimetypeService" />
    </bean>
+=======
+   
+   <bean id="draftsPermissionsUpdater" class="ee.webmedia.alfresco.document.bootstrap.DraftsPermissionsUpdater" parent="module.baseComponent">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="disabled" value="${updater.ppa.3_6_21_to_3_6_30.enabled}" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="documentDraftsSpacesBootstrap" />
+         </list>
+      </property>
+   </bean>   
+   
+   <bean id="favoritesDeletedDocumentsUpdater4" class="ee.webmedia.alfresco.document.bootstrap.FavoritesDeletedDocumentsUpdater" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+   </bean>    
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
    <!-- temp bean - might help to fix problems related to permission inheritance in PPA live environment -->
    <bean id="ArrivedDocumentsPermissionsModifier" class="ee.webmedia.alfresco.document.bootstrap.ArrivedDocumentsPermissionsModifier" />
@@ -497,6 +684,7 @@
    <!-- START: web beans: -->
 
    <bean id="AssocsBlockBean" class="ee.webmedia.alfresco.document.associations.web.AssocsBlockBean" scope="session" />
+<<<<<<< HEAD
 
    <bean id="SearchBlockBean" class="ee.webmedia.alfresco.document.search.web.SearchBlockBean" scope="session">
       <property name="documentSearchBean" ref="DocumentSearchBean" />
@@ -508,10 +696,25 @@
 
    <bean id="DocumentSendForInformationDialog" class="ee.webmedia.alfresco.document.sendout.web.DocumentSendForInformationDialog" scope="session" />
 
+=======
+   
+   <bean id="SearchBlockBean" class="ee.webmedia.alfresco.document.search.web.SearchBlockBean" scope="session">
+      <property name="documentSearchBean" ref="DocumentSearchBean" />
+   </bean>
+   
+   <bean id="TransactionsBlockBean" class="ee.webmedia.alfresco.document.einvoice.web.TransactionsBlockBean" scope="session" />
+   
+   <bean id="VisitedDocumentsBean" class="ee.webmedia.alfresco.document.web.VisitedDocumentsBean" scope="session" />
+
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
    <!-- END: web beans: -->
 
    <bean id="RecipientNoteGenerator" class="ee.webmedia.alfresco.common.propertysheet.generator.MessageSeparatorGenerator" scope="request">
       <property name="messageKey" value="document_recipientNoteSeparator_text" />
    </bean>
+<<<<<<< HEAD
 
+=======
+   
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 </beans>

@@ -2,14 +2,22 @@ package ee.webmedia.alfresco.log.model;
 
 import java.io.Serializable;
 import java.util.Date;
+<<<<<<< HEAD
 import java.util.List;
 import java.util.HashSet;
+=======
+import java.util.HashSet;
+import java.util.List;
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import java.util.Set;
 
 /**
  * DTO used for gathering system log filtering data.
+<<<<<<< HEAD
  * 
  * @author Martti Tamm
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
  */
 public class LogFilter implements Serializable {
 
@@ -116,5 +124,8 @@ public class LogFilter implements Serializable {
     public void setExactObjectId(boolean isExactObjectId) {
         this.isExactObjectId = isExactObjectId;
     }
+<<<<<<< HEAD
 
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 }

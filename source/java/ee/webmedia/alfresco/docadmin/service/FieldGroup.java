@@ -23,8 +23,11 @@ import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 
 /**
  * container for {@link Field}. Stored under /fieldGroupDefinitions or {@link DocumentTypeVersion}
+<<<<<<< HEAD
  * 
  * @author Ats Uiboupin
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
  */
 public class FieldGroup extends FieldAndGroupBase implements MetadataContainer {
     private static final long serialVersionUID = 1L;

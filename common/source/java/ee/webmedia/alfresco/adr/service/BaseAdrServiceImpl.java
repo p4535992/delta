@@ -1,11 +1,17 @@
 package ee.webmedia.alfresco.adr.service;
 
 import java.io.Serializable;
+<<<<<<< HEAD
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
+=======
+import java.util.Date;
+import java.util.GregorianCalendar;
+import java.util.HashMap;
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import java.util.Map;
 
 import javax.activation.DataHandler;
@@ -14,6 +20,7 @@ import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
 
 import org.alfresco.service.cmr.model.FileFolderService;
+<<<<<<< HEAD
 import org.alfresco.service.cmr.model.FileInfo;
 import org.alfresco.service.cmr.repository.ContentIOException;
 import org.alfresco.service.cmr.repository.ContentReader;
@@ -24,11 +31,18 @@ import org.alfresco.service.namespace.QName;
 import org.alfresco.service.transaction.TransactionService;
 import org.alfresco.util.Pair;
 import org.apache.commons.collections.list.SynchronizedList;
+=======
+import org.alfresco.service.cmr.repository.ContentReader;
+import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.cmr.repository.NodeService;
+import org.alfresco.service.namespace.QName;
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import org.apache.commons.lang.StringUtils;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.adr.model.AdrModel;
 import ee.webmedia.alfresco.common.service.GeneralService;
+<<<<<<< HEAD
 import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.utils.ContentReaderDataSource;
@@ -36,11 +50,16 @@ import ee.webmedia.alfresco.utils.ContentReaderDataSource;
 /**
  * @author Alar Kvell
  */
+=======
+import ee.webmedia.alfresco.utils.ContentReaderDataSource;
+
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 public abstract class BaseAdrServiceImpl implements AdrService {
 
     protected FileFolderService fileFolderService;
     protected GeneralService generalService;
     protected NodeService nodeService;
+<<<<<<< HEAD
     protected FileService fileService;
     protected TransactionService transactionService;
 
@@ -48,6 +67,10 @@ public abstract class BaseAdrServiceImpl implements AdrService {
     private final List<NodeRef> tempFiles = SynchronizedList.decorate(new ArrayList<NodeRef>());
     private static DatatypeFactory datatypeFactory; // JAXP RI implements DatatypeFactory in a thread-safe way
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(BaseAdrServiceImpl.class);
+=======
+
+    private static DatatypeFactory datatypeFactory; // JAXP RI implements DatatypeFactory in a thread-safe way
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
     public BaseAdrServiceImpl() {
         try {
@@ -138,6 +161,7 @@ public abstract class BaseAdrServiceImpl implements AdrService {
         nodeService.createNode(root, AdrModel.Types.ADR_ADDED_DOCUMENT_TYPE, AdrModel.Types.ADR_ADDED_DOCUMENT_TYPE, AdrModel.Types.ADR_ADDED_DOCUMENT_TYPE, props);
     }
 
+<<<<<<< HEAD
     protected Pair<Boolean, DataHandler> getFileDataHandler(NodeRef nodeRef, String filename) {
         boolean transformedToPdf = false;
         ContentReader fileReader = fileFolderService.getReader(nodeRef);
@@ -175,6 +199,15 @@ public abstract class BaseAdrServiceImpl implements AdrService {
         }
         ContentReaderDataSource dataSource = new ContentReaderDataSource(fileReader, filename);
         return Pair.newInstance(transformedToPdf, new DataHandler(dataSource));
+=======
+    protected DataHandler getFileDataHandler(NodeRef nodeRef, String filename) {
+        ContentReader fileReader = fileFolderService.getReader(nodeRef);
+        if (fileReader == null) {
+            return null;
+        }
+        ContentReaderDataSource dataSource = new ContentReaderDataSource(fileReader, filename);
+        return new DataHandler(dataSource);
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     protected static XMLGregorianCalendar convertToXMLGergorianCalendar(Date date) {
@@ -193,6 +226,7 @@ public abstract class BaseAdrServiceImpl implements AdrService {
         return input;
     }
 
+<<<<<<< HEAD
     protected void cleanTempFiles() {
         List<NodeRef> files = new ArrayList<NodeRef>(tempFiles);
         tempFiles.clear();
@@ -205,6 +239,8 @@ public abstract class BaseAdrServiceImpl implements AdrService {
         }
     }
 
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     // START: getters / setters
 
     public void setFileFolderService(FileFolderService fileFolderService) {
@@ -219,6 +255,7 @@ public abstract class BaseAdrServiceImpl implements AdrService {
         this.generalService = generalService;
     }
 
+<<<<<<< HEAD
     public void setFileService(FileService fileService) {
         this.fileService = fileService;
     }
@@ -226,4 +263,6 @@ public abstract class BaseAdrServiceImpl implements AdrService {
     public void setTransactionService(TransactionService transactionService) {
         this.transactionService = transactionService;
     }
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 }

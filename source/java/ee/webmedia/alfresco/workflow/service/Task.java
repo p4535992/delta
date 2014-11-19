@@ -1,9 +1,12 @@
 package ee.webmedia.alfresco.workflow.service;
 
+<<<<<<< HEAD
 import static ee.webmedia.alfresco.utils.RepoUtil.toQNameProperties;
 import static ee.webmedia.alfresco.utils.RepoUtil.toStringProperties;
 import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.getTaskSearchableProps;
 
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
@@ -13,6 +16,10 @@ import java.util.List;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.namespace.QName;
+<<<<<<< HEAD
+=======
+import org.alfresco.util.Pair;
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.NodePropertyResolver;
 import org.apache.commons.lang.StringUtils;
@@ -29,9 +36,12 @@ import ee.webmedia.alfresco.utils.WebUtil;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 
+<<<<<<< HEAD
 /**
  * @author Alar Kvell
  */
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 public class Task extends BaseWorkflowObject implements Comparable<Task>, CssStylable {
     private static final long serialVersionUID = 1L;
 
@@ -44,28 +54,42 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
         UNFINISH
     }
 
+<<<<<<< HEAD
     public static final QName INITIATING_COMPOUND_WORKFLOW_REF = RepoUtil.createTransientProp("initiatingCompoundWorkflowRef");
     public static final QName INITIATING_COMPOUND_WORKFLOW_TITLE = RepoUtil.createTransientProp("initiatingCompoundWorkflowTitle");
 
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     private static final QName PROP_RESOLUTION = RepoUtil.createTransientProp("resolution");
     private static final QName PROP_WORKFLOW_CATEGORY = RepoUtil.createTransientProp("category");
     private static final QName PROP_TEMP_FILES = RepoUtil.createTransientProp("files");
     private static final QName PROP_DUE_DATE_TIME_STR = RepoUtil.createTransientProp("dueDateTimeStr");
+<<<<<<< HEAD
     private static final QName PROP_COMPOUNDWORKFLOW_NODEREF = RepoUtil.createTransientProp("compountWorkflowNodeRef");
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
     private final Workflow parent;
     private final int outcomes;
     private int outcomeIndex = -1;
     private Action action = Action.NONE;
+<<<<<<< HEAD
     private List<DueDateHistoryRecord> dueDateHistoryRecords;
+=======
+    private List<Pair<String, Date>> dueDateHistoryRecords;
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     private List<NodeRef> removedFiles;
     private boolean filesLoaded;
     /** If null, indicates that due date history data existence has not been checked and should not be updated in delta_task table */
     private Boolean hasDueDateHistory;
     private Boolean originalHasDueDateHistory;
     private Boolean originalHasFiles;
+<<<<<<< HEAD
     private String groupDueDateVbString;
     private String workflowNodeRefId;
+=======
+    private String parentNodeRefId;
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     private String storeRef;
 
     /**
@@ -73,7 +97,11 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
      * (may not be current index if workflow is changed in memory).
      * At the moment used for secondary ordering in WorkflowBlock
      */
+<<<<<<< HEAD
     private Integer taskIndexInWorkflow = null;
+=======
+    private int taskIndexInWorkflow = -1;
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
     private String cssStyleClass;
 
@@ -99,10 +127,14 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
     }
 
     protected Task copy(Workflow copyParent) {
+<<<<<<< HEAD
         Task copy = copyImpl(new Task(getNode().clone(), copyParent, outcomes));
         copy.setDueDateHistoryRecords(getDueDateHistoryRecords());
         copy.hasDueDateHistory = !getDueDateHistoryRecords().isEmpty();
         return copy;
+=======
+        return copyImpl(new Task(getNode().clone(), copyParent, outcomes));
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     protected Task copy() {
@@ -115,7 +147,11 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
         task.outcomeIndex = outcomeIndex;
         task.action = action;
         boolean hasNoParentNodeRef = parent == null || parent.getNodeRef() == null;
+<<<<<<< HEAD
         task.workflowNodeRefId = hasNoParentNodeRef ? null : parent.getNodeRef().getId();
+=======
+        task.parentNodeRefId = hasNoParentNodeRef ? null : parent.getNodeRef().getId();
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         task.storeRef = hasNoParentNodeRef ? null : parent.getNodeRef().getStoreRef().toString();
         task.taskIndexInWorkflow = taskIndexInWorkflow;
         @SuppressWarnings("unchecked")
@@ -241,6 +277,7 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
         setProp(WorkflowSpecificModel.Props.CREATOR_INSTITUTION_CODE, creatorInstitutionCode);
     }
 
+<<<<<<< HEAD
     public String getCreatorInstitutionName() {
         return getProp(WorkflowSpecificModel.Props.CREATOR_INSTITUTION_NAME);
     }
@@ -249,6 +286,8 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
         setProp(WorkflowSpecificModel.Props.CREATOR_INSTITUTION_NAME, creatorInstitutionName);
     }
 
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     public String getCreatorId() {
         return getProp(WorkflowSpecificModel.Props.CREATOR_ID);
     }
@@ -344,12 +383,21 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
         return getDueDate() != null ? dateFormat.format(getDueDate()) : "";
     }
 
+<<<<<<< HEAD
     public Date getProposedDueDate() {
         return getProp(WorkflowSpecificModel.Props.PROPOSED_DUE_DATE);
     }
 
     public String getProposedDueDateStr() {
         return getProposedDueDate() != null ? dateFormat.format(getProposedDueDate()) : "";
+=======
+    public String getDueDateTimeStr() {
+        return getDueDate() != null ? dateTimeFormat.format(getDueDate()) : "";
+    }
+
+    public Date getProposedDueDate() {
+        return getProp(WorkflowSpecificModel.Props.PROPOSED_DUE_DATE);
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     public void setProposedDueDate(Date proposedDueDate) {
@@ -477,7 +525,18 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
     protected void preSave() {
         super.preSave();
 
+<<<<<<< HEAD
         calculateOverdue();
+=======
+        // Set completedOverdue value which is used in task search
+        boolean completedOverdue = false;
+        if (getCompletedDateTime() != null && getDueDate() != null) {
+            Date completedDay = DateUtils.truncate(getCompletedDateTime(), Calendar.DATE);
+            Date dueDay = DateUtils.truncate(getDueDate(), Calendar.DATE);
+            completedOverdue = completedDay.after(dueDay);
+        }
+        setProp(WorkflowSpecificModel.Props.COMPLETED_OVERDUE, completedOverdue);
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
         // Set workflowResolution value which is used in task search
         if (isUnsaved()) {
@@ -488,6 +547,7 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
         if (isUnsaved() && !(getParent().getParent() instanceof CompoundWorkflowDefinition)) {
             getNode().getAspects().add(WorkflowSpecificModel.Aspects.SEARCHABLE);
         }
+<<<<<<< HEAD
         if (node.getAspects().contains(WorkflowSpecificModel.Aspects.SEARCHABLE) && parent != null && parent.getParent() != null) {
             CompoundWorkflow compoundWorkflow = parent.getParent();
             node.getProperties().putAll(
@@ -514,6 +574,15 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
     }
 
     public void setTaskIndexInWorkflow(Integer taskIndexInWorkflow) {
+=======
+    }
+
+    public int getTaskIndexInWorkflow() {
+        return taskIndexInWorkflow;
+    }
+
+    public void setTaskIndexInWorkflow(int taskIndexInWorkflow) {
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         this.taskIndexInWorkflow = taskIndexInWorkflow;
     }
 
@@ -521,6 +590,7 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
         return parent.getIndexInCompoundWorkflow();
     }
 
+<<<<<<< HEAD
     public void setDueDateHistoryRecords(List<DueDateHistoryRecord> dueDateHistoryRecords) {
         this.dueDateHistoryRecords = dueDateHistoryRecords;
     }
@@ -528,6 +598,15 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
     public List<DueDateHistoryRecord> getDueDateHistoryRecords() {
         if (dueDateHistoryRecords == null) {
             dueDateHistoryRecords = new ArrayList<DueDateHistoryRecord>();
+=======
+    public void setDueDateHistoryRecords(List<Pair<String, Date>> dueDateHistoryRecords) {
+        this.dueDateHistoryRecords = dueDateHistoryRecords;
+    }
+
+    public List<Pair<String, Date>> getDueDateHistoryRecords() {
+        if (dueDateHistoryRecords == null) {
+            dueDateHistoryRecords = new ArrayList<Pair<String, Date>>();
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         }
         return dueDateHistoryRecords;
     }
@@ -551,6 +630,7 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
         filesLoaded = true;
     }
 
+<<<<<<< HEAD
     /** Copy files */
     public void copyFiles(List<Object> files) {
         List<Object> filesList = getFilesList();
@@ -559,6 +639,8 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
         filesLoaded = true;
     }
 
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     public void clearFiles() {
         getFilesList().clear();
         filesLoaded = false;
@@ -599,6 +681,7 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
         this.originalHasFiles = originalHasFiles;
     }
 
+<<<<<<< HEAD
     public String getGroupDueDateVbString() {
         return groupDueDateVbString;
     }
@@ -653,6 +736,14 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
 
     public void setWorkflowNodeRefId(String workflowNodeRefId) {
         this.workflowNodeRefId = workflowNodeRefId;
+=======
+    public String getParentNodeRefId() {
+        return parentNodeRefId;
+    }
+
+    public void setParentNodeRefId(String parentNodeRefId) {
+        this.parentNodeRefId = parentNodeRefId;
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     public String getStoreRef() {
@@ -663,6 +754,7 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
         this.storeRef = storeRef;
     }
 
+<<<<<<< HEAD
     public NodeRef getWorkflowNodeRef() {
         if (workflowNodeRefId == null) {
             return parent == null ? null : parent.getNodeRef();
@@ -688,6 +780,13 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
 
     public String getCompoundWorkflowId() {
         return getProp(WorkflowSpecificModel.Props.COMPOUND_WORKFLOW_ID);
+=======
+    public NodeRef getParentNodeRef() {
+        if (parentNodeRefId == null) {
+            return parent == null ? null : parent.getNodeRef();
+        }
+        return new NodeRef(new StoreRef(storeRef), parentNodeRefId);
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
 }

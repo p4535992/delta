@@ -1,6 +1,9 @@
 package ee.webmedia.alfresco.docconfig.generator.systematic;
 
+<<<<<<< HEAD
 import static ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel.Props.THESAURUS;
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import static org.alfresco.web.ui.common.StringUtils.encode;
 
 import java.util.ArrayList;
@@ -23,9 +26,15 @@ import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.apache.commons.lang.StringUtils;
+<<<<<<< HEAD
 
 import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement.ItemConfigVO;
 import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement.ItemConfigVO.ConfigItemType;
+=======
+import org.springframework.util.Assert;
+
+import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement.ItemConfigVO;
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import ee.webmedia.alfresco.common.propertysheet.generator.GeneralSelectorGenerator;
 import ee.webmedia.alfresco.common.propertysheet.multivalueeditor.MultiValueEditor;
 import ee.webmedia.alfresco.common.propertysheet.multivalueeditor.PropsBuilder;
@@ -46,8 +55,11 @@ import ee.webmedia.alfresco.utils.WebUtil;
 
 /**
  * Generates components for Systematic group Keywords
+<<<<<<< HEAD
  * 
  * @author Ats Uiboupin
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
  */
 public class KeywordsGenerator extends BaseSystematicFieldGenerator {
 
@@ -61,7 +73,10 @@ public class KeywordsGenerator extends BaseSystematicFieldGenerator {
 
         originalFieldIds = fields.toArray(new String[fields.size()]);
         documentConfigService.registerMultiValuedOverrideInSystematicGroup(originalFieldIds);
+<<<<<<< HEAD
         documentConfigService.registerHiddenFieldDependency(THESAURUS.getLocalName(), DocumentDynamicModel.Props.FIRST_KEYWORD_LEVEL.getLocalName());
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         super.afterPropertiesSet();
     }
 
@@ -72,9 +87,14 @@ public class KeywordsGenerator extends BaseSystematicFieldGenerator {
 
     @Override
     public void generateField(Field field, GeneratorResults generatorResults) {
+<<<<<<< HEAD
         // Can be used outside systematic field group or search - then additional functionality is not present
         boolean searchForm = field.isForSearch();
         if (!searchForm && (!(field.getParent() instanceof FieldGroup) || !((FieldGroup) field.getParent()).isSystematic())) {
+=======
+        // Can be used outside systematic field group - then additional functionality is not present
+        if (!(field.getParent() instanceof FieldGroup) || !((FieldGroup) field.getParent()).isSystematic()) {
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             // field not in systematic fieldGroup - it might be for example on documents search form
             generatorResults.getAndAddPreGeneratedItem();
             return;
@@ -90,6 +110,7 @@ public class KeywordsGenerator extends BaseSystematicFieldGenerator {
         QName secondKeywordLevelProp = null;
         String stateHolderKey = field.getFieldId();
         String generatorName = GeneralSelectorGenerator.class.getSimpleName();
+<<<<<<< HEAD
 
         String defaultThesaurus = null;
         if (searchForm) {
@@ -179,6 +200,44 @@ public class KeywordsGenerator extends BaseSystematicFieldGenerator {
         generatorResults.addItem(item);
 
         return fieldId;
+=======
+        for (Field child : group.getFields()) {
+            QName fieldId = child.getQName();
+            PropsBuilder generalSelectorGeneratorBuilder = new PropsBuilder(fieldId, generatorName);
+            String originalFieldId = child.getOriginalFieldId();
+            if (DocumentDynamicModel.Props.FIRST_KEYWORD_LEVEL.getLocalName().equals(originalFieldId)) {
+                firstKeywordLevelProp = fieldId;
+                generalSelectorGeneratorBuilder
+                        .addProp(GeneralSelectorGenerator.ATTR_SELECTION_ITEMS, getBindingName("getFirstKeywordLevelSelectItems", stateHolderKey))
+                        .addProp(GeneralSelectorGenerator.ATTR_VALUE_CHANGE_LISTENER, getBindingName("firstKeywordLevelChanged", stateHolderKey));
+            } else if (DocumentDynamicModel.Props.SECOND_KEYWORD_LEVEL.getLocalName().equals(originalFieldId)) {
+                secondKeywordLevelProp = fieldId;
+                generalSelectorGeneratorBuilder.addProp(GeneralSelectorGenerator.ATTR_SELECTION_ITEMS, getBindingName("getSecondKeywordLevelSelectItems", stateHolderKey));
+            } else {
+                throw new RuntimeException("Unknown field in keywords group: " + originalFieldId);
+            }
+            props.add(generalSelectorGeneratorBuilder.build());
+            propNames.add(fieldId);
+        }
+
+        ItemConfigVO item = generatorResults.getAndAddPreGeneratedItem();
+        item.setName(RepoUtil.createTransientProp(field.getFieldId()).toString());
+        item.setComponentGenerator("MultiValueEditorGenerator");
+        item.setStyleClass("add-item");
+
+        item.setDisplayLabel(group.getReadonlyFieldsName());
+        item.setAddLabelId("keywords_add_keyword");
+
+        item.setShowInViewMode(false);
+        item.setPropsGeneration(StringUtils.join(props, ","));
+
+        // And generate a separate view mode component
+        String viewModePropName = RepoUtil.createTransientProp(field.getFieldId() + "Label").toString();
+        ItemConfigVO viewModeItem = generatorResults.generateAndAddViewModeText(viewModePropName, group.getReadonlyFieldsName());
+        viewModeItem.setComponentGenerator("UnescapedOutputTextGenerator");
+
+        generatorResults.addStateHolder(stateHolderKey, new KeywordsTableState(propNames, firstKeywordLevelProp, secondKeywordLevelProp, viewModePropName, group.getThesaurus()));
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     // ===============================================================================================================================
@@ -190,14 +249,22 @@ public class KeywordsGenerator extends BaseSystematicFieldGenerator {
         private final QName firstKeywordLevelProp;
         private final QName secondKeywordLevelProp;
         private final String viewModePropName;
+<<<<<<< HEAD
         private final String defaultThesaurusName;
         private final Map<String/* thesaurusName */, Map<String/* level1Keywords */, List<String>/* level2Keywords */>> hierarchy = new HashMap<String, Map<String, List<String>>>();
 
         public KeywordsTableState(List<QName> propNames, QName firstKeywordLevelProp, QName secondKeywordLevelProp, String viewModePropName, String defaultThesaurusName) {
+=======
+        private final String thesaurusName;
+        private Map<String/* level1Keywords */, List<String>/* level2Keywords */> hirearchy;
+
+        public KeywordsTableState(List<QName> propNames, QName firstKeywordLevelProp, QName secondKeywordLevelProp, String viewModePropName, String thesaurusName) {
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             this.propNames = propNames;
             this.firstKeywordLevelProp = firstKeywordLevelProp;
             this.secondKeywordLevelProp = secondKeywordLevelProp;
             this.viewModePropName = viewModePropName;
+<<<<<<< HEAD
             this.defaultThesaurusName = defaultThesaurusName;
         }
 
@@ -243,6 +310,29 @@ public class KeywordsGenerator extends BaseSystematicFieldGenerator {
             }
             List<SelectItem> selectItems = new ArrayList<SelectItem>(thesaurusKeywords.size());
             for (String keywordLevel1 : thesaurusKeywords.keySet()) {
+=======
+            this.thesaurusName = thesaurusName;
+            Assert.notNull(thesaurusName, "thesaurusName shouldn't bee null for systematic fields group keywords");
+        }
+
+        public List<SelectItem> getFirstKeywordLevelSelectItems(FacesContext context, UIInput selectComponent) {
+            if (hirearchy == null) {
+                Thesaurus thesaurus = BeanHelper.getThesaurusService().getThesaurus(thesaurusName, true);
+                List<HierarchicalKeyword> keywords = thesaurus.getKeywords();
+                hirearchy = new HashMap<String, List<String>>();
+                for (HierarchicalKeyword kw : keywords) {
+                    String keywordLevel1 = kw.getKeywordLevel1();
+                    List<String> level2List = hirearchy.get(keywordLevel1);
+                    if (level2List == null) {
+                        level2List = new ArrayList<String>(5);
+                        hirearchy.put(keywordLevel1, level2List);
+                    }
+                    level2List.add(kw.getKeywordLevel2());
+                }
+            }
+            List<SelectItem> selectItems = new ArrayList<SelectItem>(hirearchy.size());
+            for (String keywordLevel1 : hirearchy.keySet()) {
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
                 selectItems.add(new SelectItem(keywordLevel1, keywordLevel1));
             }
             if (selectItems.isEmpty()) {
@@ -260,6 +350,7 @@ public class KeywordsGenerator extends BaseSystematicFieldGenerator {
                 ComponentUtil.putAttribute(selectComponent, "disabled", true);
                 return Collections.<SelectItem> emptyList();
             }
+<<<<<<< HEAD
 
             String selectedThesaurus = StringUtils.isNotBlank(defaultThesaurusName) ? defaultThesaurusName : getSelectedThesaurus(context, selectComponent);
             List<String> level2List = hierarchy.get(selectedThesaurus).get(firstLevelKeyword);
@@ -288,11 +379,26 @@ public class KeywordsGenerator extends BaseSystematicFieldGenerator {
             return (String) vb.getValue(context);
         }
 
+=======
+            List<String> level2List = hirearchy.get(firstLevelKeyword);
+            List<SelectItem> selectItems = new ArrayList<SelectItem>(level2List.size());
+            for (String keywordLevel2 : level2List) {
+                selectItems.add(new SelectItem(keywordLevel2, keywordLevel2));
+            }
+            if (!selectItems.isEmpty()) {
+                ComponentUtil.addDefault(selectItems, context);
+            }
+            WebUtil.sort(selectItems);
+            return selectItems;
+        }
+
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         private String getFirstLevelKeyword(FacesContext context, UIInput selectComponent) {
             ValueBinding secondLevelVB = selectComponent.getValueBinding("value");
             String firstLevelVBExpr = StringUtils.replace(secondLevelVB.getExpressionString(), secondKeywordLevelProp.toString(),
                     firstKeywordLevelProp.toString());
             ValueBinding vb = context.getApplication().createValueBinding(firstLevelVBExpr);
+<<<<<<< HEAD
             return (String) vb.getValue(context);
         }
 
@@ -302,6 +408,10 @@ public class KeywordsGenerator extends BaseSystematicFieldGenerator {
                     secondKeywordLevelProp.toString());
             ValueBinding vb = context.getApplication().createValueBinding(firstLevelVBExpr);
             return vb;
+=======
+            String firstLevelKeyword = (String) vb.getValue(context);
+            return firstLevelKeyword;
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         }
 
         private ValueBinding getSecondLevelKeywordVb(FacesContext context, UIInput selectComponent) {
@@ -345,6 +455,7 @@ public class KeywordsGenerator extends BaseSystematicFieldGenerator {
             });
         }
 
+<<<<<<< HEAD
         public void thesaurusChanged(ValueChangeEvent event) {
             if (StringUtils.isEmpty((String) event.getOldValue()) && StringUtils.isEmpty((String) event.getNewValue())) {
                 return;
@@ -366,6 +477,8 @@ public class KeywordsGenerator extends BaseSystematicFieldGenerator {
             });
         }
 
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         @Override
         protected void reset(boolean inEditMode) {
             if (!inEditMode) {

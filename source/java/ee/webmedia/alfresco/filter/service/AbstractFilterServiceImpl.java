@@ -25,8 +25,11 @@ import ee.webmedia.alfresco.user.service.UserService;
 
 /**
  * Base class for filtering services
+<<<<<<< HEAD
  * 
  * @author Ats Uiboupin
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
  */
 public abstract class AbstractFilterServiceImpl implements FilterService {
 

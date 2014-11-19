@@ -22,6 +22,7 @@
       <type name="doccom:document">
          <parent>cm:folder</parent>
          <archive>true</archive>
+<<<<<<< HEAD
          <properties>
             <!-- TODO FIXME Should be safe to remove this now, but first check that CL 188299 works without it -->
             <property name="docdyn:regDateTime">
@@ -42,6 +43,18 @@
                <type>d:boolean</type>
                <default>true</default>
             </property>
+=======
+         <!-- TODO FIXME Temporary properties for CL 188299 -->
+         <properties>
+            <property name="docdyn:regDateTime">
+               <type>d:datetime</type>
+            </property>
+            <property name="docdyn:accessRestrictionBeginDate">
+               <type>d:date</type>
+            </property><property name="docdyn:accessRestrictionEndDate">
+               <type>d:date</type>
+            </property>
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
          </properties>
          <associations>
             <association name="doccom:reply">
@@ -77,6 +90,7 @@
                   <many>true</many>
                </target>
             </association>
+<<<<<<< HEAD
             <!-- This association should be more logically defined in workflowCommonModel, 
                as it represent one independent workflow referring to multiple documents, not vice versa, 
                but due to model import limitations it is defined here -->
@@ -91,6 +105,8 @@
                   <many>true</many>
                </target>
             </association>              
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             <child-association name="doccom:sendInfo">
                <source>
                   <mandatory>true</mandatory>
@@ -104,7 +120,11 @@
             </child-association>
           
          <!-- Deprecated - document log is not saved under document node any more, but only in application log.
+<<<<<<< HEAD
           Don't create new associations of this type. Can be deleted when all existing associations have been migrated to application log (Riina). -->
+=======
+          Don't create new associations of this type. Can be deleted when all existing associations have been migrated to application log ). -->
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             <child-association name="doccom:documentLog">
                <source>
                   <mandatory>true</mandatory>
@@ -135,11 +155,15 @@
          </mandatory-aspects>
       </type>
 
+<<<<<<< HEAD
       <type name="doccom:tempFiles">
          <parent>cm:folder</parent>
       </type>
 
       <type name="doccom:drafts"> <!-- To avoid circular dependency, cf:caseFileContainer aspect is added with AddCaseFileContainerAspectToDrafts updater -->
+=======
+      <type name="doccom:drafts">
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
          <parent>sys:base</parent>
          <mandatory-aspects>
             <aspect>doccom:documentContainer</aspect>
@@ -195,7 +219,11 @@
       </type>
       
       <!-- Deprecated - document log is not saved under document node any more, but only in application log.
+<<<<<<< HEAD
            Don't create new nodes of this type. Can be deleted when all existing associations have been migrated to application log (Riina). -->
+=======
+           Don't create new nodes of this type. Can be deleted when all existing associations have been migrated to application log ). -->
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
       <type name="doccom:documentLog">
          <parent>sys:base</parent>
          <mandatory-aspects>
@@ -241,6 +269,7 @@
                   <many>true</many>
                </target>
             </association>
+<<<<<<< HEAD
             <association name="wfc:favorite">
                <source>
                   <mandatory>false</mandatory>
@@ -252,6 +281,8 @@
                   <many>true</many>
                </target>
             </association>            
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
          </associations>
       </aspect>
       
@@ -295,7 +326,11 @@
             </child-association>
          </associations>
       </aspect>
+<<<<<<< HEAD
       
+=======
+
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
       <!-- Duplicates some information on document for search purposes -->
       <aspect name="doccom:searchable">
          <properties>
@@ -411,6 +446,7 @@
             </property>
          </properties>
       </aspect>
+<<<<<<< HEAD
       
       <aspect name="doccom:notEditable">
          <properties>
@@ -441,6 +477,8 @@
             </property>
          </properties>
       </aspect>        
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
    <!-- ============================================================================================================= -->
    <!-- FIXME: remove the following definitions after all existing static documents are migrated to dynamic documents -->
@@ -612,6 +650,7 @@
                <type>d:text</type>
             </property>
          </properties>
+<<<<<<< HEAD
       </aspect>
       
       <aspect name="doccom:emailDateTime">
@@ -621,6 +660,9 @@
             </property>
          </properties>
       </aspect>
+=======
+      </aspect>      
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
    </aspects>
 

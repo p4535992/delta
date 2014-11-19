@@ -11,9 +11,12 @@ import ee.webmedia.alfresco.workflow.service.Task;
 import ee.webmedia.alfresco.workflow.service.Workflow;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
 
+<<<<<<< HEAD
 /**
  * @author Alar Kvell
  */
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 public class BaseWorkflowType implements WorkflowType, InitializingBean {
 
     private QName workflowType = WorkflowCommonModel.Types.WORKFLOW;
@@ -109,9 +112,12 @@ public class BaseWorkflowType implements WorkflowType, InitializingBean {
                 + "\n]";
     }
 
+<<<<<<< HEAD
     @Override
     public boolean isIndependentTaskType() {
         return false;
     }
 
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 }

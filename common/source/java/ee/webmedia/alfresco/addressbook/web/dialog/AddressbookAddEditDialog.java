@@ -21,11 +21,15 @@ import org.apache.commons.lang.StringUtils;
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
+<<<<<<< HEAD
 import ee.webmedia.alfresco.utils.WebUtil;
 
 /**
  * @author Keit Tehvan
  */
+=======
+
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 public class AddressbookAddEditDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;
 
@@ -100,7 +104,11 @@ public class AddressbookAddEditDialog extends BaseDialogBean {
             }
         }
         String website = (String) contact.getProperties().get(AddressbookModel.Props.WEBSITE);
+<<<<<<< HEAD
         if (StringUtils.isNotBlank(website) && WebUtil.isNotValidUrl(website)) {
+=======
+        if (StringUtils.isNotBlank(website) && !(website.startsWith("http://") || website.startsWith("https://") || website.startsWith("ftp://"))) {
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             MessageUtil.addInfoMessage("addressbook_contact_invalid_webiste");
             isValid = false;
         }

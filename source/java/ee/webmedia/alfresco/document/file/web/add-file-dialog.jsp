@@ -1,4 +1,7 @@
+<<<<<<< HEAD
 <%@page import="ee.webmedia.alfresco.common.web.BeanHelper"%>
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 <%@ taglib uri="http://java.sun.com/jsf/html" prefix="h"%>
 <%@ taglib uri="http://java.sun.com/jsf/core" prefix="f"%>
 <%@ taglib uri="/WEB-INF/alfresco.tld" prefix="a"%>
@@ -14,8 +17,11 @@
 <%@ page import="org.alfresco.web.app.servlet.FacesHelper"%>
 <%@ page import="org.alfresco.web.ui.common.PanelGenerator"%>
 <%@ page import="ee.webmedia.alfresco.document.file.web.AddFileDialog"%>
+<<<<<<< HEAD
 <%@ page import="org.apache.commons.lang.StringUtils" %>
 <%@ page import="ee.webmedia.alfresco.common.web.BeanHelper"%>
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
 <%
     boolean fileUploaded = false;
@@ -51,7 +57,11 @@
    <a:panel styleClass="column panel-100" id="file-upload" label="#{msg.upload_content}">
    <f:verbatim>
    <div id="uploader-wrapper">
+<<<<<<< HEAD
 	   <applet class="file-upload-applet" width="750" height="400" archive='<%=request.getContextPath() + BeanHelper.getApplicationService().getJumploaderUrl()%>' code="jmaster.jumploader.app.JumpLoaderApplet.class" name="jumpLoaderApplet">
+=======
+	   <applet class="file-upload-applet" width="750" height="400" archive='<c:url value="/applet/jumploader_z.jar" />' code="jmaster.jumploader.app.JumpLoaderApplet.class" name="jumpLoaderApplet">
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 	    	<param value="false" name="uc_imageEditorEnabled" />
 			<param value="<c:url value='/uploadFileServlet' />" name="uc_uploadUrl" />
 			<param value="-1" name="uc_partitionLength" />
@@ -129,6 +139,12 @@
             </a:panel>
          </h:panelGrid>
       </a:panel>
+<<<<<<< HEAD
+=======
+      <a:panel id="attachment-folder-panel-empty" rendered="#{AddFileDialog.showBlankForAttachmentBlock}">
+      	<f:verbatim> <p style='height:22px;'> </p></f:verbatim>
+      </a:panel>
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
       <h:outputText id="out_attachment" value="#{msg.file_add_attachment_label}" styleClass="dialogpanel-title block" />
       <h:selectManyMenu id="select_attachment" style="width: 100%; height: 200px;" binding="#{AddFileDialog.attachmentSelect}" validator="#{AddFileDialog.validate}">
          <f:selectItems value="#{AddFileDialog.attachments}" />
@@ -147,6 +163,12 @@
             </a:panel>
          </h:panelGrid>
       </a:panel>    
+<<<<<<< HEAD
+=======
+      <a:panel id="scanned-folder-panel-empty" rendered="#{AddFileDialog.showBlankForScannedBlock}">
+        <f:verbatim> <p style='height:22px;'> </p></f:verbatim>
+      </a:panel>
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
        <h:outputText id="out_scanned_file" value="#{msg.file_add_scanned_label}" styleClass="dialogpanel-title block"/>
        <h:selectManyMenu id="select_scanned_file" style="width: 100%; height: 200px;" binding="#{AddFileDialog.scannedSelect}" validator="#{AddFileDialog.validate}">
            <f:selectItems value="#{AddFileDialog.scannedFiles}"/>

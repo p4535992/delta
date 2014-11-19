@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <?xml version="1.0" encoding="UTF-8"?>
 <view:view xmlns:view="http://www.alfresco.org/view/repository/1.0" xmlns:docadmin="http://alfresco.webmedia.ee/model/document/admin/1.0" xmlns:docdyn="http://alfresco.webmedia.ee/model/document/dynamic/1.0">
 
@@ -23,4 +24,31 @@
       </view:properties>
    </docadmin:fieldDefinition>
 
+=======
+<?xml version="1.0" encoding="UTF-8"?>
+<view:view xmlns:view="http://www.alfresco.org/view/repository/1.0" xmlns:docadmin="http://alfresco.webmedia.ee/model/document/admin/1.0" xmlns:docdyn="http://alfresco.webmedia.ee/model/document/dynamic/1.0">
+
+   <docadmin:fieldDefinition view:childName="docdyn:dueDateDesc">
+      <view:properties>
+         <docadmin:fieldId>dueDateDesc</docadmin:fieldId>
+         <docadmin:originalFieldId>dueDateDesc</docadmin:originalFieldId>
+         <docadmin:name>Tähtaja kirjeldus</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+   
+   <docadmin:fieldDefinition view:childName="docdyn:annex">
+      <view:properties>
+         <docadmin:fieldId>annex</docadmin:fieldId>
+         <docadmin:originalFieldId>annex</docadmin:originalFieldId>
+         <docadmin:name>Lisad</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 </view:view>

@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <?xml version="1.0" encoding="UTF-8"?>
 <view:view 
    xmlns:view="http://www.alfresco.org/view/repository/1.0" 
@@ -5,4 +6,13 @@
 >
    <taskreport:taskReportFilters view:childName="taskreport:taskReportFilters" />
    
+=======
+<?xml version="1.0" encoding="UTF-8"?>
+<view:view 
+   xmlns:view="http://www.alfresco.org/view/repository/1.0" 
+   xmlns:taskreport="http://alfresco.webmedia.ee/model/task/report/1.0" 
+>
+   <taskreport:taskReportFilters view:childName="taskreport:taskReportFilters" />
+   
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 </view:view>

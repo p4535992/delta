@@ -17,8 +17,11 @@ import ee.webmedia.alfresco.utils.WebUtil;
  * S - implementation of {@link Snapshot} that contains data that must be saved for later use to reconstruct given state.<br>
  * D - type of object that is used to reset dialog.<br>
  * <b>Definition: Snapshot</b> - represents a state of a dialog at given moment. It can be used to reconstruct the dialog with the same state.<br>
+<<<<<<< HEAD
  * 
  * @author Ats Uiboupin
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
  */
 public abstract class BaseSnapshotCapableDialog<S extends BaseSnapshotCapableDialog.Snapshot, D extends Object> extends BaseDialogBean
         implements ClearStateListener {
@@ -27,8 +30,11 @@ public abstract class BaseSnapshotCapableDialog<S extends BaseSnapshotCapableDia
     // =========================================================================
     /**
      * Implementation should contain data that can be used to fully reconstruct given state.<br>
+<<<<<<< HEAD
      * 
      * @author Ats Uiboupin
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
      */
     public static interface Snapshot extends Serializable {
         // subclasses should hold the state of each "Snapshot" in the fields of the subclass

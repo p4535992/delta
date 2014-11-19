@@ -17,8 +17,11 @@ import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 
 /**
  * Callback that creates default applicant (as childNode) for trainingApplication document
+<<<<<<< HEAD
  * 
  * @author Ats Uiboupin
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
  */
 public class TrainingDocChildCreator extends AbstractDocChildCreator {
 

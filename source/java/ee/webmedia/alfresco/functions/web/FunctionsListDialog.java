@@ -1,16 +1,24 @@
 package ee.webmedia.alfresco.functions.web;
 
 import static ee.webmedia.alfresco.app.AppConstants.CHARSET;
+<<<<<<< HEAD
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentListService;
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
+<<<<<<< HEAD
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
+=======
+import java.util.List;
+import java.util.Map;
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
@@ -28,7 +36,10 @@ import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.Repository;
 import org.apache.commons.io.IOUtils;
+<<<<<<< HEAD
 import org.apache.commons.lang.StringUtils;
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import org.apache.myfaces.application.jsp.JspStateManagerImpl;
 import org.springframework.web.jsf.FacesContextUtils;
 
@@ -41,7 +52,10 @@ import ee.webmedia.alfresco.functions.service.FunctionsService;
 import ee.webmedia.alfresco.importer.excel.bootstrap.SmitExcelImporter;
 import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.user.service.UserService;
+<<<<<<< HEAD
 import ee.webmedia.alfresco.utils.ActionUtil;
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import ee.webmedia.alfresco.utils.MessageUtil;
 
 public class FunctionsListDialog extends BaseDialogBean {
@@ -56,7 +70,10 @@ public class FunctionsListDialog extends BaseDialogBean {
     private transient UserService userService;
     private transient GeneralService generalService;
     protected List<Function> functions;
+<<<<<<< HEAD
     private int deleteBatchSize = 30;
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
     @Override
     public void init(Map<String, String> params) {
@@ -91,6 +108,14 @@ public class FunctionsListDialog extends BaseDialogBean {
         MessageUtil.addInfoMessage(FacesContext.getCurrentInstance(), "docList_updateDocCounters_success", docCount);
     }
 
+<<<<<<< HEAD
+=======
+    public void updateArchivedDocCounters(@SuppressWarnings("unused") ActionEvent event) {
+        final long docCount = BeanHelper.getDocumentListService().updateDocCounters(BeanHelper.getArchivalsService().getArchivalRoot());
+        MessageUtil.addInfoMessage(FacesContext.getCurrentInstance(), "docList_updateDocCounters_success", docCount);
+    }
+
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     /**
      * NB! this method doesn't delete files associated with cases or documents that will get deleted - hence wasting disk usage. <br>
      * But as at the moment this method is meant to be called only in cases where repository and DB backups will be restored(before final successful import), it
@@ -99,6 +124,7 @@ public class FunctionsListDialog extends BaseDialogBean {
      * @param event
      */
     public void deleteAllDocuments(@SuppressWarnings("unused") ActionEvent event) {
+<<<<<<< HEAD
         deleteDocumentListAndArchivalsListContents(false, false);
     }
 
@@ -176,6 +202,23 @@ public class FunctionsListDialog extends BaseDialogBean {
             }
         }
         log.info("Completed deleting " + refsToDelete.size() + " nodes");
+=======
+        final Pair<List<NodeRef>, Long> allDocumentAndCaseRefs = BeanHelper.getDocumentListService().getAllDocumentAndCaseRefs();
+        final List<NodeRef> refsToDelete = allDocumentAndCaseRefs.getFirst();
+        final int batchMaxSize = 30;
+        ArrayList<NodeRef> nodeRefsBatch = new ArrayList<NodeRef>(batchMaxSize);
+        for (int i = 0; i < refsToDelete.size(); i++) {
+            nodeRefsBatch.add(refsToDelete.get(i));
+            if (i == (refsToDelete.size() - 1) || (i % batchMaxSize == 0)) {
+                log.info("Deleting " + nodeRefsBatch.size() + " case or document nodeRefs");
+                getGeneralService().deleteNodeRefs(nodeRefsBatch);
+                log.info("Deleted " + nodeRefsBatch.size() + " case or document nodeRefs");
+                nodeRefsBatch.clear();
+            }
+        }
+        final long docCount = allDocumentAndCaseRefs.getSecond();
+        MessageUtil.addInfoMessage(FacesContext.getCurrentInstance(), "docList_deleteAllDocuments_success", docCount);
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     // START: JSP event handlers
@@ -207,13 +250,18 @@ public class FunctionsListDialog extends BaseDialogBean {
             IOUtils.closeQuietly(outputStream);
             FacesContext.getCurrentInstance().responseComplete();
 
+<<<<<<< HEAD
             // Erko hack for incorrect view id in the next request
+=======
+            // hack for incorrect view id in the next request
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             JspStateManagerImpl.ignoreCurrentViewSequenceHack();
 
             log.info("docList export completed");
         }
     }
 
+<<<<<<< HEAD
     public void createNewYearBasedVolumes(ActionEvent event) {
         if (!ActionUtil.hasParam(event, "eventConfirmed")) {
             Map<String, String> params = new HashMap<String, String>(1);
@@ -222,6 +270,9 @@ public class FunctionsListDialog extends BaseDialogBean {
             return;
         }
 
+=======
+    public void createNewYearBasedVolumes(@SuppressWarnings("unused") ActionEvent event) {
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         final long createdVolumesCount = BeanHelper.getDocumentListService().createNewYearBasedVolumes();
         MessageUtil.addInfoMessage(FacesContext.getCurrentInstance(), "docList_createNewYearBasedVolumes_success", createdVolumesCount);
     }
@@ -244,6 +295,7 @@ public class FunctionsListDialog extends BaseDialogBean {
 
     public static void exportConsolidatedList(NodeRef nodeRef) {
         log.info("consolidated docList started");
+<<<<<<< HEAD
         HttpServletResponse response = (HttpServletResponse) FacesContext.getCurrentInstance().getExternalContext().getResponse();
         response.setCharacterEncoding(CHARSET);
         OutputStream outputStream = null;
@@ -251,14 +303,23 @@ public class FunctionsListDialog extends BaseDialogBean {
             outputStream = WMAdminNodeBrowseBean.getExportOutStream(response, "consolidated-list.csv");
             getDocumentListService().getExportCsv(outputStream, nodeRef);
             outputStream.flush();
+=======
+        try {
+            BeanHelper.getReportService().createCsvReportResult(nodeRef);
+            MessageUtil.addInfoMessage("docList_consolidatedList_background_job");
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         } catch (Exception e) {
             final String msg = "Failed to export consolidated docList";
             log.error(msg, e);
             throw new RuntimeException(msg, e);
         } finally {
+<<<<<<< HEAD
             FacesContext.getCurrentInstance().responseComplete();
             JspStateManagerImpl.ignoreCurrentViewSequenceHack();
             log.info("consolidated docList export completed");
+=======
+            log.info("consolidated list job started in background");
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         }
     }
 
@@ -292,6 +353,7 @@ public class FunctionsListDialog extends BaseDialogBean {
 
     public List<Function> getMySeriesFunctions() {
         List<Function> seriesFunctions = new ArrayList<Function>(functions.size());
+<<<<<<< HEAD
         String currentUsersStructUnitId = getUserService().getCurrentUsersStructUnitId();
         if (StringUtils.isNotBlank(currentUsersStructUnitId)) {
             for (Function function : getFunctions()) {
@@ -316,6 +378,23 @@ public class FunctionsListDialog extends BaseDialogBean {
 
     public void setDeleteBatchSize(int deleteBatchSize) {
         this.deleteBatchSize = deleteBatchSize;
+=======
+        Integer currentUsersStructUnitId = getUserService().getCurrentUsersStructUnitId();
+        for (Function function : getFunctions()) {
+            List<ChildAssociationRef> childAssocs = getNodeService().getChildAssocs(function.getNodeRef());
+            for (ChildAssociationRef caRef : childAssocs) {
+                @SuppressWarnings("unchecked")
+                List<Integer> structUnits = (List<Integer>) getNodeService().getProperty(caRef.getChildRef(), SeriesModel.Props.STRUCT_UNIT);
+                boolean contains = structUnits != null && structUnits.contains(currentUsersStructUnitId);
+                if (contains) {
+                    seriesFunctions.add(function);
+                    break;
+                }
+            }
+        }
+
+        return seriesFunctions;
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     protected FunctionsService getFunctionsService() {

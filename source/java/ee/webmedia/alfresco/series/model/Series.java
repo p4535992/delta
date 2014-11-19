@@ -24,17 +24,24 @@ public class Series implements Serializable, Comparable<Series> {
     private String title;
     private String description;
     private String status;
+<<<<<<< HEAD
     private Integer retentionPeriod; // can be empty
     private List<String> docType;
     private List<String> volType;
+=======
+    private List<String> docType;
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     private int containingDocsCount;
     private boolean newNumberForEveryDoc;
     private boolean individualizingNumbers;
     private String docNumberPattern;
     private int register;
+<<<<<<< HEAD
     private String volNumberPattern;
     private Integer volRegister;
     private boolean documentsVisibleForUsersWithoutAccess = true;
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
     @AlfrescoModelProperty(isMappable = false)
     private Node node;
@@ -111,11 +118,19 @@ public class Series implements Serializable, Comparable<Series> {
     }
 
     public Integer getRetentionPeriod() {
+<<<<<<< HEAD
         return retentionPeriod;
     }
 
     public void setRetentionPeriod(Integer retentionPeriod) {
         this.retentionPeriod = retentionPeriod;
+=======
+        return (Integer) node.getProperties().get(SeriesModel.Props.RETENTION_PERIOD);
+    }
+
+    public void setRetentionPeriod(Integer retentionPeriod) {
+        node.getProperties().put(SeriesModel.Props.RETENTION_PERIOD.toString(), retentionPeriod);
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     public List<String> getDocType() {
@@ -127,6 +142,7 @@ public class Series implements Serializable, Comparable<Series> {
         this.docType = docType;
     }
 
+<<<<<<< HEAD
     public List<String> getVolType() {
         return volType;
     }
@@ -136,6 +152,8 @@ public class Series implements Serializable, Comparable<Series> {
         this.volType = volType;
     }
 
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     public int getContainingDocsCount() {
         return containingDocsCount;
     }
@@ -150,8 +168,11 @@ public class Series implements Serializable, Comparable<Series> {
 
     public void setNode(Node node) {
         this.node = node;
+<<<<<<< HEAD
         documentsVisibleForUsersWithoutAccess = !Boolean.FALSE.equals(node.getProperties().get(SeriesModel.Props.DOCUMENTS_VISIBLE_FOR_USERS_WITHOUT_ACCESS.toString()));
 
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     public boolean isNewNumberForEveryDoc() {
@@ -186,6 +207,7 @@ public class Series implements Serializable, Comparable<Series> {
         this.register = register;
     }
 
+<<<<<<< HEAD
     public String getVolNumberPattern() {
         return volNumberPattern;
     }
@@ -217,6 +239,8 @@ public class Series implements Serializable, Comparable<Series> {
         this.documentsVisibleForUsersWithoutAccess = documentsVisibleForUsersWithoutAccess;
     }
 
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();

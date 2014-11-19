@@ -12,18 +12,27 @@ import org.apache.commons.lang.StringUtils;
  * Operations dealing with patterns. Patterns may contain any text and formulas, formulas are replaced with values.
  * Formulas must be in the form of <code>{formula}</code>.
  * Patterns may also contain cancellation groups, which must be in the form of <code>&#47;*text {formula}*&#47;</code> are also supported.
+<<<<<<< HEAD
  * 
  * @author Alar Kvell
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
  */
 public class TextPatternUtil {
 
     private static final String FORMULA_REGEX = "\\{(.*?)\\}";
     private static final String GROUP_REGEX = "/\\*(.*?)\\*/";
+<<<<<<< HEAD
     private static final String LIST_GROUP_REGEX = "/¤(.*?)¤/";
 
     private static final Pattern FORMULA_PATTERN = Pattern.compile(FORMULA_REGEX);
     private static final Pattern GROUP_PATTERN = Pattern.compile(GROUP_REGEX);
     private static final Pattern LIST_GROUP_PATTERN = Pattern.compile(LIST_GROUP_REGEX);
+=======
+
+    private static final Pattern FORMULA_PATTERN = Pattern.compile(FORMULA_REGEX);
+    private static final Pattern GROUP_PATTERN = Pattern.compile(GROUP_REGEX);
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
     public static String getResult(String input, final Map<String, String> formulaValues) {
         return getResult(input, new Transformer<String, String>() {
@@ -35,6 +44,7 @@ public class TextPatternUtil {
     }
 
     public static String getResult(String input, Transformer<String, String> formulaValueLookup) {
+<<<<<<< HEAD
         String groupsReplacedResult = replaceGroups(input, formulaValueLookup, LIST_GROUP_PATTERN, true);
         groupsReplacedResult = replaceGroups(groupsReplacedResult, formulaValueLookup, GROUP_PATTERN, false);
         return getReplacedFormulas(groupsReplacedResult, formulaValueLookup, false);
@@ -47,17 +57,28 @@ public class TextPatternUtil {
         while (groupMatcher.find()) {
             String group = groupMatcher.group(1);
             String replacedFormulas = getReplacedFormulas(group, formulaValueLookup, false);
+=======
+        StringBuffer groupsReplacedBuffer = new StringBuffer();
+        Matcher groupMatcher = GROUP_PATTERN.matcher(input);
+        while (groupMatcher.find()) {
+            String group = groupMatcher.group(1);
+            String replacedFormulas = getReplacedFormulas(group, formulaValueLookup);
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             String noMatch = group.replaceAll(FORMULA_REGEX, "");
             if (replacedFormulas.equals(noMatch)) {
                 groupMatcher.appendReplacement(groupsReplacedBuffer, "");
             } else {
+<<<<<<< HEAD
                 if (isListGroup) {
                     replacedFormulas = getReplacedFormulas(group, formulaValueLookup, isListGroup);
                 }
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
                 groupMatcher.appendReplacement(groupsReplacedBuffer, replacedFormulas);
             }
         }
         String groupsReplacedResult = groupMatcher.appendTail(groupsReplacedBuffer).toString();
+<<<<<<< HEAD
         return groupsReplacedResult;
     }
 
@@ -74,6 +95,16 @@ public class TextPatternUtil {
                 previousNotEmpty = true;
             }
             formulaMatcher.appendReplacement(result, replacementValue);
+=======
+        return getReplacedFormulas(groupsReplacedResult, formulaValueLookup);
+    }
+
+    private static String getReplacedFormulas(String input, Transformer<String, String> formulaValueLookup) {
+        StringBuffer result = new StringBuffer();
+        Matcher formulaMatcher = FORMULA_PATTERN.matcher(input);
+        while (formulaMatcher.find()) {
+            formulaMatcher.appendReplacement(result, formulaValueLookup.tr(formulaMatcher.group(1)));
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         }
         formulaMatcher.appendTail(result);
         return result.toString();

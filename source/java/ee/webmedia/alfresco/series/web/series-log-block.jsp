@@ -17,7 +17,11 @@
 </h:panelGroup>
 
 <a:panel id="series-block-block-panel" label="#{msg.series_log_title}" styleClass="panel-100 with-pager" progressive="true" rendered="#{LogBlockBean.rendered}"
+<<<<<<< HEAD
    expanded="false" facetsId="dialog:dialog-body:log-panel-facets">
+=======
+   expanded="false" facetsId="dialog:dialog-body:log-panel-facets" >
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
    <a:richList id="logList" viewMode="details" value="#{LogBlockBean.logs}" var="r" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
       width="100%" refreshOnBind="true" pageSize="#{BrowseBean.pageSizeContent}" initialSortColumn="createdDateTime">

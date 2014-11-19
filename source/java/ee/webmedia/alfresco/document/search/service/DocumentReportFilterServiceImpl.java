@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 package ee.webmedia.alfresco.document.search.service;
 
 import org.alfresco.service.cmr.repository.NodeRef;
@@ -31,3 +32,35 @@ public class DocumentReportFilterServiceImpl extends DocumentSearchFilterService
     }
 
 }
+=======
+package ee.webmedia.alfresco.document.search.service;
+
+import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.namespace.QName;
+
+import ee.webmedia.alfresco.document.search.model.DocumentReportModel;
+
+public class DocumentReportFilterServiceImpl extends DocumentSearchFilterServiceImpl implements DocumentReportFilterService {
+
+    @Override
+    protected QName getFilterNodeType() {
+        return DocumentReportModel.Types.FILTER;
+    }
+
+    @Override
+    protected QName getFilterContainerAspect() {
+        return DocumentReportModel.Aspects.DOCUMENT_REPORT_FILTERS_CONTAINER;
+    }
+
+    @Override
+    protected QName getContainerToFilterAssoc() {
+        return DocumentReportModel.Assocs.FILTERS;
+    }
+
+    @Override
+    protected NodeRef getRoot() {
+        return generalService.getNodeRef(DocumentReportModel.Repo.FILTERS_SPACE);
+    }
+
+}
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5

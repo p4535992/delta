@@ -10,9 +10,12 @@ import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.web.BaseDocumentListDialog;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
+<<<<<<< HEAD
 /**
  * @author Alar Kvell
  */
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 public class TodayRegisteredDocumentsSearchResultsDialog extends BaseDocumentListDialog {
     private static final long serialVersionUID = 1L;
     private transient UIPanel panel;

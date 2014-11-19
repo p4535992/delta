@@ -46,9 +46,12 @@ import com.csvreader.CsvWriter;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.utils.ProgressTracker;
 
+<<<<<<< HEAD
 /**
  * @author Alar Kvell
  */
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 public abstract class AbstractNodeUpdater extends AbstractModuleComponent implements InitializingBean {
     protected final Log log = LogFactory.getLog(getClass());
 
@@ -290,7 +293,11 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
         return loadedNodes;
     }
 
+<<<<<<< HEAD
     private void writeNodesToFile(File file, Set<NodeRef> nodesToWrite) throws Exception {
+=======
+    public static void writeNodesToFile(File file, Set<NodeRef> nodesToWrite, Log log) throws Exception {
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         log.info("Writing " + nodesToWrite.size() + " nodes to file " + file.getAbsolutePath());
         List<String[]> records = new ArrayList<String[]>();
         for (NodeRef nodeRef : nodesToWrite) {
@@ -299,6 +306,13 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
         writeRecordsToCsvFile(file, records);
     }
 
+<<<<<<< HEAD
+=======
+    private void writeNodesToFile(File file, Set<NodeRef> nodesToWrite) throws Exception {
+        writeNodesToFile(file, nodesToWrite, log);
+    }
+
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     public static void writeRecordsToCsvFile(File file, List<String[]> records) {
         try {
             CsvWriter writer = new CsvWriter(new FileOutputStream(file), CSV_SEPARATOR, CSV_CHARSET);

@@ -11,7 +11,11 @@
          <f:facet name="header">
             <a:sortLink id="col1-sort" label="#{msg.document_receivedDateTime}" value="created" styleClass="header" />
          </f:facet>
+<<<<<<< HEAD
          <a:actionLink id="col1-text" value="#{r.createdDateStr}" action="#{DocumentDialog.action}" tooltip="#{r.createdDateStr}" styleClass="no-underline"
+=======
+         <a:actionLink id="col1-text" value="#{r.createdDateTimeStr}" action="#{DocumentDialog.action}" tooltip="#{r.createdDateTimeStr}" styleClass="no-underline"
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
           actionListener="#{DocumentDialog.open}" >
             <f:param name="nodeRef" value="#{r.node.nodeRef}" />
           </a:actionLink>
@@ -91,40 +95,65 @@
               <a:param value="false"/>
           </f:facet>
          <r:permissionEvaluator value="#{r.files[0].node}" allow="viewDocumentFiles">
+<<<<<<< HEAD
             <a:actionLink id="col10-act1" value="#{r.files[0].name}" href="#{r.files[0].downloadUrl}" target="_blank" showLink="false"
                image="/images/icons/#{r.files[0].digiDocContainer ? 'ddoc_sign_small.gif' : 'attachment.gif'}" styleClass="inlineAction webdav-readOnly" />
+=======
+            <a:actionLink id="col10-act1" value="#{r.files[0].name}" href="#{r.files[0].readOnlyUrl}" target="_blank" showLink="false"
+               image="/images/icons/#{r.files[0].digiDocContainer ? 'ddoc_sign_small.gif' : 'attachment.gif'}" styleClass="inlineAction" />
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
          </r:permissionEvaluator>
          <r:permissionEvaluator value="#{r.files[0].node}" deny="viewDocumentFiles">
             <h:graphicImage value="/images/icons/#{r.files[0].digiDocContainer ? 'ddoc_sign_small.gif' : 'attachment.gif'}" alt="#{r.files[0].name}"
                title="#{r.files[0].name}" rendered="#{r.files[0] != null}" />
          </r:permissionEvaluator>
          <r:permissionEvaluator value="#{r.files[1].node}" allow="viewDocumentFiles">
+<<<<<<< HEAD
             <a:actionLink id="col10-act2" value="#{r.files[1].name}" href="#{r.files[1].downloadUrl}" target="_blank" showLink="false"
                image="/images/icons/#{r.files[1].digiDocContainer ? 'ddoc_sign_small.gif' : 'attachment.gif'}" styleClass="inlineAction webdav-readOnly" />
+=======
+            <a:actionLink id="col10-act2" value="#{r.files[1].name}" href="#{r.files[1].readOnlyUrl}" target="_blank" showLink="false"
+               image="/images/icons/#{r.files[1].digiDocContainer ? 'ddoc_sign_small.gif' : 'attachment.gif'}" styleClass="inlineAction" />
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
          </r:permissionEvaluator>
          <r:permissionEvaluator value="#{r.files[1].node}" deny="viewDocumentFiles">
             <h:graphicImage value="/images/icons/#{r.files[1].digiDocContainer ? 'ddoc_sign_small.gif' : 'attachment.gif'}" alt="#{r.files[1].name}"
                title="#{r.files[1].name}" rendered="#{r.files[1] != null}" />
          </r:permissionEvaluator>
          <r:permissionEvaluator value="#{r.files[2].node}" allow="viewDocumentFiles">
+<<<<<<< HEAD
             <a:actionLink id="col10-act3" value="#{r.files[2].name}" href="#{r.files[2].downloadUrl}" target="_blank" showLink="false"
                image="/images/icons/#{r.files[2].digiDocContainer ? 'ddoc_sign_small.gif' : 'attachment.gif'}" styleClass="inlineAction webdav-readOnly" />
+=======
+            <a:actionLink id="col10-act3" value="#{r.files[2].name}" href="#{r.files[2].readOnlyUrl}" target="_blank" showLink="false"
+               image="/images/icons/#{r.files[2].digiDocContainer ? 'ddoc_sign_small.gif' : 'attachment.gif'}" styleClass="inlineAction" />
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
          </r:permissionEvaluator>
          <r:permissionEvaluator value="#{r.files[2].node}" deny="viewDocumentFiles">
             <h:graphicImage value="/images/icons/#{r.files[2].digiDocContainer ? 'ddoc_sign_small.gif' : 'attachment.gif'}" alt="#{r.files[2].name}"
                title="#{r.files[2].name}" rendered="#{r.files[2] != null}" />
          </r:permissionEvaluator>
          <r:permissionEvaluator value="#{r.files[3].node}" allow="viewDocumentFiles">
+<<<<<<< HEAD
             <a:actionLink id="col10-act4" value="#{r.files[3].name}" href="#{r.files[3].downloadUrl}" target="_blank" showLink="false"
                image="/images/icons/#{r.files[3].digiDocContainer ? 'ddoc_sign_small.gif' : 'attachment.gif'}" styleClass="inlineAction webdav-readOnly" />
+=======
+            <a:actionLink id="col10-act4" value="#{r.files[3].name}" href="#{r.files[3].readOnlyUrl}" target="_blank" showLink="false"
+               image="/images/icons/#{r.files[3].digiDocContainer ? 'ddoc_sign_small.gif' : 'attachment.gif'}" styleClass="inlineAction" />
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
          </r:permissionEvaluator>
          <r:permissionEvaluator value="#{r.files[3].node}" deny="viewDocumentFiles">
             <h:graphicImage value="/images/icons/#{r.files[3].digiDocContainer ? 'ddoc_sign_small.gif' : 'attachment.gif'}" alt="#{r.files[3].name}"
                title="#{r.files[3].name}" rendered="#{r.files[3] != null}" />
          </r:permissionEvaluator>
          <r:permissionEvaluator value="#{r.files[4].node}" allow="viewDocumentFiles">
+<<<<<<< HEAD
             <a:actionLink id="col10-act5" value="#{r.files[4].name}" href="#{r.files[4].downloadUrl}" target="_blank" showLink="false"
                image="/images/icons/#{r.files[4].digiDocContainer ? 'ddoc_sign_small.gif' : 'attachment.gif'}" styleClass="inlineAction webdav-readOnly" />
+=======
+            <a:actionLink id="col10-act5" value="#{r.files[4].name}" href="#{r.files[4].readOnlyUrl}" target="_blank" showLink="false"
+               image="/images/icons/#{r.files[4].digiDocContainer ? 'ddoc_sign_small.gif' : 'attachment.gif'}" styleClass="inlineAction" />
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
          </r:permissionEvaluator>
          <r:permissionEvaluator value="#{r.files[4].node}" deny="viewDocumentFiles">
             <h:graphicImage value="/images/icons/#{r.files[4].digiDocContainer ? 'ddoc_sign_small.gif' : 'attachment.gif'}" alt="#{r.files[4].name}"

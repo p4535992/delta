@@ -100,7 +100,11 @@
    <bean id="versionUnlockUpdater" class="ee.webmedia.alfresco.versions.bootstrap.VersionUnlockUpdater" parent="abstractNodeUpdater">
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
+<<<<<<< HEAD
       <property name="enabled" value="false" /><!-- Executed from node-browser -->
+=======
+      <property name="enabled" value="true" />
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
       <property name="dependsOn">
          <list>
             <ref bean="archivalsStoresBootstrap" />

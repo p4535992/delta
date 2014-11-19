@@ -21,9 +21,12 @@ import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.utils.RepoUtil;
 
+<<<<<<< HEAD
 /**
  * @author Alar Kvell
  */
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 public class NodeServiceTest extends BaseAlfrescoSpringTest {
 
     public void testSetAndGetDynamicProperty() {
@@ -97,11 +100,14 @@ public class NodeServiceTest extends BaseAlfrescoSpringTest {
             listOfLists.add(value);
         }
         testValues.add(listOfLists);
+<<<<<<< HEAD
         List<List<String>> listOfListsWithSingleValue = new ArrayList<List<String>>();
         List<String> listWithNotNullElement = new ArrayList<String>();
         listWithNotNullElement.add("testValue");
         listOfListsWithSingleValue.add(listWithNotNullElement);
         testValues.add((Serializable) listOfListsWithSingleValue);
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
         return testValues;
     }

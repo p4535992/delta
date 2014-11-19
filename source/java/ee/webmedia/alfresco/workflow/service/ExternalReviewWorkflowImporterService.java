@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 package ee.webmedia.alfresco.workflow.service;
 
 import java.io.Reader;
@@ -15,4 +16,23 @@ public interface ExternalReviewWorkflowImporterService {
     NodeRef importWorkflowDocument(Reader viewReader, Location location,
             NodeRef existingDocumentRef, List<DataFileType> dataFiles, String dvkId, Map<QName, Task> notifications);
 
+=======
+package ee.webmedia.alfresco.workflow.service;
+
+import java.io.Reader;
+import java.util.List;
+import java.util.Map;
+
+import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.cmr.view.Location;
+import org.alfresco.service.namespace.QName;
+
+import ee.webmedia.xtee.client.dhl.types.ee.sk.digiDoc.v13.DataFileType;
+
+public interface ExternalReviewWorkflowImporterService {
+
+    NodeRef importWorkflowDocument(Reader viewReader, Location location,
+            NodeRef existingDocumentRef, List<DataFileType> dataFiles, String dvkId, Map<QName, Task> notifications);
+
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 }

@@ -14,8 +14,11 @@ import ee.webmedia.alfresco.docadmin.service.DynamicType;
 
 /**
  * evaluates to true when permissions management should be enabled for the {@link DocumentType}
+<<<<<<< HEAD
  * 
  * @author Ats Uiboupin
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
  */
 public class DocTypeManagePrivilegesEvaluator extends BaseActionEvaluator {
     private static final long serialVersionUID = 0L;

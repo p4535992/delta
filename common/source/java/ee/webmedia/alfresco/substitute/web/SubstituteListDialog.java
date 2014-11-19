@@ -40,8 +40,11 @@ import ee.webmedia.alfresco.utils.UserUtil;
 
 /**
  * Dialog for substitutes list.
+<<<<<<< HEAD
  * 
  * @author Romet Aidla
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
  */
 public class SubstituteListDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;
@@ -166,7 +169,15 @@ public class SubstituteListDialog extends BaseDialogBean {
             if (isValid &&
                     !getSubstituteService().findSubstitutionDutiesInPeriod(userNodeRef, substitutionStartDate, substitutionEndDate).isEmpty()) {
                 isValid = false;
+<<<<<<< HEAD
                 MessageUtil.addErrorMessage("substitute_substitution_while_substituting");
+=======
+                if (AuthenticationUtil.getFullyAuthenticatedUser().equals(username)) {
+                    MessageUtil.addErrorMessage("substitute_substitution_while_substituting");
+                } else {
+                    MessageUtil.addErrorMessage("substitute_substitution_while_substituting_admin");
+                }
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             }
             substitute.setValid(isValid);
         }

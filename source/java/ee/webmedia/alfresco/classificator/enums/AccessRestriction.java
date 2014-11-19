@@ -19,6 +19,7 @@ public enum AccessRestriction {
     public boolean equals(String value) {
         return valueName.equalsIgnoreCase(value);
     }
+<<<<<<< HEAD
 
     /**
      * Retrieves <code>AccessRestriction</code> by value name.
@@ -38,4 +39,6 @@ public enum AccessRestriction {
 
         return result;
     }
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 }

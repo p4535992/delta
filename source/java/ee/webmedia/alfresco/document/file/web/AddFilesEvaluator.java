@@ -6,12 +6,18 @@ import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.web.action.evaluator.BaseActionEvaluator;
 import org.alfresco.web.bean.repository.Node;
 
+<<<<<<< HEAD
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel.Privileges;
 
 /**
  * @author Ats Uiboupin
  */
+=======
+import ee.webmedia.alfresco.document.model.DocumentCommonModel.Privileges;
+import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
+
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 public class AddFilesEvaluator extends BaseActionEvaluator {
 
     private static final long serialVersionUID = 778943700049418316L;
@@ -20,7 +26,11 @@ public class AddFilesEvaluator extends BaseActionEvaluator {
     public boolean evaluate(Node docNode) {
         return docNode.getNodeRef().getStoreRef().getProtocol().equals(StoreRef.PROTOCOL_WORKSPACE)
                 && docNode.hasPermission(Privileges.EDIT_DOCUMENT)
+<<<<<<< HEAD
                 && !Boolean.TRUE.equals(docNode.getProperties().get(DocumentCommonModel.Props.NOT_EDITABLE))
+=======
+                && !Boolean.TRUE.equals(docNode.getProperties().get(DocumentSpecificModel.Props.NOT_EDITABLE))
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
                 && !getWorkflowService().hasInprogressCompoundWorkflows(docNode.getNodeRef());
     }
 

@@ -122,6 +122,7 @@ public abstract class AbstractAuthenticationComponent implements AuthenticationC
         return allowGuestLogin;
     }
 
+<<<<<<< HEAD
     public NodeService getNodeService()
     {
         return nodeService;
@@ -131,6 +132,17 @@ public abstract class AbstractAuthenticationComponent implements AuthenticationC
     {
         return personService;
     }
+=======
+    public NodeService getNodeService()
+    {
+        return nodeService;
+    }
+
+    public PersonService getPersonService()
+    {
+        return personService;
+    }
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
     public UserRegistrySynchronizer getUserRegistrySynchronizer()
     {
@@ -168,7 +180,11 @@ public abstract class AbstractAuthenticationComponent implements AuthenticationC
         switch (validationMode)
         {
         case NONE:
+<<<<<<< HEAD
             return setCurrentUserImpl(userName);
+=======
+            return setCurrentUserImpl(userName);
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         case CHECK_AND_FIX:
         default:
             return setCurrentUser(userName);
@@ -177,6 +193,7 @@ public abstract class AbstractAuthenticationComponent implements AuthenticationC
 
     public Authentication setCurrentUser(final String userName) throws AuthenticationException
     {
+<<<<<<< HEAD
         if (isSystemUserName(userName))
         {
             return setCurrentUserImpl(userName);
@@ -220,11 +237,57 @@ public abstract class AbstractAuthenticationComponent implements AuthenticationC
             throw new AuthenticationException("Null user name");
         }
 
+=======
+        if (isSystemUserName(userName))
+        {
+            return setCurrentUserImpl(userName);
+        }
+        else
+        {
+            SetCurrentUserCallback callback = new SetCurrentUserCallback(userName);
+            Authentication auth;
+            // If the repository is read only, we have to settle for a read only transaction. Auto user creation will
+            // not be possible.
+            if (transactionService.isReadOnly())
+            {
+                auth = transactionService.getRetryingTransactionHelper().doInTransaction(callback, true, false);
+            }
+            // Otherwise, we want a writeable transaction, so if the current transaction is read only we set the
+            // requiresNew flag to true
+            else
+            {
+                auth = transactionService.getRetryingTransactionHelper().doInTransaction(callback, false,
+                        AlfrescoTransactionSupport.getTransactionReadState() == TxnReadState.TXN_READ_ONLY);
+            }
+            if ((auth == null) || (callback.ae != null))
+            {
+                throw callback.ae;
+            }
+            return auth;
+        }
+    }
+
+    /**
+     * Explicitly set the current user to be authenticated.
+     * 
+     * @param userName
+     *            String
+     * @return Authentication
+     */
+    private Authentication setCurrentUserImpl(String userName) throws AuthenticationException
+    {
+        if (userName == null)
+        {
+            throw new AuthenticationException("Null user name");
+        }
+
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         if (isSystemUserName(userName))
         {
             return setSystemUserAsCurrentUser(getUserDomain(userName));
         }
 
+<<<<<<< HEAD
         try
         {
             UserDetails ud = null;
@@ -257,6 +320,40 @@ public abstract class AbstractAuthenticationComponent implements AuthenticationC
         gas[0] = new GrantedAuthorityImpl("ROLE_AUTHENTICATED");
         UserDetails ud = new User(userName, "", true, true, true, true, gas);
         return ud;
+=======
+        try
+        {
+            UserDetails ud = null;
+            if (isGuestUserName(userName))
+            {
+                GrantedAuthority[] gas = new GrantedAuthority[0];
+                ud = new User(getGuestUserName(getUserDomain(userName)), "", true, true, true, true, gas);
+            }
+            else
+            {
+                ud = getUserDetails(userName);
+            }
+            return setUserDetails(ud);
+        }
+        catch (net.sf.acegisecurity.AuthenticationException ae)
+        {
+            throw new AuthenticationException(ae.getMessage(), ae);
+        }
+    }
+
+    /**
+     * Default implementation that makes an ACEGI object on the fly
+     * 
+     * @param userName
+     * @return
+     */
+    protected UserDetails getUserDetails(String userName)
+    {
+        GrantedAuthority[] gas = new GrantedAuthority[1];
+        gas[0] = new GrantedAuthorityImpl("ROLE_AUTHENTICATED");
+        UserDetails ud = new User(userName, "", true, true, true, true, gas);
+        return ud;
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     /**
@@ -414,6 +511,7 @@ public abstract class AbstractAuthenticationComponent implements AuthenticationC
         authenticationContext.clearCurrentSecurityContext();
     }
 
+<<<<<<< HEAD
     class SetCurrentUserCallback implements RetryingTransactionHelper.RetryingTransactionCallback<Authentication>
     {
         AuthenticationException ae = null;
@@ -457,6 +555,51 @@ public abstract class AbstractAuthenticationComponent implements AuthenticationC
         }
     }
 
+=======
+    class SetCurrentUserCallback implements RetryingTransactionHelper.RetryingTransactionCallback<Authentication>
+    {
+        AuthenticationException ae = null;
+
+        String userName;
+
+        SetCurrentUserCallback(String userName)
+        {
+            this.userName = userName;
+        }
+
+        public Authentication execute() throws Throwable
+        {
+            try
+            {
+                String name = AuthenticationUtil.runAs(new RunAsWork<String>()
+                {
+                    public String doWork() throws Exception
+                    {
+                        if (personService.personExists(userName)|| userRegistrySynchronizer.createMissingPerson(userName))
+                        {
+                            NodeRef userNode = personService.getPerson(userName);
+                            if (userNode != null)
+                            {
+                                // Get the person name and use that as the current user to line up with permission
+                                // checks
+                                return (String) nodeService.getProperty(userNode, ContentModel.PROP_USERNAME);
+                            }
+                        }
+                        throw new AuthenticationException("Person does not exist in Alfresco");
+                    }
+                }, getSystemUserName(getUserDomain(userName)));
+
+                return setCurrentUserImpl(name);
+            }
+            catch (AuthenticationException ae)
+            {
+                this.ae = ae;
+                return null;
+            }
+        }
+    }
+
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     /*
      * (non-Javadoc)
      * @see org.alfresco.repo.security.authentication.AuthenticationComponent#getDefaultAdministratorUserNames()

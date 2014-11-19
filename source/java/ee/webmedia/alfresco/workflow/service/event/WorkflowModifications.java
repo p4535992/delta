@@ -3,9 +3,12 @@ package ee.webmedia.alfresco.workflow.service.event;
 import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
 import ee.webmedia.alfresco.workflow.service.Task;
 
+<<<<<<< HEAD
 /**
  * @author Alar Kvell
  */
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 public interface WorkflowModifications {
 
     /**
@@ -18,6 +21,9 @@ public interface WorkflowModifications {
     void changeInitiatingTaskDueDate(Task task, WorkflowEventQueue queue);
 
     void unfinishTasksByFinishingLetterResponsibleTask(Task task, WorkflowEventQueue queue);
+<<<<<<< HEAD
 
     void rejectDueDateExtension(Task task);
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 }

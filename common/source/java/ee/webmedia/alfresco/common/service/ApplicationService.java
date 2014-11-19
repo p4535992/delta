@@ -1,12 +1,18 @@
 package ee.webmedia.alfresco.common.service;
 
+<<<<<<< HEAD
 import org.alfresco.util.Pair;
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import org.springframework.context.ApplicationContext;
 
 /**
  * Information about specific project and common project.
+<<<<<<< HEAD
  * 
  * @author Alar Kvell
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
  */
 public interface ApplicationService {
 
@@ -53,6 +59,7 @@ public interface ApplicationService {
 
     ApplicationContext getApplicationContext();
 
+<<<<<<< HEAD
     /**
      * @return URL of custom logo if configured, or URL of standard logo otherwise
      */
@@ -72,4 +79,6 @@ public interface ApplicationService {
      * @return jar of signed jumploader applet if configured, or {@code null} otherwise
      */
     Pair<byte[], String> getJumploaderApplet();
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 }

@@ -12,8 +12,11 @@ import ee.webmedia.alfresco.docadmin.service.DocumentType;
 
 /**
  * UI action evaluator that decides whether {@link DocumentType} can be deleted
+<<<<<<< HEAD
  * 
  * @author Ats Uiboupin
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
  */
 public class DeleteDocumentTypeEvaluator extends BaseActionEvaluator {
     private static final long serialVersionUID = 0L;

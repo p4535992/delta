@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <?xml version="1.0" encoding="UTF-8"?>
 <view:view xmlns:view="http://www.alfresco.org/view/repository/1.0" xmlns:cl="http://alfresco.webmedia.ee/model/classificator/1.0">
 
@@ -7,4 +8,15 @@
       <cl:description>Klassifikaator on seotud dokumendi liigi metaandme väljaga "Dokumendi liigi grupp". Välja "Dokumendi liigi grupp" väärtus määrab dokumendi liigi asukoha põhimenüü punkti "Alusta uut dokumenti" all avanevas valikmenüüs. Dokumendi liigid, mille grupp ei ole määratud, kuvatakse valikmenüüs esimesel tasemel. Dokumendi liigid, mille grupp on määratud, kuvatakse valikmenüüs vastava grupi all teisel tasemel.</cl:description>
    </cl:classificator>
 
+=======
+<?xml version="1.0" encoding="UTF-8"?>
+<view:view xmlns:view="http://www.alfresco.org/view/repository/1.0" xmlns:cl="http://alfresco.webmedia.ee/model/classificator/1.0">
+
+   <cl:classificator view:childName="cl:docTypeGroup">
+      <cl:name>docTypeGroup</cl:name>
+      <cl:addRemoveValues>true</cl:addRemoveValues>
+      <cl:description>Klassifikaator on seotud dokumendi liigi metaandme väljaga "Dokumendi liigi grupp". Välja "Dokumendi liigi grupp" väärtus määrab dokumendi liigi asukoha põhimenüü punkti "Alusta uut dokumenti" all avanevas valikmenüüs. Dokumendi liigid, mille grupp ei ole määratud, kuvatakse valikmenüüs esimesel tasemel. Dokumendi liigid, mille grupp on määratud, kuvatakse valikmenüüs vastava grupi all teisel tasemel.</cl:description>
+   </cl:classificator>
+
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 </view:view>

@@ -32,9 +32,12 @@ import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
 
+<<<<<<< HEAD
 /**
  * @author Alar Kvell
  */
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 public class BaseServiceImpl implements BaseService {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(BaseServiceImpl.class);
 

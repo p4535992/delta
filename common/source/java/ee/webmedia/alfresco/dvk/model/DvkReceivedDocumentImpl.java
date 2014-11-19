@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 package ee.webmedia.alfresco.dvk.model;
 
 import java.util.Date;
@@ -38,3 +39,42 @@ public class DvkReceivedDocumentImpl extends AbstractLetterDocument implements D
     }
 
 }
+=======
+package ee.webmedia.alfresco.dvk.model;
+
+import java.util.Date;
+
+import ee.webmedia.alfresco.utils.beanmapper.AlfrescoModelType;
+
+// use URIs defined by the interfaces
+@AlfrescoModelType(uri = "")
+public class DvkReceivedDocumentImpl extends AbstractLetterDocument implements DvkReceivedLetterDocument {
+
+    /**
+     * aka dhl_id - unique id assigned to the sent document by the DVK server
+     */
+    private String dvkId;
+    private Date letterDeadLine;
+
+    @Override
+    public String getDvkId() {
+        return dvkId;
+    }
+
+    @Override
+    public void setDvkId(String dvkId) {
+        this.dvkId = dvkId;
+    }
+
+    @Override
+    public Date getLetterDeadLine() {
+        return letterDeadLine;
+    }
+
+    @Override
+    public void setLetterDeadLine(Date letterDeadLine) {
+        this.letterDeadLine = letterDeadLine;
+    }
+
+}
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5

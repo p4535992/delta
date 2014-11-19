@@ -4,8 +4,11 @@ import org.alfresco.web.bean.repository.Node;
 
 /**
  * Abstract evaluator of followUps
+<<<<<<< HEAD
  * 
  * @author Ats Uiboupin
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
  *         FIXME DLSeadist pole vist enam kasutusel
  */
 public class AbstractFollowUpNodeTypeEvaluator extends NodeTypeEvaluator {

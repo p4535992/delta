@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <?xml version="1.0" encoding="UTF-8"?>
 <view:view xmlns:view="http://www.alfresco.org/view/repository/1.0" xmlns:cl="http://alfresco.webmedia.ee/model/classificator/1.0">
 
@@ -57,3 +58,64 @@
    </cl:classificator>
 
 </view:view>
+=======
+<?xml version="1.0" encoding="UTF-8"?>
+<view:view xmlns:view="http://www.alfresco.org/view/repository/1.0" xmlns:cl="http://alfresco.webmedia.ee/model/classificator/1.0">
+
+   <cl:classificator view:childName="cl:invoiceTypes">
+      <cl:name>invoiceTypes</cl:name>
+      <cl:addRemoveValues>false</cl:addRemoveValues>
+
+      <view:associations>
+         <cl:classificatorValue>
+
+            <cl:classificatorValue view:childName="cl:classificatorValue">
+               <view:properties>
+                  <cl:valueName>DEB</cl:valueName>
+                  <cl:order>1</cl:order>
+                  <cl:byDefault>true</cl:byDefault>
+                  <cl:readOnly>true</cl:readOnly>
+                  <cl:active>true</cl:active>
+                  <cl:classificatorDescription>Ostuarve</cl:classificatorDescription>
+               </view:properties>
+            </cl:classificatorValue>
+
+            <cl:classificatorValue view:childName="cl:classificatorValue">
+               <view:properties>
+                  <cl:valueName>CRE</cl:valueName>
+                  <cl:order>2</cl:order>
+                  <cl:byDefault>false</cl:byDefault>
+                  <cl:readOnly>true</cl:readOnly>
+                  <cl:active>true</cl:active>
+                  <cl:classificatorDescription>Kreeditarve</cl:classificatorDescription>
+               </view:properties>
+            </cl:classificatorValue>
+
+         </cl:classificatorValue>
+      </view:associations>
+   </cl:classificator>
+
+   <cl:classificator view:childName="cl:currency">
+      <cl:name>currency</cl:name>
+      <cl:addRemoveValues>true</cl:addRemoveValues>
+
+      <view:associations>
+         <cl:classificatorValue>
+
+            <cl:classificatorValue view:childName="cl:classificatorValue">
+               <view:properties>
+                  <cl:valueName>EUR</cl:valueName>
+                  <cl:order>1</cl:order>
+                  <cl:byDefault>true</cl:byDefault>
+                  <cl:readOnly>false</cl:readOnly>
+                  <cl:active>true</cl:active>
+                  <cl:classificatorDescription>EUR</cl:classificatorDescription>
+               </view:properties>
+            </cl:classificatorValue>
+
+         </cl:classificatorValue>
+      </view:associations>
+   </cl:classificator>
+
+</view:view>
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5

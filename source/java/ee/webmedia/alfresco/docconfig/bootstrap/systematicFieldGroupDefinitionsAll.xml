@@ -112,4 +112,159 @@
       </view:properties>
    </docadmin:fieldGroup>
 
+<<<<<<< HEAD
+=======
+   <docadmin:fieldGroup view:childName="docadmin:trainingApplicant">
+      <view:properties>
+         <docadmin:name>Koolituse taotleja</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:readonlyFieldsNameChangeable>false</docadmin:readonlyFieldsNameChangeable>
+         <docadmin:readonlyFieldsRuleChangeable>false</docadmin:readonlyFieldsRuleChangeable>
+         <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
+         <docadmin:showInTwoColumnsChangeable>false</docadmin:showInTwoColumnsChangeable>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+         <docadmin:fieldDefinitionIds>
+            <view:values>
+               <view:value>applicantName</view:value>
+               <view:value>applicantServiceRank</view:value>
+               <view:value>applicantJobTitle</view:value>
+               <view:value>applicantOrgStructUnit</view:value>
+               <view:value>applicantWorkAddress</view:value>
+               <view:value>applicantEmail</view:value>
+               <view:value>applicantPhone</view:value>
+               <view:value>errandBeginDate</view:value>
+               <view:value>errandEndDate</view:value>
+               <view:value>dailyAllowanceCateringCount</view:value>
+               <view:value>dailyAllowanceDays</view:value>
+               <view:value>dailyAllowanceRate</view:value>
+               <view:value>dailyAllowanceFinancingSource</view:value>
+               <view:value>dailyAllowanceSum</view:value>
+               <view:value>dailyAllowanceTotalSum</view:value>
+               <view:value>expenseType</view:value>
+               <view:value>expectedExpenseSum</view:value>
+               <view:value>expensesFinancingSource</view:value>
+               <view:value>expensesTotalSum</view:value>
+               <view:value>financingSource</view:value>
+               <view:value>advancePaymentSum</view:value>
+               <view:value>advancePaymentDesc</view:value>
+               <view:value>substituteName</view:value>
+               <view:value>substituteJobTitle</view:value>
+               <view:value>substitutionBeginDate</view:value>
+               <view:value>substitutionEndDate</view:value>
+               <view:value>errandComment</view:value>
+            </view:values>
+         </docadmin:fieldDefinitionIds>
+      </view:properties>
+   </docadmin:fieldGroup>
+
+   <docadmin:fieldGroup view:childName="docadmin:errandExpenses">
+      <view:properties>
+         <docadmin:name>Lähetuse kulud</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:readonlyFieldsNameChangeable>false</docadmin:readonlyFieldsNameChangeable>
+         <docadmin:readonlyFieldsRuleChangeable>false</docadmin:readonlyFieldsRuleChangeable>
+         <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
+         <docadmin:showInTwoColumnsChangeable>false</docadmin:showInTwoColumnsChangeable>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+         <docadmin:fieldDefinitionIds>
+            <view:values>
+               <view:value>expenseTypeChoice</view:value>
+               <view:value>financingSourceChoice</view:value>
+               <view:value>payingReasonAndExtent</view:value>
+               <view:value>errandExpectedExpense</view:value>
+            </view:values>
+         </docadmin:fieldDefinitionIds>
+      </view:properties>
+   </docadmin:fieldGroup>
+
+   <docadmin:fieldGroup view:childName="docadmin:errandExpensesReport">
+      <view:properties>
+         <docadmin:name>Lähetuse kulude aruanne</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:readonlyFieldsNameChangeable>false</docadmin:readonlyFieldsNameChangeable>
+         <docadmin:readonlyFieldsRuleChangeable>false</docadmin:readonlyFieldsRuleChangeable>
+         <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
+         <docadmin:showInTwoColumnsChangeable>false</docadmin:showInTwoColumnsChangeable>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+         <docadmin:fieldDefinitionIds>
+            <view:values>
+               <view:value>expenseTypeChoice</view:value>
+               <view:value>errandReportPaymentMethod</view:value>
+               <view:value>errandReportSum</view:value>
+            </view:values>
+         </docadmin:fieldDefinitionIds>
+      </view:properties>
+   </docadmin:fieldGroup>
+
+   <docadmin:fieldGroup view:childName="docadmin:errandExpensesReportSummary">
+      <view:properties>
+         <docadmin:name>Lähetuse kulude aruande koond</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:readonlyFieldsNameChangeable>false</docadmin:readonlyFieldsNameChangeable>
+         <docadmin:readonlyFieldsRuleChangeable>false</docadmin:readonlyFieldsRuleChangeable>
+         <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
+         <docadmin:showInTwoColumnsChangeable>false</docadmin:showInTwoColumnsChangeable>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+         <docadmin:fieldDefinitionIds>
+            <view:values>
+               <view:value>expenseTypeChoice</view:value>
+               <view:value>errandSummaryProject</view:value>
+               <view:value>errandSummaryDepartment</view:value>
+               <view:value>financingSource</view:value>
+               <view:value>errandSummaryExpenseItem</view:value>
+               <view:value>errandSummaryAccount</view:value>
+               <view:value>errandSummaryDebit</view:value>
+               <view:value>errandSummaryCredit</view:value>
+            </view:values>
+         </docadmin:fieldDefinitionIds>
+      </view:properties>
+   </docadmin:fieldGroup>
+
+   <docadmin:fieldGroup view:childName="docadmin:driveCompensation">
+      <view:properties>
+         <docadmin:name>Sõiduauto kasutamise hüvitis</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:readonlyFieldsNameChangeable>false</docadmin:readonlyFieldsNameChangeable>
+         <docadmin:readonlyFieldsRuleChangeable>false</docadmin:readonlyFieldsRuleChangeable>
+         <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
+         <docadmin:showInTwoColumnsChangeable>false</docadmin:showInTwoColumnsChangeable>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+         <docadmin:fieldDefinitionIds>
+            <view:values>
+               <view:value>driveRecordKeeping</view:value>
+               <view:value>driveCompensationRate</view:value>
+               <view:value>driveBeginDate</view:value>
+               <view:value>driveEndDate</view:value>
+               <view:value>driveOdoBegin</view:value>
+               <view:value>driveOdoEnd</view:value>
+               <view:value>driveKm</view:value>
+               <view:value>driveCompensationCalculated</view:value>
+               <view:value>driveTotalKm</view:value>
+               <view:value>driveTotalCompensation</view:value>
+               <view:value>driveCompensation</view:value>
+            </view:values>
+         </docadmin:fieldDefinitionIds>
+      </view:properties>
+   </docadmin:fieldGroup>
+
+   <docadmin:fieldGroup view:childName="docadmin:driveCompensationRIK">
+      <view:properties>
+         <docadmin:name>Sõiduauto kasutamise hüvitis (RIK)</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:readonlyFieldsNameChangeable>false</docadmin:readonlyFieldsNameChangeable>
+         <docadmin:readonlyFieldsRuleChangeable>false</docadmin:readonlyFieldsRuleChangeable>
+         <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
+         <docadmin:showInTwoColumnsChangeable>false</docadmin:showInTwoColumnsChangeable>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+         <docadmin:fieldDefinitionIds>
+            <view:values>
+               <view:value>driveTotalKm</view:value>
+               <view:value>driveCompensationRate</view:value>
+               <view:value>driveTotalCompensation</view:value>
+            </view:values>
+         </docadmin:fieldDefinitionIds>
+      </view:properties>
+   </docadmin:fieldGroup>
+
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 </view:view>

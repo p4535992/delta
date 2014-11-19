@@ -2,9 +2,12 @@ package ee.webmedia.alfresco.common.search;
 
 import java.util.Collection;
 
+<<<<<<< HEAD
 /**
  * @author Alar Kvell
  */
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 public class CompositeSearchQueryBuilder implements SearchQueryBuilder {
 
     private final Collection<SearchQueryBuilder> builders;

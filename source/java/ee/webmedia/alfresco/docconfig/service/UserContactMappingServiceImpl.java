@@ -1,5 +1,10 @@
 package ee.webmedia.alfresco.docconfig.service;
 
+<<<<<<< HEAD
+=======
+import static ee.webmedia.alfresco.common.web.BeanHelper.getOrganizationStructureService;
+
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -18,7 +23,10 @@ import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.common.service.GeneralService;
+<<<<<<< HEAD
 import ee.webmedia.alfresco.common.web.BeanHelper;
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import ee.webmedia.alfresco.docadmin.service.Field;
 import ee.webmedia.alfresco.docadmin.service.FieldGroup;
 import ee.webmedia.alfresco.utils.TextUtil;
@@ -132,7 +140,11 @@ public class UserContactMappingServiceImpl implements UserContactMappingService 
         }
     }
 
+<<<<<<< HEAD
     // TODO Alar: could eliminate this method, because it is not used
+=======
+    // TODO could eliminate this method, because it is not used
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     private List<Serializable> getMappedValues(List<UserContactMappingCode> mappingCodes, NodeRef userOrContactRef) {
         if (userOrContactRef == null || !nodeService.exists(userOrContactRef)) {
             return null;
@@ -197,7 +209,18 @@ public class UserContactMappingServiceImpl implements UserContactMappingService 
             return null;
         case ORG_STRUCT_UNIT:
             if (isPerson) {
+<<<<<<< HEAD
                 return (Serializable) BeanHelper.getUserService().getUserOrgPathOrOrgName(props);
+=======
+                @SuppressWarnings("unchecked")
+                List<String> orgPaths = (List<String>) props.get(ContentModel.PROP_ORGANIZATION_PATH);
+                if (orgPaths != null && !orgPaths.isEmpty()) {
+                    return (Serializable) orgPaths;
+                }
+                String orgId = getProp(props, ContentModel.PROP_ORGID);
+                String orgName = getOrganizationStructureService().getOrganizationStructureName(orgId);
+                return new ArrayList<String>(Collections.singleton(orgName));
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             }
             return null;
         case ADDRESS:

@@ -65,6 +65,7 @@
             </property>            
          </properties>
       </type>
+<<<<<<< HEAD
       
       <type name="docsearch:objectFilter">
          <parent>docsearch:filter</parent>
@@ -77,6 +78,8 @@
             </property>
          </properties>
       </type>
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
    </types>
 

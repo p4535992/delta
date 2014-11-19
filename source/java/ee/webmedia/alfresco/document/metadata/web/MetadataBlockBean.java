@@ -76,7 +76,11 @@ import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentParentNodesVO;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
+<<<<<<< HEAD
 import ee.webmedia.alfresco.document.lock.service.DocLockService;
+=======
+import ee.webmedia.alfresco.document.service.DocLockService;
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.document.service.DocumentService.TransientProps;
 import ee.webmedia.alfresco.document.service.InMemoryChildNodeHelper;
@@ -84,7 +88,11 @@ import ee.webmedia.alfresco.document.type.model.DocumentType;
 import ee.webmedia.alfresco.document.type.service.DocumentTypeService;
 import ee.webmedia.alfresco.document.web.DocumentDialog;
 import ee.webmedia.alfresco.dvk.service.DvkService;
+<<<<<<< HEAD
 import ee.webmedia.alfresco.dvk.service.ReviewTaskException;
+=======
+import ee.webmedia.alfresco.dvk.service.ExternalReviewException;
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import ee.webmedia.alfresco.functions.service.FunctionsService;
 import ee.webmedia.alfresco.menu.ui.MenuBean;
 import ee.webmedia.alfresco.orgstructure.service.OrganizationStructureService;
@@ -107,9 +115,12 @@ import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.volume.service.VolumeService;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
 
+<<<<<<< HEAD
 /**
  * @author Alar Kvell
  */
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 public class MetadataBlockBean implements ClearStateListener {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(MetadataBlockBean.class);
     private static final long serialVersionUID = 1L;
@@ -1435,7 +1446,11 @@ public class MetadataBlockBean implements ClearStateListener {
                 }
                 MessageUtil.addStatusMessage(FacesContext.getCurrentInstance(), e);
                 return false;
+<<<<<<< HEAD
             } catch (ReviewTaskException e) {
+=======
+            } catch (ExternalReviewException e) {
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
                 MessageUtil.addInfoMessage("dvk_sending_failed");
             } finally {
                 BeanHelper.getDocumentLockHelperBean().lockOrUnlockIfNeeded(BeanHelper.getDocumentLockHelperBean().isLockingAllowed());
@@ -1849,7 +1864,11 @@ public class MetadataBlockBean implements ClearStateListener {
             }
             MessageUtil.addStatusMessage(e);
         } catch (NodeLockedException e) {
+<<<<<<< HEAD
             BeanHelper.getDocumentLockHelperBean().handleLockedNode("document_registerDoc_error_docLocked", e);
+=======
+            BeanHelper.getDocumentLockHelperBean().handleLockedNode("document_registerDoc_error_docLocked");
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         }
         getDocumentDialogHelperBean().switchMode(false);
     }

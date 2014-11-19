@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.workflow.exception;
 
+<<<<<<< HEAD
 /**
  * @author Alar Kvell
  */
@@ -26,4 +27,26 @@ public class WorkflowChangedException extends RuntimeException {
         return errorCause;
     }
 
+=======
+import ee.webmedia.alfresco.workflow.service.BaseWorkflowObject;
+
+public class WorkflowChangedException extends RuntimeException {
+    private static final long serialVersionUID = 1L;
+
+    private final BaseWorkflowObject baseWorkflowObject;
+
+    public WorkflowChangedException(String message, BaseWorkflowObject baseWorkflowObject) {
+        super(message);
+        this.baseWorkflowObject = baseWorkflowObject;
+    }
+
+    public String getShortMessage() {
+        return super.getMessage() + (baseWorkflowObject != null ? (";nodeRef=" + baseWorkflowObject.getNodeRef()) : "");
+    }
+
+    @Override
+    public String getMessage() {
+        return super.getMessage() + "\n" + baseWorkflowObject;
+    }
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 }

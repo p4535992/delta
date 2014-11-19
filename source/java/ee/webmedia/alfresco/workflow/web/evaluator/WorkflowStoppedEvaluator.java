@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 package ee.webmedia.alfresco.workflow.web.evaluator;
 
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
@@ -31,3 +32,24 @@ public class WorkflowStoppedEvaluator extends AbstractFullAccessEvaluator {
     }
 
 }
+=======
+package ee.webmedia.alfresco.workflow.web.evaluator;
+
+import ee.webmedia.alfresco.workflow.model.Status;
+import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
+import ee.webmedia.alfresco.workflow.service.WorkflowUtil;
+
+/**
+ * Evaluates to true if given workflow has status "peatatud".
+ */
+public class WorkflowStoppedEvaluator extends AbstractFullAccessEvaluator {
+
+    private static final long serialVersionUID = 1L;
+
+    @Override
+    public boolean evaluate(Object obj) {
+        return obj != null && WorkflowUtil.isStatus((CompoundWorkflow) obj, Status.STOPPED) && hasFullAccess();
+    }
+
+}
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5

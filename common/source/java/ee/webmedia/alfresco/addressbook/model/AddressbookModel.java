@@ -2,9 +2,12 @@ package ee.webmedia.alfresco.addressbook.model;
 
 import org.alfresco.service.namespace.QName;
 
+<<<<<<< HEAD
 /**
  * @author Keit Tehvan
  */
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 public interface AddressbookModel {
     String URI = "http://alfresco.webmedia.ee/model/addressbook/1.0";
     String PREFIX = "ab:";
@@ -42,7 +45,10 @@ public interface AddressbookModel {
         QName FIRST_ADDITIONAL_PHONE = QName.createQName(AddressbookModel.URI, "firstAdditionalPhone");
         QName SECOND_ADDITIONAL_PHONE = QName.createQName(AddressbookModel.URI, "secondAdditionalPhone");
         QName MOBILE_PHONE = QName.createQName(AddressbookModel.URI, "mobilePhone");
+<<<<<<< HEAD
         QName PRIVATE_PERSON_ORG_NAME = QName.createQName(AddressbookModel.URI, "privatePersonOrgName");
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         QName ORGANIZATION_NAME = QName.createQName(AddressbookModel.URI, "orgName");
         QName ORGANIZATION_ALTERNATE_NAME = QName.createQName(AddressbookModel.URI, "orgAltName");
         QName ORGANIZATION_ACRONYM = QName.createQName(AddressbookModel.URI, "orgAcronym");

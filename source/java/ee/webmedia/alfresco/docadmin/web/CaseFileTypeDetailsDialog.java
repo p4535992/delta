@@ -8,8 +8,11 @@ import ee.webmedia.alfresco.docadmin.service.CaseFileType;
  * Details of {@link CaseFileType}.
  * To open this dialog just call actionListener. You must not set action attribute on actionLink that opens this dialog nor any other way perform navigation, as actionListener
  * handles navigation
+<<<<<<< HEAD
  * 
  * @author Ats Uiboupin
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
  */
 public class CaseFileTypeDetailsDialog extends DynamicTypeDetailsDialog<CaseFileType, CaseFileTypeDetailsDialog.CaseFileTypeDialogSnapshot> {
     private static final long serialVersionUID = 1L;
@@ -23,8 +26,11 @@ public class CaseFileTypeDetailsDialog extends DynamicTypeDetailsDialog<CaseFile
 
     /**
      * Contains fields that contain state to be used when restoring dialog
+<<<<<<< HEAD
      * 
      * @author Ats Uiboupin
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
      */
     static class CaseFileTypeDialogSnapshot extends DynamicTypeDetailsDialog.DynTypeDialogSnapshot<CaseFileType> {
         private static final long serialVersionUID = 1L;

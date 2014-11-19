@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.Date;
 
 import org.alfresco.service.cmr.repository.NodeRef;
+<<<<<<< HEAD
 import org.alfresco.service.namespace.QName;
 import org.apache.commons.lang.StringUtils;
 
@@ -16,6 +17,12 @@ import ee.webmedia.alfresco.document.service.DocumentService.AssocType;
  * @author Ats Uiboupin
  */
 public class DocAssocInfo implements Serializable, Comparable<DocAssocInfo> {
+=======
+
+import ee.webmedia.alfresco.document.service.DocumentService.AssocType;
+
+public class DocAssocInfo implements Serializable {
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
     private static final long serialVersionUID = 1L;
 
@@ -23,17 +30,26 @@ public class DocAssocInfo implements Serializable, Comparable<DocAssocInfo> {
     private String typeId;
     private String title;
     private AssocType assocType;
+<<<<<<< HEAD
     private QName assocTypeQName;
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     private boolean source;
     private String regNumber;
     private Date regDateTime;
 
+<<<<<<< HEAD
     private NodeRef thisNodeRef;
     private NodeRef otherNodeRef;
     private NodeRef caseNodeRef;
     private NodeRef volumeNodeRef;
     private boolean isCaseFileVolume;
     private boolean allowDelete;
+=======
+    private NodeRef nodeRef;
+
+    private NodeRef caseNodeRef;
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
     public String getType() {
         return type;
@@ -75,6 +91,7 @@ public class DocAssocInfo implements Serializable, Comparable<DocAssocInfo> {
         this.source = source;
     }
 
+<<<<<<< HEAD
     public NodeRef getOtherNodeRef() {
         return otherNodeRef;
     }
@@ -85,12 +102,21 @@ public class DocAssocInfo implements Serializable, Comparable<DocAssocInfo> {
 
     public boolean isDocument() {
         return !isCase() && !isWorkflow() && !isVolume();
+=======
+    public NodeRef getNodeRef() {
+        return nodeRef;
+    }
+
+    public void setNodeRef(NodeRef nodeRef) {
+        this.nodeRef = nodeRef;
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     public boolean isCase() {
         return caseNodeRef != null;
     }
 
+<<<<<<< HEAD
     public boolean isWorkflow() {
         return AssocType.WORKFLOW == assocType;
     }
@@ -111,6 +137,8 @@ public class DocAssocInfo implements Serializable, Comparable<DocAssocInfo> {
         this.isCaseFileVolume = isCaseFileVolume;
     }
 
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     public void setCaseNodeRef(NodeRef caseNodeRef) {
         this.caseNodeRef = caseNodeRef;
     }
@@ -119,6 +147,7 @@ public class DocAssocInfo implements Serializable, Comparable<DocAssocInfo> {
         return caseNodeRef;
     }
 
+<<<<<<< HEAD
     public void setVolumeNodeRef(NodeRef volumeNodeRef) {
         this.volumeNodeRef = volumeNodeRef;
     }
@@ -130,6 +159,11 @@ public class DocAssocInfo implements Serializable, Comparable<DocAssocInfo> {
     @Override
     public String toString() {
         return "DocAssocInfo [assocType=" + assocType + ", caseNodeRef=" + caseNodeRef + ", nodeRef=" + otherNodeRef
+=======
+    @Override
+    public String toString() {
+        return "DocAssocInfo [assocType=" + assocType + ", caseNodeRef=" + caseNodeRef + ", nodeRef=" + nodeRef
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
                 + ", title=" + title + ", type=" + type + ", source=" + source + "]";
     }
 
@@ -150,6 +184,7 @@ public class DocAssocInfo implements Serializable, Comparable<DocAssocInfo> {
     }
 
     public NodeRef getEffectiveNodeRef() {
+<<<<<<< HEAD
         return otherNodeRef == null ? caseNodeRef : otherNodeRef;
     }
 
@@ -201,6 +236,9 @@ public class DocAssocInfo implements Serializable, Comparable<DocAssocInfo> {
 
     public void setAllowDelete(boolean allowDelete) {
         this.allowDelete = allowDelete;
+=======
+        return nodeRef == null ? caseNodeRef : nodeRef;
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
 }

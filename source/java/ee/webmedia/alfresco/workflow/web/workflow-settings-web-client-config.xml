@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <alfresco-config area="workflow-settings">
 
    <!-- This is a separate config area for admin compound workflow settings screen. -->
@@ -110,4 +111,107 @@
       </property-sheet>
    </config>
 
+=======
+<alfresco-config area="workflow-settings">
+
+   <!-- This is a separate config area for admin compound workflow settings screen. -->
+
+   <config evaluator="node-type" condition="wfc:compoundWorkflowDefinition">
+      <property-sheet>
+         <show-property name="wfc:name" styleClass="focus"/>
+         <show-property name="{temp}userFullName" display-label-id="compoundWorkflow_definition_user_name" component-generator="UnescapedOutputTextGenerator" rendered="#{CompoundWorkflowDefinitionDialog.showUserFullName}"/>
+         <show-property name="wfc:documentTypes" component-generator="SearchGenerator" pickerCallback="#{DocTypeListDialog.searchUsedDocTypes}"
+            allowDuplicates="false" converter="ee.webmedia.alfresco.document.type.web.DocumentTypeConverter" dialogTitleId="workflow_compound_type_popUpInfo" />
+      </property-sheet>
+   </config>
+
+   <config evaluator="node-type" condition="wfs:reviewWorkflow">
+      <property-sheet>
+         <show-property name="wfc:parallelTasks" component-generator="GeneralSelectorGenerator" selectionItems="#{CompoundWorkflowDefinitionDialog.getParallelSelections}" converter="javax.faces.Boolean" />
+      </property-sheet>
+   </config>
+
+   <config evaluator="aspect-name" condition="wfs:commonWorkflow" >
+      <property-sheet>
+         <show-property name="wfs:description" component-generator="TextAreaGenerator" styleClass="expand19-200" />
+      </property-sheet>
+   </config>
+
+   <config evaluator="node-type" condition="wfs:reviewWorkflow,wfs:externalReviewWorkflow,wfs:confirmationWorkflow" >
+      <property-sheet>
+         <!-- Override description from aspect-name=wfs:commonWorkflow: description display="inline" so that following property(stopOnFinish) is shown on the same line for reviewWorkflow  -->
+         <show-property name="wfs:description" component-generator="TextAreaGenerator" styleClass="expand19-200" display="inline" />
+         <show-property name="wfc:stopOnFinish" />
+      </property-sheet>
+   </config>
+            
+   <config evaluator="aspect-name" condition="wfs:commonWorkflow" >
+      <property-sheet>
+         <show-property name="wfs:resolution" component-generator="TextAreaGenerator" styleClass="expand19-200" />
+      </property-sheet>
+   </config>
+   
+   <config evaluator="node-type" condition="wfs:orderAssignmentWorkflow">
+      <property-sheet>
+         <show-property name="wfs:category" component-generator="ClassificatorSelectorGenerator" classificatorName="orderAssignmentTaskCategory" rendered="#{WorkflowBlockBean.showOrderAssignmentCategory}" />
+      </property-sheet>
+   </config>   
+   
+   <config evaluator="node-type" condition="wfs:signatureWorkflow">
+      <property-sheet>
+         <show-property name="{temp}workflowTasks" component-generator="TaskListGenerator" ignore-if-missing="false" display-label-id="signatureWorkflow_tasks" hideExtraInfo="true" />
+      </property-sheet>
+   </config>
+
+   <config evaluator="node-type" condition="wfs:opinionWorkflow">
+      <property-sheet>
+         <show-property name="{temp}workflowTasks" component-generator="TaskListGenerator" ignore-if-missing="false" display-label-id="opinionWorkflow_tasks" hideExtraInfo="true" />
+      </property-sheet>
+   </config>
+
+   <config evaluator="node-type" condition="wfs:reviewWorkflow">
+      <property-sheet>
+         <show-property name="{temp}workflowTasks" component-generator="TaskListGenerator" ignore-if-missing="false" display-label-id="reviewWorkflow_tasks" hideExtraInfo="true" />
+      </property-sheet>
+   </config>
+   
+   <config evaluator="node-type" condition="wfs:externalReviewWorkflow">
+      <property-sheet>
+         <show-property name="{temp}workflowTasks" component-generator="TaskListGenerator" ignore-if-missing="false" display-label-id="externalReviewWorkflow_tasks" hideExtraInfo="true" />
+      </property-sheet>
+   </config>   
+
+   <config evaluator="node-type" condition="wfs:informationWorkflow">
+      <property-sheet>
+         <show-property name="{temp}workflowTasks" component-generator="TaskListGenerator" ignore-if-missing="false" display-label-id="informationWorkflow_tasks" hideExtraInfo="true" />
+      </property-sheet>
+   </config>
+
+   <config evaluator="node-type" condition="wfs:assignmentWorkflow">
+      <property-sheet>
+         <show-property name="{temp}workflowTasks" component-generator="TaskListGenerator" ignore-if-missing="false" display-label-id="assignmentWorkflow_tasks" responsible="true" hideExtraInfo="true" />
+         <show-property name="{temp}workflowTasksCo" component-generator="TaskListGenerator" ignore-if-missing="false" display-label-id="assignmentWorkflow_tasks_co" hideExtraInfo="true" />
+      </property-sheet>
+   </config>
+   
+   <config evaluator="node-type" condition="wfs:orderAssignmentWorkflow">
+      <property-sheet>
+         <show-property name="{temp}workflowTasks" component-generator="TaskListGenerator" ignore-if-missing="false" display-label-id="orderAssignmentWorkflow_tasks" responsible="true" />
+         <show-property name="{temp}workflowTasksCo" component-generator="TaskListGenerator" ignore-if-missing="false" display-label-id="orderAssignmentWorkflow_tasks_co" />
+      </property-sheet>
+   </config>   
+   
+   <config evaluator="node-type" condition="wfs:confirmationWorkflow">
+      <property-sheet>
+         <show-property name="{temp}workflowTasks" component-generator="TaskListGenerator" ignore-if-missing="false" display-label-id="confirmationWorkflow_tasks" />
+      </property-sheet>
+   </config>   
+   
+   <config evaluator="node-type" condition="wfs:signatureWorkflow,wfs:opinionWorkflow,wfs:reviewWorkflow,wfs:informationWorkflow,wfs:assignmentWorkflow,wfs:orderAssignmentWorkflow,wfs:confirmationWorkflow,wfs:docRegistrationWorkflow">
+      <property-sheet>
+         <show-property name="wfc:mandatory" component-generator="CheckboxGenerator"/>
+      </property-sheet>
+   </config>
+
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 </alfresco-config>

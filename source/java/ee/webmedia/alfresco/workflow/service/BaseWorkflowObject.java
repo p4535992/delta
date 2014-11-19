@@ -20,9 +20,12 @@ import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 
+<<<<<<< HEAD
 /**
  * @author Alar Kvell
  */
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 public abstract class BaseWorkflowObject extends NodeBaseVO {
 
     private Map<QName, Serializable> originalProperties;
@@ -38,7 +41,11 @@ public abstract class BaseWorkflowObject extends NodeBaseVO {
     }
 
     protected <T extends BaseWorkflowObject> T copyImpl(T copy) {
+<<<<<<< HEAD
         copy.originalProperties = RepoUtil.copyProperties(originalProperties);
+=======
+        copy.setOriginalProperties(RepoUtil.copyProperties(originalProperties));
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         return copy;
     }
 
@@ -72,10 +79,13 @@ public abstract class BaseWorkflowObject extends NodeBaseVO {
         setProp(WorkflowCommonModel.Props.STARTED_DATE_TIME, startedDateTime);
     }
 
+<<<<<<< HEAD
     protected void setCreatedDateTime(Date createdDateTime) {
         setProp(WorkflowCommonModel.Props.CREATED_DATE_TIME, createdDateTime);
     }
 
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     public Date getStoppedDateTime() {
         return getProp(WorkflowCommonModel.Props.STOPPED_DATE_TIME);
     }
@@ -84,10 +94,13 @@ public abstract class BaseWorkflowObject extends NodeBaseVO {
         setProp(WorkflowCommonModel.Props.STOPPED_DATE_TIME, stoppedDateTime);
     }
 
+<<<<<<< HEAD
     protected void setFinishedDateTime(Date finishedDateTime) {
         setProp(WorkflowCommonModel.Props.FINISHED_DATE_TIME, finishedDateTime);
     }
 
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     public String getOwnerId() {
         return getProp(WorkflowCommonModel.Props.OWNER_ID);
     }
@@ -139,10 +152,13 @@ public abstract class BaseWorkflowObject extends NodeBaseVO {
         originalProperties.clear();
     }
 
+<<<<<<< HEAD
     protected Map<QName, Serializable> getOriginalProperties() {
         return Collections.unmodifiableMap(originalProperties);
     }
 
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     public boolean isStatus(Status... statuses) {
         return WorkflowUtil.isStatus(this, statuses);
     }
@@ -169,4 +185,15 @@ public abstract class BaseWorkflowObject extends NodeBaseVO {
         // Subclasses can override
     }
 
+<<<<<<< HEAD
+=======
+    protected Map<QName, Serializable> getOriginalProperties() {
+        return Collections.unmodifiableMap(originalProperties);
+    }
+
+    protected void setOriginalProperties(Map<QName, Serializable> originalProperties) {
+        this.originalProperties = originalProperties;
+    }
+
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 }

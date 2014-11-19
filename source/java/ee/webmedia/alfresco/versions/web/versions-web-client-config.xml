@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <alfresco-config>
    <config>
       <dialogs>
@@ -8,3 +9,15 @@
       </dialogs>
    </config>
 </alfresco-config>
+=======
+<alfresco-config>
+   <config>
+      <dialogs>
+
+         <dialog name="versionsListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/versions/web/versions-list-dialog.jsp" managed-bean="VersionsListDialog"
+            icon="/images/icons/versioned_properties_large.gif" />
+
+      </dialogs>
+   </config>
+</alfresco-config>
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5

@@ -8,14 +8,20 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getExporterService;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
+<<<<<<< HEAD
 import java.util.Arrays;
 import java.util.Comparator;
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import java.util.List;
 import java.util.Map;
 
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
+<<<<<<< HEAD
 import javax.faces.model.SelectItem;
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import javax.servlet.http.HttpServletResponse;
 
 import org.alfresco.service.cmr.repository.NodeRef;
@@ -23,9 +29,13 @@ import org.alfresco.service.cmr.view.ExcludingExporterCrawlerParameters;
 import org.alfresco.service.cmr.view.Location;
 import org.alfresco.service.cmr.view.ReferenceType;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
+<<<<<<< HEAD
 import org.alfresco.web.ui.common.component.PickerSearchParams;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
+=======
+import org.apache.commons.io.IOUtils;
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import org.apache.myfaces.application.jsp.JspStateManagerImpl;
 
 import ee.webmedia.alfresco.common.web.WMAdminNodeBrowseBean;
@@ -36,8 +46,11 @@ import ee.webmedia.alfresco.utils.ActionUtil;
 
 /**
  * Base dialog for list of {@link DynamicType}s
+<<<<<<< HEAD
  * 
  * @author Ats Uiboupin
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
  */
 public abstract class DynamicTypeListDialog<T extends DynamicType> extends BaseDialogBean {
     private static final long serialVersionUID = 1L;
@@ -85,6 +98,7 @@ public abstract class DynamicTypeListDialog<T extends DynamicType> extends BaseD
         getDynamicTypeDetailsDialog(typeClass).init(ActionUtil.getParam(event, "nodeRef", NodeRef.class));
     }
 
+<<<<<<< HEAD
     protected SelectItem[] searchUsedTypes(PickerSearchParams params, boolean addEmptyItem) {
         String substring = params == null ? null : params.getSearchString();
         final List<? extends DynamicType> usedTypes = loadUsedTypes();
@@ -121,6 +135,8 @@ public abstract class DynamicTypeListDialog<T extends DynamicType> extends BaseD
 
     protected abstract List<? extends DynamicType> loadUsedTypes();
 
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     // START: Export related stuff
     public void export(@SuppressWarnings("unused") ActionEvent event) {
         LOG.info("DocumentTypes export started");
@@ -155,7 +171,11 @@ public abstract class DynamicTypeListDialog<T extends DynamicType> extends BaseD
         } finally {
             IOUtils.closeQuietly(outputStream);
             context.responseComplete();
+<<<<<<< HEAD
             // Erko hack for incorrect view id in the next request
+=======
+            // hack for incorrect view id in the next request
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             JspStateManagerImpl.ignoreCurrentViewSequenceHack();
             LOG.info("DocumentTypes export completed " + (success ? "" : "un") + "successfully");
         }
@@ -183,7 +203,10 @@ public abstract class DynamicTypeListDialog<T extends DynamicType> extends BaseD
     public List<T> getTypes() {
         return types;
     }
+<<<<<<< HEAD
 
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     // END: getters / setters
 
 }

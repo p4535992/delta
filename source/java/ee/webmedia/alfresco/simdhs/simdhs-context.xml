@@ -4,6 +4,10 @@
 
    <!-- Entry point to include other components -->
    <!-- Be sure to also include necessary JSF configuration files in web/WEB-INF/web.xml -->
+<<<<<<< HEAD
+=======
+   <import resource="classpath:ee/webmedia/alfresco/person/person-context.xml" />
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
    <import resource="classpath:ee/webmedia/alfresco/log/log-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/help/help-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/signature/signature-context.xml" />
@@ -12,12 +16,18 @@
    <import resource="classpath:ee/webmedia/alfresco/menu/menu-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/classificator/classificator-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/parameters/parameters-context.xml" />
+<<<<<<< HEAD
    <import resource="classpath:ee/webmedia/alfresco/eventplan/eventplan-context.xml" />
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
    <import resource="classpath:ee/webmedia/alfresco/search/search-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/orgstructure/organizationStructure-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/cases/case-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/volume/volume-context.xml" />
+<<<<<<< HEAD
    <import resource="classpath:ee/webmedia/alfresco/casefile/case-file-context.xml" />
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
    <import resource="classpath:ee/webmedia/alfresco/series/series-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/document/document-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/functions/functions-context.xml" />
@@ -36,7 +46,10 @@
    <import resource="classpath:ee/webmedia/alfresco/ocr/ocr-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/importer/importer-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/postipoiss/postipoiss-simdhs-context.xml" />
+<<<<<<< HEAD
    <import resource="classpath:ee/webmedia/alfresco/sharepoint/sharepoint-simdhs-context.xml" />
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
    <import resource="classpath:ee/webmedia/alfresco/mso/mso-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/privilege/privilege-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/thesaurus/thesaurus-context.xml" />
@@ -46,11 +59,17 @@
    <import resource="classpath:ee/webmedia/alfresco/base/base-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/relvastus/relvastus-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/ikt/ikt-context.xml" />
+<<<<<<< HEAD
    <import resource="classpath:ee/webmedia/alfresco/adddocument/add-document-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/testdata/testdata-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/doclist/doclist-context.xml"/>
    <import resource="classpath:ee/webmedia/alfresco/report/report-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/document/lock/lock-context.xml" />
+=======
+   <import resource="classpath:ee/webmedia/alfresco/testdata/testdata-context.xml" />
+   <import resource="classpath:ee/webmedia/alfresco/doclist/doclist-context.xml"/>
+   <import resource="classpath:ee/webmedia/alfresco/report/report-context.xml" />
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
    <import resource="classpath:org/alfresco/web/bean/trashcan/trashcan-context.xml" />
 
    <bean class="org.alfresco.web.config.WebClientConfigBootstrap" init-method="init" depends-on="commonWebClientConfigBootstrap">
@@ -66,7 +85,11 @@
       <property name="serverName" value="${server.url}" />
    </bean>
 
+<<<<<<< HEAD
    <bean name="casTicketValidationFilter" class="org.jasig.cas.client.validation.Cas20ProxyReceivingTicketValidationFilter">
+=======
+   <bean name="casTicketValidationFilter" class="ee.webmedia.alfresco.user.service.Cas20ProxyReceivingRedirectingTicketValidationFilter">
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
       <property name="redirectAfterValidation" value="true" />
       <property name="serverName" value="${server.url}" />
       <property name="ticketValidator">

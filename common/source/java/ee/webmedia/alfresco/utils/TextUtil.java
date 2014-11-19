@@ -245,9 +245,16 @@ public class TextUtil {
         if (value instanceof List) {
             @SuppressWarnings("unchecked")
             List<Serializable> list = (List<Serializable>) value;
+<<<<<<< HEAD
             if (list.size() >= 2 && ((list.get(0) instanceof String && list.get(1) instanceof String) || (list.get(0) instanceof List && list.get(1) instanceof List))
                     && FieldType.STRUCT_UNIT == fieldTypeGetter.getValue()) {
                 result = UserUtil.getDisplayUnitText(value);
+=======
+            if (list.size() >= 2 && list.get(0) instanceof String && list.get(1) instanceof String && FieldType.STRUCT_UNIT == fieldTypeGetter.getValue()) {
+                @SuppressWarnings("unchecked")
+                List<String> orgStruct = (List<String>) value;
+                result = UserUtil.getDisplayUnit(orgStruct);
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             } else {
                 String[] resultValues = new String[((List<?>) value).size()];
                 int pos = 0;
@@ -272,7 +279,11 @@ public class TextUtil {
         } else if (value instanceof Date) {
             result = DATE_FORMAT.format((Date) value);
         } else {
+<<<<<<< HEAD
             result = value.toString(); // TODO Alar: do Long and Double need specific formatting?
+=======
+            result = value.toString(); // TODO do Long and Double need specific formatting?
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         }
         return result;
     }

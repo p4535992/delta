@@ -122,6 +122,7 @@
             </props>
          </list>
       </property>
+<<<<<<< HEAD
    </bean>
    
    <bean id="dvkParametersBootstrap4" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
@@ -143,16 +144,22 @@
          </list>
       </property>
    </bean>    
+=======
+   </bean>   
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
    <bean class="ee.webmedia.alfresco.common.bootstrap.ModuleComponentDependsOnSetter">
       <property name="source" ref="parameterRescheduledJobsBootstrap" />
       <property name="dependsOn" ref="dvkParametersBootstrap" />
    </bean>
+<<<<<<< HEAD
    
    <bean class="ee.webmedia.alfresco.common.bootstrap.ModuleComponentDependsOnSetter">
       <property name="source" ref="parameterRescheduledJobsBootstrap" />
       <property name="dependsOn" ref="dvkParametersBootstrap4" />
    </bean>   
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
    <bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
       <property name="ignoreUnresolvablePlaceholders" value="true" />
@@ -255,6 +262,7 @@
          </bean>
       </property>
    </bean>
+<<<<<<< HEAD
    
    <bean id="dvkResendFailedSendsTrigger" class="ee.webmedia.alfresco.parameters.job.ParameterRescheduledTriggerBean" parent="parameterRescheduledTriggerParent">
       <property name="enabled" value="${jobs.enabled}" />
@@ -272,4 +280,7 @@
       </property>
    </bean>   
    
+=======
+
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 </beans>

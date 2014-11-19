@@ -35,6 +35,7 @@
    </bean>
    
    <!-- Used to update series volume types values. CL task: 177957 -->
+<<<<<<< HEAD
    <bean id="seriesUpdater2" class="ee.webmedia.alfresco.series.bootstrap.SeriesUpdater" parent="abstractNodeUpdater">
       <property name="moduleId" value="simdhs" />
        <property name="dependsOn">
@@ -54,6 +55,10 @@
       </property>
       <property name="batchSize" value="1" />
       <property name="executeInBackground" value="${updater.version25To313.enabled}" />
+=======
+   <bean id="seriesUpdater" class="ee.webmedia.alfresco.series.bootstrap.SeriesUpdater" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
    </bean>
 
    <bean id="seriesService" class="ee.webmedia.alfresco.series.service.SeriesServiceImpl">
@@ -84,16 +89,20 @@
    <!-- Used to add document regNr pattern to old series (CL task 174930) -->
    <bean id="SeriesDocNumberPatternUpdater" class="ee.webmedia.alfresco.document.bootstrap.SeriesDocNumberPatternUpdater" parent="abstractNodeUpdater" >
       <property name="moduleId" value="simdhs" />
+<<<<<<< HEAD
       <property name="dependsOn">
          <list>
             <ref bean="registerRootBootstrap" />
          </list>
       </property>       
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
    </bean>
    
    <!-- Adds to docNumberPattern register prefix and suffix if they exist. -->
    <bean id="SeriesDocNumberPatternAddRegisterSufPrefUpdater" class="ee.webmedia.alfresco.document.bootstrap.SeriesDocNumberPatternAddRegisterSufPrefUpdater" parent="abstractNodeUpdater" >
       <property name="moduleId" value="simdhs" />
+<<<<<<< HEAD
       <property name="dependsOn">
          <list>
             <ref bean="archivalsStoresBootstrap" />
@@ -126,6 +135,9 @@
          </list>
       </property>
    </bean>   
+=======
+   </bean>
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
    <!-- START: web beans: -->
 

@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.document.log.service;
 
+<<<<<<< HEAD
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDynamicService;
 
 import java.io.Serializable;
@@ -31,6 +32,19 @@ import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
+=======
+import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.cmr.repository.NodeService;
+import org.alfresco.service.namespace.QName;
+
+import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.log.model.LogEntry;
+import ee.webmedia.alfresco.log.model.LogObject;
+import ee.webmedia.alfresco.log.service.LogService;
+import ee.webmedia.alfresco.user.service.UserService;
+import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.utils.RepoUtil;
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
 public class DocumentLogServiceImpl implements DocumentLogService {
 
@@ -50,6 +64,7 @@ public class DocumentLogServiceImpl implements DocumentLogService {
         addAppLogEntry(document, creator, event);
     }
 
+<<<<<<< HEAD
     @Override
     public void addAssociationLog(NodeRef document, NodeRef targetNodeRef) {
         addAssociationLog(document, targetNodeRef, false);
@@ -91,11 +106,24 @@ public class DocumentLogServiceImpl implements DocumentLogService {
         return DateFormatUtils.format(date, "dd.MM.yyyy");
     }
 
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     private void addAppLogEntry(NodeRef nodeRef, String creator, String description) {
         String creatorId = userService.getCurrentUserName();
         logService.addLogEntry(LogEntry.createLoc(LogObject.DOCUMENT, creatorId, creator, nodeRef, description));
     }
 
+<<<<<<< HEAD
+=======
+    @Override
+    public void addDeletedObjectLog(NodeRef objectRef, String msgKey) {
+        QName objectType = nodeService.getType(objectRef);
+        LogEntry logEntry = LogEntry.create(LogObject.RESTORE, userService, objectRef, msgKey, RepoUtil.getArchivedObjectName(objectType, nodeService.getProperties(objectRef)));
+        logEntry.setObjectName(MessageUtil.getTypeName(objectType));
+        logService.addLogEntry(logEntry);
+    }
+
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     // START: getters / setters
     public void setNodeService(NodeService nodeService) {
         this.nodeService = nodeService;

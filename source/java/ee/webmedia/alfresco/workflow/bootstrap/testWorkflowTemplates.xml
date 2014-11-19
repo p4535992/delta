@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <?xml version="1.0" encoding="UTF-8"?>
 <view:view xmlns:view="http://www.alfresco.org/view/repository/1.0" xmlns:cm="http://www.alfresco.org/model/content/1.0" xmlns:app="http://www.alfresco.org/model/application/1.0"
    xmlns:sys="http://www.alfresco.org/model/system/1.0" xmlns:docTempl="http://alfresco.webmedia.ee/model/document-template/1.0">
@@ -1615,3 +1616,250 @@
    </cm:content>
 
 </view:view>
+=======
+<?xml version="1.0" encoding="UTF-8"?>
+<view:view xmlns:view="http://www.alfresco.org/view/repository/1.0" xmlns:cm="http://www.alfresco.org/model/content/1.0" xmlns:app="http://www.alfresco.org/model/application/1.0"
+   xmlns:sys="http://www.alfresco.org/model/system/1.0" xmlns:docTempl="http://alfresco.webmedia.ee/model/document-template/1.0">
+
+   <cm:content view:childName="cm:Arvamus on antud.html">
+      <view:aspects>
+         <docTempl:systemTemplate />
+      </view:aspects>
+      <view:properties>
+         <docTempl:docTypeId>Süsteemne mall</docTempl:docTypeId>
+         <cm:name>Arvamus on antud.html</cm:name>
+         <docTempl:name>Arvamus on antud.html</docTempl:name>
+         <cm:content>contentUrl=classpath:ee/webmedia/alfresco/workflow/bootstrap/testWorkflowTemplate.html|mimetype=text/html|size=|encoding=UTF-8</cm:content>
+      </view:properties>
+   </cm:content>
+
+   <cm:content view:childName="cm:Dokument on allkirjastatud.html">
+      <view:aspects>
+         <docTempl:systemTemplate />
+      </view:aspects>
+      <view:properties>
+         <docTempl:docTypeId>Süsteemne mall</docTempl:docTypeId>
+         <cm:name>Dokument on allkirjastatud.html</cm:name>
+         <docTempl:name>Dokument on allkirjastatud.html</docTempl:name>
+         <cm:content>contentUrl=classpath:ee/webmedia/alfresco/workflow/bootstrap/testWorkflowTemplate.html|mimetype=text/html|size=|encoding=UTF-8</cm:content>
+      </view:properties>
+   </cm:content>
+
+   <cm:content view:childName="cm:Dokument on kooskõlastatud märkustega.html">
+      <view:aspects>
+         <docTempl:systemTemplate />
+      </view:aspects>
+      <view:properties>
+         <docTempl:docTypeId>Süsteemne mall</docTempl:docTypeId>
+         <cm:name>Dokument on kooskõlastatud märkustega.html</cm:name>
+         <docTempl:name>Dokument on kooskõlastatud märkustega.html</docTempl:name>
+         <cm:content>contentUrl=classpath:ee/webmedia/alfresco/workflow/bootstrap/testWorkflowTemplate.html|mimetype=text/html|size=|encoding=UTF-8</cm:content>
+      </view:properties>
+   </cm:content>
+
+   <cm:content view:childName="cm:Dokument on kooskõlastatud.html">
+      <view:aspects>
+         <docTempl:systemTemplate />
+      </view:aspects>
+      <view:properties>
+         <docTempl:docTypeId>Süsteemne mall</docTempl:docTypeId>
+         <cm:name>Dokument on kooskõlastatud.html</cm:name>
+         <docTempl:name>Dokument on kooskõlastatud.html</docTempl:name>
+         <cm:content>contentUrl=classpath:ee/webmedia/alfresco/workflow/bootstrap/testWorkflowTemplate.html|mimetype=text/html|size=|encoding=UTF-8</cm:content>
+      </view:properties>
+   </cm:content>
+
+   <cm:content view:childName="cm:Dokument on võetud teadmiseks.html">
+      <view:aspects>
+         <docTempl:systemTemplate />
+      </view:aspects>
+      <view:properties>
+         <docTempl:docTypeId>Süsteemne mall</docTempl:docTypeId>
+         <cm:name>Dokument on võetud teadmiseks.html</cm:name>
+         <docTempl:name>Dokument on võetud teadmiseks.html</docTempl:name>
+         <cm:content>contentUrl=classpath:ee/webmedia/alfresco/workflow/bootstrap/testWorkflowTemplate.html|mimetype=text/html|size=|encoding=UTF-8</cm:content>
+      </view:properties>
+   </cm:content>
+
+   <cm:content view:childName="cm:Dokumenti ei allkirjastatud.html">
+      <view:aspects>
+         <docTempl:systemTemplate />
+      </view:aspects>
+      <view:properties>
+         <docTempl:docTypeId>Süsteemne mall</docTempl:docTypeId>
+         <cm:name>Dokumenti ei allkirjastatud.html</cm:name>
+         <docTempl:name>Dokumenti ei allkirjastatud.html</docTempl:name>
+         <cm:content>contentUrl=classpath:ee/webmedia/alfresco/workflow/bootstrap/testWorkflowTemplate.html|mimetype=text/html|size=|encoding=UTF-8</cm:content>
+      </view:properties>
+   </cm:content>
+
+   <cm:content view:childName="cm:Dokumenti ei kooskõlastatud.html">
+      <view:aspects>
+         <docTempl:systemTemplate />
+      </view:aspects>
+      <view:properties>
+         <docTempl:docTypeId>Süsteemne mall</docTempl:docTypeId>
+         <cm:name>Dokumenti ei kooskõlastatud.html</cm:name>
+         <docTempl:name>Dokumenti ei kooskõlastatud.html</docTempl:name>
+         <cm:content>contentUrl=classpath:ee/webmedia/alfresco/workflow/bootstrap/testWorkflowTemplate.html|mimetype=text/html|size=|encoding=UTF-8</cm:content>
+      </view:properties>
+   </cm:content>
+
+   <cm:content view:childName="cm:Kaastäitja tööülesanne on täidetud.html">
+      <view:aspects>
+         <docTempl:systemTemplate />
+      </view:aspects>
+      <view:properties>
+         <docTempl:docTypeId>Süsteemne mall</docTempl:docTypeId>
+         <cm:name>Kaastäitja tööülesanne on täidetud.html</cm:name>
+         <docTempl:name>Kaastäitja tööülesanne on täidetud.html</docTempl:name>
+         <cm:content>contentUrl=classpath:ee/webmedia/alfresco/workflow/bootstrap/testWorkflowTemplate.html|mimetype=text/html|size=|encoding=UTF-8</cm:content>
+      </view:properties>
+   </cm:content>
+
+   <cm:content view:childName="cm:Töövoo automaatne üleminek.html">
+      <view:aspects>
+         <docTempl:systemTemplate />
+      </view:aspects>
+      <view:properties>
+         <docTempl:docTypeId>Süsteemne mall</docTempl:docTypeId>
+         <cm:name>Töövoo automaatne üleminek.html</cm:name>
+         <docTempl:name>Töövoo automaatne üleminek.html</docTempl:name>
+         <cm:content>contentUrl=classpath:ee/webmedia/alfresco/workflow/bootstrap/testWorkflowTemplate.html|mimetype=text/html|size=|encoding=UTF-8</cm:content>
+      </view:properties>
+   </cm:content>
+
+   <cm:content view:childName="cm:Töövoog on lõppenud.html">
+      <view:aspects>
+         <docTempl:systemTemplate />
+      </view:aspects>
+      <view:properties>
+         <docTempl:docTypeId>Süsteemne mall</docTempl:docTypeId>
+         <cm:name>Töövoog on lõppenud.html</cm:name>
+         <docTempl:name>Töövoog on lõppenud.html</docTempl:name>
+         <cm:content>contentUrl=classpath:ee/webmedia/alfresco/workflow/bootstrap/testWorkflowTemplate.html|mimetype=text/html|size=|encoding=UTF-8</cm:content>
+      </view:properties>
+   </cm:content>
+
+   <cm:content view:childName="cm:Tööülesande tühistamine asutusele.html">
+      <view:aspects>
+         <docTempl:systemTemplate />
+      </view:aspects>
+      <view:properties>
+         <docTempl:docTypeId>Süsteemne mall</docTempl:docTypeId>
+         <cm:name>Tööülesande tühistamine asutusele.html</cm:name>
+         <docTempl:name>Tööülesande tühistamine asutusele.html</docTempl:name>
+         <cm:content>contentUrl=classpath:ee/webmedia/alfresco/workflow/bootstrap/testWorkflowTemplate.html|mimetype=text/html|size=|encoding=UTF-8</cm:content>
+      </view:properties>
+   </cm:content>
+
+   <cm:content view:childName="cm:Tööülesande tühistamine kasutajale.html">
+      <view:aspects>
+         <docTempl:systemTemplate />
+      </view:aspects>
+      <view:properties>
+         <docTempl:docTypeId>Süsteemne mall</docTempl:docTypeId>
+         <cm:name>Tööülesande tühistamine kasutajale.html</cm:name>
+         <docTempl:name>Tööülesande tühistamine kasutajale.html</docTempl:name>
+         <cm:content>contentUrl=classpath:ee/webmedia/alfresco/workflow/bootstrap/testWorkflowTemplate.html|mimetype=text/html|size=|encoding=UTF-8</cm:content>
+      </view:properties>
+   </cm:content>
+
+   <cm:content view:childName="cm:Uus tööülesanne asutusele.html">
+      <view:aspects>
+         <docTempl:systemTemplate />
+      </view:aspects>
+      <view:properties>
+         <docTempl:docTypeId>Süsteemne mall</docTempl:docTypeId>
+         <cm:name>Uus tööülesanne asutusele.html</cm:name>
+         <docTempl:name>Uus tööülesanne asutusele.html</docTempl:name>
+         <cm:content>contentUrl=classpath:ee/webmedia/alfresco/workflow/bootstrap/testWorkflowTemplate.html|mimetype=text/html|size=|encoding=UTF-8</cm:content>
+      </view:properties>
+   </cm:content>
+
+   <cm:content view:childName="cm:Uus tööülesanne kasutajale.html">
+      <view:aspects>
+         <docTempl:systemTemplate />
+      </view:aspects>
+      <view:properties>
+         <docTempl:docTypeId>Süsteemne mall</docTempl:docTypeId>
+         <cm:name>Uus tööülesanne kasutajale.html</cm:name>
+         <docTempl:name>Uus tööülesanne kasutajale.html</docTempl:name>
+         <cm:content>contentUrl=classpath:ee/webmedia/alfresco/workflow/bootstrap/testWorkflowTemplate.html|mimetype=text/html|size=|encoding=UTF-8</cm:content>
+      </view:properties>
+   </cm:content>
+   
+   <cm:content view:childName="cm:AK piirangu lõppemine vastutajale.html">
+      <view:aspects>
+         <docTempl:systemTemplate />
+      </view:aspects>
+      <view:properties>
+         <docTempl:docTypeId>Süsteemne mall</docTempl:docTypeId>
+         <cm:name>AK piirangu lõppemine vastutajale.html</cm:name>
+         <docTempl:name>AK piirangu lõppemine vastutajale.html</docTempl:name>
+         <cm:content>contentUrl=classpath:ee/webmedia/alfresco/workflow/bootstrap/testWorkflowTemplate.html|mimetype=text/html|size=|encoding=UTF-8</cm:content>
+      </view:properties>
+   </cm:content>
+   
+   <cm:content view:childName="cm:AK piirangu lõppemine dokumendihaldurile.html">
+      <view:aspects>
+         <docTempl:systemTemplate />
+      </view:aspects>
+      <view:properties>
+         <docTempl:docTypeId>Süsteemne mall</docTempl:docTypeId>
+         <cm:name>AK piirangu lõppemine dokumendihaldurile.html</cm:name>
+         <docTempl:name>AK piirangu lõppemine dokumendihaldurile.html</docTempl:name>
+         <cm:content>contentUrl=classpath:ee/webmedia/alfresco/workflow/bootstrap/testWorkflowTemplate.html|mimetype=text/html|size=|encoding=UTF-8</cm:content>
+      </view:properties>
+   </cm:content>
+
+   <cm:content view:childName="cm:Kutse arutelus osalemiseks.html">
+      <view:aspects>
+         <docTempl:systemTemplate />
+      </view:aspects>
+      <view:properties>
+         <docTempl:docTypeId>Süsteemne mall</docTempl:docTypeId>
+         <cm:name>Kutse arutelus osalemiseks.html</cm:name>
+         <docTempl:name>Kutse arutelus osalemiseks.html</docTempl:name>
+         <cm:content>contentUrl=classpath:ee/webmedia/alfresco/workflow/bootstrap/testWorkflowTemplate.html|mimetype=text/html|size=|encoding=UTF-8</cm:content>
+      </view:properties>
+   </cm:content>
+   
+   <cm:content view:childName="cm:Tööülesande lõpptähtaja saabumine.html">
+      <view:aspects>
+         <docTempl:systemTemplate />
+      </view:aspects>
+      <view:properties>
+         <docTempl:docTypeId>Süsteemne mall</docTempl:docTypeId>
+         <cm:name>Tööülesande lõpptähtaja saabumine.html</cm:name>
+         <docTempl:name>Tööülesande lõpptähtaja saabumine.html</docTempl:name>
+         <cm:content>contentUrl=classpath:ee/webmedia/alfresco/workflow/bootstrap/testWorkflowTemplate.html|mimetype=text/html|size=|encoding=UTF-8</cm:content>
+      </view:properties>
+   </cm:content>
+   
+   <cm:content view:childName="cm:Tööülesande lõpptähtaeg on ületatud.html">
+      <view:aspects>
+         <docTempl:systemTemplate />
+      </view:aspects>
+      <view:properties>
+         <docTempl:docTypeId>Süsteemne mall</docTempl:docTypeId>
+         <cm:name>Tööülesande lõpptähtaeg on ületatud.html</cm:name>
+         <docTempl:name>Tööülesande lõpptähtaeg on ületatud.html</docTempl:name>
+         <cm:content>contentUrl=classpath:ee/webmedia/alfresco/workflow/bootstrap/testWorkflowTemplate.html|mimetype=text/html|size=|encoding=UTF-8</cm:content>
+      </view:properties>
+   </cm:content>
+   
+   <cm:content view:childName="cm:Toimikute eraldamistähtaja saabumine.html">
+      <view:aspects>
+         <docTempl:systemTemplate />
+      </view:aspects>
+      <view:properties>
+         <docTempl:docTypeId>Süsteemne mall</docTempl:docTypeId>
+         <cm:name>Toimikute eraldamistähtaja saabumine.html</cm:name>
+         <docTempl:name>Toimikute eraldamistähtaja saabumine.html</docTempl:name>
+         <cm:content>contentUrl=classpath:ee/webmedia/alfresco/workflow/bootstrap/testWorkflowTemplate.html|mimetype=text/html|size=|encoding=UTF-8</cm:content>
+      </view:properties>
+   </cm:content>
+
+</view:view>
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5

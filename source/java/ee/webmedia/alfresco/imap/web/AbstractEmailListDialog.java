@@ -18,8 +18,11 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
  * Dialog for incoming emails list.
+<<<<<<< HEAD
  * 
  * @author Romet Aidla
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
  */
 public abstract class AbstractEmailListDialog extends BaseDocumentListDialog implements FolderListDialog {
     private static final long serialVersionUID = 0L;
@@ -44,8 +47,11 @@ public abstract class AbstractEmailListDialog extends BaseDocumentListDialog imp
 
     protected abstract NodeRef getMainFolderRef();
 
+<<<<<<< HEAD
     public abstract String getEmailDateTimeColumnMsg();
 
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     @Override
     public String getListTitle() {
         return MessageUtil.getMessage("document_incoming_emails_documents");

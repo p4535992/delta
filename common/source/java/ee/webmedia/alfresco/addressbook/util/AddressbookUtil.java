@@ -101,7 +101,10 @@ public class AddressbookUtil {
             String value = node.getNodeRefAsString();
             StringBuilder label = new StringBuilder();
             Map<String, Object> props = node.getProperties();
+<<<<<<< HEAD
             boolean isOrgPerson = node.getType().equals(Types.ORGPERSON);
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             if (node.getType().equals(Types.ORGANIZATION)) {
                 String orgName = (String) props.get(Props.ORGANIZATION_NAME.toString());
                 label.append(orgName);
@@ -114,6 +117,7 @@ public class AddressbookUtil {
                         .get(Props.PERSON_LAST_NAME.toString()));
                 label.append(personName);
                 label.append(" (");
+<<<<<<< HEAD
                 label.append(MessageUtil.getMessage(isOrgPerson ? "addressbook_contactperson" : "addressbook_private_person").toLowerCase());
             }
             String afterComma;
@@ -125,6 +129,14 @@ public class AddressbookUtil {
             if (StringUtils.isNotEmpty(afterComma)) {
                 label.append(", ");
                 label.append(afterComma);
+=======
+                label.append(MessageUtil.getMessage("addressbook_private_person").toLowerCase());
+            }
+            String email = (String) props.get(Props.EMAIL.toString());
+            if (StringUtils.isNotEmpty(email)) {
+                label.append(", ");
+                label.append(email);
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             }
             if (!node.getType().equals(Types.CONTACT_GROUP)) {
                 label.append(")");
@@ -144,6 +156,18 @@ public class AddressbookUtil {
         return results;
     }
 
+<<<<<<< HEAD
+=======
+    public static NodePropertyResolver resolverParentOrgName = new NodePropertyResolver() {
+        private static final long serialVersionUID = 1L;
+
+        @Override
+        public Object get(Node node) {
+            return getNodeService().getProperty(getAddressbookService().getOrgOfPerson(node.getNodeRef()), AddressbookModel.Props.ORGANIZATION_NAME);
+        }
+    };
+
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     public static NodePropertyResolver resolverParentOrgRef = new NodePropertyResolver() {
         private static final long serialVersionUID = 1L;
 

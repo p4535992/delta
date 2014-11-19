@@ -9,18 +9,26 @@ import javax.faces.event.PhaseId;
 import javax.faces.event.ValueChangeEvent;
 
 import org.alfresco.service.cmr.repository.NodeRef;
+<<<<<<< HEAD
+=======
+import org.alfresco.service.cmr.repository.StoreRef;
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.ui.repo.component.property.UIProperty;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.apache.commons.collections.Closure;
 import org.joda.time.LocalDate;
 
+<<<<<<< HEAD
 import ee.webmedia.alfresco.casefile.model.CaseFileModel;
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.common.propertysheet.datepicker.DatePickerWithDueDateGenerator;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docconfig.generator.DialogDataProvider;
+<<<<<<< HEAD
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
@@ -30,6 +38,12 @@ import ee.webmedia.alfresco.utils.RepoUtil;
 /**
  * @author Alar Kvell
  */
+=======
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
+import ee.webmedia.alfresco.utils.ComponentUtil;
+
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 public class DocumentDialogHelperBean implements Serializable {
     private static final long serialVersionUID = 1L;
 
@@ -59,7 +73,12 @@ public class DocumentDialogHelperBean implements Serializable {
     }
 
     public NodeRef getNodeRef() {
+<<<<<<< HEAD
         return getNode().getNodeRef();
+=======
+        Node node = getNode();
+        return node == null ? null : node.getNodeRef();
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     public Map<String, Object> getProps() {
@@ -67,7 +86,11 @@ public class DocumentDialogHelperBean implements Serializable {
     }
 
     public boolean isNotEditable() {
+<<<<<<< HEAD
         return isDocument() && Boolean.TRUE.equals(getProps().get(DocumentCommonModel.Props.NOT_EDITABLE));
+=======
+        return Boolean.TRUE.equals(getProps().get(DocumentSpecificModel.Props.NOT_EDITABLE));
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     public boolean isInprogressCompoundWorkflows() {
@@ -75,8 +98,12 @@ public class DocumentDialogHelperBean implements Serializable {
     }
 
     public boolean isNotWorkingOrNotEditable() {
+<<<<<<< HEAD
         return isCaseFileClosedOrDestroyed() || isDocument() && !DocumentStatus.WORKING.getValueName().equals(getProps().get(DocumentCommonModel.Props.DOC_STATUS))
                 || isNotEditable();
+=======
+        return !DocumentStatus.WORKING.getValueName().equals(getProps().get(DocumentCommonModel.Props.DOC_STATUS)) || isNotEditable();
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     public void setDocumentDueDate(ValueChangeEvent event) {
@@ -88,7 +115,11 @@ public class DocumentDialogHelperBean implements Serializable {
         final List<Object> newValue = (List<Object>) event.getNewValue();
         // Execute at the end of UPDATE_MODEL_VALUES phase, because during this phase node properties are set from user submitted data.
         // Queue executeLater event on propertySheet, because it supports handling ActionEvents.
+<<<<<<< HEAD
         // Find propertySheet from component's hierarchy, do NOT use dialogDataProvider#getPropertySheet,
+=======
+        //Find propertySheet from component's hierarchy, do NOT use dialogDataProvider#getPropertySheet,
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         // because this AJAX submit is executed only on MultiValueEditor and thus PropertySheet binding to DocumentDynamicDialog has not been updated.
         UIComponent component = event.getComponent();
         UIPropertySheet propertySheet = ComponentUtil.getAncestorComponent(component, UIPropertySheet.class, true);
@@ -108,6 +139,7 @@ public class DocumentDialogHelperBean implements Serializable {
     }
 
     public boolean isInWorkspace() {
+<<<<<<< HEAD
         return RepoUtil.isInWorkspace(getNode());
     }
 
@@ -128,5 +160,9 @@ public class DocumentDialogHelperBean implements Serializable {
 
     public DialogDataProvider getDataProvider() {
         return dialogDataProvider;
+=======
+        Node node = getNode();
+        return (node == null ? false : node.getNodeRef().getStoreRef().getProtocol().equals(StoreRef.PROTOCOL_WORKSPACE)) ;
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 }

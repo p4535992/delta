@@ -13,14 +13,20 @@ import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docadmin.service.AssociationModel;
 import ee.webmedia.alfresco.docadmin.service.DocumentType;
 import ee.webmedia.alfresco.docconfig.bootstrap.SystematicDocumentType;
+<<<<<<< HEAD
 import ee.webmedia.alfresco.document.web.evaluator.DocumentNotInDraftsFunctionActionEvaluator;
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import ee.webmedia.alfresco.document.web.evaluator.RegisterDocumentEvaluator;
 import ee.webmedia.alfresco.document.web.evaluator.ViewStateActionEvaluator;
 
 /**
  * Base evaluator that decides if add association button should be visible for given {@link DocTypeAssocType}
+<<<<<<< HEAD
  * 
  * @author Ats Uiboupin
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
  */
 public abstract class BaseAddAssocEvaluator extends BaseActionEvaluator {
     private static final long serialVersionUID = 1L;
@@ -37,7 +43,11 @@ public abstract class BaseAddAssocEvaluator extends BaseActionEvaluator {
         if (docNode != null && !docNode.getNodeRef().getStoreRef().getProtocol().equals(StoreRef.PROTOCOL_WORKSPACE)) {
             return false;
         }
+<<<<<<< HEAD
         if (docNode == null || !new ViewStateActionEvaluator().evaluate(docNode) || !new DocumentNotInDraftsFunctionActionEvaluator().evaluate(docNode)) {
+=======
+        if (docNode == null || !new ViewStateActionEvaluator().evaluate(docNode)) {
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             return false;
         }
         DocumentType documentType = BeanHelper.getDocumentDynamicDialog().getDocumentType();

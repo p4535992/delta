@@ -1,5 +1,10 @@
 package ee.webmedia.alfresco.common.ajax;
 
+<<<<<<< HEAD
+=======
+import static org.apache.myfaces.shared_impl.renderkit.ViewSequenceUtils.getCurrentSequence;
+
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.Collections;
@@ -24,26 +29,43 @@ import javax.faces.event.PhaseId;
 import org.alfresco.repo.content.MimetypeMap;
 import org.alfresco.repo.webdav.WebDAVHelper;
 import org.alfresco.service.cmr.repository.NodeRef;
+<<<<<<< HEAD
 import org.alfresco.web.app.servlet.DownloadContentServlet;
 import org.alfresco.web.app.servlet.ajax.InvokeCommand.ResponseMimetype;
 import org.alfresco.web.ui.common.Utils;
 import org.alfresco.web.ui.common.component.data.UIRichList;
+=======
+import org.alfresco.web.app.servlet.ajax.InvokeCommand.ResponseMimetype;
+import org.alfresco.web.ui.common.Utils;
+import org.alfresco.web.ui.common.component.data.UIRichList;
+import org.apache.commons.lang.StringUtils;
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import org.apache.myfaces.shared_impl.renderkit.html.HtmlFormRendererBase;
 import org.apache.myfaces.shared_impl.util.RestoreStateUtils;
 import org.apache.myfaces.shared_impl.util.StateUtils;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
+<<<<<<< HEAD
 import ee.webmedia.alfresco.document.lock.service.DocLockService;
+=======
+import ee.webmedia.alfresco.document.service.DocLockService;
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import ee.webmedia.alfresco.privilege.service.PrivilegeUtil;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 import flexjson.JSONSerializer;
 
+<<<<<<< HEAD
 /**
  * @author Alar Kvell
  * @author Romet Aidla
  */
 public class AjaxBean implements Serializable {
+=======
+public class AjaxBean implements Serializable {
+    public static final String AJAX_REQUEST_PARAM = "ajaxRequest";
+
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     private static final long serialVersionUID = 1L;
 
     public static final String COMPONENT_CLIENT_ID_PARAM = "componentClientId";
@@ -55,12 +77,24 @@ public class AjaxBean implements Serializable {
 
     @ResponseMimetype(MimetypeMap.MIMETYPE_HTML)
     public void isFileLocked() throws IOException {
+<<<<<<< HEAD
+=======
+        // FIXME XXX This method isn't called when opening WebDAV file in IE! CL 161673
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         FacesContext context = FacesContext.getCurrentInstance();
 
         @SuppressWarnings("unchecked")
         Map<String, String> params = context.getExternalContext().getRequestParameterMap();
         String path = params.get("path");
+<<<<<<< HEAD
         Assert.hasLength(path, "path was not found in request");
+=======
+        if (StringUtils.isBlank(path)) {
+            // Assert.hasLength(path, "path was not found in request");
+            // FIXME this may happen, when session has expired, but why?
+            return;
+        }
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
         String[] parts = path.split(WebDAVHelper.PathSeperator);
         String id = parts[parts.length - 2];
@@ -91,6 +125,7 @@ public class AjaxBean implements Serializable {
             out.write(BeanHelper.getUserService().getUserFullName(lockOwner));
             return;
         }
+<<<<<<< HEAD
 
         // We mustn't lock the node now, since this will block MS Word session from locking it!
         out.write("NOT_LOCKED");
@@ -122,6 +157,12 @@ public class AjaxBean implements Serializable {
         String requestContextPath = context.getExternalContext().getRequestContextPath();
         String generateDownloadURL = DownloadContentServlet.generateDownloadURL(fileRef, filename);
         out.write(requestContextPath + generateDownloadURL);
+=======
+        if (generated) {
+            docLockService.setLockIfFree(docRef); // Lock the document. File is locked by WebDAV client
+        }
+        out.write("NOT_LOCKED");
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     @ResponseMimetype(MimetypeMap.MIMETYPE_HTML)
@@ -134,9 +175,19 @@ public class AjaxBean implements Serializable {
         String viewName = getParam(params, VIEW_NAME_PARAM);
 
         Utils.setRequestValidationDisabled(context);
+<<<<<<< HEAD
 
         // Phase 1: Restore view
         UIViewRoot viewRoot = restoreViewRoot(context, viewName);
+=======
+        ResponseWriter out = context.getResponseWriter();
+
+        // Phase 1: Restore view
+        UIViewRoot viewRoot = restoreViewRoot(context, viewName);
+        if (viewRoot == null) {
+            return;
+        }
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
         setupDataContainer(context, viewRoot, componentClientId);
         UIComponent component = ComponentUtil.findChildComponentById(context, viewRoot, componentClientId, true);
@@ -217,8 +268,12 @@ public class AjaxBean implements Serializable {
         Utils.encodeRecursive(context, renderedContainer);
 
         String viewState = saveView(context, viewRoot);
+<<<<<<< HEAD
         ResponseWriter out = context.getResponseWriter();
         out.write("VIEWSTATE:" + viewState);
+=======
+        writeViewState(out, viewState);
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
         @SuppressWarnings("unchecked")
         Set<String> formHiddenInputs = (Set<String>) context.getExternalContext().getRequestMap().get(
@@ -230,6 +285,13 @@ public class AjaxBean implements Serializable {
         out.write("HIDDEN_INPUT_NAMES_JSON:" + jsonHiddenInputNames);
     }
 
+<<<<<<< HEAD
+=======
+    public static void writeViewState(ResponseWriter out, String viewState) throws IOException {
+        out.write("VIEWSTATE:" + viewState);
+    }
+
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     private void setupDataContainer(FacesContext context, UIViewRoot viewRoot, String componentClientId) {
         Matcher matcher = DATA_CONTAINER_ROW_PATTERN.matcher(componentClientId);
         if (!matcher.find()) {
@@ -252,6 +314,7 @@ public class AjaxBean implements Serializable {
     }
 
     protected String getParam(Map<String, String> params, String paramKey) {
+<<<<<<< HEAD
         return getParam(params, paramKey, false);
     }
 
@@ -260,6 +323,10 @@ public class AjaxBean implements Serializable {
         if (!canBeEmpty) {
             Assert.hasLength(param, paramKey + " was not found in request");
         }
+=======
+        String param = params.get(paramKey);
+        Assert.hasLength(param, paramKey + " was not found in request");
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         Assert.isTrue(!"undefined".equals(param), paramKey + " was found in request, but with undefined value");
         return param;
     }
@@ -297,12 +364,17 @@ public class AjaxBean implements Serializable {
         boolean execute(FacesContext context, UIViewRoot viewRoot, UIComponent component);
     }
 
+<<<<<<< HEAD
     protected String saveView(FacesContext fc, UIViewRoot viewRoot) {
+=======
+    public static String saveView(FacesContext fc, UIViewRoot viewRoot) {
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         StateManager stateManager = fc.getApplication().getStateManager();
         stateManager.saveSerializedView(fc);
         return createViewState(fc, viewRoot);
     }
 
+<<<<<<< HEAD
     protected UIViewRoot restoreViewRoot(FacesContext fc, String viewName) {
         Application application = fc.getApplication();
         ViewHandler viewHandler = application.getViewHandler();
@@ -319,6 +391,39 @@ public class AjaxBean implements Serializable {
         // (not the view state that was used to generate the form).
         // It creates dependency to implementation of HtmlResponseStateManager, but no better solution was found.
         Object[] savedState = new Object[3];
+=======
+    public static UIViewRoot restoreViewRoot(FacesContext fc, String viewName) throws IOException {
+        UIViewRoot viewRoot = null;
+        fc.getExternalContext().getRequestMap().put(AJAX_REQUEST_PARAM, Boolean.TRUE);
+        try {
+            Application application = fc.getApplication();
+            ViewHandler viewHandler = application.getViewHandler();
+            viewRoot = viewHandler.restoreView(fc, viewName);
+            if (viewRoot != null) {
+                fc.setViewRoot(viewRoot);
+            } else {
+                writeViewStateError(fc, null);
+            }
+        } catch (AjaxIllegalViewStateException e) {
+            writeViewStateError(fc, e);
+        }
+        return viewRoot;
+    }
+
+    private static void writeViewStateError(FacesContext fc, AjaxIllegalViewStateException e) throws IOException {
+        ResponseWriter out = fc.getResponseWriter();
+        String currentViewId = e.getCurrentViewId();
+        String currentUrl = BeanHelper.getDocumentTemplateService().getServerUrl() + "/faces" + (currentViewId != null ? currentViewId : "");
+        fc.getResponseWriter().write("ERROR_VIEW_STATE_CHANGED:" + new JSONSerializer().serialize(currentUrl));
+    }
+
+    private static String createViewState(FacesContext fc, UIViewRoot viewRoot) {
+        // See HtmlResponseStateManager#writeState for meaning of different objects in saved state array.
+        // It creates dependency to implementation of HtmlResponseStateManager, but no better solution was found.
+        Object[] savedState = new Object[3];
+        Integer currentSequence = getCurrentSequence(fc);
+        savedState[0] = currentSequence != null ? currentSequence.toString() : null;
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         savedState[2] = viewRoot.getViewId();
         return StateUtils.construct(savedState, fc.getExternalContext());
     }

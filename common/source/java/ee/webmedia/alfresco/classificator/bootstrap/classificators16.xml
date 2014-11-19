@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <?xml version="1.0" encoding="UTF-8"?>
 <view:view xmlns:view="http://www.alfresco.org/view/repository/1.0" xmlns:cl="http://alfresco.webmedia.ee/model/classificator/1.0">
 
@@ -9,3 +10,16 @@
    </cl:classificator>
 
 </view:view>
+=======
+<?xml version="1.0" encoding="UTF-8"?>
+<view:view xmlns:view="http://www.alfresco.org/view/repository/1.0" xmlns:cl="http://alfresco.webmedia.ee/model/classificator/1.0">
+
+   <cl:classificator view:childName="cl:classifiedOrgStructUnitsToAdr">
+      <cl:name>classifiedOrgStructUnitsToAdr</cl:name>
+      <cl:addRemoveValues>true</cl:addRemoveValues>
+      <cl:deleteEnabled>false</cl:deleteEnabled>
+      <cl:description>Konfidentsiaalsed struktuuriüksused, mille nime ja üksuses olevate kasutajate nimesid ADR'i ei edastata. Väljale "Nimetus" sisestada konfidentsiaalse struktuuriüksuse rada. Väljale "Täiendav väärtus" sisestada tekst, millega konfidentsiaalse struktuuriüksuse nimi ADR'is asendatakse.</cl:description>
+   </cl:classificator>
+
+</view:view>
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5

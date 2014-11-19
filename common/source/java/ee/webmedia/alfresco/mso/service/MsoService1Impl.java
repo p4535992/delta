@@ -33,9 +33,12 @@ import ee.webmedia.alfresco.utils.CalendarUtil;
 import ee.webmedia.alfresco.utils.ContentReaderDataSource;
 import ee.webmedia.alfresco.utils.MimeUtil;
 
+<<<<<<< HEAD
 /**
  * @author Alar Kvell
  */
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 public class MsoService1Impl implements MsoService, InitializingBean {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(MsoService1Impl.class);
 

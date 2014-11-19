@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 package ee.webmedia.alfresco.privilege.model;
 
 import java.util.Map;
@@ -24,4 +25,30 @@ public class PrivMappings extends PrivilegeMappings {
     public Map<String, UserPrivileges> getPrivilegesByGroup() {
         return privilegesByGroup;
     }
+=======
+package ee.webmedia.alfresco.privilege.model;
+
+import java.util.Map;
+
+import org.alfresco.service.cmr.repository.NodeRef;
+
+/**
+ * Holds information about user and group privileges
+ */
+public class PrivMappings extends PrivilegeMappings {
+    private static final long serialVersionUID = 1L;
+    private Map<String/* userName */, UserPrivileges> privilegesByGroup;
+
+    public PrivMappings(NodeRef manageableRef) {
+        super(manageableRef);
+    }
+
+    public void setPrivilegesByGroup(Map<String, UserPrivileges> privilegesByGroup) {
+        this.privilegesByGroup = privilegesByGroup;
+    }
+
+    public Map<String, UserPrivileges> getPrivilegesByGroup() {
+        return privilegesByGroup;
+    }
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 }

@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.volume.model;
 
+<<<<<<< HEAD
 import static ee.webmedia.alfresco.document.model.Document.dateFormat;
 
 import java.util.Arrays;
@@ -26,64 +27,112 @@ import ee.webmedia.alfresco.functions.model.Function;
 import ee.webmedia.alfresco.series.model.Series;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.TextUtil;
+=======
+import static ee.webmedia.alfresco.app.AppConstants.DEFAULT_COLLATOR;
+
+import java.io.Serializable;
+import java.util.Calendar;
+import java.util.Date;
+
+import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.web.bean.repository.Node;
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.time.DateUtils;
+
+import ee.webmedia.alfresco.app.AppConstants;
+import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
+import ee.webmedia.alfresco.classificator.enums.VolumeType;
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import ee.webmedia.alfresco.utils.beanmapper.AlfrescoModelProperty;
 import ee.webmedia.alfresco.utils.beanmapper.AlfrescoModelType;
 
 @AlfrescoModelType(uri = VolumeModel.URI)
+<<<<<<< HEAD
 public class Volume extends EventPlanVolume implements VolumeOrCaseFile {
+=======
+public class Volume implements Serializable, Comparable<Volume> {
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
     private static final long serialVersionUID = 1L;
 
     private String volumeType;
+<<<<<<< HEAD
     @AlfrescoModelProperty(isMappable = false)
     private String volumeTypeName;
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     private String volumeMark;
     private String title;
     private Date validFrom;
     private Date validTo;
     private String status;
+<<<<<<< HEAD
     // FIXME: Alar, milleks see väli? On see üldse kuskil kasutusel?
+=======
+    private Date dispositionDate;
+    // FIXME: milleks see väli? On see üldse kuskil kasutusel?
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     private Date seriesIdentifier;
     private boolean containsCases;
     private boolean casesCreatableByUser;
     private int containingDocsCount;
+<<<<<<< HEAD
     private String ownerName;
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     // non-mappable fields
     @AlfrescoModelProperty(isMappable = false)
     private NodeRef seriesNodeRef;
 
+<<<<<<< HEAD
     public Volume() {
         super(null);
     }
+=======
+    @AlfrescoModelProperty(isMappable = false)
+    private Node node;
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
     public void setVolumeMark(String volumeMark) {
         this.volumeMark = volumeMark;
     }
 
+<<<<<<< HEAD
     @Override
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     public String getVolumeMark() {
         return volumeMark;
     }
 
+<<<<<<< HEAD
     @Override
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     public String getTitle() {
         return title;
     }
 
+<<<<<<< HEAD
     @Override
     public String getType() {
         return "";// used for CaseFile only
     }
 
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     public void setTitle(String title) {
         this.title = title;
     }
 
+<<<<<<< HEAD
     public String getVolumeMarkAndTitle() {
         return TextUtil.joinNonBlankStrings(Arrays.asList(volumeMark, title), " ");
     }
 
     @Override
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     public Date getValidFrom() {
         return validFrom;
     }
@@ -92,12 +141,18 @@ public class Volume extends EventPlanVolume implements VolumeOrCaseFile {
         this.validFrom = validFrom;
     }
 
+<<<<<<< HEAD
     @Override
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     public Date getValidTo() {
         return validTo;
     }
 
+<<<<<<< HEAD
     @Override
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     public void setValidTo(Date validTo) {
         this.validTo = validTo;
     }
@@ -110,6 +165,17 @@ public class Volume extends EventPlanVolume implements VolumeOrCaseFile {
         this.status = status;
     }
 
+<<<<<<< HEAD
+=======
+    public Date getDispositionDate() {
+        return dispositionDate;
+    }
+
+    public void setDispositionDate(Date dispositionDate) {
+        this.dispositionDate = dispositionDate;
+    }
+
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     public Date getSeriesIdentifier() {
         return seriesIdentifier;
     }
@@ -146,6 +212,7 @@ public class Volume extends EventPlanVolume implements VolumeOrCaseFile {
         return seriesNodeRef;
     }
 
+<<<<<<< HEAD
     public void setSeriesNodeRef(NodeRef seriesNodeRef) {
         this.seriesNodeRef = seriesNodeRef;
     }
@@ -176,6 +243,26 @@ public class Volume extends EventPlanVolume implements VolumeOrCaseFile {
 
     public VolumeType getVolumeTypeEnum() {
         return volumeType == null ? null : VolumeType.valueOf(volumeType);
+=======
+    public void setProperty(String key, Object value) {
+        node.getProperties().put(key, value);
+    }
+
+    public Object getProperty(String key) {
+        return node.getProperties().get(key);
+    }
+
+    public void setSeriesNodeRef(NodeRef seriesNodeRef) {
+        this.seriesNodeRef = seriesNodeRef;
+    }
+
+    public String getVolumeType() {
+        return volumeType;
+    }
+
+    public VolumeType getVolumeTypeEnum() {
+        return VolumeType.valueOf(volumeType);
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     public void setVolumeType(String volumeType) {
@@ -186,6 +273,7 @@ public class Volume extends EventPlanVolume implements VolumeOrCaseFile {
         this.volumeType = volumeType.name();
     }
 
+<<<<<<< HEAD
     public void setOwnerName(String ownerName) {
         this.ownerName = ownerName;
     }
@@ -330,6 +418,27 @@ public class Volume extends EventPlanVolume implements VolumeOrCaseFile {
             return "Tähtajaline";
         }
         return "";
+=======
+    public Node getNode() {
+        return node;
+    }
+
+    public void setNode(Node node) {
+        this.node = node;
+    }
+
+    public boolean isDisposed() {
+        return DocListUnitStatus.DESTROYED.getValueName().equals(status) ||
+                (dispositionDate != null && dispositionDate.after(DateUtils.truncate(new Date(), Calendar.DATE)));
+    }
+
+    @Override
+    public int compareTo(Volume other) {
+        if (StringUtils.equalsIgnoreCase(getVolumeMark(), other.getVolumeMark())) {
+            return AppConstants.DEFAULT_COLLATOR.compare(getTitle(), other.getTitle());
+        }
+        return DEFAULT_COLLATOR.compare(getVolumeMark(), other.getVolumeMark());
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     @Override
@@ -340,7 +449,12 @@ public class Volume extends EventPlanVolume implements VolumeOrCaseFile {
                 .append("\n\tcontainsCases = " + containsCases)
                 .append("\n\tvalidFrom = " + validFrom)
                 .append("\n\tvalidTo = " + validTo)
+<<<<<<< HEAD
                 .append("\n\tstatus = " + status).toString();
+=======
+                .append("\n\tstatus = " + status)
+                .append("\n\tdispositionDate = " + dispositionDate).toString();
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
 }

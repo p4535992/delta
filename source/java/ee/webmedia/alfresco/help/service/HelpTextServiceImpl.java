@@ -25,8 +25,11 @@ import ee.webmedia.alfresco.utils.UnableToPerformException;
  * Help text service implementation.
  * <p>
  * Specification: <i>Kontekstitundlik abiinfo</i>.
+<<<<<<< HEAD
  * 
  * @author Martti Tamm
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
  */
 public class HelpTextServiceImpl implements HelpTextService {
 

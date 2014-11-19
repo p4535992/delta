@@ -33,9 +33,17 @@ import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.security.AccessStatus;
+<<<<<<< HEAD
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
+=======
+import org.alfresco.service.cmr.security.AuthorityType;
+import org.alfresco.service.namespace.QName;
+import org.alfresco.web.app.servlet.FacesHelper;
+import org.alfresco.web.bean.dialog.BaseDialogBean;
+import org.alfresco.web.bean.repository.Node;
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import org.alfresco.web.ui.common.component.UIActionLink;
 import org.alfresco.web.ui.common.component.UIGenericPicker;
 import org.alfresco.web.ui.common.component.UIPanel;
@@ -58,6 +66,10 @@ import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.UserContactGroupSearchBean;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.privilege.model.PrivMappings;
+<<<<<<< HEAD
+=======
+import ee.webmedia.alfresco.privilege.model.PrivilegeModel;
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import ee.webmedia.alfresco.privilege.model.UserPrivileges;
 import ee.webmedia.alfresco.user.model.Authority;
 import ee.webmedia.alfresco.user.service.UserService;
@@ -66,13 +78,20 @@ import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.ComparableTransformer;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
+<<<<<<< HEAD
+=======
+import ee.webmedia.alfresco.utils.TextUtil;
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import ee.webmedia.alfresco.utils.WebUtil;
 import flexjson.JSONSerializer;
 
 /**
  * Dialog bean for managing privileges that could be inherited to the user through group and/or through parent nodes.
+<<<<<<< HEAD
  * 
  * @author Ats Uiboupin
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
  */
 public class ManageInheritablePrivilegesDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;
@@ -157,11 +176,39 @@ public class ManageInheritablePrivilegesDialog extends BaseDialogBean {
         MessageUtil.addStatusMessage(typeHandler.getInfoMessage());
         state.privMappings = getPrivilegeService().getPrivMappings(manageableRef, typeHandler.getManageablePermissions());
         markPrivilegesBaseState = true;
+<<<<<<< HEAD
+=======
+
+        List<Node> privilegeActions = getPrivilegeService().getAllInQueuePrivilegeActions(manageableRef);
+        for (Node privilegeAction : privilegeActions) {
+            String actionType = (String) privilegeAction.getProperties().get(PrivilegeModel.Props.PRIVILEGE_ACTION_TYPE);
+            @SuppressWarnings("unchecked")
+            List<String> permissions = (List<String>) privilegeAction.getProperties().get(PrivilegeModel.Props.PERMISSIONS);
+            List<String> permissionTitles = new ArrayList<String>(permissions.size());
+            for (String permission : permissions) {
+                permissionTitles.add("\"" + MessageUtil.getMessage("permission_" + permission) + "\"");
+            }
+            String authority = (String) privilegeAction.getProperties().get(PrivilegeModel.Props.AUTHORITY);
+            String authorityType = AuthorityType.getAuthorityType(authority).name();
+            String authorityTitle = authority;
+            if (AuthorityType.GROUP.name().equals(authorityType)) {
+                authorityTitle = getAuthorityService().getAuthorityDisplayName(authority);
+            } else if (AuthorityType.USER.name().equals(authorityType)) {
+                authorityTitle = getUserService().getUserFullNameWithOrganizationPath(authority);
+            }
+            MessageUtil.addInfoMessage("manage_permissions_background_action_" + authorityType + "_" + actionType, authorityTitle,
+                    TextUtil.joinNonBlankStringsWithComma(permissionTitles));
+        }
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     @Override
     public boolean getFinishButtonDisabled() {
+<<<<<<< HEAD
         // FIXME Kaarel - seda meetodit ei arvestata (seoses "Salvesta nupp alati nähtavaks" ümber tegemisega) - see meetod võiks määrata kas nupp on disabled.
+=======
+        // FIXME seda meetodit ei arvestata (seoses "Salvesta nupp alati nähtavaks" ümber tegemisega) - see meetod võiks määrata kas nupp on disabled.
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         // ajutise workaround'ina on finishImpl'is kontroll + veateate kuvamine
         return !typeHandler.isEditable();
     }
@@ -196,6 +243,7 @@ public class ManageInheritablePrivilegesDialog extends BaseDialogBean {
         return null;
     }
 
+<<<<<<< HEAD
     @Override
     protected String doPostCommitProcessing(FacesContext context, String outcome) {
         // Perform indexing in a separate transaction, because if it takes a long time,
@@ -205,6 +253,8 @@ public class ManageInheritablePrivilegesDialog extends BaseDialogBean {
         return super.doPostCommitProcessing(context, outcome);
     }
 
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     private Map<String, UserPrivileges> getVosThatLoosePrivileges() {
         Map<String /* userName */, UserPrivileges> vos = new HashMap<String, UserPrivileges>();
         for (UserPrivileges vo : state.privMappings.getPrivilegesByUsername().values()) {
@@ -781,4 +831,29 @@ public class ManageInheritablePrivilegesDialog extends BaseDialogBean {
         return cb;
     }
 
+<<<<<<< HEAD
+=======
+    // BEGIN Methods for generally pausing/continuing privilege actions from nodeBrowser
+    public boolean isPrivilegeActionsEnabled() {
+        return getPrivilegeService().isPrivilegeActionsEnabled();
+    }
+
+    public boolean isShowPausePrivilegeActions() {
+        return isPrivilegeActionsEnabled() && !getPrivilegeService().isPrivilegeActionsPaused();
+    }
+
+    public boolean isShowContinuePrivilegeActions() {
+        return isPrivilegeActionsEnabled() && getPrivilegeService().isPrivilegeActionsPaused();
+    }
+
+    public void pausePrivilegeActions(@SuppressWarnings("unused") ActionEvent event) {
+        getPrivilegeService().setPrivilegeActionsPaused(true);
+    }
+
+    public void continuePrivilegeActions(@SuppressWarnings("unused") ActionEvent event) {
+        getPrivilegeService().setPrivilegeActionsPaused(false);
+    }
+    // END Methods for generally pausing/continuing privilege actions from nodeBrowser
+
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 }

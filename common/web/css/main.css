@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 /*
 	RESET
 	*************************************************************************/
@@ -1331,3 +1332,1343 @@ input[type="checkbox"] {
 table.generic-picker td {
 	padding: 4px 0;
 }
+=======
+/*
+	RESET
+	*************************************************************************/
+/* *************************************************************************/
+
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,form,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,textarea,tfoot,thead,tr,th,td,select {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	outline: 0;
+	vertical-align: baseline;
+}
+
+input {
+	margin: 0;
+	padding: 0;
+	vertical-align: baseline;
+}
+
+input[type="text"],
+textarea,
+select {
+	border: 1px solid #888;
+}
+
+body {
+	line-height: 1;
+	color: #2D2C2D;
+	background: white;
+}
+
+ol,ul, li {
+	list-style: none;
+}
+
+/* tables still need 'cellspacing="0"' in the markup */
+table {
+	border-collapse: separate;
+	border-spacing: 0;
+}
+
+caption,th,td {
+	text-align: left;
+	font-weight: normal;
+}
+
+blockquote:before,blockquote:after,q:before,q:after {
+	content: "";
+}
+
+blockquote,q {
+	quotes: "" "";
+}
+
+/*
+	FONTS
+	*************************************************************************/
+/* *************************************************************************/
+
+/*
+	LINKS
+	******************************/
+
+a:focus {
+	outline: 1px dotted #0860b0;
+}
+
+#header a > img,
+#titlebar a > img {
+	vertical-align: -4px;
+	margin-right: 4px;
+}
+
+#preview-panel .panel-border a {
+	line-height: 25px;
+	margin-right: 20px;
+}
+
+.icon-link {
+	padding-left: 20px;
+	padding-bottom: 1px; /* may be overrridden in <a:actionlink /> declaration */
+	background: transparent no-repeat;
+	line-height: 16px;
+	height: 16px;
+}
+
+.doc-list-actions .icon-link {
+	padding-left: 16px;
+	padding-top: 1px;
+	background-position: center;
+	margin: 0 1px;
+}
+
+.doc-list-actions img {
+	padding: 2px 5px;
+	margin: 0 1px;
+}
+
+#links-panel a {
+	margin-right: 15px;
+}
+
+/*
+	LAYOUT
+	*************************************************************************/
+/* *************************************************************************/
+
+html, body {
+	height: 100%;
+}
+	
+#wrapper {
+	position: relative;
+	min-height: 100%;
+	min-width: 920px;
+	width: auto !important;
+	width: 920px;
+}
+
+#header {
+	width: 100%;
+	height: 95px;
+	/*z-index: 100;*/
+}
+
+.search-box {
+	/*z-index: 95;*/
+}
+
+#menu li {
+	/*z-index:94;*/
+}
+
+#container {
+	position: relative;
+	width: 100%;
+	padding-bottom: 50px;
+	/*z-index: 1;*/
+}
+
+#content {
+	margin-left: 0;
+	padding: 10px 5px;
+}
+
+#sidebar + #content {
+	margin-left: 217px;
+}
+
+#sidebar {
+	float: left;
+	clear: left;
+	width: 207px;
+	padding: 10px 5px;
+}
+
+#footer {
+	position: absolute;
+	bottom: 0;
+	width: 100%;
+	height: 38px;
+	height: 30px;
+	padding-top: 15px;
+	clear: both;
+	text-align: center;
+}
+
+
+/*
+	LOGO, CONTROL PANEL AND NAVIGATION
+	*************************************************************************/
+/* *************************************************************************/
+
+/*
+	HEADER
+	******************************/
+
+	#logo {
+		height:60px;
+	}
+	
+		#logo #client-logo {
+			float:left;
+			margin: 4px 0 0 10px;
+			padding: 32px 0 8px 182px !important;
+		}
+		
+		#logo #project-name {
+			float: left;
+			padding: 5px 0 5px 15px;
+			margin: 17px;
+		}
+		
+		.search-box {
+			position:absolute;
+			right:10px;
+			top:20px;
+			height: 21px;
+			padding-right: 260px;
+		}
+		
+		.search-box.alt {
+		    position:relative;
+		    float: right;
+		    top: 0;
+		}
+		    
+		    .search-box input[type="submit"]:hover,
+		    .search-box input[type="submit"]:focus,
+		    .search-box input[type="submit"]:active {
+		       background-position: 0 0;
+		    }
+		
+			.search-box > a, 
+			.search-box > span {
+				margin-right:40px;
+			}
+			
+			.search-box > img {
+				position: absolute;
+				top: -2px;
+				right: 225px;
+				cursor: pointer;
+			}
+
+			.search-box > img.simple {
+				border-width: 0px;
+				vertical-align: -1px;
+				cursor: auto;
+			}
+      
+			.search-box input[type="text"] {
+				position: absolute;
+				top: -3px;
+				padding-top: 2px; 
+				right: 65px;
+				width: 160px;
+				height: 21px;
+				line-height: 20px;
+				border: none;
+			}
+			
+			.search-box input[type="submit"] {
+				position: absolute;
+				top: -2px;
+				right: 5px;
+				height: 21px;
+				width: 60px;
+				border: none;
+				padding: 0 3px 1px 0;
+				text-transform: capitalize;
+			}
+			
+		
+		#alfsearch_menu {
+			position:absolute;
+			right: 67px;
+			top: 20px;
+			padding: 5px;
+			min-width:180px;
+		}
+		
+			#alfsearch_menu ul {
+				margin-bottom: 10px;
+			}
+			
+				#alfsearch_menu ul li {
+					margin: 4px 0; 
+				}
+				
+					#alfsearch_menu ul li input {
+						position: relative;
+						top: 2px;
+						margin-right: 4px;
+					}
+			
+			#alfsearch_menu div	{
+				padding: 4px;
+				text-align: center;
+				
+			}
+				
+				#alfsearch_menu div img	{
+					vertical-align: -3px;
+					margin-left: 4px;
+				}
+		
+/*
+	MENU
+	******************************/
+#menu {
+	/*z-index: 95;*/
+}
+
+	#menu > ul {
+		height: 35px;
+	}
+	
+	#menu li {
+		float: left;
+	}
+	
+		#menu li a {
+				display: inline-block;
+				padding: 0 12px;
+		}
+	
+	#menu li a.active {
+		margin-right: 2px;
+	}
+		
+	#menu li.dropdown {
+		position: relative;
+		float: right;
+		line-height: 12px;
+		width: 180px;
+		text-align: center;
+		z-index: 10000;
+	}
+	
+		#menu li.dropdown li,
+		#menu li.dropdown a {
+			background-image: none;
+			font-weight: normal;
+			line-height: 12px;
+			text-align: left;
+			float: none;
+			display: block;
+			width: auto;
+		}
+		
+		#menu > ul > li.dropdown > a {
+			line-height: 35px;
+			font-weight: bold;
+			display: inline;
+			text-decoration: none;
+			padding: 0;
+			outline: 0;
+			margin-left: -7px;
+		}
+		
+
+		#menu li.dropdown > img {
+			margin-left: 4px;
+			vertical-align: -3px;
+		}
+		
+		#menu li.dropdown > div {
+			position: absolute;
+			top: 10px;
+			padding-left: 17px;
+			width: 85%;
+			z-index: -1;
+		}
+		
+		#menu li.dropdown > div > span {
+			height: 15px;
+			left: 0;
+			position: absolute;
+			top: -15px;
+			width: 17px;
+		}
+		
+		#menu li.dropdown div div {
+			padding: 0px 0px 5px 0;
+		}
+		
+		#menu li.dropdown div > ul {
+			position: relative;
+			top: -15px;
+			padding: 50px 17px 0 0;
+		}
+		
+		#menu li.dropdown div > ul > li {
+			padding: 2px 0;
+		}
+		
+		#menu li.dropdown ul ul {
+			padding: 5px 0 5px 10px;
+		}
+		
+		#menu li.dropdown ul li a {
+			padding: 0 0 0 10px;
+			line-height: 14px;
+		}
+		
+		#menu li.dropdown  ul ul li a {
+			font-size: 11px;
+		}
+	
+/*
+	LEFT NAVIGATION BAR
+	*************************************************************************/
+/* *************************************************************************/
+
+/*
+	SIDEBAR
+	******************************/
+	
+/* Navigator styles can be found in styles.css */				
+
+/* SHELF MENU */
+				
+#sidebar .menu {
+	margin-top: 10px;
+}
+
+	#sidebar .menu > a {
+		display: block;
+		padding: 10px 0 8px 28px !important;
+	}
+	
+	#sidebar .menu ul {
+		padding: 5px 0 10px 0;
+	}
+	
+		#sidebar .menu li {
+			position: relative;
+			padding-bottom:3px;
+		}
+		
+			#sidebar .menu li > a {
+				padding-left: 25px;
+			}
+			
+				#sidebar .menu .shortcut-item-remove img {
+					position:absolute;
+					right: 15px;
+					top: 4px;
+					visibility: hidden;
+					vertical-align: middle;
+				}
+				
+				#sidebar .menu li:hover .shortcut-item-remove img {
+					visibility: visible;
+				}
+				
+			#sidebar div li.clipboard-item {
+				list-style: none;
+				padding: 4px;
+				margin-left: 15px;
+			}
+			
+			#sidebar div li.clipboard-item:hover {
+				
+			}
+			
+			#sidebar div li.clipboard-item > img {
+				margin-left: -16px;
+				margin-top: -2px;
+				position: absolute;
+				vertical-align: -3px;
+				visibility: hidden;
+			}
+			
+			#sidebar div li.clipboard-item .clipboard-item-actions {
+				padding: 3px;
+				position: absolute;
+				right: 5px;
+				top: -1px;
+				visibility: hidden;
+			}
+			
+			#sidebar div li.clipboard-item:hover .clipboard-item-actions,
+			#sidebar div li.clipboard-item:hover > img {
+				visibility: visible;
+			}
+			
+			#sidebar div li.clipboard-general {
+				list-style: none;
+				margin-left: -10px;
+				margin-top: 5px;
+			}
+			
+				#sidebar div li.clipboard-general a,
+				#sidebar div li.clipboard-item a {
+					padding-left: 0;
+				}
+
+
+/*
+	CONTENT
+	*************************************************************************/
+/* *************************************************************************/
+
+/*
+	BREADCRUMB
+	******************************/
+
+ul#breadcrumb li {
+	display: inline;
+}
+
+#breadcrumb, .breadcrumb, #alt-breadcrumb {
+	margin-bottom: 10px;
+/*	display: none;  */
+}
+
+.breadcrumb {
+	padding: 5px;
+}
+
+/*
+	TITLEBAR
+	******************************/
+	
+#titlebar,
+#titlebar-search,
+#footer-titlebar {
+	position: relative;
+	padding: 10px 10px 0;
+	margin-bottom: 10px;
+	/*z-index: 90;*/
+}
+
+#footer-titlebar {
+	visibility: hidden; /* show only when necessary */
+}
+
+	#titlebar h2,
+	#titlebar-search h2,
+	#footer-titlebar h2 {
+		margin-bottom: 10px;
+		padding: 0 100px 0 28px;
+	}
+	
+		#titlebar h2 img,
+		#titlebar-search h2 img,
+		#titlebar h2 a,
+		#footer-titlebar h2 img,
+		#footer-titlebar h2 a {
+			position:absolute;
+			width: 20px;
+			height: 20px;
+			left:10px;
+			top: 7px;
+		}
+		
+		#description,
+		#footer-description {
+			margin-bottom: 10px;
+		}
+	
+
+	#additional,
+	#footer-additional {
+		position: absolute;
+		top: 10px;
+		right: 10px;
+	}
+	
+		#additional > a
+		#footer-additional > a {
+			margin-left: 10px;
+		}
+		
+		#additional span > img,
+		#footer-additional span > img {
+			vertical-align: -3px;
+		}
+		
+		#additional span.icon-link
+		#foooter-additional span.icon-link {
+			margin-left: 10px;
+		}  
+	
+/*
+	ACTIONS
+	******************************/
+
+#actions,
+#footer-actions {
+	overflow: visible;
+}
+
+ 	#actions .actions,
+ 	#footer-actions .actions {
+ 		float: left;
+		padding: 7px 0;
+		margin-right: 10px;
+		display: none;
+	}
+	
+	#actions > span,
+	#footer-actions > span {
+		float:left;
+		margin-right:10px;
+		padding:7px 0;
+	}
+	
+	#actions ul,
+	#footer-actions ul {
+		overflow: auto;
+	}
+	
+		#actions ul li,
+		#footer-actions ul li {
+			float: left;
+			margin-bottom: 5px;
+		}
+		
+		#actions ul.extra-actions li,
+		#footer-actions ul.extra-actions li {
+			margin-bottom: 0;
+		}
+	
+	.wizard-steps li {
+		padding: 7px 12px 7px 15px;
+	}
+	
+	
+	.wizard-steps li:first-child {
+		background-image: none;
+	}
+	
+	.wizard-steps li.current span {
+		padding: 5px 7px;
+		margin-left: 2px;
+	}
+	
+
+.actions-menu {
+	display: block !important;
+}
+
+.dropdown-menu {
+	z-index: 1;
+}
+
+.dropdown-menu li,
+.actions-menu li {
+	position: relative;
+	margin-right: 2px;
+}
+
+.extra-actions li {
+	margin: 0 0 0 2px;
+}
+
+	.dropdown-menu a,
+	.dropdown-menu .disabled,
+	.actions-menu a {
+		float: left;
+		padding: 3px 6px 3px 22px;
+		white-space: nowrap;
+	}
+	
+	.no-icon span,
+	.no-icon a {
+		padding-left: 6px;
+	}
+	
+		.dropdown-menu li img,
+		.actions-menu li img {
+		 	position: absolute;
+		 	left: 7px;
+		 	top: 3px;
+			max-height: 12px;
+			vertical-align: -2px;
+		}
+		
+.extra-actions {
+	float: right;
+	overflow: visible !important;
+	
+}
+	
+.dropdown-menu {
+	position: absolute;
+	left: auto;
+	top: 20px;
+	z-index: 10;
+	padding-bottom: 2px;
+}
+
+.dropdown-menu.right {
+	right: 0;	
+}
+
+.dropdown-menu.in-title {
+	top: auto;
+	right: 0;
+}
+
+td .dropdown-menu {
+	top: auto;
+	right: 0;
+}
+
+.dropdown-menu li,
+.dropdown-menu li > span,
+.dropdown-menu a {
+	display: block;
+	float: none !important;
+}
+
+.dropdown-menu li {
+	margin: 2px;
+}
+
+.dropdown-menu.in-title li {
+	margin: 0;
+}
+
+/* .extra-actions > li:first-child a img { */
+.extra-actions > li a img {
+	top: 7px !important;
+}
+
+
+
+/*
+	PANELS
+	******************************/
+
+.column,
+.panel-column {
+	float: left;
+	margin-right: 1%;
+}
+
+#container-content {
+	float: none;
+}
+
+.panel-wrapper {
+	margin-bottom: 10px;
+}
+
+	.panel-wrapper h3 {
+		padding: 7px 5px;
+	}
+	
+		.panel-wrapper h3 img {
+			margin-right:2px;
+			vertical-align:-2px;
+		}
+		
+	.panel-wrapper > a {
+		float:right;
+	}
+	
+	.panel-wrapper .title-component	{
+		float:right;
+		margin: -22px 5px 0 0;
+	}
+	
+	.panel-wrapper .title-component-nonfloating {
+		float: none;
+		margin: -22px 5px 0 0;
+	}
+	
+		.panel-wrapper .title-component a,
+		.panel-wrapper .title-component a img {
+			margin-left: 4px;
+		}
+		
+		#container-content .title-component select {
+			vertical-align: middle;
+			height: 22px;
+			margin-top: -2px;
+		}
+		
+.panel-border {
+	padding: 5px 5px 7px;
+}
+
+.with-pager .panel-border {
+	position: relative;
+	padding-bottom: 30px;
+}
+
+.message {
+	margin: 0 auto 10px;
+	padding: 5px;
+}
+
+	.message img {
+		vertical-align: -4px;
+		padding-right: 5px;
+	}
+	
+	.message .error-message,
+	.message .info-message {
+		line-height: 16px;
+		margin: 4px 0 4px 4px;
+		padding-left: 15px;
+	}
+	
+.panel-10	{ width: 10%; margin-right: 0 !important;}
+.panel-15 	{ width: 14%; margin-right: 1%; }
+.panel-20 	{ width: 19%; margin-right: 1%; }
+.panel-25 	{ width: 24%; margin-right: 1%; }
+.panel-30 	{ width: 29%; margin-right: 1%; }
+.panel-30-f { width: 30%; margin-right: 0; }
+.panel-33 	{ width: 32%; margin-right: 1%; }
+.panel-33-f	{ width: 34%; margin-right: 0;	}
+.panel-35 	{ width: 34%; margin-right: 1%; }
+.panel-35-f { width: 35%; margin-right: 0; }
+.panel-40	{ width: 39%; margin-right: 1%; }
+.panel-50	{ width: 49%; margin-right: 1%; }
+.panel-50-f	{ width: 50%; margin-right: 0; }
+.panel-60 	{ width: 59%; margin-right: 1%; }
+.panel-65 	{ width: 64%; margin-right: 1%; }
+.panel-70 	{ width: 69%; margin-right: 1%; }
+.panel-70-f	{ width: 70%; margin-right: 0%; }
+.panel-80 	{ width: 79%; margin-right: 1%; }
+.panel-90 	{ width: 89%; margin-right: 1%; }
+.panel-99	{ width: 99%; }
+.panel-100	{ width: 100%; }
+
+.min-width-360		{min-width: 360px;}
+
+.width10 {
+	width: 10%;
+}
+
+.width15 {
+	width: 15%;
+}
+
+.width25 {
+	width: 25%;
+}
+
+.width30 {
+	width: 30%;
+}
+
+
+
+/*
+	TABLES
+	******************************/
+	
+th img {
+	vertical-align: -4px;
+}
+	
+/* Alfresco classes, updating the RecordSet renderer is reccommended :) */
+
+tr.recordSetRow td {
+		padding: 5px 2px;
+	}
+	
+	tr td {
+		/*padding: 4px;*/
+	}
+	
+	tr td td {
+		/* padding: 4px 0; */ 
+	}
+
+	tr.recordSetRow td,
+	tr.recordSetRowAlt td,
+	tr.odd td,
+	tr.selectedItemsRow td,
+	tr.selectedItemsRowAlt td {
+		padding: 3px;
+		vertical-align: top;
+		line-height: 14px;
+	}
+
+	tr.task td:first-child a:first-child img {
+		visibility: hidden;
+	}
+
+td.actions-column,
+th.actions-column {
+	position: relative;
+	text-align: right;
+}
+
+td.actions-column * {
+	text-align: left;
+}
+
+	td.actions-column img {
+		padding: 0 1px;
+	}
+
+.propertiesLabel {
+	width: 170px;
+}
+
+.propertiesLabel + td .propertiesLabel {
+	width: 122px;
+}
+
+.subPropertySheetTR .propertiesLabel + td .propertiesLabel {
+	width: 113px;
+}
+
+.icon-space {
+	margin-right: 35px;
+}
+
+/* PAGE CONTROLS */
+
+.page-controls {
+		bottom: 3px;
+		position:absolute;
+		right:15px;
+		z-index: 1;
+	}
+	
+	.page-controls select {
+		min-width: 20px !important;
+		margin-left: 4px;
+	}
+	
+	.page-controls * {
+		font-size: 11px;
+	}
+	
+	.page-controls > span {
+		position: relative;
+		top: -1px;
+	}
+
+.pager-wrapper {
+		position: absolute;
+		left: 0;
+		bottom: 0;
+		width: 100%;
+		height: 18px;
+		text-align: right;
+		padding-top: 6px;
+	}
+
+	.pager {
+	   position: relative;
+	   top: -2px;
+	   margin-right: 20px;
+	}
+	
+		.pager img {
+		   vertical-align: -4px;
+		}
+		
+	.page-controls + .pager-wrapper > .pager {
+		margin-right: 180px;
+	}
+	
+/*
+	CONTAINER CONTROLS
+	******************************/
+
+.container-buttons {
+	float: left;
+	margin-left: -2px; /* Borders */
+	padding: 10px 0;
+}
+
+	.container-buttons input {
+		width: 85%;
+		margin-top: 5px;
+	}
+	
+	.container-buttons input:first-child {
+		margin-top: 0;
+	}
+
+
+.ie7-z-index {
+	position: relative;
+}
+/*
+	GENERIC BUTTONS
+	******************************/
+	button,
+	input[type="submit"] {
+		/*padding: 3px;*/
+		padding: 1px 20px;
+		border: none;
+		background-color: #253967;
+		font-weight: bold;
+		line-height: 12px;
+		font-size: 12px;
+		overflow: visible;
+		cursor: pointer;
+		height /*\**/: 20px\9
+		
+	}
+	
+	button {
+		padding: 1px 19px 2px 19px;
+	}
+	
+	input[type="submit"]:first-child {
+		margin-top: 0;
+	}
+	
+
+
+/*
+	VIEWS
+	*************************************************************************/
+/* *************************************************************************/
+
+
+/*
+	USER CONSOLE
+	************************************/
+	
+	#avatar-frame {
+		float: right;
+		width: 120px;
+		border: 1px solid #efefef;
+		padding: 5px 5px 8px;
+	}
+	
+		#avatar-frame span {
+			display: block;
+			margin-top: 6px;
+		}
+	
+	.organizational-details,
+	.personal-details {
+		margin-bottom:25px;
+	}
+	
+		.organizational-details td,
+		.personal-details td {
+			padding: 10px 10px 2px !important;	
+		}
+	
+	.user-bio {
+		line-height:18px;
+		margin-bottom: 25px;
+	}
+	
+		.user-bio .propertiesLabel {
+			font-size: 16px;
+		}
+		
+		.user-bio div {
+			padding-top: 10px;
+		}
+	
+	.propertiesLabel {
+		/*white-space: nowrap;*/
+	}
+	
+	.userPropertyLabel {
+		min-width:150px;
+	}
+	
+		.propertiesLabel img {
+			margin-left:-10px;
+			padding-right: 2px;
+		}
+	
+
+/*
+	TRASHCAN
+	*********************************/
+
+#search-panel {
+	text-align: center;
+	margin: 20px auto;
+}
+
+#rightcolumn .horizontal,
+#rightcolumn .horizontal li {
+	display: inline;
+	margin: 0 5px;
+}
+
+.filter-list {
+	margin:10px 0;
+	padding:5px;
+}
+	
+	.filter-list ul,
+	.filter-list li,
+	.filter-list div,
+	.filter-list input {
+		display: inline;
+	}
+	
+	.filter-list img {
+		margin: 0 5px;
+		vertical-align: -3px;
+	}
+	
+	.filter-list a {
+		margin-right: 20px;
+	}
+	
+.trashfilter-list {
+	margin:10px 0;
+	padding:5px;
+}
+
+	.trashfilter-list ul,
+	.trashfilter-list li{
+		display: inline;
+	}
+	
+	.trashfilter-list img {
+		margin: 0 5px;
+		vertical-align: -3px;
+	}
+	
+	.trashfilter-list a {
+		margin-right: 20px;
+	}
+
+#recover-items-panel {
+	margin: 50px 0 15px;
+}
+
+	#recover-items-panel a {
+		margin-right: 10px;
+	}
+	
+	
+/*
+	ADD CONTENT
+	************************************/
+	
+	.panelGridLabelColumn {
+		width: 150px;
+	}
+	
+		.panelGridLabelColumn > img {
+			padding-right: 5px;
+			margin-left: -10px;
+		}
+	
+	.dialogpanel-title {
+		margin: 20px 0 10px;
+		padding-bottom: 3px;
+		display: block;
+	}
+	
+	.top-title {
+		margin-top: 0px !important;
+	}
+	
+	.filename {
+		display: inline !important;
+		margin-left: 10px;
+	}
+	
+
+/*
+	LOGIN
+	************************************/
+
+#login-wrapper {
+	position: absolute;
+	min-width: 100%;
+	min-height: 100%;
+}
+
+#login-container {
+	width: 330px;
+	margin: auto;
+	margin-top: 10px;
+	padding: 20px;
+	margin-top: 10%;
+}
+	
+.login-instructions {
+	display: block;
+	margin: 30px 0 20px;
+	padding-bottom: 10px;
+}
+
+#login-footer {
+	padding-top: 10px;
+	margin-top: 20px;
+}
+
+	.login-submit {
+		display: block !important;
+		margin-right: 15px;
+		padding: 3px 6px !important;
+	}
+	
+#login-container table {
+	width: 100%;
+}
+
+.loginLabel {
+	width: 30%;
+}
+
+.loginField {
+	width: 70%;
+	padding: 2px 0;
+}
+
+	.loginField * {
+		width: 92%;
+	}
+	
+#no-cookies {
+	margin-top:10px;
+	padding:10px;
+}
+
+.login-error {
+	display:block;
+	margin:10px 0;
+	padding-top:10px;
+}
+
+/*
+	WIZARD
+	************************************/
+
+.wizard-step-description {
+	margin-bottom: 15px;
+	padding-bottom: 10px;
+}
+
+.wizard-step-instructions {
+	margin-top: 15px;
+	padding-top: 10px;
+}
+
+/*
+	DETAILS
+	******************************/
+	
+#space-actions {
+	position: absolute;
+	padding-right: 1%;
+	margin-top: -16px;
+	/*z-index: 200;*/
+}
+
+#space-actions .actions-menu li {
+	overflow: auto;	
+	margin-bottom: 2px;
+	float: left;
+}
+
+#space-actions .actions-menu a {
+	
+}
+
+#nav-panel a {
+	position: relative;
+	top: -6px;
+	margin: 4px;
+}
+
+/*
+	ADVANCED SEARCH
+	******************************/
+#advanced-search-field input {
+	width: 100%;
+}
+
+#restrict-panel td,
+#location-panel td {
+	padding-top: 0px !important;
+	padding-bottom: 3px !important;
+}
+
+/*
+	MANAGE USER GROUPS
+	******************************/
+#quota-panel {
+	margin-bottom: 20px;
+}
+
+/*
+	MISC
+	*************************************************************************/
+/* *************************************************************************/
+
+.clear {
+	clear: both;
+}
+
+input[type="checkbox"] {
+	margin-right: 5px;
+	vertical-align: middle;
+	width: 16px !important;
+}
+
+.error {
+	color: red !important;
+}
+
+#document-panel .recordSetHeader {
+	padding: 0 2px;
+}
+
+/*
+	MANAGE USER GROUPS
+	******************************/
+	
+.modalpopup-content-inner table {
+	width: 100%;
+}
+
+.modalpopup-content-inner table td {
+	padding: 4px 0 !important;
+}
+
+.modalpopup-content-inner table td.propertiesLabel {
+   padding-right: 6px !important;
+}
+
+.modalpopup-content-inner table td input[type="text"],
+.modalpopup-content-inner table td textarea {
+	width: 392px !important;
+}
+
+.modalpopup-content-inner.modalpopup-filter table td textarea,
+.modalpopup-content-inner.modalpopup-filter table td input[type="text"],
+.modalpopup-content .task-search-with-filter table td input[type="text"] {
+     margin-left: 4px;
+}
+
+.modalpopup-content-inner.modalpopup-filter table td input[type="text"],
+.modalpopup-content .task-search-with-filter table td input[type="text"] {
+    width: 218px !important;
+}
+
+.modalpopup-content-inner table select[multiple="multiple"], 
+.modalpopup-content-inner table select[multiple] {
+	width: 100% !important;
+}
+
+.right {
+	float: right;
+}
+
+table.generic-picker td {
+	padding: 4px 0;
+}
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5

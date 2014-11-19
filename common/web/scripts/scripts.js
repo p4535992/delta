@@ -2,7 +2,11 @@ var delta = [];
 delta['translations'] = [];
 
 /** Vertical scrollbar appears when browser window is narrower than minScreenWidth */
+<<<<<<< HEAD
 var minScreenWidth = 1020;
+=======
+var minScreenWidth = 920;
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
 function setMinScreenWidth(minWidth){
    minScreenWidth = minWidth;
@@ -258,7 +262,10 @@ function disableAndRemoveButton(buttonId) {
 }
 /**
  * append selection of source element to the element with id ending with "toItemIdSuffix" and beginning with the same id prefix as selectBox
+<<<<<<< HEAD
  * @author Ats Uiboupin
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
  */
 function appendSelection(source, targetId) {
    var selectItem = $jQ('#' + escapeId4JQ(source.attr("id")) + ' :selected');
@@ -278,7 +285,10 @@ function appendSelection(source, targetId) {
  * Add autoComplete functionality to input using given values to for suggestion(allows to enter also values not given with <code>valuesArray</code>)
  * @param inputId - id of the input component that should have autoComplete functionality based on values from <code>valuesArray</code>
  * @param valuesArray - values to be suggested int the input
+<<<<<<< HEAD
  * @author Ats Uiboupin
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
  */
 var autocompleters = new Array();
 function addAutocompleter(inputId, valuesArray){
@@ -522,6 +532,7 @@ function setPageScrollY() {
    $jQ('#wrapper form').append('<input type="hidden" name="scrollToY" value="'+ scrollTop +'" />');
 }
 
+<<<<<<< HEAD
 function getSharePointObject() {
    var agent = navigator.userAgent.toLowerCase();
    if (agent.indexOf('msie') != -1) {
@@ -537,6 +548,46 @@ function webdavOpen(url, sharePointObject) {
       // if the link represents an Office document and we are in IE try and
       // open the file directly to get WebDAV editing capabilities
       showDoc = !sharePointObject.EditDocument(url);
+=======
+function getOffice13Link(url) {
+   var programs = {
+         "word" : ["doc", "dot", "docx", "docm", "dotx", "dotm"],
+         "excel" : ["xls", "xlt", "xlm", "xlsx", "xlsm", "xltx", "xltm"],
+         "powerpoint" : ["ppt", "pps", "pptx", "pptm", "potx", "potm", "ppam", "ppsx", "ppsm", "sldx", "sldm"]
+   }
+   
+   var link = null;
+   var extension = url.substring(url.lastIndexOf(".") + 1, url.length);
+   for (var program in programs) {
+      if (jQuery.inArray(extension, programs[program]) > -1) {
+         link = "ms-" + program + ":ofe|u|" + url;
+         break;
+      }
+   }
+
+   return link;
+}
+
+function webdavOpen(url) {
+   var showDoc = true;
+   // Try to open using MSOffice and WebDAV capabilities
+   if (window.ActiveXObject !== undefined) {
+      try {
+         // If we are able to instantiate this component, we have Office 2013 installed
+         var isOffice2013Installed = new ActiveXObject("SharePoint.OpenDocuments.5");
+         var link = getOffice13Link(url);
+         if (link) {
+            window.open(link, '_blank');
+            showDoc = false;
+         }
+      } catch (e) {
+         try {
+            showDoc = !(new ActiveXObject("SharePoint.OpenDocuments").EditDocument(url));
+         } catch (e2) {
+            // Continue and try to open the document 
+         }
+      }
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
    }
    if (showDoc == true) {
       window.open(url, '_blank');
@@ -575,6 +626,7 @@ function webdavOpenReadOnly(url) {
 //      alert("To open using webdaw you must have IE compatible browser(for example firefox with IEtab or Internet Explorer)");
 //   }
 //   alert("regular file download");
+<<<<<<< HEAD
    var uri = getContextPath() + '/ajax/invoke/AjaxBean.getDownloadUrl?path=' + url;
 
    $jQ.ajax({
@@ -590,6 +642,9 @@ function webdavOpenReadOnly(url) {
       error: ajaxError,
       datatype: 'html'
     });
+=======
+   window.open(url, '_blank');// regular file saveAs/open by downloading it to HD
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
    return false;
 }
 
@@ -637,26 +692,57 @@ function showModal(target, height){
    openModalContent = target;
 
    $jQ("#overlay").css("display","block");
+<<<<<<< HEAD
    $jQ("#" + target).css("display","block");
    if (height != null) {
       $jQ("#" + target).css("height",height);
    }
    $jQ("#" + target).show();
    $jQ("#" + target).find(".genericpicker-input").focus();
+=======
+   var modal = $jQ("#" + target);
+   modal.css("display","block");
+   var parentModal = modal.parent().closest(".modalwrap");
+   
+   if (parentModal) {
+      parentModal.show(); // regulates display property
+      height = parentModal.height();
+   }
+
+   if (height != null) {
+      modal.css("min-height", height);
+   }
+   modal.show();
+   modal.find(".genericpicker-input").focus();
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
    return false;
 }
 
 function hideModal(){
+<<<<<<< HEAD
    if (openModalContent != null){
      if(isIE(7) && titlebarIndex != null) {
         $jQ("#titlebar").css("zIndex", titlebarIndex);
      }
      $jQ("#" + openModalContent).hide();
       $jQ("#overlay").remove();
+=======
+   if (openModalContent != null) {
+      if(isIE(7) && titlebarIndex != null) {
+         $jQ("#titlebar").css("zIndex", titlebarIndex);
+      }
+      var modal = $jQ("#" + openModalContent);
+      modal.hide();
+      var parentModal = modal.parent().closest(".modalwrap");
+      if (parentModal.length < 1) {
+         $jQ("#overlay").remove();
+      }
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
    }
    return false;
 }
 
+<<<<<<< HEAD
 function selectGroupForModalSearch(selectId, hiddenId, filterId){
    var selectedValue =$jQ("#" + escapeId4JQ(selectId)).val(); 
    var hidden = $jQ("#" + escapeId4JQ(hiddenId));
@@ -679,6 +765,8 @@ function groupModalFilterChange(){
    }
 }
 
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 var propSheetValidateSubmitFn = [];
 var propSheetValidateFormId = '';
 var propSheetValidateFinishId = '';
@@ -846,12 +934,17 @@ function setScreenProtected(isProtected, reason) {
 }
 
 function updateState(divId, panelId, viewName) {
+<<<<<<< HEAD
+=======
+   setScreenProtected(true, "FIXME: palun oodake, ühendus serveriga");
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     var uri = getContextPath() + '/ajax/invoke/PanelStateBean.updatePanelState?panelId=' + panelId +
               '&panelState=' + $jQ(divId).is(":visible") + '&viewName=' + viewName;
 
     $jQ.ajax({
        type: 'POST',
        url: uri,
+<<<<<<< HEAD
        mode: 'queue',
        success: requestUpdatePanelStateSuccess,
        error: requestUpdatePanelStateFailure,
@@ -869,6 +962,39 @@ function requestUpdatePanelStateSuccess(xml) {
 
 function requestUpdatePanelStateFailure() {
     $jQ.log("Updating panel status in server side failed");
+=======
+       data: addViewStateElement(null).serialize(),
+       mode: 'queue',
+       success: requestUpdatePanelStateSuccess,
+       error: requestUpdatePanelStateFailure,
+       dataType: 'html'
+    });
+}
+
+function requestUpdatePanelStateSuccess(responseText) {
+   try {
+      if (!responseText) { // check that response is not empty
+         return;
+      }
+      if (isAjaxViewStateError(responseText)) {
+         handleAjaxViewStateError(responseText);
+         return;
+      }
+      // Set new value to view state, so when form is submitted next time, correct state is restored.
+      var viewState = responseText.substr('VIEWSTATE:'.length);
+      document.getElementById("javax.faces.ViewState").value = viewState;
+   } finally {
+      setScreenProtected(false);
+   }
+}
+
+function requestUpdatePanelStateFailure() {
+   try {
+      $jQ.log("Updating panel status in server side failed");
+   } finally {
+      setScreenProtected(false);
+   }    
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 }
 
 function ajaxError(request, textStatus, errorThrown) {
@@ -919,13 +1045,49 @@ function getContainerFields(componentContainerId, componentClientId, submittable
       return componentClientId == this.name.substring(0, componentClientId.length) || $jQ.inArray(this.name, submittableParams) >= 0;
    });
 
+<<<<<<< HEAD
    return componentChildFormElements.add(hiddenFormElements).serialize();
+=======
+   componentChildFormElements = componentChildFormElements.add(hiddenFormElements);
+   componentChildFormElements = addViewStateElement(componentChildFormElements);
+   return componentChildFormElements.serialize();
+}
+
+function addViewStateElement(elements){
+   var viewState = $jQ('#javax\\.faces\\.ViewState');
+   if(elements != null){
+      elements = elements.add(viewState);
+   } else {
+      elements = viewState;
+   }
+   return elements;
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 }
 
 function ajaxSuccess(responseText, componentClientId, componentContainerId) {
    if (responseText) { // check that response is not empty
+<<<<<<< HEAD
       // Split response
       var i = responseText.lastIndexOf('VIEWSTATE:');
+=======
+      if (isAjaxViewStateError(responseText)) {
+         try {
+            return handleAjaxViewStateError(responseText);
+         } finally {
+            setScreenProtected(false);
+         }
+      }
+      // Split response
+      var i = responseText.lastIndexOf('VIEWSTATE:');
+      if (i < 0){
+         try {
+            window.location.href = window.location.protocol + "://" + window.location.hostname + "/" + window.location.pathname;
+            return false;
+         } finally {
+            setScreenProtected(false);
+         }         
+      }
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
       var html = responseText.substr(0, i);
       var hiddenInputsIndex = responseText.lastIndexOf("HIDDEN_INPUT_NAMES_JSON:");
       var viewState = responseText.substr(i + 'VIEWSTATE:'.length, hiddenInputsIndex);
@@ -970,7 +1132,25 @@ function ajaxSuccess(responseText, componentClientId, componentContainerId) {
    }
 }
 
+<<<<<<< HEAD
 //-----------------------------------------------------------------------------
+=======
+function isAjaxViewStateError(responseText){
+   try {
+      return responseText.lastIndexOf('ERROR_VIEW_STATE_CHANGED') > -1;
+   } catch (e){
+      return false;
+   }
+}
+
+function handleAjaxViewStateError(responseText) {
+   var redirectUrl = $jQ.parseJSON(responseText.substr("ERROR_VIEW_STATE_CHANGED:".length));
+   window.location.href = redirectUrl;
+   return false;
+}
+
+// -----------------------------------------------------------------------------
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 //MENU ITEM COUNT UPDATE
 //-----------------------------------------------------------------------------
 
@@ -1017,6 +1197,7 @@ function updateMenuItemCount(menuItemId) {
                text = text.substr(0, i) + count;
             }
 
+<<<<<<< HEAD
             // Construct element title
             var title = $jQ($jQ('.menuItemCount[menuitemid=' + menuItemId + '] a')[0]).attr('title');
             var i = title.lastIndexOf(' (');
@@ -1029,6 +1210,11 @@ function updateMenuItemCount(menuItemId) {
             // Update on all elements with same menuitemid
             var menuItem = $jQ('.menuItemCount[menuitemid=' + menuItemId + '] a');
             menuItem.text(text).attr('title', title);
+=======
+            // Update on all elements with same menuitemid
+            var menuItem = $jQ('.menuItemCount[menuitemid=' + menuItemId + '] a');
+            menuItem.text(text).attr('title', text);
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             if (count.length > 2) {
                menuItem.parent().removeClass("hiddenMenuItem");
             }
@@ -1141,11 +1327,14 @@ function handleEnterKey(event) {
       return true;
    }
    
+<<<<<<< HEAD
    // if enter is pressed in association search block, it has higher priority than specificAction and defaultAction
    if(target.hasClass("searchAssocOnEnter") && _searchAssocs(event)){
       return true;
    }
    
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
    // Are there any specific actions (modal search, dialog search)?
    var specificActions = $jQ('.specificAction').filter(":visible");
    if (specificActions.length == 1) { // Do nothing if multiple actions match
@@ -1207,6 +1396,7 @@ function initWithScreenProtected() {
    $jQ(".genericpicker-input").live('keyup', throttle(function (event) {
       var input = $jQ(this);
       var filter = input.prev();
+<<<<<<< HEAD
       var hidden = input.next();
       var filterValue;
       var hiddenValue;
@@ -1219,12 +1409,38 @@ function initWithScreenProtected() {
 
       var successCallback = function(responseText) {
          var tbody = $jQ(this);
+=======
+      var filterValue;
+      if (filter != null && filter.val() != undefined) {
+         filterValue = filter.val();
+      }
+
+      var successCallback = function(responseText) {
+         var tbody = input.closest('tbody');
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
          var select = tbody.find('.genericpicker-results');
          select.children().remove();
          var index = responseText.indexOf("|");
          select.attr("size", responseText.substring(0, index));
          select.append(responseText.substring(index + 1, responseText.length));
+<<<<<<< HEAD
          tbody.find('.hidden').toggleClass('hidden');
+=======
+         var resultCount = select.children().length;
+         
+         if (select.attr("data-initialresults") == undefined) { // After the first fresh search, record the initial result count
+            select.attr("data-initialresults", resultCount);
+         }
+         
+         // Check if resultset is limited and show/hide message accordingly
+         if (resultCount == select.attr("data-rowlimit")) {
+            tbody.find('.modalResultsLimited').show();
+         } else {
+            tbody.find('.modalResultsLimited').hide();
+         }
+         
+         tbody.find('tr.hidden').toggleClass('hidden');
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
       };
 
       // Workaround for IE/WebKit, since it cannot hide option elements...
@@ -1240,24 +1456,36 @@ function initWithScreenProtected() {
          });
       };
 
+<<<<<<< HEAD
       doSearch(input, filterValue, hiddenValue, event, successCallback, backSpaceCallback, input.closest('tbody'));
    }, 500));
 
    var reSearch = true;
    function doSearch(input, filterValue, hiddenValue, event, successCallback, backSpaceCallback, callbackContext) {
+=======
+      doSearch(input, filterValue, event, successCallback, backSpaceCallback, input.closest('tbody'));
+   }, 500));
+
+   var reSearch = true;
+   function doSearch(input, filterValue, event, successCallback, backSpaceCallback, select, callbackContext) {
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
       var callback = input.attr('datasrc');
       if(!callback){
          alert("no search callback found");
       }
       var value = input.val();
       if (!value) {
+<<<<<<< HEAD
          reSearch = true;
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
          return;
       }
       if(!filterValue){
          filterValue = 1; // UserContactGroupSearchBean.USERS_FILTER
       }
 
+<<<<<<< HEAD
       var filterByStructUnit = "false";
       var split = callback.split("|");
       if (split.length == 3) {
@@ -1280,11 +1508,41 @@ function initWithScreenProtected() {
             data: $jQ.param({'contains' : value, 'pickerCallback' : callback, 'filterValue' : filterValue, 'hiddenValue' : hiddenValue, "filterByStructUnit" : filterByStructUnit}),
             mode: 'queue',
             context: callbackContext,
+=======
+      var index = callback.indexOf("|");
+      if (index >= 0) {
+         filterValue = callback.substring(0, index);
+         callback = callback.substring(index + 1);
+      }
+
+      var tbody = $jQ(callbackContext);
+      var select = tbody.find('.genericpicker-results');
+      var opts = select.children('option');
+
+      // Determine if we are dealing with limited resultset
+      var limited = false;
+      if (value.length < 3) {
+         select.removeAttr("data-initialresults"); // Reset the initial result count
+      } else {
+         limited = select.attr("data-initialresults") == select.attr("data-rowlimit");
+      }
+
+      var backspace = event.keyCode == 8;
+      if (value.length > 2 && reSearch && !backspace || limited) {
+         $jQ.ajax({
+            type: 'POST',
+            url: getContextPath() + "/ajax/invoke/AjaxSearchBean.searchPickerResults",
+            data: $jQ.param({'contains' : value, 'pickerCallback' : callback, 'filterValue' : filterValue}),
+            mode: 'queue',
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             success: successCallback,
             error: ajaxError,
             dataType: 'html'
          });
+<<<<<<< HEAD
          reSearch = false;
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
       } else if (value.length > 3 && !backspace) {
          opts.each(function (i) {
             var option = $jQ(this);
@@ -1333,6 +1591,7 @@ function initWithScreenProtected() {
          elem.closest(".panel-border").find(".reportDueDate").datepicker('setDate',  reportDue);
       }
    });
+<<<<<<< HEAD
    
    $jQ(".driveCompensationRate").live('change', function(event) {
       $jQ(".driveKm").change(); // Trigger updates
@@ -1411,6 +1670,8 @@ function initWithScreenProtected() {
       }
       compElem.change();
    });
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
    $jQ(".beginTotalCount,.endTotalCount").live('change', function (event) {
       // Get the date
@@ -1467,7 +1728,11 @@ function initWithScreenProtected() {
       } else if (elem.hasClass("eventEndDate")) {
          dateField = row.next().find(".errandEndDate");
       }
+<<<<<<< HEAD
       if (dateField != null) {
+=======
+      if (dateField != null && !dateField.val()) { // Only update if a value isn't specified
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
          dateField.datepicker('setDate', elem.datepicker('getDate'));
          dateField.change();
       }
@@ -1514,7 +1779,11 @@ function initWithScreenProtected() {
    window.dhtmlHistory.add(randomHistoryHash(), null);
 
 
+<<<<<<< HEAD
    jQuery(".dailyAllowanceDaysField, .dailyAllowanceRateField").live('change', function(event) {
+=======
+   jQuery(".dailyAllowanceDaysField:input, .dailyAllowanceRateField:input").live('change', function(event) {
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
       var elem = $jQ(this);
       // Calculate sum for current row
       var row = elem.closest("tr");
@@ -1541,10 +1810,17 @@ function initWithScreenProtected() {
          }
       });
 
+<<<<<<< HEAD
       row.closest("div").closest("tr").next().find(".dailyAllowanceTotalSumField").val(totalSum);
    });
 
    jQuery(".expectedExpenseSumField").live('keyup', function(event) {
+=======
+      row.closest("div").closest("tr").next().find(".dailyAllowanceTotalSumField").first().text(totalSum);
+   });
+
+   jQuery(".expectedExpenseSumField:input").live('keyup', function(event) {
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
       var elem = $jQ(this);
       var totalSum = 0;
       var sum = 0;
@@ -1558,8 +1834,13 @@ function initWithScreenProtected() {
          }
       });
 
+<<<<<<< HEAD
       var totalField = elem.closest("div").closest("tr").next().find(".expensesTotalSumField");
       totalField.val(totalSum);
+=======
+      var totalField = elem.closest("div").closest("tr").next().find(".expensesTotalSumField").first();
+      totalField.text(totalSum);
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
    });
 
    jQuery(".invoiceTotalSum, .invoiceVat").live('change', function(event) {
@@ -1575,6 +1856,7 @@ function initWithScreenProtected() {
       transFooterTotalSumElem = jQuery("#footer-sum-2:first");
       setTransTotalSumColor(transFooterTotalSumElem, invoiceTotalSum, getFloatOrNull(transFooterTotalSumElem.text()));
    });
+<<<<<<< HEAD
    
    jQuery(".errandReportSumField").live('change', function(event) {      
       var elem = $jQ(this);
@@ -1635,6 +1917,8 @@ function initWithScreenProtected() {
          driveTotalCompensation.val(round((driveTotalKmField * driveCompensationRate), 2));
       }      
    });
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
    jQuery(".trans-row-sum-input").live('change', recalculateInvoiceSums);
    jQuery(".trans-row-vat-code-input").live('change', recalculateInvoiceSums);
@@ -1792,9 +2076,12 @@ function textCounter(input, maxlimit) {
 // return number for valid numeric string,
 // 0 for blank string and NaN for all other values
 function getFloatOrNull(originalSumString){
+<<<<<<< HEAD
    if (!originalSumString) {
       return NaN;
    }
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
    var sumString = originalSumString.replace(",", ".");
    sumString = sumString.replace(/ /g, "");
    if(sumString == ""){
@@ -1809,6 +2096,7 @@ function getFloatOrNull(originalSumString){
 // use to avoid javascript parsing strings like "55 krooni" to number 55
 // (conversion that java validation wouldn't allow)
 function isNumeric(numberStr){
+<<<<<<< HEAD
    return isNumeric(numberStr, false);
 }
 function isNumeric(numberStr, integer){
@@ -1819,6 +2107,9 @@ function isNumeric(numberStr, integer){
    if (!integer) {
       validChars += ".";
    }
+=======
+   var validChars = "0123456789.";
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
    var additionalFirstChars = "+-";
    for (i = 0; i < numberStr.length; i++){
       var currentChar = numberStr.charAt(i);
@@ -1944,7 +2235,10 @@ function extendCondencePlugin() {
       if(!(p && p[2] == "-")){
          moreTxt = getTranslation('jQuery.condence.moreText');
       }
+<<<<<<< HEAD
       var isStrictTrim = jQuery(this).hasClass("strictTrim"); 
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
       jQuery(this).condense({
          moreSpeed: 0,
          lessSpeed: 0,
@@ -1953,7 +2247,11 @@ function extendCondencePlugin() {
          ellipsis: "",
          condensedLength: condenceAtChar,
          minTrail: moreTxt.length,
+<<<<<<< HEAD
          strictTrim: isStrictTrim  // assume that condense content is not text (html, except links, is escaped)
+=======
+         strictTrim: false  // assume that condense content is not text (html, except links, is escaped)
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
                            // and does search for word breaks for triming text
          }
        );
@@ -1978,6 +2276,7 @@ function setMinEndDate(owner, dateElem, triggerEndDateChange){
    }
 }
 
+<<<<<<< HEAD
 function initExpanders(context){
    
    //initialize all expanding textareas
@@ -1991,6 +2290,8 @@ function initExpanders(context){
    
 }
 
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 // These things need to be performed
 // 1) once after full page load
 // *) each time an area is replaced inside the page
@@ -2004,10 +2305,21 @@ function handleHtmlLoaded(context, setFocus, selects) {
       ,tooltipContainerElemName: "p"
    });
 
+<<<<<<< HEAD
    var ieVer = isIE();
    initExpanders(context);
    
    if(ieVer) { // Darn IE bugs...
+=======
+   //initialize all expanding textareas
+   var expanders = jQuery("textarea[class*=expand]", context);
+   expanders.TextAreaExpander();
+   var ieVer = isIE();
+   if(ieVer) { // Darn IE bugs...
+      // trigger size recalculation if IE, because e.scrollHeight may be inaccurate before keyup() is called
+      expanders.keyup();
+      jQuery.fn.TextAreaExpander.ieInitialized = true;
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
       zIndexWorkaround(context);
 
       var jqSelects = (selects==undefined) ? $jQ("select") : selects;
@@ -2033,7 +2345,11 @@ function handleHtmlLoaded(context, setFocus, selects) {
          fixIEDropdownMinWidth("footer-titlebar .extra-actions .dropdown-menu", "#footer-titlebar .extra-actions .dropdown-menu li", context);
          fixIEDropdownMinWidth(".title-component .dropdown-menu.in-title", ".title-component .dropdown-menu.in-title li", context);
       }
+<<<<<<< HEAD
    }     
+=======
+   }
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
    /**
     * Open Office documents directly from server
@@ -2043,8 +2359,12 @@ function handleHtmlLoaded(context, setFocus, selects) {
       // 2) $jQ(this).attr('href') = '/dhs/webdav/xxx/yyy/zzz/abc.doc'
       var path = this.href; // SharePoint ActiveXObject methods need to get full URL
 
+<<<<<<< HEAD
       var sharePointObject = getSharePointObject();
       if (sharePointObject) {
+=======
+      if (window.ActiveXObject !== undefined) {
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
          // When page is submitted, user sees an hourglass cursor
          $jQ(".submit-protection-layer").show().focus();
          var uri = getContextPath() + '/ajax/invoke/AjaxBean.isFileLocked';
@@ -2064,7 +2384,11 @@ function handleHtmlLoaded(context, setFocus, selects) {
                 alert("Faili ei saa avada, fail on kustutatud");
                 return false;
              } else if (responseText.indexOf("NOT_LOCKED") > -1) {
+<<<<<<< HEAD
                 webdavOpen(path, sharePointObject);
+=======
+                webdavOpen(path);
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
              } else if (confirm(getTranslation("webdav_openReadOnly").replace("#", responseText))) {
                 // TODO CL 161673: responseText might contain HTML of CAS page if session has timed out
                 webdavOpenReadOnly(path);
@@ -2076,7 +2400,11 @@ function handleHtmlLoaded(context, setFocus, selects) {
            datatype: 'html'
          });
       } else {
+<<<<<<< HEAD
          webdavOpen(path, sharePointObject);
+=======
+         webdavOpen(path);
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
       }
       return false;
    });
@@ -2088,7 +2416,10 @@ function handleHtmlLoaded(context, setFocus, selects) {
 
    jQuery(".dailyAllowanceDaysField, .dailyAllowanceRateField, .errandReportDateBase, .eventBeginDate, .eventEndDate", context).change();
    jQuery(".expectedExpenseSumField", context).keyup();
+<<<<<<< HEAD
    jQuery(".errandReportSumField, .errandSummaryDebitField, .errandSummaryCreditField, .driveTotalKmField", context).change();
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
    $jQ('.triggerPropSheetValidation', context).each(function () {
       prependOnclick($jQ(this), triggerPropSheetValidation);
    });
@@ -2177,7 +2508,10 @@ function handleHtmlLoaded(context, setFocus, selects) {
    /**
     * Binder for alfresco properties that are generated with ClassificatorSelectorAndTextGenerator.class
     * Binds all elements that have class="selectBoundWithText" with corresponding textAreas/inputs(assumed to have same id prefix and suffix specified with TARGET_SUFFIX)
+<<<<<<< HEAD
     * @author Ats Uiboupin
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     */
    $jQ(".selectBoundWithText", context).each(function (intIndex)
    {
@@ -2198,7 +2532,10 @@ function handleHtmlLoaded(context, setFocus, selects) {
 
    /**
     * Add onChange functionality to jQuery change event (we can't use onChange attribute because of jQuery bug in IE)
+<<<<<<< HEAD
     * @author Riina Tens
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     */
    $jQ("[class*=selectWithOnchangeEvent]", context).each(function (intIndex, selectElement)
    {
@@ -2217,7 +2554,12 @@ function handleHtmlLoaded(context, setFocus, selects) {
    propSheetValidateRegisterOnDocumentReady();
 
    // this method should be called after critical activities have been done in handleHtmlLoaded as it displays alerts and possibly submits page
+<<<<<<< HEAD
    confirmWorkflow();
+=======
+   confirmWorkflow('workflow-confirmation-messages', 'workflow-after-confirmation-link');
+   confirmWorkflow("workflow-delegation-confirmation-messages", "workflow-after-delegation-confirmation-link");
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
    // trigger keyup event (for validation & textarea resize) on paste. Can't use live() because of IE
    $jQ("textarea, input[type='text']", context).bind("paste", function(){
@@ -2248,7 +2590,11 @@ function handleHtmlLoaded(context, setFocus, selects) {
       });
    }
 
+<<<<<<< HEAD
    $jQ(".readonly", context).attr('readonly', 'readonly');   
+=======
+   $jQ(".readonly", context).attr('readonly', 'readonly');
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 }
 
 //-----------------------------------------------------------------------------
@@ -2336,8 +2682,13 @@ function sendToSapManually(){
    return showModal('entrySapNumber_popup');
 }
 
+<<<<<<< HEAD
 function confirmWorkflow(){
    var confirmationMessagesSelect = $jQ("[class='workflow-confirmation-messages']").get(0);
+=======
+function confirmWorkflow(selectClass, confirmationLinkClass){
+   var confirmationMessagesSelect = $jQ("[class='" + selectClass + "']").get(0);
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
    if(confirmationMessagesSelect == undefined){
       return false;
    }
@@ -2346,7 +2697,11 @@ function confirmWorkflow(){
          return false;
       }
    }
+<<<<<<< HEAD
    $jQ("[class='workflow-after-confirmation-link']").eq(0).click();
+=======
+   $jQ("[class='" + confirmationLinkClass + "']").eq(0).click();
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 }
 
 function clearFormHiddenParams(currFormName, newTargetVal) {
@@ -2445,7 +2800,11 @@ function help(url) {
    return false;
 }
 
+<<<<<<< HEAD
 // http://remysharp.com/2010/07/21/throttling-function-calls/
+=======
+//http://remysharp.com/2010/07/21/throttling-function-calls/
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 function throttle(fn, delay) {
    var timer = null;
    return function() {

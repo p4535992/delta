@@ -2,6 +2,10 @@ package ee.webmedia.alfresco.document.log.web;
 
 import static ee.webmedia.alfresco.common.web.BeanHelper.getLogService;
 
+<<<<<<< HEAD
+=======
+import java.util.ArrayList;
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -37,7 +41,11 @@ public class LogBlockBean implements DocumentDynamicBlock {
     private NodeRef parentRef;
     protected List<LogEntry> logs;
 
+<<<<<<< HEAD
     protected QName parentNodeType;
+=======
+    private QName parentNodeType;
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
     @Override
     public void resetOrInit(DialogDataProvider provider) {
@@ -74,12 +82,33 @@ public class LogBlockBean implements DocumentDynamicBlock {
         Set<String> excludedDescriptions = new HashSet<String>(2);
         excludedDescriptions.add(MessageUtil.getMessage("document_log_status_opened_not_inEditMode"));
         excludedDescriptions.add(MessageUtil.getMessage("file_opened", "%"));
+<<<<<<< HEAD
         logFilter.setExcludedDescriptions(excludedDescriptions);
         logFilter.setObjectId(Collections.singletonList(parentRef.toString()));
+=======
+        excludedDescriptions.add(MessageUtil.getMessage("applog_compoundWorkflow_view"));
+        logFilter.setExcludedDescriptions(excludedDescriptions);
+        List<String> objectIds = new ArrayList<String>();
+        objectIds.add(parentRef.toString());
+        objectIds.addAll(getCompoundWorkflowAndTaskNodeRefs());
+        logFilter.setObjectId(objectIds);
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         logFilter.setExactObjectId(true);
         return logFilter;
     }
 
+<<<<<<< HEAD
+=======
+    private List<String> getCompoundWorkflowAndTaskNodeRefs() {
+        List<NodeRef> compoundWorkflowAndTaskNodeRefs = BeanHelper.getWorkflowService().getCompoundWorkflowAndTaskNodeRefs(parentRef);
+        List<String> compoundWorkflowAndTaskNodeRefStr = new ArrayList<String>();
+        for (NodeRef nodeRef : compoundWorkflowAndTaskNodeRefs) {
+            compoundWorkflowAndTaskNodeRefStr.add(nodeRef.toString());
+        }
+        return compoundWorkflowAndTaskNodeRefStr;
+    }
+
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     private LogFilter getSeriesLogFilter() {
         LogFilter logFilter = new LogFilter();
         Set<String> excludedDescriptions = new HashSet<String>(1);
@@ -96,14 +125,18 @@ public class LogBlockBean implements DocumentDynamicBlock {
         parentNodeType = null;
     }
 
+<<<<<<< HEAD
     public NodeRef getParentRef() {
         return parentRef;
     }
 
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     public boolean isRendered() {
         return logs != null && logs.size() > 0;
     }
 
+<<<<<<< HEAD
     public String getListTitle() {
         return MessageUtil.getMessage("document_log_title");
     }
@@ -116,10 +149,21 @@ public class LogBlockBean implements DocumentDynamicBlock {
         return MessageUtil.getMessage("document_log_event");
     }
 
+=======
+    // in version 3.8 this method is overriden method
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     public boolean isShowLogDetailsLink() {
         return BeanHelper.getUserService().isSupervisor();
     }
 
+<<<<<<< HEAD
+=======
+    // in version 3.8 this method is overriden method
+    public NodeRef getParentRef() {
+        return parentRef;
+    }
+
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     // START: getters / setters
 
     public List<LogEntry> getLogs() {

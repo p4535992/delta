@@ -28,8 +28,11 @@ import ee.webmedia.alfresco.utils.ComponentUtil;
 /**
  * Render {@link Search} component. Child component of type {@link HtmlPanelGroup} is rendered as HTML table. Child component of type {@link UIGenericPicker} is
  * rendered as modal popup dialog.
+<<<<<<< HEAD
  * 
  * @author Alar Kvell
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
  */
 public class SearchRenderer extends BaseRenderer {
 
@@ -88,6 +91,13 @@ public class SearchRenderer extends BaseRenderer {
 
     @Override
     public void encodeBegin(FacesContext context, UIComponent component) throws IOException {
+<<<<<<< HEAD
+=======
+        if (Boolean.TRUE.equals(component.getAttributes().get(Search.RENDER_PLAIN))) {
+            return;
+        }
+
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         ResponseWriter out = context.getResponseWriter();
         out.write("<div class=\"inline\" id=\"");
         out.write(((Search) component).getAjaxClientId(context));
@@ -146,7 +156,14 @@ public class SearchRenderer extends BaseRenderer {
         if (!search.isEmpty()) {
             out.write("notEmpty");
         }
+<<<<<<< HEAD
         out.write("\"/></div>");
+=======
+        out.write("\"/>");
+        if (!search.isRenderPlain()) {
+            out.write("</div>");
+        }
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     private void renderMultiValued(FacesContext context, ResponseWriter out, Search search, HtmlPanelGroup list, UIGenericPicker picker) throws IOException {
@@ -178,28 +195,46 @@ public class SearchRenderer extends BaseRenderer {
                 out.write(ComponentUtil.generateSuggestScript(context, child, (String) search.getAttributes().get(Search.PICKER_CALLBACK_KEY)));
             }
             out.write("</td><td>");
+<<<<<<< HEAD
             boolean editable = search.isEditable();
             if (editable) {
+=======
+            if (search.isEditable()) {
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
                 renderPicker(context, out, search, picker, i);
             }
             if (isRemoveLinkRendered(search)) {
                 renderRemoveLink(context, out, search, i);
             }
+<<<<<<< HEAD
             if (!editable && i == children.size() - 1) {
                 renderPicker(context, out, search, picker, -1);
             }
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             out.write("</td></tr>");
         }
         out.write("</tbody></table>");
 
+<<<<<<< HEAD
         if (children.isEmpty()) {
+=======
+        if (children.isEmpty() || !search.isEditable()) {
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             renderPicker(context, out, search, picker, -1);
         }
         renderAddLink(context, search, out);
     }
 
     private void renderSingleValued(FacesContext context, ResponseWriter out, Search search, HtmlPanelGroup list, UIGenericPicker picker) throws IOException {
+<<<<<<< HEAD
         out.write("<table class=\"recipient inline\" cellpadding=\"0\" cellspacing=\"0\"><tbody><tr>");
+=======
+        boolean renderPlain = search.isRenderPlain();
+        if (!renderPlain) {
+            out.write("<table class=\"recipient inline\" cellpadding=\"0\" cellspacing=\"0\"><tbody><tr>");
+        }
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
         List<UIComponent> children = list.getChildren();
         for (int i = 0; i < children.size(); i++) {
@@ -208,13 +243,20 @@ public class SearchRenderer extends BaseRenderer {
                 continue;
             }
 
+<<<<<<< HEAD
             out.write("<td>");
+=======
+            if (!renderPlain) {
+                out.write("<td>");
+            }
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             setInputStyleClass(child, search);
             Utils.encodeRecursive(context, child);
             if (hasSearchSuggest(search)) {
                 out.write(ComponentUtil.generateSuggestScript(context, child, (String) search.getAttributes().get(Search.PICKER_CALLBACK_KEY)));
             }
             renderExtraInfo(search, out);
+<<<<<<< HEAD
             out.write("</td>");
             UIOutput ch = (UIOutput) child;
             Object val = ch.getValue();
@@ -227,6 +269,30 @@ public class SearchRenderer extends BaseRenderer {
         out.write("<td>");
         renderPicker(context, out, search, picker, -1);
         out.write("</td></tr></tbody></table>");
+=======
+            if (!renderPlain) {
+                out.write("</td>");
+            }
+            UIOutput ch = (UIOutput) child;
+            Object val = ch.getValue();
+            if (isRemoveLinkRendered(search) && val != null) {
+                if (!renderPlain) {
+                    out.write("<td>");
+                }
+                renderRemoveLink(context, out, search, i);
+                if (!renderPlain) {
+                    out.write("</td>");
+                }
+            }
+        }
+        if (!renderPlain) {
+            out.write("<td>");
+        }
+        renderPicker(context, out, search, picker, -1);
+        if (!renderPlain) {
+            out.write("</td></tr></tbody></table>");
+        }
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     private boolean hasSearchSuggest(Search search) {

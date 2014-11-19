@@ -86,6 +86,10 @@ import ee.webmedia.alfresco.common.propertysheet.component.WMUIProperty;
 import ee.webmedia.alfresco.common.propertysheet.converter.ListNonBlankStringsWithCommaConverter;
 import ee.webmedia.alfresco.common.propertysheet.generator.CustomAttributes;
 import ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.HandlesViewMode;
+<<<<<<< HEAD
+=======
+import ee.webmedia.alfresco.common.propertysheet.parameter.ParameterInputAttributeGenerator;
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import ee.webmedia.alfresco.common.propertysheet.validator.ForcedMandatoryValidator;
 import ee.webmedia.alfresco.common.propertysheet.validator.MandatoryIfValidator;
 import ee.webmedia.alfresco.common.web.BeanHelper;
@@ -121,6 +125,10 @@ public abstract class BaseComponentGenerator implements IComponentGenerator, Cus
         String STYLE_CLASS = "styleClass";
         String ATTR_FORCED_MANDATORY = "forcedMandatory";
         String VALDIATION_DISABLED = "validationDisabled";
+<<<<<<< HEAD
+=======
+        String ATTR_MANDATORY = "mandatory";
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         //enable to show mandatory marker independently of VALDIATION_DISABLED value
         String VALIDATION_MARKER_DISABLED = "validationMarkerDisabled";
     }
@@ -246,7 +254,10 @@ public abstract class BaseComponentGenerator implements IComponentGenerator, Cus
     * 
     * @param context FacesContext
     * @param component
+<<<<<<< HEAD
     * @author Ats Uiboupin 
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     */
     protected void addMandatoryIfValidator(FacesContext context, UIInput component) {
         if (isValidationDisabled()) {
@@ -317,7 +328,10 @@ public abstract class BaseComponentGenerator implements IComponentGenerator, Cus
      *            component should be disabled or not.
      * @param context - FacesContext
      * @param propertySheet - UIPropertySheet where this <code>component</code> is located
+<<<<<<< HEAD
      * @author Ats Uiboupin
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
      */
     private void setReadOnlyBasedOnExpressionIfNessesary(UIComponent component, PropertySheetItem item, FacesContext context, UIPropertySheet propertySheet) {
         if (item instanceof CustomAttributes) {
@@ -345,12 +359,21 @@ public abstract class BaseComponentGenerator implements IComponentGenerator, Cus
     }
 
     public static boolean evaluateBoolean(String expression, FacesContext context, PropertySheetItem item) {
+<<<<<<< HEAD
         if (expression == null || "false".equals(expression)) {
             return false;
         }
         if ("true".equals(expression)) {
             return true;
         }
+=======
+        if ("true".equals(expression)) {
+            return true;
+        }
+        if ("false".equals(expression)) {
+            return false;
+        }
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         try {
             return ((Boolean) context.getApplication().createMethodBinding(expression, new Class[] {}).invoke(context, null)).booleanValue();
         } catch (EvaluationException e) { // Fall back to value binding to allow negation - for example readOnlyIf="#{!FieldDetailsDialog.field.parameterInVolSearch}"
@@ -492,7 +515,11 @@ public abstract class BaseComponentGenerator implements IComponentGenerator, Cus
     }
 
     protected boolean isValidationDisabled() {
+<<<<<<< HEAD
         return evaluateBoolean(getCustomAttributes().get(VALDIATION_DISABLED), FacesContext.getCurrentInstance());
+=======
+        return Boolean.valueOf(getCustomAttributes().get(VALDIATION_DISABLED));
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
     
     protected boolean isMandatoryMarkerDisabled() {
@@ -610,7 +637,12 @@ public abstract class BaseComponentGenerator implements IComponentGenerator, Cus
 
     protected boolean isCreateOutputText(FacesContext context) {
         String outputTextAttr = getCustomAttributes().get(OUTPUT_TEXT);
+<<<<<<< HEAD
         return isNotBlank(outputTextAttr) ? evaluateBoolean(outputTextAttr, context) : false;
+=======
+        boolean hasParameter = StringUtils.hasText(getCustomAttributes().get(ParameterInputAttributeGenerator.PARAMETER_NAME));
+        return !hasParameter && isNotBlank(outputTextAttr) ? evaluateBoolean(outputTextAttr, context) : false;
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     protected boolean isAlwaysEdit(FacesContext context) {
@@ -638,11 +670,19 @@ public abstract class BaseComponentGenerator implements IComponentGenerator, Cus
          catch (NullPointerException npe)
          {
             // workaround a NPE bug in MyFaces
+<<<<<<< HEAD
             logger.warn("Converter " + converterId + " could not be applied");
          }
          catch (FacesException fe)
          {
             logger.warn("Converter " + converterId + " could not be applied");
+=======
+            logger.warn("Converter " + converterId + " could not be applied to component: " + component.getId());
+         }
+         catch (FacesException fe)
+         {
+            logger.warn("Converter " + converterId + " could not be applied to component: " + component.getId());
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
          }
       }
    }

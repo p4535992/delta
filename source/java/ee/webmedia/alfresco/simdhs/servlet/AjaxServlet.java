@@ -42,8 +42,11 @@ import org.apache.commons.logging.LogFactory;
 
 import ee.webmedia.alfresco.common.listener.StatisticsPhaseListener;
 import ee.webmedia.alfresco.common.listener.StatisticsPhaseListenerLogColumn;
+<<<<<<< HEAD
 import ee.webmedia.alfresco.monitoring.MonitoredService;
 import ee.webmedia.alfresco.monitoring.MonitoringUtil;
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
 /**
  * Servlet responsible for processing AJAX requests.
@@ -178,7 +181,10 @@ public class AjaxServlet extends BaseServlet {
             }
 
             // send the error
+<<<<<<< HEAD
             MonitoringUtil.logError(MonitoredService.IN_WWW, cause);
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg);
         } else {
             // the response has already been comitted, not much we can do but

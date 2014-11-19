@@ -22,6 +22,10 @@
  * the FLOSS exception, and it is also available here: 
  * http://www.alfresco.com/legal/licensing"
 --%>
+<<<<<<< HEAD
+=======
+<%@page import="ee.webmedia.alfresco.utils.MessageUtil"%>
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 <%@ taglib uri="http://java.sun.com/jsf/html" prefix="h" %>
 <%@ taglib uri="http://java.sun.com/jsf/core" prefix="f" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
@@ -30,6 +34,10 @@
 
 <%@ page import="org.alfresco.web.app.servlet.AuthenticationHelper" %>
 <%@ page import="javax.servlet.http.Cookie" %>
+<<<<<<< HEAD
+=======
+<%@ page import="ee.webmedia.alfresco.user.service.Cas20ProxyReceivingRedirectingTicketValidationFilter" %>
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 <%@ page import="ee.webmedia.alfresco.user.service.SimpleAuthenticationFilter" %>
 <%@ page import="ee.webmedia.alfresco.common.service.ApplicationService" %>
 <%@ page import="org.alfresco.web.app.servlet.FacesHelper"%>
@@ -67,12 +75,22 @@
    
    <h:form acceptcharset="UTF-8" id="loggedOutForm" >
    <div id="login-container">
+<<<<<<< HEAD
             <h:graphicImage url="#{ApplicationService.logoUrl}" alt="#{ApplicationService.headerText}" title="#{ApplicationService.headerText}" />
              
             <%
                if (session.getAttribute(SimpleAuthenticationFilter.AUTHENTICATION_EXCEPTION) != null) {
             %>
 	              <h:outputText value="#{msg.error_login_user}" styleClass="login-instructions center" />
+=======
+            <h:graphicImage url="/images/logo/logo.png" alt="#{ApplicationService.headerText}" title="#{ApplicationService.headerText}" />
+             
+            <%
+               if (session.getAttribute(SimpleAuthenticationFilter.AUTHENTICATION_EXCEPTION) != null) {
+               String message = MessageUtil.getMessage((session.getAttribute(Cas20ProxyReceivingRedirectingTicketValidationFilter.CAS_VALIDATION_ERROR) != null ? "error_ticket_validate" : "error_login_user"));
+            %>    
+                  <f:verbatim><span class="login-instructions center"><%=message%></span></f:verbatim>
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
                   <a:actionLink href="#{ApplicationService.logoutRedirectUrl}" value="#{msg.logout}" />
             <%
                } else {

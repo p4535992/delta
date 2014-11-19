@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.docadmin.web;
 
+<<<<<<< HEAD
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentAdminService;
 
 import java.util.List;
@@ -15,6 +16,10 @@ import ee.webmedia.alfresco.docadmin.service.DynamicType;
 /**
  * @author Ats Uiboupin
  */
+=======
+import ee.webmedia.alfresco.docadmin.service.CaseFileType;
+
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 public class CaseFileTypeListDialog extends DynamicTypeListDialog<CaseFileType> {
     private static final long serialVersionUID = 1L;
 
@@ -27,6 +32,7 @@ public class CaseFileTypeListDialog extends DynamicTypeListDialog<CaseFileType> 
         return "caseFileTypes.xml";
     }
 
+<<<<<<< HEAD
     /**
      * Query callback method executed by the Generic Picker component.
      */
@@ -39,4 +45,6 @@ public class CaseFileTypeListDialog extends DynamicTypeListDialog<CaseFileType> 
         return getDocumentAdminService().getUsedCaseFileTypes(DocumentAdminService.DONT_INCLUDE_CHILDREN);
     }
 
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 }

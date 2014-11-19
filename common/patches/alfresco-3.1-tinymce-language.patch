@@ -7,6 +7,7 @@ diff -urN alfresco-3.1/jsp/content/create-content-wizard/create-html.jsp alfresc
 --- alfresco-3.1/jsp/content/create-content-wizard/create-html.jsp	2009-03-20 14:51:34.000000000 +0200
 +++ alfresco/jsp/content/create-content-wizard/create-html.jsp	2009-04-06 17:14:00.000000000 +0300
 @@ -27,13 +27,16 @@
+<<<<<<< HEAD
  <%@ taglib uri="/WEB-INF/alfresco.tld" prefix="a" %>
  <%@ taglib uri="/WEB-INF/repo.tld" prefix="r" %>
  
@@ -24,10 +25,30 @@ diff -urN alfresco-3.1/jsp/content/create-content-wizard/create-html.jsp alfresc
  mode : "exact",
  relative_urls: false,
  elements : "editor",
+=======
+ <%@ taglib uri="/WEB-INF/alfresco.tld" prefix="a" %>
+ <%@ taglib uri="/WEB-INF/repo.tld" prefix="r" %>
+ 
++<%@ page import="org.alfresco.web.app.Application" %>
++<%@ page import="javax.faces.context.FacesContext" %>
++
+ <f:verbatim>
+ <script language="javascript" type="text/javascript" src="<%=request.getContextPath()%>/scripts/tiny_mce/tiny_mce.js"></script>
+ <script language="javascript" type="text/javascript">
+ <%-- Init the Tiny MCE in-line HTML editor --%>
+ tinyMCE.init({
+ theme : "advanced",
+-language : "<%=request.getLocale().getLanguage()%>",
++language : "<%=Application.getLanguage(FacesContext.getCurrentInstance()).getLanguage()%>",
+ mode : "exact",
+ relative_urls: false,
+ elements : "editor",
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 diff -urN alfresco-3.1/jsp/content/edit-html-inline.jsp alfresco/jsp/content/edit-html-inline.jsp
 --- alfresco-3.1/jsp/content/edit-html-inline.jsp	2009-03-20 14:51:34.000000000 +0200
 +++ alfresco/jsp/content/edit-html-inline.jsp	2009-04-06 17:13:27.000000000 +0300
 @@ -28,6 +28,8 @@
+<<<<<<< HEAD
  <%@ taglib uri="/WEB-INF/alfresco.tld" prefix="a" %>
  <%@ taglib uri="/WEB-INF/repo.tld" prefix="r" %>
  
@@ -45,3 +66,22 @@ diff -urN alfresco-3.1/jsp/content/edit-html-inline.jsp alfresco/jsp/content/edi
  mode : "exact",
  relative_urls: false,
  elements : "editor",
+=======
+ <%@ taglib uri="/WEB-INF/alfresco.tld" prefix="a" %>
+ <%@ taglib uri="/WEB-INF/repo.tld" prefix="r" %>
+ 
++<%@ page import="org.alfresco.web.app.Application" %>
++<%@ page import="javax.faces.context.FacesContext" %>
+ <%@ page import="org.alfresco.web.ui.common.PanelGenerator" %>
+ 
+ <f:verbatim>
+@@ -36,7 +38,7 @@
+ <%-- Init the Tiny MCE in-line HTML editor --%>
+ tinyMCE.init({
+ theme : "advanced",
+-language : "<%=request.getLocale().getLanguage()%>",
++language : "<%=Application.getLanguage(FacesContext.getCurrentInstance()).getLanguage()%>",
+ mode : "exact",
+ relative_urls: false,
+ elements : "editor",
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5

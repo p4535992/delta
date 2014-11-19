@@ -58,7 +58,10 @@ import ee.webmedia.alfresco.base.BaseObject;
 import ee.webmedia.alfresco.base.BaseObject.ChildrenList;
 import ee.webmedia.alfresco.base.BaseService;
 import ee.webmedia.alfresco.base.BaseServiceImpl;
+<<<<<<< HEAD
 import ee.webmedia.alfresco.casefile.model.CaseFileModel;
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import ee.webmedia.alfresco.classificator.constant.DocTypeAssocType;
 import ee.webmedia.alfresco.common.model.NodeBaseVO;
 import ee.webmedia.alfresco.common.service.GeneralService;
@@ -67,6 +70,10 @@ import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel.Props;
 import ee.webmedia.alfresco.docadmin.web.BaseObjectOrderModifier;
 import ee.webmedia.alfresco.docadmin.web.DocAdminUtil;
+<<<<<<< HEAD
+=======
+import ee.webmedia.alfresco.docconfig.service.DocumentConfigService;
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
 import ee.webmedia.alfresco.menu.service.MenuService;
@@ -83,9 +90,12 @@ import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
 import ee.webmedia.alfresco.utils.UnableToPerformMultiReasonException;
 
+<<<<<<< HEAD
 /**
  * @author Ats Uiboupin
  */
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 public class DocumentAdminServiceImpl implements DocumentAdminService, InitializingBean {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(DocumentAdminServiceImpl.class);
 
@@ -110,8 +120,11 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
     /**
      * Get nodeRef lazily.
      * Workaround to NPE when trying to get nodeRef from afterProperties set
+<<<<<<< HEAD
      * 
      * @author Ats Uiboupin
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
      */
     class NodeRefInitializer {
         private final String xPath;
@@ -170,10 +183,13 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
         return getDynamicTypesRoot(DocumentType.class);
     }
 
+<<<<<<< HEAD
     private NodeRef getCaseFileTypesRoot() {
         return getDynamicTypesRoot(CaseFileType.class);
     }
 
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     @Override
     public void registerForbiddenFieldId(String forbiddenFieldId) {
         Assert.notNull(forbiddenFieldId);
@@ -187,6 +203,7 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
     }
 
     @Override
+<<<<<<< HEAD
     public List<CaseFileType> getUsedCaseFileTypes(DynTypeLoadEffort effort) {
         return getAllTypes(CaseFileType.class, Boolean.TRUE, getCaseFileTypesRoot(), effort);
     }
@@ -197,6 +214,8 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
     }
 
     @Override
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     public List<DocumentType> getDocumentTypes(DynTypeLoadEffort effort) {
         return getAllDocumentTypes(null, getDocumentTypesRoot(), effort);
     }
@@ -235,6 +254,7 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
     }
 
     @Override
+<<<<<<< HEAD
     public DocumentType getUsedDocumentType(String documentTypeId) {
         DocumentType documentType = null;
         try {
@@ -266,6 +286,16 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
     @Override
     public <T> T getTypeProperty(NodeRef typeRef, QName property, Class<T> returnClass) {
         Serializable value = nodeService.getProperty(typeRef, property);
+=======
+    public <T> T getDocumentTypeProperty(String docTypeId, QName property, Class<T> returnClass) {
+        NodeRef documentTypeRef = getDocumentTypeRef(docTypeId);
+        return getDocumentTypeProperty(documentTypeRef, property, returnClass);
+    }
+
+    @Override
+    public <T> T getDocumentTypeProperty(NodeRef documentTypeRef, QName property, Class<T> returnClass) {
+        Serializable value = nodeService.getProperty(documentTypeRef, property);
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         if (Boolean.class.equals(returnClass)) {
             value = NodeBaseVO.convertNullToFalse((Boolean) value);
         }
@@ -278,6 +308,7 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
     }
 
     @Override
+<<<<<<< HEAD
     public NodeRef getCaseFileTypeRef(String id) {
         return generalService.getNodeRef(CaseFileType.getAssocName(id).toString(), getCaseFileTypesRoot());
     }
@@ -300,6 +331,16 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
         DocumentTypeVersion docVersion = null;
         for (DocumentTypeVersion version : dynType.getDocumentTypeVersions()) {
             if (docTypeVersionNr.equals(version.getVersionNr())) {
+=======
+    public Pair<DocumentType, DocumentTypeVersion> getDocumentTypeAndVersion(String docTypeId, Integer docTypeVersionNr) {
+        DocumentType docType = getDocumentType(docTypeId, DocumentAdminService.DOC_TYPE_WITH_OUT_GRAND_CHILDREN);
+        if (docType == null) {
+            return null;
+        }
+        DocumentTypeVersion docVersion = null;
+        for (DocumentTypeVersion version : docType.getDocumentTypeVersions()) {
+            if (docTypeVersionNr == version.getVersionNr()) {
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
                 baseService.loadChildren(version, null);
                 docVersion = version;
                 break;
@@ -308,17 +349,24 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
         if (docVersion == null) {
             return null;
         }
+<<<<<<< HEAD
         return new Pair<D, DocumentTypeVersion>(dynType, docVersion);
+=======
+        return new Pair<DocumentType, DocumentTypeVersion>(docType, docVersion);
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     private DocumentType getDocumentType(NodeRef docTypeRef, DynTypeLoadEffort effort) {
         return getDynamicType(DocumentType.class, docTypeRef, effort);
     }
 
+<<<<<<< HEAD
     private CaseFileType getCaseFileType(NodeRef caseFileTypeRef, DynTypeLoadEffort effort) {
         return getDynamicType(CaseFileType.class, caseFileTypeRef, effort);
     }
 
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     @Override
     public <D extends DynamicType> D getDynamicType(Class<D> dynTypeClass, NodeRef dynTypeRef, DynTypeLoadEffort effort) {
         // FIXME DLSeadist - Kui kõik süsteemsed dok.liigid on defineeritud, siis võib null kontrolli ja tagastamise eemdaldada
@@ -353,12 +401,15 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
     }
 
     @Override
+<<<<<<< HEAD
     public String getCaseFileTypeName(Node caseFile) {
         String typeId = (String) caseFile.getProperties().get(DocumentAdminModel.Props.OBJECT_TYPE_ID);
         return getCaseFileType(getCaseFileTypeRef(typeId), DONT_INCLUDE_CHILDREN).getName();
     }
 
     @Override
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     public Pair<String, String> getDocumentTypeNameAndId(Node document) {
         String documentTypeId = (String) document.getProperties().get(DocumentAdminModel.Props.OBJECT_TYPE_ID);
         return new Pair<String, String>(getDocumentTypeName(documentTypeId), documentTypeId);
@@ -366,6 +417,7 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
 
     @Override
     public Map<String/* docTypeId */, String/* docTypeName */> getDocumentTypeNames(Boolean used) {
+<<<<<<< HEAD
         return getDynamicTypeNames(used, getDocumentTypesRoot());
     }
 
@@ -377,15 +429,26 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
     private Map<String, String> getDynamicTypeNames(Boolean used, NodeRef dynamicTypesRoot) {
         Map<String, String> dynamicTypesByTypeId = new HashMap<String, String>();
         for (ChildAssociationRef childAssoc : nodeService.getChildAssocs(dynamicTypesRoot)) {
+=======
+        Map<String, String> docTypesByDocTypeId = new HashMap<String, String>();
+        for (ChildAssociationRef childAssoc : nodeService.getChildAssocs(getDocumentTypesRoot())) {
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             Map<QName, Serializable> props = nodeService.getProperties(childAssoc.getChildRef());
             Boolean documentTypeUsed = (Boolean) props.get(DocumentAdminModel.Props.USED);
             if (used == null || documentTypeUsed == used) {
                 String documentTypeId = (String) props.get(DocumentAdminModel.Props.ID);
                 String documentTypeName = (String) props.get(DocumentAdminModel.Props.NAME);
+<<<<<<< HEAD
                 dynamicTypesByTypeId.put(documentTypeId, documentTypeName);
             }
         }
         return dynamicTypesByTypeId;
+=======
+                docTypesByDocTypeId.put(documentTypeId, documentTypeName);
+            }
+        }
+        return docTypesByDocTypeId;
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     @Override
@@ -550,6 +613,16 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
             }
             saveOrUpdateFieldDefinitions(fieldsToSave.values());
         }
+<<<<<<< HEAD
+=======
+        DocumentConfigService documentConfigService = BeanHelper.getDocumentConfigService();
+        String typeId = dynType.getId();
+        for (DocumentTypeVersion docTypeVersion : dynType.getDocumentTypeVersions()) {
+            Pair<String, Integer> typeAndVersion = Pair.newInstance(typeId, docTypeVersion.getVersionNr());
+            documentConfigService.removeFromChildAssocTypeQNameTreeCache(typeAndVersion);
+            documentConfigService.removeFromPropertyDefinitionCache(typeAndVersion);
+        }
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         nodeService.deleteNode(docTypeRef);
         if (dynType.isUsed()) {
             menuService.menuUpdated();
@@ -660,8 +733,11 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
 
     /**
      * Helps to initialize order or reorder only some items - so that other items will not receive automatically order
+<<<<<<< HEAD
      * 
      * @author Ats Uiboupin
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
      */
     private static class FieldDefinitionReorderHelper {
 
@@ -714,13 +790,18 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
     }
 
     @Override
+<<<<<<< HEAD
     public List<FieldDefinition> getSearchableDocumentFieldDefinitions() {
+=======
+    public List<FieldDefinition> getSearchableFieldDefinitions() {
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         List<FieldDefinition> searchable = new ArrayList<FieldDefinition>();
         for (FieldDefinition fieldDefinition : baseService.getChildren(getFieldDefinitionsRoot(), FieldDefinition.class)) {
             if (fieldDefinition.isParameterInDocSearch()) {
                 searchable.add(fieldDefinition);
             }
         }
+<<<<<<< HEAD
         Collections.sort(searchable, DOC_SEARCH_FIELD_COMPARATOR);
         return searchable;
     }
@@ -751,12 +832,21 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
 
     @SuppressWarnings("unchecked")
     public static final Comparator<FieldDefinition> DOC_SEARCH_FIELD_COMPARATOR = new TransformingComparator(new ComparableTransformer<FieldDefinition>() {
+=======
+        Collections.sort(searchable, SEARCH_FIELD_COMPARATOR);
+        return searchable;
+    }
+
+    @SuppressWarnings("unchecked")
+    public static final Comparator<FieldDefinition> SEARCH_FIELD_COMPARATOR = new TransformingComparator(new ComparableTransformer<FieldDefinition>() {
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         @Override
         public Comparable<?> tr(FieldDefinition input) {
             return input.getParameterOrderInDocSearch();
         }
     }, new NullComparator(true));
 
+<<<<<<< HEAD
     @SuppressWarnings("unchecked")
     public static final Comparator<FieldDefinition> CASE_SEARCH_FIELD_COMPARATOR = new TransformingComparator(new ComparableTransformer<FieldDefinition>() {
         @Override
@@ -765,6 +855,8 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
         }
     }, new NullComparator(true));
 
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     @Override
     public List<FieldDefinition> getFieldDefinitions(List<String> fieldDefinitionIds) {
         List<FieldDefinition> fieldDefinitions = getFieldDefinitions();
@@ -816,8 +908,11 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
      * {@link QNamePattern} that considers {@link QName#getLocalName()} when matching. <br>
      * XXX: created for {@link DocumentAdminServiceImpl#isFieldDefinitionExisting(String)} and {@link DocumentAdminServiceImpl#getFieldDefinition(String)} because at the time there
      * were several diferent namespaces for previous built-in fields and for user defined fields. It must change in future!
+<<<<<<< HEAD
      * 
      * @author Ats Uiboupin
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
      */
     private class QNameLocalnameMatcher implements QNamePattern {
         private final String localName;
@@ -862,13 +957,31 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
     }
 
     @Override
+<<<<<<< HEAD
     public void deleteFieldDefinition(NodeRef fieldDefRef) {
         nodeService.deleteNode(fieldDefRef);
+=======
+    public void deleteFieldDefinition(Field field) {
+        nodeService.deleteNode(field.getNodeRef());
+        BeanHelper.getDocumentConfigService().removeFrompPopertyDefinitionForSearchCache(field.getFieldId());
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     @Override
     public boolean isDocumentTypeUsed(String documentTypeId) {
+<<<<<<< HEAD
         return isDynamicTypeUsed(DocumentCommonModel.Types.DOCUMENT, documentTypeId);
+=======
+        // TODO DLSeadist maybe need to cache the result (very rare that document type that was used becomes unused)
+        return documentSearchService.isMatchAllStoresWithTrashcan(
+                joinQueryPartsAnd(
+                        joinQueryPartsAnd(
+                                generateTypeQuery(DocumentCommonModel.Types.DOCUMENT)
+                                , generateAspectQuery(DocumentCommonModel.Aspects.SEARCHABLE)
+                        )
+                        , generateStringExactQuery(documentTypeId, Props.OBJECT_TYPE_ID))
+                );
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     @Override
@@ -891,6 +1004,7 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
 
     @Override
     public boolean isCaseFileTypeUsed(String caseFileTypeId) {
+<<<<<<< HEAD
         return isDynamicTypeUsed(CaseFileModel.Types.CASE_FILE, caseFileTypeId);
     }
 
@@ -904,6 +1018,9 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
                         )
                         , generateStringExactQuery(dynamicTypeId, Props.OBJECT_TYPE_ID))
                 );
+=======
+        return false; // TODO CL_TASK 183635
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     @Override
@@ -1301,8 +1418,11 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
      * for each {@link DocumentTypeVersion}: <br>
      * 1) Add {@link AssociationModel}s or merge {@link FieldMapping}s under existing {@link AssociationModel}s <br>
      * 2) save {@link DocumentTypeVersion}: <br>
+<<<<<<< HEAD
      * 
      * @author Ats Uiboupin
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
      */
     public class ImportHelper {
 
@@ -1650,12 +1770,18 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
                 MetadataItem metadataItem = it.next();
                 if (metadataItem instanceof FieldGroup) {
                     FieldGroup fieldGroup = (FieldGroup) metadataItem;
+<<<<<<< HEAD
                     String fieldGroupName = fieldGroup.getName();
                     Set<NodeRef> savedNodeRefsInFieldGroup = neededNodeRefsByGroup.get(fieldGroupName);
                     if (!neededNodeRefsByGroup.get(null).contains(fieldGroup.getNodeRef())) {
                         if (existingFieldGroupsByName.containsKey(fieldGroupName)) {
                             it.remove(); // this fieldGroup was not present under docTypeVersion that is being imported
                         }
+=======
+                    Set<NodeRef> savedNodeRefsInFieldGroup = neededNodeRefsByGroup.get(fieldGroup.getName());
+                    if (!neededNodeRefsByGroup.get(null).contains(fieldGroup.getNodeRef())) {
+                        it.remove(); // this fieldGroup was not present under docTypeVersion that is being imported
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
                     } else {
                         FieldGroup existingFieldGroup = existingFieldGroupsByName.get(fieldGroup.getName());
                         if (existingFieldGroup != null) {

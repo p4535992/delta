@@ -1,0 +1,796 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view:view xmlns:view="http://www.alfresco.org/view/repository/1.0">
+  <view:metadata>
+    <view:exportBy>38509204212</view:exportBy>
+    <view:exportDate>2011-11-17T09:47:08.723+02:00</view:exportDate>
+    <view:exporterVersion>3.2.0 (2039)</view:exporterVersion>
+    <view:exportOf>/fn:documentList</view:exportOf>
+  </view:metadata>
+  <fn:functions xmlns="" xmlns:nt="http://www.jcp.org/jcr/nt/1.0" xmlns:imap-ext="http://alfresco.webmedia.ee/model/imap/1.0" xmlns:docspec="http://alfresco.webmedia.ee/model/document/specific/1.0" xmlns:ocr="http://alfresco.webmedia.ee/model/ocr/1.0" xmlns:fm="http://www.alfresco.org/model/forum/1.0" xmlns:file="http://alfresco.webmedia.ee/model/file/1.0" xmlns:docTempl="http://alfresco.webmedia.ee/model/document-template/1.0" xmlns:wcm="http://www.alfresco.org/model/wcmmodel/1.0" xmlns:sv="http://www.jcp.org/jcr/sv/1.0" xmlns:ntf="http://alfresco.webmedia.ee/model/notification/1.0" xmlns:st="http://www.alfresco.org/model/site/1.0" xmlns:docadmin="http://alfresco.webmedia.ee/model/document/admin/1.0" xmlns:tdp="http://alfresco.webmedia.ee/model/transactionDescParameter/1.0" xmlns:fn="http://alfresco.webmedia.ee/model/functions/1.0" xmlns:custom="custom.model" xmlns:os="http://alfresco.webmedia.ee/model/orgstructure/1.0" xmlns:docsearch="http://alfresco.webmedia.ee/model/document/search/1.0" xmlns:docdyn="http://alfresco.webmedia.ee/model/document/dynamic/1.0" xmlns:menu="http://alfresco.webmedia.ee/model/menu/1.0" xmlns:wca="http://www.alfresco.org/model/wcmappmodel/1.0" xmlns:inwf="http://www.alfresco.org/model/workflow/invite/nominated/1.0" xmlns:imap="http://www.alfresco.org/model/imap/1.0" xmlns:cm="http://www.alfresco.org/model/content/1.0" xmlns:trn="http://alfresco.webmedia.ee/model/transaction/1.0" xmlns:wfs="http://alfresco.webmedia.ee/model/workflow/specific/1.0" xmlns:cl="http://alfresco.webmedia.ee/model/classificator/1.0" xmlns:ver2="http://www.alfresco.org/model/versionstore/2.0" xmlns:stcp="http://www.alfresco.org/model/sitecustomproperty/1.0" xmlns:temp="temp" xmlns:imwf="http://www.alfresco.org/model/workflow/invite/moderated/1.0" xmlns:view="http://www.alfresco.org/view/repository/1.0" xmlns:priv="http://alfresco.webmedia.ee/model/privilege/1.0" xmlns:case="http://alfresco.webmedia.ee/model/case/1.0" xmlns:wf="http://www.alfresco.org/model/workflow/1.0" xmlns:adr="http://alfresco.webmedia.ee/model/adr/1.0" xmlns:sub="http://alfresco.webmedia.ee/model/substitute/1.0" xmlns:ser="http://alfresco.webmedia.ee/model/series/1.0" xmlns:param="http://alfresco.webmedia.ee/model/parameters/1.0" xmlns:lnk="http://www.alfresco.org/model/linksmodel/1.0" xmlns:sys="http://www.alfresco.org/model/system/1.0" xmlns:wfc="http://alfresco.webmedia.ee/model/workflow/common/1.0" xmlns:vs="http://alfresco.webmedia.ee/model/versions/1.0" xmlns:asr="http://alfresco.webmedia.ee/model/assignresponsibility/common/1.0" xmlns:ver="http://www.alfresco.org/model/versionstore/1.0" xmlns:dim="http://alfresco.webmedia.ee/model/dimension/1.0" xmlns:jcr="http://www.jcp.org/jcr/1.0" xmlns:doccom="http://alfresco.webmedia.ee/model/document/common/1.0" xmlns:vol="http://alfresco.webmedia.ee/model/volume/1.0" xmlns:emailserver="http://www.alfresco.org/model/emailserver/1.0" xmlns:ia="http://www.alfresco.org/model/calendar" xmlns:docsub="http://alfresco.webmedia.ee/model/document/subtype/1.0" xmlns:rule="http://www.alfresco.org/model/rule/1.0" xmlns:usr="http://alfresco.webmedia.ee/model/user/1.0" xmlns:app="http://www.alfresco.org/model/application/1.0" xmlns:module="http://www.alfresco.org/system/modules/1.0" xmlns:d="http://www.alfresco.org/model/dictionary/1.0" xmlns:blg="http://www.alfresco.org/model/blogintegration/1.0" xmlns:alf="http://www.alfresco.org" xmlns:cmis="http://www.alfresco.org/model/cmis/0.6" xmlns:the="http://alfresco.webmedia.ee/model/thesaurus/1.0" xmlns:dvk="http://alfresco.webmedia.ee/model/dvk/1.0" xmlns:mix="http://www.jcp.org/jcr/mix/1.0" xmlns:bpm="http://www.alfresco.org/model/bpm/1.0" xmlns:reg="http://alfresco.webmedia.ee/model/register/1.0" xmlns:wcmwf="http://www.alfresco.org/model/wcmworkflow/1.0" xmlns:scan="http://alfresco.webmedia.ee/model/scanned/1.0" xmlns:ab="http://alfresco.webmedia.ee/model/addressbook/1.0" xmlns:act="http://www.alfresco.org/model/action/1.0" xmlns:tasksearch="http://alfresco.webmedia.ee/model/task/search/1.0" view:childName="fn:documentList">
+    <view:aspects>
+      <sys:referenceable></sys:referenceable>
+      <sys:aspect_root></sys:aspect_root>
+    </view:aspects>
+    <view:acl view:inherit="false">
+      <view:ace view:access="ALLOWED">
+        <view:authority>GROUP_EVERYONE</view:authority>
+        <view:permission>DocumentListBrowse</view:permission>
+      </view:ace>
+    </view:acl>
+    <view:properties>
+      <cm:name>81e364d9-e0de-46e9-bf4b-b66e3ae76e1f</cm:name>
+      <sys:node-dbid>3513</sys:node-dbid>
+      <sys:store-identifier>SpacesStore</sys:store-identifier>
+      <sys:node-uuid>81e364d9-e0de-46e9-bf4b-b66e3ae76e1f</sys:node-uuid>
+      <sys:store-protocol>workspace</sys:store-protocol>
+    </view:properties>
+    <view:associations>
+      <fn:function>
+        <fn:function view:childName="fn:function">
+          <view:aspects>
+            <sys:referenceable></sys:referenceable>
+          </view:aspects>
+          <view:acl></view:acl>
+          <view:properties>
+            <cm:name>c1d8abe6-846d-4159-ab1d-e4ff33ae3c40</cm:name>
+            <fn:mark>TEST1</fn:mark>
+            <fn:description></fn:description>
+            <sys:node-dbid>7739</sys:node-dbid>
+            <sys:store-identifier>SpacesStore</sys:store-identifier>
+            <fn:status>avatud</fn:status>
+            <fn:title>Funktsioon 1</fn:title>
+            <fn:order>1</fn:order>
+            <sys:node-uuid>c1d8abe6-846d-4159-ab1d-e4ff33ae3c40</sys:node-uuid>
+            <fn:type>funktsioon</fn:type>
+            <sys:store-protocol>workspace</sys:store-protocol>
+          </view:properties>
+          <view:associations>
+            <ser:series>
+              <ser:series view:childName="ser:series">
+                <view:aspects>
+                  <sys:referenceable></sys:referenceable>
+                  <doccom:accessRights></doccom:accessRights>
+                </view:aspects>
+                <view:acl></view:acl>
+                <view:properties>
+                  <ser:seriesIdentifier>TEST1-1</ser:seriesIdentifier>
+                  <cm:name>745f1ebd-6f59-429b-8eba-77f6089f066a</cm:name>
+                  <ser:volType>
+                    <view:values>
+                      <view:value>ANNUAL_FILE</view:value>
+                      <view:value>CASE_FILE</view:value>
+                      <view:value>SUBJECT_FILE</view:value>
+                    </view:values>
+                  </ser:volType>
+                  <sys:node-dbid>7748</sys:node-dbid>
+                  <sys:store-identifier>SpacesStore</sys:store-identifier>
+                  <ser:docNumberPattern>{S}/{DN}</ser:docNumberPattern>
+                  <ser:validToDate>
+                    <view:value view:isNull="true"></view:value>
+                  </ser:validToDate>
+                  <ser:docType>
+                    <view:values>
+                      <view:value>instrumentOfDeliveryAndReceipt</view:value>
+                      <view:value>disciplinaryDirective</view:value>
+                      <view:value>decisionOnExceptionalVisaInBorderCrossingPoint</view:value>
+                      <view:value>secondAndThirdGradeDocCounterfeitingDesc</view:value>
+                      <view:value>identityDocumentInvalidationOrVerificationNote</view:value>
+                      <view:value>decisionOnCitizenship</view:value>
+                      <view:value>cooperationAgreement</view:value>
+                      <view:value>contract</view:value>
+                      <view:value>memo</view:value>
+                      <view:value>borderRepresentativeAuthorisationDocument</view:value>
+                      <view:value>internalLetter</view:value>
+                      <view:value>incomingLetter</view:value>
+                      <view:value>expencesLetterOfCompelledAttendance</view:value>
+                      <view:value>serviceOrder</view:value>
+                      <view:value>outgoingLetter</view:value>
+                    </view:values>
+                  </ser:docType>
+                  <ser:order>1</ser:order>
+                  <sys:node-uuid>745f1ebd-6f59-429b-8eba-77f6089f066a</sys:node-uuid>
+                  <ser:retentionDesc></ser:retentionDesc>
+                  <ser:title>Sari 1-1</ser:title>
+                  <ser:type>sari</ser:type>
+                  <ser:description></ser:description>
+                  <ser:register>1</ser:register>
+                  <ser:containingDocsCount>0</ser:containingDocsCount>
+                  <doccom:accessRestriction>Avalik</doccom:accessRestriction>
+                  <doccom:accessRestrictionEndDate>
+                    <view:value view:isNull="true"></view:value>
+                  </doccom:accessRestrictionEndDate>
+                  <ser:newNumberForEveryDoc>false</ser:newNumberForEveryDoc>
+                  <doccom:accessRestrictionEndDesc></doccom:accessRestrictionEndDesc>
+                  <doccom:accessRestrictionBeginDate>
+                    <view:value view:isNull="true"></view:value>
+                  </doccom:accessRestrictionBeginDate>
+                  <ser:structUnit>
+                    <view:values></view:values>
+                  </ser:structUnit>
+                  <ser:status>avatud</ser:status>
+                  <sys:store-protocol>workspace</sys:store-protocol>
+                  <ser:retentionPeriod>
+                    <view:value view:isNull="true"></view:value>
+                  </ser:retentionPeriod>
+                  <ser:validFromDate>2011-11-16T00:00:00.000+02:00</ser:validFromDate>
+                  <doccom:accessRestrictionReason></doccom:accessRestrictionReason>
+                  <ser:individualizingNumbers>false</ser:individualizingNumbers>
+                </view:properties>
+                <view:associations>
+                  <vol:volume>
+                    <vol:volume view:childName="vol:volume">
+                      <view:aspects>
+                        <sys:referenceable></sys:referenceable>
+                        <doccom:documentContainer></doccom:documentContainer>
+                      </view:aspects>
+                      <view:acl></view:acl>
+                      <view:properties>
+                        <cm:name>10a1332a-7525-4adf-b6cd-43640c2c81b0</cm:name>
+                        <sys:node-dbid>7797</sys:node-dbid>
+                        <sys:store-identifier>SpacesStore</sys:store-identifier>
+                        <docdyn:sendToDestruction>false</docdyn:sendToDestruction>
+                        <docdyn:title>Toimik 1-1-1</docdyn:title>
+                        <docdyn:status>avatud</docdyn:status>
+                        <sys:node-uuid>10a1332a-7525-4adf-b6cd-43640c2c81b0</sys:node-uuid>
+                        <docdyn:archivingNote></docdyn:archivingNote>
+                        <docdyn:description></docdyn:description>
+                        <docdyn:volumeMark>TEST1-1-1</docdyn:volumeMark>
+                        <docdyn:volumeType>ANNUAL_FILE</docdyn:volumeType>
+                        <docdyn:dispositionDate>
+                          <view:value view:isNull="true"></view:value>
+                        </docdyn:dispositionDate>
+                        <docdyn:validFrom>2011-11-16T00:00:00.000+02:00</docdyn:validFrom>
+                        <docdyn:validTo>
+                          <view:value view:isNull="true"></view:value>
+                        </docdyn:validTo>
+                        <sys:store-protocol>workspace</sys:store-protocol>
+                        <docdyn:containsCases>false</docdyn:containsCases>
+                        <docdyn:containingDocsCount>0</docdyn:containingDocsCount>
+                      </view:properties>
+                    </vol:volume>
+                    <vol:volume view:childName="vol:volume">
+                      <view:aspects>
+                        <sys:referenceable></sys:referenceable>
+                        <doccom:documentContainer></doccom:documentContainer>
+                      </view:aspects>
+                      <view:acl></view:acl>
+                      <view:properties>
+                        <cm:name>96aee762-0254-4371-817e-6daa442e6064</cm:name>
+                        <sys:node-dbid>7812</sys:node-dbid>
+                        <sys:store-identifier>SpacesStore</sys:store-identifier>
+                        <docdyn:sendToDestruction>false</docdyn:sendToDestruction>
+                        <docdyn:title>Toimik 1-1-2</docdyn:title>
+                        <docdyn:status>avatud</docdyn:status>
+                        <sys:node-uuid>96aee762-0254-4371-817e-6daa442e6064</sys:node-uuid>
+                        <docdyn:archivingNote></docdyn:archivingNote>
+                        <docdyn:description></docdyn:description>
+                        <docdyn:volumeMark>TEST1-1-2</docdyn:volumeMark>
+                        <docdyn:volumeType>ANNUAL_FILE</docdyn:volumeType>
+                        <docdyn:dispositionDate>
+                          <view:value view:isNull="true"></view:value>
+                        </docdyn:dispositionDate>
+                        <docdyn:validFrom>2011-11-16T00:00:00.000+02:00</docdyn:validFrom>
+                        <docdyn:validTo>
+                          <view:value view:isNull="true"></view:value>
+                        </docdyn:validTo>
+                        <sys:store-protocol>workspace</sys:store-protocol>
+                        <docdyn:containsCases>false</docdyn:containsCases>
+                        <docdyn:containingDocsCount>0</docdyn:containingDocsCount>
+                      </view:properties>
+                    </vol:volume>
+                  </vol:volume>
+                  <ser:seriesLog>
+                    <doccom:documentLog view:childName="ser:seriesLog">
+                      <view:aspects>
+                        <sys:referenceable></sys:referenceable>
+                        <doccom:documentLogAspect></doccom:documentLogAspect>
+                      </view:aspects>
+                      <view:acl></view:acl>
+                      <view:properties>
+                        <cm:name>49644510-29c4-49ab-99e8-4739fe4892fa</cm:name>
+                        <sys:node-dbid>7775</sys:node-dbid>
+                        <sys:store-identifier>SpacesStore</sys:store-identifier>
+                        <doccom:eventDescription>Sarja loomine</doccom:eventDescription>
+                        <sys:node-uuid>49644510-29c4-49ab-99e8-4739fe4892fa</sys:node-uuid>
+                        <sys:store-protocol>workspace</sys:store-protocol>
+                        <doccom:createdDateTime>2011-11-16T18:02:26.867+02:00</doccom:createdDateTime>
+                        <doccom:creatorName>Alar Kvell</doccom:creatorName>
+                      </view:properties>
+                    </doccom:documentLog>
+                    <doccom:documentLog view:childName="ser:seriesLog">
+                      <view:aspects>
+                        <sys:referenceable></sys:referenceable>
+                        <doccom:documentLogAspect></doccom:documentLogAspect>
+                      </view:aspects>
+                      <view:acl></view:acl>
+                      <view:properties>
+                        <cm:name>32ac25cf-a093-41d7-aa3a-1b0390d9c65e</cm:name>
+                        <sys:node-dbid>7782</sys:node-dbid>
+                        <sys:store-identifier>SpacesStore</sys:store-identifier>
+                        <doccom:eventDescription>Sarja metaandmeid on muudetud</doccom:eventDescription>
+                        <sys:node-uuid>32ac25cf-a093-41d7-aa3a-1b0390d9c65e</sys:node-uuid>
+                        <sys:store-protocol>workspace</sys:store-protocol>
+                        <doccom:createdDateTime>2011-11-16T18:02:26.923+02:00</doccom:createdDateTime>
+                        <doccom:creatorName>Alar Kvell</doccom:creatorName>
+                      </view:properties>
+                    </doccom:documentLog>
+                    <doccom:documentLog view:childName="ser:seriesLog">
+                      <view:aspects>
+                        <sys:referenceable></sys:referenceable>
+                        <doccom:documentLogAspect></doccom:documentLogAspect>
+                      </view:aspects>
+                      <view:acl></view:acl>
+                      <view:properties>
+                        <cm:name>fca54554-87d9-44b1-8edb-3c71f500dcca</cm:name>
+                        <sys:node-dbid>7789</sys:node-dbid>
+                        <sys:store-identifier>SpacesStore</sys:store-identifier>
+                        <doccom:eventDescription>Sarja metaandmeid on muudetud</doccom:eventDescription>
+                        <sys:node-uuid>fca54554-87d9-44b1-8edb-3c71f500dcca</sys:node-uuid>
+                        <sys:store-protocol>workspace</sys:store-protocol>
+                        <doccom:createdDateTime>2011-11-16T18:03:14.736+02:00</doccom:createdDateTime>
+                        <doccom:creatorName>Alar Kvell</doccom:creatorName>
+                      </view:properties>
+                    </doccom:documentLog>
+                  </ser:seriesLog>
+                </view:associations>
+              </ser:series>
+              <ser:series view:childName="ser:series">
+                <view:aspects>
+                  <sys:referenceable></sys:referenceable>
+                  <doccom:accessRights></doccom:accessRights>
+                </view:aspects>
+                <view:acl></view:acl>
+                <view:properties>
+                  <ser:seriesIdentifier>TEST1-2</ser:seriesIdentifier>
+                  <cm:name>f2c085c7-92a0-4010-aa83-7088c2d82fff</cm:name>
+                  <ser:volType>
+                    <view:values>
+                      <view:value>ANNUAL_FILE</view:value>
+                      <view:value>CASE_FILE</view:value>
+                      <view:value>SUBJECT_FILE</view:value>
+                    </view:values>
+                  </ser:volType>
+                  <sys:node-dbid>7785</sys:node-dbid>
+                  <sys:store-identifier>SpacesStore</sys:store-identifier>
+                  <ser:docNumberPattern>{S}/{DN}</ser:docNumberPattern>
+                  <ser:validToDate>
+                    <view:value view:isNull="true"></view:value>
+                  </ser:validToDate>
+                  <ser:docType>
+                    <view:values>
+                      <view:value>instrumentOfDeliveryAndReceipt</view:value>
+                      <view:value>disciplinaryDirective</view:value>
+                      <view:value>decisionOnExceptionalVisaInBorderCrossingPoint</view:value>
+                      <view:value>secondAndThirdGradeDocCounterfeitingDesc</view:value>
+                      <view:value>identityDocumentInvalidationOrVerificationNote</view:value>
+                      <view:value>decisionOnCitizenship</view:value>
+                      <view:value>cooperationAgreement</view:value>
+                      <view:value>contract</view:value>
+                      <view:value>memo</view:value>
+                      <view:value>borderRepresentativeAuthorisationDocument</view:value>
+                      <view:value>internalLetter</view:value>
+                      <view:value>incomingLetter</view:value>
+                      <view:value>expencesLetterOfCompelledAttendance</view:value>
+                      <view:value>serviceOrder</view:value>
+                      <view:value>outgoingLetter</view:value>
+                    </view:values>
+                  </ser:docType>
+                  <ser:order>2</ser:order>
+                  <sys:node-uuid>f2c085c7-92a0-4010-aa83-7088c2d82fff</sys:node-uuid>
+                  <ser:retentionDesc></ser:retentionDesc>
+                  <ser:title>Sari 1-2</ser:title>
+                  <ser:type>sari</ser:type>
+                  <ser:description></ser:description>
+                  <ser:register>1</ser:register>
+                  <ser:containingDocsCount>0</ser:containingDocsCount>
+                  <doccom:accessRestriction>Avalik</doccom:accessRestriction>
+                  <doccom:accessRestrictionEndDate>
+                    <view:value view:isNull="true"></view:value>
+                  </doccom:accessRestrictionEndDate>
+                  <ser:newNumberForEveryDoc>false</ser:newNumberForEveryDoc>
+                  <doccom:accessRestrictionEndDesc></doccom:accessRestrictionEndDesc>
+                  <doccom:accessRestrictionBeginDate>
+                    <view:value view:isNull="true"></view:value>
+                  </doccom:accessRestrictionBeginDate>
+                  <ser:structUnit>
+                    <view:values></view:values>
+                  </ser:structUnit>
+                  <ser:status>avatud</ser:status>
+                  <sys:store-protocol>workspace</sys:store-protocol>
+                  <ser:retentionPeriod>
+                    <view:value view:isNull="true"></view:value>
+                  </ser:retentionPeriod>
+                  <ser:validFromDate>2011-11-16T00:00:00.000+02:00</ser:validFromDate>
+                  <doccom:accessRestrictionReason></doccom:accessRestrictionReason>
+                  <ser:individualizingNumbers>false</ser:individualizingNumbers>
+                </view:properties>
+                <view:associations>
+                  <vol:volume>
+                    <vol:volume view:childName="vol:volume">
+                      <view:aspects>
+                        <sys:referenceable></sys:referenceable>
+                        <doccom:documentContainer></doccom:documentContainer>
+                      </view:aspects>
+                      <view:acl></view:acl>
+                      <view:properties>
+                        <cm:name>1374f542-e45b-479c-b9b1-a0b1a4dad3f0</cm:name>
+                        <sys:node-dbid>7815</sys:node-dbid>
+                        <sys:store-identifier>SpacesStore</sys:store-identifier>
+                        <docdyn:sendToDestruction>false</docdyn:sendToDestruction>
+                        <docdyn:title>Toimik 1-2-1</docdyn:title>
+                        <docdyn:status>avatud</docdyn:status>
+                        <sys:node-uuid>1374f542-e45b-479c-b9b1-a0b1a4dad3f0</sys:node-uuid>
+                        <docdyn:archivingNote></docdyn:archivingNote>
+                        <docdyn:description></docdyn:description>
+                        <docdyn:volumeMark>TEST1-2-1</docdyn:volumeMark>
+                        <docdyn:volumeType>ANNUAL_FILE</docdyn:volumeType>
+                        <docdyn:dispositionDate>
+                          <view:value view:isNull="true"></view:value>
+                        </docdyn:dispositionDate>
+                        <docdyn:validFrom>2011-11-16T00:00:00.000+02:00</docdyn:validFrom>
+                        <docdyn:validTo>
+                          <view:value view:isNull="true"></view:value>
+                        </docdyn:validTo>
+                        <sys:store-protocol>workspace</sys:store-protocol>
+                        <docdyn:containsCases>false</docdyn:containsCases>
+                        <docdyn:containingDocsCount>0</docdyn:containingDocsCount>
+                      </view:properties>
+                    </vol:volume>
+                    <vol:volume view:childName="vol:volume">
+                      <view:aspects>
+                        <sys:referenceable></sys:referenceable>
+                        <doccom:documentContainer></doccom:documentContainer>
+                      </view:aspects>
+                      <view:acl></view:acl>
+                      <view:properties>
+                        <cm:name>b5e79f73-b001-4bcf-9905-4490258463a4</cm:name>
+                        <sys:node-dbid>7818</sys:node-dbid>
+                        <sys:store-identifier>SpacesStore</sys:store-identifier>
+                        <docdyn:sendToDestruction>false</docdyn:sendToDestruction>
+                        <docdyn:title>Toimik 1-2-2</docdyn:title>
+                        <docdyn:status>avatud</docdyn:status>
+                        <sys:node-uuid>b5e79f73-b001-4bcf-9905-4490258463a4</sys:node-uuid>
+                        <docdyn:archivingNote></docdyn:archivingNote>
+                        <docdyn:description></docdyn:description>
+                        <docdyn:volumeMark>TEST1-2-2</docdyn:volumeMark>
+                        <docdyn:volumeType>ANNUAL_FILE</docdyn:volumeType>
+                        <docdyn:dispositionDate>
+                          <view:value view:isNull="true"></view:value>
+                        </docdyn:dispositionDate>
+                        <docdyn:validFrom>2011-11-16T00:00:00.000+02:00</docdyn:validFrom>
+                        <docdyn:validTo>
+                          <view:value view:isNull="true"></view:value>
+                        </docdyn:validTo>
+                        <sys:store-protocol>workspace</sys:store-protocol>
+                        <docdyn:containsCases>false</docdyn:containsCases>
+                        <docdyn:containingDocsCount>0</docdyn:containingDocsCount>
+                      </view:properties>
+                    </vol:volume>
+                  </vol:volume>
+                  <ser:seriesLog>
+                    <doccom:documentLog view:childName="ser:seriesLog">
+                      <view:aspects>
+                        <sys:referenceable></sys:referenceable>
+                        <doccom:documentLogAspect></doccom:documentLogAspect>
+                      </view:aspects>
+                      <view:acl></view:acl>
+                      <view:properties>
+                        <cm:name>a9079731-0b5f-4e0e-b442-752891b270e8</cm:name>
+                        <sys:node-dbid>7787</sys:node-dbid>
+                        <sys:store-identifier>SpacesStore</sys:store-identifier>
+                        <doccom:eventDescription>Sarja loomine</doccom:eventDescription>
+                        <sys:node-uuid>a9079731-0b5f-4e0e-b442-752891b270e8</sys:node-uuid>
+                        <sys:store-protocol>workspace</sys:store-protocol>
+                        <doccom:createdDateTime>2011-11-16T18:03:14.709+02:00</doccom:createdDateTime>
+                        <doccom:creatorName>Alar Kvell</doccom:creatorName>
+                      </view:properties>
+                    </doccom:documentLog>
+                    <doccom:documentLog view:childName="ser:seriesLog">
+                      <view:aspects>
+                        <sys:referenceable></sys:referenceable>
+                        <doccom:documentLogAspect></doccom:documentLogAspect>
+                      </view:aspects>
+                      <view:acl></view:acl>
+                      <view:properties>
+                        <cm:name>d2da936b-1444-4586-9be0-11b525ce7298</cm:name>
+                        <sys:node-dbid>7791</sys:node-dbid>
+                        <sys:store-identifier>SpacesStore</sys:store-identifier>
+                        <doccom:eventDescription>Sarja metaandmeid on muudetud</doccom:eventDescription>
+                        <sys:node-uuid>d2da936b-1444-4586-9be0-11b525ce7298</sys:node-uuid>
+                        <sys:store-protocol>workspace</sys:store-protocol>
+                        <doccom:createdDateTime>2011-11-16T18:03:14.762+02:00</doccom:createdDateTime>
+                        <doccom:creatorName>Alar Kvell</doccom:creatorName>
+                      </view:properties>
+                    </doccom:documentLog>
+                  </ser:seriesLog>
+                </view:associations>
+              </ser:series>
+            </ser:series>
+          </view:associations>
+        </fn:function>
+        <fn:function view:childName="fn:function">
+          <view:aspects>
+            <sys:referenceable></sys:referenceable>
+          </view:aspects>
+          <view:acl></view:acl>
+          <view:properties>
+            <cm:name>14407b15-7072-4bd3-a376-54194bcf0cbb</cm:name>
+            <fn:mark>TEST2</fn:mark>
+            <fn:description></fn:description>
+            <sys:node-dbid>7821</sys:node-dbid>
+            <sys:store-identifier>SpacesStore</sys:store-identifier>
+            <fn:status>avatud</fn:status>
+            <fn:title>Funktsioon 2</fn:title>
+            <fn:order>2</fn:order>
+            <sys:node-uuid>14407b15-7072-4bd3-a376-54194bcf0cbb</sys:node-uuid>
+            <fn:type>funktsioon</fn:type>
+            <sys:store-protocol>workspace</sys:store-protocol>
+          </view:properties>
+          <view:associations>
+            <ser:series>
+              <ser:series view:childName="ser:series">
+                <view:aspects>
+                  <sys:referenceable></sys:referenceable>
+                  <doccom:accessRights></doccom:accessRights>
+                </view:aspects>
+                <view:acl></view:acl>
+                <view:properties>
+                  <ser:seriesIdentifier>TEST2-1</ser:seriesIdentifier>
+                  <cm:name>f4ece6d6-624b-4982-91ad-2a39bc3b9da1</cm:name>
+                  <ser:volType>
+                    <view:values>
+                      <view:value>ANNUAL_FILE</view:value>
+                      <view:value>CASE_FILE</view:value>
+                      <view:value>SUBJECT_FILE</view:value>
+                    </view:values>
+                  </ser:volType>
+                  <sys:node-dbid>7824</sys:node-dbid>
+                  <sys:store-identifier>SpacesStore</sys:store-identifier>
+                  <ser:docNumberPattern>{S}/{DN}</ser:docNumberPattern>
+                  <ser:validToDate>
+                    <view:value view:isNull="true"></view:value>
+                  </ser:validToDate>
+                  <ser:docType>
+                    <view:values>
+                      <view:value>instrumentOfDeliveryAndReceipt</view:value>
+                      <view:value>disciplinaryDirective</view:value>
+                      <view:value>decisionOnExceptionalVisaInBorderCrossingPoint</view:value>
+                      <view:value>secondAndThirdGradeDocCounterfeitingDesc</view:value>
+                      <view:value>identityDocumentInvalidationOrVerificationNote</view:value>
+                      <view:value>decisionOnCitizenship</view:value>
+                      <view:value>cooperationAgreement</view:value>
+                      <view:value>contract</view:value>
+                      <view:value>memo</view:value>
+                      <view:value>borderRepresentativeAuthorisationDocument</view:value>
+                      <view:value>internalLetter</view:value>
+                      <view:value>incomingLetter</view:value>
+                      <view:value>expencesLetterOfCompelledAttendance</view:value>
+                      <view:value>serviceOrder</view:value>
+                      <view:value>outgoingLetter</view:value>
+                    </view:values>
+                  </ser:docType>
+                  <ser:order>1</ser:order>
+                  <sys:node-uuid>f4ece6d6-624b-4982-91ad-2a39bc3b9da1</sys:node-uuid>
+                  <ser:retentionDesc></ser:retentionDesc>
+                  <ser:title>Sari 2-1</ser:title>
+                  <ser:type>sari</ser:type>
+                  <ser:description></ser:description>
+                  <ser:register>1</ser:register>
+                  <ser:containingDocsCount>0</ser:containingDocsCount>
+                  <doccom:accessRestriction>Avalik</doccom:accessRestriction>
+                  <doccom:accessRestrictionEndDate>
+                    <view:value view:isNull="true"></view:value>
+                  </doccom:accessRestrictionEndDate>
+                  <ser:newNumberForEveryDoc>false</ser:newNumberForEveryDoc>
+                  <doccom:accessRestrictionEndDesc></doccom:accessRestrictionEndDesc>
+                  <doccom:accessRestrictionBeginDate>
+                    <view:value view:isNull="true"></view:value>
+                  </doccom:accessRestrictionBeginDate>
+                  <ser:structUnit>
+                    <view:values></view:values>
+                  </ser:structUnit>
+                  <ser:status>avatud</ser:status>
+                  <sys:store-protocol>workspace</sys:store-protocol>
+                  <ser:retentionPeriod>
+                    <view:value view:isNull="true"></view:value>
+                  </ser:retentionPeriod>
+                  <ser:validFromDate>2011-11-16T00:00:00.000+02:00</ser:validFromDate>
+                  <doccom:accessRestrictionReason></doccom:accessRestrictionReason>
+                  <ser:individualizingNumbers>false</ser:individualizingNumbers>
+                </view:properties>
+                <view:associations>
+                  <vol:volume>
+                    <vol:volume view:childName="vol:volume">
+                      <view:aspects>
+                        <sys:referenceable></sys:referenceable>
+                        <doccom:documentContainer></doccom:documentContainer>
+                      </view:aspects>
+                      <view:acl></view:acl>
+                      <view:properties>
+                        <cm:name>b76a623f-91f8-4d07-8a5a-7532fccf8844</cm:name>
+                        <sys:node-dbid>7840</sys:node-dbid>
+                        <sys:store-identifier>SpacesStore</sys:store-identifier>
+                        <docdyn:sendToDestruction>false</docdyn:sendToDestruction>
+                        <docdyn:title>Toimik 2-1-1</docdyn:title>
+                        <docdyn:status>avatud</docdyn:status>
+                        <sys:node-uuid>b76a623f-91f8-4d07-8a5a-7532fccf8844</sys:node-uuid>
+                        <docdyn:archivingNote></docdyn:archivingNote>
+                        <docdyn:description></docdyn:description>
+                        <docdyn:volumeMark>TEST2-1-1</docdyn:volumeMark>
+                        <docdyn:volumeType>ANNUAL_FILE</docdyn:volumeType>
+                        <docdyn:dispositionDate>
+                          <view:value view:isNull="true"></view:value>
+                        </docdyn:dispositionDate>
+                        <docdyn:validFrom>2011-11-16T00:00:00.000+02:00</docdyn:validFrom>
+                        <docdyn:validTo>
+                          <view:value view:isNull="true"></view:value>
+                        </docdyn:validTo>
+                        <sys:store-protocol>workspace</sys:store-protocol>
+                        <docdyn:containsCases>false</docdyn:containsCases>
+                        <docdyn:containingDocsCount>0</docdyn:containingDocsCount>
+                      </view:properties>
+                    </vol:volume>
+                    <vol:volume view:childName="vol:volume">
+                      <view:aspects>
+                        <sys:referenceable></sys:referenceable>
+                        <doccom:documentContainer></doccom:documentContainer>
+                      </view:aspects>
+                      <view:acl></view:acl>
+                      <view:properties>
+                        <cm:name>89583826-21a5-4557-8151-bb021203c32b</cm:name>
+                        <sys:node-dbid>7843</sys:node-dbid>
+                        <sys:store-identifier>SpacesStore</sys:store-identifier>
+                        <docdyn:sendToDestruction>false</docdyn:sendToDestruction>
+                        <docdyn:title>Toimik 2-1-2</docdyn:title>
+                        <docdyn:status>avatud</docdyn:status>
+                        <sys:node-uuid>89583826-21a5-4557-8151-bb021203c32b</sys:node-uuid>
+                        <docdyn:archivingNote></docdyn:archivingNote>
+                        <docdyn:description></docdyn:description>
+                        <docdyn:volumeMark>TEST2-1-2</docdyn:volumeMark>
+                        <docdyn:volumeType>ANNUAL_FILE</docdyn:volumeType>
+                        <docdyn:dispositionDate>
+                          <view:value view:isNull="true"></view:value>
+                        </docdyn:dispositionDate>
+                        <docdyn:validFrom>2011-11-16T00:00:00.000+02:00</docdyn:validFrom>
+                        <docdyn:validTo>
+                          <view:value view:isNull="true"></view:value>
+                        </docdyn:validTo>
+                        <sys:store-protocol>workspace</sys:store-protocol>
+                        <docdyn:containsCases>false</docdyn:containsCases>
+                        <docdyn:containingDocsCount>0</docdyn:containingDocsCount>
+                      </view:properties>
+                    </vol:volume>
+                  </vol:volume>
+                  <ser:seriesLog>
+                    <doccom:documentLog view:childName="ser:seriesLog">
+                      <view:aspects>
+                        <sys:referenceable></sys:referenceable>
+                        <doccom:documentLogAspect></doccom:documentLogAspect>
+                      </view:aspects>
+                      <view:acl></view:acl>
+                      <view:properties>
+                        <cm:name>435dcdb6-44c9-4688-a9e4-bce2601be38d</cm:name>
+                        <sys:node-dbid>7826</sys:node-dbid>
+                        <sys:store-identifier>SpacesStore</sys:store-identifier>
+                        <doccom:eventDescription>Sarja loomine</doccom:eventDescription>
+                        <sys:node-uuid>435dcdb6-44c9-4688-a9e4-bce2601be38d</sys:node-uuid>
+                        <sys:store-protocol>workspace</sys:store-protocol>
+                        <doccom:createdDateTime>2011-11-16T18:06:13.467+02:00</doccom:createdDateTime>
+                        <doccom:creatorName>Alar Kvell</doccom:creatorName>
+                      </view:properties>
+                    </doccom:documentLog>
+                    <doccom:documentLog view:childName="ser:seriesLog">
+                      <view:aspects>
+                        <sys:referenceable></sys:referenceable>
+                        <doccom:documentLogAspect></doccom:documentLogAspect>
+                      </view:aspects>
+                      <view:acl></view:acl>
+                      <view:properties>
+                        <cm:name>f7c97fdc-d036-4edd-8d95-238a2378b296</cm:name>
+                        <sys:node-dbid>7828</sys:node-dbid>
+                        <sys:store-identifier>SpacesStore</sys:store-identifier>
+                        <doccom:eventDescription>Sarja metaandmeid on muudetud</doccom:eventDescription>
+                        <sys:node-uuid>f7c97fdc-d036-4edd-8d95-238a2378b296</sys:node-uuid>
+                        <sys:store-protocol>workspace</sys:store-protocol>
+                        <doccom:createdDateTime>2011-11-16T18:06:13.487+02:00</doccom:createdDateTime>
+                        <doccom:creatorName>Alar Kvell</doccom:creatorName>
+                      </view:properties>
+                    </doccom:documentLog>
+                    <doccom:documentLog view:childName="ser:seriesLog">
+                      <view:aspects>
+                        <sys:referenceable></sys:referenceable>
+                        <doccom:documentLogAspect></doccom:documentLogAspect>
+                      </view:aspects>
+                      <view:acl></view:acl>
+                      <view:properties>
+                        <cm:name>398db3ba-35f1-4bf3-be5a-5d54fed7168a</cm:name>
+                        <sys:node-dbid>7835</sys:node-dbid>
+                        <sys:store-identifier>SpacesStore</sys:store-identifier>
+                        <doccom:eventDescription>Sarja metaandmeid on muudetud</doccom:eventDescription>
+                        <sys:node-uuid>398db3ba-35f1-4bf3-be5a-5d54fed7168a</sys:node-uuid>
+                        <sys:store-protocol>workspace</sys:store-protocol>
+                        <doccom:createdDateTime>2011-11-16T18:06:34.415+02:00</doccom:createdDateTime>
+                        <doccom:creatorName>Alar Kvell</doccom:creatorName>
+                      </view:properties>
+                    </doccom:documentLog>
+                  </ser:seriesLog>
+                </view:associations>
+              </ser:series>
+              <ser:series view:childName="ser:series">
+                <view:aspects>
+                  <sys:referenceable></sys:referenceable>
+                  <doccom:accessRights></doccom:accessRights>
+                </view:aspects>
+                <view:acl></view:acl>
+                <view:properties>
+                  <ser:seriesIdentifier>TEST2-2</ser:seriesIdentifier>
+                  <cm:name>8c12a62c-d6de-40af-8530-53908f0a7ec1</cm:name>
+                  <ser:volType>
+                    <view:values>
+                      <view:value>ANNUAL_FILE</view:value>
+                      <view:value>CASE_FILE</view:value>
+                      <view:value>SUBJECT_FILE</view:value>
+                    </view:values>
+                  </ser:volType>
+                  <sys:node-dbid>7831</sys:node-dbid>
+                  <sys:store-identifier>SpacesStore</sys:store-identifier>
+                  <ser:docNumberPattern>{S}/{DN}</ser:docNumberPattern>
+                  <ser:validToDate>
+                    <view:value view:isNull="true"></view:value>
+                  </ser:validToDate>
+                  <ser:docType>
+                    <view:values>
+                      <view:value>instrumentOfDeliveryAndReceipt</view:value>
+                      <view:value>disciplinaryDirective</view:value>
+                      <view:value>decisionOnExceptionalVisaInBorderCrossingPoint</view:value>
+                      <view:value>secondAndThirdGradeDocCounterfeitingDesc</view:value>
+                      <view:value>identityDocumentInvalidationOrVerificationNote</view:value>
+                      <view:value>decisionOnCitizenship</view:value>
+                      <view:value>cooperationAgreement</view:value>
+                      <view:value>contract</view:value>
+                      <view:value>memo</view:value>
+                      <view:value>borderRepresentativeAuthorisationDocument</view:value>
+                      <view:value>internalLetter</view:value>
+                      <view:value>incomingLetter</view:value>
+                      <view:value>expencesLetterOfCompelledAttendance</view:value>
+                      <view:value>serviceOrder</view:value>
+                      <view:value>outgoingLetter</view:value>
+                    </view:values>
+                  </ser:docType>
+                  <ser:order>2</ser:order>
+                  <sys:node-uuid>8c12a62c-d6de-40af-8530-53908f0a7ec1</sys:node-uuid>
+                  <ser:retentionDesc></ser:retentionDesc>
+                  <ser:title>Sari 2-2</ser:title>
+                  <ser:type>sari</ser:type>
+                  <ser:description></ser:description>
+                  <ser:register>1</ser:register>
+                  <ser:containingDocsCount>0</ser:containingDocsCount>
+                  <doccom:accessRestriction>Avalik</doccom:accessRestriction>
+                  <doccom:accessRestrictionEndDate>
+                    <view:value view:isNull="true"></view:value>
+                  </doccom:accessRestrictionEndDate>
+                  <ser:newNumberForEveryDoc>false</ser:newNumberForEveryDoc>
+                  <doccom:accessRestrictionEndDesc></doccom:accessRestrictionEndDesc>
+                  <doccom:accessRestrictionBeginDate>
+                    <view:value view:isNull="true"></view:value>
+                  </doccom:accessRestrictionBeginDate>
+                  <ser:structUnit>
+                    <view:values></view:values>
+                  </ser:structUnit>
+                  <ser:status>avatud</ser:status>
+                  <sys:store-protocol>workspace</sys:store-protocol>
+                  <ser:retentionPeriod>
+                    <view:value view:isNull="true"></view:value>
+                  </ser:retentionPeriod>
+                  <ser:validFromDate>2011-11-16T00:00:00.000+02:00</ser:validFromDate>
+                  <doccom:accessRestrictionReason></doccom:accessRestrictionReason>
+                  <ser:individualizingNumbers>false</ser:individualizingNumbers>
+                </view:properties>
+                <view:associations>
+                  <vol:volume>
+                    <vol:volume view:childName="vol:volume">
+                      <view:aspects>
+                        <sys:referenceable></sys:referenceable>
+                        <doccom:documentContainer></doccom:documentContainer>
+                      </view:aspects>
+                      <view:acl></view:acl>
+                      <view:properties>
+                        <cm:name>4d9f1e0f-db0a-4c75-8570-15443b502717</cm:name>
+                        <sys:node-dbid>7846</sys:node-dbid>
+                        <sys:store-identifier>SpacesStore</sys:store-identifier>
+                        <docdyn:sendToDestruction>false</docdyn:sendToDestruction>
+                        <docdyn:title>Toimik 2-2-1</docdyn:title>
+                        <docdyn:status>avatud</docdyn:status>
+                        <sys:node-uuid>4d9f1e0f-db0a-4c75-8570-15443b502717</sys:node-uuid>
+                        <docdyn:archivingNote></docdyn:archivingNote>
+                        <docdyn:description></docdyn:description>
+                        <docdyn:volumeMark>TEST2-2-1</docdyn:volumeMark>
+                        <docdyn:volumeType>ANNUAL_FILE</docdyn:volumeType>
+                        <docdyn:dispositionDate>
+                          <view:value view:isNull="true"></view:value>
+                        </docdyn:dispositionDate>
+                        <docdyn:validFrom>2011-11-16T00:00:00.000+02:00</docdyn:validFrom>
+                        <docdyn:validTo>
+                          <view:value view:isNull="true"></view:value>
+                        </docdyn:validTo>
+                        <sys:store-protocol>workspace</sys:store-protocol>
+                        <docdyn:containsCases>false</docdyn:containsCases>
+                        <docdyn:containingDocsCount>0</docdyn:containingDocsCount>
+                      </view:properties>
+                    </vol:volume>
+                    <vol:volume view:childName="vol:volume">
+                      <view:aspects>
+                        <sys:referenceable></sys:referenceable>
+                        <doccom:documentContainer></doccom:documentContainer>
+                      </view:aspects>
+                      <view:acl></view:acl>
+                      <view:properties>
+                        <cm:name>a77ef515-fc63-41bc-af6d-5eb214f61f1b</cm:name>
+                        <sys:node-dbid>7849</sys:node-dbid>
+                        <sys:store-identifier>SpacesStore</sys:store-identifier>
+                        <docdyn:sendToDestruction>false</docdyn:sendToDestruction>
+                        <docdyn:title>Toimik 2-2-2</docdyn:title>
+                        <docdyn:status>avatud</docdyn:status>
+                        <sys:node-uuid>a77ef515-fc63-41bc-af6d-5eb214f61f1b</sys:node-uuid>
+                        <docdyn:archivingNote></docdyn:archivingNote>
+                        <docdyn:description></docdyn:description>
+                        <docdyn:volumeMark>TEST2-2-2</docdyn:volumeMark>
+                        <docdyn:volumeType>ANNUAL_FILE</docdyn:volumeType>
+                        <docdyn:dispositionDate>
+                          <view:value view:isNull="true"></view:value>
+                        </docdyn:dispositionDate>
+                        <docdyn:validFrom>2011-11-16T00:00:00.000+02:00</docdyn:validFrom>
+                        <docdyn:validTo>
+                          <view:value view:isNull="true"></view:value>
+                        </docdyn:validTo>
+                        <sys:store-protocol>workspace</sys:store-protocol>
+                        <docdyn:containsCases>false</docdyn:containsCases>
+                        <docdyn:containingDocsCount>0</docdyn:containingDocsCount>
+                      </view:properties>
+                    </vol:volume>
+                  </vol:volume>
+                  <ser:seriesLog>
+                    <doccom:documentLog view:childName="ser:seriesLog">
+                      <view:aspects>
+                        <sys:referenceable></sys:referenceable>
+                        <doccom:documentLogAspect></doccom:documentLogAspect>
+                      </view:aspects>
+                      <view:acl></view:acl>
+                      <view:properties>
+                        <cm:name>71a69ce1-cb10-4216-accc-dffbb415ddca</cm:name>
+                        <sys:node-dbid>7833</sys:node-dbid>
+                        <sys:store-identifier>SpacesStore</sys:store-identifier>
+                        <doccom:eventDescription>Sarja loomine</doccom:eventDescription>
+                        <sys:node-uuid>71a69ce1-cb10-4216-accc-dffbb415ddca</sys:node-uuid>
+                        <sys:store-protocol>workspace</sys:store-protocol>
+                        <doccom:createdDateTime>2011-11-16T18:06:34.394+02:00</doccom:createdDateTime>
+                        <doccom:creatorName>Alar Kvell</doccom:creatorName>
+                      </view:properties>
+                    </doccom:documentLog>
+                    <doccom:documentLog view:childName="ser:seriesLog">
+                      <view:aspects>
+                        <sys:referenceable></sys:referenceable>
+                        <doccom:documentLogAspect></doccom:documentLogAspect>
+                      </view:aspects>
+                      <view:acl></view:acl>
+                      <view:properties>
+                        <cm:name>7bb4ace3-b1e3-4b04-a729-1ffe35a9d063</cm:name>
+                        <sys:node-dbid>7837</sys:node-dbid>
+                        <sys:store-identifier>SpacesStore</sys:store-identifier>
+                        <doccom:eventDescription>Sarja metaandmeid on muudetud</doccom:eventDescription>
+                        <sys:node-uuid>7bb4ace3-b1e3-4b04-a729-1ffe35a9d063</sys:node-uuid>
+                        <sys:store-protocol>workspace</sys:store-protocol>
+                        <doccom:createdDateTime>2011-11-16T18:06:34.430+02:00</doccom:createdDateTime>
+                        <doccom:creatorName>Alar Kvell</doccom:creatorName>
+                      </view:properties>
+                    </doccom:documentLog>
+                  </ser:seriesLog>
+                </view:associations>
+              </ser:series>
+            </ser:series>
+          </view:associations>
+        </fn:function>
+      </fn:function>
+    </view:associations>
+  </fn:functions>
+</view:view>

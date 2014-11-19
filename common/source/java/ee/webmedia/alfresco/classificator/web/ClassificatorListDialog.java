@@ -65,7 +65,11 @@ public class ClassificatorListDialog extends BaseDialogBean {
             IOUtils.closeQuietly(writer);
             FacesContext.getCurrentInstance().responseComplete();
 
+<<<<<<< HEAD
             // Erko hack for incorrect view id in the next request
+=======
+            // hack for incorrect view id in the next request
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             JspStateManagerImpl.ignoreCurrentViewSequenceHack();
         }
     }

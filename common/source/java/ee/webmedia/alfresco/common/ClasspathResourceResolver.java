@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 package ee.webmedia.alfresco.common;
 
 import java.io.InputStream;
@@ -32,3 +33,37 @@ public class ClasspathResourceResolver implements LSResourceResolver {
         return lsInput;
     }
 }
+=======
+package ee.webmedia.alfresco.common;
+
+import java.io.InputStream;
+
+import org.w3c.dom.bootstrap.DOMImplementationRegistry;
+import org.w3c.dom.ls.DOMImplementationLS;
+import org.w3c.dom.ls.LSInput;
+import org.w3c.dom.ls.LSResourceResolver;
+
+/**
+ * This is an implementation of LSResourceResolver that can resolve XML schemas from the classpath.
+ * Example base is copied from http://www.java.net/node/666263.
+ */
+public class ClasspathResourceResolver implements LSResourceResolver {
+    private final DOMImplementationLS domImplementationLS;
+
+    private ClasspathResourceResolver() throws ClassNotFoundException, IllegalAccessException, InstantiationException {
+        System.setProperty(DOMImplementationRegistry.PROPERTY, "org.apache.xerces.dom.DOMImplementationSourceImpl");
+        DOMImplementationRegistry registry = DOMImplementationRegistry.newInstance();
+        domImplementationLS = (DOMImplementationLS) registry.getDOMImplementation("LS");
+    }
+
+    @Override
+    public LSInput resolveResource(String type, String namespaceURI, String publicId, String systemId,
+            String baseURI) {
+        LSInput lsInput = domImplementationLS.createLSInput();
+        InputStream is = getClass().getResourceAsStream("/" + systemId);
+        lsInput.setByteStream(is);
+        lsInput.setSystemId(systemId);
+        return lsInput;
+    }
+}
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5

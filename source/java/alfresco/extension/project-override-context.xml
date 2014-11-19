@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <?xml version='1.0' encoding='UTF-8'?>
 <beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
    xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
@@ -6,3 +7,13 @@
    <import resource="classpath:ee/webmedia/alfresco/simdhs/simdhs-override-context.xml" />
 
 </beans>
+=======
+<?xml version='1.0' encoding='UTF-8'?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
+
+   <!-- Include spring context that can be used to override other beans (i.e. those that are defined in web-client-application-context.xml) -->
+   <import resource="classpath:ee/webmedia/alfresco/simdhs/simdhs-override-context.xml" />
+
+</beans>
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5

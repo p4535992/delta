@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <?xml version="1.0" encoding="UTF-8"?>
 <view:view xmlns:view="http://www.alfresco.org/view/repository/1.0" xmlns:cm="http://www.alfresco.org/model/content/1.0" xmlns:app="http://www.alfresco.org/model/application/1.0">
    <cm:folder view:childName="app:userHomes">
@@ -10,3 +11,17 @@
       </view:properties>
    </cm:folder>
 </view:view>
+=======
+<?xml version="1.0" encoding="UTF-8"?>
+<view:view xmlns:view="http://www.alfresco.org/view/repository/1.0" xmlns:cm="http://www.alfresco.org/model/content/1.0" xmlns:app="http://www.alfresco.org/model/application/1.0">
+   <cm:folder view:childName="app:userHomes">
+      <view:aspects>
+         <app:uifacets></app:uifacets>
+      </view:aspects>
+      <view:properties>
+         <app:icon>space-icon-default</app:icon>
+         <cm:name>${spaces.userHomes.name}</cm:name>
+      </view:properties>
+   </cm:folder>
+</view:view>
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5

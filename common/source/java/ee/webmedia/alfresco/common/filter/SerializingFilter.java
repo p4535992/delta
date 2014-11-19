@@ -30,8 +30,11 @@ import ee.webmedia.alfresco.common.listener.StatisticsPhaseListenerLogColumn;
 /**
  * Serializes all session attributes. This filter helps to be aware of serializing issues during development. If the session does not serialize, exception is
  * thrown. In production configuration, this filter should never be enabled, thus it is disabled by default.
+<<<<<<< HEAD
  * 
  * @author Alar Kvell
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
  */
 public class SerializingFilter implements DependencyInjectedFilter, InitializingBean {
 

@@ -8,8 +8,11 @@ import ee.webmedia.alfresco.common.listener.RefreshEventListener;
 /**
  * Base class for dialogs that must support multiple instances of the same dialog opened after each other<br>
  * and contains blocks that can be (re)initialized with the same object that the dialog is (re)initialized
+<<<<<<< HEAD
  * 
  * @author Ats Uiboupin
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
  */
 public abstract class BaseSnapshotCapableWithBlocksDialog<S extends BaseSnapshotCapableDialog.Snapshot, B extends DialogBlockBean<D>, D extends Object>
         extends BaseSnapshotCapableDialog<S, D> implements RefreshEventListener {

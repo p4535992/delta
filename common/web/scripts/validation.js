@@ -20,6 +20,7 @@ function informUser(control, message, showMessage)
    }
 }
 
+<<<<<<< HEAD
 function isEmptyInput(inputId) {
    var inputValue = document.getElementById(inputId).value;
    return isEmptyValue(inputValue);
@@ -27,12 +28,20 @@ function isEmptyInput(inputId) {
 
 function isEmptyValue(inputValue) {
    return inputValue == null || (!(inputValue instanceof Array) && inputValue.replace(/^\\s+|\\s+$/g, '').length == 0);
+=======
+function isEmptyInput(inputId){
+   var inputValue = document.getElementById(inputId).value;
+   return inputValue == null || inputValue.replace(/^\\s+|\\s+$/g, '').length == 0;
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 }
 
 /**
  * Try to validate value set by picker. If value of picker is not set, then check if value has been set manually.
  * @return true if value has been set
+<<<<<<< HEAD
  * @author Ats Uiboupin
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
  */
 function validateSearchMandatory(control, message, showMessage) {
    if (control != null && (control.value == null || control.value.length == 0)) {

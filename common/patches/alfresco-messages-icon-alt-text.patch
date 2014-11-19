@@ -3,6 +3,7 @@ Index: source/java/org/alfresco/web/ui/common/renderer/ErrorsRenderer.java
 --- source/java/org/alfresco/web/ui/common/renderer/ErrorsRenderer.java	(revision 146036)
 +++ source/java/org/alfresco/web/ui/common/renderer/ErrorsRenderer.java	(working copy)
 @@ -46,7 +46,6 @@
+<<<<<<< HEAD
  public class ErrorsRenderer extends BaseRenderer
  {
     private static final String DEFAULT_MESSAGE = "wizard_errors";
@@ -34,3 +35,36 @@ Index: source/java/org/alfresco/web/ui/common/renderer/ErrorsRenderer.java
              out.write("'/>");
              out.write("</td><td>");
              
+=======
+ public class ErrorsRenderer extends BaseRenderer
+ {
+    private static final String DEFAULT_MESSAGE = "wizard_errors";
+-   private static final String ERROR_HINT = "error";
+    
+    /**
+     * @see javax.faces.render.Renderer#encodeBegin(javax.faces.context.FacesContext, javax.faces.component.UIComponent)
+@@ -67,7 +66,6 @@
+          String errorClass = (String)component.getAttributes().get("errorClass");
+          String infoClass = (String)component.getAttributes().get("infoClass");
+          String message = (String)component.getAttributes().get("message");
+-         String errorHint = Application.getMessage(context, ERROR_HINT);
+          
+          if (message == null)
+          {
+@@ -100,7 +98,6 @@
+             out.write("<img src='");
+             out.write(contextPath);
+             out.write("/images/icons/info_icon.gif' alt='");
+-            out.write(Utils.encode(errorHint));
+             out.write("' align='absmiddle'/>&nbsp;&nbsp;");
+             out.write(Utils.encode(message));
+             out.write("\n<ul style='margin:2px;'>");
+@@ -124,7 +121,6 @@
+             out.write("<table border='0' cellpadding='3' cellspacing='0'><tr><td valign='top'><img src='");
+             out.write(contextPath);
+             out.write("/images/icons/info_icon.gif' alt='");
+-            out.write(Utils.encode(errorHint));
+             out.write("'/>");
+             out.write("</td><td>");
+             
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5

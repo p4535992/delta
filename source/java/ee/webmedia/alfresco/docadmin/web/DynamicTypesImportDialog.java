@@ -15,8 +15,11 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
  * Dialog used to import {@link DynamicType}s
+<<<<<<< HEAD
  * 
  * @author Ats Uiboupin
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
  */
 public class DynamicTypesImportDialog<D extends DynamicType> extends AbstractImportDialog {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DynamicTypesImportDialog.class);

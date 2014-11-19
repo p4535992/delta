@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <?xml version='1.0' encoding='UTF-8'?>
 <beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
    xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
@@ -105,3 +106,149 @@
    </bean>
 
 </beans>
+=======
+<?xml version='1.0' encoding='UTF-8'?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
+
+   <!-- Use CAS authentication in combination with LDAP user/group synchronization from AD -->
+
+   <!-- Why we include syncronization configuration here, is beacuse ChainingUserRegistrySynchronizer searches for
+       'userRegistry' bean from the Authentication child application context, that means here -->
+
+   <import resource="../ldap-ad/ldap-ad-authentication-context.xml" />
+
+   <bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+      <property name="ignoreUnresolvablePlaceholders" value="true" />
+      <property name="locations">
+         <list>
+            <value>classpath:alfresco/subsystems/Authentication/ldap-ad/ldap-ad-authentication.properties</value>
+         </list>
+      </property>
+   </bean>
+
+   <!-- Include ^^ LDAP configuration first, because we want external (CAS) configuration below to override authentication beans -->
+   <!-- So that leaves only user/group synchronization configuration from LDAP (beans userRegistry and ldapInitialDirContextFactory) -->
+   <!-- And userRegistry we override below, so that leaves only ldapInitialDirContextFactory bean from ldap-ad-authentication-context.xml -->
+
+   <import resource="../external/external-authentication-context.xml" />
+   <import resource="../external/external-filter-context.xml" />
+
+   <bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+      <property name="ignoreUnresolvablePlaceholders" value="true" />
+      <property name="locations">
+         <list>
+            <value>classpath:alfresco/subsystems/Authentication/external/external-authentication.properties</value>
+            <value>classpath:alfresco/subsystems/Authentication/external/external-filter.properties</value>
+         </list>
+      </property>
+   </bean>
+
+   <!-- @Override ../external/external-authentication-context.xml -->
+   <bean id="authenticationComponent" class="ee.webmedia.alfresco.user.service.SimpleUpdatingAuthenticationComponentImpl" parent="authenticationComponentBase">
+      <property name="nodeService" ref="nodeService" />
+      <property name="personService" ref="personService" />
+      <property name="transactionService" ref="transactionService" />
+      <property name="defaultAdministratorUserNameList" value="${external.authentication.defaultAdministratorUserNames}" />
+   </bean>
+
+   <!-- @Override classpath:alfresco/subsystems/Authentication/common-ldap-context.xml -->
+   <!-- Same, but some changes, which are commented below -->
+   <bean id="userRegistry" class="org.alfresco.repo.security.sync.ldap.LDAPUserRegistry">
+      <property name="active">
+         <value>${ldap.synchronization.active}</value>
+      </property>
+      <property name="queryBatchSize">
+         <value>${ldap.synchronization.queryBatchSize}</value>
+      </property>
+      <property name="groupQuery">
+         <value>${ldap.synchronization.groupQuery}</value>
+      </property>
+      <property name="groupDifferentialQuery">
+         <value>${ldap.synchronization.groupDifferentialQuery}</value>
+      </property>
+      <property name="personQuery">
+         <value>${ldap.synchronization.personQuery}</value>
+      </property>
+      <!-- Added userId query -->
+      <property name="personUsernameQuery">
+         <value>${ldap.synchronization.personUsernameQuery}</value>
+      </property>
+      <property name="personIdCodeQuery">
+         <value>${ldap.synchronization.personIdCodeQuery}</value>
+      </property>
+      <property name="personDifferentialQuery">
+         <value>${ldap.synchronization.personDifferentialQuery}</value>
+      </property>
+      <property name="groupSearchBase">
+         <value>${ldap.synchronization.groupSearchBase}</value>
+      </property>
+      <property name="userSearchBase">
+         <value>${ldap.synchronization.userSearchBase}</value>
+      </property>
+      <property name="userIdAttributeName">
+         <value>${ldap.synchronization.userIdAttributeName}</value>
+      </property>
+      <property name="modifyTimestampAttributeName">
+         <value>${ldap.synchronization.modifyTimestampAttributeName}</value>
+      </property>
+      <property name="timestampFormat">
+         <value>${ldap.synchronization.timestampFormat}</value>
+      </property>
+      <property name="groupIdAttributeName">
+         <value>${ldap.synchronization.groupIdAttributeName}</value>
+      </property>
+      <property name="groupType">
+         <value>${ldap.synchronization.groupType}</value>
+      </property>
+      <property name="personType">
+         <value>${ldap.synchronization.personType}</value>
+      </property>
+      <property name="memberAttribute">
+         <value>${ldap.synchronization.groupMemberAttributeName}</value>
+      </property>
+      <property name="attributeMapping">
+         <map>
+            <entry key="cm:userName">
+               <value>${ldap.synchronization.userIdAttributeName}</value>
+            </entry>
+            <entry key="cm:firstName">
+               <value>${ldap.synchronization.userFirstNameAttributeName}</value>
+            </entry>
+            <entry key="cm:lastName">
+               <value>${ldap.synchronization.userLastNameAttributeName}</value>
+            </entry>
+            <!-- Added jobtitle mapping -->
+            <entry key="cm:jobtitle">
+               <value>${ldap.synchronization.userJobtitleAttributeName}</value>
+            </entry>
+            <!-- Added telephone mapping -->
+            <entry key="cm:telephone">
+               <value>${ldap.synchronization.userTelephoneAttributeName}</value>
+            </entry>
+            <entry key="cm:email">
+               <value>${ldap.synchronization.userEmailAttributeName}</value>
+            </entry>
+            <!-- Deleted cm:organizationId mapping -->
+            <entry key="cm:homeFolderProvider">
+               <null />
+            </entry>
+         </map>
+      </property>
+      <property name="attributeDefaults">
+         <map>
+            <entry key="cm:homeFolderProvider">
+               <value>${ldap.synchronization.defaultHomeFolderProvider}</value>
+            </entry>
+         </map>
+      </property>
+      <property name="LDAPInitialDirContextFactory">
+         <ref bean="ldapInitialDirContextFactory" />
+      </property>
+      <property name="namespaceService">
+         <ref bean="namespaceService" />
+      </property>
+   </bean>
+
+</beans>
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5

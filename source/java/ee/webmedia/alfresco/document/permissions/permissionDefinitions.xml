@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <?xml version='1.0' encoding='UTF-8'?>
 <!DOCTYPE permissions>
 <!-- <!DOCTYPE permissions PUBLIC '-//ALFRECSO//DTD PERMISSIONS//EN' 'permissionSchema.dtd'> -->
@@ -204,3 +205,211 @@
    <globalPermission permission="TopicCreator" authority="ROLE_TOPIC_CREATOR"/>
 
 </permissions>
+=======
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE permissions>
+<!-- <!DOCTYPE permissions PUBLIC '-//ALFRECSO//DTD PERMISSIONS//EN' 'permissionSchema.dtd'> -->
+
+<!-- Note: the above is commented out as spring does not seem to find the dtd -->
+
+<permissions>
+
+   <namespaces>
+      <namespace uri="http://www.alfresco.org/model/system/1.0" prefix="sys"/>
+      <namespace uri="http://www.alfresco.org/model/content/1.0" prefix="cm"/>
+      <namespace uri="http://www.alfresco.org/model/forum/1.0" prefix="fm"/>
+      <namespace uri="http://alfresco.webmedia.ee/model/document/common/1.0" prefix="doccom" />
+      <namespace uri="http://alfresco.webmedia.ee/model/functions/1.0" prefix="fn" />
+      <namespace uri="http://alfresco.webmedia.ee/model/series/1.0" prefix="ser" />
+      <namespace uri="http://alfresco.webmedia.ee/model/addressbook/1.0" prefix="ab" />
+      <namespace uri="http://alfresco.webmedia.ee/model/workflow/common/1.0" prefix="wfc" />
+   </namespaces>
+
+   <!-- =============================================== -->
+   <!-- Base permissions available on all types of node -->
+   <!-- =============================================== -->
+    
+   <permissionSet type="fn:functions" expose="selected" >
+
+<!--
+   Node'ile /fn:documentList lisatakse õigused (inherit=false):
+    * EVERYONE - DocumentListBrowse
+   Siis saavad kõik kasutajad:
+   * sirvida dokumentide loetelu, lugeda kõikide node'ide alamnode'e ja nende kõiki properteid
+
+-->
+      <permissionGroup name="DocumentListBrowse" expose="true" allowFullControl="false">
+           <includePermissionGroup type="sys:base" permissionGroup="ReadProperties"/>
+           <includePermissionGroup type="sys:base" permissionGroup="ReadChildren"/>
+      </permissionGroup>
+
+      <permissionGroup name="DocumentListCreate" expose="true" allowFullControl="false">
+           <includePermissionGroup type="sys:base" permissionGroup="CreateChildren"/>
+      </permissionGroup>
+
+      <permissionGroup name="DocumentListWrite" expose="true" allowFullControl="false">
+           <includePermissionGroup type="sys:base" permissionGroup="WriteProperties"/>
+           <includePermissionGroup type="sys:base" permissionGroup="ReadPermissions"/>
+           <includePermissionGroup type="sys:base" permissionGroup="ChangePermissions"/>
+      </permissionGroup>
+
+   </permissionSet>
+
+   <permissionSet type="doccom:document" expose="selected" >
+
+<!--
+   Rolli ROLE_DOCUMENT_OWNER kasutatakse dokumendi (doccom:document) peal ning see võimaldab dokumendi omanikul:
+   * Muuta dokumendi (ja selle all asuvate failide ja muude node'ide, nt. logikirjed) properteid
+   * Luua dokumendi alla alam-node'e (nt. faile ja logikirjeid)
+   * Kustutada dokumenti
+
+   Dokumendi loomisel luuakse node mustandite kausta, kus kehtivad muud õigused (TODO).
+
+   Dokumendi esmakordne liigitamise (ja hilisema ümberliigitamise) jaoks eraldi õigusi ei ole antud,
+   vastavat move käsku jooksutatakse koodis System kasutaja õigustes.
+   Dokumendi enda peal pole rohkem õigusi vaja, hetkel on juba olemas DeleteNode.
+   Vaja on CreateChildren õigust siht-node'i (sarja või teema) all.
+   Hetkel saavad esmakordset liigitamist ja hilisemat ümberliigitamist sooritada suvalisse sarja/teema alla, selle piiramiseks tuleb teha vastavad kontrollid koodis.
+
+-->
+      <permissionGroup name="DocumentWrite" expose="true" allowFullControl="false">
+           <includePermissionGroup type="sys:base" permissionGroup="CreateChildren"/>
+           <includePermissionGroup type="sys:base" permissionGroup="WriteProperties"/>
+           <includePermissionGroup type="sys:base" permissionGroup="WriteContent"/>
+           <includePermissionGroup type="cm:lockable" permissionGroup="Lock"/>
+           <includePermissionGroup type="sys:base" permissionGroup="DeleteNode"/>
+      </permissionGroup>  
+
+      <permissionGroup name="DocumentDelete" expose="true" allowFullControl="false">
+           <includePermissionGroup type="sys:base" permissionGroup="DeleteNode"/>
+      </permissionGroup>  
+
+<!--
+   Roll ROLE_DOCUMENT_OWNER_FILE rakendub dokumendi all olevatele node'idele (nt. failid, logikirjed) ning see võimaldab dokumendi omanikul:
+   * Lugeda dokumendi alla kuuluvate failide sisu
+   * Kirjutada dokumendi alla kuuluvate failide sisu
+   * Muute dokumendi alam-node'i propertite väärtuseid (nt. failide ja logikirjete)
+   * Kustutada dokumendi alam-node'i (nt. faile ja logikirjeid)
+
+   TODO versioneeritud node'ide permissionid!
+   TODO muude hoidlas olevate teemade õigused!
+-->
+      <permissionGroup name="DocumentFileWrite" expose="true" allowFullControl="false">
+           <includePermissionGroup type="sys:base" permissionGroup="WriteProperties"/>
+           <includePermissionGroup type="sys:base" permissionGroup="WriteContent"/>
+           <includePermissionGroup type="sys:base" permissionGroup="DeleteNode"/>
+           <includePermissionGroup type="cm:lockable" permissionGroup="Lock"/>
+      </permissionGroup>
+
+      <!-- Lisa ja muuda väljasaatmise kirjeid -->
+<!--
+      <permissionGroup name="DocListWriteChild" expose="true" allowFullControl="false">
+           <includePermissionGroup type="sys:base" permissionGroup="WriteProperties"/>
+      </permissionGroup>
+-->
+      <!-- Ainult lisa logikirjeid -->
+<!--
+      <permissionGroup name="DocListWriteContent" expose="true" allowFullControl="false">
+      </permissionGroup>
+-->
+   </permissionSet>
+
+   <permissionSet type="ser:series" expose="selected" >
+
+      <!-- FIXME PRIV2 - DocumentFileRead kasutamine on ära kaotatud, aga seda ei saa enne eemaldada, kui kõigi nodede küljest on need permissionid eemaldatud
+      Seda kasutati kahes erinevas kohas: 1) dokumendi küljes, 2) foorumi küljes(kuigi oleks pidanud uue permissioni tekitama) 
+       -->
+      <permissionGroup name="DocumentFileRead" expose="true" allowFullControl="false">
+           <includePermissionGroup type="sys:base" permissionGroup="ReadContent"/>
+      </permissionGroup>
+   </permissionSet>
+
+   <permissionSet type="ab:addressbook" expose="selected" >
+
+      <permissionGroup name="AddressbookManage" expose="true" allowFullControl="false">
+           <includePermissionGroup type="sys:base" permissionGroup="CreateChildren"/>
+           <includePermissionGroup type="sys:base" permissionGroup="WriteProperties"/>
+           <includePermissionGroup type="sys:base" permissionGroup="DeleteNode"/>
+      </permissionGroup>
+
+   </permissionSet>
+
+   <permissionSet type="fm:forums" expose="selected" >
+
+      <permissionGroup name="Forum" expose="true" allowFullControl="false">
+           <includePermissionGroup type="sys:base" permissionGroup="ReadContent"/>
+           <includePermissionGroup type="sys:base" permissionGroup="CreateChildren"/>
+           <includePermissionGroup type="sys:base" permissionGroup="WriteProperties"/>
+           <includePermissionGroup type="sys:base" permissionGroup="WriteContent"/>
+      </permissionGroup>
+
+      <permissionGroup name="TopicCreator" expose="true" allowFullControl="false">
+           <includePermissionGroup type="sys:base" permissionGroup="DeleteNode"/>
+      </permissionGroup>
+
+   </permissionSet>
+
+   <permissionSet type="fm:forum" >
+
+      <permission name="participateAtForum" expose="false" />
+
+   </permissionSet>
+
+   <permissionSet type="wfc:compoundWorkflow" expose="selected" >
+
+      <permissionGroup name="WorkflowUser" expose="true" allowFullControl="false">
+           <includePermissionGroup type="sys:base" permissionGroup="CreateChildren"/>
+           <includePermissionGroup type="sys:base" permissionGroup="WriteProperties"/>
+           <includePermissionGroup type="sys:base" permissionGroup="ReadContent"/>
+           <includePermissionGroup type="sys:base" permissionGroup="WriteContent"/>
+      </permissionGroup>
+
+      <permissionGroup name="WorkflowOwner" expose="true" allowFullControl="false">
+           <includePermissionGroup type="sys:base" permissionGroup="DeleteNode"/>
+      </permissionGroup>
+
+   </permissionSet>
+
+   <!--
+      doccom:metadataContainer should be parent type of all childNode types of document - then DocumentChildMetadataDynamicAuthority class grants authority if
+      parent node has write permissions.
+   -->
+   <permissionSet type="doccom:metadataContainer" expose="selected">
+
+      <permissionGroup name="DocumentChildMetadata" expose="true" allowFullControl="false">
+         <includePermissionGroup type="sys:base" permissionGroup="CreateChildren" />
+         <includePermissionGroup type="sys:base" permissionGroup="WriteProperties" />
+         <includePermissionGroup type="sys:base" permissionGroup="DeleteNode" />
+      </permissionGroup>
+
+   </permissionSet>
+
+<!--
+   [NB! Rolliga antud õigused ei pärandu, nt dokumendilt failile]
+
+   PS. Alfresco standardmudelis võetud maha ROLE_OWNER, sest see rakendub ka lihtsalt creator'ile...!
+
+   Kui kasutaja omab GROUP_DOCUMENT_MANAGERS, siis:
+   * lubatud dokumendile ROLE_DOCUMENT_OWNER ja failile ROLE_DOCUMENT_OWNER_FILE
+   * lubatud dok.loetelus ROLE_DOCUMENT_LIST_CREATE ja ROLE_DOCUMENT_LIST_WRITE
+-->
+
+   <globalPermission permission="DocumentWrite" authority="ROLE_DOCUMENT_OWNER"/>
+
+   <globalPermission permission="DocumentChildMetadata" authority="ROLE_DOCUMENT_CHILD_METADATA"/>
+
+   <globalPermission permission="DocumentFileWrite" authority="ROLE_DOCUMENT_FILE_WRITE"/>
+
+   <globalPermission permission="DocumentListCreate" authority="ROLE_DOCUMENT_LIST_CREATE"/>
+   <globalPermission permission="DocumentListWrite" authority="ROLE_DOCUMENT_LIST_WRITE"/>
+
+   <globalPermission permission="DocumentDelete" authority="ROLE_DOCUMENT_DRAFT"/>
+
+   <globalPermission permission="WorkflowUser" authority="ROLE_WORKFLOW_USER"/>
+   <globalPermission permission="WorkflowOwner" authority="ROLE_WORKFLOW_OWNER"/>
+
+   <globalPermission permission="Forum" authority="ROLE_FORUM"/>
+   <globalPermission permission="TopicCreator" authority="ROLE_TOPIC_CREATOR"/>
+
+</permissions>
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5

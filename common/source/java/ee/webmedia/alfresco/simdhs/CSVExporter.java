@@ -40,8 +40,11 @@ import ee.webmedia.alfresco.utils.ComponentUtil;
  * If custom ordering must be done with data, then {@link CSVExporter#setOrderInfo(int, boolean)} must be used. By default no ordering of data is done.
  * <p/>
  * File is written in UTF-8 encoding with BOM, ; is used as separator.-
+<<<<<<< HEAD
  * 
  * @author Romet Aidla
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
  */
 public class CSVExporter {
     private static Logger log = Logger.getLogger(CSVExporter.class);

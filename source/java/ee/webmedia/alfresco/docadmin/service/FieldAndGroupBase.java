@@ -11,8 +11,11 @@ import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 
 /**
  * Base class for {@link Field} and {@link FieldGroup}
+<<<<<<< HEAD
  * 
  * @author Ats Uiboupin
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
  */
 public abstract class FieldAndGroupBase extends MetadataItem {
     private static final long serialVersionUID = 1L;
@@ -110,12 +113,29 @@ public abstract class FieldAndGroupBase extends MetadataItem {
                 return false;
             }
             DocumentType docType = (DocumentType) dynamicType;
+<<<<<<< HEAD
             return !docType.isSystematic() || isRemovableFromSystematicDocType();
         } else if (dynamicType instanceof CaseFileType) {
             return !isMandatoryForVol();
         } else {
             throw new RuntimeException("Unknown dynamic type " + dynamicType);
         }
+=======
+            if (!docType.isSystematic()) {
+                return true;
+            }
+        } else if (dynamicType instanceof CaseFileType) {
+            if (isMandatoryForVol()) {
+                return false;
+            }
+        } else {
+            throw new RuntimeException("Unknown dynamic type " + dynamicType);
+        }
+        if (isRemovableFromSystematicDocType()) {
+            return true;
+        }
+        return false;
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
 }

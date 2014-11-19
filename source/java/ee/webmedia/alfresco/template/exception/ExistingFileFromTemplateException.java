@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 package ee.webmedia.alfresco.template.exception;
 
 /**
@@ -21,3 +22,25 @@ public class ExistingFileFromTemplateException extends RuntimeException {
     }
 
 }
+=======
+package ee.webmedia.alfresco.template.exception;
+
+public class ExistingFileFromTemplateException extends RuntimeException {
+    private static final long serialVersionUID = 1L;
+
+    private String templateName;
+
+    public ExistingFileFromTemplateException(String templateName) {
+        this.templateName = templateName;
+    }
+
+    public String getTemplateName() {
+        return templateName;
+    }
+
+    public void setTemplateName(String templateName) {
+        this.templateName = templateName;
+    }
+
+}
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5

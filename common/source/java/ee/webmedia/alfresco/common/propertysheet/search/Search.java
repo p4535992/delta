@@ -20,7 +20,10 @@ import javax.faces.event.FacesEvent;
 import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
 import org.alfresco.util.Pair;
 import org.alfresco.web.app.servlet.FacesHelper;
+<<<<<<< HEAD
 import org.alfresco.web.bean.generator.TextAreaGenerator;
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.ui.common.ComponentConstants;
 import org.alfresco.web.ui.common.component.UIGenericPicker;
@@ -36,8 +39,11 @@ import ee.webmedia.alfresco.utils.ComponentUtil;
 /**
  * Edit a multi-valued property. Supports removing any element. Supports appending elements at the end by using a search component which returns selected
  * results.
+<<<<<<< HEAD
  * 
  * @author Alar Kvell
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
  */
 public class Search extends UIComponentBase implements AjaxUpdateable, NamingContainer {
 
@@ -62,7 +68,10 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
     public static final String VALUE_KEY = "value";
     public static final String SHOW_FILTER_KEY = "showFilter";
     public static final String FILTERS_KEY = "filters";
+<<<<<<< HEAD
     public static final String FILTERS_ALLOW_GROUP_SELECT_KEY = "filtersAllowGroupSelect";
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     public static final String ID_KEY = "id";
     public static final String STYLE_CLASS_KEY = "styleClass";
     public static final String AJAX_PARENT_LEVEL_KEY = "ajaxParentLevel";
@@ -71,8 +80,13 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
     /** should delete(clear value) link be rendered when component is singlevalued (by default not rendered) */
     public static final String ALLOW_CLEAR_SINGLE_VALUED = "allowClearSingleValued";
     public static final String FILTER_INDEX = "filterIndex";
+<<<<<<< HEAD
     public static final String TEXTAREA = "textarea";
     public static final String SEARCH_SUGGEST_DISABLED = "searchSuggestDisabled";
+=======
+    public static final String SEARCH_SUGGEST_DISABLED = "searchSuggestDisabled";
+    public static final String RENDER_PLAIN = "renderPlain";
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
     @Override
     public String getFamily() {
@@ -144,7 +158,10 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
             ValueBinding pickerV = context.getApplication().createValueBinding((String) getAttributes().get(FILTERS_KEY));
             picker.setValueBinding("filters", pickerV);
         }
+<<<<<<< HEAD
         picker.setShowSelectButton(isAttributeTrue(FILTERS_ALLOW_GROUP_SELECT_KEY));
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         picker.setWidth(400);
         picker.setMultiSelect(isMultiSelect());
         String pickerCallback = (String) getAttributes().get(PICKER_CALLBACK_KEY);
@@ -317,6 +334,7 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
     protected void appendRowComponent(FacesContext context, int rowIndex) {
         List<UIComponent> children = ComponentUtil.getChildren(this).get(0).getChildren();
         String id = (String) getAttributes().get(ID_KEY);
+<<<<<<< HEAD
         boolean createTextarea = isEditable() && isTextarea();
         UIOutput component;
         if (createTextarea) {
@@ -326,6 +344,10 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
         } else {
             component = (UIOutput) context.getApplication().createComponent(isEditable() ? ComponentConstants.JAVAX_FACES_INPUT : ComponentConstants.JAVAX_FACES_OUTPUT);
         }
+=======
+        UIOutput component = (UIOutput) context.getApplication().createComponent(
+                isEditable() ? ComponentConstants.JAVAX_FACES_INPUT : ComponentConstants.JAVAX_FACES_OUTPUT);
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         FacesHelper.setupComponentId(context, component, "picker_" + id + "row_" + getNextCounterValue());
         ValueBinding vb = setValueBinding(context, component, rowIndex);
         String tooltipVB = ComponentUtil.getAttribute(this, ATTR_TOOLTIP_MB, String.class);
@@ -447,6 +469,13 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
         return (String) ComponentUtil.getAttribute(this, SEARCH_LINK_TOOLTIP);
     }
 
+<<<<<<< HEAD
+=======
+    protected boolean isRenderPlain() {
+        return isAttributeTrue(RENDER_PLAIN);
+    }
+
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     protected boolean isMandatory() {
         return isAttributeTrue("dataMandatory");
     }
@@ -459,10 +488,13 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
         return isAttributeTrue("editable");
     }
 
+<<<<<<< HEAD
     protected boolean isTextarea() {
         return isAttributeTrue(TEXTAREA);
     }
 
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     private boolean isAttributeTrue(String attributeName) {
         Boolean val = (Boolean) ComponentUtil.getAttribute(this, attributeName);
         return val != null && val;

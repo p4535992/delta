@@ -30,6 +30,9 @@
 
    <import resource="classpath:ee/webmedia/alfresco/relvastus/relvastus-ws-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/ikt/ikt-ws-context.xml" />
+<<<<<<< HEAD
    <import resource="classpath:ee/webmedia/alfresco/adddocument/add-document-ws-context.xml" />
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
 </beans>

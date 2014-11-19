@@ -33,6 +33,13 @@
       <managed-bean-name>SeriesDetailsDialog</managed-bean-name>
       <managed-bean-class>ee.webmedia.alfresco.series.web.SeriesDetailsDialog</managed-bean-class>
       <managed-bean-scope>session</managed-bean-scope>
+<<<<<<< HEAD
+=======
+      <managed-property>
+         <property-name>logBlockBean</property-name>
+         <value>#{LogBlockBean}</value>
+      </managed-property>
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
    </managed-bean>
 
    <managed-bean>

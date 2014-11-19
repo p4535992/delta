@@ -30,8 +30,11 @@ import ee.webmedia.alfresco.utils.ComponentUtil;
  * to picker should component value be editable by typing arbitary value(editable = true) <br>
  * NB! note that for multivalued component you must also implement {@link Converter#getAsObject(FacesContext, UIComponent, String)}</li>
  * </ul>
+<<<<<<< HEAD
  * 
  * @author Alar Kvell
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
  */
 public class SearchGenerator extends BaseComponentGenerator {
 
@@ -86,7 +89,10 @@ public class SearchGenerator extends BaseComponentGenerator {
         addValueFromCustomAttributes(Search.SETTER_CALLBACK, attributes);
         addValueFromCustomAttributes(Search.SETTER_CALLBACK_TAKES_NODE, attributes, Boolean.class);
         addValueFromCustomAttributes(Search.PREPROCESS_CALLBACK, attributes);
+<<<<<<< HEAD
         addValueFromCustomAttributes(Search.FILTERS_ALLOW_GROUP_SELECT_KEY, attributes, Boolean.class, false);
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         addValueFromCustomAttributes(Search.SHOW_FILTER_KEY, attributes, Boolean.class, false);
         addValueFromCustomAttributes(Search.FILTERS_KEY, attributes);
         addValueFromCustomAttributes(Search.AJAX_PARENT_LEVEL_KEY, attributes, Integer.class);
@@ -94,7 +100,10 @@ public class SearchGenerator extends BaseComponentGenerator {
         addValueFromCustomAttributes(Search.ATTR_TOOLTIP_MB, attributes);
         addValueFromCustomAttributes(Search.ALLOW_CLEAR_SINGLE_VALUED, attributes, Boolean.class, false);
         addValueFromCustomAttributes(Search.FILTER_INDEX, attributes, Integer.class);
+<<<<<<< HEAD
         addValueFromCustomAttributes(Search.TEXTAREA, attributes, Boolean.class);
+=======
+>>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         addValueFromCustomAttributes(MultiValueEditor.ADD_LABEL_ID, attributes);
         addValueFromCustomAttributes(Search.SEARCH_SUGGEST_DISABLED, attributes, Boolean.class, false);
         return attributes;
