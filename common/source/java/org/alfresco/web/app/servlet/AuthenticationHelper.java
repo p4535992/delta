@@ -373,7 +373,7 @@ public final class AuthenticationHelper
                {
                   NodeService nodeService = services.getNodeService();
                   PersonService personService = (PersonService) wc.getBean(PERSON_SERVICE);
-                  NodeRef personRef = personService.getPerson(currentUsername);
+                  NodeRef personRef = personService.getPersonFromRepo(currentUsername);
                   User user = new User(currentUsername, ticket, personRef);
                   NodeRef homeRef = (NodeRef) nodeService.getProperty(personRef, ContentModel.PROP_HOMEFOLDER);
 

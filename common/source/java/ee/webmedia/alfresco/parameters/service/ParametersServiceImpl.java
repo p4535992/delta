@@ -88,9 +88,8 @@ public class ParametersServiceImpl implements ParametersService {
             final Serializable paramValue = nodeService.getProperty(paramNodeRef, ParametersModel.Props.Parameter.VALUE);
             final String paramDescription = (String) nodeService.getProperty(paramNodeRef, ParametersModel.Props.Parameter.DESCRIPTION);
             final QName nodeType = nodeService.getType(paramNodeRef);
-            final Parameter<? extends Serializable> parameter = Parameter.newInstance(paramName, paramValue, nodeType, paramDescription);
+            final Parameter<? extends Serializable> parameter = Parameter.newInstance(paramNodeRef, paramName, paramValue, nodeType, paramDescription);
             if (parameter != null) {
-                parameter.setNodeRef(paramNodeRef);
                 parametersCache.put(parameter.getParamName(), parameter);
             }
         }
@@ -115,7 +114,7 @@ public class ParametersServiceImpl implements ParametersService {
             }
             ChildAssociationRef parentRef = parentAssocs.get(0);
 
-            Parameter<?> par = Parameter.newInstance(parentRef.getQName().getLocalName(), paramValue, nodeType);
+            Parameter<?> par = Parameter.newInstance(nodeRef, parentRef.getQName().getLocalName(), paramValue, nodeType);
             par.setNextFireTime((Date) nodeService.getProperty(nodeRef, ParametersModel.Props.Parameter.NEXT_FIRE_TIME));
             return par;
         }
@@ -134,7 +133,7 @@ public class ParametersServiceImpl implements ParametersService {
                     throw new RuntimeException("Parameter is expected to have only one parent, but got " + parentAssocs.size() + ".");
                 }
                 ChildAssociationRef parentRef = parentAssocs.get(0);
-                param = Parameter.newInstance(parentRef.getQName().getLocalName(), paramValue, nodeType);
+                param = Parameter.newInstance(paramRef, parentRef.getQName().getLocalName(), paramValue, nodeType);
                 param.setNextFireTime((Date) nodeService.getProperty(paramRef, ParametersModel.Props.Parameter.NEXT_FIRE_TIME));
                 parametersCache.put(param.getParamName(), param);
             }

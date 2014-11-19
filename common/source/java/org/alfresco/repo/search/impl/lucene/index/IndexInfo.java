@@ -2209,11 +2209,117 @@ public class IndexInfo implements IndexMonitor
                 {
                     throw new IOException("Invalid file check sum");
                 }
+                
+                File indexInfo2File = new File(this.indexDirectory, "IndexInfo2");
+                if (indexInfo2File.exists()) {
+                    g_logger.info("Found secondary indexinfo, trying to add: " + indexInfo2File);
+                    RandomAccessFile indexInfo2 = openFile(indexInfo2File);
+                    FileChannel indexInfo2Channel = indexInfo2.getChannel();
+                    g_logger.info("Current index status before adding: " + toString() + dumpInfoAsString());
+                    addStatusFromExternalFile(indexInfo2Channel);
+                    g_logger.info("Current index status after adding: " + toString() + dumpInfoAsString());
+                    writeStatus();
+                    indexInfo2Channel.close();
+                    indexInfo2.close();
+                    indexInfo2File.delete();
+                    g_logger.info("Secondary indexinfo adding complete, deleted file: " + indexInfo2File);
+                }
             }
         }
-
     }
 
+    private void addStatusFromExternalFile(FileChannel channel) throws IOException
+    {
+        channel.position(0);
+        ByteBuffer buffer;
+
+        if (useNIOMemoryMapping)
+        {
+            MappedByteBuffer mbb = channel.map(MapMode.READ_ONLY, 0, channel.size());
+            mbb.load();
+            buffer = mbb;
+        }
+        else
+        {
+            buffer = ByteBuffer.wrap(new byte[(int) channel.size()]);
+            channel.read(buffer);
+            buffer.position(0);
+        }
+
+        buffer.position(0);
+        long onDiskVersion = buffer.getLong();
+        CRC32 crc32 = new CRC32();
+        crc32.update((int) (onDiskVersion >>> 32) & 0xFFFFFFFF);
+        crc32.update((int) (onDiskVersion >>> 0) & 0xFFFFFFFF);
+        int size = buffer.getInt();
+        crc32.update(size);
+        LinkedHashMap<String, IndexEntry> newIndexEntries = new LinkedHashMap<String, IndexEntry>();
+        for (IndexEntry entry : indexEntries.values())
+        {
+            newIndexEntries.put(entry.getName(), entry);
+        }
+        // Not all state is saved some is specific to this index so we
+        // need to add the transient stuff.
+        // Until things are committed they are not shared unless it is
+        // prepared
+        for (int i = 0; i < size; i++)
+        {
+            String indexTypeString = readString(buffer, crc32);
+            IndexType indexType;
+            try
+            {
+                indexType = IndexType.valueOf(indexTypeString);
+            }
+            catch (IllegalArgumentException e)
+            {
+                throw new IOException("Invalid type " + indexTypeString);
+            }
+
+            String name = readString(buffer, crc32);
+
+            String parentName = readString(buffer, crc32);
+
+            String txStatus = readString(buffer, crc32);
+            TransactionStatus status;
+            try
+            {
+                status = TransactionStatus.valueOf(txStatus);
+            }
+            catch (IllegalArgumentException e)
+            {
+                throw new IOException("Invalid status " + txStatus);
+            }
+
+            String mergeId = readString(buffer, crc32);
+
+            long documentCount = buffer.getLong();
+            crc32.update((int) (documentCount >>> 32) & 0xFFFFFFFF);
+            crc32.update((int) (documentCount >>> 0) & 0xFFFFFFFF);
+
+            long deletions = buffer.getLong();
+            crc32.update((int) (deletions >>> 32) & 0xFFFFFFFF);
+            crc32.update((int) (deletions >>> 0) & 0xFFFFFFFF);
+
+            byte deleteOnlyNodesFlag = buffer.get();
+            crc32.update(deleteOnlyNodesFlag);
+            boolean isDeletOnlyNodes = deleteOnlyNodesFlag == 1;
+
+            if (!status.isTransient())
+            {
+                newIndexEntries.put(name, new IndexEntry(indexType, name, parentName, status, mergeId, documentCount, deletions, isDeletOnlyNodes));
+            }
+        }
+        long onDiskCRC32 = buffer.getLong();
+        if (crc32.getValue() == onDiskCRC32)
+        {
+            indexEntries = newIndexEntries;
+        }
+        else
+        {
+            g_logger.error("Invalid file check sum, ignoring secondary indexinfo: " + channel);
+        }
+    }
+    
     private String readString(ByteBuffer buffer, CRC32 crc32) throws UnsupportedEncodingException
     {
         int size = buffer.getInt();

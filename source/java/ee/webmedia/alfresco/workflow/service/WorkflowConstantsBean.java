@@ -204,7 +204,7 @@ public class WorkflowConstantsBean implements InitializingBean {
             addPropertyDefs(taskDefaultProps, dictionaryService.getPropertyDefs(taskTypeQName));
             taskPrefixedQNames.put(taskTypeQName, taskTypeQName.getPrefixedQName(namespaceService));
             String taskTypeLocalName = taskTypeQName.getLocalName();
-            taskTypeMessages.put(taskTypeLocalName, MessageUtil.getMessage(taskTypeLocalName));
+            taskTypeMessages.put(taskTypeLocalName, MessageUtil.getMessage(("wfs_workflowSpecificModel.type.wfs_" + taskTypeLocalName + ".title")));
             addTaskToWorkflowMapping(taskTypeLocalName, workflowType.getWorkflowType());
         }
         unmodifiableWorkflowTypesByWorkflow = Collections.unmodifiableMap(workflowTypesByWorkflow);

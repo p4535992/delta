@@ -387,6 +387,12 @@ public class PersonServiceImpl extends TransactionListenerAdapter implements Per
         return personRef;
     }
 
+    @Override
+    public NodeRef getPersonFromRepo(String userName) {
+        removeFromCache(userName);
+        return getPerson(userName);
+    }
+
     private NodeRef getPersonOrNull(String searchUserName)
     {
         NodeRef returnRef = personCache.get(searchUserName);
@@ -395,8 +401,8 @@ public class PersonServiceImpl extends TransactionListenerAdapter implements Per
             returnRef = getPersonRef(searchUserName);
 
             if (returnRef != null) {
-                addToCache(searchUserName, returnRef);
                 makeHomeFolderIfRequired(returnRef, searchUserName);
+                addToCache(searchUserName, returnRef);
             }
         }
         return returnRef;
@@ -684,8 +690,7 @@ public class PersonServiceImpl extends TransactionListenerAdapter implements Per
         update.putAll(properties);
 
         nodeService.setProperties(personRef, update);
-        personNodesCache.remove(userName);
-        personNodesCache.put(userName, new CachedUser(new Node(personRef)));
+        removeFromCache(userName);
     }
 
     @Override

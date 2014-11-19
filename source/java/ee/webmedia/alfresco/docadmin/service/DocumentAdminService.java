@@ -266,4 +266,6 @@ public interface DocumentAdminService {
 
     void registerDocumentTypeValidator(String validatorKey, DocumentTypeValidator documentTypeValidator);
 
+    void clearDynamicTypesCache();
+
 }

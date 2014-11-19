@@ -52,7 +52,6 @@ import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.archivals.model.ArchivalsStoreVO;
 import ee.webmedia.alfresco.casefile.model.CaseFileModel;
-import ee.webmedia.alfresco.casefile.service.CaseFileService;
 import ee.webmedia.alfresco.classificator.enums.TemplateReportOutputType;
 import ee.webmedia.alfresco.classificator.enums.TemplateReportType;
 import ee.webmedia.alfresco.classificator.enums.VolumeType;
@@ -66,13 +65,11 @@ import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel.Props;
 import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
 import ee.webmedia.alfresco.docadmin.service.FieldDefinition;
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
-import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
 import ee.webmedia.alfresco.document.sendout.model.SendInfo;
-import ee.webmedia.alfresco.document.sendout.service.SendOutService;
 import ee.webmedia.alfresco.functions.service.FunctionsService;
 import ee.webmedia.alfresco.report.model.FakeSendInfo;
 import ee.webmedia.alfresco.report.model.ReportDataCollector;
@@ -116,10 +113,7 @@ public class ReportServiceImpl implements ReportService {
     private WorkflowService workflowService;
     private DocumentAdminService documentAdminService;
     private MimetypeService mimetypeService;
-    private FileService fileService;
-    private CaseFileService caseFileService;
     private TransactionService transactionService;
-    private SendOutService sendOutService;
     private BulkLoadNodeService bulkLoadNodeService;
     private WorkflowConstantsBean workflowConstantsBean;
 
@@ -824,7 +818,7 @@ public class ReportServiceImpl implements ReportService {
             }
 
             Map<NodeRef, Map<QName, Serializable>> documentProps = !documentWorkflowEnabled || docCWRefs.isEmpty() ? Collections.<NodeRef, Map<QName, Serializable>> emptyMap() :
-                    bulkLoadNodeService.loadPrimaryParentsProperties(docCWRefs, Collections.singleton(DocumentCommonModel.Types.DOCUMENT), docPropsToLoad, null, true);
+                bulkLoadNodeService.loadPrimaryParentsProperties(docCWRefs, Collections.singleton(DocumentCommonModel.Types.DOCUMENT), docPropsToLoad, null, true);
 
             if (!caseFileCWRefs.isEmpty()) {
                 Map<NodeRef, Map<QName, Serializable>> caseFileProps = bulkLoadNodeService.loadPrimaryParentsProperties(caseFileCWRefs,
@@ -1482,20 +1476,8 @@ public class ReportServiceImpl implements ReportService {
         this.mimetypeService = mimetypeService;
     }
 
-    public void setFileService(FileService fileService) {
-        this.fileService = fileService;
-    }
-
-    public void setCaseFileService(CaseFileService caseFileService) {
-        this.caseFileService = caseFileService;
-    }
-
     public void setTransactionService(TransactionService transactionService) {
         this.transactionService = transactionService;
-    }
-
-    public void setSendOutService(SendOutService sendOutService) {
-        this.sendOutService = sendOutService;
     }
 
     public void setReportGenerationEnabled(boolean reportGenerationEnabled) {

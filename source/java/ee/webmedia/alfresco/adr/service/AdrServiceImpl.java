@@ -18,6 +18,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -32,7 +33,6 @@ import org.alfresco.service.cmr.repository.AssociationRef;
 import org.alfresco.service.cmr.repository.ContentData;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.StoreRef;
-import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.service.namespace.RegexQNamePattern;
 import org.alfresco.util.Pair;
@@ -44,8 +44,8 @@ import org.apache.commons.collections.comparators.TransformingComparator;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.FastDateFormat;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.simple.ParameterizedRowMapper;
-import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.adr.model.AdrModel;
@@ -83,7 +83,6 @@ import ee.webmedia.alfresco.document.service.DocumentService.AssocType;
 import ee.webmedia.alfresco.functions.model.FunctionsModel;
 import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.utils.ContentReaderDataSource;
-import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.TextUtil;
 import ee.webmedia.alfresco.utils.UserUtil;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
@@ -99,10 +98,18 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
     private DocumentAdminService documentAdminService;
     private DocumentService documentService;
     private DocumentDynamicService documentDynamicService;
-    private NamespaceService namespaceService;
-    private SimpleJdbcTemplate jdbcTemplate;
+    private JdbcTemplate jdbcTemplate;
     private boolean accessRestrictionChangeReasonEnabled;
     private boolean volumeTitleEnabled;
+
+    private static final Map<QName, QName> DOC_RECIPIENT_PROPS_WITH_ALTERNATIVES = new LinkedHashMap<>();
+    private static final Map<QName, QName> DOC_SENDER_NAME_WITH_ALTERNATIVE = new LinkedHashMap<>();
+    static {
+        DOC_RECIPIENT_PROPS_WITH_ALTERNATIVES.put(DocumentCommonModel.Props.RECIPIENT_NAME, DocumentDynamicModel.Props.RECIPIENT_PERSON_NAME);
+        DOC_RECIPIENT_PROPS_WITH_ALTERNATIVES.put(DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME, DocumentDynamicModel.Props.ADDITIONAL_RECIPIENT_PERSON_NAME);
+
+        DOC_SENDER_NAME_WITH_ALTERNATIVE.put(DocumentSpecificModel.Props.SENDER_DETAILS_NAME, DocumentDynamicModel.Props.SENDER_PERSON_NAME);
+    }
 
     // ========================================================================
     // =========================== REAL-TIME QUERYING =========================
@@ -234,6 +241,8 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
         DokumentDetailidegaV2 dokument = new DokumentDetailidegaV2();
         String documentTypeId = doc.getDocumentTypeId();
         boolean isIncomingLetter = SystematicDocumentType.INCOMING_LETTER.isSameType(documentTypeId);
+        boolean isOutgoingLetter = SystematicDocumentType.OUTGOING_LETTER.isSameType(documentTypeId);
+        Map<String, Object> docProps = doc.getNode().getProperties();
 
         // =======================================================
         // Copied from setDokumentProperties
@@ -241,7 +250,8 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
         dokument.setViit(getNullIfEmpty(doc.getRegNumber()));
         dokument.setRegistreerimiseAeg(convertToXMLGergorianCalendar(doc.getRegDateTime()));
         if (isIncomingLetter) {
-            dokument.setSaatja(getNullIfEmpty(getInitialsIfNeeded((String) doc.getProp(DocumentSpecificModel.Props.SENDER_DETAILS_NAME), doc.getNodeRef())));
+            String senderName = TextUtil.joinUsingInitialsForAlternativeValue(docProps, DOC_SENDER_NAME_WITH_ALTERNATIVE);
+            dokument.setSaatja(senderName);
             dokument.setSaaja(getNullIfEmpty(getClassifiedOrgStructValueIfNeeded(doc.getOwnerName(), doc.getOwnerOrgStructUnit())));
         }
         dokument.setPealkiri(getNullIfEmpty(getDocNameAdr(doc)));
@@ -249,15 +259,16 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
         // =======================================================
         // Copied from setDokumentDetailidegaProperties
 
-        dokument.setJuurdepaasuPiirang(getNullIfEmpty((String) doc.getProp(ACCESS_RESTRICTION)));
-        dokument.setJuurdepaasuPiiranguAlus(getNullIfEmpty((String) doc.getProp(ACCESS_RESTRICTION_REASON)));
-        dokument.setJuurdepaasuPiiranguKehtivuseAlgusKuupaev(convertToXMLGergorianCalendar((Date) doc.getProp(ACCESS_RESTRICTION_BEGIN_DATE)));
-        dokument.setJuurdepaasuPiiranguKehtivuseLoppKuupaev(convertToXMLGergorianCalendar((Date) doc.getProp(ACCESS_RESTRICTION_END_DATE)));
-        dokument.setJuurdepaasuPiiranguLopp(getNullIfEmpty((String) doc.getProp(ACCESS_RESTRICTION_END_DESC)));
+        dokument.setJuurdepaasuPiirang(getNullIfEmpty((String) docProps.get(ACCESS_RESTRICTION)));
+        dokument.setJuurdepaasuPiiranguAlus(getNullIfEmpty((String) docProps.get(ACCESS_RESTRICTION_REASON)));
+        dokument.setJuurdepaasuPiiranguKehtivuseAlgusKuupaev(convertToXMLGergorianCalendar((Date) docProps.get(ACCESS_RESTRICTION_BEGIN_DATE)));
+        dokument.setJuurdepaasuPiiranguKehtivuseLoppKuupaev(convertToXMLGergorianCalendar((Date) docProps.get(ACCESS_RESTRICTION_END_DATE)));
+        dokument.setJuurdepaasuPiiranguLopp(getNullIfEmpty((String) docProps.get(ACCESS_RESTRICTION_END_DESC)));
+
         if (isIncomingLetter) {
-            dokument.setVastamiseKuupaev(convertToXMLGergorianCalendar((Date) doc.getProp(DocumentSpecificModel.Props.COMPLIENCE_DATE)));
-        } else if (SystematicDocumentType.OUTGOING_LETTER.isSameType(documentTypeId)) {
-            dokument.setVastamiseKuupaev(convertToXMLGergorianCalendar((Date) doc.getProp(DocumentSpecificModel.Props.REPLY_DATE)));
+            dokument.setVastamiseKuupaev(convertToXMLGergorianCalendar((Date) docProps.get(DocumentSpecificModel.Props.COMPLIENCE_DATE)));
+        } else if (isOutgoingLetter) {
+            dokument.setVastamiseKuupaev(convertToXMLGergorianCalendar((Date) docProps.get(DocumentSpecificModel.Props.REPLY_DATE)));
         }
         if (!isIncomingLetter) {
             Date earliestSendInfoDate = BeanHelper.getSendOutService().getEarliestSendInfoDate(doc.getNodeRef());
@@ -266,11 +277,11 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
                 dokument.setSaatmiseKuupaev(convertToXMLGergorianCalendar);
             }
         }
-        dokument.setTahtaeg(convertToXMLGergorianCalendar((Date) doc.getProp(DocumentSpecificModel.Props.DUE_DATE)));
+        dokument.setTahtaeg(convertToXMLGergorianCalendar((Date) docProps.get(DocumentSpecificModel.Props.DUE_DATE)));
         dokument.setKoostaja(getNullIfEmpty(getClassifiedOrgStructValueIfNeeded(doc.getOwnerName(), doc.getOwnerOrgStructUnit())));
         @SuppressWarnings("unchecked")
-        List<String> signerStructUnit = (List<String>) doc.getProp(DocumentCommonModel.Props.SIGNER_ORG_STRUCT_UNIT);
-        dokument.setAllkirjastaja(getNullIfEmpty(getClassifiedOrgStructValueIfNeeded((String) doc.getProp(DocumentCommonModel.Props.SIGNER_NAME)
+        List<String> signerStructUnit = (List<String>) docProps.get(DocumentCommonModel.Props.SIGNER_ORG_STRUCT_UNIT);
+        dokument.setAllkirjastaja(getNullIfEmpty(getClassifiedOrgStructValueIfNeeded((String) docProps.get(DocumentCommonModel.Props.SIGNER_NAME)
                 , UserUtil.getDisplayUnit(signerStructUnit))));
 
         // =======================================================
@@ -299,27 +310,27 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
 
         dokument.setId(getNullIfEmpty(doc.getNodeRef().toString()));
 
-        dokument.setLisad(getNullIfEmpty((String) doc.getProp(DocumentSpecificModel.Props.ANNEX)));
+        dokument.setLisad(getNullIfEmpty((String) docProps.get(DocumentSpecificModel.Props.ANNEX)));
 
-        dokument.setSaatjaViit(getNullIfEmpty((String) doc.getProp(DocumentSpecificModel.Props.SENDER_REG_NUMBER)));
+        dokument.setSaatjaViit(getNullIfEmpty((String) docProps.get(DocumentSpecificModel.Props.SENDER_REG_NUMBER)));
 
         String transmittalMode;
         if (isIncomingLetter) {
-            transmittalMode = (String) doc.getProp(DocumentSpecificModel.Props.TRANSMITTAL_MODE);
+            transmittalMode = (String) docProps.get(DocumentSpecificModel.Props.TRANSMITTAL_MODE);
         } else {
             @SuppressWarnings("unchecked")
-            List<String> sendModes = (List<String>) doc.getProp(DocumentCommonModel.Props.SEARCHABLE_SEND_MODE);
+            List<String> sendModes = (List<String>) docProps.get(DocumentCommonModel.Props.SEARCHABLE_SEND_MODE);
             transmittalMode = TextUtil.joinUniqueStringsWithComma(sendModes);
         }
         dokument.setSaatmisviis(getNullIfEmpty(transmittalMode));
 
         // Tähtaja kirjeldus
-        dokument.setTahtaegKirjeldus(getNullIfEmpty((String) doc.getProp(DocumentSpecificModel.Props.DUE_DATE_DESC)));
+        dokument.setTahtaegKirjeldus(getNullIfEmpty((String) docProps.get(DocumentSpecificModel.Props.DUE_DATE_DESC)));
 
         // Osapooled
         String osapool = "";
-        if (SystematicDocumentType.OUTGOING_LETTER.isSameType(documentTypeId)) {
-            osapool = doc.getRecipients();
+        if (isOutgoingLetter) {
+            osapool = TextUtil.joinUsingInitialsForAlternativeValue(docProps, DOC_RECIPIENT_PROPS_WITH_ALTERNATIVES);
         } else {
             List<Node> parties = doc.getNode().getAllChildAssociations(DocumentChildModel.Assocs.CONTRACT_PARTY);
             if (parties != null) {
@@ -335,15 +346,15 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
 
         // =======================================================
 
-        if (AccessRestriction.OPEN.getValueName().equals(doc.getProp(ACCESS_RESTRICTION))
-                && StringUtils.equals((String) doc.getProp(DocumentDynamicModel.Props.PUBLISH_TO_ADR), PublishToAdr.REQUEST_FOR_INFORMATION.getValueName())) {
+        if (AccessRestriction.OPEN.getValueName().equals(docProps.get(ACCESS_RESTRICTION))
+                && StringUtils.equals((String) docProps.get(DocumentDynamicModel.Props.PUBLISH_TO_ADR), PublishToAdr.REQUEST_FOR_INFORMATION.getValueName())) {
             dokument.setAinultTeabenoudeKorras(Boolean.TRUE);
         } else {
             dokument.setAinultTeabenoudeKorras(Boolean.FALSE);
         }
 
         if (accessRestrictionChangeReasonEnabled && AccessRestriction.OPEN.getValueName().equals(dokument.getJuurdepaasuPiirang())) {
-            dokument.setJuurdepaasuPiiranguMuutmisePohjus(getNullIfEmpty((String) doc.getProp(DocumentCommonModel.Props.ACCESS_RESTRICTION_CHANGE_REASON)));
+            dokument.setJuurdepaasuPiiranguMuutmisePohjus(getNullIfEmpty((String) docProps.get(DocumentCommonModel.Props.ACCESS_RESTRICTION_CHANGE_REASON)));
         }
 
         // Document type
@@ -356,17 +367,9 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
 
         // Volume
         Map<QName, NodeRef> docParents = null;
-        NodeRef volumeRef = (NodeRef) doc.getNode().getProperties().get(DocumentCommonModel.Props.VOLUME);
-        Map<QName, Serializable> volumeProps = volumesCache.get(volumeRef);
-        if (volumeProps == null) {
-            if (volumeRef == null || !nodeService.exists(volumeRef)) {
-                log.warn("Document property volume=null\n  nodeRef=" + doc.getNodeRef().toString());
-                docParents = documentService.getDocumentParents(doc.getNodeRef());
-                volumeRef = docParents.get(DocumentCommonModel.Props.VOLUME);
-            }
-            volumeProps = nodeService.getProperties(volumeRef);
-            volumesCache.put(volumeRef, volumeProps);
-        }
+        NodeRef volumeRef = (NodeRef) docProps.get(DocumentCommonModel.Props.VOLUME);
+        Map<QName, Serializable> volumeProps = getStructureProps(doc, docParents, volumesCache, DocumentCommonModel.Props.VOLUME, volumeRef);
+
         Toimik wsVolume = new Toimik();
         wsVolume.setId(volumeRef.toString());
         wsVolume.setViit((String) volumeProps.get(VolumeModel.Props.MARK));
@@ -376,19 +379,9 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
         dokument.setToimik(wsVolume);
 
         // Series
-        NodeRef seriesRef = (NodeRef) doc.getNode().getProperties().get(DocumentCommonModel.Props.SERIES);
-        Map<QName, Serializable> seriesProps = seriesCache.get(seriesRef);
-        if (seriesProps == null) {
-            if (seriesRef == null || !nodeService.exists(seriesRef)) {
-                log.warn("Document property series=null\n  nodeRef=" + doc.getNodeRef().toString());
-                if (docParents == null) {
-                    docParents = documentService.getDocumentParents(doc.getNodeRef());
-                }
-                seriesRef = docParents.get(DocumentCommonModel.Props.SERIES);
-            }
-            seriesProps = nodeService.getProperties(seriesRef);
-            seriesCache.put(seriesRef, seriesProps);
-        }
+        NodeRef seriesRef = (NodeRef) docProps.get(DocumentCommonModel.Props.SERIES);
+        Map<QName, Serializable> seriesProps = getStructureProps(doc, docParents, seriesCache, DocumentCommonModel.Props.SERIES, seriesRef);
+
         Sari wsSeries = new Sari();
         wsSeries.setId(seriesRef.toString());
         wsSeries.setViit((String) seriesProps.get(SeriesModel.Props.SERIES_IDENTIFIER));
@@ -397,19 +390,9 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
         dokument.setSari(wsSeries);
 
         // Function
-        NodeRef functionRef = (NodeRef) doc.getNode().getProperties().get(DocumentCommonModel.Props.FUNCTION);
-        Map<QName, Serializable> functionProps = functionsCache.get(functionRef);
-        if (functionProps == null) {
-            if (functionRef == null || !nodeService.exists(functionRef)) {
-                log.warn("Document property function=null\n  nodeRef=" + doc.getNodeRef().toString());
-                if (docParents == null) {
-                    docParents = documentService.getDocumentParents(doc.getNodeRef());
-                }
-                functionRef = docParents.get(DocumentCommonModel.Props.FUNCTION);
-            }
-            functionProps = nodeService.getProperties(functionRef);
-            functionsCache.put(functionRef, functionProps);
-        }
+        NodeRef functionRef = (NodeRef) docProps.get(DocumentCommonModel.Props.FUNCTION);
+        Map<QName, Serializable> functionProps = getStructureProps(doc, docParents, functionsCache, DocumentCommonModel.Props.FUNCTION, functionRef);
+
         Funktsioon wsFunction = new Funktsioon();
         wsFunction.setId(functionRef.toString());
         wsFunction.setViit((String) functionProps.get(FunctionsModel.Props.MARK));
@@ -418,6 +401,23 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
         dokument.setFunktsioon(wsFunction);
 
         return dokument;
+    }
+
+    private Map<QName, Serializable> getStructureProps(DocumentDynamic doc, Map<QName, NodeRef> docParents, Map<NodeRef, Map<QName, Serializable>> cache, QName docProp,
+            NodeRef nodeRef) {
+        Map<QName, Serializable> props = cache.get(nodeRef);
+        if (props == null) {
+            if (nodeRef == null || !nodeService.exists(nodeRef)) {
+                log.warn("Document property " + docProp.getLocalName() + "=null\n  nodeRef=" + doc.getNodeRef().toString());
+                if (docParents == null) {
+                    docParents = documentService.getDocumentParents(doc.getNodeRef());
+                }
+                nodeRef = docParents.get(docProp);
+            }
+            props = nodeService.getProperties(nodeRef);
+            cache.put(nodeRef, props);
+        }
+        return props;
     }
 
     /**
@@ -860,11 +860,6 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
         return addDeletedDocument(document, regNumber, regDateTime);
     }
 
-    private String getInitialsIfNeeded(String name, NodeRef documentRef) {
-        Boolean initialsToAdr = (Boolean) nodeService.getProperty(documentRef, DocumentDynamicModel.Props.SENDER_INITIALS_TO_ADR);
-        return Boolean.TRUE.equals(initialsToAdr) ? UserUtil.getInitials(name) : name;
-    }
-
     private String getClassifiedOrgStructValueIfNeeded(String ownerName, String ownerOrgStructUnit) {
         if (StringUtils.isBlank(ownerOrgStructUnit)) {
             return ownerName;
@@ -902,12 +897,8 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
         this.documentDynamicService = documentDynamicService;
     }
 
-    public void setNamespaceService(NamespaceService namespaceService) {
-        this.namespaceService = namespaceService;
-    }
-
     public void setDataSource(DataSource dataSource) {
-        jdbcTemplate = new SimpleJdbcTemplate(dataSource);
+        jdbcTemplate = new JdbcTemplate(dataSource);
     }
 
     public void setAccessRestrictionChangeReasonEnabled(boolean accessRestrictionChangeReasonEnabled) {
