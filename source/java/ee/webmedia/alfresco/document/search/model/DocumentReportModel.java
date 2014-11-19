@@ -2,9 +2,6 @@ package ee.webmedia.alfresco.document.search.model;
 
 import org.alfresco.service.namespace.QName;
 
-/**
- * @author Riina Tens
- */
 public interface DocumentReportModel {
 
     String URI = "http://alfresco.webmedia.ee/model/document/report/1.0";

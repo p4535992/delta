@@ -54,9 +54,6 @@ import ee.webmedia.alfresco.orgstructure.model.OrganizationStructure;
 import ee.webmedia.alfresco.orgstructure.model.OrganizationStructureModel;
 import ee.webmedia.alfresco.utils.UserUtil;
 
-/**
- * @author Alar Kvell
- */
 public class ActiveDirectoryLdapUserRegistry implements UserRegistry, InitializingBean {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(ActiveDirectoryLdapUserRegistry.class);
 

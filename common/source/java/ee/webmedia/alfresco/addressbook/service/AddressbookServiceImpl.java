@@ -53,9 +53,6 @@ import ee.webmedia.alfresco.utils.SearchUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
 
-/**
- * @author Keit Tehvan 29.09.2009
- */
 public class AddressbookServiceImpl extends AbstractSearchServiceImpl implements AddressbookService {
 
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(AddressbookServiceImpl.class);

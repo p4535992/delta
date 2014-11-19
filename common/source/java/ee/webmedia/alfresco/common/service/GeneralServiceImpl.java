@@ -97,9 +97,6 @@ import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.TextUtil;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
 
-/**
- * @author Ats Uiboupin
- */
 public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(GeneralServiceImpl.class);
 
@@ -386,7 +383,7 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
     public WmNode fetchObjectNode(NodeRef objectRef, QName objectType) {
         QName type = nodeService.getType(objectRef);
         // XXX quickfix, a caseFile object can sometimes be used as a volume
-        // FIXME Alar?? we should actually find all calls with type volume to this method and rewrite them properly
+        // FIXME we should actually find all calls with type volume to this method and rewrite them properly
         if (!(objectType.equals(VolumeModel.Types.VOLUME) && type.equals(CaseFileModel.Types.CASE_FILE))) {
             Assert.isTrue(objectType.equals(type), objectRef + " is typed as " + type + " but was requested as " + objectType);
         }

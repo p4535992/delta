@@ -16,6 +16,7 @@ import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.VOLU
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -97,9 +98,6 @@ import ee.webmedia.alfresco.volume.search.model.VolumeReportModel;
 import ee.webmedia.alfresco.volume.search.model.VolumeSearchModel;
 import ee.webmedia.alfresco.volume.service.VolumeService;
 
-/**
- * @author Alar Kvell
- */
 public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DocumentLocationGenerator.class);
     public static final String[] NODE_REF_FIELD_IDS = new String[] {
@@ -286,7 +284,7 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
 
             // View mode: text item
             NodeRef nodeRef = BeanHelper.getDocumentDialogHelperBean().getNodeRef();
-            if (nodeRef == null || BeanHelper.getGeneralService().getAncestorNodeRefWithType(nodeRef, CaseModel.Types.CASE) != null) {
+            if (nodeRef == null || nodeService.exists(nodeRef) && BeanHelper.getGeneralService().getAncestorNodeRefWithType(nodeRef, CaseModel.Types.CASE) != null) {
                 ItemConfigVO caseLabelItem = generatorResults.generateAndAddViewModeText(caseLabelProp.toString(), field.getName());
                 caseLabelItem.setComponentGenerator(labelGenerator);
                 caseLabelItem.setAction("dialog:documentListDialog");
@@ -752,6 +750,8 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
                             SuggesterGenerator.setValue(caseList, (isSearchFilter ? getCasesEditableOrEmptyList(context, caseList) : casesEditable));
                             caseList.setValue(caseLabel);
                             component.setRendered(casesEditable != null || isSearchFilter);
+                        } else if (component.getId().endsWith(CASE_FILE_TYPE_PROP.getLocalName()) && !showCaseFileTypes) {
+                            component.setRendered(showCaseFileTypes);
                         }
                     }
                 }
@@ -1063,6 +1063,9 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
                     throw new RuntimeException("NodeRef changed while moving");
                 }
                 document.getNode().updateNodeRef(newDocNodeRef);
+                if (!docNodeRef.equals(newDocNodeRef)) {
+                    updateChildAssocNodeRefsRecursively(newDocNodeRef, document.getNode());
+                }
                 NodeRef oldDocNodeRef = docNodeRef;
                 docNodeRef = newDocNodeRef;
                 if (isDocument) {
@@ -1081,11 +1084,16 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
                 if (existingParentNode != null && !targetParentRef.equals(existingParentNode.getNodeRef())) {
                     if (isDocument) {
                         final String existingRegNr = (String) document.getProp(REG_NUMBER);
+                        final Date existingRegDate = (Date) document.getProp(DocumentCommonModel.Props.REG_DATE_TIME);
                         if (StringUtils.isNotBlank(existingRegNr)) {
                             // reg. number is changed if function, series or volume is changed
                             if (previousVolume != null && !previousVolume.getNodeRef().equals(volumeNodeRef)) {
                                 documentService.registerDocumentRelocating(document.getNode(), previousVolume);
-                                BeanHelper.getAdrService().addDeletedDocument(oldDocNodeRef);
+                                if (oldDocNodeRef != null && "ArchivalsStore".equals(oldDocNodeRef.getStoreRef().getIdentifier())) {
+                                    BeanHelper.getAdrService().addDeletedDocumentFromArchive(oldDocNodeRef, existingRegNr, existingRegDate);
+                                } else {
+                                    BeanHelper.getAdrService().addDeletedDocument(oldDocNodeRef);
+                                }
                             }
                         }
                     } else {
@@ -1100,6 +1108,23 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
             } catch (RuntimeException e) {
                 log.error("Failed to move document to volumes folder", e);
                 throw new UnableToPerformException(MessageSeverity.ERROR, "document_errorMsg_register_movingNotEnabled_isReplyOrFollowUp", e);
+            }
+        }
+    }
+
+    private void updateChildAssocNodeRefsRecursively(final NodeRef newNodeRef, Node node) {
+        Map<String, List<Node>> childAssocs = node.getAllChildAssociationsByAssocType();
+        if (childAssocs != null) {
+            for (List<Node> nodeList : childAssocs.values()) {
+                for (Node childAssoc : nodeList) {
+                    NodeRef oldRef = childAssoc.getNodeRef();
+                    if (nodeService.exists(oldRef) || RepoUtil.isUnsaved(oldRef)) {
+                        continue;
+                    }
+                    NodeRef newRef = new NodeRef(newNodeRef.getStoreRef(), oldRef.getId());
+                    childAssoc.updateNodeRef(newRef);
+                    updateChildAssocNodeRefsRecursively(newNodeRef, childAssoc);
+                }
             }
         }
     }

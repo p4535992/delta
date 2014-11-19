@@ -8,8 +8,6 @@ import org.alfresco.service.cmr.repository.ContentWriter;
 
 /**
  * Interface to MSO (Microsoft Office) webservice.
- * 
- * @author Alar Kvell
  */
 public interface MsoService {
 

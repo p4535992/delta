@@ -142,12 +142,9 @@ import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
 import ee.webmedia.alfresco.workflow.service.Task;
 import ee.webmedia.alfresco.workflow.service.Workflow;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
+import ee.webmedia.alfresco.workflow.service.WorkflowUtil;
 import ee.webmedia.xtee.client.dhl.DhlXTeeService.SendStatus;
 
-/**
- * @author Alar Kvell
- * @author Erko Hansar
- */
 public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl implements DocumentSearchService {
 
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DocumentSearchServiceImpl.class);
@@ -422,34 +419,9 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
                 if (!isStatus(compoundWorkflow, IN_PROGRESS)) {
                     continue;
                 }
-                for (Workflow workflow : compoundWorkflow.getWorkflows()) {
-                    if (!isStatus(workflow, IN_PROGRESS)) {
-                        continue;
-                    }
-                    List<String> taskOwners = new ArrayList<String>();
-                    for (Task task : workflow.getTasks()) {
-                        if (!isStatus(task, IN_PROGRESS)) {
-                            continue;
-                        }
-                        taskOwners.add(task.getOwnerName());
-                    }
-
-                    if (!taskOwners.isEmpty()) {
-                        workflows.put(workflow, taskOwners);
-                    }
-                }
+                workflows.putAll(WorkflowUtil.getWorkflowsAndTaskOwners(compoundWorkflow));
             }
-            StringBuilder status = new StringBuilder();
-            for (Entry<Workflow, List<String>> entry : workflows.entrySet()) {
-                if (status.length() > 0) {
-                    status.append("; ");
-                }
-                status.append(MessageUtil.getMessage(entry.getKey().getType().getLocalName()))
-                        .append(" (")
-                        .append(StringUtils.join(entry.getValue(), ", "))
-                        .append(")");
-            }
-            document.setWorkflowStatus(status.toString());
+            document.setWorkflowStatus(WorkflowUtil.formatWorkflowsAndTaskOwners(workflows));
         }
         if (log.isDebugEnabled()) {
             log.debug("Current user's in process documents search total time " + (System.currentTimeMillis() - startTime) + " ms, query: " + query);
@@ -1134,21 +1106,6 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         return count;
     }
 
-    private void filterBySendMode(List<Document> results, Map<String, Object> properties) {
-        @SuppressWarnings("unchecked")
-        List<String> sendModes = (List<String>) properties.get(DocumentSearchModel.Props.SEND_MODE.toString());
-
-        if (sendModes != null && !sendModes.isEmpty()) {
-            for (Iterator<Document> it = results.iterator(); it.hasNext();) {
-                Document doc = it.next();
-                List<String> modes = doc.getSendModesAsList();
-                if (!CollectionUtils.containsAny(sendModes, modes)) {
-                    it.remove();
-                }
-            }
-        }
-    }
-
     @Override
     public Pair<List<Document>, Boolean> searchDocuments(Node filter, int limit) {
         long startTime = System.currentTimeMillis();
@@ -1165,10 +1122,6 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         }
         try {
             Pair<List<Document>, Boolean> results = searchDocumentsImpl(query, limit, /* queryName */"documentsByFilter", storeRefs);
-            if (results != null) {
-                filterByStructUnit(results.getFirst(), filter);
-            }
-            filterBySendMode(results.getFirst(), properties);
             if (log.isDebugEnabled()) {
                 log.debug("Documents search total time " + (System.currentTimeMillis() - startTime) + " ms");
             }
@@ -1180,44 +1133,6 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
                     + "\n  searchFilter=" + WmNode.toString(filterProps, namespaceService)
                     + "\n  query=" + query, e);
             throw e;
-        }
-    }
-
-    @SuppressWarnings("rawtypes")
-    private void filterByStructUnit(List<Document> documents, Node filter) {
-        if (documents == null) {
-            return;
-        }
-        Map<QName, Serializable> props = RepoUtil.toQNameProperties(filter.getProperties());
-        for (Map.Entry<QName, Serializable> entry : props.entrySet()) {
-            Serializable value = entry.getValue();
-            if (value instanceof List) {
-                QName propQName = entry.getKey();
-                if (!DocumentDynamicModel.URI.equals(propQName.getNamespaceURI())) {
-                    continue;
-                }
-                DynamicPropertyDefinition def = BeanHelper.getDocumentConfigService().getPropertyDefinitionById(propQName.getLocalName());
-                if (!((List) value).isEmpty() && def != null && FieldType.STRUCT_UNIT == def.getFieldType()) {
-                    @SuppressWarnings("unchecked")
-                    List<String> searchStructUnits = (List<String>) value;
-                    for (Iterator<Document> it = documents.iterator(); it.hasNext();) {
-                        boolean hasStructUnit = false;
-                        @SuppressWarnings("unchecked")
-                        List<String> documentStructUnits = (List<String>) RepoUtil.flatten((Serializable) it.next().getProperties().get(propQName));
-                        if (documentStructUnits != null) {
-                            for (String searchStructUnit : searchStructUnits) {
-                                if (documentStructUnits.contains(searchStructUnit)) {
-                                    hasStructUnit = true;
-                                    break;
-                                }
-                            }
-                        }
-                        if (!hasStructUnit) {
-                            it.remove();
-                        }
-                    }
-                }
-            }
         }
     }
 
@@ -1988,7 +1903,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         // Saatmisviis
         @SuppressWarnings("unchecked")
         List<String> sendMode = (List<String>) props.get(DocumentSearchModel.Props.SEND_MODE);
-        queryParts.add(generateMultiStringExactQuery(sendMode, DocumentCommonModel.Props.SEARCHABLE_SEND_MODE, DocumentSpecificModel.Props.TRANSMITTAL_MODE));
+        queryParts.add(generateMultiStringExactQuery(sendMode, false, DocumentCommonModel.Props.SEARCHABLE_SEND_MODE, DocumentSpecificModel.Props.TRANSMITTAL_MODE));
         // Saaja
         String sendInfoRecipient = (String) props.get(DocumentSearchModel.Props.SEND_INFO_RECIPIENT);
         if (sendInfoRecipient != null) {
@@ -2182,6 +2097,8 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
                 List<String> list = (List<String>) value;
                 if (StringUtils.isNotBlank(def.getClassificator())) {
                     queryParts.add(generateMultiStringExactQuery(list, propQName));
+                } else if (!list.isEmpty() && def != null && FieldType.STRUCT_UNIT == def.getFieldTypeEnum()) {
+                    queryParts.add(generateMultiStringExactQuery(list, false, propQName));
                 } else {
                     queryParts.add(generateMultiStringWordsWildcardQuery(list, 2, propQName));
                 }
@@ -2418,7 +2335,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         List<Object> arguments = new ArrayList<Object>();
         Map<String, Object> props = filter.getProperties();
 
-        // TODO: Riina - verify that it is okay NOT to use left wildcard any more.
+        // TODO: verify that it is okay NOT to use left wildcard any more.
         // Use both left and right wildcard in task searches
         addDateQueryPartsAndArguments(queryParts, arguments, props, TaskSearchModel.Props.STARTED_DATE_TIME_BEGIN, TaskSearchModel.Props.STARTED_DATE_TIME_END,
                 WorkflowCommonModel.Props.STARTED_DATE_TIME);

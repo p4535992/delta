@@ -11,8 +11,6 @@ import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
 
 /**
  * Evaluates to true if given workflow has status "uus" and it has been saved into the repository.
- * 
- * @author Erko Hansar
  */
 public class WorkflowNewSavedEvaluator extends AbstractFullAccessEvaluator {
 

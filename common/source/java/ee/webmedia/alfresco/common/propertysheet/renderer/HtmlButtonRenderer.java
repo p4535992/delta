@@ -20,8 +20,6 @@ import ee.webmedia.alfresco.workflow.service.WorkflowUtil;
 
 /**
  * Custom renderer to generate onclick javascript based on component attributes
- * 
- * @author Riina Tens
  */
 
 public class HtmlButtonRenderer extends HtmlButtonRendererBase {

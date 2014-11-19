@@ -31,8 +31,6 @@ import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
 
 /**
  * Util class that helps to I18N messages.
- * 
- * @author Ats Uiboupin
  */
 public class MessageUtil {
     private static final Log LOG = org.apache.commons.logging.LogFactory.getLog(MessageUtil.class);

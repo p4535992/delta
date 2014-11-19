@@ -4,8 +4,6 @@ import java.io.Serializable;
 
 /**
  * Base interface for Block beans of a dialog, that uses type <D> to reset each block
- * 
- * @author Ats Uiboupin
  */
 public interface DialogBlockBean<D> extends Serializable {
 

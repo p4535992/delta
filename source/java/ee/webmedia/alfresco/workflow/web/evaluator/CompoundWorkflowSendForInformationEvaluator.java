@@ -6,9 +6,6 @@ import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
 import ee.webmedia.alfresco.workflow.service.WorkflowUtil;
 
-/**
- * @author Marti Laast
- */
 public class CompoundWorkflowSendForInformationEvaluator extends AbstractFullAccessEvaluator {
 
     private static final long serialVersionUID = 1L;

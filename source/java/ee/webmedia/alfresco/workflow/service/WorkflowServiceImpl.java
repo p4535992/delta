@@ -47,6 +47,7 @@ import org.alfresco.util.EqualsHelper;
 import org.alfresco.util.GUID;
 import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
@@ -116,9 +117,6 @@ import ee.webmedia.alfresco.workflow.service.event.WorkflowMultiEventListener;
 import ee.webmedia.alfresco.workflow.service.type.AssignmentWorkflowType;
 import ee.webmedia.alfresco.workflow.service.type.WorkflowType;
 
-/**
- * @author Alar Kvell
- */
 public class WorkflowServiceImpl implements WorkflowService, WorkflowModifications, BeanFactoryAware {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(WorkflowServiceImpl.class);
     private static final int SIGNATURE_TASK_OUTCOME_NOT_SIGNED = 0;
@@ -175,6 +173,8 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
     private final List<WorkflowMultiEventListener> multiEventListeners = new ArrayList<WorkflowMultiEventListener>();
     private final List<WorkflowEventListenerWithModifications> immediateEventListeners = new ArrayList<WorkflowEventListenerWithModifications>();
     private List<QName> taskDataTypeSearchableProps;
+    private final Set<QName> ownerRelatedKeys = new HashSet<QName>(Arrays.asList(WorkflowCommonModel.Props.OWNER_ID, WorkflowCommonModel.Props.OWNER_NAME,
+            WorkflowCommonModel.Props.PARALLEL_TASKS, WorkflowCommonModel.Props.OWNER_ORGANIZATION_NAME, WorkflowCommonModel.Props.OWNER_JOB_TITLE));
 
     /**
      * Seoses asutuseülese töövoo testimisega meie testis, kus asutus peab saama saata ülesandeid ka endale:
@@ -437,6 +437,11 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         return getCompoundWorkflows(parent, null, true);
     }
 
+    @Override
+    public List<CompoundWorkflow> getCompoundWorkflows(NodeRef parent, NodeRef nodeRefToSkip) {
+        return getCompoundWorkflows(parent, nodeRefToSkip, true);
+    }
+
     private List<CompoundWorkflow> getCompoundWorkflows(NodeRef parent, NodeRef nodeRefToSkip, boolean loadTasks) {
         List<NodeRef> nodeRefs = getCompoundWorkflowNodeRefs(parent);
         List<CompoundWorkflow> compoundWorkflows = new ArrayList<CompoundWorkflow>(nodeRefs.size());
@@ -547,6 +552,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         } else if (compoundWorkflow.isIndependentWorkflow()) {
             compoundWorkflow.setNumberOfDocuments(getCompoundWorkflowDocumentCount(compoundWorkflowRef));
         }
+        compoundWorkflowWithObject.setWorkflowStatus(WorkflowUtil.getFormattedWorkflowsAndTaskOwners(compoundWorkflow));
         return compoundWorkflowWithObject;
     }
 
@@ -3082,7 +3088,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         } else if (task.isType(Types.REVIEW_TASK)) {
             // sometimes here value of TEMP_OUTCOME is Integer, sometimes String
             final Integer tempOutcome = DefaultTypeConverter.INSTANCE.convert(Integer.class, task.getProp(WorkflowSpecificModel.Props.TEMP_OUTCOME));
-            if (tempOutcome != null && tempOutcome == REVIEW_TASK_OUTCOME_REJECTED) { // KAAREL: What is tempOutcome and why was it null?
+            if (tempOutcome != null && tempOutcome == REVIEW_TASK_OUTCOME_REJECTED) { // What is tempOutcome and why was it null?
                 return true;
             }
         } else if (outcomeIndex == CONFIRMATION_TASK_OUTCOME_REJECTED && task.isType(Types.CONFIRMATION_TASK)) {
@@ -3259,9 +3265,8 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
                     log.debug("Updating node (type '" + node.getType().toPrefixString(namespaceService) + "') with properties " //
                             + WmNode.toString(props.entrySet()));
                 }
-                if (props.containsKey(WorkflowCommonModel.Props.OWNER_ID) || props.containsKey(WorkflowCommonModel.Props.OWNER_NAME)
-                        || props.containsKey(WorkflowCommonModel.Props.OWNER_EMAIL) || props.containsKey(WorkflowCommonModel.Props.PARALLEL_TASKS)
-                        || props.containsKey(WorkflowCommonModel.Props.OWNER_ORGANIZATION_NAME) || props.containsKey(WorkflowCommonModel.Props.OWNER_JOB_TITLE)) {
+
+                if (CollectionUtils.containsAny(ownerRelatedKeys, props.keySet()) || props.containsKey(WorkflowCommonModel.Props.OWNER_EMAIL)) {
                     if (!(object instanceof CompoundWorkflow && !(object instanceof CompoundWorkflowDefinition))) {
                         if (!(isTask && onlyOwnerEmailWasAddedToTask(props, (String) object.getOriginalProperties().get(WorkflowCommonModel.Props.OWNER_EMAIL)))) {
                             requireValue(object, (String) object.getOriginalProperties().get(WorkflowCommonModel.Props.STATUS), WorkflowCommonModel.Props.STATUS,
@@ -3298,7 +3303,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
                 // adding/removing aspects is not implemented - not needed for now
             }
             if (isTask) {
-                // TODO: Riina - move querying independent tasks root to apprpriate WorkflowType implementations
+                // TODO: move querying independent tasks root to apprpriate WorkflowType implementations
                 // when more than one type of such tasks is created
                 // Currently only linkedReviewTasks are created ouside of workflow.
                 workflowDbService.updateTaskEntry((Task) object, props, taskParentRef);
@@ -3311,10 +3316,38 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
     private boolean onlyOwnerEmailWasAddedToTask(Map<QName, Serializable> saveProps, String prevoiusEmail) {
         boolean newEmailAdded = saveProps.containsKey(WorkflowCommonModel.Props.OWNER_EMAIL);
         boolean prevoiusEmailBlank = StringUtils.isBlank(prevoiusEmail);
-        boolean otherPropsNotChanged = !(saveProps.containsKey(WorkflowCommonModel.Props.OWNER_ID) || saveProps.containsKey(WorkflowCommonModel.Props.OWNER_NAME)
-                || saveProps.containsKey(WorkflowCommonModel.Props.PARALLEL_TASKS) || saveProps.containsKey(WorkflowCommonModel.Props.OWNER_ORGANIZATION_NAME)
-                || saveProps.containsKey(WorkflowCommonModel.Props.OWNER_JOB_TITLE));
+        boolean otherPropsNotChanged = !(CollectionUtils.containsAny(ownerRelatedKeys, saveProps.keySet()));
         return prevoiusEmailBlank && newEmailAdded && otherPropsNotChanged;
+    }
+
+    @Override
+    public List<String> checkAndAddMissingOwnerEmails(CompoundWorkflow compoundWorkflow) {
+        List<String> ownersNames = new ArrayList<String>();
+        for (Workflow workflow : compoundWorkflow.getWorkflows()) {
+            for (Task task : workflow.getTasks()) {
+                if (task.isStatus(Status.FINISHED, Status.UNFINISHED)) {
+                    continue;
+                }
+                String ownerEmail = task.getOwnerEmail();
+                String ownerName = task.getOwnerName();
+                if (StringUtils.isNotBlank(ownerName) && StringUtils.isBlank(ownerEmail)) {
+                    if (addUserEmailToTaskIfPossible(task)) {
+                        continue;
+                    }
+                    ownersNames.add(ownerName);
+                }
+            }
+        }
+        return ownersNames;
+    }
+
+    private static boolean addUserEmailToTaskIfPossible(Task task) {
+        String ownerEmail = BeanHelper.getUserService().getUserEmail(task.getOwnerId());
+        if (StringUtils.isNotBlank(ownerEmail)) {
+            task.setOwnerEmail(ownerEmail);
+            return true;
+        }
+        return false;
     }
 
     private OrganizationStructure getOwnerInstitution(Task task) {
@@ -3738,8 +3771,6 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
 
     /**
      * The type of action performs (after getting confirmation)
-     * 
-     * @author Vladimir Drozdik
      */
     public static enum DialogAction {
         SAVING, STARTING, CONTINUING;

@@ -12,8 +12,6 @@ import ee.webmedia.alfresco.eventplan.service.dto.EventPlanVolume;
 
 /**
  * Services for working with {@link EventPlan} entities.
- * 
- * @author Martti Tamm
  */
 public interface EventPlanService {
 

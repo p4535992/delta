@@ -20,9 +20,6 @@ import ee.webmedia.alfresco.docdynamic.model.DocumentChildModel;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.utils.SearchUtil;
 
-/**
- * @author Alar Kvell
- */
 public class ContractPartyAssocUpdater extends AbstractNodeUpdater {
 
     @Override

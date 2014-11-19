@@ -20,8 +20,6 @@ import ee.webmedia.alfresco.document.file.web.Subfolder;
 
 /**
  * Extended imap service.
- * 
- * @author Romet Aidla
  */
 public interface ImapServiceExt {
 

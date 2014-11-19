@@ -29,8 +29,6 @@ import ee.webmedia.alfresco.utils.UserUtil;
 
 /**
  * AuthenticationFilter that uses AMRService for authentication.
- * 
- * @author Ats Uiboupin
  */
 public class SimpleAuthenticationFilter extends AuthenticationFilter {
     public static final String AUTHENTICATION_EXCEPTION = "AUTHENTICATION_EXCEPTION";

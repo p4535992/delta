@@ -11,8 +11,6 @@ import ee.webmedia.alfresco.utils.Transformer;
 
 /**
  * Accessor and mutator for order property of the {@link BaseObject} that should be used to (re)order
- * 
- * @author Ats Uiboupin
  */
 public class BaseObjectOrderModifier<B extends BaseObject> implements OrderModifier<B, Integer> {
     /** qName of the order property */

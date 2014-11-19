@@ -2,9 +2,6 @@ package ee.webmedia.alfresco.report.model;
 
 import org.alfresco.service.namespace.QName;
 
-/**
- * @author Riina Tens
- */
 public interface ReportModel {
     String URI = "http://alfresco.webmedia.ee/model/report/1.0";
     String PREFIX = "report:";

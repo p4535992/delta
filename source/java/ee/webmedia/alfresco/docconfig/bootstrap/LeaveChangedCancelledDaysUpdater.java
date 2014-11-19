@@ -22,8 +22,6 @@ import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 
 /**
  * This updater sets removableFromSystematicFieldGroup to true for leaveChangedDays and leaveCancelledDays so they could be removed from systematic group.
- * 
- * @author Kaarel Jõgeva
  * @see SIMDHS-4011
  */
 public class LeaveChangedCancelledDaysUpdater extends AbstractNodeUpdater {

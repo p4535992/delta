@@ -22,9 +22,6 @@ import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
 
-/**
- * @author Alar Kvell
- */
 public class RegNumberGenerator extends BaseSystematicFieldGenerator {
 
     private UserService userService;

@@ -14,8 +14,6 @@ import ee.webmedia.alfresco.workflow.service.WorkflowService;
 
 /**
  * Class for linked review task type which has no associated workflow type.
- * 
- * @author Riina Tens
  */
 public class LinkedReviewTaskType implements WorkflowType, InitializingBean {
 

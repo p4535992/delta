@@ -27,8 +27,6 @@ import ee.webmedia.alfresco.substitute.model.SubstitutionInfo;
 /**
  * Servlet allowing external URL access to various global JSF views in the Web Client.
  * Available URL-s: <li><code>http://&lt;server&gt;/simdhs/&lt;servlet name&gt;/document/&lt;document node ref&gt;</code> - for viewing document</li>
- * 
- * @author Romet Aidla
  */
 public class ExternalAccessServlet extends BaseServlet {
     private static final long serialVersionUID = 7348802704715012097L;

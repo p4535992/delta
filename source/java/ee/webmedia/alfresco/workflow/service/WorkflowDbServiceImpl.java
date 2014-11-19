@@ -63,8 +63,6 @@ import ee.webmedia.alfresco.workflow.service.type.WorkflowType;
 
 /**
  * Main implementation of {@link WorkflowDbService}. This class does not rely on Alfresco, and exchanges data with the database using JDBC(Template) directly.
- * 
- * @author Riina Tens
  */
 public class WorkflowDbServiceImpl implements WorkflowDbService {
 
@@ -117,6 +115,21 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
         }
         arguments.add(task.getNodeRef().getId());
         updateTaskEntry(fieldNamesAndArguments.getFirst(), arguments, task.getNodeRef());
+    }
+
+    @Override
+    public void updateTaskEntryIgnoringParent(Task task, Map<QName, Serializable> changedProps) {
+        Pair<List<String>, List<Object>> fieldNamesAndArguments = getFieldNamesAndArguments(task, null, changedProps);
+        List<String> fieldNames = fieldNamesAndArguments.getFirst();
+        List<Object> arguments = fieldNamesAndArguments.getSecond();
+        arguments.add(task.getNodeRef().getId());
+        int workflowIdIndex = fieldNames.indexOf(WORKFLOW_ID_KEY);
+
+        if (workflowIdIndex > -1) {
+            arguments.remove(workflowIdIndex);
+            fieldNames.remove(workflowIdIndex);
+        }
+        updateTaskEntry(fieldNames, arguments, task.getNodeRef());
     }
 
     @Override

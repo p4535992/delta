@@ -25,8 +25,6 @@ import ee.webmedia.alfresco.utils.SearchUtil;
  * {@link ee.webmedia.alfresco.document.model.DocumentCommonModel.Props#SEND_INFO_SEND_DATE_TIME} and
  * {@link ee.webmedia.alfresco.document.model.DocumentCommonModel.Props#SEND_INFO_RESOLUTION} properties to parent document. This enables us to search documents based on these
  * properties.
- * 
- * @author Kaarel Jõgeva
  */
 public class SearchableSendInfoUpdater extends AbstractNodeUpdater {
 

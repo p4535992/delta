@@ -10,9 +10,6 @@ import org.alfresco.web.bean.dialog.BaseDialogBean;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.workflow.model.CompoundWorkflowWithObject;
 
-/**
- * @author Riina Tens
- */
 public class CompoundWorkflowListDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;
 

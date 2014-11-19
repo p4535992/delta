@@ -36,7 +36,6 @@ import ee.webmedia.alfresco.importer.excel.vo.ImportDocument;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
- * @author Ats Uiboupin
  *         There is quite a lot of hardCoded configuration in this file, as it is only supposed to be used once and hence there is not much point of
  *         dividing configuration (such as the names and the sheets of excel files - that are agreed not to change) into separate files.
  */

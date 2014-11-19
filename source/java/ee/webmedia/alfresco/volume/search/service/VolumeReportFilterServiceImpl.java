@@ -5,9 +5,6 @@ import org.alfresco.service.namespace.QName;
 
 import ee.webmedia.alfresco.volume.search.model.VolumeReportModel;
 
-/**
- * @author Keit Tehvan
- */
 public class VolumeReportFilterServiceImpl extends VolumeSearchFilterServiceImpl implements VolumeReportFilterService {
 
     @Override

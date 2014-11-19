@@ -17,8 +17,6 @@ import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigEle
 
 /**
  * Custom PropertySheetElementReader that also reads custom attributes from "show-property" element
- * 
- * @author Ats Uiboupin
  */
 public class WMPropertySheetElementReader extends PropertySheetElementReader {
     public static final String ELEMENT_SUB_PROPERTY_SHEET = "subPropertySheet";

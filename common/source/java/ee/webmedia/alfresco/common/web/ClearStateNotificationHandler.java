@@ -8,8 +8,6 @@ import java.util.Set;
  * Handles registering and notifying components (dialogs),
  * that must clear their state at different situations/events in application life-cycle.
  * For ex. when menu item is clicked and all the dialogs state must be cleared.
- * 
- * @author Romet Aidla
  */
 public class ClearStateNotificationHandler implements Serializable {
     private static final long serialVersionUID = 1L;

@@ -2,8 +2,6 @@ package ee.webmedia.alfresco.classificator.constant;
 
 /**
  * Constant for different conditions when field should be changeable
- * 
- * @author Ats Uiboupin
  */
 public enum FieldChangeableIf {
     /* alati muudetav */

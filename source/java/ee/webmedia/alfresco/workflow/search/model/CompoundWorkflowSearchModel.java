@@ -4,8 +4,6 @@ import org.alfresco.service.namespace.QName;
 
 /**
  * Compound Workflow search filter model QNames.
- * 
- * @author Keit Tehvan
  */
 public interface CompoundWorkflowSearchModel {
 

@@ -7,9 +7,6 @@ import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
 
-/**
- * @author Riina Tens
- */
 public class RemoveFavoritesCompoundWorkflowEvaluator extends BaseActionEvaluator {
     private static final long serialVersionUID = 1L;
 

@@ -87,7 +87,10 @@
             </property>
             <property name="docdyn:originalVolume">
                <type>d:noderef</type>
-            </property>         
+            </property>
+            <property name="docdyn:markedForArchiving">
+               <type>d:boolean</type>
+            </property>
          </properties>
          <associations>
             <association name="vol:volumeVolume">

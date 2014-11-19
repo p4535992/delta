@@ -11,9 +11,6 @@ import ee.webmedia.alfresco.menu.model.MenuItem;
 import ee.webmedia.alfresco.menu.service.MenuService.MenuItemProcessor;
 import ee.webmedia.alfresco.user.service.UserService;
 
-/**
- * @author Kaarel Jõgeva
- */
 public class AdministratorMenuItemProcessor implements MenuItemProcessor, InitializingBean {
 
     private MenuService menuService;

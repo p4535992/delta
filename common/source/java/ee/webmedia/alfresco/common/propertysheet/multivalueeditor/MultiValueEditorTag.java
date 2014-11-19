@@ -18,8 +18,6 @@ import ee.webmedia.alfresco.common.propertysheet.search.Search;
 
 /**
  * Tag for MultiValueEditor
- * 
- * @author Erko Hansar
  */
 public class MultiValueEditorTag extends UIComponentTag {
 

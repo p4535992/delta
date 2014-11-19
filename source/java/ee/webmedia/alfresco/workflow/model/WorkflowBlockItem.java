@@ -26,9 +26,6 @@ import ee.webmedia.alfresco.workflow.service.DueDateHistoryRecord;
 import ee.webmedia.alfresco.workflow.service.Task;
 import ee.webmedia.alfresco.workflow.web.DueDateHistoryModalComponent;
 
-/**
- * @author Kaarel Jõgeva
- */
 public class WorkflowBlockItem implements Serializable {
     private static final long serialVersionUID = 1L;
 

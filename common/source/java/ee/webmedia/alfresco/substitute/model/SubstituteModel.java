@@ -2,9 +2,6 @@ package ee.webmedia.alfresco.substitute.model;
 
 import org.alfresco.service.namespace.QName;
 
-/**
- * @author Romet Aidla
- */
 public interface SubstituteModel {
     String URI = "http://alfresco.webmedia.ee/model/substitute/1.0";
     String NAMESPACE_PREFFIX = "sub:";

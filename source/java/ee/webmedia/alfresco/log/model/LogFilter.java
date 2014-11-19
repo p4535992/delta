@@ -9,8 +9,6 @@ import java.util.Set;
 
 /**
  * DTO used for gathering system log filtering data.
- * 
- * @author Martti Tamm
  */
 public class LogFilter implements Serializable {
 

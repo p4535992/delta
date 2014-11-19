@@ -17,8 +17,6 @@ import ee.webmedia.alfresco.report.service.ReportService;
 
 /**
  * Reset all reports with status RUNNING to status IN_QUEUE.
- * 
- * @author Riina Tens
  */
 public class ResetRunningReportsBootstrap extends AbstractModuleComponent {
     private static final Log LOG = LogFactory.getLog(ResetRunningReportsBootstrap.class);

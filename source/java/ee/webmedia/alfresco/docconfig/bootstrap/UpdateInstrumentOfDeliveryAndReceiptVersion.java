@@ -26,8 +26,6 @@ import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 /**
  * This updater should run only in SIM 3.13 environment to add missing delivererName values to instrumentOfDeliveryAndReceipt documents
  * which were not migrated during during 2.5 -> 3.13 migration. See cl task 215711 for details.
- * 
- * @author Riina Tens
  */
 public class UpdateInstrumentOfDeliveryAndReceiptVersion extends AbstractNodeUpdater {
     private final Log log = LogFactory.getLog(getClass());

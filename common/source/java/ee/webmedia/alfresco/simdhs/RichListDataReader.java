@@ -28,8 +28,6 @@ import ee.webmedia.alfresco.utils.ComponentUtil;
  *  <a:param value="false"/>
  * </f:facet>
  * }
- * 
- * @author Romet Aidla
  */
 public class RichListDataReader implements DataReader {
     private static Logger log = Logger.getLogger(RichListDataReader.class);

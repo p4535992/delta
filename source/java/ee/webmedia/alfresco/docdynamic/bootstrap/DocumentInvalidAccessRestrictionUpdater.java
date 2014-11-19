@@ -18,9 +18,6 @@ import ee.webmedia.alfresco.common.bootstrap.AbstractNodeUpdater;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.utils.SearchUtil;
 
-/**
- * @author Alar Kvell
- */
 public class DocumentInvalidAccessRestrictionUpdater extends AbstractNodeUpdater {
 
     @Override

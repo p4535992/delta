@@ -12,8 +12,6 @@ import ee.webmedia.alfresco.docadmin.service.DocumentTypeVersion;
 
 /**
  * A mapped document is the document after it has been read from the XML according to the provided mapping.
- * 
- * @author Martti Tamm
  */
 public class MappedDocument {
 

@@ -38,9 +38,6 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
  * Holds document node property changes, and generates log messages.
- * 
- * @author Vladimir Drozdik
- * @author Martti Tamm
  */
 public class DocumentPropertiesChangeHolder {
 

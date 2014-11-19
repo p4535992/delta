@@ -15,9 +15,6 @@ import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel.Props;
 import ee.webmedia.alfresco.docadmin.service.DocumentTypeVersion;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 
-/**
- * @author Kaarel Jõgeva
- */
 public class DynamicTypeUtil {
 
     public static void setTypeProps(Pair<String, Integer> docTypeIdAndVersionNr, Map<QName, Serializable> props) {

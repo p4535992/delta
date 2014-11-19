@@ -13,9 +13,6 @@ import ee.webmedia.alfresco.log.model.LogFilter;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
 
-/**
- * @author Martti Tamm
- */
 public class EventPlanLogBlockBean extends LogBlockBean {
     private static final long serialVersionUID = 1L;
 

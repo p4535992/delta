@@ -7,8 +7,6 @@ import org.alfresco.service.namespace.QName;
 
 /**
  * Conveniently holds needed information for document child creation
- * 
- * @author Kaarel Jõgeva
  */
 public class DocChildAssocInfoHolder {
 

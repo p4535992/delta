@@ -31,8 +31,6 @@ import ee.webmedia.alfresco.utils.MessageUtil;
  * 1) using "enumClass" attribute on property-sheet/show-property element element.
  * or
  * 2) using "enumProp" attribute on property-sheet/show-property element element that refers to another property of the node containing the name of constant
- * 
- * @author Ats Uiboupin
  */
 public class EnumSelectorGenerator extends GeneralSelectorGenerator implements HandlesViewMode {
 

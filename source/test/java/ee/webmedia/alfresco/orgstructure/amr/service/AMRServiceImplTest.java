@@ -11,8 +11,6 @@ import smit.ametnik.services.YksusExt;
 
 /**
  * Test {@link AMRServiceImpl}
- * 
- * @author Ats Uiboupin
  */
 public class AMRServiceImplTest extends TestCase {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(AMRServiceImplTest.class);

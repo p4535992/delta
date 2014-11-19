@@ -17,8 +17,6 @@ import ee.webmedia.alfresco.volume.model.VolumeModel;
 
 /**
  * {@link PrivilegesHandler} for nodes of type {@link VolumeModel.Types#VOLUME}
- * 
- * @author Ats Uiboupin
  */
 public class VolumeTypePrivilegesHandler extends AbstractInheritingPrivilegesHandler {
     private static final long serialVersionUID = 1L;

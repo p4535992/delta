@@ -7,8 +7,6 @@ import ee.webmedia.alfresco.workflow.service.WorkflowDbService;
 
 /**
  * Fix invalid task outcomes.
- * 
- * @author Riina Tens
  */
 public class FixTaskOutcomesBootstrap extends AbstractModuleComponent {
 

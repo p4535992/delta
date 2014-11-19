@@ -11,8 +11,6 @@ import ee.webmedia.alfresco.imap.service.ImapServiceExt;
 
 /**
  * Create e-invoice from incoming e-mail
- * 
- * @author Riina Tens
  */
 public class IncomingEInvoiceCreateBehaviour implements AppendBehaviour {
     public static final String BEHAVIOUR_NAME = "incomingInvoiceBehaviour";

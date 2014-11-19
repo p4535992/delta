@@ -40,8 +40,6 @@ import ee.webmedia.alfresco.workflow.service.type.WorkflowType;
 /**
  * Insert tasks' data into delta_tasks table.
  * Tasks are retireved by compound workflow in order to retrieve task index in workflow.
- * 
- * @author Riina Tens
  */
 public class TaskTableInsertBootstrap extends AbstractNodeUpdater {
 

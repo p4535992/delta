@@ -11,9 +11,6 @@ import ee.webmedia.alfresco.document.sendout.web.DocumentSendForInformationDialo
 import ee.webmedia.alfresco.log.model.LogObject;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
-/**
- * @author Marti Laast
- */
 public class CaseFileSendForInformationDialog extends DocumentSendForInformationDialog {
 
     private static final long serialVersionUID = 1L;

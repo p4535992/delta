@@ -18,8 +18,6 @@ import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 
 /**
  * Case is no longer a mandatory field (CL 195692)
- * 
- * @author Kaarel Jõgeva
  */
 public class CaseFieldNotMandatoryUpdater extends AbstractNodeUpdater {
 

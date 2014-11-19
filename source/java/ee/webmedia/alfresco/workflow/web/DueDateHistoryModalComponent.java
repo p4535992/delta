@@ -21,9 +21,6 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.workflow.service.DueDateHistoryRecord;
 import ee.webmedia.alfresco.workflow.service.Task;
 
-/**
- * @author Riina Tens
- */
 public class DueDateHistoryModalComponent extends ModalLayerComponent {
 
     private static final long serialVersionUID = 1L;

@@ -98,8 +98,6 @@ import ee.webmedia.alfresco.workflow.service.type.WorkflowType;
  * Class contains CompundWorkflow and related data import logic in general. More exact input data processing is done in database. The scripts for creating database tables and
  * functions and for dropping them later must be placed in <em>dataFolder</em>/sql/ folder: these files are looked for explicitly imp_create_imp_tables.sql and
  * imp_drop_objects.sql, other SQL files are processed in order found.
- * 
- * @author Martti Tamm
  */
 public class WorkflowImporter {
 

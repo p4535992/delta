@@ -3,9 +3,6 @@ package ee.webmedia.alfresco.monitoring.model;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author Keit Tehvan
- */
 public class Status {
     private Application application;
     private List<ServiceStatus> services;

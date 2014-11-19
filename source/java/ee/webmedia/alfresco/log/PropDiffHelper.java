@@ -29,8 +29,6 @@ import ee.webmedia.alfresco.utils.MessageUtil;
  *         // ... other properties to watch with labels
  *         .diff(mapOfCurrentProperties, mapOfNewProperties);
  * </pre>
- * 
- * @author Martti Tamm
  */
 public class PropDiffHelper {
 

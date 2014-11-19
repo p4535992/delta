@@ -16,9 +16,6 @@ import ee.webmedia.alfresco.menu.service.CountAddingMenuItemProcessor;
 import ee.webmedia.alfresco.menu.service.MenuItemCountHandler;
 import ee.webmedia.alfresco.menu.service.MenuService;
 
-/**
- * @author Kaarel Jõgeva
- */
 public class ScannedDocumentsMenuItemProcessor extends CountAddingMenuItemProcessor implements MenuItemCountHandler, InitializingBean {
     private MenuService menuService;
     private FileFolderService fileFolderService;

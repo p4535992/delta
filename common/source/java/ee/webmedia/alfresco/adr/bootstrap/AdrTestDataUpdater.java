@@ -29,9 +29,6 @@ import ee.webmedia.alfresco.functions.model.FunctionsModel;
 import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
 
-/**
- * @author Alar Kvell
- */
 public class AdrTestDataUpdater extends AbstractNodeUpdater {
 
     private DocumentAdminService documentAdminService;

@@ -23,9 +23,6 @@ import ee.webmedia.alfresco.document.type.service.DocumentTypeHelper;
 import ee.webmedia.alfresco.menu.ui.MenuBean;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
-/**
- * @author Dmitri Melnikov
- */
 public class DeleteFileDialog extends DeleteContentDialog {
     private static final long serialVersionUID = 1L;
 

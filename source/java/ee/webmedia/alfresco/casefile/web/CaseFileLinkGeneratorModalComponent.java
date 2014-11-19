@@ -11,9 +11,6 @@ import ee.webmedia.alfresco.docdynamic.web.DocumentLinkGeneratorModalComponent;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
-/**
- * @author Marti Laast
- */
 public class CaseFileLinkGeneratorModalComponent extends DocumentLinkGeneratorModalComponent {
 
     public static final String CASE_FILE_LINK_MODAL_ID = "generateCaseFileLinkModal";

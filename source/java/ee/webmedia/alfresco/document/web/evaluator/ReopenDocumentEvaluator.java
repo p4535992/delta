@@ -11,8 +11,6 @@ import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 
 /**
  * UI action evaluator for validating whether reopen current document.
- * 
- * @author Romet Aidla
  */
 public class ReopenDocumentEvaluator extends BaseActionEvaluator {
     private static final long serialVersionUID = 0L;

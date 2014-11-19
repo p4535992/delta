@@ -18,8 +18,6 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
  * Dialog for incoming emails list.
- * 
- * @author Romet Aidla
  */
 public abstract class AbstractEmailListDialog extends BaseDocumentListDialog implements FolderListDialog {
     private static final long serialVersionUID = 0L;

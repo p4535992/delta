@@ -12,9 +12,6 @@ import org.quartz.StatefulJob;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.privilege.service.PrivilegeService;
 
-/**
- * @author Alar Kvell
- */
 public class ExecutePrivilegeActionsJob implements StatefulJob {
     private static final Log LOG = LogFactory.getLog(ExecutePrivilegeActionsJob.class);
 

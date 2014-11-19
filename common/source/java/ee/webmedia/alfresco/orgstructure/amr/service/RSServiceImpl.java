@@ -11,9 +11,6 @@ import smit.ametnik.services.RSLubaByIsikukoodRequestDocument;
 import smit.ametnik.services.RSLubaByIsikukoodRequestDocument.RSLubaByIsikukoodRequest;
 import smit.ametnik.services.RSLubaByIsikukoodResponseDocument;
 
-/**
- * @author Riina Tens
- */
 public class RSServiceImpl extends WebServiceTemplate implements RSService {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(RSServiceImpl.class);
 

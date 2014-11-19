@@ -7,9 +7,6 @@ import org.alfresco.web.bean.repository.Node;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.web.evaluator.ViewStateActionEvaluator;
 
-/**
- * @author Kaarel Jõgeva
- */
 public class AddFavoritesCaseFileEvaluator extends BaseActionEvaluator {
     private static final long serialVersionUID = 1L;
 

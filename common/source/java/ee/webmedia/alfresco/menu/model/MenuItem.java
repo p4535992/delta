@@ -50,8 +50,6 @@ import ee.webmedia.alfresco.workflow.service.WorkflowService;
 
 /**
  * Base class for menu items.
- * 
- * @author Kaarel Jõgeva
  */
 @XStreamAlias("item")
 public class MenuItem implements Serializable {

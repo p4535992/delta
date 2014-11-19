@@ -12,9 +12,6 @@ import ee.webmedia.alfresco.log.model.LogEntry;
 import ee.webmedia.alfresco.log.model.LogFilter;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
-/**
- * @author Priit Pikk
- */
 
 public class CaseFileLogBlockBean extends LogBlockBean {
     private static final long serialVersionUID = 1L;

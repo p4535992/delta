@@ -95,6 +95,18 @@
       </property>
    </bean>
    
+   <bean id="executeArchivingTrigger" class="org.alfresco.util.TriggerBean" >
+      <property name="enabled" value="${jobs.enabled}" />
+      <property name="repeatIntervalMinutes" value="1" />
+      <property name="startDelayMinutes" value="3" />
+      <property name="scheduler" ref="schedulerFactory" />
+      <property name="jobDetail">
+         <bean id="executeArchiveJobDetails" class="org.springframework.scheduling.quartz.JobDetailBean">
+            <property name="jobClass" value="ee.webmedia.alfresco.volume.job.ExecuteArchiveJob" />
+         </bean>
+      </property>
+   </bean>
+   
    <!-- 
    	  1) Updates volume type from estonian string literals to translatable constants and 
    	  2) changes namespaces of volume properties

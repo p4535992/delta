@@ -25,8 +25,6 @@ import ee.webmedia.alfresco.workflow.service.WorkflowService;
 
 /**
  * Updater to add and reorganize properties and aspects of tasks.
- * 
- * @author Riina Tens
  */
 public class TaskUpdater extends AbstractNodeUpdater {
 

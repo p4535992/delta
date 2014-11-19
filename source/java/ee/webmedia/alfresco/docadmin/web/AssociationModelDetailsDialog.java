@@ -27,8 +27,6 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
  * Dialog for editing objects of type {@link AssociationModel}
- * 
- * @author Ats Uiboupin
  */
 public class AssociationModelDetailsDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;

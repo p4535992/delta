@@ -6,8 +6,6 @@ import org.alfresco.service.cmr.repository.NodeRef;
 
 /**
  * Holds information about user and group privileges
- * 
- * @author Ats Uiboupin
  */
 public class PrivMappings extends PrivilegeMappings {
     private static final long serialVersionUID = 1L;

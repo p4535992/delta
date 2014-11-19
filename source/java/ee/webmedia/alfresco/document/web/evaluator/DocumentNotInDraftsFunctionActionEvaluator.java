@@ -8,9 +8,6 @@ import org.alfresco.web.bean.repository.Node;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 
-/**
- * @author Riina Tens
- */
 public class DocumentNotInDraftsFunctionActionEvaluator extends BaseActionEvaluator {
     private static final long serialVersionUID = 1L;
 

@@ -26,11 +26,10 @@ import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.WebUtil;
 import ee.webmedia.alfresco.volume.model.Volume;
+import ee.webmedia.alfresco.volume.web.VolumeListDialog;
 
 /**
  * Form backing component for cases list page
- * 
- * @author Ats Uiboupin
  */
 public class CaseDocumentListDialog extends DocumentListDialog {
     private static final long serialVersionUID = 1L;
@@ -40,12 +39,20 @@ public class CaseDocumentListDialog extends DocumentListDialog {
 
     private Volume parent;
     private List<Case> cases;
+    private boolean volumeRefInvalid;
 
     @Override
     public void init(NodeRef volumeRef) {
         showAll(volumeRef);
         super.init(volumeRef, false);
         WebUtil.navigateTo(AlfrescoNavigationHandler.DIALOG_PREFIX + "caseDocListDialog");
+    }
+
+    public String action() {
+        String dialogPrefix = AlfrescoNavigationHandler.DIALOG_PREFIX;
+        boolean tempState = volumeRefInvalid;
+        volumeRefInvalid = false;
+        return dialogPrefix + (tempState ? VolumeListDialog.DIALOG_NAME : "caseDetailsDialog");
     }
 
     @Override
@@ -77,6 +84,11 @@ public class CaseDocumentListDialog extends DocumentListDialog {
     // START: jsf actions/accessors
     public void showAll(ActionEvent event) {
         NodeRef volumeRef = new NodeRef(ActionUtil.getParam(event, "volumeNodeRef"));
+        if (!nodeExists(volumeRef)) {
+            volumeRefInvalid = true;
+            MessageUtil.addInfoMessage("volume_noderef_not_found");
+            return;
+        }
         super.setup(event, false);
         showAll(volumeRef);
     }

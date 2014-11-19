@@ -23,9 +23,6 @@ import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.WebUtil;
 
-/**
- * @author Keit Tehvan
- */
 public class AddressbookAddEditDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;
 

@@ -13,8 +13,6 @@ import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 
 /**
  * Callback that creates default applicant (as childNode) for errandOrderAbroadMv document and default errand (as childNode for applicant)
- * 
- * @author Ats Uiboupin
  */
 public class ErrandAbroadMvApplicantPropertiesModifierCallback extends AbstractDocChildCreator {
 

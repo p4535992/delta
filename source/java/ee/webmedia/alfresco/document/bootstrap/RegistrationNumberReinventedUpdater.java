@@ -14,9 +14,6 @@ import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.register.model.RegNrHolder;
 import ee.webmedia.alfresco.utils.SearchUtil;
 
-/**
- * @author Keit Tehvan
- */
 public class RegistrationNumberReinventedUpdater extends AbstractNodeUpdater {
 
     @Override

@@ -42,7 +42,7 @@
          <f:facet name="header">
             <a:sortLink id="col3-header" label="#{DialogManager.bean.log.eventColumnTitle}" value="eventDescription" styleClass="header" />
          </f:facet>
-         <h:outputText id="col3-txt" value="#{r.eventDescription}" />
+         <h:outputText id="col3-txt" styleClass="condence150" value="#{r.eventDescriptionAndLinks}" escape="false"/>
       </a:column>
 
       <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/page-size.jsp" />

@@ -13,9 +13,6 @@ import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.doclist.service.DocumentListService;
 import ee.webmedia.alfresco.functions.service.FunctionsService;
 
-/**
- * @author Alar Kvell
- */
 public class UpdateDocumentListCountersBootstrap extends AbstractModuleComponent {
     protected final Log LOG = LogFactory.getLog(getClass());
 

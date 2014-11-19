@@ -15,9 +15,6 @@ import ee.webmedia.alfresco.docadmin.service.Field;
 import ee.webmedia.alfresco.docconfig.generator.BaseTypeFieldGenerator;
 import ee.webmedia.alfresco.docconfig.generator.GeneratorResults;
 
-/**
- * @author Alar Kvell
- */
 public class DoubleGenerator extends BaseTypeFieldGenerator {
     public static final String END_PREFIX = "_EndNumber";
 

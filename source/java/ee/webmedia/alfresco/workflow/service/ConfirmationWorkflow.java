@@ -2,9 +2,6 @@ package ee.webmedia.alfresco.workflow.service;
 
 import ee.webmedia.alfresco.common.web.WmNode;
 
-/**
- * @author Riina Tens
- */
 public class ConfirmationWorkflow extends Workflow {
 
     private static final long serialVersionUID = 1L;

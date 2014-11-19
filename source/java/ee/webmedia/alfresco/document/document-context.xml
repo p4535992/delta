@@ -58,7 +58,7 @@
       </property>
    </bean>
 
-   <bean id="documentService" class="ee.webmedia.alfresco.document.service.DocumentServiceImpl">
+   <bean id="documentService" class="ee.webmedia.alfresco.document.service.DocumentServiceImpl" init-method="init">
       <property name="dictionaryService" ref="DictionaryService" />
       <property name="namespaceService" ref="NamespaceService" />
       <property name="nodeService" ref="NodeService" />

@@ -25,9 +25,6 @@ import ee.webmedia.alfresco.workflow.model.CompoundWorkflowType;
 import ee.webmedia.alfresco.workflow.model.RelatedUrl;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 
-/**
- * @author Alar Kvell
- */
 public class CompoundWorkflow extends BaseWorkflowObject implements Serializable, Comparable<CompoundWorkflow> {
     private static final long serialVersionUID = 1L;
 

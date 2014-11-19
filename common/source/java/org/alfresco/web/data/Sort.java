@@ -55,7 +55,6 @@ import ee.webmedia.alfresco.common.web.BeanHelper;
  * 
  * @author Kevin Roast
  * <br>----------------------
- * @author Ats Uiboupin - Added support for sorting Nodes by properties
  */
 public abstract class Sort
 {

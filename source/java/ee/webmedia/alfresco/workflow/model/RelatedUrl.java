@@ -12,9 +12,6 @@ import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.workflow.service.Task;
 
-/**
- * @author Riina Tens
- */
 public class RelatedUrl extends NodeBaseVO {
 
     public static final String TARGET_BLANK = "_blank";

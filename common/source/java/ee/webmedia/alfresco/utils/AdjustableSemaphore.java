@@ -5,7 +5,7 @@ import java.util.concurrent.Semaphore;
 import net.jcip.annotations.ThreadSafe;
 
 /**
- * Original code is copied from http://blog.teamlazerbeez.com/2009/04/20/javas-semaphore-resizing/ (Riina)
+ * Original code is copied from http://blog.teamlazerbeez.com/2009/04/20/javas-semaphore-resizing/ 
  * A simple implementation of an adjustable semaphore.
  */
 @ThreadSafe

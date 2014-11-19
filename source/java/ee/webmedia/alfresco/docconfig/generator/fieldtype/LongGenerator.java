@@ -14,9 +14,6 @@ import ee.webmedia.alfresco.docadmin.service.Field;
 import ee.webmedia.alfresco.docconfig.generator.BaseTypeFieldGenerator;
 import ee.webmedia.alfresco.docconfig.generator.GeneratorResults;
 
-/**
- * @author Alar Kvell
- */
 public class LongGenerator extends BaseTypeFieldGenerator {
 
     @Override

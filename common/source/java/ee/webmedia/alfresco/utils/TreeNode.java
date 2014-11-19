@@ -5,8 +5,6 @@ import java.util.List;
 
 /**
  * Simple implementation of a tree data structure.
- * 
- * @author Alar Kvell
  */
 public class TreeNode<T> {
 

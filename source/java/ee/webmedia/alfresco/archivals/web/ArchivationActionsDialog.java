@@ -10,9 +10,6 @@ import org.alfresco.web.bean.dialog.BaseDialogBean;
 
 import ee.webmedia.alfresco.utils.MessageUtil;
 
-/**
- * @author Riina Tens
- */
 public class ArchivationActionsDialog extends BaseDialogBean {
 
     private static final long serialVersionUID = 1L;

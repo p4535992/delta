@@ -9,9 +9,6 @@ import ee.webmedia.alfresco.adddocument.generated.AddDocumentRequest;
 import ee.webmedia.alfresco.adddocument.generated.AddDocumentResponse;
 import ee.webmedia.alfresco.document.model.Document;
 
-/**
- * @author Riina Tens
- */
 public interface AddDocumentService {
 
     String BEAN_NAME = "AddDocumentService";

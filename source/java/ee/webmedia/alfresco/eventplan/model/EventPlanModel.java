@@ -4,8 +4,6 @@ import org.alfresco.service.namespace.QName;
 
 /**
  * EventPlan model constants.
- * 
- * @author Martti Tamm
  */
 public interface EventPlanModel {
 

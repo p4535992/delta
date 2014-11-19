@@ -14,9 +14,6 @@ import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.utils.SearchUtil;
 
-/**
- * @author Alar Kvell
- */
 public class StorageTypeUpdater extends AbstractNodeUpdater {
 
     private FileService fileService;

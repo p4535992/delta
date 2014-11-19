@@ -48,6 +48,8 @@ import org.alfresco.i18n.I18NUtil;
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.content.MimetypeMap;
 import org.alfresco.repo.content.transform.ContentTransformer;
+import org.alfresco.repo.node.NodeServicePolicies;
+import org.alfresco.repo.policy.JavaBehaviour;
 import org.alfresco.repo.policy.PolicyComponent;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
@@ -90,7 +92,6 @@ import org.joda.time.Instant;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
-import org.springframework.beans.factory.InitializingBean;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.adr.service.AdrService;
@@ -182,10 +183,7 @@ import ee.webmedia.alfresco.workflow.service.SignatureTask;
 import ee.webmedia.alfresco.workflow.service.Task;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
 
-/**
- * @author Alar Kvell
- */
-public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, InitializingBean {
+public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, NodeServicePolicies.BeforeDeleteNodePolicy {
 
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DocumentServiceImpl.class);
 
@@ -238,9 +236,12 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
     private PropertyChangesMonitorHelper propertyChangesMonitorHelper = new PropertyChangesMonitorHelper();
     private boolean volumeColumnEnabled;
 
-    @Override
-    public void afterPropertiesSet() throws Exception {
-        beanFactory.getBean("policyComponent", PolicyComponent.class);
+    public void init() {
+        PolicyComponent policyComponent = (PolicyComponent) beanFactory.getBean("policyComponent", PolicyComponent.class);
+        // XXX: DocumentCommonModel.Types.DOCUMENT generates IllegalArgumentException at startup (Class {http://alfresco.webmedia.ee/model/document/common/1.0}document has not been
+        // defined in the data dictionary). Why?
+        policyComponent.bindClassBehaviour(QName.createQName(NamespaceService.ALFRESCO_URI, "beforeDeleteNode"), ContentModel.TYPE_FOLDER, new JavaBehaviour(this,
+                "beforeDeleteNode"));
     }
 
     @Override
@@ -1446,7 +1447,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
         String status = (String) nodeService.getProperty(nodeRef, DocumentCommonModel.Props.DOC_STATUS);
 
         NodeRef volume = (NodeRef) nodeService.getProperty(nodeRef, VOLUME);
-        if (CaseFileModel.Types.CASE_FILE.equals(nodeService.getType(volume))) {
+        if (volume != null && CaseFileModel.Types.CASE_FILE.equals(nodeService.getType(volume))) {
             caseFileLogService.addCaseFileLog(volume, nodeRef, "casefile_log_document_deleted");
         }
 
@@ -1458,6 +1459,13 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
 
         if (updateMenu) {
             menuService.process(BeanHelper.getMenuBean().getMenu(), false, true);
+        }
+    }
+
+    @Override
+    public void beforeDeleteNode(NodeRef nodeRef) {
+        if (nodeRef != null && DocumentCommonModel.Types.DOCUMENT.equals(nodeService.getType(nodeRef))) {
+            fileService.removePreviousParentReference(nodeRef, true);
         }
     }
 
@@ -1985,7 +1993,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
             updateParentDocumentRegNumbers(docNode.getNodeRef(), (String) props.get(REG_NUMBER.toString()), holder.getRegNumber());
             props.put(REG_NUMBER.toString(), holder.getRegNumber());
             propertyChangesMonitorHelper.addIgnoredProps(props, REG_NUMBER);
-            // TODO ALAR review this
+            // TODO review this
             // if (!isRelocating || (generateNewRegNumberInReregistration && changeShortRegAndIndividualOnRelocatingDoc(previousVolume, series))) {
             props.put(SHORT_REG_NUMBER.toString(), holder.getShortRegNumber());
             propertyChangesMonitorHelper.addIgnoredProps(props, SHORT_REG_NUMBER);
@@ -2281,8 +2289,6 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
 
     /**
      * Helps to identify if properties(that should not be ignored for given properties map) that have been changed
-     * 
-     * @author Ats Uiboupin
      */
     public static class PropertyChangesMonitorHelper {
         private final QName TEMP_PROPERTY_CHANGES_IGNORED_PROPS = QName.createQName("{temp}propertyChanges_ignoredProps");

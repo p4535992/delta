@@ -3,9 +3,6 @@ package ee.webmedia.alfresco.workflow.service;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 
-/**
- * @author Riina Tens
- */
 public class OrderAssignmentWorkflow extends Workflow {
 
     private static final long serialVersionUID = 1L;

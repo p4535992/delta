@@ -11,9 +11,6 @@ import ee.webmedia.alfresco.casefile.service.CaseFile;
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 
-/**
- * @author Keit Tehvan
- */
 public class ArchiveCaseFileEvaluator extends BaseActionEvaluator {
     private static final long serialVersionUID = 0L;
 

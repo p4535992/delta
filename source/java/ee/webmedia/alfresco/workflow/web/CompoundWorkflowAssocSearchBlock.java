@@ -17,9 +17,6 @@ import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
 
-/**
- * @author Riina Tens
- */
 public class CompoundWorkflowAssocSearchBlock extends AbstractSearchBlockBean implements Serializable {
 
     private static final long serialVersionUID = 1L;

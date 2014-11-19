@@ -4,8 +4,6 @@ import org.alfresco.service.namespace.QName;
 
 /**
  * Task search filter model QNames.
- * 
- * @author Erko Hansar
  */
 public interface TaskSearchModel {
 

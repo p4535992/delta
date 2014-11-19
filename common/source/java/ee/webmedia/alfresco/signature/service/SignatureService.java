@@ -18,9 +18,6 @@ import ee.webmedia.alfresco.signature.model.SkLdapCertificate;
 /**
  * Service class that handles DigiDoc containers.
  * Has methods that create, check, sign, retrieve signatures, signature digests and files from the container.
- * 
- * @author Dmitri Melnikov
- * @author Alar Kvell
  */
 public interface SignatureService {
 

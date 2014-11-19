@@ -10,8 +10,6 @@ import org.alfresco.util.Pair;
 
 /**
  * Service to get consolidated list of documents and hierarchy.
- * 
- * @author Priit Pikk
  */
 
 public interface DocumentListService {

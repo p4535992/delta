@@ -10,6 +10,7 @@ import javax.mail.search.SearchTerm;
 
 import org.alfresco.repo.imap.AlfrescoImapFolder;
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.util.Assert;
@@ -24,8 +25,6 @@ import com.icegreen.greenmail.store.SimpleStoredMessage;
 /**
  * Mail folder implementation, that disables most activities on folder: makes it immutable, unlistable etc.
  * Append behaviour can be defined using {@link ee.webmedia.alfresco.imap.AppendBehaviour}.
- * 
- * @author Romet Aidla
  */
 public class ImmutableFolder implements MailFolder {
     public static final String PERMISSION_DENIED = "Permission denied.";
@@ -53,7 +52,11 @@ public class ImmutableFolder implements MailFolder {
 
     @Override
     public String getFullName() {
-        return innerMailFolder.getFullName();
+        String fullName = innerMailFolder.getFullName();
+        if (StringUtils.isNotBlank(fullName)) {
+            fullName = StringUtils.remove(fullName, '"'); // Trim double quotes, since they are not used in Delta and cause crashing in Outlook 2010/2013
+        }
+        return fullName;
     }
 
     @Override
@@ -184,5 +187,10 @@ public class ImmutableFolder implements MailFolder {
     @Override
     public List getNonDeletedMessages() {
         return Collections.EMPTY_LIST;
+    }
+
+    @Override
+    public boolean isMarked() {
+        return false;
     }
 }

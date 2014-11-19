@@ -18,9 +18,6 @@ import com.thoughtworks.xstream.annotations.XStreamOmitField;
 import ee.webmedia.alfresco.utils.ComparableTransformer;
 import ee.webmedia.alfresco.utils.RepoUtil;
 
-/**
- * @author Kaarel Jõgeva
- */
 @XStreamAlias("thesaurus")
 public class Thesaurus implements Serializable, Comparable<Thesaurus> {
     private static final long serialVersionUID = 1L;

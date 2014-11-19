@@ -31,9 +31,6 @@ import ee.webmedia.alfresco.workflow.service.event.WorkflowEventQueue;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowEventQueue.WorkflowQueueParameter;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowEventType;
 
-/**
- * @author Riina Tens
- */
 public class IndependentWorkflowTaskStatusChangeListener implements WorkflowEventListener, InitializingBean {
 
     private WorkflowService workflowService;
@@ -116,7 +113,8 @@ public class IndependentWorkflowTaskStatusChangeListener implements WorkflowEven
                         String previousOwnerInMemory = compoundWorkflow.getProp(WorkflowCommonModel.Props.PREVIOUS_OWNER_ID);
                         if (!(previousOwnerInMemory != null && previousOwnerInMemory.equals(previousOwnerId))) {
                             BeanHelper.getWorkflowService().setCompoundWorkflowOwner(compoundWorkflow.getNodeRef(), newOwner, false);
-                            if (WorkflowEventType.CREATED.equals(queue.getEvents().get(0).getType())) {
+                            WorkflowEvent workflowEvent = queue.getEvents().get(0);
+                            if (WorkflowEventType.CREATED.equals(workflowEvent.getType()) && workflowEvent.getObject() instanceof CompoundWorkflow) {
                                 BeanHelper.getLogService().addLogEntry(
                                         LogEntry.create(LogObject.COMPOUND_WORKFLOW, userService, compoundWorkflow.getNodeRef(), "applog_compoundWorkflow_data_changed",
                                                 MessageUtil.getMessage("workflow_responsible"), userService.getUserFullName(previousOwnerId),

@@ -17,7 +17,6 @@ import ee.webmedia.alfresco.template.model.DocumentTemplateModel;
 import ee.webmedia.alfresco.utils.SearchUtil;
 
 /**
- * @author Vladimir Drozdik
  *         Add to templates templateType property and value. Changes systemTemplate aspect to notificationTemplate.
  */
 public class DocumentTemplateTypeUpdater extends AbstractNodeUpdater {

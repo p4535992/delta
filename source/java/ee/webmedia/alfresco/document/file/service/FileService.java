@@ -13,9 +13,6 @@ import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.file.model.GeneratedFileType;
 import ee.webmedia.alfresco.document.file.web.Subfolder;
 
-/**
- * @author Dmitri Melnikov
- */
 public interface FileService {
 
     String BEAN_NAME = "FileService";
@@ -147,6 +144,8 @@ public interface FileService {
     List<File> getFiles(List<NodeRef> taskFileNodeRefs);
 
     InputStream getFileContentInputStream(NodeRef fileRef);
+
+    void removePreviousParentReference(NodeRef docRef, boolean moveToPreviousParent);
 
     String getJumploaderPath();
 

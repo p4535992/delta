@@ -18,9 +18,6 @@ import ee.webmedia.alfresco.addressbook.util.AddressbookUtil;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.UserContactGroupSearchBean;
 
-/**
- * @author Keit Tehvan
- */
 public class AddressbookSearchBean {
 
     public static final String BEAN_NAME = "AddressbookSearchBean";

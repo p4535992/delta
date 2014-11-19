@@ -2,9 +2,6 @@ package ee.webmedia.alfresco.document.file.model;
 
 import org.alfresco.service.namespace.QName;
 
-/**
- * @author Ats Uiboupin
- */
 public interface FileModel {
     String URI = "http://alfresco.webmedia.ee/model/file/1.0";
 
@@ -31,5 +28,6 @@ public interface FileModel {
         QName LOCKED_FILE_NODEREF = QName.createQName(URI, "lockedFileNodeRef");
         QName ACTIVITY_FILE_TYPE = QName.createQName(URI, "activityFileType");
         QName MANUAL_LOCK = QName.createQName(URI, "manualLock");
+        QName PREVIOUS_FILE_PARENT = QName.createQName(URI, "previousFileParent");
     }
 }

@@ -10,9 +10,6 @@ import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.functions.model.FunctionsModel;
 
-/**
- * @author Marti Laast
- */
 public class CaseFileSendForInformationEvaluator extends BaseActionEvaluator {
 
     private static final long serialVersionUID = 1L;

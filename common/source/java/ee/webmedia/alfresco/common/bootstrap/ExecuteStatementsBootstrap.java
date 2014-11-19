@@ -11,9 +11,6 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 
-/**
- * @author Riina Tens
- */
 public class ExecuteStatementsBootstrap extends AbstractModuleComponent {
 
     protected static final Logger LOG = Logger.getLogger(ExecuteStatementsBootstrap.class);

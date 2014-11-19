@@ -11,9 +11,6 @@ import org.alfresco.web.bean.repository.Node;
 
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 
-/**
- * @author Kaarel Jõgeva
- */
 public class DeleteTopicOrForumEvaluator extends BaseActionEvaluator {
     private static final long serialVersionUID = 1L;
 

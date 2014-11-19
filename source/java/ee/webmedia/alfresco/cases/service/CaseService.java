@@ -10,8 +10,6 @@ import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
 
 /**
  * Service class for cases
- * 
- * @author Ats Uiboupin
  */
 public interface CaseService {
     String BEAN_NAME = "CaseService";

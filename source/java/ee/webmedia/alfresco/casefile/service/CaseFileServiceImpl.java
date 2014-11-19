@@ -68,9 +68,6 @@ import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
 
-/**
- * @author Kaarel Jõgeva
- */
 public class CaseFileServiceImpl implements CaseFileService, BeanFactoryAware {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(CaseFileServiceImpl.class);
 

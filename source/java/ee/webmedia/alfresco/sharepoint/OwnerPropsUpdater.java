@@ -24,9 +24,6 @@ import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.SearchUtil;
 import ee.webmedia.alfresco.utils.UserUtil;
 
-/**
- * @author Alar Kvell
- */
 public class OwnerPropsUpdater extends AbstractNodeUpdater {
 
     private UserService userService;

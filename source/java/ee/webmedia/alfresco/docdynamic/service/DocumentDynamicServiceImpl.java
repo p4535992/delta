@@ -130,9 +130,6 @@ import ee.webmedia.alfresco.workflow.service.Workflow;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
 import ee.webmedia.alfresco.workflow.service.WorkflowUtil;
 
-/**
- * @author Alar Kvell
- */
 public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanFactoryAware {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(DocumentDynamicServiceImpl.class);
 
@@ -718,6 +715,10 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         Assert.isNull(childAssocTypeQNamesRoot.getData());
 
         updateSearchableChildNodeProps(docNode, null, childAssocTypeQNamesRoot.getChildren(), propDefs);
+        if (isDraft) {
+            // Remove references on first save
+            fileService.removePreviousParentReference(docRef, false);
+        }
 
         { // update properties and log changes made in properties
             String oldRegNumber = (String) nodeService.getProperty(docRef, REG_NUMBER);
@@ -1328,7 +1329,7 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         }
 
         // Update sub-nodes
-        // TODO from Alar: implement generic child-node support using propertyDefinition.getChildAssocTypeQNameHierarchy()
+        // TODO from implement generic child-node support using propertyDefinition.getChildAssocTypeQNameHierarchy()
         if (!partyFields.isEmpty()) {
             List<ChildAssociationRef> contractPartyChildAssocs = nodeService.getChildAssocs(document, DocumentChildModel.Assocs.CONTRACT_PARTY, RegexQNamePattern.MATCH_ALL);
             for (ContractPartyField field : partyFields) {

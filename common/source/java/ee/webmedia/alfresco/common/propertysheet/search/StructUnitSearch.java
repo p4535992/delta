@@ -15,8 +15,6 @@ import ee.webmedia.alfresco.utils.UserUtil;
 
 /**
  * Search structure units, return paths list as result
- * 
- * @author Riina Tens
  */
 public class StructUnitSearch extends Search {
 

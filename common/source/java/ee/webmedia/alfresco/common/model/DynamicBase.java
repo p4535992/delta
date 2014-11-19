@@ -12,8 +12,6 @@ import ee.webmedia.alfresco.document.service.DocumentService;
 
 /**
  * Base type for objects with dynamic configuration
- * 
- * @author Kaarel Jõgeva
  */
 public class DynamicBase extends NodeBaseVO {
     private static final long serialVersionUID = 1L;

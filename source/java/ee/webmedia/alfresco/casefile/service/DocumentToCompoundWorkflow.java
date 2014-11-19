@@ -10,9 +10,6 @@ import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
 import ee.webmedia.alfresco.workflow.service.WorkflowUtil;
 
-/**
- * @author Riina Tens
- */
 public class DocumentToCompoundWorkflow implements Comparable<DocumentToCompoundWorkflow>, Serializable {
 
     private static final long serialVersionUID = 1L;

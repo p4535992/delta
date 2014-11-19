@@ -13,9 +13,6 @@ import ee.webmedia.alfresco.common.propertysheet.classificatorselector.Classific
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.utils.TextUtil;
 
-/**
- * @author Riina Tens
- */
 public class DimensionValue implements Comparable<DimensionValue>, ClassificatorSelectorValueProvider, Serializable {
 
     private static final long serialVersionUID = 1L;

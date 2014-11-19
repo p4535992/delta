@@ -33,8 +33,6 @@ import ee.webmedia.alfresco.utils.TextUtil;
  * There is no need to check if referred document actually exists and if it is supposed to be sent to adr; this check is
  * done upon synchronization, so documents that actually exist are not deleted during synchronization.
  * See CL task 215716 for details.
- * 
- * @author Riina Tens
  */
 public class AddAdrDeletedDocForNotExistingDoc extends AbstractNodeUpdater {
 

@@ -10,8 +10,6 @@ import org.springframework.util.Assert;
 
 /**
  * Wrapper for user node used in user list dialog
- * 
- * @author Riina Tens
  */
 public class UserListRowVO implements Serializable {
 

@@ -32,9 +32,6 @@ import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
-/**
- * @author Riina Tens
- */
 public class DocumentSendForInformationDialog extends BaseDialogBean {
 
     private static final long serialVersionUID = 1L;

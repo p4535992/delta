@@ -7,8 +7,6 @@ import org.alfresco.service.cmr.repository.NodeRef;
 
 /**
  * Model object for representing locked documents and files
- * 
- * @author Kaarel Jõgeva
  */
 public class Lock implements Serializable, Comparable<Lock> {
 

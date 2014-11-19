@@ -13,8 +13,6 @@ import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
 
 /**
  * Converter that converts String->String based on Enum name.
- * 
- * @author Ats Uiboupin
  */
 public class EnumConverter implements Converter, StateHolder {
     private boolean trans;
