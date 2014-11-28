@@ -1,46 +1,38 @@
 /*
- * Copyright (C) 2005-2007 Alfresco Software Limited.
+ * Copyright (C) 2005-2011 Alfresco Software Limited.
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
-
- * This program is distributed in the hope that it will be useful,
+ * This file is part of Alfresco
+ *
+ * Alfresco is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Alfresco is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
-
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-
- * As a special exception to the terms and conditions of version 2.0 of 
- * the GPL, you may redistribute this Program in connection with Free/Libre 
- * and Open Source Software ("FLOSS") applications as described in Alfresco's 
- * FLOSS exception.  You should have recieved a copy of the text describing 
- * the FLOSS exception, and it is also available here: 
- * http://www.alfresco.com/legal/licensing"
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with Alfresco. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.alfresco.repo.webdav;
 
 import java.io.Serializable;
 import java.net.URLDecoder;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Hashtable;
 import java.util.Locale;
 import java.util.Map;
-import java.util.StringTokenizer;
 import java.util.TimeZone;
-
-import javax.servlet.http.HttpServletRequest;
 
 import org.alfresco.error.AlfrescoRuntimeException;
 import org.alfresco.model.ContentModel;
 import org.alfresco.service.cmr.repository.ContentData;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.util.ISO9075;
+import org.apache.commons.lang.time.DateFormatUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -60,22 +52,30 @@ public class WebDAV
     public static final String DAV_NS   = "D";
     public static final String DAV_NS_PREFIX = DAV_NS + ":";
     
-    // PROPFIND depth
+    // PROPFIND, LOCK depth
     
     public static final int DEPTH_0 = 0;
     public static final int DEPTH_1 = 1;
     public static final int DEPTH_INFINITY = -1;
     public static final short TIMEOUT_INFINITY = -1;
+    public static final int TIMEOUT_24_HOURS = 86400;
+    public static final int TIMEOUT_180_SECONDS = 86400;
 
     // WebDAV HTTP response codes
     
     public static final int WEBDAV_SC_MULTI_STATUS = 207;
     public static final int WEBDAV_SC_LOCKED = 423;
+    public static final int WEBDAV_SC_FAILED_DEPENDENCY = 424;
+
+    // WebDAV HTTP response code descriptions
+
+    public static final String WEBDAV_SC_FAILED_DEPENDENCY_DESC = "Failed Dependency";
 
     // HTTP response code descriptions
     
     public static final String SC_OK_DESC = "OK";
     public static final String SC_NOT_FOUND_DESC = "Not Found";
+    public static final String SC_FORBIDDEN_DESC = "Forbidden";
 
     // HTTP methods
     
@@ -113,14 +113,18 @@ public class WebDAV
     public static final String HEADER_OVERWRITE = "Overwrite";
     public static final String HEADER_RANGE = "Range";
     public static final String HEADER_TIMEOUT = "Timeout";
-    public static final String HEADER_USER_AGENT = "User-agent";
-
-    public static final String AGENT_MICROSOFT_DATA_ACCESS_INTERNET_PUBLISHING_PROVIDER_DAV = "Microsoft Data Access Internet Publishing Provider DAV";
+    public static final String HEADER_USER_AGENT = "User-Agent";
 
     // If-Modified/If-Unmodified date format
     
     public static final String HEADER_IF_DATE_FORMAT = "EEE, dd MMM yyyy HH:mm:ss zzz";
     
+    // If header keyword
+
+    public static final String HEADER_KEY_NOT = "Not";
+
+    public static final String AGENT_MICROSOFT_DATA_ACCESS_INTERNET_PUBLISHING_PROVIDER_DAV = "Microsoft Data Access Internet Publishing Provider DAV";
+    public static final String AGENT_INTERNET_EXPLORER = "MSIE";
     // General string constants
     
     public static final String ASTERISK = "*";
@@ -136,6 +140,7 @@ public class WebDAV
     public static final String HEADER_VALUE_SEPARATOR = ",";
     public static final String ZERO = "0";
     public static final String ONE = "1";
+    public static final String F = "F";
     public static final String T = "T";
 
     // Strings used in WebDAV XML payload
@@ -156,6 +161,7 @@ public class WebDAV
     public static final String XML_GET_LAST_MODIFIED = "getlastmodified";
     public static final String XML_HREF = "href";
     public static final String XML_LOCK_DISCOVERY = "lockdiscovery";
+    public static final String XML_LOCK_ENTRY = "lockentry";
     public static final String XML_LOCK_SCOPE = "lockscope";
     public static final String XML_LOCK_TOKEN = "locktoken";
     public static final String XML_LOCK_TYPE = "locktype";
@@ -166,13 +172,15 @@ public class WebDAV
     public static final String XML_PROPSTAT = "propstat";
     public static final String XML_RESOURCE_TYPE = "resourcetype";
     public static final String XML_RESPONSE = "response";
-    public static final String XML_SET = "set";
     public static final String XML_SHARED = "shared";
     public static final String XML_SOURCE = "source";
     public static final String XML_STATUS = "status";
     public static final String XML_SUPPORTED_LOCK = "supportedlock";
     public static final String XML_TIMEOUT = "timeout";
     public static final String XML_WRITE = "write";
+    public static final String XML_SET = "set";
+    public static final String XML_REMOVE = "remove";
+    public static final String XML_ERROR = "error";
 
     // Namespaced versions of payload elements
     
@@ -190,6 +198,7 @@ public class WebDAV
     public static final String XML_NS_GET_LAST_MODIFIED = DAV_NS_PREFIX + "getlastmodified";
     public static final String XML_NS_HREF = DAV_NS_PREFIX + "href";
     public static final String XML_NS_LOCK_DISCOVERY = DAV_NS_PREFIX + "lockdiscovery";
+    public static final String XML_NS_LOCK_ENTRY = DAV_NS_PREFIX + "lockentry";
     public static final String XML_NS_LOCK_SCOPE = DAV_NS_PREFIX + "lockscope";
     public static final String XML_NS_LOCK_TOKEN = DAV_NS_PREFIX + "locktoken";
     public static final String XML_NS_LOCK_TYPE = DAV_NS_PREFIX + "locktype";
@@ -206,7 +215,10 @@ public class WebDAV
     public static final String XML_NS_SUPPORTED_LOCK = DAV_NS_PREFIX + "supportedlock";
     public static final String XML_NS_TIMEOUT = DAV_NS_PREFIX + "timeout";
     public static final String XML_NS_WRITE = DAV_NS_PREFIX + "write";
-    
+    public static final String XML_NS_ERROR = DAV_NS_PREFIX + "error";
+    public static final String XML_NS_CANNOT_MODIFY_PROTECTED_PROPERTY = DAV_NS_PREFIX + "cannot-modify-protected-property";
+
+
     public static final String XML_CONTENT_TYPE = "text/xml; charset=UTF-8";
     
     // Alfresco specific properties
@@ -225,7 +237,7 @@ public class WebDAV
     
     // Root path
     
-    private static final String RootPath = PathSeperator;
+    public static final String RootPath = PathSeperator;
     
     // Map WebDAV property names to Alfresco property names
     
@@ -233,13 +245,7 @@ public class WebDAV
     
     // WebDAV creation date/time formatter
     
-    private static SimpleDateFormat _creationDateFormatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
-    
-    //  HTTP header date/time formatter
-    //  NOTE: According to RFC2616 dates should always be in English and in
-    //        the GMT timezone see http://rfc.net/rfc2616.html#p20 for details
-    
-    private static SimpleDateFormat _httpDateFormatter = new SimpleDateFormat(HEADER_IF_DATE_FORMAT, Locale.ENGLISH);
+    private static String CREATION_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss'Z'";
     
     /**
      * Formats the given date so that it conforms with the Last-Modified HTTP header
@@ -249,7 +255,7 @@ public class WebDAV
      */
     public static String formatModifiedDate(Date date)
     {
-        return _httpDateFormatter.format(date);
+        return formatHeaderDate(date);
     }
 
     /**
@@ -260,7 +266,7 @@ public class WebDAV
      */
     public static String formatModifiedDate(long ldate)
     {
-        return _httpDateFormatter.format(new Date(ldate));
+        return formatHeaderDate(ldate);
     }
 
     /**
@@ -271,7 +277,7 @@ public class WebDAV
      */
     public static String formatCreationDate(Date date)
     {
-        return _creationDateFormatter.format(date);
+        return DateFormatUtils.formatUTC(date, CREATION_DATE_FORMAT);
     }
 
     /**
@@ -282,7 +288,7 @@ public class WebDAV
      */
     public static String formatCreationDate(long ldate)
     {
-        return _creationDateFormatter.format(new Date(ldate));
+        return DateFormatUtils.formatUTC(ldate, CREATION_DATE_FORMAT);
     }
 
     /**
@@ -293,7 +299,10 @@ public class WebDAV
      */
     public static String formatHeaderDate(Date date)
     {
-        return _httpDateFormatter.format( date);
+        // HTTP header date/time format
+        // NOTE: According to RFC2616 dates should always be in English and in
+        //        the GMT timezone see http://rfc.net/rfc2616.html#p20 for details
+        return DateFormatUtils.format(date, HEADER_IF_DATE_FORMAT, TimeZone.getTimeZone("GMT"), Locale.ENGLISH);
     }
     
     /**
@@ -302,9 +311,12 @@ public class WebDAV
      * @param date long
      * @return String
      */
-    public static String formatHeaderDate(long date)
+    public static String formatHeaderDate(long ldate)
     {
-        return _httpDateFormatter.format( new Date(date));
+        // HTTP header date/time format
+        // NOTE: According to RFC2616 dates should always be in English and in
+        //        the GMT timezone see http://rfc.net/rfc2616.html#p20 for details
+        return DateFormatUtils.format(ldate, HEADER_IF_DATE_FORMAT, TimeZone.getTimeZone("GMT"), Locale.ENGLISH);
     }
     
     /**
@@ -338,122 +350,7 @@ public class WebDAV
         }
         return value;
     }
-    
-    
     /**
-     * Maps the current HTTP request to a path that can be used to access a content repository
-     * 
-     * @param request HTTP request
-     * @return A content repository path
-     */
-    public static String getRepositoryPath(HttpServletRequest request)
-    {
-        // Try and get the path
-
-        String strPath = null;
-        
-        try 
-        {
-            strPath = URLDecoder.decode( request.getRequestURI(), "UTF-8");
-        }
-        catch (Exception ex) {}
-
-        // Find the servlet path and trim from the request path
-        
-        String servletPath = request.getServletPath();
-        
-        int rootPos = strPath.indexOf(servletPath);
-        if ( rootPos != -1)
-        {
-            strPath = strPath.substring( rootPos);
-        }
-        
-        // If we failed to get the path from the request try and get the path from the servlet path
-
-        if (strPath == null)
-        {
-            strPath = request.getServletPath();
-        }
-
-        if (strPath == null || strPath.length() == 0)
-        {
-            // If we still have not got a path then default to the root directory
-            strPath = RootPath;
-        }
-        else if (strPath.startsWith(request.getServletPath()))
-        {
-            // Check if the path starts with the base servlet path
-            int len = request.getServletPath().length();
-            
-            if (strPath.length() > len)
-            {
-                strPath = strPath.substring(len);
-            }
-            else
-            {
-                strPath = RootPath;
-            }
-        }
-
-        // Make sure there are no trailing slashes
-        
-        if (strPath.length() > 1 && strPath.endsWith(DIR_SEPARATOR))
-        {
-            strPath = strPath.substring(0, strPath.length() - 1);
-        }
-
-        // Return the path
-        
-        return strPath;
-    }
-
-    /**
-     * Returns a URL that could be used to access the given path.
-     * 
-     * @param request HttpServletRequest
-     * @param path String
-     * @param isCollection boolean
-     * @return String
-     */
-    public static String getURLForPath(HttpServletRequest request, String path, boolean isCollection)
-    {
-        StringBuilder urlStr = new StringBuilder(request.getRequestURI());
-        String servletPath = request.getServletPath();
-        
-        int rootPos = urlStr.indexOf(servletPath);
-        if (rootPos != -1)
-        {
-            urlStr.setLength(rootPos + servletPath.length());
-        }
-        
-        if (urlStr.charAt(urlStr.length() - 1) != PathSeperatorChar)
-        {
-            urlStr.append(PathSeperator);
-        }
-        
-        if (path.equals(RootPath) == false)
-        {
-            // split the path and URL encode each path element
-            for (StringTokenizer t = new StringTokenizer(path, PathSeperator); t.hasMoreTokens(); /**/)
-            {
-                urlStr.append( WebDAVHelper.encodeURL(t.nextToken()) );
-                if (t.hasMoreTokens())
-                {
-                    urlStr.append(PathSeperator);
-                }
-            }
-        }
-        
-        // If the URL is to a collection add a trailing slash
-        if (isCollection && urlStr.charAt( urlStr.length() - 1) != PathSeperatorChar)
-        {
-            urlStr.append( PathSeperator);
-        }
-        
-        // Return the URL string
-        return urlStr.toString();
-    }
-
     /**
      * Returns a context-relative path, beginning with a "/", that represents the canonical version
      * of the specified path after ".." and "." elements are resolved out. If the specified path
@@ -546,7 +443,7 @@ public class WebDAV
         str.append(WebDAV.OPAQUE_LOCK_TOKEN);
         str.append(lockNode.getId());
         str.append(LOCK_TOKEN_SEPERATOR);
-        str.append(owner);
+        str.append(ISO9075.encode(owner)); // FIXME Session ID needed?
         
         return str.toString();
     }
@@ -584,13 +481,34 @@ public class WebDAV
     }
     
     /**
+     * Returns string representation of the depth
+     *
+     * @param depth
+     * @return String
+     */
+    public static final String getDepthName(int depth)
+    {
+        switch (depth)
+        {
+        case DEPTH_0:
+            return ZERO;
+
+        case DEPTH_1:
+            return ONE;
+
+        case DEPTH_INFINITY:
+            return INFINITY;
+
+        default:
+            throw new IllegalArgumentException("Unknown depth:" + depth);
+        }
+    }
+
+    /**
      * Static initializer
      */
     static
     {
-        // ensure http dates are in GMT time zone (see note above)
-        _httpDateFormatter.setTimeZone(TimeZone.getTimeZone("GMT"));
-        
         // Create the WebDAV to Alfresco property mapping table
         
         _propertyNameMap = new Hashtable<String, QName>();

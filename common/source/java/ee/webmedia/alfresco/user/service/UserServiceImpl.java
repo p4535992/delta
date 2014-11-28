@@ -482,6 +482,9 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public String getUserFullName(String userName) {
+        if (StringUtils.isBlank(userName)) {
+            return userName;
+        }
         userName = StringUtils.substringBefore(userName, "_");
         Map<QName, Serializable> props = getUserProperties(userName);
         if (props == null) {

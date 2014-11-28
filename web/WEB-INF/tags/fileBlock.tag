@@ -29,7 +29,7 @@
          <li>
          	<c:set value="${file.displayName} (${mDelta:fileSize(file.size)})" var="fileTitle" />
          	<c:choose>
-	         	<c:when test="${mDelta:documentAllowPermission(file.node.nodeRef, 'viewDocumentFiles')}">
+	         	<c:when test="${ file.viewDocumentFilesPermission }" >
 	               <a href="<c:url value="${file.readOnlyUrl}" />" title="${fileTitle}"><c:out value="${fileTitle}" /></a>
 	            </c:when>
 	            <c:otherwise>

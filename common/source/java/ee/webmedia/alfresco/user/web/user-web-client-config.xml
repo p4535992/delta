@@ -103,6 +103,8 @@
             noAddLinkLabel="true" addLabelId="add_row" isAutomaticallyAddRows="true" isAlwaysEdit="true"
             propsGeneration="cm:relatedFundsCenter¤DimensionSelectorAlwaysEditGenerator¤dimensionName=invoiceFundsCenters
                      ¤styleClass=expand19-200 tooltip" />
+         <show-property name="cm:openOfficeClientExtensions" display-label-id="user_openOfficeClientExtensions" rendered="#{UserDetailsDialog.isAdministratorOrCurrentUser}"
+                        isAlwaysEdit="true" />
       </property-sheet>
    </config>
 

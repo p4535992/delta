@@ -4406,13 +4406,25 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
             return null;
         }
     }
-
+	
     public static Map<QName, Serializable> convertToPublicProperties(
             Map<PropertyMapKey, NodePropertyValue> propertyValues,
             QNameDAO qnameDAO,
             LocaleDAO localeDAO,
             ContentDataDAO contentDataDAO,
             DictionaryService dictionaryService)
+    {
+        return convertToPublicProperties(propertyValues, qnameDAO, localeDAO, contentDataDAO, dictionaryService, null, null);
+    }
+
+    public static Map<QName, Serializable> convertToPublicProperties(
+            Map<PropertyMapKey, NodePropertyValue> propertyValues,
+            QNameDAO qnameDAO,
+            LocaleDAO localeDAO,
+            ContentDataDAO contentDataDAO,
+            DictionaryService dictionaryService,
+            Set<QName> propsToload,
+            Map<Long, QName> propertyTypes)
     {
         Map<QName, Serializable> propertyMap = new HashMap<QName, Serializable>(propertyValues.size(), 1.0F);
         // Shortcut
@@ -4422,11 +4434,14 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         }
         // We need to process the properties in order
         SortedMap<PropertyMapKey, NodePropertyValue> sortedPropertyValues = new TreeMap<PropertyMapKey, NodePropertyValue>(propertyValues);
-        // A working map.  Ordering is important.
+        // A working map. Ordering is important.
         SortedMap<PropertyMapKey, NodePropertyValue> scratch = new TreeMap<PropertyMapKey, NodePropertyValue>();
         // Iterate (sorted) over the map entries and extract values with the same qname
         Long currentQNameId = Long.MIN_VALUE;
         Iterator<Map.Entry<PropertyMapKey, NodePropertyValue>> iterator = sortedPropertyValues.entrySet().iterator();
+        if (propertyTypes == null) {
+            propertyTypes = new HashMap<Long, QName>();
+        }
         while (true)
         {
             Long nextQNameId = null;
@@ -4440,58 +4455,60 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
                 nextPropertyValue = entry.getValue();
                 nextQNameId = nextPropertyKey.getQnameId();
             }
-            // If the QName is going to change, and we have some entries to process, then process them.
-            if (scratch.size() > 0 && (nextQNameId == null || !nextQNameId.equals(currentQNameId)))
-            {
-                QName currentQName = qnameDAO.getQName(currentQNameId).getSecond();
-                PropertyDefinition currentPropertyDef = dictionaryService.getProperty(currentQName);
-                // We have added something to the scratch properties but the qname has just changed
-                Serializable collapsedValue = null;
-                // We can shortcut if there is only one value
-                if (scratch.size() == 1)
+            QName currentQName = currentQNameId > Long.MIN_VALUE ? getQName(currentQNameId, propertyTypes, qnameDAO) : null;
+            if (currentQName == null || propsToload == null || propsToload.contains(currentQName)) {
+                // If the QName is going to change, and we have some entries to process, then process them.
+                if (scratch.size() > 0 && (nextQNameId == null || !nextQNameId.equals(currentQNameId)))
                 {
-                    // There is no need to collapse list indexes
-                    collapsedValue = HibernateNodeDaoServiceImpl.collapsePropertiesWithSameQNameAndListIndex(
-                            currentPropertyDef,
-                            scratch,
-                            localeDAO,
-                            contentDataDAO);
-                    // Make sure that multi-valued properties are returned as a collection
-                    if (!(collapsedValue instanceof Collection) && scratch.size() == 1 && scratch.keySet().iterator().next().getListIndex() == 0)
+                    PropertyDefinition currentPropertyDef = dictionaryService.getProperty(currentQName);
+                    // We have added something to the scratch properties but the qname has just changed
+                    Serializable collapsedValue = null;
+                    // We can shortcut if there is only one value
+                    if (scratch.size() == 1)
                     {
-                        // Can't use Collections.singletonList: ETHREEOH-1172
-                        ArrayList<Serializable> collection = new ArrayList<Serializable>(1);
-                        collection.add(collapsedValue);
-                        collapsedValue = collection;
+                        // There is no need to collapse list indexes
+                        collapsedValue = HibernateNodeDaoServiceImpl.collapsePropertiesWithSameQNameAndListIndex(
+                                currentPropertyDef,
+                                scratch,
+                                localeDAO,
+                                contentDataDAO);
+                        // Make sure that multi-valued properties are returned as a collection
+                        if (!(collapsedValue instanceof Collection) && scratch.size() == 1 && scratch.keySet().iterator().next().getListIndex() == 0)
+                        {
+                            // Can't use Collections.singletonList: ETHREEOH-1172
+                            ArrayList<Serializable> collection = new ArrayList<Serializable>(1);
+                            collection.add(collapsedValue);
+                            collapsedValue = collection;
+                        }
                     }
-                }
-                else
-                {
-                    // There is more than one value so the list indexes need to be collapsed
-                    collapsedValue = HibernateNodeDaoServiceImpl.collapsePropertiesWithSameQName(
-                            currentPropertyDef,
-                            scratch,
-                            localeDAO,
-                            contentDataDAO);
-                }
-                // If the property is multi-valued then the output property must be a collection
-                if (currentPropertyDef != null && currentPropertyDef.isMultiValued())
-                {
-                    // If value is not already collection, create list and add value into it.
-                    // There is custom change to Alfresco default implementation, so that a list with one null value ([null])
-                    // is handled correctly. Default implementation returns null, not [null] as it suppose to.
-                    if (collapsedValue == null  || !(collapsedValue instanceof Collection))
+                    else
                     {
-                        // Can't use Collections.singletonList: ETHREEOH-1172
-                        ArrayList<Serializable> collection = new ArrayList<Serializable>(1);
-                        collection.add(collapsedValue);
-                        collapsedValue = collection;
+                        // There is more than one value so the list indexes need to be collapsed
+                        collapsedValue = HibernateNodeDaoServiceImpl.collapsePropertiesWithSameQName(
+                                currentPropertyDef,
+                                scratch,
+                                localeDAO,
+                                contentDataDAO);
                     }
+                    // If the property is multi-valued then the output property must be a collection
+                    if (currentPropertyDef != null && currentPropertyDef.isMultiValued())
+                    {
+                        // If value is not already collection, create list and add value into it.
+                        // There is custom change to Alfresco default implementation, so that a list with one null value ([null])
+                        // is handled correctly. Default implementation returns null, not [null] as it suppose to.
+                        if (collapsedValue == null || !(collapsedValue instanceof Collection))
+                        {
+                            // Can't use Collections.singletonList: ETHREEOH-1172
+                            ArrayList<Serializable> collection = new ArrayList<Serializable>(1);
+                            collection.add(collapsedValue);
+                            collapsedValue = collection;
+                        }
+                    }
+                    // Store the value
+                    propertyMap.put(currentQName, collapsedValue);
+                    // Reset
+                    scratch.clear();
                 }
-                // Store the value
-                propertyMap.put(currentQName, collapsedValue);
-                // Reset
-                scratch.clear();
             }
             if (nextQNameId != null)
             {
@@ -4507,6 +4524,18 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         }
         // Done
         return propertyMap;
+    }
+	
+	private static QName getQName(Long currentQNameId, Map<Long, QName> propertyTypes, QNameDAO qnameDAO) {
+        boolean hasPropertyTypes = propertyTypes != null;
+        QName currentQName = hasPropertyTypes ? propertyTypes.get(currentQNameId) : null;
+        if (currentQName == null) {
+            currentQName = qnameDAO.getQName(currentQNameId).getSecond();
+            if (hasPropertyTypes) {
+                propertyTypes.put(currentQNameId, currentQName);
+            }
+        }
+        return currentQName;
     }
     
     private static Serializable collapsePropertiesWithSameQName(

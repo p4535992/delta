@@ -41,7 +41,6 @@ public class AdrDeletedDocumentNodeRefToTextUpdater extends AbstractNodeUpdater 
         return result;
     }
 
-
     @Override
     protected String[] updateNode(NodeRef nodeRef) throws Exception {
         Map<QName, Serializable> origProps = nodeService.getProperties(nodeRef);

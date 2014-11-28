@@ -58,33 +58,6 @@ public class AjaxBean implements Serializable {
     // AJAX handler methods
 
     @ResponseMimetype(MimetypeMap.MIMETYPE_HTML)
-    public void lockFileManually() throws IOException {
-        FacesContext context = FacesContext.getCurrentInstance();
-        ResponseWriter out = context.getResponseWriter();
-        DocLockService docLockService = BeanHelper.getDocLockService();
-
-        NodeRef fileRef = checkFileLock(context, out, docLockService);
-        if (fileRef == null) {
-            return;
-        }
-
-        try {
-            docLockService.lockFile(fileRef, 3600 * 12, true);
-            BeanHelper.getVersionsService().addVersionLockableAspect(fileRef);
-            BeanHelper.getVersionsService().setVersionLockableAspect(fileRef, false);
-        } catch (UnableToAquireLockException e) {
-            LOG.info("Failed to lock file during AJAX request", e);
-            out.write("LOCKING_FAILED");
-            return;
-        }
-
-        // Update file block state
-        BeanHelper.getFileBlockBean().refresh();
-        // Report success!
-        out.write("LOCKING_SUCCESSFUL");
-    }
-
-    @ResponseMimetype(MimetypeMap.MIMETYPE_HTML)
     public void isFileLocked() throws IOException {
         FacesContext context = FacesContext.getCurrentInstance();
         ResponseWriter out = context.getResponseWriter();
