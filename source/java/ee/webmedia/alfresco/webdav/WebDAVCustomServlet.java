@@ -11,6 +11,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletResponse;
 
 import org.alfresco.i18n.I18NUtil;
+import org.alfresco.repo.webdav.PropFindMethod;
 import org.alfresco.repo.webdav.WebDAV;
 import org.alfresco.repo.webdav.WebDAVServerException;
 import org.alfresco.repo.webdav.WebDAVServlet;

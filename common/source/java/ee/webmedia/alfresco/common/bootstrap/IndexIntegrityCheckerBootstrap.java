@@ -48,6 +48,7 @@ public class IndexIntegrityCheckerBootstrap {
     private SimpleJdbcTemplate jdbcTemplate;
     private LuceneIndexerAndSearcher indexerAndSearcher;
     private int maxTransactionsPerLuceneCommit;
+    private boolean disabled;
 
     public void execute(ActionEvent event) {
         String storeRefString = ActionUtil.getParam(event, "storeRef", (String) null);
@@ -62,6 +63,9 @@ public class IndexIntegrityCheckerBootstrap {
     }
 
     public synchronized void execute(boolean reindexMissingNodes, final StoreRef limitStoreRef) {
+        if (disabled) {
+            LOG.info("IndexIntegrityCheckerBootstrap is disabled, skipping.");
+        }
         Map<StoreRef, Set<NodeRef>> nodesToReindex;
         try {
             nodesToReindex = transactionService.getRetryingTransactionHelper().doInTransaction(new RetryingTransactionCallback<Map<StoreRef, Set<NodeRef>>>() {
@@ -355,6 +359,10 @@ public class IndexIntegrityCheckerBootstrap {
 
     public void setMaxTransactionsPerLuceneCommit(int maxTransactionsPerLuceneCommit) {
         this.maxTransactionsPerLuceneCommit = maxTransactionsPerLuceneCommit;
+    }
+
+    public void setDisabled(boolean disabled) {
+        this.disabled = disabled;
     }
 
 }

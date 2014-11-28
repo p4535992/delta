@@ -543,8 +543,35 @@ function getOffice13Link(url) {
 
 function webdavOpen(url) {
    var showDoc = true;
+   var openDocumentCallback = function(url, readOnly, refresh) {
+      if (readOnly) {
+         webdavOpenReadOnly(url, false);
+      } else {
+         window.open(url, '_blank');
+         if (!refresh) {
+            return;
+         }
+
+         var selector = "a.webdav-open.icon-link[href='"+url+"']";
+         var link = $jQ(selector);
+         var tableId = link.closest("table").attr("id");
+         if (tableId) {
+            var linkId = link.attr("id");
+            // Request new HTML for the surrounding table to show unlock action
+            var ajaxUri = getContextPath() + "/ajax/invoke/AjaxBean.submit";
+            ajaxSubmit(linkId, tableId, [], ajaxUri, {"viewName": "/jsp/dialog/container.jsp", "componentClientId": linkId, "containerClientId": tableId});
+         }
+      }
+   };
+
+   var openOfficeUrl = url.substring(0, "vnd.sun.star.webdav://".length) == "vnd.sun.star.webdav://";
+   if (openOfficeUrl) {
+      showDoc = false;
+      openDocumentCallback(url, false, false); // Open in a new window to maintain compatibility with other configurations
+   }
+
    // Try to open using MSOffice and WebDAV capabilities
-   if (window.ActiveXObject !== undefined) {
+   if (showDoc && window.ActiveXObject !== undefined) {
       try {
          // If we are able to instantiate this component, we have Office 2013 installed
          var isOffice2013Installed = new ActiveXObject("SharePoint.OpenDocuments.5");
@@ -561,45 +588,15 @@ function webdavOpen(url) {
          }
       }
    }
-   if (showDoc == true) { // If we weren't able to open with ActiveX, check for OpenOffice WebDAV protocol and try to lock/open manually
-      var openDocumentCallback = function(url, readOnly, refresh) {
-         if (readOnly) {
-            webdavOpenReadOnly(url, false);
-         } else {
-            window.open(url, '_blank');
-            if (!refresh) {
-               return;
-            }
 
-            var selector = "a.webdav-open.icon-link[href='"+url+"']";
-            var link = $jQ(selector);
-            var tableId = link.closest("table").attr("id");
-            if (tableId) {
-               var linkId = link.attr("id");
-               // Request new HTML for the surrounding table to show unlock action
-               var ajaxUri = getContextPath() + "/ajax/invoke/AjaxBean.submit";
-               ajaxSubmit(linkId, tableId, [], ajaxUri, {"viewName": "/jsp/dialog/container.jsp", "componentClientId": linkId, "containerClientId": tableId});
-            }
-         }
-      };
-
-      var protocol = "vnd.sun.star.webdav";
-      if (url.substring(0, protocol.length) === protocol) { // Check if we are dealing with OpenOffice webdav
-         if (!confirm("Kas soovid faili avada muutmiseks ja lukustada selle enda nimele 12 tunniks? NB! Pärast faili sulgemist vajuta Deltas nupule \"Vabasta lukk\"!")) {
-            webdavOpenReadOnly(url, false);
-            return false;
-         }
-
-         // Attempt to lock the file and open document for OO if possible
-         lockFileManually(url, openDocumentCallback);
-      } else {
-         openDocumentCallback(url, false, false); // Open in a new window to maintain compatibility with other configurations
-      }
+   if (showDoc) {
+      openDocumentCallback(url, false, true); // Open in a new window to maintain compatibility with other configurations
    }
    userMessageChecker.init();
    window.name += "checkMessages";
    return false;
 }
+
 function requestNewMessages(xml){
    if(!xml){
       return;

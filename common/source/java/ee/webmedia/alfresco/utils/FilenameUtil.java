@@ -6,7 +6,10 @@ import static org.apache.commons.io.FileUtils.ONE_KB;
 import static org.apache.commons.io.FileUtils.ONE_MB;
 
 import java.text.DecimalFormat;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 import org.alfresco.repo.content.MimetypeMap;
@@ -190,6 +193,19 @@ public class FilenameUtil {
 
     public static boolean isDigiDocFile(String fileName) {
         return fileName.toLowerCase().endsWith(".ddoc");
+    }
+
+    public static Set<String> getFileExtensionsFromCommaSeparated(String commaSeparatedExtensions) {
+        if (StringUtils.isBlank(commaSeparatedExtensions)) {
+            return Collections.emptySet();
+        }
+        String[] extensions = commaSeparatedExtensions.split(",");
+        Set<String> extSet = new HashSet<String>();
+        for (String ext : extensions) {
+            extSet.add(StringUtils.strip(ext, " ."));
+        }
+
+        return extSet;
     }
 
 }

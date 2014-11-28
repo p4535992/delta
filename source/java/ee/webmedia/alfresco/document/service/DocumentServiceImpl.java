@@ -2020,7 +2020,6 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, N
                 propertyChangesMonitorHelper.addIgnoredProps(props, DOC_STATUS);
                 props.put(UPDATE_METADATA_IN_FILES.toString(), Boolean.FALSE);
                 propertyChangesMonitorHelper.addIgnoredProps(props, UPDATE_METADATA_IN_FILES);
-                documentLogService.addDocumentLog(docRef, I18NUtil.getMessage("document_log_status_registered"));
                 String docStatus = (String) nodeService.getProperty(docRef, DOC_STATUS);
                 if (!DocumentStatus.FINISHED.getValueName().equals(docStatus)) {
                     addDocProceedingFinishedLog(docRef);

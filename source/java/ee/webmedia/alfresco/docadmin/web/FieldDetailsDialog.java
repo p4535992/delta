@@ -180,14 +180,18 @@ public class FieldDetailsDialog extends BaseDialogBean {
 
     private void removeDecElementsWhitespaceAndUnusedTextFields() {
         List<String> incomingDecElements = field.getRelatedIncomingDecElement();
-        List<String> strippedIncomingDecElements = strip(incomingDecElements);
-        if (!CollectionUtils.isEqualCollection(incomingDecElements, strippedIncomingDecElements)) {
-            field.setRelatedIncomingDecElement(strippedIncomingDecElements);
+        if (incomingDecElements != null) {
+            List<String> strippedIncomingDecElements = strip(incomingDecElements);
+            if (!CollectionUtils.isEqualCollection(incomingDecElements, strippedIncomingDecElements)) {
+                field.setRelatedIncomingDecElement(strippedIncomingDecElements);
+            }
         }
         List<String> relatedOutgoingDecElements = field.getRelatedOutgoingDecElement();
-        List<String> strippedOutgoingDecElements = strip(relatedOutgoingDecElements);
-        if (!CollectionUtils.isEqualCollection(relatedOutgoingDecElements, strippedOutgoingDecElements)) {
-            field.setRelatedOutgoingDecElement(strippedOutgoingDecElements);
+        if (relatedOutgoingDecElements != null) {
+            List<String> strippedOutgoingDecElements = strip(relatedOutgoingDecElements);
+            if (!CollectionUtils.isEqualCollection(relatedOutgoingDecElements, strippedOutgoingDecElements)) {
+                field.setRelatedOutgoingDecElement(strippedOutgoingDecElements);
+            }
         }
     }
 
@@ -203,7 +207,6 @@ public class FieldDetailsDialog extends BaseDialogBean {
         return strippedDecElements;
     }
 
-    
     private boolean validateDecMappings(boolean valid, List<String> incomingDecElements, List<String> outgoingDecElements) {
         List<String> incomingDecMappings = new ArrayList<String>();
         if (incomingDecElements != null) {

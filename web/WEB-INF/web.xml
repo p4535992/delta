@@ -816,6 +816,11 @@
       <listener-class>ee.webmedia.alfresco.help.web.HelpTextInitListener</listener-class>
    </listener>
 
+   <!-- WebDAV session listener - ensures that no locked resources is left after session expires -->
+   <listener>
+      <listener-class>org.alfresco.repo.webdav.WebDAVSessionListener</listener-class>
+   </listener>
+
    <!-- ========== Servlets ========== -->
 
    <servlet>
