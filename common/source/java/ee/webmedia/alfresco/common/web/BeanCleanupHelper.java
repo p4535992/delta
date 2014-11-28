@@ -42,6 +42,7 @@ import ee.webmedia.alfresco.classificator.web.ClassificatorDetailsDialog;
 import ee.webmedia.alfresco.classificator.web.ClassificatorListDialog;
 import ee.webmedia.alfresco.docadmin.web.FieldDefinitionListDialog;
 import ee.webmedia.alfresco.docadmin.web.FieldDetailsDialog;
+import ee.webmedia.alfresco.docdynamic.web.DocumentDynamicDialog;
 import ee.webmedia.alfresco.document.forum.web.InviteUsersDialog;
 import ee.webmedia.alfresco.document.search.web.DocumentDynamicReportDialog;
 import ee.webmedia.alfresco.document.search.web.DocumentDynamicSearchDialog;
@@ -161,7 +162,7 @@ public class BeanCleanupHelper implements Serializable {
         DIALOGS_TO_CLEAN.put(FieldDefinitionListDialog.BEAN_NAME, Arrays.asList(FieldDetailsDialog.BEAN_NAME));
         DIALOGS_TO_CLEAN.put(FieldDetailsDialog.BEAN_NAME, null);
         DIALOGS_TO_CLEAN.put(GroupsDialog.BEAN_NAME, null);
-        DIALOGS_TO_CLEAN.put(CaseDocumentListDialog.BEAN_NAME, Arrays.asList(DocumentListDialog.BEAN_NAME, CaseDetailsDialog.BEAN_NAME));
+        DIALOGS_TO_CLEAN.put(CaseDocumentListDialog.BEAN_NAME, Arrays.asList(DocumentListDialog.BEAN_NAME, CaseDetailsDialog.BEAN_NAME, DocumentDynamicDialog.BEAN_NAME));
     }
 
     public void clean(FacesContext context, String outcome, boolean canResetMyTasks) {

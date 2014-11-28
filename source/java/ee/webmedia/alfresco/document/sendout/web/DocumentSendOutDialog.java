@@ -282,14 +282,31 @@ public class DocumentSendOutDialog extends BaseDialogBean {
 
         boolean isContract = SystematicDocumentType.CONTRACT.getId().equals(props.get(DocumentAdminModel.Props.OBJECT_TYPE_ID));
         if (isContract) {
-            String partyName = (String) props.get(DocumentSpecificModel.Props.PARTY_NAME);
             names = new ArrayList<>();
-            if (StringUtils.isNotBlank(partyName)) {
-                names.add(partyName);
-            }
             idCodes = new ArrayList<>();
             emails = new ArrayList<>();
             groups = new ArrayList<>();
+
+            Object partys = props.get(DocumentSpecificModel.Props.PARTY_NAME);
+            if (partys instanceof String) {
+                String partyName = (String) partys;
+                boolean nameAdded = false;
+                if (StringUtils.isNotBlank(partyName)) {
+                    names.add(partyName);
+                    nameAdded = true;
+                }
+                if (nameAdded) {
+                    String email = (String) props.get(DocumentSpecificModel.Props.PARTY_EMAIL);
+                    emails.add(email);
+                }
+            } else if (partys instanceof List) {
+                List<String> partyList = (List<String>) partys;
+                List<String> emailList = (List<String>) props.get(DocumentSpecificModel.Props.PARTY_EMAIL);
+                for (int i = 0; i < partyList.size(); i++) {
+                    names.add(StringUtils.trimToEmpty(partyList.get(i)));
+                    emails.add(StringUtils.trimToEmpty(emailList.get(i)));
+                }
+            }
         } else {
             names = getNames(props, DocumentCommonModel.Props.RECIPIENT_NAME, DocumentDynamicModel.Props.RECIPIENT_PERSON_NAME);
             idCodes = newListIfNull((List<String>) props.get(DocumentDynamicModel.Props.RECIPIENT_ID), false);

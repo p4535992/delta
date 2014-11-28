@@ -30,7 +30,7 @@
          	<c:set value="${file.displayName} (${mDelta:fileSize(file.size)})" var="fileTitle" />
             <c:set var="parentRef" value="${file['class'].name == 'ee.webmedia.alfresco.document.file.model.MDeltaFile' ? file.parentRef : file.node.nodeRef}" />
          	<c:choose>
-	         	<c:when test="${mDelta:documentAllowPermission(parentRef, 'viewDocumentFiles')}">
+	         	<c:when test="${ file.viewDocumentFilesPermission }" >
 	               <a href="<c:url value="${file.readOnlyUrl}" />" title="${fileTitle}"><c:out value="${fileTitle}" /></a>
 	            </c:when>
 	            <c:otherwise>

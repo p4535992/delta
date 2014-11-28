@@ -17,6 +17,7 @@ import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.time.FastDateFormat;
 
 import ee.webmedia.alfresco.common.service.IClonable;
+import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.dvk.model.DvkModel;
 import ee.webmedia.alfresco.signature.model.DataItem;
 import ee.webmedia.alfresco.signature.model.SignatureItem;
@@ -54,6 +55,7 @@ public class File implements Serializable, IClonable<File> {
     private String activeLockOwner;
     private boolean decContainer;
     public static FastDateFormat dateFormat = FastDateFormat.getInstance("dd.MM.yyyy HH:mm");
+    public Boolean viewDocumentFilesPermission;
 
     public File() {
     }
@@ -80,6 +82,13 @@ public class File implements Serializable, IClonable<File> {
         active = (fileProps.get(ACTIVE) == null) ? true : Boolean.parseBoolean(fileProps.get(ACTIVE).toString());
         convertToPdfIfSigned = Boolean.TRUE.equals(fileProps.get(FileModel.Props.CONVERT_TO_PDF_IF_SIGNED));
         decContainer = fileProps.containsKey(DvkModel.Props.DVK_ID);
+    }
+
+    public boolean isViewDocumentFilesPermission() {
+        if (viewDocumentFilesPermission == null) {
+            viewDocumentFilesPermission = node != null && node.hasPermission(Privilege.VIEW_DOCUMENT_FILES);
+        }
+        return viewDocumentFilesPermission;
     }
 
     public String getName() {

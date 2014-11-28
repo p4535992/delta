@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.series.service;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getBulkLoadNodeService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getGeneralService;
 import static ee.webmedia.alfresco.log.PropDiffHelper.value;
 
@@ -463,7 +464,7 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
     @Override
     public boolean hasSelectableSeries(NodeRef functionRef, boolean isSearchFilter, Set<String> idList, boolean forDocumentType) {
         if (isSearchFilter || idList == null) {
-            return !getAllSeriesRefsByFunction(functionRef).isEmpty();
+            return getBulkLoadNodeService().countChildNodes(functionRef, SeriesModel.Types.SERIES) > 0;
         } else if (getGeneralService().getStore().equals(functionRef.getStoreRef())) {
             if (forDocumentType) {
                 return hasOpenSeriesForDocTypes(functionRef, DocListUnitStatus.OPEN, idList);
