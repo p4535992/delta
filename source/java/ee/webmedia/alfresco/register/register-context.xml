@@ -62,6 +62,18 @@
       </property>
    </bean>
    
+   <bean id="deltaRegistersToSequences" class="ee.webmedia.alfresco.register.bootstrap.DeltaRegisterTableToSequences" parent="abstractNodeUpdater" >
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dataSource" ref="dataSource" />
+      <property name="registerService" ref="RegisterService" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="changeRegisterSequenceToTableRowUpdater" />
+         </list>
+      </property>
+   </bean>
+   
    <bean id="registerService" class="ee.webmedia.alfresco.register.service.RegisterServiceImpl">
       <property name="generalService" ref="GeneralService" />
       <property name="nodeService" ref="NodeService" />
