@@ -2,6 +2,7 @@ package ee.webmedia.alfresco.document.lock.service;
 
 import java.util.List;
 
+import org.alfresco.repo.webdav.LockInfo;
 import org.alfresco.service.cmr.lock.LockService;
 import org.alfresco.service.cmr.lock.LockStatus;
 import org.alfresco.service.cmr.repository.NodeRef;
@@ -32,7 +33,7 @@ public interface DocLockService extends LockService {
 
     void lockFile(NodeRef lockedFileNodeRef);
 
-    void lockFile(NodeRef fileNodeRef, int timeToExpire, boolean lockedManually);
+    void lockFile(NodeRef fileNodeRef, LockInfo lockInfo);
 
     void unlockFile(NodeRef lockedFileNodeRef);
 

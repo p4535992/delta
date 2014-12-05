@@ -107,8 +107,8 @@
    when it is quaranteed that documentUpdater9 also runs (it performs the same functionality) -->
    <bean id="documentCompWorkflowSearchPropsUpdater" class="ee.webmedia.alfresco.docdynamic.bootstrap.DocumentCompWorkflowSearchPropsUpdater" parent="abstractNodeUpdater">
       <property name="moduleId" value="simdhs" />
-      <property name="enabled" value="false" />
-      <property name="executeOnceOnly" value="true" />
+      <property name="enabled" value="${updater.documentCompWorkflowSearchPropsUpdater.enabled}" />
+      <property name="executeOnceOnly" value="false" />
        <property name="dependsOn">
          <list>
             <ref bean="archivalsStoresBootstrap" />

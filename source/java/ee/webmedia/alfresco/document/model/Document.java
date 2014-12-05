@@ -14,6 +14,7 @@ import java.util.Set;
 import javax.faces.event.ActionEvent;
 
 import org.alfresco.model.ContentModel;
+import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.repository.ContentData;
 import org.alfresco.service.cmr.repository.InvalidNodeRefException;
 import org.alfresco.service.cmr.repository.NodeRef;
@@ -44,6 +45,8 @@ import ee.webmedia.alfresco.document.file.model.SimpleFile;
 import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.type.service.DocumentTypeService;
 import ee.webmedia.alfresco.dvk.model.DvkModel;
+import ee.webmedia.alfresco.privilege.model.Privilege;
+import ee.webmedia.alfresco.privilege.service.PrivilegeService;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.TextUtil;
 import ee.webmedia.alfresco.utils.UserUtil;
@@ -642,6 +645,8 @@ public class Document extends Node implements Comparable<Document>, CssStylable,
         if (!isMDeltaFiles || files == null) {
             isMDeltaFiles = true;
             BulkLoadNodeService bulkLoadNodeService = BeanHelper.getBulkLoadNodeService();
+            final PrivilegeService privilegeService = BeanHelper.getPrivilegeService();
+            final String userName = AuthenticationUtil.getRunAsUser();
             try {
                 CreateSimpleFileCallback callback = new CreateSimpleFileCallback() {
                     @Override
@@ -652,7 +657,10 @@ public class Document extends Node implements Comparable<Document>, CssStylable,
                         }
                         String readOnlyUrl = DownloadContentServlet.generateDownloadURL((NodeRef) fileProps.get(ContentModel.PROP_NODE_REF), displayName);
                         long size = DefaultTypeConverter.INSTANCE.convert(ContentData.class, fileProps.get(ContentModel.PROP_CONTENT)).getSize();
-                        return new MDeltaFile(displayName, readOnlyUrl, size, nodeRef);
+                        MDeltaFile file = new MDeltaFile(displayName, readOnlyUrl, size, nodeRef);
+                        boolean viewDocumentFiles = privilegeService.hasPermission(nodeRef, userName, Privilege.VIEW_DOCUMENT_FILES);
+                        file.setViewDocumentFilesPermission(viewDocumentFiles);
+                        return file;
                     }
                 };
                 files = bulkLoadNodeService.loadActiveFiles(nodeRef, null, MDELTA_FILE_PROPS, callback);
@@ -670,12 +678,12 @@ public class Document extends Node implements Comparable<Document>, CssStylable,
             try {
                 inactiveFiles = (List<File>) CollectionUtils.select(fileService.getAllActiveAndInactiveFiles(nodeRef), new Predicate<File>() { // TODO - Can be optimized.
 
-                    @Override
-                    public boolean evaluate(File file) {
-                        return !file.isActive();
-                    }
+                            @Override
+                            public boolean evaluate(File file) {
+                                return !file.isActive();
+                            }
 
-                });
+                        });
             } catch (InvalidNodeRefException e) {
                 // Document has been deleted between initial transaction (that constructed document list)
                 // and this transaction (JSF rendering phase, value-binding from JSP is being resolved).
@@ -709,9 +717,9 @@ public class Document extends Node implements Comparable<Document>, CssStylable,
     @Override
     public String toString() {
         return new StringBuilder("Document:")//
-        .append("\n\tregNumber = " + getRegNumber())
-        .append("\n\tdocName = " + getDocName())
-        .toString();
+                .append("\n\tregNumber = " + getRegNumber())
+                .append("\n\tdocName = " + getDocName())
+                .toString();
     }
 
     protected DocumentTypeService getDocumentTypeService() {

@@ -259,7 +259,7 @@ public class DocumentUpdater extends AbstractNodeUpdater {
             WorkflowService workflowService) {
         Serializable origValueReal = origProps.get(DocumentCommonModel.Props.SEARCHABLE_HAS_ALL_FINISHED_COMPOUND_WORKFLOWS);
         boolean origValue = Boolean.TRUE.equals(origValueReal);
-        boolean newValue = workflowService.hasAllFinishedCompoundWorkflows(docRef, null);
+        boolean newValue = workflowService.hasCompoundWorkflowsAndAllAreFinished(docRef);
         if (origValue != newValue) {
             updatedProps.put(DocumentCommonModel.Props.SEARCHABLE_HAS_ALL_FINISHED_COMPOUND_WORKFLOWS, newValue);
             return ObjectUtils.toString(origValueReal, "null") + ", " + newValue;

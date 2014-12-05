@@ -7,6 +7,7 @@ public class MDeltaFile extends SimpleFile {
     private static final long serialVersionUID = 1L;
     private final long size;
     private final NodeRef parentRef;
+    private boolean viewDocumentFilesPermission;
 
     public MDeltaFile(String displayName, String readOnlyUrl, long size, NodeRef parentRef) {
         super(displayName, readOnlyUrl);
@@ -20,6 +21,14 @@ public class MDeltaFile extends SimpleFile {
 
     public NodeRef getParentRef() {
         return parentRef;
+    }
+
+    public boolean isViewDocumentFilesPermission() {
+        return viewDocumentFilesPermission;
+    }
+
+    public void setViewDocumentFilesPermission(boolean viewDocumentFilesPermission) {
+        this.viewDocumentFilesPermission = viewDocumentFilesPermission;
     }
 
 }

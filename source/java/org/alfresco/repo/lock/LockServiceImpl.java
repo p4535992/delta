@@ -1,26 +1,20 @@
 /*
- * Copyright (C) 2005-2009 Alfresco Software Limited.
+ * Copyright (C) 2005-2010 Alfresco Software Limited.
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
-
- * This program is distributed in the hope that it will be useful,
+ * This file is part of Alfresco
+ *
+ * Alfresco is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Alfresco is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
-
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-
- * As a special exception to the terms and conditions of version 2.0 of 
- * the GPL, you may redistribute this Program in connection with Free/Libre 
- * and Open Source Software ("FLOSS") applications as described in Alfresco's 
- * FLOSS exception.  You should have recieved a copy of the text describing 
- * the FLOSS exception, and it is also available here: 
- * http://www.alfresco.com/legal/licensing"
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with Alfresco. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.alfresco.repo.lock;
 
@@ -36,18 +30,30 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.faces.context.FacesContext;
+
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.copy.CopyBehaviourCallback;
 import org.alfresco.repo.copy.CopyDetails;
 import org.alfresco.repo.copy.CopyServicePolicies;
 import org.alfresco.repo.copy.DefaultCopyBehaviourCallback;
+import org.alfresco.repo.copy.DoNothingCopyBehaviourCallback;
+import org.alfresco.repo.lock.LockServicePolicies.BeforeLock;
+import org.alfresco.repo.lock.mem.Lifetime;
+import org.alfresco.repo.lock.mem.LockState;
+import org.alfresco.repo.lock.mem.LockStore;
+import org.alfresco.repo.lock.mem.LockableAspectInterceptor;
 import org.alfresco.repo.node.NodeServicePolicies;
+import org.alfresco.repo.node.index.NodeIndexer;
+import org.alfresco.repo.policy.BehaviourFilter;
+import org.alfresco.repo.policy.ClassPolicyDelegate;
 import org.alfresco.repo.policy.JavaBehaviour;
 import org.alfresco.repo.policy.PolicyComponent;
 import org.alfresco.repo.policy.PolicyScope;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
-import org.alfresco.repo.security.authentication.InMemoryTicketComponentImpl;
 import org.alfresco.repo.tenant.TenantService;
+import org.alfresco.repo.transaction.AlfrescoTransactionSupport;
+import org.alfresco.repo.transaction.TransactionListener;
+import org.alfresco.repo.transaction.TransactionalResourceHelper;
 import org.alfresco.repo.version.VersionServicePolicies;
 import org.alfresco.service.cmr.lock.LockService;
 import org.alfresco.service.cmr.lock.LockStatus;
@@ -64,8 +70,13 @@ import org.alfresco.service.cmr.search.ResultSet;
 import org.alfresco.service.cmr.search.SearchService;
 import org.alfresco.service.cmr.security.AuthenticationService;
 import org.alfresco.service.cmr.security.OwnableService;
+import org.alfresco.service.cmr.security.AuthorityService;
 import org.alfresco.service.namespace.NamespaceService;
+import org.alfresco.service.cmr.security.PermissionService;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.util.Pair;
+import org.alfresco.util.PropertyCheck;
+import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.document.file.model.FileModel;
 import ee.webmedia.alfresco.utils.UserUtil;
@@ -76,54 +87,45 @@ import ee.webmedia.alfresco.utils.UserUtil;
  * @author Roy Wetherall
  */
 public class LockServiceImpl implements LockService,
-                                        NodeServicePolicies.BeforeCreateChildAssociationPolicy,
+                                        NodeServicePolicies.OnCreateChildAssociationPolicy,
                                         NodeServicePolicies.BeforeUpdateNodePolicy,
                                         NodeServicePolicies.BeforeDeleteNodePolicy,
+                                        NodeServicePolicies.OnMoveNodePolicy,
                                         CopyServicePolicies.OnCopyNodePolicy,
                                         VersionServicePolicies.BeforeCreateVersionPolicy,
-                                        VersionServicePolicies.OnCreateVersionPolicy
+                                        VersionServicePolicies.OnCreateVersionPolicy, TransactionListener
 {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(LockServiceImpl.class);
+    public static final int MAX_EPHEMERAL_LOCK_SECONDS = 2 * 86400; // 48 hours
 
-    /**
-     * The node service
-     */
+    /** Key to the nodes ref's to ignore when checking for locks */
+    private static final String KEY_IGNORE_NODES = "lockService.ignoreNodes";
+    private static final Object KEY_MODIFIED_NODES = "lockService.lockedNode";
+
     protected NodeService nodeService;
-    
-    /**
-     * The tenant service
-     */
     private TenantService tenantService;
-
-    /**
-     * The policy component
-     */
+    private AuthenticationService authenticationService;
+    private SearchService searchService;
+    private AuthorityService authorityService;
+    private BehaviourFilter behaviourFilter;
+    protected LockStore lockStore;
     private PolicyComponent policyComponent;
+    private LockableAspectInterceptor lockableAspectInterceptor;
 
-    /**
-     * List of node ref's to ignore when checking for locks
-     */
-    private Set<NodeRef> ignoreNodeRefs = new HashSet<NodeRef>();
+    /** Class policy delegate's */
+    private ClassPolicyDelegate<BeforeLock> beforeLock;
 
-    /**
-     * The authentication service
-     */
-    protected AuthenticationService authenticationService;
+    private NodeIndexer nodeIndexer;
 
     /**
      * The ownable service
-     * 
+     *
      */
     protected OwnableService ownableService;
-    
-    /**
-     * The search service
-     */
-    protected SearchService searchService;
 
     /**
      * Set the node service
-     * 
+     *
      * @param nodeService
      *            the node service
      */
@@ -131,32 +133,36 @@ public class LockServiceImpl implements LockService,
     {
         this.nodeService = nodeService;
     }
- 
+
     /**
      * Set the tenant service
-     * 
+     *
      * @param tenantService
      *            the tenant service
-     */   
+     */
     public void setTenantService(TenantService tenantService)
     {
         this.tenantService = tenantService;
     }
 
-    /**
-     * Sets the policy component
-     * 
-     * @param policyComponent
-     *            the policy componentO
-     */
+    public void setLockStore(LockStore lockStore)
+    {
+        this.lockStore = lockStore;
+    }
+
     public void setPolicyComponent(PolicyComponent policyComponent)
     {
         this.policyComponent = policyComponent;
     }
 
+    public void setLockableAspectInterceptor(LockableAspectInterceptor lockableAspectInterceptor)
+    {
+        this.lockableAspectInterceptor = lockableAspectInterceptor;
+    }
+
     /**
      * Sets the authentication service
-     * 
+     *
      * @param authenticationService
      *            the authentication service
      */
@@ -165,9 +171,14 @@ public class LockServiceImpl implements LockService,
         this.authenticationService = authenticationService;
     }
 
+    public void setSearchService(SearchService searchService)
+    {
+        this.searchService = searchService;
+    }
+
     /**
      * Sets the ownable service
-     * 
+     *
      * @param ownableService
      *            the ownable service
      */
@@ -175,15 +186,10 @@ public class LockServiceImpl implements LockService,
     {
         this.ownableService = ownableService;
     }
-    
-    /**
-     * Set the search service
-     * 
-     * @param searchService     the search service
-     */
-    public void setSearchService(SearchService searchService)
+
+    public void setAuthorityService(AuthorityService authorityService)
     {
-        this.searchService = searchService;
+        this.authorityService = authorityService;
     }
 
     /**
@@ -191,11 +197,22 @@ public class LockServiceImpl implements LockService,
      */
     public void init()
     {
+        PropertyCheck.mandatory(this, "nodeService", nodeService);
+        PropertyCheck.mandatory(this, "tenantService",  tenantService);
+        PropertyCheck.mandatory(this, "authenticationService", authenticationService);
+        PropertyCheck.mandatory(this, "searchService",  searchService);
+        PropertyCheck.mandatory(this, "behaviourFilter",  behaviourFilter);
+        PropertyCheck.mandatory(this, "policyComponent",  policyComponent);
+        PropertyCheck.mandatory(this, "authorityService",  authorityService);
+
+        // Register the policies
+        beforeLock = policyComponent.registerClassPolicy(LockServicePolicies.BeforeLock.class);
+
         // Register the various class behaviours to enable lock checking
         this.policyComponent.bindAssociationBehaviour(
-                QName.createQName(NamespaceService.ALFRESCO_URI, "beforeCreateChildAssociation"),
+                QName.createQName(NamespaceService.ALFRESCO_URI, "onCreateChildAssociation"),
                 ContentModel.ASPECT_LOCKABLE,
-                new JavaBehaviour(this, "beforeCreateChildAssociation"));
+                new JavaBehaviour(this, "onCreateChildAssociation"));
         this.policyComponent.bindClassBehaviour(
                 QName.createQName(NamespaceService.ALFRESCO_URI, "beforeUpdateNode"),
                 ContentModel.ASPECT_LOCKABLE,
@@ -204,6 +221,10 @@ public class LockServiceImpl implements LockService,
                 QName.createQName(NamespaceService.ALFRESCO_URI, "beforeDeleteNode"),
                 ContentModel.ASPECT_LOCKABLE,
                 new JavaBehaviour(this, "beforeDeleteNode"));
+        this.policyComponent.bindClassBehaviour(
+                QName.createQName(NamespaceService.ALFRESCO_URI, "onMoveNode"),
+                ContentModel.ASPECT_LOCKABLE,
+                new JavaBehaviour(this, "onMoveNode"));
 
         // Register copy class behaviour
         this.policyComponent.bindClassBehaviour(
@@ -212,16 +233,92 @@ public class LockServiceImpl implements LockService,
                 new JavaBehaviour(this, "getCopyCallback"));
 
         // Register the onCreateVersion behavior for the version aspect
-        this.policyComponent.bindClassBehaviour(
-                QName.createQName(NamespaceService.ALFRESCO_URI, "beforeCreateVersion"),
-                ContentModel.ASPECT_LOCKABLE,
-                new JavaBehaviour(this, "beforeCreateVersion"));
+
+        // BeforeCreateVersion behavior was removed
+        // we should be able to version a node regardless of its lock state, see ALF-16540
+
         this.policyComponent.bindClassBehaviour(
                 QName.createQName(NamespaceService.ALFRESCO_URI, "onCreateVersion"),
                 ContentModel.ASPECT_LOCKABLE,
                 new JavaBehaviour(this, "onCreateVersion"));
     }
     
+    /**
+     * Returns all the classes of a node, including its type and aspects.
+     *
+     * @param nodeRef       node reference
+     * @return List<QName>  list of classes
+     */
+    private List<QName> getInvokeClasses(NodeRef nodeRef)
+    {
+        List<QName> result = new ArrayList<QName>(10);
+        result.add(nodeService.getType(nodeRef));
+        Set<QName> aspects = nodeService.getAspects(nodeRef);
+        for (QName aspect : aspects)
+        {
+            result.add(aspect);
+        }
+        return result;
+    }
+
+    /**
+     * Invoke the before log policy
+     *
+     * @param nodeRef       the node to be locked
+     * @param lockType      the lock type
+     */
+    private void invokeBeforeLock(
+            NodeRef nodeRef,
+            LockType lockType)
+    {
+        if (!nodeService.exists(nodeRef))
+        {
+            return;
+        }
+        List<QName> classes = getInvokeClasses(nodeRef);
+        for (QName invokeClass : classes)
+        {
+            Collection<BeforeLock> policies = beforeLock.getList(invokeClass);
+            for (BeforeLock policy : policies)
+            {
+                policy.beforeLock(nodeRef, lockType);
+            }
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private void addToIgnoreSet(NodeRef nodeRef)
+    {
+        Set<NodeRef> ignoreNodeRefs = (Set<NodeRef>)AlfrescoTransactionSupport.getResource(KEY_IGNORE_NODES);
+        if (ignoreNodeRefs == null)
+        {
+            ignoreNodeRefs = new HashSet<NodeRef>();
+            AlfrescoTransactionSupport.bindResource(KEY_IGNORE_NODES, ignoreNodeRefs);
+        }
+        ignoreNodeRefs.add(nodeRef);
+    }
+
+    @SuppressWarnings("unchecked")
+    private void removeFromIgnoreSet(NodeRef nodeRef)
+    {
+        Set<NodeRef> ignoreNodeRefs = (Set<NodeRef>)AlfrescoTransactionSupport.getResource(KEY_IGNORE_NODES);
+        if (ignoreNodeRefs != null)
+        {
+            ignoreNodeRefs.remove(nodeRef);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private boolean ignore(NodeRef nodeRef)
+    {
+        Set<NodeRef> ignoreNodeRefs = (Set<NodeRef>)AlfrescoTransactionSupport.getResource(KEY_IGNORE_NODES);
+        if (ignoreNodeRefs != null)
+        {
+            return ignoreNodeRefs.contains(nodeRef);
+        }
+        return false;
+    }
+
     /**
      * @see org.alfresco.service.cmr.lock.LockService#lock(org.alfresco.service.cmr.repository.NodeRef, java.lang.String, org.alfresco.service.cmr.lock.LockType)
      */
@@ -234,15 +331,42 @@ public class LockServiceImpl implements LockService,
     /**
      * @see org.alfresco.service.cmr.lock.LockService#lock(org.alfresco.service.cmr.repository.NodeRef, java.lang.String, org.alfresco.service.cmr.lock.LockType, int)
      */
+    @Override
     public synchronized void lock(NodeRef nodeRef, LockType lockType, int timeToExpire)
     {
+        lock(nodeRef, lockType, timeToExpire, Lifetime.PERSISTENT);
+    }
+
+    /**
+     * @see org.alfresco.service.cmr.lock.LockService#lock(org.alfresco.service.cmr.repository.NodeRef, java.lang.String, org.alfresco.service.cmr.lock.LockType, int, Lifetime, String)
+     */
+    @Override
+    public void lock(NodeRef nodeRef, LockType lockType, int timeToExpire, Lifetime lifetime)
+    {
+        lock(nodeRef, lockType, timeToExpire, lifetime, null);
+    }
+
+    /**
+     * @see org.alfresco.service.cmr.lock.LockService#lock(org.alfresco.service.cmr.repository.NodeRef, java.lang.String, org.alfresco.service.cmr.lock.LockType, int, Lifetime, String)
+     */
+    @Override
+    public void lock(NodeRef nodeRef, LockType lockType, int timeToExpire, Lifetime lifetime, String additionalInfo)
+    {
+        invokeBeforeLock(nodeRef, lockType);
+        if (additionalInfo != null && !lifetime.equals(Lifetime.EPHEMERAL))
+        {
+            throw new IllegalArgumentException("additionalInfo may only be provided for ephemeral locks.");
+        }
+        if (lifetime.equals(Lifetime.EPHEMERAL) && (timeToExpire > MAX_EPHEMERAL_LOCK_SECONDS))
+        {
+            throw new IllegalArgumentException("Attempt to create ephemeral lock for " +
+                    timeToExpire + " seconds - exceeds maximum allowed time.");
+        }
+
         nodeRef = tenantService.getName(nodeRef);
         
-        // Check for lock aspect
-        checkForLockApsect(nodeRef);
-        
         // Get the current user name
-        String userName = isManualLock(nodeRef) ? getManualLockOwner() : getUserName();
+        String userName = getUserName();
 
         // Set a default value
         if (lockType == null)
@@ -250,39 +374,91 @@ public class LockServiceImpl implements LockService,
             lockType = LockType.WRITE_LOCK;
         }
 
-        LockStatus currentLockStatus = getLockStatus(nodeRef, userName);
+        // Get the current lock info and status for the node ref.
+        Pair<LockState, LockStatus> statusAndState = getLockStateAndStatus(nodeRef, userName);
+        LockState currentLockInfo = statusAndState.getFirst();
+        LockStatus currentLockStatus = statusAndState.getSecond();
+
         if (LockStatus.LOCKED.equals(currentLockStatus) == true)
         {
             // Error since we are trying to lock a locked node
             throw new UnableToAquireLockException(nodeRef);
         }
-        else if (LockStatus.NO_LOCK.equals(currentLockStatus) == true || 
+        else if (LockStatus.NO_LOCK.equals(currentLockStatus) == true ||
                  LockStatus.LOCK_EXPIRED.equals(currentLockStatus) == true ||
                  LockStatus.LOCK_OWNER.equals(currentLockStatus) == true)
         {
-            this.ignoreNodeRefs.add(nodeRef);
-            try
+            final Date expiryDate = makeExpiryDate(timeToExpire);
+
+            // Store the lock in the appropriate place.
+            if (lifetime == Lifetime.PERSISTENT)
             {
-                // Set the current user as the lock owner
-                this.nodeService.setProperty(nodeRef, ContentModel.PROP_LOCK_OWNER, userName);
-                this.nodeService.setProperty(nodeRef, ContentModel.PROP_LOCK_TYPE, lockType.toString());
-                this.nodeService.setProperty(nodeRef, FileModel.Props.LOCKED_FILE_NODEREF, null); // Reset the potential generated file induced lock
-                setExpiryDate(nodeRef, timeToExpire);
-            } 
-            finally
+                lockableAspectInterceptor.disableForThread();
+                try
+                {
+                    // Add lock aspect if not already present
+                    ensureLockAspect(nodeRef);
+                    persistLockProps(nodeRef, lockType, lifetime, userName, expiryDate);
+                }
+                finally
+                {
+                    lockableAspectInterceptor.enableForThread();
+                }
+            }
+            else if (lifetime == Lifetime.EPHEMERAL)
             {
-                this.ignoreNodeRefs.remove(nodeRef);
+                // Store the lock only in memory.
+                LockState lock = LockState.createLock(nodeRef, lockType, userName,
+                            expiryDate, lifetime, additionalInfo);
+                lockStore.set(nodeRef, lock);
+                // Record the NodeRef being locked and its last known lockstate. This allows
+                // it to be reverted to this state on rollback.
+                TransactionalResourceHelper.getMap(KEY_MODIFIED_NODES).put(nodeRef, currentLockInfo);
+                AlfrescoTransactionSupport.bindListener(this);
+
+                nodeIndexer.indexUpdateNode(nodeRef);
+            }
+            else
+            {
+                throw new IllegalStateException(lifetime.getClass().getSimpleName() +
+                            " is not a valid value: " + lifetime.toString());
             }
         }
     }
 
+    private void persistLockProps(NodeRef nodeRef, LockType lockType, Lifetime lifetime, String userName, Date expiryDate)
+    {
+        addToIgnoreSet(nodeRef);
+        try
+        {
+            final Serializable modifier = this.nodeService.getProperty(nodeRef, ContentModel.PROP_MODIFIER);
+            final Serializable modified = this.nodeService.getProperty(nodeRef, ContentModel.PROP_MODIFIED);
+
+            // Set the current user as the lock owner
+            this.nodeService.setProperty(nodeRef, ContentModel.PROP_LOCK_OWNER, userName);
+            this.nodeService.setProperty(nodeRef, ContentModel.PROP_LOCK_TYPE, lockType.toString());
+            this.nodeService.setProperty(nodeRef, FileModel.Props.LOCKED_FILE_NODEREF, null); // Reset the potential generated file induced lock
+            this.nodeService.setProperty(nodeRef, ContentModel.PROP_LOCK_LIFETIME, lifetime.toString());
+            this.nodeService.setProperty(nodeRef, ContentModel.PROP_EXPIRY_DATE, expiryDate);
+
+            // Set modifier and modified properties to original, so that locking doesn't appear to change the file
+            behaviourFilter.disableBehaviour(ContentModel.ASPECT_AUDITABLE);
+            this.nodeService.setProperty(nodeRef, ContentModel.PROP_MODIFIER, modifier);
+            this.nodeService.setProperty(nodeRef, ContentModel.PROP_MODIFIED, modified);
+        }
+        finally
+        {
+            behaviourFilter.enableBehaviour(ContentModel.ASPECT_AUDITABLE);
+            removeFromIgnoreSet(nodeRef);
+        }
+    }
+
     /**
-     * Helper method to set the expiry date based on the time to expire provided
+     * Calculate expiry date based on the time to expire provided
      * 
-     * @param nodeRef       the node reference
      * @param timeToExpire  the time to expire (in seconds)
      */
-    private void setExpiryDate(NodeRef nodeRef, int timeToExpire)
+    private Date makeExpiryDate(int timeToExpire)
     {
         // Set the expiry date
         Date expiryDate = null;
@@ -294,8 +470,7 @@ public class LockServiceImpl implements LockService,
             calendar.add(Calendar.SECOND, timeToExpire);
             expiryDate = calendar.getTime();
         }
-        
-        this.nodeService.setProperty(nodeRef, ContentModel.PROP_EXPIRY_DATE, expiryDate);
+        return expiryDate;
     }
 
     /**
@@ -332,38 +507,89 @@ public class LockServiceImpl implements LockService,
     /**
      * @see org.alfresco.service.cmr.lock.LockService#unlock(NodeRef, String)
      */
+    @Override
     public synchronized void unlock(NodeRef nodeRef) throws UnableToReleaseLockException
     {
-        final NodeRef unlockRef = tenantService.getName(nodeRef);
-        
-        // Check for lock aspect
-        checkForLockApsect(unlockRef);
-        
-        this.ignoreNodeRefs.add(unlockRef);
-        try
-        {
-            this.nodeService.setProperty(nodeRef, ContentModel.PROP_LOCK_OWNER, null);
-            this.nodeService.setProperty(nodeRef, ContentModel.PROP_LOCK_TYPE, null);
-            this.nodeService.setProperty(nodeRef, FileModel.Props.LOCKED_FILE_NODEREF, null); // Reset the potential generated file induced lock
-            this.nodeService.removeProperty(nodeRef, FileModel.Props.MANUAL_LOCK); // Remove the potential manual lock
-        }
-        finally
-        {
-            this.ignoreNodeRefs.remove(unlockRef);
-        }
+        unlock(nodeRef, false, false);
     }
 
     /**
-     * @see org.alfresco.service.cmr.lock.LockService#unlock(NodeRef, String,
-     *      boolean)
+     * @see org.alfresco.service.cmr.lock.LockService#unlock(org.alfresco.service.cmr.repository.NodeRef, boolean)
      */
-    public synchronized void unlock(NodeRef nodeRef, boolean unlockChildren)
+    @Override
+    public void unlock(NodeRef nodeRef, boolean lockChildren) throws UnableToReleaseLockException
+    {
+        unlock(nodeRef, lockChildren, false);
+    }
+
+    /**
+     * @see org.alfresco.service.cmr.lock.LockService#unlock(NodeRef, String,boolean, boolean)
+     */
+    @Override
+    public void unlock(NodeRef nodeRef, boolean unlockChildren, boolean allowCheckedOut)
             throws UnableToReleaseLockException
     {
         // Unlock the parent
-        unlock(nodeRef);
+        nodeRef = tenantService.getName(nodeRef);
 
-        if (unlockChildren == true)
+        LockState lockState = getLockState(nodeRef);
+
+        if (lockState.isLockInfo())
+        {
+        	// MNT-231: forbidden to unlock a checked out node
+//            if (!allowCheckedOut && nodeService.hasAspect(nodeRef, ContentModel.ASPECT_CHECKED_OUT))
+//            {
+//            	throw new UnableToReleaseLockException(nodeRef, CAUSE.CHECKED_OUT);
+//            }
+            // check if the user able to unlock the node
+            checkNodeBeforeUnlock(nodeRef);
+
+            // Remove the lock from persistent storage.
+            Lifetime lifetime = lockState.getLifetime();
+            if (lifetime == Lifetime.PERSISTENT)
+            {
+                addToIgnoreSet(nodeRef);
+                behaviourFilter.disableBehaviour(nodeRef, ContentModel.ASPECT_VERSIONABLE);
+                behaviourFilter.disableBehaviour(ContentModel.ASPECT_AUDITABLE);
+
+                final Serializable modifier = this.nodeService.getProperty(nodeRef, ContentModel.PROP_MODIFIER);
+                final Serializable modified = this.nodeService.getProperty(nodeRef, ContentModel.PROP_MODIFIED);
+
+                lockableAspectInterceptor.disableForThread();
+                try
+                {
+                    // Clear the lock
+                    if (nodeService.hasAspect(nodeRef, ContentModel.ASPECT_LOCKABLE))
+                    {
+                        nodeService.removeAspect(nodeRef, ContentModel.ASPECT_LOCKABLE);
+                        // Set modifier and modified properties to original, so that locking doesn't appear to change the file
+                        nodeService.setProperty(nodeRef, ContentModel.PROP_MODIFIER, modifier);
+                        nodeService.setProperty(nodeRef, ContentModel.PROP_MODIFIED, modified);
+
+                        this.nodeService.setProperty(nodeRef, FileModel.Props.LOCKED_FILE_NODEREF, null); // Reset the potential generated file induced lock
+                        this.nodeService.removeProperty(nodeRef, FileModel.Props.MANUAL_LOCK); // Remove the potential manual lock
+                    }
+                }
+                finally
+                {
+                	behaviourFilter.enableBehaviour(nodeRef, ContentModel.ASPECT_VERSIONABLE);
+                    lockableAspectInterceptor.enableForThread();
+                    removeFromIgnoreSet(nodeRef);
+                }
+            }
+            else if (lifetime == Lifetime.EPHEMERAL)
+            {
+                // force unlock the ephemeral lock.
+                lockStore.forceUnlock(nodeRef);
+                nodeIndexer.indexUpdateNode(nodeRef);
+            }
+            else
+            {
+                throw new IllegalStateException("Unhandled Lifetime value: " + lifetime);
+            }
+        }
+
+        if (unlockChildren)
         {
             // Get the children and unlock them
             Collection<ChildAssociationRef> childAssocRefs = this.nodeService.getChildAssocs(nodeRef);
@@ -397,7 +623,7 @@ public class LockServiceImpl implements LockService,
     }
 
     /**
-     * Gets the lock statuc for a node and a user name
+     * Gets the lock status for a node and a user name
      * 
      * @param nodeRef   the node reference
      * @param userName  the user name
@@ -405,42 +631,19 @@ public class LockServiceImpl implements LockService,
      */
     public LockStatus getLockStatus(NodeRef nodeRef, String userName)
     {
-        LockStatus result = LockStatus.NO_LOCK;
+        Pair<LockState, LockStatus> stateAndStatus = getLockStateAndStatus(nodeRef, userName);
+        LockStatus lockStatus = stateAndStatus.getSecond();
+        return lockStatus;
+    }
 
-        if (this.nodeService.hasAspect(nodeRef, ContentModel.ASPECT_LOCKABLE) == true)
-        {
-            // Get the current lock owner
-            String currentUserRef = isManualLock(nodeRef) ? getManualLockOwner() : getUserNameAndSession((String) this.nodeService.getProperty(nodeRef, ContentModel.PROP_LOCK_OWNER));
-            String owner = ownableService.getOwner(nodeRef);
-            if (currentUserRef != null)
-            {
-                LOG.info("Getting lock status for " + userName + " on " + nodeRef + " with " + currentUserRef + ". Owner = " + owner);
-                Date expiryDate = (Date)this.nodeService.getProperty(nodeRef, ContentModel.PROP_EXPIRY_DATE);
-                if (expiryDate != null && expiryDate.before(new Date()) == true)
-                {
-                    // Indicate that the lock has expired
-                    result = LockStatus.LOCK_EXPIRED;
-                }
-                else
-                {
-                    if (currentUserRef.equals(userName) == true)
-                    {
-                        result = LockStatus.LOCK_OWNER;
-                    }
-                    else if ((owner != null) && owner.equals(userName))
-                    {
-                        result = LockStatus.LOCK_OWNER;
-                    }
-                    else
-                    {
-                        result = LockStatus.LOCKED;
-                    }
-                }
-            }
+    private Pair<LockState, LockStatus> getLockStateAndStatus(NodeRef nodeRef, String userName)
+    {
+        final LockState lockState = getLockState(nodeRef);
 
-        }
-        return result;
-
+        String lockOwner = lockState.getOwner();
+        Date expiryDate = lockState.getExpires();
+        LockStatus status = LockUtils.lockStatus(userName, lockOwner, expiryDate);
+        return new Pair<LockState, LockStatus>(lockState, status);
     }
 
     /**
@@ -450,16 +653,22 @@ public class LockServiceImpl implements LockService,
     {
         LockType result = null;
 
+        // Don't disable the lockable aspect interceptor - allow it to fetch the lock type
+        // from the correct place (persistent storage or lockStore).
+        LockState lockState = lockStore.get(nodeRef);
+        if (lockState != null) {
+            return lockState.getLockType();
+        }
         if (this.nodeService.hasAspect(nodeRef, ContentModel.ASPECT_LOCKABLE) == true)
         {
             String lockTypeString = (String) this.nodeService.getProperty(nodeRef, ContentModel.PROP_LOCK_TYPE);
             if (lockTypeString != null)
             {
-                result = LockType.valueOf(lockTypeString);
+                return LockType.valueOf(lockTypeString);
             }
         }
 
-        return result;
+        return null;
     }
 
     /**
@@ -468,7 +677,7 @@ public class LockServiceImpl implements LockService,
      * @param nodeRef
      *            the node reference
      */
-    private void checkForLockApsect(NodeRef nodeRef)
+    private void ensureLockAspect(NodeRef nodeRef)
     {
         if (this.nodeService.hasAspect(nodeRef, ContentModel.ASPECT_LOCKABLE) == false)
         {
@@ -482,7 +691,7 @@ public class LockServiceImpl implements LockService,
     public void checkForLock(NodeRef nodeRef) throws NodeLockedException
     {
         // Get the current user name
-        String userName = isManualLock(nodeRef) ? getManualLockOwner() : getUserName();
+        String userName = getUserName();
         
         nodeRef = tenantService.getName(nodeRef);
  
@@ -491,7 +700,7 @@ public class LockServiceImpl implements LockService,
         {
             String effectiveUserName = AuthenticationUtil.getRunAsUser();
             // Check to see if should just ignore this node - note: special MT System due to AuditableAspect
-            if (!(this.ignoreNodeRefs.contains(nodeRef) || tenantService.getBaseNameUser(effectiveUserName).equals(AuthenticationUtil.getSystemUserName())))
+            if (! (ignore(nodeRef) || tenantService.getBaseNameUser(effectiveUserName).equals(AuthenticationUtil.getSystemUserName())))
             {
                 try
                 {
@@ -502,7 +711,7 @@ public class LockServiceImpl implements LockService,
                     if (LockType.WRITE_LOCK.equals(lockType) == true && 
                         LockStatus.LOCKED.equals(currentLockStatus) == true)
                     {
-                        // Error since we are trying to preform an operation on a locked node
+                        // Lock is of type Write Lock and the node is locked by another owner.
                         throw new NodeLockedException(nodeRef);
                     }
                     else if (LockType.READ_ONLY_LOCK.equals(lockType) == true &&
@@ -512,6 +721,14 @@ public class LockServiceImpl implements LockService,
                         // modifications are prevented
                         throw new NodeLockedException(nodeRef);
                     }
+                    else if (LockType.NODE_LOCK.equals(lockType) == true &&
+                            (LockStatus.LOCKED.equals(currentLockStatus) == true || LockStatus.LOCK_OWNER.equals(currentLockStatus) == true))
+                    {
+                        // Error since there is a read only lock on this object and all
+                        // modifications are prevented
+                        throw new NodeLockedException(nodeRef);
+                    }
+
                 }
                 catch (AspectMissingException exception)
                 {
@@ -521,19 +738,64 @@ public class LockServiceImpl implements LockService,
         }
     }
 
+    private void checkNodeBeforeUnlock(NodeRef nodeRef)
+    {
+        // Check for runAs first
+        String userName = AuthenticationUtil.getRunAsUser();
+        Set<String> userAuthorities = authorityService.getAuthoritiesForUser(userName);
+        // ignore check for admins and system
+        if (userAuthorities.contains(PermissionService.ADMINISTRATOR_AUTHORITY) ||
+            tenantService.getBaseNameUser(userName).equals(AuthenticationUtil.getSystemUserName()))
+        {
+            return;
+        }
+
+        nodeRef = tenantService.getName(nodeRef);
+
+        // Then check for actual lock owber with session
+        userName = getUserName();
+
+        // Ensure we have found a node reference
+        if (nodeRef != null && userName != null)
+        {
+            try
+            {
+                // Get the current lock status on the node ref
+                LockStatus currentLockStatus = getLockStatus(nodeRef, userName);
+
+                if (LockStatus.LOCKED.equals(currentLockStatus) == true)
+                {
+                    throw new UnableToReleaseLockException(nodeRef);
+                }
+            }
+            catch (AspectMissingException exception)
+            {
+                // Ignore since this indicates that the node does not have the lock aspect applied
+            }
+        }
+    }
+
     /**
      * Ensures that the parent is not locked.
      * 
      * @see #checkForLock(NodeRef)
      */
-    public void beforeCreateChildAssociation(
-            NodeRef parentNodeRef,
-            NodeRef childNodeRef,
-            QName assocTypeQName,
-            QName assocQName,
-            boolean isNewNode)
+    public void onCreateChildAssociation(ChildAssociationRef childAssocRef, boolean isNewNode)
     {
-        checkForLock(parentNodeRef);
+        LockType lockType = getLockType(childAssocRef.getParentRef());
+        if(lockType != null)
+        {
+
+            switch (lockType)
+            {
+                case WRITE_LOCK:
+                case READ_ONLY_LOCK:
+                    checkForLock(childAssocRef.getParentRef());
+                    break;
+                case NODE_LOCK:
+                // don't check for lock
+            }
+        }
     }
 
     /**
@@ -557,11 +819,11 @@ public class LockServiceImpl implements LockService,
     }
 
     /**
-     * @return              Returns {@link LockableAspectCopyBehaviourCallback}
+     * @return              Returns {@link DoNothingCopyBehaviourCallback}
      */
     public CopyBehaviourCallback getCopyCallback(QName classRef, CopyDetails copyDetails)
     {
-        return LockableAspectCopyBehaviourCallback.INSTANCE;
+        return DoNothingCopyBehaviourCallback.getInstance();
     }
 
     /**
@@ -608,6 +870,8 @@ public class LockServiceImpl implements LockService,
             PolicyScope nodeDetails)
     {
         // Add the lock aspect, but do not version the property values
+        // TODO: disable the LockAspectInterceptor for this thread, re-enable in finally.
+        //       (we need to add this aspect for real).
         nodeDetails.addAspect(ContentModel.ASPECT_LOCKABLE);
     }
 
@@ -633,7 +897,9 @@ public class LockServiceImpl implements LockService,
 
     /**
      * @see org.alfresco.service.cmr.lock.LockService#getLocks()
+     * @deprecated Uses search and does not report on ephemeral locks.
      */
+    @Deprecated
     public List<NodeRef> getLocks(StoreRef storeRef)
     {
         return getLocks(
@@ -648,7 +914,9 @@ public class LockServiceImpl implements LockService,
      * @param storeRef      the store reference
      * @param query         the query string
      * @return              the locked nodes
+     * @deprecated Uses search and does not report on ephemeral locks.
      */
+    @Deprecated
     private List<NodeRef> getLocks(StoreRef storeRef, String query)
     {
         List<NodeRef> result = new ArrayList<NodeRef>();
@@ -673,8 +941,9 @@ public class LockServiceImpl implements LockService,
 
     /**
      * @see org.alfresco.service.cmr.lock.LockService#getLocks(org.alfresco.service.cmr.lock.LockType)
+     * @deprecated Uses search and does not report on ephemeral locks.
      */
-    @Override
+    @Deprecated
     public List<NodeRef> getLocks(StoreRef storeRef, LockType lockType)
     {
         return getLocks(
@@ -683,28 +952,121 @@ public class LockServiceImpl implements LockService,
                 "\" +@\\{http\\://www.alfresco.org/model/content/1.0\\}" + ContentModel.PROP_LOCK_OWNER.getLocalName() + ":\"" + getUserName() + "\"" +
                 " +@\\{http\\://www.alfresco.org/model/content/1.0\\}" + ContentModel.PROP_LOCK_TYPE.getLocalName() + ":\"" + lockType.toString() + "\"");
     }
-    
-    /**
-     * Manual locks are generated based on authentication, not by browser/client session.
-     * 
-     * @return currently authenticated user
-     */
-    protected String getManualLockOwner() {
-        return authenticationService.getCurrentUserName();
+
+    @Override
+    public void onMoveNode(ChildAssociationRef oldChildAssocRef, ChildAssociationRef newChildAssocRef)
+    {
+        NodeRef nodeRef = oldChildAssocRef.getChildRef();
+        checkForLock(nodeRef);
     }
 
-    /**
-     * Check if this node has been locked manually
-     * 
-     * @param nodeRef node to check
-     * @return true, if node has been locked manually
-     */
-    protected boolean isManualLock(NodeRef nodeRef) {
-        boolean manualLock = false;
-        if (nodeRef != null) {
-            manualLock = Boolean.TRUE.equals(this.nodeService.getProperty(nodeRef, FileModel.Props.MANUAL_LOCK));
+    @Override
+    public void suspendLocks()
+    {
+       getBehaviourFilter().disableBehaviour(ContentModel.ASPECT_LOCKABLE);
+    }
+
+    @Override
+    public void enableLocks()
+    {
+       getBehaviourFilter().enableBehaviour(ContentModel.ASPECT_LOCKABLE);
+    }
+
+    @Override
+    public String getAdditionalInfo(NodeRef nodeRef)
+    {
+        LockState lockState = getLockState(nodeRef);
+        String additionalInfo = lockState.getAdditionalInfo();
+        return additionalInfo;
+    }
+
+    @Override
+    public LockState getLockState(NodeRef nodeRef)
+    {
+        // Check in-memory for ephemeral locks first.
+        nodeRef = tenantService.getName(nodeRef);
+        LockState lockState = lockStore.get(nodeRef);
+
+        //ALF-20361: It is possible that a rollback has resulted in a "non-lock" lock state being added to
+        //the lock store. Because of that, we check both whether the retrieved lockState is null and, if it isn't,
+        //whether it represents a real lock
+        if (lockState == null || !lockState.isLockInfo())
+        {
+            // No in-memory state, so get from the DB.
+            if (nodeService.exists(nodeRef) && nodeService.hasAspect(nodeRef, ContentModel.ASPECT_LOCKABLE))
+            {
+                String lockOwner = (String) nodeService.getProperty(nodeRef, ContentModel.PROP_LOCK_OWNER);
+
+                Date expiryDate = (Date) nodeService.getProperty(nodeRef, ContentModel.PROP_EXPIRY_DATE);
+                String lockTypeStr = (String) nodeService.getProperty(nodeRef, ContentModel.PROP_LOCK_TYPE);
+                LockType lockType = lockTypeStr != null ? LockType.valueOf(lockTypeStr) : null;
+                String lifetimeStr = (String) nodeService.getProperty(nodeRef, ContentModel.PROP_LOCK_LIFETIME);
+                Lifetime lifetime = lifetimeStr != null ? Lifetime.valueOf(lifetimeStr) : Lifetime.PERSISTENT;
+
+                // Mark lockstate as PERSISTENT as it was in the persistent storage!
+                lockState = LockState.createLock(
+                            nodeRef,
+                            lockType,
+                            lockOwner,
+                            expiryDate,
+                            lifetime,
+                            null);
+            }
+            else
+            {
+                // There is no lock information
+                lockState = LockState.createUnlocked(nodeRef);
+            }
         }
-        
-        return manualLock;
+
+        // Never return a null LockState
+        Assert.notNull(lockState);
+        return lockState;
+    }
+
+    public void setBehaviourFilter(BehaviourFilter behaviourFilter)
+    {
+        this.behaviourFilter = behaviourFilter;
+    }
+
+    public BehaviourFilter getBehaviourFilter()
+    {
+        return behaviourFilter;
+    }
+
+    public void setNodeIndexer(NodeIndexer nodeIndexer)
+    {
+        this.nodeIndexer = nodeIndexer;
+    }
+
+    @Override
+    public void flush()
+    {
+    }
+
+    @Override
+    public void beforeCommit(boolean readOnly)
+    {
+    }
+
+    @Override
+    public void beforeCompletion()
+    {
+    }
+
+    @Override
+    public void afterCommit()
+    {
+    }
+
+    @Override
+    public void afterRollback()
+    {
+        // As rollback has occurred we are unable to keep hold of any ephemeral locks set during this transaction.
+        Map<NodeRef, LockState> lockedNodes = TransactionalResourceHelper.getMap(KEY_MODIFIED_NODES);
+        for (LockState lockInfo : lockedNodes.values())
+        {
+            lockStore.set(lockInfo.getNodeRef(), lockInfo);
+        }
     }
 }

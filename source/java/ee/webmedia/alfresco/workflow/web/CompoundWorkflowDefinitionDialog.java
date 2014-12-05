@@ -872,7 +872,7 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
                 if (isNotAllowedGroupAssignmentWorkflow(tmpType)) {
                     continue;
                 }
-                String tmpName = MessageUtil.getMessage(tmpType.getLocalName());
+                String tmpName = getWorkflowConstantsBean().getWorkflowTypeName(tmpType);
                 sortedTypes.put(tmpName, tmpType);
             }
         }
@@ -936,6 +936,7 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
         int wfCounter = 1;
         if (firstLoading) {
             getTaskGroups().addNewWorkflowTaskGroupList(0);
+            TaskListContainer.addWorkflowTaskListPageInfo(commonDataGroup, 0);
         }
         List<Workflow> workflows = compoundWorkflow.getWorkflows();
         int workflowCount = workflows.size();
@@ -952,6 +953,7 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
             facetGroup.setId("action-group-" + wfCounter);
             if (firstLoading) {
                 getTaskGroups().addNewWorkflowTaskGroupList(wfCounter);
+                TaskListContainer.addWorkflowTaskListPageInfo(commonDataGroup, wfCounter);
             }
             if (!dontShowAddActions && fullAccess && showAddActions(wfCounter)) {
                 // block add workflow actions

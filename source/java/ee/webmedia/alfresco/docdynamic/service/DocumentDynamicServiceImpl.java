@@ -900,7 +900,8 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
 
         Set<NodeRef> associatedDocs = new HashSet<NodeRef>();
         associatedDocs.add(docRef);
-        BeanHelper.getBulkLoadNodeService().getAssociatedDocRefs(docRef, associatedDocs, new HashSet<NodeRef>(), currentAssociatedDocs, new HashSet<Integer>());
+        associatedDocs.addAll(currentAssociatedDocs);
+        BeanHelper.getBulkLoadNodeService().getAssociatedDocRefs(docRef, associatedDocs);
         return associatedDocs;
     }
 

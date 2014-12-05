@@ -5,6 +5,7 @@ import javax.sql.DataSource;
 
 import org.alfresco.repo.node.db.NodeDaoService;
 import org.alfresco.repo.policy.BehaviourFilter;
+import org.alfresco.repo.webdav.WebDAVLockService;
 import org.alfresco.service.ServiceRegistry;
 import org.alfresco.service.cmr.dictionary.DictionaryService;
 import org.alfresco.service.cmr.model.FileFolderService;
@@ -594,6 +595,10 @@ public class BeanHelper implements NamespacePrefixResolverProvider {
 
     public static CaseFileLogService getCaseFileLogService() {
         return getSpringBean(CaseFileLogService.class, CaseFileLogService.BEAN_NAME);
+    }
+
+    public static WebDAVLockService getWebDAVLockService() {
+        return getSpringBean(WebDAVLockService.class, WebDAVLockService.BEAN_NAME);
     }
 
     // END: alfresco services

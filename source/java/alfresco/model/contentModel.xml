@@ -272,7 +272,10 @@
             </property>
             <property name="cm:showEmptyTaskMenu">
                <type>d:boolean</type>
-            </property>         
+            </property>
+            <property name="cm:openOfficeClientExtensions">
+               <type>d:text</type>
+            </property>
             
             <!-- system maintained values -->
             <property name="cm:sizeCurrent">
@@ -865,6 +868,10 @@
                <protected>true</protected>
             </property>
             <property name="cm:lockType">
+               <type>d:text</type>
+               <protected>true</protected>
+            </property>
+            <property name="cm:lockLifetime">
                <type>d:text</type>
                <protected>true</protected>
             </property>

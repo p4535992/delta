@@ -1,53 +1,72 @@
 /*
- * Copyright (C) 2005-2007 Alfresco Software Limited.
+ * Copyright (C) 2005-2013 Alfresco Software Limited.
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
-
- * This program is distributed in the hope that it will be useful,
+ * This file is part of Alfresco
+ *
+ * Alfresco is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Alfresco is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
-
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-
- * As a special exception to the terms and conditions of version 2.0 of
- * the GPL, you may redistribute this Program in connection with Free/Libre
- * and Open Source Software ("FLOSS") applications as described in Alfresco's
- * FLOSS exception.  You should have recieved a copy of the text describing
- * the FLOSS exception, and it is also available here:
- * http://www.alfresco.com/legal/licensing"
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with Alfresco. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.alfresco.repo.webdav;
 
+import java.io.BufferedReader;
+import java.io.CharArrayWriter;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.SocketException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.regex.Pattern;
 
+import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletRequestWrapper;
 import javax.servlet.http.HttpServletResponse;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
 import org.alfresco.model.ContentModel;
+import org.alfresco.repo.content.LimitedStreamCopier;
+import org.alfresco.repo.security.authentication.AuthenticationUtil;
+import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
 import org.alfresco.repo.security.permissions.AccessDeniedException;
+import org.alfresco.repo.tenant.TenantService;
 import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
 import org.alfresco.service.ServiceRegistry;
-import org.alfresco.service.cmr.lock.LockService;
 import org.alfresco.service.cmr.model.FileFolderService;
+import org.alfresco.service.cmr.model.FileInfo;
+import org.alfresco.service.cmr.model.FileNotFoundException;
+import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.ContentService;
 import org.alfresco.service.cmr.repository.MimetypeService;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
+import org.alfresco.service.cmr.search.SearchService;
 import org.alfresco.service.cmr.security.AuthenticationService;
+import org.alfresco.service.cmr.security.PermissionService;
+import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.transaction.TransactionService;
+import org.alfresco.util.TempFileProvider;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dom4j.DocumentHelper;
@@ -57,6 +76,8 @@ import org.w3c.dom.Document;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
+
 
 /**
  * Abstract base class for all the WebDAV method handling classes
@@ -67,6 +88,8 @@ public abstract class WebDAVMethod
 {
     // Log output
 
+    private static final String VERSION_NUM_PATTERN = "\\d+\\.\\d+(\\.\\d+)?";
+
     protected static Log logger = LogFactory.getLog("org.alfresco.webdav.protocol");
 
     public static final String PARAM_TICKET = "webdaw_ticket";
@@ -75,10 +98,28 @@ public abstract class WebDAVMethod
 
     private static final boolean XMLPrettyPrint = true;
 
+    // Mapping of User-Agent pattern to response status code
+    // used to determine which status code should be returned for AccessDeniedException
+
+    private static final Map<String, Integer> accessDeniedStatusCodes = new LinkedHashMap<String, Integer>();
+    static
+    {
+        accessDeniedStatusCodes.put("^WebDAVLib/" + VERSION_NUM_PATTERN + "$",
+                                    HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+        accessDeniedStatusCodes.put("^WebDAVFS/" + VERSION_NUM_PATTERN + " \\(\\d+\\)\\s+Darwin/" +
+                                    VERSION_NUM_PATTERN + "\\s+\\(.*\\)$",
+                                    HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+        accessDeniedStatusCodes.put(".*", HttpServletResponse.SC_FORBIDDEN);
+    }
+
     // Servlet request/response
 
     protected HttpServletRequest m_request;
     protected HttpServletResponse m_response;
+    private File m_requestBody;
+    private ServletInputStream m_inputStream;
+    private CharArrayWriter m_xmlWriter;
+    private BufferedReader m_reader;
 
     // WebDAV helper
 
@@ -91,10 +132,30 @@ public abstract class WebDAVMethod
     // Repository path
 
     protected String m_strPath = null;
-    
+
     // User Agent
     
     protected String m_userAgent = null;
+
+    // If header conditions
+
+    protected LinkedList<Condition> m_conditions = null;
+
+    // If header resource-tag
+
+    protected String m_resourceTag = null;
+
+    // Depth header
+
+    protected int m_depth = WebDAV.DEPTH_INFINITY;
+
+    // request scope
+    protected Map<NodeRef, NodeRef> m_childToParent = new HashMap<NodeRef, NodeRef>();
+    protected Map<NodeRef, LockInfo> m_parentLockInfo = new HashMap<NodeRef, LockInfo>();
+
+    private String siteId;
+
+    private String tenantDomain;
 
     /**
      * Default constructor
@@ -106,19 +167,147 @@ public abstract class WebDAVMethod
     /**
      * Set the request/response details
      * 
-     * @param req HttpServletRequest
-     * @param resp HttpServletResponse
-     * @param registry ServiceRegistry
-     * @param rootNode NodeRef
+     * @param req
+     *            HttpServletRequest
+     * @param resp
+     *            HttpServletResponse
+     * @param davHelper
+     *            WebDAVHelper
+     * @param rootNode
+     *            NodeRef
      */
-    public void setDetails(HttpServletRequest req, HttpServletResponse resp, WebDAVHelper davHelper, NodeRef rootNode)
+    public void setDetails(final HttpServletRequest req, HttpServletResponse resp, WebDAVHelper davHelper,
+            NodeRef rootNode)
     {
-        m_request = req;
-        m_response = resp;
-        m_davHelper = davHelper;
-        m_rootNodeRef = rootNode;
+        // Wrap the request so that it is 'retryable'. Calls to getInputStream() and getReader() will result in the
+        // request body being read into an intermediate file.
+        this.m_request = new HttpServletRequestWrapper(req)
+        {
 
-        m_strPath = WebDAV.getRepositoryPath(req);
+            @Override
+            public ServletInputStream getInputStream() throws IOException
+            {
+                if (WebDAVMethod.this.m_reader != null)
+                {
+                    throw new IllegalStateException("Reader in use");
+                }
+                if (WebDAVMethod.this.m_inputStream == null)
+                {
+                    final FileInputStream in = new FileInputStream(getRequestBodyAsFile(req));
+                    WebDAVMethod.this.m_inputStream = new ServletInputStream()
+                    {
+
+                        @Override
+                        public int read() throws IOException
+                        {
+                            return in.read();
+                        }
+
+                        @Override
+                        public int read(byte b[]) throws IOException
+                        {
+                            return in.read(b);
+                        }
+
+                        @Override
+                        public int read(byte b[], int off, int len) throws IOException
+                        {
+                            return in.read(b, off, len);
+                        }
+
+                        @Override
+                        public long skip(long n) throws IOException
+                        {
+                            return in.skip(n);
+                        }
+
+                        @Override
+                        public int available() throws IOException
+                        {
+                            return in.available();
+                        }
+
+                        @Override
+                        public void close() throws IOException
+                        {
+                            in.close();
+                        }
+
+                        @Override
+                        public void mark(int readlimit)
+                        {
+                            in.mark(readlimit);
+                        }
+
+                        @Override
+                        public void reset() throws IOException
+                        {
+                            in.reset();
+                        }
+
+                        @Override
+                        public boolean markSupported()
+                        {
+                            return in.markSupported();
+                        }
+                    };
+                }
+
+                return WebDAVMethod.this.m_inputStream;
+            }
+
+            @Override
+            public BufferedReader getReader() throws IOException
+            {
+                if (WebDAVMethod.this.m_inputStream != null)
+                {
+                    throw new IllegalStateException("Input Stream in use");
+                }
+                if (WebDAVMethod.this.m_reader == null)
+                {
+                    String encoding = req.getCharacterEncoding();
+                    WebDAVMethod.this.m_reader = new BufferedReader(new InputStreamReader(new FileInputStream(
+                            getRequestBodyAsFile(req)), encoding == null ? "ISO-8859-1" : encoding));
+                }
+
+                return WebDAVMethod.this.m_reader;
+            }
+
+        };
+        this.m_response = resp;
+        this.m_davHelper = davHelper;
+        this.m_rootNodeRef = rootNode;
+
+        this.m_strPath = m_davHelper.getRepositoryPath(m_request);
+    }
+
+    private File getRequestBodyAsFile(HttpServletRequest req) throws IOException
+    {
+        if (this.m_requestBody == null)
+        {
+            this.m_requestBody = TempFileProvider.createTempFile("webdav_" + req.getMethod() + "_", ".bin");
+            // copy the streams
+            LimitedStreamCopier streamCopier = new LimitedStreamCopier();
+            long bytes = streamCopier.copyStreamsLong(req.getInputStream(), new FileOutputStream(this.m_requestBody), m_davHelper.getSizeLimit());
+
+            // get content length
+            long contentLength = -1;
+            try
+            {
+                    contentLength = Long.valueOf(req.getHeader(WebDAV.HEADER_CONTENT_LENGTH));
+            }
+            catch (NumberFormatException e)
+            {
+                    ; // may be null etc.
+            }
+
+            // ALF-7377: check for corrupt request
+            if (contentLength >= 0 && contentLength != bytes)
+            {
+                throw new IOException("Request body does not have specified Content Length");
+            }
+        }
+        return this.m_requestBody;
     }
 
     /**
@@ -133,61 +322,176 @@ public abstract class WebDAVMethod
     }
 
     /**
+     * Return the property find depth
+     *
+     * @return int
+     */
+    public final int getDepth()
+    {
+        return m_depth;
+    }
+
+    /**
      * Executes the method, wrapping the call to {@link #executeImpl()} in an appropriate transaction
      * and handling the error conditions.
+     * @throws IOException
      */
     public void execute() throws WebDAVServerException
     {
+        // Prepare information for node lock checking
+        setRequestWebdavTicket(getPath(), m_request);
+        
         // Parse the HTTP headers
         parseRequestHeaders();
 
         // Parse the HTTP body
-        parseRequestBody();
+        try
+        {
+            parseRequestBody();
+        }
+        catch (WebDAVServerException e)
+        {
+            if (e.getCause() != null && e.getCause() instanceof SAXParseException)
+            {
+                SAXParseException saxParseEx = (SAXParseException) e.getCause();
+                if (logger.isTraceEnabled())
+                {
+                    // Include stack trace.
+                    logger.trace("Malformed request body", saxParseEx);
+                }
+                else if (logger.isDebugEnabled())
+                {
+                    // Log message only.
+                    logger.debug("Malformed request body: " + saxParseEx.getMessage());
+                }
+
+                try
+                {
+                    m_response.sendError(e.getHttpStatusCode());
+                }
+                catch (IOException ioe)
+                {
+                    if (logger.isDebugEnabled())
+                    {
+                        logger.debug("Unable to send status code", ioe);
+                    }
+                }
+                // Halt processing.
+                return;
+            }
+            else
+            {
+                // Rethrow the exception, as we haven't dealt with it here.
+                throw e;
+            }
+        }
+
+        m_userAgent = m_request.getHeader(WebDAV.HEADER_USER_AGENT);
 
         RetryingTransactionCallback<Object> executeImplCallback = new RetryingTransactionCallback<Object>()
-                {
+        {
             @Override
             public Object execute() throws Exception
             {
-                // Set the ticket for request
-                List<String> pathParts = WebDAVHelper.splitAllPaths(getPath());
-                if (pathParts.isEmpty()) {
-                    logger.error("Path " + getPath() + " didn't contain needed parseable info!");
-                    throw new WebDAVServerException(HttpServletResponse.SC_BAD_REQUEST);
-                }
-                m_request.setAttribute(PARAM_TICKET, pathParts.get(0));
+                // Reset the request input stream / reader state
+                WebDAVMethod.this.m_inputStream = null;
+                WebDAVMethod.this.m_reader = null;
+
+                // cache current session
+                getDAVHelper().getLockService().setCurrentSession(m_request.getSession());
+
+                // cache current session
+                getDAVHelper().getLockService().setCurrentSession(m_request.getSession());
+                setRequestWebdavTicket(getPath(), m_request);
 
                 executeImpl();
                 return null;
             }
-                };
-                try
+        };
+        try
+        {
+            boolean isReadOnly = isReadOnly();
+            // Execute the method
+            getTransactionService().getRetryingTransactionHelper().doInTransaction(executeImplCallback, isReadOnly);
+            generateResponseImpl();
+        }
+        catch (AccessDeniedException e)
+        {
+            // Return a forbidden status
+            throw new WebDAVServerException(getStatusForAccessDeniedException());
+        }
+        catch (Throwable e)
+        {
+            if (e instanceof WebDAVServerException)
+            {
+               throw (WebDAVServerException) e;
+            }
+            else if (e.getCause() instanceof WebDAVServerException)
+            {
+                throw (WebDAVServerException) e.getCause();
+            }
+            else
+            {
+                boolean logOnly = false;
+
+                Throwable t = e;
+                while ((t = t.getCause()) != null)
                 {
-                    boolean isReadOnly = isReadOnly();
-                    // Execute the method
-                    getTransactionService().getRetryingTransactionHelper().doInTransaction(executeImplCallback, isReadOnly);
+                    if (t instanceof SocketException)
+                    {
+                        logOnly = true;
+
+                        // The client aborted the connection - we can't do much about this, except log it.
+                        if (logger.isTraceEnabled() || logger.isDebugEnabled())
+                        {
+                            String message = "Client dropped connection [uri=" + m_request.getRequestURI() + "]";
+
+                            if (logger.isTraceEnabled())
+                            {
+                                // Include a stack trace when trace is enabled.
+                                logger.trace(message, e);
+                            }
+                            else if (logger.isDebugEnabled())
+                            {
+                                // Just a message for debug-level output.
+                                logger.debug(message);
+                            }
+                        }
+                        break;
+                    }
                 }
-                catch (AccessDeniedException e)
+
+                // Convert error to a server error
+                if (!logOnly)
                 {
-                    // Return a forbidden status
-                    throw new WebDAVServerException(HttpServletResponse.SC_UNAUTHORIZED, e);
+                    throw new WebDAVServerException(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e);
                 }
-                catch (Throwable e)
-                {
-                    if (e instanceof WebDAVServerException)
-                    {
-                        throw (WebDAVServerException) e;
-                    }
-                    else if (e.getCause() instanceof WebDAVServerException)
-                    {
-                        throw (WebDAVServerException) e.getCause();
-                    }
-                    else
-                    {
-                        // Convert error to a server error
-                        throw new WebDAVServerException(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e);
-                    }
-                }
+            }
+        }
+        finally
+        {
+			cleanUp();
+        }
+    }
+
+    /**
+     * Clean up resources if about to finish processing the request.
+     */
+    private void cleanUp()
+    {
+        // Remove temporary file if created
+        if (this.m_requestBody != null)
+        {
+            try
+            {
+                this.m_requestBody.delete();
+        		this.m_requestBody = null;
+            }
+            catch (Throwable t)
+            {
+                WebDAVMethod.logger.error("Failed to delete temp file", t);
+            }
+        }
     }
 
     /**
@@ -198,6 +502,20 @@ public abstract class WebDAVMethod
      * @throws Exception any unhandled exception
      */
     protected abstract void executeImpl() throws WebDAVServerException, Exception;
+
+    /**
+     * Does nothing unless overridden - for reasons of backwards compatibility. Subclasses
+     * implementing this method should separate the WebDAV method execution logic from
+     * response generation logic. Execution logic should be contained in the {@link #executeImpl} method
+     * and should NOT contain any code that writes to the response. Conversely response generation logic
+     * should NOT contain any code relating to the desired effect of the WebDAV method (e.g. setting properties
+     * on a node) and should be contained purely within this method.
+     * <p>
+     * Older methods, until refactored will not override this method, relying only on {@link #executeImpl()}.
+     */
+    protected void generateResponseImpl() throws Exception
+    {
+    }
 
     /**
      * Parses the given request body represented as an XML document and sets any necessary context
@@ -229,7 +547,15 @@ public abstract class WebDAVMethod
                 factory.setNamespaceAware(true);
 
                 DocumentBuilder builder = factory.newDocumentBuilder();
-                body = builder.parse(new InputSource(m_request.getReader()));
+                if (m_request.getCharacterEncoding() == null)
+                {
+                    // Let the XML parser work out the encoding if it is not explicitly declared in the HTTP header
+                    body = builder.parse(new InputSource(m_request.getInputStream()));
+                }
+                else
+                {
+                    body = builder.parse(new InputSource(m_request.getReader()));
+                }
             }
             catch (ParserConfigurationException e)
             {
@@ -249,61 +575,128 @@ public abstract class WebDAVMethod
     }
 
     /**
-     * Returns the lock token present in the If header
+     * Parses "Depth" request header
      * 
-     * @return The lock token present in the If header
+     * @throws WebDAVServerException
      */
-    protected String parseIfHeader() throws WebDAVServerException
+    protected void parseDepthHeader() throws WebDAVServerException
     {
-        String strLockToken = null;
+        // Store the Depth header as this is used by several WebDAV methods
+
+        String strDepth = m_request.getHeader(WebDAV.HEADER_DEPTH);
+        if (strDepth != null && strDepth.length() > 0)
+        {
+            if (strDepth.equals(WebDAV.ZERO))
+            {
+                m_depth = WebDAV.DEPTH_0;
+            }
+            else if (strDepth.equals(WebDAV.ONE))
+            {
+                m_depth = WebDAV.DEPTH_1;
+            }
+            else
+            {
+                m_depth = WebDAV.DEPTH_INFINITY;
+            }
+        }
+    }
+
+    /**
+     * Parses "If" header of the request.
+     * Stores conditions that should be checked.
+     * Parses both No-tag-list and Tagged-list formats
+     * See "10.4.2 Syntax" paragraph of the WebDAV specification for "If" header format.
+     *
+     */
+    protected void parseIfHeader() throws WebDAVServerException
+    {
+        //String strLockToken = null;
 
         String strIf = m_request.getHeader(WebDAV.HEADER_IF);
 
-        if (logger.isDebugEnabled()) {
+        if (logger.isDebugEnabled())
             logger.debug("Parsing If header: " + strIf);
-        }
 
         if (strIf != null && strIf.length() > 0)
         {
-            if (strIf.startsWith("(<"))
+            if (strIf.startsWith("<"))
             {
-                // Parse the tokens (only get the first one though)
+                m_resourceTag = strIf.substring(1, strIf.indexOf(">"));
+                strIf = strIf.substring(m_resourceTag.length() + 3);
+            }
 
-                int idx = strIf.indexOf(">");
-                if (idx != -1)
+            m_conditions = new LinkedList<Condition>();
+            String[] parts = strIf.split("\\) \\(");
+            for (int i = 0; i < parts.length; i++)
+            {
+
+                String partString = parts[i].replaceAll("\\(", "").replaceAll("\\)", "");
+
+                Condition c = new Condition();
+                String[] conditions = partString.split(" ");
+
+                for (int j = 0; j < conditions.length; j++)
+                {
+                    boolean fNot = false;
+                    String eTag = null;
+                    String lockToken = null;
+
+                    if (WebDAV.HEADER_KEY_NOT.equals(conditions[j]))
+                    {
+                        // Check if Not keyword followed by State-token or entity-tag
+                        if (j == (conditions.length - 1))
+                        {
+                            throw new WebDAVServerException(HttpServletResponse.SC_PRECONDITION_FAILED);
+                        }
+                        fNot = true;
+                        j++;
+                    }
+
+                    // read State-token
+                    int index = conditions[j].indexOf('<');
+                    if (index != -1)
                 {
                     try
                     {
-                        strLockToken = strIf.substring(WebDAV.OPAQUE_LOCK_TOKEN.length() + 2, idx);
-                    }
-                    catch (IndexOutOfBoundsException e)
+                            String s = conditions[j].substring(index + 1, conditions[j].indexOf(">"));
+                            if (!s.startsWith(WebDAV.OPAQUE_LOCK_TOKEN))
+                            {
+                               if(!fNot)
                     {
-                        logger.warn("Failed to parse If header: " + strIf);
+                                   throw new WebDAVServerException(HttpServletResponse.SC_PRECONDITION_FAILED);
                     }
                 }
                 else
                 {
-                    throw new WebDAVServerException(HttpServletResponse.SC_BAD_REQUEST);
+                                lockToken = s;
+                                c.addLockTocken(lockToken, fNot);
                 }
-
-                // Print a warning if there are other tokens detected
-
-                if (strIf.length() > idx + 2)
+                        }
+                        catch (IndexOutOfBoundsException e)
                 {
-                    logger.warn("The If header contained more than one lock token, only one is supported");
+                            throw new WebDAVServerException(HttpServletResponse.SC_PRECONDITION_FAILED);
                 }
             }
-            else if (strIf.startsWith("<"))
+
+                    // read entity-tag
+                    index = conditions[j].indexOf("[\"");
+                    if (index != -1)
             {
-                logger.warn("Tagged lists in the If header are not supported");
+                        // TODO: implement parsing of weak ETags: W/"123..".
+                        int index2 = conditions[j].indexOf("]");
+                        if (index2 == -1)
+                        {
+                            logger.warn("No closing ']': "+conditions[j]);
+                            index2 = conditions[j].length();
+                        }
+                        eTag = conditions[j].substring(index + 1, index2);
+                        c.addETag(eTag, fNot);
             }
-            else if (strIf.startsWith("(["))
-            {
-                logger.warn("ETags in the If header are not supported");
+
+                }
+                m_conditions.add(c);
             }
         }
-
-        return strLockToken;
     }
 
     /**
@@ -347,6 +740,26 @@ public abstract class WebDAVMethod
     }
 
     /**
+     * Convenience method to return the search service
+     *
+     * @return SearchService
+     */
+    protected final SearchService getSearchService()
+    {
+        return m_davHelper.getSearchService();
+    }
+
+    /**
+     * Convenience method to return the namespace service
+     *
+     * @return NamespaceService
+     */
+    protected final NamespaceService getNamespaceService()
+    {
+        return m_davHelper.getNamespaceService();
+    }
+
+    /**
      * @return Returns the general file/folder manipulation service
      */
     protected final FileFolderService getFileFolderService()
@@ -375,13 +788,23 @@ public abstract class WebDAVMethod
     }
 
     /**
-     * Convenience method to return the lock service
+     * Retrieve the (WebDAV protocol-level) locking service.
      * 
-     * @return LockService
+     * @return WebDAVLockService
      */
-    protected final LockService getLockService()
+    protected final WebDAVLockService getDAVLockService()
     {
         return m_davHelper.getLockService();
+    }
+
+    /**
+     * Convenience method to return the permission service
+     *
+     * @return PermissionService
+     */
+    protected final PermissionService getPermissionService()
+    {
+        return m_davHelper.getPermissionService();
     }
 
     /**
@@ -395,11 +818,19 @@ public abstract class WebDAVMethod
     }
 
     /**
-     * @return Returns the path of the servlet
+     * @return Returns the path of the servlet, e.g. /webdav
      */
     protected final String getServletPath()
     {
         return m_request.getServletPath();
+    }
+
+    /**
+     * @return Returns the context path of the servlet, e.g. /alfresco
+     */
+    protected final String getContextPath()
+    {
+        return m_request.getContextPath();
     }
 
     /**
@@ -417,9 +848,18 @@ public abstract class WebDAVMethod
      * 
      * @return String
      */
-    protected final String getPath()
+    public String getPath()
     {
         return m_strPath;
+    }
+
+    /**
+     * Returns the format required for an XML response. This may vary per method.
+     */
+    protected OutputFormat getXMLOutputFormat()
+    {
+        // Check if debug output or XML pretty printing is enabled
+        return (XMLPrettyPrint || logger.isDebugEnabled()) ? OutputFormat.createPrettyPrint() : OutputFormat.createCompactFormat();
     }
 
     /**
@@ -430,49 +870,47 @@ public abstract class WebDAVMethod
      */
     protected final XMLWriter createXMLWriter() throws IOException
     {
-        // Check if debug output or XML pretty printing is enabled
-
-        XMLWriter writer = null;
-
-        if (XMLPrettyPrint == true || logger.isDebugEnabled())
-        {
-            writer = new XMLWriter(m_response.getWriter(), OutputFormat.createPrettyPrint());
-        }
-        else
-        {
-            writer = new XMLWriter(m_response.getWriter(), OutputFormat.createCompactFormat());
-        }
-
-        // Return the writer
-
-        return writer;
+        // Buffer the XML response, in case we have to reset mid-transaction
+        m_xmlWriter = new CharArrayWriter(1024);
+        return new XMLWriter(m_xmlWriter, getXMLOutputFormat());
     }
-    
-    protected void generateLockDiscoveryXML(XMLWriter xml, NodeRef lockNode) throws Exception {
-        generateLockDiscoveryXML(xml, lockNode, false, WebDAV.XML_EXCLUSIVE, WebDAV.ZERO);
-    }
+
+    /**
+     * Generates the lock discovery XML response
+     *
+     * @param xml XMLWriter
+     * @param lockNodeInfo NodeRef
+     * @param lockInfo
+     */
+    protected void generateLockDiscoveryXML(XMLWriter xml, FileInfo lockNodeInfo, LockInfo lockInfo) throws Exception
+    {
+        String owner, scope, depth;
+        Date expiry;
+
+        owner = lockInfo.getOwner();
+        expiry = lockInfo.getExpires();
+	    scope = lockInfo.getScope();
+        depth = lockInfo.getDepth();
+
+        generateLockDiscoveryXML(xml, lockNodeInfo, false, scope, depth,
+	                WebDAV.makeLockToken(lockNodeInfo.getNodeRef(), owner), owner, expiry);
+	}
 
     /**
      * Generates the lock discovery XML response
      * 
      * @param xml XMLWriter
-     * @param lockNode NodeRef
+     * @param lockNodeInfo NodeRef
      * @param emptyNamespace boolean True if namespace should be empty. Used to avoid bugs in WebDAV clients.
      * @param scope String lock scope
      * @param depth String lock depth
      */
-    protected void generateLockDiscoveryXML(XMLWriter xml, NodeRef lockNode, boolean emptyNamespace,
-            String scope, String depth) throws Exception
-            {
-        
-        // Get the lock details
-        NodeService nodeService = getNodeService();
-        String owner = (String) nodeService.getProperty(lockNode, ContentModel.PROP_LOCK_OWNER);
-        Date expiryDate = (Date) nodeService.getProperty(lockNode, ContentModel.PROP_EXPIRY_DATE);
-        String lToken = WebDAV.makeLockToken(lockNode, owner);
+    protected void generateLockDiscoveryXML(XMLWriter xml, FileInfo lockNodeInfo, boolean emptyNamespace,
+                String scope, String depth, String lToken, String owner, Date expiryDate) throws Exception
+    {
         Attributes nullAttr= getDAVHelper().getNullAttributes();
         String ns = emptyNamespace ? "" : WebDAV.DAV_NS;
-        if (lockNode != null)
+        if (lockNodeInfo != null)
         {
             // Output the XML response
 
@@ -504,9 +942,9 @@ public abstract class WebDAVMethod
             String strTimeout = WebDAV.INFINITE;
             if (expiryDate != null)
             {
-                long timeoutRemaining = (expiryDate.getTime() - System.currentTimeMillis())/1000L;
+                  long timeoutRemaining = (expiryDate.getTime() - System.currentTimeMillis())/1000L;
 
-                strTimeout = WebDAV.SECOND + timeoutRemaining;
+                  strTimeout = WebDAV.SECOND + timeoutRemaining;
             }
             xml.write(strTimeout);
 
@@ -523,7 +961,7 @@ public abstract class WebDAVMethod
             xml.endElement(ns, WebDAV.XML_ACTIVE_LOCK, emptyNamespace ? WebDAV.XML_ACTIVE_LOCK : WebDAV.XML_NS_ACTIVE_LOCK);
             xml.endElement(ns, WebDAV.XML_LOCK_DISCOVERY, emptyNamespace ? WebDAV.XML_LOCK_DISCOVERY : WebDAV.XML_NS_LOCK_DISCOVERY);
         }
-            }
+    }
 
     /**
      * Generates a list of namespace declarations for the response
@@ -552,12 +990,653 @@ public abstract class WebDAVMethod
                 String strNamespaceName = nameSpaces.get(strNamespaceUri);
 
                 ns.append(" ").append(WebDAV.XML_NS).append(":").append(strNamespaceName).append("=\"");
-                ns.append(strNamespaceUri).append("\" ");
+                ns.append(strNamespaceUri == null ? "" : strNamespaceUri).append("\" ");
             }
         }
 
         return ns.toString();
     }
 
+    /**
+     * Checks if write operation can be performed on node.
+     *
+     * @param fileInfo          - node's file info
+     * @param ignoreShared      - if true ignores shared locks
+     * @param lockMethod        - must be true if used from lock method
+     * @return node's lock info
+     * @throws WebDAVServerException if node has shared or exclusive lock
+     *                               or If header preconditions failed
+     */
+    protected LockInfo checkNode(FileInfo fileInfo, boolean ignoreShared, boolean lockMethod) throws WebDAVServerException
+    {
+        LockInfo nodeLockInfo = getNodeLockInfo(fileInfo);
+        NodeRef nodeRef = fileInfo.getNodeRef();
 
+        // Regardless of WebDAV locks, if we can't write to this node, then it's locked!
+        if (getDAVHelper().isLockedAndReadOnly(nodeRef))
+        {
+            throw new WebDAVServerException(WebDAV.WEBDAV_SC_LOCKED);
+        }
+
+        String nodeETag = getDAVHelper().makeQuotedETag(fileInfo.getNodeRef());
+
+        // Handle the case where there are no conditions and no lock token stored on the node. Node just needs to be writable with no shared locks
+        if (m_conditions == null)
+        {
+            // ALF-3681 fix. WebDrive 10 client doesn't send If header when locked resource is updated so check the node by lockOwner.
+            if (!nodeLockInfo.isExclusive() || (m_userAgent != null && m_userAgent.equals(WebDAV.AGENT_MICROSOFT_DATA_ACCESS_INTERNET_PUBLISHING_PROVIDER_DAV)))
+            {
+                if (!ignoreShared && nodeLockInfo.isShared() && !nodeLockInfo.getSharedLockTokens().isEmpty())
+                {
+                    throw new WebDAVServerException(WebDAV.WEBDAV_SC_LOCKED);
+                }
+                return nodeLockInfo;
+            }
+        }
+
+        // Checking of the If tag consists of two checks:
+        // 1. Check the appropriate lock token for the node has been supplied (if the node is locked)
+        // 2. If there are conditions, check at least one condition (corresponding to this node) is satisfied.
+        checkLockToken(nodeLockInfo, ignoreShared, lockMethod);
+        checkConditions(nodeLockInfo.getExclusiveLockToken(), nodeETag);
+
+        return nodeLockInfo;
+    }
+
+    /**
+     * Checks if write operation can be performed on node.
+     *
+     * @param fileInfo
+     * @return
+     * @throws WebDAVServerException if node has shared or exclusive lock
+     *                               or If header preconditions failed
+     */
+    protected LockInfo checkNode(FileInfo fileInfo) throws WebDAVServerException
+    {
+        return checkNode(fileInfo, false, true);
+    }
+
+    /**
+     * Checks if node can be accessed with WebDAV operation
+     *
+     * @param lockInfo           - node's lock info
+     * @param ignoreShared       - if true - ignores shared lock tokens
+     * @param lockMethod         - must be true if used from lock method
+     * @throws WebDAVServerException if node has no appropriate lock token
+     */
+    private void checkLockToken(LockInfo lockInfo, boolean ignoreShared, boolean lockMethod) throws WebDAVServerException
+    {
+        String nodeLockToken = lockInfo.getExclusiveLockToken();
+        Set<String> sharedLockTokens = lockInfo.getSharedLockTokens();
+
+        if (m_conditions != null)
+        {
+            // Request has conditions to check
+            if (lockInfo.isShared())
+            {
+                // Node has shared lock. Check if conditions contains lock token of the node.
+                // If not throw exception
+                if (!sharedLockTokens.isEmpty())
+                {
+                    if (!ignoreShared)
+                    {
+                        for (Condition condition : m_conditions)
+                        {
+                            for (String sharedLockToken : sharedLockTokens)
+                            {
+                                if (condition.getLockTokensMatch().contains(sharedLockToken))
+                                {
+                                    return;
+                                }
+                            }
+                        }
+                        throw new WebDAVServerException(WebDAV.WEBDAV_SC_LOCKED);
+                    }
+                    return;
+                }
+            }
+            else
+            {
+                // This particular node is not locked so it will not be part of the conditions
+                if (nodeLockToken == null)
+                {
+                    return;
+                }
+                // Node has exclusive lock. Check if conditions contains lock token of the node
+                // If not throw exception
+                for (Condition condition : m_conditions)
+                {
+                    if (condition.getLockTokensMatch().contains(nodeLockToken))
+                    {
+                        return;
+                    }
+                }
+                throw new WebDAVServerException(WebDAV.WEBDAV_SC_LOCKED);
+            }
+        }
+        else
+        {
+            // Request has no conditions
+            if (lockInfo.isShared())
+            {
+                // If lock is shared and check was called not from LOCK method return
+                if (!lockMethod)
+                {
+                    return;
+                }
+                // Throw exception - we can't set lock on node with shared lock
+                throw new WebDAVServerException(WebDAV.WEBDAV_SC_LOCKED);
+            }
+        }
+
+        // MNT-10555
+        if (lockInfo.isExpired())
+        {
+            return;
+        }
+
+        throw new WebDAVServerException(WebDAV.WEBDAV_SC_LOCKED);
+    }
+
+    private void setRequestWebdavTicket(String requestPath, HttpServletRequest request) throws WebDAVServerException {
+        // Set the ticket for request
+        List<String> pathParts = WebDAVHelper.splitAllPaths(requestPath);
+        if (pathParts.isEmpty()) {
+            logger.error("Path " + requestPath + " didn't contain needed parseable info!");
+            throw new WebDAVServerException(HttpServletResponse.SC_BAD_REQUEST);
+        }
+        request.setAttribute(PARAM_TICKET, pathParts.get(0));
+    }
+
+    /**
+     * Checks If header conditions. Throws WebDAVServerException with 412(Precondition failed)
+     * if none of the conditions success.
+     *
+     * @param nodeLockToken          - node's lock token
+     * @param nodeETag               - node's ETag
+     * @throws WebDAVServerException if conditions fail
+     */
+    private void checkConditions(String nodeLockToken, String nodeETag) throws WebDAVServerException
+    {
+        // Checks If header conditions.
+        // Each condition can contain check of ETag and check of Lock token.
+
+        if (m_conditions == null)
+        {
+            // No conditions were provided with "If" request header, so check successful
+            return;
+        }
+
+        // Check the list of "If" header's conditions.
+        // If any condition conforms then check is successful
+        for (Condition condition : m_conditions)
+        {
+            // Flag for ETag conditions
+            boolean fMatchETag = true;
+            // Flag for Lock token conditions
+            boolean fMatchLockToken = true;
+
+            // Check ETags that should match
+            if (condition.getETagsMatch() != null)
+            {
+                fMatchETag = condition.getETagsMatch().contains(nodeETag) ? true : false;
+            }
+            // Check ETags that shouldn't match
+            if (condition.getETagsNotMatch() != null)
+            {
+                fMatchETag = condition.getETagsNotMatch().contains(nodeETag) ? false : true;
+            }
+            // Check lock tokens that should match
+            if (condition.getLockTokensMatch() != null)
+            {
+                fMatchLockToken = nodeLockToken == null || condition.getLockTokensMatch().contains(nodeLockToken);
+            }
+            // Check lock tokens that shouldn't match
+            if (condition.getLockTokensNotMatch() != null)
+            {
+                fMatchLockToken = nodeLockToken == null || !condition.getLockTokensNotMatch().contains(nodeLockToken);
+            }
+
+            if (fMatchETag && fMatchLockToken)
+            {
+                // Condition conforms
+                return;
+            }
+        }
+
+        // None of the conditions successful
+        throw new WebDAVServerException(HttpServletResponse.SC_PRECONDITION_FAILED);
+    }
+
+
+    /**
+     * Returns node Lock token in consideration of WebDav lock depth.
+     *
+     * @param nodeInfo node
+     * @return String Lock token
+     */
+    protected LockInfo getNodeLockInfo(final FileInfo nodeInfo)
+    {
+        if (nodeInfo.getNodeRef() == null)
+        {
+            // TODO review - note: can be null in case of Thor root
+            return new LockInfoImpl();
+        }
+
+        // perf optimisation - effectively run against unprotected nodeService (to bypass repeated permission checks)
+        return AuthenticationUtil.runAs(new RunAsWork<LockInfo>()
+        {
+            public LockInfo doWork() throws Exception
+            {
+                return getNodeLockInfoImpl(nodeInfo);
+            }
+        }, AuthenticationUtil.getSystemUserName());
+    }
+
+    private LockInfo getNodeLockInfoImpl(final FileInfo nodeInfo)
+    {
+        // Check if node is locked directly.
+        LockInfo lockInfo = getNodeLockInfoDirect(nodeInfo);
+        if (lockInfo != null)
+        {
+            return lockInfo;
+        }
+
+        // Node isn't locked directly, try to search for an indirect lock.
+
+        // ALF-13472: In accordance with http://www.webdav.org/specs/rfc2518.html#rfc.section.8.10.4 lock of collection causes locking each resource within it.
+        // It should be possible to receive information about direct or indirect lock because it is one of the states of requested resource.
+        return AuthenticationUtil.runAs(new RunAsWork<LockInfo>()
+        {
+            @Override
+            public LockInfo doWork() throws Exception
+            {
+                NodeService nodeService = getNodeService();
+
+                NodeRef node = nodeInfo.getNodeRef();
+
+                while (true)
+                {
+                    NodeRef parent = m_childToParent.get(node);
+
+                    if ((parent == null) && (! m_childToParent.containsKey(node)))
+                    {
+                        ChildAssociationRef childAssocRef = nodeService.getPrimaryParent(node);
+                        parent = childAssocRef.getParentRef();
+
+                        if (! childAssocRef.getTypeQName().equals(ContentModel.ASSOC_CONTAINS))
+                        {
+                            parent = null;
+                        }
+
+                        // temporarily cache - for this request
+                        m_childToParent.put(node, parent);
+                    }
+
+                    if (parent == null)
+                    {
+                        // Node has no lock and Lock token
+                        return new LockInfoImpl();
+                    }
+
+                    LockInfo lockInfo = m_parentLockInfo.get(parent);
+
+                    if (lockInfo != null)
+                    {
+                        if (lockInfo.isLocked())
+                        {
+                            return lockInfo;
+                        }
+                    }
+
+                    if (lockInfo == null)
+                    {
+                        try
+                        {
+                            lockInfo = getNodeLockInfoIndirect(parent);
+                            if (lockInfo != null)
+                            {
+                                return lockInfo;
+                            }
+                        }
+                        finally
+                        {
+                            if (lockInfo == null)
+                            {
+                                lockInfo = new LockInfoImpl();
+                            }
+                            // temporarily cache - for this request
+                            m_parentLockInfo.put(parent, lockInfo);
+                        }
+                    }
+
+                    node = parent;
+                } // end while
+            }
+        }, AuthenticationUtil.getSystemUserName());
+
+    }
+
+    /**
+     * Checks if a node is directly locked. A direct lock is one associated with the node itself
+     * rather than associated with some ancestor.
+     *
+     * @param nodeInfo
+     * @return The LockInfo if the node is <strong>locked</strong>, or null otherwise.
+     */
+    private LockInfo getNodeLockInfoDirect(FileInfo nodeInfo)
+    {
+        LockInfo lock = getDAVLockService().getLockInfo(nodeInfo.getNodeRef());
+
+        if (lock == null)
+        {
+            return null;
+        }
+
+        if (lock.isLocked())
+        {
+            return lock;
+        }
+        return null;
+    }
+
+    /**
+     * Checks whether a parent node has a lock that is valid for all its descendants.
+     *
+     * @param parent
+     * @return The LockInfo if the node is <strong>locked</strong>, or null otherwise.
+     */
+    private LockInfo getNodeLockInfoIndirect(NodeRef parent)
+    {
+        LockInfo parentLock = getDAVLockService().getLockInfo(parent);
+
+        if (parentLock == null)
+        {
+            return null;
+        }
+
+        // In this case node is locked indirectly.
+        if (parentLock.isLocked() && WebDAV.INFINITY.equals(parentLock.getDepth()))
+        {
+            // In this case node is locked indirectly.
+            // Get lock scope
+            // Get shared lock tokens
+
+            // Store lock information to the lockInfo object
+
+            // Get lock token of the locked node - this is indirect lock token.
+
+            return parentLock;
+        }
+        return null;
+
+        // No has no exclusive lock but can be locked with shared lock
+        // Check node lock depth.
+        // If depth is WebDAV.INFINITY then return this node's Lock token.
+        // In this case node is locked indirectly.
+
+        // Get lock scope
+
+        // Node has it's own Lock token.
+    }
+
+    /**
+     * Get the file info for the given paths
+     *
+     * @param rootNodeRef the acting webdav root
+     * @param path the path to search for
+     * @return Return the file info for the path
+     * @throws FileNotFoundException if the path doesn't refer to a valid node
+     */
+    protected FileInfo getNodeForPath(NodeRef rootNodeRef, String path) throws FileNotFoundException
+    {
+        return getDAVHelper().getNodeForPath(rootNodeRef, path, null);
+    }
+
+    /**     * Returns a URL that could be used to access the given path.
+     *
+     * @param request HttpServletRequest
+     * @param path the path to search for
+     * @param isFolder indicates file or folder is requested
+     * @return URL that could be used to access the given path
+     */
+    protected String getURLForPath(HttpServletRequest request, String path, boolean isFolder)
+    {
+        return getDAVHelper().getURLForPath(request, path, isFolder, m_userAgent);
+    }
+
+    /**
+     * Determines whether the XMLWriter should be flushed when XML is flushed. For some reason this is method specific.
+     * @return <code>true</code> if the XMLWriter should be flushed when XML is flushed
+     */
+    protected boolean shouldFlushXMLWriter()
+    {
+        return true;
+    }
+
+    /**
+     * Flushes all XML written so far to the response
+     *
+     * @param writer XMLWriter that should be flushed
+     */
+    protected final void flushXML(XMLWriter writer) throws IOException
+    {
+        if (shouldFlushXMLWriter())
+        {
+            writer.flush();
+        }
+
+        m_response.getWriter().write(m_xmlWriter.toCharArray());
+
+        m_xmlWriter.reset();
+    }
+
+    /**
+     * Returns a working copy of node for current user.
+     *
+     * @param nodeRef node reference
+     * @return Returns the working copy's file information
+     */
+    protected FileInfo getWorkingCopy(NodeRef nodeRef)
+    {
+        FileInfo result = null;
+        NodeRef workingCopy = getServiceRegistry().getCheckOutCheckInService().getWorkingCopy(nodeRef);
+        if (workingCopy != null)
+        {
+            String workingCopyOwner = getNodeService().getProperty(workingCopy, ContentModel.PROP_WORKING_COPY_OWNER).toString();
+            if (workingCopyOwner.equals(getAuthenticationService().getCurrentUserName()))
+            {
+                result = getFileFolderService().getFileInfo(workingCopy);
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Determines status code for AccessDeniedException based on client's HTTP headers.
+     *
+     * @return Returns status code
+     */
+    protected int getStatusForAccessDeniedException()
+    {
+        if (m_request != null && m_request.getHeader(WebDAV.HEADER_USER_AGENT) != null)
+        {
+            String userAgent = m_request.getHeader(WebDAV.HEADER_USER_AGENT);
+
+            for (Entry<String, Integer> entry : accessDeniedStatusCodes.entrySet())
+            {
+                if (Pattern.compile(entry.getKey()).matcher(userAgent).find())
+                {
+                    return entry.getValue();
+                }
+            }
+        }
+        return HttpServletResponse.SC_UNAUTHORIZED;
+    }
+
+    /**
+     * Class used for storing conditions which comes with "If" header of the request
+     *
+     * @author ivanry
+     */
+    protected class Condition
+    {
+        // These tokens will be checked on equivalence against node's lock token
+        private LinkedList<String> lockTokensMatch = new LinkedList<String>();
+
+        // These tokens will be checked on non-equivalence against node's lock token
+        private LinkedList<String> lockTokensNotMatch = new LinkedList<String>();
+
+        // These ETags will be checked on equivalence against node's ETags
+        private LinkedList<String> eTagsMatch;
+
+        // These ETags will be checked on non-equivalence against node's ETags
+        private LinkedList<String> eTagsNotMatch;
+
+        /**
+         * Default constructor
+         *
+         */
+        public Condition()
+        {
+        }
+
+        /**
+         * Returns the list of lock tokens that should be checked against node's lock token on equivalence.
+         *
+         * @return lock tokens
+         */
+        public LinkedList<String> getLockTokensMatch()
+        {
+            return this.lockTokensMatch;
+        }
+
+        /**
+         * Returns the list of lock tokens that should be checked against node's lock token on non-equivalence.
+         *
+         * @return lock tokens
+         */
+        public LinkedList<String> getLockTokensNotMatch()
+        {
+            return this.lockTokensNotMatch;
+        }
+
+        /**
+         * Returns the list of ETags that should be checked against node's ETag on equivalence.
+         *
+         * @return ETags list
+         */
+        public LinkedList<String> getETagsMatch()
+        {
+            return this.eTagsMatch;
+        }
+
+        /**
+         * Returns the list of ETags that should be checked against node's ETag on non-equivalence.
+         *
+         * @return ETags list
+         */
+        public LinkedList<String> getETagsNotMatch()
+        {
+            return this.eTagsNotMatch;
+        }
+
+        /**
+         * Adds lock token to check
+         *
+         * @param lockToken String
+         * @param notMatch true is lock token should be added to the list matched tokens.
+         *                 false if should be added to the list of non-matches.
+         */
+        public void addLockTocken(String lockToken, boolean notMatch)
+        {
+            if (notMatch)
+            {
+                this.lockTokensNotMatch.add(lockToken);
+            }
+            else
+            {
+                this.lockTokensMatch.add(lockToken);
+            }
+        }
+
+        /**
+         * Add ETag to check
+         *
+         * @param eTag String
+         * @param notMatch true is ETag should be added to the list matched ETags.
+         *                 false if should be added to the list of non-matches.
+         */
+        public void addETag(String eTag, boolean notMatch)
+        {
+            if (notMatch)
+            {
+                if (eTagsNotMatch == null)
+                {
+                    eTagsNotMatch = new LinkedList<String>();
+                }
+                this.eTagsNotMatch.add(eTag);
+            }
+            else
+            {
+                if (eTagsMatch == null)
+                {
+                    eTagsMatch = new LinkedList<String>();
+                }
+                this.eTagsMatch.add(eTag);
+            }
+        }
+    }
+
+    public String toString()
+    {
+       StringBuffer sb = new StringBuffer();
+
+       if(m_request != null)
+       {
+          sb.append("WebDAV ");
+          sb.append(m_request.getMethod());
+          sb.append(" request for ");
+          sb.append(m_strPath);
+       }
+       else
+       {
+          sb.append("Inactive WebDAV request via ");
+          String clz = getClass().getName();
+          sb.append(clz.substring(clz.lastIndexOf('.')+1));
+       }
+
+       return sb.toString();
+    }
+
+
+    /**
+     * Get the site ID (short-name) that the current request relates to. The site ID
+     * will be {@link DEFAULT_SITE_ID} if not specifically set.
+     *
+     * @return The site ID
+     */
+    protected String getSiteId()
+    {
+        if (siteId == null)
+        {
+            siteId = WebDAVHelper.EMPTY_SITE_ID; //getDAVHelper().determineSiteId(this);
+        }
+        return siteId;
+    }
+
+    /**
+     * Get the tenant domain for the current user and request. The tenant domain
+     * will be {@link TenantService#DEFAULT_DOMAIN} if not specifically set.
+     *
+     * @return The tenant domain.
+     */
+    protected String getTenantDomain()
+    {
+        if (tenantDomain == null)
+        {
+            tenantDomain = getDAVHelper().determineTenantDomain(this);
+        }
+        return tenantDomain;
+    }
 }

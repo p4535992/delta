@@ -21,6 +21,7 @@ import static ee.webmedia.alfresco.utils.ComponentUtil.putAttribute;
 import static ee.webmedia.alfresco.workflow.web.CompoundWorkflowDialog.handleWorkflowChangedException;
 
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -165,9 +166,9 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
     private TransactionsBlockBean transactionsBlockBean;
     private CompoundWorkflowDialog compoundWorkflowDialog;
 
-    private transient HtmlPanelGroup dataTableGroup;
-    private transient UIRichList reviewNotesRichList;
-    private transient HtmlPanelGroup dueDateHistoryModalPanel;
+    private transient WeakReference<HtmlPanelGroup> dataTableGroup;
+    private transient WeakReference<UIRichList> reviewNotesRichList;
+    private transient WeakReference<HtmlPanelGroup> dueDateHistoryModalPanel;
 
     private NodeRef containerRef;
     private Node container;
@@ -216,6 +217,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
     }
 
     public void reset() {
+        BeanHelper.getDelegationBean().reset();
         container = null;
         containerRef = null;
         compoundWorkflows = null;
@@ -233,6 +235,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         signingFlow = null;
         dueDateExtenderUsername = null;
         dueDateExtenderUserFullname = null;
+        dueDateHistoryModalPanel = null;
     }
 
     @Override
@@ -1512,19 +1515,23 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
 
     // NB! Don't call this method from java code; this is meant ONLY for workflow-block.jsp binding
     public HtmlPanelGroup getDataTableGroup() {
-        if (dataTableGroup == null) {
-            dataTableGroup = new HtmlPanelGroup();
+        HtmlPanelGroup panelGroup = dataTableGroup != null ? dataTableGroup.get() : null;
+        if (panelGroup == null) {
+            panelGroup = new HtmlPanelGroup();
+            dataTableGroup = new WeakReference<>(panelGroup);
         }
         taskPanelControlDocument = containerRef;
-        return dataTableGroup;
+        return panelGroup;
     }
 
     private HtmlPanelGroup getDataTableGroupInner() {
         // This will be called once in the first RESTORE VIEW phase.
-        if (dataTableGroup == null) {
-            dataTableGroup = new HtmlPanelGroup();
+        HtmlPanelGroup panelGroup = dataTableGroup != null ? dataTableGroup.get() : null;
+        if (panelGroup == null) {
+            panelGroup = new HtmlPanelGroup();
+            dataTableGroup = new WeakReference<>(panelGroup);
         }
-        return dataTableGroup;
+        return panelGroup;
     }
 
     public void setDataTableGroup(HtmlPanelGroup dataTableGroup) {
@@ -1532,15 +1539,15 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
             constructTaskPanelGroup(dataTableGroup, "setDataTableGroup");
             taskPanelControlDocument = containerRef;
         }
-        this.dataTableGroup = dataTableGroup;
+        this.dataTableGroup = new WeakReference<>(dataTableGroup);
     }
 
     public UIRichList getReviewNotesRichList() {
-        return reviewNotesRichList;
+        return reviewNotesRichList != null ? reviewNotesRichList.get() : null;
     }
 
     public void setReviewNotesRichList(UIRichList reviewNotesRichList) {
-        this.reviewNotesRichList = reviewNotesRichList;
+        this.reviewNotesRichList = new WeakReference<>(reviewNotesRichList);
         for (UIComponent component : ComponentUtil.getChildren(reviewNotesRichList)) {
             if (component instanceof UIColumn) {
                 UIColumn column = (UIColumn) component;
@@ -1578,12 +1585,11 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         return workflowRights;
     }
 
-
     private void updateDueDateHistoryPanel() {
-        if (dueDateHistoryModalPanel == null) {
+        if (dueDateHistoryModalPanel == null || dueDateHistoryModalPanel.get() == null) {
             return;
         }
-        List<UIComponent> children = dueDateHistoryModalPanel.getChildren();
+        List<UIComponent> children = dueDateHistoryModalPanel.get().getChildren();
         children.clear();
         WorkflowDbService workflowDbService = getWorkflowDbService();
         final WorkflowService workflowService = BeanHelper.getWorkflowService();
@@ -1685,15 +1691,15 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
     }
 
     public HtmlPanelGroup getDueDateHistoryModalPanel() {
-        return dueDateHistoryModalPanel;
+        return dueDateHistoryModalPanel != null ? dueDateHistoryModalPanel.get() : null;
     }
 
     public void setDueDateHistoryModalPanel(HtmlPanelGroup dueDateHistoryModalPanel) {
-        if (this.dueDateHistoryModalPanel == null) {
-            this.dueDateHistoryModalPanel = dueDateHistoryModalPanel;
+        if (this.dueDateHistoryModalPanel == null || this.dueDateHistoryModalPanel.get() == null) {
+            this.dueDateHistoryModalPanel = new WeakReference<>(dueDateHistoryModalPanel);
             updateDueDateHistoryPanel();
         } else {
-            this.dueDateHistoryModalPanel = dueDateHistoryModalPanel;
+            this.dueDateHistoryModalPanel = new WeakReference<>(dueDateHistoryModalPanel);
         }
     }
 

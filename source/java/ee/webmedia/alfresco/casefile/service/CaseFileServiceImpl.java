@@ -180,6 +180,7 @@ public class CaseFileServiceImpl implements CaseFileService, BeanFactoryAware {
                 }
             }
         }
+        generalService.refreshMaterializedViews(CaseFileModel.Types.CASE_FILE);
         volumeService.removeFromCache(cf.getNodeRef());
         return cf;
     }

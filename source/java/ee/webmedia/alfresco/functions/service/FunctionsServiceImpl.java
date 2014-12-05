@@ -195,7 +195,7 @@ public class FunctionsServiceImpl implements FunctionsService {
         if (log.isDebugEnabled()) {
             log.debug("Function updated: \n" + function);
         }
-
+        generalService.refreshMaterializedViews(FunctionsModel.Types.FUNCTION);
         removeFromCache(functionRef);
         reorderFunctions(function, functionsRoot);
 
