@@ -23,6 +23,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.BeanUtils;
 
+import ee.webmedia.alfresco.common.web.WeakReferenceSerializable;
+
 import javax.faces.el.EvaluationException;
 import javax.faces.el.PropertyNotFoundException;
 import javax.faces.el.PropertyResolver;
@@ -59,6 +61,9 @@ public class PropertyResolverImpl extends PropertyResolver
     {
         try
         {
+            if (base instanceof WeakReferenceSerializable) {
+                base = ((WeakReferenceSerializable) base).get();
+            }
            if(base == null)
            {
                if(log.isDebugEnabled())

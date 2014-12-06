@@ -5,8 +5,12 @@ import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.getCompoundWork
 import java.io.Serializable;
 import java.util.Date;
 
+import javax.faces.event.ActionEvent;
+
+import org.alfresco.service.cmr.repository.NodeRef;
 import org.apache.commons.lang.time.FastDateFormat;
 
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.utils.MessageUtil;
@@ -28,6 +32,7 @@ public class TaskAndDocument implements Serializable {
     private String workflowDueDateStr;
     private String volumeMark;
     private String typeName;
+    private NodeRef actionNodeRef;
 
     public TaskAndDocument(Task task, Document document, CompoundWorkflow compoundWorkflow) {
         this.task = task;
@@ -36,6 +41,15 @@ public class TaskAndDocument implements Serializable {
         task.setCssStyleClass(getCssStyleClass(document != null ? document.getCssStyleClass() : Document.GENERIC_DOCUMENT_STYLECLASS,
                 task.getCompletedDateTime(),
                 task.getDueDate()));
+        if (compoundWorkflow != null) {
+            if (compoundWorkflow.isDocumentWorkflow()) {
+                actionNodeRef = document.getNodeRef();
+            } else if (compoundWorkflow.isIndependentWorkflow()) {
+                actionNodeRef = compoundWorkflow.getNodeRef();
+            } else if (compoundWorkflow.isCaseFileWorkflow()) {
+                actionNodeRef = compoundWorkflow.getParent();
+            }
+        }
     }
 
     public static String getCssStyleClass(String docStyleClass, final Date completedDate, final Date dueDate) {
@@ -158,9 +172,42 @@ public class TaskAndDocument implements Serializable {
         return typeName;
     }
 
+    public String action() {
+        if (compoundWorkflow == null) {
+            return "";
+        }
+        if (compoundWorkflow.isDocumentWorkflow()) {
+            return BeanHelper.getDocumentDialog().action();
+        } else if (compoundWorkflow.isIndependentWorkflow()) {
+            return "dialog:compoundWorkflowDialog";
+        } else {
+            return "";
+        }
+
+    }
+
+    public void actionListener(ActionEvent event) {
+        if (compoundWorkflow == null) {
+            return;
+        }
+        if (compoundWorkflow.isDocumentWorkflow()) {
+            BeanHelper.getDocumentDialog().open(event);
+        } else if (compoundWorkflow.isIndependentWorkflow()) {
+            BeanHelper.getCompoundWorkflowDialog().setupWorkflowFromList(event);
+        } else if (compoundWorkflow.isCaseFileWorkflow()) {
+            BeanHelper.getCaseFileDialog().openFromDocumentList(event);
+
+        }
+
+    }
+
     @Override
     public String toString() {
         return "TaskAndDocument [document=" + document + ", task=" + task + ", compoundWorkflow=" + compoundWorkflow + "]";
+    }
+
+    public NodeRef getActionNodeRef() {
+        return actionNodeRef;
     }
 
 }

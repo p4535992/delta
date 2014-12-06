@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.alfresco.model.ApplicationModel;
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.domain.LocaleDAO;
 import org.alfresco.repo.domain.NodePropertyValue;
@@ -162,12 +163,12 @@ public class BulkLoadNodeServiceImpl implements BulkLoadNodeService {
         Map<NodeRef, List<Map<QName, Serializable>>> fileNodesProps = loadChildNodes(parentNodeRefs, propsToLoad, ContentModel.TYPE_CONTENT,
                 propertyTypes, new CreateObjectCallback<Map<QName, Serializable>>() {
 
-                    @Override
-                    public Map<QName, Serializable> create(NodeRef fileRef, Map<QName, Serializable> properties) {
-                        properties.put(ContentModel.PROP_NODE_REF, fileRef);
-                        return properties;
-                    }
-                });
+            @Override
+            public Map<QName, Serializable> create(NodeRef fileRef, Map<QName, Serializable> properties) {
+                properties.put(ContentModel.PROP_NODE_REF, fileRef);
+                return properties;
+            }
+        });
         Map<NodeRef, List<SimpleFile>> allDocumentsFiles = new HashMap<NodeRef, List<SimpleFile>>();
         for (NodeRef parentRef : parentNodeRefs) {
             List<SimpleFile> files = new ArrayList<>();
@@ -401,6 +402,18 @@ public class BulkLoadNodeServiceImpl implements BulkLoadNodeService {
     }
 
     @Override
+    public <T> List<T> loadChildNodes(NodeRef parentNodeRef, Set<QName> propsToLoad, QName childNodeType, Map<Long, QName> propertyTypes,
+            CreateObjectCallback<T> createObjectCallback) {
+        Map<NodeRef, List<T>> childNodes = loadChildNodes(Arrays.asList(parentNodeRef), propsToLoad, childNodeType, propertyTypes, createObjectCallback);
+
+        if (childNodes.containsKey(parentNodeRef)) {
+            return childNodes.get(parentNodeRef);
+        }
+
+        return Collections.emptyList();
+    }
+
+    @Override
     public <T> Map<NodeRef, List<T>> loadChildNodes(Collection<NodeRef> parentNodes, Set<QName> propsToLoad, QName childNodeType, Map<Long, QName> propertyTypes,
             CreateObjectCallback<T> createObjectCallback) {
         long startTime = System.nanoTime();
@@ -520,36 +533,36 @@ public class BulkLoadNodeServiceImpl implements BulkLoadNodeService {
         jdbcTemplate.query(query,
                 new ParameterizedRowMapper<String>() {
 
-                    @Override
-                    public String mapRow(ResultSet rs, int rowNum) throws SQLException {
-                        setDefaultFetchSize(rs);
-                        NodeRef nodeRef = getNodeRef(rs);
-                        Map<PropertyMapKey, NodePropertyValue> docProps = allDocProps.get(nodeRef);
-                        if (docProps == null) {
-                            docProps = new HashMap<PropertyMapKey, NodePropertyValue>();
-                            allDocProps.put(nodeRef, docProps);
-                        }
-                        Map<String, Object> docIntrinsicProps = allDocIntrinsicProps.get(nodeRef);
-                        if (docIntrinsicProps == null) {
-                            docIntrinsicProps = new HashMap<String, Object>();
-                            docIntrinsicProps.put(ContentModel.PROP_CREATOR.toPrefixString(), rs.getString("creator"));
-                            docIntrinsicProps.put(ContentModel.PROP_CREATED.toPrefixString(), DefaultTypeConverter.INSTANCE.convert(Date.class, rs.getString("created")));
-                            docIntrinsicProps.put(ContentModel.PROP_MODIFIER.toPrefixString(), rs.getString("modifier"));
-                            docIntrinsicProps.put(ContentModel.PROP_MODIFIED.toPrefixString(), DefaultTypeConverter.INSTANCE.convert(Date.class, rs.getString("modified")));
-                            allDocIntrinsicProps.put(nodeRef, docIntrinsicProps);
-                        }
-                        PropertyMapKey propMapKey = getPropMapKey(rs);
-                        if (propMapKey.getQnameId() > 0) {
-                            NodePropertyValue nodePropValue = getPropertyValue(rs);
-                            docProps.put(propMapKey, nodePropValue);
-                        }
-                        if (loadType && !nodeTypes.containsKey(nodeRef)) {
-                            nodeTypes.put(nodeRef, getTypeFromRs(rs));
-                        }
-                        return null;
-                    }
+            @Override
+            public String mapRow(ResultSet rs, int rowNum) throws SQLException {
+                setDefaultFetchSize(rs);
+                NodeRef nodeRef = getNodeRef(rs);
+                Map<PropertyMapKey, NodePropertyValue> docProps = allDocProps.get(nodeRef);
+                if (docProps == null) {
+                    docProps = new HashMap<PropertyMapKey, NodePropertyValue>();
+                    allDocProps.put(nodeRef, docProps);
+                }
+                Map<String, Object> docIntrinsicProps = allDocIntrinsicProps.get(nodeRef);
+                if (docIntrinsicProps == null) {
+                    docIntrinsicProps = new HashMap<String, Object>();
+                    docIntrinsicProps.put(ContentModel.PROP_CREATOR.toPrefixString(), rs.getString("creator"));
+                    docIntrinsicProps.put(ContentModel.PROP_CREATED.toPrefixString(), DefaultTypeConverter.INSTANCE.convert(Date.class, rs.getString("created")));
+                    docIntrinsicProps.put(ContentModel.PROP_MODIFIER.toPrefixString(), rs.getString("modifier"));
+                    docIntrinsicProps.put(ContentModel.PROP_MODIFIED.toPrefixString(), DefaultTypeConverter.INSTANCE.convert(Date.class, rs.getString("modified")));
+                    allDocIntrinsicProps.put(nodeRef, docIntrinsicProps);
+                }
+                PropertyMapKey propMapKey = getPropMapKey(rs);
+                if (propMapKey.getQnameId() > 0) {
+                    NodePropertyValue nodePropValue = getPropertyValue(rs);
+                    docProps.put(propMapKey, nodePropValue);
+                }
+                if (loadType && !nodeTypes.containsKey(nodeRef)) {
+                    nodeTypes.put(nodeRef, getTypeFromRs(rs));
+                }
+                return null;
+            }
 
-                }, paramArray);
+        }, paramArray);
         explainQuery(query, paramArray);
         if (propertyTypes == null) {
             propertyTypes = new HashMap<Long, QName>();
@@ -682,9 +695,9 @@ public class BulkLoadNodeServiceImpl implements BulkLoadNodeService {
                 + "SELECT parent_props.*, node.store_id as store_id, node.uuid AS child_uuid, parent.uuid AS parent_uuid "
                 + (includeIntrinsicProps
                         ? ", parent.audit_creator AS creator, parent.audit_created AS created, parent.audit_modifier AS modifier, parent.audit_modified AS modified " : "")
-                + " FROM " + getNodeTableConditionalJoin(childNodes, arguments)
-                + " JOIN alf_child_assoc parent_assoc on parent_assoc.child_node_id = node.id "
-                + " JOIN alf_node parent on parent_assoc.parent_node_id = parent.id ";
+                        + " FROM " + getNodeTableConditionalJoin(childNodes, arguments)
+                        + " JOIN alf_child_assoc parent_assoc on parent_assoc.child_node_id = node.id "
+                        + " JOIN alf_node parent on parent_assoc.parent_node_id = parent.id ";
         sql += " LEFT JOIN alf_node_properties parent_props on parent_props.node_id = parent.id ";
 
         sql += " WHERE parent_assoc.is_primary = true ";
@@ -966,12 +979,10 @@ public class BulkLoadNodeServiceImpl implements BulkLoadNodeService {
 
     @Override
     @SuppressWarnings("deprecation")
-    public void getAssociatedDocRefs(NodeRef docRef, final Set<NodeRef> associatedDocs, Set<NodeRef> checkedDocs, final Set<NodeRef> currentAssociatedDocs,
-            final Set<Integer> checkedNodes) {
-        if (checkedDocs.contains(docRef) || docRef == null) {
+    public void getAssociatedDocRefs(NodeRef docRef, final Set<NodeRef> associatedDocs) {
+        if (docRef == null) {
             return;
         }
-        checkedDocs.add(docRef);
 
         List<Object> arguments = new ArrayList<>();
 
@@ -1148,6 +1159,47 @@ public class BulkLoadNodeServiceImpl implements BulkLoadNodeService {
             alias = getDbFieldNameFromCamelCase(localName) + "_prop";
         }
         return alias;
+    }
+
+    @Override
+    public Boolean getSubscriptionPropValue(NodeRef personRef, QName notificationType) {
+        long startTime = System.nanoTime();
+        List<Object> arguments = new ArrayList<>();
+        String sql = "SELECT grand_child_props.* "
+                + " FROM " + getNodeTableConditionalJoin(Arrays.asList(personRef), arguments)
+                + " JOIN alf_child_assoc child_assoc on child_assoc.parent_node_id = node.id "
+                + " JOIN alf_node child on child_assoc.child_node_id = child.id and child.type_qname_id = " + getQNameDbId(ApplicationModel.TYPE_CONFIGURATIONS)
+                + " JOIN alf_child_assoc grand_child_assoc on grand_child_assoc.parent_node_id = child.id and grand_child_assoc.qname_localname = 'preferences' "
+                + " JOIN alf_node grand_child on grand_child_assoc.child_node_id = grand_child.id "
+                + " JOIN alf_node_properties grand_child_props on grand_child_props.node_id = grand_child.id "
+                + " WHERE grand_child_props.qname_id = " + getQNameDbId(notificationType);
+
+        List<Map<QName, Serializable>> props = jdbcTemplate.query(sql, new ParameterizedRowMapper<Map<QName, Serializable>>() {
+
+            @Override
+            public Map<QName, Serializable> mapRow(ResultSet rs, int rowNum) throws SQLException {
+                setDefaultFetchSize(rs);
+                PropertyMapKey propertyKey = getPropMapKey(rs);
+                Map<QName, Serializable> props = new HashMap<>();
+                if (propertyKey.getQnameId() > 0) {
+                    NodePropertyValue propertyValue = getPropertyValue(rs);
+                    Map<PropertyMapKey, NodePropertyValue> rawPropValues = new HashMap<>();
+                    rawPropValues.put(propertyKey, propertyValue);
+                    props = HibernateNodeDaoServiceImpl.convertToPublicProperties(rawPropValues, qnameDAO, localeDAO, contentDataDAO,
+                            dictionaryService, null, null);
+                }
+                return props;
+            }
+
+        }, arguments.toArray());
+        Boolean result = null;
+        if (!props.isEmpty()) {
+            result = (Boolean) props.get(0).get(notificationType);
+        }
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("BulkLoadService.getSubscriptionPropValue total time " + CalendarUtil.duration(startTime, System.nanoTime()) + "ms");
+        }
+        return result;
     }
 
     @Override

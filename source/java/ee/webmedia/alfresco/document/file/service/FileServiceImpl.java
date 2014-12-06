@@ -627,7 +627,7 @@ public class FileServiceImpl implements FileService {
 
         StringBuilder path = new StringBuilder();
         if (isOpenOfficeFile(name)) {
-            path.append("vnd.sun.star.webdav://").append(getDocumentTemplateService().getServerUrl().replaceFirst(".*://", ""));
+            path.append("vnd.sun.star.webdav://").append(getDocumentTemplateService().getServerUrl().replaceFirst(".*://", "").replace("6443", "6080")); // FIXME
         }
         // calculate a WebDAV URL for the given node
         path.append("/").append(WebDAVServlet.WEBDAV_PREFIX);
@@ -651,7 +651,14 @@ public class FileServiceImpl implements FileService {
     }
 
     private boolean isOpenOfficeFile(String name) {
-        return openOfficeFiles.contains(FilenameUtils.getExtension(name));
+        String fileExtension = FilenameUtils.getExtension(name);
+        String userSettings = (String) userService.getUserProperties(AuthenticationUtil.getFullyAuthenticatedUser()).get(ContentModel.PROP_OPEN_OFFICE_CLIENT_EXTENSIONS);
+
+        if (StringUtils.isBlank(userSettings)) {
+            return openOfficeFiles.contains(fileExtension);
+        }
+
+        return FilenameUtil.getFileExtensionsFromCommaSeparated(userSettings).contains(fileExtension);
     }
 
     @Override
@@ -818,15 +825,7 @@ public class FileServiceImpl implements FileService {
     }
 
     public void setOpenOfficeFiles(String openOfficeFiles) {
-        if (StringUtils.isBlank(openOfficeFiles)) {
-            this.openOfficeFiles = Collections.emptySet();
-        }
-        String[] extensions = openOfficeFiles.split(",");
-        Set<String> extSet = new HashSet<String>();
-        for (String ext : extensions) {
-            extSet.add(ext);
-        }
-        this.openOfficeFiles = extSet;
+        this.openOfficeFiles = FilenameUtil.getFileExtensionsFromCommaSeparated(openOfficeFiles);
     }
 
     @Override

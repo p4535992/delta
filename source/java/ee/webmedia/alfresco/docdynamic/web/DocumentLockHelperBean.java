@@ -228,9 +228,7 @@ public class DocumentLockHelperBean implements Serializable {
             valueHolders = ArrayUtils.add(valueHolders, getNodeService().getProperty(lockedFile != null ? lockedFile : nodeRef, FileModel.Props.DISPLAY_NAME));
         }
 
-        valueHolders = ArrayUtils.add(valueHolders,
-                BeanHelper.getUserService().getUserFullName(
-                        StringUtils.substringBefore((String) BeanHelper.getNodeService().getProperty(nodeRef, ContentModel.PROP_LOCK_OWNER), "_")));
+        valueHolders = ArrayUtils.add(valueHolders, BeanHelper.getUserService().getUserFullName(BeanHelper.getDocLockService().getLockOwnerIfLocked(nodeRef)));
         Pair<String, Object[]> messageKeyAndValueHolders = Pair.newInstance(messageId, valueHolders);
         return messageKeyAndValueHolders;
     }

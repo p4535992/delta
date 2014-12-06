@@ -16,8 +16,8 @@ import static ee.webmedia.alfresco.utils.RepoUtil.isInWorkspace;
 import static ee.webmedia.alfresco.utils.RepoUtil.isSaved;
 
 import java.io.Serializable;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -1312,6 +1312,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
     @Override
     public void clean() {
         clearState();
+        modalContainer = null;
         for (DocumentDynamicBlock documentDynamicBlock : getBlocks().values()) {
             documentDynamicBlock.clean();
         }
@@ -1516,17 +1517,19 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         return getCurrentSnapshot() == null ? null : this;
     }
 
-    private transient UIPanel modalContainer;
+    private transient WeakReference<UIPanel> modalContainer;
 
     public UIPanel getModalContainer() {
-        if (modalContainer == null) {
-            modalContainer = new UIPanel();
+        UIPanel panel = modalContainer != null ? modalContainer.get() : null;
+        if (panel == null) {
+            panel = new UIPanel();
+            modalContainer = new WeakReference(panel);
         }
-        return modalContainer;
+        return panel;
     }
 
     public void setModalContainer(UIPanel modalContainer) {
-        this.modalContainer = modalContainer;
+        this.modalContainer = new WeakReference(modalContainer);
     }
 
     // =========================================================================

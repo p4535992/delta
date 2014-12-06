@@ -221,6 +221,7 @@ public class CaseServiceImpl implements CaseService {
             caseRef = node.getNodeRef();
             generalService.setPropertiesIgnoringSystem(caseRef, stringQNameProperties);
         }
+        generalService.refreshMaterializedViews(CaseModel.Types.CASE);
         removeFromCache(caseRef);
     }
 

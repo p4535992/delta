@@ -269,15 +269,15 @@ public class VolumeServiceImpl implements VolumeService {
 
             Map<QName, Serializable> repoProps = nodeService.getProperties(volumeNode.getNodeRef());
             String propDiff = new PropDiffHelper()
-            .label(VolumeModel.Props.STATUS, "volume_status")
-            .label(VolumeModel.Props.VOLUME_TYPE, "volume_volumeType")
-            .label(VolumeModel.Props.VOLUME_MARK, "volume_volumeMark")
-            .label(VolumeModel.Props.TITLE, "volume_title")
-            .label(VolumeModel.Props.DESCRIPTION, "volume_description")
-            .label(VolumeModel.Props.VALID_FROM, "volume_validFrom")
-            .label(VolumeModel.Props.VALID_TO, "volume_validTo")
-            .label(VolumeModel.Props.CASES_CREATABLE_BY_USER, "volume_casesCreatableByUser")
-            .diff(repoProps, newProps);
+                    .label(VolumeModel.Props.STATUS, "volume_status")
+                    .label(VolumeModel.Props.VOLUME_TYPE, "volume_volumeType")
+                    .label(VolumeModel.Props.VOLUME_MARK, "volume_volumeMark")
+                    .label(VolumeModel.Props.TITLE, "volume_title")
+                    .label(VolumeModel.Props.DESCRIPTION, "volume_description")
+                    .label(VolumeModel.Props.VALID_FROM, "volume_validFrom")
+                    .label(VolumeModel.Props.VALID_TO, "volume_validTo")
+                    .label(VolumeModel.Props.CASES_CREATABLE_BY_USER, "volume_casesCreatableByUser")
+                    .diff(repoProps, newProps);
             if (propDiff != null) {
                 logService.addLogEntry(LogEntry.create(LogObject.VOLUME, userService, volumeNode.getNodeRef(), "applog_space_edit",
                         volume.getVolumeMark(), volume.getTitle(), propDiff));
@@ -293,6 +293,7 @@ public class VolumeServiceImpl implements VolumeService {
             }
 
         }
+        generalService.refreshMaterializedViews(VolumeModel.Types.VOLUME);
         final NodeRef volumeRef = volume.getNode().getNodeRef();
         if (needUpdateVolumeShortcuts) {
             getGeneralService().runOnBackground(new RunAsWork<Void>() {

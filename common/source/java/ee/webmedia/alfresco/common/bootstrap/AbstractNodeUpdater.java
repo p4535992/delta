@@ -468,7 +468,7 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
     }
 
     public boolean isContinueWithNextBatchAfterError() {
-        return true;
+        return false;
     }
 
     private abstract class BatchProgress<E> {

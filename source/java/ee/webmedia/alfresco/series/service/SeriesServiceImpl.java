@@ -10,9 +10,11 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import org.alfresco.repo.cache.SimpleCache;
@@ -78,6 +80,7 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
     private FunctionsService _functionsService;
     private SimpleCache<NodeRef, UnmodifiableSeries> seriesCache;
     private static final Map<String, QName> ACCESS_RESTRICTION_DOCCOM_NS_PROPS = new HashMap<>();
+    private static final Set<QName> SERIES_DOCUMENT_TYPE_PROPS = new HashSet<>(Arrays.asList(SeriesModel.Props.STATUS, SeriesModel.Props.DOC_TYPE));
 
     @Override
     public List<NodeRef> getAllSeriesRefsByFunction(NodeRef functionRef) {
@@ -192,23 +195,23 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
             Map<QName, Serializable> repoProps = nodeService.getProperties(seriesNodeRef);
             Map<QName, Serializable> newProps = RepoUtil.toQNameProperties(stringQNameProperties);
             String propDiff = new PropDiffHelper()
-                    .label(SeriesModel.Props.STATUS, "series_status")
-                    .label(SeriesModel.Props.ORDER, "series_order")
-                    .label(SeriesModel.Props.SERIES_IDENTIFIER, "series_seriesIdentifier")
-                    .label(SeriesModel.Props.TITLE, "series_title")
-                    .label(SeriesModel.Props.REGISTER, "series_register")
-                    .label(SeriesModel.Props.INDIVIDUALIZING_NUMBERS, "series_individualizingNumbers")
-                    .label(SeriesModel.Props.STRUCT_UNIT, "series_structUnit")
-                    .label(SeriesModel.Props.TYPE, "series_type")
-                    .label(SeriesModel.Props.DOC_TYPE, "series_docType")
-                    .label(SeriesModel.Props.DOC_NUMBER_PATTERN, "series_docNumberPattern")
-                    .label(SeriesModel.Props.NEW_NUMBER_FOR_EVERY_DOC, "series_newNumberForEveryDoc")
-                    .label(SeriesModel.Props.VALID_FROM_DATE, "series_validFromDate")
-                    .label(SeriesModel.Props.VALID_TO_DATE, "series_validToDate")
-                    .label(SeriesModel.Props.VOL_TYPE, "series_volType")
-                    .label(SeriesModel.Props.VOL_REGISTER, "series_volRegister")
-                    .label(SeriesModel.Props.VOL_NUMBER_PATTERN, "series_volNumberPattern")
-                    .diff(repoProps, newProps);
+            .label(SeriesModel.Props.STATUS, "series_status")
+            .label(SeriesModel.Props.ORDER, "series_order")
+            .label(SeriesModel.Props.SERIES_IDENTIFIER, "series_seriesIdentifier")
+            .label(SeriesModel.Props.TITLE, "series_title")
+            .label(SeriesModel.Props.REGISTER, "series_register")
+            .label(SeriesModel.Props.INDIVIDUALIZING_NUMBERS, "series_individualizingNumbers")
+            .label(SeriesModel.Props.STRUCT_UNIT, "series_structUnit")
+            .label(SeriesModel.Props.TYPE, "series_type")
+            .label(SeriesModel.Props.DOC_TYPE, "series_docType")
+            .label(SeriesModel.Props.DOC_NUMBER_PATTERN, "series_docNumberPattern")
+            .label(SeriesModel.Props.NEW_NUMBER_FOR_EVERY_DOC, "series_newNumberForEveryDoc")
+            .label(SeriesModel.Props.VALID_FROM_DATE, "series_validFromDate")
+            .label(SeriesModel.Props.VALID_TO_DATE, "series_validToDate")
+            .label(SeriesModel.Props.VOL_TYPE, "series_volType")
+            .label(SeriesModel.Props.VOL_REGISTER, "series_volRegister")
+            .label(SeriesModel.Props.VOL_NUMBER_PATTERN, "series_volNumberPattern")
+            .diff(repoProps, newProps);
 
             if (propDiff != null) {
                 appLogService.addLogEntry(LogEntry.create(LogObject.SERIES, userService, seriesNodeRef, "applog_space_edit",
@@ -231,11 +234,11 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
                 appLogService.addLogEntry(LogEntry.create(LogObject.SERIES, userService, seriesNodeRef, "series_log_eventplan_modified",
                         value((repoEventPlan == null || !nodeService.exists(repoEventPlan)) ? null
                                 : nodeService.getProperty(repoEventPlan, EventPlanModel.Props.NAME), emptyLabel),
-                        value((newEventPlan == null || !nodeService.exists(newEventPlan)) ? null
-                                : nodeService.getProperty(newEventPlan, EventPlanModel.Props.NAME), emptyLabel)
+                                value((newEventPlan == null || !nodeService.exists(newEventPlan)) ? null
+                                        : nodeService.getProperty(newEventPlan, EventPlanModel.Props.NAME), emptyLabel)
                         ));
             }
-
+            generalService.refreshMaterializedViews(SeriesModel.Types.SERIES);
             generalService.setPropertiesIgnoringSystem(seriesNodeRef, stringQNameProperties);
         }
         removeFromCache(seriesNodeRef);
@@ -475,9 +478,16 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
     }
 
     private boolean hasOpenSeriesForDocTypes(NodeRef functionNodeRef, DocListUnitStatus status, Set<String> docTypeIds) {
-        List<UnmodifiableSeries> series = getAllSeriesByFunction(functionNodeRef);
-        for (UnmodifiableSeries s : series) {
-            if (status.getValueName().equals(s.getStatus()) && s.getDocTypes().containsAll(docTypeIds)) {
+        Map<NodeRef, Map<NodeRef, Map<QName, Serializable>>> allSeries = BeanHelper.getBulkLoadNodeService().loadChildNodes(Collections.singleton(functionNodeRef),
+                SERIES_DOCUMENT_TYPE_PROPS);
+        Map<NodeRef, Map<QName, Serializable>> seriesProps = allSeries.get(functionNodeRef);
+        if (seriesProps == null) {
+            return false;
+        }
+        for (Entry<NodeRef, Map<QName, Serializable>> s : seriesProps.entrySet()) {
+            Map<QName, Serializable> props = s.getValue();
+            List<String> docTypes = (List<String>) props.get(SeriesModel.Props.DOC_TYPE);
+            if (docTypes != null && docTypes.containsAll(docTypeIds) && status.getValueName().equals(props.get(SeriesModel.Props.STATUS))) {
                 return true;
             }
         }

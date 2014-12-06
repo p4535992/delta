@@ -43,7 +43,7 @@ public class UserUtil {
         List<String> initials = new ArrayList<String>();
         for (String part : fullName.split("\\s")) {
             if (part.length() > 0) {
-            	initials.add(part.substring(0, 1) + ".");
+                initials.add(part.substring(0, 1));
             }
         }
 
