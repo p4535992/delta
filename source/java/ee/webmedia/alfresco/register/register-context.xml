@@ -96,4 +96,29 @@
          </list>
       </property>
    </bean>
+   
+   <bean id="registerAutomaticResetJobDetail" class="org.springframework.scheduling.quartz.JobDetailBean">
+      <property name="jobClass">
+         <value>ee.webmedia.alfresco.register.job.AutomaticRegistersResetJob</value>
+      </property>
+      <property name="jobDataAsMap">
+         <map>
+            <entry key="registerService" value-ref="RegisterService" />
+         </map>
+      </property>
+   </bean>
+
+   <bean id="registerAutomaticResetTrigger" class="ee.webmedia.alfresco.register.job.DateTimeTriggerBean" depends-on="resourceBundles">
+      <property name="enabled" value="${jobs.enabled}" />
+      <property name="jobDetail">
+         <ref bean="registerAutomaticResetJobDetail" />
+      </property>
+      <property name="scheduler">
+         <ref bean="schedulerFactory" />
+      </property>
+      <property name="dateTimePattern" value="dd.M'T'HH:mm:ss" />
+      <property name="value" value="${conf.register.autoResetDateTime}" />
+      <property name="defaultValue" value="01.01T00:00:00" />
+   </bean>
+
 </beans>  

@@ -19,6 +19,7 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.service.namespace.RegexQNamePattern;
+import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringEscapeUtils;
@@ -29,7 +30,6 @@ import ee.webmedia.alfresco.addressbook.service.AddressbookService;
 import ee.webmedia.alfresco.classificator.enums.SendMode;
 import ee.webmedia.alfresco.common.search.DbSearchUtil;
 import ee.webmedia.alfresco.common.service.CreateObjectCallback;
-import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamicService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
@@ -61,7 +61,6 @@ public class SendOutServiceImpl implements SendOutService {
     private static final String SAP_ORG_NAME = "SAP";
 
     private NodeService nodeService;
-    private GeneralService generalService;
     private EmailService emailService;
     private AddressbookService addressbookService;
     private DvkService _dvkService;
@@ -107,8 +106,19 @@ public class SendOutServiceImpl implements SendOutService {
     }
 
     @Override
+    public List<Pair<String, String>> forward(NodeRef document, List<String> names, List<String> emails, List<String> modes, String fromEmail, String content,
+            List<NodeRef> fileRefs) {
+        return sendOut(document, names, emails, modes, null, null, fromEmail, null, content, fileRefs, false, true);
+    }
+
+    @Override
     public boolean sendOut(NodeRef document, List<String> names, List<String> emails, List<String> modes, List<String> idCodes, List<String> encryptionIdCodes, String fromEmail,
             String subject, String content, List<NodeRef> fileRefs, boolean zipIt) {
+        return sendOut(document, names, emails, modes, idCodes, encryptionIdCodes, fromEmail, subject, content, fileRefs, zipIt, false) != null;
+    }
+
+    private List<Pair<String, String>> sendOut(NodeRef document, List<String> names, List<String> emails, List<String> modes, List<String> idCodes, List<String> encryptionIdCodes,
+            String fromEmail, String subject, String content, List<NodeRef> fileRefs, boolean zipIt, boolean forward) {
 
         List<X509Certificate> allCertificates = new ArrayList<X509Certificate>();
         if (encryptionIdCodes != null) {
@@ -144,12 +154,14 @@ public class SendOutServiceImpl implements SendOutService {
         List<String> toDvkPersonNames = new ArrayList<String>();
         List<String> toDvkIdCodes = new ArrayList<String>();
 
+        List<Pair<String, String>> dvkRecipients = new ArrayList<>();
+
         // Loop through all recipients, keep a list for DVK sending, a list for email sending and prepare sendInfo properties
         for (int i = 0; i < names.size(); i++) {
             if (StringUtils.isNotBlank(names.get(i)) && StringUtils.isNotBlank(modes.get(i))) {
                 String recipientName = names.get(i);
                 String recipient = recipientName;
-                final String email = emails.get(i);
+                final String email = emails != null ? emails.get(i) : null;
                 if (StringUtils.isNotBlank(email)) {
                     recipient += " (" + email + ")";
                 }
@@ -157,7 +169,7 @@ public class SendOutServiceImpl implements SendOutService {
                 String sendMode = modes.get(i);
                 SendStatus sendStatus = SendStatus.RECEIVED;
 
-                if (SendMode.EMAIL_DVK.equals(modes.get(i))) {
+                if (SendMode.EMAIL_DVK.equals(modes.get(i)) || SendMode.DVK.equals(modes.get(i))) {
                     // Check if matches a DVK capable organization entry in addressbook
                     boolean hasDvkContact = false;
                     for (Node organization : addressbookService.getDvkCapableOrgs()) {
@@ -175,7 +187,8 @@ public class SendOutServiceImpl implements SendOutService {
                         toRegNums.add(recipientRegNr);
                         sendMode = SendMode.DVK.getValueName();
                         sendStatus = SendStatus.SENT;
-                    } else {
+                        dvkRecipients.add(new Pair<>(recipientName, recipientRegNr));
+                    } else if (!SendMode.DVK.equals(modes.get(i))) {
                         toEmails.add(email);
                         toNames.add(recipientName);
                         sendMode = SendMode.EMAIL.getValueName();
@@ -231,7 +244,7 @@ public class SendOutServiceImpl implements SendOutService {
             List<ContentToSend> contentsToSend = prepareContents(attachments);
 
             // Send it out
-            dvkId = getDvkService().sendDocuments(contentsToSend, sd);
+            dvkId = forward ? getDvkService().forwardDecDocument(contentsToSend, sd) : getDvkService().sendDocuments(contentsToSend, sd);
         }
 
         // Send through email
@@ -253,7 +266,7 @@ public class SendOutServiceImpl implements SendOutService {
             addSendinfo(document, props);
         }
 
-        return true;
+        return dvkRecipients;
     }
 
     private String buildZipAndEncryptFileTitle(Map<QName, Serializable> docProperties) {
@@ -357,10 +370,6 @@ public class SendOutServiceImpl implements SendOutService {
     // START: getters / setters
     public void setNodeService(NodeService nodeService) {
         this.nodeService = nodeService;
-    }
-
-    public void setGeneralService(GeneralService generalService) {
-        this.generalService = generalService;
     }
 
     public void setEmailService(EmailService emailService) {

@@ -154,6 +154,21 @@
    disabled="#{archivedSeriesVolTypeAndVolNumberPatternUpdater.updaterStopping == true}" />
 
 <f:verbatim><hr/></f:verbatim>
+<h:outputText value="Sarja elukäigu alusel toimiku elukäigu uuendamine"/>
+<f:verbatim><br/></f:verbatim>
+<h:outputText value="Ruum: "/>
+<h:inputText id="volumeEventPlanUpdaterStoreString" value="#{volumeEventPlanUpdater.storeString}" size="50" />
+<f:verbatim><br/></f:verbatim>
+<h:commandButton id="startVolumeEventPlanUpdater" value="Käivita" type="submit"
+   actionListener="#{volumeEventPlanUpdater.executeUpdaterInBackground}"
+   rendered="#{volumeEventPlanUpdater.updaterRunning == false}" />
+<h:commandButton id="stopVolumeEventPlanUpdater" value="Peata" type="submit"
+   actionListener="#{volumeEventPlanUpdater.stopUpdater}"
+   rendered="#{volumeEventPlanUpdater.updaterRunning == true}"
+   disabled="#{volumeEventPlanUpdater.updaterStopping == true}" />
+<f:verbatim><br/></f:verbatim>
+
+<f:verbatim><hr/></f:verbatim>
 <h:outputText value="Versioonide lahtilukustamine"/>
 <f:verbatim><br/></f:verbatim>
 <h:outputText value="Mitu objekti ühes transaktsioonis töödelda: "/>

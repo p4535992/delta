@@ -11,6 +11,11 @@
 		<h1><c:out value="${ compoundWorkflowTitle }" /></h1>
 	</c:if>
       
+      <%-- Delegation history block --%>
+      <tag:expanderBlock blockId="workflow-delegation-history-block" titleId="delegation.history.block.title" titleDetails="${delegationHistoryTaskCount}" expanded="false" independent="true" rendered="${not empty delegationHistoryTaskCount}">
+         <jsp:include page="/WEB-INF/jsp/mobile/compound-workflow/delegation-history-block-content.jsp" />
+      </tag:expanderBlock>
+      
    	  <jsp:include page="/WEB-INF/jsp/mobile/compound-workflow/in-progress-tasks.jsp" />
       
       <%-- START: General block --%>

@@ -51,11 +51,11 @@ public interface DocumentTemplateService {
      * Fills documents template file with metadata
      * 
      * @param documentNodeRef
-     * @return display name(that doesn't have OS-dependent filename length constraints) of generated word file
+     * @return display name(that doesn't have OS-dependent filename length constraints) of generated word file and NodeRef of generated/overwritten file
      * @throws FileNotFoundException throws when document has a template which has been deleted
      * @throws Exception
      */
-    String populateTemplate(NodeRef documentNodeRef, boolean overWritingGranted) throws FileNotFoundException, ExistingFileFromTemplateException;
+    Pair<String, NodeRef> populateTemplate(NodeRef documentNodeRef, boolean overWritingGranted) throws FileNotFoundException, ExistingFileFromTemplateException;
 
     String getProcessedVolumeDispositionTemplate(List<Volume> volumes, NodeRef template);
 

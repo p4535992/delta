@@ -29,5 +29,6 @@ public interface FileModel {
         QName ACTIVITY_FILE_TYPE = QName.createQName(URI, "activityFileType");
         QName MANUAL_LOCK = QName.createQName(URI, "manualLock");
         QName PREVIOUS_FILE_PARENT = QName.createQName(URI, "previousFileParent");
+        QName FILE_ORDER_IN_LIST = QName.createQName(URI, "fileOrderInList");
     }
 }

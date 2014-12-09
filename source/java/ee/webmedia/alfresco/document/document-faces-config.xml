@@ -247,6 +247,12 @@
       <managed-bean-class>ee.webmedia.alfresco.document.sendout.web.DocumentSendOutDialog</managed-bean-class>
       <managed-bean-scope>session</managed-bean-scope>
    </managed-bean>
+   
+   <managed-bean>
+      <managed-bean-name>ForwardDecDocumentDialog</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.document.sendout.web.ForwardDecDocumentDialog</managed-bean-class>
+      <managed-bean-scope>session</managed-bean-scope>
+   </managed-bean>
 
    <managed-bean>
       <managed-bean-name>SendOutBlockBean</managed-bean-name>

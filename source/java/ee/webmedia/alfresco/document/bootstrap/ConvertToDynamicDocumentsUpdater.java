@@ -466,7 +466,7 @@ public class ConvertToDynamicDocumentsUpdater extends AbstractNodeUpdater {
         if (!document.hasAspect(DocumentUpdater.EMAIL_DATE_TIME)) {
             // documentUpdater collects document reg numbers that are later used in DocumentRegNumbersUpdater, that functionality must remain
             documentUpdater.addParentRegNumber(nodeRef, (String) newDocumentProperties.get(DocumentCommonModel.Props.REG_NUMBER));
-            newDocumentProperties.put(DocumentCommonModel.Props.SEARCHABLE_HAS_ALL_FINISHED_COMPOUND_WORKFLOWS, workflowService.hasAllFinishedCompoundWorkflows(nodeRef, null));
+            newDocumentProperties.put(DocumentCommonModel.Props.SEARCHABLE_HAS_ALL_FINISHED_COMPOUND_WORKFLOWS, workflowService.hasCompoundWorkflowsAndAllAreFinished(nodeRef));
             documentUpdater.updateMetadataInFiles(newDocumentProperties, newDocumentProperties);
             if (documentUpdater.getFileEncodingUpdater().getDocumentsToUpdate().contains(nodeRef)) {
                 documentUpdater.updateFileContentsProp(nodeRef, newDocumentProperties);

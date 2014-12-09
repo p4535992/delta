@@ -77,7 +77,7 @@
 		<c:forEach items="${inProgressTasksForm.inProgressTasks}" var="taskEntry" varStatus="status">
 			<c:set value="${ taskEntry.value }" var="task" />
 			<c:set value="${ task.type.localName }" var="taskType" />
-			<c:set value="${ taskType == 'signatureTask' ? 'workflow.task.prop.comment' : 'workflow.task.review.prop.comment' }" var="commentLabel" />
+            <c:set value="${ task.commentLabel }" var="commentLabel" />
             <tag:expanderBlock blockId="workflow-in-progress-tasks-${ status.index }" titleId="site.workflow.inProgressTasks.${ taskType }" expanded="true" independent="true">			
 	            <div id="task-${task.nodeRef.id}">
 					<tag:valueRow labelId="workflow.task.prop.resolution" value="${task.resolution }" />

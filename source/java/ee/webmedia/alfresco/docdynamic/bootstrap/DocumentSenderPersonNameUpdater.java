@@ -61,7 +61,7 @@ public class DocumentSenderPersonNameUpdater extends AbstractNodeUpdater {
     protected String[] updateNode(NodeRef docRef) throws Exception {
         Map<QName, Serializable> docProps = nodeService.getProperties(docRef);
         String typeId = (String) docProps.get(DocumentAdminModel.Props.OBJECT_TYPE_ID);
-        int versionNr = (int) docProps.get(DocumentAdminModel.Props.OBJECT_TYPE_VERSION_NR);
+        int versionNr = (Integer) docProps.get(DocumentAdminModel.Props.OBJECT_TYPE_VERSION_NR);
 
         String typeAndVersionStr = typeId + "-" + versionNr;
         if (!updatedDocumentTypeVersions.contains(typeAndVersionStr)) {

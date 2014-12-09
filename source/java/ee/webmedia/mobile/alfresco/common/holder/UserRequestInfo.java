@@ -1,15 +1,16 @@
 package ee.webmedia.mobile.alfresco.common.holder;
 
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
+import ee.webmedia.mobile.alfresco.common.model.MessageItem;
 
 public class UserRequestInfo {
 
-    protected Map<String, Set<String>> messages = new HashMap<String, Set<String>>();
+    protected Map<String, List<MessageItem>> messages = new HashMap<>();
 
     public UserRequestInfo userRequestInfo() {
         return new UserRequestInfo();
@@ -19,12 +20,12 @@ public class UserRequestInfo {
 
         String messageSeverityStr = messageSeverity.name();
         if (!messages.containsKey(messageSeverityStr)) {
-            messages.put(messageSeverityStr, new HashSet<String>());
+            messages.put(messageSeverityStr, new ArrayList<MessageItem>());
         }
-        messages.get(messageSeverityStr).add(message);
+        messages.get(messageSeverityStr).add(new MessageItem(message));
     }
 
-    public Map<String, Set<String>> getMessages() {
+    public Map<String, List<MessageItem>> getMessages() {
         return messages;
     }
 

@@ -41,6 +41,7 @@ import org.alfresco.service.cmr.security.AuthorityType;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -1322,12 +1323,37 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
 
     @Override
     public List<Task> getInProgressTasks(List<NodeRef> compoundWorkflows, String ownerId) {
-        Assert.hasText(ownerId, "Must specify an owner to check!");
+        return getInProgressTasks(compoundWorkflows, ownerId, null);
+    }
 
+    @Override
+    public List<Task> getInProgressTasks(List<NodeRef> compoundWorkflows, String ownerId, Set<QName> taskTypes) {
+        Assert.hasText(ownerId, "Must specify an owner to check!");
         if (compoundWorkflows == null || compoundWorkflows.isEmpty()) {
             return Collections.emptyList();
         }
 
+        String sqlQuery = getTaskQuery(compoundWorkflows, taskTypes);
+
+        Object[] queryArgs = DbSearchUtil.appendNodeRefIdQueryArguments(compoundWorkflows, Status.IN_PROGRESS.getName(), ownerId).toArray();
+        if (taskTypes != null) {
+            Set<Object> types = new HashSet<>(taskTypes.size());
+            for (QName type : taskTypes) {
+                types.add(type.getLocalName());
+            }
+            queryArgs = ArrayUtils.addAll(queryArgs, types.toArray());
+        }
+        List<Task> tasks = jdbcTemplate.query(sqlQuery,
+                new TaskRowMapper(null, null, null, BeanHelper.getWorkflowConstantsBean().getTaskPrefixedQNames(), null, null, false, false), queryArgs);
+        explainQuery(sqlQuery, queryArgs);
+        return tasks;
+    }
+
+    private String getTaskQuery(List<NodeRef> compoundWorkflows, Set<QName> taskTypes) {
+        String typeQuery = "";
+        if (taskTypes != null && !taskTypes.isEmpty()) {
+            typeQuery = " AND delta_task.task_type IN (" + getQuestionMarks(taskTypes.size()) + ") ";
+        }
         String sqlQuery = "SELECT delta_task.*, initiating_task.wfs_compound_workflow_id as initiating_compound_workflow_id, " +
                 " initiating_task.wfs_compound_workflow_title as initiating_compound_workflow_title, " +
                 " initiating_task.store_id as initiating_compound_workflow_store_id " +
@@ -1335,13 +1361,10 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
                 " left join delta_task_due_date_extension_assoc ext_assoc on ext_assoc.extension_task_id = delta_task.task_id " +
                 " left join delta_task initiating_task on ext_assoc.task_id = initiating_task.task_id " +
                 " WHERE delta_task.wfc_status=? AND delta_task.wfc_owner_id=? AND delta_task.wfs_compound_workflow_id IN (" + getQuestionMarks(compoundWorkflows.size())
-                + ") ORDER BY index_in_workflow";
-
-        Object[] queryArgs = DbSearchUtil.appendNodeRefIdQueryArguments(compoundWorkflows, Status.IN_PROGRESS.getName(), ownerId).toArray();
-        List<Task> tasks = jdbcTemplate.query(sqlQuery,
-                new TaskRowMapper(null, null, null, BeanHelper.getWorkflowConstantsBean().getTaskPrefixedQNames(), null, null, false, false), queryArgs);
-        explainQuery(sqlQuery, queryArgs);
-        return tasks;
+                + ") "
+                + typeQuery
+                + " ORDER BY index_in_workflow";
+        return sqlQuery;
     }
 
     @Override
@@ -1770,6 +1793,9 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
         }
 
         private void createTaskGroupUrl(WorkflowBlockItem item, NodeRef workflowNodeRef) {
+            if (workflowGroupTasksUrl == null) {
+                return;
+            }
             StringBuffer url = new StringBuffer(workflowGroupTasksUrl).append(workflowNodeRef.getId())
                     .append("&amp;").append(PrintTableServlet.TASK_INDEX).append("=").append(item.getIndexInWorkflow());
 

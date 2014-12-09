@@ -93,6 +93,17 @@ public class DelegationBean implements Serializable {
     // used to keep reference to delegatable task during delegation confirming
     private Task assignmentTaskOriginal;
 
+    private static final Map<Integer, DelegatableTaskType> ASSIGNEMENT_TASK_DELEGATION_OPTIONS;
+    static {
+        Map<Integer, DelegatableTaskType> tempMap = new HashMap<>();
+        tempMap.put(0, DelegatableTaskType.ASSIGNMENT_RESPONSIBLE);
+        tempMap.put(1, DelegatableTaskType.ASSIGNMENT_NOT_RESPONSIBLE);
+        tempMap.put(2, DelegatableTaskType.INFORMATION);
+        tempMap.put(3, DelegatableTaskType.OPINION);
+        ASSIGNEMENT_TASK_DELEGATION_OPTIONS = Collections.unmodifiableMap(tempMap);
+    }
+    public static final int DELEGATION_TASK_CHOICE_COUNT = ASSIGNEMENT_TASK_DELEGATION_OPTIONS.size();
+
     /**
      * @param event passed to MethodBinding
      */
@@ -113,6 +124,18 @@ public class DelegationBean implements Serializable {
         }
         addDelegationTask(delegateTaskType.isResponsibleTask(), workflowForNewTask, taskIndex, defaultResolution, dueDate);
         updatePanelGroup("addDelegationTask");
+    }
+
+    public void addDelegationTask(Workflow originalTaskWorkflow, Integer taskIndex, String resolution, Date dueDate, int taskType, String owner, int filterIndex) {
+        DelegatableTaskType dTaskType = ASSIGNEMENT_TASK_DELEGATION_OPTIONS.get(taskType);
+        if (dTaskType == null) {
+            throw new IllegalArgumentException("Task type cannot be " + taskType);
+        }
+        boolean hasResponsibleAspect = dTaskType.isResponsibleTask();
+
+        Workflow workflow = dTaskType.isOrderAssignmentOrAssignmentWorkflow() ? originalTaskWorkflow : getOrCreateWorkflow(originalTaskWorkflow, dTaskType);
+        addDelegationTask(hasResponsibleAspect, workflow, taskIndex, resolution, dueDate);
+        addOwners(filterIndex, taskIndex, workflow, owner);
     }
 
     private void addDelegationTask(boolean hasResponsibleAspect, Workflow workflow, Integer taskIndex, String defaultResolution, Date dueDate) {
@@ -249,7 +272,7 @@ public class DelegationBean implements Serializable {
      * If <code>!dTaskType.isAssignmentWorkflow()</code> then result should be equivalent to
      * <code>getNewWorkflowTasksFetchers().get(delegatableTaskIndex).getNonAssignmentTasksByType().get(dTaskType.name());</code><br>
      * that is slower, but used for value binding of non-assignment tasks.
-     * 
+     *
      * @param delegatableTaskIndex
      * @param dTaskType
      * @return tasks of type <code>dTaskType</code> that should be displayed for delegating when showing assigment task <code>delegatableTaskIndex</code>
@@ -267,7 +290,7 @@ public class DelegationBean implements Serializable {
 
     /**
      * Used for JSF binding in {@link DelegationTaskListGenerator#setPickerBindings()}
-     * 
+     *
      * @throws Exception
      */
     @SuppressWarnings("unchecked")
@@ -324,6 +347,18 @@ public class DelegationBean implements Serializable {
             LOG.error("Compound workflow action failed!", e);
             MessageUtil.addErrorMessage(context, "workflow_compound_save_failed_general");
         }
+    }
+
+    public boolean delegate(Task assignmentTask) {
+        assignmentTaskOriginal = assignmentTask;
+        if (!validate(assignmentTaskOriginal.getParent().getParent())) {
+            return false;
+        }
+        if (assignmentTaskOriginal.isType(WorkflowSpecificModel.Types.ASSIGNMENT_TASK)) {
+            assignmentTaskOriginal.setAction(Action.FINISH);
+        }
+        getWorkflowService().delegate(assignmentTaskOriginal);
+        return true;
     }
 
     private void populateConfirmationMessage() {
@@ -611,38 +646,43 @@ public class DelegationBean implements Serializable {
         }
         Workflow workflow = getWorkflowByAction(event);
         for (String result : results) {
-            // users
-            if (filterIndex == UserContactGroupSearchBean.USERS_FILTER) {
-                setPersonPropsToTask(workflow, taskIndex, result);
-            }
-            // user groups
-            else if (filterIndex == UserContactGroupSearchBean.USER_GROUPS_FILTER) {
-                Set<String> children = UserUtil.getUsersInGroup(result, getNodeService(), getUserService(), getParametersService(), getDocumentSearchService());
-                int j = 0;
-                Task task = workflow.getTasks().get(taskIndex);
-                DelegatableTaskType delegateTaskType = DelegatableTaskType.getTypeByTask(task);
-                String resolution = task.getResolution();
-                for (String userName : children) {
-                    if (j > 0) {
-                        addDelegationTask(delegateTaskType.isResponsibleTask(), workflow, ++taskIndex, resolution, null);
-                    }
-                    setPersonPropsToTask(workflow, taskIndex, userName);
-                    j++;
-                }
-            }
-            // contacts
-            else if (filterIndex == UserContactGroupSearchBean.CONTACTS_FILTER) {
-                setContactPropsToTask(workflow, taskIndex, new NodeRef(result));
-            }
-            // contact groups
-            else if (filterIndex == UserContactGroupSearchBean.CONTACT_GROUPS_FILTER) {
-                List<NodeRef> contacts = BeanHelper.getAddressbookService().getContactGroupContents(new NodeRef(result));
-                taskIndex = addContactGroupTasks(taskIndex, workflow, contacts);
-            } else {
-                throw new RuntimeException("Unknown filter index value: " + filterIndex);
-            }
+            taskIndex = addOwners(filterIndex, taskIndex, workflow, result);
         }
         updatePanelGroup("processOwnerSearchResults");
+    }
+
+    private int addOwners(int filterIndex, int taskIndex, Workflow workflow, String result) {
+        // users
+        if (filterIndex == UserContactGroupSearchBean.USERS_FILTER) {
+            setPersonPropsToTask(workflow, taskIndex, result);
+        }
+        // user groups
+        else if (filterIndex == UserContactGroupSearchBean.USER_GROUPS_FILTER) {
+            Set<String> children = UserUtil.getUsersInGroup(result, getNodeService(), getUserService(), getParametersService(), getDocumentSearchService());
+            int j = 0;
+            Task task = workflow.getTasks().get(taskIndex);
+            DelegatableTaskType delegateTaskType = DelegatableTaskType.getTypeByTask(task);
+            String resolution = task.getResolution();
+            for (String userName : children) {
+                if (j > 0) {
+                    addDelegationTask(delegateTaskType.isResponsibleTask(), workflow, ++taskIndex, resolution, null);
+                }
+                setPersonPropsToTask(workflow, taskIndex, userName);
+                j++;
+            }
+        }
+        // contacts
+        else if (filterIndex == UserContactGroupSearchBean.CONTACTS_FILTER) {
+            setContactPropsToTask(workflow, taskIndex, new NodeRef(result));
+        }
+        // contact groups
+        else if (filterIndex == UserContactGroupSearchBean.CONTACT_GROUPS_FILTER) {
+            List<NodeRef> contacts = BeanHelper.getAddressbookService().getContactGroupContents(new NodeRef(result));
+            taskIndex = addContactGroupTasks(taskIndex, workflow, contacts);
+        } else {
+            throw new RuntimeException("Unknown filter index value: " + filterIndex);
+        }
+        return taskIndex;
     }
 
     private void setPersonPropsToTask(Workflow workflow, int taskIndex, String userName) {

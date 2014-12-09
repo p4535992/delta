@@ -365,7 +365,6 @@ public class DbNodeServiceImpl extends AbstractNodeServiceImpl
 
         // Index
         nodeIndexer.indexCreateNode(childAssocRef);
-        getGeneralService().refreshMaterializedViews(nodeTypeQName);
 
         // done
         return childAssocRef;
@@ -572,7 +571,6 @@ public class DbNodeServiceImpl extends AbstractNodeServiceImpl
 
         // Invoke policies
         invokeOnUpdateNode(nodeRef);
-        getGeneralService().refreshMaterializedViews(oldTypeQName, typeQName);
     }
 
     /**
@@ -631,7 +629,6 @@ public class DbNodeServiceImpl extends AbstractNodeServiceImpl
 
         // Index
         nodeIndexer.indexUpdateNode(nodeRef);
-        getGeneralService().refreshMaterializedViews(nodeDaoService.getNodeType(nodeId));
     }
 
     @Override
@@ -743,7 +740,6 @@ public class DbNodeServiceImpl extends AbstractNodeServiceImpl
 
         // Index
         nodeIndexer.indexUpdateNode(nodeRef);
-        getGeneralService().refreshMaterializedViews(nodeDaoService.getNodeType(nodeId));
     }
 
     /**
@@ -828,7 +824,6 @@ public class DbNodeServiceImpl extends AbstractNodeServiceImpl
 
             // Index
             nodeIndexer.indexDeleteNode(childAssocRef);
-            getGeneralService().refreshMaterializedViews(nodeTypeQName);
         }
         else
         {
@@ -1300,7 +1295,6 @@ public class DbNodeServiceImpl extends AbstractNodeServiceImpl
 
         // Index
         nodeIndexer.indexUpdateNode(nodeRef);
-        getGeneralService().refreshMaterializedViews(nodeDaoService.getNodeType(nodeId));
     }
 
     /**
@@ -1365,7 +1359,6 @@ public class DbNodeServiceImpl extends AbstractNodeServiceImpl
 
         // Index
         nodeIndexer.indexUpdateNode(nodeRef);
-        getGeneralService().refreshMaterializedViews(nodeDaoService.getNodeType(nodeId));
     }
 
     @Override
@@ -1398,7 +1391,6 @@ public class DbNodeServiceImpl extends AbstractNodeServiceImpl
 
         // Index
         nodeIndexer.indexUpdateNode(nodeRef);
-        getGeneralService().refreshMaterializedViews(nodeDaoService.getNodeType(nodeId));
     }
 
     private void setPropertiesImpl(Long nodeId, Map<QName, Serializable> properties)
@@ -1451,7 +1443,6 @@ public class DbNodeServiceImpl extends AbstractNodeServiceImpl
 
         // Index
         nodeIndexer.indexUpdateNode(nodeRef);
-        getGeneralService().refreshMaterializedViews(nodeDaoService.getNodeType(nodeId));
     }
 
     public Collection<NodeRef> getParents(NodeRef nodeRef) throws InvalidNodeRefException
@@ -2289,7 +2280,6 @@ public class DbNodeServiceImpl extends AbstractNodeServiceImpl
             // Pull children to the new store
             pullNodeChildrenToSameStore(newNodeToMovePair, true, true);
         }
-        getGeneralService().refreshMaterializedViews(nodeDaoService.getNodeType(nodeToMoveId));
         // Done
         return newParentAssocRef;
     }

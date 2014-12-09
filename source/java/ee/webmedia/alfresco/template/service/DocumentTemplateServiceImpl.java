@@ -277,7 +277,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
     }
 
     @Override
-    public String populateTemplate(NodeRef documentNodeRef, boolean overWritingGranted) throws FileNotFoundException {
+    public Pair<String, NodeRef> populateTemplate(NodeRef documentNodeRef, boolean overWritingGranted) throws FileNotFoundException {
         log.debug("Creating a file from template for document: " + documentNodeRef);
         boolean msoAvailable = msoService.isAvailable();
         boolean ooAvailable = openOfficeService.isAvailable();
@@ -371,7 +371,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
         // Set document content's MIME type and encoding from template
         replaceFormulas(documentNodeRef, nodeRef, existingGeneratedFile, templateFilename);
         generalService.setModifiedToNow(documentNodeRef);
-        return displayName;
+        return Pair.newInstance(displayName, existingGeneratedFile);
     }
 
     @Override
@@ -988,18 +988,18 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
             NodeRef volumeRef = (NodeRef) props.get(DocumentCommonModel.Props.VOLUME);
             NodeRef caseRef = (NodeRef) props.get(DocumentCommonModel.Props.CASE);
 
-            UnmodifiableFunction function = BeanHelper.getFunctionsService().getUnmodifiableFunction(functionRef, null);
-            UnmodifiableSeries series = BeanHelper.getSeriesService().getUnmodifiableSeries(seriesRef, null);
-            UnmodifiableVolume volume = BeanHelper.getVolumeService().getUnmodifiableVolume(volumeRef, null);
+            UnmodifiableFunction function = functionRef != null ? BeanHelper.getFunctionsService().getUnmodifiableFunction(functionRef, null) : null;
+            UnmodifiableSeries series = seriesRef != null ? BeanHelper.getSeriesService().getUnmodifiableSeries(seriesRef, null) : null;
+            UnmodifiableVolume volume = volumeRef != null ? BeanHelper.getVolumeService().getUnmodifiableVolume(volumeRef, null) : null;
 
-            formulas.put("$functionTitle", function.getTitle());
-            formulas.put("$functionMark", function.getMark());
+            formulas.put("$functionTitle", function != null ? function.getTitle() : "");
+            formulas.put("$functionMark", function != null ? function.getMark() : "");
 
-            formulas.put("$seriesTitle", series.getTitle());
-            formulas.put("$seriesIdentifier", series.getSeriesIdentifier());
+            formulas.put("$seriesTitle", series != null ? series.getTitle() : "");
+            formulas.put("$seriesIdentifier", series != null ? series.getSeriesIdentifier() : "");
 
-            formulas.put("$volumeTitle", volume.getTitle());
-            formulas.put("$volumeMark", volume.getVolumeMark());
+            formulas.put("$volumeTitle", volume != null ? volume.getTitle() : "");
+            formulas.put("$volumeMark", volume != null ? volume.getVolumeMark() : "");
 
             formulas.put("$caseTitle", caseRef != null ? BeanHelper.getCaseService().getCaseTitle(caseRef) : "");
             formulas.put("$docUrl", getDocumentUrl(objectRef));

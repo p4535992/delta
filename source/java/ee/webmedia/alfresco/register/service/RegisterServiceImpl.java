@@ -46,7 +46,7 @@ public class RegisterServiceImpl implements RegisterService {
     private LogService logService;
     private UserService userService;
     private JdbcTemplate jdbcTemplate;
-
+	
     private boolean valueEditable;
 
     @Override
@@ -213,14 +213,17 @@ public class RegisterServiceImpl implements RegisterService {
     }
 
     @Override
-    public void resetAllAutoResetCounters() {
+    public int resetAllAutoResetCounters() {
+        int reset = 0;
         List<Register> registers = getRegisters();
         for (Register register : registers) {
             if (register.isAutoReset()) {
                 resetCounter(new MapNode(register.getNodeRef()));
+                reset++;
                 log.debug("Register " + register.getName() + " counter reseted.");
             }
         }
+        return reset;
     }
 
     private void createSequence(int registerId) {

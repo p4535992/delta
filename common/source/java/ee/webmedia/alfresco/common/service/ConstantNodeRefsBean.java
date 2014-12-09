@@ -32,6 +32,7 @@ public class ConstantNodeRefsBean implements InitializingBean, Serializable {
     private NodeRef incomingEmailRoot;
     private NodeRef receivedincoiceRoot;
     private NodeRef sentEmailRoot;
+    private NodeRef forwardedDecDocumentsRoot;
 
     private String corruptDvkDocumentsPath;
     private String receivedDvkDocumentsPath;
@@ -132,6 +133,14 @@ public class ConstantNodeRefsBean implements InitializingBean, Serializable {
 
     public void setSentEmailRoot(NodeRef sentEmailRoot) {
         this.sentEmailRoot = sentEmailRoot;
+    }
+
+    public NodeRef getForwardedDecDocumentsRoot() {
+        return forwardedDecDocumentsRoot;
+    }
+
+    public void setForwardedDecDocumentsRoot(NodeRef forwardedDecDocumentsRoot) {
+        this.forwardedDecDocumentsRoot = forwardedDecDocumentsRoot;
     }
 
 }

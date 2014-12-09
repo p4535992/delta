@@ -10,6 +10,7 @@
 <%@ attribute name="hideIfEmpty" required="false" rtexprvalue="true" type="java.lang.Boolean" description="If true, don't show rows with empty values" %>
 <%@ attribute name="href" required="false" rtexprvalue="true" type="java.lang.String" description="If present, value will be link to this url" %>
 <%@ attribute name="escape" required="false" rtexprvalue="true" type="java.lang.Boolean" description="If false or not present, escape output html" %>
+<%@ attribute name="styleClass" required="false" rtexprvalue="true" type="java.lang.String" description="If present, will be added to 'class' attribute" %>
 
 <c:if test="${empty label and not empty labelId}">
    <fmt:message key="${labelId}" var="label" />
@@ -18,7 +19,7 @@
 <c:set value="${empty escape || escape}" var="escpeXml" />
 
 <c:if test="${ empty hideIfEmpty || !hideIfEmpty || !(empty value) }" >
-		<p class="valuerow" >
+		<p class="valuerow ${ styleClass }" >
 			<span class="desc"><c:out value="${label}:" /></span>
 			<span class="value">
 				<c:if test="${ isLink }" >

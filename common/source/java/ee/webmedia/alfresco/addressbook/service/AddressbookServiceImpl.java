@@ -20,8 +20,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import ee.webmedia.alfresco.common.service.CreateObjectCallback;
-import ee.webmedia.alfresco.common.web.WmNode;
 import org.alfresco.service.cmr.repository.AssociationRef;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
@@ -46,7 +44,9 @@ import ee.webmedia.alfresco.addressbook.model.AddressbookModel.Props;
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel.Types;
 import ee.webmedia.alfresco.addressbook.web.dialog.AddressbookAddEditDialog;
 import ee.webmedia.alfresco.addressbook.web.dialog.ContactGroupAddDialog.UserDetails;
+import ee.webmedia.alfresco.common.service.CreateObjectCallback;
 import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.search.service.AbstractSearchServiceImpl;
 import ee.webmedia.alfresco.utils.MessageDataImpl;
 import ee.webmedia.alfresco.utils.MessageDataWrapper;
@@ -54,6 +54,7 @@ import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.SearchUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
+import ee.webmedia.alfresco.utils.UserUtil;
 
 public class AddressbookServiceImpl extends AbstractSearchServiceImpl implements AddressbookService {
 
@@ -106,6 +107,18 @@ public class AddressbookServiceImpl extends AbstractSearchServiceImpl implements
                 return new AddressbookEntry(new WmNode(nodeRef, Types.ORGPERSON, null, properties));
             }
         });
+    }
+
+    @Override
+    public List<Pair<String, String>> listAllGroupMembers(NodeRef groupRef) {
+        CreateObjectCallback<Pair<String, String>> cb = new CreateObjectCallback<Pair<String, String>>() {
+            @Override
+            public Pair<String, String> create(NodeRef nodeRef, Map<QName, Serializable> properties) {
+                String name = (String) properties.get(AddressbookModel.Props.ORGANIZATION_NAME);
+                return Pair.newInstance(name, nodeRef.toString());
+            }
+        };
+        return loadChildren(groupRef, null, cb);
     }
 
     private List<Node> listNodeChildren(QName type, NodeRef parent) {
@@ -358,7 +371,7 @@ public class AddressbookServiceImpl extends AbstractSearchServiceImpl implements
 
     @Override
     public List<Node> search(String searchCriteria, int limit, boolean onlyActive) {
-        return executeSearch(searchCriteria, searchFields, false, false, allContactTypes, null, limit, onlyActive);
+        return executeSearch(searchCriteria, searchFields, false, false, false, allContactTypes, null, limit, onlyActive);
     }
 
     @Override
@@ -368,7 +381,7 @@ public class AddressbookServiceImpl extends AbstractSearchServiceImpl implements
         if (emptySearch) {
             result = listContactGroups();
         } else {
-            result = executeSearch(searchCriteria, contactGroupSearchFields, false, false, Collections.<QName> emptySet(), null, limit, false);
+            result = executeSearch(searchCriteria, contactGroupSearchFields, false, false, false, Collections.<QName> emptySet(), null, limit, false);
         }
         if (excludeTaskCapable) { // should be done during search
             List<Node> notTaskCapable = new ArrayList<Node>(result.size());
@@ -410,6 +423,11 @@ public class AddressbookServiceImpl extends AbstractSearchServiceImpl implements
     }
 
     @Override
+    public List<Node> searchDecDocumentForwardCapableContacts(String searchCriteria, int limit) {
+        return executeSearch(searchCriteria, searchFields, false, true, true, allContactTypes, null, limit, true);
+    }
+
+    @Override
     public List<Node> searchPersonContacts(String searchCriteria, int limit) {
         Set<QName> types = new HashSet<QName>();
         types.add(Types.ORGPERSON);
@@ -429,19 +447,56 @@ public class AddressbookServiceImpl extends AbstractSearchServiceImpl implements
                 contactGroupSearchFields,
                 true,
                 dvkCapableOnly,
+                false,
                 orgOnly ? Collections.singleton(Types.ORGANIZATION) : Collections.<QName> emptySet(),
                 institutionToRemove,
                 limit,
                 false); // Contact groups don't have AddressbookModel.Props.ACTIVESTATUS property
     }
 
-    private List<Node> executeSearch(String searchCriteria, Set<QName> fields, boolean taskCapableOnly, boolean dvkCapableOnly, Set<QName> types, String institutionToRemove,
-            int limit) {
-        return executeSearch(searchCriteria, fields, taskCapableOnly, dvkCapableOnly, types, institutionToRemove, limit, true);
+    @Override
+    public List<Pair<String, String>> searchTaskCapableContacts(String param, int limit) {
+        List<Node> taskCapableContacts = searchTaskCapableContacts(param, true, false, null, limit);
+        return transform(taskCapableContacts);
+    }
+
+    @Override
+    public List<Pair<String, String>> searchTaskCapableContactGroups(String param, int limit) {
+        List<Node> taskCapableContactGroups = searchTaskCapableContactGroups(param, false, false, null, limit);
+        return transform(taskCapableContactGroups);
+    }
+
+    private List<Pair<String, String>> transform(List<Node> list) {
+        List<Pair<String, String>> result = new ArrayList<>();
+        for (Node node : list) {
+            NodeRef id = node.getNodeRef();
+            if (id == null) {
+                continue;
+            }
+            String name = "";
+            Map<String, Object> props = node.getProperties();
+            if (node.getType().equals(Types.ORGANIZATION)) {
+                name = (String) props.get(Props.ORGANIZATION_NAME.toString());
+            } else if (node.getType().equals(Types.CONTACT_GROUP)) {
+                name = (String) props.get(Props.GROUP_NAME);
+            } else if (node.getType().equals(Types.PRIV_PERSON) || node.getType().equals(Types.ORGPERSON)) {
+                name = UserUtil.getPersonFullName((String) props.get(Props.PERSON_FIRST_NAME.toString()), (String) props
+                        .get(Props.PERSON_LAST_NAME.toString()));
+            }
+            if (StringUtils.isNotEmpty(name)) {
+                result.add(Pair.newInstance(name, id.toString()));
+            }
+        }
+        return result;
     }
 
     private List<Node> executeSearch(String searchCriteria, Set<QName> fields, boolean taskCapableOnly, boolean dvkCapableOnly, Set<QName> types, String institutionToRemove,
-            int limit, boolean onlyActive) {
+            int limit) {
+        return executeSearch(searchCriteria, fields, taskCapableOnly, dvkCapableOnly, false, types, institutionToRemove, limit, true);
+    }
+
+    private List<Node> executeSearch(String searchCriteria, Set<QName> fields, boolean taskCapableOnly, boolean dvkCapableOnly, boolean decDocumenForwardCapableOnly,
+            Set<QName> types, String institutionToRemove, int limit, boolean onlyActive) {
         List<String> queryPartsAnd = new ArrayList<String>(4);
         if (StringUtils.isNotBlank(searchCriteria)) {
             queryPartsAnd.add(SearchUtil.generateStringWordsWildcardQuery(parseQuickSearchWords(searchCriteria, 1), true, true, fields.toArray(new QName[0])));
@@ -454,6 +509,9 @@ public class AddressbookServiceImpl extends AbstractSearchServiceImpl implements
         }
         if (dvkCapableOnly && fields != contactGroupSearchFields) {
             queryPartsAnd.add(generatePropertyBooleanQuery(Props.DVK_CAPABLE, true));
+        }
+        if (decDocumenForwardCapableOnly) {
+            queryPartsAnd.add(generatePropertyBooleanQuery(Props.FORWARDING_DEC_DOCUMENT_ALLOWED, true));
         }
         if (onlyActive) {
             queryPartsAnd.add(generatePropertyBooleanQuery(Props.ACTIVESTATUS, true));

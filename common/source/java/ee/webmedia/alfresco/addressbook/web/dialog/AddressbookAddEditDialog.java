@@ -186,7 +186,7 @@ public class AddressbookAddEditDialog extends BaseDialogBean {
         return getAddressbookService().isTaskCapableGroupMember(entry.getNodeRef());
     }
 
-    public boolean isNotDecTaskCapable() {
+    public boolean isNotDvkCapable() {
         if (entry == null) {
             return true;
         }

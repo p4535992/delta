@@ -5,6 +5,7 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getFileService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getWorkflowService;
 import static ee.webmedia.alfresco.privilege.service.PrivilegeUtil.isAdminOrDocmanagerWithViewDocPermission;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -74,6 +75,7 @@ public class FileBlockBean implements DocumentDynamicBlock, RefreshEventListener
             if (LOG.isDebugEnabled()) {
                 LOG.debug("changed file active status, nodeRef=" + fileNodeRef + ", new status=" + active);
             }
+            getFileService().reorderFiles(docRef, fileNodeRef, !active);
             restore(); // refresh the files list
             MessageUtil.addInfoMessage(active ? "file_toggle_active_success" : "file_toggle_deactive_success", getFileName(fileNodeRef));
         } catch (NodeLockedException e) {
@@ -118,7 +120,8 @@ public class FileBlockBean implements DocumentDynamicBlock, RefreshEventListener
         NodeRef fileRef = new NodeRef(ActionUtil.getParam(event, "nodeRef"));
         FileInfo pdfFileInfo = null;
         NodeRef previouslyGeneratedPdf = getFileService().getPreviouslyGeneratedPdf(fileRef);
-        if (!ActionUtil.hasParam(event, PDF_OVERWRITE_CONFIRMED) && getFileService().isPdfUpToDate(fileRef, previouslyGeneratedPdf)) {
+        boolean overwritePdf = ActionUtil.hasParam(event, PDF_OVERWRITE_CONFIRMED);
+        if (!overwritePdf && getFileService().isPdfUpToDate(fileRef, previouslyGeneratedPdf)) {
             Map<String, String> params = new HashMap<String, String>(2);
             params.put(PDF_OVERWRITE_CONFIRMED, Boolean.TRUE.toString());
             params.put("nodeRef", fileRef.toString());
@@ -132,6 +135,9 @@ public class FileBlockBean implements DocumentDynamicBlock, RefreshEventListener
                 LOG.debug("starting to generated pdf from FileBlockBean call, fileRef=" + fileRef);
             }
             pdfFileInfo = getFileService().transformToPdf(docRef, fileRef, true);
+            if (!overwritePdf && pdfFileInfo != null) {
+                BeanHelper.getNodeService().setProperty(pdfFileInfo.getNodeRef(), FileModel.Props.FILE_ORDER_IN_LIST, activeFilesCount + 1);
+            }
         } catch (NodeLockedException e) {
             BeanHelper.getDocumentLockHelperBean().handleLockedNode("file_transform_pdf_error_docLocked", docRef);
             return;
@@ -250,10 +256,11 @@ public class FileBlockBean implements DocumentDynamicBlock, RefreshEventListener
 
     /**
      * Used in JSP page.
-     * 
-     * @return
      */
     public List<File> getFiles() {
+        if (files != null) {
+            Collections.sort(files);
+        }
         return files;
     }
 

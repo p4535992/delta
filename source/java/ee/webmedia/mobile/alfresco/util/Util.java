@@ -2,14 +2,10 @@ package ee.webmedia.mobile.alfresco.util;
 
 import java.util.Arrays;
 
-import org.alfresco.repo.security.authentication.AuthenticationUtil;
-import org.alfresco.service.cmr.repository.NodeRef;
 import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Component;
 
 import ee.webmedia.alfresco.app.AppConstants;
-import ee.webmedia.alfresco.common.web.BeanHelper;
-import ee.webmedia.alfresco.privilege.model.Privilege;
 
 @Component
 public class Util {
@@ -36,11 +32,6 @@ public class Util {
         }
 
         return messages.getMessage(translationKey, placeholderValues, AppConstants.getDefaultLocale());
-    }
-
-    public static boolean documentAllowPermission(NodeRef nodeRef, String privilege) {
-        Privilege priv = Privilege.getPrivilegeByName(privilege);
-        return BeanHelper.getPrivilegeService().hasPermission(nodeRef, AuthenticationUtil.getRunAsUser(), priv);
     }
 
 }

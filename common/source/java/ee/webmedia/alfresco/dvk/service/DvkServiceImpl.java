@@ -823,13 +823,13 @@ public abstract class DvkServiceImpl implements DvkService {
 
     abstract protected <D extends XmlObject> NodeRef importReviewTaskData(D dhlDokument, String dvkId);
 
-    private String sendDocuments(Collection<ContentToSend> contentsToSend, final DvkSendDocuments sd, boolean requireFiles) {
+    private String sendDocument(Collection<ContentToSend> contentsToSend, final DvkSendDocuments sd, boolean requireFiles, final SendDocumentsDecContainerCallback callback) {
         final Collection<String> recipientsRegNrs = sd.getRecipientsRegNrs();
         List<String> personIdCodes = sd.getPersonIdCodes();
         verifyEnoughData(contentsToSend, recipientsRegNrs, personIdCodes, requireFiles);
         try {
             final Set<String> sendDocuments = dhlXTeeService.sendDocuments(contentsToSend, getRecipients(recipientsRegNrs, personIdCodes), getSenderAddress(),
-                    new SimDhsSendDocumentsCallback(sd), new SendDocumentsRequestCallback() {
+                    callback, new SendDocumentsRequestCallback() {
 
                         @Override
                         public void doWithRequest(SendDocumentsV2RequestType dokumentDocument) {
@@ -849,9 +849,18 @@ public abstract class DvkServiceImpl implements DvkService {
         }
     }
 
+    private String sendDocuments(Collection<ContentToSend> contentsToSend, DvkSendDocuments sendDocument, boolean requireFiles) {
+        return sendDocument(contentsToSend, sendDocument, requireFiles, new SimDhsSendDocumentsCallback(sendDocument));
+    }
+
     @Override
-    public String sendDocuments(Collection<ContentToSend> contentsToSend, final DvkSendDocuments sd) {
-        return sendDocuments(contentsToSend, sd, true);
+    public String sendDocuments(Collection<ContentToSend> contentsToSend, DvkSendDocuments sendDocument) {
+        return sendDocuments(contentsToSend, sendDocument, true);
+    }
+
+    @Override
+    public String forwardDecDocument(Collection<ContentToSend> contentsToSend, DvkSendDocuments sendDocument) {
+        return sendDocument(contentsToSend, sendDocument, false, new ForwardDecContainerCallback(sendDocument));
     }
 
     @Override
@@ -1022,6 +1031,41 @@ public abstract class DvkServiceImpl implements DvkService {
         DecSender sender = DecSender.Factory.newInstance();
         sender.setOrganisationCode(propertiesResolver.getProperty("x-tee.institution"));
         return sender;
+    }
+
+    private class ForwardDecContainerCallback implements SendDocumentsDecContainerCallback {
+        private final DvkSendDocuments dvkSendDocuments;
+
+        private ForwardDecContainerCallback(DvkSendDocuments dvkSendDocuments) {
+            dvkSendDocuments.validateOutGoing();
+            this.dvkSendDocuments = dvkSendDocuments;
+        }
+
+        @Override
+        public void doWithDocument(DecContainerDocument decContainerDocument) {
+            Node document = new Node(dvkSendDocuments.getDocumentNodeRef());
+            DecContainer newContainer = decContainerDocument.getDecContainer();
+            NodeRef oldDecContainer = BeanHelper.getFileService().getDecContainer(document.getNodeRef());
+            String xmlAsString = fileFolderService.getReader(oldDecContainer).getContentString();
+
+            try {
+                DecContainerDocument oldDoc = (DecContainerDocument) XmlObject.Factory.parse(xmlAsString);
+                DecContainer oldContainer = oldDoc.getDecContainer();
+
+                newContainer.setAccess(oldContainer.getAccess());
+                newContainer.setDecMetadata(oldContainer.getDecMetadata());
+                newContainer.setInitiator(oldContainer.getInitiator());
+                newContainer.setRecipientArray(oldContainer.getRecipientArray());
+                newContainer.setRecordCreator(oldContainer.getRecordCreator());
+                newContainer.setRecordMetadata(oldContainer.getRecordMetadata());
+                newContainer.setRecordSenderToDec(oldContainer.getRecordSenderToDec());
+                newContainer.setRecordTypeSpecificMetadata(oldContainer.getRecordTypeSpecificMetadata());
+                newContainer.setSignatureMetadataArray(oldContainer.getSignatureMetadataArray());
+            } catch (XmlException e) {
+                log.warn("Failed to parse xml string", e);
+                throw new UnableToPerformException("existing_dec_container_parsing_failed");
+            }
+        }
     }
 
     private class SimDhsSendDocumentsCallback implements SendDocumentsDecContainerCallback {

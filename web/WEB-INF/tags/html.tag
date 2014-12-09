@@ -46,7 +46,7 @@
 	<div id="content-wrap" class="contentwrapper">
         <tag:sidebarMenu entries="${page.menu}" />
         <div class="${empty page.menu ? '' : 'contentmargins'}">
-            <h1><c:out value="${page.title}" /></h1>
+            <h1 id="pageTitle"><c:out value="${page.title}" /></h1>
             <tag:messages messages="${messages}" />
 
             <jsp:doBody />

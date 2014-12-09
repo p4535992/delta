@@ -66,6 +66,15 @@ public class SubstitutionBean implements Serializable {
         }
     }
 
+    public void selectSubstitution(Substitute substitute) {
+        if (substitute == null) {
+            substitutionInfo = new SubstitutionInfo();
+        } else {
+            currentStructUnitUser = null;
+            substitutionInfo = new SubstitutionInfo(substitute);
+        }
+    }
+
     public boolean isCurrentStructUnitUser() {
         if (currentStructUnitUser == null) {
             currentStructUnitUser = BeanHelper.getUserService().isCurrentStructUnitUser();

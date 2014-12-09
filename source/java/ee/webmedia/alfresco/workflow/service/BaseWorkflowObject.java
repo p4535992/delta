@@ -172,7 +172,7 @@ public abstract class BaseWorkflowObject extends NodeBaseVO {
         // Subclasses can override
     }
 
-    protected void setOriginalProperties(Map<QName, Serializable> originalProperties) {
+    public void setOriginalProperties(Map<QName,Serializable> originalProperties) {
         this.originalProperties = originalProperties;
     }
 

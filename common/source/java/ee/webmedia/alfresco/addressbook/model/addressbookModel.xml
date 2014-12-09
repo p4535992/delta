@@ -83,6 +83,7 @@
             <aspect>ab:taskCapable</aspect>
             <aspect>ab:encryptionPersonId</aspect>
             <aspect>ab:decTaskCapable</aspect>
+            <aspect>ab:forwardingDecDocumentAllowed</aspect>
          </mandatory-aspects>
       </type>
       
@@ -280,6 +281,16 @@
             <property name="ab:decTaskCapable">
                <type>d:boolean</type>
                <mandatory enforced="true">false</mandatory>               
+               <default>false</default>
+            </property>
+         </properties>
+      </aspect>
+      
+      <aspect name="ab:forwardingDecDocumentAllowed">
+         <properties>
+            <property name="ab:forwardingDecDocumentAllowed">
+               <type>d:boolean</type>
+               <mandatory enforced="true">false</mandatory>
                <default>false</default>
             </property>
          </properties>

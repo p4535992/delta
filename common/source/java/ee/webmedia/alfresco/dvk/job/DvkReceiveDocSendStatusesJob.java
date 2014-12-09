@@ -28,6 +28,8 @@ public class DvkReceiveDocSendStatusesJob extends AbstractDvkDocStatusesJob {
                 return worker.updateDocAndTaskSendStatuses();
             }
         }, AuthenticationUtil.getSystemUserName());
+
+        worker.deleteForwardedDecDocuments();
         return statusesUpdated;
     }
 }

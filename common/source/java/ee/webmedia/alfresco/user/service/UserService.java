@@ -8,6 +8,7 @@ import java.util.Set;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.security.AuthorityType;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 
 import ee.webmedia.alfresco.common.model.Cacheable;
@@ -246,5 +247,11 @@ public interface UserService {
     List<Node> getPersonsList();
 
     boolean isAdministrator(String userName);
+
+    /** @return {@code List<Pair<userNameLabel, userId>>} */
+    List<Pair<String, String>> searchUserNamesAndIdsWithoutCurrentUser(String param, int limit);
+
+    /** @return {@code List<Pair<userNameLabel, userId>>} */
+    List<Pair<String, String>> searchUserNamesAndIds(String param, int limit);
 
 }

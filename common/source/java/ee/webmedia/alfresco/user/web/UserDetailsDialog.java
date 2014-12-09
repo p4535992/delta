@@ -109,6 +109,12 @@ public class UserDetailsDialog extends BaseDialogBean {
                     TextUtil.joinNonBlankStringsWithComma(erroneousValues));
             return false;
         }
+
+        String clientExtensions = (String) user.getProperties().get(ContentModel.PROP_OPEN_OFFICE_CLIENT_EXTENSIONS.toString());
+        if (StringUtils.isNotBlank(clientExtensions) && !StringUtils.isAlpha(clientExtensions.replaceAll(",", ""))) {
+            MessageUtil.addErrorMessage("user_openOfficeClientExtensions_error");
+            return false;
+        }
         return true;
     }
 
@@ -140,6 +146,10 @@ public class UserDetailsDialog extends BaseDialogBean {
     }
 
     public boolean isShowEmptyTaskMenuEditable() {
+        return isAdministratorOrCurrentUser();
+    }
+
+    public boolean isAdministratorOrCurrentUser() {
         return BeanHelper.getUserService().isAdministrator() || user.getProperties().get(ContentModel.PROP_USERNAME.toString()).equals(AuthenticationUtil.getRunAsUser());
     }
 

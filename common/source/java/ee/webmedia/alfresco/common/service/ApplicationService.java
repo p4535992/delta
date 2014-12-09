@@ -63,13 +63,4 @@ public interface ApplicationService {
      */
     Pair<byte[], String> getCustomLogo();
 
-    /**
-     * @return URL for signed jumploader applet if configured
-     */
-    String getJumploaderUrl();
-
-    /**
-     * @return jar of signed jumploader applet if configured, or {@code null} otherwise
-     */
-    Pair<byte[], String> getJumploaderApplet();
 }

@@ -31,6 +31,8 @@ import java.util.List;
 
 import org.apache.commons.io.FilenameUtils;
 
+import ee.webmedia.alfresco.document.file.web.AddFileDialog;
+
 /**
  * Bean to hold the results of a file upload
  * 
@@ -57,6 +59,7 @@ public final class FileUploadBean implements Serializable
    private List<Boolean> associatedWithMetaData;
    private List<String> filePath;
    private List<String> contentType;
+   private List<Long> orderNumbers;
    private boolean multiple = false;
 
    private boolean problematicFile = false;
@@ -136,14 +139,15 @@ public final class FileUploadBean implements Serializable
        }
 
         String filenameWithoutExtension = FilenameUtils.removeExtension(fileName);
+        boolean associateWithMetadata = AddFileDialog.BOUND_METADATA_EXTENSIONS.contains(FilenameUtils.getExtension(fileName));
         if (!multiple) {
             this.fileName.add(0, fileName);
             this.fileNameWithoutExtension.add(0, filenameWithoutExtension);
-            associatedWithMetaData.add(0, false);
+            associatedWithMetaData.add(0, associateWithMetadata);
         } else {
             this.fileName.add(fileName);
             this.fileNameWithoutExtension.add(filenameWithoutExtension);
-            associatedWithMetaData.add(false);
+            associatedWithMetaData.add(associateWithMetadata);
         }
    }
 
@@ -169,6 +173,14 @@ public final class FileUploadBean implements Serializable
 
     public void setAssociatedWithMetaData(List<Boolean> associatedWithMetaData) {
         this.associatedWithMetaData = associatedWithMetaData;
+    }
+
+    public List<Long> getOrderNumbers() {
+        return orderNumbers;
+    }
+
+    public void setOrderNumbers(List<Long> orderNumbers) {
+        this.orderNumbers = orderNumbers;
     }
 
 /**
@@ -264,5 +276,23 @@ public final class FileUploadBean implements Serializable
         getContentTypes().remove(index);
         getFilePaths().remove(index);
         getAssociatedWithMetaData().remove(index);
+        if (getOrderNumbers() != null && getOrderNumbers().size() > index) {
+            getOrderNumbers().remove(index);
+        }
+    }
+
+    public boolean removeFile(String fileName) {
+        if (fileName == null) {
+            return false;
+        }
+        List<File> files = getFiles();
+        for (int i = 0; i < files.size(); i++) {
+            File file = files.get(i);
+            if (fileName.equals(file.getName())) {
+                removeFile(i);
+                return true;
+            }
+        }
+        return false;
     }
 }
