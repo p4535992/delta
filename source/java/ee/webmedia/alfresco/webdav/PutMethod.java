@@ -24,22 +24,25 @@
  */
 package ee.webmedia.alfresco.webdav;
 
-import static ee.webmedia.alfresco.common.web.BeanHelper.getDocLockService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getPolicyBehaviourFilter;
 
-import java.io.BufferedInputStream;
 import java.io.InputStream;
-import java.io.PrintWriter;
 import java.nio.charset.Charset;
-import java.util.Enumeration;
 
+import javax.faces.context.FacesContext;
 import javax.servlet.http.HttpServletResponse;
 
+import ee.webmedia.alfresco.utils.UserUtil;
+import org.alfresco.model.ContentModel;
 import org.alfresco.repo.content.encoding.ContentCharsetFinder;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
+import org.alfresco.repo.security.permissions.AccessDeniedException;
+import org.alfresco.repo.transaction.RetryingTransactionHelper;
+import org.alfresco.repo.webdav.LockInfo;
 import org.alfresco.repo.webdav.WebDAV;
 import org.alfresco.repo.webdav.WebDAVMethod;
 import org.alfresco.repo.webdav.WebDAVServerException;
-import org.alfresco.service.cmr.lock.LockStatus;
+import org.alfresco.service.cmr.model.FileExistsException;
 import org.alfresco.service.cmr.model.FileFolderService;
 import org.alfresco.service.cmr.model.FileInfo;
 import org.alfresco.service.cmr.model.FileNotFoundException;
@@ -50,170 +53,359 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
+import org.springframework.dao.ConcurrencyFailureException;
+
 
 /**
  * Implements the WebDAV PUT method
- * 
+ *
  * @author Gavin Cornwell
  */
-public class PutMethod extends WebDAVMethod {
-
-    private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(PutMethod.class);
-
+public class PutMethod extends WebDAVMethod
+{
     // Request parameters
     private String m_strContentType = null;
+    private boolean m_expectHeaderPresent = false;
+    // Indicates if a zero byte node was created by a LOCK call.
+    // Try to delete the node if the PUT fails
+    private boolean noContent = false;
+    private boolean created = false;
+    private FileInfo contentNodeInfo;
+    private long fileSize;
+
+    /**
+     * Default constructor
+     */
+    public PutMethod()
+    {
+    }
 
     /**
      * Parse the request headers
-     * 
-     * @exception WebDAVServerException
+     *
+     * @exception org.alfresco.repo.webdav.WebDAVServerException
      */
-    @Override
-    protected void parseRequestHeaders() throws WebDAVServerException {
+    protected void parseRequestHeaders() throws WebDAVServerException
+    {
         m_strContentType = m_request.getHeader(WebDAV.HEADER_CONTENT_TYPE);
+        String strExpect = m_request.getHeader(WebDAV.HEADER_EXPECT);
 
-        // Get the lock token, if any
+        if (strExpect != null && strExpect.equals(WebDAV.HEADER_EXPECT_CONTENT))
+        {
+            m_expectHeaderPresent = true;
+        }
+
+        // Parse Lock tokens and ETags, if any
+
         parseIfHeader();
     }
 
     /**
-     * Parse the request body
-     * 
-     * @exception WebDAVServerException
+     * Clears the aspect added by a LOCK request for a new file, so
+     * that the Timer started by the LOCK request will not remove the
+     * node now that the PUT request has been received. This is needed
+     * for large content.
+     *
+     * @exception org.alfresco.repo.webdav.WebDAVServerException
      */
-    @Override
-    protected void parseRequestBody() throws WebDAVServerException {
-        // Nothing to do in this method, the body contains
-        // the content it will be dealt with later
+    protected void parseRequestBody() throws WebDAVServerException
+    {
+        // Nothing is done with the body by this method. The body contains
+        // the content it will be dealt with later.
+
+        // This method is called ONCE just before the FIRST call to executeImpl,
+        // which is in a retrying transaction so may be called many times.
+
+        // Although this method is called just before the first executeImpl,
+        // it is possible that the Thread could be interrupted before the first call
+        // or between calls. However the chances are low and the consequence
+        // (leaving a zero byte file) is minor.
+
+        noContent = getTransactionService().getRetryingTransactionHelper().doInTransaction(
+                new RetryingTransactionHelper.RetryingTransactionCallback<Boolean>()
+                {
+                    public Boolean execute() throws Throwable
+                    {
+                        FileInfo contentNodeInfo = null;
+                        try
+                        {
+                            contentNodeInfo = getNodeForPath(getRootNodeRef(), getPath());
+                            checkNode(contentNodeInfo);
+                            final NodeRef nodeRef = contentNodeInfo.getNodeRef();
+                            if (getNodeService().hasAspect(contentNodeInfo.getNodeRef(), ContentModel.ASPECT_WEBDAV_NO_CONTENT))
+                            {
+                                getNodeService().removeAspect(nodeRef, ContentModel.ASPECT_WEBDAV_NO_CONTENT);
+                                if (logger.isDebugEnabled())
+                                {
+                                    String path = getPath();
+                                    logger.debug("Put Timer DISABLE " + path);
+                                }
+                                return Boolean.TRUE;
+                            }
+                        }
+                        catch (FileNotFoundException e)
+                        {
+                            // Does not exist, so there will be no aspect.
+                        }
+                        return Boolean.FALSE;
+                    }
+                }, false, true);
     }
 
     /**
-     * Exceute the WebDAV request
-     * 
-     * @exception WebDAVServerException
+     * Execute the WebDAV request
+     *
+     * @exception org.alfresco.repo.webdav.WebDAVServerException
      */
-    @Override
-    protected void executeImpl() throws WebDAVServerException, Exception {
+    protected void executeImpl() throws WebDAVServerException, Exception
+    {
+        if (logger.isDebugEnabled())
+        {
+            String path = getPath();
+            String userName = getDAVHelper().getAuthenticationService().getCurrentUserName();
+            logger.debug("Put node: \n" +
+                    "     user: " + userName + "\n" +
+                    "     path: " + path + "\n" +
+                    "noContent: " + noContent);
+        }
+
         FileFolderService fileFolderService = getFileFolderService();
 
         // Get the status for the request path
-        FileInfo contentNodeInfo = null;
-        boolean created = false;
-        try {
-            contentNodeInfo = getDAVHelper().getNodeForPath(getRootNodeRef(), getPath(), getServletPath());
+        LockInfo nodeLockInfo = null;
+        try
+        {
+            contentNodeInfo = getNodeForPath(getRootNodeRef(), getPath());
             // make sure that we are not trying to use a folder
-            if (contentNodeInfo.isFolder()) {
+            if (contentNodeInfo.isFolder())
+            {
                 throw new WebDAVServerException(HttpServletResponse.SC_BAD_REQUEST);
             }
-        } catch (FileNotFoundException e) {
-            // create not allowed
-            throw new WebDAVServerException(HttpServletResponse.SC_FORBIDDEN);
-        }
-        NodeRef fileRef = contentNodeInfo.getNodeRef();
-        WebDAVCustomHelper.checkDocumentFileWritePermission(fileRef);
 
-        // Require the file to be locked for current user
-        LockStatus lockStatus = getDocLockService().getLockStatus(fileRef);
-        if (!LockStatus.LOCK_OWNER.equals(lockStatus)) {
-            log.info("Not saving " + fileRef + ". LockStatus is " + lockStatus.name() + ", lock owner " + getDocLockService().getLockOwnerIfLockedByOther(fileRef));
-            throw new WebDAVServerException(WebDAV.WEBDAV_SC_LOCKED);
-        }
+            WebDAVCustomHelper.checkDocumentFileWritePermission(contentNodeInfo.getNodeRef());
 
-        if (m_request.getContentLength() <= 0) {
-            StringBuilder s = new StringBuilder("Client is trying to save zero-length content, ignoring and returning success; request headers:");
-            for (Enumeration<?> e = m_request.getHeaderNames(); e.hasMoreElements();) {
-                String headerName = (String) e.nextElement();
-                s.append("\n  ").append(headerName).append(": ").append(m_request.getHeader(headerName));
+            nodeLockInfo = checkNode(contentNodeInfo);
+
+            // 'Unhide' nodes hidden by us and behave as though we created them
+            //            NodeRef contentNodeRef = contentNodeInfo.getNodeRef();
+            //            if (fileFolderService.isHidden(contentNodeRef) && !getDAVHelper().isRenameShuffle(getPath()))
+            //            {
+            //                fileFolderService.setHidden(contentNodeRef, false);
+            //                created = true;
+            //            }
+        }
+        catch (FileNotFoundException e)
+        {
+            // the file doesn't exist - create it
+            String[] paths = getDAVHelper().splitPath(getPath());
+            try
+            {
+                FileInfo parentNodeInfo = getNodeForPath(getRootNodeRef(), paths[0]);
+                // create file
+                contentNodeInfo = getDAVHelper().createFile(parentNodeInfo, paths[1]);
+                created = true;
+
             }
-            log.warn(s.toString());
-            // Set the response status, depending if the node existed or not
-            m_response.setStatus(created ? HttpServletResponse.SC_CREATED : HttpServletResponse.SC_OK);
-
-            m_response.setContentType("text/plain");
-            m_response.setCharacterEncoding("UTF-8");
-            PrintWriter writer = m_response.getWriter();
-            try {
-                writer.println("You are trying to save zero-length content, we are ignoring it and returning a successful result.");
-                writer.println("This is probably a weird behaviour of the WebDAV client [described here http://java.net/jira/browse/JERSEY-154]:");
-                writer.print("Some HTTP clients are sending empty bodies in PUTs. e. g. Microsoft's 'WebDAV-Mini-Redirector' does this: It first sends a PUT with Content-Length=0 ");
-                writer.print("and an empty (zero bytes) body, and if that returns 200 OK it sends another PUT with 'correct' concent-length and full body; seems to be somekind of ");
-                writer.println("safety or performance optimization.");
-                writer.flush();
-            } finally {
-                writer.close();
+            catch (FileNotFoundException ee)
+            {
+                // bad path
+                throw new WebDAVServerException(HttpServletResponse.SC_CONFLICT);
             }
-            return;
+            catch (FileExistsException ee)
+            {
+                // ALF-7079 fix, retry: it looks like concurrent access (file not found but file exists)
+                throw new ConcurrencyFailureException("Concurrent access was detected.",  ee);
+            }
         }
 
-        // Update the version if the node is unlocked
-        boolean createdNewVersion = ((WebDAVCustomHelper) getDAVHelper()).getVersionsService().updateVersion(fileRef, contentNodeInfo.getName(), true);
+        String userName = UserUtil.getUsernameAndSession(getDAVHelper().getAuthenticationService().getCurrentUserName(), FacesContext.getCurrentInstance());
+        LockInfo lockInfo = getDAVLockService().getLockInfo(contentNodeInfo.getNodeRef());
 
-        // Access the content
-        ContentWriter writer = fileFolderService.getWriter(fileRef);
+        if (lockInfo != null)
+        {
+            if (lockInfo.isLocked() && !lockInfo.getOwner().equals(userName))
+            {
+                if (logger.isDebugEnabled())
+                {
+                    String path = getPath();
+                    String owner = lockInfo.getOwner();
+                    logger.debug("Node locked: path=["+path+"], owner=["+owner+"], current user=["+userName+"]");
+                }
+                // Indicate that the resource is locked
+                throw new WebDAVServerException(WebDAV.WEBDAV_SC_LOCKED);
+            }
+        }
+        // ALF-16808: We disable the versionable aspect if we are overwriting
+        // empty content because it's probably part of a compound operation to
+        // create a new single version
+        boolean disabledVersioning = false;
 
-        // Get the input stream from the request data
-        InputStream is = m_request.getInputStream();
+        try
+        {
+            // Disable versioning if we are overwriting an empty file with content
+            NodeRef nodeRef = contentNodeInfo.getNodeRef();
+            ContentData contentData = (ContentData)getNodeService().getProperty(nodeRef, ContentModel.PROP_CONTENT);
+            if ((contentData == null || contentData.getSize() == 0) && getNodeService().hasAspect(nodeRef, ContentModel.ASPECT_VERSIONABLE))
+            {
+                getPolicyBehaviourFilter().disableBehaviour(nodeRef, ContentModel.ASPECT_VERSIONABLE);
+                disabledVersioning = true;
+            }
+            // ALF-16756: To avoid firing inbound rules too early (while a node is still locked) apply the no content aspect
+            if (nodeLockInfo != null && nodeLockInfo.isExclusive() && !(ContentData.hasContent(contentData) && contentData.getSize() > 0))
+            {
+                getNodeService().addAspect(contentNodeInfo.getNodeRef(), ContentModel.ASPECT_NO_CONTENT, null);
+            }
 
-        // Do not allow to change mimeType or locale, use the same values as were set during file creation
-        ContentData contentData = contentNodeInfo.getContentData();
-        if (contentData == null) {
-            log.warn("ContentData for node is null: " + fileRef);
+            // Update the version if the node is unlocked
+            boolean createdNewVersion = ((WebDAVCustomHelper) getDAVHelper()).getVersionsService().updateVersion(nodeRef, contentNodeInfo.getName(), true);
+            // Access the content
+            ContentWriter writer = fileFolderService.getWriter(contentNodeInfo.getNodeRef());
 
             // set content properties
             String mimetype = getMimetypeService().guessMimetype(contentNodeInfo.getName());
             writer.setMimetype(mimetype);
 
+
             // Get the input stream from the request data
-            is = is.markSupported() ? is : new BufferedInputStream(is);
+            InputStream is = m_request.getInputStream();
 
             ContentCharsetFinder charsetFinder = getMimetypeService().getContentCharsetFinder();
             Charset encoding = charsetFinder.getCharset(is, mimetype);
             writer.setEncoding(encoding.name());
 
-        } else {
-            String mimetype = contentData.getMimetype();
-            writer.setMimetype(mimetype);
-            writer.setEncoding(contentData.getEncoding());
-            if (m_strContentType != null && !mimetype.equalsIgnoreCase(m_strContentType)) {
-                log.info("Client sent different mimetype '" + m_strContentType + "' when updating file with original mimetype '" + mimetype + "', ignoring");
+            // Write the new data to the content node
+            writer.putContent(is);
+            // Ask for the document metadata to be extracted
+//            Action extract = getActionService().createAction(ContentMetadataExtracter.EXECUTOR_NAME);
+//            if(extract != null)
+//            {
+//                extract.setExecuteAsynchronously(false);
+//                getActionService().executeAction(extract, contentNodeInfo.getNodeRef());
+//            }
+
+            // If the mime-type determined by the repository is different
+            // from the original specified in the request, update it.
+            if (m_strContentType == null || !m_strContentType.equals(writer.getMimetype()))
+            {
+                String oldMimeType = m_strContentType;
+                m_strContentType = writer.getMimetype();
+                if (logger.isDebugEnabled())
+                {
+                    logger.debug("Mimetype originally specified as " + oldMimeType +
+                            ", now guessed to be " + m_strContentType);
+                }
+            }
+
+            // add the user and date information to the custom aspect properties
+            ((WebDAVCustomHelper) getDAVHelper()).getVersionsService().updateVersionModifiedAspect(nodeRef);
+            // Update document search info
+            NodeRef document = getNodeService().getPrimaryParent(nodeRef).getParentRef();
+            ((WebDAVCustomHelper) getDAVHelper()).getDocumentService().updateSearchableFiles(document);
+
+            // Throw exception when user tries to save mandatory fields as blank
+            try {
+                // Update Document meta data and generated files
+                BeanHelper.getDocumentDynamicService().updateDocumentAndGeneratedFiles(nodeRef, document, true);
+            } catch (UnableToPerformException e) {
+                if ("notification_document_saving_failed_due_to_blank_mandatory_fields".equals(e.getMessageKey())) {
+                    String userId = AuthenticationUtil.getRunAsUser();
+                    Object[] obj = e.getMessageValuesForHolders();
+                    Object regNr = obj[0];
+                    Object docName = obj[1];
+                    Object fileName = obj[2];
+                    Object emptyFields = obj[3];
+                    BeanHelper.getNotificationService().addUserSpecificNotification(userId,
+                            MessageUtil.getMessage("notification_document_saving_failed_due_to_blank_mandatory_fields", regNr, docName, fileName, emptyFields));
+                }
+                throw new WebDAVServerException(HttpServletResponse.SC_FORBIDDEN);
+            }
+
+            // Record the uploaded file's size
+            fileSize = writer.getSize();
+
+            // Set the response status, depending if the node existed or not
+            m_response.setStatus(created ? HttpServletResponse.SC_CREATED : HttpServletResponse.SC_NO_CONTENT);
+            logger.debug("saved file " + nodeRef + ", " + (createdNewVersion ? "created" : "didn't crerate") + " new version");
+        }
+        catch (AccessDeniedException e)
+        {
+            throw new WebDAVServerException(HttpServletResponse.SC_FORBIDDEN, e);
+        }
+        catch (Throwable e)
+        {
+            // check if the node was marked with noContent aspect previously by lock method AND
+            // we are about to give up
+            if (noContent && RetryingTransactionHelper.extractRetryCause(e) == null)
+            {
+                // remove the 0 bytes content if save operation failed or was cancelled
+                final NodeRef nodeRef = contentNodeInfo.getNodeRef();
+                getTransactionService().getRetryingTransactionHelper().doInTransaction(
+                        new RetryingTransactionHelper.RetryingTransactionCallback<String>()
+                        {
+                            public String execute() throws Throwable
+                            {
+                                getNodeService().deleteNode(nodeRef);
+                                if (logger.isDebugEnabled())
+                                {
+                                    logger.debug("Put failed. DELETE  " + getPath());
+                                }
+                                return null;
+                            }
+                        }, false, false);
+            }
+            throw new WebDAVServerException(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e);
+        }
+        finally
+        {
+            if (disabledVersioning)
+            {
+                getPolicyBehaviourFilter().enableBehaviour(contentNodeInfo.getNodeRef(), ContentModel.ASPECT_VERSIONABLE);
             }
         }
 
-        // Write the new data to the content node
-        log.info("Writing data to " + writer.getContentUrl());
-        writer.putContent(is);
+    }
 
-        if (writer.getSize() <= 0) {
-            throw new RuntimeException("Saving zero-length content is not allowed" + ", is=" + is);
-        }
+    /**
+     * Can be used after a successful {@link #execute()} invocation to
+     * check whether the resource was new (created) or over-writing existing
+     * content.
+     *
+     * @return true if the content was newly created, false if existing.
+     */
+    protected boolean isCreated()
+    {
+        return created;
+    }
 
-        // add the user and date information to the custom aspect properties
-        ((WebDAVCustomHelper) getDAVHelper()).getVersionsService().updateVersionModifiedAspect(fileRef);
+    /**
+     * Retrieve the mimetype of the content sent for the PUT request. The initial
+     * value specified in the request may be updated after the file contents have
+     * been uploaded if the repository has determined a different mimetype for the content.
+     *
+     * @return content-type
+     */
+    public String getContentType()
+    {
+        return m_strContentType;
+    }
 
-        // Update document search info
-        NodeRef document = getNodeService().getPrimaryParent(fileRef).getParentRef();
-        ((WebDAVCustomHelper) getDAVHelper()).getDocumentService().updateSearchableFiles(document);
+    /**
+     * The FileInfo for the uploaded file, or null if not yet uploaded.
+     *
+     * @return FileInfo
+     */
+    public FileInfo getContentNodeInfo()
+    {
+        return contentNodeInfo;
+    }
 
-        // Throw exception when user tries to save mandatory fields as blank
-        try {
-            // Update Document meta data and generated files
-            BeanHelper.getDocumentDynamicService().updateDocumentAndGeneratedFiles(fileRef, document, true);
-        } catch (UnableToPerformException e) {
-            if ("notification_document_saving_failed_due_to_blank_mandatory_fields".equals(e.getMessageKey())) {
-                String userId = AuthenticationUtil.getRunAsUser();
-                Object[] obj = e.getMessageValuesForHolders();
-                Object regNr = obj[0];
-                Object docName = obj[1];
-                Object fileName = obj[2];
-                Object emptyFileds = obj[3];
-                BeanHelper.getNotificationService().addUserSpecificNotification(userId,
-                        MessageUtil.getMessage("notification_document_saving_failed_due_to_blank_mandatory_fields", regNr, docName, fileName, emptyFileds));
-            }
-            throw new WebDAVServerException(HttpServletResponse.SC_FORBIDDEN);
-        }
-
-        // Set the response status, depending if the node existed or not
-        m_response.setStatus(created ? HttpServletResponse.SC_CREATED : HttpServletResponse.SC_NO_CONTENT);
-        logger.debug("saved file " + fileRef + ", " + (createdNewVersion ? "created" : "didn't crerate") + " new version");
+    /**
+     * Returns the size of the uploaded file, zero if not yet uploaded.
+     *
+     * @return the fileSize
+     */
+    public long getFileSize()
+    {
+        return fileSize;
     }
 }

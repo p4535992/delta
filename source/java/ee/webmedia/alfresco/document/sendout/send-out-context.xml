@@ -53,7 +53,6 @@
    
    <bean id="sendOutService" class="ee.webmedia.alfresco.document.sendout.service.SendOutServiceImpl">
       <property name="nodeService" ref="NodeService" />
-      <property name="generalService" ref="GeneralService" />
       <property name="emailService" ref="CommonEmailService" />
       <property name="addressbookService" ref="AddressbookService" />
       <property name="parametersService" ref="ParametersService" />

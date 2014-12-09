@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.alfresco.model.ApplicationModel;
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.domain.LocaleDAO;
 import org.alfresco.repo.domain.NodePropertyValue;
@@ -78,7 +79,7 @@ public class BulkLoadNodeServiceImpl implements BulkLoadNodeService {
     private static final String NODE_REF_QUERY_START = "select node.uuid, node.store_id ";
     private static final String NODE_NOT_DELETED_CONDITION = " alf_node.node_deleted = false";
     private static final Set<QName> SIMPLE_FILE_PROPS = new HashSet<>(Arrays.asList(FileModel.Props.DISPLAY_NAME, FileModel.Props.ACTIVE, DvkModel.Props.DVK_ID,
-            ContentModel.PROP_NAME));
+            ContentModel.PROP_NAME, FileModel.Props.FILE_ORDER_IN_LIST));
     private static final Map<String, String> PROP_TABLE_ALIASES = new ConcurrentHashMap<>();
     private static final Map<QName, Long> QNAME_TO_DB_ID = new ConcurrentHashMap<>();
     private static final Map<Long, QName> DB_ID_TO_QNAME = new ConcurrentHashMap<>();
@@ -135,12 +136,15 @@ public class BulkLoadNodeServiceImpl implements BulkLoadNodeService {
 
             @Override
             public SimpleFile create(Map<QName, Serializable> fileProps, Serializable... objects) {
+
                 String displayName = (String) fileProps.get(FileModel.Props.DISPLAY_NAME);
                 if (StringUtils.isBlank(displayName)) {
                     displayName = (String) fileProps.get(ContentModel.PROP_NAME);
                 }
-                String readOnlyUrl = DownloadContentServlet.generateDownloadURL((NodeRef) fileProps.get(ContentModel.PROP_NODE_REF), displayName);
-                SimpleFile simpleFile = new SimpleFile(displayName, readOnlyUrl);
+                Long fileOrderInList = (Long) fileProps.get(FileModel.Props.FILE_ORDER_IN_LIST);
+                NodeRef fileRef = (NodeRef) fileProps.get(ContentModel.PROP_NODE_REF);
+                String readOnlyUrl = DownloadContentServlet.generateDownloadURL(fileRef, displayName);
+                SimpleFile simpleFile = new SimpleFile(displayName, readOnlyUrl, fileOrderInList, fileRef);
                 return simpleFile;
             }
         };
@@ -148,27 +152,45 @@ public class BulkLoadNodeServiceImpl implements BulkLoadNodeService {
 
     @Override
     public Map<NodeRef, List<SimpleFile>> loadActiveFiles(List<NodeRef> parentNodeRefs, Map<Long, QName> propertyTypes) {
-        return loadActiveFiles(parentNodeRefs, propertyTypes, SIMPLE_FILE_PROPS, getSimpleFileCallback());
+        return loadFiles(parentNodeRefs, propertyTypes, SIMPLE_FILE_PROPS, getSimpleFileCallback(), FilesLoadStrategy.ACTIVE);
     }
 
     @Override
     public List<SimpleFile> loadActiveFiles(NodeRef nodeRef, Map<Long, QName> propertyTypes, Set<QName> propsToLoad, CreateSimpleFileCallback createFileCallback) {
-        Map<NodeRef, List<SimpleFile>> allDocumentsFiles = loadActiveFiles(Arrays.asList(nodeRef), propertyTypes, propsToLoad, createFileCallback);
+        Map<NodeRef, List<SimpleFile>> allDocumentsFiles = loadFiles(Arrays.asList(nodeRef), propertyTypes, propsToLoad, createFileCallback, FilesLoadStrategy.ACTIVE);
         return allDocumentsFiles.get(nodeRef);
     }
 
-    private Map<NodeRef, List<SimpleFile>> loadActiveFiles(List<NodeRef> parentNodeRefs, Map<Long, QName> propertyTypes, Set<QName> propsToLoad,
-            CreateSimpleFileCallback createFileCallback) {
+    @Override
+    public List<SimpleFile> loadInactiveFiles(NodeRef parentRef) {
+        Map<NodeRef, List<SimpleFile>> allDocumentsFiles = loadFiles(Arrays.asList(parentRef), null, SIMPLE_FILE_PROPS, getSimpleFileCallback(), FilesLoadStrategy.INACTIVE);
+        return allDocumentsFiles.get(parentRef);
+    }
+
+    @Override
+    public List<SimpleFile> loadAllFiles(NodeRef parentRef) {
+        Map<NodeRef, List<SimpleFile>> files = loadFiles(Arrays.asList(parentRef), null, SIMPLE_FILE_PROPS, getSimpleFileCallback(), FilesLoadStrategy.BOTH);
+        return files.get(parentRef);
+    }
+
+    private enum FilesLoadStrategy {
+        ACTIVE, INACTIVE, BOTH;
+    }
+
+    private Map<NodeRef, List<SimpleFile>> loadFiles(List<NodeRef> parentNodeRefs, Map<Long, QName> propertyTypes, Set<QName> propsToLoad,
+            CreateSimpleFileCallback createFileCallback, FilesLoadStrategy strategy) {
         Map<NodeRef, List<Map<QName, Serializable>>> fileNodesProps = loadChildNodes(parentNodeRefs, propsToLoad, ContentModel.TYPE_CONTENT,
                 propertyTypes, new CreateObjectCallback<Map<QName, Serializable>>() {
 
-                    @Override
-                    public Map<QName, Serializable> create(NodeRef fileRef, Map<QName, Serializable> properties) {
-                        properties.put(ContentModel.PROP_NODE_REF, fileRef);
-                        return properties;
-                    }
-                });
+            @Override
+            public Map<QName, Serializable> create(NodeRef fileRef, Map<QName, Serializable> properties) {
+                properties.put(ContentModel.PROP_NODE_REF, fileRef);
+                return properties;
+            }
+        });
         Map<NodeRef, List<SimpleFile>> allDocumentsFiles = new HashMap<NodeRef, List<SimpleFile>>();
+        boolean activeFilesOnly = FilesLoadStrategy.ACTIVE.equals(strategy);
+        boolean inactiveFilesOnly = FilesLoadStrategy.INACTIVE.equals(strategy);
         for (NodeRef parentRef : parentNodeRefs) {
             List<SimpleFile> files = new ArrayList<>();
             List<Map<QName, Serializable>> fileNodeProps = fileNodesProps.get(parentRef);
@@ -176,7 +198,9 @@ public class BulkLoadNodeServiceImpl implements BulkLoadNodeService {
                 for (Map<QName, Serializable> fileProps : fileNodeProps) {
                     Serializable activePropValue = fileProps.get(FileModel.Props.ACTIVE);
                     boolean active = (activePropValue == null) ? true : Boolean.parseBoolean(activePropValue.toString());
-                    if (!active || fileProps.containsKey(DvkModel.Props.DVK_ID)) {
+                    if (activeFilesOnly && !active || fileProps.containsKey(DvkModel.Props.DVK_ID)) {
+                        continue;
+                    } else if (inactiveFilesOnly && active || fileProps.containsKey(DvkModel.Props.DVK_ID)) {
                         continue;
                     }
                     files.add(createFileCallback.create(fileProps));
@@ -401,6 +425,18 @@ public class BulkLoadNodeServiceImpl implements BulkLoadNodeService {
     }
 
     @Override
+    public <T> List<T> loadChildNodes(NodeRef parentNodeRef, Set<QName> propsToLoad, QName childNodeType, Map<Long, QName> propertyTypes,
+            CreateObjectCallback<T> createObjectCallback) {
+        Map<NodeRef, List<T>> childNodes = loadChildNodes(Arrays.asList(parentNodeRef), propsToLoad, childNodeType, propertyTypes, createObjectCallback);
+
+        if (childNodes.containsKey(parentNodeRef)) {
+            return childNodes.get(parentNodeRef);
+        }
+
+        return Collections.emptyList();
+    }
+
+    @Override
     public <T> Map<NodeRef, List<T>> loadChildNodes(Collection<NodeRef> parentNodes, Set<QName> propsToLoad, QName childNodeType, Map<Long, QName> propertyTypes,
             CreateObjectCallback<T> createObjectCallback) {
         long startTime = System.nanoTime();
@@ -520,36 +556,36 @@ public class BulkLoadNodeServiceImpl implements BulkLoadNodeService {
         jdbcTemplate.query(query,
                 new ParameterizedRowMapper<String>() {
 
-                    @Override
-                    public String mapRow(ResultSet rs, int rowNum) throws SQLException {
-                        setDefaultFetchSize(rs);
-                        NodeRef nodeRef = getNodeRef(rs);
-                        Map<PropertyMapKey, NodePropertyValue> docProps = allDocProps.get(nodeRef);
-                        if (docProps == null) {
-                            docProps = new HashMap<PropertyMapKey, NodePropertyValue>();
-                            allDocProps.put(nodeRef, docProps);
-                        }
-                        Map<String, Object> docIntrinsicProps = allDocIntrinsicProps.get(nodeRef);
-                        if (docIntrinsicProps == null) {
-                            docIntrinsicProps = new HashMap<String, Object>();
-                            docIntrinsicProps.put(ContentModel.PROP_CREATOR.toPrefixString(), rs.getString("creator"));
-                            docIntrinsicProps.put(ContentModel.PROP_CREATED.toPrefixString(), DefaultTypeConverter.INSTANCE.convert(Date.class, rs.getString("created")));
-                            docIntrinsicProps.put(ContentModel.PROP_MODIFIER.toPrefixString(), rs.getString("modifier"));
-                            docIntrinsicProps.put(ContentModel.PROP_MODIFIED.toPrefixString(), DefaultTypeConverter.INSTANCE.convert(Date.class, rs.getString("modified")));
-                            allDocIntrinsicProps.put(nodeRef, docIntrinsicProps);
-                        }
-                        PropertyMapKey propMapKey = getPropMapKey(rs);
-                        if (propMapKey.getQnameId() > 0) {
-                            NodePropertyValue nodePropValue = getPropertyValue(rs);
-                            docProps.put(propMapKey, nodePropValue);
-                        }
-                        if (loadType && !nodeTypes.containsKey(nodeRef)) {
-                            nodeTypes.put(nodeRef, getTypeFromRs(rs));
-                        }
-                        return null;
-                    }
+            @Override
+            public String mapRow(ResultSet rs, int rowNum) throws SQLException {
+                setDefaultFetchSize(rs);
+                NodeRef nodeRef = getNodeRef(rs);
+                Map<PropertyMapKey, NodePropertyValue> docProps = allDocProps.get(nodeRef);
+                if (docProps == null) {
+                    docProps = new HashMap<PropertyMapKey, NodePropertyValue>();
+                    allDocProps.put(nodeRef, docProps);
+                }
+                Map<String, Object> docIntrinsicProps = allDocIntrinsicProps.get(nodeRef);
+                if (docIntrinsicProps == null) {
+                    docIntrinsicProps = new HashMap<String, Object>();
+                    docIntrinsicProps.put(ContentModel.PROP_CREATOR.toPrefixString(), rs.getString("creator"));
+                    docIntrinsicProps.put(ContentModel.PROP_CREATED.toPrefixString(), DefaultTypeConverter.INSTANCE.convert(Date.class, rs.getString("created")));
+                    docIntrinsicProps.put(ContentModel.PROP_MODIFIER.toPrefixString(), rs.getString("modifier"));
+                    docIntrinsicProps.put(ContentModel.PROP_MODIFIED.toPrefixString(), DefaultTypeConverter.INSTANCE.convert(Date.class, rs.getString("modified")));
+                    allDocIntrinsicProps.put(nodeRef, docIntrinsicProps);
+                }
+                PropertyMapKey propMapKey = getPropMapKey(rs);
+                if (propMapKey.getQnameId() > 0) {
+                    NodePropertyValue nodePropValue = getPropertyValue(rs);
+                    docProps.put(propMapKey, nodePropValue);
+                }
+                if (loadType && !nodeTypes.containsKey(nodeRef)) {
+                    nodeTypes.put(nodeRef, getTypeFromRs(rs));
+                }
+                return null;
+            }
 
-                }, paramArray);
+        }, paramArray);
         explainQuery(query, paramArray);
         if (propertyTypes == null) {
             propertyTypes = new HashMap<Long, QName>();
@@ -682,9 +718,9 @@ public class BulkLoadNodeServiceImpl implements BulkLoadNodeService {
                 + "SELECT parent_props.*, node.store_id as store_id, node.uuid AS child_uuid, parent.uuid AS parent_uuid "
                 + (includeIntrinsicProps
                         ? ", parent.audit_creator AS creator, parent.audit_created AS created, parent.audit_modifier AS modifier, parent.audit_modified AS modified " : "")
-                + " FROM " + getNodeTableConditionalJoin(childNodes, arguments)
-                + " JOIN alf_child_assoc parent_assoc on parent_assoc.child_node_id = node.id "
-                + " JOIN alf_node parent on parent_assoc.parent_node_id = parent.id ";
+                        + " FROM " + getNodeTableConditionalJoin(childNodes, arguments)
+                        + " JOIN alf_child_assoc parent_assoc on parent_assoc.child_node_id = node.id "
+                        + " JOIN alf_node parent on parent_assoc.parent_node_id = parent.id ";
         sql += " LEFT JOIN alf_node_properties parent_props on parent_props.node_id = parent.id ";
 
         sql += " WHERE parent_assoc.is_primary = true ";
@@ -966,12 +1002,10 @@ public class BulkLoadNodeServiceImpl implements BulkLoadNodeService {
 
     @Override
     @SuppressWarnings("deprecation")
-    public void getAssociatedDocRefs(NodeRef docRef, final Set<NodeRef> associatedDocs, Set<NodeRef> checkedDocs, final Set<NodeRef> currentAssociatedDocs,
-            final Set<Integer> checkedNodes) {
-        if (checkedDocs.contains(docRef) || docRef == null) {
+    public void getAssociatedDocRefs(NodeRef docRef, final Set<NodeRef> associatedDocs) {
+        if (docRef == null) {
             return;
         }
-        checkedDocs.add(docRef);
 
         List<Object> arguments = new ArrayList<>();
 
@@ -1148,6 +1182,47 @@ public class BulkLoadNodeServiceImpl implements BulkLoadNodeService {
             alias = getDbFieldNameFromCamelCase(localName) + "_prop";
         }
         return alias;
+    }
+
+    @Override
+    public Boolean getSubscriptionPropValue(NodeRef personRef, QName notificationType) {
+        long startTime = System.nanoTime();
+        List<Object> arguments = new ArrayList<>();
+        String sql = "SELECT grand_child_props.* "
+                + " FROM " + getNodeTableConditionalJoin(Arrays.asList(personRef), arguments)
+                + " JOIN alf_child_assoc child_assoc on child_assoc.parent_node_id = node.id "
+                + " JOIN alf_node child on child_assoc.child_node_id = child.id and child.type_qname_id = " + getQNameDbId(ApplicationModel.TYPE_CONFIGURATIONS)
+                + " JOIN alf_child_assoc grand_child_assoc on grand_child_assoc.parent_node_id = child.id and grand_child_assoc.qname_localname = 'preferences' "
+                + " JOIN alf_node grand_child on grand_child_assoc.child_node_id = grand_child.id "
+                + " JOIN alf_node_properties grand_child_props on grand_child_props.node_id = grand_child.id "
+                + " WHERE grand_child_props.qname_id = " + getQNameDbId(notificationType);
+
+        List<Map<QName, Serializable>> props = jdbcTemplate.query(sql, new ParameterizedRowMapper<Map<QName, Serializable>>() {
+
+            @Override
+            public Map<QName, Serializable> mapRow(ResultSet rs, int rowNum) throws SQLException {
+                setDefaultFetchSize(rs);
+                PropertyMapKey propertyKey = getPropMapKey(rs);
+                Map<QName, Serializable> props = new HashMap<>();
+                if (propertyKey.getQnameId() > 0) {
+                    NodePropertyValue propertyValue = getPropertyValue(rs);
+                    Map<PropertyMapKey, NodePropertyValue> rawPropValues = new HashMap<>();
+                    rawPropValues.put(propertyKey, propertyValue);
+                    props = HibernateNodeDaoServiceImpl.convertToPublicProperties(rawPropValues, qnameDAO, localeDAO, contentDataDAO,
+                            dictionaryService, null, null);
+                }
+                return props;
+            }
+
+        }, arguments.toArray());
+        Boolean result = null;
+        if (!props.isEmpty()) {
+            result = (Boolean) props.get(0).get(notificationType);
+        }
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("BulkLoadService.getSubscriptionPropValue total time " + CalendarUtil.duration(startTime, System.nanoTime()) + "ms");
+        }
+        return result;
     }
 
     @Override

@@ -2417,6 +2417,15 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
     }
 
     @Override
+    public List<Task> getMyTasksInProgress(List<NodeRef> compoundWorkflows, QName... taskTypes) {
+        if (!compoundWorkflows.isEmpty()) {
+            Set<QName> types = new HashSet<>(Arrays.asList(taskTypes));
+            return workflowDbService.getInProgressTasks(compoundWorkflows, getUserNameToCheck(), types);
+        }
+        return Collections.emptyList();
+    }
+
+    @Override
     public boolean isCompoundWorkflowOwner(List<NodeRef> compoundWorkflows) {
         Set<QName> props = new HashSet<>(1);
         props.add(WorkflowCommonModel.Props.OWNER_ID);
@@ -2473,8 +2482,8 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
 
     @Override
     public void updateDocumentCompWorkflowSearchProps(final NodeRef docRef) {
-        final Map<QName, Serializable> props = new HashMap<QName, Serializable>();
-        boolean hasAllFinishedCompoundWorkflows = hasAllFinishedCompoundWorkflows(docRef, null);
+        final Map<QName, Serializable> props = new HashMap<>();
+        boolean hasAllFinishedCompoundWorkflows = hasCompoundWorkflowsAndAllAreFinished(docRef);
         props.put(DocumentCommonModel.Props.SEARCHABLE_HAS_ALL_FINISHED_COMPOUND_WORKFLOWS, hasAllFinishedCompoundWorkflows);
         boolean hasStartedWorkflows = hasStartedCompoundWorkflows(docRef);
         props.put(DocumentCommonModel.Props.SEARCHABLE_HAS_STARTED_COMPOUND_WORKFLOWS, hasStartedWorkflows);
@@ -2490,9 +2499,40 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
     }
 
     @Override
-    public boolean hasAllFinishedCompoundWorkflows(NodeRef docRef, Map<Long, QName> propertyTypes) {
-        Map<NodeRef, List<Node>> docCompoundWorkflowsMap = bulkLoadNodeService.loadChildNodes(Arrays.asList(docRef), null, WorkflowCommonModel.Types.COMPOUND_WORKFLOW,
-                propertyTypes,
+    public boolean hasCompoundWorkflowsAndAllAreFinished(NodeRef docRef) {
+        List<Node> documentWorkflows = getDocumentCompoundWorkflowsNodes(docRef);
+        if (hasNotFinishedDocumentWorkflows(documentWorkflows)) {
+            return false;
+        }
+
+        List<AssociationRef> independentWorkflows = getIndependentCompoundWorkflowAssocs(docRef);
+        if (hasNotFinishedIndependentWorkflows(independentWorkflows)) {
+            return false;
+        }
+
+        return !documentWorkflows.isEmpty() || !independentWorkflows.isEmpty();
+    }
+
+    private boolean hasNotFinishedDocumentWorkflows(List<Node> docCompoundWorkflows) {
+        for (Node compoundWorkflow : docCompoundWorkflows) {
+            if (!Status.FINISHED.equals((String) compoundWorkflow.getProperties().get(WorkflowCommonModel.Props.STATUS))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean hasNotFinishedIndependentWorkflows(List<AssociationRef> docIndependentWorkflows) {
+        for (AssociationRef assocRef : docIndependentWorkflows) {
+            if (!Status.FINISHED.equals(getRepoStatus(assocRef.getTargetRef()))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private List<Node> getDocumentCompoundWorkflowsNodes(NodeRef docRef) {
+        return bulkLoadNodeService.loadChildNodes(docRef, null, WorkflowCommonModel.Types.COMPOUND_WORKFLOW, null,
                 new CreateObjectCallback<Node>() {
 
             @Override
@@ -2500,36 +2540,13 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
                 return new WmNode(nodeRef, WorkflowCommonModel.Types.COMPOUND_WORKFLOW, null, properties);
             }
         });
-        List<Node> docCompoundWorkflows = docCompoundWorkflowsMap.get(docRef);
-        boolean docCWFnotEmpty = CollectionUtils.isNotEmpty(docCompoundWorkflows);
-        if (docCWFnotEmpty) {
-            for (Node compoundWorkflow : docCompoundWorkflows) {
-                if (!Status.FINISHED.equals((String) compoundWorkflow.getProperties().get(WorkflowCommonModel.Props.STATUS))) {
-                    return false;
-                }
-            }
-        }
-        if (!BeanHelper.getWorkflowConstantsBean().isIndependentWorkflowEnabled()) {
-            return true;
-        }
-        List<AssociationRef> independentCompWorkflowAssocs = nodeService.getTargetAssocs(docRef, DocumentCommonModel.Assocs.WORKFLOW_DOCUMENT);
-        if (docCWFnotEmpty && independentCompWorkflowAssocs.isEmpty()) {
-            return false;
-        }
-        List<NodeRef> independentCompWorkflows = new ArrayList<NodeRef>(independentCompWorkflowAssocs.size());
-        for (AssociationRef assocRef : independentCompWorkflowAssocs) {
-            independentCompWorkflows.add(assocRef.getTargetRef());
-        }
-        return checkAllFinishedCompoundWorkflows(independentCompWorkflows);
     }
 
-    private boolean checkAllFinishedCompoundWorkflows(List<NodeRef> compoundWorkflows) {
-        for (NodeRef compoundWorkflow : compoundWorkflows) {
-            if (!Status.FINISHED.equals(getRepoStatus(compoundWorkflow))) {
-                return false;
-            }
+    private List<AssociationRef> getIndependentCompoundWorkflowAssocs(NodeRef docRef) {
+        if (BeanHelper.getWorkflowConstantsBean().isIndependentWorkflowEnabled()) {
+            return nodeService.getTargetAssocs(docRef, DocumentCommonModel.Assocs.WORKFLOW_DOCUMENT);
         }
-        return true;
+        return Collections.emptyList();
     }
 
     @Override

@@ -1,26 +1,20 @@
 /*
- * Copyright (C) 2005-2007 Alfresco Software Limited.
+ * Copyright (C) 2005-2012 Alfresco Software Limited.
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
-
- * This program is distributed in the hope that it will be useful,
+ * This file is part of Alfresco
+ *
+ * Alfresco is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Alfresco is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
-
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-
- * As a special exception to the terms and conditions of version 2.0 of 
- * the GPL, you may redistribute this Program in connection with Free/Libre 
- * and Open Source Software ("FLOSS") applications as described in Alfresco's 
- * FLOSS exception.  You should have recieved a copy of the text describing 
- * the FLOSS exception, and it is also available here: 
- * http://www.alfresco.com/legal/licensing"
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with Alfresco. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.alfresco.repo.webdav;
 
@@ -28,15 +22,16 @@ import java.io.IOException;
 import java.util.Hashtable;
 import java.util.List;
 
+import javax.print.DocFlavor;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
+import javax.servlet.UnavailableException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.transaction.UserTransaction;
 
-import org.alfresco.filesys.ServerConfigurationBean;
-import org.alfresco.jlan.server.config.ServerConfigurationAccessor;
+import org.alfresco.repo.cache.SimpleCache;
 import org.alfresco.repo.security.authentication.AuthenticationContext;
 import org.alfresco.repo.security.permissions.AccessDeniedException;
 import org.alfresco.repo.tenant.TenantService;
@@ -45,9 +40,10 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.cmr.search.SearchService;
-import org.alfresco.service.cmr.security.AuthenticationService;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.transaction.TransactionService;
+import org.alfresco.util.FileFilterMode;
+import org.alfresco.util.PropertyCheck;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.web.context.WebApplicationContext;
@@ -77,27 +73,37 @@ public class WebDAVServlet extends HttpServlet
     private static final String INTERNAL_SERVER_ERROR = "Internal Server Error: ";
 
     // Init parameter names
+    private static final String BEAN_INIT_PARAMS = "webdav.initParams";
     public static final String KEY_STORE = "store";
     public static final String KEY_ROOT_PATH = "rootPath";
     
     // Service registry, used by methods to find services to process requests
-    private ServiceRegistry m_serviceRegistry;
+    private ServiceRegistry serviceRegistry;
     
     // Transaction service, each request is wrapped in a transaction
-    private TransactionService m_transactionService;
+    private TransactionService transactionService;
 
-    // Tenant service
-    private TenantService m_tenantService;
+    private static TenantService tenantService;
+    private static NodeService nodeService;
+    private static SearchService searchService;
+    private static NamespaceService namespaceService;
 
     // WebDAV method handlers
-    protected Hashtable<String,Class> m_davMethods;
+    protected Hashtable<String,Class<? extends WebDAVMethod>> m_davMethods;
     
     // Root node
     private NodeRef m_rootNodeRef;
     
+    private static SimpleCache<String, NodeRef> singletonCache; // eg. for webdavRootNodeRef
+    private static final String KEY_WEBDAV_ROOT_NODEREF = "key.webdavRoot.noderef";
+
+    private static String rootPath;
+
+    private static NodeRef defaultRootNode; // for default domain
+
     // WebDAV helper class
     protected WebDAVHelper m_davHelper;
-    
+
     // Root path
     private String m_rootPath;
 
@@ -109,10 +115,12 @@ public class WebDAVServlet extends HttpServlet
             IOException
     {
         long startTime = 0;
-        if (logger.isDebugEnabled())
+        if (logger.isInfoEnabled())
         {
             startTime = System.currentTimeMillis();
         }
+
+        FileFilterMode.setClient(FileFilterMode.Client.webdav);
 
         try
         {
@@ -131,8 +139,11 @@ public class WebDAVServlet extends HttpServlet
             }
             else if (method.getRootNodeRef() == null)
             {
-                if ( logger.isErrorEnabled())
-                    logger.error("No root node for request");
+                if (logger.isDebugEnabled())
+                {
+                    logger.debug("No root node for request [" +
+                            request.getMethod() + " " + request.getRequestURI() + "]");
+                }
                 
                 // Return an error status
                 response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
@@ -212,6 +223,7 @@ public class WebDAVServlet extends HttpServlet
                 long duration = endTime - startTime;
                 logger.debug(request.getMethod() + " took " + duration + "ms to execute");
             }
+            FileFilterMode.clearClient();
         }
     }
 
@@ -226,7 +238,7 @@ public class WebDAVServlet extends HttpServlet
      * @param response HttpServletResponse
      * @return WebDAVMethod
      */
-    private WebDAVMethod createMethod(HttpServletRequest request, HttpServletResponse response)
+    protected WebDAVMethod createMethod(HttpServletRequest request, HttpServletResponse response)
     {
         // Get the type of the current request
         
@@ -238,18 +250,21 @@ public class WebDAVServlet extends HttpServlet
             logger.debug("WebDAV request " + strHttpMethod + " on path "
                     + request.getRequestURI());
 
-        Class methodClass = m_davMethods.get(strHttpMethod);
+        Class<? extends WebDAVMethod> methodClass = m_davMethods.get(strHttpMethod);
         WebDAVMethod method = null;
 
-        if ( methodClass != null)
+        if (methodClass != null)
         {
             try
             {
+                m_rootNodeRef = getRootNodeRef();
                 // Create the handler method
-                
-                method = (WebDAVMethod) methodClass.newInstance();
+                method = methodClass.newInstance();
+                method.setDetails(request, response, m_davHelper, m_rootNodeRef);
+
+                method = methodClass.newInstance();
                 NodeRef rootNodeRef = m_rootNodeRef;
-                if (m_tenantService.isEnabled())
+                if (tenantService.isEnabled())
                 {
                     WebApplicationContext context = WebApplicationContextUtils.getRequiredWebApplicationContext(getServletContext());
                     NodeService nodeService = (NodeService) context.getBean("NodeService");
@@ -257,7 +272,7 @@ public class WebDAVServlet extends HttpServlet
                     NamespaceService namespaceService = (NamespaceService) context.getBean("NamespaceService");
 
                     // note: rootNodeRef is required (for storeRef part)
-                    rootNodeRef = m_tenantService.getRootNode(nodeService, searchService, namespaceService, m_rootPath, rootNodeRef);
+                    rootNodeRef = tenantService.getRootNode(nodeService, searchService, namespaceService, m_rootPath, rootNodeRef);
                 }
 
                 method.setDetails(request, response, m_davHelper, rootNodeRef);
@@ -276,12 +291,26 @@ public class WebDAVServlet extends HttpServlet
         return method;
     }
 
+    private static NodeRef getRootNodeRef()
+    {
+        NodeRef rootNodeRef = singletonCache.get(KEY_WEBDAV_ROOT_NODEREF);
+
+        if (rootNodeRef == null)
+        {
+            rootNodeRef = tenantService.getRootNode(nodeService, searchService, namespaceService, rootPath, defaultRootNode);
+            singletonCache.put(KEY_WEBDAV_ROOT_NODEREF, rootNodeRef);
+        }
+
+        return rootNodeRef;
+    }
+
     /**
      * Initialize the servlet
      * 
      * @param config ServletConfig
      * @exception ServletException
      */
+    @SuppressWarnings("unchecked")
     public void init(ServletConfig config) throws ServletException
     {
         super.init(config);
@@ -295,39 +324,40 @@ public class WebDAVServlet extends HttpServlet
             return;
         }
 
-        m_serviceRegistry = (ServiceRegistry)context.getBean(ServiceRegistry.SERVICE_REGISTRY);
+        // Get global configuration properties
+        WebApplicationContext wc = WebApplicationContextUtils.getRequiredWebApplicationContext(getServletContext());
+        WebDAVInitParameters initParams = (WebDAVInitParameters) wc.getBean(BEAN_INIT_PARAMS);
         
-        m_transactionService = m_serviceRegistry.getTransactionService();
-        m_tenantService = (TenantService) context.getBean("tenantService");
-        AuthenticationService authService = (AuthenticationService) context.getBean("authenticationService");
-        NodeService nodeService = (NodeService) context.getBean("NodeService");
-        SearchService searchService = (SearchService) context.getBean("SearchService");
-        NamespaceService namespaceService = (NamespaceService) context.getBean("NamespaceService");
-        
-        // Create the WebDAV helper
-        m_davHelper = new WebDAVHelper(m_serviceRegistry, authService);
-        
-        
-        String storeValue = context.getServletContext().getInitParameter(org.alfresco.repo.webdav.WebDAVServlet.KEY_STORE);
-        if (storeValue == null)
+        // Render this servlet permanently unavailable if its enablement property is not set
+        if (!initParams.getEnabled())
         {
-            throw new ServletException("Device missing init value: " + KEY_STORE);
+            throw new UnavailableException("WebDAV not enabled.");
         }
+        
+        // Get root paths
+        
+        String storeValue = initParams.getStoreName();
 
-        m_rootPath = context.getServletContext().getInitParameter(org.alfresco.repo.webdav.WebDAVServlet.KEY_ROOT_PATH);
-        if (m_rootPath == null)
-        {
-            throw new ServletException("Device missing init value: " + KEY_ROOT_PATH);
-        }
+        rootPath = initParams.getRootPath();
+
+        // Get beans
         
+        serviceRegistry = (ServiceRegistry)context.getBean(ServiceRegistry.SERVICE_REGISTRY);
+
+        transactionService = serviceRegistry.getTransactionService();
+        tenantService = (TenantService) context.getBean("tenantService");
+
+        nodeService = (NodeService) context.getBean("NodeService");
+        searchService = (SearchService) context.getBean("SearchService");
+        namespaceService = (NamespaceService) context.getBean("NamespaceService");
+        singletonCache = (SimpleCache<String, NodeRef>)context.getBean("immutableSingletonCache");
+
         // Initialize the root node
-        m_rootNodeRef = getRootNode(storeValue, m_rootPath, context, nodeService, searchService,
-                namespaceService, m_transactionService);
-        
-        
+        initializeRootNode(storeValue, rootPath, context, nodeService, searchService, namespaceService, tenantService, transactionService);
+
         // Create the WebDAV methods table
         
-        m_davMethods = new Hashtable<String,Class>();
+        m_davMethods = new Hashtable<String, Class<? extends WebDAVMethod>>();
         
         m_davMethods.put(WebDAV.METHOD_PROPFIND, PropFindMethod.class);
         m_davMethods.put(WebDAV.METHOD_PROPPATCH, PropPatchMethod.class);
@@ -343,92 +373,68 @@ public class WebDAVServlet extends HttpServlet
         m_davMethods.put(WebDAV.METHOD_PUT, PutMethod.class);
         m_davMethods.put(WebDAV.METHOD_UNLOCK, UnlockMethod.class);
     }
-    
+
+    protected WebDAVHelper getDAVHelper()
+    {
+        return m_davHelper;
+    }
+
+
     /**
-     * @param config
+     * @param storeValue
+     * @param rootPath
      * @param context
      * @param nodeService
      * @param searchService
      * @param namespaceService
+     * @param tenantService
+     * @param m_transactionService
      */
-    public static NodeRef getRootNode(String storeValue, String m_rootPath,
-            WebApplicationContext context, NodeService nodeService,
-            SearchService searchService, NamespaceService namespaceService,
-            TransactionService m_transactionService)
-            throws ServletException {
-        
-        NodeRef m_rootNodeRef = null;
-        
-        // Initialize the root node
-        
-        ServerConfigurationAccessor fileSrvConfig = (ServerConfigurationAccessor) context.getBean(ServerConfigurationBean.SERVER_CONFIGURATION);
-        if ( fileSrvConfig == null)
-            throw new ServletException("File server configuration not available");
+    private void initializeRootNode(String storeValue, String rootPath, WebApplicationContext context, NodeService nodeService, SearchService searchService,
+            NamespaceService namespaceService, TenantService tenantService, TransactionService m_transactionService)
+    {
 
         // Use the system user as the authenticated context for the filesystem initialization
 
         AuthenticationContext authComponent = (AuthenticationContext) context.getBean("authenticationContext");
         authComponent.setSystemUserAsCurrentUser();
-        
-        
+
         // Wrap the initialization in a transaction
-        
+
         UserTransaction tx = m_transactionService.getUserTransaction(true);
-        
+
         try
         {
             // Start the transaction
-            
-            if ( tx != null)
+
+            if (tx != null)
                 tx.begin();
             
-            // Get the store            
-            if (storeValue == null)
-            {
-                throw new ServletException("Device missing init value: " + KEY_STORE);
-            }
             StoreRef storeRef = new StoreRef(storeValue);
             
-            // Connect to the repo and ensure that the store exists
-            
-            if (! nodeService.exists(storeRef))
+            if (nodeService.exists(storeRef) == false)
             {
-                throw new ServletException("Store not created prior to application startup: " + storeRef);
+                throw new RuntimeException("No store for path: " + storeRef);
             }
+
             NodeRef storeRootNodeRef = nodeService.getRootNode(storeRef);
             
-            // Check the root path
-            if (m_rootPath == null)
-            {
-                throw new ServletException("Device missing init value: " + KEY_ROOT_PATH);
-            }
+            List<NodeRef> nodeRefs = searchService.selectNodes(storeRootNodeRef, rootPath, null, namespaceService, false);
             
-            // Find the root node for this device
-
-            List<NodeRef> nodeRefs = searchService.selectNodes(storeRootNodeRef, m_rootPath, null, namespaceService, false);
-
             if (nodeRefs.size() > 1)
             {
-                throw new ServletException("Multiple possible roots for device: \n" +
-                        "   root path: " + m_rootPath + "\n" +
-                        "   results: " + nodeRefs);
+                throw new RuntimeException("Multiple possible children for : \n" + "   path: " + rootPath + "\n" + "   results: " + nodeRefs);
             }
             else if (nodeRefs.size() == 0)
             {
-                // nothing found
-                throw new ServletException("No root found for device: \n" +
-                        "   root path: " + m_rootPath);
+                throw new RuntimeException("Node is not found for : \n" + "   root path: " + rootPath);
             }
-            else
-            {
-                // we found a node
-                m_rootNodeRef = nodeRefs.get(0);
-                
-            }
+
+            defaultRootNode = nodeRefs.get(0);
             
             // Commit the transaction
-            
-            tx.commit();
+            if (tx != null)
+            	tx.commit();
         }
         catch (Exception ex)
         {
@@ -437,12 +443,106 @@ public class WebDAVServlet extends HttpServlet
         finally
         {
             // Clear the current system user
-            
+
             authComponent.clearCurrentSecurityContext();
         }
-        
-        return m_rootNodeRef;
-        
     }
-    
+
+    /**
+     *
+     * @return root node for WebDAV
+     */
+    public static NodeRef getWebdavRootNode()
+    {
+        return getRootNodeRef();
+    }
+
+    /**
+     * Bean to hold injected initialization parameters.
+     *
+     * @author Derek Hulley
+     * @since V3.5 Team
+     */
+    public static class WebDAVInitParameters
+    {
+        private boolean enabled = true;
+        private String storeName;
+        private String rootPath;
+        private String urlPathPrefix;
+
+        public boolean getEnabled()
+        {
+            return enabled;
+        }
+        public void setEnabled(boolean enabled)
+        {
+            this.enabled = enabled;
+        }
+        /**
+         * @return              Returns the name of the store
+         * @throws ServletException if the store name was not set
+         */
+        public String getStoreName() throws ServletException
+        {
+            if (!PropertyCheck.isValidPropertyString(storeName))
+            {
+                throw new ServletException("WebDAV missing 'storeName' value.");
+            }
+            return storeName;
+        }
+        public void setStoreName(String storeName)
+        {
+            this.storeName = storeName;
+        }
+        /**
+         * @return              Returns the WebDAV root path within the store
+         * @throws ServletException if the root path was not set
+         */
+        public String getRootPath() throws ServletException
+        {
+            if (!PropertyCheck.isValidPropertyString(rootPath))
+            {
+                throw new ServletException("WebDAV missing 'rootPath' value.");
+            }
+            return rootPath;
+        }
+        public void setRootPath(String rootPath)
+        {
+            this.rootPath = rootPath;
+        }
+
+        /**
+         * Get the path prefix that generated URLs should exhibit, e.g.
+         * <pre>
+         *   http://server.name&lt;prefix&gt;/path/to/file.txt
+         * </pre>
+         * In the default set up this would be of the form /context-path/servlet-name e.g. /alfresco/webdav:
+         * <pre>
+         *   http://server.name/alfresco/webdav/path/to/file.txt
+         * </pre>
+         * however if using URL rewriting rules or a reverse proxy in front of the webdav server
+         * you may choose to use, for example / for shorter URLs.
+         * <pre>
+         *   http://server.name/path/to/file.txt
+         * </pre>
+         * <p>
+         * Leaving this property blank will cause the prefix used to be /context-path/servlet-name
+         *
+         * @return the urlPathPrefix
+         */
+        public String getUrlPathPrefix()
+        {
+            return urlPathPrefix;
+        }
+
+        /**
+         * See {@link #getUrlPathPrefix()}
+         *
+         * @param urlPathPrefix
+         */
+        public void setUrlPathPrefix(String urlPathPrefix)
+        {
+            this.urlPathPrefix = urlPathPrefix;
+        }
+    }
 }

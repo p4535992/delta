@@ -191,7 +191,10 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
         }
         NodeRef documentRef = new NodeRef(ActionUtil.getParam(event, PARAM_DOCUMENT_NODE_REF));
         try {
-            final String wordFileDisplayName = getDocumentTemplateService().populateTemplate(documentRef, overwriteGranted);
+            Pair<String, NodeRef> result = getDocumentTemplateService().populateTemplate(documentRef, overwriteGranted);
+            final String wordFileDisplayName = result.getFirst();
+            NodeRef fileRef = result.getSecond();
+            BeanHelper.getFileService().addAsLastActiveFile(documentRef, fileRef);
             MessageUtil.addInfoMessage("document_createWordFile_success", wordFileDisplayName);
         } catch (ExistingFileFromTemplateException e) {
             Map<String, String> params = new HashMap<String, String>(2);

@@ -8,10 +8,8 @@
       <property name="volumeService" ref="VolumeService" />
       <property name="caseService" ref="CaseService" />
       <property name="documentService" ref="DocumentService" />
-      <property name="documentDynamicService" ref="DocumentDynamicService" />
       <property name="functionsService" ref="FunctionsService" />
       <property name="generalService" ref="GeneralService" />
-      <property name="registerService" ref="RegisterService" />
    </bean>
    
    <bean id="DocumentListService" class="org.springframework.aop.framework.ProxyFactoryBean">

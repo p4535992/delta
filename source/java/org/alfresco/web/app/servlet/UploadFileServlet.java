@@ -25,6 +25,7 @@ package org.alfresco.web.app.servlet;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
 
@@ -37,6 +38,7 @@ import javax.servlet.http.HttpSession;
 import org.alfresco.config.ConfigService;
 import org.alfresco.error.AlfrescoRuntimeException;
 import org.alfresco.repo.content.MimetypeMap;
+import org.alfresco.util.Pair;
 import org.alfresco.util.TempFileProvider;
 import org.alfresco.web.app.Application;
 import org.alfresco.web.bean.FileUploadBean;
@@ -58,7 +60,7 @@ import org.springframework.web.context.support.WebApplicationContextUtils;
  * 
  * @author gavinc
  */
-public class UploadFileServlet extends BaseServlet
+public class UploadFileServlet extends UploadFileBaseServlet
 {
    private static final long serialVersionUID = -5482538466491052875L;
    private static final Log logger = LogFactory.getLog(UploadFileServlet.class); 
@@ -113,29 +115,7 @@ public class UploadFileServlet extends BaseServlet
          
          List<FileItem> fileItems = upload.parseRequest(request);
          
-         FileUploadBean bean = null;
-         if (Application.inPortalServer() == false)
-         {
-            bean = (FileUploadBean) session.getAttribute(FileUploadBean.getKey(uploadId));
-         }
-         else
-         {
-            // naff solution as we need to enumerate all session keys until we find the one that
-            // should match our User objects - this is weak but we don't know how the underlying
-            // Portal vendor has decided to encode the objects in the session
-            Enumeration enumNames = session.getAttributeNames();
-            while (enumNames.hasMoreElements())
-            {
-               String name = (String)enumNames.nextElement();
-               // find an Alfresco value we know must be there...
-               if (name.startsWith("javax.portlet.p") && name.endsWith(AuthenticationHelper.AUTHENTICATION_USER))
-               {
-                  String key = name.substring(0, name.lastIndexOf(AuthenticationHelper.AUTHENTICATION_USER));
-                  bean = (FileUploadBean) session.getAttribute(key + FileUploadBean.getKey(uploadId));
-                  break;
-               }
-            }
-         }
+         FileUploadBean bean = getFileUploadBean(uploadId, session);
          
          // XXX - dialog that uses this bean must remove it from session after cancel/complete condition
          if (bean == null) {
@@ -146,6 +126,8 @@ public class UploadFileServlet extends BaseServlet
                  bean.setMultiple(true);
              }
          }
+
+         List<Pair<File, String>> addedFiles = new ArrayList<>();
 
          for (FileItem item : fileItems)
          {
@@ -188,6 +170,7 @@ public class UploadFileServlet extends BaseServlet
                                      " size " + tempFile.length() +  
                                      " bytes created from upload filename: " + filename);
                      }
+                     addedFiles.add(new Pair<>(tempFile, filename));
                   }
                   else
                   {
@@ -209,7 +192,7 @@ public class UploadFileServlet extends BaseServlet
             // naff solution as we need to enumerate all session keys until we find the one that
             // should match our User objects - this is weak but we don't know how the underlying
             // Portal vendor has decided to encode the objects in the session
-            Enumeration enumNames = session.getAttributeNames();
+            Enumeration<?> enumNames = session.getAttributeNames();
             while (enumNames.hasMoreElements())
             {
                String name = (String)enumNames.nextElement();
@@ -230,7 +213,14 @@ public class UploadFileServlet extends BaseServlet
          
          if (returnPage == null || returnPage.length() == 0)
          {
-            throw new AlfrescoRuntimeException("return-page parameter has not been supplied");
+            if(addedFiles.size() > 0)
+            {
+               returnPage = "json";
+            }
+            else
+            {
+               throw new AlfrescoRuntimeException("return-page parameter has not been supplied");
+            }
          }
          
          if (returnPage.startsWith("javascript:"))
@@ -258,6 +248,10 @@ public class UploadFileServlet extends BaseServlet
              out.println("OK");
              out.println("</body></html>");
              out.close();
+         }
+         else if ("json".equals(returnPage))
+         {
+             createJsonResponse(request, response, addedFiles);
          }
          else
          {

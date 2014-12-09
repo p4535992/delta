@@ -32,6 +32,8 @@ public interface DvkService {
 
     String sendDocuments(Collection<ContentToSend> contentsToSend, DvkSendDocuments sendDocument);
 
+    String forwardDecDocument(Collection<ContentToSend> contentsToSend, DvkSendDocuments sendDocument);
+
     Map<QName, Serializable> mapRelatedIncomingElements(String documentTypeId, NodeRef storedDecContainer);
 
     Pair<NodeRef, List<Map<QName, Serializable>>> sendTaskNotificationDocument(Task task, NotificationCache notificationCache);
@@ -76,5 +78,7 @@ public interface DvkService {
     boolean isDvkCapable(List<Node> dvkCapableOrgs, String recipientOrgCode);
 
     Pair<Integer, Integer> resendFailedSends();
+
+    void deleteForwardedDecDocuments();
 
 }

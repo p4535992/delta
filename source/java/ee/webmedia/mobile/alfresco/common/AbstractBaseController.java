@@ -1,13 +1,16 @@
 package ee.webmedia.mobile.alfresco.common;
 
+import static ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel.Types.ASSIGNMENT_TASK;
 import static ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel.Types.CONFIRMATION_TASK;
 import static ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel.Types.DUE_DATE_EXTENSION_TASK;
+import static ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel.Types.INFORMATION_TASK;
 import static ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel.Types.REVIEW_TASK;
 import static ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel.Types.SIGNATURE_TASK;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -28,7 +31,6 @@ import org.springframework.ui.Model;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.web.servlet.support.RequestContextUtils;
 
-import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.common.service.ApplicationService;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
 import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
@@ -42,7 +44,7 @@ import ee.webmedia.mobile.alfresco.util.Util;
 public abstract class AbstractBaseController implements Serializable {
 
     private static final long serialVersionUID = 1L;
-    private static final String MESSAGES_ATTR = "messages";
+    protected static final String MESSAGES_ATTR = "messages";
 
     public static final String MESSAGES_FLASH_ATTR = "messagesFlashAttribute";
     protected static final String TASK_COUNT_BY_TYPE = "taskCounts";
@@ -69,15 +71,29 @@ public abstract class AbstractBaseController implements Serializable {
      * @param request
      */
     protected void setup(Model model, HttpServletRequest request) {
+        setupCommon(model, true);
+        addMessagesToModel(model, request);
+    }
+
+    protected void setupWithoutSidebarMenu(Model model, HttpServletRequest request) {
+        setupCommon(model, false);
+        addMessagesToModel(model, request);
+    }
+
+    private void setupCommon(Model model, boolean addSidebarMenu) {
         Map<String, Object> page = new HashMap<String, Object>();
-        page.put(UNSEEN_TASK_COUNT, documentSearchService.getCurrentUsersUnseenTasksCount(TASK_TYPES)); // Cache, maybe?
+        page.put(UNSEEN_TASK_COUNT, documentSearchService.getCurrentUsersUnseenTasksCount(TASK_TYPES));
         Map<QName, Integer> taskCountByType = getTaskCountByType();
         page.put(TASK_COUNT_BY_TYPE, taskCountByType);
         page.put("footerText", applicationService.getMDeltaFooterText());
         page.put("projectVersion", applicationService.getProjectVersion());
-        page.put("menu", setupSidebarMenu(taskCountByType));
+        if (addSidebarMenu) {
+            page.put("menu", setupSidebarMenu(taskCountByType));
+        }
         model.addAttribute(PAGE, page);
+    }
 
+    private void addMessagesToModel(Model model, HttpServletRequest request) {
         if (request != null) {
             Map<String, ?> inputFlashMap = RequestContextUtils.getInputFlashMap(request);
             if (inputFlashMap != null) {
@@ -179,7 +195,11 @@ public abstract class AbstractBaseController implements Serializable {
     }
 
     public Pair<MessageSeverity, String> addRedirectInfoMsg(RedirectAttributes redirectAttributes, String msgKey, Object... args) {
-        return addRedirectMessage(redirectAttributes, msgKey, MessageSeverity.INFO);
+        return addRedirectMessage(redirectAttributes, msgKey, MessageSeverity.INFO, args);
+    }
+
+    public Pair<MessageSeverity, String> addRedirectWarnMsg(RedirectAttributes redirectAttributes, String msgKey, Object... args) {
+        return addRedirectMessage(redirectAttributes, msgKey, MessageSeverity.WARN, args);
     }
 
     public Pair<MessageSeverity, String> addRedirectErrorMsg(RedirectAttributes redirectAttributes, String msgKey, Object... args) {
@@ -199,7 +219,7 @@ public abstract class AbstractBaseController implements Serializable {
     }
 
     public String translate(String code, Object... args) {
-        return Util.translate(messageSource, code, args, AppConstants.getDefaultLocale());
+        return Util.translate(messageSource, code, args);
     }
 
     protected void addErrorMessage(String messageId, Object... messageValueHolders) {
@@ -224,14 +244,15 @@ public abstract class AbstractBaseController implements Serializable {
      * Read-only fields during runtime, synchronization not needed.
      */
     protected static final Map<String, Set<QName>> TASK_TYPE_MAPPING = new TreeMap<String, Set<QName>>();
-    public static final QName[] TASK_TYPES = { /* ASSIGNMENT_TASK, GROUP_ASSIGNMENT_TASK, INFORMATION_TASK, ORDER_ASSIGNMENT_TASK, OPINION_TASK, */
+    protected static final Map<QName, String> TASK_TYPE_TO_KEY_MAPPING;
+    public static final QName[] TASK_TYPES = { ASSIGNMENT_TASK, /* GROUP_ASSIGNMENT_TASK, */INFORMATION_TASK, /* ORDER_ASSIGNMENT_TASK, OPINION_TASK, */
             REVIEW_TASK, /* EXTERNAL_REVIEW_TASK, CONFIRMATION_TASK, DUE_DATE_EXTENSION_TASK, */SIGNATURE_TASK };
 
     // Also defines sidebar menu order
     static {
-        // addTypeMapping("assignment", ASSIGNMENT_TASK);
+        addTypeMapping("assignment", ASSIGNMENT_TASK);
         // addTypeMapping("group-assignment", GROUP_ASSIGNMENT_TASK);
-        // addTypeMapping("information", INFORMATION_TASK);
+        addTypeMapping("information", INFORMATION_TASK);
         // addTypeMapping("order-assignment", ORDER_ASSIGNMENT_TASK);
         // addTypeMapping("opinion", OPINION_TASK);
         addTypeMapping("review", REVIEW_TASK);
@@ -240,6 +261,14 @@ public abstract class AbstractBaseController implements Serializable {
         // addTypeMapping("due-date-extension", DUE_DATE_EXTENSION_TASK);
         // addTypeMapping("confirmation-and-due-date-extension", CONFIRMATION_TASK, DUE_DATE_EXTENSION_TASK);
         addTypeMapping("signature", SIGNATURE_TASK);
+
+        Map<QName, String> temp = new HashMap<>();
+        for (String key : TASK_TYPE_MAPPING.keySet()) {
+            for (QName type : TASK_TYPE_MAPPING.get(key)) {
+                temp.put(type, key);
+            }
+        }
+        TASK_TYPE_TO_KEY_MAPPING = Collections.unmodifiableMap(temp);
     }
 
     private static void addTypeMapping(String key, QName... types) {

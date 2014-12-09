@@ -163,6 +163,16 @@
       </property>
    </bean>
 
+   <bean id="forwardingDecDocumentAllowedUpdater" class="ee.webmedia.alfresco.addressbook.bootstrap.ForwardingDecDocumentAllowedUpdater" parent="abstractNodeUpdater" >
+      <property name="moduleId" value="common" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="addressbookRootBootstrap"/>
+         </list>
+      </property>
+   </bean>
+
    <!-- START: web beans: -->
 
    <bean id="AddressbookListDialog" class="ee.webmedia.alfresco.addressbook.web.dialog.AddressbookListDialog" scope="session" />

@@ -17,13 +17,13 @@ import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.time.FastDateFormat;
 
 import ee.webmedia.alfresco.common.service.IClonable;
-import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.dvk.model.DvkModel;
+import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.signature.model.DataItem;
 import ee.webmedia.alfresco.signature.model.SignatureItem;
 import ee.webmedia.alfresco.signature.model.SignatureItemsAndDataItems;
 
-public class File implements Serializable, IClonable<File> {
+public class File implements Serializable, IClonable<File>, Comparable<File> {
 
     private static final long serialVersionUID = 1L;
 
@@ -54,6 +54,7 @@ public class File implements Serializable, IClonable<File> {
     private boolean isPdf;
     private String activeLockOwner;
     private boolean decContainer;
+    private Long fileOrderInList;
     public static FastDateFormat dateFormat = FastDateFormat.getInstance("dd.MM.yyyy HH:mm");
     public Boolean viewDocumentFilesPermission;
 
@@ -82,6 +83,7 @@ public class File implements Serializable, IClonable<File> {
         active = (fileProps.get(ACTIVE) == null) ? true : Boolean.parseBoolean(fileProps.get(ACTIVE).toString());
         convertToPdfIfSigned = Boolean.TRUE.equals(fileProps.get(FileModel.Props.CONVERT_TO_PDF_IF_SIGNED));
         decContainer = fileProps.containsKey(DvkModel.Props.DVK_ID);
+        fileOrderInList = (Long) fileProps.get(FileModel.Props.FILE_ORDER_IN_LIST);
     }
 
     public boolean isViewDocumentFilesPermission() {
@@ -377,4 +379,33 @@ public class File implements Serializable, IClonable<File> {
     public void setBdoc(boolean isBdoc) {
         bdoc = isBdoc;
     }
+
+    public Long getFileOrderInList() {
+        return fileOrderInList;
+    }
+
+    public void setFileOrderInList(Long fileOrderInList) {
+        this.fileOrderInList = fileOrderInList;
+    }
+
+    @Override
+    public int compareTo(File o) {
+        if (fileOrderInList < o.fileOrderInList) {
+            return -1;
+        } else if (fileOrderInList > o.fileOrderInList) {
+            return 1;
+        }
+        return placeDigidocSubitemAfterParentContainer(o);
+    }
+
+    private int placeDigidocSubitemAfterParentContainer(File o) {
+        if (!(Boolean.TRUE.equals(digiDocItem) || Boolean.TRUE.equals(o.digiDocItem))) {
+            return 0;
+        }
+        if (Boolean.TRUE.equals(digiDocItem)) {
+            return 1;
+        }
+        return -1;
+    }
+
 }

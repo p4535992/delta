@@ -26,9 +26,9 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.FastDateFormat;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.simple.ParameterizedRowMapper;
-import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.common.search.DbSearchUtil;
@@ -47,7 +47,7 @@ public class LogServiceImpl implements LogService, InitializingBean {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(LogServiceImpl.class);
     private static final FastDateFormat LOG_DATE_FORMAT = FastDateFormat.getInstance("yyyyMMdd");
 
-    private SimpleJdbcTemplate jdbcTemplate;
+    private JdbcTemplate jdbcTemplate;
 
     private boolean useClientIpFromXForwardedForHttpHeader;
 
@@ -59,13 +59,12 @@ public class LogServiceImpl implements LogService, InitializingBean {
     @Override
     public void saveLogSetup(LogSetup logSetup) {
         jdbcTemplate.update("TRUNCATE delta_log_level");
-        jdbcTemplate.getJdbcOperations().batchUpdate("INSERT INTO delta_log_level VALUES (?)", new LogSetupSqlParamSetter(logSetup.toLogLevels()));
+        jdbcTemplate.batchUpdate("INSERT INTO delta_log_level VALUES (?)", new LogSetupSqlParamSetter(logSetup.toLogLevels()));
     }
 
     @Override
-    @SuppressWarnings("rawtypes")
     public LogSetup getCurrentLogSetup() {
-        List result = jdbcTemplate.query("SELECT * FROM delta_log_level", new LogLevelRowMapper());
+        List<LogLevel> result = jdbcTemplate.query("SELECT * FROM delta_log_level", new LogLevelRowMapper());
         Set<LogLevel> levels = new HashSet<LogLevel>(result.size());
         for (Object level : result) {
             levels.add((LogLevel) level);
@@ -425,7 +424,7 @@ public class LogServiceImpl implements LogService, InitializingBean {
         return Collections.emptyList();
     }
 
-    public void setJdbcTemplate(SimpleJdbcTemplate jdbcTemplate) {
+    public void setJdbcTemplate(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
     }
 

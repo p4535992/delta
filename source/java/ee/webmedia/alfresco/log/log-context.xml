@@ -63,7 +63,7 @@
 
    <bean id="logService" class="ee.webmedia.alfresco.log.service.LogServiceImpl">
       <property name="jdbcTemplate">
-         <bean class="org.springframework.jdbc.core.simple.SimpleJdbcTemplate">
+         <bean class="org.springframework.jdbc.core.JdbcTemplate">
             <constructor-arg ref="dataSource" />
          </bean>
       </property>

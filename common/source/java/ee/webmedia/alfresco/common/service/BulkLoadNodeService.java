@@ -52,18 +52,25 @@ public interface BulkLoadNodeService {
 
     Set<NodeRef> loadChildRefs(NodeRef parentRef, final QName propName, String value, QName type);
 
+    <T> List<T> loadChildNodes(NodeRef parentNodeRef, Set<QName> propsToLoad, QName childNodeType, Map<Long, QName> propertyTypes,
+            CreateObjectCallback<T> createObjectCallback);
+
     <T> Map<NodeRef, List<T>> loadChildNodes(Collection<NodeRef> parentNodes, Set<QName> propsToLoad, QName childNodeType, Map<Long, QName> propertyTypes,
             CreateObjectCallback<T> createObjectCallback);
 
     List<SimpleFile> loadActiveFiles(NodeRef nodeRef, Map<Long, QName> propertyTypes);
 
     List<SimpleFile> loadActiveFiles(NodeRef nodeRef, Map<Long, QName> propertyTypes, Set<QName> propsToLoad, CreateSimpleFileCallback createFileCallback);
+    
+    List<SimpleFile> loadInactiveFiles(NodeRef parentRef);
+    
+    List<SimpleFile> loadAllFiles(NodeRef parentRef);
 
     Map<NodeRef, List<SimpleFile>> loadActiveFiles(List<NodeRef> parentNodeRefs, Map<Long, QName> propertyTypes);
 
     Map<NodeRef, Map<NodeRef, Map<QName, Serializable>>> loadChildNodes(Collection<NodeRef> parentNodes, Set<QName> propsToLoad);
 
-    void getAssociatedDocRefs(NodeRef docRef, final Set<NodeRef> associatedDocs, Set<NodeRef> checkedDocs, final Set<NodeRef> currentAssociatedDocs, Set<Integer> checkedNodes);
+    void getAssociatedDocRefs(NodeRef docRef, final Set<NodeRef> associatedDocs);
 
     Map<NodeRef, Map<QName, Serializable>> loadPrimaryParentsProperties(List<NodeRef> taskRefs, Set<QName> parentType, Set<QName> propsToLoad, Map<Long, QName> propertyTypes);
 
@@ -103,5 +110,7 @@ public interface BulkLoadNodeService {
 
     /** AVOID using this method unless the results are stored in cache */
     List<Substitute> loadUserSubstitutionDuties(String personName, NodeRef peopleContainer);
+
+    Boolean getSubscriptionPropValue(NodeRef personRef, QName notificationType);
 
 }

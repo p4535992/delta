@@ -139,6 +139,16 @@ public class SearchUtil {
         return "VALUES:\"" + QueryParser.escape(stripCustom(value)) + "*\"";
     }
 
+    /** Generates a query that searches all nodes in any depth below the specified path */
+    public static String generateParentPathQuery(String path) {
+        return "PATH:\"" + QueryParser.escape(path) + "//*\"";
+    }
+
+    /** Generates a query that searches all nodes exept the ones that are children (in any depth) of the specified path */
+    public static String generateParentPathExcludingQuery(String path) {
+        return "-PATH:\"" + QueryParser.escape(path) + "//*\"";
+    }
+
     public static String generateIdExactQuery(List<NodeRef> documentsForPermissionCheck) {
         List<String> queryParts = new ArrayList<>();
         for (NodeRef nodeRef : documentsForPermissionCheck) {

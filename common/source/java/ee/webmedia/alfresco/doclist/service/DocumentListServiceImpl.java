@@ -38,12 +38,10 @@ import ee.webmedia.alfresco.classificator.enums.VolumeType;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docconfig.generator.systematic.DocumentLocationGenerator;
-import ee.webmedia.alfresco.docdynamic.service.DocumentDynamicService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.functions.model.UnmodifiableFunction;
 import ee.webmedia.alfresco.functions.service.FunctionsService;
-import ee.webmedia.alfresco.register.service.RegisterService;
 import ee.webmedia.alfresco.report.model.ReportModel;
 import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.series.model.UnmodifiableSeries;
@@ -65,11 +63,9 @@ public class DocumentListServiceImpl implements DocumentListService {
     private SeriesService seriesService;
     private VolumeService volumeService;
     private CaseService caseService;
-    private DocumentDynamicService documentDynamicService;
     private DocumentService documentService;
     private NodeService nodeService;
     private GeneralService generalService;
-    private RegisterService registerService;
 
     private final FastDateFormat fastDateFormat = FastDateFormat.getInstance("dd.MM.yyyy");
 
@@ -123,7 +119,7 @@ public class DocumentListServiceImpl implements DocumentListService {
         for (UnmodifiableFunction function : functions) {
             List<UnmodifiableSeries> series = seriesService.getAllSeriesByFunction(function.getNodeRef());
             Map<NodeRef, Integer> seriesDocCount = new HashMap<NodeRef, Integer>();
-            printLine(csvWriter, function.getType(), function.getMark(), function.getTitle(), getContainingDocsCount(series, seriesDocCount, propertyTypes), "", "",
+            printLine(csvWriter, function.getType(), function.getMark(), function.getTitle(), getContainingDocsCount(series, seriesDocCount), "", "",
                     function.getStatus());
             printSeries(csvWriter, series, seriesDocCount, propertyTypes);
         }
@@ -139,7 +135,7 @@ public class DocumentListServiceImpl implements DocumentListService {
         }
     }
 
-    private long getContainingDocsCount(List<UnmodifiableSeries> series, Map<NodeRef, Integer> seriesDocCounts, Map<QName, Pair<Long, QName>> propertyTypes) {
+    private long getContainingDocsCount(List<UnmodifiableSeries> series, Map<NodeRef, Integer> seriesDocCounts) {
         long count = 0;
         for (UnmodifiableSeries serie : series) {
             int seriesDocCount = serie.getContainingDocsCount();
@@ -211,7 +207,6 @@ public class DocumentListServiceImpl implements DocumentListService {
                 }
             }
         }
-        registerService.resetAllAutoResetCounters();
         log.info("created copy of " + counter + " year-based volumes that were opened.");
         return counter;
     }
@@ -383,10 +378,6 @@ public class DocumentListServiceImpl implements DocumentListService {
         this.caseService = caseService;
     }
 
-    public void setDocumentDynamicService(DocumentDynamicService documentDynamicService) {
-        this.documentDynamicService = documentDynamicService;
-    }
-
     public void setDocumentService(DocumentService documentService) {
         this.documentService = documentService;
     }
@@ -401,10 +392,6 @@ public class DocumentListServiceImpl implements DocumentListService {
 
     public void setGeneralService(GeneralService generalService) {
         this.generalService = generalService;
-    }
-
-    public void setRegisterService(RegisterService registerService) {
-        this.registerService = registerService;
     }
 
     // END GETTERS_SETTERS

@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -30,6 +31,7 @@ import javax.xml.parsers.ParserConfigurationException;
 
 import org.alfresco.i18n.I18NUtil;
 import org.alfresco.repo.content.MimetypeMap;
+import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
 import org.alfresco.repo.transaction.RetryingTransactionHelper;
 import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
 import org.alfresco.service.cmr.repository.ContentWriter;
@@ -61,6 +63,7 @@ import ee.webmedia.alfresco.classificator.enums.StorageType;
 import ee.webmedia.alfresco.classificator.enums.TransmittalMode;
 import ee.webmedia.alfresco.classificator.enums.VolumeType;
 import ee.webmedia.alfresco.common.service.ApplicationConstantsBean;
+import ee.webmedia.alfresco.common.service.CreateObjectCallback;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docconfig.bootstrap.SystematicDocumentType;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamicService;
@@ -72,6 +75,8 @@ import ee.webmedia.alfresco.document.log.service.DocumentLogService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
+import ee.webmedia.alfresco.document.sendout.model.DocumentSendInfo;
+import ee.webmedia.alfresco.document.sendout.model.SendInfo;
 import ee.webmedia.alfresco.document.sendout.service.SendOutService;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.dvk.model.DvkModel;
@@ -139,11 +144,14 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
         final Map<NodeRef /* taskRef */, Pair<String /* dvkId */, String /* recipientRegNr */>> taskRefsAndIds //
         = documentSearchService.searchTaskBySendStatusQuery(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK);
         taskRefsAndIds.putAll(documentSearchService.searchTaskBySendStatusQuery(WorkflowSpecificModel.Types.REVIEW_TASK));
-        if (docRefsAndIds.size() == 0 && taskRefsAndIds.size() == 0) {
+        final Map<NodeRef, Pair<String, String>> forwardedDecDocRefsAndIds = documentSearchService.searchForwardedDecDocumentsDvkIds(SendStatus.SENT);
+
+        if (docRefsAndIds.size() == 0 && taskRefsAndIds.size() == 0 && forwardedDecDocRefsAndIds.size() == 0) {
             return 0; // no need to ask statuses
         }
         // get unique dvkIds
-        final Set<String> dvkIds = new HashSet<String>(docRefsAndIds.size() + taskRefsAndIds.size());
+        final Set<String> dvkIds = new HashSet<String>(docRefsAndIds.size() + taskRefsAndIds.size() + forwardedDecDocRefsAndIds.size());
+        docRefsAndIds.putAll(forwardedDecDocRefsAndIds);
         for (Pair<String, String> value : docRefsAndIds.values()) {
             dvkIds.add(value.getFirst());
         }
@@ -183,8 +191,66 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
             }
         }
 
-        return updateNodeSendStatus(docRefsAndIds, statusesByIds, DocumentCommonModel.Props.SEND_INFO_SEND_STATUS)
+        int updatedNodesCount = updateNodeSendStatus(docRefsAndIds, statusesByIds, DocumentCommonModel.Props.SEND_INFO_SEND_STATUS)
                 + updateNodeSendStatus(taskRefsAndIds, statusesByIds, WorkflowSpecificModel.Props.SEND_STATUS);
+
+        return updatedNodesCount;
+    }
+
+    @Override
+    public void deleteForwardedDecDocuments() {
+        final Map<NodeRef, Pair<String, String>> forwardedDecDocRefsAndIds = documentSearchService.searchForwardedDecDocumentsDvkIds(SendStatus.RECEIVED);
+        deleteForwardedDecDocumentsOnBackground(forwardedDecDocRefsAndIds.keySet());
+    }
+
+    private void deleteForwardedDecDocumentsOnBackground(final Set<NodeRef> sendInfoRefs) {
+        if (org.apache.commons.collections4.CollectionUtils.isEmpty(sendInfoRefs)) {
+            return;
+        }
+
+        generalService.runOnBackground(new RunAsWork<Void>() {
+
+            @Override
+            public Void doWork() throws Exception {
+                Set<NodeRef> docRefsSet = new HashSet<>();
+                for (NodeRef sendInfoRef : sendInfoRefs) {
+                    docRefsSet.add(nodeService.getPrimaryParent(sendInfoRef).getParentRef());
+                }
+                List<NodeRef> docRefs = new ArrayList<>(docRefsSet);
+
+                Map<NodeRef, List<SendInfo>> documentSendInfos = BeanHelper.getBulkLoadNodeService().loadChildNodes(docRefs,
+                        Collections.singleton(DocumentCommonModel.Props.SEND_INFO_SEND_STATUS), DocumentCommonModel.Types.SEND_INFO,
+                        null,
+                        new CreateObjectCallback<SendInfo>() {
+                    @Override
+                    public SendInfo create(NodeRef nodeRef, Map<QName, Serializable> properties) {
+                        return new DocumentSendInfo(properties);
+                    }
+                });
+
+                if (documentSendInfos == null) {
+                    return null;
+                }
+
+                Set<NodeRef> docsToDelete = new HashSet<>();
+                outer: for (Entry<NodeRef, List<SendInfo>> entry : documentSendInfos.entrySet()) {
+                    NodeRef docRef = entry.getKey();
+                    for (SendInfo si : entry.getValue()) {
+                        if (!SendStatus.RECEIVED.toString().equals(si.getSendStatus())) {
+                            continue outer;
+                        }
+                    }
+                    docsToDelete.add(docRef);
+                }
+                for (NodeRef doc : docsToDelete) {
+                    nodeService.deleteNode(doc);
+                }
+                if (log.isDebugEnabled()) {
+                    log.debug("Deleted " + docsToDelete.size() + " documents");
+                }
+                return null;
+            }
+        }, "deleteForwardedDecDocuments", true);
     }
 
     @Override

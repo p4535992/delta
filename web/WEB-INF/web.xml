@@ -312,6 +312,12 @@
    </filter-mapping> 
    
    <filter-mapping>
+      <filter-name>SerializingFilter</filter-name>
+      <url-pattern>/uploadedFileHelperServlet</url-pattern>
+   </filter-mapping>
+   
+   
+   <filter-mapping>
       <filter-name>RequestControlFilter</filter-name>
       <url-pattern>/download/*</url-pattern>
    </filter-mapping>
@@ -781,14 +787,6 @@
       <filter-name>Header Filter</filter-name>
       <url-pattern>/navigate/logo</url-pattern>
    </filter-mapping>
-   <filter-mapping>
-      <filter-name>Header Filter</filter-name>
-      <url-pattern>/n/jumploader</url-pattern>
-   </filter-mapping>
-   <filter-mapping>
-      <filter-name>Header Filter</filter-name>
-      <url-pattern>/navigate/jumploader</url-pattern>
-   </filter-mapping>
 
    <!-- ========== Listeners ========== -->
 
@@ -820,6 +818,11 @@
       <listener-class>org.springframework.web.context.request.RequestContextListener</listener-class>
    </listener>
 
+   <!-- WebDAV session listener - ensures that no locked resources is left after session expires -->
+   <listener>
+      <listener-class>org.alfresco.repo.webdav.WebDAVSessionListener</listener-class>
+   </listener>
+
    <!-- ========== Servlets ========== -->
 
    <servlet>
@@ -836,6 +839,11 @@
    <servlet>
       <servlet-name>uploadFile</servlet-name>
       <servlet-class>org.alfresco.web.app.servlet.UploadFileServlet</servlet-class>
+   </servlet>
+   
+   <servlet>
+      <servlet-name>uploadedFileHelper</servlet-name>
+      <servlet-class>ee.webmedia.alfresco.template.web.app.servlet.UploadedFileHelperServlet</servlet-class>
    </servlet>
 
    <servlet>
@@ -903,6 +911,11 @@
    <servlet-mapping>
       <servlet-name>uploadFile</servlet-name>
       <url-pattern>/uploadFileServlet</url-pattern>
+   </servlet-mapping>
+   
+   <servlet-mapping>
+      <servlet-name>uploadedFileHelper</servlet-name>
+      <url-pattern>/uploadedFileHelperServlet</url-pattern>
    </servlet-mapping>
 
   <servlet-mapping>

@@ -141,6 +141,17 @@
          </list>
       </property>
    </bean>
+   
+   <bean id="volumeEventPlanUpdater" class="ee.webmedia.alfresco.volume.bootstrap.VolumeEventPlanUpdater" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="false" />
+      <property name="enabled" value="false" /> <!-- Executed from node-browser -->
+      <property name="dependsOn">
+         <list>
+            <ref bean="archivalsStoresBootstrap" />
+         </list>
+      </property>
+   </bean>
 
    <!-- START: web beans: -->
 

@@ -26,6 +26,7 @@ package org.alfresco.web.ui.repo.component.property;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -63,6 +64,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import ee.webmedia.alfresco.common.ajax.AjaxUpdateable;
+import ee.webmedia.alfresco.common.web.WeakReferenceSerializable;
 
 /**
  * Component that represents the properties of a Node
@@ -214,11 +216,41 @@ public class UIPropertySheet extends UIPanel implements NamingContainer, AjaxUpd
     protected void storePropSheetVariable(Node node) {
         @SuppressWarnings("unchecked")
         Map<String, Object> sessionMap = getFacesContext().getExternalContext().getSessionMap();
-        sessionMap.put(this.variable, node);
+        sessionMap.put(this.variable, new WeakReferenceSerializable(node));
 
         if (logger.isDebugEnabled())
            logger.debug("Put node into session with key '" + this.variable + "': " + node);
     }
+    
+    /** If reference to bound variable is dismissed, there is no point in processing submitted data */
+    @Override
+    public void processDecodes(FacesContext context) {
+        Map<String, Object> sessionMap = getFacesContext().getExternalContext().getSessionMap();
+        WeakReferenceSerializable variableRef = (WeakReferenceSerializable) sessionMap.get(variable);
+        if (variableRef != null && variableRef.get() != null) {
+            super.processDecodes(context);
+        }
+    }
+
+    /** If reference to bound variable is dismissed, there is no point in processing submitted data */
+    @Override
+    public void processUpdates(FacesContext context) {
+        Map<String, Object> sessionMap = getFacesContext().getExternalContext().getSessionMap();
+        WeakReferenceSerializable variableRef = (WeakReferenceSerializable) sessionMap.get(variable);
+        if (variableRef != null && variableRef.get() != null) {
+            super.processUpdates(context);
+        }
+    }
+
+    /** If reference to bound variable is dismissed, there is no point in processing submitted data */
+    @Override
+    public void processValidators(FacesContext context) {
+        Map<String, Object> sessionMap = getFacesContext().getExternalContext().getSessionMap();
+        WeakReferenceSerializable variableRef = (WeakReferenceSerializable) sessionMap.get(variable);
+        if (variableRef != null && variableRef.get() != null) {
+            super.processValidators(context);
+        }
+    }    
 
    /**
     * @see javax.faces.component.UIComponent#encodeBegin(javax.faces.context.FacesContext)

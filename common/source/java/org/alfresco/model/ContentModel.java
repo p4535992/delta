@@ -50,6 +50,15 @@ public interface ContentModel
     // tag for temporary nodes
     static final QName ASPECT_TEMPORARY = QName.createQName(NamespaceService.SYSTEM_MODEL_1_0_URI, "temporary");
 
+    // tag for nodes being formed (CIFS)
+    static final QName ASPECT_NO_CONTENT = QName.createQName(NamespaceService.SYSTEM_MODEL_1_0_URI, "noContent");
+
+    // tag for nodes being formed (WebDAV)
+    static final QName ASPECT_WEBDAV_NO_CONTENT = QName.createQName(NamespaceService.SYSTEM_MODEL_1_0_URI, "webdavNoContent");
+
+    static final QName ASPECT_WEBDAV_OBJECT = QName.createQName(NamespaceService.WEBDAV_MODEL_1_0_URI, "object");
+    static final QName PROP_DEAD_PROPERTIES = QName.createQName(NamespaceService.WEBDAV_MODEL_1_0_URI, "deadproperties");
+
     // tag for localized nodes
     static final QName ASPECT_LOCALIZED = QName.createQName(NamespaceService.SYSTEM_MODEL_1_0_URI, "localized");
     static final QName PROP_LOCALE = QName.createQName(NamespaceService.SYSTEM_MODEL_1_0_URI, "locale");
@@ -160,6 +169,7 @@ public interface ContentModel
     public final static QName ASPECT_LOCKABLE = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "lockable");
     public final static QName PROP_LOCK_OWNER = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "lockOwner");
     public final static QName PROP_LOCK_TYPE = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "lockType");
+    public final static QName PROP_LOCK_LIFETIME = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "lockLifetime");
     public final static QName PROP_EXPIRY_DATE = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "expiryDate");
 
     // version aspect
@@ -210,6 +220,7 @@ public interface ContentModel
     static final QName PROP_SKYPE = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "skype");
     static final QName PROP_INSTANTMSG = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "instantmsg");
     static final QName PROP_RELATED_FUNDS_CENTER = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "relatedFundsCenter");
+    static final QName PROP_OPEN_OFFICE_CLIENT_EXTENSIONS = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "openOfficeClientExtensions");
     static final QName SHOW_EMPTY_TASK_MENU = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "showEmptyTaskMenu");
     static final QName MOBILE_PHONE = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "mobilePhone");
 

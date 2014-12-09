@@ -14,6 +14,8 @@ import static ee.webmedia.alfresco.utils.SearchUtil.generateMultiNodeRefQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateMultiStringExactQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateNodeRefQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateNumberPropertyRangeQuery;
+import static ee.webmedia.alfresco.utils.SearchUtil.generateParentPathExcludingQuery;
+import static ee.webmedia.alfresco.utils.SearchUtil.generateParentPathQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generatePropertyBooleanQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generatePropertyDateQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generatePropertyExactQuery;
@@ -1482,9 +1484,24 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
 
     @Override
     public Map<NodeRef /* sendInfo */, Pair<String /* dvkId */, String /* recipientRegNr */>> searchOutboxDvkIds() {
-        String query = getDvkOutboxQuery();
+        String query = getDvkOutboxQueryWithoutForwardedDecDocuments();
         log.debug("searchDocumentsInOutbox with query '" + query + "'");
         return searchDhlIdsBySendInfoImpl(query, -1, /* queryName */"outboxDvkIds");
+    }
+
+    @Override
+    public Map<NodeRef, Pair<String, String>> searchForwardedDecDocumentsDvkIds(SendStatus status) {
+        String query = getForwardedDecDocumentsQuery(status);
+        log.debug("searchDocumentsInOutbox with query '" + query + "'");
+        return searchDhlIdsBySendInfoImpl(query, -1, /* queryName */"outboxDvkIds");
+    }
+
+    private String getDvkOutboxQueryWithoutForwardedDecDocuments() {
+        return joinQueryPartsAnd(Arrays.asList(generateParentPathExcludingQuery("/doccom:forwardedDecDocuments"), getDvkOutboxQuery()), false);
+    }
+
+    private String getForwardedDecDocumentsQuery(SendStatus status) {
+        return joinQueryPartsAnd(Arrays.asList(generateParentPathQuery("/doccom:forwardedDecDocuments"), getDvkOutboxQuery(status)), false);
     }
 
     @Override
@@ -1825,11 +1842,15 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
     }
 
     private String getDvkOutboxQuery() {
+        return getDvkOutboxQuery(SendStatus.SENT);
+    }
+
+    private String getDvkOutboxQuery(SendStatus status) {
         List<String> queryParts = new ArrayList<String>();
         queryParts.add(generateTypeQuery(DocumentCommonModel.Types.SEND_INFO));
         queryParts.add(SearchUtil.generatePropertyExactQuery(DocumentCommonModel.Props.SEND_INFO_SEND_MODE,
                 Arrays.asList(SendMode.STATE_PORTAL_EESTI_EE.getValueName(), SendMode.DVK.getValueName())));
-        queryParts.add(generateStringExactQuery(SendStatus.SENT.toString(), DocumentCommonModel.Props.SEND_INFO_SEND_STATUS));
+        queryParts.add(generateStringExactQuery(status.toString(), DocumentCommonModel.Props.SEND_INFO_SEND_STATUS));
         return joinQueryPartsAnd(queryParts, true);
     }
 

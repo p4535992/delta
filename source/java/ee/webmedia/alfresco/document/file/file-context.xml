@@ -40,7 +40,6 @@
       <property name="documentLogService" ref="DocumentLogService"/>
       <property name="bulkLoadNodeService" ref="BulkLoadNodeService"/>
       <property name="openOfficeFiles" value="${conf.openoffice-client-extensions}" />
-      <property name="jumploaderPath" value="${jumploader.applet.file}" />
    </bean>
 
    <bean id="FileService" class="org.springframework.aop.framework.ProxyFactoryBean">
@@ -75,6 +74,18 @@
             </props>
          </list>
       </property>
+   </bean>
+   
+   <bean id="fileOrderInListAndConvertToPdfIfSignedUpdater" class="ee.webmedia.alfresco.document.file.bootstrap.FileOrderInListAndConvertToPdfIfSignedUpdater" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="fileParametersBootstrap" />
+            <ref bean="archivalsStoresBootstrap" />
+         </list>
+      </property>
+      <property name="fileService" ref="FileService" />
    </bean>
    
    <bean id="ChangeFileDialog" class="ee.webmedia.alfresco.document.file.web.ChangeFileDialog" scope="session" />

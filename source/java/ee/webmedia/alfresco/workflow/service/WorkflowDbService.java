@@ -157,6 +157,8 @@ public interface WorkflowDbService {
     List<NodeRef> getCompoundWorkflowsFinishedTasks(List<NodeRef> compoundWorkflows, QName taskType, QName sortByProperty, boolean descending);
 
     List<Task> getInProgressTasks(List<NodeRef> compoundWorkflows, String ownerId);
+    
+    List<Task> getInProgressTasks(List<NodeRef> compoundWorkflows, String ownerId, Set<QName> taskTypes);
 
     boolean hasNoInProgressOrOnlyActiveResponsibleAssignmentTasks(List<NodeRef> compoundWorkflows);
 

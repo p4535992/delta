@@ -31,6 +31,7 @@ public class Task implements Comparable<Task>, Serializable {
     // property from parent workflow
     private boolean isSignTogether;
     private Integer reviewTaskOutcome;
+    private String commentLabel;
 
     public Task() {
         actions = new HashMap<String, String>();
@@ -187,6 +188,14 @@ public class Task implements Comparable<Task>, Serializable {
 
     public void setReviewTaskOutcome(Integer reviewTaskOutcome) {
         this.reviewTaskOutcome = reviewTaskOutcome;
+    }
+
+    public String getCommentLabel() {
+        return commentLabel;
+    }
+
+    public void setCommentLabel(String commentLabel) {
+        this.commentLabel = commentLabel;
     }
 
 }

@@ -412,6 +412,10 @@ public class MultiValueEditor extends UIComponentBase implements AjaxUpdateable,
             // to find other UIInputs based on given property name and valueIndex(if component is multiValued)
             ComponentUtil.putAttribute(component, VALUE_INDEX_IN_MULTIVALUED_PROPERTY, rowIndex);
             requestMap.remove(VALUE_INDEX_IN_MULTIVALUED_PROPERTY);
+            String readonly = componentPropVO.getCustomAttributes().get("readonly");
+            if (readonly != null && Boolean.valueOf(readonly)) {
+                ComponentUtil.putAttribute(component, "readonly", "readonly");
+            }
             if (!componentPropVO.isUseComponentGenerator()) {
                 // component was not generated using componentGenerator, so we have to add bindings manually
                 FacesHelper.setupComponentId(context, component, componentPropVO.getPropertyName() + "_" + rowIndex);

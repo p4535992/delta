@@ -38,6 +38,7 @@ import org.alfresco.service.cmr.security.PersonService;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.service.namespace.RegexQNamePattern;
+import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.util.Assert;
@@ -302,12 +303,45 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public List<Pair<String, String>> searchUserNamesAndIdsWithoutCurrentUser(String param, int limit) {
+        return searchUserNamesAndIds(param, false, limit);
+    }
+
+    @Override
+    public List<Pair<String, String>> searchUserNamesAndIds(String param, int limit) {
+        return searchUserNamesAndIds(param, true, limit);
+    }
+
+    private List<Pair<String, String>> searchUserNamesAndIds(String param, boolean withCurrenUser, int limit) {
+        List<Pair<String, String>> results = new ArrayList<>();
+        List<Node> nodes = searchUsers(param, false, null, limit, null, false);
+        String currentUser = withCurrenUser ? null : AuthenticationUtil.getRunAsUser();
+        for (Node node : nodes) {
+            Map<String, Object> props = node.getProperties();
+            String userName = (String) props.get(ContentModel.PROP_USERNAME);
+            if ((!withCurrenUser && StringUtils.equals(userName, currentUser)) || node.hasAspect(UserModel.Aspects.LEAVING)) {
+                continue;
+            }
+            String firstName = (String) props.get(ContentModel.PROP_FIRSTNAME);
+            String lastName = (String) props.get(ContentModel.PROP_LASTNAME);
+            String name = UserUtil.getPersonFullName(firstName, lastName);
+            results.add(Pair.newInstance(name, userName));
+        }
+        return results;
+    }
+
+    @Override
     public List<Node> searchUsers(String input, boolean returnAllUsers, String group, int limit, String exactGroup) {
-        Set<QName> props = new HashSet<QName>(2);
+        return searchUsers(input, returnAllUsers, group, limit, exactGroup, true);
+    }
+
+    private List<Node> searchUsers(String input, boolean returnAllUsers, String group, int limit, String exactGroup, boolean withJobTitle) {
+        Set<QName> props = new HashSet<QName>(3);
         props.add(ContentModel.PROP_FIRSTNAME);
         props.add(ContentModel.PROP_LASTNAME);
-        props.add(ContentModel.PROP_JOBTITLE);
-
+        if (withJobTitle) {
+            props.add(ContentModel.PROP_JOBTITLE);
+        }
         return searchUsersByProps(input, returnAllUsers, group, props, limit, exactGroup);
     }
 
@@ -472,6 +506,9 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public String getUserFullName(String userName) {
+        if (StringUtils.isBlank(userName)) {
+            return userName;
+        }
         userName = StringUtils.substringBefore(userName, "_");
         Map<QName, Serializable> props = getUserProperties(userName);
         if (props == null) {
@@ -589,8 +626,8 @@ public class UserServiceImpl implements UserService {
         props.remove(ContentModel.PROP_SIZE_QUOTA);
 
         String diff = new PropDiffHelper()
-                .watchUser()
-                .diff(RepoUtil.getPropertiesIgnoringSystem(nodeService.getProperties(user.getNodeRef()), dictionaryService), props);
+        .watchUser()
+        .diff(RepoUtil.getPropertiesIgnoringSystem(nodeService.getProperties(user.getNodeRef()), dictionaryService), props);
         if (diff != null) {
             logService.addLogEntry(LogEntry.create(LogObject.USER, this, user.getNodeRef(), "applog_user_edit", UserUtil.getUserFullNameAndId(props), diff));
         }

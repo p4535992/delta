@@ -725,16 +725,7 @@ public abstract class AbstractLuceneIndexerImpl<T> extends AbstractLuceneBase
 
         try
         {
-            List<Document> docs;
-            try
-            {
-                docs = createDocuments(nodeRef, isNew, false, true);
-            }
-            catch (Exception e)
-            {
-                s_logger.warn("Failed to construct document " + nodeRef + ", ignoring: " + e);
-                return;
-            }
+            List<Document> docs = createDocuments(nodeRef, isNew, false, true);
             for (Document doc : docs)
             {
                 try

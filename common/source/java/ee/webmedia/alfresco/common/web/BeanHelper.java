@@ -5,6 +5,7 @@ import javax.sql.DataSource;
 
 import org.alfresco.repo.node.db.NodeDaoService;
 import org.alfresco.repo.policy.BehaviourFilter;
+import org.alfresco.repo.webdav.WebDAVLockService;
 import org.alfresco.service.ServiceRegistry;
 import org.alfresco.service.cmr.dictionary.DictionaryService;
 import org.alfresco.service.cmr.model.FileFolderService;
@@ -55,9 +56,9 @@ import ee.webmedia.alfresco.classificator.web.ClassificatorsImportDialog;
 import ee.webmedia.alfresco.common.service.ApplicationConstantsBean;
 import ee.webmedia.alfresco.common.service.ApplicationService;
 import ee.webmedia.alfresco.common.service.BulkLoadNodeService;
+import ee.webmedia.alfresco.common.service.ConstantNodeRefsBean;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.service.OpenOfficeService;
-import ee.webmedia.alfresco.common.service.ConstantNodeRefsBean;
 import ee.webmedia.alfresco.docadmin.service.CaseFileType;
 import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
 import ee.webmedia.alfresco.docadmin.service.DocumentType;
@@ -102,6 +103,7 @@ import ee.webmedia.alfresco.document.search.web.DocumentSearchResultsDialog;
 import ee.webmedia.alfresco.document.search.web.SearchBlockBean;
 import ee.webmedia.alfresco.document.sendout.service.SendOutService;
 import ee.webmedia.alfresco.document.sendout.web.DocumentSendOutDialog;
+import ee.webmedia.alfresco.document.sendout.web.ForwardDecDocumentDialog;
 import ee.webmedia.alfresco.document.sendout.web.SendOutBlockBean;
 import ee.webmedia.alfresco.document.service.DocumentFavoritesService;
 import ee.webmedia.alfresco.document.service.DocumentService;
@@ -516,6 +518,10 @@ public class BeanHelper implements NamespacePrefixResolverProvider {
         return getJsfBean(BrowseBean.class, BrowseBean.BEAN_NAME);
     }
 
+    public static ForwardDecDocumentDialog getForwardDecDocumentDialog() {
+        return getJsfBean(ForwardDecDocumentDialog.class, ForwardDecDocumentDialog.BEAN_NAME);
+    }
+
     // END: JSF web beans
 
     // START: Spring web beans
@@ -594,6 +600,10 @@ public class BeanHelper implements NamespacePrefixResolverProvider {
 
     public static CaseFileLogService getCaseFileLogService() {
         return getSpringBean(CaseFileLogService.class, CaseFileLogService.BEAN_NAME);
+    }
+
+    public static WebDAVLockService getWebDAVLockService() {
+        return getSpringBean(WebDAVLockService.class, WebDAVLockService.BEAN_NAME);
     }
 
     // END: alfresco services

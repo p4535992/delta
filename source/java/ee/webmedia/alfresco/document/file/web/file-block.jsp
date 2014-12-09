@@ -8,21 +8,23 @@
 <%@ page buffer="32kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
 <%@ page import="ee.webmedia.alfresco.document.file.web.AddFileDialog"%>
+<%@ page import="ee.webmedia.alfresco.document.file.web.ChangeFileDialog"%>
 <%@ page import="org.alfresco.web.app.Application" %>
-
+<%@ page import="org.alfresco.web.bean.dialog.IDialogBean" %>
 
 <%
-   boolean readOnly = Application.getDialogManager().getBean() instanceof AddFileDialog;
+   IDialogBean bean = Application.getDialogManager().getBean();
+   boolean readOnly = bean instanceof AddFileDialog || bean instanceof ChangeFileDialog;
 %>
 
 <h:panelGroup id="files-panel-facets">
    <f:facet name="title">
-      <r:actions id="acts_add_content" value="addFileMenu" context="#{DocumentDialogHelperBean.node}" showLink="false" rendered="#{DialogManager.bean != AddFileDialog}" />
+      <r:actions id="acts_add_content" value="addFileMenu" context="#{DocumentDialogHelperBean.node}" showLink="false" rendered="#{DialogManager.bean != AddFileDialog and DialogManager.bean != ChangeFileDialog}" />
    </f:facet>
 </h:panelGroup>
 <h:panelGroup id="inactive-files-panel-facets">
    <f:facet name="title">
-      <r:actions id="acts_add_inactive_content" value="addInactiveFileMenu" context="#{DocumentDialogHelperBean.node}" showLink="false" rendered="#{DialogManager.bean != AddFileDialog}"/>
+      <r:actions id="acts_add_inactive_content" value="addInactiveFileMenu" context="#{DocumentDialogHelperBean.node}" showLink="false" rendered="#{DialogManager.bean != AddFileDialog and DialogManager.bean != ChangeFileDialog}"/>
    </f:facet>
 </h:panelGroup>
 <h:panelGroup id="pdf-panel-facets">
@@ -32,7 +34,7 @@
 </h:panelGroup>
 
 <a:panel label="#{msg.file_title} (#{FileBlockBean.activeFilesCount})" id="files-panel" facetsId="dialog:dialog-body:files-panel-facets" styleClass="panel-100" progressive="true"
-   expanded="<%=new Boolean(!(Application.getDialogManager().getBean() instanceof AddFileDialog)).toString() %>">
+   expanded="<%=new Boolean(!(Application.getDialogManager().getBean() instanceof AddFileDialog || Application.getDialogManager().getBean() instanceof ChangeFileDialog)).toString() %>">
    <a:richList id="filelistList" viewMode="details" value="#{FileBlockBean.files}" var="r" rowStyleClass="recordSetRow"
       altRowStyleClass="recordSetRowAlt" width="100%" refreshOnBind="true">
 
@@ -120,7 +122,7 @@
       </a:column>
 
       <%-- Remove and Version column --%>
-      <a:column id="col7" rendered="#{FileBlockBean.inWorkspace and r.activeAndNotDigiDoc and DialogManager.bean != AddFileDialog}">
+      <a:column id="col7" rendered="#{FileBlockBean.inWorkspace and r.activeAndNotDigiDoc and DialogManager.bean != AddFileDialog and DialogManager.bean != ChangeFileDialog}">
          <a:actionLink id="col7-act36" value="#{r.activeLockOwner}" actionListener="#{FileBlockBean.unlock}" showLink="false"
             image="/images/icons/lock-unlock.png" tooltip="#{msg.file_unlock}" rendered="#{AuthenticationService.currentUserName == r.activeLockOwner}">
             <f:param name="nodeRef" value="#{r.nodeRef}" />
@@ -135,6 +137,7 @@
          <wm:docPermissionEvaluator id="col7-act34-eval" value="#{r.node}" allow="editDocument">
             <a:actionLink id="col7-act34" value="#{r.name}" showLink="false" image="/images/icons/edit_properties.gif" tooltip="#{msg.file_change_tooltip}" actionListener="#{ChangeFileDialog.open}">               
                <f:param name="nodeRef" value="#{r.nodeRef}" />
+               <f:param name="type" value="active" />
             </a:actionLink>
          </wm:docPermissionEvaluator>         
          <wm:docPermissionEvaluator id="col7-act2-eval" value="#{r.node}" allow="viewDocumentFiles">
@@ -306,7 +309,7 @@
       </a:column>
 
       <%-- Remove and Version column --%>
-      <a:column id="col27" rendered="#{FileBlockBean.inWorkspace and r.notActiveAndNotDigiDoc and DialogManager.bean != AddFileDialog}">
+      <a:column id="col27" rendered="#{FileBlockBean.inWorkspace and r.notActiveAndNotDigiDoc and DialogManager.bean != AddFileDialog and DialogManager.bean != ChangeFileDialog}">
          <a:actionLink id="col27-act36" value="#{r.activeLockOwner}" actionListener="#{FileBlockBean.unlock}" showLink="false"
             image="/images/icons/lock-unlock.png" tooltip="#{msg.file_unlock}" rendered="#{AuthenticationService.currentUserName == r.activeLockOwner}">
             <f:param name="nodeRef" value="#{r.nodeRef}" />
@@ -321,6 +324,7 @@
          <wm:docPermissionEvaluator id="col27-act34-eval" value="#{r.node}" allow="editDocument">
             <a:actionLink id="col27-act34" value="#{r.name}" showLink="false" image="/images/icons/edit_properties.gif" tooltip="#{msg.file_change_tooltip}" actionListener="#{ChangeFileDialog.open}">               
                <f:param name="nodeRef" value="#{r.nodeRef}" />
+               <f:param name="type" value="inactive" />
             </a:actionLink>
          </wm:docPermissionEvaluator>         
          <wm:docPermissionEvaluator id="col27-act2-eval-allow" value="#{r.node}" allow="viewDocumentFiles">

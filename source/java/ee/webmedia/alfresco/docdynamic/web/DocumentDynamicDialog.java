@@ -16,8 +16,8 @@ import static ee.webmedia.alfresco.utils.RepoUtil.isInWorkspace;
 import static ee.webmedia.alfresco.utils.RepoUtil.isSaved;
 
 import java.io.Serializable;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -138,6 +138,8 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
     public static final QName TEMP_ACCESS_RESTRICTION_CHANGE_REASON = RepoUtil.createTransientProp(DocumentCommonModel.Props.ACCESS_RESTRICTION_CHANGE_REASON.getLocalName());
     public static final QName TEMP_ARCHIVAL_ACTIVITY_NODE_REF = RepoUtil.createTransientProp("archivalActivityNodeRef");
     public static final QName TEMP_VALIDATE_WITHOUT_SAVE = RepoUtil.createTransientProp("validateWithoutSave");
+    public static final String DVK_RECEIVED = QName.createQName(DocumentCommonModel.DOCCOM_URI, "dvkReceived").toString();
+    public static final String FORWARDED_DEC_DOCUMENTS = QName.createQName(DocumentCommonModel.DOCCOM_URI, "forwardedDecDocuments").toString();
     private static final String PARAM_NODEREF = "nodeRef";
     private String renderedModal;
     private boolean showConfirmationPopup;
@@ -554,7 +556,19 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
                 buttons.add(new DialogButtonConfig("documentRegisterButton", null, "document_registerDoc", "#{DocumentDynamicDialog.saveAndRegister}", "false", null));
             }
         }
+
+        String path = node.getPath();
+        if (path != null && (path.contains(DVK_RECEIVED) || path.contains(FORWARDED_DEC_DOCUMENTS))) {
+            buttons.add(new DialogButtonConfig("forwardDecDocumentButton", null, "document_forward_dec_document", "#{DialogManager.bean.forwardDecDocuments}", "false", null));
+        }
         return buttons;
+    }
+
+    public void forwardDecDocuments() {
+        String result = BeanHelper.getForwardDecDocumentDialog().init();
+        if (result != null) {
+            WebUtil.navigateTo("dialog:forwardDecDocumentDialog", FacesContext.getCurrentInstance());
+        }
     }
 
     /**
@@ -1198,7 +1212,8 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
             return true;
         }
         return getCurrentSnapshot().inEditMode && searchBlockBean.isShow() && !searchBlockBean.isShowSimilarDocumentsBlock()
-                && (getDocument().isImapOrDvk() && !getDocument().isNotEditable());
+                && ((getDocument().isImapOrDvk() && !getDocument().isNotEditable())
+                || BeanHelper.getDocumentDynamicService().isInForwardedDecDocuments(getCurrentSnapshot().document.getNodeRef()));
     }
 
     public boolean isAssocsBlockExpanded() {
@@ -1208,7 +1223,8 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
     public boolean isShowTypeBlock() {
         return !getCurrentSnapshot().document.isDraft() && getCurrentSnapshot().inEditMode
                 && DocumentStatus.WORKING.getValueName().equals(getCurrentSnapshot().document.getDocStatus())
-                && validateViewMetaDataPermission(getCurrentSnapshot().document.getNodeRef());
+                && validateViewMetaDataPermission(getCurrentSnapshot().document.getNodeRef())
+                || BeanHelper.getDocumentDynamicService().isInForwardedDecDocuments(getCurrentSnapshot().document.getNodeRef());
 
     }
 
@@ -1312,6 +1328,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
     @Override
     public void clean() {
         clearState();
+        modalContainer = null;
         for (DocumentDynamicBlock documentDynamicBlock : getBlocks().values()) {
             documentDynamicBlock.clean();
         }
@@ -1516,17 +1533,19 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         return getCurrentSnapshot() == null ? null : this;
     }
 
-    private transient UIPanel modalContainer;
+    private transient WeakReference<UIPanel> modalContainer;
 
     public UIPanel getModalContainer() {
-        if (modalContainer == null) {
-            modalContainer = new UIPanel();
+        UIPanel panel = modalContainer != null ? modalContainer.get() : null;
+        if (panel == null) {
+            panel = new UIPanel();
+            modalContainer = new WeakReference(panel);
         }
-        return modalContainer;
+        return panel;
     }
 
     public void setModalContainer(UIPanel modalContainer) {
-        this.modalContainer = modalContainer;
+        this.modalContainer = new WeakReference(modalContainer);
     }
 
     // =========================================================================

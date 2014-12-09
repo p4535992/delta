@@ -49,6 +49,7 @@ public class DeleteFileDialog extends DeleteContentDialog {
             String fileName = file.getName();
             if (document != null && getDictionaryService().isSubClass(getNodeService().getType(document), DocumentCommonModel.Types.DOCUMENT)) {
                 String displayName = (String) file.getProperties().get(FileModel.Props.DISPLAY_NAME);
+                BeanHelper.getFileService().reorderFiles(document);
                 if (StringUtils.isNotBlank(displayName)) {
                     fileName = displayName;
                 }

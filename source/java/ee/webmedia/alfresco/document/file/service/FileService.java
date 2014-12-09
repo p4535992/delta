@@ -2,12 +2,14 @@ package ee.webmedia.alfresco.document.file.service;
 
 import java.io.InputStream;
 import java.util.List;
+import java.util.Map;
 
 import org.alfresco.service.cmr.model.FileInfo;
 import org.alfresco.service.cmr.model.FileNotFoundException;
 import org.alfresco.service.cmr.repository.ContentReader;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.util.Pair;
 
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.file.model.GeneratedFileType;
@@ -84,9 +86,11 @@ public interface FileService {
      */
     void moveAllFiles(NodeRef fromRef, NodeRef toRef) throws FileNotFoundException;
 
-    boolean addExistingFileToDocument(String name, String displayName, NodeRef documentNodeRef, NodeRef fileNodeRef, boolean active, boolean associatedWithMetaData);
+    Pair<Boolean, NodeRef> addExistingFileToDocument(String name, String displayName, NodeRef documentNodeRef, NodeRef fileNodeRef, boolean active, boolean associatedWithMetaData,
+            Long fileOrderInList);
 
-    boolean addUploadedFileToDocument(String name, String displayName, NodeRef documentNodeRef, java.io.File file, String mimeType, boolean active, boolean associatedWithMetaData);
+    Pair<Boolean, NodeRef> addUploadedFileToDocument(String name, String displayName, NodeRef documentNodeRef, java.io.File file, String mimeType, boolean active,
+            boolean associatedWithMetaData, Long fileOrderInList);
 
     NodeRef addFileToTask(String name, String displayName, NodeRef taskNodeRef, java.io.File file, String mimeType);
 
@@ -133,6 +137,8 @@ public interface FileService {
 
     List<NodeRef> getAllFileRefs(NodeRef nodeRef, boolean activeFilesOnly);
 
+    List<NodeRef> getAllFileRefsExcludingDecContainer(NodeRef nodeRef);
+
     List<File> getAllActiveAndInactiveFiles(NodeRef nodeRef);
 
     /** Get all active files, excluding the ones that are sources for generated pdfs */
@@ -175,6 +181,17 @@ public interface FileService {
 
     void removePreviousParentReference(NodeRef docRef, boolean moveToPreviousParent);
 
-    String getJumploaderPath();
+    void reorderFiles(NodeRef documentRef);
+
+    void reorderFiles(NodeRef doocumentRef, Map<NodeRef, Long> originalOrders);
+
+    /**
+     * @param documentRef
+     * @param fileRef - ref of file that must be added to the end of the list
+     * @param active - previous state of the file
+     */
+    void reorderFiles(NodeRef documentRef, NodeRef fileRef, boolean active);
+
+    void addAsLastActiveFile(NodeRef documentRef, NodeRef lastFileRef);
 
 }

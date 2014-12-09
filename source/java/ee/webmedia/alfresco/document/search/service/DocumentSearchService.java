@@ -22,6 +22,7 @@ import ee.webmedia.alfresco.user.model.Authority;
 import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.volume.model.VolumeOrCaseFile;
 import ee.webmedia.alfresco.workflow.service.Task;
+import ee.webmedia.xtee.client.dhl.DhlXTeeService.SendStatus;
 
 /**
  * Note: Use method names that start with "query" for methods that require a read-write transaction.
@@ -89,6 +90,9 @@ public interface DocumentSearchService {
      * @return dvkId's by sendInfos(aka dhl_id's - assigned to documents by DVK when sent to DVK, to be able to ask sending statuses)
      */
     Map<NodeRef, Pair<String, String>> searchOutboxDvkIds();
+
+    /** @return {@code Map<sendInfo, Pair<dvkId, recipientRegNr>>} */
+    public Map<NodeRef, Pair<String, String>> searchForwardedDecDocumentsDvkIds(SendStatus status);
 
     /**
      * @return {@code Map<sendInfoNodeRef, Pair<dvkId, recipientRegNr>> }

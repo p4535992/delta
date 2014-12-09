@@ -121,6 +121,7 @@ import ee.webmedia.alfresco.utils.MessageDataImpl;
 import ee.webmedia.alfresco.utils.MessageDataWrapper;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
+import ee.webmedia.alfresco.utils.TextUtil;
 import ee.webmedia.alfresco.utils.TreeNode;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UnableToPerformMultiReasonException;
@@ -297,6 +298,30 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         Assert.isTrue(childNodes.size() == 1);
 
         documentConfigService.setDefaultPropertyValues(childNodes.get(0).getSecond(), hierarchy, false, false, docVer);
+    }
+
+    @Override
+    public void moveNodeToForwardedDecDocuments(Node docNode, List<Pair<String, String>> recipients) {
+        NodeRef docRef = docNode.getNodeRef();
+        ChildAssociationRef ca = nodeService.moveNode(docRef, BeanHelper.getConstantNodeRefsBean().getForwardedDecDocumentsRoot(),
+                DocumentCommonModel.Assocs.DOCUMENT, DocumentCommonModel.Assocs.DOCUMENT);
+        docRef = ca.getChildRef();
+
+        Map<String, Object> docProps = docNode.getProperties();
+        String senderName = (String) docProps.get(DocumentSpecificModel.Props.SENDER_DETAILS_NAME.toString());
+        String senderRegNumber = (String) docProps.get(DocumentSpecificModel.Props.SENDER_REG_NUMBER.toString());
+        if (senderRegNumber == null) {
+            senderRegNumber = "";
+        }
+        String docName = (String) docProps.get(DocumentCommonModel.Props.DOC_NAME.toString());
+        String regNrWithName = senderRegNumber.concat(";").concat(docName);
+
+        List<String> formatted = new ArrayList<>(recipients.size());
+        for (Pair<String, String> recipient : recipients) {
+            formatted.add(recipient.getFirst() + " (" + recipient.getSecond() + ")");
+        }
+        documentLogService.addDocumentLog(docRef,
+                MessageUtil.getMessage("document_forward_dec_document_done", senderName, regNrWithName, TextUtil.joinNonBlankStringsWithComma(formatted)));
     }
 
     @Override
@@ -900,7 +925,8 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
 
         Set<NodeRef> associatedDocs = new HashSet<NodeRef>();
         associatedDocs.add(docRef);
-        BeanHelper.getBulkLoadNodeService().getAssociatedDocRefs(docRef, associatedDocs, new HashSet<NodeRef>(), currentAssociatedDocs, new HashSet<Integer>());
+        associatedDocs.addAll(currentAssociatedDocs);
+        BeanHelper.getBulkLoadNodeService().getAssociatedDocRefs(docRef, associatedDocs);
         return associatedDocs;
     }
 
@@ -963,6 +989,16 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         NodeRef parentAssocRef = nodeService.getPrimaryParent(docRef).getParentRef();
         QName parentType = nodeService.getType(parentAssocRef);
         return isDraftOrImapOrDvk(parentType) && !isDraft(nodeService.getPrimaryParent(parentAssocRef), parentType);
+    }
+
+    @Override
+    public boolean isInForwardedDecDocuments(NodeRef docRef) {
+        NodeRef parentAssocRef = nodeService.getPrimaryParent(docRef).getParentRef();
+        NodeRef forwardRoot = BeanHelper.getConstantNodeRefsBean().getForwardedDecDocumentsRoot();
+        if (forwardRoot != null && forwardRoot.equals(parentAssocRef)) {
+            return true;
+        }
+        return false;
     }
 
     @Override
@@ -1306,7 +1342,8 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
             String docName = doc.getDocName();
             LOG.warn("File \"" + fileName + "\" in document \"" + docName + "\" was not saved. User tried to save mandatory field(s) \"" + s + "\" as blank!");
             setSaveFailedLogMessage(document, fileName, s);
-            throw new UnableToPerformException("notification_document_saving_failed_due_to_blank_mandatory_fields", doc.getRegNumber(), docName, fileName, s);
+            String regNumber = StringUtils.trimToEmpty(doc.getRegNumber());
+            throw new UnableToPerformException("notification_document_saving_failed_due_to_blank_mandatory_fields", regNumber, docName, fileName, s);
         }
 
         // Update sub-nodes

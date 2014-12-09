@@ -39,7 +39,7 @@ public class ParseExternalAccessArgumentsFilter implements Filter {
         String uri = request.getPathInfo();
         IllegalArgumentException parseException = null;
         Pair<String, String[]> outcomeAndArgs = null;
-        if (!ExternalAccessServlet.isLogoUri(uri) && !ExternalAccessServlet.isJumploaderUri(uri)) {
+        if (!ExternalAccessServlet.isLogoUri(uri)) {
             try {
                 outcomeAndArgs = ExternalAccessServlet.getDocumentUriTokens(uri);
             } catch (IllegalArgumentException e) {

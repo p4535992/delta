@@ -21,7 +21,7 @@
    </bean>
    
    <bean id="constantNodeRefsBean" class="ee.webmedia.alfresco.common.service.ConstantNodeRefsBean" scope="application" 
-   depends-on="imapModelBootstrap,documentModelBootstrap,imapModelBootstrap,addressbookModelBootstrap,thesaurusModelBootstrap,documentTemplateModelBootstrap">
+   depends-on="imapModelBootstrap,documentModelBootstrap,imapModelBootstrap,addressbookModelBootstrap,thesaurusModelBootstrap,documentTemplateModelBootstrap,dvkSpacesBootstrap2">
       <property name="receivedDvkDocumentsPath" value="${dvk.received.parent.folder.xpath}${dvk.received.folder.name}" />
       <property name="corruptDvkDocumentsPath" value="${dvk.received.parent.folder.xpath}${dvk.corrupt.folder.name}" />
       <property name="scannedFilesRoot" value="#{generalService.getNodeRef('${scannedFiles.rootPath}${scannedFiles.folder.name}')}" />
@@ -29,6 +29,7 @@
       <property name="incomingEmailRoot" value="#{generalService.getNodeRef('${imap.config.home.rootPath}/imap-ext:incoming')}" />
       <property name="receivedincoiceRoot" value="#{generalService.getNodeRef('/imap-ext:imap-root/imap-ext:receivedInvoices')}" />
       <property name="sentEmailRoot" value="#{generalService.getNodeRef('${imap.config.home.rootPath}/imap-ext:sent')}" />
+      <property name="forwardedDecDocumentsRoot" value="#{generalService.getNodeRef('${dvk.received.parent.folder.xpath}doccom:forwardedDecDocuments')}"></property>
    </bean>
 
    <bean id="sessionContext" class="ee.webmedia.alfresco.common.web.SessionContext" scope="session" />
@@ -204,7 +205,6 @@
       <property name="logoutRedirectUrl" value="${cas.casServerUrl}logout" />
       <property name="serverUrl" value="${server.url}" />
       <property name="logoFile" value="${logo.file}" />
-      <property name="jumploaderFile" value="${jumploader.applet.file}" />
    </bean>
 
    <bean id="generalService" class="ee.webmedia.alfresco.common.service.GeneralServiceImpl" depends-on="spacesBootstrap">

@@ -161,6 +161,15 @@ public class UserContactGroupSearchBean implements Serializable {
         return selectItems;
     }
 
+    public List<Pair<String, String>> searchGroups(String param, int limit) {
+        List<Authority> authorities = BeanHelper.getDocumentSearchService().searchAuthorityGroups(param, true, true, limit);
+        List<Pair<String, String>> result = new ArrayList<>(authorities.size());
+        for (Authority a : authorities) {
+            result.add(Pair.newInstance(a.getName(), a.getAuthority()));
+        }
+        return result;
+    }
+
     /*
      * preprocessCallback methods
      */

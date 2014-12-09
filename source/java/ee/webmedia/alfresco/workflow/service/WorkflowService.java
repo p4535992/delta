@@ -143,11 +143,12 @@ public interface WorkflowService {
 
     List<Task> getMyTasksInProgress(List<NodeRef> compoundWorkflows);
 
+    List<Task> getMyTasksInProgress(List<NodeRef> compoundWorkflows, QName... taskTypes);
+
     /**
      * If document has at least one compoundWorkflow and all compoundWorkflows have {@link Status#FINISHED}.
-     * @param propertyTypes TODO
      */
-    boolean hasAllFinishedCompoundWorkflows(NodeRef parent, Map<Long, QName> propertyTypes);
+    boolean hasCompoundWorkflowsAndAllAreFinished(NodeRef parent);
 
     boolean hasInprogressCompoundWorkflows(NodeRef parent);
 

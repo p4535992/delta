@@ -173,6 +173,8 @@ public interface AddressbookService {
 
     List<Node> searchTaskCapableContacts(String searchCriteria, boolean orgOnly, boolean dvkCapableOnly, String institutionToRemove, int limit);
 
+    List<Node> searchDecDocumentForwardCapableContacts(String searchCriteria, int limit);
+
     List<Node> getDvkCapableOrgs();
 
     List<String> getDvkCapableOrgNames();
@@ -209,4 +211,9 @@ public interface AddressbookService {
 
     List<NodeRef> getContactGroupContents(NodeRef contactGroupRef);
 
+    List<Pair<String, String>> searchTaskCapableContacts(String param, int limit);
+
+    List<Pair<String, String>> searchTaskCapableContactGroups(String param, int limit);
+
+    List<Pair<String, String>> listAllGroupMembers(NodeRef groupRef);
 }
