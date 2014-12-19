@@ -558,7 +558,7 @@ public class ConvertToDynamicDocumentsUpdater extends AbstractNodeUpdater {
                         if (isErrandV1
                                 && (DocumentChildModel.Assocs.ERRAND_ABROAD.equals(dynamicGrandChildAssocQName)
                                         || DocumentChildModel.Assocs.ERRAND_DOMESTIC.equals(dynamicGrandChildAssocQName) || DocumentChildModel.Assocs.ERRAND
-                                        .equals(dynamicGrandChildAssocQName))) {
+                                            .equals(dynamicGrandChildAssocQName))) {
                             existingGrandChildProps.putAll(errandPropsToAdd);
                         }
                         Node dynamicGrandChildNode = getOrCreateDynamicChildNode(dynamicChildNode, dynamicDocTypeId, childAssocTypeQNameTree, dynamicGrandChildAssocQName,

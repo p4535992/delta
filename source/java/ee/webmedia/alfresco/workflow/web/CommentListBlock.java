@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.workflow.web;
 
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -43,7 +44,7 @@ public class CommentListBlock extends BaseDialogBean {
     private CompoundWorkflow compoundWorkflow;
     private List<Comment> comments = new ArrayList<Comment>();
     private String newComment;
-    private transient UIPanel editCommentModalContainer;
+    private transient WeakReference<UIPanel> editCommentModalContainer;
 
     @Override
     public Object getActionsContext() {
@@ -185,14 +186,16 @@ public class CommentListBlock extends BaseDialogBean {
     }
 
     public UIPanel getEditCommentModalContainer() {
-        if (editCommentModalContainer == null) {
-            editCommentModalContainer = new UIPanel();
+        UIPanel editCommentComponent = editCommentModalContainer != null ? editCommentModalContainer.get() : null;
+        if (editCommentComponent == null) {
+            editCommentComponent = new UIPanel();
+            editCommentModalContainer = new WeakReference<>(editCommentComponent);
         }
-        return editCommentModalContainer;
+        return editCommentComponent;
     }
 
     public void setEditCommentModalContainer(UIPanel editCommentModalContainer) {
-        this.editCommentModalContainer = editCommentModalContainer;
+        this.editCommentModalContainer = new WeakReference<>(editCommentModalContainer);
     }
 
     public String getNewComment() {

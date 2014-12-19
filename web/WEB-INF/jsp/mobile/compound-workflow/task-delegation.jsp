@@ -385,10 +385,6 @@
        if($(".autocomplete").parent().find("li.token-input-token").length == 0) {
           $(".token-input-list").addClass("invalid");
        }
-       var resolution = $("#taskResolution");
-       if (resolution.val().length == 0) {
-          resolution.addClass("invalid");
-       }
        var datePicker = $(".datepicker");
        if($("#choice").val() != "2" && datePicker.val().length == 0) { // 2 = teadmiseks
           datePicker.addClass("invalid");

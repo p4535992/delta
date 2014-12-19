@@ -164,15 +164,15 @@ public class EventPlanVolume extends EventPlanCommon {
     }
 
     public boolean validate() {
-        String msg = getValidationMessage();
+        String msg = validateAndGetValidationMessage();
         if (msg != null) {
             MessageUtil.addErrorMessage(msg);
             return false;
         }
-        return false;
+        return true;
     }
 
-    public String getValidationMessage() {
+    public String validateAndGetValidationMessage() {
         if (isAppraised() && !isRetainPermanent() && StringUtils.isBlank(getRetaintionStart())) {
             return "eventplan_volume_error_retaintionStart";
         } else if (isAppraised() && !isRetainPermanent() && !isHasArchivalValue() && !RetaintionStart.FIXED_DATE.name().equals(getRetaintionStart())

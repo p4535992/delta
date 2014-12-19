@@ -1002,9 +1002,10 @@ public class BulkLoadNodeServiceImpl implements BulkLoadNodeService {
 
     @Override
     @SuppressWarnings("deprecation")
-    public void getAssociatedDocRefs(NodeRef docRef, final Set<NodeRef> associatedDocs) {
+    public Set<NodeRef> getAssociatedDocRefs(NodeRef docRef) {
+        Set<NodeRef> associatedDocs = new HashSet<>();
         if (docRef == null) {
-            return;
+            return associatedDocs;
         }
 
         List<Object> arguments = new ArrayList<>();
@@ -1037,7 +1038,7 @@ public class BulkLoadNodeServiceImpl implements BulkLoadNodeService {
                 return getNodeRef(rs);
             }
         }, arguments.toArray()));
-
+        return associatedDocs;
     }
 
     private String getWorkflowStateQuery(List<NodeRef> docRefs, List<Object> arguments, boolean returnStateStr) {

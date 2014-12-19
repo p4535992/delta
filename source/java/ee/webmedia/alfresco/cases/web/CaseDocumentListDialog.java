@@ -11,6 +11,7 @@ import javax.faces.event.ActionEvent;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.app.AlfrescoNavigationHandler;
+import org.apache.commons.collections4.CollectionUtils;
 
 import ee.webmedia.alfresco.cases.service.UnmodifiableCase;
 import ee.webmedia.alfresco.classificator.enums.VolumeType;
@@ -104,7 +105,7 @@ public class CaseDocumentListDialog extends DocumentListDialog {
     }
 
     public boolean isShowAssocsBlock() {
-        return parent != null && VolumeType.SUBJECT_FILE.equals(parent.getVolumeTypeEnum()) && BeanHelper.getAssocsBlockBean().getDocAssocInfos().size() > 0;
+        return parent != null && VolumeType.SUBJECT_FILE.equals(parent.getVolumeTypeEnum()) && CollectionUtils.size(BeanHelper.getAssocsBlockBean().getDocAssocInfos()) > 0;
     }
 
     public boolean isShowAddAssocsLink() {
@@ -118,6 +119,10 @@ public class CaseDocumentListDialog extends DocumentListDialog {
     private void showAll(NodeRef volumeRef) {
         parent = getVolumeService().getVolumeByNodeRef(volumeRef, null);
         getLogService().addLogEntry(LogEntry.create(LogObject.VOLUME, getUserService(), volumeRef, "applog_space_open", parent.getVolumeMark(), parent.getTitle()));
+        initAssocsBlock();
+    }
+
+    private void initAssocsBlock() {
         if (parent != null) {
             AssocsBlockBean assocsBlockBean = BeanHelper.getAssocsBlockBean();
             assocsBlockBean.init(parent.getNode());
@@ -138,6 +143,7 @@ public class CaseDocumentListDialog extends DocumentListDialog {
     public void restored() {
         super.restored();
         doInitialSearch();
+        initAssocsBlock();
     }
 
     @Override

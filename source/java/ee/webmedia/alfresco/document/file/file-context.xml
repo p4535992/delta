@@ -76,7 +76,7 @@
       </property>
    </bean>
    
-   <bean id="fileOrderInListAndConvertToPdfIfSignedUpdater" class="ee.webmedia.alfresco.document.file.bootstrap.FileOrderInListAndConvertToPdfIfSignedUpdater" parent="abstractNodeUpdater">
+   <bean id="fileOrderInListAndConvertToPdfIfSignedUpdater" class="ee.webmedia.alfresco.document.file.bootstrap.FileOrderInListAndConvertToPdfIfSignedUpdater" parent="abstractParallelNodeUpdater">
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
       <property name="dependsOn">

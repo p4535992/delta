@@ -14,6 +14,7 @@ import static ee.webmedia.alfresco.workflow.web.TaskListGenerator.WF_INDEX;
 import static org.apache.commons.lang.time.DateUtils.isSameDay;
 
 import java.io.Serializable;
+import java.lang.ref.WeakReference;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -160,7 +161,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
             )));
     public static final String MODAL_KEY_ENTRY_COMMENT = "popup_comment";
     private String renderedModal;
-    private transient UIPanel modalContainer;
+    private transient WeakReference<UIPanel> modalContainer;
 
     /**
      * @param propSheet
@@ -421,7 +422,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
         updateFullAccess();
         initExpandedStatuses();
         initBlocks();
-        if (panelGroup != null) {
+        if (!RepoUtil.isReferenceNull(panelGroup)) {
             updatePanelGroup(null, null, true, false, null, false);
         }
         disableDocumentUpdate = false;
@@ -1201,14 +1202,16 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
     }
 
     public UIPanel getModalContainer() {
-        if (modalContainer == null) {
-            modalContainer = new UIPanel();
+        UIPanel modalComponent = modalContainer != null ? modalContainer.get() : null;
+        if (modalComponent == null) {
+            modalComponent = new UIPanel();
+            modalContainer = new WeakReference<>(modalComponent);
         }
-        return modalContainer;
+        return modalComponent;
     }
 
     public void setModalContainer(UIPanel modalContainer) {
-        this.modalContainer = modalContainer;
+        this.modalContainer = new WeakReference<>(modalContainer);
     }
 
     // /// PROTECTED & PRIVATE METHODS /////

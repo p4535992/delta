@@ -110,13 +110,6 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
     private GeneralService generalService;
     private WorkflowConstantsBean workflowConstantsBean;
 
-    private static final String USER_TASKS_COUNT_BY_TYPE = "SELECT task_type, count(*) FROM delta_task" +
-            " WHERE wfc_owner_id= ?" +
-            " AND wfc_status='" + Status.IN_PROGRESS.getName() + "'" +
-            " AND is_searchable=true" +
-            " AND store_id<>'" + StoreRef.STORE_REF_ARCHIVE_SPACESSTORE.toString() + "'" +
-            " GROUP BY task_type;";
-
     static {
         TRANSIENT_PROPS.put(INITIATING_COMPOUND_WORKFLOW_ID_KEY, INITIATING_COMPOUND_WORKFLOW_REF);
         TRANSIENT_PROPS.put("initiating_compound_workflow_title", INITIATING_COMPOUND_WORKFLOW_TITLE);
@@ -885,7 +878,12 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
     public Map<String, Integer> countAllCurrentUserTasks() {
         final Map<String, Integer> counts = new HashMap<>();
         String userName = AuthenticationUtil.getRunAsUser();
-        jdbcTemplate.query(USER_TASKS_COUNT_BY_TYPE, new RowMapper<Void>() {
+        String sql = "SELECT task_type, count(*) FROM delta_task" +
+                " WHERE wfc_owner_id= ?" +
+                " AND wfc_status='" + Status.IN_PROGRESS.getName() + "'" +
+                " AND " + getSearchableAndNotInArchiveSpacesstoreCondition() +
+                " GROUP BY task_type;";
+        jdbcTemplate.query(sql, new RowMapper<Void>() {
             @Override
             public Void mapRow(ResultSet rs, int rowNum) throws SQLException {
                 counts.put(rs.getString(TaskSearchUtil.TASK_TYPE_FIELD), rs.getInt("count"));

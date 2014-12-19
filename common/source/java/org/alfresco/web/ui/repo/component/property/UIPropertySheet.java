@@ -64,6 +64,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import ee.webmedia.alfresco.common.ajax.AjaxUpdateable;
+import ee.webmedia.alfresco.common.propertysheet.component.WMUIPropertySheet;
 import ee.webmedia.alfresco.common.web.WeakReferenceSerializable;
 
 /**
@@ -221,36 +222,29 @@ public class UIPropertySheet extends UIPanel implements NamingContainer, AjaxUpd
         if (logger.isDebugEnabled())
            logger.debug("Put node into session with key '" + this.variable + "': " + node);
     }
-    
-    /** If reference to bound variable is dismissed, there is no point in processing submitted data */
-    @Override
-    public void processDecodes(FacesContext context) {
-        Map<String, Object> sessionMap = getFacesContext().getExternalContext().getSessionMap();
-        WeakReferenceSerializable variableRef = (WeakReferenceSerializable) sessionMap.get(variable);
-        if (variableRef != null && variableRef.get() != null) {
-            super.processDecodes(context);
-        }
-    }
 
-    /** If reference to bound variable is dismissed, there is no point in processing submitted data */
-    @Override
-    public void processUpdates(FacesContext context) {
-        Map<String, Object> sessionMap = getFacesContext().getExternalContext().getSessionMap();
-        WeakReferenceSerializable variableRef = (WeakReferenceSerializable) sessionMap.get(variable);
-        if (variableRef != null && variableRef.get() != null) {
-            super.processUpdates(context);
-        }
-    }
-
-    /** If reference to bound variable is dismissed, there is no point in processing submitted data */
+    /** If reference to bound variable is dismissed, there is no harm in not validating submitted data.
+     * If UISelectMany is validated with nulled variable, it throws an exception, see comment about
+     * the bug in MyFaces implementation of javax.faces.component.UISelectMany.validate method */
     @Override
     public void processValidators(FacesContext context) {
-        Map<String, Object> sessionMap = getFacesContext().getExternalContext().getSessionMap();
-        WeakReferenceSerializable variableRef = (WeakReferenceSerializable) sessionMap.get(variable);
-        if (variableRef != null && variableRef.get() != null) {
+        if (isSubPropertySheet() || hasValidVariable()) {
             super.processValidators(context);
         }
-    }    
+    }
+
+    private boolean hasValidVariable() {
+        if (variable == null) {
+            return true;
+        }
+        Map<String, Object> sessionMap = getFacesContext().getExternalContext().getSessionMap();
+        WeakReferenceSerializable variableRef = (WeakReferenceSerializable) sessionMap.get(variable);
+        return variableRef != null && variableRef.get() != null;
+    }
+
+    private boolean isSubPropertySheet() {
+        return (this instanceof WMUIPropertySheet) && ((WMUIPropertySheet) this).isSubPropertySheet();
+    } 
 
    /**
     * @see javax.faces.component.UIComponent#encodeBegin(javax.faces.context.FacesContext)

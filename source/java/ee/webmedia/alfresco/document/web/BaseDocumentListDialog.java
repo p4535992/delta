@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.document.web;
 
+import java.lang.ref.WeakReference;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -29,12 +30,12 @@ public abstract class BaseDocumentListDialog extends BaseLimitedListDialog {
     private transient DocumentService documentService;
     private transient DocumentSearchService documentSearchService;
 
-    private transient UIRichList richList;
-    private transient UIPanel panel;
+    private transient WeakReference<UIRichList> richList;
+    private transient WeakReference<UIPanel> panel;
 
     protected DocumentListDataProvider documentProvider;
-    private Map<NodeRef, Boolean> listCheckboxes = new HashMap<NodeRef, Boolean>();
-    protected static final Set<QName> SENDER_PROPS = new HashSet<QName>();
+    private Map<NodeRef, Boolean> listCheckboxes = new HashMap<>();
+    protected static final Set<QName> SENDER_PROPS = new HashSet<>();
     protected static final Set<QName> DOC_PROPS_TO_LOAD = new HashSet<>();
 
     static {
@@ -160,16 +161,17 @@ public abstract class BaseDocumentListDialog extends BaseLimitedListDialog {
     }
 
     public void setRichList(UIRichList richList) {
-        this.richList = richList;
+        this.richList = new WeakReference<>(richList);
     }
 
     public UIRichList getRichList() {
-        return richList;
+        return richList != null ? richList.get() : null;
     }
 
     protected void clearRichList() {
-        if (getRichList() != null) {
-            getRichList().setValue(null);
+        UIRichList richList2 = getRichList();
+        if (richList2 != null) {
+            richList2.setValue(null);
         }
     }
 
@@ -182,14 +184,16 @@ public abstract class BaseDocumentListDialog extends BaseLimitedListDialog {
     }
 
     public void setPanel(UIPanel panel) {
-        this.panel = panel;
+        this.panel = new WeakReference<>(panel);
     }
 
     public UIPanel getPanel() {
-        if (panel == null) {
-            panel = new UIPanel();
+        UIPanel panelComponent = panel != null ? panel.get() : null;
+        if (panelComponent == null) {
+            panelComponent = new UIPanel();
+            panel = new WeakReference<>(panelComponent);
         }
-        return panel;
+        return panelComponent;
     }
 
     public boolean isContainsCases() {

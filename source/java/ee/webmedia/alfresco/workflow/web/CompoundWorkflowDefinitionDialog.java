@@ -18,11 +18,14 @@ import static ee.webmedia.alfresco.utils.ComponentUtil.addChildren;
 import static ee.webmedia.alfresco.utils.ComponentUtil.addFacet;
 import static ee.webmedia.alfresco.utils.ComponentUtil.createUIParam;
 import static ee.webmedia.alfresco.utils.ComponentUtil.putAttribute;
+import static ee.webmedia.alfresco.utils.RepoUtil.getReferenceOrNull;
+import static ee.webmedia.alfresco.utils.RepoUtil.isReferenceNull;
 import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.TASK_INDEX;
 import static ee.webmedia.alfresco.workflow.web.TaskListGenerator.ATTR_RESPONSIBLE;
 import static ee.webmedia.alfresco.workflow.web.TaskListGenerator.WF_INDEX;
 
 import java.io.Serializable;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -125,9 +128,9 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
     protected static final String COMP_WORKFLOW_DEFINITION_SELECTOR_ID = "comp-workflow-definition-selector";
     protected static final String COMP_WORKFLOW_DEFINITION_INPUT_ID = "comp-workflow-definition-input";
 
-    protected transient HtmlPanelGroup panelGroup;
-    private transient HtmlPanelGroup saveAsGroup;
-    private transient HtmlPanelGroup commonDataGroup;
+    protected transient WeakReference<HtmlPanelGroup> panelGroup;
+    private transient WeakReference<HtmlPanelGroup> saveAsGroup;
+    private transient WeakReference<HtmlPanelGroup> commonDataGroup;
     protected Map<String, QName> sortedTypes;
 
     private OwnerSearchBean ownerSearchBean;
@@ -752,47 +755,47 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
      * Binding for JSP.
      */
     public HtmlPanelGroup getPanelGroup() {
-        return panelGroup;
+        return getReferenceOrNull(panelGroup);
     }
 
     /**
      * Binding for JSP.
      */
     public HtmlPanelGroup getSaveAsGroup() {
-        return saveAsGroup;
+        return saveAsGroup != null ? saveAsGroup.get() : null;
     }
 
     /**
      * Binding for JSP.
      */
     public HtmlPanelGroup getCommonDataGroup() {
-        return commonDataGroup;
+        return commonDataGroup != null ? commonDataGroup.get() : null;
     }
 
     public void setPanelGroup(HtmlPanelGroup panelGroup) {
-        if (this.panelGroup == null) {
-            this.panelGroup = panelGroup;
+        if (isReferenceNull(this.panelGroup)) {
+            this.panelGroup = new WeakReference<>(panelGroup);
             updatePanelGroup(null, null, false, false, null, true);
         } else {
-            this.panelGroup = panelGroup;
+            this.panelGroup = new WeakReference<>(panelGroup);
         }
     }
 
     public void setSaveAsGroup(HtmlPanelGroup saveAsGroup) {
-        if (this.saveAsGroup == null && isShowSaveAsGroup()) {
-            this.saveAsGroup = saveAsGroup;
+        if (isReferenceNull(this.saveAsGroup) && isShowSaveAsGroup()) {
+            this.saveAsGroup = new WeakReference<>(saveAsGroup);
             updateSaveAsGroup();
         } else {
-            this.saveAsGroup = saveAsGroup;
+            this.saveAsGroup = new WeakReference<>(saveAsGroup);
         }
     }
 
     public void setCommonDataGroup(HtmlPanelGroup commonDataGroup) {
-        if (this.commonDataGroup == null) {
-            this.commonDataGroup = commonDataGroup;
+        if (isReferenceNull(this.commonDataGroup)) {
+            this.commonDataGroup = new WeakReference<>(commonDataGroup);
             updateCommonDataGroup();
         } else {
-            this.commonDataGroup = commonDataGroup;
+            this.commonDataGroup = new WeakReference<>(commonDataGroup);
         }
     }
 
@@ -944,7 +947,7 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
         int wfCounter = 1;
         if (firstLoading) {
             getTaskGroups().addNewWorkflowTaskGroupList(0);
-            TaskListContainer.addWorkflowTaskListPageInfo(commonDataGroup, 0);
+            TaskListContainer.addWorkflowTaskListPageInfo(getReferenceOrNull(commonDataGroup), 0);
         }
         List<Workflow> workflows = compoundWorkflow.getWorkflows();
         int workflowCount = workflows.size();
@@ -961,7 +964,7 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
             facetGroup.setId("action-group-" + wfCounter);
             if (firstLoading) {
                 getTaskGroups().addNewWorkflowTaskGroupList(wfCounter);
-                TaskListContainer.addWorkflowTaskListPageInfo(commonDataGroup, wfCounter);
+                TaskListContainer.addWorkflowTaskListPageInfo(getReferenceOrNull(commonDataGroup), wfCounter);
             }
             if (!dontShowAddActions && fullAccess && showAddActions(wfCounter)) {
                 // block add workflow actions
@@ -1007,7 +1010,7 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
             if (facetGroup.getChildCount() > 0) {
                 addFacet(panelW, "title", facetGroup);
             }
-            addChildren(panelGroup, panelW);
+            addChildren(getReferenceOrNull(panelGroup), panelW);
 
             // block data properties
             UIPropertySheet sheetW = (UIPropertySheet) application.createComponent("org.alfresco.faces.PropertySheet");
@@ -1038,14 +1041,14 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
                 BeanHelper.getWorkflowBlockBean().initIndependentWorkflow(compoundWorkflow, (CompoundWorkflowDialog) this);
             }
         }
-        ComponentUtil.setAjaxEnabledOnActionLinksRecursive(panelGroup, -1);
+        ComponentUtil.setAjaxEnabledOnActionLinksRecursive(getReferenceOrNull(panelGroup), -1);
     }
 
     public void resetPanelGroup(boolean retrieveExpandedStatuses) {
         if (retrieveExpandedStatuses) {
             retrieveExpandedStatuses();
         }
-        panelGroup.getChildren().clear();
+        getReferenceOrNull(panelGroup).getChildren().clear();
     }
 
     protected void addConfirmationMessages(List<String> confirmationMessages, String methodBinding, FacesContext context, Application application, List<Pair<String, Object>> params) {
@@ -1059,7 +1062,7 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
                 addChildren(messageInput, selectItem);
             }
             messageInput.setStyle("display: none;");
-            addChildren(commonDataGroup, messageInput);
+            addChildren(getReferenceOrNull(commonDataGroup), messageInput);
 
             // hidden link for submitting form when OK is clicked in js confirmation alert
             HtmlCommandLink workflowConfirmationLink = new HtmlCommandLink();
@@ -1072,15 +1075,15 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
                     workflowConfirmationLink.getChildren().add(ComponentUtil.createUIParam(param.getFirst(), param.getSecond(), application));
                 }
             }
-            addChildren(commonDataGroup, workflowConfirmationLink);
+            addChildren(getReferenceOrNull(commonDataGroup), workflowConfirmationLink);
         }
     }
 
     private void retrieveExpandedStatuses() {
-        if (panelGroup == null) {
+        if (isReferenceNull(panelGroup)) {
             return;
         }
-        List<UIComponent> children = ComponentUtil.getChildren(panelGroup);
+        List<UIComponent> children = ComponentUtil.getChildren(getReferenceOrNull(panelGroup));
         if (children == null) {
             return;
         }
@@ -1128,8 +1131,9 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
             return;
         }
         // common data panel
-        commonDataGroup.getChildren().clear();
-        commonDataGroup.setId("compound-workflow-group");
+        HtmlPanelGroup htmlPanelGroupComponent = getReferenceOrNull(commonDataGroup);
+        htmlPanelGroupComponent.getChildren().clear();
+        htmlPanelGroupComponent.setId("compound-workflow-group");
 
         UIPanel commonDataPanel = (UIPanel) application.createComponent("org.alfresco.faces.Panel");
         commonDataPanel.setId("compound-workflow-panel");
@@ -1159,7 +1163,7 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
             sheetC.setMode(UIPropertySheet.VIEW_MODE);
         }
         addChildren(commonDataPanel, sheetC);
-        addChildren(commonDataGroup, commonDataPanel);
+        addChildren(htmlPanelGroupComponent, commonDataPanel);
     }
 
     protected void addLargeWorkflowWarning() {
@@ -1183,8 +1187,9 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
         }
         FacesContext context = FacesContext.getCurrentInstance();
         Application application = context.getApplication();
-        saveAsGroup.getChildren().clear();
-        saveAsGroup.setId("compound-workflow-saveas-group");
+        HtmlPanelGroup saveAsGroupComponent = getReferenceOrNull(saveAsGroup);
+        saveAsGroupComponent.getChildren().clear();
+        saveAsGroupComponent.setId("compound-workflow-saveas-group");
 
         UIPanel saveAsPanel = (UIPanel) application.createComponent("org.alfresco.faces.Panel");
         saveAsPanel.setId("compound-workflow-saveas-panel");
@@ -1193,7 +1198,7 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
         saveAsPanel.setProgressive(true);
         saveAsPanel.setExpanded(false);
         saveAsPanel.setFacetsId("dialog:dialog-body:compound-workflow-saveas-panel");
-        addChildren(saveAsGroup, saveAsPanel);
+        addChildren(saveAsGroupComponent, saveAsPanel);
 
         final HtmlPanelGrid saveasGrid = (HtmlPanelGrid) application.createComponent(HtmlPanelGrid.COMPONENT_TYPE);
         saveasGrid.setId("compound-workflow-saveas-grid");

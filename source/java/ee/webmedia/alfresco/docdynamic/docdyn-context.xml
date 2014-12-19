@@ -105,7 +105,7 @@
    
    <!-- NB! This updater's searchableHasAllFinishedCompoundWorkflows part is not needed 
    when it is quaranteed that documentUpdater9 also runs (it performs the same functionality) -->
-   <bean id="documentCompWorkflowSearchPropsUpdater" class="ee.webmedia.alfresco.docdynamic.bootstrap.DocumentCompWorkflowSearchPropsUpdater" parent="abstractNodeUpdater">
+   <bean id="documentCompWorkflowSearchPropsUpdater" class="ee.webmedia.alfresco.docdynamic.bootstrap.DocumentCompWorkflowSearchPropsUpdater" parent="abstractParallelNodeUpdater">
       <property name="moduleId" value="simdhs" />
       <property name="enabled" value="${updater.documentCompWorkflowSearchPropsUpdater.enabled}" />
       <property name="executeOnceOnly" value="false" />

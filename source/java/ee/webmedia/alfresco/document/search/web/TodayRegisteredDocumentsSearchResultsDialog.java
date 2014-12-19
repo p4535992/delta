@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.document.search.web;
 
+import java.lang.ref.WeakReference;
 import java.util.Map;
 
 import javax.faces.component.UIPanel;
@@ -14,7 +15,7 @@ public class TodayRegisteredDocumentsSearchResultsDialog extends BaseDocumentLis
     private static final long serialVersionUID = 1L;
 
     public static final String BEAN_NAME = "TodayRegisteredDocumentsSearchResultsDialog";
-    private transient UIPanel panel;
+    private transient WeakReference<UIPanel> panel;
     private String searchValue;
     private boolean quickSearch;
 
@@ -71,15 +72,17 @@ public class TodayRegisteredDocumentsSearchResultsDialog extends BaseDocumentLis
 
     @Override
     public void setPanel(UIPanel panel) {
-        this.panel = panel;
+        this.panel = new WeakReference<>(panel);
     }
 
     @Override
     public UIPanel getPanel() {
-        if (panel == null) {
-            panel = new UIPanel();
+        UIPanel panelComponent = panel != null ? panel.get() : null;
+        if (panelComponent == null) {
+            panelComponent = new UIPanel();
+            panel = new WeakReference<>(panelComponent);
         }
-        return panel;
+        return panelComponent;
     }
 
     public void setSearchValue(String searchValue) {

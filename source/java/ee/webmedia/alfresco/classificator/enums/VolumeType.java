@@ -8,6 +8,6 @@ public enum VolumeType {
     ANNUAL_FILE(),
     /** Asjatoimik */
     CASE_FILE(),
-    /** Objektipõhine toimik */
+    /** Teemapõhine toimik */
     SUBJECT_FILE();
 }

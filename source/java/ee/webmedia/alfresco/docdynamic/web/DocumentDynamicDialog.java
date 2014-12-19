@@ -12,6 +12,7 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
 import static ee.webmedia.alfresco.docconfig.generator.systematic.AccessRestrictionGenerator.ACCESS_RESTRICTION_CHANGE_REASON_ERROR;
 import static ee.webmedia.alfresco.docdynamic.web.ChangeReasonModalComponent.ACCESS_RESTRICTION_CHANGE_REASON_MODAL_ID;
 import static ee.webmedia.alfresco.docdynamic.web.ChangeReasonModalComponent.DELETE_DOCUMENT_REASON_MODAL_ID;
+import static ee.webmedia.alfresco.utils.RepoUtil.getReferenceOrNull;
 import static ee.webmedia.alfresco.utils.RepoUtil.isInWorkspace;
 import static ee.webmedia.alfresco.utils.RepoUtil.isSaved;
 
@@ -816,6 +817,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         }
         if (!isInEditMode || !getCurrentSnapshot().viewModeWasOpenedInThePast || !canRestore()) {
             getDocumentDynamicService().deleteDocumentIfDraft(getDocument().getNodeRef());
+            cleanDyamicBlocks();
             return super.cancel(); // closeDialogSnapshot
         }
         // Switch from edit mode back to view mode
@@ -1329,6 +1331,10 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
     public void clean() {
         clearState();
         modalContainer = null;
+        cleanDyamicBlocks();
+    }
+
+    private void cleanDyamicBlocks() {
         for (DocumentDynamicBlock documentDynamicBlock : getBlocks().values()) {
             documentDynamicBlock.clean();
         }
@@ -1438,7 +1444,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
     // Components
     // =========================================================================
 
-    private transient UIPropertySheet propertySheet;
+    private transient WeakReference<UIPropertySheet> propertySheet;
 
     @Override
     public UIPropertySheet getPropertySheet() {
@@ -1446,7 +1452,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
             LOG.debug("getPropertySheet propertySheet=" + ObjectUtils.toString(propertySheet));
         }
         // Additional checks are no longer needed, because ExternalAccessServlet behavior with JSF is now correct
-        return propertySheet;
+        return getReferenceOrNull(propertySheet);
     }
 
     public void setPropertySheet(UIPropertySheet propertySheet) {
@@ -1454,7 +1460,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
             LOG.debug("setPropertySheet propertySheet=" + ObjectUtils.toString(propertySheet));
         }
         // Additional checks are no longer needed, because ExternalAccessServlet behavior with JSF is now correct
-        this.propertySheet = propertySheet;
+        this.propertySheet = new WeakReference<>(propertySheet);
     }
 
     @Override
@@ -1463,12 +1469,13 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
             LOG.debug("resetOrInit propertySheet=" + ObjectUtils.toString(propertySheet));
         }
         WmNode node = getNode();
-        if (propertySheet != null) {
-            propertySheet.getChildren().clear();
-            propertySheet.getClientValidations().clear();
-            propertySheet.setNode(node);
-            propertySheet.setMode(getMode());
-            propertySheet.setConfig(getPropertySheetConfigElement());
+        UIPropertySheet propertySheetComponent = getReferenceOrNull(propertySheet);
+        if (propertySheetComponent != null) {
+            propertySheetComponent.getChildren().clear();
+            propertySheetComponent.getClientValidations().clear();
+            propertySheetComponent.setNode(node);
+            propertySheetComponent.setMode(getMode());
+            propertySheetComponent.setConfig(getPropertySheetConfigElement());
         }
         if (node != null) {
             BeanHelper.getVisitedDocumentsBean().getVisitedDocuments().add(node.getNodeRef());
