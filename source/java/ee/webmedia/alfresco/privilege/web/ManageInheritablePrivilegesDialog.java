@@ -7,8 +7,10 @@ import static ee.webmedia.alfresco.privilege.service.PrivilegeServiceImpl.GROUPL
 import static ee.webmedia.alfresco.utils.ComponentUtil.addChildren;
 import static ee.webmedia.alfresco.utils.ComponentUtil.createUIParam;
 import static ee.webmedia.alfresco.utils.ComponentUtil.putAttribute;
+import static ee.webmedia.alfresco.utils.RepoUtil.getReferenceOrNull;
 
 import java.io.Serializable;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -79,8 +81,8 @@ public class ManageInheritablePrivilegesDialog extends BaseDialogBean {
 
     private static Comparator<UserPrivileges> tableRowComparator;
     // UIComponents
-    private transient UIRichList permissionsRichList;
-    private transient UIGenericPicker picker;
+    private transient WeakReference<UIRichList> permissionsRichList;
+    private transient WeakReference<UIGenericPicker> picker;
 
     /**
      * could be used to indicate that
@@ -184,7 +186,9 @@ public class ManageInheritablePrivilegesDialog extends BaseDialogBean {
             }
             init(state.getManageableRef(), true);
             rebuildUserPrivilegesRows = true;
-            picker.queueEvent(new UIGenericPicker.PickerEvent(picker, UIGenericPicker.ACTION_CLEAR, UserContactGroupSearchBean.USERS_FILTER, null, null));
+            UIGenericPicker pickerComponent = getReferenceOrNull(picker);
+            pickerComponent.queueEvent(
+                    new UIGenericPicker.PickerEvent(pickerComponent, UIGenericPicker.ACTION_CLEAR, UserContactGroupSearchBean.USERS_FILTER, null, null));
         }
         return null;
     }
@@ -232,11 +236,11 @@ public class ManageInheritablePrivilegesDialog extends BaseDialogBean {
     }
 
     public UIGenericPicker getPicker() {
-        return picker;
+        return getReferenceOrNull(picker);
     }
 
     public void setPicker(UIGenericPicker picker) {
-        this.picker = picker;
+        this.picker = new WeakReference<>(picker);
     }
 
     public UIComponent getCheckbox() {
@@ -248,14 +252,14 @@ public class ManageInheritablePrivilegesDialog extends BaseDialogBean {
     }
 
     public UIRichList getPermissionsRichList() {
-        return permissionsRichList;
+        return getReferenceOrNull(permissionsRichList);
     }
 
     /**
      * @param permissionsRichList - partially preconfigured RichList from jsp
      */
     public void setPermissionsRichList(UIRichList permissionsRichList) {
-        if (this.permissionsRichList == null) {
+        if (this.permissionsRichList == null || this.permissionsRichList.get() == null) {
             ComponentUtil.putAttribute(permissionsRichList, DetailsViewRenderer.ATTR_GROUP_BY, GROUPLESS_GROUP);
             ComponentUtil.putAttribute(permissionsRichList, DetailsViewRenderer.ATTR_ADDITIONAL_ROW_STYLE_BINDING, "userId_#{r.userName}");
             ComponentUtil.putAttribute(permissionsRichList, DetailsViewRenderer.ATTR_GROUP_TBODY_ATTRIBUTES, new HashMap<String, Map<String, String>>());
@@ -270,7 +274,7 @@ public class ManageInheritablePrivilegesDialog extends BaseDialogBean {
             }
             permissionRLChildren.add(createActionsColumn(context));
         }
-        this.permissionsRichList = permissionsRichList;
+        this.permissionsRichList = new WeakReference<>(permissionsRichList);
     }
 
     /**
@@ -366,7 +370,7 @@ public class ManageInheritablePrivilegesDialog extends BaseDialogBean {
         // set the pointer
         state.userPrivileges = userPrivileges;
         // facets based cleanup ?
-        permissionsRichList.getFacets().clear(); // remove also group rows that are actually rendered from facets
+        getReferenceOrNull(permissionsRichList).getFacets().clear(); // remove also group rows that are actually rendered from facets
         // ??
         getOrCreateFacetRows().clear();
         // let's be optimistic about end-result
@@ -504,10 +508,11 @@ public class ManageInheritablePrivilegesDialog extends BaseDialogBean {
     }
 
     private Collection<String> getOrCreateFacetRows() {
-        Collection<String> facetRows = DetailsViewRenderer.getFacetRows(permissionsRichList);
+        UIRichList permissionListComponent = getReferenceOrNull(permissionsRichList);
+        Collection<String> facetRows = DetailsViewRenderer.getFacetRows(permissionListComponent);
         if (facetRows == null) {
             facetRows = new TreeSet<String>(new AppConstants.SerializableDefaultCollatorDelegate());
-            DetailsViewRenderer.setFacetRows(permissionsRichList, facetRows);
+            DetailsViewRenderer.setFacetRows(permissionListComponent, facetRows);
         }
         return facetRows;
     }
@@ -535,11 +540,12 @@ public class ManageInheritablePrivilegesDialog extends BaseDialogBean {
         Map<String/* attributeName */, String/* attributeValue */> tbodyAttributes = new HashMap<String, String>();
         String groupCodeHtml = HtmlUtils.htmlEscape(groupCode).replaceAll(" ", "¤");
         tbodyAttributes.put("class", USERGROUP_MARKER_CLASS + " " + groupCodeHtml);
+        UIRichList permissionListComponent = getReferenceOrNull(permissionsRichList);
         Map<String/* groupCode */, Map<String/* attributeName */, String/* attributeValue */>> tbodyAttributesByGroup = (Map<String, Map<String, String>>)
-                ComponentUtil.getAttribute(permissionsRichList, DetailsViewRenderer.ATTR_GROUP_TBODY_ATTRIBUTES);
+                ComponentUtil.getAttribute(permissionListComponent, DetailsViewRenderer.ATTR_GROUP_TBODY_ATTRIBUTES);
         tbodyAttributesByGroup.put(groupCode, tbodyAttributes);
         String groupDisplayName = groupNamesByCode.get(groupCode);
-        UITableRow tr = (UITableRow) permissionsRichList.getFacet(groupCode);
+        UITableRow tr = (UITableRow) permissionListComponent.getFacet(groupCode);
         if (tr == null) {
             FacesContext context = FacesContext.getCurrentInstance();
             Application application = context.getApplication();
@@ -604,7 +610,7 @@ public class ManageInheritablePrivilegesDialog extends BaseDialogBean {
                 }
             }
             addChildren(tr, tableCell);
-            ComponentUtil.addFacet(permissionsRichList, groupCode, tr);
+            ComponentUtil.addFacet(permissionListComponent, groupCode, tr);
         }
     }
 

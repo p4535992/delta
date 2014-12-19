@@ -32,7 +32,7 @@ public class HelpTextServlet extends HttpServlet {
             String title = "Abiinfo";
             content = String.format(CONTENT_HTML, title, content);
 
-            resp.setContentType("text/html;charset=UTF-8");
+            resp.setContentType("text/html;charset=" + CHARSET);
             resp.setContentLength(content.getBytes(CHARSET).length);
             resp.getWriter().write(content);
         } else if (helpTextInfo.length == 2) {

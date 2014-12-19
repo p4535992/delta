@@ -118,6 +118,16 @@ public class FileServiceImpl implements FileService {
     }
 
     @Override
+    public void reorderFiles(List<NodeRef> documentRefs) {
+        if (CollectionUtils.isEmpty(documentRefs)) {
+            return;
+        }
+        for (NodeRef docRef : documentRefs) {
+            reorderFiles(docRef);
+        }
+    }
+
+    @Override
     public void addAsLastActiveFile(NodeRef documentRef, NodeRef lastFileRef) {
         List<File> activeFiles = getAllActiveFiles(documentRef);
         Map<NodeRef, Long> initialOrders = new HashMap<>();

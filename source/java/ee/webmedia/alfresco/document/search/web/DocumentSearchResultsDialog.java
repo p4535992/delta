@@ -5,6 +5,7 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentAdminService
 import static ee.webmedia.alfresco.common.web.BeanHelper.getVisitedDocumentsBean;
 
 import java.io.Serializable;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -88,7 +89,7 @@ public class DocumentSearchResultsDialog extends BaseDocumentListDialog {
 
     protected Node searchFilter;
     @SuppressWarnings("unused")
-    private UIRichList richList;
+    private transient WeakReference<UIRichList> richList;
 
     public String setup(Node filter) {
         searchFilter = filter;
@@ -159,12 +160,12 @@ public class DocumentSearchResultsDialog extends BaseDocumentListDialog {
 
     // TODO we need the richList instance
     /**
-     * @param richList - partially preconfigured RichList from jsp
+     * @param richListComponent - partially preconfigured RichList from jsp
      */
     @Override
-    public void setRichList(UIRichList richList) {
-        this.richList = richList;
-        if (!richList.getChildren().isEmpty()) {
+    public void setRichList(UIRichList richListComponent) {
+        richList = new WeakReference<>(richListComponent);
+        if (!richListComponent.getChildren().isEmpty()) {
             return;
         }
         FacesContext context = FacesContext.getCurrentInstance();
@@ -186,7 +187,7 @@ public class DocumentSearchResultsDialog extends BaseDocumentListDialog {
                     valueComponent = createActionLink(context, valueBinding, "#{DocumentDialog.action}", null, "#{DocumentDialog.open}", null, titleLinkParams);
                 }
 
-                createAndAddColumn(context, richList, MessageUtil.getMessage(col.getValue().getSecond()), sortLinkValue, false, valueComponent);
+                createAndAddColumn(context, richListComponent, MessageUtil.getMessage(col.getValue().getSecond()), sortLinkValue, false, valueComponent);
             }
         }
         Set<String> keys = props.keySet();
@@ -255,10 +256,10 @@ public class DocumentSearchResultsDialog extends BaseDocumentListDialog {
                 valueComponent.add(createActionLink(context, valueBinding, "#{DocumentDialog.action}", null, "#{DocumentDialog.open}", null,
                         titleLinkParams, !isStructUnit));
             }
-            createAndAddColumn(context, richList, fieldTitle, sortValue, false,
+            createAndAddColumn(context, richListComponent, fieldTitle, sortValue, false,
                     valueComponent.toArray(new UIComponent[valueComponent.size()]));
         }
-        createAndAddColumn(context, richList, MessageUtil.getMessage("document_allFiles"), null, true, createFileColumnContent(context));
+        createAndAddColumn(context, richListComponent, MessageUtil.getMessage("document_allFiles"), null, true, createFileColumnContent(context));
     }
 
     @Override

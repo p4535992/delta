@@ -158,7 +158,7 @@ public class WMUIPropertySheet extends UIPropertySheet {
         }
     }
 
-    private boolean isSubPropertySheet() {
+    public boolean isSubPropertySheet() {
         return associationBrand != null;
     }
 

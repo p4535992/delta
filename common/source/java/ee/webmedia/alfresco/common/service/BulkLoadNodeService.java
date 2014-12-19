@@ -70,7 +70,7 @@ public interface BulkLoadNodeService {
 
     Map<NodeRef, Map<NodeRef, Map<QName, Serializable>>> loadChildNodes(Collection<NodeRef> parentNodes, Set<QName> propsToLoad);
 
-    void getAssociatedDocRefs(NodeRef docRef, final Set<NodeRef> associatedDocs);
+    Set<NodeRef> getAssociatedDocRefs(NodeRef docRef);
 
     Map<NodeRef, Map<QName, Serializable>> loadPrimaryParentsProperties(List<NodeRef> taskRefs, Set<QName> parentType, Set<QName> propsToLoad, Map<Long, QName> propertyTypes);
 

@@ -162,7 +162,9 @@ public class AddDocumentServiceImpl implements AddDocumentService {
         BeanHelper.getDocumentDynamicService().saveThisNodeAndChildNodes(null, importedDocument.getNode(), childAssocTypeQNamesRoot.getChildren(), null,
                 propertyChangesMonitorHelper, null);
 
-        addFiles(documentToAdd, docRef);
+        if (addFiles(documentToAdd, docRef)) {
+            BeanHelper.getFileService().reorderFiles(docRef);
+        }
 
         String senderApplication = documentToAdd.getSenderApplication();
         String logMsgKey = "document_log_status_imported_web_service";
@@ -172,8 +174,9 @@ public class AddDocumentServiceImpl implements AddDocumentService {
         return result;
     }
 
-    private void addFiles(ee.webmedia.alfresco.adddocument.generated.Document documentToAdd, NodeRef docRef) throws IOException {
+    private boolean addFiles(ee.webmedia.alfresco.adddocument.generated.Document documentToAdd, NodeRef docRef) throws IOException {
         Files files = documentToAdd.getFiles();
+        boolean addedFile = false;
         if (files != null) {
             FileFolderService fileFolderService = BeanHelper.getFileFolderService();
             GeneralService generalService = BeanHelper.getGeneralService();
@@ -201,8 +204,10 @@ public class AddDocumentServiceImpl implements AddDocumentService {
                 writer.setEncoding(createdFile.getContentData().getEncoding());
                 OutputStream os = writer.getContentOutputStream();
                 FileCopyUtils.copy(file.getContent().getInputStream(), os);
+                addedFile = true;
             }
         }
+        return addedFile;
     }
 
     private Map<QName, Serializable> collectPropertyValues(Map<String, Pair<DynamicPropertyDefinition, ee.webmedia.alfresco.docadmin.service.Field>> propDefinitions, Fields fields) {

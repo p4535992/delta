@@ -32,8 +32,6 @@
       <property name="forwardedDecDocumentsRoot" value="#{generalService.getNodeRef('${dvk.received.parent.folder.xpath}doccom:forwardedDecDocuments')}"></property>
    </bean>
 
-   <bean id="sessionContext" class="ee.webmedia.alfresco.common.web.SessionContext" scope="session" />
-
    <bean class="ee.webmedia.alfresco.common.bootstrap.EhCacheJmxBootstrap">
       <property name="cacheManager" ref="internalEHCacheManager" />
    </bean>
@@ -353,6 +351,8 @@
    <bean id="abstractNodeUpdater" abstract="true" parent="module.baseComponent">
       <property name="inputFolderPath" value="${dir.root.shared}/updater" />
    </bean>
+
+   <bean id="abstractParallelNodeUpdater" abstract="true" parent="abstractNodeUpdater" />
 
    <bean id="abstractDeleteNodeByXPathBootstrap" abstract="true" class="ee.webmedia.alfresco.common.bootstrap.DeleteNodeByXPathBootstrap" parent="module.baseComponent">
       <property name="executeOnceOnly" value="true" />

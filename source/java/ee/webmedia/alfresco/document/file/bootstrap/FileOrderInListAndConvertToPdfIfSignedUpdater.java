@@ -11,7 +11,7 @@ import org.alfresco.service.cmr.search.ResultSet;
 import org.alfresco.service.cmr.search.SearchService;
 import org.apache.commons.collections4.CollectionUtils;
 
-import ee.webmedia.alfresco.common.bootstrap.AbstractNodeUpdater;
+import ee.webmedia.alfresco.common.bootstrap.AbstractParallelNodeUpdater;
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.file.model.FileModel;
 import ee.webmedia.alfresco.document.file.service.FileService;
@@ -22,7 +22,7 @@ import ee.webmedia.alfresco.utils.SearchUtil;
  * This uploader generates {@code FileModel.Props.FILE_ORDER_IN_LIST} property to all files
  * and sets {@code FileModel.Props.CONVERT_TO_PDF_IF_SIGNED} value to true if file is transformable
  */
-public class FileOrderInListAndConvertToPdfIfSignedUpdater extends AbstractNodeUpdater {
+public class FileOrderInListAndConvertToPdfIfSignedUpdater extends AbstractParallelNodeUpdater {
 
     private FileService fileService;
 

@@ -4,6 +4,7 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentConfigServic
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDynamicService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getPropertySheetStateBean;
 
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -93,7 +94,7 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
 
     private DocumentConfig config;
 
-    private transient UIPropertySheet propSheet;
+    private transient WeakReference<UIPropertySheet> propSheet;
 
     private boolean confirmMoveAssociatedDocuments;
     private boolean showDocumentsLocationPopup;
@@ -474,9 +475,10 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
         DocumentLocationModalComponent locationModal = new DocumentLocationModalComponent();
         locationModal.setActionListener(application.createMethodBinding("#{DialogManager.bean.massChangeDocLocation}", UIActions.ACTION_CLASS_ARGS));
         List<UIComponent> modalChildren = ComponentUtil.getChildren(locationModal);
-        propSheet = generatePropSheet();
+        UIPropertySheet propertySheetComponent = generatePropSheet();
+        propSheet = new WeakReference<>(propertySheetComponent);
         modalChildren.clear();
-        modalChildren.add(propSheet);
+        modalChildren.add(propertySheetComponent);
 
         List<UIComponent> children = ComponentUtil.getChildren(getPanel());
         children.clear();
@@ -531,11 +533,11 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
 
     @Override
     public UIPropertySheet getPropertySheet() {
-        return propSheet;
+        return propSheet != null ? propSheet.get() : null;
     }
 
     public void setPropSheet(UIPropertySheet propSheet) {
-        this.propSheet = propSheet;
+        this.propSheet = new WeakReference<>(propSheet);
     }
 
     // END: getters / setters

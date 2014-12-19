@@ -16,8 +16,8 @@ import org.alfresco.service.cmr.search.SearchService;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.util.Assert;
 
+import ee.webmedia.alfresco.casefile.model.CaseFileModel;
 import ee.webmedia.alfresco.common.bootstrap.AbstractNodeUpdater;
-import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.eventplan.model.EventPlan;
 import ee.webmedia.alfresco.eventplan.model.EventPlanModel;
 import ee.webmedia.alfresco.eventplan.model.EventPlanVolume;
@@ -45,7 +45,7 @@ public class VolumeEventPlanUpdater extends AbstractNodeUpdater {
             throw new UnableToPerformException("User entered unknown storeRef: " + storeString);
         }
         seriesRefToEventPlan = new HashMap<>();
-        return Arrays.asList(searchService.query(storeRef, SearchService.LANGUAGE_LUCENE, generateTypeQuery(VolumeModel.Types.VOLUME)));
+        return Arrays.asList(searchService.query(storeRef, SearchService.LANGUAGE_LUCENE, generateTypeQuery(VolumeModel.Types.VOLUME, CaseFileModel.Types.CASE_FILE)));
     }
 
     @Override
@@ -61,17 +61,16 @@ public class VolumeEventPlanUpdater extends AbstractNodeUpdater {
             if (eventPlanRef == null) {
                 return null;
             }
-            seriesEventPlan = getEventPlanService().getEventPlan(eventPlanRef);
+            seriesEventPlan = eventPlanService.getEventPlan(eventPlanRef);
             seriesRefToEventPlan.put(seriesRef, seriesEventPlan);
         }
 
-        EventPlanService eps = getEventPlanService();
-        EventPlanVolume epv = eps.getEventPlanVolume(volumeRef);
-        epv.initFromEventPlan(seriesEventPlan);
-        String msg = epv.getValidationMessage();
+        EventPlanVolume eventPlanVolume = eventPlanService.getEventPlanVolume(volumeRef);
+        eventPlanVolume.initFromEventPlan(seriesEventPlan);
+        String msg = eventPlanVolume.validateAndGetValidationMessage();
         if (msg == null) {
-            eps.save(epv);
-            String addedEventPlanRef = epv.getNodeRef() != null ? epv.getNodeRef().toString() : "";
+            eventPlanService.save(eventPlanVolume);
+            String addedEventPlanRef = eventPlanVolume.getNodeRef() != null ? eventPlanVolume.getNodeRef().toString() : "";
             return new String[] { addedEventPlanRef };
         }
         LOG.warn(MessageUtil.getMessage(msg) + " (volumeRef=" + volumeRef + ")");
@@ -85,6 +84,11 @@ public class VolumeEventPlanUpdater extends AbstractNodeUpdater {
     }
 
     @Override
+    protected boolean usePreviousInputState() {
+        return false;
+    }
+
+    @Override
     protected Set<NodeRef> loadNodesFromFile(File file, boolean readHeaders) throws Exception {
         return null;
     }
@@ -92,14 +96,10 @@ public class VolumeEventPlanUpdater extends AbstractNodeUpdater {
     private void resetFields() {
         seriesRefToEventPlan = null;
         storeString = null;
-        eventPlanService = null;
     }
 
-    private EventPlanService getEventPlanService() {
-        if (eventPlanService == null) {
-            eventPlanService = BeanHelper.getEventPlanService();
-        }
-        return eventPlanService;
+    public void setEventPlanService(EventPlanService eventPlanService) {
+        this.eventPlanService = eventPlanService;
     }
 
     public String getStoreString() {

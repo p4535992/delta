@@ -13,15 +13,15 @@
 
 <a:panel styleClass="column panel-100" id="file-change" label="#{msg.file_change_blockname}">
 
-   <a:richList id="fileChangeList" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" value="#{ChangeFileDialog.files}" var="r" 
+   <a:richList id="fileChangeList" viewMode="details" value="#{ChangeFileDialog.files}" var="r" 
       rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt">
 
       <a:column id="fileOrder">
          <f:facet name="header">
             <h:outputText id="col0-header" value="#{msg.file_order}" styleClass="header" />
          </f:facet>
-         <h:inputTextarea id="order" value="#{r.fileOrderInList}" styleClass="tiny" >
-         </h:inputTextarea>
+         <h:inputText id="order" value="#{r.fileOrderInList}" styleClass="tiny" >
+         </h:inputText>
       </a:column>
 
       <a:column id="fileName">

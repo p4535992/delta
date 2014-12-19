@@ -238,6 +238,7 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
 
             saveOriginalEmlFile(mimeMessage, docRef);
             saveAttachments(docRef, mimeMessage, true);
+            fileService.reorderFiles(docRef);
 
             return (Long) nodeService.getProperty(docRef, ContentModel.PROP_NODE_DBID);
         } catch (Exception e) { // todo: improve exception handling
@@ -316,6 +317,9 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
                 saveAttachments(docRef, mimeMessage, false, invoiceRefToAttachment);
                 documentLogService.addDocumentLog(docRef, I18NUtil.getMessage("document_log_status_imported", I18NUtil.getMessage("document_log_creator_imap")) //
                         , I18NUtil.getMessage("document_log_creator_imap"));
+            }
+            if (!newInvoices.isEmpty()) {
+                fileService.reorderFiles(newInvoices);
             }
 
         } catch (Exception e) { // TODO: improve exception handling

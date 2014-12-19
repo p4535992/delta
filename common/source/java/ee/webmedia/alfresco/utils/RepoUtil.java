@@ -3,6 +3,7 @@ package ee.webmedia.alfresco.utils;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDictionaryService;
 
 import java.io.Serializable;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -512,6 +513,14 @@ public class RepoUtil {
             workflowRefs.add((NodeRef) entry.getValue().get(ContentModel.PROP_NODE_REF));
         }
         return workflowRefs;
+    }
+
+    public static <T> T getReferenceOrNull(WeakReference<T> weakReference) {
+        return weakReference != null ? weakReference.get() : null;
+    }
+
+    public static boolean isReferenceNull(WeakReference weakReference) {
+        return weakReference == null || weakReference.get() == null;
     }
 
 }

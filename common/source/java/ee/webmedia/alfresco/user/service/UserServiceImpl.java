@@ -43,6 +43,9 @@ import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.util.Assert;
 
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
+
 import ee.webmedia.alfresco.common.service.ApplicationConstantsBean;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.BeanHelper;
@@ -345,15 +348,27 @@ public class UserServiceImpl implements UserService {
         return searchUsersByProps(input, returnAllUsers, group, props, limit, exactGroup);
     }
 
+    private Set<String> limitSearchParameters(int limit, Set<String> original) {
+        if (limit > -1 && original != null && original.size() > limit) {
+            return ImmutableSet.copyOf(Iterables.limit(original, limit));
+        }
+        return original;
+    }
+
     private List<Node> searchUsersByProps(String input, boolean returnAllUsers, String group, Set<QName> props, int limit, String exactGroup) {
         List<String> groupNames = null;
-        List<String> queryAndAdditions = new ArrayList<String>();
+        List<String> queryAndAdditions = new ArrayList<>();
+        Set<String> userNamesInGroup = new HashSet<>();
         if (StringUtils.isNotBlank(group)) {
-            queryAndAdditions.add(SearchUtil.generatePropertyExactQuery(ContentModel.PROP_USERNAME, getUserNamesInGroup(group)));
+            userNamesInGroup.addAll(getUserNamesInGroup(group));
         }
         if (StringUtils.isNotBlank(exactGroup)) {
             groupNames = BeanHelper.getDocumentSearchService().searchAuthorityGroupsByExactName(exactGroup);
-            queryAndAdditions.add(SearchUtil.generatePropertyExactQuery(ContentModel.PROP_USERNAME, getUserNamesInGroup(groupNames)));
+            userNamesInGroup.addAll(getUserNamesInGroup(groupNames));
+        }
+        if (!userNamesInGroup.isEmpty()) {
+            Set<String> userNames = limitSearchParameters(limit, userNamesInGroup);
+            queryAndAdditions.add(SearchUtil.generatePropertyExactQuery(ContentModel.PROP_USERNAME, userNames));
         }
         List<String> userNames = getDocumentSearchService().searchUserNamesByTypeAndProps(input, ContentModel.TYPE_PERSON, props, limit,
                 SearchUtil.joinQueryPartsAnd(queryAndAdditions));

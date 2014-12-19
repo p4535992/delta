@@ -5,18 +5,20 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -35,11 +37,13 @@ import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.search.ResultSet;
 import org.alfresco.service.cmr.search.SearchService;
 import org.alfresco.service.namespace.QName;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang.time.FastDateFormat;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.InitializingBean;
-import org.springframework.util.Assert;
 
 import com.csvreader.CsvReader;
 import com.csvreader.CsvWriter;
@@ -48,35 +52,39 @@ import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.utils.ProgressTracker;
 
 public abstract class AbstractNodeUpdater extends AbstractModuleComponent implements InitializingBean {
+
     protected final Log log = LogFactory.getLog(getClass());
 
     protected static final int DEFAULT_BATCH_SIZE = 50;
     protected static final char CSV_SEPARATOR = ';';
-    protected static Charset CSV_CHARSET = Charset.forName("UTF-8");
+    protected static final Charset CSV_CHARSET = Charset.forName("UTF-8");
 
     protected NodeService nodeService;
     protected SearchService searchService;
     protected GeneralService generalService;
     protected BehaviourFilter behaviourFilter;
 
-    protected final DateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
-    protected final DateFormat dateTimeFormat = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss-SSS");
-    {
-        dateFormat.setLenient(false);
-        dateTimeFormat.setLenient(false);
-    }
+    protected final FastDateFormat dateFormat = FastDateFormat.getInstance("dd.MM.yyyy");
+    protected final FastDateFormat dateTimeFormat = FastDateFormat.getInstance("yyyy-MM-dd-HH-mm-ss-SSS");
 
     protected int batchSize = DEFAULT_BATCH_SIZE;
     private boolean enabled = true;
-    protected File inputFolder;
-    private int transactionHelperMinRetryWaits = -1;
 
-    private Set<NodeRef> nodes = new HashSet<NodeRef>();
-    private Set<NodeRef> completedNodes = new HashSet<NodeRef>();
-    private File nodesFile;
-    private File failedNodesFile;
-    private File completedNodesFile;
+    private int transactionHelperMinRetryWaits = -1;
+    protected File inputFolder;
+
+    protected Set<NodeRef> nodes = Collections.newSetFromMap(new ConcurrentHashMap<NodeRef, Boolean>());
+    private Set<NodeRef> completedNodes = Collections.newSetFromMap(new ConcurrentHashMap<NodeRef, Boolean>());
+
+    protected List<File> failedNodesFiles;
+    protected List<File> completedNodesFiles;
+
     private boolean errorExecutingUpdaterInBackground;
+
+    protected int threadCount = 1;
+
+    private static final String CSV_EXTENSION = ".csv";
+    protected static final String THREAD_SUFFIX = "_thread-";
 
     @Override
     public void afterPropertiesSet() throws Exception {
@@ -190,11 +198,20 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
         return usePreviousState();
     }
 
-    protected void executeUpdater() throws Exception {
+    protected void initializeBeforeUpdating() throws Exception {
+        log.info("Initializing values");
         try {
-            log.info("Starting node updater");
-            nodesFile = new File(inputFolder, getNodesCsvFileName());
-            failedNodesFile = new File(inputFolder, getFailedNodesCsvFileName());
+            failedNodesFiles = new CopyOnWriteArrayList<>();
+            completedNodesFiles = new CopyOnWriteArrayList<>();
+
+            for (int i = 0; i < threadCount; i++) {
+                File tempFailedNodesFile = new File(inputFolder, getFailedNodesCsvFileName(i));
+                File tempCompletedNodesFile = new File(inputFolder, getCompletedNodesCsvFileName(i));
+                failedNodesFiles.add(tempFailedNodesFile);
+                completedNodesFiles.add(tempCompletedNodesFile);
+            }
+
+            File nodesFile = new File(inputFolder, getNodesCsvFileName());
             nodes = null;
             if (usePreviousInputState()) {
                 nodes = loadNodesFromFile(nodesFile, false);
@@ -207,40 +224,60 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
                 }
                 writeNodesToFile(nodesFile, nodes);
             }
-            completedNodesFile = new File(inputFolder, getCompletedNodesCsvFileName());
             completedNodes = null;
             if (usePreviousCompletedState()) {
-                completedNodes = loadNodesFromFile(completedNodesFile, true);
+                completedNodes = loadNodesFromFile(FilenameUtils.removeExtension(getCompletedNodesCsvFileName()), true);
             } else {
-                if (completedNodesFile.exists()) {
-                    log.info("Completed nodes file exists, deleting: " + completedNodesFile.getAbsolutePath());
-                    Assert.isTrue(completedNodesFile.delete());
-                }
-                if (failedNodesFile.exists()) {
-                    log.info("Failed nodes file exists, deleting: " + failedNodesFile.getAbsolutePath());
-                    Assert.isTrue(failedNodesFile.delete());
-                }
+                List<File> completedFiles = getFiles(FilenameUtils.removeExtension(getCompletedNodesCsvFileName()));
+                log.info("Found " + completedFiles.size() + " completed nodes files");
+                deleteFiles(completedFiles);
+
+                List<File> failedNodesFiles = getFiles(FilenameUtils.removeExtension(getFailedNodesCsvFileName()));
+                log.info("Found " + failedNodesFiles.size() + " failed nodes files");
+                deleteFiles(failedNodesFiles);
             }
             if (completedNodes != null) {
                 nodes.removeAll(completedNodes);
                 log.info("Removed " + completedNodes.size() + " completed nodes from nodes list, " + nodes.size() + " nodes remained");
             } else {
-                completedNodes = new HashSet<NodeRef>();
+                completedNodes = Collections.newSetFromMap(new ConcurrentHashMap<NodeRef, Boolean>());
             }
         } catch (Exception e) {
             stopFlag.set(true);
             throw e;
         }
-        log.info("Starting to update " + nodes.size() + " nodes");
-        if (nodes.size() > 0) {
-            UpdateNodesBatchProgress batchProgress = new UpdateNodesBatchProgress();
-            try {
-                batchProgress.run();
-            } finally {
-                log.info("Completed nodes have been written to file " + completedNodesFile.getAbsolutePath());
+    }
+
+    protected void deleteFiles(List<File> files) {
+        if (CollectionUtils.isEmpty(files)) {
+            return;
+        }
+        for (File file : files) {
+            if (file.exists()) {
+                log.info("Deleting: " + file.getAbsolutePath());
+                file.delete();
             }
         }
+    }
+
+    protected void executeUpdater() throws Exception {
+        initializeBeforeUpdating();
+        if (CollectionUtils.isEmpty(nodes)) {
+            log.info("Did not find any nodes to update");
+            return;
+        }
+        log.info("Starting to update " + nodes.size() + " nodes");
+        UpdateNodesBatchProgress batchProgress = new UpdateNodesBatchProgress();
+        try {
+            batchProgress.run();
+        } finally {
+            log.info("Completed nodes have been written to file " + completedNodesFiles.get(0).getAbsolutePath());
+        }
         log.info("Completed nodes updater");
+    }
+
+    protected int getThreadCount() {
+        return threadCount;
     }
 
     final protected String getBaseFileName() {
@@ -248,19 +285,67 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
     }
 
     private String getNodesCsvFileName() {
-        return getBaseFileName() + ".csv";
+        return getBaseFileName() + CSV_EXTENSION;
     }
 
-    private String getFailedNodesCsvFileName() {
+    private String getFailedNodesCsvFileName(int thread) {
+        return getBaseFileName() + "Failed" + THREAD_SUFFIX + thread + CSV_EXTENSION;
+    }
+
+    protected String getFailedNodesCsvFileName() {
         return getBaseFileName() + "Failed.csv";
     }
 
-    private String getCompletedNodesCsvFileName() {
+    protected String getCompletedNodesCsvFileName() {
         return getBaseFileName() + "Completed.csv";
     }
 
+    private String getCompletedNodesCsvFileName(int thread) {
+        return getBaseFileName() + "Completed" + THREAD_SUFFIX + thread + CSV_EXTENSION;
+    }
+
     private String getRollbackNodesCsvFileName() {
-        return getBaseFileName() + "Rollback-" + dateTimeFormat.format(new Date()) + ".csv";
+        return getBaseFileName() + "Rollback-" + dateTimeFormat.format(new Date()) + Thread.currentThread().getName() + CSV_EXTENSION;
+    }
+
+    protected List<File> getFiles(final String filenameWithoutExtension) {
+        File folder = inputFolder;
+        File mainFile = new File(folder, filenameWithoutExtension + CSV_EXTENSION);
+
+        File[] threadFiles = folder.listFiles(new FilenameFilter() {
+
+            @Override
+            public boolean accept(File dir, String name) {
+                return name.startsWith(filenameWithoutExtension + THREAD_SUFFIX);
+            }
+        });
+
+        List<File> files = new ArrayList<>();
+        if (mainFile.exists()) {
+            log.info("Found file: " + mainFile.getAbsolutePath());
+            files.add(mainFile);
+        }
+        if (threadFiles != null && threadFiles.length > 0) {
+            log.info(String.format("Found %d files with prefix %s", threadFiles.length, filenameWithoutExtension + THREAD_SUFFIX));
+            files.addAll(Arrays.asList(threadFiles));
+        }
+        return files;
+    }
+
+    protected Set<NodeRef> loadNodesFromFile(final String filenameWithoutExtension, boolean readHeaders) throws Exception {
+        Set<NodeRef> loadedNodes = null;
+        List<File> files = getFiles(filenameWithoutExtension);
+        if (CollectionUtils.isNotEmpty(files)) {
+            loadedNodes = Collections.newSetFromMap(new ConcurrentHashMap<NodeRef, Boolean>());
+            for (File file : files) {
+                log.info("Processing file: " + file.getAbsolutePath());
+                Set<NodeRef> loaded = loadNodesFromFile(file, readHeaders);
+                if (loaded != null) {
+                    loadedNodes.addAll(loaded);
+                }
+            }
+        }
+        return CollectionUtils.isNotEmpty(loadedNodes) ? loadedNodes : null;
     }
 
     protected Set<NodeRef> loadNodesFromFile(File file, boolean readHeaders) throws Exception {
@@ -290,7 +375,7 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
 
     private void writeNodesToFile(File file, Set<NodeRef> nodesToWrite) throws Exception {
         log.info("Writing " + nodesToWrite.size() + " nodes to file " + file.getAbsolutePath());
-        List<String[]> records = new ArrayList<String[]>();
+        List<String[]> records = new ArrayList<>(nodesToWrite.size());
         for (NodeRef nodeRef : nodesToWrite) {
             records.add(new String[] { nodeRef.toString() });
         }
@@ -333,7 +418,7 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
         if (resultSets == null || resultSets.size() == 0) {
             return null;
         }
-        Set<NodeRef> nodeSet = new HashSet<NodeRef>();
+        Set<NodeRef> nodeSet = Collections.newSetFromMap(new ConcurrentHashMap<NodeRef, Boolean>());
         try {
             for (ResultSet resultSet : resultSets) {
                 log.info("Found " + resultSet.length() + " nodes from repository store "
@@ -358,7 +443,7 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
      */
     protected abstract List<ResultSet> getNodeLoadingResultSet() throws Exception;
 
-    private class UpdateNodesBatchProgress extends BatchProgress<NodeRef> {
+    protected class UpdateNodesBatchProgress extends BatchProgress<NodeRef> {
 
         public UpdateNodesBatchProgress() {
             origin = nodes;
@@ -368,7 +453,7 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
 
         @Override
         void executeBatch() throws Exception {
-            updateNodesBatch(batchList);
+            updateNodesBatch(batchList, completedNodesFiles.get(0), failedNodesFiles.get(0));
         }
     }
 
@@ -376,8 +461,8 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
         return true;
     }
 
-    private void updateNodesBatch(final List<NodeRef> batchList) throws Exception {
-        final List<String[]> batchInfos = processNodes(batchList);
+    protected void updateNodesBatch(final List<NodeRef> batchList, File completedNodesFile, File failedNodesFile) throws Exception {
+        final List<String[]> batchInfos = processNodes(batchList, failedNodesFile);
         File rollbackNodesFile = new File(inputFolder, getRollbackNodesCsvFileName());
         bindCsvWriteAfterCommit(completedNodesFile, rollbackNodesFile, new CsvWriterClosure() {
 
@@ -396,7 +481,11 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
     }
 
     protected List<String[]> processNodes(final List<NodeRef> batchList) throws Exception, InterruptedException {
-        final List<String[]> batchInfos = new ArrayList<String[]>(batchList.size());
+        return processNodes(batchList, failedNodesFiles.get(0));
+    }
+
+    protected List<String[]> processNodes(final List<NodeRef> batchList, File failedNodesFile) throws Exception, InterruptedException {
+        final List<String[]> batchInfos = new ArrayList<>(batchList.size());
         for (NodeRef nodeRef : batchList) {
             if (processOnlyExistingNodeRefs() && !nodeService.exists(nodeRef)) {
                 batchInfos.add(new String[] { nodeRef.toString(), "nodeDoesNotExist" });
@@ -407,7 +496,7 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
                 String[] batchInfo = (String[]) ArrayUtils.add(info, 0, nodeRef.toString());
                 batchInfos.add(batchInfo);
             } catch (Exception e) {
-                handleNodeProcessingError(Collections.singletonList(nodeRef), e);
+                handleNodeProcessingError(Collections.singletonList(nodeRef), e, failedNodesFile);
             }
             int sleepTime2 = getSleepTime();
             if (sleepTime2 > 0) {
@@ -417,7 +506,7 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
         return batchInfos;
     }
 
-    protected void handleNodeProcessingError(List<NodeRef> nodeRefs, Exception e) throws Exception {
+    protected void handleNodeProcessingError(List<NodeRef> nodeRefs, Exception e, File failedNodesFile) throws Exception {
         try {
             boolean exists = failedNodesFile.exists();
             if (!exists) {
@@ -474,7 +563,6 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
     private abstract class BatchProgress<E> {
         Collection<E> origin;
         List<E> batchList;
-        @SuppressWarnings("hiding")
         int batchSize = AbstractNodeUpdater.this.batchSize;
         String processName;
         File stopFile;

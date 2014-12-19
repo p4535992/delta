@@ -68,6 +68,8 @@ import org.alfresco.util.SearchLanguageConversion;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import ee.webmedia.alfresco.document.file.model.FileModel;
+
 /**
  * Implementation of the file/folder-specific service.
  * 
@@ -797,6 +799,9 @@ public class FileFolderServiceImpl implements FileFolderService
             String mimetype = mimetypeService.guessMimetype(name);
             ContentData contentData = new ContentData(null, mimetype, 0L, "UTF-8");
             properties.put(ContentModel.PROP_CONTENT, contentData);
+            // Add just in case: file ordering depends on this property and if it's missing then NPE will be thrown.
+            // Subsequent logic should replace it with actual value.
+            properties.put(FileModel.Props.FILE_ORDER_IN_LIST, Long.MAX_VALUE);
         }
         
         // create the node

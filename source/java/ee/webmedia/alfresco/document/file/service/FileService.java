@@ -182,6 +182,8 @@ public interface FileService {
     void removePreviousParentReference(NodeRef docRef, boolean moveToPreviousParent);
 
     void reorderFiles(NodeRef documentRef);
+    
+    void reorderFiles(List<NodeRef> documentRefs);
 
     void reorderFiles(NodeRef doocumentRef, Map<NodeRef, Long> originalOrders);
 

@@ -2152,44 +2152,45 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, N
     private void createSubstitutions(final Map<String, Object> props) {
         final String ownerId = (String) props.get(DocumentDynamicModel.Props.OWNER_ID);
         final NodeRef ownerRef = userService.getPerson(ownerId);
-        if (ownerRef != null) {
-            final List<String> substituteIds = (List<String>) props.get(DocumentDynamicModel.Props.SUBSTITUTE_ID);
-            final List<String> substituteNames = (List<String>) props.get(DocumentSpecificModel.Props.SUBSTITUTE_NAME);
-            final List<Date> substituteBeginDates = (List<Date>) props.get(DocumentSpecificModel.Props.SUBSTITUTION_BEGIN_DATE);
-            final List<Date> substituteEndDates = (List<Date>) props.get(DocumentSpecificModel.Props.SUBSTITUTION_END_DATE);
-            for (int i = 0; i < substituteIds.size(); i++) {
-                if (substituteEndDates.get(i) == null || substituteBeginDates.get(i) == null) {
-                    throw new UnableToPerformException("substitute_dates_must_not_be_null");
+        if (ownerRef == null) {
+            return;
+        }
+        final List<String> substituteIds = (List<String>) props.get(DocumentDynamicModel.Props.SUBSTITUTE_ID);
+        final List<String> substituteNames = (List<String>) props.get(DocumentSpecificModel.Props.SUBSTITUTE_NAME);
+        final List<Date> substituteBeginDates = (List<Date>) props.get(DocumentSpecificModel.Props.SUBSTITUTION_BEGIN_DATE);
+        final List<Date> substituteEndDates = (List<Date>) props.get(DocumentSpecificModel.Props.SUBSTITUTION_END_DATE);
+        for (int i = 0; i < substituteIds.size(); i++) {
+            if (StringUtils.isNotBlank(substituteIds.get(i)) && (substituteEndDates.get(i) == null || substituteBeginDates.get(i) == null)) {
+                throw new UnableToPerformException("substitute_dates_must_not_be_null");
+            }
+        }
+
+        generalService.runOnBackground(new RunAsWork<Void>() {
+
+            @Override
+            public Void doWork() throws Exception {
+                final List<Substitute> addedSubstitutes = new ArrayList<Substitute>();
+                for (int i = 0; i < substituteIds.size(); i++) {
+                    String substituteId = substituteIds.get(i);
+                    if (StringUtils.isBlank(substituteId)) {
+                        continue; // just ignore this one
+                    }
+                    Substitute substitute = Substitute.newInstance();
+                    substitute.setSubstituteId(substituteId);
+                    substitute.setSubstituteName(substituteNames.get(i));
+                    substitute.setReplacedPersonUserName(ownerId);
+                    Date substitutionEndDate = substituteEndDates.get(i);
+                    Date substitutionStartDate = substituteBeginDates.get(i);
+                    substitute.setSubstitutionEndDate(substitutionEndDate);
+                    substitute.setSubstitutionStartDate(substitutionStartDate);
+                    substituteService.addSubstitute(ownerRef, substitute);
+                    addedSubstitutes.add(substitute);
                 }
+                getNotificationService().notifySubstitutionEvent(addedSubstitutes);
+                return null;
             }
 
-            generalService.runOnBackground(new RunAsWork<Void>() {
-
-                @Override
-                public Void doWork() throws Exception {
-                    final List<Substitute> addedSubstitutes = new ArrayList<Substitute>();
-                    for (int i = 0; i < substituteIds.size(); i++) {
-                        Substitute substitute = Substitute.newInstance();
-                        String substituteId = substituteIds.get(i);
-                        if (StringUtils.isBlank(substituteId)) {
-                            continue; // just ignore this one
-                        }
-                        substitute.setSubstituteId(substituteId);
-                        substitute.setSubstituteName(substituteNames.get(i));
-                        substitute.setReplacedPersonUserName(ownerId);
-                        Date substitutionEndDate = substituteEndDates.get(i);
-                        Date substitutionStartDate = substituteBeginDates.get(i);
-                        substitute.setSubstitutionEndDate(substitutionEndDate);
-                        substitute.setSubstitutionStartDate(substitutionStartDate);
-                        substituteService.addSubstitute(ownerRef, substitute);
-                        addedSubstitutes.add(substitute);
-                    }
-                    getNotificationService().notifySubstitutionEvent(addedSubstitutes);
-                    return null;
-                }
-
-            }, "sendDocRegistrationNotificaitionsToSubstitutes", false);
-        }
+        }, "sendDocRegistrationNotificaitionsToSubstitutes", false);
     }
 
     @Override

@@ -1,5 +1,8 @@
 package ee.webmedia.alfresco.user.web;
 
+import static ee.webmedia.alfresco.utils.RepoUtil.getReferenceOrNull;
+
+import java.lang.ref.WeakReference;
 import java.util.Iterator;
 import java.util.List;
 
@@ -26,7 +29,7 @@ public class PermissionsListDialog extends BaseDialogBean {
     /** allows delegating actual permission removing to another method using given method binding expression */
     private static String DELEGATE_REMOVE_AUTHORITY_MB = "delegateRemoveAuthorityMB";
 
-    private transient UIRichList authoritiesRichList;
+    private transient WeakReference<UIRichList> authoritiesRichList;
     private transient UserService userService;
 
     private NodeRef nodeRef;
@@ -131,8 +134,9 @@ public class PermissionsListDialog extends BaseDialogBean {
     @Override
     public void restored() {
         authorities = null;
-        if (authoritiesRichList != null) {
-            authoritiesRichList.setValue(null);
+        UIRichList authoritiesListComponent = getReferenceOrNull(authoritiesRichList);
+        if (authoritiesListComponent != null) {
+            authoritiesListComponent.setValue(null);
         }
     }
 
@@ -153,11 +157,11 @@ public class PermissionsListDialog extends BaseDialogBean {
     }
 
     public UIRichList getAuthoritiesRichList() {
-        return authoritiesRichList;
+        return getReferenceOrNull(authoritiesRichList);
     }
 
     public void setAuthoritiesRichList(UIRichList authoritiesRichList) {
-        this.authoritiesRichList = authoritiesRichList;
+        this.authoritiesRichList = new WeakReference<>(authoritiesRichList);
     }
 
     protected UserService getUserService() {

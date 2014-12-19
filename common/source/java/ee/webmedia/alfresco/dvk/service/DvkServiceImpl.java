@@ -285,6 +285,7 @@ public abstract class DvkServiceImpl implements DvkService {
                 throw e;// didn't even manage to handle exception
             }
             if (storedDocuments != null && storedDocuments.size() > 0) {
+                BeanHelper.getFileService().reorderFiles(storedDocuments);
                 receivedDocumentIds.add(dhlId);
                 createdDocumentCounter += storedDocuments.size();
             } else {

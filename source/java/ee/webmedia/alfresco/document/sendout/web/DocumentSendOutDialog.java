@@ -290,14 +290,11 @@ public class DocumentSendOutDialog extends BaseDialogBean {
             Object partys = props.get(DocumentSpecificModel.Props.PARTY_NAME);
             if (partys instanceof String) {
                 String partyName = (String) partys;
-                boolean nameAdded = false;
                 if (StringUtils.isNotBlank(partyName)) {
                     names.add(partyName);
-                    nameAdded = true;
-                }
-                if (nameAdded) {
                     String email = (String) props.get(DocumentSpecificModel.Props.PARTY_EMAIL);
                     emails.add(email);
+                    groups.add("");
                 }
             } else if (partys instanceof List) {
                 List<String> partyList = (List<String>) partys;
@@ -305,6 +302,7 @@ public class DocumentSendOutDialog extends BaseDialogBean {
                 for (int i = 0; i < partyList.size(); i++) {
                     names.add(StringUtils.trimToEmpty(partyList.get(i)));
                     emails.add(StringUtils.trimToEmpty(emailList.get(i)));
+                    groups.add("");
                 }
             }
         } else {
@@ -392,7 +390,7 @@ public class DocumentSendOutDialog extends BaseDialogBean {
     }
 
     private void removeEmptyValuesLeavingOneEmptyLineIfNeeded(List<String> names, List<String> emails, List<String> groups) {
-        List<Integer> removeIndexes = new ArrayList<Integer>();
+        List<Integer> removeIndexes = new ArrayList<>();
         int j = 0;
         for (Iterator<String> it = names.iterator(); it.hasNext();) {
             String name = it.next();

@@ -700,6 +700,9 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
     }
 
     private void removeAllVersionsOfDynamicTypeFormCache(DynamicType dynType) {
+        if (dynType == null) {
+            return;
+        }
         Integer latestVersion = dynType.getLatestVersion();
         NodeRef nodeRef = dynType.getNodeRef();
         for (int i = latestVersion; i > 0; i--) {
