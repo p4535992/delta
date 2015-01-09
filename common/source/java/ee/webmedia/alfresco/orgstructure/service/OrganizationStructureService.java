@@ -68,12 +68,16 @@ public interface OrganizationStructureService {
     void createOrganisationStructure(OrganizationStructure org);
 
     int updateOrganisationStructureBasedGroups();
-
+    
     void updateOrganisationStructureBasedGroups(ActionEvent event);
 
-    List<String> getOrganizationStructurePaths(String value);
+    int removeUsersFromOldOrganisationStructureBasedGroups();
+    
+    void removeUsersFromOldOrganisationStructureBasedGroups(ActionEvent event);
 
-    List<NodeRef> getAllOrganizationStructureRefs();
+    int removeOrganisationStructureBasedGroups();
+    
+    void removeOrganisationStructureBasedGroups(ActionEvent event);
 
     OrganizationStructure getOrganizationStructure(NodeRef nodeRef);
 

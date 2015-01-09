@@ -23,17 +23,23 @@ public class UpdateUsersGroupsOrganizationsListJob implements StatefulJob {
 
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
-        log.debug("Starting UpdateUsersGroupsOrganizationsListJob");
+        log.info("Starting UpdateUsersGroupsOrganizationsListJob");
         JobDataMap jobData = context.getJobDetail().getJobDataMap();
 
         // Run the jobs
+        log.info("Start organization structure sync...");
         updateOrganisationStructure(jobData);
+        
+        log.info("Start person sync...");
         updateUsersAndGroups(jobData);
+        
+        log.info("Start organization structure based group sync...");
         updateOrganisationStructureBasedGroups(jobData);
+        
+        log.info("Start organization structure based generated group remove sync...");
+        removeOrganisationStructureBasedGroups(jobData);
 
-        if (log.isDebugEnabled()) {
-            log.debug("UpdateUsersGroupsOrganizationsListJob done");
-        }
+        log.info("UpdateUsersGroupsOrganizationsListJob done");
     }
 
     private void updateOrganisationStructureBasedGroups(JobDataMap jobData) {
@@ -53,6 +59,27 @@ public class UpdateUsersGroupsOrganizationsListJob implements StatefulJob {
                 return worker.updateOrganisationStructureBasedGroups();
             }
         }, AuthenticationUtil.getSystemUserName());
+        log.debug("Starting to remove organization structure based groups - DONE");
+    }
+
+    private void removeOrganisationStructureBasedGroups(JobDataMap jobData) {
+        log.debug("Starting to update organization structure based groups");
+
+        Object workerObj = jobData.get("organizationStructureService");
+        if (workerObj == null || !(workerObj instanceof OrganizationStructureService)) {
+            throw new AlfrescoRuntimeException("UpdateUsersGroupsOrganizationsListJob data must contain valid 'organizationStructureService' reference, but contained: "
+                    + workerObj);
+        }
+        final OrganizationStructureService worker = (OrganizationStructureService) workerObj;
+
+        // Run job as with systemUser privileges
+        AuthenticationUtil.runAs(new RunAsWork<Integer>() {
+            @Override
+            public Integer doWork() throws Exception {
+                return worker.removeOrganisationStructureBasedGroups();
+            }
+        }, AuthenticationUtil.getSystemUserName());
+        log.debug("Starting to remove organization structure based groups - DONE");
     }
 
     private void updateOrganisationStructure(JobDataMap jobData) {
