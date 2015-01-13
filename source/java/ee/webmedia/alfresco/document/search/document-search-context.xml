@@ -93,10 +93,6 @@
       <property name="logService" ref="LogService" />
       <property name="authorityService" ref="AuthorityService" />
       <property name="luceneConfig" ref="admLuceneIndexerAndSearcherFactory" />
-<<<<<<< HEAD
-      <property name="finishedIncomingLettersAreNotShown" value="${conf.myDocumentsMenu.finishedIncomingLettersAreNotShown}" />
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
    </bean>
 
    <bean id="DocumentSearchService" class="org.springframework.aop.framework.ProxyFactoryBean">
@@ -179,34 +175,6 @@
       <property name="menuService" ref="MenuService" />
       <property name="documentSearchService" ref="DocumentSearchService" />
    </bean>
-<<<<<<< HEAD
-   
-   
-   <bean id="volumeAndCaseLocationPropUpdater3" class="ee.webmedia.alfresco.document.search.bootstrap.VolumeAndCaseLocationPropUpdater" parent="abstractNodeUpdater">
-      <property name="moduleId" value="simdhs" />
-      <property name="executeOnceOnly" value="true" />
-      <property name="dependsOn">
-         <list>
-            <ref bean="archivalsStoresBootstrap" />
-         </list>
-      </property>      
-      <property name="documentSearchService" ref="DocumentSearchService" /> 
-   </bean> 
-   
-   <bean id="searchFilterOrgStructToMultivaluedUpdater" class="ee.webmedia.alfresco.document.search.bootstrap.SearchFilterOrgStructToMultivaluedUpdater" parent="abstractNodeUpdater">
-      <property name="moduleId" value="simdhs" />
-      <property name="executeOnceOnly" value="true" />
-      <property name="enabled" value="${updater.version25To313.enabled}" />
-      <property name="dependsOn">
-         <list>
-            <ref bean="archivalsStoresBootstrap" />
-            <!-- Ensure that organization structure has been synchronized -->
-            <ref bean="workflow25To313DynamicDocTypeUpdater" />
-         </list>
-      </property>      
-   </bean> 
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
    <!-- START: web beans: -->
 

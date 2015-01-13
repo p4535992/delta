@@ -9,10 +9,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-<<<<<<< HEAD
-import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import org.alfresco.service.cmr.dictionary.DictionaryService;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
@@ -20,19 +16,10 @@ import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.view.Location;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.service.namespace.RegexQNamePattern;
-<<<<<<< HEAD
-import org.alfresco.util.EqualsHelper;
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import org.alfresco.web.bean.repository.TransientNode;
 
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
 import ee.webmedia.alfresco.common.service.GeneralService;
-<<<<<<< HEAD
-import ee.webmedia.alfresco.common.web.BeanHelper;
-import ee.webmedia.alfresco.document.service.DocumentService;
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import ee.webmedia.alfresco.functions.model.Function;
 import ee.webmedia.alfresco.functions.model.FunctionsModel;
 import ee.webmedia.alfresco.log.PropDiffHelper;
@@ -43,10 +30,6 @@ import ee.webmedia.alfresco.series.model.Series;
 import ee.webmedia.alfresco.series.service.SeriesService;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.RepoUtil;
-<<<<<<< HEAD
-import ee.webmedia.alfresco.utils.UnableToPerformException;
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import ee.webmedia.alfresco.utils.beanmapper.BeanPropertyMapper;
 
 public class FunctionsServiceImpl implements FunctionsService {
@@ -64,10 +47,6 @@ public class FunctionsServiceImpl implements FunctionsService {
     private SeriesService seriesService;
     private UserService userService;
     private LogService logService;
-<<<<<<< HEAD
-    private DocumentService documentService;
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
     @Override
     public List<Function> getAllFunctions() {
@@ -106,20 +85,6 @@ public class FunctionsServiceImpl implements FunctionsService {
     }
 
     @Override
-<<<<<<< HEAD
-    public List<NodeRef> getAllLimitedActivityFunctions() {
-        List<NodeRef> functionRefs = new ArrayList<NodeRef>();
-        for (Function function : getAllFunctions()) {
-            if (function.isDocumentActivitiesAreLimited()) {
-                functionRefs.add(function.getNodeRef());
-            }
-        }
-        return functionRefs;
-    }
-
-    @Override
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     public Function getFunctionByNodeRef(String ref) {
         return getFunctionByNodeRef(new NodeRef(ref));
     }
@@ -140,14 +105,7 @@ public class FunctionsServiceImpl implements FunctionsService {
     }
 
     @Override
-<<<<<<< HEAD
-    public void saveOrUpdate(final Function function, NodeRef functionsRoot) {
-        boolean activitiesLimitedChanged = true;
-        Map<String, Object> stringQNameProperties = function.getNode().getProperties();
-        Boolean documentActivitiesAreLimited = (Boolean) stringQNameProperties.get(FunctionsModel.Props.DOCUMENT_ACTIVITIES_ARE_LIMITED.toString());
-=======
     public void saveOrUpdate(Function function, NodeRef functionsRoot) {
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         if (function.getNode() instanceof TransientNode) {
             TransientNode transientNode = (TransientNode) function.getNode();
             NodeRef functionNodeRef = nodeService.createNode(functionsRoot,
@@ -161,12 +119,8 @@ public class FunctionsServiceImpl implements FunctionsService {
             logService.addLogEntry(LogEntry.create(LogObject.FUNCTION, userService, functionNodeRef, "applog_space_add",
                     props.get(FunctionsModel.Props.MARK.toString()), props.get(FunctionsModel.Props.TITLE.toString())));
         } else {
-<<<<<<< HEAD
-            Map<QName, Serializable> originalProperties = nodeService.getProperties(function.getNodeRef());
-=======
             Map<String, Object> stringQNameProperties = function.getNode().getProperties();
 
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             String propDiff = new PropDiffHelper()
                     .label(FunctionsModel.Props.STATUS, "function_status")
                     .label(FunctionsModel.Props.ORDER, "function_status")
@@ -174,23 +128,13 @@ public class FunctionsServiceImpl implements FunctionsService {
                     .label(FunctionsModel.Props.TITLE, "function_title")
                     .label(FunctionsModel.Props.DESCRIPTION, "function_description")
                     .label(FunctionsModel.Props.TYPE, "function_type")
-<<<<<<< HEAD
-                    .label(FunctionsModel.Props.DOCUMENT_ACTIVITIES_ARE_LIMITED, "function_documentActivitiesAreLimited")
-                    .diff(originalProperties, RepoUtil.toQNameProperties(stringQNameProperties));
-=======
                     .diff(nodeService.getProperties(function.getNodeRef()), RepoUtil.toQNameProperties(stringQNameProperties));
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
             if (propDiff != null) {
                 logService.addLogEntry(LogEntry.create(LogObject.FUNCTION, userService, function.getNodeRef(), "applog_space_edit",
                         function.getMark(), function.getTitle(), propDiff));
             }
-<<<<<<< HEAD
-            activitiesLimitedChanged = !EqualsHelper.nullSafeEquals(documentActivitiesAreLimited,
-                    originalProperties.get(FunctionsModel.Props.DOCUMENT_ACTIVITIES_ARE_LIMITED.toString()));
-=======
 
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             generalService.setPropertiesIgnoringSystem(function.getNode().getNodeRef(), stringQNameProperties);
         }
         if (log.isDebugEnabled()) {
@@ -199,19 +143,6 @@ public class FunctionsServiceImpl implements FunctionsService {
 
         reorderFunctions(function, functionsRoot);
 
-<<<<<<< HEAD
-        if (activitiesLimitedChanged && functionsRoot.equals(getFunctionsRoot()) && documentActivitiesAreLimited) {
-            generalService.runOnBackground(new RunAsWork<Void>() {
-                @Override
-                public Void doWork() throws Exception {
-                    BeanHelper.getMenuService().addFunctionVolumeShortcuts(function.getNodeRef());
-                    return null;
-                }
-            }, "addFunctionVolumeShortcuts", true);
-        }
-
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     private void reorderFunctions(Function function, NodeRef functionsRoot) {
@@ -284,18 +215,6 @@ public class FunctionsServiceImpl implements FunctionsService {
         saveOrUpdate(function);
     }
 
-<<<<<<< HEAD
-    @Override
-    public void delete(Function function) {
-        List<Series> allSeries = seriesService.getAllSeriesByFunction(function.getNodeRef());
-        if (!allSeries.isEmpty()) {
-            throw new UnableToPerformException("function_delete_not_empty");
-        }
-        nodeService.deleteNode(function.getNodeRef());
-    }
-
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     private int getNextFunctionOrderNrByFunction() {
         int maxOrder = 0;
         for (Function fn : getAllFunctions()) {
@@ -318,17 +237,6 @@ public class FunctionsServiceImpl implements FunctionsService {
         return location;
     }
 
-<<<<<<< HEAD
-    @Override
-    public boolean isDraftsFunction(NodeRef functionRef) {
-        if (functionRef == null) {
-            return false;
-        }
-        return functionRef.equals(documentService.getDrafts()) || Boolean.TRUE.equals(nodeService.getProperty(functionRef, FunctionsModel.Props.DOCUMENT_ACTIVITIES_ARE_LIMITED));
-    }
-
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     // START: getters / setters
     public void setGeneralService(GeneralService generalService) {
         this.generalService = generalService;
@@ -354,13 +262,6 @@ public class FunctionsServiceImpl implements FunctionsService {
         this.userService = userService;
     }
 
-<<<<<<< HEAD
-    public void setDocumentService(DocumentService documentService) {
-        this.documentService = documentService;
-    }
-
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     // END: getters / setters
 
 }

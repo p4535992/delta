@@ -11,11 +11,6 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
  * Dialog for incoming e-invoices list.
-<<<<<<< HEAD
- * 
- * @author Riina Tens
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
  */
 public class IncomingEInvoiceListDialog extends BaseDocumentListDialog {
     private static final long serialVersionUID = 0L;

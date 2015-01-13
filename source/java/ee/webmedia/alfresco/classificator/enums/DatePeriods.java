@@ -1,11 +1,5 @@
 package ee.webmedia.alfresco.classificator.enums;
 
-<<<<<<< HEAD
-/**
- * @author Keit Tehvan
- */
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 public enum DatePeriods {
     TODAY("TODAY"),
     YESTERDAY("YESTERDAY"),

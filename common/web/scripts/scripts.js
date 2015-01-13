@@ -2,11 +2,7 @@ var delta = [];
 delta['translations'] = [];
 
 /** Vertical scrollbar appears when browser window is narrower than minScreenWidth */
-<<<<<<< HEAD
-var minScreenWidth = 1020;
-=======
 var minScreenWidth = 920;
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
 function setMinScreenWidth(minWidth){
    minScreenWidth = minWidth;
@@ -262,10 +258,6 @@ function disableAndRemoveButton(buttonId) {
 }
 /**
  * append selection of source element to the element with id ending with "toItemIdSuffix" and beginning with the same id prefix as selectBox
-<<<<<<< HEAD
- * @author Ats Uiboupin
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
  */
 function appendSelection(source, targetId) {
    var selectItem = $jQ('#' + escapeId4JQ(source.attr("id")) + ' :selected');
@@ -285,10 +277,6 @@ function appendSelection(source, targetId) {
  * Add autoComplete functionality to input using given values to for suggestion(allows to enter also values not given with <code>valuesArray</code>)
  * @param inputId - id of the input component that should have autoComplete functionality based on values from <code>valuesArray</code>
  * @param valuesArray - values to be suggested int the input
-<<<<<<< HEAD
- * @author Ats Uiboupin
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
  */
 var autocompleters = new Array();
 function addAutocompleter(inputId, valuesArray){
@@ -532,23 +520,6 @@ function setPageScrollY() {
    $jQ('#wrapper form').append('<input type="hidden" name="scrollToY" value="'+ scrollTop +'" />');
 }
 
-<<<<<<< HEAD
-function getSharePointObject() {
-   var agent = navigator.userAgent.toLowerCase();
-   if (agent.indexOf('msie') != -1) {
-      var sharePointObject = new ActiveXObject('SharePoint.OpenDocuments.1');
-      return sharePointObject;
-   }
-   return null;
-}
-
-function webdavOpen(url, sharePointObject) {
-   var showDoc = true;
-   if (sharePointObject) {
-      // if the link represents an Office document and we are in IE try and
-      // open the file directly to get WebDAV editing capabilities
-      showDoc = !sharePointObject.EditDocument(url);
-=======
 function getOffice13Link(url) {
    var programs = {
          "word" : ["doc", "dot", "docx", "docm", "dotx", "dotm"],
@@ -587,7 +558,6 @@ function webdavOpen(url) {
             // Continue and try to open the document 
          }
       }
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
    }
    if (showDoc == true) {
       window.open(url, '_blank');
@@ -626,25 +596,7 @@ function webdavOpenReadOnly(url) {
 //      alert("To open using webdaw you must have IE compatible browser(for example firefox with IEtab or Internet Explorer)");
 //   }
 //   alert("regular file download");
-<<<<<<< HEAD
-   var uri = getContextPath() + '/ajax/invoke/AjaxBean.getDownloadUrl?path=' + url;
-
-   $jQ.ajax({
-      type: 'POST',
-      url: uri,
-      data: 'url=' + url, // path is already escaped, so disable jquery escaping by giving it a string directly
-      mode: 'queue',
-      success: function openForDownload(responseText) {
-        if (confirm(getTranslation("webdav_noPermissionsDownloadConfirm"))) {
-           window.open(responseText, '_blank');// regular file saveAs/open by downloading it to HD
-        }
-      },
-      error: ajaxError,
-      datatype: 'html'
-    });
-=======
    window.open(url, '_blank');// regular file saveAs/open by downloading it to HD
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
    return false;
 }
 
@@ -692,14 +644,6 @@ function showModal(target, height){
    openModalContent = target;
 
    $jQ("#overlay").css("display","block");
-<<<<<<< HEAD
-   $jQ("#" + target).css("display","block");
-   if (height != null) {
-      $jQ("#" + target).css("height",height);
-   }
-   $jQ("#" + target).show();
-   $jQ("#" + target).find(".genericpicker-input").focus();
-=======
    var modal = $jQ("#" + target);
    modal.css("display","block");
    var parentModal = modal.parent().closest(".modalwrap");
@@ -714,19 +658,10 @@ function showModal(target, height){
    }
    modal.show();
    modal.find(".genericpicker-input").focus();
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
    return false;
 }
 
 function hideModal(){
-<<<<<<< HEAD
-   if (openModalContent != null){
-     if(isIE(7) && titlebarIndex != null) {
-        $jQ("#titlebar").css("zIndex", titlebarIndex);
-     }
-     $jQ("#" + openModalContent).hide();
-      $jQ("#overlay").remove();
-=======
    if (openModalContent != null) {
       if(isIE(7) && titlebarIndex != null) {
          $jQ("#titlebar").css("zIndex", titlebarIndex);
@@ -737,36 +672,10 @@ function hideModal(){
       if (parentModal.length < 1) {
          $jQ("#overlay").remove();
       }
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
    }
    return false;
 }
 
-<<<<<<< HEAD
-function selectGroupForModalSearch(selectId, hiddenId, filterId){
-   var selectedValue =$jQ("#" + escapeId4JQ(selectId)).val(); 
-   var hidden = $jQ("#" + escapeId4JQ(hiddenId));
-   var filter = $jQ("#" + escapeId4JQ(filterId));
-   hidden.val(selectedValue);
-   filter.val(parseInt(filter.val())-1);
-}
-
-function groupModalFilterChange(){
-   var selector = $jQ("#" + escapeId4JQ(this.id.replace("_filter","_groupSelector")));
-   if(selector == null) {
-      return;
-   }
-   $jQ("#" + escapeId4JQ(this.id.replace("_filter","_selectedGroup"))).val("");
-   $jQ("#" + escapeId4JQ(this.id.replace("_filter","_selectedGroupText"))).remove();
-   if(this.value == "1"){
-      selector.attr('disabled','');
-   } else {
-      selector.attr('disabled','disabled');
-   }
-}
-
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 var propSheetValidateSubmitFn = [];
 var propSheetValidateFormId = '';
 var propSheetValidateFinishId = '';
@@ -934,35 +843,13 @@ function setScreenProtected(isProtected, reason) {
 }
 
 function updateState(divId, panelId, viewName) {
-<<<<<<< HEAD
-=======
    setScreenProtected(true, "FIXME: palun oodake, ühendus serveriga");
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     var uri = getContextPath() + '/ajax/invoke/PanelStateBean.updatePanelState?panelId=' + panelId +
               '&panelState=' + $jQ(divId).is(":visible") + '&viewName=' + viewName;
 
     $jQ.ajax({
        type: 'POST',
        url: uri,
-<<<<<<< HEAD
-       mode: 'queue',
-       success: requestUpdatePanelStateSuccess,
-       error: requestUpdatePanelStateFailure,
-       dataType: 'xml'
-    });
-}
-
-function requestUpdatePanelStateSuccess(xml) {
-   if (!xml) { // check that response is not empty
-      return;
-   }
-   // Set new value to view state, so when form is submitted next time, correct state is restored.
-   document.getElementById("javax.faces.ViewState").value = xml.documentElement.getAttribute('view-state');
-}
-
-function requestUpdatePanelStateFailure() {
-    $jQ.log("Updating panel status in server side failed");
-=======
        data: addViewStateElement(null).serialize(),
        mode: 'queue',
        success: requestUpdatePanelStateSuccess,
@@ -994,7 +881,6 @@ function requestUpdatePanelStateFailure() {
    } finally {
       setScreenProtected(false);
    }    
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 }
 
 function ajaxError(request, textStatus, errorThrown) {
@@ -1045,9 +931,6 @@ function getContainerFields(componentContainerId, componentClientId, submittable
       return componentClientId == this.name.substring(0, componentClientId.length) || $jQ.inArray(this.name, submittableParams) >= 0;
    });
 
-<<<<<<< HEAD
-   return componentChildFormElements.add(hiddenFormElements).serialize();
-=======
    componentChildFormElements = componentChildFormElements.add(hiddenFormElements);
    componentChildFormElements = addViewStateElement(componentChildFormElements);
    return componentChildFormElements.serialize();
@@ -1061,15 +944,10 @@ function addViewStateElement(elements){
       elements = viewState;
    }
    return elements;
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 }
 
 function ajaxSuccess(responseText, componentClientId, componentContainerId) {
    if (responseText) { // check that response is not empty
-<<<<<<< HEAD
-      // Split response
-      var i = responseText.lastIndexOf('VIEWSTATE:');
-=======
       if (isAjaxViewStateError(responseText)) {
          try {
             return handleAjaxViewStateError(responseText);
@@ -1087,7 +965,6 @@ function ajaxSuccess(responseText, componentClientId, componentContainerId) {
             setScreenProtected(false);
          }         
       }
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
       var html = responseText.substr(0, i);
       var hiddenInputsIndex = responseText.lastIndexOf("HIDDEN_INPUT_NAMES_JSON:");
       var viewState = responseText.substr(i + 'VIEWSTATE:'.length, hiddenInputsIndex);
@@ -1132,9 +1009,6 @@ function ajaxSuccess(responseText, componentClientId, componentContainerId) {
    }
 }
 
-<<<<<<< HEAD
-//-----------------------------------------------------------------------------
-=======
 function isAjaxViewStateError(responseText){
    try {
       return responseText.lastIndexOf('ERROR_VIEW_STATE_CHANGED') > -1;
@@ -1150,7 +1024,6 @@ function handleAjaxViewStateError(responseText) {
 }
 
 // -----------------------------------------------------------------------------
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 //MENU ITEM COUNT UPDATE
 //-----------------------------------------------------------------------------
 
@@ -1197,24 +1070,9 @@ function updateMenuItemCount(menuItemId) {
                text = text.substr(0, i) + count;
             }
 
-<<<<<<< HEAD
-            // Construct element title
-            var title = $jQ($jQ('.menuItemCount[menuitemid=' + menuItemId + '] a')[0]).attr('title');
-            var i = title.lastIndexOf(' (');
-            if (i == -1) {
-               title += count;
-            } else {
-               title = title.substr(0, i) + count;
-            }
-
-            // Update on all elements with same menuitemid
-            var menuItem = $jQ('.menuItemCount[menuitemid=' + menuItemId + '] a');
-            menuItem.text(text).attr('title', title);
-=======
             // Update on all elements with same menuitemid
             var menuItem = $jQ('.menuItemCount[menuitemid=' + menuItemId + '] a');
             menuItem.text(text).attr('title', text);
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             if (count.length > 2) {
                menuItem.parent().removeClass("hiddenMenuItem");
             }
@@ -1327,14 +1185,6 @@ function handleEnterKey(event) {
       return true;
    }
    
-<<<<<<< HEAD
-   // if enter is pressed in association search block, it has higher priority than specificAction and defaultAction
-   if(target.hasClass("searchAssocOnEnter") && _searchAssocs(event)){
-      return true;
-   }
-   
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
    // Are there any specific actions (modal search, dialog search)?
    var specificActions = $jQ('.specificAction').filter(":visible");
    if (specificActions.length == 1) { // Do nothing if multiple actions match
@@ -1396,20 +1246,6 @@ function initWithScreenProtected() {
    $jQ(".genericpicker-input").live('keyup', throttle(function (event) {
       var input = $jQ(this);
       var filter = input.prev();
-<<<<<<< HEAD
-      var hidden = input.next();
-      var filterValue;
-      var hiddenValue;
-      if (filter != null && filter.val() != undefined) {
-         filterValue = filter.val();
-      }
-      if (hidden != null && hidden.attr('value') != undefined) {
-         hiddenValue = hidden.attr('value');
-      }
-
-      var successCallback = function(responseText) {
-         var tbody = $jQ(this);
-=======
       var filterValue;
       if (filter != null && filter.val() != undefined) {
          filterValue = filter.val();
@@ -1417,15 +1253,11 @@ function initWithScreenProtected() {
 
       var successCallback = function(responseText) {
          var tbody = input.closest('tbody');
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
          var select = tbody.find('.genericpicker-results');
          select.children().remove();
          var index = responseText.indexOf("|");
          select.attr("size", responseText.substring(0, index));
          select.append(responseText.substring(index + 1, responseText.length));
-<<<<<<< HEAD
-         tbody.find('.hidden').toggleClass('hidden');
-=======
          var resultCount = select.children().length;
          
          if (select.attr("data-initialresults") == undefined) { // After the first fresh search, record the initial result count
@@ -1440,7 +1272,6 @@ function initWithScreenProtected() {
          }
          
          tbody.find('tr.hidden').toggleClass('hidden');
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
       };
 
       // Workaround for IE/WebKit, since it cannot hide option elements...
@@ -1456,59 +1287,23 @@ function initWithScreenProtected() {
          });
       };
 
-<<<<<<< HEAD
-      doSearch(input, filterValue, hiddenValue, event, successCallback, backSpaceCallback, input.closest('tbody'));
-   }, 500));
-
-   var reSearch = true;
-   function doSearch(input, filterValue, hiddenValue, event, successCallback, backSpaceCallback, callbackContext) {
-=======
       doSearch(input, filterValue, event, successCallback, backSpaceCallback, input.closest('tbody'));
    }, 500));
 
    var reSearch = true;
    function doSearch(input, filterValue, event, successCallback, backSpaceCallback, select, callbackContext) {
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
       var callback = input.attr('datasrc');
       if(!callback){
          alert("no search callback found");
       }
       var value = input.val();
       if (!value) {
-<<<<<<< HEAD
-         reSearch = true;
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
          return;
       }
       if(!filterValue){
          filterValue = 1; // UserContactGroupSearchBean.USERS_FILTER
       }
 
-<<<<<<< HEAD
-      var filterByStructUnit = "false";
-      var split = callback.split("|");
-      if (split.length == 3) {
-         filterValue = split[0];
-         callback = split[1];
-         filterByStructUnit = split[2];
-      } else if (split.length == 2) {
-         callback = split[0];
-         filterByStructUnit = split[1];
-      }
-
-      var backspace = event.keyCode == 8;
-      var tbody = $jQ(callbackContext);
-      var select = tbody.find('.genericpicker-results');
-      var opts = select.children('option');
-      if (value.length > 2 && reSearch && !backspace) {
-         $jQ.ajax({
-            type: 'POST',
-            url: getContextPath() + "/ajax/invoke/AjaxSearchBean.searchPickerResults",
-            data: $jQ.param({'contains' : value, 'pickerCallback' : callback, 'filterValue' : filterValue, 'hiddenValue' : hiddenValue, "filterByStructUnit" : filterByStructUnit}),
-            mode: 'queue',
-            context: callbackContext,
-=======
       var index = callback.indexOf("|");
       if (index >= 0) {
          filterValue = callback.substring(0, index);
@@ -1534,15 +1329,10 @@ function initWithScreenProtected() {
             url: getContextPath() + "/ajax/invoke/AjaxSearchBean.searchPickerResults",
             data: $jQ.param({'contains' : value, 'pickerCallback' : callback, 'filterValue' : filterValue}),
             mode: 'queue',
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             success: successCallback,
             error: ajaxError,
             dataType: 'html'
          });
-<<<<<<< HEAD
-         reSearch = false;
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
       } else if (value.length > 3 && !backspace) {
          opts.each(function (i) {
             var option = $jQ(this);
@@ -1591,87 +1381,6 @@ function initWithScreenProtected() {
          elem.closest(".panel-border").find(".reportDueDate").datepicker('setDate',  reportDue);
       }
    });
-<<<<<<< HEAD
-   
-   $jQ(".driveCompensationRate").live('change', function(event) {
-      $jQ(".driveKm").change(); // Trigger updates
-   });
-
-   $jQ(".driveOdoBegin,.driveOdoEnd").live('change', function (event) {
-      var elem = $jQ(this);
-      var begin = elem.hasClass("driveOdoBegin");
-      var other = begin ? $jQ(elem.parent().next().children()[0]) : $jQ(elem.parent().prev().children()[0]);
-      if (!elem || !other) {
-         return;
-      }
-      
-      var driveKm = elem.closest("tr").find(".driveKm");
-      var val1 = elem.val();
-      var val2 = other.val();
-      if (!val1 || !val2) {
-         driveKm.val("");
-      } else {
-         driveKm.val(begin ? val2 - val1 : val1 - val2); // Show negative value, when data is incorrect
-      }
-      driveKm.change();
-   });
-   
-   $jQ(".driveKm").live('change', function (event) {
-      var kmElem = $jQ(this);
-      var propSheet = kmElem.closest("table").parent().closest("table");
-      var rateElem = propSheet.find(".driveCompensationRate");
-      
-      if (kmElem == null || rateElem == null) {
-         return;
-      }
-      
-      var compCalc = $jQ(kmElem.parent().next().children()[0]);
-      
-      var kmVal = kmElem.val();
-      var rateVal = rateElem.val();
-      if (!isNumeric(kmVal, true) || !isNumeric(rateVal)) {
-         compCalc.val("");
-      } else {
-         compCalc.val(round((kmVal * rateVal), 2));
-      }
-      compCalc.change();
-      
-      // Update sum
-      var totalKmElem = $jQ(propSheet.find(".driveTotalKm")[0]);
-      if (!totalKmElem) {
-         return;
-      }
-      var totalKm = 0;
-      kmElem.closest("table").find(".driveKm").each(function () {
-         if (isNumeric(this.value)) {
-            totalKm += parseInt(this.value);
-         }
-      });
-
-      totalKmElem.val(totalKm);
-      totalKmElem.change();
-   });
-   
-   $jQ(".driveTotalKm").live('change', function (event) {
-      var kmElem = $jQ(this);
-      var propSheet = kmElem.closest("table");
-      var rateElem = $jQ(propSheet.find(".driveCompensationRate")[0]);
-      var compElem = $jQ(propSheet.find(".driveTotalCompensation")[0]);
-      if (!rateElem || !compElem) {
-         return;
-      }
-      
-      var kmVal = kmElem.val();
-      var rateVal = rateElem.val();
-      if (!isNumeric(kmVal, true) || !isNumeric(rateVal)) {
-         compElem.val("");
-      } else {
-         compElem.val(round((kmVal * rateVal), 2));
-      }
-      compElem.change();
-   });
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
    $jQ(".beginTotalCount,.endTotalCount").live('change', function (event) {
       // Get the date
@@ -1728,11 +1437,7 @@ function initWithScreenProtected() {
       } else if (elem.hasClass("eventEndDate")) {
          dateField = row.next().find(".errandEndDate");
       }
-<<<<<<< HEAD
-      if (dateField != null) {
-=======
       if (dateField != null && !dateField.val()) { // Only update if a value isn't specified
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
          dateField.datepicker('setDate', elem.datepicker('getDate'));
          dateField.change();
       }
@@ -1779,11 +1484,7 @@ function initWithScreenProtected() {
    window.dhtmlHistory.add(randomHistoryHash(), null);
 
 
-<<<<<<< HEAD
-   jQuery(".dailyAllowanceDaysField, .dailyAllowanceRateField").live('change', function(event) {
-=======
    jQuery(".dailyAllowanceDaysField:input, .dailyAllowanceRateField:input").live('change', function(event) {
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
       var elem = $jQ(this);
       // Calculate sum for current row
       var row = elem.closest("tr");
@@ -1810,17 +1511,10 @@ function initWithScreenProtected() {
          }
       });
 
-<<<<<<< HEAD
-      row.closest("div").closest("tr").next().find(".dailyAllowanceTotalSumField").val(totalSum);
-   });
-
-   jQuery(".expectedExpenseSumField").live('keyup', function(event) {
-=======
       row.closest("div").closest("tr").next().find(".dailyAllowanceTotalSumField").first().text(totalSum);
    });
 
    jQuery(".expectedExpenseSumField:input").live('keyup', function(event) {
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
       var elem = $jQ(this);
       var totalSum = 0;
       var sum = 0;
@@ -1834,13 +1528,8 @@ function initWithScreenProtected() {
          }
       });
 
-<<<<<<< HEAD
-      var totalField = elem.closest("div").closest("tr").next().find(".expensesTotalSumField");
-      totalField.val(totalSum);
-=======
       var totalField = elem.closest("div").closest("tr").next().find(".expensesTotalSumField").first();
       totalField.text(totalSum);
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
    });
 
    jQuery(".invoiceTotalSum, .invoiceVat").live('change', function(event) {
@@ -1856,69 +1545,6 @@ function initWithScreenProtected() {
       transFooterTotalSumElem = jQuery("#footer-sum-2:first");
       setTransTotalSumColor(transFooterTotalSumElem, invoiceTotalSum, getFloatOrNull(transFooterTotalSumElem.text()));
    });
-<<<<<<< HEAD
-   
-   jQuery(".errandReportSumField").live('change', function(event) {      
-      var elem = $jQ(this);
-      var totalSum = 0;
-      var sum = 0;
-      var sumString;
-      elem.closest("table").find(".errandReportSumField").each(function () {         
-         sumString = $jQ(this).val();
-         sum = getFloatOrNull(sumString);
-         if(sum) {
-            totalSum += sum;
-         }
-      });
-
-      var totalField = elem.closest("div").closest("tr").next().find(".errandReportTotalSumField");
-      totalField.val(round(totalSum, 2));
-   });
-   
-   jQuery(".errandSummaryDebitField").live('change', function(event) {      
-      var elem = $jQ(this);
-      var totalSum = 0;
-      var sum = 0;
-      var sumString;
-      elem.closest("table").find(".errandSummaryDebitField").each(function () {         
-         sumString = $jQ(this).val();
-         sum = getFloatOrNull(sumString);
-         if(sum) {
-            totalSum += sum;
-         }
-      });
-
-      var totalField = elem.closest("div").closest("table").find(".errandSummaryDebitTotalField");
-      totalField.val(round(totalSum, 2));
-   });
-   
-   jQuery(".errandSummaryCreditField").live('change', function(event) {      
-      var elem = $jQ(this);
-      var totalSum = 0;
-      var sum = 0;
-      var sumString;
-      elem.closest("table").find(".errandSummaryCreditField").each(function () {         
-         sumString = $jQ(this).val();
-         sum = getFloatOrNull(sumString);
-         if(sum) {
-            totalSum += sum;
-         }
-      });
-
-      var totalField = elem.closest("div").closest("table").find(".errandSummaryCreditTotalField");
-      totalField.val(round(totalSum, 2));
-   });
-   
-   jQuery(".driveTotalKmField, .driveCompensationRateField").live('change', function(event) {
-      var driveTotalCompensation = $jQ(".driveTotalCompensationField");
-      var driveTotalKmField = getFloatOrNull($jQ(".driveTotalKmField").val());
-      var driveCompensationRate = getFloatOrNull($jQ(".driveCompensationRateField").val());
-      if(driveTotalKmField && driveCompensationRate) {
-         driveTotalCompensation.val(round((driveTotalKmField * driveCompensationRate), 2));
-      }      
-   });
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
    jQuery(".trans-row-sum-input").live('change', recalculateInvoiceSums);
    jQuery(".trans-row-vat-code-input").live('change', recalculateInvoiceSums);
@@ -2076,12 +1702,6 @@ function textCounter(input, maxlimit) {
 // return number for valid numeric string,
 // 0 for blank string and NaN for all other values
 function getFloatOrNull(originalSumString){
-<<<<<<< HEAD
-   if (!originalSumString) {
-      return NaN;
-   }
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
    var sumString = originalSumString.replace(",", ".");
    sumString = sumString.replace(/ /g, "");
    if(sumString == ""){
@@ -2096,20 +1716,7 @@ function getFloatOrNull(originalSumString){
 // use to avoid javascript parsing strings like "55 krooni" to number 55
 // (conversion that java validation wouldn't allow)
 function isNumeric(numberStr){
-<<<<<<< HEAD
-   return isNumeric(numberStr, false);
-}
-function isNumeric(numberStr, integer){
-   if (!numberStr) {
-      return false;
-   }
-   var validChars = "0123456789";
-   if (!integer) {
-      validChars += ".";
-   }
-=======
    var validChars = "0123456789.";
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
    var additionalFirstChars = "+-";
    for (i = 0; i < numberStr.length; i++){
       var currentChar = numberStr.charAt(i);
@@ -2235,10 +1842,6 @@ function extendCondencePlugin() {
       if(!(p && p[2] == "-")){
          moreTxt = getTranslation('jQuery.condence.moreText');
       }
-<<<<<<< HEAD
-      var isStrictTrim = jQuery(this).hasClass("strictTrim"); 
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
       jQuery(this).condense({
          moreSpeed: 0,
          lessSpeed: 0,
@@ -2247,11 +1850,7 @@ function extendCondencePlugin() {
          ellipsis: "",
          condensedLength: condenceAtChar,
          minTrail: moreTxt.length,
-<<<<<<< HEAD
-         strictTrim: isStrictTrim  // assume that condense content is not text (html, except links, is escaped)
-=======
          strictTrim: false  // assume that condense content is not text (html, except links, is escaped)
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
                            // and does search for word breaks for triming text
          }
        );
@@ -2276,22 +1875,6 @@ function setMinEndDate(owner, dateElem, triggerEndDateChange){
    }
 }
 
-<<<<<<< HEAD
-function initExpanders(context){
-   
-   //initialize all expanding textareas
-   var expanders = jQuery("textarea[class*=expand]", context);
-   expanders.TextAreaExpander();
-   if(isIE()) {
-      // trigger size recalculation if IE, because e.scrollHeight may be inaccurate before keyup() is called
-      expanders.keyup();
-      jQuery.fn.TextAreaExpander.ieInitialized = true;
-   }
-   
-}
-
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 // These things need to be performed
 // 1) once after full page load
 // *) each time an area is replaced inside the page
@@ -2305,12 +1888,6 @@ function handleHtmlLoaded(context, setFocus, selects) {
       ,tooltipContainerElemName: "p"
    });
 
-<<<<<<< HEAD
-   var ieVer = isIE();
-   initExpanders(context);
-   
-   if(ieVer) { // Darn IE bugs...
-=======
    //initialize all expanding textareas
    var expanders = jQuery("textarea[class*=expand]", context);
    expanders.TextAreaExpander();
@@ -2319,7 +1896,6 @@ function handleHtmlLoaded(context, setFocus, selects) {
       // trigger size recalculation if IE, because e.scrollHeight may be inaccurate before keyup() is called
       expanders.keyup();
       jQuery.fn.TextAreaExpander.ieInitialized = true;
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
       zIndexWorkaround(context);
 
       var jqSelects = (selects==undefined) ? $jQ("select") : selects;
@@ -2345,11 +1921,7 @@ function handleHtmlLoaded(context, setFocus, selects) {
          fixIEDropdownMinWidth("footer-titlebar .extra-actions .dropdown-menu", "#footer-titlebar .extra-actions .dropdown-menu li", context);
          fixIEDropdownMinWidth(".title-component .dropdown-menu.in-title", ".title-component .dropdown-menu.in-title li", context);
       }
-<<<<<<< HEAD
-   }     
-=======
    }
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
    /**
     * Open Office documents directly from server
@@ -2359,12 +1931,7 @@ function handleHtmlLoaded(context, setFocus, selects) {
       // 2) $jQ(this).attr('href') = '/dhs/webdav/xxx/yyy/zzz/abc.doc'
       var path = this.href; // SharePoint ActiveXObject methods need to get full URL
 
-<<<<<<< HEAD
-      var sharePointObject = getSharePointObject();
-      if (sharePointObject) {
-=======
       if (window.ActiveXObject !== undefined) {
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
          // When page is submitted, user sees an hourglass cursor
          $jQ(".submit-protection-layer").show().focus();
          var uri = getContextPath() + '/ajax/invoke/AjaxBean.isFileLocked';
@@ -2384,11 +1951,7 @@ function handleHtmlLoaded(context, setFocus, selects) {
                 alert("Faili ei saa avada, fail on kustutatud");
                 return false;
              } else if (responseText.indexOf("NOT_LOCKED") > -1) {
-<<<<<<< HEAD
-                webdavOpen(path, sharePointObject);
-=======
                 webdavOpen(path);
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
              } else if (confirm(getTranslation("webdav_openReadOnly").replace("#", responseText))) {
                 // TODO CL 161673: responseText might contain HTML of CAS page if session has timed out
                 webdavOpenReadOnly(path);
@@ -2400,11 +1963,7 @@ function handleHtmlLoaded(context, setFocus, selects) {
            datatype: 'html'
          });
       } else {
-<<<<<<< HEAD
-         webdavOpen(path, sharePointObject);
-=======
          webdavOpen(path);
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
       }
       return false;
    });
@@ -2416,10 +1975,6 @@ function handleHtmlLoaded(context, setFocus, selects) {
 
    jQuery(".dailyAllowanceDaysField, .dailyAllowanceRateField, .errandReportDateBase, .eventBeginDate, .eventEndDate", context).change();
    jQuery(".expectedExpenseSumField", context).keyup();
-<<<<<<< HEAD
-   jQuery(".errandReportSumField, .errandSummaryDebitField, .errandSummaryCreditField, .driveTotalKmField", context).change();
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
    $jQ('.triggerPropSheetValidation', context).each(function () {
       prependOnclick($jQ(this), triggerPropSheetValidation);
    });
@@ -2508,10 +2063,6 @@ function handleHtmlLoaded(context, setFocus, selects) {
    /**
     * Binder for alfresco properties that are generated with ClassificatorSelectorAndTextGenerator.class
     * Binds all elements that have class="selectBoundWithText" with corresponding textAreas/inputs(assumed to have same id prefix and suffix specified with TARGET_SUFFIX)
-<<<<<<< HEAD
-    * @author Ats Uiboupin
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     */
    $jQ(".selectBoundWithText", context).each(function (intIndex)
    {
@@ -2532,10 +2083,6 @@ function handleHtmlLoaded(context, setFocus, selects) {
 
    /**
     * Add onChange functionality to jQuery change event (we can't use onChange attribute because of jQuery bug in IE)
-<<<<<<< HEAD
-    * @author Riina Tens
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     */
    $jQ("[class*=selectWithOnchangeEvent]", context).each(function (intIndex, selectElement)
    {
@@ -2554,12 +2101,8 @@ function handleHtmlLoaded(context, setFocus, selects) {
    propSheetValidateRegisterOnDocumentReady();
 
    // this method should be called after critical activities have been done in handleHtmlLoaded as it displays alerts and possibly submits page
-<<<<<<< HEAD
-   confirmWorkflow();
-=======
    confirmWorkflow('workflow-confirmation-messages', 'workflow-after-confirmation-link');
    confirmWorkflow("workflow-delegation-confirmation-messages", "workflow-after-delegation-confirmation-link");
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
    // trigger keyup event (for validation & textarea resize) on paste. Can't use live() because of IE
    $jQ("textarea, input[type='text']", context).bind("paste", function(){
@@ -2590,11 +2133,7 @@ function handleHtmlLoaded(context, setFocus, selects) {
       });
    }
 
-<<<<<<< HEAD
-   $jQ(".readonly", context).attr('readonly', 'readonly');   
-=======
    $jQ(".readonly", context).attr('readonly', 'readonly');
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 }
 
 //-----------------------------------------------------------------------------
@@ -2682,13 +2221,8 @@ function sendToSapManually(){
    return showModal('entrySapNumber_popup');
 }
 
-<<<<<<< HEAD
-function confirmWorkflow(){
-   var confirmationMessagesSelect = $jQ("[class='workflow-confirmation-messages']").get(0);
-=======
 function confirmWorkflow(selectClass, confirmationLinkClass){
    var confirmationMessagesSelect = $jQ("[class='" + selectClass + "']").get(0);
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
    if(confirmationMessagesSelect == undefined){
       return false;
    }
@@ -2697,11 +2231,7 @@ function confirmWorkflow(selectClass, confirmationLinkClass){
          return false;
       }
    }
-<<<<<<< HEAD
-   $jQ("[class='workflow-after-confirmation-link']").eq(0).click();
-=======
    $jQ("[class='" + confirmationLinkClass + "']").eq(0).click();
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 }
 
 function clearFormHiddenParams(currFormName, newTargetVal) {
@@ -2800,11 +2330,7 @@ function help(url) {
    return false;
 }
 
-<<<<<<< HEAD
-// http://remysharp.com/2010/07/21/throttling-function-calls/
-=======
 //http://remysharp.com/2010/07/21/throttling-function-calls/
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 function throttle(fn, delay) {
    var timer = null;
    return function() {

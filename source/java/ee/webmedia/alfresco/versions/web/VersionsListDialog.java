@@ -5,27 +5,13 @@ import java.util.List;
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
-<<<<<<< HEAD
-import org.alfresco.service.cmr.lock.NodeLockedException;
 import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.web.app.AlfrescoNavigationHandler;
-=======
-import org.alfresco.service.cmr.repository.NodeRef;
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.common.service.GeneralService;
-<<<<<<< HEAD
-import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
-import ee.webmedia.alfresco.utils.UnableToPerformException;
-import ee.webmedia.alfresco.utils.WebUtil;
-=======
-import ee.webmedia.alfresco.utils.ActionUtil;
-import ee.webmedia.alfresco.utils.MessageUtil;
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import ee.webmedia.alfresco.versions.model.Version;
 import ee.webmedia.alfresco.versions.service.VersionsService;
 
@@ -67,27 +53,9 @@ public class VersionsListDialog extends BaseDialogBean {
         versions = loadVersions(nodeRef);
     }
 
-<<<<<<< HEAD
-    public void activateVersion(ActionEvent event) {
-        try {
-            versionsService.activateVersion(new NodeRef(ActionUtil.getParam(event, PARAM_SELECT_NODEREF)));
-            MessageUtil.addInfoMessage("version_activated");
-            WebUtil.navigateTo(AlfrescoNavigationHandler.CLOSE_DIALOG_OUTCOME);
-        } catch (NodeLockedException e) {
-            BeanHelper.getDocumentLockHelperBean().handleLockedNode("version_source_file_locked", e.getNodeRef());
-        } catch (UnableToPerformException u) {
-            MessageUtil.addStatusMessage(u);
-        }
-    }
-
-    // START: private methods
-    private List<Version> loadVersions(NodeRef nodeRef) {
-        return getVersionsService().getAllVersions(nodeRef);
-=======
     // START: private methods
     private List<Version> loadVersions(NodeRef nodeRef) {
         return getVersionsService().getAllVersions(nodeRef, fileName);
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     // END: private methods

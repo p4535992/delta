@@ -16,16 +16,7 @@
    <r:propertySheetGrid id="volume-metatada" value="#{VolumeDetailsDialog.currentNode}" binding="#{VolumeDetailsDialog.propertySheet}" columns="1" mode="edit" externalConfig="true" labelStyleClass="propertiesLabel"/>
 </a:panel>
 
-<<<<<<< HEAD
-<jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/document/associations/web/assocs-block.jsp" />
-<a:booleanEvaluator id="searchBlockEvaluator" value="#{VolumeDetailsDialog.showSearchBlock}">
-   <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/document/search/web/document-search-block.jsp" />
-</a:booleanEvaluator>
-
-<a:panel id="deleted-documents-panel" label="#{msg.volume_deletedDocuments}" styleClass="panel-100" progressive="true" expanded="false">
-=======
 <a:panel id="deleted-documents-panel" label="#{msg.volume_deletedDocuments}" styleClass="panel-100" progressive="true">
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
    <%-- Main List --%>
    <a:richList id="deletedDocumentsList" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
       width="100%" value="#{VolumeDetailsDialog.deletedDocuments}" var="r">
@@ -61,19 +52,7 @@
          <f:facet name="header">
             <a:sortLink id="col4-sort" label="#{msg.volume_deletedDocument_comment}" value="comment" styleClass="header" />
          </f:facet>
-<<<<<<< HEAD
-         <h:outputText id="col4-text" value="#{r.comment}" />
-      </a:column>
-      
-      <%-- comment --%>
-      <a:column id="col5" primary="true">
-         <f:facet name="header">
-            <a:sortLink id="col5-sort" label="#{msg.volume_deletedDocument_deletionType}" value="deletionType" styleClass="header" />
-         </f:facet>
-         <h:outputText id="col5-text" value="#{r.deletionType}" />
-=======
          <h:outputText id="col2-text" value="#{r.comment}" />
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
       </a:column>
       
    </a:richList>

@@ -21,10 +21,6 @@ import org.apache.commons.logging.LogFactory;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.archivals.model.ArchivalsStoreVO;
-<<<<<<< HEAD
-import ee.webmedia.alfresco.common.model.DynamicBase;
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.docconfig.generator.SaveListener;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
@@ -33,11 +29,6 @@ import ee.webmedia.alfresco.log.LogHelper;
 
 /**
  * Entry point for starting and stopping whole import. Manages input parameters and coordinates structure and document import.
-<<<<<<< HEAD
- * 
- * @author Alar Kvell
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
  */
 public class PostipoissImporter implements SaveListener {
     protected final Log log = LogFactory.getLog(getClass());
@@ -301,26 +292,14 @@ public class PostipoissImporter implements SaveListener {
     // SaveListener that sets draft=true on document
 
     @Override
-<<<<<<< HEAD
-    public void validate(DynamicBase dynamicObject, ValidationHelper validationHelper) {
-=======
     public void validate(DocumentDynamic document, ValidationHelper validationHelper) {
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         // do nothing
     }
 
     @Override
-<<<<<<< HEAD
-    public void save(DynamicBase document) {
-        if (document instanceof DocumentDynamic) {
-            ((DocumentDynamic) document).setDraft(true);
-            ((DocumentDynamic) document).setDraftOrImapOrDvk(true);
-        }
-=======
     public void save(DocumentDynamic document) {
         document.setDraft(true);
         document.setDraftOrImapOrDvk(true);
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     @Override

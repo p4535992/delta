@@ -1,6 +1,2 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<<<<<<< HEAD
-<Context cachingAllowed="false" docBase="c:/workspace/mvdhs/build/exploded"/>
-=======
 <Context cachingAllowed="false" docBase="c:/workspace/delta/build/exploded"/>
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5

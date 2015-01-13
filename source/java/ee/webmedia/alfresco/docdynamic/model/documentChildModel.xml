@@ -66,18 +66,12 @@
          <parent>doccom:metadataContainer</parent>
       </type>
 
-<<<<<<< HEAD
-      <type name="docchild:applicantTraining">
-         <parent>doccom:metadataContainer</parent>
-      </type>
-=======
 <!--
       Uncomment when implemented
       <type name="docchild:applicantTraining">
          <parent>doccom:metadataContainer</parent>
       </type>
 -->
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
    </types>
    <aspects>
@@ -130,11 +124,8 @@
          </associations>
       </aspect>
 
-<<<<<<< HEAD
-=======
 <!--
       Uncomment when implemented
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
       <aspect name="docchild:applicantTrainingContainer">
          <associations>
             <child-association name="docchild:applicantTraining">
@@ -144,20 +135,13 @@
                </source>
                <target>
                   <class>docchild:applicantTraining</class>
-<<<<<<< HEAD
-                  <mandatory>true</mandatory><!--  At least one applicantTraining is required -->
-=======
                   <mandatory>true</mandatory> At least one applicantTraining is required
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
                   <many>true</many>
                </target>
             </child-association>
          </associations>
       </aspect>
-<<<<<<< HEAD
-=======
 -->
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
    </aspects>
 

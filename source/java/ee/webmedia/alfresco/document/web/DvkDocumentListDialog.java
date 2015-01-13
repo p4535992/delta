@@ -5,12 +5,6 @@ import javax.faces.event.ActionEvent;
 
 import ee.webmedia.alfresco.utils.MessageUtil;
 
-<<<<<<< HEAD
-/**
- * @author Alar Kvell
- */
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 public class DvkDocumentListDialog extends BaseDocumentListDialog {
     private static final long serialVersionUID = 1L;
 

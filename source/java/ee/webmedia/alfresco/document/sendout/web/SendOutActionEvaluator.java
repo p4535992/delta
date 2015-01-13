@@ -12,21 +12,12 @@ import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel.Props;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
-<<<<<<< HEAD
-import ee.webmedia.alfresco.document.web.evaluator.DocumentNotInDraftsFunctionActionEvaluator;
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import ee.webmedia.alfresco.document.web.evaluator.DocumentSavedActionEvaluator;
 import ee.webmedia.alfresco.document.web.evaluator.ViewStateActionEvaluator;
 import ee.webmedia.alfresco.workflow.service.HasNoStoppedOrInprogressWorkflowsEvaluator;
 
 /**
  * Evaluator, that evaluates to true if user is admin or document manager or document owner.
-<<<<<<< HEAD
- * 
- * @author Erko Hansar
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
  */
 public class SendOutActionEvaluator extends BaseActionEvaluator {
 
@@ -38,10 +29,6 @@ public class SendOutActionEvaluator extends BaseActionEvaluator {
             return false;
         }
         boolean result = new ViewStateActionEvaluator().evaluate(node) && new DocumentSavedActionEvaluator().evaluate(node)
-<<<<<<< HEAD
-                && new DocumentNotInDraftsFunctionActionEvaluator().evaluate(node)
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
                 && node.hasPermission(DocumentCommonModel.Privileges.EDIT_DOCUMENT);
         if (result) {
             final Map<String, Object> props = node.getProperties();

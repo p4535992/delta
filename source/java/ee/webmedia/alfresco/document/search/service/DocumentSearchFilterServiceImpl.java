@@ -6,12 +6,6 @@ import org.alfresco.service.namespace.QName;
 import ee.webmedia.alfresco.document.search.model.DocumentSearchModel;
 import ee.webmedia.alfresco.filter.service.AbstractFilterServiceImpl;
 
-<<<<<<< HEAD
-/**
- * @author Alar Kvell
- */
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 public class DocumentSearchFilterServiceImpl extends AbstractFilterServiceImpl implements DocumentSearchFilterService {
 
     @Override

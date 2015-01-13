@@ -3,33 +3,6 @@ package ee.webmedia.alfresco.workflow.service;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
-<<<<<<< HEAD
-import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
-
-import javax.faces.event.ActionEvent;
-
-import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.util.Pair;
-import org.apache.commons.lang.StringUtils;
-import org.springframework.util.Assert;
-
-import ee.webmedia.alfresco.app.AppConstants;
-import ee.webmedia.alfresco.common.web.BeanHelper;
-import ee.webmedia.alfresco.common.web.WmNode;
-import ee.webmedia.alfresco.utils.MessageUtil;
-import ee.webmedia.alfresco.utils.RepoUtil;
-import ee.webmedia.alfresco.utils.UserUtil;
-import ee.webmedia.alfresco.workflow.model.CompoundWorkflowType;
-import ee.webmedia.alfresco.workflow.model.RelatedUrl;
-import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
-
-/**
- * @author Alar Kvell
- */
-public class CompoundWorkflow extends BaseWorkflowObject implements Serializable, Comparable<CompoundWorkflow> {
-=======
 import java.util.List;
 
 import org.alfresco.service.cmr.repository.NodeRef;
@@ -39,21 +12,12 @@ import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 
 public class CompoundWorkflow extends BaseWorkflowObject implements Serializable {
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     private static final long serialVersionUID = 1L;
 
     private final NodeRef parent;
     private final List<Workflow> workflows = new ArrayList<Workflow>();
     private List<CompoundWorkflow> otherCompoundWorkflows = new ArrayList<CompoundWorkflow>();
     private final List<Workflow> removedWorkflows = new ArrayList<Workflow>();
-<<<<<<< HEAD
-    private Integer numberOfDocuments;
-    private final List<NodeRef> newAssocs = new ArrayList<NodeRef>();
-    private final List<RelatedUrl> newRelatedUrls = new ArrayList<RelatedUrl>();
-
-    private List<Pair<String, Object[]>> reviewTaskDvkInfoMessages;
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
     public CompoundWorkflow(WmNode node, NodeRef parent) {
         super(node);
@@ -61,11 +25,7 @@ public class CompoundWorkflow extends BaseWorkflowObject implements Serializable
         this.parent = parent;
     }
 
-<<<<<<< HEAD
-    protected CompoundWorkflow copy() {
-=======
     public CompoundWorkflow copy() {
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         return copyImpl(new CompoundWorkflow(getNode().clone(), parent));
     }
 
@@ -78,15 +38,6 @@ public class CompoundWorkflow extends BaseWorkflowObject implements Serializable
         for (Workflow removedWorkflow : removedWorkflows) {
             compoundWorkflow.removedWorkflows.add(removedWorkflow.copy(compoundWorkflow));
         }
-<<<<<<< HEAD
-        for (NodeRef docRef : newAssocs) {
-            compoundWorkflow.newAssocs.add(docRef);
-        }
-        for (RelatedUrl relatedUrl : newRelatedUrls) {
-            compoundWorkflow.newRelatedUrls.add(relatedUrl);
-        }
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         @SuppressWarnings("unchecked")
         T result = (T) compoundWorkflow;
         return result;
@@ -150,209 +101,10 @@ public class CompoundWorkflow extends BaseWorkflowObject implements Serializable
         setProp(WorkflowCommonModel.Props.OWNER_NAME, ownerName);
     }
 
-<<<<<<< HEAD
-    @SuppressWarnings("unchecked")
-    public String getOwnerStructUnit() {
-        return UserUtil.getDisplayUnit((List<String>) getNode().getProperties().get(WorkflowCommonModel.Props.OWNER_ORGANIZATION_NAME));
-    }
-
-    @SuppressWarnings("unchecked")
-    public List<String> getOwnerStructUnitProp() {
-        return (List<String>) getProp(WorkflowCommonModel.Props.OWNER_ORGANIZATION_NAME);
-    }
-
-    public void setOwnerStructUnit(List<String> structUnit) {
-        setProp(WorkflowCommonModel.Props.OWNER_ORGANIZATION_NAME, (Serializable) structUnit);
-    }
-
-    public String getOwnerJobTitle() {
-        return getProp(WorkflowCommonModel.Props.OWNER_JOB_TITLE);
-    }
-
-    public void setOwnerJobTitle(String ownerJobTitle) {
-        setProp(WorkflowCommonModel.Props.OWNER_JOB_TITLE, ownerJobTitle);
-    }
-
-    public CompoundWorkflowType getTypeEnum() {
-        String typeStr = getProp(WorkflowCommonModel.Props.TYPE);
-        return StringUtils.isBlank(typeStr) ? null : CompoundWorkflowType.valueOf(typeStr);
-    }
-
-    public void setTypeEnum(CompoundWorkflowType type) {
-        setProp(WorkflowCommonModel.Props.TYPE, type.name());
-    }
-
-    public String getCreatedDateStr() {
-        Date created = getCreatedDateTime();
-        return created != null ? Task.dateTimeFormat.format(created) : "";
-    }
-
-    public Date getCreatedDateTime() {
-        return getProp(WorkflowCommonModel.Props.CREATED_DATE_TIME);
-    }
-
-    public String getStartedDateStr() {
-        Date started = getStartedDateTime();
-        return started != null ? Task.dateFormat.format(started) : "";
-    }
-
-    public String getStoppedDateStr() {
-        Date stopped = getStoppedDateTime();
-        return stopped != null ? Task.dateFormat.format(stopped) : "";
-    }
-
-    public String getEndedDateStr() {
-        Date ended = getEndedDateTime();
-        return ended != null ? Task.dateFormat.format(ended) : "";
-    }
-
-    public Date getEndedDateTime() {
-        return getProp(WorkflowCommonModel.Props.FINISHED_DATE_TIME);
-    }
-
-    public String getComment() {
-        return getProp(WorkflowCommonModel.Props.COMMENT);
-    }
-
-    public String getWorkflowTypeString() {
-        return MessageUtil.getMessage(getTypeEnum());
-    }
-
-    public String getTitle() {
-        return getProp(WorkflowCommonModel.Props.TITLE);
-    }
-
-    public void setTitle(String title) {
-        setProp(WorkflowCommonModel.Props.TITLE, title);
-    }
-
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     @Override
     protected String additionalToString() {
         return "\n  parent=" + getParent() + "\n  workflows=" + WmNode.toString(getWorkflows()) + "\n  removedWorkflows="
                 + WmNode.toString(getRemovedWorkflows());
     }
 
-<<<<<<< HEAD
-    public boolean isDocumentWorkflow() {
-        return getTypeEnum() == null || isType(CompoundWorkflowType.DOCUMENT_WORKFLOW);
-    }
-
-    public boolean isIndependentWorkflow() {
-        return isType(CompoundWorkflowType.INDEPENDENT_WORKFLOW);
-    }
-
-    public boolean isCaseFileWorkflow() {
-        return isType(CompoundWorkflowType.CASE_FILE_WORKFLOW);
-    }
-
-    public String action() {
-        if (isIndependentWorkflow()) {
-            return "dialog:compoundWorkflowDialog";
-        }
-
-        // DocumentDynamicDialog and CaseFileDialog handle the navigation with actionListeners
-        return null;
-    }
-
-    public void actionListener(ActionEvent event) {
-        if (isDocumentWorkflow()) {
-            BeanHelper.getDocumentDynamicDialog().openFromChildList(event);
-        } else if (isIndependentWorkflow()) {
-            BeanHelper.getCompoundWorkflowDialog().setupWorkflowFromList(event);
-        } else if (isCaseFileWorkflow()) {
-            BeanHelper.getCaseFileDialog().openFromChildList(event);
-        }
-    }
-
-    private boolean isType(CompoundWorkflowType compoundWorkflowType) {
-        Assert.notNull(compoundWorkflowType);
-        return getTypeEnum() == compoundWorkflowType;
-    }
-
-    public void setMainDocument(NodeRef nodeRef) {
-        setProp(WorkflowCommonModel.Props.MAIN_DOCUMENT, nodeRef);
-    }
-
-    public NodeRef getMainDocument() {
-        return getProp(WorkflowCommonModel.Props.MAIN_DOCUMENT);
-    }
-
-    public List<NodeRef> getDocumentsToSign() {
-        List<NodeRef> documentsToSign = getPropList(WorkflowCommonModel.Props.DOCUMENTS_TO_SIGN);
-        if (documentsToSign == null) {
-            documentsToSign = new ArrayList<NodeRef>();
-            setPropList(WorkflowCommonModel.Props.DOCUMENTS_TO_SIGN, documentsToSign);
-        } else {
-            // If compound workflow is imported, it may contain null value for documentsToSign property,
-            // in contrast to [] (empty list) value that is assigned when new compound workflow is saved in Delta.
-            // As general behavior, null values in multivalued properties are converted to [null] (list containing one null element)
-            // (see HibernateNodeServiceImpl.convertToPublicProperties, comment "There is custom change to Alfresco default implementation...").
-            // But here we assume that no null values are inserted (and should not be inserted) as actual values for the property, so we ignore null values
-            for (Iterator<NodeRef> it = documentsToSign.iterator(); it.hasNext();) {
-                if (it.next() == null) {
-                    it.remove();
-                }
-            }
-        }
-        return documentsToSign;
-    }
-
-    public List<String> getDocumentsToSignNodeRefIds() {
-        return RepoUtil.getNodeRefIds(getDocumentsToSign());
-    }
-
-    public void setNumberOfDocuments(int numberOfDocuments) {
-        this.numberOfDocuments = numberOfDocuments;
-    }
-
-    public int getNumberOfDocuments() {
-        if (numberOfDocuments == null) {
-            if (isDocumentWorkflow()) {
-                numberOfDocuments = 1;
-            } else {
-                numberOfDocuments = BeanHelper.getWorkflowService().getCompoundWorkflowDocumentCount(getNodeRef());
-            }
-        }
-        return numberOfDocuments;
-    }
-
-    public String getNumberOfDocumentsStr() {
-        return new Integer(getNumberOfDocuments()).toString();
-    }
-
-    @Override
-    public int compareTo(CompoundWorkflow wf) {
-        String ownerName = getOwnerName();
-        if (StringUtils.isNotBlank(ownerName)) {
-            if (StringUtils.isBlank(wf.getOwnerName())) {
-                return -1;
-            }
-            return AppConstants.DEFAULT_COLLATOR.compare(ownerName, wf.getOwnerName());
-        }
-        return 0;
-    }
-
-    public List<NodeRef> getNewAssocs() {
-        return newAssocs;
-    }
-
-    public List<RelatedUrl> getNewRelatedUrls() {
-        return newRelatedUrls;
-    }
-
-    public List<Pair<String, Object[]>> getReviewTaskDvkInfoMessages() {
-        if (reviewTaskDvkInfoMessages == null) {
-            reviewTaskDvkInfoMessages = new ArrayList<Pair<String, Object[]>>();
-        }
-        return reviewTaskDvkInfoMessages;
-    }
-
-    public void setReviewTaskDvkInfoMessages(List<Pair<String, Object[]>> reviewTaskDvkInfoMessages) {
-        this.reviewTaskDvkInfoMessages = reviewTaskDvkInfoMessages;
-    }
-
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 }

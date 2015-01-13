@@ -1,9 +1,5 @@
 package ee.webmedia.alfresco.classificator.web;
 
-<<<<<<< HEAD
-import static ee.webmedia.alfresco.classificator.web.ClassificatorUtil.getClassificatorReorderHelper;
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import static ee.webmedia.alfresco.common.web.BeanHelper.getClassificatorService;
 
 import java.util.ArrayList;
@@ -30,10 +26,6 @@ import ee.webmedia.alfresco.classificator.model.Classificator;
 import ee.webmedia.alfresco.classificator.model.ClassificatorValue;
 import ee.webmedia.alfresco.classificator.service.ClassificatorServiceImpl;
 import ee.webmedia.alfresco.common.web.BeanHelper;
-<<<<<<< HEAD
-import ee.webmedia.alfresco.docadmin.web.ListReorderHelper;
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
@@ -51,19 +43,11 @@ public class ClassificatorDetailsDialog extends BaseDialogBean {
     private transient UIRichList richList;
 
     private Map<String, ClassificatorValue> originalValues;
-<<<<<<< HEAD
-    private Map<String, ClassificatorValue> originalValuesToSort;
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     private List<ClassificatorValue> classificatorValues;
     private List<ClassificatorValue> addedClassificatorValues;
     private Classificator selectedClassificator;
     private Node classificatorNode;
     private String searchCriteria = "";
-<<<<<<< HEAD
-    private boolean savedClassificator;
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
     @Override
     public void init(Map<String, String> parameters) {
@@ -139,10 +123,6 @@ public class ClassificatorDetailsDialog extends BaseDialogBean {
             } else {
                 distinctValues.add(valueName);
             }
-<<<<<<< HEAD
-            originalValuesToSort.put(classificatorValue.getNodeRef().toString(), classificatorValue);
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         }
 
         boolean hasErrors = false;
@@ -159,19 +139,7 @@ public class ClassificatorDetailsDialog extends BaseDialogBean {
                 MessageUtil.addErrorMessage(message);
             }
         } else {
-<<<<<<< HEAD
-            ListReorderHelper.reorder(originalValuesToSort.values(), getClassificatorReorderHelper());
-            for (ClassificatorValue classificatorValue : classificatorValues) {
-                String classificatorRef = classificatorValue.getNodeRef().toString();
-                if (originalValuesToSort.containsKey(classificatorRef)) {
-                    classificatorValue.setOrder(originalValuesToSort.get(classificatorRef).getOrder());
-                }
-            }
-            BeanHelper.getClassificatorService().updateClassificatorValues(selectedClassificator, classificatorNode, originalValues,
-                    new ArrayList<ClassificatorValue>(originalValuesToSort.values()), addedClassificatorValues);
-=======
             BeanHelper.getClassificatorService().updateClassificatorValues(selectedClassificator, classificatorNode, originalValues, classificatorValues, addedClassificatorValues);
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             reloadSavedData(selectedClassificator.getNodeRef());
             MessageUtil.addInfoMessage("save_success");
         }
@@ -200,14 +168,8 @@ public class ClassificatorDetailsDialog extends BaseDialogBean {
     }
 
     /** used by delete action to do actual deleting (after user has confirmed deleting in DeleteDialog) */
-<<<<<<< HEAD
-    public String deleteClassificator(@SuppressWarnings("unused") ActionEvent event) {
-        getClassificatorService().deleteClassificator(selectedClassificator);
-        return getCloseOutcome(2);
-=======
     public void deleteClassificator(@SuppressWarnings("unused") ActionEvent event) {
         getClassificatorService().deleteClassificator(selectedClassificator);
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     /**
@@ -242,10 +204,6 @@ public class ClassificatorDetailsDialog extends BaseDialogBean {
         classificatorValues.remove(classificatorValue);
         if (originalValues.containsKey(ref)) {
             originalValues.remove(ref);
-<<<<<<< HEAD
-            originalValuesToSort.remove(ref);
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             BeanHelper.getClassificatorService().removeClassificatorValueByNodeRef(selectedClassificator, ref);
         } else {
             addedClassificatorValues.remove(classificatorValue);
@@ -286,10 +244,6 @@ public class ClassificatorDetailsDialog extends BaseDialogBean {
 
     protected void resetData() {
         originalValues = null;
-<<<<<<< HEAD
-        originalValuesToSort = null;
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         classificatorValues = null;
         selectedClassificator = null;
         addedClassificatorValues = null;
@@ -301,20 +255,10 @@ public class ClassificatorDetailsDialog extends BaseDialogBean {
         if (selectedClassificator != null) {
             classificatorValues = BeanHelper.getClassificatorService().getAllClassificatorValues(selectedClassificator);
             originalValues = new TreeMap<String, ClassificatorValue>();
-<<<<<<< HEAD
-            originalValuesToSort = new TreeMap<String, ClassificatorValue>();
-            for (ClassificatorValue cv : classificatorValues) {
-                originalValues.put(cv.getNodeRef().toString(), new ClassificatorValue(cv));
-                originalValuesToSort.put(cv.getNodeRef().toString(), new ClassificatorValue(cv));
-            }
-            addedClassificatorValues = new ArrayList<ClassificatorValue>();
-            getClassificatorReorderHelper().markBaseState(classificatorValues);
-=======
             for (ClassificatorValue cv : classificatorValues) {
                 originalValues.put(cv.getNodeRef().toString(), new ClassificatorValue(cv));
             }
             addedClassificatorValues = new ArrayList<ClassificatorValue>();
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         }
     }
 
@@ -322,10 +266,6 @@ public class ClassificatorDetailsDialog extends BaseDialogBean {
         if (StringUtils.isNotBlank(getSearchCriteria())) {
             clearRichList();
             classificatorValues = BeanHelper.getClassificatorService().searchValues(getSearchCriteria(), selectedClassificator.getNodeRef());
-<<<<<<< HEAD
-            getClassificatorReorderHelper().markBaseState(classificatorValues);
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         } else {
             MessageUtil.addInfoMessage("classificators_error_emptySearchField");
         }

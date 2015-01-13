@@ -65,21 +65,6 @@
             </property>            
          </properties>
       </type>
-<<<<<<< HEAD
-      
-      <type name="docsearch:objectFilter">
-         <parent>docsearch:filter</parent>
-         <properties>
-            <property name="docsearch:objectType">
-               <type>d:text</type>
-            </property>  
-            <property name="docsearch:objectTitle">
-               <type>d:text</type>
-            </property>
-         </properties>
-      </type>
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
    </types>
 

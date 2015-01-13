@@ -21,11 +21,6 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
  * Dialog for scanned documents list
-<<<<<<< HEAD
- * 
- * @author Romet Aidla
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
  */
 public class ScannedDocumentsList extends BaseDialogBean implements FolderListDialog {
     private static final long serialVersionUID = 0L;

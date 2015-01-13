@@ -15,11 +15,6 @@ import org.apache.log4j.Logger;
 
 /**
  * Log tables bootstrap: makes sure that delta_log* tables (2) are present, and creates them when necessary.
-<<<<<<< HEAD
- * 
- * @author Martti Tamm
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
  */
 public abstract class CreateTableBootstrap extends AbstractModuleComponent {
 

@@ -21,15 +21,7 @@ import ee.webmedia.alfresco.utils.UserUtil;
 import ee.webmedia.alfresco.workflow.model.TaskAndDocument;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
-<<<<<<< HEAD
-import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
 
-/**
- * @author Erko Hansar
- */
-=======
-
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 public class TaskInfo implements Serializable, Comparable<TaskInfo>, CssStylable, CreatedAndRegistered {
 
     private static final long serialVersionUID = 1L;
@@ -37,10 +29,6 @@ public class TaskInfo implements Serializable, Comparable<TaskInfo>, CssStylable
     private Node task;
     private Node workflow;
     private Node document;
-<<<<<<< HEAD
-    private CompoundWorkflow compoundWorkflow;
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     private String cssStyleClass;
 
     public TaskInfo() {
@@ -79,41 +67,12 @@ public class TaskInfo implements Serializable, Comparable<TaskInfo>, CssStylable
     // LIST FIELD GETTERS:
 
     public String getDocType() {
-<<<<<<< HEAD
-        if (document == null) {
-            return null;
-        }
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         DocumentTypeConverter docTypeConverter = new DocumentTypeConverter();
         String docTypeId = (String) document.getProperties().get(DocumentAdminModel.Props.OBJECT_TYPE_ID);
         return docTypeConverter.convertSelectedValueToString(docTypeId);
     }
 
     public String getRegNum() {
-<<<<<<< HEAD
-        return document == null ? null : (String) document.getProperties().get(DocumentCommonModel.Props.REG_NUMBER);
-    }
-
-    public Date getRegDate() {
-        return (document == null) ? null : (Date) document.getProperties().get(DocumentCommonModel.Props.REG_DATE_TIME);
-    }
-
-    /**
-     * NB! This method is used for JSP sorting and returns values from different objects.
-     * @return document title or compound workflow title or empty string
-     */
-    public String getDocName() {
-        if (!isLinkedReviewTask() && getCompoundWorkflow().isDocumentWorkflow()) {
-            return (String) document.getProperties().get(DocumentCommonModel.Props.DOC_NAME);
-        } else if (isLinkedReviewTask()) {
-            return (String) task.getProperties().get(WorkflowSpecificModel.Props.COMPOUND_WORKFLOW_TITLE);
-        } else if (hasCompoundWorkflow() && (getCompoundWorkflow().isIndependentWorkflow() || getCompoundWorkflow().isCaseFileWorkflow())) {
-            return getCompoundWorkflowTitle();
-        }
-
-        return ""; // If we reach here, then bean/JSP usage must be revised.
-=======
         return (String) document.getProperties().get(DocumentCommonModel.Props.REG_NUMBER);
     }
 
@@ -123,7 +82,6 @@ public class TaskInfo implements Serializable, Comparable<TaskInfo>, CssStylable
 
     public String getDocName() {
         return (String) document.getProperties().get(DocumentCommonModel.Props.DOC_NAME);
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     public String getCreatorName() {
@@ -147,11 +105,7 @@ public class TaskInfo implements Serializable, Comparable<TaskInfo>, CssStylable
     }
 
     public String getTaskTypeText() {
-<<<<<<< HEAD
-        return workflow == null ? MessageUtil.getMessage(task.getType().getLocalName()) : MessageUtil.getMessage(workflow.getType().getLocalName());
-=======
         return MessageUtil.getMessage(workflow.getType().getLocalName());
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     public Date getDueDate() {
@@ -168,11 +122,7 @@ public class TaskInfo implements Serializable, Comparable<TaskInfo>, CssStylable
     }
 
     public String getRegDateStr() {
-<<<<<<< HEAD
-        return (getRegDateTime() != null) ? dateFormat.format(getRegDateTime()) : "";
-=======
         return getRegDateTime() != null ? dateFormat.format(getRegDateTime()) : "";
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     public String getStartedDateStr() {
@@ -193,30 +143,6 @@ public class TaskInfo implements Serializable, Comparable<TaskInfo>, CssStylable
 
     @Override
     public Date getCreated() {
-<<<<<<< HEAD
-        return document == null ? null : (Date) document.getProperties().get(ContentModel.PROP_CREATED);
-    }
-
-    public String getComment() {
-        if (task.getType().equals(WorkflowSpecificModel.Types.REVIEW_TASK) || task.getType().equals(WorkflowSpecificModel.Types.OPINION_TASK)
-                || isLinkedReviewTask()) {
-            return (String) task.getProperties().get(WorkflowCommonModel.Props.OUTCOME);
-        }
-
-        String outcome = (String) task.getProperties().get(WorkflowCommonModel.Props.OUTCOME);
-        if (StringUtils.isBlank(outcome)) {
-            outcome = "";
-        }
-        String comment = (String) task.getProperties().get(WorkflowSpecificModel.Props.COMMENT);
-        if (StringUtils.isBlank(comment)) {
-            comment = "";
-        }
-        if (StringUtils.isBlank(outcome) && StringUtils.isBlank(comment)) {
-            return null;
-        }
-        return outcome + ": " + comment;
-
-=======
         return (Date) document.getProperties().get(ContentModel.PROP_CREATED);
     }
 
@@ -237,7 +163,6 @@ public class TaskInfo implements Serializable, Comparable<TaskInfo>, CssStylable
             }
             return outcome + ": " + comment;
         }
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     public String getResponsible() {
@@ -249,21 +174,11 @@ public class TaskInfo implements Serializable, Comparable<TaskInfo>, CssStylable
     }
 
     public String getResolution() {
-<<<<<<< HEAD
-        if (WorkflowSpecificModel.Types.ASSIGNMENT_TASK.equals(task.getType())) {
-            return (String) task.getProperties().get(WorkflowSpecificModel.Props.RESOLUTION);
-        } else if (isLinkedReviewTask()) {
-            return (String) task.getProperties().get(WorkflowSpecificModel.Props.WORKFLOW_RESOLUTION);
-        }
-        
-        return (String) workflow.getProperties().get(WorkflowSpecificModel.Props.RESOLUTION);
-=======
         if (task.getType().equals(WorkflowSpecificModel.Types.ASSIGNMENT_TASK)) {
             return (String) task.getProperties().get(WorkflowSpecificModel.Props.RESOLUTION);
         } else {
             return (String) workflow.getProperties().get(WorkflowSpecificModel.Props.RESOLUTION);
         }
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     public String getOverdue() {
@@ -296,86 +211,10 @@ public class TaskInfo implements Serializable, Comparable<TaskInfo>, CssStylable
         if (cssStyleClass == null) {
             final Date dueDate = (Date) task.getProperties().get(WorkflowSpecificModel.Props.DUE_DATE);
             final Date completedDate = (Date) task.getProperties().get(WorkflowCommonModel.Props.COMPLETED_DATE_TIME);
-<<<<<<< HEAD
-            final String docStyleClass = document == null ? null : document.getType().getLocalName();
-=======
             final String docStyleClass = document.getType().getLocalName();
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             cssStyleClass = TaskAndDocument.getCssStyleClass(docStyleClass, completedDate, dueDate);
         }
         return cssStyleClass;
     }
 
-<<<<<<< HEAD
-    public void setCompoundWorkflow(CompoundWorkflow compoundWorkflow) {
-        this.compoundWorkflow = compoundWorkflow;
-    }
-
-    public CompoundWorkflow getCompoundWorkflow() {
-        return compoundWorkflow;
-    }
-
-    public String getCompoundWorkflowType() {
-        return hasCompoundWorkflow() ? compoundWorkflow.getWorkflowTypeString() : "";
-    }
-
-    public String getCompoundWorkflowTitle() {
-        return hasCompoundWorkflow() ? compoundWorkflow.getTitle() : "";
-    }
-
-    public String getCompoundWorkflowOwnerName() {
-        return hasCompoundWorkflow() ? compoundWorkflow.getOwnerName() : "";
-    }
-
-    public String getCompoundWorkflowOwnerOrganizationPath() {
-        return hasCompoundWorkflow() ? compoundWorkflow.getOwnerStructUnit() : "";
-    }
-
-    public String getCompoundWorkflowOwnerJobTitle() {
-        return hasCompoundWorkflow() ? compoundWorkflow.getOwnerJobTitle() : "";
-    }
-
-    public String getCompoundWorkflowCreatedDateTime() {
-        return hasCompoundWorkflow() ? compoundWorkflow.getCreatedDateStr() : "";
-    }
-
-    public String getCompoundWorkflowStartedDateTime() {
-        return hasCompoundWorkflow() ? compoundWorkflow.getStartedDateStr() : "";
-    }
-
-    public String getCompoundWorkflowStoppedDateTime() {
-        return hasCompoundWorkflow() ? compoundWorkflow.getStoppedDateStr() : "";
-    }
-
-    public String getCompoundWorkflowFinishedDateTime() {
-        return hasCompoundWorkflow() ? compoundWorkflow.getEndedDateStr() : "";
-    }
-
-    public String getCompoundWorkflowComment() {
-        String linkedReviewTaskComment = isLinkedReviewTask() ? (String) task.getProperties().get(WorkflowSpecificModel.Props.COMPOUND_WORKFLOW_COMMENT) : "";
-        return hasCompoundWorkflow() ? compoundWorkflow.getComment() : StringUtils.defaultString(linkedReviewTaskComment, "");
-    }
-
-    public String getCompoundWorkflowStatus() {
-        return hasCompoundWorkflow() ? compoundWorkflow.getStatus() : "";
-    }
-
-    public String getCompoundWorkflowDocumentCount() {
-        return hasCompoundWorkflow() ? compoundWorkflow.getNumberOfDocumentsStr() : "";
-    }
-
-    private boolean hasCompoundWorkflow() {
-        return compoundWorkflow != null;
-    }
-
-    public String getOriginalTaskObjectUrl() {
-        return (String) task.getProperties().get(WorkflowSpecificModel.Props.ORIGINAL_TASK_OBJECT_URL);
-    }
-
-    public boolean isLinkedReviewTask() {
-        return WorkflowSpecificModel.Types.LINKED_REVIEW_TASK.equals(task.getType());
-    }
-
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 }

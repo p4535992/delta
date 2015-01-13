@@ -23,12 +23,6 @@ import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageDataWrapper;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
-<<<<<<< HEAD
-/**
- * @author Keit Tehvan
- */
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 public class AddressbookGroupsManagerBean implements Serializable {
     private static final long serialVersionUID = 1L;
     public static final String BEAN_NAME = "AddressbookGroupsManagerBean";

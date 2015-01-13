@@ -45,10 +45,6 @@ import org.apache.commons.lang.StringUtils;
 import ee.webmedia.alfresco.common.ajax.AjaxUpdateable;
 import ee.webmedia.alfresco.common.propertysheet.component.HandlesShowUnvalued;
 import ee.webmedia.alfresco.common.propertysheet.converter.ListNonBlankStringsWithCommaConverter;
-<<<<<<< HEAD
-import ee.webmedia.alfresco.common.propertysheet.converter.ListToLongestStringConverter;
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.ComponentPropVO;
 import ee.webmedia.alfresco.common.propertysheet.search.Search;
 import ee.webmedia.alfresco.common.web.UserContactGroupSearchBean;
@@ -59,11 +55,6 @@ import ee.webmedia.alfresco.utils.ComponentUtil;
  * an empty row at the end (a {@code null} element is added to each {@link List}). When cells are first generated, it is ensured that each column's {@link List} contains the same
  * amount of elements as the list with greatest amount of elements. Again, {@code null} elements are appended, where necessary. <br>
  * Component configuration attributes are documented at {@link MultiValueEditorGenerator}.
-<<<<<<< HEAD
- * 
- * @author Alar Kvell
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
  */
 public class MultiValueEditor extends UIComponentBase implements AjaxUpdateable, NamingContainer, HandlesShowUnvalued {
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(MultiValueEditor.class);
@@ -71,10 +62,6 @@ public class MultiValueEditor extends UIComponentBase implements AjaxUpdateable,
     protected static final String PROPERTY_SHEET_VAR = "propertySheetVar";
     public static final String PREPROCESS_CALLBACK = "preprocessCallback";
     protected static final String FILTERS = "filters";
-<<<<<<< HEAD
-    protected static final String FILTER_INDEX = "filterIndex";
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     public static final String ATTR_CLICK_LINK_ID = "clickLinkId";
 
     public static final String MULTI_VALUE_EDITOR_FAMILY = MultiValueEditor.class.getCanonicalName();
@@ -136,10 +123,6 @@ public class MultiValueEditor extends UIComponentBase implements AjaxUpdateable,
         Application application = getFacesContext().getApplication();
         MethodBinding b = application.createMethodBinding(pickerCallback, GenericPickerTag.QUERYCALLBACK_CLASS_ARGS);
         picker.setQueryCallback(b);
-<<<<<<< HEAD
-        picker.setShowSelectButton((Boolean) getAttributes().get(Search.FILTERS_ALLOW_GROUP_SELECT_KEY));
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
         String filters = (String) getAttributes().get(FILTERS);
         if (StringUtils.isNotBlank(filters)) {
@@ -148,15 +131,9 @@ public class MultiValueEditor extends UIComponentBase implements AjaxUpdateable,
             picker.setShowFilter(true);
         }
 
-<<<<<<< HEAD
-        String filterIndex = (String) getAttributes().get(FILTER_INDEX);
-        if (StringUtils.isNotBlank(filterIndex) && StringUtils.isNumeric(filterIndex)) {
-            picker.setDefaultFilterIndex(Integer.parseInt(filterIndex));
-=======
         Object filterIndex = getAttributes().get(Search.FILTER_INDEX);
         if (filterIndex instanceof Integer) {
             picker.setDefaultFilterIndex((Integer) filterIndex);
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         } else {
             picker.setDefaultFilterIndex(UserContactGroupSearchBean.USERS_FILTER);
         }
@@ -414,21 +391,6 @@ public class MultiValueEditor extends UIComponentBase implements AjaxUpdateable,
             requestMap.put(VALUE_INDEX_IN_MULTIVALUED_PROPERTY, rowIndex);
             componentPropVO.getCustomAttributes().put(VALUE_INDEX_IN_MULTIVALUED_PROPERTY, rowIndex.toString());
             final UIComponent component = ComponentUtil.generateAndAddComponent(context, componentPropVO, propertySheet, rowContainerChildren);
-<<<<<<< HEAD
-            if (component instanceof ValueHolder) {
-                Converter converter = ((ValueHolder) component).getConverter();
-                if (converter instanceof ListNonBlankStringsWithCommaConverter) {
-                    Converter singleValueConverter = ((ListNonBlankStringsWithCommaConverter) converter).getSingleValueConverter();
-                    if ((StringUtils.isBlank(componentPropVO.getCustomAttributes().get(PropertySheetElementReader.ATTR_CONVERTER)))) {
-                        // Retract only MultiValueConverter that was set in BaseComponentGenerator#setupConverter
-                        ((ValueHolder) component).setConverter(singleValueConverter);
-                        // Some other converters that are not in componentPropVO#converter, are totally OK (like DatePickerConverter)
-                    }
-                    if (singleValueConverter instanceof ListToLongestStringConverter) {
-                        ((ValueHolder) component).setConverter(singleValueConverter);
-                    }
-                }
-=======
             if (StringUtils.isBlank(componentPropVO.getCustomAttributes().get(PropertySheetElementReader.ATTR_CONVERTER))
                     && component instanceof ValueHolder) {
                 Converter converter = ((ValueHolder) component).getConverter();
@@ -438,7 +400,6 @@ public class MultiValueEditor extends UIComponentBase implements AjaxUpdateable,
                     ((ValueHolder) component).setConverter(singleValueConverter);
                 }
                 // Some other converters that are not in componentPropVO#converter, are totally OK (like DatePickerConverter)
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             }
             // save valueIndex also to component, as it can be used in MandatoryIfValidator,
             // to find other UIInputs based on given property name and valueIndex(if component is multiValued)

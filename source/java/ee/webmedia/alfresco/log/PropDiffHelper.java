@@ -29,11 +29,6 @@ import ee.webmedia.alfresco.utils.MessageUtil;
  *         // ... other properties to watch with labels
  *         .diff(mapOfCurrentProperties, mapOfNewProperties);
  * </pre>
-<<<<<<< HEAD
- * 
- * @author Martti Tamm
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
  */
 public class PropDiffHelper {
 
@@ -155,23 +150,6 @@ public class PropDiffHelper {
         return result;
     }
 
-<<<<<<< HEAD
-    public String value(QName prop, Object value, String defaultStr) {
-        if (prop != null) {
-            if (value instanceof Date && propDateTimes.contains(prop)) {
-                return DATE_TIME_FORMAT.format((Date) value);
-            }
-            if (value instanceof String && propEnums.containsKey(prop) && StringUtils.isNotBlank((String) value)) {
-                @SuppressWarnings("rawtypes")
-                Class c = propEnums.get(prop);
-                try {
-                    @SuppressWarnings({ "unchecked", "rawtypes" })
-                    Enum e = Enum.valueOf(c, (String) value);
-                    return MessageUtil.getMessage(e);
-                } catch (IllegalArgumentException ex) {
-                    return (String) value;
-                }
-=======
     private String value(QName prop, Object value, String defaultStr) {
         if (value instanceof Date && propDateTimes.contains(prop)) {
             return DATE_TIME_FORMAT.format((Date) value);
@@ -185,7 +163,6 @@ public class PropDiffHelper {
                 return MessageUtil.getMessage(e);
             } catch (IllegalArgumentException ex) {
                 return (String) value;
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             }
         }
         return value(value, defaultStr);

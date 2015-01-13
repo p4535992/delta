@@ -2,11 +2,7 @@ package ee.webmedia.alfresco.testdata;
 
 import static ee.webmedia.alfresco.addressbook.model.AddressbookModel.URI;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getAddressbookService;
-<<<<<<< HEAD
-import static ee.webmedia.alfresco.common.web.BeanHelper.getCaseFileService;
-=======
 import static ee.webmedia.alfresco.common.web.BeanHelper.getAuthorityService;
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import static ee.webmedia.alfresco.common.web.BeanHelper.getCaseService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getClassificatorService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getContentService;
@@ -15,15 +11,6 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentConfigServic
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDynamicService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentListService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getFileFolderService;
-<<<<<<< HEAD
-import static ee.webmedia.alfresco.common.web.BeanHelper.getFunctionsService;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getGeneralService;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getMimetypeService;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getNamespaceService;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getNodeService;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getOrganizationStructureService;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getPersonService;
-=======
 import static ee.webmedia.alfresco.common.web.BeanHelper.getFileService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getFunctionsService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getGeneralService;
@@ -33,7 +20,6 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getOrganizationStructur
 import static ee.webmedia.alfresco.common.web.BeanHelper.getPermissionService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getPersonService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getPrivilegeService;
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import static ee.webmedia.alfresco.common.web.BeanHelper.getRegisterService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getSeriesService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getSubstituteService;
@@ -42,11 +28,6 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getVolumeService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getWorkflowService;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.FILE_CONTENTS;
-<<<<<<< HEAD
-import static ee.webmedia.alfresco.privilege.service.PrivilegeUtil.getPrivsWithDependencies;
-import static ee.webmedia.alfresco.privilege.service.PrivilegeUtil.getRequiredPrivsForInprogressTask;
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -71,10 +52,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-<<<<<<< HEAD
-=======
 import java.util.Map.Entry;
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -91,23 +69,15 @@ import org.alfresco.repo.content.transform.ContentTransformer;
 import org.alfresco.repo.management.subsystems.DefaultChildApplicationContextManager;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
-<<<<<<< HEAD
-import org.alfresco.repo.transaction.RetryingTransactionHelper;
-import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
-=======
 import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
 import org.alfresco.service.cmr.dictionary.DataTypeDefinition;
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.ContentData;
 import org.alfresco.service.cmr.repository.ContentIOException;
 import org.alfresco.service.cmr.repository.ContentReader;
 import org.alfresco.service.cmr.repository.ContentWriter;
 import org.alfresco.service.cmr.repository.NodeRef;
-<<<<<<< HEAD
-=======
 import org.alfresco.service.cmr.security.AccessPermission;
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import org.alfresco.service.cmr.security.AuthorityService;
 import org.alfresco.service.cmr.security.AuthorityType;
 import org.alfresco.service.namespace.NamespaceService;
@@ -129,10 +99,6 @@ import com.csvreader.CsvReader;
 import com.csvreader.CsvWriter;
 
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
-<<<<<<< HEAD
-import ee.webmedia.alfresco.casefile.service.CaseFile;
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import ee.webmedia.alfresco.cases.model.Case;
 import ee.webmedia.alfresco.cases.model.CaseModel;
 import ee.webmedia.alfresco.classificator.constant.FieldType;
@@ -142,13 +108,7 @@ import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.classificator.enums.SendMode;
 import ee.webmedia.alfresco.classificator.enums.VolumeType;
 import ee.webmedia.alfresco.classificator.model.ClassificatorValue;
-<<<<<<< HEAD
-import ee.webmedia.alfresco.common.model.DynamicBase;
 import ee.webmedia.alfresco.common.web.BeanHelper;
-import ee.webmedia.alfresco.docadmin.service.CaseFileType;
-=======
-import ee.webmedia.alfresco.common.web.BeanHelper;
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
 import ee.webmedia.alfresco.docadmin.service.DocumentType;
 import ee.webmedia.alfresco.docadmin.service.DocumentTypeVersion;
@@ -158,25 +118,12 @@ import ee.webmedia.alfresco.docconfig.bootstrap.SystematicDocumentType;
 import ee.webmedia.alfresco.docconfig.bootstrap.SystematicFieldGroupNames;
 import ee.webmedia.alfresco.docconfig.generator.SaveListener;
 import ee.webmedia.alfresco.docconfig.service.DynamicPropertyDefinition;
-<<<<<<< HEAD
-import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
-import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
-import ee.webmedia.alfresco.document.assocsdyn.service.DocumentAssociationsService;
-import ee.webmedia.alfresco.document.file.model.FileModel;
-import ee.webmedia.alfresco.document.file.service.FileService;
-import ee.webmedia.alfresco.document.model.Document;
-=======
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
 import ee.webmedia.alfresco.document.file.model.FileModel;
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.functions.model.Function;
 import ee.webmedia.alfresco.functions.model.FunctionsModel;
 import ee.webmedia.alfresco.orgstructure.model.OrganizationStructure;
-<<<<<<< HEAD
-import ee.webmedia.alfresco.privilege.service.PrivilegeService;
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import ee.webmedia.alfresco.privilege.service.PrivilegeUtil;
 import ee.webmedia.alfresco.register.model.Register;
 import ee.webmedia.alfresco.register.model.RegisterModel;
@@ -188,29 +135,15 @@ import ee.webmedia.alfresco.utils.UserUtil;
 import ee.webmedia.alfresco.versions.model.VersionsModel;
 import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
-<<<<<<< HEAD
-import ee.webmedia.alfresco.workflow.model.CompoundWorkflowType;
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 import ee.webmedia.alfresco.workflow.service.Task;
-<<<<<<< HEAD
-import ee.webmedia.alfresco.workflow.service.WorkflowUtil;
-import ee.webmedia.alfresco.workflow.service.Task;
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import ee.webmedia.alfresco.workflow.service.type.WorkflowType;
 import ee.webmedia.xtee.client.dhl.DhlXTeeService.SendStatus;
 
 /**
  * Test data generator. Can't use any Lucene searches, because lucene indexing may be turned off during test data generation and then lucene search results would be out-of-date.
-<<<<<<< HEAD
- * 
- * @author Alar Kvell
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
  */
 public class TestDataService implements SaveListener {
     protected final Log log = LogFactory.getLog(getClass());
@@ -311,40 +244,22 @@ public class TestDataService implements SaveListener {
     private List<Pair<String, String>> functionMarksAndTitles;
     private List<Pair<String, String>> seriesMarksAndTitles;
     private List<Pair<String, String>> volumesMarksAndTitles;
-<<<<<<< HEAD
-=======
     private List<String> groupNames;
     private List<String> groupLevel1Names;
     private List<String> groupLevel2Names;
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     private List<Integer> registerIds;
     private Set<NodeRef> functions;
     private List<NodeRef> functionsList;
     private Set<SerieVO> series;
-<<<<<<< HEAD
-    private List<SerieVO> seriesWithAnnualOrSubjectVolTypeList;
-    private List<SerieVO> seriesWithCaseFilesList;
-    private Map<NodeRef, Integer> seriesMaxOrder;
-    private Map<NodeRef, SerieVO> seriesByVolumeRef;
-    private Set<SerieVO> seriesWithCaseFiles;
-    private Set<NodeRef> volumes;
-    private List<NodeRef> volumesWithCases;
-    private Set<NodeRef> caseFiles;
-=======
     private List<SerieVO> seriesList;
     private Map<NodeRef, Integer> seriesMaxOrder;
     private Map<NodeRef, SerieVO> seriesByVolumeRef;
     private Set<NodeRef> volumes;
     private List<NodeRef> volumesWithCases;
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     private Set<NodeRef> cases;
     private List<Node> contactNodes;
     private List<DocumentLocationVO> docLocations;
     private List<NodeRef> docs;
-<<<<<<< HEAD
-    private List<NodeRef> independentCompoundWorkflows;
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     private Map<String /* fileUrl */, Object /* lock object */> textFileLocks;
     private Object textFileLocksGlobalLock;
     private Random docLocationsRandom;
@@ -353,31 +268,6 @@ public class TestDataService implements SaveListener {
     private Map<String, List<ClassificatorValue>> classificators;
     private List<Pair<RootOrgUnit, List<OrgUnit>>> orgUnits;
     private List<OrganizationStructure> structUnits;
-<<<<<<< HEAD
-    private Map<String, OrganizationStructure> structUnitsByUnitId;
-    List<CaseFileType> caseFileTypes;
-
-    private final FastDateFormat dateFormat = FastDateFormat.getInstance("dd.MM.yyyy");
-
-    private int orgUnitsCount = 478;
-    private int usersCount = 5900;
-    private int contactsCount = 2000;
-    private int registersCount = 200;
-    private int functionsCount = 49;
-    private int seriesCount = 503;
-    private int volumesCount = 5000;
-    private int caseFilesCount = 0;
-    private int closedCaseFilesCount = 0;
-    private int casesCount = 500;
-    private int documentsCount = 1714500;
-    private int independentWorkflowsCount = 0;
-    private int finishedIndependentWorkflowsCount = 0;
-    private int maxDocumentsInIndependentWorkflow = 0;
-    private boolean documentWorkflowsEnabled = true;
-    private boolean caseFileWorkflowsEnabled = true;
-    private boolean filesEnabled = true;
-    private int documentAndWorkflowGeneratorThreads = 1;
-=======
     private Map<Integer, OrganizationStructure> structUnitsByUnitId;
 
     private final FastDateFormat dateFormat = FastDateFormat.getInstance("dd.MM.yyyy");
@@ -393,7 +283,6 @@ public class TestDataService implements SaveListener {
     private int documentsCount = 700000; // 1076040 would be max in SpacesStore in 2y2m
     private boolean filesEnabled = true;
     private int documentGeneratorThreads = 1;
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
     private void executeUpdater() throws Exception {
         usersFirstNames = loadCsv("users-firstnames.csv");
@@ -411,43 +300,23 @@ public class TestDataService implements SaveListener {
         files = loadCsvMultiCols("files.csv");
         // transmittalModes?
 
-<<<<<<< HEAD
-        filterFiles();
-=======
         //filterFiles();
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
         // FUTURE: document creation, registration, file creation and workflow times that vary in the past
 
         createOrgUnits(orgUnitsCount); // TODO fix orgUnits
         createUsers(usersCount);
-<<<<<<< HEAD
-        if (usersCount > 0) {
-            createSubstitutes();
-        }
-=======
         createSubstitutes();
         createGroups();
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         createContacts(contactsCount);
         createRegisters(registersCount, documentsCount, seriesCount);
         createFunctions(functionsCount);
         createSeries(seriesCount);
         createVolumes(volumesCount); // TODO et kõikide sarjade all oleks vähemalt üks toimik
-<<<<<<< HEAD
-        createCaseFiles(caseFilesCount); // TODO et kõikide sarjade all oleks vähemalt üks toimik
-        createCases(casesCount); // TODO et kõikide toimikute all oleks vähemalt üks asi
-        createDocuments(documentsCount);
-        createIndependentCompoundWorkflows(independentWorkflowsCount);
-
-        // TODO arhiivi ka genereerida! fn-sari-toimik-asi võib identsed või samade arvude alusel genereerida vist, aga lihtsalt suletud
-        // TODO: kas on vaja genereerida mustandite funktsioone (function.documentActivitiesAreLimited=true)?
-=======
         createCases(casesCount); // TODO et kõikide toimikute all oleks vähemalt üks asi
         createDocuments(documentsCount);
 
         // TODO arhiivi ka genereerida! fn-sari-toimik-asi võib identsed või samade arvude alusel genereerida vist, aga lihtsalt suletud
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
         // TODO progressi raporteerimine iga 50 ühiku järel - panna tsükli algusesse, siis on näha kohe
         // TODO statistika kirjutamine csv failidesse
@@ -692,22 +561,13 @@ public class TestDataService implements SaveListener {
         protected final List<String> secondLevelNameCandidates;
 
         public RootOrgUnit(String name, int subUnitsCountGoal, List<String> secondLevelNameCandidates) {
-<<<<<<< HEAD
-            super(name, null, 0, null);
-=======
             super(name, 0, 0, null);
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             this.subUnitsCountGoal = subUnitsCountGoal;
             this.secondLevelNameCandidates = secondLevelNameCandidates;
         }
 
-<<<<<<< HEAD
-        public void setUnitId(String unitId) {
-            Assert.isTrue(StringUtils.isBlank(this.unitId) && StringUtils.isNotBlank(unitId));
-=======
         public void setUnitId(int unitId) {
             Assert.isTrue(this.unitId == 0 && unitId > 0);
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             this.unitId = unitId;
         }
 
@@ -728,20 +588,12 @@ public class TestDataService implements SaveListener {
 
     public static class OrgUnit {
         protected String name;
-<<<<<<< HEAD
-        protected String unitId;
-=======
         protected int unitId;
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         protected int level;
         protected String path;
         protected List<OrgUnit> subUnits = new ArrayList<OrgUnit>();
 
-<<<<<<< HEAD
-        public OrgUnit(String name, String unitId, int level, String parentPath) {
-=======
         public OrgUnit(String name, int unitId, int level, String parentPath) {
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             this.name = name;
             this.unitId = unitId;
             this.level = level;
@@ -752,11 +604,7 @@ public class TestDataService implements SaveListener {
             return name;
         }
 
-<<<<<<< HEAD
-        public String getUnitId() {
-=======
         public int getUnitId() {
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             return unitId;
         }
 
@@ -784,11 +632,7 @@ public class TestDataService implements SaveListener {
 
     private void createOrgUnits(int count) {
         structUnits = getOrganizationStructureService().getAllOrganizationStructures();
-<<<<<<< HEAD
-        structUnitsByUnitId = new HashMap<String, OrganizationStructure>();
-=======
         structUnitsByUnitId = new HashMap<Integer, OrganizationStructure>();
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         // if (count < 5) {
         // return;
         // }
@@ -810,15 +654,7 @@ public class TestDataService implements SaveListener {
 
         int maxUnitId = 1;
         for (OrganizationStructure structUnit : structUnits) {
-<<<<<<< HEAD
-            try {
-                maxUnitId = Math.max(maxUnitId, Integer.parseInt(structUnit.getUnitId()));
-            } catch (NumberFormatException e) {
-                // Ignore
-            }
-=======
             maxUnitId = Math.max(maxUnitId, structUnit.getUnitId());
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             copy.remove(structUnit.getName());
             structUnitsByUnitId.put(structUnit.getUnitId(), structUnit);
         }
@@ -826,27 +662,16 @@ public class TestDataService implements SaveListener {
         for (Pair<RootOrgUnit, List<OrgUnit>> pair : orgUnits) {
             RootOrgUnit rootOrgUnit = pair.getFirst();
             for (OrganizationStructure structUnit : structUnits) {
-<<<<<<< HEAD
-                if (structUnit.getName().equals(rootOrgUnit.getName()) && StringUtils.isBlank(structUnit.getSuperUnitId())) {
-=======
                 if (structUnit.getName().equals(rootOrgUnit.getName()) && structUnit.getSuperUnitId() == 0) {
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
                     rootOrgUnit.setUnitId(structUnit.getUnitId());
                     addSubUnits(rootOrgUnit, structUnits, rootOrgUnit.getSubUnits());
                     break;
                 }
             }
-<<<<<<< HEAD
-            if (StringUtils.isBlank(rootOrgUnit.getUnitId())) {
-                OrganizationStructure orgStruct = new OrganizationStructure();
-                orgStruct.setUnitId(Integer.toString(++maxUnitId));
-                orgStruct.setSuperUnitId(null);
-=======
             if (rootOrgUnit.getUnitId() < 1) {
                 OrganizationStructure orgStruct = new OrganizationStructure();
                 orgStruct.setUnitId(++maxUnitId);
                 orgStruct.setSuperUnitId(0);
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
                 orgStruct.setName(rootOrgUnit.getName());
                 orgStruct.setOrganizationPath(UserUtil.getPathHierarchy(rootOrgUnit.getPath(), ","));
                 getOrganizationStructureService().createOrganisationStructure(orgStruct);
@@ -859,11 +684,7 @@ public class TestDataService implements SaveListener {
             log.info("Found " + rootOrgUnit.getSubUnitsCount() + " subunits for " + rootOrgUnit.getName() + ", goal is " + rootOrgUnit.getSubUnitsCountGoal());
             while (rootOrgUnit.getSubUnitsCount() < rootOrgUnit.getSubUnitsCountGoal()) {
                 OrganizationStructure orgStruct = new OrganizationStructure();
-<<<<<<< HEAD
-                orgStruct.setUnitId(Integer.toString(++maxUnitId));
-=======
                 orgStruct.setUnitId(++maxUnitId);
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
                 OrgUnit parentOrgUnit = getRandom(pair.getSecond());
                 if (parentOrgUnit.getLevel() > 2) {
                     continue; // only 3 levels of orgUnits
@@ -910,10 +731,7 @@ public class TestDataService implements SaveListener {
 
     private void createUsers(int count) throws Exception {
         log.info("Creating users");
-<<<<<<< HEAD
-=======
         userDataByUserName = new ConcurrentHashMap<String, Pair<NodeRef, Map<QName, Serializable>>>();
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         DefaultChildApplicationContextManager authentication = BeanHelper.getSpringBean(DefaultChildApplicationContextManager.class, "Authentication");
         Collection<String> instanceIds = authentication.getInstanceIds();
         Set<String> zones = new HashSet<String>();
@@ -934,42 +752,16 @@ public class TestDataService implements SaveListener {
         }
         log.info("There are " + userNames.size() + " users; goal was " + count + " users");
 
-<<<<<<< HEAD
-        List<Map<QName, Serializable>> userProps = UserUtil.getFilteredTaskOwnerStructUnitUsersProps(userNames, BeanHelper.getNodeService(), BeanHelper.getParametersService(),
-                BeanHelper.getDocumentSearchService(), BeanHelper.getUserService());
-        File filename = new File(dataFolder, "users.csv");
-        CsvWriter writer = new CsvWriter(new FileOutputStream(filename), ';', Charset.forName("UTF-8"));
-        try {
-            for (Map<QName, Serializable> userProp : userProps) {
-                writer.writeRecord(new String[] { (String) userProp.get(ContentModel.PROP_USERNAME) });
-=======
         File filename = new File(dataFolder, "users.csv");
         CsvWriter writer = new CsvWriter(new FileOutputStream(filename), ';', Charset.forName("UTF-8"));
         try {
             for (String userName : userNames) {
                 writer.writeRecord(new String[] { userName });
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             }
         } finally {
             writer.close();
         }
-<<<<<<< HEAD
-        log.info("Wrote " + userProps.size() + " usernames to file " + filename);
-
-        filename = new File(dataFolder, "usersfirstlastnames.csv");
-        writer = new CsvWriter(new FileOutputStream(filename), ';', Charset.forName("UTF-8"));
-        try {
-            for (Map<QName, Serializable> userProp : userProps) {
-                writer.writeRecord(new String[] { (String) userProp.get(ContentModel.PROP_FIRSTNAME), (String) userProp.get(ContentModel.PROP_LASTNAME) });
-            }
-        } finally {
-            writer.close();
-        }
-        log.info("Wrote " + userProps.size() + " user first names, last names to file " + filename);
-
-=======
         log.info("Wrote " + userNames.size() + " usernames to file " + filename);
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         userNamesList = new ArrayList<String>(userNames);
         Collections.shuffle(userNamesList);
     }
@@ -977,10 +769,6 @@ public class TestDataService implements SaveListener {
     private Map<String, Pair<NodeRef, Map<QName, Serializable>>> userDataByUserName;
 
     private void createSubstitutes() {
-<<<<<<< HEAD
-        userDataByUserName = new ConcurrentHashMap<String, Pair<NodeRef, Map<QName, Serializable>>>();
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         if (userNamesList.size() < 2) {
             return;
         }
@@ -1046,11 +834,7 @@ public class TestDataService implements SaveListener {
     private Pair<NodeRef, Map<QName, Serializable>> getUserData(String userName) {
         Pair<NodeRef, Map<QName, Serializable>> userData = userDataByUserName.get(userName);
         if (userData == null) {
-<<<<<<< HEAD
-            NodeRef userRef = getPerson(userName);
-=======
             NodeRef userRef = getUserService().getPerson(userName);
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             Map<QName, Serializable> userProps = getNodeService().getProperties(userRef);
             userData = Pair.newInstance(userRef, userProps);
             userDataByUserName.put(userName, userData);
@@ -1058,11 +842,7 @@ public class TestDataService implements SaveListener {
         return userData;
     }
 
-<<<<<<< HEAD
-    private void createUser(final String userName, Set<String> userNames, Set<String> zones) {
-=======
     private void createUser(String userName, Set<String> userNames, Set<String> zones) {
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         if (userNames.contains(userName)) {
             return;
         }
@@ -1088,29 +868,11 @@ public class TestDataService implements SaveListener {
         // properties.put(ContentModel.PROP_SERVICE_RANK, reader.get(11));
 
         getPersonService().createPerson(properties, zones);
-<<<<<<< HEAD
-        getPerson(userName);
-=======
         getPersonService().getPerson(userName); // to create home folder
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         userNames.add(userName);
         log.info("Created user " + userName + " " + firstName + " " + lastName);
     }
 
-<<<<<<< HEAD
-    private NodeRef getPerson(final String userName) {
-        return BeanHelper.getTransactionService().getRetryingTransactionHelper().doInTransaction(new RetryingTransactionHelper.RetryingTransactionCallback<NodeRef>() {
-
-            @Override
-            public NodeRef execute() throws Throwable {
-                return getPersonService().getPerson(userName); // to create home folder
-            }
-
-        }, false);
-    }
-
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     private String testEmail;
 
     public String getTestEmail() {
@@ -1161,10 +923,6 @@ public class TestDataService implements SaveListener {
             props.put(FunctionsModel.Props.TYPE.toString(), mark.indexOf(".") == -1 ? "funktsioon" : "allfunktsioon");
             props.put(FunctionsModel.Props.STATUS.toString(), DocListUnitStatus.OPEN.getValueName());
             props.put(FunctionsModel.Props.ORDER.toString(), order + 1);
-<<<<<<< HEAD
-            props.put(FunctionsModel.Props.DOCUMENT_ACTIVITIES_ARE_LIMITED.toString(), false);
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             getFunctionsService().saveOrUpdate(function, rootRef);
             functions.add(function.getNodeRef());
             order = Math.max(function.getOrder(), order);
@@ -1199,14 +957,9 @@ public class TestDataService implements SaveListener {
     private void createSeries(int count) {
         Random registersRandom = new Random();
         Random functionsRandom = new Random();
-<<<<<<< HEAD
-
-        List<DocumentType> documentTypes = getDocumentAdminService().getDocumentTypes(DocumentAdminService.DONT_INCLUDE_CHILDREN);
-=======
         Random groupLevel2Random = new Random();
 
         List<DocumentType> documentTypes = getDocumentAdminService().getDocumentTypes(DocumentAdminService.DONT_INCLUDE_CHILDREN, true);
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         for (Iterator<DocumentType> i = documentTypes.iterator(); i.hasNext();) {
             DocumentType docType = i.next();
             if (SystematicDocumentType.INCOMING_LETTER.isSameType(docType.getId()) || SystematicDocumentType.OUTGOING_LETTER.isSameType(docType.getId())) {
@@ -1217,11 +970,6 @@ public class TestDataService implements SaveListener {
 
         List<Pair<String, String>> copy = new ArrayList<Pair<String, String>>(seriesMarksAndTitles);
         series = new HashSet<TestDataService.SerieVO>();
-<<<<<<< HEAD
-        seriesWithCaseFiles = new HashSet<TestDataService.SerieVO>();
-        seriesWithAnnualOrSubjectVolTypeList = new ArrayList<SerieVO>();
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         seriesMaxOrder = new HashMap<NodeRef, Integer>();
         for (NodeRef functionRef : functions) {
             checkStop();
@@ -1240,19 +988,7 @@ public class TestDataService implements SaveListener {
                     order = Math.max(order, serie.getOrder());
                 }
                 seriesMaxOrder.put(serie.getFunctionNodeRef(), order);
-<<<<<<< HEAD
-                SerieVO serieVO = new SerieVO(serie.getNode(), serie.getFunctionNodeRef());
-                series.add(serieVO);
-                List<String> volTypes = serieVO.getVolType();
-                if (volTypes.contains(VolumeType.CASE_FILE.name())) {
-                    seriesWithCaseFiles.add(serieVO);
-                }
-                if (volTypes.contains(VolumeType.ANNUAL_FILE.name()) || volTypes.contains(VolumeType.SUBJECT_FILE.name())) {
-                    seriesWithAnnualOrSubjectVolTypeList.add(serieVO);
-                }
-=======
                 series.add(new SerieVO(serie.getNode(), serie.getFunctionNodeRef()));
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             }
         }
         Iterator<Pair<String, String>> i = copy.iterator();
@@ -1260,20 +996,6 @@ public class TestDataService implements SaveListener {
             checkStop();
             Pair<String, String> entry = i.next();
             i.remove();
-<<<<<<< HEAD
-            createSerie(entry, count, documentTypes, docTypesCountRandom, functionsRandom, registersRandom);
-        }
-        while (series.size() < count) {
-            checkStop();
-            createSerie(getRandom(seriesMarksAndTitles), count, documentTypes, docTypesCountRandom, functionsRandom, registersRandom);
-        }
-        log.info("There are " + series.size() + " series; goal was " + count + " series");
-        seriesWithCaseFilesList = new ArrayList<SerieVO>(seriesWithCaseFiles);
-        Collections.shuffle(seriesWithAnnualOrSubjectVolTypeList);
-    }
-
-    private void createSerie(Pair<String, String> entry, int count, List<DocumentType> documentTypes, Random docTypesCountRandom, Random functionsRandom, Random registersRandom) {
-=======
             createSerie(entry, count, documentTypes, docTypesCountRandom, functionsRandom, registersRandom, groupLevel2Random);
         }
         while (series.size() < count) {
@@ -1287,7 +1009,6 @@ public class TestDataService implements SaveListener {
 
     private void createSerie(Pair<String, String> entry, int count, List<DocumentType> documentTypes, Random docTypesCountRandom, Random functionsRandom, Random registersRandom,
             Random groupLevel2Random) {
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         String mark = entry.getFirst();
         String title = entry.getSecond();
 
@@ -1327,42 +1048,6 @@ public class TestDataService implements SaveListener {
         props.put(SeriesModel.Props.REGISTER.toString(), getRandomGaussian3(registerIds, registersRandom));
         props.put(SeriesModel.Props.DOC_NUMBER_PATTERN.toString(), "{S}/{DN}");
         ArrayList<String> volType = new ArrayList<String>();
-<<<<<<< HEAD
-        if (caseFilesCount <= 0) {
-            double random = Math.random() * 3;
-            if (random < 1.0d) {
-                volType.add(VolumeType.ANNUAL_FILE.name());
-                volType.add(VolumeType.SUBJECT_FILE.name());
-            } else if (random < 2.0d) {
-                volType.add(VolumeType.SUBJECT_FILE.name());
-            } else {
-                volType.add(VolumeType.ANNUAL_FILE.name());
-            }
-        } else {
-            double random = Math.random() * 7;
-            if (random < 1.0d) {
-                volType.add(VolumeType.ANNUAL_FILE.name());
-                volType.add(VolumeType.SUBJECT_FILE.name());
-                volType.add(VolumeType.CASE_FILE.name());
-            } else if (random < 2.0d) {
-                volType.add(VolumeType.SUBJECT_FILE.name());
-                volType.add(VolumeType.CASE_FILE.name());
-            } else if (random < 3.0d) {
-                volType.add(VolumeType.ANNUAL_FILE.name());
-                volType.add(VolumeType.CASE_FILE.name());
-            } else if (random < 4.0d) {
-                volType.add(VolumeType.ANNUAL_FILE.name());
-                volType.add(VolumeType.SUBJECT_FILE.name());
-            } else if (random < 5.0d) {
-                volType.add(VolumeType.ANNUAL_FILE.name());
-            } else if (random < 6.0d) {
-                volType.add(VolumeType.SUBJECT_FILE.name());
-            } else {
-                volType.add(VolumeType.CASE_FILE.name());
-            }
-        }
-        props.put(SeriesModel.Props.VOL_TYPE.toString(), volType);
-=======
         double random = Math.random() * 3;
         if (random < 1.0d) {
             volType.add(VolumeType.ANNUAL_FILE.name());
@@ -1383,7 +1068,6 @@ public class TestDataService implements SaveListener {
             retentionPeriod = 75;
         }
         props.put(SeriesModel.Props.RETENTION_PERIOD.toString(), retentionPeriod);
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         String accessRestriction;
         if (Math.random() < 0.9d) {
             accessRestriction = AccessRestriction.AK.getValueName();
@@ -1391,13 +1075,8 @@ public class TestDataService implements SaveListener {
             props.put(SeriesModel.Props.ACCESS_RESTRICTION_BEGIN_DATE.toString(), cal.getTime());
             if (Math.random() < 0.15d) {
                 props.put(SeriesModel.Props.ACCESS_RESTRICTION_END_DESC.toString(), getRandom(accessRestrictionEndDescs));
-<<<<<<< HEAD
-            } else {
-                cal.add(Calendar.YEAR, (int) (Math.random() * 75));
-=======
             } else if (retentionPeriod != null) {
                 cal.add(Calendar.YEAR, retentionPeriod);
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
                 props.put(SeriesModel.Props.ACCESS_RESTRICTION_END_DATE.toString(), cal.getTime());
             }
         } else {
@@ -1407,21 +1086,6 @@ public class TestDataService implements SaveListener {
         getSeriesService().saveOrUpdateWithoutReorder(serie);
         seriesMaxOrder.put(functionRef, order);
 
-<<<<<<< HEAD
-        SerieVO newSerie = new SerieVO(serie.getNode(), serie.getFunctionNodeRef());
-        series.add(newSerie);
-        if (volType.contains(VolumeType.CASE_FILE.name())) {
-            seriesWithCaseFiles.add(newSerie);
-        }
-        if (volType.contains(VolumeType.ANNUAL_FILE.name()) || volType.contains(VolumeType.SUBJECT_FILE.name())) {
-            seriesWithAnnualOrSubjectVolTypeList.add(newSerie);
-        }
-        log.info("Created series " + mark + " " + title);
-    }
-
-    private void createVolumes(int count) {
-        Random seriesRandom = new Random();
-=======
         series.add(new SerieVO(serie.getNode(), serie.getFunctionNodeRef()));
 
         // dok.halduritele lisada 2 priv alati
@@ -1497,7 +1161,6 @@ public class TestDataService implements SaveListener {
     private void createVolumes(int count) {
         Random seriesRandom = new Random();
         Random volumePrivilegesRandom = new Random();
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
         List<Pair<String, String>> copy = new ArrayList<Pair<String, String>>(volumesMarksAndTitles);
         volumes = new HashSet<NodeRef>();
@@ -1508,13 +1171,6 @@ public class TestDataService implements SaveListener {
             checkStop();
             List<Volume> allVolumes = getVolumeService().getAllVolumesBySeries(serie.getSeriesRef());
             for (Volume volume : allVolumes) {
-<<<<<<< HEAD
-                if (volume.isDynamic()) {
-                    // case files are handeled in createCaseFiles
-                    continue;
-                }
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
                 for (Iterator<Pair<String, String>> i = copy.iterator(); i.hasNext();) {
                     Pair<String, String> pair = i.next();
                     if (pair.getFirst().equals(stripAndTrim(volume.getVolumeMark())) && pair.getSecond().equals(stripAndTrim(volume.getTitle()))) {
@@ -1525,14 +1181,9 @@ public class TestDataService implements SaveListener {
                 volumes.add(volumeRef);
                 if (volume.isContainsCases()) {
                     volumesWithCases.add(volumeRef);
-<<<<<<< HEAD
-                }
-                docLocations.add(new DocumentLocationVO(serie, volumeRef));
-=======
                 } else {
                     docLocations.add(new DocumentLocationVO(serie, volumeRef));
                 }
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
                 seriesByVolumeRef.put(volumeRef, serie);
             }
         }
@@ -1541,81 +1192,16 @@ public class TestDataService implements SaveListener {
             checkStop();
             Pair<String, String> entry = i.next();
             i.remove();
-<<<<<<< HEAD
-            createVolume(entry, count, seriesRandom);
-        }
-        while (volumes.size() < count) {
-            checkStop();
-            createVolume(getRandom(volumesMarksAndTitles), count, seriesRandom);
-=======
             createVolume(entry, count, seriesRandom, volumePrivilegesRandom.nextDouble() >= 0.77d);
         }
         while (volumes.size() < count) {
             checkStop();
             createVolume(getRandom(volumesMarksAndTitles), count, seriesRandom, volumePrivilegesRandom.nextDouble() >= 0.77d);
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         }
         log.info("There are " + volumes.size() + " volumes; goal was " + count + " volumes");
         Collections.shuffle(volumesWithCases);
     }
 
-<<<<<<< HEAD
-    private void createCaseFiles(int count) {
-        List<Pair<String, String>> copy = new ArrayList<Pair<String, String>>(volumesMarksAndTitles);
-        caseFileTypes = BeanHelper.getDocumentAdminService().getAllCaseFileTypes(DocumentAdminService.DONT_INCLUDE_CHILDREN);
-        if (count > 0 && (caseFileTypes == null || caseFileTypes.isEmpty())) {
-            log.error("There are no case file types defined; skipping case file generation.");
-            return;
-        }
-        caseFiles = new HashSet<NodeRef>();
-        // seriesByCaseFileRef = new HashMap<NodeRef, SerieVO>();
-        for (SerieVO serie : series) {
-            checkStop();
-            List<Volume> allVolumes = getVolumeService().getAllVolumesBySeries(serie.getSeriesRef());
-            for (Volume volume : allVolumes) {
-                if (!volume.isDynamic()) {
-                    // volumes (i.e. not case files) are handeled in createVolume
-                    continue;
-                }
-                for (Iterator<Pair<String, String>> i = copy.iterator(); i.hasNext();) {
-                    Pair<String, String> pair = i.next();
-                    if (pair.getFirst().equals(stripAndTrim(volume.getVolumeMark())) && pair.getSecond().equals(stripAndTrim(volume.getTitle()))) {
-                        i.remove();
-                    }
-                }
-                NodeRef caseFileRef = volume.getNode().getNodeRef();
-                caseFiles.add(caseFileRef);
-                // seriesByCaseFileRef.put(caseFileRef, serie);
-            }
-        }
-        Iterator<Pair<String, String>> i = copy.iterator();
-        Random caseFileLocationsRandom = new Random();
-        double closedCaseFilesLikelyhood = caseFilesCount == 0 ? 0 : closedCaseFilesCount / caseFilesCount;
-        Random workflowRandom = new Random();
-        while (i.hasNext() && caseFiles.size() < count) {
-            checkStop();
-            Pair<String, String> entry = i.next();
-            i.remove();
-            createCaseFile(entry, count, caseFileLocationsRandom, closedCaseFilesLikelyhood, workflowRandom);
-        }
-        while (caseFiles.size() < count) {
-            checkStop();
-            createCaseFile(getRandom(volumesMarksAndTitles), count, caseFileLocationsRandom, closedCaseFilesLikelyhood, workflowRandom);
-        }
-        log.info("There are " + caseFiles.size() + " case files; goal was " + count + " case files");
-    }
-
-    private void createVolume(Pair<String, String> entry, int count, Random seriesRandom) {
-        String mark = entry.getFirst();
-        String title = entry.getSecond();
-
-        SerieVO serie = getRandomGaussian2(seriesWithAnnualOrSubjectVolTypeList, seriesRandom);
-        Volume volume = getVolumeService().createVolume(serie.getSeriesRef());
-        Map<String, Object> props = volume.getNode().getProperties();
-        List<String> volumeTypes = new ArrayList<String>(serie.getVolType());
-        volumeTypes.remove(VolumeType.CASE_FILE.name());
-        String volumeType = getRandom(volumeTypes);
-=======
     private void createVolume(Pair<String, String> entry, int count, Random seriesRandom, boolean addPrivileges) {
         String mark = entry.getFirst();
         String title = entry.getSecond();
@@ -1624,7 +1210,6 @@ public class TestDataService implements SaveListener {
         Volume volume = getVolumeService().createVolume(serie.getSeriesRef());
         Map<String, Object> props = volume.getNode().getProperties();
         String volumeType = getRandom(serie.getVolType());
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         if (VolumeType.SUBJECT_FILE.equals(volumeType)) {
             mark = serie.getMark();
         }
@@ -1642,93 +1227,6 @@ public class TestDataService implements SaveListener {
         volumes.add(volumeRef);
         if (isContainsCases) {
             volumesWithCases.add(volumeRef);
-<<<<<<< HEAD
-        }
-        docLocations.add(new DocumentLocationVO(serie, volumeRef));
-        seriesByVolumeRef.put(volumeRef, serie);
-        log.info("Created volume " + mark + " " + title);
-    }
-
-    private void createCaseFile(Pair<String, String> entry, int count, Random seriesRandom, double closedCaseFilesLikelyhood, Random workflowRandom) {
-        String mark = entry.getFirst();
-        String title = entry.getSecond();
-
-        SerieVO serie = getRandomGaussian2(seriesWithCaseFilesList, seriesRandom);
-        String typeId = getRandom(caseFileTypes).getId();
-        CaseFile caseFile = BeanHelper.getCaseFileService().createNewCaseFile(typeId, serie.getSeriesRef()).getFirst();
-
-        Map<String, Object> props = caseFile.getNode().getProperties();
-        String volumeType = getRandom(serie.getVolType());
-        props.put(VolumeModel.Props.VOLUME_MARK.toString(), mark);
-        props.put(VolumeModel.Props.TITLE.toString(), title);
-
-        Calendar cal = Calendar.getInstance();
-        // TODO: check how this calculation should be changed
-        cal.add(Calendar.DATE, (int) (Math.random() * (count / -5d)));
-        props.put(DocumentDynamicModel.Props.VALID_FROM.toString(), cal.getTime());
-        DocListUnitStatus status = DocListUnitStatus.OPEN;
-        if (Math.random() < closedCaseFilesLikelyhood) {
-            status = DocListUnitStatus.CLOSED;
-        }
-        props.put(DocumentDynamicModel.Props.STATUS.toString(), status.getValueName());
-
-        caseFile.setFunction(serie.getFunctionRef());
-        caseFile.setSeries(serie.getSeriesRef());
-
-        Map<String, Pair<DynamicPropertyDefinition, Field>> propDefs = getDocumentConfigService().getPropertyDefinitions(caseFile.getNode());
-        for (Pair<DynamicPropertyDefinition, Field> pair : propDefs.values()) {
-            DynamicPropertyDefinition propDef = pair.getFirst();
-            Field field = pair.getSecond();
-            if (field == null) {
-                continue;
-            }
-
-            Node propNode = caseFile.getNode();
-            QName[] hierarchy = propDef.getChildAssocTypeQNameHierarchy();
-            if (hierarchy != null) {
-                int i = 0;
-                while (i < hierarchy.length) {
-                    propNode = propNode.getAllChildAssociations(hierarchy[i]).get(0);
-                    i++;
-                }
-            }
-
-            QName propName = field.getQName();
-            Serializable value = (Serializable) propNode.getProperties().get(propName.toString());
-            String systematicGroupName = null;
-            if (field.getParent() instanceof FieldGroup && ((FieldGroup) field.getParent()).isSystematic()) {
-                systematicGroupName = ((FieldGroup) field.getParent()).getName();
-            }
-
-            if (SystematicFieldGroupNames.DOCUMENT_OWNER.equals(systematicGroupName)) {
-                continue;
-            } else if (SystematicFieldGroupNames.DOCUMENT_LOCATION.equals(systematicGroupName)) {
-                continue;
-            }
-
-            value = setPropValueIfNeeded(propDef, field, propNode, propName, value);
-
-        }
-        NodeRef caseFileRef = caseFile.getNodeRef();
-
-        getNodeService().addAspect(caseFileRef, DocumentCommonModel.Aspects.SEARCHABLE, null);
-        getCaseFileService().update(caseFile, Arrays.asList("TestDataService"));
-
-        int allTaskCount = 0;
-        if (caseFileWorkflowsEnabled) {
-            int compoundWorkflowCount = getCompoundWorkflowCount(workflowRandom);
-            for (int i = 0; i < compoundWorkflowCount; i++) {
-                Pair<NodeRef, Integer> pair = createWorkflows(caseFileRef, status == DocListUnitStatus.OPEN, typeId, CompoundWorkflowType.CASE_FILE_WORKFLOW);
-                allTaskCount += pair.getSecond();
-            }
-        }
-
-        // FUTURE: õiguseid (nii dokumendi kui sarja omad) praegu ei tee
-
-        caseFiles.add(caseFileRef);
-        seriesByVolumeRef.put(caseFileRef, serie);
-        log.info("Created caseFile " + mark + " " + title + (caseFileWorkflowsEnabled ? ", " + allTaskCount + " tasks" : ""));
-=======
         } else {
             docLocations.add(new DocumentLocationVO(serie, volumeRef));
         }
@@ -1752,7 +1250,6 @@ public class TestDataService implements SaveListener {
         }
 
         log.info("Created volume " + mark + " " + title);
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     private void createCases(int count) {
@@ -1816,8 +1313,6 @@ public class TestDataService implements SaveListener {
         log.info("Created case " + title);
     }
 
-<<<<<<< HEAD
-=======
     private void createGroups() {
         checkStop();
         log.info("Updating organization structure based groups");
@@ -1840,7 +1335,6 @@ public class TestDataService implements SaveListener {
         log.info("There are " + groupNames.size() + " groups (" + groupLevel1Names.size() + " first level groups, " + groupLevel2Names.size() + " second level groups)");
     }
 
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     private void createContacts(int count) {
         contactNodes = new ArrayList<Node>();
         contactNodes.addAll(getAddressbookService().listOrganization());
@@ -1908,17 +1402,10 @@ public class TestDataService implements SaveListener {
         Assert.isTrue(new HashSet<NodeRef>(docs).size() == docs.size());
         Collections.shuffle(docLocations);
 
-<<<<<<< HEAD
-        log.info("Starting " + documentAndWorkflowGeneratorThreads + " threads for generating documents");
-        List<Thread> threads = new ArrayList<Thread>();
-        try {
-            for (int i = 0; i < documentAndWorkflowGeneratorThreads; i++) {
-=======
         log.info("Starting " + documentGeneratorThreads + " threads for generating documents");
         List<Thread> threads = new ArrayList<Thread>();
         try {
             for (int i = 0; i < documentGeneratorThreads; i++) {
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
                 String threadName = "DocumentGeneratorThread-" + i;
                 log.info("Starting thread " + threadName);
                 Thread thread = new Thread(new Runnable() {
@@ -1948,10 +1435,6 @@ public class TestDataService implements SaveListener {
         try {
             log.info("Documents generator thread started");
             try {
-<<<<<<< HEAD
-                final Random workflowRandom = new Random();
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
                 while (docs.size() < documentsCount) {
                     checkStop();
                     try {
@@ -1962,11 +1445,7 @@ public class TestDataService implements SaveListener {
                                 new RetryingTransactionCallback<Pair<NodeRef, String>>() {
                                     @Override
                                     public Pair<NodeRef, String> execute() throws Throwable {
-<<<<<<< HEAD
-                                        return createDocument(docLocation, workflowRandom);
-=======
                                         return createDocument(docLocation);
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
                                     }
                                 }, false);
                         NodeRef docRef = pair.getFirst();
@@ -1974,11 +1453,7 @@ public class TestDataService implements SaveListener {
                         log.info("Created document " + docs.size() + " of " + documentsCount + " - " + docRef + " " + pair.getSecond());
                     } catch (Exception e) {
                         log.error("Documents generator thread error", e);
-<<<<<<< HEAD
-                        Thread.sleep(Math.max(documentAndWorkflowGeneratorThreads * 1000, 1000));
-=======
                         Thread.sleep(Math.max(documentGeneratorThreads * 1000, 1000));
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
                     }
                 }
             } catch (StopException e) {
@@ -1991,11 +1466,7 @@ public class TestDataService implements SaveListener {
         }
     }
 
-<<<<<<< HEAD
-    private Pair<NodeRef, String> createDocument(DocumentLocationVO docLocation, Random workflowRandom) throws Exception {
-=======
     private Pair<NodeRef, String> createDocument(DocumentLocationVO docLocation) throws Exception {
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         String docTypeId = getRandom(docLocation.getSeriesDocType());
         DocumentTypeVersion docVer = docVersions.get(docTypeId);
         if (docVer == null) {
@@ -2063,9 +1534,6 @@ public class TestDataService implements SaveListener {
                 continue;
             }
 
-<<<<<<< HEAD
-            value = setPropValueIfNeeded(propDef, field, propNode, propName, value);
-=======
             if (value == null
                     || (value instanceof String && StringUtils.isBlank((String) value))
                     || (value instanceof List && (((List<?>) value).size() == 0
@@ -2145,7 +1613,6 @@ public class TestDataService implements SaveListener {
 
                 propNode.getProperties().put(propName.toString(), value);
             }
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
         }
         NodeRef docRef = doc.getNodeRef();
@@ -2154,17 +1621,6 @@ public class TestDataService implements SaveListener {
         ArrayList<String> fileTitles = new ArrayList<String>();
         ContentWriter allWriter = null;
         int filesCount = 0;
-<<<<<<< HEAD
-        if (isFilesEnabled()) {
-            double r = Math.random() * 5d;
-            if (r > 4.5d) {
-                filesCount = (int) ((Math.random() * 30) + 5);
-                if (filesCount > 31) {
-                    filesCount = (int) ((Math.random() * 30) + 32);
-                }
-            } else if (r > 1) {
-                filesCount = ((int) r) - 1;
-=======
         double r = Math.random(); // 0×0,5+1×0,4+4,5×0,0995+45×0,0005 = 0,87
         if (isFilesEnabled() && r >= 0.5d) {
             if (r < 0.9d) {
@@ -2173,7 +1629,6 @@ public class TestDataService implements SaveListener {
                 filesCount = ((int) (Math.random() * 9)) + 2; // 2 - 10
             } else {
                 filesCount = ((int) (Math.random() * 90)) + 11; // 11 - 100
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             }
             Map<QName, Serializable> userProps = getUserData(getUserService().getCurrentUserName()).getSecond();
             allWriter = BeanHelper.getContentService().getWriter(docRef, FILE_CONTENTS, false);
@@ -2192,13 +1647,6 @@ public class TestDataService implements SaveListener {
         doc.setProp(DocumentCommonModel.Props.FILE_NAMES, fileTitles);
         doc.setProp(DocumentCommonModel.Props.FILE_CONTENTS, allWriter == null ? null : allWriter.getContentData());
         doc.setProp(DocumentCommonModel.Props.SEARCHABLE_SEND_MODE, new ArrayList<String>(0));
-<<<<<<< HEAD
-        getDocumentDynamicService().updateDocument(doc, Arrays.asList("TestDataService"), false, true);
-
-        // ASSOCS
-        Random assocsRandom = new Random();
-        int assocsCount = (docs.isEmpty() || Math.random() > 0.4d) ? 0 : Math.abs(getRandomGaussian2(assocsRandom, 16) - 8);
-=======
         getDocumentDynamicService().updateDocument(doc, Arrays.asList("TestDataService"), false);
 
         // ASSOCS
@@ -2213,7 +1661,6 @@ public class TestDataService implements SaveListener {
                 assocsCount = ((int) (Math.random() * 90)) + 11; // 11 - 100
             }
         }
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         Set<NodeRef> assocOtherDocRefs = new HashSet<NodeRef>();
         for (int i = 0; i < assocsCount; i++) {
             QName assocQName = DocumentCommonModel.Assocs.DOCUMENT_2_DOCUMENT;
@@ -2232,35 +1679,12 @@ public class TestDataService implements SaveListener {
             assocOtherDocRefs.add(otherDocRef);
         }
 
-<<<<<<< HEAD
-        int allTaskCount = 0;
-        if (documentWorkflowsEnabled) {
-            int compoundWorkflowCount = getCompoundWorkflowCount(workflowRandom);
-            if (compoundWorkflowCount > 0) {
-                boolean inProgress = !isRegistered;
-                // 10% registreerimata, neist 56% omab töövoogu, seega kokku 5,6%, aga see on teostamisel
-                // aga tahame et 1000 dokumenti 6000 kasutaja kohta oleksid registreerimiseks menüüpunktis
-                // 1714500 dokist 96012 dokki on regamata, aga teostamisel töövooga, seega 1,04% neist tahame lõpetada
-                if (inProgress && Math.random() < 0.0105d) {
-                    inProgress = false;
-                }
-
-                for (int i = 0; i < compoundWorkflowCount; i++) {
-                    allTaskCount += createWorkflows(docRef, inProgress, docTypeId, CompoundWorkflowType.DOCUMENT_WORKFLOW).getSecond();
-                }
-            }
-        }
-=======
         int allTaskCount = createWorkflows(docRef, !isRegistered, docTypeId);
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
         // SENDINFOS
         // How many documents match recipientFinishedDocuments query (are finished && have recipientName/additionalRecipientName/partyName field, that is non-empty)
         // depends on documentTypes.xml that is used. In case of our sample documentTypes.xml, 34% of generated documents match
         // 34% of 1 700 000 is 578 000; 100 of 578 000 is 0.0002
-<<<<<<< HEAD
-        if (Math.random() > 0.0002d) {
-=======
         @SuppressWarnings("unchecked")
         List<String> recipientName = (List<String>) doc.getProp(DocumentCommonModel.Props.RECIPIENT_NAME);
         @SuppressWarnings("unchecked")
@@ -2269,7 +1693,6 @@ public class TestDataService implements SaveListener {
                         && ((recipientName != null && !recipientName.isEmpty()) || (additionalRecipientName != null && !additionalRecipientName.isEmpty()))
                         && Math.random() > 0.0002d) {
 
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             Map<QName, Serializable> sendInfoProps = new HashMap<QName, Serializable>();
             sendInfoProps.put(DocumentCommonModel.Props.SEND_INFO_RESOLUTION, getRandom(docTitles));
             sendInfoProps.put(DocumentCommonModel.Props.SEND_INFO_RECIPIENT, getRandom(contacts));
@@ -2291,175 +1714,6 @@ public class TestDataService implements SaveListener {
         return Pair.newInstance(docRef, docTypeId + ", " + regNumber + ", " + filesCount + " files, " + assocOtherDocRefs.size() + " assocs, " + allTaskCount + " tasks");
     }
 
-<<<<<<< HEAD
-    public int getCompoundWorkflowCount(Random compoundWorkflowRandom) {
-        int compoundWorkflowCount;
-        double workflowRandom = compoundWorkflowRandom.nextDouble();
-        if (workflowRandom < 0.44d) {
-            compoundWorkflowCount = 0;
-        } else if (workflowRandom >= 0.44d && workflowRandom < 0.69d) {
-            compoundWorkflowCount = 1;
-        } else if (workflowRandom >= 0.69d && workflowRandom < 0.82d) {
-            compoundWorkflowCount = 2;
-        } else {
-            compoundWorkflowCount = (int) (Math.random() * 31 + 3);
-        }
-        return compoundWorkflowCount;
-    }
-
-    private Serializable setPropValueIfNeeded(DynamicPropertyDefinition propDef, Field field, Node propNode, QName propName, Serializable value) {
-        if (value == null
-                || (value instanceof String && StringUtils.isBlank((String) value))
-                || (value instanceof List && (((List<?>) value).size() == 0
-                || (((List<?>) value).size() == 1 && (((List<?>) value).get(0) == null
-                || (((List<?>) value).get(0) instanceof String && StringUtils.isBlank((String) ((List<?>) value).get(0)))))))) {
-
-            // Always fill empty fields that are mandatory; if not mandatory then fill only half of the fields
-            if (!field.isMandatory() && Math.random() < 0.5d) {
-                return value;
-            }
-
-            switch (field.getFieldTypeEnum()) {
-            case CHECKBOX:
-                value = Boolean.valueOf(Math.random() < 0.5d);
-                break;
-            case COMBOBOX:
-            case COMBOBOX_EDITABLE:
-            case COMBOBOX_AND_TEXT:
-            case COMBOBOX_AND_TEXT_NOT_EDITABLE:
-            case LISTBOX: // FUTURE IMPROVEMENT: multiple values can be selected
-                value = getRandomClassificatorValue(field.getClassificator());
-                if (value == null && field.getFieldTypeEnum() == FieldType.LISTBOX) {
-                    value = new ArrayList<String>();
-                }
-                break;
-            case TEXT_FIELD:
-            case USER: // FUTURE IMPROVEMENT: users/contacts group mappings can be used
-            case USERS:
-            case USER_CONTACT:
-            case USERS_CONTACTS:
-            case CONTACT:
-            case CONTACTS:
-                if (field.getFieldId().toLowerCase().indexOf("regnum") >= 0) {
-                    value = getRandom(senderRegNumbers);
-                } else {
-                    value = getRandom(contacts);
-                }
-                break;
-            case DATE:
-                Calendar cal = Calendar.getInstance();
-                cal.add(Calendar.DATE, (int) (Math.random() - 0.5d) * 4000); // +- 6 years
-                value = cal.getTime();
-                break;
-            case DOUBLE:
-                value = (Math.random() - 0.5d) * 20000;
-                break;
-            case LONG:
-                value = (long) ((Math.random() - 0.5d) * 20000);
-                break;
-            case STRUCT_UNIT:
-                if (value == null) {
-                    value = new ArrayList<String>();
-                }
-                break;
-            case INFORMATION_TEXT:
-                return value;
-            }
-
-            if (propDef.isMultiValued() && !(value instanceof List<?>)) {
-                ArrayList<Serializable> list = new ArrayList<Serializable>();
-                list.add(value);
-                value = list;
-            }
-
-            propNode.getProperties().put(propName.toString(), value);
-        }
-        return value;
-    }
-
-    private void createIndependentCompoundWorkflows(int count) throws Exception {
-        checkStop();
-        independentCompoundWorkflows = Collections.synchronizedList(new ArrayList<NodeRef>());
-
-        NodeRef root = getWorkflowService().getIndependentWorkflowsRoot();
-        List<ChildAssociationRef> childAssocs = getNodeService().getChildAssocs(root, Collections.singleton(WorkflowCommonModel.Types.COMPOUND_WORKFLOW));
-        for (ChildAssociationRef childAssociationRef : childAssocs) {
-            independentCompoundWorkflows.add(childAssociationRef.getChildRef());
-        }
-
-        if (independentWorkflowsCount <= 0) {
-            return;
-        }
-
-        log.info("Starting " + documentAndWorkflowGeneratorThreads + " threads for generating independent compound workflows");
-        List<Thread> threads = new ArrayList<Thread>();
-        try {
-            for (int i = 0; i < documentAndWorkflowGeneratorThreads; i++) {
-                String threadName = "WorkflowGeneratorThread-" + i;
-                log.info("Starting thread " + threadName);
-                Thread thread = new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        createIndependentCompoundWorkflowsLoop();
-                    }
-                }, threadName);
-                thread.start();
-                threads.add(thread);
-            }
-            log.info("Independent compound workflow generator threads started. Waiting for all threads to complete");
-        } finally {
-            for (Thread thread : threads) {
-                log.info("Waiting for " + thread.getName() + " to complete");
-                thread.join();
-            }
-            log.info("All independent compound workflow generator threads completed.");
-            log.info("There are " + independentCompoundWorkflows.size() + " independent compound workflows; goal was " + count + " independent compound workflows");
-        }
-    }
-
-    private void createIndependentCompoundWorkflowsLoop() {
-        final NodeRef root = getWorkflowService().getIndependentWorkflowsRoot();
-        final double finishedCompoundWorkflowsLikelihood = finishedIndependentWorkflowsCount / independentWorkflowsCount;
-        try {
-            log.info("Independent compound workflow generator thread started");
-            try {
-                while (independentCompoundWorkflows.size() < independentWorkflowsCount) {
-                    checkStop();
-                    try {
-                        String userName = getRandomGaussian3(userNamesList, usersRandom);
-                        AuthenticationUtil.setFullyAuthenticatedUser(userName); // also sets runAsUser
-                        Pair<NodeRef, Integer> pair = getTransactionService().getRetryingTransactionHelper().doInTransaction(
-                                new RetryingTransactionCallback<Pair<NodeRef, Integer>>() {
-                                    @Override
-                                    public Pair<NodeRef, Integer> execute() throws Throwable {
-                                        return createWorkflows(root, Math.random() > finishedCompoundWorkflowsLikelihood, null, CompoundWorkflowType.INDEPENDENT_WORKFLOW);
-                                    }
-                                }, false);
-                        NodeRef icwfRef = pair.getFirst();
-                        independentCompoundWorkflows.add(icwfRef);
-                        log.info("Created independent compound workflow " + independentCompoundWorkflows.size() + " of " + independentWorkflowsCount + " - " + icwfRef + " with "
-                                + pair.getSecond() + " tasks");
-                    } catch (Exception e) {
-                        log.error("Independent compound workflow generator thread error", e);
-                        Thread.sleep(Math.max(documentAndWorkflowGeneratorThreads * 1000, 1000));
-                    }
-                }
-            } catch (StopException e) {
-                log.info("Stop requested");
-            } catch (Exception e) {
-                log.error("Independent compound workflow generator thread error", e);
-            }
-        } finally {
-            log.info("Independent compound workflow generator thread stopped");
-        }
-
-    }
-
-    private Pair<NodeRef, Integer> createWorkflows(NodeRef docRef, boolean inProgress, String docTypeId, CompoundWorkflowType compoundWorkflowType) {
-        int allTaskCount = 0;
-        boolean isDocumentWorkflow = CompoundWorkflowType.DOCUMENT_WORKFLOW == compoundWorkflowType;
-
-=======
     private int createWorkflows(NodeRef docRef, boolean inProgress, String docTypeId) {
         int allTaskCount = 0;
         if (Math.random() < 0.25d) {
@@ -2472,7 +1726,6 @@ public class TestDataService implements SaveListener {
             inProgress = false;
         }
 
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         String creatorUserName = getRandom(userNamesList);
 
         Map<QName, Serializable> creatorProps = getUserData(creatorUserName).getSecond();
@@ -2482,18 +1735,12 @@ public class TestDataService implements SaveListener {
         String cwfOwnerUserName = getRandom(userNamesList);
         String cwfOwnerFullName = UserUtil.getPersonFullName1(getUserData(cwfOwnerUserName).getSecond());
 
-<<<<<<< HEAD
-        HashMap<QName, Serializable> props = new HashMap<QName, Serializable>();
-        props.put(WorkflowCommonModel.Props.STATUS, inProgress ? Status.IN_PROGRESS.getName() : Status.FINISHED.getName());
-        props.put(WorkflowCommonModel.Props.TYPE, compoundWorkflowType.toString());
-=======
         Map<String, Set<String>> privilegesByTaskOwnerId = new HashMap<String, Set<String>>();
         HashMap<QName, Serializable> props = new HashMap<QName, Serializable>();
         props.put(WorkflowCommonModel.Props.STATUS, inProgress ? Status.IN_PROGRESS.getName() : Status.FINISHED.getName());
         // TODO uncomment in 3.7
         // import ee.webmedia.alfresco.workflow.model.CompoundWorkflowType;
         // props.put(WorkflowCommonModel.Props.TYPE, CompoundWorkflowType.DOCUMENT_WORKFLOW.toString());
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         props.put(WorkflowCommonModel.Props.CREATOR_NAME, creatorFullName);
         Calendar cal = Calendar.getInstance();
         cal.add(Calendar.DATE, ((int) (Math.random() * -900)) - 30);
@@ -2502,10 +1749,6 @@ public class TestDataService implements SaveListener {
         props.put(WorkflowCommonModel.Props.STOPPED_DATE_TIME, null);
         props.put(WorkflowCommonModel.Props.OWNER_ID, cwfOwnerUserName);
         props.put(WorkflowCommonModel.Props.OWNER_NAME, cwfOwnerFullName);
-<<<<<<< HEAD
-        props.put(WorkflowCommonModel.Props.TITLE, getRandom(docTitles));
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         NodeRef cwfRef = getNodeService().createNode(
                 docRef,
                 WorkflowCommonModel.Assocs.COMPOUND_WORKFLOW,
@@ -2513,42 +1756,19 @@ public class TestDataService implements SaveListener {
                 WorkflowCommonModel.Types.COMPOUND_WORKFLOW,
                 props
                 ).getChildRef();
-<<<<<<< HEAD
-        Map<QName, Serializable> taskSearchableProps = WorkflowUtil.getTaskSearchableProps(props);
-        List<QName> wfTypes;
-        if (CompoundWorkflowType.DOCUMENT_WORKFLOW == compoundWorkflowType || CompoundWorkflowType.INDEPENDENT_WORKFLOW == compoundWorkflowType) {
-            wfTypes = Arrays.asList(WorkflowSpecificModel.Types.SIGNATURE_WORKFLOW, WorkflowSpecificModel.Types.OPINION_WORKFLOW,
-                    WorkflowSpecificModel.Types.REVIEW_WORKFLOW, WorkflowSpecificModel.Types.INFORMATION_WORKFLOW, WorkflowSpecificModel.Types.CONFIRMATION_WORKFLOW);
-        } else {
-            wfTypes = Arrays.asList(WorkflowSpecificModel.Types.OPINION_WORKFLOW,
-                    WorkflowSpecificModel.Types.REVIEW_WORKFLOW, WorkflowSpecificModel.Types.INFORMATION_WORKFLOW, WorkflowSpecificModel.Types.CONFIRMATION_WORKFLOW);
-        }
-=======
 
         List<QName> wfTypes = Arrays.asList(WorkflowSpecificModel.Types.SIGNATURE_WORKFLOW, WorkflowSpecificModel.Types.OPINION_WORKFLOW,
                 WorkflowSpecificModel.Types.REVIEW_WORKFLOW, WorkflowSpecificModel.Types.INFORMATION_WORKFLOW, WorkflowSpecificModel.Types.CONFIRMATION_WORKFLOW);
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         // Not used: REGISTRATION_WORKFLOW, EXTERNAL_REVIEW_WORKFLOW, DUE_DATE_EXTENSION_WORKFLOW -- too special
         // FUTURE: orderAssignmentWorkflow -- could be used, but don't remember exact rules right now (must have category...?)?
         Map<QName, WorkflowType> wfTypesByWf = getWorkflowService().getWorkflowTypes();
 
-<<<<<<< HEAD
-        Map<String, Set<String>> permissionsByTaskOwnerId = new HashMap<String, Set<String>>();
-        FileService fileService = BeanHelper.getFileService();
-
-        boolean isIndependentWorkflow = CompoundWorkflowType.INDEPENDENT_WORKFLOW == compoundWorkflowType;
-        boolean isCaseFileWorkflow = CompoundWorkflowType.CASE_FILE_WORKFLOW == compoundWorkflowType;
-
-        int wfCount = ((int) (Math.random() * 6)) + 1; // 1 - 6
-        boolean hasSignatureWorkflow = false;
-=======
         int wfCount;
         if (Math.random() < 0.9d) {
             wfCount = 1;
         } else {
             wfCount = ((int) (Math.random() * 5)) + 2; // 2 - 6
         }
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         for (int i = 0; i < wfCount; i++) {
             QName wfType;
             if (i == 0 && Math.random() < 0.5d) {
@@ -2556,10 +1776,6 @@ public class TestDataService implements SaveListener {
             } else {
                 wfType = getRandom(wfTypes);
             }
-<<<<<<< HEAD
-            hasSignatureWorkflow |= WorkflowSpecificModel.Types.SIGNATURE_WORKFLOW.equals(wfType);
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             props = new HashMap<QName, Serializable>();
             String wfStatus = inProgress ? (i == 0 ? Status.IN_PROGRESS.getName() : Status.NEW.getName()) : Status.FINISHED.getName();
             props.put(WorkflowCommonModel.Props.STATUS, wfStatus);
@@ -2581,16 +1797,11 @@ public class TestDataService implements SaveListener {
             Date dueDate = cal.getTime();
             List<String> userNamesListCopy = new ArrayList<String>(userNamesList);
             int taskCount;
-<<<<<<< HEAD
-            if (Math.random() < 0.8d) {
-                taskCount = ((int) (Math.random() * 10)) + 1; // 1 - 10
-=======
             double r = Math.random();
             if (r < 0.985d) {
                 taskCount = ((int) (Math.random() * 1.8d)) + 1; // 1 - 2
             } else if (r < 0.995d) {
                 taskCount = ((int) (Math.random() * 8)) + 3; // 3 - 10
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             } else {
                 taskCount = ((int) (Math.random() * 90)) + 11; // 11 - 100
             }
@@ -2601,11 +1812,7 @@ public class TestDataService implements SaveListener {
                 }
                 String taskOwnerUserName = getRandom(userNamesListCopy);
                 userNamesListCopy.remove(taskOwnerUserName);
-<<<<<<< HEAD
-                Map<QName, Serializable> taskOwnerProps = userDataByUserName.get(taskOwnerUserName).getSecond();
-=======
                 Map<QName, Serializable> taskOwnerProps = getUserData(taskOwnerUserName).getSecond();
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
                 String taskOwnerFullName = UserUtil.getPersonFullName1(taskOwnerProps);
                 String taskOwnerEmail = (String) taskOwnerProps.get(ContentModel.PROP_EMAIL);
                 String taskOwnerJobTitle = (String) taskOwnerProps.get(ContentModel.PROP_JOBTITLE);
@@ -2626,11 +1833,7 @@ public class TestDataService implements SaveListener {
                 props.put(WorkflowCommonModel.Props.OWNER_NAME, taskOwnerFullName);
                 props.put(WorkflowCommonModel.Props.OWNER_EMAIL, taskOwnerEmail);
                 props.put(WorkflowCommonModel.Props.OWNER_JOB_TITLE, taskOwnerJobTitle);
-<<<<<<< HEAD
-                props.put(WorkflowCommonModel.Props.OWNER_ORGANIZATION_NAME, (Serializable) (taskOwnerStructUnit != null ? Collections.singleton(taskOwnerStructUnit.getName())
-=======
                 props.put(WorkflowCommonModel.Props.OWNER_ORGANIZATION_NAME, (Serializable) (taskOwnerStructUnit != null ? new ArrayList<String>(Arrays.asList(taskOwnerStructUnit.getName()))
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
                         : null));
 
                 props.put(WorkflowCommonModel.Props.DOCUMENT_TYPE, docTypeId);
@@ -2669,102 +1872,14 @@ public class TestDataService implements SaveListener {
                 props.put(WorkflowSpecificModel.Props.IS_DUE_DATE_WORKING_DAYS, null);
 
                 // for assignmentTask and confirmationTask, resolution could be filled
-<<<<<<< HEAD
-                props.putAll(taskSearchableProps);
                 Task task = BeanHelper.getWorkflowService().createTaskInMemory(wfRef, workflowType, props);
                 Set<QName> aspects = task.getNode().getAspects();
                 aspects.add(WorkflowSpecificModel.Aspects.SEARCHABLE);
-
-=======
-                Task task = BeanHelper.getWorkflowService().createTaskInMemory(wfRef, workflowType, props);
-                Set<QName> aspects = task.getNode().getAspects();
-                aspects.add(WorkflowSpecificModel.Aspects.SEARCHABLE);
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
                 // if assignmentWorkflow, then 1 task must have responsible active=true, (and 0-few can have responsible active=false)
                 if (taskType.equals(WorkflowSpecificModel.Types.ASSIGNMENT_TASK) && j == 0) {
                     task.getNode().getProperties().put(WorkflowSpecificModel.Props.ACTIVE.toString(), Boolean.TRUE);
                     aspects.add(WorkflowSpecificModel.Aspects.RESPONSIBLE);
                 }
-<<<<<<< HEAD
-
-                task.setTaskIndexInWorkflow(j);
-                BeanHelper.getWorkflowDbService().createTaskEntry(task, wfRef);
-
-                String ownerId = task.getOwnerId();
-                if (StringUtils.isNotBlank(ownerId)) {
-                    // document workflow
-                    if (isDocumentWorkflow) {
-                        Set<String> requiredPrivileges = PrivilegeUtil.getRequiredPrivsForInprogressTask(task, docRef, fileService, false);
-                        addOwnerPermissions(permissionsByTaskOwnerId, ownerId, requiredPrivileges);
-                    }
-                } else if (isCaseFileWorkflow) {
-                    // case file workflow
-                    addOwnerPermissions(permissionsByTaskOwnerId, ownerId, getPrivsWithDependencies(getRequiredPrivsForInprogressTask(task, null, null, true)));
-                } else {
-                    // independent workflow
-                    Set<String> privileges = WorkflowUtil.getIndependentWorkflowDefaultDocPermissions();
-                    boolean addEditPrivilege = task.isType(WorkflowSpecificModel.Types.ASSIGNMENT_TASK) || WorkflowUtil.isFirstConfirmationTask(task);
-                    Set<String> documentPrivileges = new HashSet<String>();
-                    documentPrivileges.addAll(privileges);
-                    if (addEditPrivilege) {
-                        documentPrivileges.add(DocumentCommonModel.Privileges.EDIT_DOCUMENT);
-                    }
-                    addOwnerPermissions(permissionsByTaskOwnerId, ownerId, documentPrivileges);
-                }
-
-                allTaskCount++;
-            }
-        }
-
-        if (!isIndependentWorkflow) {
-            getNodeService().setProperty(docRef, DocumentCommonModel.Props.SEARCHABLE_HAS_STARTED_COMPOUND_WORKFLOWS, true);
-        }
-
-        List<NodeRef> documentsToSign = new ArrayList<NodeRef>();
-        if (isIndependentWorkflow && maxDocumentsInIndependentWorkflow > 0) {
-            DocumentAssociationsService docAssocService = BeanHelper.getDocumentAssociationsService();
-            int docAssocCount = (int) (Math.random() * maxDocumentsInIndependentWorkflow);
-            Set<NodeRef> associatedDocRefs = new HashSet<NodeRef>();
-            for (int i = 0; i < docAssocCount; i++) {
-                NodeRef assocDocRef = getRandom(docs);
-                if (associatedDocRefs.contains(assocDocRef)) {
-                    // TODO: should we try to get anther doc if there is more than maxDocumentsInIndependentWorkflow dos available?
-                    continue;
-                }
-                associatedDocRefs.add(assocDocRef);
-                docAssocService.createWorkflowAssoc(assocDocRef, cwfRef, true, true);
-                // assume that in signature workflow, most of documents are going to be signed
-                if (hasSignatureWorkflow && Math.random() < 0.9d) {
-                    documentsToSign.add(assocDocRef);
-                }
-            }
-            if (!documentsToSign.isEmpty()) {
-                BeanHelper.getNodeService().setProperty(cwfRef, WorkflowCommonModel.Props.DOCUMENTS_TO_SIGN, (Serializable) documentsToSign);
-            }
-        }
-
-        PrivilegeService privilegeService = BeanHelper.getPrivilegeService();
-        if (isDocumentWorkflow) {
-            for (Map.Entry<String, Set<String>> entry : permissionsByTaskOwnerId.entrySet()) {
-                privilegeService.setPermissions(docRef, entry.getKey(), entry.getValue());
-            }
-        } else if (isCaseFileWorkflow) {
-            // and to documents under this case file
-            for (NodeRef documentRef : BeanHelper.getDocumentService().getAllDocumentRefsByParentRef(docRef)) {
-                for (Map.Entry<String, Set<String>> entry : permissionsByTaskOwnerId.entrySet()) {
-                    privilegeService.setPermissions(documentRef, entry.getKey(), entry.getValue());
-                }
-            }
-        } else {
-            List<Document> documents = BeanHelper.getWorkflowService().getCompoundWorkflowDocuments(cwfRef);
-            for (Document document : documents) {
-                for (Map.Entry<String, Set<String>> entry : permissionsByTaskOwnerId.entrySet()) {
-                    Set<String> privileges = new HashSet<String>(entry.getValue());
-                    if (!document.isDocStatus(DocumentStatus.WORKING)) {
-                        privileges.remove(DocumentCommonModel.Privileges.EDIT_DOCUMENT);
-                    }
-                    privilegeService.setPermissions(document.getNodeRef(), entry.getKey(), privileges);
-=======
                 task.setTaskIndexInWorkflow(j);
                 BeanHelper.getWorkflowDbService().createTaskEntry(task, wfRef);
                 allTaskCount++;
@@ -2777,31 +1892,15 @@ public class TestDataService implements SaveListener {
                     } else {
                         privileges.addAll(requiredPrivileges);
                     }
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
                 }
             }
         }
 
-<<<<<<< HEAD
-        return new Pair<NodeRef, Integer>(cwfRef, allTaskCount);
-    }
-
-    public void addOwnerPermissions(Map<String, Set<String>> permissionsByTaskOwnerId, String ownerId, Set<String> requiredPrivileges) {
-        if (!requiredPrivileges.isEmpty()) {
-            Set<String> ownerPermissions = permissionsByTaskOwnerId.get(ownerId);
-            if (ownerPermissions == null) {
-                ownerPermissions = new HashSet<String>();
-                permissionsByTaskOwnerId.put(ownerId, ownerPermissions);
-            }
-            ownerPermissions.addAll(requiredPrivileges);
-        }
-=======
         getNodeService().setProperty(docRef, DocumentCommonModel.Props.SEARCHABLE_HAS_STARTED_COMPOUND_WORKFLOWS, true);
         for (Entry<String, Set<String>> entry : privilegesByTaskOwnerId.entrySet()) {
             getPrivilegeService().setPermissions(docRef, entry.getKey(), entry.getValue());
         }
         return allTaskCount;
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     private void createFile(NodeRef docRef, ArrayList<String> fileTitles, Map<QName, Serializable> userProps, OutputStream allOutput, int i) throws Exception {
@@ -2810,37 +1909,8 @@ public class TestDataService implements SaveListener {
         String fileMimeType = file.get(1);
         String fileEncoding = file.get(2);
         String fileSize = file.get(3);
-<<<<<<< HEAD
-        String fileName = FilenameUtil.trimDotsAndSpaces(FilenameUtil.stripForbiddenWindowsCharacters(file.get(4)));
-        String fileTitle = file.get(5).replace('+', '-');
-        if (StringUtils.isBlank(fileMimeType)) {
-            fileMimeType = getMimetypeService().guessMimetype(fileName);
-        }
-        if (StringUtils.isBlank(fileEncoding)) {
-            InputStream is = null;
-            try {
-                is = new BufferedInputStream(new FileInputStream(new File(dataFolder + "/contentstore/testfiles/" + fileUrl)));
-                Charset charset = getMimetypeService().getContentCharsetFinder().getCharset(is, fileMimeType);
-                fileEncoding = charset.name();
-            } catch (FileNotFoundException e) {
-                throw new RuntimeException(e);
-            } finally {
-                try {
-                    if (is != null) {
-                        is.close();
-                    }
-                } catch (IOException e) {
-                    // Do nothing
-                }
-            }
-        }
-        if (StringUtils.isBlank(fileSize)) {
-            fileSize = Long.toString(new File(dataFolder + "/contentstore/testfiles/" + fileUrl).length());
-        }
-=======
         String fileName = file.get(4);
         String fileTitle = file.get(5);
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         String contentUrl = FileContentStore.STORE_PROTOCOL + ContentStore.PROTOCOL_DELIMITER + "testfiles/" + fileUrl;
         ContentData contentData = new ContentData(contentUrl, fileMimeType, Long.parseLong(fileSize), fileEncoding, locale);
 
@@ -2985,36 +2055,20 @@ public class TestDataService implements SaveListener {
     }
 
     private String stripAndTrim(String value) {
-<<<<<<< HEAD
-        return StringUtils.trimToEmpty(StringUtils.stripToEmpty(value));
-=======
         return StringUtils.trimToEmpty(StringUtils.stripToEmpty(StringUtils.defaultString(value).replaceAll("\\p{Cntrl}", " ").replaceAll(" {2,}", " ")));
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     // SaveListener that sets draft=true on document
 
     @Override
-<<<<<<< HEAD
-    public void validate(DynamicBase dynamicObject, ValidationHelper validationHelper) {
-=======
     public void validate(DocumentDynamic document, ValidationHelper validationHelper) {
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         // do nothing
     }
 
     @Override
-<<<<<<< HEAD
-    public void save(DynamicBase document) {
-        if (document instanceof DocumentDynamic) {
-            ((DocumentDynamic) document).setDraft(true);
-            ((DocumentDynamic) document).setDraftOrImapOrDvk(true);
-        }
-=======
     public void save(DocumentDynamic document) {
         document.setDraft(true);
         document.setDraftOrImapOrDvk(true);
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     @Override
@@ -3078,25 +2132,6 @@ public class TestDataService implements SaveListener {
         this.volumesCount = volumesCount;
     }
 
-<<<<<<< HEAD
-    public int getCaseFilesCount() {
-        return caseFilesCount;
-    }
-
-    public void setCaseFilesCount(int caseFilesCount) {
-        this.caseFilesCount = caseFilesCount;
-    }
-
-    public int getIndependentWorkflowsCount() {
-        return independentWorkflowsCount;
-    }
-
-    public void setIndependentWorkflowsCount(int independentWorkflowsCount) {
-        this.independentWorkflowsCount = independentWorkflowsCount;
-    }
-
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     public int getCasesCount() {
         return casesCount;
     }
@@ -3121,61 +2156,12 @@ public class TestDataService implements SaveListener {
         this.filesEnabled = filesEnabled;
     }
 
-<<<<<<< HEAD
-    public int getDocumentAndWorkflowGeneratorThreads() {
-        return documentAndWorkflowGeneratorThreads;
-    }
-
-    public void setDocumentAndWorkflowGeneratorThreads(int documentAndWorkflowGeneratorThreads) {
-        this.documentAndWorkflowGeneratorThreads = documentAndWorkflowGeneratorThreads;
-    }
-
-    public int getClosedCaseFilesCount() {
-        return closedCaseFilesCount;
-    }
-
-    public void setClosedCaseFilesCount(int closedCaseFilesCount) {
-        this.closedCaseFilesCount = closedCaseFilesCount;
-    }
-
-    public int getFinishedIndependentWorkflowsCount() {
-        return finishedIndependentWorkflowsCount;
-    }
-
-    public void setFinishedIndependentWorkflowsCount(int finishedIndependentWorkflowsCount) {
-        this.finishedIndependentWorkflowsCount = finishedIndependentWorkflowsCount;
-    }
-
-    public int getMaxDocumentsInIndependentWorkflow() {
-        return maxDocumentsInIndependentWorkflow;
-    }
-
-    public void setMaxDocumentsInIndependentWorkflow(int maxDocumentsInIndependentWorkflow) {
-        this.maxDocumentsInIndependentWorkflow = maxDocumentsInIndependentWorkflow;
-    }
-
-    public boolean isDocumentWorkflowsEnabled() {
-        return documentWorkflowsEnabled;
-    }
-
-    public void setDocumentWorkflowsEnabled(boolean documentWorkflowsEnabled) {
-        this.documentWorkflowsEnabled = documentWorkflowsEnabled;
-    }
-
-    public boolean isCaseFileWorkflowsEnabled() {
-        return caseFileWorkflowsEnabled;
-    }
-
-    public void setCaseFileWorkflowsEnabled(boolean caseFileWorkflowsEnabled) {
-        this.caseFileWorkflowsEnabled = caseFileWorkflowsEnabled;
-=======
     public int getDocumentGeneratorThreads() {
         return documentGeneratorThreads;
     }
 
     public void setDocumentGeneratorThreads(int documentGeneratorThreads) {
         this.documentGeneratorThreads = documentGeneratorThreads;
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
 }

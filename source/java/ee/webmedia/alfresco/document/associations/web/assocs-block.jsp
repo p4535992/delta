@@ -9,32 +9,19 @@
 
 <h:panelGroup id="assocs-panel-facets">
    <f:facet name="title">
-<<<<<<< HEAD
-      <r:permissionEvaluator id="assocs-permission-evaluator" value="#{DocumentDialogHelperBean.node}" allow="viewDocumentMetaData">
-         <a:actionLink image="/images/icons/import.gif" id="col3-text" showLink="false" tooltip="#{msg.document_assocAdd}" value="" 
-            actionListener="#{DialogManager.bean.searchDocsAndCases}" action="#docsearch-panel" rendered="#{DialogManager.bean.showAddAssocsLink}" >
-=======
       <r:permissionEvaluator id="assocs-permission-evaluator" value="#{DocumentDynamicDialog.node}" allow="viewDocumentMetaData">
          <a:actionLink image="/images/icons/import.gif" id="col3-text" showLink="false" tooltip="#{msg.document_assocAdd}" value="" 
             actionListener="#{DocumentDynamicDialog.searchDocsAndCases}" action="#docsearch-panel" rendered="#{DocumentDialogHelperBean.inWorkspace and not DocumentDynamicDialog.inEditMode}" >
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
          </a:actionLink>
       </r:permissionEvaluator>
    </f:facet>
 </h:panelGroup>
 
 <a:panel id="assocs-block-panel" label="#{msg.document_assocsBlockBean_panelTitle}" styleClass="panel-100 with-pager" progressive="true"
-<<<<<<< HEAD
-   expanded="#{DialogManager.bean.assocsBlockExpanded}" facetsId="dialog:dialog-body:assocs-panel-facets">
-
-   <a:richList id="assocsList" viewMode="details" value="#{AssocsBlockBean.docAssocInfos}" var="r" rowStyleClass="recordSetRow"
-      altRowStyleClass="recordSetRowAlt" width="100%" refreshOnBind="true" pageSize="#{BrowseBean.pageSizeContent}" >
-=======
    expanded="false" facetsId="dialog:dialog-body:assocs-panel-facets">
 
    <a:richList id="assocsList" viewMode="details" value="#{AssocsBlockBean.docAssocInfos}" var="r" rowStyleClass="recordSetRow"
       altRowStyleClass="recordSetRowAlt" width="100%" refreshOnBind="true" pageSize="#{BrowseBean.pageSizeContent}" initialSortColumn="type">
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
       <a:column id="col1" >
          <f:facet name="header">
@@ -52,8 +39,6 @@
          </h:outputText>
       </a:column>
 
-<<<<<<< HEAD
-=======
       <a:column id="col3" primary="true" >
          <f:facet name="header">
             <a:sortLink id="col3-header" label="#{msg.document_assocsBlockBean_type}" value="type" styleClass="header" />
@@ -62,40 +47,11 @@
       </a:column>
 
 
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
       <a:column id="col4">
          <f:facet name="header">
             <a:sortLink id="col4-header" label="#{msg.document_assocsBlockBean_title}" value="title" styleClass="header" />
          </f:facet>
          <a:actionLink id="col4-text" value="#{r.title}" tooltip="#{msg.document_details_info}" showLink="false"
-<<<<<<< HEAD
-            actionListener="#{DocumentDynamicDialog.openFromDocumentList}" rendered="#{r.document}">
-            <f:param name="nodeRef" value="#{r.otherNodeRef}" />
-         </a:actionLink>
-         <a:actionLink id="col4-link2docList" value="#{r.title}" action="dialog:documentListDialog" tooltip="#{r.title}"
-            showLink="false" actionListener="#{DocumentListDialog.setup}" rendered="#{r.case}">
-            <f:param name="caseNodeRef" value="#{r.otherNodeRef}" />
-         </a:actionLink>
-         <a:actionLink id="col2-act" value="#{r.title}" action="dialog:compoundWorkflowDialog" tooltip="#{r.title}" 
-            actionListener="#{CompoundWorkflowDialog.setupWorkflow}" rendered="#{r.workflow}" >
-            <f:param name="nodeRef" value="#{r.otherNodeRef}" />
-         </a:actionLink>
-         <a:actionLink id="col4-link2volume" value="#{r.title}" action="dialog:caseDocListDialog" tooltip="#{r.title}"
-            showLink="false" actionListener="#{CaseDocumentListDialog.showAll}" rendered="#{r.volume && !r.caseFileVolume}">
-            <f:param id="col4-volumeNodeRef" name="volumeNodeRef" value="#{r.otherNodeRef}" />
-         </a:actionLink>
-         <a:actionLink id="col4-link2caseFile" value="#{r.title}" tooltip="#{r.title}"
-            showLink="false" actionListener="#{CaseFileDialog.openFromDocumentList}" rendered="#{r.caseFileVolume}">
-            <f:param id="col4-nodeRef" name="nodeRef" value="#{r.otherNodeRef}" />
-         </a:actionLink>         
-      </a:column>
-
-      <a:column id="col3" primary="true" >
-         <f:facet name="header">
-            <a:sortLink id="col3-header" label="#{msg.document_assocsBlockBean_type}" value="type" styleClass="header" />
-         </f:facet>
-         <h:outputText id="col3-txt" value="#{r.type}" />
-=======
             actionListener="#{DocumentDynamicDialog.openFromDocumentList}" rendered="#{not r.case}">
             <f:param name="nodeRef" value="#{r.nodeRef}" />
          </a:actionLink>
@@ -103,7 +59,6 @@
             showLink="false" actionListener="#{DocumentListDialog.setup}" rendered="#{r.case}">
             <f:param name="caseNodeRef" value="#{r.caseNodeRef}" />
          </a:actionLink>
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
       </a:column>
 
       <a:column id="col5">
@@ -118,33 +73,19 @@
             <h:outputText id="col6-header" value="#{msg.document_assocsBlockBean_actions}" styleClass="header" />
          </f:facet>
          <r:permissionEvaluator id="assocs-list-permission-evaluator" value="#{DocumentDynamicDialog.node}" allow="editDocument">
-<<<<<<< HEAD
-            <a:actionLink id="col6-act" rendered="#{r.allowDelete}" value="#{r.title}" actionListener="#{DeleteAssocDialog.setupAssoc}" action="dialog:deleteAssoc" showLink="false"
-                  image="/images/icons/delete.gif" tooltip="#{msg.document_assocsBlockBean_delete}">
-                  <f:param name="sourceNodeRef" value="#{r.sourceNodeRef}"/>
-                  <f:param name="targetNodeRef" value="#{r.targetNodeRef}"/>
-                  <f:param name="type" value="#{r.assocTypeQName}"/>
-=======
             <a:actionLink id="col6-act" rendered="#{r.assocType.valueName == 'tavaline'}" value="#{r.title}" actionListener="#{DeleteAssocDialog.setupAssoc}" action="dialog:deleteAssoc" showLink="false"
                   image="/images/icons/delete.gif" tooltip="#{msg.document_assocsBlockBean_delete}">
                   <f:param name="nodeRef" value="#{r.nodeRef}"/>
                   <f:param name="caseNodeRef" value="#{r.caseNodeRef}"/>
                   <f:param name="documentRef" value="#{AssocsBlockBean.document.nodeRef}"/>
                   <f:param name="source" value="#{r.source}" />
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             </a:actionLink>
          </r:permissionEvaluator>
 
          <r:permissionEvaluator id="assocs-list-compare-permission-evaluator" value="#{r.effectiveNodeRef}" allow="viewDocumentMetaData">
-<<<<<<< HEAD
-            <a:actionLink id="compare-documents-link" value="#{msg.document_assocsBlockBean_compare}" rendered="#{r.documentToDocumentAssoc && DocumentDynamicDialog.document.documentTypeId == r.typeId}"
-            image="/images/icons/search_results.gif" target="_blank" showLink="false"
-            href="/printTable?tableMode=DOCUMENT_FIELD_COMPARE&doc1=#{DialogManager.bean.node.nodeRef}&doc2=#{r.effectiveNodeRef}" />
-=======
             <a:actionLink id="compare-documents-link" value="#{msg.document_assocsBlockBean_compare}" rendered="#{DocumentDynamicDialog.document.documentTypeId == r.typeId}"
             image="/images/icons/search_results.gif" target="_blank" showLink="false"
             href="/printTable?tableMode=DOCUMENT_FIELD_COMPARE&doc1=#{DocumentDynamicDialog.node.nodeRef}&doc2=#{r.effectiveNodeRef}" />
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
          </r:permissionEvaluator>
       </a:column>
 

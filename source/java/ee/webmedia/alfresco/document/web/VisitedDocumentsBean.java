@@ -20,11 +20,6 @@ import ee.webmedia.alfresco.document.search.model.FakeDocument;
  * Maintains a list of documents which have been opened since last document search or quick-search.
  * That list is used by document search results and quick search results dialogs, that when user goes back to one of these dialogs, then all documents that are on the list are
  * refreshed (or deleted if they don't exist any more).
-<<<<<<< HEAD
- * 
- * @author Alar Kvell
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
  */
 public class VisitedDocumentsBean implements Serializable {
     private static final long serialVersionUID = 1L;

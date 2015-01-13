@@ -8,11 +8,6 @@ import ee.webmedia.alfresco.log.model.LogEntry;
 
 /**
  * Helper class that gathers and stores data about the source of incoming request.
-<<<<<<< HEAD
- * 
- * @author Martti Tamm
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
  */
 public class LogHelper {
 

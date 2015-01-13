@@ -22,12 +22,6 @@ import ee.webmedia.alfresco.docconfig.generator.systematic.UserContactRelatedGro
 import ee.webmedia.alfresco.docconfig.service.UserContactMappingCode;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 
-<<<<<<< HEAD
-/**
- * @author Alar Kvell
- */
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 public class UserContactGenerator extends BaseTypeFieldGenerator {
 
     @Override
@@ -71,13 +65,7 @@ public class UserContactGenerator extends BaseTypeFieldGenerator {
             item.setShowFilter(true);
             item.setFilters("#{UserContactGroupSearchBean.usersGroupsFilters}");
             item.setAddLabelId("add_user");
-<<<<<<< HEAD
-            item.setFiltersAllowGroupSelect(true);
-            item.setDialogTitleId("users_search_title");
-            break;
-=======
             //$FALL-THROUGH$
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         case USER:
             item.setDialogTitleId("users_search_title");
             break;
@@ -95,10 +83,6 @@ public class UserContactGenerator extends BaseTypeFieldGenerator {
             item.setFilters("#{UserContactGroupSearchBean.usersGroupsContactsGroupsFilters}");
             item.setDialogTitleId("users_contacts_search_title");
             item.setAddLabelId("workflow_compound_add_user");
-<<<<<<< HEAD
-            item.setFiltersAllowGroupSelect(true);
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             break;
         case USER_CONTACT:
             item.setShowFilter(true);

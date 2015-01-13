@@ -23,28 +23,13 @@ import ee.webmedia.alfresco.document.associations.model.DocAssocInfo;
 import ee.webmedia.alfresco.document.assocsdyn.web.AddFollowUpAssocEvaluator;
 import ee.webmedia.alfresco.document.assocsdyn.web.AddReplyAssocEvaluator;
 import ee.webmedia.alfresco.utils.MessageUtil;
-<<<<<<< HEAD
-import ee.webmedia.alfresco.utils.RepoUtil;
-import ee.webmedia.alfresco.workflow.web.WorkflowBlockBean;
-
-/**
- * Block that shows associations of given document/volume/caseFile/case with other documents/volumes/caseFiles/cases
- * 
- * @author Ats Uiboupin
-=======
 
 /**
  * Block that shows associations of given document with other documents and related cases
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
  */
 public class AssocsBlockBean implements DocumentDynamicBlock {
     private static final long serialVersionUID = 1L;
 
-<<<<<<< HEAD
-    private static org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(WorkflowBlockBean.class);
-
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     public static final String BEAN_NAME = "AssocsBlockBean";
     private static final String FOLLOWUPS_METHOD_BINDING_NAME = "#{" + BEAN_NAME + ".createAddFollowupsMenu}";
     private static final String REPLIES_METHOD_BINDING_NAME = "#{" + BEAN_NAME + ".createAddRepliesMenu}";
@@ -52,11 +37,7 @@ public class AssocsBlockBean implements DocumentDynamicBlock {
     public static final String PARAM_ASSOC_MODEL_REF = "assocModelRef";
 
     private Node document;
-<<<<<<< HEAD
-    private List<DocAssocInfo> docAssocInfos = new ArrayList<DocAssocInfo>();
-=======
     private List<DocAssocInfo> docAssocInfos;
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
     public void init(Node node) {
         reset();
@@ -65,31 +46,12 @@ public class AssocsBlockBean implements DocumentDynamicBlock {
     }
 
     public void restore() {
-<<<<<<< HEAD
-        if (document != null && RepoUtil.isSaved(document) && BeanHelper.getNodeService().exists(document.getNodeRef())) {
-            docAssocInfos = BeanHelper.getDocumentAssociationsService().getAssocInfos(document);
-            sortDocAssocInfos();
-        } else {
-            docAssocInfos = new ArrayList<DocAssocInfo>();
-        }
-    }
-
-    public void sortDocAssocInfos() {
-        if (docAssocInfos != null) {
-            Collections.sort(docAssocInfos);
-        }
-=======
         docAssocInfos = BeanHelper.getDocumentAssociationsService().getAssocInfos(document);
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     public void reset() {
         document = null;
-<<<<<<< HEAD
-        docAssocInfos = new ArrayList<DocAssocInfo>();
-=======
         docAssocInfos = null;
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     @Override
@@ -102,31 +64,11 @@ public class AssocsBlockBean implements DocumentDynamicBlock {
     }
 
     public String getFollowupAssocsBindingName() {
-<<<<<<< HEAD
-        try {
-            WmNode document = getDocumentFromDialog();// FIXME document should be provided by bean
-            if (new AddFollowUpAssocEvaluator().evaluate(document)) {
-                return FOLLOWUPS_METHOD_BINDING_NAME;
-            }
-            return null;
-        } catch (RuntimeException e) {
-            // Log error here, because JSF EL evaluator does not log detailed error cause
-            LOG.error("Error getting followupAssocsBindingName", e);
-            throw e;
-        }
-    }
-
-    public void disableDelete() {
-        for (DocAssocInfo assocInf : docAssocInfos) {
-            assocInf.setAllowDelete(false);
-        }
-=======
         WmNode document = getDocumentFromDialog();// FIXME document should be provided by bean
         if (new AddFollowUpAssocEvaluator().evaluate(document)) {
             return FOLLOWUPS_METHOD_BINDING_NAME;
         }
         return null;
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     /**
@@ -138,25 +80,11 @@ public class AssocsBlockBean implements DocumentDynamicBlock {
     }
 
     public String getRepliesAssocsBindingName() {
-<<<<<<< HEAD
-        try {
-            WmNode document = getDocumentFromDialog();
-            if (new AddReplyAssocEvaluator().evaluate(document)) {
-                return REPLIES_METHOD_BINDING_NAME;
-            }
-            return null;
-        } catch (RuntimeException e) {
-            // Log error here, because JSF EL evaluator does not log detailed error cause
-            LOG.error("Error getting repliesAssocsBindingName", e);
-            throw e;
-        }
-=======
         WmNode document = getDocumentFromDialog();
         if (new AddReplyAssocEvaluator().evaluate(document)) {
             return REPLIES_METHOD_BINDING_NAME;
         }
         return null;
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     public List<ActionDefinition> createAddFollowupsMenu(@SuppressWarnings("unused") String nodeTypeId) {

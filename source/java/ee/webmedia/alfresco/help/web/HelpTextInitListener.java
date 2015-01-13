@@ -7,11 +7,6 @@ import ee.webmedia.alfresco.common.web.BeanHelper;
 
 /**
  * Loads help texts into servlet context during servlet context initialization.
-<<<<<<< HEAD
- * 
- * @author Martti Tamm
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
  */
 public class HelpTextInitListener implements ServletContextListener {
 

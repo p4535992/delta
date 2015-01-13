@@ -26,11 +26,6 @@ import ee.webmedia.alfresco.utils.SearchUtil;
 
 /**
  * Fixes encoding on HTML files (CL task 196507)
-<<<<<<< HEAD
- * 
- * @author Alar Kvell
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
  */
 public class FileEncodingUpdater extends AbstractNodeUpdater {
 
@@ -51,11 +46,7 @@ public class FileEncodingUpdater extends AbstractNodeUpdater {
     protected List<ResultSet> getNodeLoadingResultSet() throws Exception {
         String query = SearchUtil.generateTypeQuery(ContentModel.TYPE_CONTENT);
         List<ResultSet> resultSets = new ArrayList<ResultSet>();
-<<<<<<< HEAD
-        for (StoreRef storeRef : generalService.getAllStoreRefsWithTrashCan()) {
-=======
         for (StoreRef storeRef : generalService.getAllWithArchivalsStoreRefs()) {
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             resultSets.add(searchService.query(storeRef, SearchService.LANGUAGE_LUCENE, query));
         }
         return resultSets;

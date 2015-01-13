@@ -10,25 +10,12 @@ import ee.webmedia.alfresco.user.service.UserService;
 
 /**
  * Evaluator, that evaluates to true if user is admin or document manager
-<<<<<<< HEAD
- * 
- * @author Ats Uiboupin
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
  */
 public class DocumentManagerEvaluator extends BaseActionEvaluator {
     private static final long serialVersionUID = 2958297435415449179L;
 
     @Override
     public boolean evaluate(Node node) {
-<<<<<<< HEAD
-        return evaluate((Object) node);
-    }
-
-    @Override
-    public boolean evaluate(Object obj) {
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         UserService userService = (UserService) FacesContextUtils.getRequiredWebApplicationContext(//
                 FacesContext.getCurrentInstance()).getBean(UserService.BEAN_NAME);
         return userService.isDocumentManager();

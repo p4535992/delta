@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 <?xml version='1.0' encoding='UTF-8'?>
 <beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
    xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
@@ -76,83 +75,4 @@
       </property>
    </bean>
 
-=======
-<?xml version='1.0' encoding='UTF-8'?>
-<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-   xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
-
-   <bean id="emailServerConfigurationProperties" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
-      <property name="ignoreUnresolvablePlaceholders">
-         <value>true</value>
-      </property>
-      <property name="locations">
-         <list>
-            <value>classpath:alfresco/emailserver/email-server.properties</value>
-            <value>classpath:alfresco/extension/custom-email-server.properties</value>
-         </list>
-      </property>
-   </bean>
-   
-   <bean id="simEmailMessageHandler" parent="emailMessageHandlerBase" class="ee.webmedia.alfresco.smtp.ScannedEmailHandler" >
-      <property name="userService" ref="UserService" />
-      <property name="generalService" ref="GeneralService" />
-      <property name="ocrService" ref="OcrService" />
-      <property name="fileService" ref="FileService" />
-   </bean>
-
-   <!-- @Override from email-service-context.xml -->
-   <bean id="emailService" class="ee.webmedia.alfresco.smtp.DeltaEmailServiceImpl">
-      <property name="generalService" ref="GeneralService" />
-      <property name="emailInboundEnabled">
-         <value>${email.inbound.enabled}</value>
-      </property>
-      <property name="emailPrefixToFolderMap">
-         <map>
-            <!-- Mappings for email address local part to repository location(XPath) -->
-            <entry key="${email.to.scanned.local-part}" value="${scannedFiles.rootPath}${scannedFiles.folder.name}" />
-         </map>
-      </property>
-      <property name="emailMessageHandlerMap">
-         <map>
-            <!-- Custom mappings for this bean: -->
-            <entry key="scan:scanned" value-ref="simEmailMessageHandler" />
-            <!-- Original mappings of overridden bean: -->
-            <entry key="cm:folder">
-               <ref bean="folderEmailMessageHandler"></ref>
-            </entry>
-            <entry key="cm:content">
-               <ref bean="documentEmailMessageHandler"></ref>
-            </entry>
-            <entry key="fm:forum">
-               <ref bean="forumEmailMessageHandler"></ref>
-            </entry>
-            <entry key="fm:discussion">
-               <ref bean="forumEmailMessageHandler"></ref>
-            </entry>
-            <entry key="fm:topic">
-               <ref bean="topicEmailMessageHandler"></ref>
-            </entry>
-            <entry key="fm:post">
-               <ref bean="topicEmailMessageHandler"></ref>
-            </entry>
-         </map>
-      </property>
-      <property name="namespaceService">
-         <ref bean="NamespaceService" />
-      </property>
-      <property name="nodeService">
-         <ref bean="NodeService" />
-      </property>
-      <property name="searchService">
-         <ref bean="SearchService" />
-      </property>
-      <property name="retryingTransactionHelper">
-         <ref bean="retryingTransactionHelper" />
-      </property>
-      <property name="authorityService">
-         <ref bean="authorityService" />
-      </property>
-   </bean>
-
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 </beans>

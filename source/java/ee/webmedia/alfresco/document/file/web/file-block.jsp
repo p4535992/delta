@@ -10,15 +10,10 @@
 <%@ page import="ee.webmedia.alfresco.document.file.web.AddFileDialog"%>
 <%@ page import="org.alfresco.web.app.Application" %>
 
-<<<<<<< HEAD
-<%
-   String webdavOpenMode = "webdav-" + (Application.getDialogManager().getBean() instanceof AddFileDialog? "readOnly": "open") + " condence50- strictTrim tooltip";
-=======
 
 <%
    boolean readOnly = Application.getDialogManager().getBean() instanceof AddFileDialog;
    String webdavClass = readOnly ? "" : " webdav-open";
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 %>
 
 <h:panelGroup id="files-panel-facets">
@@ -31,14 +26,6 @@
       <r:actions id="acts_add_inactive_content" value="addInactiveFileMenu" context="#{DocumentDialogHelperBean.node}" showLink="false" rendered="#{DialogManager.bean != AddFileDialog}"/>
    </f:facet>
 </h:panelGroup>
-<<<<<<< HEAD
-<h:panelGroup id="pdf-panel-facets">
-   <f:facet name="title">
-      <a:actionLink id="close-pdfView" actionListener="#{FileBlockBean.hidePdfBlock}" value="#{msg.file_view_pdf_close}" image="/images/icons/close_panel.gif" showLink="false"/>
-   </f:facet>
-</h:panelGroup>
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
 <a:panel label="#{msg.file_title} (#{FileBlockBean.activeFilesCount})" id="files-panel" facetsId="dialog:dialog-body:files-panel-facets" styleClass="panel-100" progressive="true"
    expanded="<%=new Boolean(!(Application.getDialogManager().getBean() instanceof AddFileDialog)).toString() %>">
@@ -54,13 +41,8 @@
          <f:facet name="small-icon">
             <h:panelGroup>
                <wm:docPermissionEvaluator id="col1-act1-eval-allow" value="#{r.node}" allow="viewDocumentFiles">
-<<<<<<< HEAD
-                  <a:actionLink id="col1-act1" value="#{r.displayName}" href="#{r.downloadUrl}" target="_blank" image="#{r.fileType16}" showLink="false"
-                     styleClass='<%="inlineAction " + webdavOpenMode %>' />
-=======
                   <a:actionLink id="col1-act1" value="#{r.displayName}" href='<%=(readOnly ? "#{r.readOnlyUrl}" : "#{r.downloadUrl}")%>' target="_blank" image="#{r.fileType16}" showLink="false"
                      styleClass="inlineAction<%=webdavClass%>" />
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
                </wm:docPermissionEvaluator>
                <wm:docPermissionEvaluator id="col1-act1-eval-deny" value="#{r.node}" deny="viewDocumentFiles">
                   <h:graphicImage id="col1-act1-deny" value="#{r.fileType16}" />
@@ -68,17 +50,10 @@
             </h:panelGroup>
          </f:facet>
          <wm:docPermissionEvaluator id="col1-act2-eval-allow" value="#{r.node}" allow="viewDocumentFiles">
-<<<<<<< HEAD
-            <a:actionLink id="col1-act2" value="#{r.displayName}" href="#{r.downloadUrl}" target="_blank" styleClass="<%=webdavOpenMode %>" />
-         </wm:docPermissionEvaluator>
-         <wm:docPermissionEvaluator id="col1-act2a-eval-deny" value="#{r.node}" deny="viewDocumentFiles">
-            <h:outputText id="col1-act2a-eval-deny-txt" value="#{r.displayName}" />
-=======
             <a:actionLink id="col1-act2" value="#{r.displayName}" href='<%=(readOnly ? "#{r.readOnlyUrl}" : "#{r.downloadUrl}")%>' target="_blank" styleClass="<%=webdavClass%>" />
          </wm:docPermissionEvaluator>
          <wm:docPermissionEvaluator id="col1-act2a-eval-deny" value="#{r.node}" deny="viewDocumentFiles">
             <h:outputText value="#{r.displayName}" />
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
          </wm:docPermissionEvaluator>
       </a:column>
 
@@ -128,35 +103,12 @@
          </h:outputText>
       </a:column>
 
-<<<<<<< HEAD
-      <%-- Transform checkbox --%>
-      <a:column id="col6-2" rendered="#{r.activeAndNotDigiDoc}">
-         <f:facet name="header">
-            <h:outputText id="col6-2-header" value="#{msg.file_transform_column}" styleClass="header" />
-         </f:facet>
-         <h:selectBooleanCheckbox title="#{msg.file_convert_to_pdf_if_signed_tooltip}" id="col6-2-boolean" value="#{r.convertToPdfIfSigned}"  disabled="#{!r.transformableToPdf || !DocumentDialogHelperBean.inEditMode}">
-         </h:selectBooleanCheckbox>
-      </a:column>
-
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
       <%-- Remove and Version column --%>
       <a:column id="col7" rendered="#{FileBlockBean.inWorkspace and r.activeAndNotDigiDoc and DialogManager.bean != AddFileDialog}">
          <a:actionLink id="col7-act33" value="#{r.name}" actionListener="#{FileBlockBean.toggleActive}" showLink="false"
             image="/images/icons/document-convert.png" tooltip="#{msg.file_toggle_deactive} " rendered="#{FileBlockBean.toggleActive}">
             <f:param name="nodeRef" value="#{r.nodeRef}" />
          </a:actionLink>
-<<<<<<< HEAD
-         <a:actionLink id="col7-act35" value="#{r.name}" showLink="false" image="/images/icons/topic-16.gif" tooltip="#{msg.file_comment_tooltip}" actionListener="#{CommentFileDialog.open}" rendered="#{UserService.userFullName == r.modifier}">               
-            <f:param name="nodeRef" value="#{r.nodeRef}" />
-         </a:actionLink>
-         <wm:docPermissionEvaluator id="col7-act34-eval" value="#{r.node}" allow="editDocument">
-            <a:actionLink id="col7-act34" value="#{r.name}" showLink="false" image="/images/icons/edit_properties.gif" tooltip="#{msg.file_change_tooltip}" actionListener="#{ChangeFileDialog.open}">               
-               <f:param name="nodeRef" value="#{r.nodeRef}" />
-            </a:actionLink>
-         </wm:docPermissionEvaluator>         
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
          <wm:docPermissionEvaluator id="col7-act2-eval" value="#{r.node}" allow="viewDocumentFiles">
             <a:actionLink id="col7-act2" value="#{r.name}" actionListener="#{VersionsListDialog.select}" action="dialog:versionsListDialog" showLink="false"
                image="/images/icons/version_history.gif" rendered="#{r.versionable && !DocumentDialogHelperBean.notEditable}" tooltip="#{msg.file_version_history}">
@@ -176,19 +128,10 @@
             </a:actionLink>
          </wm:docPermissionEvaluator>
          <wm:docPermissionEvaluator id="col7-act5-eval" value="#{r.node}" allow="viewDocumentFiles">
-<<<<<<< HEAD
-            <a:actionLink id="col7-act5-iframe" value="#{r.name}" actionListener="#{FileBlockBean.viewPdf}" showLink="false"
-               image="/images/icons/file-small-gray.png" tooltip="#{msg.file_view_pdf}" rendered="#{r.pdf}">
-               <f:param name="nodeRef" value="#{r.nodeRef}" />
-            </a:actionLink>
-            <a:actionLink id="col7-act5-download" value="#{r.name}" href="#{r.downloadUrl}" target="_blank" styleClass="<%=webdavOpenMode %>" showLink="false"
-               image="/images/icons/file-small-gray.png" tooltip="#{msg.file_view_pdf}" rendered="#{r.pdf}"/>            
-=======
             <a:actionLink id="col7-act5" value="#{r.name}" actionListener="#{FileBlockBean.viewPdf}" showLink="false"
                image="/images/icons/file-small-gray.png" tooltip="#{msg.file_view_pdf}" rendered="#{r.pdf}">
                <f:param name="nodeRef" value="#{r.nodeRef}" />
             </a:actionLink>
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
          </wm:docPermissionEvaluator>         
       </a:column>
 
@@ -266,13 +209,8 @@
          <f:facet name="small-icon">
             <h:panelGroup>
                <wm:docPermissionEvaluator id="col21-act1-eval-allow" value="#{r.node}" allow="viewDocumentFiles">
-<<<<<<< HEAD
-                  <a:actionLink id="col21-act1" value="#{r.displayName}" href="#{r.downloadUrl}" target="_blank" image="#{r.fileType16}" showLink="false"
-                     styleClass='<%="inlineAction " + webdavOpenMode %>' />
-=======
                   <a:actionLink id="col21-act1" value="#{r.displayName}" href='<%=(readOnly ? "#{r.readOnlyUrl}" : "#{r.downloadUrl}")%>' target="_blank" image="#{r.fileType16}" showLink="false"
                      styleClass="inlineAction<%=webdavClass%>" />
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
                </wm:docPermissionEvaluator>
                <wm:docPermissionEvaluator id="col21-act1-eval-deny" value="#{r.node}" deny="viewDocumentFiles">
                   <h:graphicImage id="col21-act1-deny" value="#{r.fileType16}" />
@@ -280,17 +218,10 @@
             </h:panelGroup>
          </f:facet>
          <wm:docPermissionEvaluator id="col21-act2-eval-allow" value="#{r.node}" allow="viewDocumentFiles">
-<<<<<<< HEAD
-            <a:actionLink id="col21-act2" value="#{r.displayName}" href="#{r.downloadUrl}" target="_blank" styleClass="<%=webdavOpenMode %>" />
-         </wm:docPermissionEvaluator>
-         <wm:docPermissionEvaluator id="col21-act2-eval-deny" value="#{r.node}" deny="viewDocumentFiles">
-            <h:outputText id="col21-act2-eval-deny-txt" value="#{r.displayName}" />
-=======
             <a:actionLink id="col21-act2" value="#{r.displayName}" href='<%=(readOnly ? "#{r.readOnlyUrl}" : "#{r.downloadUrl}")%>' target="_blank" styleClass="<%=webdavClass%>" />
          </wm:docPermissionEvaluator>
          <wm:docPermissionEvaluator id="col21-act2-eval-deny" value="#{r.node}" deny="viewDocumentFiles">
             <h:outputText value="#{r.displayName}" />
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
          </wm:docPermissionEvaluator>
       </a:column>
 
@@ -346,17 +277,6 @@
             image="/images/icons/document-convert.png" tooltip="#{msg.file_toggle_active}" rendered="#{FileBlockBean.toggleInActive}">
             <f:param name="nodeRef" value="#{r.nodeRef}" />
          </a:actionLink>
-<<<<<<< HEAD
-         <a:actionLink id="col27-act35" value="#{r.name}" showLink="false" image="/images/icons/topic-16.gif" tooltip="#{msg.file_comment_tooltip}" actionListener="#{CommentFileDialog.open}" rendered="#{UserService.userFullName == r.modifier}">               
-            <f:param name="nodeRef" value="#{r.nodeRef}" />
-         </a:actionLink>
-         <wm:docPermissionEvaluator id="col27-act34-eval" value="#{r.node}" allow="editDocument">
-            <a:actionLink id="col27-act34" value="#{r.name}" showLink="false" image="/images/icons/edit_properties.gif" tooltip="#{msg.file_change_tooltip}" actionListener="#{ChangeFileDialog.open}">               
-               <f:param name="nodeRef" value="#{r.nodeRef}" />
-            </a:actionLink>
-         </wm:docPermissionEvaluator>         
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
          <wm:docPermissionEvaluator id="col27-act2-eval-allow" value="#{r.node}" allow="viewDocumentFiles">
             <a:actionLink id="col27-act2" value="#{r.name}" actionListener="#{VersionsListDialog.select}" action="dialog:versionsListDialog" showLink="false"
                image="/images/icons/version_history.gif" rendered="#{r.versionable}" tooltip="#{msg.file_version_history}">
@@ -370,19 +290,10 @@
             <f:param name="ref" value="#{r.nodeRef}" />
          </a:actionLink>
          <wm:docPermissionEvaluator id="col27-act5-eval-allow" value="#{r.node}" allow="viewDocumentFiles">
-<<<<<<< HEAD
-            <a:actionLink id="col27-act5-iframe" value="#{r.name}" actionListener="#{FileBlockBean.viewPdf}" showLink="false"
-               image="/images/icons/file-small-gray.png" tooltip="#{msg.file_view_pdf}" rendered="#{r.pdf}">
-               <f:param name="nodeRef" value="#{r.nodeRef}" />
-            </a:actionLink>
-            <a:actionLink id="col27-act5-download" value="#{r.name}" href="#{r.downloadUrl}" target="_blank" styleClass="<%=webdavOpenMode %>" showLink="false"
-               image="/images/icons/file-small-gray.png" tooltip="#{msg.file_view_pdf}" rendered="#{r.pdf}"/> 
-=======
             <a:actionLink id="col27-act5" value="#{r.name}" actionListener="#{FileBlockBean.viewPdf}" showLink="false"
                image="/images/icons/file-small-gray.png" tooltip="#{msg.file_view_pdf}" rendered="#{r.pdf}">
                <f:param name="nodeRef" value="#{r.nodeRef}" />
             </a:actionLink>
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
          </wm:docPermissionEvaluator>         
       </a:column>
 
@@ -444,86 +355,9 @@
    </a:richList>
 </a:panel>
 
-<<<<<<< HEAD
-<a:panel label="PDF" id="pdf-panel" facetsId="dialog:dialog-body:pdf-panel-facets" styleClass="panel-100" progressive="true" rendered="#{FileBlockBean.inWorkspace and FileBlockBean.pdfUrl != null}">
-   <f:verbatim>
-      <iframe id="pdf-panel-iframe" width="100%" height="450" style="z-index: -1;" wmode="transparent" tabindex="-1" src="<%=request.getContextPath()%></f:verbatim><h:outputText value="#{FileBlockBean.pdfUrl}" /><f:verbatim>" class="fileViewerFrame" name="embedpdf_1" id="embedpdf_1">
-      </iframe>
-   </f:verbatim>
-</a:panel>
-
-<script type="text/javascript">
-<!-- source http://stackoverflow.com/questions/5645581/how-to-check-adobe-reader-installed-or-not-without-active-x-checking-in-javascri -->
-   
-   var acrobat = new Object();
-   acrobat.installed = false;
-   acrobat.version = '0.0';
-
-   if (navigator.plugins && navigator.plugins.length) {
-      for ( var x = 0, l = navigator.plugins.length; x < l; ++x) {
-         if (navigator.plugins[x].description.indexOf('Adobe Acrobat') != -1 || navigator.plugins[x].description.indexOf('PDF') != -1) {
-            acrobat.version = (navigator.plugins[x].description.indexOf('PDF') != -1) ? '7+' : parseFloat(navigator.plugins[x].description.split('Version ')[1]);
-            if (acrobat.version.toString().length == 1)
-               acrobat.version += '.0';
-            acrobat.installed = true;
-            break;
-         }
-      }
-   } else if (window.ActiveXObject) {
-      for (x = 2; x < 10; x++) {
-         try {
-            oAcro = eval("new ActiveXObject('PDF.PdfCtrl." + x + "');");
-            if (oAcro) {
-               acrobat.installed = true;
-               acrobat.version = x + '.0';
-            }
-         } catch (e) {
-         }
-      }
-      try {
-         oAcro4 = new ActiveXObject('PDF.PdfCtrl.1');
-         if (oAcro4) {
-            acrobat.installed = true;
-            acrobat.version = '4.0';
-         }
-      } catch (e) {
-      }
-      try {
-         oAcro7 = new ActiveXObject('AcroPDF.PDF.1');
-         if (oAcro7) {
-            acrobat.installed = true;
-            acrobat.version = '7+';
-         }
-      } catch (e) {
-      }
-      try {
-         oAcro7 = new ActiveXObject('AcroPDF.PDF');
-         if (oAcro7) {
-            acrobat.installed = true;
-            acrobat.version = '7+';
-         }
-      } catch (e) {
-      }
-   }
-   
-   if (acrobat.installed) {
-      $jQ('#col7-act5-iframe').show();
-      $jQ('#col27-act5-iframe').show();
-      $jQ('#col7-act5-download').hide();
-      $jQ('#col27-act5-download').hide();      
-   } else {
-      $jQ('#col7-act5-iframe').hide();
-      $jQ('#col27-act5-iframe').hide();
-      $jQ('#col7-act5-download').show();
-      $jQ('#col27-act5-download').show();      
-   }
-   
-</script>
-=======
 <a:panel label="PDF" id="pdf-panel" styleClass="panel-100" progressive="true" rendered="#{FileBlockBean.inWorkspace and FileBlockBean.pdfUrl != null}">
    <f:verbatim>
       <iframe width="100%" height="450" style="z-index: -1;" wmode="transparent" tabindex="-1" src="<%=request.getContextPath()%></f:verbatim><h:outputText value="#{FileBlockBean.pdfUrl}" /><f:verbatim>" class="fileViewerFrame" name="embedpdf_1" id="embedpdf_1">
       </iframe>
    </f:verbatim>
 </a:panel>
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5

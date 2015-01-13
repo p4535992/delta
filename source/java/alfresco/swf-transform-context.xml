@@ -1,15 +1,6 @@
-<<<<<<< HEAD
 <?xml version='1.0' encoding='UTF-8'?>
 <!DOCTYPE beans PUBLIC '-//SPRING//DTD BEAN//EN' 'http://www.springframework.org/dtd/spring-beans.dtd'>
 
 <beans>
 
 </beans>
-=======
-<?xml version='1.0' encoding='UTF-8'?>
-<!DOCTYPE beans PUBLIC '-//SPRING//DTD BEAN//EN' 'http://www.springframework.org/dtd/spring-beans.dtd'>
-
-<beans>
-
-</beans>
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5

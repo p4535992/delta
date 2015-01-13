@@ -67,12 +67,6 @@ import ee.webmedia.alfresco.volume.service.VolumeService;
 
 /**
  * Imports structure (contacts, functions and volumes) from postipoiss.
-<<<<<<< HEAD
- * 
- * @author Taimo Peelo
- * @author Aleksei Lissitsin
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
  */
 public class PostipoissStructureImporter {
 
@@ -586,10 +580,6 @@ public class PostipoissStructureImporter {
         props.put(FunctionsModel.Props.TYPE.toString(), functionType);
         props.put(FunctionsModel.Props.ORDER.toString(), funk.order);
         props.put(FunctionsModel.Props.STATUS.toString(), openUnit ? DocListUnitStatus.OPEN.getValueName() : DocListUnitStatus.CLOSED.getValueName());
-<<<<<<< HEAD
-        props.put(FunctionsModel.Props.DOCUMENT_ACTIVITIES_ARE_LIMITED.toString(), Boolean.FALSE);
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         functionsService.saveOrUpdate(function, archivalsRoot);
 
         log.info(function.getNodeRef());
@@ -865,11 +855,7 @@ public class PostipoissStructureImporter {
         volume.setStatus(openUnit ? DocListUnitStatus.OPEN.getValueName() : DocListUnitStatus.CLOSED.getValueName());
 
         if (t.validTo != null) {
-<<<<<<< HEAD
-            volume.setRetainUntilDate(DateUtils.addYears(t.validTo, t.bestBefore));
-=======
             volume.setDispositionDate(DateUtils.addYears(t.validTo, t.bestBefore));
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         }
 
         volumeService.saveOrUpdate(volume, false);
@@ -926,13 +912,7 @@ public class PostipoissStructureImporter {
         volType.add(VolumeType.ANNUAL_FILE.name());
         volType.add(VolumeType.SUBJECT_FILE.name());
         props.put(SeriesModel.Props.VOL_TYPE.toString(), volType);
-<<<<<<< HEAD
-        if (t.bestBefore > 0) {
-            props.put(SeriesModel.Props.DESCRIPTION.toString(), "Säilitustähtaeg (migreeritud): " + t.bestBefore);
-        }
-=======
         props.put(SeriesModel.Props.RETENTION_PERIOD.toString(), t.bestBefore);
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         // Default access restriction value is OPEN
         props.put(SeriesModel.Props.ACCESS_RESTRICTION.toString(), AccessRestriction.OPEN.getValueName());
         if (StringUtils.isNotEmpty(t.seriesAccessRestriction)) {

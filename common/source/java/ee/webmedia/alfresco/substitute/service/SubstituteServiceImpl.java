@@ -41,12 +41,6 @@ import ee.webmedia.alfresco.substitute.model.SubstituteModel;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.beanmapper.BeanPropertyMapper;
 
-<<<<<<< HEAD
-/**
- * @author Romet Aidla
- */
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 public class SubstituteServiceImpl implements SubstituteService, BeanFactoryAware {
     private static final Log log = LogFactory.getLog(SubstituteServiceImpl.class);
 
@@ -131,11 +125,7 @@ public class SubstituteServiceImpl implements SubstituteService, BeanFactoryAwar
                 .label(SubstituteModel.Props.SUBSTITUTE_NAME, "substitute_name")
                 .label(SubstituteModel.Props.SUBSTITUTION_START_DATE, "substitute_startdate")
                 .label(SubstituteModel.Props.SUBSTITUTION_END_DATE, "substitute_enddate")
-<<<<<<< HEAD
-                .diff(oldProps, oldProps);
-=======
                 .diff(oldProps, newProps);
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
         nodeService.setProperties(substitute.getNodeRef(), newProps);
         if (log.isDebugEnabled()) {
@@ -208,15 +198,6 @@ public class SubstituteServiceImpl implements SubstituteService, BeanFactoryAwar
                         joinQueryPartsOr(Arrays.asList(
                                 generateDatePropertyRangeQuery(startDate, endDate, SubstituteModel.Props.SUBSTITUTION_START_DATE),
                                 generateDatePropertyRangeQuery(startDate, endDate, SubstituteModel.Props.SUBSTITUTION_END_DATE)
-<<<<<<< HEAD
-                                )),
-                        joinQueryPartsAnd(Arrays.asList(
-                                generateDatePropertyRangeQuery(null, startDate, SubstituteModel.Props.SUBSTITUTION_START_DATE),
-                                generateDatePropertyRangeQuery(endDate, null, SubstituteModel.Props.SUBSTITUTION_END_DATE)
-                                ))
-
-                        ))
-=======
                                 ), true),
                         joinQueryPartsAnd(Arrays.asList(
                                 generateDatePropertyRangeQuery(null, startDate, SubstituteModel.Props.SUBSTITUTION_START_DATE),
@@ -224,7 +205,6 @@ public class SubstituteServiceImpl implements SubstituteService, BeanFactoryAwar
                                 ), true)
 
                         ), true)
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
                 ));
 
         List<NodeRef> nodeRefs = getDocumentSearchService().searchNodes(query, -1, "substitutionDutiesInPeriod");

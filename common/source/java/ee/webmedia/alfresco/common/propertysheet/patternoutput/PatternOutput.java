@@ -20,11 +20,6 @@ import ee.webmedia.alfresco.utils.TextUtil;
  * Formulas must be in the form of <code>{propertyLocalName}</code>.
  * Property values are taken from ancestor {@link UIPropertySheet} component's node and {@code docdyn:} namespace is used.
  * Cancellation groups in the form of <code>&#47;*text {propertyLocalName}*&#47;</code> are also supported.
-<<<<<<< HEAD
- * 
- * @author Alar Kvell
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
  */
 public class PatternOutput extends UIOutput implements HandlesShowUnvalued {
 

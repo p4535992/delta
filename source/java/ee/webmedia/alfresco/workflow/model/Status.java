@@ -1,11 +1,5 @@
 package ee.webmedia.alfresco.workflow.model;
 
-<<<<<<< HEAD
-/**
- * @author Alar Kvell
- */
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 public enum Status {
 
     /** uus */
@@ -17,13 +11,7 @@ public enum Status {
     /** lõpetatud */
     FINISHED("lõpetatud"),
     /** teostamata */
-<<<<<<< HEAD
-    UNFINISHED("teostamata"),
-    /** kustutatud - used only for linkedReviewTasks */
-    DELETED("kustutatud");
-=======
     UNFINISHED("teostamata");
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
     private String name;
 

@@ -274,8 +274,6 @@
       </view:properties>
    </docadmin:fieldDefinition>
 
-<<<<<<< HEAD
-=======
    <docadmin:fieldDefinition view:childName="docdyn:expenseTypeChoice">
       <view:properties>
          <docadmin:fieldId>expenseTypeChoice</docadmin:fieldId>
@@ -575,7 +573,6 @@
       </view:properties>
    </docadmin:fieldDefinition>
 
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
    <docadmin:fieldDefinition view:childName="docdyn:dailyAllowanceCateringCount">
       <view:properties>
          <docadmin:fieldId>dailyAllowanceCateringCount</docadmin:fieldId>

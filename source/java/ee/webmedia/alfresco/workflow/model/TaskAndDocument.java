@@ -1,46 +1,5 @@
 package ee.webmedia.alfresco.workflow.model;
 
-<<<<<<< HEAD
-import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.getCompoundWorkflowDocMsg;
-
-import java.io.Serializable;
-import java.util.Date;
-
-import org.apache.commons.lang.time.DateUtils;
-import org.apache.commons.lang.time.FastDateFormat;
-
-import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
-import ee.webmedia.alfresco.document.model.Document;
-import ee.webmedia.alfresco.utils.MessageUtil;
-import ee.webmedia.alfresco.volume.model.VolumeModel;
-import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
-import ee.webmedia.alfresco.workflow.service.Task;
-
-/**
- * @author Alar Kvell
- */
-public class TaskAndDocument implements Serializable {
-    private static final String MSG_CASE_FILE_TITLE = MessageUtil.getMessage("compoundWorkflow_caseFile_title");
-    private static final long serialVersionUID = 1L;
-    public static final String STYLECLASS_TASK_OVERDUE = "taskOverdue";
-    private static final FastDateFormat dateFormat = FastDateFormat.getInstance("dd.MM.yyyy");
-
-    private final Task task;
-    private final Document document;
-    private final CompoundWorkflow compoundWorkflow;
-    private String title;
-    private Date workflowDueDate;
-    private String workflowDueDateStr;
-    private String volumeMark;
-
-    public TaskAndDocument(Task task, Document document, CompoundWorkflow compoundWorkflow) {
-        this.task = task;
-        this.document = document;
-        this.compoundWorkflow = compoundWorkflow;
-        task.setCssStyleClass(getCssStyleClass(document != null ? document.getCssStyleClass() : Document.GENERIC_DOCUMENT_STYLECLASS,
-                task.getCompletedDateTime(),
-                task.getDueDate()));
-=======
 import java.io.Serializable;
 import java.util.Date;
 
@@ -58,18 +17,13 @@ public class TaskAndDocument implements Serializable {
         this.task = task;
         this.document = document;
         task.setCssStyleClass(getCssStyleClass(document.getCssStyleClass(), task.getCompletedDateTime(), task.getDueDate()));
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     public static String getCssStyleClass(String docStyleClass, final Date completedDate, final Date dueDate) {
         final String cssStyleClass;
         if (completedDate == null) {
             final Date now = new Date();
-<<<<<<< HEAD
-            if (dueDate != null && dueDate.before(now) && !DateUtils.isSameDay(dueDate, now)) {
-=======
             if (dueDate != null && dueDate.before(now)) {
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
                 cssStyleClass = STYLECLASS_TASK_OVERDUE;
             } else {
                 cssStyleClass = docStyleClass;
@@ -90,18 +44,7 @@ public class TaskAndDocument implements Serializable {
 
     // methods for sortLink tag in jsp
     public String getDocName() {
-<<<<<<< HEAD
-        return hasDocument() ? document.getDocName() : ((compoundWorkflow != null && compoundWorkflow.isIndependentWorkflow()) ? compoundWorkflow.getTitle() : "");
-    }
-
-    public String getTitle() {
-        if (title == null && hasDocument()) {
-            title = (String) document.getProperties().get(DocumentDynamicModel.Props.DOC_TITLE);
-        }
-        return title;
-=======
         return document.getDocName();
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     public Date getTaskDueDate() {
@@ -117,77 +60,6 @@ public class TaskAndDocument implements Serializable {
     }
 
     public String getRegNumber() {
-<<<<<<< HEAD
-        return hasDocument() ? document.getRegNumber() : "";
-    }
-
-    public String getVolumeMark() {
-        if (hasDocument() && volumeMark == null) {
-            volumeMark = (String) document.getProperties().get(VolumeModel.Props.VOLUME_MARK);
-        }
-        return volumeMark;
-    }
-
-    public Date getRegDateTime() {
-        return hasDocument() ? document.getRegDateTime() : null;
-    }
-
-    public String getRegDateTimeStr() {
-        return hasDocument() ? document.getRegDateTimeStr() : "";
-    }
-
-    public String getSender() {
-        return hasDocument() ? document.getSender() : "";
-    }
-
-    public Date getDocumentDueDate() {
-        return hasDocument() ? document.getDueDate() : null;
-    }
-
-    public String getDocumentDueDateStr() {
-        return hasDocument() ? document.getDueDateStr() : "";
-    }
-
-    public Date getWorkflowDueDate() {
-        if (hasDocument() && workflowDueDate == null) {
-            workflowDueDate = (Date) document.getProperties().get(DocumentDynamicModel.Props.WORKFLOW_DUE_DATE);
-        }
-        return workflowDueDate;
-    }
-
-    public String getWorkflowDueDateStr() {
-        if (hasDocument() && workflowDueDateStr == null) {
-            Date dueDate = getWorkflowDueDate();
-            if (dueDate != null) {
-                workflowDueDateStr = dateFormat.format(getWorkflowDueDate());
-            }
-        }
-        return workflowDueDateStr;
-    }
-
-    private boolean hasDocument() {
-        return document != null;
-    }
-
-    public CompoundWorkflow getCompoundWorkflow() {
-        return compoundWorkflow;
-    }
-
-    public String getDocumentTypeName() {
-        String typeName;
-        if (hasDocument()) {
-            if (compoundWorkflow.isCaseFileWorkflow()) {
-                typeName = MessageUtil.getMessage("casefile_workflow_type_name");
-            } else {
-                typeName = document.getDocumentTypeName();
-            }
-        } else if (compoundWorkflow != null && compoundWorkflow.isIndependentWorkflow()) {
-            typeName = getCompoundWorkflowDocMsg(compoundWorkflow.getNumberOfDocuments(), MessageUtil.getMessage("compound_workflow_independent_no_documents"));
-        } else {
-            typeName = MSG_CASE_FILE_TITLE;
-        }
-        return typeName;
-=======
         return document.getRegNumber();
     }
 
@@ -205,16 +77,11 @@ public class TaskAndDocument implements Serializable {
 
     public String getDocumentTypeName() {
         return document.getDocumentTypeName();
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     @Override
     public String toString() {
-<<<<<<< HEAD
-        return "TaskAndDocument [document=" + document + ", task=" + task + ", compoundWorkflow=" + compoundWorkflow + "]";
-=======
         return "TaskAndDocument [document=" + document + ", task=" + task + "]";
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
 }

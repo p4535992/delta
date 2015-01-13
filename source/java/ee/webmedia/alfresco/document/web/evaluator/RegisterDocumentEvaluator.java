@@ -24,11 +24,6 @@ import ee.webmedia.alfresco.workflow.service.HasNoStoppedOrInprogressWorkflowsEv
 
 /**
  * Evaluator, that is used to decide if we should show registrDoc button or not
-<<<<<<< HEAD
- * 
- * @author Ats Uiboupin
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
  */
 public class RegisterDocumentEvaluator extends BaseActionEvaluator {
     private static final long serialVersionUID = 2958297435415449179L;
@@ -36,17 +31,10 @@ public class RegisterDocumentEvaluator extends BaseActionEvaluator {
     @Override
     public boolean evaluate(Node docNode) {
         return docNode.getNodeRef().getStoreRef().getProtocol().equals(StoreRef.PROTOCOL_WORKSPACE)
-<<<<<<< HEAD
-                && new DocumentNotInDraftsFunctionActionEvaluator().evaluate(docNode)
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
                 && new ViewStateActionEvaluator().evaluate(docNode) && canRegister(docNode, true);
     }
 
     public boolean canRegister(Node docNode, boolean checkStoppedOrInprogressWorkflows) {
-<<<<<<< HEAD
-        if (!canRegister(docNode)) {
-=======
         final FacesContext context = FacesContext.getCurrentInstance();
         if (isRegistered(docNode)) {
             return false;
@@ -54,16 +42,11 @@ public class RegisterDocumentEvaluator extends BaseActionEvaluator {
         BeanHelper.getDocumentService().throwIfNotDynamicDoc(docNode);
         String docTypeId = (String) docNode.getProperties().get(Props.OBJECT_TYPE_ID);
         if (!getDocumentAdminService().getDocumentTypeProperty(docTypeId, DocumentAdminModel.Props.REGISTRATION_ENABLED, Boolean.class)) {
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             return false;
         }
         if (checkStoppedOrInprogressWorkflows && !new HasNoStoppedOrInprogressWorkflowsEvaluator().evaluate(docNode)) {
             return false;
         }
-<<<<<<< HEAD
-        final FacesContext context = FacesContext.getCurrentInstance();
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         DocumentService documentService = (DocumentService) FacesContextUtils.getRequiredWebApplicationContext(//
                 context).getBean(DocumentService.BEAN_NAME);
         if (!documentService.isSaved(docNode.getNodeRef())) {
@@ -72,21 +55,6 @@ public class RegisterDocumentEvaluator extends BaseActionEvaluator {
         return docNode.hasPermission(DocumentCommonModel.Privileges.EDIT_DOCUMENT);
     }
 
-<<<<<<< HEAD
-    public boolean canRegister(Node docNode) {
-        if (isRegistered(docNode)) {
-            return false;
-        }
-        BeanHelper.getDocumentService().throwIfNotDynamicDoc(docNode);
-        String docTypeId = (String) docNode.getProperties().get(Props.OBJECT_TYPE_ID);
-        if (!getDocumentAdminService().getDocumentTypeProperty(docTypeId, DocumentAdminModel.Props.REGISTRATION_ENABLED, Boolean.class)) {
-            return false;
-        }
-        return true;
-    }
-
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     public static boolean isNotRegistered(Node docNode) {
         return !isRegistered(docNode);
     }

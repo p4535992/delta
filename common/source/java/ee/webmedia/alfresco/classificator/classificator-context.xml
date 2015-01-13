@@ -28,17 +28,6 @@
          </list>
       </property>
    </bean>
-<<<<<<< HEAD
-   
-   <bean class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
-      <property name="resourceBundles">
-         <list>
-            <value>ee/webmedia/alfresco/classificator/web/classificator-webclient</value>
-         </list>
-      </property>
-   </bean>  
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
    <bean id="classificatorRootBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
       <property name="moduleId" value="common" />
@@ -141,11 +130,7 @@
    </bean>      
 
    <bean id="deleteLeaveTypeClassificatorsUpdater" class="ee.webmedia.alfresco.common.bootstrap.DeleteNodeByXPathBootstrap" parent="abstractDeleteNodeByXPathBootstrap">
-<<<<<<< HEAD
-      <property name="moduleId" value="simdhs" />
-=======
       <property name="moduleId" value="common" />
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
       <property name="nodeXPath" value="/cl:classificators/cl:leaveType" />
       <property name="dependsOn">
          <list>
@@ -155,11 +140,7 @@
    </bean>
 
    <bean id="classificatorRootBootstrap6_2" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
-<<<<<<< HEAD
-      <property name="moduleId" value="simdhs" />
-=======
       <property name="moduleId" value="common" />
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
       <property name="executeOnceOnly" value="true" />
       <property name="importer" ref="spacesBootstrap" />
       <property name="dependsOn">
@@ -389,30 +370,6 @@
       </property>
    </bean>
 
-<<<<<<< HEAD
-   <bean id="classificatorRootBootstrap17" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
-      <property name="moduleId" value="common" />
-      <property name="executeOnceOnly" value="true" />
-      <property name="importer" ref="spacesBootstrap" />
-      <property name="dependsOn">
-         <list>
-            <ref bean="classificatorRootBootstrap" />
-         </list>
-      </property>      
-      <property name="bootstrapViews">
-         <list>
-            <props>
-               <prop key="encoding">UTF-8</prop>
-               <prop key="path">${classificators.parent.folder.xpath}${classificators.folder.name}</prop>
-               <prop key="location">ee/webmedia/alfresco/classificator/bootstrap/classificators17.xml</prop>
-               <prop key="messages">ee/webmedia/alfresco/classificator/bootstrap/classificators-bootstrap</prop>
-            </props>
-         </list>
-      </property>
-   </bean>
-   
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
    <bean id="accessRestrictionTypeClassificatorValueBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
       <property name="moduleId" value="common" />
       <property name="executeOnceOnly" value="true" />
@@ -561,20 +518,6 @@
          </list>
       </property>
    </bean>
-<<<<<<< HEAD
-   
-   <bean id="sendModeSearchTypeDeleteClassificatorsUpdater" class="ee.webmedia.alfresco.common.bootstrap.DeleteNodeByXPathBootstrap" parent="abstractDeleteNodeByXPathBootstrap">
-      <property name="moduleId" value="common" />
-      <property name="executeOnceOnly" value="true" />
-      <property name="nodeXPath" value="/cl:classificators/cl:sendModeSearch" />
-      <property name="dependsOn">
-         <list>
-            <ref bean="classificatorRootBootstrap" />
-         </list>
-      </property>
-   </bean>
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
    <bean id="classificatorService" class="ee.webmedia.alfresco.classificator.service.ClassificatorServiceImpl" depends-on="classificatorModelBootstrap">
       <property name="generalService" ref="GeneralService" />

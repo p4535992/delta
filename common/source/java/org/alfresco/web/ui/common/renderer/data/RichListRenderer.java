@@ -64,10 +64,7 @@ public class RichListRenderer extends BaseRenderer
          outputAttribute(out, attrs.get("styleClass"), "class");
          outputAttribute(out, attrs.get("style"), "style");
          outputAttribute(out, attrs.get("width"), "width");
-<<<<<<< HEAD
-=======
          outputAttribute(out, attrs.get("id"), "id");
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
          out.write(">");
       }
    }

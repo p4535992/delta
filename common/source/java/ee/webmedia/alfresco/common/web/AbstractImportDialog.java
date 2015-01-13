@@ -13,11 +13,6 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
  * Base dialog for importing information from files
-<<<<<<< HEAD
- * 
- * @author Ats Uiboupin
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
  */
 public abstract class AbstractImportDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;

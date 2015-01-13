@@ -28,11 +28,6 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
  * Form backing bean for Series list
-<<<<<<< HEAD
- * 
- * @author Ats Uiboupin
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
  */
 public class SeriesListDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;
@@ -42,11 +37,7 @@ public class SeriesListDialog extends BaseDialogBean {
     private Function function;
     private List<Series> series;
     private boolean disableActions = false;
-<<<<<<< HEAD
-    private String activeStructUnit;
-=======
     private Integer activeStructUnit;
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
     public static final String BEAN_NAME = "SeriesListDialog";
 
@@ -101,19 +92,11 @@ public class SeriesListDialog extends BaseDialogBean {
 
     public void showMyStructUnit(ActionEvent event) {
         Map<QName, Serializable> userProperties = userService.getUserProperties(AuthenticationUtil.getRunAsUser());
-<<<<<<< HEAD
-        String userStructUnit = (String) userProperties.get(ContentModel.PROP_ORGID);
-        showAllForStructUnit(new NodeRef(ActionUtil.getParam(event, "functionNodeRef")), userStructUnit);
-    }
-
-    public void showAllForStructUnit(NodeRef nodeRef, String structUnitId) {
-=======
         Integer userStructUnit = Integer.parseInt(userProperties.get(ContentModel.PROP_ORGID).toString());
         showAllForStructUnit(new NodeRef(ActionUtil.getParam(event, "functionNodeRef")), userStructUnit);
     }
 
     public void showAllForStructUnit(NodeRef nodeRef, Integer structUnitId) {
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         function = getFunctionsService().getFunctionByNodeRef(nodeRef);
         series = getSeriesService().getAllSeriesByFunctionForStructUnit(nodeRef, structUnitId);
         activeStructUnit = structUnitId;
@@ -153,19 +136,11 @@ public class SeriesListDialog extends BaseDialogBean {
         this.disableActions = disableActions;
     }
 
-<<<<<<< HEAD
-    public String getActiveStructUnit() {
-        return activeStructUnit;
-    }
-
-    public void setActiveStructUnit(String activeStructUnit) {
-=======
     public Integer getActiveStructUnit() {
         return activeStructUnit;
     }
 
     public void setActiveStructUnit(Integer activeStructUnit) {
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         this.activeStructUnit = activeStructUnit;
     }
 

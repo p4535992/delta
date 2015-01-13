@@ -29,11 +29,6 @@
          <docadmin:mandatoryForVol>true</docadmin:mandatoryForVol>
          <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
          <docadmin:inapplicableForDoc>true</docadmin:inapplicableForDoc>
-<<<<<<< HEAD
-         <docadmin:readonlyFieldsNameChangeable>false</docadmin:readonlyFieldsNameChangeable>
-         <docadmin:readonlyFieldsRuleChangeable>false</docadmin:readonlyFieldsRuleChangeable>
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
          <docadmin:order>3</docadmin:order>
          <docadmin:fieldDefinitionIds>
             <view:values>

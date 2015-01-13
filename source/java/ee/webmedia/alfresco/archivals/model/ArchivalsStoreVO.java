@@ -6,12 +6,6 @@ import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.util.Assert;
 
-<<<<<<< HEAD
-/**
- * @author Alar Kvell
- */
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 public class ArchivalsStoreVO {
 
     private final String storeSuffixAndPrimaryPathSuffix;

@@ -20,12 +20,6 @@ import ee.webmedia.alfresco.signature.model.SignatureItemsAndDataItems;
 import ee.webmedia.alfresco.signature.service.SignatureService;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
-<<<<<<< HEAD
-/**
- * @author Alar Kvell
- */
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 public class SignatureBlockBean implements Serializable {
     private static final long serialVersionUID = 1L;
 

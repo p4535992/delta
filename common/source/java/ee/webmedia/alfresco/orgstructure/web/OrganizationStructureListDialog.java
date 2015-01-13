@@ -58,11 +58,7 @@ public class OrganizationStructureListDialog extends BaseDialogBean {
         int i = 0;
         for (OrganizationStructure struct : structs) {
             String organizationDisplayPath = UserUtil.getDisplayUnit(struct.getOrganizationPath());
-<<<<<<< HEAD
-            results[i++] = new SelectItem(struct.getUnitId(), StringUtils.isNotBlank(organizationDisplayPath) ? organizationDisplayPath : struct.getName());
-=======
             results[i++] = new SelectItem(Integer.toString(struct.getUnitId()), StringUtils.isNotBlank(organizationDisplayPath) ? organizationDisplayPath : struct.getName());
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             if (i == params.getLimit()) {
                 break;
             }
@@ -89,17 +85,6 @@ public class OrganizationStructureListDialog extends BaseDialogBean {
 
     private void addPaths(String[] results, List<String> organizationPaths, int index, boolean longestOnly) {
         try {
-<<<<<<< HEAD
-            String unitId = results[index];
-            OrganizationStructure orgStruct = getOrganizationStructureService().getOrganizationStructure(unitId);
-            if (longestOnly) {
-                organizationPaths.add(orgStruct.getOrganizationDisplayPath());
-            } else {
-                organizationPaths.addAll(orgStruct.getOrganizationPath());
-            }
-            if (organizationPaths.isEmpty()) {
-                organizationPaths.add(orgStruct.getName());
-=======
             Integer unitId = Integer.parseInt(results[index]);
             OrganizationStructure orgStruct = getOrganizationStructureService().getOrganizationStructure(unitId);
             if (orgStruct != null) {
@@ -111,7 +96,6 @@ public class OrganizationStructureListDialog extends BaseDialogBean {
                 if (organizationPaths.isEmpty()) {
                     organizationPaths.add(orgStruct.getName());
                 }
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             }
         } catch (NumberFormatException e) {
 

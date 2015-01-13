@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 <%@ taglib uri="http://java.sun.com/jsf/html" prefix="h" %>
 <%@ taglib uri="http://java.sun.com/jsf/core" prefix="f" %>
 <%@ taglib uri="/WEB-INF/repo.tld" prefix="r"%>
@@ -8,14 +7,3 @@
 <h:outputText value="#{DeleteDialog.confirmMessage}" rendered="#{DeleteDialog.showConfirm}"/>
 <r:propertySheetGrid id="node-props" value="#{DeleteDialog.objectNode}" columns="1" externalConfig="true" mode="view" rendered="#{DeleteDialog.showObjectData}" labelStyleClass="propertiesLabel"/>
 
-=======
-<%@ taglib uri="http://java.sun.com/jsf/html" prefix="h" %>
-<%@ taglib uri="http://java.sun.com/jsf/core" prefix="f" %>
-<%@ taglib uri="/WEB-INF/repo.tld" prefix="r"%>
-
-<%@ page buffer="32kb" contentType="text/html;charset=UTF-8" %>
-<%@ page isELIgnored="false" %>
-<h:outputText value="#{DeleteDialog.confirmMessage}" rendered="#{DeleteDialog.showConfirm}"/>
-<r:propertySheetGrid id="node-props" value="#{DeleteDialog.objectNode}" columns="1" externalConfig="true" mode="view" rendered="#{DeleteDialog.showObjectData}" labelStyleClass="propertiesLabel"/>
-
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5

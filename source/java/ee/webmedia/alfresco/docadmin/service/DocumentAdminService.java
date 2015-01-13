@@ -16,12 +16,6 @@ import ee.webmedia.alfresco.base.BaseService.Effort;
 import ee.webmedia.alfresco.docadmin.service.DocumentAdminServiceImpl.ImportHelper;
 import ee.webmedia.alfresco.utils.MessageData;
 
-<<<<<<< HEAD
-/**
- * @author Ats Uiboupin
- */
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 public interface DocumentAdminService {
 
     String BEAN_NAME = "DocumentAdminService";
@@ -51,13 +45,7 @@ public interface DocumentAdminService {
 
     Pair<DocumentType, DocumentTypeVersion> getDocumentTypeAndVersion(String docTypeId, Integer docTypeVersionNr);
 
-<<<<<<< HEAD
-    Pair<CaseFileType, DocumentTypeVersion> getCaseFileTypeAndVersion(String caseFileTypeId, Integer docTypeVersionNr);
-
-    <T> T getTypeProperty(NodeRef docTypeRef, QName property, Class<T> returnClass);
-=======
     <T> T getDocumentTypeProperty(NodeRef docTypeRef, QName property, Class<T> returnClass);
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
     /**
      * if you have docTypeRef, use {@link #getDocumentTypeProperty(NodeRef, QName, Class)} instead
@@ -130,11 +118,7 @@ public interface DocumentAdminService {
 
     Field getField(NodeRef fieldDefRef);
 
-<<<<<<< HEAD
-    void deleteFieldDefinition(NodeRef fieldDefRef);
-=======
     void deleteFieldDefinition(Field field);
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
     void addSystematicMetadataItems(DocumentTypeVersion docVer);
 
@@ -170,13 +154,7 @@ public interface DocumentAdminService {
             Map<String /* documentTypeId */, Pair<String /* documentTypeName */, Pair<Set<String> /* fieldGroupNames */, Set<QName> /* fieldGroupNames */>>> systematicDocumentTypes,
             NodeRef fieldGroupDefinitionsTmp, NodeRef fieldDefinitionsTmp);
 
-<<<<<<< HEAD
-    List<FieldDefinition> getSearchableDocumentFieldDefinitions();
-
-    List<FieldDefinition> getSearchableVolumeFieldDefinitions();
-=======
     List<FieldDefinition> getSearchableFieldDefinitions();
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
     void registerGroupShowShowInTwoColumns(Set<String> originalFieldIds);
 
@@ -257,27 +235,6 @@ public interface DocumentAdminService {
     /** Return true if fieldDefinition is used in some docType where used=true */
     boolean isFieldDefintionUsed(String fieldId);
 
-<<<<<<< HEAD
-    List<CaseFileType> getUsedCaseFileTypes(DynTypeLoadEffort effort);
-
-    <T> T getCaseFileTypeProperty(String caseFileTypeId, QName property, Class<T> returnClass);
-
-    NodeRef getCaseFileTypeRef(String id);
-
-    CaseFileType getCaseFileType(String id, DynTypeLoadEffort effort);
-
-    String getCaseFileTypeName(Node caseFile);
-
-    List<FieldDefinition> getVolumeFieldDefinitions();
-
-    List<CaseFileType> getAllCaseFileTypes(DynTypeLoadEffort effort);
-
-    DocumentType getUsedDocumentType(String documentTypeId);
-
-    Map<String, String> getCaseFileTypeNames(Boolean used);
-
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     DocumentTypeVersion getLatestDocTypeVer(String documentTypeId);
 
     Map<String, DocumentTypeVersion> getLatestDocTypeVersions();

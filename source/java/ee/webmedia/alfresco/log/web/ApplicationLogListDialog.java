@@ -16,11 +16,6 @@ import ee.webmedia.alfresco.simdhs.RichListDataReader;
 
 /**
  * Dialog for performing log entries search and displaying results.
-<<<<<<< HEAD
- * 
- * @author Martti Tamm
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
  */
 public class ApplicationLogListDialog extends BaseDialogBean {
 

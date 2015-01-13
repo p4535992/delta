@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -13,19 +12,3 @@
       </property>
    </bean>
 </beans>
-=======
-<?xml version="1.0" encoding="UTF-8"?>
-<beans xmlns="http://www.springframework.org/schema/beans"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
-
-   <!-- translation properties file to be used by I18NUtil outside FacesContext -->
-   <bean class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
-      <property name="resourceBundles">
-         <list>
-            <value>ee.webmedia.alfresco.webdav.webdav</value>
-         </list>
-      </property>
-   </bean>
-</beans>
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5

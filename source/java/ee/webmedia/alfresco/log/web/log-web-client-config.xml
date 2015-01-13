@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 <?xml version="1.0" encoding="UTF-8"?>
 <alfresco-config>
    <config>
@@ -39,45 +38,3 @@
    </config>
 
 </alfresco-config>
-=======
-<?xml version="1.0" encoding="UTF-8"?>
-<alfresco-config>
-   <config>
-      <actions>
-         <action id="log_results_export">
-            <label-id>applog_export_csv</label-id>
-            <image>/images/icons/export.gif</image>
-            <action-listener>#{ApplicationLogListDialog.exportCsv}</action-listener>
-            <target>no_wait_workaround</target>
-         </action>
-
-         <action-group id="log_results_actions">
-            <action idref="log_results_export" />
-         </action-group>
-      </actions>
-
-      <dialogs>
-         <dialog name="applicationLogDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/log/web/application-log-dialog.jsp" managed-bean="ApplicationLogDialog"
-            icon="/images/icons/versioned_properties_large.gif" title-id="applog" show-ok-button="false" />
-         <dialog name="applicationLogListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/log/web/application-log-list-dialog.jsp" managed-bean="ApplicationLogListDialog"
-            icon="/images/icons/versioned_properties_large.gif" title-id="applog_filter" show-ok-button="true" actions-config-id="log_results_actions" />
-      </dialogs>
-   </config>
-
-   <config evaluator="node-type" condition="log:logFilter">
-      <property-sheet>
-         <show-property name="log:logEntryId" display-label-id="applog_item_id" styleClass="focus"/>
-         <show-property name="log:dateCreatedStart" display-label-id="applog_item_created" component-generator="InlinePropertyGroupGenerator"
-            props="log:dateCreatedStart||styleClass=date,log:dateCreatedStart_EndDate||styleClass=date,log:dateCreatedStart_DateRangePicker|EnumSelectorGenerator|disableSorting=true|styleClass=quickDateRangePicker|enumClass=ee.webmedia.alfresco.classificator.enums.DatePeriods" 
-            textId="task_search_from_to_with_picker" />
-         <show-property name="log:creatorName" display-label-id="applog_item_user" component-generator="SearchGenerator"
-            pickerCallback="#{UserContactGroupSearchBean.searchAll}" setterCallback="#{ApplicationLogDialog.processCreatorSearchResults}" dialogTitleId="users_search_title"/>
-         <show-property name="log:computerId" display-label-id="applog_item_computer" />
-         <show-property name="log:description" display-label-id="applog_item_description" />
-         <show-property name="log:objectName" display-label-id="applog_item_object" />
-         <show-property name="log:objectId" display-label-id="applog_item_object_id" />
-      </property-sheet>
-   </config>
-
-</alfresco-config>
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5

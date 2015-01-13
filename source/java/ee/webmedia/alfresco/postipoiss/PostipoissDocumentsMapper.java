@@ -44,12 +44,6 @@ import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.utils.TreeNode;
 
-<<<<<<< HEAD
-/**
- * @author Aleksei Lissitsin
- */
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 public class PostipoissDocumentsMapper {
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(PostipoissDocumentsMapper.class);
 
@@ -102,19 +96,7 @@ public class PostipoissDocumentsMapper {
             props.add(pm);
         }
 
-<<<<<<< HEAD
-        public PropMapping getPropMappingTo(String to) {
-            return getPropMappingTo(to, false);
-        }
-
         public PropMapping requirePropMappingTo(String to) {
-            return getPropMappingTo(to, true);
-        }
-
-        private PropMapping getPropMappingTo(String to, boolean throwExceptionIfNotExists) {
-=======
-        public PropMapping requirePropMappingTo(String to) {
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             PropMapping result = null;
             for (PropMapping propMapping : props) {
                 if (to.equals(propMapping.to)) {
@@ -124,11 +106,7 @@ public class PostipoissDocumentsMapper {
                     result = propMapping;
                 }
             }
-<<<<<<< HEAD
-            if (throwExceptionIfNotExists && result == null) {
-=======
             if (result == null) {
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
                 throw new RuntimeException("No <prop> elements with to='" + to + "' found under <mapping from='" + from + "' to='" + this.to + "'>");
             }
             return result;
@@ -573,11 +551,7 @@ public class PostipoissDocumentsMapper {
             DocumentType docType = getDocumentAdminService().getDocumentType(name, DocumentAdminService.DOC_TYPE_WITH_OUT_GRAND_CHILDREN_EXEPT_LATEST_DOCTYPE_VER);
             Assert.notNull(docType, "Document type doesn't exist: " + name);
             typeInfo.docVer = docType.getLatestDocumentTypeVersion();
-<<<<<<< HEAD
-            typeInfo.propDefs = getDocumentConfigService().getPropertyDefinitions(DocAdminUtil.getPropDefCacheKey(DocumentType.class, typeInfo.docVer));
-=======
             typeInfo.propDefs = getDocumentConfigService().getPropertyDefinitions(DocAdminUtil.getDocTypeIdAndVersionNr(typeInfo.docVer));
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             typeInfo.childAssocTypeQNameTree = getDocumentConfigService().getChildAssocTypeQNameTree(typeInfo.docVer);
             typeInfo.hierarchy = new QName[] {};
         } else {

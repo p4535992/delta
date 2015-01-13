@@ -48,11 +48,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.cxf.jaxws.JaxWsProxyFactoryBean;
 import org.apache.log4j.Logger;
 import org.bouncycastle.asn1.ASN1InputStream;
-<<<<<<< HEAD
-import org.bouncycastle.asn1.DERObject;
-=======
 import org.bouncycastle.asn1.ASN1Primitive;
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import org.bouncycastle.asn1.DERObjectIdentifier;
 import org.bouncycastle.asn1.DEROctetString;
 import org.bouncycastle.asn1.DERSequence;
@@ -80,11 +76,6 @@ import ee.sk.xmlenc.EncryptedData;
 import ee.sk.xmlenc.EncryptedKey;
 import ee.sk.xmlenc.EncryptionProperty;
 import ee.webmedia.alfresco.app.AppConstants;
-<<<<<<< HEAD
-import ee.webmedia.alfresco.monitoring.MonitoredService;
-import ee.webmedia.alfresco.monitoring.MonitoringUtil;
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import ee.webmedia.alfresco.signature.exception.SignatureException;
 import ee.webmedia.alfresco.signature.exception.SignatureRuntimeException;
 import ee.webmedia.alfresco.signature.model.DataItem;
@@ -97,12 +88,6 @@ import ee.webmedia.alfresco.utils.FilenameUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UserUtil;
 
-<<<<<<< HEAD
-/**
- * @author Alar Kvell
- */
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 public class SignatureServiceImpl implements SignatureService, InitializingBean {
 
     private static Logger log = Logger.getLogger(SignatureServiceImpl.class);
@@ -220,11 +205,7 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
 
     @Override
     public boolean isDigiDocContainer(FileInfo fileInfo) {
-<<<<<<< HEAD
-        return FilenameUtil.isDigiDocFile(fileInfo.getName()) && !fileInfo.isFolder();
-=======
         return fileInfo.getName().toLowerCase().endsWith(".ddoc") && !fileInfo.isFolder();
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     @Override
@@ -389,11 +370,7 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
         }
     }
 
-<<<<<<< HEAD
-    private void addSignature(SignedDoc signedDoc, SignatureDigest signatureDigest, String signatureHex) throws Exception {
-=======
     private void addSignature(SignedDoc signedDoc, SignatureDigest signatureDigest, String signatureHex) throws DigiDocException, SignatureException {
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         byte[] signatureBytes = SignedDoc.hex2bin(signatureHex);
         Signature sig = prepareSignature(signedDoc, signatureDigest.getCertHex());
 
@@ -409,21 +386,7 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
 
         // If OCSP response is successful, then no exception is thrown
         long startTime = System.nanoTime();
-<<<<<<< HEAD
-        try {
-            sig.getConfirmation();
-            MonitoringUtil.logSuccess(MonitoredService.OUT_SK_OCSP);
-        } catch (Exception e) {
-            if (e instanceof DigiDocException && ((DigiDocException) e).getCode() == 88) {
-                MonitoringUtil.logSuccess(MonitoredService.OUT_SK_OCSP);
-            } else {
-                MonitoringUtil.logError(MonitoredService.OUT_SK_OCSP, e);
-            }
-            throw e;
-        }
-=======
         sig.getConfirmation();
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         long stopTime = System.nanoTime();
         log.info("PERFORMANCE: query skOcspSignatureConfirmation - " + duration(startTime, stopTime) + " ms");
 
@@ -536,9 +499,6 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
 
             // Cannot use more generic read method that detects type (DDOC/BDOC), beacuse it is buggy
             // (detect method reads from stream, and when parse is invoked, stream is not at the beginning any more)
-<<<<<<< HEAD
-            SignedDoc signedDoc = digiDocFactory.readSignedDocOfType(contentInputStream, false, fileContents);
-=======
             ArrayList<DigiDocException> errors = new ArrayList<DigiDocException>();
             SignedDoc signedDoc = digiDocFactory.readSignedDocFromStreamOfType(contentInputStream, false, errors);
             for (DigiDocException ex : errors) {
@@ -548,7 +508,6 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
                 }
                 throw ex;
             }
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             if (fileContents) {
                 bindCleanTempFiles(signedDoc);
             }
@@ -732,28 +691,13 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
                     status);
             long stopTime = System.nanoTime();
             if (!"OK".equals(status.value)) {
-<<<<<<< HEAD
-                String string = "Error performing query skDigiDocServiceMobileCreateSignature - " + duration(startTime, stopTime) + " ms: status='" + status.value + "'";
-                log.error(string);
-                MonitoringUtil.logError(MonitoredService.OUT_SK_DIGIDOCSERVICE, string);
-                throw new UnableToPerformException("sk_digidocservice_error");
-            }
-            MonitoringUtil.logSuccess(MonitoredService.OUT_SK_DIGIDOCSERVICE);
-=======
                 log.error("Error performing query skDigiDocServiceMobileCreateSignature - " + duration(startTime, stopTime) + " ms: status='" + status.value + "'");
                 throw new UnableToPerformException("sk_digidocservice_error");
             }
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             log.info("PERFORMANCE: query skDigiDocServiceMobileCreateSignature - " + duration(startTime, stopTime) + " ms, status=OK");
         } catch (SOAPFaultException e) {
             long stopTime = System.nanoTime();
             handleDigiDocServiceSoapFault(e, startTime, stopTime, "skDigiDocServiceMobileCreateSignature");
-<<<<<<< HEAD
-        } catch (RuntimeException e) {
-            MonitoringUtil.logError(MonitoredService.OUT_SK_DIGIDOCSERVICE, e);
-            throw e;
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         }
 
         // RESPONSE
@@ -788,44 +732,19 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
             long stopTime = System.nanoTime();
             if (!Arrays.asList("SIGNATURE", "OUTSTANDING_TRANSACTION", "EXPIRED_TRANSACTION", "USER_CANCEL", "MID_NOT_READY", "PHONE_ABSENT", "SIM_ERROR", "SENDING_ERROR",
                     "INTERNAL_ERROR").contains(status.value)) {
-<<<<<<< HEAD
-                String string = "Error performing query skDigiDocServiceGetMobileCreateSignatureStatus - " + duration(startTime, stopTime) + " ms: status=" + status.value;
-                log.error(string);
-                MonitoringUtil.logError(MonitoredService.OUT_SK_DIGIDOCSERVICE, string);
-                throw new UnableToPerformException("sk_digidocservice_error");
-            }
-            log.info("PERFORMANCE: query skDigiDocServiceGetMobileCreateSignatureStatus - " + duration(startTime, stopTime) + " ms, status=" + status.value);
-            if ("INTERNAL_ERROR".equals(status.value)) {
-                MonitoringUtil.logError(MonitoredService.OUT_SK_DIGIDOCSERVICE, status.value);
-            } else {
-                MonitoringUtil.logSuccess(MonitoredService.OUT_SK_DIGIDOCSERVICE);
-            }
-=======
                 log.error("Error performing query skDigiDocServiceGetMobileCreateSignatureStatus - " + duration(startTime, stopTime) + " ms: status=" + status.value);
                 throw new UnableToPerformException("sk_digidocservice_error");
             }
             log.info("PERFORMANCE: query skDigiDocServiceGetMobileCreateSignatureStatus - " + duration(startTime, stopTime) + " ms, status=" + status.value);
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             if ("SIGNATURE".equals(status.value)) {
                 return signature.value;
             } else if ("OUTSTANDING_TRANSACTION".equals(status.value)) {
                 return null;
             }
-<<<<<<< HEAD
-            UnableToPerformException unableToPerformException = new UnableToPerformException("ddoc_signature_failed_" + status.value);
-            throw unableToPerformException;
-        } catch (SOAPFaultException e) {
-            long stopTime = System.nanoTime();
-            handleDigiDocServiceSoapFault(e, startTime, stopTime, "skDigiDocServiceGetMobileCreateSignatureStatus");
-        } catch (RuntimeException e) {
-            MonitoringUtil.logError(MonitoredService.OUT_SK_DIGIDOCSERVICE, e);
-            throw e;
-=======
             throw new UnableToPerformException("ddoc_signature_failed_" + status.value);
         } catch (SOAPFaultException e) {
             long stopTime = System.nanoTime();
             handleDigiDocServiceSoapFault(e, startTime, stopTime, "skDigiDocServiceGetMobileCreateSignatureStatus");
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         }
         Assert.isTrue(false); // unreachable code
         return null;
@@ -845,36 +764,20 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
             int faultCode = Integer.parseInt(e.getMessage());
             if (faultCode >= 200 && faultCode < 300) {
                 log.info("PERFORMANCE: query " + queryName + " - " + duration(startTime, stopTime) + " ms, faultCode=" + faultCode);
-<<<<<<< HEAD
-                MonitoringUtil.logError(MonitoredService.OUT_SK_DIGIDOCSERVICE, e);
                 throw new UnableToPerformException("ddoc_signature_failed_INTERNAL_ERROR");
             } else if (faultCode == 101 || (faultCode >= 300 && faultCode <= 303)) {
                 log.info("PERFORMANCE: query " + queryName + " - " + duration(startTime, stopTime) + " ms, faultCode=" + faultCode);
-                MonitoringUtil.logSuccess(MonitoredService.OUT_SK_DIGIDOCSERVICE);
-=======
-                throw new UnableToPerformException("ddoc_signature_failed_INTERNAL_ERROR");
-            } else if (faultCode == 101 || (faultCode >= 300 && faultCode <= 303)) {
-                log.info("PERFORMANCE: query " + queryName + " - " + duration(startTime, stopTime) + " ms, faultCode=" + faultCode);
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
                 throw new UnableToPerformException("ddoc_signature_failed_" + faultCode);
             }
         } catch (NumberFormatException e2) {
             // do nothing
         }
         log.error("Error performing query " + queryName + " - " + duration(startTime, stopTime) + " ms: " + e.getMessage(), e);
-<<<<<<< HEAD
-        MonitoringUtil.logError(MonitoredService.OUT_SK_DIGIDOCSERVICE, e);
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         throw new UnableToPerformException("sk_digidocservice_error");
     }
 
     private void addSignature(SignedDoc signedDoc, SignatureChallenge signatureChallenge, String signature) throws DigiDocException, SignatureException,
-<<<<<<< HEAD
-            UnsupportedEncodingException {
-=======
     UnsupportedEncodingException {
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
         List<String> digestHexs = new ArrayList<String>();
         for (int i = 0; i < signedDoc.countDataFiles(); i++) {
@@ -1003,11 +906,7 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
             List<String> objectIdentifiers = new ArrayList<String>();
             byte[] policies = cert.getExtensionValue("2.5.29.32");
             if (policies != null) {
-<<<<<<< HEAD
-                DERObject derObject;
-=======
                 ASN1Primitive derObject;
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
                 derObject = toDerObject(policies);
                 if (derObject instanceof DEROctetString) {
                     derObject = toDerObject(((DEROctetString) derObject).getOctets());
@@ -1022,11 +921,7 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
         }
     }
 
-<<<<<<< HEAD
-    private static DERObject toDerObject(byte[] data) throws IOException {
-=======
     private static ASN1Primitive toDerObject(byte[] data) throws IOException {
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         return new ASN1InputStream(new ByteArrayInputStream(data)).readObject();
     }
 

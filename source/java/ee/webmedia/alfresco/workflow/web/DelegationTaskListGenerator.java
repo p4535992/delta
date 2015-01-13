@@ -29,10 +29,7 @@ import org.alfresco.web.ui.common.tag.GenericPickerTag;
 import org.alfresco.web.ui.repo.component.UIActions;
 import org.alfresco.web.ui.repo.component.property.PropertySheetItem;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
-<<<<<<< HEAD
-=======
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet.ClientValidation;
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.common.propertysheet.datepicker.DatePickerConverter;
@@ -47,11 +44,6 @@ import ee.webmedia.alfresco.workflow.service.WorkflowUtil;
 /**
  * Depending on "taskType" attribute it generates taskList for delegating assignment task as
  * new ASSIGNMENT_RESPONSIBLE, ASSIGNMENT_NOT_RESPONSIBLE, INFORMATION or OPINION task
-<<<<<<< HEAD
- * 
- * @author Ats Uiboupin
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
  */
 public class DelegationTaskListGenerator extends TaskListGenerator {
     /**
@@ -209,8 +201,6 @@ public class DelegationTaskListGenerator extends TaskListGenerator {
                             , createTaskPropValueBinding(dTaskType, delegatableTaskIndex, counter, WorkflowSpecificModel.Props.DUE_DATE, application));
                     ComponentUtil.createAndSetConverter(context, DatePickerConverter.CONVERTER_ID, dueDateInput);
                     Map<String, Object> dueDateAttributes = ComponentUtil.putAttribute(dueDateInput, "styleClass", "margin-left-4 date");
-<<<<<<< HEAD
-=======
                     if (DelegatableTaskType.ASSIGNMENT_RESPONSIBLE.equals(dTaskType) || DelegatableTaskType.ORDER_ASSIGNMENT_RESPONSIBLE.equals(dTaskType)) { // add client side
                                                                                                                                                               // validation
                         List<String> params = new ArrayList<String>(2);
@@ -220,7 +210,6 @@ public class DelegationTaskListGenerator extends TaskListGenerator {
                         propertySheet.addClientValidation(new ClientValidation("validateMandatory", params, true));
                         dueDateAttributes.put("onchange", "processButtonState();");
                     }
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
                     final HtmlPanelGroup columnActions = (HtmlPanelGroup) application.createComponent(HtmlPanelGroup.COMPONENT_TYPE);
                     columnActions.setId("column-actions-" + listId + "-" + counter);
@@ -329,11 +318,6 @@ public class DelegationTaskListGenerator extends TaskListGenerator {
         picker.setShowFilter(false);
         picker.setMultiSelect(false);
         picker.setShowFilter(true);
-<<<<<<< HEAD
-        picker.setShowSelectButton(true);
-        picker.setFilterByTaskOwnerStructUnit(true);
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         picker.setWidth(400);
         setPickerBindings(picker, dTaskType, application);
         ComponentUtil.putAttribute(picker, ATTRIB_DELEGATE_TASK_TYPE, dTaskType);
@@ -347,19 +331,11 @@ public class DelegationTaskListGenerator extends TaskListGenerator {
         String selectedSearchProcessingB; // processes selected results
         if (DelegatableTaskType.ASSIGNMENT_RESPONSIBLE.equals(dTaskType)) {
             getOwnerSearchFiltersB = "#{OwnerSearchBean.responsibleOwnerSearchFilters}";
-<<<<<<< HEAD
-            executeSearchCallbackB = "#{CompoundWorkflowDefinitionDialog.executeResponsibleOwnerSearch}";
-            selectedSearchProcessingB = "#{DelegationBean.processResponsibleOwnerSearchResults}";
-        } else {
-            getOwnerSearchFiltersB = "#{OwnerSearchBean.ownerSearchFilters}";
-            executeSearchCallbackB = "#{CompoundWorkflowDefinitionDialog.executeTaskOwnerSearch}";
-=======
             executeSearchCallbackB = "#{CompoundWorkflowDialog.executeResponsibleOwnerSearch}";
             selectedSearchProcessingB = "#{DelegationBean.processResponsibleOwnerSearchResults}";
         } else {
             getOwnerSearchFiltersB = "#{OwnerSearchBean.ownerSearchFilters}";
             executeSearchCallbackB = "#{CompoundWorkflowDialog.executeTaskOwnerSearch}";
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             selectedSearchProcessingB = "#{DelegationBean.processOwnerSearchResults}";
         }
         picker.setValueBinding("filters", application.createValueBinding(getOwnerSearchFiltersB));

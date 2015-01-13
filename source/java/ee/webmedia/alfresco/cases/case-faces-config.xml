@@ -12,11 +12,6 @@
       More information: http://wiki.alfresco.com/wiki/Packaging_And_Deploying_Extensions#JSF_configuration_files
     -->
    <managed-bean>
-<<<<<<< HEAD
-      <managed-bean-name>CaseDocumentListDialog</managed-bean-name>
-      <managed-bean-class>ee.webmedia.alfresco.cases.web.CaseDocumentListDialog</managed-bean-class>
-      <managed-bean-scope>session</managed-bean-scope>
-=======
       <managed-bean-name>CaseListDialog</managed-bean-name>
       <managed-bean-class>ee.webmedia.alfresco.cases.web.CaseListDialog</managed-bean-class>
       <managed-bean-scope>session</managed-bean-scope>
@@ -28,20 +23,16 @@
          <property-name>volumeService</property-name>
          <value>#{VolumeService}</value>
       </managed-property>
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
    </managed-bean>
 
    <managed-bean>
       <managed-bean-name>CaseDetailsDialog</managed-bean-name>
       <managed-bean-class>ee.webmedia.alfresco.cases.web.CaseDetailsDialog</managed-bean-class>
       <managed-bean-scope>session</managed-bean-scope>
-<<<<<<< HEAD
-=======
       <managed-property>
          <property-name>caseService</property-name>
          <value>#{CaseService}</value>
       </managed-property>
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
    </managed-bean>
 
 </faces-config>

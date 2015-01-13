@@ -4,25 +4,10 @@ import java.io.Serializable;
 import java.util.Date;
 
 import org.alfresco.service.cmr.repository.NodeRef;
-<<<<<<< HEAD
-import org.alfresco.service.namespace.QName;
-import org.apache.commons.lang.StringUtils;
-
-import ee.webmedia.alfresco.app.AppConstants;
-import ee.webmedia.alfresco.document.assocsdyn.service.DocumentAssociationsServiceImpl;
-import ee.webmedia.alfresco.document.model.DocumentCommonModel;
-import ee.webmedia.alfresco.document.service.DocumentService.AssocType;
-
-/**
- * @author Ats Uiboupin
- */
-public class DocAssocInfo implements Serializable, Comparable<DocAssocInfo> {
-=======
 
 import ee.webmedia.alfresco.document.service.DocumentService.AssocType;
 
 public class DocAssocInfo implements Serializable {
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
     private static final long serialVersionUID = 1L;
 
@@ -30,26 +15,13 @@ public class DocAssocInfo implements Serializable {
     private String typeId;
     private String title;
     private AssocType assocType;
-<<<<<<< HEAD
-    private QName assocTypeQName;
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     private boolean source;
     private String regNumber;
     private Date regDateTime;
 
-<<<<<<< HEAD
-    private NodeRef thisNodeRef;
-    private NodeRef otherNodeRef;
-    private NodeRef caseNodeRef;
-    private NodeRef volumeNodeRef;
-    private boolean isCaseFileVolume;
-    private boolean allowDelete;
-=======
     private NodeRef nodeRef;
 
     private NodeRef caseNodeRef;
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
     public String getType() {
         return type;
@@ -91,54 +63,18 @@ public class DocAssocInfo implements Serializable {
         this.source = source;
     }
 
-<<<<<<< HEAD
-    public NodeRef getOtherNodeRef() {
-        return otherNodeRef;
-    }
-
-    public void setOtherNodeRef(NodeRef otherNodeRef) {
-        this.otherNodeRef = otherNodeRef;
-    }
-
-    public boolean isDocument() {
-        return !isCase() && !isWorkflow() && !isVolume();
-=======
     public NodeRef getNodeRef() {
         return nodeRef;
     }
 
     public void setNodeRef(NodeRef nodeRef) {
         this.nodeRef = nodeRef;
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     public boolean isCase() {
         return caseNodeRef != null;
     }
 
-<<<<<<< HEAD
-    public boolean isWorkflow() {
-        return AssocType.WORKFLOW == assocType;
-    }
-
-    public boolean isVolume() {
-        return volumeNodeRef != null;
-    }
-
-    public boolean isCaseFileVolume() {
-        return isVolume() && isCaseFileVolume;
-    }
-
-    public boolean isDocumentToDocumentAssoc() {
-        return DocumentCommonModel.Assocs.DOCUMENT_2_DOCUMENT.equals(assocTypeQName);
-    }
-
-    public void setCaseFileVolume(boolean isCaseFileVolume) {
-        this.isCaseFileVolume = isCaseFileVolume;
-    }
-
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     public void setCaseNodeRef(NodeRef caseNodeRef) {
         this.caseNodeRef = caseNodeRef;
     }
@@ -147,23 +83,9 @@ public class DocAssocInfo implements Serializable {
         return caseNodeRef;
     }
 
-<<<<<<< HEAD
-    public void setVolumeNodeRef(NodeRef volumeNodeRef) {
-        this.volumeNodeRef = volumeNodeRef;
-    }
-
-    public NodeRef getVolumeNodeRef() {
-        return volumeNodeRef;
-    }
-
-    @Override
-    public String toString() {
-        return "DocAssocInfo [assocType=" + assocType + ", caseNodeRef=" + caseNodeRef + ", nodeRef=" + otherNodeRef
-=======
     @Override
     public String toString() {
         return "DocAssocInfo [assocType=" + assocType + ", caseNodeRef=" + caseNodeRef + ", nodeRef=" + nodeRef
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
                 + ", title=" + title + ", type=" + type + ", source=" + source + "]";
     }
 
@@ -184,61 +106,7 @@ public class DocAssocInfo implements Serializable {
     }
 
     public NodeRef getEffectiveNodeRef() {
-<<<<<<< HEAD
-        return otherNodeRef == null ? caseNodeRef : otherNodeRef;
-    }
-
-    @Override
-    public int compareTo(DocAssocInfo otherDocAssocInfo) {
-        if (otherDocAssocInfo == null) {
-            return (assocType == AssocType.WORKFLOW || isCase()) ? -1 : 0;
-        }
-        QName otherAssocTypeQName = otherDocAssocInfo.getAssocTypeQName();
-        if (otherAssocTypeQName.equals(assocTypeQName)) {
-            return AppConstants.DEFAULT_COLLATOR.compare(StringUtils.defaultString(getTitle()), StringUtils.defaultString(otherDocAssocInfo.getTitle()));
-        } else if (assocType == AssocType.WORKFLOW) {
-            return -1;
-        } else if (otherDocAssocInfo.getAssocType() == AssocType.WORKFLOW) {
-            return 1;
-        } else {
-            return Integer.valueOf(DocumentAssociationsServiceImpl.ASSOCS_BETWEEN_DOC_LIST_UNIT_ITEMS.indexOf(assocTypeQName)).compareTo(
-                    DocumentAssociationsServiceImpl.ASSOCS_BETWEEN_DOC_LIST_UNIT_ITEMS.indexOf(otherAssocTypeQName));
-        }
-    }
-
-    public NodeRef getThisNodeRef() {
-        return thisNodeRef;
-    }
-
-    public void setThisNodeRef(NodeRef thisNodeRef) {
-        this.thisNodeRef = thisNodeRef;
-    }
-
-    public NodeRef getSourceNodeRef() {
-        return source ? otherNodeRef : thisNodeRef;
-    }
-
-    public NodeRef getTargetNodeRef() {
-        return source ? thisNodeRef : otherNodeRef;
-    }
-
-    public QName getAssocTypeQName() {
-        return assocTypeQName;
-    }
-
-    public void setAssocTypeQName(QName assocTypeQName) {
-        this.assocTypeQName = assocTypeQName;
-    }
-
-    public boolean isAllowDelete() {
-        return allowDelete;
-    }
-
-    public void setAllowDelete(boolean allowDelete) {
-        this.allowDelete = allowDelete;
-=======
         return nodeRef == null ? caseNodeRef : nodeRef;
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
 }

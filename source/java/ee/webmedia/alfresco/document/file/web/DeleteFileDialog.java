@@ -16,22 +16,12 @@ import org.alfresco.web.bean.content.DeleteContentDialog;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.StringUtils;
 
-<<<<<<< HEAD
-import ee.webmedia.alfresco.common.web.BeanHelper;
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import ee.webmedia.alfresco.document.file.model.FileModel;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.type.service.DocumentTypeHelper;
 import ee.webmedia.alfresco.menu.ui.MenuBean;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
-<<<<<<< HEAD
-/**
- * @author Dmitri Melnikov
- */
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 public class DeleteFileDialog extends DeleteContentDialog {
     private static final long serialVersionUID = 1L;
 
@@ -68,13 +58,6 @@ public class DeleteFileDialog extends DeleteContentDialog {
             if (file.getType().equals(ContentModel.TYPE_CONTENT) || DocumentTypeHelper.isIncomingOrOutgoingLetter(file.getType())) {
                 ((MenuBean) FacesHelper.getManagedBean(context, MenuBean.BEAN_NAME)).processTaskItems();
             }
-<<<<<<< HEAD
-            NodeRef previouslyGeneratedPdf = BeanHelper.getFileService().getPreviouslyGeneratedPdf(file.getNodeRef());
-            if (previouslyGeneratedPdf != null) {
-                getNodeService().setProperty(previouslyGeneratedPdf, FileModel.Props.PDF_GENERATED_FROM_FILE, null);
-            }
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             MessageUtil.addInfoMessage("file_delete_success", fileName);
         }
 

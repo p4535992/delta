@@ -40,11 +40,6 @@ import ee.webmedia.alfresco.adr.ws.OtsiFailSisuga;
 import ee.webmedia.alfresco.adr.ws.OtsiFailSisugaResponse;
 import ee.webmedia.alfresco.adr.ws.OtsiFailSisugaV2;
 import ee.webmedia.alfresco.adr.ws.OtsiFailSisugaV2Response;
-<<<<<<< HEAD
-import ee.webmedia.alfresco.monitoring.MonitoredService;
-import ee.webmedia.alfresco.monitoring.MonitoringUtil;
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
 @WebService(name = "AvalikDokumendiRegister", targetNamespace = "http://alfresco/avalikdokumendiregister", serviceName = "AvalikDokumendiRegisterService")
 public class AvalikDokumendiRegisterEndpoint implements AvalikDokumendiRegister {
@@ -58,29 +53,15 @@ public class AvalikDokumendiRegisterEndpoint implements AvalikDokumendiRegister 
 
     private AdrService getAdrService() {
         if (adrService == null) {
-<<<<<<< HEAD
-            checkWebAppContext();
-=======
             if (webApplicationContext == null) {
                 ServletContext servletContext = (ServletContext) context.getMessageContext().get(MessageContext.SERVLET_CONTEXT);
                 webApplicationContext = WebApplicationContextUtils.getRequiredWebApplicationContext(servletContext);
             }
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             adrService = (AdrService) webApplicationContext.getBean(AdrService.BEAN_NAME);
         }
         return adrService;
     }
 
-<<<<<<< HEAD
-    private void checkWebAppContext() {
-        if (webApplicationContext == null) {
-            ServletContext servletContext = (ServletContext) context.getMessageContext().get(MessageContext.SERVLET_CONTEXT);
-            webApplicationContext = WebApplicationContextUtils.getRequiredWebApplicationContext(servletContext);
-        }
-    }
-
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     @Override
     @WebMethod
     @WebResult(name = "dokument", targetNamespace = "")
@@ -95,18 +76,7 @@ public class AvalikDokumendiRegisterEndpoint implements AvalikDokumendiRegister 
         return AuthenticationUtil.runAs(new RunAsWork<List<Dokument>>() {
             @Override
             public List<Dokument> doWork() throws Exception {
-<<<<<<< HEAD
-                try {
-                    List<Dokument> otsiDokumendid = getAdrService().otsiDokumendid(perioodiAlgusKuupaev, perioodiLoppKuupaev, dokumendiLiik, otsingusona);
-                    MonitoringUtil.logSuccess(MonitoredService.IN_ADR);
-                    return otsiDokumendid;
-                } catch (Exception e) {
-                    MonitoringUtil.logError(MonitoredService.IN_ADR, e);
-                    throw e;
-                }
-=======
                 return getAdrService().otsiDokumendid(perioodiAlgusKuupaev, perioodiLoppKuupaev, dokumendiLiik, otsingusona);
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             }
         }, AuthenticationUtil.getSystemUserName());
     }
@@ -121,18 +91,7 @@ public class AvalikDokumendiRegisterEndpoint implements AvalikDokumendiRegister 
         DokumentDetailidega result = AuthenticationUtil.runAs(new RunAsWork<DokumentDetailidega>() {
             @Override
             public DokumentDetailidega doWork() throws Exception {
-<<<<<<< HEAD
-                try {
-                    DokumentDetailidega dokumentDetailidega = getAdrService().dokumentDetailidega(parameters.getViit(), parameters.getRegistreerimiseAeg());
-                    MonitoringUtil.logSuccess(MonitoredService.IN_ADR);
-                    return dokumentDetailidega;
-                } catch (Exception e) {
-                    MonitoringUtil.logError(MonitoredService.IN_ADR, e);
-                    throw e;
-                }
-=======
                 return getAdrService().dokumentDetailidega(parameters.getViit(), parameters.getRegistreerimiseAeg());
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             }
         }, AuthenticationUtil.getSystemUserName());
         DokumentDetailidegaResponse wrapper = new DokumentDetailidegaResponse();
@@ -150,18 +109,7 @@ public class AvalikDokumendiRegisterEndpoint implements AvalikDokumendiRegister 
         Fail result = AuthenticationUtil.runAs(new RunAsWork<Fail>() {
             @Override
             public Fail doWork() throws Exception {
-<<<<<<< HEAD
-                try {
-                    Fail failSisuga = getAdrService().failSisuga(parameters.getViit(), parameters.getRegistreerimiseAeg(), parameters.getFailinimi());
-                    MonitoringUtil.logSuccess(MonitoredService.IN_ADR);
-                    return failSisuga;
-                } catch (Exception e) {
-                    MonitoringUtil.logError(MonitoredService.IN_ADR, e);
-                    throw e;
-                }
-=======
                 return getAdrService().failSisuga(parameters.getViit(), parameters.getRegistreerimiseAeg(), parameters.getFailinimi());
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             }
         }, AuthenticationUtil.getSystemUserName());
         OtsiFailSisugaResponse wrapper = new OtsiFailSisugaResponse();
@@ -181,17 +129,9 @@ public class AvalikDokumendiRegisterEndpoint implements AvalikDokumendiRegister 
             public FailV2 doWork() throws Exception {
                 try {
                     FailV2 failSisugaV2 = getAdrService().failSisugaV2(new NodeRef(parameters.getDokumentId()), parameters.getFailinimi());
-<<<<<<< HEAD
-                    MonitoringUtil.logSuccess(MonitoredService.IN_ADR);
                     return failSisugaV2;
                 } catch (Exception e) {
                     LOG.error("Error in failSisugaV2\n  parameters=" + objectToString(parameters), e);
-                    MonitoringUtil.logError(MonitoredService.IN_ADR, e);
-=======
-                    return failSisugaV2;
-                } catch (Exception e) {
-                    LOG.error("Error in failSisugaV2\n  parameters=" + objectToString(parameters), e);
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
                     throw e;
                 }
             }
@@ -211,18 +151,7 @@ public class AvalikDokumendiRegisterEndpoint implements AvalikDokumendiRegister 
         List<Dokumendiliik> result = AuthenticationUtil.runAs(new RunAsWork<List<Dokumendiliik>>() {
             @Override
             public List<Dokumendiliik> doWork() throws Exception {
-<<<<<<< HEAD
-                try {
-                    List<Dokumendiliik> dokumendiliigid = getAdrService().dokumendiliigid();
-                    MonitoringUtil.logSuccess(MonitoredService.IN_ADR);
-                    return dokumendiliigid;
-                } catch (Exception e) {
-                    MonitoringUtil.logError(MonitoredService.IN_ADR, e);
-                    throw e;
-                }
-=======
                 return getAdrService().dokumendiliigid();
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             }
         }, AuthenticationUtil.getSystemUserName());
         OtsiDokumendiliigidResponse wrapper = new OtsiDokumendiliigidResponse();
@@ -242,18 +171,7 @@ public class AvalikDokumendiRegisterEndpoint implements AvalikDokumendiRegister 
         return AuthenticationUtil.runAs(new RunAsWork<List<DokumentDetailidega>>() {
             @Override
             public List<DokumentDetailidega> doWork() throws Exception {
-<<<<<<< HEAD
-                try {
-                    List<DokumentDetailidega> koikDokumendidLisatudMuudetud = getAdrService().koikDokumendidLisatudMuudetud(perioodiAlgusKuupaev, perioodiLoppKuupaev);
-                    MonitoringUtil.logSuccess(MonitoredService.IN_ADR);
-                    return koikDokumendidLisatudMuudetud;
-                } catch (Exception e) {
-                    MonitoringUtil.logError(MonitoredService.IN_ADR, e);
-                    throw e;
-                }
-=======
                 return getAdrService().koikDokumendidLisatudMuudetud(perioodiAlgusKuupaev, perioodiLoppKuupaev);
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             }
         }, AuthenticationUtil.getSystemUserName());
     }
@@ -275,10 +193,6 @@ public class AvalikDokumendiRegisterEndpoint implements AvalikDokumendiRegister 
                 try {
                     List<DokumentDetailidegaV2> koikDokumendidLisatudMuudetudV2 = getAdrService().koikDokumendidLisatudMuudetudV2(perioodiAlgusKuupaev, perioodiLoppKuupaev,
                             jataAlgusestVahele, tulemustePiirang);
-<<<<<<< HEAD
-                    MonitoringUtil.logSuccess(MonitoredService.IN_ADR);
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
                     return koikDokumendidLisatudMuudetudV2;
                 } catch (Exception e) {
                     LOG.error("Error in koikDokumendidLisatudMuudetudV2"
@@ -287,10 +201,6 @@ public class AvalikDokumendiRegisterEndpoint implements AvalikDokumendiRegister 
                             + "\n  jataAlgusestVahele=" + jataAlgusestVahele
                             + "\n  tulemustePiirang=" + objectToString(tulemustePiirang)
                             , e);
-<<<<<<< HEAD
-                    MonitoringUtil.logError(MonitoredService.IN_ADR, e);
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
                     throw e;
                 }
             }
@@ -309,18 +219,7 @@ public class AvalikDokumendiRegisterEndpoint implements AvalikDokumendiRegister 
         return AuthenticationUtil.runAs(new RunAsWork<List<Dokument>>() {
             @Override
             public List<Dokument> doWork() throws Exception {
-<<<<<<< HEAD
-                try {
-                    List<Dokument> koikDokumendidKustutatud = getAdrService().koikDokumendidKustutatud(perioodiAlgusKuupaev, perioodiLoppKuupaev);
-                    MonitoringUtil.logSuccess(MonitoredService.IN_ADR);
-                    return koikDokumendidKustutatud;
-                } catch (Exception e) {
-                    MonitoringUtil.logError(MonitoredService.IN_ADR, e);
-                    throw e;
-                }
-=======
                 return getAdrService().koikDokumendidKustutatud(perioodiAlgusKuupaev, perioodiLoppKuupaev);
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             }
         }, AuthenticationUtil.getSystemUserName());
     }
@@ -342,10 +241,6 @@ public class AvalikDokumendiRegisterEndpoint implements AvalikDokumendiRegister 
                 try {
                     List<DokumentId> koikDokumendidKustutatudV2 = getAdrService().koikDokumendidKustutatudV2(perioodiAlgusKuupaev, perioodiLoppKuupaev, jataAlgusestVahele,
                             tulemustePiirang);
-<<<<<<< HEAD
-                    MonitoringUtil.logSuccess(MonitoredService.IN_ADR);
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
                     return koikDokumendidKustutatudV2;
                 } catch (Exception e) {
                     LOG.error("Error in koikDokumendidKustutatudV2"
@@ -354,10 +249,6 @@ public class AvalikDokumendiRegisterEndpoint implements AvalikDokumendiRegister 
                             + "\n  jataAlgusestVahele=" + jataAlgusestVahele
                             + "\n  tulemustePiirang=" + objectToString(tulemustePiirang)
                             , e);
-<<<<<<< HEAD
-                    MonitoringUtil.logError(MonitoredService.IN_ADR, e);
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
                     throw e;
                 }
             }

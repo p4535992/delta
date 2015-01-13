@@ -131,10 +131,6 @@
          <parent>docadmin:dynamicType</parent>
       </type>
 
-<<<<<<< HEAD
-      <!-- docdyn:function, docdyn:series, docdyn:volume and docdyn:case properties are also added from DocumentDynamicModel -->
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
       <type name="docadmin:documentType"><!-- path name should be id -->
          <parent>docadmin:dynamicType</parent>
          <properties>
@@ -423,13 +419,6 @@
                <type>d:text</type>
                <mandatory enforced="true">true</mandatory>
             </property>
-<<<<<<< HEAD
-            <property name="docadmin:associateWithSourceDocumentWorkflow">
-               <type>d:boolean</type>
-               <mandatory>true</mandatory>            
-            </property>
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
          </properties>
          <associations>
             <child-association name="docadmin:fieldMapping">

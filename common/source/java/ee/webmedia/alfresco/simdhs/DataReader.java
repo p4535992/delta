@@ -8,11 +8,6 @@ import org.alfresco.web.ui.common.component.data.UIRichList;
 
 /**
  * Interface used for defining data reader for {@link ee.webmedia.alfresco.simdhs.CSVExporter}.
-<<<<<<< HEAD
- * 
- * @author Romet Aidla
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
  */
 public interface DataReader {
 

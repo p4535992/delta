@@ -12,12 +12,7 @@
 
    <bean id="iktJaxbMarshaller" class="org.springframework.oxm.jaxb.Jaxb2Marshaller">
       <property name="contextPath" value="ee.webmedia.alfresco.ikt.generated" />
-<<<<<<< HEAD
-      <property name="schema" value="classpath:ee/webmedia/alfresco/ikt/generated/local-ikt.xsd" />
-      <property name="schemaResourceResolver" ref="classpathResourceResolver" />
-=======
       <property name="schema" value="classpath:ee/webmedia/alfresco/ikt/generated/ikt.xsd" />
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
       <!--
          If you don't need to serve attachments (swaRef), then disable this
       -->

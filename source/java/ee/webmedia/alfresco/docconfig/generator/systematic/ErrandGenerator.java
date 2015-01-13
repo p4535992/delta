@@ -22,10 +22,7 @@ import javax.faces.el.MethodBinding;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
-<<<<<<< HEAD
-=======
 import org.alfresco.web.bean.generator.BaseComponentGenerator.CustomAttributeNames;
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.ArrayUtils;
@@ -36,10 +33,6 @@ import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.classificator.constant.FieldType;
 import ee.webmedia.alfresco.classificator.model.ClassificatorValue;
-<<<<<<< HEAD
-import ee.webmedia.alfresco.common.model.DynamicBase;
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement.ItemConfigVO;
 import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement.ItemConfigVO.ConfigItemType;
 import ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.CombinedPropReader;
@@ -67,12 +60,6 @@ import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UserUtil;
 
-<<<<<<< HEAD
-/**
- * @author Alar Kvell
- */
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 public class ErrandGenerator extends BaseSystematicGroupGenerator implements SaveListener, BeanNameAware {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(ErrandGenerator.class);
 
@@ -165,25 +152,14 @@ public class ErrandGenerator extends BaseSystematicGroupGenerator implements Sav
         documentConfigService.registerChildAssocTypeQNameHierarchy(SystematicFieldGroupNames.ERRAND_ABROAD_APPLICANT, DocumentChildModel.Assocs.APPLICANT_ABROAD,
                 applicantAbroadAdditionalHierarchy);
 
-<<<<<<< HEAD
-        documentConfigService.registerChildAssocTypeQNameHierarchy(SystematicFieldGroupNames.TRAINING_APPLICANT, DocumentChildModel.Assocs.APPLICANT_TRAINING, null);
-
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         Set<String> multiValueOverrideFieldOriginalIds = new HashSet<String>();
         multiValueOverrideFieldOriginalIds.addAll(substituteTableFieldIds);
         multiValueOverrideFieldOriginalIds.addAll(dailyAllowanceTableFieldIds);
         multiValueOverrideFieldOriginalIds.addAll(expenseTableFieldIds);
         documentConfigService.registerMultiValuedOverrideBySystematicGroupName(SystematicFieldGroupNames.ERRAND_DOMESTIC_APPLICANT, multiValueOverrideFieldOriginalIds);
         documentConfigService.registerMultiValuedOverrideBySystematicGroupName(SystematicFieldGroupNames.ERRAND_ABROAD_APPLICANT, multiValueOverrideFieldOriginalIds);
-<<<<<<< HEAD
-        documentConfigService.registerMultiValuedOverrideBySystematicGroupName(SystematicFieldGroupNames.TRAINING_APPLICANT, multiValueOverrideFieldOriginalIds);
-
-        return new String[] { SystematicFieldGroupNames.ERRAND_DOMESTIC_APPLICANT, SystematicFieldGroupNames.ERRAND_ABROAD_APPLICANT, SystematicFieldGroupNames.TRAINING_APPLICANT };
-=======
 
         return new String[] { SystematicFieldGroupNames.ERRAND_DOMESTIC_APPLICANT, SystematicFieldGroupNames.ERRAND_ABROAD_APPLICANT };
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     @Override
@@ -236,16 +212,7 @@ public class ErrandGenerator extends BaseSystematicGroupGenerator implements Sav
             Pair<Field, List<Field>> relatedFields2 = collectAndRemoveFieldsInOriginalOrderToFakeGroup(notProcessedFields, field, fieldsByOriginalId);
             List<Field> relatedFields = relatedFields2 == null ? null : relatedFields2.getSecond();
             if (relatedFields != null) {
-<<<<<<< HEAD
-                boolean forceEditMode = false;
-                if (!relatedFields.isEmpty()) {
-                    forceEditMode = generateReadonlyGroupItem(relatedFields2.getFirst(), relatedFields, "applicantName", convertHierarchyToString(hierarchy), generatorResults,
-                            fieldsByOriginalId);
-                }
-                generateFields(generatorResults, items, primaryStateHolder, stateHolders, hierarchy, forceEditMode, relatedFields.toArray(new Field[relatedFields.size()]));
-=======
                 generateFields(generatorResults, items, primaryStateHolder, stateHolders, hierarchy, relatedFields.toArray(new Field[relatedFields.size()]));
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
                 continue;
             }
             relatedFields = collectAndRemoveFieldsInOriginalOrder(notProcessedFields, field, dailyAllowanceTableFieldIds);
@@ -280,11 +247,7 @@ public class ErrandGenerator extends BaseSystematicGroupGenerator implements Sav
             }
 
             // If field is not related to a group of fields, then process it separately
-<<<<<<< HEAD
-            generateFields(generatorResults, items, primaryStateHolder, stateHolders, hierarchy, false, field);
-=======
             generateFields(generatorResults, items, primaryStateHolder, stateHolders, hierarchy, field);
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         }
 
         for (ItemConfigVO item : items.values()) {
@@ -343,13 +306,6 @@ public class ErrandGenerator extends BaseSystematicGroupGenerator implements Sav
         ItemConfigVO item = result.getFirst();
         item.setComponentGenerator("InlinePropertyGroupGenerator");
         item.setTextId(textId);
-<<<<<<< HEAD
-        item.setProps(result.getSecond());
-
-        return item;
-    }
-
-=======
         String props = result.getSecond();
         
         if (relatedFields.size() >= 2) {
@@ -370,7 +326,6 @@ public class ErrandGenerator extends BaseSystematicGroupGenerator implements Sav
         return StringUtils.join(prop, CombinedPropReader.AttributeNames.DEFAULT_PROPERTIES_SEPARATOR);
     }
 
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     private Pair<ItemConfigVO, String> generateBasePropsItem(FieldGroupGeneratorResults generatorResults, Map<String, ItemConfigVO> items, ErrandState primaryStateHolder,
             QName[] hierarchy,
             List<Field> relatedFields, Field primaryField, String displayLabel) {
@@ -452,58 +407,15 @@ public class ErrandGenerator extends BaseSystematicGroupGenerator implements Sav
         return Pair.newInstance(primaryFakeField, fakeFields);
     }
 
-<<<<<<< HEAD
-    private boolean generateReadonlyGroupItem(Field primaryField, List<Field> fields, String primaryFieldRequiredId, String subpropSheetId,
-            FieldGroupGeneratorResults generatorResults, Map<String, Field> fieldsByOriginalId) {
-        String primaryFakeFieldId = primaryField != null ? primaryField.getFieldId() : null;
-        if (!fieldsByOriginalId.get(primaryFieldRequiredId).getFieldId().equals(primaryFakeFieldId)) {
-            return false;
-        }
-        FieldGroup fieldGroup = (FieldGroup) primaryField.getParent();
-        StringBuffer readonlyFieldsRule = new StringBuffer("{" + primaryFakeFieldId + "}");
-
-        List<Field> readonlyViewFields = new ArrayList<Field>();
-        for (Field fakeField : fields) {
-            String originalFieldId = fakeField.getOriginalFieldId();
-            if (!"applicantName".equals(originalFieldId) && !"applicantId".equals(originalFieldId)) {
-                readonlyViewFields.add(fakeField);
-            }
-        }
-
-        if (!readonlyViewFields.isEmpty()) {
-            readonlyFieldsRule.append("/¤ (");
-            for (Field readonlyField : readonlyViewFields) {
-                readonlyFieldsRule.append("{" + readonlyField.getFieldId() + "}");
-            }
-            readonlyFieldsRule.append(")¤/");
-        }
-        fieldGroup.setReadonlyFieldsRule(readonlyFieldsRule.toString());
-        ItemConfigVO generateFieldGroupReadonlyItem = documentConfigService.generateFieldGroupReadonlyItem(fieldGroup);
-        generateFieldGroupReadonlyItem.setBelongsToSubPropertySheetId(subpropSheetId);
-        generatorResults.addItem(generateFieldGroupReadonlyItem);
-        return true;
-    }
-
-    private void generateFields(FieldGroupGeneratorResults generatorResults, Map<String, ItemConfigVO> items, ErrandState primaryStateHolder,
-            Map<String, PropertySheetStateHolder> stateHolders,
-            QName[] hierarchy, boolean forceEditMode, Field... fields) {
-=======
     private void generateFields(FieldGroupGeneratorResults generatorResults, Map<String, ItemConfigVO> items, ErrandState primaryStateHolder,
             Map<String, PropertySheetStateHolder> stateHolders,
             QName[] hierarchy, Field... fields) {
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         Pair<Map<String, ItemConfigVO>, Map<String, PropertySheetStateHolder>> result = generatorResults.generateItems(fields);
         Map<String, ItemConfigVO> generatedItems = result.getFirst();
         Map<String, PropertySheetStateHolder> generatedStateHolders = result.getSecond();
         Assert.isTrue(!CollectionUtils.containsAny(items.keySet(), generatedItems.keySet()));
         Assert.isTrue(!CollectionUtils.containsAny(stateHolders.keySet(), generatedStateHolders.keySet()));
         for (ItemConfigVO item : generatedItems.values()) {
-<<<<<<< HEAD
-            if (forceEditMode) {
-                item.setShowInViewMode(false);
-            }
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             QName propName = QName.resolveToQName(namespaceService, item.getName());
             for (Field field : fields) {
                 if (field.getFieldId().equals(propName.getLocalName())) {
@@ -724,18 +636,6 @@ public class ErrandGenerator extends BaseSystematicGroupGenerator implements Sav
                     }
                 }
             }
-<<<<<<< HEAD
-
-            applicants = document.getAllChildAssociations(DocumentChildModel.Assocs.APPLICANT_TRAINING);
-            if (applicants != null) {
-                for (Node applicant : applicants) {
-                    calculateDailyAllowanceSums(applicant, validate);
-                    calculateExpensesSum(applicant);
-
-                }
-            }
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         }
 
         private void calculateExpensesSum(Node errand) {
@@ -814,20 +714,12 @@ public class ErrandGenerator extends BaseSystematicGroupGenerator implements Sav
     }
 
     @Override
-<<<<<<< HEAD
-    public void validate(DynamicBase dynamicObject, ValidationHelper validationHelper) {
-=======
     public void validate(DocumentDynamic document, ValidationHelper validationHelper) {
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         ErrandState errandStateHolder = BeanHelper.getPropertySheetStateBean().getStateHolder(ERRAND_STATE_HOLDER_KEY, ErrandState.class);
         // errandStateHolder may be null if save action is not initiated from document dialog.
         // At present, it is assumed that there is no need to check values when saving not from document dialog.
         if (errandStateHolder != null) {
-<<<<<<< HEAD
-            List<Node> applicants = dynamicObject.getNode().getAllChildAssociations(DocumentChildModel.Assocs.APPLICANT_ABROAD);
-=======
             List<Node> applicants = document.getNode().getAllChildAssociations(DocumentChildModel.Assocs.APPLICANT_ABROAD);
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             if (applicants != null) {
                 for (Node applicant : applicants) {
                     List<Node> errands = applicant.getAllChildAssociations(DocumentChildModel.Assocs.ERRAND_ABROAD);
@@ -836,14 +728,6 @@ public class ErrandGenerator extends BaseSystematicGroupGenerator implements Sav
                     }
                 }
             }
-<<<<<<< HEAD
-
-            applicants = dynamicObject.getNode().getAllChildAssociations(DocumentChildModel.Assocs.APPLICANT_TRAINING);
-            if (applicants != null) {
-                validateErrandDailyAllowance(validationHelper, errandStateHolder, applicants);
-            }
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         }
     }
 
@@ -866,23 +750,12 @@ public class ErrandGenerator extends BaseSystematicGroupGenerator implements Sav
     }
 
     @Override
-<<<<<<< HEAD
-    public void save(DynamicBase document) {
-        if (document instanceof DocumentDynamic) {
-            ErrandState errandStateHolder = BeanHelper.getPropertySheetStateBean().getStateHolder(ERRAND_STATE_HOLDER_KEY, ErrandState.class);
-            // errandStateHolder may be null if save action is not initiated from document dialog.
-            // At present, it is assumed that there is no need to recalculate values when saving not from document dialog.
-            if (errandStateHolder != null) {
-                errandStateHolder.calculateValues(document.getNode(), true);
-            }
-=======
     public void save(DocumentDynamic document) {
         ErrandState errandStateHolder = BeanHelper.getPropertySheetStateBean().getStateHolder(ERRAND_STATE_HOLDER_KEY, ErrandState.class);
         // errandStateHolder may be null if save action is not initiated from document dialog.
         // At present, it is assumed that there is no need to recalculate values when saving not from document dialog.
         if (errandStateHolder != null) {
             errandStateHolder.calculateValues(document.getNode(), true);
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         }
     }
 

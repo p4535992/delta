@@ -10,12 +10,6 @@ import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 
-<<<<<<< HEAD
-/**
- * @author Alar Kvell
- */
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 public class CompoundWorkflowDefinition extends CompoundWorkflow {
     private static final long serialVersionUID = 1L;
     private static final QName USER_FULL_NAME = RepoUtil.createTransientProp("userFullName");
@@ -25,11 +19,7 @@ public class CompoundWorkflowDefinition extends CompoundWorkflow {
     }
 
     @Override
-<<<<<<< HEAD
-    protected CompoundWorkflowDefinition copy() {
-=======
     public CompoundWorkflowDefinition copy() {
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         return copyImpl(new CompoundWorkflowDefinition(getNode().clone(), getParent()));
     }
 
@@ -58,13 +48,6 @@ public class CompoundWorkflowDefinition extends CompoundWorkflow {
         setPropList(WorkflowCommonModel.Props.DOCUMENT_TYPES, documentTypes);
     }
 
-<<<<<<< HEAD
-    public List<String> getCaseFileTypes() {
-        return getPropList(WorkflowCommonModel.Props.CASE_FILE_TYPES);
-    }
-
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     public String getUserId() {
         return getProp(WorkflowCommonModel.Props.USER_ID);
     }

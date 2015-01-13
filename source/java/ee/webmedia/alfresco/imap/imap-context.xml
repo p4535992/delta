@@ -133,10 +133,6 @@
       <property name="einvoiceService" ref="EInvoiceService" />
       <property name="userService" ref="UserService" />
       <property name="messageCopyFolder" value="${imap.messageFolder}" />
-<<<<<<< HEAD
-      <property name="saveOriginalToRepo" value="${conf.imap.save-original.enabled}" />
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
       <property name="incomingLettersSubfolderType" value="${imap-folders.incomingLetters.subfolderType}" />
       <property name="attachmentsSubfolderType" value="${imap-folders.attachments.subfolderType}" />
       <property name="outgoingLettersSubfolderType" value="${imap-foders.outgoingLetters.subfolderType}" />

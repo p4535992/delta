@@ -18,11 +18,6 @@ import ee.webmedia.alfresco.document.service.InMemoryChildNodeHelper;
 
 /**
  * Callback that creates childAssociations to document
-<<<<<<< HEAD
- * 
- * @author Ats Uiboupin
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
  */
 public abstract class AbstractDocChildCreator extends PropertiesModifierCallback {
     protected NodeService nodeService;

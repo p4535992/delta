@@ -132,8 +132,6 @@
       </view:properties>
    </docadmin:fieldGroup>
 
-<<<<<<< HEAD
-=======
 <!-- TODO DLSeadist
    <docadmin:fieldGroup view:childName="docadmin:users">
       <view:properties>
@@ -154,7 +152,6 @@
    </docadmin:fieldGroup>
 -->
 
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
    <docadmin:fieldGroup view:childName="docadmin:recipients">
       <view:properties>
          <docadmin:name>Adressaadid</docadmin:name>
@@ -241,11 +238,7 @@
          <docadmin:readonlyFieldsName>Saatja kirja reg nr ja kpv</docadmin:readonlyFieldsName>
          <docadmin:readonlyFieldsRule>{senderRegNumber} {senderRegDate}</docadmin:readonlyFieldsRule>
          <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
-<<<<<<< HEAD
-         <docadmin:mandatoryForVol>false</docadmin:mandatoryForVol>
-=======
          <docadmin:mandatoryForVol>true</docadmin:mandatoryForVol>
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
          <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
          <docadmin:fieldDefinitionIds>
             <view:values>

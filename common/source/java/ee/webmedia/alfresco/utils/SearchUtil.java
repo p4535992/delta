@@ -1,28 +1,13 @@
 package ee.webmedia.alfresco.utils;
 
-<<<<<<< HEAD
-import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
-
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
-<<<<<<< HEAD
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import org.alfresco.repo.security.authentication.AuthenticationUtil;
-=======
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import org.alfresco.service.cmr.dictionary.DataTypeDefinition;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.StoreRef;
@@ -34,18 +19,7 @@ import org.alfresco.web.bean.repository.Repository;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.FastDateFormat;
 import org.apache.lucene.queryParser.QueryParser;
-<<<<<<< HEAD
-import org.springframework.util.Assert;
 
-import ee.webmedia.alfresco.document.model.DocumentCommonModel;
-import ee.webmedia.alfresco.series.model.SeriesModel;
-
-/**
- * @author Alar Kvell
- */
-=======
-
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 public class SearchUtil {
 
     public static FastDateFormat luceneDateFormat = FastDateFormat.getInstance("yyyy-MM-dd'T'00:00:00.000");
@@ -53,18 +27,8 @@ public class SearchUtil {
     private static final Pattern DATE_PATTERN = Pattern.compile("\\d\\d?\\.\\d\\d?\\.\\d\\d\\d\\d");
 
     /**
-<<<<<<< HEAD
-     * Query for retrieving series where document access is restricted. Searches using {@link #generateDocAccess(List, String)} can use this query to find such series.
-     */
-    public static final String QUERY_RESTRICTED_SERIES = joinQueryPartsAnd(generateTypeQuery(SeriesModel.Types.SERIES),
-            generatePropertyBooleanQuery(SeriesModel.Props.DOCUMENTS_VISIBLE_FOR_USERS_WITHOUT_ACCESS, false));
-
-    /**
-     * @param date
-=======
      * @param date
      * @param residual
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
      * @return "yyyy-MM-dd'T'00:00:00.000" if the property is not residual, else "yyyy-MM-dd"
      */
     private static String formatLuceneDate(Date date) {
@@ -115,12 +79,6 @@ public class SearchUtil {
     }
 
     public static String generatePropertyExactQuery(QName propName, String value) {
-<<<<<<< HEAD
-        if (StringUtils.isBlank(value)) {
-            return null;
-        }
-        return "@" + Repository.escapeQName(propName) + ":\"" + QueryParser.escape(stripCustom(value)) + "\"";
-=======
         return generatePropertyExactQuery(propName, value, true);
     }
 
@@ -129,7 +87,6 @@ public class SearchUtil {
             return null;
         }
         return "@" + Repository.escapeQName(propName) + ":\"" + (stripCustom ? QueryParser.escape(stripCustom(value)) : QueryParser.escape(value)) + "\"";
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     public static String generatePropertyExactNotQuery(QName documentPropName, String value) {
@@ -272,24 +229,6 @@ public class SearchUtil {
         return joinQueryPartsOr(queryParts, false);
     }
 
-<<<<<<< HEAD
-    public static String generateNotMultiNodeRefQuery(String positiveArgument, List<NodeRef> values, QName... documentPropNames) {
-        if (values == null || values.isEmpty()) {
-            return null;
-        }
-        Assert.isTrue(StringUtils.isNotBlank(positiveArgument));
-        List<String> queryParts = new ArrayList<String>(documentPropNames.length + 1);
-        queryParts.add(positiveArgument);
-        for (NodeRef value : values) {
-            for (QName documentPropName : documentPropNames) {
-                queryParts.add("NOT " + generateStringExactQuery(value.toString(), documentPropName));
-            }
-        }
-        return joinQueryPartsAnd(queryParts, false);
-    }
-
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     public static String generateStringExactQuery(String value, QName... documentPropNames) {
         if (StringUtils.isBlank(value)) {
             return null;
@@ -322,24 +261,17 @@ public class SearchUtil {
     }
 
     public static String generateMultiStringExactQuery(List<String> values, QName... documentPropNames) {
-<<<<<<< HEAD
-=======
         return generateMultiStringExactQuery(values, true, documentPropNames);
     }
 
     public static String generateMultiStringExactQuery(List<String> values, boolean stripCustom, QName... documentPropNames) {
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         if (values == null || values.isEmpty()) {
             return null;
         }
         List<String> queryParts = new ArrayList<String>(documentPropNames.length * values.size());
         for (String value : values) {
             for (QName documentPropName : documentPropNames) {
-<<<<<<< HEAD
-                queryParts.add(generatePropertyExactQuery(documentPropName, value));
-=======
                 queryParts.add(generatePropertyExactQuery(documentPropName, value, stripCustom));
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             }
         }
         return joinQueryPartsOr(queryParts, false);
@@ -399,10 +331,6 @@ public class SearchUtil {
         return joinQueryParts(queryParts, "AND", true);
     }
 
-<<<<<<< HEAD
-    /** NB! When using this method with parenthesis=false, ensure that subqueries have set required parenthesis themselves */
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     public static String joinQueryPartsAnd(List<String> queryParts, boolean parenthesis) {
         return joinQueryParts(queryParts, "AND", parenthesis);
     }
@@ -415,10 +343,6 @@ public class SearchUtil {
         return joinQueryParts(queryParts, "OR", true);
     }
 
-<<<<<<< HEAD
-    /** NB! When using this method with parenthesis=false, ensure that subqueries have set required parenthesis themselves */
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     public static String joinQueryPartsOr(List<String> queryParts, boolean parenthesis) {
         return joinQueryParts(queryParts, "OR", parenthesis);
     }
@@ -472,38 +396,6 @@ public class SearchUtil {
     }
 
     /**
-<<<<<<< HEAD
-     * @param userId - if null, use current user
-     */
-    public static String generateDocAccess(List<NodeRef> restrictedSeriesRefs, String userId) {
-        if (restrictedSeriesRefs.isEmpty() || getUserService().isAdministrator()) {
-            return null;
-        }
-
-        if (userId == null) {
-            userId = AuthenticationUtil.getRunAsUser();
-        }
-
-        Set<String> userGroups = new HashSet<String>();
-        userGroups.add(userId);
-        userGroups.addAll(getUserService().getUsersGroups(userId));
-
-        List<String> query = new ArrayList<String>(userGroups.size() + 2);
-        query.add(generateNotMultiNodeRefQuery(generateTypeQuery(DocumentCommonModel.Types.DOCUMENT), restrictedSeriesRefs, DocumentCommonModel.Props.SERIES));
-        query.add(generateStringExactQuery(userId, DocumentCommonModel.Props.OWNER_ID));
-
-        for (String group : userGroups) {
-            if (StringUtils.isNotBlank(group)) {
-                query.add("DOC_VISIBLE_TO:\"" + QueryParser.escape(group) + "\"");
-            }
-        }
-
-        return joinQueryPartsOr(query);
-    }
-
-    /**
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
      * Extracts dates (as 'dd.MM.yyyy' from given text) and stores them in given list in format 'ddMMyyyy'.
      * Duplicate formatted date values won't be added to the list.
      * 
@@ -531,8 +423,4 @@ public class SearchUtil {
             }
         }
     }
-<<<<<<< HEAD
-
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 }

@@ -4,12 +4,6 @@ import java.io.Serializable;
 import java.util.Comparator;
 import java.util.List;
 
-<<<<<<< HEAD
-import org.alfresco.service.cmr.repository.NodeRef;
-import org.apache.commons.lang.StringUtils;
-
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.utils.UserUtil;
 import ee.webmedia.alfresco.utils.beanmapper.AlfrescoModelProperty;
@@ -21,26 +15,6 @@ public class OrganizationStructure implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private String name;
-<<<<<<< HEAD
-    private String unitId;
-    private String superUnitId;
-    private List<String> organizationPath;
-    private String institutionRegCode;
-
-    @AlfrescoModelProperty(isMappable = false)
-    private NodeRef nodeRef;
-    @AlfrescoModelProperty(isMappable = false)
-    private String superValueName;
-
-    public NodeRef getNodeRef() {
-        return nodeRef;
-    }
-
-    public void setNodeRef(NodeRef nodeRef) {
-        this.nodeRef = nodeRef;
-    }
-
-=======
     private int unitId;
     private int superUnitId;
     private List<String> organizationPath;
@@ -51,7 +25,6 @@ public class OrganizationStructure implements Serializable {
     @AlfrescoModelProperty(isMappable = false)
     private String superValueName;
 
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     public String getName() {
         return name;
     }
@@ -68,21 +41,6 @@ public class OrganizationStructure implements Serializable {
         this.superValueName = superValueName;
     }
 
-<<<<<<< HEAD
-    public String getUnitId() {
-        return unitId;
-    }
-
-    public void setUnitId(String unitId) {
-        this.unitId = unitId;
-    }
-
-    public String getSuperUnitId() {
-        return superUnitId;
-    }
-
-    public void setSuperUnitId(String superUnitId) {
-=======
     public int getUnitId() {
         return unitId;
     }
@@ -96,7 +54,6 @@ public class OrganizationStructure implements Serializable {
     }
 
     public void setSuperUnitId(int superUnitId) {
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         this.superUnitId = superUnitId;
     }
 
@@ -112,37 +69,16 @@ public class OrganizationStructure implements Serializable {
         return UserUtil.getDisplayUnit(organizationPath);
     }
 
-<<<<<<< HEAD
-    public String getInstitutionRegCode() {
-        return institutionRegCode;
-    }
-
-    public void setInstitutionRegCode(String institutionRegCode) {
-        this.institutionRegCode = institutionRegCode;
-=======
     public void setOrganizationDisplayPath(String organizationDisplayPath) {
         this.organizationDisplayPath = organizationDisplayPath;
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     @Override
     public String toString() {
-<<<<<<< HEAD
-        StringBuilder sb = new StringBuilder("OrganizationStructure[");
-        sb.append("\n  nodeRef=").append(nodeRef);
-        sb.append("\n  unitId=").append(unitId);
-        sb.append("\n  superUnitId=").append(superUnitId);
-        sb.append("\n  superValueName=").append(superValueName);
-        sb.append("\n  name=").append(name);
-        sb.append("\n  organizationPath=").append(organizationPath == null ? null : StringUtils.join(organizationPath, '|'));
-        sb.append("\n  institutionRegCode=").append(institutionRegCode);
-        sb.append("\n]");
-=======
         StringBuilder sb = new StringBuilder();
         sb.append("\nName = " + name + "\n");
         sb.append("unitId = " + unitId + "\n");
         sb.append("superUnitId = " + superUnitId + "\n");
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         return sb.toString();
     }
 

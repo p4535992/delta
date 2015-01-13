@@ -8,12 +8,6 @@ import ee.webmedia.alfresco.workflow.service.event.WorkflowEventQueue;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowEventType;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowModifications;
 
-<<<<<<< HEAD
-/**
- * @author Riina Tens
- */
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 public class DueDateExtensionWorkflowType extends BaseWorkflowType implements WorkflowEventListenerWithModifications {
 
     public static final int DUE_DATE_EXTENSION_OUTCOME_NOT_ACCEPTED = 1;
@@ -25,16 +19,8 @@ public class DueDateExtensionWorkflowType extends BaseWorkflowType implements Wo
                 && event.getObject().isStatus(Status.FINISHED)) {
 
             Task task = (Task) event.getObject();
-<<<<<<< HEAD
-            int outcomeIndex = task.getOutcomeIndex();
-            if (outcomeIndex == DUE_DATE_EXTENSION_OUTCOME_ACCEPTED) {
-                workflowService.changeInitiatingTaskDueDate(task, queue);
-            } else if (outcomeIndex == DUE_DATE_EXTENSION_OUTCOME_NOT_ACCEPTED) {
-                workflowService.rejectDueDateExtension(task);
-=======
             if (task.getOutcomeIndex() == DUE_DATE_EXTENSION_OUTCOME_ACCEPTED) {
                 workflowService.changeInitiatingTaskDueDate(task, queue);
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             }
         }
     }

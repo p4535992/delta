@@ -43,11 +43,7 @@
          <list>
             <ref bean="parametersSpacesBootstrap" />
          </list>
-<<<<<<< HEAD
-      </property>
-=======
       </property>      
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
    </bean>
 
    <bean id="deleteEmployeeRegReceiveUsersPeriodBootstrap" class="ee.webmedia.alfresco.common.bootstrap.DeleteNodeByXPathBootstrap" parent="abstractDeleteNodeByXPathBootstrap">
@@ -57,11 +53,7 @@
          <list>
             <ref bean="parametersSpacesBootstrap" />
          </list>
-<<<<<<< HEAD
-      </property>
-=======
       </property>      
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
    </bean>
 
    <bean id="orgstructureParametersBootstrap2" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
@@ -101,15 +93,10 @@
    <bean id="organizationStructureService" class="ee.webmedia.alfresco.orgstructure.service.OrganizationStructureServiceImpl">
       <property name="generalService" ref="GeneralService" />
       <property name="nodeService" ref="NodeService" />
-<<<<<<< HEAD
-      <property name="userRegistry" ref="userRegistry" />
-      <property name="authorityService" ref="AuthorityService" />
-=======
       <property name="amrService" ref="AmrService" />
       <property name="authorityService" ref="AuthorityService" />
       <property name="orgStructPropertiesCache" ref="orgStructPropertiesCache" />  
       <property name="organizationStructureUpdateEnabled" value="${organizationStructure.updateEnabled}" />
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
    </bean>
 
    <bean id="OrganizationStructureService" class="org.springframework.aop.framework.ProxyFactoryBean">
@@ -155,26 +142,9 @@
          <list>
             <ref bean="parametersSpacesBootstrap" />
          </list>
-<<<<<<< HEAD
-      </property>
-   </bean>
-
-   <bean id="organizationStructureUnitIdTypeChangeBootstrap" class="ee.webmedia.alfresco.orgstructure.bootstrap.OrganizationStructureUnitIdTypeChangeBootstrap" parent="module.baseComponent">
-      <property name="moduleId" value="simdhs" />
-      <property name="executeOnceOnly" value="true" />
-      <property name="dependsOn">
-         <list>
-            <ref bean="orgstructureRootBootstrap" />
-         </list>
-      </property>
-      <property name="organizationStructureService" ref="OrganizationStructureService" />
-   </bean>
-
-=======
       </property>         
    </bean>
    
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
    <bean id="RsAccessStatusBean" class="ee.webmedia.alfresco.orgstructure.web.RsAccessStatusBean" scope="session" />
 
 </beans>

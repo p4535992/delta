@@ -18,12 +18,6 @@ import ee.webmedia.alfresco.menu.ui.MenuBean;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
-<<<<<<< HEAD
-/**
- * @author Alar Kvell
- */
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 public class DocumentQuickSearchResultsDialog extends BaseDocumentListDialog {
     private static final long serialVersionUID = 1L;
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DocumentQuickSearchResultsDialog.class);

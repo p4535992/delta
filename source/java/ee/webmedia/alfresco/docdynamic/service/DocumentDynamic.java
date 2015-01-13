@@ -2,11 +2,8 @@ package ee.webmedia.alfresco.docdynamic.service;
 
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentTemplateService;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.CASE;
-<<<<<<< HEAD
-=======
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.FUNCTION;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.SERIES;
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.VOLUME;
 
 import java.util.Date;
@@ -18,31 +15,17 @@ import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
-<<<<<<< HEAD
-import ee.webmedia.alfresco.common.model.DynamicBase;
-import ee.webmedia.alfresco.common.web.WmNode;
-import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
-import ee.webmedia.alfresco.document.model.DocumentCommonModel;
-=======
 import ee.webmedia.alfresco.common.model.NodeBaseVO;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel.Props;
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.utils.TextUtil;
 import ee.webmedia.alfresco.utils.UserUtil;
 
-<<<<<<< HEAD
-/**
- * @author Alar Kvell
- */
-public class DocumentDynamic extends DynamicBase implements Cloneable, Comparable<DocumentDynamic> {
-=======
 public class DocumentDynamic extends NodeBaseVO implements Cloneable, Comparable<DocumentDynamic> {
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     private static final long serialVersionUID = 1L;
 
     protected DocumentDynamic(WmNode node) {
@@ -50,8 +33,6 @@ public class DocumentDynamic extends NodeBaseVO implements Cloneable, Comparable
         this.node = node;
     }
 
-<<<<<<< HEAD
-=======
     public String getDocumentTypeId() {
         return getProp(Props.OBJECT_TYPE_ID);
     }
@@ -60,7 +41,6 @@ public class DocumentDynamic extends NodeBaseVO implements Cloneable, Comparable
         return getProp(Props.OBJECT_TYPE_VERSION_NR);
     }
 
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     public String getUrl() {
         return getDocumentTemplateService().getDocumentUrl(getNodeRef());
     }
@@ -74,10 +54,6 @@ public class DocumentDynamic extends NodeBaseVO implements Cloneable, Comparable
         }
     }
 
-<<<<<<< HEAD
-    // =========================================================================
-
-=======
     @Override
     public String toString() {
         return WmNode.toString(this) + "[\n  node=" + StringUtils.replace(node.toString(), "\n", "\n  ") + "\n]";
@@ -101,7 +77,6 @@ public class DocumentDynamic extends NodeBaseVO implements Cloneable, Comparable
         setProp(SERIES, series);
     }
 
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     public NodeRef getVolume() {
         return getProp(VOLUME);
     }
@@ -126,8 +101,6 @@ public class DocumentDynamic extends NodeBaseVO implements Cloneable, Comparable
         setProp(DocumentService.TransientProps.TEMP_DOCUMENT_IS_DRAFT_OR_IMAP_OR_DVK_QNAME, draftOrImapOrDvk);
     }
 
-<<<<<<< HEAD
-=======
     public boolean isDraft() {
         return getPropBoolean(DocumentService.TransientProps.TEMP_DOCUMENT_IS_DRAFT_QNAME);
     }
@@ -136,7 +109,6 @@ public class DocumentDynamic extends NodeBaseVO implements Cloneable, Comparable
         setProp(DocumentService.TransientProps.TEMP_DOCUMENT_IS_DRAFT_QNAME, draft);
     }
 
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     public boolean isImapOrDvk() {
         return isDraftOrImapOrDvk() && !isDraft();
     }
@@ -146,11 +118,7 @@ public class DocumentDynamic extends NodeBaseVO implements Cloneable, Comparable
     }
 
     public boolean isNotEditable() {
-<<<<<<< HEAD
-        return getNode().hasAspect(DocumentCommonModel.Aspects.NOT_EDITABLE);
-=======
         return getNode().hasAspect(DocumentSpecificModel.Aspects.NOT_EDITABLE); // FIXME: move aspect to DocumentCommonModel
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     public void setIncomingInvoice(boolean incomingInvoice) {
@@ -218,17 +186,6 @@ public class DocumentDynamic extends NodeBaseVO implements Cloneable, Comparable
         return TextUtil.join(getNode().getProperties(), DocumentCommonModel.Props.RECIPIENT_NAME, DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME);
     }
 
-<<<<<<< HEAD
-    public void setDocOldTypeId(String docOldTypeId) {
-        setProp(DocumentService.TransientProps.TEMP_DOCUMENT_OLD_TYPE_ID, docOldTypeId);
-    }
-
-    public String getDocOldTypeId() {
-        return getProp(DocumentService.TransientProps.TEMP_DOCUMENT_OLD_TYPE_ID);
-    }
-
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     @Override
     public int compareTo(DocumentDynamic other) {
         if (StringUtils.equals(getRegNumber(), other.getRegNumber())) {

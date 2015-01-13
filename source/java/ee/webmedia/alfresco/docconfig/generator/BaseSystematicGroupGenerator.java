@@ -5,12 +5,6 @@ import org.springframework.beans.factory.InitializingBean;
 import ee.webmedia.alfresco.docconfig.service.DocumentConfigService;
 import ee.webmedia.alfresco.docconfig.web.PropertySheetStateBean;
 
-<<<<<<< HEAD
-/**
- * @author Alar Kvell
- */
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 public abstract class BaseSystematicGroupGenerator implements FieldGroupGenerator, InitializingBean {
 
     protected DocumentConfigService documentConfigService;

@@ -11,11 +11,6 @@ import ee.webmedia.alfresco.functions.model.Function;
 
 /**
  * Service for searching and listing functions.
-<<<<<<< HEAD
- * 
- * @author Dmitri Melnikov
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
  */
 public interface FunctionsService {
 
@@ -71,11 +66,6 @@ public interface FunctionsService {
      */
     boolean closeFunction(Function function);
 
-<<<<<<< HEAD
-    void delete(Function function);
-
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     /**
      * Reopen the function by setting DocListUnitStatus.OPEN status
      * 
@@ -89,11 +79,4 @@ public interface FunctionsService {
 
     public List<ChildAssociationRef> getFunctionAssocs(NodeRef functionsRoot);
 
-<<<<<<< HEAD
-    boolean isDraftsFunction(NodeRef functionRef);
-
-    List<NodeRef> getAllLimitedActivityFunctions();
-
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 }

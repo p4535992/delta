@@ -1,11 +1,5 @@
 package ee.webmedia.alfresco.classificator.enums;
 
-<<<<<<< HEAD
-/**
- * @author Taimo Peelo
- */
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 public enum SeriesType {
     SERIES("sari"),
     SUBSERIES("allsari");

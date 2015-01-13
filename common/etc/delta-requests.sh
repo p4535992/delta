@@ -1,8 +1,4 @@
 #!/bin/bash
-<<<<<<< HEAD
-# Author: Alar Kvell
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 # Usage ./delta-requests.sh alfresco.log [alfresco2.log [...]]
 # Outputs CSV with the following columns (separated by semicolon), suitable for importing into Excel or a database:
 #  1) kasutaja HTTP päringu aeg kokku (ms)
@@ -22,8 +18,4 @@
 # Tunnused 2-6 kokku unikaalselt identifitseerivad päringu; kui soovida ridu summeerida, siis tuleks grupeerida nende 5 tunnuse alusel korraga
 #  (a la GROUP BY servlet_path, action, action_listener, outcome, viewid).
 
-<<<<<<< HEAD
-grep -F -h REQUEST_END "$@"|sed -e 's/.*REQUEST_END,//' -e 's/,[^|]*|[^|]*|SERVLET_PATH,/;/' -e 's/|[^|]*|[^|]*|[^|]*|[^|]*|[^|]*|[^|]*|/;/' -e 's/ACTION_LISTENER,[0-9]*,//' -e 's/|/;/' -e 's/ACTION\(,[0-9]*\)\?,//' -e 's/|/;/' -e 's/OUTCOME,[0-9]*,//' -e 's/|/;/' -e 's/VIEWID,//' -e 's/|[^|]*|[^|]*|[^|]*|/;/' -e 's/|/;/' -e 's/|[^|]*|[^|]*|[^|]*|[^|]*|[^|]*|[^|]*|[^|]*|[^|]*|/;/' -e 's/|[^|]*|/;/' -e 's/\([^;]*;[^;]*;[^;]*;[^;]*;[^;]*;[^;]*\);;\(.*\)/\1;0,0;\2/' -e 's/\([^;]*;[^;]*;[^;]*;[^;]*;[^;]*;[^;]*;[^;]*\);;\(.*\)/\1;0,0;\2/' -e 's/\([^;]*;[^;]*;[^;]*;[^;]*;[^;]*;[^;]*;[^;]*;[^;]*\);;\(.*\)/\1;0,0;\2/' -e 's/\(.*\);$/\1;0,0/' -e 's/DB,//'  -e 's/TX_RETRY,//' -e 's/IDX_QUERY,//' -e 's/SRV_MSO,//' -e 's/,/;/g'
-=======
 fgrep -h REQUEST_END "$@"|sed -e 's/.*REQUEST_END,//' -e 's/,[^|]*|[^|]*|SERVLET_PATH,/;/' -e 's/|[^|]*|[^|]*|[^|]*|[^|]*|[^|]*|[^|]*|/;/' -e 's/ACTION_LISTENER,[0-9]*,//' -e 's/|/;/' -e 's/ACTION\(,[0-9]*\)\?,//' -e 's/|/;/' -e 's/OUTCOME,[0-9]*,//' -e 's/|/;/' -e 's/VIEWID,//' -e 's/|[^|]*|[^|]*|[^|]*|/;/' -e 's/|/;/' -e 's/|[^|]*|[^|]*|[^|]*|[^|]*|[^|]*|[^|]*|[^|]*|[^|]*|/;/' -e 's/|[^|]*|/;/' -e 's/\([^;]*;[^;]*;[^;]*;[^;]*;[^;]*;[^;]*\);;\(.*\)/\1;0,0;\2/' -e 's/\([^;]*;[^;]*;[^;]*;[^;]*;[^;]*;[^;]*;[^;]*\);;\(.*\)/\1;0,0;\2/' -e 's/\([^;]*;[^;]*;[^;]*;[^;]*;[^;]*;[^;]*;[^;]*;[^;]*\);;\(.*\)/\1;0,0;\2/' -e 's/\(.*\);$/\1;0,0/' -e 's/DB,//'  -e 's/TX_RETRY,//' -e 's/IDX_QUERY,//' -e 's/SRV_MSO,//' -e 's/,/;/g'
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5

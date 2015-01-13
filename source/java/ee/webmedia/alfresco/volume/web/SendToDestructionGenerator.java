@@ -20,11 +20,6 @@ import ee.webmedia.alfresco.volume.model.Volume;
 
 /**
  * Generates usual check box, but makes it readonly if necessary: {@link SendToDestructionGenerator#isReadOnly()}.
-<<<<<<< HEAD
- * 
- * @author Romet Aidla
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
  */
 public class SendToDestructionGenerator extends BaseComponentGenerator {
     private DialogManager dialogManager;
@@ -50,11 +45,7 @@ public class SendToDestructionGenerator extends BaseComponentGenerator {
         Volume volume = dialog.getCurrentVolume();
         boolean isDestroyed = DocListUnitStatus.DESTROYED.getValueName().equals(volume.getStatus());
         Date today = DateUtils.truncate(new Date(), Calendar.DATE);
-<<<<<<< HEAD
-        boolean isDispositionDateInFuture = volume.getRetainUntilDate() != null && volume.getRetainUntilDate().after(today);
-=======
         boolean isDispositionDateInFuture = volume.getDispositionDate() != null && volume.getDispositionDate().after(today);
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         return isDestroyed || isDispositionDateInFuture;
     }
 

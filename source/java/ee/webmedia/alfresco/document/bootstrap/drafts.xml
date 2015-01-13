@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 <?xml version="1.0" encoding="UTF-8"?>
 <view:view xmlns:view="http://www.alfresco.org/view/repository/1.0" xmlns:doccom="http://alfresco.webmedia.ee/model/document/common/1.0">
    <doccom:drafts view:childName="doccom:drafts">
@@ -10,16 +9,3 @@
       </view:acl>
    </doccom:drafts>
 </view:view>
-=======
-<?xml version="1.0" encoding="UTF-8"?>
-<view:view xmlns:view="http://www.alfresco.org/view/repository/1.0" xmlns:doccom="http://alfresco.webmedia.ee/model/document/common/1.0">
-   <doccom:drafts view:childName="doccom:drafts">
-      <view:acl view:inherit="false">
-         <view:ace view:access="ALLOWED">
-            <view:authority>GROUP_EVERYONE</view:authority>
-            <view:permission>DocumentListBrowse</view:permission>
-         </view:ace>
-      </view:acl>
-   </doccom:drafts>
-</view:view>
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5

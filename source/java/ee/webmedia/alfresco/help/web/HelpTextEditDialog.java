@@ -1,10 +1,7 @@
 package ee.webmedia.alfresco.help.web;
 
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentAdminService;
-<<<<<<< HEAD
-=======
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentTypeService;
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import static ee.webmedia.alfresco.common.web.BeanHelper.getGeneralService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getHelpTextService;
 import static ee.webmedia.alfresco.help.web.HelpTextUtil.TYPE_DIALOG;
@@ -23,10 +20,7 @@ import javax.servlet.ServletContext;
 
 import org.alfresco.config.Config;
 import org.alfresco.service.cmr.repository.NodeRef;
-<<<<<<< HEAD
-=======
 import org.alfresco.service.namespace.QName;
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import org.alfresco.web.app.Application;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.Node;
@@ -36,13 +30,9 @@ import org.alfresco.web.config.DialogsConfigElement.DialogConfig;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.BeanNameAware;
 
-<<<<<<< HEAD
-import ee.webmedia.alfresco.docadmin.service.FieldDefinition;
-=======
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 import ee.webmedia.alfresco.docadmin.service.FieldDefinition;
 import ee.webmedia.alfresco.document.type.model.DocumentType;
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import ee.webmedia.alfresco.help.model.HelpTextModel;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.WebUtil;
@@ -51,11 +41,6 @@ import ee.webmedia.alfresco.utils.WebUtil;
  * Dialog for adding and editing an help text. There are three types of help texts: for dialogs, document types and fields.
  * <p>
  * Specification: <i>Kontekstitundlik abiinfo</i>.
-<<<<<<< HEAD
- * 
- * @author Martti Tamm
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
  */
 public class HelpTextEditDialog extends BaseDialogBean implements BeanNameAware {
 
@@ -130,15 +115,8 @@ public class HelpTextEditDialog extends BaseDialogBean implements BeanNameAware 
     }
 
     public void processDocumentTypeSearchResults(String docTypeCode) {
-<<<<<<< HEAD
-        String docTypeName = getDocumentAdminService().getDocumentTypeName(docTypeCode);
-        if (docTypeName == null) {
-            docTypeName = docTypeCode;
-        }
-=======
         DocumentType docType = getDocumentTypeService().getDocumentType(QName.createQName(DocumentAdminModel.URI, docTypeCode));
         String docTypeName = docType != null ? docType.getName() : docTypeCode;
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         helpText.getProperties().put(PROP_CODE, docTypeCode);
         helpText.getProperties().put(PROP_NAME, docTypeName);
         helpText.getProperties().put(getCodeEditProp(), docTypeName);

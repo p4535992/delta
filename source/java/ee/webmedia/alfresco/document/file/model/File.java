@@ -21,12 +21,6 @@ import ee.webmedia.alfresco.signature.model.DataItem;
 import ee.webmedia.alfresco.signature.model.SignatureItem;
 import ee.webmedia.alfresco.signature.model.SignatureItemsAndDataItems;
 
-<<<<<<< HEAD
-/**
- * @author Dmitri Melnikov
- */
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 public class File implements Serializable, IClonable<File> {
 
     private static final long serialVersionUID = 1L;
@@ -34,18 +28,11 @@ public class File implements Serializable, IClonable<File> {
     private String name;
     private String displayName;
     private String downloadUrl;
-<<<<<<< HEAD
-=======
     private String readOnlyUrl;
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     private String creator;
     private String modifier;
     private String encoding;
     private String mimeType;
-<<<<<<< HEAD
-    private String comment;
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     private long size;
     private Date created;
     private Date modified;
@@ -58,10 +45,6 @@ public class File implements Serializable, IClonable<File> {
     private boolean generated;
     private boolean active;
     private boolean isTransformableToPdf;
-<<<<<<< HEAD
-    private boolean convertToPdfIfSigned; //
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     private long nrOfChildren; // used to show childCount if the file represents folder
     private boolean isPdf;
     public static FastDateFormat dateFormat = FastDateFormat.getInstance("dd.MM.yyyy HH:mm");
@@ -89,10 +72,6 @@ public class File implements Serializable, IClonable<File> {
         modifier = "";
         generated = fileProps.get(FileModel.Props.GENERATED_FROM_TEMPLATE) != null || fileProps.get(FileModel.Props.GENERATION_TYPE) != null;
         active = (fileProps.get(ACTIVE) == null) ? true : Boolean.parseBoolean(fileProps.get(ACTIVE).toString());
-<<<<<<< HEAD
-        convertToPdfIfSigned = Boolean.TRUE.equals(fileProps.get(FileModel.Props.CONVERT_TO_PDF_IF_SIGNED));
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     public String getName() {
@@ -118,8 +97,6 @@ public class File implements Serializable, IClonable<File> {
     public void setDownloadUrl(String url) {
         downloadUrl = url;
     }
-<<<<<<< HEAD
-=======
     
     public String getReadOnlyUrl() {
         return readOnlyUrl;
@@ -128,7 +105,6 @@ public class File implements Serializable, IClonable<File> {
     public void setReadOnlyUrl(String readOnlyUrl) {
         this.readOnlyUrl = readOnlyUrl;
     }
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
     public String getCreator() {
         return creator;
@@ -142,17 +118,6 @@ public class File implements Serializable, IClonable<File> {
         return modifier;
     }
 
-<<<<<<< HEAD
-    public void setComment(String comment) {
-        this.comment = comment;
-    }
-
-    public String getComment() {
-        return comment;
-    }
-
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     public void setModifier(String modifier) {
         this.modifier = modifier;
     }
@@ -239,17 +204,6 @@ public class File implements Serializable, IClonable<File> {
         this.digiDocContainer = digiDocContainer;
     }
 
-<<<<<<< HEAD
-    public NodeRef getCompoundWorkflowRef() {
-        return (NodeRef) getNode().getProperties().get(FileModel.Props.COMPOUND_WORKFLOW);
-    }
-
-    public NodeRef getGeneratedFileRef() {
-        return (NodeRef) getNode().getProperties().get(FileModel.Props.GENERATED_FILE);
-    }
-
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     public boolean isVersionable() {
         return versionable;
     }
@@ -357,20 +311,4 @@ public class File implements Serializable, IClonable<File> {
         file.setNode(new Node(nodeRef));
         return file;
     }
-<<<<<<< HEAD
-
-    public void setConvertToPdfIfSigned(boolean isConvertToPdfIfSigned) {
-        convertToPdfIfSigned = isConvertToPdfIfSigned;
-    }
-
-    public boolean isConvertToPdfIfSigned() {
-        return convertToPdfIfSigned;
-    }
-
-    public boolean getConvertToPdfIfSignedFromProps() {
-        Boolean convertToPdf = node != null ? Boolean.TRUE.equals(node.getProperties().get(FileModel.Props.CONVERT_TO_PDF_IF_SIGNED)) : false;
-        return convertToPdf != null ? convertToPdf : false;
-    }
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 }

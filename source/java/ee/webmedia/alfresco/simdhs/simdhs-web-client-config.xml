@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 <alfresco-config>
    <plug-ins>
       <evaluators>
@@ -48,54 +47,3 @@
       </client>
    </config>
 </alfresco-config>
-=======
-<alfresco-config>
-   <plug-ins>
-      <evaluators>
-         <evaluator id="node-type-and-aspect-name" class="ee.webmedia.alfresco.document.web.evaluator.NodeTypeAndAspectNameEvaluator" />
-      </evaluators>
-   </plug-ins>
-   <config>
-      <dialogs>
-         <dialog name="informingDeleteNodeDialog" page="/jsp/dialog/delete.jsp" managed-bean="InformingDeleteNodeDialog" icon="/images/icons/delete.gif" />
-<!-- 
-         title-id="notification_delete"
-         description-id="delete_file_info"
- -->   
-   
-      </dialogs>
-      <actions>
-         <!-- @Override web-client-config-actions.xml -->
-         <action id="create_group">
-            <evaluator>ee.webmedia.alfresco.user.web.GroupsEditingAllowedEvaluator</evaluator>
-            <label-id>new_group</label-id>
-            <image>/images/icons/create_group.gif</image>
-            <action>dialog:createGroup</action>
-            <action-listener>#{DialogManager.setupParameters}</action-listener>
-            <params>
-               <param name="group">#{actionContext.group}</param>
-               <param name="groupName">#{actionContext.groupName}</param>
-            </params>
-         </action>
-
-         <!-- These groups are used in group list dialog, since adding subgroups is not allowed per spec.  -->
-         <action-group id="group_inline_actions_no_subgroup">
-            <action idref="delete_group" />
-         </action-group>
-         
-         <action-group id="group_inline_actions_subgroup">
-            <action idref="create_group" />
-            <action idref="add_group_user" />
-            <action idref="delete_group" />
-         </action-group>
-
-         <action-group id="base_group_inline_actions">
-            <action idref="add_group_user" />
-         </action-group>
-      </actions>
-      <client>
-         <login-page>/jsp/relogin.jsp</login-page><!-- replace login with relogin, as loginpage is handled by CAS -->
-      </client>
-   </config>
-</alfresco-config>
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5

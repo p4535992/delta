@@ -1,18 +1,9 @@
 package ee.webmedia.alfresco.simdhs.servlet;
 
-<<<<<<< HEAD
-import static ee.webmedia.alfresco.common.web.BeanHelper.getApplicationService;
-
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import java.io.IOException;
 import java.util.StringTokenizer;
 
 import javax.servlet.ServletException;
-<<<<<<< HEAD
-import javax.servlet.ServletOutputStream;
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -21,10 +12,6 @@ import org.alfresco.web.app.servlet.AuthenticationStatus;
 import org.alfresco.web.app.servlet.BaseServlet;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-<<<<<<< HEAD
-import org.springframework.util.FileCopyUtils;
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
 import ee.webmedia.alfresco.common.listener.ExternalAccessPhaseListener;
 import ee.webmedia.alfresco.common.listener.StatisticsPhaseListener;
@@ -33,11 +20,6 @@ import ee.webmedia.alfresco.common.listener.StatisticsPhaseListenerLogColumn;
 /**
  * Servlet allowing external URL access to various global JSF views in the Web Client.
  * Available URL-s: <li><code>http://&lt;server&gt;/simdhs/&lt;servlet name&gt;/document/&lt;document node ref&gt;</code> - for viewing document</li>
-<<<<<<< HEAD
- * 
- * @author Romet Aidla
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
  */
 public class ExternalAccessServlet extends BaseServlet {
     private static final long serialVersionUID = 7348802704715012097L;
@@ -57,35 +39,8 @@ public class ExternalAccessServlet extends BaseServlet {
         if (AuthenticationStatus.Failure == servletAuthenticate(req, res)) {
             return;
         }
-<<<<<<< HEAD
-
-        if ("/logo".equals(uri)) {
-            Pair<byte[], String> logo = getApplicationService().getCustomLogo();
-            if (logo != null) {
-                res.setHeader("Content-Length", Integer.toString(logo.getFirst().length));
-                res.setContentType(logo.getSecond());
-                ServletOutputStream os = res.getOutputStream();
-                FileCopyUtils.copy(logo.getFirst(), os); // closes both streams
-            }
-            return;
-        }
-
-        if ("/jumploader".equals(uri)) {
-            Pair<byte[], String> applet = getApplicationService().getJumploaderApplet();
-            if (applet != null) {
-                res.setHeader("Content-Length", Integer.toString(applet.getFirst().length));
-                res.setContentType(applet.getSecond());
-                ServletOutputStream os = res.getOutputStream();
-                FileCopyUtils.copy(applet.getFirst(), os); // closes both streams
-            }
-            return;
-        }
-
-        setNoCacheHeaders(res);
-=======
         setNoCacheHeaders(res);
 
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         Pair<String, String[]> outcomeAndArgs = getDocumentUriTokens(uri);
         req.setAttribute(ExternalAccessPhaseListener.OUTCOME_AND_ARGS_ATTR, outcomeAndArgs);
 

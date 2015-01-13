@@ -12,10 +12,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
 
-<<<<<<< HEAD
-import org.alfresco.repo.security.sync.NodeDescription;
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import org.alfresco.service.cmr.dictionary.TypeDefinition;
 import org.alfresco.service.cmr.repository.AssociationRef;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
@@ -33,10 +29,6 @@ import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.archivals.model.ArchivalsStoreVO;
 import ee.webmedia.alfresco.cases.model.CaseModel;
-<<<<<<< HEAD
-import ee.webmedia.alfresco.classificator.enums.VolumeType;
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import ee.webmedia.alfresco.common.propertysheet.component.WMUIProperty;
 import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
 import ee.webmedia.alfresco.docadmin.service.FieldDefinition;
@@ -49,30 +41,14 @@ import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
-<<<<<<< HEAD
-import ee.webmedia.alfresco.volume.search.model.VolumeSearchModel;
-import ee.webmedia.alfresco.workflow.model.CompoundWorkflowType;
-import ee.webmedia.alfresco.workflow.model.Status;
-import ee.webmedia.alfresco.workflow.search.model.CompoundWorkflowSearchModel;
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
 /**
  * Node that does not fetch properties (or anything) lazily, but takes data on creation. Thus does not depend on static FacesContext and can be used in service
  * layer (but see additional TODO in {@link #getNamespacePrefixResolver()}.
  * Can be used to both represent nodes loaded from repository or new nodes not saved to repository yet (see {@link #NOT_SAVED}.
-<<<<<<< HEAD
- * 
- * @author Alar Kvell
  */
 public class WmNode extends TransientNode {
     private static final long serialVersionUID = 1L;
-    private static PropDiffHelper propDiffHelper;
-=======
- */
-public class WmNode extends TransientNode {
-    private static final long serialVersionUID = 1L;
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
     /**
      * Special NodeRef that can be used for detection that a {@link Node} object is not backed by repository node (not saved yet).
@@ -160,11 +136,7 @@ public class WmNode extends TransientNode {
     public WmNode clone() {
         WmNode clone = new WmNode(getNodeRef(), getType(), getAspects(), RepoUtil.toQNameProperties(getProperties(), true), getAddedAssociations());
 
-<<<<<<< HEAD
-        // TODO Alar: deep cloning of values would be more correct
-=======
         // TODO deep cloning of values would be more correct
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         clone.allChildAssociationsByAssocType = allChildAssociationsByAssocType;
         clone.allChildAssociationsByAssocTypeRetrieved = allChildAssociationsByAssocTypeRetrieved;
         clone.childAssocsRetrieved = childAssocsRetrieved;
@@ -237,28 +209,17 @@ public class WmNode extends TransientNode {
         return toString(collection, false);
     }
 
-<<<<<<< HEAD
-    public static String toString(Collection<?> collection, boolean printClass) {
-=======
     private static String toString(Collection<?> collection, boolean printClass) {
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         StringBuilder s = new StringBuilder();
         toString(s, collection, printClass);
         return s.toString();
     }
 
     private static void toString(StringBuilder s, Collection<?> collection, boolean printClass) {
-<<<<<<< HEAD
-        toString(s, collection, null, printClass, false, "\n    ");
-    }
-
-    private static void toString(StringBuilder s, Collection<?> collection, QName prop, boolean printClass, boolean translateSpecialClasses, String argumentSeparator) {
-=======
         toString(s, collection, printClass, false, "\n    ");
     }
 
     private static void toString(StringBuilder s, Collection<?> collection, boolean printClass, boolean translateSpecialClasses, String argumentSeparator) {
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         if (collection == null) {
             s.append("null");
             return;
@@ -280,15 +241,11 @@ public class WmNode extends TransientNode {
                     toStringWithClass(s, o, namespaceService);
                 } else {
                     if (o != null) {
-<<<<<<< HEAD
-                        valueToString(s, o, prop, namespaceService, printClass, translateSpecialClasses, argumentSeparator);
-=======
                         if (o instanceof String) {
                             s.append(StringUtils.replace(o.toString(), "\n", "\n    "));
                         } else {
                             valueToString(s, o, namespaceService, printClass, translateSpecialClasses, argumentSeparator);
                         }
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
                     }
                 }
             }
@@ -313,15 +270,6 @@ public class WmNode extends TransientNode {
         return s.toString();
     }
 
-<<<<<<< HEAD
-    /**
-     * @param collection - properties
-     * @param namespacePrefixResolver - always required
-     * @param documentAdminService - only required, if we have dynamic properties in collection, otherwise can be null
-     * @return
-     */
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     public static String toHumanReadableStringIfPossible(Map<QName, Serializable> collection, NamespacePrefixResolver namespacePrefixResolver,
             DocumentAdminService documentAdminService) {
         if (collection == null || collection.isEmpty()) {
@@ -343,11 +291,7 @@ public class WmNode extends TransientNode {
             }
             s.append(" = ");
             Serializable value = entry.getValue();
-<<<<<<< HEAD
-            valueToString(s, value, key, namespacePrefixResolver, false, true, ", ");
-=======
             valueToString(s, value, namespacePrefixResolver, false, true, ", ");
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             propsWithValues.add(s.toString());
         }
         return StringUtils.join(propsWithValues, ",\n ");
@@ -417,20 +361,11 @@ public class WmNode extends TransientNode {
                 s.append(className);
             }
             s.append("]");
-<<<<<<< HEAD
-            valueToString(s, value, null, namespacePrefixResolver, true, false, "\n    ");
-        }
-    }
-
-    private static void valueToString(StringBuilder s, Object value, QName prop, NamespacePrefixResolver namespacePrefixResolver, boolean printClass,
-            boolean translateSpecialClasses,
-=======
             valueToString(s, value, namespacePrefixResolver, true, false, "\n    ");
         }
     }
 
     private static void valueToString(StringBuilder s, Object value, NamespacePrefixResolver namespacePrefixResolver, boolean printClass, boolean translateSpecialClasses,
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             String argumentSeparator) {
         if (value instanceof QName) {
             TypeDefinition typeDef = BeanHelper.getDictionaryService().getType((QName) value);
@@ -468,31 +403,10 @@ public class WmNode extends TransientNode {
             }
         }
         if (value instanceof Collection) {
-<<<<<<< HEAD
-            toString(s, (Collection<?>) value, prop, printClass, translateSpecialClasses, argumentSeparator);
-        } else if (value instanceof NodeDescription) {
-            NodeDescription nodeDesc = (NodeDescription) value;
-            String childAssocs = nodeDesc.getChildAssociations().isEmpty() ? "" : "\n  childAssociations=" + toString(nodeDesc.getChildAssociations(), true);
-            s.append(StringUtils.replace(toString(nodeDesc.getProperties(), namespacePrefixResolver) + childAssocs, "\n", "\n    "));
-        } else {
-            s.append(StringUtils.replace(getPropDiffHelper().value(prop, value, ""), "\n", "\n    "));
-        }
-    }
-
-    private static PropDiffHelper getPropDiffHelper() {
-        if (propDiffHelper == null) {
-            propDiffHelper = new PropDiffHelper();
-            propDiffHelper.labelEnum(CompoundWorkflowSearchModel.Props.TYPE, "", CompoundWorkflowType.class);
-            propDiffHelper.labelEnum(CompoundWorkflowSearchModel.Props.STATUS, "", Status.class);
-            propDiffHelper.labelEnum(VolumeSearchModel.Props.VOLUME_TYPE, "", VolumeType.class);
-        }
-        return propDiffHelper;
-=======
             toString(s, (Collection<?>) value, printClass, translateSpecialClasses, argumentSeparator);
         } else {
             s.append(StringUtils.replace(PropDiffHelper.value(value, ""), "\n", "\n    "));
         }
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     public static String toString(Map<? extends Object, ? extends Collection<?>> map) {

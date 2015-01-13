@@ -222,15 +222,9 @@ function updateButtonState()
 
                               <a:column id="ab-people-list2-col5">
                                  <f:facet name="header">
-<<<<<<< HEAD
-                                    <a:sortLink id="ab-people-list2-ot8-sort" label="#{msg.addressbook_org}" value="privatePersonOrgName" mode="case-insensitive" styleClass="header" />
-                                 </f:facet>
-                                 <a:actionLink id="ab-people-list2-link-org" value="#{r.node['ab:privatePersonOrgName']}"
-=======
                                     <a:sortLink id="ab-people-list2-ot8-sort" label="#{msg.addressbook_org}" value="parentOrgName" mode="case-insensitive" styleClass="header" />
                                  </f:facet>
                                  <a:actionLink id="ab-people-list2-link-org" value="#{r.node.parentOrgName}"
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
                                     showLink="false" action="dialog:addressbookOrgDetails" actionListener="#{AddressbookOrgDetailsDialog.setupViewEntry}">
                                     <f:param name="nodeRef" value="#{r.node.parentOrgRef}" />
                                  </a:actionLink>

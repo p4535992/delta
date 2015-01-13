@@ -4,10 +4,7 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentConfigServic
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDynamicService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getPropertySheetStateBean;
 
-<<<<<<< HEAD
-=======
 import java.util.ArrayList;
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -22,12 +19,8 @@ import javax.faces.component.UIComponent;
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
-<<<<<<< HEAD
-import org.alfresco.service.cmr.lock.NodeLockedException;
-=======
 import org.alfresco.repo.transaction.RetryingTransactionHelper;
 import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
@@ -37,18 +30,10 @@ import org.alfresco.web.config.PropertySheetConfigElement;
 import org.alfresco.web.ui.common.component.UIActionLink;
 import org.alfresco.web.ui.repo.component.UIActions;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
-<<<<<<< HEAD
-import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.collections.Transformer;
-
-import ee.webmedia.alfresco.casefile.model.CaseFileModel;
-import ee.webmedia.alfresco.casefile.service.CaseFile;
-=======
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import ee.webmedia.alfresco.cases.model.Case;
 import ee.webmedia.alfresco.cases.model.CaseModel;
 import ee.webmedia.alfresco.cases.service.CaseService;
@@ -72,32 +57,19 @@ import ee.webmedia.alfresco.document.web.evaluator.IsAdminOrDocManagerEvaluator;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
-<<<<<<< HEAD
-import ee.webmedia.alfresco.utils.RepoUtil;
-import ee.webmedia.alfresco.utils.UnableToPerformException;
-=======
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UnableToPerformMultiReasonException;
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import ee.webmedia.alfresco.utils.WebUtil;
 import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
 import ee.webmedia.alfresco.volume.service.VolumeService;
-<<<<<<< HEAD
-=======
 import ee.webmedia.alfresco.volume.web.VolumeListDialog;
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
 /**
  * Form backing bean for Document list. <br>
  * <br>
  * This Class has logic of two diferent, but similar versions of documents(when parent is volume or case). <br>
  * Reason is that we don't have to worry about what the parent of document in jsp files.
-<<<<<<< HEAD
- * 
- * @author Ats Uiboupin
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
  */
 public class DocumentListDialog extends BaseDocumentListDialog implements DialogDataProvider {
     private static final long serialVersionUID = 1L;
@@ -106,11 +78,8 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
 
     private static final String VOLUME_NODE_REF = "volumeNodeRef";
     private static final String CASE_NODE_REF = "caseNodeRef";
-<<<<<<< HEAD
-=======
 
     private static final Log LOG = LogFactory.getLog(DocumentListDialog.class);
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     private transient VolumeService volumeService;
     private transient CaseService caseService;
 
@@ -126,24 +95,10 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
 
     private boolean confirmMoveAssociatedDocuments;
     private boolean showDocumentsLocationPopup;
-<<<<<<< HEAD
-    private List<NodeRef> selectedDocs;
-
-    @Override
-    public Object getActionsContext() {
-        if (parentVolume != null) {
-            return parentVolume.getNode();
-        } else if (parentCase != null) {
-            return parentCase.getNode();
-        }
-
-        return null;
-=======
 
     @Override
     public Object getActionsContext() {
         return parentVolume == null ? parentCase.getNode() : parentVolume.getNode();
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     @Override
@@ -153,19 +108,9 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
     }
 
     public void init(NodeRef parentRef) {
-<<<<<<< HEAD
-        init(parentRef, true);
-    }
-
-    public void init(NodeRef parentRef, boolean navigate) {
-        QName type = getNodeService().getType(parentRef);
-        getPropertySheetStateBean().reset(null, null);
-        if (VolumeModel.Types.VOLUME.equals(type) || CaseFileModel.Types.CASE_FILE.equals(type)) {
-=======
         QName type = getNodeService().getType(parentRef);
         getPropertySheetStateBean().reset(null, null);
         if (VolumeModel.Types.VOLUME.equals(type)) {
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             parentVolume = getVolumeService().getVolumeByNodeRef(parentRef);
             parentCase = null;
         } else if (CaseModel.Types.CASE.equals(type)) {
@@ -177,54 +122,30 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
         resetLimit(false);
         doInitialSearch();
         BeanHelper.getVisitedDocumentsBean().clearVisitedDocuments();
-<<<<<<< HEAD
-        if (navigate) {
-            WebUtil.navigateTo(AlfrescoNavigationHandler.DIALOG_PREFIX + "documentListDialog");
-        }
-    }
-
-    public void setup(ActionEvent event, boolean navigate) {
-=======
         WebUtil.navigateTo(AlfrescoNavigationHandler.DIALOG_PREFIX + "documentListDialog");
     }
 
     public void setup(ActionEvent event) {
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         final Map<String, String> parameterMap = ((UIActionLink) event.getSource()).getParameterMap();
         final String param;
         if (parameterMap.containsKey(VOLUME_NODE_REF)) {
             param = ActionUtil.getParam(event, VOLUME_NODE_REF);
-<<<<<<< HEAD
-=======
             if (!nodeExists(new NodeRef(param))) {
                 return;
             }
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             parentVolume = getVolumeService().getVolumeByNodeRef(param);
             parentCase = null;
         } else {
             param = ActionUtil.getParam(event, CASE_NODE_REF);
-<<<<<<< HEAD
-=======
             if (!nodeExists(new NodeRef(param))) {
                 return;
             }
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             parentCase = getCaseService().getCaseByNoderef(param);
             parentVolume = null;
         }
         resetLimit(false);
         doInitialSearch();
         BeanHelper.getVisitedDocumentsBean().clearVisitedDocuments();
-<<<<<<< HEAD
-        if (navigate) {
-            WebUtil.navigateTo(AlfrescoNavigationHandler.DIALOG_PREFIX + "documentListDialog");
-        }
-    }
-
-    public void setup(ActionEvent event) {
-        setup(event, true);
-=======
         WebUtil.navigateTo(AlfrescoNavigationHandler.DIALOG_PREFIX + "documentListDialog");
     }
 
@@ -235,7 +156,6 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
             return dialogPrefix + VolumeListDialog.DIALOG_NAME;
         }
         return dialogPrefix + "documentListDialog";
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     public void updateLocationSelect(@SuppressWarnings("unused") ActionEvent event) {
@@ -265,11 +185,7 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
         NodeRef volume = (NodeRef) locationProps.get(DocumentCommonModel.Props.VOLUME.toString());
         // caseRef is not checked here, because admins and docmanagers always have the suggest component for case property
         String caseLabel = (String) locationProps.get(DocumentLocationGenerator.CASE_LABEL_EDITABLE);
-<<<<<<< HEAD
-        if (!isValidLocation(function, series, volume)) {
-=======
         if (!isValidLocation(function, series, volume, caseLabel)) {
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             return;
         }
         // assume that current document list contains documents from one location, check location for first document only
@@ -297,68 +213,6 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
 
     public void massChangeDocLocationConfirmed(ActionEvent event) {
         resetConfirmation(event);
-<<<<<<< HEAD
-        massChangeDocLocationSave();
-    }
-
-    @SuppressWarnings("unchecked")
-    public void massChangeDocLocationSave() {
-        Map<String, Object> locationProps = getLocationNode().getProperties();
-        NodeRef function = (NodeRef) locationProps.get(DocumentCommonModel.Props.FUNCTION.toString());
-        NodeRef series = (NodeRef) locationProps.get(DocumentCommonModel.Props.SERIES.toString());
-        NodeRef volume = (NodeRef) locationProps.get(DocumentCommonModel.Props.VOLUME.toString());
-        String caseLabel = (String) locationProps.get(DocumentLocationGenerator.CASE_LABEL_EDITABLE);
-        Set<NodeRef> updatedNodeRefs = new HashSet<NodeRef>();
-
-        if (selectedDocs == null) {
-            selectedDocs = (List<NodeRef>) CollectionUtils.collect(getListCheckboxes().entrySet(), new Transformer() {
-
-                @Override
-                public Object transform(Object input) {
-                    Entry<NodeRef, Boolean> item = (Entry<NodeRef, Boolean>) input;
-                    if (Boolean.TRUE.equals(item.getValue())) {
-                        return item.getKey();
-                    }
-                    return null;
-                }
-            });
-            selectedDocs.remove(null);
-        }
-
-        if (isCreateNewCaseFile(volume)) {
-            BeanHelper.getCaseFileDialog().createCaseFile((String) locationNode.getProperties().get(DocumentLocationGenerator.CASE_FILE_TYPE_PROP), locationNode, selectedDocs);
-            return;
-        }
-
-        int processed = 0;
-        String currentDocName = null;
-        try {
-            for (NodeRef docRef : selectedDocs) {
-                if (docRef == null || updatedNodeRefs.contains(docRef)) {
-                    // document was already moved as followup or reply document of some selected document
-                    continue;
-                }
-                DocumentDynamic document = getDocumentDynamicService().getDocument(docRef);
-                currentDocName = document.getDocName();
-                DocumentConfig cfg = getDocumentConfigService().getConfig(document.getNode());
-                document.setFunction(function);
-                document.setSeries(series);
-                document.setVolume(volume);
-                document.setCase(null);
-                document.getNode().getProperties().put(DocumentLocationGenerator.CASE_LABEL_EDITABLE.toString(), caseLabel);
-                List<Pair<NodeRef, NodeRef>> updatedRefs = getDocumentDynamicService().updateDocumentGetDocAndNodeRefs(document, cfg.getSaveListenerBeanNames(), true, true)
-                        .getSecond();
-                for (Pair<NodeRef, NodeRef> pair : updatedRefs) {
-                    updatedNodeRefs.add(pair.getFirst());
-                    updatedNodeRefs.add(pair.getSecond());
-                }
-                processed++;
-            }
-        } catch (NodeLockedException e) {
-            BeanHelper.getDocumentLockHelperBean().handleLockedNode("document_location_change_error_assoc_locked", e.getNodeRef(), new Object[] { processed, currentDocName });
-        } catch (UnableToPerformException e) {
-            MessageUtil.addStatusMessage(FacesContext.getCurrentInstance(), e);
-=======
         Map<String, Object> locationProps = getLocationNode().getProperties();
         final NodeRef function = (NodeRef) locationProps.get(DocumentCommonModel.Props.FUNCTION.toString());
         final NodeRef series = (NodeRef) locationProps.get(DocumentCommonModel.Props.SERIES.toString());
@@ -398,21 +252,11 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
                 MessageUtil.addErrorMessage("mass_change_document_location_general_error");
             }
             MessageUtil.addStatusMessages(FacesContext.getCurrentInstance(), e.getMessageDataWrapper());
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         }
         doInitialSearch();
         BeanHelper.getVisitedDocumentsBean().clearVisitedDocuments();
     }
 
-<<<<<<< HEAD
-    private boolean isCreateNewCaseFile(NodeRef volumeRef) {
-        final boolean createNewCaseFile = volumeRef != null && RepoUtil.isUnsaved(volumeRef);
-        return createNewCaseFile;
-    }
-
-    public void setSelectedDocs(List<NodeRef> selectedDocs) {
-        this.selectedDocs = selectedDocs;
-=======
     private void updateDocumentInMassChangeLocation(NodeRef function, NodeRef series, NodeRef volume, String caseLabel, Set<NodeRef> updatedNodeRefs, NodeRef docRef) {
         DocumentDynamic document = getDocumentDynamicService().getDocument(docRef);
         DocumentConfig cfg = getDocumentConfigService().getConfig(document.getNode());
@@ -427,7 +271,6 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
             updatedNodeRefs.add(pair.getFirst());
             updatedNodeRefs.add(pair.getSecond());
         }
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     public void resetConfirmation(@SuppressWarnings("unused") ActionEvent event) {
@@ -442,23 +285,16 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
         return showDocumentsLocationPopup;
     }
 
-<<<<<<< HEAD
-    private boolean isValidLocation(NodeRef functionRef, NodeRef seriesRef, NodeRef volumeRef) {
-=======
     private boolean isValidLocation(NodeRef functionRef, NodeRef seriesRef, NodeRef volumeRef, String caseLabel) {
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         if (functionRef == null || seriesRef == null || volumeRef == null) {
             MessageUtil.addErrorMessage("document_validationMsg_mandatory_functionSeriesVolume");
             return false;
         }
-<<<<<<< HEAD
-=======
         Volume volume = BeanHelper.getVolumeService().getVolumeByNodeRef(volumeRef);
         if (volume.isContainsCases() && StringUtils.isBlank(caseLabel)) {
             MessageUtil.addErrorMessage("document_validationMsg_mandatory_case");
             return false;
         }
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         return true;
     }
 
@@ -483,20 +319,10 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
     private void doInitialSearch() {
         NodeRef parentRef = null;
         locationNode = null;
-<<<<<<< HEAD
-        selectedDocs = null;
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         setListCheckboxes(new HashMap<NodeRef, Boolean>());
         getPropertySheetStateBean().reset(getConfig().getStateHolders(), this);
         if (parentCase != null) {
             parentRef = parentCase.getNode().getNodeRef();
-<<<<<<< HEAD
-        } else if (parentVolume != null) {// assuming that parentVolume is volume
-            parentRef = parentVolume.getNode().getNodeRef();
-        }
-        documents = setLimited(getChildNodes(parentRef, getLimit()));
-=======
         } else {// assuming that parentVolume is volume
             parentRef = parentVolume.getNode().getNodeRef();
         }
@@ -505,27 +331,10 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
         if (debugEnabled) {
             LOG.debug("Found " + documents.size() + " document(s) during initial search. Limit: " + getLimit());
         }
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
         // Because documents are fetched from search, the results may not be accurate if indexing is done in background
         // and mass change location was done during the last few seconds
         // Therefore filter out documents, that are not under this volume or case
-<<<<<<< HEAD
-        for (Iterator<Document> i = documents.iterator(); i.hasNext();) {
-            Document document = i.next();
-            if (parentCase != null) {
-                NodeRef caseRef = (NodeRef) document.getProperties().get(DocumentCommonModel.Props.CASE.toString());
-                if (!parentCase.getNode().getNodeRef().equals(caseRef)) {
-                    i.remove();
-                }
-            } else {
-                NodeRef volumeRef = (NodeRef) document.getProperties().get(DocumentCommonModel.Props.VOLUME.toString());
-                if (!parentVolume.getNode().getNodeRef().equals(volumeRef)) {
-                    i.remove();
-                }
-            }
-        }
-=======
         List<Document> removedDocs = null;
         if (debugEnabled) {
             removedDocs = new ArrayList<Document>();
@@ -545,7 +354,6 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
         if (debugEnabled) {
             LOG.debug("Removed " + removedDocs.size() + " documents from " + parentRef + " children listing during filtering: " + removedDocs.toString());
         }
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
         Collections.sort(documents); // always sort, because at first user gets only limited amount of documents;
         // and if user presses show all, then he/she knows it will take time
@@ -570,27 +378,11 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
     }
 
     @Override
-<<<<<<< HEAD
-    public String getContainerTitle() {
-        if (parentVolume != null && parentVolume.isContainsCases()) {
-            return MessageUtil.getMessage("document_case_and_document_list");
-        }
-
-        return MessageUtil.getMessage("document_list");
-    }
-
-    @Override
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     public String getListTitle() {
         if (parentCase != null) {
             return parentCase.getTitle();
         } else if (parentVolume != null) {
-<<<<<<< HEAD
-            return MessageUtil.getMessage("document_list_title", parentVolume.getVolumeMark(), parentVolume.getTitle());
-=======
             return parentVolume.getVolumeMark() + " " + parentVolume.getTitle();
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         } else {
             return "";
         }
@@ -644,11 +436,7 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
 
         // Access restriction change reason
         DocumentLocationModalComponent locationModal = new DocumentLocationModalComponent();
-<<<<<<< HEAD
-        locationModal.setActionListener(application.createMethodBinding("#{DialogManager.bean.massChangeDocLocation}", UIActions.ACTION_CLASS_ARGS));
-=======
         locationModal.setActionListener(application.createMethodBinding("#{DocumentListDialog.massChangeDocLocation}", UIActions.ACTION_CLASS_ARGS));
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         List<UIComponent> modalChildren = ComponentUtil.getChildren(locationModal);
         propSheet = generatePropSheet();
         modalChildren.clear();
@@ -670,15 +458,9 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
         sheetAttributes.put("externalConfig", Boolean.TRUE);
         sheetAttributes.put("labelStyleClass", "propertiesLabel wrap");
         sheetAttributes.put("columns", 1);
-<<<<<<< HEAD
-        sheet.setValueBinding("binding", application.createValueBinding("#{DialogManager.bean.propSheet}")); // this is friggin important!!
-        sheet.setValueBinding("config", application.createValueBinding("#{DialogManager.bean.locationNodeConfig}"));
-        sheet.setValueBinding("value", application.createValueBinding("#{DialogManager.bean.locationNode}"));
-=======
         sheet.setValueBinding("binding", application.createValueBinding("#{DocumentListDialog.propSheet}")); // this is friggin important!!
         sheet.setValueBinding("config", application.createValueBinding("#{DocumentListDialog.locationNodeConfig}"));
         sheet.setValueBinding("value", application.createValueBinding("#{DocumentListDialog.locationNode}"));
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         return sheet;
     }
 
@@ -731,12 +513,4 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
         throw new UnsupportedOperationException();
     }
 
-<<<<<<< HEAD
-    @Override
-    public CaseFile getCaseFile() {
-        throw new RuntimeException("Not used!");
-    }
-
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 }

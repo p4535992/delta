@@ -11,11 +11,6 @@ import ee.webmedia.alfresco.utils.ComponentUtil;
 
 /**
  * Alfresco Repository constraint that checks if value is a String (d:text) and an Enum name.
-<<<<<<< HEAD
- * 
- * @author Alar Kvell
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
  */
 public class EnumConstraint<T extends Enum<T>> extends AbstractConstraint {
 

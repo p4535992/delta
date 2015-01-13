@@ -5,26 +5,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-<<<<<<< HEAD
-import org.apache.commons.lang.StringUtils;
-import org.springframework.util.Assert;
-
-import ee.webmedia.alfresco.common.web.WmNode;
-import ee.webmedia.alfresco.workflow.model.SigningType;
-import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
-import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
-
-/**
- * @author Alar Kvell
- */
-=======
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 public class Workflow extends BaseWorkflowObject implements Serializable {
     private static final long serialVersionUID = 1L;
 
@@ -71,10 +57,6 @@ public class Workflow extends BaseWorkflowObject implements Serializable {
     @Override
     protected <T extends BaseWorkflowObject> T copyImpl(T copy) {
         Workflow workflow = (Workflow) super.copyImpl(copy);
-<<<<<<< HEAD
-        workflow.setIndexInCompoundWorkflow(indexInCompoundWorkflow);
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         for (Task task : tasks) {
             workflow.tasks.add(task.copy(workflow));
         }
@@ -114,13 +96,6 @@ public class Workflow extends BaseWorkflowObject implements Serializable {
         tasks.add(task);
     }
 
-<<<<<<< HEAD
-    protected void addTask(Task task, int index) {
-        tasks.add(index, task);
-    }
-
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     protected void addTasks(List<Task> tasks) {
         this.tasks.addAll(tasks);
     }
@@ -216,27 +191,6 @@ public class Workflow extends BaseWorkflowObject implements Serializable {
         return getProp(WorkflowSpecificModel.Props.CATEGORY);
     }
 
-<<<<<<< HEAD
-    public void setSigningType(SigningType signingType) {
-        setProp(WorkflowSpecificModel.Props.SIGNING_TYPE, signingType != null ? signingType.toString() : null);
-    }
-
-    public boolean isSignTogether() {
-        String signingTypeStr = getSigningTypeStr();
-        return StringUtils.isBlank(signingTypeStr) ? false : SigningType.SIGN_TOGETHER == SigningType.valueOf(signingTypeStr);
-    }
-
-    public SigningType getSigningType() {
-        String signingTypeStr = getSigningTypeStr();
-        return StringUtils.isBlank(signingTypeStr) ? null : SigningType.valueOf(signingTypeStr);
-    }
-
-    private String getSigningTypeStr() {
-        return getProp(WorkflowSpecificModel.Props.SIGNING_TYPE);
-    }
-
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     @Override
     protected String additionalToString() {
         return "\n  parent=" + WmNode.toString(getParent()) + "\n  tasks=" + WmNode.toString(getTasks()) + "\n  removedTasks="

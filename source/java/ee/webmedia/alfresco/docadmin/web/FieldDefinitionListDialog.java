@@ -6,31 +6,16 @@ import java.util.List;
 import java.util.Map;
 
 import javax.faces.context.FacesContext;
-<<<<<<< HEAD
-import javax.faces.event.ActionEvent;
 
-import org.alfresco.service.cmr.repository.NodeRef;
-=======
-
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.ui.common.component.data.UIRichList;
 import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.docadmin.service.FieldDefinition;
-<<<<<<< HEAD
-import ee.webmedia.alfresco.utils.ActionUtil;
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
  * Dialog for the list of field definitions
-<<<<<<< HEAD
- * 
- * @author Ats Uiboupin
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
  */
 public class FieldDefinitionListDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;
@@ -87,16 +72,6 @@ public class FieldDefinitionListDialog extends BaseDialogBean {
         return super.cancel();
     }
 
-<<<<<<< HEAD
-    public void deleteField(ActionEvent event) {
-        NodeRef fieldDefRef = new NodeRef(ActionUtil.getParam(event, "nodeRef"));
-        getDocumentAdminService().deleteFieldDefinition(fieldDefRef);
-        MessageUtil.addInfoMessage("fieldDefinitions_list_action_delete_success");
-        initFields();
-    }
-
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     private void clearRichList() {
         if (getRichList() != null) {
             getRichList().setValue(null);

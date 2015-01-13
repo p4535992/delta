@@ -1,32 +1,3 @@
-<<<<<<< HEAD
-package ee.webmedia.alfresco.imap;
-
-import java.util.Date;
-
-import javax.mail.Flags;
-import javax.mail.internet.MimeMessage;
-
-import com.icegreen.greenmail.store.FolderException;
-
-/**
- * All implementations must be <b>thread-safe</b>.
- * 
- * @author Romet Aidla
- */
-public interface AppendBehaviour {
-    /**
-     * Appends message to the folder.
-     * 
-     * @param folder Message is appended to this folder
-     * @param mimeMessage Message
-     * @param flags Mail flags
-     * @param date Message date
-     * @return
-     * @throws FolderException
-     */
-    public long appendMessage(ImmutableFolder folder, MimeMessage mimeMessage, Flags flags, Date date) throws FolderException;
-}
-=======
 package ee.webmedia.alfresco.imap;
 
 import java.util.Date;
@@ -52,4 +23,3 @@ public interface AppendBehaviour {
      */
     public long appendMessage(ImmutableFolder folder, MimeMessage mimeMessage, Flags flags, Date date) throws FolderException;
 }
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5

@@ -12,11 +12,6 @@ import org.apache.commons.lang.StringUtils;
 
 /**
  * JSF tag for Search.
-<<<<<<< HEAD
- * 
- * @author Romet Aidla
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
  */
 public class SearchTag extends UIComponentTag {
     private String value;
@@ -26,10 +21,6 @@ public class SearchTag extends UIComponentTag {
     private String setterCallback;
     private String dialogTitleId;
     private Boolean editable;
-<<<<<<< HEAD
-    private Boolean textarea;
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     private String readonly;
     private Boolean showFilter;
     private String filters;
@@ -37,10 +28,7 @@ public class SearchTag extends UIComponentTag {
     private String searchLinkLabel;
     private String searchLinkTooltip;
     private String converter;
-<<<<<<< HEAD
-=======
     private Boolean renderPlain;
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
     @Override
     public String getComponentType() {
@@ -85,10 +73,6 @@ public class SearchTag extends UIComponentTag {
             attributes.put(Search.DIALOG_TITLE_ID_KEY, dialogTitleId);
         }
         attributes.put("editable", editable != null ? editable : Boolean.FALSE);
-<<<<<<< HEAD
-        attributes.put("textarea", textarea != null ? textarea : Boolean.FALSE);
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
         if (readonly != null) {
             if (isValueReference(readonly)) {
@@ -102,16 +86,8 @@ public class SearchTag extends UIComponentTag {
         if (converter != null) {
             attributes.put(Search.CONVERTER_KEY, converter);
         }
-<<<<<<< HEAD
-        if (showFilter != null) {
-            attributes.put(Search.SHOW_FILTER_KEY, showFilter);
-        }
-        if (filters != null) {
-            attributes.put(Search.FILTERS_KEY, filters);
-=======
         if (renderPlain != null) {
             attributes.put(Search.RENDER_PLAIN, renderPlain);
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         }
     }
 
@@ -128,10 +104,7 @@ public class SearchTag extends UIComponentTag {
         readonly = null;
         ajaxParentLevel = null;
         converter = null;
-<<<<<<< HEAD
-=======
         renderPlain = null;
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     public void setValue(String value) {
@@ -206,15 +179,6 @@ public class SearchTag extends UIComponentTag {
         return converter;
     }
 
-<<<<<<< HEAD
-    public Boolean getTextarea() {
-        return textarea;
-    }
-
-    public void setTextarea(Boolean textarea) {
-        this.textarea = textarea;
-    }
-=======
     public Boolean getRenderPlain() {
         return renderPlain;
     }
@@ -223,5 +187,4 @@ public class SearchTag extends UIComponentTag {
         this.renderPlain = renderPlain;
     }
 
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 }

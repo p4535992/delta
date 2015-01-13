@@ -1,10 +1,7 @@
 package ee.webmedia.alfresco.workflow.search.web;
 
-<<<<<<< HEAD
-=======
 import static ee.webmedia.alfresco.common.web.BeanHelper.getWorkflowService;
 
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -28,53 +25,33 @@ import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel.Types;
-<<<<<<< HEAD
-import ee.webmedia.alfresco.addressbook.util.AddressbookUtil;
-import ee.webmedia.alfresco.common.web.BeanHelper;
-import ee.webmedia.alfresco.common.web.UserContactGroupSearchBean;
-import ee.webmedia.alfresco.filter.web.AbstractSearchFilterBlockBean;
-=======
 import ee.webmedia.alfresco.addressbook.service.AddressbookService;
 import ee.webmedia.alfresco.addressbook.util.AddressbookUtil;
 import ee.webmedia.alfresco.common.web.UserContactGroupSearchBean;
 import ee.webmedia.alfresco.filter.web.AbstractSearchFilterBlockBean;
 import ee.webmedia.alfresco.user.web.UserListDialog;
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UserUtil;
 import ee.webmedia.alfresco.utils.WebUtil;
 import ee.webmedia.alfresco.workflow.model.Status;
-<<<<<<< HEAD
-import ee.webmedia.alfresco.workflow.search.model.TaskSearchModel;
-import ee.webmedia.alfresco.workflow.search.service.TaskSearchFilterService;
-import ee.webmedia.alfresco.workflow.service.type.WorkflowType;
-
-/**
- * @author Erko Hansar
- */
-=======
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 import ee.webmedia.alfresco.workflow.search.model.TaskSearchModel;
 import ee.webmedia.alfresco.workflow.search.service.TaskSearchFilterService;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
 import ee.webmedia.alfresco.workflow.service.type.WorkflowType;
 
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 public class TaskSearchDialog extends AbstractSearchFilterBlockBean<TaskSearchFilterService> {
 
     private static final long serialVersionUID = 1L;
 
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(TaskSearchDialog.class);
 
-<<<<<<< HEAD
-=======
     private transient WorkflowService workflowService;
     private transient AddressbookService addressbookService;
 
     private TaskSearchResultsDialog taskSearchResultsDialog;
     private UserListDialog userListDialog;
 
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     private List<SelectItem> taskTypes;
     private List<SelectItem> taskStatuses;
     private SelectItem[] ownerSearchFilters;
@@ -84,22 +61,12 @@ public class TaskSearchDialog extends AbstractSearchFilterBlockBean<TaskSearchFi
         super.init(params);
         // Task types
         if (taskTypes == null) {
-<<<<<<< HEAD
-            Map<QName, WorkflowType> workflowTypes = BeanHelper.getWorkflowService().getWorkflowTypesByTask();
-            taskTypes = new ArrayList<SelectItem>(workflowTypes.size());
-            for (WorkflowType workflowType : workflowTypes.values()) {
-                QName taskType = workflowType.getTaskType();
-                if (taskType != null) {
-                    QName type = workflowType.getWorkflowType();
-                    taskTypes.add(new SelectItem(taskType, MessageUtil.getMessage(type == null ? taskType.getLocalName() : type.getLocalName())));
-=======
             Map<QName, WorkflowType> workflowTypes = getWorkflowService().getWorkflowTypes();
             taskTypes = new ArrayList<SelectItem>(workflowTypes.size());
             for (WorkflowType workflowType : workflowTypes.values()) {
                 QName taskType = workflowType.getTaskType();
                 if (taskType != null && taskTypeEnabled(taskType)) {
                     taskTypes.add(new SelectItem(taskType, MessageUtil.getMessage(workflowType.getWorkflowType().getLocalName())));
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
                 }
             }
             WebUtil.sort(taskTypes);
@@ -109,35 +76,20 @@ public class TaskSearchDialog extends AbstractSearchFilterBlockBean<TaskSearchFi
         if (taskStatuses == null) {
             taskStatuses = new ArrayList<SelectItem>(Status.values().length);
             for (Status tmp : Status.values()) {
-<<<<<<< HEAD
-                if (tmp != Status.DELETED) {
-                    taskStatuses.add(new SelectItem(tmp.getName(), tmp.getName()));
-                }
-=======
                 taskStatuses.add(new SelectItem(tmp.getName(), tmp.getName()));
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             }
         }
 
         if (ownerSearchFilters == null) {
-<<<<<<< HEAD
-            ownerSearchFilters = new SelectItem[] { new SelectItem(0, MessageUtil.getMessage("task_owner_users")),
-                    new SelectItem(1, MessageUtil.getMessage("task_owner_contacts")), };
-=======
             ownerSearchFilters = new SelectItem[] { new SelectItem(UserContactGroupSearchBean.USERS_FILTER, MessageUtil.getMessage("task_owner_users")),
                     new SelectItem(UserContactGroupSearchBean.CONTACTS_FILTER, MessageUtil.getMessage("task_owner_contacts")), };
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         }
         loadAllFilters();
     }
 
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
-<<<<<<< HEAD
-        BeanHelper.getTaskSearchResultsDialog().setup(filter);
-=======
         taskSearchResultsDialog.setup(filter);
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         super.isFinished = false;
         return AlfrescoNavigationHandler.DIALOG_PREFIX + "taskSearchResultsDialog";
     }
@@ -210,17 +162,10 @@ public class TaskSearchDialog extends AbstractSearchFilterBlockBean<TaskSearchFi
         log.debug("executeOwnerSearch: " + params.getFilterIndex() + ", " + params.getSearchString());
         SelectItem[] results = new SelectItem[0];
         if (params.isFilterIndex(UserContactGroupSearchBean.USERS_FILTER)) {
-<<<<<<< HEAD
-            results = (SelectItem[]) ArrayUtils.addAll(results, BeanHelper.getUserListDialog().searchUsers(params));
-        }
-        if (params.isFilterIndex(UserContactGroupSearchBean.CONTACTS_FILTER)) {
-            List<Node> nodes = BeanHelper.getAddressbookService().search(params.getSearchString(), params.getLimit());
-=======
             results = (SelectItem[]) ArrayUtils.addAll(results, userListDialog.searchUsers(params));
         }
         if (params.isFilterIndex(UserContactGroupSearchBean.CONTACTS_FILTER)) {
             List<Node> nodes = getAddressbookService().search(params.getSearchString(), params.getLimit());
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             results = (SelectItem[]) ArrayUtils.addAll(results, AddressbookUtil.transformAddressbookNodesToSelectItems(nodes));
         }
 
@@ -287,10 +232,6 @@ public class TaskSearchDialog extends AbstractSearchFilterBlockBean<TaskSearchFi
         return taskStatuses;
     }
 
-<<<<<<< HEAD
-    // START: getters / setters
-
-=======
     private boolean taskTypeEnabled(QName taskType) {
         if (WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_TASK.equals(taskType)) {
             return getWorkflowService().isOrderAssignmentWorkflowEnabled();
@@ -320,7 +261,6 @@ public class TaskSearchDialog extends AbstractSearchFilterBlockBean<TaskSearchFi
         return addressbookService;
     }
 
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     @Override
     protected TaskSearchFilterService getFilterService() {
         if (filterService == null) {

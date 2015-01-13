@@ -16,11 +16,6 @@
       <property name="generalService" ref="generalService" />
       <property name="namespaceService" ref="namespaceService" />
       <property name="dataSource" ref="dataSource" />
-<<<<<<< HEAD
-      <property name="transactionService" ref="TransactionService" />
-      <property name="accessRestrictionChangeReasonEnabled" value="${conf.adr.accessRestrictionChangeReason.enabled}" />
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
    </bean>
 
 </beans>

@@ -21,10 +21,6 @@ public class Function implements Serializable, Comparable<Function> {
     private String description;
     private String status;
     private int order;
-<<<<<<< HEAD
-    private boolean documentActivitiesAreLimited;
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
     @AlfrescoModelProperty(isMappable = false)
     private Node node;
@@ -77,17 +73,6 @@ public class Function implements Serializable, Comparable<Function> {
         this.order = order;
     }
 
-<<<<<<< HEAD
-    public boolean isDocumentActivitiesAreLimited() {
-        return documentActivitiesAreLimited;
-    }
-
-    public void setDocumentActivitiesAreLimited(boolean documentActivitiesAreLimited) {
-        this.documentActivitiesAreLimited = documentActivitiesAreLimited;
-    }
-
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     public NodeRef getNodeRef() {
         return node.getNodeRef();
     }
@@ -118,23 +103,10 @@ public class Function implements Serializable, Comparable<Function> {
         if (getOrder() == fn2.getOrder()) {
             int cmpMark;
             if ((cmpMark = DEFAULT_COLLATOR.compare(getMark(), fn2.getMark())) == 0) {
-<<<<<<< HEAD
-                if (title != null && fn2.title != null) {
-                    return DEFAULT_COLLATOR.compare(getTitle(), fn2.getTitle());
-                } else if (title == null && fn2.title == null) {
-                    return 0;
-                }
-                return title == null ? -1 : 1;
-=======
                 return DEFAULT_COLLATOR.compare(getTitle(), fn2.getTitle());
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             }
             return cmpMark;
         }
         return getOrder() - fn2.getOrder();
     }
-<<<<<<< HEAD
-
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 }

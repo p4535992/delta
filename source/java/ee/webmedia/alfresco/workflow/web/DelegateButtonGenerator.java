@@ -25,11 +25,6 @@ import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 
 /**
  * Generates button for delegation
-<<<<<<< HEAD
- * 
- * @author Ats Uiboupin
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
  */
 public class DelegateButtonGenerator extends BaseComponentGenerator {
     private static final String PARAM_NODEREF = "nodeRef";

@@ -22,12 +22,6 @@ import ee.webmedia.alfresco.docconfig.generator.systematic.DocumentLocationGener
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 
-<<<<<<< HEAD
-/**
- * @author Alar Kvell
- */
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 public class DynamicPropertyDefinitionImpl implements DynamicPropertyDefinition {
 
     private final QName name;

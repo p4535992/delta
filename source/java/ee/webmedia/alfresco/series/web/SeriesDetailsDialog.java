@@ -1,63 +1,27 @@
 package ee.webmedia.alfresco.series.web;
 
-<<<<<<< HEAD
-import static ee.webmedia.alfresco.common.web.BeanHelper.getLogBlockBean;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getSeriesService;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.faces.component.UIInput;
-import javax.faces.context.FacesContext;
-import javax.faces.event.ActionEvent;
-import javax.faces.model.SelectItem;
-=======
 import java.util.List;
 
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.TransientNode;
-<<<<<<< HEAD
-import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
-
-import ee.webmedia.alfresco.classificator.enums.VolumeType;
-import ee.webmedia.alfresco.common.web.BeanHelper;
-import ee.webmedia.alfresco.eventplan.model.EventPlan;
-import ee.webmedia.alfresco.register.model.Register;
-=======
 
 import ee.webmedia.alfresco.classificator.enums.VolumeType;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.log.web.LogBlockBean;
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import ee.webmedia.alfresco.series.model.Series;
 import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.series.numberpattern.NumberPatternParser;
 import ee.webmedia.alfresco.utils.ActionUtil;
-<<<<<<< HEAD
-import ee.webmedia.alfresco.utils.MessageDataImpl;
-import ee.webmedia.alfresco.utils.MessageUtil;
-import ee.webmedia.alfresco.utils.UnableToPerformException;
-import ee.webmedia.alfresco.utils.WebUtil;
-
-/**
- * Form backing bean for Series details
- * 
- * @author Ats Uiboupin
-=======
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 
 /**
  * Form backing bean for Series details
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
  */
 public class SeriesDetailsDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;
@@ -66,25 +30,6 @@ public class SeriesDetailsDialog extends BaseDialogBean {
     private static final String PARAM_FUNCTION_NODEREF = "functionNodeRef";
     private static final String PARAM_SERIES_NODEREF = "seriesNodeRef";
 
-<<<<<<< HEAD
-    private Series series;
-    private boolean newSeries;
-    private String initialSeriesIdentifier;
-    private transient UIPropertySheet propertySheet;
-    private static final String PARAM_NODEREF = "nodeRef";
-    private static final String PARAM_CONFIRMATION = "confirmation";
-
-    @Override
-    protected String finishImpl(FacesContext context, String outcome) throws Throwable {
-        return finishImpl(context, outcome, false);
-    }
-
-    private String finishImpl(FacesContext context, String outcome, boolean registerChecked) throws Throwable {
-        if (performPatternChecks(context)) {
-            return null;
-        }
-        if (!registerChecked && performRegisterCheck()) {
-=======
     private LogBlockBean logBlockBean;
     private Series series;
     private boolean newSeries;
@@ -96,7 +41,6 @@ public class SeriesDetailsDialog extends BaseDialogBean {
             return null;
         }
         if (!validate()) {
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             return null;
         }
         BeanHelper.getSeriesService().saveOrUpdate(series);
@@ -106,8 +50,6 @@ public class SeriesDetailsDialog extends BaseDialogBean {
         return outcome;
     }
 
-<<<<<<< HEAD
-=======
     private boolean validate() {
         Integer retentionPeriod = series.getRetentionPeriod();
         if (retentionPeriod != null && (retentionPeriod < 0 || retentionPeriod > 999)) {
@@ -117,7 +59,6 @@ public class SeriesDetailsDialog extends BaseDialogBean {
         return true;
     }
 
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     private boolean performPatternChecks(FacesContext context) {
         boolean foundErrors = false;
         String patternStr = (String) getCurrentNode().getProperties().get(SeriesModel.Props.DOC_NUMBER_PATTERN);
@@ -193,31 +134,6 @@ public class SeriesDetailsDialog extends BaseDialogBean {
         return foundErrors;
     }
 
-<<<<<<< HEAD
-    private boolean performRegisterCheck() {
-        Register register = BeanHelper.getRegisterService().getRegister((Integer) getCurrentNode().getProperties().get(SeriesModel.Props.REGISTER));
-        if (register.isAutoReset()) {
-            @SuppressWarnings("unchecked")
-            List<String> volTypes = ((List<String>) getCurrentNode().getProperties().get(SeriesModel.Props.VOL_TYPE));
-            if (volTypes.contains(VolumeType.CASE_FILE.name()) || volTypes.contains(VolumeType.SUBJECT_FILE.name())) {
-                Map<String, String> params = new HashMap<String, String>(2);
-                params.put(PARAM_NODEREF, series.getNode().getNodeRefAsString());
-                params.put(PARAM_CONFIRMATION, Boolean.TRUE.toString());
-                BeanHelper
-                        .getUserConfirmHelper()
-                        .setup(
-                                new MessageDataImpl(
-                                        "series_confirmation", register.getName()), null,
-                                "#{SeriesDetailsDialog.afterConfirmationAction}", params, null, null, null
-                        );
-                return true;
-            }
-        }
-        return false;
-    }
-
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     @Override
     public String cancel() {
         resetFields();
@@ -240,24 +156,15 @@ public class SeriesDetailsDialog extends BaseDialogBean {
     // START: jsf actions/accessors
     public void showDetails(ActionEvent event) {
         String seriesNodeRef = ActionUtil.getParam(event, PARAM_SERIES_NODEREF);
-<<<<<<< HEAD
-        series = getSeriesService().getSeriesByNodeRef(seriesNodeRef);
-        getLogBlockBean().init(series.getNode());
-=======
         series = BeanHelper.getSeriesService().getSeriesByNodeRef(seriesNodeRef);
         logBlockBean.init(series.getNode());
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     public void addNewSeries(ActionEvent event) {
         newSeries = true;
         NodeRef funcNodeRef = new NodeRef(ActionUtil.getParam(event, PARAM_FUNCTION_NODEREF));
         // create new node for series
-<<<<<<< HEAD
-        series = getSeriesService().createSeries(funcNodeRef);
-=======
         series = BeanHelper.getSeriesService().createSeries(funcNodeRef);
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         initialSeriesIdentifier = (String) getCurrentNode().getProperties().get(SeriesModel.Props.SERIES_IDENTIFIER);
     }
 
@@ -271,14 +178,8 @@ public class SeriesDetailsDialog extends BaseDialogBean {
             return;
         }
         if (isClosed()) {
-<<<<<<< HEAD
-            propertySheet.getChildren().clear();
-            try {
-                getSeriesService().openSeries(series);
-=======
             try {
                 BeanHelper.getSeriesService().openSeries(series);
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             } catch (UnableToPerformException e) {
                 MessageUtil.addStatusMessage(e);
                 return;
@@ -293,114 +194,36 @@ public class SeriesDetailsDialog extends BaseDialogBean {
         }
 
         if (!isClosed()) {
-<<<<<<< HEAD
-            propertySheet.getChildren().clear();
-            boolean wasClosed = getSeriesService().closeSeries(series);
-=======
             boolean wasClosed = BeanHelper.getSeriesService().closeSeries(series);
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             if (!wasClosed) {
                 MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "series_validationMsg_closeNotPossible");
                 return null;
             }
             MessageUtil.addInfoMessage("series_close_success");
-<<<<<<< HEAD
-            return null;
-        }
-        return null;
-    }
-
-    public String delete() {
-        if (series.getNode() instanceof TransientNode) {
-            return null;
-        }
-        if (isClosed()) {
-            try {
-                getSeriesService().delete(series);
-                MessageUtil.addInfoMessage("series_delete_success");
-                return getDefaultCancelOutcome();
-            } catch (UnableToPerformException e) {
-                MessageUtil.addStatusMessage(e);
-            }
-=======
             return getDefaultFinishOutcome();
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         }
         return null;
     }
 
-<<<<<<< HEAD
-    @SuppressWarnings("unused")
-    public List<SelectItem> getEventPlans(FacesContext context, UIInput input) {
-        List<EventPlan> eventPlans = BeanHelper.getEventPlanService().getEventPlans();
-
-        List<SelectItem> options = new ArrayList<SelectItem>();
-        options.add(new SelectItem("", MessageUtil.getMessage("select_default_label")));
-        for (EventPlan eventPlan : eventPlans) {
-            options.add(new SelectItem(eventPlan.getNode().getNodeRef(), eventPlan.getName()));
-        }
-        return options;
-    }
-
-    public boolean isClosed() {
-        return getSeriesService().isClosed(getCurrentNode());
-=======
     public boolean isClosed() {
         return BeanHelper.getSeriesService().isClosed(getCurrentNode());
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     public boolean isNew() {
         return newSeries;
     }
 
-<<<<<<< HEAD
-    public void afterConfirmationAction(ActionEvent event) {
-        boolean continueSaving = false;
-        if (ActionUtil.hasParam(event, PARAM_CONFIRMATION)) {
-            continueSaving = ActionUtil.getParam(event, PARAM_CONFIRMATION, Boolean.class);
-        }
-        try {
-            if (continueSaving) {
-                WebUtil.navigateTo(finishImpl(FacesContext.getCurrentInstance(), getDefaultFinishOutcome(), true));
-            } else {
-                cancel();
-            }
-        } catch (Throwable e) {
-            MessageUtil.addErrorMessage(e.getLocalizedMessage());
-        }
-    }
-
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     // END: jsf actions/accessors
 
     private void resetFields() {
         initialSeriesIdentifier = null;
         series = null;
         newSeries = false;
-<<<<<<< HEAD
-        propertySheet = null;
-        getLogBlockBean().reset();
-=======
         logBlockBean.reset();
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     // START: getters / setters
 
-<<<<<<< HEAD
-    public String getInitialSeriesIdentifier() {
-        return initialSeriesIdentifier;
-    }
-
-    public void setPropertySheet(UIPropertySheet propertySheet) {
-        this.propertySheet = propertySheet;
-    }
-
-    public UIPropertySheet getPropertySheet() {
-        return propertySheet;
-=======
     public void setLogBlockBean(LogBlockBean logBlockBean) {
         this.logBlockBean = logBlockBean;
     }
@@ -411,7 +234,6 @@ public class SeriesDetailsDialog extends BaseDialogBean {
 
     public String getInitialSeriesIdentifier() {
         return initialSeriesIdentifier;
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     // END: getters / setters

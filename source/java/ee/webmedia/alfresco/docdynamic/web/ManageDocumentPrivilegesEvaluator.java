@@ -9,11 +9,6 @@ import ee.webmedia.alfresco.document.web.evaluator.ViewStateActionEvaluator;
 
 /**
  * Evaluator, that evaluates to true if privileges management button is visible
-<<<<<<< HEAD
- * 
- * @author Ats Uiboupin
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
  */
 public class ManageDocumentPrivilegesEvaluator extends BaseActionEvaluator {
     private static final long serialVersionUID = 1L;

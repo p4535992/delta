@@ -42,21 +42,10 @@ import org.springframework.util.CollectionUtils;
 import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.email.model.EmailAttachment;
-<<<<<<< HEAD
-import ee.webmedia.alfresco.monitoring.MonitoredService;
-import ee.webmedia.alfresco.monitoring.MonitoringUtil;
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import ee.webmedia.alfresco.signature.service.SignatureService;
 import ee.webmedia.alfresco.utils.FilenameUtil;
 import ee.webmedia.alfresco.utils.MimeUtil;
 
-<<<<<<< HEAD
-/**
- * @author Erko Hansar
- */
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 public class EmailServiceImpl implements EmailService {
 
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(EmailServiceImpl.class);
@@ -178,24 +167,13 @@ public class EmailServiceImpl implements EmailService {
                 }
             }
 
-<<<<<<< HEAD
-            MonitoringUtil.logSuccess(MonitoredService.OUT_SMTP);
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             if (log.isInfoEnabled()) {
                 log.info("sendEmail service call took " + (step2 - step0) + " ms\n    prepare message - " + (step1 - step0) + " ms\n    send message - "
                         + (step2 - step1) + " ms" + info);
             }
         } catch (AlfrescoRuntimeException e) {
-<<<<<<< HEAD
-            MonitoringUtil.logError(MonitoredService.OUT_SMTP, e);
             throw e;
         } catch (Exception e) {
-            MonitoringUtil.logError(MonitoredService.OUT_SMTP, e);
-=======
-            throw e;
-        } catch (Exception e) {
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             throw new EmailException(e);
         }
     }

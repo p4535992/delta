@@ -5,20 +5,13 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getPersonService;
 import static java.util.Arrays.asList;
 
 import java.io.Serializable;
-<<<<<<< HEAD
-=======
 import java.math.BigInteger;
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
-<<<<<<< HEAD
-import java.util.Iterator;
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -26,15 +19,6 @@ import java.util.Set;
 import javax.faces.event.ActionEvent;
 
 import org.alfresco.model.ContentModel;
-<<<<<<< HEAD
-import org.alfresco.repo.security.authentication.AuthenticationUtil;
-import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
-import org.alfresco.repo.security.sync.NodeDescription;
-import org.alfresco.repo.security.sync.UserRegistry;
-import org.alfresco.service.cmr.repository.ChildAssociationRef;
-import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.service.cmr.repository.NodeService;
-=======
 import org.alfresco.repo.cache.SimpleCache;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
@@ -42,7 +26,6 @@ import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import org.alfresco.service.cmr.security.AuthorityService;
 import org.alfresco.service.cmr.security.AuthorityType;
 import org.alfresco.service.namespace.QName;
@@ -51,13 +34,6 @@ import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.collections.comparators.NullComparator;
 import org.apache.commons.lang.StringUtils;
 
-<<<<<<< HEAD
-import ee.webmedia.alfresco.common.service.GeneralService;
-import ee.webmedia.alfresco.common.web.BeanHelper;
-import ee.webmedia.alfresco.orgstructure.model.OrganizationStructure;
-import ee.webmedia.alfresco.orgstructure.model.OrganizationStructureModel;
-import ee.webmedia.alfresco.user.service.UserService;
-=======
 import smit.ametnik.services.YksusExt;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.BeanHelper;
@@ -66,7 +42,6 @@ import ee.webmedia.alfresco.orgstructure.model.OrganizationStructure;
 import ee.webmedia.alfresco.orgstructure.model.OrganizationStructureModel;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.UserUtil;
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import ee.webmedia.alfresco.utils.beanmapper.BeanPropertyMapper;
 
 public class OrganizationStructureServiceImpl implements OrganizationStructureService {
@@ -78,15 +53,6 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
     private static BeanPropertyMapper<OrganizationStructure> organizationStructureBeanPropertyMapper = BeanPropertyMapper
             .newInstance(OrganizationStructure.class);
 
-<<<<<<< HEAD
-    private GeneralService generalService;
-    private NodeService nodeService;
-    private UserRegistry userRegistry;
-    private AuthorityService authorityService;
-    // START: properties that would cause dependency cycle when trying to inject them
-    private UserService _userService;
-    // START: properties that would cause dependency cycle when trying to inject them
-=======
     private boolean organizationStructureUpdateEnabled;
     private GeneralService generalService;
     private NodeService nodeService;
@@ -98,29 +64,11 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
 
     /** a transactionally-safe cache to be injected */
     private SimpleCache<Integer, OrganizationStructure> orgStructPropertiesCache;
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
     private NodeRef orgStructsRoot;
 
     @Override
     public int updateOrganisationStructures() {
-<<<<<<< HEAD
-        Iterator<NodeDescription> orgStructs = userRegistry.getOrganizationStructures();
-        // save old organization structures, that will be removed if everything goes right
-        List<ChildAssociationRef> oldOrganizations = nodeService.getChildAssocs(getOrgStructsRoot(), OrganizationStructureModel.Assocs.ORGSTRUCT, RegexQNamePattern.MATCH_ALL);
-        int orgStructuresCount = 0;
-        while (orgStructs.hasNext()) {
-            NodeDescription orgStruct = orgStructs.next();
-            String unitId = (String) orgStruct.getProperties().get(OrganizationStructureModel.Props.UNIT_ID);
-            nodeService.createNode(getOrgStructsRoot(), OrganizationStructureModel.Assocs.ORGSTRUCT, //
-                    QName.createQName(OrganizationStructureModel.URI, unitId), OrganizationStructureModel.Types.ORGSTRUCT, orgStruct.getProperties());
-            orgStructuresCount++;
-        }
-        for (ChildAssociationRef oldOrganization : oldOrganizations) { // remove all old organizations
-            nodeService.deleteNode(oldOrganization.getChildRef());
-        }
-        return orgStructuresCount;
-=======
         if (!organizationStructureUpdateEnabled) {
             return 0;
         }
@@ -140,7 +88,6 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
             nodeService.removeChildAssociation(oldOrganization);
         }
         return orgStructures.size();
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     @Override
@@ -168,22 +115,14 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
         Set<String> defaultGroups = new HashSet<String>(authorityService.getAllAuthoritiesInZone(AuthorityService.ZONE_APP_DEFAULT, AuthorityType.GROUP));
 
         List<OrganizationStructure> allOrganizationStructures = getAllOrganizationStructures();
-<<<<<<< HEAD
-        Map<String, OrganizationStructure> orgStructById = new HashMap<String, OrganizationStructure>(allOrganizationStructures.size());
-=======
         Map<Integer, OrganizationStructure> orgStructById = new HashMap<Integer, OrganizationStructure>(allOrganizationStructures.size());
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         for (OrganizationStructure organizationStructure : allOrganizationStructures) {
             orgStructById.put(organizationStructure.getUnitId(), organizationStructure);
         }
 
         for (OrganizationStructure os : allOrganizationStructures) {
             String organizationPath = os.getOrganizationDisplayPath();
-<<<<<<< HEAD
-            String groupName = StringUtils.isBlank(organizationPath) ? os.getName() : organizationPath;
-=======
             String groupName = StringUtils.isEmpty(organizationPath) ? os.getName() : organizationPath;
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             String groupAuthority = AuthorityType.GROUP.getPrefixString() + groupName;
 
             // User has manually created a group that is named after an organization structure
@@ -223,13 +162,6 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
                 }
 
                 // Users by organization ID
-<<<<<<< HEAD
-                String orgId = (String) props.get(ContentModel.PROP_ORGID);
-                if (StringUtils.isBlank(orgId)) {
-                    continue;
-                }
-                OrganizationStructure orgStruct = orgStructById.get(orgId);
-=======
                 Serializable orgId = props.get(ContentModel.PROP_ORGID);
                 if (orgId == null) {
                     continue;
@@ -240,7 +172,6 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
                 } catch (NumberFormatException e) {
                     // Ignore and continue
                 }
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
                 if (orgStruct == null) {
                     continue;
                 }
@@ -265,10 +196,7 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
         // Remove missing organization structures
         for (String missingGeneratedGroup : generatedGroups) {
             authorityService.deleteAuthority(missingGeneratedGroup);
-<<<<<<< HEAD
-=======
 
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         }
 
         return 0;
@@ -289,26 +217,6 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
     public void createOrganisationStructure(OrganizationStructure org) {
         Map<QName, Serializable> properties = organizationStructureBeanPropertyMapper.toProperties(org);
         nodeService.createNode(getOrgStructsRoot(), OrganizationStructureModel.Assocs.ORGSTRUCT, //
-<<<<<<< HEAD
-                QName.createQName(OrganizationStructureModel.URI, org.getUnitId()), OrganizationStructureModel.Types.ORGSTRUCT, properties);
-    }
-
-    @Override
-    public OrganizationStructure getOrganizationStructure(String unitId) {
-        if (StringUtils.isBlank(unitId)) {
-            return null;
-        }
-        List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(getOrgStructsRoot(),
-                OrganizationStructureModel.Assocs.ORGSTRUCT, //
-                QName.createQName(OrganizationStructureModel.URI, unitId));
-        for (ChildAssociationRef childAssociationRef : childAssocs) {
-            OrganizationStructure orgStruct = getOrganizationStructure(childAssociationRef.getChildRef());
-            if (StringUtils.equals(unitId, orgStruct.getUnitId())) {
-                return orgStruct;
-            }
-        }
-        return null;
-=======
                 QName.createQName(OrganizationStructureModel.URI, String.valueOf(org.getUnitId())), OrganizationStructureModel.Types.ORGSTRUCT, properties);
         orgStructPropertiesCache.put(org.getUnitId(), org);
     }
@@ -326,27 +234,17 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
             orgStructPropertiesCache.put(unitId, os);
         }
         return os;
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     @Override
     public String getOrganizationStructureName(String value) {
-<<<<<<< HEAD
-        OrganizationStructure orgStruct = getOrganizationStructure(value);
-=======
         OrganizationStructure orgStruct = getOrganizationStructur(value);
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         if (orgStruct == null) {
             return value;
         }
         return orgStruct.getName();
     }
 
-<<<<<<< HEAD
-    @Override
-    public List<String> getOrganizationStructurePaths(String value) {
-        OrganizationStructure orgStruct = getOrganizationStructure(value);
-=======
     protected OrganizationStructure getOrganizationStructur(String value) {
         if (StringUtils.isEmpty(value)) {
             return null;
@@ -363,7 +261,6 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
     @Override
     public List<String> getOrganizationStructurePaths(String value) {
         OrganizationStructure orgStruct = getOrganizationStructur(value);
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         if (orgStruct == null) {
             return null;
         }
@@ -372,21 +269,12 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
 
     @Override
     public List<OrganizationStructure> getAllOrganizationStructures() {
-<<<<<<< HEAD
-        List<ChildAssociationRef> childRefs = nodeService.getChildAssocs(getOrgStructsRoot());
-        List<OrganizationStructure> orgstructs = new ArrayList<OrganizationStructure>(childRefs.size());
-        Map<String, String> superNames = new HashMap<String, String>(childRefs.size());
-        for (ChildAssociationRef childAssocRef : childRefs) {
-            NodeRef nodeRef = childAssocRef.getChildRef();
-            OrganizationStructure os = getOrganizationStructure(nodeRef);
-=======
         NodeRef root = generalService.getNodeRef(OrganizationStructureModel.Repo.SPACE);
         List<ChildAssociationRef> childRefs = nodeService.getChildAssocs(root);
         List<OrganizationStructure> orgstructs = new ArrayList<OrganizationStructure>(childRefs.size());
         Map<Integer, String> superNames = new HashMap<Integer, String>(childRefs.size());
         for (ChildAssociationRef childRef : childRefs) {
             OrganizationStructure os = getOrganizationStructure(childRef.getChildRef());
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             orgstructs.add(os);
             superNames.put(os.getUnitId(), os.getName());
         }
@@ -404,8 +292,6 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
     }
 
     @Override
-<<<<<<< HEAD
-=======
     public List<NodeRef> getAllOrganizationStructureRefs() {
         NodeRef root = generalService.getNodeRef(OrganizationStructureModel.Repo.SPACE);
         List<ChildAssociationRef> childRefs = nodeService.getChildAssocs(root);
@@ -417,24 +303,12 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
     }
 
     @Override
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     public List<OrganizationStructure> searchOrganizationStructures(String input, int limit) {
         Set<QName> props = new HashSet<QName>(1);
         props.add(OrganizationStructureModel.Props.NAME);
         props.add(OrganizationStructureModel.Props.ORGANIZATION_PATH);
 
         // why doesn't lucene sorting work? as a workaround we sort in java
-<<<<<<< HEAD
-        List<NodeRef> nodeRefs = getDocumentSearchService().searchNodesByTypeAndProps(input, OrganizationStructureModel.Types.ORGSTRUCT, props, limit);
-
-        if (nodeRefs == null) {
-            return sortByName(getAllOrganizationStructures());
-        }
-
-        List<OrganizationStructure> structs = new ArrayList<OrganizationStructure>(nodeRefs.size());
-        for (NodeRef nodeRef : nodeRefs) {
-            structs.add(getOrganizationStructure(nodeRef));
-=======
         List<NodeRef> nodes = getDocumentSearchService().searchNodesByTypeAndProps(input, OrganizationStructureModel.Types.ORGSTRUCT, props, limit);
 
         if (nodes == null) {
@@ -444,7 +318,6 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
         List<OrganizationStructure> structs = new ArrayList<OrganizationStructure>(nodes.size());
         for (NodeRef node : nodes) {
             structs.add(getOrganizationStructure(node));
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         }
         return sortByName(structs);
     }
@@ -456,11 +329,7 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
 
             String unitId = (String) props.get(ContentModel.PROP_ORGID);
             String orgStruct;
-<<<<<<< HEAD
-            if (StringUtils.isBlank(unitId)) {
-=======
             if (StringUtils.isEmpty(unitId)) {
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
                 unitId = "";
                 orgStruct = "";
             } else {
@@ -483,14 +352,6 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
         return structs;
     }
 
-<<<<<<< HEAD
-    private OrganizationStructure getOrganizationStructure(NodeRef nodeRef) {
-        OrganizationStructure os = organizationStructureBeanPropertyMapper.toObject(nodeService.getProperties(nodeRef));
-        os.setNodeRef(nodeRef);
-        return os;
-    }
-
-=======
     @Override
     public OrganizationStructure getOrganizationStructure(NodeRef nodeRef) {
         OrganizationStructure os = organizationStructureBeanPropertyMapper.toObject(nodeService.getProperties(nodeRef));
@@ -516,7 +377,6 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
         return org;
     }
 
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     private NodeRef getOrgStructsRoot() {
         if (orgStructsRoot == null) {
             String orgStructXPath = OrganizationStructureModel.Repo.SPACE;
@@ -543,21 +403,14 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
         this.nodeService = nodeService;
     }
 
-<<<<<<< HEAD
-    public void setUserRegistry(UserRegistry userRegistry) {
-        this.userRegistry = userRegistry;
-=======
     public void setAmrService(AMRService amrService) {
         this.amrService = amrService;
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     public void setAuthorityService(AuthorityService authorityService) {
         this.authorityService = authorityService;
     }
 
-<<<<<<< HEAD
-=======
     public void setOrganizationStructureUpdateEnabled(boolean organizationStructureUpdateEnabled) {
         this.organizationStructureUpdateEnabled = organizationStructureUpdateEnabled;
     }
@@ -566,6 +419,5 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
         this.orgStructPropertiesCache = orgStructPropertiesCache;
     }
 
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     // END: getters / setters
 }

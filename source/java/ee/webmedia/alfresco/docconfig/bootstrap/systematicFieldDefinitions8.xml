@@ -113,16 +113,8 @@
          <docadmin:mandatoryForVol>true</docadmin:mandatoryForVol>
          <docadmin:mandatory>true</docadmin:mandatory>
          <docadmin:mandatoryChangeable>false</docadmin:mandatoryChangeable>
-<<<<<<< HEAD
-         <docadmin:fieldType>COMBOBOX</docadmin:fieldType>
-         <docadmin:changeableIf>ALWAYS_NOT_CHANGEABLE</docadmin:changeableIf>
-         <docadmin:changeableIfChangeable>false</docadmin:changeableIfChangeable>
-         <docadmin:classificator>docListUnitStatus</docadmin:classificator>
-         <docadmin:classificatorDefaultValue>avatud</docadmin:classificatorDefaultValue>
-=======
          <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
          <docadmin:changeableIf>ALWAYS_NOT_CHANGEABLE</docadmin:changeableIf>
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
          <docadmin:isParameterInDocSearch>false</docadmin:isParameterInDocSearch>
          <docadmin:isParameterInVolSearch>true</docadmin:isParameterInVolSearch>
          <docadmin:isFixedParameterInDocSearch>false</docadmin:isFixedParameterInDocSearch>

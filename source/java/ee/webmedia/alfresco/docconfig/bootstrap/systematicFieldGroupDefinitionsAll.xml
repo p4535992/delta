@@ -112,8 +112,6 @@
       </view:properties>
    </docadmin:fieldGroup>
 
-<<<<<<< HEAD
-=======
    <docadmin:fieldGroup view:childName="docadmin:trainingApplicant">
       <view:properties>
          <docadmin:name>Koolituse taotleja</docadmin:name>
@@ -266,5 +264,4 @@
       </view:properties>
    </docadmin:fieldGroup>
 
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 </view:view>

@@ -37,10 +37,6 @@
          <set>
             <value>ab:personFirstName</value>
             <value>ab:personLastName</value>
-<<<<<<< HEAD
-            <value>ab:privatePersonOrgName</value>
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             <value>ab:orgName</value>
             <value>ab:orgAltName</value>
             <value>ab:orgAcronym</value>
@@ -108,30 +104,17 @@
    </bean>     
    
    <bean id="taskCapablePropertyRemoverOnPeople" class="ee.webmedia.alfresco.addressbook.bootstrap.TaskCapablePropertyRemoverOnPeople" parent="abstractNodeUpdater" >
-<<<<<<< HEAD
-      <property name="moduleId" value="simdhs" />
-=======
       <property name="moduleId" value="common" />
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
       <property name="executeOnceOnly" value="true" />
       <property name="dependsOn">
          <list>
             <ref bean="taskCapablePropertyUpdater4"/>
-<<<<<<< HEAD
-             <!-- This dependency is here to ensure seriesUpdater2 starts at the beginning of updater execution process; taskCapablePropertyRemoverOnPeople has no functional dependency on seriesUpdater2 -->
-            <ref bean="seriesUpdater2" />
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
          </list>
       </property>
    </bean>     
       
    <bean id="skypeAspectAdderForOrgPeople" class="ee.webmedia.alfresco.addressbook.bootstrap.AddSkypeAspectToOrgPeople" parent="abstractNodeUpdater" >
-<<<<<<< HEAD
-      <property name="moduleId" value="simdhs" />
-=======
       <property name="moduleId" value="common" />
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
       <property name="executeOnceOnly" value="true" />
       <property name="dependsOn">
          <list>
@@ -139,14 +122,6 @@
          </list>
       </property>
    </bean>     
-<<<<<<< HEAD
-      
-   <bean id="addOrgNameToOrgContacts" class="ee.webmedia.alfresco.addressbook.bootstrap.AddOrgNameToOrgContactUpdater" parent="abstractNodeUpdater" >
-      <property name="moduleId" value="common" />
-      <property name="executeOnceOnly" value="true" />
-   </bean>     
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
    
    <bean id="encryptionPersonIdAdderForOrgs" class="ee.webmedia.alfresco.addressbook.bootstrap.EncryptionPersonIdAdderForOrgs" parent="abstractNodeUpdater" >
       <property name="moduleId" value="common" />

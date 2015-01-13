@@ -4,21 +4,13 @@ import java.util.List;
 
 import javax.faces.event.ActionEvent;
 
-<<<<<<< HEAD
-=======
 import org.alfresco.service.cmr.repository.NodeRef;
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import org.alfresco.web.bean.repository.Node;
 
 import ee.webmedia.alfresco.orgstructure.model.OrganizationStructure;
 
 /**
  * Service for searching and listing organization structures.
-<<<<<<< HEAD
- * 
- * @author Dmitri Melnikov
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
  */
 public interface OrganizationStructureService {
 
@@ -41,11 +33,7 @@ public interface OrganizationStructureService {
      * @param unitId
      * @return organization structure or {@code null} of not found
      */
-<<<<<<< HEAD
-    OrganizationStructure getOrganizationStructure(String unitId);
-=======
     OrganizationStructure getOrganizationStructure(int unitId);
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
     /**
      * Return one organization structure.
@@ -85,11 +73,8 @@ public interface OrganizationStructureService {
 
     List<String> getOrganizationStructurePaths(String value);
 
-<<<<<<< HEAD
-=======
     List<NodeRef> getAllOrganizationStructureRefs();
 
     OrganizationStructure getOrganizationStructure(NodeRef nodeRef);
 
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 }

@@ -54,10 +54,6 @@ public final class FileUploadBean implements Serializable
    private List<File> file;
    private List<String> fileName;
    private List<String> fileNameWithoutExtension;
-<<<<<<< HEAD
-   private List<Boolean> associatedWithMetaData;
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
    private List<String> filePath;
    private List<String> contentType;
    private boolean multiple = false;
@@ -133,32 +129,16 @@ public final class FileUploadBean implements Serializable
            
        if(this.fileNameWithoutExtension == null)
            this.fileNameWithoutExtension = new ArrayList<String>(10);
-<<<<<<< HEAD
-       
-       if (associatedWithMetaData == null) {
-           associatedWithMetaData = new ArrayList<Boolean>(10);
-       }
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
         String filenameWithoutExtension = FilenameUtils.removeExtension(fileName);
         if (!multiple) {
             this.fileName.add(0, fileName);
             this.fileNameWithoutExtension.add(0, filenameWithoutExtension);
-<<<<<<< HEAD
-            associatedWithMetaData.add(0, false);
-        } else {
-            this.fileName.add(fileName);
-            this.fileNameWithoutExtension.add(filenameWithoutExtension);
-            associatedWithMetaData.add(false);
-        }
-=======
         } else {
             this.fileName.add(fileName);
             this.fileNameWithoutExtension.add(filenameWithoutExtension);
         }
         
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
    }
 
     public List<String> getFileNames() {
@@ -176,17 +156,6 @@ public final class FileUploadBean implements Serializable
     public void setFileNameWithoutExtension(List<String> fileNameWithoutExtension) {
         this.fileNameWithoutExtension = fileNameWithoutExtension;
     }
-<<<<<<< HEAD
-    
-    public List<Boolean> getAssociatedWithMetaData() {
-        return associatedWithMetaData;
-    }
-
-    public void setAssociatedWithMetaData(List<Boolean> associatedWithMetaData) {
-        this.associatedWithMetaData = associatedWithMetaData;
-    }
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
 /**
     * @return Returns the path of the file uploaded
@@ -280,9 +249,5 @@ public final class FileUploadBean implements Serializable
         getFileNameWithoutExtension().remove(index);
         getContentTypes().remove(index);
         getFilePaths().remove(index);
-<<<<<<< HEAD
-        getAssociatedWithMetaData().remove(index);
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 }

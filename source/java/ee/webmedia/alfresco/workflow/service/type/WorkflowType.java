@@ -5,12 +5,6 @@ import org.alfresco.service.namespace.QName;
 import ee.webmedia.alfresco.workflow.service.Task;
 import ee.webmedia.alfresco.workflow.service.Workflow;
 
-<<<<<<< HEAD
-/**
- * @author Alar Kvell
- */
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 public interface WorkflowType {
 
     QName getWorkflowType();
@@ -33,9 +27,4 @@ public interface WorkflowType {
 
     int getTaskOutcomes();
 
-<<<<<<< HEAD
-    boolean isIndependentTaskType();
-
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 }

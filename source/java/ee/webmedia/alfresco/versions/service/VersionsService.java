@@ -23,11 +23,7 @@ public interface VersionsService {
      * @param nodeRef
      * @return
      */
-<<<<<<< HEAD
-    List<Version> getAllVersions(NodeRef nodeRef);
-=======
     List<Version> getAllVersions(NodeRef nodeRef, String fileName);
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
     /**
      * Adds the user and date information to the custom aspect properties.
@@ -36,11 +32,6 @@ public interface VersionsService {
      */
     void updateVersionModifiedAspect(NodeRef nodeRef);
 
-<<<<<<< HEAD
-    void addVersionModifiedAspect(NodeRef nodeRef);
-
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     /**
      * Updates the version if the node is unlocked and last version was not saved.. (.. today or ..by authenticated user)
      * Sets VersionsModel.Props.VersionLockable.LOCKED property of the VersionsModel.Aspects.VERSION_LOCKABLE aspect to true.
@@ -74,11 +65,7 @@ public interface VersionsService {
      * 
      * @param lockNode
      */
-<<<<<<< HEAD
-    boolean addVersionLockableAspect(NodeRef lockNode);
-=======
     void addVersionLockableAspect(NodeRef lockNode);
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
     /**
      * Calculate next version label based on current version (no new version is actually created)
@@ -88,11 +75,4 @@ public interface VersionsService {
      */
     String calculateNextVersionLabel(NodeRef fileRef);
 
-<<<<<<< HEAD
-    void activateVersion(NodeRef versionRef);
-
-    boolean addVersionableAspect(NodeRef nodeRef);
-
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 }

@@ -12,28 +12,13 @@ import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 
 import ee.webmedia.alfresco.classificator.constant.FieldType;
-<<<<<<< HEAD
-import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement.ItemConfigVO;
-import ee.webmedia.alfresco.docadmin.service.DocumentType;
-import ee.webmedia.alfresco.docadmin.service.DocumentTypeVersion;
-import ee.webmedia.alfresco.docadmin.service.DynamicType;
-import ee.webmedia.alfresco.docadmin.service.Field;
-import ee.webmedia.alfresco.docadmin.service.FieldGroup;
-=======
 import ee.webmedia.alfresco.docadmin.service.DocumentType;
 import ee.webmedia.alfresco.docadmin.service.DocumentTypeVersion;
 import ee.webmedia.alfresco.docadmin.service.Field;
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import ee.webmedia.alfresco.docconfig.generator.FieldGenerator;
 import ee.webmedia.alfresco.docconfig.generator.FieldGroupGenerator;
 import ee.webmedia.alfresco.utils.TreeNode;
 
-<<<<<<< HEAD
-/**
- * @author Alar Kvell
- */
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 public interface DocumentConfigService {
 
     String BEAN_NAME = "DocumentConfigService";
@@ -54,11 +39,6 @@ public interface DocumentConfigService {
 
     void setUserContactProps(Map<QName, Serializable> props, String userName, String fieldId);
 
-<<<<<<< HEAD
-    void setUserContactProps(Map<QName, Serializable> props, String userName, String fieldId, Class<? extends DynamicType> typeClass);
-
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     void setUserContactProps(Map<QName, Serializable> props, String userName, PropertyDefinition propDef, Field field);
 
     DynamicPropertyDefinition getPropertyDefinition(Node node, QName property);
@@ -72,11 +52,7 @@ public interface DocumentConfigService {
      */
     Map<String, Pair<DynamicPropertyDefinition, Field>> getPropertyDefinitions(Node documentDynamicNode);
 
-<<<<<<< HEAD
-    Map<String, Pair<DynamicPropertyDefinition, Field>> getPropertyDefinitions(PropDefCacheKey cacheKey);
-=======
     Map<String, Pair<DynamicPropertyDefinition, Field>> getPropertyDefinitions(Pair<String, Integer> docTypeIdAndVersionNr);
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
     /**
      * Set default property values on given node and all it's child and grand-child nodes.
@@ -126,22 +102,10 @@ public interface DocumentConfigService {
 
     DocumentConfig getReportConfig();
 
-<<<<<<< HEAD
-    DocumentConfig getVolumeSearchFilterConfig(boolean withCheckboxes);
-
-    DocumentConfig getAssocObjectSearchConfig(String additionalStateHolderKey, String renderAssocObjectFieldValueBinding);
-
-    DocumentConfig getEventPlanVolumeSearchFilterConfig();
-
-    boolean isRegDateFilterInAssociationsSearch();
-
-    ItemConfigVO generateFieldGroupReadonlyItem(FieldGroup fieldGroup);
-=======
     void removeFrompPopertyDefinitionForSearchCache(String fieldId);
 
     void removeFromChildAssocTypeQNameTreeCache(Pair<String, Integer> typeAndVersion);
 
     void removeFromPropertyDefinitionCache(Pair<String, Integer> typeAndVersion);
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
 }

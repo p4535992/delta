@@ -21,11 +21,6 @@ import ee.webmedia.alfresco.utils.ProgressTracker;
 
 /**
  * Delete all nodes under drafts, except if running not on startup, then exclude nodes that have a lock which is not expired.
-<<<<<<< HEAD
- * 
- * @author Alar Kvell
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
  */
 public class DeleteDraftsBootstrap extends AbstractModuleComponent {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(DeleteDraftsBootstrap.class);
@@ -34,11 +29,8 @@ public class DeleteDraftsBootstrap extends AbstractModuleComponent {
     private DocumentService documentService;
     private TransactionService transactionService;
 
-<<<<<<< HEAD
-=======
     private boolean disabled;
 
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     @Override
     public boolean isRequiresNewTransaction() {
         return false;
@@ -56,13 +48,10 @@ public class DeleteDraftsBootstrap extends AbstractModuleComponent {
      */
     @Override
     protected void executeInternal() throws Throwable {
-<<<<<<< HEAD
-=======
         if (disabled) {
             LOG.info("DeleteDraftsBootstrap is disabled, skipping.");
             return;
         }
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         executeInternal(true);
     }
 
@@ -146,11 +135,8 @@ public class DeleteDraftsBootstrap extends AbstractModuleComponent {
         this.transactionService = transactionService;
     }
 
-<<<<<<< HEAD
-=======
     public void setDisabled(boolean disabled) {
         this.disabled = disabled;
     }
 
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 }

@@ -25,21 +25,11 @@
 package ee.webmedia.alfresco.webdav;
 
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocLockService;
-<<<<<<< HEAD
-=======
 import static ee.webmedia.alfresco.common.web.BeanHelper.getMsoService;
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
 import java.io.BufferedInputStream;
 import java.io.InputStream;
 import java.io.PrintWriter;
-<<<<<<< HEAD
-import java.nio.charset.Charset;
-import java.util.Enumeration;
-
-import javax.servlet.http.HttpServletResponse;
-
-=======
 import java.io.Serializable;
 import java.nio.charset.Charset;
 import java.text.ParseException;
@@ -55,27 +45,16 @@ import java.util.Map.Entry;
 import javax.servlet.http.HttpServletResponse;
 
 import org.alfresco.model.ContentModel;
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import org.alfresco.repo.content.encoding.ContentCharsetFinder;
 import org.alfresco.repo.webdav.WebDAV;
 import org.alfresco.repo.webdav.WebDAVMethod;
 import org.alfresco.repo.webdav.WebDAVServerException;
-<<<<<<< HEAD
-=======
 import org.alfresco.service.cmr.dictionary.DataTypeDefinition;
 import org.alfresco.service.cmr.dictionary.PropertyDefinition;
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import org.alfresco.service.cmr.lock.LockStatus;
 import org.alfresco.service.cmr.model.FileFolderService;
 import org.alfresco.service.cmr.model.FileInfo;
 import org.alfresco.service.cmr.model.FileNotFoundException;
-<<<<<<< HEAD
-import org.alfresco.service.cmr.repository.ContentData;
-import org.alfresco.service.cmr.repository.ContentWriter;
-import org.alfresco.service.cmr.repository.NodeRef;
-
-import ee.webmedia.alfresco.common.web.BeanHelper;
-=======
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.ContentData;
 import org.alfresco.service.cmr.repository.ContentWriter;
@@ -105,7 +84,6 @@ import ee.webmedia.alfresco.document.file.model.FileModel;
 import ee.webmedia.alfresco.document.file.model.GeneratedFileType;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
 /**
  * Implements the WebDAV PUT method
@@ -236,10 +214,6 @@ public class PutMethod extends WebDAVMethod {
         }
 
         // Write the new data to the content node
-<<<<<<< HEAD
-        log.info("Writing data to " + writer.getContentUrl());
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         writer.putContent(is);
 
         if (writer.getSize() <= 0) {
@@ -254,18 +228,12 @@ public class PutMethod extends WebDAVMethod {
         ((WebDAVCustomHelper) getDAVHelper()).getDocumentService().updateSearchableFiles(document);
 
         // Update Document meta data and generated files
-<<<<<<< HEAD
-        BeanHelper.getDocumentDynamicService().updateDocumentAndGeneratedFiles(fileRef, document, true);
-=======
         updateDocumentAndGeneratedFiles(contentNodeInfo, document);
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
         // Set the response status, depending if the node existed or not
         m_response.setStatus(created ? HttpServletResponse.SC_CREATED : HttpServletResponse.SC_NO_CONTENT);
         logger.debug("saved file " + fileRef + ", " + (createdNewVersion ? "created" : "didn't crerate") + " new version");
     }
-<<<<<<< HEAD
-=======
 
     private void updateDocumentAndGeneratedFiles(FileInfo contentNodeInfo, NodeRef document) {
         String generationType = (String) getNodeService().getProperty(contentNodeInfo.getNodeRef(), FileModel.Props.GENERATION_TYPE);
@@ -458,5 +426,4 @@ public class PutMethod extends WebDAVMethod {
             return value;
         }
     }
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 }

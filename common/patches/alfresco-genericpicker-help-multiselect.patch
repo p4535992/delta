@@ -3,7 +3,6 @@ Index: source/java/org/alfresco/web/ui/common/component/UIGenericPicker.java
 --- source/java/org/alfresco/web/ui/common/component/UIGenericPicker.java	(revision 149926)
 +++ source/java/org/alfresco/web/ui/common/component/UIGenericPicker.java	(working copy)
 @@ -385,6 +385,14 @@
-<<<<<<< HEAD
        out.write("</select>");
        out.write("</td></tr>");
        
@@ -18,22 +17,6 @@ Index: source/java/org/alfresco/web/ui/common/component/UIGenericPicker.java
        // bottom row - add button
        if (getShowAddButton() == true)
        {
-=======
-       out.write("</select>");
-       out.write("</td></tr>");
-       
-+      // help text
-+      if (getMultiSelect() == true)
-+      {
-+          out.write("<tr><td colspan=2>");
-+          out.write(Utils.encode(bundle.getString("help_select_multiple_rows")));
-+          out.write("</td></tr>");
-+      }
-+      
-       // bottom row - add button
-       if (getShowAddButton() == true)
-       {
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 Index: source/java/ee/webmedia/alfresco/common/propertysheet/web/common-propertysheet_et_EE.properties
 ===================================================================
 --- source/java/ee/webmedia/alfresco/common/propertysheet/web/common-propertysheet_et_EE.properties	(revision 149987)

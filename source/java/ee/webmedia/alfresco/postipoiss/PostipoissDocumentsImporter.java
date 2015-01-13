@@ -6,10 +6,6 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getNamespaceService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getNodeService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getPrivilegeService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
-<<<<<<< HEAD
-import static ee.webmedia.alfresco.common.web.BeanHelper.getWorkflowService;
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.ACCESS_RESTRICTION;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.OWNER_ID;
 
@@ -99,28 +95,14 @@ import ee.webmedia.alfresco.postipoiss.PostipoissDocumentsMapper.PropMapping;
 import ee.webmedia.alfresco.postipoiss.PostipoissDocumentsMapper.PropertyValue;
 import ee.webmedia.alfresco.utils.FilenameUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
-<<<<<<< HEAD
-import ee.webmedia.alfresco.workflow.model.CompoundWorkflowType;
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 import ee.webmedia.alfresco.workflow.service.Task;
-<<<<<<< HEAD
-import ee.webmedia.alfresco.workflow.service.WorkflowUtil;
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import ee.webmedia.alfresco.workflow.service.type.WorkflowType;
 
 /**
  * Imports documents and files from Postipoiss.
-<<<<<<< HEAD
- * 
- * @author Aleksei Lissitsin
- * @author Alar Kvell
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
  */
 public class PostipoissDocumentsImporter {
 
@@ -683,27 +665,8 @@ public class PostipoissDocumentsImporter {
         }
     }
 
-<<<<<<< HEAD
-    private void setOwnerProperties(Map<QName, Serializable> props, Element root, Mapping mapping) {
-        String ownerId = StringUtils.stripToNull((String) props.get(OWNER_ID));
-
-        if (StringUtils.isBlank(ownerId)) {
-            PropMapping ownerIdMapping = mapping.getPropMappingTo(OWNER_ID.getLocalName());
-            if (ownerIdMapping != null && "koostajadId".equals(ownerIdMapping.from)) {
-                ownerId = root.elementText("kelleleId");
-                props.put(OWNER_ID, ownerId);
-                props.put(DocumentCommonModel.Props.OWNER_NAME, root.elementText("kellele"));
-            } else if (ownerIdMapping != null && "kelleleId".equals(ownerIdMapping.from)) {
-                ownerId = root.elementText("koostajadId");
-                props.put(OWNER_ID, ownerId);
-                props.put(DocumentCommonModel.Props.OWNER_NAME, root.elementText("koostajad"));
-            }
-        }
-
-=======
     private void setOwnerProperties(Map<QName, Serializable> props, Mapping mapping) {
         String ownerId = StringUtils.stripToNull((String) props.get(OWNER_ID));
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         if (StringUtils.isNotBlank(ownerId)) {
             // find user by ownerId
             // if found, then overwrite all owner fields
@@ -717,34 +680,11 @@ public class PostipoissDocumentsImporter {
                 usersNotFound.put(ownerId, count);
             }
         } else {
-<<<<<<< HEAD
-            String signerId = StringUtils.stripToNull((String) props.get(DocumentDynamicModel.Props.SIGNER_ID));
-            if (StringUtils.isNotBlank(signerId)) {
-                if (!setOwnerIfExists(props, signerId, mapping)) {
-                    Integer count = usersNotFound.get(ownerId);
-                    if (count == null) {
-                        count = 0;
-                    }
-                    count++;
-                    usersNotFound.put(ownerId, count);
-
-                    props.put(OWNER_ID, signerId);
-                    props.put(DocumentCommonModel.Props.OWNER_NAME, props.get(DocumentCommonModel.Props.SIGNER_NAME));
-                }
-            } else {
-                // find user by ownerId
-                // if found, then overwrite all owner fields
-                if (!setOwnerIfExists(props, defaultOwnerId, mapping)) {
-                    // if not found, throw exception
-                    throw new RuntimeException("User with default ownerId not found: " + defaultOwnerId);
-                }
-=======
             // find user by ownerId
             // if found, then overwrite all owner fields
             if (!setOwnerIfExists(props, defaultOwnerId, mapping)) {
                 // if not found, throw exception
                 throw new RuntimeException("User with default ownerId not found: " + defaultOwnerId);
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             }
         }
 
@@ -893,11 +833,7 @@ public class PostipoissDocumentsImporter {
 
         if (AccessRestriction.AK.getValueName().equals(accessRestriction) || AccessRestriction.LIMITED.getValueName().equals(accessRestriction)) {
             if (StringUtils.isBlank((String) props.get(DocumentCommonModel.Props.ACCESS_RESTRICTION_REASON))) {
-<<<<<<< HEAD
-                props.put(DocumentCommonModel.Props.ACCESS_RESTRICTION_REASON, "AvTS § 35 lg 1 p 12");
-=======
                 props.put(DocumentCommonModel.Props.ACCESS_RESTRICTION_REASON, "AvTS § 35 lg 1 p 9");
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             }
             if (props.get(DocumentCommonModel.Props.ACCESS_RESTRICTION_BEGIN_DATE) == null) {
                 props.put(DocumentCommonModel.Props.ACCESS_RESTRICTION_BEGIN_DATE, props.get(DocumentCommonModel.Props.REG_DATE_TIME));
@@ -919,15 +855,12 @@ public class PostipoissDocumentsImporter {
                 throw new RuntimeException("accessRestrictionEndDate is null and accessRestrictionEndDesc is blank, but accessRestriction = " + accessRestriction);
             }
         }
-<<<<<<< HEAD
-=======
         if (AccessRestriction.OPEN.equals(accessRestriction) || AccessRestriction.INTERNAL.equals(accessRestriction)) {
             props.put(DocumentCommonModel.Props.ACCESS_RESTRICTION_REASON, null);
             props.put(DocumentCommonModel.Props.ACCESS_RESTRICTION_BEGIN_DATE, null);
             props.put(DocumentCommonModel.Props.ACCESS_RESTRICTION_END_DATE, null);
             props.put(DocumentCommonModel.Props.ACCESS_RESTRICTION_END_DESC, null);
         }
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     private static String cleanUserFullName(String strippedOwnerName) {
@@ -1307,27 +1240,8 @@ public class PostipoissDocumentsImporter {
 
     protected void createDocumentsBatch(final List<Entry<Integer, File>> batchList) throws Exception {
         final Map<Integer, ImportedDocument> batchCompletedDocumentsMap = new TreeMap<Integer, ImportedDocument>();
-<<<<<<< HEAD
-        AlfrescoTransactionSupport.bindListener(new TransactionListenerAdapter() {
-            @Override
-            public void afterCommit() {
-                postponedAssocsCommited = new TreeMap<Integer, List<PostponedAssoc>>(postponedAssocs);
-                usersFoundCommited = new HashMap<String, Integer>(usersFound);
-                usersNotFoundCommited = new HashMap<String, Integer>(usersNotFound);
-            }
-
-            @Override
-            public void afterRollback() {
-                postponedAssocs = new TreeMap<Integer, List<PostponedAssoc>>(postponedAssocsCommited);
-                usersFound = new HashMap<String, Integer>(usersFoundCommited);
-                usersNotFound = new HashMap<String, Integer>(usersNotFoundCommited);
-                completedDocumentsMap.keySet().removeAll(batchCompletedDocumentsMap.keySet());
-            }
-        });
-=======
         // FOR ASSOCS
         // this.batchCompletedDocumentsMap = batchCompletedDocumentsMap;
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         for (Entry<Integer, File> entry : batchList) {
             Integer documentId = entry.getKey();
             if (log.isTraceEnabled()) {
@@ -1348,8 +1262,6 @@ public class PostipoissDocumentsImporter {
                 throw new RuntimeException("Error importing document " + file.getName() + ": " + e.getMessage(), e);
             }
         }
-<<<<<<< HEAD
-=======
         AlfrescoTransactionSupport.bindListener(new TransactionListenerAdapter() {
             @Override
             public void afterCommit() {
@@ -1366,7 +1278,6 @@ public class PostipoissDocumentsImporter {
                 completedDocumentsMap.keySet().removeAll(batchCompletedDocumentsMap.keySet());
             }
         });
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         bindCsvWriteAfterCommit(completedDocumentsFile, new CsvWriterClosure() {
 
             @Override
@@ -1658,18 +1569,9 @@ public class PostipoissDocumentsImporter {
 
         addHistoryItems(documentRef, root, propsMap, mapping);
 
-<<<<<<< HEAD
-        propsMap.put(DocumentCommonModel.Props.DOCUMENT_IS_IMPORTED,
-                Boolean.valueOf(DocumentStatus.FINISHED.getValueName().equals(propsMap.get(DocumentCommonModel.Props.DOC_STATUS))));
-
-        doc.getNode().getProperties().putAll(RepoUtil.toStringProperties(propsMap));
-        doc.getNode().getProperties().put(DocumentService.TransientProps.TEMP_LOGGING_DISABLED_DOCUMENT_METADATA_CHANGED.toString(), Boolean.TRUE);
-        getDocumentDynamicService().updateDocument(doc, Arrays.asList("postipoissImporter"), false, true);
-=======
         doc.getNode().getProperties().putAll(RepoUtil.toStringProperties(propsMap));
         doc.getNode().getProperties().put(DocumentService.TransientProps.TEMP_LOGGING_DISABLED_DOCUMENT_METADATA_CHANGED.toString(), Boolean.TRUE);
         getDocumentDynamicService().updateDocument(doc, Arrays.asList("postipoissImporter"), false);
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
         // Add sendInfo
         if (recipient != null) {
@@ -1866,11 +1768,7 @@ public class PostipoissDocumentsImporter {
         // }
         // propsMap.put(DocumentCommonModel.Props.OWNER_NAME, ownerName);
         // }
-<<<<<<< HEAD
-        setOwnerProperties(propsMap, root, mapping);
-=======
         setOwnerProperties(propsMap, mapping);
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         // log.info("ownerName=" + (String) propsMap.get(OWNER_NAME));
         // log.info("ownerId=" + (String) propsMap.get(OWNER_NAME));
 
@@ -1997,10 +1895,6 @@ public class PostipoissDocumentsImporter {
             NodeRef wfRef = null;
             int taskIndex = 0;
             Map<QName, Serializable> props = new HashMap<QName, Serializable>();
-<<<<<<< HEAD
-            Map<QName, Serializable> taskSearchableProps = null;
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
             WorkflowType workflowType = BeanHelper.getWorkflowService().getWorkflowTypes().get(WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW);
             for (Element kellele : (List<Element>) tegevus.elements("kellele")) {
@@ -2023,25 +1917,13 @@ public class PostipoissDocumentsImporter {
                     props.put(WorkflowCommonModel.Props.STARTED_DATE_TIME, dateTime);
                     props.put(WorkflowCommonModel.Props.STATUS, Status.IN_PROGRESS.getName());
                     props.put(WorkflowCommonModel.Props.STOPPED_DATE_TIME, null);
-<<<<<<< HEAD
-                    props.put(WorkflowCommonModel.Props.TYPE, CompoundWorkflowType.INDEPENDENT_WORKFLOW.name());
-                    props.put(WorkflowCommonModel.Props.TITLE, docProps.get(DocumentCommonModel.Props.DOC_NAME));
-                    NodeRef cwfRef = getNodeService().createNode(
-                            getWorkflowService().getIndependentWorkflowsRoot(),
-=======
                     NodeRef cwfRef = getNodeService().createNode(
                             docRef,
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
                             WorkflowCommonModel.Assocs.COMPOUND_WORKFLOW,
                             WorkflowCommonModel.Assocs.COMPOUND_WORKFLOW,
                             WorkflowCommonModel.Types.COMPOUND_WORKFLOW,
                             props
                             ).getChildRef();
-<<<<<<< HEAD
-                    getNodeService().createAssociation(docRef, cwfRef, DocumentCommonModel.Assocs.WORKFLOW_DOCUMENT);
-                    getWorkflowService().updateMainDocument(cwfRef, docRef);
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
                     props = new HashMap<QName, Serializable>();
                     props.put(WorkflowCommonModel.Props.CREATOR_NAME, kelleltEnimi + " " + kelleltPnimi);
@@ -2059,10 +1941,6 @@ public class PostipoissDocumentsImporter {
                             WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW,
                             props
                             ).getChildRef();
-<<<<<<< HEAD
-                    taskSearchableProps = WorkflowUtil.getTaskSearchableProps(props);
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
                 }
 
                 props = new HashMap<QName, Serializable>();
@@ -2100,17 +1978,9 @@ public class PostipoissDocumentsImporter {
                 props.put(WorkflowCommonModel.Props.COMPLETED_DATE_TIME, null);
                 props.put(WorkflowSpecificModel.Props.COMMENT, "");
 
-<<<<<<< HEAD
-                props.putAll(taskSearchableProps);
                 Task task = BeanHelper.getWorkflowService().createTaskInMemory(wfRef, workflowType, props);
                 Set<QName> aspects = task.getNode().getAspects();
                 aspects.add(WorkflowSpecificModel.Aspects.SEARCHABLE);
-
-=======
-                Task task = BeanHelper.getWorkflowService().createTaskInMemory(wfRef, workflowType, props);
-                Set<QName> aspects = task.getNode().getAspects();
-                aspects.add(WorkflowSpecificModel.Aspects.SEARCHABLE);
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
                 if (firstTaskRef == null) {
                     firstTaskRef = task.getNodeRef();
                     firstTaskOwnerId = kelleleIkood;
@@ -2126,10 +1996,6 @@ public class PostipoissDocumentsImporter {
                 task.setTaskIndexInWorkflow(taskIndex++);
                 BeanHelper.getWorkflowDbService().createTaskEntry(task, wfRef);
                 docProps.put(DocumentCommonModel.Props.SEARCHABLE_HAS_STARTED_COMPOUND_WORKFLOWS, Boolean.TRUE);
-<<<<<<< HEAD
-                docProps.put(DocumentCommonModel.Props.DOC_STATUS, DocumentStatus.WORKING.getValueName());
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             }
         }
         if (!responsibleActiveSet && firstTaskRef != null) {

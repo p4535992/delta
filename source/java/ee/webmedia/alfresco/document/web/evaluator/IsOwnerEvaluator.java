@@ -9,11 +9,6 @@ import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 
 /**
  * UI action evaluator for validating whether user is the owner of the document.
-<<<<<<< HEAD
- * 
- * @author Romet Aidla
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
  */
 public class IsOwnerEvaluator extends BaseActionEvaluator {
     private static final long serialVersionUID = 0L;

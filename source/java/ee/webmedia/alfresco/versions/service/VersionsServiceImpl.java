@@ -1,10 +1,5 @@
 package ee.webmedia.alfresco.versions.service;
 
-<<<<<<< HEAD
-import static ee.webmedia.alfresco.common.web.BeanHelper.getDocLockService;
-
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Date;
@@ -16,20 +11,11 @@ import org.alfresco.i18n.I18NUtil;
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.dictionary.DictionaryService;
-<<<<<<< HEAD
-import org.alfresco.service.cmr.lock.LockStatus;
-import org.alfresco.service.cmr.lock.NodeLockedException;
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.app.servlet.DownloadContentServlet;
-<<<<<<< HEAD
-import org.alfresco.web.bean.repository.MapNode;
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateUtils;
 
@@ -37,10 +23,6 @@ import ee.webmedia.alfresco.document.file.model.FileModel;
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.user.service.UserService;
-<<<<<<< HEAD
-import ee.webmedia.alfresco.utils.UnableToPerformException;
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import ee.webmedia.alfresco.utils.UserUtil;
 import ee.webmedia.alfresco.versions.model.Version;
 import ee.webmedia.alfresco.versions.model.VersionsModel;
@@ -70,20 +52,12 @@ public class VersionsServiceImpl implements VersionsService {
     }
 
     @Override
-<<<<<<< HEAD
-    public List<Version> getAllVersions(NodeRef nodeRef) {
-=======
     public List<Version> getAllVersions(NodeRef nodeRef, String fileName) {
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         List<org.alfresco.service.cmr.version.Version> versionHistory = (List<org.alfresco.service.cmr.version.Version>) versionServiceExt.getVersionHistory(nodeRef)
                 .getAllVersions();
         List<Version> list = new ArrayList<Version>(versionHistory.size());
         for (org.alfresco.service.cmr.version.Version v : versionHistory) {
-<<<<<<< HEAD
-            Version ver = transformVersion(v);
-=======
             Version ver = transformVersion(v, fileName);
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             list.add(ver);
         }
         return list;
@@ -96,19 +70,11 @@ public class VersionsServiceImpl implements VersionsService {
 
     @Override
     public boolean updateVersion(NodeRef nodeRef, String filename, boolean updateOnlyIfNeeded) {
-<<<<<<< HEAD
-        Map<String, Serializable> sourceFileProp = getVersionModifiedAspectProperties(nodeRef);
-        if (nodeService.hasAspect(nodeRef, VersionsModel.Aspects.VERSION_LOCKABLE)) {
-=======
         if (nodeService.hasAspect(nodeRef, VersionsModel.Aspects.VERSION_LOCKABLE) == true) {
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             // if not locked, then a new version can be made
             boolean isLocked = getVersionLockableAspect(nodeRef);
             if (!isLocked) {
                 // If the versionable aspect is not there then add it
-<<<<<<< HEAD
-                addVersionableAspect(nodeRef);
-=======
                 if (nodeService.hasAspect(nodeRef, ContentModel.ASPECT_VERSIONABLE) == false) {
                     Map<QName, Serializable> aspectProperties = new HashMap<QName, Serializable>(3);
                     aspectProperties.put(ContentModel.PROP_INITIAL_VERSION, false);
@@ -119,7 +85,6 @@ public class VersionsServiceImpl implements VersionsService {
                         logger.debug("Versionable aspect added to " + nodeRef);
                     }
                 }
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
                 if (updateOnlyIfNeeded && !Boolean.TRUE.equals(nodeService.getProperty(nodeRef, FileModel.Props.NEW_VERSION_ON_NEXT_SAVE))) {
                     org.alfresco.service.cmr.version.Version previousLatestVer = versionServiceExt.getCurrentVersion(nodeRef);
@@ -135,20 +100,9 @@ public class VersionsServiceImpl implements VersionsService {
                 }
 
                 // create a new version
-<<<<<<< HEAD
-                org.alfresco.service.cmr.version.Version version = versionServiceExt.createVersion(nodeRef, sourceFileProp);
-                logger.info("Created new version (" + version.getVersionLabel() + ") from " + nodeRef + " ( " + filename + "). VersionedNodeRef: " + version.getVersionedNodeRef()
-                        + " FrozenStateNodeRef: " + version.getFrozenStateNodeRef());
-                // check the flag as true to prevent creation of new versions until the node is unlocked in UnlockMethod
-                setVersionLockableAspect(nodeRef, true);
-
-                nodeService.removeProperty(nodeRef, FileModel.Props.COMMENT);
-
-=======
                 versionServiceExt.createVersion(nodeRef, getVersionModifiedAspectProperties(nodeRef));
                 // check the flag as true to prevent creation of new versions until the node is unlocked in UnlockMethod
                 setVersionLockableAspect(nodeRef, true);
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
                 // log the event
                 NodeRef parentRef = nodeService.getPrimaryParent(nodeRef).getParentRef();
                 if (dictionaryService.isSubClass(nodeService.getType(parentRef), DocumentCommonModel.Types.DOCUMENT)) {
@@ -161,44 +115,14 @@ public class VersionsServiceImpl implements VersionsService {
                 }
                 return true;
             }
-<<<<<<< HEAD
-            logger.warn("not creating new version of nodeRef=" + nodeRef + " - it is locked!");
-        } else {
-            logger.warn("not creating new version of nodeRef=" + nodeRef + " - it doesn't have " + VersionsModel.Aspects.VERSION_LOCKABLE.getLocalName() + " aspect!");
-        }
-=======
         }
         logger.warn("not creating new version of nodeRef=" + nodeRef + " - it doesn't have " + VersionsModel.Aspects.VERSION_LOCKABLE.getLocalName() + " aspect");
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         return false;
     }
 
     @Override
-<<<<<<< HEAD
-    public void activateVersion(NodeRef versionRef) {
-        Map<QName, Serializable> versionProp = nodeService.getProperties(versionRef);
-        // should take sourceRef value from frozenNodeRef (Version2Model.PROP_QNAME_FROZEN_NODE_REF)
-        NodeRef sourceRef = new NodeRef((String) versionProp.get(ContentModel.PROP_STORE_PROTOCOL), (String) versionProp.get(ContentModel.PROP_STORE_IDENTIFIER),
-                (String) versionProp.get(ContentModel.PROP_NODE_UUID));
-        if (getDocLockService().getLockStatus(sourceRef) == LockStatus.LOCKED) {
-            throw new NodeLockedException(sourceRef);
-        }
-        Map<QName, Serializable> sourceProp = nodeService.getProperties(sourceRef);
-        if (!updateVersion(sourceRef, (String) sourceProp.get(ContentModel.PROP_NAME), false)) {
-            throw new UnableToPerformException("version_activate_error");
-        }
-        updateVersionModifiedAspect(sourceRef);
-        nodeService.setProperty(sourceRef, ContentModel.PROP_CONTENT, versionProp.get(ContentModel.PROP_CONTENT));
-        setVersionLockableAspect(sourceRef, false);
-    }
-
-    @Override
-    public void updateVersionModifiedAspect(NodeRef nodeRef) {
-        if (nodeService.hasAspect(nodeRef, VersionsModel.Aspects.VERSION_MODIFIED)) {
-=======
     public void updateVersionModifiedAspect(NodeRef nodeRef) {
         if (nodeService.hasAspect(nodeRef, VersionsModel.Aspects.VERSION_MODIFIED) == true) {
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             Map<QName, Serializable> properties = nodeService.getProperties(nodeRef);
             String user = (String) properties.get(ContentModel.PROP_MODIFIER);
 
@@ -218,14 +142,8 @@ public class VersionsServiceImpl implements VersionsService {
 
     @Override
     public boolean getVersionLockableAspect(NodeRef nodeRef) {
-<<<<<<< HEAD
-        if (nodeService.hasAspect(nodeRef, VersionsModel.Aspects.VERSION_LOCKABLE)) {
-            // If the property isn't set, then this version isn't locked
-            return Boolean.TRUE.equals(nodeService.getProperty(nodeRef, VersionsModel.Props.VersionLockable.LOCKED));
-=======
         if (nodeService.hasAspect(nodeRef, VersionsModel.Aspects.VERSION_LOCKABLE) == true) {
             return (Boolean) nodeService.getProperty(nodeRef, VersionsModel.Props.VersionLockable.LOCKED);
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         }
         return false;
     }
@@ -241,65 +159,22 @@ public class VersionsServiceImpl implements VersionsService {
     }
 
     @Override
-<<<<<<< HEAD
-    public boolean addVersionLockableAspect(NodeRef lockNode) {
-        boolean aspectAdded = false;
-        if (!nodeService.hasAspect(lockNode, VersionsModel.Aspects.VERSION_LOCKABLE)) {
-=======
     public void addVersionLockableAspect(NodeRef lockNode) {
         if (nodeService.hasAspect(lockNode, VersionsModel.Aspects.VERSION_LOCKABLE) == false) {
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             nodeService.addAspect(lockNode, VersionsModel.Aspects.VERSION_LOCKABLE, null);
             if (logger.isDebugEnabled()) {
                 logger.debug("VERSION_LOCKABLE aspect added to " + lockNode);
             }
-<<<<<<< HEAD
-            aspectAdded = true;
-        }
-
-        return aspectAdded;
-    }
-
-    // START: private methods
-    @Override
-    public boolean addVersionableAspect(NodeRef nodeRef) {
-        boolean aspectAdded = false;
-        if (!nodeService.hasAspect(nodeRef, ContentModel.ASPECT_VERSIONABLE)) {
-            logger.info("Adding " + ContentModel.ASPECT_VERSIONABLE.getLocalName() + " to " + nodeRef);
-            Map<QName, Serializable> aspectProperties = new HashMap<QName, Serializable>(3);
-            aspectProperties.put(ContentModel.PROP_INITIAL_VERSION, false);
-            aspectProperties.put(ContentModel.PROP_AUTO_VERSION, false);
-            aspectProperties.put(ContentModel.PROP_AUTO_VERSION_PROPS, false);
-            nodeService.addAspect(nodeRef, ContentModel.ASPECT_VERSIONABLE, aspectProperties);
-            if (logger.isDebugEnabled()) {
-                logger.debug("Versionable aspect added to " + nodeRef);
-            }
-            aspectAdded = true;
-        }
-
-        return aspectAdded;
-    }
-
-    private Version transformVersion(org.alfresco.service.cmr.version.Version historicalVersion) {
-        String fileName = (String) historicalVersion.getVersionProperty(ContentModel.PROP_NAME.getLocalName());
-=======
         }
     }
 
     // START: private methods
     private Version transformVersion(org.alfresco.service.cmr.version.Version historicalVersion, String fileName) {
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         Version ver = new Version();
         ver.setVersion(historicalVersion.getVersionLabel());
         ver.setDownloadUrl(DownloadContentServlet.generateDownloadURL(historicalVersion.getFrozenStateNodeRef(), fileName));
         ver.setModified(getModifiedDateFromAspect(historicalVersion));
         ver.setAuthor(getPersonFullNameFromAspect(historicalVersion.getFrozenStateNodeRef(), historicalVersion.getFrozenModifier()));
-<<<<<<< HEAD
-        ver.setComment((String) historicalVersion.getVersionProperties().get(VersionsModel.Props.VersionModified.COMMENT.getLocalName()));
-        ver.setNodeRef(historicalVersion.getFrozenStateNodeRef());
-        ver.setNode(new MapNode(historicalVersion.getVersionedNodeRef()));
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         return ver;
     }
 
@@ -312,37 +187,6 @@ public class VersionsServiceImpl implements VersionsService {
         return historicalVersion.getFrozenModifiedDate();
     }
 
-<<<<<<< HEAD
-    @Override
-    public void addVersionModifiedAspect(NodeRef nodeRef) {
-        if (!nodeService.hasAspect(nodeRef, VersionsModel.Aspects.VERSION_MODIFIED)) {
-            Map<QName, Serializable> properties = nodeService.getProperties(nodeRef);
-
-            String user = (String) properties.get(ContentModel.PROP_CREATOR);
-
-            Date modified = DefaultTypeConverter.INSTANCE.convert(Date.class, properties.get(ContentModel.PROP_CREATED));
-            Map<QName, Serializable> aspectProperties = new HashMap<QName, Serializable>(3);
-            aspectProperties.put(VersionsModel.Props.VersionModified.MODIFIED, modified);
-
-            Map<QName, Serializable> personProps = userService.getUserProperties(user);
-            String first = (String) personProps.get(ContentModel.PROP_FIRSTNAME);
-            String last = (String) personProps.get(ContentModel.PROP_LASTNAME);
-
-            aspectProperties.put(VersionsModel.Props.VersionModified.FIRSTNAME, first);
-            aspectProperties.put(VersionsModel.Props.VersionModified.LASTNAME, last);
-
-            nodeService.addAspect(nodeRef, VersionsModel.Aspects.VERSION_MODIFIED, aspectProperties);
-        }
-    }
-
-    private Map<String, Serializable> getVersionModifiedAspectProperties(NodeRef nodeRef) {
-        Map<QName, Serializable> fileProps = nodeService.getProperties(nodeRef);
-        Map<String, Serializable> props = new HashMap<String, Serializable>(4);
-        props.put(VersionsModel.Props.VersionModified.MODIFIED.getLocalName(), fileProps.get(VersionsModel.Props.VersionModified.MODIFIED));
-        props.put(VersionsModel.Props.VersionModified.FIRSTNAME.getLocalName(), fileProps.get(VersionsModel.Props.VersionModified.FIRSTNAME));
-        props.put(VersionsModel.Props.VersionModified.LASTNAME.getLocalName(), fileProps.get(VersionsModel.Props.VersionModified.LASTNAME));
-        props.put(VersionsModel.Props.VersionModified.COMMENT.getLocalName(), fileProps.get(FileModel.Props.COMMENT));
-=======
     private Map<String, Serializable> getVersionModifiedAspectProperties(NodeRef nodeRef) {
         Date modified = (Date) nodeService.getProperty(nodeRef, VersionsModel.Props.VersionModified.MODIFIED);
         String first = (String) nodeService.getProperty(nodeRef, VersionsModel.Props.VersionModified.FIRSTNAME);
@@ -353,7 +197,6 @@ public class VersionsServiceImpl implements VersionsService {
         props.put(VersionsModel.Props.VersionModified.FIRSTNAME.getLocalName(), first);
         props.put(VersionsModel.Props.VersionModified.LASTNAME.getLocalName(), last);
 
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         return props;
     }
 

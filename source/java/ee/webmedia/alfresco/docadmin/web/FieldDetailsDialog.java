@@ -57,11 +57,6 @@ import ee.webmedia.alfresco.utils.TextUtil;
 
 /**
  * Details dialog for creating/editing objects of type field or fieldDefinition
-<<<<<<< HEAD
- * 
- * @author Ats Uiboupin
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
  */
 public class FieldDetailsDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;
@@ -165,8 +160,6 @@ public class FieldDetailsDialog extends BaseDialogBean {
         return valid;
     }
 
-<<<<<<< HEAD
-=======
     public void deleteField(ActionEvent event) {
         getDocumentAdminService().deleteFieldDefinition(field);
     }
@@ -176,7 +169,6 @@ public class FieldDetailsDialog extends BaseDialogBean {
         return field;
     }
 
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     private String getDynTypeName() {
         final DocumentTypeVersion dynTypeVer;
         if (fieldParent instanceof FieldGroup) {

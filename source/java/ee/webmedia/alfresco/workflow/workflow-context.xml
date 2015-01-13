@@ -2,11 +2,7 @@
 <beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
    xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
 
-<<<<<<< HEAD
-   <import resource="classpath:ee/webmedia/alfresco/workflow/search/workflow-task-search-context.xml" />
-=======
    <import resource="classpath:ee/webmedia/alfresco/workflow/search/task-search-context.xml" />
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
    <bean id="workflowModelBootstrap" parent="dictionaryModelBootstrap" depends-on="dictionaryBootstrap">
       <property name="models">
@@ -44,10 +40,6 @@
       <property name="resourceBundles">
          <list>
             <value>ee/webmedia/alfresco/workflow/model/workflow-messages</value>
-<<<<<<< HEAD
-            <value>ee/webmedia/alfresco/workflow/web/workflow-webclient</value>
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
          </list>
       </property>
    </bean>
@@ -74,63 +66,8 @@
          </list>
       </property>
    </bean>
-<<<<<<< HEAD
-   
-   <bean id="independentWorkflowRootBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
-      <property name="moduleId" value="simdhs" />
-      <property name="executeOnceOnly" value="true" />
-      <property name="importer" ref="spacesBootstrap" />
-      <property name="bootstrapViews">
-         <list>
-            <props>
-               <prop key="encoding">UTF-8</prop>
-               <prop key="path">/</prop>
-               <prop key="location">ee/webmedia/alfresco/workflow/bootstrap/independent-workflow.xml</prop>
-            </props>
-         </list>
-      </property>
-   </bean>
-   
-   <bean id="linkedReviewTasksRootBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
-      <property name="moduleId" value="simdhs" />
-      <property name="executeOnceOnly" value="true" />
-      <property name="importer" ref="spacesBootstrap" />
-=======
 
    <bean id="testWorkflowTemplatesBootstrap" class="ee.webmedia.alfresco.common.bootstrap.ImporterModuleComponent" parent="module.baseComponent">
-      <property name="moduleId" value="simdhs" />
-      <property name="executeOnceOnly" value="true" />
-      <property name="importer" ref="spacesBootstrap" />
-      <property name="enabled" value="${project.test}" />
-      <property name="dependsOn">
-         <list>
-            <ref bean="documentTemplatesRootBootstrap" />
-         </list>
-      </property>
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
-      <property name="bootstrapViews">
-         <list>
-            <props>
-               <prop key="encoding">UTF-8</prop>
-<<<<<<< HEAD
-               <prop key="path">/</prop>
-               <prop key="location">ee/webmedia/alfresco/workflow/bootstrap/linked-review-tasks.xml</prop>
-            </props>
-         </list>
-      </property>
-   </bean>   
-
-   <bean id="testWorkflowTemplatesBootstrap" class="ee.webmedia.alfresco.common.bootstrap.ImporterModuleComponent" parent="module.baseComponent">
-=======
-               <prop key="path">/cm:templates</prop>
-               <prop key="location">ee/webmedia/alfresco/workflow/bootstrap/testWorkflowTemplates.xml</prop>
-            </props>
-         </list>
-      </property>
-   </bean>
-   
-   <bean id="testWorkflowTemplatesBootstrap2" class="ee.webmedia.alfresco.common.bootstrap.ImporterModuleComponent" parent="module.baseComponent">
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
       <property name="importer" ref="spacesBootstrap" />
@@ -145,11 +82,28 @@
             <props>
                <prop key="encoding">UTF-8</prop>
                <prop key="path">/cm:templates</prop>
-<<<<<<< HEAD
                <prop key="location">ee/webmedia/alfresco/workflow/bootstrap/testWorkflowTemplates.xml</prop>
-=======
+            </props>
+         </list>
+      </property>
+   </bean>
+   
+   <bean id="testWorkflowTemplatesBootstrap2" class="ee.webmedia.alfresco.common.bootstrap.ImporterModuleComponent" parent="module.baseComponent">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="importer" ref="spacesBootstrap" />
+      <property name="enabled" value="${project.test}" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="documentTemplatesRootBootstrap" />
+         </list>
+      </property>
+      <property name="bootstrapViews">
+         <list>
+            <props>
+               <prop key="encoding">UTF-8</prop>
+               <prop key="path">/cm:templates</prop>
                <prop key="location">ee/webmedia/alfresco/workflow/bootstrap/testWorkflowTemplates2.xml</prop>
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             </props>
          </list>
       </property>
@@ -193,15 +147,9 @@
             </props>
          </list>
       </property>
-<<<<<<< HEAD
-   </bean>
-   
-   <bean id="workflowParametersBootstrap2" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
-=======
    </bean>   
    
    <bean id="workflowParametersBootstrap3" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
       <property name="moduleId" value="common" />
       <property name="executeOnceOnly" value="true" />
       <property name="dependsOn">
@@ -215,50 +163,15 @@
             <props>
                <prop key="encoding">UTF-8</prop>
                <prop key="path">/param:parameters</prop>
-<<<<<<< HEAD
-               <prop key="location">ee/webmedia/alfresco/workflow/bootstrap/workflow-parameters2.xml</prop>
-            </props>
-         </list>
-      </property>
-   </bean>  
-=======
                <prop key="location">ee/webmedia/alfresco/workflow/bootstrap/workflow-parameters3.xml</prop>
             </props>
          </list>
       </property>
    </bean>      
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
    
    <bean id="taskTableBootstrap3" class="ee.webmedia.alfresco.workflow.bootstrap.TaskTableBootstrap" parent="createTableBootstrap" >
       <property name="executeOnceOnly" value="true" />
    </bean>
-<<<<<<< HEAD
-    
-   <bean id="taskTableAddColumnBootstrap4" parent="executeStatementsBootstrap" >
-      <property name="moduleId" value="simdhs" />
-      <property name="executeOnceOnly" value="true" />
-      <property name="dataSource" ref="dataSource" />
-      <property name="resourceName" value="ee/webmedia/alfresco/workflow/bootstrap/delta_task_table_add_columns.sql" />
-      <property name="dependsOn">
-         <list>
-            <ref bean="taskTableBootstrap3" />
-         </list>
-      </property>
-   </bean> 
-   
-   <bean id="taskTableAddColumnBootstrap6" parent="executeStatementsBootstrap" >
-      <property name="moduleId" value="simdhs" />
-      <property name="executeOnceOnly" value="true" />
-      <property name="dataSource" ref="dataSource" />
-      <property name="resourceName" value="ee/webmedia/alfresco/workflow/bootstrap/delta_task_table_add_columns1.sql" />
-      <property name="dependsOn">
-         <list>
-            <ref bean="taskTableAddColumnBootstrap4" />
-         </list>
-      </property>
-   </bean> 
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
    
    <!-- TODO: maybe create one bootstrap for taskDueDateExtensionAssocTableBootstrap, taskTableAddColumnBootstrap7, taskDueDateHistoryTableBootstrap, taskFileTableBootstrap? -->
    <bean id="taskDueDateExtensionAssocTableBootstrap1" class="ee.webmedia.alfresco.workflow.bootstrap.TaskDueDateExtensionAssocTableBootstrap" parent="createTableBootstrap" >
@@ -282,22 +195,6 @@
       </property>
    </bean>
    
-<<<<<<< HEAD
-   <bean id="taskTableAddColumnBootstrap8" parent="executeStatementsBootstrap" >
-      <property name="moduleId" value="simdhs" />
-      <property name="executeOnceOnly" value="true" />
-      <property name="dataSource" ref="dataSource" />
-      <property name="resourceName" value="ee/webmedia/alfresco/workflow/bootstrap/delta_task_table_add_columns3.sql" />
-      <property name="dependsOn">
-         <list>
-            <ref bean="taskTableBootstrap3" />
-            <ref bean="taskTableSearchIndexesBootstrap1" />
-         </list>
-      </property>
-   </bean>   
-   
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
    <bean id="taskDueDateHistoryTableBootstrap" class="ee.webmedia.alfresco.workflow.bootstrap.TaskDueDateHistoryTableBootstrap" parent="createTableBootstrap" >
       <property name="executeOnceOnly" value="true" />
       <property name="dependsOn">
@@ -307,35 +204,6 @@
       </property>         
    </bean>
    
-<<<<<<< HEAD
-   <bean id="taskTableAddColumnBootstrap9" parent="executeStatementsBootstrap" >
-      <property name="moduleId" value="simdhs" />
-      <property name="executeOnceOnly" value="true" />
-      <property name="dataSource" ref="dataSource" />
-      <property name="resourceName" value="ee/webmedia/alfresco/workflow/bootstrap/delta_task_table_add_columns4.sql" />
-      <property name="dependsOn">
-         <list>
-            <ref bean="taskTableBootstrap3" />
-            <ref bean="taskTableSearchIndexesBootstrap1" />
-         </list>
-      </property>
-   </bean>
-   
-   <bean id="taskDueDateHistoryTableAddColumnBootstrap" parent="executeStatementsBootstrap" >
-      <property name="moduleId" value="simdhs" />
-      <property name="executeOnceOnly" value="true" />
-      <property name="dataSource" ref="dataSource" />
-      <property name="resourceName" value="ee/webmedia/alfresco/workflow/bootstrap/delta_task_due_date_history_table_add_columns.sql" />
-      <property name="dependsOn">
-         <list>
-            <!--<ref bean="taskTableBootstrap3" />-->
-            <!--<ref bean="taskDueDateHistoryTableBootstrap"/>-->
-         </list>
-      </property>
-   </bean>
-   
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
    <bean id="taskFileTableBootstrap" class="ee.webmedia.alfresco.workflow.bootstrap.TaskFileTableBootstrap" parent="createTableBootstrap" >
       <property name="executeOnceOnly" value="true" />
       <property name="dependsOn">
@@ -355,21 +223,7 @@
             <ref bean="taskTableBootstrap3" />
          </list>
       </property>
-<<<<<<< HEAD
-   </bean>
-   
-   <bean id="taskTableFixInvalidOutcomesBootstrap" class="ee.webmedia.alfresco.workflow.bootstrap.FixTaskOutcomesBootstrap" parent="module.baseComponent" >
-      <property name="moduleId" value="simdhs" />
-      <property name="executeOnceOnly" value="true" />
-      <property name="dependsOn">
-         <list>
-            <ref bean="taskTableBootstrap3" />
-         </list>
-      </property>
-   </bean>  
-=======
    </bean>   
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
    
    <!-- Used to fix invalid parallelTasks property and update lucene index (CL task 155454) -->
    <bean id="ParallelTasksPropertiesUpdater" class="ee.webmedia.alfresco.workflow.bootstrap.ParallelTasksPropertiesUpdater" parent="abstractNodeUpdater" >
@@ -377,11 +231,7 @@
       <property name="executeOnceOnly" value="true" />
       <property name="dependsOn">
          <list>
-<<<<<<< HEAD
-            <ref bean="convertToDynamicDocumentsUpdater" />
-=======
             <ref bean="deleteSubtypedDocuments" />
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
          </list>
       </property>
       <property name="enabled" value="${parallelTasksPropertiesUpdater.enabled}" />
@@ -412,27 +262,11 @@
       <property name="versionsService" ref="VersionsService" />
       <property name="behaviourFilter" ref="policyBehaviourFilter"/>
       <property name="logService" ref="LogService"/>
-<<<<<<< HEAD
-      <property name="documentLogService" ref="DocumentLogService"/>
-      <property name="volumeService" ref="VolumeService"/>
       <property name="workflowDbService" ref="WorkflowDbService"/>
-      <property name="caseFileLogService" ref="CaseFileLogService"/>
-=======
-      <property name="workflowDbService" ref="WorkflowDbService"/>
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
       <property name="internalTesting" value="${project.test}" />
       <property name="orderAssignmentCategoryEnabled" value="${conf.workflow.order-assignment-task-category.enabled}" />
       <property name="orderAssignmentWorkflowEnabled" value="${conf.workflow.order-assignment-workflow.enabled}" />
       <property name="confirmationWorkflowEnabled" value="${conf.workflow.confirmation-workflow.enabled}" />
-<<<<<<< HEAD
-      <property name="groupAssignmentWorkflowEnabled" value="${conf.workflow.group-assignment-workflow.enabled}" />
-      <property name="independentWorkflowEnabled" value="${conf.independent-workflow.enabled}" />
-      <property name="documentWorkflowEnabled" value="${conf.document-workflow.enabled}" />
-      <property name="workflowTitleEnabled" value="${conf.workflow.title.enabled}" />
-      <property name="reviewToOtherOrgEnabled" value="${conf.workflow.review-to-other-org.enabled}" />
-      <property name="finishDocumentsWhenWorkflowFinishes" value="${conf.independent-workflow.finishDocumentsWhenWorkflowFinishes}" />
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
    </bean>
 
    <bean id="WmWorkflowService" class="org.springframework.aop.framework.ProxyFactoryBean">
@@ -449,27 +283,6 @@
       </property>
    </bean>
    
-<<<<<<< HEAD
-   <bean id="compoundWorkflowFavoritesService" class="ee.webmedia.alfresco.workflow.service.CompoundWorkflowFavoritesServiceImpl" parent="abstractFavoritesService" > 
-      <property name="workflowService" ref="WmWorkflowService" />
-   </bean>
-   
-   <bean id="CompoundWorkflowFavoritesService" class="org.springframework.aop.framework.ProxyFactoryBean">
-      <property name="proxyInterfaces">
-         <list>
-            <value>ee.webmedia.alfresco.workflow.service.CompoundWorkflowFavoritesService</value>
-         </list>
-      </property>
-      <property name="target" ref="compoundWorkflowFavoritesService" />
-      <property name="interceptorNames">
-         <list>
-            <idref bean="commonTransactionInterceptor" />
-         </list>
-      </property>
-   </bean>    
-   
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
    <bean id="workflowDbService" class="ee.webmedia.alfresco.workflow.service.WorkflowDbServiceImpl">
       <property name="jdbcTemplate">
          <bean class="org.springframework.jdbc.core.simple.SimpleJdbcTemplate">
@@ -533,15 +346,6 @@
       <property name="taskTypeString" value="wfs:externalReviewTask" />
       <property name="taskOutcomes" value="2" />
    </bean>   
-<<<<<<< HEAD
-   
-   <bean class="ee.webmedia.alfresco.workflow.service.type.LinkedReviewTaskType">
-      <property name="workflowService" ref="WmWorkflowService" />
-      <property name="namespaceService" ref="NamespaceService" />      
-      <property name="taskTypeString" value="wfs:linkedReviewTask" />
-   </bean>
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
    <bean class="ee.webmedia.alfresco.workflow.service.type.AssignmentWorkflowType" parent="workflowType">
       <property name="workflowTypeString" value="wfs:assignmentWorkflow" />
@@ -579,32 +383,12 @@
       <property name="taskClass" value="" />
       <property name="documentService" ref="DocumentService" />
    </bean>
-<<<<<<< HEAD
-   
-   <bean class="ee.webmedia.alfresco.workflow.service.type.GroupAssignmnetWorkflowType" parent="workflowType">
-      <property name="workflowTypeString" value="wfs:groupAssignmentWorkflow" />
-      <property name="taskTypeString" value="wfs:groupAssignmentTask" />
-      <property name="taskOutcomes" value="1" />
-   </bean>   
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
    <bean class="ee.webmedia.alfresco.workflow.service.TaskMenuItemProcessor">
       <property name="menuService" ref="MenuService" />
       <property name="documentSearchService" ref="DocumentSearchService" />
    </bean>
    
-<<<<<<< HEAD
-   <bean class="ee.webmedia.alfresco.workflow.service.CaseFileAndWorkflowMenuItemProcessor">
-      <property name="menuService" ref="MenuService" />
-      <property name="workflowService" ref="WmWorkflowService" />
-      <property name="volumeService" ref="VolumeService" />
-      <property name="documentAdminService" ref="DocumentAdminService" />
-      <property name="permissionService" ref="PermissionService" />
-   </bean>   
-   
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
    <bean id="externalReviewWorkflowImporterComponent" class="ee.webmedia.alfresco.workflow.service.ExternalReviewWorkflowImporterComponent" parent="importerComponent">
       <property name="documentService" ref="DocumentService"/>
       <property name="workflowService" ref="WmWorkflowService"/>
@@ -622,22 +406,6 @@
       <property name="nodeService" ref="NodeService" />
    </bean> 
    
-<<<<<<< HEAD
-   <bean id="independentWorkflowTaskStatusChangeListener" class="ee.webmedia.alfresco.workflow.service.IndependentWorkflowTaskStatusChangeListener">
-      <property name="workflowService" ref="WmWorkflowService" />
-      <property name="privilegeService" ref="PrivilegeService" />
-      <property name="documentDynamicService" ref="DocumentDynamicService" />
-   </bean>
-
-   <bean id="caseFileWorkflowTaskStatusChangeListener" class="ee.webmedia.alfresco.workflow.service.CaseFileWorkflowTaskStatusChangeListener">
-      <property name="workflowService" ref="WmWorkflowService" />
-      <property name="privilegeService" ref="PrivilegeService" />
-      <property name="generalService" ref="GeneralService" />
-      <property name="documentService" ref="DocumentService" />
-   </bean>    
-   
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
    <!-- Used to add temOutcome aspect to external review workflows -->
    <bean id="Version22ReviewWorkflowTempOutcomeUpdater" class="ee.webmedia.alfresco.workflow.bootstrap.Version22ReviewWorkflowTempOutcomeUpdater" parent="abstractNodeUpdater" >
       <property name="moduleId" value="simdhs" />
@@ -648,8 +416,6 @@
          </list>
       </property>
    </bean> 
-<<<<<<< HEAD
-=======
    
    <bean id="addDocTypeToTaskNodeUpdater" class="ee.webmedia.alfresco.workflow.bootstrap.AddDocTypeToTaskNodeUpdater" parent="abstractNodeUpdater" >
       <property name="moduleId" value="simdhs" />
@@ -660,50 +426,21 @@
          </list>
       </property>
    </bean>
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
    <bean id="dueDateExtensionTaskUpdater" class="ee.webmedia.alfresco.workflow.bootstrap.DueDateExtensionTaskUpdater" parent="abstractNodeUpdater">
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
-<<<<<<< HEAD
-      <property name="dependsOn">
-         <list>
-            <ref bean="archivalsStoresBootstrap" />
-=======
       <property name="disabled" value="${updater.ppa.3_6_21_to_3_6_30.enabled}" />
       <property name="dependsOn">
          <list>
             <ref bean="addDocTypeToTaskNodeUpdater" />
             <ref bean="archivalsStoresBootstrap" />
             <ref bean="taskTableInsertMissingTasksBootstrap" />
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
          </list>
       </property>
       <property name="workflowDbService" ref="WorkflowDbService"/>
       <property name="workflowService" ref="WmWorkflowService"/>       
    </bean>
-<<<<<<< HEAD
-
-   <bean id="moveTaskFileToChildAssoc1" class="ee.webmedia.alfresco.workflow.bootstrap.MoveTaskFileToChildAssoc" parent="abstractNodeUpdater" >
-      <property name="moduleId" value="simdhs" />
-      <property name="executeOnceOnly" value="true" />
-      <property name="dependsOn">
-         <list>
-            <ref bean="dueDateExtensionTaskUpdater" />
-         </list>
-      </property>
-      <property name="fileService" ref="FileService" />
-      <property name="mimetypeService" ref="MimetypeService" />
-      <property name="contentService" ref="ContentService" />
-   </bean>
-   
-   <bean class="ee.webmedia.alfresco.workflow.web.CompoundWorkflowListMenuItemProcessor">
-      <property name="menuService" ref="MenuService" />
-      <property name="documentSearchService" ref="DocumentSearchService" />
-   </bean>
-   
-   <bean id="compoundWorkflowOwnerPropsUpdater4" class="ee.webmedia.alfresco.workflow.bootstrap.CompoundWorkflowOwnerPropsUpdater" parent="abstractNodeUpdater" >
-=======
    
    <bean id="dueDateExtensionTaskSqlUpdater" class="ee.webmedia.alfresco.workflow.bootstrap.DueDateExtensionTaskSqlUpdater" parent="module.baseComponent">
       <property name="moduleId" value="simdhs" />
@@ -727,21 +464,10 @@
    </bean>   
 
    <bean id="moveTaskFileToChildAssoc1" class="ee.webmedia.alfresco.workflow.bootstrap.MoveTaskFileToChildAssoc" parent="abstractNodeUpdater" >
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
       <property name="dependsOn">
          <list>
-<<<<<<< HEAD
-            <ref bean="archivalsStoresBootstrap" />
-            <ref bean="workflow25To313DynamicDocTypeUpdater" />
-         </list>
-      </property>
-      <property name="userService" ref="UserService" />
-   </bean>
-   
-   <bean id="taskUpdater" class="ee.webmedia.alfresco.workflow.bootstrap.TaskUpdater" parent="abstractNodeUpdater" >
-=======
             <ref bean="dueDateExtensionTaskUpdater" />
          </list>
       </property>
@@ -751,29 +477,13 @@
    </bean>
    
    <bean id="ownerOrganizationNameToMultivaluedUpdater" class="ee.webmedia.alfresco.workflow.bootstrap.OwnerOrganizationNameToMultivaluedUpdater" parent="abstractNodeUpdater" >
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
       <property name="dependsOn">
          <list>
-<<<<<<< HEAD
-            <ref bean="archivalsStoresBootstrap" />
-            <ref bean="taskTableInsertBootstrap3" />
-            <ref bean="taskTableAddColumnBootstrap4" />
-            <ref bean="taskTableAddColumnBootstrap6" />
-            <ref bean="taskTableAddColumnBootstrap7" />
-            <ref bean="taskTableAddColumnBootstrap8" />
-            <ref bean="compoundWorkflowOwnerPropsUpdater4" />
-            <ref bean="convertToDynamicDocumentsUpdater" />
-         </list>
-      </property>
-      <property name="workflowDbService" ref="WorkflowDbService"/>
-      <property name="workflowService" ref="WmWorkflowService"/>        
-=======
             <ref bean="moveTaskFileToChildAssoc1" />
          </list>
       </property>
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
    </bean>
    
    <!-- All bootstraps that modify tasks should run before filling delta_task db table -->
@@ -785,43 +495,15 @@
             <ref bean="workflowRootBootstrap" />
             <ref bean="archivalsStoresBootstrap" />
             <ref bean="taskTableBootstrap3" />
-<<<<<<< HEAD
-            <ref bean="taskTableAddColumnBootstrap4" />
-            <ref bean="taskTableAddColumnBootstrap6" />
-            <ref bean="taskTableAddColumnBootstrap7" />
-            <ref bean="taskTableAddColumnBootstrap8" />
-            <ref bean="taskTableAddColumnBootstrap9" />
-            <ref bean="dueDateExtensionTaskUpdater" />
-            <ref bean="moveTaskFileToChildAssoc1" />
-            <ref bean="notStartedFinishedTaskUpdater" />
-            <ref bean="convertToDynamicDocumentsUpdater" />
-            <ref bean="deleteCompoundWorkflowsWithEmptyDateOrOwner" />
-=======
             <ref bean="ownerOrganizationNameToMultivaluedUpdater" />
             <ref bean="dueDateExtensionTaskUpdater" />
             <ref bean="moveTaskFileToChildAssoc1" />
             <ref bean="notStartedFinishedTaskUpdater" />
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
          </list>
       </property>
       <property name="workflowService" ref="WmWorkflowService"/>
       <property name="workflowDbService" ref="WorkflowDbService"/>
       <property name="fileService" ref="FileService"/>
-<<<<<<< HEAD
-      <property name="namespaceService" ref="NamespaceService"/>
-      <property name="dictionaryService" ref="DictionaryService"/>
-      <property name="transactionHelperMinRetryWaits" value="6000" />
-   </bean>
-   
-   <bean id="taskOwnerStructUnitParameterUpdater" class="ee.webmedia.alfresco.workflow.bootstrap.TaskOwnerStructUnitParameterUpdater" parent="module.baseComponent" >
-      <property name="moduleId" value="simdhs" />
-      <property name="executeOnceOnly" value="true" />
-      <property name="dependsOn">
-         <list>
-            <ref bean="modalSearchParametersBootstrap" />
-         </list>
-      </property>
-=======
       <property name="transactionHelperMinRetryWaits" value="6000" />
    </bean>
    
@@ -847,57 +529,11 @@
       <property name="workflowDbService" ref="WorkflowDbService"/>
       <property name="namespaceService" ref="NamespaceService"/>
       <property name="dictionaryService" ref="DictionaryService"/>
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
    </bean>
    
    <bean id="taskAssociatedDataTableInsertBootstrap1" class="ee.webmedia.alfresco.workflow.bootstrap.TaskAssociatedDataTableInsertBootstrap" parent="abstractNodeUpdater" >
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
-<<<<<<< HEAD
-      <property name="dependsOn">
-         <list>
-            <ref bean="taskTableInsertBootstrap3" />
-            <ref bean="taskDueDateExtensionAssocTableBootstrap1" />
-            <ref bean="taskDueDateHistoryTableBootstrap" />
-            <!--<ref bean="taskDueDateHistoryTableAddColumnBootstrap"/>-->
-            <ref bean="taskFileTableBootstrap" />
-            <ref bean="taskTableAddColumnBootstrap7" />
-            <ref bean="archivalsStoresBootstrap" />   
-            <ref bean="logAndDeleteNotExistingWorkflowTasks2" />
-            <ref bean="deleteCompoundWorkflowsWithEmptyDateOrOwner" />
-         </list>
-      </property>
-      <property name="workflowDbService" ref="WorkflowDbService"/>
-      <property name="workflowService" ref="WmWorkflowService"/>
-      <property name="fileService" ref="FileService"/>  
-      <property name="transactionHelperMinRetryWaits" value="6000" />     
-   </bean>
-   
-   <bean id="taskAssociatedDataTableInsertBootstrap2" class="ee.webmedia.alfresco.workflow.bootstrap.TaskAssociatedDataTableInsertBootstrap2" parent="abstractNodeUpdater" >
-      <property name="moduleId" value="simdhs" />
-      <property name="executeOnceOnly" value="true" />
-      <property name="dependsOn">
-         <list>
-            <ref bean="taskTableInsertBootstrap3" />
-            <ref bean="taskAssociatedDataTableInsertBootstrap1" /> 
-            <ref bean="taskDueDateExtensionAssocTableBootstrap1" />
-            <ref bean="taskAssociatedDataTableInsertBootstrap1" /> 
-            <ref bean="taskDueDateHistoryTableBootstrap" />
-            <!--<ref bean="taskDueDateHistoryTableAddColumnBootstrap"/>-->
-            <ref bean="taskFileTableBootstrap" />
-            <ref bean="taskTableAddColumnBootstrap8" />
-            <ref bean="taskTableAddColumnBootstrap9" />
-            <ref bean="archivalsStoresBootstrap" />
-            <ref bean="deleteCompoundWorkflowsWithEmptyDateOrOwner" /> 
-         </list>
-      </property>
-      <property name="workflowDbService" ref="WorkflowDbService"/>
-      <property name="workflowService" ref="WmWorkflowService"/>  
-      <property name="transactionHelperMinRetryWaits" value="6000" />     
-   </bean>
-   
-   <!-- Executed from node-browser -->
-=======
       <property name="disabled" value="${updater.ppa.3_6_21_to_3_6_30.enabled}" />
       <property name="dependsOn">
          <list>
@@ -940,7 +576,6 @@
       </property>      
    </bean>   
    
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
    <bean id="deleteAllTasksFromRepo" class="ee.webmedia.alfresco.workflow.bootstrap.DeleteAllTasksFromRepo" parent="abstractNodeUpdater" >
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
@@ -948,46 +583,12 @@
       <property name="dependsOn">
          <list>
             <ref bean="taskAssociatedDataTableInsertBootstrap1" /> 
-<<<<<<< HEAD
-            <ref bean="taskAssociatedDataTableInsertBootstrap2" />      
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             <ref bean="archivalsStoresBootstrap" />   
          </list>
       </property>
       <property name="batchSize" value="30" />
    </bean>
    
-<<<<<<< HEAD
-   <bean id="fixTaskStoreIdFromWorkflow" class="ee.webmedia.alfresco.workflow.bootstrap.FixTaskStoreIdFromWorkflow" parent="abstractNodeUpdater" >
-      <property name="moduleId" value="simdhs" />
-      <property name="executeOnceOnly" value="true" />
-      <property name="enabled" value="${fixTaskStoreIdFromWorkflow.enabled}" />
-      <property name="dependsOn">
-         <list>
-            <ref bean="taskAssociatedDataTableInsertBootstrap1" /> 
-            <ref bean="taskAssociatedDataTableInsertBootstrap2" />      
-            <ref bean="archivalsStoresBootstrap" />   
-         </list>
-      </property>
-   </bean>
-   
-   <bean id="logAndDeleteNotExistingTasks" class="ee.webmedia.alfresco.workflow.bootstrap.LogAndDeleteNotExistingTasks" parent="module.baseComponent" >
-      <property name="moduleId" value="simdhs" />
-      <property name="executeOnceOnly" value="true" />   
-      <property name="inputFolderPath" value="${dir.root.shared}/updater" />
-      <property name="dependsOn">
-         <list>
-            <ref bean="fixTaskStoreIdFromWorkflow" /> 
-         </list>
-      </property>
-   </bean>  
-
-  <bean id="logAndDeleteNotExistingWorkflowTasks2" class="ee.webmedia.alfresco.workflow.bootstrap.LogAndDeleteNotExistingWorkflowTasks" parent="abstractNodeUpdater" >
-      <property name="moduleId" value="simdhs" />
-      <property name="executeOnceOnly" value="true" />   
-      <property name="enabled" value="true" /><!-- true only in 3.13; in other branches, deleteAllTasksFromRepo does the same thing -->
-=======
    <bean id="logAndDeleteNotExistingTasks" class="ee.webmedia.alfresco.workflow.bootstrap.LogAndDeleteNotExistingTasks" parent="module.baseComponent" >
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />   
@@ -1004,22 +605,14 @@
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />   
       <property name="enabled" value="false" /><!-- true only in 3.13; in other branches, deleteAllTasksFromRepo does the same thing -->
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
       <property name="workflowDbService" ref="WorkflowDbService"/>
       <property name="workflowService" ref="WmWorkflowService"/>  
       <property name="dependsOn">
          <list>
             <ref bean="taskTableAddColumnBootstrap7" />
-<<<<<<< HEAD
-            <ref bean="convertToDynamicDocumentsUpdater" />
-         </list>
-      </property>
-   </bean>     
-=======
          </list>
       </property>      
    </bean> 
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
    
    <!-- Can be executed only after store_id field is filled by taskAssociatedDataTableInsertBootstrap or fixed by fixTaskStoreIdFromWorkflow 
       and not existing tasks have been removed by logAndDeleteNotExistingTasks -->
@@ -1031,10 +624,6 @@
       <property name="dependsOn">
          <list>
             <ref bean="taskAssociatedDataTableInsertBootstrap1" />
-<<<<<<< HEAD
-            <ref bean="fixTaskStoreIdFromWorkflow" />
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             <ref bean="logAndDeleteNotExistingTasks" />
          </list>
       </property>
@@ -1047,25 +636,6 @@
       <property name="resourceName" value="ee/webmedia/alfresco/workflow/bootstrap/delta_task_table_search_indexes.sql" />
       <property name="dependsOn">
          <list>
-<<<<<<< HEAD
-            <ref bean="taskTableAddColumnBootstrap4" />
-            <ref bean="taskTableAddColumnBootstrap6" />
-            <ref bean="taskTableAddColumnBootstrap7" />
-         </list>
-      </property>
-   </bean>
-
-   <bean id="taskTableSearchIndexesBootstrap1" parent="executeStatementsBootstrap" >
-      <property name="moduleId" value="simdhs" />
-      <property name="executeOnceOnly" value="true" />
-      <property name="dataSource" ref="dataSource" />
-      <property name="resourceName" value="ee/webmedia/alfresco/workflow/bootstrap/delta_task_table_search_indexes1.sql" />
-      <property name="dependsOn">
-         <list>
-            <ref bean="taskTableAddColumnBootstrap4" />
-            <ref bean="taskTableAddColumnBootstrap6" />
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             <ref bean="taskTableAddColumnBootstrap7" />
          </list>
       </property>
@@ -1078,58 +648,6 @@
       <property name="resourceName" value="ee/webmedia/alfresco/workflow/bootstrap/delta_task_table_search_indexes2.sql" />
       <property name="dependsOn">
          <list>
-<<<<<<< HEAD
-            <ref bean="taskTableAddColumnBootstrap4" />
-            <ref bean="taskTableAddColumnBootstrap6" />
-            <ref bean="taskTableAddColumnBootstrap7" />
-            <ref bean="taskTableAddColumnBootstrap8" />
-            <ref bean="taskTableAddColumnBootstrap9" />
-         </list>
-      </property>
-   </bean>    
-
-   <bean id="addTaskPrivilegesToDocumentUpdater" class="ee.webmedia.alfresco.workflow.bootstrap.AddTaskPrivilegesToDocumentUpdater" parent="abstractNodeUpdater" >
-      <property name="moduleId" value="simdhs" />
-      <property name="executeOnceOnly" value="true" />
-      <property name="enabled" value="false" /><!-- executed from node-browser manually -->
-      <property name="dependsOn">
-         <list>
-            <ref bean="archivalsStoresBootstrap" />
-         </list>
-      </property>
-      <property name="privilegeService" ref="PrivilegeService"/>
-      <property name="fileService" ref="FileService"/>
-      <property name="workflowService" ref="WmWorkflowService"/>
-      <property name="documentDynamicService" ref="DocumentDynamicService"/>
-   </bean>
-   
-   <bean id="workflow25To313DynamicDocTypeUpdater" class="ee.webmedia.alfresco.workflow.bootstrap.Workflow25To313DynamicDocTypeUpdater" parent="abstractNodeUpdater">
-      <property name="moduleId" value="simdhs" />
-      <property name="enabled" value="${updater.version25To313.enabled}" />
-      <property name="dependsOn">
-         <list>
-            <ref bean="archivalsStoresBootstrap" />
-         </list>
-      </property>
-      <property name="compoundWorkflowOwnerPropsUpdater" ref="compoundWorkflowOwnerPropsUpdater4" />
-      <property name="userService" ref="UserService" />
-      <property name="transactionHelperMinRetryWaits" value="6000" />
-   </bean>    
-   
-    <!-- Should run only in environments where it has been verified that is is acceptable to delete compound workflows with tasks that have empty dueDate or ownerName properties -->
-   <bean id="deleteCompoundWorkflowsWithEmptyDateOrOwner" class="ee.webmedia.alfresco.workflow.bootstrap.DeleteCompoundWorkflowsWithEmptyDateOrOwner" parent="abstractNodeUpdater">
-      <property name="moduleId" value="simdhs" />
-      <property name="executeOnceOnly" value="true" />
-      <property name="enabled" value="${updater.deleteCompoundWorkflowsWithEmptyDateOrOwner.enabled}" />
-      <property name="dependsOn">
-         <list>
-            <ref bean="archivalsStoresBootstrap" />
-            <ref bean="taskTableBootstrap3" />
-         </list>
-      </property>
-   </bean>
-   
-=======
             <ref bean="taskTableAddColumnBootstrap7" />
          </list>
       </property>
@@ -1163,31 +681,11 @@
       </property>    
    </bean>    
 
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
    <!-- START: web beans: -->
       
    <bean id="DvkWorkflowExporter" class="ee.webmedia.alfresco.workflow.web.DvkWorkflowExporter" scope="session" />
 
    <bean id="OwnerSearchBean" class="ee.webmedia.alfresco.workflow.web.OwnerSearchBean" scope="session" />
-<<<<<<< HEAD
-
-   <bean id="CompoundWorkflowAssocListDialog" class="ee.webmedia.alfresco.workflow.web.CompoundWorkflowAssocListDialog" scope="session" />
-   
-   <bean id="CompoundWorkflowAssocSearchBlock" class="ee.webmedia.alfresco.workflow.web.CompoundWorkflowAssocSearchBlock" scope="session" />
-   
-   <bean id="CompoundWorkflowLogBlockBean" class="ee.webmedia.alfresco.workflow.web.CompoundWorkflowLogBlockBean" scope="session" />
-   
-   <bean id="CompoundWorkflowListDialog" class="ee.webmedia.alfresco.workflow.web.CompoundWorkflowListDialog" scope="session" />
-   
-   <bean id="RelatedUrlListBlock" class="ee.webmedia.alfresco.workflow.web.RelatedUrlListBlock" scope="session" />
-   
-   <bean id="RelatedUrlDetailsDialog" class="ee.webmedia.alfresco.workflow.web.RelatedUrlDetailsDialog" scope="session" />
-   
    <!-- END: web beans: -->
 
 </beans>
-=======
-   <!-- END: web beans: -->
-
-</beans>
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5

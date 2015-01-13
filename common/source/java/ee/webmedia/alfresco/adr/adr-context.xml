@@ -76,10 +76,7 @@
    <bean id="adrDeletedDocumentNodeRefToTextUpdater" class="ee.webmedia.alfresco.adr.bootstrap.AdrDeletedDocumentNodeRefToTextUpdater" parent="abstractNodeUpdater">
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
-<<<<<<< HEAD
-=======
       <property name="batchSize" value="100" />
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
       <property name="dependsOn">
          <list>
             <ref bean="adrDeletedDocumentsBootstrap" />

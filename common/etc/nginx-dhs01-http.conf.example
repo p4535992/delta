@@ -5,11 +5,7 @@ server {
     listen 80;
     server_name dhs01.example.com;
 
-<<<<<<< HEAD
-    # For opening files with OpenOffice.org / LibreOffice / Apache OpenOffice (if conf.openoffice-client-extensions in alfresco-global.properties is non-empty),
-=======
     # For opening files with LibreOffice (if conf.openoffice-client-extensions in alfresco-global.properties is non-empty),
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     # it is needed for web server on http port (80) to redirect requests to https port (443) with URL with the same path and query string.
     location / {
         rewrite ^(.*) https://dhs01.example.com$1;

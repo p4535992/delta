@@ -4,11 +4,7 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getAuthorityService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getContentService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDictionaryService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentConfigService;
-<<<<<<< HEAD
-import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentFavoritesService;
-=======
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentService;
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import static ee.webmedia.alfresco.common.web.BeanHelper.getNamespaceService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getNodeService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getPolicyBehaviourFilter;
@@ -72,12 +68,6 @@ import ee.webmedia.alfresco.substitute.model.SubstituteModel;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.workflow.search.model.TaskSearchModel;
 
-<<<<<<< HEAD
-/**
- * @author Alar Kvell
- */
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 public class UserDataRestoreService {
     protected final Log log = LogFactory.getLog(getClass());
 
@@ -271,11 +261,7 @@ public class UserDataRestoreService {
                 + "AND alf_node.node_deleted = false", otherContainerNodeId);
         for (Map<String, Object> row : rows) {
             NodeRef docRef = new NodeRef((String) row.get("protocol"), (String) row.get("identifier"), (String) row.get("uuid"));
-<<<<<<< HEAD
-            if (getDocumentFavoritesService().addFavorite(docRef, favoriteDirName, false)) {
-=======
             if (getDocumentService().addFavorite(docRef, favoriteDirName, false)) {
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
                 log.info("Person '" + userName + "' favorite document " + docRef + " - created, under favorite directory "
                         + (favoriteDirName == null ? "root" : "'" + favoriteDirName + "'"));
             } else {

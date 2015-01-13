@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 <?xml version="1.0" encoding="UTF-8"?>
 <view:view 
    xmlns:view="http://www.alfresco.org/view/repository/1.0" 
@@ -18,24 +17,3 @@
    </param:doubleParameter>
 
 </view:view>
-=======
-<?xml version="1.0" encoding="UTF-8"?>
-<view:view 
-   xmlns:view="http://www.alfresco.org/view/repository/1.0" 
-   xmlns:param="http://alfresco.webmedia.ee/model/parameters/1.0" 
->
-
-   <param:doubleParameter view:childName="param:trainingApplicationDailyAllowanceSum">
-      <view:properties>
-         <param:value>0.0</param:value>
-      </view:properties>
-   </param:doubleParameter>
-   
-   <param:doubleParameter view:childName="param:errandOrderAbroadDailyAllowanceSum">
-      <view:properties>
-         <param:value>0.0</param:value>
-      </view:properties>
-   </param:doubleParameter>
-
-</view:view>
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5

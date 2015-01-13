@@ -9,12 +9,6 @@ import org.springframework.util.Assert;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.utils.WebUtil;
 
-<<<<<<< HEAD
-/**
- * @author Erko Hansar
- */
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 public class DocumentSendInfo implements Serializable, SendInfo {
 
     private static final long serialVersionUID = 1L;

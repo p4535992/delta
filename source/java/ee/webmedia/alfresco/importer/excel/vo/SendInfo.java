@@ -1,29 +1,3 @@
-<<<<<<< HEAD
-package ee.webmedia.alfresco.importer.excel.vo;
-
-import org.apache.commons.lang.builder.ToStringBuilder;
-import org.apache.commons.lang.builder.ToStringStyle;
-
-/**
- * @author Ats Uiboupin
- */
-public class SendInfo {
-    /** doccom:sendMode */
-    private String sendMode;
-
-    public void setSendMode(String sendMode) {
-        this.sendMode = sendMode;
-    }
-
-    public String getSendMode() {
-        return sendMode;
-    }
-
-    @Override
-    public String toString() {
-        return ToStringBuilder.reflectionToString(this, ToStringStyle.MULTI_LINE_STYLE);
-    }
-=======
 package ee.webmedia.alfresco.importer.excel.vo;
 
 import org.apache.commons.lang.builder.ToStringBuilder;
@@ -45,5 +19,4 @@ public class SendInfo {
     public String toString() {
         return ToStringBuilder.reflectionToString(this, ToStringStyle.MULTI_LINE_STYLE);
     }
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 }

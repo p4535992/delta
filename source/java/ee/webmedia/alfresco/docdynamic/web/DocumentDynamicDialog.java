@@ -11,18 +11,9 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
 import static ee.webmedia.alfresco.docconfig.generator.systematic.AccessRestrictionGenerator.ACCESS_RESTRICTION_CHANGE_REASON_ERROR;
 import static ee.webmedia.alfresco.docdynamic.web.ChangeReasonModalComponent.ACCESS_RESTRICTION_CHANGE_REASON_MODAL_ID;
 import static ee.webmedia.alfresco.docdynamic.web.ChangeReasonModalComponent.DELETE_DOCUMENT_REASON_MODAL_ID;
-<<<<<<< HEAD
-import static ee.webmedia.alfresco.utils.RepoUtil.isInWorkspace;
-import static ee.webmedia.alfresco.utils.RepoUtil.isSaved;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Collections;
-=======
-
-import java.io.Serializable;
-import java.util.ArrayList;
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -50,10 +41,6 @@ import org.alfresco.web.app.AlfrescoNavigationHandler;
 import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.config.DialogsConfigElement.DialogButtonConfig;
-<<<<<<< HEAD
-import org.alfresco.web.config.DialogsConfigElement.DialogConfig;
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import org.alfresco.web.config.PropertySheetConfigElement;
 import org.alfresco.web.ui.common.Utils;
 import org.alfresco.web.ui.repo.component.UIActions;
@@ -62,22 +49,11 @@ import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.util.Assert;
 
-<<<<<<< HEAD
-import ee.webmedia.alfresco.casefile.service.CaseFile;
-import ee.webmedia.alfresco.cases.model.Case;
-import ee.webmedia.alfresco.classificator.constant.DocTypeAssocType;
-import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
-import ee.webmedia.alfresco.common.propertysheet.component.SubPropertySheetItem;
-import ee.webmedia.alfresco.common.web.BeanHelper;
-import ee.webmedia.alfresco.common.web.WmNode;
-import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
-=======
 import ee.webmedia.alfresco.cases.model.Case;
 import ee.webmedia.alfresco.classificator.constant.DocTypeAssocType;
 import ee.webmedia.alfresco.common.propertysheet.component.SubPropertySheetItem;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.WmNode;
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import ee.webmedia.alfresco.docadmin.service.AssociationModel;
 import ee.webmedia.alfresco.docadmin.service.DocumentType;
 import ee.webmedia.alfresco.docadmin.service.DocumentTypeVersion;
@@ -91,20 +67,11 @@ import ee.webmedia.alfresco.docdynamic.web.ChangeReasonModalComponent.ChangeReas
 import ee.webmedia.alfresco.docdynamic.web.DocumentDynamicDialog.DocDialogSnapshot;
 import ee.webmedia.alfresco.document.associations.model.DocAssocInfo;
 import ee.webmedia.alfresco.document.associations.web.AssocsBlockBean;
-<<<<<<< HEAD
-import ee.webmedia.alfresco.document.assocsdyn.service.DocumentAssociationsService;
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import ee.webmedia.alfresco.document.file.web.FileBlockBean;
 import ee.webmedia.alfresco.document.log.web.LogBlockBean;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentParentNodesVO;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
-<<<<<<< HEAD
-import ee.webmedia.alfresco.document.search.web.AbstractSearchBlockBean;
-import ee.webmedia.alfresco.document.search.web.BlockBeanProviderProvider;
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import ee.webmedia.alfresco.document.search.web.SearchBlockBean;
 import ee.webmedia.alfresco.document.sendout.model.SendInfo;
 import ee.webmedia.alfresco.document.sendout.web.SendOutBlockBean;
@@ -113,23 +80,12 @@ import ee.webmedia.alfresco.document.service.EventsLoggingHelper;
 import ee.webmedia.alfresco.document.web.FavoritesModalComponent;
 import ee.webmedia.alfresco.document.web.FavoritesModalComponent.AddToFavoritesEvent;
 import ee.webmedia.alfresco.document.web.evaluator.DeleteDocumentEvaluator;
-<<<<<<< HEAD
-import ee.webmedia.alfresco.document.web.evaluator.DocumentNotInDraftsFunctionActionEvaluator;
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import ee.webmedia.alfresco.document.web.evaluator.RegisterDocumentEvaluator;
 import ee.webmedia.alfresco.log.model.LogEntry;
 import ee.webmedia.alfresco.log.model.LogObject;
 import ee.webmedia.alfresco.menu.ui.MenuBean;
-<<<<<<< HEAD
-import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.series.model.Series;
 import ee.webmedia.alfresco.simdhs.servlet.ExternalAccessServlet;
-import ee.webmedia.alfresco.user.model.UserModel;
-=======
-import ee.webmedia.alfresco.series.model.Series;
-import ee.webmedia.alfresco.simdhs.servlet.ExternalAccessServlet;
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.MessageData;
@@ -141,11 +97,6 @@ import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UnableToPerformMultiReasonException;
 import ee.webmedia.alfresco.utils.WebUtil;
 import ee.webmedia.alfresco.volume.model.Volume;
-<<<<<<< HEAD
-import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
-import ee.webmedia.alfresco.workflow.service.WorkflowService;
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 import ee.webmedia.alfresco.workflow.web.WorkflowBlockBean;
 
 /**
@@ -157,26 +108,13 @@ import ee.webmedia.alfresco.workflow.web.WorkflowBlockBean;
  * <p>
  * For example, to open this dialog manually, (for example {@link ExternalAccessServlet} does this), you should call {@code documentDynamicDialog.open...(nodeRef)}
  * </p>
-<<<<<<< HEAD
- * 
- * @author Alar Kvell
- */
-public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<DocDialogSnapshot, DocumentDynamicBlock, DialogDataProvider> implements DialogDataProvider,
-        BlockBeanProviderProvider {
-=======
  */
 public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<DocDialogSnapshot, DocumentDynamicBlock, DialogDataProvider> implements DialogDataProvider {
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     private static final long serialVersionUID = 1L;
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(DocumentDynamicDialog.class);
 
     public static final String BEAN_NAME = "DocumentDynamicDialog";
     public static final QName TEMP_ACCESS_RESTRICTION_CHANGE_REASON = RepoUtil.createTransientProp(DocumentCommonModel.Props.ACCESS_RESTRICTION_CHANGE_REASON.getLocalName());
-<<<<<<< HEAD
-    public static final QName TEMP_ARCHIVAL_ACTIVITY_NODE_REF = RepoUtil.createTransientProp("archivalActivityNodeRef");
-    public static final QName TEMP_VALIDATE_WITHOUT_SAVE = RepoUtil.createTransientProp("validateWithoutSave");
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     private static final String PARAM_NODEREF = "nodeRef";
     private String renderedModal;
     private boolean showConfirmationPopup;
@@ -198,29 +136,8 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
     }
 
     /** @param event */
-<<<<<<< HEAD
-    public void openFromChildList(ActionEvent event) {
-        if (!ActionUtil.hasParam(event, "nodeRef")) {
-            return;
-        }
-        NodeRef childNodeRef = new NodeRef(ActionUtil.getParam(event, "nodeRef"));
-        NodeRef docRef = BeanHelper.getGeneralService().getAncestorNodeRefWithType(childNodeRef, DocumentCommonModel.Types.DOCUMENT);
-        if (docRef != null) {
-            openFromDocumentList(docRef);
-        }
-    }
-
-    /** @param event */
-    public void openFromDocumentList(ActionEvent event) {
-        openFromDocumentList(new NodeRef(ActionUtil.getParam(event, "nodeRef")));
-    }
-
-    /** @param docRef */
-    private void openFromDocumentList(NodeRef docRef) {
-=======
     public void openFromDocumentList(ActionEvent event) {
         NodeRef docRef = new NodeRef(ActionUtil.getParam(event, "nodeRef"));
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         if (validateExists(docRef)) {
             // TODO if isIncomingInvoice() then inEditMode = true;
             boolean inEditMode = getDocumentDynamicService().isImapOrDvk(docRef);
@@ -230,82 +147,11 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
 
     /** @param event */
     public void createDraft(ActionEvent event) {
-<<<<<<< HEAD
-        String documentTypeId = ActionUtil.getParam(event, "typeId");
-        DocumentDynamic doc = getDocumentDynamicService().createNewDocumentInDrafts(documentTypeId).getFirst();
-        setLocationFromVolume(doc);
-        open(doc.getNodeRef(), doc, true);
-    }
-
-    /** @param event */
-    public void createDraftForArchivalActivity(ActionEvent event) {
-        NodeRef archivalActivityNodeRef = new NodeRef(ActionUtil.getParam(event, "archivalNodeRef"));
-        String documentTypeId = BeanHelper.getParametersService().getStringParameter(Parameters.ARCHIVAL_ACTIVITY_DOC_TYPE_ID);
-        DocumentDynamic doc = BeanHelper.getDocumentDynamicService().createNewDocumentForArchivalActivity(archivalActivityNodeRef, documentTypeId);
-        if (doc == null) {
-            MessageUtil.addErrorMessage("document_create_invalid_doc_type", documentTypeId);
-            return;
-        }
-        setLocationFromVolume(doc);
-        open(doc.getNodeRef(), doc, true);
-    }
-
-    /** When creating draft from caseFile/volume view, set caseFile/volume location as document location */
-    private void setLocationFromVolume(DocumentDynamic doc) {
-        NodeRef functionRef = null;
-        NodeRef seriesRef = null;
-        NodeRef volumeRef = null;
-        DialogConfig currentDialog = null;
-        try {
-            currentDialog = BeanHelper.getDialogManager() != null ? BeanHelper.getDialogManager().getCurrentDialog() : null;
-        } catch (Exception e) {
-
-        }
-        String previousDialogName = currentDialog != null ? currentDialog.getName() : null;
-        if ("caseFileDialog".equals(previousDialogName)) {
-            CaseFile caseFile = BeanHelper.getCaseFileDialog().getCaseFile();
-            WmNode node = caseFile != null ? caseFile.getNode() : null;
-            if (caseFile != null && isValidLocation(node, caseFile.getSeries(), doc.getDocumentTypeId())) {
-                volumeRef = caseFile.getNodeRef();
-                seriesRef = caseFile.getSeries();
-                functionRef = caseFile.getFunction();
-            }
-        } else if ("caseDocListDialog".equals(previousDialogName)) {
-            Volume volume = BeanHelper.getCaseDocumentListDialog().getParent();
-            Node node = volume != null ? volume.getNode() : null;
-            if (volume != null && isValidLocation(node, volume.getSeriesNodeRef(), doc.getDocumentTypeId())) {
-                volumeRef = node.getNodeRef();
-                seriesRef = volume.getSeriesNodeRef();
-                functionRef = volume.getFunctionNodeRef();
-            }
-        }
-        if (functionRef != null) {
-            doc.setFunction(functionRef);
-            doc.setCase(null);
-        }
-        if (seriesRef != null) {
-            doc.setSeries(seriesRef);
-        }
-        if (volumeRef != null) {
-            doc.setVolume(volumeRef);
-        }
-    }
-
-    private boolean isValidLocation(Node node, NodeRef seriesRef, String documentTypeId) {
-        if (seriesRef != null && node != null && isSaved(node) && isInWorkspace(node) && BeanHelper.getGeneralService().getStore().equals(node.getNodeRef().getStoreRef())) {
-            Series series = BeanHelper.getSeriesService().getSeriesByNodeRef(seriesRef);
-            return series.getDocType().contains(documentTypeId);
-        }
-        return false;
-    }
-
-=======
         String documentTypeId = ActionUtil.getParam(event, "documentTypeId");
         DocumentDynamic doc = getDocumentDynamicService().createNewDocumentInDrafts(documentTypeId).getFirst();
         open(doc.getNodeRef(), doc, true);
     }
 
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     public void changeByNewDocument(@SuppressWarnings("unused") ActionEvent event) {
         DocumentDynamic baseDoc = getDocument();
         String docName;
@@ -319,14 +165,8 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
                     , getDocumentType().getName());
         }
 
-<<<<<<< HEAD
-        Map<QName, Serializable> overrides = new HashMap<QName, Serializable>(2);
-        overrides.put(DocumentCommonModel.Props.DOC_NAME, docName);
-        overrides.put(DocumentCommonModel.Props.UPDATE_METADATA_IN_FILES, Boolean.TRUE);
-=======
         Map<QName, Serializable> overrides = new HashMap<QName, Serializable>(1);
         overrides.put(DocumentCommonModel.Props.DOC_NAME, docName);
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
         NodeRef docRef = getDocumentDynamicService().copyDocumentToDrafts(baseDoc, overrides,
                 DocumentCommonModel.Props.REG_NUMBER,
@@ -337,23 +177,13 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
 
         open(docRef, true);
 
-<<<<<<< HEAD
-        addTargetAssoc(baseDoc.getNodeRef(), DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP, false, true);
-=======
         addTargetAssoc(baseDoc.getNodeRef(), DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP, false);
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     public void copyDocument(@SuppressWarnings("unused") ActionEvent event) {
         DocumentDynamic baseDoc = getCurrentSnapshot().document;
 
-<<<<<<< HEAD
-        Map<QName, Serializable> overrides = new HashMap<QName, Serializable>(1);
-        overrides.put(DocumentCommonModel.Props.UPDATE_METADATA_IN_FILES, Boolean.TRUE);
-        NodeRef docRef = getDocumentDynamicService().copyDocumentToDrafts(baseDoc, overrides,
-=======
         NodeRef docRef = getDocumentDynamicService().copyDocumentToDrafts(baseDoc, null,
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
                 DocumentSpecificModel.Props.ENTRY_DATE,
                 DocumentSpecificModel.Props.ENTRY_SAP_NUMBER,
                 DocumentCommonModel.Props.REG_NUMBER,
@@ -384,16 +214,8 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
             BeanHelper.getDocumentLockHelperBean().handleLockedNode("docdyn_createAssoc_error_docLocked");
             return;
         }
-<<<<<<< HEAD
-        Pair<DocumentDynamic, AssociationModel> newDocumentAndAssociatonModel = BeanHelper.getDocumentAssociationsService().createAssociatedDocFromModel(baseDocRef, assocModelRef);
-        DocumentDynamic newDocument = newDocumentAndAssociatonModel.getFirst();
-        open(newDocument.getNodeRef(), newDocument, true);
-        addWorkflowAssocs(baseDocRef, newDocumentAndAssociatonModel.getSecond().getAssociationType().getAssocBetweenDocs());
-        getAssocsBlockBean().sortDocAssocInfos();
-=======
         DocumentDynamic newDocument = BeanHelper.getDocumentAssociationsService().createAssociatedDocFromModel(baseDocRef, assocModelRef);
         open(newDocument.getNodeRef(), newDocument, true);
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     public void createFollowUpReport(@SuppressWarnings("unused") ActionEvent event) {
@@ -432,11 +254,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
     public void searchDocsAndCases(@SuppressWarnings("unused") ActionEvent event) {
         getCurrentSnapshot().showDocsAndCasesAssocs = true;
         SearchBlockBean searchBlockBean = getSearchBlock();
-<<<<<<< HEAD
-        searchBlockBean.init(getDataProvider());
-=======
         searchBlockBean.init(getDocument());
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         searchBlockBean.setExpanded(true);
     }
 
@@ -447,15 +265,9 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
 
     public void addFollowUpHandlerSimilarDocuments(ActionEvent event) {
         NodeRef nodeRef = new NodeRef(ActionUtil.getParam(event, PARAM_NODEREF));
-<<<<<<< HEAD
-        boolean isFoundSimilar = getSearchBlock().isFoundSimilar();
-        addTargetAssocAndReopen(nodeRef, DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP);
-        getSearchBlock().setFoundSimilar(isFoundSimilar);
-=======
         addTargetAssocAndReopen(nodeRef, DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP);
         getSearchBlock().setShowSimilarDocumentsBlock(false);
         setShowSaveAndRegisterButton(true);
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     public void addReplyHandler(ActionEvent event) {
@@ -464,49 +276,17 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
     }
 
     private void addTargetAssocAndReopen(NodeRef targetRef, QName targetType) {
-<<<<<<< HEAD
-        addTargetAssoc(targetRef, targetType, true, true);
-        addWorkflowAssocs(targetRef, targetType);
-=======
         addTargetAssoc(targetRef, targetType, true);
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         updateFollowUpOrReplyProperties(targetRef);
         openOrSwitchModeCommon(getDocument(), true);
         getSearchBlock().setShow(false);
         MessageUtil.addInfoMessage("document_assocAdd_success");
     }
 
-<<<<<<< HEAD
-    private void addWorkflowAssocs(NodeRef targetRef, QName targetType) {
-        String currentDocTypeId = getDocumentType() != null ? getDocumentType().getId() : null;
-        QName assocType = DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP.equals(targetType) ? DocumentAdminModel.Types.FOLLOWUP_ASSOCIATION
-                : DocumentAdminModel.Types.REPLY_ASSOCIATION;
-        DocumentAssociationsService documentAssociationsService = BeanHelper.getDocumentAssociationsService();
-        if (BeanHelper.getDocumentAssociationsService().isAddCompoundWorkflowAssoc(targetRef, currentDocTypeId, assocType)) {
-            WorkflowService workflowService = BeanHelper.getWorkflowService();
-            WmNode document = getNode();
-            for (NodeRef workflowRef : documentAssociationsService.getDocumentIndependentWorkflowAssocs(targetRef)) {
-                addTargetAssoc(workflowRef, DocumentCommonModel.Assocs.WORKFLOW_DOCUMENT, true, false);
-                getDocumentDynamicService().setOwnerFromActiveResponsibleTask(
-                        workflowService.getCompoundWorkflowOfType(workflowRef, Collections.singletonList(WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW)),
-                        document.getNodeRef(), document.getProperties());
-            }
-        }
-    }
-
-    private void addTargetAssoc(NodeRef targetRef, QName targetType, boolean isSourceAssoc, boolean skipNotSearchable) {
-        AssocsBlockBean assocsBlockBean = getAssocsBlockBean();
-        AssociationRef assocRef = RepoUtil.addAssoc(getNode(), targetRef, targetType, true);
-        // TODO: Riina: clarify this logic (would be better if retrieving associations could be done on common basis,
-        // but as compoundWorkflow associations are retrieved differently, this is workaround to retrieve workflow associations here)
-        boolean getAsSourceAssoc = DocumentCommonModel.Assocs.WORKFLOW_DOCUMENT.equals(targetType) ? !isSourceAssoc : isSourceAssoc;
-        final DocAssocInfo docAssocInfo = getDocumentAssociationsService().getDocListUnitAssocInfo(assocRef, getAsSourceAssoc, skipNotSearchable);
-=======
     private void addTargetAssoc(NodeRef targetRef, QName targetType, boolean isSourceAssoc) {
         AssocsBlockBean assocsBlockBean = getAssocsBlockBean();
         AssociationRef assocRef = RepoUtil.addAssoc(getNode(), targetRef, targetType, true);
         final DocAssocInfo docAssocInfo = getDocumentAssociationsService().getDocAssocInfo(assocRef, isSourceAssoc);
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         assocsBlockBean.getDocAssocInfos().add(docAssocInfo);
     }
 
@@ -537,19 +317,6 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         updateAccessRestrictionProperties(docProps, seriesRef);
     }
 
-<<<<<<< HEAD
-    public void addNotification() {
-        BeanHelper.getNotificationService().addNotificationAssocForCurrentUser(getNode().getNodeRef(), UserModel.Assocs.DOCUMENT_NOTIFICATION,
-                UserModel.Aspects.DOCUMENT_NOTIFICATIONS);
-    }
-
-    public void removeNotification() {
-        BeanHelper.getNotificationService().removeNotificationAssocForCurrentUser(getNode().getNodeRef(), UserModel.Assocs.DOCUMENT_NOTIFICATION,
-                UserModel.Aspects.DOCUMENT_NOTIFICATIONS);
-    }
-
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     private void updateAccessRestrictionProperties(Map<String, Object> docProps, NodeRef seriesRef) {
         final String accessRestriction = (String) docProps.get(DocumentCommonModel.Props.ACCESS_RESTRICTION.toString());
         if (StringUtils.isBlank(accessRestriction)) {
@@ -586,27 +353,12 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         }
     }
 
-<<<<<<< HEAD
-    private SearchBlockBean getSearchBlock() {
-        return (SearchBlockBean) getBlocks().get(SearchBlockBean.class);
-    }
-
-    @Override
-    public AbstractSearchBlockBean getSearch() {
-        return (AbstractSearchBlockBean) getBlocks().get(SearchBlockBean.class);
-    }
-
-    @Override
-    public LogBlockBean getLog() {
-        return (LogBlockBean) getBlocks().get(LogBlockBean.class);
-=======
     public void hideSearchBlock(@SuppressWarnings("unused") ActionEvent event) {
         getSearchBlock().setExpanded(false);
     }
 
     private SearchBlockBean getSearchBlock() {
         return (SearchBlockBean) getBlocks().get(SearchBlockBean.class);
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     public void addFile(ActionEvent event) {
@@ -623,13 +375,6 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         return getCurrentSnapshot().showDocsAndCasesAssocs;
     }
 
-<<<<<<< HEAD
-    public boolean isShowAddAssocsLink() {
-        return BeanHelper.getDocumentDialogHelperBean().isInWorkspace() && !isInEditMode();
-    }
-
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     @Override
     public List<DialogButtonConfig> getAdditionalButtons() {
         DocDialogSnapshot snapshot = getCurrentSnapshot();
@@ -641,16 +386,9 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         WmNode node = document.getNode();
 
         List<DialogButtonConfig> buttons = new ArrayList<DialogButtonConfig>(1);
-<<<<<<< HEAD
-        if (snapshot.inEditMode && SystematicDocumentType.INCOMING_LETTER.isSameType(document.getDocumentTypeId()) && ((DocumentType)
-                config.getDocType()).isRegistrationEnabled()
-                && RegisterDocumentEvaluator.isNotRegistered(node)) {
-            if (getSearchBlock().isFoundSimilar()) {
-=======
         if (snapshot.inEditMode && SystematicDocumentType.INCOMING_LETTER.isSameType(document.getDocumentTypeId()) && config.getDocType().isRegistrationEnabled()
                 && RegisterDocumentEvaluator.isNotRegistered(node)) {
             if (getSearchBlock().isShowSimilarDocumentsBlock() || getShowSaveAndRegisterButton()) {
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
                 buttons.add(new DialogButtonConfig("documentRegisterButton", null, "document_registerDoc_continue",
                         "#{DocumentDynamicDialog.saveAndRegisterContinue}", "false", null));
             } else {
@@ -708,31 +446,16 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         private boolean showDocsAndCasesAssocs;
         private boolean saveAndRegister;
         private boolean saveAndRegisterContinue;
-<<<<<<< HEAD
-        private boolean confirmMoveAssociatedDocuments;
-        private boolean moveAssociatedDocumentsConfirmed;
-        private DocumentConfig config;
-        private boolean needRegisteringAfterCreateCaseFile;
-        private boolean needSendNotificationAfterCreateCaseFile;
-=======
         private boolean showSaveAndRegisterContinueButton;
         private boolean confirmMoveAssociatedDocuments;
         private boolean moveAssociatedDocumentsConfirmed;
         private DocumentConfig config;
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
         @Override
         public String getOpenDialogNavigationOutcome() {
             return AlfrescoNavigationHandler.DIALOG_PREFIX + "documentDynamicDialog";
         }
 
-<<<<<<< HEAD
-        public void setDocument(DocumentDynamic document) {
-            this.document = document;
-        }
-
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         @Override
         public String toString() {
             return toString(false);
@@ -860,58 +583,18 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         switchMode(true);
     }
 
-<<<<<<< HEAD
-    public void sendAccessRestrictionChangedEmails(ActionEvent event) {
-        String paramName = "missingEmailsConfirmed";
-        boolean ignoreMissingEmails = ActionUtil.hasParam(event, paramName);
-        DocumentDynamic document = getDocument();
-        Pair<List<String>, List<SendInfo>> existingAndMissingEmails = BeanHelper.getNotificationService().getExistingAndMissingEmails(BeanHelper.getSendOutService().getDocumentSendInfos(document.getNodeRef()));
-        List<SendInfo> missingEmails = existingAndMissingEmails.getSecond();
-        if (!ignoreMissingEmails && !missingEmails.isEmpty()) {
-=======
     public void sendAccessRestrictionChangedEmails(@SuppressWarnings("unused") ActionEvent event) {
         DocumentDynamic document = getDocument();
         List<SendInfo> missingEmails = BeanHelper.getNotificationService().processAccessRestrictionChangedNotification(document,
                 BeanHelper.getSendOutService().getDocumentSendInfos(document.getNodeRef()), true);
         if (!missingEmails.isEmpty()) {
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             List<String> names = new ArrayList<String>(missingEmails.size());
             for (SendInfo sendInfo : missingEmails) {
                 names.add(sendInfo.getRecipient());
             }
-<<<<<<< HEAD
-            Map<String, String> params = new HashMap<String, String>(1);
-            params.put(paramName, "true");
-            BeanHelper.getUserConfirmHelper().setup(new MessageDataImpl("docdyn_accessRestriction_missingEmailsConfirm", StringUtils.join(names, ", ")), null,
-                    "#{DocumentDynamicDialog.sendAccessRestrictionChangedEmails}", params, null, "#{DocumentDynamicDialog.dontSendAccessRestrictionChangedEmails}", null);
-            showConfirmationPopup = false; // we don't need this pop-up anymore
-            return;
-        }
-        
-        if (isCreateNewCaseFile()) {
-            getCurrentSnapshot().needSendNotificationAfterCreateCaseFile = true;
-            navigateCreateNewCaseFile();
-        } else {
-            notifyAccessRestrictionChanged(document, existingAndMissingEmails.getFirst());
-            cancel();
-        }
-    }
-
-    public void notifyAccessRestrictionChanged(DocumentDynamic document, List<String> emails) {
-        BeanHelper.getNotificationService().processAccessRestrictionChangedNotification(document, emails);
-    }
-
-    public void dontSendAccessRestrictionChangedEmails(@SuppressWarnings("unused") ActionEvent event) {
-        if (isCreateNewCaseFile()) {
-
-        } else {
-            cancel();
-        }
-=======
             MessageUtil.addInfoMessage("docdyn_accessRestriction_missingEmails", StringUtils.join(names, ", "));
         }
         cancel();
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     public String cancel(@SuppressWarnings("unused") ActionEvent event) {
@@ -925,9 +608,6 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
             LOG.warn(e.getMessage(), e);
             return cancel(false);
         }
-<<<<<<< HEAD
-        if (!isInEditMode() || !getCurrentSnapshot().viewModeWasOpenedInThePast || !canRestore()) {
-=======
         boolean isInEditMode = isInEditMode();
         if (isInEditMode) {
             try {
@@ -938,7 +618,6 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
             }
         }
         if (!isInEditMode || !getCurrentSnapshot().viewModeWasOpenedInThePast || !canRestore()) {
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             getDocumentDynamicService().deleteDocumentIfDraft(getDocument().getNodeRef());
             return super.cancel(); // closeDialogSnapshot
         }
@@ -947,25 +626,6 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         return null;
     }
 
-<<<<<<< HEAD
-    @Override
-    /** Transaction created by BaseDialogBean.finish method is not needed by us here, and it would be clearer to turn it off - 
-     * but we haven't turned it off and thus it is still created and therefore it is the super transaction.
-     * Actions in finishImpl method are performed in two separate child transactions for the following reason: 
-     * integrity checker runs at the end of the transaction and we want integrity checker to run before switchMode is run.
-     */
-    protected String finishImpl(final FacesContext context, String outcome) throws Throwable {
-        if (!isInEditMode()) {
-            throw new RuntimeException("Document metadata block is not in edit mode");
-        }
-
-        if (BeanHelper.getDocumentLockHelperBean().isLockReleased(getDocument().getNodeRef())) {
-            MessageUtil.addErrorMessage("lock_document_administrator_released");
-            WebUtil.navigateTo("dialog:close");
-            return null;
-        }
-
-=======
     private boolean isNodeRefValid() {
         NodeRef docRef = getDocument().getNodeRef();
         return BeanHelper.getNodeService().exists(docRef);
@@ -980,7 +640,6 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
             MessageUtil.addErrorMessage("docdyn_deleted");
             return null;
         }
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         if (isSaveAndRegister()) {
             // select followup document before saving
             if (checkSimilarDocuments()) {
@@ -998,19 +657,6 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         }
         final DocumentDynamic savedDocument;
         final boolean isDraft = getDocument().isDraft();
-<<<<<<< HEAD
-        final boolean createNewCaseFile = isCreateNewCaseFile();
-        try {
-            if (!createNewCaseFile) {
-                savedDocument = save(getDocument(), getConfig().getSaveListenerBeanNames(), getCurrentSnapshot().confirmMoveAssociatedDocuments, true);
-            }
-            // when new case file is created, actual saving (and registering, if required) is postponed to after saving case file
-            else {
-                savedDocument = getDocument();
-                savedDocument.setProp(TEMP_VALIDATE_WITHOUT_SAVE, Boolean.TRUE);
-                getDocumentDynamicService().validateDocument(getConfig().getSaveListenerBeanNames(), savedDocument);
-                savedDocument.getNode().getProperties().remove(TEMP_VALIDATE_WITHOUT_SAVE);
-=======
         try {
             // Do in new transaction, because we want to catch integrity checker exceptions now, not at the end of this method when mode is already switched
             Pair<DocumentDynamic, List<Pair<NodeRef, NodeRef>>> result = getTransactionService().getRetryingTransactionHelper().doInTransaction(
@@ -1033,7 +679,6 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
                     }
                     snapshot.document.getNode().updateNodeRef(pair.getSecond());
                 }
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             }
 
         } catch (NodeLockedException e) {
@@ -1055,18 +700,9 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
             @Override
             public String execute() throws Throwable {
                 if (isSaveAndRegister() || isSaveAndRegisterContinue()) {
-<<<<<<< HEAD
-                    getCurrentSnapshot().needRegisteringAfterCreateCaseFile = true;
-                    setSaveAndRegister(false);
-                    setSaveAndRegisterContinue(false);
-                    if (!createNewCaseFile) {
-                        register(isDraft);
-                    }
-=======
                     setSaveAndRegister(false);
                     setSaveAndRegisterContinue(false);
                     register(isDraft);
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
                 }
                 if (savedDocument.isAccessRestrictionPropsChanged() && BeanHelper.getSendOutService().hasDocumentSendInfos(savedDocument.getNodeRef())) {
                     isFinished = false;
@@ -1076,101 +712,25 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
                     showConfirmationPopup = true;
                     return null;
                 }
-<<<<<<< HEAD
-                if (!createNewCaseFile) {
-                    // Switch from edit mode back to view mode
-                    switchMode(false);
-                } else {
-                    navigateCreateNewCaseFile();
-                }
-                return null;
-            }
-
-        }, false, true);
-    }
-
-    public DocumentDynamic save(final DocumentDynamic document, final List<String> saveListenerBeanNames, final boolean relocateAssocDocs, boolean newTransaction) {
-        final DocumentDynamic savedDocument;
-        Pair<DocumentDynamic, List<Pair<NodeRef, NodeRef>>> result;
-        // Do in new transaction, because we want to catch integrity checker exceptions now, not at the end of this method when mode is already switched
-        RetryingTransactionCallback<Pair<DocumentDynamic, List<Pair<NodeRef, NodeRef>>>> callback = new RetryingTransactionCallback<Pair<DocumentDynamic, List<Pair<NodeRef, NodeRef>>>>() {
-            @Override
-            public Pair<DocumentDynamic, List<Pair<NodeRef, NodeRef>>> execute() throws Throwable {
-                // May throw UnableToPerformException or UnableToPerformMultiReasonException
-                ((FileBlockBean) getBlocks().get(FileBlockBean.class)).updateFilesProperties();
-                return getDocumentDynamicService().updateDocumentGetDocAndNodeRefs(document, saveListenerBeanNames, relocateAssocDocs, true);
-            }
-        };
-        if (newTransaction) {
-            result = getTransactionService().getRetryingTransactionHelper().doInTransaction(callback, false, true);
-        } else {
-            try {
-                result = callback.execute();
-            } catch (Throwable e) {
-                throw new RuntimeException(e);
-            }
-        }
-        savedDocument = result.getFirst();
-        for (Pair<NodeRef, NodeRef> pair : result.getSecond()) {
-            if (pair.getFirst().equals(pair.getSecond())) {
-                continue;
-            }
-            for (DocDialogSnapshot snapshot : getSnapshots()) {
-                if (!pair.getFirst().equals(snapshot.document.getNodeRef())) {
-                    continue;
-                }
-                snapshot.document.getNode().updateNodeRef(pair.getSecond());
-            }
-        }
-        return savedDocument;
-    }
-
-    private void navigateCreateNewCaseFile() {
-        String caseFileType = getDocument().getProp(DocumentLocationGenerator.CASE_FILE_TYPE_PROP);
-        BeanHelper.getCaseFileDialog().createCaseFile(caseFileType, getDocument(), getCurrentSnapshot().needRegisteringAfterCreateCaseFile,
-                getCurrentSnapshot().needSendNotificationAfterCreateCaseFile, getConfig().getSaveListenerBeanNames());
-    }
-
-    private boolean isCreateNewCaseFile() {
-        NodeRef volumeRef = getDocument().getVolume();
-        final boolean createNewCaseFile = volumeRef != null && RepoUtil.isUnsaved(volumeRef);
-        return createNewCaseFile;
-=======
                 // Switch from edit mode back to view mode
                 switchMode(false);
                 return null;
             }
         }, false, true);
 
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     private boolean isRelocatingAssociations() {
         DocumentDynamic document = getDocument();
-<<<<<<< HEAD
-
-        if (!RepoUtil.isSaved(document.getVolume())) {
-            return false;
-        }
-
-        NodeRef newParentRef = getParent(document.getVolume(), StringUtils.trimToNull((String) document.getProp(DocumentLocationGenerator.CASE_LABEL_EDITABLE)));
-        // For documents not under volume or case, check location change against associated document
-        // TODO : Riina: in 3.10 branch, add document.isFromWebService() check here
-=======
         NodeRef newParentRef = getParent(document.getVolume(), StringUtils.trimToNull((String) document.getProp(DocumentLocationGenerator.CASE_LABEL_EDITABLE)));
         // For documents not under volume or case, check location change against associated document
         // TODO : in 3.10 branch, add document.isFromWebService() check here
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         if (document.isDraftOrImapOrDvk() || document.isIncomingInvoice()) {
             List<DocAssocInfo> docAssocs = getAssocsBlockBean().getDocAssocInfos();
             if (docAssocs == null || docAssocs.isEmpty()) {
                 return false;
             }
-<<<<<<< HEAD
-            NodeRef associatedDocParentRef = getNodeService().getPrimaryParent(docAssocs.get(0).getOtherNodeRef()).getParentRef();
-=======
             NodeRef associatedDocParentRef = getNodeService().getPrimaryParent(docAssocs.get(0).getNodeRef()).getParentRef();
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             return !associatedDocParentRef.equals(newParentRef);
         }
         NodeRef currentParentRef = getNodeService().getPrimaryParent(document.getNodeRef()).getParentRef();
@@ -1183,11 +743,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
     public static NodeRef getParent(NodeRef volumeRef, String caseLabel) {
         Volume volume = BeanHelper.getVolumeService().getVolumeByNodeRef(volumeRef);
         NodeRef parentRef = null;
-<<<<<<< HEAD
-        if (volume.isContainsCases() && caseLabel != null) {
-=======
         if (volume.isContainsCases()) {
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             Case existingCase = BeanHelper.getCaseService().getCaseByTitle(caseLabel, volumeRef, null);
             parentRef = existingCase != null ? existingCase.getNode().getNodeRef() : null;
         } else {
@@ -1210,12 +766,9 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
 
     private void setSaveAndRegisterContinue(boolean saveAndRegisterContinue) {
         getCurrentSnapshot().saveAndRegisterContinue = saveAndRegisterContinue;
-<<<<<<< HEAD
-=======
         if (saveAndRegisterContinue) {
             setShowSaveAndRegisterButton(true);
         }
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     private boolean isSaveAndRegisterContinue() {
@@ -1226,8 +779,6 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         return getCurrentSnapshot().saveAndRegister;
     }
 
-<<<<<<< HEAD
-=======
     private boolean setShowSaveAndRegisterButton(boolean showSaveAndRegisterContinueButton) {
         return getCurrentSnapshot().showSaveAndRegisterContinueButton = showSaveAndRegisterContinueButton;
     }
@@ -1236,7 +787,6 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         return getCurrentSnapshot().showSaveAndRegisterContinueButton;
     }
 
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     private boolean checkSimilarDocuments() {
         SearchBlockBean searchBlock = getSearchBlock();
         // search for similar documents if it's an incoming letter
@@ -1244,54 +794,13 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
             String senderRegNum = getDocument().getProp(DocumentSpecificModel.Props.SENDER_REG_NUMBER);
             searchBlock.findSimilarDocuments(senderRegNum);
         }
-<<<<<<< HEAD
-        if (searchBlock.isFoundSimilar()) {
-=======
         if (searchBlock.isShowSimilarDocumentsBlock()) {
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             return true;
         }
         return false;
     }
 
     public void saveAndRegisterContinue() {
-<<<<<<< HEAD
-        if (checkCanRegister()) {
-            // similar documents were found before, finish registering
-            setSaveAndRegister(false);
-            setSaveAndRegisterContinue(true);
-            super.finish();
-            getSearchBlock().setFoundSimilar(false);
-        }
-    }
-
-    public void saveAndRegister() {
-        if (checkCanRegister()) {
-            setSaveAndRegister(true);
-            setSaveAndRegisterContinue(false);
-            super.finish();
-        }
-    }
-
-    private boolean checkCanRegister() {
-        WmNode node = getNode();
-        try {
-            BeanHelper.getDocumentLockHelperBean().checkAssocDocumentLocks(node, null);
-        } catch (NodeLockedException e) {
-            BeanHelper.getDocumentLockHelperBean().handleLockedNode("document_registerDoc_error_docLocked_initialDocument", e);
-            setSaveAndRegister(false);
-            setSaveAndRegisterContinue(false);
-            return false;
-        }
-
-        if (new DocumentNotInDraftsFunctionActionEvaluator().evaluate(node)) {
-            return true;
-        }
-        setSaveAndRegister(false);
-        setSaveAndRegisterContinue(false);
-        MessageUtil.addErrorMessage("document_registerDoc_error_drafts_function");
-        return false;
-=======
         // similar documents were found before, finish registering
         setSaveAndRegister(false);
         setSaveAndRegisterContinue(true);
@@ -1303,7 +812,6 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         setSaveAndRegister(true);
         setSaveAndRegisterContinue(false);
         super.finish();
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     public void changeDocLocationConfirmed(ActionEvent event) {
@@ -1312,20 +820,10 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
     }
 
     private void register(boolean isDraft) {
-<<<<<<< HEAD
-        register(isDraft, getDocument(), getNode(), getDocumentDialogHelperBean().getNode());
-    }
-
-    public void register(boolean isDraft, DocumentDynamic documentDynamic, WmNode node, Node document) {
-        documentDynamic.setProp(RepoUtil.createTransientProp(DocumentService.TransientProps.TEMP_DOCUMENT_IS_DRAFT), isDraft);
-        EventsLoggingHelper.disableLogging(node, DocumentService.TransientProps.TEMP_LOGGING_DISABLED_DOCUMENT_METADATA_CHANGED);
-        try {
-=======
         getDocument().setProp(RepoUtil.createTransientProp(DocumentService.TransientProps.TEMP_DOCUMENT_IS_DRAFT), isDraft);
         EventsLoggingHelper.disableLogging(getNode(), DocumentService.TransientProps.TEMP_LOGGING_DISABLED_DOCUMENT_METADATA_CHANGED);
         try {
             Node document = getDocumentDialogHelperBean().getNode();
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
             DocumentParentNodesVO parentNodes = getDocumentService().getAncestorNodesByDocument(document.getNodeRef());
             getDocumentService().setTransientProperties(document, parentNodes);
             document = getDocumentService().registerDocument(document);
@@ -1339,11 +837,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
             }
             MessageUtil.addStatusMessage(FacesContext.getCurrentInstance(), e);
         } catch (NodeLockedException e) {
-<<<<<<< HEAD
-            BeanHelper.getDocumentLockHelperBean().handleLockedNode("document_registerDoc_error_docLocked", e);
-=======
             BeanHelper.getDocumentLockHelperBean().handleLockedNode("document_registerDoc_error_docLocked");
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         }
     }
 
@@ -1367,29 +861,13 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         return true;
     }
 
-<<<<<<< HEAD
-    public void showDocumentLink(ActionEvent event) {
-        renderedModal = DocumentLinkGeneratorModalComponent.DOCUMENT_LINK_MODAL_ID;
-    }
-
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     public void setAccessRestrictionChangeReason(ActionEvent event) {
         getDocument().setProp(TEMP_ACCESS_RESTRICTION_CHANGE_REASON, ((ChangeReasonEvent) event).getReason());
         finish();
     }
 
-<<<<<<< HEAD
-    public String getFetchAndResetRenderedModal() {
-        try {
-            return renderedModal;
-        } finally {
-            renderedModal = null;
-        }
-=======
     public String getRenderedModal() {
         return renderedModal;
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     public boolean isModalRendered() {
@@ -1406,37 +884,17 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         if ((searchBlockBean.isExpanded() && !getCurrentSnapshot().inEditMode)) {
             return true;
         }
-<<<<<<< HEAD
-        return getCurrentSnapshot().inEditMode && searchBlockBean.isShow() && !searchBlockBean.isFoundSimilar()
-                && (getDocument().isImapOrDvk() && !getDocument().isNotEditable());
-    }
-
-    public boolean isAssocsBlockExpanded() {
-        return isShowSearchBlock();
-    }
-
-    public boolean isShowTypeBlock() {
-        return !getCurrentSnapshot().document.isDraft() && getCurrentSnapshot().inEditMode
-                && DocumentStatus.WORKING.getValueName().equals(getCurrentSnapshot().document.getDocStatus())
-                && validateViewMetaDataPermission(getCurrentSnapshot().document.getNodeRef());
-
-=======
         return getCurrentSnapshot().inEditMode && searchBlockBean.isShow() && !searchBlockBean.isShowSimilarDocumentsBlock()
                 && (getDocument().isImapOrDvk() && !getDocument().isNotEditable());
     }
 
     public boolean isShowTypeBlock() {
         return getCurrentSnapshot().inEditMode && getDocument().isImapOrDvk() && !getDocument().isNotEditable();
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     public boolean isShowFoundSimilar() {
         SearchBlockBean searchBlockBean = (SearchBlockBean) getBlocks().get(SearchBlockBean.class);
-<<<<<<< HEAD
-        return getCurrentSnapshot().inEditMode && searchBlockBean.isFoundSimilar();
-=======
         return getCurrentSnapshot().inEditMode && searchBlockBean.isShowSimilarDocumentsBlock();
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     // =========================================================================
@@ -1449,12 +907,8 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
             return;
         }
         if (event instanceof AddToFavoritesEvent) {
-<<<<<<< HEAD
-            BeanHelper.getDocumentFavoritesService().addFavorite(getNode().getNodeRef(), ((AddToFavoritesEvent) event).getFavoriteDirectoryName(), true);
-=======
             getDocumentService().addFavorite(getNode().getNodeRef(), ((AddToFavoritesEvent) event).getFavoriteDirectoryName(), true);
             renderedModal = null;
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         }
     }
 
@@ -1497,11 +951,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
     // Permission checks on open or switch mode
     // =========================================================================
 
-<<<<<<< HEAD
-    public static boolean validateOpen(NodeRef docRef, boolean inEditMode) {
-=======
     private static boolean validateOpen(NodeRef docRef, boolean inEditMode) {
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         if (!validateExists(docRef) || !validateViewMetaDataPermission(docRef) || (inEditMode && !validateEditMetaDataPermission(docRef))
                 || (inEditMode && !getDocumentLockHelperBean().isLockable(docRef))) {
             return false;
@@ -1509,11 +959,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         return true;
     }
 
-<<<<<<< HEAD
-    public static boolean validateExists(NodeRef docRef) {
-=======
     private static boolean validateExists(NodeRef docRef) {
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         Assert.notNull(docRef, "docRef is not given");
         if (!BeanHelper.getNodeService().exists(docRef)) {
             MessageUtil.addErrorMessage("document_restore_error_docDeleted");
@@ -1530,11 +976,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         return validatePermissionWithErrorMessage(docRef, DocumentCommonModel.Privileges.EDIT_DOCUMENT);
     }
 
-<<<<<<< HEAD
-    public static boolean validatePermissionWithErrorMessage(NodeRef docRef, String permission) {
-=======
     private static boolean validatePermissionWithErrorMessage(NodeRef docRef, String permission) {
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         try {
             validatePermission(docRef, permission);
         } catch (UnableToPerformException e) {
@@ -1562,11 +1004,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         if (snapshot == null) {
             return null;
         }
-<<<<<<< HEAD
-        return (DocumentType) snapshot.config.getDocType();
-=======
         return snapshot.config.getDocType();
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     public DocumentTypeVersion getDocumentVersion() {
@@ -1690,10 +1128,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         getPropertySheetStateBean().reset(getStateHolders(), provider);
         getDocumentDialogHelperBean().reset(provider);
         resetModals();
-<<<<<<< HEAD
-=======
         setShowSaveAndRegisterButton(false);
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         super.resetOrInit(provider); // reset blocks
     }
 
@@ -1724,24 +1159,13 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
                 , "docdyn_deleteDocumentReason_modal_header", "docdyn_deleteDocumentReason");
         docDeleteReasonModal.setActionListener(application.createMethodBinding("#{DocumentDynamicDialog.deleteDocument}", UIActions.ACTION_CLASS_ARGS));
         docDeleteReasonModal.setFinishButtonLabelId("delete");
-<<<<<<< HEAD
-        docDeleteReasonModal.setId("document-delete-reason-popup-" + context.getViewRoot().createUniqueId());
-
-        DocumentLinkGeneratorModalComponent linkModal = new DocumentLinkGeneratorModalComponent();
-        linkModal.setId("document-link-modal-" + context.getViewRoot().createUniqueId());
-=======
         accessRestrictionChangeReasonModal.setId("document-delete-reason-popup-" + context.getViewRoot().createUniqueId());
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 
         List<UIComponent> children = ComponentUtil.getChildren(getModalContainer());
         children.clear();
         children.add(favoritesModal);
         children.add(accessRestrictionChangeReasonModal);
         children.add(docDeleteReasonModal);
-<<<<<<< HEAD
-        children.add(linkModal);
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
     }
 
     public boolean isShowConfirmationPopup() {
@@ -1806,13 +1230,4 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         return childAssocTypeQNameHierarchy;
     }
 
-<<<<<<< HEAD
-    @Override
-    public CaseFile getCaseFile() {
-        // Not used.
-        return null;
-    }
-
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 }

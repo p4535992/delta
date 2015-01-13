@@ -19,12 +19,6 @@ import ee.webmedia.alfresco.addressbook.service.AddressbookEntry;
 import ee.webmedia.alfresco.addressbook.util.AddressbookUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
-<<<<<<< HEAD
-/**
- * @author Keit Tehvan
- */
-=======
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
 public class AddressbookListDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;
     public static final String BEAN_NAME = "AddressbookListDialog";
@@ -73,11 +67,6 @@ public class AddressbookListDialog extends BaseDialogBean {
      */
     public String showAll() {
         setSearchCriteria("");
-<<<<<<< HEAD
-        setOrgPeople(new ArrayList<AddressbookEntry>());
-        setOrganizations(getAddressbookService().listAddressbookEntries(AddressbookModel.Assocs.ORGANIZATIONS));
-        setPeople(getAddressbookService().listAddressbookEntries(AddressbookModel.Assocs.ABPEOPLE));
-=======
         setOrganizations(getAddressbookService().listAddressbookEntries(AddressbookModel.Assocs.ORGANIZATIONS));
         setPeople(getAddressbookService().listAddressbookEntries(AddressbookModel.Assocs.ABPEOPLE));
 
@@ -91,7 +80,6 @@ public class AddressbookListDialog extends BaseDialogBean {
         }
         setOrgPeople(organizationPeople);
 
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
         return null;
     }
 
@@ -106,10 +94,7 @@ public class AddressbookListDialog extends BaseDialogBean {
             } else if (node.getType().equals(Types.PRIV_PERSON)) {
                 getPeople().add(new AddressbookEntry(node));
             } else if (node.getType().equals(Types.ORGPERSON)) {
-<<<<<<< HEAD
-=======
                 node.addPropertyResolver("parentOrgName", AddressbookUtil.resolverParentOrgName);
->>>>>>> 29c20c3e1588186b14bdc3b5fa90cae04ea61fc5
                 node.addPropertyResolver("parentOrgRef", AddressbookUtil.resolverParentOrgRef);
                 getOrgPeople().add(new AddressbookEntry(node));
             }
