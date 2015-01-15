@@ -713,24 +713,54 @@ public class BulkLoadNodeServiceImpl implements BulkLoadNodeService {
         return result;
     }
 
-    private String getParentNodeQuery(List<NodeRef> childNodes, Set<QName> propsToLoad, Set<QName> parentNodeTypes, List<Object> arguments, boolean includeIntrinsicProps) {
-        String sql = "SELECT * FROM ("
-                + "SELECT parent_props.*, node.store_id as store_id, node.uuid AS child_uuid, parent.uuid AS parent_uuid "
-                + (includeIntrinsicProps
-                        ? ", parent.audit_creator AS creator, parent.audit_created AS created, parent.audit_modifier AS modifier, parent.audit_modified AS modified " : "")
-                        + " FROM " + getNodeTableConditionalJoin(childNodes, arguments)
-                        + " JOIN alf_child_assoc parent_assoc on parent_assoc.child_node_id = node.id "
-                        + " JOIN alf_node parent on parent_assoc.parent_node_id = parent.id ";
-        sql += " LEFT JOIN alf_node_properties parent_props on parent_props.node_id = parent.id ";
-
-        sql += " WHERE parent_assoc.is_primary = true ";
-        boolean hasPropCondition = propsToLoad != null && !propsToLoad.isEmpty();
-        if (parentNodeTypes != null && !parentNodeTypes.isEmpty()) {
-            sql += " AND parent.type_qname_id in (" + createQnameIdListing(parentNodeTypes) + ") ";
+    @Override
+    @SuppressWarnings("deprecation")
+    public Set<NodeRef> loadPrimaryParentNodeRefs(Set<NodeRef> childNodes, Set<QName> parentNodeTypes) {
+        if (childNodes == null || childNodes.isEmpty()) {
+            return new HashSet<>();
         }
+        List<Object> arguments = new ArrayList<>();
+        String sql = getParentNodeQuery(childNodes, arguments, parentNodeTypes, false, false);
+        Object[] paramArray = arguments.toArray();
+        final Set<NodeRef> parentRefs = new HashSet<>();
+
+        jdbcTemplate.query(sql, new ParameterizedRowMapper<Void>() {
+
+            @Override
+            public Void mapRow(ResultSet rs, int rowNum) throws SQLException {
+                setDefaultFetchSize(rs);
+                parentRefs.add(getNodeRef(rs, "parent_uuid"));
+                return null;
+            }
+
+        }, paramArray);
+        explainQuery(sql, paramArray);
+        return parentRefs;
+    }
+
+    private String getParentNodeQuery(List<NodeRef> childNodes, Set<QName> propsToLoad, Set<QName> parentNodeTypes, List<Object> arguments, boolean includeIntrinsicProps) {
+        String sql = "SELECT * FROM (" + getParentNodeQuery(childNodes, arguments, parentNodeTypes, true, includeIntrinsicProps);
+        boolean hasPropCondition = propsToLoad != null && !propsToLoad.isEmpty();
         sql += ") temp ";
         if (hasPropCondition) {
             sql += " WHERE qname_id in (" + createQnameIdListing(propsToLoad) + ") OR qname_id is null";
+        }
+        return sql;
+    }
+
+    private String getParentNodeQuery(Collection<NodeRef> childNodes, List<Object> arguments, Set<QName> parentNodeTypes, boolean includeProps, boolean includeIntrinsicProps) {
+        String sql = "SELECT " + (includeProps ? "parent_props.*, " : "") + "node.store_id as store_id, node.uuid AS child_uuid, parent.uuid AS parent_uuid "
+                + (includeIntrinsicProps
+                        ? ", parent.audit_creator AS creator, parent.audit_created AS created, parent.audit_modifier AS modifier, parent.audit_modified AS modified " : "")
+                + " FROM " + getNodeTableConditionalJoin(childNodes, arguments)
+                + " JOIN alf_child_assoc parent_assoc on parent_assoc.child_node_id = node.id "
+                + " JOIN alf_node parent on parent_assoc.parent_node_id = parent.id ";
+        if (includeProps) {
+            sql += " LEFT JOIN alf_node_properties parent_props on parent_props.node_id = parent.id ";
+        }
+        sql += " WHERE parent_assoc.is_primary = true ";
+        if (parentNodeTypes != null && !parentNodeTypes.isEmpty()) {
+            sql += " AND parent.type_qname_id in (" + createQnameIdListing(parentNodeTypes) + ") ";
         }
         return sql;
     }

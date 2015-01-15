@@ -1,6 +1,7 @@
 package ee.webmedia.alfresco.workflow.service;
 
 import java.io.Serializable;
+import java.sql.Connection;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -57,9 +58,9 @@ public interface WorkflowDbService {
 
     void updateTaskSingleProperty(Task task, QName key, Serializable value, NodeRef workflowRef);
 
-    TaskUpdateInfo verifyTaskAndGetUpdateInfoOnCreate(Task task, NodeRef workflowfRef);
+    TaskUpdateInfo verifyTaskAndGetUpdateInfoOnCreate(Task task, NodeRef workflowfRef, Connection connection);
 
-    TaskUpdateInfo verifyTaskAndGetUpdateInfoOnUpdate(Task task, NodeRef workflowfRef, Map<QName, Serializable> propsToSave);
+    TaskUpdateInfo verifyTaskAndGetUpdateInfoOnUpdate(Task task, NodeRef workflowfRef, Map<QName, Serializable> propsToSave, Connection connection);
 
     void updateTaskProperties(NodeRef taskRef, Map<QName, Serializable> props);
 
@@ -157,7 +158,7 @@ public interface WorkflowDbService {
     List<NodeRef> getCompoundWorkflowsFinishedTasks(List<NodeRef> compoundWorkflows, QName taskType, QName sortByProperty, boolean descending);
 
     List<Task> getInProgressTasks(List<NodeRef> compoundWorkflows, String ownerId);
-    
+
     List<Task> getInProgressTasks(List<NodeRef> compoundWorkflows, String ownerId, Set<QName> taskTypes);
 
     boolean hasNoInProgressOrOnlyActiveResponsibleAssignmentTasks(List<NodeRef> compoundWorkflows);

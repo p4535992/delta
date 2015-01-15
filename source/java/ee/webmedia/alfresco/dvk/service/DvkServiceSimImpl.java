@@ -212,10 +212,7 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
 
             @Override
             public Void doWork() throws Exception {
-                Set<NodeRef> docRefsSet = new HashSet<>();
-                for (NodeRef sendInfoRef : sendInfoRefs) {
-                    docRefsSet.add(nodeService.getPrimaryParent(sendInfoRef).getParentRef());
-                }
+                Set<NodeRef> docRefsSet = BeanHelper.getBulkLoadNodeService().loadPrimaryParentNodeRefs(sendInfoRefs, Collections.singleton(DocumentCommonModel.Types.DOCUMENT));
                 List<NodeRef> docRefs = new ArrayList<>(docRefsSet);
 
                 Map<NodeRef, List<SendInfo>> documentSendInfos = BeanHelper.getBulkLoadNodeService().loadChildNodes(docRefs,
@@ -233,10 +230,11 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
                 }
 
                 Set<NodeRef> docsToDelete = new HashSet<>();
+                String expectedStatus = SendStatus.RECEIVED.toString();
                 outer: for (Entry<NodeRef, List<SendInfo>> entry : documentSendInfos.entrySet()) {
                     NodeRef docRef = entry.getKey();
                     for (SendInfo si : entry.getValue()) {
-                        if (!SendStatus.RECEIVED.toString().equals(si.getSendStatus())) {
+                        if (!expectedStatus.equals(si.getSendStatus())) {
                             continue outer;
                         }
                     }
@@ -417,7 +415,7 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
             return newInvoices;
         }
         try {
-            NodeRef receivedInvoiceFolder = BeanHelper.getConstantNodeRefsBean().getReceivedincoiceRoot();
+            NodeRef receivedInvoiceFolder = BeanHelper.getConstantNodeRefsBean().getReceivedInvoiceRoot();
             // read invoice(s) from attachments
             Map<NodeRef, Integer> invoiceRefToDatafile = new HashMap<NodeRef, Integer>();
             Map<NodeRef, Integer> transactionRefToDataFile = new HashMap<NodeRef, Integer>();

@@ -21,7 +21,7 @@
          <f:facet name="header">
             <a:sortLink id="resolution-sort" label="#{msg.task_property_resolution}" value="resolution" styleClass="header" />
          </f:facet>
-         <a:actionLink id="resolution-text" value="#{r.task.node.properties['{temp}resolution']}" action="#{r.action}" tooltip="#{r.task.node.properties['{temp}resolution']}" actionListener="#{r.actionListener}" styleClass="no-underline" rendered="#{r.compoundWorkflow.documentWorkflow}" >
+         <a:actionLink id="resolution-text" value="#{r.task.node.properties['{temp}resolution']}" action="#{r.action}" tooltip="#{r.task.node.properties['{temp}resolution']}" actionListener="#{r.actionListener}" styleClass="no-underline" >
             <f:param name="nodeRef" value="#{r.actionNodeRef}" />
          </a:actionLink>
       </a:column>
@@ -31,7 +31,7 @@
          <f:facet name="header">
             <a:sortLink id="creatorName-sort" label="#{msg.task_property_creator_name}" value="creatorName" styleClass="header" />
          </f:facet>
-         <a:actionLink id="creatorName-text" value="#{r.task.creatorName}" action="#{r.action}" tooltip="#{r.task.creatorName}" actionListener="#{r.actionListener}" styleClass="no-underline" rendered="#{r.compoundWorkflow.documentWorkflow}" >
+         <a:actionLink id="creatorName-text" value="#{r.task.creatorName}" action="#{r.action}" tooltip="#{r.task.creatorName}" actionListener="#{r.actionListener}" styleClass="no-underline" >
             <f:param name="nodeRef" value="#{r.actionNodeRef}" />
          </a:actionLink>
       </a:column>
@@ -51,7 +51,7 @@
          <f:facet name="header">
             <a:sortLink id="col6-sort" label="#{msg.document_docName}" value="docName" styleClass="header" />
          </f:facet>
-         <a:actionLink id="col6-text" value="#{r.document.docName}" action="#{r.action}" tooltip="#{r.document.docName}" actionListener="#{r.actionListener}" styleClass="condence20-" rendered="#{r.compoundWorkflow.documentWorkflow}" >
+         <a:actionLink id="col6-text" value="#{r.title}" action="#{r.action}" tooltip="#{r.title}" actionListener="#{r.actionListener}" styleClass="condence20-" >
             <f:param name="nodeRef" value="#{r.actionNodeRef}" />
          </a:actionLink>
       </a:column>
@@ -61,7 +61,7 @@
          <f:facet name="header">
             <a:sortLink id="col3-sort" label="#{msg.document_type}" value="documentTypeName" styleClass="header" />
          </f:facet>
-         <a:actionLink id="col3-text" value="#{r.document.documentTypeName}" action="#{r.action}" tooltip="#{r.document.documentTypeName}" actionListener="#{r.actionListener}" styleClass="no-underline" rendered="#{r.compoundWorkflow.documentWorkflow}" >
+         <a:actionLink id="col3-text" value="#{r.documentTypeName}" action="#{r.action}" tooltip="#{r.documentTypeName}" actionListener="#{r.actionListener}" styleClass="no-underline" >
             <f:param name="nodeRef" value="#{r.actionNodeRef}" />
          </a:actionLink>
       </a:column>

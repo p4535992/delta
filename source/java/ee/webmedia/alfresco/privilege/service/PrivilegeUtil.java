@@ -18,6 +18,7 @@ import java.util.Set;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.security.AccessPermission;
+import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.StringUtils;
 
@@ -98,18 +99,21 @@ public class PrivilegeUtil {
         return permissionsWithDependencies;
     }
 
-    public static Set<Privilege> getRequiredPrivsForInprogressTask(Task task, NodeRef docRef, FileService fileService, boolean isForCaseFile) {
+    public static Set<Privilege> getRequiredPrivsForInprogressTask(Task task, NodeRef docRef, FileService fileService, boolean isForCaseFile,
+            Map<NodeRef, Pair<Boolean, Boolean>> documentDigiDocStatus) {
         if (isStatus(task, Status.IN_PROGRESS)) {
-            return getRequiredPrivsForTask(task, docRef, fileService, isForCaseFile);
+            return getRequiredPrivsForTask(task, docRef, fileService, isForCaseFile, documentDigiDocStatus);
         }
         return new HashSet<Privilege>();
     }
 
-    private static Set<Privilege> getRequiredPrivsForTask(Task task, NodeRef docRef, FileService fileService, boolean isForCaseFile) {
-        return getRequiredPrivsForTask(task, docRef, fileService, isForCaseFile, task.getParent().getParent().isCaseFileWorkflow());
+    private static Set<Privilege> getRequiredPrivsForTask(Task task, NodeRef docRef, FileService fileService, boolean isForCaseFile,
+            Map<NodeRef, Pair<Boolean, Boolean>> documentDigiDocStatus) {
+        return getRequiredPrivsForTask(task, docRef, fileService, isForCaseFile, task.getParent().getParent().isCaseFileWorkflow(), documentDigiDocStatus);
     }
 
-    public static Set<Privilege> getRequiredPrivsForTask(Task task, NodeRef docRef, FileService fileService, boolean isForCaseFile, boolean isUnderCaseFile) {
+    public static Set<Privilege> getRequiredPrivsForTask(Task task, NodeRef docRef, FileService fileService, boolean isForCaseFile, boolean isUnderCaseFile,
+            Map<NodeRef, Pair<Boolean, Boolean>> documentDigiDocStatus) {
         String taskOwnerId = task.getOwnerId();
         Set<Privilege> requiredPrivileges = new HashSet<Privilege>(4);
         if (!StringUtils.isBlank(taskOwnerId)) {
@@ -117,11 +121,18 @@ public class PrivilegeUtil {
             boolean isSignatureTaskWith1Digidoc = false;
             boolean isSignatureTaskWithFiles = false;
             if (task.isType(WorkflowSpecificModel.Types.SIGNATURE_TASK)) {
-                List<File> allFiles = fileService.getAllActiveFiles(docRef);
-                if (allFiles.size() == 1 && FilenameUtil.isDigiDocFile(allFiles.get(0).getName())) {
-                    isSignatureTaskWith1Digidoc = true;
-                } else if (!allFiles.isEmpty() || allFiles.size() == 1 && !FilenameUtil.isDigiDocFile(allFiles.get(0).getName())) {
-                    isSignatureTaskWithFiles = true;
+                if (documentDigiDocStatus.containsKey(docRef)) {
+                    Pair<Boolean, Boolean> digiDocStatuses = documentDigiDocStatus.get(docRef);
+                    isSignatureTaskWith1Digidoc = digiDocStatuses.getFirst();
+                    isSignatureTaskWithFiles = digiDocStatuses.getSecond();
+                } else {
+                    List<File> allFiles = fileService.getAllActiveFiles(docRef);
+                    if (allFiles.size() == 1 && FilenameUtil.isDigiDocFile(allFiles.get(0).getName())) {
+                        isSignatureTaskWith1Digidoc = true;
+                    } else if (!allFiles.isEmpty() || allFiles.size() == 1 && !FilenameUtil.isDigiDocFile(allFiles.get(0).getName())) {
+                        isSignatureTaskWithFiles = true;
+                    }
+                    documentDigiDocStatus.put(docRef, Pair.newInstance(isSignatureTaskWith1Digidoc, isSignatureTaskWithFiles));
                 }
             }
             boolean isResponsible = isResponsible(task);

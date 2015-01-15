@@ -34,15 +34,9 @@ public class DeleteFileDialog extends DeleteContentDialog {
             document = getNodeService().getPrimaryParent(file.getNodeRef()).getParentRef();
         }
         if (getDocLockService().getLockStatus(document) == LockStatus.LOCKED) {
-            // lock owned by other user
-            MessageUtil.addErrorMessage("file_delete_error_locked",
-                    getUserService().getUserFullName((String) getNodeService().getProperty(document, ContentModel.PROP_LOCK_OWNER)));
-
+            addLockedMessage(document);
         } else if (getDocLockService().getLockStatus(file.getNodeRef()) == LockStatus.LOCKED) {
-            // lock owned by other user
-            MessageUtil.addErrorMessage("file_delete_error_locked",
-                    getUserService().getUserFullName((String) getNodeService().getProperty(file.getNodeRef(), ContentModel.PROP_LOCK_OWNER)));
-
+            addLockedMessage(file.getNodeRef());
         } else { // could be locked: LockStatus: LOCK_OWNER | NO_LOCK | LOCK_EXPIRED
             super.finishImpl(context, outcome);
 
@@ -68,6 +62,11 @@ public class DeleteFileDialog extends DeleteContentDialog {
         }
 
         return outcome;
+    }
+
+    private void addLockedMessage(NodeRef nodeRef) {
+        String lockOwner = getDocLockService().getLockOwnerIfLocked(nodeRef);
+        MessageUtil.addErrorMessage("file_delete_error_locked", getUserService().getUserFullName(lockOwner));
     }
 
     @Override

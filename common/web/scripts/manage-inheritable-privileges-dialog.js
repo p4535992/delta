@@ -108,9 +108,7 @@ $jQ(document).ready(function() {
         var checkBox = $jQ(cb);
         var parent = checkBox.parent();
         var box = $jQ('<input>');
-        var div = $jQ('<div>');
-        
-        div.css('display', 'block');
+        box.addClass('dummy');
         box.attr('type', 'checkbox');
         
         box.css('opacity', '0');
@@ -123,10 +121,7 @@ $jQ(document).ready(function() {
         box.css('left', '-'+leftVal+'px');
         checkBox.css('left', leftVal+'px');
         
-        checkBox.appendTo(div);
-        box.appendTo(div);
-        
-        div.appendTo(parent);
+        box.appendTo(parent);
         box.mouseover(function(e) {
            box.siblings("input").trigger(e);
         });
@@ -159,10 +154,10 @@ $jQ(document).ready(function() {
       var groupHeaderRow = groupRows.eq(0);
       var groupUserRows = groupRows.slice(1);
       if (firstUpdate) {
-         var groupBodyCBs = groupUserRows.find("td input[type='checkbox']");
+         var groupBodyCBs = groupUserRows.find("td input[type='checkbox']:not(.dummy)");
          bindOnChangeUpdateHeaderCheckboxState(groupBodyCBs);
       }
-      var groupHeaderCheckboxes = groupHeaderRow.find("td input[type='checkbox']");
+      var groupHeaderCheckboxes = groupHeaderRow.find("td input[type='checkbox']:not(.dummy)");
       groupHeaderCheckboxes.each(function() {
          var groupPermissionHeaderCB = $jQ(this);
          var sameGroupAndPermissionCBs = getSameGroupAndPermissionCBs(groupPermissionHeaderCB);

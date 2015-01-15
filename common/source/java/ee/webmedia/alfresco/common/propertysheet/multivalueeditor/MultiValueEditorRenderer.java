@@ -24,6 +24,7 @@ import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.classificator.model.ClassificatorValue;
 import ee.webmedia.alfresco.classificator.service.ClassificatorService;
+import ee.webmedia.alfresco.common.propertysheet.generator.GeneralSelectorGenerator;
 import ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.ComponentPropVO;
 import ee.webmedia.alfresco.common.propertysheet.modalLayer.ValidatingModalLayerComponent;
 import ee.webmedia.alfresco.common.propertysheet.search.Search;
@@ -234,7 +235,13 @@ public class MultiValueEditorRenderer extends BaseRenderer {
 
                     out.write("<td");
                     if (StringUtils.isNotBlank(styleClass)) {
-                        out.write(" class=\"" + styleClass + "\"");
+                        boolean containsOnChangeEvent = StringUtils.contains(styleClass, GeneralSelectorGenerator.ONCHANGE_MARKER_CLASS);
+                        if (containsOnChangeEvent) {
+                            styleClass = StringUtils.substringBefore(styleClass, GeneralSelectorGenerator.ONCHANGE_MARKER_CLASS) + StringUtils.substringAfterLast(styleClass, ";");
+                        }
+                        if (!containsOnChangeEvent || StringUtils.isNotBlank(styleClass)) {
+                            out.write(" class=\"" + styleClass + "\"");
+                        }
                     }
                     out.write(">");
                     if ((rowIndex == renderedRowCount - 1) && (columnCount == renderedColumnCount - 1) && ((MultiValueEditor) multiValueEditor).isAutomaticallyAddRows()) {

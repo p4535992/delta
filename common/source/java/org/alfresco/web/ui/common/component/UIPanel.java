@@ -284,7 +284,8 @@ public class UIPanel extends UICommand
       if (this.hasAdornments)
       {
           out.write("<div id='"+hideableDivId+"' class='panel-border'");
-          if (!getExpandedState()) {
+          evaluateExpanded();
+          if (!isExpanded()) {
               out.write(" style=\"display:none;\"");
           }
           out.write(">");
@@ -594,19 +595,13 @@ public class UIPanel extends UICommand
       this.progressive = Boolean.valueOf(progressive);
    }
 
-   /**
-    * Returns whether the component show allow rendering of its child components.
-    */
-   public boolean isExpanded()
+   public void evaluateExpanded()
    {
        ValueBinding vb = getValueBinding("expanded");
        if (vb != null)
        {
           this.expanded = (Boolean)vb.getValue(getFacesContext());
        }
-
-       // Return true, to allow child component rendering. When false is returned the childList will be empty during rendering
-       return true;
    }
 
    /**
@@ -619,7 +614,7 @@ public class UIPanel extends UICommand
       this.expanded = Boolean.valueOf(expanded);
    }
    
-   public Boolean getExpandedState(){
+   public Boolean isExpanded(){
        return expanded;
    }
 

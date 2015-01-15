@@ -814,10 +814,12 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         // Add case file owner and in progress task owners to document permissions
         String ownerId = (String) caseFile.getProperties().get(DocumentCommonModel.Props.OWNER_ID);
         privilegeService.setPermissions(docRef, ownerId, Privilege.EDIT_DOCUMENT);
+        Map<NodeRef, Pair<Boolean, Boolean>> digiDocStatuses = new HashMap<>();
         for (Task task : workflowService.getTasksInProgress(caseFile.getNodeRef())) {
             String taskOwnerId = task.getOwnerId();
             if (StringUtils.isNotBlank(taskOwnerId)) {
-                privilegeService.setPermissions(docRef, taskOwnerId, getPrivsWithDependencies(getRequiredPrivsForInprogressTask(task, docRef, fileService, false)));
+                privilegeService
+                        .setPermissions(docRef, taskOwnerId, getPrivsWithDependencies(getRequiredPrivsForInprogressTask(task, docRef, fileService, false, digiDocStatuses)));
             }
         }
     }
@@ -939,7 +941,17 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         document.setDraft(isDraft(docRef));
         document.setFromWebService(isFromWebService(docRef));
         document.setDraftOrImapOrDvk(isDraftOrImapOrDvk(docRef));
+        NodeRef parentRef = nodeService.getPrimaryParent(docRef).getParentRef();
+        document.setForwardedDecDocument(isDecendant(BeanHelper.getConstantNodeRefsBean().getForwardedDecDocumentsRoot(), parentRef));
+        document.setDvk(isDecendant(BeanHelper.getConstantNodeRefsBean().getReceivedDvkDocumentsRoot(), parentRef));
         document.setIncomingInvoice(documentService.isIncomingInvoice(docRef));
+    }
+
+    private boolean isDecendant(NodeRef expectedParentRef, NodeRef actualParentRef) {
+        if (expectedParentRef != null && expectedParentRef.equals(actualParentRef)) {
+            return true;
+        }
+        return false;
     }
 
     @Override
@@ -989,16 +1001,6 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         NodeRef parentAssocRef = nodeService.getPrimaryParent(docRef).getParentRef();
         QName parentType = nodeService.getType(parentAssocRef);
         return isDraftOrImapOrDvk(parentType) && !isDraft(nodeService.getPrimaryParent(parentAssocRef), parentType);
-    }
-
-    @Override
-    public boolean isInForwardedDecDocuments(NodeRef docRef) {
-        NodeRef parentAssocRef = nodeService.getPrimaryParent(docRef).getParentRef();
-        NodeRef forwardRoot = BeanHelper.getConstantNodeRefsBean().getForwardedDecDocumentsRoot();
-        if (forwardRoot != null && forwardRoot.equals(parentAssocRef)) {
-            return true;
-        }
-        return false;
     }
 
     @Override

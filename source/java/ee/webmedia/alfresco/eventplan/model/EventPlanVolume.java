@@ -183,8 +183,8 @@ public class EventPlanVolume extends EventPlanCommon {
         } else if (isAppraised() && StringUtils.isBlank(getArchivingNote())) {
             return "eventplan_volume_error_archivingNote";
         } else if (getRetainUntilDate() != null &&
-                (getValidFrom() != null && CalendarUtil.getDaysBetweenSigned(getValidFrom(), getRetainUntilDate()) < 0)
-                || (getValidTo() != null && CalendarUtil.getDaysBetweenSigned(getValidTo(), getRetainUntilDate()) < 0)) {
+                ((getValidFrom() != null && CalendarUtil.getDaysBetweenSigned(getValidFrom(), getRetainUntilDate()) < 0)
+                || (getValidTo() != null && CalendarUtil.getDaysBetweenSigned(getValidTo(), getRetainUntilDate()) < 0))) {
             return "eventplan_volume_error_retainUntilDate2";
         } else if (getRetaintionPeriod() != null && (getRetaintionPeriod() <= 0 || getRetaintionPeriod() >= 999)) {
             return "eventplan_error_retaintionPeriod2";

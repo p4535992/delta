@@ -225,6 +225,9 @@
                data.context.find(".progress-bar").fadeOut();
             }
          }).on('fileuploaddone', function (e, data) {
+            if(data.result == null) {
+               addFailMessage(data);
+            }
             $jQ.each(data.result.files, function (index, file) {
                if (file.deleteUrl) {
                   var additional = data.context.find(".additional");
@@ -237,8 +240,7 @@
             });
          }).on('fileuploadfail', function (e, data) {
             $jQ.each(data.files, function (index) {
-               var error = $jQ('<span class="error"/>').text('Faili üleslaadimine ebaõnnestus');
-               data.context.find(".additional").append(error);
+               addFailMessage(data);
             });
          }).prop('disabled', !$jQ.support.fileInput)
             .parent().addClass($jQ.support.fileInput ? undefined : 'disabled');
@@ -265,6 +267,11 @@
 	   if(uploader.getStatus() == 0) {
 		   document.forms[1].submit();
 	   }
+   }
+   
+   function addFailMessage(data) {
+      var error = $jQ('<span class="error"/>').text('Faili üleslaadimine ebaõnnestus');
+      data.context.find(".additional").append(error);
    }
    
    var valdateFilesSelected = function(event) {

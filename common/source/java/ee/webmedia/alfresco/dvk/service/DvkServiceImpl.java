@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
 
+import ee.webmedia.alfresco.document.file.model.FileModel;
 import org.alfresco.error.AlfrescoRuntimeException;
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.transaction.RetryingTransactionHelper;
@@ -719,9 +720,11 @@ public abstract class DvkServiceImpl implements DvkService {
     }
 
     protected <F extends XmlObject> NodeRef storeFile(String dhlId, String senderOrgNr, NodeRef documentFolder, F dataFile) throws IOException {
-        String filename = DvkUtil.getFileName(dataFile);
+        String displayName = DvkUtil.getFileName(dataFile);
+        String filename = FilenameUtil.checkAndGetUniqueFilename(documentFolder, displayName, BeanHelper.getGeneralService());
         NodeRef file = createFileNode(documentFolder, filename);
-        log.info("Writing file '" + filename + "' (fileRef: " + file + ") from DVK document with dvkId '" + dhlId + "' to repository space: '"
+        nodeService.setProperty(file, FileModel.Props.DISPLAY_NAME, displayName);
+        log.info("Writing file '" + filename + "' (fileRef: " + file + ", original name: " + displayName + ") from DVK document with dvkId '" + dhlId + "' to repository space: '"
                 + receivedDvkDocumentsPath + "' (parentRef: " + documentFolder + ")");
 
         final ContentWriter writer = fileFolderService.getWriter(file);

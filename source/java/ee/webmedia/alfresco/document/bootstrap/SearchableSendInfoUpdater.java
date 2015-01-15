@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.document.bootstrap;
 
+import java.io.File;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -52,16 +53,16 @@ public class SearchableSendInfoUpdater extends AbstractNodeUpdater {
     }
 
     @Override
-    protected List<String[]> processNodes(final List<NodeRef> batchList) throws Exception, InterruptedException {
+    protected List<String[]> processNodes(final List<NodeRef> batchList, File failedNodesFile) throws Exception, InterruptedException {
         final List<String[]> batchInfos = new ArrayList<>(batchList.size());
         Map<NodeRef, List<SendInfo>> searchableSendInfos = bulkLoadNodeService.loadChildNodes(batchList, null, DocumentCommonModel.Types.SEND_INFO, propertyTypes,
                 new CreateObjectCallback<SendInfo>() {
 
-            @Override
-            public SendInfo create(NodeRef nodeRef, Map<QName, Serializable> properties) {
-                return new DocumentSendInfo(properties);
-            }
-        });
+                    @Override
+                    public SendInfo create(NodeRef nodeRef, Map<QName, Serializable> properties) {
+                        return new DocumentSendInfo(properties);
+                    }
+                });
         Map<NodeRef, Map<QName, Serializable>> documentSearchableSendInfos = new HashMap<>();
         for (Map.Entry<NodeRef, List<SendInfo>> entry : searchableSendInfos.entrySet()) {
             List<SendInfo> searchableSendInfoProps = entry.getValue();

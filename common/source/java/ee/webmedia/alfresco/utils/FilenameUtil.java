@@ -50,9 +50,9 @@ public class FilenameUtil {
         if (StringUtils.isBlank(extension) && extensionRequired) {
             extension = MimetypeMap.EXTENSION_BINARY;
         }
-        extension = StringUtils.deleteWhitespace(stripForbiddenWindowsCharacters(extension));
+        extension = StringUtils.deleteWhitespace(stripForbiddenWindowsCharactersAndRedundantWhitespaces(extension));
         int maxLength = 254 - extension.length();
-        String nameWithoutExtension = trimDotsAndSpaces(stripForbiddenWindowsCharacters(title));
+        String nameWithoutExtension = trimDotsAndSpaces(stripForbiddenWindowsCharactersAndRedundantWhitespaces(title));
         if (nameWithoutExtension.length() > maxLength) {
             nameWithoutExtension = nameWithoutExtension.substring(0, maxLength);
         }
@@ -71,8 +71,12 @@ public class FilenameUtil {
         name = name.replace("\"", "");
         name = name.replace("/", "");
         // [\"\*\<\>?\|]
-        name = name.replaceAll("[\\*\\\\\\>\\<\\?\\|]", "").replaceAll("\\s+", " ");
+        name = name.replaceAll("[\\*\\\\\\>\\<\\?\\|]", "");
         return name;
+    }
+
+    public static String stripForbiddenWindowsCharactersAndRedundantWhitespaces(String filename) {
+        return stripForbiddenWindowsCharacters(filename).replaceAll("\\s+", " ");
     }
 
     public static String trimDotsAndSpaces(String filename) {
@@ -136,7 +140,7 @@ public class FilenameUtil {
                         removeAccents(
                                 replaceAmpersand(
                                         trimDotsAndSpaces(
-                                                stripForbiddenWindowsCharacters(
+                                                stripForbiddenWindowsCharactersAndRedundantWhitespaces(
                                                         name))))));
 
         if (existingFileNames != null && !existingFileNames.isEmpty()) {
@@ -167,7 +171,7 @@ public class FilenameUtil {
     /**
      * NB! this method is intended only for cm:name property!
      */
-    private static String checkAndGetUniqueFilename(NodeRef documentNodeRef, String displayName, GeneralService generalService) {
+    public static String checkAndGetUniqueFilename(NodeRef documentNodeRef, String displayName, GeneralService generalService) {
         String safeFilename = makeSafeFilename(displayName);
         return generalService.getUniqueFileName(documentNodeRef, safeFilename);
     }

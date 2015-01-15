@@ -40,6 +40,7 @@ import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.privilege.service.PrivilegeService;
 import ee.webmedia.alfresco.privilege.service.PrivilegeUtil;
 import ee.webmedia.alfresco.user.service.UserService;
+import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 import ee.webmedia.alfresco.workflow.service.BaseWorkflowObject;
@@ -115,16 +116,22 @@ public class WorkflowStatusEventListener implements WorkflowMultiEventListener, 
     private Void logWorkflowEvents(List<WorkflowEvent> eventsToLog, String userId, String userName) {
         LogService logService = BeanHelper.getLogService();
         WorkflowConstantsBean workflowConstantsBean = BeanHelper.getWorkflowConstantsBean();
+        UserService userService = BeanHelper.getUserService();
         for (WorkflowEvent event : eventsToLog) {
             BaseWorkflowObject object = event.getObject();
             if (!(object instanceof Task)) {
                 continue;
             }
             Task task = (Task) object;
-            if (WorkflowEventType.STATUS_CHANGED.equals(event.getType()) && Status.NEW.equals(event.getOriginalStatus()) && task.isStatus(Status.IN_PROGRESS)) {
-                NodeRef taskRef = object.getNodeRef();
-                logService.addLogEntry(LogEntry.create(LogObject.TASK, userId, userName, taskRef, "applog_task_assigned",
-                        task.getOwnerName(), workflowConstantsBean.getTaskTypeName(task.getType())));
+            if (WorkflowEventType.STATUS_CHANGED.equals(event.getType())) {
+                if (Status.NEW.equals(event.getOriginalStatus()) && task.isStatus(Status.IN_PROGRESS)) {
+                    NodeRef taskRef = object.getNodeRef();
+                    logService.addLogEntry(LogEntry.create(LogObject.TASK, userId, userName, taskRef, "applog_task_assigned",
+                            task.getOwnerName(), workflowConstantsBean.getTaskTypeName(task.getType())));
+                } else if (task.isStatus(Status.FINISHED, Status.UNFINISHED)) {
+                    logService.addLogEntry(LogEntry.create(LogObject.TASK, userService, task.getNodeRef(), "applog_task_done",
+                            MessageUtil.getTypeName(task.getType()), task.getOutcome()));
+                }
             }
         }
         return null;
@@ -197,7 +204,8 @@ public class WorkflowStatusEventListener implements WorkflowMultiEventListener, 
     }
 
     private Map<NodeRef, Map<String, Set<Privilege>>> getPermissions(final List<WorkflowEvent> events) {
-        final Map<NodeRef, Map<String, Set<Privilege>>> permissions = new HashMap<NodeRef, Map<String, Set<Privilege>>>();
+        final Map<NodeRef, Map<String, Set<Privilege>>> permissions = new HashMap<>();
+        Map<NodeRef, Pair<Boolean, Boolean>> digiDocStatuses = new HashMap<>();
         for (WorkflowEvent event : events) {
             BaseWorkflowObject object = event.getObject();
             if (object instanceof Task) {
@@ -210,7 +218,7 @@ public class WorkflowStatusEventListener implements WorkflowMultiEventListener, 
                 if (StringUtils.isNotBlank(taskOwnerId) && event.getType().equals(WorkflowEventType.STATUS_CHANGED) && task.isStatus(Status.IN_PROGRESS)) {
                     Workflow workflow = task.getParent();
                     NodeRef docRef = workflow.getParent().getParent();
-                    Set<Privilege> requiredPrivileges = PrivilegeUtil.getRequiredPrivsForInprogressTask(task, docRef, fileService, false);
+                    Set<Privilege> requiredPrivileges = PrivilegeUtil.getRequiredPrivsForInprogressTask(task, docRef, fileService, false, digiDocStatuses);
                     if (!requiredPrivileges.isEmpty()) {
                         Map<String, Set<Privilege>> permissionsByDocRef = permissions.get(docRef);
                         if (permissionsByDocRef == null) {

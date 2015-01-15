@@ -1380,8 +1380,9 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         attributes.put(Search.FILTER_INDEX, UserContactGroupSearchBean.USERS_FILTER);
         attributes.put(Search.SETTER_CALLBACK, "#{WorkflowBlockBean.assignDueDateExtender}");
         attributes.put(Search.DATA_TYPE_KEY, String.class);
-        dueDateExtenderUsername = defaultUsername;
-        dueDateExtenderUserFullname = defaultUserFullname;
+        boolean taskCreatorExists = StringUtils.isNotBlank(defaultUsername) && (BeanHelper.getUserService().getUser(defaultUsername) != null);
+        dueDateExtenderUsername = taskCreatorExists ? defaultUsername : null;
+        dueDateExtenderUserFullname = taskCreatorExists ? defaultUserFullname : null;
         search.setValueBinding("value", context.getApplication().createValueBinding("#{WorkflowBlockBean.dueDateExtenderUserFullname}"));
         layerChildren.add(search);
 

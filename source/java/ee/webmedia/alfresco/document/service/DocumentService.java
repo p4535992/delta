@@ -44,6 +44,7 @@ public interface DocumentService {
         public static final QName TEMP_DOCUMENT_IS_INCOMING_INVOICE_QNAME = RepoUtil.createTransientProp("isIncomingInvoice");
         public static final QName TEMP_DOCUMENT_IS_FROM_WEB_SERVICE_QNAME = RepoUtil.createTransientProp("isFromWebService");
         public static final QName TEMP_DOCUMENT_IS_DVK_QNAME = RepoUtil.createTransientProp("isDvk");
+        public static final QName TEMP_DOCUMENT_IS_FORWARDED_DEC_DOCUMENT = RepoUtil.createTransientProp("forwardDecDocument");
         public static final QName TEMP_DOCUMENT_IS_DRAFT_QNAME = RepoUtil.createTransientProp("isDraft");
         public static final String TEMP_DOCUMENT_IS_DRAFT = TEMP_DOCUMENT_IS_DRAFT_QNAME.toString();
         public static final String TEMP_LOGGING_DISABLED_DOCUMENT_METADATA_CHANGED = "{temp}logging_disabled_docMetadataChanged";

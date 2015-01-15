@@ -184,7 +184,7 @@ public interface WorkflowService {
     void registerMultiEventListener(WorkflowMultiEventListener listener);
 
     Task getTaskWithoutParentAndChildren(NodeRef nodeRef, Workflow workflow, boolean copy);
-    
+
     Map<NodeRef, Task> getTasksWithCompoundWorkflowRef(List<NodeRef> taskRefs);
 
     NodeRef getCompoundWorkflowDefinitionByName(String newCompWorkflowDefinitionName, String runAsUser, boolean checkGlobalDefinitions);
@@ -212,6 +212,8 @@ public interface WorkflowService {
     int getCompoundWorkflowDocumentCount(NodeRef compoundWorkflowRef);
 
     List<NodeRef> getCompoundWorkflowDocumentRefs(NodeRef compoundWorkflowRef);
+    
+    Set<NodeRef> getCompoundWorkflowDocumentRefs(CompoundWorkflow compoundWorkflow);
 
     boolean hasTwoInProgressOrStoppedCWorkflowsWithMultipleWorkflows(CompoundWorkflow cWorkflow, boolean checkCurrentWorkflow);
 
@@ -256,8 +258,6 @@ public interface WorkflowService {
     NodeRef importLinkedReviewTask(LinkedReviewTaskType taskToImport, String dvkId);
 
     NodeRef markLinkedReviewTaskDeleted(DeleteLinkedReviewTaskType deletedTask);
-
-    void updateTaskSearchableProperties(NodeRef nodeRef);
 
     QName getNodeRefType(NodeRef nodeRef);
 

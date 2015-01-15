@@ -744,7 +744,7 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
     public void validateFileName(@SuppressWarnings("unused") FacesContext context, UIComponent component, Object value) {
         if (component instanceof HtmlInputText) {
             boolean isValid = true;
-            if (!value.toString().equals(FilenameUtil.stripForbiddenWindowsCharacters(value.toString()))) {
+            if (!value.toString().equals(FilenameUtil.stripForbiddenWindowsCharactersAndRedundantWhitespaces(value.toString()))) {
                 isValid = false;
             }
 

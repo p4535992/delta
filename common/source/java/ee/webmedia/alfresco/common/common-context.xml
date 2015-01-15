@@ -24,12 +24,12 @@
    depends-on="imapModelBootstrap,documentModelBootstrap,imapModelBootstrap,addressbookModelBootstrap,thesaurusModelBootstrap,documentTemplateModelBootstrap,dvkSpacesBootstrap2">
       <property name="receivedDvkDocumentsPath" value="${dvk.received.parent.folder.xpath}${dvk.received.folder.name}" />
       <property name="corruptDvkDocumentsPath" value="${dvk.received.parent.folder.xpath}${dvk.corrupt.folder.name}" />
-      <property name="scannedFilesRoot" value="#{generalService.getNodeRef('${scannedFiles.rootPath}${scannedFiles.folder.name}')}" />
-      <property name="fromDvkRoot" value="#{generalService.getNodeRef('${dvk.received.parent.folder.xpath}${dvk.received.folder.name}')}" />
-      <property name="incomingEmailRoot" value="#{generalService.getNodeRef('${imap.config.home.rootPath}/imap-ext:incoming')}" />
-      <property name="receivedincoiceRoot" value="#{generalService.getNodeRef('/imap-ext:imap-root/imap-ext:receivedInvoices')}" />
-      <property name="sentEmailRoot" value="#{generalService.getNodeRef('${imap.config.home.rootPath}/imap-ext:sent')}" />
-      <property name="forwardedDecDocumentsRoot" value="#{generalService.getNodeRef('${dvk.received.parent.folder.xpath}doccom:forwardedDecDocuments')}"></property>
+      <property name="scannedFilesRootPath" value="${scannedFiles.rootPath}${scannedFiles.folder.name}" />
+      <property name="fromDvkRootPath" value="${dvk.received.parent.folder.xpath}${dvk.received.folder.name}" />
+      <property name="incomingEmailRootPath" value="${imap.config.home.rootPath}/imap-ext:incoming" />
+      <property name="receivedInvoiceRootPath" value="${imap.config.home.rootPath}/imap-ext:receivedInvoices" />
+      <property name="sentEmailRootPath" value="${imap.config.home.rootPath}/imap-ext:sent" />
+      <property name="forwardedDecDocumentsRootPath" value="${dvk.received.parent.folder.xpath}doccom:forwardedDecDocuments"/>
    </bean>
 
    <bean class="ee.webmedia.alfresco.common.bootstrap.EhCacheJmxBootstrap">

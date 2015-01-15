@@ -425,6 +425,7 @@
       <property name="applicationConstantsBean" ref="applicationConstantsBean" />
       <property name="workflowConstantsBean" ref="workflowConstantsBean" />
       <property name="compoundWorkflowDefinitionsCache" ref="compoundWorkflowDefinitionsCache"/>
+      <property name="dataSource" ref="dataSource" />
    </bean>
 
    <bean id="WmWorkflowService" class="org.springframework.aop.framework.ProxyFactoryBean">

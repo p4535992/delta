@@ -480,10 +480,6 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
         });
     }
 
-    protected List<String[]> processNodes(final List<NodeRef> batchList) throws Exception, InterruptedException {
-        return processNodes(batchList, failedNodesFiles.get(0));
-    }
-
     protected List<String[]> processNodes(final List<NodeRef> batchList, File failedNodesFile) throws Exception, InterruptedException {
         final List<String[]> batchInfos = new ArrayList<>(batchList.size());
         for (NodeRef nodeRef : batchList) {

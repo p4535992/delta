@@ -1094,7 +1094,7 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
             }
             UIPanel panel = (UIPanel) component;
             if (panel.getId().startsWith(WORKFLOW_PANEL_ID_PREFIX)) {
-                workflowBlockExpandedStatuses.add(panel.getExpandedState());
+                workflowBlockExpandedStatuses.add(panel.isExpanded());
             }
         }
     }

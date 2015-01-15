@@ -78,8 +78,6 @@ public interface DocumentDynamicService {
 
     boolean isImapOrDvk(NodeRef docRef);
 
-    boolean isInForwardedDecDocuments(NodeRef docRef);
-
     boolean isOutgoingLetter(NodeRef docRef);
 
     String getDocumentTypeName(NodeRef documentRef);
@@ -131,7 +129,7 @@ public interface DocumentDynamicService {
     DocumentDynamic createNewDocumentForArchivalActivity(NodeRef archivalActivityNodeRef, String documentTypeId);
 
     TreeNode<QName> getChildNodeQNameHierarchy(QName[] hierarchy, TreeNode<QName> root);
-    
+
     void moveNodeToForwardedDecDocuments(Node docNode, List<Pair<String, String>> recipients);
 
 }

@@ -359,16 +359,20 @@ public class UserServiceImpl implements UserService {
         List<String> groupNames = null;
         List<String> queryAndAdditions = new ArrayList<>();
         Set<String> userNamesInGroup = new HashSet<>();
-        if (StringUtils.isNotBlank(group)) {
+        boolean isUsersInGroupSearch = StringUtils.isNotBlank(group);
+        if (isUsersInGroupSearch) {
             userNamesInGroup.addAll(getUserNamesInGroup(group));
         }
         if (StringUtils.isNotBlank(exactGroup)) {
             groupNames = BeanHelper.getDocumentSearchService().searchAuthorityGroupsByExactName(exactGroup);
-            userNamesInGroup.addAll(getUserNamesInGroup(groupNames));
+            userNamesInGroup.retainAll(getUserNamesInGroup(groupNames));
         }
         if (!userNamesInGroup.isEmpty()) {
             Set<String> userNames = limitSearchParameters(limit, userNamesInGroup);
             queryAndAdditions.add(SearchUtil.generatePropertyExactQuery(ContentModel.PROP_USERNAME, userNames));
+        }
+        if (userNamesInGroup.isEmpty() && isUsersInGroupSearch) {
+            return Collections.emptyList();
         }
         List<String> userNames = getDocumentSearchService().searchUserNamesByTypeAndProps(input, ContentModel.TYPE_PERSON, props, limit,
                 SearchUtil.joinQueryPartsAnd(queryAndAdditions));

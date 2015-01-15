@@ -16,6 +16,7 @@ import javax.faces.context.FacesContext;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.util.Pair;
 import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.casefile.model.CaseFileModel;
@@ -95,6 +96,7 @@ public class DocumentTypePrivilegesHandler extends AbstractInheritingPrivilegesH
         }
         FileService fileService = BeanHelper.getFileService();
         Map<String, Set<Privilege>> missingPrivsByUser = new HashMap<String, Set<Privilege>>();
+        Map<NodeRef, Pair<Boolean, Boolean>> digiDocStatuses = new HashMap<>();
         for (Task task : tasks) {
             String ownerId = task.getOwnerId();
             UserPrivileges userPrivileges = loosingPrivileges.get(ownerId);
@@ -102,7 +104,7 @@ public class DocumentTypePrivilegesHandler extends AbstractInheritingPrivilegesH
                 continue;
             }
             Set<Privilege> requiredPrivileges = PrivilegeUtil.getPrivsWithDependencies(PrivilegeUtil.getRequiredPrivsForInprogressTask(task, docRef, fileService,
-                    CaseFileModel.Types.CASE_FILE.equals(getNodeType())));
+                    CaseFileModel.Types.CASE_FILE.equals(getNodeType()), digiDocStatuses));
             requiredPrivileges.removeAll(userPrivileges.getActivePrivileges());
             if (!requiredPrivileges.isEmpty()) {
                 Set<Privilege> missingPrivileges = missingPrivsByUser.get(userPrivileges.getUserName());
