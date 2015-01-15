@@ -49,7 +49,7 @@ public class DocRegistrationWorkflowType extends BaseWorkflowType implements Wor
             foundDocuments = true;
             BeanHelper.getMenuBean().processTaskItems();
         } else if (compoundWorkflow.isIndependentWorkflow()) {
-            for (NodeRef docRef : workflowService.getCompoundWorkflowDocumentRefs(compoundWorkflow.getNodeRef())) {
+            for (NodeRef docRef : workflowService.getCompoundWorkflowDocumentRefs(compoundWorkflow)) {
                 if (RegisterDocumentEvaluator.canRegister(new Node(docRef), false)) {
                     registerDocument(docRef);
                 }

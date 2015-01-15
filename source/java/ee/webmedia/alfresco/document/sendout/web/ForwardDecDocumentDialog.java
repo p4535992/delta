@@ -11,6 +11,7 @@ import javax.faces.context.FacesContext;
 import org.alfresco.service.cmr.lock.NodeLockedException;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.util.Pair;
+import org.alfresco.web.app.AlfrescoNavigationHandler;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.StringUtils;
@@ -19,11 +20,11 @@ import ee.webmedia.alfresco.addressbook.util.AddressbookUtil;
 import ee.webmedia.alfresco.classificator.enums.SendMode;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docdynamic.web.DocumentLockHelperBean;
+import ee.webmedia.alfresco.dvk.model.DvkModel;
 import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
-import ee.webmedia.alfresco.utils.WebUtil;
 
 public class ForwardDecDocumentDialog extends BaseDialogBean {
 
@@ -45,7 +46,11 @@ public class ForwardDecDocumentDialog extends BaseDialogBean {
         docNode.clearPermissionsCache();
         docRef = docNode.getNodeRef();
 
-        NodeRef decContainerRef = BeanHelper.getFileService().getDecContainer(docRef);
+        if (docRef == null || !getNodeService().exists(docRef)) {
+            MessageUtil.addErrorMessage("document_forward_dec_document_error_doc_deleted");
+            return null;
+        }
+        NodeRef decContainerRef = (NodeRef) docNode.getProperties().get(DvkModel.Props.DEC_CONTAINER);
         if (decContainerRef == null) {
             MessageUtil.addErrorMessage("document_forward_dec_document_error_container_v1_5");
             return null;
@@ -60,10 +65,6 @@ public class ForwardDecDocumentDialog extends BaseDialogBean {
         properties.put(RECIPIENTS, recipientNames);
         properties.put(RECIPIENT_EMAILS, recipientEmails);
         model.setProperties(properties);
-        if (docRef == null || !getNodeService().exists(docRef)) {
-            MessageUtil.addErrorMessage("document_forward_dec_document_error_doc_deleted");
-            return null;
-        }
         try {
             DocumentLockHelperBean documentLockHelperBean = BeanHelper.getDocumentLockHelperBean();
             documentLockHelperBean.lockOrUnlockIfNeeded(documentLockHelperBean.isLockingAllowed());
@@ -90,8 +91,7 @@ public class ForwardDecDocumentDialog extends BaseDialogBean {
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
         if (BeanHelper.getDocumentLockHelperBean().isLockReleased(docRef)) {
             MessageUtil.addErrorMessage("lock_send_out_administrator_released");
-            WebUtil.navigateTo("dialog:close");
-            return null;
+            return AlfrescoNavigationHandler.CLOSE_DIALOG_OUTCOME;
         }
 
         List<String> recipients = model.getProperties().get(RECIPIENTS);

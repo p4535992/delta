@@ -234,17 +234,17 @@ public class UIPropertySheet extends UIPanel implements NamingContainer, AjaxUpd
     }
 
     private boolean hasValidVariable() {
-        if (variable == null) {
-            return true;
-        }
-        Map<String, Object> sessionMap = getFacesContext().getExternalContext().getSessionMap();
+	    if (variable == null) {
+			return true;
+		}
+		Map<String, Object> sessionMap = getFacesContext().getExternalContext().getSessionMap();
         WeakReferenceSerializable variableRef = (WeakReferenceSerializable) sessionMap.get(variable);
         return variableRef != null && variableRef.get() != null;
     }
 
-    private boolean isSubPropertySheet() {
+	private boolean isSubPropertySheet() {
         return (this instanceof WMUIPropertySheet) && ((WMUIPropertySheet) this).isSubPropertySheet();
-    } 
+    }
 
    /**
     * @see javax.faces.component.UIComponent#encodeBegin(javax.faces.context.FacesContext)

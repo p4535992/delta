@@ -28,9 +28,8 @@ public class TaskAndDocument implements Serializable {
     private final Document document;
     private final CompoundWorkflow compoundWorkflow;
     private String title;
-    private Date workflowDueDate;
-    private String workflowDueDateStr;
-    private String volumeMark;
+    private String dueDateStr;
+    private String regNrOrVolumeMark;
     private String typeName;
     private NodeRef actionNodeRef;
 
@@ -81,14 +80,16 @@ public class TaskAndDocument implements Serializable {
     }
 
     public String getTitle() {
-        if (title == null && hasDocument()) {
-            title = (String) document.getProperties().get(DocumentDynamicModel.Props.DOC_TITLE);
+        if (title == null && compoundWorkflow != null) {
+            if (compoundWorkflow.isDocumentWorkflow()) {
+                title = hasDocument() ? document.getDocName() : "";
+            } else if (compoundWorkflow.isIndependentWorkflow()) {
+                title = compoundWorkflow.getTitle();
+            } else if (compoundWorkflow.isCaseFileWorkflow()) {
+                title = hasDocument() ? (String) document.getProperties().get(DocumentDynamicModel.Props.DOC_TITLE) : "";
+            }
         }
         return title;
-    }
-
-    public Date getTaskDueDate() {
-        return task.getDueDate();
     }
 
     public String getResolution() {
@@ -99,19 +100,15 @@ public class TaskAndDocument implements Serializable {
         return task.getCreatorName();
     }
 
-    public String getRegNumber() {
-        return hasDocument() ? document.getRegNumber() : "";
-    }
-
-    public String getVolumeMark() {
-        if (hasDocument() && volumeMark == null) {
-            volumeMark = (String) document.getProperties().get(VolumeModel.Props.VOLUME_MARK);
+    public String getRegNrOrVolumeMark() {
+        if (regNrOrVolumeMark == null && hasDocument()) {
+            if (compoundWorkflow.isDocumentWorkflow()) {
+                regNrOrVolumeMark = document.getRegNumber();
+            } else if (compoundWorkflow.isCaseFileWorkflow()) {
+                regNrOrVolumeMark = (String) document.getProperties().get(VolumeModel.Props.VOLUME_MARK);
+            }
         }
-        return volumeMark;
-    }
-
-    public Date getRegDateTime() {
-        return hasDocument() ? document.getRegDateTime() : null;
+        return regNrOrVolumeMark;
     }
 
     public String getRegDateTimeStr() {
@@ -122,29 +119,18 @@ public class TaskAndDocument implements Serializable {
         return hasDocument() ? document.getSenderOrOwner() : "";
     }
 
-    public Date getDocumentDueDate() {
-        return hasDocument() ? document.getDueDate() : null;
-    }
-
-    public String getDocumentDueDateStr() {
-        return hasDocument() ? document.getDueDateStr() : "";
-    }
-
-    public Date getWorkflowDueDate() {
-        if (hasDocument() && workflowDueDate == null) {
-            workflowDueDate = (Date) document.getProperties().get(DocumentDynamicModel.Props.WORKFLOW_DUE_DATE);
-        }
-        return workflowDueDate;
-    }
-
-    public String getWorkflowDueDateStr() {
-        if (hasDocument() && workflowDueDateStr == null) {
-            Date dueDate = getWorkflowDueDate();
-            if (dueDate != null) {
-                workflowDueDateStr = dateFormat.format(getWorkflowDueDate());
+    public String getDueDateStr() {
+        if (dueDateStr == null && hasDocument() && compoundWorkflow != null) {
+            if (compoundWorkflow.isDocumentWorkflow()) {
+                dueDateStr = document.getDueDateStr();
+            } else if (compoundWorkflow.isCaseFileWorkflow()) {
+                Date dueDate = (Date) document.getProperties().get(DocumentDynamicModel.Props.WORKFLOW_DUE_DATE);
+                if (dueDate != null) {
+                    dueDateStr = dateFormat.format(dueDate);
+                }
             }
         }
-        return workflowDueDateStr;
+        return dueDateStr;
     }
 
     private boolean hasDocument() {

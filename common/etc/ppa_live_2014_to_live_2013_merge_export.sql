@@ -82,7 +82,7 @@ WITH RECURSIVE node_hierarchy (id, uuid, new_id, transaction_id) AS (
                 join alf_node child on child.id = child_assoc.child_node_id
                 where 
 		node.id in (select id from tmp_export_nodes)
-                and child.id not in (
+                and child.type_qname_id not in (
 					select qname.id from alf_qname qname join alf_namespace ns on ns.id = qname.ns_id where (
 						(local_name = 'documentLog' and uri = 'http://alfresco.webmedia.ee/model/document/common/1.0')
 						or (local_name = 'assignmentTask' and uri = 'http://alfresco.webmedia.ee/model/workflow/specific/1.0')
@@ -102,7 +102,7 @@ WITH RECURSIVE node_hierarchy (id, uuid, new_id, transaction_id) AS (
                 FROM node_hierarchy child  
                 JOIN alf_child_assoc child_child_assoc ON child_child_assoc.parent_node_id = child.id  
                 JOIN alf_node child_child ON child_child.id = child_child_assoc.child_node_id 
-                where child_child.id not in (
+                where child_child.type_qname_id not in (
 					select qname.id from alf_qname qname join alf_namespace ns on ns.id = qname.ns_id where (
 						(local_name = 'documentLog' and uri = 'http://alfresco.webmedia.ee/model/document/common/1.0')
 						or (local_name = 'assignmentTask' and uri = 'http://alfresco.webmedia.ee/model/workflow/specific/1.0')
@@ -409,24 +409,12 @@ COPY (
 		else child_node_id end, 
 	qname_ns_id, qname_localname, is_primary, assoc_index
 	FROM alf_child_assoc 
---	left join tmp_export_nodes parent_export on parent_export.id = alf_child_assoc.parent_node_id
-
---	SELECT nextval('export_sequence'), version, 
---	case when parent_node_id in (select id from tmp_export_nodes)
---		then (select new_id from tmp_export_nodes where id = parent_node_id)
---		else parent_node_id end, 
---	type_qname_id, child_node_name_crc, child_node_name, 
---	case when child_node_id in (select id from tmp_export_nodes)
---		then (select new_id from tmp_export_nodes where id = child_node_id)
---		else child_node_id end, 
---	qname_ns_id, qname_localname, is_primary, assoc_index FROM alf_child_assoc 
 	left join tmp_export_nodes parent_export on parent_export.id = alf_child_assoc.parent_node_id
 	left join tmp_export_nodes child_export on child_export.id = alf_child_assoc.child_node_id
 	where alf_child_assoc.type_qname_id not in (select qname.id from alf_qname qname join alf_namespace ns on ns.id = qname.ns_id 
 		where (local_name = 'task' and uri = 'http://alfresco.webmedia.ee/model/workflow/common/1.0')
 		or (local_name = 'documentLog' and uri = 'http://alfresco.webmedia.ee/model/document/common/1.0')
 		or (local_name = 'seriesLog' and uri = 'http://alfresco.webmedia.ee/model/series/1.0'))
-	-- and (parent_node_id in (select id from tmp_export_nodes) or child_node_id in (select id from tmp_export_nodes))
 	and (parent_export.id is not null or child_export.id is not null)
 ) TO '/delta-pgsql/data/alf_child_assoc.tsv';
 

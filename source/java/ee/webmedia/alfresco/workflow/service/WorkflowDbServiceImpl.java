@@ -284,7 +284,7 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
             return;
         }
         verifyTask(task, parentRef);
-        TaskUpdateInfo updateInfo = getTaskUpdateInfo(task, parentRef, changedProps);
+        TaskUpdateInfo updateInfo = getTaskUpdateInfo(task, parentRef, changedProps, null);
         if (!updateInfo.isUpdateNeeded()) {
             return;
         }
@@ -293,7 +293,7 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
 
     @Override
     public void updateTaskEntryIgnoringParent(Task task, Map<QName, Serializable> changedProps) {
-        TaskUpdateInfo updateInfo = getTaskUpdateInfo(task, null, changedProps);
+        TaskUpdateInfo updateInfo = getTaskUpdateInfo(task, null, changedProps, null);
         updateInfo.remove(WORKFLOW_ID_KEY);
         updateTaskEntry(updateInfo);
     }
@@ -312,7 +312,7 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
 
     @Override
     public void createTaskEntry(Task task, NodeRef workflowfRef, boolean isIndependentTask) {
-        TaskUpdateInfo updateInfo = verifyTaskAndGetUpdateInfoOnCreate(task, (isIndependentTask ? null : workflowfRef));
+        TaskUpdateInfo updateInfo = verifyTaskAndGetUpdateInfoOnCreate(task, (isIndependentTask ? null : workflowfRef), null);
         if (updateInfo == null) {
             return;
         }
@@ -356,16 +356,16 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
     }
 
     @Override
-    public TaskUpdateInfo verifyTaskAndGetUpdateInfoOnCreate(Task task, NodeRef workflowRef) {
-        return verifyTaskAndGetUpdateInfo(task, workflowRef, true, RepoUtil.toQNameProperties(task.getNode().getProperties()));
+    public TaskUpdateInfo verifyTaskAndGetUpdateInfoOnCreate(Task task, NodeRef workflowRef, Connection connection) {
+        return verifyTaskAndGetUpdateInfo(task, workflowRef, true, RepoUtil.toQNameProperties(task.getNode().getProperties()), connection);
     }
 
     @Override
-    public TaskUpdateInfo verifyTaskAndGetUpdateInfoOnUpdate(Task task, NodeRef workflowRef, Map<QName, Serializable> propsToSave) {
-        return verifyTaskAndGetUpdateInfo(task, workflowRef, false, propsToSave);
+    public TaskUpdateInfo verifyTaskAndGetUpdateInfoOnUpdate(Task task, NodeRef workflowRef, Map<QName, Serializable> propsToSave, Connection connection) {
+        return verifyTaskAndGetUpdateInfo(task, workflowRef, false, propsToSave, connection);
     }
 
-    private TaskUpdateInfo verifyTaskAndGetUpdateInfo(Task task, NodeRef workflowfRef, boolean isNewTask, Map<QName, Serializable> props) {
+    private TaskUpdateInfo verifyTaskAndGetUpdateInfo(Task task, NodeRef workflowfRef, boolean isNewTask, Map<QName, Serializable> props, Connection connection) {
         if (task == null) {
             return null;
         }
@@ -375,7 +375,7 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
             Integer taskIndexInWorkflow = task.getTaskIndexInWorkflow();
             Assert.isTrue(taskIndexInWorkflow == null || taskIndexInWorkflow >= 0);
         }
-        TaskUpdateInfo updateInfo = getTaskUpdateInfo(task, workflowfRef, props);
+        TaskUpdateInfo updateInfo = getTaskUpdateInfo(task, workflowfRef, props, connection);
         if (isNewTask) {
             updateInfo.add(IS_SEARCHABLE_FIELD, task.getNode().getAspects().contains(WorkflowSpecificModel.Aspects.SEARCHABLE));
         }
@@ -391,7 +391,7 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
             return;
         }
         TaskUpdateInfo updateInfo = new TaskUpdateInfo(taskRef);
-        populateTaskUpdateInfo(updateInfo, props);
+        populateTaskUpdateInfo(updateInfo, props, null);
         updateTaskEntry(updateInfo);
     }
 
@@ -400,36 +400,47 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
             final List<QName> compoundWorkflowTaskSearchableProperties, String compoundWorkflowTaskUpdateString) {
 
         String sql = "UPDATE delta_task SET " + compoundWorkflowTaskUpdateString + " WHERE wfs_compound_workflow_id=?";
-        return jdbcTemplate.batchUpdate(sql, new BatchPreparedStatementSetter() {
+        Connection connection = null;
+        try {
+            // TODO: get "text" constant value from connection? It is database-specific
+            connection = dataSource.getConnection();
+            final Connection finalConnection = connection;
+            return jdbcTemplate.batchUpdate(sql, new BatchPreparedStatementSetter() {
 
-            @Override
-            public void setValues(PreparedStatement ps, int i) throws SQLException {
-                Pair<String, Map<QName, Serializable>> pair = compoundWorkflowtaskSearchableProps.get(i);
-                int fieldCounter = 1;
-                Map<QName, Serializable> props = pair.getSecond();
-                for (QName prop : compoundWorkflowTaskSearchableProperties) {
-                    Object value = props.get(prop);
-                    if ((WorkflowCommonModel.Props.OWNER_ORGANIZATION_NAME.equals(prop)
-                            || WorkflowSpecificModel.Props.SEARCHABLE_COMPOUND_WORKFLOW_OWNER_ORGANIZATION_NAME.equals(prop)) && value != null) {
-                        value = getArrayValueForDb(value);
+                @Override
+                public void setValues(PreparedStatement ps, int i) throws SQLException {
+                    Pair<String, Map<QName, Serializable>> pair = compoundWorkflowtaskSearchableProps.get(i);
+                    int fieldCounter = 1;
+                    Map<QName, Serializable> props = pair.getSecond();
+                    for (QName prop : compoundWorkflowTaskSearchableProperties) {
+                        Object value = props.get(prop);
+                        if ((WorkflowCommonModel.Props.OWNER_ORGANIZATION_NAME.equals(prop)
+                                || WorkflowSpecificModel.Props.SEARCHABLE_COMPOUND_WORKFLOW_OWNER_ORGANIZATION_NAME.equals(prop)) && value != null) {
+                            value = getArrayValueForDb(value, finalConnection);
+                        }
+                        DbSearchUtil.setParameterValue(ps, fieldCounter++, value);
                     }
-                    DbSearchUtil.setParameterValue(ps, fieldCounter++, value);
+                    ps.setObject(fieldCounter, pair.getFirst());
                 }
-                ps.setObject(fieldCounter, pair.getFirst());
-            }
 
-            @Override
-            public int getBatchSize() {
-                return compoundWorkflowtaskSearchableProps.size();
-            }
-        });
+                @Override
+                public int getBatchSize() {
+                    return compoundWorkflowtaskSearchableProps.size();
+                }
+            });
+        } catch (SQLException e) {
+            LOG.error("Error creating owner organization name input", e);
+            throw new RuntimeException(e);
+        } finally {
+            WorkflowUtil.closeConnection(connection);
+        }
     }
 
     @Override
     public int updateTaskPropertiesAndStorRef(NodeRef taskRef, Map<QName, Serializable> props) {
         TaskUpdateInfo info = new TaskUpdateInfo(taskRef);
         info.add(STORE_ID_FIELD, taskRef.getStoreRef().toString());
-        populateTaskUpdateInfo(info, props);
+        populateTaskUpdateInfo(info, props, null);
         return updateTaskEntry(info);
     }
 
@@ -595,7 +606,7 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
         Assert.isTrue(isSaved(taskRef) && isSaved(wfRef) && task.getType() != null);
     }
 
-    private TaskUpdateInfo getTaskUpdateInfo(Task task, NodeRef workflowfRef, Map<QName, Serializable> changedProps) {
+    private TaskUpdateInfo getTaskUpdateInfo(Task task, NodeRef workflowfRef, Map<QName, Serializable> changedProps, Connection connection) {
         TaskUpdateInfo updateInfo = new TaskUpdateInfo(task);
 
         Integer taskIndexInWorkflow = task.getTaskIndexInWorkflow();
@@ -610,11 +621,11 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
         if (addTaskIndexInWorkflow) {
             updateInfo.add(INDEX_IN_WORKFLOW_FIELD, taskIndexInWorkflow);
         }
-        populateTaskUpdateInfo(updateInfo, changedProps);
+        populateTaskUpdateInfo(updateInfo, changedProps, connection);
         return updateInfo;
     }
 
-    private void populateTaskUpdateInfo(TaskUpdateInfo updateInfo, @SuppressWarnings("rawtypes") Map taskProps) {
+    private void populateTaskUpdateInfo(TaskUpdateInfo updateInfo, @SuppressWarnings("rawtypes") Map taskProps, Connection connection) {
         if (taskProps == null) {
             return;
         }
@@ -631,36 +642,34 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
             Object value = entry.getValue();
             if ((WorkflowCommonModel.Props.OWNER_ORGANIZATION_NAME.equals(propName)
                     || WorkflowSpecificModel.Props.SEARCHABLE_COMPOUND_WORKFLOW_OWNER_ORGANIZATION_NAME.equals(propName)) && value != null) {
-                value = getArrayValueForDb(value);
+                value = getArrayValueForDb(value, connection);
             }
             updateInfo.add(getDbFieldName(propName), value);
         }
     }
 
-    private Object getArrayValueForDb(Object value) {
-        Connection connection = null;
+    /**
+     * @param connection - if not null, use provided connection for retrieving value. Connection is not closed. If connection is null, new connection is fetched and also closed
+     *            after retrieving data.
+     * @return
+     */
+    private Object getArrayValueForDb(Object value, Connection connection) {
+        Object[] valueArray = ((List<String>) value).toArray();
+        if (connection != null) {
+            try {
+                return connection.createArrayOf("text", valueArray);
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+        }
         try {
-            // TODO: get "text" constant value from connection? It is database-specific
             connection = dataSource.getConnection();
-            value = connection.createArrayOf("text", (((List<String>) value).toArray()));
+            return connection.createArrayOf("text", valueArray);
         } catch (SQLException e) {
             LOG.error("Error creating owner organization name input", e);
             throw new RuntimeException(e);
         } finally {
-            closeConnection(connection);
-        }
-        return value;
-    }
-
-    private void closeConnection(Connection connection) {
-        if (connection != null) {
-            try {
-                connection.setAutoCommit(true);
-                connection.close();
-            } catch (SQLException e) {
-                LOG.error("Error closing connection", e);
-                throw new RuntimeException(e);
-            }
+            WorkflowUtil.closeConnection(connection);
         }
     }
 
@@ -1487,7 +1496,7 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
                     workflowsAndTaskOwners.append("; ");
                 }
                 workflowsAndTaskOwners.append(workflowConstantsBean.getWorkflowTypeNameByTask(typeAndOwners.getFirst()))
-                .append(" (" + typeAndOwners.getSecond() + ")");
+                        .append(" (" + typeAndOwners.getSecond() + ")");
             }
             taskOwners.put(nodeRef, workflowsAndTaskOwners.toString());
         }

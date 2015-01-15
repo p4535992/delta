@@ -1506,7 +1506,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, N
     @Override
     public int getAllDocumentFromIncomingInvoiceCount() {
         List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(
-                constantNodeRefsBean.getReceivedincoiceRoot(), RegexQNamePattern.MATCH_ALL, RegexQNamePattern.MATCH_ALL);
+                constantNodeRefsBean.getReceivedInvoiceRoot(), RegexQNamePattern.MATCH_ALL, RegexQNamePattern.MATCH_ALL);
         return childAssocs != null ? childAssocs.size() : 0;
     }
 
@@ -1531,7 +1531,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, N
 
     @Override
     public List<NodeRef> getIncomingEInvoices() {
-        NodeRef incomingNodeRef = constantNodeRefsBean.getReceivedincoiceRoot();
+        NodeRef incomingNodeRef = constantNodeRefsBean.getReceivedInvoiceRoot();
         return getIncomingDocuments(incomingNodeRef);
     }
 
@@ -1670,7 +1670,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, N
 
     @Override
     public boolean isIncomingInvoice(NodeRef nodeRef) {
-        NodeRef receivedInvoicePathRef = constantNodeRefsBean.getReceivedincoiceRoot();
+        NodeRef receivedInvoicePathRef = constantNodeRefsBean.getReceivedInvoiceRoot();
         return receivedInvoicePathRef.equals(nodeService.getPrimaryParent(nodeRef).getParentRef());
     }
 

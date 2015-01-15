@@ -139,8 +139,6 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
     public static final QName TEMP_ACCESS_RESTRICTION_CHANGE_REASON = RepoUtil.createTransientProp(DocumentCommonModel.Props.ACCESS_RESTRICTION_CHANGE_REASON.getLocalName());
     public static final QName TEMP_ARCHIVAL_ACTIVITY_NODE_REF = RepoUtil.createTransientProp("archivalActivityNodeRef");
     public static final QName TEMP_VALIDATE_WITHOUT_SAVE = RepoUtil.createTransientProp("validateWithoutSave");
-    public static final String DVK_RECEIVED = QName.createQName(DocumentCommonModel.DOCCOM_URI, "dvkReceived").toString();
-    public static final String FORWARDED_DEC_DOCUMENTS = QName.createQName(DocumentCommonModel.DOCCOM_URI, "forwardedDecDocuments").toString();
     private static final String PARAM_NODEREF = "nodeRef";
     private String renderedModal;
     private boolean showConfirmationPopup;
@@ -558,8 +556,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
             }
         }
 
-        String path = node.getPath();
-        if (path != null && (path.contains(DVK_RECEIVED) || path.contains(FORWARDED_DEC_DOCUMENTS))) {
+        if (document.isDvk() || document.isForwardedDecDocument()) {
             buttons.add(new DialogButtonConfig("forwardDecDocumentButton", null, "document_forward_dec_document", "#{DialogManager.bean.forwardDecDocuments}", "false", null));
         }
         return buttons;
@@ -1214,8 +1211,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
             return true;
         }
         return getCurrentSnapshot().inEditMode && searchBlockBean.isShow() && !searchBlockBean.isShowSimilarDocumentsBlock()
-                && ((getDocument().isImapOrDvk() && !getDocument().isNotEditable())
-                || BeanHelper.getDocumentDynamicService().isInForwardedDecDocuments(getCurrentSnapshot().document.getNodeRef()));
+                && ((getDocument().isImapOrDvk() && !getDocument().isNotEditable()) || getDocument().isForwardedDecDocument());
     }
 
     public boolean isAssocsBlockExpanded() {
@@ -1226,7 +1222,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         return !getCurrentSnapshot().document.isDraft() && getCurrentSnapshot().inEditMode
                 && DocumentStatus.WORKING.getValueName().equals(getCurrentSnapshot().document.getDocStatus())
                 && validateViewMetaDataPermission(getCurrentSnapshot().document.getNodeRef())
-                || BeanHelper.getDocumentDynamicService().isInForwardedDecDocuments(getCurrentSnapshot().document.getNodeRef());
+                || getCurrentSnapshot().document.isForwardedDecDocument();
 
     }
 

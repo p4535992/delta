@@ -2110,6 +2110,7 @@ public class TestDataService implements SaveListener {
             wfCount = ((int) (Math.random() * 5)) + 2; // 2 - 6
         }
         boolean hasSignatureWorkflow = false;
+        Map<NodeRef, Pair<Boolean, Boolean>> digiDocStatuses = new HashMap<>();
         for (int i = 0; i < wfCount; i++) {
             QName wfType;
             if (i == 0 && Math.random() < 0.5d) {
@@ -2233,12 +2234,12 @@ public class TestDataService implements SaveListener {
                     if (StringUtils.isNotBlank(ownerId)) {
                         // document workflow
                         if (isDocumentWorkflow) {
-                            Set<Privilege> requiredPrivileges = getRequiredPrivsForTask(task, docRef, fileService, false, false);
+                            Set<Privilege> requiredPrivileges = getRequiredPrivsForTask(task, docRef, fileService, false, false, digiDocStatuses);
                             addOwnerPermissions(permissionsByTaskOwnerId, ownerId, requiredPrivileges);
                         }
                     } else if (isCaseFileWorkflow) {
                         // case file workflow
-                        addOwnerPermissions(permissionsByTaskOwnerId, ownerId, getPrivsWithDependencies(getRequiredPrivsForTask(task, null, null, true, true)));
+                        addOwnerPermissions(permissionsByTaskOwnerId, ownerId, getPrivsWithDependencies(getRequiredPrivsForTask(task, null, null, true, true, digiDocStatuses)));
                     } else {
                         // independent workflow
                         Set<Privilege> privileges = WorkflowUtil.getIndependentWorkflowDefaultDocPermissions();
@@ -2328,7 +2329,7 @@ public class TestDataService implements SaveListener {
         String fileMimeType = file.get(1);
         String fileEncoding = file.get(2);
         String fileSize = file.get(3);
-        String fileName = FilenameUtil.trimDotsAndSpaces(FilenameUtil.stripForbiddenWindowsCharacters(file.get(4)));
+        String fileName = FilenameUtil.trimDotsAndSpaces(FilenameUtil.stripForbiddenWindowsCharactersAndRedundantWhitespaces(file.get(4)));
         String fileTitle = file.get(5).replace('+', '-');
         if (StringUtils.isBlank(fileMimeType)) {
             fileMimeType = getMimetypeService().guessMimetype(fileName);

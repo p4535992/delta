@@ -144,11 +144,6 @@ public class SearchUtil {
         return "PATH:\"" + QueryParser.escape(path) + "//*\"";
     }
 
-    /** Generates a query that searches all nodes exept the ones that are children (in any depth) of the specified path */
-    public static String generateParentPathExcludingQuery(String path) {
-        return "-PATH:\"" + QueryParser.escape(path) + "//*\"";
-    }
-
     public static String generateIdExactQuery(List<NodeRef> documentsForPermissionCheck) {
         List<String> queryParts = new ArrayList<>();
         for (NodeRef nodeRef : documentsForPermissionCheck) {

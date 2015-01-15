@@ -444,7 +444,7 @@ public class UIGenericPicker extends UICommand implements AjaxUpdateable {
         out.write("</td></tr>");
 
         if (!StringUtils.isBlank(selectedUsergroup)) {
-            out.write("<tr><td><span id=\"" + clientId + FIELD_SELECTED_GROUP_TEXT + "\">");
+            out.write("<tr><td><span id=\"" + clientId + FIELD_SELECTED_GROUP_TEXT + "\" style=\"font-weight:bold\">");
             out.write(Utils.encode(MessageUtil.getMessage(MSG_MODAL_SEARCH_USERGROUP_SELECTED, getAuthorityService().getAuthorityDisplayName(selectedUsergroup))));
             out.write("</span></td></tr>");
         }
@@ -484,9 +484,7 @@ public class UIGenericPicker extends UICommand implements AjaxUpdateable {
             // select group for search
             if (showSelectButton != null && showSelectButton) {
                 out.write("&nbsp;<input class=\"picker-add\" type='submit' id='" + clientId + FIELD_GROUP_SELECTOR + "'");
-                if (filterIndex != UserContactGroupSearchBean.USER_GROUPS_FILTER) {
-                    out.write("disabled='disabled'");
-                }
+                out.write("disabled='disabled'");
                 out.write(" value='");
                 out.write(Utils.encode(MessageUtil.getMessage(MSG_MODAL_SEARCH_SELECT_USERGROUP)));
                 out.write("' onclick=\"");
@@ -753,7 +751,7 @@ public class UIGenericPicker extends UICommand implements AjaxUpdateable {
 
     /**
      * We use a hidden field per picker instance on the page.
-     * 
+     *
      * @return hidden field name
      */
     private String getHiddenFieldName() {

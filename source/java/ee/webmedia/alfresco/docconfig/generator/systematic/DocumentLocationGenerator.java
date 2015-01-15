@@ -978,10 +978,10 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
                 && isClosedUnitCheckNeeded((DocumentDynamic) document, documentService.getAncestorNodesByDocument(document.getNodeRef()), volumeRef, caseRef);
 
         if (isClosedUnitCheckNeeded && DocListUnitStatus.CLOSED.equals(functionsService.getUnmodifiableFunction(functionRef, null).getStatus())) {
-            validationHelper.addErrorMessage(isDocument ? "document" : "caseFile" + "_validationMsg_closed_function");
+            validationHelper.addErrorMessage((isDocument ? "document" : "caseFile") + "_validationMsg_closed_function");
         }
         if (isClosedUnitCheckNeeded && DocListUnitStatus.CLOSED.equals(seriesService.getSeriesByNodeRef(seriesRef).getStatus())) {
-            validationHelper.addErrorMessage(isDocument ? "document" : "caseFile" + "_validationMsg_closed_series");
+            validationHelper.addErrorMessage((isDocument ? "document" : "caseFile") + "_validationMsg_closed_series");
         }
 
         if (!isDocument) {

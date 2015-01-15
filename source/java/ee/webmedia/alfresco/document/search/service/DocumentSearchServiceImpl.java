@@ -14,7 +14,6 @@ import static ee.webmedia.alfresco.utils.SearchUtil.generateMultiNodeRefQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateMultiStringExactQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateNodeRefQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateNumberPropertyRangeQuery;
-import static ee.webmedia.alfresco.utils.SearchUtil.generateParentPathExcludingQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateParentPathQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generatePropertyBooleanQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generatePropertyDateQuery;
@@ -285,16 +284,16 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
     }
 
     @Override
-    public List<NodeRef> searchAdrDocuments(Date modifiedDateBegin, Date modifiedDateEnd, Set<String> documentTypeIds) {
+    public Set<NodeRef> searchAdrDocuments(Date modifiedDateBegin, Date modifiedDateEnd, Set<String> documentTypeIds) {
         long startTime = System.currentTimeMillis();
-        List<String> queryParts = new ArrayList<String>(3);
+        List<String> queryParts = new ArrayList<String>();
         if (modifiedDateBegin != null && modifiedDateEnd != null) {
             queryParts.add(generateDatePropertyRangeQuery(modifiedDateBegin, modifiedDateEnd, ContentModel.PROP_MODIFIED));
         }
 
         String query = generateAdrDocumentSearchQuery(queryParts, documentTypeIds);
         // Only search from SpacesStore and ArchivalsStore to get correct document set (PPA).
-        List<NodeRef> results = searchNodes(query, -1, /* queryName */"adrDocumentByModified1");
+        Set<NodeRef> results = new HashSet<>(searchNodes(query, -1, /* queryName */"adrDocumentByModified1"));
         results.addAll(searchNodes(query, -1, /* queryName */"adrDocumentByModified2", generalService.getArchivalsStoreRefs(), true).getFirst());
         if (log.isDebugEnabled()) {
             log.debug("ADR document details search total time " + (System.currentTimeMillis() - startTime) + " ms, results " + results.size() //
@@ -1484,24 +1483,16 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
 
     @Override
     public Map<NodeRef /* sendInfo */, Pair<String /* dvkId */, String /* recipientRegNr */>> searchOutboxDvkIds() {
-        String query = getDvkOutboxQueryWithoutForwardedDecDocuments();
+        String query = getDvkOutboxQuery();
         log.debug("searchDocumentsInOutbox with query '" + query + "'");
         return searchDhlIdsBySendInfoImpl(query, -1, /* queryName */"outboxDvkIds");
     }
 
     @Override
     public Map<NodeRef, Pair<String, String>> searchForwardedDecDocumentsDvkIds(SendStatus status) {
-        String query = getForwardedDecDocumentsQuery(status);
+        String query = joinQueryPartsAnd(Arrays.asList(generateParentPathQuery("/doccom:forwardedDecDocuments"), getDvkOutboxQuery(status)), false);
         log.debug("searchDocumentsInOutbox with query '" + query + "'");
-        return searchDhlIdsBySendInfoImpl(query, -1, /* queryName */"outboxDvkIds");
-    }
-
-    private String getDvkOutboxQueryWithoutForwardedDecDocuments() {
-        return joinQueryPartsAnd(Arrays.asList(generateParentPathExcludingQuery("/doccom:forwardedDecDocuments"), getDvkOutboxQuery()), false);
-    }
-
-    private String getForwardedDecDocumentsQuery(SendStatus status) {
-        return joinQueryPartsAnd(Arrays.asList(generateParentPathQuery("/doccom:forwardedDecDocuments"), getDvkOutboxQuery(status)), false);
+        return searchDhlIdsBySendInfoImpl(query, -1, "forwardedDecDocumentsDvkIds", Collections.singleton(generalService.getStore()));
     }
 
     @Override
@@ -1854,9 +1845,15 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         return joinQueryPartsAnd(queryParts, true);
     }
 
-    private Map<NodeRef /* sendInfo */, Pair<String /* dvkId */, String /* recipientRegNr */>> searchDhlIdsBySendInfoImpl(String query, int limit,
-            String queryName) {
+    private Map<NodeRef /* sendInfo */, Pair<String /* dvkId */, String /* recipientRegNr */>> searchDhlIdsBySendInfoImpl(String query, int limit, String queryName) {
+        return searchDhlIdsBySendInfoImpl(query, limit, queryName, null);
+    }
+
+    private Map<NodeRef, Pair<String, String>> searchDhlIdsBySendInfoImpl(String query, int limit, String queryName, Set<StoreRef> stores) {
         final HashMap<NodeRef, Pair<String, String>> refsAndDvkIds = new HashMap<NodeRef, Pair<String, String>>();
+        if (stores == null) {
+            stores = getAllStoresWithArchivalStoreVOs();
+        }
         searchGeneralImpl(query, limit, queryName, new SearchCallback<String>() {
             @Override
             public String addResult(ResultSetRow row) {
@@ -1867,7 +1864,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
                 refsAndDvkIds.put(sendInfoRef, dvkIdAndRecipientregNr);
                 return null;
             }
-        }, getAllStoresWithArchivalStoreVOs());
+        }, stores);
         return refsAndDvkIds;
     }
 

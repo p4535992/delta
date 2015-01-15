@@ -6,6 +6,8 @@ import static ee.webmedia.alfresco.utils.XmlUtil.initSchema;
 
 import java.io.InputStream;
 import java.io.Serializable;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -451,8 +453,8 @@ public class WorkflowUtil {
             statusNames.add(status.name());
         }
         return "If compoundWorkflow status is " + cWfStatus.name() + ", then workflows must have the following statuses, in order:" +
-        " 0..* FINISHED, (1 " + cWfStatus.name() + " OR (1..* parallely startable workflows " + TextUtil.joinNonBlankStrings(statusNames, " OR ")
-        + " with at least one " + cWfStatus.name() + ")), 0..* NEW or FINISHED";
+                " 0..* FINISHED, (1 " + cWfStatus.name() + " OR (1..* parallely startable workflows " + TextUtil.joinNonBlankStrings(statusNames, " OR ")
+                + " with at least one " + cWfStatus.name() + ")), 0..* NEW or FINISHED";
     }
 
     private static boolean isValidInProgressOrStopped(List<Workflow> workflows, Status requiredStatus, Status... cWfStatuses) {
@@ -972,6 +974,18 @@ public class WorkflowUtil {
         compoundWorkflow.setOwnerName(UserUtil.getPersonFullName1(userProps));
         compoundWorkflow.setProp(WorkflowCommonModel.Props.OWNER_JOB_TITLE, userProps.get(ContentModel.PROP_JOBTITLE));
         compoundWorkflow.setProp(WorkflowCommonModel.Props.OWNER_ORGANIZATION_NAME, (Serializable) userService.getUserOrgPathOrOrgName(userProps));
+    }
+
+    public static void closeConnection(Connection connection) {
+        if (connection != null) {
+            try {
+                connection.setAutoCommit(true);
+                connection.close();
+            } catch (SQLException e) {
+                LOG.error("Error closing connection", e);
+                throw new RuntimeException(e);
+            }
+        }
     }
 
 }

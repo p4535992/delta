@@ -26,6 +26,7 @@ import org.alfresco.util.URLDecoder;
 import org.alfresco.util.URLEncoder;
 import org.alfresco.web.app.servlet.DownloadContentServlet;
 import org.alfresco.web.bean.LoginBean;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.springframework.util.Assert;
 import org.springframework.util.FileCopyUtils;
@@ -214,11 +215,14 @@ public class DownloadDigiDocContentServlet extends DownloadContentServlet {
         // this is better than the default response of the browser trying to display the
         // contents
         res.setHeader("Content-Disposition", "attachment");
+        boolean isBdoc = false;
 
         try {
             WebApplicationContext webAppContext = WebApplicationContextUtils.getWebApplicationContext(getServletContext());
             SignatureService signatureService = (SignatureService) webAppContext.getBean(SignatureService.BEAN_NAME);
-            SignatureItemsAndDataItems items = signatureService.getDataItemsAndSignatureItems(dDocRef, true, true);
+            String fileName = (String) nodeService.getProperty(dDocRef, ContentModel.PROP_NAME);
+            isBdoc = StringUtils.isNotBlank(fileName) && FilenameUtil.isBdocFile(fileName);
+            SignatureItemsAndDataItems items = signatureService.getDataItemsAndSignatureItems(dDocRef, true, isBdoc);
             DataItem item = items.getDataItems().get(dataFileId);
 
             long size = item.getSize();
@@ -232,7 +236,7 @@ public class DownloadDigiDocContentServlet extends DownloadContentServlet {
             ServletOutputStream os = res.getOutputStream();
             FileCopyUtils.copy(item.getData(), os); // closes both streams
         } catch (SignatureException e) {
-            logger.error("Failed to fetch a document from .ddoc, noderef: " + dDocRef + ", id = " + dataFileId, e);
+            logger.error("Failed to fetch a document from " + (isBdoc ? ".bdoc" : ".ddoc") + ", noderef: " + dDocRef + ", id = " + dataFileId, e);
         }
     }
 

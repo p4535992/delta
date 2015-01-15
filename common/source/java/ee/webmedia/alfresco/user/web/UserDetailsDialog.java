@@ -145,6 +145,13 @@ public class UserDetailsDialog extends BaseDialogBean {
         user.getProperties().put(ContentModel.SHOW_EMPTY_TASK_MENU.toString(), DefaultTypeConverter.INSTANCE.convert(Boolean.class, e.getNewValue()));
     }
 
+    public void openOfficeClientExtensionsChanged(ValueChangeEvent e) {
+        String extensions = DefaultTypeConverter.INSTANCE.convert(String.class, e.getNewValue());
+        if (StringUtils.isNotBlank(extensions)) {
+            user.getProperties().put(ContentModel.PROP_OPEN_OFFICE_CLIENT_EXTENSIONS.toString(), extensions);
+        }
+    }
+
     public boolean isShowEmptyTaskMenuEditable() {
         return isAdministratorOrCurrentUser();
     }

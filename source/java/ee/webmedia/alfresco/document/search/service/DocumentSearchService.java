@@ -231,7 +231,7 @@ public interface DocumentSearchService {
 
     List<NodeRef> searchNewTasksByOwnerId(String ownerId, boolean isPreviousOwnerId);
 
-    List<NodeRef> searchAdrDocuments(Date modifiedDateBegin, Date modifiedDateEnd, Set<String> documentTypeIds);
+    Set<NodeRef> searchAdrDocuments(Date modifiedDateBegin, Date modifiedDateEnd, Set<String> documentTypeIds);
 
     List<NodeRef> searchAdrDeletedDocuments(Date deletedDateBegin, Date deletedDateEnd);
 

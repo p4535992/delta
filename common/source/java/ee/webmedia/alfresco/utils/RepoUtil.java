@@ -291,6 +291,11 @@ public class RepoUtil {
     }
 
     public static Map<QName, Serializable> getPropertiesIgnoringSystem(Map<QName, Serializable> props, DictionaryService dictionaryService) {
+        return getPropertiesIgnoringSystem(props, new HashMap<QName, PropertyDefinition>(), dictionaryService);
+    }
+
+    public static Map<QName, Serializable> getPropertiesIgnoringSystem(Map<QName, Serializable> props, Map<QName, PropertyDefinition> propertyDefinitions,
+            DictionaryService dictionaryService) {
         Map<QName, Serializable> filteredProps = new HashMap<QName, Serializable>(props.size());
         for (QName qName : props.keySet()) {
             // ignore system and contentModel properties
@@ -301,13 +306,13 @@ public class RepoUtil {
             if (value == null) {
                 // problem: when null is set as a value to multivalued property and stored to repository, then after loading back instead of null value is list containing null
                 // workaround: replace null values with empty list
-                PropertyDefinition propDef = dictionaryService.getProperty(qName);
+                PropertyDefinition propDef = getPropDef(dictionaryService, propertyDefinitions, qName);
                 if (propDef != null && propDef.isMultiValued()) {
                     value = new ArrayList<Object>(0);
                 }
             } else if (value instanceof String && (value.toString().length() == 0)) {
                 // check for empty strings when using number types, set to null in this case
-                PropertyDefinition propDef = dictionaryService.getProperty(qName);
+                PropertyDefinition propDef = getPropDef(dictionaryService, propertyDefinitions, qName);
                 if (propDef != null) {
                     if (propDef.getDataType().getName().equals(DataTypeDefinition.DOUBLE) ||
                             propDef.getDataType().getName().equals(DataTypeDefinition.FLOAT) ||
@@ -320,6 +325,15 @@ public class RepoUtil {
             filteredProps.put(qName, value);
         }
         return filteredProps;
+    }
+
+    private static PropertyDefinition getPropDef(DictionaryService dictionaryService, Map<QName, PropertyDefinition> propertyDefinitions, QName qName) {
+        PropertyDefinition propDef = propertyDefinitions.get(qName);
+        if (propDef == null && !propertyDefinitions.containsKey(qName)) {
+            propDef = dictionaryService.getProperty(qName);
+            propertyDefinitions.put(qName, propDef);
+        }
+        return propDef;
     }
 
     public static boolean propsEqual(Map<String, Object> savedProps, Map<String, Object> unSavedPprops) {
@@ -519,7 +533,7 @@ public class RepoUtil {
         return weakReference != null ? weakReference.get() : null;
     }
 
-    public static boolean isReferenceNull(WeakReference weakReference) {
+    public static boolean isReferenceNull(WeakReference<?> weakReference) {
         return weakReference == null || weakReference.get() == null;
     }
 

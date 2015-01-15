@@ -465,7 +465,7 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
     }
 
     private void resetModals() {
-        if (propSheet != null) {
+        if (!RepoUtil.isReferenceNull(propSheet)) {
             return;
         }
         final FacesContext context = FacesContext.getCurrentInstance();

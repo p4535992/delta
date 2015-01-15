@@ -33,6 +33,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.Predicate;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.FastDateFormat;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -41,6 +42,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.ResponseStatus;
 
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel.Types;
@@ -73,8 +75,6 @@ public class HomeController extends AbstractBaseController {
     private static final long serialVersionUID = 1L;
 
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(HomeController.class);
-
-    public static final String REDIRECT_FROM_FINISH_TASK_ATTR = "redirectFromFinishTask";
 
     // FIXME STYLESHEET GOES THROUGH FACES FILTER
 
@@ -142,10 +142,7 @@ public class HomeController extends AbstractBaseController {
         }
 
         // Add model objects
-        Boolean redirectFromFinishTask = (Boolean) model.asMap().get(REDIRECT_FROM_FINISH_TASK_ATTR);
-        if (Boolean.TRUE.equals(redirectFromFinishTask)) {
-            updateTaskCounts(model, containers, getTaskViews(taskTypes));
-        }
+        updateTaskCounts(model, containers, getTaskViews(taskTypes));
         addContainers(model, containers);
         addSubstitutionInfo(model);
         return HOME_VIEW;
@@ -250,8 +247,9 @@ public class HomeController extends AbstractBaseController {
         messages.put(NEUTRAL_MESSAGE, substitutionMessages);
     }
 
+    @ResponseStatus(value = HttpStatus.OK)
     @RequestMapping(value = "/ajax/substitute", method = RequestMethod.POST)
-    public String handleSubstitutionEvent(HttpServletRequest request) {
+    public void handleSubstitutionEvent(HttpServletRequest request) {
         String userToSubstitute = request.getParameter("userName");
         List<Substitute> substitutes = getSubstituteService().searchActiveSubstitutionDuties(AuthenticationUtil.getFullyAuthenticatedUser());
         Substitute substitute = null;
@@ -263,7 +261,6 @@ public class HomeController extends AbstractBaseController {
             }
         }
         BeanHelper.getSubstitutionBean().selectSubstitution(substitute);
-        return "redirect:/m/";
     }
 
     private void addSelectItems(List<UserItem> result, List<Pair<String, String>> items, int type) {

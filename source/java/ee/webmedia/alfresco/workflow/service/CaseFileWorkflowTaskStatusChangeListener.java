@@ -3,9 +3,12 @@ package ee.webmedia.alfresco.workflow.service;
 import static ee.webmedia.alfresco.privilege.service.PrivilegeUtil.getPrivsWithDependencies;
 import static ee.webmedia.alfresco.privilege.service.PrivilegeUtil.getRequiredPrivsForInprogressTask;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.util.Pair;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.InitializingBean;
 
@@ -59,9 +62,10 @@ public class CaseFileWorkflowTaskStatusChangeListener implements WorkflowEventLi
         }
 
         // Add task owner privileges to case file
-        privilegeService.setPermissions(caseFileRef, ownerId, getPrivsWithDependencies(getRequiredPrivsForInprogressTask(task, null, null, true)));
+        Map<NodeRef, Pair<Boolean, Boolean>> digiDocStatuses = new HashMap<>();
+        privilegeService.setPermissions(caseFileRef, ownerId, getPrivsWithDependencies(getRequiredPrivsForInprogressTask(task, null, null, true, digiDocStatuses)));
         // and to documents under this case file
-        Set<Privilege> privsWithDependencies = getPrivsWithDependencies(getRequiredPrivsForInprogressTask(task, null, null, false));
+        Set<Privilege> privsWithDependencies = getPrivsWithDependencies(getRequiredPrivsForInprogressTask(task, null, null, false, digiDocStatuses));
         for (NodeRef docRef : documentSearchService.searchAllDocumentRefsByParentRef(caseFileRef)) {
             privilegeService.setPermissions(docRef, ownerId, privsWithDependencies);
         }

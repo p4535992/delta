@@ -73,7 +73,6 @@ import ee.webmedia.alfresco.workflow.web.CompoundWorkflowDialog;
 import ee.webmedia.alfresco.workflow.web.DelegationBean;
 import ee.webmedia.alfresco.workflow.web.SigningFlowContainer;
 import ee.webmedia.alfresco.workflow.web.WorkflowBlockBean;
-import ee.webmedia.mobile.alfresco.HomeController;
 import ee.webmedia.mobile.alfresco.common.AbstractBaseController;
 import ee.webmedia.mobile.alfresco.workflow.model.DelegationHistoryItem;
 import ee.webmedia.mobile.alfresco.workflow.model.DueDateExtensionForm;
@@ -465,7 +464,7 @@ public class CompundWorkflowDetailsController extends AbstractBaseController {
             addEmptyGroupsMessage(redirectAttributes, emptyGroups);
         }
         addRedirectInfoMsg(redirectAttributes, "workflow.task.delegation.finished");
-        return redirectToTaskList(redirectAttributes, WorkflowSpecificModel.Types.ASSIGNMENT_TASK);
+        return redirectToTaskList(WorkflowSpecificModel.Types.ASSIGNMENT_TASK);
     }
 
     private void addEmptyGroupsMessage(RedirectAttributes redirectAttributes, Set<String> emptyGroups) {
@@ -500,7 +499,7 @@ public class CompundWorkflowDetailsController extends AbstractBaseController {
         if (!formActions.isEmpty()) {
             boolean redirectToTaskList = continueCurrentSigning(inProgressTasksForm, redirectAttributes, formActions, session);
             if (redirectToTaskList) {
-                return redirectToTaskList(redirectAttributes, WorkflowSpecificModel.Types.SIGNATURE_TASK);
+                return redirectToTaskList(WorkflowSpecificModel.Types.SIGNATURE_TASK);
             }
             return redirectToCompoundWorkflow(compoundWorkflowNodeId);
         }
@@ -544,15 +543,14 @@ public class CompundWorkflowDetailsController extends AbstractBaseController {
             } else {
                 boolean finishSuccess = finishTask(taskToFinish, taskType, outcomeIndex, redirectAttributes);
                 if (finishSuccess) {
-                    return redirectToTaskList(redirectAttributes, taskType);
+                    return redirectToTaskList(taskType);
                 }
             }
         }
         return redirectToCompoundWorkflow(compoundWorkflowNodeId);
     }
 
-    private String redirectToTaskList(RedirectAttributes redirectAttributes, QName taskType) {
-        redirectAttributes.addFlashAttribute(HomeController.REDIRECT_FROM_FINISH_TASK_ATTR, Boolean.TRUE);
+    private String redirectToTaskList(QName taskType) {
         return "redirect:/m/tasks/" + TASK_TYPE_TO_KEY_MAPPING.get(taskType);
     }
 

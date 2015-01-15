@@ -7,13 +7,11 @@ import java.util.Map;
 import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.util.EqualsHelper;
 import org.alfresco.web.bean.repository.Node;
-import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.common.evaluator.SharedResourceEvaluator;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel.Props;
-import ee.webmedia.alfresco.docdynamic.web.DocumentDynamicDialog;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.privilege.model.Privilege;
 
@@ -24,8 +22,7 @@ public class CreateWordFileFromTemplateEvaluator extends SharedResourceEvaluator
     @Override
     public boolean evaluate(Node node) {
         if (!node.getNodeRef().getStoreRef().getProtocol().equals(StoreRef.PROTOCOL_WORKSPACE)
-                || BeanHelper.getDocumentDialogHelperBean().isInEditMode()
-                || StringUtils.contains(node.getPath(), DocumentDynamicDialog.FORWARDED_DEC_DOCUMENTS)) {
+                || BeanHelper.getDocumentDialogHelperBean().isInEditMode()) {
             return false;
         }
         Map<String, Object> properties = node.getProperties();
@@ -42,7 +39,7 @@ public class CreateWordFileFromTemplateEvaluator extends SharedResourceEvaluator
     @Override
     public boolean evaluate() {
         DocumentDynamicActionsGroupResources resource = (DocumentDynamicActionsGroupResources) sharedResource;
-        if (!resource.isWorkspaceNode() || resource.isInEditMode() || resource.isInForwardedDecDocuments()) {
+        if (!resource.isWorkspaceNode() || resource.isInEditMode()) {
             return false;
         }
         if (!resource.isInStatus(DocumentStatus.WORKING)

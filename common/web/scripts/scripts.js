@@ -732,16 +732,29 @@ function selectGroupForModalSearch(selectId, hiddenId, filterId){
 }
 
 function groupModalFilterChange(){
-   var selector = $jQ("#" + escapeId4JQ(this.id.replace("_filter","_groupSelector")));
-   if(selector == null) {
+   var filterId = "#" + escapeId4JQ(this.id);
+   var selectorId = filterId.replace("_filter","_groupSelector");
+   if($jQ(selectorId) == null) {
       return;
    }
-   $jQ("#" + escapeId4JQ(this.id.replace("_filter","_selectedGroup"))).val("");
-   $jQ("#" + escapeId4JQ(this.id.replace("_filter","_selectedGroupText"))).remove();
-   if(this.value == "1"){
-      selector.attr('disabled','');
+   $jQ(filterId.replace("_filter","_selectedGroup")).val("");
+   $jQ(filterId.replace("_filter","_selectedGroupText")).remove();
+   var resultsId = filterId.replace("_filter","_results");
+   var userGroups = $jQ(resultsId);
+   if(userGroups == null) {
+      return;
+   }
+   if(this.value == "2") {
+      userGroups.live('change', function(){
+         if($jQ(filterId).val() == 2 && $jQ(resultsId).children("option:selected").length == 1) {
+            $jQ(selectorId).removeAttr('disabled');
+         } else {
+            $jQ(selectorId).attr('disabled','disabled');
+         }
+      });
    } else {
-      selector.attr('disabled','disabled');
+      userGroups.unbind('change');
+      $jQ(selectorId).attr('disabled','disabled');
    }
 }
 

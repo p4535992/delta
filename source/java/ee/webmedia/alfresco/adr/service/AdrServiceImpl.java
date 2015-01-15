@@ -565,7 +565,7 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
 
             log.info("Executing lucene query to find all public ADR documents, modified between " + dateFormat.format(modifiedDateBegin) + " and "
                     + dateFormat.format(modifiedDateEnd) + " (inclusive)");
-            List<NodeRef> docs1 = documentSearchService.searchAdrDocuments(modifiedDateBegin, modifiedDateEnd, publicAdrDocumentTypeIds);
+            Set<NodeRef> docs1 = documentSearchService.searchAdrDocuments(modifiedDateBegin, modifiedDateEnd, publicAdrDocumentTypeIds);
             log.info("Found " + docs1.size() + " documents that were modified during specified period");
             Set<NodeRef> docs = new HashSet<NodeRef>(docs1);
 
@@ -578,7 +578,7 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
             if (documentTypes.size() > 0) {
                 log.info("Executing lucene query to find all documents of the following document types whose publicAdr was changed during specified period: "
                         + WmNode.toString(documentTypes));
-                List<NodeRef> docs2 = documentSearchService.searchAdrDocuments((Date) null, (Date) null, documentTypes);
+                Set<NodeRef> docs2 = documentSearchService.searchAdrDocuments((Date) null, (Date) null, documentTypes);
                 log.info("Found " + docs2.size() + " documents that belong to " + documentTypes.size()
                         + " document types whose publicAdr was changed during specified period");
                 docs.addAll(docs2);
@@ -615,7 +615,7 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
                 }
             }
 
-            docs.removeAll(documentsByModified);
+            docs.removeAll(new HashSet<>(documentsByModified));
             log.info("There are " + docs.size() + " documents in the lucene response that are not in the sql response");
 
             list = new ArrayList<T>(results.values());
@@ -755,7 +755,7 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
             // ============= Search for documents that exist (were modified) during specified period
 
             log.info("Executing lucene query to find documents that were modified during specified period");
-            List<NodeRef> existingDocRefs = documentSearchService.searchAdrDocuments(deletedDateBegin, deletedDateEnd, documentAdminService.getAdrDocumentTypeIds());
+            Set<NodeRef> existingDocRefs = documentSearchService.searchAdrDocuments(deletedDateBegin, deletedDateEnd, documentAdminService.getAdrDocumentTypeIds());
             log.info("Found " + existingDocRefs.size() + " documents that were modified during specified period");
             for (Iterator<AdrDocument> i = deletedDocs.iterator(); i.hasNext();) {
                 AdrDocument deletedDoc = i.next();
@@ -782,7 +782,7 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
             if (deletedDocumentTypes.size() > 0) {
                 log.info("Executing lucene query to find all documents that belong to " + deletedDocumentTypes.size()
                         + " document types which were changed to publicAdr=false during specified period");
-                List<NodeRef> docs = documentSearchService.searchAdrDocuments((Date) null, (Date) null, deletedDocumentTypes);
+                Set<NodeRef> docs = documentSearchService.searchAdrDocuments((Date) null, (Date) null, deletedDocumentTypes);
                 log.info("Found " + docs.size() + " documents that belong to " + deletedDocumentTypes.size()
                         + " document types which were changed to publicAdr=false during specified period");
                 docs.removeAll(deletedDocRefs);

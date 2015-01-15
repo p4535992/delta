@@ -21,6 +21,7 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.cmr.security.AuthenticationService;
+import org.alfresco.service.namespace.QName;
 import org.alfresco.service.transaction.TransactionService;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
@@ -29,6 +30,7 @@ import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.privilege.service.PrivilegeUtil;
+import ee.webmedia.alfresco.report.model.ReportModel;
 import ee.webmedia.alfresco.versions.service.VersionsService;
 
 public class WebDAVCustomHelper extends WebDAVHelper {
@@ -115,13 +117,28 @@ public class WebDAVCustomHelper extends WebDAVHelper {
     public static void checkDocumentFileReadPermission(NodeRef fileRef) {
         NodeService nodeService = BeanHelper.getNodeService();
         NodeRef docRef = nodeService.getPrimaryParent(fileRef).getParentRef();
-        if (!DocumentCommonModel.Types.DOCUMENT.equals(nodeService.getType(docRef))) {
-            if (!Version2Model.STORE_ID.equals(fileRef.getStoreRef().getIdentifier()) && !getUserService().isAdministrator() && !hasViewDocFilesPermission(fileRef)) {
+        QName nodeType = nodeService.getType(docRef);
+        if (!DocumentCommonModel.Types.DOCUMENT.equals(nodeType)) {
+            if (!Version2Model.STORE_ID.equals(fileRef.getStoreRef().getIdentifier()) && !getUserService().isAdministrator()
+                    && !hasViewDocFilesPermission(fileRef) && !isRunAsUserReportResult(nodeType, docRef)) {
                 throw new AccessDeniedException("Not allowing reading - file is not under document and user has no permission to view files. File=" + fileRef);
             }
         } else if (!hasViewDocFilesPermission(docRef)) {
             throw new AccessDeniedException("permission " + Privilege.VIEW_DOCUMENT_FILES.getPrivilegeName() + " denied for file of document " + docRef);
         }
+    }
+
+    private static boolean isRunAsUserReportResult(QName type, NodeRef reportResultRef) {
+        if (!ReportModel.Types.REPORT_RESULT.equals(type)) {
+            return false;
+        }
+        NodeRef personRef = getGeneralService().getAncestorNodeRefWithType(reportResultRef, ContentModel.TYPE_PERSON);
+        if (personRef != null) {
+            String userName = (String) BeanHelper.getNodeService().getProperty(personRef, ContentModel.PROP_USERNAME);
+            return userName != null && userName.equals(AuthenticationUtil.getRunAsUser());
+        }
+        return false;
+
     }
 
     /**

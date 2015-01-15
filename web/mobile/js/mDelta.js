@@ -154,12 +154,20 @@ var mDelta = (function($) {
    }
    
    initSubstitutionLinks = function() {
-      $(".substitutionLink").click(function() {
-         var userName = $(this).siblings("input").first().attr("value");
-         $.post(getContextPath() + "/m/ajax/substitute",
-            { "userName" : userName },
-            function() { location.replace(getContextPath() + "/m"); }
-         );
+      $('.substitutionLink').click(function() {
+         var userName = $(this).siblings('input').first().attr('value');
+         $.ajax({
+            url: getContextPath() + '/m/ajax/substitute',
+            data: { 'userName' : userName },
+            method: 'POST',
+            mode: 'queue',
+            success: function() {
+               location.replace(getContextPath() + '/m');
+            },
+            error: function() {
+               location.replace(getContextPath() + '/m');
+            }
+         });
       });
    }
 

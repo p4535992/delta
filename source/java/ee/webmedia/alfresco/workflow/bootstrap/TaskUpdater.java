@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.workflow.bootstrap;
 
+import java.io.File;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -65,7 +66,7 @@ public class TaskUpdater extends AbstractNodeUpdater {
     }
 
     @Override
-    protected List<String[]> processNodes(final List<NodeRef> batchList) throws Exception, InterruptedException {
+    protected List<String[]> processNodes(final List<NodeRef> batchList, File failedNodesFile) throws Exception, InterruptedException {
         final List<String[]> batchInfos = new ArrayList<>(batchList.size());
         Map<NodeRef, Node> compoundWorkflows = bulkLoadNodeService.loadNodes(batchList, null, propertyTypes);
         List<Pair<String, Map<QName, Serializable>>> compoundWorkflowtaskSearchableProps = new ArrayList<>();
