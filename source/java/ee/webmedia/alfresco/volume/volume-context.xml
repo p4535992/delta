@@ -37,6 +37,7 @@
       <property name="logService" ref="LogService" />
       <property name="userService" ref="UserService" />
       <property name="eventPlanService" ref="EventPlanService" />
+      <property name="bulkLoadNodeService" ref="BulkLoadNodeService" />
       <property name="volumeCache" ref="volumeCache" />
    </bean>
 

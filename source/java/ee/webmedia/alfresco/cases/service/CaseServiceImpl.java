@@ -14,7 +14,6 @@ import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.namespace.QName;
-import org.alfresco.service.namespace.RegexQNamePattern;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.TransientNode;
 import org.apache.commons.lang.StringUtils;
@@ -22,6 +21,7 @@ import org.apache.commons.lang.StringUtils;
 import ee.webmedia.alfresco.cases.model.Case;
 import ee.webmedia.alfresco.cases.model.CaseModel;
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
+import ee.webmedia.alfresco.common.service.BulkLoadNodeService;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.service.NodeBasedObjectCallback;
 import ee.webmedia.alfresco.common.web.BeanHelper;
@@ -49,12 +49,13 @@ public class CaseServiceImpl implements CaseService {
     private UserService userService;
     private LogService logService;
     private DocumentService _documentService; // can not be set on bean creation!!
+    private BulkLoadNodeService bulkLoadNodeService;
     private SimpleCache<NodeRef, UnmodifiableCase> caseCache;
 
     @Override
     public List<UnmodifiableCase> getAllCasesByVolume(NodeRef volumeRef, DocListUnitStatus status) {
         List<UnmodifiableCase> allCases = getAllCasesByVolume(volumeRef);
-        List<UnmodifiableCase> cases = new ArrayList<UnmodifiableCase>();
+        List<UnmodifiableCase> cases = new ArrayList<>();
         for (UnmodifiableCase unmodifiableCase : allCases) {
             if (status.getValueName().equals(unmodifiableCase.getStatus())) {
                 cases.add(unmodifiableCase);
@@ -65,11 +66,11 @@ public class CaseServiceImpl implements CaseService {
 
     @Override
     public List<UnmodifiableCase> getAllCasesByVolume(NodeRef volumeRef) {
-        List<ChildAssociationRef> caseAssocs = getCaseChildAssocsByVolume(volumeRef);
-        List<UnmodifiableCase> caseOfVolume = new ArrayList<UnmodifiableCase>(caseAssocs.size());
-        Map<Long, QName> propertyTypes = new HashMap<Long, QName>();
-        for (ChildAssociationRef caseAssocRef : caseAssocs) {
-            UnmodifiableCase unmodifiableCase = getUnmodifiableCase(caseAssocRef.getChildRef(), propertyTypes);
+        List<NodeRef> caseRefs = getCaseChildAssocsByVolume(volumeRef);
+        List<UnmodifiableCase> caseOfVolume = new ArrayList<>(caseRefs.size());
+        Map<Long, QName> propertyTypes = new HashMap<>();
+        for (NodeRef caseRef : caseRefs) {
+            UnmodifiableCase unmodifiableCase = getUnmodifiableCase(caseRef, propertyTypes);
             caseOfVolume.add(unmodifiableCase);
         }
         Collections.sort(caseOfVolume);
@@ -99,15 +100,11 @@ public class CaseServiceImpl implements CaseService {
 
     @Override
     public List<NodeRef> getCaseRefsByVolume(NodeRef volumeRef) {
-        List<NodeRef> caseRefs = new ArrayList<NodeRef>();
-        for (ChildAssociationRef childAssocRef : getCaseChildAssocsByVolume(volumeRef)) {
-            caseRefs.add(childAssocRef.getChildRef());
-        }
-        return caseRefs;
+        return getCaseChildAssocsByVolume(volumeRef);
     }
 
-    private List<ChildAssociationRef> getCaseChildAssocsByVolume(NodeRef volumeRef) {
-        return nodeService.getChildAssocs(volumeRef, RegexQNamePattern.MATCH_ALL, CaseModel.Associations.CASE);
+    private List<NodeRef> getCaseChildAssocsByVolume(NodeRef volumeRef) {
+        return bulkLoadNodeService.loadChildRefs(volumeRef, CaseModel.Types.CASE);
     }
 
     @Override
@@ -338,6 +335,10 @@ public class CaseServiceImpl implements CaseService {
 
     public void setCaseCache(SimpleCache<NodeRef, UnmodifiableCase> caseCache) {
         this.caseCache = caseCache;
+    }
+
+    public void setBulkLoadNodeService(BulkLoadNodeService bulkLoadNodeService) {
+        this.bulkLoadNodeService = bulkLoadNodeService;
     }
 
 }

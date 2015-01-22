@@ -32,6 +32,7 @@
       <property name="generalService" ref="GeneralService" />
       <property name="logService" ref="LogService" />
       <property name="userService" ref="UserService" />
+      <property name="bulkLoadNodeService" ref="BulkLoadNodeService"></property>
       <property name="caseCache" ref="caseCache" />
    </bean>
 

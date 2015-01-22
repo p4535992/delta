@@ -3,7 +3,6 @@ package ee.webmedia.alfresco.volume.service;
 import java.util.List;
 import java.util.Map;
 
-import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
@@ -38,7 +37,7 @@ public interface VolumeService {
      */
     NodeRef saveOrUpdate(Volume volume, boolean fromNodeProps);
 
-    List<ChildAssociationRef> getAllVolumeRefsBySeries(NodeRef seriesNodeRef);
+    List<NodeRef> getAllVolumeRefsBySeries(NodeRef seriesNodeRef);
 
     List<UnmodifiableVolume> getAllVolumesBySeries(NodeRef seriesNodeRef);
 

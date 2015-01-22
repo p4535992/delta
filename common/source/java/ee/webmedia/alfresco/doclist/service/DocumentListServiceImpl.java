@@ -254,16 +254,14 @@ public class DocumentListServiceImpl implements DocumentListService {
                     final NodeRef volumeRef = volume.getNodeRef();
                     if (volume.isContainsCases()) {
                         for (NodeRef caseRef : caseService.getCaseRefsByVolume(volumeRef)) {
-                            final List<NodeRef> allDocumentsByCase = documentService.getAllDocumentRefsByParentRefWithoutRestrictedAccess(caseRef);
-                            final int documentsCountByCase = allDocumentsByCase.size();
+                            final int documentsCountByCase = documentService.getDocumentsCountByVolumeOrCase(caseRef);
                             nodeService.setProperty(caseRef, CaseModel.Props.CONTAINING_DOCS_COUNT, documentsCountByCase);
                             caseService.removeFromCache(caseRef);
                             docCountInVolume += documentsCountByCase;
                         }
                     }
                     // Also include documents
-                    final List<NodeRef> allDocumentsByVolume = documentService.getAllDocumentRefsByParentRefWithoutRestrictedAccess(volumeRef);
-                    final int documentsCountByVolume = allDocumentsByVolume.size();
+                    final int documentsCountByVolume = documentService.getDocumentsCountByVolumeOrCase(volumeRef);
                     docCountInVolume += documentsCountByVolume;
 
                     nodeService.setProperty(volumeRef, VolumeModel.Props.CONTAINING_DOCS_COUNT, docCountInVolume);
@@ -290,8 +288,7 @@ public class DocumentListServiceImpl implements DocumentListService {
         for (ChildAssociationRef function : functionsService.getFunctionAssocs(functionsRoot)) {
             final NodeRef functionRef = function.getChildRef();
             for (NodeRef seriesRef : seriesService.getAllSeriesRefsByFunction(functionRef)) {
-                for (ChildAssociationRef volume : volumeService.getAllVolumeRefsBySeries(seriesRef)) {
-                    final NodeRef volumeRef = volume.getChildRef();
+                for (NodeRef volumeRef : volumeService.getAllVolumeRefsBySeries(seriesRef)) {
                     Boolean containsCases = (Boolean) nodeService.getProperty(volumeRef, VolumeModel.Props.CONTAINS_CASES);
                     if (containsCases != null && containsCases) {
                         for (NodeRef caseRef : caseService.getCaseRefsByVolume(volumeRef)) {

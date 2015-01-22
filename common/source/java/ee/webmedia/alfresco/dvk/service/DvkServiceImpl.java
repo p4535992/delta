@@ -83,6 +83,7 @@ import ee.webmedia.alfresco.log.model.LogObject;
 import ee.webmedia.alfresco.monitoring.MonitoredService;
 import ee.webmedia.alfresco.monitoring.MonitoringUtil;
 import ee.webmedia.alfresco.notification.model.NotificationCache;
+import ee.webmedia.alfresco.notification.model.NotificationResult;
 import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
 import ee.webmedia.alfresco.signature.exception.SignatureException;
@@ -868,7 +869,8 @@ public abstract class DvkServiceImpl implements DvkService {
     }
 
     @Override
-    public Pair<NodeRef, List<Map<QName, Serializable>>> sendTaskNotificationDocument(Task task, NotificationCache notificationCache) {
+    public NotificationResult sendTaskNotificationDocument(Task task, NotificationCache notificationCache) {
+        NotificationResult result = new NotificationResult();
         if (task.isStatus(Status.IN_PROGRESS) && StringUtils.isBlank(task.getOwnerId()) && StringUtils.isBlank(task.getInstitutionName())
                 && !task.isType(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK) && task.getParent().getParent().isDocumentWorkflow()) {
 
@@ -912,7 +914,9 @@ public abstract class DvkServiceImpl implements DvkService {
                     props.put(DocumentCommonModel.Props.SEND_INFO_SEND_STATUS, SendStatus.SENT.toString());
                     props.put(DocumentCommonModel.Props.SEND_INFO_DVK_ID, dvkId);
                     props.put(DocumentCommonModel.Props.SEND_INFO_RESOLUTION, WorkflowUtil.getTaskSendInfoResolution(task));
-                    return new Pair<NodeRef, List<Map<QName, Serializable>>>(docNodeRef, new ArrayList<Map<QName, Serializable>>(Arrays.asList(props)));
+                    result.setDocRef(docNodeRef);
+                    result.addSendInfoProps(props);
+                    result.markSent();
                 } catch (RuntimeException e) {
                     log.debug("Sending document over dvk failed: ", e);
                     RetryingTransactionHelper txHelper = BeanHelper.getTransactionService().getRetryingTransactionHelper();
@@ -930,7 +934,7 @@ public abstract class DvkServiceImpl implements DvkService {
                 }
             }
         }
-        return null;
+        return result;
     }
 
     @Override

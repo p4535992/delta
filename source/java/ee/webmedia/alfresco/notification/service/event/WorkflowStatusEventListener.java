@@ -35,6 +35,7 @@ import ee.webmedia.alfresco.log.model.LogObject;
 import ee.webmedia.alfresco.log.service.LogService;
 import ee.webmedia.alfresco.menu.ui.MenuBean;
 import ee.webmedia.alfresco.notification.model.NotificationCache;
+import ee.webmedia.alfresco.notification.model.NotificationResult;
 import ee.webmedia.alfresco.notification.service.NotificationService;
 import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.privilege.service.PrivilegeService;
@@ -293,11 +294,10 @@ public class WorkflowStatusEventListener implements WorkflowMultiEventListener, 
         } else if (object instanceof Workflow) {
             handleWorkflowNotifications(event, notificationCache);
         } else if (object instanceof Task) {
-            Pair<NodeRef, List<Map<QName, Serializable>>> docRefAndSendInfoProps =
-                    handleTaskNotifications(event, groupAssignmentTasksFinishedAutomatically, initiatingTask, notificationCache);
-            if (docRefAndSendInfoProps != null) {
-                NodeRef nodeRef = docRefAndSendInfoProps.getFirst();
-                List<Map<QName, Serializable>> props = docRefAndSendInfoProps.getSecond();
+            NotificationResult result = handleTaskNotifications(event, groupAssignmentTasksFinishedAutomatically, initiatingTask, notificationCache);
+            if (result != null && result.containsSendInfos()) {
+                NodeRef nodeRef = result.getDocRef();
+                List<Map<QName, Serializable>> props = result.getSendInfoProps();
                 if (docSendInfos.containsKey(nodeRef)) {
                     docSendInfos.get(nodeRef).addAll(props);
                 } else {
@@ -317,22 +317,21 @@ public class WorkflowStatusEventListener implements WorkflowMultiEventListener, 
         }
     }
 
-    private Pair<NodeRef, List<Map<QName, Serializable>>> handleTaskNotifications(WorkflowEvent event, List<NodeRef> groupAssignmentTasksFinishedAutomatically,
+    private NotificationResult handleTaskNotifications(WorkflowEvent event, List<NodeRef> groupAssignmentTasksFinishedAutomatically,
             Task orderAssignmentFinishTriggeringTask, NotificationCache notificationCache) {
         final Task task = (Task) event.getObject();
-        Pair<NodeRef, List<Map<QName, Serializable>>> docRefAndSendInfoProps = null;
+        NotificationResult result = null;
         if (event.getType().equals(WorkflowEventType.STATUS_CHANGED)) {
             if (!task.isStatus(Status.UNFINISHED)) {
-                docRefAndSendInfoProps = BeanHelper.getDvkService().sendTaskNotificationDocument(task, notificationCache);
-                boolean sentOverDvk = docRefAndSendInfoProps != null;
+                result = BeanHelper.getDvkService().sendTaskNotificationDocument(task, notificationCache);
+                boolean sentOverDvk = result.isNotificationSent();
                 if (!sentOverDvk) {
                     boolean isGroupAssignmentTaskFinishedAutomatically = groupAssignmentTasksFinishedAutomatically != null
                             && groupAssignmentTasksFinishedAutomatically.contains(task.getNodeRef());
-                    docRefAndSendInfoProps = notificationService
+                    result = notificationService
                             .notifyTaskEvent(task, isGroupAssignmentTaskFinishedAutomatically, orderAssignmentFinishTriggeringTask, sentOverDvk, notificationCache);
                 }
-                if (docRefAndSendInfoProps != null && task.isType(WorkflowSpecificModel.Types.INFORMATION_TASK) && task.isStatus(Status.IN_PROGRESS)
-                        && task.getOwnerId() == null) {
+                if (result.isNotificationSent() && task.isType(WorkflowSpecificModel.Types.INFORMATION_TASK) && task.isStatus(Status.IN_PROGRESS) && task.getOwnerId() == null) {
                     tasksToFinish.add(task);
                 }
             } else {
@@ -340,7 +339,7 @@ public class WorkflowStatusEventListener implements WorkflowMultiEventListener, 
                 notificationService.notifyTaskUnfinishedEvent(task, cancelledManually, notificationCache);
             }
         }
-        return docRefAndSendInfoProps;
+        return result;
     }
 
     private void handleWorkflowNotifications(WorkflowEvent event, NotificationCache notificationCache) {

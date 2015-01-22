@@ -71,6 +71,7 @@ import ee.webmedia.alfresco.notification.model.Notification;
 import ee.webmedia.alfresco.notification.model.NotificationCache;
 import ee.webmedia.alfresco.notification.model.NotificationCache.Template;
 import ee.webmedia.alfresco.notification.model.NotificationModel;
+import ee.webmedia.alfresco.notification.model.NotificationResult;
 import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
 import ee.webmedia.alfresco.substitute.model.Substitute;
@@ -426,13 +427,13 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
-    public Pair<NodeRef, List<Map<QName, Serializable>>> notifyTaskEvent(Task task, boolean isGroupAssignmentTaskFinishedAutomatically, Task orderAssignmentFinishTriggeringTask,
+    public NotificationResult notifyTaskEvent(Task task, boolean isGroupAssignmentTaskFinishedAutomatically, Task orderAssignmentFinishTriggeringTask,
             boolean sentOverDvk, NotificationCache notificationCache) {
+        NotificationResult result = new NotificationResult();
         if (task instanceof LinkedReviewTask) {
             // no notification whatsoever is sent out for linkedReviweTasks
-            return null;
+            return result;
         }
-        List<Map<QName, Serializable>> sendInfoProps = new ArrayList<Map<QName, Serializable>>();
         Notification substitutionNotification = null;
         boolean isNewTaskNotification = task.isStatus(Status.IN_PROGRESS);
         if (isNewTaskNotification) {
@@ -441,6 +442,7 @@ public class NotificationServiceImpl implements NotificationService {
         List<Notification> notifications = processNotification(task, isGroupAssignmentTaskFinishedAutomatically, orderAssignmentFinishTriggeringTask, sentOverDvk);
         CompoundWorkflow compoundWorkflow = task.getParent().getParent();
         NodeRef docRef = !compoundWorkflow.isIndependentWorkflow() ? compoundWorkflow.getParent() : null;
+        result.setDocRef(docRef);
         boolean isDocumentWF = compoundWorkflow.isDocumentWorkflow();
         LinkedHashMap<String, NodeRef> tempalteData = setupTemplateData(task, notificationCache);
         try {
@@ -458,11 +460,14 @@ public class NotificationServiceImpl implements NotificationService {
                     props.put(DocumentCommonModel.Props.SEND_INFO_SEND_STATUS, SendInfo.SENT);
                     props.put(DocumentCommonModel.Props.SEND_INFO_RESOLUTION, notification.getAdditionalFormulas().get(CONTENT));
                     NodeRef orgNodeRef = getAddressbookService().getOrganizationNodeRef(task.getOwnerEmail(), task.getOwnerName());
-                    Serializable orgRegNr;
-                    if (orgNodeRef != null && (orgRegNr = nodeService.getProperty(orgNodeRef, AddressbookModel.Props.ORGANIZATION_CODE)) != null) {
+                    Serializable orgRegNr = (orgNodeRef != null) ? nodeService.getProperty(orgNodeRef, AddressbookModel.Props.ORGANIZATION_CODE) : null;
+                    if (orgRegNr != null) {
                         props.put(DocumentCommonModel.Props.SEND_INFO_RECIPIENT_REG_NR, orgRegNr);
                     }
-                    sendInfoProps.add(props);
+                    result.addSendInfoProps(props);
+                }
+                if (notificationSent) {
+                    result.markSent();
                 }
             }
         } catch (EmailException e) {
@@ -480,10 +485,7 @@ public class NotificationServiceImpl implements NotificationService {
                 throw e;
             }
         }
-        if (!sendInfoProps.isEmpty()) {
-            return new Pair<NodeRef, List<Map<QName, Serializable>>>(docRef, sendInfoProps);
-        }
-        return null;
+        return result;
     }
 
     @Override
@@ -1745,7 +1747,9 @@ public class NotificationServiceImpl implements NotificationService {
             }
         } else {
             Pair<String, NodeRef> typeStrAndParentRef = cache.getCwfRefToTypeStrAndParentRef().get(compoundWorkflowRef);
-            templateDataNodeRefs.put(typeStrAndParentRef.getFirst(), typeStrAndParentRef.getSecond());
+            if (typeStrAndParentRef != null) {
+                templateDataNodeRefs.put(typeStrAndParentRef.getFirst(), typeStrAndParentRef.getSecond());
+            }
         }
         templateDataNodeRefs.put("task", task.getNodeRef());
         templateDataNodeRefs.put("workflow", workflowRef);

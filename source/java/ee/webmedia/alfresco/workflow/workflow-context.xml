@@ -909,6 +909,18 @@
       </property>
    </bean>
    
+   <bean id="taskTableSearchIndexesBootstrap3" parent="executeStatementsBootstrap" >
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dataSource" ref="dataSource" />
+      <property name="resourceName" value="ee/webmedia/alfresco/workflow/bootstrap/delta_task_table_search_indexes3.sql" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="taskTableAddColumnBootstrap6" />
+         </list>
+      </property>
+   </bean>   
+   
    <bean id="deleteEmptyTasksUpdater" class="ee.webmedia.alfresco.workflow.bootstrap.DeleteEmptyTasksUpdater" parent="abstractNodeUpdater" >
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />   

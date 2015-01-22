@@ -28,6 +28,7 @@ import org.apache.commons.lang.time.DateUtils;
 import ee.webmedia.alfresco.casefile.model.CaseFileModel;
 import ee.webmedia.alfresco.cases.service.CaseService;
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
+import ee.webmedia.alfresco.common.service.BulkLoadNodeService;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.service.NodeBasedObjectCallback;
 import ee.webmedia.alfresco.common.web.BeanHelper;
@@ -66,38 +67,38 @@ public class VolumeServiceImpl implements VolumeService {
     private LogService logService;
     private DocumentAdminService _documentAdminService;
     private EventPlanService eventPlanService;
+    private BulkLoadNodeService bulkLoadNodeService;
     private SimpleCache<NodeRef, UnmodifiableVolume> volumeCache;
 
     @Override
-    public List<ChildAssociationRef> getAllVolumeRefsBySeries(NodeRef seriesNodeRef) {
-        List<ChildAssociationRef> childAssocs = getVolumeRefs(seriesNodeRef);
-        childAssocs.addAll(getCaseFileRefs(seriesNodeRef));
-        return childAssocs;
+    public List<NodeRef> getAllVolumeRefsBySeries(NodeRef seriesNodeRef) {
+        List<NodeRef> childRefs = getVolumeRefs(seriesNodeRef);
+        childRefs.addAll(getCaseFileRefs(seriesNodeRef));
+        return childRefs;
     }
 
-    private List<ChildAssociationRef> getCaseFileRefs(NodeRef seriesNodeRef) {
-        return nodeService.getChildAssocs(seriesNodeRef, RegexQNamePattern.MATCH_ALL, CaseFileModel.Assocs.CASE_FILE);
+    private List<NodeRef> getCaseFileRefs(NodeRef seriesNodeRef) {
+        return bulkLoadNodeService.loadChildRefs(seriesNodeRef, CaseFileModel.Assocs.CASE_FILE);
     }
 
-    private List<ChildAssociationRef> getVolumeRefs(NodeRef seriesNodeRef) {
-        return nodeService.getChildAssocs(seriesNodeRef, RegexQNamePattern.MATCH_ALL, VolumeModel.Associations.VOLUME);
+    private List<NodeRef> getVolumeRefs(NodeRef seriesNodeRef) {
+        return bulkLoadNodeService.loadChildRefs(seriesNodeRef, VolumeModel.Types.VOLUME);
     }
 
     @Override
     public List<UnmodifiableVolume> getAllVolumesBySeries(NodeRef seriesNodeRef) {
-        List<ChildAssociationRef> volumeChildRefs = getVolumeRefs(seriesNodeRef);
-        List<ChildAssociationRef> caseFileChildRefs = getCaseFileRefs(seriesNodeRef);
-        List<UnmodifiableVolume> volumeList = new ArrayList<UnmodifiableVolume>(volumeChildRefs.size() + caseFileChildRefs.size());
-        Map<Long, QName> propertyTypes = new HashMap<Long, QName>();
+        List<NodeRef> volumeChildRefs = getVolumeRefs(seriesNodeRef);
+        List<NodeRef> caseFileChildRefs = getCaseFileRefs(seriesNodeRef);
+        List<UnmodifiableVolume> volumeList = new ArrayList<>(volumeChildRefs.size() + caseFileChildRefs.size());
+        Map<Long, QName> propertyTypes = new HashMap<>();
         getVolumeFromChildAssoc(volumeChildRefs, volumeList, false, propertyTypes);
         getVolumeFromChildAssoc(caseFileChildRefs, volumeList, true, propertyTypes);
         Collections.sort(volumeList);
         return volumeList;
     }
 
-    public void getVolumeFromChildAssoc(List<ChildAssociationRef> volumeChildRefs, List<UnmodifiableVolume> volumeList, boolean isDynamic, Map<Long, QName> propertyTypes) {
-        for (ChildAssociationRef childRef : volumeChildRefs) {
-            NodeRef seriesRef = childRef.getChildRef();
+    private void getVolumeFromChildAssoc(List<NodeRef> volumeChildRefs, List<UnmodifiableVolume> volumeList, boolean isDynamic, Map<Long, QName> propertyTypes) {
+        for (NodeRef seriesRef : volumeChildRefs) {
             UnmodifiableVolume volume = getUnmodifiableVolume(seriesRef, isDynamic, propertyTypes);
             volumeList.add(volume);
         }
@@ -598,6 +599,10 @@ public class VolumeServiceImpl implements VolumeService {
 
     public void setVolumeCache(SimpleCache<NodeRef, UnmodifiableVolume> volumeCache) {
         this.volumeCache = volumeCache;
+    }
+
+    public void setBulkLoadNodeService(BulkLoadNodeService bulkLoadNodeService) {
+        this.bulkLoadNodeService = bulkLoadNodeService;
     }
 
     // END: getters / setters
