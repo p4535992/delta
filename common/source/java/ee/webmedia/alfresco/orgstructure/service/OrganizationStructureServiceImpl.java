@@ -373,7 +373,7 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
         return 0;
     }
 
-    
+    /*
     @Override
     public void updateOrganisationStructures(ActionEvent event) {
         AuthenticationUtil.runAs(new RunAsWork<Integer>() {
@@ -384,6 +384,7 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
         }, AuthenticationUtil.getSystemUserName());
 
     }
+    */
 
     
     @Override

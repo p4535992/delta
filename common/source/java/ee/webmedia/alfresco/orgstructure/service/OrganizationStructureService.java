@@ -79,6 +79,10 @@ public interface OrganizationStructureService {
     
     void removeOrganisationStructureBasedGroups(ActionEvent event);
 
+	List<String> getOrganizationStructurePaths(String value);
+
+    List<NodeRef> getAllOrganizationStructureRefs();
+
     OrganizationStructure getOrganizationStructure(NodeRef nodeRef);
 
 }
