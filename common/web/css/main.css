@@ -515,6 +515,7 @@ ul#breadcrumb li {
 
 #footer-titlebar {
 	visibility: hidden; /* show only when necessary */
+	box-sizing: border-box;
 }
 
 	#titlebar h2,

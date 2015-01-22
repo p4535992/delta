@@ -50,6 +50,8 @@ public interface BulkLoadNodeService {
 
     Map<NodeRef, Node> loadNodes(Collection<NodeRef> nodesToLoad, Set<QName> propsToLoad);
 
+    List<NodeRef> loadChildRefs(NodeRef parentRef, QName type);
+
     Set<NodeRef> loadChildRefs(NodeRef parentRef, final QName propName, String value, QName type);
 
     <T> List<T> loadChildNodes(NodeRef parentNodeRef, Set<QName> propsToLoad, QName childNodeType, Map<Long, QName> propertyTypes,
@@ -61,9 +63,9 @@ public interface BulkLoadNodeService {
     List<SimpleFile> loadActiveFiles(NodeRef nodeRef, Map<Long, QName> propertyTypes);
 
     List<SimpleFile> loadActiveFiles(NodeRef nodeRef, Map<Long, QName> propertyTypes, Set<QName> propsToLoad, CreateSimpleFileCallback createFileCallback);
-    
+
     List<SimpleFile> loadInactiveFiles(NodeRef parentRef);
-    
+
     List<SimpleFile> loadAllFiles(NodeRef parentRef);
 
     Map<NodeRef, List<SimpleFile>> loadActiveFiles(List<NodeRef> parentNodeRefs, Map<Long, QName> propertyTypes);
@@ -76,7 +78,7 @@ public interface BulkLoadNodeService {
 
     Map<NodeRef, Map<QName, Serializable>> loadPrimaryParentsProperties(List<NodeRef> taskRefs, Set<QName> parentType, Set<QName> propsToLoad, Map<Long, QName> propertyTypes,
             boolean includeIntrinsicProps);
-    
+
     Set<NodeRef> loadPrimaryParentNodeRefs(Set<NodeRef> childNodes, Set<QName> parentNodeTypes);
 
     Map<NodeRef, Integer> getSearchableChildDocCounts(List<NodeRef> indpendentCompoundWorkflows);

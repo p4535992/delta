@@ -1,9 +1,7 @@
 package ee.webmedia.alfresco.notification.service;
 
-import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 
 import javax.faces.event.ActionEvent;
 
@@ -16,6 +14,7 @@ import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
 import ee.webmedia.alfresco.document.sendout.model.SendInfo;
 import ee.webmedia.alfresco.notification.model.GeneralNotification;
 import ee.webmedia.alfresco.notification.model.NotificationCache;
+import ee.webmedia.alfresco.notification.model.NotificationResult;
 import ee.webmedia.alfresco.substitute.model.Substitute;
 import ee.webmedia.alfresco.user.model.Authority;
 import ee.webmedia.alfresco.workflow.service.Task;
@@ -29,10 +28,7 @@ public interface NotificationService {
 
     public void notifyTaskEvent(Task task);
 
-    /**
-     * @return docNodeRef and list of sendInfo props. Will return null if no sendInfos are created.
-     */
-    public Pair<NodeRef, List<Map<QName, Serializable>>> notifyTaskEvent(Task task, boolean isGroupAssignmentTaskFinishedAutomatically, Task orderAssignmentFinishTriggeringTask,
+    public NotificationResult notifyTaskEvent(Task task, boolean isGroupAssignmentTaskFinishedAutomatically, Task orderAssignmentFinishTriggeringTask,
             boolean sentOverDvk, NotificationCache notificationCache);
 
     public void notifyWorkflowEvent(Workflow workflow, WorkflowEventType eventType, NotificationCache notificationCache);

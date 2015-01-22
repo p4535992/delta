@@ -44,22 +44,6 @@ insert into tmp_transactions_to_delete (
 	left join alf_node node on node.transaction_id = alf_transaction.id
 	where node.id is null); 
 
-create table tmp_acl_to_delete (
-	acl_id bigint
-);
-
-insert into tmp_acl_to_delete (
-	select acl_id from alf_node 
-	join tmp_nodes_to_delete on tmp_nodes_to_delete.node_id = alf_node.id);
-
-create table tmp_ace_to_delete (
-	ace_id bigint
-);
-
-insert into tmp_ace_to_delete (
-	select ace_id from alf_acl_member 
-	join tmp_acl_to_delete on tmp_acl_to_delete.acl_id = alf_acl_member.acl_id);
-
 delete from alf_node 
 	using tmp_nodes_to_delete
 	where id = tmp_nodes_to_delete.node_id;
@@ -68,22 +52,20 @@ delete from alf_transaction
 	using tmp_transactions_to_delete
 	where id = tmp_transactions_to_delete.txn_id;
 
+begin;
+
 delete from alf_acl_member 
-	using tmp_acl_to_delete
-	where alf_acl_member.acl_id = tmp_acl_to_delete.acl_id;
+	where not exists (select acl_id from alf_node where acl_id = alf_acl_member.acl_id);
 
 delete from alf_access_control_list 
-	using tmp_acl_to_delete
-	where id = tmp_acl_to_delete.acl_id;
+ where not exists (select acl_id from alf_node where acl_id = alf_access_control_list.id)
+ and id not in (select acl_id from avm_stores);
 
 delete from alf_access_control_entry 
-	using tmp_ace_to_delete
-	where id = tmp_ace_to_delete.ace_id;
+ where not exists (select ace_id from alf_acl_member where ace_id = alf_access_control_entry.id);
+
+commit;
 
 drop table tmp_transactions_to_delete;
 
 drop table tmp_nodes_to_delete;
-
-drop table tmp_acl_to_delete;
-
-drop table tmp_ace_to_delete;

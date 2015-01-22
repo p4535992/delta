@@ -96,6 +96,7 @@
             <ref bean="structUnitFieldTypeUpdater" />
             <ref bean="convertToDynamicDocumentsUpdater" />
             <ref bean="fileEncodingUpdater" />
+            <ref bean="insertDeltaPermissionsBootstrap" />
          </list>
       </property>
       <property name="workflowService" ref="WmWorkflowService" />

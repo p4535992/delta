@@ -23,7 +23,6 @@ import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.namespace.QName;
-import org.alfresco.service.namespace.RegexQNamePattern;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.TransientNode;
 import org.apache.commons.lang.ObjectUtils;
@@ -35,6 +34,7 @@ import org.springframework.beans.factory.BeanFactoryAware;
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
 import ee.webmedia.alfresco.classificator.enums.VolumeType;
 import ee.webmedia.alfresco.common.service.ApplicationConstantsBean;
+import ee.webmedia.alfresco.common.service.BulkLoadNodeService;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.service.NodeBasedObjectCallback;
 import ee.webmedia.alfresco.common.web.BeanHelper;
@@ -78,31 +78,26 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
     private VolumeService _volumeService;
     /** NB! not injected - use getter to obtain instance of functionsService */
     private FunctionsService _functionsService;
+    private BulkLoadNodeService bulkLoadNodeService;
     private SimpleCache<NodeRef, UnmodifiableSeries> seriesCache;
     private static final Map<String, QName> ACCESS_RESTRICTION_DOCCOM_NS_PROPS = new HashMap<>();
     private static final Set<QName> SERIES_DOCUMENT_TYPE_PROPS = new HashSet<>(Arrays.asList(SeriesModel.Props.STATUS, SeriesModel.Props.DOC_TYPE));
 
     @Override
     public List<NodeRef> getAllSeriesRefsByFunction(NodeRef functionRef) {
-        List<ChildAssociationRef> childAssocs = getSeriesByFunctionChildAssocs(functionRef);
-        List<NodeRef> seriesRefs = new ArrayList<NodeRef>(childAssocs.size());
-        for (ChildAssociationRef series : childAssocs) {
-            seriesRefs.add(series.getChildRef());
-        }
-        return seriesRefs;
+        return getSeriesByFunctionNodeRefs(functionRef);
     }
 
-    private List<ChildAssociationRef> getSeriesByFunctionChildAssocs(NodeRef functionRef) {
-        return nodeService.getChildAssocs(functionRef, RegexQNamePattern.MATCH_ALL, SeriesModel.Associations.SERIES);
+    private List<NodeRef> getSeriesByFunctionNodeRefs(NodeRef functionRef) {
+        return bulkLoadNodeService.loadChildRefs(functionRef, SeriesModel.Types.SERIES);
     }
 
     @Override
     public List<UnmodifiableSeries> getAllSeriesByFunction(NodeRef functionNodeRef) {
-        List<ChildAssociationRef> childRefs = getSeriesByFunctionChildAssocs(functionNodeRef);
-        List<UnmodifiableSeries> seriesList = new ArrayList<UnmodifiableSeries>(childRefs.size());
-        Map<Long, QName> propertyTypes = new HashMap<Long, QName>();
-        for (ChildAssociationRef childRef : childRefs) {
-            NodeRef seriesRef = childRef.getChildRef();
+        List<NodeRef> childRefs = getSeriesByFunctionNodeRefs(functionNodeRef);
+        List<UnmodifiableSeries> seriesList = new ArrayList<>();
+        Map<Long, QName> propertyTypes = new HashMap<>();
+        for (NodeRef seriesRef : childRefs) {
             UnmodifiableSeries series = getUnmodifiableSeries(seriesRef, functionNodeRef, propertyTypes);
             seriesList.add(series);
         }
@@ -160,7 +155,7 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
 
     @Override
     public boolean hasSeries(NodeRef functionNodeRef) {
-        return !getSeriesByFunctionChildAssocs(functionNodeRef).isEmpty();
+        return !getSeriesByFunctionNodeRefs(functionNodeRef).isEmpty();
     }
 
     @Override
@@ -366,7 +361,7 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
     @Override
     public void delete(Series series) {
         NodeRef seriesRef = series.getNode().getNodeRef();
-        List<ChildAssociationRef> allVolumes = getVolumeService().getAllVolumeRefsBySeries(seriesRef);
+        List<NodeRef> allVolumes = getVolumeService().getAllVolumeRefsBySeries(seriesRef);
         if (!allVolumes.isEmpty()) {
             throw new UnableToPerformException("series_delete_not_empty");
         }
@@ -563,6 +558,10 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
 
     public void setApplicationConstantsBean(ApplicationConstantsBean applicationConstantsBean) {
         this.applicationConstantsBean = applicationConstantsBean;
+    }
+
+    public void setBulkLoadNodeService(BulkLoadNodeService bulkLoadNodeService) {
+        this.bulkLoadNodeService = bulkLoadNodeService;
     }
 
 }

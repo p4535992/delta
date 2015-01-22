@@ -289,7 +289,7 @@
 
             </f:subview>
 
-      <a:panel id="footer-titlebar">
+      <a:panel id="footer-titlebar" styleClass="column panel-100">
             
                <a:panel id="footer-titlebar-dialog-buttons-panel" styleClass="titlebar-buttons" rendered="#{DialogManager.OKButtonVisible || (DialogManager.currentDialog.name eq 'manageGroups' && GroupsDialog.group ne null)}">
                   <r:dialogButtons id="footer-titlebar-dialog-buttons" styleClass="wizardButton" />

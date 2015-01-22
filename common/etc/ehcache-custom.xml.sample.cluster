@@ -62,7 +62,9 @@
                                 //otherserver:40001/org.alfresco.cache.encodingEntityCache|
                                 //otherserver:40001/org.alfresco.cache.storeAndNodeIdCache|
                                 //otherserver:40001/org.alfresco.cache.parentAssocsCache|
-                                //otherserver:40001/org.alfresco.cache.userToAuthorityCache| 
+                                //otherserver:40001/org.alfresco.cache.userToAuthorityCache|
+                                //otherserver:40001/org.alfresco.cache.fieldDefinitionCache|
+								//otherserver:40001/org.alfresco.cache.compoundWorkflowDefinitionsCache| 
                                 //otherserver:40001/org.alfresco.cache.nodeOwnerCache| 
                                 //otherserver:40001/org.alfresco.cache.personCache|
                                 //otherserver:40001/org.alfresco.cache.personNodesCache|
