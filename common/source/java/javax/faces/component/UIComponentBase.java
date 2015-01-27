@@ -130,6 +130,11 @@ public abstract class UIComponentBase
         }
         return _attributesMap;
     }
+    
+    public boolean isAttributesInitialized()
+    {
+        return _attributesMap != null;
+    }
 
     /**
      * Get the named value-binding associated with this component.

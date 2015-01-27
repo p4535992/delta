@@ -3,8 +3,6 @@ package ee.webmedia.alfresco.workflow.service;
 import static ee.webmedia.alfresco.common.search.DbSearchUtil.getQuestionMarks;
 
 import java.io.Serializable;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -104,12 +102,7 @@ public class TaskUpdateInfo {
         return taskNodeRef.getId();
     }
 
-    public void setValue(PreparedStatement statement, int fieldIndex, String fieldName, Map<String, QName> fieldNameToTaskProp) throws SQLException {
-        Object value = getFieldValue(fieldName, fieldNameToTaskProp);
-        DbSearchUtil.setParameterValue(statement, fieldIndex, value);
-    }
-
-    private Object getFieldValue(String fieldName, Map<String, QName> usedFieldNameMappings) {
+    public Object getFieldValue(String fieldName, Map<String, QName> usedFieldNameMappings) {
         Assert.isTrue(StringUtils.isNotBlank(fieldName));
         Object value;
         int index = fieldNames.indexOf(fieldName);

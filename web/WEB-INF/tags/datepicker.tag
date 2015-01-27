@@ -7,7 +7,7 @@
 <%@ attribute name="labelId" required="false" rtexprvalue="true" type="java.lang.String" description="Translation key for value row label." %>
 <%@ attribute name="value" required="true" rtexprvalue="true" type="java.lang.String" %>
 <%@ attribute name="name" required="false" rtexprvalue="true" type="java.lang.String"%>
-<%@ attribute name="initialValue" required="false" rtexprvalue="true" type="java.lang.String" description="Must have format 'dd.mm.yyyy'"%>
+<%@ attribute name="initialValue" required="false" rtexprvalue="true" type="java.lang.String" description="Must have format 'dd.MM.yyyy'"%>
 
 <c:if test="${empty label and not empty labelId}">
    <fmt:message key="${labelId}" var="label" />

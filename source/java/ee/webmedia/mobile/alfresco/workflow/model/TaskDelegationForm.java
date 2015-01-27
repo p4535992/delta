@@ -16,6 +16,7 @@ public class TaskDelegationForm implements Serializable {
 
     private String choice;
     private Date dueDate;
+    private String taskDueDate;
 
     private Map<String, List<TaskElement>> taskElementMap = new HashMap<>();
 
@@ -62,6 +63,14 @@ public class TaskDelegationForm implements Serializable {
 
     public void setTaskElementMap(Map<String, List<TaskElement>> taskElementMap) {
         this.taskElementMap = taskElementMap;
+    }
+
+    public String getTaskDueDate() {
+        return taskDueDate;
+    }
+
+    public void setTaskDueDate(String taskDueDate) {
+        this.taskDueDate = taskDueDate;
     }
 
     public static class TaskElement {

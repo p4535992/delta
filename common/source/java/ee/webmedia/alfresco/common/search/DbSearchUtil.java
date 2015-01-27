@@ -311,6 +311,8 @@ public class DbSearchUtil {
             statement.setBoolean(fieldIndex, (Boolean) value);
         } else if (value instanceof Integer) {
             statement.setInt(fieldIndex, (Integer) value);
+        } else if (value instanceof List) {
+            statement.setObject(fieldIndex, statement.getConnection().createArrayOf("text", ((List) value).toArray()));
         } else {
             statement.setObject(fieldIndex, value);
         }

@@ -782,7 +782,6 @@ public class ArchivalsServiceImpl implements ArchivalsService {
         Set<ChildAssociationRef> notCaseNodeRefs = new HashSet<ChildAssociationRef>();
         final Set<NodeRef> caseNodeRefs = new HashSet<NodeRef>();
         Map<NodeRef, Set<ChildAssociationRef>> archiveNodeRefs = new HashMap<NodeRef, Set<ChildAssociationRef>>();
-        // TODO: seems that no separate transaction is needed, read-only operations are performed here?
         collectNodeRefsToArchive(volumeNodeRef, notCaseNodeRefs, caseNodeRefs, archiveNodeRefs);
 
         int failedNodeCount = 0;
@@ -805,7 +804,8 @@ public class ArchivalsServiceImpl implements ArchivalsService {
             if (!isInCase) {
                 archivedParentRef = archivedVolumeRef;
             } else {
-                archivedParentRef = getOrCreateArchiveCase(originalParentRef, archivedVolumeRef, copiedVolumeRef, originalToArchivedCaseNodeRef, transactionHelper);
+                archivedParentRef = getOrCreateArchiveCase(originalParentRef, archivedVolumeRef, copiedVolumeRef, originalToArchivedCaseNodeRef, transactionHelper,
+                        archivedSeriesRef, archivedFunctionRef);
             }
             final NodeRef archivedParentRefFinal = archivedParentRef;
             for (final ChildAssociationRef childAssocRef : entry.getValue()) {
@@ -870,7 +870,11 @@ public class ArchivalsServiceImpl implements ArchivalsService {
         transactionHelper.doInTransaction(new RetryingTransactionCallback<Void>() {
             @Override
             public Void execute() {
-                nodeService.setProperty(archivedVolumeRef, EventPlanModel.Props.ARCHIVING_NOTE, archivingNote);
+                Map<QName, Serializable> props = new HashMap<>();
+                props.put(EventPlanModel.Props.ARCHIVING_NOTE, archivingNote);
+                props.put(DocumentCommonModel.Props.SERIES, archivedSeriesRef);
+                props.put(DocumentCommonModel.Props.FUNCTION, archivedFunctionRef);
+                nodeService.addProperties(archivedVolumeRef, props);
                 return null;
             }
         }, false, true);
@@ -937,7 +941,8 @@ public class ArchivalsServiceImpl implements ArchivalsService {
     }
 
     private NodeRef getOrCreateArchiveCase(final NodeRef originalCaseRef, final NodeRef archivedVolumeRef, final NodeRef copiedVolumeRef,
-            final Map<NodeRef, NodeRef> originalToArchivedCaseNodeRef, final RetryingTransactionHelper transactionHelper) {
+            final Map<NodeRef, NodeRef> originalToArchivedCaseNodeRef, final RetryingTransactionHelper transactionHelper, final NodeRef archivedSeriesRef,
+            final NodeRef archivedFunctionRef) {
         NodeRef archivedCaseRef = originalToArchivedCaseNodeRef.get(originalCaseRef);
         if (archivedCaseRef == null) {
             final NodeRef originalCaseRefFinal = originalCaseRef;
@@ -950,6 +955,9 @@ public class ArchivalsServiceImpl implements ArchivalsService {
                     Map<QName, Serializable> caseProps = new HashMap<QName, Serializable>();
                     caseProps.put(CaseModel.Props.CONTAINING_DOCS_COUNT, 0);
                     caseProps.put(CaseModel.Props.ORIGINAL_CASE, originalCaseRefFinal);
+                    caseProps.put(DocumentCommonModel.Props.VOLUME, archivedVolumeRef);
+                    caseProps.put(DocumentCommonModel.Props.SERIES, archivedSeriesRef);
+                    caseProps.put(DocumentCommonModel.Props.FUNCTION, archivedFunctionRef);
                     nodeService.addProperties(archCaseRef, caseProps);
                     return archCaseRef;
                 }

@@ -155,6 +155,16 @@
          </list>
       </property>
    </bean>
+   
+   <bean id="fixArchivedVolumesAndCasesStructurePropertiesBootstrap" class="ee.webmedia.alfresco.archivals.bootstrap.FixArchivedVolumesAndCasesStructurePropertiesBootstrap" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+       <property name="dependsOn">
+         <list>
+            <ref bean="archivalsSpacesBootstrap" />
+         </list>
+      </property>
+   </bean>
 
     <bean id="archivalsService" class="ee.webmedia.alfresco.archivals.service.ArchivalsServiceImpl">
       <property name="copyService" ref="CopyService"/>

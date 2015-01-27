@@ -18,6 +18,7 @@ import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 import javax.faces.event.ValueChangeEvent;
 
+import bsh.StringUtil;
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.repository.DuplicateChildNodeNameException;
@@ -147,9 +148,7 @@ public class UserDetailsDialog extends BaseDialogBean {
 
     public void openOfficeClientExtensionsChanged(ValueChangeEvent e) {
         String extensions = DefaultTypeConverter.INSTANCE.convert(String.class, e.getNewValue());
-        if (StringUtils.isNotBlank(extensions)) {
-            user.getProperties().put(ContentModel.PROP_OPEN_OFFICE_CLIENT_EXTENSIONS.toString(), extensions);
-        }
+        user.getProperties().put(ContentModel.PROP_OPEN_OFFICE_CLIENT_EXTENSIONS.toString(), extensions);
     }
 
     public boolean isShowEmptyTaskMenuEditable() {

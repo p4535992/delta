@@ -785,8 +785,9 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
     }
 
     @Override
-    public void writeZipFileFromFiles(OutputStream output, List<NodeRef> fileRefs) {
+    public long writeZipFileFromFiles(OutputStream output, List<NodeRef> fileRefs) {
         ZipArchiveOutputStream out = new ZipArchiveOutputStream(output);
+        long fileSize;
         try {
             out.setLevel(Deflater.DEFAULT_COMPRESSION);
             out.setEncoding("Cp437");
@@ -813,8 +814,11 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
             log.warn("Failed to zip up files.", e);
             throw new RuntimeException("Failed to zip up files.", e);
         } finally {
+            fileSize = out.getBytesWritten();
             IOUtils.closeQuietly(out);
         }
+
+        return fileSize;
     }
 
     @Override
@@ -1042,6 +1046,20 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
                     }
                 }
             }
+        });
+    }
+
+    @Override
+    public void runBeforeCommit(final RunAsWork<Void> work) {
+        AlfrescoTransactionSupport.bindListener(new TransactionListenerAdapter() {
+
+            @Override
+            public void beforeCommit(boolean readOnly) {
+                long start = System.currentTimeMillis();
+                AuthenticationUtil.runAs(work, AuthenticationUtil.getSystemUserName());
+                log.info("Run work before commit, total time: " + (System.currentTimeMillis() - start) + "ms");
+            }
+
         });
     }
 

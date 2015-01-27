@@ -70,7 +70,6 @@
       <property name="logService" ref="LogService" />
       <property name="caseFileLogService" ref="CaseFileLogService" />
       <property name="docLockService" ref="DocLockService" />
-      <property name="searchService" ref="SearchService" />
       <property name="bulkLoadNodeService" ref="BulkLoadNodeService" />
       <property name="applicationConstantsBean" ref="applicationConstantsBean" />
       <property name="constantNodeRefsBean" ref="constantNodeRefsBean" />

@@ -368,51 +368,51 @@ public abstract class VolumeArchiveBaseDialog extends BaseDialogBean {
     }
 
     public boolean showValidTo() {
-        return getRenderedFilterFields().contains(VolumeSearchModel.Props.VALID_TO);
+        return getRenderedFilterFields().contains(VolumeSearchModel.Props.VALID_TO.toPrefixString());
     }
 
     public boolean showHasArchivalValue() {
-        return getRenderedFilterFields().contains(VolumeSearchModel.Props.HAS_ARCHIVAL_VALUE);
+        return getRenderedFilterFields().contains(VolumeSearchModel.Props.HAS_ARCHIVAL_VALUE.toPrefixString());
     }
 
     public boolean showStatus() {
-        return getRenderedFilterFields().contains(VolumeSearchModel.Props.STATUS);
+        return getRenderedFilterFields().contains(VolumeSearchModel.Props.STATUS.toPrefixString());
     }
 
     public boolean showStore() {
-        return getRenderedFilterFields().contains(VolumeSearchModel.Props.STORE);
+        return getRenderedFilterFields().contains(VolumeSearchModel.Props.STORE.toPrefixString());
     }
 
     public boolean showRetainPermanent() {
-        return getRenderedFilterFields().contains(VolumeSearchModel.Props.RETAIN_PERMANENT);
+        return getRenderedFilterFields().contains(VolumeSearchModel.Props.RETAIN_PERMANENT.toPrefixString());
     }
 
     public boolean showRetainUntilDate() {
-        return getRenderedFilterFields().contains(VolumeSearchModel.Props.RETAIN_UNTIL_DATE);
+        return getRenderedFilterFields().contains(VolumeSearchModel.Props.RETAIN_UNTIL_DATE.toPrefixString());
     }
 
     public boolean showMarkedForTransfer() {
-        return getRenderedFilterFields().contains(VolumeSearchModel.Props.MARKED_FOR_TRANSFER);
+        return getRenderedFilterFields().contains(VolumeSearchModel.Props.MARKED_FOR_TRANSFER.toPrefixString());
     }
 
     public boolean showExportedForUam() {
-        return getRenderedFilterFields().contains(VolumeSearchModel.Props.EXPORTED_FOR_UAM);
+        return getRenderedFilterFields().contains(VolumeSearchModel.Props.EXPORTED_FOR_UAM.toPrefixString());
     }
 
     public boolean showExportedForUamDateTime() {
-        return getRenderedFilterFields().contains(VolumeSearchModel.Props.EXPORTED_FOR_UAM_DATE_TIME);
+        return getRenderedFilterFields().contains(VolumeSearchModel.Props.EXPORTED_FOR_UAM_DATE_TIME.toPrefixString());
     }
 
     public boolean showNextEvent() {
-        return getRenderedFilterFields().contains(VolumeSearchModel.Props.NEXT_EVENT);
+        return getRenderedFilterFields().contains(VolumeSearchModel.Props.NEXT_EVENT.toPrefixString());
     }
 
     public boolean showMarkedForDestruction() {
-        return getRenderedFilterFields().contains(VolumeSearchModel.Props.MARKED_FOR_DESTRUCTION);
+        return getRenderedFilterFields().contains(VolumeSearchModel.Props.MARKED_FOR_DESTRUCTION.toPrefixString());
     }
 
     public boolean showDisposalActCreated() {
-        return getRenderedFilterFields().contains(VolumeSearchModel.Props.DISPOSAL_ACT_CREATED);
+        return getRenderedFilterFields().contains(VolumeSearchModel.Props.DISPOSAL_ACT_CREATED.toPrefixString());
     }
 
     // rendering conditions for dialog buttons' confirmation messages

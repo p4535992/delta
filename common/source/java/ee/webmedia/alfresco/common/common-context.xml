@@ -394,11 +394,6 @@
       <property name="dataSource" ref="dataSource" />
    </bean>
    
-   <bean id="loadApplicationCommonDataBootstrap" class="ee.webmedia.alfresco.common.bootstrap.LoadApplicationCommonDataBootstrap" parent="module.baseComponent">
-      <property name="moduleId" value="common" />
-      <property name="executeOnceOnly" value="false" />
-   </bean>
-
    <bean id="classpathResourceResolver" class="ee.webmedia.alfresco.common.ClasspathResourceResolver" />
 
    <bean id="nightlyDataFixJobDetail" class="org.springframework.scheduling.quartz.JobDetailBean">

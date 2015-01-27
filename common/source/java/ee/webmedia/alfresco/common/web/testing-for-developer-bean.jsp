@@ -439,6 +439,10 @@
 <h:commandButton id="updateOrganisationStructureBasedGroups" value="updateOrganisationStructureBasedGroups" type="submit"
    actionListener="#{OrganizationStructureService.updateOrganisationStructureBasedGroups}" />
    <f:verbatim><br/></f:verbatim>
+   
+<h:commandButton id="repairDuplicateSubstituteRoots" value="Paranda dubleeritud asendajate asukohad" type="submit"
+   actionListener="#{RepairSubstitutesAfterMerge.executeUpdaterInBackground}" />
+<f:verbatim><br/></f:verbatim>
 
 <h:outputText id="reportGenerationTitle" value="Aruannete genereerimine: " />
 <f:verbatim><br/></f:verbatim>

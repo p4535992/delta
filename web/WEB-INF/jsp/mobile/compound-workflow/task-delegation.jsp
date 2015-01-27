@@ -52,7 +52,7 @@
     </tag:formrow>
 
     <fmt:formatDate value="${ taskDelegationForm.dueDate }" pattern="dd MMMM, yyyy" var="dueDateStr" />
-    <tag:datepicker labelId="workflow.task.dueDate" value="${ dueDateStr }" />
+    <tag:datepicker labelId="workflow.task.dueDate" value="${ dueDateStr }" initialValue="${ taskDelegationForm.taskDueDate }"/>
 
     <div class="buttongroup">
       <button type="button" id="addTaskButton" onclick="validateAndAdd()">

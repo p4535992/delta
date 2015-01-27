@@ -7,6 +7,7 @@ import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import javax.activation.DataHandler;
 import javax.xml.datatype.DatatypeConfigurationException;
@@ -44,7 +45,7 @@ public abstract class BaseAdrServiceImpl implements AdrService {
     @SuppressWarnings("unchecked")
     private final List<NodeRef> tempFiles = SynchronizedList.decorate(new ArrayList<NodeRef>());
     private static DatatypeFactory datatypeFactory; // JAXP RI implements DatatypeFactory in a thread-safe way
-    private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(BaseAdrServiceImpl.class);
+    private static final Pattern ILLEGAL_XML_CHARACTERS = Pattern.compile("[^\u0009\r\n\u0020-\uD7FF\uE000-\uFFFD\ud800\udc00-\udbff\udfff]");
 
     public BaseAdrServiceImpl() {
         try {
@@ -183,11 +184,19 @@ public abstract class BaseAdrServiceImpl implements AdrService {
         return datatypeFactory.newXMLGregorianCalendar(cal);
     }
 
+    /** Also removes all illegal xml characters */
     protected static String getNullIfEmpty(String input) {
         if (StringUtils.isEmpty(input)) {
             return null;
         }
-        return input;
+        return removeIllegalXmlChars(input);
+    }
+
+    protected static String removeIllegalXmlChars(String input) {
+        if (input == null) {
+            return input;
+        }
+        return ILLEGAL_XML_CHARACTERS.matcher(input).replaceAll("");
     }
 
     protected void cleanTempFiles() {
