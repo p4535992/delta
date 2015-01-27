@@ -201,6 +201,7 @@ public class EmailServiceImpl implements EmailService {
                 containerExtension = "zip";
             }
             if (containerExtension != null) {
+                String fileName = FilenameUtil.buildFileName(zipAndEncryptFileTitle, containerExtension);
                 final File tmpFile = TempFileProvider.createTempFile("sendout-", "." + containerExtension);
                 AlfrescoTransactionSupport.bindListener(new TransactionListenerAdapter() {
                     @Override
@@ -211,7 +212,7 @@ public class EmailServiceImpl implements EmailService {
                 try {
                     OutputStream tmpOutput = new BufferedOutputStream(new FileOutputStream(tmpFile));
                     if (encryptionCertificates != null && !encryptionCertificates.isEmpty()) {
-                        getSignatureService().writeEncryptedContainer(tmpOutput, fileRefs, encryptionCertificates);
+                        getSignatureService().writeEncryptedContainer(tmpOutput, fileRefs, encryptionCertificates, fileName);
                     } else {
                         generalService.writeZipFileFromFiles(tmpOutput, fileRefs);
                     }
@@ -219,7 +220,6 @@ public class EmailServiceImpl implements EmailService {
                     throw new RuntimeException(e);
                 }
                 InputStreamSource contentSource = new FileSystemResource(tmpFile);
-                String fileName = FilenameUtil.buildFileName(zipAndEncryptFileTitle, containerExtension);
                 String mimeType = mimetypeService.guessMimetype(fileName);
                 attachments.add(new EmailAttachment(fileName, mimeType, AppConstants.CHARSET, contentSource, fileRefs.get(0)));
             } else {

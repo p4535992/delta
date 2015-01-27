@@ -96,6 +96,19 @@
       </property>
    </bean>
 
+   <bean id="loadApplicationCommonDataBootstrap" class="ee.webmedia.alfresco.common.bootstrap.LoadApplicationCommonDataBootstrap" parent="module.baseComponent">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="false" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="systematicDocumentTypesBootstrap" />
+            <ref bean="caseFileTypeSpacesBootstrap" />
+            <ref bean="independentWorkflowRootBootstrap" />
+            <ref bean="workflowRootBootstrap" />
+         </list>
+      </property>
+   </bean>
+
    <!-- START: web beans: -->
 
    <bean id="InformingDeleteNodeDialog" class="ee.webmedia.alfresco.common.web.InformingDeleteNodeDialog" scope="session" />

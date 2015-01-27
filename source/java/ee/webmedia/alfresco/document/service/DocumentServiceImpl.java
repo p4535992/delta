@@ -72,7 +72,6 @@ import org.alfresco.service.cmr.repository.CopyService;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.repository.StoreRef;
-import org.alfresco.service.cmr.search.SearchService;
 import org.alfresco.service.cmr.security.PermissionService;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
@@ -226,7 +225,6 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, N
     private DocumentSearchService _documentSearchService;
     private ImapServiceExt _imapServiceExt;
     private DocumentConfigService _documentConfigService;
-    private SearchService searchService;
     // END: properties that would cause dependency cycle when trying to inject them
     protected BeanFactory beanFactory;
     private ApplicationConstantsBean applicationConstantsBean;
@@ -2820,11 +2818,10 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, N
 
         NodeRef seriesRef = generalService.getAncestorNodeRefWithType(documentNodeRef, SeriesModel.Types.SERIES);
         if (AlfrescoTransactionSupport.getResource("seriesContainingCount") == null) {
-            final Map<NodeRef, Integer> countBySeries = new HashMap<NodeRef, Integer>();
+            final Map<NodeRef, Integer> countBySeries = new HashMap<>();
             countBySeries.put(seriesRef, documentAdded ? 1 : -1);
             AlfrescoTransactionSupport.bindResource("seriesContainingCount", countBySeries);
-
-            generalService.runOnBackground(new RunAsWork<Void>() {
+            generalService.runBeforeCommit(new RunAsWork<Void>() {
 
                 @Override
                 public Void doWork() throws Exception {
@@ -2833,12 +2830,6 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, N
                         generalService.updateParentContainingDocsCount(seriesNodeRef, SeriesModel.Props.CONTAINING_DOCS_COUNT, null, entry.getValue());
                         seriesService.removeFromCache(seriesNodeRef);
                     }
-                    return null;
-                }
-            }, "updateSeriesContainingDocsCount", true, new RunAsWork<Void>() {
-
-                @Override
-                public Void doWork() throws Exception {
                     AlfrescoTransactionSupport.unbindResource("seriesContainingCount");
                     return null;
                 }
@@ -2992,10 +2983,6 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, N
 
     public void setDocLockService(DocLockService docLockService) {
         this.docLockService = docLockService;
-    }
-
-    public void setSearchService(SearchService searchService) {
-        this.searchService = searchService;
     }
 
     private FileService getFileService() {

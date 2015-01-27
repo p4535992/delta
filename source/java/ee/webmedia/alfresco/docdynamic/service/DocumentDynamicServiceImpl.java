@@ -680,7 +680,17 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
                 associatedDocument.setVolume(volumeRef);
                 associatedDocument.setProp(DocumentLocationGenerator.CASE_LABEL_EDITABLE, caseLabel);
                 NodeRef oldNodeRef = associatedDocument.getNodeRef();
-                NodeRef newNodeRef = update(associatedDocument, cfg.getSaveListenerBeanNames(), updateGeneratedFiles).getNodeRef();
+
+                // Do not validate accessRestriction value when relocating associated documents because the value has not changed for associated documents
+                // but administrator might have changed the "active" property for accessRestriction values causing the validation to fail. In this case the
+                // entire relocation process would fail and user sees a confusing fault message.
+                // See DELTA-703
+                List<String> saveListeners = null;
+                if (cfg.getSaveListenerBeanNames() != null) {
+                    saveListeners = new ArrayList<>(cfg.getSaveListenerBeanNames());
+                    saveListeners.remove(AccessRestrictionGenerator.BEAN_NAME);
+                }
+                NodeRef newNodeRef = update(associatedDocument, saveListeners, updateGeneratedFiles).getNodeRef();
                 originalNodeRefs.add(Pair.newInstance(oldNodeRef, newNodeRef));
             } else {
                 originalDocumentUpdated = update(associatedDocument, saveListenerBeanNames, updateGeneratedFiles);

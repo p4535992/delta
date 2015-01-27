@@ -86,6 +86,13 @@
         <property name="enabled" value="${jobs.enabled}" />
     </bean>
     
+    <bean id="RepairSubstitutesAfterMerge" class="ee.webmedia.alfresco.substitute.bootstrap.RepairSubstitutesAfterMerge" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="enabled" value="false" /> <!-- Executed from nodeBrowser -->
+      <property name="bulkLoadNodeService" ref="BulkLoadNodeService"/>
+    </bean>
+    
     <bean id="SubstituteListDialog" class="ee.webmedia.alfresco.substitute.web.SubstituteListDialog" scope="session" />
     <bean id="SubstitutionBean" class="ee.webmedia.alfresco.substitute.web.SubstitutionBean" scope="session" />
    

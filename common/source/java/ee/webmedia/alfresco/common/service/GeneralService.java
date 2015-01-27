@@ -225,7 +225,7 @@ public interface GeneralService {
      * @param output
      * @param fileRefs selected file nodeRefs.
      */
-    void writeZipFileFromFiles(OutputStream output, List<NodeRef> fileRefs);
+    long writeZipFileFromFiles(OutputStream output, List<NodeRef> fileRefs);
 
     long writeZipFileFromStream(OutputStream output, String fileName, InputStream in);
 
@@ -335,5 +335,7 @@ public interface GeneralService {
     Node fetchNode(NodeRef nodeRef, Map<Long, QName> propertyTypes);
 
     WmNode fetchObjectNode(NodeRef objectRef, QName objectType, Map<Long, QName> propertyTypes);
+    
+    void runBeforeCommit(final RunAsWork<Void> work);
 
 }

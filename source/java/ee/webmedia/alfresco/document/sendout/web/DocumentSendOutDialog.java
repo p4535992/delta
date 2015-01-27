@@ -314,6 +314,9 @@ public class DocumentSendOutDialog extends BaseDialogBean {
             while (groups.size() < names.size()) {
                 groups.add("");
             }
+            while (idCodes.size() < names.size()) {
+                idCodes.add("");
+            }
             List<Node> childNodes = node.getAllChildAssociations(DocumentChildModel.Assocs.CONTRACT_PARTY);
             if (childNodes != null) {
                 for (Node childNode : childNodes) {
@@ -337,9 +340,9 @@ public class DocumentSendOutDialog extends BaseDialogBean {
                 groups = new ArrayList<String>();
             }
 
-            addAdditionalRecipients(props, names, idCodes, emails, groups);
+            addAdditionalRecipients(props, idCodes, names, emails, groups);
         }
-        removeEmptyValuesLeavingOneEmptyLineIfNeeded(names, emails, groups);
+        removeEmptyValuesLeavingOneEmptyLineIfNeeded(names, idCodes, emails, groups);
 
         List<String> recSendModes = new ArrayList<String>(names.size());
         for (int i = 0; i < names.size(); i++) {
@@ -360,7 +363,7 @@ public class DocumentSendOutDialog extends BaseDialogBean {
     }
 
     @SuppressWarnings("unchecked")
-    private void addAdditionalRecipients(Map<String, Object> props, List<String> names, List<String> idCodes, List<String> emails, List<String> groups) {
+    private void addAdditionalRecipients(Map<String, Object> props, List<String> idCodes, List<String> names, List<String> emails, List<String> groups) {
         List<String> namesAdd = getNames(props, DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME, DocumentDynamicModel.Props.ADDITIONAL_RECIPIENT_PERSON_NAME);
         List<String> idCodesAdd = newListIfNull((List<String>) props.get(DocumentDynamicModel.Props.ADDITIONAL_RECIPIENT_ID), false);
         List<String> emailsAdd = newListIfNull((List<String>) props.get(DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_EMAIL), false);
@@ -368,6 +371,9 @@ public class DocumentSendOutDialog extends BaseDialogBean {
         RepoUtil.validateSameSize(namesAdd, emailsAdd, "additionalNames", "additionalEmails");
         while (groupsAdd.size() < namesAdd.size()) {
             groupsAdd.add("");
+        }
+        while (idCodesAdd.size() < namesAdd.size()) {
+            idCodesAdd.add("");
         }
 
         names.addAll(namesAdd);
@@ -389,7 +395,7 @@ public class DocumentSendOutDialog extends BaseDialogBean {
         }
     }
 
-    private void removeEmptyValuesLeavingOneEmptyLineIfNeeded(List<String> names, List<String> emails, List<String> groups) {
+    private void removeEmptyValuesLeavingOneEmptyLineIfNeeded(List<String> names, List<String> idCodes, List<String> emails, List<String> groups) {
         List<Integer> removeIndexes = new ArrayList<>();
         int j = 0;
         for (Iterator<String> it = names.iterator(); it.hasNext();) {
@@ -404,9 +410,13 @@ public class DocumentSendOutDialog extends BaseDialogBean {
         for (Integer index : removeIndexes) {
             emails.remove((int) index);
             groups.remove((int) index);
+            if (idCodes.size() > index) {
+                idCodes.remove((int) index);
+            }
         }
         if (names.size() == 0) {
             names.add("");
+            idCodes.add("");
             emails.add("");
             groups.add("");
         }

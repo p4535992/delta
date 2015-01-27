@@ -34,10 +34,20 @@ public abstract class AbstractParallelNodeUpdater extends AbstractNodeUpdater {
 
     @Override
     protected void initializeBeforeUpdating() throws Exception {
+        prepareForUpdating();
         super.initializeBeforeUpdating();
         if (nodes.size() <= threadCount) {
             threadCount = Math.max(1, nodes.size());
         }
+    }
+
+    /**
+     * Method for fulfilling prerequisites (in a single thread) to be able to update nodes in parallel.
+     * For example, creating new QNames in database, etc.</br>
+     * By default does nothing, so subclasses must override to achieve desired behaviour.
+     */
+    protected void prepareForUpdating() {
+        // subclass must override
     }
 
     @Override

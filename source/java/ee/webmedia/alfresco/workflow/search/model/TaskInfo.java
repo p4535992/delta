@@ -125,7 +125,7 @@ public class TaskInfo implements Serializable, Comparable<TaskInfo>, CssStylable
     }
 
     private void setDocName(Node document, Node task, boolean independentOrCaseFileWorkflow, boolean documentWorkflow, boolean linkedReviewTask) {
-        if (!linkedReviewTask && documentWorkflow) {
+        if (!linkedReviewTask && documentWorkflow && document != null) {
             docName = (String) document.getProperties().get(DocumentCommonModel.Props.DOC_NAME);
         } else if (linkedReviewTask) {
             docName = (String) task.getProperties().get(WorkflowSpecificModel.Props.COMPOUND_WORKFLOW_TITLE);

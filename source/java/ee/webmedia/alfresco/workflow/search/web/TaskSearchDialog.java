@@ -242,7 +242,7 @@ public class TaskSearchDialog extends AbstractSearchFilterBlockBean<TaskSearchFi
         } else if (WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK.equals(taskType)) {
             return getWorkflowConstantsBean().isExternalReviewWorkflowEnabled();
         } else if (WorkflowSpecificModel.Types.CONFIRMATION_TASK.equals(taskType)) {
-            return getWorkflowConstantsBean().isOrderAssignmentWorkflowEnabled();
+            return getWorkflowConstantsBean().isConfirmationWorkflowEnabled();
         } else if (WorkflowSpecificModel.Types.GROUP_ASSIGNMENT_TASK.equals(taskType)) {
             return getWorkflowConstantsBean().isGroupAssignmentWorkflowEnabled();
         } else if (WorkflowSpecificModel.Types.LINKED_REVIEW_TASK.equals(taskType)) {

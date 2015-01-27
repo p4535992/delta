@@ -597,6 +597,13 @@ public class UIPanel extends UICommand
 
    public void evaluateExpanded()
    {
+       if(isAttributesInitialized()) {
+           Boolean expanded = (Boolean) getAttributes().get("expanded");
+           if(expanded != null) {
+               this.expanded = expanded;
+               return;
+           }
+       }
        ValueBinding vb = getValueBinding("expanded");
        if (vb != null)
        {

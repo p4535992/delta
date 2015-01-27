@@ -251,7 +251,7 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
         dokument.setRegistreerimiseAeg(convertToXMLGergorianCalendar(doc.getRegDateTime()));
         if (isIncomingLetter) {
             String senderName = TextUtil.joinUsingInitialsForAlternativeValue(docProps, DOC_SENDER_NAME_WITH_ALTERNATIVE);
-            dokument.setSaatja(senderName);
+            dokument.setSaatja(removeIllegalXmlChars(senderName));
             dokument.setSaaja(getNullIfEmpty(getClassifiedOrgStructValueIfNeeded(doc.getOwnerName(), doc.getOwnerOrgStructUnit())));
         }
         dokument.setPealkiri(getNullIfEmpty(getDocNameAdr(doc)));
@@ -373,7 +373,7 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
         Toimik wsVolume = new Toimik();
         wsVolume.setId(volumeRef.toString());
         wsVolume.setViit((String) volumeProps.get(VolumeModel.Props.MARK));
-        wsVolume.setPealkiri(volumeTitleEnabled ? (String) volumeProps.get(VolumeModel.Props.TITLE) : "");
+        wsVolume.setPealkiri(volumeTitleEnabled ? removeIllegalXmlChars((String) volumeProps.get(VolumeModel.Props.TITLE)) : "");
         wsVolume.setKehtivAlatesKuupaev(convertToXMLGergorianCalendar((Date) volumeProps.get(VolumeModel.Props.VALID_FROM)));
         wsVolume.setKehtivKuniKuupaev(convertToXMLGergorianCalendar((Date) volumeProps.get(VolumeModel.Props.VALID_TO)));
         dokument.setToimik(wsVolume);
@@ -384,8 +384,8 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
 
         Sari wsSeries = new Sari();
         wsSeries.setId(seriesRef.toString());
-        wsSeries.setViit((String) seriesProps.get(SeriesModel.Props.SERIES_IDENTIFIER));
-        wsSeries.setPealkiri((String) seriesProps.get(SeriesModel.Props.TITLE));
+        wsSeries.setViit(removeIllegalXmlChars((String) seriesProps.get(SeriesModel.Props.SERIES_IDENTIFIER)));
+        wsSeries.setPealkiri(removeIllegalXmlChars((String) seriesProps.get(SeriesModel.Props.TITLE)));
         wsSeries.setJarjekorraNumber((Integer) seriesProps.get(SeriesModel.Props.ORDER));
         dokument.setSari(wsSeries);
 
@@ -395,8 +395,8 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
 
         Funktsioon wsFunction = new Funktsioon();
         wsFunction.setId(functionRef.toString());
-        wsFunction.setViit((String) functionProps.get(FunctionsModel.Props.MARK));
-        wsFunction.setPealkiri((String) functionProps.get(FunctionsModel.Props.TITLE));
+        wsFunction.setViit(removeIllegalXmlChars((String) functionProps.get(FunctionsModel.Props.MARK)));
+        wsFunction.setPealkiri(removeIllegalXmlChars((String) functionProps.get(FunctionsModel.Props.TITLE)));
         wsFunction.setJarjekorraNumber((Integer) functionProps.get(FunctionsModel.Props.ORDER));
         dokument.setFunktsioon(wsFunction);
 

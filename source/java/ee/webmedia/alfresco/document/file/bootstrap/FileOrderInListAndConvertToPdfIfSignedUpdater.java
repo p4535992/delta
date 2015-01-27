@@ -5,6 +5,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.alfresco.repo.domain.QNameDAO;
+import org.alfresco.repo.transaction.RetryingTransactionHelper;
+import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.cmr.search.ResultSet;
@@ -12,6 +15,7 @@ import org.alfresco.service.cmr.search.SearchService;
 import org.apache.commons.collections4.CollectionUtils;
 
 import ee.webmedia.alfresco.common.bootstrap.AbstractParallelNodeUpdater;
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.file.model.FileModel;
 import ee.webmedia.alfresco.document.file.service.FileService;
@@ -56,6 +60,19 @@ public class FileOrderInListAndConvertToPdfIfSignedUpdater extends AbstractParal
         }
 
         return new String[] { "Reordered and set 'convertToPdfIfSigned' = true for " + filesToTransform.size() + " files" };
+    }
+
+    @Override
+    protected void prepareForUpdating() {
+        RetryingTransactionHelper helper = BeanHelper.getTransactionService().getRetryingTransactionHelper();
+        helper.doInTransaction(new RetryingTransactionCallback<Void>() {
+            @Override
+            public Void execute() throws Throwable {
+                QNameDAO qnameDao = BeanHelper.getSpringBean(QNameDAO.class, "qnameDAO");
+                qnameDao.getOrCreateQName(FileModel.Props.FILE_ORDER_IN_LIST);
+                return null;
+            }
+        }, false, true);
     }
 
     private NodeRef getFileRef(File f) {

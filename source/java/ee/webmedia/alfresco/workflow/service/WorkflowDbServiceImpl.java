@@ -333,26 +333,36 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
     }
 
     private void batchUpdate(final List<TaskUpdateInfo> taskUpdateInfos, final Set<String> usedFieldNames, String sql, final boolean addTaskId) {
-        jdbcTemplate.batchUpdate(sql, new BatchPreparedStatementSetter() {
+        try (Connection conn = dataSource.getConnection()) {
 
-            @Override
-            public void setValues(PreparedStatement ps, int i) throws SQLException {
-                TaskUpdateInfo info = taskUpdateInfos.get(i);
-                int fieldIndex = 1;
-                for (String fieldName : usedFieldNames) {
-                    info.setValue(ps, fieldIndex, fieldName, FIELD_NAME_TO_TASK_PROP);
-                    fieldIndex++;
-                }
-                if (addTaskId) {
-                    ps.setObject(fieldIndex, info.getTaskId());
-                }
-            }
+            jdbcTemplate.batchUpdate(sql, new BatchPreparedStatementSetter() {
 
-            @Override
-            public int getBatchSize() {
-                return taskUpdateInfos.size();
-            }
-        });
+                @Override
+                public void setValues(PreparedStatement ps, int i) throws SQLException {
+                    TaskUpdateInfo info = taskUpdateInfos.get(i);
+                    int fieldIndex = 1;
+                    for (String fieldName : usedFieldNames) {
+                        Object value = info.getFieldValue(fieldName, FIELD_NAME_TO_TASK_PROP);
+                        if (value instanceof List) {
+                            value = getArrayValueForDb(value, conn);
+                        }
+                        DbSearchUtil.setParameterValue(ps, fieldIndex, value);
+                        fieldIndex++;
+                    }
+                    if (addTaskId) {
+                        ps.setObject(fieldIndex, info.getTaskId());
+                    }
+                }
+
+                @Override
+                public int getBatchSize() {
+                    return taskUpdateInfos.size();
+                }
+            });
+        } catch (SQLException e) {
+            LOG.error("Unable to update tasks", e);
+            throw new RuntimeException(e);
+        }
     }
 
     @Override

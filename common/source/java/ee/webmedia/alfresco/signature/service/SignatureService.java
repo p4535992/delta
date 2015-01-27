@@ -178,8 +178,9 @@ public interface SignatureService {
      * @param output output stream that newly created CDOC file is written to; stream is closed automatically.
      * @param contents input files that are encrypted; at least one file is required.
      * @param recipientCerts certificates of recipient or recipient; at least one is required.
+     * @param containerFileName name of the container being written
      * @throws SignatureRuntimeException
      */
-    void writeEncryptedContainer(OutputStream output, List<NodeRef> contents, List<X509Certificate> recipientCerts);
+    void writeEncryptedContainer(OutputStream output, List<NodeRef> contents, List<X509Certificate> recipientCerts, String containerFileName);
 
 }

@@ -27,6 +27,8 @@ import java.util.Vector;
 import javax.xml.ws.Holder;
 import javax.xml.ws.soap.SOAPFaultException;
 
+import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.document.file.model.FileModel;
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.content.MimetypeMap;
 import org.alfresco.repo.transaction.AlfrescoTransactionSupport;
@@ -971,7 +973,7 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
     }
 
     @Override
-    public void writeEncryptedContainer(OutputStream output, List<NodeRef> contents, List<X509Certificate> recipientCerts) {
+    public void writeEncryptedContainer(OutputStream output, List<NodeRef> contents, List<X509Certificate> recipientCerts, String containerFileName) {
         Assert.isTrue(!contents.isEmpty());
         Assert.isTrue(!recipientCerts.isEmpty());
 
@@ -990,38 +992,28 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
                 cdoc.addEncryptedKey(ekey);
             }
 
-            SignedDoc bdoc = createSignedDoc(contents);
-
-            // Like cdoc.setPropRegisterDigiDoc(signedDoc), but with minor improvements
-            for (int i = 0; i < bdoc.countDataFiles(); i++) {
-                DataFile df = bdoc.getDataFile(i);
-                StringBuffer sb = new StringBuffer();
-                sb.append(df.getFileName());
-                sb.append("|");
-                sb.append(FilenameUtil.byteCountToDisplaySize(df.getSize()));
-                sb.append("|");
-                sb.append(df.getMimeType());
-                sb.append("|");
-                sb.append(df.getId());
-                EncryptionProperty prop = new EncryptionProperty(EncryptedData.ENCPROP_ORIG_FILE, sb.toString());
-                prop.setId(EncryptedData.ENCPROP_ORIG_FILE + i);
-                cdoc.addProperty(prop);
-            }
-
-            File tmpFile = TempFileProvider.createTempFile("container-", FilenameUtil.BDOC_EXTENSION);
+            File tmpFile = TempFileProvider.createTempFile("container-", "tmp");
             try {
-                OutputStream tmpOutput = new BufferedOutputStream(new FileOutputStream(tmpFile));
-                try {
-                    bdoc.writeToStream(tmpOutput);
-                } finally {
-                    tmpOutput.close();
+                boolean singleFileToEncrypt = contents.size() == 1;
+                long fileSize;
+                try (OutputStream tmpOutput = new BufferedOutputStream(new FileOutputStream(tmpFile))) {
+                    if (singleFileToEncrypt) {
+                        try (InputStream inputStream = BeanHelper.getFileService().getFileContentInputStream(contents.get(0))) {
+                            fileSize = IOUtils.copy(inputStream, tmpOutput);
+                        }
+                    } else {
+                        fileSize = BeanHelper.getGeneralService().writeZipFileFromFiles(tmpOutput, contents);
+                    }
                 }
 
-                InputStream tmpInput = new BufferedInputStream(new FileInputStream(tmpFile));
-                try {
+                String fileName = singleFileToEncrypt
+                        ? (String) nodeService.getProperty(contents.get(0), FileModel.Props.DISPLAY_NAME)
+                        : (FilenameUtils.getBaseName(containerFileName) + ".zip");
+                cdoc.addProperty(EncryptedData.ENCPROP_FILENAME, fileName);
+                cdoc.addProperty(EncryptedData.ENCPROP_ORIG_SIZE, new Long(fileSize).toString());
+
+                try (InputStream tmpInput = new BufferedInputStream(new FileInputStream(tmpFile))) {
                     cdoc.encryptStream(tmpInput, output, EncryptedData.DENC_COMPRESS_ALLWAYS);
-                } finally {
-                    tmpInput.close();
                 }
             } finally {
                 tmpFile.delete();

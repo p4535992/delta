@@ -389,27 +389,34 @@ public class CompundWorkflowDetailsController extends AbstractBaseController {
     public String taskDelegation(@PathVariable String compoundWorkflowNodeId, @PathVariable String taskId, Model model, HttpServletRequest request) {
         super.setup(model, request);
         NodeRef cwfRef = WebUtil.getNodeRefFromNodeId(compoundWorkflowNodeId);
-        List<ee.webmedia.alfresco.workflow.service.Task> tasks = workflowService.getMyTasksInProgress(Arrays.asList(cwfRef),
-                WorkflowSpecificModel.Types.ASSIGNMENT_TASK);
+        List<ee.webmedia.alfresco.workflow.service.Task> tasks = workflowService.getMyTasksInProgress(Arrays.asList(cwfRef), WorkflowSpecificModel.Types.ASSIGNMENT_TASK);
+        NodeRef taskRef = new NodeRef(cwfRef.getStoreRef(), taskId);
+        Date taskDueDate = null;
         List<ee.webmedia.alfresco.workflow.service.Task> delegationTasks = new ArrayList<>();
         for (ee.webmedia.alfresco.workflow.service.Task t : tasks) {
             delegationTasks.add(t);
+            if (taskDueDate == null && taskRef.equals(t.getNodeRef())) {
+                taskDueDate = t.getDueDate();
+            }
         }
         setupDelegationHistoryBlock(model, delegationTasks);
-        NodeRef taskRef = new NodeRef(cwfRef.getStoreRef(), taskId);
-        TaskDelegationForm form = setupTaskDelegationFrom(taskRef);
+        TaskDelegationForm form = setupTaskDelegationFrom(taskRef, taskDueDate);
         model.addAttribute("taskDelegationForm", form);
 
         return "compound-workflow/task-delegation";
     }
 
-    private TaskDelegationForm setupTaskDelegationFrom(NodeRef taskRef) {
+    private TaskDelegationForm setupTaskDelegationFrom(NodeRef taskRef, Date taskDueDate) {
         Map<Integer, String> delegationTaskChoices = new HashMap<>();
         int start = hasResponsibleAspect(taskRef) ? 0 : 1;
         for (int i = start; i < DelegationBean.DELEGATION_TASK_CHOICE_COUNT; i++) {
             delegationTaskChoices.put(i, translate("workflow.task.delegation.choice." + i));
         }
-        return new TaskDelegationForm(delegationTaskChoices);
+        TaskDelegationForm form = new TaskDelegationForm(delegationTaskChoices);
+        if (taskDueDate != null) {
+            form.setTaskDueDate(new SimpleDateFormat("dd.MM.yyyy").format(taskDueDate));
+        }
+        return form;
     }
 
     private boolean hasResponsibleAspect(NodeRef taskRef) {
