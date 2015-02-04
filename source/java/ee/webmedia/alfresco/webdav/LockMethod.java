@@ -25,6 +25,7 @@ import java.util.Iterator;
 import javax.faces.context.FacesContext;
 import javax.servlet.http.HttpServletResponse;
 
+import org.alfresco.model.ContentModel;
 import org.alfresco.repo.policy.BehaviourFilter;
 import org.alfresco.repo.webdav.LockInfo;
 import org.alfresco.repo.webdav.LockInfoImpl;
@@ -251,6 +252,7 @@ public class LockMethod extends WebDAVMethod {
         NodeRef fileRef = lockNodeInfo.getNodeRef();
         WebDAVCustomHelper.checkDocumentFileWritePermission(fileRef);
 
+        getBehaviourFilter().disableBehaviour(ContentModel.ASPECT_AUDITABLE);
         // Check if this is a new lock or a lock refresh
         if (hasLockToken())
         {

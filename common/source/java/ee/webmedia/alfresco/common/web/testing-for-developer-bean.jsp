@@ -169,6 +169,21 @@
 <f:verbatim><br/></f:verbatim>
 
 <f:verbatim><hr/></f:verbatim>
+<h:outputText value="Dokumendi ADR peakirjaks dokumendi liigi nimetuse määramine"/>
+<f:verbatim><br/></f:verbatim>
+<h:outputText value="Kuupäev (k.a., kujul pp.kk.aaaa), millest varem loodud dokumentidel määratakse välja 'ADR pealkiri' tühja väärtuse asemel väärtuseks dokumendi liigi pealkiri: "/>
+<h:inputText id="endDateStr" value="#{adrDocNameUpdater.endDateStr}" size="12" />
+<f:verbatim><br/></f:verbatim>
+<h:commandButton id="startAdrDocNameUpdater" value="Käivita" type="submit"
+   actionListener="#{adrDocNameUpdater.executeUpdaterInBackground}"
+   rendered="#{adrDocNameUpdater.updaterRunning == false}" />
+<h:commandButton id="stopAdrDocNameUpdater" value="Peata" type="submit"
+   actionListener="#{adrDocNameUpdater.stopUpdater}"
+   rendered="#{adrDocNameUpdater.updaterRunning == true}"
+   disabled="#{adrDocNameUpdater.updaterStopping == true}" />
+<f:verbatim><br/></f:verbatim>
+
+<f:verbatim><hr/></f:verbatim>
 <h:outputText value="Versioonide lahtilukustamine"/>
 <f:verbatim><br/></f:verbatim>
 <h:outputText value="Mitu objekti ühes transaktsioonis töödelda: "/>

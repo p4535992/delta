@@ -5,7 +5,6 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentAdminService
 import static ee.webmedia.alfresco.common.web.BeanHelper.getVisitedDocumentsBean;
 
 import java.io.Serializable;
-import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -41,6 +40,7 @@ import org.apache.myfaces.shared_impl.taglib.UIComponentTagUtils;
 import ee.webmedia.alfresco.classificator.constant.FieldType;
 import ee.webmedia.alfresco.common.propertysheet.customchildrencontainer.CustomChildrenContainer;
 import ee.webmedia.alfresco.common.propertysheet.customchildrencontainer.CustomChildrenCreator;
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.docadmin.service.UnmodifiableFieldDefinition;
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
@@ -88,8 +88,6 @@ public class DocumentSearchResultsDialog extends BaseDocumentListDialog {
     }
 
     protected Node searchFilter;
-    @SuppressWarnings("unused")
-    private transient WeakReference<UIRichList> richList;
 
     public String setup(Node filter) {
         searchFilter = filter;
@@ -164,7 +162,7 @@ public class DocumentSearchResultsDialog extends BaseDocumentListDialog {
      */
     @Override
     public void setRichList(UIRichList richListComponent) {
-        richList = new WeakReference<>(richListComponent);
+        BeanHelper.getJsfBindingHelper().addBinding(getRichListBindingName(), richListComponent);
         if (!richListComponent.getChildren().isEmpty()) {
             return;
         }
@@ -271,7 +269,6 @@ public class DocumentSearchResultsDialog extends BaseDocumentListDialog {
     public void clean() {
         super.clean();
         searchFilter = null;
-        richList = null;
     }
 
     // TODO refactor these into an util?

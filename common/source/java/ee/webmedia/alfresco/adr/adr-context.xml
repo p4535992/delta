@@ -107,4 +107,17 @@
       </property>
    </bean>
 
+   <bean id="adrDocNameUpdater" class="ee.webmedia.alfresco.adr.bootstrap.AdrDocNameUpdater" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="false" />
+      <property name="enabled" value="false" /> <!-- Executed from node-browser -->
+      <property name="dependsOn">
+         <list>
+            <ref bean="adrDeletedDocumentNodeRefToTextUpdater" />
+         </list>
+      </property>
+      <property name="documentAdminService" ref="DocumentAdminService"></property>
+      <property name="bulkLoadNodeService" ref="BulkLoadNodeService"></property>
+   </bean>
+
 </beans>

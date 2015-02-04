@@ -34,7 +34,6 @@ import javax.faces.event.PhaseId;
 import javax.faces.event.ValueChangeEvent;
 import javax.faces.model.SelectItem;
 
-import ee.webmedia.alfresco.common.propertysheet.component.WMUIProperty;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
 import org.alfresco.service.cmr.repository.NodeRef;
@@ -60,6 +59,7 @@ import ee.webmedia.alfresco.cases.service.UnmodifiableCase;
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
 import ee.webmedia.alfresco.classificator.enums.VolumeType;
 import ee.webmedia.alfresco.common.model.DynamicBase;
+import ee.webmedia.alfresco.common.propertysheet.component.WMUIProperty;
 import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement.ItemConfigVO;
 import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement.ItemConfigVO.ConfigItemType;
 import ee.webmedia.alfresco.common.propertysheet.converter.NodeRefConverter;
@@ -108,10 +108,10 @@ import ee.webmedia.alfresco.volume.service.VolumeService;
 public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DocumentLocationGenerator.class);
     public static final String[] NODE_REF_FIELD_IDS = new String[] {
-            FUNCTION.getLocalName(),
-            SERIES.getLocalName(),
-            VOLUME.getLocalName(),
-            CASE.getLocalName() };
+        FUNCTION.getLocalName(),
+        SERIES.getLocalName(),
+        VOLUME.getLocalName(),
+        CASE.getLocalName() };
     public static final QName CASE_FILE_TYPE_PROP = RepoUtil.createTransientProp("caseFileType");
 
     @Override
@@ -340,7 +340,7 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
         private boolean showCaseFileTypes;
 
         public DocumentLocationState(QName functionProp, QName seriesProp, QName caseProp, QName volumeProp, QName functionLabelProp, QName seriesLabelProp, QName volumeLabelProp,
-                QName caseLabelProp, QName caseLabelEditableProp, boolean documentType, boolean useAdditionalStateHolder) {
+                                     QName caseLabelProp, QName caseLabelEditableProp, boolean documentType, boolean useAdditionalStateHolder) {
             this.functionProp = functionProp;
             this.seriesProp = seriesProp;
             this.caseProp = caseProp;
@@ -583,7 +583,7 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
                 volumeRef = null;
             } else {
                 if (updateAccessRestrictionProperties) {
-                    if (ps == null) { // when metadata block is first rendered
+                    if (ps == null || ps.getChildCount() == 0) { // when metadata block is first rendered
                         updateAccessRestrictionProperties(seriesRef);
                     } else { // when value change event is fired
                         final NodeRef finalSeriesRef = seriesRef;
@@ -853,7 +853,7 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
             } else if (getGeneralService().getStore().equals(functionRef.getStoreRef())) {
                 allSeries = documentType
                         ? _getSeriesService().getAllSeriesByFunction(functionRef, DocListUnitStatus.OPEN, idList)
-                                : _getSeriesService().getAllCaseFileSeriesByFunction(functionRef, DocListUnitStatus.OPEN);
+                        : _getSeriesService().getAllCaseFileSeriesByFunction(functionRef, DocListUnitStatus.OPEN);
             } else {
                 allSeries = Collections.emptyList();
             }
@@ -1165,12 +1165,12 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
     private boolean isClosedUnitCheckNeeded(DocumentDynamic document, DocumentParentNodesVO parents, NodeRef volumeRef, NodeRef caseRef) {
         return document.isDraftOrImapOrDvk()
                 || !(volumeRef.equals(parents.getVolumeNode().getNodeRef())
-                && (parents.getCaseNode() == null ? caseRef == null
+                        && (parents.getCaseNode() == null ? caseRef == null
                         : (caseRef == null ? false
                                 : parents.getCaseNode().getNodeRef().equals(caseRef)
-                        )
-                )
-                );
+                                )
+                                )
+                        );
     }
 
     // START: setters

@@ -1368,7 +1368,11 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
     private void addBooleanPropQuery(List<String> queryParts, Map<QName, Serializable> props, QName filterPropName, QName volumeProp) {
         Boolean value = (Boolean) props.get(filterPropName);
         if (value != null) {
-            queryParts.add(generatePropertyBooleanQuery(volumeProp, value));
+            if (!value) {
+                queryParts.add(joinQueryPartsOr(generatePropertyBooleanQuery(volumeProp, value), generatePropertyNullQuery(volumeProp)));
+            } else {
+                queryParts.add(generatePropertyBooleanQuery(volumeProp, value));
+            }
         }
     }
 

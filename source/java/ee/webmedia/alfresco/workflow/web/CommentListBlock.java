@@ -1,6 +1,7 @@
 package ee.webmedia.alfresco.workflow.web;
 
-import java.lang.ref.WeakReference;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getJsfBindingHelper;
+
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -44,7 +45,6 @@ public class CommentListBlock extends BaseDialogBean {
     private CompoundWorkflow compoundWorkflow;
     private List<Comment> comments = new ArrayList<Comment>();
     private String newComment;
-    private transient WeakReference<UIPanel> editCommentModalContainer;
 
     @Override
     public Object getActionsContext() {
@@ -186,16 +186,20 @@ public class CommentListBlock extends BaseDialogBean {
     }
 
     public UIPanel getEditCommentModalContainer() {
-        UIPanel editCommentComponent = editCommentModalContainer != null ? editCommentModalContainer.get() : null;
+        UIPanel editCommentComponent = (UIPanel) getJsfBindingHelper().getComponentBinding(getModalContainerBindingName());
         if (editCommentComponent == null) {
             editCommentComponent = new UIPanel();
-            editCommentModalContainer = new WeakReference<>(editCommentComponent);
+            getJsfBindingHelper().addBinding(getModalContainerBindingName(), editCommentComponent);
         }
         return editCommentComponent;
     }
 
+    protected String getModalContainerBindingName() {
+        return getBindingName("modalContainer");
+    }
+
     public void setEditCommentModalContainer(UIPanel editCommentModalContainer) {
-        this.editCommentModalContainer = new WeakReference<>(editCommentModalContainer);
+        getJsfBindingHelper().addBinding(getModalContainerBindingName(), editCommentModalContainer);
     }
 
     public String getNewComment() {

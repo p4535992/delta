@@ -1,8 +1,7 @@
 package ee.webmedia.alfresco.user.web;
 
-import static ee.webmedia.alfresco.utils.RepoUtil.getReferenceOrNull;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getJsfBindingHelper;
 
-import java.lang.ref.WeakReference;
 import java.util.Iterator;
 import java.util.List;
 
@@ -29,7 +28,6 @@ public class PermissionsListDialog extends BaseDialogBean {
     /** allows delegating actual permission removing to another method using given method binding expression */
     private static String DELEGATE_REMOVE_AUTHORITY_MB = "delegateRemoveAuthorityMB";
 
-    private transient WeakReference<UIRichList> authoritiesRichList;
     private transient UserService userService;
 
     private NodeRef nodeRef;
@@ -134,7 +132,7 @@ public class PermissionsListDialog extends BaseDialogBean {
     @Override
     public void restored() {
         authorities = null;
-        UIRichList authoritiesListComponent = getReferenceOrNull(authoritiesRichList);
+        UIRichList authoritiesListComponent = getAuthoritiesRichList();
         if (authoritiesListComponent != null) {
             authoritiesListComponent.setValue(null);
         }
@@ -157,11 +155,15 @@ public class PermissionsListDialog extends BaseDialogBean {
     }
 
     public UIRichList getAuthoritiesRichList() {
-        return getReferenceOrNull(authoritiesRichList);
+        return (UIRichList) getJsfBindingHelper().getComponentBinding(getRichListBindingName());
+    }
+
+    protected String getRichListBindingName() {
+        return getBindingName("richList");
     }
 
     public void setAuthoritiesRichList(UIRichList authoritiesRichList) {
-        this.authoritiesRichList = new WeakReference<>(authoritiesRichList);
+        getJsfBindingHelper().addBinding(getRichListBindingName(), authoritiesRichList);
     }
 
     protected UserService getUserService() {

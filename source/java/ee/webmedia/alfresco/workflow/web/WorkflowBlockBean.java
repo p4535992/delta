@@ -7,6 +7,7 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDvkService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getEInvoiceService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getFileService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getJsfBindingHelper;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getLogService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getNodeService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getSignatureService;
@@ -21,7 +22,6 @@ import static ee.webmedia.alfresco.utils.ComponentUtil.putAttribute;
 import static ee.webmedia.alfresco.workflow.web.CompoundWorkflowDialog.handleWorkflowChangedException;
 
 import java.io.IOException;
-import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -166,10 +166,6 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
     private TransactionsBlockBean transactionsBlockBean;
     private CompoundWorkflowDialog compoundWorkflowDialog;
 
-    private transient WeakReference<HtmlPanelGroup> dataTableGroup;
-    private transient WeakReference<UIRichList> reviewNotesRichList;
-    private transient WeakReference<HtmlPanelGroup> dueDateHistoryModalPanel;
-
     private NodeRef containerRef;
     private Node container;
     private NodeRef taskPanelControlDocument;
@@ -205,6 +201,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         containerRef = container.getNodeRef();
         delegationBean.setWorkflowBlockBean(this);
         restore("init");
+        updateDueDateHistoryPanel();
     }
 
     public void initIndependentWorkflow(CompoundWorkflow compoundWorkflow, CompoundWorkflowDialog compoundWorkflowDialog) {
@@ -228,14 +225,11 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         finishedOrderAssignmentTasks = null;
         groupedWorkflowBlockItems = null;
         workflowBlockItemDataProvider = null;
-        dataTableGroup = null;
         removedFiles = null;
         delegationBean.reset();
-        reviewNotesRichList = null;
         signingFlow = null;
         dueDateExtenderUsername = null;
         dueDateExtenderUserFullname = null;
-        dueDateHistoryModalPanel = null;
     }
 
     @Override
@@ -253,8 +247,6 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         getRestoredMyTasks(getRestoredCompoundWorkflows());
         getWorkflowService().loadTaskFilesFromCompoundWorkflows(myTasks, compoundWorkflows);
 
-        // jsp:include parameters are not taken in account in list construction if list is not nulled
-        reviewNotesRichList = null;
         removedFiles = null;
 
         // Reset data providers
@@ -522,8 +514,8 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
                     && getWorkflowConstantsBean().isIndependentWorkflowEnabled()
                     && BeanHelper.getPrivilegeService().hasPermission(containerRef, AuthenticationUtil.getRunAsUser(), Privilege.VIEW_DOCUMENT_META_DATA,
                             Privilege.VIEW_DOCUMENT_FILES)
-                    && (containerRef == null || !isDocumentWorkflow(BeanHelper.getNodeService().getType(containerRef))
-                    || new DocumentNotInDraftsFunctionActionEvaluator().evaluate(new Node(containerRef)))) {
+                            && (containerRef == null || !isDocumentWorkflow(BeanHelper.getNodeService().getType(containerRef))
+                            || new DocumentNotInDraftsFunctionActionEvaluator().evaluate(new Node(containerRef)))) {
                 return INDEPENDENT_WORKFLOW_METHOD_BINDING_NAME;
             }
             return null;
@@ -1177,7 +1169,6 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         if (WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_TASK.equals(taskType) && myTask.getProp(WorkflowSpecificModel.Props.SEND_ORDER_ASSIGNMENT_COMPLETED_EMAIL) == null) {
             myTask.setProp(WorkflowSpecificModel.Props.SEND_ORDER_ASSIGNMENT_COMPLETED_EMAIL, Boolean.TRUE);
         }
-
         return myTask;
     }
 
@@ -1376,7 +1367,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         Map<String, Object> attributes = ComponentUtil.getAttributes(search);
         attributes.put(ValidatingModalLayerComponent.ATTR_LABEL_KEY, "workflow_dueDateExtension_extender");
         attributes.put(ValidatingModalLayerComponent.ATTR_MANDATORY, Boolean.TRUE);
-        attributes.put(Search.PICKER_CALLBACK_KEY, "#{UserContactGroupSearchBean.searchAll}");
+        attributes.put(Search.PICKER_CALLBACK_KEY, "#{UserContactGroupSearchBean.searchAllWithoutLogOnUser}");
         attributes.put(Search.FILTER_INDEX, UserContactGroupSearchBean.USERS_FILTER);
         attributes.put(Search.SETTER_CALLBACK, "#{WorkflowBlockBean.assignDueDateExtender}");
         attributes.put(Search.DATA_TYPE_KEY, String.class);
@@ -1516,23 +1507,23 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
 
     // NB! Don't call this method from java code; this is meant ONLY for workflow-block.jsp binding
     public HtmlPanelGroup getDataTableGroup() {
-        HtmlPanelGroup panelGroup = dataTableGroup != null ? dataTableGroup.get() : null;
-        if (panelGroup == null) {
-            panelGroup = new HtmlPanelGroup();
-            dataTableGroup = new WeakReference<>(panelGroup);
+        HtmlPanelGroup dataTableGroup = (HtmlPanelGroup) BeanHelper.getJsfBindingHelper().getComponentBinding(getDataTableGroupBindingName());
+        if (dataTableGroup == null) {
+            dataTableGroup = new HtmlPanelGroup();
+            BeanHelper.getJsfBindingHelper().addBinding(getDataTableGroupBindingName(), dataTableGroup);
         }
         taskPanelControlDocument = containerRef;
-        return panelGroup;
+        return dataTableGroup;
     }
 
     private HtmlPanelGroup getDataTableGroupInner() {
         // This will be called once in the first RESTORE VIEW phase.
-        HtmlPanelGroup panelGroup = dataTableGroup != null ? dataTableGroup.get() : null;
-        if (panelGroup == null) {
-            panelGroup = new HtmlPanelGroup();
-            dataTableGroup = new WeakReference<>(panelGroup);
+        HtmlPanelGroup dataTableGroup = (HtmlPanelGroup) BeanHelper.getJsfBindingHelper().getComponentBinding(getDataTableGroupBindingName());
+        if (dataTableGroup == null) {
+            dataTableGroup = new HtmlPanelGroup();
+            BeanHelper.getJsfBindingHelper().addBinding(getDataTableGroupBindingName(), dataTableGroup);
         }
-        return panelGroup;
+        return dataTableGroup;
     }
 
     public void setDataTableGroup(HtmlPanelGroup dataTableGroup) {
@@ -1540,15 +1531,22 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
             constructTaskPanelGroup(dataTableGroup, "setDataTableGroup");
             taskPanelControlDocument = containerRef;
         }
-        this.dataTableGroup = new WeakReference<>(dataTableGroup);
+        BeanHelper.getJsfBindingHelper().addBinding(getDataTableGroupBindingName(), dataTableGroup);
+    }
+
+    protected String getDataTableGroupBindingName() {
+        return getBindingName("dataTableGroup");
     }
 
     public UIRichList getReviewNotesRichList() {
-        return reviewNotesRichList != null ? reviewNotesRichList.get() : null;
+        return null;
+    }
+
+    protected String getReviewNotesBindingName() {
+        return getBindingName("reviewNotes");
     }
 
     public void setReviewNotesRichList(UIRichList reviewNotesRichList) {
-        this.reviewNotesRichList = new WeakReference<>(reviewNotesRichList);
         for (UIComponent component : ComponentUtil.getChildren(reviewNotesRichList)) {
             if (component instanceof UIColumn) {
                 UIColumn column = (UIColumn) component;
@@ -1587,10 +1585,11 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
     }
 
     private void updateDueDateHistoryPanel() {
-        if (dueDateHistoryModalPanel == null || dueDateHistoryModalPanel.get() == null) {
+        HtmlPanelGroup dueDateHistoryModalPanel = (HtmlPanelGroup) getJsfBindingHelper().getComponentBinding(getModalPanelBindingName());
+        if (dueDateHistoryModalPanel == null) {
             return;
         }
-        List<UIComponent> children = dueDateHistoryModalPanel.get().getChildren();
+        List<UIComponent> children = dueDateHistoryModalPanel.getChildren();
         children.clear();
         WorkflowDbService workflowDbService = getWorkflowDbService();
         final WorkflowService workflowService = BeanHelper.getWorkflowService();
@@ -1692,16 +1691,24 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
     }
 
     public HtmlPanelGroup getDueDateHistoryModalPanel() {
-        return dueDateHistoryModalPanel != null ? dueDateHistoryModalPanel.get() : null;
+        HtmlPanelGroup modalPanel = (HtmlPanelGroup) getJsfBindingHelper().getComponentBinding(getModalPanelBindingName());
+        if (modalPanel == null) {
+            modalPanel = (HtmlPanelGroup) FacesContext.getCurrentInstance().getApplication().createComponent(HtmlPanelGroup.COMPONENT_TYPE);
+            getJsfBindingHelper().addBinding(getModalPanelBindingName(), modalPanel);
+        }
+        return modalPanel;
+    }
+
+    protected String getModalPanelBindingName() {
+        return getBindingName("modalPanel");
     }
 
     public void setDueDateHistoryModalPanel(HtmlPanelGroup dueDateHistoryModalPanel) {
-        if (this.dueDateHistoryModalPanel == null || this.dueDateHistoryModalPanel.get() == null) {
-            this.dueDateHistoryModalPanel = new WeakReference<>(dueDateHistoryModalPanel);
-            updateDueDateHistoryPanel();
-        } else {
-            this.dueDateHistoryModalPanel = new WeakReference<>(dueDateHistoryModalPanel);
-        }
+        getJsfBindingHelper().addBinding(getModalPanelBindingName(), dueDateHistoryModalPanel);
+    }
+
+    protected String getBindingName(String name) {
+        return this.getClass().getSimpleName() + "." + name;
     }
 
     // END: getters / setters

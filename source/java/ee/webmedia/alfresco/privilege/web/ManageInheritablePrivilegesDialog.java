@@ -1,16 +1,15 @@
 package ee.webmedia.alfresco.privilege.web;
 
 import static ee.webmedia.alfresco.common.web.BeanHelper.getAuthorityService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getJsfBindingHelper;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getPrivilegeService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
 import static ee.webmedia.alfresco.privilege.service.PrivilegeServiceImpl.GROUPLESS_GROUP;
 import static ee.webmedia.alfresco.utils.ComponentUtil.addChildren;
 import static ee.webmedia.alfresco.utils.ComponentUtil.createUIParam;
 import static ee.webmedia.alfresco.utils.ComponentUtil.putAttribute;
-import static ee.webmedia.alfresco.utils.RepoUtil.getReferenceOrNull;
 
 import java.io.Serializable;
-import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -80,9 +79,6 @@ public class ManageInheritablePrivilegesDialog extends BaseDialogBean {
     private static final String USERGROUP_MARKER_CLASS = "tbGroup";
 
     private static Comparator<UserPrivileges> tableRowComparator;
-    // UIComponents
-    private transient WeakReference<UIRichList> permissionsRichList;
-    private transient WeakReference<UIGenericPicker> picker;
 
     /**
      * could be used to indicate that
@@ -186,11 +182,15 @@ public class ManageInheritablePrivilegesDialog extends BaseDialogBean {
             }
             init(state.getManageableRef(), true);
             rebuildUserPrivilegesRows = true;
-            UIGenericPicker pickerComponent = getReferenceOrNull(picker);
+            UIGenericPicker pickerComponent = (UIGenericPicker) BeanHelper.getJsfBindingHelper().getComponentBinding(getPickerComponentBindingName());
             pickerComponent.queueEvent(
                     new UIGenericPicker.PickerEvent(pickerComponent, UIGenericPicker.ACTION_CLEAR, UserContactGroupSearchBean.USERS_FILTER, null, null));
         }
         return null;
+    }
+
+    protected String getPickerComponentBindingName() {
+        return getBindingName("picker");
     }
 
     @Override
@@ -225,8 +225,6 @@ public class ManageInheritablePrivilegesDialog extends BaseDialogBean {
 
     private void resetState(boolean reInit) {
         if (!reInit) {
-            permissionsRichList = null;
-            picker = null;
             checkbox = null;
         }
         tableRowComparator = null;
@@ -236,11 +234,11 @@ public class ManageInheritablePrivilegesDialog extends BaseDialogBean {
     }
 
     public UIGenericPicker getPicker() {
-        return getReferenceOrNull(picker);
+        return (UIGenericPicker) BeanHelper.getJsfBindingHelper().getComponentBinding(getPickerComponentBindingName());
     }
 
     public void setPicker(UIGenericPicker picker) {
-        this.picker = new WeakReference<>(picker);
+        BeanHelper.getJsfBindingHelper().addBinding(getPickerComponentBindingName(), picker);
     }
 
     public UIComponent getCheckbox() {
@@ -252,29 +250,48 @@ public class ManageInheritablePrivilegesDialog extends BaseDialogBean {
     }
 
     public UIRichList getPermissionsRichList() {
-        return getReferenceOrNull(permissionsRichList);
+        UIRichList richList = (UIRichList) getJsfBindingHelper().getComponentBinding(getRichListBindingName());
+        if (richList == null) {
+            richList = new UIRichList();
+            setPermissionsRichList(richList);
+            updatePermissionList(richList);
+        }
+        return richList;
     }
 
     /**
      * @param permissionsRichList - partially preconfigured RichList from jsp
      */
     public void setPermissionsRichList(UIRichList permissionsRichList) {
-        if (this.permissionsRichList == null || this.permissionsRichList.get() == null) {
-            ComponentUtil.putAttribute(permissionsRichList, DetailsViewRenderer.ATTR_GROUP_BY, GROUPLESS_GROUP);
-            ComponentUtil.putAttribute(permissionsRichList, DetailsViewRenderer.ATTR_ADDITIONAL_ROW_STYLE_BINDING, "userId_#{r.userName}");
-            ComponentUtil.putAttribute(permissionsRichList, DetailsViewRenderer.ATTR_GROUP_TBODY_ATTRIBUTES, new HashMap<String, Map<String, String>>());
+        getJsfBindingHelper().addBinding(getRichListBindingName(), permissionsRichList);
+    }
 
-            FacesContext context = FacesContext.getCurrentInstance();
-            List<UIComponent> permissionRLChildren = ComponentUtil.getChildren(permissionsRichList);
-            boolean editable = typeHandler.isEditable();
-            for (Privilege permission : typeHandler.getManageablePermissions()) {
-                if (!permission.equals(typeHandler.getImplicitPrivilege())) { // don't add implicit privilege column
-                    permissionRLChildren.add(createPermissionColumn(permission, context, editable));
-                }
+    @Override
+    protected String getRichListBindingName() {
+        return getBindingName("richList");
+    }
+
+    @Override
+    public void restored() {
+        getPermissionsRichList();
+        rebuildUserPrivilegesRows = true;
+        getUserPrivilegesRows();
+    }
+
+    protected void updatePermissionList(UIRichList permissionsRichList) {
+        ComponentUtil.putAttribute(permissionsRichList, DetailsViewRenderer.ATTR_GROUP_BY, GROUPLESS_GROUP);
+        ComponentUtil.putAttribute(permissionsRichList, DetailsViewRenderer.ATTR_ADDITIONAL_ROW_STYLE_BINDING, "userId_#{r.userName}");
+        ComponentUtil.putAttribute(permissionsRichList, DetailsViewRenderer.ATTR_GROUP_TBODY_ATTRIBUTES, new HashMap<String, Map<String, String>>());
+
+        FacesContext context = FacesContext.getCurrentInstance();
+        List<UIComponent> permissionRLChildren = ComponentUtil.getChildren(permissionsRichList);
+        boolean editable = typeHandler.isEditable();
+        for (Privilege permission : typeHandler.getManageablePermissions()) {
+            if (!permission.equals(typeHandler.getImplicitPrivilege())) { // don't add implicit privilege column
+                permissionRLChildren.add(createPermissionColumn(permission, context, editable));
             }
-            permissionRLChildren.add(createActionsColumn(context));
         }
-        this.permissionsRichList = new WeakReference<>(permissionsRichList);
+        permissionRLChildren.add(createActionsColumn(context));
     }
 
     /**
@@ -370,7 +387,7 @@ public class ManageInheritablePrivilegesDialog extends BaseDialogBean {
         // set the pointer
         state.userPrivileges = userPrivileges;
         // facets based cleanup ?
-        getReferenceOrNull(permissionsRichList).getFacets().clear(); // remove also group rows that are actually rendered from facets
+        BeanHelper.getJsfBindingHelper().getComponentBinding(getRichListBindingName()).getFacets().clear(); // remove also group rows that are actually rendered from facets
         // ??
         getOrCreateFacetRows().clear();
         // let's be optimistic about end-result
@@ -508,7 +525,7 @@ public class ManageInheritablePrivilegesDialog extends BaseDialogBean {
     }
 
     private Collection<String> getOrCreateFacetRows() {
-        UIRichList permissionListComponent = getReferenceOrNull(permissionsRichList);
+        UIRichList permissionListComponent = getPermissionsRichList();
         Collection<String> facetRows = DetailsViewRenderer.getFacetRows(permissionListComponent);
         if (facetRows == null) {
             facetRows = new TreeSet<String>(new AppConstants.SerializableDefaultCollatorDelegate());
@@ -540,7 +557,7 @@ public class ManageInheritablePrivilegesDialog extends BaseDialogBean {
         Map<String/* attributeName */, String/* attributeValue */> tbodyAttributes = new HashMap<String, String>();
         String groupCodeHtml = HtmlUtils.htmlEscape(groupCode).replaceAll(" ", "¤");
         tbodyAttributes.put("class", USERGROUP_MARKER_CLASS + " " + groupCodeHtml);
-        UIRichList permissionListComponent = getReferenceOrNull(permissionsRichList);
+        UIRichList permissionListComponent = getPermissionsRichList();
         Map<String/* groupCode */, Map<String/* attributeName */, String/* attributeValue */>> tbodyAttributesByGroup = (Map<String, Map<String, String>>)
                 ComponentUtil.getAttribute(permissionListComponent, DetailsViewRenderer.ATTR_GROUP_TBODY_ATTRIBUTES);
         tbodyAttributesByGroup.put(groupCode, tbodyAttributes);

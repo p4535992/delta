@@ -811,7 +811,7 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
                 + " left join alf_node_properties owner_prop on document.id = owner_prop.node_id and owner_prop.qname_id = "
                 + bulkLoadNodeService.getQNameDbId(DocumentCommonModel.Props.OWNER_ID);
 
-        sqlQuery += " WHERE " + SearchUtil.joinQueryPartsAnd(getSearchableAndNotInArchiveSpacesstoreCondition(), queryCondition);
+        sqlQuery += " WHERE " + SearchUtil.joinQueryPartsAnd(getSearchableAndNotInArchiveSpacesstoreCondition("task"), queryCondition);
 
         Object[] argumentsArray = arguments.toArray();
         final boolean useLimit = limit > -1;
@@ -882,6 +882,10 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
     }
 
     private String getSearchableAndNotInArchiveSpacesstoreCondition() {
+        return getSearchableAndNotInArchiveSpacesstoreCondition("");
+    }
+
+    private String getSearchableAndNotInArchiveSpacesstoreCondition(String tableName) {
         Set<StoreRef> stores = generalService.getAllWithArchivalsStoreRefs();
         List<StoreRef> storeList = new ArrayList<>(stores);
         String storesCondition = "( ";
@@ -890,7 +894,8 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
             storesCondition += "'" + storeList.get(i) + "', ";
         }
         storesCondition += "'" + storeList.get(lastIndex) + "' )";
-        return "is_searchable = true AND store_id in " + storesCondition;
+        tableName = StringUtils.isNotBlank(tableName) ? (tableName + ".") : "";
+        return tableName + "is_searchable = true AND " + tableName + "store_id in " + storesCondition;
     }
 
     @Override

@@ -535,5 +535,21 @@ public abstract class BaseDialogBean implements IDialogBean, Serializable
            throw e;
        }
    }
+   
+   protected String getBindingName(String name) {
+       return this.getClass().getSimpleName() + "." + name;
+   }
+
+   protected String getRichListBindingName() {
+       return getBindingName("richList");
+   }
+
+   protected String getModalComponentBindingName() {
+       return getBindingName("modalComponent");
+   }
+
+   protected String getPropertySheetBindingName() {
+       return getBindingName("propertySheet");
+   }
 
 }

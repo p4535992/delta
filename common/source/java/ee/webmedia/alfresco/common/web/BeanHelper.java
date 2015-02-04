@@ -454,6 +454,10 @@ public class BeanHelper implements NamespacePrefixResolverProvider {
         return getSpringBean(UserConfirmHelper.class, UserConfirmHelper.BEAN_NAME);
     }
 
+    public static JsfBindingHelper getJsfBindingHelper() {
+        return getSpringBean(JsfBindingHelper.class, JsfBindingHelper.BEAN_NAME);
+    }
+
     public static RsAccessStatusBean getRsAccessStatusBean() {
         return getSpringBean(RsAccessStatusBean.class, RsAccessStatusBean.BEAN_NAME);
     }

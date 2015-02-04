@@ -1,6 +1,7 @@
 package ee.webmedia.alfresco.document.search.web;
 
-import java.lang.ref.WeakReference;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getJsfBindingHelper;
+
 import java.util.Map;
 
 import javax.faces.component.UIPanel;
@@ -15,7 +16,6 @@ public class TodayRegisteredDocumentsSearchResultsDialog extends BaseDocumentLis
     private static final long serialVersionUID = 1L;
 
     public static final String BEAN_NAME = "TodayRegisteredDocumentsSearchResultsDialog";
-    private transient WeakReference<UIPanel> panel;
     private String searchValue;
     private boolean quickSearch;
 
@@ -56,7 +56,6 @@ public class TodayRegisteredDocumentsSearchResultsDialog extends BaseDocumentLis
     @Override
     public void clean() {
         super.clean();
-        panel = null;
         searchValue = null;
     }
 
@@ -72,15 +71,15 @@ public class TodayRegisteredDocumentsSearchResultsDialog extends BaseDocumentLis
 
     @Override
     public void setPanel(UIPanel panel) {
-        this.panel = new WeakReference<>(panel);
+        getJsfBindingHelper().addBinding(getPanelBindingName(), panel);
     }
 
     @Override
     public UIPanel getPanel() {
-        UIPanel panelComponent = panel != null ? panel.get() : null;
+        UIPanel panelComponent = (UIPanel) getJsfBindingHelper().getComponentBinding(getPanelBindingName());
         if (panelComponent == null) {
             panelComponent = new UIPanel();
-            panel = new WeakReference<>(panelComponent);
+            getJsfBindingHelper().addBinding(getPanelBindingName(), panelComponent);
         }
         return panelComponent;
     }

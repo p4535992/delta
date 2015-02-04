@@ -115,7 +115,7 @@
       <property-sheet>       
          <show-property name="volumesearch:nextEventDate" component-generator="InlinePropertyGroupGenerator"
             props="volumesearch:nextEventDate||styleClass=date,volumesearch:nextEventDate_EndDate||styleClass=date,volumesearch:nextEventDate_DateRangePicker|EnumSelectorGenerator|disableSorting=true|styleClass=quickDateRangePicker|enumClass=ee.webmedia.alfresco.classificator.enums.DatePeriods" 
-            textId="task_search_from_to_with_picker" display-label-id="volume_search_planned_destruction" />         
+            textId="task_search_from_to_with_picker" display-label-id="volume_search_planned_destruction" styleClass="volumeArchiveFilterInput" />         
       </property-sheet>
    </config>    
          

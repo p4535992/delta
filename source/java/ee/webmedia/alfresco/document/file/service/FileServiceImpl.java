@@ -609,7 +609,7 @@ public class FileServiceImpl implements FileService {
             }
         }, AuthenticationUtil.getSystemUserName());
 
-        associatedWithMetaData = addFilePropsAndUpdateDocumentMetadata(documentNodeRef, fileNodeRef, associatedWithMetaData, active,
+        associatedWithMetaData = addFilePropsAndUpdateDocumentMetadata(documentNodeRef, movedFileNodeRef, associatedWithMetaData, active,
                 getFileFolderService().getWriter(movedFileNodeRef)
                 .getMimetype(), null, name);
 

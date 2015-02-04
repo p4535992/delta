@@ -7,6 +7,7 @@ import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -27,8 +28,6 @@ import java.util.Vector;
 import javax.xml.ws.Holder;
 import javax.xml.ws.soap.SOAPFaultException;
 
-import ee.webmedia.alfresco.common.web.BeanHelper;
-import ee.webmedia.alfresco.document.file.model.FileModel;
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.content.MimetypeMap;
 import org.alfresco.repo.transaction.AlfrescoTransactionSupport;
@@ -43,6 +42,7 @@ import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
 import org.alfresco.util.TempFileProvider;
+import org.apache.commons.codec.binary.Base64OutputStream;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.ObjectUtils;
@@ -300,7 +300,7 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
     public SignatureDigest getSignatureDigest(List<NodeRef> contents, String certHex) throws SignatureException {
         SignedDoc signedDoc = null;
         try {
-            signedDoc = createSignedDoc(contents);
+            signedDoc = createSignedBDoc(contents);
             SignatureDigest signatureDigest = getSignatureDigest(signedDoc, certHex);
             return signatureDigest;
         } catch (Exception e) {
@@ -312,7 +312,7 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
     public SignatureChallenge getSignatureChallenge(List<NodeRef> contents, String phoneNo, String idCode) throws SignatureException {
         SignedDoc signedDoc = null;
         try {
-            signedDoc = createSignedDoc(contents);
+            signedDoc = createSignedBDoc(contents);
             SignatureChallenge signatureDigest = getSignatureChallenge(signedDoc, phoneNo, idCode);
             return signatureDigest;
         } catch (UnableToPerformException e) {
@@ -325,7 +325,7 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
     @Override
     public NodeRef createContainer(NodeRef parent, List<NodeRef> contents, String filename, SignatureDigest signatureDigest, String signatureHex) {
         try {
-            SignedDoc signedDoc = createSignedDoc(contents);
+            SignedDoc signedDoc = createSignedBDoc(contents);
             addSignature(signedDoc, signatureDigest, signatureHex);
             NodeRef newNodeRef = createContentNode(parent, filename);
             writeSignedDoc(newNodeRef, signedDoc);
@@ -339,7 +339,7 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
     @Override
     public NodeRef createContainer(NodeRef parent, List<NodeRef> contents, String filename, SignatureChallenge signatureChallenge, String signature) {
         try {
-            SignedDoc signedDoc = createSignedDoc(contents);
+            SignedDoc signedDoc = createSignedBDoc(contents);
             addSignature(signedDoc, signatureChallenge, signature);
             NodeRef newNodeRef = createContentNode(parent, filename);
             writeSignedDoc(newNodeRef, signedDoc);
@@ -379,7 +379,7 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
     public void writeContainer(NodeRef nodeRef, List<NodeRef> contents, SignatureDigest signatureDigest, String signatureHex) {
         SignedDoc signedDoc = null;
         try {
-            signedDoc = createSignedDoc(contents);
+            signedDoc = createSignedBDoc(contents);
             addSignature(signedDoc, signatureDigest, signatureHex);
             writeSignedDoc(nodeRef, signedDoc);
             nodeService.setProperty(nodeRef, ContentModel.PROP_NAME,
@@ -393,7 +393,7 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
     @Override
     public void writeContainer(OutputStream output, List<NodeRef> contents) {
         try {
-            SignedDoc signedDoc = createSignedDoc(contents);
+            SignedDoc signedDoc = createSignedBDoc(contents);
             try {
                 signedDoc.writeToStream(output);
             } finally {
@@ -587,12 +587,21 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
         }
     }
 
-    private SignedDoc createSignedDoc(List<NodeRef> nodeRefs) throws DigiDocException, IOException {
+    private SignedDoc createSignedDDoc(List<NodeRef> nodeRefs) throws DigiDocException, IOException {
+        SignedDoc document = new SignedDoc(SignedDoc.FORMAT_DIGIDOC_XML, SignedDoc.VERSION_1_3);
+        return addSignedDocDataFiles(document, nodeRefs, false);
+    }
+
+    private SignedDoc createSignedBDoc(List<NodeRef> nodeRefs) throws DigiDocException, IOException {
         SignedDoc document = new SignedDoc(SignedDoc.FORMAT_BDOC, SignedDoc.BDOC_VERSION_2_1);
         document.setProfile(SignedDoc.BDOC_PROFILE_TM);
+        return addSignedDocDataFiles(document, nodeRefs, true);
+    }
+
+    private SignedDoc addSignedDocDataFiles(SignedDoc document, List<NodeRef> nodeRefs, boolean isBDoc) throws DigiDocException, IOException {
         bindCleanTempFiles(document);
         for (NodeRef ref : nodeRefs) {
-            addDataFile(ref, document);
+            addDataFile(ref, document, isBDoc);
         }
         return document;
     }
@@ -606,19 +615,34 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
         return fileInfo.getNodeRef();
     }
 
-    private void addDataFile(NodeRef nodeRef, SignedDoc document) throws DigiDocException, IOException {
+    private void addDataFile(NodeRef nodeRef, SignedDoc document, boolean isBDoc) throws DigiDocException, IOException {
         String fileName = getFileName(nodeRef);
         ContentReader reader = fileFolderService.getReader(nodeRef);
-
-        // According to JDigiDoc Programmer’s Guide (ver 3.9, point 5.1.3) the data file name must be used as id
-        DataFile datafile = new DataFile(fileName, DataFile.CONTENT_BINARY, fileName, "application/octet-stream", document);
-
-        datafile.createCacheFile();
-        OutputStream os = new BufferedOutputStream(new FileOutputStream(datafile.getDfCacheFile()));
-        reader.getContent(os); // closes both streams
-        datafile.calculateFileSizeAndDigest(os);
-
+        DataFile datafile = isBDoc ? createBDocDataFile(document, reader, fileName) : createDDocDataFile(document, reader, fileName);
         document.addDataFile(datafile);
+    }
+
+    private DataFile createBDocDataFile(SignedDoc signedDocument, ContentReader reader, String fileName) throws DigiDocException, IOException {
+        // According to JDigiDoc Programmer’s Guide (ver 3.9, point 5.1.3) the data file name must be used as id
+        DataFile dataFile = new DataFile(fileName, DataFile.CONTENT_BINARY, fileName, "application/octet-stream", signedDocument);
+        dataFile.createCacheFile();
+        OutputStream os = new BufferedOutputStream(new FileOutputStream(dataFile.getDfCacheFile()));
+        reader.getContent(os); // closes both streams
+        dataFile.calculateFileSizeAndDigest(os);
+
+        return dataFile;
+    }
+
+    private DataFile createDDocDataFile(SignedDoc signedDocument, ContentReader reader, String fileName) throws DigiDocException, IOException {
+        DataFile dataFile = new DataFile(signedDocument.getNewDataFileId(), DataFile.CONTENT_EMBEDDED_BASE64, fileName, reader.getMimetype(), signedDocument);
+        dataFile.createCacheFile();
+        OutputStream os = new Base64OutputStream(new BufferedOutputStream(new FileOutputStream(dataFile.getDfCacheFile())), true, 64, new byte[] { '\n' });
+        reader.getContent(os); // closes both streams
+        dataFile.setSize(reader.getSize());
+        // XXX reader.getEncoding() sometimes returns "utf-8", sometimes "UTF-8"
+        dataFile.setInitialCodepage(reader.getEncoding().toUpperCase());
+
+        return dataFile;
     }
 
     private SignatureChallenge getSignatureChallenge(SignedDoc signedDoc, String phoneNo, String idCode) throws DigiDocException {
@@ -992,26 +1016,29 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
                 cdoc.addEncryptedKey(ekey);
             }
 
-            File tmpFile = TempFileProvider.createTempFile("container-", "tmp");
+            SignedDoc dDoc = createSignedDDoc(contents);
+
+            // Like cdoc.setPropRegisterDigiDoc(signedDoc), but with minor improvements
+            for (int i = 0; i < dDoc.countDataFiles(); i++) {
+                DataFile df = dDoc.getDataFile(i);
+                StringBuffer sb = new StringBuffer();
+                sb.append(df.getFileName());
+                sb.append("|");
+                sb.append(df.getSize());
+                sb.append("|");
+                sb.append(df.getMimeType());
+                sb.append("|");
+                sb.append(df.getId());
+                EncryptionProperty prop = new EncryptionProperty(EncryptedData.ENCPROP_ORIG_FILE, sb.toString());
+                prop.setId(EncryptedData.ENCPROP_ORIG_FILE);
+                cdoc.addProperty(prop);
+            }
+
+            File tmpFile = TempFileProvider.createTempFile("container-", ".ddoc");
             try {
-                boolean singleFileToEncrypt = contents.size() == 1;
-                long fileSize;
                 try (OutputStream tmpOutput = new BufferedOutputStream(new FileOutputStream(tmpFile))) {
-                    if (singleFileToEncrypt) {
-                        try (InputStream inputStream = BeanHelper.getFileService().getFileContentInputStream(contents.get(0))) {
-                            fileSize = IOUtils.copy(inputStream, tmpOutput);
-                        }
-                    } else {
-                        fileSize = BeanHelper.getGeneralService().writeZipFileFromFiles(tmpOutput, contents);
-                    }
+                    dDoc.writeToStream(tmpOutput);
                 }
-
-                String fileName = singleFileToEncrypt
-                        ? (String) nodeService.getProperty(contents.get(0), FileModel.Props.DISPLAY_NAME)
-                        : (FilenameUtils.getBaseName(containerFileName) + ".zip");
-                cdoc.addProperty(EncryptedData.ENCPROP_FILENAME, fileName);
-                cdoc.addProperty(EncryptedData.ENCPROP_ORIG_SIZE, new Long(fileSize).toString());
-
                 try (InputStream tmpInput = new BufferedInputStream(new FileInputStream(tmpFile))) {
                     cdoc.encryptStream(tmpInput, output, EncryptedData.DENC_COMPRESS_ALLWAYS);
                 }

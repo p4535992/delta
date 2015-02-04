@@ -545,7 +545,7 @@ function webdavOpen(url) {
    var showDoc = true;
    var openDocumentCallback = function(url, readOnly, refresh) {
       if (readOnly) {
-         webdavOpenReadOnly(url, false);
+         webdavOpenReadOnly(url);
       } else {
          window.open(url, '_blank');
          if (!refresh) {
@@ -2203,7 +2203,8 @@ function handleHtmlLoaded(context, setFocus, selects) {
    /**
     * Open Office documents directly from server
     */
-   $jQ('.webdav-open', context).click(function () {
+   $jQ('.webdav-open', context).click(function (event) {
+      event.preventDefault();
       // 1) this.href = 'https://dhs.example.com/dhs/webdav/xxx/yyy/zzz/abc.doc'
       // 2) $jQ(this).attr('href') = '/dhs/webdav/xxx/yyy/zzz/abc.doc'
       var path = this.href; // SharePoint ActiveXObject methods need to get full URL

@@ -2,9 +2,9 @@ package ee.webmedia.alfresco.document.web;
 
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentConfigService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDynamicService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getJsfBindingHelper;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getPropertySheetStateBean;
 
-import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -93,8 +93,6 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
     private Node locationNode;
 
     private DocumentConfig config;
-
-    private transient WeakReference<UIPropertySheet> propSheet;
 
     private boolean confirmMoveAssociatedDocuments;
     private boolean showDocumentsLocationPopup;
@@ -465,7 +463,9 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
     }
 
     private void resetModals() {
-        if (!RepoUtil.isReferenceNull(propSheet)) {
+        String bindingName = getPropSheetBindingName();
+        UIPropertySheet propertySheetComponent = (UIPropertySheet) getJsfBindingHelper().getComponentBinding(bindingName);
+        if (propertySheetComponent != null && !propertySheetComponent.getChildren().isEmpty()) {
             return;
         }
         final FacesContext context = FacesContext.getCurrentInstance();
@@ -475,14 +475,19 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
         DocumentLocationModalComponent locationModal = new DocumentLocationModalComponent();
         locationModal.setActionListener(application.createMethodBinding("#{DialogManager.bean.massChangeDocLocation}", UIActions.ACTION_CLASS_ARGS));
         List<UIComponent> modalChildren = ComponentUtil.getChildren(locationModal);
-        UIPropertySheet propertySheetComponent = generatePropSheet();
-        propSheet = new WeakReference<>(propertySheetComponent);
+        propertySheetComponent = generatePropSheet();
+        getJsfBindingHelper().addBinding(bindingName, propertySheetComponent);
+
         modalChildren.clear();
         modalChildren.add(propertySheetComponent);
 
         List<UIComponent> children = ComponentUtil.getChildren(getPanel());
         children.clear();
         children.add(locationModal);
+    }
+
+    protected String getPropSheetBindingName() {
+        return getBindingName("propertySheet");
     }
 
     private UIPropertySheet generatePropSheet() {
@@ -509,7 +514,7 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
         parentCase = null;
         locationNode = null;
         config = null;
-        propSheet = null;
+        getJsfBindingHelper().removeBinding(getPropSheetBindingName());
         selectedDocs = null;
     }
 
@@ -533,11 +538,11 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
 
     @Override
     public UIPropertySheet getPropertySheet() {
-        return propSheet != null ? propSheet.get() : null;
+        return (UIPropertySheet) getJsfBindingHelper().getComponentBinding(getPropSheetBindingName());
     }
 
     public void setPropSheet(UIPropertySheet propSheet) {
-        this.propSheet = new WeakReference<>(propSheet);
+        getJsfBindingHelper().addBinding(getPropSheetBindingName(), propSheet);
     }
 
     // END: getters / setters
