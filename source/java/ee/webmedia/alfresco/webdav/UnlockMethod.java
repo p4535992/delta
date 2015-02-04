@@ -7,6 +7,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.utils.UserUtil;
+import org.alfresco.model.ContentModel;
 import org.alfresco.repo.policy.BehaviourFilter;
 import org.alfresco.repo.webdav.LockInfo;
 import org.alfresco.repo.webdav.WebDAV;
@@ -110,6 +111,7 @@ public class UnlockMethod extends org.alfresco.repo.webdav.UnlockMethod {
                 throw new WebDAVServerException(HttpServletResponse.SC_PRECONDITION_FAILED);
             }
 
+            getBehaviourFilter().disableBehaviour(ContentModel.ASPECT_AUDITABLE);
             ((WebDAVCustomHelper) getDAVHelper()).getVersionsService().setVersionLockableAspect(nodeRef, false);
         }
         else if (lockInfo.isShared())

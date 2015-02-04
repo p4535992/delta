@@ -184,6 +184,22 @@ alter table alf_node_assoc add CONSTRAINT fk_alf_nass_tnode FOREIGN KEY (target_
       REFERENCES alf_node (id) MATCH SIMPLE
       ON UPDATE NO ACTION ON DELETE NO ACTION;
       
+CREATE TABLE tmp_import_alf_child_assoc (
+  id bigint,
+  version bigint,
+  parent_node_id bigint,
+  type_qname_id bigint,
+  child_node_name_crc bigint,
+  child_node_name character varying(50),
+  child_node_id bigint,
+  qname_ns_id bigint,
+  qname_localname character varying(255),
+  is_primary boolean,
+  assoc_index integer
+);
+
+copy tmp_import_alf_child_assoc from '/delta-pgsql/data/alf_child_assoc.tsv';
+      
 insert into alf_child_assoc (
 	select tmp_import_alf_child_assoc.id, tmp_import_alf_child_assoc.version, tmp_import_alf_child_assoc.parent_node_id, 
 	tmp_alf_qname.local_id,

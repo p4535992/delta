@@ -1149,58 +1149,58 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         UnsavedTaskCommonData unsavedTaskCommonData = null;
         ReviewFromOtherOrgCommonData reviewCommonData = workflow.isType(WorkflowSpecificModel.Types.REVIEW_WORKFLOW) && workflowConstantsBean.isReviewToOtherOrgEnabled()
                 ? collectReviewTaskCommonData() : null;
-        Map<QName, PropertyDefinition> propertyDefinitions = new HashMap<>();
-        Connection connection = null;
-        try {
+                Map<QName, PropertyDefinition> propertyDefinitions = new HashMap<>();
+                Connection connection = null;
+                try {
 
-            connection = dataSource.getConnection();
-            for (Task task : workflow.getTasks()) {
-                task.setTaskIndexInWorkflow(index);
-                if (documentTypeFromTaskParent == null && isUnsavedAndNotLinkedReview(task)) {
-                    documentTypeFromTaskParent = getDocumentTypeFromTaskParent(parentRef);
-                }
-                if (unsavedTaskCommonData == null && isUnsavedAndNotLinkedReview(task)) {
-                    unsavedTaskCommonData = collectNewTaskCommonData();
-                }
-                Map<QName, Serializable> propsToSave = prepareTaskForSaving(task, documentTypeFromTaskParent, propertyDefinitions, unsavedTaskCommonData, reviewCommonData);
+                    connection = dataSource.getConnection();
+                    for (Task task : workflow.getTasks()) {
+                        task.setTaskIndexInWorkflow(index);
+                        if (documentTypeFromTaskParent == null && isUnsavedAndNotLinkedReview(task)) {
+                            documentTypeFromTaskParent = getDocumentTypeFromTaskParent(parentRef);
+                        }
+                        if (unsavedTaskCommonData == null && isUnsavedAndNotLinkedReview(task)) {
+                            unsavedTaskCommonData = collectNewTaskCommonData();
+                        }
+                        Map<QName, Serializable> propsToSave = prepareTaskForSaving(task, documentTypeFromTaskParent, propertyDefinitions, unsavedTaskCommonData, reviewCommonData);
 
-                if (task.isUnsaved()) {
-                    NodeRef nodeRef = new NodeRef(parentRef.getStoreRef(), GUID.generate());
-                    task.getNode().updateNodeRef(nodeRef);
-                    TaskUpdateInfo info = workflowDbService.verifyTaskAndGetUpdateInfoOnCreate(task, (linkedReviewTaskSpace.equals(parentRef) ? null : parentRef), connection);
-                    info.setPostSaveProperties(propsToSave);
+                        if (task.isUnsaved()) {
+                            NodeRef nodeRef = new NodeRef(parentRef.getStoreRef(), GUID.generate());
+                            task.getNode().updateNodeRef(nodeRef);
+                            TaskUpdateInfo info = workflowDbService.verifyTaskAndGetUpdateInfoOnCreate(task, (linkedReviewTaskSpace.equals(parentRef) ? null : parentRef), connection);
+                            info.setPostSaveProperties(propsToSave);
 
-                    tasksToCreate.add(info);
-                    createTaskUsedFieldNames.addAll(info.getUnmodifiableFieldNames());
+                            tasksToCreate.add(info);
+                            createTaskUsedFieldNames.addAll(info.getUnmodifiableFieldNames());
 
-                    if (tasksToCreate.size() >= batchSize) {
-                        processCreateTaskBatch(parentRef, tasksToCreate, createTaskUsedFieldNames);
+                            if (tasksToCreate.size() >= batchSize) {
+                                processCreateTaskBatch(parentRef, tasksToCreate, createTaskUsedFieldNames);
+                            }
+                        } else {
+                            verifyRequiredStatusOnUpdate(task, propsToSave);
+                            TaskUpdateInfo info = workflowDbService.verifyTaskAndGetUpdateInfoOnUpdate(task, (linkedReviewTaskSpace.equals(parentRef) ? null : parentRef), propsToSave,
+                            connection);
+                            info.setPostSaveProperties(propsToSave);
+
+                            taskToUpdate.add(info);
+                            updateTaskUsedFieldNames.addAll(info.getUnmodifiableFieldNames());
+
+                            if (taskToUpdate.size() >= batchSize) {
+                                processUpdateTaskBatch(parentRef, taskToUpdate, updateTaskUsedFieldNames);
+                            }
+                        }
+                        index++;
                     }
-                } else {
-                    verifyRequiredStatusOnUpdate(task, propsToSave);
-                    TaskUpdateInfo info = workflowDbService.verifyTaskAndGetUpdateInfoOnUpdate(task, (linkedReviewTaskSpace.equals(parentRef) ? null : parentRef), propsToSave,
-                                    connection);
-                    info.setPostSaveProperties(propsToSave);
-
-                    taskToUpdate.add(info);
-                    updateTaskUsedFieldNames.addAll(info.getUnmodifiableFieldNames());
-
-                    if (taskToUpdate.size() >= batchSize) {
-                        processUpdateTaskBatch(parentRef, taskToUpdate, updateTaskUsedFieldNames);
-                    }
+                } catch (SQLException e) {
+                    log.error("Error saving task ", e);
+                    throw new RuntimeException(e);
+                } finally {
+                    WorkflowUtil.closeConnection(connection);
                 }
-                index++;
-            }
-        } catch (SQLException e) {
-            log.error("Error saving task ", e);
-            throw new RuntimeException(e);
-        } finally {
-            WorkflowUtil.closeConnection(connection);
-        }
 
-        // Eat the leftovers
-        processUpdateTaskBatch(parentRef, taskToUpdate, updateTaskUsedFieldNames);
-        processCreateTaskBatch(parentRef, tasksToCreate, createTaskUsedFieldNames);
+                // Eat the leftovers
+                processUpdateTaskBatch(parentRef, taskToUpdate, updateTaskUsedFieldNames);
+                processCreateTaskBatch(parentRef, tasksToCreate, createTaskUsedFieldNames);
     }
 
     private void processCreateTaskBatch(NodeRef parentRef, List<TaskUpdateInfo> tasksToCreate, Set<String> createTaskUsedFieldNames) {
@@ -1654,7 +1654,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         return task.isType(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK)
                 && ((internalTesting && !Boolean.TRUE.equals(nodeService.getProperty(task.getParent().getParent().getParent(),
                         DocumentCommonModel.Props.NOT_EDITABLE)))
-                        || (!internalTesting && !isResponsibleCurrenInstitution(task)));
+                || (!internalTesting && !isResponsibleCurrenInstitution(task)));
     }
 
     private boolean isResponsibleCurrenInstitution(Task task) {
@@ -2168,6 +2168,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
                     || key.equals(WorkflowSpecificModel.Props.ACTIVE) || key.equals(WorkflowCommonModel.Props.OWNER_ORGANIZATION_NAME)
                     || key.equals(WorkflowCommonModel.Props.OWNER_JOB_TITLE) || key.equals(WorkflowCommonModel.Props.TYPE)
                     || key.equals(WorkflowSpecificModel.Props.CATEGORY) || key.equals(WorkflowSpecificModel.Props.SIGNING_TYPE)
+                    || key.equals(WorkflowCommonModel.Props.OWNER_GROUP)
                     || (key.equals(WorkflowCommonModel.Props.TITLE) && workflowConstantsBean.isWorkflowTitleEnabled())) {
                 // keep value
             } else {
@@ -2212,7 +2213,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
     @Override
     public int getConnectedActiveResponsibleTasksCount(List<CompoundWorkflow> compoundWorkflows, boolean allowFinished, NodeRef compoundWorkflowToSkip) {
         Status[] allowedStatuses = allowFinished ? new Status[] { Status.NEW, Status.IN_PROGRESS, Status.STOPPED, Status.FINISHED } :
-            new Status[] { Status.NEW, Status.IN_PROGRESS, Status.STOPPED };
+                new Status[] { Status.NEW, Status.IN_PROGRESS, Status.STOPPED };
         int counter = 0;
         for (CompoundWorkflow compoundWorkflow : compoundWorkflows) {
             if (!compoundWorkflow.isStatus(allowedStatuses) || compoundWorkflow.getNodeRef().equals(compoundWorkflowToSkip)) {
@@ -2564,11 +2565,11 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         return bulkLoadNodeService.loadChildNodes(docRef, null, WorkflowCommonModel.Types.COMPOUND_WORKFLOW, null,
                 new CreateObjectCallback<Node>() {
 
-            @Override
-            public Node create(NodeRef nodeRef, Map<QName, Serializable> properties) {
-                return new WmNode(nodeRef, WorkflowCommonModel.Types.COMPOUND_WORKFLOW, null, properties);
-            }
-        });
+                    @Override
+                    public Node create(NodeRef nodeRef, Map<QName, Serializable> properties) {
+                        return new WmNode(nodeRef, WorkflowCommonModel.Types.COMPOUND_WORKFLOW, null, properties);
+                    }
+                });
     }
 
     private List<AssociationRef> getIndependentCompoundWorkflowAssocs(NodeRef docRef) {
@@ -3495,17 +3496,17 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
                     // contact found, but dvk not enabled
                     if (task.getParent() != null && task.getParent().getParent() != null) {
                         task.getParent()
-                        .getParent()
-                        .getReviewTaskDvkInfoMessages()
-                        .add(new Pair<String, Object[]>("review_task_organization_contact_dvk_disabled", new Object[] { task.getOwnerName(),
-                                orgProps.get(Props.ORGANIZATION_NAME), institutionRegCode }));
+                                .getParent()
+                                .getReviewTaskDvkInfoMessages()
+                                .add(new Pair<String, Object[]>("review_task_organization_contact_dvk_disabled", new Object[] { task.getOwnerName(),
+                                        orgProps.get(Props.ORGANIZATION_NAME), institutionRegCode }));
                     }
                     return null;
                 }
                 // organization contact not found
                 if (task.getParent() != null && task.getParent().getParent() != null) {
                     task.getParent().getParent().getReviewTaskDvkInfoMessages()
-                    .add(new Pair<String, Object[]>("review_task_organization_missing_contact", new Object[] { task.getOwnerName(), institutionRegCode }));
+                            .add(new Pair<String, Object[]>("review_task_organization_missing_contact", new Object[] { task.getOwnerName(), institutionRegCode }));
                 }
                 return null;
             }

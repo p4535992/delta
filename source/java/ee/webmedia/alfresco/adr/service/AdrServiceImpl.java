@@ -372,7 +372,7 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
 
         Toimik wsVolume = new Toimik();
         wsVolume.setId(volumeRef.toString());
-        wsVolume.setViit((String) volumeProps.get(VolumeModel.Props.MARK));
+        wsVolume.setViit(removeIllegalXmlChars((String) volumeProps.get(VolumeModel.Props.MARK)));
         wsVolume.setPealkiri(volumeTitleEnabled ? removeIllegalXmlChars((String) volumeProps.get(VolumeModel.Props.TITLE)) : "");
         wsVolume.setKehtivAlatesKuupaev(convertToXMLGergorianCalendar((Date) volumeProps.get(VolumeModel.Props.VALID_FROM)));
         wsVolume.setKehtivKuniKuupaev(convertToXMLGergorianCalendar((Date) volumeProps.get(VolumeModel.Props.VALID_TO)));

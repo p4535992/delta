@@ -279,8 +279,8 @@ public class UserDetailsDialog extends BaseDialogBean {
      * @param userName
      */
     public void setupUser(String userName) {
-        List<Node> users = new ArrayList<Node>(1);
-        users.add(new Node(BeanHelper.getUserService().getPerson(userName)));
+        List<Node> users = new ArrayList<>(1);
+        users.add(new Node(BeanHelper.getPersonService().getPersonFromRepo(userName)));
         fillUserProps(users);
         setupGroups();
     }

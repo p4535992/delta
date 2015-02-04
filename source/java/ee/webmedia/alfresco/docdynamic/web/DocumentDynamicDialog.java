@@ -6,18 +6,17 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDynamicServi
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentLockHelperBean;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getFileService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getJsfBindingHelper;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getLogService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getPropertySheetStateBean;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
 import static ee.webmedia.alfresco.docconfig.generator.systematic.AccessRestrictionGenerator.ACCESS_RESTRICTION_CHANGE_REASON_ERROR;
 import static ee.webmedia.alfresco.docdynamic.web.ChangeReasonModalComponent.ACCESS_RESTRICTION_CHANGE_REASON_MODAL_ID;
 import static ee.webmedia.alfresco.docdynamic.web.ChangeReasonModalComponent.DELETE_DOCUMENT_REASON_MODAL_ID;
-import static ee.webmedia.alfresco.utils.RepoUtil.getReferenceOrNull;
 import static ee.webmedia.alfresco.utils.RepoUtil.isInWorkspace;
 import static ee.webmedia.alfresco.utils.RepoUtil.isSaved;
 
 import java.io.Serializable;
-import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -60,6 +59,7 @@ import ee.webmedia.alfresco.casefile.service.CaseFile;
 import ee.webmedia.alfresco.cases.service.UnmodifiableCase;
 import ee.webmedia.alfresco.classificator.constant.DocTypeAssocType;
 import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
+import ee.webmedia.alfresco.common.propertysheet.component.SimUIPropertySheet;
 import ee.webmedia.alfresco.common.propertysheet.component.SubPropertySheetItem;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.WmNode;
@@ -190,7 +190,6 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         String documentTypeId = ActionUtil.getParam(event, "typeId");
         DocumentDynamic doc = getDocumentDynamicService().createNewDocumentInDrafts(documentTypeId).getFirst();
         setLocationFromVolume(doc);
-        propertySheet = null;
         open(doc.getNodeRef(), doc, true, true);
     }
 
@@ -1326,7 +1325,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
     @Override
     public void clean() {
         clearState();
-        modalContainer = null;
+        resetModals();
         cleanDyamicBlocks();
     }
 
@@ -1440,15 +1439,18 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
     // Components
     // =========================================================================
 
-    private transient WeakReference<UIPropertySheet> propertySheet;
-
     @Override
     public UIPropertySheet getPropertySheet() {
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("getPropertySheet propertySheet=" + ObjectUtils.toString(propertySheet));
+        UIPropertySheet propSheet = (UIPropertySheet) getJsfBindingHelper().getComponentBinding(getPropertySheetBindingName());
+        if (propSheet == null) {
+            propSheet = new SimUIPropertySheet();
+            getJsfBindingHelper().addBinding(getPropertySheetBindingName(), propSheet);
+            updatePropertySheet();
         }
-        // Additional checks are no longer needed, because ExternalAccessServlet behavior with JSF is now correct
-        return getReferenceOrNull(propertySheet);
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("getPropertySheet propertySheet=" + ObjectUtils.toString(propSheet));
+        }
+        return propSheet;
     }
 
     public void setPropertySheet(UIPropertySheet propertySheet) {
@@ -1456,23 +1458,16 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
             LOG.debug("setPropertySheet propertySheet=" + ObjectUtils.toString(propertySheet));
         }
         // Additional checks are no longer needed, because ExternalAccessServlet behavior with JSF is now correct
-        this.propertySheet = new WeakReference<>(propertySheet);
+        getJsfBindingHelper().addBinding(getPropertySheetBindingName(), propertySheet);
+    }
+
+    private String getModalContainerBindingName() {
+        return getBindingName("modalContainer");
     }
 
     @Override
     protected void resetOrInit(DialogDataProvider provider) {
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("resetOrInit propertySheet=" + ObjectUtils.toString(propertySheet));
-        }
         WmNode node = getNode();
-        UIPropertySheet propertySheetComponent = getReferenceOrNull(propertySheet);
-        if (propertySheetComponent != null) {
-            propertySheetComponent.getChildren().clear();
-            propertySheetComponent.getClientValidations().clear();
-            propertySheetComponent.setNode(node);
-            propertySheetComponent.setMode(getMode());
-            propertySheetComponent.setConfig(getPropertySheetConfigElement());
-        }
         if (node != null) {
             BeanHelper.getVisitedDocumentsBean().getVisitedDocuments().add(node.getNodeRef());
         }
@@ -1481,6 +1476,18 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         resetModals();
         setShowSaveAndRegisterButton(false);
         super.resetOrInit(provider); // reset blocks
+        updatePropertySheet();
+    }
+
+    private void updatePropertySheet() {
+        UIPropertySheet propertySheetComponent = (UIPropertySheet) getJsfBindingHelper().getComponentBinding(getPropertySheetBindingName());
+        if (propertySheetComponent != null) {
+            propertySheetComponent.getChildren().clear();
+            propertySheetComponent.getClientValidations().clear();
+            propertySheetComponent.setNode(getNode());
+            propertySheetComponent.setMode(getMode());
+            propertySheetComponent.setConfig(getPropertySheetConfigElement());
+        }
     }
 
     @Override
@@ -1492,6 +1499,10 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
     private void resetModals() {
         renderedModal = null;
         showConfirmationPopup = false;
+        getModalContainer();
+    }
+
+    private void updateModals(UIPanel panel) {
         // Add favorite modal component
         FavoritesModalComponent favoritesModal = new FavoritesModalComponent();
         final FacesContext context = FacesContext.getCurrentInstance();
@@ -1515,7 +1526,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         DocumentLinkGeneratorModalComponent linkModal = new DocumentLinkGeneratorModalComponent();
         linkModal.setId("document-link-modal-" + context.getViewRoot().createUniqueId());
 
-        List<UIComponent> children = ComponentUtil.getChildren(getModalContainer());
+        List<UIComponent> children = ComponentUtil.getChildren(panel);
         children.clear();
         children.add(favoritesModal);
         children.add(accessRestrictionChangeReasonModal);
@@ -1536,19 +1547,19 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         return getCurrentSnapshot() == null ? null : this;
     }
 
-    private transient WeakReference<UIPanel> modalContainer;
-
     public UIPanel getModalContainer() {
-        UIPanel panel = modalContainer != null ? modalContainer.get() : null;
+        UIPanel panel = (UIPanel) getJsfBindingHelper().getComponentBinding(getModalContainerBindingName());
         if (panel == null) {
-            panel = new UIPanel();
-            modalContainer = new WeakReference(panel);
+            panel = (UIPanel) FacesContext.getCurrentInstance().getApplication().createComponent(UIPanel.COMPONENT_TYPE);
+            updateModals(panel);
+            getJsfBindingHelper().addBinding(getModalContainerBindingName(), panel);
         }
         return panel;
+
     }
 
     public void setModalContainer(UIPanel modalContainer) {
-        this.modalContainer = new WeakReference(modalContainer);
+        getJsfBindingHelper().addBinding(getModalContainerBindingName(), modalContainer);
     }
 
     // =========================================================================

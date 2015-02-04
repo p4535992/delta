@@ -480,8 +480,19 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
         });
     }
 
+    /**
+     * Handle for accessing NodeRefs in the upcoming update batch. </br>
+     * By default does nothing
+     *
+     * @param batchList - NodeRefs that will be updated in the upcoming batch
+     */
+    protected void doBeforeBatchUpdate(List<NodeRef> batchList) {
+        // Subclass must override
+    }
+
     protected List<String[]> processNodes(final List<NodeRef> batchList, File failedNodesFile) throws Exception, InterruptedException {
         final List<String[]> batchInfos = new ArrayList<>(batchList.size());
+        doBeforeBatchUpdate(batchList);
         for (NodeRef nodeRef : batchList) {
             if (processOnlyExistingNodeRefs() && !nodeService.exists(nodeRef)) {
                 batchInfos.add(new String[] { nodeRef.toString(), "nodeDoesNotExist" });

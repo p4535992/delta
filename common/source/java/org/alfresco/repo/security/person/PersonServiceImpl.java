@@ -726,7 +726,7 @@ public class PersonServiceImpl extends TransactionListenerAdapter implements Per
                         homeFolderManager.onCreateNode(ref);
                         return null;
                     }
-                }, transactionService.isReadOnly(), false);
+                }, false, false);
             }
         }
     }

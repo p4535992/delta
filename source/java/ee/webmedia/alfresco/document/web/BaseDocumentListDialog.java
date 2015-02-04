@@ -1,6 +1,7 @@
 package ee.webmedia.alfresco.document.web;
 
-import java.lang.ref.WeakReference;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getJsfBindingHelper;
+
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -29,9 +30,6 @@ public abstract class BaseDocumentListDialog extends BaseLimitedListDialog {
 
     private transient DocumentService documentService;
     private transient DocumentSearchService documentSearchService;
-
-    private transient WeakReference<UIRichList> richList;
-    private transient WeakReference<UIPanel> panel;
 
     protected DocumentListDataProvider documentProvider;
     private Map<NodeRef, Boolean> listCheckboxes = new HashMap<>();
@@ -161,15 +159,15 @@ public abstract class BaseDocumentListDialog extends BaseLimitedListDialog {
     }
 
     public void setRichList(UIRichList richList) {
-        this.richList = new WeakReference<>(richList);
+        getJsfBindingHelper().addBinding(getRichListBindingName(), richList);
     }
 
     public UIRichList getRichList() {
-        return richList != null ? richList.get() : null;
+        return (UIRichList) getJsfBindingHelper().getComponentBinding(getRichListBindingName());
     }
 
     protected void clearRichList() {
-        UIRichList richList2 = getRichList();
+        UIRichList richList2 = (UIRichList) getJsfBindingHelper().getComponentBinding(getRichListBindingName());
         if (richList2 != null) {
             richList2.setValue(null);
         }
@@ -184,16 +182,20 @@ public abstract class BaseDocumentListDialog extends BaseLimitedListDialog {
     }
 
     public void setPanel(UIPanel panel) {
-        this.panel = new WeakReference<>(panel);
+        getJsfBindingHelper().addBinding(getPanelBindingName(), panel);
     }
 
     public UIPanel getPanel() {
-        UIPanel panelComponent = panel != null ? panel.get() : null;
+        UIPanel panelComponent = (UIPanel) getJsfBindingHelper().getComponentBinding(getPanelBindingName());
         if (panelComponent == null) {
             panelComponent = new UIPanel();
-            panel = new WeakReference<>(panelComponent);
+            getJsfBindingHelper().addBinding(getPanelBindingName(), panelComponent);
         }
         return panelComponent;
+    }
+
+    protected String getPanelBindingName() {
+        return getBindingName("panel");
     }
 
     public boolean isContainsCases() {

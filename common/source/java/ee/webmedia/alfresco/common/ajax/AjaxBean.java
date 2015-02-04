@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.common.ajax;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getPrivilegeService;
 import static org.apache.myfaces.shared_impl.renderkit.ViewSequenceUtils.getCurrentSequence;
 
 import java.io.IOException;
@@ -23,9 +24,10 @@ import javax.faces.context.ResponseWriter;
 import javax.faces.el.ValueBinding;
 import javax.faces.event.PhaseId;
 
+import ee.webmedia.alfresco.privilege.model.Privilege;
 import org.alfresco.repo.content.MimetypeMap;
+import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.webdav.WebDAVHelper;
-import org.alfresco.service.cmr.lock.UnableToAquireLockException;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.app.servlet.DownloadContentServlet;
 import org.alfresco.web.app.servlet.ajax.InvokeCommand.ResponseMimetype;
@@ -310,7 +312,9 @@ public class AjaxBean implements Serializable {
         }
 
         // If user cannot edit the document, then output nothing
-        if (Boolean.FALSE.equals(PrivilegeUtil.additionalDocumentFileWritePermission(docRef, BeanHelper.getNodeService()))) {
+        boolean insufficientUserPermissions = !getPrivilegeService().hasPermission(docRef, AuthenticationUtil.getRunAsUser(), Privilege.EDIT_DOCUMENT);
+        boolean insufficientDocumentPermissions = Boolean.FALSE.equals(PrivilegeUtil.additionalDocumentFileWritePermission(docRef, BeanHelper.getNodeService()));
+        if (insufficientUserPermissions || insufficientDocumentPermissions) {
             return null;
         }
 

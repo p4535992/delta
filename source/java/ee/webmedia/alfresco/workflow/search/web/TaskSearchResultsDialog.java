@@ -1,8 +1,7 @@
 package ee.webmedia.alfresco.workflow.search.web;
 
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentSearchService;
-
-import java.lang.ref.WeakReference;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getJsfBindingHelper;
 
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
@@ -30,7 +29,6 @@ public class TaskSearchResultsDialog extends BaseLimitedListDialog {
 
     private TaskInfoListDataProvider tasks;
     private Node filter;
-    private transient WeakReference<UIRichList> richList;
 
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
@@ -73,7 +71,6 @@ public class TaskSearchResultsDialog extends BaseLimitedListDialog {
     public void clean() {
         tasks = null;
         filter = null;
-        richList = null;
     }
 
     private void doInitialSearch() {
@@ -101,11 +98,11 @@ public class TaskSearchResultsDialog extends BaseLimitedListDialog {
     }
 
     public void setRichList(UIRichList richList) {
-        this.richList = new WeakReference<>(richList);
+        getJsfBindingHelper().addBinding(getRichListBindingName(), richList);
     }
 
     public UIRichList getRichList() {
-        return richList != null ? richList.get() : null;
+        return (UIRichList) getJsfBindingHelper().getComponentBinding(getRichListBindingName());
     }
 
 }
