@@ -519,6 +519,8 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
             setCompoundWorkflowId(compoundWorkflowRef.getId());
             setProp(WorkflowSpecificModel.Props.COMPOUND_WORKFLOW_STORE_ID, BeanHelper.getBulkLoadNodeService().getStoreRefDbId(compoundWorkflowRef.getStoreRef()));
             setCompoundWorkflowTitle(compoundWorkflow.getTitle());
+            setStoreRef(parent.getNodeRef().getStoreRef().toString());
+            setWorkflowNodeRefId(parent.getNodeRef().getId());
         }
 
     }

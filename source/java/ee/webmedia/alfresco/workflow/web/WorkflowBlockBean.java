@@ -24,6 +24,7 @@ import static ee.webmedia.alfresco.workflow.web.CompoundWorkflowDialog.handleWor
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -72,6 +73,7 @@ import org.alfresco.web.ui.repo.component.UIActions;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.apache.commons.collections.Transformer;
 import org.apache.commons.collections.comparators.TransformingComparator;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.LocalDate;
@@ -90,6 +92,7 @@ import ee.webmedia.alfresco.common.propertysheet.renderer.HtmlButtonRenderer;
 import ee.webmedia.alfresco.common.propertysheet.renderkit.PropertySheetGridRenderer;
 import ee.webmedia.alfresco.common.propertysheet.search.Search;
 import ee.webmedia.alfresco.common.propertysheet.search.UserSearchGenerator;
+import ee.webmedia.alfresco.common.richlist.PageLoadCallback;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.UserContactGroupSearchBean;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
@@ -129,7 +132,6 @@ import ee.webmedia.alfresco.workflow.service.DueDateHistoryRecord;
 import ee.webmedia.alfresco.workflow.service.SignatureTask;
 import ee.webmedia.alfresco.workflow.service.Task;
 import ee.webmedia.alfresco.workflow.service.Workflow;
-import ee.webmedia.alfresco.workflow.service.WorkflowDbService;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
 import ee.webmedia.alfresco.workflow.service.WorkflowUtil;
 import ee.webmedia.alfresco.workflow.service.type.DueDateExtensionWorkflowType;
@@ -201,7 +203,6 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         containerRef = container.getNodeRef();
         delegationBean.setWorkflowBlockBean(this);
         restore("init");
-        updateDueDateHistoryPanel();
     }
 
     public void initIndependentWorkflow(CompoundWorkflow compoundWorkflow, CompoundWorkflowDialog compoundWorkflowDialog) {
@@ -1561,13 +1562,30 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         if (groupedWorkflowBlockItems == null) {
             groupedWorkflowBlockItems = getWorkflowDbService().getWorkflowBlockItems(compoundWorkflows, checkWorkflowBlockItemRights(), getWorkflowGroupTaskUrl());
         }
-        updateDueDateHistoryPanel();
         return groupedWorkflowBlockItems;
     }
 
     public WorkflowBlockItemDataProvider getWorkflowBlockItemDataProvider() {
         if (workflowBlockItemDataProvider == null) {
-            workflowBlockItemDataProvider = new WorkflowBlockItemDataProvider(compoundWorkflows, checkWorkflowBlockItemRights(), getWorkflowGroupTaskUrl());
+            PageLoadCallback<Integer, WorkflowBlockItem> callback = new PageLoadCallback<Integer, WorkflowBlockItem>() {
+
+                private static final long serialVersionUID = 1L;
+
+                @Override
+                public void doWithPageItems(Map<Integer, WorkflowBlockItem> loadedRows) {
+                    Collection<WorkflowBlockItem> items = loadedRows.values();
+                    Map<String, List<DueDateHistoryRecord>> historyRecords = new HashMap<>();
+                    for (WorkflowBlockItem item : items) {
+                        List<DueDateHistoryRecord> records = item.getDueDateHistoryRecords();
+                        if (CollectionUtils.isNotEmpty(records)) {
+                            historyRecords.put(item.getTaskNodeRef().getId(), records);
+                        }
+                    }
+                    updateDueDateHistoryPanel(historyRecords);
+                }
+            };
+
+            workflowBlockItemDataProvider = new WorkflowBlockItemDataProvider(compoundWorkflows, checkWorkflowBlockItemRights(), getWorkflowGroupTaskUrl(), callback);
         }
         return workflowBlockItemDataProvider;
     }
@@ -1584,28 +1602,14 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         return workflowRights;
     }
 
-    private void updateDueDateHistoryPanel() {
-        HtmlPanelGroup dueDateHistoryModalPanel = (HtmlPanelGroup) getJsfBindingHelper().getComponentBinding(getModalPanelBindingName());
-        if (dueDateHistoryModalPanel == null) {
-            return;
-        }
-        List<UIComponent> children = dueDateHistoryModalPanel.getChildren();
+    public void updateDueDateHistoryPanel(Map<String, List<DueDateHistoryRecord>> records) {
+        @SuppressWarnings("unchecked")
+        List<UIComponent> children = getDueDateHistoryModalPanel().getChildren();
         children.clear();
-        WorkflowDbService workflowDbService = getWorkflowDbService();
-        final WorkflowService workflowService = BeanHelper.getWorkflowService();
-        for (NodeRef workflow : workflowService.getChildWorkflowNodeRefs(getCompoundWorkflows())) {
-            QName workflowType = getNodeService().getType(workflow);
-            if (!WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW.equals(workflowType) && !WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_WORKFLOW.equals(workflowType)) {
-                continue;
-            }
 
-            List<NodeRef> workflowTaskNodeRefs = workflowDbService.getWorkflowTaskNodeRefs(workflow);
-            for (NodeRef task : workflowTaskNodeRefs) {
-                // TODO Probably would be more efficient as a single query
-                List<DueDateHistoryRecord> dueDateHistoryRecords = workflowDbService.getDueDateHistoryRecords(task);
-                if (dueDateHistoryRecords != null && !dueDateHistoryRecords.isEmpty()) {
-                    children.add(new DueDateHistoryModalComponent(FacesContext.getCurrentInstance(), task.getId(), dueDateHistoryRecords));
-                }
+        for (Map.Entry<String, List<DueDateHistoryRecord>> entry : records.entrySet()) {
+            if (CollectionUtils.isNotEmpty(entry.getValue())) {
+                children.add(new DueDateHistoryModalComponent(FacesContext.getCurrentInstance(), entry.getKey(), entry.getValue()));
             }
         }
     }

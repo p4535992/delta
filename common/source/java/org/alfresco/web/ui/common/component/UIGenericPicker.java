@@ -15,11 +15,11 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
- * As a special exception to the terms and conditions of version 2.0 of 
- * the GPL, you may redistribute this Program in connection with Free/Libre 
- * and Open Source Software ("FLOSS") applications as described in Alfresco's 
- * FLOSS exception.  You should have recieved a copy of the text describing 
- * the FLOSS exception, and it is also available here: 
+ * As a special exception to the terms and conditions of version 2.0 of
+ * the GPL, you may redistribute this Program in connection with Free/Libre
+ * and Open Source Software ("FLOSS") applications as described in Alfresco's
+ * FLOSS exception.  You should have recieved a copy of the text describing
+ * the FLOSS exception, and it is also available here:
  * http://www.alfresco.com/legal/licensing"
  */
 package org.alfresco.web.ui.common.component;
@@ -336,11 +336,11 @@ public class UIGenericPicker extends UICommand implements AjaxUpdateable {
             // output filter options
             SelectItem[] items = getFilterOptions();
             if (items != null) {
-                for (int i = 0; i < items.length; i++) {
+                for (SelectItem item : items) {
                     out.write("<option value=\"");
                     // I checked and it seems that we are using integers as values everywhere.
                     // When this is not the case this cast will fail fast.
-                    Integer value = (Integer) items[i].getValue();
+                    Integer value = (Integer) item.getValue();
                     out.write(value.toString());
                     // Since select values aren't 0-based integer lists anymore, the selected attribute must be assigned regarding the value.
                     if (filterIndex != value) {
@@ -348,7 +348,7 @@ public class UIGenericPicker extends UICommand implements AjaxUpdateable {
                     } else {
                         out.write("\" selected=\"true\">");
                     }
-                    out.write(Utils.encode(items[i].getLabel()));
+                    out.write(Utils.encode(item.getLabel()));
                     out.write("</option>");
                 }
             }
@@ -483,7 +483,7 @@ public class UIGenericPicker extends UICommand implements AjaxUpdateable {
             out.write("\">");
             // select group for search
             if (showSelectButton != null && showSelectButton) {
-                out.write("&nbsp;<input class=\"picker-add\" type='submit' id='" + clientId + FIELD_GROUP_SELECTOR + "'");
+                out.write("&nbsp;<input type='submit' id='" + clientId + FIELD_GROUP_SELECTOR + "'");
                 out.write("disabled='disabled'");
                 out.write(" value='");
                 out.write(Utils.encode(MessageUtil.getMessage(MSG_MODAL_SEARCH_SELECT_USERGROUP)));
@@ -760,7 +760,7 @@ public class UIGenericPicker extends UICommand implements AjaxUpdateable {
 
     /**
      * Generate FORM submit JavaScript for the specified action
-     * 
+     *
      * @param context FacesContext
      * @param action Action index
      * @return FORM submit JavaScript

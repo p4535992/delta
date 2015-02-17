@@ -704,6 +704,7 @@ public class FileServiceImpl implements FileService {
     @Override
     public void removePreviousParentReference(NodeRef docRef, boolean moveToPreviousParent) {
         List<FileInfo> listFiles = getFileFolderService().listFiles(docRef);
+        boolean moveFileToPreviousParent = moveToPreviousParent && CollectionUtils.isNotEmpty(listFiles) && BeanHelper.getDocumentDynamicService().isDraft(docRef);
         for (FileInfo fileInfo : listFiles) {
             String parentRefString = (String) fileInfo.getProperties().get(FileModel.Props.PREVIOUS_FILE_PARENT);
             if (StringUtils.isBlank(parentRefString)) {
@@ -717,7 +718,7 @@ public class FileServiceImpl implements FileService {
 
             NodeRef fileRef = fileInfo.getNodeRef();
             // Move node back to previous parent and remove property if still present.
-            if (moveToPreviousParent) {
+            if (moveFileToPreviousParent) {
                 fileRef = nodeService.moveNode(fileRef, previousParent, ContentModel.ASSOC_CONTAINS, ContentModel.ASSOC_CONTAINS).getChildRef();
             }
             nodeService.removeProperty(fileRef, FileModel.Props.PREVIOUS_FILE_PARENT);

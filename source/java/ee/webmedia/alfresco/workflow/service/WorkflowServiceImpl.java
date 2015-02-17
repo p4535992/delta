@@ -610,9 +610,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         workflow.addTasks(workflowDbService.getWorkflowTasks(parent, workflowConstantsBean.getTaskDataTypeDefaultAspects().get(workflowTaskType),
                 workflowConstantsBean.getTaskDataTypeDefaultProps().get(workflowTaskType),
                 workflowConstantsBean.getTaskPrefixedQNames(), workflowType, workflow, copy));
-        for (Task task : workflow.getTasks()) {
-            loadDueDateData(task);
-        }
+        loadDueDateData(workflow.getTasks());
     }
 
     @Override
@@ -628,7 +626,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
             CompoundWorkflow compoundWorkflow = fetchCompoundWorkflow ? getCompoundWorkflow(compoundWorkflowRef) : null;
             workflow = getWorkflow(parent, compoundWorkflow, false);
         }
-        return getTask(nodeRef, workflow, false);
+        return getTask(nodeRef, workflow, true);
     }
 
     @Override
@@ -653,27 +651,43 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         });
     }
 
-    private Task getTask(NodeRef nodeRef, Workflow workflow, boolean copy) {
-        Task task = getTaskWithoutParentAndChildren(nodeRef, workflow, copy);
-        loadDueDateData(task);
+    private Task getTask(NodeRef nodeRef, Workflow workflow, boolean loadDueDateData) {
+        Task task = getTaskWithoutParentAndChildren(nodeRef, workflow, false);
+        if (loadDueDateData) {
+            loadDueDateData(Arrays.asList(task));
+        }
         return task;
     }
 
-    private void loadDueDateData(Task task) {
-        if (task.isType(WorkflowSpecificModel.Types.DUE_DATE_EXTENSION_TASK)) {
-            // due date extension task
-            NodeRef initiatingCompoundWorkflowRef = task.getInitiatingCompoundWorkflowRef();
-            if (initiatingCompoundWorkflowRef != null && StringUtils.isBlank(task.getInitiatingCompoundWorkflowTitle())) {
-                task.setInitiatingCompoundWorkflowTitle((String) nodeService.getProperty(initiatingCompoundWorkflowRef, WorkflowCommonModel.Props.TITLE));
+    private void loadDueDateData(List<Task> tasks) {
+        if (CollectionUtils.isEmpty(tasks)) {
+            return;
+        }
+        Set<String> taskIds = new HashSet<>(tasks.size());
+        for (Task task : tasks) {
+            if (task.isType(WorkflowSpecificModel.Types.DUE_DATE_EXTENSION_TASK)) {
+                // due date extension task
+                NodeRef initiatingCompoundWorkflowRef = task.getInitiatingCompoundWorkflowRef();
+                if (initiatingCompoundWorkflowRef != null && StringUtils.isBlank(task.getInitiatingCompoundWorkflowTitle())) {
+                    task.setInitiatingCompoundWorkflowTitle((String) nodeService.getProperty(initiatingCompoundWorkflowRef, WorkflowCommonModel.Props.TITLE));
+                }
+                continue;
             }
-            return;
+            if (!task.isSaved() || !task.getNode().hasAspect(WorkflowSpecificModel.Aspects.TASK_DUE_DATE_EXTENSION_CONTAINER)) {
+                continue;
+            }
+            taskIds.add(task.getNodeRef().getId());
         }
-        if (!task.isSaved() || !task.getNode().hasAspect(WorkflowSpecificModel.Aspects.TASK_DUE_DATE_EXTENSION_CONTAINER)) {
-            return;
+        Map<String, List<DueDateHistoryRecord>> dueDates = workflowDbService.getDueDateHistoryRecords(taskIds);
+        for (Task task : tasks) {
+            if (task.isUnsaved()) {
+                continue;
+            }
+            List<DueDateHistoryRecord> dueDateHistoryRecords = dueDates.get(task.getNodeRef().getId());
+            if (CollectionUtils.isNotEmpty(dueDateHistoryRecords)) {
+                task.getDueDateHistoryRecords().addAll(dueDateHistoryRecords);
+            }
         }
-        // due date initiating task (assignment or order assignment task)
-        List<DueDateHistoryRecord> historyRecords = task.getDueDateHistoryRecords();
-        historyRecords.addAll(workflowDbService.getDueDateHistoryRecords(task.getNodeRef()));
     }
 
     @Override
@@ -3670,7 +3684,6 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         logDueDateExtension(initiatingTask, task.getParent().getParent(), initiatingCompoundWorkflowNodeRef, "applog_compoundWorkflow_due_date_extension_rejected");
     }
 
-    @SuppressWarnings("unchecked")
     private void addDueDateHistoryRecord(Task initiatingTask, Task task) {
         Date previousDueDate = initiatingTask.getDueDate();
         String changeReason = StringUtils.defaultIfEmpty(task.getComment(), task.getResolution());

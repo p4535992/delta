@@ -470,6 +470,7 @@ function addSearchSuggest(clientId, containerClientId, pickerCallback, pickerCal
                }
                ajaxSuccess(responseText, clientId, containerClientId);
                setScreenProtected(false);
+               handleEnterKeySkip = false;
             },
             error: ajaxError,
             dataType: 'text'

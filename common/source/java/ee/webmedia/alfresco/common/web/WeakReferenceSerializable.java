@@ -5,9 +5,7 @@ import java.io.Serializable;
 import java.lang.ref.WeakReference;
 
 public class WeakReferenceSerializable implements Serializable {
-    /**
-     *
-     */
+
     private static final long serialVersionUID = 1L;
     private WeakReference wr;
 

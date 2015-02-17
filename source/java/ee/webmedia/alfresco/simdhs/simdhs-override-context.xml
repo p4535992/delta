@@ -127,7 +127,6 @@
             <ref bean="personCache" />
         </property>
         <property name="personNodesCache" ref="personNodesCache" />        
-        <property name="bulkLoadNodeService" ref="BulkLoadNodeService" />
         <property name="personDao">
             <ref bean="personDaoImpl" />
         </property>

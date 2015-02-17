@@ -84,7 +84,6 @@ import ee.webmedia.alfresco.classificator.enums.SendMode;
 import ee.webmedia.alfresco.classificator.enums.VolumeType;
 import ee.webmedia.alfresco.common.search.DbSearchUtil;
 import ee.webmedia.alfresco.common.service.ApplicationConstantsBean;
-import ee.webmedia.alfresco.common.service.BulkLoadNodeService;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
@@ -152,7 +151,6 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
     private AuthorityService authorityService;
     private UserService userService;
     private LogService logService;
-    private BulkLoadNodeService bulkLoadNodeService;
     private ApplicationConstantsBean applicationConstantsBean;
     private boolean finishedIncomingLettersAreNotShown;
 
@@ -2690,10 +2688,6 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
             _workflowService = BeanHelper.getWorkflowService();
         }
         return _workflowService;
-    }
-
-    public void setBulkLoadNodeService(BulkLoadNodeService bulkLoadNodeService) {
-        this.bulkLoadNodeService = bulkLoadNodeService;
     }
 
     public void setApplicationConstantsBean(ApplicationConstantsBean applicationConstantsBean) {

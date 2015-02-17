@@ -81,6 +81,7 @@ import org.alfresco.util.EqualsHelper;
 import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.ui.common.Utils;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.ObjectUtils;
@@ -1428,7 +1429,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, N
     public void deleteDocument(NodeRef nodeRef, String comment, DeletionType deletionType, String executingUser) {
         log.debug("Deleting document: " + nodeRef);
         getAdrService().addDeletedDocument(nodeRef);
-        Set<AssociationRef> assocs = new HashSet<AssociationRef>(nodeService.getTargetAssocs(nodeRef, RegexQNamePattern.MATCH_ALL));
+        Set<AssociationRef> assocs = new HashSet<>(nodeService.getTargetAssocs(nodeRef, RegexQNamePattern.MATCH_ALL));
         assocs.addAll(nodeService.getSourceAssocs(nodeRef, RegexQNamePattern.MATCH_ALL));
         DocumentAssociationsService documentAssociationsService = getDocumentAssociationsService();
         boolean updateMenu = false;
@@ -1447,6 +1448,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, N
             }
             if (DocumentCommonModel.Assocs.WORKFLOW_DOCUMENT.equals(assoc.getTypeQName())) {
                 documentAssociationsService.logDocumentWorkflowAssocRemove(nodeRef, targetRef);
+                removeDocFromCompoundWorkflowProps(sourceRef, targetRef);
             }
         }
         updateParentNodesContainingDocsCount(nodeRef, false);
@@ -1476,6 +1478,23 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, N
 
         if (updateMenu) {
             menuService.process(BeanHelper.getMenuBean().getMenu(), false, true);
+        }
+    }
+
+    private void removeDocFromCompoundWorkflowProps(NodeRef docRef, NodeRef compoundWorkflowRef) {
+        Map<QName, Serializable> cwfProps = nodeService.getProperties(compoundWorkflowRef);
+        NodeRef mainDoc = (NodeRef) cwfProps.get(WorkflowCommonModel.Props.MAIN_DOCUMENT);
+        Map<QName, Serializable> newProps = new HashMap<>();
+        if (mainDoc != null && mainDoc.equals(docRef)) {
+            newProps.put(WorkflowCommonModel.Props.MAIN_DOCUMENT, null);
+        }
+        List<NodeRef> docsToSign = (List<NodeRef>) cwfProps.get(WorkflowCommonModel.Props.DOCUMENTS_TO_SIGN);
+        if (CollectionUtils.isNotEmpty(docsToSign) && docsToSign.contains(docRef)) {
+            docsToSign.remove(docRef);
+            newProps.put(WorkflowCommonModel.Props.DOCUMENTS_TO_SIGN, (Serializable) docsToSign);
+        }
+        if (!newProps.isEmpty()) {
+            nodeService.addProperties(compoundWorkflowRef, newProps);
         }
     }
 

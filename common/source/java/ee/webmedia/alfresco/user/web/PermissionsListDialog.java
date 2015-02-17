@@ -158,10 +158,6 @@ public class PermissionsListDialog extends BaseDialogBean {
         return (UIRichList) getJsfBindingHelper().getComponentBinding(getRichListBindingName());
     }
 
-    protected String getRichListBindingName() {
-        return getBindingName("richList");
-    }
-
     public void setAuthoritiesRichList(UIRichList authoritiesRichList) {
         getJsfBindingHelper().addBinding(getRichListBindingName(), authoritiesRichList);
     }

@@ -45,8 +45,10 @@ public class FixArchivedVolumesAndCasesStructurePropertiesBootstrap extends Abst
         String query = joinQueryPartsAnd(
                 generateTypeQuery(CaseFileModel.Types.CASE_FILE, VolumeModel.Types.VOLUME, CaseModel.Types.CASE),
                 joinQueryPartsOr(
-                        generatePropertyWildcardQuery(FUNCTION, StoreRef.STORE_REF_WORKSPACE_SPACESSTORE.toString(), false, true),
-                        generatePropertyWildcardQuery(SERIES, StoreRef.STORE_REF_WORKSPACE_SPACESSTORE.toString(), false, true))
+                        joinQueryPartsAnd(generatePropertyWildcardQuery(FUNCTION, StoreRef.STORE_REF_WORKSPACE_SPACESSTORE.getProtocol(), true, true),
+                                generatePropertyWildcardQuery(FUNCTION, StoreRef.STORE_REF_WORKSPACE_SPACESSTORE.getIdentifier(), true, true)),
+                                joinQueryPartsAnd(generatePropertyWildcardQuery(SERIES, StoreRef.STORE_REF_WORKSPACE_SPACESSTORE.getProtocol(), true, true),
+                                        generatePropertyWildcardQuery(SERIES, StoreRef.STORE_REF_WORKSPACE_SPACESSTORE.getProtocol(), true, true)))
                 );
         List<ResultSet> result = new ArrayList<>();
         for (StoreRef store : generalService.getArchivalsStoreRefs()) {

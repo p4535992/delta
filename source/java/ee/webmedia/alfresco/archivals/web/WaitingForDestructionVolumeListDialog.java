@@ -10,6 +10,7 @@ import java.util.Map;
 
 import javax.faces.event.ActionEvent;
 
+import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.config.DialogsConfigElement.DialogButtonConfig;
@@ -172,24 +173,32 @@ public class WaitingForDestructionVolumeListDialog extends VolumeArchiveBaseDial
                 "archivals_volume_destruction_with_disposition_act", "archivals_volume_start_destruction_success", "applog_archivals_volume_disposed");
     }
 
-    private void disposeVolumes(String template, String missingTemplateErrorMsgKey, ActivityType activityType, String docCommentMsgKey, String successMsgKey, String logMessageKey) {
-        Date destructionStartDate = new Date();
-        String templateName = MessageUtil.getMessage(template);
-        NodeRef templateRef = BeanHelper.getDocumentTemplateService().getArchivalReportTemplateByName(templateName);
-        if (templateRef == null) {
-            MessageUtil.addErrorMessage(missingTemplateErrorMsgKey, templateName);
-            return;
-        }
-        List<NodeRef> selectedVolumes = getSelectedVolumes();
-        if (!validateVolumesForDisposal(selectedVolumes, false)) {
-            return;
-        }
-        NodeRef activityRef = generateActivityAndWordFile(activityType, ActivityStatus.IN_PROGRESS, null, null);
-        if (activityRef != null) {
-            BeanHelper.getArchivalsService().disposeVolumes(selectedVolumes, destructionStartDate, MessageUtil.getMessage(docCommentMsgKey),
-                    activityRef, templateRef, MessageUtil.getMessage(logMessageKey));
-            MessageUtil.addInfoMessage(successMsgKey, selectedVolumes.size());
-        }
+    private void disposeVolumes(final String template, final String missingTemplateErrorMsgKey, final ActivityType activityType, final String docCommentMsgKey,
+            final String successMsgKey, final String logMessageKey) {
+        BeanHelper.getTransactionService().getRetryingTransactionHelper().doInTransaction(new RetryingTransactionCallback<Void>() {
+
+            @Override
+            public Void execute() throws Throwable {
+                Date destructionStartDate = new Date();
+                String templateName = MessageUtil.getMessage(template);
+                NodeRef templateRef = BeanHelper.getDocumentTemplateService().getArchivalReportTemplateByName(templateName);
+                if (templateRef == null) {
+                    MessageUtil.addErrorMessage(missingTemplateErrorMsgKey, templateName);
+                    return null;
+                }
+                List<NodeRef> selectedVolumes = getSelectedVolumes();
+                if (!validateVolumesForDisposal(selectedVolumes, false)) {
+                    return null;
+                }
+                NodeRef activityRef = generateActivityAndWordFile(activityType, ActivityStatus.IN_PROGRESS, null, null);
+                if (activityRef != null) {
+                    BeanHelper.getArchivalsService().disposeVolumes(selectedVolumes, destructionStartDate, MessageUtil.getMessage(docCommentMsgKey),
+                            activityRef, templateRef, MessageUtil.getMessage(logMessageKey));
+                    MessageUtil.addInfoMessage(successMsgKey, selectedVolumes.size());
+                }
+                return null;
+            }
+        });
     }
 
     private boolean validateVolumesForDisposal(List<NodeRef> selectedVolumes, boolean simpleDestruction) {

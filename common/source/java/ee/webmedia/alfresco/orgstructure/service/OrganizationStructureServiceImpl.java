@@ -306,21 +306,26 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
     @Override
     public List<Node> setUsersUnit(List<Node> users) {
         for (Node user : users) {
-            Map<String, Object> props = user.getProperties();
-
-            String unitId = (String) props.get(ContentModel.PROP_ORGID);
-            String orgStruct;
-            if (StringUtils.isBlank(unitId)) {
-                unitId = "";
-                orgStruct = "";
-            } else {
-                orgStruct = getOrganizationStructureName(unitId);
-            }
-
-            props.put(UNIT_PROP, unitId + (StringUtils.equals(unitId, orgStruct) ? "" : " " + orgStruct));
-            props.put(UNIT_NAME_PROP, orgStruct);
+            loadUserUnit(user);
         }
         return users;
+    }
+
+    @Override
+    public void loadUserUnit(Node user) {
+        Map<String, Object> props = user.getProperties();
+
+        String unitId = (String) props.get(ContentModel.PROP_ORGID);
+        String orgStruct;
+        if (StringUtils.isBlank(unitId)) {
+            unitId = "";
+            orgStruct = "";
+        } else {
+            orgStruct = getOrganizationStructureName(unitId);
+        }
+
+        props.put(UNIT_PROP, unitId + (StringUtils.equals(unitId, orgStruct) ? "" : " " + orgStruct));
+        props.put(UNIT_NAME_PROP, orgStruct);
     }
 
     // public String getOrganizationStructureByUser(Map<QName, Serializable> userProps) {

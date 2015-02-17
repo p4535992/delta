@@ -1320,6 +1320,10 @@ input[type="checkbox"] {
 	width: 392px !important;
 }
 
+.modalpopup-content-inner table td textarea.compound-workflow-comment-text-input {
+	width: 380px !important;
+}
+
 .modalpopup-content-inner.modalpopup-filter table td textarea,
 .modalpopup-content-inner.modalpopup-filter table td input[type="text"],
 .modalpopup-content .task-search-with-filter table td input[type="text"] {

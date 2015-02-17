@@ -23,6 +23,7 @@ import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.cmr.security.AuthenticationService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.service.transaction.TransactionService;
+import org.alfresco.util.EqualsHelper;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
@@ -31,6 +32,7 @@ import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.privilege.service.PrivilegeUtil;
 import ee.webmedia.alfresco.report.model.ReportModel;
+import ee.webmedia.alfresco.substitute.model.SubstitutionInfo;
 import ee.webmedia.alfresco.versions.service.VersionsService;
 
 public class WebDAVCustomHelper extends WebDAVHelper {
@@ -147,7 +149,14 @@ public class WebDAVCustomHelper extends WebDAVHelper {
      * @return
      */
     private static boolean hasViewDocFilesPermission(NodeRef docOrFileRef) {
-        return BeanHelper.getPrivilegeService().hasPermission(docOrFileRef, AuthenticationUtil.getRunAsUser(), Privilege.VIEW_DOCUMENT_FILES);
+        SubstitutionInfo info = BeanHelper.getSubstitutionBean().getSubstitutionInfo();
+        String userName = AuthenticationUtil.getRunAsUser();
+        if (info.isSubstituting() && !EqualsHelper.nullSafeEquals(userName, info.getSubstitution().getReplacedPersonUserName())) {
+            // If user is downloading a file and BaseServlet.servletAuthenticate() is called after SubstitutionFilter.doFilter()
+            // then AuthenticationUtil.getRunAsUser() might give the username of a fully authenticated user instead of actual runAs user.
+            userName = info.getSubstitution().getReplacedPersonUserName();
+        }
+        return BeanHelper.getPrivilegeService().hasPermission(docOrFileRef, userName, Privilege.VIEW_DOCUMENT_FILES);
     }
 
     public static void checkDocumentFileWritePermission(NodeRef fileRef) throws WebDAVServerException {

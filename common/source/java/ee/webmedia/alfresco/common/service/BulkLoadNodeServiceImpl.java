@@ -182,12 +182,12 @@ public class BulkLoadNodeServiceImpl implements BulkLoadNodeService {
         Map<NodeRef, List<Map<QName, Serializable>>> fileNodesProps = loadChildNodes(parentNodeRefs, propsToLoad, ContentModel.TYPE_CONTENT,
                 propertyTypes, new CreateObjectCallback<Map<QName, Serializable>>() {
 
-                    @Override
-                    public Map<QName, Serializable> create(NodeRef fileRef, Map<QName, Serializable> properties) {
-                        properties.put(ContentModel.PROP_NODE_REF, fileRef);
-                        return properties;
-                    }
-                });
+            @Override
+            public Map<QName, Serializable> create(NodeRef fileRef, Map<QName, Serializable> properties) {
+                properties.put(ContentModel.PROP_NODE_REF, fileRef);
+                return properties;
+            }
+        });
         Map<NodeRef, List<SimpleFile>> allDocumentsFiles = new HashMap<NodeRef, List<SimpleFile>>();
         boolean activeFilesOnly = FilesLoadStrategy.ACTIVE.equals(strategy);
         boolean inactiveFilesOnly = FilesLoadStrategy.INACTIVE.equals(strategy);
@@ -239,7 +239,6 @@ public class BulkLoadNodeServiceImpl implements BulkLoadNodeService {
 
             @Override
             public Void mapRow(ResultSet rs, int rowNum) throws SQLException {
-                setDefaultFetchSize(rs);
                 counts.put(getNodeRef(rs), rs.getInt("child_count"));
                 return null;
             }
@@ -271,20 +270,12 @@ public class BulkLoadNodeServiceImpl implements BulkLoadNodeService {
 
             @Override
             public Void mapRow(ResultSet rs, int rowNum) throws SQLException {
-                setDefaultFetchSize(rs);
                 counts.put(getNodeRef(rs), rs.getInt("source_count"));
                 return null;
             }
 
         }, arguments.toArray());
         return counts;
-    }
-
-    private void setDefaultFetchSize(ResultSet rs) throws SQLException {
-        // TODO: this could impact performance significantly,
-        // by making retrieving large amounts of data much quicker, but at the same time consuming much more memory
-        // Needs thorough testing before use
-        // rs.setFetchSize(1000);
     }
 
     @SuppressWarnings("deprecation")
@@ -475,7 +466,6 @@ public class BulkLoadNodeServiceImpl implements BulkLoadNodeService {
 
             @Override
             public String mapRow(ResultSet rs, int rowNum) throws SQLException {
-                setDefaultFetchSize(rs);
                 Map<NodeRef, Map<PropertyMapKey, NodePropertyValue>> allChildProps = getPropsMap(getNodeRef(rs, "parent_uuid"), allPropsMap);
                 Map<PropertyMapKey, NodePropertyValue> childProps = getPropsMap(getNodeRef(rs, "child_uuid"), allChildProps);
                 PropertyMapKey propMapKey = getPropMapKey(rs);
@@ -556,36 +546,35 @@ public class BulkLoadNodeServiceImpl implements BulkLoadNodeService {
         jdbcTemplate.query(query,
                 new ParameterizedRowMapper<String>() {
 
-                    @Override
-                    public String mapRow(ResultSet rs, int rowNum) throws SQLException {
-                        setDefaultFetchSize(rs);
-                        NodeRef nodeRef = getNodeRef(rs);
-                        Map<PropertyMapKey, NodePropertyValue> docProps = allDocProps.get(nodeRef);
-                        if (docProps == null) {
-                            docProps = new HashMap<PropertyMapKey, NodePropertyValue>();
-                            allDocProps.put(nodeRef, docProps);
-                        }
-                        Map<String, Object> docIntrinsicProps = allDocIntrinsicProps.get(nodeRef);
-                        if (docIntrinsicProps == null) {
-                            docIntrinsicProps = new HashMap<String, Object>();
-                            docIntrinsicProps.put(ContentModel.PROP_CREATOR.toPrefixString(), rs.getString("creator"));
-                            docIntrinsicProps.put(ContentModel.PROP_CREATED.toPrefixString(), DefaultTypeConverter.INSTANCE.convert(Date.class, rs.getString("created")));
-                            docIntrinsicProps.put(ContentModel.PROP_MODIFIER.toPrefixString(), rs.getString("modifier"));
-                            docIntrinsicProps.put(ContentModel.PROP_MODIFIED.toPrefixString(), DefaultTypeConverter.INSTANCE.convert(Date.class, rs.getString("modified")));
-                            allDocIntrinsicProps.put(nodeRef, docIntrinsicProps);
-                        }
-                        PropertyMapKey propMapKey = getPropMapKey(rs);
-                        if (propMapKey.getQnameId() > 0) {
-                            NodePropertyValue nodePropValue = getPropertyValue(rs);
-                            docProps.put(propMapKey, nodePropValue);
-                        }
-                        if (loadType && !nodeTypes.containsKey(nodeRef)) {
-                            nodeTypes.put(nodeRef, getTypeFromRs(rs));
-                        }
-                        return null;
-                    }
+            @Override
+            public String mapRow(ResultSet rs, int rowNum) throws SQLException {
+                NodeRef nodeRef = getNodeRef(rs);
+                Map<PropertyMapKey, NodePropertyValue> docProps = allDocProps.get(nodeRef);
+                if (docProps == null) {
+                    docProps = new HashMap<PropertyMapKey, NodePropertyValue>();
+                    allDocProps.put(nodeRef, docProps);
+                }
+                Map<String, Object> docIntrinsicProps = allDocIntrinsicProps.get(nodeRef);
+                if (docIntrinsicProps == null) {
+                    docIntrinsicProps = new HashMap<String, Object>();
+                    docIntrinsicProps.put(ContentModel.PROP_CREATOR.toPrefixString(), rs.getString("creator"));
+                    docIntrinsicProps.put(ContentModel.PROP_CREATED.toPrefixString(), DefaultTypeConverter.INSTANCE.convert(Date.class, rs.getString("created")));
+                    docIntrinsicProps.put(ContentModel.PROP_MODIFIER.toPrefixString(), rs.getString("modifier"));
+                    docIntrinsicProps.put(ContentModel.PROP_MODIFIED.toPrefixString(), DefaultTypeConverter.INSTANCE.convert(Date.class, rs.getString("modified")));
+                    allDocIntrinsicProps.put(nodeRef, docIntrinsicProps);
+                }
+                PropertyMapKey propMapKey = getPropMapKey(rs);
+                if (propMapKey.getQnameId() > 0) {
+                    NodePropertyValue nodePropValue = getPropertyValue(rs);
+                    docProps.put(propMapKey, nodePropValue);
+                }
+                if (loadType && !nodeTypes.containsKey(nodeRef)) {
+                    nodeTypes.put(nodeRef, getTypeFromRs(rs));
+                }
+                return null;
+            }
 
-                }, paramArray);
+        }, paramArray);
         explainQuery(query, paramArray);
         if (propertyTypes == null) {
             propertyTypes = new HashMap<Long, QName>();
@@ -656,7 +645,6 @@ public class BulkLoadNodeServiceImpl implements BulkLoadNodeService {
 
             @Override
             public String mapRow(ResultSet rs, int rowNum) throws SQLException {
-                setDefaultFetchSize(rs);
                 Map<NodeRef, Map<PropertyMapKey, NodePropertyValue>> allParentProps = getPropsMap(getNodeRef(rs, "child_uuid"), allPropsMap);
                 NodeRef parentRef = getNodeRef(rs, "parent_uuid");
                 Map<PropertyMapKey, NodePropertyValue> parentProps = getPropsMap(parentRef, allParentProps);
@@ -728,7 +716,6 @@ public class BulkLoadNodeServiceImpl implements BulkLoadNodeService {
 
             @Override
             public Void mapRow(ResultSet rs, int rowNum) throws SQLException {
-                setDefaultFetchSize(rs);
                 parentRefs.add(getNodeRef(rs, "parent_uuid"));
                 return null;
             }
@@ -752,9 +739,9 @@ public class BulkLoadNodeServiceImpl implements BulkLoadNodeService {
         String sql = "SELECT " + (includeProps ? "parent_props.*, " : "") + "node.store_id as store_id, node.uuid AS child_uuid, parent.uuid AS parent_uuid "
                 + (includeIntrinsicProps
                         ? ", parent.audit_creator AS creator, parent.audit_created AS created, parent.audit_modifier AS modifier, parent.audit_modified AS modified " : "")
-                        + " FROM " + getNodeTableConditionalJoin(childNodes, arguments)
-                        + " JOIN alf_child_assoc parent_assoc on parent_assoc.child_node_id = node.id "
-                        + " JOIN alf_node parent on parent_assoc.parent_node_id = parent.id ";
+                + " FROM " + getNodeTableConditionalJoin(childNodes, arguments)
+                + " JOIN alf_child_assoc parent_assoc on parent_assoc.child_node_id = node.id "
+                + " JOIN alf_node parent on parent_assoc.parent_node_id = parent.id ";
         if (includeProps) {
             sql += " LEFT JOIN alf_node_properties parent_props on parent_props.node_id = parent.id ";
         }
@@ -786,7 +773,6 @@ public class BulkLoadNodeServiceImpl implements BulkLoadNodeService {
 
             @Override
             public Void mapRow(ResultSet rs, int rowNum) throws SQLException {
-                setDefaultFetchSize(rs);
                 result.put(getNodeRef(rs), rs.getInt("document_count"));
                 return null;
             }
@@ -980,7 +966,6 @@ public class BulkLoadNodeServiceImpl implements BulkLoadNodeService {
 
             @Override
             public String mapRow(ResultSet rs, int rowNum) throws SQLException {
-                setDefaultFetchSize(rs);
                 NodeRef nodeRef = getNodeRef(rs);
                 String workflowState = rs.getString("document_workflow_state");
                 workflowStates.put(nodeRef, workflowState);
@@ -1009,7 +994,6 @@ public class BulkLoadNodeServiceImpl implements BulkLoadNodeService {
 
             @Override
             public NodeRef mapRow(ResultSet rs, int rowNum) throws SQLException {
-                setDefaultFetchSize(rs);
                 return getNodeRef(rs);
             }
 
@@ -1064,7 +1048,6 @@ public class BulkLoadNodeServiceImpl implements BulkLoadNodeService {
 
             @Override
             public NodeRef mapRow(ResultSet rs, int rowNum) throws SQLException {
-                setDefaultFetchSize(rs);
                 return getNodeRef(rs);
             }
         }, arguments.toArray()));
@@ -1111,7 +1094,6 @@ public class BulkLoadNodeServiceImpl implements BulkLoadNodeService {
 
             @Override
             public NodeRef mapRow(ResultSet rs, int rowNum) throws SQLException {
-                setDefaultFetchSize(rs);
                 return getNodeRef(rs);
             }
 
@@ -1149,7 +1131,6 @@ public class BulkLoadNodeServiceImpl implements BulkLoadNodeService {
 
             @Override
             public NodeRef mapRow(ResultSet rs, int rowNum) throws SQLException {
-                setDefaultFetchSize(rs);
                 PropertyMapKey propertyKey = getPropMapKey(rs);
                 if (skipNodesWithMissingProp && allZeroesOrNulls(propertyKey)) {
                     return null;
@@ -1205,7 +1186,6 @@ public class BulkLoadNodeServiceImpl implements BulkLoadNodeService {
 
             @Override
             public Void mapRow(ResultSet rs, int rowNum) throws SQLException {
-                setDefaultFetchSize(rs);
                 result.add(getNodeRef(rs));
                 return null;
             }
@@ -1239,7 +1219,6 @@ public class BulkLoadNodeServiceImpl implements BulkLoadNodeService {
 
             @Override
             public Map<QName, Serializable> mapRow(ResultSet rs, int rowNum) throws SQLException {
-                setDefaultFetchSize(rs);
                 PropertyMapKey propertyKey = getPropMapKey(rs);
                 Map<QName, Serializable> props = new HashMap<>();
                 if (propertyKey.getQnameId() > 0) {
@@ -1287,7 +1266,6 @@ public class BulkLoadNodeServiceImpl implements BulkLoadNodeService {
 
             @Override
             public String mapRow(ResultSet rs, int rowNum) throws SQLException {
-                setDefaultFetchSize(rs);
                 PropertyMapKey propertyKey = getPropMapKey(rs);
                 if (propertyKey.getQnameId() <= 0) {
                     return null;
@@ -1352,7 +1330,6 @@ public class BulkLoadNodeServiceImpl implements BulkLoadNodeService {
 
             @Override
             public Void mapRow(ResultSet rs, int rowNum) throws SQLException {
-                setDefaultFetchSize(rs);
                 qnameDAO.getQName(rs.getLong("id"));
                 return null;
             }
@@ -1362,7 +1339,6 @@ public class BulkLoadNodeServiceImpl implements BulkLoadNodeService {
     private final class NodeRefRowMapper implements ParameterizedRowMapper<NodeRef> {
         @Override
         public NodeRef mapRow(ResultSet rs, int rowNum) throws SQLException {
-            setDefaultFetchSize(rs);
             return getNodeRef(rs);
         }
     }

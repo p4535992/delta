@@ -15,7 +15,6 @@ import javax.faces.event.ActionEvent;
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.TransientNode;
 import org.apache.commons.lang.StringUtils;
@@ -24,7 +23,6 @@ import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.assignresponsibility.model.AssignResponsibilityModel;
 import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.user.model.UserModel;
-import ee.webmedia.alfresco.user.web.UserDetailsDialog;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UserUtil;
 
@@ -76,6 +74,7 @@ public class AssignResponsibilityBean implements Serializable {
         getAssignResponsibilityService().changeOwnerOfAllDesignatedObjects(fromOwnerId, toOwnerId, false);
         leaving = false;
         unsetOwner();
+        BeanHelper.getUserDetailsDialog().reloadUser();
         MessageUtil.addInfoMessage("assign_responsibility_revert_success");
     }
 
@@ -119,23 +118,9 @@ public class AssignResponsibilityBean implements Serializable {
         return isNotLeaving() || isLeavingAndAdmin();
     }
 
-    public String getSetFromOwnerUserConsole() {
-        fromOwnerId = AuthenticationUtil.getRunAsUser();
-        leaving = getUserService().getUser(fromOwnerId).hasAspect(UserModel.Aspects.LEAVING);
-        return "";
-    }
-
-    public String getSetFromOwnerUserDetails() {
-        UserDetailsDialog userDetailsDialog = (UserDetailsDialog) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), "UserDetailsDialog");
-        userDetailsDialog.refreshCurrentUser();
-        Node user = userDetailsDialog.getUser();
-        leaving = user.hasAspect(UserModel.Aspects.LEAVING);
-        fromOwnerId = (String) user.getProperties().get(ContentModel.PROP_USERNAME);
-        return "";
-    }
-
     public void updateLiabilityGivenToPerson(Node user) {
         leaving = user.hasAspect(UserModel.Aspects.LEAVING);
+        fromOwnerId = (String) user.getProperties().get(ContentModel.PROP_USERNAME);
         if (leaving) {
             String liabilityGivenToPersonId = (String) user.getProperties().get(UserModel.Props.LIABILITY_GIVEN_TO_PERSON_ID);
             String fullName = getUserService().getUserFullName(liabilityGivenToPersonId);

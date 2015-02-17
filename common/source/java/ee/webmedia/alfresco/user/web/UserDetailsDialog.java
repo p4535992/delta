@@ -16,26 +16,17 @@ import java.util.Set;
 import javax.faces.component.UIInput;
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
-import javax.faces.event.ValueChangeEvent;
 
-import bsh.StringUtil;
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.repository.DuplicateChildNodeNameException;
-import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
 import org.alfresco.service.cmr.security.PermissionService;
-import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.users.UsersBeanProperties;
-import org.alfresco.web.bean.users.UsersDialog;
 import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
-import ee.webmedia.alfresco.document.einvoice.model.DimensionValue;
-import ee.webmedia.alfresco.document.einvoice.model.Dimensions;
-import ee.webmedia.alfresco.document.einvoice.service.EInvoiceService;
 import ee.webmedia.alfresco.substitute.model.Substitute;
 import ee.webmedia.alfresco.substitute.web.SubstituteListDialog;
 import ee.webmedia.alfresco.utils.ActionUtil;
@@ -55,15 +46,6 @@ public class UserDetailsDialog extends BaseDialogBean {
 
     private Node user;
     public static final String NOTIFICATION_SENDER_LABEL = "NotificationSender";
-
-    @Override
-    public void init(Map<String, String> parameters) {
-        super.init(parameters);
-        substituteListDialog = new SubstituteListDialog();
-        substituteListDialog.setUserNodeRef(user.getNodeRef());
-        substituteListDialog.refreshData();
-        setupGroups();
-    }
 
     protected void setupGroups() {
         groupToAdd = null;
@@ -90,27 +72,6 @@ public class UserDetailsDialog extends BaseDialogBean {
     }
 
     private boolean validate() {
-        List<String> erroneousValues = new ArrayList<String>();
-        @SuppressWarnings("unchecked")
-        List<String> relatedFundCenters = (List<String>) user.getProperties().get(ContentModel.PROP_RELATED_FUNDS_CENTER.toString());
-        if (relatedFundCenters != null) {
-            EInvoiceService eInvoiceService = BeanHelper.getEInvoiceService();
-            NodeRef dimensionRef = eInvoiceService.getDimension(Dimensions.INVOICE_FUNDS_CENTERS);
-            for (String dimensionName : relatedFundCenters) {
-                if (StringUtils.isNotBlank(dimensionName)) {
-                    DimensionValue dimensionValue = eInvoiceService.getDimensionValue(dimensionRef, dimensionName);
-                    if (dimensionValue == null) {
-                        erroneousValues.add(dimensionName);
-                    }
-                }
-            }
-        }
-        if (!erroneousValues.isEmpty()) {
-            MessageUtil.addErrorMessage("user_relatedFundsCenter_no_existing_value", MessageUtil.getMessage("user_relatedFundsCenter"),
-                    TextUtil.joinNonBlankStringsWithComma(erroneousValues));
-            return false;
-        }
-
         String clientExtensions = (String) user.getProperties().get(ContentModel.PROP_OPEN_OFFICE_CLIENT_EXTENSIONS.toString());
         if (StringUtils.isNotBlank(clientExtensions) && !StringUtils.isAlpha(clientExtensions.replaceAll(",", ""))) {
             MessageUtil.addErrorMessage("user_openOfficeClientExtensions_error");
@@ -142,29 +103,12 @@ public class UserDetailsDialog extends BaseDialogBean {
         return !isShowEmptyTaskMenuEditable();
     }
 
-    public void showEmptyTaskMenuChanged(ValueChangeEvent e) {
-        user.getProperties().put(ContentModel.SHOW_EMPTY_TASK_MENU.toString(), DefaultTypeConverter.INSTANCE.convert(Boolean.class, e.getNewValue()));
-    }
-
-    public void openOfficeClientExtensionsChanged(ValueChangeEvent e) {
-        String extensions = DefaultTypeConverter.INSTANCE.convert(String.class, e.getNewValue());
-        user.getProperties().put(ContentModel.PROP_OPEN_OFFICE_CLIENT_EXTENSIONS.toString(), extensions);
-    }
-
     public boolean isShowEmptyTaskMenuEditable() {
         return isAdministratorOrCurrentUser();
     }
 
     public boolean isAdministratorOrCurrentUser() {
         return BeanHelper.getUserService().isAdministrator() || user.getProperties().get(ContentModel.PROP_USERNAME.toString()).equals(AuthenticationUtil.getRunAsUser());
-    }
-
-    public boolean isRelatedFundsCenterNotEditable() {
-        return !BeanHelper.getUserService().isAdministrator() && BeanHelper.getApplicationConstantsBean().isEinvoiceEnabled();
-    }
-
-    public boolean isRelatedFundsCenterEditable() {
-        return BeanHelper.getUserService().isAdministrator() && BeanHelper.getApplicationConstantsBean().isEinvoiceEnabled();
     }
 
     public boolean isServiceRankRendered() {
@@ -178,55 +122,48 @@ public class UserDetailsDialog extends BaseDialogBean {
      * UsersDialog.getCurrentUserNode().
      */
     public void setupCurrentUser(@SuppressWarnings("unused") ActionEvent event) {
-        Node node = new Node(BeanHelper.getUserService().getPerson(AuthenticationUtil.getRunAsUser()));
-        // Eagerly load properties
-        node.getProperties();
-
-        // take care of UsersDialog
-        UsersDialog dialog = (UsersDialog) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), UsersDialog.BEAN_NAME);
-        dialog.setupUserAction(node.getId());
-
-        List<Node> users = new ArrayList<Node>(1);
-        users.add(node);
-        fillUserProps(users);
-        BeanHelper.getAssignResponsibilityBean().updateLiabilityGivenToPerson(node);
+        setupUser(AuthenticationUtil.getRunAsUser());
+        BeanHelper.getUsersDialog().setupUserAction(user.getId());
     }
 
-    private void fillUserProps(List<Node> users) {
-        user = getOrganizationStructureService().setUsersUnit(users).get(0);
+    /**
+     * Action event called by all actions that need to setup a Person context on
+     * the Users bean before an action page is called. The context will be a
+     * Person Node in setPerson() which can be retrieved on the action page from
+     * UsersDialog.getPerson().
+     */
+    public void setupUser(ActionEvent event) {
+        setupUser(ActionUtil.getParam(event, "id"));
+    }
+
+    /**
+     * Used in JSP to set up person context
+     *
+     * @param userName
+     */
+    public void setupUser(String userName) {
+        user = new Node(BeanHelper.getPersonService().getPersonFromRepo(userName));
+        fillUserProps();
+        BeanHelper.getAssignResponsibilityBean().updateLiabilityGivenToPerson(user);
+        substituteListDialog.setUserNodeRef(user.getNodeRef());
+        substituteListDialog.refreshData();
+    }
+
+    public void reloadUser() {
+        if (user != null) {
+            setupUser((String) user.getProperties().get(ContentModel.PROP_USERNAME));
+        }
+    }
+
+    private void fillUserProps() {
+        getOrganizationStructureService().loadUserUnit(user);
         setupGroups();
         Map<String, Object> props = user.getProperties();
-        EInvoiceService eInvoiceService = BeanHelper.getEInvoiceService();
-        NodeRef dimensionRef = eInvoiceService.getDimension(Dimensions.INVOICE_FUNDS_CENTERS);
-        @SuppressWarnings("unchecked")
-        List<String> relatedFundsCenters = (List<String>) user.getProperties().get(ContentModel.PROP_RELATED_FUNDS_CENTER);
-        if (relatedFundsCenters == null || relatedFundsCenters.isEmpty()) {
-            relatedFundsCenters = eInvoiceService.getDimensionDefaultValueList(Dimensions.INVOICE_FUNDS_CENTERS, null);
-        }
+
         props.put("{temp}unit", getUserDisplayUnit(props));
         props.put("{temp}jobAddress", TextUtil.joinNonBlankStringsWithComma(Arrays.asList((String) props.get(ContentModel.PROP_STREET_HOUSE),
                 (String) props.get(ContentModel.PROP_VILLAGE), (String) props.get(ContentModel.PROP_MUNICIPALITY), (String) props.get(ContentModel.PROP_POSTAL_CODE),
                 (String) props.get(ContentModel.PROP_COUNTY))));
-        props.put(ContentModel.PROP_RELATED_FUNDS_CENTER.toString(), relatedFundsCenters);
-
-        StringBuilder sb = new StringBuilder("");
-
-        int dimensionIndex = 0;
-        for (String dimensionName : relatedFundsCenters) {
-            if (StringUtils.isNotBlank(dimensionName)) {
-                if (dimensionIndex > 0) {
-                    sb.append(", ");
-                }
-                DimensionValue dimensionValue = eInvoiceService.getDimensionValue(dimensionRef, dimensionName);
-                sb.append("<span title=\"");
-                sb.append(org.alfresco.web.ui.common.StringUtils.encode(TextUtil.joinStringAndStringWithSeparator(dimensionValue.getValue(),
-                        dimensionValue.getValueComment(), ";")));
-                sb.append("\" class=\"tooltip\">");
-                sb.append(org.alfresco.web.ui.common.StringUtils.encode(dimensionValue.getValueName())).append("</span>");
-                dimensionIndex++;
-            }
-        }
-        user.getProperties().put("{temp}relatedFundsCenter", sb.toString());
 
         Boolean showEmpty = (Boolean) user.getProperties().get(ContentModel.SHOW_EMPTY_TASK_MENU.toString());
         if (showEmpty == null) {
@@ -261,30 +198,6 @@ public class UserDetailsDialog extends BaseDialogBean {
         MessageUtil.addInfoMessage("user_added_to_group");
     }
 
-    /**
-     * Action event called by all actions that need to setup a Person context on
-     * the Users bean before an action page is called. The context will be a
-     * Person Node in setPerson() which can be retrieved on the action page from
-     * UsersDialog.getPerson().
-     */
-    public void setupUser(ActionEvent event) {
-        String userName = ActionUtil.getParam(event, "id");
-        setupUser(userName);
-        BeanHelper.getAssignResponsibilityBean().updateLiabilityGivenToPerson(new Node(BeanHelper.getUserService().getPerson(userName)));
-    }
-
-    /**
-     * Used in JSP to set up person context
-     *
-     * @param userName
-     */
-    public void setupUser(String userName) {
-        List<Node> users = new ArrayList<>(1);
-        users.add(new Node(BeanHelper.getPersonService().getPersonFromRepo(userName)));
-        fillUserProps(users);
-        setupGroups();
-    }
-
     public void refreshCurrentUser() {
         if (user == null) {
             return;
@@ -313,10 +226,6 @@ public class UserDetailsDialog extends BaseDialogBean {
 
     public Node getUser() {
         return user;
-    }
-
-    public void setUser(Node user) {
-        this.user = user;
     }
 
     public List<String> getDimensionSuggesterValues(FacesContext contect, UIInput input) {
@@ -367,6 +276,8 @@ public class UserDetailsDialog extends BaseDialogBean {
         this.groupToAdd = groupToAdd;
     }
 
-    // ///
+    public void setSubstituteListDialog(SubstituteListDialog substituteListDialog) {
+        this.substituteListDialog = substituteListDialog;
+    }
 
 }

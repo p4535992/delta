@@ -184,6 +184,18 @@
 <f:verbatim><br/></f:verbatim>
 
 <f:verbatim><hr/></f:verbatim>
+<h:outputText value="Paranda .ddoc failide mimetype"/>
+<f:verbatim><br/></f:verbatim>
+<h:commandButton id="startFixDdocMimetypeUpdater" value="Käivita" type="submit"
+   actionListener="#{fixDdocMimetypeUpdater.executeUpdaterInBackground}"
+   rendered="#{fixDdocMimetypeUpdater.updaterRunning == false}" />
+<h:commandButton id="stopFixDdocMimetypeUpdater" value="Peata" type="submit"
+   actionListener="#{fixDdocMimetypeUpdater.stopUpdater}"
+   rendered="#{fixDdocMimetypeUpdater.updaterRunning == true}"
+   disabled="#{fixDdocMimetypeUpdater.updaterStopping == true}" />
+<f:verbatim><br/></f:verbatim>
+
+<f:verbatim><hr/></f:verbatim>
 <h:outputText value="Versioonide lahtilukustamine"/>
 <f:verbatim><br/></f:verbatim>
 <h:outputText value="Mitu objekti ühes transaktsioonis töödelda: "/>

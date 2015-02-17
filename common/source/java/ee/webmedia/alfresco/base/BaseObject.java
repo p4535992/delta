@@ -87,7 +87,7 @@ public abstract class BaseObject extends NodeBaseVO implements Cloneable {
         }
     }
 
-    private <P extends BaseObject> void setParent(P parent) {
+    protected <P extends BaseObject> void setParent(P parent) {
         this.parent = parent;
     }
 

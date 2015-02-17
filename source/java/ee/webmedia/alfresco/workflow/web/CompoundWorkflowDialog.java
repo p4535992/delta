@@ -513,6 +513,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
             updateFullAccess();
             updatePanelGroup();
             initExpandedStatuses();
+            BeanHelper.getCompoundWorkflowAssocListDialog().setResetNewAssocs(true);
             initBlocks();
             setSignatureTaskOwnerProps();
             isUnsavedWorkFlow = true;
@@ -1154,8 +1155,8 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
     }
 
     public void addDateForAllTasks(ActionEvent event) {
-        Integer workflow = ActionUtil.getParam(event, WF_INDEX, Integer.class);
-        Workflow block = compoundWorkflow.getWorkflows().get(workflow);
+        Integer workflowIndex = ActionUtil.getParam(event, WF_INDEX, Integer.class);
+        Workflow block = compoundWorkflow.getWorkflows().get(workflowIndex);
         if (block.isStatus(Status.NEW)) {
             Task selectedTask = block.getTasks().get(ActionUtil.getParam(event, TASK_INDEX, Integer.class));
             Date originDate = selectedTask.getDueDate();
@@ -1164,7 +1165,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
                     task.setDueDate(originDate);
                 }
             }
-            for (TaskGroup workflowTaskGroup : getTaskGroups().getWorkflowTaskGroups(workflow)) {
+            for (TaskGroup workflowTaskGroup : getTaskGroups().getWorkflowTaskGroups(workflowIndex)) {
                 workflowTaskGroup.setDueDate(originDate);
             }
         }

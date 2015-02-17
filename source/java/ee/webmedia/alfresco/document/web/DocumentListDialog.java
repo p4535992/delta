@@ -463,7 +463,7 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
     }
 
     private void resetModals() {
-        String bindingName = getPropSheetBindingName();
+        String bindingName = getPropertySheetBindingName();
         UIPropertySheet propertySheetComponent = (UIPropertySheet) getJsfBindingHelper().getComponentBinding(bindingName);
         if (propertySheetComponent != null && !propertySheetComponent.getChildren().isEmpty()) {
             return;
@@ -484,10 +484,6 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
         List<UIComponent> children = ComponentUtil.getChildren(getPanel());
         children.clear();
         children.add(locationModal);
-    }
-
-    protected String getPropSheetBindingName() {
-        return getBindingName("propertySheet");
     }
 
     private UIPropertySheet generatePropSheet() {
@@ -514,7 +510,7 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
         parentCase = null;
         locationNode = null;
         config = null;
-        getJsfBindingHelper().removeBinding(getPropSheetBindingName());
+        getJsfBindingHelper().removeBinding(getPropertySheetBindingName());
         selectedDocs = null;
     }
 
@@ -538,11 +534,11 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
 
     @Override
     public UIPropertySheet getPropertySheet() {
-        return (UIPropertySheet) getJsfBindingHelper().getComponentBinding(getPropSheetBindingName());
+        return (UIPropertySheet) getJsfBindingHelper().getComponentBinding(getPropertySheetBindingName());
     }
 
     public void setPropSheet(UIPropertySheet propSheet) {
-        getJsfBindingHelper().addBinding(getPropSheetBindingName(), propSheet);
+        getJsfBindingHelper().addBinding(getPropertySheetBindingName(), propSheet);
     }
 
     // END: getters / setters

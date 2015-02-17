@@ -111,8 +111,10 @@ public class UnlockMethod extends org.alfresco.repo.webdav.UnlockMethod {
                 throw new WebDAVServerException(HttpServletResponse.SC_PRECONDITION_FAILED);
             }
 
-            getBehaviourFilter().disableBehaviour(ContentModel.ASPECT_AUDITABLE);
+            BehaviourFilter behaviourFilter = getBehaviourFilter();
+            behaviourFilter.disableBehaviour(ContentModel.ASPECT_AUDITABLE);
             ((WebDAVCustomHelper) getDAVHelper()).getVersionsService().setVersionLockableAspect(nodeRef, false);
+            behaviourFilter.enableBehaviour(ContentModel.ASPECT_AUDITABLE);
         }
         else if (lockInfo.isShared())
         {

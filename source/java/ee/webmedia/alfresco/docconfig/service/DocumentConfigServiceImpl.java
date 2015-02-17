@@ -246,7 +246,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
     public DocumentConfig getConfig(Node documentDynamicNode) {
         QName type = documentDynamicNode.getType();
         if (DocumentCommonModel.Types.DOCUMENT.equals(type)) {
-            Pair<DocumentType, DocumentTypeVersion> documentTypeAndVersion = getDocumentTypeAndVersion(documentDynamicNode, false);
+            Pair<DocumentType, DocumentTypeVersion> documentTypeAndVersion = getDocumentTypeAndVersion(documentDynamicNode, true);
             return getConfig(documentTypeAndVersion.getSecond(), documentTypeAndVersion.getFirst().isShowUnvalued());
         } else if (CaseFileModel.Types.CASE_FILE.equals(type)) {
             PropDefCacheKey key = DocAdminUtil.getPropDefCacheKey(documentDynamicNode.getProperties(), CaseFileType.class);

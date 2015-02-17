@@ -26,6 +26,7 @@ import static ee.webmedia.alfresco.workflow.web.TaskListGenerator.WF_INDEX;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -419,6 +420,26 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
         if (updatePanelGroup) { // Regenerate component only if needed
             updatePanelGroupWithoutWorkflowBlockUpdate();
         }
+    }
+
+    public void deleteGroup(ActionEvent event) {
+        TaskGroup group = findTaskGroup(event);
+        if (group == null) {
+            return;
+        }
+
+        Integer wfIndex = ActionUtil.getParam(event, WF_INDEX, Integer.class);
+
+        // Delete the tasks one by one
+        List<Integer> taskIds = new ArrayList<>(group.getTaskIds()); // Avoid concurrent modification from iteration
+        Collections.sort(taskIds, Collections.reverseOrder()); // Start from the largest taskId so we don't need to sync the original list
+        for (Integer taskId : taskIds) {
+            removeWorkflowTask(wfIndex, taskId, false);
+        }
+
+        // And remove the group itself
+        getTaskGroups().removeGroup(wfIndex, group);
+        updatePanelGroupWithoutWorkflowBlockUpdate();
     }
 
     /**
@@ -1529,7 +1550,4 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
         return taskGroups;
     }
 
-    public void setTaskGroups(TaskGroupHolder taskGroups) {
-        this.taskGroups = taskGroups;
-    }
 }

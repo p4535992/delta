@@ -88,6 +88,32 @@
       <property name="fileService" ref="FileService" />
    </bean>
    
+   <bean id="fixDdocMimetypeUpdater" class="ee.webmedia.alfresco.document.file.bootstrap.FixDdocMimetypeUpdater" parent="abstractNodeUpdater" lazy-init="true">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="false" />
+      <property name="enabled" value="false" /><!-- Executed from node-browser -->
+      <property name="mimetypeService" ref="MimetypeService" />
+      <property name="bulkLoadNodeService" ref="BulkLoadNodeService" />
+   </bean>
+   
+   <bean id="recoverMisplacedDocumentFiles" class="ee.webmedia.alfresco.document.file.bootstrap.RecoverMisplacedDocumentFiles" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="enabled" value="${updater.recoverMisplacedDocumentFiles.enabled}" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="fileParametersBootstrap" />
+            <ref bean="archivalsStoresBootstrap" />
+         </list>
+      </property>
+      <property name="fileService" ref="FileService" />
+      <property name="jdbcTemplate">
+         <bean class="org.springframework.jdbc.core.JdbcTemplate">
+            <constructor-arg ref="dataSource" />
+         </bean>
+      </property>
+   </bean>
+   
    <bean id="ChangeFileDialog" class="ee.webmedia.alfresco.document.file.web.ChangeFileDialog" scope="session" />
    
    <bean id="CommentFileDialog" class="ee.webmedia.alfresco.document.file.web.CommentFileDialog" scope="session" />

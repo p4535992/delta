@@ -36,11 +36,13 @@ import org.alfresco.service.cmr.search.SearchParameters;
 import org.alfresco.service.cmr.search.SearchService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
+import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.StringUtils;
 import org.apache.lucene.analysis.Token;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.search.BooleanQuery;
 
+import ee.webmedia.alfresco.common.service.BulkLoadNodeService;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.parameters.model.Parameters;
@@ -57,6 +59,7 @@ public abstract class AbstractSearchServiceImpl {
     protected SearchService searchService;
     protected ParametersService parametersService;
     protected LuceneConfig config;
+    protected BulkLoadNodeService bulkLoadNodeService;
 
     protected LuceneAnalyser luceneAnalyser;
 
@@ -177,14 +180,13 @@ public abstract class AbstractSearchServiceImpl {
     }
 
     protected <T> Pair<List<T>, Boolean> searchProperty(String query, int limit, String queryName, final QName property, final Class<T> propertyClass) {
-        final Map<QName, Pair<Long, QName>> propertyTypes = new HashMap<QName, Pair<Long, QName>>();
-        return searchGeneralImplWithoutSort(query, limit, queryName, new SearchCallback<T>() {
-            @SuppressWarnings("unchecked")
-            @Override
-            public T addResult(ResultSetRow row) {
-                return (T) nodeService.getProperty(row.getNodeRef(), property, propertyTypes);
-            }
-        }, null, true);
+        Pair<List<NodeRef>, Boolean> nodeRefs = searchNodes(query, limit, queryName, null, false);
+        Map<NodeRef, Node> propsMap = bulkLoadNodeService.loadNodes(nodeRefs.getFirst(), new HashSet<>(Arrays.asList(property)));
+        List<T> properties = new ArrayList<>();
+        for (Node value : propsMap.values()) {
+            properties.add((T) value.getProperties().get(property));
+        }
+        return Pair.newInstance(properties, nodeRefs.getSecond());
     }
 
     protected interface SearchCallback<E> {
@@ -552,7 +554,7 @@ public abstract class AbstractSearchServiceImpl {
         }
 
         Collections.sort(list, new Comparator<org.apache.lucene.analysis.Token>()
-        {
+                {
 
             @Override
             public int compare(Token o1, Token o2)
@@ -564,7 +566,7 @@ public abstract class AbstractSearchServiceImpl {
                 }
                 return o2.getPositionIncrement() - o1.getPositionIncrement();
             }
-        });
+                });
 
         // Combined * and ? based strings - should redo the tokeniser
 
@@ -724,7 +726,7 @@ public abstract class AbstractSearchServiceImpl {
         // reorder by start position and increment
 
         Collections.sort(fixed, new Comparator<org.apache.lucene.analysis.Token>()
-        {
+                {
 
             @Override
             public int compare(Token o1, Token o2)
@@ -736,8 +738,12 @@ public abstract class AbstractSearchServiceImpl {
                 }
                 return o2.getPositionIncrement() - o1.getPositionIncrement();
             }
-        });
+                });
         return fixed;
+    }
+
+    public void setBulkLoadNodeService(BulkLoadNodeService bulkLoadNodeService) {
+        this.bulkLoadNodeService = bulkLoadNodeService;
     }
 
 }
