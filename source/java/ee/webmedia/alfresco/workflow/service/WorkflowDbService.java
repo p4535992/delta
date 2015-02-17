@@ -84,7 +84,7 @@ public interface WorkflowDbService {
 
     void createTaskFileEntriesFromNodeRefs(NodeRef taskRef, List<NodeRef> fileNodeRefs);
 
-    List<DueDateHistoryRecord> getDueDateHistoryRecords(NodeRef taskRef);
+    Map<String, List<DueDateHistoryRecord>> getDueDateHistoryRecords(Set<String> taskIds);
 
     boolean taskExists(NodeRef nodeRef);
 

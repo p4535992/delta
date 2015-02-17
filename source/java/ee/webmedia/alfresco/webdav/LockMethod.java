@@ -252,7 +252,8 @@ public class LockMethod extends WebDAVMethod {
         NodeRef fileRef = lockNodeInfo.getNodeRef();
         WebDAVCustomHelper.checkDocumentFileWritePermission(fileRef);
 
-        getBehaviourFilter().disableBehaviour(ContentModel.ASPECT_AUDITABLE);
+        BehaviourFilter behaviourFilter = getBehaviourFilter();
+        behaviourFilter.disableBehaviour(ContentModel.ASPECT_AUDITABLE);
         // Check if this is a new lock or a lock refresh
         if (hasLockToken())
         {
@@ -271,6 +272,7 @@ public class LockMethod extends WebDAVMethod {
             // Create a new lock
             createLock(lockNodeInfo, userName);
         }
+        behaviourFilter.enableBehaviour(ContentModel.ASPECT_AUDITABLE);
 
         m_response.setHeader(WebDAV.HEADER_LOCK_TOKEN, "<" + WebDAV.makeLockToken(lockNodeInfo.getNodeRef(), userName) + ">");
         m_response.setHeader(WebDAV.HEADER_CONTENT_TYPE, WebDAV.XML_CONTENT_TYPE);

@@ -7,6 +7,7 @@ import java.util.Date;
 import java.util.List;
 
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateFormatUtils;
@@ -250,7 +251,7 @@ public class WorkflowBlockItem implements Serializable {
         }
         StringBuilder sb = new StringBuilder("");
         List<DueDateHistoryRecord> dueDateHistoryRecords = getDueDateHistoryRecords();
-        if (!dueDateHistoryRecords.isEmpty()) {
+        if (CollectionUtils.isNotEmpty(dueDateHistoryRecords)) {
             sb.append("<a href=\"\" onclick=\"alert('");
             DateFormat dateFormat = new SimpleDateFormat("dd.M.yyyy");
             int recordCounter = 0;

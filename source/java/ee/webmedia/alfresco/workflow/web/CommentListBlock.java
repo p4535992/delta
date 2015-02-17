@@ -186,20 +186,16 @@ public class CommentListBlock extends BaseDialogBean {
     }
 
     public UIPanel getEditCommentModalContainer() {
-        UIPanel editCommentComponent = (UIPanel) getJsfBindingHelper().getComponentBinding(getModalContainerBindingName());
+        UIPanel editCommentComponent = (UIPanel) getJsfBindingHelper().getComponentBinding(getModalContainerBindingName(this));
         if (editCommentComponent == null) {
             editCommentComponent = new UIPanel();
-            getJsfBindingHelper().addBinding(getModalContainerBindingName(), editCommentComponent);
+            getJsfBindingHelper().addBinding(getModalContainerBindingName(this), editCommentComponent);
         }
         return editCommentComponent;
     }
 
-    protected String getModalContainerBindingName() {
-        return getBindingName("modalContainer");
-    }
-
     public void setEditCommentModalContainer(UIPanel editCommentModalContainer) {
-        getJsfBindingHelper().addBinding(getModalContainerBindingName(), editCommentModalContainer);
+        getJsfBindingHelper().addBinding(getModalContainerBindingName(this), editCommentModalContainer);
     }
 
     public String getNewComment() {

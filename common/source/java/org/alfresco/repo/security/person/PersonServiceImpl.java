@@ -191,7 +191,6 @@ public class PersonServiceImpl extends TransactionListenerAdapter implements Per
         PropertyCheck.mandatory(this, "policyComponent", policyComponent);
         PropertyCheck.mandatory(this, "personCache", personCache);
         PropertyCheck.mandatory(this, "personNodesCache", personNodesCache);
-        PropertyCheck.mandatory(this, "bulkLoadNodeService", bulkLoadNodeService);
         PropertyCheck.mandatory(this, "personDao", personDao);
 
         policyComponent
@@ -329,7 +328,7 @@ public class PersonServiceImpl extends TransactionListenerAdapter implements Per
 
     @Override
     public List<Node> getPersonNodeList(int limit) {
-        Map<String, NodeRef> people = bulkLoadNodeService.loadChildElementsNodeRefs(BeanHelper.getPersonService().getPeopleContainer(), ContentModel.PROP_USERNAME,
+        Map<String, NodeRef> people = getBulkLoadNodeService().loadChildElementsNodeRefs(BeanHelper.getPersonService().getPeopleContainer(), ContentModel.PROP_USERNAME,
                 ContentModel.TYPE_PERSON);
         List<Node> users = new ArrayList<>();
 
@@ -349,14 +348,14 @@ public class PersonServiceImpl extends TransactionListenerAdapter implements Per
 
     @Override
     public List<NodeRef> getAllUserRefs() {
-        Map<String, NodeRef> people = bulkLoadNodeService.loadChildElementsNodeRefs(BeanHelper.getPersonService().getPeopleContainer(), ContentModel.PROP_USERNAME,
+        Map<String, NodeRef> people = getBulkLoadNodeService().loadChildElementsNodeRefs(BeanHelper.getPersonService().getPeopleContainer(), ContentModel.PROP_USERNAME,
                 ContentModel.TYPE_PERSON);
         return new ArrayList<NodeRef>(people.values());
     }
 
     @Override
     public Set<String> getAllUserNames() {
-        Map<String, NodeRef> people = bulkLoadNodeService.loadChildElementsNodeRefs(BeanHelper.getPersonService().getPeopleContainer(), ContentModel.PROP_USERNAME,
+        Map<String, NodeRef> people = getBulkLoadNodeService().loadChildElementsNodeRefs(BeanHelper.getPersonService().getPeopleContainer(), ContentModel.PROP_USERNAME,
                 ContentModel.TYPE_PERSON);
         return people.keySet();
     }
@@ -998,10 +997,6 @@ public class PersonServiceImpl extends TransactionListenerAdapter implements Per
         storeRef = new StoreRef(storeUrl);
     }
 
-    public void setBulkLoadNodeService(BulkLoadNodeService bulkLoadNodeService) {
-        this.bulkLoadNodeService = bulkLoadNodeService;
-    }
-
     @Override
     public String getUserIdentifier(String caseSensitiveUserName)
     {
@@ -1062,6 +1057,13 @@ public class PersonServiceImpl extends TransactionListenerAdapter implements Per
     public boolean getUserNamesAreCaseSensitive()
     {
         return userNameMatcher.getUserNamesAreCaseSensitive();
+    }
+
+    private BulkLoadNodeService getBulkLoadNodeService() {
+        if(bulkLoadNodeService == null){
+            bulkLoadNodeService = BeanHelper.getBulkLoadNodeService();
+        }
+        return bulkLoadNodeService;
     }
 
 }

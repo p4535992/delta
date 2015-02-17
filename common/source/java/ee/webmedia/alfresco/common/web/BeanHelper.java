@@ -29,6 +29,7 @@ import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.BrowseBean;
 import org.alfresco.web.bean.dialog.DialogManager;
 import org.alfresco.web.bean.groups.GroupsDialog;
+import org.alfresco.web.bean.users.UsersDialog;
 
 import ee.webmedia.alfresco.adddocument.service.AddDocumentService;
 import ee.webmedia.alfresco.addressbook.service.AddressbookService;
@@ -352,6 +353,10 @@ public class BeanHelper implements NamespacePrefixResolverProvider {
 
     public static UserDetailsDialog getUserDetailsDialog() {
         return getJsfBean(UserDetailsDialog.class, UserDetailsDialog.BEAN_NAME);
+    }
+
+    public static UsersDialog getUsersDialog() {
+        return getJsfBean(UsersDialog.class, UsersDialog.BEAN_NAME);
     }
 
     public static DimensionDetailsDialog getDimensionDetailsDialog() {

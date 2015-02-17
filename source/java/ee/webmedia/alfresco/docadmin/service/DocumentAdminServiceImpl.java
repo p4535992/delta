@@ -344,7 +344,10 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
 
     @SuppressWarnings("unchecked")
     private <D extends DynamicType> Pair<D, DocumentTypeVersion> cloneResult(Pair<D, DocumentTypeVersion> original) {
-        return (Pair<D, DocumentTypeVersion>) new Pair<>(original.getFirst().clone(), original.getSecond().clone());
+        DocumentTypeVersion originalDocTypeVersion = original.getSecond();
+        DocumentTypeVersion clonedDocTypeVersion = originalDocTypeVersion.clone();
+        clonedDocTypeVersion.setParent(originalDocTypeVersion.getParent() != null ? originalDocTypeVersion.getParent().clone() : null);
+        return (Pair<D, DocumentTypeVersion>) new Pair<>(original.getFirst().clone(), clonedDocTypeVersion);
     }
 
     private DocumentType getDocumentType(NodeRef docTypeRef, DynTypeLoadEffort effort) {

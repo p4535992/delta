@@ -1002,7 +1002,7 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
         Assert.isTrue(!recipientCerts.isEmpty());
 
         try {
-            EncryptedData cdoc = new EncryptedData(null, null, null, EncryptedData.DENC_XMLNS_XMLENC, EncryptedData.DENC_ENC_METHOD_AES128);
+            EncryptedData cdoc = new EncryptedData(null, null, "http://www.sk.ee/DigiDoc/v1.3.0/digidoc.xsd", EncryptedData.DENC_XMLNS_XMLENC, EncryptedData.DENC_ENC_METHOD_AES128);
 
             int idCounter = 1;
             for (X509Certificate recipientCert : recipientCerts) {
@@ -1040,7 +1040,7 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
                     dDoc.writeToStream(tmpOutput);
                 }
                 try (InputStream tmpInput = new BufferedInputStream(new FileInputStream(tmpFile))) {
-                    cdoc.encryptStream(tmpInput, output, EncryptedData.DENC_COMPRESS_ALLWAYS);
+                    cdoc.encryptStream(tmpInput, output, EncryptedData.DENC_COMPRESS_NEVER);
                 }
             } finally {
                 tmpFile.delete();

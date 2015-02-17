@@ -537,7 +537,11 @@ public abstract class BaseDialogBean implements IDialogBean, Serializable
    }
    
    protected String getBindingName(String name) {
-       return this.getClass().getSimpleName() + "." + name;
+       return getBindingName(name, this);
+   }
+
+   protected static String getBindingName(String name, Object classInstance) {
+       return classInstance.getClass().getSimpleName() + "." + name;
    }
 
    protected String getRichListBindingName() {
@@ -550,6 +554,10 @@ public abstract class BaseDialogBean implements IDialogBean, Serializable
 
    protected String getPropertySheetBindingName() {
        return getBindingName("propertySheet");
+   }
+
+   public static String getModalContainerBindingName(Object classInstance) {
+       return getBindingName("modalContainer", classInstance);
    }
 
 }

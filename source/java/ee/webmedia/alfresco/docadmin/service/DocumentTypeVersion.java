@@ -41,6 +41,11 @@ public class DocumentTypeVersion extends BaseObject implements MetadataContainer
     }
 
     @Override
+    protected <P extends BaseObject> void setParent(P parent) {
+        super.setParent(parent);
+    }
+
+    @Override
     public void resetParent() {
         super.resetParent();
     }

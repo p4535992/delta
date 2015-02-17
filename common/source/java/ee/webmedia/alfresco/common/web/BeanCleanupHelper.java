@@ -74,6 +74,7 @@ import ee.webmedia.alfresco.user.web.GroupUsersListDialog;
 import ee.webmedia.alfresco.user.web.PermissionsAddDialog;
 import ee.webmedia.alfresco.user.web.PermissionsDeleteDialog;
 import ee.webmedia.alfresco.user.web.PermissionsListDialog;
+import ee.webmedia.alfresco.user.web.UserDetailsDialog;
 import ee.webmedia.alfresco.user.web.UserSyncDialog;
 import ee.webmedia.alfresco.volume.search.web.VolumeDynamicReportDialog;
 import ee.webmedia.alfresco.volume.search.web.VolumeDynamicSearchDialog;
@@ -163,6 +164,7 @@ public class BeanCleanupHelper implements Serializable {
         DIALOGS_TO_CLEAN.put(FieldDetailsDialog.BEAN_NAME, null);
         DIALOGS_TO_CLEAN.put(GroupsDialog.BEAN_NAME, null);
         DIALOGS_TO_CLEAN.put(CaseDocumentListDialog.BEAN_NAME, Arrays.asList(DocumentListDialog.BEAN_NAME, CaseDetailsDialog.BEAN_NAME, DocumentDynamicDialog.BEAN_NAME));
+        DIALOGS_TO_CLEAN.put(UserDetailsDialog.BEAN_NAME, Arrays.asList(GroupUsersListDialog.BEAN_NAME));
     }
 
     public void clean(FacesContext context, String outcome, boolean canResetMyTasks) {
@@ -264,7 +266,8 @@ public class BeanCleanupHelper implements Serializable {
      * Returns true if <code>clean()</code> should be called later if moving from managedBean to outcome
      */
     private static boolean postponeClean(String managedBean, String outcome) {
-        return StringUtils.containsIgnoreCase(outcome, managedBean) || containsException(managedBean, outcome);
+        return StringUtils.containsIgnoreCase(outcome, managedBean) || containsException(managedBean, outcome)
+                || "dialog:userConsole".equals(outcome) && UserDetailsDialog.BEAN_NAME.equals(managedBean);
     }
 
     private static boolean containsException(String managedBean, String outcome) {

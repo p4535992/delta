@@ -9,23 +9,23 @@
 
 <a:panel id="users-groups" label="#{msg.usergroups}" styleClass="with-pager">
    <a:richList id="usersGroupsList" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
-      width="100%" value="#{UserDetailsDialog.groups}" var="r" refreshOnBind="true">
+      width="100%" value="#{UserDetailsDialog.groups}" var="r2" refreshOnBind="true">
       
          <%-- Primary column for details view mode --%>
          <a:column primary="true" style="padding:2px;text-align:left">
             <f:facet name="small-icon">
-               <a:actionLink value="#{r.name}" image="/images/icons/group.gif" actionListener="#{GroupUsersListDialog.clickGroup}" showLink="false">
-                  <f:param id="ugParam1" name="id" value="#{r.id}" />
+               <a:actionLink value="#{r2.name}" image="/images/icons/group.gif" actionListener="#{GroupUsersListDialog.clickGroup}" showLink="false">
+                  <f:param id="ugParam1" name="id" value="#{r2.id}" />
                </a:actionLink>
             </f:facet>
             <f:facet name="header">
                <a:sortLink label="#{msg.addressbook_group_name}" value="id" mode="case-insensitive" styleClass="header"/>
             </f:facet>
             
-            <a:actionLink value="#{r.displayName}" action="dialog:groupUsersListDialog" actionListener="#{GroupUsersListDialog.clickGroup}" rendered="#{UserService.documentManager}">
-               <f:param id="ugParam2" name="id" value="#{r.id}" />
+            <a:actionLink value="#{r2.displayName}" action="dialog:groupUsersListDialog" actionListener="#{GroupUsersListDialog.clickGroup}" rendered="#{UserService.documentManager}">
+               <f:param id="ugParam2" name="id" value="#{r2.id}" />
             </a:actionLink>
-            <h:outputText value="#{r.displayName}" rendered="#{!UserService.documentManager}" />
+            <h:outputText value="#{r2.displayName}" rendered="#{!UserService.documentManager}" />
          </a:column>
          
         <%-- Actions column --%>
@@ -34,7 +34,7 @@
                <h:outputText value="#{msg.actions}" />
             </f:facet>
                <a:actionLink value="" tooltip="#{msg.delete_user}" image="/images/icons/remove_user.gif" actionListener="#{UserDetailsDialog.removeFromGroup}">
-                  <f:param id="ugParam3" name="group" value="#{r.group}" />
+                  <f:param id="ugParam3" name="group" value="#{r2.group}" />
                </a:actionLink>
          </a:column>
                   

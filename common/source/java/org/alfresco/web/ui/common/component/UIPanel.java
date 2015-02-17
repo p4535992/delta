@@ -598,6 +598,10 @@ public class UIPanel extends UICommand
    public void evaluateExpanded()
    {
        if(isAttributesInitialized()) {
+           if(expandedState != null) {
+               this.expanded = expandedState;
+               return;
+           }
            Boolean expanded = (Boolean) getAttributes().get("expanded");
            if(expanded != null) {
                this.expanded = expanded;
@@ -619,6 +623,11 @@ public class UIPanel extends UICommand
    public void setExpanded(boolean expanded)
    {
       this.expanded = Boolean.valueOf(expanded);
+      setExpandedState(this.expanded);
+   }
+   
+   private void setExpandedState(boolean expandedState) {
+       this.expandedState = expandedState;
    }
    
    public Boolean isExpanded(){
@@ -670,6 +679,7 @@ public class UIPanel extends UICommand
    private boolean hasAdornments = false;
    private boolean hasBorderedTitleArea = false;
    private Boolean expanded = Boolean.TRUE;
+   private Boolean expandedState = null;
    
    // ------------------------------------------------------------------------------
    // Inner classes

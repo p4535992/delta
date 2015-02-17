@@ -1,11 +1,12 @@
 package ee.webmedia.alfresco.workflow.bootstrap;
 
 import java.io.File;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.StoreRef;
@@ -40,26 +41,23 @@ public class CompoundWorkflowDefinitionTypeUpdater extends AbstractNodeUpdater {
     protected List<String[]> processNodes(final List<NodeRef> batchList, File failedNodesFile) throws Exception, InterruptedException {
         final List<String[]> batchInfos = new ArrayList<>(batchList.size());
         Map<NodeRef, Node> compoundWorkflows = bulkLoadNodeService.loadNodes(batchList, null, propertyTypes);
-        Map<NodeRef, Map<QName, Serializable>> compoundWorkflowsNewProps = new HashMap<>();
+        Set<NodeRef> compoundWorkflowsToUpdate = new HashSet<>();
         for (Map.Entry<NodeRef, Node> entry : compoundWorkflows.entrySet()) {
             Map<String, Object> compoundWorkflowProps = entry.getValue().getProperties();
-            Map<QName, Serializable> propsToAdd = new HashMap<>();
             if (StringUtils.isBlank((String) compoundWorkflowProps.get(WorkflowCommonModel.Props.TYPE.toString()))) {
-                propsToAdd.put(WorkflowCommonModel.Props.TYPE, CompoundWorkflowType.DOCUMENT_WORKFLOW.toString());
+                compoundWorkflowsToUpdate.add(entry.getKey());
             }
-            compoundWorkflowsNewProps.put(entry.getKey(), propsToAdd);
         }
         for (NodeRef nodeRef : batchList) {
-            if (!compoundWorkflowsNewProps.containsKey(nodeRef)) {
+            if (!compoundWorkflows.containsKey(nodeRef)) {
                 batchInfos.add(new String[] { "not found " });
                 continue;
             }
-            Map<QName, Serializable> propsToAdd = compoundWorkflowsNewProps.get(nodeRef);
-            if (propsToAdd.isEmpty()) {
+            if (!compoundWorkflowsToUpdate.contains(nodeRef)) {
                 batchInfos.add(new String[] { "no update needed" });
                 continue;
             }
-            nodeService.addProperties(nodeRef, propsToAdd);
+            nodeService.setProperty(nodeRef, WorkflowCommonModel.Props.TYPE, CompoundWorkflowType.DOCUMENT_WORKFLOW.toString());
             batchInfos.add(new String[] { "updated" });
 
         }

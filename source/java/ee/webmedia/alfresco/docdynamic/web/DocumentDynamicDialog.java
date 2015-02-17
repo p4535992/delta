@@ -1461,10 +1461,6 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         getJsfBindingHelper().addBinding(getPropertySheetBindingName(), propertySheet);
     }
 
-    private String getModalContainerBindingName() {
-        return getBindingName("modalContainer");
-    }
-
     @Override
     protected void resetOrInit(DialogDataProvider provider) {
         WmNode node = getNode();
@@ -1548,18 +1544,18 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
     }
 
     public UIPanel getModalContainer() {
-        UIPanel panel = (UIPanel) getJsfBindingHelper().getComponentBinding(getModalContainerBindingName());
+        UIPanel panel = (UIPanel) getJsfBindingHelper().getComponentBinding(getModalContainerBindingName(this));
         if (panel == null) {
             panel = (UIPanel) FacesContext.getCurrentInstance().getApplication().createComponent(UIPanel.COMPONENT_TYPE);
             updateModals(panel);
-            getJsfBindingHelper().addBinding(getModalContainerBindingName(), panel);
+            getJsfBindingHelper().addBinding(getModalContainerBindingName(this), panel);
         }
         return panel;
 
     }
 
     public void setModalContainer(UIPanel modalContainer) {
-        getJsfBindingHelper().addBinding(getModalContainerBindingName(), modalContainer);
+        getJsfBindingHelper().addBinding(getModalContainerBindingName(this), modalContainer);
     }
 
     // =========================================================================

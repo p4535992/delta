@@ -36,8 +36,9 @@ public abstract class AbstractParallelNodeUpdater extends AbstractNodeUpdater {
     protected void initializeBeforeUpdating() throws Exception {
         prepareForUpdating();
         super.initializeBeforeUpdating();
-        if (nodes.size() <= threadCount) {
-            threadCount = Math.max(1, nodes.size());
+        int nodesSize = nodes == null ? 0 : nodes.size();
+        if (nodesSize <= threadCount) {
+            threadCount = Math.max(1, nodesSize);
         }
     }
 

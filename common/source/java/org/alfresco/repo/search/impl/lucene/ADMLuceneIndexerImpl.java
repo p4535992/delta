@@ -824,7 +824,7 @@ public class ADMLuceneIndexerImpl extends AbstractLuceneIndexerImpl<NodeRef> imp
             // Document field "DOC_VISIBLE_TO" is added with authority names with "viewDocumentMetaData" privilege (including inherited authorities with same privilege).
             if (DocumentCommonModel.Types.DOCUMENT.equals(typeQName) && StoreRef.PROTOCOL_WORKSPACE.equals(nodeRef.getStoreRef().getProtocol())) {
                 NodeRef seriesRef = (NodeRef) properties.get(DocumentCommonModel.Props.SERIES);
-                if (seriesRef != null && !nodeService.exists(nodeRef)) {
+                if (seriesRef != null && !nodeService.exists(seriesRef)) {
                     log.warn("Document " + nodeRef + " references nonexistent series " + seriesRef);
                     seriesRef = null;
                 }

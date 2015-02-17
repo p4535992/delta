@@ -135,7 +135,7 @@ public class TestingForDeveloperBean implements Serializable {
         int testParamValue = ActionUtil.getParam(event, "testP", Integer.class);
         LOG.debug("Received event with testP=" + testParamValue);
         // Developers can use this method for testing, but shouldn't commit changes
-        atsTestib(event);
+        System.gc();
     }
 
     public void runADMLuceneTestTestMaskDeletes(ActionEvent event) throws Exception {

@@ -23,6 +23,7 @@
       <property name="authorityService" ref="AuthorityService" />
       <property name="permissionService" ref="PermissionService" />
       <property name="parametersService" ref="ParametersService" />
+      <property name="bulkLoadNodeService" ref="BulkLoadNodeService" />
       <property name="generalService" ref="GeneralService" />
       <property name="luceneConfig" ref="admLuceneIndexerAndSearcherFactory" />
       <property name="store" value="${spaces.store}" />
