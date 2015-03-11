@@ -756,6 +756,9 @@ public class WorkflowUtil {
                 }
                 TaskGroup group = dueDates.get(taskGroupKeyForTask);
                 if (group != null && group.hasTask(j)) { // Tasks that are between two groups floor to previous group
+                    if (group.getTaskIds().size() == 1) {
+                        continue; // due date has been added to task
+                    }
                     tasks.get(j).setDueDate(group.getDueDate());
                 }
             }

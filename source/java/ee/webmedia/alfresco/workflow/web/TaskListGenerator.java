@@ -262,8 +262,12 @@ public class TaskListGenerator extends BaseComponentGenerator {
 
             if (row.isSingleTaskRow()) {
                 if (taskListPage.isRowOnCurrentPage(rowNumber)) {
-                    showAddDateLink = createTaskRow(context, propertySheet, compoundWorkflow, taskListInfo, workflow, tasks, picker, textAreaGenerator, taskGridChildren, showAddDateLink,
-                            signatureTaskOwnerProps, row.getTaskIndex(), null);
+                    if (row.partOfGroup) { // other group member have been deleted by user
+                        TaskGroup group = getTaskGroup(taskListInfo, tasks.get(row.getTaskIndex()), row.getTaskIndex(), taskGroupHolder);
+                        reorderGroupTaskIds(group, row.getTaskIndex(), Collections.<Integer> emptyList());
+                    }
+                    showAddDateLink = createTaskRow(context, propertySheet, compoundWorkflow, taskListInfo, workflow, tasks, picker, textAreaGenerator, taskGridChildren,
+                            showAddDateLink, signatureTaskOwnerProps, row.getTaskIndex(), null);
                 }
                 rowNumber++;
                 continue;
@@ -289,8 +293,8 @@ public class TaskListGenerator extends BaseComponentGenerator {
 
                     // Primary task in group
                     if (taskListPage.isRowOnCurrentPage(rowNumber)) {
-                        showAddDateLink = createTaskRow(context, propertySheet, compoundWorkflow, taskListInfo, workflow, tasks, picker, textAreaGenerator, taskGridChildren, showAddDateLink,
-                                signatureTaskOwnerProps, row.getTaskIndex(), taskGroup);
+                        showAddDateLink = createTaskRow(context, propertySheet, compoundWorkflow, taskListInfo, workflow, tasks, picker, textAreaGenerator, taskGridChildren,
+                                showAddDateLink, signatureTaskOwnerProps, row.getTaskIndex(), taskGroup);
                     }
                     rowNumber++;
 
@@ -298,8 +302,8 @@ public class TaskListGenerator extends BaseComponentGenerator {
                         int startIndex = getTaskGroupStartIndex(taskListPage, rowNumber);
                         List<Integer> groupedTaskIndices = row.getGroupedTaskIndices();
                         for (int i = startIndex, actualRow = rowNumber + startIndex; (i < row.getGroupedTasksCount() && taskListPage.isRowOnCurrentPage(actualRow)); i++, actualRow++) {
-                            showAddDateLink = createTaskRow(context, propertySheet, compoundWorkflow, taskListInfo, workflow, tasks, picker, textAreaGenerator, taskGridChildren, showAddDateLink,
-                                    signatureTaskOwnerProps, groupedTaskIndices.get(i), taskGroup);
+                            showAddDateLink = createTaskRow(context, propertySheet, compoundWorkflow, taskListInfo, workflow, tasks, picker, textAreaGenerator, taskGridChildren,
+                                    showAddDateLink, signatureTaskOwnerProps, groupedTaskIndices.get(i), taskGroup);
                         }
                     }
                     rowNumber += row.getGroupedTasksCount();
@@ -320,19 +324,30 @@ public class TaskListGenerator extends BaseComponentGenerator {
         return startIndex;
     }
 
-    private TaskGroup createGroupRow(TaskListInfo list, Task task, Integer taskIndex, List<Integer> secondaryGroupTaskIndices, TaskGroupHolder taskGroupHolder) {
+    private TaskGroup getTaskGroup(TaskListInfo list, Task task, Integer taskIndex, TaskGroupHolder taskGroupHolder) {
         String ownerGroup = task.getOwnerGroup();
-        TaskGroup taskGroup = taskGroupHolder.getAdjacentTaskGroup(list.workflowIndex, ownerGroup, taskIndex);
-        if (taskGroup == null) {
-            taskGroup = taskGroupHolder.addNewTaskGroup(list.workflowIndex, taskIndex, ownerGroup, list.responsible, list.fullAccess);
-            if (task.getDueDate() != null) {
-                taskGroup.setDueDate(task.getDueDate());
-            }
+        return taskGroupHolder.getAdjacentTaskGroup(list.workflowIndex, ownerGroup, taskIndex);
+    }
+
+    private void reorderGroupTaskIds(TaskGroup taskGroup, Integer taskIndex, List<Integer> secondaryGroupTaskIndices) {
+        if(taskGroup == null) {
+            return;
         }
         Set<Integer> groupTaskIds = taskGroup.getTaskIds();
         groupTaskIds.clear();
         groupTaskIds.add(taskIndex);
         groupTaskIds.addAll(secondaryGroupTaskIndices);
+    }
+
+    private TaskGroup createGroupRow(TaskListInfo list, Task task, Integer taskIndex, List<Integer> secondaryGroupTaskIndices, TaskGroupHolder taskGroupHolder) {
+        TaskGroup taskGroup = getTaskGroup(list, task, taskIndex, taskGroupHolder);
+        if (taskGroup == null) {
+            taskGroup = taskGroupHolder.addNewTaskGroup(list.workflowIndex, taskIndex, task.getOwnerGroup(), list.responsible, list.fullAccess);
+            if (task.getDueDate() != null) {
+                taskGroup.setDueDate(task.getDueDate());
+            }
+        }
+        reorderGroupTaskIds(taskGroup, taskIndex, secondaryGroupTaskIndices);
         task.setGroupDueDateVbString("#{DialogManager.bean.taskGroups.byGroupId['" + taskGroup.getGroupId() + "'].dueDate}");
         return taskGroup;
     }
@@ -1058,7 +1073,9 @@ public class TaskListGenerator extends BaseComponentGenerator {
                     previousGroupRow.addGroupedTask(taskIndex);
                 } else {
                     previousGroupRow = addVisibleTask(result, taskGroups, ownerGroup, workflowIndex, taskIndex);
-                    previousGroupName = StringUtils.isNotBlank(ownerGroup) ? ownerGroup : "";
+                    boolean hasGroup = StringUtils.isNotBlank(ownerGroup);
+                    previousGroupRow.partOfGroup = hasGroup;
+                    previousGroupName = hasGroup ? ownerGroup : "";
                 }
                 maximumVisibleIndex = taskIndex;
             }
@@ -1087,10 +1104,10 @@ public class TaskListGenerator extends BaseComponentGenerator {
         private final Integer taskIndex;
         private List<Integer> groupedTaskIndices;
         private boolean groupExpanded = false;
+        private boolean partOfGroup;
 
         public TaskListRow(int taskIndex) {
             this.taskIndex = taskIndex;
-            // groupedTaskIndices = new ArrayList<>();
         }
 
         public int getGroupedTasksCount() {

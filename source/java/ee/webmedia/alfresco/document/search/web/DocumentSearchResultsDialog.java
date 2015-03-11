@@ -7,6 +7,7 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getVisitedDocumentsBean
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,7 +24,6 @@ import javax.faces.event.ActionEvent;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
-import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.Repository;
 import org.alfresco.web.ui.common.component.UIActionLink;
@@ -77,14 +77,17 @@ public class DocumentSearchResultsDialog extends BaseDocumentListDialog {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DocumentSearchResultsDialog.class);
     public static final String BEAN_NAME = "DocumentSearchResultsDialog";
 
-    private static Map<QName/* FieldDefinition prop name */, Pair<String /* property name */, String /* translation key */>> CUSTOM_COLUMNS = new HashMap<>();
+    private static final List<CustomColumn> CUSTOM_COLUMNS;
     static {
-        CUSTOM_COLUMNS.put(DocumentSearchModel.Props.DOCUMENT_TYPE, new Pair<>(DOCUMENT_TYPE_NAME_COL, "document_docType"));
-        CUSTOM_COLUMNS.put(DocumentSearchModel.Props.SEND_MODE, new Pair<>(SEND_MODE_COL, "document_send_mode"));
-        CUSTOM_COLUMNS.put(DocumentSearchModel.Props.SEND_INFO_RECIPIENT, new Pair<>(SEND_INFO_RECIPIENT_COL, "document_search_export_recipient"));
-        CUSTOM_COLUMNS.put(DocumentSearchModel.Props.SEND_INFO_SEND_DATE_TIME, new Pair<>(SEND_INFO_SEND_DATE_TIME_COL, "document_search_send_info_time"));
-        CUSTOM_COLUMNS.put(DocumentSearchModel.Props.SEND_INFO_RESOLUTION, new Pair<>(SEND_INFO_RESOLUTION_COL, "document_search_send_info_resolution"));
-        CUSTOM_COLUMNS.put(DocumentSearchModel.Props.DOCUMENT_CREATED, new Pair<>(DOC_CREATED_DATE_COL, "document_search_document_created"));
+        List<CustomColumn> columns = new ArrayList<>();
+        columns.add(new CustomColumn(DocumentSearchModel.Props.DOCUMENT_TYPE, DOCUMENT_TYPE_NAME_COL, DOCUMENT_TYPE_NAME_COL, "document_docType"));
+        columns.add(new CustomColumn(DocumentSearchModel.Props.SEND_MODE, SEND_MODE_COL, SEND_MODE_COL, "document_send_mode"));
+        columns.add(new CustomColumn(DocumentSearchModel.Props.SEND_INFO_RECIPIENT, SEND_INFO_RECIPIENT_COL, SEND_INFO_RECIPIENT_COL, "document_search_export_recipient"));
+        columns.add(new CustomColumn(DocumentSearchModel.Props.SEND_INFO_SEND_DATE_TIME, SEND_INFO_SEND_DATE_TIME_COL, SEND_INFO_SEND_DATE_TIME_COL,
+                "document_search_send_info_time"));
+        columns.add(new CustomColumn(DocumentSearchModel.Props.SEND_INFO_RESOLUTION, SEND_INFO_RESOLUTION_COL, SEND_INFO_RESOLUTION_COL, "document_search_send_info_resolution"));
+        columns.add(new CustomColumn(DocumentSearchModel.Props.DOCUMENT_CREATED, DOC_CREATED_DATE_COL, "created", "document_search_document_created"));
+        CUSTOM_COLUMNS = Collections.unmodifiableList(columns);
     }
 
     protected Node searchFilter;
@@ -108,7 +111,6 @@ public class DocumentSearchResultsDialog extends BaseDocumentListDialog {
         getVisitedDocumentsBean().resetVisitedDocuments(documentProvider);
     }
 
-    @SuppressWarnings("unchecked")
     protected void doInitialSearch() {
         try {
             DocumentSearchService documentSearchService = getDocumentSearchService();
@@ -174,18 +176,16 @@ public class DocumentSearchResultsDialog extends BaseDocumentListDialog {
         titleLinkParams.put("caseNodeRef", "#{r.node.nodeRef}");
         List<String> outputTextOverrides = Arrays.asList(SEND_INFO_RESOLUTION_COL);
 
-        for (Entry<QName, Pair<String, String>> col : CUSTOM_COLUMNS.entrySet()) {
-            if (Boolean.TRUE.equals(props.get(getLabelBoolean(col.getKey())))) {
-                String sortLinkValue = col.getValue().getFirst();
-                String valueBinding = "#{r." + sortLinkValue + "}";
+        for (CustomColumn col : CUSTOM_COLUMNS) {
+            if (Boolean.TRUE.equals(props.get(col.getLabelBooleanProp()))) {
                 UIComponent valueComponent = null;
-                if (outputTextOverrides.contains(sortLinkValue)) {
-                    valueComponent = createOutput(context, sortLinkValue, valueBinding);
+                if (outputTextOverrides.contains(col.getDisplayProp())) {
+                    valueComponent = createOutput(context, col.getDisplayProp(), col.getValueBinding());
                 } else {
-                    valueComponent = createActionLink(context, valueBinding, "#{DocumentDialog.action}", null, "#{DocumentDialog.open}", null, titleLinkParams);
+                    valueComponent = createActionLink(context, col.getValueBinding(), "#{DocumentDialog.action}", null, "#{DocumentDialog.open}", null, titleLinkParams);
                 }
 
-                createAndAddColumn(context, richListComponent, MessageUtil.getMessage(col.getValue().getSecond()), sortLinkValue, false, valueComponent);
+                createAndAddColumn(context, richListComponent, col.getTranslation(), col.getSortLinkProp(), false, valueComponent);
             }
         }
         Set<String> keys = props.keySet();
@@ -345,5 +345,43 @@ public class DocumentSearchResultsDialog extends BaseDocumentListDialog {
 
     public CustomChildrenCreator getCustomChildGenerator() {
         return ComponentUtil.getDocumentRowFileGenerator(FacesContext.getCurrentInstance().getApplication(), 5);
+    }
+
+    private static class CustomColumn {
+
+        private final String displayProp;
+        private final String sortLinkProp;
+        private final String translation;
+        private final String valueBinding;
+        private final QName labelBooleanProp;
+
+        private CustomColumn(QName fieldDefinitionProp, String displayProp, String sortLinkProp, String translationKey) {
+            this.displayProp = displayProp;
+            valueBinding = "#{r." + displayProp + "}";
+            this.sortLinkProp = sortLinkProp;
+            translation = MessageUtil.getMessage(translationKey);
+            labelBooleanProp = getLabelBoolean(fieldDefinitionProp);
+        }
+
+        public String getDisplayProp() {
+            return displayProp;
+        }
+
+        public String getSortLinkProp() {
+            return sortLinkProp;
+        }
+
+        public String getTranslation() {
+            return translation;
+        }
+
+        public String getValueBinding() {
+            return valueBinding;
+        }
+
+        public QName getLabelBooleanProp() {
+            return labelBooleanProp;
+        }
+
     }
 }

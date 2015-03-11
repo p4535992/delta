@@ -126,7 +126,8 @@ insert into tmp_export_nodes (
 	join alf_node parent on parent.id = child_assoc.parent_node_id
 	where 
 	node.type_qname_id in (select qname.id from alf_qname qname join alf_namespace ns on ns.id = qname.ns_id 
-			where (local_name = 'content' and uri = 'http://www.alfresco.org/model/content/1.0'))
+			where (local_name = 'content' and uri = 'http://www.alfresco.org/model/content/1.0')
+            or (local_name = 'fileContents' and uri = 'http://alfresco.webmedia.ee/model/document/common/1.0'))
 	and (
 		parent.type_qname_id in 
 			(select qname.id from alf_qname qname join alf_namespace ns on ns.id = qname.ns_id  
@@ -411,6 +412,10 @@ create table tmp_content_data (
 
 insert into tmp_content_data (select id, nextval('export_sequence') from alf_content_data);
 
+COPY (
+   select * from tmp_content_data
+) TO '/delta-pgsql/data/content_data_old_id_to_new_id.tsv';
+
 create table tmp_content_url (
    id bigint,
    new_id bigint
@@ -422,7 +427,9 @@ insert into tmp_content_url (select id, nextval('export_sequence') from alf_cont
 COPY (
 	SELECT export.new_id, 
 	actual_type_n, persisted_type_n, boolean_value, 
-	case when qname_id in (select qname.id from alf_qname qname join alf_namespace ns on ns.id = qname.ns_id where local_name = 'content' and uri = 'http://www.alfresco.org/model/content/1.0') 
+	case when qname_id in (select qname.id from alf_qname qname join alf_namespace ns on ns.id = qname.ns_id 
+	        where (local_name = 'content' and uri = 'http://www.alfresco.org/model/content/1.0')
+            or (local_name = 'fileContents' and uri = 'http://alfresco.webmedia.ee/model/document/common/1.0'))
 		then tmp_content_data.new_id 
 		else long_value end, 
 	float_value, double_value, string_value, serializable_value, qname_id, list_index, locale_id FROM alf_node_properties props 

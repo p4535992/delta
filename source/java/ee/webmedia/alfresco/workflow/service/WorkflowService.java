@@ -309,4 +309,6 @@ public interface WorkflowService {
     void removeDeletedCompoundWorkflowDefinitionFromCache();
 
     Map<NodeRef, List<NodeRef>> getChildWorkflowNodeRefsByCompoundWorkflow(List<NodeRef> compoundWorkflows);
+
+    void removeCaseFileTypeFromCompoundWorklfowDefinitions(String caseFileId);
 }

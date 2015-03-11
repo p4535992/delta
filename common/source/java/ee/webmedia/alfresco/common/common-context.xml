@@ -18,6 +18,7 @@
       <property name="generateNewRegNumberInReregistration" value="${conf.document-regnumber.generate-new-in-reregistration.enabled}" />
       <property name="finishUnregisteredDocumentEnabled" value="${conf.document.finish-unregistered-document.enabled}" />
       <property name="volumeColumnEnabled" value="${conf.documents-list.volume-column.enabled}" />
+      <property name="myTasksAndDocumentsMenuClosed" value="${conf.myTasksAndDocuments.menu.closed}" />
    </bean>
    
    <bean id="constantNodeRefsBean" class="ee.webmedia.alfresco.common.service.ConstantNodeRefsBean" scope="application" 

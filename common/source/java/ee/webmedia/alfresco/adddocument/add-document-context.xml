@@ -53,6 +53,16 @@
       </property>
    </bean>
 
+   <bean id="removeAddedDocumentParentHierarchyPropertiesUpdater" class="ee.webmedia.alfresco.adddocument.bootstrap.RemoveAddedDocumentParentHierarchyPropertiesUpdater" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="addDocumentSpacesBootstrap" />
+         </list>
+      </property>
+   </bean>
+
    <bean id="WebServiceDocumentListDialog" class="ee.webmedia.alfresco.adddocument.web.WebServiceDocumentListDialog" scope="session" />
 
 </beans>

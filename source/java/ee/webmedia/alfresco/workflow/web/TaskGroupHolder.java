@@ -1,8 +1,5 @@
 package ee.webmedia.alfresco.workflow.web;
 
-import org.apache.commons.collections4.map.MultiValueMap;
-import org.springframework.util.Assert;
-
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -12,6 +9,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.TreeMap;
+
+import org.apache.commons.collections4.map.MultiValueMap;
+import org.springframework.util.Assert;
 
 public class TaskGroupHolder implements Serializable {
     /**
@@ -33,6 +33,7 @@ public class TaskGroupHolder implements Serializable {
 
     public void removeGroup(int wfIndex, TaskGroup group) {
         getWorkflowTaskGroupLists(wfIndex).removeGroup(group);
+        removeWorkflowTaskGroupList(wfIndex);
         byGroupId.remove(group.getGroupId());
     }
 
@@ -79,7 +80,7 @@ public class TaskGroupHolder implements Serializable {
         return Collections.unmodifiableMap(byGroupId);
     }
 
-    public void removeTaskFromGroup(Integer wfIndex, Integer taskIndex) {
+    public void removeTaskFromGroup(Integer wfIndex, Integer taskIndex, boolean removeGroup) {
         WorkflowTaskGroupList groupLists = getWorkflowTaskGroupLists(wfIndex);
         if (groupLists.isEmpty()) {
             return;
@@ -88,6 +89,9 @@ public class TaskGroupHolder implements Serializable {
         for (TaskGroup group : groupLists.getAllTaskGroups()) {
             if (group.hasTask(taskIndex)) {
                 group.removeTask(taskIndex);
+                if (removeGroup && group.isEmpty()) {
+                    removeGroup(wfIndex, group);
+                }
                 return;
             }
         }

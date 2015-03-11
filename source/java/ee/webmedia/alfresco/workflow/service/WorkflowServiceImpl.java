@@ -2647,6 +2647,29 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         }
         return true;
     }
+    
+    @Override
+    public void removeCaseFileTypeFromCompoundWorklfowDefinitions(String caseFileId) {
+        Set<QName> propsToLoad = new HashSet<>(Arrays.asList(WorkflowCommonModel.Props.CASE_FILE_TYPES, WorkflowCommonModel.Props.NAME));
+        NodeRef definitionsRoot = getRoot();
+        Map<NodeRef, Pair<String, List<String>>> updatedCaseFileTypes = new HashMap<>();
+        Map<NodeRef, Map<QName, Serializable>> definitions = bulkLoadNodeService.loadChildNodes(Collections.singleton(definitionsRoot), propsToLoad).get(definitionsRoot);
+        for (Map.Entry<NodeRef, Map<QName, Serializable>> entry : definitions.entrySet()) {
+            Map<QName, Serializable> props = entry.getValue();
+            @SuppressWarnings("unchecked")
+            List<String> caseFileTypes = (List<String>) props.get(WorkflowCommonModel.Props.CASE_FILE_TYPES);
+            if (CollectionUtils.isNotEmpty(caseFileTypes) && caseFileTypes.contains(caseFileId)) {
+                caseFileTypes.remove(caseFileId);
+                updatedCaseFileTypes.put(entry.getKey(), Pair.newInstance((String) props.get(WorkflowCommonModel.Props.NAME), caseFileTypes));
+            }
+        }
+        for (Map.Entry<NodeRef, Pair<String, List<String>>> entry : updatedCaseFileTypes.entrySet()) {
+            NodeRef definitionRef = entry.getKey();
+            String definitionName = entry.getValue().getFirst();
+            nodeService.setProperty(definitionRef, WorkflowCommonModel.Props.CASE_FILE_TYPES, (Serializable) entry.getValue().getSecond());
+            log.info(String.format("Removed caseFileType '%s' from compound workflow definition '%s' (nodeRef=%s)", caseFileId, definitionName, definitionRef.toString()));
+        }
+    }
 
     private String getUserNameToCheck() {
         return AuthenticationUtil.getRunAsUser();

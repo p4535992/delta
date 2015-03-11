@@ -350,20 +350,36 @@ public class TaskInfo implements Serializable, Comparable<TaskInfo>, CssStylable
         return hasCompoundWorkflow() ? compoundWorkflow.getOwnerJobTitle() : "";
     }
 
-    public String getCompoundWorkflowCreatedDateTime() {
+    public String getCompoundWorkflowCreatedDateTimeStr() {
         return hasCompoundWorkflow() ? compoundWorkflow.getCreatedDateStr() : "";
     }
 
-    public String getCompoundWorkflowStartedDateTime() {
+    public Date getCompoundWorkflowCreatedDateTime() {
+        return hasCompoundWorkflow() ? compoundWorkflow.getCreatedDateTime() : null;
+    }
+
+    public String getCompoundWorkflowStartedDateTimeStr() {
         return hasCompoundWorkflow() ? compoundWorkflow.getStartedDateStr() : "";
     }
 
-    public String getCompoundWorkflowStoppedDateTime() {
+    public Date getCompoundWorkflowStartedDateTime() {
+        return hasCompoundWorkflow() ? compoundWorkflow.getStartedDateTime() : null;
+    }
+
+    public String getCompoundWorkflowStoppedDateTimeStr() {
         return hasCompoundWorkflow() ? compoundWorkflow.getStoppedDateStr() : "";
     }
 
-    public String getCompoundWorkflowFinishedDateTime() {
+    public Date getCompoundWorkflowStoppedDateTime() {
+        return hasCompoundWorkflow() ? compoundWorkflow.getStoppedDateTime() : null;
+    }
+
+    public String getCompoundWorkflowFinishedDateTimeStr() {
         return hasCompoundWorkflow() ? compoundWorkflow.getEndedDateStr() : "";
+    }
+
+    public Date getCompoundWorkflowFinishedDateTime() {
+        return hasCompoundWorkflow() ? compoundWorkflow.getEndedDateTime() : null;
     }
 
     public String getCompoundWorkflowStatus() {

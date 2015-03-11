@@ -44,6 +44,7 @@ public class ApplicationConstantsBean implements InitializingBean {
     private boolean generateNewRegNumberInReregistration;
     private boolean finishUnregisteredDocumentEnabled;
     private boolean volumeColumnEnabled;
+    private boolean myTasksAndDocumentsMenuClosed;
 
     public boolean isGenerateNewRegNumberInReregistration() {
         return generateNewRegNumberInReregistration;
@@ -125,6 +126,14 @@ public class ApplicationConstantsBean implements InitializingBean {
 
     public String getMessageYes() {
         return messageYes;
+    }
+
+    public boolean isMyTasksAndDocumentsMenuClosed() {
+        return myTasksAndDocumentsMenuClosed;
+    }
+
+    public void setMyTasksAndDocumentsMenuClosed(boolean myTasksAndDocumentsMenuClosed) {
+        this.myTasksAndDocumentsMenuClosed = myTasksAndDocumentsMenuClosed;
     }
 
 }

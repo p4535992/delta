@@ -399,6 +399,7 @@ public class LockServiceImpl implements LockService,
                     // Add lock aspect if not already present
                     ensureLockAspect(nodeRef);
                     persistLockProps(nodeRef, lockType, lifetime, userName, expiryDate);
+                    lockStore.forceUnlock(nodeRef);
                 }
                 finally
                 {

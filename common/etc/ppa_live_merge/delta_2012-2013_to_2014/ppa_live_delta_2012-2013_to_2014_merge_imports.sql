@@ -393,7 +393,11 @@ COPY tmp_delta_node_inheritspermissions from '/delta-pgsql/data/delta_node_permi
 insert into delta_node_inheritspermissions (select * from tmp_delta_node_inheritspermissions);
 
 -- content
-COPY alf_content_url from '/delta-pgsql/data/alf_content_url.tsv';
+drop table if exists tmp_alf_content_url_imported;
+create table if not exists tmp_alf_content_url_imported(like alf_content_url);
+COPY tmp_alf_content_url_imported from '/delta-pgsql/data/alf_content_url.tsv';
+
+select * into alf_content_url from tmp_alf_content_url_imported
 
 create table tmp_content_data (
   id bigint NOT NULL,
@@ -427,6 +431,62 @@ insert into alf_content_data (
 	join tmp_mimetype on tmp_mimetype.id = tmp_content_data.content_mimetype_id
 	join alf_mimetype on alf_mimetype.mimetype_str = tmp_mimetype.mimetype_str
 );
+
+-- remove duplicate content data and content urls
+drop table if exists tmp_duplicate_content_url_id;
+create table tmp_duplicate_content_url_id (
+  old_id bigint not null,
+  new_id bigint not null
+);
+
+insert into tmp_duplicate_content_url_id (
+  select min(id) as old_id, max(id) as new_id
+  from alf_content_url 
+  group by content_url
+  having count(1) > 1
+  and max(id) in (select id from tmp_alf_content_url_imported)
+);
+
+create table if not exists tmp_alf_content_url_deleted (like alf_content_url);
+create table if not exists tmp_alf_content_data_deleted (like alf_content_data);
+
+insert into tmp_alf_content_url_deleted (
+  select * from alf_content_url url
+  where url.id in (select duplicate.old_id from tmp_duplicate_content_url_id duplicate)
+);
+
+insert into tmp_alf_content_data_deleted (
+  select * from alf_content_data
+  where content_url_id in (select old_id from tmp_duplicate_content_url_id)
+);
+
+drop table if exists tmp_old_content_data_id_to_new;
+create table tmp_old_content_data_id_to_new (
+  id bigint not null,
+  new_id bigint not null
+);
+
+COPY tmp_old_content_data_id_to_new from '/delta-pgsql/data/content_data_old_id_to_new_id.tsv';
+
+-- alf_content_data.id is used in alf_node_properties.long_value, update references
+with props_qname_ids as (
+   select alf_qname.id from alf_qname
+   join alf_namespace ns on ns.id = ns_id
+   where (local_name = 'content' and uri = 'http://www.alfresco.org/model/content/1.0')
+   or (local_name = 'fileContents' and uri = 'http://alfresco.webmedia.ee/model/document/common/1.0')
+)
+update alf_node_properties props
+set long_value = tmp.new_id
+from tmp_old_content_data_id_to_new AS tmp
+where actual_type_n = 3 -- long
+and qname_id in (select id from props_qname_ids)
+and props.long_value = tmp.id;
+
+delete from alf_content_url
+where id in (select old_id from tmp_duplicate_content_url_id);
+
+delete from alf_content_data
+where content_url_id in (select old_id from tmp_duplicate_content_url_id);
 
 -- resettida sequence'id
 select setval('delta_task_due_date_extension_task_due_date_extension_assoc_seq', (select max(task_due_date_extension_assoc_id) from delta_task_due_date_extension_assoc));

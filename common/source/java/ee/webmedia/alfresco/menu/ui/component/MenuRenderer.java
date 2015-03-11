@@ -1,5 +1,7 @@
 package ee.webmedia.alfresco.menu.ui.component;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getApplicationConstantsBean;
+
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -79,7 +81,8 @@ public class MenuRenderer extends BaseRenderer {
 
         UIMenuComponent menuComponent = (UIMenuComponent) component;
         boolean primary = ((Boolean) menuComponent.getAttributes().get(UIMenuComponent.PRIMARY_ATTRIBUTE_KEY));
-        if (!primary && Integer.parseInt(BeanHelper.getMenuBean().getActiveItemId()) == MenuBean.MY_TASKS_AND_DOCUMENTS_ID) {
+        if (!primary && !getApplicationConstantsBean().isMyTasksAndDocumentsMenuClosed()
+                && Integer.parseInt(BeanHelper.getMenuBean().getActiveItemId()) == MenuBean.MY_TASKS_AND_DOCUMENTS_ID) {
             out.write("<script type=\"text/javascript\">\n");
             out.write("$jQ(document).ready(function() {\n");
             out.write("updateMenuItemsCount();\n");
@@ -113,11 +116,11 @@ public class MenuRenderer extends BaseRenderer {
                 if (scrollToAnchor || StringUtils.isNotEmpty(menuBean.getScrollToY())) {
                     final String scrollTo = scrollToAnchor ? "'" + menuBean.getScrollToAnchor() + "'" : menuBean.getScrollToY();
                     StringBuilder sb = new StringBuilder("<script type=\"text/javascript\">")
-                    .append("$jQ(document).ready(function(){")
-                    .append("$jQ.scrollTo(")
-                    .append(scrollTo)
-                    .append(")});")
-                    .append("</script>");
+                            .append("$jQ(document).ready(function(){")
+                            .append("$jQ.scrollTo(")
+                            .append(scrollTo)
+                            .append(")});")
+                            .append("</script>");
 
                     out.write(sb.toString());
                 }

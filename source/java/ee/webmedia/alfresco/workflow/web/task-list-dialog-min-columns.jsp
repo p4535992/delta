@@ -9,7 +9,7 @@
       <%-- dueDate --%>
       <a:column id="dueDate" primary="true" styleClass="#{r.task.cssStyleClass}" style="width: 10%;" >
          <f:facet name="header">
-            <a:sortLink id="dueDate-sort" label="#{msg.task_property_dueDate}" value="dueDate" styleClass="header" />
+            <a:sortLink id="dueDate-sort" label="#{msg.task_property_dueDate}" value="taskDueDate" styleClass="header" />
          </f:facet>
          <a:actionLink id="dueDate-text" value="#{r.task.dueDateTimeStr}" action="#{r.action}" tooltip="#{r.task.dueDateTimeStr}" actionListener="#{r.actionListener}" styleClass="no-underline" >
             <f:param name="nodeRef" value="#{r.actionNodeRef}" />

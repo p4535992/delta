@@ -314,10 +314,10 @@
          <f:facet name="header">
             <a:sortLink id="col23-header" label="#{msg.task_search_result_compound_workflow_created_date_time}" value="compoundWorkflowCreatedDateTime" styleClass="header" />
          </f:facet>
-          <a:actionLink id="col23-txt" value="#{r.compoundWorkflowCreatedDateTime}" action="#{DocumentDialog.action}" tooltip="#{r.compoundWorkflowCreatedDateTime}" showLink="false" actionListener="#{DocumentDialog.open}" styleClass="no-underline" rendered="#{!r.linkedReviewTask && r.documentWorkflow}" >
+          <a:actionLink id="col23-txt" value="#{r.compoundWorkflowCreatedDateTimeStr}" action="#{DocumentDialog.action}" tooltip="#{r.compoundWorkflowCreatedDateTimeStr}" showLink="false" actionListener="#{DocumentDialog.open}" styleClass="no-underline" rendered="#{!r.linkedReviewTask && r.documentWorkflow}" >
             <f:param name="nodeRef" value="#{r.documentNodeRef}" />
          </a:actionLink>
-          <a:actionLink id="col23-txt1" value="#{r.compoundWorkflowCreatedDateTime}" action="dialog:compoundWorkflowDialog" tooltip="#{r.compoundWorkflowCreatedDateTime}" showLink="false" actionListener="#{CompoundWorkflowDialog.setupWorkflowFromList}" styleClass="no-underline" rendered="#{r.independentWorkflow || r.caseFileWorkflow}" >
+          <a:actionLink id="col23-txt1" value="#{r.compoundWorkflowCreatedDateTimeStr}" action="dialog:compoundWorkflowDialog" tooltip="#{r.compoundWorkflowCreatedDateTimeStr}" showLink="false" actionListener="#{CompoundWorkflowDialog.setupWorkflowFromList}" styleClass="no-underline" rendered="#{r.independentWorkflow || r.caseFileWorkflow}" >
             <f:param name="nodeRef" value="#{r.compoundWorkflowNodeRef}" />
          </a:actionLink>         
       </a:column>  
@@ -326,10 +326,10 @@
          <f:facet name="header">
             <a:sortLink id="col24-header" label="#{msg.task_search_result_compound_workflow_started_date_time}" value="compoundWorkflowStartedDateTime" styleClass="header" />
          </f:facet>
-          <a:actionLink id="col24-txt" value="#{r.compoundWorkflowStartedDateTime}" action="#{DocumentDialog.action}" tooltip="#{r.compoundWorkflowStartedDateTime}" showLink="false" actionListener="#{DocumentDialog.open}" styleClass="no-underline" rendered="#{!r.linkedReviewTask && r.documentWorkflow}" >
+          <a:actionLink id="col24-txt" value="#{r.compoundWorkflowStartedDateTimeStr}" action="#{DocumentDialog.action}" tooltip="#{r.compoundWorkflowStartedDateTimeStr}" showLink="false" actionListener="#{DocumentDialog.open}" styleClass="no-underline" rendered="#{!r.linkedReviewTask && r.documentWorkflow}" >
             <f:param name="nodeRef" value="#{r.documentNodeRef}" />
          </a:actionLink>
-          <a:actionLink id="col24-txt1" value="#{r.compoundWorkflowStartedDateTime}" action="dialog:compoundWorkflowDialog" tooltip="#{r.compoundWorkflowStartedDateTime}" showLink="false" actionListener="#{CompoundWorkflowDialog.setupWorkflowFromList}" styleClass="no-underline" rendered="#{r.independentWorkflow || r.caseFileWorkflow}" >
+          <a:actionLink id="col24-txt1" value="#{r.compoundWorkflowStartedDateTimeStr}" action="dialog:compoundWorkflowDialog" tooltip="#{r.compoundWorkflowStartedDateTimeStr}" showLink="false" actionListener="#{CompoundWorkflowDialog.setupWorkflowFromList}" styleClass="no-underline" rendered="#{r.independentWorkflow || r.caseFileWorkflow}" >
             <f:param name="nodeRef" value="#{r.compoundWorkflowNodeRef}" />
          </a:actionLink>         
       </a:column>  
@@ -338,10 +338,10 @@
          <f:facet name="header">
             <a:sortLink id="col25-header" label="#{msg.task_search_result_compound_workflow_stopped_date_time}" value="compoundWorkflowStoppedDateTime" styleClass="header" />
          </f:facet>
-          <a:actionLink id="col25-txt" value="#{r.compoundWorkflowStoppedDateTime}" action="#{DocumentDialog.action}" tooltip="#{r.compoundWorkflowStoppedDateTime}" showLink="false" actionListener="#{DocumentDialog.open}" styleClass="no-underline" rendered="#{!r.linkedReviewTask && r.documentWorkflow}" >
+          <a:actionLink id="col25-txt" value="#{r.compoundWorkflowStoppedDateTimeStr}" action="#{DocumentDialog.action}" tooltip="#{r.compoundWorkflowStoppedDateTimeStr}" showLink="false" actionListener="#{DocumentDialog.open}" styleClass="no-underline" rendered="#{!r.linkedReviewTask && r.documentWorkflow}" >
             <f:param name="nodeRef" value="#{r.documentNodeRef}" />
          </a:actionLink>
-          <a:actionLink id="col25-txt1" value="#{r.compoundWorkflowStoppedDateTime}" action="dialog:compoundWorkflowDialog" tooltip="#{r.compoundWorkflowStoppedDateTime}" showLink="false" actionListener="#{CompoundWorkflowDialog.setupWorkflowFromList}" styleClass="no-underline" rendered="#{r.independentWorkflow || r.caseFileWorkflow}" >
+          <a:actionLink id="col25-txt1" value="#{r.compoundWorkflowStoppedDateTimeStr}" action="dialog:compoundWorkflowDialog" tooltip="#{r.compoundWorkflowStoppedDateTimeStr}" showLink="false" actionListener="#{CompoundWorkflowDialog.setupWorkflowFromList}" styleClass="no-underline" rendered="#{r.independentWorkflow || r.caseFileWorkflow}" >
             <f:param name="nodeRef" value="#{r.compoundWorkflowNodeRef}" />
          </a:actionLink>         
       </a:column>  
@@ -350,10 +350,10 @@
          <f:facet name="header">
             <a:sortLink id="col26-header" label="#{msg.task_search_result_compound_workflow_finished_date_time}" value="compoundWorkflowFinishedDateTime" styleClass="header" />
          </f:facet>
-          <a:actionLink id="col26-txt" value="#{r.compoundWorkflowFinishedDateTime}" action="#{DocumentDialog.action}" tooltip="#{r.compoundWorkflowFinishedDateTime}" showLink="false" actionListener="#{DocumentDialog.open}" styleClass="no-underline" rendered="#{!r.linkedReviewTask && r.documentWorkflow}" >
+          <a:actionLink id="col26-txt" value="#{r.compoundWorkflowFinishedDateTimeStr}" action="#{DocumentDialog.action}" tooltip="#{r.compoundWorkflowFinishedDateTimeStr}" showLink="false" actionListener="#{DocumentDialog.open}" styleClass="no-underline" rendered="#{!r.linkedReviewTask && r.documentWorkflow}" >
             <f:param name="nodeRef" value="#{r.documentNodeRef}" />
          </a:actionLink>
-          <a:actionLink id="col26-txt1" value="#{r.compoundWorkflowFinishedDateTime}" action="dialog:compoundWorkflowDialog" tooltip="#{r.compoundWorkflowFinishedDateTime}" showLink="false" actionListener="#{CompoundWorkflowDialog.setupWorkflowFromList}" styleClass="no-underline" rendered="#{r.independentWorkflow || r.caseFileWorkflow}" >
+          <a:actionLink id="col26-txt1" value="#{r.compoundWorkflowFinishedDateTimeStr}" action="dialog:compoundWorkflowDialog" tooltip="#{r.compoundWorkflowFinishedDateTimeStr}" showLink="false" actionListener="#{CompoundWorkflowDialog.setupWorkflowFromList}" styleClass="no-underline" rendered="#{r.independentWorkflow || r.caseFileWorkflow}" >
             <f:param name="nodeRef" value="#{r.compoundWorkflowNodeRef}" />
          </a:actionLink>         
       </a:column>

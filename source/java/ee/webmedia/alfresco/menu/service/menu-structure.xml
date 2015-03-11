@@ -92,7 +92,7 @@
                </item>
             </subitems>
          </dropdown>
-         <dropdown title-id="menu_received_sent_documents" expanded="true">
+         <dropdown id="menu_received_sent_documents" title-id="menu_received_sent_documents" expanded="true">
             <submenu-id>received-documents-submenu</submenu-id>
             <subitems>
                <item id="incomingEmails" title-id="menu_incoming_emails" document-manager="true">

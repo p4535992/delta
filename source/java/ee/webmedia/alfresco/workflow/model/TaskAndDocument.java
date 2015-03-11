@@ -133,6 +133,10 @@ public class TaskAndDocument implements Serializable {
         return dueDateStr;
     }
 
+    public Date getTaskDueDate() {
+        return task.getDueDate();
+    }
+
     private boolean hasDocument() {
         return document != null;
     }
