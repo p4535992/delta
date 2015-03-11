@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.alfresco.model.ContentModel;
 import org.alfresco.repo.domain.QNameDAO;
 import org.alfresco.repo.transaction.RetryingTransactionHelper;
 import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
@@ -60,6 +61,11 @@ public class FileOrderInListAndConvertToPdfIfSignedUpdater extends AbstractParal
         }
 
         return new String[] { "Reordered and set 'convertToPdfIfSigned' = true for " + filesToTransform.size() + " files" };
+    }
+
+    @Override
+    protected void doBeforeBatchUpdate(List<NodeRef> batchList) {
+        behaviourFilter.disableBehaviour(ContentModel.ASPECT_AUDITABLE);
     }
 
     @Override

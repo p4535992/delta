@@ -391,6 +391,7 @@ public class UIPanel extends UICommand
       this.expandedTitleBorder = (String)values[8];
       this.expandedActionListener = (MethodBinding)restoreAttachedState(context, values[9]);
       this.facetsId = (String)values[10];
+      this.expandedState = (Boolean)values[11];
    }
 
    /**
@@ -409,7 +410,8 @@ public class UIPanel extends UICommand
          this.titleBorder,
          this.expandedTitleBorder,
          saveAttachedState(context, this.expandedActionListener),
-         this.facetsId};
+         this.facetsId,
+         this.expandedState};
       return values;
    }
 
@@ -623,11 +625,7 @@ public class UIPanel extends UICommand
    public void setExpanded(boolean expanded)
    {
       this.expanded = Boolean.valueOf(expanded);
-      setExpandedState(this.expanded);
-   }
-   
-   private void setExpandedState(boolean expandedState) {
-       this.expandedState = expandedState;
+      expandedState = this.expanded;
    }
    
    public Boolean isExpanded(){

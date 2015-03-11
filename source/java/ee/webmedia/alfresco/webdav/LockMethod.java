@@ -133,7 +133,17 @@ public class LockMethod extends WebDAVMethod {
         parseIfHeader();
 
         // Get the lock timeout value
+        // setLockTimeoutFromHeader(); XXX: is this ever needed?
 
+        // DEBUG
+
+        if (logger.isDebugEnabled()) {
+            logger.debug("Lock lockToken=" + getLockToken() + ", request timeout=" + getLockTimeout()
+                    + ", user-agent=" + m_request.getHeader(WebDAV.HEADER_USER_AGENT));
+        }
+    }
+
+    private void setLockTimeoutFromHeader() {
         String strTimeout = m_request.getHeader(WebDAV.HEADER_TIMEOUT);
 
         // If the timeout header starts with anything other than Second
@@ -162,13 +172,6 @@ public class LockMethod extends WebDAVMethod {
 
                 logger.warn("Failed to parse Timeout header: " + strTimeout);
             }
-        }
-
-        // DEBUG
-
-        if (logger.isDebugEnabled()) {
-            logger.debug("Lock lockToken=" + getLockToken() + ", request timeout=" + getLockTimeout()
-                    + ", user-agent=" + m_request.getHeader(WebDAV.HEADER_USER_AGENT));
         }
     }
 

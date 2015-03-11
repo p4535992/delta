@@ -157,6 +157,7 @@ public class AddDocumentServiceImpl implements AddDocumentService {
                 propCounter++;
             }
         }
+        resetDocumentHierarchy(importedDocument.getNode());
 
         DocumentServiceImpl.PropertyChangesMonitorHelper propertyChangesMonitorHelper = new DocumentServiceImpl.PropertyChangesMonitorHelper();
         BeanHelper.getDocumentDynamicService().saveThisNodeAndChildNodes(null, importedDocument.getNode(), childAssocTypeQNamesRoot.getChildren(), null,
@@ -172,6 +173,14 @@ public class AddDocumentServiceImpl implements AddDocumentService {
         BeanHelper.getDocumentLogService().addDocumentLog(docRef, MessageUtil.getMessage(logMsgKey, senderApplication), senderApplication);
         result.setStatus("OK");
         return result;
+    }
+
+    private void resetDocumentHierarchy(Node docNode) {
+        Map<String, Object> props = docNode.getProperties();
+        props.put(DocumentCommonModel.Props.FUNCTION.toString(), null);
+        props.put(DocumentCommonModel.Props.SERIES.toString(), null);
+        props.put(DocumentCommonModel.Props.VOLUME.toString(), null);
+        props.put(DocumentCommonModel.Props.CASE.toString(), null);
     }
 
     private boolean addFiles(ee.webmedia.alfresco.adddocument.generated.Document documentToAdd, NodeRef docRef) throws IOException {

@@ -322,7 +322,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         }
         Pair<DocumentDynamic, AssociationModel> newDocumentAndAssociatonModel = BeanHelper.getDocumentAssociationsService().createAssociatedDocFromModel(baseDocRef, assocModelRef);
         DocumentDynamic newDocument = newDocumentAndAssociatonModel.getFirst();
-        open(newDocument.getNodeRef(), newDocument, true, false);
+        open(newDocument.getNodeRef(), newDocument, true, true);
         addWorkflowAssocs(baseDocRef, newDocumentAndAssociatonModel.getSecond().getAssociationType().getAssocBetweenDocs());
         getAssocsBlockBean().sortDocAssocInfos();
     }

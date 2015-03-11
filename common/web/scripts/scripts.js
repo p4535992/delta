@@ -1113,8 +1113,20 @@ function handleAjaxViewStateError(responseText) {
 // There is no concurrency in JS. One thread per page. Event handling is based on a queue.
 // http://stackoverflow.com/questions/2078235/ajax-concurrency
 
+function updateItemsCountIfNeeded(id, updateMethod){
+   var menuElement = $jQ('#' + escapeId4JQ(id));
+   if (!menuElement.hasClass("menuItemCountUpdated")){
+      updateItemsCount(updateMethod);
+      menuElement.addClass("menuItemCountUpdated");
+   }
+}
+
 function updateMenuItemsCount() {
-   var uri = getContextPath() + '/ajax/invoke/MenuItemCountBean.updateMenuItemsCount';
+   updateItemsCount('MenuItemCountBean.updateMenuItemsCount');
+}
+
+function updateItemsCount(updateMethod) {
+   var uri = getContextPath() + '/ajax/invoke/' + updateMethod;
    $jQ.ajax({
       type: 'POST',
       url: uri,
@@ -2308,8 +2320,12 @@ function handleHtmlLoaded(context, setFocus, selects) {
             setDateFromEnum(beginDate,endDate,selector.val());
             beginDate.change(clearRangePicker);
             endDate.change(clearRangePicker);
+            beginDate.each(clearRangePicker);
             selector.change(setDateFromEnumOnChange);
          });
+
+   $jQ("[id*='substitutionBeginDate_']").each(setMultiRowMinEndDate);
+   $jQ("[id*='substitutionBeginDate_']").live("change", setMultiRowMinEndDate);
 
    if(context != null) {
       $jQ("input", context).focus(function() {
@@ -2561,21 +2577,30 @@ function clearFormHiddenParams(currFormName, newTargetVal) {
    f.target = newTargetVal ? newTargetVal : '';
 }
 function clearRangePicker(){
-   var date = jQuery(this);
-   var dateId = date.attr("id");
-   dateId = dateId.replace("_EndDate","");
-   var otherDate;
-   if(dateId==date.attr("id")){
-      otherDate = jQuery("#" + escapeId4JQ(dateId + "_EndDate"))
-   } else {
-      otherDate = jQuery("#" + escapeId4JQ(dateId))
-   }
-   date.datepicker("option","minDate",null);
-   date.datepicker("option","maxDate",null);
-   otherDate.datepicker("option","minDate",null);
-   otherDate.datepicker("option","maxDate",null);
+   var dateId = jQuery(this).attr("id");
+   var isEndDate = dateId.indexOf("_EndDate") > -1;
+   var startDateSelector = "#" + (isEndDate ? escapeId4JQ(dateId.replace("_EndDate","")) : escapeId4JQ(dateId));
+   var endDateSelector = "#" + (isEndDate ? escapeId4JQ(dateId) : escapeId4JQ(dateId + "_EndDate"));
+   var startDate = jQuery(startDateSelector);
+   var endDate = jQuery(endDateSelector);
+   
+   startDate.datepicker("option","minDate",null);
+   startDate.datepicker("option","maxDate",null);
+   endDate.datepicker("option","maxDate",null);
+   setMinDateOption(startDate, endDate);
    var selector = jQuery("#" + escapeId4JQ(dateId + "_DateRangePicker"));
    selector.val("");
+}
+function setMultiRowMinEndDate() {
+   var beginDate = $jQ(this);
+   var fieldId = beginDate.attr("id");
+   var endDateId = fieldId.replace(/BeginDate/, "EndDate");
+   var endDate = $jQ("#" + escapeId4JQ(endDateId));
+   setMinDateOption(beginDate, endDate);
+}
+function setMinDateOption(beginDate, endDate) {
+   var selectedStartDate = beginDate.val() ? beginDate.val() : null;
+   endDate.datepicker("option","minDate",selectedStartDate);
 }
 function setDateFromEnumOnChange(){
    var selector = jQuery(this);

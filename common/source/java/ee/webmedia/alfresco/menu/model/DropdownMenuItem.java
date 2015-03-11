@@ -2,9 +2,12 @@ package ee.webmedia.alfresco.menu.model;
 
 import static org.apache.commons.lang.StringUtils.startsWith;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import javax.faces.component.UIComponent;
 import javax.faces.context.FacesContext;
@@ -21,6 +24,7 @@ import com.thoughtworks.xstream.annotations.XStreamAlias;
 import com.thoughtworks.xstream.annotations.XStreamAsAttribute;
 import com.thoughtworks.xstream.annotations.XStreamOmitField;
 
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.menu.ui.MenuBean;
 import ee.webmedia.alfresco.menu.ui.component.MenuItemWrapper;
 import ee.webmedia.alfresco.menu.ui.component.MenuRenderer;
@@ -61,6 +65,8 @@ public class DropdownMenuItem extends MenuItem {
     private String childFilter;
     private String transientOrderString;
 
+    private static final Set<String> MY_TASKS_AND_DOCUMENTS_SUBMENUES = new HashSet<>(Arrays.asList("menu_my_tasks", "menu_my_responsibility", "menu_received_sent_documents"));
+
     public DropdownMenuItem() {
         super();
     }
@@ -81,12 +87,17 @@ public class DropdownMenuItem extends MenuItem {
             return null;
         }
 
+        String menuId = getId();
+        boolean isMyTasksAndDocumentsSubmenu = MY_TASKS_AND_DOCUMENTS_SUBMENUES.contains(menuId);
+
         javax.faces.application.Application application = context.getApplication();
 
         MenuItemWrapper wrapper = (MenuItemWrapper) application.createComponent(MenuItemWrapper.class.getCanonicalName());
         wrapper.setDropdownWrapper(true);
-        wrapper.setExpanded(isExpanded());
-        wrapper.setSubmenuId(getSubmenuId());
+        boolean isMyTasksAndDocSubmenuAndIsClosed = isMyTasksAndDocumentsSubmenu && BeanHelper.getApplicationConstantsBean().isMyTasksAndDocumentsMenuClosed();
+        wrapper.setExpanded(isExpanded() && !isMyTasksAndDocSubmenuAndIsClosed);
+        setExpanded(wrapper.isExpanded());
+        wrapper.setSubmenuId(submenuId);
 
         UIActionLink link = (UIActionLink) application.createComponent(UIActions.COMPONENT_ACTIONLINK);
         link.setRendererType(UIActions.RENDERER_ACTIONLINK);
@@ -126,23 +137,31 @@ public class DropdownMenuItem extends MenuItem {
         if (isBrowse()) {
             // avoid setting on-click
         } else if (isTemporary()) {
-            link.setOnclick("_toggleTempMenu(event, '" + getSubmenuId() + "'); return false;");
+            link.setOnclick("_toggleTempMenu(event, '" + submenuId + "'); return false;");
         } else if (isHover()) {
             attr.put("styleClass", "dropdown-hover");
             link.setOnclick("return false;");
         } else {
-            link.setOnclick("_togglePersistentMenu(event, '" + getSubmenuId() + "'); return false;");
+            String onClickString = "_togglePersistentMenu(event, '" + submenuId + "');";
+            if (isMyTasksAndDocSubmenuAndIsClosed) {
+                if ("menu_my_tasks".equals(menuId)) {
+                    onClickString += " updateItemsCountIfNeeded('" + submenuId + "', 'MenuItemCountBean.updateMyTaskMenuCounts'); ";
+                } else if ("menu_my_responsibility".equals(menuId)) {
+                    onClickString += " updateItemsCountIfNeeded('" + submenuId + "', 'MenuItemCountBean.updateMyResponsibilitiesMenuCount'); ";
+                } else if ("menu_received_sent_documents".equals(menuId)) {
+                    onClickString += " updateItemsCountIfNeeded('" + submenuId + "', 'MenuItemCountBean.updateReceivedSentMenuItemsCount'); ";
+                }
+            }
+            onClickString += "return false;";
+            link.setOnclick(onClickString);
         }
         // Check if MenuItem should be initially hidden
         if (StringUtils.isNotBlank(getHidden())) {
             boolean hideIt = getHidden().startsWith("#{")
-                    ? (Boolean) application.createMethodBinding(getHidden(), new Class[] { String.class }).invoke(context, new Object[] { getId() }) //
-                    : Boolean.valueOf(getHidden());
+                    ? (Boolean) application.createMethodBinding(getHidden(), new Class[] { String.class }).invoke(context, new Object[] { menuId }) //
+                            : Boolean.valueOf(getHidden());
 
-            wrapper.setRendered(!hideIt);
-            if (hideIt && isMyTasksMenu) {
-                log.debug("Menu error; menuItem menu_my_tasks is hidden");
-            }
+                    wrapper.setRendered(!hideIt);
         }
 
         @SuppressWarnings("unchecked")

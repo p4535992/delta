@@ -67,9 +67,10 @@ public class DocumentLockHelperBean implements Serializable {
     /**
      * @param mustLock4Edit
      * @return true if current user holds the lock after execution of this function
-     * @throws UnableToPerformException when node is already locked by another user
+     * @throws NodeLockedException when node is already locked by another user
+     * @throws UnableToPerformException when docRef has been deleted or locking has failed for unknown reason
      */
-    public boolean lockOrUnlockIfNeeded(boolean mustLock4Edit) throws NodeLockedException {
+    public boolean lockOrUnlockIfNeeded(boolean mustLock4Edit) throws NodeLockedException, UnableToPerformException {
         // XXX It would be correct to lock all nodes in document/caseFile dialog stack which are opened in edit mode.
         // But currently we only lock the top most node.
         final Node docNode = getDocumentDialogHelperBean().getNode();
@@ -80,14 +81,13 @@ public class DocumentLockHelperBean implements Serializable {
         final NodeRef docRef = docNode.getNodeRef();
         synchronized (docNode) { // to avoid extending lock after unlock(save/cancel)
             if (!getNodeService().exists(docRef)) {
-                throw new UnableToPerformException("document_delete_success"); // XXX:
+                throw new UnableToPerformException("document_delete_success");
             }
             if (mustLock4Edit) {
                 if (lockService.setLockIfFree(docRef) == LockStatus.LOCK_OWNER) {
                     return true;
                 }
                 LOG.debug("Lock can't be created: document_validation_alreadyLocked");
-
                 // Node cannot be locked
                 throw new NodeLockedException(docRef);
             }
@@ -101,7 +101,7 @@ public class DocumentLockHelperBean implements Serializable {
      * a) document is in edit mode
      * OR
      * b) current document is opened in send out dialog
-     * 
+     *
      * @return true if we can lock, false otherwise.
      */
     public boolean isLockingAllowed() {

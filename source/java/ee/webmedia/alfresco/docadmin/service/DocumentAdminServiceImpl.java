@@ -584,6 +584,7 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
     @Override
     public void deleteDynamicType(NodeRef docTypeRef) {
         DynamicType dynType = getDynamicType(null, docTypeRef, DOC_TYPE_WITHOUT_OLDER_DT_VERSION_CHILDREN);
+        boolean isCaseFileType = false;
         if (dynType instanceof DocumentType) {
             DocumentType docType = (DocumentType) dynType;
             if (docType.isSystematic()) {
@@ -593,7 +594,8 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
                 throw new UnableToPerformException("docType_delete_failed_inUse");
             }
         } else {
-            Assert.isTrue(CaseFileType.class.equals(dynType.getClass()), "expected that deletable node is CaseFileType (if it is not DocumentType)");
+            isCaseFileType = CaseFileType.class.equals(dynType.getClass());
+            Assert.isTrue(isCaseFileType, "expected that deletable node is CaseFileType (if it is not DocumentType)");
             if (isCaseFileTypeUsed(dynType.getId())) {
                 throw new UnableToPerformException("caseFileType_delete_failed_inUse");
             }
@@ -610,6 +612,9 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
                 }
             }
             saveOrUpdateFieldDefinitions(fieldsToSave.values(), false);
+        }
+        if (isCaseFileType) {
+            BeanHelper.getWorkflowService().removeCaseFileTypeFromCompoundWorklfowDefinitions(dynType.getId());
         }
         DocumentConfigService documentConfigService = BeanHelper.getDocumentConfigService();
         String typeId = dynType.getId();

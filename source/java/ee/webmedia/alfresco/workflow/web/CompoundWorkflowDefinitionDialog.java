@@ -401,10 +401,10 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
     public void removeWorkflowTask(ActionEvent event) {
         int wfIndex = ActionUtil.getParam(event, WF_INDEX, Integer.class);
         int taskIndex = Integer.parseInt(ActionUtil.getParam(event, TASK_INDEX));
-        removeWorkflowTask(wfIndex, taskIndex, true);
+        removeWorkflowTask(wfIndex, taskIndex, true, true);
     }
 
-    public void removeWorkflowTask(Integer wfIndex, Integer taskIndex, boolean updatePanelGroup) {
+    public void removeWorkflowTask(Integer wfIndex, Integer taskIndex, boolean updatePanelGroup, boolean removeGroup) {
         log.debug("removeWorkflowTask: " + wfIndex + ", " + taskIndex);
         Workflow block = compoundWorkflow.getWorkflows().get(wfIndex);
         Task delTask = block.getTasks().get(taskIndex);
@@ -416,7 +416,7 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
             }
         }
         block.removeTask(taskIndex);
-        updateTaskGroupsAfterTaskRemoval(wfIndex, taskIndex);
+        updateTaskGroupsAfterTaskRemoval(wfIndex, taskIndex, removeGroup);
         if (updatePanelGroup) { // Regenerate component only if needed
             updatePanelGroupWithoutWorkflowBlockUpdate();
         }
@@ -434,7 +434,7 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
         List<Integer> taskIds = new ArrayList<>(group.getTaskIds()); // Avoid concurrent modification from iteration
         Collections.sort(taskIds, Collections.reverseOrder()); // Start from the largest taskId so we don't need to sync the original list
         for (Integer taskId : taskIds) {
-            removeWorkflowTask(wfIndex, taskId, false);
+            removeWorkflowTask(wfIndex, taskId, false, false);
         }
 
         // And remove the group itself
@@ -495,8 +495,8 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
         return requiredType == CompoundWorkflowType.valueOf(type);
     }
 
-    private void updateTaskGroupsAfterTaskRemoval(Integer wfIndex, Integer taskIndex) {
-        getTaskGroups().removeTaskFromGroup(wfIndex, taskIndex);
+    private void updateTaskGroupsAfterTaskRemoval(Integer wfIndex, Integer taskIndex, boolean removeGroup) {
+        getTaskGroups().removeTaskFromGroup(wfIndex, taskIndex, removeGroup);
     }
 
     public TaskGroup findTaskGroup(ActionEvent event) {

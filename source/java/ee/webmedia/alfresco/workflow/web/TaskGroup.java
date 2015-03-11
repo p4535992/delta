@@ -78,6 +78,10 @@ public class TaskGroup implements Serializable {
         }
         return taskIds;
     }
+    
+    public boolean isEmpty() {
+        return getTaskIds().isEmpty();
+    }
 
     public boolean isExpanded() {
         return expanded;
