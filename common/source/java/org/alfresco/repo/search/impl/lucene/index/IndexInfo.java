@@ -2254,11 +2254,12 @@ public class IndexInfo implements IndexMonitor
         }
 
         buffer.position(0);
-        long onDiskVersion = buffer.getLong();
+        boolean isEmptyBuffer = !buffer.hasRemaining();
+        long onDiskVersion = isEmptyBuffer ? 0 : buffer.getLong();
         CRC32 crc32 = new CRC32();
         crc32.update((int) (onDiskVersion >>> 32) & 0xFFFFFFFF);
         crc32.update((int) (onDiskVersion >>> 0) & 0xFFFFFFFF);
-        int size = buffer.getInt();
+        int size = isEmptyBuffer ? 0 : buffer.getInt();
         crc32.update(size);
         LinkedHashMap<String, IndexEntry> newIndexEntries = new LinkedHashMap<String, IndexEntry>();
         // Not all state is saved some is specific to this index so we
@@ -2322,8 +2323,8 @@ public class IndexInfo implements IndexMonitor
         {
             newIndexEntries.put(entry.getName(), entry);
         }
-        long onDiskCRC32 = buffer.getLong();
-        if (crc32.getValue() == onDiskCRC32)
+        long onDiskCRC32 = isEmptyBuffer ? 0 : buffer.getLong();
+        if (isEmptyBuffer || crc32.getValue() == onDiskCRC32)
         {
             indexEntries = newIndexEntries;
 

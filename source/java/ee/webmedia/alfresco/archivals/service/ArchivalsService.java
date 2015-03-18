@@ -27,7 +27,7 @@ public interface ArchivalsService {
 
     NodeRef addArchivalActivity(ActivityType activityType, ActivityStatus activityStatus, List<NodeRef> volumeRefs, NodeRef templateRef);
 
-    void archiveVolumeOrCaseFile(NodeRef volumeNodeRef);
+    void archiveVolumeOrCaseFile(NodeRef volumeNodeRef, boolean resumingPaused);
 
     void setNewReviewDate(List<NodeRef> volumes, Date reviewDate, NodeRef activityRef);
 
@@ -76,5 +76,7 @@ public interface ArchivalsService {
     boolean isArchivingContinuedManually();
 
     void resetManualActions();
+
+    boolean isArchivingAllowed();
 
 }

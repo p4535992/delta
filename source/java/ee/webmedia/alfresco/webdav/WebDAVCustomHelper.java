@@ -34,6 +34,7 @@ import ee.webmedia.alfresco.privilege.service.PrivilegeUtil;
 import ee.webmedia.alfresco.report.model.ReportModel;
 import ee.webmedia.alfresco.substitute.model.SubstitutionInfo;
 import ee.webmedia.alfresco.versions.service.VersionsService;
+import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 
 public class WebDAVCustomHelper extends WebDAVHelper {
 
@@ -122,7 +123,9 @@ public class WebDAVCustomHelper extends WebDAVHelper {
         QName nodeType = nodeService.getType(docRef);
         if (!DocumentCommonModel.Types.DOCUMENT.equals(nodeType)) {
             if (!Version2Model.STORE_ID.equals(fileRef.getStoreRef().getIdentifier()) && !getUserService().isAdministrator()
-                    && !hasViewDocFilesPermission(fileRef) && !isRunAsUserReportResult(nodeType, docRef)) {
+                    && !isNoPermissionsRequired(nodeType)
+                    && !hasViewDocFilesPermission(fileRef)
+                    && !isRunAsUserReportResult(nodeType, docRef)) {
                 throw new AccessDeniedException("Not allowing reading - file is not under document and user has no permission to view files. File=" + fileRef);
             }
         } else if (!hasViewDocFilesPermission(docRef)) {
@@ -141,6 +144,10 @@ public class WebDAVCustomHelper extends WebDAVHelper {
         }
         return false;
 
+    }
+
+    private static boolean isNoPermissionsRequired(QName nodeType) {
+        return WorkflowSpecificModel.Types.OPINION_WORKFLOW.equals(nodeType);
     }
 
     /**

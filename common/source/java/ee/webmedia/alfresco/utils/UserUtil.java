@@ -179,7 +179,8 @@ public class UserUtil {
         authMap.put("group", authority);
         authMap.put("groupName", name);
         authMap.put("displayName", authorityService.getAuthorityDisplayName(authority));
-        authMap.put("structUnitBased", authorityService.getAuthorityZones(authority).contains(OrganizationStructureService.STRUCT_UNIT_BASED) ? "true" : "false");
+        Set<String> authorityZones = authorityService.getAuthorityZones(authority);
+        authMap.put("structUnitBased", (authorityZones != null && authorityZones.contains(OrganizationStructureService.STRUCT_UNIT_BASED)) ? "true" : "false");
         authMap.put("deleteEnabled",  Boolean.toString(userService.isGroupDeleteAllowed(authority)));
         return authMap;
     }
