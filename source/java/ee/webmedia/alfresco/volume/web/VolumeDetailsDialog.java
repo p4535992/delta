@@ -80,6 +80,13 @@ public class VolumeDetailsDialog extends BaseDialogBean implements BlockBeanProv
     }
 
     @Override
+    public void restored() {
+        if (currentEntry != null && currentEntry.getNodeRef() != null) {
+            reload(currentEntry.getNodeRef());
+        }
+    }
+
+    @Override
     public String cancel() {
         resetFields();
         return super.cancel();

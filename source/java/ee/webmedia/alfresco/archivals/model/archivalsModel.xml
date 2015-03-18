@@ -133,6 +133,18 @@
             <property name="arch:errorMessage">
                <type>d:text</type>
             </property>
+            <property name="arch:failedNodeCount">
+               <type>d:int</type>
+            </property>
+            <property name="arch:failedDocumentsCount">
+               <type>d:int</type>
+            </property>
+            <property name="arch:totalArchivedDocumentsCount">
+               <type>d:int</type>
+            </property>
+            <property name="arch:archivedNodeCount">
+               <type>d:int</type>
+            </property>
          </properties>
       </type>
    

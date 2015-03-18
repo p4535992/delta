@@ -188,8 +188,8 @@
       <property name="userService" ref="UserService" />
       <property name="documentTemplateService" ref="DocumentTemplateService" />
       <property name="contentService" ref="ContentService" />
-      <property name="archivalsStore" value="workspace://ArchivalsStore" />
       <property name="simpleDestructionEnabled" value="${conf.archivals.simple-destruction.enabled}" />
+      <property name="parametersService" ref="ParametersService" />
    </bean>
 
    <bean id="ArchivalsService" class="org.springframework.aop.framework.ProxyFactoryBean">

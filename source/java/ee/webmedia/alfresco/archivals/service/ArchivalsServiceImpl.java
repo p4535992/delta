@@ -9,9 +9,11 @@ import java.io.Serializable;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.text.DateFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -19,6 +21,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.faces.event.ActionEvent;
 
@@ -39,7 +42,6 @@ import org.alfresco.service.cmr.repository.ContentWriter;
 import org.alfresco.service.cmr.repository.CopyService;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
-import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.service.namespace.RegexQNamePattern;
@@ -50,6 +52,8 @@ import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.FastDateFormat;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeConstants;
 import org.springframework.util.Assert;
 
 import com.ociweb.xml.Version;
@@ -97,6 +101,8 @@ import ee.webmedia.alfresco.log.model.LogEntry;
 import ee.webmedia.alfresco.log.model.LogFilter;
 import ee.webmedia.alfresco.log.model.LogObject;
 import ee.webmedia.alfresco.log.service.LogService;
+import ee.webmedia.alfresco.parameters.model.Parameters;
+import ee.webmedia.alfresco.parameters.service.ParametersService;
 import ee.webmedia.alfresco.series.model.Series;
 import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.series.service.SeriesService;
@@ -136,16 +142,25 @@ public class ArchivalsServiceImpl implements ArchivalsService {
     private DocumentTemplateService documentTemplateService;
     private UserService userService;
     private ContentService contentService;
+    private ParametersService parametersService;
 
-    private StoreRef archivalsStore;
-    private boolean archivingPaused;
-    private boolean archivingContinuedManually;
+    private final AtomicBoolean archivingPaused = new AtomicBoolean(false);
+    private final AtomicBoolean archivingContinuedManually = new AtomicBoolean(false);
     private boolean simpleDestructionEnabled;
 
     private static final FastDateFormat DATE_FORMAT = FastDateFormat.getInstance("yyyy-MM-dd");
     private static final FastDateFormat DATE_SHORT_FORMAT = FastDateFormat.getInstance("yyyyMMdd");
     private static final FastDateFormat DATE_TIME_FORMAT = FastDateFormat.getInstance("yyyy-MM-dd'T'HH:mm:ss");
-    private static final FastDateFormat DATE_TIME_SHORT_FORMAT = FastDateFormat.getInstance("dd.MM.yyyy HH:mm");
+    /**
+     * No need to remove objects from ThreadLocal if it is always accessed by same threads (for example, threads that
+     * are managed by ThreadPool that reuses its threads). Otherwise objects must always be explicitly removed.
+     */
+    private static final ThreadLocal<SimpleDateFormat> THREAD_LOCAL_TIME_FORMAT = new ThreadLocal<SimpleDateFormat>() {
+        @Override
+        protected SimpleDateFormat initialValue() {
+            return new SimpleDateFormat("HH:mm");
+        }
+    };
 
     @Override
     public void exportToUam(final List<NodeRef> volumes, final Date exportStartDate, final NodeRef activityRef) {
@@ -672,16 +687,24 @@ public class ArchivalsServiceImpl implements ArchivalsService {
     }
 
     @Override
-    public void archiveVolumeOrCaseFile(final NodeRef archivingJobRef) {
+    public void archiveVolumeOrCaseFile(final NodeRef archivingJobRef, final boolean resumingPaused) {
         final RetryingTransactionHelper transactionHelper = BeanHelper.getTransactionService().getRetryingTransactionHelper();
         try {
-            archiveVolumeOrCaseFileImpl(archivingJobRef);
+            final ArchiveJobStatus status = archiveVolumeOrCaseFileImpl(archivingJobRef, resumingPaused);
             transactionHelper.doInTransaction(new RetryingTransactionCallback<Void>() {
                 @Override
                 public Void execute() throws Throwable {
                     Map<QName, Serializable> props = new HashMap<QName, Serializable>();
-                    props.put(ArchivalsModel.Props.ARCHIVING_JOB_STATUS, ArchiveJobStatus.FINISHED);
-                    props.put(ArchivalsModel.Props.ARCHIVING_END_TIME, new Date());
+                    props.put(ArchivalsModel.Props.ARCHIVING_JOB_STATUS, status);
+                    if (ArchiveJobStatus.FINISHED.equals(status)) {
+                        props.put(ArchivalsModel.Props.ARCHIVING_END_TIME, new Date());
+                        if (resumingPaused) {
+                            nodeService.removeProperty(archivingJobRef, ArchivalsModel.Props.FAILED_NODE_COUNT);
+                            nodeService.removeProperty(archivingJobRef, ArchivalsModel.Props.FAILED_DOCUMENTS_COUNT);
+                            nodeService.removeProperty(archivingJobRef, ArchivalsModel.Props.TOTAL_ARCHIVED_DOCUMENTS_COUNT);
+                            nodeService.removeProperty(archivingJobRef, ArchivalsModel.Props.ARCHIVED_NODE_COUNT);
+                        }
+                    }
                     nodeService.addProperties(archivingJobRef, props);
                     return null;
                 }
@@ -750,17 +773,18 @@ public class ArchivalsServiceImpl implements ArchivalsService {
         return nodeService.getChildAssocs(getArchivalsSpaceRef(), Collections.singleton(ArchivalsModel.Types.ARCHIVING_JOB));
     }
 
-    private NodeRef archiveVolumeOrCaseFileImpl(final NodeRef archivingJobRef) {
-        final NodeRef volumeNodeRef = (NodeRef) nodeService.getProperty(archivingJobRef, ArchivalsModel.Props.VOLUME_REF);
+    private ArchiveJobStatus archiveVolumeOrCaseFileImpl(final NodeRef archivingJobRef, boolean resumingPaused) {
+        final Map<QName, Serializable> jobProps = nodeService.getProperties(archivingJobRef);
+        final NodeRef volumeNodeRef = (NodeRef) jobProps.get(ArchivalsModel.Props.VOLUME_REF);
         Assert.notNull(volumeNodeRef, "Reference to volume node must be provided");
-        final String archivingNote = (String) nodeService.getProperty(archivingJobRef, ArchivalsModel.Props.ARCHIVE_NOTE);
+        final String archivingNote = (String) jobProps.get(ArchivalsModel.Props.ARCHIVE_NOTE);
 
         final RetryingTransactionHelper transactionHelper = BeanHelper.getTransactionService().getRetryingTransactionHelper();
 
         final Volume volume = volumeService.getVolumeByNodeRef(volumeNodeRef, null);
         final Series series = seriesService.getSeriesByNodeRef(volume.getSeriesNodeRef());
         final NodeRef originalSeriesRef = series.getNode().getNodeRef();
-        final Map<NodeRef, NodeRef> originalToArchivedCaseNodeRef = new HashMap<NodeRef, NodeRef>();
+        final Map<NodeRef, NodeRef> originalToArchivedCaseNodeRef = new HashMap<>();
 
         // do in separate transaction, must be visible in following transactions
         NodeRef[] archivedParentRefs = transactionHelper.doInTransaction(new RetryingTransactionCallback<NodeRef[]>() {
@@ -779,22 +803,26 @@ public class ArchivalsServiceImpl implements ArchivalsService {
         Assert.notNull(archivedSeriesRef, "Series was not archived");
         Assert.notNull(archivedVolumeRef, "Volume was not archived");
 
-        Set<ChildAssociationRef> notCaseNodeRefs = new HashSet<ChildAssociationRef>();
-        final Set<NodeRef> caseNodeRefs = new HashSet<NodeRef>();
-        Map<NodeRef, Set<ChildAssociationRef>> archiveNodeRefs = new HashMap<NodeRef, Set<ChildAssociationRef>>();
+        Set<ChildAssociationRef> notCaseNodeRefs = new HashSet<>();
+        final Set<NodeRef> caseNodeRefs = new HashSet<>();
+        Map<NodeRef, Set<ChildAssociationRef>> archiveNodeRefs = new HashMap<>();
         collectNodeRefsToArchive(volumeNodeRef, notCaseNodeRefs, caseNodeRefs, archiveNodeRefs);
 
-        int failedNodeCount = 0;
-        int failedDocumentsCount = 0;
-        int totalArchivedDocumentsCount = 0;
-        int archivedNodesCount = 0;
+        int failedNodeCount = getCount(jobProps, ArchivalsModel.Props.FAILED_NODE_COUNT);
+        int failedDocumentsCount = getCount(jobProps, ArchivalsModel.Props.FAILED_DOCUMENTS_COUNT);
+        int totalArchivedDocumentsCount = getCount(jobProps, ArchivalsModel.Props.TOTAL_ARCHIVED_DOCUMENTS_COUNT);
+        int archivedNodesCount = getCount(jobProps, ArchivalsModel.Props.ARCHIVED_NODE_COUNT);
 
-        final Map<NodeRef, Integer> caseDocsUpdated = new HashMap<NodeRef, Integer>();
-        int childCount = 0;
+        final Map<NodeRef, Integer> caseDocsUpdated = new HashMap<>();
+        long childCount = archivedNodesCount;
         for (Set<ChildAssociationRef> childNodes : archiveNodeRefs.values()) {
             childCount += childNodes.size();
         }
-        ProgressTracker progress = new ProgressTracker(childCount, 0);
+        if (resumingPaused) {
+            LOG.info(String.format("Resuming paused archiving: %d nodes archived previously, starting to archive remaining %d nodes",
+                    archivedNodesCount, (childCount - archivedNodesCount)));
+        }
+        ProgressTracker progress = new ProgressTracker(childCount, archivedNodesCount);
         int count = 0;
         for (Map.Entry<NodeRef, Set<ChildAssociationRef>> entry : archiveNodeRefs.entrySet()) {
 
@@ -859,6 +887,25 @@ public class ArchivalsServiceImpl implements ArchivalsService {
                     if (info != null) {
                         LOG.info("Archiving volume: " + info);
                     }
+                    if (isArchivingPaused() || !isArchivingAllowed()) {
+                        final Map<QName, Serializable> props = new HashMap<>();
+                        props.put(ArchivalsModel.Props.FAILED_NODE_COUNT, failedNodeCount);
+                        props.put(ArchivalsModel.Props.FAILED_DOCUMENTS_COUNT, failedDocumentsCount);
+                        props.put(ArchivalsModel.Props.TOTAL_ARCHIVED_DOCUMENTS_COUNT, totalArchivedDocumentsCount);
+                        props.put(ArchivalsModel.Props.ARCHIVED_NODE_COUNT, archivedNodesCount);
+                        LOG.info("Pausing archiving");
+                        transactionHelper.doInTransaction(new RetryingTransactionCallback<Void>() {
+
+                            @Override
+                            public Void execute() throws Throwable {
+                                nodeService.addProperties(archivingJobRef, props);
+                                return null;
+                            }
+                        }, false, true);
+                        updateCounters(volumeNodeRef, archivedVolumeRef, originalSeriesRef, archivedSeriesRef, originalToArchivedCaseNodeRef, totalArchivedDocumentsCount,
+                                caseDocsUpdated, transactionHelper);
+                        return ArchiveJobStatus.PAUSED;
+                    }
                 }
             }
         }
@@ -902,8 +949,68 @@ public class ArchivalsServiceImpl implements ArchivalsService {
             }
         }, false, true);
 
-        return archivedVolumeRef;
+        return ArchiveJobStatus.FINISHED;
 
+    }
+
+    private int getCount(final Map<QName, Serializable> jobProps, QName prop) {
+        Integer count = (Integer) jobProps.get(prop);
+        return (count != null) ? count : 0;
+    }
+
+    @Override
+    public boolean isArchivingAllowed() {
+        boolean allowedNow = isArchivingAllowedAtThisTime();
+
+        if (allowedNow) {
+            resetManualActions();
+            return true;
+        }
+
+        if (!allowedNow && isArchivingContinuedManually()) {
+            return true;
+        }
+
+        return allowedNow;
+    }
+
+    private boolean isArchivingAllowedAtThisTime() {
+        DateTime now = new DateTime();
+        if (Boolean.valueOf(parametersService.getStringParameter(Parameters.CONTINUE_ARCIVING_OVER_WEEKEND))) {
+            int weekDay = now.getDayOfWeek();
+            if (DateTimeConstants.SATURDAY == weekDay || DateTimeConstants.SUNDAY == weekDay) {
+                return true;
+            }
+        }
+        String beginTimeStr = StringUtils.deleteWhitespace(parametersService.getStringParameter(Parameters.ARCHIVING_BEGIN_TIME));
+        String endTimeStr = StringUtils.deleteWhitespace(parametersService.getStringParameter(Parameters.ARCHIVING_END_TIME));
+        if (StringUtils.isBlank(beginTimeStr) || StringUtils.isBlank(endTimeStr)) {
+            return true;
+        }
+        DateTime beginTime;
+        DateTime endTime;
+        try {
+            beginTime = getDateTime(now, beginTimeStr);
+            endTime = getDateTime(now, endTimeStr);
+            if (beginTime.isAfter(endTime)) {
+                endTime = endTime.plusDays(1);
+            }
+        } catch (ParseException e) {
+            LOG.warn("Unable to parse " + Parameters.ARCHIVING_BEGIN_TIME.getParameterName() + " (value=" + beginTimeStr + ") or "
+                    + Parameters.ARCHIVING_END_TIME.getParameterName() + " (value=" + endTimeStr + "), continuing archiving. " +
+                    "Required format is " + THREAD_LOCAL_TIME_FORMAT.get().toPattern());
+            return true;
+        }
+        if (beginTime.isBefore(now) && endTime.isAfter(now)) {
+            return true;
+        }
+        return false;
+    }
+
+    private DateTime getDateTime(DateTime now, String timeString) throws ParseException {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(THREAD_LOCAL_TIME_FORMAT.get().parse(timeString));
+        return new DateTime(now.getYear(), now.getMonthOfYear(), now.getDayOfMonth(), calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE), 0, 0);
     }
 
     private void deleteEmptyVolumeAndCases(final NodeRef volumeNodeRef, final Set<NodeRef> caseNodeRefs, final RetryingTransactionHelper transactionHelper) {
@@ -1024,7 +1131,7 @@ public class ArchivalsServiceImpl implements ArchivalsService {
         }
         archiveNodeRefs.put(volumeNodeRef, notCaseNodeRefs);
         for (NodeRef caseNodeRef : caseNodeRefs) {
-            archiveNodeRefs.put(caseNodeRef, new HashSet<ChildAssociationRef>(nodeService.getChildAssocs(caseNodeRef)));
+            archiveNodeRefs.put(caseNodeRef, new HashSet<>(nodeService.getChildAssocs(caseNodeRef)));
         }
     }
 
@@ -1460,10 +1567,6 @@ public class ArchivalsServiceImpl implements ArchivalsService {
         this.caseService = caseService;
     }
 
-    public void setArchivalsStore(String archivalsStore) {
-        this.archivalsStore = new StoreRef(archivalsStore);
-    }
-
     public void setDocumentAssociationsService(DocumentAssociationsService documentAssociationsService) {
         this.documentAssociationsService = documentAssociationsService;
     }
@@ -1513,6 +1616,10 @@ public class ArchivalsServiceImpl implements ArchivalsService {
         this.simpleDestructionEnabled = simpleDestructionEnabled;
     }
 
+    public void setParametersService(ParametersService parametersService) {
+        this.parametersService = parametersService;
+    }
+
     @Override
     public void removeJobNodeFromArchivingList(NodeRef archivingJobRef) {
         if (archivingJobRef != null) {
@@ -1552,36 +1659,36 @@ public class ArchivalsServiceImpl implements ArchivalsService {
 
     @Override
     public void pauseArchiving(ActionEvent event) {
-        archivingPaused = true;
-        archivingContinuedManually = false;
+        archivingPaused.set(true);
+        archivingContinuedManually.set(false);
         LOG.info("Volume archiving was paused");
     }
 
     @Override
     public void continueArchiving(ActionEvent event) {
-        archivingPaused = false;
-        archivingContinuedManually = true;
+        archivingPaused.set(false);
+        archivingContinuedManually.set(true);
         LOG.info("Volume archiving was resumed");
     }
 
     @Override
     public boolean isArchivingPaused() {
-        return archivingPaused;
+        return archivingPaused.get();
     }
 
     @Override
     public boolean isArchivingContinuedManually() {
-        return archivingContinuedManually;
+        return archivingContinuedManually.get();
     }
 
     @Override
     public void resetManualActions() {
-        archivingContinuedManually = false;
+        archivingContinuedManually.set(false);
     }
 
     @Override
     public void doPauseArchiving() {
-        while (archivingPaused) {
+        while (archivingPaused.get()) {
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {

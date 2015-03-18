@@ -297,7 +297,10 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
                 if (updateGeneratedFiles) {
                     getDocumentTemplateService().updateGeneratedFiles(documentNodeRef, false);
                     DocumentDialogHelperBean documentDialogHelperBean = BeanHelper.getDocumentDialogHelperBean();
-                    documentDialogHelperBean.switchMode(documentDialogHelperBean.isInEditMode());
+                    boolean inEditMode = documentDialogHelperBean.isInEditMode();
+                    if (!inEditMode) {
+                        documentDialogHelperBean.switchMode(inEditMode);
+                    }
                 }
                 if (invoiceAdded) {
                     documentDialog.reloadDocAndClearPropertySheet(true);

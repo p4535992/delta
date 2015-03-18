@@ -2324,8 +2324,8 @@ function handleHtmlLoaded(context, setFocus, selects) {
             selector.change(setDateFromEnumOnChange);
          });
 
-   $jQ("[id*='substitutionBeginDate_']").each(setMultiRowMinEndDate);
-   $jQ("[id*='substitutionBeginDate_']").live("change", setMultiRowMinEndDate);
+   $jQ("[id*='BeginDate_']").each(setMultiRowMinEndDate);
+   $jQ("[id*='BeginDate_']").live("change", setMultiRowMinEndDate);
 
    if(context != null) {
       $jQ("input", context).focus(function() {
@@ -2594,7 +2594,7 @@ function clearRangePicker(){
 function setMultiRowMinEndDate() {
    var beginDate = $jQ(this);
    var fieldId = beginDate.attr("id");
-   var endDateId = fieldId.replace(/BeginDate/, "EndDate");
+   var endDateId = fieldId.replace(/BeginDate(?=[^BeginDate]*$)/, "EndDate"); // replace last occurrence
    var endDate = $jQ("#" + escapeId4JQ(endDateId));
    setMinDateOption(beginDate, endDate);
 }
