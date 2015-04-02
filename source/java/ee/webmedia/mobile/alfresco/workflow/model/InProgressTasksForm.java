@@ -18,6 +18,7 @@ public class InProgressTasksForm implements Serializable {
     private String signingFlowView;
     private String mobileIdChallengeId;
     private Map<String, String> actions;
+    private boolean defaultSigningNumber;
 
     public InProgressTasksForm() {
         inProgressTasks = new HashMap<String, Task>();
@@ -96,6 +97,14 @@ public class InProgressTasksForm implements Serializable {
 
     public void setMobileIdChallengeId(String mobileIdChallengeId) {
         this.mobileIdChallengeId = mobileIdChallengeId;
+    }
+
+    public boolean isDefaultSigningNumber() {
+        return defaultSigningNumber;
+    }
+
+    public void setDefaultSigningNumber(boolean defaultSigningNumber) {
+        this.defaultSigningNumber = defaultSigningNumber;
     }
 
 }

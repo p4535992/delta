@@ -226,5 +226,7 @@ public interface PersonService
     Object getPersonProperty(String userName, QName property);
     
     NodeRef getPersonFromRepo(String userName);
+    
+    void setPersonProperty(String username, QName property, Serializable value);
 
 }

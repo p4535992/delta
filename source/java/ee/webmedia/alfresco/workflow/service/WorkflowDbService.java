@@ -15,6 +15,7 @@ import org.springframework.jdbc.core.RowMapper;
 
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.workflow.model.Comment;
+import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.model.WorkflowBlockItem;
 import ee.webmedia.alfresco.workflow.service.type.WorkflowType;
 
@@ -157,6 +158,8 @@ public interface WorkflowDbService {
 
     List<NodeRef> getCompoundWorkflowsFinishedTasks(List<NodeRef> compoundWorkflows, QName taskType, QName sortByProperty, boolean descending);
 
+    List<Task> loadCompoundWorkflowTasks(List<NodeRef> compoundWorkflowRefs, Set<QName> taskTypes, Set<Status> taskStatuses);
+
     List<Task> getInProgressTasks(List<NodeRef> compoundWorkflows, String ownerId);
 
     List<Task> getInProgressTasks(List<NodeRef> compoundWorkflows, String ownerId, Set<QName> taskTypes);
@@ -180,4 +183,6 @@ public interface WorkflowDbService {
 
     int[] updateCompoundWorkflowTaskSearchableProperties(List<Pair<String, Map<QName, Serializable>>> compoundWorkflowtaskSearchableProps,
             List<QName> compoundWorkflowTaskSearchableProperties, String compoundWorkflowTaskUpdateString);
+
+    Pair<List<Pair<NodeRef, QName>>, Boolean> searchTaskNodeRefAndType(String queryCondition, String orderClause, List<Object> arguments, int limit);
 }

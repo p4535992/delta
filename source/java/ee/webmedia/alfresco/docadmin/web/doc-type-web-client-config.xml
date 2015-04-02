@@ -239,6 +239,7 @@
          <show-property name="docadmin:addReplyToUnregistratedDocEnabled" labelStyleClass="wrap" />
          <show-property name="docadmin:editFilesOfFinishedDocEnabled" labelStyleClass="wrap"/>
          <show-property name="docadmin:registrationOnDocFormEnabled" labelStyleClass="wrap"/>
+         <show-property name="docadmin:docSigningForOwnerEnabled" labelStyleClass="wrap"/>
       </property-sheet>
    </config>
 

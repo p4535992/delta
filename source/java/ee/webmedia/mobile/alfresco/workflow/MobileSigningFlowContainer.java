@@ -1,13 +1,11 @@
 package ee.webmedia.mobile.alfresco.workflow;
 
-import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.lock.NodeLockedException;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.util.Pair;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docdynamic.web.DocumentLockHelperBean;
 import ee.webmedia.alfresco.utils.MessageData;
 import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
@@ -25,13 +23,6 @@ public class MobileSigningFlowContainer extends SigningFlowContainer {
 
     public MobileSigningFlowContainer(SignatureTask signatureTask, boolean isSignTogether, InProgressTasksForm inProgressTasksForm, NodeRef compoundWorkflowRef, NodeRef containerRef) {
         super(signatureTask, isSignTogether, inProgressTasksForm, compoundWorkflowRef, containerRef);
-        setPhoneNumber(getUserPhoneNumber());
-    }
-
-    private String getUserPhoneNumber() {
-        String userName = AuthenticationUtil.getFullyAuthenticatedUser();
-        BeanHelper.getUserService().getUserMobilePhone(userName);
-        return null;
     }
 
     @Override

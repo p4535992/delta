@@ -162,6 +162,8 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
             , WorkflowSpecificModel.Types.GROUP_ASSIGNMENT_WORKFLOW
             )));
     public static final String MODAL_KEY_ENTRY_COMMENT = "popup_comment";
+    private static final Set<String> TASK_FINISH_CALLBACKS = new HashSet<>(Arrays.asList(WorkflowBlockBean.FINISH_TASK, WorkflowBlockBean.SEND_TASK_DUE_DATE_EXTENSION_REQUEST,
+            DelegationBean.DELEGATE));
     private String renderedModal;
 
     /**
@@ -273,7 +275,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
         }
         boolean hasWorkflowBlockCallback = workflowBlockCallback != null;
         if (validate(context, isInProgress, false, hasWorkflowBlockCallback)) {
-            List<String> confirmationMessages = checkConfirmations ? getConfirmationMessages(false) : null;
+            List<String> confirmationMessages = checkConfirmations ? getConfirmationMessages(false, workflowBlockCallback) : null;
 
             if (CollectionUtils.isNotEmpty(confirmationMessages)) {
                 updatePanelGroup(confirmationMessages, hasWorkflowBlockCallback ? workflowBlockCallback : SAVE_VALIDATED_WORKFLOW, true, true, params, !hasWorkflowBlockCallback);
@@ -300,8 +302,10 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
             if (!saveSucceeded) {
                 confirmationOutcome = null;
             }
-            updatePanelGroup(null, null, true, true, null, !finishingTask);
-            initBlocks(false, !finishingTask);
+            if (!isDocumentWorkflow()) {
+                updatePanelGroup(null, null, true, true, null, !finishingTask);
+                initBlocks(false, !finishingTask);
+            }
             if (finishingTask) {
                 return saveSucceeded ? "SAVED" : null;
             }
@@ -631,7 +635,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
         return compoundWorkflow == null || compoundWorkflow.isDocumentWorkflow();
     }
 
-    private List<String> getConfirmationMessages(boolean checkDocumentDueDate) {
+    private List<String> getConfirmationMessages(boolean checkDocumentDueDate, String workflowBlockCallback) {
         List<String> messages = new ArrayList<String>();
         NodeService nodeService = BeanHelper.getNodeService();
         NodeRef docRef = compoundWorkflow.getParent();
@@ -652,6 +656,8 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
                 independentCompWorkflowDocs = BeanHelper.getCompoundWorkflowAssocListDialog().getDocumentList();
             }
         }
+        boolean inProgressIndependentCWF = independentWorkflow && WorkflowUtil.isStatus(compoundWorkflow, Status.IN_PROGRESS);
+        boolean finishingTask = TASK_FINISH_CALLBACKS.contains(workflowBlockCallback);
         boolean addedDueDateInPastMsg = false;
         Date now = new Date(System.currentTimeMillis());
         for (Workflow workflow : compoundWorkflow.getWorkflows()) {
@@ -688,7 +694,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
                             }
                         }
                     }
-                    if (!addedDueDateInPastMsg && task.isStatus(Status.NEW) && taskDueDate.before(now)) {
+                    if (!addedDueDateInPastMsg && !(inProgressIndependentCWF && finishingTask) && task.isStatus(Status.NEW) && taskDueDate.before(now)) {
                         messages.add(MessageUtil.getMessage("task_confirm_due_date_in_past"));
                         addedDueDateInPastMsg = true;
                     }
@@ -696,6 +702,10 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
             }
         }
         return messages;
+    }
+
+    private List<String> getConfirmationMessages(boolean checkDocumentDueDate) {
+        return getConfirmationMessages(checkDocumentDueDate, null);
     }
 
     /**
@@ -1133,7 +1143,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
                 if (task.isStatus(Status.NEW) && task.getDueDate() != null && task.getDueDateDays() != null) {
                     if (!DateUtils.isSameDay(task.getDueDate(),
                             DatePickerWithDueDateGenerator.calculateDueDate(task.getPropBoolean(WorkflowSpecificModel.Props.IS_DUE_DATE_WORKING_DAYS), task.getDueDateDays())
-                            .toDateMidnight().toDate())) {
+                                    .toDateMidnight().toDate())) {
                         task.setProp(WorkflowSpecificModel.Props.DUE_DATE_DAYS, null);
                         task.setProp(WorkflowSpecificModel.Props.IS_DUE_DATE_WORKING_DAYS, Boolean.FALSE); // reset to default value
                     }
@@ -1221,7 +1231,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
         if (WorkflowUtil.isStatus(compoundWorkflow, Status.NEW) && AbstractFullAccessEvaluator.hasFullAccess()
                 && !compoundWorkflow.getWorkflows().isEmpty()
                 && (!compoundWorkflow.isIndependentWorkflow()
-                || isOwnerOrDocManager())) {
+                        || isOwnerOrDocManager())) {
             return Arrays.asList(new DialogButtonConfig("compound_workflow_start", null, "workflow_compound_start",
                     "#{CompoundWorkflowDialog.startWorkflow}", "false", null));
 

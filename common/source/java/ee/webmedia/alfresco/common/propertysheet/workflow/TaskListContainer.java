@@ -1,18 +1,20 @@
 package ee.webmedia.alfresco.common.propertysheet.workflow;
 
-import ee.webmedia.alfresco.common.web.BeanHelper;
-import ee.webmedia.alfresco.utils.ComponentUtil;
-import ee.webmedia.alfresco.workflow.web.CompoundWorkflowDefinitionDialog;
-import org.alfresco.web.data.IDataContainer;
-
-import javax.faces.component.UIComponent;
-import javax.faces.component.html.HtmlPanelGroup;
-import javax.faces.context.FacesContext;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import javax.faces.component.UIComponent;
+import javax.faces.component.html.HtmlPanelGroup;
+import javax.faces.context.FacesContext;
+
+import org.alfresco.web.data.IDataContainer;
+
+import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.utils.ComponentUtil;
+import ee.webmedia.alfresco.workflow.web.CompoundWorkflowDefinitionDialog;
 
 public class TaskListContainer extends HtmlPanelGroup implements IDataContainer {
 
@@ -36,7 +38,7 @@ public class TaskListContainer extends HtmlPanelGroup implements IDataContainer 
     }
 
     public void setRowCount(int rowCount) {
-        this.pageCount = (rowCount / pageSize) + 1;
+        pageCount = (rowCount / pageSize) + 1;
         if (rowCount % pageSize == 0 && pageCount != 1) {
             pageCount--;
         }
@@ -62,7 +64,7 @@ public class TaskListContainer extends HtmlPanelGroup implements IDataContainer 
 
     @Override
     public void setCurrentPage(int i) {
-        this.currentPage = i;
+        currentPage = i;
         saveSelectedPageNumber(new PageInfo(i, pageSize));
     }
 
@@ -72,6 +74,10 @@ public class TaskListContainer extends HtmlPanelGroup implements IDataContainer 
             return;
         }
         setTaskListCurrentPageInfo(persistentParent, workflowIndex, currentPageAttributeKey, selectedPage);
+        updateView();
+    }
+
+    protected void updateView() {
         ((CompoundWorkflowDefinitionDialog) BeanHelper.getDialogManager().getBean()).updatePanelGroupWithoutWorkflowBlockUpdate();
     }
 
@@ -138,15 +144,19 @@ public class TaskListContainer extends HtmlPanelGroup implements IDataContainer 
         throw new UnsupportedOperationException();
     }
 
+    protected UIComponent getPersistentParent(UIComponent searchFromComponent) {
+        return getCompoundWorkflowDialog(searchFromComponent);
+    }
+
     // Static helper methods
 
     public static void addWorkflowTaskListPageInfo(UIComponent eventSource, int addedWorkflowIndex) {
-        List<Map<String, PageInfo>> pageAttribute = getCurrentPageAttribute(getPersistentParent(eventSource));
+        List<Map<String, PageInfo>> pageAttribute = getCurrentPageAttribute(getCompoundWorkflowDialog(eventSource));
         pageAttribute.add(addedWorkflowIndex, new HashMap<String, PageInfo>());
     }
 
     public static void removeWorkflowTaskListPageInfo(UIComponent eventSource, int removedWorkflowIndex) {
-        List<Map<String, PageInfo>> pageAttribute = getCurrentPageAttribute(getPersistentParent(eventSource));
+        List<Map<String, PageInfo>> pageAttribute = getCurrentPageAttribute(getCompoundWorkflowDialog(eventSource));
         pageAttribute.remove(removedWorkflowIndex);
     }
 
@@ -202,13 +212,15 @@ public class TaskListContainer extends HtmlPanelGroup implements IDataContainer 
         return page;
     }
 
-    private static UIComponent getPersistentParent(UIComponent searchFromComponent) {
-        return ComponentUtil.findParentComponentById(FacesContext.getCurrentInstance(), searchFromComponent, "compound-workflow-dialog");
+    private static UIComponent getCompoundWorkflowDialog(UIComponent searchFromComponent) {
+        return ComponentUtil.findParentComponentById(searchFromComponent, "compound-workflow-dialog");
     }
 
     private static class PageInfo implements Serializable {
-        private Integer pageNumber;
-        private Integer pageSize;
+        private static final long serialVersionUID = 1L;
+
+        private final Integer pageNumber;
+        private final Integer pageSize;
 
         public PageInfo(int pageNumber, int pageSize) {
             this.pageNumber = pageNumber;

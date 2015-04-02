@@ -386,6 +386,13 @@
     </cache>
     
     <cache
+        name="org.alfresco.cache.documentTemplateCache"
+        maxElementsInMemory="1000"
+        eternal="true"
+        overflowToDisk="false">
+    </cache>
+    
+    <cache
         name="org.alfresco.cache.functionCache"
         maxElementsInMemory="10000"
         eternal="true"

@@ -22,7 +22,7 @@
    </f:verbatim>
 </h:panelGroup>
 
-<h:panelGroup rendered="#{CaseFileDialog.inWorkspace and !CaseFileDialog.inEditMode}">
+<h:panelGroup id="case-file-dialog-workflow-block" rendered="#{CaseFileDialog.inWorkspace and !CaseFileDialog.inEditMode}">
    <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/workflow/web/workflow-block.jsp" />
 </h:panelGroup>
 

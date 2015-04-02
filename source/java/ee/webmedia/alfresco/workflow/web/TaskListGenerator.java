@@ -128,7 +128,7 @@ public class TaskListGenerator extends BaseComponentGenerator {
         throw new RuntimeException("This is never called!");
     }
 
-    enum TaskOwnerSearchType {
+    private enum TaskOwnerSearchType {
         TASK_OWNER_SEARCH_RESPONSIBLE,
         TASK_OWNER_SEARCH_EXTERNAL_REVIEW,
         TASK_OWNER_SEARCH_DEFAULT,
@@ -142,11 +142,11 @@ public class TaskListGenerator extends BaseComponentGenerator {
         CompoundWorkflowDefinitionDialog compoundWorkflowDefinitionDialog = (CompoundWorkflowDefinitionDialog) dialogManager.getBean();
         CompoundWorkflow compoundWorkflow = compoundWorkflowDefinitionDialog.getWorkflow();
 
-        TaskListInfo taskListInfo = new TaskListInfo();
-        Workflow workflow = setupTaskListInfo(taskListInfo, context, propertySheet, compoundWorkflow);
+        TaskListInfo taskListInfo = new TaskListInfo(context);
+        Workflow workflow = setupTaskListInfo(taskListInfo, propertySheet, compoundWorkflow);
         List<Task> tasks = workflow.getTasks();
 
-        final TaskListContainer result = createTaskListContainer(propertySheet, taskListInfo.listId, taskListInfo.workflowIndex, getCurrentPageAttributeKey(context, item));
+        final TaskListContainer result = createTaskListContainer(propertySheet, taskListInfo, context, item);
         addChildren(item, result);
 
         final HtmlPanelGrid taskGrid = createTaskGrid(application, taskListInfo);
@@ -161,8 +161,8 @@ public class TaskListGenerator extends BaseComponentGenerator {
         UIGenericPicker picker = createAndAddTaskOwnerPicker(context, taskListInfo, resultChildren);
         initAndAddCommentPopupIfNeeded(context, resultChildren, taskListInfo);
         createTaskListHeader(application, workflow, taskGrid);
-        int taskRows = createTaskListRows(context, propertySheet, compoundWorkflowDefinitionDialog, compoundWorkflow, taskListInfo, workflow, tasks, taskGrid, visibleTasks,
-                picker, result);
+        int taskRows = createTaskListRows(context, propertySheet, compoundWorkflowDefinitionDialog.getTaskGroups(), compoundWorkflow, taskListInfo, workflow, tasks, taskGrid,
+                visibleTasks, picker, result);
         createTaskListFooter(context, item, taskListInfo, taskGrid);
         ComponentUtil.setAjaxEnabledOnActionLinksRecursive(result, 1);
 
@@ -170,7 +170,7 @@ public class TaskListGenerator extends BaseComponentGenerator {
         return result;
     }
 
-    private void createTaskListFooter(FacesContext context, PropertySheetItem item, TaskListInfo list, HtmlPanelGrid taskGrid) {
+    protected void createTaskListFooter(FacesContext context, PropertySheetItem item, TaskListInfo list, HtmlPanelGrid taskGrid) {
         if (list.responsible) {
             return;
         }
@@ -182,7 +182,7 @@ public class TaskListGenerator extends BaseComponentGenerator {
         createTaskListPager(footerComponents, item.getId());
     }
 
-    private String getCurrentPageAttributeKey(FacesContext context, PropertySheetItem item) {
+    protected String getCurrentPageAttributeKey(FacesContext context, PropertySheetItem item) {
         String clientId = item.getClientId(context);
         String tempPropNamespace = "prop_x007b_tempx007d_";
         int beginIndex = clientId.indexOf(tempPropNamespace) + tempPropNamespace.length();
@@ -211,7 +211,7 @@ public class TaskListGenerator extends BaseComponentGenerator {
         dropDownMenu.setId("page-size-select");
         addChildren(container, dropDownMenu);
         dropDownMenu.setValue(Integer.toString(getBrowseBean().getPageSizeContent()));
-        dropDownMenu.setValueChangeListener(context.getApplication().createMethodBinding("#{DialogManager.bean.updateTaskListPageSize}", new Class[] { ValueChangeEvent.class }));
+        dropDownMenu.setValueChangeListener(context.getApplication().createMethodBinding(getPageSizeDropDownChangeBinding(), new Class[] { ValueChangeEvent.class }));
         dropDownMenu.setOnchange(ComponentUtil.generateAjaxFormSubmit(context, dropDownMenu, null, null, 1));
 
         for (String pageSize : Arrays.asList("10", "20", "50", "75", "100")) {
@@ -220,6 +220,10 @@ public class TaskListGenerator extends BaseComponentGenerator {
             menuItem.setItemLabel(pageSize);
             addChildren(dropDownMenu, menuItem);
         }
+    }
+
+    protected String getPageSizeDropDownChangeBinding() {
+        return "#{DialogManager.bean.updateTaskListPageSize}";
     }
 
     private UIComponent createEmptyTaskList(Application application, TaskListInfo list, HtmlPanelGroup result) {
@@ -246,7 +250,7 @@ public class TaskListGenerator extends BaseComponentGenerator {
         return picker;
     }
 
-    private int createTaskListRows(FacesContext context, UIPropertySheet propertySheet, CompoundWorkflowDefinitionDialog compoundWorkflowDefinitionDialog,
+    private int createTaskListRows(FacesContext context, UIPropertySheet propertySheet, TaskGroupHolder taskGroupHolder,
             CompoundWorkflow compoundWorkflow, TaskListInfo taskListInfo, Workflow workflow, List<Task> tasks, HtmlPanelGrid taskGrid, Set<TaskListRow> visibleTasks,
             UIGenericPicker picker, TaskListContainer taskListPage) {
 
@@ -254,8 +258,6 @@ public class TaskListGenerator extends BaseComponentGenerator {
         List<UIComponent> taskGridChildren = taskGrid.getChildren();
         boolean showAddDateLink = workflow.isStatus(Status.NEW) && taskListInfo.compoundWorkflowDialog;
         Map<String, Object> signatureTaskOwnerProps = getSignatureTaskOwnerProps(workflow, taskListInfo);
-
-        TaskGroupHolder taskGroupHolder = compoundWorkflowDefinitionDialog.getTaskGroups();
 
         int rowNumber = 0;
         for (TaskListRow row : visibleTasks) {
@@ -279,7 +281,7 @@ public class TaskListGenerator extends BaseComponentGenerator {
 
                     if (!row.isGroupExpanded()) {
                         if (taskListPage.isRowOnCurrentPage(rowNumber)) {
-                            generateGroupRowComponents(context, taskListInfo, workflow, taskGroup, taskGrid);
+                            generateGroupRowComponents(context, taskListInfo, workflow.hasTaskResolution(), workflow.isStatus(Status.NEW), taskGroup, taskGrid);
                         }
                         rowNumber++;
                         continue;
@@ -287,7 +289,7 @@ public class TaskListGenerator extends BaseComponentGenerator {
 
                     // Expanded group row
                     if (taskListPage.isRowOnCurrentPage(rowNumber)) {
-                        generateGroupRowComponents(context, taskListInfo, workflow, taskGroup, taskGrid);
+                        generateGroupRowComponents(context, taskListInfo, workflow.hasTaskResolution(), workflow.isStatus(Status.NEW), taskGroup, taskGrid);
                     }
                     rowNumber++;
 
@@ -313,7 +315,7 @@ public class TaskListGenerator extends BaseComponentGenerator {
         return rowNumber;
     }
 
-    private int getTaskGroupStartIndex(TaskListContainer taskListPage, int rowNumber) {
+    protected int getTaskGroupStartIndex(TaskListContainer taskListPage, int rowNumber) {
         int startIndex = -1;
         int firstPageRowNumber = taskListPage.getFirstPageRowNumber();
         if (rowNumber < firstPageRowNumber) {
@@ -324,13 +326,13 @@ public class TaskListGenerator extends BaseComponentGenerator {
         return startIndex;
     }
 
-    private TaskGroup getTaskGroup(TaskListInfo list, Task task, Integer taskIndex, TaskGroupHolder taskGroupHolder) {
+    protected TaskGroup getTaskGroup(TaskListInfo list, Task task, Integer taskIndex, TaskGroupHolder taskGroupHolder) {
         String ownerGroup = task.getOwnerGroup();
         return taskGroupHolder.getAdjacentTaskGroup(list.workflowIndex, ownerGroup, taskIndex);
     }
 
-    private void reorderGroupTaskIds(TaskGroup taskGroup, Integer taskIndex, List<Integer> secondaryGroupTaskIndices) {
-        if(taskGroup == null) {
+    protected void reorderGroupTaskIds(TaskGroup taskGroup, Integer taskIndex, List<Integer> secondaryGroupTaskIndices) {
+        if (taskGroup == null) {
             return;
         }
         Set<Integer> groupTaskIds = taskGroup.getTaskIds();
@@ -339,7 +341,7 @@ public class TaskListGenerator extends BaseComponentGenerator {
         groupTaskIds.addAll(secondaryGroupTaskIndices);
     }
 
-    private TaskGroup createGroupRow(TaskListInfo list, Task task, Integer taskIndex, List<Integer> secondaryGroupTaskIndices, TaskGroupHolder taskGroupHolder) {
+    protected TaskGroup createGroupRow(TaskListInfo list, Task task, Integer taskIndex, List<Integer> secondaryGroupTaskIndices, TaskGroupHolder taskGroupHolder) {
         TaskGroup taskGroup = getTaskGroup(list, task, taskIndex, taskGroupHolder);
         if (taskGroup == null) {
             taskGroup = taskGroupHolder.addNewTaskGroup(list.workflowIndex, taskIndex, task.getOwnerGroup(), list.responsible, list.fullAccess);
@@ -526,7 +528,7 @@ public class TaskListGenerator extends BaseComponentGenerator {
         return null;
     }
 
-    private HtmlPanelGrid createTaskGrid(Application application, TaskListInfo list) {
+    protected HtmlPanelGrid createTaskGrid(Application application, TaskListInfo list) {
         final HtmlPanelGrid taskGrid = (HtmlPanelGrid) application.createComponent(HtmlPanelGrid.COMPONENT_TYPE);
         taskGrid.setId("task-grid-" + list.listId);
         taskGrid.setStyleClass(getTaskGridStyleClass());
@@ -580,13 +582,12 @@ public class TaskListGenerator extends BaseComponentGenerator {
         taskGridChildren.add(actionsHeading);
     }
 
-    private Workflow setupTaskListInfo(TaskListInfo listInfo, FacesContext context, UIPropertySheet propertySheet, CompoundWorkflow compoundWorkflow) {
+    private Workflow setupTaskListInfo(TaskListInfo listInfo, UIPropertySheet propertySheet, CompoundWorkflow compoundWorkflow) {
         int workflowIndex = (Integer) propertySheet.getAttributes().get(ATTR_WORKFLOW_INDEX);
         boolean isCompoundWorkflowDialog = dialogManager.getBean() instanceof CompoundWorkflowDialog;
         Workflow workflow = compoundWorkflow.getWorkflows().get(workflowIndex);
         QName workflowBlockType = workflow.getNode().getType();
 
-        listInfo.listId = context.getViewRoot().createUniqueId();
         listInfo.workflowIndex = workflowIndex;
         listInfo.hideExtraInfo = Boolean.parseBoolean(getCustomAttributes().get("hideExtraInfo"));
         listInfo.responsible = new Boolean(getCustomAttributes().get(ATTR_RESPONSIBLE));
@@ -658,13 +659,14 @@ public class TaskListGenerator extends BaseComponentGenerator {
         return true;
     }
 
-    private TaskListContainer createTaskListContainer(UIComponent parent, String id, int workflowIndex, String currentPageAttributeKey) {
-        TaskListContainer container = new TaskListContainer(parent, workflowIndex, currentPageAttributeKey);
-        container.setId("task-panel-" + id);
+    protected TaskListContainer createTaskListContainer(UIComponent parent, TaskListInfo list, FacesContext context, PropertySheetItem item) {
+        String currentPageAttributeKey = getCurrentPageAttributeKey(context, item);
+        TaskListContainer container = new TaskListContainer(parent, list.workflowIndex, currentPageAttributeKey);
+        container.setId("task-panel-" + list.listId);
         return container;
     }
 
-    private HtmlPanelGroup createHtmlPanelGroupWithId(Application application, String Id) {
+    protected HtmlPanelGroup createHtmlPanelGroupWithId(Application application, String Id) {
         HtmlPanelGroup result = (HtmlPanelGroup) application.createComponent(HtmlPanelGroup.COMPONENT_TYPE);
         result.setId(Id);
         return result;
@@ -778,28 +780,29 @@ public class TaskListGenerator extends BaseComponentGenerator {
         return null;
     }
 
-    private String generateGroupRowComponents(FacesContext context, TaskListInfo list, Workflow workflow, TaskGroup group, HtmlPanelGrid taskGrid) {
+    private String generateGroupRowComponents(FacesContext context, TaskListInfo list, boolean hasTaskResolution, boolean createDeleteLink, TaskGroup group,
+            HtmlPanelGrid taskGrid) {
+        String taskGroupBinding = "#{DialogManager.bean.taskGroups.byGroupId['" + group.getGroupId() + "']";
         Application application = context.getApplication();
         String rowId = makeLegalId(group.getGroupId());
         HtmlPanelGroup iconAndName = (HtmlPanelGroup) application.createComponent(HtmlPanelGroup.COMPONENT_TYPE);
 
         // Name
         UIComponent groupNameLabel = application.createComponent(UIOutput.COMPONENT_TYPE);
-        groupNameLabel.setValueBinding("value", application.createValueBinding("#{DialogManager.bean.taskGroups.byGroupId['" + group.getGroupId() + "'].groupName}"));
-        addChildren(iconAndName, createToggleGroupActionLink(application, group, list.workflowIndex, rowId), groupNameLabel);
+        groupNameLabel.setValueBinding("value", application.createValueBinding(taskGroupBinding + ".groupName}"));
+        addChildren(iconAndName, createToggleGroupActionLink(application, group, list.workflowIndex, rowId, "TaskListGenerator"), groupNameLabel);
         addChildren(taskGrid, iconAndName);
 
         // Generate the spacer for resolution column if needed
         QName blockType = list.workflowBlockType;
-        boolean hasResolutionColumn = WorkflowSpecificModel.Types.CONFIRMATION_WORKFLOW.equals(blockType) || workflow.hasTaskResolution();
-        boolean resolutionDisabled = (WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_WORKFLOW.equals(blockType) || WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW.equals(blockType))
-                && !(dialogManager.getBean() instanceof CompoundWorkflowDialog);
-        if (hasResolutionColumn && !resolutionDisabled) {
+        boolean hasResolutionColumn = WorkflowSpecificModel.Types.CONFIRMATION_WORKFLOW.equals(blockType)
+                || (hasTaskResolution && dialogManager.getBean() instanceof CompoundWorkflowDialog);
+        if (hasResolutionColumn) {
             addChildren(taskGrid, ComponentUtil.createSpacer(application));
         }
 
         if (dialogManager.getBean() instanceof CompoundWorkflowDialog) {
-            String dueDateVbString = "#{DialogManager.bean.taskGroups.byGroupId['" + group.getGroupId() + "'].dueDate}";
+            String dueDateVbString = taskGroupBinding + ".dueDate}";
             addChildren(taskGrid, createTaskGroupDatePicker(context, group, list.workflowIndex, rowId, dueDateVbString));
             addChildren(taskGrid, createTaskGroupDueDateDaysSelector(context, group, list.workflowIndex, rowId));
             addChildren(taskGrid, ComponentUtil.createSpacer(application));
@@ -807,7 +810,7 @@ public class TaskListGenerator extends BaseComponentGenerator {
 
         // Icons
         final HtmlPanelGroup iconsPanel = (HtmlPanelGroup) context.getApplication().createComponent(HtmlPanelGroup.COMPONENT_TYPE);
-        if (workflow.isStatus(Status.NEW)) {
+        if (createDeleteLink) {
             addChildren(iconsPanel, createDeleteGroupLink(application, group, rowId, list.workflowIndex));
         }
         addChildren(iconsPanel, createAddTaskLink(application, list, rowId, list.maximumVisibleTaskIndex + 1));
@@ -848,11 +851,11 @@ public class TaskListGenerator extends BaseComponentGenerator {
         return dateTimePickerPanel;
     }
 
-    private UIActionLink createToggleGroupActionLink(Application application, TaskGroup group, int wfIndex, String rowId) {
+    protected UIActionLink createToggleGroupActionLink(Application application, TaskGroup group, int wfIndex, String rowId, String generator) {
         UIActionLink toggleGroupLink = createUIActionLink(application, "task-group-toggle-" + rowId + group.getGroupId());
         String tooltip = group.isExpanded() ? constants.getCollapseTaskGroupText() : constants.getExpandTaskGroupText();
         ComponentUtil.setActionLinkTooltipAndActionListener(toggleGroupLink, tooltip,
-                application.createMethodBinding("#{TaskListGenerator.toggleGroup}", UIActions.ACTION_CLASS_ARGS));
+                application.createMethodBinding("#{" + generator + ".toggleGroup}", UIActions.ACTION_CLASS_ARGS));
 
         toggleGroupLink.setImage("/images/icons/" + (group.isExpanded() ? "minus" : "plus") + ".gif");
         addChildren(toggleGroupLink, createUIParam("groupName", group.getGroupName(), application), createUIParam("groupId", group.getGroupId(), application),
@@ -1086,7 +1089,7 @@ public class TaskListGenerator extends BaseComponentGenerator {
         return result;
     }
 
-    private TaskListRow addVisibleTask(Set<TaskListRow> result, TaskGroupHolder taskGroups, String ownerGroup, int workflowIndex, int taskIndex) {
+    protected TaskListRow addVisibleTask(Set<TaskListRow> result, TaskGroupHolder taskGroups, String ownerGroup, int workflowIndex, int taskIndex) {
         TaskListRow row = new TaskListRow(taskIndex);
         if (StringUtils.isNotBlank(ownerGroup)) {
             TaskGroup adjacentTaskGroup = taskGroups.getAdjacentTaskGroup(workflowIndex, ownerGroup, taskIndex);
@@ -1100,11 +1103,12 @@ public class TaskListGenerator extends BaseComponentGenerator {
         return row;
     }
 
-    private static class TaskListRow implements Serializable, Comparable<TaskListRow> {
+    protected static class TaskListRow implements Serializable, Comparable<TaskListRow> {
+        private static final long serialVersionUID = 1L;
         private final Integer taskIndex;
         private List<Integer> groupedTaskIndices;
         private boolean groupExpanded = false;
-        private boolean partOfGroup;
+        protected boolean partOfGroup;
 
         public TaskListRow(int taskIndex) {
             this.taskIndex = taskIndex;
@@ -1151,7 +1155,13 @@ public class TaskListGenerator extends BaseComponentGenerator {
 
     }
 
-    private static class TaskListInfo {
+    protected static class TaskListInfo {
+        
+        protected TaskListInfo(FacesContext context) {
+            listId = context.getViewRoot().createUniqueId();
+        }
+
+        protected final String listId;
         protected boolean createAddTaskLink;
         protected String addTaskLinkText;
         protected QName workflowBlockType;
@@ -1161,7 +1171,6 @@ public class TaskListGenerator extends BaseComponentGenerator {
         protected boolean commentPopupRequired;
         protected boolean hideExtraInfo;
         protected int workflowIndex;
-        protected String listId;
         protected UIComponent commentPopup;
         protected String commentPopupActionId;
         protected String commentPopupModalJsCall;
@@ -1173,6 +1182,14 @@ public class TaskListGenerator extends BaseComponentGenerator {
         protected boolean assignmentWorkflow;
         protected boolean compoundWorkflowDialog;
         protected boolean independentWorkflow;
+        private Map<String, Object> extraAttributes;
+
+        public Map<String, Object> getExtraAttributes() {
+            if (extraAttributes == null) {
+                extraAttributes = new HashMap<>();
+            }
+            return extraAttributes;
+        }
     }
 
 }

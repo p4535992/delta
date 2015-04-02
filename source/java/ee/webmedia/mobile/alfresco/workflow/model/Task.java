@@ -3,6 +3,7 @@ package ee.webmedia.mobile.alfresco.workflow.model;
 import java.io.Serializable;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.alfresco.service.cmr.repository.NodeRef;
@@ -32,6 +33,11 @@ public class Task implements Comparable<Task>, Serializable {
     private boolean isSignTogether;
     private Integer reviewTaskOutcome;
     private String commentLabel;
+    private String typeStr;
+    private List<TaskFile> files;
+    private Date completedDateTime;
+    private String ownerNameWithSubstitute;
+    private String commentAndLinks;
 
     public Task() {
         actions = new HashMap<String, String>();
@@ -196,6 +202,46 @@ public class Task implements Comparable<Task>, Serializable {
 
     public void setCommentLabel(String commentLabel) {
         this.commentLabel = commentLabel;
+    }
+
+    public String getTypeStr() {
+        return typeStr;
+    }
+
+    public void setTypeStr(String typeStr) {
+        this.typeStr = typeStr;
+    }
+
+    public List<TaskFile> getFiles() {
+        return files;
+    }
+
+    public void setFiles(List<TaskFile> files) {
+        this.files = files;
+    }
+
+    public Date getCompletedDateTime() {
+        return completedDateTime;
+    }
+
+    public void setCompletedDateTime(Date completedDateTime) {
+        this.completedDateTime = completedDateTime;
+    }
+
+    public String getOwnerNameWithSubstitute() {
+        return ownerNameWithSubstitute;
+    }
+
+    public void setOwnerNameWithSubstitute(String ownerNameWithSubstitute) {
+        this.ownerNameWithSubstitute = ownerNameWithSubstitute;
+    }
+
+    public String getCommentAndLinks() {
+        return commentAndLinks;
+    }
+
+    public void setCommentAndLinks(String commentAndLinks) {
+        this.commentAndLinks = commentAndLinks;
     }
 
 }

@@ -50,12 +50,14 @@ public class GridLazyDataModel implements IGridDataModel {
     }
 
     @Override
-    public void loadSlice(int rowIndex, int maxRowIndex) {
+    public int loadSlice(int rowIndex, int maxRowIndex) {
         if (rowIndex != currentStartIndex || maxRowIndex != currentEndIndex) {
-            dataProvider.loadPage(rowIndex, maxRowIndex);
+            int missingRowsCount = dataProvider.loadPage(rowIndex, maxRowIndex);
             currentStartIndex = rowIndex;
-            currentEndIndex = maxRowIndex;
+            currentEndIndex = (maxRowIndex < 0) ? maxRowIndex : (maxRowIndex - missingRowsCount);
+            return missingRowsCount;
         }
+        return 0;
     }
 
     @Override

@@ -33,6 +33,7 @@ import javax.xml.validation.Schema;
 import org.alfresco.model.ContentModel;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.util.EqualsHelper;
 import org.alfresco.util.GUID;
 import org.alfresco.util.Pair;
 import org.alfresco.web.ui.common.Utils;
@@ -54,6 +55,9 @@ import ee.webmedia.alfresco.workflow.model.SigningType;
 import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
+import ee.webmedia.alfresco.workflow.service.event.WorkflowEvent;
+import ee.webmedia.alfresco.workflow.service.event.WorkflowEventQueue;
+import ee.webmedia.alfresco.workflow.service.event.WorkflowEventType;
 import ee.webmedia.alfresco.workflow.web.TaskGroup;
 import ee.webmedia.alfresco.workflow.web.TaskGroupHolder;
 
@@ -467,19 +471,30 @@ public class WorkflowUtil {
                 .requireAny(Status.NEW, Status.FINISHED).check();
     }
 
-    public static boolean isStatusChanged(BaseWorkflowObject object) {
-        if (RepoUtil.isSaved(object.getNode()) && object.isChangedProperty(WorkflowCommonModel.Props.STATUS)) {
+    public static void requireStatusUnchanged(BaseWorkflowObject object) {
+        requireStatusUnchanged(object, null);
+    }
+
+    public static void requireStatusUnchanged(BaseWorkflowObject object, WorkflowEventQueue queue) {
+        if (isStatusChanged(object, queue)) {
+            throw new WorkflowChangedException("Changing status is not permitted outside of service", object);
+        }
+    }
+
+    private static boolean isStatusChanged(BaseWorkflowObject object, WorkflowEventQueue queue) {
+        if (RepoUtil.isSaved(object.getNode()) && object.isChangedProperty(WorkflowCommonModel.Props.STATUS)
+                && queue != null && !queueContainsEvent(object, queue)) {
             return true;
         }
         if (object instanceof CompoundWorkflow) {
             for (Workflow workflow : ((CompoundWorkflow) object).getWorkflows()) {
-                if (isStatusChanged(workflow)) {
+                if (isStatusChanged(workflow, queue)) {
                     return true;
                 }
             }
         } else if (object instanceof Workflow) {
             for (Task task : ((Workflow) object).getTasks()) {
-                if (isStatusChanged(task)) {
+                if (isStatusChanged(task, queue)) {
                     return true;
                 }
             }
@@ -487,10 +502,17 @@ public class WorkflowUtil {
         return false;
     }
 
-    public static void requireStatusUnchanged(BaseWorkflowObject object) {
-        if (isStatusChanged(object)) {
-            throw new WorkflowChangedException("Changing status is not permitted outside of service", object);
+    private static boolean queueContainsEvent(BaseWorkflowObject object, WorkflowEventQueue queue) {
+        NodeRef nodeRef = object.getNodeRef();
+        for (WorkflowEvent event : queue.getEvents()) {
+            if (EqualsHelper.nullSafeEquals(nodeRef, event.getObject().getNodeRef())) {
+                if (WorkflowEventType.STATUS_CHANGED.equals(event.getType())) {
+                    return true;
+                }
+                break;
+            }
         }
+        return false;
     }
 
     // ========================================================================
@@ -989,6 +1011,26 @@ public class WorkflowUtil {
                 throw new RuntimeException(e);
             }
         }
+    }
+
+    public static void setPropsToTask(Task task, String name, Serializable id, Serializable email, Serializable orgName, Serializable jobTitle, Serializable groupName) {
+        @SuppressWarnings("unchecked")
+        List<String> orgStructUnit = (List<String>) orgName;
+
+        task.setOwnerName(name);
+        task.setOwnerId((String) id);
+        task.setOwnerEmail((String) email);
+        task.setOwnerGroup((String) groupName);
+        task.setOwnerOrgStructUnitProp(orgStructUnit);
+        task.setOwnerJobTitle((String) jobTitle);
+    }
+
+    public static void setPersonPropsToTask(Task task, Map<String, Object> personProps, Serializable orgName) {
+        String name = UserUtil.getPersonFullName2(personProps);
+        Serializable id = (Serializable) personProps.get(ContentModel.PROP_USERNAME);
+        Serializable email = (Serializable) personProps.get(ContentModel.PROP_EMAIL);
+        Serializable jobTitle = (Serializable) personProps.get(ContentModel.PROP_JOBTITLE);
+        setPropsToTask(task, name, id, email, orgName, jobTitle, null);
     }
 
 }

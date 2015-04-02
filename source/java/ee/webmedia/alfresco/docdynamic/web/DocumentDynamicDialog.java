@@ -61,6 +61,7 @@ import ee.webmedia.alfresco.classificator.constant.DocTypeAssocType;
 import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.common.propertysheet.component.SimUIPropertySheet;
 import ee.webmedia.alfresco.common.propertysheet.component.SubPropertySheetItem;
+import ee.webmedia.alfresco.common.service.RequestCacheBean;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
@@ -116,6 +117,7 @@ import ee.webmedia.alfresco.utils.UnableToPerformMultiReasonException;
 import ee.webmedia.alfresco.utils.WebUtil;
 import ee.webmedia.alfresco.volume.model.UnmodifiableVolume;
 import ee.webmedia.alfresco.volume.model.Volume;
+import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
 import ee.webmedia.alfresco.workflow.web.WorkflowBlockBean;
@@ -140,8 +142,10 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
     public static final QName TEMP_ARCHIVAL_ACTIVITY_NODE_REF = RepoUtil.createTransientProp("archivalActivityNodeRef");
     public static final QName TEMP_VALIDATE_WITHOUT_SAVE = RepoUtil.createTransientProp("validateWithoutSave");
     private static final String PARAM_NODEREF = "nodeRef";
+    private static final String SIGNABLE_BY_OWNER_KEY = "signableByOwner";
     private String renderedModal;
     private boolean showConfirmationPopup;
+    private RequestCacheBean requestCacheBean;
 
     // TODO kontrollida et kustutatud dokumendi ekraanile tagasipöördumine töötaks... või tahavad teised blokid laadida uuesti asju? ja siis oleks mõtekam dialoogi mitte kuvada?
 
@@ -1348,6 +1352,27 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         return snapshot.document;
     }
 
+    public boolean isSignableByOwner() {
+        Boolean signableByOwner = (Boolean) requestCacheBean.getResult(SIGNABLE_BY_OWNER_KEY);
+        if (signableByOwner == null) {
+            DocumentDynamic doc = getDocument();
+            Map<String, Object> docProps = doc.getNode().getProperties();
+            NodeRef functionRef = (NodeRef) docProps.get(DocumentCommonModel.Props.FUNCTION);
+            signableByOwner = BeanHelper.getWorkflowConstantsBean().isDocumentOrIndependentWorkflowEnabled()
+                    && !isInEditMode()
+                    && AuthenticationUtil.getRunAsUser().equals(docProps.get(DocumentCommonModel.Props.OWNER_ID))
+                    && functionRef != null && !BeanHelper.getFunctionsService().getUnmodifiableFunction(functionRef, null).isDocumentActivitiesAreLimited()
+                    && getDocumentType().isDocSigningForOwnerEnabled()
+                    && !BeanHelper.getWorkflowService().hasCompoundWorkflowsWithStatus(doc.getNodeRef(), Status.NEW_INPROGRESS_OR_STOPPED);
+            requestCacheBean.setResult(SIGNABLE_BY_OWNER_KEY, signableByOwner);
+        }
+        return signableByOwner;
+    }
+
+    public void clearRequestCache() {
+        requestCacheBean.clear();
+    }
+
     public DocumentType getDocumentType() {
         DocDialogSnapshot snapshot = getCurrentSnapshot();
         if (snapshot == null) {
@@ -1598,6 +1623,14 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
     public CaseFile getCaseFile() {
         // Not used.
         return null;
+    }
+
+    public RequestCacheBean getRequestCacheBean() {
+        return requestCacheBean;
+    }
+
+    public void setRequestCacheBean(RequestCacheBean requestCacheBean) {
+        this.requestCacheBean = requestCacheBean;
     }
 
 }

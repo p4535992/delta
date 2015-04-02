@@ -19,6 +19,9 @@
       <property name="dictionaryService" ref="DictionaryService" />
       <property name="namespaceService" ref="NamespaceService" />
       <property name="generalService" ref="GeneralService" />
+      <property name="informationWorkflowDelegationEnabled" value="${conf.informationWorkflow.delegate.enabled}"/>
+      <property name="opinionWorkflowDelegationEnabled" value="${conf.opinionWorkflow.delegate.enabled}"/>
+      <property name="reviewWorkflowDelegationEnabled" value="${conf.reviewWorkflow.delegate.enabled}"/>
    </bean>
 
    <bean id="workflowModelBootstrap" parent="dictionaryModelBootstrap" depends-on="dictionaryBootstrap">

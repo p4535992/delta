@@ -58,6 +58,9 @@ public class DeleteFileDialog extends DeleteContentDialog {
             if (previouslyGeneratedPdf != null) {
                 getNodeService().setProperty(previouslyGeneratedPdf, FileModel.Props.PDF_GENERATED_FROM_FILE, null);
             }
+            if (document != null && BeanHelper.getConstantNodeRefsBean().getTemplateRoot().equals(document)) {
+                BeanHelper.getDocumentTemplateService().removeTemplateFromCache(file.getNodeRef());
+            }
             MessageUtil.addInfoMessage("file_delete_success", fileName);
         }
 

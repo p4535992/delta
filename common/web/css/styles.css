@@ -1403,6 +1403,10 @@ table.expand19-200 {
 	display: block;
 }
 
+.borderless {
+	border-bottom: none;
+}
+
 .delegateBtn {
 	margin-top: 6px !important;
 	margin-bottom: 4px;

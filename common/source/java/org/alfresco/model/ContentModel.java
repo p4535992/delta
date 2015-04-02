@@ -222,7 +222,7 @@ public interface ContentModel
     static final QName PROP_RELATED_FUNDS_CENTER = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "relatedFundsCenter");
     static final QName PROP_OPEN_OFFICE_CLIENT_EXTENSIONS = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "openOfficeClientExtensions");
     static final QName SHOW_EMPTY_TASK_MENU = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "showEmptyTaskMenu");
-    static final QName MOBILE_PHONE = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "mobilePhone");
+    static final QName DEFAULT_TELEPHONE_FOR_SIGNING = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "defaultTelephoneForSigning");
 
     static final QName PROP_SIZE_CURRENT = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "sizeCurrent");
     static final QName PROP_SIZE_QUOTA = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "sizeQuota");

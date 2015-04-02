@@ -262,12 +262,21 @@
       <property-sheet>
          <show-property name="wfs:comment" display-label-id="task_property_comment_confirmationTask" component-generator="TextAreaGenerator" styleClass="expand19-200" />
       </property-sheet>
-   </config>   
+   </config>
+   
+   <config evaluator="node-type" condition="wfs:informationTask">
+      <property-sheet>
+         <show-property name="{temp}delegateAsInformationTask" component-generator="DelegationTaskListGenerator" ignore-if-missing="false" styleClass="borderless" delegate-single-task-type="true"
+            rendered="#{workflowConstantsBean.informationWorkflowDelegationEnabled}" display-label-id="informationWorkflow_add_task" taskType="INFORMATION" />
+      </property-sheet>
+   </config>
    
    <config evaluator="node-type" condition="wfs:reviewTask">
       <property-sheet>
          <show-property name="wfs:tempOutcome" display-label-id="task_property_outcomes_reviewTask" component-generator="GeneralSelectorGenerator"
             selectionItems="#{WorkflowBlockBean.getReviewTaskOutcomes}" converter="javax.faces.Integer" ignore-if-missing="false" />
+         <show-property name="{temp}delegateAsReviewTask" component-generator="DelegationTaskListGenerator" ignore-if-missing="false" styleClass="borderless" delegate-single-task-type="true"
+            rendered="#{workflowConstantsBean.reviewWorkflowDelegationEnabled}" display-label-id="workflow_task_review_delegate" taskType="REVIEW" />
       </property-sheet>
    </config>
    
@@ -281,6 +290,8 @@
    <config evaluator="node-type" condition="wfs:opinionTask">
       <property-sheet>
          <show-property name="{temp}files" removedValues="#{WorkflowBlockBean.removedFiles}" display-label-id="task_file_upload" component-generator="UploadFileGenerator" successMsgKey="opinion_file_uploaded" ignore-if-missing="false" />
+         <show-property name="{temp}delegateAsOpinionTask" component-generator="DelegationTaskListGenerator" ignore-if-missing="false" styleClass="borderless" delegate-single-task-type="true"
+            rendered="#{workflowConstantsBean.opinionWorkflowDelegationEnabled}" display-label-id="workflow_task_opinion_delegate" taskType="OPINION" />
       </property-sheet>
    </config>
    

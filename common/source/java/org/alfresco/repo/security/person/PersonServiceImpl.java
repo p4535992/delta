@@ -693,6 +693,16 @@ public class PersonServiceImpl extends TransactionListenerAdapter implements Per
     }
 
     @Override
+    public void setPersonProperty(String username, QName property, Serializable value) {
+        NodeRef personRef = getPerson(username);
+        if (personRef == null) {
+            return;
+        }
+        nodeService.setProperty(personRef, property, value);
+        removeFromCache(username);
+    }
+
+    @Override
     public boolean isMutable()
     {
         return true;

@@ -28,16 +28,14 @@ import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
  */
 public class DelegateButtonGenerator extends BaseComponentGenerator {
     private static final String PARAM_NODEREF = "nodeRef";
+    private static final String DELEGATE_BINDING = "#{" + DelegationBean.DELEGATE + "}";
 
     @Override
     protected UIComponent createComponent(FacesContext context, UIPropertySheet propertySheet, final PropertySheetItem item) {
-        HtmlCommandButton delegateButton = new HtmlCommandButton();
-        Node assignmentTaskNode = propertySheet.getNode();
-        delegateButton.setId("delegate-id-" + assignmentTaskNode.getId());
         Application app = context.getApplication();
-        delegateButton.setActionListener(app.createMethodBinding("#{" + DelegationBean.BEAN_NAME + ".delegate}", new Class[] { ActionEvent.class }));
-        delegateButton.setValue(MessageUtil.getMessage("task_delegate_" + assignmentTaskNode.getType().getLocalName()));
-        delegateButton.setStyleClass("delegateBtn");
+        Node assignmentTaskNode = propertySheet.getNode();
+        HtmlCommandButton delegateButton = createDelegateButton(app, assignmentTaskNode);
+
         Integer delegatableTaskIndex = ComponentUtil.getAttribute(propertySheet, DelegationBean.ATTRIB_DELEGATABLE_TASK_INDEX, Integer.class);
         NodeRef compoundWorkflowRef = BeanHelper.getGeneralService().getAncestorNodeRefWithType(
                 BeanHelper.getWorkflowDbService().getTaskParentNodeRef(assignmentTaskNode.getNodeRef()), WorkflowCommonModel.Types.COMPOUND_WORKFLOW);
@@ -45,11 +43,20 @@ public class DelegateButtonGenerator extends BaseComponentGenerator {
                 createUIParam(PARAM_NODEREF, compoundWorkflowRef, app)
                 , createUIParam(DelegationBean.ATTRIB_DELEGATABLE_TASK_INDEX, delegatableTaskIndex, app));
 
-        UIOutput wrapper = (UIOutput) context.getApplication().createComponent(ComponentConstants.JAVAX_FACES_OUTPUT);
+        UIOutput wrapper = (UIOutput) app.createComponent(ComponentConstants.JAVAX_FACES_OUTPUT);
         FacesHelper.setupComponentId(context, wrapper, "delegBtnUnderLine");
         ComponentUtil.putAttribute(wrapper, "styleClass", "delegationWrapper");
         ComponentUtil.addChildren(wrapper, delegateButton);
         return wrapper;
+    }
+
+    public static HtmlCommandButton createDelegateButton(Application app, Node taskNode) {
+        HtmlCommandButton delegateButton = new HtmlCommandButton();
+        delegateButton.setId("delegate-id-" + taskNode.getId());
+        delegateButton.setActionListener(app.createMethodBinding(DELEGATE_BINDING, new Class[] { ActionEvent.class }));
+        delegateButton.setValue(MessageUtil.getMessage("task_delegate_" + taskNode.getType().getLocalName()));
+        delegateButton.setStyleClass("delegateBtn");
+        return delegateButton;
     }
 
     @Override

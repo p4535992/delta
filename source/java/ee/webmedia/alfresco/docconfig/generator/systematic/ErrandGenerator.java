@@ -25,7 +25,7 @@ import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
 import org.alfresco.web.bean.generator.BaseComponentGenerator.CustomAttributeNames;
 import org.alfresco.web.bean.repository.Node;
-import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.LocalDate;
@@ -846,7 +846,7 @@ public class ErrandGenerator extends BaseSystematicGroupGenerator implements Sav
                 Date errandEnd = (Date) properties.get(errandEndDateProp.toString());
                 if (errandBegin != null && errandEnd != null) {
                     int calculatedDays = CalendarUtil.getDaysBetween(new LocalDate(errandBegin.getTime()), new LocalDate(errandEnd.getTime()));
-                    if (dailyAllowanceMandatory && dailyAllowanceDaysTotal != calculatedDays) {
+                    if (dailyAllowanceDaysTotal != calculatedDays && (CollectionUtils.isNotEmpty(dailyAllowanceDays) || dailyAllowanceMandatory)) {
                         throw new UnableToPerformException("document_errand_dailyAllowance_days_sum_match_totalDays");
                     }
                 }

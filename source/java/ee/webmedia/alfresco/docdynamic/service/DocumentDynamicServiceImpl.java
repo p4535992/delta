@@ -92,7 +92,6 @@ import ee.webmedia.alfresco.docconfig.generator.SaveListener;
 import ee.webmedia.alfresco.docconfig.generator.systematic.AccessRestrictionGenerator;
 import ee.webmedia.alfresco.docconfig.generator.systematic.DocumentLocationGenerator;
 import ee.webmedia.alfresco.docconfig.service.ContractPartyField;
-import ee.webmedia.alfresco.docconfig.service.DocumentConfig;
 import ee.webmedia.alfresco.docconfig.service.DocumentConfigService;
 import ee.webmedia.alfresco.docconfig.service.DynamicPropertyDefinition;
 import ee.webmedia.alfresco.docdynamic.model.DocumentChildModel;
@@ -674,7 +673,7 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         Collections.sort(associatedDocs, DOCUMENT_BY_REG_DATE_TIME_COMPARATOR);
         for (DocumentDynamic associatedDocument : associatedDocs) {
             if (!associatedDocument.getNodeRef().getId().equals(originalDocumentNodeRef.getId())) {
-                DocumentConfig cfg = documentConfigService.getConfig(associatedDocument.getNode());
+                List<String> saveListenerBeans = documentConfigService.getSaveListenerBeanNames(associatedDocument.getNode());
                 associatedDocument.setFunction(functionRef);
                 associatedDocument.setSeries(seriesRef);
                 associatedDocument.setVolume(volumeRef);
@@ -686,8 +685,8 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
                 // entire relocation process would fail and user sees a confusing fault message.
                 // See DELTA-703
                 List<String> saveListeners = null;
-                if (cfg.getSaveListenerBeanNames() != null) {
-                    saveListeners = new ArrayList<>(cfg.getSaveListenerBeanNames());
+                if (saveListenerBeans != null) {
+                    saveListeners = new ArrayList<>(saveListenerBeans);
                     saveListeners.remove(AccessRestrictionGenerator.BEAN_NAME);
                 }
                 NodeRef newNodeRef = update(associatedDocument, saveListeners, updateGeneratedFiles).getNodeRef();

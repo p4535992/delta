@@ -38,6 +38,7 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -54,6 +55,7 @@ import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.mobile.alfresco.common.AbstractBaseController;
 import ee.webmedia.mobile.alfresco.common.model.MessageItem;
 import ee.webmedia.mobile.alfresco.workflow.TaskRowMapper;
+import ee.webmedia.mobile.alfresco.workflow.model.QueryString;
 import ee.webmedia.mobile.alfresco.workflow.model.Task;
 import ee.webmedia.mobile.alfresco.workflow.model.TaskContainer;
 import ee.webmedia.mobile.alfresco.workflow.model.UserItem;
@@ -190,8 +192,9 @@ public class HomeController extends AbstractBaseController {
     }
 
     @RequestMapping(value = "/ajax/search/groupmembers", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
-    public @ResponseBody List<UserItem> searchGroupMembers(@RequestParam String q) {
+    public @ResponseBody List<UserItem> searchGroupMembers(@RequestBody QueryString query) {
         List<UserItem> members = new ArrayList<>();
+        String q = query.getQuery();
         if (StringUtils.startsWithIgnoreCase(q, "group")) {
             UserService userService = getUserService();
             AuthorityService authorityService = getAuthorityService();

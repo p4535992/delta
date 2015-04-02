@@ -27,8 +27,10 @@ package org.alfresco.web.bean;
 import java.io.File;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
+import org.alfresco.service.cmr.repository.NodeRef;
 import org.apache.commons.io.FilenameUtils;
 
 import ee.webmedia.alfresco.document.file.web.AddFileDialog;
@@ -60,6 +62,7 @@ public final class FileUploadBean implements Serializable
    private List<String> filePath;
    private List<String> contentType;
    private List<Long> orderNumbers;
+   private List<NodeRef> taskRefs;
    private boolean multiple = false;
 
    private boolean problematicFile = false;
@@ -279,6 +282,16 @@ public final class FileUploadBean implements Serializable
         if (getOrderNumbers() != null && getOrderNumbers().size() > index) {
             getOrderNumbers().remove(index);
         }
+        if (getTaskRefs() != null && getTaskRefs().size() > index) {
+            getTaskRefs().remove(index);
+        }
+    }
+
+    public void removeFiles(List<Integer> fileIndexes) {
+        Collections.sort(fileIndexes, Collections.reverseOrder());
+        for (int index : fileIndexes) {
+            removeFile(index);
+        }
     }
 
     public boolean removeFile(String fileName) {
@@ -294,5 +307,16 @@ public final class FileUploadBean implements Serializable
             }
         }
         return false;
+    }
+
+    public List<NodeRef> getTaskRefs() {
+        return taskRefs;
+    }
+
+    public void setTaskRef(NodeRef taskRef) {
+        if (taskRefs == null) {
+            taskRefs = new ArrayList<>();
+        }
+        taskRefs.add(taskRef);
     }
 }

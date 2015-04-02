@@ -17,11 +17,11 @@ public class TaskGroupHolder implements Serializable {
     /**
      * Maps workflow index to grouped tasks.
      */
-    private List<WorkflowTaskGroupList> workflowTaskGroupLists = new ArrayList<>();
+    private final List<WorkflowTaskGroupList> workflowTaskGroupLists = new ArrayList<>();
     /**
      * Maps references to same TaskGroup object. Is used for JSF value binding.
      */
-    private Map<String, TaskGroup> byGroupId = new HashMap<>();
+    private final Map<String, TaskGroup> byGroupId = new HashMap<>();
 
     public TaskGroup addNewTaskGroup(int workflowIndex, int taskIndex, String groupName, boolean isResponsible, boolean isFullAccess) {
         WorkflowTaskGroupList workflowTaskGroupLists1 = getWorkflowTaskGroupLists(workflowIndex);
@@ -37,14 +37,21 @@ public class TaskGroupHolder implements Serializable {
         byGroupId.remove(group.getGroupId());
     }
 
+    public void removeGroup(int wfIndex, String groupId) {
+        TaskGroup group = byGroupId.get(groupId);
+        if (group == null) {
+            return;
+        }
+        removeGroup(wfIndex, group);
+    }
+
     public boolean hasTaskGroups(int workflowIndex) {
         return !getWorkflowTaskGroupLists(workflowIndex).isEmpty();
     }
 
     private WorkflowTaskGroupList getWorkflowTaskGroupLists(int workflowIndex) {
-        Assert.isTrue(workflowIndex >= 0 && workflowIndex <= workflowTaskGroupLists.size());
-        if (workflowIndex >= workflowTaskGroupLists.size()) {
-            workflowTaskGroupLists.add(workflowIndex, new WorkflowTaskGroupList());
+        while (workflowIndex >= workflowTaskGroupLists.size()) {
+            workflowTaskGroupLists.add(workflowTaskGroupLists.size(), new WorkflowTaskGroupList());
         }
 
         return workflowTaskGroupLists.get(workflowIndex);
@@ -118,7 +125,7 @@ public class TaskGroupHolder implements Serializable {
     }
 
     private static class WorkflowTaskGroupList implements Serializable {
-        private MultiValueMap<String, TaskGroup> taskGroupsByGroupName = new MultiValueMap<>();
+        private final MultiValueMap<String, TaskGroup> taskGroupsByGroupName = new MultiValueMap<>();
 
         public boolean isEmpty() {
             return taskGroupsByGroupName.isEmpty();

@@ -320,7 +320,9 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
         }
         for (Node taskOwner : taskOwners.values()) {
             Task task = workflow.addTask();
-            setPersonPropsToTask(task, RepoUtil.toQNameProperties(taskOwner.getProperties()));
+            Map<String, Object> props = taskOwner.getProperties();
+            Serializable orgName = (Serializable) getOrganizationStructureService().getOrganizationStructurePaths((String) props.get(ContentModel.PROP_ORGID.toPrefixString()));
+            WorkflowUtil.setPersonPropsToTask(task, props, orgName);
         }
     }
 
@@ -1395,15 +1397,6 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
         return Pair.newInstance(retrieveUserTime, retrieveOrgTime);
     }
 
-    private void setPersonPropsToTask(Task task, Map<QName, Serializable> personProps) {
-        String name = UserUtil.getPersonFullName1(personProps);
-        Serializable id = personProps.get(ContentModel.PROP_USERNAME);
-        Serializable email = personProps.get(ContentModel.PROP_EMAIL);
-        Serializable orgName = (Serializable) getOrganizationStructureService().getOrganizationStructurePaths((String) personProps.get(ContentModel.PROP_ORGID));
-        Serializable jobTitle = personProps.get(ContentModel.PROP_JOBTITLE);
-        setPropsToTask(task, name, id, email, orgName, jobTitle, null);
-    }
-
     private void setContactPropsToTask(Workflow block, int index, NodeRef contact, String groupName) {
         Map<QName, Serializable> resultProps = getNodeService().getProperties(contact);
         QName resultType = getNodeService().getType(contact);
@@ -1428,19 +1421,7 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
                 task = ((OrderAssignmentWorkflow) block).addResponsibleTask();
             }
         }
-        setPropsToTask(task, name, id, email, orgName, jobTitle, groupName);
-    }
-
-    private void setPropsToTask(Task task, String name, Serializable id, Serializable email, Serializable orgName, Serializable jobTitle, Serializable groupName) {
-        @SuppressWarnings("unchecked")
-        List<String> orgStructUnit = (List<String>) orgName;
-
-        task.setOwnerName(name);
-        task.setOwnerId((String) id);
-        task.setOwnerEmail((String) email);
-        task.setOwnerGroup((String) groupName);
-        task.setOwnerOrgStructUnitProp(orgStructUnit);
-        task.setOwnerJobTitle((String) jobTitle);
+        WorkflowUtil.setPropsToTask(task, name, id, email, orgName, jobTitle, groupName);
     }
 
     /**
@@ -1462,11 +1443,9 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
         }
 
         boolean respTaskInSomeBlock = false;
-        int i = -1;
 
         List<TaskInfHolder> wfThatNeedTask = new ArrayList<TaskInfHolder>();
         for (Workflow block : compoundWorkflow.getWorkflows()) {
-            i++;
             String blockStatus = block.getStatus();
             if (Status.NEW.equals(blockStatus)) {
                 QName blockType = block.getNode().getType();

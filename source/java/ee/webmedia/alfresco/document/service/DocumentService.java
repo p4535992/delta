@@ -1,6 +1,7 @@
 package ee.webmedia.alfresco.document.service;
 
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -297,7 +298,7 @@ public interface DocumentService {
      * @param propertyTypes
      * @return
      */
-    List<TaskAndDocument> getTasksWithDocuments(List<Task> tasks, Map<Long, QName> propertyTypes);
+    Map<NodeRef, TaskAndDocument> getTasksWithDocuments(Collection<Task> tasks, Map<Long, QName> propertyTypes);
 
     /**
      * Ends document.

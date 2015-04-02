@@ -116,6 +116,14 @@ public class DocumentType extends DynamicType {
         setProp(DocumentAdminModel.Props.EDIT_FILES_OF_FINISHED_DOC_ENABLED, editFilesOfFinishedDocEnabled);
     }
 
+    public boolean isDocSigningForOwnerEnabled() {
+        return getPropBoolean(DocumentAdminModel.Props.DOC_SIGNING_FOR_OWNER_ENABLED);
+    }
+
+    public void setDocSigningForOwnerEnabled(boolean docSigningForOwnerEnabled) {
+        setProp(DocumentAdminModel.Props.DOC_SIGNING_FOR_OWNER_ENABLED, docSigningForOwnerEnabled);
+    }
+
     public boolean isAddReplyToUnregistratedDocEnabled() {
         return getPropBoolean(DocumentAdminModel.Props.ADD_REPLY_TO_UNREGISTRATED_DOC_ENABLED);
     }

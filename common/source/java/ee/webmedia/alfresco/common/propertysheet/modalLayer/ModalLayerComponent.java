@@ -11,10 +11,12 @@ import javax.faces.component.UIComponent;
 import javax.faces.component.UIInput;
 import javax.faces.context.FacesContext;
 import javax.faces.context.ResponseWriter;
+import javax.faces.el.MethodBinding;
 import javax.faces.event.ActionEvent;
 
 import org.alfresco.web.ui.common.Utils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.myfaces.el.MethodBindingImpl;
 
 import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
@@ -34,6 +36,7 @@ public class ModalLayerComponent extends UICommand implements Serializable {
     public static final String ATTR_AUTO_SHOW = "autoShow";
     public static final String ACTION_INDEX = "actionIndex";
     public static final String ATTR_STYLE_CLASS = "modalStyleClass";
+    public static final String ATTR_ON_CLOSE_CALLBACK_BINDING = "onCloseCallbackBinding";
 
     public final static int ACTION_CLEAR = 1;
     public final static int ACTION_SUBMIT = 2;
@@ -52,6 +55,11 @@ public class ModalLayerComponent extends UICommand implements Serializable {
             if (action == ACTION_CLEAR) {
                 if (Boolean.TRUE.equals(ComponentUtil.getAttributes(this).get(ATTR_SET_RENDERED_FALSE_ON_CLOSE))) {
                     setRendered(false);
+                }
+                String callbackBinding = (String) ComponentUtil.getAttributes(this).get(ATTR_ON_CLOSE_CALLBACK_BINDING);
+                if (StringUtils.isNotBlank(callbackBinding)) {
+                    MethodBinding binding = new MethodBindingImpl(getFacesContext().getApplication(), callbackBinding, new Class<?>[0]);
+                    binding.invoke(getFacesContext(), null);
                 }
             } else if (action == ACTION_SUBMIT) {
                 String actionIndexStr = requestMap.get(getActionId(context, this));

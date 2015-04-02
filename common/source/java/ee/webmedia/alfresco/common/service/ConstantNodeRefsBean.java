@@ -10,6 +10,7 @@ import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.imap.model.ImapModel;
 import ee.webmedia.alfresco.template.model.DocumentTemplateModel;
 import ee.webmedia.alfresco.thesaurus.model.ThesaurusModel;
+import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 
 public class ConstantNodeRefsBean implements Serializable {
 
@@ -32,6 +33,7 @@ public class ConstantNodeRefsBean implements Serializable {
     private NodeRef receivedInvoiceRoot;
     private NodeRef sentEmailRoot;
     private NodeRef forwardedDecDocumentsRoot;
+    private NodeRef independentWorkflowsRoot;
 
     private String corruptDvkDocumentsPath;
     private String receivedDvkDocumentsPath;
@@ -145,6 +147,13 @@ public class ConstantNodeRefsBean implements Serializable {
             forwardedDecDocumentsRoot = BeanHelper.getGeneralService().getNodeRef(forwardedDecDocumentsRootPath);
         }
         return forwardedDecDocumentsRoot;
+    }
+
+    public NodeRef getIndependentWorkflowsRoot() {
+        if (independentWorkflowsRoot == null) {
+            independentWorkflowsRoot = BeanHelper.getGeneralService().getNodeRef(WorkflowCommonModel.Repo.INDEPENDENT_WORKFLOWS_SPACE);
+        }
+        return independentWorkflowsRoot;
     }
 
     public void setCorruptDvkDocumentsPath(String corruptDvkDocumentsPath) {

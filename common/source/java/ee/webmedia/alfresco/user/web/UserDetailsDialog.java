@@ -29,6 +29,7 @@ import org.apache.commons.lang.StringUtils;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.substitute.model.Substitute;
 import ee.webmedia.alfresco.substitute.web.SubstituteListDialog;
+import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.TextUtil;
@@ -63,6 +64,7 @@ public class UserDetailsDialog extends BaseDialogBean {
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
         if (validate()) {
+            trimDefaultTelephoneForSigning();
             substituteListDialog.save();
             BeanHelper.getUserService().updateUser(user);
             setupUser((String) user.getProperties().get(ContentModel.PROP_USERNAME.toString()));
@@ -72,10 +74,15 @@ public class UserDetailsDialog extends BaseDialogBean {
     }
 
     private boolean validate() {
-        String clientExtensions = (String) user.getProperties().get(ContentModel.PROP_OPEN_OFFICE_CLIENT_EXTENSIONS.toString());
-        if (StringUtils.isNotBlank(clientExtensions) && !StringUtils.isAlpha(clientExtensions.replaceAll(",", ""))) {
+        Map<String, Object> userProps = user.getProperties();
+        String clientExtensions = (String) userProps.get(ContentModel.PROP_OPEN_OFFICE_CLIENT_EXTENSIONS.toString());
+        String strippedExtensions = StringUtils.deleteWhitespace(clientExtensions);
+        if (StringUtils.isNotBlank(strippedExtensions) && !StringUtils.isAlpha(strippedExtensions.replaceAll(",", ""))) {
             MessageUtil.addErrorMessage("user_openOfficeClientExtensions_error");
             return false;
+        }
+        if (!StringUtils.equals(clientExtensions, strippedExtensions)) {
+            userProps.put(ContentModel.PROP_OPEN_OFFICE_CLIENT_EXTENSIONS.toString(), strippedExtensions);
         }
         return true;
     }
@@ -103,12 +110,26 @@ public class UserDetailsDialog extends BaseDialogBean {
         return !isShowEmptyTaskMenuEditable();
     }
 
+    public void trimDefaultTelephoneForSigning() {
+        String tel = StringUtils.trimToEmpty((String) user.getProperties().get(ContentModel.DEFAULT_TELEPHONE_FOR_SIGNING.toString()));
+        user.getProperties().put(ContentModel.DEFAULT_TELEPHONE_FOR_SIGNING.toString(), tel);
+    }
+
     public boolean isShowEmptyTaskMenuEditable() {
         return isAdministratorOrCurrentUser();
     }
 
     public boolean isAdministratorOrCurrentUser() {
-        return BeanHelper.getUserService().isAdministrator() || user.getProperties().get(ContentModel.PROP_USERNAME.toString()).equals(AuthenticationUtil.getRunAsUser());
+        return BeanHelper.getUserService().isAdministrator() || isCurrentUser();
+    }
+
+    public boolean isAdministratorOrDocManagerOrCurrentUser() {
+        UserService userService = BeanHelper.getUserService();
+        return userService.isAdministrator() || userService.isDocumentManager() || isCurrentUser();
+    }
+
+    private boolean isCurrentUser() {
+        return user.getProperties().get(ContentModel.PROP_USERNAME.toString()).equals(AuthenticationUtil.getRunAsUser());
     }
 
     public boolean isServiceRankRendered() {

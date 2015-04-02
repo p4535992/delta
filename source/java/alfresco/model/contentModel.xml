@@ -276,6 +276,9 @@
             <property name="cm:openOfficeClientExtensions">
                <type>d:text</type>
             </property>
+            <property name="cm:defaultTelephoneForSigning">
+               <type>d:text</type>
+            </property>
             
             <!-- system maintained values -->
             <property name="cm:sizeCurrent">

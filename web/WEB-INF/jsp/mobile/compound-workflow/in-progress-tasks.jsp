@@ -5,6 +5,10 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%@ taglib tagdir="/WEB-INF/tags" prefix="tag"%>
 
+<script src='<c:url value="/scripts/jquery/jquery.ui.widget.min.js" />'></script>
+<script src='<c:url value="/scripts/jquery/fileupload/jquery.fileupload.js" />'></script>
+<script src='<c:url value="/mobile/js/files.js" />'></script>
+
 <form:form modelAttribute="inProgressTasksForm" method="POST" >
 
 	<c:if test="${ inProgressTasksForm.signingFlowView == 'GET_PHONE_NUMBER'}">
@@ -18,7 +22,7 @@
 						<script type="text/javascript">
 							$(document).ready(function(){
 							   var disableBtnFunction = function() {
-							      var disabled = isEmptyInput('phoneNumber');
+							      var disabled = isEmptyInputOr('phoneNumber', '+372');
 							      var buttonToDisable = $('#signMobileBtn');
 							      if (disabled) {
 							         buttonToDisable.attr('disabled','disabled');
@@ -32,7 +36,15 @@
 							});
 						</script>
 					</span>
-				</p>		
+				</p>
+                <p class="valuerow" >
+                    <span class="desc"></span>
+                    <span class="value" style="float:right;">
+                        <fmt:message key="workflow.task.sign.default.signing.number" var="inputTitle" />
+                        <form:checkbox id="defaultSigningNumber" path="defaultSigningNumber" />
+                        <span>${inputTitle}</span>
+                    </span>
+                </p>
 				<div class="buttongroup">
 					<button type="submit" name="actions['mobileNumberInserted']" id="signMobileBtn"><fmt:message key="workflow.task.sign.button.title" /></button>
 					<button type="submit" name="actions['signingCancelled']"><fmt:message key="workflow.task.sign.cancel.button.title" /></button>
@@ -86,6 +98,24 @@
 					<tag:formrow labelId="${ commentLabel }">
 						<tag:textarea name="inProgressTasks['${taskEntry.key}'].comment" id="${task.comment}" value="${task.comment}" />
 					</tag:formrow>
+                    <c:if test="${ taskType == 'opinionTask' }" >
+                       <tag:formrow labelId="workflow.task.prop.file">
+                       <input id="fileupload-${task.nodeRef.id}" type="file" name="files[]" multiple/>
+                       </tag:formrow>
+                       <script>addFileUpload('${task.nodeRef.id}', '${task.nodeRef}', '<c:url value="/uploadFileServlet" />');</script>
+                       <table id="taskFiles-${task.nodeRef.id}" class="task-files">
+                          <tbody>
+                             <c:forEach items="${task.files}" var="file" varStatus="status">
+                                <tr class="fileRow">
+                                   <td>${file.name}</td>
+                                   <td class="actions">
+                                      <a class="remove" data-file-ref="${file.nodeRef}" data-task-ref="${task.nodeRef}" data-delete-url="${file.deleteUrl}" onclick="deleteFile($(this))" ></a>
+                                   </td>
+                                </tr>
+                             </c:forEach>
+                          </tbody>
+                       </table>
+                    </c:if>
 					<c:if test="${ taskType == 'reviewTask' }" >
 						<tag:formrow labelId="workflow.task.review.tmp.outcome">					
 							<form:select path="inProgressTasks['${taskEntry.key}'].reviewTaskOutcome" items="${ reviewTaskOutcomes }" />
@@ -93,6 +123,7 @@
 					</c:if>
 					<input name="inProgressTasks['${taskEntry.key}'].signTogether" value="${task.signTogether}" type="hidden" />
 					<input name="inProgressTasks['${taskEntry.key}'].nodeRef" value="${task.nodeRef}" type="hidden" />
+                    <input name="inProgressTasks['${taskEntry.key}'].typeStr" value="${task.typeStr}" type="hidden" />
 					
 					<div class="buttongroup">				
 						<c:forEach items="${taskOutcomeButtons[task.nodeRef] }" var="outcomeBtn" varStatus="status" >

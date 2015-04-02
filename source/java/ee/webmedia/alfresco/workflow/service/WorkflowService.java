@@ -53,6 +53,8 @@ public interface WorkflowService {
 
     // new in-memory object, based on existing compoundWorkflow definition
     CompoundWorkflow getNewCompoundWorkflow(NodeRef compoundWorkflowDefinition, NodeRef parent);
+    
+    CompoundWorkflow getNewCompoundWorkflow(NodeRef parent);
 
     // get existing object from repository
     List<CompoundWorkflow> getCompoundWorkflows(NodeRef parent);
@@ -121,6 +123,8 @@ public interface WorkflowService {
      *            compoundWorkflow is not fetched, so {@code workflow.getParent()} returns {@code null}.
      */
     Task getTask(NodeRef task, boolean fetchWorkflow);
+
+    Task getTaskWithoutDueDateData(NodeRef task);
 
     Set<Task> getTasks(NodeRef docRef, Predicate<Task> predicate);
 
@@ -199,8 +203,6 @@ public interface WorkflowService {
 
     List<ChildAssociationRef> getAllCompoundWorkflowDefinitionRefs();
 
-    NodeRef getIndependentWorkflowsRoot();
-
     List<CompoundWorkflowDefinition> getIndependentCompoundWorkflowDefinitions(String userId);
 
     void updateMainDocument(NodeRef workflowRef, NodeRef mainDocRef);
@@ -275,7 +277,11 @@ public interface WorkflowService {
 
     void loadTaskFilesFromCompoundWorkflows(List<Task> tasks, List<NodeRef> compoundWorkflows);
 
+    Map<NodeRef, List<File>> loadTaskFilesFromCompoundWorkflow(Set<NodeRef> taskRefs, NodeRef compoundWorkflowRef);
+
     void loadTaskFiles(Task task, List<NodeRef> taskFiles);
+
+    void loadTaskFiles(Task task);
 
     List<NodeRef> getChildWorkflowNodeRefs(List<NodeRef> compoundWorkflows);
 
@@ -310,5 +316,10 @@ public interface WorkflowService {
 
     Map<NodeRef, List<NodeRef>> getChildWorkflowNodeRefsByCompoundWorkflow(List<NodeRef> compoundWorkflows);
 
+    boolean hasCompoundWorkflowsWithStatus(NodeRef docRef, Set<String> statusNames);
+
+    List<Task> getDocumentCompoundWorkflowTasks(NodeRef docRef, Set<QName> taskTypes, Set<Status> taskStatuses);
+
     void removeCaseFileTypeFromCompoundWorklfowDefinitions(String caseFileId);
+
 }

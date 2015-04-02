@@ -849,6 +849,8 @@ input[type="file"] {
 	border: 1px solid #e6e6e6;
 	border-radius: 2px;
 	background: #fff;
+	z-index: 9999;
+	position: absolute;
 }
 .token-input-dropdown ul {
 	margin: -0.5rem;
@@ -858,7 +860,7 @@ input[type="file"] {
 	line-height: 1.25;
 }
 .token-input-dropdown li {
-	padding: .5rem;
+	padding: 0.35rem .5rem;
 	cursor: pointer;
 }
 .token-input-dropdown li:hover {
@@ -1743,7 +1745,6 @@ DIV.modalpopup-footer P.action {
 	display: block;
 	background: none repeat scroll 0 0 #fff;
 	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-	width: 440px;
 }
 .modal-header {
 	padding: 17px 20px 13px;
@@ -1855,4 +1856,35 @@ DIV.modalpopup-footer P.action {
     opacity: 0.5;
     background: "#CCCCCC";
     pointer-events: none;
+}
+.task-files {
+	margin-left: 34%;
+    width: 66%;
+}
+.task-files td {
+    border: 1px solid #e6e6e6;
+    line-height: 1;
+    padding: 4px 8px;
+}
+.task-files .actions {
+    white-space: nowrap;
+    width: 1px;
+}
+.actions .remove {
+    background: url(../gfx/Dumster.svg) no-repeat scroll 100% 50% transparent;
+    display: block;
+    height: 17px;
+    overflow: hidden;
+    text-indent: -10000em;
+    width: 12px;
+}
+.file-upload-progress {
+    position: absolute;
+    width: 0%;
+    z-index: -1;    
+    background: #ff9500;
+    opacity: 0.5;    
+    transition:width 0.5s;
+    margin-top: -5px;
+    margin-left: -8px;
 }

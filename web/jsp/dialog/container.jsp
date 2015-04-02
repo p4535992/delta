@@ -147,6 +147,16 @@
                   <f:verbatim></li></f:verbatim>
                </f:subview>
 
+               <f:subview id="more-actions-panel-signOwnerDoc" rendered="#{DialogManager.currentDialog.name eq 'documentDynamicDialog' and DocumentDynamicDialog.signableByOwner}">
+                  <f:verbatim><li></f:verbatim>
+                     <a:menu id="signing_type_menu" style="white-space:nowrap" menuStyleClass="dropdown-menu right"
+                        label="#{WorkflowBlockBean.signOwnerDocLabel}" image="/images/icons/arrow-down.png" rendered="#{not WorkflowBlockBean.mobileIdDisabled}">
+                        <r:actions id="sign_doc_items" value="#{WorkflowBlockBean.signOwnerDocBindingName}" context="#{DialogManager.actionsContext}" />
+                     </a:menu>
+                     <r:actions id="sign_doc_items_single" value="#{WorkflowBlockBean.signOwnerDocBindingName}" context="#{DialogManager.actionsContext}" showLink="true" rendered="#{WorkflowBlockBean.mobileIdDisabled}" />
+                  <f:verbatim></li></f:verbatim>
+               </f:subview>
+
                <f:subview id="more-actions-panel-replies" rendered="#{DialogManager.currentDialog.name eq 'documentDynamicDialog' and DocumentDialogHelperBean.inWorkspace and AssocsBlockBean.repliesAssocsBindingName != null and DocumentDialogHelperBean.inEditMode == false}">
                   <f:verbatim><li></f:verbatim>
                      <a:menu id="replies_menu" style="white-space:nowrap" menuStyleClass="dropdown-menu right"
