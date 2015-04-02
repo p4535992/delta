@@ -246,6 +246,14 @@ public class MessageUtil {
         return isErrorAdded;
     }
 
+    public static List<String> getStatusMessages(MessageDataWrapper wrapper) {
+        List<String> messages = new ArrayList<>();
+        for (MessageData messageData : wrapper) {
+            messages.add(getMessage(messageData));
+        }
+        return messages;
+    }
+
     /**
      * @param facesContext
      * @param messageData

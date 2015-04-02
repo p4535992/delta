@@ -14,7 +14,7 @@
 
    <%-- Main List --%>
    <a:richList id="assignment-task-list" viewMode="details" pageSize="#{MyTasksBean.pageSize}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
-      width="100%" value="#{MyTasksBean.assignmentTasks}" var="r" initialSortColumn="taskDueDate" initialSortDescending="true">
+      width="100%" value="#{MyTasksBean.assignmentTasks}" var="r" refreshOnBind="true" >
 
       <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/workflow/web/task-list-dialog-columns.jsp" />
       <a:booleanEvaluator value="#{MyTasksBean.assignmentPagerVisible}">
@@ -24,11 +24,12 @@
 
 </a:panel>
 
-<a:panel id="group-assignment-tasks-panel" styleClass="panel-100 #{(MyTasksBean.groupAssignmentPagerVisible) ? 'with-pager' : ''}" label="#{msg.task_list_group_assignment_title}" progressive="true" rendered="#{not empty MyTasksBean.groupAssignmentTasks}">
+<a:panel id="group-assignment-tasks-panel" styleClass="panel-100 #{(MyTasksBean.groupAssignmentPagerVisible) ? 'with-pager' : ''}" label="#{msg.task_list_group_assignment_title}" progressive="true" 
+	rendered="#{MyTasksBean.groupAssignmentTasks.listSize > 0}" >
 
    <%-- Main List --%>
    <a:richList id="group-assignment-task-list" viewMode="details" pageSize="#{MyTasksBean.pageSize}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
-      width="100%" value="#{MyTasksBean.groupAssignmentTasks}" var="r" initialSortColumn="taskDueDate" initialSortDescending="true">
+      width="100%" value="#{MyTasksBean.groupAssignmentTasks}" var="r" refreshOnBind="true">
 
       <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/workflow/web/task-list-dialog-columns.jsp" />
       <a:booleanEvaluator value="#{MyTasksBean.groupAssignmentPagerVisible}">
@@ -38,11 +39,12 @@
 
 </a:panel>
 
-<a:panel id="information-tasks-panel" styleClass="panel-100 #{(MyTasksBean.informationPagerVisible) ? 'with-pager' : ''}" label="#{msg.task_list_information_title}" progressive="true" rendered="#{not empty MyTasksBean.informationTasks}">
+<a:panel id="information-tasks-panel" styleClass="panel-100 #{(MyTasksBean.informationPagerVisible) ? 'with-pager' : ''}" label="#{msg.task_list_information_title}" progressive="true" 
+	rendered="#{MyTasksBean.informationTasks.listSize > 0}" >
 
    <%-- Main List --%>
    <a:richList id="information-task-list" viewMode="details" pageSize="#{MyTasksBean.pageSize}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
-      width="100%" value="#{MyTasksBean.informationTasks}"  var="r" initialSortColumn="taskDueDate" initialSortDescending="true">
+      width="100%" value="#{MyTasksBean.informationTasks}"  var="r" refreshOnBind="true" >
 
       <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/workflow/web/task-list-dialog-columns.jsp" />
 
@@ -53,11 +55,11 @@
 
 </a:panel>
 
-<a:panel id="order-assignment-tasks-panel" styleClass="panel-100 #{(MyTasksBean.orderAssignmentPagerVisible) ? 'with-pager' : ''}" label="#{msg.task_list_order_assignment_title}" progressive="true" rendered="#{not empty MyTasksBean.orderAssignmentTasks}">
+<a:panel id="order-assignment-tasks-panel" styleClass="panel-100 #{(MyTasksBean.orderAssignmentPagerVisible) ? 'with-pager' : ''}" label="#{msg.task_list_order_assignment_title}" progressive="true" rendered="#{MyTasksBean.orderAssignmentTasks.listSize > 0}">
 
    <%-- Main List --%>
    <a:richList id="order-assignment-task-list" viewMode="details" pageSize="#{MyTasksBean.pageSize}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
-      width="100%" value="#{MyTasksBean.orderAssignmentTasks}" var="r" initialSortColumn="taskDueDate" initialSortDescending="true">
+      width="100%" value="#{MyTasksBean.orderAssignmentTasks}" var="r" refreshOnBind="true" >
 
       <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/workflow/web/task-list-dialog-columns.jsp" />
       <a:booleanEvaluator value="#{MyTasksBean.orderAssignmentPagerVisible}">
@@ -67,11 +69,11 @@
 
 </a:panel>
 
-<a:panel id="opinion-tasks-panel" styleClass="panel-100 #{(MyTasksBean.opinionPagerVisible) ? 'with-pager' : ''}" label="#{msg.task_list_opinion_title}" progressive="true" rendered="#{not empty MyTasksBean.opinionTasks}">
+<a:panel id="opinion-tasks-panel" styleClass="panel-100 #{(MyTasksBean.opinionPagerVisible) ? 'with-pager' : ''}" label="#{msg.task_list_opinion_title}" progressive="true" rendered="#{MyTasksBean.opinionTasks.listSize > 0}">
 
    <%-- Main List --%>
    <a:richList id="opinion-task-list" viewMode="details" pageSize="#{MyTasksBean.pageSize}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
-      width="100%" value="#{MyTasksBean.opinionTasks}"  var="r" initialSortColumn="taskDueDate" initialSortDescending="true">
+      width="100%" value="#{MyTasksBean.opinionTasks}"  var="r" refreshOnBind="true" >
 
       <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/workflow/web/task-list-dialog-columns.jsp" />
       <a:booleanEvaluator value="#{MyTasksBean.opinionPagerVisible}">
@@ -81,11 +83,11 @@
 
 </a:panel>
 
-<a:panel id="review-tasks-panel" styleClass="panel-100 #{(MyTasksBean.reviewPagerVisible) ? 'with-pager' : ''}" label="#{msg.task_list_review_title}" progressive="true" rendered="#{not empty MyTasksBean.reviewTasks}">
+<a:panel id="review-tasks-panel" styleClass="panel-100 #{(MyTasksBean.reviewPagerVisible) ? 'with-pager' : ''}" label="#{msg.task_list_review_title}" progressive="true" rendered="#{MyTasksBean.reviewTasks.listSize > 0}">
 
    <%-- Main List --%>
    <a:richList id="review-task-list" viewMode="details" pageSize="#{MyTasksBean.pageSize}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
-      width="100%" value="#{MyTasksBean.reviewTasks}"  var="r" initialSortColumn="taskDueDate" initialSortDescending="true">
+      width="100%" value="#{MyTasksBean.reviewTasks}"  var="r" refreshOnBind="true" >
 
       <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/workflow/web/task-list-dialog-min-columns.jsp" />
 
@@ -96,11 +98,11 @@
 
 </a:panel>
 
-<a:panel id="confirmation-tasks-panel" styleClass="panel-100 #{(MyTasksBean.confirmationPagerVisible) ? 'with-pager' : ''}" label="#{msg.task_list_confirmation_title}" progressive="true" rendered="#{not empty MyTasksBean.confirmationTasks}">
+<a:panel id="confirmation-tasks-panel" styleClass="panel-100 #{(MyTasksBean.confirmationPagerVisible) ? 'with-pager' : ''}" label="#{msg.task_list_confirmation_title}" progressive="true" rendered="#{MyTasksBean.confirmationTasks.listSize > 0}">
 
    <%-- Main List --%>
    <a:richList id="confirmation-task-list" viewMode="details" pageSize="#{MyTasksBean.pageSize}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
-      width="100%" value="#{MyTasksBean.confirmationTasks}" var="r" initialSortColumn="taskDueDate" initialSortDescending="true">
+      width="100%" value="#{MyTasksBean.confirmationTasks}" var="r" refreshOnBind="true" >
 
       <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/workflow/web/task-list-dialog-columns.jsp" />
       <a:booleanEvaluator value="#{MyTasksBean.confirmationPagerVisible}">
@@ -110,11 +112,11 @@
 
 </a:panel>
 
-<a:panel id="signature-tasks-panel" styleClass="panel-100 #{(MyTasksBean.signaturePagerVisible) ? 'with-pager' : ''}" label="#{msg.task_list_signature_title}" progressive="true"  rendered="#{not empty MyTasksBean.signatureTasks}">
+<a:panel id="signature-tasks-panel" styleClass="panel-100 #{(MyTasksBean.signaturePagerVisible) ? 'with-pager' : ''}" label="#{msg.task_list_signature_title}" progressive="true"  rendered="#{MyTasksBean.signatureTasks.listSize > 0}">
 
    <%-- Main List --%>
    <a:richList id="signature-task-list" viewMode="details" pageSize="#{MyTasksBean.pageSize}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
-      width="100%" value="#{MyTasksBean.signatureTasks}"  var="r" initialSortColumn="taskDueDate" initialSortDescending="true">
+      width="100%" value="#{MyTasksBean.signatureTasks}"  var="r" refreshOnBind="true" >
 
       <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/workflow/web/task-list-dialog-min-columns.jsp" />
 
@@ -125,11 +127,11 @@
 
 </a:panel>
 
-<a:panel id="external-review-tasks-panel" styleClass="panel-100 #{(MyTasksBean.externalReviewPagerVisible) ? 'with-pager' : ''}" label="#{msg.task_list_external_review_title}" progressive="true" rendered="#{not empty MyTasksBean.externalReviewTasks}">
+<a:panel id="external-review-tasks-panel" styleClass="panel-100 #{(MyTasksBean.externalReviewPagerVisible) ? 'with-pager' : ''}" label="#{msg.task_list_external_review_title}" progressive="true" rendered="#{MyTasksBean.externalReviewTasks.listSize > 0}">
 
    <%-- Main List --%>
    <a:richList id="external-review-task-list" viewMode="details" pageSize="#{MyTasksBean.pageSize}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
-      width="100%" value="#{MyTasksBean.externalReviewTasks}"  var="r" initialSortColumn="taskDueDate" initialSortDescending="true">
+      width="100%" value="#{MyTasksBean.externalReviewTasks}"  var="r" refreshOnBind="true" >
 
       <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/workflow/web/task-list-dialog-min-columns.jsp" />
 

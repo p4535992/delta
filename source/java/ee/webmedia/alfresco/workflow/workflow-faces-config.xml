@@ -55,17 +55,13 @@
       <managed-bean-class>ee.webmedia.alfresco.workflow.web.WorkflowBlockBean</managed-bean-class>
       <managed-bean-scope>session</managed-bean-scope>
       <managed-property>
-         <property-name>fileBlockBean</property-name>
-         <value>#{FileBlockBean}</value>
-      </managed-property>
-      <managed-property>
          <property-name>delegationBean</property-name>
          <value>#{DelegationBean}</value>
-      </managed-property>
+      </managed-property>    
       <managed-property>
-         <property-name>transactionsBlockBean</property-name>
-         <value>#{TransactionsBlockBean}</value>
-      </managed-property>      
+         <property-name>requestCacheBean</property-name>
+         <value>#{requestCacheBean}</value>
+      </managed-property>
    </managed-bean>
 
    <managed-bean>

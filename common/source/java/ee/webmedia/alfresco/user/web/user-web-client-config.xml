@@ -96,8 +96,10 @@
          <show-property name="cm:email" display-label-id="user_email" />
          <show-property name="cm:homeFolder" display-label-id="user_home_folder" />
          <show-property name="{temp}showEmptyTaskMenu" display-label-id="user_showEmptyTaskMenu" rendered="#{UserDetailsDialog.isShowEmptyTaskMenuNotEditable}" component-generator="UnescapedOutputTextGenerator" />
+         <show-property name="cm:showEmptyTaskMenu" display-label-id="user_showEmptyTaskMenu" rendered="#{UserDetailsDialog.isShowEmptyTaskMenuEditable}" isAlwaysEdit="true" component-generator="CheckboxGenerator" valueChangeListener="#{UserDetailsDialog.showEmptyTaskMenuChanged}" />
          <show-property name="cm:showEmptyTaskMenu" display-label-id="user_showEmptyTaskMenu" rendered="#{UserDetailsDialog.isShowEmptyTaskMenuEditable}" isAlwaysEdit="true" component-generator="CheckboxGenerator" />
          <show-property name="cm:openOfficeClientExtensions" display-label-id="user_openOfficeClientExtensions" rendered="#{UserDetailsDialog.isAdministratorOrCurrentUser}" isAlwaysEdit="true" />
+         <show-property name="cm:defaultTelephoneForSigning" display-label-id="user_defaultTelephoneForSigning" rendered="#{UserDetailsDialog.isAdministratorOrDocManagerOrCurrentUser}" isAlwaysEdit="true" />
       </property-sheet>
    </config>
 

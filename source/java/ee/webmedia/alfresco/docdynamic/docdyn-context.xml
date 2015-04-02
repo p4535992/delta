@@ -218,7 +218,9 @@
 
    <!-- START: web beans: -->
 
-   <bean id="DocumentDynamicDialog" class="ee.webmedia.alfresco.docdynamic.web.DocumentDynamicDialog" scope="session" />
+   <bean id="DocumentDynamicDialog" class="ee.webmedia.alfresco.docdynamic.web.DocumentDynamicDialog" scope="session" >
+      <property name="requestCacheBean" ref="requestCacheBean"></property>
+   </bean>
 
    <bean id="DocumentDialogHelperBean" class="ee.webmedia.alfresco.docdynamic.web.DocumentDialogHelperBean" scope="session" />
 

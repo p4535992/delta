@@ -7,7 +7,7 @@ import javax.faces.context.FacesContext;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.springframework.web.jsf.FacesContextUtils;
 
-import ee.webmedia.alfresco.template.model.DocumentTemplate;
+import ee.webmedia.alfresco.template.model.UnmodifiableDocumentTemplate;
 import ee.webmedia.alfresco.template.service.DocumentTemplateService;
 
 public class DocumentTemplateListDialog extends BaseDialogBean {
@@ -16,8 +16,8 @@ public class DocumentTemplateListDialog extends BaseDialogBean {
 
     private transient DocumentTemplateService documentTemplateService;
 
-    public List<DocumentTemplate> getTemplates() {
-        return getDocumentTemplateService().getTemplates();
+    public List<UnmodifiableDocumentTemplate> getTemplates() {
+        return getDocumentTemplateService().getUnmodifiableTemplates();
     }
 
     /*

@@ -187,7 +187,8 @@ $(document).ready(function() {
       clear: 'Kustuta',
       formatSubmit: 'dd.mm.yyyy',
       hiddenSuffix: '',
-      hiddenName: true
+      hiddenName: true,
+      onClose: function() {$('.datepicker').blur()}
    });
 
    // Timepicker. http://amsul.ca/pickadate.js/time.htm
@@ -210,13 +211,15 @@ function setupSuggester(suggester, url) {
       method: 'POST',
       propertyToSearch: 'name',
       resultsFormatter: function(item) {
-         var showId = item.userItemFilterType != undefined && (item.userItemFilterType == 8 || item.userItemFilterType == 4 || item.userItemFilterType == 2);
+         if(!item) {return '';}
+         var showId = item.userItemFilterType && (item.userItemFilterType == 8 || item.userItemFilterType == 4 || item.userItemFilterType == 2);
          return '<li><span class="name">' + item.name + (showId ? '</span></li>' : ('</span><span class="id">' + item.userId + '</span></li>'));
       },
       tokenFormatter: function(item) {
-         var isGroup = item.userItemFilterType != undefined && (item.userItemFilterType == 8 || item.userItemFilterType == 2);
+         if(!item) {return '';}
+         var isGroup = item.userItemFilterType && (item.userItemFilterType == 8 || item.userItemFilterType == 2);
          var type = isGroup ? "group" : "";
-         return '<li><span class="name" itemtype='+type+'>' + item.name +  '</span></li>'; 
+         return '<li><span class="name" itemtype='+type+'>' + item.name + '</span></li>'; 
       },
       minChars: 3,
       onAdd: function(item) {
@@ -238,7 +241,8 @@ function setupSuggester(suggester, url) {
       hintText: false,
       noResultsText: 'Vasted puuduvad',
       searchingText: 'Otsimine...',
-      deleteText: '&times;'
+      deleteText: '&times;',
+      appendToElement: $(".autocomplete").parent()
    });
 }
 
@@ -301,6 +305,11 @@ function isEmptyInput(inputId) {
    return isEmptyValue(inputValue);
 }
 
+function isEmptyInputOr(inputId, valueToCheck) {
+   var inputValue = document.getElementById(inputId).value;
+   return isEmptyValue(inputValue) || inputValue == valueToCheck;
+}
+
 function isEmptyValue(inputValue) {
    return inputValue == null || (!(inputValue instanceof Array) && inputValue.replace(/^\\s+|\\s+$/g, '').length == 0);
 }
@@ -331,18 +340,34 @@ function addShowMoreListener(element) {
 function addFancyBox($element) {
    $element.fancybox({
       padding: 0,
-         openEffect: "none",
-         closeEffect: "none",
-         scrolling: "visible",
-         fitToView: false,
-         helpers: {
-            overlay: { closeClick: false } // prevents closing when clicking OUTSIDE fancybox
-         },
-         tpl: {
-            wrap: '<div class="fancybox-wrap" tabIndex="-1"><div class="fancybox-skin"><div class="fancybox-outer"><div class="fancybox-inner"></div></div></div></div>',
-            iframe: '<iframe id="fancybox-frame{rnd}" name="fancybox-frame{rnd}" class="fancybox-iframe" frameborder="0" vspace="0" hspace="0"' + (window.navigator.userAgent.indexOf("MSIE ") > 0 ? ' allowtransparency="true"' : '') + '></iframe>',
-            error: '<p class="fancybox-error">Sisu pole võimalik laadida.</p>',
-            closeBtn: '<a title="Sulge" class="fancybox-item fancybox-close" href="javascript:;"></a>'
-         }
+      openEffect: "none",
+      closeEffect: "none",
+      scrolling: "visible",
+      fitToView: false,
+      minWidth: 250,
+      autoSize: true,
+      helpers: {
+         overlay: { closeClick: false } // prevents closing when clicking OUTSIDE fancybox
+      },
+      tpl: {
+         wrap: '<div class="fancybox-wrap" tabIndex="-1"><div class="fancybox-skin"><div class="fancybox-outer"><div class="fancybox-inner"></div></div></div></div>',
+         iframe: '<iframe id="fancybox-frame{rnd}" name="fancybox-frame{rnd}" class="fancybox-iframe" frameborder="0" vspace="0" hspace="0"' + (window.navigator.userAgent.indexOf("MSIE ") > 0 ? ' allowtransparency="true"' : '') + '></iframe>',
+         error: '<p class="fancybox-error">Sisu pole võimalik laadida.</p>',
+         closeBtn: '<a title="Sulge" class="fancybox-item fancybox-close" href="javascript:;"></a>'
+      }
    });
+}
+
+var translations = [];
+
+function addTranslation(key, translation) {
+   translations[key] = translation;
+}
+
+function translate(key) {
+   var translation = translations[key];
+   if (translation == null) {
+      translation = key;
+   }
+   return translation;
 }

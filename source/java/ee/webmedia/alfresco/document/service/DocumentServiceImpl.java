@@ -2448,8 +2448,8 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, N
     }
 
     @Override
-    public List<TaskAndDocument> getTasksWithDocuments(List<Task> tasks, Map<Long, QName> propertyTypes) {
-        List<TaskAndDocument> results = new ArrayList<TaskAndDocument>(tasks.size());
+    public Map<NodeRef, TaskAndDocument> getTasksWithDocuments(Collection<Task> tasks, Map<Long, QName> propertyTypes) {
+        Map<NodeRef, TaskAndDocument> results = new HashMap<>();
 
         List<NodeRef> compoundWorkflowRefs = new ArrayList<NodeRef>();
         for (Task task : tasks) {
@@ -2496,7 +2496,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, N
                             NodeRef documentNodeRef = documentProps != null ? (NodeRef) documentProps.get(ContentModel.PROP_NODE_REF) : null;
                             Document taskDocument = documentNodeRef != null
                     ? new Document(documentNodeRef, RepoUtil.toStringProperties(documentProps)) : null;
-            results.add(new TaskAndDocument(task, taskDocument, compoundWorkflow));
+            results.put(task.getNodeRef(), new TaskAndDocument(task, taskDocument, compoundWorkflow));
         }
 
         return results;

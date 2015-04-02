@@ -106,4 +106,9 @@ public class ActionUtil {
         return folderRef;
     }
 
+    @SuppressWarnings("unchecked")
+    public static <T> T getEventParamOrAttirbuteValue(ActionEvent event, String key, Class<T> resultClass) {
+        return (T) (hasParam(event, key) ? getParam(event, key, resultClass) : event.getComponent().getAttributes().get(key));
+    }
+
 }

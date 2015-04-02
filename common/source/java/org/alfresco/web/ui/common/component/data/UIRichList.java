@@ -640,7 +640,10 @@ public class UIRichList extends UIComponentBase implements IDataContainer, Seria
             maxRowIndex = (rowCount - 1);
         }
         if (!ignoreRefreshOnBind && getRefreshOnBind()) {
-            getDataModel().loadSlice(rowIndex < 0 ? 0 : rowIndex, maxRowIndex < 0 ? -1 : maxRowIndex + 1);
+            int missingRowsCount = getDataModel().loadSlice(rowIndex < 0 ? 0 : rowIndex, maxRowIndex < 0 ? -1 : maxRowIndex + 1);
+            if (maxRowIndex > 0) {
+                maxRowIndex -= missingRowsCount;
+            }
         }
         if (logger.isDebugEnabled()) {
             logger.debug("Bound datasource: PageSize: " + pageSize + "; CurrentPage: " + currentPage + "; RowIndex: " + rowIndex + "; MaxRowIndex: " + maxRowIndex + "; RowCount: "

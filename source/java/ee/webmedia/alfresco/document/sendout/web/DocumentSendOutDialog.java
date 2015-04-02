@@ -79,8 +79,8 @@ import ee.webmedia.alfresco.menu.model.MenuItem;
 import ee.webmedia.alfresco.menu.ui.MenuBean;
 import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.privilege.model.Privilege;
-import ee.webmedia.alfresco.template.model.DocumentTemplate;
 import ee.webmedia.alfresco.template.model.ProcessedEmailTemplate;
+import ee.webmedia.alfresco.template.model.UnmodifiableDocumentTemplate;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
@@ -458,7 +458,7 @@ public class DocumentSendOutDialog extends BaseDialogBean {
         if (emailTemplates == null) {
             emailTemplates = new ArrayList<SelectItem>();
             emailTemplates.add(new SelectItem("", MessageUtil.getMessage(FacesContext.getCurrentInstance(), "document_choose")));
-            for (DocumentTemplate template : getDocumentTemplateService().getEmailTemplates()) {
+            for (UnmodifiableDocumentTemplate template : getDocumentTemplateService().getEmailTemplates()) {
                 String templateName = FilenameUtils.getBaseName(template.getName());
                 emailTemplates.add(new SelectItem(template.getNodeRef().toString(), templateName));
             }

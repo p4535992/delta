@@ -70,6 +70,7 @@
                                 //otherserver:40001/org.alfresco.cache.personNodesCache|
                                 //otherserver:40001/org.alfresco.cache.classificatorsCache|
                                 //otherserver:40001/org.alfresco.cache.parametersCache|
+                                //otherserver:40001/org.alfresco.cache.documentTemplateCache|
                                 //otherserver:40001/org.alfresco.cache.functionCache|
                                 //otherserver:40001/org.alfresco.cache.seriesCache|
                                 //otherserver:40001/org.alfresco.cache.volumeCache|
@@ -825,6 +826,21 @@
     <cache 
         name="org.alfresco.cache.parametersCache" 
         maxElementsInMemory="10000"
+        eternal="true"
+        overflowToDisk="false">
+
+            <cacheEventListenerFactory
+                    class="net.sf.ehcache.distribution.RMICacheReplicatorFactory"
+                    properties="replicatePuts = false,
+                                replicateUpdates = true,
+                                replicateRemovals = true,
+                                replicateUpdatesViaCopy = false,
+                                replicateAsynchronously = false"/>
+    </cache>
+    
+    <cache 
+        name="org.alfresco.cache.documentTemplateCache" 
+        maxElementsInMemory="1000"
         eternal="true"
         overflowToDisk="false">
 

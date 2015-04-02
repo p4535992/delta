@@ -1398,7 +1398,7 @@ public class NotificationServiceImpl implements NotificationService {
             NodeRef workflowRef = task.getWorkflowNodeRef();
             NodeRef compoundWorkflowRef = (nodeService.getPrimaryParent(workflowRef).getParentRef());
             NodeRef docRef = (nodeService.getPrimaryParent(compoundWorkflowRef)).getParentRef();
-            if (workflowService.getIndependentWorkflowsRoot().equals(docRef)) {
+            if (BeanHelper.getConstantNodeRefsBean().getIndependentWorkflowsRoot().equals(docRef)) {
                 docRef = null;
             }
             try {

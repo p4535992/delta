@@ -314,13 +314,13 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
 
     private void updateDocumentInMassChangeLocation(NodeRef function, NodeRef series, NodeRef volume, String caseLabel, Set<NodeRef> updatedNodeRefs, NodeRef docRef) {
         DocumentDynamic document = getDocumentDynamicService().getDocument(docRef);
-        DocumentConfig cfg = getDocumentConfigService().getConfig(document.getNode());
+        List<String> saveListenerBeans = getDocumentConfigService().getSaveListenerBeanNames(document.getNode());
         document.setFunction(function);
         document.setSeries(series);
         document.setVolume(volume);
         document.setCase(null);
         document.getNode().getProperties().put(DocumentLocationGenerator.CASE_LABEL_EDITABLE.toString(), caseLabel);
-        List<Pair<NodeRef, NodeRef>> updatedRefs = getDocumentDynamicService().updateDocumentGetDocAndNodeRefs(document, cfg.getSaveListenerBeanNames(), true, true)
+        List<Pair<NodeRef, NodeRef>> updatedRefs = getDocumentDynamicService().updateDocumentGetDocAndNodeRefs(document, saveListenerBeans, true, true)
                 .getSecond();
         for (Pair<NodeRef, NodeRef> pair : updatedRefs) {
             updatedNodeRefs.add(pair.getFirst());

@@ -89,7 +89,7 @@ public class CaseFileAndWorkflowMenuItemProcessor implements InitializingBean, M
         List<MenuItem> children = dropdownItem.getSubItems();
         children.clear();
         List<CompoundWorkflowDefinition> compoundWorkflowDefinitions = workflowService.getIndependentCompoundWorkflowDefinitions(AuthenticationUtil.getRunAsUser());
-        NodeRef parentRef = workflowService.getIndependentWorkflowsRoot();
+        NodeRef parentRef = BeanHelper.getConstantNodeRefsBean().getIndependentWorkflowsRoot();
         for (CompoundWorkflowDefinition compoundWorkflowDefinition : compoundWorkflowDefinitions) {
             MenuItem item = new MenuItem();
             item.setTitle(compoundWorkflowDefinition.getName());

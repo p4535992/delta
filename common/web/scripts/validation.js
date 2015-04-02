@@ -25,6 +25,11 @@ function isEmptyInput(inputId) {
    return isEmptyValue(inputValue);
 }
 
+function isEmptyInputOr(inputId, valueToCheck) {
+   var inputValue = document.getElementById(inputId).value;
+   return isEmptyValue(inputValue) || inputValue == valueToCheck;
+}
+
 function isEmptyValue(inputValue) {
    return inputValue == null || (!(inputValue instanceof Array) && inputValue.replace(/^\\s+|\\s+$/g, '').length == 0);
 }

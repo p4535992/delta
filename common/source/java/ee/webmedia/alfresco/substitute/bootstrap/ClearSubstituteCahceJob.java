@@ -14,9 +14,7 @@ public class ClearSubstituteCahceJob implements StatefulJob {
 
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("Starting ClearSubstituteCahceJob");
-        }
+        LOG.info("Starting ClearSubstituteCahceJob");
         try {
             final String message = AuthenticationUtil.runAs(new RunAsWork<String>() {
                 @Override
@@ -31,7 +29,7 @@ public class ClearSubstituteCahceJob implements StatefulJob {
             LOG.error("ClearSubstituteCahceJob failed: " + e.getMessage(), e);
             throw e;
         }
-
+        LOG.info("Successfully executed ClearSubstituteCahceJob");
     }
 
 }

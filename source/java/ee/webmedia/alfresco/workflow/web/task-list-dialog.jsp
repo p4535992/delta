@@ -12,7 +12,7 @@
    <%-- Main List --%>
    <a:booleanEvaluator value="#{not MyTasksBean.lessColumns}">
       <a:richList id="taskList" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
-         width="100%" value="#{MyTasksBean.tasks}"  var="r" initialSortColumn="taskDueDate" initialSortDescending="true">
+         width="100%" value="#{MyTasksBean.tasks}"  var="r" refreshOnBind="true" >
    
          <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/workflow/web/task-list-dialog-columns.jsp" />
    
@@ -24,7 +24,7 @@
    <%-- Main List Minimal --%>
    <a:booleanEvaluator value="#{MyTasksBean.lessColumns}">
       <a:richList id="taskListMin" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
-         width="100%" value="#{MyTasksBean.tasks}"  var="r" initialSortColumn="taskDueDate" initialSortDescending="true">
+         width="100%" value="#{MyTasksBean.tasks}"  var="r" refreshOnBind="true" >
    
          <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/workflow/web/task-list-dialog-min-columns.jsp" />
    
@@ -39,7 +39,7 @@
    <%-- Additional List --%>
    <a:booleanEvaluator value="#{not MyTasksBean.lessColumns}">
       <a:richList id="additionalTaskList" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
-         width="100%" value="#{MyTasksBean.additionalTasks}"  var="r" initialSortColumn="taskDueDate" initialSortDescending="true">
+         width="100%" value="#{MyTasksBean.additionalTasks}"  var="r" refreshOnBind="true" >
    
          <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/workflow/web/task-list-dialog-columns.jsp" />
    
@@ -51,7 +51,7 @@
    <%-- Additional List Minimal --%>
    <a:booleanEvaluator value="#{MyTasksBean.lessColumns}">
       <a:richList id="additionalTaskListMin" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
-         width="100%" value="#{MyTasksBean.additionalTasks}"  var="r" initialSortColumn="taskDueDate" initialSortDescending="true">
+         width="100%" value="#{MyTasksBean.additionalTasks}"  var="r" refreshOnBind="true">
    
          <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/workflow/web/task-list-dialog-min-columns.jsp" />
    
@@ -65,7 +65,7 @@
 <a:panel id="linkedreview-tasks-panel" styleClass="panel-100 with-pager" label="#{msg.task_list_linked_review_title}" progressive="true" rendered="#{MyTasksBean.linkedReviewTaskEnabled}" >
    <%-- LinkedView List --%>
    <a:richList id="linkedReviewTaskList" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
-      width="100%" value="#{MyTasksBean.linkedReviewTasks}"  var="r" initialSortColumn="taskDueDate" initialSortDescending="true">
+      width="100%" value="#{MyTasksBean.linkedReviewTasks}"  var="r" refreshOnBind="true" >
    
       <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/workflow/web/linkedtask-list-dialog-columns.jsp" />
    

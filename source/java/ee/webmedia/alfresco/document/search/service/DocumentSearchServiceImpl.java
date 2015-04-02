@@ -208,7 +208,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
                 , joinQueryPartsOr(
                         generatePropertyNullQuery(DocumentSpecificModel.Props.DUE_DATE)
                         , generateDatePropertyRangeQuery(now, dueDateLimit, DocumentSpecificModel.Props.DUE_DATE)
-                        )
+                )
                 );
 
         List<NodeRef> contracts = searchDocumentsImpl(query, -1, /* queryName */"contractDueDate", getAllStoresWithArchivalStoreVOs()).getFirst();
@@ -375,10 +375,10 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
                 generateAndNotQuery(generateStringExactQuery(DocumentStatus.FINISHED.getValueName(), DocumentCommonModel.Props.DOC_STATUS),
                         generateStringExactQuery(INCOMING_LETTER.getId(), DocumentAdminModel.Props.OBJECT_TYPE_ID))
 
-                        , joinQueryPartsAnd(Arrays.asList(
-                                generateStringExactQuery(INCOMING_LETTER.getId(), DocumentAdminModel.Props.OBJECT_TYPE_ID),
-                                generatePropertyNotNullQuery(DocumentCommonModel.Props.REG_NUMBER)
-                                ))
+                , joinQueryPartsAnd(Arrays.asList(
+                        generateStringExactQuery(INCOMING_LETTER.getId(), DocumentAdminModel.Props.OBJECT_TYPE_ID),
+                        generatePropertyNotNullQuery(DocumentCommonModel.Props.REG_NUMBER)
+                        ))
                 )));
 
         // Possible access restrictions
@@ -386,11 +386,11 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
                 joinQueryPartsOr(
                         generateStringExactQuery(AccessRestriction.AK.getValueName(), DocumentCommonModel.Props.ACCESS_RESTRICTION)
                         , generateStringExactQuery(AccessRestriction.OPEN.getValueName(), DocumentCommonModel.Props.ACCESS_RESTRICTION))
-                        , joinQueryPartsOr(
-                                generatePropertyNullQuery(DocumentDynamicModel.Props.PUBLISH_TO_ADR)
-                                , generateStringExactQuery(PublishToAdr.TO_ADR.getValueName(), DocumentDynamicModel.Props.PUBLISH_TO_ADR)
-                                , generateStringExactQuery(PublishToAdr.REQUEST_FOR_INFORMATION.getValueName(), DocumentDynamicModel.Props.PUBLISH_TO_ADR)
-                                )
+                , joinQueryPartsOr(
+                        generatePropertyNullQuery(DocumentDynamicModel.Props.PUBLISH_TO_ADR)
+                        , generateStringExactQuery(PublishToAdr.TO_ADR.getValueName(), DocumentDynamicModel.Props.PUBLISH_TO_ADR)
+                        , generateStringExactQuery(PublishToAdr.REQUEST_FOR_INFORMATION.getValueName(), DocumentDynamicModel.Props.PUBLISH_TO_ADR)
+                )
                 )
                 );
 
@@ -563,25 +563,52 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
     }
 
     @Override
-    public List<Task> searchCurrentUsersTasksInProgress(QName... taskType) {
-        return searchCurrentUsersTasksInProgress(null, taskType);
+    public List<Pair<NodeRef, QName>> searchCurrentUsersInProgressTaskRefs(boolean onlyOverdueOrToday, QName... taskType) {
+        long startTime = System.currentTimeMillis();
+        Pair<List<String>, List<Object>> queryPartsAndArgs = new Pair<List<String>, List<Object>>(new ArrayList<String>(), new ArrayList<>());
+        String query = generateUserInProgressTaskQuery(onlyOverdueOrToday, false, queryPartsAndArgs, taskType);
+        String orderClause = " order by wfs_due_date desc nulls last";
+        Pair<List<Pair<NodeRef, QName>>, Boolean> results = BeanHelper.getWorkflowDbService().searchTaskNodeRefAndType(query, orderClause, queryPartsAndArgs.getSecond(), -1);
+        if (log.isDebugEnabled()) {
+            log.debug("Current user's and IN_PROGRESS tasks search total time " + (System.currentTimeMillis() - startTime) + " ms, query: " + query);
+        }
+        return results.getFirst();
     }
 
     @Override
     public <T extends Object> List<T> searchCurrentUsersTasksInProgress(RowMapper<T> rowMapper, QName... taskType) {
         long startTime = System.currentTimeMillis();
-        Pair<List<String>, List<Object>> queryPartsAndArgs = getTaskQuery(AuthenticationUtil.getRunAsUser(), Status.IN_PROGRESS, false, taskType);
-        addSubstitutionRestriction(queryPartsAndArgs);
-        if (rowMapper != null) {
-            queryPartsAndArgs.getFirst().add(DbSearchUtil.generateTaskPropertyNotQuery(WorkflowSpecificModel.Props.SEARCHABLE_COMPOUND_WORKFLOW_TYPE));
-            queryPartsAndArgs.getSecond().add(CompoundWorkflowType.CASE_FILE_WORKFLOW.toString());
-        }
-        String query = generateTaskSearchQuery(queryPartsAndArgs.getFirst());
+        Pair<List<String>, List<Object>> queryPartsAndArgs = new Pair<List<String>, List<Object>>(new ArrayList<String>(), new ArrayList<>());
+        String query = generateUserInProgressTaskQuery(false, rowMapper != null, queryPartsAndArgs, taskType);
         Pair<List<T>, Boolean> results = BeanHelper.getWorkflowDbService().searchTasksAllStores(query, queryPartsAndArgs.getSecond(), -1, rowMapper);
         if (log.isDebugEnabled()) {
             log.debug("Current user's and IN_PROGRESS tasks search total time " + (System.currentTimeMillis() - startTime) + " ms, query: " + query);
         }
         return results.getFirst();
+    }
+
+    private String generateUserInProgressTaskQuery(boolean onlyOverdueOrToday, boolean excludeCaseFileWorkflows, Pair<List<String>, List<Object>> queryPartsAndArgs,
+            QName... taskType) {
+        getTaskQuery(AuthenticationUtil.getRunAsUser(), Status.IN_PROGRESS, false, queryPartsAndArgs, taskType);
+        addSubstitutionRestriction(queryPartsAndArgs);
+        if (onlyOverdueOrToday) {
+            addTaskOverdueCondition(queryPartsAndArgs);
+        }
+        if (excludeCaseFileWorkflows) {
+            queryPartsAndArgs.getFirst().add(DbSearchUtil.generateTaskPropertyNotQuery(WorkflowSpecificModel.Props.SEARCHABLE_COMPOUND_WORKFLOW_TYPE));
+            queryPartsAndArgs.getSecond().add(CompoundWorkflowType.CASE_FILE_WORKFLOW.toString());
+        }
+        String query = generateTaskSearchQuery(queryPartsAndArgs.getFirst());
+        return query;
+    }
+
+    private void addTaskOverdueCondition(Pair<List<String>, List<Object>> queryPartsAndArgs) {
+        Date today = Calendar.getInstance().getTime();
+        today.setHours(23);
+        today.setMinutes(59);
+        today.setSeconds(59);
+        queryPartsAndArgs.getFirst().add(" wfs_due_date <= ? ");
+        queryPartsAndArgs.getSecond().add(today);
     }
 
     @Override
@@ -990,7 +1017,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
                             SearchUtil.joinQueryPartsOr(
                                     DbSearchUtil.generateTaskPropertyExactQuery(WorkflowCommonModel.Props.VIEWED_BY_OWNER),
                                     DbSearchUtil.generateTaskPropertyNullQuery(WorkflowCommonModel.Props.VIEWED_BY_OWNER)),
-                            DbSearchUtil.generateTaskPropertyNotQuery(WorkflowSpecificModel.Props.SEARCHABLE_COMPOUND_WORKFLOW_TYPE))
+                                    DbSearchUtil.generateTaskPropertyNotQuery(WorkflowSpecificModel.Props.SEARCHABLE_COMPOUND_WORKFLOW_TYPE))
                     );
             arguments.add(Boolean.FALSE);
             arguments.add(CompoundWorkflowType.CASE_FILE_WORKFLOW.toString());
@@ -1318,11 +1345,11 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         return joinQueryPartsOr(Arrays.asList(
                 joinQueryPartsAnd(generatePropertyBooleanQuery(EventPlanModel.Props.RETAIN_PERMANENT, Boolean.TRUE),
                         generatePropertyBooleanQuery(EventPlanModel.Props.TRANSFER_CONFIRMED, Boolean.TRUE)),
-                        joinQueryPartsAnd(generatePropertyBooleanQuery(EventPlanModel.Props.HAS_ARCHIVAL_VALUE, Boolean.TRUE),
-                                generatePropertyBooleanQuery(EventPlanModel.Props.TRANSFER_CONFIRMED, Boolean.TRUE)),
-                                joinQueryPartsAnd(generatePropertyBooleanQuery(EventPlanModel.Props.RETAIN_PERMANENT, Boolean.FALSE),
-                                        generatePropertyBooleanQuery(EventPlanModel.Props.HAS_ARCHIVAL_VALUE, Boolean.FALSE),
-                                        generateDatePropertyRangeQuery(null, new Date(), EventPlanModel.Props.RETAIN_UNTIL_DATE))));
+                joinQueryPartsAnd(generatePropertyBooleanQuery(EventPlanModel.Props.HAS_ARCHIVAL_VALUE, Boolean.TRUE),
+                        generatePropertyBooleanQuery(EventPlanModel.Props.TRANSFER_CONFIRMED, Boolean.TRUE)),
+                joinQueryPartsAnd(generatePropertyBooleanQuery(EventPlanModel.Props.RETAIN_PERMANENT, Boolean.FALSE),
+                        generatePropertyBooleanQuery(EventPlanModel.Props.HAS_ARCHIVAL_VALUE, Boolean.FALSE),
+                        generateDatePropertyRangeQuery(null, new Date(), EventPlanModel.Props.RETAIN_UNTIL_DATE))));
 
     }
 
@@ -1377,7 +1404,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
                 generateTypeQuery(ArchivalsModel.Types.ARCHIVAL_ACTIVITY),
                 generateDatePropertyRangeQuery((Date) props.get(ArchivalsModel.Props.FILTER_CREATED), (Date) props.get(ArchivalsModel.Props.FILTER_CREATED_END_DATE),
                         ArchivalsModel.Props.CREATED),
-                        generateStringExactQuery((String) props.get(ArchivalsModel.Props.FILTER_ACTIVITY_TYPE), ArchivalsModel.Props.ACTIVITY_TYPE));
+                generateStringExactQuery((String) props.get(ArchivalsModel.Props.FILTER_ACTIVITY_TYPE), ArchivalsModel.Props.ACTIVITY_TYPE));
         try {
             List<ArchivalActivity> results = searchArchivalActivitiesImpl(query, -1, /* queryName */"archivalActivitiesByFilter",
                     Collections.singletonList(generalService.getStore()));
@@ -1754,9 +1781,14 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
     }
 
     private Pair<List<String>, List<Object>> getTaskQuery(String ownerId, Status status, boolean isPreviousOwnerId, QName... taskType) {
+        return getTaskQuery(ownerId, status, isPreviousOwnerId, new Pair<List<String>, List<Object>>(new ArrayList<String>(), new ArrayList<>()), taskType);
+    }
+
+    private Pair<List<String>, List<Object>> getTaskQuery(String ownerId, Status status, boolean isPreviousOwnerId, Pair<List<String>, List<Object>> queryPartsAndArgs,
+            QName... taskType) {
+        List<String> queryParts = queryPartsAndArgs.getFirst();
+        List<Object> arguments = queryPartsAndArgs.getSecond();
         QName ownerField = (isPreviousOwnerId) ? WorkflowCommonModel.Props.PREVIOUS_OWNER_ID : WorkflowCommonModel.Props.OWNER_ID;
-        List<String> queryParts = new ArrayList<String>();
-        List<Object> arguments = new ArrayList<Object>();
         if (taskType != null) {
             addTaskTypeFieldExactQueryPartsAndArguments(queryParts, arguments, taskType);
         } else {
@@ -1764,7 +1796,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         }
         addTaskStringExactPartsAndArgs(queryParts, arguments, status.getName(), WorkflowCommonModel.Props.STATUS);
         addTaskStringExactPartsAndArgs(queryParts, arguments, ownerId, ownerField);
-        return new Pair<List<String>, List<Object>>(queryParts, arguments);
+        return queryPartsAndArgs;
     }
 
     private void addTaskStringExactPartsAndArgs(List<String> queryParts, List<Object> arguments, String value, QName propName) {
@@ -1824,7 +1856,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
                     joinQueryPartsOr(
                             joinQueryPartsAnd(incomingLetterTypesQuery, hasNoStartedCompoundWorkflowsQuery)
                             , notIncomingLetterTypesQuery
-                            ));
+                    ));
         }
         return generateDocumentSearchQuery(queryParts, getAllStores());
     }
@@ -2169,7 +2201,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
             query = joinQueryPartsAnd(
                     generateNodeRefQuery(containerNodeRef, DocumentCommonModel.Props.FUNCTION, DocumentCommonModel.Props.SERIES, DocumentCommonModel.Props.VOLUME,
                             DocumentCommonModel.Props.CASE),
-                            query);
+                    query);
         }
         if (log.isDebugEnabled()) {
             log.debug("Quick search query construction time " + (System.currentTimeMillis() - startTime) + " ms, query: " + query);
@@ -2316,7 +2348,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
 
         queryParts.add(generateStringWordsWildcardQuery((String) props.get(CompoundWorkflowSearchModel.Props.JOB_TITLE), true, true, 2, WorkflowCommonModel.Props.OWNER_JOB_TITLE));
         queryParts
-        .add(generatePropertyExactQuery(WorkflowCommonModel.Props.OWNER_ORGANIZATION_NAME, (List<String>) props.get(CompoundWorkflowSearchModel.Props.STRUCT_UNIT)));
+                .add(generatePropertyExactQuery(WorkflowCommonModel.Props.OWNER_ORGANIZATION_NAME, (List<String>) props.get(CompoundWorkflowSearchModel.Props.STRUCT_UNIT)));
 
         queryParts.add(generateDatePropertyRangeQuery((Date) props.get(CompoundWorkflowSearchModel.Props.CREATED_DATE),
                 (Date) props.get(CompoundWorkflowSearchModel.Props.CREATED_DATE_END), WorkflowCommonModel.Props.CREATED_DATE_TIME));
@@ -2585,8 +2617,8 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         limit = limit < 0 ? 100 : limit;
         String query = joinQueryPartsAnd(
                 type != null ? generateTypeQuery(type) : "",
-                        generateStringWordsWildcardQuery(input, props.toArray(new QName[props.size()])),
-                        queryAndAddition
+                generateStringWordsWildcardQuery(input, props.toArray(new QName[props.size()])),
+                queryAndAddition
                 );
         return searchNodes(query, limit, "searchNodesByTypeAndProps");
     }
@@ -2596,8 +2628,8 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         limit = limit < 0 ? 100 : limit;
         String query = joinQueryPartsAnd(
                 type != null ? generateTypeQuery(type) : "",
-                generateStringWordsWildcardQuery(input, props.toArray(new QName[props.size()])),
-                queryAndAddition
+                        generateStringWordsWildcardQuery(input, props.toArray(new QName[props.size()])),
+                        queryAndAddition
                 );
         return searchProperty(query, limit, "searchUserNamesByTypeAndProps", ContentModel.PROP_USERNAME, String.class).getFirst();
     }

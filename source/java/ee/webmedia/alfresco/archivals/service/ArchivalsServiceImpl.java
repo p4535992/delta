@@ -151,16 +151,6 @@ public class ArchivalsServiceImpl implements ArchivalsService {
     private static final FastDateFormat DATE_FORMAT = FastDateFormat.getInstance("yyyy-MM-dd");
     private static final FastDateFormat DATE_SHORT_FORMAT = FastDateFormat.getInstance("yyyyMMdd");
     private static final FastDateFormat DATE_TIME_FORMAT = FastDateFormat.getInstance("yyyy-MM-dd'T'HH:mm:ss");
-    /**
-     * No need to remove objects from ThreadLocal if it is always accessed by same threads (for example, threads that
-     * are managed by ThreadPool that reuses its threads). Otherwise objects must always be explicitly removed.
-     */
-    private static final ThreadLocal<SimpleDateFormat> THREAD_LOCAL_TIME_FORMAT = new ThreadLocal<SimpleDateFormat>() {
-        @Override
-        protected SimpleDateFormat initialValue() {
-            return new SimpleDateFormat("HH:mm");
-        }
-    };
 
     @Override
     public void exportToUam(final List<NodeRef> volumes, final Date exportStartDate, final NodeRef activityRef) {
@@ -822,6 +812,7 @@ public class ArchivalsServiceImpl implements ArchivalsService {
             LOG.info(String.format("Resuming paused archiving: %d nodes archived previously, starting to archive remaining %d nodes",
                     archivedNodesCount, (childCount - archivedNodesCount)));
         }
+        SimpleDateFormat dateFormat = new SimpleDateFormat("HH:mm");
         ProgressTracker progress = new ProgressTracker(childCount, archivedNodesCount);
         int count = 0;
         for (Map.Entry<NodeRef, Set<ChildAssociationRef>> entry : archiveNodeRefs.entrySet()) {
@@ -887,7 +878,7 @@ public class ArchivalsServiceImpl implements ArchivalsService {
                     if (info != null) {
                         LOG.info("Archiving volume: " + info);
                     }
-                    if (isArchivingPaused() || !isArchivingAllowed()) {
+                    if (isArchivingPaused() || !isArchivingAllowed(dateFormat)) {
                         final Map<QName, Serializable> props = new HashMap<>();
                         props.put(ArchivalsModel.Props.FAILED_NODE_COUNT, failedNodeCount);
                         props.put(ArchivalsModel.Props.FAILED_DOCUMENTS_COUNT, failedDocumentsCount);
@@ -958,9 +949,8 @@ public class ArchivalsServiceImpl implements ArchivalsService {
         return (count != null) ? count : 0;
     }
 
-    @Override
-    public boolean isArchivingAllowed() {
-        boolean allowedNow = isArchivingAllowedAtThisTime();
+    private boolean isArchivingAllowed(SimpleDateFormat dateFormat) {
+        boolean allowedNow = isArchivingAllowedAtThisTime(dateFormat);
 
         if (allowedNow) {
             resetManualActions();
@@ -974,7 +964,12 @@ public class ArchivalsServiceImpl implements ArchivalsService {
         return allowedNow;
     }
 
-    private boolean isArchivingAllowedAtThisTime() {
+    @Override
+    public boolean isArchivingAllowed() {
+        return isArchivingAllowed(new SimpleDateFormat("HH:mm"));
+    }
+
+    private boolean isArchivingAllowedAtThisTime(SimpleDateFormat dateFormat) {
         DateTime now = new DateTime();
         if (Boolean.valueOf(parametersService.getStringParameter(Parameters.CONTINUE_ARCIVING_OVER_WEEKEND))) {
             int weekDay = now.getDayOfWeek();
@@ -990,15 +985,15 @@ public class ArchivalsServiceImpl implements ArchivalsService {
         DateTime beginTime;
         DateTime endTime;
         try {
-            beginTime = getDateTime(now, beginTimeStr);
-            endTime = getDateTime(now, endTimeStr);
+            beginTime = getDateTime(now, beginTimeStr, dateFormat);
+            endTime = getDateTime(now, endTimeStr, dateFormat);
             if (beginTime.isAfter(endTime)) {
                 endTime = endTime.plusDays(1);
             }
         } catch (ParseException e) {
             LOG.warn("Unable to parse " + Parameters.ARCHIVING_BEGIN_TIME.getParameterName() + " (value=" + beginTimeStr + ") or "
                     + Parameters.ARCHIVING_END_TIME.getParameterName() + " (value=" + endTimeStr + "), continuing archiving. " +
-                    "Required format is " + THREAD_LOCAL_TIME_FORMAT.get().toPattern());
+                    "Required format is " + dateFormat.toPattern());
             return true;
         }
         if (beginTime.isBefore(now) && endTime.isAfter(now)) {
@@ -1007,9 +1002,9 @@ public class ArchivalsServiceImpl implements ArchivalsService {
         return false;
     }
 
-    private DateTime getDateTime(DateTime now, String timeString) throws ParseException {
+    private DateTime getDateTime(DateTime now, String timeString, DateFormat dateFormat) throws ParseException {
         Calendar calendar = Calendar.getInstance();
-        calendar.setTime(THREAD_LOCAL_TIME_FORMAT.get().parse(timeString));
+        calendar.setTime(dateFormat.parse(timeString));
         return new DateTime(now.getYear(), now.getMonthOfYear(), now.getDayOfMonth(), calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE), 0, 0);
     }
 

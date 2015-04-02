@@ -28,7 +28,6 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getTransactionService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getVolumeService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getWorkflowConstantsBean;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getWorkflowService;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.FILE_CONTENTS;
 import static ee.webmedia.alfresco.privilege.service.PrivilegeUtil.getPrivsWithDependencies;
 import static ee.webmedia.alfresco.privilege.service.PrivilegeUtil.getRequiredPrivsForTask;
@@ -1978,7 +1977,7 @@ public class TestDataService implements SaveListener {
         checkStop();
         independentCompoundWorkflows = Collections.synchronizedList(new ArrayList<NodeRef>());
 
-        NodeRef root = getWorkflowService().getIndependentWorkflowsRoot();
+        NodeRef root = BeanHelper.getConstantNodeRefsBean().getIndependentWorkflowsRoot();
         List<ChildAssociationRef> childAssocs = getNodeService().getChildAssocs(root, Collections.singleton(WorkflowCommonModel.Types.COMPOUND_WORKFLOW));
         for (ChildAssociationRef childAssociationRef : childAssocs) {
             independentCompoundWorkflows.add(childAssociationRef.getChildRef());
@@ -2015,7 +2014,7 @@ public class TestDataService implements SaveListener {
     }
 
     private void createIndependentCompoundWorkflowsLoop() {
-        final NodeRef root = getWorkflowService().getIndependentWorkflowsRoot();
+        final NodeRef root = BeanHelper.getConstantNodeRefsBean().getIndependentWorkflowsRoot();
         final double finishedCompoundWorkflowsLikelihood = finishedIndependentWorkflowsCount / independentWorkflowsCount;
         try {
             log.info("Independent compound workflow generator thread started");

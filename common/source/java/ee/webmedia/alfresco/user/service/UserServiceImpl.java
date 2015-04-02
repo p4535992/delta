@@ -466,8 +466,8 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public String getUserMobilePhone(String userName) {
-        return (String) personService.getPersonProperty(userName, ContentModel.MOBILE_PHONE);
+    public String getDefaultTelephoneForSigning(String userName) {
+        return (String) personService.getPersonProperty(userName, ContentModel.DEFAULT_TELEPHONE_FOR_SIGNING);
     }
 
     public Map<QName, Serializable> getPersonProperties(String userName) {
@@ -592,6 +592,12 @@ public class UserServiceImpl implements UserService {
     @Override
     public String getCurrentUserName() {
         return authenticationService.getCurrentUserName();
+    }
+
+    @Override
+    public void setCurrentUserProperty(QName property, Serializable value) {
+        String userName = getCurrentUserName();
+        personService.setPersonProperty(userName, property, value);
     }
 
     @Override

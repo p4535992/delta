@@ -1179,7 +1179,6 @@ public class ComponentUtil {
             }
         }
 
-
         if (clazz.isAssignableFrom(component.getClass())) {
             @SuppressWarnings("unchecked")
             T resultComponent = (T) component;
@@ -1199,7 +1198,7 @@ public class ComponentUtil {
         return null;
     }
 
-    public static UIComponent findParentComponentById(FacesContext context, UIComponent component, String id) {
+    public static UIComponent findParentComponentById(UIComponent component, String id) {
         while (component != null) {
             if (id.equals(component.getId())) {
                 return component;
@@ -1210,7 +1209,7 @@ public class ComponentUtil {
     }
 
     @SuppressWarnings("unchecked")
-    public static <T extends UIComponent> T findParentWithClass(FacesContext context, UIComponent component, Class<T> clazz) {
+    public static <T extends UIComponent> T findParentWithClass(UIComponent component, Class<T> clazz) {
         UIComponent parent = component.getParent();
         while (parent != null) {
             if (parent.getClass().isAssignableFrom(clazz)) {

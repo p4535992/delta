@@ -2006,7 +2006,7 @@ public class PostipoissDocumentsImporter {
                     props.put(WorkflowCommonModel.Props.TYPE, CompoundWorkflowType.INDEPENDENT_WORKFLOW.name());
                     props.put(WorkflowCommonModel.Props.TITLE, docProps.get(DocumentCommonModel.Props.DOC_NAME));
                     NodeRef cwfRef = getNodeService().createNode(
-                            getWorkflowService().getIndependentWorkflowsRoot(),
+                            BeanHelper.getConstantNodeRefsBean().getIndependentWorkflowsRoot(),
                             WorkflowCommonModel.Assocs.COMPOUND_WORKFLOW,
                             WorkflowCommonModel.Assocs.COMPOUND_WORKFLOW,
                             WorkflowCommonModel.Types.COMPOUND_WORKFLOW,

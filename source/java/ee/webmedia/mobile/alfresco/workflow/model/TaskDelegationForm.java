@@ -4,40 +4,53 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import ee.webmedia.alfresco.workflow.web.DelegationBean;
+import org.alfresco.service.cmr.repository.NodeRef;
+import org.apache.commons.collections4.Factory;
+import org.apache.commons.collections4.MapUtils;
 
 public class TaskDelegationForm implements Serializable {
 
     private static final long serialVersionUID = 1L;
-    private Map<Integer, String> choices;
+    private LinkedHashMap<String, String> choices;
 
     private String choice;
     private Date dueDate;
     private String taskDueDate;
+    private NodeRef compoundWorkflowRef;
+    private String taskType;
+
+    private final Map<String, String> translations = new HashMap<>();
 
     private Map<String, List<TaskElement>> taskElementMap = new HashMap<>();
 
     public TaskDelegationForm() {
-        for (int i = 0; i < DelegationBean.DELEGATION_TASK_CHOICE_COUNT; i++) {
-            taskElementMap.put(String.valueOf(i), new ArrayList<TaskDelegationForm.TaskElement>());
-        }
+        taskElementMap = MapUtils.lazyMap(new HashMap<String, List<TaskElement>>(), new Factory<List<TaskElement>>() {
+            @Override
+            public List<TaskElement> create() {
+                return new ArrayList<TaskDelegationForm.TaskElement>();
+            }
+        });
     }
 
-    public TaskDelegationForm(Map<Integer, String> choices) {
+    public TaskDelegationForm(LinkedHashMap<String, String> choices) {
         this.choices = choices;
+        if (choices == null) {
+            return;
+        }
         init();
     }
 
     private void init() {
-        for (Integer i : choices.keySet()) {
-            taskElementMap.put(String.valueOf(i), new ArrayList<TaskDelegationForm.TaskElement>());
+        for (String s : choices.keySet()) {
+            taskElementMap.put(s, new ArrayList<TaskDelegationForm.TaskElement>());
         }
     }
 
-    public Map<Integer, String> getChoices() {
+    public Map<String, String> getChoices() {
         return choices;
     }
 
@@ -71,6 +84,26 @@ public class TaskDelegationForm implements Serializable {
 
     public void setTaskDueDate(String taskDueDate) {
         this.taskDueDate = taskDueDate;
+    }
+
+    public NodeRef getCompoundWorkflowRef() {
+        return compoundWorkflowRef;
+    }
+
+    public void setCompoundWorkflowRef(NodeRef compoundWorkflowRef) {
+        this.compoundWorkflowRef = compoundWorkflowRef;
+    }
+
+    public String getTaskType() {
+        return taskType;
+    }
+
+    public void setTaskType(String taskType) {
+        this.taskType = taskType;
+    }
+
+    public Map<String, String> getTranslations() {
+        return translations;
     }
 
     public static class TaskElement {

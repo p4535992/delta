@@ -177,6 +177,16 @@
       <property name="executeOnceOnly" value="true" />
    </bean> 
    
+   <bean id="docTypesDocSigningForOwnerEnabledUpdater" class="ee.webmedia.alfresco.docadmin.bootstrap.DocTypesDocSigningForOwnerEnabledUpdater" parent="abstractNodeUpdater" >
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="docTypeSpacesBootstrap" />
+         </list>
+      </property>
+   </bean>
+   
    <!-- START: web beans: -->
 
    <bean id="DocTypeListDialog" class="ee.webmedia.alfresco.docadmin.web.DocTypeListDialog" scope="session" />

@@ -4,6 +4,7 @@ import static ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel.Types.AS
 import static ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel.Types.CONFIRMATION_TASK;
 import static ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel.Types.DUE_DATE_EXTENSION_TASK;
 import static ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel.Types.INFORMATION_TASK;
+import static ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel.Types.OPINION_TASK;
 import static ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel.Types.REVIEW_TASK;
 import static ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel.Types.SIGNATURE_TASK;
 
@@ -243,10 +244,10 @@ public abstract class AbstractBaseController implements Serializable {
     /**
      * Read-only fields during runtime, synchronization not needed.
      */
-    protected static final Map<String, Set<QName>> TASK_TYPE_MAPPING = new TreeMap<String, Set<QName>>();
+    protected static final Map<String, Set<QName>> TASK_TYPE_MAPPING = new TreeMap<>();
     protected static final Map<QName, String> TASK_TYPE_TO_KEY_MAPPING;
-    public static final QName[] TASK_TYPES = { ASSIGNMENT_TASK, /* GROUP_ASSIGNMENT_TASK, */INFORMATION_TASK, /* ORDER_ASSIGNMENT_TASK, OPINION_TASK, */
-            REVIEW_TASK, /* EXTERNAL_REVIEW_TASK, CONFIRMATION_TASK, DUE_DATE_EXTENSION_TASK, */SIGNATURE_TASK };
+    public static final QName[] TASK_TYPES = { ASSIGNMENT_TASK, /* GROUP_ASSIGNMENT_TASK, */INFORMATION_TASK, /* ORDER_ASSIGNMENT_TASK, */OPINION_TASK,
+        REVIEW_TASK, /* EXTERNAL_REVIEW_TASK, CONFIRMATION_TASK, DUE_DATE_EXTENSION_TASK, */SIGNATURE_TASK };
 
     // Also defines sidebar menu order
     static {
@@ -254,7 +255,7 @@ public abstract class AbstractBaseController implements Serializable {
         // addTypeMapping("group-assignment", GROUP_ASSIGNMENT_TASK);
         addTypeMapping("information", INFORMATION_TASK);
         // addTypeMapping("order-assignment", ORDER_ASSIGNMENT_TASK);
-        // addTypeMapping("opinion", OPINION_TASK);
+        addTypeMapping("opinion", OPINION_TASK);
         addTypeMapping("review", REVIEW_TASK);
         // addTypeMapping("external-review", EXTERNAL_REVIEW_TASK);
         // addTypeMapping("confirmation", CONFIRMATION_TASK);
@@ -275,6 +276,6 @@ public abstract class AbstractBaseController implements Serializable {
         if (types == null || types.length < 1) {
             return;
         }
-        TASK_TYPE_MAPPING.put(key, new HashSet<QName>(Arrays.asList(types)));
+        TASK_TYPE_MAPPING.put(key, new HashSet<>(Arrays.asList(types)));
     }
 }

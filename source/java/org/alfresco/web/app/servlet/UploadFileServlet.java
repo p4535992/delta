@@ -38,6 +38,7 @@ import javax.servlet.http.HttpSession;
 import org.alfresco.config.ConfigService;
 import org.alfresco.error.AlfrescoRuntimeException;
 import org.alfresco.repo.content.MimetypeMap;
+import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.util.Pair;
 import org.alfresco.util.TempFileProvider;
 import org.alfresco.web.app.Application;
@@ -63,7 +64,8 @@ import org.springframework.web.context.support.WebApplicationContextUtils;
 public class UploadFileServlet extends UploadFileBaseServlet
 {
    private static final long serialVersionUID = -5482538466491052875L;
-   private static final Log logger = LogFactory.getLog(UploadFileServlet.class); 
+   private static final Log logger = LogFactory.getLog(UploadFileServlet.class);
+   private static final String TASK_REF_HEADER = "X-TaskRef";
    
    private ConfigService configService;
    
@@ -116,6 +118,9 @@ public class UploadFileServlet extends UploadFileBaseServlet
          List<FileItem> fileItems = upload.parseRequest(request);
          
          FileUploadBean bean = getFileUploadBean(uploadId, session);
+         @SuppressWarnings("cast")
+         String taskRefHeader = (String) request.getHeader(TASK_REF_HEADER);
+         NodeRef taskRef = (taskRefHeader != null && NodeRef.isNodeRef(taskRefHeader)) ? new NodeRef(taskRefHeader) : null;
          
          // XXX - dialog that uses this bean must remove it from session after cancel/complete condition
          if (bean == null) {
@@ -164,6 +169,9 @@ public class UploadFileServlet extends UploadFileBaseServlet
                      bean.setFileName(filename);
                      bean.setFilePath(tempFile.getAbsolutePath());
                      bean.setContentType(item.getContentType());
+                     if(taskRef != null) {
+                         bean.setTaskRef(taskRef);
+                     }
                      if (logger.isDebugEnabled())
                      {
                         logger.debug("Temp file: " + tempFile.getAbsolutePath() + 

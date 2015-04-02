@@ -147,7 +147,7 @@ public class FunctionsListDialog extends BaseDialogBean {
 
     private void deleteIndependentCompoundWorkflows() {
         log.info("Deleting independent compound workflows...");
-        NodeRef independentWorkflowsRoot = BeanHelper.getWorkflowService().getIndependentWorkflowsRoot();
+        NodeRef independentWorkflowsRoot = BeanHelper.getConstantNodeRefsBean().getIndependentWorkflowsRoot();
         log.info("Finding nodes to delete...");
         List<NodeRef> independentWorkflows = new ArrayList<NodeRef>();
         for (ChildAssociationRef childAssocRef : getNodeService().getChildAssocs(independentWorkflowsRoot)) {

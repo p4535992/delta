@@ -9,15 +9,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.faces.application.Application;
-import javax.faces.context.FacesContext;
-import javax.faces.el.MethodBinding;
-
 import org.alfresco.service.cmr.dictionary.DictionaryService;
 import org.alfresco.service.cmr.dictionary.PropertyDefinition;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
-import org.alfresco.web.ui.repo.component.UIActions;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.util.Assert;
 
@@ -47,10 +42,13 @@ public class WorkflowConstantsBean implements InitializingBean {
     private boolean reviewToOtherOrgEnabled;
     private boolean finishDocumentsWhenWorkflowFinishes;
     private boolean externalReviewWorkflowEnabled;
+    private boolean informationWorkflowDelegationEnabled;
+    private boolean opinionWorkflowDelegationEnabled;
+    private boolean reviewWorkflowDelegationEnabled;
     private final Map<QName, WorkflowType> workflowTypesByWorkflow = new HashMap<QName, WorkflowType>();
     private Map<QName, WorkflowType> unmodifiableWorkflowTypesByWorkflow = Collections.unmodifiableMap(new HashMap<QName, WorkflowType>());
     private final Map<QName, WorkflowType> workflowTypesByTask = new HashMap<QName, WorkflowType>();
-    private Set<QName> allWorkflowTypes = new HashSet();
+    private Set<QName> allWorkflowTypes = new HashSet<>();
     private final Map<QName, Collection<QName>> taskDataTypeDefaultAspects = new HashMap<QName, Collection<QName>>();
     private final Map<QName, List<QName>> taskDataTypeDefaultProps = new HashMap<QName, List<QName>>();
     private final Map<QName, QName> taskPrefixedQNames = new HashMap<QName, QName>();
@@ -88,7 +86,11 @@ public class WorkflowConstantsBean implements InitializingBean {
     }
 
     public boolean isWorkflowEnabled() {
-        return applicationConstantsBean.isCaseVolumeEnabled() || independentWorkflowEnabled || documentWorkflowEnabled;
+        return applicationConstantsBean.isCaseVolumeEnabled() || isDocumentOrIndependentWorkflowEnabled();
+    }
+
+    public boolean isDocumentOrIndependentWorkflowEnabled() {
+        return independentWorkflowEnabled || documentWorkflowEnabled;
     }
 
     public boolean getOrderAssignmentCategoryEnabled() {
@@ -173,6 +175,30 @@ public class WorkflowConstantsBean implements InitializingBean {
 
     public void setExternalReviewWorkflowEnabled(boolean externalReviewWorkflowEnabled) {
         this.externalReviewWorkflowEnabled = externalReviewWorkflowEnabled;
+    }
+
+    public boolean isInformationWorkflowDelegationEnabled() {
+        return informationWorkflowDelegationEnabled;
+    }
+
+    public void setInformationWorkflowDelegationEnabled(boolean informationWorkflowDelegationEnabled) {
+        this.informationWorkflowDelegationEnabled = informationWorkflowDelegationEnabled;
+    }
+
+    public boolean isOpinionWorkflowDelegationEnabled() {
+        return opinionWorkflowDelegationEnabled;
+    }
+
+    public void setOpinionWorkflowDelegationEnabled(boolean opinionWorkflowDelegationEnabled) {
+        this.opinionWorkflowDelegationEnabled = opinionWorkflowDelegationEnabled;
+    }
+
+    public boolean isReviewWorkflowDelegationEnabled() {
+        return reviewWorkflowDelegationEnabled;
+    }
+
+    public void setReviewWorkflowDelegationEnabled(boolean reviewWorkflowDelegationEnabled) {
+        this.reviewWorkflowDelegationEnabled = reviewWorkflowDelegationEnabled;
     }
 
     public void registerWorkflowType(WorkflowType workflowType) {
@@ -322,7 +348,6 @@ public class WorkflowConstantsBean implements InitializingBean {
 
         private TaskListConstants() {
         }
-
 
         public String getDeleteTaskLinkText() {
             return deleteTaskLinkText;

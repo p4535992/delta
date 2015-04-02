@@ -15,11 +15,13 @@ import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.NodePropertyResolver;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateUtils;
 import org.apache.commons.lang.time.FastDateFormat;
 import org.springframework.util.Assert;
 
+import ee.webmedia.alfresco.common.propertysheet.upload.UploadFileInput.FileWithContentType;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.CssStylable;
 import ee.webmedia.alfresco.common.web.WmNode;
@@ -564,6 +566,12 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
         return Collections.unmodifiableList(getFilesList());
     }
 
+    public boolean hasFiles() {
+        @SuppressWarnings("unchecked")
+        List<Object> files = (ArrayList<Object>) getNode().getProperties().get(PROP_TEMP_FILES.toString());
+        return CollectionUtils.isNotEmpty(files);
+    }
+
     @SuppressWarnings("unchecked")
     private List<Object> getFilesList() {
         if (getNode().getProperties().get(PROP_TEMP_FILES.toString()) == null) {
@@ -584,6 +592,10 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
         filesList.clear();
         filesList.addAll(files);
         filesLoaded = true;
+    }
+
+    public void addUploadedFile(FileWithContentType file) {
+        getFilesList().add(file);
     }
 
     public void clearFiles() {

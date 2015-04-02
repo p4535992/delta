@@ -2,6 +2,7 @@ package ee.webmedia.alfresco.workflow.service;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -95,6 +96,11 @@ public class Workflow extends BaseWorkflowObject implements Serializable {
 
     public void removeTask(int index) {
         removedTasks.add(tasks.remove(index));
+    }
+
+    public void removeTasks(Collection<Task> tasks) {
+        removedTasks.addAll(tasks);
+        this.tasks.removeAll(tasks);
     }
 
     public void addTask(Task task) {

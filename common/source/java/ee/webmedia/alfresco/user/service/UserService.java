@@ -242,7 +242,7 @@ public interface UserService {
 
     void addUserToGroup(String group, String username);
 
-    String getUserMobilePhone(String userName);
+    String getDefaultTelephoneForSigning(String userName);
 
     List<Node> getPersonsList();
 
@@ -253,5 +253,7 @@ public interface UserService {
 
     /** @return {@code List<Pair<userNameLabel, userId>>} */
     List<Pair<String, String>> searchUserNamesAndIds(String param, int limit);
+    
+    void setCurrentUserProperty(QName property, Serializable value);
 
 }
