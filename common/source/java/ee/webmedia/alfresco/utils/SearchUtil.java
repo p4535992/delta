@@ -12,6 +12,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.alfresco.repo.search.impl.lucene.LuceneQueryParser;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.dictionary.DataTypeDefinition;
 import org.alfresco.service.cmr.repository.NodeRef;
@@ -500,6 +501,10 @@ public class SearchUtil {
         }
 
         return joinQueryPartsAnd(joinQueryPartsOr(query), generateAspectQuery(DocumentCommonModel.Aspects.SEARCHABLE));
+    }
+
+    public static String generateUnsentDocQuery() {
+        return LuceneQueryParser.IS_UNSENT_DOC_FIELD + ":\"" + QueryParser.escape(Boolean.TRUE.toString()) + "\"";
     }
 
     /**

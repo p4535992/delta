@@ -143,11 +143,15 @@ public class DelegationBean implements Serializable {
     }
 
     public void addDelegationTaskToOriginalWorkflow(Workflow originalTaskWorkflow, Integer taskIndex, String resolution, Date dueDate, String owner, int filterIndex) {
-        addDelegationTask(false, originalTaskWorkflow, taskIndex, resolution, dueDate);
+        addDelegationTask(false, originalTaskWorkflow, taskIndex, resolution, dueDate, true);
         addOwners(filterIndex, taskIndex, originalTaskWorkflow, owner);
     }
 
     private void addDelegationTask(boolean hasResponsibleAspect, Workflow workflow, Integer taskIndex, String defaultResolution, Date dueDate) {
+        addDelegationTask(hasResponsibleAspect, workflow, taskIndex, defaultResolution, dueDate, false);
+    }
+
+    private void addDelegationTask(boolean hasResponsibleAspect, Workflow workflow, Integer taskIndex, String resolution, Date dueDate, boolean forceAddResolution) {
         Task task = taskIndex != null ? workflow.addTask(taskIndex) : workflow.addTask();
         markAsGeneratedByDelegation(task);
         task.setParallel(true);
@@ -155,8 +159,8 @@ public class DelegationBean implements Serializable {
             task.setResponsible(true);
             task.setActive(true);
         }
-        if (task.isType(WorkflowSpecificModel.Types.ASSIGNMENT_TASK, WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_TASK)) {
-            task.setResolution(defaultResolution);
+        if (forceAddResolution || task.isType(WorkflowSpecificModel.Types.ASSIGNMENT_TASK, WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_TASK)) {
+            task.setResolution(resolution);
         }
         task.setDueDate(dueDate);
     }
@@ -205,7 +209,7 @@ public class DelegationBean implements Serializable {
             t.setDueDate(dueDate);
         }
     }
-    
+
     private List<Task> getTasksInGroup(Workflow workflow, TaskGroup group) {
         Set<Integer> taskIds = group.getTaskIds();
         if (CollectionUtils.isEmpty(taskIds)) {
@@ -468,12 +472,14 @@ public class DelegationBean implements Serializable {
     }
 
     public static void addDuplicateTaskMessage(List<String> messages, NodeRef docRef, QName taskType, Set<String> addedOwnerIds) {
-        List<ee.webmedia.alfresco.workflow.service.Task> existingTasks = BeanHelper.getWorkflowService()
-                .getDocumentCompoundWorkflowTasks(docRef, Collections.singleton(taskType), Status.getAllExept(Status.UNFINISHED));
+        List<Map<QName, Serializable>> existingTasks = BeanHelper.getWorkflowService()
+                .getDocumentCompoundWorkflowTaskOwnerNamesAndIds(docRef, Collections.singleton(taskType), Status.getAllExept(Status.UNFINISHED));
 
-        for (Task task : existingTasks) {
-            if (addedOwnerIds.contains(task.getOwnerId())) {
-                String msg = MessageUtil.getMessage("workflow_compound_confirm_same_task", task.getOwnerName(), MessageUtil.getMessage("task_title_" + taskType.getLocalName()));
+        for (Map<QName, Serializable> task : existingTasks) {
+            String ownerId = (String) task.get(WorkflowCommonModel.Props.OWNER_ID);
+            if (addedOwnerIds.contains(ownerId)) {
+                String ownerName = (String) task.get(WorkflowCommonModel.Props.OWNER_NAME);
+                String msg = MessageUtil.getMessage("workflow_compound_confirm_same_task", ownerName, MessageUtil.getMessage("task_title_" + taskType.getLocalName()));
                 messages.add(msg + " " + MessageUtil.getMessage("workflow_compound_confirm_continue"));
             }
         }

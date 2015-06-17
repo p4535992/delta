@@ -156,6 +156,26 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
 
     private BeanFactory beanFactory;
 
+    private static final Set<String> UNCHANGEABLE_FIELD_IDS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
+            DocumentCommonModel.Props.OWNER_NAME.getLocalName(),
+            DocumentCommonModel.Props.SIGNER_NAME.getLocalName(),
+            DocumentCommonModel.Props.OWNER_ID.getLocalName(),
+            DocumentCommonModel.Props.DOC_STATUS.getLocalName(),
+            DocumentCommonModel.Props.REG_NUMBER.getLocalName(),
+            DocumentCommonModel.Props.SHORT_REG_NUMBER.getLocalName(),
+            DocumentCommonModel.Props.REG_DATE_TIME.getLocalName(),
+            DocumentCommonModel.Props.INDIVIDUAL_NUMBER.getLocalName(),
+            DocumentDynamicModel.Props.SIGNER_ID.getLocalName(),
+            DocumentDynamicModel.Props.SUBSTITUTE_ID.getLocalName(),
+            DocumentSpecificModel.Props.SUBSTITUTE_NAME.getLocalName())));
+
+    private static final Set<FieldType> READ_ONLY_FIELD_TYPES = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
+            FieldType.COMBOBOX_AND_TEXT_NOT_EDITABLE,
+            FieldType.LISTBOX,
+            FieldType.CHECKBOX,
+            FieldType.INFORMATION_TEXT,
+            FieldType.STRUCT_UNIT)));
+
     @Override
     public void setOwner(NodeRef docRef, String ownerId, boolean retainPreviousOwnerId) {
         Map<QName, Serializable> props = nodeService.getProperties(docRef);
@@ -828,7 +848,7 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
             String taskOwnerId = task.getOwnerId();
             if (StringUtils.isNotBlank(taskOwnerId)) {
                 privilegeService
-                        .setPermissions(docRef, taskOwnerId, getPrivsWithDependencies(getRequiredPrivsForInprogressTask(task, docRef, fileService, false, digiDocStatuses)));
+                .setPermissions(docRef, taskOwnerId, getPrivsWithDependencies(getRequiredPrivsForInprogressTask(task, docRef, fileService, false, digiDocStatuses)));
             }
         }
     }
@@ -1246,23 +1266,11 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
             return false;
         }
 
-        DocumentDynamicService documentDynamicService = BeanHelper.getDocumentDynamicService();
-        DocumentDynamic doc = documentDynamicService.getDocument(document);
-
+        DocumentDynamic doc = getDocument(document);
         Map<String, Pair<DynamicPropertyDefinition, Field>> propertyDefinitions = BeanHelper.getDocumentConfigService().getPropertyDefinitions(doc.getNode());
-
-        List<String> updateDisabled = Arrays.asList(
-                DocumentCommonModel.Props.OWNER_NAME.getLocalName(), DocumentCommonModel.Props.SIGNER_NAME.getLocalName()
-                , DocumentSpecificModel.Props.SUBSTITUTE_NAME.getLocalName(), DocumentCommonModel.Props.OWNER_ID.getLocalName()
-                , DocumentDynamicModel.Props.SIGNER_ID.getLocalName(), DocumentDynamicModel.Props.SUBSTITUTE_ID.getLocalName()
-                , DocumentCommonModel.Props.DOC_STATUS.getLocalName(), DocumentCommonModel.Props.REG_NUMBER.getLocalName()
-                , DocumentCommonModel.Props.SHORT_REG_NUMBER.getLocalName(), DocumentCommonModel.Props.REG_DATE_TIME.getLocalName()
-                , DocumentCommonModel.Props.INDIVIDUAL_NUMBER.getLocalName());
-        List<FieldType> readOnlyFields = Arrays.asList(FieldType.COMBOBOX_AND_TEXT_NOT_EDITABLE, FieldType.LISTBOX, FieldType.CHECKBOX, FieldType.INFORMATION_TEXT);
-        List<ContractPartyField> partyFields = new ArrayList<ContractPartyField>();
+        List<ContractPartyField> partyFields = new ArrayList<>();
+        List<String> blankMandatoryFields = new ArrayList<>();
         ClassificatorService classificatorService = BeanHelper.getClassificatorService();
-
-        List<String> blankMandatoryFields = new ArrayList<String>();
 
         for (Entry<String, String> entry : formulas.entrySet()) {
             String formulaKey = entry.getKey();
@@ -1300,7 +1308,7 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
             Field field = propDefAndField.getSecond();
 
             // If field is not changeable, then don't allow it.
-            if (isFieldUnchangeable(doc, updateDisabled, readOnlyFields, field, classificatorService, formulaValue)) {
+            if (isFieldUnchangeable(doc, field, classificatorService, formulaValue)) {
                 continue;
             }
 
@@ -1403,15 +1411,14 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         }
     }
 
-    private boolean isFieldUnchangeable(DocumentDynamic doc, List<String> updateDisabled, List<FieldType> readOnlyFields, Field field, ClassificatorService classificatorService,
-            String formulaValue) {
+    private boolean isFieldUnchangeable(DocumentDynamic doc, Field field, ClassificatorService classificatorService, String formulaValue) {
         return FieldChangeableIf.ALWAYS_NOT_CHANGEABLE == field.getChangeableIfEnum()
                 || FieldChangeableIf.CHANGEABLE_IF_WORKING_DOC == field.getChangeableIfEnum()
                 && !DocumentStatus.WORKING.getValueName().equals(doc.getProp(DocumentCommonModel.Props.DOC_STATUS))
-                || updateDisabled.contains(field.getFieldId()) || readOnlyFields.contains(field.getFieldTypeEnum())
+                || UNCHANGEABLE_FIELD_IDS.contains(field.getFieldId())
+                || READ_ONLY_FIELD_TYPES.contains(field.getFieldTypeEnum())
                 || DocumentDynamicModel.Props.FIRST_KEYWORD_LEVEL.getLocalName().equals(field.getOriginalFieldId())
                 || DocumentDynamicModel.Props.SECOND_KEYWORD_LEVEL.getLocalName().equals(field.getOriginalFieldId())
-                || FieldType.STRUCT_UNIT == field.getFieldTypeEnum()
                 || FieldType.COMBOBOX == field.getFieldTypeEnum() && field.isComboboxNotRelatedToClassificator()
                 || FieldType.COMBOBOX == field.getFieldTypeEnum() && !classificatorService.hasClassificatorValueName(field.getClassificator(), formulaValue);
     }

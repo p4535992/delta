@@ -648,7 +648,7 @@ public class Document extends Node implements Comparable<Document>, CssStylable,
             final PrivilegeService privilegeService = BeanHelper.getPrivilegeService();
             final String userName = AuthenticationUtil.getRunAsUser();
             try {
-                CreateSimpleFileCallback callback = new CreateSimpleFileCallback() {
+                CreateSimpleFileCallback<MDeltaFile> callback = new CreateSimpleFileCallback<MDeltaFile>() {
                     @Override
                     public MDeltaFile create(Map<QName, Serializable> fileProps, Serializable... objects) {
                         String displayName = (String) fileProps.get(FileModel.Props.DISPLAY_NAME);
@@ -663,9 +663,11 @@ public class Document extends Node implements Comparable<Document>, CssStylable,
                         return file;
                     }
                 };
-                files = bulkLoadNodeService.loadActiveFiles(nodeRef, null, MDELTA_FILE_PROPS, callback);
+                files = new ArrayList<>();
+                List<MDeltaFile> filez = bulkLoadNodeService.loadActiveFiles(nodeRef, null, MDELTA_FILE_PROPS, callback);
+                files.addAll(filez);
             } catch (InvalidNodeRefException e) {
-                files = new ArrayList<SimpleFile>();
+                files = new ArrayList<>();
             }
         }
         return files;

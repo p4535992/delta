@@ -213,6 +213,12 @@ public class DocumentDynamicSearchDialog extends AbstractSearchFilterBlockBean<D
         @SuppressWarnings("unchecked")
         List<NodeRef> selectedStores = (List<NodeRef>) event.getNewValue();
         getNode().getProperties().put(SELECTED_STORES.toString(), selectedStores);
+        for (PropertySheetStateHolder stateHolder : config.getStateHolders().values()) { // State holder key varies
+            if (stateHolder instanceof DocumentLocationState) {
+                ((DocumentLocationState) stateHolder).reset(isInEditMode());
+                return;
+            }
+        }
     }
 
     public void reportTypeChanged(ValueChangeEvent event) {

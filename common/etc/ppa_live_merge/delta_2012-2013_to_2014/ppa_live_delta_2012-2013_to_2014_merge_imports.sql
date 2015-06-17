@@ -13,6 +13,7 @@ drop table if exists tmp_import_alf_node_aspects;
 drop table if exists tmp_delta_task;
 drop table if exists tmp_mimetype;
 drop table if exists tmp_locale;
+drop table if exists tmp_content_data;
 
 alter table alf_node drop constraint if exists fk_alf_node_acl;
 alter table alf_attributes drop constraint if exists fk_alf_attr_acl;
@@ -397,7 +398,7 @@ drop table if exists tmp_alf_content_url_imported;
 create table if not exists tmp_alf_content_url_imported(like alf_content_url);
 COPY tmp_alf_content_url_imported from '/delta-pgsql/data/alf_content_url.tsv';
 
-select * into alf_content_url from tmp_alf_content_url_imported
+insert into alf_content_url (select * from tmp_alf_content_url_imported);
 
 create table tmp_content_data (
   id bigint NOT NULL,
@@ -482,11 +483,11 @@ where actual_type_n = 3 -- long
 and qname_id in (select id from props_qname_ids)
 and props.long_value = tmp.id;
 
-delete from alf_content_url
-where id in (select old_id from tmp_duplicate_content_url_id);
-
 delete from alf_content_data
 where content_url_id in (select old_id from tmp_duplicate_content_url_id);
+
+delete from alf_content_url
+where id in (select old_id from tmp_duplicate_content_url_id);
 
 -- resettida sequence'id
 select setval('delta_task_due_date_extension_task_due_date_extension_assoc_seq', (select max(task_due_date_extension_assoc_id) from delta_task_due_date_extension_assoc));

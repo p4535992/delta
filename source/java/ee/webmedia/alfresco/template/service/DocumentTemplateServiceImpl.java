@@ -192,7 +192,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
             if (StringUtils.isNotBlank((String) file.getProperties().get(FileModel.Props.GENERATED_FROM_TEMPLATE))
                     || Boolean.TRUE.equals(file.getProperties().get(FileModel.Props.UPDATE_METADATA_IN_FILES))) {
 
-                replaceFormulas(docRef, file.getNodeRef(), file.getNodeRef(), file.getName(), isRegistering, true);
+                replaceDocumentFormulas(docRef, file.getNodeRef(), file.getNodeRef(), file.getName(), isRegistering, true);
             }
         }
     }
@@ -274,7 +274,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
     }
 
     @Override
-    public Pair<String, NodeRef> populateTemplate(NodeRef documentNodeRef, boolean overWritingGranted) throws FileNotFoundException {
+    public String populateTemplate(NodeRef documentNodeRef, boolean overWritingGranted) throws FileNotFoundException {
         log.debug("Creating a file from template for document: " + documentNodeRef);
         boolean msoAvailable = msoService.isAvailable();
         boolean ooAvailable = openOfficeService.isAvailable();
@@ -352,12 +352,13 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
             name = generalService.getUniqueFileName(documentNodeRef, name);
 
             existingGeneratedFile = fileFolderService.create(documentNodeRef, name, ContentModel.TYPE_CONTENT).getNodeRef();
-
-            Map<QName, Serializable> templateProps = new HashMap<QName, Serializable>(3);
+            int activeFilesCount = BeanHelper.getBulkLoadNodeService().countFiles(documentNodeRef, Boolean.TRUE);
+            Map<QName, Serializable> templateProps = new HashMap<>(7);
             // Mark down the template that was used to generate the file
             templateProps.put(FileModel.Props.GENERATED_FROM_TEMPLATE, templateFilename);
             templateProps.put(FileModel.Props.GENERATION_TYPE, (ooTemplate ? GeneratedFileType.OPENOFFICE_TEMPLATE.name() : GeneratedFileType.WORD_TEMPLATE.name()));
             templateProps.put(FileModel.Props.CONVERT_TO_PDF_IF_SIGNED, Boolean.TRUE);
+            templateProps.put(FileModel.Props.FILE_ORDER_IN_LIST, ++activeFilesCount);
             // Set the display name so we can process it during document registration
             templateProps.put(FileModel.Props.DISPLAY_NAME, displayName);
             nodeService.addProperties(existingGeneratedFile, templateProps);
@@ -367,13 +368,13 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
         }
 
         // Set document content's MIME type and encoding from template
-        replaceFormulas(documentNodeRef, nodeRef, existingGeneratedFile, templateFilename);
+        replaceDocumentFormulas(documentNodeRef, nodeRef, existingGeneratedFile, templateFilename, false, false);
         generalService.setModifiedToNow(documentNodeRef);
-        return Pair.newInstance(displayName, existingGeneratedFile);
+        return displayName;
     }
 
     @Override
-    public void populateVolumeArchiveTemplate(NodeRef parentRef, List<NodeRef> volumeRefs, NodeRef templateRef) {
+    public void populateVolumeArchiveTemplate(NodeRef parentRef, List<NodeRef> volumeRefs, NodeRef templateRef, String executingUser) {
         if (!msoService.isAvailable()) {
             throw new UnableToPerformException("document_errorMsg_template_processsing_failed_service_missing");
         }
@@ -382,17 +383,36 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
         String filenameWithoutExtension = FilenameUtils.removeExtension(templateFilename);
         templateFilename = filenameWithoutExtension + " " + FastDateFormat.getInstance("yyyyMMdd").format(new Date()) + ".docx";
         NodeRef generatedFile = fileFolderService.create(parentRef, templateFilename, ContentModel.TYPE_CONTENT).getNodeRef();
-        replaceFormulas(volumeRefs, templateRef, generatedFile, templateFilename, true, false);
+        replaceArchiveTemplateFormulas(volumeRefs, templateRef, generatedFile, templateFilename, executingUser);
         nodeService.setProperty(generatedFile, FileModel.Props.ACTIVITY_FILE_TYPE, ActivityFileType.GENERATED_DOCX.name());
     }
 
-    private void replaceFormulas(NodeRef document, NodeRef sourceFile, NodeRef destinationFile, String sourceFileName) {
-        replaceFormulas(document, sourceFile, destinationFile, sourceFileName, false, false);
+    private interface FormulasProvider {
+        Map<String, String> getFormulas();
     }
 
-    @SuppressWarnings("unchecked")
-    private void replaceFormulas(Object documentOrVolumeRefList, NodeRef sourceFile, NodeRef destinationFile, String sourceFileName, boolean finalize, boolean dontSaveIfUnmodified) {
-        Assert.isTrue(documentOrVolumeRefList instanceof NodeRef || documentOrVolumeRefList instanceof List);
+    private void replaceDocumentFormulas(final NodeRef documentRef, NodeRef templateRef, NodeRef destinationFile, String templateFilename, boolean finalize,
+            boolean dontSaveIfUnmodified) {
+        FormulasProvider formulasCb = new FormulasProvider() {
+            @Override
+            public Map<String, String> getFormulas() {
+                return getDocumentFormulas(documentRef);
+            }
+        };
+        replaceFormulas(templateRef, destinationFile, templateFilename, finalize, dontSaveIfUnmodified, formulasCb);
+    }
+
+    private void replaceArchiveTemplateFormulas(final List<NodeRef> volumeRefs, NodeRef templateRef, NodeRef destinationFile, String templateFilename, final String executingUser) {
+        FormulasProvider formulasCb = new FormulasProvider() {
+            @Override
+            public Map<String, String> getFormulas() {
+                return getArchiveFormulas(volumeRefs, executingUser);
+            }
+        };
+        replaceFormulas(templateRef, destinationFile, templateFilename, true, false, formulasCb);
+    }
+
+    private void replaceFormulas(NodeRef sourceFile, NodeRef destinationFile, String sourceFileName, boolean finalize, boolean dontSaveIfUnmodified, FormulasProvider provider) {
         // Basically the same check is performed in MsoService#isFormulasReplaceable, but with MIME types
         boolean msoFile = StringUtils.endsWithIgnoreCase(sourceFileName, ".doc") || StringUtils.endsWithIgnoreCase(sourceFileName, ".docx")
                 || StringUtils.endsWithIgnoreCase(sourceFileName, ".dot") || StringUtils.endsWithIgnoreCase(sourceFileName, ".dotx");
@@ -401,14 +421,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
             throw new UnableToPerformException(MessageSeverity.ERROR, "template_replace_formulas_invalid_file_extension");
         }
 
-        NodeRef document = null;
-        Map<String, String> formulas = null;
-        if (documentOrVolumeRefList instanceof NodeRef) {
-            document = (NodeRef) documentOrVolumeRefList;
-            formulas = getDocumentFormulas(document);
-        } else {
-            formulas = getArchiveFormulas((List<NodeRef>) documentOrVolumeRefList);
-        }
+        Map<String, String> formulas = provider.getFormulas();
         if (log.isDebugEnabled()) {
             log.debug("Produced formulas " + WmNode.toString(formulas.entrySet()));
         }
@@ -436,11 +449,11 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
             }
         } else if (ooFile && openOfficeService.isAvailable()) {
             // generating document for volume list is not implemented for OpenOffice
-            replaceFormulasWithOpenOffice(document, sourceFile, destinationFile, sourceFileName, formulas, finalize, dontSaveIfUnmodified);
+            replaceFormulasWithOpenOffice(sourceFile, destinationFile, sourceFileName, formulas, finalize, dontSaveIfUnmodified);
         }
     }
 
-    private void replaceFormulasWithOpenOffice(NodeRef document, NodeRef sourceFile, NodeRef destinationFile, String sourceFileName, Map<String, String> formulas,
+    private void replaceFormulasWithOpenOffice(NodeRef sourceFile, NodeRef destinationFile, String sourceFileName, Map<String, String> formulas,
             boolean finalize, boolean dontSaveIfUnmodified) {
         int retry = 3;
         do {
@@ -693,15 +706,14 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
         return result.toString();
     }
 
-    public Map<String, String> getArchiveFormulas(List<NodeRef> volumeRefs) {
-        Map<String, String> formulas = new LinkedHashMap<String, String>();
+    public Map<String, String> getArchiveFormulas(List<NodeRef> volumeRefs, String executingUser) {
         if (volumeRefs == null) {
-            return formulas;
+            return Collections.emptyMap();
         }
 
-        String currentUser = userService.getCurrentUserName();
-        formulas.put("activityUserName", userService.getUserFullName(currentUser));
-        formulas.put("activityUserId", currentUser);
+        Map<String, String> formulas = new LinkedHashMap<>();
+        formulas.put("activityUserName", userService.getUserFullName(executingUser));
+        formulas.put("activityUserId", executingUser);
         Date date = new Date();
         formulas.put("activityDate", dateFormat.format(date));
         formulas.put("activityDateTime", dateTimeFormat.format(date));
@@ -1087,12 +1099,12 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
             }
             StringBuilder sb = new StringBuilder();
             sb.append(name)
-                    .append(" ")
-                    .append(startDate == null ? "" : dateFormat.format(startDate))
-                    .append(" ")
-                    .append(until)
-                    .append(" ")
-                    .append(endDate == null ? "" : dateFormat.format(endDate));
+            .append(" ")
+            .append(startDate == null ? "" : dateFormat.format(startDate))
+            .append(" ")
+            .append(until)
+            .append(" ")
+            .append(endDate == null ? "" : dateFormat.format(endDate));
             substitutes.add(sb.toString());
         }
         return StringUtils.join(substitutes.iterator(), "\n");

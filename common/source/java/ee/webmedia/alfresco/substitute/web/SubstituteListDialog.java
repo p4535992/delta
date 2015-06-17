@@ -99,7 +99,6 @@ public class SubstituteListDialog extends BaseDialogBean {
 
     @Override
     public String cancel() {
-        clean();
         return super.cancel();
     }
 

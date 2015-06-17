@@ -411,6 +411,18 @@
       </property>
       <property name="bulkLoadNodeService" ref="BulkLoadNodeService" />
    </bean>
+   
+   <bean id="docVisibleToUpdater2" class="ee.webmedia.alfresco.document.bootstrap.DocVisibleToUpdater" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="false" />
+      <property name="enabled" value="${updater.document.docVisibleToUpdater.enabled}" /> 
+      <property name="batchSize" value="10" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="archivalsStoresBootstrap" />
+         </list>
+      </property>
+   </bean>
 
    <!-- START: web beans: -->
 

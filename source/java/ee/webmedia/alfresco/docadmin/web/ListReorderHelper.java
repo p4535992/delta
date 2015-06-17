@@ -21,8 +21,6 @@ import ee.webmedia.alfresco.utils.ComparableTransformer;
  */
 public class ListReorderHelper {
 
-    private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(ListReorderHelper.class);
-
     /**
      * Accessor and mutator for order property/field of the object
      *

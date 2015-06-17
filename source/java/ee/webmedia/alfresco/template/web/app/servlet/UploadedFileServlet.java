@@ -17,7 +17,7 @@ import org.alfresco.web.bean.FileUploadBean;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 
-public class UploadedFileHelperServlet extends UploadFileBaseServlet {
+public class UploadedFileServlet extends UploadFileBaseServlet {
 
     private static final long serialVersionUID = 1L;
 

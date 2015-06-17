@@ -12,6 +12,7 @@ import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
 
 import ee.webmedia.alfresco.document.file.model.SimpleFile;
+import ee.webmedia.alfresco.document.file.model.SimpleFileWithOrder;
 import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.substitute.model.Substitute;
 
@@ -62,9 +63,13 @@ public interface BulkLoadNodeService {
 
     List<SimpleFile> loadActiveFiles(NodeRef nodeRef, Map<Long, QName> propertyTypes);
 
-    List<SimpleFile> loadActiveFiles(NodeRef nodeRef, Map<Long, QName> propertyTypes, Set<QName> propsToLoad, CreateSimpleFileCallback createFileCallback);
+    <T extends SimpleFile> List<T> loadActiveFiles(NodeRef nodeRef, Map<Long, QName> propertyTypes, Set<QName> propsToLoad, CreateSimpleFileCallback<T> createFileCallback);
 
-    List<SimpleFile> loadInactiveFiles(NodeRef parentRef);
+    List<SimpleFileWithOrder> loadInactiveFilesWithOrder(NodeRef parentRef);
+
+    List<SimpleFileWithOrder> loadActiveFilesWithOrder(NodeRef parentRef);
+
+    int countFiles(NodeRef parentNodeRef, Boolean active);
 
     List<SimpleFile> loadAllFiles(NodeRef parentRef);
 
@@ -116,5 +121,7 @@ public interface BulkLoadNodeService {
     List<Substitute> loadUserSubstitutionDuties(String personName, NodeRef peopleContainer);
 
     Boolean getSubscriptionPropValue(NodeRef personRef, QName notificationType);
+
+    List<Node> loadAssociatedTargetNodes(NodeRef parentRef, Set<QName> propsToLoad, QName assocType, CreateObjectCallback<Node> createNodeCallback);
 
 }

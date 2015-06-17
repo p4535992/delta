@@ -49,7 +49,7 @@ public interface DocumentTemplateService {
      * @throws FileNotFoundException throws when document has a template which has been deleted
      * @throws Exception
      */
-    Pair<String, NodeRef> populateTemplate(NodeRef documentNodeRef, boolean overWritingGranted) throws FileNotFoundException, ExistingFileFromTemplateException;
+    String populateTemplate(NodeRef documentNodeRef, boolean overWritingGranted) throws FileNotFoundException, ExistingFileFromTemplateException;
 
     String getProcessedVolumeDispositionTemplate(List<Volume> volumes, NodeRef template);
 
@@ -133,7 +133,7 @@ public interface DocumentTemplateService {
 
     NodeRef getArchivalReportTemplateByName(String templateName);
 
-    void populateVolumeArchiveTemplate(NodeRef parentRef, List<NodeRef> volumeRefs, NodeRef templateRef);
+    void populateVolumeArchiveTemplate(NodeRef parentRef, List<NodeRef> volumeRefs, NodeRef templateRef, String executingUser);
 
     List<UnmodifiableDocumentTemplate> getUnmodifiableTemplates();
 

@@ -609,6 +609,13 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         return ComponentUtil.getOnChangeStyleClass();
     }
 
+    public void reloadDocument(NodeRef docRef) {
+        if (getCurrentSnapshot() != null && getCurrentSnapshot().inEditMode) {
+            DocumentDynamic doc = BeanHelper.getDocumentDynamicService().getDocument(docRef);
+            getCurrentSnapshot().setDocument(doc);
+        }
+    }
+
     // =========================================================================
 
     static class DocDialogSnapshot implements BaseSnapshotCapableDialog.Snapshot {
@@ -869,6 +876,9 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
                 return null;
             }
         }
+        if (!BeanHelper.getWorkflowConstantsBean().isDocumentWorkflowEnabled()) {
+            resetAllRequestCaches();
+        }
         final boolean relocateAssociations = isRelocatingAssociations();
         if (!getCurrentSnapshot().moveAssociatedDocumentsConfirmed && relocateAssociations) {
             BeanHelper.getUserConfirmHelper().setup(new MessageDataImpl("document_move_associated_documents_confirmation"), null,
@@ -946,6 +956,12 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
             }
 
         }, false, true);
+    }
+
+    private void resetAllRequestCaches() {
+        BeanHelper.getWorkflowBlockBean().clearRequestCache();
+        BeanHelper.getAssocsBlockBean().clearRequestCache();
+        clearRequestCache();
     }
 
     public Pair<DocumentDynamic, List<Pair<NodeRef, NodeRef>>> save(final DocumentDynamic document, final List<String> saveListenerBeanNames, final boolean relocateAssocDocs,

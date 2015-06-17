@@ -128,25 +128,6 @@ public class FileServiceImpl implements FileService {
     }
 
     @Override
-    public void addAsLastActiveFile(NodeRef documentRef, NodeRef lastFileRef) {
-        List<File> activeFiles = getAllActiveFiles(documentRef);
-        Map<NodeRef, Long> initialOrders = new HashMap<>();
-        for (File f : activeFiles) {
-            NodeRef fileRef = getFileNodeRef(f);
-            initialOrders.put(fileRef, f.getFileOrderInList());
-            if (lastFileRef.equals(fileRef)) {
-                f.setFileOrderInList(new Long(activeFiles.size() + 1));
-                break;
-            }
-        }
-
-        FileOrderModifier modifier = new FileOrderModifier(initialOrders);
-        ListReorderHelper.reorder(activeFiles, modifier);
-
-        updateOrder(activeFiles, initialOrders);
-    }
-
-    @Override
     public void reorderFiles(NodeRef documentRef, Map<NodeRef, Long> originalOrders) {
         List<File> files = getAllFilesExcludingDigidocSubitems(documentRef);
         List<File> activeFiles = new ArrayList<>();
@@ -635,7 +616,7 @@ public class FileServiceImpl implements FileService {
     private boolean addFilePropsAndUpdateDocumentMetadata(final NodeRef documentNodeRef, final NodeRef fileNodeRef, boolean associatedWithMetaData, boolean active,
             String mimetype, Map<QName, Serializable> props, String filename) {
         if (props == null) {
-            props = new HashMap<QName, Serializable>(3);
+            props = new HashMap<>(7);
         }
         props.put(FileModel.Props.ACTIVE, active);
         props.put(FileModel.Props.CONVERT_TO_PDF_IF_SIGNED, isTransformableToPdf(mimetype));

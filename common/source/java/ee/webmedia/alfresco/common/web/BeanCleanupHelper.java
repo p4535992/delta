@@ -137,7 +137,7 @@ public class BeanCleanupHelper implements Serializable {
         DIALOGS_TO_CLEAN.put(UserConfirmHelper.BEAN_NAME, null);
         DIALOGS_TO_CLEAN.put(ClearStateNotificationHandler.BEAN_NAME, null);
         DIALOGS_TO_CLEAN.put(OrganizationStructureListDialog.BEAN_NAME, null);
-        DIALOGS_TO_CLEAN.put(SubstituteListDialog.BEAN_NAME, null);
+        DIALOGS_TO_CLEAN.put(SubstituteListDialog.BEAN_NAME, Collections.singletonList("dialog:close"));
         DIALOGS_TO_CLEAN.put(SubstitutionBean.BEAN_NAME, null);
         DIALOGS_TO_CLEAN.put(ThesaurusDetailsDialog.BEAN_NAME, null);
         DIALOGS_TO_CLEAN.put(ThesaurusListDialog.BEAN_NAME, null);
@@ -164,7 +164,7 @@ public class BeanCleanupHelper implements Serializable {
         DIALOGS_TO_CLEAN.put(FieldDetailsDialog.BEAN_NAME, null);
         DIALOGS_TO_CLEAN.put(GroupsDialog.BEAN_NAME, null);
         DIALOGS_TO_CLEAN.put(CaseDocumentListDialog.BEAN_NAME, Arrays.asList(DocumentListDialog.BEAN_NAME, CaseDetailsDialog.BEAN_NAME, DocumentDynamicDialog.BEAN_NAME));
-        DIALOGS_TO_CLEAN.put(UserDetailsDialog.BEAN_NAME, Arrays.asList(GroupUsersListDialog.BEAN_NAME));
+        DIALOGS_TO_CLEAN.put(UserDetailsDialog.BEAN_NAME, Arrays.asList(GroupUsersListDialog.BEAN_NAME, SubstituteListDialog.BEAN_NAME));
     }
 
     public void clean(FacesContext context, String outcome, boolean canResetMyTasks) {

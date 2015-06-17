@@ -43,7 +43,7 @@ import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 import ee.webmedia.alfresco.workflow.service.Workflow;
 import ee.webmedia.alfresco.workflow.web.DelegationBean;
 import ee.webmedia.alfresco.workflow.web.DelegationTaskListGenerator.DelegatableTaskType;
-import ee.webmedia.mobile.alfresco.workflow.model.DelegationMessagesRequest;
+import ee.webmedia.mobile.alfresco.workflow.model.DelegationMessage;
 import ee.webmedia.mobile.alfresco.workflow.model.TaskDelegationForm;
 import ee.webmedia.mobile.alfresco.workflow.model.TaskDelegationForm.TaskElement;
 
@@ -347,35 +347,35 @@ public class TaskDelegationController extends AbstractCompoundWorkflowController
 
     @RequestMapping(value = "/ajax/delegation/confirmation", method = POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
-    public DelegationMessagesRequest getDelegationConfirmationMessages(@RequestBody DelegationMessagesRequest request) throws ParseException {
-        NodeRef cwfRef = request.getCompoundWorkflowRef();
+    public DelegationMessage getDelegationConfirmationMessages(@RequestBody DelegationMessage message) throws ParseException {
+        NodeRef cwfRef = message.getCompoundWorkflowRef();
         CompoundWorkflowType type = workflowService.getCompoundWorkflowType(cwfRef);
         List<String> messages = new ArrayList<>(2);
-        request.setMessages(messages);
+        message.setMessages(messages);
         if (CompoundWorkflowType.INDEPENDENT_WORKFLOW.equals(type)) {
-            List<String> dueDateStrings = request.getDueDates();
+            List<String> dueDateStrings = message.getDueDates();
             if (CollectionUtils.isNotEmpty(dueDateStrings)) {
                 List<NodeRef> docRefs = workflowService.getCompoundWorkflowDocumentRefs(cwfRef);
                 if (CollectionUtils.isNotEmpty(docRefs)) {
-                    QName workflowType = getDelegableTaskParentType(resolveToQName(request.getTaskType()));
+                    QName workflowType = getDelegableTaskParentType(resolveToQName(message.getTaskType()));
                     DelegationBean.addDueDateConfirmation(messages, getMaxDate(dueDateStrings), docRefs, workflowType.getLocalName(), true);
                 }
             }
         } else if (CompoundWorkflowType.DOCUMENT_WORKFLOW.equals(type)) {
 
-            List<String> dueDateStrings = request.getDueDates();
+            List<String> dueDateStrings = message.getDueDates();
             NodeRef docRef = BeanHelper.getNodeService().getPrimaryParent(cwfRef).getParentRef();
-            QName taskType = resolveToQName(request.getTaskType());
+            QName taskType = resolveToQName(message.getTaskType());
             QName workflowType = getDelegableTaskParentType(taskType);
             if (CollectionUtils.isNotEmpty(dueDateStrings)) {
                 DelegationBean.addDueDateConfirmation(messages, getMaxDate(dueDateStrings), Collections.singletonList(docRef), workflowType.getLocalName(), false);
             }
-            Set<String> taskOwners = new HashSet<>(request.getTaskOwners());
+            Set<String> taskOwners = new HashSet<>(message.getTaskOwners());
             DelegationBean.addDuplicateTaskMessage(messages, docRef, taskType, taskOwners);
         } else {
             throw new RuntimeException("Unexpected compound workflow type: " + type.name());
         }
-        return request;
+        return message;
     }
 
     private QName getDelegableTaskParentType(QName taskType) {

@@ -36,7 +36,7 @@ import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
 import org.alfresco.web.app.servlet.DownloadContentServlet;
 import org.alfresco.web.bean.repository.Node;
-import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -50,6 +50,7 @@ import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 import ee.webmedia.alfresco.document.file.model.FileModel;
 import ee.webmedia.alfresco.document.file.model.SimpleFile;
+import ee.webmedia.alfresco.document.file.model.SimpleFileWithOrder;
 import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.search.model.FakeDocument;
@@ -79,7 +80,8 @@ public class BulkLoadNodeServiceImpl implements BulkLoadNodeService {
     private static final String NODE_REF_QUERY_START = "select node.uuid, node.store_id ";
     private static final String NODE_NOT_DELETED_CONDITION = " alf_node.node_deleted = false";
     private static final Set<QName> SIMPLE_FILE_PROPS = new HashSet<>(Arrays.asList(FileModel.Props.DISPLAY_NAME, FileModel.Props.ACTIVE, DvkModel.Props.DVK_ID,
-            ContentModel.PROP_NAME, FileModel.Props.FILE_ORDER_IN_LIST));
+            ContentModel.PROP_NAME));
+    private static final Set<QName> SIMPLE_FILE_PROPS_WITH_FILE_ORDER;
     private static final Map<String, String> PROP_TABLE_ALIASES = new ConcurrentHashMap<>();
     private static final Map<QName, Long> QNAME_TO_DB_ID = new ConcurrentHashMap<>();
     private static final Map<Long, QName> DB_ID_TO_QNAME = new ConcurrentHashMap<>();
@@ -87,6 +89,14 @@ public class BulkLoadNodeServiceImpl implements BulkLoadNodeService {
     private static final Map<Long, StoreRef> DB_ID_TO_STORE_REF = new ConcurrentHashMap<>();
 
     private static final Log LOG = LogFactory.getLog(BulkLoadNodeServiceImpl.class);
+
+    static {
+        Set<QName> tempProps = new HashSet<>(SIMPLE_FILE_PROPS);
+        tempProps.add(FileModel.Props.FILE_ORDER_IN_LIST);
+        tempProps.add(FileModel.Props.GENERATION_TYPE);
+        tempProps.add(FileModel.Props.GENERATED_FROM_TEMPLATE);
+        SIMPLE_FILE_PROPS_WITH_FILE_ORDER = tempProps;
+    }
 
     private SimpleJdbcTemplate jdbcTemplate;
     private QNameDAO qnameDAO;
@@ -131,8 +141,8 @@ public class BulkLoadNodeServiceImpl implements BulkLoadNodeService {
         return loadActiveFiles(nodeRef, propertyTypes, SIMPLE_FILE_PROPS, getSimpleFileCallback());
     }
 
-    private CreateSimpleFileCallback getSimpleFileCallback() {
-        return new CreateSimpleFileCallback() {
+    private CreateSimpleFileCallback<SimpleFile> getSimpleFileCallback() {
+        return new CreateSimpleFileCallback<SimpleFile>() {
 
             @Override
             public SimpleFile create(Map<QName, Serializable> fileProps, Serializable... objects) {
@@ -141,10 +151,30 @@ public class BulkLoadNodeServiceImpl implements BulkLoadNodeService {
                 if (StringUtils.isBlank(displayName)) {
                     displayName = (String) fileProps.get(ContentModel.PROP_NAME);
                 }
+                NodeRef fileRef = (NodeRef) fileProps.get(ContentModel.PROP_NODE_REF);
+                String readOnlyUrl = DownloadContentServlet.generateDownloadURL(fileRef, displayName);
+                SimpleFile simpleFile = new SimpleFile(displayName, readOnlyUrl);
+                return simpleFile;
+            }
+        };
+    }
+
+    private CreateSimpleFileCallback<SimpleFileWithOrder> getSimpleFileWithOrderCallback() {
+        return new CreateSimpleFileCallback<SimpleFileWithOrder>() {
+
+            @Override
+            public SimpleFileWithOrder create(Map<QName, Serializable> fileProps, Serializable... objects) {
+                String displayName = (String) fileProps.get(FileModel.Props.DISPLAY_NAME);
+                if (StringUtils.isBlank(displayName)) {
+                    displayName = (String) fileProps.get(ContentModel.PROP_NAME);
+                }
                 Long fileOrderInList = (Long) fileProps.get(FileModel.Props.FILE_ORDER_IN_LIST);
                 NodeRef fileRef = (NodeRef) fileProps.get(ContentModel.PROP_NODE_REF);
                 String readOnlyUrl = DownloadContentServlet.generateDownloadURL(fileRef, displayName);
-                SimpleFile simpleFile = new SimpleFile(displayName, readOnlyUrl, fileOrderInList, fileRef);
+                boolean generated = fileProps.get(FileModel.Props.GENERATED_FROM_TEMPLATE) != null || fileProps.get(FileModel.Props.GENERATION_TYPE) != null;
+                SimpleFileWithOrder simpleFile = new SimpleFileWithOrder(displayName, readOnlyUrl, fileOrderInList, fileRef, generated);
+                boolean active = Boolean.TRUE.equals(fileProps.get(FileModel.Props.ACTIVE));
+                simpleFile.setActive(active);
                 return simpleFile;
             }
         };
@@ -156,14 +186,24 @@ public class BulkLoadNodeServiceImpl implements BulkLoadNodeService {
     }
 
     @Override
-    public List<SimpleFile> loadActiveFiles(NodeRef nodeRef, Map<Long, QName> propertyTypes, Set<QName> propsToLoad, CreateSimpleFileCallback createFileCallback) {
-        Map<NodeRef, List<SimpleFile>> allDocumentsFiles = loadFiles(Arrays.asList(nodeRef), propertyTypes, propsToLoad, createFileCallback, FilesLoadStrategy.ACTIVE);
+    public <T extends SimpleFile> List<T> loadActiveFiles(NodeRef nodeRef, Map<Long, QName> propertyTypes, Set<QName> propsToLoad, CreateSimpleFileCallback<T> createFileCallback) {
+        Map<NodeRef, List<T>> allDocumentsFiles = loadFiles(Arrays.asList(nodeRef), propertyTypes, propsToLoad, createFileCallback, FilesLoadStrategy.ACTIVE);
         return allDocumentsFiles.get(nodeRef);
     }
 
     @Override
-    public List<SimpleFile> loadInactiveFiles(NodeRef parentRef) {
-        Map<NodeRef, List<SimpleFile>> allDocumentsFiles = loadFiles(Arrays.asList(parentRef), null, SIMPLE_FILE_PROPS, getSimpleFileCallback(), FilesLoadStrategy.INACTIVE);
+    public List<SimpleFileWithOrder> loadInactiveFilesWithOrder(NodeRef parentRef) {
+        return loadFilesWithOrder(parentRef, FilesLoadStrategy.INACTIVE);
+    }
+
+    @Override
+    public List<SimpleFileWithOrder> loadActiveFilesWithOrder(NodeRef parentRef) {
+        return loadFilesWithOrder(parentRef, FilesLoadStrategy.ACTIVE);
+    }
+
+    private List<SimpleFileWithOrder> loadFilesWithOrder(NodeRef parentRef, FilesLoadStrategy strategy) {
+        Map<NodeRef, List<SimpleFileWithOrder>> allDocumentsFiles = loadFiles(Arrays.asList(parentRef), null, SIMPLE_FILE_PROPS_WITH_FILE_ORDER,
+                getSimpleFileWithOrderCallback(), strategy);
         return allDocumentsFiles.get(parentRef);
     }
 
@@ -177,8 +217,8 @@ public class BulkLoadNodeServiceImpl implements BulkLoadNodeService {
         ACTIVE, INACTIVE, BOTH;
     }
 
-    private Map<NodeRef, List<SimpleFile>> loadFiles(List<NodeRef> parentNodeRefs, Map<Long, QName> propertyTypes, Set<QName> propsToLoad,
-            CreateSimpleFileCallback createFileCallback, FilesLoadStrategy strategy) {
+    private <T extends SimpleFile> Map<NodeRef, List<T>> loadFiles(List<NodeRef> parentNodeRefs, Map<Long, QName> propertyTypes, Set<QName> propsToLoad,
+            CreateSimpleFileCallback<T> createFileCallback, FilesLoadStrategy strategy) {
         Map<NodeRef, List<Map<QName, Serializable>>> fileNodesProps = loadChildNodes(parentNodeRefs, propsToLoad, ContentModel.TYPE_CONTENT,
                 propertyTypes, new CreateObjectCallback<Map<QName, Serializable>>() {
 
@@ -188,11 +228,11 @@ public class BulkLoadNodeServiceImpl implements BulkLoadNodeService {
                 return properties;
             }
         });
-        Map<NodeRef, List<SimpleFile>> allDocumentsFiles = new HashMap<NodeRef, List<SimpleFile>>();
+        Map<NodeRef, List<T>> allDocumentsFiles = new HashMap<>();
         boolean activeFilesOnly = FilesLoadStrategy.ACTIVE.equals(strategy);
         boolean inactiveFilesOnly = FilesLoadStrategy.INACTIVE.equals(strategy);
         for (NodeRef parentRef : parentNodeRefs) {
-            List<SimpleFile> files = new ArrayList<>();
+            List<T> files = new ArrayList<>();
             List<Map<QName, Serializable>> fileNodeProps = fileNodesProps.get(parentRef);
             if (fileNodeProps != null) {
                 for (Map<QName, Serializable> fileProps : fileNodeProps) {
@@ -200,7 +240,7 @@ public class BulkLoadNodeServiceImpl implements BulkLoadNodeService {
                     boolean active = (activePropValue == null) ? true : Boolean.parseBoolean(activePropValue.toString());
                     if (activeFilesOnly && !active || fileProps.containsKey(DvkModel.Props.DVK_ID)) {
                         continue;
-                    } else if (inactiveFilesOnly && active || fileProps.containsKey(DvkModel.Props.DVK_ID)) {
+                    } else if (inactiveFilesOnly && active) {
                         continue;
                     }
                     files.add(createFileCallback.create(fileProps));
@@ -209,6 +249,28 @@ public class BulkLoadNodeServiceImpl implements BulkLoadNodeService {
             allDocumentsFiles.put(parentRef, files);
         }
         return allDocumentsFiles;
+    }
+
+    @Override
+    public int countFiles(NodeRef parentNodeRef, Boolean active) {
+        List<Map<QName, Serializable>> fileNodesProps = loadChildNodes(Collections.singleton(parentNodeRef), Collections.singleton(FileModel.Props.ACTIVE),
+                ContentModel.TYPE_CONTENT, null, new CreateObjectCallback<Map<QName, Serializable>>() {
+
+            @Override
+            public Map<QName, Serializable> create(NodeRef fileRef, Map<QName, Serializable> properties) {
+                return properties;
+            }
+        }).get(parentNodeRef);
+
+        int count = 0;
+        if (CollectionUtils.isNotEmpty(fileNodesProps)) {
+            for (Map<QName, Serializable> props : fileNodesProps) {
+                if (active.equals(props.get(FileModel.Props.ACTIVE))) {
+                    count++;
+                }
+            }
+        }
+        return count;
     }
 
     @Override
@@ -458,6 +520,50 @@ public class BulkLoadNodeServiceImpl implements BulkLoadNodeService {
         return result;
     }
 
+    @Override
+    @SuppressWarnings("deprecation")
+    public List<Node> loadAssociatedTargetNodes(NodeRef sourceRef, Set<QName> propsToLoad, QName assocType, CreateObjectCallback<Node> createNodeCallback) {
+        List<Object> arguments = new ArrayList<>();
+        boolean filterProps = CollectionUtils.isNotEmpty(propsToLoad);
+        String sql = "SELECT target.id, target.uuid, target.store_id, props.* FROM " + getNodeTableConditionalJoin(Collections.singleton(sourceRef), arguments, "id")
+                + " JOIN alf_node_assoc assoc ON node.id = assoc.source_node_id"
+                + " JOIN alf_node_properties props ON props.node_id = assoc.target_node_id"
+                + " JOIN alf_node target ON target.id = assoc.target_node_id"
+                + " WHERE assoc.type_qname_id = " + getQNameDbId(assocType)
+                + (filterProps ? " AND props.qname_id in (" + createQnameIdListing(propsToLoad, false) + " )" : "");
+        Object[] args = arguments.toArray();
+        final Map<NodeRef, Map<PropertyMapKey, NodePropertyValue>> nodeProps = new HashMap<>();
+        jdbcTemplate.query(sql, new ParameterizedRowMapper<String>() {
+
+            @Override
+            public String mapRow(ResultSet rs, int rowNum) throws SQLException {
+                NodeRef nodeRef = getNodeRef(rs);
+                Map<PropertyMapKey, NodePropertyValue> props = nodeProps.get(nodeRef);
+                if (props == null) {
+                    props = new HashMap<>();
+                    nodeProps.put(nodeRef, props);
+                }
+                PropertyMapKey propMapKey = getPropMapKey(rs);
+                if (propMapKey.getQnameId() > 0) {
+                    NodePropertyValue nodePropValue = getPropertyValue(rs);
+                    props.put(propMapKey, nodePropValue);
+                }
+                return null;
+            }
+
+        }, args);
+
+        List<Node> result = new ArrayList<>();
+        for (Map.Entry<NodeRef, Map<PropertyMapKey, NodePropertyValue>> entry : nodeProps.entrySet()) {
+            NodeRef nodeRef = entry.getKey();
+            Map<QName, Serializable> properties = HibernateNodeDaoServiceImpl.convertToPublicProperties(entry.getValue(),
+                    qnameDAO, localeDAO, contentDataDAO, dictionaryService, null, null);
+            result.add(createNodeCallback.create(nodeRef, properties));
+        }
+        explainQuery(sql, args);
+        return result;
+    }
+
     @SuppressWarnings("deprecation")
     private Map<NodeRef, Map<NodeRef, Map<PropertyMapKey, NodePropertyValue>>> executeChildNodesQuery(List<Object> arguments, String sql) {
         Object[] paramArray = arguments.toArray();
@@ -539,7 +645,7 @@ public class BulkLoadNodeServiceImpl implements BulkLoadNodeService {
         sqlQuery.append(" order by node.id, qname_id, locale_id, list_index");
 
         Object[] paramArray = arguments.toArray();
-        final Map<NodeRef, Map<PropertyMapKey, NodePropertyValue>> allDocProps = new HashMap<NodeRef, Map<PropertyMapKey, NodePropertyValue>>();
+        final Map<NodeRef, Map<PropertyMapKey, NodePropertyValue>> allDocProps = new HashMap<>();
         final Map<NodeRef, Map<String, Object>> allDocIntrinsicProps = new HashMap<>();
         final Map<NodeRef, QName> nodeTypes = new HashMap<>();
         String query = sqlQuery.toString();
@@ -908,12 +1014,16 @@ public class BulkLoadNodeServiceImpl implements BulkLoadNodeService {
 
     @Override
     public String getNodeTableConditionalJoin(Collection<NodeRef> nodesToLoad, List<Object> arguments) {
+        return getNodeTableConditionalJoin(nodesToLoad, arguments, "*");
+    }
+
+    private String getNodeTableConditionalJoin(Collection<NodeRef> nodesToLoad, List<Object> arguments, String selectColumns) {
         Assert.isTrue(nodesToLoad != null && !nodesToLoad.isEmpty(), "Cannot create node query without arguments!");
         Map<StoreRef, Set<String>> nodeIdsByStoreRef = getNodeRefsByStore(nodesToLoad);
         List<String> queryParts = new ArrayList<>();
         for (Map.Entry<StoreRef, Set<String>> entry : nodeIdsByStoreRef.entrySet()) {
             Set<String> value = entry.getValue();
-            queryParts.add("(select * from alf_node where alf_node.store_id = " + getStoreRefDbId(entry.getKey()) + " and alf_node.uuid IN ("
+            queryParts.add("(select " + selectColumns + " from alf_node where alf_node.store_id = " + getStoreRefDbId(entry.getKey()) + " and alf_node.uuid IN ("
                     + getQuestionMarks(value.size()) + ") AND " + NODE_NOT_DELETED_CONDITION + ")");
             arguments.addAll(value);
         }

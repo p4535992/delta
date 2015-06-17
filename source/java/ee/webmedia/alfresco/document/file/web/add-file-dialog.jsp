@@ -105,7 +105,7 @@
    function initUploadedFiles() {
       $jQ.ajax({
          type: 'POST',
-         url: '<%=contextPath%>' + '/uploadedFileHelperServlet',
+         url: '<%=contextPath%>' + '/uploadedFileServlet',
          dataType: 'json',
          mode: 'queue',
          success: function (ajaxResponse) {
