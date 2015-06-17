@@ -81,7 +81,7 @@ public class UploadFileBaseServlet extends BaseServlet {
     }
 
     public static String generateDeleteUrl(HttpServletRequest request, String fileName) {
-        return BeanHelper.getApplicationService().getServerUrl() + request.getContextPath() + "/uploadedFileHelperServlet?" + FILE_PARAM + "=" + fileName;
+        return BeanHelper.getApplicationService().getServerUrl() + request.getContextPath() + "/uploadedFileServlet?" + FILE_PARAM + "=" + fileName;
     }
 
 }

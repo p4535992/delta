@@ -190,6 +190,7 @@
       <property name="contentService" ref="ContentService" />
       <property name="simpleDestructionEnabled" value="${conf.archivals.simple-destruction.enabled}" />
       <property name="parametersService" ref="ParametersService" />
+      <property name="bulkLoadNodeService" ref="BulkLoadNodeService" />
    </bean>
 
    <bean id="ArchivalsService" class="org.springframework.aop.framework.ProxyFactoryBean">

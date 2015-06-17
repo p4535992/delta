@@ -153,6 +153,10 @@ public class AssocsBlockBean implements DocumentDynamicBlock {
         }
     }
 
+    public void clearRequestCache() {
+        requestCacheBean.clear();
+    }
+
     public List<ActionDefinition> createAddFollowupsMenu(@SuppressWarnings("unused") String nodeTypeId) {
         return initCreateAddAssocMenu(DocTypeAssocType.FOLLOWUP, "document_addFollowUp");
     }

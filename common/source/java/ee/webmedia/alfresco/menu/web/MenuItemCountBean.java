@@ -103,17 +103,12 @@ public class MenuItemCountBean implements Serializable {
         luceneLimit = maxResults + 1;
 
         boolean isDocumentManager = BeanHelper.getUserService().isDocumentManager();
-        boolean isInvoiceEnabled = BeanHelper.getApplicationConstantsBean().isEinvoiceEnabled();
 
         final List<Pair<String, Integer>> counts = Collections.synchronizedList(new ArrayList<Pair<String, Integer>>());
 
         int latchCount = 1;
 
         if (isDocumentManager) {
-            latchCount++;
-        }
-
-        if (isInvoiceEnabled) {
             latchCount++;
         }
 
@@ -124,8 +119,11 @@ public class MenuItemCountBean implements Serializable {
 
             @Override
             public void run() {
-                counts.addAll(getUserCounts(authContext, menuItemGroup));
-                latch.countDown();
+                try {
+                    counts.addAll(getUserCounts(authContext, menuItemGroup));
+                } finally {
+                    latch.countDown();
+                }
             }
         });
 
@@ -134,8 +132,11 @@ public class MenuItemCountBean implements Serializable {
 
                 @Override
                 public void run() {
-                    counts.addAll(getDocManagerCounts(authContext, menuItemGroup));
-                    latch.countDown();
+                    try {
+                        counts.addAll(getDocManagerCounts(authContext, menuItemGroup));
+                    } finally {
+                        latch.countDown();
+                    }
                 }
             });
 
@@ -230,10 +231,12 @@ public class MenuItemCountBean implements Serializable {
 
                 @Override
                 public void run() {
-                    ContextHolder.setContext(context);
-                    addDiscussionCount(result, documentSearchService);
-                    latch.countDown();
-
+                    try {
+                        ContextHolder.setContext(context);
+                        addDiscussionCount(result, documentSearchService);
+                    } finally {
+                        latch.countDown();
+                    }
                 }
             });
         }
@@ -242,9 +245,12 @@ public class MenuItemCountBean implements Serializable {
 
             @Override
             public void run() {
-                ContextHolder.setContext(context);
-                result.add(new Pair<>(MenuItem.USER_CASE_FILES, documentSearchService.getCurrentUserCaseFilesCount(luceneLimit)));
-                latch.countDown();
+                try {
+                    ContextHolder.setContext(context);
+                    result.add(new Pair<>(MenuItem.USER_CASE_FILES, documentSearchService.getCurrentUserCaseFilesCount(luceneLimit)));
+                } finally {
+                    latch.countDown();
+                }
             }
         });
 
@@ -252,9 +258,12 @@ public class MenuItemCountBean implements Serializable {
 
             @Override
             public void run() {
-                ContextHolder.setContext(context);
-                result.add(new Pair<>(MenuItem.USER_COMPOUND_WORKFLOWS, documentSearchService.getCurrentUserCompoundWorkflowsCount(luceneLimit)));
-                latch.countDown();
+                try {
+                    ContextHolder.setContext(context);
+                    result.add(new Pair<>(MenuItem.USER_COMPOUND_WORKFLOWS, documentSearchService.getCurrentUserCompoundWorkflowsCount(luceneLimit)));
+                } finally {
+                    latch.countDown();
+                }
             }
         });
 
@@ -298,9 +307,12 @@ public class MenuItemCountBean implements Serializable {
 
                 @Override
                 public void run() {
-                    ContextHolder.setContext(context);
-                    addForRegisteringDocCount(documentSearchService, result);
-                    latch.countDown();
+                    try {
+                        ContextHolder.setContext(context);
+                        addForRegisteringDocCount(documentSearchService, result);
+                    } finally {
+                        latch.countDown();
+                    }
                 }
             });
         }
@@ -309,9 +321,12 @@ public class MenuItemCountBean implements Serializable {
 
             @Override
             public void run() {
-                ContextHolder.setContext(context);
-                result.add(new Pair<>(MenuItem.EMAIL_ATTACHMENTS, imapServiceExt.getAllFilesCount(constantNodeRefsBean.getAttachmentRoot(), true, luceneLimit)));
-                latch.countDown();
+                try {
+                    ContextHolder.setContext(context);
+                    result.add(new Pair<>(MenuItem.EMAIL_ATTACHMENTS, imapServiceExt.getAllFilesCount(constantNodeRefsBean.getAttachmentRoot(), true, luceneLimit)));
+                } finally {
+                    latch.countDown();
+                }
             }
         });
 
@@ -319,10 +334,13 @@ public class MenuItemCountBean implements Serializable {
 
             @Override
             public void run() {
-                ContextHolder.setContext(context);
-                result.add(new Pair<>(MenuItem.DVK_CORRUPT, BeanHelper.getBulkLoadNodeService()
-                        .countChildNodes(constantNodeRefsBean.getDvkCorruptRoot(), ContentModel.TYPE_CONTENT)));
-                latch.countDown();
+                try {
+                    ContextHolder.setContext(context);
+                    result.add(new Pair<>(MenuItem.DVK_CORRUPT, BeanHelper.getBulkLoadNodeService()
+                            .countChildNodes(constantNodeRefsBean.getDvkCorruptRoot(), ContentModel.TYPE_CONTENT)));
+                } finally {
+                    latch.countDown();
+                }
             }
         });
 
@@ -330,9 +348,12 @@ public class MenuItemCountBean implements Serializable {
 
             @Override
             public void run() {
-                ContextHolder.setContext(context);
-                result.add(new Pair<>(MenuItem.DVK_DOCUMENTS, documentService.getAllDocumentFromDvkCount()));
-                latch.countDown();
+                try {
+                    ContextHolder.setContext(context);
+                    result.add(new Pair<>(MenuItem.DVK_DOCUMENTS, documentService.getAllDocumentFromDvkCount()));
+                } finally {
+                    latch.countDown();
+                }
             }
         });
 
@@ -340,9 +361,12 @@ public class MenuItemCountBean implements Serializable {
 
             @Override
             public void run() {
-                ContextHolder.setContext(context);
-                result.add(new Pair<>(MenuItem.INCOMING_EMAILS, documentService.getIncomingEmailsCount(luceneLimit)));
-                latch.countDown();
+                try {
+                    ContextHolder.setContext(context);
+                    result.add(new Pair<>(MenuItem.INCOMING_EMAILS, documentService.getIncomingEmailsCount(luceneLimit)));
+                } finally {
+                    latch.countDown();
+                }
             }
         });
 
@@ -350,9 +374,12 @@ public class MenuItemCountBean implements Serializable {
 
             @Override
             public void run() {
-                ContextHolder.setContext(context);
-                result.add(new Pair<>(MenuItem.OUTBOX_DOCUMENT, documentSearchService.searchDocumentsInOutboxCount(luceneLimit)));
-                latch.countDown();
+                try {
+                    ContextHolder.setContext(context);
+                    result.add(new Pair<>(MenuItem.OUTBOX_DOCUMENT, documentSearchService.searchDocumentsInOutboxCount(luceneLimit)));
+                } finally {
+                    latch.countDown();
+                }
             }
         });
 
@@ -360,9 +387,12 @@ public class MenuItemCountBean implements Serializable {
 
             @Override
             public void run() {
-                ContextHolder.setContext(context);
-                result.add(new Pair<>(MenuItem.SCANNED_DOCUMENTS, documentService.countFilesInFolder(constantNodeRefsBean.getScannedFilesRoot(), true, luceneLimit)));
-                latch.countDown();
+                try {
+                    ContextHolder.setContext(context);
+                    result.add(new Pair<>(MenuItem.SCANNED_DOCUMENTS, documentService.countFilesInFolder(constantNodeRefsBean.getScannedFilesRoot(), true, luceneLimit)));
+                } finally {
+                    latch.countDown();
+                }
             }
         });
 
@@ -370,9 +400,13 @@ public class MenuItemCountBean implements Serializable {
 
             @Override
             public void run() {
-                ContextHolder.setContext(context);
-                result.add(new Pair<>(MenuItem.SEND_FAILURE_NOTIFICATION, imapServiceExt.getAllFilesCount(constantNodeRefsBean.getSendFailureNoticeSpaceRoot(), true, luceneLimit)));
-                latch.countDown();
+                try {
+                    ContextHolder.setContext(context);
+                    result.add(new Pair<>(MenuItem.SEND_FAILURE_NOTIFICATION, imapServiceExt.getAllFilesCount(constantNodeRefsBean.getSendFailureNoticeSpaceRoot(), true,
+                            luceneLimit)));
+                } finally {
+                    latch.countDown();
+                }
             }
         });
 
@@ -380,9 +414,12 @@ public class MenuItemCountBean implements Serializable {
 
             @Override
             public void run() {
-                ContextHolder.setContext(context);
-                result.add(new Pair<>(MenuItem.SENT_EMAILS, documentService.getSentEmailsCount(luceneLimit)));
-                latch.countDown();
+                try {
+                    ContextHolder.setContext(context);
+                    result.add(new Pair<>(MenuItem.SENT_EMAILS, documentService.getSentEmailsCount(luceneLimit)));
+                } finally {
+                    latch.countDown();
+                }
             }
         });
 
@@ -390,9 +427,12 @@ public class MenuItemCountBean implements Serializable {
 
             @Override
             public void run() {
-                ContextHolder.setContext(context);
-                result.add(new Pair<>(MenuItem.UNSENT_DOCUMENT, documentSearchService.searchRecipientFinishedDocumentsCount(luceneLimit)));
-                latch.countDown();
+                try {
+                    ContextHolder.setContext(context);
+                    result.add(new Pair<>(MenuItem.UNSENT_DOCUMENT, documentSearchService.searchRecipientFinishedDocumentsCount(luceneLimit)));
+                } finally {
+                    latch.countDown();
+                }
             }
         });
 

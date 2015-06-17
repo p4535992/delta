@@ -4,7 +4,7 @@ import java.util.List;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 
-public class DelegationMessagesRequest {
+public class DelegationMessage {
 
     private NodeRef compoundWorkflowRef;
     private List<String> dueDates;

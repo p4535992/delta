@@ -25,7 +25,7 @@ public class TaskDelegationForm implements Serializable {
 
     private final Map<String, String> translations = new HashMap<>();
 
-    private Map<String, List<TaskElement>> taskElementMap = new HashMap<>();
+    private Map<String, List<TaskElement>> taskElementMap;
 
     public TaskDelegationForm() {
         taskElementMap = MapUtils.lazyMap(new HashMap<String, List<TaskElement>>(), new Factory<List<TaskElement>>() {
@@ -40,13 +40,6 @@ public class TaskDelegationForm implements Serializable {
         this.choices = choices;
         if (choices == null) {
             return;
-        }
-        init();
-    }
-
-    private void init() {
-        for (String s : choices.keySet()) {
-            taskElementMap.put(s, new ArrayList<TaskDelegationForm.TaskElement>());
         }
     }
 

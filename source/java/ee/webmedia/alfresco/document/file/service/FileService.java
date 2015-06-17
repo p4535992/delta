@@ -182,7 +182,7 @@ public interface FileService {
     void removePreviousParentReference(NodeRef docRef, boolean moveToPreviousParent);
 
     void reorderFiles(NodeRef documentRef);
-    
+
     void reorderFiles(List<NodeRef> documentRefs);
 
     void reorderFiles(NodeRef doocumentRef, Map<NodeRef, Long> originalOrders);
@@ -193,7 +193,5 @@ public interface FileService {
      * @param active - previous state of the file
      */
     void reorderFiles(NodeRef documentRef, NodeRef fileRef, boolean active);
-
-    void addAsLastActiveFile(NodeRef documentRef, NodeRef lastFileRef);
 
 }

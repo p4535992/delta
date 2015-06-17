@@ -53,7 +53,7 @@ public interface WorkflowService {
 
     // new in-memory object, based on existing compoundWorkflow definition
     CompoundWorkflow getNewCompoundWorkflow(NodeRef compoundWorkflowDefinition, NodeRef parent);
-    
+
     CompoundWorkflow getNewCompoundWorkflow(NodeRef parent);
 
     // get existing object from repository
@@ -214,7 +214,7 @@ public interface WorkflowService {
     int getCompoundWorkflowDocumentCount(NodeRef compoundWorkflowRef);
 
     List<NodeRef> getCompoundWorkflowDocumentRefs(NodeRef compoundWorkflowRef);
-    
+
     Set<NodeRef> getCompoundWorkflowDocumentRefs(CompoundWorkflow compoundWorkflow);
 
     boolean hasTwoInProgressOrStoppedCWorkflowsWithMultipleWorkflows(CompoundWorkflow cWorkflow, boolean checkCurrentWorkflow);
@@ -318,7 +318,7 @@ public interface WorkflowService {
 
     boolean hasCompoundWorkflowsWithStatus(NodeRef docRef, Set<String> statusNames);
 
-    List<Task> getDocumentCompoundWorkflowTasks(NodeRef docRef, Set<QName> taskTypes, Set<Status> taskStatuses);
+    List<Map<QName, Serializable>> getDocumentCompoundWorkflowTaskOwnerNamesAndIds(NodeRef docRef, Set<QName> taskTypes, Set<Status> taskStatuses);
 
     void removeCaseFileTypeFromCompoundWorklfowDefinitions(String caseFileId);
 

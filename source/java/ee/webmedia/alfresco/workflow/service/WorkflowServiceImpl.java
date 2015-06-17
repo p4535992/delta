@@ -132,6 +132,13 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
     private static final int CONFIRMATION_TASK_OUTCOME_REJECTED = 1;
     private static final Set<QName> COMPOUND_WORKFLOW_STATUS_PROP = Collections.singleton(WorkflowCommonModel.Props.STATUS);
 
+    private static final CreateObjectCallback<Node> CREATE_COMPOUND_WORKFLOW_NODE_CALLBACK = new CreateObjectCallback<Node>() {
+        @Override
+        public Node create(NodeRef nodeRef, Map<QName, Serializable> properties) {
+            return new WmNode(nodeRef, WorkflowCommonModel.Types.COMPOUND_WORKFLOW, null, properties);
+        }
+    };
+
     /*
      * There are two ways to be notified of events:
      * 1) WorkflowEventListener which is registered via #registerEventListener, is called at the end of each service call.
@@ -2611,13 +2618,14 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
     }
 
     @Override
-    public List<Task> getDocumentCompoundWorkflowTasks(NodeRef docRef, Set<QName> taskTypes, Set<Status> taskStatuses) {
+    public List<Map<QName, Serializable>> getDocumentCompoundWorkflowTaskOwnerNamesAndIds(NodeRef docRef, Set<QName> taskTypes, Set<Status> taskStatuses) {
         List<NodeRef> workflowRefs = bulkLoadNodeService.loadChildRefs(docRef, WorkflowCommonModel.Types.COMPOUND_WORKFLOW);
-        List<Task> tasks = new ArrayList<>(workflowRefs.size());
+        List<Map<QName, Serializable>> tasks = new ArrayList<>();
         if (CollectionUtils.isEmpty(workflowRefs)) {
             return tasks;
         }
-        tasks.addAll(workflowDbService.loadCompoundWorkflowTasks(workflowRefs, taskTypes, taskStatuses));
+        tasks.addAll(workflowDbService.loadCompoundWorkflowTaskOwnerNamesAndIds(workflowRefs, taskTypes, taskStatuses));
+
         return tasks;
     }
 
@@ -2640,14 +2648,8 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
     }
 
     private List<Node> getDocumentCompoundWorkflowsNodesWithStatusProp(NodeRef docRef) {
-        return bulkLoadNodeService.loadChildNodes(docRef, COMPOUND_WORKFLOW_STATUS_PROP, WorkflowCommonModel.Types.COMPOUND_WORKFLOW, null,
-                new CreateObjectCallback<Node>() {
-
-                    @Override
-                    public Node create(NodeRef nodeRef, Map<QName, Serializable> properties) {
-                        return new WmNode(nodeRef, WorkflowCommonModel.Types.COMPOUND_WORKFLOW, null, properties);
-                    }
-                });
+        return bulkLoadNodeService.loadChildNodes(docRef, COMPOUND_WORKFLOW_STATUS_PROP,
+                WorkflowCommonModel.Types.COMPOUND_WORKFLOW, null, CREATE_COMPOUND_WORKFLOW_NODE_CALLBACK);
     }
 
     private List<AssociationRef> getIndependentCompoundWorkflowAssocs(NodeRef docRef) {
@@ -2737,8 +2739,19 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
 
     @Override
     public boolean hasCompoundWorkflowsWithStatus(NodeRef docRef, Set<String> statusNames) {
-        List<Node> compoundWorkflows = getDocumentCompoundWorkflowsNodesWithStatusProp(docRef);
+        List<Node> docCompoundWorkflows = getDocumentCompoundWorkflowsNodesWithStatusProp(docRef);
+        if (hasCompoundWorkflowInStatus(statusNames, docCompoundWorkflows)) {
+            return true;
+        }
+        if (workflowConstantsBean.isIndependentWorkflowEnabled()) {
+            List<Node> independentCompoundWorkflows = bulkLoadNodeService.loadAssociatedTargetNodes(docRef,
+                    COMPOUND_WORKFLOW_STATUS_PROP, DocumentCommonModel.Assocs.WORKFLOW_DOCUMENT, CREATE_COMPOUND_WORKFLOW_NODE_CALLBACK);
+            return hasCompoundWorkflowInStatus(statusNames, independentCompoundWorkflows);
+        }
+        return false;
+    }
 
+    private boolean hasCompoundWorkflowInStatus(Set<String> statusNames, List<Node> compoundWorkflows) {
         if (CollectionUtils.isEmpty(compoundWorkflows)) {
             return false;
         }
@@ -3677,7 +3690,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         }
     }
 
-    protected String getDocumentsLog(String emptyLabel, List<NodeRef> documents) {
+    private String getDocumentsLog(String emptyLabel, List<NodeRef> documents) {
         if (documents == null || documents.isEmpty()) {
             return emptyLabel;
         }

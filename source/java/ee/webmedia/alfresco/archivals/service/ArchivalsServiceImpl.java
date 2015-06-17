@@ -49,6 +49,7 @@ import org.alfresco.service.transaction.TransactionService;
 import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.codec.binary.Hex;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.FastDateFormat;
@@ -73,6 +74,7 @@ import ee.webmedia.alfresco.cases.model.CaseModel;
 import ee.webmedia.alfresco.cases.service.CaseService;
 import ee.webmedia.alfresco.classificator.enums.AccessRestriction;
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
+import ee.webmedia.alfresco.common.service.BulkLoadNodeService;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.WmNode;
@@ -116,6 +118,8 @@ import ee.webmedia.alfresco.volume.model.DeletionType;
 import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
 import ee.webmedia.alfresco.volume.service.VolumeService;
+import ee.webmedia.alfresco.workflow.model.CompoundWorkflowType;
+import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 
 public class ArchivalsServiceImpl implements ArchivalsService {
 
@@ -143,6 +147,7 @@ public class ArchivalsServiceImpl implements ArchivalsService {
     private UserService userService;
     private ContentService contentService;
     private ParametersService parametersService;
+    private BulkLoadNodeService bulkLoadNodeService;
 
     private final AtomicBoolean archivingPaused = new AtomicBoolean(false);
     private final AtomicBoolean archivingContinuedManually = new AtomicBoolean(false);
@@ -151,6 +156,8 @@ public class ArchivalsServiceImpl implements ArchivalsService {
     private static final FastDateFormat DATE_FORMAT = FastDateFormat.getInstance("yyyy-MM-dd");
     private static final FastDateFormat DATE_SHORT_FORMAT = FastDateFormat.getInstance("yyyyMMdd");
     private static final FastDateFormat DATE_TIME_FORMAT = FastDateFormat.getInstance("yyyy-MM-dd'T'HH:mm:ss");
+
+    private static final Set<QName> CWF_PROPS_TO_LOAD = new HashSet<>(Arrays.asList(WorkflowCommonModel.Props.TYPE, WorkflowCommonModel.Props.MAIN_DOCUMENT));
 
     @Override
     public void exportToUam(final List<NodeRef> volumes, final Date exportStartDate, final NodeRef activityRef) {
@@ -803,6 +810,8 @@ public class ArchivalsServiceImpl implements ArchivalsService {
         int totalArchivedDocumentsCount = getCount(jobProps, ArchivalsModel.Props.TOTAL_ARCHIVED_DOCUMENTS_COUNT);
         int archivedNodesCount = getCount(jobProps, ArchivalsModel.Props.ARCHIVED_NODE_COUNT);
 
+        final boolean independentWorkflowEnabled = BeanHelper.getWorkflowConstantsBean().isIndependentWorkflowEnabled();
+
         final Map<NodeRef, Integer> caseDocsUpdated = new HashMap<>();
         long childCount = archivedNodesCount;
         for (Set<ChildAssociationRef> childNodes : archiveNodeRefs.values()) {
@@ -840,16 +849,29 @@ public class ArchivalsServiceImpl implements ArchivalsService {
 
                         @Override
                         public Void execute() throws Throwable {
+                            Set<NodeRef> cwfRefs = null;
                             if (isDocument) {
                                 String existingRegNr = (String) nodeService.getProperty(childRef, REG_NUMBER);
                                 if (StringUtils.isNotBlank(existingRegNr)) {
                                     BeanHelper.getAdrService().addDeletedDocument(childRef);
+                                }
+                                // This approach would now work if institutions would change independent workflow enabled/disabled status
+                                // but in practice institutions don't do that.
+                                if (independentWorkflowEnabled) {
+                                    cwfRefs = new HashSet<>();
+                                    List<AssociationRef> assocRefs = nodeService.getTargetAssocs(childRef, DocumentCommonModel.Assocs.WORKFLOW_DOCUMENT);
+                                    for (AssociationRef assocRef : assocRefs) {
+                                        cwfRefs.add(assocRef.getTargetRef());
+                                    }
                                 }
                             }
                             NodeRef archivedNodeRef = nodeService.moveNode(childRef, archivedParentRefFinal, childAssocRef.getTypeQName(),
                                     childAssocRef.getQName()).getChildRef();
                             updateDocumentLocationProps(archivedFunctionRef, archivedSeriesRef, archivedVolumeRef, isInCase ? archivedParentRefFinal : null,
                                     archivedNodeRef);
+                            if (isDocument && independentWorkflowEnabled) {
+                                updateCompoundWorkflowProps(cwfRefs, childRef, archivedNodeRef);
+                            }
                             return null;
                         }
                     }, false, true);
@@ -1198,6 +1220,20 @@ public class ArchivalsServiceImpl implements ArchivalsService {
         nodeService.addProperties(docRef, props);
     }
 
+    private void updateCompoundWorkflowProps(Set<NodeRef> compoundWorkflowRefs, NodeRef mainDocRef, NodeRef archivedDocRef) {
+        if (CollectionUtils.isEmpty(compoundWorkflowRefs)) {
+            return;
+        }
+        Map<NodeRef, Node> nodes = bulkLoadNodeService.loadNodes(compoundWorkflowRefs, CWF_PROPS_TO_LOAD);
+        for (Map.Entry<NodeRef, Node> entry : nodes.entrySet()) {
+            Map<String, Object> cwfProps = entry.getValue().getProperties();
+            CompoundWorkflowType type = CompoundWorkflowType.valueOf((String) cwfProps.get(WorkflowCommonModel.Props.TYPE));
+            if (CompoundWorkflowType.INDEPENDENT_WORKFLOW.equals(type) && mainDocRef.equals(cwfProps.get(WorkflowCommonModel.Props.MAIN_DOCUMENT))) {
+                nodeService.setProperty(entry.getKey(), WorkflowCommonModel.Props.MAIN_DOCUMENT, archivedDocRef);
+            }
+        }
+    }
+
     @Override
     public void setNewReviewDate(final List<NodeRef> volumes, final Date reviewDate, final NodeRef activityRef) {
         setNextEvent(volumes, reviewDate, activityRef, FirstEvent.REVIEW, "volumeSetReviewDate", "applog_archivals_volume_new_review_date", true);
@@ -1318,44 +1354,12 @@ public class ArchivalsServiceImpl implements ArchivalsService {
             @Override
             public Void doWork() throws Exception {
                 disposeVolumes(volumes, destructionStartDate, docDeletingComment, logMessage, executingUser);
-                BeanHelper.getDocumentTemplateService().populateVolumeArchiveTemplate(activityRef, volumes, templateRef);
+                BeanHelper.getDocumentTemplateService().populateVolumeArchiveTemplate(activityRef, volumes, templateRef, executingUser);
                 setActivityStatusFinished(activityRef);
                 return null;
             }
 
         }, "volumeDispose", true);
-    }
-
-    private void updateDocListUnitLocations(NodeRef archivedFunRef, NodeRef archivedSeriesRef, NodeRef archivedVolumeRef, boolean containsCases) {
-        updateDocListUnitLocationProps(archivedFunRef, archivedSeriesRef, archivedVolumeRef, null, Collections.singletonList(archivedVolumeRef), false, false);
-        if (containsCases) {
-            List<NodeRef> caseRefs = caseService.getCaseRefsByVolume(archivedVolumeRef);
-            updateDocListUnitLocationProps(archivedFunRef, archivedSeriesRef, archivedVolumeRef, null, caseRefs, true, false);
-            for (NodeRef caseRef : caseRefs) {
-                List<NodeRef> documents = documentService.getAllDocumentRefsByParentRefWithoutRestrictedAccess(caseRef);
-                updateDocListUnitLocationProps(archivedFunRef, archivedSeriesRef, archivedVolumeRef, caseRef, documents, true, true);
-            }
-        }
-
-        // Also process documents found directly under the volume
-        List<NodeRef> documents = documentService.getAllDocumentRefsByParentRefWithoutRestrictedAccess(archivedVolumeRef);
-        updateDocListUnitLocationProps(archivedFunRef, archivedSeriesRef, archivedVolumeRef, null, documents, true, true);
-    }
-
-    private void updateDocListUnitLocationProps(NodeRef archivedFunRef, NodeRef archivedSeriesRef, NodeRef archivedVolumeRef, NodeRef archivedCaseRef, List<NodeRef> docRefs,
-            boolean addVolume, boolean addCase) {
-        for (NodeRef docRef : docRefs) {
-            Map<QName, Serializable> props = new HashMap<QName, Serializable>();
-            props.put(DocumentCommonModel.Props.FUNCTION, archivedFunRef);
-            props.put(DocumentCommonModel.Props.SERIES, archivedSeriesRef);
-            if (addVolume) {
-                props.put(DocumentCommonModel.Props.VOLUME, archivedVolumeRef);
-            }
-            if (addCase) {
-                props.put(DocumentCommonModel.Props.CASE, archivedCaseRef);
-            }
-            nodeService.addProperties(docRef, props);
-        }
     }
 
     private void disposeVolumes(List<NodeRef> volumesToDestroy, final Date disposalDate, final String docDeletingComment, final String logMessage, String executingUser) {
@@ -1437,7 +1441,7 @@ public class ArchivalsServiceImpl implements ArchivalsService {
                 ArchivalsModel.Types.ARCHIVAL_ACTIVITY, properties);
         NodeRef activityRef = childAssoc.getChildRef();
         if (templateRef != null) {
-            documentTemplateService.populateVolumeArchiveTemplate(activityRef, volumeRefs, templateRef);
+            documentTemplateService.populateVolumeArchiveTemplate(activityRef, volumeRefs, templateRef, username);
         }
         return activityRef;
     }
@@ -1600,6 +1604,10 @@ public class ArchivalsServiceImpl implements ArchivalsService {
 
     public void setContentService(ContentService contentService) {
         this.contentService = contentService;
+    }
+
+    public void setBulkLoadNodeService(BulkLoadNodeService bulkLoadNodeService) {
+        this.bulkLoadNodeService = bulkLoadNodeService;
     }
 
     @Override

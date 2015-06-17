@@ -735,7 +735,7 @@ public class PersonServiceImpl extends TransactionListenerAdapter implements Per
                         homeFolderManager.onCreateNode(ref);
                         return null;
                     }
-                }, false, false);
+                }, false, transactionService.isReadOnly());
             }
         }
     }
@@ -1070,7 +1070,7 @@ public class PersonServiceImpl extends TransactionListenerAdapter implements Per
     }
 
     private BulkLoadNodeService getBulkLoadNodeService() {
-        if(bulkLoadNodeService == null){
+        if (bulkLoadNodeService == null) {
             bulkLoadNodeService = BeanHelper.getBulkLoadNodeService();
         }
         return bulkLoadNodeService;

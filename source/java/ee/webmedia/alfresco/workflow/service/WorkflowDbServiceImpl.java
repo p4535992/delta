@@ -1418,18 +1418,42 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
     }
 
     @Override
-    public List<Task> loadCompoundWorkflowTasks(List<NodeRef> compoundWorkflowRefs, Set<QName> taskTypes, Set<Status> taskStatuses) {
-        if (compoundWorkflowRefs == null || compoundWorkflowRefs.isEmpty()) {
-            return Collections.emptyList();
-        }
-        Set<String> statusNames = new HashSet<>();
+    public List<Map<QName, Serializable>> loadCompoundWorkflowTaskOwnerNamesAndIds(List<NodeRef> compoundWorkflowRefs, Set<QName> taskTypes, Set<Status> taskStatuses) {
+        Set<String> statusNames = new HashSet<>(taskStatuses.size());
         for (Status s : taskStatuses) {
             statusNames.add(s.getName());
         }
-        String sqlQuery = getTaskQuery(compoundWorkflowRefs, taskTypes, statusNames, false);
-        Object[] queryArgs = DbSearchUtil.appendNodeRefIdQueryArguments(compoundWorkflowRefs, statusNames.toArray()).toArray();
-        List<Task> tasks = executeTaskQuery(taskTypes, sqlQuery, queryArgs);
-        return tasks;
+        List<Object> args = DbSearchUtil.appendNodeRefIdQueryArguments(compoundWorkflowRefs, statusNames.toArray());
+        boolean hasTaskTypes = taskTypes != null && !taskTypes.isEmpty();
+        if (hasTaskTypes) {
+            for (QName type : taskTypes) {
+                args.add(type.getLocalName());
+            }
+        }
+
+        final String ownerIdField = getDbFieldName(WorkflowCommonModel.Props.OWNER_ID);
+        final String ownerNameField = getDbFieldName(WorkflowCommonModel.Props.OWNER_NAME);
+        String sqlQuery = "SELECT " + ownerIdField + ", " + ownerNameField + " FROM delta_task " +
+                " WHERE delta_task.wfc_status IN (" + getQuestionMarks(statusNames.size()) + ")" +
+                " AND delta_task.wfs_compound_workflow_id IN (" + getQuestionMarks(compoundWorkflowRefs.size()) + ") " +
+                (hasTaskTypes ? " AND delta_task.task_type IN (" + getQuestionMarks(taskTypes.size()) + ") " : "");
+
+        List<Map<QName, Serializable>> result = jdbcTemplate.query(sqlQuery, new ParameterizedRowMapper<Map<QName, Serializable>>() {
+
+            @Override
+            public Map<QName, Serializable> mapRow(ResultSet rs, int rowNum) throws SQLException {
+                Map<QName, Serializable> result = new HashMap<>(3);
+                Serializable ownerId = getConvertedValue(rs, WorkflowCommonModel.Props.OWNER_ID, ownerIdField, rs.getObject(ownerIdField));
+                Serializable ownerName = getConvertedValue(rs, WorkflowCommonModel.Props.OWNER_NAME, ownerNameField, rs.getObject(ownerNameField));
+                result.put(WorkflowCommonModel.Props.OWNER_ID, ownerId);
+                result.put(WorkflowCommonModel.Props.OWNER_NAME, ownerName);
+                return result;
+            }
+
+        }, args.toArray());
+        explainQuery(sqlQuery, args.toArray());
+
+        return result;
     }
 
     @Override
@@ -1444,7 +1468,7 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
             return Collections.emptyList();
         }
 
-        String sqlQuery = getTaskQuery(compoundWorkflows, taskTypes, Collections.singleton(Status.IN_PROGRESS.getName()), true);
+        String sqlQuery = getTaskQuery(compoundWorkflows, taskTypes, Collections.singleton(Status.IN_PROGRESS.getName()));
 
         Object[] queryArgs = DbSearchUtil.appendNodeRefIdQueryArguments(compoundWorkflows, Status.IN_PROGRESS.getName(), ownerId).toArray();
         List<Task> tasks = executeTaskQuery(taskTypes, sqlQuery, queryArgs);
@@ -1465,7 +1489,7 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
         return tasks;
     }
 
-    private String getTaskQuery(List<NodeRef> compoundWorkflows, Set<QName> taskTypes, Set<String> statusNames, boolean filterByOwner) {
+    private String getTaskQuery(List<NodeRef> compoundWorkflows, Set<QName> taskTypes, Set<String> statusNames) {
         String typeQuery = "";
         if (taskTypes != null && !taskTypes.isEmpty()) {
             typeQuery = " AND delta_task.task_type IN (" + getQuestionMarks(taskTypes.size()) + ") ";
@@ -1477,7 +1501,7 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
                 " left join delta_task_due_date_extension_assoc ext_assoc on ext_assoc.extension_task_id = delta_task.task_id " +
                 " left join delta_task initiating_task on ext_assoc.task_id = initiating_task.task_id "
                 + "WHERE delta_task.wfc_status IN (" + getQuestionMarks(statusNames.size()) + ")"
-                + (filterByOwner ? "AND delta_task.wfc_owner_id=? " : "")
+                + "AND delta_task.wfc_owner_id=? "
                 + "AND delta_task.wfs_compound_workflow_id IN (" + getQuestionMarks(compoundWorkflows.size())
                 + ") "
                 + typeQuery

@@ -158,7 +158,7 @@ public interface WorkflowDbService {
 
     List<NodeRef> getCompoundWorkflowsFinishedTasks(List<NodeRef> compoundWorkflows, QName taskType, QName sortByProperty, boolean descending);
 
-    List<Task> loadCompoundWorkflowTasks(List<NodeRef> compoundWorkflowRefs, Set<QName> taskTypes, Set<Status> taskStatuses);
+    List<Map<QName, Serializable>> loadCompoundWorkflowTaskOwnerNamesAndIds(List<NodeRef> compoundWorkflowRefs, Set<QName> taskTypes, Set<Status> taskStatuses);
 
     List<Task> getInProgressTasks(List<NodeRef> compoundWorkflows, String ownerId);
 

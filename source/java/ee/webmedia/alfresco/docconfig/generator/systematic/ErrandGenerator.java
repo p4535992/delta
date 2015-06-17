@@ -289,7 +289,8 @@ public class ErrandGenerator extends BaseSystematicGroupGenerator implements Sav
                     }
                 }
 
-                ItemConfigVO item = generateTable(generatorResults, items, primaryStateHolder, hierarchy, relatedFields, field, "Päevaraha", "add", columnStyleClasses, primaryStateHolder.dailyAllowanceMandatory);
+                ItemConfigVO item = generateTable(generatorResults, items, primaryStateHolder, hierarchy, relatedFields, field, "Päevaraha", "add", columnStyleClasses,
+                        primaryStateHolder.dailyAllowanceMandatory);
                 item.setStyleClass("add-expense");
                 continue;
             }
@@ -382,7 +383,7 @@ public class ErrandGenerator extends BaseSystematicGroupGenerator implements Sav
         item.setComponentGenerator("InlinePropertyGroupGenerator");
         item.setTextId(textId);
         String props = result.getSecond();
-        
+
         if (relatedFields.size() >= 2) {
             item.setProps(addMandatoryMarkers(relatedFields, props));
         } else {
@@ -506,7 +507,7 @@ public class ErrandGenerator extends BaseSystematicGroupGenerator implements Sav
         StringBuffer readonlyFieldsRule = new StringBuffer("{" + primaryFakeFieldId + "}");
 
         List<Field> readonlyViewFields = new ArrayList<Field>();
-        List<String> ignoredFields = Arrays.asList("applicantName", "applicantId", "country", "city");
+        List<String> ignoredFields = Arrays.asList("applicantName", "country", "city");
         for (Field fakeField : fields) {
             String originalFieldId = fakeField.getOriginalFieldId();
             if (!ignoredFields.contains(originalFieldId)) {
