@@ -118,19 +118,6 @@ public class DocumentLockHelperBean implements Serializable {
         return inEditMode;
     }
 
-    public void checkAssocDocumentLocks(Node dynamicDocumentNode, String customMessage) {
-        DocLockService docLockService = BeanHelper.getDocLockService();
-        for (NodeRef assocNodeRef : BeanHelper.getDocumentDynamicService().getAssociatedDocRefs(dynamicDocumentNode)) {
-            if (docLockService.getLockStatus(assocNodeRef) == LockStatus.LOCKED) {
-                NodeLockedException nodeLockedException = new NodeLockedException(assocNodeRef);
-                if (customMessage != null) {
-                    nodeLockedException.setCustomMessageId(customMessage);
-                }
-                throw nodeLockedException;
-            }
-        }
-    }
-
     /**
      * AJAX: Extend lock on document (or create one)
      */

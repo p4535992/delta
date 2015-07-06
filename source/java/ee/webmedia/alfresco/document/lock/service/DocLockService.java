@@ -7,6 +7,7 @@ import org.alfresco.service.cmr.lock.LockService;
 import org.alfresco.service.cmr.lock.LockStatus;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.util.Pair;
+import org.alfresco.web.bean.repository.Node;
 
 import ee.webmedia.alfresco.document.lock.model.Lock;
 
@@ -15,7 +16,7 @@ public interface DocLockService extends LockService {
 
     /**
      * Create a new lock
-     * 
+     *
      * @param lockNode NodeRef
      * @return true false if lock can't be obtained, true otherwise
      */
@@ -45,4 +46,6 @@ public interface DocLockService extends LockService {
     List<Lock> getDocumentAndFileLocks();
 
     boolean isLockByOther(NodeRef nodeRef);
+
+    void checkAssocDocumentLocks(Node dynamicDocumentNode, String customMessage);
 }

@@ -647,7 +647,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, N
                     }
                     final boolean isInitialDocWithRepliesOrFollowUps //
                     = nodeService.getSourceAssocs(docNodeRef, DocumentCommonModel.Assocs.DOCUMENT_REPLY).size() > 0 //
-                            || nodeService.getSourceAssocs(docNodeRef, DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP).size() > 0;
+                    || nodeService.getSourceAssocs(docNodeRef, DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP).size() > 0;
                     if (isInitialDocWithRepliesOrFollowUps) {
                         throw new UnableToPerformException(MessageSeverity.ERROR, "document_errorMsg_register_movingNotEnabled_hasReplyOrFollowUp");
                     }
@@ -1398,16 +1398,16 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, N
         String caseLbl = caseNode != null ? caseNode.getProperties().get(CaseModel.Props.TITLE).toString() : null;
         String volumeLbl = volumeNode != null ? volumeNode.getProperties().get(VolumeModel.Props.MARK).toString() + " "
                 + volumeNode.getProperties().get(VolumeModel.Props.TITLE).toString() : null;
-                String seriesLbl = seriesNode != null ? seriesNode.getProperties().get(SeriesModel.Props.SERIES_IDENTIFIER).toString() + " "
-                        + seriesNode.getProperties().get(SeriesModel.Props.TITLE).toString() : null;
-                        String functionLbl = functionNode != null ? functionNode.getProperties().get(FunctionsModel.Props.MARK).toString() + " "
-                                + functionNode.getProperties().get(FunctionsModel.Props.TITLE).toString() : null;
+        String seriesLbl = seriesNode != null ? seriesNode.getProperties().get(SeriesModel.Props.SERIES_IDENTIFIER).toString() + " "
+                + seriesNode.getProperties().get(SeriesModel.Props.TITLE).toString() : null;
+        String functionLbl = functionNode != null ? functionNode.getProperties().get(FunctionsModel.Props.MARK).toString() + " "
+                + functionNode.getProperties().get(FunctionsModel.Props.TITLE).toString() : null;
 
-                                props.put(TransientProps.FUNCTION_LABEL, functionLbl);
-                                props.put(TransientProps.SERIES_LABEL, seriesLbl);
-                                props.put(TransientProps.VOLUME_LABEL, volumeLbl);
-                                props.put(TransientProps.CASE_LABEL, caseLbl);
-                                props.put(TransientProps.CASE_LABEL_EDITABLE, caseLbl);
+        props.put(TransientProps.FUNCTION_LABEL, functionLbl);
+        props.put(TransientProps.SERIES_LABEL, seriesLbl);
+        props.put(TransientProps.VOLUME_LABEL, volumeLbl);
+        props.put(TransientProps.CASE_LABEL, caseLbl);
+        props.put(TransientProps.CASE_LABEL_EDITABLE, caseLbl);
     }
 
     @Override
@@ -1838,14 +1838,14 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, N
     private NodeRef registerDocument(Node docNode, boolean isRelocating, Node previousVolume) {
         docNode.clearPermissionsCache(); // permissions might have been lost after rendering registration button
         if (!isRelocating) {
-            if (!RegisterDocumentEvaluator.canRegister(docNode, false)) {
+            if (!RegisterDocumentEvaluator.canRegisterWithLog(docNode, false, log)) {
                 throw new UnableToPerformException("document_registerDoc_error_noPermission");
             }
         } else {
             // when relocating, this is the only check from RegisterDocumentEvaluator.canRegister, that we need to perform
             throwIfNotDynamicDoc(docNode);
         }
-        BeanHelper.getDocumentLockHelperBean().checkAssocDocumentLocks(docNode, "document_registerDoc_error_docLocked_initialDocument");
+        docLockService.checkAssocDocumentLocks(docNode, "document_registerDoc_error_docLocked_initialDocument");
         final Map<String, Object> props = docNode.getProperties();
 
         // only register when no existingRegNr or when relocating
@@ -2485,18 +2485,18 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, N
             NodeRef caseFileNodeRef = caseFileProps != null ? (NodeRef) caseFileProps.get(ContentModel.PROP_NODE_REF) : null;
             CompoundWorkflow compoundWorkflow = compoundWorkflows.containsKey(compoundWorkflowNodeRef)
                     ? new CompoundWorkflow((WmNode) compoundWorkflows.get(compoundWorkflowNodeRef), caseFileNodeRef) : null;
-            Map<QName, Serializable> documentProps = compoundWorkflowNodeRef != null && documents != null
-                    ? documents.get(compoundWorkflowNodeRef) : null;
+                    Map<QName, Serializable> documentProps = compoundWorkflowNodeRef != null && documents != null
+                            ? documents.get(compoundWorkflowNodeRef) : null;
 
-            Integer compoundWorkflowDocumentsCount = docCounts.containsKey(compoundWorkflowNodeRef) ? docCounts.get(compoundWorkflowNodeRef) : 0;
-            if (compoundWorkflow != null) {
-                compoundWorkflow.setNumberOfDocuments(compoundWorkflowDocumentsCount);
-            }
+                            Integer compoundWorkflowDocumentsCount = docCounts.containsKey(compoundWorkflowNodeRef) ? docCounts.get(compoundWorkflowNodeRef) : 0;
+                            if (compoundWorkflow != null) {
+                                compoundWorkflow.setNumberOfDocuments(compoundWorkflowDocumentsCount);
+                            }
 
-                            NodeRef documentNodeRef = documentProps != null ? (NodeRef) documentProps.get(ContentModel.PROP_NODE_REF) : null;
-                            Document taskDocument = documentNodeRef != null
-                    ? new Document(documentNodeRef, RepoUtil.toStringProperties(documentProps)) : null;
-            results.put(task.getNodeRef(), new TaskAndDocument(task, taskDocument, compoundWorkflow));
+            NodeRef documentNodeRef = documentProps != null ? (NodeRef) documentProps.get(ContentModel.PROP_NODE_REF) : null;
+            Document taskDocument = documentNodeRef != null
+                                    ? new Document(documentNodeRef, RepoUtil.toStringProperties(documentProps)) : null;
+                                    results.put(task.getNodeRef(), new TaskAndDocument(task, taskDocument, compoundWorkflow));
         }
 
         return results;
