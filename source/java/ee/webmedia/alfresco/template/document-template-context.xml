@@ -94,6 +94,7 @@
       <property name="documentAdminService" ref="DocumentAdminService" />
       <property name="versionsService" ref="VersionsService" />
       <property name="workflowService" ref="WmWorkflowService" />
+      <property name="documentService" ref="DocumentService" />
       <property name="applicationConstantsBean" ref="applicationConstantsBean" />
       <property name="documentTemplateCache" ref="documentTemplateCache" />
    </bean>

@@ -105,19 +105,20 @@ public class WorkflowStatusEventListener implements WorkflowMultiEventListener, 
         UserService userService = BeanHelper.getUserService();
         final String userId = userService.getCurrentUserName();
         final String userName = userService.getUserFullName();
+        final String fullyAuthenticatedUserId = AuthenticationUtil.getFullyAuthenticatedUser();
+        final String fullyAuthenticatedUserName = userService.getUserFullName(fullyAuthenticatedUserId);
         final List<WorkflowEvent> eventsToLog = new ArrayList<>(queue.getEvents());
         generalService.runOnBackground(new RunAsWork<Void>() {
             @Override
             public Void doWork() throws Exception {
-                return WorkflowStatusEventListener.this.logWorkflowEvents(eventsToLog, userId, userName);
+                return WorkflowStatusEventListener.this.logWorkflowEvents(eventsToLog, userId, userName, fullyAuthenticatedUserId, fullyAuthenticatedUserName);
             }
         }, "workflowLogEntries", true);
     }
 
-    private Void logWorkflowEvents(List<WorkflowEvent> eventsToLog, String userId, String userName) {
+    private Void logWorkflowEvents(List<WorkflowEvent> eventsToLog, String userId, String userName, String fullyAuthenticatedUserId, String fullyAuthenticatedUserName) {
         LogService logService = BeanHelper.getLogService();
         WorkflowConstantsBean workflowConstantsBean = BeanHelper.getWorkflowConstantsBean();
-        UserService userService = BeanHelper.getUserService();
         for (WorkflowEvent event : eventsToLog) {
             BaseWorkflowObject object = event.getObject();
             if (!(object instanceof Task)) {
@@ -130,7 +131,7 @@ public class WorkflowStatusEventListener implements WorkflowMultiEventListener, 
                     logService.addLogEntry(LogEntry.create(LogObject.TASK, userId, userName, taskRef, "applog_task_assigned",
                             task.getOwnerName(), workflowConstantsBean.getTaskTypeName(task.getType())));
                 } else if (task.isStatus(Status.FINISHED, Status.UNFINISHED)) {
-                    logService.addLogEntry(LogEntry.create(LogObject.TASK, userService, task.getNodeRef(), "applog_task_done",
+                    logService.addLogEntry(LogEntry.create(LogObject.TASK, fullyAuthenticatedUserId, fullyAuthenticatedUserName, task.getNodeRef(), "applog_task_done",
                             MessageUtil.getTypeName(task.getType()), task.getOutcome()));
                 }
             }

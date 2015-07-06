@@ -1920,7 +1920,7 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
             item.setDueDate(rs.getTimestamp("wfs_due_date"));
             item.setCreatorName(rs.getString("wfc_creator_name"));
             item.setTaskType(rs.getString("task_type"));
-            item.setResponsible(rs.getBoolean("wfs_active"));
+            item.setResponsible(rs.getObject("wfs_active") != null);
             item.setProposedDueDate(rs.getTimestamp("wfs_proposed_due_date"));
             item.setTaskResolution(rs.getString("wfs_resolution"));
             item.setWorkflowResolution(rs.getString("wfs_workflow_resolution"));

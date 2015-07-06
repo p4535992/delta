@@ -272,7 +272,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
                     , getDocumentType().getName());
         }
 
-        Map<QName, Serializable> overrides = new HashMap<QName, Serializable>(2);
+        Map<QName, Serializable> overrides = new HashMap<>(2);
         overrides.put(DocumentCommonModel.Props.DOC_NAME, docName);
         overrides.put(DocumentCommonModel.Props.UPDATE_METADATA_IN_FILES, Boolean.TRUE);
 
@@ -291,7 +291,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
     public void copyDocument(@SuppressWarnings("unused") ActionEvent event) {
         DocumentDynamic baseDoc = getCurrentSnapshot().document;
 
-        Map<QName, Serializable> overrides = new HashMap<QName, Serializable>(1);
+        Map<QName, Serializable> overrides = new HashMap<>(1);
         overrides.put(DocumentCommonModel.Props.UPDATE_METADATA_IN_FILES, Boolean.TRUE);
         NodeRef docRef = getDocumentDynamicService().copyDocumentToDrafts(baseDoc, overrides,
                 DocumentSpecificModel.Props.ENTRY_DATE,
@@ -546,7 +546,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
             config = snapshot.config;
         }
 
-        List<DialogButtonConfig> buttons = new ArrayList<DialogButtonConfig>(1);
+        List<DialogButtonConfig> buttons = new ArrayList<>(1);
         DocumentType docType = (DocumentType) config.getDocType();
         if (snapshot.inEditMode && SystematicDocumentType.INCOMING_LETTER.isSameType(document.getDocumentTypeId())
                 && docType.isRegistrationEnabled() && docType.isRegistrationOnDocFormEnabled()
@@ -739,7 +739,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
     protected Map<Class<? extends DocumentDynamicBlock>, DocumentDynamicBlock> getBlocks() {
         Map<Class<? extends DocumentDynamicBlock>, DocumentDynamicBlock> blocks = super.getBlocks();
         if (blocks.isEmpty()) {
-            blocks = new HashMap<Class<? extends DocumentDynamicBlock>, DocumentDynamicBlock>();
+            blocks = new HashMap<>();
             blocks.put(FileBlockBean.class, BeanHelper.getFileBlockBean());
             blocks.put(LogBlockBean.class, BeanHelper.getLogBlockBean());
             blocks.put(WorkflowBlockBean.class, BeanHelper.getWorkflowBlockBean());
@@ -786,7 +786,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         BeanHelper.getNotificationService().processAccessRestrictionChangedNotification(document, existingAndMissingEmails.getFirst());
 
         if (!existingAndMissingEmails.getSecond().isEmpty()) {
-            List<String> names = new ArrayList<String>(existingAndMissingEmails.getSecond().size());
+            List<String> names = new ArrayList<>(existingAndMissingEmails.getSecond().size());
             for (SendInfo sendInfo : existingAndMissingEmails.getSecond()) {
                 names.add(sendInfo.getRecipient());
             }
@@ -1131,7 +1131,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
     private boolean checkCanRegister() {
         WmNode node = getNode();
         try {
-            BeanHelper.getDocumentLockHelperBean().checkAssocDocumentLocks(node, null);
+            BeanHelper.getDocLockService().checkAssocDocumentLocks(node, null);
         } catch (NodeLockedException e) {
             BeanHelper.getDocumentLockHelperBean().handleLockedNode("document_registerDoc_error_docLocked_initialDocument", e);
             setSaveAndRegister(false);

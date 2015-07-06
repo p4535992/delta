@@ -79,6 +79,7 @@ import ee.webmedia.alfresco.document.log.service.DocumentLogService;
 import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
+import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.functions.model.UnmodifiableFunction;
 import ee.webmedia.alfresco.mso.service.MsoService;
 import ee.webmedia.alfresco.notification.model.NotificationCache;
@@ -138,6 +139,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
     private VersionsService versionsService;
     private DocumentLogService documentLogService;
     private WorkflowService workflowService;
+    private DocumentService documentService;
     private ApplicationConstantsBean applicationConstantsBean;
 
     private SimpleCache<NodeRef, UnmodifiableDocumentTemplate> documentTemplateCache;
@@ -270,6 +272,10 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
         DocumentTemplate dt = templateBeanPropertyMapper.toObject(nodeService.getProperties(templateRef), null);
         dt.setNodeRef(templateRef);
         dt.setDownloadUrl(getFileService().generateURL(templateRef));
+        String docTypeId = dt.getDocTypeId();
+        if (StringUtils.isNotBlank(docTypeId)) {
+            dt.setDocTypeName(documentAdminService.getDocumentTypeName(docTypeId));
+        }
         return dt;
     }
 
@@ -370,6 +376,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
         // Set document content's MIME type and encoding from template
         replaceDocumentFormulas(documentNodeRef, nodeRef, existingGeneratedFile, templateFilename, false, false);
         generalService.setModifiedToNow(documentNodeRef);
+        documentService.updateSearchableFiles(documentNodeRef);
         return displayName;
     }
 
@@ -1363,6 +1370,10 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
 
     public void setDocumentTemplateCache(SimpleCache<NodeRef, UnmodifiableDocumentTemplate> documentTemplateCache) {
         this.documentTemplateCache = documentTemplateCache;
+    }
+
+    public void setDocumentService(DocumentService documentService) {
+        this.documentService = documentService;
     }
 
     // END: getters / setters

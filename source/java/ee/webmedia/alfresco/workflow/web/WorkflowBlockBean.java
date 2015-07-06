@@ -183,6 +183,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
     private static final String MODAL_KEY_EXTENDER = "extender";
     private static final String MODAL_KEY_DUE_DATE = "dueDate";
     private static final String MODAL_KEY_PROPOSED_DUE_DATE = "proposedDueDate";
+    private static final String MODAL_KEY_EXTENDER_FULL_NAME = "extenderFullName";
     private DelegationBean delegationBean;
     private CompoundWorkflowDialog compoundWorkflowDialog;
 
@@ -827,22 +828,30 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         Date newDate;
         Date dueDate;
         Integer taskIndex;
+        String extender;
+        String extenderFullName;
         if (event instanceof ModalLayerSubmitEvent) {
             commentEvent = (ModalLayerSubmitEvent) event;
             reason = (String) commentEvent.getSubmittedValue(MODAL_KEY_REASON);
             newDate = (Date) commentEvent.getSubmittedValue(MODAL_KEY_PROPOSED_DUE_DATE);
             dueDate = (Date) commentEvent.getSubmittedValue(MODAL_KEY_DUE_DATE);
             taskIndex = commentEvent.getActionIndex();
+            extender = dueDateExtenderUsername;
+            extenderFullName = dueDateExtenderUserFullname;
             params.add(new Pair<String, Object>(MODAL_KEY_REASON, reason));
             TypeConverter typeConverter = DefaultTypeConverter.INSTANCE;
             params.add(new Pair<String, Object>(MODAL_KEY_PROPOSED_DUE_DATE, typeConverter.convert(String.class, newDate)));
             params.add(new Pair<String, Object>(MODAL_KEY_DUE_DATE, typeConverter.convert(String.class, dueDate)));
+            params.add(new Pair<String, Object>(MODAL_KEY_EXTENDER, dueDateExtenderUsername));
+            params.add(new Pair<String, Object>(MODAL_KEY_EXTENDER_FULL_NAME, dueDateExtenderUserFullname));
             params.add(new Pair<String, Object>(ATTRIB_INDEX, taskIndex));
         } else {
             reason = ActionUtil.getParam(event, MODAL_KEY_REASON);
             newDate = ActionUtil.getParam(event, MODAL_KEY_PROPOSED_DUE_DATE, Date.class);
             dueDate = ActionUtil.getParam(event, MODAL_KEY_DUE_DATE, Date.class);
             taskIndex = ActionUtil.getParam(event, ATTRIB_INDEX, Integer.class);
+            extender = ActionUtil.getParam(event, MODAL_KEY_EXTENDER);
+            extenderFullName = ActionUtil.getParam(event, MODAL_KEY_EXTENDER_FULL_NAME);
         }
 
         // Save independent workflow first
@@ -856,7 +865,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
 
         Task initiatingTask = reloadWorkflow(taskIndex);
 
-        getWorkflowService().createDueDateExtension(reason, newDate, dueDate, initiatingTask, containerRef, dueDateExtenderUsername, dueDateExtenderUserFullname);
+        getWorkflowService().createDueDateExtension(reason, newDate, dueDate, initiatingTask, containerRef, extender, extenderFullName);
 
         MessageUtil.addInfoMessage("task_sendDueDateExtensionRequest_success_defaultMsg");
         notifyDialogsIfNeeded();

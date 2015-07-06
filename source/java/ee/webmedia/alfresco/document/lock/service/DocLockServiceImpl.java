@@ -14,9 +14,11 @@ import org.alfresco.repo.webdav.LockInfoImpl;
 import org.alfresco.repo.webdav.WebDAV;
 import org.alfresco.service.cmr.lock.LockStatus;
 import org.alfresco.service.cmr.lock.LockType;
+import org.alfresco.service.cmr.lock.NodeLockedException;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
+import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.util.Assert;
 
@@ -152,7 +154,7 @@ public class DocLockServiceImpl extends LockServiceImpl implements DocLockServic
      * NB! Unlike implementation in superclass, this class returns LOCKED(not LOCK_OWNER) <br>
      * if given nodeRef is locked by someone else, but nodeRef itself is owned by given user
      * </b>
-     * 
+     *
      * @param nodeRef the node reference
      * @param userName the user name
      * @return the lock status
@@ -336,6 +338,20 @@ public class DocLockServiceImpl extends LockServiceImpl implements DocLockServic
             isLockOwnedByOther = false;
         }
         return isLockOwnedByOther;
+    }
+
+    @Override
+    public void checkAssocDocumentLocks(Node dynamicDocumentNode, String customMessage) {
+        DocLockService docLockService = BeanHelper.getDocLockService();
+        for (NodeRef assocNodeRef : BeanHelper.getDocumentDynamicService().getAssociatedDocRefs(dynamicDocumentNode)) {
+            if (docLockService.getLockStatus(assocNodeRef) == LockStatus.LOCKED) {
+                NodeLockedException nodeLockedException = new NodeLockedException(assocNodeRef);
+                if (customMessage != null) {
+                    nodeLockedException.setCustomMessageId(customMessage);
+                }
+                throw nodeLockedException;
+            }
+        }
     }
 
     // START: getters / setters

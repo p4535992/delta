@@ -55,6 +55,7 @@ import org.alfresco.web.bean.generator.BaseComponentGenerator;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.privilege.model.Privilege;
+import ee.webmedia.alfresco.utils.TextUtil;
 
 /**
  * Lighweight client side representation of a node held in the repository.
@@ -436,6 +437,18 @@ public class Node implements Serializable, NamespacePrefixResolverProvider
     /** Clear permissions cache - for example to validate that permission is not lost meanwhile */
     public void clearPermissionsCache() {
         permissions = null;
+    }
+
+    /** Print currently loaded permissions as list */
+    public String printLoadedPermissions() {
+        if (permissions == null) {
+            return permissionsUsername;
+        }
+        List<String> privilegeStrList = new ArrayList<>();
+        for (Privilege privilege : permissions) {
+            privilegeStrList.add(privilege.name());
+        }
+        return permissionsUsername + " privileges=" + TextUtil.joinNonBlankStringsWithComma(privilegeStrList);
     }
 
     /**
