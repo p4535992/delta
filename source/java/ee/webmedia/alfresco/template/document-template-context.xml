@@ -95,6 +95,7 @@
       <property name="versionsService" ref="VersionsService" />
       <property name="workflowService" ref="WmWorkflowService" />
       <property name="applicationConstantsBean" ref="applicationConstantsBean" />
+      <property name="documentTemplateCache" ref="documentTemplateCache" />
    </bean>
 
    <bean id="DocumentTemplateService" class="org.springframework.aop.framework.ProxyFactoryBean">
@@ -123,6 +124,16 @@
    <bean id="defaultValuesFieldUpdater" class="ee.webmedia.alfresco.template.bootstrap.DefaultValuesFieldUpdater" parent="abstractNodeUpdater" >
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
+   </bean>
+   
+   <bean id="documentTemplatesCacheUpdater" class="ee.webmedia.alfresco.template.bootstrap.DocumentTemplatesCacheUpdater" parent="module.baseComponent">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="false" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="defaultValuesFieldUpdater" />
+         </list>
+      </property>
    </bean>
    
 </beans>

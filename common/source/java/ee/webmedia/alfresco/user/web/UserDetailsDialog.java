@@ -72,10 +72,15 @@ public class UserDetailsDialog extends BaseDialogBean {
     }
 
     private boolean validate() {
-        String clientExtensions = (String) user.getProperties().get(ContentModel.PROP_OPEN_OFFICE_CLIENT_EXTENSIONS.toString());
-        if (StringUtils.isNotBlank(clientExtensions) && !StringUtils.isAlpha(clientExtensions.replaceAll(",", ""))) {
+        Map<String, Object> userProps = user.getProperties();
+        String clientExtensions = (String) userProps.get(ContentModel.PROP_OPEN_OFFICE_CLIENT_EXTENSIONS.toString());
+        String strippedExtensions = StringUtils.deleteWhitespace(clientExtensions);
+        if (StringUtils.isNotBlank(strippedExtensions) && !StringUtils.isAlpha(strippedExtensions.replaceAll(",", ""))) {
             MessageUtil.addErrorMessage("user_openOfficeClientExtensions_error");
             return false;
+        }
+        if (!StringUtils.equals(clientExtensions, strippedExtensions)) {
+            userProps.put(ContentModel.PROP_OPEN_OFFICE_CLIENT_EXTENSIONS.toString(), strippedExtensions);
         }
         return true;
     }

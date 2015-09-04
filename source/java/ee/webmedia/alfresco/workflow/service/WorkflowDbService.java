@@ -180,4 +180,6 @@ public interface WorkflowDbService {
 
     int[] updateCompoundWorkflowTaskSearchableProperties(List<Pair<String, Map<QName, Serializable>>> compoundWorkflowtaskSearchableProps,
             List<QName> compoundWorkflowTaskSearchableProperties, String compoundWorkflowTaskUpdateString);
+
+    Pair<List<Pair<NodeRef, QName>>, Boolean> searchTaskNodeRefAndType(String queryCondition, String orderClause, List<Object> arguments, int limit);
 }

@@ -537,4 +537,19 @@ public class RepoUtil {
         return weakReference == null || weakReference.get() == null;
     }
 
+    @SuppressWarnings("unchecked")
+    public static boolean isEmptyListOrString(Object listOrString) {
+        if (listOrString == null) {
+            return true;
+        }
+        if (listOrString instanceof String) {
+            return StringUtils.isBlank((String) listOrString);
+        }
+        for (String member : (List<String>) listOrString) {
+            if (StringUtils.isNotBlank(member)) {
+                return false;
+            }
+        }
+        return true;
+    }
 }

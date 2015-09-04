@@ -66,6 +66,10 @@
          <property-name>transactionsBlockBean</property-name>
          <value>#{TransactionsBlockBean}</value>
       </managed-property>      
+      <managed-property>
+         <property-name>requestCacheBean</property-name>
+         <value>#{requestCacheBean}</value>
+      </managed-property>
    </managed-bean>
 
    <managed-bean>

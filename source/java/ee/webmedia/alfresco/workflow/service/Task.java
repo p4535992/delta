@@ -15,6 +15,7 @@ import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.NodePropertyResolver;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateUtils;
 import org.apache.commons.lang.time.FastDateFormat;
@@ -562,6 +563,12 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
     /** Return list of FileWithContentType or File objects */
     public List<Object> getFiles() {
         return Collections.unmodifiableList(getFilesList());
+    }
+
+    public boolean hasFiles() {
+        @SuppressWarnings("unchecked")
+        List<Object> files = (ArrayList<Object>) getNode().getProperties().get(PROP_TEMP_FILES.toString());
+        return CollectionUtils.isNotEmpty(files);
     }
 
     @SuppressWarnings("unchecked")

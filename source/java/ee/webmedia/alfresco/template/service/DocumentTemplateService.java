@@ -18,6 +18,7 @@ import ee.webmedia.alfresco.notification.model.NotificationCache.Template;
 import ee.webmedia.alfresco.template.exception.ExistingFileFromTemplateException;
 import ee.webmedia.alfresco.template.model.DocumentTemplate;
 import ee.webmedia.alfresco.template.model.ProcessedEmailTemplate;
+import ee.webmedia.alfresco.template.model.UnmodifiableDocumentTemplate;
 import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.workflow.service.Task;
 
@@ -26,26 +27,19 @@ public interface DocumentTemplateService {
     String BEAN_NAME = "DocumentTemplateService";
 
     /**
-     * Returns list with all the templates
-     * 
-     * @return
-     */
-    List<DocumentTemplate> getTemplates();
-
-    /**
      * Returns list with templates which match the given document type.
      * 
      * @param docType document type qname
      * @return
      */
-    List<DocumentTemplate> getDocumentTemplates(String docTypeId);
+    List<UnmodifiableDocumentTemplate> getDocumentTemplates(String docTypeId);
 
     /**
      * Returns list with templates which are not mapped to any document type and are considered to be email templates.
      * 
      * @return
      */
-    List<DocumentTemplate> getEmailTemplates();
+    List<UnmodifiableDocumentTemplate> getEmailTemplates();
 
     /**
      * Fills documents template file with metadata
@@ -55,7 +49,7 @@ public interface DocumentTemplateService {
      * @throws FileNotFoundException throws when document has a template which has been deleted
      * @throws Exception
      */
-    Pair<String, NodeRef> populateTemplate(NodeRef documentNodeRef, boolean overWritingGranted) throws FileNotFoundException, ExistingFileFromTemplateException;
+    String populateTemplate(NodeRef documentNodeRef, boolean overWritingGranted) throws FileNotFoundException, ExistingFileFromTemplateException;
 
     String getProcessedVolumeDispositionTemplate(List<Volume> volumes, NodeRef template);
 
@@ -82,14 +76,6 @@ public interface DocumentTemplateService {
      */
     ProcessedEmailTemplate getProcessedEmailTemplate(Map<String, NodeRef> dataNodeRefs, Template template, Map<String, String> additionalFormulas,
             NotificationCache notificationCache, Task task);
-
-    /**
-     * Check if supplied document has a template that can be used
-     * 
-     * @param document node to check against
-     * @return found DocumentTemplate or null if none found
-     */
-    DocumentTemplate getDocumentsTemplate(NodeRef document);
 
     boolean hasDocumentsTemplate(String documentTypeId);
 
@@ -148,4 +134,8 @@ public interface DocumentTemplateService {
     NodeRef getArchivalReportTemplateByName(String templateName);
 
     void populateVolumeArchiveTemplate(NodeRef parentRef, List<NodeRef> volumeRefs, NodeRef templateRef);
+
+    List<UnmodifiableDocumentTemplate> getUnmodifiableTemplates();
+
+    void removeTemplateFromCache(NodeRef templateRef);
 }

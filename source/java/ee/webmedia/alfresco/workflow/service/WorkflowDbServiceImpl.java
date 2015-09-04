@@ -45,6 +45,7 @@ import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.simple.ParameterizedRowMapper;
 import org.springframework.util.Assert;
@@ -325,10 +326,35 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
     }
 
     @Override
-    public void createTaskEntries(List<TaskUpdateInfo> taskUpdateInfos, Set<String> usedFieldNames) {
-        String commaSeparatedUsedFieldNames = TextUtil.joinNonBlankStringsWithComma(usedFieldNames); // What if some fields ARE blank? :O
-        String sql = "INSERT INTO delta_task (" + commaSeparatedUsedFieldNames + ") VALUES (" + getQuestionMarks(usedFieldNames.size()) + ")";
-        batchUpdate(taskUpdateInfos, usedFieldNames, sql, false);
+    public void createTaskEntries(final List<TaskUpdateInfo> taskUpdateInfos, final Set<String> usedFieldNames) {
+        String commaSeparatedUsedFieldNames = TextUtil.joinNonBlankStringsWithComma(usedFieldNames);
+        final StringBuilder sql = new StringBuilder("INSERT INTO delta_task (" + commaSeparatedUsedFieldNames + ") VALUES ");
+        String placeHolder = "(" + getQuestionMarks(usedFieldNames.size()) + ")";
+
+        int finalIndex = taskUpdateInfos.size() - 1;
+        for (int i = 0; i < taskUpdateInfos.size(); i++) {
+            sql.append(placeHolder).append((i == finalIndex) ? "" : ",");
+        }
+
+        jdbcTemplate.update(new PreparedStatementCreator() {
+
+            @Override
+            public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
+                PreparedStatement ps = con.prepareStatement(sql.toString());
+                int fieldIndex = 1;
+                for (TaskUpdateInfo info : taskUpdateInfos) {
+                    for (String fieldName : usedFieldNames) {
+                        Object value = info.getFieldValue(fieldName, FIELD_NAME_TO_TASK_PROP);
+                        if (value instanceof List) {
+                            value = getArrayValueForDb(value, con);
+                        }
+                        DbSearchUtil.setParameterValue(ps, fieldIndex, value);
+                        fieldIndex++;
+                    }
+                }
+                return ps;
+            }
+        });
     }
 
     @Override
@@ -480,12 +506,12 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
         List<String> tasks = jdbcTemplate.query(sqlQuery,
                 new ParameterizedRowMapper<String>() {
 
-            @Override
-            public String mapRow(ResultSet rs, int rowNum) throws SQLException {
-                return rs.getString(1);
-            }
-        },
-        parentId);
+                    @Override
+                    public String mapRow(ResultSet rs, int rowNum) throws SQLException {
+                        return rs.getString(1);
+                    }
+                },
+                parentId);
         explainQuery(sqlQuery, parentId);
         for (String taskId : tasks) {
             updateTaskProperties(new NodeRef(workflowRef.getStoreRef(), taskId), newProps);
@@ -788,6 +814,25 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
     }
 
     @Override
+    public Pair<List<Pair<NodeRef, QName>>, Boolean> searchTaskNodeRefAndType(String queryCondition, String orderClause, List<Object> arguments, int limit) {
+        boolean useLimit = limit > -1;
+        String sqlQuery = "SELECT task_id, store_id, task_type FROM delta_task WHERE "
+                + SearchUtil.joinQueryPartsAnd(getSearchableAndNotInArchiveSpacesstoreCondition(), queryCondition) + (useLimit ? " LIMIT " + (limit + 1) : "");
+        if (StringUtils.isNotBlank(orderClause)) {
+            sqlQuery += orderClause;
+        }
+        Object[] argumentsArray = arguments.toArray();
+        List<Pair<NodeRef, QName>> taskRefs = jdbcTemplate.query(sqlQuery, new TaskNodeRefAndTypeRowMapper(), argumentsArray);
+        explainQuery(sqlQuery, argumentsArray);
+        boolean limitedResult = false;
+        if (useLimit && taskRefs.size() > limit) {
+            limitedResult = true;
+            taskRefs.remove(taskRefs.size() - 1);
+        }
+        return Pair.newInstance(taskRefs, limitedResult);
+    }
+
+    @Override
     public Pair<List<NodeRef>, Boolean> searchTaskNodeRefsCheckLimitedSeries(String queryCondition, final String userId, List<Object> arguments, final int limit) {
         DocumentSearchService documentSearchService = BeanHelper.getDocumentSearchService();
         boolean isAdministrator = BeanHelper.getUserService().isAdministrator(userId);
@@ -952,12 +997,12 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
             first = false;
 
             sql.append(" (SELECT COUNT(*) FROM delta_task WHERE task_type = '").append(type.getLocalName()).append("' AND ")
-            .append(restriction)
-            .append(") AS ").append(type.getLocalName());
+                    .append(restriction)
+                    .append(") AS ").append(type.getLocalName());
         }
         sql.append(" FROM delta_task WHERE")
-        .append(restriction)
-        .append(" LIMIT 1;");
+                .append(restriction)
+                .append(" LIMIT 1;");
         String sqlQuery = sql.toString();
 
         // NB! There will be only one row!
@@ -1004,13 +1049,13 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
         List<Pair<NodeRef, Pair<String, String>>> taskSendInfos = jdbcTemplate.query(sqlQuery,
                 new ParameterizedRowMapper<Pair<NodeRef, Pair<String, String>>>() {
 
-            @Override
-            public Pair<NodeRef, Pair<String, String>> mapRow(ResultSet rs, int rowNum) throws SQLException {
-                return new Pair<NodeRef, Pair<String, String>>(nodeRefFromRs(rs, TASK_ID_FIELD), new Pair<String, String>(rs.getString("wfs_sent_dvk_id"), rs
-                        .getString("wfs_institution_code")));
-            }
+                    @Override
+                    public Pair<NodeRef, Pair<String, String>> mapRow(ResultSet rs, int rowNum) throws SQLException {
+                        return new Pair<NodeRef, Pair<String, String>>(nodeRefFromRs(rs, TASK_ID_FIELD), new Pair<String, String>(rs.getString("wfs_sent_dvk_id"), rs
+                                .getString("wfs_institution_code")));
+                    }
 
-        }, argumentsArray);
+                }, argumentsArray);
         explainQuery(sqlQuery, argumentsArray);
         Map<NodeRef, Pair<String, String>> sendInfosMap = new HashMap<NodeRef, Pair<String, String>>();
         for (Pair<NodeRef, Pair<String, String>> sendInfo : taskSendInfos) {
@@ -1065,7 +1110,7 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
         List<Task> tasks = jdbcTemplate
                 .query(sqlQuery,
                         new TaskRowMapper(null, null, null, getWorkflowConstantsBean().getTaskPrefixedQNames(), null, workflow, copy, propsToLoad != null
-                        && !propsToLoad.isEmpty(), loadCompoundWorkflowRef),
+                                && !propsToLoad.isEmpty(), loadCompoundWorkflowRef),
                         paramArray);
         explainQuery(sqlQuery, paramArray);
         Map<NodeRef, Task> result = new HashMap<NodeRef, Task>();
@@ -1115,21 +1160,21 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
         jdbcTemplate.batchUpdate("INSERT INTO delta_task_due_date_history (task_id, previous_date, change_reason, extension_task_id) VALUES (?, ?, ?, ?)",
                 new BatchPreparedStatementSetter() {
 
-            @Override
-            public void setValues(PreparedStatement ps, int i) throws SQLException {
-                ps.setString(1, taskRefId);
-                DueDateHistoryRecord record = historyRecords.get(i);
-                Date previousDate = record.getPreviousDate();
-                ps.setTimestamp(2, previousDate != null ? new Timestamp(previousDate.getTime()) : null);
-                ps.setString(3, record.getChangeReason());
-                ps.setString(4, record.getExtensionTaskId());
-            }
+                    @Override
+                    public void setValues(PreparedStatement ps, int i) throws SQLException {
+                        ps.setString(1, taskRefId);
+                        DueDateHistoryRecord record = historyRecords.get(i);
+                        Date previousDate = record.getPreviousDate();
+                        ps.setTimestamp(2, previousDate != null ? new Timestamp(previousDate.getTime()) : null);
+                        ps.setString(3, record.getChangeReason());
+                        ps.setString(4, record.getExtensionTaskId());
+                    }
 
-            @Override
-            public int getBatchSize() {
-                return historyRecords.size();
-            }
-        });
+                    @Override
+                    public int getBatchSize() {
+                        return historyRecords.size();
+                    }
+                });
     }
 
     @Override
@@ -1195,17 +1240,17 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
         jdbcTemplate.batchUpdate("INSERT INTO delta_task_file (task_id, file_id) VALUES (?, ?)",
                 new BatchPreparedStatementSetter() {
 
-            @Override
-            public void setValues(PreparedStatement ps, int i) throws SQLException {
-                ps.setString(1, taskRefId);
-                ps.setString(2, fileNodeRefs.get(i).getId());
-            }
+                    @Override
+                    public void setValues(PreparedStatement ps, int i) throws SQLException {
+                        ps.setString(1, taskRefId);
+                        ps.setString(2, fileNodeRefs.get(i).getId());
+                    }
 
-            @Override
-            public int getBatchSize() {
-                return fileNodeRefs.size();
-            }
-        });
+                    @Override
+                    public int getBatchSize() {
+                        return fileNodeRefs.size();
+                    }
+                });
     }
 
     private boolean isEmptyInsert(@SuppressWarnings("rawtypes") final List files) {
@@ -1246,12 +1291,12 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
                 .query(sqlQuery,
                         new ParameterizedRowMapper<NodeRef>() {
 
-                    @Override
-                    public NodeRef mapRow(ResultSet rs, int rowNum) throws SQLException {
-                        return nodeRefFromRs(rs, "file_id");
-                    }
+                            @Override
+                            public NodeRef mapRow(ResultSet rs, int rowNum) throws SQLException {
+                                return nodeRefFromRs(rs, "file_id");
+                            }
 
-                }, taskRefId);
+                        }, taskRefId);
         explainQuery(sqlQuery, taskRefId);
         // null value shouldn't actually be in the list, but just in case...
         fileRefs.remove(null);
@@ -1278,24 +1323,24 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
         jdbcTemplate.query(sqlQuery,
                 new RowMapper<Void>() {
 
-            @Override
-            public Void mapRow(ResultSet rs, int rowNum) throws SQLException {
+                    @Override
+                    public Void mapRow(ResultSet rs, int rowNum) throws SQLException {
 
-                final NodeRef task_id = nodeRefFromRs(rs, "task_id");
-                final NodeRef file_id = nodeRefFromRs(rs, "file_id");
-                List<NodeRef> files = taskRefsWithFileRefs.get(task_id);
-                if (files == null) {
-                    files = new ArrayList<>();
-                }
-                if (file_id != null) {
-                    files.add(file_id);
-                }
-                taskRefsWithFileRefs.put(task_id, files);
+                        final NodeRef task_id = nodeRefFromRs(rs, "task_id");
+                        final NodeRef file_id = nodeRefFromRs(rs, "file_id");
+                        List<NodeRef> files = taskRefsWithFileRefs.get(task_id);
+                        if (files == null) {
+                            files = new ArrayList<>();
+                        }
+                        if (file_id != null) {
+                            files.add(file_id);
+                        }
+                        taskRefsWithFileRefs.put(task_id, files);
 
-                return null;
-            }
+                        return null;
+                    }
 
-        }, taskRefArray);
+                }, taskRefArray);
         explainQuery(sqlQuery, taskRefArray);
         return taskRefsWithFileRefs;
     }
@@ -1540,7 +1585,7 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
                     workflowsAndTaskOwners.append("; ");
                 }
                 workflowsAndTaskOwners.append(workflowConstantsBean.getWorkflowTypeNameByTask(typeAndOwners.getFirst()))
-                .append(" (" + typeAndOwners.getSecond() + ")");
+                        .append(" (" + typeAndOwners.getSecond() + ")");
             }
             taskOwners.put(nodeRef, workflowsAndTaskOwners.toString());
         }
@@ -1555,25 +1600,25 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
         List<List<String>> taskData = jdbcTemplate.query(sqlQuery,
                 new ParameterizedRowMapper<List<String>>() {
 
-            @Override
-            public List<String> mapRow(ResultSet rs, int rowNum) throws SQLException {
-                ResultSetMetaData metaData = rs.getMetaData();
-                int columnCount = metaData.getColumnCount();
-                if (rowNum == 0) {
-                    for (int i = 1; i <= columnCount; i++) {
-                        columnNames.add(metaData.getColumnName(i));
+                    @Override
+                    public List<String> mapRow(ResultSet rs, int rowNum) throws SQLException {
+                        ResultSetMetaData metaData = rs.getMetaData();
+                        int columnCount = metaData.getColumnCount();
+                        if (rowNum == 0) {
+                            for (int i = 1; i <= columnCount; i++) {
+                                columnNames.add(metaData.getColumnName(i));
+                            }
+                        }
+                        List<String> columnValues = new ArrayList<String>();
+                        for (int i = 1; i <= columnCount; i++) {
+                            Object object = rs.getObject(i);
+                            columnValues.add(object != null ? object.toString() : null);
+                        }
+                        taskIds.add(rs.getString(TASK_ID_FIELD));
+                        return columnValues;
                     }
-                }
-                List<String> columnValues = new ArrayList<String>();
-                for (int i = 1; i <= columnCount; i++) {
-                    Object object = rs.getObject(i);
-                    columnValues.add(object != null ? object.toString() : null);
-                }
-                taskIds.add(rs.getString(TASK_ID_FIELD));
-                return columnValues;
-            }
 
-        });
+                });
         explainQuery(sqlQuery);
         taskData.add(0, columnNames);
 
@@ -1644,6 +1689,16 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
         }
     }
 
+    private class TaskNodeRefAndTypeRowMapper implements ParameterizedRowMapper<Pair<NodeRef, QName>> {
+
+        @Override
+        public Pair<NodeRef, QName> mapRow(ResultSet rs, int rowNum) throws SQLException {
+            NodeRef nodeRef = nodeRefFromRs(rs, TASK_ID_FIELD);
+            QName type = getTaskTypeFromRs(rs);
+            return new Pair(nodeRef, type);
+        }
+    }
+
     private class TaskRowMapper<T> implements ParameterizedRowMapper<Task> {
         private final Collection<QName> taskDataTypeDefaultAspects;
         private final List<QName> taskDataTypeDefaultProps;
@@ -1658,12 +1713,12 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
         private final boolean loadCompoundWorkflowRef;
 
         public TaskRowMapper(NodeRef originalParentRef, Collection<QName> taskDataTypeDefaultAspects, List<QName> taskDataTypeDefaultProps, Map<QName, QName> taskPrefixedQNames,
-                WorkflowType workflowType, Workflow workflow, boolean copy, boolean restrictedProps) {
+                             WorkflowType workflowType, Workflow workflow, boolean copy, boolean restrictedProps) {
             this(originalParentRef, taskDataTypeDefaultAspects, taskDataTypeDefaultProps, taskPrefixedQNames, workflowType, workflow, copy, restrictedProps, false);
         }
 
         public TaskRowMapper(NodeRef originalParentRef, Collection<QName> taskDataTypeDefaultAspects, List<QName> taskDataTypeDefaultProps, Map<QName, QName> taskPrefixedQNames,
-                WorkflowType workflowType, Workflow workflow, boolean copy, boolean restrictedProps, boolean loadCompoundWorkflowRef) {
+                             WorkflowType workflowType, Workflow workflow, boolean copy, boolean restrictedProps, boolean loadCompoundWorkflowRef) {
             Assert.isTrue(workflowType == null || workflowType.getTaskType() == null || (taskDataTypeDefaultAspects != null && taskDataTypeDefaultProps != null));
             this.taskDataTypeDefaultAspects = taskDataTypeDefaultAspects;
             this.taskDataTypeDefaultProps = taskDataTypeDefaultProps;

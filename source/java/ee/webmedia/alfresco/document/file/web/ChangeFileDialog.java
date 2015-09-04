@@ -28,9 +28,8 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
-import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.file.model.FileModel;
-import ee.webmedia.alfresco.document.file.model.SimpleFile;
+import ee.webmedia.alfresco.document.file.model.SimpleFileWithOrder;
 import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.FilenameUtil;
@@ -84,8 +83,8 @@ public class ChangeFileDialog extends BaseDialogBean {
                 fileUploadBean.setFileNameWithoutExtension(fileNamesWithoutExtension);
                 fileUploadBean.setOrderNumbers(fileOrderValues);
             }
+            AddFileDialog addFileDialog = BeanHelper.getAddFileDialog();
             if (attatchmentsOrScannedFilesAdded) {
-                AddFileDialog dialog = BeanHelper.getAddFileDialog();
                 List<NodeRef> tempNodeRefs = new ArrayList<>();
                 List<String> tempNames = new ArrayList<>();
                 List<String> tempNamesWithoutExtensions = new ArrayList<>();
@@ -102,13 +101,13 @@ public class ChangeFileDialog extends BaseDialogBean {
                     tempOrdersInList.add(Long.valueOf(file.getFileOrderInList()));
                     tempSelectedWithMetadata.add(AddFileDialog.BOUND_METADATA_EXTENSIONS.contains(file.getExtension()));
                 }
-                dialog.setSelectedFileNodeRef(tempNodeRefs);
-                dialog.setSelectedFileName(tempNames);
-                dialog.setSelectedFileNameWithoutExtension(tempNamesWithoutExtensions);
-                dialog.setSelectedFileOrderInList(tempOrdersInList);
-                dialog.setSelectedAssociatedWithMetaData(tempSelectedWithMetadata);
+                addFileDialog.setSelectedFileNodeRef(tempNodeRefs);
+                addFileDialog.setSelectedFileName(tempNames);
+                addFileDialog.setSelectedFileNameWithoutExtension(tempNamesWithoutExtensions);
+                addFileDialog.setSelectedFileOrderInList(tempOrdersInList);
+                addFileDialog.setSelectedAssociatedWithMetaData(tempSelectedWithMetadata);
             }
-            BeanHelper.getAddFileDialog().save(context, outcome, false);
+            addFileDialog.save(context, outcome, false);
             return "dialog:close[2]";
         }
         validatePermission(docRef, Privilege.EDIT_DOCUMENT);
@@ -175,19 +174,13 @@ public class ChangeFileDialog extends BaseDialogBean {
                 AddFileDialog addFileDialog = BeanHelper.getAddFileDialog();
                 attatchmentsOrScannedFilesAdded = addFileDialog.addAttatchmentsAndScannedFiles();
                 isFileUpload = true;
-                int maxOrderNr = 0;
-                List<File> docFiles = getFileService().getAllActiveAndInactiveFiles(docRef);
                 Boolean isActive = addFileDialog.isActiveFileDialog();
-                for (File f : docFiles) {
-                    if (isActive.equals(f.isActive())) {
-                        maxOrderNr++;
-                    }
-                }
-                FileUploadBean fuBean = getFileUploadBean();
-                if (fuBean != null) {
-                    List<String> fileNamez = fuBean.getFileNames();
-                    for (String fileName : fileNamez) {
-                        files.add(new FileVO(String.valueOf(++maxOrderNr), FilenameUtils.removeExtension(fileName), FilenameUtils.getExtension(fileName), null));
+                int maxOrderNr = BeanHelper.getBulkLoadNodeService().countFiles(docRef, isActive);
+                FileUploadBean uploadBean = getFileUploadBean();
+                if (uploadBean != null) {
+                    List<String> fileNames = uploadBean.getFileNames();
+                    for (String fileName : fileNames) {
+                        files.add(new FileVO(String.valueOf(++maxOrderNr), FilenameUtils.removeExtension(fileName), FilenameUtils.getExtension(fileName), null, false));
                     }
                 }
                 if (attatchmentsOrScannedFilesAdded) {
@@ -195,22 +188,22 @@ public class ChangeFileDialog extends BaseDialogBean {
                     List<NodeRef> fileRefs = addFileDialog.getSelectedFileNodeRef();
                     for (int i = 0; i < fileNames.size(); i++) {
                         String fileName = fileNames.get(i);
-                        files.add(new FileVO(String.valueOf(++maxOrderNr), FilenameUtils.removeExtension(fileName), FilenameUtils.getExtension(fileName), fileRefs.get(i)));
+                        files.add(new FileVO(String.valueOf(++maxOrderNr), FilenameUtils.removeExtension(fileName), FilenameUtils.getExtension(fileName), fileRefs.get(i), false));
                     }
                 }
             } else { // started from document dialog
                 String type = ActionUtil.getParam(event, "type");
-                List<SimpleFile> docFiles = null;
+                List<SimpleFileWithOrder> docFiles = null;
                 if ("active".equals(type)) {
-                    docFiles = BeanHelper.getBulkLoadNodeService().loadActiveFiles(docRef, null);
+                    docFiles = BeanHelper.getBulkLoadNodeService().loadActiveFilesWithOrder(docRef);
                 } else {
-                    docFiles = BeanHelper.getBulkLoadNodeService().loadInactiveFiles(docRef);
+                    docFiles = BeanHelper.getBulkLoadNodeService().loadInactiveFilesWithOrder(docRef);
                 }
 
-                for (SimpleFile f : docFiles) {
+                for (SimpleFileWithOrder f : docFiles) {
                     String orderInList = String.valueOf(f.getFileOrderInList());
                     files.add(new FileVO(orderInList, FilenameUtils.removeExtension(f.getDisplayName()), FilenameUtils.getExtension(f.getDisplayName()),
-                            f.getFileRef()));
+                            f.getFileRef(), f.isGenerated()));
                 }
             }
 
@@ -227,7 +220,7 @@ public class ChangeFileDialog extends BaseDialogBean {
             if (e instanceof NodeLockedException) {
                 BeanHelper.getDocumentLockHelperBean().handleLockedNode("file_change_file_validation_alreadyLocked", ((NodeLockedException) e).getNodeRef());
             } else {
-                MessageUtil.addErrorMessage("file_locking_failed");
+                MessageUtil.addErrorMessage("file_open_for_changing_failed");
             }
         }
     }
@@ -245,33 +238,33 @@ public class ChangeFileDialog extends BaseDialogBean {
         if (isFileUpload) {
             return true;
         }
-        List<NodeRef> fileRefs = getFileRefs();
+        List<Pair<NodeRef, Boolean>> fileRefsWithGeneratedProp = getFileRefsWithGeneratedProp();
         if (lock4Edit) {
-            for (NodeRef fileRef : fileRefs) {
+            for (Pair<NodeRef, Boolean> fileRef : fileRefsWithGeneratedProp) {
                 try {
-                    if (getDocLockService().setLockIfFree(fileRef) == LockStatus.LOCKED) {
-                        throw new NodeLockedException(fileRef);
+                    if (getDocLockService().setLockIfFree(fileRef.getFirst()) == LockStatus.LOCKED) {
+                        getDocLockService().unlockFiles(fileRefsWithGeneratedProp, docRef);
                     }
                 } catch (RuntimeException e) {
-                    getDocLockService().unlockFiles(fileRefs, docRef);
-                    if (e instanceof NodeLockedException) {
-                        throw e;
-                    }
-                    throw new RuntimeException();
+                    getDocLockService().unlockFiles(fileRefsWithGeneratedProp, docRef);
+                    throw e;
                 }
             }
             return true;
         }
-        getDocLockService().unlockFiles(fileRefs, docRef);
+        getDocLockService().unlockFiles(fileRefsWithGeneratedProp, docRef);
         return false;
     }
 
-    private List<NodeRef> getFileRefs() {
-        List<NodeRef> fileRefs = new ArrayList<>(files.size());
-        for (FileVO f : files) {
-            fileRefs.add(f.getFileRef());
+    private List<Pair<NodeRef, Boolean>> getFileRefsWithGeneratedProp() {
+        if (files == null) {
+            return Collections.emptyList();
         }
-        return fileRefs;
+        List<Pair<NodeRef, Boolean>> result = new ArrayList<>(files.size());
+        for (FileVO f : files) {
+            result.add(Pair.newInstance(f.getFileRef(), f.isGenerated()));
+        }
+        return result;
     }
 
     private boolean validate() {
@@ -321,12 +314,14 @@ public class ChangeFileDialog extends BaseDialogBean {
         private String fileNameWithoutExtension;
         private final String extension;
         private final NodeRef fileRef;
+        private final boolean generated;
 
-        public FileVO(String fileOrderInList, String fileNameWithoutExtension, String extension, NodeRef fileRef) {
+        public FileVO(String fileOrderInList, String fileNameWithoutExtension, String extension, NodeRef fileRef, boolean generated) {
             this.fileOrderInList = fileOrderInList;
             this.fileNameWithoutExtension = fileNameWithoutExtension;
             this.extension = extension;
             this.fileRef = fileRef;
+            this.generated = generated;
         }
 
         public String getFileOrderInList() {
@@ -355,6 +350,10 @@ public class ChangeFileDialog extends BaseDialogBean {
 
         public NodeRef getFileRef() {
             return fileRef;
+        }
+
+        public boolean isGenerated() {
+            return generated;
         }
 
         @Override

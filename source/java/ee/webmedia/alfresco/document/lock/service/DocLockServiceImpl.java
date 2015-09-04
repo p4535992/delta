@@ -16,6 +16,7 @@ import org.alfresco.service.cmr.lock.LockStatus;
 import org.alfresco.service.cmr.lock.LockType;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.util.Pair;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.util.Assert;
 
@@ -261,11 +262,11 @@ public class DocLockServiceImpl extends LockServiceImpl implements DocLockServic
     }
 
     @Override
-    public void unlockFiles(List<NodeRef> lockedFileRefs, NodeRef parentRef) {
+    public void unlockFiles(List<Pair<NodeRef, Boolean>> lockedFileRefsWithGeneratedProp, NodeRef parentRef) {
         boolean generatedFile = false;
-        for (NodeRef fileRef : lockedFileRefs) {
-            unlockIfOwner(fileRef);
-            generatedFile |= getFileService().isFileGenerated(fileRef);
+        for (Pair<NodeRef, Boolean> fileRefAndGeneratedProp : lockedFileRefsWithGeneratedProp) {
+            unlockIfOwner(fileRefAndGeneratedProp.getFirst());
+            generatedFile |= fileRefAndGeneratedProp.getSecond();
 
         }
         if (!generatedFile) {

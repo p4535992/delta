@@ -10,7 +10,7 @@ public class MDeltaFile extends SimpleFile {
     private boolean viewDocumentFilesPermission;
 
     public MDeltaFile(String displayName, String readOnlyUrl, long size, NodeRef parentRef) {
-        super(displayName, readOnlyUrl, null, null);
+        super(displayName, readOnlyUrl);
         this.size = size;
         this.parentRef = parentRef;
     }

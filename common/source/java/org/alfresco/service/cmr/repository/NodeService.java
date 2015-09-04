@@ -221,6 +221,8 @@ public interface NodeService
     @Auditable(key = Auditable.Key.ARG_0 ,parameters = {"nodeRef"})
     public QName getType(NodeRef nodeRef) throws InvalidNodeRefException;
     
+    boolean isType(NodeRef nodeRef, QName type);
+    
     /**
      * Re-sets the type of the node.  Can be called in order specialise a node to a sub-type.
      * 

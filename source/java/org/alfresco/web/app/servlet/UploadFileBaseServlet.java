@@ -66,7 +66,7 @@ public class UploadFileBaseServlet extends BaseServlet {
                 out.println("{");
                 out.println("\"name\": \"" + filename + "\",");
                 out.println("\"size\": \"" + FileUtils.byteCountToDisplaySize(item.length()) + "\",");
-                String deleteUrl = BeanHelper.getApplicationService().getServerUrl() + request.getContextPath() + "/uploadedFileHelperServlet?" + FILE_PARAM + "=" + item.getName();
+                String deleteUrl = BeanHelper.getApplicationService().getServerUrl() + request.getContextPath() + "/uploadedFileServlet?" + FILE_PARAM + "=" + item.getName();
                 out.println("\"deleteUrl\": \"" + deleteUrl + "\",");
                 out.println("\"deleteType\": \"POST\"");
                 if (i < lastItem) {

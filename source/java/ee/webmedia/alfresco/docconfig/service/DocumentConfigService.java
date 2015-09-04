@@ -35,6 +35,8 @@ public interface DocumentConfigService {
 
     DocumentConfig getConfig(Node documentDynamicNode);
 
+    List<String> getSaveListenerBeanNames(Node documentDynamicNode);
+
     DocumentConfig getSearchConfig();
 
     DocumentConfig getDocLocationConfig();

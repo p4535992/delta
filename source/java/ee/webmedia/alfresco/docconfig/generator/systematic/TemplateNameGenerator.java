@@ -18,7 +18,7 @@ import ee.webmedia.alfresco.docconfig.generator.BasePropertySheetStateHolder;
 import ee.webmedia.alfresco.docconfig.generator.BaseSystematicFieldGenerator;
 import ee.webmedia.alfresco.docconfig.generator.GeneratorResults;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
-import ee.webmedia.alfresco.template.model.DocumentTemplate;
+import ee.webmedia.alfresco.template.model.UnmodifiableDocumentTemplate;
 import ee.webmedia.alfresco.utils.WebUtil;
 
 public class TemplateNameGenerator extends BaseSystematicFieldGenerator {
@@ -52,14 +52,14 @@ public class TemplateNameGenerator extends BaseSystematicFieldGenerator {
          * @return A collection of UISelectItem objects containing the selection items to show on form.
          */
         public List<SelectItem> findDocumentTemplates(FacesContext context, UIInput selectComponent) {
-            List<DocumentTemplate> docTemplates = getDocumentTemplateService().getDocumentTemplates(
+            List<UnmodifiableDocumentTemplate> docTemplates = getDocumentTemplateService().getDocumentTemplates(
                     (String) dialogDataProvider.getNode().getProperties().get(DocumentAdminModel.Props.OBJECT_TYPE_ID));
             List<SelectItem> selectItems = new ArrayList<SelectItem>(docTemplates.size() + 1);
 
             // Empty default selection
             selectItems.add(new SelectItem("", ""));
 
-            for (DocumentTemplate tmpl : docTemplates) {
+            for (UnmodifiableDocumentTemplate tmpl : docTemplates) {
                 selectItems.add(new SelectItem(tmpl.getName(), FilenameUtils.removeExtension(tmpl.getName())));
             }
 

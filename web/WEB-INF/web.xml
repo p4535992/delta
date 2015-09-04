@@ -313,7 +313,7 @@
    
    <filter-mapping>
       <filter-name>SerializingFilter</filter-name>
-      <url-pattern>/uploadedFileHelperServlet</url-pattern>
+      <url-pattern>/uploadedFileServlet</url-pattern>
    </filter-mapping>
    
    
@@ -842,8 +842,8 @@
    </servlet>
    
    <servlet>
-      <servlet-name>uploadedFileHelper</servlet-name>
-      <servlet-class>ee.webmedia.alfresco.template.web.app.servlet.UploadedFileHelperServlet</servlet-class>
+      <servlet-name>uploadedFile</servlet-name>
+      <servlet-class>ee.webmedia.alfresco.template.web.app.servlet.UploadedFileServlet</servlet-class>
    </servlet>
 
    <servlet>
@@ -914,8 +914,8 @@
    </servlet-mapping>
    
    <servlet-mapping>
-      <servlet-name>uploadedFileHelper</servlet-name>
-      <url-pattern>/uploadedFileHelperServlet</url-pattern>
+      <servlet-name>uploadedFile</servlet-name>
+      <url-pattern>/uploadedFileServlet</url-pattern>
    </servlet-mapping>
 
   <servlet-mapping>

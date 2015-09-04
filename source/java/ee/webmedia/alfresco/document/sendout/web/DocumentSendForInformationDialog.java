@@ -3,7 +3,6 @@ package ee.webmedia.alfresco.document.sendout.web;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentService;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,8 +24,8 @@ import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.web.evaluator.DocumentSendForInformationEvaluator;
 import ee.webmedia.alfresco.log.model.LogEntry;
 import ee.webmedia.alfresco.log.model.LogObject;
-import ee.webmedia.alfresco.template.model.DocumentTemplate;
 import ee.webmedia.alfresco.template.model.ProcessedEmailTemplate;
+import ee.webmedia.alfresco.template.model.UnmodifiableDocumentTemplate;
 import ee.webmedia.alfresco.user.model.Authority;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.ActionUtil;
@@ -139,12 +138,12 @@ public class DocumentSendForInformationDialog extends BaseDialogBean {
             MessageUtil.addErrorMessage("document_sendOut_error_docDeleted");
             return;
         }
-        List<DocumentTemplate> templates = BeanHelper.getDocumentTemplateService().getEmailTemplates();
-        emailTemplates = new ArrayList<SelectItem>();
-        for (DocumentTemplate template : templates) {
+        List<UnmodifiableDocumentTemplate> templates = BeanHelper.getDocumentTemplateService().getEmailTemplates();
+        emailTemplates = new ArrayList<>(templates.size() + 1);
+        emailTemplates.add(new SelectItem("", MessageUtil.getMessage("select_default_label")));
+        for (UnmodifiableDocumentTemplate template : templates) {
             emailTemplates.add(new SelectItem(template.getName(), FilenameUtils.getBaseName(template.getName()), template.getNodeRef().toString()));
         }
-        emailTemplates.add(0, new SelectItem("", MessageUtil.getMessage("select_default_label")));
     }
 
     protected void initNodeValue(ActionEvent event) {

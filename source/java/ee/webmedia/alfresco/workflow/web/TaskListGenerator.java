@@ -791,10 +791,9 @@ public class TaskListGenerator extends BaseComponentGenerator {
 
         // Generate the spacer for resolution column if needed
         QName blockType = list.workflowBlockType;
-        boolean hasResolutionColumn = WorkflowSpecificModel.Types.CONFIRMATION_WORKFLOW.equals(blockType) || workflow.hasTaskResolution();
-        boolean resolutionDisabled = (WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_WORKFLOW.equals(blockType) || WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW.equals(blockType))
-                && !(dialogManager.getBean() instanceof CompoundWorkflowDialog);
-        if (hasResolutionColumn && !resolutionDisabled) {
+        boolean hasResolutionColumn = WorkflowSpecificModel.Types.CONFIRMATION_WORKFLOW.equals(blockType)
+                || (workflow.hasTaskResolution() && dialogManager.getBean() instanceof CompoundWorkflowDialog);
+        if (hasResolutionColumn) {
             addChildren(taskGrid, ComponentUtil.createSpacer(application));
         }
 

@@ -94,9 +94,9 @@ public abstract class LazyListDataProvider<Key, Value> implements Serializable {
 
     protected abstract void resetObjectKeyOrder(List<Value> orderedRows);
 
-    public void loadPage(int pageStartIndex, int pageEndIndex) {
+    public int loadPage(int pageStartIndex, int pageEndIndex) {
         if (isAllLoaded()) {
-            return;
+            return 0;
         }
         Assert.isTrue(pageStartIndex >= 0 && (pageEndIndex >= pageStartIndex || (pageStartIndex == 0 && pageEndIndex < 0)),
                 "pageEndIndex must be greater than 0 and greater than pageStartIndex, or, to load all data, pageEndIndex must be set to negative value.");
@@ -112,19 +112,20 @@ public abstract class LazyListDataProvider<Key, Value> implements Serializable {
             loadedRowsEndIndex = getListSize();
         }
         if (loadedRowsEndIndex == 0) {
-            return;
+            return 0;
         }
         List<Key> nodesToLoad = loadedRowsEndIndex >= 0 ? objectKeys.subList(loadedRowsBeginIndex, loadedRowsEndIndex) : objectKeys;
         loadedRows = loadData(nodesToLoad);
-        int loadedSizeDiff = nodesToLoad.size() - loadedRows.size();
-        if (loadedSizeDiff > 0) {
+        int missingNodesCount = nodesToLoad.size() - loadedRows.size();
+        if (missingNodesCount > 0) {
             @SuppressWarnings("unchecked")
             Collection<Key> missingNodes = CollectionUtils.subtract(nodesToLoad, loadedRows.keySet());
             objectKeys.removeAll(missingNodes);
-            loadPage(pageStartIndex, pageEndIndex);
+            missingNodesCount += loadPage(pageStartIndex, pageEndIndex);
         } else if (pageLoadCallback != null) {
             pageLoadCallback.doWithPageItems(loadedRows);
         }
+        return missingNodesCount;
     }
 
     protected abstract Map<Key, Value> loadData(List<Key> rowsToLoad);

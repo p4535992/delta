@@ -89,8 +89,9 @@ public class GridListDataModel implements IGridDataModel
    private List data = null;
 
    @Override
-   public void loadSlice(int rowIndex, int maxRowIndex) {
+   public int loadSlice(int rowIndex, int maxRowIndex) {
        // nothing to do; all data is loaded
+       return 0;
    }
    
    @Override

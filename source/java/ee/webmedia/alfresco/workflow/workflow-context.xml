@@ -999,6 +999,18 @@
       <property name="workflowService" ref="WmWorkflowService" />
    </bean>
    
+   <bean id="fixIndependentCompoundWorkflowMainDocumentProperty" class="ee.webmedia.alfresco.workflow.bootstrap.FixIndependentCompoundWorkflowMainDocumentProperty" parent="abstractParallelNodeUpdater" >
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="archivalsStoresBootstrap" />
+            <ref bean="finishUnfinshedDocumentsInCompWorkflows" />
+         </list>
+      </property>
+      <property name="bulkLoadNodeService" ref="BulkLoadNodeService"/>
+   </bean>
+   
    <bean id="reCreateDeltaWorkflowNameTableBootstrap" class="ee.webmedia.alfresco.workflow.bootstrap.ReCreateDeltaWorkflowNameTableBootstrap" parent="executeStatementsBootstrap" >
       <property name="moduleId" value="common" />
       <property name="executeOnceOnly" value="false" />

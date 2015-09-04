@@ -9,7 +9,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 
 import org.alfresco.service.cmr.repository.NodeRef;
@@ -76,6 +78,7 @@ public abstract class AbstractParallelNodeUpdater extends AbstractNodeUpdater {
 
             int start = 0;
             int end = 0;
+            Map<String, Exception> exceptions = new ConcurrentHashMap<>();
             for (int i = 0; i < threadCount; i++) {
                 start = end;
                 if (start >= nodeList.size()) {
@@ -87,7 +90,7 @@ public abstract class AbstractParallelNodeUpdater extends AbstractNodeUpdater {
                 Set<NodeRef> threadNodes = new HashSet<>(subList);
                 File completedNodesFile = completedNodesFiles.get(i);
                 File failedNodesFile = failedNodesFiles.get(i);
-                Thread updater = new UpdaterThread(getName() + THREAD_SUFFIX + i, threadNodes, progress, completedNodesFile, failedNodesFile, latch);
+                Thread updater = new UpdaterThread(getName() + THREAD_SUFFIX + i, threadNodes, progress, completedNodesFile, failedNodesFile, latch, exceptions);
 
                 try {
                     updater.start();
@@ -102,8 +105,13 @@ public abstract class AbstractParallelNodeUpdater extends AbstractNodeUpdater {
                 latch.countDown();
                 threadCount--;
             }
-
             latch.await();
+            if (!exceptions.isEmpty()) {
+                for (Map.Entry<String, Exception> entry : exceptions.entrySet()) {
+                    log.error("Updater " + getName() + " thread " + entry.getKey() + " throw unhandled exception " + entry.getValue());
+                }
+                throw new RuntimeException("Updater failed to execute, because one or more updater threads failed to perform update, see previous log for detailed error messages.");
+            }
             log.info("Merging separate thread files together");
             mergeCsvFiles(getCompletedNodesCsvFileName());
             mergeCsvFiles(getFailedNodesCsvFileName());
@@ -188,23 +196,32 @@ public abstract class AbstractParallelNodeUpdater extends AbstractNodeUpdater {
         private final File completedNodesFile;
         private final File failedNodesFile;
         private final CountDownLatch latch;
+        private final Map<String, Exception> exceptions;
 
-        private UpdaterThread(String name, Set<NodeRef> nodes, ProgressTracker progress, File completedNodesFile, File failedNodesFile, CountDownLatch latch) {
+        private UpdaterThread(String name, Set<NodeRef> nodes, ProgressTracker progress, File completedNodesFile, File failedNodesFile, CountDownLatch latch,
+                              Map<String, Exception> exceptions) {
             setName(name);
             this.nodes = nodes;
             this.progress = progress;
             this.completedNodesFile = completedNodesFile;
             this.failedNodesFile = failedNodesFile;
             this.latch = latch;
+            this.exceptions = exceptions;
         }
 
         @Override
         public void run() {
-            log.info(String.format("Starting thread %s with %d nodes", getName(), nodes.size()));
-            UpdateNodesParallelBatchProgress batchProgress = new UpdateNodesParallelBatchProgress(nodes, progress, completedNodesFile, failedNodesFile);
-            batchProgress.run();
-            log.info("Finishing " + getName());
-            latch.countDown();
+            try {
+                log.info(String.format("Starting thread %s with %d nodes", getName(), nodes.size()));
+                UpdateNodesParallelBatchProgress batchProgress = new UpdateNodesParallelBatchProgress(nodes, progress, completedNodesFile, failedNodesFile);
+                batchProgress.run();
+                log.info("Finishing " + getName());
+            } catch (Exception e) {
+                exceptions.put(getName(), e);
+                throw e;
+            } finally {
+                latch.countDown();
+            }
         }
 
     }

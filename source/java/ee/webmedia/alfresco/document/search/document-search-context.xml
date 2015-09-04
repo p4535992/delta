@@ -181,6 +181,11 @@
          </list>
       </property>
    </bean>
+   
+   <bean id="recipientFinishedDocumentsReindexBootstrap" class="ee.webmedia.alfresco.document.search.bootstrap.RecipientFinishedDocumentsReindexBootstrap" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />   
+   </bean>
 
    <!-- START: web beans: -->
 

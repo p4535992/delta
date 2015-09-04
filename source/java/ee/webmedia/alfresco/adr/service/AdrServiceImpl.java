@@ -472,7 +472,7 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
 
     public SeotudDokument getSeotudDokument(AssociationRef assocRef, boolean isSourceAssoc, Set<String> documentTypeIds) {
         NodeRef otherDocRef = isSourceAssoc ? assocRef.getSourceRef() : assocRef.getTargetRef();
-        if (!DocumentCommonModel.Types.DOCUMENT.equals(nodeService.getType(otherDocRef))) {
+        if (!nodeService.isType(otherDocRef, DocumentCommonModel.Types.DOCUMENT)) {
             return null;
         }
         DocumentDynamic otherDoc = documentDynamicService.getDocument(otherDocRef);
@@ -607,7 +607,12 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
                 AdrDocument adrDocument = new AdrDocument(doc.getNodeRef(), doc.getRegNumber(), doc.getRegDateTime(), compareByNodeRef);
                 if (compareByNodeRef || !results.containsKey(adrDocument)) {
                     log.debug("Constructing document " + (results.size() + 1));
-                    results.put(adrDocument, buildDocumentCallback.buildDocument(doc, publicAdrDocumentTypeIds));
+                    try {
+                        results.put(adrDocument, buildDocumentCallback.buildDocument(doc, publicAdrDocumentTypeIds));
+                    } catch (Exception e) {
+                        log.warn(String.format("Construction of document (nodeRef=%s) failed, skipping this document", nodeRef));
+                        continue;
+                    }
                     if (limit > 0 && results.size() >= limit) {
                         log.info("Limit reached, breaking");
                         break;
