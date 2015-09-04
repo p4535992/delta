@@ -2,8 +2,6 @@ package ee.webmedia.alfresco.document.file.model;
 
 import java.io.Serializable;
 
-import org.alfresco.service.cmr.repository.NodeRef;
-
 import ee.webmedia.alfresco.utils.FilenameUtil;
 
 public class SimpleFile implements Serializable {
@@ -16,15 +14,11 @@ public class SimpleFile implements Serializable {
     protected final String displayName;
     protected final String imagePath;
     protected final String readOnlyUrl;
-    private final Long fileOrderInList;
-    private final NodeRef fileRef;
 
-    public SimpleFile(String displayName, String readOnlyUrl, Long fileOrderInList, NodeRef fileRef) {
+    public SimpleFile(String displayName, String readOnlyUrl) {
         this.displayName = displayName;
         imagePath = FilenameUtil.isDigiDocFile(displayName) ? DIGIDOC_IMAGE_PATH : NON_DIGIDOC_IMAGE_PATH;
         this.readOnlyUrl = readOnlyUrl;
-        this.fileOrderInList = fileOrderInList;
-        this.fileRef = fileRef;
     }
 
     public String getDisplayName() {
@@ -37,14 +31,6 @@ public class SimpleFile implements Serializable {
 
     public String getReadOnlyUrl() {
         return readOnlyUrl;
-    }
-
-    public Long getFileOrderInList() {
-        return fileOrderInList;
-    }
-
-    public NodeRef getFileRef() {
-        return fileRef;
     }
 
 }

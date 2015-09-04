@@ -58,7 +58,8 @@ public interface IGridDataModel extends Serializable
     */
    public void sort(String column, boolean descending, String mode);
    
-   public void loadSlice(int rowIndex, int maxRowIndex);
+   /** @return number of rows that were not loaded */
+   public int loadSlice(int rowIndex, int maxRowIndex);
 
    public Pair<Integer, Integer> getCurrentSlice();
 

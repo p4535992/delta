@@ -93,6 +93,7 @@ import ee.webmedia.alfresco.common.propertysheet.renderkit.PropertySheetGridRend
 import ee.webmedia.alfresco.common.propertysheet.search.Search;
 import ee.webmedia.alfresco.common.propertysheet.search.UserSearchGenerator;
 import ee.webmedia.alfresco.common.richlist.PageLoadCallback;
+import ee.webmedia.alfresco.common.service.RequestCacheBean;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.UserContactGroupSearchBean;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
@@ -144,7 +145,9 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
     public static final String BEAN_NAME = "WorkflowBlockBean";
 
     private static final String WORKFLOW_METHOD_BINDING_NAME = "#{WorkflowBlockBean.findCompoundWorkflowDefinitions}";
+    private static final String WORKFLOW_METHOD_BINDING_NAME_CACHE_KEY = "WorkflowMethodBindingName";
     private static final String INDEPENDENT_WORKFLOW_METHOD_BINDING_NAME = "#{WorkflowBlockBean.findIndependentCompoundWorkflowDefinitions}";
+    private static final String INDEPENDENT_WORKFLOW_METHOD_BINDING_NAME_CACHE_KEY = "IndependentWorkflowMethodBindingName";
     private static final String DROPDOWN_MENU_ITEM_ICON = "/images/icons/versioned_properties.gif";
     private static final String MSG_WORKFLOW_ACTION_GROUP = "workflow_compound_start_workflow";
     private static final String TASK_DUE_DATE_EXTENSION_ID = "task-due-date-extension";
@@ -186,6 +189,8 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
 
     private String dueDateExtenderUsername;
     private String dueDateExtenderUserFullname;
+
+    private RequestCacheBean requestCacheBean;
 
     @Override
     public void resetOrInit(DialogDataProvider provider) {
@@ -488,17 +493,13 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
             if (compoundWorkflow != null) {
                 return null;
             }
-            QName parentType = null;
-            if (containerRef != null && getNodeService().exists(containerRef)) {
-                parentType = getNodeService().getType(containerRef);
+            Boolean returnBinding = (Boolean) requestCacheBean.getResult(WORKFLOW_METHOD_BINDING_NAME_CACHE_KEY);
+            if (returnBinding != null) {
+                return returnBinding ? WORKFLOW_METHOD_BINDING_NAME : null;
             }
-            if ((isDocumentWorkflow(parentType) && getWorkflowConstantsBean().isDocumentWorkflowEnabled()
-                    && container.hasPermission(Privilege.VIEW_DOCUMENT_META_DATA, Privilege.VIEW_DOCUMENT_FILES)
-                    && (container == null || new DocumentNotInDraftsFunctionActionEvaluator().evaluate(container)))
-                    || isCaseWorkflow(parentType) && BeanHelper.getWorkflowService().hasNoStoppedOrInprogressCompoundWorkflows(containerRef)) {
-                return WORKFLOW_METHOD_BINDING_NAME;
-            }
-            return null;
+            returnBinding = evaluateShowWorkflowMethodBinding();
+            requestCacheBean.setResult(WORKFLOW_METHOD_BINDING_NAME_CACHE_KEY, returnBinding);
+            return returnBinding ? WORKFLOW_METHOD_BINDING_NAME : null;
         } catch (InvalidNodeRefException ne) {
             log.warn("Node " + containerRef + " in invalid!");
             return null;
@@ -509,17 +510,26 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         }
     }
 
+    private boolean evaluateShowWorkflowMethodBinding() {
+        QName parentType = null;
+        if (containerRef != null && getNodeService().exists(containerRef)) {
+            parentType = getNodeService().getType(containerRef);
+        }
+        return (isDocumentWorkflow(parentType) && getWorkflowConstantsBean().isDocumentWorkflowEnabled()
+                && container.hasPermission(Privilege.VIEW_DOCUMENT_META_DATA, Privilege.VIEW_DOCUMENT_FILES)
+                && (container == null || new DocumentNotInDraftsFunctionActionEvaluator().evaluate(container)))
+                || isCaseWorkflow(parentType) && BeanHelper.getWorkflowService().hasNoStoppedOrInprogressCompoundWorkflows(containerRef);
+    }
+
     public String getIndependentWorkflowMethodBindingName() {
         try {
-            if (compoundWorkflow == null
-                    && getWorkflowConstantsBean().isIndependentWorkflowEnabled()
-                    && BeanHelper.getPrivilegeService().hasPermission(containerRef, AuthenticationUtil.getRunAsUser(), Privilege.VIEW_DOCUMENT_META_DATA,
-                            Privilege.VIEW_DOCUMENT_FILES)
-                            && (containerRef == null || !isDocumentWorkflow(BeanHelper.getNodeService().getType(containerRef))
-                            || new DocumentNotInDraftsFunctionActionEvaluator().evaluate(new Node(containerRef)))) {
-                return INDEPENDENT_WORKFLOW_METHOD_BINDING_NAME;
+            Boolean returnBinding = (Boolean) requestCacheBean.getResult(INDEPENDENT_WORKFLOW_METHOD_BINDING_NAME_CACHE_KEY);
+            if (returnBinding != null) {
+                return returnBinding ? INDEPENDENT_WORKFLOW_METHOD_BINDING_NAME : null;
             }
-            return null;
+            returnBinding = evaluateShowIndependentWorkflowMethodBinding();
+            requestCacheBean.setResult(INDEPENDENT_WORKFLOW_METHOD_BINDING_NAME_CACHE_KEY, returnBinding);
+            return returnBinding ? INDEPENDENT_WORKFLOW_METHOD_BINDING_NAME : null;
         } catch (InvalidNodeRefException ne) {
             log.warn("Node " + containerRef + " in invalid!");
             return null;
@@ -528,6 +538,18 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
             log.error("Error getting independentWorkflowMethodBindingName", e);
             throw e;
         }
+    }
+
+    private boolean evaluateShowIndependentWorkflowMethodBinding() {
+        return compoundWorkflow == null && getWorkflowConstantsBean().isIndependentWorkflowEnabled()
+                && BeanHelper.getPrivilegeService()
+                        .hasPermission(containerRef, AuthenticationUtil.getRunAsUser(), Privilege.VIEW_DOCUMENT_META_DATA, Privilege.VIEW_DOCUMENT_FILES)
+                && (containerRef == null || !isDocumentWorkflow(BeanHelper.getNodeService().getType(containerRef))
+                || new DocumentNotInDraftsFunctionActionEvaluator().evaluate(new Node(containerRef)));
+    }
+    
+    public void clearRequestCache() {
+        requestCacheBean.clear();
     }
 
     private boolean isCaseWorkflow(QName parentType) {
@@ -1713,6 +1735,10 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
 
     protected String getBindingName(String name) {
         return this.getClass().getSimpleName() + "." + name;
+    }
+
+    public void setRequestCacheBean(RequestCacheBean requestCacheBean) {
+        this.requestCacheBean = requestCacheBean;
     }
 
     // END: getters / setters

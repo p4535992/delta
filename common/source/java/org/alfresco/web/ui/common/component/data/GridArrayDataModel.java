@@ -81,8 +81,9 @@ public class GridArrayDataModel implements IGridDataModel
    private Object[] data = null;
     
    @Override
-   public void loadSlice(int rowIndex, int maxRowIndex) {
+   public int loadSlice(int rowIndex, int maxRowIndex) {
        // nothing to do; all data is loaded
+       return 0;
    }
 
    @Override

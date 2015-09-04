@@ -473,7 +473,7 @@ function addSearchSuggest(clientId, containerClientId, pickerCallback, pickerCal
                handleEnterKeySkip = false;
             },
             error: ajaxError,
-            dataType: 'text'
+            dataType: 'html'
          });
       });
       jQInput.focus(function() {

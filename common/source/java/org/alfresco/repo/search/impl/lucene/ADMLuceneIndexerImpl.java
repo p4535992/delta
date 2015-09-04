@@ -102,10 +102,12 @@ import org.apache.lucene.search.Searcher;
 import org.apache.lucene.search.TermQuery;
 
 import ee.webmedia.alfresco.casefile.model.CaseFileModel;
+import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docconfig.service.DocumentConfigService;
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.utils.ClosingTransactionListener;
@@ -822,16 +824,37 @@ public class ADMLuceneIndexerImpl extends AbstractLuceneIndexerImpl<NodeRef> imp
 
             // Index some information about access restrictions when document is in a series that requires access restrictions to be applied on contained documents.
             // Document field "DOC_VISIBLE_TO" is added with authority names with "viewDocumentMetaData" privilege (including inherited authorities with same privilege).
-            if (DocumentCommonModel.Types.DOCUMENT.equals(typeQName) && StoreRef.PROTOCOL_WORKSPACE.equals(nodeRef.getStoreRef().getProtocol())) {
-                NodeRef seriesRef = (NodeRef) properties.get(DocumentCommonModel.Props.SERIES);
-                if (seriesRef != null && !nodeService.exists(seriesRef)) {
-                    log.warn("Document " + nodeRef + " references nonexistent series " + seriesRef);
-                    seriesRef = null;
+            if (DocumentCommonModel.Types.DOCUMENT.equals(typeQName)) {
+                boolean isUnsentDocument = DocumentStatus.FINISHED.getValueName().equals(properties.get(DocumentCommonModel.Props.DOC_STATUS))
+                        && RepoUtil.isEmptyListOrString(properties.get(DocumentCommonModel.Props.SEARCHABLE_SEND_MODE))
+                        && (Boolean.FALSE.equals(properties.get(DocumentCommonModel.Props.DOCUMENT_IS_IMPORTED))
+                        || properties.get(DocumentCommonModel.Props.DOCUMENT_IS_IMPORTED) == null)
+                        && !(RepoUtil.isEmptyListOrString(properties.get(DocumentCommonModel.Props.RECIPIENT_NAME))
+                                && RepoUtil.isEmptyListOrString(properties.get(DocumentDynamicModel.Props.RECIPIENT_PERSON_NAME))
+                                && RepoUtil.isEmptyListOrString(properties.get(DocumentCommonModel.Props.RECIPIENT_EMAIL))
+                                && RepoUtil.isEmptyListOrString(properties.get(DocumentDynamicModel.Props.RECIPIENT_POSTAL_CITY))
+                                && RepoUtil.isEmptyListOrString(properties.get(DocumentDynamicModel.Props.RECIPIENT_STREET_HOUSE))
+                                && RepoUtil.isEmptyListOrString(properties.get(DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME))
+                                && RepoUtil.isEmptyListOrString(properties.get(DocumentDynamicModel.Props.ADDITIONAL_RECIPIENT_PERSON_NAME))
+                                && RepoUtil.isEmptyListOrString(properties.get(DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_EMAIL))
+                                && RepoUtil.isEmptyListOrString(properties.get(DocumentDynamicModel.Props.ADDITIONAL_RECIPIENT_POSTAL_CITY))
+                                && RepoUtil.isEmptyListOrString(properties.get(DocumentDynamicModel.Props.ADDITIONAL_RECIPIENT_STREET_HOUSE))
+                                && RepoUtil.isEmptyListOrString(properties.get(DocumentSpecificModel.Props.PARTY_NAME)));
+                if (isUnsentDocument) {
+                    xdoc.add(new Field("IS_UNSENT_DOC", Boolean.TRUE.toString(), Field.Store.NO, Field.Index.NO_NORMS, Field.TermVector.NO));
                 }
-                if (seriesRef == null || Boolean.FALSE.equals(nodeService.getProperty(seriesRef, SeriesModel.Props.DOCUMENTS_VISIBLE_FOR_USERS_WITHOUT_ACCESS))) {
-                    List<String> authorities = BeanHelper.getPrivilegeService().getAuthoritiesWithPrivilege(nodeRef, Privilege.VIEW_DOCUMENT_META_DATA);
-                    for (String authority : authorities) {
-                        xdoc.add(new Field("DOC_VISIBLE_TO", authority, Field.Store.NO, Field.Index.NO_NORMS, Field.TermVector.NO));
+                if (StoreRef.PROTOCOL_WORKSPACE.equals(nodeRef.getStoreRef().getProtocol())) {
+
+                    NodeRef seriesRef = (NodeRef) properties.get(DocumentCommonModel.Props.SERIES);
+                    if (seriesRef != null && !nodeService.exists(seriesRef)) {
+                        log.warn("Document " + nodeRef + " references nonexistent series " + seriesRef);
+                        seriesRef = null;
+                    }
+                    if (seriesRef == null || Boolean.FALSE.equals(nodeService.getProperty(seriesRef, SeriesModel.Props.DOCUMENTS_VISIBLE_FOR_USERS_WITHOUT_ACCESS))) {
+                        List<String> authorities = BeanHelper.getPrivilegeService().getAuthoritiesWithPrivilege(nodeRef, Privilege.VIEW_DOCUMENT_META_DATA);
+                        for (String authority : authorities) {
+                            xdoc.add(new Field("DOC_VISIBLE_TO", authority, Field.Store.NO, Field.Index.NO_NORMS, Field.TermVector.NO));
+                        }
                     }
                 }
             }

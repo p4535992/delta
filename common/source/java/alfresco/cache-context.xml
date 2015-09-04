@@ -491,6 +491,43 @@
       </property>
    </bean>
    
+   <!-- ============================================================== -->
+   <!-- DocumentTemplate nodeRef to UnmodifiableDocumentTemplate cache -->
+   <!-- ============================================================== -->
+
+   <!-- The cross-transaction shared cache for Person properties -->
+   
+   <bean name="documentTemplateSharedCache" class="org.alfresco.repo.cache.EhCacheAdapter">
+      <property name="cache">
+         <bean class="org.springframework.cache.ehcache.EhCacheFactoryBean" >
+            <property name="cacheManager">
+               <ref bean="internalEHCacheManager" />
+            </property>
+            <property name="cacheName">
+               <value>org.alfresco.cache.documentTemplateCache</value>
+            </property>
+         </bean>
+      </property>
+   </bean>
+   
+   <!-- The transactional cache for DocumentTemplate -->
+   
+   <bean name="documentTemplateCache" class="org.alfresco.repo.cache.TransactionalCache">
+      <property name="sharedCache">
+         <ref bean="documentTemplateSharedCache" />
+      </property>
+      <property name="cacheManager" >
+         <ref bean="transactionalEHCacheManager" />
+      </property>
+      <!-- Eh cache area -->
+      <property name="name">
+         <value>org.alfresco.documentTemplateTransactionalCache</value>
+      </property>
+      <property name="maxCacheSize">
+         <value>1000</value>
+      </property>
+   </bean>
+   
    <!-- ============================================= -->
    <!-- Function nodeRef to UnmodifiableFunction cache -->
    <!-- ============================================= -->

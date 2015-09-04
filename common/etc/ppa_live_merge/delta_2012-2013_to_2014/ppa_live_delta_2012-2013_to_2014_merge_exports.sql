@@ -323,7 +323,7 @@ COPY (
   wfc_viewed_by_owner,
   wfs_received_date_time
   FROM delta_task
-  left join alf_node node on node.uuid = workflow_id and node.store_id = wfs_compound_workflow_store_id
+  left join alf_node node on node.uuid = workflow_id -- and node.store_id = wfs_compound_workflow_store_id
   left join tmp_export_nodes export_node on export_node.id = node.id
   where node.id is null or export_node.id is not null
 ) TO '/delta-pgsql/data/delta_task.tsv';

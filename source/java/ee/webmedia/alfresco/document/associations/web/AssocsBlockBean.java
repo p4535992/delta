@@ -13,6 +13,7 @@ import org.alfresco.web.config.ActionsConfigElement.ActionDefinition;
 import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.classificator.constant.DocTypeAssocType;
+import ee.webmedia.alfresco.common.service.RequestCacheBean;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.docadmin.service.AssociationModel;
@@ -41,7 +42,11 @@ public class AssocsBlockBean implements DocumentDynamicBlock {
     private static final String REPLIES_METHOD_BINDING_NAME = "#{" + BEAN_NAME + ".createAddRepliesMenu}";
     private static final String DROPDOWN_MENU_ITEM_ICON = "/images/icons/versioned_properties.gif";
     private static final String DROPDOWN_MENU_SINGLE_ITEM_ICON = "/images/icons/arrow-right.png";
+    private static final String FOLLOWUP_ASSOC_BINDING_CAHCE_KEY = "FollowupAssocsBinding";
+    private static final String REPLY_ASSOC_BINDING_CAHCE_KEY = "RepliesAssocsBindingName";
     public static final String PARAM_ASSOC_MODEL_REF = "assocModelRef";
+
+    private RequestCacheBean requestCacheBean;
 
     private Node document;
     private List<DocAssocInfo> docAssocInfos = new ArrayList<DocAssocInfo>();
@@ -94,11 +99,14 @@ public class AssocsBlockBean implements DocumentDynamicBlock {
     public String getFollowupAssocsBindingName() {
         WmNode document = null;
         try {
-            document = getDocumentFromDialog();// FIXME document should be provided by bean
-            if (new AddFollowUpAssocEvaluator().evaluate(document)) {
-                return FOLLOWUPS_METHOD_BINDING_NAME;
+            Boolean returnBinding = (Boolean) requestCacheBean.getResult(FOLLOWUP_ASSOC_BINDING_CAHCE_KEY);
+            if (returnBinding != null) {
+                return returnBinding ? FOLLOWUPS_METHOD_BINDING_NAME : null;
             }
-            return null;
+            document = getDocumentFromDialog();// FIXME document should be provided by bean
+            returnBinding = new AddFollowUpAssocEvaluator().evaluate(document);
+            requestCacheBean.setResult(FOLLOWUP_ASSOC_BINDING_CAHCE_KEY, returnBinding);
+            return returnBinding ? FOLLOWUPS_METHOD_BINDING_NAME : null;
         } catch (InvalidNodeRefException ne) {
             LOG.warn("Node " + document + " in invalid!");
             return null;
@@ -126,11 +134,14 @@ public class AssocsBlockBean implements DocumentDynamicBlock {
     public String getRepliesAssocsBindingName() {
         WmNode document = null;
         try {
-            document = getDocumentFromDialog();
-            if (new AddReplyAssocEvaluator().evaluate(document)) {
-                return REPLIES_METHOD_BINDING_NAME;
+            Boolean returnBinding = (Boolean) requestCacheBean.getResult(REPLY_ASSOC_BINDING_CAHCE_KEY);
+            if (returnBinding != null) {
+                return returnBinding ? REPLIES_METHOD_BINDING_NAME : null;
             }
-            return null;
+            document = getDocumentFromDialog();
+            returnBinding = new AddReplyAssocEvaluator().evaluate(document);
+            requestCacheBean.setResult(REPLY_ASSOC_BINDING_CAHCE_KEY, returnBinding);
+            return returnBinding ? REPLIES_METHOD_BINDING_NAME : null;
         } catch (InvalidNodeRefException ne) {
             LOG.warn("Node " + document + " in invalid!");
             return null;
@@ -225,6 +236,10 @@ public class AssocsBlockBean implements DocumentDynamicBlock {
 
     public List<DocAssocInfo> getDocAssocInfos() {
         return docAssocInfos;
+    }
+
+    public void setRequestCacheBean(RequestCacheBean requestCacheBean) {
+        this.requestCacheBean = requestCacheBean;
     }
 
     // END: getters / setters

@@ -49,6 +49,7 @@ import org.alfresco.service.transaction.TransactionService;
 import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.codec.binary.Hex;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.FastDateFormat;
@@ -73,6 +74,7 @@ import ee.webmedia.alfresco.cases.model.CaseModel;
 import ee.webmedia.alfresco.cases.service.CaseService;
 import ee.webmedia.alfresco.classificator.enums.AccessRestriction;
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
+import ee.webmedia.alfresco.common.service.BulkLoadNodeService;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.WmNode;
@@ -116,6 +118,8 @@ import ee.webmedia.alfresco.volume.model.DeletionType;
 import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
 import ee.webmedia.alfresco.volume.service.VolumeService;
+import ee.webmedia.alfresco.workflow.model.CompoundWorkflowType;
+import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 
 public class ArchivalsServiceImpl implements ArchivalsService {
 
@@ -143,6 +147,7 @@ public class ArchivalsServiceImpl implements ArchivalsService {
     private UserService userService;
     private ContentService contentService;
     private ParametersService parametersService;
+    private BulkLoadNodeService bulkLoadNodeService;
 
     private final AtomicBoolean archivingPaused = new AtomicBoolean(false);
     private final AtomicBoolean archivingContinuedManually = new AtomicBoolean(false);
@@ -151,16 +156,8 @@ public class ArchivalsServiceImpl implements ArchivalsService {
     private static final FastDateFormat DATE_FORMAT = FastDateFormat.getInstance("yyyy-MM-dd");
     private static final FastDateFormat DATE_SHORT_FORMAT = FastDateFormat.getInstance("yyyyMMdd");
     private static final FastDateFormat DATE_TIME_FORMAT = FastDateFormat.getInstance("yyyy-MM-dd'T'HH:mm:ss");
-    /**
-     * No need to remove objects from ThreadLocal if it is always accessed by same threads (for example, threads that
-     * are managed by ThreadPool that reuses its threads). Otherwise objects must always be explicitly removed.
-     */
-    private static final ThreadLocal<SimpleDateFormat> THREAD_LOCAL_TIME_FORMAT = new ThreadLocal<SimpleDateFormat>() {
-        @Override
-        protected SimpleDateFormat initialValue() {
-            return new SimpleDateFormat("HH:mm");
-        }
-    };
+
+    private static final Set<QName> CWF_PROPS_TO_LOAD = new HashSet<>(Arrays.asList(WorkflowCommonModel.Props.TYPE, WorkflowCommonModel.Props.MAIN_DOCUMENT));
 
     @Override
     public void exportToUam(final List<NodeRef> volumes, final Date exportStartDate, final NodeRef activityRef) {
@@ -813,6 +810,8 @@ public class ArchivalsServiceImpl implements ArchivalsService {
         int totalArchivedDocumentsCount = getCount(jobProps, ArchivalsModel.Props.TOTAL_ARCHIVED_DOCUMENTS_COUNT);
         int archivedNodesCount = getCount(jobProps, ArchivalsModel.Props.ARCHIVED_NODE_COUNT);
 
+        final boolean independentWorkflowEnabled = BeanHelper.getWorkflowConstantsBean().isIndependentWorkflowEnabled();
+
         final Map<NodeRef, Integer> caseDocsUpdated = new HashMap<>();
         long childCount = archivedNodesCount;
         for (Set<ChildAssociationRef> childNodes : archiveNodeRefs.values()) {
@@ -822,6 +821,7 @@ public class ArchivalsServiceImpl implements ArchivalsService {
             LOG.info(String.format("Resuming paused archiving: %d nodes archived previously, starting to archive remaining %d nodes",
                     archivedNodesCount, (childCount - archivedNodesCount)));
         }
+        SimpleDateFormat dateFormat = new SimpleDateFormat("HH:mm");
         ProgressTracker progress = new ProgressTracker(childCount, archivedNodesCount);
         int count = 0;
         for (Map.Entry<NodeRef, Set<ChildAssociationRef>> entry : archiveNodeRefs.entrySet()) {
@@ -849,16 +849,29 @@ public class ArchivalsServiceImpl implements ArchivalsService {
 
                         @Override
                         public Void execute() throws Throwable {
+                            Set<NodeRef> cwfRefs = null;
                             if (isDocument) {
                                 String existingRegNr = (String) nodeService.getProperty(childRef, REG_NUMBER);
                                 if (StringUtils.isNotBlank(existingRegNr)) {
                                     BeanHelper.getAdrService().addDeletedDocument(childRef);
+                                }
+                                // This approach would now work if institutions would change independent workflow enabled/disabled status
+                                // but in practice institutions don't do that.
+                                if (independentWorkflowEnabled) {
+                                    cwfRefs = new HashSet<>();
+                                    List<AssociationRef> assocRefs = nodeService.getTargetAssocs(childRef, DocumentCommonModel.Assocs.WORKFLOW_DOCUMENT);
+                                    for (AssociationRef assocRef : assocRefs) {
+                                        cwfRefs.add(assocRef.getTargetRef());
+                                    }
                                 }
                             }
                             NodeRef archivedNodeRef = nodeService.moveNode(childRef, archivedParentRefFinal, childAssocRef.getTypeQName(),
                                     childAssocRef.getQName()).getChildRef();
                             updateDocumentLocationProps(archivedFunctionRef, archivedSeriesRef, archivedVolumeRef, isInCase ? archivedParentRefFinal : null,
                                     archivedNodeRef);
+                            if (isDocument && independentWorkflowEnabled) {
+                                updateCompoundWorkflowProps(cwfRefs, childRef, archivedNodeRef);
+                            }
                             return null;
                         }
                     }, false, true);
@@ -887,7 +900,7 @@ public class ArchivalsServiceImpl implements ArchivalsService {
                     if (info != null) {
                         LOG.info("Archiving volume: " + info);
                     }
-                    if (isArchivingPaused() || !isArchivingAllowed()) {
+                    if (isArchivingPaused() || !isArchivingAllowed(dateFormat)) {
                         final Map<QName, Serializable> props = new HashMap<>();
                         props.put(ArchivalsModel.Props.FAILED_NODE_COUNT, failedNodeCount);
                         props.put(ArchivalsModel.Props.FAILED_DOCUMENTS_COUNT, failedDocumentsCount);
@@ -958,9 +971,8 @@ public class ArchivalsServiceImpl implements ArchivalsService {
         return (count != null) ? count : 0;
     }
 
-    @Override
-    public boolean isArchivingAllowed() {
-        boolean allowedNow = isArchivingAllowedAtThisTime();
+    private boolean isArchivingAllowed(SimpleDateFormat dateFormat) {
+        boolean allowedNow = isArchivingAllowedAtThisTime(dateFormat);
 
         if (allowedNow) {
             resetManualActions();
@@ -974,7 +986,12 @@ public class ArchivalsServiceImpl implements ArchivalsService {
         return allowedNow;
     }
 
-    private boolean isArchivingAllowedAtThisTime() {
+    @Override
+    public boolean isArchivingAllowed() {
+        return isArchivingAllowed(new SimpleDateFormat("HH:mm"));
+    }
+
+    private boolean isArchivingAllowedAtThisTime(SimpleDateFormat dateFormat) {
         DateTime now = new DateTime();
         if (Boolean.valueOf(parametersService.getStringParameter(Parameters.CONTINUE_ARCIVING_OVER_WEEKEND))) {
             int weekDay = now.getDayOfWeek();
@@ -990,15 +1007,15 @@ public class ArchivalsServiceImpl implements ArchivalsService {
         DateTime beginTime;
         DateTime endTime;
         try {
-            beginTime = getDateTime(now, beginTimeStr);
-            endTime = getDateTime(now, endTimeStr);
+            beginTime = getDateTime(now, beginTimeStr, dateFormat);
+            endTime = getDateTime(now, endTimeStr, dateFormat);
             if (beginTime.isAfter(endTime)) {
                 endTime = endTime.plusDays(1);
             }
         } catch (ParseException e) {
             LOG.warn("Unable to parse " + Parameters.ARCHIVING_BEGIN_TIME.getParameterName() + " (value=" + beginTimeStr + ") or "
                     + Parameters.ARCHIVING_END_TIME.getParameterName() + " (value=" + endTimeStr + "), continuing archiving. " +
-                    "Required format is " + THREAD_LOCAL_TIME_FORMAT.get().toPattern());
+                    "Required format is " + dateFormat.toPattern());
             return true;
         }
         if (beginTime.isBefore(now) && endTime.isAfter(now)) {
@@ -1007,9 +1024,9 @@ public class ArchivalsServiceImpl implements ArchivalsService {
         return false;
     }
 
-    private DateTime getDateTime(DateTime now, String timeString) throws ParseException {
+    private DateTime getDateTime(DateTime now, String timeString, DateFormat dateFormat) throws ParseException {
         Calendar calendar = Calendar.getInstance();
-        calendar.setTime(THREAD_LOCAL_TIME_FORMAT.get().parse(timeString));
+        calendar.setTime(dateFormat.parse(timeString));
         return new DateTime(now.getYear(), now.getMonthOfYear(), now.getDayOfMonth(), calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE), 0, 0);
     }
 
@@ -1201,6 +1218,20 @@ public class ArchivalsServiceImpl implements ArchivalsService {
         props.put(DocumentCommonModel.Props.VOLUME, archivedVolumeRef);
         props.put(DocumentCommonModel.Props.CASE, archivedCaseRef);
         nodeService.addProperties(docRef, props);
+    }
+
+    private void updateCompoundWorkflowProps(Set<NodeRef> compoundWorkflowRefs, NodeRef mainDocRef, NodeRef archivedDocRef) {
+        if (CollectionUtils.isEmpty(compoundWorkflowRefs)) {
+            return;
+        }
+        Map<NodeRef, Node> nodes = bulkLoadNodeService.loadNodes(compoundWorkflowRefs, CWF_PROPS_TO_LOAD);
+        for (Map.Entry<NodeRef, Node> entry : nodes.entrySet()) {
+            Map<String, Object> cwfProps = entry.getValue().getProperties();
+            CompoundWorkflowType type = CompoundWorkflowType.valueOf((String) cwfProps.get(WorkflowCommonModel.Props.TYPE));
+            if (CompoundWorkflowType.INDEPENDENT_WORKFLOW.equals(type) && mainDocRef.equals(cwfProps.get(WorkflowCommonModel.Props.MAIN_DOCUMENT))) {
+                nodeService.setProperty(entry.getKey(), WorkflowCommonModel.Props.MAIN_DOCUMENT, archivedDocRef);
+            }
+        }
     }
 
     @Override
@@ -1605,6 +1636,10 @@ public class ArchivalsServiceImpl implements ArchivalsService {
 
     public void setContentService(ContentService contentService) {
         this.contentService = contentService;
+    }
+
+    public void setBulkLoadNodeService(BulkLoadNodeService bulkLoadNodeService) {
+        this.bulkLoadNodeService = bulkLoadNodeService;
     }
 
     @Override

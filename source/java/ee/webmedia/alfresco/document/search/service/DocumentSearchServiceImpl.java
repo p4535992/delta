@@ -162,23 +162,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
 
     static {
         List<String> queryParts = new ArrayList<String>();
-        queryParts.add(generateStringExactQuery(DocumentStatus.FINISHED.getValueName(), DocumentCommonModel.Props.DOC_STATUS));
-        queryParts.add(generateStringNullQuery(DocumentCommonModel.Props.SEARCHABLE_SEND_MODE));
-        queryParts.add(joinQueryPartsOr(
-                generatePropertyBooleanQuery(DocumentCommonModel.Props.DOCUMENT_IS_IMPORTED, false)
-                , generatePropertyNullQuery(DocumentCommonModel.Props.DOCUMENT_IS_IMPORTED)));
-        queryParts.add(generateStringNotEmptyQuery(
-                DocumentCommonModel.Props.RECIPIENT_NAME,
-                DocumentDynamicModel.Props.RECIPIENT_PERSON_NAME,
-                DocumentCommonModel.Props.RECIPIENT_EMAIL,
-                DocumentDynamicModel.Props.RECIPIENT_POSTAL_CITY,
-                DocumentDynamicModel.Props.RECIPIENT_STREET_HOUSE,
-                DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME,
-                DocumentDynamicModel.Props.ADDITIONAL_RECIPIENT_PERSON_NAME,
-                DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_EMAIL,
-                DocumentDynamicModel.Props.ADDITIONAL_RECIPIENT_POSTAL_CITY,
-                DocumentDynamicModel.Props.ADDITIONAL_RECIPIENT_STREET_HOUSE,
-                DocumentSpecificModel.Props.PARTY_NAME));
+        queryParts.add(SearchUtil.generateUnsentDocQuery());
         PRELOADED_RECIPIENT_FINISHED_QUERY_PARTS = Collections.unmodifiableList(queryParts);
     }
 
@@ -563,25 +547,52 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
     }
 
     @Override
-    public List<Task> searchCurrentUsersTasksInProgress(QName... taskType) {
-        return searchCurrentUsersTasksInProgress(null, taskType);
+    public List<Pair<NodeRef, QName>> searchCurrentUsersInProgressTaskRefs(boolean onlyOverdueOrToday, QName... taskType) {
+        long startTime = System.currentTimeMillis();
+        Pair<List<String>, List<Object>> queryPartsAndArgs = new Pair<List<String>, List<Object>>(new ArrayList<String>(), new ArrayList<>());
+        String query = generateUserInProgressTaskQuery(onlyOverdueOrToday, false, queryPartsAndArgs, taskType);
+        String orderClause = " order by wfs_due_date desc nulls last";
+        Pair<List<Pair<NodeRef, QName>>, Boolean> results = BeanHelper.getWorkflowDbService().searchTaskNodeRefAndType(query, orderClause, queryPartsAndArgs.getSecond(), -1);
+        if (log.isDebugEnabled()) {
+            log.debug("Current user's and IN_PROGRESS tasks search total time " + (System.currentTimeMillis() - startTime) + " ms, query: " + query);
+        }
+        return results.getFirst();
     }
 
     @Override
     public <T extends Object> List<T> searchCurrentUsersTasksInProgress(RowMapper<T> rowMapper, QName... taskType) {
         long startTime = System.currentTimeMillis();
-        Pair<List<String>, List<Object>> queryPartsAndArgs = getTaskQuery(AuthenticationUtil.getRunAsUser(), Status.IN_PROGRESS, false, taskType);
-        addSubstitutionRestriction(queryPartsAndArgs);
-        if (rowMapper != null) {
-            queryPartsAndArgs.getFirst().add(DbSearchUtil.generateTaskPropertyNotQuery(WorkflowSpecificModel.Props.SEARCHABLE_COMPOUND_WORKFLOW_TYPE));
-            queryPartsAndArgs.getSecond().add(CompoundWorkflowType.CASE_FILE_WORKFLOW.toString());
-        }
-        String query = generateTaskSearchQuery(queryPartsAndArgs.getFirst());
+        Pair<List<String>, List<Object>> queryPartsAndArgs = new Pair<List<String>, List<Object>>(new ArrayList<String>(), new ArrayList<>());
+        String query = generateUserInProgressTaskQuery(false, rowMapper != null, queryPartsAndArgs, taskType);
         Pair<List<T>, Boolean> results = BeanHelper.getWorkflowDbService().searchTasksAllStores(query, queryPartsAndArgs.getSecond(), -1, rowMapper);
         if (log.isDebugEnabled()) {
             log.debug("Current user's and IN_PROGRESS tasks search total time " + (System.currentTimeMillis() - startTime) + " ms, query: " + query);
         }
         return results.getFirst();
+    }
+
+    private String generateUserInProgressTaskQuery(boolean onlyOverdueOrToday, boolean excludeCaseFileWorkflows, Pair<List<String>, List<Object>> queryPartsAndArgs,
+            QName... taskType) {
+        getTaskQuery(AuthenticationUtil.getRunAsUser(), Status.IN_PROGRESS, false, queryPartsAndArgs, taskType);
+        addSubstitutionRestriction(queryPartsAndArgs);
+        if (onlyOverdueOrToday) {
+            addTaskOverdueCondition(queryPartsAndArgs);
+        }
+        if (excludeCaseFileWorkflows) {
+            queryPartsAndArgs.getFirst().add(DbSearchUtil.generateTaskPropertyNotQuery(WorkflowSpecificModel.Props.SEARCHABLE_COMPOUND_WORKFLOW_TYPE));
+            queryPartsAndArgs.getSecond().add(CompoundWorkflowType.CASE_FILE_WORKFLOW.toString());
+        }
+        String query = generateTaskSearchQuery(queryPartsAndArgs.getFirst());
+        return query;
+    }
+
+    private void addTaskOverdueCondition(Pair<List<String>, List<Object>> queryPartsAndArgs) {
+        Date today = Calendar.getInstance().getTime();
+        today.setHours(23);
+        today.setMinutes(59);
+        today.setSeconds(59);
+        queryPartsAndArgs.getFirst().add(" wfs_due_date <= ? ");
+        queryPartsAndArgs.getSecond().add(today);
     }
 
     @Override
@@ -1754,9 +1765,14 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
     }
 
     private Pair<List<String>, List<Object>> getTaskQuery(String ownerId, Status status, boolean isPreviousOwnerId, QName... taskType) {
+        return getTaskQuery(ownerId, status, isPreviousOwnerId, new Pair<List<String>, List<Object>>(new ArrayList<String>(), new ArrayList<>()), taskType);
+    }
+
+    private Pair<List<String>, List<Object>> getTaskQuery(String ownerId, Status status, boolean isPreviousOwnerId, Pair<List<String>, List<Object>> queryPartsAndArgs,
+            QName... taskType) {
+        List<String> queryParts = queryPartsAndArgs.getFirst();
+        List<Object> arguments = queryPartsAndArgs.getSecond();
         QName ownerField = (isPreviousOwnerId) ? WorkflowCommonModel.Props.PREVIOUS_OWNER_ID : WorkflowCommonModel.Props.OWNER_ID;
-        List<String> queryParts = new ArrayList<String>();
-        List<Object> arguments = new ArrayList<Object>();
         if (taskType != null) {
             addTaskTypeFieldExactQueryPartsAndArguments(queryParts, arguments, taskType);
         } else {
@@ -1764,7 +1780,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         }
         addTaskStringExactPartsAndArgs(queryParts, arguments, status.getName(), WorkflowCommonModel.Props.STATUS);
         addTaskStringExactPartsAndArgs(queryParts, arguments, ownerId, ownerField);
-        return new Pair<List<String>, List<Object>>(queryParts, arguments);
+        return queryPartsAndArgs;
     }
 
     private void addTaskStringExactPartsAndArgs(List<String> queryParts, List<Object> arguments, String value, QName propName) {

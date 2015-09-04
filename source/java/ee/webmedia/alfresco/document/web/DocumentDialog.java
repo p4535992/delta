@@ -191,10 +191,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
         }
         NodeRef documentRef = new NodeRef(ActionUtil.getParam(event, PARAM_DOCUMENT_NODE_REF));
         try {
-            Pair<String, NodeRef> result = getDocumentTemplateService().populateTemplate(documentRef, overwriteGranted);
-            final String wordFileDisplayName = result.getFirst();
-            NodeRef fileRef = result.getSecond();
-            BeanHelper.getFileService().addAsLastActiveFile(documentRef, fileRef);
+            String wordFileDisplayName = getDocumentTemplateService().populateTemplate(documentRef, overwriteGranted);
             MessageUtil.addInfoMessage("document_createWordFile_success", wordFileDisplayName);
         } catch (ExistingFileFromTemplateException e) {
             Map<String, String> params = new HashMap<String, String>(2);
@@ -676,6 +673,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
             // needed for file-block
             final Serializable updatedStatus = getNodeService().getProperty(getDocumentDialogHelperBean().getNodeRef(), DocumentCommonModel.Props.DOC_STATUS);
             getDocumentDialogHelperBean().getProps().put(DocumentCommonModel.Props.DOC_STATUS.toString(), updatedStatus);
+            BeanHelper.getWorkflowBlockBean().clearRequestCache();
         } catch (InvalidNodeRefException e) {
             final FacesContext context = FacesContext.getCurrentInstance();
             MessageUtil.addErrorMessage(context, "document_registerDoc_error_docDeleted");

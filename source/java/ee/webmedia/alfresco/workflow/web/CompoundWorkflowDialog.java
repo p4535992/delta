@@ -300,8 +300,10 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
             if (!saveSucceeded) {
                 confirmationOutcome = null;
             }
-            updatePanelGroup(null, null, true, true, null, !finishingTask);
-            initBlocks(false, !finishingTask);
+            if (!isDocumentWorkflow()) {
+                updatePanelGroup(null, null, true, true, null, !finishingTask);
+                initBlocks(false, !finishingTask);
+            }
             if (finishingTask) {
                 return saveSucceeded ? "SAVED" : null;
             }

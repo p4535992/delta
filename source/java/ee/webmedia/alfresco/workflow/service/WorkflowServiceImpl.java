@@ -964,10 +964,9 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         return freshCompoundWorkflow;
     }
 
-    public void saveCompoundWorkflow(WorkflowEventQueue queue, CompoundWorkflow compoundWorkflow) {
+    private void saveCompoundWorkflow(WorkflowEventQueue queue, CompoundWorkflow compoundWorkflow) {
         proccessPreSave(queue, compoundWorkflow);
-
-        boolean changed = saveCompoundWorkflow(queue, compoundWorkflow, null);
+        saveCompoundWorkflow(queue, compoundWorkflow, null);
     }
 
     private void proccessPreSave(WorkflowEventQueue queue, CompoundWorkflow compoundWorkflow) {
@@ -1160,6 +1159,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
 
         int index = 0;
         String documentTypeFromTaskParent = null;
+        boolean documentTypeNotFound = false;
         UnsavedTaskCommonData unsavedTaskCommonData = null;
         ReviewFromOtherOrgCommonData reviewCommonData = workflow.isType(WorkflowSpecificModel.Types.REVIEW_WORKFLOW) && workflowConstantsBean.isReviewToOtherOrgEnabled()
                 ? collectReviewTaskCommonData() : null;
@@ -1170,8 +1170,11 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
                     connection = dataSource.getConnection();
                     for (Task task : workflow.getTasks()) {
                         task.setTaskIndexInWorkflow(index);
-                        if (documentTypeFromTaskParent == null && isUnsavedAndNotLinkedReview(task)) {
+                        if (documentTypeFromTaskParent == null && !documentTypeNotFound && isUnsavedAndNotLinkedReview(task)) {
                             documentTypeFromTaskParent = getDocumentTypeFromTaskParent(parentRef);
+                            if (documentTypeFromTaskParent == null) {
+                                documentTypeNotFound = true;
+                            }
                         }
                         if (unsavedTaskCommonData == null && isUnsavedAndNotLinkedReview(task)) {
                             unsavedTaskCommonData = collectNewTaskCommonData();
@@ -1250,6 +1253,11 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
                 workflowDbService.removeTaskFiles(taskRef, removedFiles);
                 removedFiles.clear();
             }
+
+            if (!task.hasFiles()) {
+                continue;
+            }
+
             List<String> existingDisplayNames = new ArrayList<>();
             List<NodeRef> newFileRefs = new ArrayList<>();
             final List<Object> files = task.getFiles();
@@ -2647,7 +2655,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         }
         return true;
     }
-    
+
     @Override
     public void removeCaseFileTypeFromCompoundWorklfowDefinitions(String caseFileId) {
         Set<QName> propsToLoad = new HashSet<>(Arrays.asList(WorkflowCommonModel.Props.CASE_FILE_TYPES, WorkflowCommonModel.Props.NAME));
@@ -2724,7 +2732,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         for (WorkflowMultiEventListener listener : multiEventListeners) {
             listener.handleMultipleEvents(queue);
         }
-        queue.getEvents().clear();
+        queue.clear();
     }
 
     private void handleEventForWorkflowType(WorkflowEventQueue queue, WorkflowEvent event) {
@@ -2760,16 +2768,12 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         WorkflowEvent event = new BaseWorkflowEvent(type, object, extras);
         handleEventImmediately(queue, event);
 
-        List<WorkflowEvent> events = queue.getEvents();
-        for (WorkflowEvent existingEvent : events) {
-            if (existingEvent.getType() == type && existingEvent.getObject().equals(object)) {
-                if (log.isDebugEnabled()) {
-                    log.debug("Event already exists in queue for this object: " + existingEvent);
-                }
-                return;
+        boolean eventAdded = queue.add(event);
+        if (!eventAdded) {
+            if (log.isDebugEnabled()) {
+                log.debug("Event already exists in queue for this object: " + event);
             }
         }
-        events.add(event);
     }
 
     // ========================================================================
@@ -3586,7 +3590,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         }
     }
 
-    protected String getDocumentsLog(String emptyLabel, List<NodeRef> documents) {
+    private String getDocumentsLog(String emptyLabel, List<NodeRef> documents) {
         if (documents == null || documents.isEmpty()) {
             return emptyLabel;
         }

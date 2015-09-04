@@ -58,7 +58,7 @@ public class Document extends Node implements Comparable<Document>, CssStylable,
     private static final QName MAIN_DOCUMENT_PROP = RepoUtil.createTransientProp("mainDocument");
     private static final QName DOCUMENT_TO_SIGN_PROP = RepoUtil.createTransientProp("documentToSign");
     private static final Set<QName> MDELTA_FILE_PROPS = new HashSet<QName>(Arrays.asList(FileModel.Props.DISPLAY_NAME, DvkModel.Props.DVK_ID,
-            ContentModel.PROP_NAME, ContentModel.PROP_CONTENT));
+            ContentModel.PROP_NAME, ContentModel.PROP_CONTENT, FileModel.Props.ACTIVE));
 
     private static final long serialVersionUID = 1L;
 
@@ -648,7 +648,7 @@ public class Document extends Node implements Comparable<Document>, CssStylable,
             final PrivilegeService privilegeService = BeanHelper.getPrivilegeService();
             final String userName = AuthenticationUtil.getRunAsUser();
             try {
-                CreateSimpleFileCallback callback = new CreateSimpleFileCallback() {
+                CreateSimpleFileCallback<MDeltaFile> callback = new CreateSimpleFileCallback<MDeltaFile>() {
                     @Override
                     public MDeltaFile create(Map<QName, Serializable> fileProps, Serializable... objects) {
                         String displayName = (String) fileProps.get(FileModel.Props.DISPLAY_NAME);
@@ -663,9 +663,11 @@ public class Document extends Node implements Comparable<Document>, CssStylable,
                         return file;
                     }
                 };
-                files = bulkLoadNodeService.loadActiveFiles(nodeRef, null, MDELTA_FILE_PROPS, callback);
+                files = new ArrayList<>();
+                List<MDeltaFile> filez = bulkLoadNodeService.loadActiveFiles(nodeRef, null, MDELTA_FILE_PROPS, callback);
+                files.addAll(filez);
             } catch (InvalidNodeRefException e) {
-                files = new ArrayList<SimpleFile>();
+                files = new ArrayList<>();
             }
         }
         return files;

@@ -160,7 +160,7 @@ public interface DocumentSearchService {
      *
      * @param taskType
      */
-    List<Task> searchCurrentUsersTasksInProgress(QName... taskType);
+    List<Pair<NodeRef, QName>> searchCurrentUsersInProgressTaskRefs(boolean onlyOverdueOrToday, QName... taskType);
 
     <T extends Object> List<T> searchCurrentUsersTasksInProgress(RowMapper<T> rowMapper, QName... taskType);
 

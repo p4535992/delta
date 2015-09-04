@@ -7,7 +7,6 @@ import static org.apache.commons.lang.StringUtils.equalsIgnoreCase;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -30,6 +29,7 @@ import javax.xml.ws.soap.SOAPFaultException;
 import org.alfresco.i18n.I18NUtil;
 import org.alfresco.model.ContentModel;
 import org.alfresco.model.ForumModel;
+import org.alfresco.repo.cache.SimpleCache;
 import org.alfresco.repo.content.MimetypeMap;
 import org.alfresco.service.cmr.dictionary.DictionaryService;
 import org.alfresco.service.cmr.model.FileFolderService;
@@ -88,6 +88,7 @@ import ee.webmedia.alfresco.template.exception.ExistingFileFromTemplateException
 import ee.webmedia.alfresco.template.model.DocumentTemplate;
 import ee.webmedia.alfresco.template.model.DocumentTemplateModel;
 import ee.webmedia.alfresco.template.model.ProcessedEmailTemplate;
+import ee.webmedia.alfresco.template.model.UnmodifiableDocumentTemplate;
 import ee.webmedia.alfresco.template.web.AddDocumentTemplateDialog;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.FilenameUtil;
@@ -138,6 +139,8 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
     private DocumentLogService documentLogService;
     private WorkflowService workflowService;
     private ApplicationConstantsBean applicationConstantsBean;
+
+    private SimpleCache<NodeRef, UnmodifiableDocumentTemplate> documentTemplateCache;
 
     private static final Set<String> IGNORED_FIELD_GROUPS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
             SystematicFieldGroupNames.DOCUMENT_LOCATION,
@@ -199,7 +202,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
         Map<String, Object> properties = docTemplNode.getProperties();
         String oldName = (String) properties.get(DocumentTemplateModel.Prop.NAME.toString());
         String newName = StringUtils.strip((String) properties.get(TEMP_PROP_FILE_NAME_BASE.toString())) + properties.get(TEMP_PROP_FILE_NAME_EXTENSION.toString());
-        for (DocumentTemplate documentTemplate : getTemplates()) {
+        for (UnmodifiableDocumentTemplate documentTemplate : getUnmodifiableTemplates()) {
             String nameForCheck = documentTemplate.getName();
             if (!StringUtils.equals(nameForCheck, oldName) && StringUtils.equals(nameForCheck, newName)) {
                 throw new UnableToPerformException(AddDocumentTemplateDialog.ERR_EXISTING_FILE, newName);
@@ -207,38 +210,34 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
         }
         properties.put(DocumentTemplateModel.Prop.NAME.toString(), newName);
         NodeRef docTemplateNodeRef = docTemplNode.getNodeRef();
+        removeTemplateFromCache(docTemplateNodeRef);
         generalService.setPropertiesIgnoringSystem(docTemplateNodeRef, properties);
         nodeService.setProperty(docTemplateNodeRef, ContentModel.PROP_NAME, newName);
     }
 
-    @Override
-    public DocumentTemplate getDocumentsTemplate(NodeRef document) {
-        String documentTypeId = (String) nodeService.getProperty(document, DocumentAdminModel.Props.OBJECT_TYPE_ID);
+    private DocumentTemplate getDocumentsTemplate(String documentTypeId) {
         // it's OK to pick first one
-        FileInfo word2003OrOOTemplate = null;
+        UnmodifiableDocumentTemplate word2003OrOOTemplate = null;
         boolean msoAvailable = msoService.isAvailable();
         boolean ooAvailable = openOfficeService.isAvailable();
-        for (FileInfo fi : fileFolderService.listFiles(getConstantNodeRefsBean().getTemplateRoot())) {
-            if (!nodeService.hasAspect(fi.getNodeRef(), DocumentTemplateModel.Aspects.TEMPLATE_DOCUMENT)) {
-                continue;
-            }
-
-            if (!documentTypeId.equals(fi.getProperties().get(DocumentTemplateModel.Prop.DOCTYPE_ID))) {
+        for (UnmodifiableDocumentTemplate template : getUnmodifiableTemplates()) {
+            if (!documentTypeId.equals(template.getDocTypeId())
+                    || !template.hasAspect(DocumentTemplateModel.Aspects.TEMPLATE_DOCUMENT)) {
                 continue;
             }
 
             // If current file is 2007/2010 template, return the first one found
-            if (StringUtils.endsWithIgnoreCase(fi.getName(), ".dotx") && msoAvailable) {
-                return setupDocumentTemplate(fi);
+            if (StringUtils.endsWithIgnoreCase(template.getName(), ".dotx") && msoAvailable) {
+                return setupDocumentTemplate(template.getNodeRef());
             }
 
             // Otherwise mark it as a candidate if only 2003 binary or OpenOffice template is present
-            word2003OrOOTemplate = fi;
+            word2003OrOOTemplate = template;
         }
         if (word2003OrOOTemplate != null) {
             String ext = getExtension(word2003OrOOTemplate.getName());
             if (equalsIgnoreCase("ott", ext) && ooAvailable || equalsIgnoreCase("dot", ext) && msoAvailable) {
-                return setupDocumentTemplate(word2003OrOOTemplate);
+                return setupDocumentTemplate(word2003OrOOTemplate.getNodeRef());
             }
         }
 
@@ -247,17 +246,11 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
 
     @Override
     public boolean hasDocumentsTemplate(String documentTypeId) {
-        Collection<Map<NodeRef, Map<QName, Serializable>>> outerNodes = BeanHelper.getBulkLoadNodeService()
-                .loadChildNodes(Arrays.asList(getConstantNodeRefsBean().getTemplateRoot()), TYPE_ID_AND_NAME_PROPS).values();
-        for (Map<NodeRef, Map<QName, Serializable>> nodes : outerNodes) {
-            for (Map.Entry<NodeRef, Map<QName, Serializable>> entry : nodes.entrySet()) {
-                Map<QName, Serializable> properties = entry.getValue();
-                if (documentTypeId.equals(properties.get(DocumentTemplateModel.Prop.DOCTYPE_ID))
-                        && nodeService.hasAspect(entry.getKey(), DocumentTemplateModel.Aspects.TEMPLATE_DOCUMENT)) {
-                    String fileNameExtension = FilenameUtils.getExtension((String) properties.get(DocumentTemplateModel.Prop.NAME));
-                    Assert.isTrue(StringUtils.equals("dotx", fileNameExtension) || StringUtils.equals("dot", fileNameExtension) || StringUtils.equals("ott", fileNameExtension));
-                    return true;
-                }
+        for (UnmodifiableDocumentTemplate template : getUnmodifiableTemplates()) {
+            if (documentTypeId.equals(template.getDocTypeId()) && template.hasAspect(DocumentTemplateModel.Aspects.TEMPLATE_DOCUMENT)) {
+                String fileNameExtension = FilenameUtils.getExtension(template.getName());
+                Assert.isTrue(StringUtils.equals("dotx", fileNameExtension) || StringUtils.equals("dot", fileNameExtension) || StringUtils.equals("ott", fileNameExtension));
+                return true;
             }
         }
         return false;
@@ -270,14 +263,18 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
      * @return
      */
     private DocumentTemplate setupDocumentTemplate(FileInfo fileInfo) {
-        DocumentTemplate dt = templateBeanPropertyMapper.toObject(nodeService.getProperties(fileInfo.getNodeRef()), null);
-        dt.setNodeRef(fileInfo.getNodeRef());
-        dt.setDownloadUrl(getFileService().generateURL(fileInfo.getNodeRef()));
+        return setupDocumentTemplate(fileInfo.getNodeRef());
+    }
+
+    private DocumentTemplate setupDocumentTemplate(NodeRef templateRef) {
+        DocumentTemplate dt = templateBeanPropertyMapper.toObject(nodeService.getProperties(templateRef), null);
+        dt.setNodeRef(templateRef);
+        dt.setDownloadUrl(getFileService().generateURL(templateRef));
         return dt;
     }
 
     @Override
-    public Pair<String, NodeRef> populateTemplate(NodeRef documentNodeRef, boolean overWritingGranted) throws FileNotFoundException {
+    public String populateTemplate(NodeRef documentNodeRef, boolean overWritingGranted) throws FileNotFoundException {
         log.debug("Creating a file from template for document: " + documentNodeRef);
         boolean msoAvailable = msoService.isAvailable();
         boolean ooAvailable = openOfficeService.isAvailable();
@@ -296,7 +293,8 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
             // No template specified, try to use default, if any
             // NOTE: we don't need to check for null, because in that case the button triggering this action isn't shown
             log.debug("Document template not specified, looking for default template! Document: " + documentNodeRef);
-            DocumentTemplate templ = getDocumentsTemplate(documentNodeRef);
+            String documentTypeId = (String) docProp.get(DocumentAdminModel.Props.OBJECT_TYPE_ID);
+            DocumentTemplate templ = getDocumentsTemplate(documentTypeId);
             nodeRef = templ == null ? null : templ.getNodeRef();
         } else {
             nodeRef = getTemplateByName(templName).getNodeRef();
@@ -354,12 +352,13 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
             name = generalService.getUniqueFileName(documentNodeRef, name);
 
             existingGeneratedFile = fileFolderService.create(documentNodeRef, name, ContentModel.TYPE_CONTENT).getNodeRef();
-
-            Map<QName, Serializable> templateProps = new HashMap<QName, Serializable>(3);
+            int activeFilesCount = BeanHelper.getBulkLoadNodeService().countFiles(documentNodeRef, Boolean.TRUE);
+            Map<QName, Serializable> templateProps = new HashMap<>(7);
             // Mark down the template that was used to generate the file
             templateProps.put(FileModel.Props.GENERATED_FROM_TEMPLATE, templateFilename);
             templateProps.put(FileModel.Props.GENERATION_TYPE, (ooTemplate ? GeneratedFileType.OPENOFFICE_TEMPLATE.name() : GeneratedFileType.WORD_TEMPLATE.name()));
             templateProps.put(FileModel.Props.CONVERT_TO_PDF_IF_SIGNED, Boolean.TRUE);
+            templateProps.put(FileModel.Props.FILE_ORDER_IN_LIST, ++activeFilesCount);
             // Set the display name so we can process it during document registration
             templateProps.put(FileModel.Props.DISPLAY_NAME, displayName);
             nodeService.addProperties(existingGeneratedFile, templateProps);
@@ -371,7 +370,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
         // Set document content's MIME type and encoding from template
         replaceFormulas(documentNodeRef, nodeRef, existingGeneratedFile, templateFilename);
         generalService.setModifiedToNow(documentNodeRef);
-        return Pair.newInstance(displayName, existingGeneratedFile);
+        return displayName;
     }
 
     @Override
@@ -1129,16 +1128,6 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
 
     }
 
-    /**
-     * @param foundPattern
-     * @param document
-     * @return
-     */
-    private String getAncestorProperty(NodeRef document, QName ancestorType, QName property) {
-        Node parent = generalService.getAncestorWithType(document, ancestorType);
-        return (parent != null) ? nodeService.getProperty(parent.getNodeRef(), property).toString() : "";
-    }
-
     @Override
     public DocumentTemplate getTemplateByName(String name) throws FileNotFoundException {
         NodeRef nodeRef = fileFolderService.searchSimple(getConstantNodeRefsBean().getTemplateRoot(), name);
@@ -1149,31 +1138,10 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
     }
 
     @Override
-    public List<DocumentTemplate> getTemplates() {
-        List<FileInfo> templateFiles = fileFolderService.listFiles(getConstantNodeRefsBean().getTemplateRoot());
-        List<DocumentTemplate> templates = new ArrayList<DocumentTemplate>(templateFiles.size());
-        for (FileInfo fi : templateFiles) {
-            DocumentTemplate dt = setupDocumentTemplate(fi);
-            if (nodeService.hasAspect(fi.getNodeRef(), DocumentTemplateModel.Aspects.TEMPLATE_DOCUMENT)) {
-                NodeRef docType = generalService.getNodeRef(DocumentAdminModel.Repo.DOCUMENT_TYPES_SPACE + "/" + DocumentAdminModel.PREFIX + dt.getDocTypeId());
-                if (docType != null) {
-                    dt.setDocTypeName((String) nodeService.getProperty(docType, DocumentAdminModel.Props.NAME));
-                }
-            } else if (nodeService.hasAspect(fi.getNodeRef(), DocumentTemplateModel.Aspects.TEMPLATE_EMAIL)) {
-                dt.setDocTypeName("");
-            } else {
-                dt.setDocTypeName(dt.getDocTypeId());
-            }
-            templates.add(dt);
-        }
-        return templates;
-    }
-
-    @Override
-    public List<DocumentTemplate> getDocumentTemplates(String docTypeId) {
+    public List<UnmodifiableDocumentTemplate> getDocumentTemplates(String docTypeId) {
         Assert.notNull(docTypeId, "Parameter docTypeId is mandatory.");
-        List<DocumentTemplate> result = new ArrayList<DocumentTemplate>();
-        for (DocumentTemplate template : getTemplates()) {
+        List<UnmodifiableDocumentTemplate> result = new ArrayList<>();
+        for (UnmodifiableDocumentTemplate template : getUnmodifiableTemplates()) {
             if (docTypeId.equals(template.getDocTypeId())) {
                 result.add(template);
             }
@@ -1182,10 +1150,32 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
     }
 
     @Override
-    public List<DocumentTemplate> getEmailTemplates() {
-        List<DocumentTemplate> result = new ArrayList<DocumentTemplate>();
-        for (DocumentTemplate template : getTemplates()) {
-            if (nodeService.hasAspect(template.getNodeRef(), DocumentTemplateModel.Aspects.TEMPLATE_EMAIL)) {
+    public List<UnmodifiableDocumentTemplate> getUnmodifiableTemplates() {
+        List<NodeRef> templateRefs = BeanHelper.getBulkLoadNodeService().loadChildRefs(BeanHelper.getConstantNodeRefsBean().getTemplateRoot(), null);
+        List<UnmodifiableDocumentTemplate> result = new ArrayList<>();
+        for (NodeRef templateRef : templateRefs) {
+            UnmodifiableDocumentTemplate template = documentTemplateCache.get(templateRef);
+            if (template == null) {
+                DocumentTemplate docTemplate = setupDocumentTemplate(templateRef);
+                Set<QName> aspects = nodeService.getAspects(templateRef);
+                template = new UnmodifiableDocumentTemplate(docTemplate, aspects);
+                documentTemplateCache.put(templateRef, template);
+            }
+            result.add(template);
+        }
+        return result;
+    }
+
+    @Override
+    public void removeTemplateFromCache(NodeRef templateRef) {
+        documentTemplateCache.remove(templateRef);
+    }
+
+    @Override
+    public List<UnmodifiableDocumentTemplate> getEmailTemplates() {
+        List<UnmodifiableDocumentTemplate> result = new ArrayList<>();
+        for (UnmodifiableDocumentTemplate template : getUnmodifiableTemplates()) {
+            if (template.hasAspect(DocumentTemplateModel.Aspects.TEMPLATE_EMAIL)) {
                 result.add(template);
             }
         }
@@ -1197,8 +1187,8 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
         Assert.notNull(typeId, "Parameter typeId is mandatory.");
         List<SelectItem> result = new ArrayList<SelectItem>();
         String typeStr = typeId.toString();
-        for (DocumentTemplate template : getTemplates()) {
-            if (nodeService.hasAspect(template.getNodeRef(), DocumentTemplateModel.Aspects.TEMPLATE_REPORT) && typeStr.equals(template.getReportType())) {
+        for (UnmodifiableDocumentTemplate template : getUnmodifiableTemplates()) {
+            if (template.hasAspect(DocumentTemplateModel.Aspects.TEMPLATE_REPORT) && typeStr.equals(template.getReportType())) {
                 result.add(new SelectItem(template.getName()));
             }
         }
@@ -1208,10 +1198,10 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
     @Override
     public List<Pair<SelectItem, String>> getReportTemplatesWithOutputTypes(TemplateReportType typeId) {
         Assert.notNull(typeId, "Parameter typeId is mandatory.");
-        List<Pair<SelectItem, String>> result = new ArrayList<Pair<SelectItem, String>>();
+        List<Pair<SelectItem, String>> result = new ArrayList<>();
         String typeStr = typeId.toString();
-        for (DocumentTemplate template : getTemplates()) {
-            if (nodeService.hasAspect(template.getNodeRef(), DocumentTemplateModel.Aspects.TEMPLATE_REPORT) && typeStr.equals(template.getReportType())) {
+        for (UnmodifiableDocumentTemplate template : getUnmodifiableTemplates()) {
+            if (template.hasAspect(DocumentTemplateModel.Aspects.TEMPLATE_REPORT) && typeStr.equals(template.getReportType())) {
                 Serializable outputType = BeanHelper.getNodeService().getProperty(template.getNodeRef(), DocumentTemplateModel.Prop.REPORT_OUTPUT_TYPE);
                 if (outputType != null) {
                     String templateOutputType = outputType.toString();
@@ -1358,6 +1348,10 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
 
     public void setApplicationConstantsBean(ApplicationConstantsBean applicationConstantsBean) {
         this.applicationConstantsBean = applicationConstantsBean;
+    }
+
+    public void setDocumentTemplateCache(SimpleCache<NodeRef, UnmodifiableDocumentTemplate> documentTemplateCache) {
+        this.documentTemplateCache = documentTemplateCache;
     }
 
     // END: getters / setters

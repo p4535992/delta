@@ -20,7 +20,6 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.web.app.Application;
 import org.alfresco.web.app.servlet.BaseServlet;
 import org.apache.commons.lang.StringUtils;
 
@@ -109,8 +108,8 @@ public class SubstitutionBean implements Serializable {
     }
 
     public List<SelectItem> getActiveSubstitutions() {
-        List<SelectItem> selectItems = new ArrayList<SelectItem>();
-        List<Substitute> substitutions = getSubstituteService().searchActiveSubstitutionDuties(Application.getCurrentUser(FacesContext.getCurrentInstance()).getUserName());
+        List<SelectItem> selectItems = new ArrayList<>();
+        List<Substitute> substitutions = getSubstituteService().searchActiveSubstitutionDuties(AuthenticationUtil.getFullyAuthenticatedUser());
         for (Substitute substitution : substitutions) {
             selectItems.add(new SelectItem(substitution.getNodeRef().toString(),
                     getUserService().getUserFullName(substitution.getReplacedPersonUserName())));

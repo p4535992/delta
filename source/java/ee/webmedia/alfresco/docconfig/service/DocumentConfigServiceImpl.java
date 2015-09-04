@@ -244,9 +244,13 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
 
     @Override
     public DocumentConfig getConfig(Node documentDynamicNode) {
+        return getConfig(documentDynamicNode, true);
+    }
+
+    private DocumentConfig getConfig(Node documentDynamicNode, boolean cloneDocResult) {
         QName type = documentDynamicNode.getType();
         if (DocumentCommonModel.Types.DOCUMENT.equals(type)) {
-            Pair<DocumentType, DocumentTypeVersion> documentTypeAndVersion = getDocumentTypeAndVersion(documentDynamicNode, true);
+            Pair<DocumentType, DocumentTypeVersion> documentTypeAndVersion = getDocumentTypeAndVersion(documentDynamicNode, cloneDocResult);
             return getConfig(documentTypeAndVersion.getSecond(), documentTypeAndVersion.getFirst().isShowUnvalued());
         } else if (CaseFileModel.Types.CASE_FILE.equals(type)) {
             PropDefCacheKey key = DocAdminUtil.getPropDefCacheKey(documentDynamicNode.getProperties(), CaseFileType.class);
@@ -254,6 +258,11 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
         }
 
         throw new RuntimeException("Config isn't supported for " + type);
+    }
+
+    @Override
+    public List<String> getSaveListenerBeanNames(Node documentDynamicNode) {
+        return getConfig(documentDynamicNode, false).getSaveListenerBeanNames();
     }
 
     @Override

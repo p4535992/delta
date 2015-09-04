@@ -395,11 +395,11 @@ public class File implements Serializable, IClonable<File>, Comparable<File> {
         } else if (fileOrderInList > o.fileOrderInList) {
             return 1;
         }
-        return placeDigidocSubitemAfterParentContainer(o);
+        return orderDigidocSubitemAndParentContainer(o);
     }
 
-    private int placeDigidocSubitemAfterParentContainer(File o) {
-        if (!(Boolean.TRUE.equals(digiDocItem) || Boolean.TRUE.equals(o.digiDocItem))) {
+    private int orderDigidocSubitemAndParentContainer(File o) {
+        if (digiDocItem == o.digiDocItem) {
             return 0;
         }
         if (Boolean.TRUE.equals(digiDocItem)) {

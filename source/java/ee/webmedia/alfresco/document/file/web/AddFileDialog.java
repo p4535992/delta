@@ -4,8 +4,6 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getApplicationConstants
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDialogHelperBean;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getParametersService;
 import static ee.webmedia.alfresco.docadmin.web.DocAdminUtil.getDocTypeIdAndVersionNr;
-import static ee.webmedia.alfresco.utils.ComponentUtil.addChildren;
-import static ee.webmedia.alfresco.utils.ComponentUtil.putAttribute;
 import static ee.webmedia.alfresco.utils.FilenameUtil.getFilenameFromDisplayname;
 
 import java.io.FileInputStream;
@@ -17,17 +15,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.faces.application.Application;
 import javax.faces.application.FacesMessage;
 import javax.faces.component.UIComponent;
 import javax.faces.component.UIInput;
-import javax.faces.component.UIParameter;
 import javax.faces.component.html.HtmlInputText;
-import javax.faces.component.html.HtmlInputTextarea;
-import javax.faces.component.html.HtmlOutputText;
-import javax.faces.component.html.HtmlPanelGrid;
-import javax.faces.component.html.HtmlPanelGroup;
-import javax.faces.component.html.HtmlSelectBooleanCheckbox;
 import javax.faces.component.html.HtmlSelectManyMenu;
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
@@ -46,8 +37,6 @@ import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.config.DialogsConfigElement.DialogButtonConfig;
 import org.alfresco.web.ui.common.Utils;
-import org.alfresco.web.ui.common.component.UIActionLink;
-import org.alfresco.web.ui.repo.component.UIActions;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.BooleanUtils;
@@ -98,7 +87,6 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
     private transient EInvoiceService eInvoiceService;
     private transient DocumentTemplateService documentTemplateService;
 
-    private transient HtmlPanelGroup uploadedFilesPanelGroup;
     private transient HtmlSelectManyMenu attachmentSelect;
     private transient HtmlSelectManyMenu scannedSelect;
 
@@ -159,7 +147,6 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
         selectedFileName = null;
         selectedFileNameWithoutExtension = null;
         selectedAssociatedWithMetaData = null;
-        uploadedFilesPanelGroup = null;
         attachmentSelect = null;
         scannedSelect = null;
         attachmentParentRef = null;
@@ -514,7 +501,6 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
 
     @Override
     public void restored() {
-        refreshUploadedFilesPanelGroup();
         super.restored();
     }
 
@@ -577,151 +563,15 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
         return MessageFormat.format(msg, namesStr);
     }
 
-    public HtmlPanelGroup getUploadedFilesPanelGroup() {
-        return uploadedFilesPanelGroup;
-    }
-
-    public void setUploadedFilesPanelGroup(HtmlPanelGroup panelGroup) {
-        if (uploadedFilesPanelGroup == null) {
-            uploadedFilesPanelGroup = panelGroup;
-            refreshUploadedFilesPanelGroup();
-        } else {
-            uploadedFilesPanelGroup = panelGroup;
-        }
-    }
-
-    /**
-     * @param app
-     */
-    private void refreshUploadedFilesPanelGroup() {
-        if (uploadedFilesPanelGroup == null) {
-            uploadedFilesPanelGroup = new HtmlPanelGroup();
-        }
-        @SuppressWarnings("unchecked")
-        List<UIComponent> groupChildren = uploadedFilesPanelGroup.getChildren();
-        groupChildren.clear();
-
-        Application app = FacesContext.getCurrentInstance().getApplication();
-        HtmlPanelGrid uploadedFilesGrid = (HtmlPanelGrid) app.createComponent(HtmlPanelGrid.COMPONENT_TYPE);
-        uploadedFilesGrid.setStyleClass("table-padding");
-        uploadedFilesGrid.setColumnClasses("propertiesLabel,");
-        uploadedFilesGrid.setColumns(5);
-
-        groupChildren.add(uploadedFilesGrid);
-
-        @SuppressWarnings("unchecked")
-        List<UIComponent> gridChildren = uploadedFilesGrid.getChildren();
-        int rowCount = 0, size = 0;
-        List<String> fileNames = new ArrayList<String>();
-        FileUploadBean fileBean = getFileUploadBean();
-        if (fileBean != null) {
-            size = fileBean.getFiles().size();
-            fileNames = fileBean.getFileNames();
-        }
-        for (int i = 0; i < size; i++, rowCount++) { // Uploaded files
-            gridChildren.add(createLabel(app, rowCount, "name", true));
-
-            String nameValueBinding = "#{AddFileDialog.fileUploadBean.fileNameWithoutExtension[" + i + "]}";
-            gridChildren.add(createInput(app, rowCount, nameValueBinding));
-            if (BOUND_METADATA_EXTENSIONS.contains(FilenameUtils.getExtension(fileNames.get(i)).toLowerCase())) {
-                gridChildren.add(createLabel(app, rowCount, "file_associated_with_metadata", false));
-                gridChildren.add(createCheckbox(app, rowCount, "#{AddFileDialog.fileUploadBean.associatedWithMetaData[" + i + "]}"));
-            } else {
-                gridChildren.add(createDummyOutput(app, rowCount, 1));
-                gridChildren.add(createDummyOutput(app, rowCount, 2));
-            }
-
-            String deleteMethodBinding = "#{AddFileDialog.removeUploadedFile}";
-            gridChildren.add(createDelete(app, rowCount, i, deleteMethodBinding));
-        }
-
-        if (selectedFileNodeRef == null) {
-            return; // We can skip further processing
-        }
-
-        for (int i = 0; i < selectedFileNodeRef.size(); i++, rowCount++) { // Scanned files and email-attachments
-            gridChildren.add(createLabel(app, rowCount, "name", true));
-
-            String nameValueBinding = "#{AddFileDialog.selectedFileNameWithoutExtension[" + i + "]}";
-            gridChildren.add(createInput(app, rowCount, nameValueBinding));
-
-            if (BOUND_METADATA_EXTENSIONS.contains(FilenameUtils.getExtension(selectedFileName.get(i)))) {
-                gridChildren.add(createLabel(app, rowCount, "file_associated_with_metadata", false));
-                gridChildren.add(createCheckbox(app, rowCount, "#{AddFileDialog.selectedAssociatedWithMetaData[" + i + "]}"));
-            } else {
-                gridChildren.add(createDummyOutput(app, rowCount, 1));
-                gridChildren.add(createDummyOutput(app, rowCount, 2));
-            }
-
-            String deleteMethodBinding = "#{AddFileDialog.removeSelectedFile}";
-            gridChildren.add(createDelete(app, rowCount, i, deleteMethodBinding));
-        }
-    }
-
-    private UIActionLink createDelete(Application app, int rowCount, int i, String deleteBinding) {
-        UIActionLink delete = (UIActionLink) app.createComponent("org.alfresco.faces.ActionLink");
-        delete.setId("file-remove-link-" + rowCount);
-        delete.setImage("/images/icons/delete.gif");
-        delete.setValue("");
-        delete.setTooltip(MessageUtil.getMessage("delete"));
-        delete.setActionListener(app.createMethodBinding(deleteBinding, UIActions.ACTION_CLASS_ARGS));
-        delete.setShowLink(false);
-        putAttribute(delete, "styleClass", "icon-link");
-
-        UIParameter index = (UIParameter) app.createComponent(UIParameter.COMPONENT_TYPE);
-        index.setName("index");
-        index.setValue(i);
-        addChildren(delete, index);
-        return delete;
-    }
-
-    private UIComponent createInput(Application app, int rowCount, String nameValueBinding) {
-        UIInput nameInput = (UIInput) app.createComponent(HtmlInputTextarea.COMPONENT_TYPE);
-        nameInput.setValueBinding("value", app.createValueBinding(nameValueBinding));
-        nameInput.setId("uploaded-file-input-" + rowCount);
-        nameInput.setRequired(true);
-        nameInput.setValidator(app.createMethodBinding("#{AddFileDialog.validateFileName}", new Class[] { FacesContext.class, UIComponent.class,
-                Object.class }));
-        putAttribute(nameInput, "styleClass", "expand19-200");
-        return nameInput;
-    }
-
-    private UIComponent createCheckbox(Application app, int rowCount, String nameValueBinding) {
-        UIInput metaInput = (UIInput) app.createComponent(HtmlSelectBooleanCheckbox.COMPONENT_TYPE);
-        metaInput.setValueBinding("value", app.createValueBinding(nameValueBinding));
-        metaInput.setId("uploaded-file-checkbox-" + rowCount);
-        metaInput.setRequired(true);
-        metaInput.setValue(true);
-        return metaInput;
-    }
-
-    private HtmlOutputText createLabel(Application app, int rowCount, String name, boolean required) {
-        HtmlOutputText label = (HtmlOutputText) app.createComponent(HtmlOutputText.COMPONENT_TYPE);
-        label.setValue((required ? "<span class=\"red\">* </span>" : "") + MessageUtil.getMessage(name));
-        label.setStyleClass("propertiesLabel");
-        label.setEscape(false);
-        label.setId("uploaded-file-label-" + name + "-" + rowCount);
-        return label;
-    }
-
-    private HtmlOutputText createDummyOutput(Application app, int rowCount, int colCount) {
-        HtmlOutputText dummyOutput = (HtmlOutputText) app.createComponent(HtmlOutputText.COMPONENT_TYPE);
-        dummyOutput.setValue("");
-        dummyOutput.setId("uploaded-file-void-" + rowCount + "-" + colCount);
-        return dummyOutput;
-    }
-
     public void removeUploadedFile(ActionEvent event) {
         int index = Integer.parseInt(ActionUtil.getParam(event, "index"));
         getFileUploadBean().removeFile(index);
-        refreshUploadedFilesPanelGroup();
     }
 
     public void removeSelectedFile(ActionEvent event) {
         int index = Integer.parseInt(ActionUtil.getParam(event, "index"));
         selectedFileNodeRef.remove(index);
         selectedFileName.remove(index);
-        refreshUploadedFilesPanelGroup();
     }
 
     public FileUploadBean getFileUploadBean() {

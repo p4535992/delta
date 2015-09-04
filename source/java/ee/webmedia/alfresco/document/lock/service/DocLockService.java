@@ -6,6 +6,7 @@ import org.alfresco.repo.webdav.LockInfo;
 import org.alfresco.service.cmr.lock.LockService;
 import org.alfresco.service.cmr.lock.LockStatus;
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.util.Pair;
 
 import ee.webmedia.alfresco.document.lock.model.Lock;
 
@@ -37,7 +38,7 @@ public interface DocLockService extends LockService {
 
     void unlockFile(NodeRef lockedFileNodeRef);
 
-    void unlockFiles(List<NodeRef> lockedFileRefs, NodeRef parentRef);
+    void unlockFiles(List<Pair<NodeRef, Boolean>> lockedFileRefsWithGeneratedProp, NodeRef parentRef);
 
     boolean isGeneratedFileDocumentLocked(NodeRef fileRef);
 

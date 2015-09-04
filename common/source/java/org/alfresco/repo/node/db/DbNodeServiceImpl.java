@@ -542,6 +542,16 @@ public class DbNodeServiceImpl extends AbstractNodeServiceImpl
         return nodeDaoService.getNodeType(nodePair.getFirst());
     }
 
+    @Override
+    public boolean isType(NodeRef nodeRef, QName type) {
+        try {
+            return type.equals(getType(nodeRef));
+        } catch (Exception e) {
+            logger.warn(String.format("Checking node (nodeRef=%s) type failed. Exception: %s", nodeRef, e));
+        } 
+        return false;
+    }
+
     /**
      * @see org.alfresco.service.cmr.repository.NodeService#setType(org.alfresco.service.cmr.repository.NodeRef, org.alfresco.service.namespace.QName)
      */

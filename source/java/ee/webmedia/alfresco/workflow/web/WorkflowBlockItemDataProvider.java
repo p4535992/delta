@@ -60,11 +60,6 @@ public class WorkflowBlockItemDataProvider extends LazyListDataProvider<Integer,
     }
 
     @Override
-    public void loadPage(int pageStartIndex, int pageEndIndex) {
-        super.loadPage(pageStartIndex, pageEndIndex);
-    }
-
-    @Override
     protected Integer getKeyFromValue(WorkflowBlockItem workflowBlockItem) {
         return workflowBlockItem.getRowNumber();
 

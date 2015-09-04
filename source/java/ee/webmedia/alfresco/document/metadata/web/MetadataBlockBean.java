@@ -92,7 +92,7 @@ import ee.webmedia.alfresco.parameters.service.ParametersService;
 import ee.webmedia.alfresco.privilege.model.Privilege;
 import ee.webmedia.alfresco.series.model.Series;
 import ee.webmedia.alfresco.series.service.SeriesService;
-import ee.webmedia.alfresco.template.model.DocumentTemplate;
+import ee.webmedia.alfresco.template.model.UnmodifiableDocumentTemplate;
 import ee.webmedia.alfresco.template.service.DocumentTemplateService;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.user.web.UserListDialog;
@@ -955,14 +955,14 @@ public class MetadataBlockBean implements ClearStateListener {
      * @return A collection of UISelectItem objects containing the selection items to show on form.
      */
     public List<SelectItem> findDocumentTemplates(FacesContext context, UIInput selectComponent) {
-        List<DocumentTemplate> docTemplates = getDocumentTemplateService().getDocumentTemplates(
+        List<UnmodifiableDocumentTemplate> docTemplates = getDocumentTemplateService().getDocumentTemplates(
                 (String) document.getProperties().get(DocumentAdminModel.Props.OBJECT_TYPE_ID));
-        List<SelectItem> selectItems = new ArrayList<SelectItem>(docTemplates.size() + 1);
+        List<SelectItem> selectItems = new ArrayList<>(docTemplates.size() + 1);
 
         // Empty default selection
         selectItems.add(new SelectItem("", ""));
 
-        for (DocumentTemplate tmpl : docTemplates) {
+        for (UnmodifiableDocumentTemplate tmpl : docTemplates) {
             selectItems.add(new SelectItem(tmpl.getName(), FilenameUtils.removeExtension(tmpl.getName())));
         }
 

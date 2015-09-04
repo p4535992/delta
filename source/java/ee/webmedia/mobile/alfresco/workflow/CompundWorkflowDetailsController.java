@@ -652,6 +652,7 @@ public class CompundWorkflowDetailsController extends AbstractBaseController {
             Integer nodeOutcome = taskToFinish.getReviewTaskOutcome();
             if (nodeOutcome != null) {
                 outcomeIndex = nodeOutcome;
+                task.setProp(WorkflowSpecificModel.Props.TEMP_OUTCOME, outcomeIndex);
             }
         }
 
