@@ -110,7 +110,7 @@ public abstract class BaseAdrServiceImpl implements AdrService {
             return null;
         }
         NodeRef root = generalService.getNodeRef(AdrModel.Repo.ADR_DELETED_DOCUMENTS);
-        Map<QName, Serializable> props = new HashMap<QName, Serializable>();
+        Map<QName, Serializable> props = new HashMap<>();
         props.put(AdrModel.Props.NODEREF, nodeRef.toString());
         props.put(AdrModel.Props.REG_NUMBER, regNumber);
         props.put(AdrModel.Props.REG_DATE_TIME, regDateTime);
@@ -121,7 +121,7 @@ public abstract class BaseAdrServiceImpl implements AdrService {
     @Override
     public void deleteDocumentType(QName documentType) {
         NodeRef root = generalService.getNodeRef(AdrModel.Repo.ADR_DELETED_DOCUMENT_TYPES);
-        Map<QName, Serializable> props = new HashMap<QName, Serializable>();
+        Map<QName, Serializable> props = new HashMap<>();
         props.put(AdrModel.Props.DOCUMENT_TYPE, documentType);
         props.put(AdrModel.Props.DELETED_DATE_TIME, new Date());
         nodeService.createNode(root, AdrModel.Types.ADR_DELETED_DOCUMENT_TYPE, AdrModel.Types.ADR_DELETED_DOCUMENT_TYPE, AdrModel.Types.ADR_DELETED_DOCUMENT_TYPE, props);
@@ -130,7 +130,7 @@ public abstract class BaseAdrServiceImpl implements AdrService {
     @Override
     public void addDocumentType(QName documentType) {
         NodeRef root = generalService.getNodeRef(AdrModel.Repo.ADR_ADDED_DOCUMENT_TYPES);
-        Map<QName, Serializable> props = new HashMap<QName, Serializable>();
+        Map<QName, Serializable> props = new HashMap<>();
         props.put(AdrModel.Props.DOCUMENT_TYPE, documentType);
         props.put(AdrModel.Props.DELETED_DATE_TIME, new Date());
         nodeService.createNode(root, AdrModel.Types.ADR_ADDED_DOCUMENT_TYPE, AdrModel.Types.ADR_ADDED_DOCUMENT_TYPE, AdrModel.Types.ADR_ADDED_DOCUMENT_TYPE, props);
@@ -200,7 +200,7 @@ public abstract class BaseAdrServiceImpl implements AdrService {
     }
 
     protected void cleanTempFiles() {
-        List<NodeRef> files = new ArrayList<NodeRef>(tempFiles);
+        List<NodeRef> files = new ArrayList<>(tempFiles);
         tempFiles.clear();
 
         for (NodeRef nodeRef : files) {

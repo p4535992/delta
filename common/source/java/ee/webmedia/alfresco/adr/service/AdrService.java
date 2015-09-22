@@ -98,7 +98,7 @@ public interface AdrService {
     // * (arhiveerimine - ei tehta midagi, jääb ADR'i alles)
     // * hävitamine - kustutatakse ADR'ist
 
-    NodeRef addDeletedDocument(NodeRef document);
+    void addDeletedDocument(NodeRef document);
 
     NodeRef addDeletedDocumentFromArchive(NodeRef document, String regNumber, Date regDateTime);
 

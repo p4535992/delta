@@ -18,11 +18,21 @@ import ee.webmedia.alfresco.volume.model.VolumeModel;
 import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
 import ee.webmedia.alfresco.workflow.service.Task;
 
+/**
+ * Methods in this class must be kept in sync with the following files: </br>
+ * * task-list-dialog-columns.jsp </br>
+ * * task-list-dialog-min-columns.jsp </br>
+ * </br>
+ * Otherwise sorting of columns can have surprising effects
+ */
 public class TaskAndDocument implements Serializable {
-    private static final String MSG_CASE_FILE_TITLE = MessageUtil.getMessage("compoundWorkflow_caseFile_title");
     private static final long serialVersionUID = 1L;
+    private static final String MSG_CASE_FILE_TITLE = MessageUtil.getMessage("compoundWorkflow_caseFile_title");
+    private static final String MSG_CASE_FILE_WORKFLOW = MessageUtil.getMessage("casefile_workflow_type_name");
+    private static final String MSG_INDEPENDENT_CWF_NO_DOCS = MessageUtil.getMessage("compound_workflow_independent_no_documents");
+    private static final FastDateFormat SIMPLE_DATE_FORMAT = FastDateFormat.getInstance("dd.MM.yyyy");
+
     public static final String STYLECLASS_TASK_OVERDUE = "taskOverdue";
-    private static final FastDateFormat dateFormat = FastDateFormat.getInstance("dd.MM.yyyy");
 
     private final Task task;
     private final Document document;
@@ -76,16 +86,16 @@ public class TaskAndDocument implements Serializable {
 
     // methods for sortLink tag in jsp
     public String getDocName() {
-        return hasDocument() ? document.getDocName() : ((compoundWorkflow != null && compoundWorkflow.isIndependentWorkflow()) ? compoundWorkflow.getTitle() : "");
+        return hasDocument() ? document.getDocName() : ((isIndependentWorkflow()) ? compoundWorkflow.getTitle() : "");
     }
 
     public String getTitle() {
-        if (title == null && compoundWorkflow != null) {
-            if (compoundWorkflow.isDocumentWorkflow()) {
+        if (title == null && hasCompoundWorkflow()) {
+            if (isDocumentWorkflow()) {
                 title = hasDocument() ? document.getDocName() : "";
-            } else if (compoundWorkflow.isIndependentWorkflow()) {
+            } else if (isIndependentWorkflow()) {
                 title = compoundWorkflow.getTitle();
-            } else if (compoundWorkflow.isCaseFileWorkflow()) {
+            } else if (isCaseFileWorkflow()) {
                 title = hasDocument() ? (String) document.getProperties().get(DocumentDynamicModel.Props.DOC_TITLE) : "";
             }
         }
@@ -102,32 +112,58 @@ public class TaskAndDocument implements Serializable {
 
     public String getRegNrOrVolumeMark() {
         if (regNrOrVolumeMark == null && hasDocument()) {
-            if (compoundWorkflow.isDocumentWorkflow()) {
+            if (isDocumentWorkflow()) {
                 regNrOrVolumeMark = document.getRegNumber();
-            } else if (compoundWorkflow.isCaseFileWorkflow()) {
+            } else if (isCaseFileWorkflow()) {
                 regNrOrVolumeMark = (String) document.getProperties().get(VolumeModel.Props.VOLUME_MARK);
+            } else {
+                regNrOrVolumeMark = "";
             }
         }
         return regNrOrVolumeMark;
     }
 
+    public Date getRegDateTime() {
+        if (isDocumentWorkflow()) {
+            return hasDocument() ? document.getRegDateTime() : null;
+        }
+        return null;
+    }
+
     public String getRegDateTimeStr() {
-        return hasDocument() ? document.getRegDateTimeStr() : "";
+        if (isDocumentWorkflow()) {
+            return hasDocument() ? document.getRegDateTimeStr() : "";
+        }
+        return "";
     }
 
     public String getSender() {
-        return hasDocument() ? document.getSenderOrOwner() : "";
+        if (isDocumentWorkflow()) {
+            return hasDocument() ? document.getSenderOrOwner() : "";
+        }
+        return "";
+    }
+
+    public Date getDocumentDueDate() {
+        if (isDocumentWorkflow()) {
+            return hasDocument() ? document.getDueDate() : null;
+        } else if (isCaseFileWorkflow()) {
+            return (Date) document.getProperties().get(DocumentDynamicModel.Props.WORKFLOW_DUE_DATE);
+        }
+        return null;
     }
 
     public String getDueDateStr() {
-        if (dueDateStr == null && hasDocument() && compoundWorkflow != null) {
-            if (compoundWorkflow.isDocumentWorkflow()) {
+        if (dueDateStr == null && hasDocument() && hasCompoundWorkflow()) {
+            if (isDocumentWorkflow()) {
                 dueDateStr = document.getDueDateStr();
-            } else if (compoundWorkflow.isCaseFileWorkflow()) {
+            } else if (isCaseFileWorkflow()) {
                 Date dueDate = (Date) document.getProperties().get(DocumentDynamicModel.Props.WORKFLOW_DUE_DATE);
                 if (dueDate != null) {
-                    dueDateStr = dateFormat.format(dueDate);
+                    dueDateStr = SIMPLE_DATE_FORMAT.format(dueDate);
                 }
+            } else {
+                dueDateStr = "";
             }
         }
         return dueDateStr;
@@ -141,20 +177,32 @@ public class TaskAndDocument implements Serializable {
         return document != null;
     }
 
+    private boolean hasCompoundWorkflow() {
+        return compoundWorkflow != null;
+    }
+
+    private boolean isDocumentWorkflow() {
+        return hasCompoundWorkflow() && compoundWorkflow.isDocumentWorkflow();
+    }
+
+    private boolean isCaseFileWorkflow() {
+        return hasCompoundWorkflow() && compoundWorkflow.isCaseFileWorkflow();
+    }
+
+    private boolean isIndependentWorkflow() {
+        return hasCompoundWorkflow() && compoundWorkflow.isIndependentWorkflow();
+    }
+
     public CompoundWorkflow getCompoundWorkflow() {
         return compoundWorkflow;
     }
 
-    public String getDocumentTypeName() {
+    public String getTypeName() {
         if (typeName == null) {
             if (hasDocument()) {
-                if (compoundWorkflow != null && compoundWorkflow.isCaseFileWorkflow()) {
-                    typeName = MessageUtil.getMessage("casefile_workflow_type_name");
-                } else {
-                    typeName = document.getDocumentTypeName();
-                }
-            } else if (compoundWorkflow != null && compoundWorkflow.isIndependentWorkflow()) {
-                typeName = getCompoundWorkflowDocMsg(compoundWorkflow.getNumberOfDocuments(), MessageUtil.getMessage("compound_workflow_independent_no_documents"));
+                typeName = isCaseFileWorkflow() ? MSG_CASE_FILE_WORKFLOW : document.getDocumentTypeName();
+            } else if (isIndependentWorkflow()) {
+                typeName = getCompoundWorkflowDocMsg(compoundWorkflow.getNumberOfDocuments(), MSG_INDEPENDENT_CWF_NO_DOCS);
             } else {
                 typeName = MSG_CASE_FILE_TITLE;
             }
@@ -163,12 +211,12 @@ public class TaskAndDocument implements Serializable {
     }
 
     public String action() {
-        if (compoundWorkflow == null) {
+        if (!hasCompoundWorkflow()) {
             return "";
         }
-        if (compoundWorkflow.isDocumentWorkflow()) {
+        if (isDocumentWorkflow()) {
             return BeanHelper.getDocumentDialog().action();
-        } else if (compoundWorkflow.isIndependentWorkflow()) {
+        } else if (isIndependentWorkflow()) {
             return "dialog:compoundWorkflowDialog";
         } else {
             return "";
@@ -177,7 +225,7 @@ public class TaskAndDocument implements Serializable {
     }
 
     public void actionListener(ActionEvent event) {
-        if (compoundWorkflow == null) {
+        if (!hasCompoundWorkflow()) {
             return;
         }
         if (compoundWorkflow.isDocumentWorkflow()) {
@@ -186,9 +234,7 @@ public class TaskAndDocument implements Serializable {
             BeanHelper.getCompoundWorkflowDialog().setupWorkflowFromList(event);
         } else if (compoundWorkflow.isCaseFileWorkflow()) {
             BeanHelper.getCaseFileDialog().openFromDocumentList(event);
-
         }
-
     }
 
     @Override

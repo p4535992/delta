@@ -104,6 +104,7 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
 
     private static final Map<QName, QName> DOC_RECIPIENT_PROPS_WITH_ALTERNATIVES = new LinkedHashMap<>();
     private static final Map<QName, QName> DOC_SENDER_NAME_WITH_ALTERNATIVE = new LinkedHashMap<>();
+
     static {
         DOC_RECIPIENT_PROPS_WITH_ALTERNATIVES.put(DocumentCommonModel.Props.RECIPIENT_NAME, DocumentDynamicModel.Props.RECIPIENT_PERSON_NAME);
         DOC_RECIPIENT_PROPS_WITH_ALTERNATIVES.put(DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME, DocumentDynamicModel.Props.ADDITIONAL_RECIPIENT_PERSON_NAME);
@@ -334,7 +335,7 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
         } else {
             List<Node> parties = doc.getNode().getAllChildAssociations(DocumentChildModel.Assocs.CONTRACT_PARTY);
             if (parties != null) {
-                List<String> names = new ArrayList<String>(parties.size());
+                List<String> names = new ArrayList<>(parties.size());
                 for (Node node : parties) {
                     names.add((String) node.getProperties().get(DocumentSpecificModel.Props.PARTY_NAME));
                 }
@@ -454,7 +455,7 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
     }
 
     private List<SeotudDokument> getSeotudDokumentList(NodeRef document, Set<String> documentTypeIds) {
-        List<SeotudDokument> list = new ArrayList<SeotudDokument>();
+        List<SeotudDokument> list = new ArrayList<>();
         for (AssociationRef targetAssocRef : nodeService.getTargetAssocs(document, RegexQNamePattern.MATCH_ALL)) {
             SeotudDokument seotudDokument = getSeotudDokument(targetAssocRef, false, documentTypeIds);
             if (seotudDokument != null) {
@@ -472,7 +473,7 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
 
     public SeotudDokument getSeotudDokument(AssociationRef assocRef, boolean isSourceAssoc, Set<String> documentTypeIds) {
         NodeRef otherDocRef = isSourceAssoc ? assocRef.getSourceRef() : assocRef.getTargetRef();
-        if (!DocumentCommonModel.Types.DOCUMENT.equals(nodeService.getType(otherDocRef))) {
+        if (!nodeService.isType(otherDocRef, DocumentCommonModel.Types.DOCUMENT)) {
             return null;
         }
         DocumentDynamic otherDoc = documentDynamicService.getDocument(otherDocRef);
@@ -517,9 +518,9 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
     @Override
     public List<DokumentDetailidegaV2> koikDokumendidLisatudMuudetudV2(XMLGregorianCalendar perioodiAlgusKuupaev, XMLGregorianCalendar perioodiLoppKuupaev, int jataAlgusestVahele,
             int tulemustePiirang) {
-        final Map<NodeRef, Map<QName, Serializable>> functionsCache = new HashMap<NodeRef, Map<QName, Serializable>>();
-        final Map<NodeRef, Map<QName, Serializable>> seriesCache = new HashMap<NodeRef, Map<QName, Serializable>>();
-        final Map<NodeRef, Map<QName, Serializable>> volumesCache = new HashMap<NodeRef, Map<QName, Serializable>>();
+        final Map<NodeRef, Map<QName, Serializable>> functionsCache = new HashMap<>();
+        final Map<NodeRef, Map<QName, Serializable>> seriesCache = new HashMap<>();
+        final Map<NodeRef, Map<QName, Serializable>> volumesCache = new HashMap<>();
 
         try {
             return koikDokumendidLisatudMuudetud(perioodiAlgusKuupaev, perioodiLoppKuupaev, new BuildDocumentCallback<DokumentDetailidegaV2>() {
@@ -567,13 +568,13 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
                     + dateFormat.format(modifiedDateEnd) + " (inclusive)");
             Set<NodeRef> docs1 = documentSearchService.searchAdrDocuments(modifiedDateBegin, modifiedDateEnd, publicAdrDocumentTypeIds);
             log.info("Found " + docs1.size() + " documents that were modified during specified period");
-            Set<NodeRef> docs = new HashSet<NodeRef>(docs1);
+            Set<NodeRef> docs = new HashSet<>(docs1);
 
             // ============= Search for document types that were changed to publicAdr=true during specified period
             // ============= and add ALL documents that belong to these types to results
 
             List<String> addedDocumentTypes = documentSearchService.searchAdrAddedDocumentTypes(modifiedDateBegin, modifiedDateEnd);
-            Set<String> documentTypes = new HashSet<String>(publicAdrDocumentTypeIds); // Currently allowed docTypes
+            Set<String> documentTypes = new HashSet<>(publicAdrDocumentTypeIds); // Currently allowed docTypes
             documentTypes.retainAll(addedDocumentTypes); // Result: docTypes that were added during this period AND are currently allowed
             if (documentTypes.size() > 0) {
                 log.info("Executing lucene query to find all documents of the following document types whose publicAdr was changed during specified period: "
@@ -588,7 +589,7 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
 
             log.info("Starting document construction");
             int skipped = 0;
-            Map<AdrDocument, T> results = new HashMap<AdrDocument, T>();
+            Map<AdrDocument, T> results = new HashMap<>();
             for (NodeRef nodeRef : documentsByModified) {
                 if (!docs.contains(nodeRef)) {
                     continue;
@@ -607,7 +608,12 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
                 AdrDocument adrDocument = new AdrDocument(doc.getNodeRef(), doc.getRegNumber(), doc.getRegDateTime(), compareByNodeRef);
                 if (compareByNodeRef || !results.containsKey(adrDocument)) {
                     log.debug("Constructing document " + (results.size() + 1));
-                    results.put(adrDocument, buildDocumentCallback.buildDocument(doc, publicAdrDocumentTypeIds));
+                    try {
+                        results.put(adrDocument, buildDocumentCallback.buildDocument(doc, publicAdrDocumentTypeIds));
+                    } catch (Exception e) {
+                        log.warn(String.format("Construction of document (nodeRef=%s) failed, skipping this document", nodeRef));
+                        continue;
+                    }
                     if (limit > 0 && results.size() >= limit) {
                         log.info("Limit reached, breaking");
                         break;
@@ -618,7 +624,7 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
             docs.removeAll(new HashSet<>(documentsByModified));
             log.info("There are " + docs.size() + " documents in the lucene response that are not in the sql response");
 
-            list = new ArrayList<T>(results.values());
+            list = new ArrayList<>(results.values());
         }
 
         log.info("Finished koikDokumendidLisatudMuudetud" + (compareByNodeRef ? "V2" : "")
@@ -671,7 +677,7 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
         }
         Assert.notNull(spacesStoreId, "Store " + spacesStoreRef + " not found in alf_store");
         Assert.notNull(archivalsStoreId, "Store " + archivalsStoreRef + " not found in alf_store");
-        Map<Long, StoreRef> storesById = new HashMap<Long, StoreRef>();
+        Map<Long, StoreRef> storesById = new HashMap<>();
         storesById.put(spacesStoreId, spacesStoreRef);
         storesById.put(archivalsStoreId, archivalsStoreRef);
 
@@ -738,7 +744,7 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
                     + " (inclusive)");
             List<NodeRef> deletedDocRefs = documentSearchService.searchAdrDeletedDocuments(deletedDateBegin, deletedDateEnd);
             log.info("Found " + deletedDocRefs.size() + " documents that were deleted during specified period; loading properties ...");
-            List<AdrDocument> deletedDocs = new ArrayList<AdrDocument>(deletedDocRefs.size());
+            List<AdrDocument> deletedDocs = new ArrayList<>(deletedDocRefs.size());
             for (NodeRef deletedDoc : deletedDocRefs) {
                 Map<QName, Serializable> props = nodeService.getProperties(deletedDoc);
                 String nodeRef = (String) props.get(AdrModel.Props.NODEREF);
@@ -766,7 +772,7 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
             log.info("Removing existing docs, list now contains " + deletedDocs.size() + " documents that were deleted during specified period");
 
             Collections.sort(deletedDocs, ADR_DOCUMENT_BY_REG_DATE_TIME_COMPARATOR);
-            deletedDocRefs = new ArrayList<NodeRef>(deletedDocs.size());
+            deletedDocRefs = new ArrayList<>(deletedDocs.size());
             for (AdrDocument deletedDoc : deletedDocs) {
                 deletedDocRefs.add(deletedDoc.nodeRef);
             }
@@ -774,7 +780,7 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
             // ============= Search for document types that were changed to publicAdr=false during specified period
             // ============= and add ALL documents that belong to these types to results
 
-            Set<String> deletedDocumentTypes = new HashSet<String>(documentSearchService.searchAdrDeletedDocumentTypes(deletedDateBegin, deletedDateEnd));
+            Set<String> deletedDocumentTypes = new HashSet<>(documentSearchService.searchAdrDeletedDocumentTypes(deletedDateBegin, deletedDateEnd));
             // Result: docTypes that were deleted during this period AND are not currently allowed
             deletedDocumentTypes.removeAll(documentAdminService.getAdrDocumentTypeIds());
             log.info("Found " + deletedDocumentTypes.size() + " document types, which were changed to publicAdr=false during specified period: "
@@ -801,7 +807,7 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
 
             log.info("Total found " + deletedDocRefs.size() + " deleted documents");
             int skipped = 0;
-            list = new ArrayList<DokumentId>(deletedDocRefs.size());
+            list = new ArrayList<>(deletedDocRefs.size());
             for (NodeRef deletedDocRef : deletedDocRefs) {
                 if (skip > 0 && skipped < skip) {
                     skipped++;
@@ -824,6 +830,7 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
     }
 
     private static final Comparator<AdrDocument> ADR_DOCUMENT_BY_REG_DATE_TIME_COMPARATOR;
+
     static {
         // ComparatorChain is not thread-safe at construction time, but it is thread-safe to perform multiple comparisons after all the setup operations are complete.
         ComparatorChain chain = new ComparatorChain();
@@ -849,10 +856,14 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
     // ========================================================================
 
     @Override
-    public NodeRef addDeletedDocument(NodeRef document) {
+    public void addDeletedDocument(NodeRef document) {
+        if (document == null || !nodeService.exists(document)) {
+            log.warn("Cannot add deleted document because nodeRef is invalid: " + document);
+            return;
+        }
         String regNumber = (String) nodeService.getProperty(document, DocumentCommonModel.Props.REG_NUMBER);
         Date regDateTime = (Date) nodeService.getProperty(document, DocumentCommonModel.Props.REG_DATE_TIME);
-        return addDeletedDocument(document, regNumber, regDateTime);
+        addDeletedDocument(document, regNumber, regDateTime);
     }
 
     @Override

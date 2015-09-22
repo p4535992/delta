@@ -41,7 +41,7 @@
          <f:facet name="header">
             <a:sortLink id="col4-sort" label="#{msg.document_sender}" value="sender" styleClass="header" />
          </f:facet>
-         <a:actionLink id="col4-text" value="#{r.document.sender}" action="#{r.action}" tooltip="#{r.document.sender}" actionListener="#{r.actionListener}" styleClass="no-underline condence20-" rendered="#{r.compoundWorkflow.documentWorkflow}" >
+         <a:actionLink id="col4-text" value="#{r.sender}" action="#{r.action}" tooltip="#{r.document.sender}" actionListener="#{r.actionListener}" styleClass="no-underline condence20-" >
             <f:param name="nodeRef" value="#{r.actionNodeRef}" />
          </a:actionLink>
       </a:column>
@@ -49,7 +49,7 @@
       <%-- Title --%>
       <a:column id="col6" styleClass="#{r.task.cssStyleClass}" style="width: 25%;">
          <f:facet name="header">
-            <a:sortLink id="col6-sort" label="#{msg.document_docName}" value="docName" styleClass="header" />
+            <a:sortLink id="col6-sort" label="#{msg.document_docName}" value="title" styleClass="header" />
          </f:facet>
          <a:actionLink id="col6-text" value="#{r.title}" action="#{r.action}" tooltip="#{r.title}" actionListener="#{r.actionListener}" styleClass="condence20-" >
             <f:param name="nodeRef" value="#{r.actionNodeRef}" />
@@ -59,9 +59,9 @@
       <%-- Document type --%>
       <a:column id="col3" primary="true" styleClass="#{r.task.cssStyleClass}" style="width: 10%;">
          <f:facet name="header">
-            <a:sortLink id="col3-sort" label="#{msg.document_type}" value="documentTypeName" styleClass="header" />
+            <a:sortLink id="col3-sort" label="#{msg.document_type}" value="typeName" styleClass="header" />
          </f:facet>
-         <a:actionLink id="col3-text" value="#{r.documentTypeName}" action="#{r.action}" tooltip="#{r.documentTypeName}" actionListener="#{r.actionListener}" styleClass="no-underline" >
+         <a:actionLink id="col3-text" value="#{r.typeName}" action="#{r.action}" tooltip="#{r.typeName}" actionListener="#{r.actionListener}" styleClass="no-underline" >
             <f:param name="nodeRef" value="#{r.actionNodeRef}" />
          </a:actionLink>
       </a:column>

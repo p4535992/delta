@@ -39,9 +39,9 @@
       <%-- regNumber --%>
       <a:column id="col1" primary="true" styleClass="#{r.task.cssStyleClass}" style="width: 10%;" rendered="#{MyTasksBean.caseFileOrDocumentWorkflowEnabled}">
          <f:facet name="header">
-            <a:sortLink id="col1-sort" label="#{msg.document_regNumber}" value="regNumber" styleClass="header" />
+            <a:sortLink id="col1-sort" label="#{msg.document_regNumber}" value="regNrOrVolumeMark" styleClass="header" />
          </f:facet>
-         <a:actionLink id="col1-text" value="#{r.regNrOrVolumeMark}" action="#{r.action}" tooltip="#{r.regNrOrVolumeMark}" actionListener="#{r.actionListener}" styleClass="no-underline" rendered="#{r.compoundWorkflow.documentWorkflow or r.compoundWorkflow.caseFileWorkflow}" >
+         <a:actionLink id="col1-text" value="#{r.regNrOrVolumeMark}" action="#{r.action}" tooltip="#{r.regNrOrVolumeMark}" actionListener="#{r.actionListener}" styleClass="no-underline" >
             <f:param name="nodeRef" value="#{r.actionNodeRef}" />
          </a:actionLink>
       </a:column>
@@ -51,7 +51,7 @@
          <f:facet name="header">
             <a:sortLink id="col2-sort" label="#{msg.document_regDateTime}" value="regDateTime" styleClass="header" />
          </f:facet>
-         <a:actionLink id="col2-text" value="#{r.regDateTimeStr}" action="#{DocumentDialog.action}" tooltip="#{r.regDateTimeStr}" actionListener="#{DocumentDialog.open}" styleClass="no-underline" rendered="#{r.compoundWorkflow.documentWorkflow}" >
+         <a:actionLink id="col2-text" value="#{r.regDateTimeStr}" action="#{DocumentDialog.action}" tooltip="#{r.regDateTimeStr}" actionListener="#{DocumentDialog.open}" styleClass="no-underline" >
             <f:param name="nodeRef" value="#{r.actionNodeRef}" />
          </a:actionLink>
       </a:column>
@@ -61,7 +61,7 @@
          <f:facet name="header">
             <a:sortLink id="col4-sort" label="#{msg.document_sender}" value="sender" styleClass="header" />
          </f:facet>
-         <a:actionLink id="col4-text" value="#{r.sender}" action="#{DocumentDialog.action}" tooltip="#{r.sender}" actionListener="#{DocumentDialog.open}" styleClass="no-underline condence20-" rendered="#{r.compoundWorkflow.documentWorkflow}" >
+         <a:actionLink id="col4-text" value="#{r.sender}" action="#{DocumentDialog.action}" tooltip="#{r.sender}" actionListener="#{DocumentDialog.open}" styleClass="no-underline condence20-" >
             <f:param name="nodeRef" value="#{r.actionNodeRef}" />
          </a:actionLink>
       </a:column>
@@ -69,7 +69,7 @@
       <%-- Title --%>
       <a:column id="col6" styleClass="#{r.task.cssStyleClass}" style="width: 15%;">
          <f:facet name="header">
-            <a:sortLink id="col6-sort" label="#{msg.document_docName}" value="docName" styleClass="header" />
+            <a:sortLink id="col6-sort" label="#{msg.document_docName}" value="title" styleClass="header" />
          </f:facet>
          <a:actionLink id="col6-text" value="#{r.title}" action="#{r.action}" tooltip="#{r.title}" actionListener="#{r.actionListener}" styleClass="condence20-" >
             <f:param name="nodeRef" value="#{r.actionNodeRef}" />
@@ -81,7 +81,7 @@
          <f:facet name="header">
             <a:sortLink id="col7-sort" label="#{msg.document_dueDate}" value="documentDueDate" styleClass="header" />
          </f:facet>
-         <a:actionLink id="col7-text" value="#{r.dueDateStr}" action="#{r.action}" tooltip="#{r.dueDateStr}" actionListener="#{r.actionListener}" styleClass="no-underline" rendered="#{r.compoundWorkflow.documentWorkflow}" >
+         <a:actionLink id="col7-text" value="#{r.dueDateStr}" action="#{r.action}" tooltip="#{r.dueDateStr}" actionListener="#{r.actionListener}" styleClass="no-underline" >
             <f:param name="nodeRef" value="#{r.actionNodeRef}" />
          </a:actionLink>
       </a:column>
@@ -89,9 +89,9 @@
       <%-- Document type --%>
       <a:column id="col3" primary="true" styleClass="#{r.task.cssStyleClass}" style="width: 10%;">
          <f:facet name="header">
-            <a:sortLink id="col3-sort" label="#{msg.document_type}" value="documentTypeName" styleClass="header" />
+            <a:sortLink id="col3-sort" label="#{msg.document_type}" value="typeName" styleClass="header" />
          </f:facet>
-         <a:actionLink id="col3-text" value="#{r.documentTypeName}" action="#{r.action}" tooltip="#{r.documentTypeName}" actionListener="#{r.actionListener}" styleClass="no-underline" >
+         <a:actionLink id="col3-text" value="#{r.typeName}" action="#{r.action}" tooltip="#{r.typeName}" actionListener="#{r.actionListener}" styleClass="no-underline" >
             <f:param name="nodeRef" value="#{r.actionNodeRef}" />
          </a:actionLink>
      </a:column>
